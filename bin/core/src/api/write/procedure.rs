@@ -1,72 +1,80 @@
 use komodo_client::{
   api::write::*,
   entities::{
-    permission::PermissionLevel, procedure::Procedure,
-    update::Update, user::User,
+    permission::PermissionLevel, procedure::Procedure, update::Update,
   },
 };
 use resolver_api::Resolve;
 
-use crate::{resource, state::State};
+use crate::resource;
 
-impl Resolve<CreateProcedure, User> for State {
-  #[instrument(name = "CreateProcedure", skip(self, user))]
+use super::WriteArgs;
+
+impl Resolve<WriteArgs> for CreateProcedure {
+  #[instrument(name = "CreateProcedure", skip(user))]
   async fn resolve(
-    &self,
-    CreateProcedure { name, config }: CreateProcedure,
-    user: User,
-  ) -> anyhow::Result<CreateProcedureResponse> {
-    resource::create::<Procedure>(&name, config, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<CreateProcedureResponse> {
+    Ok(
+      resource::create::<Procedure>(&self.name, self.config, user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<CopyProcedure, User> for State {
-  #[instrument(name = "CopyProcedure", skip(self, user))]
+impl Resolve<WriteArgs> for CopyProcedure {
+  #[instrument(name = "CopyProcedure", skip(user))]
   async fn resolve(
-    &self,
-    CopyProcedure { name, id }: CopyProcedure,
-    user: User,
-  ) -> anyhow::Result<CopyProcedureResponse> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<CopyProcedureResponse> {
     let Procedure { config, .. } =
       resource::get_check_permissions::<Procedure>(
-        &id,
+        &self.id,
         &user,
         PermissionLevel::Write,
       )
       .await?;
-    resource::create::<Procedure>(&name, config.into(), &user).await
+    Ok(
+      resource::create::<Procedure>(&self.name, config.into(), user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<UpdateProcedure, User> for State {
-  #[instrument(name = "UpdateProcedure", skip(self, user))]
+impl Resolve<WriteArgs> for UpdateProcedure {
+  #[instrument(name = "UpdateProcedure", skip(user))]
   async fn resolve(
-    &self,
-    UpdateProcedure { id, config }: UpdateProcedure,
-    user: User,
-  ) -> anyhow::Result<UpdateProcedureResponse> {
-    resource::update::<Procedure>(&id, config, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<UpdateProcedureResponse> {
+    Ok(
+      resource::update::<Procedure>(&self.id, self.config, user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<RenameProcedure, User> for State {
-  #[instrument(name = "RenameProcedure", skip(self, user))]
+impl Resolve<WriteArgs> for RenameProcedure {
+  #[instrument(name = "RenameProcedure", skip(user))]
   async fn resolve(
-    &self,
-    RenameProcedure { id, name }: RenameProcedure,
-    user: User,
-  ) -> anyhow::Result<Update> {
-    resource::rename::<Procedure>(&id, &name, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Update> {
+    Ok(
+      resource::rename::<Procedure>(&self.id, &self.name, user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<DeleteProcedure, User> for State {
-  #[instrument(name = "DeleteProcedure", skip(self, user))]
+impl Resolve<WriteArgs> for DeleteProcedure {
+  #[instrument(name = "DeleteProcedure", skip(args))]
   async fn resolve(
-    &self,
-    DeleteProcedure { id }: DeleteProcedure,
-    user: User,
-  ) -> anyhow::Result<DeleteProcedureResponse> {
-    resource::delete::<Procedure>(&id, &user).await
+    self,
+    args: &WriteArgs,
+  ) -> serror::Result<DeleteProcedureResponse> {
+    Ok(resource::delete::<Procedure>(&self.id, args).await?)
   }
 }

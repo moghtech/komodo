@@ -1,15 +1,7 @@
 use anyhow::{anyhow, Context};
 use komodo_client::{
-  api::write::{
-    CreateVariable, CreateVariableResponse, DeleteVariable,
-    DeleteVariableResponse, UpdateVariableDescription,
-    UpdateVariableDescriptionResponse, UpdateVariableIsSecret,
-    UpdateVariableIsSecretResponse, UpdateVariableValue,
-    UpdateVariableValueResponse,
-  },
-  entities::{
-    user::User, variable::Variable, Operation, ResourceTarget,
-  },
+  api::write::*,
+  entities::{variable::Variable, Operation, ResourceTarget},
 };
 use mungos::mongodb::bson::doc;
 use resolver_api::Resolve;
@@ -19,23 +11,26 @@ use crate::{
     query::get_variable,
     update::{add_update, make_update},
   },
-  state::{db_client, State},
+  state::db_client,
 };
 
-impl Resolve<CreateVariable, User> for State {
-  #[instrument(name = "CreateVariable", skip(self, user, value))]
+use super::WriteArgs;
+
+impl Resolve<WriteArgs> for CreateVariable {
+  #[instrument(name = "CreateVariable", skip(user, self), fields(name = &self.name))]
   async fn resolve(
-    &self,
-    CreateVariable {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<CreateVariableResponse> {
+    let CreateVariable {
       name,
       value,
       description,
       is_secret,
-    }: CreateVariable,
-    user: User,
-  ) -> anyhow::Result<CreateVariableResponse> {
+    } = self;
+
     if !user.admin {
-      return Err(anyhow!("only admins can create variables"));
+      return Err(anyhow!("only admins can create variables").into());
     }
 
     let variable = Variable {
@@ -63,20 +58,21 @@ impl Resolve<CreateVariable, User> for State {
 
     add_update(update).await?;
 
-    get_variable(&variable.name).await
+    Ok(get_variable(&variable.name).await?)
   }
 }
 
-impl Resolve<UpdateVariableValue, User> for State {
-  #[instrument(name = "UpdateVariableValue", skip(self, user, value))]
+impl Resolve<WriteArgs> for UpdateVariableValue {
+  #[instrument(name = "UpdateVariableValue", skip(user, self), fields(name = &self.name))]
   async fn resolve(
-    &self,
-    UpdateVariableValue { name, value }: UpdateVariableValue,
-    user: User,
-  ) -> anyhow::Result<UpdateVariableValueResponse> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<UpdateVariableValueResponse> {
     if !user.admin {
-      return Err(anyhow!("only admins can update variables"));
+      return Err(anyhow!("only admins can update variables").into());
     }
+
+    let UpdateVariableValue { name, value } = self;
 
     let variable = get_variable(&name).await?;
 
@@ -116,74 +112,71 @@ impl Resolve<UpdateVariableValue, User> for State {
 
     add_update(update).await?;
 
-    get_variable(&name).await
+    Ok(get_variable(&name).await?)
   }
 }
 
-impl Resolve<UpdateVariableDescription, User> for State {
-  #[instrument(name = "UpdateVariableDescription", skip(self, user))]
+impl Resolve<WriteArgs> for UpdateVariableDescription {
+  #[instrument(name = "UpdateVariableDescription", skip(user))]
   async fn resolve(
-    &self,
-    UpdateVariableDescription { name, description }: UpdateVariableDescription,
-    user: User,
-  ) -> anyhow::Result<UpdateVariableDescriptionResponse> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<UpdateVariableDescriptionResponse> {
     if !user.admin {
-      return Err(anyhow!("only admins can update variables"));
+      return Err(anyhow!("only admins can update variables").into());
     }
     db_client()
       .variables
       .update_one(
-        doc! { "name": &name },
-        doc! { "$set": { "description": &description } },
+        doc! { "name": &self.name },
+        doc! { "$set": { "description": &self.description } },
       )
       .await
       .context("failed to update variable description on db")?;
-    get_variable(&name).await
+    Ok(get_variable(&self.name).await?)
   }
 }
 
-impl Resolve<UpdateVariableIsSecret, User> for State {
-  #[instrument(name = "UpdateVariableIsSecret", skip(self, user))]
+impl Resolve<WriteArgs> for UpdateVariableIsSecret {
+  #[instrument(name = "UpdateVariableIsSecret", skip(user))]
   async fn resolve(
-    &self,
-    UpdateVariableIsSecret { name, is_secret }: UpdateVariableIsSecret,
-    user: User,
-  ) -> anyhow::Result<UpdateVariableIsSecretResponse> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<UpdateVariableIsSecretResponse> {
     if !user.admin {
-      return Err(anyhow!("only admins can update variables"));
+      return Err(anyhow!("only admins can update variables").into());
     }
     db_client()
       .variables
       .update_one(
-        doc! { "name": &name },
-        doc! { "$set": { "is_secret": is_secret } },
+        doc! { "name": &self.name },
+        doc! { "$set": { "is_secret": self.is_secret } },
       )
       .await
       .context("failed to update variable is secret on db")?;
-    get_variable(&name).await
+    Ok(get_variable(&self.name).await?)
   }
 }
 
-impl Resolve<DeleteVariable, User> for State {
+impl Resolve<WriteArgs> for DeleteVariable {
   async fn resolve(
-    &self,
-    DeleteVariable { name }: DeleteVariable,
-    user: User,
-  ) -> anyhow::Result<DeleteVariableResponse> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<DeleteVariableResponse> {
     if !user.admin {
-      return Err(anyhow!("only admins can delete variables"));
+      return Err(anyhow!("only admins can delete variables").into());
     }
-    let variable = get_variable(&name).await?;
+    let variable = get_variable(&self.name).await?;
     db_client()
       .variables
-      .delete_one(doc! { "name": &name })
+      .delete_one(doc! { "name": &self.name })
       .await
       .context("failed to delete variable on db")?;
 
     let mut update = make_update(
       ResourceTarget::system(),
       Operation::DeleteVariable,
-      &user,
+      user,
     );
 
     update

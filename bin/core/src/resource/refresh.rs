@@ -12,9 +12,9 @@ use mungos::find::find_collect;
 use resolver_api::Resolve;
 
 use crate::{
-  api::execute::pull_deployment_inner,
+  api::{execute::pull_deployment_inner, write::WriteArgs},
   config::core_config,
-  state::{db_client, State},
+  state::db_client,
 };
 
 pub fn spawn_resource_refresh_loop() {
@@ -53,14 +53,13 @@ async fn refresh_stacks() {
     return;
   };
   for stack in stacks {
-    State
+    RefreshStackCache { stack: stack.id }
       .resolve(
-        RefreshStackCache { stack: stack.id },
-        stack_user().clone(),
+        &WriteArgs { user: stack_user().clone() },
       )
       .await
       .inspect_err(|e| {
-        warn!("Failed to refresh Stack cache in refresh task | Stack: {} | {e:#}", stack.name)
+        warn!("Failed to refresh Stack cache in refresh task | Stack: {} | {:#}", stack.name, e.error)
       })
       .ok();
   }
@@ -115,14 +114,13 @@ async fn refresh_builds() {
     return;
   };
   for build in builds {
-    State
+    RefreshBuildCache { build: build.id }
       .resolve(
-        RefreshBuildCache { build: build.id },
-        build_user().clone(),
+        &WriteArgs { user: build_user().clone() },
       )
       .await
       .inspect_err(|e| {
-        warn!("Failed to refresh Build cache in refresh task | Build: {} | {e:#}", build.name)
+        warn!("Failed to refresh Build cache in refresh task | Build: {} | {:#}", build.name, e.error)
       })
       .ok();
   }
@@ -140,14 +138,13 @@ async fn refresh_repos() {
     return;
   };
   for repo in repos {
-    State
+    RefreshRepoCache { repo: repo.id }
       .resolve(
-        RefreshRepoCache { repo: repo.id },
-        repo_user().clone(),
+        &WriteArgs { user: repo_user().clone() },
       )
       .await
       .inspect_err(|e| {
-        warn!("Failed to refresh Repo cache in refresh task | Repo: {} | {e:#}", repo.name)
+        warn!("Failed to refresh Repo cache in refresh task | Repo: {} | {:#}", repo.name, e.error)
       })
       .ok();
   }
@@ -169,14 +166,13 @@ async fn refresh_syncs() {
     if sync.config.repo.is_empty() {
       continue;
     }
-    State
+    RefreshResourceSyncPending { sync: sync.id }
       .resolve(
-        RefreshResourceSyncPending { sync: sync.id },
-        sync_user().clone(),
+        &WriteArgs { user: sync_user().clone() },
       )
       .await
       .inspect_err(|e| {
-        warn!("Failed to refresh ResourceSync in refresh task | Sync: {} | {e:#}", sync.name)
+        warn!("Failed to refresh ResourceSync in refresh task | Sync: {} | {:#}", sync.name, e.error)
       })
       .ok();
   }

@@ -15,8 +15,11 @@ use resolver_api::Resolve;
 use serde::Deserialize;
 
 use crate::{
-  api::execute::ExecuteRequest,
-  helpers::update::init_execution_update, state::State,
+  api::{
+    execute::{ExecuteArgs, ExecuteRequest},
+    write::WriteArgs,
+  },
+  helpers::update::init_execution_update,
 };
 
 use super::{ListenerLockCache, ANY_BRANCH};
@@ -58,7 +61,10 @@ pub async fn handle_build_webhook<B: super::VerifyBranch>(
   let ExecuteRequest::RunBuild(req) = req else {
     unreachable!()
   };
-  State.resolve(req, (user, update)).await?;
+  req
+    .resolve(&ExecuteArgs { user, update })
+    .await
+    .map_err(|e| e.error)?;
   Ok(())
 }
 
@@ -93,7 +99,10 @@ impl RepoExecution for CloneRepo {
     else {
       unreachable!()
     };
-    State.resolve(req, (user, update)).await?;
+    req
+      .resolve(&ExecuteArgs { user, update })
+      .await
+      .map_err(|e| e.error)?;
     Ok(())
   }
 }
@@ -110,7 +119,10 @@ impl RepoExecution for PullRepo {
     else {
       unreachable!()
     };
-    State.resolve(req, (user, update)).await?;
+    req
+      .resolve(&ExecuteArgs { user, update })
+      .await
+      .map_err(|e| e.error)?;
     Ok(())
   }
 }
@@ -127,7 +139,10 @@ impl RepoExecution for BuildRepo {
     else {
       unreachable!()
     };
-    State.resolve(req, (user, update)).await?;
+    req
+      .resolve(&ExecuteArgs { user, update })
+      .await
+      .map_err(|e| e.error)?;
     Ok(())
   }
 }
@@ -196,21 +211,22 @@ fn stack_locks() -> &'static ListenerLockCache {
 }
 
 pub trait StackExecution {
-  async fn resolve(stack: Stack) -> anyhow::Result<()>;
+  async fn resolve(stack: Stack) -> serror::Result<()>;
 }
 
 impl StackExecution for RefreshStackCache {
-  async fn resolve(stack: Stack) -> anyhow::Result<()> {
-    let user = git_webhook_user().to_owned();
-    State
-      .resolve(RefreshStackCache { stack: stack.id }, user)
+  async fn resolve(stack: Stack) -> serror::Result<()> {
+    RefreshStackCache { stack: stack.id }
+      .resolve(&WriteArgs {
+        user: git_webhook_user().to_owned(),
+      })
       .await?;
     Ok(())
   }
 }
 
 impl StackExecution for DeployStack {
-  async fn resolve(stack: Stack) -> anyhow::Result<()> {
+  async fn resolve(stack: Stack) -> serror::Result<()> {
     let user = git_webhook_user().to_owned();
     if stack.config.webhook_force_deploy {
       let req = ExecuteRequest::DeployStack(DeployStack {
@@ -222,7 +238,10 @@ impl StackExecution for DeployStack {
       let ExecuteRequest::DeployStack(req) = req else {
         unreachable!()
       };
-      State.resolve(req, (user, update)).await?;
+      req
+        .resolve(&ExecuteArgs { user, update })
+        .await
+        .map_err(|e| e.error)?;
     } else {
       let req =
         ExecuteRequest::DeployStackIfChanged(DeployStackIfChanged {
@@ -233,7 +252,10 @@ impl StackExecution for DeployStack {
       let ExecuteRequest::DeployStackIfChanged(req) = req else {
         unreachable!()
       };
-      State.resolve(req, (user, update)).await?;
+      req
+        .resolve(&ExecuteArgs { user, update })
+        .await
+        .map_err(|e| e.error)?;
     }
 
     Ok(())
@@ -282,7 +304,7 @@ pub async fn handle_stack_webhook_inner<
 
   B::verify_branch(&body, &stack.config.branch)?;
 
-  E::resolve(stack).await
+  E::resolve(stack).await.map_err(|e| e.error)
 }
 
 // ======
@@ -306,10 +328,12 @@ pub trait SyncExecution {
 
 impl SyncExecution for RefreshResourceSyncPending {
   async fn resolve(sync: ResourceSync) -> anyhow::Result<()> {
-    let user = git_webhook_user().to_owned();
-    State
-      .resolve(RefreshResourceSyncPending { sync: sync.id }, user)
-      .await?;
+    RefreshResourceSyncPending { sync: sync.id }
+      .resolve(&WriteArgs {
+        user: git_webhook_user().to_owned(),
+      })
+      .await
+      .map_err(|e| e.error)?;
     Ok(())
   }
 }
@@ -326,7 +350,10 @@ impl SyncExecution for RunSync {
     let ExecuteRequest::RunSync(req) = req else {
       unreachable!()
     };
-    State.resolve(req, (user, update)).await?;
+    req
+      .resolve(&ExecuteArgs { user, update })
+      .await
+      .map_err(|e| e.error)?;
     Ok(())
   }
 }
@@ -422,7 +449,10 @@ pub async fn handle_procedure_webhook<B: super::VerifyBranch>(
   let ExecuteRequest::RunProcedure(req) = req else {
     unreachable!()
   };
-  State.resolve(req, (user, update)).await?;
+  req
+    .resolve(&ExecuteArgs { user, update })
+    .await
+    .map_err(|e| e.error)?;
   Ok(())
 }
 
@@ -467,6 +497,9 @@ pub async fn handle_action_webhook<B: super::VerifyBranch>(
   let ExecuteRequest::RunAction(req) = req else {
     unreachable!()
   };
-  State.resolve(req, (user, update)).await?;
+  req
+    .resolve(&ExecuteArgs { user, update })
+    .await
+    .map_err(|e| e.error)?;
   Ok(())
 }

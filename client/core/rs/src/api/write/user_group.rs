@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -10,10 +10,11 @@ use super::KomodoWriteRequest;
 /// **Admin only.** Create a user group. Response: [UserGroup]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
+#[error(serror::Error)]
 pub struct CreateUserGroup {
   /// The name to assign to the new UserGroup
   pub name: String,
@@ -24,10 +25,11 @@ pub struct CreateUserGroup {
 /// **Admin only.** Rename a user group. Response: [UserGroup]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
+#[error(serror::Error)]
 pub struct RenameUserGroup {
   /// The id of the UserGroup
   pub id: String,
@@ -40,10 +42,11 @@ pub struct RenameUserGroup {
 /// **Admin only.** Delete a user group. Response: [UserGroup]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
+#[error(serror::Error)]
 pub struct DeleteUserGroup {
   /// The id of the UserGroup
   pub id: String,
@@ -54,10 +57,11 @@ pub struct DeleteUserGroup {
 /// **Admin only.** Add a user to a user group. Response: [UserGroup]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
+#[error(serror::Error)]
 pub struct AddUserToUserGroup {
   /// The name or id of UserGroup that user should be added to.
   pub user_group: String,
@@ -70,10 +74,11 @@ pub struct AddUserToUserGroup {
 /// **Admin only.** Remove a user from a user group. Response: [UserGroup]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
+#[error(serror::Error)]
 pub struct RemoveUserFromUserGroup {
   /// The name or id of UserGroup that user should be removed from.
   pub user_group: String,
@@ -87,10 +92,11 @@ pub struct RemoveUserFromUserGroup {
 /// Response: [UserGroup]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
+#[error(serror::Error)]
 pub struct SetUsersInUserGroup {
   /// Id or name.
   pub user_group: String,

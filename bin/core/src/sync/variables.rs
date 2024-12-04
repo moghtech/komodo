@@ -3,10 +3,7 @@ use std::collections::HashMap;
 use anyhow::Context;
 use formatting::{bold, colored, muted, Color};
 use komodo_client::{
-  api::write::{
-    CreateVariable, DeleteVariable, UpdateVariableDescription,
-    UpdateVariableIsSecret, UpdateVariableValue,
-  },
+  api::write::*,
   entities::{
     sync::DiffData, update::Log, user::sync_user, variable::Variable,
   },
@@ -14,7 +11,7 @@ use komodo_client::{
 use mungos::find::find_collect;
 use resolver_api::Resolve;
 
-use crate::state::{db_client, State};
+use crate::{api::write::WriteArgs, state::db_client};
 
 use super::toml::TOML_PRETTY_OPTIONS;
 
@@ -154,23 +151,23 @@ pub async fn run_updates(
   let mut log = String::from("running updates on Variables");
 
   for variable in to_create {
-    if let Err(e) = State
-      .resolve(
-        CreateVariable {
-          name: variable.name.clone(),
-          value: variable.value,
-          description: variable.description,
-          is_secret: variable.is_secret,
-        },
-        sync_user().to_owned(),
-      )
-      .await
+    if let Err(e) = (CreateVariable {
+      name: variable.name.clone(),
+      value: variable.value,
+      description: variable.description,
+      is_secret: variable.is_secret,
+    })
+    .resolve(&WriteArgs {
+      user: sync_user().to_owned(),
+    })
+    .await
     {
       has_error = true;
       log.push_str(&format!(
-        "\n{}: failed to create variable '{}' | {e:#}",
+        "\n{}: failed to create variable '{}' | {:#}",
         colored("ERROR", Color::Red),
-        bold(&variable.name)
+        bold(&variable.name),
+        e.error
       ));
     } else {
       log.push_str(&format!(
@@ -190,21 +187,21 @@ pub async fn run_updates(
   } in to_update
   {
     if update_value {
-      if let Err(e) = State
-        .resolve(
-          UpdateVariableValue {
-            name: variable.name.clone(),
-            value: variable.value,
-          },
-          sync_user().to_owned(),
-        )
-        .await
+      if let Err(e) = (UpdateVariableValue {
+        name: variable.name.clone(),
+        value: variable.value,
+      })
+      .resolve(&WriteArgs {
+        user: sync_user().to_owned(),
+      })
+      .await
       {
         has_error = true;
         log.push_str(&format!(
-          "\n{}: failed to update variable value for '{}' | {e:#}",
+          "\n{}: failed to update variable value for '{}' | {:#}",
           colored("ERROR", Color::Red),
-          bold(&variable.name)
+          bold(&variable.name),
+          e.error
         ))
       } else {
         log.push_str(&format!(
@@ -216,21 +213,21 @@ pub async fn run_updates(
       };
     }
     if update_description {
-      if let Err(e) = State
-        .resolve(
-          UpdateVariableDescription {
-            name: variable.name.clone(),
-            description: variable.description,
-          },
-          sync_user().to_owned(),
-        )
-        .await
+      if let Err(e) = (UpdateVariableDescription {
+        name: variable.name.clone(),
+        description: variable.description,
+      })
+      .resolve(&WriteArgs {
+        user: sync_user().to_owned(),
+      })
+      .await
       {
         has_error = true;
         log.push_str(&format!(
-          "\n{}: failed to update variable description for '{}' | {e:#}",
+          "\n{}: failed to update variable description for '{}' | {:#}",
           colored("ERROR", Color::Red),
-          bold(&variable.name)
+          bold(&variable.name),
+          e.error
         ))
       } else {
         log.push_str(&format!(
@@ -242,21 +239,21 @@ pub async fn run_updates(
       };
     }
     if update_is_secret {
-      if let Err(e) = State
-        .resolve(
-          UpdateVariableIsSecret {
-            name: variable.name.clone(),
-            is_secret: variable.is_secret,
-          },
-          sync_user().to_owned(),
-        )
-        .await
+      if let Err(e) = (UpdateVariableIsSecret {
+        name: variable.name.clone(),
+        is_secret: variable.is_secret,
+      })
+      .resolve(&WriteArgs {
+        user: sync_user().to_owned(),
+      })
+      .await
       {
         has_error = true;
         log.push_str(&format!(
-          "\n{}: failed to update variable is secret for '{}' | {e:#}",
+          "\n{}: failed to update variable is secret for '{}' | {:#}",
           colored("ERROR", Color::Red),
-          bold(&variable.name)
+          bold(&variable.name),
+          e.error,
         ))
       } else {
         log.push_str(&format!(
@@ -270,20 +267,20 @@ pub async fn run_updates(
   }
 
   for variable in to_delete {
-    if let Err(e) = State
-      .resolve(
-        DeleteVariable {
-          name: variable.clone(),
-        },
-        sync_user().to_owned(),
-      )
-      .await
+    if let Err(e) = (DeleteVariable {
+      name: variable.clone(),
+    })
+    .resolve(&WriteArgs {
+      user: sync_user().to_owned(),
+    })
+    .await
     {
       has_error = true;
       log.push_str(&format!(
-        "\n{}: failed to delete variable '{}' | {e:#}",
+        "\n{}: failed to delete variable '{}' | {:#}",
         colored("ERROR", Color::Red),
-        bold(&variable)
+        bold(&variable),
+        e.error
       ))
     } else {
       log.push_str(&format!(

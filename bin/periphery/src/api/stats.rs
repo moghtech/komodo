@@ -1,59 +1,48 @@
-use anyhow::Context;
+use komodo_client::entities::stats::{
+  SystemInformation, SystemProcess, SystemStats,
+};
 use periphery_client::api::stats::{
   GetSystemInformation, GetSystemProcesses, GetSystemStats,
 };
-use resolver_api::ResolveToString;
+use resolver_api::Resolve;
 
-use crate::{stats::stats_client, State};
+use crate::stats::stats_client;
 
-impl ResolveToString<GetSystemInformation> for State {
+impl Resolve<super::Args> for GetSystemInformation {
   #[instrument(
     name = "GetSystemInformation",
     level = "debug",
-    skip(self)
+    skip_all
   )]
-  async fn resolve_to_string(
-    &self,
-    _: GetSystemInformation,
-    _: (),
-  ) -> anyhow::Result<String> {
-    let info = &stats_client().read().await.info;
-    serde_json::to_string(info)
-      .context("failed to serialize response to string")
+  async fn resolve(
+    self,
+    _: &super::Args,
+  ) -> serror::Result<SystemInformation> {
+    Ok(stats_client().read().await.info.clone())
   }
 }
 
 //
 
-impl ResolveToString<GetSystemStats> for State {
-  #[instrument(name = "GetSystemStats", level = "debug", skip(self))]
-  async fn resolve_to_string(
-    &self,
-    _: GetSystemStats,
-    _: (),
-  ) -> anyhow::Result<String> {
-    let stats = &stats_client().read().await.stats;
-    serde_json::to_string(stats)
-      .context("failed to serialize response to string")
+impl Resolve<super::Args> for GetSystemStats {
+  #[instrument(name = "GetSystemStats", level = "debug", skip_all)]
+  async fn resolve(
+    self,
+    _: &super::Args,
+  ) -> serror::Result<SystemStats> {
+    Ok(stats_client().read().await.stats.clone())
   }
 }
 
 //
 
-impl ResolveToString<GetSystemProcesses> for State {
-  #[instrument(
-    name = "GetSystemProcesses",
-    level = "debug",
-    skip(self)
-  )]
-  async fn resolve_to_string(
-    &self,
-    _: GetSystemProcesses,
-    _: (),
-  ) -> anyhow::Result<String> {
-    let stats = &stats_client().read().await.get_processes();
-    serde_json::to_string(&stats)
-      .context("failed to serialize response to string")
+impl Resolve<super::Args> for GetSystemProcesses {
+  #[instrument(name = "GetSystemProcesses", level = "debug")]
+  async fn resolve(
+    self,
+    _: &super::Args,
+  ) -> serror::Result<Vec<SystemProcess>> {
+    Ok(stats_client().read().await.get_processes())
   }
 }
 

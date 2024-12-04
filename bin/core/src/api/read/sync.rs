@@ -8,7 +8,6 @@ use komodo_client::{
       ResourceSync, ResourceSyncActionState, ResourceSyncListItem,
       ResourceSyncState,
     },
-    user::User,
   },
 };
 use resolver_api::Resolve;
@@ -17,69 +16,73 @@ use crate::{
   config::core_config,
   helpers::query::get_all_tags,
   resource,
-  state::{
-    action_states, github_client, resource_sync_state_cache, State,
-  },
+  state::{action_states, github_client, resource_sync_state_cache},
 };
 
-impl Resolve<GetResourceSync, User> for State {
+use super::ReadArgs;
+
+impl Resolve<ReadArgs> for GetResourceSync {
   async fn resolve(
-    &self,
-    GetResourceSync { sync }: GetResourceSync,
-    user: User,
-  ) -> anyhow::Result<ResourceSync> {
-    resource::get_check_permissions::<ResourceSync>(
-      &sync,
-      &user,
-      PermissionLevel::Read,
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ResourceSync> {
+    Ok(
+      resource::get_check_permissions::<ResourceSync>(
+        &self.sync,
+        &user,
+        PermissionLevel::Read,
+      )
+      .await?,
     )
-    .await
   }
 }
 
-impl Resolve<ListResourceSyncs, User> for State {
+impl Resolve<ReadArgs> for ListResourceSyncs {
   async fn resolve(
-    &self,
-    ListResourceSyncs { query }: ListResourceSyncs,
-    user: User,
-  ) -> anyhow::Result<Vec<ResourceSyncListItem>> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Vec<ResourceSyncListItem>> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    resource::list_for_user::<ResourceSync>(query, &user, &all_tags)
-      .await
+    Ok(
+      resource::list_for_user::<ResourceSync>(
+        self.query, &user, &all_tags,
+      )
+      .await?,
+    )
   }
 }
 
-impl Resolve<ListFullResourceSyncs, User> for State {
+impl Resolve<ReadArgs> for ListFullResourceSyncs {
   async fn resolve(
-    &self,
-    ListFullResourceSyncs { query }: ListFullResourceSyncs,
-    user: User,
-  ) -> anyhow::Result<ListFullResourceSyncsResponse> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListFullResourceSyncsResponse> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    resource::list_full_for_user::<ResourceSync>(
-      query, &user, &all_tags,
+    Ok(
+      resource::list_full_for_user::<ResourceSync>(
+        self.query, &user, &all_tags,
+      )
+      .await?,
     )
-    .await
   }
 }
 
-impl Resolve<GetResourceSyncActionState, User> for State {
+impl Resolve<ReadArgs> for GetResourceSyncActionState {
   async fn resolve(
-    &self,
-    GetResourceSyncActionState { sync }: GetResourceSyncActionState,
-    user: User,
-  ) -> anyhow::Result<ResourceSyncActionState> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ResourceSyncActionState> {
     let sync = resource::get_check_permissions::<ResourceSync>(
-      &sync,
-      &user,
+      &self.sync,
+      user,
       PermissionLevel::Read,
     )
     .await?;
@@ -93,16 +96,15 @@ impl Resolve<GetResourceSyncActionState, User> for State {
   }
 }
 
-impl Resolve<GetResourceSyncsSummary, User> for State {
+impl Resolve<ReadArgs> for GetResourceSyncsSummary {
   async fn resolve(
-    &self,
-    GetResourceSyncsSummary {}: GetResourceSyncsSummary,
-    user: User,
-  ) -> anyhow::Result<GetResourceSyncsSummaryResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetResourceSyncsSummaryResponse> {
     let resource_syncs =
       resource::list_full_for_user::<ResourceSync>(
         Default::default(),
-        &user,
+        user,
         &[],
       )
       .await
@@ -159,12 +161,11 @@ impl Resolve<GetResourceSyncsSummary, User> for State {
   }
 }
 
-impl Resolve<GetSyncWebhooksEnabled, User> for State {
+impl Resolve<ReadArgs> for GetSyncWebhooksEnabled {
   async fn resolve(
-    &self,
-    GetSyncWebhooksEnabled { sync }: GetSyncWebhooksEnabled,
-    user: User,
-  ) -> anyhow::Result<GetSyncWebhooksEnabledResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetSyncWebhooksEnabledResponse> {
     let Some(github) = github_client() else {
       return Ok(GetSyncWebhooksEnabledResponse {
         managed: false,
@@ -174,8 +175,8 @@ impl Resolve<GetSyncWebhooksEnabled, User> for State {
     };
 
     let sync = resource::get_check_permissions::<ResourceSync>(
-      &sync,
-      &user,
+      &self.sync,
+      user,
       PermissionLevel::Read,
     )
     .await?;

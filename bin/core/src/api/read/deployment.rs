@@ -12,7 +12,6 @@ use komodo_client::{
     permission::PermissionLevel,
     server::Server,
     update::Log,
-    user::User,
   },
 };
 use periphery_client::api;
@@ -21,67 +20,73 @@ use resolver_api::Resolve;
 use crate::{
   helpers::{periphery_client, query::get_all_tags},
   resource,
-  state::{action_states, deployment_status_cache, State},
+  state::{action_states, deployment_status_cache},
 };
 
-impl Resolve<GetDeployment, User> for State {
+use super::ReadArgs;
+
+impl Resolve<ReadArgs> for GetDeployment {
   async fn resolve(
-    &self,
-    GetDeployment { deployment }: GetDeployment,
-    user: User,
-  ) -> anyhow::Result<Deployment> {
-    resource::get_check_permissions::<Deployment>(
-      &deployment,
-      &user,
-      PermissionLevel::Read,
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Deployment> {
+    Ok(
+      resource::get_check_permissions::<Deployment>(
+        &self.deployment,
+        user,
+        PermissionLevel::Read,
+      )
+      .await?,
     )
-    .await
   }
 }
 
-impl Resolve<ListDeployments, User> for State {
+impl Resolve<ReadArgs> for ListDeployments {
   async fn resolve(
-    &self,
-    ListDeployments { query }: ListDeployments,
-    user: User,
-  ) -> anyhow::Result<Vec<DeploymentListItem>> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Vec<DeploymentListItem>> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    resource::list_for_user::<Deployment>(query, &user, &all_tags)
-      .await
+    Ok(
+      resource::list_for_user::<Deployment>(
+        self.query, user, &all_tags,
+      )
+      .await?,
+    )
   }
 }
 
-impl Resolve<ListFullDeployments, User> for State {
+impl Resolve<ReadArgs> for ListFullDeployments {
   async fn resolve(
-    &self,
-    ListFullDeployments { query }: ListFullDeployments,
-    user: User,
-  ) -> anyhow::Result<ListFullDeploymentsResponse> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListFullDeploymentsResponse> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    resource::list_full_for_user::<Deployment>(
-      query, &user, &all_tags,
+    Ok(
+      resource::list_full_for_user::<Deployment>(
+        self.query, user, &all_tags,
+      )
+      .await?,
     )
-    .await
   }
 }
 
-impl Resolve<GetDeploymentContainer, User> for State {
+impl Resolve<ReadArgs> for GetDeploymentContainer {
   async fn resolve(
-    &self,
-    GetDeploymentContainer { deployment }: GetDeploymentContainer,
-    user: User,
-  ) -> anyhow::Result<GetDeploymentContainerResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetDeploymentContainerResponse> {
     let deployment = resource::get_check_permissions::<Deployment>(
-      &deployment,
-      &user,
+      &self.deployment,
+      user,
       PermissionLevel::Read,
     )
     .await?;
@@ -99,23 +104,23 @@ impl Resolve<GetDeploymentContainer, User> for State {
 
 const MAX_LOG_LENGTH: u64 = 5000;
 
-impl Resolve<GetDeploymentLog, User> for State {
+impl Resolve<ReadArgs> for GetDeploymentLog {
   async fn resolve(
-    &self,
-    GetDeploymentLog {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Log> {
+    let GetDeploymentLog {
       deployment,
       tail,
       timestamps,
-    }: GetDeploymentLog,
-    user: User,
-  ) -> anyhow::Result<Log> {
+    } = self;
     let Deployment {
       name,
       config: DeploymentConfig { server_id, .. },
       ..
     } = resource::get_check_permissions::<Deployment>(
       &deployment,
-      &user,
+      user,
       PermissionLevel::Read,
     )
     .await?;
@@ -123,36 +128,37 @@ impl Resolve<GetDeploymentLog, User> for State {
       return Ok(Log::default());
     }
     let server = resource::get::<Server>(&server_id).await?;
-    periphery_client(&server)?
+    let res = periphery_client(&server)?
       .request(api::container::GetContainerLog {
         name,
         tail: cmp::min(tail, MAX_LOG_LENGTH),
         timestamps,
       })
       .await
-      .context("failed at call to periphery")
+      .context("failed at call to periphery")?;
+    Ok(res)
   }
 }
 
-impl Resolve<SearchDeploymentLog, User> for State {
+impl Resolve<ReadArgs> for SearchDeploymentLog {
   async fn resolve(
-    &self,
-    SearchDeploymentLog {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Log> {
+    let SearchDeploymentLog {
       deployment,
       terms,
       combinator,
       invert,
       timestamps,
-    }: SearchDeploymentLog,
-    user: User,
-  ) -> anyhow::Result<Log> {
+    } = self;
     let Deployment {
       name,
       config: DeploymentConfig { server_id, .. },
       ..
     } = resource::get_check_permissions::<Deployment>(
       &deployment,
-      &user,
+      user,
       PermissionLevel::Read,
     )
     .await?;
@@ -160,7 +166,7 @@ impl Resolve<SearchDeploymentLog, User> for State {
       return Ok(Log::default());
     }
     let server = resource::get::<Server>(&server_id).await?;
-    periphery_client(&server)?
+    let res = periphery_client(&server)?
       .request(api::container::GetContainerLogSearch {
         name,
         terms,
@@ -169,46 +175,48 @@ impl Resolve<SearchDeploymentLog, User> for State {
         timestamps,
       })
       .await
-      .context("failed at call to periphery")
+      .context("failed at call to periphery")?;
+    Ok(res)
   }
 }
 
-impl Resolve<GetDeploymentStats, User> for State {
+impl Resolve<ReadArgs> for GetDeploymentStats {
   async fn resolve(
-    &self,
-    GetDeploymentStats { deployment }: GetDeploymentStats,
-    user: User,
-  ) -> anyhow::Result<ContainerStats> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ContainerStats> {
     let Deployment {
       name,
       config: DeploymentConfig { server_id, .. },
       ..
     } = resource::get_check_permissions::<Deployment>(
-      &deployment,
-      &user,
+      &self.deployment,
+      user,
       PermissionLevel::Read,
     )
     .await?;
     if server_id.is_empty() {
-      return Err(anyhow!("deployment has no server attached"));
+      return Err(
+        anyhow!("deployment has no server attached").into(),
+      );
     }
     let server = resource::get::<Server>(&server_id).await?;
-    periphery_client(&server)?
+    let res = periphery_client(&server)?
       .request(api::container::GetContainerStats { name })
       .await
-      .context("failed to get stats from periphery")
+      .context("failed to get stats from periphery")?;
+    Ok(res)
   }
 }
 
-impl Resolve<GetDeploymentActionState, User> for State {
+impl Resolve<ReadArgs> for GetDeploymentActionState {
   async fn resolve(
-    &self,
-    GetDeploymentActionState { deployment }: GetDeploymentActionState,
-    user: User,
-  ) -> anyhow::Result<DeploymentActionState> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<DeploymentActionState> {
     let deployment = resource::get_check_permissions::<Deployment>(
-      &deployment,
-      &user,
+      &self.deployment,
+      user,
       PermissionLevel::Read,
     )
     .await?;
@@ -222,15 +230,14 @@ impl Resolve<GetDeploymentActionState, User> for State {
   }
 }
 
-impl Resolve<GetDeploymentsSummary, User> for State {
+impl Resolve<ReadArgs> for GetDeploymentsSummary {
   async fn resolve(
-    &self,
-    GetDeploymentsSummary {}: GetDeploymentsSummary,
-    user: User,
-  ) -> anyhow::Result<GetDeploymentsSummaryResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetDeploymentsSummaryResponse> {
     let deployments = resource::list_full_for_user::<Deployment>(
       Default::default(),
-      &user,
+      user,
       &[],
     )
     .await
@@ -263,19 +270,18 @@ impl Resolve<GetDeploymentsSummary, User> for State {
   }
 }
 
-impl Resolve<ListCommonDeploymentExtraArgs, User> for State {
+impl Resolve<ReadArgs> for ListCommonDeploymentExtraArgs {
   async fn resolve(
-    &self,
-    ListCommonDeploymentExtraArgs { query }: ListCommonDeploymentExtraArgs,
-    user: User,
-  ) -> anyhow::Result<ListCommonDeploymentExtraArgsResponse> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListCommonDeploymentExtraArgsResponse> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
     let deployments = resource::list_full_for_user::<Deployment>(
-      query, &user, &all_tags,
+      self.query, &user, &all_tags,
     )
     .await
     .context("failed to get resources matching query")?;

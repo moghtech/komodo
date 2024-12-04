@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::{derive::Request, HasResponse};
+use resolver_api::{HasResponse, Resolve};
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -22,10 +22,11 @@ pub struct JwtResponse {
 /// Response: [GetLoginOptionsResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoAuthRequest)]
 #[response(GetLoginOptionsResponse)]
+#[error(serror::Error)]
 pub struct GetLoginOptions {}
 
 /// The response for [GetLoginOptions].
@@ -53,10 +54,11 @@ pub struct GetLoginOptionsResponse {
 /// Note. This method is only available if the core api has `local_auth` enabled.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoAuthRequest)]
 #[response(CreateLocalUserResponse)]
+#[error(serror::Error)]
 pub struct CreateLocalUser {
   /// The username for the new user.
   pub username: String,
@@ -77,10 +79,11 @@ pub type CreateLocalUserResponse = JwtResponse;
 /// Note. This method is only available if the core api has `local_auth` enabled.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoAuthRequest)]
 #[response(LoginLocalUserResponse)]
+#[error(serror::Error)]
 pub struct LoginLocalUser {
   /// The user's username
   pub username: String,
@@ -99,10 +102,11 @@ pub type LoginLocalUserResponse = JwtResponse;
 /// Response: [ExchangeForJwtResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoAuthRequest)]
 #[response(ExchangeForJwtResponse)]
+#[error(serror::Error)]
 pub struct ExchangeForJwt {
   /// The 'exchange token'
   pub token: String,
@@ -118,10 +122,11 @@ pub type ExchangeForJwtResponse = JwtResponse;
 /// Response: [User].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoAuthRequest)]
 #[response(GetUserResponse)]
+#[error(serror::Error)]
 pub struct GetUser {}
 
 #[typeshare]

@@ -36,9 +36,6 @@ export type ReadResponses = {
   GetUserGroup: Types.GetUserGroupResponse;
   ListUserGroups: Types.ListUserGroupsResponse;
 
-  // ==== SEARCH ====
-  FindResources: Types.FindResourcesResponse;
-
   // ==== PROCEDURE ====
   GetProceduresSummary: Types.GetProceduresSummaryResponse;
   GetProcedure: Types.GetProcedureResponse;

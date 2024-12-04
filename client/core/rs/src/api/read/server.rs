@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -29,10 +29,11 @@ use super::KomodoReadRequest;
 /// Get a specific server. Response: [Server].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(Server)]
+#[error(serror::Error)]
 pub struct GetServer {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -47,10 +48,11 @@ pub type GetServerResponse = Server;
 /// List servers matching optional query. Response: [ListServersResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListServersResponse)]
+#[error(serror::Error)]
 pub struct ListServers {
   /// optional structured query to filter servers.
   #[serde(default)]
@@ -65,10 +67,11 @@ pub type ListServersResponse = Vec<ServerListItem>;
 /// List servers matching optional query. Response: [ListFullServersResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullServersResponse)]
+#[error(serror::Error)]
 pub struct ListFullServers {
   /// optional structured query to filter servers.
   #[serde(default)]
@@ -83,10 +86,11 @@ pub type ListFullServersResponse = Vec<Server>;
 /// Get the state of the target server. Response: [GetServerStateResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetServerStateResponse)]
+#[error(serror::Error)]
 pub struct GetServerState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -106,10 +110,11 @@ pub struct GetServerStateResponse {
 /// Get current action state for the servers. Response: [ServerActionState].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ServerActionState)]
+#[error(serror::Error)]
 pub struct GetServerActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -125,10 +130,11 @@ pub type GetServerActionStateResponse = ServerActionState;
 /// Response: [GetPeripheryVersionResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetPeripheryVersionResponse)]
+#[error(serror::Error)]
 pub struct GetPeripheryVersion {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -148,10 +154,11 @@ pub struct GetPeripheryVersionResponse {
 /// List the docker networks on the server. Response: [ListDockerNetworksResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerNetworksResponse)]
+#[error(serror::Error)]
 pub struct ListDockerNetworks {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -166,10 +173,11 @@ pub type ListDockerNetworksResponse = Vec<NetworkListItem>;
 /// Inspect a docker network on the server. Response: [InspectDockerNetworkResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDockerNetworkResponse)]
+#[error(serror::Error)]
 pub struct InspectDockerNetwork {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -187,10 +195,11 @@ pub type InspectDockerNetworkResponse = Network;
 /// Response: [ListDockerImagesResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerImagesResponse)]
+#[error(serror::Error)]
 pub struct ListDockerImages {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -205,10 +214,11 @@ pub type ListDockerImagesResponse = Vec<ImageListItem>;
 /// Inspect a docker image on the server. Response: [Image].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDockerImageResponse)]
+#[error(serror::Error)]
 pub struct InspectDockerImage {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -225,10 +235,11 @@ pub type InspectDockerImageResponse = Image;
 /// Get image history from the server. Response: [ListDockerImageHistoryResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerImageHistoryResponse)]
+#[error(serror::Error)]
 pub struct ListDockerImageHistory {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -247,10 +258,11 @@ pub type ListDockerImageHistoryResponse =
 /// Response: [ListDockerContainersResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerContainersResponse)]
+#[error(serror::Error)]
 pub struct ListDockerContainers {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -266,10 +278,11 @@ pub type ListDockerContainersResponse = Vec<ContainerListItem>;
 /// Response: [ListDockerContainersResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListAllDockerContainersResponse)]
+#[error(serror::Error)]
 pub struct ListAllDockerContainers {
   /// Filter by server id or name.
   #[serde(default)]
@@ -284,10 +297,11 @@ pub type ListAllDockerContainersResponse = Vec<ContainerListItem>;
 /// Inspect a docker container on the server. Response: [Container].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDockerContainerResponse)]
+#[error(serror::Error)]
 pub struct InspectDockerContainer {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -307,10 +321,11 @@ pub type InspectDockerContainerResponse = Container;
 /// Note. This call will hit the underlying server directly for most up to date log.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetContainerLogResponse)]
+#[error(serror::Error)]
 pub struct GetContainerLog {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -342,10 +357,11 @@ pub type GetContainerLogResponse = Log;
 /// Note. This call will hit the underlying server directly for most up to date log.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(SearchContainerLogResponse)]
+#[error(serror::Error)]
 pub struct SearchContainerLog {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -376,10 +392,11 @@ pub type SearchContainerLogResponse = Log;
 /// Find the attached resource for a container. Either Deployment or Stack. Response: [GetResourceMatchingContainerResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetResourceMatchingContainerResponse)]
+#[error(serror::Error)]
 pub struct GetResourceMatchingContainer {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -401,10 +418,11 @@ pub struct GetResourceMatchingContainerResponse {
 /// Response: [ListDockerVolumesResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerVolumesResponse)]
+#[error(serror::Error)]
 pub struct ListDockerVolumes {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -419,10 +437,11 @@ pub type ListDockerVolumesResponse = Vec<VolumeListItem>;
 /// Inspect a docker volume on the server. Response: [Volume].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDockerVolumeResponse)]
+#[error(serror::Error)]
 pub struct InspectDockerVolume {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -440,10 +459,11 @@ pub type InspectDockerVolumeResponse = Volume;
 /// Response: [ListComposeProjectsResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListComposeProjectsResponse)]
+#[error(serror::Error)]
 pub struct ListComposeProjects {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -459,10 +479,11 @@ pub type ListComposeProjectsResponse = Vec<ComposeProject>;
 /// Response: [SystemInformation].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetSystemInformationResponse)]
+#[error(serror::Error)]
 pub struct GetSystemInformation {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -481,10 +502,11 @@ pub type GetSystemInformationResponse = SystemInformation;
 /// to keep it up to date.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetSystemStatsResponse)]
+#[error(serror::Error)]
 pub struct GetSystemStats {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -504,10 +526,11 @@ pub type GetSystemStatsResponse = SystemStats;
 /// to keep it up to date.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSystemProcessesResponse)]
+#[error(serror::Error)]
 pub struct ListSystemProcesses {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -523,10 +546,11 @@ pub type ListSystemProcessesResponse = Vec<SystemProcess>;
 /// Response: [GetHistoricalServerStatsResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetHistoricalServerStatsResponse)]
+#[error(serror::Error)]
 pub struct GetHistoricalServerStats {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -555,10 +579,11 @@ pub struct GetHistoricalServerStatsResponse {
 /// Response: [GetServersSummaryResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetServersSummaryResponse)]
+#[error(serror::Error)]
 pub struct GetServersSummary {}
 
 /// Response for [GetServersSummary].

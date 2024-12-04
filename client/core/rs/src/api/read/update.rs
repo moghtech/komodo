@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -14,10 +14,11 @@ use super::KomodoReadRequest;
 /// Response: [Update].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetUpdateResponse)]
+#[error(serror::Error)]
 pub struct GetUpdate {
   /// The update id.
   pub id: String,
@@ -32,10 +33,11 @@ pub type GetUpdateResponse = Update;
 /// More recent updates will be returned first.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListUpdatesResponse)]
+#[error(serror::Error)]
 pub struct ListUpdates {
   /// An optional mongo query to filter the updates.
   pub query: Option<MongoDocument>,

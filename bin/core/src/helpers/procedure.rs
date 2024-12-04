@@ -21,9 +21,12 @@ use resolver_api::Resolve;
 use tokio::sync::Mutex;
 
 use crate::{
-  api::execute::ExecuteRequest,
+  api::{
+    execute::{ExecuteArgs, ExecuteRequest},
+    write::WriteArgs,
+  },
   resource::{list_full_for_user_using_pattern, KomodoResource},
-  state::{db_client, State},
+  state::db_client,
 };
 
 use super::update::{init_execution_update, update_update};
@@ -227,9 +230,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at RunProcedure"),
         &update_id,
       )
@@ -249,9 +253,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at RunAction"),
         &update_id,
       )
@@ -271,9 +276,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at RunBuild"),
         &update_id,
       )
@@ -293,9 +299,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at CancelBuild"),
         &update_id,
       )
@@ -309,9 +316,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at Deploy"),
         &update_id,
       )
@@ -331,9 +339,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at PullDeployment"),
         &update_id,
       )
@@ -347,9 +356,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at StartDeployment"),
         &update_id,
       )
@@ -363,9 +373,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at RestartDeployment"),
         &update_id,
       )
@@ -379,9 +390,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at PauseDeployment"),
         &update_id,
       )
@@ -395,9 +407,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at UnpauseDeployment"),
         &update_id,
       )
@@ -411,9 +424,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at StopDeployment"),
         &update_id,
       )
@@ -427,9 +441,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at RemoveDeployment"),
         &update_id,
       )
@@ -449,9 +464,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at CloneRepo"),
         &update_id,
       )
@@ -471,9 +487,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at PullRepo"),
         &update_id,
       )
@@ -493,9 +510,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at BuildRepo"),
         &update_id,
       )
@@ -515,9 +533,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at CancelRepoBuild"),
         &update_id,
       )
@@ -531,9 +550,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at StartContainer"),
         &update_id,
       )
@@ -547,9 +567,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at RestartContainer"),
         &update_id,
       )
@@ -563,9 +584,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at PauseContainer"),
         &update_id,
       )
@@ -579,9 +601,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at UnpauseContainer"),
         &update_id,
       )
@@ -595,9 +618,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at StopContainer"),
         &update_id,
       )
@@ -611,9 +635,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at RemoveContainer"),
         &update_id,
       )
@@ -627,9 +652,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at StartAllContainers"),
         &update_id,
       )
@@ -643,9 +669,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at RestartAllContainers"),
         &update_id,
       )
@@ -659,9 +686,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at PauseAllContainers"),
         &update_id,
       )
@@ -675,9 +703,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at UnpauseAllContainers"),
         &update_id,
       )
@@ -691,9 +720,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at StopAllContainers"),
         &update_id,
       )
@@ -707,9 +737,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at PruneContainers"),
         &update_id,
       )
@@ -723,9 +754,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at DeleteNetwork"),
         &update_id,
       )
@@ -739,9 +771,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at PruneNetworks"),
         &update_id,
       )
@@ -755,9 +788,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at DeleteImage"),
         &update_id,
       )
@@ -771,9 +805,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at PruneImages"),
         &update_id,
       )
@@ -787,9 +822,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at DeleteVolume"),
         &update_id,
       )
@@ -803,9 +839,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at PruneVolumes"),
         &update_id,
       )
@@ -819,9 +856,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at PruneDockerBuilders"),
         &update_id,
       )
@@ -835,9 +873,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at PruneBuildx"),
         &update_id,
       )
@@ -851,9 +890,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at PruneSystem"),
         &update_id,
       )
@@ -867,18 +907,20 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at RunSync"),
         &update_id,
       )
       .await?
     }
     // Exception: This is a write operation.
-    Execution::CommitSync(req) => State
-      .resolve(req, user)
+    Execution::CommitSync(req) => req
+      .resolve(&WriteArgs { user })
       .await
+      .map_err(|e| e.error)
       .context("Failed at CommitSync")?,
     Execution::DeployStack(req) => {
       let req = ExecuteRequest::DeployStack(req);
@@ -888,9 +930,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at DeployStack"),
         &update_id,
       )
@@ -910,9 +953,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at DeployStackIfChanged"),
         &update_id,
       )
@@ -932,9 +976,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at PullStack"),
         &update_id,
       )
@@ -948,9 +993,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at StartStack"),
         &update_id,
       )
@@ -964,9 +1010,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at RestartStack"),
         &update_id,
       )
@@ -980,9 +1027,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at PauseStack"),
         &update_id,
       )
@@ -996,9 +1044,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at UnpauseStack"),
         &update_id,
       )
@@ -1012,9 +1061,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at StopStack"),
         &update_id,
       )
@@ -1028,9 +1078,10 @@ async fn execute_execution(
       };
       let update_id = update.id.clone();
       handle_resolve_result(
-        State
-          .resolve(req, (user, update))
+        req
+          .resolve(&ExecuteArgs { user, update })
           .await
+          .map_err(|e| e.error)
           .context("Failed at DestroyStack"),
         &update_id,
       )

@@ -11,34 +11,26 @@ use komodo_client::entities::{
 use periphery_client::api::image::*;
 use resolver_api::Resolve;
 
-use crate::{
-  docker::{docker_client, docker_login},
-  State,
-};
+use crate::docker::{docker_client, docker_login};
 
 //
 
-impl Resolve<InspectImage> for State {
-  #[instrument(name = "InspectImage", level = "debug", skip(self))]
-  async fn resolve(
-    &self,
-    InspectImage { name }: InspectImage,
-    _: (),
-  ) -> anyhow::Result<Image> {
-    docker_client().inspect_image(&name).await
+impl Resolve<super::Args> for InspectImage {
+  #[instrument(name = "InspectImage", level = "debug")]
+  async fn resolve(self, _: &super::Args) -> serror::Result<Image> {
+    Ok(docker_client().inspect_image(&self.name).await?)
   }
 }
 
 //
 
-impl Resolve<ImageHistory> for State {
-  #[instrument(name = "ImageHistory", level = "debug", skip(self))]
+impl Resolve<super::Args> for ImageHistory {
+  #[instrument(name = "ImageHistory", level = "debug")]
   async fn resolve(
-    &self,
-    ImageHistory { name }: ImageHistory,
-    _: (),
-  ) -> anyhow::Result<Vec<ImageHistoryResponseItem>> {
-    docker_client().image_history(&name).await
+    self,
+    _: &super::Args,
+  ) -> serror::Result<Vec<ImageHistoryResponseItem>> {
+    Ok(docker_client().image_history(&self.name).await?)
   }
 }
 
@@ -53,17 +45,14 @@ fn pull_cache() -> &'static TimeoutCache<String, Log> {
   PULL_CACHE.get_or_init(Default::default)
 }
 
-impl Resolve<PullImage> for State {
-  #[instrument(name = "PullImage", skip(self))]
-  async fn resolve(
-    &self,
-    PullImage {
+impl Resolve<super::Args> for PullImage {
+  #[instrument(name = "PullImage", skip_all, fields(name = &self.name))]
+  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
+    let PullImage {
       name,
       account,
       token,
-    }: PullImage,
-    _: (),
-  ) -> anyhow::Result<Log> {
+    } = self;
     // Acquire the image lock
     let lock = pull_cache().get_lock(name.clone()).await;
 
@@ -74,7 +63,7 @@ impl Resolve<PullImage> for State {
 
     // Early return from cache if lasted pulled with PULL_TIMEOUT
     if locked.last_ts + PULL_TIMEOUT > komodo_timestamp() {
-      return locked.clone_res();
+      return locked.clone_res().map_err(Into::into);
     }
 
     let res = async {
@@ -100,33 +89,25 @@ impl Resolve<PullImage> for State {
     // then immediately also use this same result.
     locked.set(&res, komodo_timestamp());
 
-    res
+    res.map_err(Into::into)
   }
 }
 
 //
 
-impl Resolve<DeleteImage> for State {
-  #[instrument(name = "DeleteImage", skip(self))]
-  async fn resolve(
-    &self,
-    DeleteImage { name }: DeleteImage,
-    _: (),
-  ) -> anyhow::Result<Log> {
-    let command = format!("docker image rm {name}");
+impl Resolve<super::Args> for DeleteImage {
+  #[instrument(name = "DeleteImage")]
+  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
+    let command = format!("docker image rm {}", self.name);
     Ok(run_komodo_command("delete image", None, command, false).await)
   }
 }
 
 //
 
-impl Resolve<PruneImages> for State {
-  #[instrument(name = "PruneImages", skip(self))]
-  async fn resolve(
-    &self,
-    _: PruneImages,
-    _: (),
-  ) -> anyhow::Result<Log> {
+impl Resolve<super::Args> for PruneImages {
+  #[instrument(name = "PruneImages")]
+  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
     let command = String::from("docker image prune -a -f");
     Ok(run_komodo_command("prune images", None, command, false).await)
   }

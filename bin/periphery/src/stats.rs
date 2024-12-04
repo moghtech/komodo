@@ -16,21 +16,8 @@ pub fn stats_client() -> &'static RwLock<StatsClient> {
 }
 
 /// This should be called before starting the server in main.rs.
-/// Keeps the caches stats up to date
-pub fn spawn_system_stats_polling_threads() {
-  tokio::spawn(async move {
-    let client = stats_client();
-    loop {
-      let ts = wait_until_timelength(
-        async_timing_util::Timelength::FiveMinutes,
-        0,
-      )
-      .await;
-      let mut client = client.write().await;
-      client.refresh_lists();
-      client.stats.refresh_list_ts = ts as i64;
-    }
-  });
+/// Keeps the cached stats up to date
+pub fn spawn_system_stats_polling_thread() {
   tokio::spawn(async move {
     let polling_rate = periphery_config()
       .stats_polling_rate
@@ -89,13 +76,8 @@ impl StatsClient {
     self.system.refresh_cpu_all();
     self.system.refresh_memory();
     self.system.refresh_processes(ProcessesToUpdate::All, true);
-    self.disks.refresh();
-    self.networks.refresh();
-  }
-
-  fn refresh_lists(&mut self) {
-    self.disks.refresh_list();
-    self.networks.refresh_list();
+    self.disks.refresh(true);
+    self.networks.refresh(true);
   }
 
   pub fn get_system_stats(&self) -> SystemStats {

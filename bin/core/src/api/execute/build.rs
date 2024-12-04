@@ -17,7 +17,7 @@ use komodo_client::{
     komodo_timestamp,
     permission::PermissionLevel,
     update::{Log, Update},
-    user::{auto_redeploy_user, User},
+    user::auto_redeploy_user,
   },
 };
 use mungos::{
@@ -49,10 +49,10 @@ use crate::{
     update::{init_execution_update, update_update},
   },
   resource::{self, refresh_build_state_cache},
-  state::{action_states, db_client, State},
+  state::{action_states, db_client},
 };
 
-use super::ExecuteRequest;
+use super::{ExecuteArgs, ExecuteRequest};
 
 impl super::BatchExecute for BatchRunBuild {
   type Resource = Build;
@@ -61,26 +61,27 @@ impl super::BatchExecute for BatchRunBuild {
   }
 }
 
-impl Resolve<BatchRunBuild, (User, Update)> for State {
-  #[instrument(name = "BatchRunBuild", skip(self, user), fields(user_id = user.id))]
+impl Resolve<ExecuteArgs> for BatchRunBuild {
+  #[instrument(name = "BatchRunBuild", skip(user), fields(user_id = user.id))]
   async fn resolve(
-    &self,
-    BatchRunBuild { pattern }: BatchRunBuild,
-    (user, _): (User, Update),
-  ) -> anyhow::Result<BatchExecutionResponse> {
-    super::batch_execute::<BatchRunBuild>(&pattern, &user).await
+    self,
+    ExecuteArgs { user, .. }: &ExecuteArgs,
+  ) -> serror::Result<BatchExecutionResponse> {
+    Ok(
+      super::batch_execute::<BatchRunBuild>(&self.pattern, user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<RunBuild, (User, Update)> for State {
-  #[instrument(name = "RunBuild", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for RunBuild {
+  #[instrument(name = "RunBuild", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    RunBuild { build }: RunBuild,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let mut build = resource::get_check_permissions::<Build>(
-      &build,
+      &self.build,
       &user,
       PermissionLevel::Execute,
     )
@@ -88,7 +89,7 @@ impl Resolve<RunBuild, (User, Update)> for State {
     let mut vars_and_secrets = get_variables_and_secrets().await?;
 
     if build.config.builder_id.is_empty() {
-      return Err(anyhow!("Must attach builder to RunBuild"));
+      return Err(anyhow!("Must attach builder to RunBuild").into());
     }
 
     // get the action state for the build (or insert default).
@@ -103,6 +104,9 @@ impl Resolve<RunBuild, (User, Update)> for State {
     if build.config.auto_increment_version {
       build.config.version.increment();
     }
+
+    let mut update = update.clone();
+
     update.version = build.config.version;
     update_update(update.clone()).await?;
 
@@ -408,7 +412,7 @@ impl Resolve<RunBuild, (User, Update)> for State {
       });
     }
 
-    Ok(update)
+    Ok(update.clone())
   }
 }
 
@@ -418,7 +422,7 @@ async fn handle_early_return(
   build_id: String,
   build_name: String,
   is_cancel: bool,
-) -> anyhow::Result<Update> {
+) -> serror::Result<Update> {
   update.finalize();
   // Need to manually update the update before cache refresh,
   // and before broadcast with add_update.
@@ -456,7 +460,7 @@ async fn handle_early_return(
       send_alerts(&[alert]).await
     });
   }
-  Ok(update)
+  Ok(update.clone())
 }
 
 pub async fn validate_cancel_build(
@@ -495,25 +499,28 @@ pub async fn validate_cancel_build(
     match (latest_build, latest_cancel) {
       (Some(build), Some(cancel)) => {
         if cancel.start_ts > build.start_ts {
-          return Err(anyhow!("Build has already been cancelled"));
+          return Err(
+            anyhow!("Build has already been cancelled"),
+          );
         }
       }
-      (None, _) => return Err(anyhow!("No build in progress")),
+      (None, _) => {
+        return Err(anyhow!("No build in progress"))
+      }
       _ => {}
     };
   }
   Ok(())
 }
 
-impl Resolve<CancelBuild, (User, Update)> for State {
-  #[instrument(name = "CancelBuild", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for CancelBuild {
+  #[instrument(name = "CancelBuild", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    CancelBuild { build }: CancelBuild,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let build = resource::get_check_permissions::<Build>(
-      &build,
+      &self.build,
       &user,
       PermissionLevel::Execute,
     )
@@ -527,8 +534,10 @@ impl Resolve<CancelBuild, (User, Update)> for State {
       .and_then(|s| s.get().ok().map(|s| s.building))
       .unwrap_or_default()
     {
-      return Err(anyhow!("Build is not building."));
+      return Err(anyhow!("Build is not building.").into());
     }
+
+    let mut update = update.clone();
 
     update.push_simple_log(
       "cancel triggered",
@@ -593,16 +602,13 @@ async fn handle_post_build_redeploy(build_id: &str) {
           let user = auto_redeploy_user().to_owned();
           let res = async {
             let update = init_execution_update(&req, &user).await?;
-            State
-              .resolve(
-                Deploy {
-                  deployment: deployment.id.clone(),
-                  stop_signal: None,
-                  stop_time: None,
-                },
-                (user, update),
-              )
-              .await
+            Deploy {
+              deployment: deployment.id.clone(),
+              stop_signal: None,
+              stop_time: None,
+            }
+            .resolve(&ExecuteArgs { user, update })
+            .await
           }
           .await;
           Some((deployment.id.clone(), res))
@@ -616,7 +622,10 @@ async fn handle_post_build_redeploy(build_id: &str) {
       continue;
     };
     if let Err(e) = res {
-      warn!("failed post build redeploy for deployment {id}: {e:#}");
+      warn!(
+        "failed post build redeploy for deployment {id}: {:#}",
+        e.error
+      );
     }
   }
 }
@@ -636,14 +645,17 @@ async fn validate_account_extract_registry_token(
       },
     ..
   }: &Build,
-) -> anyhow::Result<Option<String>> {
+) -> serror::Result<Option<String>> {
   if domain.is_empty() {
     return Ok(None);
   }
   if account.is_empty() {
-    return Err(anyhow!(
-      "Must attach account to use registry provider {domain}"
-    ));
+    return Err(
+      anyhow!(
+        "Must attach account to use registry provider {domain}"
+      )
+      .into(),
+    );
   }
 
   let registry_token = registry_token(domain, account).await.with_context(

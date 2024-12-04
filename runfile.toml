@@ -46,12 +46,12 @@ cmd = """
 docker compose -p komodo-dev -f test.compose.yaml build"""
 
 [test-core]
-description = "runs core --release pointing to .komodo/core.config.toml"
-cmd = "KOMODO_CONFIG_PATH=.komodo/core.config.toml cargo run -p komodo_core --release"
+description = "runs core --release pointing to .dev/core.config.toml"
+cmd = "KOMODO_CONFIG_PATH=.dev/core.config.toml cargo run -p komodo_core --release"
 
 [test-periphery]
-description = "runs periphery --release pointing to test.periphery.config.toml"
-cmd = "PERIPHERY_CONFIG_PATH=test.periphery.config.toml cargo run -p komodo_periphery --release"
+description = "runs periphery --release pointing to .dev/periphery.config.toml"
+cmd = "PERIPHERY_CONFIG_PATH=.dev/periphery.config.toml cargo run -p komodo_periphery --release"
 
 [create-multiarch-builder]
 cmd = "docker buildx create --name builder --use --bootstrap"

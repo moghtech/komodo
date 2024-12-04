@@ -6,7 +6,7 @@ use komodo_client::{
     AddUserToUserGroup, CreateUserGroup, DeleteUserGroup,
     RemoveUserFromUserGroup, RenameUserGroup, SetUsersInUserGroup,
   },
-  entities::{komodo_timestamp, user::User, user_group::UserGroup},
+  entities::{komodo_timestamp, user_group::UserGroup},
 };
 use mungos::{
   by_id::{delete_one_by_id, find_one_by_id, update_one_by_id},
@@ -15,23 +15,24 @@ use mungos::{
 };
 use resolver_api::Resolve;
 
-use crate::state::{db_client, State};
+use crate::state::db_client;
 
-impl Resolve<CreateUserGroup, User> for State {
+use super::WriteArgs;
+
+impl Resolve<WriteArgs> for CreateUserGroup {
   async fn resolve(
-    &self,
-    CreateUserGroup { name }: CreateUserGroup,
-    admin: User,
-  ) -> anyhow::Result<UserGroup> {
+    self,
+    WriteArgs { user: admin }: &WriteArgs,
+  ) -> serror::Result<UserGroup> {
     if !admin.admin {
-      return Err(anyhow!("This call is admin-only"));
+      return Err(anyhow!("This call is admin-only").into());
     }
     let user_group = UserGroup {
       id: Default::default(),
       users: Default::default(),
       all: Default::default(),
       updated_at: komodo_timestamp(),
-      name,
+      name: self.name,
     };
     let db = db_client();
     let id = db
@@ -43,63 +44,63 @@ impl Resolve<CreateUserGroup, User> for State {
       .as_object_id()
       .context("inserted id is not ObjectId")?
       .to_string();
-    find_one_by_id(&db.user_groups, &id)
+    let res = find_one_by_id(&db.user_groups, &id)
       .await
       .context("failed to query db for user groups")?
-      .context("user group at id not found")
+      .context("user group at id not found")?;
+    Ok(res)
   }
 }
 
-impl Resolve<RenameUserGroup, User> for State {
+impl Resolve<WriteArgs> for RenameUserGroup {
   async fn resolve(
-    &self,
-    RenameUserGroup { id, name }: RenameUserGroup,
-    admin: User,
-  ) -> anyhow::Result<UserGroup> {
+    self,
+    WriteArgs { user: admin }: &WriteArgs,
+  ) -> serror::Result<UserGroup> {
     if !admin.admin {
-      return Err(anyhow!("This call is admin-only"));
+      return Err(anyhow!("This call is admin-only").into());
     }
     let db = db_client();
     update_one_by_id(
       &db.user_groups,
-      &id,
-      doc! { "$set": { "name": name } },
+      &self.id,
+      doc! { "$set": { "name": self.name } },
       None,
     )
     .await
     .context("failed to rename UserGroup on db")?;
-    find_one_by_id(&db.user_groups, &id)
+    let res = find_one_by_id(&db.user_groups, &self.id)
       .await
       .context("failed to query db for UserGroups")?
-      .context("no user group with given id")
+      .context("no user group with given id")?;
+    Ok(res)
   }
 }
 
-impl Resolve<DeleteUserGroup, User> for State {
+impl Resolve<WriteArgs> for DeleteUserGroup {
   async fn resolve(
-    &self,
-    DeleteUserGroup { id }: DeleteUserGroup,
-    admin: User,
-  ) -> anyhow::Result<UserGroup> {
+    self,
+    WriteArgs { user: admin }: &WriteArgs,
+  ) -> serror::Result<UserGroup> {
     if !admin.admin {
-      return Err(anyhow!("This call is admin-only"));
+      return Err(anyhow!("This call is admin-only").into());
     }
 
     let db = db_client();
 
-    let ug = find_one_by_id(&db.user_groups, &id)
+    let ug = find_one_by_id(&db.user_groups, &self.id)
       .await
       .context("failed to query db for UserGroups")?
       .context("no UserGroup found with given id")?;
 
-    delete_one_by_id(&db.user_groups, &id, None)
+    delete_one_by_id(&db.user_groups, &self.id, None)
       .await
       .context("failed to delete UserGroup from db")?;
 
     db.permissions
       .delete_many(doc! {
         "user_target.type": "UserGroup",
-        "user_target.id": id,
+        "user_target.id": self.id,
       })
       .await
       .context("failed to clean up UserGroups permissions. User Group has been deleted")?;
@@ -108,21 +109,20 @@ impl Resolve<DeleteUserGroup, User> for State {
   }
 }
 
-impl Resolve<AddUserToUserGroup, User> for State {
+impl Resolve<WriteArgs> for AddUserToUserGroup {
   async fn resolve(
-    &self,
-    AddUserToUserGroup { user_group, user }: AddUserToUserGroup,
-    admin: User,
-  ) -> anyhow::Result<UserGroup> {
+    self,
+    WriteArgs { user: admin }: &WriteArgs,
+  ) -> serror::Result<UserGroup> {
     if !admin.admin {
-      return Err(anyhow!("This call is admin-only"));
+      return Err(anyhow!("This call is admin-only").into());
     }
 
     let db = db_client();
 
-    let filter = match ObjectId::from_str(&user) {
+    let filter = match ObjectId::from_str(&self.user) {
       Ok(id) => doc! { "_id": id },
-      Err(_) => doc! { "username": &user },
+      Err(_) => doc! { "username": &self.user },
     };
     let user = db
       .users
@@ -131,9 +131,9 @@ impl Resolve<AddUserToUserGroup, User> for State {
       .context("failed to query mongo for users")?
       .context("no matching user found")?;
 
-    let filter = match ObjectId::from_str(&user_group) {
+    let filter = match ObjectId::from_str(&self.user_group) {
       Ok(id) => doc! { "_id": id },
-      Err(_) => doc! { "name": &user_group },
+      Err(_) => doc! { "name": &self.user_group },
     };
     db.user_groups
       .update_one(
@@ -142,32 +142,30 @@ impl Resolve<AddUserToUserGroup, User> for State {
       )
       .await
       .context("failed to add user to group on db")?;
-    db.user_groups
+    let res = db
+      .user_groups
       .find_one(filter)
       .await
       .context("failed to query db for UserGroups")?
-      .context("no user group with given id")
+      .context("no user group with given id")?;
+    Ok(res)
   }
 }
 
-impl Resolve<RemoveUserFromUserGroup, User> for State {
+impl Resolve<WriteArgs> for RemoveUserFromUserGroup {
   async fn resolve(
-    &self,
-    RemoveUserFromUserGroup {
-      user_group,
-      user,
-    }: RemoveUserFromUserGroup,
-    admin: User,
-  ) -> anyhow::Result<UserGroup> {
+    self,
+    WriteArgs { user: admin }: &WriteArgs,
+  ) -> serror::Result<UserGroup> {
     if !admin.admin {
-      return Err(anyhow!("This call is admin-only"));
+      return Err(anyhow!("This call is admin-only").into());
     }
 
     let db = db_client();
 
-    let filter = match ObjectId::from_str(&user) {
+    let filter = match ObjectId::from_str(&self.user) {
       Ok(id) => doc! { "_id": id },
-      Err(_) => doc! { "username": &user },
+      Err(_) => doc! { "username": &self.user },
     };
     let user = db
       .users
@@ -176,9 +174,9 @@ impl Resolve<RemoveUserFromUserGroup, User> for State {
       .context("failed to query mongo for users")?
       .context("no matching user found")?;
 
-    let filter = match ObjectId::from_str(&user_group) {
+    let filter = match ObjectId::from_str(&self.user_group) {
       Ok(id) => doc! { "_id": id },
-      Err(_) => doc! { "name": &user_group },
+      Err(_) => doc! { "name": &self.user_group },
     };
     db.user_groups
       .update_one(
@@ -187,22 +185,23 @@ impl Resolve<RemoveUserFromUserGroup, User> for State {
       )
       .await
       .context("failed to add user to group on db")?;
-    db.user_groups
+    let res = db
+      .user_groups
       .find_one(filter)
       .await
       .context("failed to query db for UserGroups")?
-      .context("no user group with given id")
+      .context("no user group with given id")?;
+    Ok(res)
   }
 }
 
-impl Resolve<SetUsersInUserGroup, User> for State {
+impl Resolve<WriteArgs> for SetUsersInUserGroup {
   async fn resolve(
-    &self,
-    SetUsersInUserGroup { user_group, users }: SetUsersInUserGroup,
-    admin: User,
-  ) -> anyhow::Result<UserGroup> {
+    self,
+    WriteArgs { user: admin }: &WriteArgs,
+  ) -> serror::Result<UserGroup> {
     if !admin.admin {
-      return Err(anyhow!("This call is admin-only"));
+      return Err(anyhow!("This call is admin-only").into());
     }
 
     let db = db_client();
@@ -215,7 +214,8 @@ impl Resolve<SetUsersInUserGroup, User> for State {
       .collect::<HashMap<_, _>>();
 
     // Make sure all users are user ids
-    let users = users
+    let users = self
+      .users
       .into_iter()
       .filter_map(|user| match ObjectId::from_str(&user) {
         Ok(_) => Some(user),
@@ -223,18 +223,20 @@ impl Resolve<SetUsersInUserGroup, User> for State {
       })
       .collect::<Vec<_>>();
 
-    let filter = match ObjectId::from_str(&user_group) {
+    let filter = match ObjectId::from_str(&self.user_group) {
       Ok(id) => doc! { "_id": id },
-      Err(_) => doc! { "name": &user_group },
+      Err(_) => doc! { "name": &self.user_group },
     };
     db.user_groups
       .update_one(filter.clone(), doc! { "$set": { "users": users } })
       .await
       .context("failed to set users on user group")?;
-    db.user_groups
+    let res = db
+      .user_groups
       .find_one(filter)
       .await
       .context("failed to query db for UserGroups")?
-      .context("no user group with given id")
+      .context("no user group with given id")?;
+    Ok(res)
   }
 }

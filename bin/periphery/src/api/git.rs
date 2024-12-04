@@ -8,41 +8,45 @@ use periphery_client::api::git::{
 use resolver_api::Resolve;
 use tokio::fs;
 
-use crate::{config::periphery_config, State};
+use crate::config::periphery_config;
 
-impl Resolve<GetLatestCommit, ()> for State {
+impl Resolve<super::Args> for GetLatestCommit {
+  #[instrument(name = "CloneRepo", level = "debug")]
   async fn resolve(
-    &self,
-    GetLatestCommit { name }: GetLatestCommit,
-    _: (),
-  ) -> anyhow::Result<LatestCommit> {
-    let repo_path = periphery_config().repo_dir.join(name);
+    self,
+    _: &super::Args,
+  ) -> serror::Result<LatestCommit> {
+    let repo_path = periphery_config().repo_dir.join(self.name);
     if !repo_path.is_dir() {
-      return Err(anyhow!(
-        "Repo path is not directory. is it cloned?"
-      ));
+      return Err(
+        anyhow!("Repo path is not directory. is it cloned?").into(),
+      );
     }
-    git::get_commit_hash_info(&repo_path).await
+    Ok(git::get_commit_hash_info(&repo_path).await?)
   }
 }
 
-impl Resolve<CloneRepo> for State {
+impl Resolve<super::Args> for CloneRepo {
   #[instrument(
     name = "CloneRepo",
-    skip(self, git_token, environment, replacers)
+    skip_all,
+    fields(
+      args = format!("{:?}", self.args),
+      skip_secret_interp = self.skip_secret_interp,
+    )
   )]
   async fn resolve(
-    &self,
-    CloneRepo {
+    self,
+    _: &super::Args,
+  ) -> serror::Result<RepoActionResponse> {
+    let CloneRepo {
       args,
       git_token,
       environment,
       env_file_path,
       skip_secret_interp,
       replacers,
-    }: CloneRepo,
-    _: (),
-  ) -> anyhow::Result<RepoActionResponse> {
+    } = self;
     let CloneArgs {
       provider, account, ..
     } = &args;
@@ -81,28 +85,33 @@ impl Resolve<CloneRepo> for State {
         }
       },
     )
+    .map_err(Into::into)
   }
 }
 
 //
 
-impl Resolve<PullRepo> for State {
+impl Resolve<super::Args> for PullRepo {
   #[instrument(
     name = "PullRepo",
-    skip(self, git_token, environment, replacers)
+    skip_all,
+    fields(
+      args = format!("{:?}", self.args),
+      skip_secret_interp = self.skip_secret_interp,
+    )
   )]
   async fn resolve(
-    &self,
-    PullRepo {
+    self,
+    _: &super::Args,
+  ) -> serror::Result<RepoActionResponse> {
+    let PullRepo {
       args,
       git_token,
       environment,
       env_file_path,
       skip_secret_interp,
       replacers,
-    }: PullRepo,
-    _: (),
-  ) -> anyhow::Result<RepoActionResponse> {
+    } = self;
     let CloneArgs {
       provider, account, ..
     } = &args;
@@ -141,28 +150,33 @@ impl Resolve<PullRepo> for State {
         }
       },
     )
+    .map_err(Into::into)
   }
 }
 
 //
 
-impl Resolve<PullOrCloneRepo> for State {
+impl Resolve<super::Args> for PullOrCloneRepo {
   #[instrument(
     name = "PullOrCloneRepo",
-    skip(self, git_token, environment, replacers)
+    skip_all,
+    fields(
+      args = format!("{:?}", self.args),
+      skip_secret_interp = self.skip_secret_interp,
+    )
   )]
   async fn resolve(
-    &self,
-    PullOrCloneRepo {
+    self,
+    _: &super::Args,
+  ) -> serror::Result<RepoActionResponse> {
+    let PullOrCloneRepo {
       args,
       git_token,
       environment,
       env_file_path,
       skip_secret_interp,
       replacers,
-    }: PullOrCloneRepo,
-    _: (),
-  ) -> anyhow::Result<RepoActionResponse> {
+    } = self;
     let CloneArgs {
       provider, account, ..
     } = &args;
@@ -201,21 +215,19 @@ impl Resolve<PullOrCloneRepo> for State {
         }
       },
     )
+    .map_err(Into::into)
   }
 }
 
 //
 
-impl Resolve<RenameRepo> for State {
-  #[instrument(name = "RenameRepo", skip(self))]
-  async fn resolve(
-    &self,
-    RenameRepo {
+impl Resolve<super::Args> for RenameRepo {
+  #[instrument(name = "RenameRepo")]
+  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
+    let RenameRepo {
       curr_name,
       new_name,
-    }: RenameRepo,
-    _: (),
-  ) -> anyhow::Result<Log> {
+    } = self;
     let renamed = fs::rename(
       periphery_config().repo_dir.join(&curr_name),
       periphery_config().repo_dir.join(&new_name),
@@ -231,13 +243,10 @@ impl Resolve<RenameRepo> for State {
 
 //
 
-impl Resolve<DeleteRepo> for State {
-  #[instrument(name = "DeleteRepo", skip(self))]
-  async fn resolve(
-    &self,
-    DeleteRepo { name }: DeleteRepo,
-    _: (),
-  ) -> anyhow::Result<Log> {
+impl Resolve<super::Args> for DeleteRepo {
+  #[instrument(name = "DeleteRepo")]
+  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
+    let DeleteRepo { name } = self;
     // If using custom clone path, it will be passed by core instead of name.
     // So the join will resolve to just the absolute path.
     let deleted =

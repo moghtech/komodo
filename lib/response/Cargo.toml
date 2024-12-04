@@ -1,0 +1,15 @@
+[package]
+name = "response"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+serde_json.workspace = true
+serror.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+axum.workspace = true

@@ -16,6 +16,7 @@ path = "src/main.rs"
 
 [dependencies]
 # local
+# komodo_client = "1.16.12"
 komodo_client.workspace = true
 # external
 tracing-subscriber.workspace = true

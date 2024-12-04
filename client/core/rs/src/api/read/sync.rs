@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -15,10 +15,11 @@ use super::KomodoReadRequest;
 /// Get a specific sync. Response: [ResourceSync].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ResourceSync)]
+#[error(serror::Error)]
 pub struct GetResourceSync {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -33,10 +34,11 @@ pub type GetResourceSyncResponse = ResourceSync;
 /// List syncs matching optional query. Response: [ListResourceSyncsResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListResourceSyncsResponse)]
+#[error(serror::Error)]
 pub struct ListResourceSyncs {
   /// optional structured query to filter syncs.
   #[serde(default)]
@@ -51,10 +53,11 @@ pub type ListResourceSyncsResponse = Vec<ResourceSyncListItem>;
 /// List syncs matching optional query. Response: [ListFullResourceSyncsResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullResourceSyncsResponse)]
+#[error(serror::Error)]
 pub struct ListFullResourceSyncs {
   /// optional structured query to filter syncs.
   #[serde(default)]
@@ -69,10 +72,11 @@ pub type ListFullResourceSyncsResponse = Vec<ResourceSync>;
 /// Get current action state for the sync. Response: [ResourceSyncActionState].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetResourceSyncActionStateResponse)]
+#[error(serror::Error)]
 pub struct GetResourceSyncActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -88,10 +92,11 @@ pub type GetResourceSyncActionStateResponse = ResourceSyncActionState;
 /// Response: [GetResourceSyncsSummaryResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetResourceSyncsSummaryResponse)]
+#[error(serror::Error)]
 pub struct GetResourceSyncsSummary {}
 
 /// Response for [GetResourceSyncsSummary]
@@ -117,10 +122,11 @@ pub struct GetResourceSyncsSummaryResponse {
 /// Get a target Sync's configured webhooks. Response: [GetSyncWebhooksEnabledResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetSyncWebhooksEnabledResponse)]
+#[error(serror::Error)]
 pub struct GetSyncWebhooksEnabled {
   /// Id or name
   #[serde(alias = "id", alias = "name")]

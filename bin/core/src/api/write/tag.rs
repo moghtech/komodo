@@ -11,7 +11,7 @@ use komodo_client::{
     deployment::Deployment, permission::PermissionLevel,
     procedure::Procedure, repo::Repo, server::Server,
     server_template::ServerTemplate, stack::Stack,
-    sync::ResourceSync, tag::Tag, user::User, ResourceTarget,
+    sync::ResourceSync, tag::Tag, ResourceTarget,
   },
 };
 use mungos::{
@@ -23,23 +23,24 @@ use resolver_api::Resolve;
 use crate::{
   helpers::query::{get_tag, get_tag_check_owner},
   resource,
-  state::{db_client, State},
+  state::db_client,
 };
 
-impl Resolve<CreateTag, User> for State {
-  #[instrument(name = "CreateTag", skip(self, user))]
+use super::WriteArgs;
+
+impl Resolve<WriteArgs> for CreateTag {
+  #[instrument(name = "CreateTag", skip(user))]
   async fn resolve(
-    &self,
-    CreateTag { name }: CreateTag,
-    user: User,
-  ) -> anyhow::Result<Tag> {
-    if ObjectId::from_str(&name).is_ok() {
-      return Err(anyhow!("tag name cannot be ObjectId"));
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Tag> {
+    if ObjectId::from_str(&self.name).is_ok() {
+      return Err(anyhow!("tag name cannot be ObjectId").into());
     }
 
     let mut tag = Tag {
       id: Default::default(),
-      name,
+      name: self.name,
       owner: user.id.clone(),
     };
 
@@ -57,167 +58,170 @@ impl Resolve<CreateTag, User> for State {
   }
 }
 
-impl Resolve<RenameTag, User> for State {
-  #[instrument(name = "RenameTag", skip(self, user))]
+impl Resolve<WriteArgs> for RenameTag {
+  #[instrument(name = "RenameTag", skip(user))]
   async fn resolve(
-    &self,
-    RenameTag { id, name }: RenameTag,
-    user: User,
-  ) -> anyhow::Result<Tag> {
-    if ObjectId::from_str(&name).is_ok() {
-      return Err(anyhow!("tag name cannot be ObjectId"));
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Tag> {
+    if ObjectId::from_str(&self.name).is_ok() {
+      return Err(anyhow!("tag name cannot be ObjectId").into());
     }
 
-    get_tag_check_owner(&id, &user).await?;
+    get_tag_check_owner(&self.id, &user).await?;
 
     update_one_by_id(
       &db_client().tags,
-      &id,
-      doc! { "$set": { "name": name } },
+      &self.id,
+      doc! { "$set": { "name": self.name } },
       None,
     )
     .await
     .context("failed to rename tag on db")?;
 
-    get_tag(&id).await
+    Ok(get_tag(&self.id).await?)
   }
 }
 
-impl Resolve<DeleteTag, User> for State {
-  #[instrument(name = "DeleteTag", skip(self, user))]
+impl Resolve<WriteArgs> for DeleteTag {
+  #[instrument(name = "DeleteTag", skip(user))]
   async fn resolve(
-    &self,
-    DeleteTag { id }: DeleteTag,
-    user: User,
-  ) -> anyhow::Result<Tag> {
-    let tag = get_tag_check_owner(&id, &user).await?;
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Tag> {
+    let tag = get_tag_check_owner(&self.id, &user).await?;
 
     tokio::try_join!(
-      resource::remove_tag_from_all::<Server>(&id),
-      resource::remove_tag_from_all::<Deployment>(&id),
-      resource::remove_tag_from_all::<Stack>(&id),
-      resource::remove_tag_from_all::<Build>(&id),
-      resource::remove_tag_from_all::<Repo>(&id),
-      resource::remove_tag_from_all::<Builder>(&id),
-      resource::remove_tag_from_all::<Alerter>(&id),
-      resource::remove_tag_from_all::<Procedure>(&id),
-      resource::remove_tag_from_all::<ServerTemplate>(&id),
+      resource::remove_tag_from_all::<Server>(&self.id),
+      resource::remove_tag_from_all::<Deployment>(&self.id),
+      resource::remove_tag_from_all::<Stack>(&self.id),
+      resource::remove_tag_from_all::<Build>(&self.id),
+      resource::remove_tag_from_all::<Repo>(&self.id),
+      resource::remove_tag_from_all::<Builder>(&self.id),
+      resource::remove_tag_from_all::<Alerter>(&self.id),
+      resource::remove_tag_from_all::<Procedure>(&self.id),
+      resource::remove_tag_from_all::<ServerTemplate>(&self.id),
     )?;
 
-    delete_one_by_id(&db_client().tags, &id, None).await?;
+    delete_one_by_id(&db_client().tags, &self.id, None).await?;
 
     Ok(tag)
   }
 }
 
-impl Resolve<UpdateTagsOnResource, User> for State {
-  #[instrument(name = "UpdateTagsOnResource", skip(self, user))]
+impl Resolve<WriteArgs> for UpdateTagsOnResource {
+  #[instrument(name = "UpdateTagsOnResource", skip(args))]
   async fn resolve(
-    &self,
-    UpdateTagsOnResource { target, tags }: UpdateTagsOnResource,
-    user: User,
-  ) -> anyhow::Result<UpdateTagsOnResourceResponse> {
-    match target {
-      ResourceTarget::System(_) => return Err(anyhow!("")),
+    self,
+    args: &WriteArgs,
+  ) -> serror::Result<UpdateTagsOnResourceResponse> {
+    let WriteArgs { user } = args;
+    match self.target {
+      ResourceTarget::System(_) => {
+        return Err(anyhow!("Invalid target type: System").into())
+      }
       ResourceTarget::Build(id) => {
         resource::get_check_permissions::<Build>(
           &id,
-          &user,
+          user,
           PermissionLevel::Write,
         )
         .await?;
-        resource::update_tags::<Build>(&id, tags, user).await?;
+        resource::update_tags::<Build>(&id, self.tags, args).await?;
       }
       ResourceTarget::Builder(id) => {
         resource::get_check_permissions::<Builder>(
           &id,
-          &user,
+          user,
           PermissionLevel::Write,
         )
         .await?;
-        resource::update_tags::<Builder>(&id, tags, user).await?
+        resource::update_tags::<Builder>(&id, self.tags, args).await?
       }
       ResourceTarget::Deployment(id) => {
         resource::get_check_permissions::<Deployment>(
           &id,
-          &user,
+          user,
           PermissionLevel::Write,
         )
         .await?;
-        resource::update_tags::<Deployment>(&id, tags, user).await?
+        resource::update_tags::<Deployment>(&id, self.tags, args)
+          .await?
       }
       ResourceTarget::Server(id) => {
         resource::get_check_permissions::<Server>(
           &id,
-          &user,
+          user,
           PermissionLevel::Write,
         )
         .await?;
-        resource::update_tags::<Server>(&id, tags, user).await?
+        resource::update_tags::<Server>(&id, self.tags, args).await?
       }
       ResourceTarget::Repo(id) => {
         resource::get_check_permissions::<Repo>(
           &id,
-          &user,
+          user,
           PermissionLevel::Write,
         )
         .await?;
-        resource::update_tags::<Repo>(&id, tags, user).await?
+        resource::update_tags::<Repo>(&id, self.tags, args).await?
       }
       ResourceTarget::Alerter(id) => {
         resource::get_check_permissions::<Alerter>(
           &id,
-          &user,
+          user,
           PermissionLevel::Write,
         )
         .await?;
-        resource::update_tags::<Alerter>(&id, tags, user).await?
+        resource::update_tags::<Alerter>(&id, self.tags, args).await?
       }
       ResourceTarget::Procedure(id) => {
         resource::get_check_permissions::<Procedure>(
           &id,
-          &user,
+          user,
           PermissionLevel::Write,
         )
         .await?;
-        resource::update_tags::<Procedure>(&id, tags, user).await?
+        resource::update_tags::<Procedure>(&id, self.tags, args)
+          .await?
       }
       ResourceTarget::Action(id) => {
         resource::get_check_permissions::<Action>(
           &id,
-          &user,
+          user,
           PermissionLevel::Write,
         )
         .await?;
-        resource::update_tags::<Action>(&id, tags, user).await?
+        resource::update_tags::<Action>(&id, self.tags, args).await?
       }
       ResourceTarget::ServerTemplate(id) => {
         resource::get_check_permissions::<ServerTemplate>(
           &id,
-          &user,
+          user,
           PermissionLevel::Write,
         )
         .await?;
-        resource::update_tags::<ServerTemplate>(&id, tags, user)
+        resource::update_tags::<ServerTemplate>(&id, self.tags, args)
           .await?
       }
       ResourceTarget::ResourceSync(id) => {
         resource::get_check_permissions::<ResourceSync>(
           &id,
-          &user,
+          user,
           PermissionLevel::Write,
         )
         .await?;
-        resource::update_tags::<ResourceSync>(&id, tags, user).await?
+        resource::update_tags::<ResourceSync>(&id, self.tags, args)
+          .await?
       }
       ResourceTarget::Stack(id) => {
         resource::get_check_permissions::<Stack>(
           &id,
-          &user,
+          user,
           PermissionLevel::Write,
         )
         .await?;
-        resource::update_tags::<Stack>(&id, tags, user).await?
+        resource::update_tags::<Stack>(&id, self.tags, args).await?
       }
     };
     Ok(UpdateTagsOnResourceResponse {})

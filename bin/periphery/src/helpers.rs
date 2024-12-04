@@ -11,7 +11,7 @@ use komodo_client::{
 use periphery_client::api::git::PullOrCloneRepo;
 use resolver_api::Resolve;
 
-use crate::{config::periphery_config, State};
+use crate::config::periphery_config;
 
 pub fn git_token(
   domain: &str,
@@ -140,21 +140,19 @@ pub async fn pull_or_clone_stack(
     }
   };
 
-  State
-    .resolve(
-      PullOrCloneRepo {
-        args,
-        git_token,
-        environment: vec![],
-        env_file_path: stack.config.env_file_path.clone(),
-        skip_secret_interp: stack.config.skip_secret_interp,
-        // repo replacer only needed for on_clone / on_pull,
-        // which aren't available for stacks
-        replacers: Default::default(),
-      },
-      (),
-    )
-    .await?;
+  PullOrCloneRepo {
+    args,
+    git_token,
+    environment: vec![],
+    env_file_path: stack.config.env_file_path.clone(),
+    skip_secret_interp: stack.config.skip_secret_interp,
+    // repo replacer only needed for on_clone / on_pull,
+    // which aren't available for stacks
+    replacers: Default::default(),
+  }
+  .resolve(&crate::api::Args)
+  .await
+  .map_err(|e| e.error)?;
 
   Ok(root)
 }

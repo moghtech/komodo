@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -18,10 +18,11 @@ use super::KomodoReadRequest;
 /// Get a specific stack. Response: [Stack].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStackResponse)]
+#[error(serror::Error)]
 pub struct GetStack {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -36,10 +37,11 @@ pub type GetStackResponse = Stack;
 /// Lists a specific stacks services (the containers). Response: [ListStackServicesResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListStackServicesResponse)]
+#[error(serror::Error)]
 pub struct ListStackServices {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -54,10 +56,11 @@ pub type ListStackServicesResponse = Vec<StackService>;
 /// Get a stack service's log. Response: [GetStackServiceLogResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStackServiceLogResponse)]
+#[error(serror::Error)]
 pub struct GetStackServiceLog {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -89,10 +92,11 @@ pub type GetStackServiceLogResponse = Log;
 /// Note. This call will hit the underlying server directly for most up to date log.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(SearchStackServiceLogResponse)]
+#[error(serror::Error)]
 pub struct SearchStackServiceLog {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -124,10 +128,11 @@ pub type SearchStackServiceLogResponse = Log;
 /// Useful to offer suggestions. Response: [ListCommonStackExtraArgsResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonStackExtraArgsResponse)]
+#[error(serror::Error)]
 pub struct ListCommonStackExtraArgs {
   /// optional structured query to filter stacks.
   #[serde(default)]
@@ -143,10 +148,11 @@ pub type ListCommonStackExtraArgsResponse = Vec<String>;
 /// Useful to offer suggestions. Response: [ListCommonStackBuildExtraArgsResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonStackBuildExtraArgsResponse)]
+#[error(serror::Error)]
 pub struct ListCommonStackBuildExtraArgs {
   /// optional structured query to filter stacks.
   #[serde(default)]
@@ -161,10 +167,11 @@ pub type ListCommonStackBuildExtraArgsResponse = Vec<String>;
 /// List stacks matching optional query. Response: [ListStacksResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListStacksResponse)]
+#[error(serror::Error)]
 pub struct ListStacks {
   /// optional structured query to filter syncs.
   #[serde(default)]
@@ -179,10 +186,11 @@ pub type ListStacksResponse = Vec<StackListItem>;
 /// List stacks matching optional query. Response: [ListFullStacksResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullStacksResponse)]
+#[error(serror::Error)]
 pub struct ListFullStacks {
   /// optional structured query to filter stacks.
   #[serde(default)]
@@ -197,10 +205,11 @@ pub type ListFullStacksResponse = Vec<Stack>;
 /// Get current action state for the stack. Response: [StackActionState].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStackActionStateResponse)]
+#[error(serror::Error)]
 pub struct GetStackActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -216,10 +225,11 @@ pub type GetStackActionStateResponse = StackActionState;
 /// Response: [GetStacksSummaryResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStacksSummaryResponse)]
+#[error(serror::Error)]
 pub struct GetStacksSummary {}
 
 /// Response for [GetStacksSummary]
@@ -245,10 +255,11 @@ pub struct GetStacksSummaryResponse {
 /// Get a target stack's configured webhooks. Response: [GetStackWebhooksEnabledResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStackWebhooksEnabledResponse)]
+#[error(serror::Error)]
 pub struct GetStackWebhooksEnabled {
   /// Id or name
   #[serde(alias = "id", alias = "name")]

@@ -395,7 +395,7 @@ pub async fn update_stack_cache(
             send_alerts(&[alert]).await;
           }
           Err(e) => {
-            warn!("Failed auto update Stack {} | {e:#}", stack.name)
+            warn!("Failed auto update Stack {} | {e:#}", stack.name,)
           }
         }
       });

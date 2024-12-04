@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -16,10 +16,11 @@ use super::KomodoWriteRequest;
 /// Create a action. Response: [Action].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Action)]
+#[error(serror::Error)]
 pub struct CreateAction {
   /// The name given to newly created action.
   pub name: String,
@@ -34,10 +35,11 @@ pub struct CreateAction {
 /// of the action at the given `id`. Response: [Action].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Action)]
+#[error(serror::Error)]
 pub struct CopyAction {
   /// The name of the new action.
   pub name: String,
@@ -51,10 +53,11 @@ pub struct CopyAction {
 /// Response: [Action]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Action)]
+#[error(serror::Error)]
 pub struct DeleteAction {
   /// The id or name of the action to delete.
   pub id: String,
@@ -72,10 +75,11 @@ pub struct DeleteAction {
 /// field changes occur from out of date local state.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Action)]
+#[error(serror::Error)]
 pub struct UpdateAction {
   /// The id of the action to update.
   pub id: String,
@@ -89,10 +93,12 @@ pub struct UpdateAction {
 /// Response: [Update].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
+#[error(serror::Error)]
 pub struct RenameAction {
   /// The id or name of the Action to rename.
   pub id: String,
@@ -104,10 +110,11 @@ pub struct RenameAction {
 /// passed in request. Response: [CreateActionWebhookResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateActionWebhookResponse)]
+#[error(serror::Error)]
 pub struct CreateActionWebhook {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -123,10 +130,11 @@ pub type CreateActionWebhookResponse = NoData;
 /// passed in request. Response: [DeleteActionWebhookResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteActionWebhookResponse)]
+#[error(serror::Error)]
 pub struct DeleteActionWebhook {
   /// Id or name
   #[serde(alias = "id", alias = "name")]

@@ -1,6 +1,6 @@
 use clap::Parser;
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -16,12 +16,13 @@ use super::{BatchExecutionResponse, KomodoExecuteRequest};
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct DeployStack {
   /// Id or name
   pub stack: String,
@@ -42,12 +43,13 @@ pub struct DeployStack {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
+#[error(serror::Error)]
 pub struct BatchDeployStack {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.
@@ -74,12 +76,13 @@ pub struct BatchDeployStack {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct DeployStackIfChanged {
   /// Id or name
   pub stack: String,
@@ -98,12 +101,13 @@ pub struct DeployStackIfChanged {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
+#[error(serror::Error)]
 pub struct BatchDeployStackIfChanged {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.
@@ -128,12 +132,13 @@ pub struct BatchDeployStackIfChanged {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct PullStack {
   /// Id or name
   pub stack: String,
@@ -151,12 +156,13 @@ pub struct PullStack {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct StartStack {
   /// Id or name
   pub stack: String,
@@ -174,12 +180,13 @@ pub struct StartStack {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct RestartStack {
   /// Id or name
   pub stack: String,
@@ -197,12 +204,13 @@ pub struct RestartStack {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct PauseStack {
   /// Id or name
   pub stack: String,
@@ -222,12 +230,13 @@ pub struct PauseStack {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct UnpauseStack {
   /// Id or name
   pub stack: String,
@@ -245,12 +254,13 @@ pub struct UnpauseStack {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct StopStack {
   /// Id or name
   pub stack: String,
@@ -270,12 +280,13 @@ pub struct StopStack {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct DestroyStack {
   /// Id or name
   pub stack: String,
@@ -298,12 +309,13 @@ pub struct DestroyStack {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
+#[error(serror::Error)]
 pub struct BatchDestroyStack {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.

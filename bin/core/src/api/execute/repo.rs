@@ -12,7 +12,6 @@ use komodo_client::{
     repo::Repo,
     server::Server,
     update::{Log, Update},
-    user::User,
   },
 };
 use mungos::{
@@ -28,6 +27,7 @@ use tokio_util::sync::CancellationToken;
 
 use crate::{
   alert::send_alerts,
+  api::write::WriteArgs,
   helpers::{
     builder::{cleanup_builder_instance, get_builder_periphery},
     channel::repo_cancel_channel,
@@ -42,10 +42,10 @@ use crate::{
     update::update_update,
   },
   resource::{self, refresh_repo_state_cache},
-  state::{action_states, db_client, State},
+  state::{action_states, db_client},
 };
 
-use super::ExecuteRequest;
+use super::{ExecuteArgs, ExecuteRequest};
 
 impl super::BatchExecute for BatchCloneRepo {
   type Resource = Repo;
@@ -54,27 +54,28 @@ impl super::BatchExecute for BatchCloneRepo {
   }
 }
 
-impl Resolve<BatchCloneRepo, (User, Update)> for State {
-  #[instrument(name = "BatchCloneRepo", skip(self, user), fields(user_id = user.id))]
+impl Resolve<ExecuteArgs> for BatchCloneRepo {
+  #[instrument(name = "BatchCloneRepo", skip( user), fields(user_id = user.id))]
   async fn resolve(
-    &self,
-    BatchCloneRepo { pattern }: BatchCloneRepo,
-    (user, _): (User, Update),
-  ) -> anyhow::Result<BatchExecutionResponse> {
-    super::batch_execute::<BatchCloneRepo>(&pattern, &user).await
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<BatchExecutionResponse> {
+    Ok(
+      super::batch_execute::<BatchCloneRepo>(&self.pattern, user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<CloneRepo, (User, Update)> for State {
-  #[instrument(name = "CloneRepo", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for CloneRepo {
+  #[instrument(name = "CloneRepo", skip( user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    CloneRepo { repo }: CloneRepo,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let mut repo = resource::get_check_permissions::<Repo>(
-      &repo,
-      &user,
+      &self.repo,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -88,10 +89,11 @@ impl Resolve<CloneRepo, (User, Update)> for State {
     let _action_guard =
       action_state.update(|state| state.cloning = true)?;
 
+    let mut update = update.clone();
     update_update(update.clone()).await?;
 
     if repo.config.server_id.is_empty() {
-      return Err(anyhow!("repo has no server attached"));
+      return Err(anyhow!("repo has no server attached").into());
     }
 
     let git_token = git_token(
@@ -141,9 +143,10 @@ impl Resolve<CloneRepo, (User, Update)> for State {
       update_last_pulled_time(&repo.name).await;
     }
 
-    if let Err(e) = State
-      .resolve(RefreshRepoCache { repo: repo.id }, user)
+    if let Err(e) = (RefreshRepoCache { repo: repo.id })
+      .resolve(&WriteArgs { user: user.clone() })
       .await
+      .map_err(|e| e.error)
       .context("Failed to refresh repo cache")
     {
       update.push_error_log(
@@ -163,26 +166,27 @@ impl super::BatchExecute for BatchPullRepo {
   }
 }
 
-impl Resolve<BatchPullRepo, (User, Update)> for State {
-  #[instrument(name = "BatchPullRepo", skip(self, user), fields(user_id = user.id))]
+impl Resolve<ExecuteArgs> for BatchPullRepo {
+  #[instrument(name = "BatchPullRepo", skip(user), fields(user_id = user.id))]
   async fn resolve(
-    &self,
-    BatchPullRepo { pattern }: BatchPullRepo,
-    (user, _): (User, Update),
-  ) -> anyhow::Result<BatchExecutionResponse> {
-    super::batch_execute::<BatchPullRepo>(&pattern, &user).await
+    self,
+    ExecuteArgs { user, .. }: &ExecuteArgs,
+  ) -> serror::Result<BatchExecutionResponse> {
+    Ok(
+      super::batch_execute::<BatchPullRepo>(&self.pattern, &user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<PullRepo, (User, Update)> for State {
-  #[instrument(name = "PullRepo", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for PullRepo {
+  #[instrument(name = "PullRepo", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    PullRepo { repo }: PullRepo,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let mut repo = resource::get_check_permissions::<Repo>(
-      &repo,
+      &self.repo,
       &user,
       PermissionLevel::Execute,
     )
@@ -197,10 +201,12 @@ impl Resolve<PullRepo, (User, Update)> for State {
     let _action_guard =
       action_state.update(|state| state.pulling = true)?;
 
+    let mut update = update.clone();
+
     update_update(update.clone()).await?;
 
     if repo.config.server_id.is_empty() {
-      return Err(anyhow!("repo has no server attached"));
+      return Err(anyhow!("repo has no server attached").into());
     }
 
     let git_token = git_token(
@@ -254,9 +260,10 @@ impl Resolve<PullRepo, (User, Update)> for State {
       update_last_pulled_time(&repo.name).await;
     }
 
-    if let Err(e) = State
-      .resolve(RefreshRepoCache { repo: repo.id }, user)
+    if let Err(e) = (RefreshRepoCache { repo: repo.id })
+      .resolve(&WriteArgs { user: user.clone() })
       .await
+      .map_err(|e| e.error)
       .context("Failed to refresh repo cache")
     {
       update.push_error_log(
@@ -272,7 +279,7 @@ impl Resolve<PullRepo, (User, Update)> for State {
 #[instrument(skip_all, fields(update_id = update.id))]
 async fn handle_server_update_return(
   update: Update,
-) -> anyhow::Result<Update> {
+) -> serror::Result<Update> {
   // Need to manually update the update before cache refresh,
   // and before broadcast with add_update.
   // The Err case of to_document should be unreachable,
@@ -314,33 +321,34 @@ impl super::BatchExecute for BatchBuildRepo {
   }
 }
 
-impl Resolve<BatchBuildRepo, (User, Update)> for State {
-  #[instrument(name = "BatchBuildRepo", skip(self, user), fields(user_id = user.id))]
+impl Resolve<ExecuteArgs> for BatchBuildRepo {
+  #[instrument(name = "BatchBuildRepo", skip(user), fields(user_id = user.id))]
   async fn resolve(
-    &self,
-    BatchBuildRepo { pattern }: BatchBuildRepo,
-    (user, _): (User, Update),
-  ) -> anyhow::Result<BatchExecutionResponse> {
-    super::batch_execute::<BatchBuildRepo>(&pattern, &user).await
+    self,
+    ExecuteArgs { user, .. }: &ExecuteArgs,
+  ) -> serror::Result<BatchExecutionResponse> {
+    Ok(
+      super::batch_execute::<BatchBuildRepo>(&self.pattern, user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<BuildRepo, (User, Update)> for State {
-  #[instrument(name = "BuildRepo", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for BuildRepo {
+  #[instrument(name = "BuildRepo", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    BuildRepo { repo }: BuildRepo,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let mut repo = resource::get_check_permissions::<Repo>(
-      &repo,
-      &user,
+      &self.repo,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
 
     if repo.config.builder_id.is_empty() {
-      return Err(anyhow!("Must attach builder to BuildRepo"));
+      return Err(anyhow!("Must attach builder to BuildRepo").into());
     }
 
     // get the action state for the repo (or insert default).
@@ -352,6 +360,7 @@ impl Resolve<BuildRepo, (User, Update)> for State {
     let _action_guard =
       action_state.update(|state| state.building = true)?;
 
+    let mut update = update.clone();
     update_update(update.clone()).await?;
 
     let git_token = git_token(
@@ -429,7 +438,8 @@ impl Resolve<BuildRepo, (User, Update)> for State {
         return handle_builder_early_return(
           update, repo.id, repo.name, false,
         )
-        .await;
+        .await
+        .map_err(Into::into);
       }
     };
 
@@ -547,7 +557,7 @@ async fn handle_builder_early_return(
   repo_id: String,
   repo_name: String,
   is_cancel: bool,
-) -> anyhow::Result<Update> {
+) -> serror::Result<Update> {
   update.finalize();
   // Need to manually update the update before cache refresh,
   // and before broadcast with add_update.
@@ -635,16 +645,15 @@ pub async fn validate_cancel_repo_build(
   Ok(())
 }
 
-impl Resolve<CancelRepoBuild, (User, Update)> for State {
-  #[instrument(name = "CancelRepoBuild", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for CancelRepoBuild {
+  #[instrument(name = "CancelRepoBuild", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    CancelRepoBuild { repo }: CancelRepoBuild,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let repo = resource::get_check_permissions::<Repo>(
-      &repo,
-      &user,
+      &self.repo,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -657,8 +666,10 @@ impl Resolve<CancelRepoBuild, (User, Update)> for State {
       .and_then(|s| s.get().ok().map(|s| s.building))
       .unwrap_or_default()
     {
-      return Err(anyhow!("Repo is not building."));
+      return Err(anyhow!("Repo is not building.").into());
     }
+
+    let mut update = update.clone();
 
     update.push_simple_log(
       "cancel triggered",

@@ -1,6 +1,6 @@
 use clap::Parser;
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -16,12 +16,13 @@ use super::{BatchExecutionResponse, KomodoExecuteRequest};
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct RunProcedure {
   /// Id or name
   pub procedure: String,
@@ -35,12 +36,13 @@ pub struct RunProcedure {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
+#[error(serror::Error)]
 pub struct BatchRunProcedure {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.

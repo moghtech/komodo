@@ -9,7 +9,6 @@ use komodo_client::{
     server::Server,
     stack::{Stack, StackInfo},
     update::{Log, Update},
-    user::User,
   },
 };
 use mungos::mongodb::bson::{doc, to_document};
@@ -17,6 +16,7 @@ use periphery_client::api::compose::*;
 use resolver_api::Resolve;
 
 use crate::{
+  api::write::WriteArgs,
   helpers::{
     interpolate::{
       add_interp_update_log,
@@ -31,10 +31,10 @@ use crate::{
   monitor::update_cache_for_server,
   resource,
   stack::{execute::execute_compose, get_stack_and_server},
-  state::{action_states, db_client, State},
+  state::{action_states, db_client},
 };
 
-use super::ExecuteRequest;
+use super::{ExecuteArgs, ExecuteRequest};
 
 impl super::BatchExecute for BatchDeployStack {
   type Resource = Stack;
@@ -47,31 +47,28 @@ impl super::BatchExecute for BatchDeployStack {
   }
 }
 
-impl Resolve<BatchDeployStack, (User, Update)> for State {
-  #[instrument(name = "BatchDeployStack", skip(self, user), fields(user_id = user.id))]
+impl Resolve<ExecuteArgs> for BatchDeployStack {
+  #[instrument(name = "BatchDeployStack", skip(user), fields(user_id = user.id))]
   async fn resolve(
-    &self,
-    BatchDeployStack { pattern }: BatchDeployStack,
-    (user, _): (User, Update),
-  ) -> anyhow::Result<BatchExecutionResponse> {
-    super::batch_execute::<BatchDeployStack>(&pattern, &user).await
+    self,
+    ExecuteArgs { user, .. }: &ExecuteArgs,
+  ) -> serror::Result<BatchExecutionResponse> {
+    Ok(
+      super::batch_execute::<BatchDeployStack>(&self.pattern, user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<DeployStack, (User, Update)> for State {
-  #[instrument(name = "DeployStack", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for DeployStack {
+  #[instrument(name = "DeployStack", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    DeployStack {
-      stack,
-      service,
-      stop_time,
-    }: DeployStack,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let (mut stack, server) = get_stack_and_server(
-      &stack,
-      &user,
+      &self.stack,
+      user,
       PermissionLevel::Execute,
       true,
     )
@@ -86,9 +83,11 @@ impl Resolve<DeployStack, (User, Update)> for State {
     let _action_guard =
       action_state.update(|state| state.deploying = true)?;
 
+    let mut update = update.clone();
+
     update_update(update.clone()).await?;
 
-    if let Some(service) = &service {
+    if let Some(service) = &self.service {
       update.logs.push(Log::simple(
         &format!("Service: {service}"),
         format!("Execution requested for Stack service {service}"),
@@ -176,7 +175,7 @@ impl Resolve<DeployStack, (User, Update)> for State {
     } = periphery_client(&server)?
       .request(ComposeUp {
         stack: stack.clone(),
-        service,
+        service: self.service,
         git_token,
         registry_token,
         replacers: secret_replacers.into_iter().collect(),
@@ -284,39 +283,39 @@ impl super::BatchExecute for BatchDeployStackIfChanged {
   }
 }
 
-impl Resolve<BatchDeployStackIfChanged, (User, Update)> for State {
-  #[instrument(name = "BatchDeployStackIfChanged", skip(self, user), fields(user_id = user.id))]
+impl Resolve<ExecuteArgs> for BatchDeployStackIfChanged {
+  #[instrument(name = "BatchDeployStackIfChanged", skip(user), fields(user_id = user.id))]
   async fn resolve(
-    &self,
-    BatchDeployStackIfChanged { pattern }: BatchDeployStackIfChanged,
-    (user, _): (User, Update),
-  ) -> anyhow::Result<BatchExecutionResponse> {
-    super::batch_execute::<BatchDeployStackIfChanged>(&pattern, &user)
-      .await
+    self,
+    ExecuteArgs { user, .. }: &ExecuteArgs,
+  ) -> serror::Result<BatchExecutionResponse> {
+    Ok(
+      super::batch_execute::<BatchDeployStackIfChanged>(
+        &self.pattern,
+        user,
+      )
+      .await?,
+    )
   }
 }
 
-impl Resolve<DeployStackIfChanged, (User, Update)> for State {
-  #[instrument(name = "DeployStackIfChanged", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for DeployStackIfChanged {
+  #[instrument(name = "DeployStackIfChanged", skip(user, update), fields(user_id = user.id))]
   async fn resolve(
-    &self,
-    DeployStackIfChanged { stack, stop_time }: DeployStackIfChanged,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let stack = resource::get_check_permissions::<Stack>(
-      &stack,
-      &user,
+      &self.stack,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
-    State
-      .resolve(
-        RefreshStackCache {
-          stack: stack.id.clone(),
-        },
-        user.clone(),
-      )
-      .await?;
+    RefreshStackCache {
+      stack: stack.id.clone(),
+    }
+    .resolve(&WriteArgs { user: user.clone() })
+    .await?;
     let stack = resource::get::<Stack>(&stack.id).await?;
     let changed = match (
       &stack.info.deployed_contents,
@@ -343,6 +342,8 @@ impl Resolve<DeployStackIfChanged, (User, Update)> for State {
       _ => false,
     };
 
+    let mut update = update.clone();
+
     if !changed {
       update.push_simple_log(
         "Diff compose files",
@@ -356,16 +357,16 @@ impl Resolve<DeployStackIfChanged, (User, Update)> for State {
     // This is usually done in crate::helpers::update::init_execution_update.
     update.id = add_update_without_send(&update).await?;
 
-    State
-      .resolve(
-        DeployStack {
-          stack: stack.name,
-          service: None,
-          stop_time,
-        },
-        (user, update),
-      )
-      .await
+    DeployStack {
+      stack: stack.name,
+      service: None,
+      stop_time: self.stop_time,
+    }
+    .resolve(&ExecuteArgs {
+      user: user.clone(),
+      update,
+    })
+    .await
   }
 }
 
@@ -412,16 +413,15 @@ pub async fn pull_stack_inner(
   Ok(res)
 }
 
-impl Resolve<PullStack, (User, Update)> for State {
-  #[instrument(name = "PullStack", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for PullStack {
+  #[instrument(name = "PullStack", skip(user, update), fields(user_id = user.id))]
   async fn resolve(
-    &self,
-    PullStack { stack, service }: PullStack,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let (stack, server) = get_stack_and_server(
-      &stack,
-      &user,
+      &self.stack,
+      user,
       PermissionLevel::Execute,
       true,
     )
@@ -436,11 +436,16 @@ impl Resolve<PullStack, (User, Update)> for State {
     let _action_guard =
       action_state.update(|state| state.pulling = true)?;
 
+    let mut update = update.clone();
     update_update(update.clone()).await?;
 
-    let res =
-      pull_stack_inner(stack, service, &server, Some(&mut update))
-        .await?;
+    let res = pull_stack_inner(
+      stack,
+      self.service,
+      &server,
+      Some(&mut update),
+    )
+    .await?;
 
     update.logs.extend(res.logs);
     update.finalize();
@@ -450,104 +455,100 @@ impl Resolve<PullStack, (User, Update)> for State {
   }
 }
 
-impl Resolve<StartStack, (User, Update)> for State {
-  #[instrument(name = "StartStack", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for StartStack {
+  #[instrument(name = "StartStack", skip(user, update), fields(user_id = user.id))]
   async fn resolve(
-    &self,
-    StartStack { stack, service }: StartStack,
-    (user, update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     execute_compose::<StartStack>(
-      &stack,
-      service,
-      &user,
+      &self.stack,
+      self.service,
+      user,
       |state| state.starting = true,
-      update,
+      update.clone(),
       (),
     )
     .await
+    .map_err(Into::into)
   }
 }
 
-impl Resolve<RestartStack, (User, Update)> for State {
-  #[instrument(name = "RestartStack", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for RestartStack {
+  #[instrument(name = "RestartStack", skip(user, update), fields(user_id = user.id))]
   async fn resolve(
-    &self,
-    RestartStack { stack, service }: RestartStack,
-    (user, update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     execute_compose::<RestartStack>(
-      &stack,
-      service,
-      &user,
+      &self.stack,
+      self.service,
+      user,
       |state| {
         state.restarting = true;
       },
-      update,
+      update.clone(),
       (),
     )
     .await
+    .map_err(Into::into)
   }
 }
 
-impl Resolve<PauseStack, (User, Update)> for State {
-  #[instrument(name = "PauseStack", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for PauseStack {
+  #[instrument(name = "PauseStack", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    PauseStack { stack, service }: PauseStack,
-    (user, update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     execute_compose::<PauseStack>(
-      &stack,
-      service,
-      &user,
+      &self.stack,
+      self.service,
+      user,
       |state| state.pausing = true,
-      update,
+      update.clone(),
       (),
     )
     .await
+    .map_err(Into::into)
   }
 }
 
-impl Resolve<UnpauseStack, (User, Update)> for State {
-  #[instrument(name = "UnpauseStack", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for UnpauseStack {
+  #[instrument(name = "UnpauseStack", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    UnpauseStack { stack, service }: UnpauseStack,
-    (user, update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     execute_compose::<UnpauseStack>(
-      &stack,
-      service,
-      &user,
+      &self.stack,
+      self.service,
+      user,
       |state| state.unpausing = true,
-      update,
+      update.clone(),
       (),
     )
     .await
+    .map_err(Into::into)
   }
 }
 
-impl Resolve<StopStack, (User, Update)> for State {
-  #[instrument(name = "StopStack", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for StopStack {
+  #[instrument(name = "StopStack", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    StopStack {
-      stack,
-      stop_time,
-      service,
-    }: StopStack,
-    (user, update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     execute_compose::<StopStack>(
-      &stack,
-      service,
-      &user,
+      &self.stack,
+      self.service,
+      user,
       |state| state.stopping = true,
-      update,
-      stop_time,
+      update.clone(),
+      self.stop_time,
     )
     .await
+    .map_err(Into::into)
   }
 }
 
@@ -563,37 +564,33 @@ impl super::BatchExecute for BatchDestroyStack {
   }
 }
 
-impl Resolve<BatchDestroyStack, (User, Update)> for State {
-  #[instrument(name = "BatchDestroyStack", skip(self, user), fields(user_id = user.id))]
+impl Resolve<ExecuteArgs> for BatchDestroyStack {
+  #[instrument(name = "BatchDestroyStack", skip(user), fields(user_id = user.id))]
   async fn resolve(
-    &self,
-    BatchDestroyStack { pattern }: BatchDestroyStack,
-    (user, _): (User, Update),
-  ) -> anyhow::Result<BatchExecutionResponse> {
-    super::batch_execute::<BatchDestroyStack>(&pattern, &user).await
+    self,
+    ExecuteArgs { user, .. }: &ExecuteArgs,
+  ) -> serror::Result<BatchExecutionResponse> {
+    super::batch_execute::<BatchDestroyStack>(&self.pattern, user)
+      .await
+      .map_err(Into::into)
   }
 }
 
-impl Resolve<DestroyStack, (User, Update)> for State {
-  #[instrument(name = "DestroyStack", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for DestroyStack {
+  #[instrument(name = "DestroyStack", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    DestroyStack {
-      stack,
-      service,
-      remove_orphans,
-      stop_time,
-    }: DestroyStack,
-    (user, update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     execute_compose::<DestroyStack>(
-      &stack,
-      service,
-      &user,
+      &self.stack,
+      self.service,
+      user,
       |state| state.destroying = true,
-      update,
-      (stop_time, remove_orphans),
+      update.clone(),
+      (self.stop_time, self.remove_orphans),
     )
     .await
+    .map_err(Into::into)
   }
 }

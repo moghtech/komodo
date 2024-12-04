@@ -3,7 +3,7 @@ use komodo_client::entities::{
   update::Log,
   FileContents, SearchCombinator,
 };
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 
 use super::git::RepoActionResponse;
@@ -13,16 +13,18 @@ use super::git::RepoActionResponse;
 ///
 /// Incoming from docker like:
 /// [{"Name":"project_name","Status":"running(1)","ConfigFiles":"/root/compose/compose.yaml,/root/compose/compose2.yaml"}]
-#[derive(Debug, Clone, Serialize, Deserialize, Request)]
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Vec<ComposeProject>)]
+#[error(serror::Error)]
 pub struct ListComposeProjects {}
 
 //
 
 /// Get the compose contents on the host, for stacks using
 /// `files_on_host`.
-#[derive(Debug, Clone, Serialize, Deserialize, Request)]
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(GetComposeContentsOnHostResponse)]
+#[error(serror::Error)]
 pub struct GetComposeContentsOnHost {
   /// The name of the stack
   pub name: String,
@@ -39,8 +41,9 @@ pub struct GetComposeContentsOnHostResponse {
 //
 
 /// The stack folder must already exist for this to work
-#[derive(Debug, Clone, Serialize, Deserialize, Request)]
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Log)]
+#[error(serror::Error)]
 pub struct GetComposeServiceLog {
   /// The name of the project
   pub project: String,
@@ -61,8 +64,9 @@ fn default_tail() -> u64 {
 //
 
 /// The stack folder must already exist for this to work
-#[derive(Debug, Clone, Serialize, Deserialize, Request)]
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Log)]
+#[error(serror::Error)]
 pub struct GetComposeServiceLogSearch {
   /// The name of the project
   pub project: String,
@@ -86,8 +90,9 @@ pub struct GetComposeServiceLogSearch {
 
 /// Write the compose contents to the file on the host, for stacks using
 /// `files_on_host`.
-#[derive(Debug, Clone, Serialize, Deserialize, Request)]
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Log)]
+#[error(serror::Error)]
 pub struct WriteComposeContentsToHost {
   /// The name of the stack
   pub name: String,
@@ -104,8 +109,9 @@ pub struct WriteComposeContentsToHost {
 
 /// Write and commit compose contents.
 /// Only works with git repo based stacks.
-#[derive(Debug, Clone, Serialize, Deserialize, Request)]
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(RepoActionResponse)]
+#[error(serror::Error)]
 pub struct WriteCommitComposeContents {
   /// The stack to write to.
   pub stack: Stack,
@@ -123,8 +129,9 @@ pub struct WriteCommitComposeContents {
 
 /// Rewrites the compose directory, pulls any images, takes down existing containers,
 /// and runs docker compose up. Response: [ComposePullResponse]
-#[derive(Debug, Clone, Serialize, Deserialize, Request)]
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(ComposePullResponse)]
+#[error(serror::Error)]
 pub struct ComposePull {
   /// The stack to deploy
   pub stack: Stack,
@@ -145,8 +152,9 @@ pub struct ComposePullResponse {
 //
 
 /// docker compose up.
-#[derive(Debug, Clone, Serialize, Deserialize, Request)]
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(ComposeUpResponse)]
+#[error(serror::Error)]
 pub struct ComposeUp {
   /// The stack to deploy
   pub stack: Stack,
@@ -187,8 +195,9 @@ pub struct ComposeUpResponse {
 //
 
 /// General compose command runner
-#[derive(Debug, Clone, Serialize, Deserialize, Request)]
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Log)]
+#[error(serror::Error)]
 pub struct ComposeExecution {
   /// The compose project name to run the execution on.
   /// Usually its he name of the stack / folder under the `stack_dir`.

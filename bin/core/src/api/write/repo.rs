@@ -11,7 +11,6 @@ use komodo_client::{
     server::Server,
     to_komodo_name,
     update::{Log, Update},
-    user::User,
     CloneArgs, NoData, Operation,
   },
 };
@@ -30,69 +29,66 @@ use crate::{
     update::{add_update, make_update},
   },
   resource,
-  state::{action_states, db_client, github_client, State},
+  state::{action_states, db_client, github_client},
 };
 
-impl Resolve<CreateRepo, User> for State {
-  #[instrument(name = "CreateRepo", skip(self, user))]
+use super::WriteArgs;
+
+impl Resolve<WriteArgs> for CreateRepo {
+  #[instrument(name = "CreateRepo", skip(user))]
   async fn resolve(
-    &self,
-    CreateRepo { name, config }: CreateRepo,
-    user: User,
-  ) -> anyhow::Result<Repo> {
-    resource::create::<Repo>(&name, config, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Repo> {
+    Ok(resource::create::<Repo>(&self.name, self.config, user).await?)
   }
 }
 
-impl Resolve<CopyRepo, User> for State {
-  #[instrument(name = "CopyRepo", skip(self, user))]
+impl Resolve<WriteArgs> for CopyRepo {
+  #[instrument(name = "CopyRepo", skip(user))]
   async fn resolve(
-    &self,
-    CopyRepo { name, id }: CopyRepo,
-    user: User,
-  ) -> anyhow::Result<Repo> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Repo> {
     let Repo { config, .. } =
       resource::get_check_permissions::<Repo>(
-        &id,
+        &self.id,
         &user,
         PermissionLevel::Write,
       )
       .await?;
-    resource::create::<Repo>(&name, config.into(), &user).await
+    Ok(
+      resource::create::<Repo>(&self.name, config.into(), &user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<DeleteRepo, User> for State {
-  #[instrument(name = "DeleteRepo", skip(self, user))]
-  async fn resolve(
-    &self,
-    DeleteRepo { id }: DeleteRepo,
-    user: User,
-  ) -> anyhow::Result<Repo> {
-    resource::delete::<Repo>(&id, &user).await
+impl Resolve<WriteArgs> for DeleteRepo {
+  #[instrument(name = "DeleteRepo", skip(args))]
+  async fn resolve(self, args: &WriteArgs) -> serror::Result<Repo> {
+    Ok(resource::delete::<Repo>(&self.id, args).await?)
   }
 }
 
-impl Resolve<UpdateRepo, User> for State {
-  #[instrument(name = "UpdateRepo", skip(self, user))]
+impl Resolve<WriteArgs> for UpdateRepo {
+  #[instrument(name = "UpdateRepo", skip(user))]
   async fn resolve(
-    &self,
-    UpdateRepo { id, config }: UpdateRepo,
-    user: User,
-  ) -> anyhow::Result<Repo> {
-    resource::update::<Repo>(&id, config, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Repo> {
+    Ok(resource::update::<Repo>(&self.id, self.config, user).await?)
   }
 }
 
-impl Resolve<RenameRepo, User> for State {
-  #[instrument(name = "RenameRepo", skip(self, user))]
+impl Resolve<WriteArgs> for RenameRepo {
+  #[instrument(name = "RenameRepo", skip(user))]
   async fn resolve(
-    &self,
-    RenameRepo { id, name }: RenameRepo,
-    user: User,
-  ) -> anyhow::Result<Update> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Update> {
     let repo = resource::get_check_permissions::<Repo>(
-      &id,
+      &self.id,
       &user,
       PermissionLevel::Write,
     )
@@ -101,7 +97,9 @@ impl Resolve<RenameRepo, User> for State {
     if repo.config.server_id.is_empty()
       || !repo.config.path.is_empty()
     {
-      return resource::rename::<Repo>(&repo.id, &name, &user).await;
+      return Ok(
+        resource::rename::<Repo>(&repo.id, &self.name, &user).await?,
+      );
     }
 
     // get the action state for the repo (or insert default).
@@ -113,7 +111,7 @@ impl Resolve<RenameRepo, User> for State {
     let _action_guard =
       action_state.update(|state| state.renaming = true)?;
 
-    let name = to_komodo_name(&name);
+    let name = to_komodo_name(&self.name);
 
     let mut update = make_update(&repo, Operation::RenameRepo, &user);
 
@@ -159,21 +157,20 @@ impl Resolve<RenameRepo, User> for State {
   }
 }
 
-impl Resolve<RefreshRepoCache, User> for State {
+impl Resolve<WriteArgs> for RefreshRepoCache {
   #[instrument(
     name = "RefreshRepoCache",
     level = "debug",
-    skip(self, user)
+    skip(user)
   )]
   async fn resolve(
-    &self,
-    RefreshRepoCache { repo }: RefreshRepoCache,
-    user: User,
-  ) -> anyhow::Result<NoData> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<NoData> {
     // Even though this is a write request, this doesn't change any config. Anyone that can execute the
     // repo should be able to do this.
     let repo = resource::get_check_permissions::<Repo>(
-      &repo,
+      &self.repo,
       &user,
       PermissionLevel::Execute,
     )
@@ -245,39 +242,42 @@ impl Resolve<RefreshRepoCache, User> for State {
   }
 }
 
-impl Resolve<CreateRepoWebhook, User> for State {
-  #[instrument(name = "CreateRepoWebhook", skip(self, user))]
+impl Resolve<WriteArgs> for CreateRepoWebhook {
+  #[instrument(name = "CreateRepoWebhook", skip(args))]
   async fn resolve(
-    &self,
-    CreateRepoWebhook { repo, action }: CreateRepoWebhook,
-    user: User,
-  ) -> anyhow::Result<CreateRepoWebhookResponse> {
+    self,
+    args: &WriteArgs,
+  ) -> serror::Result<CreateRepoWebhookResponse> {
     let Some(github) = github_client() else {
-      return Err(anyhow!(
-        "github_webhook_app is not configured in core config toml"
-      ));
+      return Err(
+        anyhow!(
+          "github_webhook_app is not configured in core config toml"
+        )
+        .into(),
+      );
     };
 
     let repo = resource::get_check_permissions::<Repo>(
-      &repo,
-      &user,
+      &self.repo,
+      &args.user,
       PermissionLevel::Write,
     )
     .await?;
 
     if repo.config.repo.is_empty() {
-      return Err(anyhow!(
-        "No repo configured, can't create webhook"
-      ));
+      return Err(
+        anyhow!("No repo configured, can't create webhook").into(),
+      );
     }
 
     let mut split = repo.config.repo.split('/');
     let owner = split.next().context("Repo repo has no owner")?;
 
     let Some(github) = github.get(owner) else {
-      return Err(anyhow!(
-        "Cannot manage repo webhooks under owner {owner}"
-      ));
+      return Err(
+        anyhow!("Cannot manage repo webhooks under owner {owner}")
+          .into(),
+      );
     };
 
     let repo_name =
@@ -310,7 +310,7 @@ impl Resolve<CreateRepoWebhook, User> for State {
     } else {
       webhook_base_url
     };
-    let url = match action {
+    let url = match self.action {
       RepoWebhookAction::Clone => {
         format!("{host}/listener/github/repo/{}/clone", repo.id)
       }
@@ -348,64 +348,65 @@ impl Resolve<CreateRepoWebhook, User> for State {
       .context("failed to create webhook")?;
 
     if !repo.config.webhook_enabled {
-      self
-        .resolve(
-          UpdateRepo {
-            id: repo.id,
-            config: PartialRepoConfig {
-              webhook_enabled: Some(true),
-              ..Default::default()
-            },
-          },
-          user,
-        )
-        .await
-        .context("failed to update repo to enable webhook")?;
+      UpdateRepo {
+        id: repo.id,
+        config: PartialRepoConfig {
+          webhook_enabled: Some(true),
+          ..Default::default()
+        },
+      }
+      .resolve(args)
+      .await
+      .map_err(|e| e.error)
+      .context("failed to update repo to enable webhook")?;
     }
 
     Ok(NoData {})
   }
 }
 
-impl Resolve<DeleteRepoWebhook, User> for State {
-  #[instrument(name = "DeleteRepoWebhook", skip(self, user))]
+impl Resolve<WriteArgs> for DeleteRepoWebhook {
+  #[instrument(name = "DeleteRepoWebhook", skip(user))]
   async fn resolve(
-    &self,
-    DeleteRepoWebhook { repo, action }: DeleteRepoWebhook,
-    user: User,
-  ) -> anyhow::Result<DeleteRepoWebhookResponse> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<DeleteRepoWebhookResponse> {
     let Some(github) = github_client() else {
-      return Err(anyhow!(
-        "github_webhook_app is not configured in core config toml"
-      ));
+      return Err(
+        anyhow!(
+          "github_webhook_app is not configured in core config toml"
+        )
+        .into(),
+      );
     };
 
     let repo = resource::get_check_permissions::<Repo>(
-      &repo,
-      &user,
+      &self.repo,
+      user,
       PermissionLevel::Write,
     )
     .await?;
 
     if repo.config.git_provider != "github.com" {
-      return Err(anyhow!(
-        "Can only manage github.com repo webhooks"
-      ));
+      return Err(
+        anyhow!("Can only manage github.com repo webhooks").into(),
+      );
     }
 
     if repo.config.repo.is_empty() {
-      return Err(anyhow!(
-        "No repo configured, can't create webhook"
-      ));
+      return Err(
+        anyhow!("No repo configured, can't create webhook").into(),
+      );
     }
 
     let mut split = repo.config.repo.split('/');
     let owner = split.next().context("Repo repo has no owner")?;
 
     let Some(github) = github.get(owner) else {
-      return Err(anyhow!(
-        "Cannot manage repo webhooks under owner {owner}"
-      ));
+      return Err(
+        anyhow!("Cannot manage repo webhooks under owner {owner}")
+          .into(),
+      );
     };
 
     let repo_name =
@@ -431,7 +432,7 @@ impl Resolve<DeleteRepoWebhook, User> for State {
     } else {
       webhook_base_url
     };
-    let url = match action {
+    let url = match self.action {
       RepoWebhookAction::Clone => {
         format!("{host}/listener/github/repo/{}/clone", repo.id)
       }

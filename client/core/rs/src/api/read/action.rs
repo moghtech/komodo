@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -14,10 +14,11 @@ use super::KomodoReadRequest;
 /// Get a specific action. Response: [Action].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetActionResponse)]
+#[error(serror::Error)]
 pub struct GetAction {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -32,10 +33,11 @@ pub type GetActionResponse = Action;
 /// List actions matching optional query. Response: [ListActionsResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListActionsResponse)]
+#[error(serror::Error)]
 pub struct ListActions {
   /// optional structured query to filter actions.
   #[serde(default)]
@@ -50,10 +52,11 @@ pub type ListActionsResponse = Vec<ActionListItem>;
 /// List actions matching optional query. Response: [ListFullActionsResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullActionsResponse)]
+#[error(serror::Error)]
 pub struct ListFullActions {
   /// optional structured query to filter actions.
   #[serde(default)]
@@ -68,10 +71,11 @@ pub type ListFullActionsResponse = Vec<Action>;
 /// Get current action state for the action. Response: [ActionActionState].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetActionActionStateResponse)]
+#[error(serror::Error)]
 pub struct GetActionActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -87,10 +91,11 @@ pub type GetActionActionStateResponse = ActionActionState;
 /// Response: [GetActionsSummaryResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetActionsSummaryResponse)]
+#[error(serror::Error)]
 pub struct GetActionsSummary {}
 
 /// Response for [GetActionsSummary].

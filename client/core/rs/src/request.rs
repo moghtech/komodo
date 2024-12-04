@@ -15,10 +15,14 @@ use crate::{
 
 impl KomodoClient {
   #[cfg(not(feature = "blocking"))]
-  pub async fn auth<T: KomodoAuthRequest>(
+  pub async fn auth<T>(
     &self,
     request: T,
-  ) -> anyhow::Result<T::Response> {
+  ) -> anyhow::Result<T::Response>
+  where
+    T: Serialize + KomodoAuthRequest,
+    T::Response: DeserializeOwned,
+  {
     self
       .post(
         "/auth",
@@ -31,10 +35,11 @@ impl KomodoClient {
   }
 
   #[cfg(feature = "blocking")]
-  pub fn auth<T: KomodoAuthRequest>(
-    &self,
-    request: T,
-  ) -> anyhow::Result<T::Response> {
+  pub fn auth<T>(&self, request: T) -> anyhow::Result<T::Response>
+  where
+    T: Serialize + KomodoAuthRequest,
+    T::Response: DeserializeOwned,
+  {
     self.post(
       "/auth",
       json!({
@@ -45,10 +50,14 @@ impl KomodoClient {
   }
 
   #[cfg(not(feature = "blocking"))]
-  pub async fn user<T: KomodoUserRequest>(
+  pub async fn user<T>(
     &self,
     request: T,
-  ) -> anyhow::Result<T::Response> {
+  ) -> anyhow::Result<T::Response>
+  where
+    T: Serialize + KomodoUserRequest,
+    T::Response: DeserializeOwned,
+  {
     self
       .post(
         "/auth",
@@ -61,10 +70,11 @@ impl KomodoClient {
   }
 
   #[cfg(feature = "blocking")]
-  pub fn user<T: KomodoUserRequest>(
-    &self,
-    request: T,
-  ) -> anyhow::Result<T::Response> {
+  pub fn user<T>(&self, request: T) -> anyhow::Result<T::Response>
+  where
+    T: Serialize + KomodoUserRequest,
+    T::Response: DeserializeOwned,
+  {
     self.post(
       "/auth",
       json!({
@@ -75,10 +85,14 @@ impl KomodoClient {
   }
 
   #[cfg(not(feature = "blocking"))]
-  pub async fn read<T: KomodoReadRequest>(
+  pub async fn read<T>(
     &self,
     request: T,
-  ) -> anyhow::Result<T::Response> {
+  ) -> anyhow::Result<T::Response>
+  where
+    T: Serialize + KomodoReadRequest,
+    T::Response: DeserializeOwned,
+  {
     self
       .post(
         "/read",
@@ -91,10 +105,11 @@ impl KomodoClient {
   }
 
   #[cfg(feature = "blocking")]
-  pub fn read<T: KomodoReadRequest>(
-    &self,
-    request: T,
-  ) -> anyhow::Result<T::Response> {
+  pub fn read<T>(&self, request: T) -> anyhow::Result<T::Response>
+  where
+    T: Serialize + KomodoReadRequest,
+    T::Response: DeserializeOwned,
+  {
     self.post(
       "/read",
       json!({
@@ -105,10 +120,14 @@ impl KomodoClient {
   }
 
   #[cfg(not(feature = "blocking"))]
-  pub async fn write<T: KomodoWriteRequest>(
+  pub async fn write<T>(
     &self,
     request: T,
-  ) -> anyhow::Result<T::Response> {
+  ) -> anyhow::Result<T::Response>
+  where
+    T: Serialize + KomodoWriteRequest,
+    T::Response: DeserializeOwned,
+  {
     self
       .post(
         "/write",
@@ -121,10 +140,11 @@ impl KomodoClient {
   }
 
   #[cfg(feature = "blocking")]
-  pub fn write<T: KomodoWriteRequest>(
-    &self,
-    request: T,
-  ) -> anyhow::Result<T::Response> {
+  pub fn write<T>(&self, request: T) -> anyhow::Result<T::Response>
+  where
+    T: Serialize + KomodoWriteRequest,
+    T::Response: DeserializeOwned,
+  {
     self.post(
       "/write",
       json!({
@@ -135,10 +155,14 @@ impl KomodoClient {
   }
 
   #[cfg(not(feature = "blocking"))]
-  pub async fn execute<T: KomodoExecuteRequest>(
+  pub async fn execute<T>(
     &self,
     request: T,
-  ) -> anyhow::Result<T::Response> {
+  ) -> anyhow::Result<T::Response>
+  where
+    T: Serialize + KomodoExecuteRequest,
+    T::Response: DeserializeOwned,
+  {
     self
       .post(
         "/execute",
@@ -151,10 +175,11 @@ impl KomodoClient {
   }
 
   #[cfg(feature = "blocking")]
-  pub fn execute<T: KomodoExecuteRequest>(
-    &self,
-    request: T,
-  ) -> anyhow::Result<T::Response> {
+  pub fn execute<T>(&self, request: T) -> anyhow::Result<T::Response>
+  where
+    T: Serialize + KomodoExecuteRequest,
+    T::Response: DeserializeOwned,
+  {
     self.post(
       "/execute",
       json!({

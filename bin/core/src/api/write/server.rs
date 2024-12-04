@@ -5,7 +5,6 @@ use komodo_client::{
     permission::PermissionLevel,
     server::Server,
     update::{Update, UpdateStatus},
-    user::User,
     Operation,
   },
 };
@@ -18,63 +17,59 @@ use crate::{
     update::{add_update, make_update, update_update},
   },
   resource,
-  state::State,
 };
 
-impl Resolve<CreateServer, User> for State {
-  #[instrument(name = "CreateServer", skip(self, user))]
+use super::WriteArgs;
+
+impl Resolve<WriteArgs> for CreateServer {
+  #[instrument(name = "CreateServer", skip(user))]
   async fn resolve(
-    &self,
-    CreateServer { name, config }: CreateServer,
-    user: User,
-  ) -> anyhow::Result<Server> {
-    resource::create::<Server>(&name, config, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Server> {
+    Ok(
+      resource::create::<Server>(&self.name, self.config, user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<DeleteServer, User> for State {
-  #[instrument(name = "DeleteServer", skip(self, user))]
-  async fn resolve(
-    &self,
-    DeleteServer { id }: DeleteServer,
-    user: User,
-  ) -> anyhow::Result<Server> {
-    resource::delete::<Server>(&id, &user).await
+impl Resolve<WriteArgs> for DeleteServer {
+  #[instrument(name = "DeleteServer", skip(args))]
+  async fn resolve(self, args: &WriteArgs) -> serror::Result<Server> {
+    Ok(resource::delete::<Server>(&self.id, args).await?)
   }
 }
 
-impl Resolve<UpdateServer, User> for State {
-  #[instrument(name = "UpdateServer", skip(self, user))]
+impl Resolve<WriteArgs> for UpdateServer {
+  #[instrument(name = "UpdateServer", skip(user))]
   async fn resolve(
-    &self,
-    UpdateServer { id, config }: UpdateServer,
-    user: User,
-  ) -> anyhow::Result<Server> {
-    resource::update::<Server>(&id, config, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Server> {
+    Ok(resource::update::<Server>(&self.id, self.config, user).await?)
   }
 }
 
-impl Resolve<RenameServer, User> for State {
-  #[instrument(name = "RenameServer", skip(self, user))]
+impl Resolve<WriteArgs> for RenameServer {
+  #[instrument(name = "RenameServer", skip(user))]
   async fn resolve(
-    &self,
-    RenameServer { id, name }: RenameServer,
-    user: User,
-  ) -> anyhow::Result<Update> {
-    resource::rename::<Server>(&id, &name, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Update> {
+    Ok(resource::rename::<Server>(&self.id, &self.name, user).await?)
   }
 }
 
-impl Resolve<CreateNetwork, User> for State {
-  #[instrument(name = "CreateNetwork", skip(self, user))]
+impl Resolve<WriteArgs> for CreateNetwork {
+  #[instrument(name = "CreateNetwork", skip(user))]
   async fn resolve(
-    &self,
-    CreateNetwork { server, name }: CreateNetwork,
-    user: User,
-  ) -> anyhow::Result<Update> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Write,
     )
     .await?;
@@ -87,7 +82,10 @@ impl Resolve<CreateNetwork, User> for State {
     update.id = add_update(update.clone()).await?;
 
     match periphery
-      .request(api::network::CreateNetwork { name, driver: None })
+      .request(api::network::CreateNetwork {
+        name: self.name,
+        driver: None,
+      })
       .await
     {
       Ok(log) => update.logs.push(log),

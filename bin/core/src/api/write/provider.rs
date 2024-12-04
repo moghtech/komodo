@@ -3,7 +3,6 @@ use komodo_client::{
   api::write::*,
   entities::{
     provider::{DockerRegistryAccount, GitProviderAccount},
-    user::User,
     Operation, ResourceTarget,
   },
 };
@@ -15,29 +14,31 @@ use resolver_api::Resolve;
 
 use crate::{
   helpers::update::{add_update, make_update},
-  state::{db_client, State},
+  state::db_client,
 };
 
-impl Resolve<CreateGitProviderAccount, User> for State {
+use super::WriteArgs;
+
+impl Resolve<WriteArgs> for CreateGitProviderAccount {
   async fn resolve(
-    &self,
-    CreateGitProviderAccount { account }: CreateGitProviderAccount,
-    user: User,
-  ) -> anyhow::Result<CreateGitProviderAccountResponse> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<CreateGitProviderAccountResponse> {
     if !user.admin {
-      return Err(anyhow!(
-        "only admins can create git provider accounts"
-      ));
+      return Err(
+        anyhow!("only admins can create git provider accounts")
+          .into(),
+      );
     }
 
-    let mut account: GitProviderAccount = account.into();
+    let mut account: GitProviderAccount = self.account.into();
 
     if account.domain.is_empty() {
-      return Err(anyhow!("domain cannot be empty string."));
+      return Err(anyhow!("domain cannot be empty string.").into());
     }
 
     if account.username.is_empty() {
-      return Err(anyhow!("username cannot be empty string."));
+      return Err(anyhow!("username cannot be empty string.").into());
     }
 
     let mut update = make_update(
@@ -77,36 +78,38 @@ impl Resolve<CreateGitProviderAccount, User> for State {
   }
 }
 
-impl Resolve<UpdateGitProviderAccount, User> for State {
+impl Resolve<WriteArgs> for UpdateGitProviderAccount {
   async fn resolve(
-    &self,
-    UpdateGitProviderAccount { id, mut account }: UpdateGitProviderAccount,
-    user: User,
-  ) -> anyhow::Result<UpdateGitProviderAccountResponse> {
+    mut self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<UpdateGitProviderAccountResponse> {
     if !user.admin {
-      return Err(anyhow!(
-        "only admins can update git provider accounts"
-      ));
+      return Err(
+        anyhow!("only admins can update git provider accounts")
+          .into(),
+      );
     }
 
-    if let Some(domain) = &account.domain {
+    if let Some(domain) = &self.account.domain {
       if domain.is_empty() {
-        return Err(anyhow!(
-          "cannot update git provider with empty domain"
-        ));
+        return Err(
+          anyhow!("cannot update git provider with empty domain")
+            .into(),
+        );
       }
     }
 
-    if let Some(username) = &account.username {
+    if let Some(username) = &self.account.username {
       if username.is_empty() {
-        return Err(anyhow!(
-          "cannot update git provider with empty username"
-        ));
+        return Err(
+          anyhow!("cannot update git provider with empty username")
+            .into(),
+        );
       }
     }
 
     // Ensure update does not change id
-    account.id = None;
+    self.account.id = None;
 
     let mut update = make_update(
       ResourceTarget::system(),
@@ -114,25 +117,24 @@ impl Resolve<UpdateGitProviderAccount, User> for State {
       &user,
     );
 
-    let account = to_document(&account).context(
+    let account = to_document(&self.account).context(
       "failed to serialize partial git provider account to bson",
     )?;
     let db = db_client();
     update_one_by_id(
       &db.git_accounts,
-      &id,
+      &self.id,
       doc! { "$set": account },
       None,
     )
     .await
     .context("failed to update git provider account on db")?;
 
-    let Some(account) =
-      find_one_by_id(&db.git_accounts, &id)
-        .await
-        .context("failed to query db for git accounts")?
+    let Some(account) = find_one_by_id(&db.git_accounts, &self.id)
+      .await
+      .context("failed to query db for git accounts")?
     else {
-      return Err(anyhow!("no account found with given id"));
+      return Err(anyhow!("no account found with given id").into());
     };
 
     update.push_simple_log(
@@ -156,16 +158,16 @@ impl Resolve<UpdateGitProviderAccount, User> for State {
   }
 }
 
-impl Resolve<DeleteGitProviderAccount, User> for State {
+impl Resolve<WriteArgs> for DeleteGitProviderAccount {
   async fn resolve(
-    &self,
-    DeleteGitProviderAccount { id }: DeleteGitProviderAccount,
-    user: User,
-  ) -> anyhow::Result<DeleteGitProviderAccountResponse> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<DeleteGitProviderAccountResponse> {
     if !user.admin {
-      return Err(anyhow!(
-        "only admins can delete git provider accounts"
-      ));
+      return Err(
+        anyhow!("only admins can delete git provider accounts")
+          .into(),
+      );
     }
 
     let mut update = make_update(
@@ -175,14 +177,13 @@ impl Resolve<DeleteGitProviderAccount, User> for State {
     );
 
     let db = db_client();
-    let Some(account) =
-      find_one_by_id(&db.git_accounts, &id)
-        .await
-        .context("failed to query db for git accounts")?
+    let Some(account) = find_one_by_id(&db.git_accounts, &self.id)
+      .await
+      .context("failed to query db for git accounts")?
     else {
-      return Err(anyhow!("no account found with given id"));
+      return Err(anyhow!("no account found with given id").into());
     };
-    delete_one_by_id(&db.git_accounts, &id, None)
+    delete_one_by_id(&db.git_accounts, &self.id, None)
       .await
       .context("failed to delete git account on db")?;
 
@@ -207,26 +208,28 @@ impl Resolve<DeleteGitProviderAccount, User> for State {
   }
 }
 
-impl Resolve<CreateDockerRegistryAccount, User> for State {
+impl Resolve<WriteArgs> for CreateDockerRegistryAccount {
   async fn resolve(
-    &self,
-    CreateDockerRegistryAccount { account }: CreateDockerRegistryAccount,
-    user: User,
-  ) -> anyhow::Result<CreateDockerRegistryAccountResponse> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<CreateDockerRegistryAccountResponse> {
     if !user.admin {
-      return Err(anyhow!(
-        "only admins can create docker registry account accounts"
-      ));
+      return Err(
+        anyhow!(
+          "only admins can create docker registry account accounts"
+        )
+        .into(),
+      );
     }
 
-    let mut account: DockerRegistryAccount = account.into();
+    let mut account: DockerRegistryAccount = self.account.into();
 
     if account.domain.is_empty() {
-      return Err(anyhow!("domain cannot be empty string."));
+      return Err(anyhow!("domain cannot be empty string.").into());
     }
 
     if account.username.is_empty() {
-      return Err(anyhow!("username cannot be empty string."));
+      return Err(anyhow!("username cannot be empty string.").into());
     }
 
     let mut update = make_update(
@@ -268,35 +271,41 @@ impl Resolve<CreateDockerRegistryAccount, User> for State {
   }
 }
 
-impl Resolve<UpdateDockerRegistryAccount, User> for State {
+impl Resolve<WriteArgs> for UpdateDockerRegistryAccount {
   async fn resolve(
-    &self,
-    UpdateDockerRegistryAccount { id, mut account }: UpdateDockerRegistryAccount,
-    user: User,
-  ) -> anyhow::Result<UpdateDockerRegistryAccountResponse> {
+    mut self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<UpdateDockerRegistryAccountResponse> {
     if !user.admin {
-      return Err(anyhow!(
-        "only admins can update docker registry accounts"
-      ));
+      return Err(
+        anyhow!("only admins can update docker registry accounts")
+          .into(),
+      );
     }
 
-    if let Some(domain) = &account.domain {
+    if let Some(domain) = &self.account.domain {
       if domain.is_empty() {
-        return Err(anyhow!(
-          "cannot update docker registry account with empty domain"
-        ));
+        return Err(
+          anyhow!(
+            "cannot update docker registry account with empty domain"
+          )
+          .into(),
+        );
       }
     }
 
-    if let Some(username) = &account.username {
+    if let Some(username) = &self.account.username {
       if username.is_empty() {
-        return Err(anyhow!(
+        return Err(
+          anyhow!(
           "cannot update docker registry account with empty username"
-        ));
+        )
+          .into(),
+        );
       }
     }
 
-    account.id = None;
+    self.account.id = None;
 
     let mut update = make_update(
       ResourceTarget::system(),
@@ -304,14 +313,14 @@ impl Resolve<UpdateDockerRegistryAccount, User> for State {
       &user,
     );
 
-    let account = to_document(&account).context(
+    let account = to_document(&self.account).context(
       "failed to serialize partial docker registry account account to bson",
     )?;
 
     let db = db_client();
     update_one_by_id(
       &db.registry_accounts,
-      &id,
+      &self.id,
       doc! { "$set": account },
       None,
     )
@@ -320,11 +329,12 @@ impl Resolve<UpdateDockerRegistryAccount, User> for State {
       "failed to update docker registry account account on db",
     )?;
 
-    let Some(account) = find_one_by_id(&db.registry_accounts, &id)
-      .await
-      .context("failed to query db for registry accounts")?
+    let Some(account) =
+      find_one_by_id(&db.registry_accounts, &self.id)
+        .await
+        .context("failed to query db for registry accounts")?
     else {
-      return Err(anyhow!("no account found with given id"));
+      return Err(anyhow!("no account found with given id").into());
     };
 
     update.push_simple_log(
@@ -348,16 +358,16 @@ impl Resolve<UpdateDockerRegistryAccount, User> for State {
   }
 }
 
-impl Resolve<DeleteDockerRegistryAccount, User> for State {
+impl Resolve<WriteArgs> for DeleteDockerRegistryAccount {
   async fn resolve(
-    &self,
-    DeleteDockerRegistryAccount { id }: DeleteDockerRegistryAccount,
-    user: User,
-  ) -> anyhow::Result<DeleteDockerRegistryAccountResponse> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<DeleteDockerRegistryAccountResponse> {
     if !user.admin {
-      return Err(anyhow!(
-        "only admins can delete docker registry accounts"
-      ));
+      return Err(
+        anyhow!("only admins can delete docker registry accounts")
+          .into(),
+      );
     }
 
     let mut update = make_update(
@@ -367,13 +377,14 @@ impl Resolve<DeleteDockerRegistryAccount, User> for State {
     );
 
     let db = db_client();
-    let Some(account) = find_one_by_id(&db.registry_accounts, &id)
-      .await
-      .context("failed to query db for git accounts")?
+    let Some(account) =
+      find_one_by_id(&db.registry_accounts, &self.id)
+        .await
+        .context("failed to query db for git accounts")?
     else {
-      return Err(anyhow!("no account found with given id"));
+      return Err(anyhow!("no account found with given id").into());
     };
-    delete_one_by_id(&db.registry_accounts, &id, None)
+    delete_one_by_id(&db.registry_accounts, &self.id, None)
       .await
       .context("failed to delete registry account on db")?;
 

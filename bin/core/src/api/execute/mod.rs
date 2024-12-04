@@ -1,6 +1,6 @@
-use std::time::Instant;
+use std::{pin::Pin, time::Instant};
 
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use axum::{middleware, routing::post, Extension, Router};
 use axum_extra::{headers::ContentType, TypedHeader};
 use derive_variants::{EnumVariants, ExtractVariant};
@@ -15,7 +15,8 @@ use komodo_client::{
   },
 };
 use mungos::by_id::find_one_by_id;
-use resolver_api::{derive::Resolver, Resolver};
+use resolver_api::Resolve;
+use response::JsonString;
 use serde::{Deserialize, Serialize};
 use serror::Json;
 use typeshare::typeshare;
@@ -25,7 +26,7 @@ use crate::{
   auth::auth_request,
   helpers::update::{init_execution_update, update_update},
   resource::{list_full_for_user_using_pattern, KomodoResource},
-  state::{db_client, State},
+  state::db_client,
 };
 
 mod action;
@@ -42,13 +43,19 @@ pub use {
   deployment::pull_deployment_inner, stack::pull_stack_inner,
 };
 
+pub struct ExecuteArgs {
+  pub user: User,
+  pub update: Update,
+}
+
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Resolver, EnumVariants,
+  Serialize, Deserialize, Debug, Clone, Resolve, EnumVariants,
 )]
 #[variant_derive(Debug)]
-#[resolver_target(State)]
-#[resolver_args((User, Update))]
+#[args(ExecuteArgs)]
+#[response(JsonString)]
+#[error(serror::Error)]
 #[serde(tag = "type", content = "params")]
 pub enum ExecuteRequest {
   // ==== SERVER ====
@@ -153,64 +160,73 @@ pub enum ExecutionResult {
   Batch(String),
 }
 
-pub async fn inner_handler(
+pub fn inner_handler(
   request: ExecuteRequest,
   user: User,
-) -> anyhow::Result<ExecutionResult> {
-  let req_id = Uuid::new_v4();
+) -> Pin<
+  Box<
+    dyn std::future::Future<Output = anyhow::Result<ExecutionResult>>
+      + Send,
+  >,
+> {
+  Box::pin(async move {
+    let req_id = Uuid::new_v4();
 
-  // need to validate no cancel is active before any update is created.
-  build::validate_cancel_build(&request).await?;
+    // need to validate no cancel is active before any update is created.
+    build::validate_cancel_build(&request).await?;
 
-  let update = init_execution_update(&request, &user).await?;
+    let update = init_execution_update(&request, &user).await?;
 
-  // This will be the case for the Batch exections,
-  // they don't have their own updates.
-  // The batch calls also call "inner_handler" themselves,
-  // and in their case will spawn tasks, so that isn't necessary
-  // here either.
-  if update.operation == Operation::None {
-    return Ok(ExecutionResult::Batch(
-      task(req_id, request, user, update).await?,
-    ));
-  }
-
-  let handle =
-    tokio::spawn(task(req_id, request, user, update.clone()));
-
-  tokio::spawn({
-    let update_id = update.id.clone();
-    async move {
-      let log = match handle.await {
-        Ok(Err(e)) => {
-          warn!("/execute request {req_id} task error: {e:#}",);
-          Log::error("task error", format_serror(&e.into()))
-        }
-        Err(e) => {
-          warn!("/execute request {req_id} spawn error: {e:?}",);
-          Log::error("spawn error", format!("{e:#?}"))
-        }
-        _ => return,
-      };
-      let res = async {
-        let mut update =
-          find_one_by_id(&db_client().updates, &update_id)
-            .await
-            .context("failed to query to db")?
-            .context("no update exists with given id")?;
-        update.logs.push(log);
-        update.finalize();
-        update_update(update).await
-      }
-      .await;
-
-      if let Err(e) = res {
-        warn!("failed to update update with task error log | {e:#}");
-      }
+    // This will be the case for the Batch exections,
+    // they don't have their own updates.
+    // The batch calls also call "inner_handler" themselves,
+    // and in their case will spawn tasks, so that isn't necessary
+    // here either.
+    if update.operation == Operation::None {
+      return Ok(ExecutionResult::Batch(
+        task(req_id, request, user, update).await?,
+      ));
     }
-  });
 
-  Ok(ExecutionResult::Single(update))
+    let handle =
+      tokio::spawn(task(req_id, request, user, update.clone()));
+
+    tokio::spawn({
+      let update_id = update.id.clone();
+      async move {
+        let log = match handle.await {
+          Ok(Err(e)) => {
+            warn!("/execute request {req_id} task error: {e:#}",);
+            Log::error("task error", format_serror(&e.into()))
+          }
+          Err(e) => {
+            warn!("/execute request {req_id} spawn error: {e:?}",);
+            Log::error("spawn error", format!("{e:#?}"))
+          }
+          _ => return,
+        };
+        let res = async {
+          let mut update =
+            find_one_by_id(&db_client().updates, &update_id)
+              .await
+              .context("failed to query to db")?
+              .context("no update exists with given id")?;
+          update.logs.push(log);
+          update.finalize();
+          update_update(update).await
+        }
+        .await;
+
+        if let Err(e) = res {
+          warn!(
+            "failed to update update with task error log | {e:#}"
+          );
+        }
+      }
+    });
+
+    Ok(ExecutionResult::Single(update))
+  })
 }
 
 #[instrument(
@@ -231,15 +247,14 @@ async fn task(
   info!("/execute request {req_id} | user: {}", user.username);
   let timer = Instant::now();
 
-  let res = State
-    .resolve_request(request, (user, update))
-    .await
-    .map_err(|e| match e {
-      resolver_api::Error::Serialization(e) => {
-        anyhow!("{e:?}").context("response serialization error")
-      }
-      resolver_api::Error::Inner(e) => e,
-    });
+  let res = match request.resolve(&ExecuteArgs { user, update }).await
+  {
+    Err(e) => Err(e.error),
+    Ok(JsonString::Err(e)) => Err(
+      anyhow::Error::from(e).context("failed to serialize response"),
+    ),
+    Ok(JsonString::Ok(res)) => Ok(res),
+  };
 
   if let Err(e) = &res {
     warn!("/execute request {req_id} error: {e:#}");

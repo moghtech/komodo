@@ -3,7 +3,6 @@ use komodo_client::{
   api::read::*,
   entities::{
     permission::PermissionLevel, server_template::ServerTemplate,
-    user::User,
   },
 };
 use mongo_indexed::Document;
@@ -11,66 +10,70 @@ use mungos::mongodb::bson::doc;
 use resolver_api::Resolve;
 
 use crate::{
-  helpers::query::get_all_tags,
-  resource,
-  state::{db_client, State},
+  helpers::query::get_all_tags, resource, state::db_client,
 };
 
-impl Resolve<GetServerTemplate, User> for State {
+use super::ReadArgs;
+
+impl Resolve<ReadArgs> for GetServerTemplate {
   async fn resolve(
-    &self,
-    GetServerTemplate { server_template }: GetServerTemplate,
-    user: User,
-  ) -> anyhow::Result<GetServerTemplateResponse> {
-    resource::get_check_permissions::<ServerTemplate>(
-      &server_template,
-      &user,
-      PermissionLevel::Read,
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetServerTemplateResponse> {
+    Ok(
+      resource::get_check_permissions::<ServerTemplate>(
+        &self.server_template,
+        user,
+        PermissionLevel::Read,
+      )
+      .await?,
     )
-    .await
   }
 }
 
-impl Resolve<ListServerTemplates, User> for State {
+impl Resolve<ReadArgs> for ListServerTemplates {
   async fn resolve(
-    &self,
-    ListServerTemplates { query }: ListServerTemplates,
-    user: User,
-  ) -> anyhow::Result<ListServerTemplatesResponse> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListServerTemplatesResponse> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    resource::list_for_user::<ServerTemplate>(query, &user, &all_tags)
-      .await
+    Ok(
+      resource::list_for_user::<ServerTemplate>(
+        self.query, user, &all_tags,
+      )
+      .await?,
+    )
   }
 }
 
-impl Resolve<ListFullServerTemplates, User> for State {
+impl Resolve<ReadArgs> for ListFullServerTemplates {
   async fn resolve(
-    &self,
-    ListFullServerTemplates { query }: ListFullServerTemplates,
-    user: User,
-  ) -> anyhow::Result<ListFullServerTemplatesResponse> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListFullServerTemplatesResponse> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    resource::list_full_for_user::<ServerTemplate>(
-      query, &user, &all_tags,
+    Ok(
+      resource::list_full_for_user::<ServerTemplate>(
+        self.query, user, &all_tags,
+      )
+      .await?,
     )
-    .await
   }
 }
 
-impl Resolve<GetServerTemplatesSummary, User> for State {
+impl Resolve<ReadArgs> for GetServerTemplatesSummary {
   async fn resolve(
-    &self,
-    GetServerTemplatesSummary {}: GetServerTemplatesSummary,
-    user: User,
-  ) -> anyhow::Result<GetServerTemplatesSummaryResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetServerTemplatesSummaryResponse> {
     let query = match resource::get_resource_object_ids_for_user::<
       ServerTemplate,
     >(&user)

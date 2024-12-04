@@ -10,13 +10,12 @@ use axum::{
   routing::post,
   Router,
 };
-use axum_extra::{headers::ContentType, TypedHeader};
 use derive_variants::ExtractVariant;
-use resolver_api::Resolver;
+use resolver_api::Resolve;
 use serror::{AddStatusCode, AddStatusCodeError, Json};
 use uuid::Uuid;
 
-use crate::{config::periphery_config, State};
+use crate::config::periphery_config;
 
 pub fn router() -> Router {
   Router::new()
@@ -27,7 +26,7 @@ pub fn router() -> Router {
 
 async fn handler(
   Json(request): Json<crate::api::PeripheryRequest>,
-) -> serror::Result<(TypedHeader<ContentType>, String)> {
+) -> serror::Result<axum::response::Response> {
   let req_id = Uuid::new_v4();
 
   let res = tokio::spawn(task(req_id, request))
@@ -38,28 +37,22 @@ async fn handler(
     warn!("request {req_id} spawn error: {e:#}");
   }
 
-  Ok((TypedHeader(ContentType::json()), res??))
+  res?
 }
 
 async fn task(
   req_id: Uuid,
   request: crate::api::PeripheryRequest,
-) -> anyhow::Result<String> {
+) -> serror::Result<axum::response::Response> {
   let variant = request.extract_variant();
 
-  let res =
-    State
-      .resolve_request(request, ())
-      .await
-      .map_err(|e| match e {
-        resolver_api::Error::Serialization(e) => {
-          anyhow!("{e:?}").context("response serialization error")
-        }
-        resolver_api::Error::Inner(e) => e,
-      });
+  let res = request.resolve(&crate::api::Args).await.map(|res| res.0);
 
   if let Err(e) = &res {
-    warn!("request {req_id} | type: {variant:?} | error: {e:#}");
+    warn!(
+      "request {req_id} | type: {variant:?} | error: {:#}",
+      e.error
+    );
   }
 
   res

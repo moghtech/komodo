@@ -28,7 +28,6 @@ export type ReadResponses = {
     ListUserTargetPermissions: Types.ListUserTargetPermissionsResponse;
     GetUserGroup: Types.GetUserGroupResponse;
     ListUserGroups: Types.ListUserGroupsResponse;
-    FindResources: Types.FindResourcesResponse;
     GetProceduresSummary: Types.GetProceduresSummaryResponse;
     GetProcedure: Types.GetProcedureResponse;
     GetProcedureActionState: Types.GetProcedureActionStateResponse;

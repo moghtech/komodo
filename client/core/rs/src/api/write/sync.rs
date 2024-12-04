@@ -1,6 +1,6 @@
 use clap::Parser;
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -17,10 +17,11 @@ use super::KomodoWriteRequest;
 /// Create a sync. Response: [ResourceSync].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ResourceSync)]
+#[error(serror::Error)]
 pub struct CreateResourceSync {
   /// The name given to newly created sync.
   pub name: String,
@@ -35,10 +36,11 @@ pub struct CreateResourceSync {
 /// of the sync at the given `id`. Response: [ResourceSync].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ResourceSync)]
+#[error(serror::Error)]
 pub struct CopyResourceSync {
   /// The name of the new sync.
   pub name: String,
@@ -52,10 +54,11 @@ pub struct CopyResourceSync {
 /// Response: [ResourceSync]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ResourceSync)]
+#[error(serror::Error)]
 pub struct DeleteResourceSync {
   /// The id or name of the sync to delete.
   pub id: String,
@@ -73,10 +76,11 @@ pub struct DeleteResourceSync {
 /// field changes occur from out of date local state.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ResourceSync)]
+#[error(serror::Error)]
 pub struct UpdateResourceSync {
   /// The id of the sync to update.
   pub id: String,
@@ -90,10 +94,12 @@ pub struct UpdateResourceSync {
 /// Response: [Update].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
+#[error(serror::Error)]
 pub struct RenameResourceSync {
   /// The id or name of the ResourceSync to rename.
   pub id: String,
@@ -106,10 +112,11 @@ pub struct RenameResourceSync {
 /// Trigger a refresh of the computed diff logs for view. Response: [ResourceSync]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ResourceSync)]
+#[error(serror::Error)]
 pub struct RefreshResourceSyncPending {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -121,10 +128,12 @@ pub struct RefreshResourceSyncPending {
 /// Rename the stack at id to the given name. Response: [Update].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
+#[error(serror::Error)]
 pub struct WriteSyncFileContents {
   /// The name or id of the target Sync.
   #[serde(alias = "id", alias = "name")]
@@ -150,12 +159,14 @@ pub struct WriteSyncFileContents {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
+#[error(serror::Error)]
 pub struct CommitSync {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -175,10 +186,11 @@ pub enum SyncWebhookAction {
 /// passed in request. Response: [CreateSyncWebhookResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateSyncWebhookResponse)]
+#[error(serror::Error)]
 pub struct CreateSyncWebhook {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -196,10 +208,11 @@ pub type CreateSyncWebhookResponse = NoData;
 /// passed in request. Response: [DeleteSyncWebhookResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteSyncWebhookResponse)]
+#[error(serror::Error)]
 pub struct DeleteSyncWebhook {
   /// Id or name
   #[serde(alias = "id", alias = "name")]

@@ -28,22 +28,19 @@ use mungos::{
 };
 use resolver_api::Resolve;
 
-use crate::{
-  config::core_config,
-  resource,
-  state::{db_client, State},
-};
+use crate::{config::core_config, resource, state::db_client};
+
+use super::ReadArgs;
 
 const UPDATES_PER_PAGE: i64 = 100;
 
-impl Resolve<ListUpdates, User> for State {
+impl Resolve<ReadArgs> for ListUpdates {
   async fn resolve(
-    &self,
-    ListUpdates { query, page }: ListUpdates,
-    user: User,
-  ) -> anyhow::Result<ListUpdatesResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListUpdatesResponse> {
     let query = if user.admin || core_config().transparent_mode {
-      query
+      self.query
     } else {
       let server_query =
         resource::get_resource_ids_for_user::<Server>(&user)
@@ -157,7 +154,7 @@ impl Resolve<ListUpdates, User> for State {
         })
         .unwrap_or_else(|| doc! { "target.type": "ResourceSync" });
 
-      let mut query = query.unwrap_or_default();
+      let mut query = self.query.unwrap_or_default();
       query.extend(doc! {
         "$or": [
           server_query,
@@ -188,7 +185,7 @@ impl Resolve<ListUpdates, User> for State {
       query,
       FindOptions::builder()
         .sort(doc! { "start_ts": -1 })
-        .skip(page as u64 * UPDATES_PER_PAGE as u64)
+        .skip(self.page as u64 * UPDATES_PER_PAGE as u64)
         .limit(UPDATES_PER_PAGE)
         .build(),
     )
@@ -220,7 +217,7 @@ impl Resolve<ListUpdates, User> for State {
     .collect::<Vec<_>>();
 
     let next_page = if updates.len() == UPDATES_PER_PAGE as usize {
-      Some(page + 1)
+      Some(self.page + 1)
     } else {
       None
     };
@@ -229,13 +226,12 @@ impl Resolve<ListUpdates, User> for State {
   }
 }
 
-impl Resolve<GetUpdate, User> for State {
+impl Resolve<ReadArgs> for GetUpdate {
   async fn resolve(
-    &self,
-    GetUpdate { id }: GetUpdate,
-    user: User,
-  ) -> anyhow::Result<Update> {
-    let update = find_one_by_id(&db_client().updates, &id)
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Update> {
+    let update = find_one_by_id(&db_client().updates, &self.id)
       .await
       .context("failed to query to db")?
       .context("no update exists with given id")?;
@@ -244,9 +240,9 @@ impl Resolve<GetUpdate, User> for State {
     }
     match &update.target {
       ResourceTarget::System(_) => {
-        return Err(anyhow!(
-          "user must be admin to view system updates"
-        ))
+        return Err(
+          anyhow!("user must be admin to view system updates").into(),
+        )
       }
       ResourceTarget::Server(id) => {
         resource::get_check_permissions::<Server>(

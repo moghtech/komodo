@@ -88,30 +88,3 @@ pub fn periphery_config() -> &'static PeripheryConfig {
     }
   })
 }
-
-pub fn git_providers_response() -> &'static String {
-  static GIT_PROVIDERS_RESPONSE: OnceLock<String> = OnceLock::new();
-  GIT_PROVIDERS_RESPONSE.get_or_init(|| {
-    let config = periphery_config();
-    serde_json::to_string(&config.git_providers).unwrap()
-  })
-}
-
-pub fn docker_registries_response() -> &'static String {
-  static DOCKER_REGISTRIES_RESPONSE: OnceLock<String> =
-    OnceLock::new();
-  DOCKER_REGISTRIES_RESPONSE.get_or_init(|| {
-    let config = periphery_config();
-    serde_json::to_string(&config.docker_registries).unwrap()
-  })
-}
-
-pub fn secrets_response() -> &'static String {
-  static SECRETS_RESPONSE: OnceLock<String> = OnceLock::new();
-  SECRETS_RESPONSE.get_or_init(|| {
-    serde_json::to_string(
-      &periphery_config().secrets.keys().collect::<Vec<_>>(),
-    )
-    .unwrap()
-  })
-}

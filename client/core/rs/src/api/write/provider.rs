@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -11,10 +11,11 @@ use super::KomodoWriteRequest;
 /// Response: [GitProviderAccount].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateGitProviderAccountResponse)]
+#[error(serror::Error)]
 pub struct CreateGitProviderAccount {
   /// The initial account config. Anything in the _id field will be ignored,
   /// as this is generated on creation.
@@ -30,10 +31,11 @@ pub type CreateGitProviderAccountResponse = GitProviderAccount;
 /// Response: [GitProviderAccount].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateGitProviderAccountResponse)]
+#[error(serror::Error)]
 pub struct UpdateGitProviderAccount {
   /// The id of the git provider account to update.
   pub id: String,
@@ -50,10 +52,11 @@ pub type UpdateGitProviderAccountResponse = GitProviderAccount;
 /// Response: [DeleteGitProviderAccountResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteGitProviderAccountResponse)]
+#[error(serror::Error)]
 pub struct DeleteGitProviderAccount {
   /// The id of the git provider to delete
   pub id: String,
@@ -68,10 +71,11 @@ pub type DeleteGitProviderAccountResponse = GitProviderAccount;
 /// Response: [DockerRegistryAccount].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateDockerRegistryAccountResponse)]
+#[error(serror::Error)]
 pub struct CreateDockerRegistryAccount {
   pub account: _PartialDockerRegistryAccount,
 }
@@ -85,10 +89,11 @@ pub type CreateDockerRegistryAccountResponse = DockerRegistryAccount;
 /// Response: [DockerRegistryAccount].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateDockerRegistryAccountResponse)]
+#[error(serror::Error)]
 pub struct UpdateDockerRegistryAccount {
   /// The id of the docker registry to update
   pub id: String,
@@ -105,10 +110,11 @@ pub type UpdateDockerRegistryAccountResponse = DockerRegistryAccount;
 /// Response: [DockerRegistryAccount].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteDockerRegistryAccountResponse)]
+#[error(serror::Error)]
 pub struct DeleteDockerRegistryAccount {
   /// The id of the docker registry account to delete
   pub id: String,

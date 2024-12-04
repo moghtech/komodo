@@ -1,17 +1,17 @@
 use std::time::Instant;
 
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use axum::{middleware, routing::post, Extension, Router};
-use axum_extra::{headers::ContentType, TypedHeader};
 use derive_variants::{EnumVariants, ExtractVariant};
 use komodo_client::{api::write::*, entities::user::User};
-use resolver_api::{derive::Resolver, Resolver};
+use resolver_api::Resolve;
+use response::Response;
 use serde::{Deserialize, Serialize};
 use serror::Json;
 use typeshare::typeshare;
 use uuid::Uuid;
 
-use crate::{auth::auth_request, state::State};
+use crate::auth::auth_request;
 
 mod action;
 mod alerter;
@@ -33,13 +33,18 @@ mod user;
 mod user_group;
 mod variable;
 
+pub struct WriteArgs {
+  pub user: User,
+}
+
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Resolver, EnumVariants,
+  Serialize, Deserialize, Debug, Clone, Resolve, EnumVariants,
 )]
 #[variant_derive(Debug)]
-#[resolver_target(State)]
-#[resolver_args(User)]
+#[args(WriteArgs)]
+#[response(Response)]
+#[error(serror::Error)]
 #[serde(tag = "type", content = "params")]
 pub enum WriteRequest {
   // ==== USER ====
@@ -194,7 +199,7 @@ pub fn router() -> Router {
 async fn handler(
   Extension(user): Extension<User>,
   Json(request): Json<WriteRequest>,
-) -> serror::Result<(TypedHeader<ContentType>, String)> {
+) -> serror::Result<axum::response::Response> {
   let req_id = Uuid::new_v4();
 
   let res = tokio::spawn(task(req_id, request, user))
@@ -205,7 +210,7 @@ async fn handler(
     warn!("/write request {req_id} spawn error: {e:#}");
   }
 
-  Ok((TypedHeader(ContentType::json()), res??))
+  res?
 }
 
 #[instrument(
@@ -220,28 +225,19 @@ async fn task(
   req_id: Uuid,
   request: WriteRequest,
   user: User,
-) -> anyhow::Result<String> {
+) -> serror::Result<axum::response::Response> {
   info!("/write request | user: {}", user.username);
 
   let timer = Instant::now();
 
-  let res =
-    State
-      .resolve_request(request, user)
-      .await
-      .map_err(|e| match e {
-        resolver_api::Error::Serialization(e) => {
-          anyhow!("{e:?}").context("response serialization error")
-        }
-        resolver_api::Error::Inner(e) => e,
-      });
+  let res = request.resolve(&WriteArgs { user }).await;
 
   if let Err(e) = &res {
-    warn!("/write request {req_id} error: {e:#}");
+    warn!("/write request {req_id} error: {:#}", e.error);
   }
 
   let elapsed = timer.elapsed();
   debug!("/write request {req_id} | resolve time: {elapsed:?}");
 
-  res
+  res.map(|res| res.0)
 }

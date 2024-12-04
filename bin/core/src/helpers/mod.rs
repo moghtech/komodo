@@ -25,9 +25,8 @@ use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use resolver_api::Resolve;
 
 use crate::{
-  config::core_config,
-  resource,
-  state::{db_client, State},
+  api::write::WriteArgs, config::core_config, resource,
+  state::db_client,
 };
 
 pub mod action_state;
@@ -305,46 +304,44 @@ pub async fn ensure_first_server_and_builder() {
   let server = if let Some(server) = server {
     server
   } else {
-    match State
-      .resolve(
-        CreateServer {
-          name: format!("server-{}", random_string(5)),
-          config: PartialServerConfig {
-            address: Some(first_server.to_string()),
-            enabled: Some(true),
-            ..Default::default()
-          },
-        },
-        system_user().to_owned(),
-      )
-      .await
+    match (CreateServer {
+      name: format!("server-{}", random_string(5)),
+      config: PartialServerConfig {
+        address: Some(first_server.to_string()),
+        enabled: Some(true),
+        ..Default::default()
+      },
+    })
+    .resolve(&WriteArgs {
+      user: system_user().to_owned(),
+    })
+    .await
     {
       Ok(server) => server,
       Err(e) => {
-        error!("Failed to initialize 'first_server'. Failed to CreateServer. {e:?}");
+        error!("Failed to initialize 'first_server'. Failed to CreateServer. {:#}", e.error);
         return;
       }
     }
   };
   let Ok(None) = db.builders
     .find_one(Document::new()).await
-    .inspect_err(|e| error!("Failed to initialize 'first_builder'. Failed to query db. {e:?}")) else {
+    .inspect_err(|e| error!("Failed to initialize 'first_builder' | Failed to query db | {e:?}")) else {
       return;
     };
-  if let Err(e) = State
-    .resolve(
-      CreateBuilder {
-        name: String::from("local"),
-        config: PartialBuilderConfig::Server(
-          PartialServerBuilderConfig {
-            server_id: Some(server.id),
-          },
-        ),
+  if let Err(e) = (CreateBuilder {
+    name: String::from("local"),
+    config: PartialBuilderConfig::Server(
+      PartialServerBuilderConfig {
+        server_id: Some(server.id),
       },
-      system_user().to_owned(),
-    )
-    .await
+    ),
+  })
+  .resolve(&WriteArgs {
+    user: system_user().to_owned(),
+  })
+  .await
   {
-    error!("Failed to initialize 'first_builder'. Failed to CreateBuilder. {e:?}");
+    error!("Failed to initialize 'first_builder' | Failed to CreateBuilder | {:#}", e.error);
   }
 }

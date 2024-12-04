@@ -7,46 +7,41 @@ use komodo_client::{
     UpdateUserPasswordResponse, UpdateUserUsername,
     UpdateUserUsernameResponse,
   },
-  entities::{
-    user::{User, UserConfig},
-    NoData,
-  },
+  entities::{user::UserConfig, NoData},
 };
 use mungos::mongodb::bson::{doc, oid::ObjectId};
 use resolver_api::Resolve;
 
-use crate::{
-  helpers::hash_password,
-  state::{db_client, State},
-};
+use crate::{helpers::hash_password, state::db_client};
+
+use super::WriteArgs;
 
 //
 
-impl Resolve<UpdateUserUsername, User> for State {
+impl Resolve<WriteArgs> for UpdateUserUsername {
   async fn resolve(
-    &self,
-    UpdateUserUsername { username }: UpdateUserUsername,
-    user: User,
-  ) -> anyhow::Result<UpdateUserUsernameResponse> {
-    if username.is_empty() {
-      return Err(anyhow!("Username cannot be empty."));
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<UpdateUserUsernameResponse> {
+    if self.username.is_empty() {
+      return Err(anyhow!("Username cannot be empty.").into());
     }
     let db = db_client();
     if db
       .users
-      .find_one(doc! { "username": &username })
+      .find_one(doc! { "username": &self.username })
       .await
       .context("Failed to query for existing users")?
       .is_some()
     {
-      return Err(anyhow!("Username already taken."));
+      return Err(anyhow!("Username already taken.").into());
     }
     let id = ObjectId::from_str(&user.id)
       .context("User id not valid ObjectId.")?;
     db.users
       .update_one(
         doc! { "_id": id },
-        doc! { "$set": { "username": username } },
+        doc! { "$set": { "username": self.username } },
       )
       .await
       .context("Failed to update user username on database.")?;
@@ -56,21 +51,20 @@ impl Resolve<UpdateUserUsername, User> for State {
 
 //
 
-impl Resolve<UpdateUserPassword, User> for State {
+impl Resolve<WriteArgs> for UpdateUserPassword {
   async fn resolve(
-    &self,
-    UpdateUserPassword { password }: UpdateUserPassword,
-    user: User,
-  ) -> anyhow::Result<UpdateUserPasswordResponse> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<UpdateUserPasswordResponse> {
     let UserConfig::Local { .. } = user.config else {
-      return Err(anyhow!("User is not local user"));
+      return Err(anyhow!("User is not local user").into());
     };
-    if password.is_empty() {
-      return Err(anyhow!("Password cannot be empty."));
+    if self.password.is_empty() {
+      return Err(anyhow!("Password cannot be empty.").into());
     }
     let id = ObjectId::from_str(&user.id)
       .context("User id not valid ObjectId.")?;
-    let hashed_password = hash_password(password)?;
+    let hashed_password = hash_password(self.password)?;
     db_client()
       .users
       .update_one(
@@ -87,22 +81,21 @@ impl Resolve<UpdateUserPassword, User> for State {
 
 //
 
-impl Resolve<DeleteUser, User> for State {
+impl Resolve<WriteArgs> for DeleteUser {
   async fn resolve(
-    &self,
-    DeleteUser { user }: DeleteUser,
-    admin: User,
-  ) -> anyhow::Result<DeleteUserResponse> {
+    self,
+    WriteArgs { user: admin }: &WriteArgs,
+  ) -> serror::Result<DeleteUserResponse> {
     if !admin.admin {
-      return Err(anyhow!("Calling user is not admin."));
+      return Err(anyhow!("Calling user is not admin.").into());
     }
-    if admin.username == user || admin.id == user {
-      return Err(anyhow!("User cannot delete themselves."));
+    if admin.username == self.user || admin.id == self.user {
+      return Err(anyhow!("User cannot delete themselves.").into());
     }
-    let query = if let Ok(id) = ObjectId::from_str(&user) {
+    let query = if let Ok(id) = ObjectId::from_str(&self.user) {
       doc! { "_id": id }
     } else {
-      doc! { "username": user }
+      doc! { "username": self.user }
     };
     let db = db_client();
     let Some(user) = db
@@ -111,15 +104,20 @@ impl Resolve<DeleteUser, User> for State {
       .await
       .context("Failed to query database for users.")?
     else {
-      return Err(anyhow!("No user found with given id / username"));
+      return Err(
+        anyhow!("No user found with given id / username").into(),
+      );
     };
     if user.super_admin {
-      return Err(anyhow!("Cannot delete a super admin user."));
+      return Err(
+        anyhow!("Cannot delete a super admin user.").into(),
+      );
     }
     if user.admin && !admin.super_admin {
-      return Err(anyhow!(
-        "Only a Super Admin can delete an admin user."
-      ));
+      return Err(
+        anyhow!("Only a Super Admin can delete an admin user.")
+          .into(),
+      );
     }
     db.users
       .delete_one(query)

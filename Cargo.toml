@@ -8,23 +8,20 @@ members = [
 ]
 
 [workspace.package]
-version = "1.16.12"
+version = "1.16.13"
 edition = "2021"
 authors = ["mbecker20 <becker.maxh@gmail.com>"]
 license = "GPL-3.0-or-later"
 repository = "https://github.com/mbecker20/komodo"
 homepage = "https://komo.do"
 
-[patch.crates-io]
-# komodo_client = { path = "client/core/rs" }
-
 [workspace.dependencies]
 # LOCAL
-# komodo_client = "1.15.6"
 komodo_client = { path = "client/core/rs" }
 periphery_client = { path = "client/periphery/rs" }
 environment_file = { path = "lib/environment_file" }
 formatting = { path = "lib/formatting" }
+response = { path = "lib/response" }
 command = { path = "lib/command" }
 logger = { path = "lib/logger" }
 cache = { path = "lib/cache" }
@@ -32,7 +29,7 @@ git = { path = "lib/git" }
 
 # MOGH
 run_command = { version = "0.0.6", features = ["async_tokio"] }
-serror = { version = "0.4.7", default-features = false }
+serror = { version = "0.4.8", default-features = false }
 slack = { version = "0.3.0", package = "slack_client_rs", default-features = false, features = ["rustls"] }
 derive_default_builder = "0.1.8"
 derive_empty_traits = "0.1.0"
@@ -41,15 +38,15 @@ async_timing_util = "1.0.0"
 partial_derive2 = "0.4.3"
 derive_variants = "1.0.0"
 mongo_indexed = "2.0.1"
-resolver_api = "1.1.1"
+resolver_api = "3.0.0"
 toml_pretty = "1.1.2"
 mungos = "1.1.0"
 svi = "1.0.1"
 
 # ASYNC
 reqwest = { version = "0.12.9", default-features = false, features = ["json", "rustls-tls"] }
-tokio = { version = "1.41.1", features = ["full"] }
-tokio-util = "0.7.12"
+tokio = { version = "1.42.0", features = ["full"] }
+tokio-util = "0.7.13"
 futures = "0.3.31"
 futures-util = "0.3.31"
 
@@ -69,20 +66,20 @@ serde_yaml = "0.9.34"
 toml = "0.8.19"
 
 # ERROR
-anyhow = "1.0.93"
-thiserror = "2.0.3"
+anyhow = "1.0.94"
+thiserror = "2.0.6"
 
 # LOGGING
 opentelemetry-otlp = { version = "0.27.0", features = ["tls-roots", "reqwest-rustls"] }
-opentelemetry_sdk = { version = "0.27.0", features = ["rt-tokio"] }
-tracing-subscriber = { version = "0.3.18", features = ["json"] }
+opentelemetry_sdk = { version = "0.27.1", features = ["rt-tokio"] }
+tracing-subscriber = { version = "0.3.19", features = ["json"] }
 opentelemetry-semantic-conventions = "0.27.0"
 tracing-opentelemetry = "0.28.0"
-opentelemetry = "0.27.0"
-tracing = "0.1.40"
+opentelemetry = "0.27.1"
+tracing = "0.1.41"
 
 # CONFIG
-clap = { version = "4.5.21", features = ["derive"] }
+clap = { version = "4.5.23", features = ["derive"] }
 dotenvy = "0.15.7"
 envy = "0.4.2"
 
@@ -93,7 +90,7 @@ urlencoding = "2.1.3"
 nom_pem = "4.0.0"
 bcrypt = "0.16.0"
 base64 = "0.22.1"
-rustls = "0.23.18"
+rustls = "0.23.19"
 hmac = "0.12.1"
 sha2 = "0.10.8"
 rand = "0.8.5"
@@ -102,11 +99,11 @@ hex = "0.4.3"
 
 # SYSTEM
 bollard = "0.18.1"
-sysinfo = "0.32.0"
+sysinfo = "0.33.0"
 
 # CLOUD
 aws-config = "1.5.10"
-aws-sdk-ec2 = "1.91.0"
+aws-sdk-ec2 = "1.95.0"
 
 # MISC
 derive_builder = "0.20.2"

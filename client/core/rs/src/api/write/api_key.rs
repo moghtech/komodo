@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -16,10 +16,11 @@ use super::KomodoWriteRequest;
 /// Response: [CreateApiKeyResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateApiKeyForServiceUserResponse)]
+#[error(serror::Error)]
 pub struct CreateApiKeyForServiceUser {
   /// Must be service user
   pub user_id: String,
@@ -40,10 +41,11 @@ pub type CreateApiKeyForServiceUserResponse = CreateApiKeyResponse;
 /// Response: [NoData].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteApiKeyForServiceUserResponse)]
+#[error(serror::Error)]
 pub struct DeleteApiKeyForServiceUser {
   pub key: String,
 }

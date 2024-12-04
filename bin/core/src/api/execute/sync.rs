@@ -20,7 +20,7 @@ use komodo_client::{
     stack::Stack,
     sync::ResourceSync,
     update::{Log, Update},
-    user::{sync_user, User},
+    user::sync_user,
     ResourceTargetVariant,
   },
 };
@@ -32,9 +32,10 @@ use mungos::{
 use resolver_api::Resolve;
 
 use crate::{
+  api::write::WriteArgs,
   helpers::{query::get_id_to_tags, update::update_update},
   resource::{self, refresh_resource_sync_state_cache},
-  state::{action_states, db_client, State},
+  state::{action_states, db_client},
   sync::{
     deploy::{
       build_deploy_cache, deploy_from_cache, SyncDeployParams,
@@ -45,17 +46,19 @@ use crate::{
   },
 };
 
-impl Resolve<RunSync, (User, Update)> for State {
-  #[instrument(name = "RunSync", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+use super::ExecuteArgs;
+
+impl Resolve<ExecuteArgs> for RunSync {
+  #[instrument(name = "RunSync", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    RunSync {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
+    let RunSync {
       sync,
       resource_type: match_resource_type,
       resources: match_resources,
-    }: RunSync,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    } = self;
     let sync = resource::get_check_permissions::<
       entities::sync::ResourceSync,
     >(&sync, &user, PermissionLevel::Execute)
@@ -71,6 +74,8 @@ impl Resolve<RunSync, (User, Update)> for State {
     // Will also check to ensure sync not already busy before updating.
     let _action_guard =
       action_state.update(|state| state.syncing = true)?;
+
+    let mut update = update.clone();
 
     // Send update here for FE to recheck action state
     update_update(update.clone()).await?;
@@ -90,7 +95,9 @@ impl Resolve<RunSync, (User, Update)> for State {
     update_update(update.clone()).await?;
 
     if !file_errors.is_empty() {
-      return Err(anyhow!("Found file errors. Cannot execute sync."));
+      return Err(
+        anyhow!("Found file errors. Cannot execute sync.").into(),
+      );
     }
 
     let resources = resources?;
@@ -581,18 +588,21 @@ impl Resolve<RunSync, (User, Update)> for State {
       )
     }
 
-    if let Err(e) = State
-      .resolve(
-        RefreshResourceSyncPending { sync: sync.id },
-        sync_user().to_owned(),
-      )
+    if let Err(e) = (RefreshResourceSyncPending { sync: sync.id })
+      .resolve(&WriteArgs {
+        user: sync_user().to_owned(),
+      })
       .await
     {
-      warn!("failed to refresh sync {} after run | {e:#}", sync.name);
+      warn!(
+        "failed to refresh sync {} after run | {:#}",
+        sync.name, e.error
+      );
       update.push_error_log(
         "refresh sync",
         format_serror(
-          &e.context("failed to refresh sync pending after run")
+          &e.error
+            .context("failed to refresh sync pending after run")
             .into(),
         ),
       );

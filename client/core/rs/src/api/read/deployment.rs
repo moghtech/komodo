@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -20,10 +20,11 @@ use super::KomodoReadRequest;
 /// Get a specific deployment by name or id. Response: [Deployment].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentResponse)]
+#[error(serror::Error)]
 pub struct GetDeployment {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -39,10 +40,11 @@ pub type GetDeploymentResponse = Deployment;
 /// Response: [ListDeploymentsResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDeploymentsResponse)]
+#[error(serror::Error)]
 pub struct ListDeployments {
   /// optional structured query to filter deployments.
   #[serde(default)]
@@ -58,10 +60,11 @@ pub type ListDeploymentsResponse = Vec<DeploymentListItem>;
 /// Response: [ListFullDeploymentsResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullDeploymentsResponse)]
+#[error(serror::Error)]
 pub struct ListFullDeployments {
   /// optional structured query to filter deployments.
   #[serde(default)]
@@ -81,10 +84,11 @@ pub type ListFullDeploymentsResponse = Vec<Deployment>;
 /// to keep it up to date.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentContainerResponse)]
+#[error(serror::Error)]
 pub struct GetDeploymentContainer {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -107,10 +111,11 @@ pub struct GetDeploymentContainerResponse {
 /// Note. This call will hit the underlying server directly for most up to date log.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentLogResponse)]
+#[error(serror::Error)]
 pub struct GetDeploymentLog {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -140,10 +145,11 @@ pub type GetDeploymentLogResponse = Log;
 /// Note. This call will hit the underlying server directly for most up to date log.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(SearchDeploymentLogResponse)]
+#[error(serror::Error)]
 pub struct SearchDeploymentLog {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -175,10 +181,11 @@ pub type SearchDeploymentLogResponse = Log;
 /// Note. This call will hit the underlying server directly for most up to date stats.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentStatsResponse)]
+#[error(serror::Error)]
 pub struct GetDeploymentStats {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -194,10 +201,11 @@ pub type GetDeploymentStatsResponse = ContainerStats;
 /// Response: [DeploymentActionState].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(DeploymentActionState)]
+#[error(serror::Error)]
 pub struct GetDeploymentActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -213,10 +221,11 @@ pub type GetDeploymentActionStateResponse = DeploymentActionState;
 /// Response: [GetDeploymentsSummaryResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentsSummaryResponse)]
+#[error(serror::Error)]
 pub struct GetDeploymentsSummary {}
 
 /// Response for [GetDeploymentsSummary].
@@ -243,10 +252,11 @@ pub struct GetDeploymentsSummaryResponse {
 /// Useful to offer suggestions. Response: [ListCommonDeploymentExtraArgsResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonDeploymentExtraArgsResponse)]
+#[error(serror::Error)]
 pub struct ListCommonDeploymentExtraArgs {
   /// optional structured query to filter deployments.
   #[serde(default)]

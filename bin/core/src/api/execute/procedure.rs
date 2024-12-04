@@ -17,10 +17,10 @@ use tokio::sync::Mutex;
 use crate::{
   helpers::{procedure::execute_procedure, update::update_update},
   resource::{self, refresh_procedure_state_cache},
-  state::{action_states, db_client, State},
+  state::{action_states, db_client},
 };
 
-use super::ExecuteRequest;
+use super::{ExecuteArgs, ExecuteRequest};
 
 impl super::BatchExecute for BatchRunProcedure {
   type Resource = Procedure;
@@ -29,25 +29,29 @@ impl super::BatchExecute for BatchRunProcedure {
   }
 }
 
-impl Resolve<BatchRunProcedure, (User, Update)> for State {
-  #[instrument(name = "BatchRunProcedure", skip(self, user), fields(user_id = user.id))]
+impl Resolve<ExecuteArgs> for BatchRunProcedure {
+  #[instrument(name = "BatchRunProcedure", skip(user), fields(user_id = user.id))]
   async fn resolve(
-    &self,
-    BatchRunProcedure { pattern }: BatchRunProcedure,
-    (user, _): (User, Update),
-  ) -> anyhow::Result<BatchExecutionResponse> {
-    super::batch_execute::<BatchRunProcedure>(&pattern, &user).await
+    self,
+    ExecuteArgs { user, .. }: &ExecuteArgs,
+  ) -> serror::Result<BatchExecutionResponse> {
+    Ok(
+      super::batch_execute::<BatchRunProcedure>(&self.pattern, user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<RunProcedure, (User, Update)> for State {
-  #[instrument(name = "RunProcedure", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for RunProcedure {
+  #[instrument(name = "RunProcedure", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    RunProcedure { procedure }: RunProcedure,
-    (user, update): (User, Update),
-  ) -> anyhow::Result<Update> {
-    resolve_inner(procedure, user, update).await
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
+    Ok(
+      resolve_inner(self.procedure, user.clone(), update.clone())
+        .await?,
+    )
   }
 }
 

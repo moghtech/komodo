@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -16,10 +16,11 @@ use super::KomodoWriteRequest;
 /// Create a repo. Response: [Repo].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Repo)]
+#[error(serror::Error)]
 pub struct CreateRepo {
   /// The name given to newly created repo.
   pub name: String,
@@ -34,10 +35,11 @@ pub struct CreateRepo {
 /// of the repo at the given `id`. Response: [Repo].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Repo)]
+#[error(serror::Error)]
 pub struct CopyRepo {
   /// The name of the new repo.
   pub name: String,
@@ -51,10 +53,11 @@ pub struct CopyRepo {
 /// Response: [Repo]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Repo)]
+#[error(serror::Error)]
 pub struct DeleteRepo {
   /// The id or name of the repo to delete.
   pub id: String,
@@ -75,10 +78,11 @@ pub struct DeleteRepo {
 /// field changes occur from out of date local state.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Repo)]
+#[error(serror::Error)]
 pub struct UpdateRepo {
   /// The id of the repo to update.
   pub id: String,
@@ -92,10 +96,12 @@ pub struct UpdateRepo {
 /// Response: [Update].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
+#[error(serror::Error)]
 pub struct RenameRepo {
   /// The id or name of the Repo to rename.
   pub id: String,
@@ -108,10 +114,11 @@ pub struct RenameRepo {
 /// Trigger a refresh of the cached latest hash and message.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
+#[error(serror::Error)]
 pub struct RefreshRepoCache {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -132,10 +139,11 @@ pub enum RepoWebhookAction {
 /// passed in request. Response: [CreateRepoWebhookResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateRepoWebhookResponse)]
+#[error(serror::Error)]
 pub struct CreateRepoWebhook {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -153,10 +161,11 @@ pub type CreateRepoWebhookResponse = NoData;
 /// passed in request. Response: [DeleteRepoWebhookResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteRepoWebhookResponse)]
+#[error(serror::Error)]
 pub struct DeleteRepoWebhook {
   /// Id or name
   #[serde(alias = "id", alias = "name")]

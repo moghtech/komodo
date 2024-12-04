@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -14,10 +14,11 @@ use super::KomodoReadRequest;
 /// Get a specific repo. Response: [Repo].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(Repo)]
+#[error(serror::Error)]
 pub struct GetRepo {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -32,10 +33,11 @@ pub type GetRepoResponse = Repo;
 /// List repos matching optional query. Response: [ListReposResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListReposResponse)]
+#[error(serror::Error)]
 pub struct ListRepos {
   /// optional structured query to filter repos.
   #[serde(default)]
@@ -50,10 +52,11 @@ pub type ListReposResponse = Vec<RepoListItem>;
 /// List repos matching optional query. Response: [ListFullReposResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullReposResponse)]
+#[error(serror::Error)]
 pub struct ListFullRepos {
   /// optional structured query to filter repos.
   #[serde(default)]
@@ -68,10 +71,11 @@ pub type ListFullReposResponse = Vec<Repo>;
 /// Get current action state for the repo. Response: [RepoActionState].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetRepoActionStateResponse)]
+#[error(serror::Error)]
 pub struct GetRepoActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -87,10 +91,11 @@ pub type GetRepoActionStateResponse = RepoActionState;
 /// Response: [GetReposSummaryResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetReposSummaryResponse)]
+#[error(serror::Error)]
 pub struct GetReposSummary {}
 
 /// Response for [GetReposSummary]
@@ -118,10 +123,11 @@ pub struct GetReposSummaryResponse {
 /// Get a target Repo's configured webhooks. Response: [GetRepoWebhooksEnabledResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetRepoWebhooksEnabledResponse)]
+#[error(serror::Error)]
 pub struct GetRepoWebhooksEnabled {
   /// Id or name
   #[serde(alias = "id", alias = "name")]

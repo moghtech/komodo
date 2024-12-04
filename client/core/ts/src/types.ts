@@ -4747,28 +4747,6 @@ export interface ExportResourcesToToml {
 	include_variables?: boolean;
 }
 
-/** Find resources matching a common query. Response: [FindResourcesResponse]. */
-export interface FindResources {
-	/** The mongo query as JSON */
-	query?: MongoDocument;
-	/** The resource variants to include in the response. */
-	resources?: ResourceTarget["type"][];
-}
-
-/** Response for [FindResources]. */
-export interface FindResourcesResponse {
-	/** The matching servers. */
-	servers: ServerListItem[];
-	/** The matching deployments. */
-	deployments: DeploymentListItem[];
-	/** The matching builds. */
-	builds: BuildListItem[];
-	/** The matching repos. */
-	repos: RepoListItem[];
-	/** The matching procedures. */
-	procedures: ProcedureListItem[];
-}
-
 /**
  * **Admin only.**
  * Find a user.
@@ -7459,7 +7437,6 @@ export type ReadRequest =
 	| { type: "ListUserTargetPermissions", params: ListUserTargetPermissions }
 	| { type: "GetUserGroup", params: GetUserGroup }
 	| { type: "ListUserGroups", params: ListUserGroups }
-	| { type: "FindResources", params: FindResources }
 	| { type: "GetProceduresSummary", params: GetProceduresSummary }
 	| { type: "GetProcedure", params: GetProcedure }
 	| { type: "GetProcedureActionState", params: GetProcedureActionState }

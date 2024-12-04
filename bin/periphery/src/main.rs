@@ -16,8 +16,6 @@ mod router;
 mod ssl;
 mod stats;
 
-struct State;
-
 async fn app() -> anyhow::Result<()> {
   dotenvy::dotenv().ok();
   let config = config::periphery_config();
@@ -26,7 +24,7 @@ async fn app() -> anyhow::Result<()> {
   info!("Komodo Periphery version: v{}", env!("CARGO_PKG_VERSION"));
   info!("{:?}", config.sanitized());
 
-  stats::spawn_system_stats_polling_threads();
+  stats::spawn_system_stats_polling_thread();
 
   let socket_addr =
     SocketAddr::from_str(&format!("0.0.0.0:{}", config.port))

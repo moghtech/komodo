@@ -4,7 +4,6 @@ use komodo_client::{
   entities::{
     alerter::{Alerter, AlerterListItem},
     permission::PermissionLevel,
-    user::User,
   },
 };
 use mongo_indexed::Document;
@@ -12,63 +11,68 @@ use mungos::mongodb::bson::doc;
 use resolver_api::Resolve;
 
 use crate::{
-  helpers::query::get_all_tags,
-  resource,
-  state::{db_client, State},
+  helpers::query::get_all_tags, resource, state::db_client,
 };
 
-impl Resolve<GetAlerter, User> for State {
+use super::ReadArgs;
+
+impl Resolve<ReadArgs> for GetAlerter {
   async fn resolve(
-    &self,
-    GetAlerter { alerter }: GetAlerter,
-    user: User,
-  ) -> anyhow::Result<Alerter> {
-    resource::get_check_permissions::<Alerter>(
-      &alerter,
-      &user,
-      PermissionLevel::Read,
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Alerter> {
+    Ok(
+      resource::get_check_permissions::<Alerter>(
+        &self.alerter,
+        user,
+        PermissionLevel::Read,
+      )
+      .await?,
     )
-    .await
   }
 }
 
-impl Resolve<ListAlerters, User> for State {
+impl Resolve<ReadArgs> for ListAlerters {
   async fn resolve(
-    &self,
-    ListAlerters { query }: ListAlerters,
-    user: User,
-  ) -> anyhow::Result<Vec<AlerterListItem>> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Vec<AlerterListItem>> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    resource::list_for_user::<Alerter>(query, &user, &all_tags).await
+    Ok(
+      resource::list_for_user::<Alerter>(self.query, user, &all_tags)
+        .await?,
+    )
   }
 }
 
-impl Resolve<ListFullAlerters, User> for State {
+impl Resolve<ReadArgs> for ListFullAlerters {
   async fn resolve(
-    &self,
-    ListFullAlerters { query }: ListFullAlerters,
-    user: User,
-  ) -> anyhow::Result<ListFullAlertersResponse> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListFullAlertersResponse> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    resource::list_full_for_user::<Alerter>(query, &user, &all_tags)
-      .await
+    Ok(
+      resource::list_full_for_user::<Alerter>(
+        self.query, &user, &all_tags,
+      )
+      .await?,
+    )
   }
 }
 
-impl Resolve<GetAlertersSummary, User> for State {
+impl Resolve<ReadArgs> for GetAlertersSummary {
   async fn resolve(
-    &self,
-    GetAlertersSummary {}: GetAlertersSummary,
-    user: User,
-  ) -> anyhow::Result<GetAlertersSummaryResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetAlertersSummaryResponse> {
     let query = match resource::get_resource_object_ids_for_user::<
       Alerter,
     >(&user)

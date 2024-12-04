@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -15,10 +15,11 @@ use super::KomodoWriteRequest;
 /// Create a builder. Response: [Builder].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Builder)]
+#[error(serror::Error)]
 pub struct CreateBuilder {
   /// The name given to newly created builder.
   pub name: String,
@@ -33,10 +34,11 @@ pub struct CreateBuilder {
 /// of the builder at the given `id`. Response: [Builder]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Builder)]
+#[error(serror::Error)]
 pub struct CopyBuilder {
   /// The name of the new builder.
   pub name: String,
@@ -50,10 +52,11 @@ pub struct CopyBuilder {
 /// Response: [Builder]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Builder)]
+#[error(serror::Error)]
 pub struct DeleteBuilder {
   /// The id or name of the builder to delete.
   pub id: String,
@@ -71,10 +74,11 @@ pub struct DeleteBuilder {
 /// field changes occur from out of date local state.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Builder)]
+#[error(serror::Error)]
 pub struct UpdateBuilder {
   /// The id of the builder to update.
   pub id: String,
@@ -88,10 +92,12 @@ pub struct UpdateBuilder {
 /// Response: [Update].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
+#[error(serror::Error)]
 pub struct RenameBuilder {
   /// The id or name of the Builder to rename.
   pub id: String,

@@ -25,8 +25,9 @@ use mungos::{
 };
 use resolver_api::Resolve;
 
-use crate::state::{
-  action_states, db_client, resource_sync_state_cache, State,
+use crate::{
+  api::write::WriteArgs,
+  state::{action_states, db_client, resource_sync_state_cache},
 };
 
 impl super::KomodoResource for ResourceSync {
@@ -103,18 +104,17 @@ impl super::KomodoResource for ResourceSync {
     created: &Resource<Self::Config, Self::Info>,
     update: &mut Update,
   ) -> anyhow::Result<()> {
-    if let Err(e) = State
-      .resolve(
-        RefreshResourceSyncPending {
-          sync: created.id.clone(),
-        },
-        sync_user().to_owned(),
-      )
-      .await
+    if let Err(e) = (RefreshResourceSyncPending {
+      sync: created.id.clone(),
+    })
+    .resolve(&WriteArgs {
+      user: sync_user().to_owned(),
+    })
+    .await
     {
       update.push_error_log(
         "Refresh sync pending",
-        format_serror(&e.context("The sync pending cache has failed to refresh. This is likely due to a misconfiguration of the sync").into())
+        format_serror(&e.error.context("The sync pending cache has failed to refresh. This is likely due to a misconfiguration of the sync").into())
       );
     };
     refresh_resource_sync_state_cache().await;

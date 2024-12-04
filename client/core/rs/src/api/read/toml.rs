@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -21,10 +21,11 @@ pub struct TomlResponse {
 /// Response: [TomlResponse].
 #[typeshare]
 #[derive(
-  Debug, Clone, Default, Serialize, Deserialize, Request, EmptyTraits,
+  Debug, Clone, Default, Serialize, Deserialize, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ExportAllResourcesToTomlResponse)]
+#[error(serror::Error)]
 pub struct ExportAllResourcesToToml {
   /// Tag name or id. Empty array will not filter by tag.
   #[serde(default)]
@@ -40,10 +41,11 @@ pub type ExportAllResourcesToTomlResponse = TomlResponse;
 /// Response: [TomlResponse].
 #[typeshare]
 #[derive(
-  Debug, Clone, Default, Serialize, Deserialize, Request, EmptyTraits,
+  Debug, Clone, Default, Serialize, Deserialize, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ExportResourcesToTomlResponse)]
+#[error(serror::Error)]
 pub struct ExportResourcesToToml {
   /// The targets to include in the export.
   #[serde(default)]

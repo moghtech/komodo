@@ -23,11 +23,8 @@ fn resource(service_name: String) -> Resource {
 
 pub fn tracer(endpoint: &str, service_name: String) -> Tracer {
   let provider = opentelemetry_sdk::trace::TracerProvider::builder()
-    .with_config(
-      opentelemetry_sdk::trace::Config::default()
-        .with_sampler(Sampler::AlwaysOn)
-        .with_resource(resource(service_name.clone())),
-    )
+    .with_resource(resource(service_name.clone()))
+    .with_sampler(Sampler::AlwaysOn)
     .with_batch_exporter(
       opentelemetry_otlp::SpanExporter::builder()
         .with_tonic()

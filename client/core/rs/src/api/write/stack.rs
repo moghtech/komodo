@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -16,10 +16,11 @@ use super::KomodoWriteRequest;
 /// Create a stack. Response: [Stack].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Stack)]
+#[error(serror::Error)]
 pub struct CreateStack {
   /// The name given to newly created stack.
   pub name: String,
@@ -34,10 +35,11 @@ pub struct CreateStack {
 /// of the stack at the given `id`. Response: [Stack].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Stack)]
+#[error(serror::Error)]
 pub struct CopyStack {
   /// The name of the new stack.
   pub name: String,
@@ -51,10 +53,11 @@ pub struct CopyStack {
 /// Response: [Stack]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Stack)]
+#[error(serror::Error)]
 pub struct DeleteStack {
   /// The id or name of the stack to delete.
   pub id: String,
@@ -75,10 +78,11 @@ pub struct DeleteStack {
 /// field changes occur from out of date local state.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Stack)]
+#[error(serror::Error)]
 pub struct UpdateStack {
   /// The id of the Stack to update.
   pub id: String,
@@ -91,10 +95,12 @@ pub struct UpdateStack {
 /// Rename the stack at id to the given name. Response: [Update].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
+#[error(serror::Error)]
 pub struct RenameStack {
   /// The id of the stack to rename.
   pub id: String,
@@ -107,10 +113,12 @@ pub struct RenameStack {
 /// Update file contents in Files on Server or Git Repo mode. Response: [Update].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
+#[error(serror::Error)]
 pub struct WriteStackFileContents {
   /// The name or id of the target Stack.
   #[serde(alias = "id", alias = "name")]
@@ -130,10 +138,11 @@ pub struct WriteStackFileContents {
 ///   - The latest json, and for repos, the remote contents, hash, and message.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
+#[error(serror::Error)]
 pub struct RefreshStackCache {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -153,10 +162,11 @@ pub enum StackWebhookAction {
 /// passed in request. Response: [CreateStackWebhookResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateStackWebhookResponse)]
+#[error(serror::Error)]
 pub struct CreateStackWebhook {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -174,10 +184,11 @@ pub type CreateStackWebhookResponse = NoData;
 /// passed in request. Response: [DeleteStackWebhookResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteStackWebhookResponse)]
+#[error(serror::Error)]
 pub struct DeleteStackWebhook {
   /// Id or name
   #[serde(alias = "id", alias = "name")]

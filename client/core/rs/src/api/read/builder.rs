@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -14,10 +14,11 @@ use super::KomodoReadRequest;
 /// Get a specific builder by id or name. Response: [Builder].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuilderResponse)]
+#[error(serror::Error)]
 pub struct GetBuilder {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -32,10 +33,11 @@ pub type GetBuilderResponse = Builder;
 /// List builders matching structured query. Response: [ListBuildersResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListBuildersResponse)]
+#[error(serror::Error)]
 pub struct ListBuilders {
   #[serde(default)]
   pub query: BuilderQuery,
@@ -49,10 +51,11 @@ pub type ListBuildersResponse = Vec<BuilderListItem>;
 /// List builders matching structured query. Response: [ListFullBuildersResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullBuildersResponse)]
+#[error(serror::Error)]
 pub struct ListFullBuilders {
   #[serde(default)]
   pub query: BuilderQuery,
@@ -67,10 +70,11 @@ pub type ListFullBuildersResponse = Vec<Builder>;
 /// Response: [GetBuildersSummaryResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildersSummaryResponse)]
+#[error(serror::Error)]
 pub struct GetBuildersSummary {}
 
 /// Response for [GetBuildersSummary].

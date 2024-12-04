@@ -1,6 +1,6 @@
 use clap::Parser;
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -22,12 +22,13 @@ use super::KomodoExecuteRequest;
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct StartContainer {
   /// Name or id
   pub server: String,
@@ -47,12 +48,13 @@ pub struct StartContainer {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct RestartContainer {
   /// Name or id
   pub server: String,
@@ -72,12 +74,13 @@ pub struct RestartContainer {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct PauseContainer {
   /// Name or id
   pub server: String,
@@ -99,12 +102,13 @@ pub struct PauseContainer {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct UnpauseContainer {
   /// Name or id
   pub server: String,
@@ -124,12 +128,13 @@ pub struct UnpauseContainer {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct StopContainer {
   /// Name or id
   pub server: String,
@@ -154,12 +159,13 @@ pub struct StopContainer {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct DestroyContainer {
   /// Name or id
   pub server: String,
@@ -181,12 +187,13 @@ pub struct DestroyContainer {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct StartAllContainers {
   /// Name or id
   pub server: String,
@@ -202,12 +209,13 @@ pub struct StartAllContainers {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct RestartAllContainers {
   /// Name or id
   pub server: String,
@@ -223,12 +231,13 @@ pub struct RestartAllContainers {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct PauseAllContainers {
   /// Name or id
   pub server: String,
@@ -244,12 +253,13 @@ pub struct PauseAllContainers {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct UnpauseAllContainers {
   /// Name or id
   pub server: String,
@@ -265,12 +275,13 @@ pub struct UnpauseAllContainers {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct StopAllContainers {
   /// Name or id
   pub server: String,
@@ -288,12 +299,13 @@ pub struct StopAllContainers {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct PruneContainers {
   /// Id or name
   pub server: String,
@@ -312,12 +324,13 @@ pub struct PruneContainers {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct DeleteNetwork {
   /// Id or name.
   pub server: String,
@@ -337,12 +350,13 @@ pub struct DeleteNetwork {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct PruneNetworks {
   /// Id or name
   pub server: String,
@@ -359,12 +373,13 @@ pub struct PruneNetworks {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct DeleteImage {
   /// Id or name.
   pub server: String,
@@ -384,12 +399,13 @@ pub struct DeleteImage {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct PruneImages {
   /// Id or name
   pub server: String,
@@ -406,12 +422,13 @@ pub struct PruneImages {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct DeleteVolume {
   /// Id or name.
   pub server: String,
@@ -431,12 +448,13 @@ pub struct DeleteVolume {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct PruneVolumes {
   /// Id or name
   pub server: String,
@@ -454,12 +472,13 @@ pub struct PruneVolumes {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct PruneDockerBuilders {
   /// Id or name
   pub server: String,
@@ -477,12 +496,13 @@ pub struct PruneDockerBuilders {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct PruneBuildx {
   /// Id or name
   pub server: String,
@@ -500,12 +520,13 @@ pub struct PruneBuildx {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct PruneSystem {
   /// Id or name
   pub server: String,
