@@ -105,67 +105,71 @@ export const ServerStats = ({
           title="Historical"
           actions={
             <div className="flex gap-4 items-center">
-            {/* Granularity Dropdown */}
+              {/* Granularity Dropdown */}
               <div className="flex items-center gap-2">
-              <div className="text-muted-foreground">Interval:</div>
-              <Select
-                value={interval}
-                onValueChange={(interval) =>
-                  setInterval(interval as Types.Timelength)
-                }
-              >
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[
-                    Types.Timelength.FifteenSeconds,
-                    Types.Timelength.ThirtySeconds,
-                    Types.Timelength.OneMinute,
-                    Types.Timelength.FiveMinutes,
-                    Types.Timelength.FifteenMinutes,
-                    Types.Timelength.ThirtyMinutes,
-                    Types.Timelength.OneHour,
-                    Types.Timelength.SixHours,
-                    Types.Timelength.OneDay,
-                  ].map((timelength) => (
-                    <SelectItem key={timelength} value={timelength}>
-                      {timelength}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <div className="text-muted-foreground">Interval:</div>
+                <Select
+                  value={interval}
+                  onValueChange={(interval) =>
+                    setInterval(interval as Types.Timelength)
+                  }
+                >
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[
+                      Types.Timelength.FifteenSeconds,
+                      Types.Timelength.ThirtySeconds,
+                      Types.Timelength.OneMinute,
+                      Types.Timelength.FiveMinutes,
+                      Types.Timelength.FifteenMinutes,
+                      Types.Timelength.ThirtyMinutes,
+                      Types.Timelength.OneHour,
+                      Types.Timelength.SixHours,
+                      Types.Timelength.OneDay,
+                    ].map((timelength) => (
+                      <SelectItem key={timelength} value={timelength}>
+                        {timelength}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Network Interface Dropdown */}
+              <div className="flex items-center gap-2">
+                <div className="text-muted-foreground">Interface:</div>
+                <Select
+                  value={networkInterface ?? "all"} // Show "all" if networkInterface is undefined
+                  onValueChange={(interfaceName) => {
+                    if (interfaceName === "all") {
+                      setNetworkInterface(undefined); // Set undefined for "All" option
+                    } else {
+                      setNetworkInterface(interfaceName);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    {/* Iterate over the vector and access the `name` property */}
+                    {(stats?.network_usage_interface ?? []).map(
+                      (networkInterface) => (
+                        <SelectItem
+                          key={networkInterface.name}
+                          value={networkInterface.name}
+                        >
+                          {networkInterface.name}
+                        </SelectItem>
+                      )
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-
-            {/* Network Interface Dropdown */}
-            <div className="flex items-center gap-2">
-            <div className="text-muted-foreground">Interface:</div>
-            <Select
-              value={networkInterface ?? "all"} // Show "all" if networkInterface is undefined
-              onValueChange={(interfaceName) => {
-                if (interfaceName === "all") {
-                  setNetworkInterface(undefined); // Set undefined for "All" option
-                } else {
-                  setNetworkInterface(interfaceName);
-                }
-              }}
-            >
-              <SelectTrigger className="w-[150px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                {/* Iterate over the vector and access the `name` property */}
-                {(stats?.network_usage_interface ?? []).map((networkInterface) => (
-                  <SelectItem key={networkInterface.name} value={networkInterface.name}>
-                    {networkInterface.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
           }
         >
           <div className="flex flex-col gap-8">
@@ -176,8 +180,16 @@ export const ServerStats = ({
               type="disk"
               className="w-full h-[250px]"
             />
-            <StatChart server_id={id} type="network_ingress" className="w-full h-[250px]" />
-            <StatChart server_id={id} type="network_egress" className="w-full h-[250px]" />
+            <StatChart
+              server_id={id}
+              type="network_ingress"
+              className="w-full h-[250px]"
+            />
+            <StatChart
+              server_id={id}
+              type="network_egress"
+              className="w-full h-[250px]"
+            />
           </div>
         </Section>
 
@@ -415,17 +427,20 @@ const NETWORK = ({ stats }: { stats: Types.SystemStats | undefined }) => {
       <CardContent>
         <div className="flex justify-between items-center mb-4">
           <p className="font-medium">Ingress</p>
-          <span className="text-sm text-gray-600">{formattedIngress.value.toFixed(2)} {formattedIngress.unit}</span>
+          <span className="text-sm text-gray-600">
+            {formattedIngress.value.toFixed(2)} {formattedIngress.unit}
+          </span>
         </div>
         <div className="flex justify-between items-center">
           <p className="font-medium">Egress</p>
-          <span className="text-sm text-gray-600">{formattedEgress.value.toFixed(2)} {formattedEgress.unit}</span>
+          <span className="text-sm text-gray-600">
+            {formattedEgress.value.toFixed(2)} {formattedEgress.unit}
+          </span>
         </div>
       </CardContent>
     </Card>
   );
 };
-
 
 const DISK = ({ stats }: { stats: Types.SystemStats | undefined }) => {
   const used = stats?.disks.reduce((acc, curr) => (acc += curr.used_gb), 0);
