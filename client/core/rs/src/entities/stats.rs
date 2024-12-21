@@ -51,15 +51,15 @@ pub struct SystemStatsRecord {
   pub disk_total_gb: f64,
   /// Breakdown of individual disks, ie their usages, sizes, and mount points
   pub disks: Vec<SingleDiskUsage>,
-   /// Network ingress usage in bytes
-   #[serde(default)]
-   pub network_ingress_bytes: f64,
-   /// Network egress usage in bytes
-   #[serde(default)]
-   pub network_egress_bytes: f64,
-   /// Network usage by interface name (ingress, egress in bytes)
-   #[serde(default)]
-   pub network_usage_interface: Vec<SingleNetworkInterfaceUsage>, // interface -> (ingress, egress)
+  /// Network ingress usage in bytes
+  #[serde(default)]
+  pub network_ingress_bytes: f64,
+  /// Network egress usage in bytes
+  #[serde(default)]
+  pub network_egress_bytes: f64,
+  /// Network usage by interface name (ingress, egress in bytes)
+  #[serde(default)]
+  pub network_usage_interface: Vec<SingleNetworkInterfaceUsage>, // interface -> (ingress, egress)
 }
 
 /// Realtime system stats data.

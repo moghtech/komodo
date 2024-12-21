@@ -2,7 +2,8 @@ use std::{cmp::Ordering, sync::OnceLock};
 
 use async_timing_util::wait_until_timelength;
 use komodo_client::entities::stats::{
-  SingleDiskUsage, SystemInformation, SystemProcess, SystemStats, SingleNetworkInterfaceUsage,
+  SingleDiskUsage, SingleNetworkInterfaceUsage, SystemInformation,
+  SystemProcess, SystemStats,
 };
 use sysinfo::{ProcessesToUpdate, System};
 use tokio::sync::RwLock;
@@ -34,7 +35,6 @@ pub fn spawn_system_stats_polling_thread() {
     }
   });
 }
-
 
 pub struct StatsClient {
   /// Cached system stats
@@ -85,27 +85,28 @@ impl StatsClient {
     let available_mem = self.system.available_memory();
 
     let mut total_ingress: u64 = 0;
-    let mut total_egress: u64 = 0; 
+    let mut total_egress: u64 = 0;
 
     // Fetch network data (Ingress and Egress)
-    let network_usage: Vec<SingleNetworkInterfaceUsage> = self.networks
-        .iter()
-        .map(|(interface_name, network)| {
-            let ingress = network.received();
-            let egress = network.transmitted();
+    let network_usage: Vec<SingleNetworkInterfaceUsage> = self
+      .networks
+      .iter()
+      .map(|(interface_name, network)| {
+        let ingress = network.received();
+        let egress = network.transmitted();
 
-            // Update total ingress and egress
-            total_ingress += ingress;
-            total_egress += egress;
+        // Update total ingress and egress
+        total_ingress += ingress;
+        total_egress += egress;
 
-            // Return per-interface network stats
-            SingleNetworkInterfaceUsage {
-                name: interface_name.clone(),
-                ingress_bytes: ingress as f64,
-                egress_bytes: egress as f64,
-            }
-        })
-        .collect();
+        // Return per-interface network stats
+        SingleNetworkInterfaceUsage {
+          name: interface_name.clone(),
+          ingress_bytes: ingress as f64,
+          egress_bytes: egress as f64,
+        }
+      })
+      .collect();
 
     SystemStats {
       cpu_perc: self.system.global_cpu_usage(),

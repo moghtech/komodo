@@ -45,4 +45,3 @@ impl Resolve<super::Args> for GetSystemProcesses {
     Ok(stats_client().read().await.get_processes())
   }
 }
-
