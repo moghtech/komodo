@@ -29,7 +29,7 @@ git = { path = "lib/git" }
 
 # MOGH
 run_command = { version = "0.0.6", features = ["async_tokio"] }
-serror = { version = "0.4.8", default-features = false }
+serror = { version = "0.5.0", default-features = false }
 slack = { version = "0.3.0", package = "slack_client_rs", default-features = false, features = ["rustls"] }
 derive_default_builder = "0.1.8"
 derive_empty_traits = "0.1.0"
@@ -44,30 +44,30 @@ mungos = "1.1.0"
 svi = "1.0.1"
 
 # ASYNC
-reqwest = { version = "0.12.9", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.12.12", default-features = false, features = ["json", "rustls-tls"] }
 tokio = { version = "1.42.0", features = ["full"] }
 tokio-util = "0.7.13"
 futures = "0.3.31"
 futures-util = "0.3.31"
 
 # SERVER
-axum-extra = { version = "0.9.6", features = ["typed-header"] }
+axum-extra = { version = "0.10.0", features = ["typed-header"] }
 tower-http = { version = "0.6.2", features = ["fs", "cors"] }
 axum-server = { version = "0.7.1", features = ["tls-rustls"] }
-axum = { version = "0.7.9", features = ["ws", "json"] }
-tokio-tungstenite = "0.24.0"
+axum = { version = "0.8.1", features = ["ws", "json", "macros"] }
+tokio-tungstenite = "0.26.1"
 
 # SER/DE
 ordered_hash_map = { version = "0.4.0", features = ["serde"] }
-serde = { version = "1.0.215", features = ["derive"] }
+serde = { version = "1.0.217", features = ["derive"] }
 strum = { version = "0.26.3", features = ["derive"] }
-serde_json = "1.0.133"
+serde_json = "1.0.134"
 serde_yaml = "0.9.34"
 toml = "0.8.19"
 
 # ERROR
-anyhow = "1.0.94"
-thiserror = "2.0.6"
+anyhow = "1.0.95"
+thiserror = "2.0.9"
 
 # LOGGING
 opentelemetry-otlp = { version = "0.27.0", features = ["tls-roots", "reqwest-rustls"] }
@@ -90,7 +90,7 @@ urlencoding = "2.1.3"
 nom_pem = "4.0.0"
 bcrypt = "0.16.0"
 base64 = "0.22.1"
-rustls = "0.23.19"
+rustls = "0.23.20"
 hmac = "0.12.1"
 sha2 = "0.10.8"
 rand = "0.8.5"
@@ -99,18 +99,18 @@ hex = "0.4.3"
 
 # SYSTEM
 bollard = "0.18.1"
-sysinfo = "0.33.0"
+sysinfo = "0.33.1"
 
 # CLOUD
-aws-config = "1.5.10"
-aws-sdk-ec2 = "1.95.0"
+aws-config = "1.5.12"
+aws-sdk-ec2 = "1.99.0"
 
 # MISC
 derive_builder = "0.20.2"
 typeshare = "1.0.4"
-octorust = "0.7.0"
+octorust = "0.9.0"
 dashmap = "6.1.0"
 wildcard = "0.3.0"
-colored = "2.1.0"
+colored = "2.2.0"
 regex = "1.11.1"
 bson = "2.13.0"

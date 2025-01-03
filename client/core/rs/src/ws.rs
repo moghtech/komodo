@@ -137,7 +137,7 @@ impl KomodoClient {
               // SEND LOGIN MSG
               // ==================
               let login_send_res = ws
-                .send(Message::Text(login_msg.clone()))
+                .send(Message::text(&login_msg))
                 .await
                 .context("failed to send login message");
 
@@ -157,7 +157,7 @@ impl KomodoClient {
                 Ok(Some(Message::Text(msg))) => {
                   if msg != "LOGGED_IN" {
                     let _ = tx.send(UpdateWsMessage::Error(
-                      UpdateWsError::LoginError(msg.clone()),
+                      UpdateWsError::LoginError(msg.to_string()),
                     ));
                     let _ = ws.close(None).await;
                     warn!("breaking inner loop | got msg {msg} instead of 'LOGGED_IN' | inner uuid {inner_uuid} | outer uuid {outer_uuid} | master uuid {master_uuid}");
@@ -227,7 +227,7 @@ impl KomodoClient {
                           "got unrecognized message: {msg:?} | inner uuid {inner_uuid} | outer uuid {outer_uuid} | master uuid {master_uuid}"
                         );
                         let _ = tx.send(UpdateWsMessage::Error(
-                          UpdateWsError::MessageUnrecognized(msg),
+                          UpdateWsError::MessageUnrecognized(msg.to_string()),
                         ));
                       }
                     }

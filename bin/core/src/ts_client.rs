@@ -30,6 +30,7 @@ struct FilePath {
   path: String,
 }
 
+#[axum::debug_handler]
 async fn serve_client_file(
   Path(FilePath { path }): Path<FilePath>,
 ) -> serror::Result<(HeaderMap, String)> {
