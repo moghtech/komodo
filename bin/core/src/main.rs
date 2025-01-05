@@ -80,7 +80,12 @@ async fn app() -> anyhow::Result<()> {
     .nest("/client", ts_client::router())
     .nest_service("/", serve_dir)
     .fallback_service(frontend_index)
-    .layer(cors()?)
+    .layer(
+      CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods(Any)
+        .allow_headers(Any),
+    )
     .into_make_service();
 
   let socket_addr =
@@ -122,12 +127,4 @@ async fn main() -> anyhow::Result<()> {
     res = tokio::spawn(app()) => res?,
     _ = term_signal.recv() => Ok(()),
   }
-}
-
-fn cors() -> anyhow::Result<CorsLayer> {
-  let cors = CorsLayer::new()
-    .allow_origin(Any)
-    .allow_methods(Any)
-    .allow_headers(Any);
-  Ok(cors)
 }
