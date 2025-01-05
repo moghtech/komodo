@@ -102,8 +102,8 @@ bollard = "0.18.1"
 sysinfo = "0.33.1"
 
 # CLOUD
-aws-config = "1.5.12"
-aws-sdk-ec2 = "1.99.0"
+aws-config = "1.5.13"
+aws-sdk-ec2 = "1.100.0"
 
 # MISC
 derive_builder = "0.20.2"
