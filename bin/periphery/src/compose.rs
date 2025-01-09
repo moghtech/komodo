@@ -159,8 +159,8 @@ pub async fn compose_up(
   // after performing interpolation
   {
     let command = format!(
-    "{docker_compose} -p {project_name} -f {file_args}{env_file}{additional_env_files} config --format json",
-  );
+      "{docker_compose} -p {project_name} -f {file_args}{additional_env_files}{env_file} config --format json",
+    );
     let config_log = run_komodo_command(
       "compose build",
       run_directory.as_ref(),

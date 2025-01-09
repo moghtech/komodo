@@ -372,7 +372,7 @@ impl Resolve<super::Args> for ComposePull {
       "compose pull",
       run_directory.as_ref(),
       format!(
-        "{docker_compose} -p {project_name} -f {file_args}{env_file}{additional_env_files} pull{service_arg}",
+        "{docker_compose} -p {project_name} -f {file_args}{additional_env_files}{env_file} pull{service_arg}",
       ),
       false,
     )
