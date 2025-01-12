@@ -6,6 +6,7 @@ use strum::{Display, EnumString};
 use typeshare::typeshare;
 
 mod action;
+mod alerter;
 mod build;
 mod deployment;
 mod procedure;

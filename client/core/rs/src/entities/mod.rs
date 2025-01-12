@@ -753,6 +753,7 @@ pub enum Operation {
   UpdateAlerter,
   RenameAlerter,
   DeleteAlerter,
+  TestAlerter,
 
   // server template
   CreateServerTemplate,
