@@ -484,6 +484,7 @@ export type Execution =
 	| { type: "StopStack", params: StopStack }
 	| { type: "DestroyStack", params: DestroyStack }
 	| { type: "BatchDestroyStack", params: BatchDestroyStack }
+	| { type: "TestAlerter", params: TestAlerter }
 	| { type: "Sleep", params: Sleep };
 
 /** Allows to enable / disabled procedures in the sequence / parallel vec on the fly */
@@ -924,6 +925,16 @@ export enum SeverityLevel {
 export type AlertData = 
 	/** A null alert */
 	| { type: "None", data: {
+}}
+	/**
+	 * The user triggered a test of the
+	 * Alerter configuration.
+	 */
+	| { type: "Test", data: {
+	/** The id of the alerter */
+	id: string;
+	/** The name of the alerter */
+	name: string;
 }}
 	/** A server could not be reached. */
 	| { type: "ServerUnreachable", data: {
@@ -1983,6 +1994,7 @@ export enum Operation {
 	UpdateAlerter = "UpdateAlerter",
 	RenameAlerter = "RenameAlerter",
 	DeleteAlerter = "DeleteAlerter",
+	TestAlerter = "TestAlerter",
 	CreateServerTemplate = "CreateServerTemplate",
 	UpdateServerTemplate = "UpdateServerTemplate",
 	RenameServerTemplate = "RenameServerTemplate",
@@ -6918,6 +6930,12 @@ export interface TerminationSignalLabel {
 	label: string;
 }
 
+/** Tests an Alerters ability to reach the configured endpoint. Response: [Update] */
+export interface TestAlerter {
+	/** Name or id */
+	alerter: string;
+}
+
 /** Info for the all system disks combined. */
 export interface TotalDiskUsage {
 	/** Used portion in GB */
@@ -7412,6 +7430,7 @@ export type ExecuteRequest =
 	| { type: "RunAction", params: RunAction }
 	| { type: "BatchRunAction", params: BatchRunAction }
 	| { type: "LaunchServer", params: LaunchServer }
+	| { type: "TestAlerter", params: TestAlerter }
 	| { type: "RunSync", params: RunSync };
 
 /** Configuration for the registry to push the built image to. */

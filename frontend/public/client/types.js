@@ -205,6 +205,7 @@ export var Operation;
     Operation["UpdateAlerter"] = "UpdateAlerter";
     Operation["RenameAlerter"] = "RenameAlerter";
     Operation["DeleteAlerter"] = "DeleteAlerter";
+    Operation["TestAlerter"] = "TestAlerter";
     Operation["CreateServerTemplate"] = "CreateServerTemplate";
     Operation["UpdateServerTemplate"] = "UpdateServerTemplate";
     Operation["RenameServerTemplate"] = "RenameServerTemplate";

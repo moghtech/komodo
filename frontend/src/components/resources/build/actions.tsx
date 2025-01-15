@@ -1,7 +1,7 @@
 import { ConfirmButton } from "@components/util";
 import { useExecute, useRead } from "@lib/hooks";
 import { Types } from "komodo_client";
-import { Ban, Hammer, Loader2 } from "lucide-react";
+import { Ban, Hammer } from "lucide-react";
 import { useBuilder } from "../builder";
 
 export const RunBuild = ({ id }: { id: string }) => {
@@ -64,13 +64,8 @@ export const RunBuild = ({ id }: { id: string }) => {
     return (
       <ConfirmButton
         title="Build"
-        icon={
-          runPending ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Hammer className="h-4 w-4" />
-          )
-        }
+        icon={<Hammer className="h-4 w-4" />}
+        loading={runPending}
         onClick={() => run_mutate({ build: id })}
         disabled={runPending}
       />

@@ -306,4 +306,5 @@ export type ExecuteResponses = {
     PauseStackService: Types.Update;
     UnpauseStackService: Types.Update;
     DestroyStackService: Types.Update;
+    TestAlerter: Types.Update;
 };

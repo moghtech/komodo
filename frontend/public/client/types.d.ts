@@ -604,6 +604,9 @@ export type Execution =
     type: "BatchDestroyStack";
     params: BatchDestroyStack;
 } | {
+    type: "TestAlerter";
+    params: TestAlerter;
+} | {
     type: "Sleep";
     params: Sleep;
 };
@@ -1012,6 +1015,19 @@ export type AlertData =
 {
     type: "None";
     data: {};
+}
+/**
+ * The user triggered a test of the
+ * Alerter configuration.
+ */
+ | {
+    type: "Test";
+    data: {
+        /** The id of the alerter */
+        id: string;
+        /** The name of the alerter */
+        name: string;
+    };
 }
 /** A server could not be reached. */
  | {
@@ -2062,6 +2078,7 @@ export declare enum Operation {
     UpdateAlerter = "UpdateAlerter",
     RenameAlerter = "RenameAlerter",
     DeleteAlerter = "DeleteAlerter",
+    TestAlerter = "TestAlerter",
     CreateServerTemplate = "CreateServerTemplate",
     UpdateServerTemplate = "UpdateServerTemplate",
     RenameServerTemplate = "RenameServerTemplate",
@@ -6480,6 +6497,11 @@ export interface TerminationSignalLabel {
     signal: TerminationSignal;
     label: string;
 }
+/** Tests an Alerters ability to reach the configured endpoint. Response: [Update] */
+export interface TestAlerter {
+    /** Name or id */
+    alerter: string;
+}
 /** Info for the all system disks combined. */
 export interface TotalDiskUsage {
     /** Used portion in GB */
@@ -7065,6 +7087,9 @@ export type ExecuteRequest = {
 } | {
     type: "LaunchServer";
     params: LaunchServer;
+} | {
+    type: "TestAlerter";
+    params: TestAlerter;
 } | {
     type: "RunSync";
     params: RunSync;

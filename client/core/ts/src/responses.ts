@@ -407,4 +407,7 @@ export type ExecuteResponses = {
   PauseStackService: Types.Update;
   UnpauseStackService: Types.Update;
   DestroyStackService: Types.Update;
+
+  // ==== ALERTER ====
+  TestAlerter: Types.Update;
 };

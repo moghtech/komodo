@@ -1,13 +1,13 @@
-import { useRead, useUser } from "@lib/hooks";
+import { useExecute, useRead, useUser } from "@lib/hooks";
 import { RequiredResourceComponents } from "@types";
-import { AlarmClock } from "lucide-react";
+import { AlarmClock, FlaskConical } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardDescription, CardHeader, CardTitle } from "@ui/card";
 import { AlerterConfig } from "./config";
 import { DeleteResource, NewResource } from "../common";
 import { AlerterTable } from "./table";
 import { Types } from "komodo_client";
-import { ResourcePageHeader } from "@components/util";
+import { ConfirmButton, ResourcePageHeader } from "@components/util";
 import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
 
@@ -44,7 +44,7 @@ export const AlerterComponents: RequiredResourceComponents = {
     return is_admin && <NewResource type="Alerter" />;
   },
 
-  GroupActions: () => <GroupActions type="Alerter" actions={[]} />,
+  GroupActions: () => <GroupActions type="Alerter" actions={["TestAlerter"]} />,
 
   Table: ({ resources }) => (
     <AlerterTable alerters={resources as Types.AlerterListItem[]} />
@@ -65,7 +65,22 @@ export const AlerterComponents: RequiredResourceComponents = {
     },
   },
 
-  Actions: {},
+  Actions: {
+    TestAlerter: ({ id }) => {
+      const { mutate, isPending } = useExecute("TestAlerter");
+      const alerter = useAlerter(id);
+      if (!alerter) return null;
+      return (
+        <ConfirmButton
+          title="Send Test Alert"
+          icon={<FlaskConical className="h-4 w-4" />}
+          loading={isPending}
+          onClick={() => mutate({ alerter: id })}
+          disabled={isPending}
+        />
+      );
+    },
+  },
 
   Page: {},
 
