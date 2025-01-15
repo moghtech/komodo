@@ -66,7 +66,7 @@ async fn app() -> anyhow::Result<()> {
   let frontend_path = &config.frontend_path;
   let frontend_index =
     ServeFile::new(format!("{frontend_path}/index.html"));
-  let serve_dir = ServeDir::new(frontend_path)
+  let serve_frontend = ServeDir::new(frontend_path)
     .not_found_service(frontend_index.clone());
 
   let app = Router::new()
@@ -78,8 +78,7 @@ async fn app() -> anyhow::Result<()> {
     .nest("/listener", listener::router())
     .nest("/ws", ws::router())
     .nest("/client", ts_client::router())
-    .nest_service("/", serve_dir)
-    .fallback_service(frontend_index)
+    .fallback_service(serve_frontend)
     .layer(
       CorsLayer::new()
         .allow_origin(Any)

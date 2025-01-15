@@ -13,7 +13,7 @@ use tokio::fs;
 use crate::config::core_config;
 
 pub fn router() -> Router {
-  Router::new().route("/:path", get(serve_client_file))
+  Router::new().route("/{path}", get(serve_client_file))
 }
 
 const ALLOWED_FILES: &[&str] = &[
