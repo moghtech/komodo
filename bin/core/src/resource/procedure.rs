@@ -5,6 +5,7 @@ use komodo_client::{
   api::execute::Execution,
   entities::{
     action::Action,
+    alerter::Alerter,
     build::Build,
     deployment::Deployment,
     permission::PermissionLevel,
@@ -686,6 +687,15 @@ async fn validate_config(
               "Non admin user cannot configure Batch executions"
             ));
           }
+        }
+        Execution::TestAlerter(params) => {
+          let alerter = super::get_check_permissions::<Alerter>(
+            &params.alerter,
+            user,
+            PermissionLevel::Execute,
+          )
+          .await?;
+          params.alerter = alerter.id;
         }
         Execution::Sleep(_) => {}
       }

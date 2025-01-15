@@ -701,6 +701,13 @@ impl ResourceSyncTrait for Procedure {
               .unwrap_or_default();
           }
           Execution::BatchDestroyStack(_config) => {}
+          Execution::TestAlerter(config) => {
+            config.alerter = resources
+              .alerters
+              .get(&config.alerter)
+              .map(|a| a.name.clone())
+              .unwrap_or_default();
+          }
           Execution::Sleep(_) => {}
         }
       }

@@ -30,6 +30,7 @@ use crate::{
 };
 
 mod action;
+mod alerter;
 mod build;
 mod deployment;
 mod procedure;
@@ -131,6 +132,9 @@ pub enum ExecuteRequest {
 
   // ==== SERVER TEMPLATE ====
   LaunchServer(LaunchServer),
+
+  // ==== ALERTER ====
+  TestAlerter(TestAlerter),
 
   // ==== SYNC ====
   RunSync(RunSync),

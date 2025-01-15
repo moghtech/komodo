@@ -789,6 +789,13 @@ impl ToToml for Procedure {
               .unwrap_or(&String::new()),
           ),
           Execution::BatchDestroyStack(_exec) => {}
+          Execution::TestAlerter(exec) => exec.alerter.clone_from(
+            all
+              .alerters
+              .get(&exec.alerter)
+              .map(|a| &a.name)
+              .unwrap_or(&String::new()),
+          ),
           Execution::Sleep(_) | Execution::None(_) => {}
         }
       }

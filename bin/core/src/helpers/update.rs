@@ -1,6 +1,7 @@
 use anyhow::Context;
 use komodo_client::entities::{
   action::Action,
+  alerter::Alerter,
   build::Build,
   deployment::Deployment,
   komodo_timestamp,
@@ -498,13 +499,24 @@ pub async fn init_execution_update(
     ExecuteRequest::BatchDestroyStack(_data) => {
       return Ok(Default::default())
     }
+
+    // Alerter
+    ExecuteRequest::TestAlerter(data) => (
+      Operation::TestAlerter,
+      ResourceTarget::Alerter(
+        resource::get::<Alerter>(&data.alerter).await?.id,
+      ),
+    ),
   };
+
   let mut update = make_update(target, operation, user);
   update.in_progress();
+
   // Hold off on even adding update for DeployStackIfChanged
   if !matches!(&request, ExecuteRequest::DeployStackIfChanged(_)) {
     // Don't actually send it here, let the handlers send it after they can set action state.
     update.id = add_update_without_send(&update).await?;
   }
+  
   Ok(update)
 }
