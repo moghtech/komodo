@@ -54,7 +54,7 @@ export const Topbar = () => {
           to="/"
           className="flex gap-3 items-center text-2xl tracking-widest md:mx-2"
         >
-          <img src="/greengrey-outline.svg" className="w-[32px]" />
+          <img src="/komodo-logo.svg" className="w-[32px]" />
           <div className="hidden lg:block">KOMODO</div>
         </Link>
 
