@@ -72,7 +72,7 @@ export const AlerterComponents: RequiredResourceComponents = {
       if (!alerter) return null;
       return (
         <ConfirmButton
-          title="Send Test Alert"
+          title="Test Alerter"
           icon={<FlaskConical className="h-4 w-4" />}
           loading={isPending}
           onClick={() => mutate({ alerter: id })}
