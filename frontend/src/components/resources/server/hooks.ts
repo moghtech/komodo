@@ -8,10 +8,3 @@ const statsGranularityAtom = atomWithStorage<Types.Timelength>(
 );
 
 export const useStatsGranularity = () => useAtom(statsGranularityAtom);
-
-const selectedNetworkInterfaceAtom = atomWithStorage<string | undefined>(
-  "selected-network-interface-v0",
-  undefined // Default value is `undefined` (Global view)
-);
-
-export const useSelectedNetworkInterface = () => useAtom(selectedNetworkInterfaceAtom);
