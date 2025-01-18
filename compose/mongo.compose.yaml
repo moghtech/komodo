@@ -43,8 +43,8 @@ services:
     env_file: ./compose.env
     environment:
       KOMODO_DATABASE_ADDRESS: mongo:27017
-      KOMODO_DATABASE_USERNAME: ${DB_USERNAME}
-      KOMODO_DATABASE_PASSWORD: ${DB_PASSWORD}
+      KOMODO_DATABASE_USERNAME: ${KOMODO_DB_USERNAME}
+      KOMODO_DATABASE_PASSWORD: ${KOMODO_DB_PASSWORD}
     volumes:
       ## Core cache for repos for latest commit hash / contents
       - repo-cache:/repo-cache

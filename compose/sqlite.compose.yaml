@@ -3,7 +3,7 @@
 #################################
 
 ## This compose file will deploy:
-##   1. Sqlite + FerretDB Mongo adapter
+##   1. Sqlite + FerretDB Mongo adapter (https://www.ferretdb.com)
 ##   2. Komodo Core
 ##   3. Komodo Periphery
 
