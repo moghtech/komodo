@@ -2,8 +2,7 @@ use std::{cmp::Ordering, sync::OnceLock};
 
 use async_timing_util::wait_until_timelength;
 use komodo_client::entities::stats::{
-  SingleDiskUsage, SingleNetworkInterfaceUsage, SystemInformation,
-  SystemProcess, SystemStats,
+  SingleDiskUsage, SystemInformation, SystemProcess, SystemStats,
 };
 use sysinfo::{ProcessesToUpdate, System};
 use tokio::sync::RwLock;
@@ -84,40 +83,21 @@ impl StatsClient {
     let total_mem = self.system.total_memory();
     let available_mem = self.system.available_memory();
 
-    let mut total_ingress: u64 = 0;
-    let mut total_egress: u64 = 0;
+    let mut network_ingress_bytes: u64 = 0;
+    let mut network_egress_bytes: u64 = 0;
 
-    // Fetch network data (Ingress and Egress)
-    let network_usage: Vec<SingleNetworkInterfaceUsage> = self
-      .networks
-      .iter()
-      .map(|(interface_name, network)| {
-        let ingress = network.received();
-        let egress = network.transmitted();
-
-        // Update total ingress and egress
-        total_ingress += ingress;
-        total_egress += egress;
-
-        // Return per-interface network stats
-        SingleNetworkInterfaceUsage {
-          name: interface_name.clone(),
-          ingress_bytes: ingress as f64,
-          egress_bytes: egress as f64,
-        }
-      })
-      .collect();
+    for (_, network) in self.networks.iter() {
+      network_ingress_bytes += network.received();
+      network_egress_bytes += network.transmitted();
+    }
 
     SystemStats {
       cpu_perc: self.system.global_cpu_usage(),
       mem_free_gb: self.system.free_memory() as f64 / BYTES_PER_GB,
       mem_used_gb: (total_mem - available_mem) as f64 / BYTES_PER_GB,
       mem_total_gb: total_mem as f64 / BYTES_PER_GB,
-      // Added total ingress and egress
-      network_ingress_bytes: total_ingress as f64,
-      network_egress_bytes: total_egress as f64,
-      network_usage_interface: network_usage,
-
+      network_ingress_bytes: network_ingress_bytes as f64,
+      network_egress_bytes: network_egress_bytes as f64,
       disks: self.get_disks(),
       polling_rate: self.stats.polling_rate,
       refresh_ts: self.stats.refresh_ts,

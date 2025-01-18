@@ -1,11 +1,5 @@
 import { Section } from "@components/layouts";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@ui/card";
 import { Progress } from "@ui/progress";
 import { Cpu, Database, Loader2, MemoryStick } from "lucide-react";
 import { useRead } from "@lib/hooks";
@@ -14,7 +8,7 @@ import { DataTable, SortableHeader } from "@ui/data-table";
 import { ReactNode, useMemo, useState } from "react";
 import { Input } from "@ui/input";
 import { StatChart } from "./stat-chart";
-import { useStatsGranularity, useSelectedNetworkInterface } from "./hooks";
+import { useStatsGranularity } from "./hooks";
 import {
   Select,
   SelectContent,
@@ -32,7 +26,6 @@ export const ServerStats = ({
   titleOther?: ReactNode;
 }) => {
   const [interval, setInterval] = useStatsGranularity();
-  const [networkInterface, setNetworkInterface] = useSelectedNetworkInterface();
 
   const stats = useRead(
     "GetSystemStats",
@@ -76,6 +69,10 @@ export const ServerStats = ({
                 accessorKey: "kernel",
               },
               {
+                header: "CPU",
+                accessorKey: "cpu_brand",
+              },
+              {
                 header: "Core Count",
                 accessorFn: ({ core_count }) =>
                   `${core_count} Core${(core_count || 0) > 1 ? "s" : ""}`,
@@ -93,11 +90,11 @@ export const ServerStats = ({
         </Section>
 
         <Section title="Current">
-          <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex flex-col xl:flex-row gap-4">
             <CPU stats={stats} />
             <RAM stats={stats} />
-            <NETWORK stats={stats} />
             <DISK stats={stats} />
+            <NETWORK stats={stats} />
           </div>
         </Section>
 
@@ -133,39 +130,6 @@ export const ServerStats = ({
                         {timelength}
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Network Interface Dropdown */}
-              <div className="flex items-center gap-2">
-                <div className="text-muted-foreground">Interface:</div>
-                <Select
-                  value={networkInterface ?? "all"} // Show "all" if networkInterface is undefined
-                  onValueChange={(interfaceName) => {
-                    if (interfaceName === "all") {
-                      setNetworkInterface(undefined); // Set undefined for "All" option
-                    } else {
-                      setNetworkInterface(interfaceName);
-                    }
-                  }}
-                >
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    {/* Iterate over the vector and access the `name` property */}
-                    {(stats?.network_usage_interface ?? []).map(
-                      (networkInterface) => (
-                        <SelectItem
-                          key={networkInterface.name}
-                          value={networkInterface.name}
-                        >
-                          {networkInterface.name}
-                        </SelectItem>
-                      )
-                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -355,44 +319,62 @@ const ProcessesInner = ({
   );
 };
 
-const CPU = ({ stats }: { stats: Types.SystemStats | undefined }) => {
-  const perc = stats?.cpu_perc;
-
+const StatBar = ({
+  title,
+  icon,
+  percentage,
+}: {
+  title: string;
+  icon: ReactNode;
+  percentage: number | undefined;
+}) => {
   return (
     <Card className="w-full">
-      <CardHeader className="flex-row justify-between">
-        <CardTitle>CPU Usage</CardTitle>
+      <CardHeader className="flex-row items-center justify-between">
+        <CardTitle>{title}</CardTitle>
         <div className="flex gap-2 items-center">
-          <CardDescription>{perc?.toFixed(2)}%</CardDescription>
-          <Cpu className="w-4 h-4" />
+          <div className="text-lg">{percentage?.toFixed(2)}%</div>
+          {icon}
         </div>
       </CardHeader>
       <CardContent>
-        <Progress value={perc} className="h-4" />
+        <Progress value={percentage} className="h-4" />
       </CardContent>
     </Card>
+  );
+};
+
+const CPU = ({ stats }: { stats: Types.SystemStats | undefined }) => {
+  return (
+    <StatBar
+      title="CPU Usage"
+      icon={<Cpu className="w-5 h-5" />}
+      percentage={stats?.cpu_perc}
+    />
   );
 };
 
 const RAM = ({ stats }: { stats: Types.SystemStats | undefined }) => {
   const used = stats?.mem_used_gb;
   const total = stats?.mem_total_gb;
-
-  const perc = ((used ?? 0) / (total ?? 0)) * 100;
-
   return (
-    <Card className="w-full">
-      <CardHeader className="flex-row justify-between">
-        <CardTitle>RAM Usage</CardTitle>
-        <div className="flex gap-2 items-center">
-          <CardDescription>{perc.toFixed(2)}%</CardDescription>
-          <MemoryStick className="w-4 h-4" />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Progress value={perc} className="h-4" />
-      </CardContent>
-    </Card>
+    <StatBar
+      title="RAM Usage"
+      icon={<MemoryStick className="w-5 h-5" />}
+      percentage={((used ?? 0) / (total ?? 0)) * 100}
+    />
+  );
+};
+
+const DISK = ({ stats }: { stats: Types.SystemStats | undefined }) => {
+  const used = stats?.disks.reduce((acc, curr) => (acc += curr.used_gb), 0);
+  const total = stats?.disks.reduce((acc, curr) => (acc += curr.total_gb), 0);
+  return (
+    <StatBar
+      title="Disk Usage"
+      icon={<Database className="w-5 h-5" />}
+      percentage={((used ?? 0) / (total ?? 0)) * 100}
+    />
   );
 };
 
@@ -437,28 +419,6 @@ const NETWORK = ({ stats }: { stats: Types.SystemStats | undefined }) => {
             {formattedEgress.value.toFixed(2)} {formattedEgress.unit}
           </span>
         </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-const DISK = ({ stats }: { stats: Types.SystemStats | undefined }) => {
-  const used = stats?.disks.reduce((acc, curr) => (acc += curr.used_gb), 0);
-  const total = stats?.disks.reduce((acc, curr) => (acc += curr.total_gb), 0);
-
-  const perc = ((used ?? 0) / (total ?? 0)) * 100;
-
-  return (
-    <Card className="w-full">
-      <CardHeader className="flex-row justify-between">
-        <CardTitle>Disk Usage</CardTitle>
-        <div className="flex gap-2 items-center">
-          <CardDescription>{perc?.toFixed(2)}%</CardDescription>
-          <Database className="w-4 h-4" />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Progress value={perc} className="h-4" />
       </CardContent>
     </Card>
   );

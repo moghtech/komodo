@@ -1820,16 +1820,6 @@ export interface SingleDiskUsage {
 	total_gb: number;
 }
 
-/** Info for network interface usage. */
-export interface SingleNetworkInterfaceUsage {
-	/** The network interface name */
-	name: string;
-	/** The ingress in bytes */
-	ingress_bytes: number;
-	/** The egress in bytes */
-	egress_bytes: number;
-}
-
 export enum Timelength {
 	OneSecond = "1-sec",
 	FiveSeconds = "5-sec",
@@ -1875,8 +1865,6 @@ export interface SystemStats {
 	network_ingress_bytes?: number;
 	/** Network egress usage in MB */
 	network_egress_bytes?: number;
-	/** Network usage by interface name (ingress, egress in bytes) */
-	network_usage_interface?: SingleNetworkInterfaceUsage[];
 	/** The rate the system stats are being polled from the system */
 	polling_rate: Timelength;
 	/** Unix timestamp in milliseconds when stats were last polled */
@@ -5099,14 +5087,12 @@ export interface SystemStatsRecord {
 	disk_used_gb: number;
 	/** Total disk size in GB */
 	disk_total_gb: number;
-	/** Breakdown of individual disks, ie their usages, sizes, and mount points */
+	/** Breakdown of individual disks, including their usage, total size, and mount point */
 	disks: SingleDiskUsage[];
-	/** Network ingress usage in bytes */
+	/** Total network ingress in bytes */
 	network_ingress_bytes?: number;
-	/** Network egress usage in bytes */
+	/** Total network egress in bytes */
 	network_egress_bytes?: number;
-	/** Network usage by interface name (ingress, egress in bytes) */
-	network_usage_interface?: SingleNetworkInterfaceUsage[];
 }
 
 /** Response to [GetHistoricalServerStats]. */
@@ -6831,6 +6817,16 @@ export interface SetUsersInUserGroup {
 	user_group: string;
 	/** The user ids or usernames to hard set as the group's users. */
 	users: string[];
+}
+
+/** Info for network interface usage. */
+export interface SingleNetworkInterfaceUsage {
+	/** The network interface name */
+	name: string;
+	/** The ingress in bytes */
+	ingress_bytes: number;
+	/** The egress in bytes */
+	egress_bytes: number;
 }
 
 /** Configuration for a Slack alerter. */
