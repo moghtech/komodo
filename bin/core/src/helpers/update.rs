@@ -517,6 +517,6 @@ pub async fn init_execution_update(
     // Don't actually send it here, let the handlers send it after they can set action state.
     update.id = add_update_without_send(&update).await?;
   }
-  
+
   Ok(update)
 }
