@@ -57,15 +57,32 @@ pub enum UpdateWsError {
 const MAX_SHORT_RETRY_COUNT: usize = 5;
 
 impl KomodoClient {
+  /// Subscribes to the Komodo Core update websocket,
+  /// and forwards the updates over a channel.
+  /// Handles reconnection internally.
+  ///
+  /// ```
+  /// let (mut rx, _) = komodo.subscribe_to_updates()?;
+  /// loop {
+  ///   let update = match rx.recv().await {
+  ///     Ok(msg) => msg,
+  ///     Err(e) => {
+  ///       error!("🚨 recv error | {e:?}");
+  ///       break;
+  ///     }
+  ///   };
+  ///   // Handle the update
+  ///   info!("Got update: {update:?}");
+  /// }
+  /// ```
   pub fn subscribe_to_updates(
     &self,
-    capacity: usize,
-    retry_cooldown_secs: u64,
+    // retry_cooldown_secs: u64,
   ) -> anyhow::Result<(
     broadcast::Receiver<UpdateWsMessage>,
     CancellationToken,
   )> {
-    let (tx, rx) = broadcast::channel(capacity);
+    let (tx, rx) = broadcast::channel(128);
     let cancel = CancellationToken::new();
     let cancel_clone = cancel.clone();
     let address =
@@ -262,8 +279,7 @@ impl KomodoClient {
           }
         }.instrument(span).await;
 
-        tokio::time::sleep(Duration::from_secs(retry_cooldown_secs))
-          .await;
+        tokio::time::sleep(Duration::from_secs(3)).await;
       }
     });
 

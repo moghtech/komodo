@@ -3,6 +3,7 @@ resolver = "2"
 members = [
 	"bin/*",
 	"lib/*",
+	"example/*",
 	"client/core/rs",
 	"client/periphery/rs",
 ]
