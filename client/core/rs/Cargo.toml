@@ -18,13 +18,13 @@ blocking = ["reqwest/blocking"]
 [dependencies]
 # mogh
 mongo_indexed = { workspace = true, optional = true }
+serror = { workspace = true, features = ["axum"]}
 derive_default_builder.workspace = true
 derive_empty_traits.workspace = true
 async_timing_util.workspace = true
 partial_derive2.workspace = true
 derive_variants.workspace = true
 resolver_api.workspace = true
-serror.workspace = true
 # external
 tokio-tungstenite.workspace = true
 derive_builder.workspace = true
