@@ -142,7 +142,7 @@ async fn callback(
 
   if komodo_timestamp() > valid_until {
     return Err(anyhow!(
-      "CSRF token invalid (Timed out). The token must be "
+      "CSRF token invalid (Timed out). The token must be used within 2 minutes."
     ));
   }
 
