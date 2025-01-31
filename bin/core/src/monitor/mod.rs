@@ -263,7 +263,7 @@ pub async fn update_cache_for_server(server: &Server) {
   for repo in repos {
     let (latest_hash, latest_message) = periphery
       .request(GetLatestCommit {
-        name: repo.name.clone(),
+        path: repo.config.path.clone(),
       })
       .await
       .map(|r| (r.hash, r.message))
