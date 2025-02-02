@@ -2,6 +2,7 @@ import { useInvalidate, useLocalStorage, useRead, useWrite } from "@lib/hooks";
 import { RequiredResourceComponents } from "@types";
 import { Card } from "@ui/card";
 import {
+  CircleArrowUp,
   FolderGit,
   Layers,
   Loader2,
@@ -271,44 +272,7 @@ export const StackComponents: RequiredResourceComponents = {
         </HoverCard>
       );
     },
-    UpdateAvailable: ({ id }) => {
-      const info = useStack(id)?.info;
-      const state = info?.state ?? Types.StackState.Unknown;
-      if (
-        !info ||
-        !!info?.services.every((service) => !service.update_available) ||
-        [Types.StackState.Down, Types.StackState.Unknown].includes(state)
-      ) {
-        return null;
-      }
-      return (
-        <HoverCard openDelay={200}>
-          <HoverCardTrigger asChild>
-            <Card className="px-3 py-2 border-blue-400 hover:border-blue-500 transition-colors cursor-pointer">
-              <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis">
-                Update
-                {(info?.services.filter((s) => s.update_available).length ??
-                  0) > 0
-                  ? "s"
-                  : ""}{" "}
-                Available
-              </div>
-            </Card>
-          </HoverCardTrigger>
-          <HoverCardContent align="start" className="flex flex-col gap-2 w-fit">
-            {info?.services
-              .filter((service) => service.update_available)
-              .map((s) => (
-                <div className="text-sm flex gap-2">
-                  <div className="text-muted-foreground">{s.service}</div>
-                  <div className="text-muted-foreground"> - </div>
-                  <div>{s.image}</div>
-                </div>
-              ))}
-          </HoverCardContent>
-        </HoverCard>
-      );
-    },
+    UpdateAvailable: ({ id }) => <UpdateAvailable id={id} />,
     Hash: ({ id }) => {
       const info = useStack(id)?.info;
       const fullInfo = useFullStack(id)?.info;
@@ -483,4 +447,49 @@ export const StackComponents: RequiredResourceComponents = {
       />
     );
   },
+};
+
+export const UpdateAvailable = ({
+  id,
+  small = false,
+}: {
+  id: string;
+  small?: boolean;
+}) => {
+  const info = useStack(id)?.info;
+  const state = info?.state ?? Types.StackState.Unknown;
+  if (
+    !info ||
+    !!info?.services.every((service) => !service.update_available) ||
+    [Types.StackState.Down, Types.StackState.Unknown].includes(state)
+  ) {
+    return null;
+  }
+  return (
+    <HoverCard openDelay={200}>
+      <HoverCardTrigger asChild>
+        <Card className="px-3 py-2 border-blue-400 hover:border-blue-500 transition-colors cursor-pointer flex items-center gap-2">
+          <CircleArrowUp className="w-4 h-4" />
+          <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis">
+            Update
+            {(info?.services.filter((s) => s.update_available).length ?? 0) > 1
+              ? "s"
+              : ""}{" "}
+            {!small && "Available"}
+          </div>
+        </Card>
+      </HoverCardTrigger>
+      <HoverCardContent align="start" className="flex flex-col gap-2 w-fit">
+        {info?.services
+          .filter((service) => service.update_available)
+          .map((s) => (
+            <div className="text-sm flex gap-2">
+              <div className="text-muted-foreground">{s.service}</div>
+              <div className="text-muted-foreground"> - </div>
+              <div>{s.image}</div>
+            </div>
+          ))}
+      </HoverCardContent>
+    </HoverCard>
+  );
 };
