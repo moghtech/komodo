@@ -3,7 +3,7 @@ import { Types } from "komodo_client";
 import { DataTable, SortableHeader } from "@ui/data-table";
 import { useRead, useSelectedResources } from "@lib/hooks";
 import { ResourceLink } from "../common";
-import { DeploymentComponents } from ".";
+import { DeploymentComponents, UpdateAvailable } from ".";
 import { HardDrive } from "lucide-react";
 import { useCallback } from "react";
 
@@ -35,7 +35,10 @@ export const DeploymentTable = ({
             <SortableHeader column={column} title="Name" />
           ),
           cell: ({ row }) => (
-            <ResourceLink type="Deployment" id={row.original.id} />
+            <div className="flex items-center justify-between gap-2">
+              <ResourceLink type="Deployment" id={row.original.id} />
+              <UpdateAvailable id={row.original.id} small />
+            </div>
           ),
           size: 200,
         },

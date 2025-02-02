@@ -468,15 +468,23 @@ export const UpdateAvailable = ({
   return (
     <HoverCard openDelay={200}>
       <HoverCardTrigger asChild>
-        <Card className="px-3 py-2 border-blue-400 hover:border-blue-500 transition-colors cursor-pointer flex items-center gap-2">
+        <Card
+          className={cn(
+            "border-blue-400 hover:border-blue-500 transition-colors cursor-pointer flex items-center gap-2",
+            small ? "px-2 py-1" : "px-3 py-2"
+          )}
+        >
           <CircleArrowUp className="w-4 h-4" />
-          <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis">
-            Update
-            {(info?.services.filter((s) => s.update_available).length ?? 0) > 1
-              ? "s"
-              : ""}{" "}
-            {!small && "Available"}
-          </div>
+          {!small && (
+            <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis">
+              Update
+              {(info?.services.filter((s) => s.update_available).length ?? 0) >
+              1
+                ? "s"
+                : ""}{" "}
+              Available
+            </div>
+          )}
         </Card>
       </HoverCardTrigger>
       <HoverCardContent align="start" className="flex flex-col gap-2 w-fit">

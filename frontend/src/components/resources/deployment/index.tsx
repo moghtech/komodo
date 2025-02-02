@@ -1,7 +1,7 @@
 import { useLocalStorage, useRead } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { RequiredResourceComponents } from "@types";
-import { HardDrive, Rocket, Server } from "lucide-react";
+import { CircleArrowUp, HardDrive, Rocket, Server } from "lucide-react";
 import { cn } from "@lib/utils";
 import { useServer } from "../server";
 import {
@@ -200,34 +200,7 @@ export const DeploymentComponents: RequiredResourceComponents = {
   },
 
   Status: {
-    UpdateAvailable: ({ id }) => {
-      const info = useDeployment(id)?.info;
-      const state = info?.state ?? Types.DeploymentState.Unknown;
-      if (
-        !info ||
-        !info?.update_available ||
-        [
-          Types.DeploymentState.NotDeployed,
-          Types.DeploymentState.Unknown,
-        ].includes(state)
-      ) {
-        return null;
-      }
-      return (
-        <HoverCard openDelay={200}>
-          <HoverCardTrigger asChild>
-            <Card className="px-3 py-2 border-blue-400 hover:border-blue-500 transition-colors cursor-pointer">
-              <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis">
-                Update Available
-              </div>
-            </Card>
-          </HoverCardTrigger>
-          <HoverCardContent align="start" className="w-fit text-sm">
-            There is a newer image available
-          </HoverCardContent>
-        </HoverCard>
-      );
-    },
+    UpdateAvailable: ({ id }) => <UpdateAvailable id={id} />,
   },
 
   Info: {
@@ -326,4 +299,46 @@ export const DeploymentComponents: RequiredResourceComponents = {
       />
     );
   },
+};
+
+export const UpdateAvailable = ({
+  id,
+  small,
+}: {
+  id: string;
+  small?: boolean;
+}) => {
+  const info = useDeployment(id)?.info;
+  const state = info?.state ?? Types.DeploymentState.Unknown;
+  if (
+    !info ||
+    !info?.update_available ||
+    [Types.DeploymentState.NotDeployed, Types.DeploymentState.Unknown].includes(
+      state
+    )
+  ) {
+    return null;
+  }
+  return (
+    <HoverCard openDelay={200}>
+      <HoverCardTrigger asChild>
+        <Card
+          className={cn(
+            "border-blue-400 hover:border-blue-500 transition-colors cursor-pointer flex items-center gap-2",
+            small ? "px-2 py-1" : "px-3 py-2"
+          )}
+        >
+          <CircleArrowUp className="w-4 h-4" />
+          {!small && (
+            <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis">
+              Update Available
+            </div>
+          )}
+        </Card>
+      </HoverCardTrigger>
+      <HoverCardContent align="start" className="w-fit text-sm">
+        There is a newer image available
+      </HoverCardContent>
+    </HoverCard>
+  );
 };
