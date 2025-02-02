@@ -2,7 +2,7 @@ import { useRead, useSelectedResources } from "@lib/hooks";
 import { DataTable, SortableHeader } from "@ui/data-table";
 import { ResourceLink } from "../common";
 import { TableTags } from "@components/tags";
-import { StackComponents } from ".";
+import { StackComponents, UpdateAvailable } from ".";
 import { Types } from "komodo_client";
 import { useCallback } from "react";
 
@@ -29,7 +29,14 @@ export const StackTable = ({ stacks }: { stacks: Types.StackListItem[] }) => {
           header: ({ column }) => (
             <SortableHeader column={column} title="Name" />
           ),
-          cell: ({ row }) => <ResourceLink type="Stack" id={row.original.id} />,
+          cell: ({ row }) => {
+            return (
+              <div className="flex items-center justify-between gap-2">
+                <ResourceLink type="Stack" id={row.original.id} />
+                <UpdateAvailable id={row.original.id} small />
+              </div>
+            );
+          },
           size: 200,
         },
         {
