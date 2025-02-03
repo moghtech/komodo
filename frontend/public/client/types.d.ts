@@ -104,7 +104,7 @@ export interface ResourceQuery<T> {
 export interface ActionQuerySpecifics {
 }
 export type ActionQuery = ResourceQuery<ActionQuerySpecifics>;
-export type AlerterEndpoint = 
+export type AlerterEndpoint =
 /** Send alert serialized to JSON to an http endpoint. */
 {
     type: "Custom";
@@ -390,7 +390,7 @@ export interface BuildQuerySpecifics {
     built_since?: I64;
 }
 export type BuildQuery = ResourceQuery<BuildQuerySpecifics>;
-export type BuilderConfig = 
+export type BuilderConfig =
 /** Use a Periphery address as a Builder. */
 {
     type: "Url";
@@ -421,7 +421,7 @@ export interface BuilderQuerySpecifics {
 }
 export type BuilderQuery = ResourceQuery<BuilderQuerySpecifics>;
 /** A wrapper for all Komodo exections. */
-export type Execution = 
+export type Execution =
 /** The "null" execution. Does nothing. */
 {
     type: "None";
@@ -725,7 +725,7 @@ export interface JwtResponse {
 export type CreateLocalUserResponse = JwtResponse;
 export type CreateProcedureResponse = Procedure;
 export type CreateRepoWebhookResponse = NoData;
-export type UserConfig = 
+export type UserConfig =
 /** User that logs in with username / password */
 {
     type: "Local";
@@ -833,7 +833,7 @@ export type DeleteStackWebhookResponse = NoData;
 export type DeleteSyncWebhookResponse = NoData;
 export type DeleteUserResponse = User;
 export type DeleteVariableResponse = Variable;
-export type DeploymentImage = 
+export type DeploymentImage =
 /** Deploy any external image. */
 {
     type: "Image";
@@ -1010,7 +1010,7 @@ export declare enum SeverityLevel {
     Critical = "CRITICAL"
 }
 /** The variants of data related to the alert. */
-export type AlertData = 
+export type AlertData =
 /** A null alert */
 {
     type: "None";
@@ -1476,7 +1476,7 @@ export interface ResourceSyncConfig {
     /** Manage the file contents in the UI. */
     file_contents?: string;
 }
-export type DiffData = 
+export type DiffData =
 /** Resource will be created */
 {
     type: "Create";
@@ -1641,7 +1641,7 @@ export interface ServerConfig {
 }
 export type Server = Resource<ServerConfig, undefined>;
 export type GetServerResponse = Server;
-export type ServerTemplateConfig = 
+export type ServerTemplateConfig =
 /** Template to launch an AWS EC2 instance */
 {
     type: "Aws";
@@ -1775,6 +1775,8 @@ export interface StackConfig {
     registry_account?: string;
     /** The optional command to run before the Stack is deployed. */
     pre_deploy?: SystemCommand;
+    /** The optional command to run before the Stack is deployed. */
+    post_deploy?: SystemCommand;
     /**
      * The extra arguments to pass after `docker compose up -d`.
      * If empty, no extra arguments will be passed.
@@ -3079,7 +3081,7 @@ export interface GitProvider {
     accounts: ProviderAccount[];
 }
 export type ListGitProvidersFromConfigResponse = GitProvider[];
-export type UserTarget = 
+export type UserTarget =
 /** User Id */
 {
     type: "User";
@@ -7091,7 +7093,7 @@ export type ExecuteRequest = {
     params: RunSync;
 };
 /** Configuration for the registry to push the built image to. */
-export type ImageRegistryLegacy1_14 = 
+export type ImageRegistryLegacy1_14 =
 /** Don't push the image to any registry */
 {
     type: "None";

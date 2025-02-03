@@ -152,6 +152,13 @@ impl Resolve<ExecuteArgs> for DeployStack {
         &mut secret_replacers,
       )?;
 
+      interpolate_variables_secrets_into_system_command(
+        &vars_and_secrets,
+        &mut stack.config.post_deploy,
+        &mut global_replacers,
+        &mut secret_replacers,
+      )?;
+
       add_interp_update_log(
         &mut update,
         &global_replacers,
