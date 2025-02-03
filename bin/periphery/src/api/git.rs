@@ -23,7 +23,7 @@ impl Resolve<super::Args> for GetLatestCommit {
     };
     if !repo_path.is_dir() {
       return Err(
-        anyhow!("Repo path {} is not directory. is it cloned?", repo_path.display().to_string()).into(),
+        anyhow!("Repo path {} is not directory. is it cloned?", repo_path.display()).into(),
       );
     }
     Ok(git::get_commit_hash_info(&repo_path).await?)
