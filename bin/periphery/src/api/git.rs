@@ -17,7 +17,10 @@ impl Resolve<super::Args> for GetLatestCommit {
     self,
     _: &super::Args,
   ) -> serror::Result<LatestCommit> {
-    let repo_path = PathBuf::from(self.path);
+    let repo_path = match self.path {
+      Some(p) => PathBuf::from(p),
+      None => periphery_config().repo_dir.join(self.name.as_deref().unwrap_or_default())
+    };
     if !repo_path.is_dir() {
       return Err(
         anyhow!("Repo path {} is not directory. is it cloned?", repo_path.display().to_string()).into(),
