@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 #[response(LatestCommit)]
 #[error(serror::Error)]
 pub struct GetLatestCommit {
-  pub name: Option<String>,
+  pub name: String,
   pub path: Option<String>,
 }
 

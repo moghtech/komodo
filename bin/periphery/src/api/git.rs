@@ -19,7 +19,7 @@ impl Resolve<super::Args> for GetLatestCommit {
   ) -> serror::Result<LatestCommit> {
     let repo_path = match self.path {
       Some(p) => PathBuf::from(p),
-      None => periphery_config().repo_dir.join(self.name.as_deref().unwrap_or_default())
+      None => periphery_config().repo_dir.join(self.name)
     };
     if !repo_path.is_dir() {
       return Err(
