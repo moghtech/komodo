@@ -140,7 +140,7 @@ async fn send_custom_alert(
   let vars_and_secrets = get_variables_and_secrets().await?;
   let mut global_replacers = HashSet::new();
   let mut secret_replacers = HashSet::new();
-  let mut url_interpolated = url.clone().into();
+  let mut url_interpolated = url.to_string();
 
   // interpolate variables and secrets into the url
   interpolate_variables_secrets_into_string(
