@@ -388,10 +388,12 @@ pub async fn compose_up(
     log
   };
 
-  // push the compose up command logs to keep the correct order
-  res.logs.push(log.clone());
+  res.deployed = log.success;
 
-  if !stack.config.post_deploy.command.is_empty() {
+  // push the compose up command logs to keep the correct order
+  res.logs.push(log);
+
+  if res.deployed && !stack.config.post_deploy.command.is_empty() {
     let post_deploy_path =
         run_directory.join(&stack.config.post_deploy.path);
     if !stack.config.skip_secret_interp {
@@ -444,8 +446,6 @@ pub async fn compose_up(
       ));
     }
   }
-
-  res.deployed = log.success;
 
   Ok(())
 }
