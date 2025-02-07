@@ -41,7 +41,7 @@ dependencies = [
 
 [[package]]
 name = "alerter"
-version = "1.17.0"
+version = "1.17.0-dev"
 dependencies = [
  "anyhow",
  "axum 0.8.1",
@@ -942,7 +942,7 @@ dependencies = [
 
 [[package]]
 name = "cache"
-version = "1.17.0"
+version = "1.17.0-dev"
 dependencies = [
  "anyhow",
  "tokio",
@@ -1082,7 +1082,7 @@ dependencies = [
 
 [[package]]
 name = "command"
-version = "1.17.0"
+version = "1.17.0-dev"
 dependencies = [
  "komodo_client",
  "run_command",
@@ -1521,7 +1521,7 @@ dependencies = [
 
 [[package]]
 name = "environment_file"
-version = "1.17.0"
+version = "1.17.0-dev"
 dependencies = [
  "thiserror 2.0.11",
 ]
@@ -1590,7 +1590,7 @@ dependencies = [
 
 [[package]]
 name = "formatting"
-version = "1.17.0"
+version = "1.17.0-dev"
 dependencies = [
  "serror",
 ]
@@ -1728,7 +1728,7 @@ checksum = "07e28edb80900c19c28f1072f2e8aeca7fa06b23cd4169cefe1af5aa3260783f"
 
 [[package]]
 name = "git"
-version = "1.17.0"
+version = "1.17.0-dev"
 dependencies = [
  "anyhow",
  "cache",
@@ -2491,7 +2491,7 @@ dependencies = [
 
 [[package]]
 name = "komodo_cli"
-version = "1.17.0"
+version = "1.17.0-dev"
 dependencies = [
  "anyhow",
  "clap",
@@ -2507,7 +2507,7 @@ dependencies = [
 
 [[package]]
 name = "komodo_client"
-version = "1.17.0"
+version = "1.17.0-dev"
 dependencies = [
  "anyhow",
  "async_timing_util",
@@ -2538,7 +2538,7 @@ dependencies = [
 
 [[package]]
 name = "komodo_core"
-version = "1.17.0"
+version = "1.17.0-dev"
 dependencies = [
  "anyhow",
  "async_timing_util",
@@ -2600,7 +2600,7 @@ dependencies = [
 
 [[package]]
 name = "komodo_periphery"
-version = "1.17.0"
+version = "1.17.0-dev"
 dependencies = [
  "anyhow",
  "async_timing_util",
@@ -2711,7 +2711,7 @@ dependencies = [
 
 [[package]]
 name = "logger"
-version = "1.17.0"
+version = "1.17.0-dev"
 dependencies = [
  "anyhow",
  "komodo_client",
@@ -3397,7 +3397,7 @@ checksum = "e3148f5046208a5d56bcfc03053e3ca6334e51da8dfb19b6cdc8b306fae3283e"
 
 [[package]]
 name = "periphery_client"
-version = "1.17.0"
+version = "1.17.0-dev"
 dependencies = [
  "anyhow",
  "komodo_client",
@@ -3891,7 +3891,7 @@ dependencies = [
 
 [[package]]
 name = "response"
-version = "1.17.0"
+version = "1.17.0-dev"
 dependencies = [
  "anyhow",
  "axum 0.8.1",
@@ -5286,7 +5286,7 @@ checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 
 [[package]]
 name = "update_logger"
-version = "1.17.0"
+version = "1.17.0-dev"
 dependencies = [
  "anyhow",
  "komodo_client",
