@@ -430,14 +430,10 @@ impl CloneArgs {
       .repo
       .as_ref()
       .context("resource has no repo attached")?;
-    // Azure DevOps uses a path without .git on the end.
-    let url = if self.provider.contains("dev.azure.com") {
-        format!("{protocol}://{access_token_at}{}/{repo}", self.provider)
-    } else {
-        format!("{protocol}://{access_token_at}{}/{repo}.git", self.provider)
-    };
-
-    Ok(url)
+    Ok(format!(
+      "{protocol}://{access_token_at}{}/{repo}",
+      self.provider
+    ))
   }
 
   pub fn unique_path(
