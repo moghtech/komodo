@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use anyhow::{anyhow, Context};
 use git::GitRes;
 use komodo_client::entities::{update::Log, CloneArgs, LatestCommit};
@@ -16,10 +17,13 @@ impl Resolve<super::Args> for GetLatestCommit {
     self,
     _: &super::Args,
   ) -> serror::Result<LatestCommit> {
-    let repo_path = periphery_config().repo_dir.join(self.name);
+    let repo_path = match self.path {
+      Some(p) => PathBuf::from(p),
+      None => periphery_config().repo_dir.join(self.name)
+    };
     if !repo_path.is_dir() {
       return Err(
-        anyhow!("Repo path is not directory. is it cloned?").into(),
+        anyhow!("Repo path {} is not directory. is it cloned?", repo_path.display()).into(),
       );
     }
     Ok(git::get_commit_hash_info(&repo_path).await?)
