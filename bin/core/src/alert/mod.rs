@@ -155,6 +155,10 @@ async fn send_custom_alert(
     .json(alert)
     .send()
     .await
+    .map_err(|e| {
+      let replacers = secret_replacers.into_iter().collect::<Vec<_>>();
+      svi::replace_in_string(&format!("{e:?}"), &replacers)
+    })
     .context("failed at post request to alerter")?;
   let status = res.status();
   if !status.is_success() {
