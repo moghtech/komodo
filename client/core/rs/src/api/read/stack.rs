@@ -173,7 +173,7 @@ pub type ListCommonStackBuildExtraArgsResponse = Vec<String>;
 #[response(ListStacksResponse)]
 #[error(serror::Error)]
 pub struct ListStacks {
-  /// optional structured query to filter syncs.
+  /// optional structured query to filter stacks.
   #[serde(default)]
   pub query: StackQuery,
 }
