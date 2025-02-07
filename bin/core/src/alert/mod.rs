@@ -157,7 +157,8 @@ async fn send_custom_alert(
     .await
     .map_err(|e| {
       let replacers = secret_replacers.into_iter().collect::<Vec<_>>();
-      svi::replace_in_string(&format!("{e:?}"), &replacers)
+      let sanitized_error = svi::replace_in_string(&format!("{e:?}"), &replacers);
+      anyhow::Error::msg(format!("Error with request: {}", sanitized_error))
     })
     .context("failed at post request to alerter")?;
   let status = res.status();
