@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use ::slack::types::Block;
 use anyhow::{anyhow, Context};
 use derive_variants::ExtractVariant;
@@ -13,6 +14,8 @@ use mungos::{find::find_collect, mongodb::bson::doc};
 use tracing::Instrument;
 
 use crate::{config::core_config, state::db_client};
+use crate::helpers::interpolate::interpolate_variables_secrets_into_string;
+use crate::helpers::query::get_variables_and_secrets;
 
 mod discord;
 mod slack;
@@ -133,11 +136,30 @@ async fn send_custom_alert(
   url: &str,
   alert: &Alert,
 ) -> anyhow::Result<()> {
+
+  let vars_and_secrets = get_variables_and_secrets().await?;
+  let mut global_replacers = HashSet::new();
+  let mut secret_replacers = HashSet::new();
+  let mut url_interpolated = url.to_string();
+
+  // interpolate variables and secrets into the url
+  interpolate_variables_secrets_into_string(
+    &vars_and_secrets,
+    &mut url_interpolated,
+    &mut global_replacers,
+    &mut secret_replacers,
+  )?;
+
   let res = reqwest::Client::new()
-    .post(url)
+    .post(url_interpolated)
     .json(alert)
     .send()
     .await
+    .map_err(|e| {
+      let replacers = secret_replacers.into_iter().collect::<Vec<_>>();
+      let sanitized_error = svi::replace_in_string(&format!("{e:?}"), &replacers);
+      anyhow::Error::msg(format!("Error with request: {}", sanitized_error))
+    })
     .context("failed at post request to alerter")?;
   let status = res.status();
   if !status.is_success() {
