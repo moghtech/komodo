@@ -307,6 +307,20 @@ export const StackConfig = ({
       },
     },
     {
+      label: "Post Deploy",
+      description:
+          "Execute a shell command after running docker compose up. The 'path' is relative to the Run Directory",
+      components: {
+        post_deploy: (value, set) => (
+            <SystemCommand
+                value={value}
+                set={(value) => set({ post_deploy: value })}
+                disabled={disabled}
+            />
+        ),
+      },
+    },
+    {
       label: "Extra Args",
       labelHidden: true,
       components: {

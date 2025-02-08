@@ -124,7 +124,7 @@ export interface ActionQuerySpecifics {
 
 export type ActionQuery = ResourceQuery<ActionQuerySpecifics>;
 
-export type AlerterEndpoint = 
+export type AlerterEndpoint =
 	/** Send alert serialized to JSON to an http endpoint. */
 	| { type: "Custom", params: CustomAlerterEndpoint }
 	/** Send alert to a Slack app */
@@ -133,7 +133,7 @@ export type AlerterEndpoint =
 	| { type: "Discord", params: DiscordAlerterEndpoint };
 
 /** Used to reference a specific resource across all resource types */
-export type ResourceTarget = 
+export type ResourceTarget =
 	| { type: "System", id: string }
 	| { type: "Server", id: string }
 	| { type: "Stack", id: string }
@@ -152,7 +152,7 @@ export interface AlerterConfig {
 	enabled?: boolean;
 	/**
 	 * Where to route the alert messages.
-	 * 
+	 *
 	 * Default: Custom endpoint `http://localhost:7000`
 	 */
 	endpoint?: AlerterEndpoint;
@@ -198,7 +198,7 @@ export interface AlerterQuerySpecifics {
 
 export type AlerterQuery = ResourceQuery<AlerterQuerySpecifics>;
 
-export type BatchExecutionResponseItem = 
+export type BatchExecutionResponseItem =
 	| { status: "Ok", data: Update }
 	| { status: "Err", data: BatchExecutionResponseItemErr };
 
@@ -245,7 +245,7 @@ export interface BuildConfig {
 	/**
 	 * An alternate name for the image pushed to the repository.
 	 * If this is empty, it will use the build name.
-	 * 
+	 *
 	 * Can be used in conjunction with `image_tag` to direct multiple builds
 	 * with different configs to push to the same image registry, under different,
 	 * independantly versioned tags.
@@ -255,7 +255,7 @@ export interface BuildConfig {
 	 * An extra tag put before the build version, for the image pushed to the repository.
 	 * Eg. in image tag of `aarch64` would push to mbecker20/komodo:1.13.2-aarch64.
 	 * If this is empty, the image tag will just be the build version.
-	 * 
+	 *
 	 * Can be used in conjunction with `image_name` to direct multiple builds
 	 * with different configs to push to the same image registry, under different,
 	 * independantly versioned tags.
@@ -267,14 +267,14 @@ export interface BuildConfig {
 	git_provider: string;
 	/**
 	 * Whether to use https to clone the repo (versus http). Default: true
-	 * 
+	 *
 	 * Note. Komodo does not currently support cloning repos via ssh.
 	 */
 	git_https: boolean;
 	/**
 	 * The git account used to access private repos.
 	 * Passing empty string can only clone public repos.
-	 * 
+	 *
 	 * Note. A token for the account must be available in the core config or the builder server's periphery config
 	 * for the configured git provider.
 	 */
@@ -311,16 +311,16 @@ export interface BuildConfig {
 	extra_args?: string[];
 	/**
 	 * Docker build arguments.
-	 * 
+	 *
 	 * These values are visible in the final image by running `docker inspect`.
 	 */
 	build_args?: string;
 	/**
 	 * Secret arguments.
-	 * 
+	 *
 	 * These values remain hidden in the final image by using
 	 * docker secret mounts. See <https://docs.docker.com/build/building/secrets>.
-	 * 
+	 *
 	 * The values can be used in RUN commands:
 	 * ```sh
 	 * RUN --mount=type=secret,id=SECRET_KEY \
@@ -394,7 +394,7 @@ export interface BuildQuerySpecifics {
 
 export type BuildQuery = ResourceQuery<BuildQuerySpecifics>;
 
-export type BuilderConfig = 
+export type BuilderConfig =
 	/** Use a Periphery address as a Builder. */
 	| { type: "Url", params: UrlBuilderConfig }
 	/** Use a connected server as a Builder. */
@@ -422,7 +422,7 @@ export interface BuilderQuerySpecifics {
 export type BuilderQuery = ResourceQuery<BuilderQuerySpecifics>;
 
 /** A wrapper for all Komodo exections. */
-export type Execution = 
+export type Execution =
 	/** The "null" execution. Does nothing. */
 	| { type: "None", params: NoData }
 	| { type: "RunAction", params: RunAction }
@@ -538,7 +538,7 @@ export interface CreateApiKeyResponse {
 	key: string;
 	/**
 	 * X-API-SECRET
-	 * 
+	 *
 	 * Note.
 	 * There is no way to get the secret again after it is distributed in this message
 	 */
@@ -559,7 +559,7 @@ export interface DockerRegistryAccount {
 	_id?: MongoId;
 	/**
 	 * The domain of the provider.
-	 * 
+	 *
 	 * For docker registry, this can include 'http://...',
 	 * however this is not recommended and won't work unless "insecure registries" are enabled
 	 * on your hosts. See <https://docs.docker.com/reference/cli/dockerd/#insecure-registries>.
@@ -589,7 +589,7 @@ export interface GitProviderAccount {
 	_id?: MongoId;
 	/**
 	 * The domain of the provider.
-	 * 
+	 *
 	 * For git, this cannot include the protocol eg 'http://',
 	 * which is controlled with 'https' field.
 	 */
@@ -620,7 +620,7 @@ export type CreateProcedureResponse = Procedure;
 
 export type CreateRepoWebhookResponse = NoData;
 
-export type UserConfig = 
+export type UserConfig =
 	/** User that logs in with username / password */
 	| { type: "Local", data: {
 	password: string;
@@ -698,7 +698,7 @@ export interface Variable {
 	/**
 	 * If marked as secret, the variable value will be hidden in updates / logs.
 	 * Additionally the value will not be served in read requests by non admin users.
-	 * 
+	 *
 	 * Note that the value is NOT encrypted in the database, and will likely show up in database logs.
 	 * The security of these variables comes down to the security
 	 * of the database (system level encryption, network isolation, etc.)
@@ -732,7 +732,7 @@ export type DeleteUserResponse = User;
 
 export type DeleteVariableResponse = Variable;
 
-export type DeploymentImage = 
+export type DeploymentImage =
 	/** Deploy any external image. */
 	| { type: "Image", params: {
 	/** The docker image, can be from any registry that works with docker and that the host server can reach. */
@@ -774,7 +774,7 @@ export interface DeploymentConfig {
 	/**
 	 * Configure the account used to pull the image from the registry.
 	 * Used with `docker login`.
-	 * 
+	 *
 	 * - If the field is empty string, will use the same account config as the build, or none at all if using image.
 	 * - If the field contains an account, a token for the account must be available.
 	 * - Will get the registry domain from the build / image
@@ -846,7 +846,7 @@ export type Deployment = Resource<DeploymentConfig, undefined>;
 
 /**
  * Variants de/serialized from/to snake_case.
- * 
+ *
  * Eg.
  * - NotDeployed -> not_deployed
  * - Restarting -> restarting
@@ -922,7 +922,7 @@ export enum SeverityLevel {
 }
 
 /** The variants of data related to the alert. */
-export type AlertData = 
+export type AlertData =
 	/** A null alert */
 	| { type: "None", data: {
 }}
@@ -1223,14 +1223,14 @@ export interface RepoConfig {
 	git_provider: string;
 	/**
 	 * Whether to use https to clone the repo (versus http). Default: true
-	 * 
+	 *
 	 * Note. Komodo does not currently support cloning repos via ssh.
 	 */
 	git_https: boolean;
 	/**
 	 * The git account used to access private repos.
 	 * Passing empty string can only clone public repos.
-	 * 
+	 *
 	 * Note. A token for the account must be available in the core config or the builder server's periphery config
 	 * for the configured git provider.
 	 */
@@ -1266,7 +1266,7 @@ export interface RepoConfig {
 	 * The environment variables passed to the compose file.
 	 * They will be written to path defined in env_file_path,
 	 * which is given relative to the run directory.
-	 * 
+	 *
 	 * If it is empty, no file will be written.
 	 */
 	environment?: string;
@@ -1312,7 +1312,7 @@ export interface ResourceSyncConfig {
 	git_provider: string;
 	/**
 	 * Whether to use https to clone the repo (versus http). Default: true
-	 * 
+	 *
 	 * Note. Komodo does not currently support cloning repos via ssh.
 	 */
 	git_https: boolean;
@@ -1325,7 +1325,7 @@ export interface ResourceSyncConfig {
 	/**
 	 * The git account used to access private repos.
 	 * Passing empty string can only clone public repos.
-	 * 
+	 *
 	 * Note. A token for the account must be available in the core config or the builder server's periphery config
 	 * for the configured git provider.
 	 */
@@ -1372,7 +1372,7 @@ export interface ResourceSyncConfig {
 	file_contents?: string;
 }
 
-export type DiffData = 
+export type DiffData =
 	/** Resource will be created */
 	| { type: "Create", data: {
 	/** The name of resource to create */
@@ -1542,7 +1542,7 @@ export type Server = Resource<ServerConfig, undefined>;
 
 export type GetServerResponse = Server;
 
-export type ServerTemplateConfig = 
+export type ServerTemplateConfig =
 	/** Template to launch an AWS EC2 instance */
 	| { type: "Aws", params: AwsServerTemplateConfig }
 	/** Template to launch a Hetzner server */
@@ -1575,7 +1575,7 @@ export interface StackConfig {
 	 * Optionally specify a custom project name for the stack.
 	 * If this is empty string, it will default to the stack name.
 	 * Used with `docker compose -p {project_name}`.
-	 * 
+	 *
 	 * Note. Can be used to import pre-existing stacks.
 	 */
 	project_name?: string;
@@ -1632,14 +1632,14 @@ export interface StackConfig {
 	git_provider: string;
 	/**
 	 * Whether to use https to clone the repo (versus http). Default: true
-	 * 
+	 *
 	 * Note. Komodo does not currently support cloning repos via ssh.
 	 */
 	git_https: boolean;
 	/**
 	 * The git account used to access private repos.
 	 * Passing empty string can only clone public repos.
-	 * 
+	 *
 	 * Note. A token for the account must be available in the core config or the builder server's periphery config
 	 * for the configured git provider.
 	 */
@@ -1675,6 +1675,8 @@ export interface StackConfig {
 	registry_account?: string;
 	/** The optional command to run before the Stack is deployed. */
 	pre_deploy?: SystemCommand;
+	/** The optional command to run after the Stack is deployed. */
+	post_deploy?: SystemCommand;
 	/**
 	 * The extra arguments to pass after `docker compose up -d`.
 	 * If empty, no extra arguments will be passed.
@@ -1702,7 +1704,7 @@ export interface StackConfig {
 	 * The environment variables passed to the compose file.
 	 * They will be written to path defined in env_file_path,
 	 * which is given relative to the run directory.
-	 * 
+	 *
 	 * If it is empty, no file will be written.
 	 */
 	environment?: string;
@@ -1721,18 +1723,18 @@ export interface StackServiceNames {
 	/**
 	 * Will either be the declared container_name in the compose file,
 	 * or a pattern to match auto named containers.
-	 * 
+	 *
 	 * Auto named containers are composed of three parts:
-	 * 
+	 *
 	 * 1. The name of the compose project (top level name field of compose file).
 	 * This defaults to the name of the parent folder of the compose file.
 	 * Komodo will always set it to be the name of the stack, but imported stacks
 	 * will have a different name.
 	 * 2. The service name
 	 * 3. The replica number
-	 * 
+	 *
 	 * Example: stacko-mongo-1.
-	 * 
+	 *
 	 * This stores only 1. and 2., ie stacko-mongo.
 	 * Containers will be matched via regex like `^container_name-?[0-9]*$``
 	 */
@@ -2032,7 +2034,7 @@ export interface Update {
 	success: boolean;
 	/**
 	 * The user id that triggered the update.
-	 * 
+	 *
 	 * Also can take these values for operations triggered automatically:
 	 * - `Procedure`: The operation was triggered as part of a procedure run
 	 * - `Github`: The operation was triggered by a github webhook
@@ -2064,7 +2066,7 @@ export type GetUpdateResponse = Update;
 
 /**
  * Permission users at the group level.
- * 
+ *
  * All users that are part of a group inherit the group's permissions.
  * A user can be a part of multiple groups. A user's permission on a particular resource
  * will be resolved to be the maximum permission level between the user's own permissions and
@@ -3110,7 +3112,7 @@ export interface GitProvider {
 
 export type ListGitProvidersFromConfigResponse = GitProvider[];
 
-export type UserTarget = 
+export type UserTarget =
 	/** User Id */
 	| { type: "User", id: string }
 	/** UserGroup Id */
@@ -3658,7 +3660,7 @@ export interface BatchBuildRepo {
 	/**
 	 * Id or name or wildcard pattern or regex.
 	 * Supports multiline and comma delineated combinations of the above.
-	 * 
+	 *
 	 * Example:
 	 * ```
 	 * # match all foo-* repos
@@ -3675,7 +3677,7 @@ export interface BatchCloneRepo {
 	/**
 	 * Id or name or wildcard pattern or regex.
 	 * Supports multiline and comma delineated combinations of the above.
-	 * 
+	 *
 	 * Example:
 	 * ```
 	 * # match all foo-* repos
@@ -3692,7 +3694,7 @@ export interface BatchDeploy {
 	/**
 	 * Id or name or wildcard pattern or regex.
 	 * Supports multiline and comma delineated combinations of the above.
-	 * 
+	 *
 	 * Example:
 	 * ```
 	 * # match all foo-* deployments
@@ -3709,7 +3711,7 @@ export interface BatchDeployStack {
 	/**
 	 * Id or name or wildcard pattern or regex.
 	 * Supports multiline and comma delineated combinations of the above.
-	 * 
+	 *
 	 * Example:
 	 * ```
 	 * # match all foo-* stacks
@@ -3726,7 +3728,7 @@ export interface BatchDeployStackIfChanged {
 	/**
 	 * Id or name or wildcard pattern or regex.
 	 * Supports multiline and comma delineated combinations of the above.
-	 * 
+	 *
 	 * Example:
 	 * ```
 	 * # match all foo-* stacks
@@ -3743,7 +3745,7 @@ export interface BatchDestroyDeployment {
 	/**
 	 * Id or name or wildcard pattern or regex.
 	 * Supports multiline and comma delineated combinations of the above.
-	 * 
+	 *
 	 * Example:
 	 * ```
 	 * # match all foo-* deployments
@@ -3782,7 +3784,7 @@ export interface BatchPullRepo {
 	/**
 	 * Id or name or wildcard pattern or regex.
 	 * Supports multiline and comma delineated combinations of the above.
-	 * 
+	 *
 	 * Example:
 	 * ```
 	 * # match all foo-* repos
@@ -3799,7 +3801,7 @@ export interface BatchRunAction {
 	/**
 	 * Id or name or wildcard pattern or regex.
 	 * Supports multiline and comma delineated combinations of the above.
-	 * 
+	 *
 	 * Example:
 	 * ```
 	 * # match all foo-* actions
@@ -3816,7 +3818,7 @@ export interface BatchRunBuild {
 	/**
 	 * Id or name or wildcard pattern or regex.
 	 * Supports multiline and comma delineated combinations of the above.
-	 * 
+	 *
 	 * Example:
 	 * ```
 	 * # match all foo-* builds
@@ -3833,7 +3835,7 @@ export interface BatchRunProcedure {
 	/**
 	 * Id or name or wildcard pattern or regex.
 	 * Supports multiline and comma delineated combinations of the above.
-	 * 
+	 *
 	 * Example:
 	 * ```
 	 * # match all foo-* procedures
@@ -3847,9 +3849,9 @@ export interface BatchRunProcedure {
 
 /**
  * Builds the target repo, using the attached builder. Response: [Update].
- * 
+ *
  * Note. Repo must have builder attached at `builder_id`.
- * 
+ *
  * 1. Spawns the target builder instance (For AWS type. For Server type, just use CloneRepo).
  * 2. Clones the repo on the builder using `git clone https://{$token?}@github.com/${repo} -b ${branch}`.
  * The token will only be used if a github account is specified,
@@ -3914,9 +3916,9 @@ export interface CloneArgs {
 
 /**
  * Clones the target repo. Response: [Update].
- * 
+ *
  * Note. Repo must have server attached at `server_id`.
- * 
+ *
  * 1. Clones the repo on the target server using `git clone https://{$token?}@github.com/${repo} -b ${branch}`.
  * The token will only be used if a github account is specified,
  * and must be declared in the periphery configuration on the target server.
@@ -3930,7 +3932,7 @@ export interface CloneRepo {
 
 /**
  * Exports matching resources, and writes to the target sync's resource file. Response: [Update]
- * 
+ *
  * Note. Will fail if the Sync is not `managed`.
  */
 export interface CommitSync {
@@ -4083,7 +4085,7 @@ export interface CreateAlerter {
 /**
  * Create an api key for the calling user.
  * Response: [CreateApiKeyResponse].
- * 
+ *
  * Note. After the response is served, there will be no way
  * to get the secret later.
  */
@@ -4131,7 +4133,7 @@ export interface CreateBuildWebhook {
 }
 
 /** Partial representation of [BuilderConfig] */
-export type PartialBuilderConfig = 
+export type PartialBuilderConfig =
 	| { type: "Url", params: _PartialUrlBuilderConfig }
 	| { type: "Server", params: _PartialServerBuilderConfig }
 	| { type: "Aws", params: _PartialAwsBuilderConfig };
@@ -4184,7 +4186,7 @@ export interface CreateGitProviderAccount {
  * Create a new local user account. Will fail if a user with the
  * given username already exists.
  * Response: [CreateLocalUserResponse].
- * 
+ *
  * Note. This method is only available if the core api has `local_auth` enabled.
  */
 export interface CreateLocalUser {
@@ -4200,7 +4202,7 @@ export interface CreateLocalUser {
 /**
  * Create a docker network on the server.
  * Response: [Update]
- * 
+ *
  * `docker network create {name}`
  */
 export interface CreateNetwork {
@@ -4259,7 +4261,7 @@ export interface CreateServer {
 	config?: _PartialServerConfig;
 }
 
-export type PartialServerTemplateConfig = 
+export type PartialServerTemplateConfig =
 	| { type: "Aws", params: _PartialAwsServerTemplateConfig }
 	| { type: "Hetzner", params: _PartialHetznerServerTemplateConfig };
 
@@ -4426,7 +4428,7 @@ export interface DeleteBuilder {
 /**
  * Deletes the deployment at the given id, and returns the deleted deployment.
  * Response: [Deployment].
- * 
+ *
  * Note. If the associated container is running, it will be deleted as part of
  * the deployment clean up.
  */
@@ -4564,7 +4566,7 @@ export interface DeleteSyncWebhook {
 
 /**
  * Delete a tag, and return the deleted tag. Response: [Tag].
- * 
+ *
  * Note. Will also remove this tag from all attached resources.
  */
 export interface DeleteTag {
@@ -4609,7 +4611,7 @@ export interface DeleteVolume {
 
 /**
  * Deploys the container for the target deployment. Response: [Update].
- * 
+ *
  * 1. Pulls the image onto the target server.
  * 2. If the container is already running,
  * it will be stopped and removed using `docker container rm ${container_name}`.
@@ -4662,7 +4664,7 @@ export interface DeployStackIfChanged {
 /**
  * Stops and destroys the container on the target server.
  * Reponse: [Update].
- * 
+ *
  * 1. The container is stopped and removed using `docker container rm ${container_name}`.
  */
 export interface DestroyContainer {
@@ -4679,7 +4681,7 @@ export interface DestroyContainer {
 /**
  * Stops and destroys the container for the target deployment.
  * Reponse: [Update].
- * 
+ *
  * 1. The container is stopped and removed using `docker container rm ${container_name}`.
  */
 export interface DestroyDeployment {
@@ -4828,7 +4830,7 @@ export interface GetBuildActionState {
 /**
  * Gets summary and timeseries breakdown of the last months build count / time for charting.
  * Response: [GetBuildMonthlyStatsResponse].
- * 
+ *
  * Note. This method is paginated. One page is 30 days of data.
  * Query for older pages by incrementing the page, starting at 0.
  */
@@ -4907,7 +4909,7 @@ export interface GetBuildsSummaryResponse {
 /**
  * Get the container log's tail, split by stdout/stderr.
  * Response: [Log].
- * 
+ *
  * Note. This call will hit the underlying server directly for most up to date log.
  */
 export interface GetContainerLog {
@@ -4970,7 +4972,7 @@ export interface GetDeploymentActionState {
 /**
  * Get the container, including image / status, of the target deployment.
  * Response: [GetDeploymentContainerResponse].
- * 
+ *
  * Note. This does not hit the server directly. The status comes from an
  * in memory cache on the core, which hits the server periodically
  * to keep it up to date.
@@ -4989,7 +4991,7 @@ export interface GetDeploymentContainerResponse {
 /**
  * Get the deployment log's tail, split by stdout/stderr.
  * Response: [Log].
- * 
+ *
  * Note. This call will hit the underlying server directly for most up to date log.
  */
 export interface GetDeploymentLog {
@@ -5008,7 +5010,7 @@ export interface GetDeploymentLog {
 /**
  * Get the deployment container's stats using `docker stats`.
  * Response: [GetDeploymentStatsResponse].
- * 
+ *
  * Note. This call will hit the underlying server directly for most up to date stats.
  */
 export interface GetDeploymentStats {
@@ -5451,7 +5453,7 @@ export interface GetSystemInformation {
 
 /**
  * Get the system stats on the target server. Response: [SystemStats].
- * 
+ *
  * Note. This does not hit the server directly. The stats come from an
  * in memory cache on the core, which hits the server periodically
  * to keep it up to date.
@@ -5512,7 +5514,7 @@ export interface GetUsernameResponse {
 /**
  * List all available global variables.
  * Response: [Variable]
- * 
+ *
  * Note. For non admin users making this call,
  * secret variables will have their values obscured.
  */
@@ -5707,7 +5709,7 @@ export interface ListAlerters {
 export interface ListAlerts {
 	/**
 	 * Pass a custom mongo query to filter the alerts.
-	 * 
+	 *
 	 * ## Example JSON
 	 * ```
 	 * {
@@ -5894,7 +5896,7 @@ export interface ListDockerNetworks {
 /**
  * List the docker registry providers available in Core / Periphery config files.
  * Response: [ListDockerRegistriesFromConfigResponse].
- * 
+ *
  * Includes:
  * - registries in core config
  * - registries configured on builds, deployments
@@ -6009,7 +6011,7 @@ export interface ListGitProviderAccounts {
 /**
  * List the git providers available in Core / Periphery config files.
  * Response: [ListGitProvidersFromConfigResponse].
- * 
+ *
  * Includes:
  * - providers in core config
  * - providers configured on builds, repos, syncs
@@ -6087,7 +6089,7 @@ export interface ListStacks {
 /**
  * List the processes running on the target server.
  * Response: [ListSystemProcessesResponse].
- * 
+ *
  * Note. This does not hit the server directly. The procedures come from an
  * in memory cache on the core, which hits the server periodically
  * to keep it up to date.
@@ -6133,7 +6135,7 @@ export interface UpdateListItem {
 	username: string;
 	/**
 	 * The user id that triggered the update.
-	 * 
+	 *
 	 * Also can take these values for operations triggered automatically:
 	 * - `Procedure`: The operation was triggered as part of a procedure run
 	 * - `Github`: The operation was triggered by a github webhook
@@ -6165,7 +6167,7 @@ export interface ListUpdatesResponse {
 
 /**
  * List all user groups which user can see. Response: [ListUserGroupsResponse].
- * 
+ *
  * Admins can see all user groups,
  * and users can see user groups to which they belong.
  */
@@ -6192,7 +6194,7 @@ export interface ListUsers {
 /**
  * List all available global variables.
  * Response: [ListVariablesResponse]
- * 
+ *
  * Note. For non admin users making this call,
  * secret variables will have their values obscured.
  */
@@ -6202,7 +6204,7 @@ export interface ListVariables {
 /**
  * Login as a local user. Will fail if the users credentials don't match
  * any local user.
- * 
+ *
  * Note. This method is only available if the core api has `local_auth` enabled.
  */
 export interface LoginLocalUser {
@@ -6225,7 +6227,7 @@ export interface PauseAllContainers {
 
 /**
  * Pauses the container on the target server. Response: [Update]
- * 
+ *
  * 1. Runs `docker pause ${container_name}`.
  */
 export interface PauseContainer {
@@ -6237,7 +6239,7 @@ export interface PauseContainer {
 
 /**
  * Pauses the container for the target deployment. Response: [Update]
- * 
+ *
  * 1. Runs `docker pause ${container_name}`.
  */
 export interface PauseDeployment {
@@ -6290,7 +6292,7 @@ export interface Port {
 
 /**
  * Prunes the docker buildx cache on the target server. Response: [Update].
- * 
+ *
  * 1. Runs `docker buildx prune -a -f`.
  */
 export interface PruneBuildx {
@@ -6300,7 +6302,7 @@ export interface PruneBuildx {
 
 /**
  * Prunes the docker containers on the target server. Response: [Update].
- * 
+ *
  * 1. Runs `docker container prune -f`.
  */
 export interface PruneContainers {
@@ -6310,7 +6312,7 @@ export interface PruneContainers {
 
 /**
  * Prunes the docker builders (build cache) on the target server. Response: [Update].
- * 
+ *
  * 1. Runs `docker builder prune -a -f`.
  */
 export interface PruneDockerBuilders {
@@ -6320,7 +6322,7 @@ export interface PruneDockerBuilders {
 
 /**
  * Prunes the docker images on the target server. Response: [Update].
- * 
+ *
  * 1. Runs `docker image prune -a -f`.
  */
 export interface PruneImages {
@@ -6330,7 +6332,7 @@ export interface PruneImages {
 
 /**
  * Prunes the docker networks on the target server. Response: [Update].
- * 
+ *
  * 1. Runs `docker network prune -f`.
  */
 export interface PruneNetworks {
@@ -6340,7 +6342,7 @@ export interface PruneNetworks {
 
 /**
  * Prunes the docker system on the target server, including volumes. Response: [Update].
- * 
+ *
  * 1. Runs `docker system prune -a -f --volumes`.
  */
 export interface PruneSystem {
@@ -6350,7 +6352,7 @@ export interface PruneSystem {
 
 /**
  * Prunes the docker volumes on the target server. Response: [Update].
- * 
+ *
  * 1. Runs `docker volume prune -a -f`.
  */
 export interface PruneVolumes {
@@ -6366,9 +6368,9 @@ export interface PullDeployment {
 
 /**
  * Pulls the target repo. Response: [Update].
- * 
+ *
  * Note. Repo must have server attached at `server_id`.
- * 
+ *
  * 1. Pulls the repo on the target server using `git pull`.
  * 2. If `on_pull` is specified, it will be executed after the pull is complete.
  */
@@ -6477,7 +6479,7 @@ export interface RenameBuilder {
 
 /**
  * Rename the deployment at id to the given name. Response: [Update].
- * 
+ *
  * Note. If a container is created for the deployment, it will be renamed using
  * `docker rename ...`.
  */
@@ -6576,7 +6578,7 @@ export interface ResourceToml<PartialConfig> {
 	tags?: string[];
 	/**
 	 * Optional. Only relevant for deployments / stacks.
-	 * 
+	 *
 	 * Will ensure deployment / stack is running with the latest configuration.
 	 * Deploy actions to achieve this will be included in the sync.
 	 * Default is false.
@@ -6584,7 +6586,7 @@ export interface ResourceToml<PartialConfig> {
 	deploy?: boolean;
 	/**
 	 * Optional. Only relevant for deployments / stacks using the 'deploy' sync feature.
-	 * 
+	 *
 	 * Specify other deployments / stacks by name as dependencies.
 	 * The sync will ensure the deployment / stack will only be deployed 'after' its dependencies.
 	 */
@@ -6629,7 +6631,7 @@ export interface RestartAllContainers {
 
 /**
  * Restarts the container on the target server. Response: [Update]
- * 
+ *
  * 1. Runs `docker restart ${container_name}`.
  */
 export interface RestartContainer {
@@ -6641,7 +6643,7 @@ export interface RestartContainer {
 
 /**
  * Restarts the container for the target deployment. Response: [Update]
- * 
+ *
  * 1. Runs `docker restart ${container_name}`.
  */
 export interface RestartDeployment {
@@ -6665,7 +6667,7 @@ export interface RunAction {
 
 /**
  * Runs the target build. Response: [Update].
- * 
+ *
  * 1. Get a handle to the builder. If using AWS builder, this means starting a builder ec2 instance.
  * 2. Clone the repo on the builder. If an `on_clone` commmand is given, it will be executed.
  * 3. Execute `docker build {...params}`, where params are determined using the builds configuration.
@@ -6707,7 +6709,7 @@ export enum SearchCombinator {
 /**
  * Search the container log's tail using `grep`. All lines go to stdout.
  * Response: [Log].
- * 
+ *
  * Note. This call will hit the underlying server directly for most up to date log.
  */
 export interface SearchContainerLog {
@@ -6719,7 +6721,7 @@ export interface SearchContainerLog {
 	terms: string[];
 	/**
 	 * When searching for multiple terms, can use `AND` or `OR` combinator.
-	 * 
+	 *
 	 * - `AND`: Only include lines with **all** terms present in that line.
 	 * - `OR`: Include lines that have one or more matches in the terms.
 	 */
@@ -6733,7 +6735,7 @@ export interface SearchContainerLog {
 /**
  * Search the deployment log's tail using `grep`. All lines go to stdout.
  * Response: [Log].
- * 
+ *
  * Note. This call will hit the underlying server directly for most up to date log.
  */
 export interface SearchDeploymentLog {
@@ -6743,7 +6745,7 @@ export interface SearchDeploymentLog {
 	terms: string[];
 	/**
 	 * When searching for multiple terms, can use `AND` or `OR` combinator.
-	 * 
+	 *
 	 * - `AND`: Only include lines with **all** terms present in that line.
 	 * - `OR`: Include lines that have one or more matches in the terms.
 	 */
@@ -6757,7 +6759,7 @@ export interface SearchDeploymentLog {
 /**
  * Search the deployment log's tail using `grep`. All lines go to stdout.
  * Response: [Log].
- * 
+ *
  * Note. This call will hit the underlying server directly for most up to date log.
  */
 export interface SearchStackServiceLog {
@@ -6769,7 +6771,7 @@ export interface SearchStackServiceLog {
 	terms: string[];
 	/**
 	 * When searching for multiple terms, can use `AND` or `OR` combinator.
-	 * 
+	 *
 	 * - `AND`: Only include lines with **all** terms present in that line.
 	 * - `OR`: Include lines that have one or more matches in the terms.
 	 */
@@ -6847,7 +6849,7 @@ export interface StartAllContainers {
 
 /**
  * Starts the container on the target server. Response: [Update]
- * 
+ *
  * 1. Runs `docker start ${container_name}`.
  */
 export interface StartContainer {
@@ -6859,7 +6861,7 @@ export interface StartContainer {
 
 /**
  * Starts the container for the target deployment. Response: [Update]
- * 
+ *
  * 1. Runs `docker start ${container_name}`.
  */
 export interface StartDeployment {
@@ -6883,7 +6885,7 @@ export interface StopAllContainers {
 
 /**
  * Stops the container on the target server. Response: [Update]
- * 
+ *
  * 1. Runs `docker stop ${container_name}`.
  */
 export interface StopContainer {
@@ -6899,7 +6901,7 @@ export interface StopContainer {
 
 /**
  * Stops the container for the target deployment. Response: [Update]
- * 
+ *
  * 1. Runs `docker stop ${container_name}`.
  */
 export interface StopDeployment {
@@ -6948,9 +6950,9 @@ export interface UnpauseAllContainers {
 
 /**
  * Unpauses the container on the target server. Response: [Update]
- * 
+ *
  * 1. Runs `docker unpause ${container_name}`.
- * 
+ *
  * Note. This is the only way to restart a paused container.
  */
 export interface UnpauseContainer {
@@ -6962,9 +6964,9 @@ export interface UnpauseContainer {
 
 /**
  * Unpauses the container for the target deployment. Response: [Update]
- * 
+ *
  * 1. Runs `docker unpause ${container_name}`.
- * 
+ *
  * Note. This is the only way to restart a paused container.
  */
 export interface UnpauseDeployment {
@@ -6974,7 +6976,7 @@ export interface UnpauseDeployment {
 
 /**
  * Unpauses the target stack. `docker compose unpause`. Response: [Update].
- * 
+ *
  * Note. This is the only way to restart a paused container.
  */
 export interface UnpauseStack {
@@ -6987,7 +6989,7 @@ export interface UnpauseStack {
 /**
  * Update the action at the given id, and return the updated action.
  * Response: [Action].
- * 
+ *
  * Note. This method updates only the fields which are set in the [_PartialActionConfig],
  * effectively merging diffs into the final document.
  * This is helpful when multiple users are using
@@ -7003,7 +7005,7 @@ export interface UpdateAction {
 
 /**
  * Update the alerter at the given id, and return the updated alerter. Response: [Alerter].
- * 
+ *
  * Note. This method updates only the fields which are set in the [PartialAlerterConfig][crate::entities::alerter::PartialAlerterConfig],
  * effectively merging diffs into the final document. This is helpful when multiple users are using
  * the same resources concurrently by ensuring no unintentional
@@ -7019,7 +7021,7 @@ export interface UpdateAlerter {
 /**
  * Update the build at the given id, and return the updated build.
  * Response: [Build].
- * 
+ *
  * Note. This method updates only the fields which are set in the [_PartialBuildConfig],
  * effectively merging diffs into the final document.
  * This is helpful when multiple users are using
@@ -7036,7 +7038,7 @@ export interface UpdateBuild {
 /**
  * Update the builder at the given id, and return the updated builder.
  * Response: [Builder].
- * 
+ *
  * Note. This method updates only the fields which are set in the [PartialBuilderConfig],
  * effectively merging diffs into the final document.
  * This is helpful when multiple users are using
@@ -7053,10 +7055,10 @@ export interface UpdateBuilder {
 /**
  * Update the deployment at the given id, and return the updated deployment.
  * Response: [Deployment].
- * 
+ *
  * Note. If the attached server for the deployment changes,
  * the deployment will be deleted / cleaned up on the old server.
- * 
+ *
  * Note. This method updates only the fields which are set in the [_PartialDeploymentConfig],
  * effectively merging diffs into the final document.
  * This is helpful when multiple users are using
@@ -7132,7 +7134,7 @@ export interface UpdatePermissionOnTarget {
 /**
  * Update the procedure at the given id, and return the updated procedure.
  * Response: [Procedure].
- * 
+ *
  * Note. This method updates only the fields which are set in the [_PartialProcedureConfig],
  * effectively merging diffs into the final document.
  * This is helpful when multiple users are using
@@ -7149,10 +7151,10 @@ export interface UpdateProcedure {
 /**
  * Update the repo at the given id, and return the updated repo.
  * Response: [Repo].
- * 
+ *
  * Note. If the attached server for the repo changes,
  * the repo will be deleted / cleaned up on the old server.
- * 
+ *
  * Note. This method updates only the fields which are set in the [_PartialRepoConfig],
  * effectively merging diffs into the final document.
  * This is helpful when multiple users are using
@@ -7169,7 +7171,7 @@ export interface UpdateRepo {
 /**
  * Update the sync at the given id, and return the updated sync.
  * Response: [ResourceSync].
- * 
+ *
  * Note. This method updates only the fields which are set in the [_PartialResourceSyncConfig],
  * effectively merging diffs into the final document.
  * This is helpful when multiple users are using
@@ -7186,7 +7188,7 @@ export interface UpdateResourceSync {
 /**
  * Update the server at the given id, and return the updated server.
  * Response: [Server].
- * 
+ *
  * Note. This method updates only the fields which are set in the [_PartialServerConfig],
  * effectively merging diffs into the final document.
  * This is helpful when multiple users are using
@@ -7203,7 +7205,7 @@ export interface UpdateServer {
 /**
  * Update the server template at the given id, and return the updated server template.
  * Response: [ServerTemplate].
- * 
+ *
  * Note. This method updates only the fields which are set in the [PartialServerTemplateConfig],
  * effectively merging diffs into the final document.
  * This is helpful when multiple users are using
@@ -7231,10 +7233,10 @@ export interface UpdateServiceUserDescription {
 /**
  * Update the stack at the given id, and return the updated stack.
  * Response: [Stack].
- * 
+ *
  * Note. If the attached server for the stack changes,
  * the stack will be deleted / cleaned up on the old server.
- * 
+ *
  * Note. This method updates only the fields which are set in the [_PartialStackConfig],
  * merging diffs into the final document.
  * This is helpful when multiple users are using
@@ -7360,14 +7362,14 @@ export interface WriteSyncFileContents {
 	contents: string;
 }
 
-export type AuthRequest = 
+export type AuthRequest =
 	| { type: "GetLoginOptions", params: GetLoginOptions }
 	| { type: "CreateLocalUser", params: CreateLocalUser }
 	| { type: "LoginLocalUser", params: LoginLocalUser }
 	| { type: "ExchangeForJwt", params: ExchangeForJwt }
 	| { type: "GetUser", params: GetUser };
 
-export type ExecuteRequest = 
+export type ExecuteRequest =
 	| { type: "StartContainer", params: StartContainer }
 	| { type: "RestartContainer", params: RestartContainer }
 	| { type: "PauseContainer", params: PauseContainer }
@@ -7430,13 +7432,13 @@ export type ExecuteRequest =
 	| { type: "RunSync", params: RunSync };
 
 /** Configuration for the registry to push the built image to. */
-export type ImageRegistryLegacy1_14 = 
+export type ImageRegistryLegacy1_14 =
 	/** Don't push the image to any registry */
 	| { type: "None", params: NoData }
 	/** Push the image to a standard image registry (any domain) */
 	| { type: "Standard", params: ImageRegistryConfig };
 
-export type ReadRequest = 
+export type ReadRequest =
 	| { type: "GetVersion", params: GetVersion }
 	| { type: "GetCoreInfo", params: GetCoreInfo }
 	| { type: "ListSecrets", params: ListSecrets }
@@ -7556,13 +7558,13 @@ export type ReadRequest =
 	| { type: "GetDockerRegistryAccount", params: GetDockerRegistryAccount }
 	| { type: "ListDockerRegistryAccounts", params: ListDockerRegistryAccounts };
 
-export type UserRequest = 
+export type UserRequest =
 	| { type: "PushRecentlyViewed", params: PushRecentlyViewed }
 	| { type: "SetLastSeenUpdate", params: SetLastSeenUpdate }
 	| { type: "CreateApiKey", params: CreateApiKey }
 	| { type: "DeleteApiKey", params: DeleteApiKey };
 
-export type WriteRequest = 
+export type WriteRequest =
 	| { type: "UpdateUserUsername", params: UpdateUserUsername }
 	| { type: "UpdateUserPassword", params: UpdateUserPassword }
 	| { type: "DeleteUser", params: DeleteUser }
@@ -7668,7 +7670,7 @@ export type WriteRequest =
 	| { type: "UpdateDockerRegistryAccount", params: UpdateDockerRegistryAccount }
 	| { type: "DeleteDockerRegistryAccount", params: DeleteDockerRegistryAccount };
 
-export type WsLoginMessage = 
+export type WsLoginMessage =
 	| { type: "Jwt", params: {
 	jwt: string;
 }}
