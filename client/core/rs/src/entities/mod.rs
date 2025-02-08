@@ -431,7 +431,7 @@ impl CloneArgs {
       .as_ref()
       .context("resource has no repo attached")?;
     Ok(format!(
-      "{protocol}://{access_token_at}{}/{repo}.git",
+      "{protocol}://{access_token_at}{}/{repo}",
       self.provider
     ))
   }
