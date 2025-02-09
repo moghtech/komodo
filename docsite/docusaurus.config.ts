@@ -41,13 +41,11 @@ const config: Config = {
       {
         docs: {
           sidebarPath: "./sidebars.ts",
-          editUrl:
-            "https://github.com/moghtech/komodo/tree/main/docsite",
+          editUrl: "https://github.com/moghtech/komodo/tree/main/docsite",
         },
         blog: {
           showReadingTime: true,
-          editUrl:
-            "https://github.com/moghtech/komodo/tree/main/docsite",
+          editUrl: "https://github.com/moghtech/komodo/tree/main/docsite",
         },
         theme: {
           customCss: "./src/css/custom.css",
@@ -78,7 +76,12 @@ const config: Config = {
           label: "docs",
         },
         {
-          href: "https://docs.rs/komodo_client/latest/komodo_client/",
+          href: "https://opencollective.com/komodo",
+          label: "Donate",
+          position: "right",
+        },
+        {
+          href: "https://docs.rs/komodo_client/latest/komodo_client",
           label: "Docs.rs",
           position: "right",
         },
