@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -12,10 +12,11 @@ use super::KomodoWriteRequest;
 /// Create a tag. Response: [Tag].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Tag)]
+#[error(serror::Error)]
 pub struct CreateTag {
   /// The name of the tag.
   pub name: String,
@@ -28,10 +29,11 @@ pub struct CreateTag {
 /// Note. Will also remove this tag from all attached resources.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Tag)]
+#[error(serror::Error)]
 pub struct DeleteTag {
   /// The id of the tag to delete.
   pub id: String,
@@ -42,10 +44,11 @@ pub struct DeleteTag {
 /// Rename a tag at id. Response: [Tag].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Tag)]
+#[error(serror::Error)]
 pub struct RenameTag {
   /// The id of the tag to rename.
   pub id: String,
@@ -59,10 +62,11 @@ pub struct RenameTag {
 /// Response: [NoData]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateTagsOnResourceResponse)]
+#[error(serror::Error)]
 pub struct UpdateTagsOnResource {
   pub target: ResourceTarget,
   /// Tag Ids

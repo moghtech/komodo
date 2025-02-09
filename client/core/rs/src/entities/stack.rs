@@ -382,6 +382,11 @@ pub struct StackConfig {
   #[builder(default)]
   pub pre_deploy: SystemCommand,
 
+  /// The optional command to run after the Stack is deployed.
+  #[serde(default)]
+  #[builder(default)]
+  pub post_deploy: SystemCommand,
+
   /// The extra arguments to pass after `docker compose up -d`.
   /// If empty, no extra arguments will be passed.
   #[serde(default, deserialize_with = "string_list_deserializer")]
@@ -489,6 +494,7 @@ impl Default for StackConfig {
       auto_update: Default::default(),
       ignore_services: Default::default(),
       pre_deploy: Default::default(),
+      post_deploy: Default::default(),
       extra_args: Default::default(),
       environment: Default::default(),
       env_file_path: default_env_file_path(),

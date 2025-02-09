@@ -5,72 +5,88 @@ use komodo_client::{
   },
   entities::{
     permission::PermissionLevel, server_template::ServerTemplate,
-    update::Update, user::User,
+    update::Update,
   },
 };
 use resolver_api::Resolve;
 
-use crate::{resource, state::State};
+use crate::resource;
 
-impl Resolve<CreateServerTemplate, User> for State {
-  #[instrument(name = "CreateServerTemplate", skip(self, user))]
+use super::WriteArgs;
+
+impl Resolve<WriteArgs> for CreateServerTemplate {
+  #[instrument(name = "CreateServerTemplate", skip(user))]
   async fn resolve(
-    &self,
-    CreateServerTemplate { name, config }: CreateServerTemplate,
-    user: User,
-  ) -> anyhow::Result<ServerTemplate> {
-    resource::create::<ServerTemplate>(&name, config, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<ServerTemplate> {
+    Ok(
+      resource::create::<ServerTemplate>(
+        &self.name,
+        self.config,
+        &user,
+      )
+      .await?,
+    )
   }
 }
 
-impl Resolve<CopyServerTemplate, User> for State {
-  #[instrument(name = "CopyServerTemplate", skip(self, user))]
+impl Resolve<WriteArgs> for CopyServerTemplate {
+  #[instrument(name = "CopyServerTemplate", skip(user))]
   async fn resolve(
-    &self,
-    CopyServerTemplate { name, id }: CopyServerTemplate,
-    user: User,
-  ) -> anyhow::Result<ServerTemplate> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<ServerTemplate> {
     let ServerTemplate { config, .. } =
       resource::get_check_permissions::<ServerTemplate>(
-        &id,
+        &self.id,
         &user,
         PermissionLevel::Write,
       )
       .await?;
-    resource::create::<ServerTemplate>(&name, config.into(), &user)
-      .await
+    Ok(
+      resource::create::<ServerTemplate>(
+        &self.name,
+        config.into(),
+        &user,
+      )
+      .await?,
+    )
   }
 }
 
-impl Resolve<DeleteServerTemplate, User> for State {
-  #[instrument(name = "DeleteServerTemplate", skip(self, user))]
+impl Resolve<WriteArgs> for DeleteServerTemplate {
+  #[instrument(name = "DeleteServerTemplate", skip(args))]
   async fn resolve(
-    &self,
-    DeleteServerTemplate { id }: DeleteServerTemplate,
-    user: User,
-  ) -> anyhow::Result<ServerTemplate> {
-    resource::delete::<ServerTemplate>(&id, &user).await
+    self,
+    args: &WriteArgs,
+  ) -> serror::Result<ServerTemplate> {
+    Ok(resource::delete::<ServerTemplate>(&self.id, args).await?)
   }
 }
 
-impl Resolve<UpdateServerTemplate, User> for State {
-  #[instrument(name = "UpdateServerTemplate", skip(self, user))]
+impl Resolve<WriteArgs> for UpdateServerTemplate {
+  #[instrument(name = "UpdateServerTemplate", skip(user))]
   async fn resolve(
-    &self,
-    UpdateServerTemplate { id, config }: UpdateServerTemplate,
-    user: User,
-  ) -> anyhow::Result<ServerTemplate> {
-    resource::update::<ServerTemplate>(&id, config, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<ServerTemplate> {
+    Ok(
+      resource::update::<ServerTemplate>(&self.id, self.config, user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<RenameServerTemplate, User> for State {
-  #[instrument(name = "RenameServerTemplate", skip(self, user))]
+impl Resolve<WriteArgs> for RenameServerTemplate {
+  #[instrument(name = "RenameServerTemplate", skip(user))]
   async fn resolve(
-    &self,
-    RenameServerTemplate { id, name }: RenameServerTemplate,
-    user: User,
-  ) -> anyhow::Result<Update> {
-    resource::rename::<ServerTemplate>(&id, &name, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Update> {
+    Ok(
+      resource::rename::<ServerTemplate>(&self.id, &self.name, user)
+        .await?,
+    )
   }
 }

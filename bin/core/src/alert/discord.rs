@@ -11,6 +11,12 @@ pub async fn send_alert(
 ) -> anyhow::Result<()> {
   let level = fmt_level(alert.level);
   let content = match &alert.data {
+    AlertData::Test { id, name } => {
+      let link = resource_link(ResourceTargetVariant::Alerter, id);
+      format!(
+        "{level} | If you see this message, then Alerter **{name}** is **working**\n{link}"
+      )
+    }
     AlertData::ServerUnreachable {
       id,
       name,

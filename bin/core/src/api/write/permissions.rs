@@ -2,16 +2,9 @@ use std::str::FromStr;
 
 use anyhow::{anyhow, Context};
 use komodo_client::{
-  api::write::{
-    UpdatePermissionOnResourceType,
-    UpdatePermissionOnResourceTypeResponse, UpdatePermissionOnTarget,
-    UpdatePermissionOnTargetResponse, UpdateUserAdmin,
-    UpdateUserAdminResponse, UpdateUserBasePermissions,
-    UpdateUserBasePermissionsResponse,
-  },
+  api::write::*,
   entities::{
     permission::{UserTarget, UserTargetVariant},
-    user::User,
     ResourceTarget, ResourceTargetVariant,
   },
 };
@@ -24,37 +17,40 @@ use mungos::{
 };
 use resolver_api::Resolve;
 
-use crate::{
-  helpers::query::get_user,
-  state::{db_client, State},
-};
+use crate::{helpers::query::get_user, state::db_client};
 
-impl Resolve<UpdateUserAdmin, User> for State {
+use super::WriteArgs;
+
+impl Resolve<WriteArgs> for UpdateUserAdmin {
+  #[instrument(name = "UpdateUserAdmin", skip(super_admin))]
   async fn resolve(
-    &self,
-    UpdateUserAdmin { user_id, admin }: UpdateUserAdmin,
-    super_admin: User,
-  ) -> anyhow::Result<UpdateUserAdminResponse> {
+    self,
+    WriteArgs { user: super_admin }: &WriteArgs,
+  ) -> serror::Result<UpdateUserAdminResponse> {
     if !super_admin.super_admin {
-      return Err(anyhow!("Only super admins can call this method."));
+      return Err(
+        anyhow!("Only super admins can call this method.").into(),
+      );
     }
-    let user = find_one_by_id(&db_client().users, &user_id)
+    let user = find_one_by_id(&db_client().users, &self.user_id)
       .await
       .context("failed to query mongo for user")?
       .context("did not find user with given id")?;
 
     if !user.enabled {
-      return Err(anyhow!("User is disabled. Enable user first."));
+      return Err(
+        anyhow!("User is disabled. Enable user first.").into(),
+      );
     }
 
     if user.super_admin {
-      return Err(anyhow!("Cannot update other super admins"));
+      return Err(anyhow!("Cannot update other super admins").into());
     }
 
     update_one_by_id(
       &db_client().users,
-      &user_id,
-      doc! { "$set": { "admin": admin } },
+      &self.user_id,
+      doc! { "$set": { "admin": self.admin } },
       None,
     )
     .await?;
@@ -63,20 +59,21 @@ impl Resolve<UpdateUserAdmin, User> for State {
   }
 }
 
-impl Resolve<UpdateUserBasePermissions, User> for State {
-  #[instrument(name = "UpdateUserBasePermissions", skip(self, admin))]
+impl Resolve<WriteArgs> for UpdateUserBasePermissions {
+  #[instrument(name = "UpdateUserBasePermissions", skip(admin))]
   async fn resolve(
-    &self,
-    UpdateUserBasePermissions {
+    self,
+    WriteArgs { user: admin }: &WriteArgs,
+  ) -> serror::Result<UpdateUserBasePermissionsResponse> {
+    let UpdateUserBasePermissions {
       user_id,
       enabled,
       create_servers,
       create_builds,
-    }: UpdateUserBasePermissions,
-    admin: User,
-  ) -> anyhow::Result<UpdateUserBasePermissionsResponse> {
+    } = self;
+
     if !admin.admin {
-      return Err(anyhow!("this method is admin only"));
+      return Err(anyhow!("this method is admin only").into());
     }
 
     let user = find_one_by_id(&db_client().users, &user_id)
@@ -84,14 +81,17 @@ impl Resolve<UpdateUserBasePermissions, User> for State {
       .context("failed to query mongo for user")?
       .context("did not find user with given id")?;
     if user.super_admin {
-      return Err(anyhow!(
-        "Cannot use this method to update super admins permissions"
-      ));
+      return Err(
+        anyhow!(
+          "Cannot use this method to update super admins permissions"
+        )
+        .into(),
+      );
     }
     if user.admin && !admin.super_admin {
       return Err(anyhow!(
         "Only super admins can use this method to update other admins permissions"
-      ));
+      ).into());
     }
     let mut update_doc = Document::new();
     if let Some(enabled) = enabled {
@@ -116,34 +116,35 @@ impl Resolve<UpdateUserBasePermissions, User> for State {
   }
 }
 
-impl Resolve<UpdatePermissionOnResourceType, User> for State {
-  #[instrument(
-    name = "UpdatePermissionOnResourceType",
-    skip(self, admin)
-  )]
+impl Resolve<WriteArgs> for UpdatePermissionOnResourceType {
+  #[instrument(name = "UpdatePermissionOnResourceType", skip(admin))]
   async fn resolve(
-    &self,
-    UpdatePermissionOnResourceType {
+    self,
+    WriteArgs { user: admin }: &WriteArgs,
+  ) -> serror::Result<UpdatePermissionOnResourceTypeResponse> {
+    let UpdatePermissionOnResourceType {
       user_target,
       resource_type,
       permission,
-    }: UpdatePermissionOnResourceType,
-    admin: User,
-  ) -> anyhow::Result<UpdatePermissionOnResourceTypeResponse> {
+    } = self;
+
     if !admin.admin {
-      return Err(anyhow!("this method is admin only"));
+      return Err(anyhow!("this method is admin only").into());
     }
 
     // Some extra checks if user target is an actual User
     if let UserTarget::User(user_id) = &user_target {
       let user = get_user(user_id).await?;
       if user.admin {
-        return Err(anyhow!(
+        return Err(
+          anyhow!(
           "cannot use this method to update other admins permissions"
-        ));
+        )
+          .into(),
+        );
       }
       if !user.enabled {
-        return Err(anyhow!("user not enabled"));
+        return Err(anyhow!("user not enabled").into());
       }
     }
 
@@ -181,31 +182,35 @@ impl Resolve<UpdatePermissionOnResourceType, User> for State {
   }
 }
 
-impl Resolve<UpdatePermissionOnTarget, User> for State {
-  #[instrument(name = "UpdatePermissionOnTarget", skip(self, admin))]
+impl Resolve<WriteArgs> for UpdatePermissionOnTarget {
+  #[instrument(name = "UpdatePermissionOnTarget", skip(admin))]
   async fn resolve(
-    &self,
-    UpdatePermissionOnTarget {
+    self,
+    WriteArgs { user: admin }: &WriteArgs,
+  ) -> serror::Result<UpdatePermissionOnTargetResponse> {
+    let UpdatePermissionOnTarget {
       user_target,
       resource_target,
       permission,
-    }: UpdatePermissionOnTarget,
-    admin: User,
-  ) -> anyhow::Result<UpdatePermissionOnTargetResponse> {
+    } = self;
+
     if !admin.admin {
-      return Err(anyhow!("this method is admin only"));
+      return Err(anyhow!("this method is admin only").into());
     }
 
     // Some extra checks if user target is an actual User
     if let UserTarget::User(user_id) = &user_target {
       let user = get_user(user_id).await?;
       if user.admin {
-        return Err(anyhow!(
+        return Err(
+          anyhow!(
           "cannot use this method to update other admins permissions"
-        ));
+        )
+          .into(),
+        );
       }
       if !user.enabled {
-        return Err(anyhow!("user not enabled"));
+        return Err(anyhow!("user not enabled").into());
       }
     }
 
@@ -247,7 +252,7 @@ impl Resolve<UpdatePermissionOnTarget, User> for State {
 /// checks if inner id is actually a `name`, and replaces it with id if so.
 async fn extract_user_target_with_validation(
   user_target: &UserTarget,
-) -> anyhow::Result<(UserTargetVariant, String)> {
+) -> serror::Result<(UserTargetVariant, String)> {
   match user_target {
     UserTarget::User(ident) => {
       let filter = match ObjectId::from_str(ident) {
@@ -283,7 +288,7 @@ async fn extract_user_target_with_validation(
 /// checks if inner id is actually a `name`, and replaces it with id if so.
 async fn extract_resource_target_with_validation(
   resource_target: &ResourceTarget,
-) -> anyhow::Result<(ResourceTargetVariant, String)> {
+) -> serror::Result<(ResourceTargetVariant, String)> {
   match resource_target {
     ResourceTarget::System(_) => {
       let res = resource_target.extract_variant_id();

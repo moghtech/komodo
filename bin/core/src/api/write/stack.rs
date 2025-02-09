@@ -8,7 +8,7 @@ use komodo_client::{
     server::ServerState,
     stack::{PartialStackConfig, Stack, StackInfo},
     update::Update,
-    user::{stack_user, User},
+    user::stack_user,
     FileContents, NoData, Operation,
   },
 };
@@ -36,81 +36,81 @@ use crate::{
     remote::{get_repo_compose_contents, RemoteComposeContents},
     services::extract_services_into_res,
   },
-  state::{db_client, github_client, State},
+  state::{db_client, github_client},
 };
 
-impl Resolve<CreateStack, User> for State {
-  #[instrument(name = "CreateStack", skip(self, user))]
+use super::WriteArgs;
+
+impl Resolve<WriteArgs> for CreateStack {
+  #[instrument(name = "CreateStack", skip(user))]
   async fn resolve(
-    &self,
-    CreateStack { name, config }: CreateStack,
-    user: User,
-  ) -> anyhow::Result<Stack> {
-    resource::create::<Stack>(&name, config, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Stack> {
+    Ok(
+      resource::create::<Stack>(&self.name, self.config, user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<CopyStack, User> for State {
-  #[instrument(name = "CopyStack", skip(self, user))]
+impl Resolve<WriteArgs> for CopyStack {
+  #[instrument(name = "CopyStack", skip(user))]
   async fn resolve(
-    &self,
-    CopyStack { name, id }: CopyStack,
-    user: User,
-  ) -> anyhow::Result<Stack> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Stack> {
     let Stack { config, .. } =
       resource::get_check_permissions::<Stack>(
-        &id,
-        &user,
+        &self.id,
+        user,
         PermissionLevel::Write,
       )
       .await?;
-    resource::create::<Stack>(&name, config.into(), &user).await
+    Ok(
+      resource::create::<Stack>(&self.name, config.into(), user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<DeleteStack, User> for State {
-  #[instrument(name = "DeleteStack", skip(self, user))]
-  async fn resolve(
-    &self,
-    DeleteStack { id }: DeleteStack,
-    user: User,
-  ) -> anyhow::Result<Stack> {
-    resource::delete::<Stack>(&id, &user).await
+impl Resolve<WriteArgs> for DeleteStack {
+  #[instrument(name = "DeleteStack", skip(args))]
+  async fn resolve(self, args: &WriteArgs) -> serror::Result<Stack> {
+    Ok(resource::delete::<Stack>(&self.id, args).await?)
   }
 }
 
-impl Resolve<UpdateStack, User> for State {
-  #[instrument(name = "UpdateStack", skip(self, user))]
+impl Resolve<WriteArgs> for UpdateStack {
+  #[instrument(name = "UpdateStack", skip(user))]
   async fn resolve(
-    &self,
-    UpdateStack { id, config }: UpdateStack,
-    user: User,
-  ) -> anyhow::Result<Stack> {
-    resource::update::<Stack>(&id, config, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Stack> {
+    Ok(resource::update::<Stack>(&self.id, self.config, user).await?)
   }
 }
 
-impl Resolve<RenameStack, User> for State {
-  #[instrument(name = "RenameStack", skip(self, user))]
+impl Resolve<WriteArgs> for RenameStack {
+  #[instrument(name = "RenameStack", skip(user))]
   async fn resolve(
-    &self,
-    RenameStack { id, name }: RenameStack,
-    user: User,
-  ) -> anyhow::Result<Update> {
-    resource::rename::<Stack>(&id, &name, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Update> {
+    Ok(resource::rename::<Stack>(&self.id, &self.name, user).await?)
   }
 }
 
-impl Resolve<WriteStackFileContents, User> for State {
+impl Resolve<WriteArgs> for WriteStackFileContents {
   async fn resolve(
-    &self,
-    WriteStackFileContents {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Update> {
+    let WriteStackFileContents {
       stack,
       file_path,
       contents,
-    }: WriteStackFileContents,
-    user: User,
-  ) -> anyhow::Result<Update> {
+    } = self;
     let (mut stack, server) = get_stack_and_server(
       &stack,
       &user,
@@ -122,7 +122,7 @@ impl Resolve<WriteStackFileContents, User> for State {
     if !stack.config.files_on_host && stack.config.repo.is_empty() {
       return Err(anyhow!(
         "Stack is not configured to use Files on Host or Git Repo, can't write file contents"
-      ));
+      ).into());
     }
 
     let mut update =
@@ -173,7 +173,7 @@ impl Resolve<WriteStackFileContents, User> for State {
       match periphery_client(&server)?
         .request(WriteCommitComposeContents {
           stack,
-          username: Some(user.username),
+          username: Some(user.username.clone()),
           file_path,
           contents,
           git_token,
@@ -193,12 +193,12 @@ impl Resolve<WriteStackFileContents, User> for State {
       };
     }
 
-    if let Err(e) = State
-      .resolve(
-        RefreshStackCache { stack: stack_id },
-        stack_user().to_owned(),
-      )
+    if let Err(e) = (RefreshStackCache { stack: stack_id })
+      .resolve(&WriteArgs {
+        user: stack_user().to_owned(),
+      })
       .await
+      .map_err(|e| e.error)
       .context(
         "Failed to refresh stack cache after writing file contents",
       )
@@ -216,22 +216,21 @@ impl Resolve<WriteStackFileContents, User> for State {
   }
 }
 
-impl Resolve<RefreshStackCache, User> for State {
+impl Resolve<WriteArgs> for RefreshStackCache {
   #[instrument(
     name = "RefreshStackCache",
     level = "debug",
-    skip(self, user)
+    skip(user)
   )]
   async fn resolve(
-    &self,
-    RefreshStackCache { stack }: RefreshStackCache,
-    user: User,
-  ) -> anyhow::Result<NoData> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<NoData> {
     // Even though this is a write request, this doesn't change any config. Anyone that can execute the
     // stack should be able to do this.
     let stack = resource::get_check_permissions::<Stack>(
-      &stack,
-      &user,
+      &self.stack,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -300,9 +299,9 @@ impl Resolve<RefreshStackCache, User> for State {
             &mut services,
           ) {
             warn!(
-                "failed to extract stack services, things won't works correctly. stack: {} | {e:#}",
-                stack.name
-              );
+              "failed to extract stack services, things won't works correctly. stack: {} | {e:#}",
+              stack.name
+            );
           }
         }
 
@@ -414,39 +413,44 @@ impl Resolve<RefreshStackCache, User> for State {
   }
 }
 
-impl Resolve<CreateStackWebhook, User> for State {
-  #[instrument(name = "CreateStackWebhook", skip(self, user))]
+impl Resolve<WriteArgs> for CreateStackWebhook {
+  #[instrument(name = "CreateStackWebhook", skip(args))]
   async fn resolve(
-    &self,
-    CreateStackWebhook { stack, action }: CreateStackWebhook,
-    user: User,
-  ) -> anyhow::Result<CreateStackWebhookResponse> {
+    self,
+    args: &WriteArgs,
+  ) -> serror::Result<CreateStackWebhookResponse> {
+    let WriteArgs { user } = args;
+
     let Some(github) = github_client() else {
-      return Err(anyhow!(
-        "github_webhook_app is not configured in core config toml"
-      ));
+      return Err(
+        anyhow!(
+          "github_webhook_app is not configured in core config toml"
+        )
+        .into(),
+      );
     };
 
     let stack = resource::get_check_permissions::<Stack>(
-      &stack,
-      &user,
+      &self.stack,
+      user,
       PermissionLevel::Write,
     )
     .await?;
 
     if stack.config.repo.is_empty() {
-      return Err(anyhow!(
-        "No repo configured, can't create webhook"
-      ));
+      return Err(
+        anyhow!("No repo configured, can't create webhook").into(),
+      );
     }
 
     let mut split = stack.config.repo.split('/');
     let owner = split.next().context("Stack repo has no owner")?;
 
     let Some(github) = github.get(owner) else {
-      return Err(anyhow!(
-        "Cannot manage repo webhooks under owner {owner}"
-      ));
+      return Err(
+        anyhow!("Cannot manage repo webhooks under owner {owner}")
+          .into(),
+      );
     };
 
     let repo =
@@ -479,7 +483,7 @@ impl Resolve<CreateStackWebhook, User> for State {
     } else {
       webhook_base_url
     };
-    let url = match action {
+    let url = match self.action {
       StackWebhookAction::Refresh => {
         format!("{host}/listener/github/stack/{}/refresh", stack.id)
       }
@@ -514,64 +518,65 @@ impl Resolve<CreateStackWebhook, User> for State {
       .context("failed to create webhook")?;
 
     if !stack.config.webhook_enabled {
-      self
-        .resolve(
-          UpdateStack {
-            id: stack.id,
-            config: PartialStackConfig {
-              webhook_enabled: Some(true),
-              ..Default::default()
-            },
-          },
-          user,
-        )
-        .await
-        .context("failed to update stack to enable webhook")?;
+      UpdateStack {
+        id: stack.id,
+        config: PartialStackConfig {
+          webhook_enabled: Some(true),
+          ..Default::default()
+        },
+      }
+      .resolve(args)
+      .await
+      .map_err(|e| e.error)
+      .context("failed to update stack to enable webhook")?;
     }
 
     Ok(NoData {})
   }
 }
 
-impl Resolve<DeleteStackWebhook, User> for State {
-  #[instrument(name = "DeleteStackWebhook", skip(self, user))]
+impl Resolve<WriteArgs> for DeleteStackWebhook {
+  #[instrument(name = "DeleteStackWebhook", skip(user))]
   async fn resolve(
-    &self,
-    DeleteStackWebhook { stack, action }: DeleteStackWebhook,
-    user: User,
-  ) -> anyhow::Result<DeleteStackWebhookResponse> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<DeleteStackWebhookResponse> {
     let Some(github) = github_client() else {
-      return Err(anyhow!(
-        "github_webhook_app is not configured in core config toml"
-      ));
+      return Err(
+        anyhow!(
+          "github_webhook_app is not configured in core config toml"
+        )
+        .into(),
+      );
     };
 
     let stack = resource::get_check_permissions::<Stack>(
-      &stack,
-      &user,
+      &self.stack,
+      user,
       PermissionLevel::Write,
     )
     .await?;
 
     if stack.config.git_provider != "github.com" {
-      return Err(anyhow!(
-        "Can only manage github.com repo webhooks"
-      ));
+      return Err(
+        anyhow!("Can only manage github.com repo webhooks").into(),
+      );
     }
 
     if stack.config.repo.is_empty() {
-      return Err(anyhow!(
-        "No repo configured, can't create webhook"
-      ));
+      return Err(
+        anyhow!("No repo configured, can't create webhook").into(),
+      );
     }
 
     let mut split = stack.config.repo.split('/');
     let owner = split.next().context("Stack repo has no owner")?;
 
     let Some(github) = github.get(owner) else {
-      return Err(anyhow!(
-        "Cannot manage repo webhooks under owner {owner}"
-      ));
+      return Err(
+        anyhow!("Cannot manage repo webhooks under owner {owner}")
+          .into(),
+      );
     };
 
     let repo =
@@ -597,7 +602,7 @@ impl Resolve<DeleteStackWebhook, User> for State {
     } else {
       webhook_base_url
     };
-    let url = match action {
+    let url = match self.action {
       StackWebhookAction::Refresh => {
         format!("{host}/listener/github/stack/{}/refresh", stack.id)
       }

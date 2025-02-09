@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -16,10 +16,11 @@ use super::KomodoWriteRequest;
 /// Create a build. Response: [Build].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Build)]
+#[error(serror::Error)]
 pub struct CreateBuild {
   /// The name given to newly created build.
   pub name: String,
@@ -34,10 +35,11 @@ pub struct CreateBuild {
 /// of the build at the given `id`. Response: [Build].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Build)]
+#[error(serror::Error)]
 pub struct CopyBuild {
   /// The name of the new build.
   pub name: String,
@@ -51,10 +53,11 @@ pub struct CopyBuild {
 /// Response: [Build]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Build)]
+#[error(serror::Error)]
 pub struct DeleteBuild {
   /// The id or name of the build to delete.
   pub id: String,
@@ -72,10 +75,11 @@ pub struct DeleteBuild {
 /// field changes occur from out of date local state.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Build)]
+#[error(serror::Error)]
 pub struct UpdateBuild {
   /// The id of the build to update.
   pub id: String,
@@ -89,10 +93,12 @@ pub struct UpdateBuild {
 /// Response: [Update].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
+#[error(serror::Error)]
 pub struct RenameBuild {
   /// The id or name of the Build to rename.
   pub id: String,
@@ -105,10 +111,11 @@ pub struct RenameBuild {
 /// Trigger a refresh of the cached latest hash and message.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
+#[error(serror::Error)]
 pub struct RefreshBuildCache {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -121,10 +128,11 @@ pub struct RefreshBuildCache {
 /// passed in request. Response: [CreateBuildWebhookResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateBuildWebhookResponse)]
+#[error(serror::Error)]
 pub struct CreateBuildWebhook {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -140,10 +148,11 @@ pub type CreateBuildWebhookResponse = NoData;
 /// passed in request. Response: [CreateBuildWebhookResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteBuildWebhookResponse)]
+#[error(serror::Error)]
 pub struct DeleteBuildWebhook {
   /// Id or name
   #[serde(alias = "id", alias = "name")]

@@ -143,9 +143,7 @@ fn read_resource_file(
     path: file_path.display().to_string(),
     contents: contents.clone(),
   });
-  let more = toml::from_str::<ResourcesToml>(&contents)
-    // the error without this comes through with multiple lines (\n) and looks bad
-    .map_err(|e| anyhow!("{e:#}"))
+  let more = super::deserialize_resources_toml(&contents)
     .context("failed to parse resource file contents")?;
   log.push('\n');
   let path_for_view =

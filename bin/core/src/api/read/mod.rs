@@ -2,7 +2,6 @@ use std::{collections::HashSet, sync::OnceLock, time::Instant};
 
 use anyhow::{anyhow, Context};
 use axum::{middleware, routing::post, Extension, Router};
-use axum_extra::{headers::ContentType, TypedHeader};
 use komodo_client::{
   api::read::*,
   entities::{
@@ -16,9 +15,8 @@ use komodo_client::{
     ResourceTarget,
   },
 };
-use resolver_api::{
-  derive::Resolver, Resolve, ResolveToString, Resolver,
-};
+use resolver_api::Resolve;
+use response::Response;
 use serde::{Deserialize, Serialize};
 use serror::Json;
 use typeshare::typeshare;
@@ -26,7 +24,7 @@ use uuid::Uuid;
 
 use crate::{
   auth::auth_request, config::core_config, helpers::periphery_client,
-  resource, state::State,
+  resource,
 };
 
 mod action;
@@ -39,7 +37,6 @@ mod permission;
 mod procedure;
 mod provider;
 mod repo;
-mod search;
 mod server;
 mod server_template;
 mod stack;
@@ -51,15 +48,18 @@ mod user;
 mod user_group;
 mod variable;
 
+pub struct ReadArgs {
+  pub user: User,
+}
+
 #[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, Resolver)]
-#[resolver_target(State)]
-#[resolver_args(User)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[args(ReadArgs)]
+#[response(Response)]
+#[error(serror::Error)]
 #[serde(tag = "type", content = "params")]
 enum ReadRequest {
-  #[to_string_resolver]
   GetVersion(GetVersion),
-  #[to_string_resolver]
   GetCoreInfo(GetCoreInfo),
   ListSecrets(ListSecrets),
   ListGitProvidersFromConfig(ListGitProvidersFromConfig),
@@ -78,9 +78,6 @@ enum ReadRequest {
   // ==== USER GROUP ====
   GetUserGroup(GetUserGroup),
   ListUserGroups(ListUserGroups),
-
-  // ==== SEARCH ====
-  FindResources(FindResources),
 
   // ==== PROCEDURE ====
   GetProceduresSummary(GetProceduresSummary),
@@ -120,15 +117,10 @@ enum ReadRequest {
   ListDockerImageHistory(ListDockerImageHistory),
   InspectDockerVolume(InspectDockerVolume),
   ListAllDockerContainers(ListAllDockerContainers),
-  #[to_string_resolver]
   ListDockerContainers(ListDockerContainers),
-  #[to_string_resolver]
   ListDockerNetworks(ListDockerNetworks),
-  #[to_string_resolver]
   ListDockerImages(ListDockerImages),
-  #[to_string_resolver]
   ListDockerVolumes(ListDockerVolumes),
-  #[to_string_resolver]
   ListComposeProjects(ListComposeProjects),
 
   // ==== DEPLOYMENT ====
@@ -212,11 +204,8 @@ enum ReadRequest {
   GetAlert(GetAlert),
 
   // ==== SERVER STATS ====
-  #[to_string_resolver]
   GetSystemInformation(GetSystemInformation),
-  #[to_string_resolver]
   GetSystemStats(GetSystemStats),
-  #[to_string_resolver]
   ListSystemProcesses(ListSystemProcesses),
 
   // ==== VARIABLE ====
@@ -240,54 +229,35 @@ pub fn router() -> Router {
 async fn handler(
   Extension(user): Extension<User>,
   Json(request): Json<ReadRequest>,
-) -> serror::Result<(TypedHeader<ContentType>, String)> {
+) -> serror::Result<axum::response::Response> {
   let timer = Instant::now();
   let req_id = Uuid::new_v4();
   debug!("/read request | user: {}", user.username);
-  let res =
-    State
-      .resolve_request(request, user)
-      .await
-      .map_err(|e| match e {
-        resolver_api::Error::Serialization(e) => {
-          anyhow!("{e:?}").context("response serialization error")
-        }
-        resolver_api::Error::Inner(e) => e,
-      });
+  let res = request.resolve(&ReadArgs { user }).await;
   if let Err(e) = &res {
-    debug!("/read request {req_id} error: {e:#}");
+    debug!("/read request {req_id} error: {:#}", e.error);
   }
   let elapsed = timer.elapsed();
   debug!("/read request {req_id} | resolve time: {elapsed:?}");
-  Ok((TypedHeader(ContentType::json()), res?))
+  res.map(|res| res.0)
 }
 
-fn version() -> &'static String {
-  static VERSION: OnceLock<String> = OnceLock::new();
-  VERSION.get_or_init(|| {
-    serde_json::to_string(&GetVersionResponse {
+impl Resolve<ReadArgs> for GetVersion {
+  async fn resolve(
+    self,
+    _: &ReadArgs,
+  ) -> serror::Result<GetVersionResponse> {
+    Ok(GetVersionResponse {
       version: env!("CARGO_PKG_VERSION").to_string(),
     })
-    .context("failed to serialize GetVersionResponse")
-    .unwrap()
-  })
-}
-
-impl ResolveToString<GetVersion, User> for State {
-  async fn resolve_to_string(
-    &self,
-    GetVersion {}: GetVersion,
-    _: User,
-  ) -> anyhow::Result<String> {
-    Ok(version().to_string())
   }
 }
 
-fn core_info() -> &'static String {
-  static CORE_INFO: OnceLock<String> = OnceLock::new();
+fn core_info() -> &'static GetCoreInfoResponse {
+  static CORE_INFO: OnceLock<GetCoreInfoResponse> = OnceLock::new();
   CORE_INFO.get_or_init(|| {
     let config = core_config();
-    let info = GetCoreInfoResponse {
+    GetCoreInfoResponse {
       title: config.title.clone(),
       monitoring_interval: config.monitoring_interval,
       webhook_base_url: if config.webhook_base_url.is_empty() {
@@ -305,36 +275,31 @@ fn core_info() -> &'static String {
         .iter()
         .map(|i| i.namespace.to_string())
         .collect(),
-    };
-    serde_json::to_string(&info)
-      .context("failed to serialize GetCoreInfoResponse")
-      .unwrap()
+    }
   })
 }
 
-impl ResolveToString<GetCoreInfo, User> for State {
-  async fn resolve_to_string(
-    &self,
-    GetCoreInfo {}: GetCoreInfo,
-    _: User,
-  ) -> anyhow::Result<String> {
-    Ok(core_info().to_string())
+impl Resolve<ReadArgs> for GetCoreInfo {
+  async fn resolve(
+    self,
+    _: &ReadArgs,
+  ) -> serror::Result<GetCoreInfoResponse> {
+    Ok(core_info().clone())
   }
 }
 
-impl Resolve<ListSecrets, User> for State {
+impl Resolve<ReadArgs> for ListSecrets {
   async fn resolve(
-    &self,
-    ListSecrets { target }: ListSecrets,
-    _: User,
-  ) -> anyhow::Result<ListSecretsResponse> {
+    self,
+    _: &ReadArgs,
+  ) -> serror::Result<ListSecretsResponse> {
     let mut secrets = core_config()
       .secrets
       .keys()
       .cloned()
       .collect::<HashSet<_>>();
 
-    if let Some(target) = target {
+    if let Some(target) = self.target {
       let server_id = match target {
         ResourceTarget::Server(id) => Some(id),
         ResourceTarget::Builder(id) => {
@@ -348,7 +313,9 @@ impl Resolve<ListSecrets, User> for State {
           }
         }
         _ => {
-          return Err(anyhow!("target must be `Server` or `Builder`"))
+          return Err(
+            anyhow!("target must be `Server` or `Builder`").into(),
+          )
         }
       };
       if let Some(id) = server_id {
@@ -373,15 +340,14 @@ impl Resolve<ListSecrets, User> for State {
   }
 }
 
-impl Resolve<ListGitProvidersFromConfig, User> for State {
+impl Resolve<ReadArgs> for ListGitProvidersFromConfig {
   async fn resolve(
-    &self,
-    ListGitProvidersFromConfig { target }: ListGitProvidersFromConfig,
-    user: User,
-  ) -> anyhow::Result<ListGitProvidersFromConfigResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListGitProvidersFromConfigResponse> {
     let mut providers = core_config().git_providers.clone();
 
-    if let Some(target) = target {
+    if let Some(target) = self.target {
       match target {
         ResourceTarget::Server(id) => {
           merge_git_providers_for_server(&mut providers, &id).await?;
@@ -405,7 +371,9 @@ impl Resolve<ListGitProvidersFromConfig, User> for State {
           }
         }
         _ => {
-          return Err(anyhow!("target must be `Server` or `Builder`"))
+          return Err(
+            anyhow!("target must be `Server` or `Builder`").into(),
+          )
         }
       }
     }
@@ -471,15 +439,14 @@ impl Resolve<ListGitProvidersFromConfig, User> for State {
   }
 }
 
-impl Resolve<ListDockerRegistriesFromConfig, User> for State {
+impl Resolve<ReadArgs> for ListDockerRegistriesFromConfig {
   async fn resolve(
-    &self,
-    ListDockerRegistriesFromConfig { target }: ListDockerRegistriesFromConfig,
-    _: User,
-  ) -> anyhow::Result<ListDockerRegistriesFromConfigResponse> {
+    self,
+    _: &ReadArgs,
+  ) -> serror::Result<ListDockerRegistriesFromConfigResponse> {
     let mut registries = core_config().docker_registries.clone();
 
-    if let Some(target) = target {
+    if let Some(target) = self.target {
       match target {
         ResourceTarget::Server(id) => {
           merge_docker_registries_for_server(&mut registries, &id)
@@ -504,7 +471,9 @@ impl Resolve<ListDockerRegistriesFromConfig, User> for State {
           }
         }
         _ => {
-          return Err(anyhow!("target must be `Server` or `Builder`"))
+          return Err(
+            anyhow!("target must be `Server` or `Builder`").into(),
+          )
         }
       }
     }
@@ -518,7 +487,7 @@ impl Resolve<ListDockerRegistriesFromConfig, User> for State {
 async fn merge_git_providers_for_server(
   providers: &mut Vec<GitProvider>,
   server_id: &str,
-) -> anyhow::Result<()> {
+) -> serror::Result<()> {
   let server = resource::get::<Server>(server_id).await?;
   let more = periphery_client(&server)?
     .request(periphery_client::api::ListGitProviders {})
@@ -556,7 +525,7 @@ fn merge_git_providers(
 async fn merge_docker_registries_for_server(
   registries: &mut Vec<DockerRegistry>,
   server_id: &str,
-) -> anyhow::Result<()> {
+) -> serror::Result<()> {
   let server = resource::get::<Server>(server_id).await?;
   let more = periphery_client(&server)?
     .request(periphery_client::api::ListDockerRegistries {})

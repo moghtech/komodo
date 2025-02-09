@@ -4,7 +4,6 @@ use komodo_client::{
   entities::{
     permission::PermissionLevel,
     procedure::{Procedure, ProcedureState},
-    user::User,
   },
 };
 use resolver_api::Resolve;
@@ -12,65 +11,73 @@ use resolver_api::Resolve;
 use crate::{
   helpers::query::get_all_tags,
   resource,
-  state::{action_states, procedure_state_cache, State},
+  state::{action_states, procedure_state_cache},
 };
 
-impl Resolve<GetProcedure, User> for State {
+use super::ReadArgs;
+
+impl Resolve<ReadArgs> for GetProcedure {
   async fn resolve(
-    &self,
-    GetProcedure { procedure }: GetProcedure,
-    user: User,
-  ) -> anyhow::Result<GetProcedureResponse> {
-    resource::get_check_permissions::<Procedure>(
-      &procedure,
-      &user,
-      PermissionLevel::Read,
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetProcedureResponse> {
+    Ok(
+      resource::get_check_permissions::<Procedure>(
+        &self.procedure,
+        user,
+        PermissionLevel::Read,
+      )
+      .await?,
     )
-    .await
   }
 }
 
-impl Resolve<ListProcedures, User> for State {
+impl Resolve<ReadArgs> for ListProcedures {
   async fn resolve(
-    &self,
-    ListProcedures { query }: ListProcedures,
-    user: User,
-  ) -> anyhow::Result<ListProceduresResponse> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListProceduresResponse> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    resource::list_for_user::<Procedure>(query, &user, &all_tags)
-      .await
+    Ok(
+      resource::list_for_user::<Procedure>(
+        self.query, user, &all_tags,
+      )
+      .await?,
+    )
   }
 }
 
-impl Resolve<ListFullProcedures, User> for State {
+impl Resolve<ReadArgs> for ListFullProcedures {
   async fn resolve(
-    &self,
-    ListFullProcedures { query }: ListFullProcedures,
-    user: User,
-  ) -> anyhow::Result<ListFullProceduresResponse> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListFullProceduresResponse> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    resource::list_full_for_user::<Procedure>(query, &user, &all_tags)
-      .await
+    Ok(
+      resource::list_full_for_user::<Procedure>(
+        self.query, &user, &all_tags,
+      )
+      .await?,
+    )
   }
 }
 
-impl Resolve<GetProceduresSummary, User> for State {
+impl Resolve<ReadArgs> for GetProceduresSummary {
   async fn resolve(
-    &self,
-    GetProceduresSummary {}: GetProceduresSummary,
-    user: User,
-  ) -> anyhow::Result<GetProceduresSummaryResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetProceduresSummaryResponse> {
     let procedures = resource::list_full_for_user::<Procedure>(
       Default::default(),
-      &user,
+      user,
       &[],
     )
     .await
@@ -108,15 +115,14 @@ impl Resolve<GetProceduresSummary, User> for State {
   }
 }
 
-impl Resolve<GetProcedureActionState, User> for State {
+impl Resolve<ReadArgs> for GetProcedureActionState {
   async fn resolve(
-    &self,
-    GetProcedureActionState { procedure }: GetProcedureActionState,
-    user: User,
-  ) -> anyhow::Result<GetProcedureActionStateResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetProcedureActionStateResponse> {
     let procedure = resource::get_check_permissions::<Procedure>(
-      &procedure,
-      &user,
+      &self.procedure,
+      user,
       PermissionLevel::Read,
     )
     .await?;

@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::{derive::Request, HasResponse};
+use resolver_api::{HasResponse, Resolve};
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -13,10 +13,11 @@ pub trait KomodoUserRequest: HasResponse {}
 /// Response: [NoData].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoUserRequest)]
 #[response(PushRecentlyViewedResponse)]
+#[error(serror::Error)]
 pub struct PushRecentlyViewed {
   /// The target to push.
   pub resource: ResourceTarget,
@@ -32,10 +33,11 @@ pub type PushRecentlyViewedResponse = NoData;
 /// Response: [NoData]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoUserRequest)]
 #[response(SetLastSeenUpdateResponse)]
+#[error(serror::Error)]
 pub struct SetLastSeenUpdate {}
 
 #[typeshare]
@@ -50,10 +52,11 @@ pub type SetLastSeenUpdateResponse = NoData;
 /// to get the secret later.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoUserRequest)]
 #[response(CreateApiKeyResponse)]
+#[error(serror::Error)]
 pub struct CreateApiKey {
   /// The name for the api key.
   pub name: String,
@@ -84,10 +87,11 @@ pub struct CreateApiKeyResponse {
 /// Response: [NoData]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoUserRequest)]
 #[response(DeleteApiKeyResponse)]
+#[error(serror::Error)]
 pub struct DeleteApiKey {
   /// The key which the user intends to delete.
   pub key: String,

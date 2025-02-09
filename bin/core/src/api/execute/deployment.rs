@@ -35,10 +35,10 @@ use crate::{
   },
   monitor::update_cache_for_server,
   resource,
-  state::{action_states, State},
+  state::action_states,
 };
 
-use super::ExecuteRequest;
+use super::{ExecuteArgs, ExecuteRequest};
 
 impl super::BatchExecute for BatchDeploy {
   type Resource = Deployment;
@@ -51,14 +51,16 @@ impl super::BatchExecute for BatchDeploy {
   }
 }
 
-impl Resolve<BatchDeploy, (User, Update)> for State {
-  #[instrument(name = "BatchDeploy", skip(self, user), fields(user_id = user.id))]
+impl Resolve<ExecuteArgs> for BatchDeploy {
+  #[instrument(name = "BatchDeploy", skip(user), fields(user_id = user.id))]
   async fn resolve(
-    &self,
-    BatchDeploy { pattern }: BatchDeploy,
-    (user, _): (User, Update),
-  ) -> anyhow::Result<BatchExecutionResponse> {
-    super::batch_execute::<BatchDeploy>(&pattern, &user).await
+    self,
+    ExecuteArgs { user, .. }: &ExecuteArgs,
+  ) -> serror::Result<BatchExecutionResponse> {
+    Ok(
+      super::batch_execute::<BatchDeploy>(&self.pattern, user)
+        .await?,
+    )
   }
 }
 
@@ -87,19 +89,14 @@ async fn setup_deployment_execution(
   Ok((deployment, server))
 }
 
-impl Resolve<Deploy, (User, Update)> for State {
-  #[instrument(name = "Deploy", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for Deploy {
+  #[instrument(name = "Deploy", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    Deploy {
-      deployment,
-      stop_signal,
-      stop_time,
-    }: Deploy,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let (mut deployment, server) =
-      setup_deployment_execution(&deployment, &user).await?;
+      setup_deployment_execution(&self.deployment, user).await?;
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -111,6 +108,8 @@ impl Resolve<Deploy, (User, Update)> for State {
     // The returned guard will set the action state back to default when dropped.
     let _action_guard =
       action_state.update(|state| state.deploying = true)?;
+
+    let mut update = update.clone();
 
     // Send update after setting action state, this way frontend gets correct state.
     update_update(update.clone()).await?;
@@ -237,8 +236,8 @@ impl Resolve<Deploy, (User, Update)> for State {
     match periphery_client(&server)?
       .request(api::container::Deploy {
         deployment,
-        stop_signal,
-        stop_time,
+        stop_signal: self.stop_signal,
+        stop_time: self.stop_time,
         registry_token,
         replacers: secret_replacers.into_iter().collect(),
       })
@@ -378,14 +377,14 @@ pub async fn pull_deployment_inner(
   res
 }
 
-impl Resolve<PullDeployment, (User, Update)> for State {
+impl Resolve<ExecuteArgs> for PullDeployment {
+  #[instrument(name = "PullDeployment", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    PullDeployment { deployment }: PullDeployment,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let (deployment, server) =
-      setup_deployment_execution(&deployment, &user).await?;
+      setup_deployment_execution(&self.deployment, user).await?;
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -398,6 +397,7 @@ impl Resolve<PullDeployment, (User, Update)> for State {
     let _action_guard =
       action_state.update(|state| state.pulling = true)?;
 
+    let mut update = update.clone();
     // Send update after setting action state, this way frontend gets correct state.
     update_update(update.clone()).await?;
 
@@ -411,15 +411,14 @@ impl Resolve<PullDeployment, (User, Update)> for State {
   }
 }
 
-impl Resolve<StartDeployment, (User, Update)> for State {
-  #[instrument(name = "StartDeployment", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for StartDeployment {
+  #[instrument(name = "StartDeployment", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    StartDeployment { deployment }: StartDeployment,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let (deployment, server) =
-      setup_deployment_execution(&deployment, &user).await?;
+      setup_deployment_execution(&self.deployment, user).await?;
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -431,6 +430,8 @@ impl Resolve<StartDeployment, (User, Update)> for State {
     // The returned guard will set the action state back to default when dropped.
     let _action_guard =
       action_state.update(|state| state.starting = true)?;
+
+    let mut update = update.clone();
 
     // Send update after setting action state, this way frontend gets correct state.
     update_update(update.clone()).await?;
@@ -457,15 +458,14 @@ impl Resolve<StartDeployment, (User, Update)> for State {
   }
 }
 
-impl Resolve<RestartDeployment, (User, Update)> for State {
-  #[instrument(name = "RestartDeployment", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for RestartDeployment {
+  #[instrument(name = "RestartDeployment", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    RestartDeployment { deployment }: RestartDeployment,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let (deployment, server) =
-      setup_deployment_execution(&deployment, &user).await?;
+      setup_deployment_execution(&self.deployment, user).await?;
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -477,6 +477,8 @@ impl Resolve<RestartDeployment, (User, Update)> for State {
     // The returned guard will set the action state back to default when dropped.
     let _action_guard =
       action_state.update(|state| state.restarting = true)?;
+
+    let mut update = update.clone();
 
     // Send update after setting action state, this way frontend gets correct state.
     update_update(update.clone()).await?;
@@ -505,15 +507,14 @@ impl Resolve<RestartDeployment, (User, Update)> for State {
   }
 }
 
-impl Resolve<PauseDeployment, (User, Update)> for State {
-  #[instrument(name = "PauseDeployment", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for PauseDeployment {
+  #[instrument(name = "PauseDeployment", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    PauseDeployment { deployment }: PauseDeployment,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let (deployment, server) =
-      setup_deployment_execution(&deployment, &user).await?;
+      setup_deployment_execution(&self.deployment, user).await?;
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -525,6 +526,8 @@ impl Resolve<PauseDeployment, (User, Update)> for State {
     // The returned guard will set the action state back to default when dropped.
     let _action_guard =
       action_state.update(|state| state.pausing = true)?;
+
+    let mut update = update.clone();
 
     // Send update after setting action state, this way frontend gets correct state.
     update_update(update.clone()).await?;
@@ -551,15 +554,14 @@ impl Resolve<PauseDeployment, (User, Update)> for State {
   }
 }
 
-impl Resolve<UnpauseDeployment, (User, Update)> for State {
-  #[instrument(name = "UnpauseDeployment", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for UnpauseDeployment {
+  #[instrument(name = "UnpauseDeployment", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    UnpauseDeployment { deployment }: UnpauseDeployment,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let (deployment, server) =
-      setup_deployment_execution(&deployment, &user).await?;
+      setup_deployment_execution(&self.deployment, &user).await?;
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -571,6 +573,8 @@ impl Resolve<UnpauseDeployment, (User, Update)> for State {
     // The returned guard will set the action state back to default when dropped.
     let _action_guard =
       action_state.update(|state| state.unpausing = true)?;
+
+    let mut update = update.clone();
 
     // Send update after setting action state, this way frontend gets correct state.
     update_update(update.clone()).await?;
@@ -599,19 +603,14 @@ impl Resolve<UnpauseDeployment, (User, Update)> for State {
   }
 }
 
-impl Resolve<StopDeployment, (User, Update)> for State {
-  #[instrument(name = "StopDeployment", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for StopDeployment {
+  #[instrument(name = "StopDeployment", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    StopDeployment {
-      deployment,
-      signal,
-      time,
-    }: StopDeployment,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let (deployment, server) =
-      setup_deployment_execution(&deployment, &user).await?;
+      setup_deployment_execution(&self.deployment, &user).await?;
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -624,16 +623,20 @@ impl Resolve<StopDeployment, (User, Update)> for State {
     let _action_guard =
       action_state.update(|state| state.stopping = true)?;
 
+    let mut update = update.clone();
+
     // Send update after setting action state, this way frontend gets correct state.
     update_update(update.clone()).await?;
 
     let log = match periphery_client(&server)?
       .request(api::container::StopContainer {
         name: deployment.name,
-        signal: signal
+        signal: self
+          .signal
           .unwrap_or(deployment.config.termination_signal)
           .into(),
-        time: time
+        time: self
+          .time
           .unwrap_or(deployment.config.termination_timeout)
           .into(),
       })
@@ -666,31 +669,30 @@ impl super::BatchExecute for BatchDestroyDeployment {
   }
 }
 
-impl Resolve<BatchDestroyDeployment, (User, Update)> for State {
-  #[instrument(name = "BatchDestroyDeployment", skip(self, user), fields(user_id = user.id))]
+impl Resolve<ExecuteArgs> for BatchDestroyDeployment {
+  #[instrument(name = "BatchDestroyDeployment", skip(user), fields(user_id = user.id))]
   async fn resolve(
-    &self,
-    BatchDestroyDeployment { pattern }: BatchDestroyDeployment,
-    (user, _): (User, Update),
-  ) -> anyhow::Result<BatchExecutionResponse> {
-    super::batch_execute::<BatchDestroyDeployment>(&pattern, &user)
-      .await
+    self,
+    ExecuteArgs { user, .. }: &ExecuteArgs,
+  ) -> serror::Result<BatchExecutionResponse> {
+    Ok(
+      super::batch_execute::<BatchDestroyDeployment>(
+        &self.pattern,
+        user,
+      )
+      .await?,
+    )
   }
 }
 
-impl Resolve<DestroyDeployment, (User, Update)> for State {
-  #[instrument(name = "DestroyDeployment", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for DestroyDeployment {
+  #[instrument(name = "DestroyDeployment", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    DestroyDeployment {
-      deployment,
-      signal,
-      time,
-    }: DestroyDeployment,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let (deployment, server) =
-      setup_deployment_execution(&deployment, &user).await?;
+      setup_deployment_execution(&self.deployment, user).await?;
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -703,16 +705,20 @@ impl Resolve<DestroyDeployment, (User, Update)> for State {
     let _action_guard =
       action_state.update(|state| state.destroying = true)?;
 
+    let mut update = update.clone();
+
     // Send update after setting action state, this way frontend gets correct state.
     update_update(update.clone()).await?;
 
     let log = match periphery_client(&server)?
       .request(api::container::RemoveContainer {
         name: deployment.name,
-        signal: signal
+        signal: self
+          .signal
           .unwrap_or(deployment.config.termination_signal)
           .into(),
-        time: time
+        time: self
+          .time
           .unwrap_or(deployment.config.termination_timeout)
           .into(),
       })

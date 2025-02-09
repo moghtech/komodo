@@ -10,8 +10,7 @@ use komodo_client::{
     deployment::Deployment, permission::PermissionLevel,
     procedure::Procedure, repo::Repo, resource::ResourceQuery,
     server::Server, server_template::ServerTemplate, stack::Stack,
-    sync::ResourceSync, toml::ResourcesToml, user::User,
-    ResourceTarget,
+    sync::ResourceSync, toml::ResourcesToml, ResourceTarget,
   },
 };
 use mungos::find::find_collect;
@@ -22,7 +21,7 @@ use crate::{
     get_all_tags, get_id_to_tags, get_user_user_group_ids,
   },
   resource,
-  state::{db_client, State},
+  state::db_client,
   sync::{
     toml::{convert_resource, ToToml, TOML_PRETTY_OPTIONS},
     user_groups::convert_user_groups,
@@ -30,23 +29,26 @@ use crate::{
   },
 };
 
-impl Resolve<ExportAllResourcesToToml, User> for State {
+use super::ReadArgs;
+
+impl Resolve<ReadArgs> for ExportAllResourcesToToml {
   async fn resolve(
-    &self,
-    ExportAllResourcesToToml { tags }: ExportAllResourcesToToml,
-    user: User,
-  ) -> anyhow::Result<ExportAllResourcesToTomlResponse> {
+    self,
+    args: &ReadArgs,
+  ) -> serror::Result<ExportAllResourcesToTomlResponse> {
     let mut targets = Vec::<ResourceTarget>::new();
 
-    let all_tags = if tags.is_empty() {
+    let all_tags = if self.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
 
+    let ReadArgs { user } = args;
+
     targets.extend(
       resource::list_for_user::<Alerter>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
+        ResourceQuery::builder().tags(self.tags.clone()).build(),
         &user,
         &all_tags,
       )
@@ -56,7 +58,7 @@ impl Resolve<ExportAllResourcesToToml, User> for State {
     );
     targets.extend(
       resource::list_for_user::<Builder>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
+        ResourceQuery::builder().tags(self.tags.clone()).build(),
         &user,
         &all_tags,
       )
@@ -66,7 +68,7 @@ impl Resolve<ExportAllResourcesToToml, User> for State {
     );
     targets.extend(
       resource::list_for_user::<Server>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
+        ResourceQuery::builder().tags(self.tags.clone()).build(),
         &user,
         &all_tags,
       )
@@ -75,18 +77,8 @@ impl Resolve<ExportAllResourcesToToml, User> for State {
       .map(|resource| ResourceTarget::Server(resource.id)),
     );
     targets.extend(
-      resource::list_for_user::<Deployment>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
-        &user,
-        &all_tags,
-      )
-      .await?
-      .into_iter()
-      .map(|resource| ResourceTarget::Deployment(resource.id)),
-    );
-    targets.extend(
       resource::list_for_user::<Stack>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
+        ResourceQuery::builder().tags(self.tags.clone()).build(),
         &user,
         &all_tags,
       )
@@ -95,8 +87,18 @@ impl Resolve<ExportAllResourcesToToml, User> for State {
       .map(|resource| ResourceTarget::Stack(resource.id)),
     );
     targets.extend(
+      resource::list_for_user::<Deployment>(
+        ResourceQuery::builder().tags(self.tags.clone()).build(),
+        &user,
+        &all_tags,
+      )
+      .await?
+      .into_iter()
+      .map(|resource| ResourceTarget::Deployment(resource.id)),
+    );
+    targets.extend(
       resource::list_for_user::<Build>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
+        ResourceQuery::builder().tags(self.tags.clone()).build(),
         &user,
         &all_tags,
       )
@@ -106,7 +108,7 @@ impl Resolve<ExportAllResourcesToToml, User> for State {
     );
     targets.extend(
       resource::list_for_user::<Repo>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
+        ResourceQuery::builder().tags(self.tags.clone()).build(),
         &user,
         &all_tags,
       )
@@ -116,7 +118,7 @@ impl Resolve<ExportAllResourcesToToml, User> for State {
     );
     targets.extend(
       resource::list_for_user::<Procedure>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
+        ResourceQuery::builder().tags(self.tags.clone()).build(),
         &user,
         &all_tags,
       )
@@ -126,7 +128,7 @@ impl Resolve<ExportAllResourcesToToml, User> for State {
     );
     targets.extend(
       resource::list_for_user::<Action>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
+        ResourceQuery::builder().tags(self.tags.clone()).build(),
         &user,
         &all_tags,
       )
@@ -136,7 +138,7 @@ impl Resolve<ExportAllResourcesToToml, User> for State {
     );
     targets.extend(
       resource::list_for_user::<ServerTemplate>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
+        ResourceQuery::builder().tags(self.tags.clone()).build(),
         &user,
         &all_tags,
       )
@@ -146,7 +148,7 @@ impl Resolve<ExportAllResourcesToToml, User> for State {
     );
     targets.extend(
       resource::list_full_for_user::<ResourceSync>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
+        ResourceQuery::builder().tags(self.tags.clone()).build(),
         &user,
         &all_tags,
       )
@@ -156,7 +158,7 @@ impl Resolve<ExportAllResourcesToToml, User> for State {
       .map(|resource| ResourceTarget::ResourceSync(resource.id)),
     );
 
-    let user_groups = if user.admin && tags.is_empty() {
+    let user_groups = if user.admin && self.tags.is_empty() {
       find_collect(&db_client().user_groups, None, None)
         .await
         .context("failed to query db for user groups")?
@@ -167,32 +169,30 @@ impl Resolve<ExportAllResourcesToToml, User> for State {
       get_user_user_group_ids(&user.id).await?
     };
 
-    self
-      .resolve(
-        ExportResourcesToToml {
-          targets,
-          user_groups,
-          include_variables: tags.is_empty(),
-        },
-        user,
-      )
-      .await
-  }
-}
-
-impl Resolve<ExportResourcesToToml, User> for State {
-  async fn resolve(
-    &self,
     ExportResourcesToToml {
       targets,
       user_groups,
+      include_variables: self.tags.is_empty(),
+    }
+    .resolve(args)
+    .await
+  }
+}
+
+impl Resolve<ReadArgs> for ExportResourcesToToml {
+  async fn resolve(
+    self,
+    args: &ReadArgs,
+  ) -> serror::Result<ExportResourcesToTomlResponse> {
+    let ExportResourcesToToml {
+      targets,
+      user_groups,
       include_variables,
-    }: ExportResourcesToToml,
-    user: User,
-  ) -> anyhow::Result<ExportResourcesToTomlResponse> {
+    } = self;
     let mut res = ResourcesToml::default();
     let all = AllResourcesById::load().await?;
     let id_to_tags = get_id_to_tags(None).await?;
+    let ReadArgs { user } = args;
     for target in targets {
       match target {
         ResourceTarget::Alerter(id) => {
@@ -368,7 +368,7 @@ impl Resolve<ExportResourcesToToml, User> for State {
       };
     }
 
-    add_user_groups(user_groups, &mut res, &all, &user)
+    add_user_groups(user_groups, &mut res, &all, args)
       .await
       .context("failed to add user groups")?;
 
@@ -398,11 +398,12 @@ async fn add_user_groups(
   user_groups: Vec<String>,
   res: &mut ResourcesToml,
   all: &AllResourcesById,
-  user: &User,
+  args: &ReadArgs,
 ) -> anyhow::Result<()> {
-  let user_groups = State
-    .resolve(ListUserGroups {}, user.clone())
-    .await?
+  let user_groups = ListUserGroups {}
+    .resolve(args)
+    .await
+    .map_err(|e| e.error)?
     .into_iter()
     .filter(|ug| {
       user_groups.contains(&ug.name) || user_groups.contains(&ug.id)

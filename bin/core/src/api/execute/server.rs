@@ -7,7 +7,6 @@ use komodo_client::{
     permission::PermissionLevel,
     server::Server,
     update::{Log, Update},
-    user::User,
   },
 };
 use periphery_client::api;
@@ -17,19 +16,20 @@ use crate::{
   helpers::{periphery_client, update::update_update},
   monitor::update_cache_for_server,
   resource,
-  state::{action_states, State},
+  state::action_states,
 };
 
-impl Resolve<StartContainer, (User, Update)> for State {
+use super::ExecuteArgs;
+
+impl Resolve<ExecuteArgs> for StartContainer {
   #[instrument(name = "StartContainer", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    StartContainer { server, container }: StartContainer,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -45,13 +45,17 @@ impl Resolve<StartContainer, (User, Update)> for State {
     let _action_guard = action_state
       .update(|state| state.starting_containers = true)?;
 
+    let mut update = update.clone();
+
     // Send update after setting action state, this way frontend gets correct state.
     update_update(update.clone()).await?;
 
     let periphery = periphery_client(&server)?;
 
     let log = match periphery
-      .request(api::container::StartContainer { name: container })
+      .request(api::container::StartContainer {
+        name: self.container,
+      })
       .await
     {
       Ok(log) => log,
@@ -71,16 +75,15 @@ impl Resolve<StartContainer, (User, Update)> for State {
   }
 }
 
-impl Resolve<RestartContainer, (User, Update)> for State {
+impl Resolve<ExecuteArgs> for RestartContainer {
   #[instrument(name = "RestartContainer", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    RestartContainer { server, container }: RestartContainer,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -96,13 +99,17 @@ impl Resolve<RestartContainer, (User, Update)> for State {
     let _action_guard = action_state
       .update(|state| state.restarting_containers = true)?;
 
+    let mut update = update.clone();
+
     // Send update after setting action state, this way frontend gets correct state.
     update_update(update.clone()).await?;
 
     let periphery = periphery_client(&server)?;
 
     let log = match periphery
-      .request(api::container::RestartContainer { name: container })
+      .request(api::container::RestartContainer {
+        name: self.container,
+      })
       .await
     {
       Ok(log) => log,
@@ -124,16 +131,15 @@ impl Resolve<RestartContainer, (User, Update)> for State {
   }
 }
 
-impl Resolve<PauseContainer, (User, Update)> for State {
-  #[instrument(name = "PauseContainer", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for PauseContainer {
+  #[instrument(name = "PauseContainer", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    PauseContainer { server, container }: PauseContainer,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -149,13 +155,17 @@ impl Resolve<PauseContainer, (User, Update)> for State {
     let _action_guard =
       action_state.update(|state| state.pausing_containers = true)?;
 
+    let mut update = update.clone();
+
     // Send update after setting action state, this way frontend gets correct state.
     update_update(update.clone()).await?;
 
     let periphery = periphery_client(&server)?;
 
     let log = match periphery
-      .request(api::container::PauseContainer { name: container })
+      .request(api::container::PauseContainer {
+        name: self.container,
+      })
       .await
     {
       Ok(log) => log,
@@ -175,16 +185,15 @@ impl Resolve<PauseContainer, (User, Update)> for State {
   }
 }
 
-impl Resolve<UnpauseContainer, (User, Update)> for State {
-  #[instrument(name = "UnpauseContainer", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for UnpauseContainer {
+  #[instrument(name = "UnpauseContainer", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    UnpauseContainer { server, container }: UnpauseContainer,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -200,13 +209,17 @@ impl Resolve<UnpauseContainer, (User, Update)> for State {
     let _action_guard = action_state
       .update(|state| state.unpausing_containers = true)?;
 
+    let mut update = update.clone();
+
     // Send update after setting action state, this way frontend gets correct state.
     update_update(update.clone()).await?;
 
     let periphery = periphery_client(&server)?;
 
     let log = match periphery
-      .request(api::container::UnpauseContainer { name: container })
+      .request(api::container::UnpauseContainer {
+        name: self.container,
+      })
       .await
     {
       Ok(log) => log,
@@ -228,21 +241,15 @@ impl Resolve<UnpauseContainer, (User, Update)> for State {
   }
 }
 
-impl Resolve<StopContainer, (User, Update)> for State {
-  #[instrument(name = "StopContainer", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for StopContainer {
+  #[instrument(name = "StopContainer", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    StopContainer {
-      server,
-      container,
-      signal,
-      time,
-    }: StopContainer,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -258,6 +265,8 @@ impl Resolve<StopContainer, (User, Update)> for State {
     let _action_guard = action_state
       .update(|state| state.stopping_containers = true)?;
 
+    let mut update = update.clone();
+
     // Send update after setting action state, this way frontend gets correct state.
     update_update(update.clone()).await?;
 
@@ -265,9 +274,9 @@ impl Resolve<StopContainer, (User, Update)> for State {
 
     let log = match periphery
       .request(api::container::StopContainer {
-        name: container,
-        signal,
-        time,
+        name: self.container,
+        signal: self.signal,
+        time: self.time,
       })
       .await
     {
@@ -288,21 +297,21 @@ impl Resolve<StopContainer, (User, Update)> for State {
   }
 }
 
-impl Resolve<DestroyContainer, (User, Update)> for State {
-  #[instrument(name = "DestroyContainer", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for DestroyContainer {
+  #[instrument(name = "DestroyContainer", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    DestroyContainer {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
+    let DestroyContainer {
       server,
       container,
       signal,
       time,
-    }: DestroyContainer,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    } = self;
     let server = resource::get_check_permissions::<Server>(
       &server,
-      &user,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -317,6 +326,8 @@ impl Resolve<DestroyContainer, (User, Update)> for State {
     // The returned guard will set the action state back to default when dropped.
     let _action_guard =
       action_state.update(|state| state.pruning_containers = true)?;
+
+    let mut update = update.clone();
 
     // Send update after setting action state, this way frontend gets correct state.
     update_update(update.clone()).await?;
@@ -348,16 +359,15 @@ impl Resolve<DestroyContainer, (User, Update)> for State {
   }
 }
 
-impl Resolve<StartAllContainers, (User, Update)> for State {
-  #[instrument(name = "StartAllContainers", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for StartAllContainers {
+  #[instrument(name = "StartAllContainers", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    StartAllContainers { server }: StartAllContainers,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -372,6 +382,8 @@ impl Resolve<StartAllContainers, (User, Update)> for State {
     // The returned guard will set the action state back to default when dropped.
     let _action_guard = action_state
       .update(|state| state.starting_containers = true)?;
+
+    let mut update = update.clone();
 
     update_update(update.clone()).await?;
 
@@ -397,16 +409,15 @@ impl Resolve<StartAllContainers, (User, Update)> for State {
   }
 }
 
-impl Resolve<RestartAllContainers, (User, Update)> for State {
-  #[instrument(name = "RestartAllContainers", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for RestartAllContainers {
+  #[instrument(name = "RestartAllContainers", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    RestartAllContainers { server }: RestartAllContainers,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -421,6 +432,8 @@ impl Resolve<RestartAllContainers, (User, Update)> for State {
     // The returned guard will set the action state back to default when dropped.
     let _action_guard = action_state
       .update(|state| state.restarting_containers = true)?;
+
+    let mut update = update.clone();
 
     update_update(update.clone()).await?;
 
@@ -448,16 +461,15 @@ impl Resolve<RestartAllContainers, (User, Update)> for State {
   }
 }
 
-impl Resolve<PauseAllContainers, (User, Update)> for State {
-  #[instrument(name = "PauseAllContainers", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for PauseAllContainers {
+  #[instrument(name = "PauseAllContainers", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    PauseAllContainers { server }: PauseAllContainers,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -472,6 +484,8 @@ impl Resolve<PauseAllContainers, (User, Update)> for State {
     // The returned guard will set the action state back to default when dropped.
     let _action_guard =
       action_state.update(|state| state.pausing_containers = true)?;
+
+    let mut update = update.clone();
 
     update_update(update.clone()).await?;
 
@@ -497,16 +511,15 @@ impl Resolve<PauseAllContainers, (User, Update)> for State {
   }
 }
 
-impl Resolve<UnpauseAllContainers, (User, Update)> for State {
-  #[instrument(name = "UnpauseAllContainers", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for UnpauseAllContainers {
+  #[instrument(name = "UnpauseAllContainers", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    UnpauseAllContainers { server }: UnpauseAllContainers,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -521,6 +534,8 @@ impl Resolve<UnpauseAllContainers, (User, Update)> for State {
     // The returned guard will set the action state back to default when dropped.
     let _action_guard = action_state
       .update(|state| state.unpausing_containers = true)?;
+
+    let mut update = update.clone();
 
     update_update(update.clone()).await?;
 
@@ -548,16 +563,15 @@ impl Resolve<UnpauseAllContainers, (User, Update)> for State {
   }
 }
 
-impl Resolve<StopAllContainers, (User, Update)> for State {
-  #[instrument(name = "StopAllContainers", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for StopAllContainers {
+  #[instrument(name = "StopAllContainers", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    StopAllContainers { server }: StopAllContainers,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -572,6 +586,8 @@ impl Resolve<StopAllContainers, (User, Update)> for State {
     // The returned guard will set the action state back to default when dropped.
     let _action_guard = action_state
       .update(|state| state.stopping_containers = true)?;
+
+    let mut update = update.clone();
 
     update_update(update.clone()).await?;
 
@@ -597,16 +613,15 @@ impl Resolve<StopAllContainers, (User, Update)> for State {
   }
 }
 
-impl Resolve<PruneContainers, (User, Update)> for State {
-  #[instrument(name = "PruneContainers", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for PruneContainers {
+  #[instrument(name = "PruneContainers", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    PruneContainers { server }: PruneContainers,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -621,6 +636,8 @@ impl Resolve<PruneContainers, (User, Update)> for State {
     // The returned guard will set the action state back to default when dropped.
     let _action_guard =
       action_state.update(|state| state.pruning_containers = true)?;
+
+    let mut update = update.clone();
 
     update_update(update.clone()).await?;
 
@@ -652,37 +669,43 @@ impl Resolve<PruneContainers, (User, Update)> for State {
   }
 }
 
-impl Resolve<DeleteNetwork, (User, Update)> for State {
-  #[instrument(name = "DeleteNetwork", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for DeleteNetwork {
+  #[instrument(name = "DeleteNetwork", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    DeleteNetwork { server, name }: DeleteNetwork,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
+
+    let mut update = update.clone();
 
     update_update(update.clone()).await?;
 
     let periphery = periphery_client(&server)?;
 
     let log = match periphery
-      .request(api::network::DeleteNetwork { name: name.clone() })
+      .request(api::network::DeleteNetwork {
+        name: self.name.clone(),
+      })
       .await
       .context(format!(
-        "failed to delete network {name} on server {}",
-        server.name
+        "failed to delete network {} on server {}",
+        self.name, server.name
       )) {
       Ok(log) => log,
       Err(e) => Log::error(
         "delete network",
         format_serror(
-          &e.context(format!("failed to delete network {name}"))
-            .into(),
+          &e.context(format!(
+            "failed to delete network {}",
+            self.name
+          ))
+          .into(),
         ),
       ),
     };
@@ -697,16 +720,15 @@ impl Resolve<DeleteNetwork, (User, Update)> for State {
   }
 }
 
-impl Resolve<PruneNetworks, (User, Update)> for State {
-  #[instrument(name = "PruneNetworks", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for PruneNetworks {
+  #[instrument(name = "PruneNetworks", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    PruneNetworks { server }: PruneNetworks,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -721,6 +743,8 @@ impl Resolve<PruneNetworks, (User, Update)> for State {
     // The returned guard will set the action state back to default when dropped.
     let _action_guard =
       action_state.update(|state| state.pruning_networks = true)?;
+
+    let mut update = update.clone();
 
     update_update(update.clone()).await?;
 
@@ -750,36 +774,40 @@ impl Resolve<PruneNetworks, (User, Update)> for State {
   }
 }
 
-impl Resolve<DeleteImage, (User, Update)> for State {
-  #[instrument(name = "DeleteImage", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for DeleteImage {
+  #[instrument(name = "DeleteImage", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    DeleteImage { server, name }: DeleteImage,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
+
+    let mut update = update.clone();
 
     update_update(update.clone()).await?;
 
     let periphery = periphery_client(&server)?;
 
     let log = match periphery
-      .request(api::image::DeleteImage { name: name.clone() })
+      .request(api::image::DeleteImage {
+        name: self.name.clone(),
+      })
       .await
       .context(format!(
-        "failed to delete image {name} on server {}",
-        server.name
+        "failed to delete image {} on server {}",
+        self.name, server.name
       )) {
       Ok(log) => log,
       Err(e) => Log::error(
         "delete image",
         format_serror(
-          &e.context(format!("failed to delete image {name}")).into(),
+          &e.context(format!("failed to delete image {}", self.name))
+            .into(),
         ),
       ),
     };
@@ -794,16 +822,15 @@ impl Resolve<DeleteImage, (User, Update)> for State {
   }
 }
 
-impl Resolve<PruneImages, (User, Update)> for State {
-  #[instrument(name = "PruneImages", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for PruneImages {
+  #[instrument(name = "PruneImages", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    PruneImages { server }: PruneImages,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -818,6 +845,8 @@ impl Resolve<PruneImages, (User, Update)> for State {
     // The returned guard will set the action state back to default when dropped.
     let _action_guard =
       action_state.update(|state| state.pruning_images = true)?;
+
+    let mut update = update.clone();
 
     update_update(update.clone()).await?;
 
@@ -845,37 +874,43 @@ impl Resolve<PruneImages, (User, Update)> for State {
   }
 }
 
-impl Resolve<DeleteVolume, (User, Update)> for State {
-  #[instrument(name = "DeleteVolume", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for DeleteVolume {
+  #[instrument(name = "DeleteVolume", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    DeleteVolume { server, name }: DeleteVolume,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
+
+    let mut update = update.clone();
 
     update_update(update.clone()).await?;
 
     let periphery = periphery_client(&server)?;
 
     let log = match periphery
-      .request(api::volume::DeleteVolume { name: name.clone() })
+      .request(api::volume::DeleteVolume {
+        name: self.name.clone(),
+      })
       .await
       .context(format!(
-        "failed to delete volume {name} on server {}",
-        server.name
+        "failed to delete volume {} on server {}",
+        self.name, server.name
       )) {
       Ok(log) => log,
       Err(e) => Log::error(
         "delete volume",
         format_serror(
-          &e.context(format!("failed to delete volume {name}"))
-            .into(),
+          &e.context(format!(
+            "failed to delete volume {}",
+            self.name
+          ))
+          .into(),
         ),
       ),
     };
@@ -890,16 +925,15 @@ impl Resolve<DeleteVolume, (User, Update)> for State {
   }
 }
 
-impl Resolve<PruneVolumes, (User, Update)> for State {
-  #[instrument(name = "PruneVolumes", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for PruneVolumes {
+  #[instrument(name = "PruneVolumes", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    PruneVolumes { server }: PruneVolumes,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -914,6 +948,8 @@ impl Resolve<PruneVolumes, (User, Update)> for State {
     // The returned guard will set the action state back to default when dropped.
     let _action_guard =
       action_state.update(|state| state.pruning_volumes = true)?;
+
+    let mut update = update.clone();
 
     update_update(update.clone()).await?;
 
@@ -941,16 +977,15 @@ impl Resolve<PruneVolumes, (User, Update)> for State {
   }
 }
 
-impl Resolve<PruneDockerBuilders, (User, Update)> for State {
-  #[instrument(name = "PruneDockerBuilders", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for PruneDockerBuilders {
+  #[instrument(name = "PruneDockerBuilders", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    PruneDockerBuilders { server }: PruneDockerBuilders,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -965,6 +1000,8 @@ impl Resolve<PruneDockerBuilders, (User, Update)> for State {
     // The returned guard will set the action state back to default when dropped.
     let _action_guard =
       action_state.update(|state| state.pruning_builders = true)?;
+
+    let mut update = update.clone();
 
     update_update(update.clone()).await?;
 
@@ -992,16 +1029,15 @@ impl Resolve<PruneDockerBuilders, (User, Update)> for State {
   }
 }
 
-impl Resolve<PruneBuildx, (User, Update)> for State {
-  #[instrument(name = "PruneBuildx", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for PruneBuildx {
+  #[instrument(name = "PruneBuildx", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    PruneBuildx { server }: PruneBuildx,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -1016,6 +1052,8 @@ impl Resolve<PruneBuildx, (User, Update)> for State {
     // The returned guard will set the action state back to default when dropped.
     let _action_guard =
       action_state.update(|state| state.pruning_buildx = true)?;
+
+    let mut update = update.clone();
 
     update_update(update.clone()).await?;
 
@@ -1043,16 +1081,15 @@ impl Resolve<PruneBuildx, (User, Update)> for State {
   }
 }
 
-impl Resolve<PruneSystem, (User, Update)> for State {
-  #[instrument(name = "PruneSystem", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+impl Resolve<ExecuteArgs> for PruneSystem {
+  #[instrument(name = "PruneSystem", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    PruneSystem { server }: PruneSystem,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -1067,6 +1104,8 @@ impl Resolve<PruneSystem, (User, Update)> for State {
     // The returned guard will set the action state back to default when dropped.
     let _action_guard =
       action_state.update(|state| state.pruning_system = true)?;
+
+    let mut update = update.clone();
 
     update_update(update.clone()).await?;
 

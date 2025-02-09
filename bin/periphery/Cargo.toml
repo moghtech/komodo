@@ -19,6 +19,7 @@ komodo_client.workspace = true
 periphery_client.workspace = true
 environment_file.workspace = true
 formatting.workspace = true
+response.workspace = true
 command.workspace = true
 logger.workspace = true
 cache.workspace = true
@@ -33,7 +34,6 @@ run_command.workspace = true
 svi.workspace = true
 # external
 axum-server.workspace = true
-axum-extra.workspace = true
 serde_json.workspace = true
 futures.workspace = true
 tracing.workspace = true

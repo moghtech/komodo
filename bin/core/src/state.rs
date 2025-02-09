@@ -29,8 +29,6 @@ use crate::{
   },
 };
 
-pub struct State;
-
 static DB_CLIENT: OnceLock<DbClient> = OnceLock::new();
 
 pub fn db_client() -> &'static DbClient {

@@ -6,6 +6,7 @@ use strum::{Display, EnumString};
 use typeshare::typeshare;
 
 mod action;
+mod alerter;
 mod build;
 mod deployment;
 mod procedure;
@@ -16,6 +17,7 @@ mod stack;
 mod sync;
 
 pub use action::*;
+pub use alerter::*;
 pub use build::*;
 pub use deployment::*;
 pub use procedure::*;
@@ -133,6 +135,9 @@ pub enum Execution {
   StopStack(StopStack),
   DestroyStack(DestroyStack),
   BatchDestroyStack(BatchDestroyStack),
+
+  // ALERTER
+  TestAlerter(TestAlerter),
 
   // SLEEP
   Sleep(Sleep),

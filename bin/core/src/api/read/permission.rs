@@ -5,23 +5,23 @@ use komodo_client::{
     ListPermissionsResponse, ListUserTargetPermissions,
     ListUserTargetPermissionsResponse,
   },
-  entities::{permission::PermissionLevel, user::User},
+  entities::permission::PermissionLevel,
 };
 use mungos::{find::find_collect, mongodb::bson::doc};
 use resolver_api::Resolve;
 
 use crate::{
-  helpers::query::get_user_permission_on_target,
-  state::{db_client, State},
+  helpers::query::get_user_permission_on_target, state::db_client,
 };
 
-impl Resolve<ListPermissions, User> for State {
+use super::ReadArgs;
+
+impl Resolve<ReadArgs> for ListPermissions {
   async fn resolve(
-    &self,
-    ListPermissions {}: ListPermissions,
-    user: User,
-  ) -> anyhow::Result<ListPermissionsResponse> {
-    find_collect(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListPermissionsResponse> {
+    let res = find_collect(
       &db_client().permissions,
       doc! {
         "user_target.type": "User",
@@ -30,34 +30,33 @@ impl Resolve<ListPermissions, User> for State {
       None,
     )
     .await
-    .context("failed to query db for permissions")
+    .context("failed to query db for permissions")?;
+    Ok(res)
   }
 }
 
-impl Resolve<GetPermissionLevel, User> for State {
+impl Resolve<ReadArgs> for GetPermissionLevel {
   async fn resolve(
-    &self,
-    GetPermissionLevel { target }: GetPermissionLevel,
-    user: User,
-  ) -> anyhow::Result<GetPermissionLevelResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetPermissionLevelResponse> {
     if user.admin {
       return Ok(PermissionLevel::Write);
     }
-    get_user_permission_on_target(&user, &target).await
+    Ok(get_user_permission_on_target(user, &self.target).await?)
   }
 }
 
-impl Resolve<ListUserTargetPermissions, User> for State {
+impl Resolve<ReadArgs> for ListUserTargetPermissions {
   async fn resolve(
-    &self,
-    ListUserTargetPermissions { user_target }: ListUserTargetPermissions,
-    user: User,
-  ) -> anyhow::Result<ListUserTargetPermissionsResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListUserTargetPermissionsResponse> {
     if !user.admin {
-      return Err(anyhow!("this method is admin only"));
+      return Err(anyhow!("this method is admin only").into());
     }
-    let (variant, id) = user_target.extract_variant_id();
-    find_collect(
+    let (variant, id) = self.user_target.extract_variant_id();
+    let res = find_collect(
       &db_client().permissions,
       doc! {
         "user_target.type": variant.as_ref(),
@@ -66,6 +65,7 @@ impl Resolve<ListUserTargetPermissions, User> for State {
       None,
     )
     .await
-    .context("failed to query db for permissions")
+    .context("failed to query db for permissions")?;
+    Ok(res)
   }
 }

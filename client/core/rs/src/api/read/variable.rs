@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -14,10 +14,11 @@ use super::KomodoReadRequest;
 /// secret variables will have their values obscured.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetVariableResponse)]
+#[error(serror::Error)]
 pub struct GetVariable {
   /// The name of the variable to get.
   pub name: String,
@@ -35,10 +36,11 @@ pub type GetVariableResponse = Variable;
 /// secret variables will have their values obscured.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListVariablesResponse)]
+#[error(serror::Error)]
 pub struct ListVariables {}
 
 #[typeshare]

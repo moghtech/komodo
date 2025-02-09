@@ -1,13 +1,5 @@
 use anyhow::{anyhow, Context};
-use komodo_client::{
-  api::read::{
-    GetDockerRegistryAccount, GetDockerRegistryAccountResponse,
-    GetGitProviderAccount, GetGitProviderAccountResponse,
-    ListDockerRegistryAccounts, ListDockerRegistryAccountsResponse,
-    ListGitProviderAccounts, ListGitProviderAccountsResponse,
-  },
-  entities::user::User,
-};
+use komodo_client::api::read::*;
 use mongo_indexed::{doc, Document};
 use mungos::{
   by_id::find_one_by_id, find::find_collect,
@@ -15,45 +7,48 @@ use mungos::{
 };
 use resolver_api::Resolve;
 
-use crate::state::{db_client, State};
+use crate::state::db_client;
 
-impl Resolve<GetGitProviderAccount, User> for State {
+use super::ReadArgs;
+
+impl Resolve<ReadArgs> for GetGitProviderAccount {
   async fn resolve(
-    &self,
-    GetGitProviderAccount { id }: GetGitProviderAccount,
-    user: User,
-  ) -> anyhow::Result<GetGitProviderAccountResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetGitProviderAccountResponse> {
     if !user.admin {
-      return Err(anyhow!(
-        "Only admins can read git provider accounts"
-      ));
+      return Err(
+        anyhow!("Only admins can read git provider accounts").into(),
+      );
     }
-    find_one_by_id(&db_client().git_accounts, &id)
+    let res = find_one_by_id(&db_client().git_accounts, &self.id)
       .await
       .context("failed to query db for git provider accounts")?
-      .context("did not find git provider account with the given id")
+      .context(
+        "did not find git provider account with the given id",
+      )?;
+    Ok(res)
   }
 }
 
-impl Resolve<ListGitProviderAccounts, User> for State {
+impl Resolve<ReadArgs> for ListGitProviderAccounts {
   async fn resolve(
-    &self,
-    ListGitProviderAccounts { domain, username }: ListGitProviderAccounts,
-    user: User,
-  ) -> anyhow::Result<ListGitProviderAccountsResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListGitProviderAccountsResponse> {
     if !user.admin {
-      return Err(anyhow!(
-        "Only admins can read git provider accounts"
-      ));
+      return Err(
+        anyhow!("Only admins can read git provider accounts").into(),
+      );
     }
     let mut filter = Document::new();
-    if let Some(domain) = domain {
+    if let Some(domain) = self.domain {
       filter.insert("domain", domain);
     }
-    if let Some(username) = username {
+    if let Some(username) = self.username {
       filter.insert("username", username);
     }
-    find_collect(
+    let res = find_collect(
       &db_client().git_accounts,
       filter,
       FindOptions::builder()
@@ -61,49 +56,52 @@ impl Resolve<ListGitProviderAccounts, User> for State {
         .build(),
     )
     .await
-    .context("failed to query db for git provider accounts")
+    .context("failed to query db for git provider accounts")?;
+    Ok(res)
   }
 }
 
-impl Resolve<GetDockerRegistryAccount, User> for State {
+impl Resolve<ReadArgs> for GetDockerRegistryAccount {
   async fn resolve(
-    &self,
-    GetDockerRegistryAccount { id }: GetDockerRegistryAccount,
-    user: User,
-  ) -> anyhow::Result<GetDockerRegistryAccountResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetDockerRegistryAccountResponse> {
     if !user.admin {
-      return Err(anyhow!(
-        "Only admins can read docker registry accounts"
-      ));
+      return Err(
+        anyhow!("Only admins can read docker registry accounts")
+          .into(),
+      );
     }
-    find_one_by_id(&db_client().registry_accounts, &id)
-      .await
-      .context("failed to query db for docker registry accounts")?
-      .context(
-        "did not find docker registry account with the given id",
-      )
+    let res =
+      find_one_by_id(&db_client().registry_accounts, &self.id)
+        .await
+        .context("failed to query db for docker registry accounts")?
+        .context(
+          "did not find docker registry account with the given id",
+        )?;
+    Ok(res)
   }
 }
 
-impl Resolve<ListDockerRegistryAccounts, User> for State {
+impl Resolve<ReadArgs> for ListDockerRegistryAccounts {
   async fn resolve(
-    &self,
-    ListDockerRegistryAccounts { domain, username }: ListDockerRegistryAccounts,
-    user: User,
-  ) -> anyhow::Result<ListDockerRegistryAccountsResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListDockerRegistryAccountsResponse> {
     if !user.admin {
-      return Err(anyhow!(
-        "Only admins can read docker registry accounts"
-      ));
+      return Err(
+        anyhow!("Only admins can read docker registry accounts")
+          .into(),
+      );
     }
     let mut filter = Document::new();
-    if let Some(domain) = domain {
+    if let Some(domain) = self.domain {
       filter.insert("domain", domain);
     }
-    if let Some(username) = username {
+    if let Some(username) = self.username {
       filter.insert("username", username);
     }
-    find_collect(
+    let res = find_collect(
       &db_client().registry_accounts,
       filter,
       FindOptions::builder()
@@ -111,6 +109,7 @@ impl Resolve<ListDockerRegistryAccounts, User> for State {
         .build(),
     )
     .await
-    .context("failed to query db for docker registry accounts")
+    .context("failed to query db for docker registry accounts")?;
+    Ok(res)
   }
 }

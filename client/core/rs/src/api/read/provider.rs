@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -13,10 +13,11 @@ use super::KomodoReadRequest;
 /// Response: [GetGitProviderAccountResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetGitProviderAccountResponse)]
+#[error(serror::Error)]
 pub struct GetGitProviderAccount {
   pub id: String,
 }
@@ -30,10 +31,11 @@ pub type GetGitProviderAccountResponse = GitProviderAccount;
 /// Response: [ListGitProviderAccountsResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListGitProviderAccountsResponse)]
+#[error(serror::Error)]
 pub struct ListGitProviderAccounts {
   /// Optionally filter by accounts with a specific domain.
   pub domain: Option<String>,
@@ -50,10 +52,11 @@ pub type ListGitProviderAccountsResponse = Vec<GitProviderAccount>;
 /// Response: [GetDockerRegistryAccountResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDockerRegistryAccountResponse)]
+#[error(serror::Error)]
 pub struct GetDockerRegistryAccount {
   pub id: String,
 }
@@ -67,10 +70,11 @@ pub type GetDockerRegistryAccountResponse = DockerRegistryAccount;
 /// Response: [ListDockerRegistryAccountsResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerRegistryAccountsResponse)]
+#[error(serror::Error)]
 pub struct ListDockerRegistryAccounts {
   /// Optionally filter by accounts with a specific domain.
   pub domain: Option<String>,

@@ -10,7 +10,6 @@ use komodo_client::{
     config::core::CoreConfig,
     permission::PermissionLevel,
     update::UpdateStatus,
-    user::User,
     Operation,
   },
 };
@@ -25,65 +24,72 @@ use crate::{
   helpers::query::get_all_tags,
   resource,
   state::{
-    action_states, build_state_cache, db_client, github_client, State,
+    action_states, build_state_cache, db_client, github_client,
   },
 };
 
-impl Resolve<GetBuild, User> for State {
+use super::ReadArgs;
+
+impl Resolve<ReadArgs> for GetBuild {
   async fn resolve(
-    &self,
-    GetBuild { build }: GetBuild,
-    user: User,
-  ) -> anyhow::Result<Build> {
-    resource::get_check_permissions::<Build>(
-      &build,
-      &user,
-      PermissionLevel::Read,
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Build> {
+    Ok(
+      resource::get_check_permissions::<Build>(
+        &self.build,
+        user,
+        PermissionLevel::Read,
+      )
+      .await?,
     )
-    .await
   }
 }
 
-impl Resolve<ListBuilds, User> for State {
+impl Resolve<ReadArgs> for ListBuilds {
   async fn resolve(
-    &self,
-    ListBuilds { query }: ListBuilds,
-    user: User,
-  ) -> anyhow::Result<Vec<BuildListItem>> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Vec<BuildListItem>> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    resource::list_for_user::<Build>(query, &user, &all_tags).await
+    Ok(
+      resource::list_for_user::<Build>(self.query, user, &all_tags)
+        .await?,
+    )
   }
 }
 
-impl Resolve<ListFullBuilds, User> for State {
+impl Resolve<ReadArgs> for ListFullBuilds {
   async fn resolve(
-    &self,
-    ListFullBuilds { query }: ListFullBuilds,
-    user: User,
-  ) -> anyhow::Result<ListFullBuildsResponse> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListFullBuildsResponse> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    resource::list_full_for_user::<Build>(query, &user, &all_tags)
-      .await
+    Ok(
+      resource::list_full_for_user::<Build>(
+        self.query, user, &all_tags,
+      )
+      .await?,
+    )
   }
 }
 
-impl Resolve<GetBuildActionState, User> for State {
+impl Resolve<ReadArgs> for GetBuildActionState {
   async fn resolve(
-    &self,
-    GetBuildActionState { build }: GetBuildActionState,
-    user: User,
-  ) -> anyhow::Result<BuildActionState> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<BuildActionState> {
     let build = resource::get_check_permissions::<Build>(
-      &build,
-      &user,
+      &self.build,
+      user,
       PermissionLevel::Read,
     )
     .await?;
@@ -97,15 +103,14 @@ impl Resolve<GetBuildActionState, User> for State {
   }
 }
 
-impl Resolve<GetBuildsSummary, User> for State {
+impl Resolve<ReadArgs> for GetBuildsSummary {
   async fn resolve(
-    &self,
-    GetBuildsSummary {}: GetBuildsSummary,
-    user: User,
-  ) -> anyhow::Result<GetBuildsSummaryResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetBuildsSummaryResponse> {
     let builds = resource::list_full_for_user::<Build>(
       Default::default(),
-      &user,
+      user,
       &[],
     )
     .await
@@ -145,16 +150,15 @@ impl Resolve<GetBuildsSummary, User> for State {
 
 const ONE_DAY_MS: i64 = 86400000;
 
-impl Resolve<GetBuildMonthlyStats, User> for State {
+impl Resolve<ReadArgs> for GetBuildMonthlyStats {
   async fn resolve(
-    &self,
-    GetBuildMonthlyStats { page }: GetBuildMonthlyStats,
-    _: User,
-  ) -> anyhow::Result<GetBuildMonthlyStatsResponse> {
+    self,
+    _: &ReadArgs,
+  ) -> serror::Result<GetBuildMonthlyStatsResponse> {
     let curr_ts = unix_timestamp_ms() as i64;
     let next_day = curr_ts - curr_ts % ONE_DAY_MS + ONE_DAY_MS;
 
-    let close_ts = next_day - page as i64 * 30 * ONE_DAY_MS;
+    let close_ts = next_day - self.page as i64 * 30 * ONE_DAY_MS;
     let open_ts = close_ts - 30 * ONE_DAY_MS;
 
     let mut build_updates = db_client()
@@ -202,21 +206,21 @@ fn ms_to_hour(duration: i64) -> f64 {
   duration as f64 / MS_TO_HOUR_DIVISOR
 }
 
-impl Resolve<ListBuildVersions, User> for State {
+impl Resolve<ReadArgs> for ListBuildVersions {
   async fn resolve(
-    &self,
-    ListBuildVersions {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Vec<BuildVersionResponseItem>> {
+    let ListBuildVersions {
       build,
       major,
       minor,
       patch,
       limit,
-    }: ListBuildVersions,
-    user: User,
-  ) -> anyhow::Result<Vec<BuildVersionResponseItem>> {
+    } = self;
     let build = resource::get_check_permissions::<Build>(
       &build,
-      &user,
+      user,
       PermissionLevel::Read,
     )
     .await?;
@@ -259,21 +263,21 @@ impl Resolve<ListBuildVersions, User> for State {
   }
 }
 
-impl Resolve<ListCommonBuildExtraArgs, User> for State {
+impl Resolve<ReadArgs> for ListCommonBuildExtraArgs {
   async fn resolve(
-    &self,
-    ListCommonBuildExtraArgs { query }: ListCommonBuildExtraArgs,
-    user: User,
-  ) -> anyhow::Result<ListCommonBuildExtraArgsResponse> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListCommonBuildExtraArgsResponse> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    let builds =
-      resource::list_full_for_user::<Build>(query, &user, &all_tags)
-        .await
-        .context("failed to get resources matching query")?;
+    let builds = resource::list_full_for_user::<Build>(
+      self.query, user, &all_tags,
+    )
+    .await
+    .context("failed to get resources matching query")?;
 
     // first collect with guaranteed uniqueness
     let mut res = HashSet::<String>::new();
@@ -290,12 +294,11 @@ impl Resolve<ListCommonBuildExtraArgs, User> for State {
   }
 }
 
-impl Resolve<GetBuildWebhookEnabled, User> for State {
+impl Resolve<ReadArgs> for GetBuildWebhookEnabled {
   async fn resolve(
-    &self,
-    GetBuildWebhookEnabled { build }: GetBuildWebhookEnabled,
-    user: User,
-  ) -> anyhow::Result<GetBuildWebhookEnabledResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetBuildWebhookEnabledResponse> {
     let Some(github) = github_client() else {
       return Ok(GetBuildWebhookEnabledResponse {
         managed: false,
@@ -304,8 +307,8 @@ impl Resolve<GetBuildWebhookEnabled, User> for State {
     };
 
     let build = resource::get_check_permissions::<Build>(
-      &build,
-      &user,
+      &self.build,
+      user,
       PermissionLevel::Read,
     )
     .await?;

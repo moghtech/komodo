@@ -2,7 +2,7 @@
 ## Sets up the necessary runtime container dependencies for Komodo Periphery.
 ## Since theres no heavy build here, QEMU multi-arch builds are fine for this image.
 
-ARG BINARIES_IMAGE=ghcr.io/mbecker20/komodo-binaries:latest
+ARG BINARIES_IMAGE=ghcr.io/moghtech/komodo-binaries:latest
 ARG X86_64_BINARIES=${BINARIES_IMAGE}-x86_64
 ARG AARCH64_BINARIES=${BINARIES_IMAGE}-aarch64
 
@@ -26,7 +26,7 @@ RUN mv /app/arch/${TARGETPLATFORM} /usr/local/bin/periphery && rm -r /app/arch
 
 EXPOSE 8120
 
-LABEL org.opencontainers.image.source=https://github.com/mbecker20/komodo
+LABEL org.opencontainers.image.source=https://github.com/moghtech/komodo
 LABEL org.opencontainers.image.description="Komodo Periphery"
 LABEL org.opencontainers.image.licenses=GPL-3.0
 

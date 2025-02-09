@@ -2,70 +2,76 @@ use komodo_client::{
   api::write::*,
   entities::{
     alerter::Alerter, permission::PermissionLevel, update::Update,
-    user::User,
   },
 };
 use resolver_api::Resolve;
 
-use crate::{resource, state::State};
+use crate::resource;
 
-impl Resolve<CreateAlerter, User> for State {
-  #[instrument(name = "CreateAlerter", skip(self, user))]
-  async fn resolve(
-    &self,
-    CreateAlerter { name, config }: CreateAlerter,
-    user: User,
-  ) -> anyhow::Result<Alerter> {
-    resource::create::<Alerter>(&name, config, &user).await
-  }
-}
+use super::WriteArgs;
 
-impl Resolve<CopyAlerter, User> for State {
-  #[instrument(name = "CopyAlerter", skip(self, user))]
+impl Resolve<WriteArgs> for CreateAlerter {
+  #[instrument(name = "CreateAlerter", skip(user))]
   async fn resolve(
-    &self,
-    CopyAlerter { name, id }: CopyAlerter,
-    user: User,
-  ) -> anyhow::Result<Alerter> {
-    let Alerter { config, .. } = resource::get_check_permissions::<
-      Alerter,
-    >(
-      &id, &user, PermissionLevel::Write
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Alerter> {
+    Ok(
+      resource::create::<Alerter>(&self.name, self.config, user)
+        .await?,
     )
-    .await?;
-    resource::create::<Alerter>(&name, config.into(), &user).await
   }
 }
 
-impl Resolve<DeleteAlerter, User> for State {
-  #[instrument(name = "DeleteAlerter", skip(self, user))]
+impl Resolve<WriteArgs> for CopyAlerter {
+  #[instrument(name = "CopyAlerter", skip(user))]
   async fn resolve(
-    &self,
-    DeleteAlerter { id }: DeleteAlerter,
-    user: User,
-  ) -> anyhow::Result<Alerter> {
-    resource::delete::<Alerter>(&id, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Alerter> {
+    let Alerter { config, .. } =
+      resource::get_check_permissions::<Alerter>(
+        &self.id,
+        &user,
+        PermissionLevel::Write,
+      )
+      .await?;
+    Ok(
+      resource::create::<Alerter>(&self.name, config.into(), user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<UpdateAlerter, User> for State {
-  #[instrument(name = "UpdateAlerter", skip(self, user))]
+impl Resolve<WriteArgs> for DeleteAlerter {
+  #[instrument(name = "DeleteAlerter", skip(args))]
   async fn resolve(
-    &self,
-    UpdateAlerter { id, config }: UpdateAlerter,
-    user: User,
-  ) -> anyhow::Result<Alerter> {
-    resource::update::<Alerter>(&id, config, &user).await
+    self,
+    args: &WriteArgs,
+  ) -> serror::Result<Alerter> {
+    Ok(resource::delete::<Alerter>(&self.id, args).await?)
   }
 }
 
-impl Resolve<RenameAlerter, User> for State {
-  #[instrument(name = "RenameAlerter", skip(self, user))]
+impl Resolve<WriteArgs> for UpdateAlerter {
+  #[instrument(name = "UpdateAlerter", skip(user))]
   async fn resolve(
-    &self,
-    RenameAlerter { id, name }: RenameAlerter,
-    user: User,
-  ) -> anyhow::Result<Update> {
-    resource::rename::<Alerter>(&id, &name, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Alerter> {
+    Ok(
+      resource::update::<Alerter>(&self.id, self.config, user)
+        .await?,
+    )
+  }
+}
+
+impl Resolve<WriteArgs> for RenameAlerter {
+  #[instrument(name = "RenameAlerter", skip(user))]
+  async fn resolve(
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Update> {
+    Ok(resource::rename::<Alerter>(&self.id, &self.name, user).await?)
   }
 }

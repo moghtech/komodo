@@ -104,7 +104,7 @@ export interface ResourceQuery<T> {
 export interface ActionQuerySpecifics {
 }
 export type ActionQuery = ResourceQuery<ActionQuerySpecifics>;
-export type AlerterEndpoint = 
+export type AlerterEndpoint =
 /** Send alert serialized to JSON to an http endpoint. */
 {
     type: "Custom";
@@ -257,7 +257,7 @@ export interface BuildConfig {
     image_name?: string;
     /**
      * An extra tag put before the build version, for the image pushed to the repository.
-     * Eg. in image tag of `aarch64` would push to mbecker20/komodo:1.13.2-aarch64.
+     * Eg. in image tag of `aarch64` would push to moghtech/komodo:1.13.2-aarch64.
      * If this is empty, the image tag will just be the build version.
      *
      * Can be used in conjunction with `image_name` to direct multiple builds
@@ -390,7 +390,7 @@ export interface BuildQuerySpecifics {
     built_since?: I64;
 }
 export type BuildQuery = ResourceQuery<BuildQuerySpecifics>;
-export type BuilderConfig = 
+export type BuilderConfig =
 /** Use a Periphery address as a Builder. */
 {
     type: "Url";
@@ -421,7 +421,7 @@ export interface BuilderQuerySpecifics {
 }
 export type BuilderQuery = ResourceQuery<BuilderQuerySpecifics>;
 /** A wrapper for all Komodo exections. */
-export type Execution = 
+export type Execution =
 /** The "null" execution. Does nothing. */
 {
     type: "None";
@@ -604,6 +604,9 @@ export type Execution =
     type: "BatchDestroyStack";
     params: BatchDestroyStack;
 } | {
+    type: "TestAlerter";
+    params: TestAlerter;
+} | {
     type: "Sleep";
     params: Sleep;
 };
@@ -722,7 +725,7 @@ export interface JwtResponse {
 export type CreateLocalUserResponse = JwtResponse;
 export type CreateProcedureResponse = Procedure;
 export type CreateRepoWebhookResponse = NoData;
-export type UserConfig = 
+export type UserConfig =
 /** User that logs in with username / password */
 {
     type: "Local";
@@ -830,7 +833,7 @@ export type DeleteStackWebhookResponse = NoData;
 export type DeleteSyncWebhookResponse = NoData;
 export type DeleteUserResponse = User;
 export type DeleteVariableResponse = Variable;
-export type DeploymentImage = 
+export type DeploymentImage =
 /** Deploy any external image. */
 {
     type: "Image";
@@ -1007,11 +1010,24 @@ export declare enum SeverityLevel {
     Critical = "CRITICAL"
 }
 /** The variants of data related to the alert. */
-export type AlertData = 
+export type AlertData =
 /** A null alert */
 {
     type: "None";
     data: {};
+}
+/**
+ * The user triggered a test of the
+ * Alerter configuration.
+ */
+ | {
+    type: "Test";
+    data: {
+        /** The id of the alerter */
+        id: string;
+        /** The name of the alerter */
+        name: string;
+    };
 }
 /** A server could not be reached. */
  | {
@@ -1460,7 +1476,7 @@ export interface ResourceSyncConfig {
     /** Manage the file contents in the UI. */
     file_contents?: string;
 }
-export type DiffData = 
+export type DiffData =
 /** Resource will be created */
 {
     type: "Create";
@@ -1625,7 +1641,7 @@ export interface ServerConfig {
 }
 export type Server = Resource<ServerConfig, undefined>;
 export type GetServerResponse = Server;
-export type ServerTemplateConfig = 
+export type ServerTemplateConfig =
 /** Template to launch an AWS EC2 instance */
 {
     type: "Aws";
@@ -1759,6 +1775,8 @@ export interface StackConfig {
     registry_account?: string;
     /** The optional command to run before the Stack is deployed. */
     pre_deploy?: SystemCommand;
+    /** The optional command to run before the Stack is deployed. */
+    post_deploy?: SystemCommand;
     /**
      * The extra arguments to pass after `docker compose up -d`.
      * If empty, no extra arguments will be passed.
@@ -1894,15 +1912,6 @@ export interface SingleDiskUsage {
     /** Total size of the disk in GB */
     total_gb: number;
 }
-/** Info for network interface usage. */
-export interface SingleNetworkInterfaceUsage {
-    /** The network interface name */
-    name: string;
-    /** The ingress in bytes */
-    ingress_bytes: number;
-    /** The egress in bytes */
-    egress_bytes: number;
-}
 export declare enum Timelength {
     OneSecond = "1-sec",
     FiveSeconds = "5-sec",
@@ -1947,8 +1956,6 @@ export interface SystemStats {
     network_ingress_bytes?: number;
     /** Network egress usage in MB */
     network_egress_bytes?: number;
-    /** Network usage by interface name (ingress, egress in bytes) */
-    network_usage_interface?: SingleNetworkInterfaceUsage[];
     /** The rate the system stats are being polled from the system */
     polling_rate: Timelength;
     /** Unix timestamp in milliseconds when stats were last polled */
@@ -2062,6 +2069,7 @@ export declare enum Operation {
     UpdateAlerter = "UpdateAlerter",
     RenameAlerter = "RenameAlerter",
     DeleteAlerter = "DeleteAlerter",
+    TestAlerter = "TestAlerter",
     CreateServerTemplate = "CreateServerTemplate",
     UpdateServerTemplate = "UpdateServerTemplate",
     RenameServerTemplate = "RenameServerTemplate",
@@ -3073,7 +3081,7 @@ export interface GitProvider {
     accounts: ProviderAccount[];
 }
 export type ListGitProvidersFromConfigResponse = GitProvider[];
-export type UserTarget = 
+export type UserTarget =
 /** User Id */
 {
     type: "User";
@@ -4529,26 +4537,6 @@ export interface ExportResourcesToToml {
     /** Whether to include variables */
     include_variables?: boolean;
 }
-/** Find resources matching a common query. Response: [FindResourcesResponse]. */
-export interface FindResources {
-    /** The mongo query as JSON */
-    query?: MongoDocument;
-    /** The resource variants to include in the response. */
-    resources?: ResourceTarget["type"][];
-}
-/** Response for [FindResources]. */
-export interface FindResourcesResponse {
-    /** The matching servers. */
-    servers: ServerListItem[];
-    /** The matching deployments. */
-    deployments: DeploymentListItem[];
-    /** The matching builds. */
-    builds: BuildListItem[];
-    /** The matching repos. */
-    repos: RepoListItem[];
-    /** The matching procedures. */
-    procedures: ProcedureListItem[];
-}
 /**
  * **Admin only.**
  * Find a user.
@@ -4855,14 +4843,12 @@ export interface SystemStatsRecord {
     disk_used_gb: number;
     /** Total disk size in GB */
     disk_total_gb: number;
-    /** Breakdown of individual disks, ie their usages, sizes, and mount points */
+    /** Breakdown of individual disks, including their usage, total size, and mount point */
     disks: SingleDiskUsage[];
-    /** Network ingress usage in bytes */
+    /** Total network ingress in bytes */
     network_ingress_bytes?: number;
-    /** Network egress usage in bytes */
+    /** Total network egress in bytes */
     network_egress_bytes?: number;
-    /** Network usage by interface name (ingress, egress in bytes) */
-    network_usage_interface?: SingleNetworkInterfaceUsage[];
 }
 /** Response to [GetHistoricalServerStats]. */
 export interface GetHistoricalServerStatsResponse {
@@ -6414,6 +6400,15 @@ export interface SetUsersInUserGroup {
     /** The user ids or usernames to hard set as the group's users. */
     users: string[];
 }
+/** Info for network interface usage. */
+export interface SingleNetworkInterfaceUsage {
+    /** The network interface name */
+    name: string;
+    /** The ingress in bytes */
+    ingress_bytes: number;
+    /** The egress in bytes */
+    egress_bytes: number;
+}
 /** Configuration for a Slack alerter. */
 export interface SlackAlerterEndpoint {
     /** The Slack app webhook url */
@@ -6499,6 +6494,11 @@ export interface StopStack {
 export interface TerminationSignalLabel {
     signal: TerminationSignal;
     label: string;
+}
+/** Tests an Alerters ability to reach the configured endpoint. Response: [Update] */
+export interface TestAlerter {
+    /** Name or id */
+    alerter: string;
 }
 /** Info for the all system disks combined. */
 export interface TotalDiskUsage {
@@ -7086,11 +7086,14 @@ export type ExecuteRequest = {
     type: "LaunchServer";
     params: LaunchServer;
 } | {
+    type: "TestAlerter";
+    params: TestAlerter;
+} | {
     type: "RunSync";
     params: RunSync;
 };
 /** Configuration for the registry to push the built image to. */
-export type ImageRegistryLegacy1_14 = 
+export type ImageRegistryLegacy1_14 =
 /** Don't push the image to any registry */
 {
     type: "None";
@@ -7146,9 +7149,6 @@ export type ReadRequest = {
 } | {
     type: "ListUserGroups";
     params: ListUserGroups;
-} | {
-    type: "FindResources";
-    params: FindResources;
 } | {
     type: "GetProceduresSummary";
     params: GetProceduresSummary;

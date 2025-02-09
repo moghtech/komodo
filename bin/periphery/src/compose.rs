@@ -25,7 +25,6 @@ use crate::{
   config::periphery_config,
   docker::docker_login,
   helpers::{interpolate_variables, parse_extra_args},
-  State,
 };
 
 pub fn docker_compose() -> &'static str {
@@ -160,8 +159,8 @@ pub async fn compose_up(
   // after performing interpolation
   {
     let command = format!(
-    "{docker_compose} -p {project_name} -f {file_args}{env_file}{additional_env_files} config --format json",
-  );
+      "{docker_compose} -p {project_name} -f {file_args}{additional_env_files}{env_file} config --format json",
+    );
     let config_log = run_komodo_command(
       "compose build",
       run_directory.as_ref(),
@@ -372,7 +371,7 @@ pub async fn compose_up(
       svi::Interpolator::DoubleBrackets,
       true,
     ).context("failed to interpolate periphery secrets into stack run command")?;
-    replacers.extend(core_replacers);
+    replacers.extend(core_replacers.clone());
 
     let mut log = run_komodo_command(
       "compose up",
@@ -390,7 +389,63 @@ pub async fn compose_up(
   };
 
   res.deployed = log.success;
+
+  // push the compose up command logs to keep the correct order
   res.logs.push(log);
+
+  if res.deployed && !stack.config.post_deploy.command.is_empty() {
+    let post_deploy_path =
+        run_directory.join(&stack.config.post_deploy.path);
+    if !stack.config.skip_secret_interp {
+      let (full_command, mut replacers) =
+          interpolate_variables(&stack.config.post_deploy.command)
+              .context(
+                "failed to interpolate secrets into post_deploy command",
+              )?;
+      replacers.extend(core_replacers);
+      let mut post_deploy_log = run_komodo_command(
+        "post deploy",
+        post_deploy_path.as_ref(),
+        &full_command,
+        true,
+      )
+          .await;
+
+      post_deploy_log.command =
+          svi::replace_in_string(&post_deploy_log.command, &replacers);
+      post_deploy_log.stdout =
+          svi::replace_in_string(&post_deploy_log.stdout, &replacers);
+      post_deploy_log.stderr =
+          svi::replace_in_string(&post_deploy_log.stderr, &replacers);
+
+      tracing::debug!(
+        "run Stack post_deploy command | command: {} | cwd: {:?}",
+        post_deploy_log.command,
+        post_deploy_path
+      );
+
+      res.logs.push(post_deploy_log);
+    } else {
+      let post_deploy_log = run_komodo_command(
+        "post deploy",
+        post_deploy_path.as_ref(),
+        &stack.config.post_deploy.command,
+        true,
+      )
+          .await;
+      tracing::debug!(
+        "run Stack post_deploy command | command: {} | cwd: {:?}",
+        &stack.config.post_deploy.command,
+        post_deploy_path
+      );
+      res.logs.push(post_deploy_log);
+    }
+    if !all_logs_success(&res.logs) {
+      return Err(anyhow!(
+        "Failed at running post_deploy command, stopping the run."
+      ));
+    }
+  }
 
   Ok(())
 }
@@ -588,37 +643,31 @@ pub async fn write_stack(
       .to_string();
 
     let clone_or_pull_res = if stack.config.reclone {
-      State
-        .resolve(
-          CloneRepo {
-            args,
-            git_token,
-            environment: env_vars,
-            env_file_path,
-            skip_secret_interp: stack.config.skip_secret_interp,
-            // repo replacer only needed for on_clone / on_pull,
-            // which aren't available for stacks
-            replacers: Default::default(),
-          },
-          (),
-        )
-        .await
+      CloneRepo {
+        args,
+        git_token,
+        environment: env_vars,
+        env_file_path,
+        skip_secret_interp: stack.config.skip_secret_interp,
+        // repo replacer only needed for on_clone / on_pull,
+        // which aren't available for stacks
+        replacers: Default::default(),
+      }
+      .resolve(&crate::api::Args)
+      .await
     } else {
-      State
-        .resolve(
-          PullOrCloneRepo {
-            args,
-            git_token,
-            environment: env_vars,
-            env_file_path,
-            skip_secret_interp: stack.config.skip_secret_interp,
-            // repo replacer only needed for on_clone / on_pull,
-            // which aren't available for stacks
-            replacers: Default::default(),
-          },
-          (),
-        )
-        .await
+      PullOrCloneRepo {
+        args,
+        git_token,
+        environment: env_vars,
+        env_file_path,
+        skip_secret_interp: stack.config.skip_secret_interp,
+        // repo replacer only needed for on_clone / on_pull,
+        // which aren't available for stacks
+        replacers: Default::default(),
+      }
+      .resolve(&crate::api::Args)
+      .await
     };
 
     let RepoActionResponse {
@@ -630,7 +679,7 @@ pub async fn write_stack(
       Ok(res) => res,
       Err(e) => {
         let error = format_serror(
-          &e.context("failed to pull stack repo").into(),
+          &e.error.context("failed to pull stack repo").into(),
         );
         res
           .logs()

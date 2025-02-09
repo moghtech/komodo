@@ -632,6 +632,7 @@ type MinExecutionType = Exclude<
   | "DeleteNetwork"
   | "DeleteImage"
   | "DeleteVolume"
+  | "TestAlerter"
 >;
 
 type ExecutionConfigParams<T extends MinExecutionType> = Extract<

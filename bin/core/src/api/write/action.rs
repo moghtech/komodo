@@ -2,70 +2,70 @@ use komodo_client::{
   api::write::*,
   entities::{
     action::Action, permission::PermissionLevel, update::Update,
-    user::User,
   },
 };
 use resolver_api::Resolve;
 
-use crate::{resource, state::State};
+use crate::resource;
 
-impl Resolve<CreateAction, User> for State {
-  #[instrument(name = "CreateAction", skip(self, user))]
-  async fn resolve(
-    &self,
-    CreateAction { name, config }: CreateAction,
-    user: User,
-  ) -> anyhow::Result<Action> {
-    resource::create::<Action>(&name, config, &user).await
-  }
-}
+use super::WriteArgs;
 
-impl Resolve<CopyAction, User> for State {
-  #[instrument(name = "CopyAction", skip(self, user))]
+impl Resolve<WriteArgs> for CreateAction {
+  #[instrument(name = "CreateAction", skip(user))]
   async fn resolve(
-    &self,
-    CopyAction { name, id }: CopyAction,
-    user: User,
-  ) -> anyhow::Result<Action> {
-    let Action { config, .. } = resource::get_check_permissions::<
-      Action,
-    >(
-      &id, &user, PermissionLevel::Write
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Action> {
+    Ok(
+      resource::create::<Action>(&self.name, self.config, user)
+        .await?,
     )
-    .await?;
-    resource::create::<Action>(&name, config.into(), &user).await
   }
 }
 
-impl Resolve<UpdateAction, User> for State {
-  #[instrument(name = "UpdateAction", skip(self, user))]
+impl Resolve<WriteArgs> for CopyAction {
+  #[instrument(name = "CopyAction", skip(user))]
   async fn resolve(
-    &self,
-    UpdateAction { id, config }: UpdateAction,
-    user: User,
-  ) -> anyhow::Result<Action> {
-    resource::update::<Action>(&id, config, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Action> {
+    let Action { config, .. } =
+      resource::get_check_permissions::<Action>(
+        &self.id,
+        &user,
+        PermissionLevel::Write,
+      )
+      .await?;
+    Ok(
+      resource::create::<Action>(&self.name, config.into(), &user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<RenameAction, User> for State {
-  #[instrument(name = "RenameAction", skip(self, user))]
+impl Resolve<WriteArgs> for UpdateAction {
+  #[instrument(name = "UpdateAction", skip(user))]
   async fn resolve(
-    &self,
-    RenameAction { id, name }: RenameAction,
-    user: User,
-  ) -> anyhow::Result<Update> {
-    resource::rename::<Action>(&id, &name, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Action> {
+    Ok(resource::update::<Action>(&self.id, self.config, user).await?)
   }
 }
 
-impl Resolve<DeleteAction, User> for State {
-  #[instrument(name = "DeleteAction", skip(self, user))]
+impl Resolve<WriteArgs> for RenameAction {
+  #[instrument(name = "RenameAction", skip(user))]
   async fn resolve(
-    &self,
-    DeleteAction { id }: DeleteAction,
-    user: User,
-  ) -> anyhow::Result<Action> {
-    resource::delete::<Action>(&id, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Update> {
+    Ok(resource::rename::<Action>(&self.id, &self.name, user).await?)
+  }
+}
+
+impl Resolve<WriteArgs> for DeleteAction {
+  #[instrument(name = "DeleteAction", skip(args))]
+  async fn resolve(self, args: &WriteArgs) -> serror::Result<Action> {
+    Ok(resource::delete::<Action>(&self.id, args).await?)
   }
 }
