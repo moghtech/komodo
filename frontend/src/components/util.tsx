@@ -677,7 +677,7 @@ export const DockerResourceLink = ({
       <Icon server_id={server_id} name={type === "image" ? id : name} />
       <div
         title={name}
-        className="max-w-[250px] lg:max-w-[300px] overflow-hidden overflow-ellipsis overflow-breakable"
+        className="max-w-[250px] lg:max-w-[300px] overflow-hidden overflow-ellipsis break-words"
       >
         {name}
       </div>
