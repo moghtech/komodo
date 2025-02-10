@@ -10,7 +10,7 @@
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
 		"ghcr.io/devcontainers/features/node:1": {
-			"version": "18.18.0"
+			"version": "20.12.2"
 		},
 		"ghcr.io/devcontainers-community/features/deno:1": {
 
