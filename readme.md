@@ -23,29 +23,29 @@ there are no warranties. Use at your own risk.
 
 ## Links
 
-- [periphery setup](https://github.com/mbecker20/komodo/blob/main/scripts/readme.md)
-- [roadmap](https://github.com/mbecker20/komodo/blob/main/roadmap.md)
+- [periphery setup](https://github.com/moghtech/komodo/blob/main/scripts/readme.md)
+- [roadmap](https://github.com/moghtech/komodo/blob/main/roadmap.md)
 
 ## Screenshots
 
 ### Light Theme
 
-![Dashboard](https://raw.githubusercontent.com/mbecker20/komodo/main/screenshots/Light-Dashboard.png)
-![Stack](https://raw.githubusercontent.com/mbecker20/komodo/main/screenshots/Light-Stack.png)
-![Compose](https://raw.githubusercontent.com/mbecker20/komodo/main/screenshots/Light-Compose.png)
-![Env](https://raw.githubusercontent.com/mbecker20/komodo/main/screenshots/Light-Env.png)
-![Sync](https://raw.githubusercontent.com/mbecker20/komodo/main/screenshots/Light-Sync.png)
-![Update](https://raw.githubusercontent.com/mbecker20/komodo/main/screenshots/Light-Update.png)
-![Stats](https://raw.githubusercontent.com/mbecker20/komodo/main/screenshots/Light-Stats.png)
-![Export](https://raw.githubusercontent.com/mbecker20/komodo/main/screenshots/Light-Export.png)
+![Dashboard](https://raw.githubusercontent.com/moghtech/komodo/main/screenshots/Light-Dashboard.png)
+![Stack](https://raw.githubusercontent.com/moghtech/komodo/main/screenshots/Light-Stack.png)
+![Compose](https://raw.githubusercontent.com/moghtech/komodo/main/screenshots/Light-Compose.png)
+![Env](https://raw.githubusercontent.com/moghtech/komodo/main/screenshots/Light-Env.png)
+![Sync](https://raw.githubusercontent.com/moghtech/komodo/main/screenshots/Light-Sync.png)
+![Update](https://raw.githubusercontent.com/moghtech/komodo/main/screenshots/Light-Update.png)
+![Stats](https://raw.githubusercontent.com/moghtech/komodo/main/screenshots/Light-Stats.png)
+![Export](https://raw.githubusercontent.com/moghtech/komodo/main/screenshots/Light-Export.png)
 
 ### Dark Theme
 
-![Dashboard](https://raw.githubusercontent.com/mbecker20/komodo/main/screenshots/Dark-Dashboard.png)
-![Stack](https://raw.githubusercontent.com/mbecker20/komodo/main/screenshots/Dark-Stack.png)
-![Compose](https://raw.githubusercontent.com/mbecker20/komodo/main/screenshots/Dark-Compose.png)
-![Env](https://raw.githubusercontent.com/mbecker20/komodo/main/screenshots/Dark-Env.png)
-![Sync](https://raw.githubusercontent.com/mbecker20/komodo/main/screenshots/Dark-Sync.png)
-![Update](https://raw.githubusercontent.com/mbecker20/komodo/main/screenshots/Dark-Update.png)
-![Stats](https://raw.githubusercontent.com/mbecker20/komodo/main/screenshots/Dark-Stats.png)
-![Export](https://raw.githubusercontent.com/mbecker20/komodo/main/screenshots/Dark-Export.png)
+![Dashboard](https://raw.githubusercontent.com/moghtech/komodo/main/screenshots/Dark-Dashboard.png)
+![Stack](https://raw.githubusercontent.com/moghtech/komodo/main/screenshots/Dark-Stack.png)
+![Compose](https://raw.githubusercontent.com/moghtech/komodo/main/screenshots/Dark-Compose.png)
+![Env](https://raw.githubusercontent.com/moghtech/komodo/main/screenshots/Dark-Env.png)
+![Sync](https://raw.githubusercontent.com/moghtech/komodo/main/screenshots/Dark-Sync.png)
+![Update](https://raw.githubusercontent.com/moghtech/komodo/main/screenshots/Dark-Update.png)
+![Stats](https://raw.githubusercontent.com/moghtech/komodo/main/screenshots/Dark-Stats.png)
+![Export](https://raw.githubusercontent.com/moghtech/komodo/main/screenshots/Dark-Export.png)

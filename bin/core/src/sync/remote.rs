@@ -56,7 +56,7 @@ pub async fn get_remote_resources(
     // ==========
     let mut resources = ResourcesToml::default();
     let resources = if !sync.config.file_contents.is_empty() {
-      toml::from_str::<ResourcesToml>(&sync.config.file_contents)
+      super::deserialize_resources_toml(&sync.config.file_contents)
         .context("failed to parse resource file contents")
         .map(|more| {
           extend_resources(

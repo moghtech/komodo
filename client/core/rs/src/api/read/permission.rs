@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -15,10 +15,11 @@ use super::KomodoReadRequest;
 /// Response: [ListPermissionsResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListPermissionsResponse)]
+#[error(serror::Error)]
 pub struct ListPermissions {}
 
 #[typeshare]
@@ -31,10 +32,11 @@ pub type ListPermissionsResponse = Vec<Permission>;
 /// Response: [PermissionLevel]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetPermissionLevelResponse)]
+#[error(serror::Error)]
 pub struct GetPermissionLevel {
   /// The target to get user permission on.
   pub target: ResourceTarget,
@@ -49,10 +51,11 @@ pub type GetPermissionLevelResponse = PermissionLevel;
 /// Response: [ListUserTargetPermissionsResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListUserTargetPermissionsResponse)]
+#[error(serror::Error)]
 pub struct ListUserTargetPermissions {
   /// Specify either a user or a user group.
   pub user_target: UserTarget,

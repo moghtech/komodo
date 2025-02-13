@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -13,10 +13,11 @@ use super::KomodoWriteRequest;
 /// Response: [NoData].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateUserUsernameResponse)]
+#[error(serror::Error)]
 pub struct UpdateUserUsername {
   pub username: String,
 }
@@ -30,10 +31,11 @@ pub type UpdateUserUsernameResponse = NoData;
 /// Response: [NoData].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateUserPasswordResponse)]
+#[error(serror::Error)]
 pub struct UpdateUserPassword {
   pub password: String,
 }
@@ -51,10 +53,11 @@ pub type UpdateUserPasswordResponse = NoData;
 /// Response: [NoData].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteUserResponse)]
+#[error(serror::Error)]
 pub struct DeleteUser {
   /// User id or username
   #[serde(alias = "username", alias = "id")]
@@ -70,10 +73,11 @@ pub type DeleteUserResponse = User;
 /// Response: [User].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateServiceUserResponse)]
+#[error(serror::Error)]
 pub struct CreateServiceUser {
   /// The username for the service user.
   pub username: String,
@@ -90,10 +94,11 @@ pub type CreateServiceUserResponse = User;
 /// Response: [User].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateServiceUserDescriptionResponse)]
+#[error(serror::Error)]
 pub struct UpdateServiceUserDescription {
   /// The service user's username
   pub username: String,

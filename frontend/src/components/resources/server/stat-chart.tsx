@@ -2,14 +2,14 @@ import { hex_color_by_intention } from "@lib/color";
 import { useRead } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { useMemo } from "react";
-import { useStatsGranularity, useSelectedNetworkInterface } from "./hooks";
+import { useStatsGranularity } from "./hooks";
 import { Loader2 } from "lucide-react";
 import { AxisOptions, Chart } from "react-charts";
 import { convertTsMsToLocalUnixTsInMs } from "@lib/utils";
 import { useTheme } from "@ui/theme";
 import { fmt_utc_date } from "@lib/formatting";
 
-type StatType = "cpu" | "mem" | "disk" | "network_ingress" | "network_egress" | "network_interface_ingress" | "network_interface_egress";
+type StatType = "cpu" | "mem" | "disk" | "network_ingress" | "network_egress";
 
 type StatDatapoint = { date: number; value: number };
 
@@ -22,13 +22,11 @@ export const StatChart = ({
   type: StatType;
   className?: string;
 }) => {
-  const [selectedInterface] = useSelectedNetworkInterface();
   const [granularity] = useStatsGranularity();
 
   const { data, isPending } = useRead("GetHistoricalServerStats", {
     server: server_id,
     granularity,
-    selectedInterface,
   });
 
   const stats = useMemo(
@@ -37,7 +35,7 @@ export const StatChart = ({
         .map((stat) => {
           return {
             date: convertTsMsToLocalUnixTsInMs(stat.ts),
-            value: getStat(stat, type, selectedInterface),
+            value: getStat(stat, type),
           };
         })
         .reverse(),
@@ -58,6 +56,10 @@ export const StatChart = ({
   );
 };
 
+const BYTES_PER_GB = 1073741824.0;
+const BYTES_PER_MB = 1048576.0;
+const BYTES_PER_KB = 1024.0;
+
 export const InnerStatChart = ({
   type,
   stats,
@@ -72,12 +74,11 @@ export const InnerStatChart = ({
         ? "dark"
         : "light"
       : _theme;
-  const BYTES_PER_GB = 1073741824.0;
-  const BYTES_PER_MB = 1048576.0;
-  const BYTES_PER_KB = 1024.0;
+
   const min = stats?.[0]?.date ?? 0;
   const max = stats?.[stats.length - 1]?.date ?? 0;
   const diff = max - min;
+
   const timeAxis = useMemo((): AxisOptions<StatDatapoint> => {
     return {
       getValue: (datum) => new Date(datum.date),
@@ -177,27 +178,14 @@ export const InnerStatChart = ({
       }}
     />
   );
-
 };
 
-const getStat = (stat: Types.SystemStatsRecord, type: StatType, selectedInterface?: string) => {
+const getStat = (stat: Types.SystemStatsRecord, type: StatType) => {
   if (type === "cpu") return stat.cpu_perc || 0;
   if (type === "mem") return (100 * stat.mem_used_gb) / stat.mem_total_gb;
   if (type === "disk") return (100 * stat.disk_used_gb) / stat.disk_total_gb;
   if (type === "network_ingress") return stat.network_ingress_bytes || 0;
   if (type === "network_egress") return stat.network_egress_bytes || 0;
-  if (type === "network_interface_ingress")
-    return selectedInterface
-      ? stat.network_usage_interface?.find(
-        (networkInterface) => networkInterface.name === selectedInterface
-      )?.ingress_bytes || 0
-      : stat.network_ingress_bytes || 0;
-  if (type === "network_interface_egress")
-    return selectedInterface
-      ? stat.network_usage_interface?.find(
-        (networkInterface) => networkInterface.name === selectedInterface
-      )?.egress_bytes || 0
-      : stat.network_egress_bytes || 0;
   return 0;
 };
 
@@ -205,7 +193,7 @@ const getColor = (type: StatType) => {
   if (type === "cpu") return hex_color_by_intention("Good");
   if (type === "mem") return hex_color_by_intention("Warning");
   if (type === "disk") return hex_color_by_intention("Neutral");
-  if (type === "network_interface_ingress") return hex_color_by_intention("Critical");
-  if (type === "network_interface_egress") return hex_color_by_intention("Unknown");
+  if (type === "network_ingress") return hex_color_by_intention("Good");
+  if (type === "network_egress") return hex_color_by_intention("Critical");
   return hex_color_by_intention("Unknown");
 };

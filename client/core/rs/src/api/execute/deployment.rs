@@ -1,6 +1,6 @@
 use clap::Parser;
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -22,12 +22,13 @@ use super::{BatchExecutionResponse, KomodoExecuteRequest};
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct Deploy {
   /// Name or id
   pub deployment: String,
@@ -49,12 +50,13 @@ pub struct Deploy {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
+#[error(serror::Error)]
 pub struct BatchDeploy {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.
@@ -79,12 +81,13 @@ pub struct BatchDeploy {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct PullDeployment {
   /// Name or id
   pub deployment: String,
@@ -102,12 +105,13 @@ pub struct PullDeployment {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct StartDeployment {
   /// Name or id
   pub deployment: String,
@@ -125,12 +129,13 @@ pub struct StartDeployment {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct RestartDeployment {
   /// Name or id
   pub deployment: String,
@@ -148,12 +153,13 @@ pub struct RestartDeployment {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct PauseDeployment {
   /// Name or id
   pub deployment: String,
@@ -173,12 +179,13 @@ pub struct PauseDeployment {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct UnpauseDeployment {
   /// Name or id
   pub deployment: String,
@@ -196,12 +203,13 @@ pub struct UnpauseDeployment {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct StopDeployment {
   /// Name or id
   pub deployment: String,
@@ -224,12 +232,13 @@ pub struct StopDeployment {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct DestroyDeployment {
   /// Name or id.
   pub deployment: String,
@@ -249,12 +258,13 @@ pub struct DestroyDeployment {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
+#[error(serror::Error)]
 pub struct BatchDestroyDeployment {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.

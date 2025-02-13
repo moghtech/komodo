@@ -2,7 +2,6 @@ use std::str::FromStr;
 
 use anyhow::{anyhow, Context};
 use async_timing_util::unix_timestamp_ms;
-use axum::http::HeaderMap;
 use komodo_client::{
   api::auth::{
     CreateLocalUser, CreateLocalUserResponse, LoginLocalUser,
@@ -15,50 +14,52 @@ use mungos::mongodb::bson::{doc, oid::ObjectId};
 use resolver_api::Resolve;
 
 use crate::{
+  api::auth::AuthArgs,
   config::core_config,
   helpers::hash_password,
-  state::{db_client, jwt_client, State},
+  state::{db_client, jwt_client},
 };
 
-impl Resolve<CreateLocalUser, HeaderMap> for State {
+impl Resolve<AuthArgs> for CreateLocalUser {
   #[instrument(name = "CreateLocalUser", skip(self))]
   async fn resolve(
-    &self,
-    CreateLocalUser { username, password }: CreateLocalUser,
-    _: HeaderMap,
-  ) -> anyhow::Result<CreateLocalUserResponse> {
+    self,
+    _: &AuthArgs,
+  ) -> serror::Result<CreateLocalUserResponse> {
     let core_config = core_config();
 
     if !core_config.local_auth {
-      return Err(anyhow!("Local auth is not enabled"));
+      return Err(anyhow!("Local auth is not enabled").into());
     }
 
-    if username.is_empty() {
-      return Err(anyhow!("Username cannot be empty string"));
+    if self.username.is_empty() {
+      return Err(anyhow!("Username cannot be empty string").into());
     }
 
-    if ObjectId::from_str(&username).is_ok() {
-      return Err(anyhow!("Username cannot be valid ObjectId"));
+    if ObjectId::from_str(&self.username).is_ok() {
+      return Err(
+        anyhow!("Username cannot be valid ObjectId").into(),
+      );
     }
 
-    if password.is_empty() {
-      return Err(anyhow!("Password cannot be empty string"));
+    if self.password.is_empty() {
+      return Err(anyhow!("Password cannot be empty string").into());
     }
 
-    let hashed_password = hash_password(password)?;
+    let hashed_password = hash_password(self.password)?;
 
     let no_users_exist =
       db_client().users.find_one(Document::new()).await?.is_none();
 
     if !no_users_exist && core_config.disable_user_registration {
-      return Err(anyhow!("User registration is disabled"));
+      return Err(anyhow!("User registration is disabled").into());
     }
 
     let ts = unix_timestamp_ms() as i64;
 
     let user = User {
       id: Default::default(),
-      username,
+      username: self.username,
       enabled: no_users_exist || core_config.enable_new_users,
       admin: no_users_exist,
       super_admin: no_users_exist,
@@ -91,40 +92,42 @@ impl Resolve<CreateLocalUser, HeaderMap> for State {
   }
 }
 
-impl Resolve<LoginLocalUser, HeaderMap> for State {
+impl Resolve<AuthArgs> for LoginLocalUser {
   #[instrument(name = "LoginLocalUser", level = "debug", skip(self))]
   async fn resolve(
-    &self,
-    LoginLocalUser { username, password }: LoginLocalUser,
-    _: HeaderMap,
-  ) -> anyhow::Result<LoginLocalUserResponse> {
+    self,
+    _: &AuthArgs,
+  ) -> serror::Result<LoginLocalUserResponse> {
     if !core_config().local_auth {
-      return Err(anyhow!("local auth is not enabled"));
+      return Err(anyhow!("local auth is not enabled").into());
     }
 
     let user = db_client()
       .users
-      .find_one(doc! { "username": &username })
+      .find_one(doc! { "username": &self.username })
       .await
       .context("failed at db query for users")?
       .with_context(|| {
-        format!("did not find user with username {username}")
+        format!("did not find user with username {}", self.username)
       })?;
 
     let UserConfig::Local {
       password: user_pw_hash,
     } = user.config
     else {
-      return Err(anyhow!(
-        "non-local auth users can not log in with a password"
-      ));
+      return Err(
+        anyhow!(
+          "non-local auth users can not log in with a password"
+        )
+        .into(),
+      );
     };
 
-    let verified = bcrypt::verify(password, &user_pw_hash)
+    let verified = bcrypt::verify(self.password, &user_pw_hash)
       .context("failed at verify password")?;
 
     if !verified {
-      return Err(anyhow!("invalid credentials"));
+      return Err(anyhow!("invalid credentials").into());
     }
 
     let jwt = jwt_client()

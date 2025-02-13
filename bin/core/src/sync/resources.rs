@@ -24,6 +24,7 @@ use komodo_client::{
 use partial_derive2::{MaybeNone, PartialDiff};
 
 use crate::{
+  api::write::WriteArgs,
   resource::KomodoResource,
   sync::{
     execute::{run_update_description, run_update_tags},
@@ -700,6 +701,13 @@ impl ResourceSyncTrait for Procedure {
               .unwrap_or_default();
           }
           Execution::BatchDestroyStack(_config) => {}
+          Execution::TestAlerter(config) => {
+            config.alerter = resources
+              .alerters
+              .get(&config.alerter)
+              .map(|a| a.name.clone())
+              .unwrap_or_default();
+          }
           Execution::Sleep(_) => {}
         }
       }
@@ -726,8 +734,13 @@ impl ExecuteResourceSync for Procedure {
       format!("running updates on {}s", Self::resource_type());
 
     for name in to_delete {
-      if let Err(e) =
-        crate::resource::delete::<Procedure>(&name, sync_user()).await
+      if let Err(e) = crate::resource::delete::<Procedure>(
+        &name,
+        &WriteArgs {
+          user: sync_user().to_owned(),
+        },
+      )
+      .await
       {
         has_error = true;
         log.push_str(&format!(

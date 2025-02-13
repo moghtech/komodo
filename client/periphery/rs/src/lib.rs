@@ -3,8 +3,8 @@ use std::{sync::OnceLock, time::Duration};
 use anyhow::Context;
 use reqwest::StatusCode;
 use resolver_api::HasResponse;
+use serde::{de::DeserializeOwned, Serialize};
 use serde_json::json;
-use serror::deserialize_error;
 
 pub mod api;
 
@@ -45,10 +45,14 @@ impl PeripheryClient {
     level = "debug",
     skip(self)
   )]
-  pub async fn request<T: HasResponse>(
+  pub async fn request<T>(
     &self,
     request: T,
-  ) -> anyhow::Result<T::Response> {
+  ) -> anyhow::Result<T::Response>
+  where
+    T: std::fmt::Debug + Serialize + HasResponse,
+    T::Response: DeserializeOwned,
+  {
     tracing::debug!("running health check");
     self.health_check().await?;
     tracing::debug!("health check passed. running inner request");
@@ -64,11 +68,15 @@ impl PeripheryClient {
   }
 
   #[tracing::instrument(level = "debug", skip(self))]
-  async fn request_inner<T: HasResponse>(
+  async fn request_inner<T>(
     &self,
     request: T,
     timeout: Option<Duration>,
-  ) -> anyhow::Result<T::Response> {
+  ) -> anyhow::Result<T::Response>
+  where
+    T: std::fmt::Debug + Serialize + HasResponse,
+    T::Response: DeserializeOwned,
+  {
     let req_type = T::req_type();
     tracing::trace!(
       "sending request | type: {req_type} | body: {request:?}"
@@ -104,8 +112,7 @@ impl PeripheryClient {
 
       tracing::debug!("got response text, deserializing error");
 
-      let error = deserialize_error(text)
-        .context(format!("request to periphery failed | {status}"));
+      let error = serror::deserialize_error(text).context(status);
 
       Err(error)
     }

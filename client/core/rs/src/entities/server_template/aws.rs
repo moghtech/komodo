@@ -127,7 +127,7 @@ apt upgrade -y
 curl -fsSL https://get.docker.com | sh
 systemctl enable docker.service
 systemctl enable containerd.service
-curl -sSL https://raw.githubusercontent.com/mbecker20/komodo/main/scripts/setup-periphery.py | HOME=/root python3
+curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/scripts/setup-periphery.py | HOME=/root python3
 systemctl enable periphery.service")
 }
 

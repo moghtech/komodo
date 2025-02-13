@@ -12,7 +12,6 @@ use komodo_client::{
     server::{Server, ServerState},
     to_komodo_name,
     update::Update,
-    user::User,
     Operation,
   },
 };
@@ -27,51 +26,57 @@ use crate::{
     update::{add_update, make_update},
   },
   resource,
-  state::{action_states, db_client, server_status_cache, State},
+  state::{action_states, db_client, server_status_cache},
 };
 
-impl Resolve<CreateDeployment, User> for State {
-  #[instrument(name = "CreateDeployment", skip(self, user))]
+use super::WriteArgs;
+
+impl Resolve<WriteArgs> for CreateDeployment {
+  #[instrument(name = "CreateDeployment", skip(user))]
   async fn resolve(
-    &self,
-    CreateDeployment { name, config }: CreateDeployment,
-    user: User,
-  ) -> anyhow::Result<Deployment> {
-    resource::create::<Deployment>(&name, config, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Deployment> {
+    Ok(
+      resource::create::<Deployment>(&self.name, self.config, user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<CopyDeployment, User> for State {
-  #[instrument(name = "CopyDeployment", skip(self, user))]
+impl Resolve<WriteArgs> for CopyDeployment {
+  #[instrument(name = "CopyDeployment", skip(user))]
   async fn resolve(
-    &self,
-    CopyDeployment { name, id }: CopyDeployment,
-    user: User,
-  ) -> anyhow::Result<Deployment> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Deployment> {
     let Deployment { config, .. } =
       resource::get_check_permissions::<Deployment>(
-        &id,
-        &user,
+        &self.id,
+        user,
         PermissionLevel::Write,
       )
       .await?;
-    resource::create::<Deployment>(&name, config.into(), &user).await
+    Ok(
+      resource::create::<Deployment>(
+        &self.name,
+        config.into(),
+        &user,
+      )
+      .await?,
+    )
   }
 }
 
-impl Resolve<CreateDeploymentFromContainer, User> for State {
-  #[instrument(
-    name = "CreateDeploymentFromContainer",
-    skip(self, user)
-  )]
+impl Resolve<WriteArgs> for CreateDeploymentFromContainer {
+  #[instrument(name = "CreateDeploymentFromContainer", skip(user))]
   async fn resolve(
-    &self,
-    CreateDeploymentFromContainer { name, server }: CreateDeploymentFromContainer,
-    user: User,
-  ) -> anyhow::Result<Deployment> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Deployment> {
     let server = resource::get_check_permissions::<Server>(
-      &server,
-      &user,
+      &self.server,
+      user,
       PermissionLevel::Write,
     )
     .await?;
@@ -79,13 +84,18 @@ impl Resolve<CreateDeploymentFromContainer, User> for State {
       .get_or_insert_default(&server.id)
       .await;
     if cache.state != ServerState::Ok {
-      return Err(anyhow!(
-        "Cannot inspect container: server is {:?}",
-        cache.state
-      ));
+      return Err(
+        anyhow!(
+          "Cannot inspect container: server is {:?}",
+          cache.state
+        )
+        .into(),
+      );
     }
     let container = periphery_client(&server)?
-      .request(InspectContainer { name: name.clone() })
+      .request(InspectContainer {
+        name: self.name.clone(),
+      })
       .await
       .context("Failed to inspect container")?;
 
@@ -146,42 +156,45 @@ impl Resolve<CreateDeploymentFromContainer, User> for State {
       });
     }
 
-    resource::create::<Deployment>(&name, config, &user).await
+    Ok(
+      resource::create::<Deployment>(&self.name, config, &user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<DeleteDeployment, User> for State {
-  #[instrument(name = "DeleteDeployment", skip(self, user))]
+impl Resolve<WriteArgs> for DeleteDeployment {
+  #[instrument(name = "DeleteDeployment", skip(args))]
   async fn resolve(
-    &self,
-    DeleteDeployment { id }: DeleteDeployment,
-    user: User,
-  ) -> anyhow::Result<Deployment> {
-    resource::delete::<Deployment>(&id, &user).await
+    self,
+    args: &WriteArgs,
+  ) -> serror::Result<Deployment> {
+    Ok(resource::delete::<Deployment>(&self.id, args).await?)
   }
 }
 
-impl Resolve<UpdateDeployment, User> for State {
-  #[instrument(name = "UpdateDeployment", skip(self, user))]
+impl Resolve<WriteArgs> for UpdateDeployment {
+  #[instrument(name = "UpdateDeployment", skip(user))]
   async fn resolve(
-    &self,
-    UpdateDeployment { id, config }: UpdateDeployment,
-    user: User,
-  ) -> anyhow::Result<Deployment> {
-    resource::update::<Deployment>(&id, config, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Deployment> {
+    Ok(
+      resource::update::<Deployment>(&self.id, self.config, &user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<RenameDeployment, User> for State {
-  #[instrument(name = "RenameDeployment", skip(self, user))]
+impl Resolve<WriteArgs> for RenameDeployment {
+  #[instrument(name = "RenameDeployment", skip(user))]
   async fn resolve(
-    &self,
-    RenameDeployment { id, name }: RenameDeployment,
-    user: User,
-  ) -> anyhow::Result<Update> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Update> {
     let deployment = resource::get_check_permissions::<Deployment>(
-      &id,
-      &user,
+      &self.id,
+      user,
       PermissionLevel::Write,
     )
     .await?;
@@ -197,14 +210,17 @@ impl Resolve<RenameDeployment, User> for State {
     let _action_guard =
       action_state.update(|state| state.renaming = true)?;
 
-    let name = to_komodo_name(&name);
+    let name = to_komodo_name(&self.name);
 
     let container_state = get_deployment_state(&deployment).await?;
 
     if container_state == DeploymentState::Unknown {
-      return Err(anyhow!(
-        "Cannot rename Deployment when container status is unknown"
-      ));
+      return Err(
+        anyhow!(
+          "Cannot rename Deployment when container status is unknown"
+        )
+        .into(),
+      );
     }
 
     let mut update =

@@ -122,8 +122,11 @@ async fn get_aws_builder(
   let protocol = if config.use_https { "https" } else { "http" };
   let periphery_address =
     format!("{protocol}://{ip}:{}", config.port);
-  let periphery =
-    PeripheryClient::new(&periphery_address, &core_config().passkey, Duration::from_secs(3));
+  let periphery = PeripheryClient::new(
+    &periphery_address,
+    &core_config().passkey,
+    Duration::from_secs(3),
+  );
 
   let start_connect_ts = komodo_timestamp();
   let mut res = Ok(GetVersionResponse {

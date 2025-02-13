@@ -43,7 +43,7 @@ export const AwsServerTemplateConfig = ({
   return (
     <Config
       disabled={disabled}
-      config={config}
+      original={config}
       update={update}
       set={set}
       onSave={async () => {

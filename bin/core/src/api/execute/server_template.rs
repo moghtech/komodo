@@ -7,50 +7,50 @@ use komodo_client::{
     server::PartialServerConfig,
     server_template::{ServerTemplate, ServerTemplateConfig},
     update::Update,
-    user::User,
   },
 };
 use mungos::mongodb::bson::doc;
 use resolver_api::Resolve;
 
 use crate::{
+  api::write::WriteArgs,
   cloud::{
     aws::ec2::launch_ec2_instance, hetzner::launch_hetzner_server,
   },
   helpers::update::update_update,
   resource,
-  state::{db_client, State},
+  state::db_client,
 };
 
-impl Resolve<LaunchServer, (User, Update)> for State {
-  #[instrument(name = "LaunchServer", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+use super::ExecuteArgs;
+
+impl Resolve<ExecuteArgs> for LaunchServer {
+  #[instrument(name = "LaunchServer", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    LaunchServer {
-      name,
-      server_template,
-    }: LaunchServer,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
     // validate name isn't already taken by another server
     if db_client()
       .servers
       .find_one(doc! {
-        "name": &name
+        "name": &self.name
       })
       .await
       .context("failed to query db for servers")?
       .is_some()
     {
-      return Err(anyhow!("name is already taken"));
+      return Err(anyhow!("name is already taken").into());
     }
 
     let template = resource::get_check_permissions::<ServerTemplate>(
-      &server_template,
-      &user,
+      &self.server_template,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
+
+    let mut update = update.clone();
 
     update.push_simple_log(
       "launching server",
@@ -63,24 +63,24 @@ impl Resolve<LaunchServer, (User, Update)> for State {
         let region = config.region.clone();
         let use_https = config.use_https;
         let port = config.port;
-        let instance = match launch_ec2_instance(&name, config).await
-        {
-          Ok(instance) => instance,
-          Err(e) => {
-            update.push_error_log(
-              "launch server",
-              format!("failed to launch aws instance\n\n{e:#?}"),
-            );
-            update.finalize();
-            update_update(update.clone()).await?;
-            return Ok(update);
-          }
-        };
+        let instance =
+          match launch_ec2_instance(&self.name, config).await {
+            Ok(instance) => instance,
+            Err(e) => {
+              update.push_error_log(
+                "launch server",
+                format!("failed to launch aws instance\n\n{e:#?}"),
+              );
+              update.finalize();
+              update_update(update.clone()).await?;
+              return Ok(update);
+            }
+          };
         update.push_simple_log(
           "launch server",
           format!(
-            "successfully launched server {name} on ip {}",
-            instance.ip
+            "successfully launched server {} on ip {}",
+            self.name, instance.ip
           ),
         );
         let protocol = if use_https { "https" } else { "http" };
@@ -95,24 +95,24 @@ impl Resolve<LaunchServer, (User, Update)> for State {
         let datacenter = config.datacenter;
         let use_https = config.use_https;
         let port = config.port;
-        let server = match launch_hetzner_server(&name, config).await
-        {
-          Ok(server) => server,
-          Err(e) => {
-            update.push_error_log(
-              "launch server",
-              format!("failed to launch hetzner server\n\n{e:#?}"),
-            );
-            update.finalize();
-            update_update(update.clone()).await?;
-            return Ok(update);
-          }
-        };
+        let server =
+          match launch_hetzner_server(&self.name, config).await {
+            Ok(server) => server,
+            Err(e) => {
+              update.push_error_log(
+                "launch server",
+                format!("failed to launch hetzner server\n\n{e:#?}"),
+              );
+              update.finalize();
+              update_update(update.clone()).await?;
+              return Ok(update);
+            }
+          };
         update.push_simple_log(
           "launch server",
           format!(
-            "successfully launched server {name} on ip {}",
-            server.ip
+            "successfully launched server {} on ip {}",
+            self.name, server.ip
           ),
         );
         let protocol = if use_https { "https" } else { "http" };
@@ -125,7 +125,13 @@ impl Resolve<LaunchServer, (User, Update)> for State {
       }
     };
 
-    match self.resolve(CreateServer { name, config }, user).await {
+    match (CreateServer {
+      name: self.name,
+      config,
+    })
+    .resolve(&WriteArgs { user: user.clone() })
+    .await
+    {
       Ok(server) => {
         update.push_simple_log(
           "create server",
@@ -136,7 +142,9 @@ impl Resolve<LaunchServer, (User, Update)> for State {
       Err(e) => {
         update.push_error_log(
           "create server",
-          format_serror(&e.context("failed to create server").into()),
+          format_serror(
+            &e.error.context("failed to create server").into(),
+          ),
         );
       }
     };

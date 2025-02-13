@@ -154,7 +154,7 @@ pub struct Env {
 
 /// # Periphery Configuration File
 ///
-/// Refer to the [example file](https://github.com/mbecker20/komodo/blob/main/config/periphery.config.toml) for a full example.
+/// Refer to the [example file](https://github.com/moghtech/komodo/blob/main/config/periphery.config.toml) for a full example.
 #[derive(Debug, Clone, Deserialize)]
 pub struct PeripheryConfig {
   /// The port periphery will run on.

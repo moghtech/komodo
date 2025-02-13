@@ -34,6 +34,7 @@ use resolver_api::Resolve;
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::{
+  api::{read::ReadArgs, write::WriteArgs},
   config::core_config,
   helpers::{
     create_permission, flatten_document,
@@ -43,7 +44,7 @@ use crate::{
     },
     update::{add_update, make_update},
   },
-  state::{db_client, State},
+  state::db_client,
 };
 
 mod action;
@@ -783,20 +784,17 @@ pub async fn update_description<T: KomodoResource>(
 pub async fn update_tags<T: KomodoResource>(
   id_or_name: &str,
   tags: Vec<String>,
-  user: User,
+  args: &WriteArgs,
 ) -> anyhow::Result<()> {
   let futures = tags.iter().map(|tag| async {
     match get_tag(tag).await {
       Ok(tag) => Ok(tag.id),
-      Err(_) => State
-        .resolve(
-          CreateTag {
-            name: tag.to_string(),
-          },
-          user.clone(),
-        )
-        .await
-        .map(|tag| tag.id),
+      Err(_) => CreateTag {
+        name: tag.to_string(),
+      }
+      .resolve(args)
+      .await
+      .map(|tag| tag.id),
     }
   });
   let tags = join_all(futures)
@@ -884,11 +882,11 @@ pub async fn rename<T: KomodoResource>(
 
 pub async fn delete<T: KomodoResource>(
   id_or_name: &str,
-  user: &User,
+  args: &WriteArgs,
 ) -> anyhow::Result<Resource<T::Config, T::Info>> {
   let resource = get_check_permissions::<T>(
     id_or_name,
-    user,
+    &args.user,
     PermissionLevel::Write,
   )
   .await?;
@@ -898,19 +896,19 @@ pub async fn delete<T: KomodoResource>(
   }
 
   let target = resource_target::<T>(resource.id.clone());
-  let toml = State
-    .resolve(
-      ExportResourcesToToml {
-        targets: vec![target.clone()],
-        ..Default::default()
-      },
-      user.clone(),
-    )
-    .await?
-    .toml;
+  let toml = ExportResourcesToToml {
+    targets: vec![target.clone()],
+    ..Default::default()
+  }
+  .resolve(&ReadArgs {
+    user: args.user.clone(),
+  })
+  .await
+  .map_err(|e| e.error)?
+  .toml;
 
   let mut update =
-    make_update(target.clone(), T::delete_operation(), user);
+    make_update(target.clone(), T::delete_operation(), &args.user);
 
   T::pre_delete(&resource, &mut update).await?;
 

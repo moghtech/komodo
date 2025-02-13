@@ -54,7 +54,7 @@ export const RepoConfig = ({ id }: { id: string }) => {
   return (
     <Config
       disabled={disabled}
-      config={config}
+      original={config}
       update={update}
       set={set}
       onSave={async () => {

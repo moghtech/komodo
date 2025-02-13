@@ -46,7 +46,7 @@ export const ActionConfig = ({ id }: { id: string }) => {
     <Config
       disabled={disabled}
       disableSidebar
-      config={config}
+      original={config}
       update={update}
       set={set}
       onSave={async () => {

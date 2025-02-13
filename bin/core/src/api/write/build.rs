@@ -7,7 +7,6 @@ use komodo_client::{
     config::core::CoreConfig,
     permission::PermissionLevel,
     update::Update,
-    user::User,
     CloneArgs, NoData,
   },
 };
@@ -22,89 +21,88 @@ use crate::{
   config::core_config,
   helpers::git_token,
   resource,
-  state::{db_client, github_client, State},
+  state::{db_client, github_client},
 };
 
-impl Resolve<CreateBuild, User> for State {
-  #[instrument(name = "CreateBuild", skip(self, user))]
+use super::WriteArgs;
+
+impl Resolve<WriteArgs> for CreateBuild {
+  #[instrument(name = "CreateBuild", skip(user))]
   async fn resolve(
-    &self,
-    CreateBuild { name, config }: CreateBuild,
-    user: User,
-  ) -> anyhow::Result<Build> {
-    resource::create::<Build>(&name, config, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Build> {
+    Ok(
+      resource::create::<Build>(&self.name, self.config, user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<CopyBuild, User> for State {
-  #[instrument(name = "CopyBuild", skip(self, user))]
+impl Resolve<WriteArgs> for CopyBuild {
+  #[instrument(name = "CopyBuild", skip(user))]
   async fn resolve(
-    &self,
-    CopyBuild { name, id }: CopyBuild,
-    user: User,
-  ) -> anyhow::Result<Build> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Build> {
     let Build { mut config, .. } =
       resource::get_check_permissions::<Build>(
-        &id,
-        &user,
+        &self.id,
+        user,
         PermissionLevel::Write,
       )
       .await?;
     // reset version to 0.0.0
     config.version = Default::default();
-    resource::create::<Build>(&name, config.into(), &user).await
+    Ok(
+      resource::create::<Build>(&self.name, config.into(), user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<DeleteBuild, User> for State {
-  #[instrument(name = "DeleteBuild", skip(self, user))]
+impl Resolve<WriteArgs> for DeleteBuild {
+  #[instrument(name = "DeleteBuild", skip(args))]
+  async fn resolve(self, args: &WriteArgs) -> serror::Result<Build> {
+    Ok(resource::delete::<Build>(&self.id, args).await?)
+  }
+}
+
+impl Resolve<WriteArgs> for UpdateBuild {
+  #[instrument(name = "UpdateBuild", skip(user))]
   async fn resolve(
-    &self,
-    DeleteBuild { id }: DeleteBuild,
-    user: User,
-  ) -> anyhow::Result<Build> {
-    resource::delete::<Build>(&id, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Build> {
+    Ok(resource::update::<Build>(&self.id, self.config, user).await?)
   }
 }
 
-impl Resolve<UpdateBuild, User> for State {
-  #[instrument(name = "UpdateBuild", skip(self, user))]
+impl Resolve<WriteArgs> for RenameBuild {
+  #[instrument(name = "RenameBuild", skip(user))]
   async fn resolve(
-    &self,
-    UpdateBuild { id, config }: UpdateBuild,
-    user: User,
-  ) -> anyhow::Result<Build> {
-    resource::update::<Build>(&id, config, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Update> {
+    Ok(resource::rename::<Build>(&self.id, &self.name, user).await?)
   }
 }
 
-impl Resolve<RenameBuild, User> for State {
-  #[instrument(name = "RenameBuild", skip(self, user))]
-  async fn resolve(
-    &self,
-    RenameBuild { id, name }: RenameBuild,
-    user: User,
-  ) -> anyhow::Result<Update> {
-    resource::rename::<Build>(&id, &name, &user).await
-  }
-}
-
-impl Resolve<RefreshBuildCache, User> for State {
+impl Resolve<WriteArgs> for RefreshBuildCache {
   #[instrument(
     name = "RefreshBuildCache",
     level = "debug",
-    skip(self, user)
+    skip(user)
   )]
   async fn resolve(
-    &self,
-    RefreshBuildCache { build }: RefreshBuildCache,
-    user: User,
-  ) -> anyhow::Result<NoData> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<NoData> {
     // Even though this is a write request, this doesn't change any config. Anyone that can execute the
     // build should be able to do this.
     let build = resource::get_check_permissions::<Build>(
-      &build,
-      &user,
+      &self.build,
+      user,
       PermissionLevel::Execute,
     )
     .await?;
@@ -178,39 +176,44 @@ impl Resolve<RefreshBuildCache, User> for State {
   }
 }
 
-impl Resolve<CreateBuildWebhook, User> for State {
-  #[instrument(name = "CreateBuildWebhook", skip(self, user))]
+impl Resolve<WriteArgs> for CreateBuildWebhook {
+  #[instrument(name = "CreateBuildWebhook", skip(args))]
   async fn resolve(
-    &self,
-    CreateBuildWebhook { build }: CreateBuildWebhook,
-    user: User,
-  ) -> anyhow::Result<CreateBuildWebhookResponse> {
+    self,
+    args: &WriteArgs,
+  ) -> serror::Result<CreateBuildWebhookResponse> {
     let Some(github) = github_client() else {
-      return Err(anyhow!(
-        "github_webhook_app is not configured in core config toml"
-      ));
+      return Err(
+        anyhow!(
+          "github_webhook_app is not configured in core config toml"
+        )
+        .into(),
+      );
     };
 
+    let WriteArgs { user } = args;
+
     let build = resource::get_check_permissions::<Build>(
-      &build,
-      &user,
+      &self.build,
+      user,
       PermissionLevel::Write,
     )
     .await?;
 
     if build.config.repo.is_empty() {
-      return Err(anyhow!(
-        "No repo configured, can't create webhook"
-      ));
+      return Err(
+        anyhow!("No repo configured, can't create webhook").into(),
+      );
     }
 
     let mut split = build.config.repo.split('/');
     let owner = split.next().context("Build repo has no owner")?;
 
     let Some(github) = github.get(owner) else {
-      return Err(anyhow!(
-        "Cannot manage repo webhooks under owner {owner}"
-      ));
+      return Err(
+        anyhow!("Cannot manage repo webhooks under owner {owner}")
+          .into(),
+      );
     };
 
     let repo =
@@ -271,64 +274,65 @@ impl Resolve<CreateBuildWebhook, User> for State {
       .context("failed to create webhook")?;
 
     if !build.config.webhook_enabled {
-      self
-        .resolve(
-          UpdateBuild {
-            id: build.id,
-            config: PartialBuildConfig {
-              webhook_enabled: Some(true),
-              ..Default::default()
-            },
-          },
-          user,
-        )
-        .await
-        .context("failed to update build to enable webhook")?;
+      UpdateBuild {
+        id: build.id,
+        config: PartialBuildConfig {
+          webhook_enabled: Some(true),
+          ..Default::default()
+        },
+      }
+      .resolve(args)
+      .await
+      .map_err(|e| e.error)
+      .context("failed to update build to enable webhook")?;
     }
 
     Ok(NoData {})
   }
 }
 
-impl Resolve<DeleteBuildWebhook, User> for State {
-  #[instrument(name = "DeleteBuildWebhook", skip(self, user))]
+impl Resolve<WriteArgs> for DeleteBuildWebhook {
+  #[instrument(name = "DeleteBuildWebhook", skip(user))]
   async fn resolve(
-    &self,
-    DeleteBuildWebhook { build }: DeleteBuildWebhook,
-    user: User,
-  ) -> anyhow::Result<DeleteBuildWebhookResponse> {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<DeleteBuildWebhookResponse> {
     let Some(github) = github_client() else {
-      return Err(anyhow!(
-        "github_webhook_app is not configured in core config toml"
-      ));
+      return Err(
+        anyhow!(
+          "github_webhook_app is not configured in core config toml"
+        )
+        .into(),
+      );
     };
 
     let build = resource::get_check_permissions::<Build>(
-      &build,
+      &self.build,
       &user,
       PermissionLevel::Write,
     )
     .await?;
 
     if build.config.git_provider != "github.com" {
-      return Err(anyhow!(
-        "Can only manage github.com repo webhooks"
-      ));
+      return Err(
+        anyhow!("Can only manage github.com repo webhooks").into(),
+      );
     }
 
     if build.config.repo.is_empty() {
-      return Err(anyhow!(
-        "No repo configured, can't delete webhook"
-      ));
+      return Err(
+        anyhow!("No repo configured, can't delete webhook").into(),
+      );
     }
 
     let mut split = build.config.repo.split('/');
     let owner = split.next().context("Build repo has no owner")?;
 
     let Some(github) = github.get(owner) else {
-      return Err(anyhow!(
-        "Cannot manage repo webhooks under owner {owner}"
-      ));
+      return Err(
+        anyhow!("Cannot manage repo webhooks under owner {owner}")
+          .into(),
+      );
     };
 
     let repo =

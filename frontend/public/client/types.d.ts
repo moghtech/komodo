@@ -257,7 +257,7 @@ export interface BuildConfig {
     image_name?: string;
     /**
      * An extra tag put before the build version, for the image pushed to the repository.
-     * Eg. in image tag of `aarch64` would push to mbecker20/komodo:1.13.2-aarch64.
+     * Eg. in image tag of `aarch64` would push to moghtech/komodo:1.13.2-aarch64.
      * If this is empty, the image tag will just be the build version.
      *
      * Can be used in conjunction with `image_name` to direct multiple builds
@@ -603,6 +603,9 @@ export type Execution =
 } | {
     type: "BatchDestroyStack";
     params: BatchDestroyStack;
+} | {
+    type: "TestAlerter";
+    params: TestAlerter;
 } | {
     type: "Sleep";
     params: Sleep;
@@ -1012,6 +1015,19 @@ export type AlertData =
 {
     type: "None";
     data: {};
+}
+/**
+ * The user triggered a test of the
+ * Alerter configuration.
+ */
+ | {
+    type: "Test";
+    data: {
+        /** The id of the alerter */
+        id: string;
+        /** The name of the alerter */
+        name: string;
+    };
 }
 /** A server could not be reached. */
  | {
@@ -1440,6 +1456,11 @@ export interface ResourceSyncConfig {
      */
     resource_path?: string[];
     /**
+     * Excluse Komodo Resources (Servers / Stacks / Builds)
+     * from the sync. Will be variable / user group only sync.
+     */
+    exclude_resources?: boolean;
+    /**
      * Enable "pushes" to the file,
      * which exports resources matching tags to single file.
      * - If using `files_on_host`, it is stored in the file_contents, which must point to a .toml file path (it will be created if it doesn't exist).
@@ -1649,6 +1670,7 @@ export interface StackActionState {
     destroying: boolean;
 }
 export type GetStackActionStateResponse = StackActionState;
+export type GetStackLogResponse = Log;
 /** The compose file configuration. */
 export interface StackConfig {
     /** The server to deploy the stack on. */
@@ -1759,6 +1781,8 @@ export interface StackConfig {
     registry_account?: string;
     /** The optional command to run before the Stack is deployed. */
     pre_deploy?: SystemCommand;
+    /** The optional command to run after the Stack is deployed. */
+    post_deploy?: SystemCommand;
     /**
      * The extra arguments to pass after `docker compose up -d`.
      * If empty, no extra arguments will be passed.
@@ -1839,13 +1863,21 @@ export interface StackInfo {
     deployed_hash?: string;
     /** Deployed commit message, or null. Only for repo based stacks */
     deployed_message?: string;
-    /** The deployed compose file contents. This is updated whenever Komodo successfully deploys the stack. */
+    /**
+     * The deployed compose file contents.
+     * This is updated whenever Komodo successfully deploys the stack.
+     */
     deployed_contents?: FileContents[];
     /**
      * The deployed service names.
      * This is updated whenever it is empty, or deployed contents is updated.
      */
     deployed_services?: StackServiceNames[];
+    /**
+     * The output of `docker compose config`.
+     * This is updated whenever Komodo successfully deploys the stack.
+     */
+    deployed_config?: string;
     /**
      * The latest service names.
      * This is updated whenever the stack cache refreshes, using the latest file contents (either db defined or remote).
@@ -1866,7 +1898,6 @@ export interface StackInfo {
 }
 export type Stack = Resource<StackConfig, StackInfo>;
 export type GetStackResponse = Stack;
-export type GetStackServiceLogResponse = Log;
 /** System information of a server */
 export interface SystemInformation {
     /** The system name */
@@ -1893,15 +1924,6 @@ export interface SingleDiskUsage {
     used_gb: number;
     /** Total size of the disk in GB */
     total_gb: number;
-}
-/** Info for network interface usage. */
-export interface SingleNetworkInterfaceUsage {
-    /** The network interface name */
-    name: string;
-    /** The ingress in bytes */
-    ingress_bytes: number;
-    /** The egress in bytes */
-    egress_bytes: number;
 }
 export declare enum Timelength {
     OneSecond = "1-sec",
@@ -1947,8 +1969,6 @@ export interface SystemStats {
     network_ingress_bytes?: number;
     /** Network egress usage in MB */
     network_egress_bytes?: number;
-    /** Network usage by interface name (ingress, egress in bytes) */
-    network_usage_interface?: SingleNetworkInterfaceUsage[];
     /** The rate the system stats are being polled from the system */
     polling_rate: Timelength;
     /** Unix timestamp in milliseconds when stats were last polled */
@@ -2062,6 +2082,7 @@ export declare enum Operation {
     UpdateAlerter = "UpdateAlerter",
     RenameAlerter = "RenameAlerter",
     DeleteAlerter = "DeleteAlerter",
+    TestAlerter = "TestAlerter",
     CreateServerTemplate = "CreateServerTemplate",
     UpdateServerTemplate = "UpdateServerTemplate",
     RenameServerTemplate = "RenameServerTemplate",
@@ -3360,7 +3381,7 @@ export interface ResourceSyncQuerySpecifics {
 export type ResourceSyncQuery = ResourceQuery<ResourceSyncQuerySpecifics>;
 export type SearchContainerLogResponse = Log;
 export type SearchDeploymentLogResponse = Log;
-export type SearchStackServiceLogResponse = Log;
+export type SearchStackLogResponse = Log;
 export interface ServerQuerySpecifics {
 }
 /** Server-specific query */
@@ -4529,26 +4550,6 @@ export interface ExportResourcesToToml {
     /** Whether to include variables */
     include_variables?: boolean;
 }
-/** Find resources matching a common query. Response: [FindResourcesResponse]. */
-export interface FindResources {
-    /** The mongo query as JSON */
-    query?: MongoDocument;
-    /** The resource variants to include in the response. */
-    resources?: ResourceTarget["type"][];
-}
-/** Response for [FindResources]. */
-export interface FindResourcesResponse {
-    /** The matching servers. */
-    servers: ServerListItem[];
-    /** The matching deployments. */
-    deployments: DeploymentListItem[];
-    /** The matching builds. */
-    builds: BuildListItem[];
-    /** The matching repos. */
-    repos: RepoListItem[];
-    /** The matching procedures. */
-    procedures: ProcedureListItem[];
-}
 /**
  * **Admin only.**
  * Find a user.
@@ -4855,14 +4856,12 @@ export interface SystemStatsRecord {
     disk_used_gb: number;
     /** Total disk size in GB */
     disk_total_gb: number;
-    /** Breakdown of individual disks, ie their usages, sizes, and mount points */
+    /** Breakdown of individual disks, including their usage, total size, and mount point */
     disks: SingleDiskUsage[];
-    /** Network ingress usage in bytes */
+    /** Total network ingress in bytes */
     network_ingress_bytes?: number;
-    /** Network egress usage in bytes */
+    /** Total network egress in bytes */
     network_egress_bytes?: number;
-    /** Network usage by interface name (ingress, egress in bytes) */
-    network_usage_interface?: SingleNetworkInterfaceUsage[];
 }
 /** Response to [GetHistoricalServerStats]. */
 export interface GetHistoricalServerStatsResponse {
@@ -5099,12 +5098,19 @@ export interface GetStackActionState {
     /** Id or name */
     stack: string;
 }
-/** Get a stack service's log. Response: [GetStackServiceLogResponse]. */
-export interface GetStackServiceLog {
+/**
+ * Get a stack's logs. Filter down included services. Response: [GetStackLogResponse].
+ *
+ * Note. This call will hit the underlying server directly for most up to date log.
+ */
+export interface GetStackLog {
     /** Id or name */
     stack: string;
-    /** The service to get the log for. */
-    service: string;
+    /**
+     * Filter the logs to only ones from specific services.
+     * If empty, will include logs from all services.
+     */
+    services: string[];
     /**
      * The number of lines of the log tail to include.
      * Default: 100.
@@ -5743,7 +5749,7 @@ export interface ListStackServices {
 }
 /** List stacks matching optional query. Response: [ListStacksResponse]. */
 export interface ListStacks {
-    /** optional structured query to filter syncs. */
+    /** optional structured query to filter stacks. */
     query?: StackQuery;
 }
 /**
@@ -6356,16 +6362,19 @@ export interface SearchDeploymentLog {
     timestamps?: boolean;
 }
 /**
- * Search the deployment log's tail using `grep`. All lines go to stdout.
- * Response: [Log].
+ * Search the stack log's tail using `grep`. All lines go to stdout.
+ * Response: [SearchStackLogResponse].
  *
  * Note. This call will hit the underlying server directly for most up to date log.
  */
-export interface SearchStackServiceLog {
+export interface SearchStackLog {
     /** Id or name */
     stack: string;
-    /** The service to get the log for. */
-    service: string;
+    /**
+     * Filter the logs to only ones from specific services.
+     * If empty, will include logs from all services.
+     */
+    services: string[];
     /** The terms to search for. */
     terms: string[];
     /**
@@ -6413,6 +6422,15 @@ export interface SetUsersInUserGroup {
     user_group: string;
     /** The user ids or usernames to hard set as the group's users. */
     users: string[];
+}
+/** Info for network interface usage. */
+export interface SingleNetworkInterfaceUsage {
+    /** The network interface name */
+    name: string;
+    /** The ingress in bytes */
+    ingress_bytes: number;
+    /** The egress in bytes */
+    egress_bytes: number;
 }
 /** Configuration for a Slack alerter. */
 export interface SlackAlerterEndpoint {
@@ -6499,6 +6517,11 @@ export interface StopStack {
 export interface TerminationSignalLabel {
     signal: TerminationSignal;
     label: string;
+}
+/** Tests an Alerters ability to reach the configured endpoint. Response: [Update] */
+export interface TestAlerter {
+    /** Name or id */
+    alerter: string;
 }
 /** Info for the all system disks combined. */
 export interface TotalDiskUsage {
@@ -7086,6 +7109,9 @@ export type ExecuteRequest = {
     type: "LaunchServer";
     params: LaunchServer;
 } | {
+    type: "TestAlerter";
+    params: TestAlerter;
+} | {
     type: "RunSync";
     params: RunSync;
 };
@@ -7146,9 +7172,6 @@ export type ReadRequest = {
 } | {
     type: "ListUserGroups";
     params: ListUserGroups;
-} | {
-    type: "FindResources";
-    params: FindResources;
 } | {
     type: "GetProceduresSummary";
     params: GetProceduresSummary;
@@ -7363,11 +7386,11 @@ export type ReadRequest = {
     type: "GetStackWebhooksEnabled";
     params: GetStackWebhooksEnabled;
 } | {
-    type: "GetStackServiceLog";
-    params: GetStackServiceLog;
+    type: "GetStackLog";
+    params: GetStackLog;
 } | {
-    type: "SearchStackServiceLog";
-    params: SearchStackServiceLog;
+    type: "SearchStackLog";
+    params: SearchStackLog;
 } | {
     type: "ListStacks";
     params: ListStacks;

@@ -9,7 +9,7 @@ Accounts / access tokens can be configured in either the [core config](../setup/
 or in the [periphery config](../connect-servers.mdx#manual-install-steps---binaries).
 
 ### Repo configuration
-To specify the git repo to build, just give it the name of the repo and the branch under *repo config*. The name is given like `mbecker20/komodo`, it includes the username / organization that owns the repo.
+To specify the git repo to build, just give it the name of the repo and the branch under *repo config*. The name is given like `moghtech/komodo`, it includes the username / organization that owns the repo.
 
 Many repos are private, in this case an access token is needed by the building server.
 It can either come from a provider defined in the core configuration,

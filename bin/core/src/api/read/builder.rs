@@ -4,7 +4,6 @@ use komodo_client::{
   entities::{
     builder::{Builder, BuilderListItem},
     permission::PermissionLevel,
-    user::User,
   },
 };
 use mongo_indexed::Document;
@@ -12,63 +11,68 @@ use mungos::mongodb::bson::doc;
 use resolver_api::Resolve;
 
 use crate::{
-  helpers::query::get_all_tags,
-  resource,
-  state::{db_client, State},
+  helpers::query::get_all_tags, resource, state::db_client,
 };
 
-impl Resolve<GetBuilder, User> for State {
+use super::ReadArgs;
+
+impl Resolve<ReadArgs> for GetBuilder {
   async fn resolve(
-    &self,
-    GetBuilder { builder }: GetBuilder,
-    user: User,
-  ) -> anyhow::Result<Builder> {
-    resource::get_check_permissions::<Builder>(
-      &builder,
-      &user,
-      PermissionLevel::Read,
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Builder> {
+    Ok(
+      resource::get_check_permissions::<Builder>(
+        &self.builder,
+        user,
+        PermissionLevel::Read,
+      )
+      .await?,
     )
-    .await
   }
 }
 
-impl Resolve<ListBuilders, User> for State {
+impl Resolve<ReadArgs> for ListBuilders {
   async fn resolve(
-    &self,
-    ListBuilders { query }: ListBuilders,
-    user: User,
-  ) -> anyhow::Result<Vec<BuilderListItem>> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Vec<BuilderListItem>> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    resource::list_for_user::<Builder>(query, &user, &all_tags).await
+    Ok(
+      resource::list_for_user::<Builder>(self.query, user, &all_tags)
+        .await?,
+    )
   }
 }
 
-impl Resolve<ListFullBuilders, User> for State {
+impl Resolve<ReadArgs> for ListFullBuilders {
   async fn resolve(
-    &self,
-    ListFullBuilders { query }: ListFullBuilders,
-    user: User,
-  ) -> anyhow::Result<ListFullBuildersResponse> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListFullBuildersResponse> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    resource::list_full_for_user::<Builder>(query, &user, &all_tags)
-      .await
+    Ok(
+      resource::list_full_for_user::<Builder>(
+        self.query, user, &all_tags,
+      )
+      .await?,
+    )
   }
 }
 
-impl Resolve<GetBuildersSummary, User> for State {
+impl Resolve<ReadArgs> for GetBuildersSummary {
   async fn resolve(
-    &self,
-    GetBuildersSummary {}: GetBuildersSummary,
-    user: User,
-  ) -> anyhow::Result<GetBuildersSummaryResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetBuildersSummaryResponse> {
     let query = match resource::get_resource_object_ids_for_user::<
       Builder,
     >(&user)

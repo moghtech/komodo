@@ -2,7 +2,7 @@ use std::{cmp::Ordering, sync::OnceLock};
 
 use async_timing_util::wait_until_timelength;
 use komodo_client::entities::stats::{
-  SingleDiskUsage, SystemInformation, SystemProcess, SystemStats, SingleNetworkInterfaceUsage,
+  SingleDiskUsage, SystemInformation, SystemProcess, SystemStats,
 };
 use sysinfo::{ProcessesToUpdate, System};
 use tokio::sync::RwLock;
@@ -16,21 +16,8 @@ pub fn stats_client() -> &'static RwLock<StatsClient> {
 }
 
 /// This should be called before starting the server in main.rs.
-/// Keeps the caches stats up to date
-pub fn spawn_system_stats_polling_threads() {
-  tokio::spawn(async move {
-    let client = stats_client();
-    loop {
-      let ts = wait_until_timelength(
-        async_timing_util::Timelength::FiveMinutes,
-        0,
-      )
-      .await;
-      let mut client = client.write().await;
-      client.refresh_lists();
-      client.stats.refresh_list_ts = ts as i64;
-    }
-  });
+/// Keeps the cached stats up to date
+pub fn spawn_system_stats_polling_thread() {
   tokio::spawn(async move {
     let polling_rate = periphery_config()
       .stats_polling_rate
@@ -47,7 +34,6 @@ pub fn spawn_system_stats_polling_threads() {
     }
   });
 }
-
 
 pub struct StatsClient {
   /// Cached system stats
@@ -89,52 +75,29 @@ impl StatsClient {
     self.system.refresh_cpu_all();
     self.system.refresh_memory();
     self.system.refresh_processes(ProcessesToUpdate::All, true);
-    self.disks.refresh();
-    self.networks.refresh();
-  }
-
-  fn refresh_lists(&mut self) {
-    self.disks.refresh_list();
-    self.networks.refresh_list();
+    self.disks.refresh(true);
+    self.networks.refresh(true);
   }
 
   pub fn get_system_stats(&self) -> SystemStats {
     let total_mem = self.system.total_memory();
     let available_mem = self.system.available_memory();
 
-    let mut total_ingress: u64 = 0;
-    let mut total_egress: u64 = 0; 
+    let mut network_ingress_bytes: u64 = 0;
+    let mut network_egress_bytes: u64 = 0;
 
-    // Fetch network data (Ingress and Egress)
-    let network_usage: Vec<SingleNetworkInterfaceUsage> = self.networks
-        .iter()
-        .map(|(interface_name, network)| {
-            let ingress = network.received();
-            let egress = network.transmitted();
-
-            // Update total ingress and egress
-            total_ingress += ingress;
-            total_egress += egress;
-
-            // Return per-interface network stats
-            SingleNetworkInterfaceUsage {
-                name: interface_name.clone(),
-                ingress_bytes: ingress as f64,
-                egress_bytes: egress as f64,
-            }
-        })
-        .collect();
+    for (_, network) in self.networks.iter() {
+      network_ingress_bytes += network.received();
+      network_egress_bytes += network.transmitted();
+    }
 
     SystemStats {
       cpu_perc: self.system.global_cpu_usage(),
       mem_free_gb: self.system.free_memory() as f64 / BYTES_PER_GB,
       mem_used_gb: (total_mem - available_mem) as f64 / BYTES_PER_GB,
       mem_total_gb: total_mem as f64 / BYTES_PER_GB,
-      // Added total ingress and egress
-      network_ingress_bytes: total_ingress as f64,
-      network_egress_bytes: total_egress as f64,
-      network_usage_interface: network_usage,
-
+      network_ingress_bytes: network_ingress_bytes as f64,
+      network_egress_bytes: network_egress_bytes as f64,
       disks: self.get_disks(),
       polling_rate: self.stats.polling_rate,
       refresh_ts: self.stats.refresh_ts,

@@ -24,7 +24,10 @@ use mungos::find::find_collect;
 use regex::Regex;
 use resolver_api::Resolve;
 
-use crate::state::{db_client, State};
+use crate::{
+  api::{read::ReadArgs, write::WriteArgs},
+  state::db_client,
+};
 
 use super::{toml::TOML_PRETTY_OPTIONS, AllResourcesById};
 
@@ -211,105 +214,105 @@ pub async fn get_updates_for_execution(
       })
       .collect::<Vec<_>>();
 
-    let mut original_permissions = State
-      .resolve(
-        ListUserTargetPermissions {
-          user_target: UserTarget::UserGroup(original.id),
-        },
-        sync_user().to_owned(),
-      )
-      .await
-      .context("failed to query for existing UserGroup permissions")?
-      .into_iter()
-      .filter(|p| p.level > PermissionLevel::None)
-      .map(|mut p| {
-        // replace the ids with names
-        match &mut p.resource_target {
-          ResourceTarget::System(_) => {}
-          ResourceTarget::Build(id) => {
-            *id = all_resources
-              .builds
-              .get(id)
-              .map(|b| b.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::Builder(id) => {
-            *id = all_resources
-              .builders
-              .get(id)
-              .map(|b| b.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::Deployment(id) => {
-            *id = all_resources
-              .deployments
-              .get(id)
-              .map(|b| b.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::Server(id) => {
-            *id = all_resources
-              .servers
-              .get(id)
-              .map(|b| b.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::Repo(id) => {
-            *id = all_resources
-              .repos
-              .get(id)
-              .map(|b| b.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::Alerter(id) => {
-            *id = all_resources
-              .alerters
-              .get(id)
-              .map(|b| b.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::Procedure(id) => {
-            *id = all_resources
-              .procedures
-              .get(id)
-              .map(|b| b.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::Action(id) => {
-            *id = all_resources
-              .actions
-              .get(id)
-              .map(|b| b.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::ServerTemplate(id) => {
-            *id = all_resources
-              .templates
-              .get(id)
-              .map(|b| b.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::ResourceSync(id) => {
-            *id = all_resources
-              .syncs
-              .get(id)
-              .map(|b| b.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::Stack(id) => {
-            *id = all_resources
-              .stacks
-              .get(id)
-              .map(|b| b.name.clone())
-              .unwrap_or_default()
-          }
+    let mut original_permissions = (ListUserTargetPermissions {
+      user_target: UserTarget::UserGroup(original.id),
+    })
+    .resolve(&ReadArgs {
+      user: sync_user().to_owned(),
+    })
+    .await
+    .map_err(|e| e.error)
+    .context("failed to query for existing UserGroup permissions")?
+    .into_iter()
+    .filter(|p| p.level > PermissionLevel::None)
+    .map(|mut p| {
+      // replace the ids with names
+      match &mut p.resource_target {
+        ResourceTarget::System(_) => {}
+        ResourceTarget::Build(id) => {
+          *id = all_resources
+            .builds
+            .get(id)
+            .map(|b| b.name.clone())
+            .unwrap_or_default()
         }
-        PermissionToml {
-          target: p.resource_target,
-          level: p.level,
+        ResourceTarget::Builder(id) => {
+          *id = all_resources
+            .builders
+            .get(id)
+            .map(|b| b.name.clone())
+            .unwrap_or_default()
         }
-      })
-      .collect::<Vec<_>>();
+        ResourceTarget::Deployment(id) => {
+          *id = all_resources
+            .deployments
+            .get(id)
+            .map(|b| b.name.clone())
+            .unwrap_or_default()
+        }
+        ResourceTarget::Server(id) => {
+          *id = all_resources
+            .servers
+            .get(id)
+            .map(|b| b.name.clone())
+            .unwrap_or_default()
+        }
+        ResourceTarget::Repo(id) => {
+          *id = all_resources
+            .repos
+            .get(id)
+            .map(|b| b.name.clone())
+            .unwrap_or_default()
+        }
+        ResourceTarget::Alerter(id) => {
+          *id = all_resources
+            .alerters
+            .get(id)
+            .map(|b| b.name.clone())
+            .unwrap_or_default()
+        }
+        ResourceTarget::Procedure(id) => {
+          *id = all_resources
+            .procedures
+            .get(id)
+            .map(|b| b.name.clone())
+            .unwrap_or_default()
+        }
+        ResourceTarget::Action(id) => {
+          *id = all_resources
+            .actions
+            .get(id)
+            .map(|b| b.name.clone())
+            .unwrap_or_default()
+        }
+        ResourceTarget::ServerTemplate(id) => {
+          *id = all_resources
+            .templates
+            .get(id)
+            .map(|b| b.name.clone())
+            .unwrap_or_default()
+        }
+        ResourceTarget::ResourceSync(id) => {
+          *id = all_resources
+            .syncs
+            .get(id)
+            .map(|b| b.name.clone())
+            .unwrap_or_default()
+        }
+        ResourceTarget::Stack(id) => {
+          *id = all_resources
+            .stacks
+            .get(id)
+            .map(|b| b.name.clone())
+            .unwrap_or_default()
+        }
+      }
+      PermissionToml {
+        target: p.resource_target,
+        level: p.level,
+      }
+    })
+    .collect::<Vec<_>>();
 
     original_users.sort();
     user_group.users.sort();
@@ -404,20 +407,20 @@ pub async fn run_updates(
   // Create the non-existant user groups
   for user_group in to_create {
     // Create the user group
-    if let Err(e) = State
-      .resolve(
-        CreateUserGroup {
-          name: user_group.name.clone(),
-        },
-        sync_user().to_owned(),
-      )
-      .await
+    if let Err(e) = (CreateUserGroup {
+      name: user_group.name.clone(),
+    })
+    .resolve(&WriteArgs {
+      user: sync_user().to_owned(),
+    })
+    .await
     {
       has_error = true;
       log.push_str(&format!(
-        "\n{}: failed to create user group '{}' | {e:#}",
+        "\n{}: failed to create user group '{}' | {:#}",
         colored("ERROR", Color::Red),
-        bold(&user_group.name)
+        bold(&user_group.name),
+        e.error
       ));
       continue;
     } else {
@@ -489,18 +492,18 @@ pub async fn run_updates(
   }
 
   for user_group in to_delete {
-    if let Err(e) = State
-      .resolve(
-        DeleteUserGroup { id: user_group.id },
-        sync_user().to_owned(),
-      )
+    if let Err(e) = (DeleteUserGroup { id: user_group.id })
+      .resolve(&WriteArgs {
+        user: sync_user().to_owned(),
+      })
       .await
     {
       has_error = true;
       log.push_str(&format!(
-        "\n{}: failed to delete user group '{}' | {e:#}",
+        "\n{}: failed to delete user group '{}' | {:#}",
         colored("ERROR", Color::Red),
-        bold(&user_group.name)
+        bold(&user_group.name),
+        e.error
       ))
     } else {
       log.push_str(&format!(
@@ -526,21 +529,21 @@ async fn set_users(
   log: &mut String,
   has_error: &mut bool,
 ) {
-  if let Err(e) = State
-    .resolve(
-      SetUsersInUserGroup {
-        user_group: user_group.clone(),
-        users,
-      },
-      sync_user().to_owned(),
-    )
-    .await
+  if let Err(e) = (SetUsersInUserGroup {
+    user_group: user_group.clone(),
+    users,
+  })
+  .resolve(&WriteArgs {
+    user: sync_user().to_owned(),
+  })
+  .await
   {
     *has_error = true;
     log.push_str(&format!(
-      "\n{}: failed to set users in group {} | {e:#}",
+      "\n{}: failed to set users in group {} | {:#}",
       colored("ERROR", Color::Red),
-      bold(&user_group)
+      bold(&user_group),
+      e.error
     ))
   } else {
     log.push_str(&format!(
@@ -559,22 +562,22 @@ async fn run_update_all(
   has_error: &mut bool,
 ) {
   for (resource_type, permission) in all_diff {
-    if let Err(e) = State
-      .resolve(
-        UpdatePermissionOnResourceType {
-          user_target: UserTarget::UserGroup(user_group.clone()),
-          resource_type,
-          permission,
-        },
-        sync_user().to_owned(),
-      )
-      .await
+    if let Err(e) = (UpdatePermissionOnResourceType {
+      user_target: UserTarget::UserGroup(user_group.clone()),
+      resource_type,
+      permission,
+    })
+    .resolve(&WriteArgs {
+      user: sync_user().to_owned(),
+    })
+    .await
     {
       *has_error = true;
       log.push_str(&format!(
-        "\n{}: failed to set base permissions on {resource_type} in group {} | {e:#}",
+        "\n{}: failed to set base permissions on {resource_type} in group {} | {:#}",
         colored("ERROR", Color::Red),
-        bold(&user_group)
+        bold(&user_group),
+        e.error
       ))
     } else {
       log.push_str(&format!(
@@ -594,22 +597,22 @@ async fn run_update_permissions(
   has_error: &mut bool,
 ) {
   for PermissionToml { target, level } in permissions {
-    if let Err(e) = State
-      .resolve(
-        UpdatePermissionOnTarget {
-          user_target: UserTarget::UserGroup(user_group.clone()),
-          resource_target: target.clone(),
-          permission: level,
-        },
-        sync_user().to_owned(),
-      )
-      .await
+    if let Err(e) = (UpdatePermissionOnTarget {
+      user_target: UserTarget::UserGroup(user_group.clone()),
+      resource_target: target.clone(),
+      permission: level,
+    })
+    .resolve(&WriteArgs {
+      user: sync_user().to_owned(),
+    })
+    .await
     {
       *has_error = true;
       log.push_str(&format!(
-        "\n{}: failed to set permission in group {} | target: {target:?} | {e:#}",
+        "\n{}: failed to set permission in group {} | target: {target:?} | {:#}",
         colored("ERROR", Color::Red),
-        bold(&user_group)
+        bold(&user_group),
+        e.error
       ))
     } else {
       log.push_str(&format!(
@@ -830,105 +833,105 @@ pub async fn convert_user_groups(
 
   for user_group in user_groups {
     // this method is admin only, but we already know user can see user group if above does not return Err
-    let mut permissions = State
-      .resolve(
-        ListUserTargetPermissions {
-          user_target: UserTarget::UserGroup(user_group.id.clone()),
-        },
-        User {
-          admin: true,
-          ..Default::default()
-        },
-      )
-      .await?
-      .into_iter()
-      .map(|mut permission| {
-        match &mut permission.resource_target {
-          ResourceTarget::Build(id) => {
-            *id = all
-              .builds
-              .get(id)
-              .map(|r| r.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::Builder(id) => {
-            *id = all
-              .builders
-              .get(id)
-              .map(|r| r.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::Deployment(id) => {
-            *id = all
-              .deployments
-              .get(id)
-              .map(|r| r.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::Server(id) => {
-            *id = all
-              .servers
-              .get(id)
-              .map(|r| r.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::Repo(id) => {
-            *id = all
-              .repos
-              .get(id)
-              .map(|r| r.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::Alerter(id) => {
-            *id = all
-              .alerters
-              .get(id)
-              .map(|r| r.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::Procedure(id) => {
-            *id = all
-              .procedures
-              .get(id)
-              .map(|r| r.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::Action(id) => {
-            *id = all
-              .actions
-              .get(id)
-              .map(|r| r.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::ServerTemplate(id) => {
-            *id = all
-              .templates
-              .get(id)
-              .map(|r| r.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::ResourceSync(id) => {
-            *id = all
-              .syncs
-              .get(id)
-              .map(|r| r.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::Stack(id) => {
-            *id = all
-              .stacks
-              .get(id)
-              .map(|r| r.name.clone())
-              .unwrap_or_default()
-          }
-          ResourceTarget::System(_) => {}
+    let mut permissions = (ListUserTargetPermissions {
+      user_target: UserTarget::UserGroup(user_group.id.clone()),
+    })
+    .resolve(&ReadArgs {
+      user: User {
+        admin: true,
+        ..Default::default()
+      },
+    })
+    .await
+    .map_err(|e| e.error)?
+    .into_iter()
+    .map(|mut permission| {
+      match &mut permission.resource_target {
+        ResourceTarget::Build(id) => {
+          *id = all
+            .builds
+            .get(id)
+            .map(|r| r.name.clone())
+            .unwrap_or_default()
         }
-        PermissionToml {
-          target: permission.resource_target,
-          level: permission.level,
+        ResourceTarget::Builder(id) => {
+          *id = all
+            .builders
+            .get(id)
+            .map(|r| r.name.clone())
+            .unwrap_or_default()
         }
-      })
-      .collect::<Vec<_>>();
+        ResourceTarget::Deployment(id) => {
+          *id = all
+            .deployments
+            .get(id)
+            .map(|r| r.name.clone())
+            .unwrap_or_default()
+        }
+        ResourceTarget::Server(id) => {
+          *id = all
+            .servers
+            .get(id)
+            .map(|r| r.name.clone())
+            .unwrap_or_default()
+        }
+        ResourceTarget::Repo(id) => {
+          *id = all
+            .repos
+            .get(id)
+            .map(|r| r.name.clone())
+            .unwrap_or_default()
+        }
+        ResourceTarget::Alerter(id) => {
+          *id = all
+            .alerters
+            .get(id)
+            .map(|r| r.name.clone())
+            .unwrap_or_default()
+        }
+        ResourceTarget::Procedure(id) => {
+          *id = all
+            .procedures
+            .get(id)
+            .map(|r| r.name.clone())
+            .unwrap_or_default()
+        }
+        ResourceTarget::Action(id) => {
+          *id = all
+            .actions
+            .get(id)
+            .map(|r| r.name.clone())
+            .unwrap_or_default()
+        }
+        ResourceTarget::ServerTemplate(id) => {
+          *id = all
+            .templates
+            .get(id)
+            .map(|r| r.name.clone())
+            .unwrap_or_default()
+        }
+        ResourceTarget::ResourceSync(id) => {
+          *id = all
+            .syncs
+            .get(id)
+            .map(|r| r.name.clone())
+            .unwrap_or_default()
+        }
+        ResourceTarget::Stack(id) => {
+          *id = all
+            .stacks
+            .get(id)
+            .map(|r| r.name.clone())
+            .unwrap_or_default()
+        }
+        ResourceTarget::System(_) => {}
+      }
+      PermissionToml {
+        target: permission.resource_target,
+        level: permission.level,
+      }
+    })
+    .collect::<Vec<_>>();
     let mut users = user_group
       .users
       .into_iter()

@@ -1,6 +1,6 @@
 ## All in one, multi stage compile + runtime Docker build for your architecture.
 
-FROM rust:1.82.0-bullseye AS builder
+FROM rust:1.84.1-bullseye AS builder
 
 WORKDIR /builder
 COPY Cargo.toml Cargo.lock ./
@@ -22,7 +22,7 @@ COPY --from=builder /builder/target/release/periphery /usr/local/bin/periphery
 
 EXPOSE 8120
 
-LABEL org.opencontainers.image.source=https://github.com/mbecker20/komodo
+LABEL org.opencontainers.image.source=https://github.com/moghtech/komodo
 LABEL org.opencontainers.image.description="Komodo Periphery"
 LABEL org.opencontainers.image.licenses=GPL-3.0
 

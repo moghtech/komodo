@@ -1,7 +1,7 @@
 ## All in one, multi stage compile + runtime Docker build for your architecture.
 
 # Build Core
-FROM rust:1.82.0-bullseye AS core-builder
+FROM rust:1.84.1-bullseye AS core-builder
 
 WORKDIR /builder
 COPY Cargo.toml Cargo.lock ./
@@ -48,7 +48,7 @@ RUN mkdir /action-cache && \
 EXPOSE 9120
 
 # Label for Ghcr
-LABEL org.opencontainers.image.source=https://github.com/mbecker20/komodo
+LABEL org.opencontainers.image.source=https://github.com/moghtech/komodo
 LABEL org.opencontainers.image.description="Komodo Core"
 LABEL org.opencontainers.image.licenses=GPL-3.0
 

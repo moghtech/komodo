@@ -81,14 +81,15 @@ where
     }
   };
 
-  let Ok(env_file_path) = crate::environment::write_file(
-    environment,
-    env_file_path,
-    secrets,
-    &repo_dir,
-    &mut logs,
-  )
-  .await
+  let Ok((env_file_path, _replacers)) =
+    crate::environment::write_file(
+      environment,
+      env_file_path,
+      secrets,
+      &repo_dir,
+      &mut logs,
+    )
+    .await
   else {
     return Ok(GitRes {
       logs,

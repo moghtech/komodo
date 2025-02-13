@@ -4,7 +4,7 @@
 
 ## This is the offical "Default" config file for Komodo Periphery.
 ## It serves as documentation for the meaning of the fields.
-## It is located at `https://github.com/mbecker20/komodo/blob/main/config/periphery.config.toml`.
+## It is located at `https://github.com/moghtech/komodo/blob/main/config/periphery.config.toml`.
 
 ## All fields with a "Default" provided are optional. If they are
 ## left out of the file, the "Default" value will be used.

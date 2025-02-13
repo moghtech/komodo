@@ -2,70 +2,79 @@ use komodo_client::{
   api::write::*,
   entities::{
     builder::Builder, permission::PermissionLevel, update::Update,
-    user::User,
   },
 };
 use resolver_api::Resolve;
 
-use crate::{resource, state::State};
+use crate::resource;
 
-impl Resolve<CreateBuilder, User> for State {
-  #[instrument(name = "CreateBuilder", skip(self, user))]
-  async fn resolve(
-    &self,
-    CreateBuilder { name, config }: CreateBuilder,
-    user: User,
-  ) -> anyhow::Result<Builder> {
-    resource::create::<Builder>(&name, config, &user).await
-  }
-}
+use super::WriteArgs;
 
-impl Resolve<CopyBuilder, User> for State {
-  #[instrument(name = "CopyBuilder", skip(self, user))]
+impl Resolve<WriteArgs> for CreateBuilder {
+  #[instrument(name = "CreateBuilder", skip(user))]
   async fn resolve(
-    &self,
-    CopyBuilder { name, id }: CopyBuilder,
-    user: User,
-  ) -> anyhow::Result<Builder> {
-    let Builder { config, .. } = resource::get_check_permissions::<
-      Builder,
-    >(
-      &id, &user, PermissionLevel::Write
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Builder> {
+    Ok(
+      resource::create::<Builder>(&self.name, self.config, user)
+        .await?,
     )
-    .await?;
-    resource::create::<Builder>(&name, config.into(), &user).await
   }
 }
 
-impl Resolve<DeleteBuilder, User> for State {
-  #[instrument(name = "DeleteBuilder", skip(self, user))]
+impl Resolve<WriteArgs> for CopyBuilder {
+  #[instrument(name = "CopyBuilder", skip(user))]
   async fn resolve(
-    &self,
-    DeleteBuilder { id }: DeleteBuilder,
-    user: User,
-  ) -> anyhow::Result<Builder> {
-    resource::delete::<Builder>(&id, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Builder> {
+    let Builder { config, .. } =
+      resource::get_check_permissions::<Builder>(
+        &self.id,
+        user,
+        PermissionLevel::Write,
+      )
+      .await?;
+    Ok(
+      resource::create::<Builder>(&self.name, config.into(), &user)
+        .await?,
+    )
   }
 }
 
-impl Resolve<UpdateBuilder, User> for State {
-  #[instrument(name = "UpdateBuilder", skip(self, user))]
+impl Resolve<WriteArgs> for DeleteBuilder {
+  #[instrument(name = "DeleteBuilder", skip(args))]
   async fn resolve(
-    &self,
-    UpdateBuilder { id, config }: UpdateBuilder,
-    user: User,
-  ) -> anyhow::Result<Builder> {
-    resource::update::<Builder>(&id, config, &user).await
+    self,
+    args: &WriteArgs,
+  ) -> serror::Result<Builder> {
+    Ok(resource::delete::<Builder>(&self.id, args).await?)
   }
 }
 
-impl Resolve<RenameBuilder, User> for State {
-  #[instrument(name = "RenameBuilder", skip(self, user))]
+impl Resolve<WriteArgs> for UpdateBuilder {
+  #[instrument(name = "UpdateBuilder", skip(user))]
   async fn resolve(
-    &self,
-    RenameBuilder { id, name }: RenameBuilder,
-    user: User,
-  ) -> anyhow::Result<Update> {
-    resource::rename::<Builder>(&id, &name, &user).await
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Builder> {
+    Ok(
+      resource::update::<Builder>(&self.id, self.config, user)
+        .await?,
+    )
+  }
+}
+
+impl Resolve<WriteArgs> for RenameBuilder {
+  #[instrument(name = "RenameBuilder", skip(user))]
+  async fn resolve(
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Update> {
+    Ok(
+      resource::rename::<Builder>(&self.id, &self.name, &user)
+        .await?,
+    )
   }
 }

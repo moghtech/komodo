@@ -5,7 +5,7 @@ import { cn } from "@lib/utils";
 import * as monaco from "monaco-editor";
 import * as prettier from "prettier/standalone";
 import * as pluginTypescript from "prettier/plugins/typescript";
-import * as pluginEstree from "prettier/plugins/estree";
+import * as pluginEsTree from "prettier/plugins/estree";
 import * as pluginYaml from "prettier/plugins/yaml";
 import { useWindowDimensions } from "@lib/hooks";
 
@@ -85,7 +85,7 @@ export const MonacoEditor = ({
             plugins:
               language === "yaml"
                 ? [pluginYaml]
-                : [pluginTypescript, pluginEstree],
+                : [pluginTypescript, pluginEsTree as any],
             printWidth: 80, // Set the desired max line length
           }
         );

@@ -4,12 +4,12 @@
 
 ## This is the offical "Default" config file for Komodo Core.
 ## It serves as documentation for the meaning of the fields.
-## It is located at `https://github.com/mbecker20/komodo/blob/main/config/core.config.toml`.
+## It is located at `https://github.com/moghtech/komodo/blob/main/config/core.config.toml`.
 
 ## All fields with a "Default" provided are optional. If they are
 ## left out of the file, the "Default" value will be used.
 
-## This file is bundled into the official image, `ghcr.io/mbecker20/komodo`,
+## This file is bundled into the official image, `ghcr.io/moghtech/komodo`,
 ## as the default config at `/config/config.toml`.
 ## Komodo can start with no external config file mounted.
 

@@ -5,7 +5,7 @@ use komodo_client::{
   },
   entities::{
     deployment::Deployment, server::Server, stack::Stack,
-    sync::ResourceSync, user::User,
+    sync::ResourceSync,
   },
 };
 use mungos::{
@@ -16,29 +16,29 @@ use mungos::{
 use resolver_api::Resolve;
 
 use crate::{
-  config::core_config,
-  resource::get_resource_ids_for_user,
-  state::{db_client, State},
+  config::core_config, resource::get_resource_ids_for_user,
+  state::db_client,
 };
+
+use super::ReadArgs;
 
 const NUM_ALERTS_PER_PAGE: u64 = 100;
 
-impl Resolve<ListAlerts, User> for State {
+impl Resolve<ReadArgs> for ListAlerts {
   async fn resolve(
-    &self,
-    ListAlerts { query, page }: ListAlerts,
-    user: User,
-  ) -> anyhow::Result<ListAlertsResponse> {
-    let mut query = query.unwrap_or_default();
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListAlertsResponse> {
+    let mut query = self.query.unwrap_or_default();
     if !user.admin && !core_config().transparent_mode {
       let server_ids =
-        get_resource_ids_for_user::<Server>(&user).await?;
+        get_resource_ids_for_user::<Server>(user).await?;
       let stack_ids =
-        get_resource_ids_for_user::<Stack>(&user).await?;
+        get_resource_ids_for_user::<Stack>(user).await?;
       let deployment_ids =
-        get_resource_ids_for_user::<Deployment>(&user).await?;
+        get_resource_ids_for_user::<Deployment>(user).await?;
       let sync_ids =
-        get_resource_ids_for_user::<ResourceSync>(&user).await?;
+        get_resource_ids_for_user::<ResourceSync>(user).await?;
       query.extend(doc! {
         "$or": [
           { "target.type": "Server", "target.id": { "$in": &server_ids } },
@@ -55,7 +55,7 @@ impl Resolve<ListAlerts, User> for State {
       FindOptions::builder()
         .sort(doc! { "ts": -1 })
         .limit(NUM_ALERTS_PER_PAGE as i64)
-        .skip(page * NUM_ALERTS_PER_PAGE)
+        .skip(self.page * NUM_ALERTS_PER_PAGE)
         .build(),
     )
     .await
@@ -64,7 +64,7 @@ impl Resolve<ListAlerts, User> for State {
     let next_page = if alerts.len() < NUM_ALERTS_PER_PAGE as usize {
       None
     } else {
-      Some((page + 1) as i64)
+      Some((self.page + 1) as i64)
     };
 
     let res = ListAlertsResponse { next_page, alerts };
@@ -73,15 +73,16 @@ impl Resolve<ListAlerts, User> for State {
   }
 }
 
-impl Resolve<GetAlert, User> for State {
+impl Resolve<ReadArgs> for GetAlert {
   async fn resolve(
-    &self,
-    GetAlert { id }: GetAlert,
-    _: User,
-  ) -> anyhow::Result<GetAlertResponse> {
-    find_one_by_id(&db_client().alerts, &id)
-      .await
-      .context("failed to query db for alert")?
-      .context("no alert found with given id")
+    self,
+    _: &ReadArgs,
+  ) -> serror::Result<GetAlertResponse> {
+    Ok(
+      find_one_by_id(&db_client().alerts, &self.id)
+        .await
+        .context("failed to query db for alert")?
+        .context("no alert found with given id")?,
+    )
   }
 }

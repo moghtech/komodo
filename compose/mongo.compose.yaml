@@ -28,7 +28,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${KOMODO_DB_PASSWORD}
   
   core:
-    image: ghcr.io/mbecker20/komodo:${COMPOSE_KOMODO_IMAGE_TAG:-latest}
+    image: ghcr.io/moghtech/komodo:${COMPOSE_KOMODO_IMAGE_TAG:-latest}
     labels:
       komodo.skip: # Prevent Komodo from stopping with StopAllContainers
     restart: unless-stopped
@@ -59,9 +59,9 @@ services:
 
   ## Deploy Periphery container using this block,
   ## or deploy the Periphery binary with systemd using 
-  ## https://github.com/mbecker20/komodo/tree/main/scripts
+  ## https://github.com/moghtech/komodo/tree/main/scripts
   periphery:
-    image: ghcr.io/mbecker20/periphery:${COMPOSE_KOMODO_IMAGE_TAG:-latest}
+    image: ghcr.io/moghtech/periphery:${COMPOSE_KOMODO_IMAGE_TAG:-latest}
     labels:
       komodo.skip: # Prevent Komodo from stopping with StopAllContainers
     restart: unless-stopped
@@ -82,7 +82,7 @@ services:
       - /proc:/proc
       ## Specify the Periphery agent root directory.
       ## Must be the same inside and outside the container,
-      ## or docker will get confused. See https://github.com/mbecker20/komodo/discussions/180.
+      ## or docker will get confused. See https://github.com/moghtech/komodo/discussions/180.
       ## Default: /etc/komodo.
       - ${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}:${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}
 
