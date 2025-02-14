@@ -56,7 +56,7 @@ export const Resources = () => {
       actions={<ExportButton targets={targets} />}
     >
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="flex flex-wrap gap-4 items-center justify-between">
           <div className="flex gap-4">
             {(is_admin || !disable_non_admin_create) && <Components.New />}
             <Components.GroupActions />
