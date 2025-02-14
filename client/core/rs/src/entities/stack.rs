@@ -163,11 +163,17 @@ pub struct StackInfo {
   pub deployed_hash: Option<String>,
   /// Deployed commit message, or null. Only for repo based stacks
   pub deployed_message: Option<String>,
-  /// The deployed compose file contents. This is updated whenever Komodo successfully deploys the stack.
+  /// The deployed compose file contents.
+  /// This is updated whenever Komodo successfully deploys the stack.
   pub deployed_contents: Option<Vec<FileContents>>,
   /// The deployed service names.
   /// This is updated whenever it is empty, or deployed contents is updated.
   pub deployed_services: Option<Vec<StackServiceNames>>,
+  /// The output of `docker compose config`.
+  /// This is updated whenever Komodo successfully deploys the stack.
+  pub deployed_config: Option<String>,
+  // /// The output of ``
+  // pub pulled_config: Option<String>,
 
   /// The latest service names.
   /// This is updated whenever the stack cache refreshes, using the latest file contents (either db defined or remote).
@@ -382,6 +388,11 @@ pub struct StackConfig {
   #[builder(default)]
   pub pre_deploy: SystemCommand,
 
+  /// The optional command to run after the Stack is deployed.
+  #[serde(default)]
+  #[builder(default)]
+  pub post_deploy: SystemCommand,
+
   /// The extra arguments to pass after `docker compose up -d`.
   /// If empty, no extra arguments will be passed.
   #[serde(default, deserialize_with = "string_list_deserializer")]
@@ -489,6 +500,7 @@ impl Default for StackConfig {
       auto_update: Default::default(),
       ignore_services: Default::default(),
       pre_deploy: Default::default(),
+      post_deploy: Default::default(),
       extra_args: Default::default(),
       environment: Default::default(),
       env_file_path: default_env_file_path(),

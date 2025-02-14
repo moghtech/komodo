@@ -62,7 +62,7 @@ async fn ws_handler(ws: WebSocketUpgrade) -> impl IntoResponse {
         let user = match user {
           Err(e) => {
             let _ = ws_sender
-              .send(Message::Text(json!({ "type": "INVALID_USER", "msg": serialize_error(&e) }).to_string()))
+              .send(Message::text(json!({ "type": "INVALID_USER", "msg": serialize_error(&e) }).to_string()))
               .await;
             let _ = ws_sender.close().await;
             return;
@@ -73,7 +73,7 @@ async fn ws_handler(ws: WebSocketUpgrade) -> impl IntoResponse {
         // Only send if user has permission on the target resource.
         if user_can_see_update(&user, &update.target).await.is_ok() {
           let _ = ws_sender
-            .send(Message::Text(serde_json::to_string(&update).unwrap()))
+            .send(Message::text(serde_json::to_string(&update).unwrap()))
             .await;
         }
       }
@@ -103,7 +103,9 @@ async fn ws_login(
   mut socket: WebSocket,
 ) -> Option<(WebSocket, User)> {
   let login_msg = match socket.recv().await {
-    Some(Ok(Message::Text(login_msg))) => LoginMessage::Ok(login_msg),
+    Some(Ok(Message::Text(login_msg))) => {
+      LoginMessage::Ok(login_msg.to_string())
+    }
     Some(Ok(msg)) => {
       LoginMessage::Err(format!("invalid login message: {msg:?}"))
     }
@@ -117,7 +119,7 @@ async fn ws_login(
   let login_msg = match login_msg {
     LoginMessage::Ok(login_msg) => login_msg,
     LoginMessage::Err(msg) => {
-      let _ = socket.send(Message::Text(msg)).await;
+      let _ = socket.send(Message::text(msg)).await;
       let _ = socket.close().await;
       return None;
     }
@@ -127,13 +129,12 @@ async fn ws_login(
     Ok(WsLoginMessage::Jwt { jwt }) => {
       match auth_jwt_check_enabled(&jwt).await {
         Ok(user) => {
-          let _ =
-            socket.send(Message::Text("LOGGED_IN".to_string())).await;
+          let _ = socket.send(Message::text("LOGGED_IN")).await;
           Some((socket, user))
         }
         Err(e) => {
           let _ = socket
-            .send(Message::Text(format!(
+            .send(Message::text(format!(
               "failed to authenticate user using jwt | {e:#}"
             )))
             .await;
@@ -146,13 +147,12 @@ async fn ws_login(
     Ok(WsLoginMessage::ApiKeys { key, secret }) => {
       match auth_api_key_check_enabled(&key, &secret).await {
         Ok(user) => {
-          let _ =
-            socket.send(Message::Text("LOGGED_IN".to_string())).await;
+          let _ = socket.send(Message::text("LOGGED_IN")).await;
           Some((socket, user))
         }
         Err(e) => {
           let _ = socket
-            .send(Message::Text(format!(
+            .send(Message::text(format!(
               "failed to authenticate user using api keys | {e:#}"
             )))
             .await;
@@ -163,7 +163,7 @@ async fn ws_login(
     }
     Err(e) => {
       let _ = socket
-        .send(Message::Text(format!(
+        .send(Message::text(format!(
           "failed to parse login message: {e:#}"
         )))
         .await;

@@ -7,6 +7,22 @@ pub async fn send_alert(
 ) -> anyhow::Result<()> {
   let level = fmt_level(alert.level);
   let (text, blocks): (_, Option<_>) = match &alert.data {
+    AlertData::Test { id, name } => {
+      let text = format!(
+        "{level} | If you see this message, then Alerter *{name}* is *working*"
+      );
+      let blocks = vec![
+        Block::header(level),
+        Block::section(format!(
+          "If you see this message, then Alerter *{name}* is *working*"
+        )),
+        Block::section(resource_link(
+          ResourceTargetVariant::Alerter,
+          id,
+        )),
+      ];
+      (text, blocks.into())
+    }
     AlertData::ServerUnreachable {
       id,
       name,

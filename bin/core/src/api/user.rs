@@ -2,19 +2,15 @@ use std::{collections::VecDeque, time::Instant};
 
 use anyhow::{anyhow, Context};
 use axum::{middleware, routing::post, Extension, Json, Router};
-use axum_extra::{headers::ContentType, TypedHeader};
+use derive_variants::EnumVariants;
 use komodo_client::{
-  api::user::{
-    CreateApiKey, CreateApiKeyResponse, DeleteApiKey,
-    DeleteApiKeyResponse, PushRecentlyViewed,
-    PushRecentlyViewedResponse, SetLastSeenUpdate,
-    SetLastSeenUpdateResponse,
-  },
+  api::user::*,
   entities::{api_key::ApiKey, komodo_timestamp, user::User},
 };
 use mongo_indexed::doc;
 use mungos::{by_id::update_one_by_id, mongodb::bson::to_bson};
-use resolver_api::{derive::Resolver, Resolve, Resolver};
+use resolver_api::Resolve;
+use response::Response;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 use uuid::Uuid;
@@ -22,13 +18,20 @@ use uuid::Uuid;
 use crate::{
   auth::auth_request,
   helpers::{query::get_user, random_string},
-  state::{db_client, State},
+  state::db_client,
 };
 
+pub struct UserArgs {
+  pub user: User,
+}
+
 #[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, Resolver)]
-#[resolver_target(State)]
-#[resolver_args(User)]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EnumVariants,
+)]
+#[args(UserArgs)]
+#[response(Response)]
+#[error(serror::Error)]
 #[serde(tag = "type", content = "params")]
 enum UserRequest {
   PushRecentlyViewed(PushRecentlyViewed),
@@ -47,47 +50,37 @@ pub fn router() -> Router {
 async fn handler(
   Extension(user): Extension<User>,
   Json(request): Json<UserRequest>,
-) -> serror::Result<(TypedHeader<ContentType>, String)> {
+) -> serror::Result<axum::response::Response> {
   let timer = Instant::now();
   let req_id = Uuid::new_v4();
   debug!(
     "/user request {req_id} | user: {} ({})",
     user.username, user.id
   );
-  let res =
-    State
-      .resolve_request(request, user)
-      .await
-      .map_err(|e| match e {
-        resolver_api::Error::Serialization(e) => {
-          anyhow!("{e:?}").context("response serialization error")
-        }
-        resolver_api::Error::Inner(e) => e,
-      });
+  let res = request.resolve(&UserArgs { user }).await;
   if let Err(e) = &res {
-    warn!("/user request {req_id} error: {e:#}");
+    warn!("/user request {req_id} error: {:#}", e.error);
   }
   let elapsed = timer.elapsed();
   debug!("/user request {req_id} | resolve time: {elapsed:?}");
-  Ok((TypedHeader(ContentType::json()), res?))
+  res.map(|res| res.0)
 }
 
 const RECENTLY_VIEWED_MAX: usize = 10;
 
-impl Resolve<PushRecentlyViewed, User> for State {
+impl Resolve<UserArgs> for PushRecentlyViewed {
   #[instrument(
     name = "PushRecentlyViewed",
     level = "debug",
-    skip(self, user)
+    skip(user)
   )]
   async fn resolve(
-    &self,
-    PushRecentlyViewed { resource }: PushRecentlyViewed,
-    user: User,
-  ) -> anyhow::Result<PushRecentlyViewedResponse> {
+    self,
+    UserArgs { user }: &UserArgs,
+  ) -> serror::Result<PushRecentlyViewedResponse> {
     let user = get_user(&user.id).await?;
 
-    let (resource_type, id) = resource.extract_variant_id();
+    let (resource_type, id) = self.resource.extract_variant_id();
     let update = match user.recents.get(&resource_type) {
       Some(recents) => {
         let mut recents = recents
@@ -117,17 +110,16 @@ impl Resolve<PushRecentlyViewed, User> for State {
   }
 }
 
-impl Resolve<SetLastSeenUpdate, User> for State {
+impl Resolve<UserArgs> for SetLastSeenUpdate {
   #[instrument(
     name = "SetLastSeenUpdate",
     level = "debug",
-    skip(self, user)
+    skip(user)
   )]
   async fn resolve(
-    &self,
-    SetLastSeenUpdate {}: SetLastSeenUpdate,
-    user: User,
-  ) -> anyhow::Result<SetLastSeenUpdateResponse> {
+    self,
+    UserArgs { user }: &UserArgs,
+  ) -> serror::Result<SetLastSeenUpdateResponse> {
     update_one_by_id(
       &db_client().users,
       &user.id,
@@ -145,17 +137,12 @@ impl Resolve<SetLastSeenUpdate, User> for State {
 const SECRET_LENGTH: usize = 40;
 const BCRYPT_COST: u32 = 10;
 
-impl Resolve<CreateApiKey, User> for State {
-  #[instrument(
-    name = "CreateApiKey",
-    level = "debug",
-    skip(self, user)
-  )]
+impl Resolve<UserArgs> for CreateApiKey {
+  #[instrument(name = "CreateApiKey", level = "debug", skip(user))]
   async fn resolve(
-    &self,
-    CreateApiKey { name, expires }: CreateApiKey,
-    user: User,
-  ) -> anyhow::Result<CreateApiKeyResponse> {
+    self,
+    UserArgs { user }: &UserArgs,
+  ) -> serror::Result<CreateApiKeyResponse> {
     let user = get_user(&user.id).await?;
 
     let key = format!("K-{}", random_string(SECRET_LENGTH));
@@ -164,12 +151,12 @@ impl Resolve<CreateApiKey, User> for State {
       .context("failed at hashing secret string")?;
 
     let api_key = ApiKey {
-      name,
+      name: self.name,
       key: key.clone(),
       secret: secret_hash,
       user_id: user.id.clone(),
       created_at: komodo_timestamp(),
-      expires,
+      expires: self.expires,
     };
     db_client()
       .api_keys
@@ -180,26 +167,21 @@ impl Resolve<CreateApiKey, User> for State {
   }
 }
 
-impl Resolve<DeleteApiKey, User> for State {
-  #[instrument(
-    name = "DeleteApiKey",
-    level = "debug",
-    skip(self, user)
-  )]
+impl Resolve<UserArgs> for DeleteApiKey {
+  #[instrument(name = "DeleteApiKey", level = "debug", skip(user))]
   async fn resolve(
-    &self,
-    DeleteApiKey { key }: DeleteApiKey,
-    user: User,
-  ) -> anyhow::Result<DeleteApiKeyResponse> {
+    self,
+    UserArgs { user }: &UserArgs,
+  ) -> serror::Result<DeleteApiKeyResponse> {
     let client = db_client();
     let key = client
       .api_keys
-      .find_one(doc! { "key": &key })
+      .find_one(doc! { "key": &self.key })
       .await
       .context("failed at db query")?
       .context("no api key with key found")?;
     if user.id != key.user_id {
-      return Err(anyhow!("api key does not belong to user"));
+      return Err(anyhow!("api key does not belong to user").into());
     }
     client
       .api_keys

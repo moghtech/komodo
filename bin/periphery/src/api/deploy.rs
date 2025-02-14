@@ -20,25 +20,26 @@ use crate::{
   config::periphery_config,
   docker::{docker_login, pull_image},
   helpers::{parse_extra_args, parse_labels},
-  State,
 };
 
-impl Resolve<Deploy> for State {
+impl Resolve<super::Args> for Deploy {
   #[instrument(
     name = "Deploy",
-    skip(self, core_replacers, registry_token)
+    skip_all,
+    fields(
+      stack = &self.deployment.name,
+      stop_signal = format!("{:?}", self.stop_signal),
+      stop_time = self.stop_time,
+    )
   )]
-  async fn resolve(
-    &self,
-    Deploy {
+  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
+    let Deploy {
       deployment,
       stop_signal,
       stop_time,
       registry_token,
       replacers: core_replacers,
-    }: Deploy,
-    _: (),
-  ) -> anyhow::Result<Log> {
+    } = self;
     let image = if let DeploymentImage::Image { image } =
       &deployment.config.image
     {
@@ -73,16 +74,13 @@ impl Resolve<Deploy> for State {
 
     let _ = pull_image(image).await;
     debug!("image pulled");
-    let _ = State
-      .resolve(
-        RemoveContainer {
-          name: deployment.name.clone(),
-          signal: stop_signal,
-          time: stop_time,
-        },
-        (),
-      )
-      .await;
+    let _ = (RemoveContainer {
+      name: deployment.name.clone(),
+      signal: stop_signal,
+      time: stop_time,
+    })
+    .resolve(&super::Args)
+    .await;
     debug!("container stopped and removed");
 
     let command = docker_run_command(&deployment, image)

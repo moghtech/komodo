@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::{derive::Request, HasResponse};
+use resolver_api::{HasResponse, Resolve};
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -13,7 +13,6 @@ mod permission;
 mod procedure;
 mod provider;
 mod repo;
-mod search;
 mod server;
 mod server_template;
 mod stack;
@@ -35,7 +34,6 @@ pub use permission::*;
 pub use procedure::*;
 pub use provider::*;
 pub use repo::*;
-pub use search::*;
 pub use server::*;
 pub use server_template::*;
 pub use stack::*;
@@ -60,10 +58,11 @@ pub trait KomodoReadRequest: HasResponse {}
 /// Response: [GetVersionResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetVersionResponse)]
+#[error(serror::Error)]
 pub struct GetVersion {}
 
 /// Response for [GetVersion].
@@ -80,10 +79,11 @@ pub struct GetVersionResponse {
 /// Response: [GetCoreInfoResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetCoreInfoResponse)]
+#[error(serror::Error)]
 pub struct GetCoreInfo {}
 
 /// Response for [GetCoreInfo].
@@ -119,10 +119,11 @@ pub struct GetCoreInfoResponse {
 ///   - providers on the optional Server or Builder
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListGitProvidersFromConfigResponse)]
+#[error(serror::Error)]
 pub struct ListGitProvidersFromConfig {
   /// Accepts an optional Server or Builder target to expand the core list with
   /// providers available on that specific resource.
@@ -143,10 +144,11 @@ pub type ListGitProvidersFromConfigResponse = Vec<GitProvider>;
 ///   - registries on the optional Server or Builder
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerRegistriesFromConfigResponse)]
+#[error(serror::Error)]
 pub struct ListDockerRegistriesFromConfig {
   /// Accepts an optional Server or Builder target to expand the core list with
   /// providers available on that specific resource.
@@ -162,10 +164,11 @@ pub type ListDockerRegistriesFromConfigResponse = Vec<DockerRegistry>;
 /// Response: [ListSecretsResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSecretsResponse)]
+#[error(serror::Error)]
 pub struct ListSecrets {
   /// Accepts an optional Server or Builder target to expand the core list with
   /// providers available on that specific resource.

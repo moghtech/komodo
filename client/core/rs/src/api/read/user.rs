@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -11,10 +11,11 @@ use super::KomodoReadRequest;
 /// Response: [ListApiKeysResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListApiKeysResponse)]
+#[error(serror::Error)]
 pub struct ListApiKeys {}
 
 #[typeshare]
@@ -28,10 +29,11 @@ pub type ListApiKeysResponse = Vec<ApiKey>;
 /// Response: [ListApiKeysForServiceUserResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListApiKeysForServiceUserResponse)]
+#[error(serror::Error)]
 pub struct ListApiKeysForServiceUser {
   /// Id or username
   #[serde(alias = "id", alias = "username")]
@@ -48,10 +50,11 @@ pub type ListApiKeysForServiceUserResponse = Vec<ApiKey>;
 /// Response: [FindUserResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(FindUserResponse)]
+#[error(serror::Error)]
 pub struct FindUser {
   /// Id or username
   #[serde(alias = "id", alias = "username")]
@@ -68,10 +71,11 @@ pub type FindUserResponse = User;
 /// Response: [ListUsersResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListUsersResponse)]
+#[error(serror::Error)]
 pub struct ListUsers {}
 
 #[typeshare]
@@ -83,10 +87,11 @@ pub type ListUsersResponse = Vec<User>;
 /// Response: [GetUsernameResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetUsernameResponse)]
+#[error(serror::Error)]
 pub struct GetUsername {
   /// The id of the user.
   pub user_id: String,

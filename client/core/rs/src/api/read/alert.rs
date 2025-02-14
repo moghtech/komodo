@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -11,10 +11,11 @@ use super::KomodoReadRequest;
 /// Response: [ListAlertsResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListAlertsResponse)]
+#[error(serror::Error)]
 pub struct ListAlerts {
   /// Pass a custom mongo query to filter the alerts.
   ///
@@ -62,10 +63,11 @@ pub struct ListAlertsResponse {
 /// Get an alert: Response: [Alert].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetAlertResponse)]
+#[error(serror::Error)]
 pub struct GetAlert {
   pub id: String,
 }

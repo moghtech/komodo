@@ -13,7 +13,7 @@ There's two ways to install periphery: `System` and `User`
 Note. Run this after switching to root user (eg `sudo su -`).
 
 ```sh
-curl -sSL https://raw.githubusercontent.com/mbecker20/komodo/main/scripts/setup-periphery.py | python3
+curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/scripts/setup-periphery.py | python3
 ```
 
 Will install to paths:
@@ -26,7 +26,7 @@ Will install to paths:
 *Note*. The user running periphery must be a member of the docker group, in order to use the docker cli without sudo.
 
 ```sh
-curl -sSL https://raw.githubusercontent.com/mbecker20/komodo/main/scripts/setup-periphery.py | python3 - --user
+curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/scripts/setup-periphery.py | python3 - --user
 ```
 
 Will install to paths:
@@ -63,5 +63,5 @@ to the current default.
 Example:
 
 ```sh
-curl -sSL https://raw.githubusercontent.com/mbecker20/komodo/main/scripts/setup-periphery.py | python3 - --force-service-file
+curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/scripts/setup-periphery.py | python3 - --force-service-file
 ```

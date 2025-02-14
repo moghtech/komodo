@@ -45,7 +45,7 @@ fn default_branch() -> String {
 pub fn router<P: VerifySecret + VerifyBranch>() -> Router {
   Router::new()
   .route(
-    "/build/:id",
+    "/build/{id}",
     post(
       |Path(Id { id }), headers: HeaderMap, body: String| async move {
         let build =
@@ -71,7 +71,7 @@ pub fn router<P: VerifySecret + VerifyBranch>() -> Router {
     ),
   )
   .route(
-    "/repo/:id/:option",
+    "/repo/{id}/{option}",
     post(
       |Path(IdAndOption::<RepoWebhookOption> { id, option }), headers: HeaderMap, body: String| async move {
         let repo =
@@ -97,7 +97,7 @@ pub fn router<P: VerifySecret + VerifyBranch>() -> Router {
     ),
   )
   .route(
-    "/stack/:id/:option",
+    "/stack/{id}/{option}",
     post(
       |Path(IdAndOption::<StackWebhookOption> { id, option }), headers: HeaderMap, body: String| async move {
         let stack =
@@ -123,7 +123,7 @@ pub fn router<P: VerifySecret + VerifyBranch>() -> Router {
     ),
   )
   .route(
-    "/sync/:id/:option",
+    "/sync/{id}/{option}",
     post(
       |Path(IdAndOption::<SyncWebhookOption> { id, option }), headers: HeaderMap, body: String| async move {
         let sync =
@@ -149,7 +149,7 @@ pub fn router<P: VerifySecret + VerifyBranch>() -> Router {
     ),
   )
   .route(
-    "/procedure/:id/:branch",
+    "/procedure/{id}/{branch}",
     post(
       |Path(IdAndBranch { id, branch }), headers: HeaderMap, body: String| async move {
         let procedure =
@@ -175,7 +175,7 @@ pub fn router<P: VerifySecret + VerifyBranch>() -> Router {
     ),
   )
   .route(
-    "/action/:id/:branch",
+    "/action/{id}/{branch}",
     post(
       |Path(IdAndBranch { id, branch }), headers: HeaderMap, body: String| async move {
         let action =

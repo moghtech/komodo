@@ -1,6 +1,6 @@
-//! # Komodo core API
+//! # Komodo Core API
 //!
-//! Komodo core exposes an HTTP api using standard JSON serialization.
+//! Komodo Core exposes an HTTP api using standard JSON serialization.
 //!
 //! All calls share some common HTTP params:
 //! - Method: `POST`

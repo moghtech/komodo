@@ -5,7 +5,6 @@ use komodo_client::{
     config::core::CoreConfig,
     permission::PermissionLevel,
     repo::{Repo, RepoActionState, RepoListItem, RepoState},
-    user::User,
   },
 };
 use resolver_api::Resolve;
@@ -14,64 +13,71 @@ use crate::{
   config::core_config,
   helpers::query::get_all_tags,
   resource,
-  state::{action_states, github_client, repo_state_cache, State},
+  state::{action_states, github_client, repo_state_cache},
 };
 
-impl Resolve<GetRepo, User> for State {
+use super::ReadArgs;
+
+impl Resolve<ReadArgs> for GetRepo {
   async fn resolve(
-    &self,
-    GetRepo { repo }: GetRepo,
-    user: User,
-  ) -> anyhow::Result<Repo> {
-    resource::get_check_permissions::<Repo>(
-      &repo,
-      &user,
-      PermissionLevel::Read,
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Repo> {
+    Ok(
+      resource::get_check_permissions::<Repo>(
+        &self.repo,
+        user,
+        PermissionLevel::Read,
+      )
+      .await?,
     )
-    .await
   }
 }
 
-impl Resolve<ListRepos, User> for State {
+impl Resolve<ReadArgs> for ListRepos {
   async fn resolve(
-    &self,
-    ListRepos { query }: ListRepos,
-    user: User,
-  ) -> anyhow::Result<Vec<RepoListItem>> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Vec<RepoListItem>> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    resource::list_for_user::<Repo>(query, &user, &all_tags).await
+    Ok(
+      resource::list_for_user::<Repo>(self.query, &user, &all_tags)
+        .await?,
+    )
   }
 }
 
-impl Resolve<ListFullRepos, User> for State {
+impl Resolve<ReadArgs> for ListFullRepos {
   async fn resolve(
-    &self,
-    ListFullRepos { query }: ListFullRepos,
-    user: User,
-  ) -> anyhow::Result<ListFullReposResponse> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListFullReposResponse> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    resource::list_full_for_user::<Repo>(query, &user, &all_tags)
-      .await
+    Ok(
+      resource::list_full_for_user::<Repo>(
+        self.query, &user, &all_tags,
+      )
+      .await?,
+    )
   }
 }
 
-impl Resolve<GetRepoActionState, User> for State {
+impl Resolve<ReadArgs> for GetRepoActionState {
   async fn resolve(
-    &self,
-    GetRepoActionState { repo }: GetRepoActionState,
-    user: User,
-  ) -> anyhow::Result<RepoActionState> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<RepoActionState> {
     let repo = resource::get_check_permissions::<Repo>(
-      &repo,
-      &user,
+      &self.repo,
+      user,
       PermissionLevel::Read,
     )
     .await?;
@@ -85,15 +91,14 @@ impl Resolve<GetRepoActionState, User> for State {
   }
 }
 
-impl Resolve<GetReposSummary, User> for State {
+impl Resolve<ReadArgs> for GetReposSummary {
   async fn resolve(
-    &self,
-    GetReposSummary {}: GetReposSummary,
-    user: User,
-  ) -> anyhow::Result<GetReposSummaryResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetReposSummaryResponse> {
     let repos = resource::list_full_for_user::<Repo>(
       Default::default(),
-      &user,
+      user,
       &[],
     )
     .await
@@ -141,12 +146,11 @@ impl Resolve<GetReposSummary, User> for State {
   }
 }
 
-impl Resolve<GetRepoWebhooksEnabled, User> for State {
+impl Resolve<ReadArgs> for GetRepoWebhooksEnabled {
   async fn resolve(
-    &self,
-    GetRepoWebhooksEnabled { repo }: GetRepoWebhooksEnabled,
-    user: User,
-  ) -> anyhow::Result<GetRepoWebhooksEnabledResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetRepoWebhooksEnabledResponse> {
     let Some(github) = github_client() else {
       return Ok(GetRepoWebhooksEnabledResponse {
         managed: false,
@@ -157,8 +161,8 @@ impl Resolve<GetRepoWebhooksEnabled, User> for State {
     };
 
     let repo = resource::get_check_permissions::<Repo>(
-      &repo,
-      &user,
+      &self.repo,
+      user,
       PermissionLevel::Read,
     )
     .await?;

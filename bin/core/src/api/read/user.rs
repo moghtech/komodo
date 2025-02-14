@@ -6,7 +6,7 @@ use komodo_client::{
     ListApiKeysForServiceUserResponse, ListApiKeysResponse,
     ListUsers, ListUsersResponse,
   },
-  entities::user::{admin_service_user, User, UserConfig},
+  entities::user::{admin_service_user, UserConfig},
 };
 use mungos::{
   by_id::find_one_by_id,
@@ -15,25 +15,23 @@ use mungos::{
 };
 use resolver_api::Resolve;
 
-use crate::{
-  helpers::query::get_user,
-  state::{db_client, State},
-};
+use crate::{helpers::query::get_user, state::db_client};
 
-impl Resolve<GetUsername, User> for State {
+use super::ReadArgs;
+
+impl Resolve<ReadArgs> for GetUsername {
   async fn resolve(
-    &self,
-    GetUsername { user_id }: GetUsername,
-    _: User,
-  ) -> anyhow::Result<GetUsernameResponse> {
-    if let Some(user) = admin_service_user(&user_id) {
+    self,
+    _: &ReadArgs,
+  ) -> serror::Result<GetUsernameResponse> {
+    if let Some(user) = admin_service_user(&self.user_id) {
       return Ok(GetUsernameResponse {
         username: user.username,
         avatar: None,
       });
     }
 
-    let user = find_one_by_id(&db_client().users, &user_id)
+    let user = find_one_by_id(&db_client().users, &self.user_id)
       .await
       .context("failed at mongo query for user")?
       .context("no user found with id")?;
@@ -51,27 +49,27 @@ impl Resolve<GetUsername, User> for State {
   }
 }
 
-impl Resolve<FindUser, User> for State {
+impl Resolve<ReadArgs> for FindUser {
   async fn resolve(
-    &self,
-    FindUser { user }: FindUser,
-    admin: User,
-  ) -> anyhow::Result<FindUserResponse> {
+    self,
+    ReadArgs { user: admin }: &ReadArgs,
+  ) -> serror::Result<FindUserResponse> {
     if !admin.admin {
-      return Err(anyhow!("This method is admin only."));
+      return Err(anyhow!("This method is admin only.").into());
     }
-    get_user(&user).await
+    Ok(get_user(&self.user).await?)
   }
 }
 
-impl Resolve<ListUsers, User> for State {
+impl Resolve<ReadArgs> for ListUsers {
   async fn resolve(
-    &self,
-    ListUsers {}: ListUsers,
-    user: User,
-  ) -> anyhow::Result<ListUsersResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListUsersResponse> {
     if !user.admin {
-      return Err(anyhow!("this route is only accessable by admins"));
+      return Err(
+        anyhow!("this route is only accessable by admins").into(),
+      );
     }
     let mut users = find_collect(
       &db_client().users,
@@ -85,12 +83,11 @@ impl Resolve<ListUsers, User> for State {
   }
 }
 
-impl Resolve<ListApiKeys, User> for State {
+impl Resolve<ReadArgs> for ListApiKeys {
   async fn resolve(
-    &self,
-    ListApiKeys {}: ListApiKeys,
-    user: User,
-  ) -> anyhow::Result<ListApiKeysResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListApiKeysResponse> {
     let api_keys = find_collect(
       &db_client().api_keys,
       doc! { "user_id": &user.id },
@@ -108,20 +105,19 @@ impl Resolve<ListApiKeys, User> for State {
   }
 }
 
-impl Resolve<ListApiKeysForServiceUser, User> for State {
+impl Resolve<ReadArgs> for ListApiKeysForServiceUser {
   async fn resolve(
-    &self,
-    ListApiKeysForServiceUser { user }: ListApiKeysForServiceUser,
-    admin: User,
-  ) -> anyhow::Result<ListApiKeysForServiceUserResponse> {
+    self,
+    ReadArgs { user: admin }: &ReadArgs,
+  ) -> serror::Result<ListApiKeysForServiceUserResponse> {
     if !admin.admin {
-      return Err(anyhow!("This method is admin only."));
+      return Err(anyhow!("This method is admin only.").into());
     }
 
-    let user = get_user(&user).await?;
+    let user = get_user(&self.user).await?;
 
     let UserConfig::Service { .. } = user.config else {
-      return Err(anyhow!("Given user is not service user"));
+      return Err(anyhow!("Given user is not service user").into());
     };
     let api_keys = find_collect(
       &db_client().api_keys,

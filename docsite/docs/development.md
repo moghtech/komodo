@@ -4,7 +4,7 @@ If you are looking to contribute to Komodo, this page is a launching point for s
 
 ## Dependencies
 
-Running Komodo from [source](https://github.com/mbecker20/komodo) requires either [Docker](https://www.docker.com/) (and can use the included [devcontainer](https://code.visualstudio.com/docs/devcontainers/containers)), or can have the development dependencies installed locally:
+Running Komodo from [source](https://github.com/moghtech/komodo) requires either [Docker](https://www.docker.com/) (and can use the included [devcontainer](https://code.visualstudio.com/docs/devcontainers/containers)), or can have the development dependencies installed locally:
 
 * Backend (Core / Periphery APIs)
     * [Rust](https://www.rust-lang.org/) stable via [rustup installer](https://rustup.rs/)

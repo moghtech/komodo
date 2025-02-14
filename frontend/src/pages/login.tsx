@@ -133,7 +133,7 @@ export const Login = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <div className="container flex justify-between items-center h-16">
-        <img src="/monitor-circle.png" className="w-[28px] dark:invert" />
+        <img src="/komodo-logo.svg" className="w-[32px]" />
         <ThemeToggle />
       </div>
       <div
@@ -236,7 +236,7 @@ export const Login = () => {
               No login methods have been configured. See the
               <Button variant="link" className="text-sm py-0 px-1">
                 <a
-                  href="https://github.com/mbecker20/komodo/blob/main/config/core.config.toml"
+                  href="https://github.com/moghtech/komodo/blob/main/config/core.config.toml"
                   target="_blank"
                   className="flex text-sm"
                 >

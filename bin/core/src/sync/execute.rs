@@ -13,7 +13,7 @@ use mungos::find::find_collect;
 use partial_derive2::MaybeNone;
 use resolver_api::Resolve;
 
-use crate::state::State;
+use crate::api::write::WriteArgs;
 
 use super::{
   AllResourcesById, ResourceSyncTrait, ToCreate, ToDelete, ToUpdate,
@@ -256,8 +256,13 @@ pub trait ExecuteResourceSync: ResourceSyncTrait {
     }
 
     for resource in to_delete {
-      if let Err(e) =
-        crate::resource::delete::<Self>(&resource, sync_user()).await
+      if let Err(e) = crate::resource::delete::<Self>(
+        &resource,
+        &WriteArgs {
+          user: sync_user().to_owned(),
+        },
+      )
+      .await
       {
         has_error = true;
         log.push_str(&format!(
@@ -294,22 +299,22 @@ pub async fn run_update_tags<Resource: ResourceSyncTrait>(
   has_error: &mut bool,
 ) {
   // Update tags
-  if let Err(e) = State
-    .resolve(
-      UpdateTagsOnResource {
-        target: Resource::resource_target(id),
-        tags,
-      },
-      sync_user().to_owned(),
-    )
-    .await
+  if let Err(e) = (UpdateTagsOnResource {
+    target: Resource::resource_target(id),
+    tags,
+  })
+  .resolve(&WriteArgs {
+    user: sync_user().to_owned(),
+  })
+  .await
   {
     *has_error = true;
     log.push_str(&format!(
-      "\n{}: failed to update tags on {} '{}' | {e:#}",
+      "\n{}: failed to update tags on {} '{}' | {:#}",
       colored("ERROR", Color::Red),
       Resource::resource_type(),
       bold(name),
+      e.error
     ))
   } else {
     log.push_str(&format!(
@@ -329,22 +334,22 @@ pub async fn run_update_description<Resource: ResourceSyncTrait>(
   log: &mut String,
   has_error: &mut bool,
 ) {
-  if let Err(e) = State
-    .resolve(
-      UpdateDescription {
-        target: Resource::resource_target(id.clone()),
-        description,
-      },
-      sync_user().to_owned(),
-    )
-    .await
+  if let Err(e) = (UpdateDescription {
+    target: Resource::resource_target(id.clone()),
+    description,
+  })
+  .resolve(&WriteArgs {
+    user: sync_user().to_owned(),
+  })
+  .await
   {
     *has_error = true;
     log.push_str(&format!(
-      "\n{}: failed to update description on {} '{}' | {e:#}",
+      "\n{}: failed to update description on {} '{}' | {:#}",
       colored("ERROR", Color::Red),
       Resource::resource_type(),
       bold(name),
+      e.error
     ))
   } else {
     log.push_str(&format!(

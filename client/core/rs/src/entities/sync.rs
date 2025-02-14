@@ -229,6 +229,12 @@ pub struct ResourceSyncConfig {
   #[builder(default)]
   pub resource_path: Vec<String>,
 
+  /// Excluse Komodo Resources (Servers / Stacks / Builds)
+  /// from the sync. Will be variable / user group only sync.
+  #[serde(default)]
+  #[builder(default)]
+  pub exclude_resources: bool,
+
   /// Enable "pushes" to the file,
   /// which exports resources matching tags to single file.
   ///  - If using `files_on_host`, it is stored in the file_contents, which must point to a .toml file path (it will be created if it doesn't exist).
@@ -309,6 +315,7 @@ impl Default for ResourceSyncConfig {
       resource_path: Default::default(),
       files_on_host: Default::default(),
       file_contents: Default::default(),
+      exclude_resources: Default::default(),
       managed: Default::default(),
       match_tags: Default::default(),
       delete: Default::default(),

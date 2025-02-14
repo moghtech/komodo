@@ -141,8 +141,8 @@ const on_message = (
         ["ListDockerContainers"],
         ["ListDockerNetworks"],
         ["ListDockerImages"],
-        ["GetStackServiceLog", { stack: update.target.id }],
-        ["SearchStackServiceLog", { stack: update.target.id }],
+        ["GetStackLog", { stack: update.target.id }],
+        ["SearchStackLog", { stack: update.target.id }],
         ["GetStack"],
         ["ListStackServices"],
         ["GetResourceMatchingContainer"]

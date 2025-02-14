@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -17,10 +17,11 @@ use super::KomodoReadRequest;
 /// Get a specific build. Response: [Build].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildResponse)]
+#[error(serror::Error)]
 pub struct GetBuild {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -35,10 +36,11 @@ pub type GetBuildResponse = Build;
 /// List builds matching optional query. Response: [ListBuildsResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListBuildsResponse)]
+#[error(serror::Error)]
 pub struct ListBuilds {
   /// optional structured query to filter builds.
   #[serde(default)]
@@ -53,10 +55,11 @@ pub type ListBuildsResponse = Vec<BuildListItem>;
 /// List builds matching optional query. Response: [ListFullBuildsResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullBuildsResponse)]
+#[error(serror::Error)]
 pub struct ListFullBuilds {
   /// optional structured query to filter builds.
   #[serde(default)]
@@ -71,10 +74,11 @@ pub type ListFullBuildsResponse = Vec<Build>;
 /// Get current action state for the build. Response: [BuildActionState].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildActionStateResponse)]
+#[error(serror::Error)]
 pub struct GetBuildActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -90,10 +94,11 @@ pub type GetBuildActionStateResponse = BuildActionState;
 /// Response: [GetBuildsSummaryResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildsSummaryResponse)]
+#[error(serror::Error)]
 pub struct GetBuildsSummary {}
 
 /// Response for [GetBuildsSummary].
@@ -121,10 +126,11 @@ pub struct GetBuildsSummaryResponse {
 /// Query for older pages by incrementing the page, starting at 0.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildMonthlyStatsResponse)]
+#[error(serror::Error)]
 pub struct GetBuildMonthlyStats {
   /// Query for older data by incrementing the page.
   /// `page: 0` is the default, and will return the most recent data.
@@ -182,10 +188,11 @@ impl GetBuildMonthlyStatsResponse {
 /// Response: [ListBuildVersionsResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListBuildVersionsResponse)]
+#[error(serror::Error)]
 pub struct ListBuildVersions {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -216,10 +223,11 @@ pub struct BuildVersionResponseItem {
 /// Useful to offer suggestions. Response: [ListCommonBuildExtraArgsResponse]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonBuildExtraArgsResponse)]
+#[error(serror::Error)]
 pub struct ListCommonBuildExtraArgs {
   /// optional structured query to filter builds.
   #[serde(default)]
@@ -234,10 +242,11 @@ pub type ListCommonBuildExtraArgsResponse = Vec<String>;
 /// Get whether a Build's target repo has a webhook for the build configured. Response: [GetBuildWebhookEnabledResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildWebhookEnabledResponse)]
+#[error(serror::Error)]
 pub struct GetBuildWebhookEnabled {
   /// Id or name
   #[serde(alias = "id", alias = "name")]

@@ -36,9 +36,6 @@ export type ReadResponses = {
   GetUserGroup: Types.GetUserGroupResponse;
   ListUserGroups: Types.ListUserGroupsResponse;
 
-  // ==== SEARCH ====
-  FindResources: Types.FindResourcesResponse;
-
   // ==== PROCEDURE ====
   GetProceduresSummary: Types.GetProceduresSummaryResponse;
   GetProcedure: Types.GetProcedureResponse;
@@ -127,8 +124,8 @@ export type ReadResponses = {
   GetStack: Types.GetStackResponse;
   GetStackActionState: Types.GetStackActionStateResponse;
   GetStackWebhooksEnabled: Types.GetStackWebhooksEnabledResponse;
-  GetStackServiceLog: Types.GetStackServiceLogResponse;
-  SearchStackServiceLog: Types.SearchStackServiceLogResponse;
+  GetStackLog: Types.GetStackLogResponse;
+  SearchStackLog: Types.SearchStackLogResponse;
   ListStacks: Types.ListStacksResponse;
   ListFullStacks: Types.ListFullStacksResponse;
   ListStackServices: Types.ListStackServicesResponse;
@@ -410,4 +407,7 @@ export type ExecuteResponses = {
   PauseStackService: Types.Update;
   UnpauseStackService: Types.Update;
   DestroyStackService: Types.Update;
+
+  // ==== ALERTER ====
+  TestAlerter: Types.Update;
 };

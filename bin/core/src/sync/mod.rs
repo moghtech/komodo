@@ -1,11 +1,21 @@
 use std::{collections::HashMap, str::FromStr};
 
+use anyhow::anyhow;
 use komodo_client::entities::{
-  action::Action, alerter::Alerter, build::Build, builder::Builder,
-  deployment::Deployment, procedure::Procedure, repo::Repo,
-  server::Server, server_template::ServerTemplate, stack::Stack,
-  sync::ResourceSync, tag::Tag, toml::ResourceToml, ResourceTarget,
-  ResourceTargetVariant,
+  action::Action,
+  alerter::Alerter,
+  build::Build,
+  builder::Builder,
+  deployment::Deployment,
+  procedure::Procedure,
+  repo::Repo,
+  server::Server,
+  server_template::ServerTemplate,
+  stack::Stack,
+  sync::ResourceSync,
+  tag::Tag,
+  toml::{ResourceToml, ResourcesToml},
+  ResourceTarget, ResourceTargetVariant,
 };
 use mungos::mongodb::bson::oid::ObjectId;
 use toml::ToToml;
@@ -208,4 +218,18 @@ impl AllResourcesById {
       .await?,
     })
   }
+}
+
+fn deserialize_resources_toml(
+  toml_str: &str,
+) -> anyhow::Result<ResourcesToml> {
+  ::toml::from_str::<ResourcesToml>(
+    &toml_str
+      // Escape the \ for the user on incoming.
+      // After deserialized by `toml` crate, the contents
+      // will match what would be passed on eg command line exactly.
+      .replace(r#"\"#, r#"\\"#),
+  )
+  // the error without this comes through with multiple lines (\n) and looks bad
+  .map_err(|e| anyhow!("{e:#}"))
 }

@@ -74,6 +74,15 @@ pub enum AlertData {
   /// A null alert
   None {},
 
+  /// The user triggered a test of the
+  /// Alerter configuration.
+  Test {
+    /// The id of the alerter
+    id: String,
+    /// The name of the alerter
+    name: String,
+  },
+
   /// A server could not be reached.
   ServerUnreachable {
     /// The id of the server

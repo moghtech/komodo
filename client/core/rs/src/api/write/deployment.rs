@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -15,10 +15,11 @@ use super::KomodoWriteRequest;
 /// Create a deployment. Response: [Deployment].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Deployment)]
+#[error(serror::Error)]
 pub struct CreateDeployment {
   /// The name given to newly created deployment.
   pub name: String,
@@ -33,10 +34,11 @@ pub struct CreateDeployment {
 /// of the deployment at the given `id`. Response: [Deployment]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Deployment)]
+#[error(serror::Error)]
 pub struct CopyDeployment {
   /// The name of the new deployment.
   pub name: String,
@@ -49,10 +51,11 @@ pub struct CopyDeployment {
 /// Create a Deployment from an existing container. Response: [Deployment].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Deployment)]
+#[error(serror::Error)]
 pub struct CreateDeploymentFromContainer {
   /// The name or id of the existing container.
   pub name: String,
@@ -69,10 +72,11 @@ pub struct CreateDeploymentFromContainer {
 /// the deployment clean up.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Deployment)]
+#[error(serror::Error)]
 pub struct DeleteDeployment {
   /// The id or name of the deployment to delete.
   pub id: String,
@@ -93,10 +97,11 @@ pub struct DeleteDeployment {
 /// field changes occur from out of date local state.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Deployment)]
+#[error(serror::Error)]
 pub struct UpdateDeployment {
   /// The deployment id to update.
   pub id: String,
@@ -112,10 +117,12 @@ pub struct UpdateDeployment {
 /// `docker rename ...`.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
+#[error(serror::Error)]
 pub struct RenameDeployment {
   /// The id of the deployment to rename.
   pub id: String,

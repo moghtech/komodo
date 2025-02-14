@@ -1,5 +1,5 @@
 import { AuthResponses, ExecuteResponses, ReadResponses, UserResponses, WriteResponses } from "./responses.js";
-import { AuthRequest, ExecuteRequest, ReadRequest, UserRequest, WriteRequest } from "./types.js";
+import { AuthRequest, ExecuteRequest, ReadRequest, UpdateListItem, UserRequest, WriteRequest } from "./types.js";
 export * as Types from "./types.js";
 type InitOptions = {
     type: "jwt";
@@ -13,6 +13,11 @@ type InitOptions = {
         secret: string;
     };
 };
+export declare class CancelToken {
+    cancelled: boolean;
+    constructor();
+    cancel(): void;
+}
 /** Initialize a new client for Komodo */
 export declare function KomodoClient(url: string, options: InitOptions): {
     /**
@@ -88,4 +93,18 @@ export declare function KomodoClient(url: string, options: InitOptions): {
     }>>(type: T, params: Req["params"]) => Promise<ExecuteResponses[Req["type"]]>;
     /** Returns the version of Komodo Core the client is calling to. */
     core_version: () => Promise<string>;
+    /**
+     * Subscribes to the update websocket with automatic reconnect loop.
+     *
+     * Note. Awaiting this method will never finish.
+     */
+    subscribe_to_update_websocket: ({ on_update, on_login, on_close, retry_timeout_ms, cancel, on_cancel, }: {
+        on_update: (update: UpdateListItem) => void;
+        on_login?: () => void;
+        on_open?: () => void;
+        on_close?: () => void;
+        retry_timeout_ms?: number;
+        cancel?: CancelToken;
+        on_cancel?: () => void;
+    }) => Promise<void>;
 };

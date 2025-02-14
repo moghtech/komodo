@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -15,10 +15,11 @@ use super::KomodoWriteRequest;
 /// Create a procedure. Response: [Procedure].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateProcedureResponse)]
+#[error(serror::Error)]
 pub struct CreateProcedure {
   /// The name given to newly created build.
   pub name: String,
@@ -36,10 +37,11 @@ pub type CreateProcedureResponse = Procedure;
 /// of the procedure at the given `id`. Response: [Procedure].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CopyProcedureResponse)]
+#[error(serror::Error)]
 pub struct CopyProcedure {
   /// The name of the new procedure.
   pub name: String,
@@ -56,10 +58,11 @@ pub type CopyProcedureResponse = Procedure;
 /// Response: [Procedure]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteProcedureResponse)]
+#[error(serror::Error)]
 pub struct DeleteProcedure {
   /// The id or name of the procedure to delete.
   pub id: String,
@@ -80,10 +83,11 @@ pub type DeleteProcedureResponse = Procedure;
 /// field changes occur from out of date local state.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateProcedureResponse)]
+#[error(serror::Error)]
 pub struct UpdateProcedure {
   /// The id of the procedure to update.
   pub id: String,
@@ -100,10 +104,12 @@ pub type UpdateProcedureResponse = Procedure;
 /// Response: [Update].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
+#[error(serror::Error)]
 pub struct RenameProcedure {
   /// The id or name of the Procedure to rename.
   pub id: String,

@@ -1,27 +1,19 @@
 use anyhow::Context;
-use komodo_client::{
-  api::read::{
-    GetVariable, GetVariableResponse, ListVariables,
-    ListVariablesResponse,
-  },
-  entities::user::User,
-};
+use komodo_client::api::read::*;
 use mongo_indexed::doc;
 use mungos::{find::find_collect, mongodb::options::FindOptions};
 use resolver_api::Resolve;
 
-use crate::{
-  helpers::query::get_variable,
-  state::{db_client, State},
-};
+use crate::{helpers::query::get_variable, state::db_client};
 
-impl Resolve<GetVariable, User> for State {
+use super::ReadArgs;
+
+impl Resolve<ReadArgs> for GetVariable {
   async fn resolve(
-    &self,
-    GetVariable { name }: GetVariable,
-    user: User,
-  ) -> anyhow::Result<GetVariableResponse> {
-    let mut variable = get_variable(&name).await?;
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetVariableResponse> {
+    let mut variable = get_variable(&self.name).await?;
     if !variable.is_secret || user.admin {
       return Ok(variable);
     }
@@ -30,12 +22,11 @@ impl Resolve<GetVariable, User> for State {
   }
 }
 
-impl Resolve<ListVariables, User> for State {
+impl Resolve<ReadArgs> for ListVariables {
   async fn resolve(
-    &self,
-    ListVariables {}: ListVariables,
-    user: User,
-  ) -> anyhow::Result<ListVariablesResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListVariablesResponse> {
     let variables = find_collect(
       &db_client().variables,
       None,

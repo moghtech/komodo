@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -11,10 +11,11 @@ use super::KomodoReadRequest;
 /// Response: [UserGroup].
 #[typeshare]
 #[derive(
-  Debug, Clone, Serialize, Deserialize, Request, EmptyTraits,
+  Debug, Clone, Serialize, Deserialize, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetUserGroupResponse)]
+#[error(serror::Error)]
 pub struct GetUserGroup {
   /// Name or Id
   pub user_group: String,
@@ -31,10 +32,11 @@ pub type GetUserGroupResponse = UserGroup;
 /// and users can see user groups to which they belong.
 #[typeshare]
 #[derive(
-  Debug, Clone, Default, Serialize, Deserialize, Request, EmptyTraits,
+  Debug, Clone, Default, Serialize, Deserialize, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListUserGroupsResponse)]
+#[error(serror::Error)]
 pub struct ListUserGroups {}
 
 #[typeshare]

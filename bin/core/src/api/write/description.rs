@@ -5,33 +5,34 @@ use komodo_client::{
     action::Action, alerter::Alerter, build::Build, builder::Builder,
     deployment::Deployment, procedure::Procedure, repo::Repo,
     server::Server, server_template::ServerTemplate, stack::Stack,
-    sync::ResourceSync, user::User, ResourceTarget,
+    sync::ResourceSync, ResourceTarget,
   },
 };
 use resolver_api::Resolve;
 
-use crate::{resource, state::State};
+use crate::resource;
 
-impl Resolve<UpdateDescription, User> for State {
-  #[instrument(name = "UpdateDescription", skip(self, user))]
+use super::WriteArgs;
+
+impl Resolve<WriteArgs> for UpdateDescription {
+  #[instrument(name = "UpdateDescription", skip(user))]
   async fn resolve(
-    &self,
-    UpdateDescription {
-      target,
-      description,
-    }: UpdateDescription,
-    user: User,
-  ) -> anyhow::Result<UpdateDescriptionResponse> {
-    match target {
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<UpdateDescriptionResponse> {
+    match self.target {
       ResourceTarget::System(_) => {
-        return Err(anyhow!(
-          "cannot update description of System resource target"
-        ))
+        return Err(
+          anyhow!(
+            "cannot update description of System resource target"
+          )
+          .into(),
+        )
       }
       ResourceTarget::Server(id) => {
         resource::update_description::<Server>(
           &id,
-          &description,
+          &self.description,
           &user,
         )
         .await?;
@@ -39,7 +40,7 @@ impl Resolve<UpdateDescription, User> for State {
       ResourceTarget::Deployment(id) => {
         resource::update_description::<Deployment>(
           &id,
-          &description,
+          &self.description,
           &user,
         )
         .await?;
@@ -47,7 +48,7 @@ impl Resolve<UpdateDescription, User> for State {
       ResourceTarget::Build(id) => {
         resource::update_description::<Build>(
           &id,
-          &description,
+          &self.description,
           &user,
         )
         .await?;
@@ -55,7 +56,7 @@ impl Resolve<UpdateDescription, User> for State {
       ResourceTarget::Repo(id) => {
         resource::update_description::<Repo>(
           &id,
-          &description,
+          &self.description,
           &user,
         )
         .await?;
@@ -63,7 +64,7 @@ impl Resolve<UpdateDescription, User> for State {
       ResourceTarget::Builder(id) => {
         resource::update_description::<Builder>(
           &id,
-          &description,
+          &self.description,
           &user,
         )
         .await?;
@@ -71,7 +72,7 @@ impl Resolve<UpdateDescription, User> for State {
       ResourceTarget::Alerter(id) => {
         resource::update_description::<Alerter>(
           &id,
-          &description,
+          &self.description,
           &user,
         )
         .await?;
@@ -79,7 +80,7 @@ impl Resolve<UpdateDescription, User> for State {
       ResourceTarget::Procedure(id) => {
         resource::update_description::<Procedure>(
           &id,
-          &description,
+          &self.description,
           &user,
         )
         .await?;
@@ -87,7 +88,7 @@ impl Resolve<UpdateDescription, User> for State {
       ResourceTarget::Action(id) => {
         resource::update_description::<Action>(
           &id,
-          &description,
+          &self.description,
           &user,
         )
         .await?;
@@ -95,7 +96,7 @@ impl Resolve<UpdateDescription, User> for State {
       ResourceTarget::ServerTemplate(id) => {
         resource::update_description::<ServerTemplate>(
           &id,
-          &description,
+          &self.description,
           &user,
         )
         .await?;
@@ -103,7 +104,7 @@ impl Resolve<UpdateDescription, User> for State {
       ResourceTarget::ResourceSync(id) => {
         resource::update_description::<ResourceSync>(
           &id,
-          &description,
+          &self.description,
           &user,
         )
         .await?;
@@ -111,7 +112,7 @@ impl Resolve<UpdateDescription, User> for State {
       ResourceTarget::Stack(id) => {
         resource::update_description::<Stack>(
           &id,
-          &description,
+          &self.description,
           &user,
         )
         .await?;

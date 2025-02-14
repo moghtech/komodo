@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -15,10 +15,11 @@ use super::KomodoWriteRequest;
 /// Create an alerter. Response: [Alerter].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Alerter)]
+#[error(serror::Error)]
 pub struct CreateAlerter {
   /// The name given to newly created alerter.
   pub name: String,
@@ -33,10 +34,11 @@ pub struct CreateAlerter {
 /// of the alerter at the given `id`. Response: [Alerter].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Alerter)]
+#[error(serror::Error)]
 pub struct CopyAlerter {
   /// The name of the new alerter.
   pub name: String,
@@ -50,10 +52,11 @@ pub struct CopyAlerter {
 /// Response: [Alerter]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Alerter)]
+#[error(serror::Error)]
 pub struct DeleteAlerter {
   /// The id or name of the alerter to delete.
   pub id: String,
@@ -69,10 +72,11 @@ pub struct DeleteAlerter {
 /// field changes occur from out of date local state.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Alerter)]
+#[error(serror::Error)]
 pub struct UpdateAlerter {
   /// The id of the alerter to update.
   pub id: String,
@@ -86,10 +90,12 @@ pub struct UpdateAlerter {
 /// Response: [Update].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
+#[error(serror::Error)]
 pub struct RenameAlerter {
   /// The id or name of the Alerter to rename.
   pub id: String,

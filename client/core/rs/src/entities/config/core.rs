@@ -27,7 +27,7 @@ use super::{empty_or_redacted, DockerRegistry, GitProvider};
 /// although the lower case format can still be parsed.
 ///
 /// *Note.* The Komodo Core docker image includes the default core configuration found at
-/// [https://github.com/mbecker20/komodo/blob/main/config/core.config.toml](https://github.com/mbecker20/komodo/blob/main/config/core.config.toml).
+/// [https://github.com/moghtech/komodo/blob/main/config/core.config.toml](https://github.com/moghtech/komodo/blob/main/config/core.config.toml).
 /// To configure the core api, you can either mount your own custom configuration file to
 /// `/config/config.toml` inside the container,
 /// or simply override whichever fields you need using the environment.
@@ -227,12 +227,12 @@ fn default_config_path() -> String {
 /// and then applying any config field overrides specified in the environment.
 ///
 /// *Note.* The Komodo Core docker image includes the default core configuration found at
-/// [https://github.com/mbecker20/komodo/blob/main/config/core.config.toml](https://github.com/mbecker20/komodo/blob/main/config/core.config.toml).
+/// [https://github.com/moghtech/komodo/blob/main/config/core.config.toml](https://github.com/moghtech/komodo/blob/main/config/core.config.toml).
 /// To configure the core api, you can either mount your own custom configuration file to
 /// `/config/config.toml` inside the container,
 /// or simply override whichever fields you need using the environment.
 ///
-/// Refer to the [example file](https://github.com/mbecker20/komodo/blob/main/config/core.config.toml) for a full example.
+/// Refer to the [example file](https://github.com/moghtech/komodo/blob/main/config/core.config.toml) for a full example.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CoreConfig {
   // ===========
