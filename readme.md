@@ -4,7 +4,7 @@ A tool to build and deploy software across many servers.
 
 🦎 [See the docs](https://komo.do)
 
-🦎 [Try the Demo](https://demo.komo.do) - Login: `demo` : `demo`
+🦎 [Try the Demo](https://demo.komo.do) - Login: `komodo` : `komodo`
 
 🦎 [See the Build Server](https://build.komo.do)  - Login: `komodo` : `komodo`
 
