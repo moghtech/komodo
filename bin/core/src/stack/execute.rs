@@ -85,7 +85,7 @@ impl ExecuteCompose for StartStack {
     _: Self::Extras,
   ) -> anyhow::Result<Log> {
     let service_args = if !services.is_empty() {
-      services.join(" ")
+      format!(" {}", services.join(" "))
     } else {
       String::new()
     };
@@ -107,7 +107,7 @@ impl ExecuteCompose for RestartStack {
     _: Self::Extras,
   ) -> anyhow::Result<Log> {
     let service_args = if !services.is_empty() {
-      services.join(" ")
+      format!(" {}", services.join(" "))
     } else {
       String::new()
     };
@@ -129,7 +129,7 @@ impl ExecuteCompose for PauseStack {
     _: Self::Extras,
   ) -> anyhow::Result<Log> {
     let service_args = if !services.is_empty() {
-      services.join(" ")
+      format!(" {}", services.join(" "))
     } else {
       String::new()
     };
@@ -151,7 +151,7 @@ impl ExecuteCompose for UnpauseStack {
     _: Self::Extras,
   ) -> anyhow::Result<Log> {
     let service_args = if !services.is_empty() {
-      services.join(" ")
+      format!(" {}", services.join(" "))
     } else {
       String::new()
     };
@@ -173,7 +173,7 @@ impl ExecuteCompose for StopStack {
     timeout: Self::Extras,
   ) -> anyhow::Result<Log> {
     let service_args = if !services.is_empty() {
-      services.join(" ")
+      format!(" {}", services.join(" "))
     } else {
       String::new()
     };
@@ -196,7 +196,7 @@ impl ExecuteCompose for DestroyStack {
     (timeout, remove_orphans): Self::Extras,
   ) -> anyhow::Result<Log> {
     let service_args = if !services.is_empty() {
-      services.join(" ")
+      format!(" {}", services.join(" "))
     } else {
       String::new()
     };
