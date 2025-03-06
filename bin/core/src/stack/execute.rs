@@ -76,6 +76,14 @@ pub async fn execute_compose<T: ExecuteCompose>(
   Ok(update)
 }
 
+fn service_args(services: &[String]) -> String {
+  if !services.is_empty() {
+    format!(" {}", services.join(" "))
+  } else {
+    String::new()
+  }
+}
+
 impl ExecuteCompose for StartStack {
   type Extras = ();
   async fn execute(
@@ -84,11 +92,7 @@ impl ExecuteCompose for StartStack {
     services: Vec<String>,
     _: Self::Extras,
   ) -> anyhow::Result<Log> {
-    let service_args = if !services.is_empty() {
-      format!(" {}", services.join(" "))
-    } else {
-      String::new()
-    };
+    let service_args = service_args(&services);
     periphery
       .request(ComposeExecution {
         project: stack.project_name(false),
@@ -106,11 +110,7 @@ impl ExecuteCompose for RestartStack {
     services: Vec<String>,
     _: Self::Extras,
   ) -> anyhow::Result<Log> {
-    let service_args = if !services.is_empty() {
-      format!(" {}", services.join(" "))
-    } else {
-      String::new()
-    };
+    let service_args = service_args(&services);
     periphery
       .request(ComposeExecution {
         project: stack.project_name(false),
@@ -128,11 +128,7 @@ impl ExecuteCompose for PauseStack {
     services: Vec<String>,
     _: Self::Extras,
   ) -> anyhow::Result<Log> {
-    let service_args = if !services.is_empty() {
-      format!(" {}", services.join(" "))
-    } else {
-      String::new()
-    };
+    let service_args = service_args(&services);
     periphery
       .request(ComposeExecution {
         project: stack.project_name(false),
@@ -150,11 +146,7 @@ impl ExecuteCompose for UnpauseStack {
     services: Vec<String>,
     _: Self::Extras,
   ) -> anyhow::Result<Log> {
-    let service_args = if !services.is_empty() {
-      format!(" {}", services.join(" "))
-    } else {
-      String::new()
-    };
+    let service_args = service_args(&services);
     periphery
       .request(ComposeExecution {
         project: stack.project_name(false),
@@ -172,11 +164,7 @@ impl ExecuteCompose for StopStack {
     services: Vec<String>,
     timeout: Self::Extras,
   ) -> anyhow::Result<Log> {
-    let service_args = if !services.is_empty() {
-      format!(" {}", services.join(" "))
-    } else {
-      String::new()
-    };
+    let service_args = service_args(&services);
     let maybe_timeout = maybe_timeout(timeout);
     periphery
       .request(ComposeExecution {
@@ -195,11 +183,7 @@ impl ExecuteCompose for DestroyStack {
     services: Vec<String>,
     (timeout, remove_orphans): Self::Extras,
   ) -> anyhow::Result<Log> {
-    let service_args = if !services.is_empty() {
-      format!(" {}", services.join(" "))
-    } else {
-      String::new()
-    };
+    let service_args = service_args(&services);
     let maybe_timeout = maybe_timeout(timeout);
     let maybe_remove_orphans = if remove_orphans {
       " --remove-orphans"
