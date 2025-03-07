@@ -603,12 +603,24 @@ pub type StackQuery = ResourceQuery<StackQuerySpecifics>;
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
 pub struct StackQuerySpecifics {
+  /// Query only for Stacks on these Servers.
+  /// If empty, does not filter by Server.
+  /// Only accepts Server id (not name).
+  #[serde(default)]
+  pub server_ids: Vec<String>,
   /// Filter syncs by their repo.
+  #[serde(default)]
   pub repos: Vec<String>,
+  /// Query only for Stack with available image updates.
+  pub update_available: Option<bool>,
 }
 
 impl super::resource::AddFilters for StackQuerySpecifics {
   fn add_filters(&self, filters: &mut Document) {
+    if !self.server_ids.is_empty() {
+      filters
+        .insert("config.server_id", doc! { "$in": &self.server_ids });
+    }
     if !self.repos.is_empty() {
       filters.insert("config.repo", doc! { "$in": &self.repos });
     }

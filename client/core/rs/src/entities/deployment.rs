@@ -453,11 +453,20 @@ pub type DeploymentQuery = ResourceQuery<DeploymentQuerySpecifics>;
   Debug, Clone, Default, Serialize, Deserialize, DefaultBuilder,
 )]
 pub struct DeploymentQuerySpecifics {
+  /// Query only for Deployments on these Servers.
+  /// If empty, does not filter by Server.
+  /// Only accepts Server id (not name).
   #[serde(default)]
   pub server_ids: Vec<String>,
 
+  /// Query only for Deployments with these Builds attached.
+  /// If empty, does not filter by Build.
+  /// Only accepts Build id (not name).
   #[serde(default)]
   pub build_ids: Vec<String>,
+
+  /// Query only for Deployments with available image updates.
+  pub update_available: Option<bool>,
 }
 
 impl super::resource::AddFilters for DeploymentQuerySpecifics {

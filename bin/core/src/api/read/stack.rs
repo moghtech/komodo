@@ -194,10 +194,29 @@ impl Resolve<ReadArgs> for ListStacks {
     } else {
       get_all_tags(None).await?
     };
-    Ok(
+    let update_available_filter =
+      self.query.specific.update_available;
+    let stacks =
       resource::list_for_user::<Stack>(self.query, user, &all_tags)
-        .await?,
-    )
+        .await?;
+    let stacks = if let Some(update_available_filter) =
+      update_available_filter
+    {
+      stacks
+        .into_iter()
+        .filter(|stack| {
+          stack
+            .info
+            .services
+            .iter()
+            .any(|service| service.update_available)
+            == update_available_filter
+        })
+        .collect()
+    } else {
+      stacks
+    };
+    Ok(stacks)
   }
 }
 
