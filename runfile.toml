@@ -3,8 +3,16 @@ description = "starts the frontend in dev mode"
 path = "frontend"
 cmd = "yarn dev"
 
+[yarn-install]
+description = "downloads latest javacript dependencies for client and frontend"
+cmd = """
+cd frontend && yarn && \
+cd ../client/core/ts && yarn
+"""
+
 [gen-client]
 description = "generates typescript types and build the ts client"
+after = "yarn-install"
 cmd = """
 node ./client/core/ts/generate_types.mjs && \
 cd ./client/core/ts && yarn build && \
