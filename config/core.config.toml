@@ -174,17 +174,20 @@ oidc_provider = "https://oidc.provider.internal/application/o/komodo"
 ## Optional, no default.
 oidc_redirect_host = ""
 
-## Give the OIDC Client ID.
+## Set the OIDC Client ID.
 ## Env: KOMODO_OIDC_CLIENT_ID or KOMODO_OIDC_CLIENT_ID_FILE
 oidc_client_id = ""
 
-## Give the OIDC Client Secret.
+## Set the OIDC Client Secret.
+## If the OIDC provider supports PKCE-only flow,
+## the client secret is not necessary and can be ommitted or left empty.
 ## Env: KOMODO_OIDC_CLIENT_SECRET or KOMODO_OIDC_CLIENT_SECRET_FILE
 oidc_client_secret = ""
 
 ## If true, use the full email for usernames.
 ## Otherwise, the @address will be stripped,
 ## making usernames more concise.
+## Note. This does not work for all OIDC providers.
 ## Env: KOMODO_OIDC_USE_FULL_EMAIL
 ## Default: false.
 oidc_use_full_email = false
