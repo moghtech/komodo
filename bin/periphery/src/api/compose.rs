@@ -1,11 +1,11 @@
 use std::{fmt::Write, path::PathBuf};
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use command::run_komodo_command;
 use formatting::format_serror;
-use git::{write_commit_file, GitRes};
+use git::{GitRes, write_commit_file};
 use komodo_client::entities::{
-  stack::ComposeProject, to_komodo_name, update::Log, FileContents,
+  FileContents, stack::ComposeProject, to_komodo_name, update::Log,
 };
 use periphery_client::api::{compose::*, git::RepoActionResponse};
 use resolver_api::Resolve;
@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use tokio::fs;
 
 use crate::{
-  compose::{compose_up, docker_compose, write_stack, WriteStackRes},
+  compose::{WriteStackRes, compose_up, docker_compose, write_stack},
   config::periphery_config,
   docker::docker_login,
   helpers::{log_grep, pull_or_clone_stack},

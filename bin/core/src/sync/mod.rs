@@ -2,6 +2,7 @@ use std::{collections::HashMap, str::FromStr};
 
 use anyhow::anyhow;
 use komodo_client::entities::{
+  ResourceTarget, ResourceTargetVariant,
   action::Action,
   alerter::Alerter,
   build::Build,
@@ -15,7 +16,6 @@ use komodo_client::entities::{
   sync::ResourceSync,
   tag::Tag,
   toml::{ResourceToml, ResourcesToml},
-  ResourceTarget, ResourceTargetVariant,
 };
 use mungos::mongodb::bson::oid::ObjectId;
 use toml::ToToml;

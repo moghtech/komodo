@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use anyhow::Context;
 use komodo_client::entities::{
+  ResourceTargetVariant,
   sync::{DiffData, ResourceDiff},
   tag::Tag,
   toml::ResourceToml,
-  ResourceTargetVariant,
 };
 use mungos::find::find_collect;
 use partial_derive2::MaybeNone;

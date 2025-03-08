@@ -1,10 +1,11 @@
 use std::{collections::HashSet, sync::OnceLock, time::Instant};
 
-use anyhow::{anyhow, Context};
-use axum::{middleware, routing::post, Extension, Router};
+use anyhow::{Context, anyhow};
+use axum::{Extension, Router, middleware, routing::post};
 use komodo_client::{
   api::read::*,
   entities::{
+    ResourceTarget,
     build::Build,
     builder::{Builder, BuilderConfig},
     config::{DockerRegistry, GitProvider},
@@ -12,7 +13,6 @@ use komodo_client::{
     server::Server,
     sync::ResourceSync,
     user::User,
-    ResourceTarget,
   },
 };
 use resolver_api::Resolve;
@@ -315,7 +315,7 @@ impl Resolve<ReadArgs> for ListSecrets {
         _ => {
           return Err(
             anyhow!("target must be `Server` or `Builder`").into(),
-          )
+          );
         }
       };
       if let Some(id) = server_id {
@@ -373,7 +373,7 @@ impl Resolve<ReadArgs> for ListGitProvidersFromConfig {
         _ => {
           return Err(
             anyhow!("target must be `Server` or `Builder`").into(),
-          )
+          );
         }
       }
     }
@@ -473,7 +473,7 @@ impl Resolve<ReadArgs> for ListDockerRegistriesFromConfig {
         _ => {
           return Err(
             anyhow!("target must be `Server` or `Builder`").into(),
-          )
+          );
         }
       }
     }

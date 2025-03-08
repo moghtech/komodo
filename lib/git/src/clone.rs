@@ -6,12 +6,12 @@ use command::{
 };
 use formatting::format_serror;
 use komodo_client::entities::{
-  all_logs_success, komodo_timestamp, update::Log, CloneArgs,
-  EnvironmentVar,
+  CloneArgs, EnvironmentVar, all_logs_success, komodo_timestamp,
+  update::Log,
 };
 use run_command::async_run_command;
 
-use crate::{get_commit_hash_log, GitRes};
+use crate::{GitRes, get_commit_hash_log};
 
 /// Will delete the existing repo folder,
 /// clone the repo, get the latest hash / message,

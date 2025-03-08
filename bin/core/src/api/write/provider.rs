@@ -1,9 +1,9 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::{
   api::write::*,
   entities::{
-    provider::{DockerRegistryAccount, GitProviderAccount},
     Operation, ResourceTarget,
+    provider::{DockerRegistryAccount, GitProviderAccount},
   },
 };
 use mungos::{

@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::{
   api::{user::CreateApiKey, write::*},
   entities::{

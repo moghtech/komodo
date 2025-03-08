@@ -3,7 +3,7 @@ use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::entities::{tag::Tag, NoData, ResourceTarget};
+use crate::entities::{NoData, ResourceTarget, tag::Tag};
 
 use super::KomodoWriteRequest;
 

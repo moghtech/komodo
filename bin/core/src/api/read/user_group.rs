@@ -5,7 +5,7 @@ use komodo_client::api::read::*;
 use mungos::{
   find::find_collect,
   mongodb::{
-    bson::{doc, oid::ObjectId, Document},
+    bson::{Document, doc, oid::ObjectId},
     options::FindOptions,
   },
 };

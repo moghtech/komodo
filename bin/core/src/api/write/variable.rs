@@ -1,7 +1,7 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::{
   api::write::*,
-  entities::{variable::Variable, Operation, ResourceTarget},
+  entities::{Operation, ResourceTarget, variable::Variable},
 };
 use mungos::mongodb::bson::doc;
 use resolver_api::Resolve;

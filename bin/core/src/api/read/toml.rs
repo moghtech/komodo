@@ -6,11 +6,12 @@ use komodo_client::{
     ListUserGroups,
   },
   entities::{
-    action::Action, alerter::Alerter, build::Build, builder::Builder,
-    deployment::Deployment, permission::PermissionLevel,
-    procedure::Procedure, repo::Repo, resource::ResourceQuery,
-    server::Server, server_template::ServerTemplate, stack::Stack,
-    sync::ResourceSync, toml::ResourcesToml, ResourceTarget,
+    ResourceTarget, action::Action, alerter::Alerter, build::Build,
+    builder::Builder, deployment::Deployment,
+    permission::PermissionLevel, procedure::Procedure, repo::Repo,
+    resource::ResourceQuery, server::Server,
+    server_template::ServerTemplate, stack::Stack,
+    sync::ResourceSync, toml::ResourcesToml,
   },
 };
 use mungos::find::find_collect;
@@ -23,9 +24,9 @@ use crate::{
   resource,
   state::db_client,
   sync::{
-    toml::{convert_resource, ToToml, TOML_PRETTY_OPTIONS},
-    user_groups::convert_user_groups,
     AllResourcesById,
+    toml::{TOML_PRETTY_OPTIONS, ToToml, convert_resource},
+    user_groups::convert_user_groups,
   },
 };
 

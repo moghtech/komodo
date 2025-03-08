@@ -1,11 +1,11 @@
 use std::{collections::HashMap, str::FromStr};
 
-use anyhow::{anyhow, Context};
-use formatting::{colored, format_serror, Color};
+use anyhow::{Context, anyhow};
+use formatting::{Color, colored, format_serror};
 use komodo_client::{
   api::{execute::RunSync, write::RefreshResourceSyncPending},
   entities::{
-    self,
+    self, ResourceTargetVariant,
     action::Action,
     alerter::Alerter,
     build::Build,
@@ -21,7 +21,6 @@ use komodo_client::{
     sync::ResourceSync,
     update::{Log, Update},
     user::sync_user,
-    ResourceTargetVariant,
   },
 };
 use mongo_indexed::doc;
@@ -34,12 +33,12 @@ use crate::{
   resource,
   state::{action_states, db_client},
   sync::{
-    deploy::{
-      build_deploy_cache, deploy_from_cache, SyncDeployParams,
-    },
-    execute::{get_updates_for_execution, ExecuteResourceSync},
-    remote::RemoteResources,
     AllResourcesById, ResourceSyncTrait,
+    deploy::{
+      SyncDeployParams, build_deploy_cache, deploy_from_cache,
+    },
+    execute::{ExecuteResourceSync, get_updates_for_execution},
+    remote::RemoteResources,
   },
 };
 

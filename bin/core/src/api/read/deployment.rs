@@ -1,6 +1,6 @@
 use std::{cmp, collections::HashSet};
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::{
   api::read::*,
   entities::{

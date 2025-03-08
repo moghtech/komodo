@@ -1,12 +1,12 @@
-use std::path::PathBuf;
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use git::GitRes;
-use komodo_client::entities::{update::Log, CloneArgs, LatestCommit};
+use komodo_client::entities::{CloneArgs, LatestCommit, update::Log};
 use periphery_client::api::git::{
   CloneRepo, DeleteRepo, GetLatestCommit, PullOrCloneRepo, PullRepo,
   RenameRepo, RepoActionResponse,
 };
 use resolver_api::Resolve;
+use std::path::PathBuf;
 use tokio::fs;
 
 use crate::config::periphery_config;
@@ -19,11 +19,15 @@ impl Resolve<super::Args> for GetLatestCommit {
   ) -> serror::Result<LatestCommit> {
     let repo_path = match self.path {
       Some(p) => PathBuf::from(p),
-      None => periphery_config().repo_dir.join(self.name)
+      None => periphery_config().repo_dir.join(self.name),
     };
     if !repo_path.is_dir() {
       return Err(
-        anyhow!("Repo path {} is not directory. is it cloned?", repo_path.display()).into(),
+        anyhow!(
+          "Repo path {} is not directory. is it cloned?",
+          repo_path.display()
+        )
+        .into(),
       );
     }
     Ok(git::get_commit_hash_info(&repo_path).await?)

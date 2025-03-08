@@ -37,9 +37,10 @@ mungos.workspace = true
 slack.workspace = true
 svi.workspace = true
 # external
-axum-server.workspace = true
+aws-credential-types.workspace = true
 ordered_hash_map.workspace = true
 openidconnect.workspace = true
+axum-server.workspace = true
 urlencoding.workspace = true
 aws-sdk-ec2.workspace = true
 aws-config.workspace = true

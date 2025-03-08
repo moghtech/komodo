@@ -29,7 +29,7 @@ pub use sync::*;
 
 use crate::{
   api::write::CommitSync,
-  entities::{update::Update, NoData, _Serror, I64},
+  entities::{_Serror, I64, NoData, update::Update},
 };
 
 pub trait KomodoExecuteRequest: HasResponse {}

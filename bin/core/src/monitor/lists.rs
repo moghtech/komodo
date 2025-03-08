@@ -6,8 +6,8 @@ use komodo_client::entities::{
   stack::ComposeProject,
 };
 use periphery_client::{
-  api::{GetDockerLists, GetDockerListsResponse},
   PeripheryClient,
+  api::{GetDockerLists, GetDockerListsResponse},
 };
 
 pub async fn get_docker_lists(

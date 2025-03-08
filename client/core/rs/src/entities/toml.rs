@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use super::{
+  ResourceTarget, ResourceTargetVariant,
   action::_PartialActionConfig, alerter::_PartialAlerterConfig,
   build::_PartialBuildConfig, builder::_PartialBuilderConfig,
   deployment::_PartialDeploymentConfig, permission::PermissionLevel,
@@ -11,7 +12,7 @@ use super::{
   server::_PartialServerConfig,
   server_template::PartialServerTemplateConfig,
   stack::_PartialStackConfig, sync::_PartialResourceSyncConfig,
-  variable::Variable, ResourceTarget, ResourceTargetVariant,
+  variable::Variable,
 };
 
 /// Specifies resources to sync on Komodo

@@ -1,4 +1,4 @@
-use axum::{extract::Path, http::HeaderMap, routing::post, Router};
+use axum::{Router, extract::Path, http::HeaderMap, routing::post};
 use komodo_client::entities::{
   action::Action, build::Build, procedure::Procedure, repo::Repo,
   resource::Resource, stack::Stack, sync::ResourceSync,
@@ -11,13 +11,13 @@ use tracing::Instrument;
 use crate::resource::KomodoResource;
 
 use super::{
+  CustomSecret, VerifyBranch, VerifySecret,
   resources::{
+    RepoWebhookOption, StackWebhookOption, SyncWebhookOption,
     handle_action_webhook, handle_build_webhook,
     handle_procedure_webhook, handle_repo_webhook,
-    handle_stack_webhook, handle_sync_webhook, RepoWebhookOption,
-    StackWebhookOption, SyncWebhookOption,
+    handle_stack_webhook, handle_sync_webhook,
   },
-  CustomSecret, VerifyBranch, VerifySecret,
 };
 
 #[derive(Deserialize)]

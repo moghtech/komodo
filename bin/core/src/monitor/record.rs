@@ -1,5 +1,5 @@
 use komodo_client::entities::stats::{
-  sum_disk_usage, SystemStatsRecord, TotalDiskUsage,
+  SystemStatsRecord, TotalDiskUsage, sum_disk_usage,
 };
 
 use crate::state::{db_client, server_status_cache};

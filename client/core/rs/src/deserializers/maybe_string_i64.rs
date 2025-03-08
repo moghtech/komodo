@@ -1,4 +1,4 @@
-use serde::{de::Visitor, Deserializer};
+use serde::{Deserializer, de::Visitor};
 
 pub fn maybe_string_i64_deserializer<'de, D>(
   deserializer: D,

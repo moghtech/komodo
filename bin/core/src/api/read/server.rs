@@ -4,13 +4,14 @@ use std::{
   sync::{Arc, OnceLock},
 };
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use async_timing_util::{
-  get_timelength_in_ms, unix_timestamp_ms, FIFTEEN_SECONDS_MS,
+  FIFTEEN_SECONDS_MS, get_timelength_in_ms, unix_timestamp_ms,
 };
 use komodo_client::{
   api::read::*,
   entities::{
+    ResourceTarget,
     deployment::Deployment,
     docker::{
       container::{Container, ContainerListItem},
@@ -25,7 +26,6 @@ use komodo_client::{
     stack::{Stack, StackServiceNames},
     stats::{SystemInformation, SystemProcess},
     update::Log,
-    ResourceTarget,
   },
 };
 use mungos::{

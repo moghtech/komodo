@@ -55,8 +55,8 @@ pub fn jwt_client() -> &'static JwtClient {
   })
 }
 
-pub fn github_client(
-) -> Option<&'static HashMap<String, octorust::Client>> {
+pub fn github_client()
+-> Option<&'static HashMap<String, octorust::Client>> {
   static GITHUB_CLIENT: OnceLock<
     Option<HashMap<String, octorust::Client>>,
   > = OnceLock::new();

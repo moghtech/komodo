@@ -46,8 +46,8 @@ pub use user_group::*;
 pub use variable::*;
 
 use crate::entities::{
-  config::{DockerRegistry, GitProvider},
   ResourceTarget, Timelength,
+  config::{DockerRegistry, GitProvider},
 };
 
 pub trait KomodoReadRequest: HasResponse {}

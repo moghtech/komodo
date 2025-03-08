@@ -1,27 +1,27 @@
 use std::time::Duration;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use formatting::muted;
 use komodo_client::entities::{
+  Version,
   builder::{AwsBuilderConfig, Builder, BuilderConfig},
   komodo_timestamp,
   server::Server,
   server_template::aws::AwsServerTemplateConfig,
   update::{Log, Update},
-  Version,
 };
 use periphery_client::{
-  api::{self, GetVersionResponse},
   PeripheryClient,
+  api::{self, GetVersionResponse},
 };
 
 use crate::{
   cloud::{
-    aws::ec2::{
-      launch_ec2_instance, terminate_ec2_instance_with_retry,
-      Ec2Instance,
-    },
     BuildCleanupData,
+    aws::ec2::{
+      Ec2Instance, launch_ec2_instance,
+      terminate_ec2_instance_with_retry,
+    },
   },
   config::core_config,
   helpers::update::update_update,

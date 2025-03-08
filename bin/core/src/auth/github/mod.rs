@@ -1,6 +1,6 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use axum::{
-  extract::Query, response::Redirect, routing::get, Router,
+  Router, extract::Query, response::Redirect, routing::get,
 };
 use komodo_client::entities::{
   komodo_timestamp,

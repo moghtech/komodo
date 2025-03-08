@@ -3,7 +3,7 @@ use std::{fs, path::PathBuf};
 use anyhow::Context;
 use formatting::format_serror;
 use komodo_client::entities::{
-  stack::Stack, update::Log, CloneArgs, FileContents,
+  CloneArgs, FileContents, stack::Stack, update::Log,
 };
 
 use crate::{config::core_config, helpers::git_token};

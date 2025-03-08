@@ -1,5 +1,6 @@
 use anyhow::Context;
 use komodo_client::entities::{
+  MergePartial, Operation, ResourceTargetVariant,
   builder::{
     Builder, BuilderConfig, BuilderConfigDiff, BuilderConfigVariant,
     BuilderListItem, BuilderListItemInfo, BuilderQuerySpecifics,
@@ -10,11 +11,10 @@ use komodo_client::entities::{
   server::Server,
   update::Update,
   user::User,
-  MergePartial, Operation, ResourceTargetVariant,
 };
 use mungos::mongodb::{
-  bson::{doc, to_document, Document},
   Collection,
+  bson::{Document, doc, to_document},
 };
 
 use crate::state::db_client;

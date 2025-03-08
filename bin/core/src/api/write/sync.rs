@@ -1,11 +1,11 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use formatting::format_serror;
 use komodo_client::{
   api::{read::ExportAllResourcesToToml, write::*},
   entities::{
-    self,
+    self, CloneArgs, NoData, Operation, ResourceTarget,
     action::Action,
     alert::{Alert, AlertData, SeverityLevel},
     alerter::Alerter,
@@ -27,7 +27,6 @@ use komodo_client::{
     to_komodo_name,
     update::{Log, Update},
     user::sync_user,
-    CloneArgs, NoData, Operation, ResourceTarget,
   },
 };
 use mungos::{
@@ -52,8 +51,8 @@ use crate::{
   resource,
   state::{db_client, github_client},
   sync::{
-    deploy::SyncDeployParams, remote::RemoteResources,
-    view::push_updates_for_view, AllResourcesById,
+    AllResourcesById, deploy::SyncDeployParams,
+    remote::RemoteResources, view::push_updates_for_view,
   },
 };
 
@@ -165,7 +164,9 @@ async fn write_sync_file_contents_on_host(
 
   if let Err(e) =
     fs::write(&full_path, &contents).await.with_context(|| {
-      format!("Failed to write resource file contents to {full_path:?}")
+      format!(
+        "Failed to write resource file contents to {full_path:?}"
+      )
     })
   {
     update.push_error_log("Write File", format_serror(&e.into()));
@@ -261,7 +262,9 @@ async fn write_sync_file_contents_git(
 
   if let Err(e) =
     fs::write(&full_path, &contents).await.with_context(|| {
-      format!("Failed to write resource file contents to {full_path:?}")
+      format!(
+        "Failed to write resource file contents to {full_path:?}"
+      )
     })
   {
     update.push_error_log("Write File", format_serror(&e.into()));

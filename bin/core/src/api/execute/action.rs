@@ -317,8 +317,8 @@ fn delete_file(
         if name == file {
           if let Err(e) = fs::remove_file(entry.path()).await {
             warn!(
-            "Failed to clean up generated file after action execution | {e:#}"
-          );
+              "Failed to clean up generated file after action execution | {e:#}"
+            );
           };
           return true;
         }

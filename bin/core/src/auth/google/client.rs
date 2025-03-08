@@ -1,12 +1,12 @@
 use std::sync::OnceLock;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use jwt::Token;
 use komodo_client::entities::config::core::{
   CoreConfig, OauthCredentials,
 };
 use reqwest::StatusCode;
-use serde::{de::DeserializeOwned, Deserialize};
+use serde::{Deserialize, de::DeserializeOwned};
 use serde_json::Value;
 use tokio::sync::Mutex;
 
@@ -49,15 +49,21 @@ impl GoogleOauthClient {
       return None;
     }
     if host.is_empty() {
-      warn!("google oauth is enabled, but 'config.host' is not configured");
+      warn!(
+        "google oauth is enabled, but 'config.host' is not configured"
+      );
       return None;
     }
     if id.is_empty() {
-      warn!("google oauth is enabled, but 'config.google_oauth.id' is not configured");
+      warn!(
+        "google oauth is enabled, but 'config.google_oauth.id' is not configured"
+      );
       return None;
     }
     if secret.is_empty() {
-      warn!("google oauth is enabled, but 'config.google_oauth.secret' is not configured");
+      warn!(
+        "google oauth is enabled, but 'config.google_oauth.secret' is not configured"
+      );
       return None;
     }
     let scopes = urlencoding::encode(

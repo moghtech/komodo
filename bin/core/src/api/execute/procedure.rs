@@ -1,6 +1,6 @@
 use std::pin::Pin;
 
-use formatting::{bold, colored, format_serror, muted, Color};
+use formatting::{Color, bold, colored, format_serror, muted};
 use komodo_client::{
   api::execute::{
     BatchExecutionResponse, BatchRunProcedure, RunProcedure,

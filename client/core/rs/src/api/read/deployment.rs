@@ -4,13 +4,13 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::entities::{
+  I64, SearchCombinator, U64,
   deployment::{
     Deployment, DeploymentActionState, DeploymentListItem,
     DeploymentQuery, DeploymentState,
   },
   docker::container::{ContainerListItem, ContainerStats},
   update::Log,
-  SearchCombinator, I64, U64,
 };
 
 use super::KomodoReadRequest;

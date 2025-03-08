@@ -3,7 +3,7 @@ use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::entities::{alert::Alert, MongoDocument, I64, U64};
+use crate::entities::{I64, MongoDocument, U64, alert::Alert};
 
 use super::KomodoReadRequest;
 

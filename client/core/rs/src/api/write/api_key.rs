@@ -5,7 +5,7 @@ use typeshare::typeshare;
 
 use crate::{
   api::user::CreateApiKeyResponse,
-  entities::{NoData, I64},
+  entities::{I64, NoData},
 };
 
 use super::KomodoWriteRequest;

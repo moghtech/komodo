@@ -8,11 +8,11 @@ use thiserror::Error;
 use tokio::sync::broadcast;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, info, info_span, warn, Instrument};
+use tracing::{Instrument, debug, info, info_span, warn};
 use typeshare::typeshare;
 use uuid::Uuid;
 
-use crate::{entities::update::UpdateListItem, KomodoClient};
+use crate::{KomodoClient, entities::update::UpdateListItem};
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]

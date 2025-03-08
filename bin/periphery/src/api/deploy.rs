@@ -5,13 +5,13 @@ use command::{
 use formatting::format_serror;
 use komodo_client::{
   entities::{
+    EnvironmentVar,
     deployment::{
-      conversions_from_str, extract_registry_domain, Conversion,
-      Deployment, DeploymentConfig, DeploymentImage, RestartMode,
+      Conversion, Deployment, DeploymentConfig, DeploymentImage,
+      RestartMode, conversions_from_str, extract_registry_domain,
     },
     environment_vars_from_str, to_komodo_name,
     update::Log,
-    EnvironmentVar,
   },
   parsers::QUOTE_PATTERN,
 };
@@ -149,7 +149,9 @@ fn docker_run_command(
   );
   let command = parse_command(command);
   let extra_args = parse_extra_args(extra_args);
-  let command = format!("docker run -d --name {name}{ports}{volumes}{network}{restart}{environment}{labels}{extra_args} {image}{command}");
+  let command = format!(
+    "docker run -d --name {name}{ports}{volumes}{network}{restart}{environment}{labels}{extra_args} {image}{command}"
+  );
   Ok(command)
 }
 

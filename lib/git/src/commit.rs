@@ -7,7 +7,7 @@ use komodo_client::entities::{all_logs_success, update::Log};
 use run_command::async_run_command;
 use tokio::fs;
 
-use crate::{get_commit_hash_log, GitRes};
+use crate::{GitRes, get_commit_hash_log};
 
 /// Write file, add, commit, force push.
 /// Repo must be cloned.

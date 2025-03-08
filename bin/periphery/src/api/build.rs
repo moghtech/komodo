@@ -1,15 +1,17 @@
-use anyhow::{anyhow, Context};
+use std::{fmt::Write, path::Path};
+
+use anyhow::{Context, anyhow};
 use command::{
   run_komodo_command, run_komodo_command_with_interpolation,
 };
 use formatting::format_serror;
 use komodo_client::{
   entities::{
+    EnvironmentVar, Version,
     build::{Build, BuildConfig},
     environment_vars_from_str, get_image_name, optional_string,
     to_komodo_name,
     update::Log,
-    EnvironmentVar, Version,
   },
   parsers::QUOTE_PATTERN,
 };
@@ -105,8 +107,12 @@ impl Resolve<super::Args> for build::Build {
 
     let secret_args = environment_vars_from_str(secret_args)
       .context("Invalid secret_args")?;
-    let command_secret_args =
-      parse_secret_args(&secret_args, *skip_secret_interp)?;
+    let command_secret_args = parse_secret_args(
+      &secret_args,
+      &build_dir,
+      *skip_secret_interp,
+    )
+    .await?;
 
     let labels = parse_labels(
       &environment_vars_from_str(labels).context("Invalid labels")?,
@@ -142,8 +148,6 @@ impl Resolve<super::Args> for build::Build {
     {
       logs.push(log)
     }
-
-    cleanup_secret_env_vars(&secret_args);
 
     Ok(logs)
   }
@@ -188,45 +192,59 @@ fn parse_build_args(build_args: &[EnvironmentVar]) -> String {
     .join("")
 }
 
-fn parse_secret_args(
+/// https://docs.docker.com/build/building/secrets/#using-build-secrets
+async fn parse_secret_args(
   secret_args: &[EnvironmentVar],
+  build_dir: &Path,
   skip_secret_interp: bool,
 ) -> anyhow::Result<String> {
   let periphery_config = periphery_config();
-  Ok(
-    secret_args
-      .iter()
-      .map(|EnvironmentVar { variable, value }| {
-        if variable.is_empty() {
-          return Err(anyhow!("secret variable cannot be empty string"))
-        } else if variable.contains('=') {
-          return Err(anyhow!("invalid variable {variable}. variable cannot contain '='"))
-        }
-        let value = if skip_secret_interp {
-          value.to_string()
-        } else {
-          svi::interpolate_variables(
-            value,
-            &periphery_config.secrets,
-            svi::Interpolator::DoubleBrackets,
-            true,
-          )
-          .context(
-            "failed to interpolate periphery secrets into build secrets",
-          )?.0
-        };
-        std::env::set_var(variable, value);
-        anyhow::Ok(format!(" --secret id={variable}"))
-      })
-      .collect::<anyhow::Result<Vec<_>>>()?
-      .join(""),
-  )
-}
-
-fn cleanup_secret_env_vars(secret_args: &[EnvironmentVar]) {
-  secret_args.iter().for_each(
-    |EnvironmentVar { variable, .. }| std::env::remove_var(variable),
-  )
+  let mut res = String::new();
+  for EnvironmentVar { variable, value } in secret_args {
+    // Check edge cases
+    if variable.is_empty() {
+      return Err(anyhow!("secret variable cannot be empty string"));
+    } else if variable.contains('=') {
+      return Err(anyhow!(
+        "invalid variable {variable}. variable cannot contain '='"
+      ));
+    }
+    // Interpolate in value
+    let value = if skip_secret_interp {
+      value.to_string()
+    } else {
+      svi::interpolate_variables(
+        value,
+        &periphery_config.secrets,
+        svi::Interpolator::DoubleBrackets,
+        true,
+      )
+      .context(
+        "Failed to interpolate periphery secrets into build secrets",
+      )?
+      .0
+    };
+    // Write the value to file to mount
+    let path = build_dir.join(variable);
+    tokio::fs::write(&path, value).await.with_context(|| {
+      format!(
+        "Failed to write build secret {variable} to {}",
+        path.display()
+      )
+    })?;
+    // Extend the command
+    write!(
+      &mut res,
+      " --secret id={variable},src={}",
+      path.display()
+    )
+    .with_context(|| {
+      format!(
+        "Failed to format build secret arguments for {variable}"
+      )
+    })?;
+  }
+  Ok(res)
 }
 
 //

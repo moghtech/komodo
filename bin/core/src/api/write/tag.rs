@@ -1,17 +1,17 @@
 use std::str::FromStr;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::{
   api::write::{
     CreateTag, DeleteTag, RenameTag, UpdateTagsOnResource,
     UpdateTagsOnResourceResponse,
   },
   entities::{
-    action::Action, alerter::Alerter, build::Build, builder::Builder,
-    deployment::Deployment, permission::PermissionLevel,
-    procedure::Procedure, repo::Repo, server::Server,
-    server_template::ServerTemplate, stack::Stack,
-    sync::ResourceSync, tag::Tag, ResourceTarget,
+    ResourceTarget, action::Action, alerter::Alerter, build::Build,
+    builder::Builder, deployment::Deployment,
+    permission::PermissionLevel, procedure::Procedure, repo::Repo,
+    server::Server, server_template::ServerTemplate, stack::Stack,
+    sync::ResourceSync, tag::Tag,
   },
 };
 use mungos::{
@@ -118,7 +118,7 @@ impl Resolve<WriteArgs> for UpdateTagsOnResource {
     let WriteArgs { user } = args;
     match self.target {
       ResourceTarget::System(_) => {
-        return Err(anyhow!("Invalid target type: System").into())
+        return Err(anyhow!("Invalid target type: System").into());
       }
       ResourceTarget::Build(id) => {
         resource::get_check_permissions::<Build>(

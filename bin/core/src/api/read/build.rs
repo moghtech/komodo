@@ -6,11 +6,11 @@ use futures::TryStreamExt;
 use komodo_client::{
   api::read::*,
   entities::{
+    Operation,
     build::{Build, BuildActionState, BuildListItem, BuildState},
     config::core::CoreConfig,
     permission::PermissionLevel,
     update::UpdateStatus,
-    Operation,
   },
 };
 use mungos::{

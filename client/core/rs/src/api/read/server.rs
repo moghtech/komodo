@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::entities::{
+  I64, ResourceTarget, SearchCombinator, Timelength, U64,
   docker::{
     container::{Container, ContainerListItem},
     image::{Image, ImageHistoryResponseItem, ImageListItem},
@@ -19,7 +20,6 @@ use crate::entities::{
     SystemInformation, SystemProcess, SystemStats, SystemStatsRecord,
   },
   update::Log,
-  ResourceTarget, SearchCombinator, Timelength, I64, U64,
 };
 
 use super::KomodoReadRequest;

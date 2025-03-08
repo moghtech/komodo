@@ -1,4 +1,5 @@
 use komodo_client::entities::{
+  SystemCommand,
   config::{DockerRegistry, GitProvider},
   docker::{
     container::ContainerListItem, image::ImageListItem,
@@ -6,7 +7,6 @@ use komodo_client::entities::{
   },
   stack::ComposeProject,
   update::Log,
-  SystemCommand,
 };
 use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};

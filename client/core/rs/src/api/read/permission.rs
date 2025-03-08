@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::entities::{
-  permission::{Permission, PermissionLevel, UserTarget},
   ResourceTarget,
+  permission::{Permission, PermissionLevel, UserTarget},
 };
 
 use super::KomodoReadRequest;

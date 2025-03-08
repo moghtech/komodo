@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::{
   api::read::{
     FindUser, FindUserResponse, GetUsername, GetUsernameResponse,
@@ -6,7 +6,7 @@ use komodo_client::{
     ListApiKeysForServiceUserResponse, ListApiKeysResponse,
     ListUsers, ListUsersResponse,
   },
-  entities::user::{admin_service_user, UserConfig},
+  entities::user::{UserConfig, admin_service_user},
 };
 use mungos::{
   by_id::find_one_by_id,

@@ -1,11 +1,11 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use git::GitRes;
 use komodo_client::entities::{
+  CloneArgs,
   sync::{ResourceSync, SyncFileContents},
   to_komodo_name,
   toml::ResourcesToml,
   update::Log,
-  CloneArgs,
 };
 
 use crate::{config::core_config, helpers::git_token};

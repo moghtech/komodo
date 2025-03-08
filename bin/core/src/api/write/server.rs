@@ -2,10 +2,10 @@ use formatting::format_serror;
 use komodo_client::{
   api::write::*,
   entities::{
+    Operation,
     permission::PermissionLevel,
     server::Server,
     update::{Update, UpdateStatus},
-    Operation,
   },
 };
 use periphery_client::api;

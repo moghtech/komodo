@@ -1,5 +1,6 @@
 use anyhow::Context;
 use komodo_client::entities::{
+  Operation, ResourceTarget,
   action::Action,
   alerter::Alerter,
   build::Build,
@@ -13,7 +14,6 @@ use komodo_client::entities::{
   sync::ResourceSync,
   update::{Update, UpdateListItem},
   user::User,
-  Operation, ResourceTarget,
 };
 use mungos::{
   by_id::{find_one_by_id, update_one_by_id},
@@ -263,7 +263,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchDeploy(_data) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
     ExecuteRequest::PullDeployment(data) => (
       Operation::PullDeployment,
@@ -308,7 +308,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchDestroyDeployment(_data) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
 
     // Build
@@ -319,7 +319,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchRunBuild(_data) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
     ExecuteRequest::CancelBuild(data) => (
       Operation::CancelBuild,
@@ -336,7 +336,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchCloneRepo(_data) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
     ExecuteRequest::PullRepo(data) => (
       Operation::PullRepo,
@@ -345,7 +345,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchPullRepo(_data) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
     ExecuteRequest::BuildRepo(data) => (
       Operation::BuildRepo,
@@ -354,7 +354,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchBuildRepo(_data) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
     ExecuteRequest::CancelRepoBuild(data) => (
       Operation::CancelRepoBuild,
@@ -371,7 +371,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchRunProcedure(_) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
 
     // Action
@@ -382,7 +382,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchRunAction(_) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
 
     // Server template
@@ -415,7 +415,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchDeployStack(_data) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
     ExecuteRequest::DeployStackIfChanged(data) => (
       Operation::DeployStack,
@@ -424,7 +424,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchDeployStackIfChanged(_data) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
     ExecuteRequest::StartStack(data) => (
       if !data.services.is_empty() {
@@ -497,7 +497,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchDestroyStack(_data) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
 
     // Alerter

@@ -14,11 +14,11 @@ use std::{collections::HashMap, path::PathBuf, str::FromStr};
 use serde::{Deserialize, Serialize};
 
 use crate::entities::{
-  logger::{LogConfig, LogLevel, StdioLogMode},
   Timelength,
+  logger::{LogConfig, LogLevel, StdioLogMode},
 };
 
-use super::{empty_or_redacted, DockerRegistry, GitProvider};
+use super::{DockerRegistry, GitProvider, empty_or_redacted};
 
 /// # Komodo Core Environment Variables
 ///

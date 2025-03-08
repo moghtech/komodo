@@ -1,4 +1,4 @@
-use bson::{doc, Document};
+use bson::{Document, doc};
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
 use partial_derive2::Partial;
@@ -12,8 +12,8 @@ use crate::deserializers::{
 };
 
 use super::{
+  I64, ResourceTarget,
   resource::{Resource, ResourceListItem, ResourceQuery},
-  ResourceTarget, I64,
 };
 
 #[typeshare]

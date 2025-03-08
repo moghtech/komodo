@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::entities::{
-  update::{Update, UpdateListItem},
   MongoDocument,
+  update::{Update, UpdateListItem},
 };
 
 use super::KomodoReadRequest;

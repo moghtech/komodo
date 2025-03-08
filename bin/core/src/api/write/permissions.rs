@@ -1,17 +1,17 @@
 use std::str::FromStr;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::{
   api::write::*,
   entities::{
-    permission::{UserTarget, UserTargetVariant},
     ResourceTarget, ResourceTargetVariant,
+    permission::{UserTarget, UserTargetVariant},
   },
 };
 use mungos::{
   by_id::{find_one_by_id, update_one_by_id},
   mongodb::{
-    bson::{doc, oid::ObjectId, Document},
+    bson::{Document, doc, oid::ObjectId},
     options::UpdateOptions,
   },
 };

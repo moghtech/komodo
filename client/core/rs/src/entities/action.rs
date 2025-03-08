@@ -1,4 +1,4 @@
-use bson::{doc, Document};
+use bson::{Document, doc};
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
 use partial_derive2::Partial;

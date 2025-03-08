@@ -1,10 +1,10 @@
-use bson::{doc, Document};
+use bson::{Document, doc};
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
 use partial_derive2::Partial;
 use serde::{
-  de::{value::MapAccessDeserializer, Visitor},
   Deserialize, Deserializer, Serialize,
+  de::{Visitor, value::MapAccessDeserializer},
 };
 use strum::Display;
 use typeshare::typeshare;
@@ -19,8 +19,8 @@ use crate::{
 };
 
 use super::{
-  resource::{Resource, ResourceListItem, ResourceQuery},
   NoData, SystemCommand, Version,
+  resource::{Resource, ResourceListItem, ResourceQuery},
 };
 
 #[typeshare]
@@ -390,7 +390,10 @@ impl<'de> Visitor<'de> for ImageRegistryVisitor {
     &self,
     formatter: &mut std::fmt::Formatter,
   ) -> std::fmt::Result {
-    write!(formatter, "{{ \"domain\": string, \"account\": string, \"organization\": string }}")
+    write!(
+      formatter,
+      "{{ \"domain\": string, \"account\": string, \"organization\": string }}"
+    )
   }
 
   fn visit_map<A>(self, map: A) -> Result<Self::Value, A::Error>
@@ -420,7 +423,10 @@ impl<'de> Visitor<'de> for OptionImageRegistryVisitor {
     &self,
     formatter: &mut std::fmt::Formatter,
   ) -> std::fmt::Result {
-    write!(formatter, "null or {{ \"domain\": string, \"account\": string, \"organization\": string }}")
+    write!(
+      formatter,
+      "null or {{ \"domain\": string, \"account\": string, \"organization\": string }}"
+    )
   }
 
   fn visit_map<A>(self, map: A) -> Result<Self::Value, A::Error>

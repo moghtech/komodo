@@ -3,16 +3,16 @@ use command::run_komodo_command;
 use derive_variants::EnumVariants;
 use futures::TryFutureExt;
 use komodo_client::entities::{
+  SystemCommand,
   config::{DockerRegistry, GitProvider},
   update::Log,
-  SystemCommand,
 };
 use periphery_client::api::{
-  build::*, compose::*, container::*, git::*, image::*, network::*,
-  stats::*, volume::*, GetDockerLists, GetDockerListsResponse,
-  GetHealth, GetHealthResponse, GetVersion, GetVersionResponse,
+  GetDockerLists, GetDockerListsResponse, GetHealth,
+  GetHealthResponse, GetVersion, GetVersionResponse,
   ListDockerRegistries, ListGitProviders, ListSecrets, PruneSystem,
-  RunCommand,
+  RunCommand, build::*, compose::*, container::*, git::*, image::*,
+  network::*, stats::*, volume::*,
 };
 use resolver_api::Resolve;
 use response::Response;

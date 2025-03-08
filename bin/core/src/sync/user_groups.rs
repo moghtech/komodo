@@ -1,7 +1,7 @@
 use std::{cmp::Ordering, collections::HashMap};
 
 use anyhow::Context;
-use formatting::{bold, colored, muted, Color};
+use formatting::{Color, bold, colored, muted};
 use komodo_client::{
   api::{
     read::ListUserTargetPermissions,
@@ -11,13 +11,13 @@ use komodo_client::{
     },
   },
   entities::{
+    ResourceTarget, ResourceTargetVariant,
     permission::{PermissionLevel, UserTarget},
     sync::DiffData,
     toml::{PermissionToml, UserGroupToml},
     update::Log,
-    user::{sync_user, User},
+    user::{User, sync_user},
     user_group::UserGroup,
-    ResourceTarget, ResourceTargetVariant,
   },
 };
 use mungos::find::find_collect;
@@ -29,7 +29,7 @@ use crate::{
   state::db_client,
 };
 
-use super::{toml::TOML_PRETTY_OPTIONS, AllResourcesById};
+use super::{AllResourcesById, toml::TOML_PRETTY_OPTIONS};
 
 pub struct UpdateItem {
   user_group: UserGroupToml,

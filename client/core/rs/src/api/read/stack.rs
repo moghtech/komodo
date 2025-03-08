@@ -4,11 +4,11 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::entities::{
+  SearchCombinator, U64,
   stack::{
     Stack, StackActionState, StackListItem, StackQuery, StackService,
   },
   update::Log,
-  SearchCombinator, U64,
 };
 
 use super::KomodoReadRequest;

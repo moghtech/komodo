@@ -1,17 +1,17 @@
 use std::{pin::Pin, time::Instant};
 
 use anyhow::Context;
-use axum::{middleware, routing::post, Extension, Router};
-use axum_extra::{headers::ContentType, TypedHeader};
+use axum::{Extension, Router, middleware, routing::post};
+use axum_extra::{TypedHeader, headers::ContentType};
 use derive_variants::{EnumVariants, ExtractVariant};
 use formatting::format_serror;
 use futures::future::join_all;
 use komodo_client::{
   api::execute::*,
   entities::{
+    Operation,
     update::{Log, Update},
     user::User,
-    Operation,
   },
 };
 use mungos::by_id::find_one_by_id;
@@ -25,7 +25,7 @@ use uuid::Uuid;
 use crate::{
   auth::auth_request,
   helpers::update::{init_execution_update, update_update},
-  resource::{list_full_for_user_using_pattern, KomodoResource},
+  resource::{KomodoResource, list_full_for_user_using_pattern},
   state::db_client,
 };
 

@@ -1,7 +1,7 @@
 use komodo_client::entities::{
+  FileContents, SearchCombinator,
   stack::{ComposeProject, Stack, StackServiceNames},
   update::Log,
-  FileContents, SearchCombinator,
 };
 use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};

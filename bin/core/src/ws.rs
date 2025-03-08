@@ -1,17 +1,17 @@
 use anyhow::anyhow;
 use axum::{
+  Router,
   extract::{
-    ws::{Message, WebSocket},
     WebSocketUpgrade,
+    ws::{Message, WebSocket},
   },
   response::IntoResponse,
   routing::get,
-  Router,
 };
 use futures::{SinkExt, StreamExt};
 use komodo_client::{
   entities::{
-    permission::PermissionLevel, user::User, ResourceTarget,
+    ResourceTarget, permission::PermissionLevel, user::User,
   },
   ws::WsLoginMessage,
 };

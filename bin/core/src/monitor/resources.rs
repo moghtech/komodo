@@ -7,6 +7,7 @@ use anyhow::Context;
 use komodo_client::{
   api::execute::{Deploy, DeployStack},
   entities::{
+    ResourceTarget,
     alert::{Alert, AlertData, SeverityLevel},
     build::Build,
     deployment::{Deployment, DeploymentImage, DeploymentState},
@@ -17,7 +18,6 @@ use komodo_client::{
     komodo_timestamp,
     stack::{Stack, StackService, StackServiceNames, StackState},
     user::auto_redeploy_user,
-    ResourceTarget,
   },
 };
 
@@ -222,8 +222,8 @@ pub async fn update_deployment_cache(
 }
 
 /// (StackId, Service)
-fn stack_alert_sent_cache(
-) -> &'static Mutex<HashSet<(String, String)>> {
+fn stack_alert_sent_cache()
+-> &'static Mutex<HashSet<(String, String)>> {
   static CACHE: OnceLock<Mutex<HashSet<(String, String)>>> =
     OnceLock::new();
   CACHE.get_or_init(Default::default)

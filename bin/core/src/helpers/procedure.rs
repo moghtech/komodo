@@ -1,7 +1,7 @@
 use std::time::{Duration, Instant};
 
-use anyhow::{anyhow, Context};
-use formatting::{bold, colored, format_serror, muted, Color};
+use anyhow::{Context, anyhow};
+use formatting::{Color, bold, colored, format_serror, muted};
 use futures::future::join_all;
 use komodo_client::{
   api::execute::*,
@@ -25,7 +25,7 @@ use crate::{
     execute::{ExecuteArgs, ExecuteRequest},
     write::WriteArgs,
   },
-  resource::{list_full_for_user_using_pattern, KomodoResource},
+  resource::{KomodoResource, list_full_for_user_using_pattern},
   state::db_client,
 };
 
@@ -206,7 +206,7 @@ async fn execute_stage(
   join_all(futures)
     .await
     .into_iter()
-    .collect::<anyhow::Result<_>>()?;
+    .collect::<anyhow::Result<Vec<_>>>()?;
   Ok(())
 }
 

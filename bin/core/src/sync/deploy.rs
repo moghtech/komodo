@@ -1,7 +1,7 @@
 use std::{collections::HashMap, time::Duration};
 
-use anyhow::{anyhow, Context};
-use formatting::{bold, colored, format_serror, muted, Color};
+use anyhow::{Context, anyhow};
+use formatting::{Color, bold, colored, format_serror, muted};
 use futures::future::join_all;
 use komodo_client::{
   api::{
@@ -9,6 +9,7 @@ use komodo_client::{
     read::ListBuildVersions,
   },
   entities::{
+    FileContents, ResourceTarget,
     deployment::{
       Deployment, DeploymentConfig, DeploymentImage, DeploymentState,
       PartialDeploymentConfig,
@@ -18,7 +19,6 @@ use komodo_client::{
     toml::ResourceToml,
     update::Log,
     user::sync_user,
-    FileContents, ResourceTarget,
   },
 };
 use resolver_api::Resolve;
@@ -729,10 +729,14 @@ async fn insert_target_using_after_list<'a>(
                   )),
                 );
                 return Ok(());
-              },
+              }
               // The parent will not deploy, do nothing here.
-              Some(None) => {},
-              None => return Err(anyhow!("Did not find parent in cache after build recursion. This should not happen."))
+              Some(None) => {}
+              None => {
+                return Err(anyhow!(
+                  "Did not find parent in cache after build recursion. This should not happen."
+                ));
+              }
             }
           }
           ResourceTarget::Stack(name) => {
@@ -772,10 +776,14 @@ async fn insert_target_using_after_list<'a>(
                   )),
                 );
                 return Ok(());
-              },
+              }
               // The parent will not deploy, do nothing here.
-              Some(None) => {},
-              None => return Err(anyhow!("Did not find parent in cache after build recursion. This should not happen."))
+              Some(None) => {}
+              None => {
+                return Err(anyhow!(
+                  "Did not find parent in cache after build recursion. This should not happen."
+                ));
+              }
             }
           }
           _ => unreachable!(),

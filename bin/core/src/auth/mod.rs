@@ -1,5 +1,5 @@
 use ::jwt::VerifyWithKey;
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use async_timing_util::unix_timestamp_ms;
 use axum::{
   extract::Request, http::HeaderMap, middleware::Next,
@@ -71,7 +71,9 @@ pub async fn get_user_id_from_headers(
     }
     _ => {
       // AUTH FAIL
-      Err(anyhow!("must attach either AUTHORIZATION header with jwt OR pass X-API-KEY and X-API-SECRET"))
+      Err(anyhow!(
+        "must attach either AUTHORIZATION header with jwt OR pass X-API-KEY and X-API-SECRET"
+      ))
     }
   }
 }

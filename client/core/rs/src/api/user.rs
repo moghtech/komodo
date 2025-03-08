@@ -3,7 +3,7 @@ use resolver_api::{HasResponse, Resolve};
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::entities::{NoData, ResourceTarget, I64};
+use crate::entities::{I64, NoData, ResourceTarget};
 
 pub trait KomodoUserRequest: HasResponse {}
 

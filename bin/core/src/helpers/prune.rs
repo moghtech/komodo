@@ -1,6 +1,6 @@
 use anyhow::Context;
 use async_timing_util::{
-  unix_timestamp_ms, wait_until_timelength, Timelength, ONE_DAY_MS,
+  ONE_DAY_MS, Timelength, unix_timestamp_ms, wait_until_timelength,
 };
 use futures::future::join_all;
 use mungos::{find::find_collect, mongodb::bson::doc};

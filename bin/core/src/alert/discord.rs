@@ -94,7 +94,9 @@ pub async fn send_alert(
     } => {
       let link = resource_link(ResourceTargetVariant::Deployment, id);
       let to = fmt_docker_container_state(to);
-      format!("📦 Deployment **{name}** is now **{to}**\nserver: **{server_name}**\nprevious: **{from}**\n{link}")
+      format!(
+        "📦 Deployment **{name}** is now **{to}**\nserver: **{server_name}**\nprevious: **{from}**\n{link}"
+      )
     }
     AlertData::DeploymentImageUpdateAvailable {
       id,
@@ -104,7 +106,9 @@ pub async fn send_alert(
       image,
     } => {
       let link = resource_link(ResourceTargetVariant::Deployment, id);
-      format!("⬆ Deployment **{name}** has an update available\nserver: **{server_name}**\nimage: **{image}**\n{link}")
+      format!(
+        "⬆ Deployment **{name}** has an update available\nserver: **{server_name}**\nimage: **{image}**\n{link}"
+      )
     }
     AlertData::DeploymentAutoUpdated {
       id,
@@ -114,7 +118,9 @@ pub async fn send_alert(
       image,
     } => {
       let link = resource_link(ResourceTargetVariant::Deployment, id);
-      format!("⬆ Deployment **{name}** was updated automatically ⏫\nserver: **{server_name}**\nimage: **{image}**\n{link}")
+      format!(
+        "⬆ Deployment **{name}** was updated automatically ⏫\nserver: **{server_name}**\nimage: **{image}**\n{link}"
+      )
     }
     AlertData::StackStateChange {
       id,
@@ -126,7 +132,9 @@ pub async fn send_alert(
     } => {
       let link = resource_link(ResourceTargetVariant::Stack, id);
       let to = fmt_stack_state(to);
-      format!("🥞 Stack **{name}** is now {to}\nserver: **{server_name}**\nprevious: **{from}**\n{link}")
+      format!(
+        "🥞 Stack **{name}** is now {to}\nserver: **{server_name}**\nprevious: **{from}**\n{link}"
+      )
     }
     AlertData::StackImageUpdateAvailable {
       id,
@@ -137,7 +145,9 @@ pub async fn send_alert(
       image,
     } => {
       let link = resource_link(ResourceTargetVariant::Stack, id);
-      format!("⬆ Stack **{name}** has an update available\nserver: **{server_name}**\nservice: **{service}**\nimage: **{image}**\n{link}")
+      format!(
+        "⬆ Stack **{name}** has an update available\nserver: **{server_name}**\nservice: **{service}**\nimage: **{image}**\n{link}"
+      )
     }
     AlertData::StackAutoUpdated {
       id,
@@ -150,13 +160,17 @@ pub async fn send_alert(
       let images_label =
         if images.len() > 1 { "images" } else { "image" };
       let images = images.join(", ");
-      format!("⬆ Stack **{name}** was updated automatically ⏫\nserver: **{server_name}**\n{images_label}: **{images}**\n{link}")
+      format!(
+        "⬆ Stack **{name}** was updated automatically ⏫\nserver: **{server_name}**\n{images_label}: **{images}**\n{link}"
+      )
     }
     AlertData::AwsBuilderTerminationFailed {
       instance_id,
       message,
     } => {
-      format!("{level} | Failed to terminated AWS builder instance\ninstance id: **{instance_id}**\n{message}")
+      format!(
+        "{level} | Failed to terminated AWS builder instance\ninstance id: **{instance_id}**\n{message}"
+      )
     }
     AlertData::ResourceSyncPendingUpdates { id, name } => {
       let link =
@@ -167,7 +181,9 @@ pub async fn send_alert(
     }
     AlertData::BuildFailed { id, name, version } => {
       let link = resource_link(ResourceTargetVariant::Build, id);
-      format!("{level} | Build **{name}** failed\nversion: **v{version}**\n{link}")
+      format!(
+        "{level} | Build **{name}** failed\nversion: **v{version}**\n{link}"
+      )
     }
     AlertData::RepoBuildFailed { id, name } => {
       let link = resource_link(ResourceTargetVariant::Repo, id);

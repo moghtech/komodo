@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::entities::{
-  action::{Action, _PartialActionConfig},
-  update::Update,
   NoData,
+  action::{_PartialActionConfig, Action},
+  update::Update,
 };
 
 use super::KomodoWriteRequest;

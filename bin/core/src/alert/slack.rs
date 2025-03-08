@@ -73,7 +73,9 @@ pub async fn send_alert(
       let region = fmt_region(region);
       match alert.level {
         SeverityLevel::Ok => {
-          let text = format!("{level} | *{name}*{region} cpu usage at *{percentage:.1}%*");
+          let text = format!(
+            "{level} | *{name}*{region} cpu usage at *{percentage:.1}%*"
+          );
           let blocks = vec![
             Block::header(level),
             Block::section(format!(
@@ -87,7 +89,9 @@ pub async fn send_alert(
           (text, blocks.into())
         }
         _ => {
-          let text = format!("{level} | *{name}*{region} cpu usage at *{percentage:.1}%* 📈");
+          let text = format!(
+            "{level} | *{name}*{region} cpu usage at *{percentage:.1}%* 📈"
+          );
           let blocks = vec![
             Block::header(level),
             Block::section(format!(
@@ -113,7 +117,9 @@ pub async fn send_alert(
       let percentage = 100.0 * used_gb / total_gb;
       match alert.level {
         SeverityLevel::Ok => {
-          let text = format!("{level} | *{name}*{region} memory usage at *{percentage:.1}%* 💾");
+          let text = format!(
+            "{level} | *{name}*{region} memory usage at *{percentage:.1}%* 💾"
+          );
           let blocks = vec![
             Block::header(level),
             Block::section(format!(
@@ -130,7 +136,9 @@ pub async fn send_alert(
           (text, blocks.into())
         }
         _ => {
-          let text = format!("{level} | *{name}*{region} memory usage at *{percentage:.1}%* 💾");
+          let text = format!(
+            "{level} | *{name}*{region} memory usage at *{percentage:.1}%* 💾"
+          );
           let blocks = vec![
             Block::header(level),
             Block::section(format!(
@@ -160,7 +168,9 @@ pub async fn send_alert(
       let percentage = 100.0 * used_gb / total_gb;
       match alert.level {
         SeverityLevel::Ok => {
-          let text = format!("{level} | *{name}*{region} disk usage at *{percentage:.1}%* | mount point: *{path:?}* 💿");
+          let text = format!(
+            "{level} | *{name}*{region} disk usage at *{percentage:.1}%* | mount point: *{path:?}* 💿"
+          );
           let blocks = vec![
             Block::header(level),
             Block::section(format!(
@@ -169,12 +179,17 @@ pub async fn send_alert(
             Block::section(format!(
               "mount point: {path:?} | using *{used_gb:.1} GiB* / *{total_gb:.1} GiB*"
             )),
-            Block::section(resource_link(ResourceTargetVariant::Server, id)),
+            Block::section(resource_link(
+              ResourceTargetVariant::Server,
+              id,
+            )),
           ];
           (text, blocks.into())
         }
         _ => {
-          let text = format!("{level} | *{name}*{region} disk usage at *{percentage:.1}%* | mount point: *{path:?}* 💿");
+          let text = format!(
+            "{level} | *{name}*{region} disk usage at *{percentage:.1}%* | mount point: *{path:?}* 💿"
+          );
           let blocks = vec![
             Block::header(level),
             Block::section(format!(
@@ -183,7 +198,10 @@ pub async fn send_alert(
             Block::section(format!(
               "mount point: {path:?} | using *{used_gb:.1} GiB* / *{total_gb:.1} GiB*"
             )),
-            Block::section(resource_link(ResourceTargetVariant::Server, id)),
+            Block::section(resource_link(
+              ResourceTargetVariant::Server,
+              id,
+            )),
           ];
           (text, blocks.into())
         }

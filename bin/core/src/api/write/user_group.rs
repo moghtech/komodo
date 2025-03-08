@@ -1,6 +1,6 @@
 use std::{collections::HashMap, str::FromStr};
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::{
   api::write::{
     AddUserToUserGroup, CreateUserGroup, DeleteUserGroup,

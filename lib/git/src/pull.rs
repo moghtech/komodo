@@ -11,11 +11,11 @@ use command::{
 };
 use formatting::format_serror;
 use komodo_client::entities::{
-  all_logs_success, komodo_timestamp, update::Log, CloneArgs,
-  EnvironmentVar,
+  CloneArgs, EnvironmentVar, all_logs_success, komodo_timestamp,
+  update::Log,
 };
 
-use crate::{get_commit_hash_log, GitRes};
+use crate::{GitRes, get_commit_hash_log};
 
 /// Wait this long after a pull to allow another pull through
 const PULL_TIMEOUT: i64 = 5_000;

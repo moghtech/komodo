@@ -2,10 +2,10 @@ use anyhow::anyhow;
 use komodo_client::{
   api::write::{UpdateDescription, UpdateDescriptionResponse},
   entities::{
-    action::Action, alerter::Alerter, build::Build, builder::Builder,
-    deployment::Deployment, procedure::Procedure, repo::Repo,
-    server::Server, server_template::ServerTemplate, stack::Stack,
-    sync::ResourceSync, ResourceTarget,
+    ResourceTarget, action::Action, alerter::Alerter, build::Build,
+    builder::Builder, deployment::Deployment, procedure::Procedure,
+    repo::Repo, server::Server, server_template::ServerTemplate,
+    stack::Stack, sync::ResourceSync,
   },
 };
 use resolver_api::Resolve;
@@ -27,7 +27,7 @@ impl Resolve<WriteArgs> for UpdateDescription {
             "cannot update description of System resource target"
           )
           .into(),
-        )
+        );
       }
       ResourceTarget::Server(id) => {
         resource::update_description::<Server>(

@@ -18,12 +18,12 @@ use clap::Parser;
 use serde::Deserialize;
 
 use crate::entities::{
-  logger::{LogConfig, LogLevel, StdioLogMode},
   Timelength,
+  logger::{LogConfig, LogLevel, StdioLogMode},
 };
 
 use super::{
-  empty_or_redacted, DockerRegistry, GitProvider, ProviderAccount,
+  DockerRegistry, GitProvider, ProviderAccount, empty_or_redacted,
 };
 
 /// # Periphery Command Line Arguments.

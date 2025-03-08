@@ -1,15 +1,15 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use formatting::format_serror;
 use komodo_client::{
   api::write::*,
   entities::{
+    FileContents, NoData, Operation,
     config::core::CoreConfig,
     permission::PermissionLevel,
     server::ServerState,
     stack::{PartialStackConfig, Stack, StackInfo},
     update::Update,
     user::stack_user,
-    FileContents, NoData, Operation,
   },
 };
 use mungos::mongodb::bson::{doc, to_document};
@@ -33,7 +33,7 @@ use crate::{
   resource,
   stack::{
     get_stack_and_server,
-    remote::{get_repo_compose_contents, RemoteComposeContents},
+    remote::{RemoteComposeContents, get_repo_compose_contents},
     services::extract_services_into_res,
   },
   state::{db_client, github_client},

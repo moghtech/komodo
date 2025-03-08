@@ -1,21 +1,21 @@
 use std::{collections::HashSet, sync::OnceLock};
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use cache::TimeoutCache;
 use formatting::format_serror;
 use komodo_client::{
   api::execute::*,
   entities::{
+    Version,
     build::{Build, ImageRegistryConfig},
     deployment::{
-      extract_registry_domain, Deployment, DeploymentImage,
+      Deployment, DeploymentImage, extract_registry_domain,
     },
     get_image_name, komodo_timestamp, optional_string,
     permission::PermissionLevel,
     server::Server,
     update::{Log, Update},
     user::User,
-    Version,
   },
 };
 use periphery_client::api;

@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
-use formatting::{bold, colored, muted, Color};
+use formatting::{Color, bold, colored, muted};
 use komodo_client::{
   api::execute::Execution,
   entities::{
+    ResourceTarget, ResourceTargetVariant,
     action::Action,
     alerter::Alerter,
     build::Build,
@@ -18,7 +19,6 @@ use komodo_client::{
     tag::Tag,
     update::Log,
     user::sync_user,
-    ResourceTarget, ResourceTargetVariant,
   },
 };
 use partial_derive2::{MaybeNone, PartialDiff};
@@ -27,16 +27,16 @@ use crate::{
   api::write::WriteArgs,
   resource::KomodoResource,
   sync::{
-    execute::{run_update_description, run_update_tags},
     ToUpdateItem,
+    execute::{run_update_description, run_update_tags},
   },
 };
 
 use super::{
+  AllResourcesById, ResourceSyncTrait, ToCreate, ToDelete, ToUpdate,
   execute::ExecuteResourceSync,
   include_resource_by_resource_type_and_name,
-  include_resource_by_tags, AllResourcesById, ResourceSyncTrait,
-  ToCreate, ToDelete, ToUpdate,
+  include_resource_by_tags,
 };
 
 impl ResourceSyncTrait for Server {

@@ -3,7 +3,7 @@ use std::{sync::OnceLock, time::Duration};
 use anyhow::Context;
 use reqwest::StatusCode;
 use resolver_api::HasResponse;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 use serde_json::json;
 
 pub mod api;

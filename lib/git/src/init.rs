@@ -3,7 +3,7 @@ use std::path::Path;
 use command::run_komodo_command;
 use formatting::format_serror;
 use komodo_client::entities::{
-  all_logs_success, update::Log, CloneArgs,
+  CloneArgs, all_logs_success, update::Log,
 };
 
 pub async fn init_folder_as_repo(

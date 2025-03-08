@@ -5,7 +5,7 @@ use std::{
 
 use anyhow::Context;
 use formatting::format_serror;
-use komodo_client::entities::{update::Log, EnvironmentVar};
+use komodo_client::entities::{EnvironmentVar, update::Log};
 
 /// If the environment was written and needs to be passed to the compose command,
 /// will return the env file PathBuf.

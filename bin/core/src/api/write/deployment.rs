@@ -1,7 +1,8 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::{
   api::write::*,
   entities::{
+    Operation,
     deployment::{
       Deployment, DeploymentImage, DeploymentState,
       PartialDeploymentConfig, RestartMode,
@@ -12,7 +13,6 @@ use komodo_client::{
     server::{Server, ServerState},
     to_komodo_name,
     update::Update,
-    Operation,
   },
 };
 use mungos::{by_id::update_one_by_id, mongodb::bson::doc};
@@ -58,12 +58,8 @@ impl Resolve<WriteArgs> for CopyDeployment {
       )
       .await?;
     Ok(
-      resource::create::<Deployment>(
-        &self.name,
-        config.into(),
-        user,
-      )
-      .await?,
+      resource::create::<Deployment>(&self.name, config.into(), user)
+        .await?,
     )
   }
 }

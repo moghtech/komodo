@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::entities::{
+  I64, Version,
   build::{Build, BuildActionState, BuildListItem, BuildQuery},
-  Version, I64,
 };
 
 use super::KomodoReadRequest;

@@ -1,24 +1,24 @@
 use std::{str::FromStr, time::Duration};
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use futures::future::join_all;
 use komodo_client::{
   api::write::{CreateBuilder, CreateServer},
   entities::{
+    ResourceTarget,
     builder::{PartialBuilderConfig, PartialServerBuilderConfig},
     komodo_timestamp,
     permission::{Permission, PermissionLevel, UserTarget},
     server::{PartialServerConfig, Server},
     sync::ResourceSync,
     update::Log,
-    user::{system_user, User},
-    ResourceTarget,
+    user::{User, system_user},
   },
 };
 use mongo_indexed::Document;
 use mungos::{
   find::find_collect,
-  mongodb::bson::{doc, oid::ObjectId, to_document, Bson},
+  mongodb::bson::{Bson, doc, oid::ObjectId, to_document},
 };
 use periphery_client::PeripheryClient;
 use rand::Rng;
@@ -208,7 +208,9 @@ pub async fn startup_cleanup() {
 async fn startup_in_progress_update_cleanup() {
   let log = Log::error(
     "Komodo shutdown",
-    String::from("Komodo shutdown during execution. If this is a build, the builder may not have been terminated.")
+    String::from(
+      "Komodo shutdown during execution. If this is a build, the builder may not have been terminated.",
+    ),
   );
   // This static log won't fail to serialize, unwrap ok.
   let log = to_document(&log).unwrap();
@@ -319,7 +321,10 @@ pub async fn ensure_first_server_and_builder() {
     {
       Ok(server) => server,
       Err(e) => {
-        error!("Failed to initialize 'first_server'. Failed to CreateServer. {:#}", e.error);
+        error!(
+          "Failed to initialize 'first_server'. Failed to CreateServer. {:#}",
+          e.error
+        );
         return;
       }
     }
@@ -342,6 +347,9 @@ pub async fn ensure_first_server_and_builder() {
   })
   .await
   {
-    error!("Failed to initialize 'first_builder' | Failed to CreateBuilder | {:#}", e.error);
+    error!(
+      "Failed to initialize 'first_builder' | Failed to CreateBuilder | {:#}",
+      e.error
+    );
   }
 }

@@ -1,6 +1,6 @@
 use std::{fmt::Write, path::PathBuf};
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use command::{
   run_komodo_command, run_komodo_command_multiline,
   run_komodo_command_with_interpolation,
@@ -8,14 +8,14 @@ use command::{
 use formatting::format_serror;
 use git::environment;
 use komodo_client::entities::{
-  all_logs_success, environment_vars_from_str,
+  CloneArgs, FileContents, all_logs_success,
+  environment_vars_from_str,
   stack::{
     ComposeFile, ComposeService, ComposeServiceDeploy, Stack,
     StackServiceNames,
   },
   to_komodo_name,
   update::Log,
-  CloneArgs, FileContents,
 };
 use periphery_client::api::{
   compose::ComposeUpResponse,
@@ -87,7 +87,9 @@ pub async fn compose_up(
     }
   }
   if !res.missing_files.is_empty() {
-    return Err(anyhow!("A compose file doesn't exist after writing stack. Ensure the run_directory and file_paths are correct."));
+    return Err(anyhow!(
+      "A compose file doesn't exist after writing stack. Ensure the run_directory and file_paths are correct."
+    ));
   }
 
   for (path, full_path) in &file_paths {
@@ -110,8 +112,8 @@ pub async fn compose_up(
           contents: error,
         });
         return Err(anyhow!(
-            "failed to read compose file at {full_path:?}, stopping run"
-          ));
+          "failed to read compose file at {full_path:?}, stopping run"
+        ));
       }
     };
     res.file_contents.push(FileContents {
@@ -489,7 +491,9 @@ pub async fn write_stack(
     ))
   } else if stack.config.repo.is_empty() {
     if stack.config.file_contents.trim().is_empty() {
-      return Err(anyhow!("Must either input compose file contents directly, or use files on host / git repo options."));
+      return Err(anyhow!(
+        "Must either input compose file contents directly, or use files on host / git repo options."
+      ));
     }
     // ==============
     // UI BASED FILES
@@ -698,7 +702,9 @@ async fn compose_down(
   let success = log.success;
   res.logs.push(log);
   if !success {
-    return Err(anyhow!("Failed to bring down existing container(s) with docker compose down. Stopping run."));
+    return Err(anyhow!(
+      "Failed to bring down existing container(s) with docker compose down. Stopping run."
+    ));
   }
 
   Ok(())

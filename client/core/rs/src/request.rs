@@ -1,16 +1,16 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use reqwest::StatusCode;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 use serde_json::json;
 use serror::deserialize_error;
 
 use crate::{
+  KomodoClient,
   api::{
     auth::KomodoAuthRequest, execute::KomodoExecuteRequest,
     read::KomodoReadRequest, user::KomodoUserRequest,
     write::KomodoWriteRequest,
   },
-  KomodoClient,
 };
 
 impl KomodoClient {

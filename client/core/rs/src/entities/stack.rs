@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::OnceLock};
 
-use bson::{doc, Document};
+use bson::{Document, doc};
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
 use partial_derive2::Partial;
@@ -16,9 +16,10 @@ use crate::deserializers::{
 };
 
 use super::{
+  FileContents, SystemCommand,
   docker::container::ContainerListItem,
   resource::{Resource, ResourceListItem, ResourceQuery},
-  to_komodo_name, FileContents, SystemCommand,
+  to_komodo_name,
 };
 
 #[typeshare]

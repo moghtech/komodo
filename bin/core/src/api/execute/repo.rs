@@ -1,6 +1,6 @@
 use std::{collections::HashSet, future::IntoFuture, time::Duration};
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use formatting::format_serror;
 use komodo_client::{
   api::{execute::*, write::RefreshRepoCache},
@@ -695,7 +695,9 @@ impl Resolve<ExecuteArgs> for CancelRepoBuild {
       )
       .await
       {
-        warn!("failed to set CancelRepoBuild Update status Complete after timeout | {e:#}")
+        warn!(
+          "failed to set CancelRepoBuild Update status Complete after timeout | {e:#}"
+        )
       }
     });
 

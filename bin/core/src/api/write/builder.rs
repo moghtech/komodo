@@ -72,9 +72,6 @@ impl Resolve<WriteArgs> for RenameBuilder {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Update> {
-    Ok(
-      resource::rename::<Builder>(&self.id, &self.name, user)
-        .await?,
-    )
+    Ok(resource::rename::<Builder>(&self.id, &self.name, user).await?)
   }
 }

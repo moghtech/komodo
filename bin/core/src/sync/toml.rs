@@ -339,7 +339,7 @@ impl ToToml for Repo {
         match key.as_str() {
           "server_id" => return Ok((String::from("server"), value)),
           "builder_id" => {
-            return Ok((String::from("builder"), value))
+            return Ok((String::from("builder"), value));
           }
           _ => {}
         }

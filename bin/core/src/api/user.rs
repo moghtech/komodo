@@ -1,7 +1,7 @@
 use std::{collections::VecDeque, time::Instant};
 
-use anyhow::{anyhow, Context};
-use axum::{middleware, routing::post, Extension, Json, Router};
+use anyhow::{Context, anyhow};
+use axum::{Extension, Json, Router, middleware, routing::post};
 use derive_variants::EnumVariants;
 use komodo_client::{
   api::user::*,

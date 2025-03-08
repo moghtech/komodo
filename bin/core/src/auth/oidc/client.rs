@@ -2,9 +2,9 @@ use std::sync::OnceLock;
 
 use anyhow::Context;
 use openidconnect::{
-  core::*, Client, ClientId, ClientSecret, EmptyAdditionalClaims,
+  Client, ClientId, ClientSecret, EmptyAdditionalClaims,
   EndpointMaybeSet, EndpointNotSet, EndpointSet, IssuerUrl,
-  RedirectUrl, StandardErrorResponse,
+  RedirectUrl, StandardErrorResponse, core::*,
 };
 
 use crate::config::core_config;

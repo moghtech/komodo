@@ -1,4 +1,4 @@
-use serde::{de::Visitor, Deserializer};
+use serde::{Deserializer, de::Visitor};
 
 /// Using this ensures the file contents end with trailing '\n'
 pub fn file_contents_deserializer<'de, D>(

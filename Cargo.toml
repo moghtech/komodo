@@ -8,8 +8,8 @@ members = [
 ]
 
 [workspace.package]
-version = "1.17.0-dev-5"
-edition = "2021"
+version = "1.17.0-dev-6"
+edition = "2024"
 authors = ["mbecker20 <becker.maxh@gmail.com>"]
 license = "GPL-3.0-or-later"
 repository = "https://github.com/moghtech/komodo"
@@ -102,8 +102,9 @@ bollard = "0.18.1"
 sysinfo = "0.33.1"
 
 # CLOUD
-aws-config = "1.5.17"
-aws-sdk-ec2 = "1.114.0"
+aws-config = "1.5.18"
+aws-sdk-ec2 = "1.116.0"
+aws-credential-types = "1.2.1"
 
 # MISC
 derive_builder = "0.20.2"

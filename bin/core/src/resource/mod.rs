@@ -3,20 +3,20 @@ use std::{
   str::FromStr,
 };
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use formatting::format_serror;
-use futures::{future::join_all, FutureExt};
+use futures::{FutureExt, future::join_all};
 use komodo_client::{
   api::{read::ExportResourcesToToml, write::CreateTag},
   entities::{
+    Operation, ResourceTarget, ResourceTargetVariant,
     komodo_timestamp,
     permission::PermissionLevel,
     resource::{AddFilters, Resource, ResourceQuery},
     tag::Tag,
     to_komodo_name,
     update::Update,
-    user::{system_user, User},
-    Operation, ResourceTarget, ResourceTargetVariant,
+    user::{User, system_user},
   },
   parsers::parse_string_list,
 };
@@ -24,14 +24,14 @@ use mungos::{
   by_id::{delete_one_by_id, update_one_by_id},
   find::find_collect,
   mongodb::{
-    bson::{doc, oid::ObjectId, to_document, Document},
-    options::FindOptions,
     Collection,
+    bson::{Document, doc, oid::ObjectId, to_document},
+    options::FindOptions,
   },
 };
 use partial_derive2::{Diff, FieldDiff, MaybeNone, PartialDiff};
 use resolver_api::Resolve;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 
 use crate::{
   api::{read::ReadArgs, write::WriteArgs},
@@ -971,7 +971,9 @@ where
     })
     .await
   {
-    warn!("failed to delete_many permissions matching target {target:?} | {e:#}");
+    warn!(
+      "failed to delete_many permissions matching target {target:?} | {e:#}"
+    );
   }
 }
 

@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use komodo_client::entities::{
-  update::Log, CloneArgs, EnvironmentVar, LatestCommit,
+  CloneArgs, EnvironmentVar, LatestCommit, update::Log,
 };
 use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};

@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::{
   api::read::{GetUpdate, ListUpdates, ListUpdatesResponse},
   entities::{
+    ResourceTarget,
     action::Action,
     alerter::Alerter,
     build::Build,
@@ -18,7 +19,6 @@ use komodo_client::{
     sync::ResourceSync,
     update::{Update, UpdateListItem},
     user::User,
-    ResourceTarget,
   },
 };
 use mungos::{
@@ -242,7 +242,7 @@ impl Resolve<ReadArgs> for GetUpdate {
       ResourceTarget::System(_) => {
         return Err(
           anyhow!("user must be admin to view system updates").into(),
-        )
+        );
       }
       ResourceTarget::Server(id) => {
         resource::get_check_permissions::<Server>(

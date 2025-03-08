@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
 use anyhow::Context;
-use formatting::{bold, colored, muted, Color};
+use formatting::{Color, bold, colored, muted};
 use komodo_client::{
   api::write::{UpdateDescription, UpdateTagsOnResource},
   entities::{
-    tag::Tag, toml::ResourceToml, update::Log, user::sync_user,
-    ResourceTargetVariant,
+    ResourceTargetVariant, tag::Tag, toml::ResourceToml, update::Log,
+    user::sync_user,
   },
 };
 use mungos::find::find_collect;

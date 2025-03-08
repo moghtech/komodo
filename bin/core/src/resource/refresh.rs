@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use async_timing_util::{get_timelength_in_ms, Timelength};
+use async_timing_util::{Timelength, get_timelength_in_ms};
 use komodo_client::{
   api::write::{
     RefreshBuildCache, RefreshRepoCache, RefreshResourceSyncPending,
@@ -95,7 +95,9 @@ async fn refresh_deployments() {
         if let Err(e) =
           pull_deployment_inner(deployment, server).await
         {
-          warn!("Failed to pull latest image for Deployment {name} | {e:#}");
+          warn!(
+            "Failed to pull latest image for Deployment {name} | {e:#}"
+          );
         }
       }
     }
@@ -151,15 +153,17 @@ async fn refresh_repos() {
 }
 
 async fn refresh_syncs() {
-  let Ok(syncs) =
-    find_collect(&db_client().resource_syncs, None, None)
-      .await
-      .inspect_err(|e| {
-        warn!(
+  let Ok(syncs) = find_collect(
+    &db_client().resource_syncs,
+    None,
+    None,
+  )
+  .await
+  .inspect_err(|e| {
+    warn!(
       "failed to get resource syncs from db in refresh task | {e:#}"
     )
-      })
-  else {
+  }) else {
     return;
   };
   for sync in syncs {

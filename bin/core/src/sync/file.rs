@@ -3,8 +3,8 @@ use std::{
   path::{Path, PathBuf},
 };
 
-use anyhow::{anyhow, Context};
-use formatting::{bold, colored, format_serror, muted, Color};
+use anyhow::{Context, anyhow};
+use formatting::{Color, bold, colored, format_serror, muted};
 use komodo_client::entities::{
   sync::SyncFileContents,
   toml::{ResourceToml, ResourcesToml},

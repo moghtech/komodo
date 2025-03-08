@@ -6,7 +6,7 @@ use komodo_client::{
   entities::{komodo_timestamp, update::Log},
   parsers::parse_multiline_command,
 };
-use run_command::{async_run_command, CommandOutput};
+use run_command::{CommandOutput, async_run_command};
 use svi::Interpolator;
 
 pub async fn run_komodo_command(
@@ -45,7 +45,7 @@ pub async fn run_komodo_command_multiline(
 
 /// Interpolates provided secrets into (potentially multiline) command,
 /// executes the command, and sanitizes the output to avoid exposing the secrets.
-/// 
+///
 /// Checks to make sure the command is non-empty after being multiline-parsed.
 ///
 /// If `parse_multiline: true`, parses commands out of multiline string
@@ -73,7 +73,7 @@ pub async fn run_komodo_command_with_interpolation(
       return Some(Log::error(
         &format!("{stage} - Interpolate Secrets"),
         format_serror(&e.into()),
-      ))
+      ));
     }
   };
   let mut log = if parse_multiline {

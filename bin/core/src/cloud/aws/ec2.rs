@@ -1,22 +1,22 @@
 use std::{str::FromStr, time::Duration};
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use aws_config::{BehaviorVersion, Region};
 use aws_sdk_ec2::{
+  Client,
   types::{
     BlockDeviceMapping, EbsBlockDevice,
     InstanceNetworkInterfaceSpecification, InstanceStateChange,
     InstanceStateName, InstanceStatus, InstanceType, ResourceType,
     Tag, TagSpecification, VolumeType,
   },
-  Client,
 };
 use base64::Engine;
 use komodo_client::entities::{
+  ResourceTarget,
   alert::{Alert, AlertData, SeverityLevel},
   komodo_timestamp,
   server_template::aws::AwsServerTemplateConfig,
-  ResourceTarget,
 };
 
 use crate::{alert::send_alerts, config::core_config};
@@ -29,20 +29,40 @@ pub struct Ec2Instance {
   pub ip: String,
 }
 
+/// Provides credentials in the core config file to the AWS client
+#[derive(Debug)]
+struct CredentialsFromConfig;
+
+impl aws_credential_types::provider::ProvideCredentials
+  for CredentialsFromConfig
+{
+  fn provide_credentials<'a>(
+    &'a self,
+  ) -> aws_credential_types::provider::future::ProvideCredentials<'a>
+  where
+    Self: 'a,
+  {
+    aws_credential_types::provider::future::ProvideCredentials::new(
+      async {
+        let config = core_config();
+        Ok(aws_credential_types::Credentials::new(
+          &config.aws.access_key_id,
+          &config.aws.secret_access_key,
+          None,
+          None,
+          "komodo-config",
+        ))
+      },
+    )
+  }
+}
+
 #[instrument]
 async fn create_ec2_client(region: String) -> Client {
-  // There may be a better way to pass these keys to client
-  std::env::set_var(
-    "AWS_ACCESS_KEY_ID",
-    &core_config().aws.access_key_id,
-  );
-  std::env::set_var(
-    "AWS_SECRET_ACCESS_KEY",
-    &core_config().aws.secret_access_key,
-  );
   let region = Region::new(region);
   let config = aws_config::defaults(BehaviorVersion::v2024_03_28())
     .region(region)
+    .credentials_provider(CredentialsFromConfig)
     .load()
     .await;
   Client::new(&config)

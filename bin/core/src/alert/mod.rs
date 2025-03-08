@@ -1,21 +1,21 @@
-use std::collections::HashSet;
 use ::slack::types::Block;
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use derive_variants::ExtractVariant;
 use futures::future::join_all;
 use komodo_client::entities::{
+  ResourceTargetVariant,
   alert::{Alert, AlertData, AlertDataVariant, SeverityLevel},
   alerter::*,
   deployment::DeploymentState,
   stack::StackState,
-  ResourceTargetVariant,
 };
 use mungos::{find::find_collect, mongodb::bson::doc};
+use std::collections::HashSet;
 use tracing::Instrument;
 
-use crate::{config::core_config, state::db_client};
 use crate::helpers::interpolate::interpolate_variables_secrets_into_string;
 use crate::helpers::query::get_variables_and_secrets;
+use crate::{config::core_config, state::db_client};
 
 mod discord;
 mod slack;
@@ -136,7 +136,6 @@ async fn send_custom_alert(
   url: &str,
   alert: &Alert,
 ) -> anyhow::Result<()> {
-
   let vars_and_secrets = get_variables_and_secrets().await?;
   let mut global_replacers = HashSet::new();
   let mut secret_replacers = HashSet::new();
@@ -156,9 +155,14 @@ async fn send_custom_alert(
     .send()
     .await
     .map_err(|e| {
-      let replacers = secret_replacers.into_iter().collect::<Vec<_>>();
-      let sanitized_error = svi::replace_in_string(&format!("{e:?}"), &replacers);
-      anyhow::Error::msg(format!("Error with request: {}", sanitized_error))
+      let replacers =
+        secret_replacers.into_iter().collect::<Vec<_>>();
+      let sanitized_error =
+        svi::replace_in_string(&format!("{e:?}"), &replacers);
+      anyhow::Error::msg(format!(
+        "Error with request: {}",
+        sanitized_error
+      ))
     })
     .context("failed at post request to alerter")?;
   let status = res.status();

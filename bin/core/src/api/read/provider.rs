@@ -1,6 +1,6 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::api::read::*;
-use mongo_indexed::{doc, Document};
+use mongo_indexed::{Document, doc};
 use mungos::{
   by_id::find_one_by_id, find::find_collect,
   mongodb::options::FindOptions,

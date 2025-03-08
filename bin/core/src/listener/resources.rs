@@ -22,7 +22,7 @@ use crate::{
   helpers::update::init_execution_update,
 };
 
-use super::{ListenerLockCache, ANY_BRANCH};
+use super::{ANY_BRANCH, ListenerLockCache};
 
 // =======
 //  BUILD

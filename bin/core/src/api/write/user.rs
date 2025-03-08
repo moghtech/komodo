@@ -1,13 +1,13 @@
 use std::str::FromStr;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::{
   api::write::{
     DeleteUser, DeleteUserResponse, UpdateUserPassword,
     UpdateUserPasswordResponse, UpdateUserUsername,
     UpdateUserUsernameResponse,
   },
-  entities::{user::UserConfig, NoData},
+  entities::{NoData, user::UserConfig},
 };
 use mungos::mongodb::bson::{doc, oid::ObjectId};
 use resolver_api::Resolve;

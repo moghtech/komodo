@@ -1,6 +1,6 @@
 use std::{collections::HashSet, future::IntoFuture, time::Duration};
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use formatting::format_serror;
 use futures::future::join_all;
 use komodo_client::{
@@ -560,7 +560,9 @@ impl Resolve<ExecuteArgs> for CancelBuild {
       )
       .await
       {
-        warn!("failed to set CancelBuild Update status Complete after timeout | {e:#}")
+        warn!(
+          "failed to set CancelBuild Update status Complete after timeout | {e:#}"
+        )
       }
     });
 

@@ -1,8 +1,8 @@
 use komodo_client::entities::{
+  SearchCombinator, TerminationSignal,
   deployment::Deployment,
   docker::container::{Container, ContainerStats},
   update::Log,
-  SearchCombinator, TerminationSignal,
 };
 use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};

@@ -3,7 +3,7 @@ use formatting::format_serror;
 use komodo_client::{
   api::write::RefreshResourceSyncPending,
   entities::{
-    komodo_timestamp,
+    Operation, ResourceTargetVariant, komodo_timestamp,
     resource::Resource,
     sync::{
       PartialResourceSyncConfig, ResourceSync, ResourceSyncConfig,
@@ -12,8 +12,7 @@ use komodo_client::{
       ResourceSyncState,
     },
     update::Update,
-    user::{sync_user, User},
-    Operation, ResourceTargetVariant,
+    user::{User, sync_user},
   },
 };
 use mongo_indexed::doc;

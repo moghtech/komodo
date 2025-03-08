@@ -3,7 +3,7 @@ use std::{
   time::Duration,
 };
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use futures::future::join_all;
 use komodo_client::entities::server_template::hetzner::{
   HetznerDatacenter, HetznerServerTemplateConfig, HetznerServerType,

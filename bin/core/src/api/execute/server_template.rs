@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use formatting::format_serror;
 use komodo_client::{
   api::{execute::LaunchServer, write::CreateServer},

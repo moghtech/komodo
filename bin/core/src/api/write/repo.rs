@@ -1,9 +1,10 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use formatting::format_serror;
 use git::GitRes;
 use komodo_client::{
   api::write::*,
   entities::{
+    CloneArgs, NoData, Operation,
     config::core::CoreConfig,
     komodo_timestamp,
     permission::PermissionLevel,
@@ -11,7 +12,6 @@ use komodo_client::{
     server::Server,
     to_komodo_name,
     update::{Log, Update},
-    CloneArgs, NoData, Operation,
   },
 };
 use mongo_indexed::doc;

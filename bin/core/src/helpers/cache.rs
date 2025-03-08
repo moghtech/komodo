@@ -9,9 +9,9 @@ pub struct Cache<K: PartialEq + Eq + Hash, T: Clone + Default> {
 }
 
 impl<
-    K: PartialEq + Eq + Hash + std::fmt::Debug + Clone,
-    T: Clone + Default,
-  > Cache<K, T>
+  K: PartialEq + Eq + Hash + std::fmt::Debug + Clone,
+  T: Clone + Default,
+> Cache<K, T>
 {
   #[instrument(level = "debug", skip(self))]
   pub async fn get(&self, key: &K) -> Option<T> {
@@ -70,9 +70,9 @@ impl<
 }
 
 impl<
-    K: PartialEq + Eq + Hash + std::fmt::Debug + Clone,
-    T: Clone + Default + Busy,
-  > Cache<K, T>
+  K: PartialEq + Eq + Hash + std::fmt::Debug + Clone,
+  T: Clone + Default + Busy,
+> Cache<K, T>
 {
   #[instrument(level = "debug", skip(self))]
   pub async fn busy(&self, id: &K) -> bool {

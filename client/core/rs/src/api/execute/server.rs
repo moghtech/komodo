@@ -4,7 +4,7 @@ use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::entities::{update::Update, TerminationSignal};
+use crate::entities::{TerminationSignal, update::Update};
 
 use super::KomodoExecuteRequest;
 

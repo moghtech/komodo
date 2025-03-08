@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::Context;
-use formatting::{bold, colored, muted, Color};
+use formatting::{Color, bold, colored, muted};
 use komodo_client::{
   api::write::*,
   entities::{

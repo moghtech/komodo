@@ -1,14 +1,14 @@
 use std::net::SocketAddr;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use axum::{
+  Router,
   body::Body,
   extract::ConnectInfo,
   http::{Request, StatusCode},
   middleware::{self, Next},
   response::Response,
   routing::post,
-  Router,
 };
 use derive_variants::ExtractVariant;
 use resolver_api::Resolve;

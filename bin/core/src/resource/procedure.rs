@@ -1,9 +1,10 @@
 use std::time::Duration;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::{
   api::execute::Execution,
   entities::{
+    Operation, ResourceTargetVariant,
     action::Action,
     alerter::Alerter,
     build::Build,
@@ -21,12 +22,11 @@ use komodo_client::{
     sync::ResourceSync,
     update::Update,
     user::User,
-    Operation, ResourceTargetVariant,
   },
 };
 use mungos::{
   find::find_collect,
-  mongodb::{bson::doc, options::FindOneOptions, Collection},
+  mongodb::{Collection, bson::doc, options::FindOneOptions},
 };
 
 use crate::{
@@ -173,7 +173,7 @@ async fn validate_config(
             Some(id) if procedure.id == id => {
               return Err(anyhow!(
                 "Cannot have self-referential procedure"
-              ))
+              ));
             }
             _ => {}
           }

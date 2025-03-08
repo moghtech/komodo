@@ -1,9 +1,9 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use axum::{
+  Router,
   extract::Path,
   http::{HeaderMap, HeaderValue},
   routing::get,
-  Router,
 };
 use reqwest::StatusCode;
 use serde::Deserialize;

@@ -1,10 +1,10 @@
 use std::path::PathBuf;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::{
   entities::{
-    stack::Stack, to_komodo_name, CloneArgs, EnvironmentVar,
-    SearchCombinator,
+    CloneArgs, EnvironmentVar, SearchCombinator, stack::Stack,
+    to_komodo_name,
   },
   parsers::QUOTE_PATTERN,
 };

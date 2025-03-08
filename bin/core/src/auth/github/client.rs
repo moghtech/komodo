@@ -1,11 +1,11 @@
 use std::sync::OnceLock;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::entities::config::core::{
   CoreConfig, OauthCredentials,
 };
 use reqwest::StatusCode;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use tokio::sync::Mutex;
 
 use crate::{
@@ -47,15 +47,21 @@ impl GithubOauthClient {
       return None;
     }
     if host.is_empty() {
-      warn!("github oauth is enabled, but 'config.host' is not configured");
+      warn!(
+        "github oauth is enabled, but 'config.host' is not configured"
+      );
       return None;
     }
     if id.is_empty() {
-      warn!("github oauth is enabled, but 'config.github_oauth.id' is not configured");
+      warn!(
+        "github oauth is enabled, but 'config.github_oauth.id' is not configured"
+      );
       return None;
     }
     if secret.is_empty() {
-      warn!("github oauth is enabled, but 'config.github_oauth.secret' is not configured");
+      warn!(
+        "github oauth is enabled, but 'config.github_oauth.secret' is not configured"
+      );
       return None;
     }
     GithubOauthClient {

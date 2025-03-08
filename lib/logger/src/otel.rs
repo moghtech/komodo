@@ -1,10 +1,10 @@
 use std::time::Duration;
 
-use opentelemetry::{global, trace::TracerProvider, KeyValue};
+use opentelemetry::{KeyValue, global, trace::TracerProvider};
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
-  trace::{Sampler, Tracer},
   Resource,
+  trace::{Sampler, Tracer},
 };
 use opentelemetry_semantic_conventions::resource::SERVICE_VERSION;
 

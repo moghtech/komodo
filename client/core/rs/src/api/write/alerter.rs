@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::entities::{
-  alerter::{Alerter, _PartialAlerterConfig},
+  alerter::{_PartialAlerterConfig, Alerter},
   update::Update,
 };
 

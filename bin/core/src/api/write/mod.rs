@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use anyhow::Context;
-use axum::{middleware, routing::post, Extension, Router};
+use axum::{Extension, Router, middleware, routing::post};
 use derive_variants::{EnumVariants, ExtractVariant};
 use komodo_client::{api::write::*, entities::user::User};
 use resolver_api::Resolve;

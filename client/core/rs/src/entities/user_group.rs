@@ -6,7 +6,7 @@ use typeshare::typeshare;
 use crate::deserializers::string_list_deserializer;
 
 use super::{
-  permission::PermissionLevel, MongoId, ResourceTargetVariant, I64,
+  I64, MongoId, ResourceTargetVariant, permission::PermissionLevel,
 };
 
 /// Permission users at the group level.

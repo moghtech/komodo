@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use anyhow::Context;
 use komodo_client::entities::{
+  Operation, ResourceTargetVariant,
   build::{
     Build, BuildConfig, BuildConfigDiff, BuildInfo, BuildListItem,
     BuildListItemInfo, BuildQuerySpecifics, BuildState,
@@ -13,11 +14,10 @@ use komodo_client::entities::{
   resource::Resource,
   update::Update,
   user::User,
-  Operation, ResourceTargetVariant,
 };
 use mungos::{
   find::find_collect,
-  mongodb::{bson::doc, options::FindOptions, Collection},
+  mongodb::{Collection, bson::doc, options::FindOptions},
 };
 
 use crate::{

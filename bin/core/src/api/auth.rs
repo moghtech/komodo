@@ -1,6 +1,6 @@
 use std::{sync::OnceLock, time::Instant};
 
-use axum::{http::HeaderMap, routing::post, Router};
+use axum::{Router, http::HeaderMap, routing::post};
 use derive_variants::{EnumVariants, ExtractVariant};
 use komodo_client::{api::auth::*, entities::user::User};
 use resolver_api::Resolve;

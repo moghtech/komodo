@@ -1,8 +1,8 @@
 use std::sync::OnceLock;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use axum::{
-  extract::Query, response::Redirect, routing::get, Router,
+  Router, extract::Query, response::Redirect, routing::get,
 };
 use client::default_oidc_client;
 use dashmap::DashMap;
@@ -10,10 +10,10 @@ use komodo_client::entities::{
   komodo_timestamp,
   user::{User, UserConfig},
 };
-use mungos::mongodb::bson::{doc, Document};
+use mungos::mongodb::bson::{Document, doc};
 use openidconnect::{
-  core::CoreAuthenticationFlow, AuthorizationCode, CsrfToken, Nonce,
-  Scope, TokenResponse,
+  AuthorizationCode, CsrfToken, Nonce, Scope, TokenResponse,
+  core::CoreAuthenticationFlow,
 };
 use reqwest::StatusCode;
 use serde::Deserialize;

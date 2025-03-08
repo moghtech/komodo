@@ -1,4 +1,4 @@
-use bson::{doc, Document};
+use bson::{Document, doc};
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
 use derive_variants::EnumVariants;
@@ -8,9 +8,9 @@ use strum::{AsRefStr, Display, EnumString};
 use typeshare::typeshare;
 
 use super::{
+  ResourceTarget,
   alert::AlertDataVariant,
   resource::{Resource, ResourceListItem, ResourceQuery},
-  ResourceTarget,
 };
 
 #[typeshare]

@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use async_timing_util::unix_timestamp_ms;
 use komodo_client::{
   api::auth::{
