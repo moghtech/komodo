@@ -35,7 +35,7 @@ services:
       PERIPHERY_INCLUDE_DISK_MOUNTS: /etc/hostname
 
   ferretdb:
-    image: ghcr.io/ferretdb/ferretdb
+    image: ghcr.io/ferretdb/ferretdb:1
     restart: unless-stopped
     logging:
       driver: local

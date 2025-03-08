@@ -1,7 +1,15 @@
-[start-frontend]
+[dev-frontend]
 description = "starts the frontend in dev mode"
 path = "frontend"
 cmd = "yarn dev"
+
+[dev-core]
+description = "runs core --release pointing to .dev/core.config.toml"
+cmd = "KOMODO_CONFIG_PATH=.dev/core.config.toml cargo run -p komodo_core --release"
+
+[dev-periphery]
+description = "runs periphery --release pointing to .dev/periphery.config.toml"
+cmd = "PERIPHERY_CONFIG_PATH=.dev/periphery.config.toml cargo run -p komodo_periphery --release"
 
 [yarn-install]
 description = "downloads latest javacript dependencies for client and frontend"
@@ -36,49 +44,33 @@ after = "gen-client"
 path = "client/core/ts"
 cmd = "npm publish"
 
-[test-compose]
-description = "deploys test.compose.yaml"
+[dev-compose]
+description = "deploys dev.compose.yaml"
 cmd = """
-docker compose -p komodo-dev -f test.compose.yaml down --remove-orphans && \
-docker compose -p komodo-dev -f test.compose.yaml up -d"""
+docker compose -p komodo-dev -f dev.compose.yaml down --remove-orphans && \
+docker compose -p komodo-dev -f dev.compose.yaml up -d"""
 
-[test-compose-exposed]
-description = "deploys test.compose.yaml with exposed port and non-ssl periphery"
+[dev-compose-exposed]
+description = "deploys dev.compose.yaml with exposed port and non-ssl periphery"
 cmd = """
-docker compose -p komodo-dev -f test.compose.yaml -f expose.compose.yaml down --remove-orphans && \
-docker compose -p komodo-dev -f test.compose.yaml -f expose.compose.yaml up -d"""
+docker compose -p komodo-dev down --remove-orphans && \
+docker compose -p komodo-dev -f dev.compose.yaml -f expose.compose.yaml up -d"""
 
-[test-compose-build]
-description = "builds and deploys test.compose.yaml"
+[dev-compose-build]
+description = "builds and deploys dev.compose.yaml"
 cmd = """
-docker compose -p komodo-dev -f test.compose.yaml build"""
+docker compose -p komodo-dev -f dev.compose.yaml build"""
 
-[test-core]
-description = "runs core --release pointing to .dev/core.config.toml"
-cmd = "KOMODO_CONFIG_PATH=.dev/core.config.toml cargo run -p komodo_core --release"
-
-[test-periphery]
-description = "runs periphery --release pointing to .dev/periphery.config.toml"
-cmd = "PERIPHERY_CONFIG_PATH=.dev/periphery.config.toml cargo run -p komodo_periphery --release"
-
-[create-multiarch-builder]
-cmd = "docker buildx create --name builder --use --bootstrap"
-
-[build-multiarch-periphery]
-cmd = """
-docker build \
-  --platform linux/amd64,linux/arm64 \
-  -f bin/periphery/cross-compile.Dockerfile \
-  .
-"""
-
-[docsite-start]
+[dev-docsite]
+description = "starts the documentation site (https://komo.do) in dev mode"
 path = "docsite"
 cmd = "yarn start"
 
-[docsite-deploy]
+[deploy-docsite]
+description = "deploys the documentation site (https://komo.do) to github pages"
 path = "docsite"
 cmd = "yarn deploy"
 
-# [rustdoc-server]
-# cmd = "cargo watch -s 'cargo doc --no-deps -p komodo_client' & http --quiet target/doc"
+[dev-rustdoc]
+description = "starts the rustdoc site (https://docs.rs/komodo_client/latest/komodo_client/) in dev mode"
+cmd = "cargo watch -s 'cargo doc --no-deps -p komodo_client' & http --quiet target/doc"
