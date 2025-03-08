@@ -29,26 +29,24 @@ type OidcClient = Client<
   EndpointMaybeSet,
 >;
 
-static DEFAULT_OIDC_CLIENT: OnceLock<Option<OidcClient>> =
-  OnceLock::new();
+static OIDC_CLIENT: OnceLock<Option<OidcClient>> = OnceLock::new();
 
-pub fn default_oidc_client() -> Option<&'static OidcClient> {
-  DEFAULT_OIDC_CLIENT
+pub fn oidc_client() -> Option<&'static OidcClient> {
+  OIDC_CLIENT
     .get()
     .expect("OIDC client get before init")
     .as_ref()
 }
 
-pub async fn init_default_oidc_client() {
+pub async fn init_oidc_client() {
   let config = core_config();
   if !config.oidc_enabled
     || config.oidc_provider.is_empty()
     || config.oidc_client_id.is_empty()
-    || config.oidc_client_secret.is_empty()
   {
-    DEFAULT_OIDC_CLIENT
+    OIDC_CLIENT
       .set(None)
-      .expect("Default OIDC client initialized twice");
+      .expect("OIDC client initialized twice");
     return;
   }
   async {
@@ -67,7 +65,12 @@ pub async fn init_default_oidc_client() {
     let client = CoreClient::from_provider_metadata(
       provider_metadata,
       ClientId::new(config.oidc_client_id.to_string()),
-      Some(ClientSecret::new(config.oidc_client_secret.to_string())),
+      // The secret may be empty / ommitted if auth provider supports PKCE
+      if config.oidc_client_secret.is_empty() {
+        None
+      } else {
+        Some(ClientSecret::new(config.oidc_client_secret.to_string()))
+      },
     )
     // Set the URL the user will be redirected to after the authorization process.
     .set_redirect_uri(RedirectUrl::new(format!(
@@ -75,7 +78,7 @@ pub async fn init_default_oidc_client() {
       core_config().host
     ))?);
 
-    DEFAULT_OIDC_CLIENT
+    OIDC_CLIENT
       .set(Some(client))
       .expect("Default OIDC client initialized twice");
 

@@ -4,7 +4,7 @@ use anyhow::{Context, anyhow};
 use axum::{
   Router, extract::Query, response::Redirect, routing::get,
 };
-use client::default_oidc_client;
+use client::oidc_client;
 use dashmap::DashMap;
 use komodo_client::entities::{
   komodo_timestamp,
@@ -12,8 +12,9 @@ use komodo_client::entities::{
 };
 use mungos::mongodb::bson::{Document, doc};
 use openidconnect::{
-  AuthorizationCode, CsrfToken, Nonce, Scope, TokenResponse,
-  core::CoreAuthenticationFlow,
+  AccessTokenHash, AuthorizationCode, CsrfToken, Nonce,
+  OAuth2TokenResponse, PkceCodeChallenge, PkceCodeVerifier, Scope,
+  TokenResponse, core::CoreAuthenticationFlow,
 };
 use reqwest::StatusCode;
 use serde::Deserialize;
@@ -43,10 +44,13 @@ fn reqwest_client() -> &'static reqwest::Client {
 const CSRF_VALID_FOR_MS: i64 = 120_000; // 2 minutes for user to log in.
 
 type RedirectUrl = Option<String>;
-type CsrfMap = DashMap<String, (Nonce, RedirectUrl, i64)>;
-fn csrf_verifier_tokens() -> &'static CsrfMap {
-  static CSRF: OnceLock<CsrfMap> = OnceLock::new();
-  CSRF.get_or_init(Default::default)
+/// Maps the csrf secrets to other information added in the "login" method (before auth provider redirect).
+/// This information is retrieved in the "callback" method (after auth provider redirect).
+type VerifierMap =
+  DashMap<String, (PkceCodeVerifier, Nonce, RedirectUrl, i64)>;
+fn verifier_tokens() -> &'static VerifierMap {
+  static VERIFIERS: OnceLock<VerifierMap> = OnceLock::new();
+  VERIFIERS.get_or_init(Default::default)
 }
 
 pub fn router() -> Router {
@@ -69,8 +73,10 @@ pub fn router() -> Router {
 async fn login(
   Query(RedirectQuery { redirect }): Query<RedirectQuery>,
 ) -> anyhow::Result<Redirect> {
-  let client =
-    default_oidc_client().context("OIDC Client not configured")?;
+  let client = oidc_client().context("OIDC Client not configured")?;
+
+  let (pkce_challenge, pkce_verifier) =
+    PkceCodeChallenge::new_random_sha256();
 
   // Generate the authorization URL.
   let (auth_url, csrf_token, nonce) = client
@@ -79,14 +85,20 @@ async fn login(
       CsrfToken::new_random,
       Nonce::new_random,
     )
+    .set_pkce_challenge(pkce_challenge)
     .add_scope(Scope::new("openid".to_string()))
     .add_scope(Scope::new("email".to_string()))
     .url();
 
   // Data inserted here will be matched on callback side for csrf protection.
-  csrf_verifier_tokens().insert(
+  verifier_tokens().insert(
     csrf_token.secret().clone(),
-    (nonce, redirect, komodo_timestamp() + CSRF_VALID_FOR_MS),
+    (
+      pkce_verifier,
+      nonce,
+      redirect,
+      komodo_timestamp() + CSRF_VALID_FOR_MS,
+    ),
   );
 
   let config = core_config();
@@ -121,8 +133,7 @@ struct CallbackQuery {
 async fn callback(
   Query(query): Query<CallbackQuery>,
 ) -> anyhow::Result<Redirect> {
-  let client =
-    default_oidc_client().context("OIDC Client not configured")?;
+  let client = oidc_client().context("OIDC Client not configured")?;
 
   if let Some(e) = query.error {
     return Err(anyhow!("Provider returned error: {e}"));
@@ -133,9 +144,10 @@ async fn callback(
     query.state.context("Provider did not return state")?,
   );
 
-  let (_, (nonce, redirect, valid_until)) = csrf_verifier_tokens()
-    .remove(state.secret())
-    .context("CSRF Token invalid")?;
+  let (_, (pkce_verifier, nonce, redirect, valid_until)) =
+    verifier_tokens()
+      .remove(state.secret())
+      .context("CSRF token invalid")?;
 
   if komodo_timestamp() > valid_until {
     return Err(anyhow!(
@@ -146,6 +158,7 @@ async fn callback(
   let token_response = client
     .exchange_code(AuthorizationCode::new(code))
     .context("Failed to get Oauth token at exchange code")?
+    .set_pkce_verifier(pkce_verifier)
     .request_async(reqwest_client())
     .await
     .context("Failed to get Oauth token")?;
@@ -170,6 +183,20 @@ async fn callback(
   let claims = id_token
     .claims(&verifier, &nonce)
     .context("Failed to verify token claims")?;
+
+  // Verify the access token hash to ensure that the access token hasn't been substituted for
+  // another user's.
+  if let Some(expected_access_token_hash) = claims.access_token_hash()
+  {
+    let actual_access_token_hash = AccessTokenHash::from_token(
+      token_response.access_token(),
+      id_token.signing_alg()?,
+      id_token.signing_key(&verifier)?,
+    )?;
+    if actual_access_token_hash != *expected_access_token_hash {
+      return Err(anyhow!("Invalid access token"));
+    }
+  }
 
   let user_id = claims.subject().as_str();
 

@@ -105,8 +105,7 @@ fn login_options_reponse() -> &'static GetLoginOptionsResponse {
         && !config.google_oauth.secret.is_empty(),
       oidc: config.oidc_enabled
         && !config.oidc_provider.is_empty()
-        && !config.oidc_client_id.is_empty()
-        && !config.oidc_client_secret.is_empty(),
+        && !config.oidc_client_id.is_empty(),
       registration_disabled: config.disable_user_registration,
     }
   })
