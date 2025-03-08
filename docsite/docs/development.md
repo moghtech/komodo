@@ -22,7 +22,7 @@ Running Komodo from [source](https://github.com/moghtech/komodo) requires either
 
 ## Docker
 
-After making changes to the project, run `run -r test-compose-build` to rebuild Komodo and then `run -r test-compose-exposed` to start a Komodo container with the UI accessible at `localhost:9120`. Any changes made to source files will require re-running the `test-compose-build` and `test-compose-exposed` commands.
+After making changes to the project, run `run -r dev-compose-build` to rebuild Komodo and then `run -r dev-compose-exposed` to start a Komodo container with the UI accessible at `localhost:9120`. Any changes made to source files will require re-running the `dev-compose-build` and `dev-compose-exposed` commands.
 
 ## Devcontainer
 
@@ -39,17 +39,17 @@ To run a full Komodo instance from a non-container environment run commands in t
 * Ensure dependencies are up to date
     * `rustup update` -- ensure rust toolchain is up to date
 * Build and Run backend
-    * `run -r test-core` -- Build and run Core API
-    * `run -r test-periphery` -- Build and run Periphery API
+    * `run -r dev-core` -- Build and run Core API
+    * `run -r dev-periphery` -- Build and run Periphery API
 * Build Frontend
     * Install **typeshare-cli**: `cargo install typeshare-cli`
     * **Run this once** -- `run -r link-client` -- generates TS client and links to the frontend
     * After running the above once:
         * `run -r gen-client` -- Rebuild client 
-        * `run -r start-frontend` -- Start in dev (watch) mode
+        * `run -r dev-frontend` -- Start in dev (watch) mode
         * `run -r build-frontend` -- Typecheck and build
             
 
 ## Docsite Development
 
-Use `run -r docsite-start` to start the [Docusaurus](https://docusaurus.io/) Komodo docs site in development mode. Changes made to files in `./docsite` will be automatically reloaded by the server.
+Use `run -r dev-docsite` to start the [Docusaurus](https://docusaurus.io/) Komodo docs site in development mode. Changes made to files in `./docsite` will be automatically reloaded by the server.
