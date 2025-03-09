@@ -8,11 +8,11 @@ use thiserror::Error;
 use tokio::sync::broadcast;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, info, info_span, warn, Instrument};
+use tracing::{Instrument, debug, info, info_span, warn};
 use typeshare::typeshare;
 use uuid::Uuid;
 
-use crate::{entities::update::UpdateListItem, KomodoClient};
+use crate::{KomodoClient, entities::update::UpdateListItem};
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -57,15 +57,32 @@ pub enum UpdateWsError {
 const MAX_SHORT_RETRY_COUNT: usize = 5;
 
 impl KomodoClient {
+  /// Subscribes to the Komodo Core update websocket,
+  /// and forwards the updates over a channel.
+  /// Handles reconnection internally.
+  ///
+  /// ```
+  /// let (mut rx, _) = komodo.subscribe_to_updates()?;
+  /// loop {
+  ///   let update = match rx.recv().await {
+  ///     Ok(msg) => msg,
+  ///     Err(e) => {
+  ///       error!("🚨 recv error | {e:?}");
+  ///       break;
+  ///     }
+  ///   };
+  ///   // Handle the update
+  ///   info!("Got update: {update:?}");
+  /// }
+  /// ```
   pub fn subscribe_to_updates(
     &self,
-    capacity: usize,
-    retry_cooldown_secs: u64,
+    // retry_cooldown_secs: u64,
   ) -> anyhow::Result<(
     broadcast::Receiver<UpdateWsMessage>,
     CancellationToken,
   )> {
-    let (tx, rx) = broadcast::channel(capacity);
+    let (tx, rx) = broadcast::channel(128);
     let cancel = CancellationToken::new();
     let cancel_clone = cancel.clone();
     let address =
@@ -137,7 +154,7 @@ impl KomodoClient {
               // SEND LOGIN MSG
               // ==================
               let login_send_res = ws
-                .send(Message::Text(login_msg.clone()))
+                .send(Message::text(&login_msg))
                 .await
                 .context("failed to send login message");
 
@@ -157,7 +174,7 @@ impl KomodoClient {
                 Ok(Some(Message::Text(msg))) => {
                   if msg != "LOGGED_IN" {
                     let _ = tx.send(UpdateWsMessage::Error(
-                      UpdateWsError::LoginError(msg.clone()),
+                      UpdateWsError::LoginError(msg.to_string()),
                     ));
                     let _ = ws.close(None).await;
                     warn!("breaking inner loop | got msg {msg} instead of 'LOGGED_IN' | inner uuid {inner_uuid} | outer uuid {outer_uuid} | master uuid {master_uuid}");
@@ -227,7 +244,7 @@ impl KomodoClient {
                           "got unrecognized message: {msg:?} | inner uuid {inner_uuid} | outer uuid {outer_uuid} | master uuid {master_uuid}"
                         );
                         let _ = tx.send(UpdateWsMessage::Error(
-                          UpdateWsError::MessageUnrecognized(msg),
+                          UpdateWsError::MessageUnrecognized(msg.to_string()),
                         ));
                       }
                     }
@@ -262,8 +279,7 @@ impl KomodoClient {
           }
         }.instrument(span).await;
 
-        tokio::time::sleep(Duration::from_secs(retry_cooldown_secs))
-          .await;
+        tokio::time::sleep(Duration::from_secs(3)).await;
       }
     });
 

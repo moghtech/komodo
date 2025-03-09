@@ -89,7 +89,9 @@ impl DbClient {
         client = client.address(address);
       }
       _ => {
-        error!("config.mongo not configured correctly. must pass either config.mongo.uri, or config.mongo.address + config.mongo.username? + config.mongo.password?");
+        error!(
+          "config.mongo not configured correctly. must pass either config.mongo.uri, or config.mongo.address + config.mongo.username? + config.mongo.password?"
+        );
         std::process::exit(1)
       }
     }

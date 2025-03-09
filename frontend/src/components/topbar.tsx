@@ -54,7 +54,7 @@ export const Topbar = () => {
           to="/"
           className="flex gap-3 items-center text-2xl tracking-widest md:mx-2"
         >
-          <img src="/monitor-circle.png" className="w-[28px] dark:invert" />
+          <img src="/komodo-512x512.png" className="w-[32px]" />
           <div className="hidden lg:block">KOMODO</div>
         </Link>
 
@@ -102,7 +102,7 @@ const Version = () => {
   if (!version) return null;
   return (
     <a
-      href="https://github.com/mbecker20/komodo/releases"
+      href="https://github.com/moghtech/komodo/releases"
       target="_blank"
       className="hidden lg:block"
     >

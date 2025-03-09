@@ -1,33 +1,32 @@
 use std::{str::FromStr, time::Duration};
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use futures::future::join_all;
 use komodo_client::{
   api::write::{CreateBuilder, CreateServer},
   entities::{
+    ResourceTarget,
     builder::{PartialBuilderConfig, PartialServerBuilderConfig},
     komodo_timestamp,
     permission::{Permission, PermissionLevel, UserTarget},
     server::{PartialServerConfig, Server},
     sync::ResourceSync,
     update::Log,
-    user::{system_user, User},
-    ResourceTarget,
+    user::{User, system_user},
   },
 };
 use mongo_indexed::Document;
 use mungos::{
   find::find_collect,
-  mongodb::bson::{doc, oid::ObjectId, to_document, Bson},
+  mongodb::bson::{Bson, doc, oid::ObjectId, to_document},
 };
 use periphery_client::PeripheryClient;
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use rand::Rng;
 use resolver_api::Resolve;
 
 use crate::{
-  config::core_config,
-  resource,
-  state::{db_client, State},
+  api::write::WriteArgs, config::core_config, resource,
+  state::db_client,
 };
 
 pub mod action_state;
@@ -55,8 +54,8 @@ pub fn empty_or_only_spaces(word: &str) -> bool {
 }
 
 pub fn random_string(length: usize) -> String {
-  thread_rng()
-    .sample_iter(&Alphanumeric)
+  rand::rng()
+    .sample_iter(&rand::distr::Alphanumeric)
     .take(length)
     .map(char::from)
     .collect()
@@ -209,7 +208,9 @@ pub async fn startup_cleanup() {
 async fn startup_in_progress_update_cleanup() {
   let log = Log::error(
     "Komodo shutdown",
-    String::from("Komodo shutdown during execution. If this is a build, the builder may not have been terminated.")
+    String::from(
+      "Komodo shutdown during execution. If this is a build, the builder may not have been terminated.",
+    ),
   );
   // This static log won't fail to serialize, unwrap ok.
   let log = to_document(&log).unwrap();
@@ -305,46 +306,50 @@ pub async fn ensure_first_server_and_builder() {
   let server = if let Some(server) = server {
     server
   } else {
-    match State
-      .resolve(
-        CreateServer {
-          name: format!("server-{}", random_string(5)),
-          config: PartialServerConfig {
-            address: Some(first_server.to_string()),
-            enabled: Some(true),
-            ..Default::default()
-          },
-        },
-        system_user().to_owned(),
-      )
-      .await
+    match (CreateServer {
+      name: format!("server-{}", random_string(5)),
+      config: PartialServerConfig {
+        address: Some(first_server.to_string()),
+        enabled: Some(true),
+        ..Default::default()
+      },
+    })
+    .resolve(&WriteArgs {
+      user: system_user().to_owned(),
+    })
+    .await
     {
       Ok(server) => server,
       Err(e) => {
-        error!("Failed to initialize 'first_server'. Failed to CreateServer. {e:?}");
+        error!(
+          "Failed to initialize 'first_server'. Failed to CreateServer. {:#}",
+          e.error
+        );
         return;
       }
     }
   };
   let Ok(None) = db.builders
     .find_one(Document::new()).await
-    .inspect_err(|e| error!("Failed to initialize 'first_builder'. Failed to query db. {e:?}")) else {
+    .inspect_err(|e| error!("Failed to initialize 'first_builder' | Failed to query db | {e:?}")) else {
       return;
     };
-  if let Err(e) = State
-    .resolve(
-      CreateBuilder {
-        name: String::from("local"),
-        config: PartialBuilderConfig::Server(
-          PartialServerBuilderConfig {
-            server_id: Some(server.id),
-          },
-        ),
+  if let Err(e) = (CreateBuilder {
+    name: String::from("local"),
+    config: PartialBuilderConfig::Server(
+      PartialServerBuilderConfig {
+        server_id: Some(server.id),
       },
-      system_user().to_owned(),
-    )
-    .await
+    ),
+  })
+  .resolve(&WriteArgs {
+    user: system_user().to_owned(),
+  })
+  .await
   {
-    error!("Failed to initialize 'first_builder'. Failed to CreateBuilder. {e:?}");
+    error!(
+      "Failed to initialize 'first_builder' | Failed to CreateBuilder | {:#}",
+      e.error
+    );
   }
 }

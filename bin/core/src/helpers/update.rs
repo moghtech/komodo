@@ -1,6 +1,8 @@
 use anyhow::Context;
 use komodo_client::entities::{
+  Operation, ResourceTarget,
   action::Action,
+  alerter::Alerter,
   build::Build,
   deployment::Deployment,
   komodo_timestamp,
@@ -12,7 +14,6 @@ use komodo_client::entities::{
   sync::ResourceSync,
   update::{Update, UpdateListItem},
   user::User,
-  Operation, ResourceTarget,
 };
 use mungos::{
   by_id::{find_one_by_id, update_one_by_id},
@@ -262,7 +263,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchDeploy(_data) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
     ExecuteRequest::PullDeployment(data) => (
       Operation::PullDeployment,
@@ -307,7 +308,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchDestroyDeployment(_data) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
 
     // Build
@@ -318,7 +319,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchRunBuild(_data) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
     ExecuteRequest::CancelBuild(data) => (
       Operation::CancelBuild,
@@ -335,7 +336,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchCloneRepo(_data) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
     ExecuteRequest::PullRepo(data) => (
       Operation::PullRepo,
@@ -344,7 +345,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchPullRepo(_data) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
     ExecuteRequest::BuildRepo(data) => (
       Operation::BuildRepo,
@@ -353,7 +354,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchBuildRepo(_data) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
     ExecuteRequest::CancelRepoBuild(data) => (
       Operation::CancelRepoBuild,
@@ -370,7 +371,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchRunProcedure(_) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
 
     // Action
@@ -381,7 +382,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchRunAction(_) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
 
     // Server template
@@ -404,7 +405,7 @@ pub async fn init_execution_update(
 
     // Stack
     ExecuteRequest::DeployStack(data) => (
-      if data.service.is_some() {
+      if !data.services.is_empty() {
         Operation::DeployStackService
       } else {
         Operation::DeployStack
@@ -414,7 +415,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchDeployStack(_data) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
     ExecuteRequest::DeployStackIfChanged(data) => (
       Operation::DeployStack,
@@ -423,10 +424,10 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchDeployStackIfChanged(_data) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
     ExecuteRequest::StartStack(data) => (
-      if data.service.is_some() {
+      if !data.services.is_empty() {
         Operation::StartStackService
       } else {
         Operation::StartStack
@@ -436,7 +437,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::PullStack(data) => (
-      if data.service.is_some() {
+      if !data.services.is_empty() {
         Operation::PullStackService
       } else {
         Operation::PullStack
@@ -446,7 +447,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::RestartStack(data) => (
-      if data.service.is_some() {
+      if !data.services.is_empty() {
         Operation::RestartStackService
       } else {
         Operation::RestartStack
@@ -456,7 +457,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::PauseStack(data) => (
-      if data.service.is_some() {
+      if !data.services.is_empty() {
         Operation::PauseStackService
       } else {
         Operation::PauseStack
@@ -466,7 +467,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::UnpauseStack(data) => (
-      if data.service.is_some() {
+      if !data.services.is_empty() {
         Operation::UnpauseStackService
       } else {
         Operation::UnpauseStack
@@ -476,7 +477,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::StopStack(data) => (
-      if data.service.is_some() {
+      if !data.services.is_empty() {
         Operation::StopStackService
       } else {
         Operation::StopStack
@@ -486,7 +487,7 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::DestroyStack(data) => (
-      if data.service.is_some() {
+      if !data.services.is_empty() {
         Operation::DestroyStackService
       } else {
         Operation::DestroyStack
@@ -496,15 +497,26 @@ pub async fn init_execution_update(
       ),
     ),
     ExecuteRequest::BatchDestroyStack(_data) => {
-      return Ok(Default::default())
+      return Ok(Default::default());
     }
+
+    // Alerter
+    ExecuteRequest::TestAlerter(data) => (
+      Operation::TestAlerter,
+      ResourceTarget::Alerter(
+        resource::get::<Alerter>(&data.alerter).await?.id,
+      ),
+    ),
   };
+
   let mut update = make_update(target, operation, user);
   update.in_progress();
+
   // Hold off on even adding update for DeployStackIfChanged
   if !matches!(&request, ExecuteRequest::DeployStackIfChanged(_)) {
     // Don't actually send it here, let the handlers send it after they can set action state.
     update.id = add_update_without_send(&update).await?;
   }
+
   Ok(update)
 }

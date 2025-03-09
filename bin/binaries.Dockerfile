@@ -1,7 +1,7 @@
 ## Builds the Komodo Core and Periphery binaries
 ## for a specific architecture.
 
-FROM rust:1.82.0-bullseye AS builder
+FROM rust:1.85.0-bullseye AS builder
 
 WORKDIR /builder
 COPY Cargo.toml Cargo.lock ./
@@ -22,6 +22,6 @@ FROM scratch
 COPY --from=builder /builder/target/release/core /core
 COPY --from=builder /builder/target/release/periphery /periphery
 
-LABEL org.opencontainers.image.source=https://github.com/mbecker20/komodo
+LABEL org.opencontainers.image.source=https://github.com/moghtech/komodo
 LABEL org.opencontainers.image.description="Komodo Periphery"
 LABEL org.opencontainers.image.licenses=GPL-3.0

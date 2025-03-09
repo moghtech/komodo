@@ -1,19 +1,22 @@
 use std::path::PathBuf;
 
 use komodo_client::entities::{
-  update::Log, CloneArgs, EnvironmentVar, LatestCommit,
+  CloneArgs, EnvironmentVar, LatestCommit, update::Log,
 };
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, Request)]
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(LatestCommit)]
+#[error(serror::Error)]
 pub struct GetLatestCommit {
   pub name: String,
+  pub path: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Request)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[response(RepoActionResponse)]
+#[error(serror::Error)]
 pub struct CloneRepo {
   pub args: CloneArgs,
   #[serde(default)]
@@ -35,8 +38,9 @@ fn default_env_file_path() -> String {
 
 //
 
-#[derive(Serialize, Deserialize, Debug, Clone, Request)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[response(RepoActionResponse)]
+#[error(serror::Error)]
 pub struct PullRepo {
   pub args: CloneArgs,
   #[serde(default)]
@@ -55,8 +59,9 @@ pub struct PullRepo {
 //
 
 /// Either pull or clone depending on whether it exists.
-#[derive(Serialize, Deserialize, Debug, Clone, Request)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[response(RepoActionResponse)]
+#[error(serror::Error)]
 pub struct PullOrCloneRepo {
   pub args: CloneArgs,
   #[serde(default)]
@@ -86,8 +91,9 @@ pub struct RepoActionResponse {
 
 //
 
-#[derive(Serialize, Deserialize, Debug, Clone, Request)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[response(Log)]
+#[error(serror::Error)]
 pub struct RenameRepo {
   pub curr_name: String,
   pub new_name: String,
@@ -95,8 +101,9 @@ pub struct RenameRepo {
 
 //
 
-#[derive(Serialize, Deserialize, Debug, Clone, Request)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[response(Log)]
+#[error(serror::Error)]
 pub struct DeleteRepo {
   pub name: String,
 }

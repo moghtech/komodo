@@ -1,17 +1,24 @@
 import { Section } from "@components/layouts";
 import { ReactNode, useState } from "react";
-import { Card, CardContent, CardHeader } from "@ui/card";
-import { useFullStack } from ".";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@ui/card";
+import { useFullStack, useStack } from ".";
 import { cn, updateLogToHtml } from "@lib/utils";
 import { MonacoEditor } from "@components/monaco";
 import { useEditPermissions } from "@pages/resource";
 import { ConfirmUpdate } from "@components/config/util";
-import { useWrite } from "@lib/hooks";
+import { useLocalStorage, useWrite } from "@lib/hooks";
 import { Button } from "@ui/button";
 import { FilePlus, History } from "lucide-react";
 import { useToast } from "@ui/use-toast";
 import { ConfirmButton, ShowHideButton } from "@components/util";
 import { DEFAULT_STACK_FILE_CONTENTS } from "./config";
+import { Types } from "komodo_client";
 
 export const StackInfo = ({
   id,
@@ -20,7 +27,10 @@ export const StackInfo = ({
   id: string;
   titleOther: ReactNode;
 }) => {
-  const [edits, setEdits] = useState<Record<string, string | undefined>>({});
+  const [edits, setEdits] = useLocalStorage<Record<string, string | undefined>>(
+    `stack-${id}-edits`,
+    {}
+  );
   const [show, setShow] = useState<Record<string, boolean | undefined>>({});
   const { canWrite } = useEditPermissions({ type: "Stack", id });
   const { toast } = useToast();
@@ -33,6 +43,7 @@ export const StackInfo = ({
     },
   });
 
+  const not_down = useStack(id)?.info.state !== Types.StackState.Down;
   const stack = useFullStack(id);
   // const state = useStack(id)?.info.state ?? Types.StackState.Unknown;
   // const is_down = [Types.StackState.Down, Types.StackState.Unknown].includes(
@@ -199,13 +210,13 @@ export const StackInfo = ({
               <CardHeader
                 className={cn(
                   "flex flex-row justify-between items-center",
-                  showContents && "pb-2"
+                  showContents && "pb-0"
                 )}
               >
-                <div className="font-mono flex gap-2">
+                <CardTitle className="font-mono flex gap-2">
                   <div className="text-muted-foreground">File:</div>
                   {content.path}
-                </div>
+                </CardTitle>
                 <div className="flex items-center gap-2">
                   {canEdit && (
                     <>
@@ -259,6 +270,26 @@ export const StackInfo = ({
             </Card>
           );
         })}
+
+      {stack?.info?.deployed_config && not_down && (
+        <Card className="flex flex-col gap-4">
+          <CardHeader className="pb-0">
+            <CardTitle className="font-mono">Deployed config:</CardTitle>
+            <CardDescription>
+              Output of '<code>docker compose config</code>' when Stack was last
+              deployed.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="pr-8">
+            <MonacoEditor
+              value={stack.info.deployed_config}
+              language="yaml"
+              readOnly
+            />
+          </CardContent>
+        </Card>
+      )}
     </Section>
   );
 };

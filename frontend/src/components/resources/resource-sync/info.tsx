@@ -5,7 +5,7 @@ import { useFullResourceSync } from ".";
 import { cn, updateLogToHtml } from "@lib/utils";
 import { MonacoEditor } from "@components/monaco";
 import { useEditPermissions } from "@pages/resource";
-import { useWrite } from "@lib/hooks";
+import { useLocalStorage, useWrite } from "@lib/hooks";
 import { useToast } from "@ui/use-toast";
 import { Button } from "@ui/button";
 import { FilePlus, History } from "lucide-react";
@@ -19,7 +19,10 @@ export const ResourceSyncInfo = ({
   id: string;
   titleOther: ReactNode;
 }) => {
-  const [edits, setEdits] = useState<Record<string, string | undefined>>({});
+  const [edits, setEdits] = useLocalStorage<Record<string, string | undefined>>(
+    `sync-${id}-edits`,
+    {}
+  );
   const [show, setShow] = useState<Record<string, boolean | undefined>>({});
   const { canWrite } = useEditPermissions({ type: "ResourceSync", id });
   const { toast } = useToast();

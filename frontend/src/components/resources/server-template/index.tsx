@@ -30,7 +30,7 @@ export const ServerTemplateComponents: RequiredResourceComponents = {
   list_item: (id) => useServerTemplate(id),
   resource_links: () => undefined,
 
-  Description: () => <>Deploy more cloud-based servers on a button click.</>,
+  Description: () => <>Deploy more cloud-based servers.</>,
 
   Dashboard: () => {
     const count = useRead("ListServerTemplates", {}).data?.length;

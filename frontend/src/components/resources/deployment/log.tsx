@@ -1,15 +1,8 @@
-import { Section } from "@components/layouts";
-import { useLocalStorage, useRead } from "@lib/hooks";
+import { useRead } from "@lib/hooks";
 import { Types } from "komodo_client";
-import { Button } from "@ui/button";
-import { RefreshCw, X, AlertOctagon } from "lucide-react";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode } from "react";
 import { useDeployment } from ".";
-import { Input } from "@ui/input";
-import { useToast } from "@ui/use-toast";
-import { ToggleGroup, ToggleGroupItem } from "@ui/toggle-group";
-import { Switch } from "@ui/switch";
-import { Log, TailLengthSelector } from "@components/log";
+import { Log, LogSection } from "@components/log";
 
 export const DeploymentLogs = ({
   id,
@@ -36,135 +29,28 @@ const DeploymentLogsInner = ({
   id: string;
   titleOther: ReactNode;
 }) => {
-  const { toast } = useToast();
-  const [stream, setStream] = useState("stdout");
-  const [tail, set] = useState("100");
-  const [terms, setTerms] = useState<string[]>([]);
-  const [invert, setInvert] = useState(false);
-  const [search, setSearch] = useState("");
-  const [poll, setPoll] = useLocalStorage("log-poll-v1", false);
-  const [timestamps, setTimestamps] = useLocalStorage(
-    "log-timestamps-v1",
-    false
-  );
-
-  const addTerm = () => {
-    if (!search.length) return;
-    if (terms.includes(search)) {
-      toast({ title: "Search term is already present" });
-      setSearch("");
-      return;
-    }
-    setTerms([...terms, search]);
-    setSearch("");
-  };
-
-  const clearSearch = () => {
-    setSearch("");
-    setTerms([]);
-  };
-
-  const { Log, refetch, stderr } = terms.length
-    ? SearchLogs(id, terms, invert, timestamps)
-    : NoSearchLogs(id, tail, timestamps, stream);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (poll) refetch();
-    }, 5_000);
-    return () => clearInterval(interval);
-  }, [poll, refetch]);
-
   return (
-    <Section
-      titleOther={titleOther}
-      actions={
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <div className="text-muted-foreground flex gap-1 text-sm">
-              Invert
-            </div>
-            <Switch checked={invert} onCheckedChange={setInvert} />
-          </div>
-          {terms.map((term, index) => (
-            <Button
-              key={term}
-              variant="destructive"
-              onClick={() => setTerms(terms.filter((_, i) => i !== index))}
-              className="flex gap-2 items-center py-0 px-2"
-            >
-              {term}
-              <X className="w-4 h-h" />
-            </Button>
-          ))}
-          <div className="relative">
-            <Input
-              placeholder="Search Logs"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onBlur={addTerm}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") addTerm();
-              }}
-              className="w-[180px] xl:w-[240px]"
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={clearSearch}
-              className="absolute right-0 top-1/2 -translate-y-1/2"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-          <ToggleGroup type="single" value={stream} onValueChange={setStream}>
-            <ToggleGroupItem value="stdout">stdout</ToggleGroupItem>
-            <ToggleGroupItem value="stderr">
-              stderr
-              {stderr && (
-                <AlertOctagon className="w-4 h-4 ml-2 stroke-red-500" />
-              )}
-            </ToggleGroupItem>
-          </ToggleGroup>
-          <Button variant="secondary" size="icon" onClick={() => refetch()}>
-            <RefreshCw className="w-4 h-4" />
-          </Button>
-          <div
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() => setTimestamps((t) => !t)}
-          >
-            <div className="text-muted-foreground text-sm">Timestamps</div>
-            <Switch checked={timestamps} />
-          </div>
-          <div
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() => setPoll((p) => !p)}
-          >
-            <div className="text-muted-foreground text-sm">Poll</div>
-            <Switch checked={poll} />
-          </div>
-          <TailLengthSelector
-            selected={tail}
-            onSelect={set}
-            disabled={search.length > 0}
-          />
-        </div>
+    <LogSection
+      regular_logs={(timestamps, stream, tail) =>
+        NoSearchLogs(id, tail, timestamps, stream)
       }
-    >
-      {Log}
-    </Section>
+      search_logs={(timestamps, terms, invert) =>
+        SearchLogs(id, terms, invert, timestamps)
+      }
+      titleOther={titleOther}
+    />
   );
 };
 
 const NoSearchLogs = (
   id: string,
-  tail: string,
+  tail: number,
   timestamps: boolean,
   stream: string
 ) => {
   const { data: log, refetch } = useRead("GetDeploymentLog", {
     deployment: id,
-    tail: Number(tail),
+    tail,
     timestamps,
   });
   return {

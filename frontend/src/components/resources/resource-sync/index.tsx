@@ -1,4 +1,4 @@
-import { useLocalStorage, useRead, useUser } from "@lib/hooks";
+import { atomWithStorage, useLocalStorage, useRead, useUser } from "@lib/hooks";
 import { RequiredResourceComponents } from "@types";
 import { Card } from "@ui/card";
 import { Clock, FolderSync } from "lucide-react";
@@ -23,6 +23,7 @@ import { ResourceSyncPending } from "./pending";
 import { Badge } from "@ui/badge";
 import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
+import { useAtom } from "jotai";
 
 export const useResourceSync = (id?: string) =>
   useRead("ListResourceSyncs", {}, { refetchInterval: 10_000 }).data?.find(
@@ -38,6 +39,17 @@ const ResourceSyncIcon = ({ id, size }: { id?: string; size: number }) => {
     resource_sync_state_intention(state)
   );
   return <FolderSync className={cn(`w-${size} h-${size}`, state && color)} />;
+};
+
+const pendingViewAtom = atomWithStorage<"Execute" | "Commit">(
+  "sync-view-v1",
+  "Execute"
+);
+export const usePendingView = () => {
+  return useAtom(pendingViewAtom) as [
+    "Execute" | "Commit",
+    (view: "Execute" | "Commit") => void,
+  ];
 };
 
 const ConfigInfoPending = ({ id }: { id: string }) => {

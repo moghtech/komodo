@@ -3,9 +3,9 @@ use std::{collections::HashMap, sync::OnceLock};
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::entities::{MongoId, I64};
+use crate::entities::{I64, MongoId};
 
-use super::{permission::PermissionLevel, ResourceTargetVariant};
+use super::{ResourceTargetVariant, permission::PermissionLevel};
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]

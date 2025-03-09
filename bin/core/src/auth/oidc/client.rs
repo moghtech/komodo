@@ -1,67 +1,94 @@
-use std::sync::OnceLock;
+use std::{sync::OnceLock, time::Duration};
 
 use anyhow::Context;
+use arc_swap::ArcSwapOption;
 use openidconnect::{
-  core::{CoreClient, CoreProviderMetadata},
-  reqwest::async_http_client,
-  ClientId, ClientSecret, IssuerUrl, RedirectUrl,
+  Client, ClientId, ClientSecret, EmptyAdditionalClaims,
+  EndpointMaybeSet, EndpointNotSet, EndpointSet, IssuerUrl,
+  RedirectUrl, StandardErrorResponse, core::*,
 };
 
 use crate::config::core_config;
 
-static DEFAULT_OIDC_CLIENT: OnceLock<Option<CoreClient>> =
-  OnceLock::new();
+type OidcClient = Client<
+  EmptyAdditionalClaims,
+  CoreAuthDisplay,
+  CoreGenderClaim,
+  CoreJweContentEncryptionAlgorithm,
+  CoreJsonWebKey,
+  CoreAuthPrompt,
+  StandardErrorResponse<CoreErrorResponseType>,
+  CoreTokenResponse,
+  CoreTokenIntrospectionResponse,
+  CoreRevocableToken,
+  CoreRevocationErrorResponse,
+  EndpointSet,
+  EndpointNotSet,
+  EndpointNotSet,
+  EndpointNotSet,
+  EndpointMaybeSet,
+  EndpointMaybeSet,
+>;
 
-pub fn default_oidc_client() -> Option<&'static CoreClient> {
-  DEFAULT_OIDC_CLIENT
-    .get()
-    .expect("OIDC client get before init")
-    .as_ref()
+pub fn oidc_client() -> &'static ArcSwapOption<OidcClient> {
+  static OIDC_CLIENT: OnceLock<ArcSwapOption<OidcClient>> =
+    OnceLock::new();
+  OIDC_CLIENT.get_or_init(Default::default)
 }
 
-pub async fn init_default_oidc_client() {
+/// The OIDC client must be reinitialized to
+/// pick up the latest provider JWKs. This
+/// function spawns a management thread to do this
+/// on a loop.
+pub async fn spawn_oidc_client_management() {
   let config = core_config();
   if !config.oidc_enabled
     || config.oidc_provider.is_empty()
     || config.oidc_client_id.is_empty()
-    || config.oidc_client_secret.is_empty()
   {
-    DEFAULT_OIDC_CLIENT
-      .set(None)
-      .expect("Default OIDC client initialized twice");
     return;
   }
-  async {
-    // Use OpenID Connect Discovery to fetch the provider metadata.
-    let provider_metadata = CoreProviderMetadata::discover_async(
-      IssuerUrl::new(config.oidc_provider.clone())?,
-      async_http_client,
-    )
+  reset_oidc_client()
     .await
-    .context(
-      "Failed to get OIDC /.well-known/openid-configuration",
-    )?;
+    .context("Failed to initialize OIDC client.")
+    .unwrap();
+  tokio::spawn(async move {
+    loop {
+      tokio::time::sleep(Duration::from_secs(60)).await;
+      if let Err(e) = reset_oidc_client().await {
+        warn!("Failed to reinitialize OIDC client | {e:#}");
+      }
+    }
+  });
+}
 
-    // Create an OpenID Connect client by specifying the client ID, client secret, authorization URL
-    // and token URL.
-    let client = CoreClient::from_provider_metadata(
-      provider_metadata,
-      ClientId::new(config.oidc_client_id.to_string()),
-      Some(ClientSecret::new(config.oidc_client_secret.to_string())),
-    )
-    // Set the URL the user will be redirected to after the authorization process.
-    .set_redirect_uri(RedirectUrl::new(format!(
-      "{}/auth/oidc/callback",
-      core_config().host
-    ))?);
-
-    DEFAULT_OIDC_CLIENT
-      .set(Some(client))
-      .expect("Default OIDC client initialized twice");
-
-    anyhow::Ok(())
-  }
+async fn reset_oidc_client() -> anyhow::Result<()> {
+  let config = core_config();
+  // Use OpenID Connect Discovery to fetch the provider metadata.
+  let provider_metadata = CoreProviderMetadata::discover_async(
+    IssuerUrl::new(config.oidc_provider.clone())?,
+    super::reqwest_client(),
+  )
   .await
-  .context("Failed to init default OIDC client")
-  .unwrap();
+  .context("Failed to get OIDC /.well-known/openid-configuration")?;
+
+  let client = CoreClient::from_provider_metadata(
+    provider_metadata,
+    ClientId::new(config.oidc_client_id.to_string()),
+    // The secret may be empty / ommitted if auth provider supports PKCE
+    if config.oidc_client_secret.is_empty() {
+      None
+    } else {
+      Some(ClientSecret::new(config.oidc_client_secret.to_string()))
+    },
+  )
+  // Set the URL the user will be redirected to after the authorization process.
+  .set_redirect_uri(RedirectUrl::new(format!(
+    "{}/auth/oidc/callback",
+    core_config().host
+  ))?);
+
+  oidc_client().store(Some(client.into()));
+
+  Ok(())
 }

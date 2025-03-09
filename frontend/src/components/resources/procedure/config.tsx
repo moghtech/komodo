@@ -125,7 +125,7 @@ const ProcedureConfigInner = ({
           </div>
         }
         disabled={disabled}
-        config={config}
+        update={config}
         onConfirm={async () => {
           await mutateAsync({ id: procedure._id!.$oid, config });
           setConfig({});
@@ -632,6 +632,7 @@ type MinExecutionType = Exclude<
   | "DeleteNetwork"
   | "DeleteImage"
   | "DeleteVolume"
+  | "TestAlerter"
 >;
 
 type ExecutionConfigParams<T extends MinExecutionType> = Extract<

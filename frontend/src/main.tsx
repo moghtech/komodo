@@ -33,7 +33,7 @@ init_monaco().then(() =>
   ReactDOM.createRoot(document.getElementById("root")!).render(
     // <React.StrictMode>
     <QueryClientProvider client={query_client}>
-      <WebsocketProvider url={UPDATE_WS_URL}>
+      <WebsocketProvider>
         <ThemeProvider>
           <Router />
           <Toaster />

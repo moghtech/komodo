@@ -9,8 +9,8 @@ use typeshare::typeshare;
 use crate::api::execute::Execution;
 
 use super::{
-  resource::{Resource, ResourceListItem, ResourceQuery},
   I64,
+  resource::{Resource, ResourceListItem, ResourceQuery},
 };
 
 #[typeshare]

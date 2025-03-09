@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use anyhow::Context;
-use komodo_client::entities::{update::Update, SystemCommand};
+use komodo_client::entities::{SystemCommand, update::Update};
 
 use super::query::VariablesAndSecrets;
 

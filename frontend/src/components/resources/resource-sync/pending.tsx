@@ -10,7 +10,9 @@ import { cn, sanitizeOnlySpan } from "@lib/utils";
 import { ConfirmButton } from "@components/util";
 import { SquarePlay } from "lucide-react";
 import { useEditPermissions } from "@pages/resource";
-import { useFullResourceSync } from ".";
+import { useFullResourceSync, usePendingView } from ".";
+import { Tabs, TabsList, TabsTrigger } from "@ui/tabs";
+import { ResourceDiff } from "komodo_client/dist/types";
 
 export const ResourceSyncPending = ({
   id,
@@ -23,10 +25,48 @@ export const ResourceSyncPending = ({
     ?.syncing;
   const sync = useFullResourceSync(id);
   const { canExecute } = useEditPermissions({ type: "ResourceSync", id });
+  const [_pendingView, setPendingView] = usePendingView();
+  const pendingView = sync?.config?.managed ? _pendingView : "Execute";
   const { mutate, isPending } = useExecute("RunSync");
   const loading = isPending || syncing;
   return (
-    <Section titleOther={titleOther}>
+    <Section
+      titleOther={titleOther}
+    >
+      <div className="flex items-center gap-4 py-2 flex-wrap">
+        {sync?.config?.managed && (
+          <Tabs value={pendingView} onValueChange={setPendingView as any}>
+            <TabsList className="justify-start w-fit">
+              <TabsTrigger value="Execute" className="w-[110px]">
+                Execute
+              </TabsTrigger>
+              <TabsTrigger value="Commit" className="w-[110px]">
+                Commit
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
+        <div className="text-muted-foreground">{pendingView} Mode:</div>
+        <div className="flex items-center gap-1 flex-wrap">
+          {pendingView === "Execute" && (
+            <>
+              Update resources in the
+              <div className="font-bold">UI</div>
+              to match the
+              <div className="font-bold">file changes.</div>
+            </>
+          )}
+          {pendingView === "Commit" && (
+            <>
+              Update resources in the
+              <div className="font-bold">file</div>
+              to match the
+              <div className="font-bold">UI changes.</div>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Pending Error */}
       {sync?.info?.pending_error && sync.info.pending_error.length ? (
         <Card>
@@ -49,7 +89,7 @@ export const ResourceSyncPending = ({
       ) : undefined}
 
       {/* Pending Deploy */}
-      {sync?.info?.pending_deploy?.to_deploy ? (
+      {pendingView === "Execute" && sync?.info?.pending_deploy?.to_deploy ? (
         <Card>
           <CardHeader
             className={cn(
@@ -78,10 +118,16 @@ export const ResourceSyncPending = ({
               <div className="flex items-center gap-4 font-mono">
                 <div
                   className={text_color_class_by_intention(
-                    diff_type_intention(update.data.type)
+                    diff_type_intention(
+                      update.data.type,
+                      pendingView === "Commit"
+                    )
                   )}
                 >
-                  {update.data.type} {update.target.type}
+                  {pendingView === "Commit"
+                    ? reverse_pending_type(update.data.type)
+                    : update.data.type}{" "}
+                  {update.target.type}
                 </div>
                 <div className="text-muted-foreground">|</div>
                 {update.data.type === "Create" ? (
@@ -93,7 +139,7 @@ export const ResourceSyncPending = ({
                   />
                 )}
               </div>
-              {canExecute && (
+              {canExecute && pendingView === "Execute" && (
                 <ConfirmButton
                   title="Execute Change"
                   icon={<SquarePlay className="w-4 h-4" />}
@@ -121,12 +167,24 @@ export const ResourceSyncPending = ({
                 />
               )}
               {update.data.type === "Update" && (
-                <MonacoDiffEditor
-                  original={update.data.data.current}
-                  modified={update.data.data.proposed}
-                  language="toml"
-                  readOnly
-                />
+                <>
+                  {pendingView === "Execute" && (
+                    <MonacoDiffEditor
+                      original={update.data.data.current}
+                      modified={update.data.data.proposed}
+                      language="toml"
+                      readOnly
+                    />
+                  )}
+                  {pendingView === "Commit" && (
+                    <MonacoDiffEditor
+                      original={update.data.data.proposed}
+                      modified={update.data.data.current}
+                      language="toml"
+                      readOnly
+                    />
+                  )}
+                </>
               )}
               {update.data.type === "Delete" && (
                 <MonacoEditor
@@ -146,10 +204,15 @@ export const ResourceSyncPending = ({
             <CardHeader
               className={cn(
                 "font-mono pb-2",
-                text_color_class_by_intention(diff_type_intention(data.type))
+                text_color_class_by_intention(
+                  diff_type_intention(data.type, pendingView === "Commit")
+                )
               )}
             >
-              {data.type} Variable
+              {pendingView === "Commit"
+                ? reverse_pending_type(data.type)
+                : data.type}{" "}
+              Variable
             </CardHeader>
             <CardContent>
               {data.type === "Create" && (
@@ -160,12 +223,24 @@ export const ResourceSyncPending = ({
                 />
               )}
               {data.type === "Update" && (
-                <MonacoDiffEditor
-                  original={data.data.current}
-                  modified={data.data.proposed}
-                  language="toml"
-                  readOnly
-                />
+                <>
+                  {pendingView === "Execute" && (
+                    <MonacoDiffEditor
+                      original={data.data.current}
+                      modified={data.data.proposed}
+                      language="toml"
+                      readOnly
+                    />
+                  )}
+                  {pendingView === "Commit" && (
+                    <MonacoDiffEditor
+                      original={data.data.proposed}
+                      modified={data.data.current}
+                      language="toml"
+                      readOnly
+                    />
+                  )}
+                </>
               )}
               {data.type === "Delete" && (
                 <MonacoEditor
@@ -185,10 +260,15 @@ export const ResourceSyncPending = ({
             <CardHeader
               className={cn(
                 "font-mono pb-2",
-                text_color_class_by_intention(diff_type_intention(data.type))
+                text_color_class_by_intention(
+                  diff_type_intention(data.type, pendingView === "Commit")
+                )
               )}
             >
-              {data.type} User Group
+              {pendingView === "Commit"
+                ? reverse_pending_type(data.type)
+                : data.type}{" "}
+              User Group
             </CardHeader>
             <CardContent>
               {data.type === "Create" && (
@@ -199,12 +279,24 @@ export const ResourceSyncPending = ({
                 />
               )}
               {data.type === "Update" && (
-                <MonacoDiffEditor
-                  original={data.data.current}
-                  modified={data.data.proposed}
-                  language="toml"
-                  readOnly
-                />
+                <>
+                  {pendingView === "Execute" && (
+                    <MonacoDiffEditor
+                      original={data.data.current}
+                      modified={data.data.proposed}
+                      language="toml"
+                      readOnly
+                    />
+                  )}
+                  {pendingView === "Commit" && (
+                    <MonacoDiffEditor
+                      original={data.data.proposed}
+                      modified={data.data.current}
+                      language="toml"
+                      readOnly
+                    />
+                  )}
+                </>
               )}
               {data.type === "Delete" && (
                 <MonacoEditor
@@ -221,124 +313,13 @@ export const ResourceSyncPending = ({
   );
 };
 
-// const PENDING_TYPE_KEYS: Array<[string, string]> = [
-//   ["Server", "server_updates"],
-//   ["Deploy", "deploy_updates"],
-//   ["Deployment", "deployment_updates"],
-//   ["Stack", "stack_updates"],
-//   ["Build", "build_updates"],
-//   ["Repo", "repo_updates"],
-//   ["Procedure", "procedure_updates"],
-//   ["Alerter", "alerter_updates"],
-//   ["Builder", "builder_updates"],
-//   ["Server Template", "server_template_updates"],
-//   ["Resource Sync", "resource_sync_updates"],
-//   ["Variable", "variable_updates"],
-//   ["User Group", "user_group_updates"],
-// ];
-
-// export const ResourceSyncPending = ({
-//   id,
-//   titleOther,
-// }: {
-//   id: string;
-//   titleOther: ReactNode;
-// }) => {
-//   const sync = useRead(
-//     "GetResourceSync",
-//     { sync: id },
-//     { refetchInterval: 5000 }
-//   ).data;
-//   const pending = sync?.info?.pending;
-//   return (
-//     <Section titleOther={titleOther}>
-//       {pending?.hash && pending.message && (
-//         <Card>
-//           <div className="flex items-center gap-4 px-8 py-4">
-//             <div className="text-muted-foreground">Latest Commit</div>
-//             <div className="text-muted-foreground">|</div>
-//             <div>{pending.hash}</div>
-//             <div className="text-muted-foreground">|</div>
-//             <div>{pending.message}</div>
-//           </div>
-//         </Card>
-//       )}
-//       {pending?.data.type === "Ok" &&
-//         PENDING_TYPE_KEYS.map(([type, key]) => (
-//           <PendingView
-//             key={type}
-//             type={type}
-//             pending={pending.data.data[key]}
-//           />
-//         ))}
-//       {pending?.data.type === "Err" && (
-//         <Card>
-//           <CardHeader className="flex items-center justify-between gap-4">
-//             <CardTitle>Pending Error</CardTitle>
-//           </CardHeader>
-//           <CardContent>
-//             <pre
-//               dangerouslySetInnerHTML={{
-//                 __html: sanitizeOnlySpan(pending.data.data.message),
-//               }}
-//             />
-//           </CardContent>
-//         </Card>
-//       )}
-//     </Section>
-//   );
-// };
-
-// const PendingView = ({
-//   type,
-//   pending,
-// }: {
-//   type: string;
-//   pending: Types.SyncUpdate | undefined;
-// }) => {
-//   if (!pending) return;
-
-//   return (
-//     <Card>
-//       <div className="flex items-center gap-4 px-8 py-4">
-//         <CardTitle>{type} Updates</CardTitle>
-//         <div className="flex gap-4 items-center m-0">
-//           {pending.to_create ? (
-//             <>
-//               <div className="text-muted-foreground">|</div>
-//               <div className="flex gap-2 items-center">
-//                 <div className="text-muted-foreground">To Create:</div>
-//                 <div>{pending.to_create}</div>
-//               </div>
-//             </>
-//           ) : undefined}
-//           {pending.to_update ? (
-//             <>
-//               <div className="text-muted-foreground">|</div>
-//               <div className="flex gap-2 items-center">
-//                 <div className="text-muted-foreground">To Update:</div>
-//                 <div>{pending.to_update}</div>
-//               </div>
-//             </>
-//           ) : undefined}
-//           {pending.to_delete ? (
-//             <>
-//               <div className="text-muted-foreground">|</div>
-//               <div className="flex gap-2 items-center">
-//                 <div className="text-muted-foreground">To Delete:</div>
-//                 <div>{pending.to_delete}</div>
-//               </div>
-//             </>
-//           ) : undefined}
-//         </div>
-//       </div>
-//       <CardContent>
-//         <pre
-//           dangerouslySetInnerHTML={{
-//             __html: sanitizeOnlySpan(pending.log),
-//           }}
-//         />
-//       </CardContent>
-//     </Card>
-//   );
-// };
+const reverse_pending_type = (type: ResourceDiff["data"]["type"]) => {
+  switch (type) {
+    case "Create":
+      return "Remove";
+    case "Update":
+      return "Update";
+    case "Delete":
+      return "Add";
+  }
+};

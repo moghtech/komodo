@@ -1,17 +1,17 @@
 use std::path::PathBuf;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::{
   entities::{
-    stack::Stack, to_komodo_name, CloneArgs, EnvironmentVar,
-    SearchCombinator,
+    CloneArgs, EnvironmentVar, SearchCombinator, stack::Stack,
+    to_komodo_name,
   },
   parsers::QUOTE_PATTERN,
 };
 use periphery_client::api::git::PullOrCloneRepo;
 use resolver_api::Resolve;
 
-use crate::{config::periphery_config, State};
+use crate::config::periphery_config;
 
 pub fn git_token(
   domain: &str,
@@ -86,17 +86,6 @@ pub fn log_grep(
   }
 }
 
-pub fn interpolate_variables(
-  input: &str,
-) -> svi::Result<(String, Vec<(String, String)>)> {
-  svi::interpolate_variables(
-    input,
-    &periphery_config().secrets,
-    svi::Interpolator::DoubleBrackets,
-    true,
-  )
-}
-
 /// Returns path to root directory of the stack repo.
 pub async fn pull_or_clone_stack(
   stack: &Stack,
@@ -140,21 +129,19 @@ pub async fn pull_or_clone_stack(
     }
   };
 
-  State
-    .resolve(
-      PullOrCloneRepo {
-        args,
-        git_token,
-        environment: vec![],
-        env_file_path: stack.config.env_file_path.clone(),
-        skip_secret_interp: stack.config.skip_secret_interp,
-        // repo replacer only needed for on_clone / on_pull,
-        // which aren't available for stacks
-        replacers: Default::default(),
-      },
-      (),
-    )
-    .await?;
+  PullOrCloneRepo {
+    args,
+    git_token,
+    environment: vec![],
+    env_file_path: stack.config.env_file_path.clone(),
+    skip_secret_interp: stack.config.skip_secret_interp,
+    // repo replacer only needed for on_clone / on_pull,
+    // which aren't available for stacks
+    replacers: Default::default(),
+  }
+  .resolve(&crate::api::Args)
+  .await
+  .map_err(|e| e.error)?;
 
   Ok(root)
 }

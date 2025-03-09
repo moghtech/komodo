@@ -308,14 +308,15 @@ export const alert_level_intention: (
 };
 
 export const diff_type_intention: (
-  level: Types.DiffData["type"]
-) => ColorIntention = (level) => {
+  level: Types.DiffData["type"],
+  reverse: boolean
+) => ColorIntention = (level, reverse) => {
   switch (level) {
     case "Create":
-      return "Good";
+      return reverse ? "Critical" : "Good";
     case "Update":
       return "Neutral";
     case "Delete":
-      return "Critical";
+      return reverse ? "Good" : "Critical";
   }
 };

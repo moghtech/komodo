@@ -1,11 +1,11 @@
 use std::{collections::HashMap, str::FromStr};
 
-use anyhow::{anyhow, Context};
-use formatting::{colored, format_serror, Color};
+use anyhow::{Context, anyhow};
+use formatting::{Color, colored, format_serror};
 use komodo_client::{
   api::{execute::RunSync, write::RefreshResourceSyncPending},
   entities::{
-    self,
+    self, ResourceTargetVariant,
     action::Action,
     alerter::Alerter,
     build::Build,
@@ -20,45 +20,44 @@ use komodo_client::{
     stack::Stack,
     sync::ResourceSync,
     update::{Log, Update},
-    user::{sync_user, User},
-    ResourceTargetVariant,
+    user::sync_user,
   },
 };
 use mongo_indexed::doc;
-use mungos::{
-  by_id::update_one_by_id,
-  mongodb::bson::{oid::ObjectId, to_document},
-};
+use mungos::{by_id::update_one_by_id, mongodb::bson::oid::ObjectId};
 use resolver_api::Resolve;
 
 use crate::{
+  api::write::WriteArgs,
   helpers::{query::get_id_to_tags, update::update_update},
-  resource::{self, refresh_resource_sync_state_cache},
-  state::{action_states, db_client, State},
+  resource,
+  state::{action_states, db_client},
   sync::{
-    deploy::{
-      build_deploy_cache, deploy_from_cache, SyncDeployParams,
-    },
-    execute::{get_updates_for_execution, ExecuteResourceSync},
-    remote::RemoteResources,
     AllResourcesById, ResourceSyncTrait,
+    deploy::{
+      SyncDeployParams, build_deploy_cache, deploy_from_cache,
+    },
+    execute::{ExecuteResourceSync, get_updates_for_execution},
+    remote::RemoteResources,
   },
 };
 
-impl Resolve<RunSync, (User, Update)> for State {
-  #[instrument(name = "RunSync", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+use super::ExecuteArgs;
+
+impl Resolve<ExecuteArgs> for RunSync {
+  #[instrument(name = "RunSync", skip(user, update), fields(user_id = user.id, update_id = update.id))]
   async fn resolve(
-    &self,
-    RunSync {
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
+    let RunSync {
       sync,
       resource_type: match_resource_type,
       resources: match_resources,
-    }: RunSync,
-    (user, mut update): (User, Update),
-  ) -> anyhow::Result<Update> {
+    } = self;
     let sync = resource::get_check_permissions::<
       entities::sync::ResourceSync,
-    >(&sync, &user, PermissionLevel::Execute)
+    >(&sync, user, PermissionLevel::Execute)
     .await?;
 
     // get the action state for the sync (or insert default).
@@ -71,6 +70,8 @@ impl Resolve<RunSync, (User, Update)> for State {
     // Will also check to ensure sync not already busy before updating.
     let _action_guard =
       action_state.update(|state| state.syncing = true)?;
+
+    let mut update = update.clone();
 
     // Send update here for FE to recheck action state
     update_update(update.clone()).await?;
@@ -90,7 +91,9 @@ impl Resolve<RunSync, (User, Update)> for State {
     update_update(update.clone()).await?;
 
     if !file_errors.is_empty() {
-      return Err(anyhow!("Found file errors. Cannot execute sync."));
+      return Err(
+        anyhow!("Found file errors. Cannot execute sync.").into(),
+      );
     }
 
     let resources = resources?;
@@ -581,39 +584,27 @@ impl Resolve<RunSync, (User, Update)> for State {
       )
     }
 
-    if let Err(e) = State
-      .resolve(
-        RefreshResourceSyncPending { sync: sync.id },
-        sync_user().to_owned(),
-      )
+    if let Err(e) = (RefreshResourceSyncPending { sync: sync.id })
+      .resolve(&WriteArgs {
+        user: sync_user().to_owned(),
+      })
       .await
     {
-      warn!("failed to refresh sync {} after run | {e:#}", sync.name);
+      warn!(
+        "failed to refresh sync {} after run | {:#}",
+        sync.name, e.error
+      );
       update.push_error_log(
         "refresh sync",
         format_serror(
-          &e.context("failed to refresh sync pending after run")
+          &e.error
+            .context("failed to refresh sync pending after run")
             .into(),
         ),
       );
     }
 
     update.finalize();
-
-    // Need to manually update the update before cache refresh,
-    // and before broadcast with add_update.
-    // The Err case of to_document should be unreachable,
-    // but will fail to update cache in that case.
-    if let Ok(update_doc) = to_document(&update) {
-      let _ = update_one_by_id(
-        &db.updates,
-        &update.id,
-        mungos::update::Update::Set(update_doc),
-        None,
-      )
-      .await;
-      refresh_resource_sync_state_cache().await;
-    }
     update_update(update.clone()).await?;
 
     Ok(update)

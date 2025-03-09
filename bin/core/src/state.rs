@@ -12,7 +12,6 @@ use komodo_client::entities::{
   procedure::ProcedureState,
   repo::RepoState,
   stack::StackState,
-  sync::ResourceSyncState,
 };
 use octorust::auth::{
   Credentials, InstallationTokenGenerator, JWTCredentials,
@@ -28,8 +27,6 @@ use crate::{
     CachedStackStatus, History,
   },
 };
-
-pub struct State;
 
 static DB_CLIENT: OnceLock<DbClient> = OnceLock::new();
 
@@ -58,8 +55,8 @@ pub fn jwt_client() -> &'static JwtClient {
   })
 }
 
-pub fn github_client(
-) -> Option<&'static HashMap<String, octorust::Client>> {
+pub fn github_client()
+-> Option<&'static HashMap<String, octorust::Client>> {
   static GITHUB_CLIENT: OnceLock<
     Option<HashMap<String, octorust::Client>>,
   > = OnceLock::new();
@@ -198,13 +195,4 @@ pub fn action_state_cache() -> &'static ActionStateCache {
   static ACTION_STATE_CACHE: OnceLock<ActionStateCache> =
     OnceLock::new();
   ACTION_STATE_CACHE.get_or_init(Default::default)
-}
-
-pub type ResourceSyncStateCache = Cache<String, ResourceSyncState>;
-
-pub fn resource_sync_state_cache() -> &'static ResourceSyncStateCache
-{
-  static RESOURCE_SYNC_STATE_CACHE: OnceLock<ResourceSyncStateCache> =
-    OnceLock::new();
-  RESOURCE_SYNC_STATE_CACHE.get_or_init(Default::default)
 }

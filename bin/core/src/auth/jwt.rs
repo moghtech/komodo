@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use async_timing_util::{
-  get_timelength_in_ms, unix_timestamp_ms, Timelength,
+  Timelength, get_timelength_in_ms, unix_timestamp_ms,
 };
 use hmac::{Hmac, Mac};
 use jwt::SignWithKey;

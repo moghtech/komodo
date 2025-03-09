@@ -14,11 +14,11 @@ use std::{collections::HashMap, path::PathBuf, str::FromStr};
 use serde::{Deserialize, Serialize};
 
 use crate::entities::{
-  logger::{LogConfig, LogLevel, StdioLogMode},
   Timelength,
+  logger::{LogConfig, LogLevel, StdioLogMode},
 };
 
-use super::{empty_or_redacted, DockerRegistry, GitProvider};
+use super::{DockerRegistry, GitProvider, empty_or_redacted};
 
 /// # Komodo Core Environment Variables
 ///
@@ -27,7 +27,7 @@ use super::{empty_or_redacted, DockerRegistry, GitProvider};
 /// although the lower case format can still be parsed.
 ///
 /// *Note.* The Komodo Core docker image includes the default core configuration found at
-/// [https://github.com/mbecker20/komodo/blob/main/config/core.config.toml](https://github.com/mbecker20/komodo/blob/main/config/core.config.toml).
+/// [https://github.com/moghtech/komodo/blob/main/config/core.config.toml](https://github.com/moghtech/komodo/blob/main/config/core.config.toml).
 /// To configure the core api, you can either mount your own custom configuration file to
 /// `/config/config.toml` inside the container,
 /// or simply override whichever fields you need using the environment.
@@ -96,6 +96,8 @@ pub struct Env {
   pub komodo_enable_new_users: Option<bool>,
   /// Override `disable_user_registration`
   pub komodo_disable_user_registration: Option<bool>,
+  /// Override `lock_login_credentials_for`
+  pub komodo_lock_login_credentials_for: Option<Vec<String>>,
   /// Override `disable_confirm_dialog`
   pub komodo_disable_confirm_dialog: Option<bool>,
   /// Override `disable_non_admin_create`
@@ -227,12 +229,12 @@ fn default_config_path() -> String {
 /// and then applying any config field overrides specified in the environment.
 ///
 /// *Note.* The Komodo Core docker image includes the default core configuration found at
-/// [https://github.com/mbecker20/komodo/blob/main/config/core.config.toml](https://github.com/mbecker20/komodo/blob/main/config/core.config.toml).
+/// [https://github.com/moghtech/komodo/blob/main/config/core.config.toml](https://github.com/moghtech/komodo/blob/main/config/core.config.toml).
 /// To configure the core api, you can either mount your own custom configuration file to
 /// `/config/config.toml` inside the container,
 /// or simply override whichever fields you need using the environment.
 ///
-/// Refer to the [example file](https://github.com/mbecker20/komodo/blob/main/config/core.config.toml) for a full example.
+/// Refer to the [example file](https://github.com/moghtech/komodo/blob/main/config/core.config.toml) for a full example.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CoreConfig {
   // ===========
@@ -299,6 +301,13 @@ pub struct CoreConfig {
   /// With `disable_user_registration = true`, only the first user to log in will registered as a user.
   #[serde(default)]
   pub disable_user_registration: bool,
+
+  /// List of usernames for which the update username / password
+  /// APIs are disabled. Used by demo to lock the 'demo' : 'demo' login.
+  ///
+  /// To lock the api for all users, use `lock_login_credentials_for = ["__ALL__"]`
+  #[serde(default)]
+  pub lock_login_credentials_for: Vec<String>,
 
   /// Normally all users can create resources.
   /// If `disable_non_admin_create = true`, only admins will be able to create resources.
@@ -581,6 +590,7 @@ impl CoreConfig {
       enable_new_users: config.enable_new_users,
       disable_user_registration: config.disable_user_registration,
       disable_non_admin_create: config.disable_non_admin_create,
+      lock_login_credentials_for: config.lock_login_credentials_for,
       local_auth: config.local_auth,
       oidc_enabled: config.oidc_enabled,
       oidc_provider: config.oidc_provider,

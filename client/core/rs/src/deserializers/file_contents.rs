@@ -1,4 +1,4 @@
-use serde::{de::Visitor, Deserializer};
+use serde::{Deserializer, de::Visitor};
 
 /// Using this ensures the file contents end with trailing '\n'
 pub fn file_contents_deserializer<'de, D>(
@@ -22,7 +22,7 @@ where
 
 struct FileContentsVisitor;
 
-impl<'de> Visitor<'de> for FileContentsVisitor {
+impl Visitor<'_> for FileContentsVisitor {
   type Value = String;
 
   fn expecting(
@@ -47,7 +47,7 @@ impl<'de> Visitor<'de> for FileContentsVisitor {
 
 struct OptionFileContentsVisitor;
 
-impl<'de> Visitor<'de> for OptionFileContentsVisitor {
+impl Visitor<'_> for OptionFileContentsVisitor {
   type Value = Option<String>;
 
   fn expecting(

@@ -188,6 +188,7 @@ impl ToToml for Stack {
     config
       .into_iter()
       .map(|(key, value)| {
+        #[allow(clippy::single_match)]
         match key.as_str() {
           "server_id" => return Ok((String::from("server"), value)),
           _ => {}
@@ -338,7 +339,7 @@ impl ToToml for Repo {
         match key.as_str() {
           "server_id" => return Ok((String::from("server"), value)),
           "builder_id" => {
-            return Ok((String::from("builder"), value))
+            return Ok((String::from("builder"), value));
           }
           _ => {}
         }
@@ -789,6 +790,13 @@ impl ToToml for Procedure {
               .unwrap_or(&String::new()),
           ),
           Execution::BatchDestroyStack(_exec) => {}
+          Execution::TestAlerter(exec) => exec.alerter.clone_from(
+            all
+              .alerters
+              .get(&exec.alerter)
+              .map(|a| &a.name)
+              .unwrap_or(&String::new()),
+          ),
           Execution::Sleep(_) | Execution::None(_) => {}
         }
       }

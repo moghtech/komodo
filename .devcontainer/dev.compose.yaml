@@ -23,7 +23,7 @@ services:
 
   db:
     extends:
-      file: ../test.compose.yaml
+      file: ../dev.compose.yaml
       service: ferretdb
 
 volumes:

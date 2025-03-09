@@ -10,8 +10,8 @@ use clap::Parser;
 use derive_empty_traits::EmptyTraits;
 use derive_variants::{EnumVariants, ExtractVariant};
 use serde::{
-  de::{value::MapAccessDeserializer, Visitor},
   Deserialize, Serialize,
+  de::{Visitor, value::MapAccessDeserializer},
 };
 use serror::Serror;
 use strum::{AsRefStr, Display, EnumString};
@@ -213,11 +213,7 @@ impl SystemCommand {
   }
 
   pub fn into_option(self) -> Option<SystemCommand> {
-    if self.is_none() {
-      None
-    } else {
-      Some(self)
-    }
+    if self.is_none() { None } else { Some(self) }
   }
 
   pub fn is_none(&self) -> bool {
@@ -431,7 +427,7 @@ impl CloneArgs {
       .as_ref()
       .context("resource has no repo attached")?;
     Ok(format!(
-      "{protocol}://{access_token_at}{}/{repo}.git",
+      "{protocol}://{access_token_at}{}/{repo}",
       self.provider
     ))
   }
@@ -753,6 +749,7 @@ pub enum Operation {
   UpdateAlerter,
   RenameAlerter,
   DeleteAlerter,
+  TestAlerter,
 
   // server template
   CreateServerTemplate,

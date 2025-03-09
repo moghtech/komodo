@@ -7,29 +7,29 @@ Connecting a server to Komodo has 2 steps:
 
 ## Install Periphery
 
-You can install Periphery as a systemd managed process, run it as a [docker container](https://github.com/mbecker20/komodo/pkgs/container/periphery), or do whatever you want with the binary.
+You can install Periphery as a systemd managed process, run it as a [docker container](https://github.com/moghtech/komodo/pkgs/container/periphery), or do whatever you want with the binary.
 
 :::warning
 Allowing unintended access to the Periphery agent API is a security risk.
 Ensure to take appropriate measures to block access to the Periphery API, such as firewall rules on port `8120`.
-Additionally, you can whitelist your Komodo Core IP address in the [Periphery config](https://github.com/mbecker20/komodo/blob/main/config/periphery.config.toml#L46),
-and configure it to [only accept requests matching including your Core passkey](https://github.com/mbecker20/komodo/blob/main/config/periphery.config.toml#L51).
+Additionally, you can whitelist your Komodo Core IP address in the [Periphery config](https://github.com/moghtech/komodo/blob/main/config/periphery.config.toml#L46),
+and configure it to [only accept requests matching including your Core passkey](https://github.com/moghtech/komodo/blob/main/config/periphery.config.toml#L51).
 :::
 
 ### Install the Periphery agent - systemd
 
 As root user:
 ```bash
-curl -sSL https://raw.githubusercontent.com/mbecker20/komodo/main/scripts/setup-periphery.py | python3
+curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/scripts/setup-periphery.py | python3
 ```
 
 Periphery can also be installed to run as the calling user, just note this comes with some additional configuration.
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/mbecker20/komodo/main/scripts/setup-periphery.py | python3 - --user
+curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/scripts/setup-periphery.py | python3 - --user
 ```
 
-You can find more information (and view the script) in the [readme](https://github.com/mbecker20/komodo/tree/main/scripts).
+You can find more information (and view the script) in the [readme](https://github.com/moghtech/komodo/tree/main/scripts).
 
 :::info
 This script can be run multiple times without issue, and it won't change existing config after the first run. Just run it again after a Komodo version release, and it will update the periphery version.
@@ -66,7 +66,7 @@ services:
       ## Optionally mount a path to store compose files
       # - /path/to/compose:/host/compose
     environment:
-      ## Full list: `https://github.com/mbecker20/komodo/blob/main/config/periphery.config.toml`
+      ## Full list: `https://github.com/moghtech/komodo/blob/main/config/periphery.config.toml`
       ## Configure the same passkey given to Komodo Core (KOMODO_PASSKEY)
       PERIPHERY_PASSKEYS: your_core_passkey # Alt: PERIPHERY_PASSKEYS_FILE
       ## Adding IP here will ensure calling IP is in the list. (optional)
@@ -88,9 +88,9 @@ volumes:
 
 ### Manual install steps - binaries
 
-1.  Download the periphery binary from the latest [release](https://github.com/mbecker20/komodo/releases).
+1.  Download the periphery binary from the latest [release](https://github.com/moghtech/komodo/releases).
 
-2.  Create and edit your config files, following the [config example](https://github.com/mbecker20/komodo/blob/main/config/periphery.config.toml).
+2.  Create and edit your config files, following the [config example](https://github.com/moghtech/komodo/blob/main/config/periphery.config.toml).
 
 :::note
 See the [periphery config docs](https://docs.rs/komodo_client/latest/komodo_client/entities/config/periphery/index.html)
@@ -142,15 +142,15 @@ Similarly, you can specify a base docker / github account pair, and extend them 
 
 Quick download to `./komodo/periphery.config.toml`:
 ```bash
-wget -P komodo https://raw.githubusercontent.com/mbecker20/komodo/main/config/periphery.config.toml
+wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/config/periphery.config.toml
 ```
 
 ```mdx-code-block
 import RemoteCodeFile from "@site/src/components/RemoteCodeFile";
 
 <RemoteCodeFile
-	title="https://github.com/mbecker20/komodo/blob/main/config/periphery.config.toml"
-	url="https://raw.githubusercontent.com/mbecker20/komodo/main/config/periphery.config.toml"
+	title="https://github.com/moghtech/komodo/blob/main/config/periphery.config.toml"
+	url="https://raw.githubusercontent.com/moghtech/komodo/main/config/periphery.config.toml"
 	language="toml"
 />
 ```

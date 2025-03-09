@@ -1,5 +1,5 @@
 import { AUTH_TOKEN_STORAGE_KEY, KOMODO_BASE_URL } from "@main";
-import { KomodoClient as Client, Types } from "komodo_client";
+import { KomodoClient, Types } from "komodo_client";
 import {
   AuthResponses,
   ExecuteResponses,
@@ -27,19 +27,20 @@ import { RESOURCE_TARGETS } from "./utils";
 const token = () => ({
   jwt: localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) ?? "",
 });
-const client = () => Client(KOMODO_BASE_URL, { type: "jwt", params: token() });
+export const komodo_client = () =>
+  KomodoClient(KOMODO_BASE_URL, { type: "jwt", params: token() });
 
 export const useLoginOptions = () =>
   useQuery({
     queryKey: ["GetLoginOptions"],
-    queryFn: () => client().auth("GetLoginOptions", {}),
+    queryFn: () => komodo_client().auth("GetLoginOptions", {}),
   });
 
 export const useUser = () => {
   const userInvalidate = useUserInvalidate();
   const query = useQuery({
     queryKey: ["GetUser"],
-    queryFn: () => client().auth("GetUser", {}),
+    queryFn: () => komodo_client().auth("GetUser", {}),
     refetchInterval: 30_000,
   });
   useEffect(() => {
@@ -77,7 +78,7 @@ export const useRead = <
 ) =>
   useQuery({
     queryKey: [type, params],
-    queryFn: () => client().read<T, R>(type, params),
+    queryFn: () => komodo_client().read<T, R>(type, params),
     ...config,
   });
 
@@ -106,7 +107,7 @@ export const useManageUser = <
   const { toast } = useToast();
   return useMutation({
     mutationKey: [type],
-    mutationFn: (params: P) => client().user<T, R>(type, params),
+    mutationFn: (params: P) => komodo_client().user<T, R>(type, params),
     onError: (e: { result: { error?: string } }, v, c) => {
       console.log("Auth error:", e);
       const msg = e.result.error ?? "Unknown error. See console.";
@@ -140,7 +141,7 @@ export const useWrite = <
   const { toast } = useToast();
   return useMutation({
     mutationKey: [type],
-    mutationFn: (params: P) => client().write<T, R>(type, params),
+    mutationFn: (params: P) => komodo_client().write<T, R>(type, params),
     onError: (e: { result: { error?: string } }, v, c) => {
       console.log("Write error:", e);
       const msg = e.result.error ?? "Unknown error. See console.";
@@ -174,7 +175,7 @@ export const useExecute = <
   const { toast } = useToast();
   return useMutation({
     mutationKey: [type],
-    mutationFn: (params: P) => client().execute<T, R>(type, params),
+    mutationFn: (params: P) => komodo_client().execute<T, R>(type, params),
     onError: (e: { result: { error?: string } }, v, c) => {
       console.log("Execute error:", e);
       const msg = e.result.error ?? "Unknown error. See console.";
@@ -208,7 +209,7 @@ export const useAuth = <
   const { toast } = useToast();
   return useMutation({
     mutationKey: [type],
-    mutationFn: (params: P) => client().auth<T, R>(type, params),
+    mutationFn: (params: P) => komodo_client().auth<T, R>(type, params),
     onError: (e: { result: { error?: string } }, v, c) => {
       console.log("Auth error:", e);
       const msg = e.result.error ?? "Unknown error. See console.";

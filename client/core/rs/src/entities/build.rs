@@ -1,10 +1,10 @@
-use bson::{doc, Document};
+use bson::{Document, doc};
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
 use partial_derive2::Partial;
 use serde::{
-  de::{value::MapAccessDeserializer, Visitor},
   Deserialize, Deserializer, Serialize,
+  de::{Visitor, value::MapAccessDeserializer},
 };
 use strum::Display;
 use typeshare::typeshare;
@@ -19,8 +19,8 @@ use crate::{
 };
 
 use super::{
-  resource::{Resource, ResourceListItem, ResourceQuery},
   NoData, SystemCommand, Version,
+  resource::{Resource, ResourceListItem, ResourceQuery},
 };
 
 #[typeshare]
@@ -122,7 +122,7 @@ pub struct BuildConfig {
   pub image_name: String,
 
   /// An extra tag put before the build version, for the image pushed to the repository.
-  /// Eg. in image tag of `aarch64` would push to mbecker20/komodo:1.13.2-aarch64.
+  /// Eg. in image tag of `aarch64` would push to moghtech/komodo:1.13.2-aarch64.
   /// If this is empty, the image tag will just be the build version.
   ///
   /// Can be used in conjunction with `image_name` to direct multiple builds
@@ -390,7 +390,10 @@ impl<'de> Visitor<'de> for ImageRegistryVisitor {
     &self,
     formatter: &mut std::fmt::Formatter,
   ) -> std::fmt::Result {
-    write!(formatter, "{{ \"domain\": string, \"account\": string, \"organization\": string }}")
+    write!(
+      formatter,
+      "{{ \"domain\": string, \"account\": string, \"organization\": string }}"
+    )
   }
 
   fn visit_map<A>(self, map: A) -> Result<Self::Value, A::Error>
@@ -420,7 +423,10 @@ impl<'de> Visitor<'de> for OptionImageRegistryVisitor {
     &self,
     formatter: &mut std::fmt::Formatter,
   ) -> std::fmt::Result {
-    write!(formatter, "null or {{ \"domain\": string, \"account\": string, \"organization\": string }}")
+    write!(
+      formatter,
+      "null or {{ \"domain\": string, \"account\": string, \"organization\": string }}"
+    )
   }
 
   fn visit_map<A>(self, map: A) -> Result<Self::Value, A::Error>

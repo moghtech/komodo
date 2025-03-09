@@ -1,7 +1,7 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use async_timing_util::unix_timestamp_ms;
 use axum::{
-  extract::Query, response::Redirect, routing::get, Router,
+  Router, extract::Query, response::Redirect, routing::get,
 };
 use komodo_client::entities::user::{User, UserConfig};
 use mongo_indexed::Document;

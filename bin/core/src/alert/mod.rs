@@ -1,22 +1,26 @@
 use ::slack::types::Block;
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use derive_variants::ExtractVariant;
 use futures::future::join_all;
 use komodo_client::entities::{
-  alert::{Alert, AlertData, SeverityLevel},
+  ResourceTargetVariant,
+  alert::{Alert, AlertData, AlertDataVariant, SeverityLevel},
   alerter::*,
   deployment::DeploymentState,
   stack::StackState,
-  ResourceTargetVariant,
 };
 use mungos::{find::find_collect, mongodb::bson::doc};
+use std::collections::HashSet;
 use tracing::Instrument;
 
+use crate::helpers::interpolate::interpolate_variables_secrets_into_string;
+use crate::helpers::query::get_variables_and_secrets;
 use crate::{config::core_config, state::db_client};
 
 mod discord;
 mod slack;
 
+#[instrument(level = "debug")]
 pub async fn send_alerts(alerts: &[Alert]) {
   if alerts.is_empty() {
     return;
@@ -54,14 +58,31 @@ async fn send_alert(alerters: &[Alerter], alert: &Alert) {
     return;
   }
 
+  let handles = alerters
+    .iter()
+    .map(|alerter| send_alert_to_alerter(alerter, alert));
+
+  join_all(handles)
+    .await
+    .into_iter()
+    .filter_map(|res| res.err())
+    .for_each(|e| error!("{e:#}"));
+}
+
+pub async fn send_alert_to_alerter(
+  alerter: &Alerter,
+  alert: &Alert,
+) -> anyhow::Result<()> {
+  // Don't send if not enabled
+  if !alerter.config.enabled {
+    return Ok(());
+  }
+
   let alert_type = alert.data.extract_variant();
 
-  let handles = alerters.iter().map(|alerter| async {
-    // Don't send if not enabled
-    if !alerter.config.enabled {
-      return Ok(());
-    }
-
+  // In the test case, we don't want the filters inside this
+  // block to stop the test from being sent to the alerting endpoint.
+  if alert_type != AlertDataVariant::Test {
     // Don't send if alert type not configured on the alerter
     if !alerter.config.alert_types.is_empty()
       && !alerter.config.alert_types.contains(&alert_type)
@@ -80,40 +101,34 @@ async fn send_alert(alerters: &[Alerter], alert: &Alert) {
     {
       return Ok(());
     }
+  }
 
-    match &alerter.config.endpoint {
-      AlerterEndpoint::Custom(CustomAlerterEndpoint { url }) => {
-        send_custom_alert(url, alert).await.with_context(|| {
-          format!(
-            "failed to send alert to custom alerter {}",
-            alerter.name
-          )
-        })
-      }
-      AlerterEndpoint::Slack(SlackAlerterEndpoint { url }) => {
-        slack::send_alert(url, alert).await.with_context(|| {
-          format!(
-            "failed to send alert to slack alerter {}",
-            alerter.name
-          )
-        })
-      }
-      AlerterEndpoint::Discord(DiscordAlerterEndpoint { url }) => {
-        discord::send_alert(url, alert).await.with_context(|| {
-          format!(
-            "failed to send alert to Discord alerter {}",
-            alerter.name
-          )
-        })
-      }
+  match &alerter.config.endpoint {
+    AlerterEndpoint::Custom(CustomAlerterEndpoint { url }) => {
+      send_custom_alert(url, alert).await.with_context(|| {
+        format!(
+          "Failed to send alert to Custom Alerter {}",
+          alerter.name
+        )
+      })
     }
-  });
-
-  join_all(handles)
-    .await
-    .into_iter()
-    .filter_map(|res| res.err())
-    .for_each(|e| error!("{e:#}"));
+    AlerterEndpoint::Slack(SlackAlerterEndpoint { url }) => {
+      slack::send_alert(url, alert).await.with_context(|| {
+        format!(
+          "Failed to send alert to Slack Alerter {}",
+          alerter.name
+        )
+      })
+    }
+    AlerterEndpoint::Discord(DiscordAlerterEndpoint { url }) => {
+      discord::send_alert(url, alert).await.with_context(|| {
+        format!(
+          "Failed to send alert to Discord Alerter {}",
+          alerter.name
+        )
+      })
+    }
+  }
 }
 
 #[instrument(level = "debug")]
@@ -121,11 +136,34 @@ async fn send_custom_alert(
   url: &str,
   alert: &Alert,
 ) -> anyhow::Result<()> {
+  let vars_and_secrets = get_variables_and_secrets().await?;
+  let mut global_replacers = HashSet::new();
+  let mut secret_replacers = HashSet::new();
+  let mut url_interpolated = url.to_string();
+
+  // interpolate variables and secrets into the url
+  interpolate_variables_secrets_into_string(
+    &vars_and_secrets,
+    &mut url_interpolated,
+    &mut global_replacers,
+    &mut secret_replacers,
+  )?;
+
   let res = reqwest::Client::new()
-    .post(url)
+    .post(url_interpolated)
     .json(alert)
     .send()
     .await
+    .map_err(|e| {
+      let replacers =
+        secret_replacers.into_iter().collect::<Vec<_>>();
+      let sanitized_error =
+        svi::replace_in_string(&format!("{e:?}"), &replacers);
+      anyhow::Error::msg(format!(
+        "Error with request: {}",
+        sanitized_error
+      ))
+    })
     .context("failed at post request to alerter")?;
   let status = res.status();
   if !status.is_success() {

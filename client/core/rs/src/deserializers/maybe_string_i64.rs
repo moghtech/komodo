@@ -1,4 +1,4 @@
-use serde::{de::Visitor, Deserializer};
+use serde::{Deserializer, de::Visitor};
 
 pub fn maybe_string_i64_deserializer<'de, D>(
   deserializer: D,
@@ -20,7 +20,7 @@ where
 
 struct MaybeStringI64Visitor;
 
-impl<'de> Visitor<'de> for MaybeStringI64Visitor {
+impl Visitor<'_> for MaybeStringI64Visitor {
   type Value = i64;
 
   fn expecting(
@@ -110,7 +110,7 @@ impl<'de> Visitor<'de> for MaybeStringI64Visitor {
 
 struct OptionMaybeStringI64Visitor;
 
-impl<'de> Visitor<'de> for OptionMaybeStringI64Visitor {
+impl Visitor<'_> for OptionMaybeStringI64Visitor {
   type Value = Option<i64>;
 
   fn expecting(

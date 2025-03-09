@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
 use komodo_client::entities::{
+  ResourceTarget,
   alert::{Alert, AlertData, SeverityLevel},
   deployment::{Deployment, DeploymentState},
-  ResourceTarget,
 };
 
 use crate::{

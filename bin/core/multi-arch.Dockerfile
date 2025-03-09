@@ -2,8 +2,8 @@
 ## Sets up the necessary runtime container dependencies for Komodo Core.
 ## Since theres no heavy build here, QEMU multi-arch builds are fine for this image.
 
-ARG BINARIES_IMAGE=ghcr.io/mbecker20/komodo-binaries:latest
-ARG FRONTEND_IMAGE=ghcr.io/mbecker20/komodo-frontend:latest
+ARG BINARIES_IMAGE=ghcr.io/moghtech/komodo-binaries:latest
+ARG FRONTEND_IMAGE=ghcr.io/moghtech/komodo-frontend:latest
 ARG X86_64_BINARIES=${BINARIES_IMAGE}-x86_64
 ARG AARCH64_BINARIES=${BINARIES_IMAGE}-aarch64
 
@@ -43,8 +43,8 @@ RUN mkdir /action-cache && \
 EXPOSE 9120
 
 # Label for Ghcr
-LABEL org.opencontainers.image.source=https://github.com/mbecker20/komodo
+LABEL org.opencontainers.image.source=https://github.com/moghtech/komodo
 LABEL org.opencontainers.image.description="Komodo Core"
 LABEL org.opencontainers.image.licenses=GPL-3.0
 
-ENTRYPOINT [ "core" ]
+CMD [ "core" ]

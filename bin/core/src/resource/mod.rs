@@ -3,20 +3,20 @@ use std::{
   str::FromStr,
 };
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use formatting::format_serror;
-use futures::{future::join_all, FutureExt};
+use futures::{FutureExt, future::join_all};
 use komodo_client::{
   api::{read::ExportResourcesToToml, write::CreateTag},
   entities::{
+    Operation, ResourceTarget, ResourceTargetVariant,
     komodo_timestamp,
     permission::PermissionLevel,
     resource::{AddFilters, Resource, ResourceQuery},
     tag::Tag,
     to_komodo_name,
     update::Update,
-    user::{system_user, User},
-    Operation, ResourceTarget, ResourceTargetVariant,
+    user::{User, system_user},
   },
   parsers::parse_string_list,
 };
@@ -24,16 +24,17 @@ use mungos::{
   by_id::{delete_one_by_id, update_one_by_id},
   find::find_collect,
   mongodb::{
-    bson::{doc, oid::ObjectId, to_document, Document},
-    options::FindOptions,
     Collection,
+    bson::{Document, doc, oid::ObjectId, to_document},
+    options::FindOptions,
   },
 };
 use partial_derive2::{Diff, FieldDiff, MaybeNone, PartialDiff};
 use resolver_api::Resolve;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 
 use crate::{
+  api::{read::ReadArgs, write::WriteArgs},
   config::core_config,
   helpers::{
     create_permission, flatten_document,
@@ -43,7 +44,7 @@ use crate::{
     },
     update::{add_update, make_update},
   },
-  state::{db_client, State},
+  state::db_client,
 };
 
 mod action;
@@ -71,10 +72,6 @@ pub use procedure::{
 pub use refresh::spawn_resource_refresh_loop;
 pub use repo::{
   refresh_repo_state_cache, spawn_repo_state_refresh_loop,
-};
-pub use sync::{
-  refresh_resource_sync_state_cache,
-  spawn_resource_sync_state_refresh_loop,
 };
 
 /// Implement on each Komodo resource for common methods
@@ -783,20 +780,17 @@ pub async fn update_description<T: KomodoResource>(
 pub async fn update_tags<T: KomodoResource>(
   id_or_name: &str,
   tags: Vec<String>,
-  user: User,
+  args: &WriteArgs,
 ) -> anyhow::Result<()> {
   let futures = tags.iter().map(|tag| async {
     match get_tag(tag).await {
       Ok(tag) => Ok(tag.id),
-      Err(_) => State
-        .resolve(
-          CreateTag {
-            name: tag.to_string(),
-          },
-          user.clone(),
-        )
-        .await
-        .map(|tag| tag.id),
+      Err(_) => CreateTag {
+        name: tag.to_string(),
+      }
+      .resolve(args)
+      .await
+      .map(|tag| tag.id),
     }
   });
   let tags = join_all(futures)
@@ -884,11 +878,11 @@ pub async fn rename<T: KomodoResource>(
 
 pub async fn delete<T: KomodoResource>(
   id_or_name: &str,
-  user: &User,
+  args: &WriteArgs,
 ) -> anyhow::Result<Resource<T::Config, T::Info>> {
   let resource = get_check_permissions::<T>(
     id_or_name,
-    user,
+    &args.user,
     PermissionLevel::Write,
   )
   .await?;
@@ -898,19 +892,19 @@ pub async fn delete<T: KomodoResource>(
   }
 
   let target = resource_target::<T>(resource.id.clone());
-  let toml = State
-    .resolve(
-      ExportResourcesToToml {
-        targets: vec![target.clone()],
-        ..Default::default()
-      },
-      user.clone(),
-    )
-    .await?
-    .toml;
+  let toml = ExportResourcesToToml {
+    targets: vec![target.clone()],
+    ..Default::default()
+  }
+  .resolve(&ReadArgs {
+    user: args.user.clone(),
+  })
+  .await
+  .map_err(|e| e.error)?
+  .toml;
 
   let mut update =
-    make_update(target.clone(), T::delete_operation(), user);
+    make_update(target.clone(), T::delete_operation(), &args.user);
 
   T::pre_delete(&resource, &mut update).await?;
 
@@ -977,7 +971,9 @@ where
     })
     .await
   {
-    warn!("failed to delete_many permissions matching target {target:?} | {e:#}");
+    warn!(
+      "failed to delete_many permissions matching target {target:?} | {e:#}"
+    );
   }
 }
 

@@ -20,7 +20,7 @@ async fn app() -> anyhow::Result<()> {
   let komodo =
     KomodoClient::new_from_env()?.with_healthcheck().await?;
 
-  let (mut rx, _) = komodo.subscribe_to_updates(1000, 5)?;
+  let (mut rx, _) = komodo.subscribe_to_updates()?;
 
   loop {
     let update = match rx.recv().await {

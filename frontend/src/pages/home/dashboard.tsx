@@ -21,6 +21,8 @@ import { DataTable, SortableHeader } from "@ui/data-table";
 import { AlertTriangle, Box, Circle, History } from "lucide-react";
 import { PieChart } from "react-minimal-pie-chart";
 import { Link } from "react-router-dom";
+import { UpdateAvailable as StackUpdateAvailable } from "@components/resources/stack";
+import { UpdateAvailable as DeploymentUpdateAvailable } from "@components/resources/deployment";
 
 export const Dashboard = () => {
   const noResources = useNoResources();
@@ -143,10 +145,12 @@ const RecentCard = ({
       )}
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-nowrap">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-nowrap">
           <Components.Icon id={id} />
           <ResourceName type={type} id={id} />
         </div>
+        {type === "Deployment" && <DeploymentUpdateAvailable id={id} small />}
+        {type === "Stack" && <StackUpdateAvailable id={id} small />}
       </div>
       <div className="flex gap-2 w-full">
         <TagsWithBadge tag_ids={tags} />

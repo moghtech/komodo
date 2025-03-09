@@ -1,6 +1,6 @@
 use clap::Parser;
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -16,17 +16,20 @@ use super::{BatchExecutionResponse, KomodoExecuteRequest};
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct DeployStack {
   /// Id or name
   pub stack: String,
-  /// Optionally specify a specific service to "compose up"
-  pub service: Option<String>,
+  /// Filter to only deploy specific services.
+  /// If empty, will deploy all services.
+  #[serde(default)]
+  pub services: Vec<String>,
   /// Override the default termination max time.
   /// Only used if the stack needs to be taken down first.
   pub stop_time: Option<i32>,
@@ -42,12 +45,13 @@ pub struct DeployStack {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
+#[error(serror::Error)]
 pub struct BatchDeployStack {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.
@@ -74,12 +78,13 @@ pub struct BatchDeployStack {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct DeployStackIfChanged {
   /// Id or name
   pub stack: String,
@@ -98,12 +103,13 @@ pub struct DeployStackIfChanged {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
+#[error(serror::Error)]
 pub struct BatchDeployStackIfChanged {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.
@@ -128,17 +134,20 @@ pub struct BatchDeployStackIfChanged {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct PullStack {
   /// Id or name
   pub stack: String,
-  /// Optionally specify a specific service to start
-  pub service: Option<String>,
+  /// Filter to only pull specific services.
+  /// If empty, will pull all services.
+  #[serde(default)]
+  pub services: Vec<String>,
 }
 
 //
@@ -151,17 +160,20 @@ pub struct PullStack {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct StartStack {
   /// Id or name
   pub stack: String,
-  /// Optionally specify a specific service to start
-  pub service: Option<String>,
+  /// Filter to only start specific services.
+  /// If empty, will start all services.
+  #[serde(default)]
+  pub services: Vec<String>,
 }
 
 //
@@ -174,17 +186,20 @@ pub struct StartStack {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct RestartStack {
   /// Id or name
   pub stack: String,
-  /// Optionally specify a specific service to restart
-  pub service: Option<String>,
+  /// Filter to only restart specific services.
+  /// If empty, will restart all services.
+  #[serde(default)]
+  pub services: Vec<String>,
 }
 
 //
@@ -197,17 +212,20 @@ pub struct RestartStack {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct PauseStack {
   /// Id or name
   pub stack: String,
-  /// Optionally specify a specific service to pause
-  pub service: Option<String>,
+  /// Filter to only pause specific services.
+  /// If empty, will pause all services.
+  #[serde(default)]
+  pub services: Vec<String>,
 }
 
 //
@@ -222,17 +240,20 @@ pub struct PauseStack {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct UnpauseStack {
   /// Id or name
   pub stack: String,
-  /// Optionally specify a specific service to unpause
-  pub service: Option<String>,
+  /// Filter to only unpause specific services.
+  /// If empty, will unpause all services.
+  #[serde(default)]
+  pub services: Vec<String>,
 }
 
 //
@@ -245,19 +266,22 @@ pub struct UnpauseStack {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct StopStack {
   /// Id or name
   pub stack: String,
   /// Override the default termination max time.
   pub stop_time: Option<i32>,
-  /// Optionally specify a specific service to stop
-  pub service: Option<String>,
+  /// Filter to only stop specific services.
+  /// If empty, will stop all services.
+  #[serde(default)]
+  pub services: Vec<String>,
 }
 
 //
@@ -270,17 +294,20 @@ pub struct StopStack {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct DestroyStack {
   /// Id or name
   pub stack: String,
-  /// Optionally specify a specific service to destroy
-  pub service: Option<String>,
+  /// Filter to only destroy specific services.
+  /// If empty, will destroy all services.
+  #[serde(default)]
+  pub services: Vec<String>,
   /// Pass `--remove-orphans`
   #[serde(default)]
   pub remove_orphans: bool,
@@ -298,12 +325,13 @@ pub struct DestroyStack {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
+#[error(serror::Error)]
 pub struct BatchDestroyStack {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.

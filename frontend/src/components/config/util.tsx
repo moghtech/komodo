@@ -600,6 +600,7 @@ interface ConfirmUpdateProps<T> {
   disabled: boolean;
   language?: MonacoLanguage;
   file_contents_language?: MonacoLanguage;
+  key_listener?: boolean;
 }
 
 export function ConfirmUpdate<T>({
@@ -610,9 +611,11 @@ export function ConfirmUpdate<T>({
   disabled,
   language,
   file_contents_language,
+  key_listener = false,
 }: ConfirmUpdateProps<T>) {
   const [open, set] = useState(false);
   useCtrlKeyListener("Enter", () => {
+    if (!key_listener) return;
     if (open) {
       onConfirm();
     } else {
@@ -625,7 +628,7 @@ export function ConfirmUpdate<T>({
         <Button
           onClick={() => set(true)}
           disabled={disabled}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 w-100"
         >
           <Save className="w-4 h-4" />
           Save

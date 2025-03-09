@@ -54,7 +54,9 @@ export const DeployStack = ({
         name={`${stack?.name}${service ? ` - ${service}` : ""}`}
         title="Redeploy"
         icon={<Rocket className="h-4 w-4" />}
-        onClick={() => deploy({ stack: id, service })}
+        onClick={() =>
+          deploy({ stack: id, services: service ? [service] : [] })
+        }
         disabled={isPending}
         loading={isPending || deploying}
       />
@@ -65,7 +67,7 @@ export const DeployStack = ({
     <ConfirmButton
       title="Deploy"
       icon={<Rocket className="w-4 h-4" />}
-      onClick={() => deploy({ stack: id, service })}
+      onClick={() => deploy({ stack: id, services: service ? [service] : [] })}
       disabled={isPending}
       loading={isPending || deploying}
     />
@@ -107,7 +109,7 @@ export const DestroyStack = ({
       name={`${stack?.name}${service ? ` - ${service}` : ""}`}
       title="Destroy"
       icon={<Trash className="h-4 w-4" />}
-      onClick={() => destroy({ stack: id, service })}
+      onClick={() => destroy({ stack: id, services: service ? [service] : [] })}
       disabled={isPending}
       loading={isPending || destroying}
     />
@@ -137,7 +139,7 @@ export const PullStack = ({
     <ConfirmButton
       title={`Pull Image${service ? "" : "s"}`}
       icon={<Download className="h-4 w-4" />}
-      onClick={() => pull({ stack: id, service })}
+      onClick={() => pull({ stack: id, services: service ? [service] : [] })}
       disabled={pullPending}
       loading={pullPending || action_state?.pulling}
     />
@@ -181,7 +183,7 @@ export const RestartStack = ({
       name={`${stack?.name}${service ? ` - ${service}` : ""}`}
       title="Restart"
       icon={<RefreshCcw className="h-4 w-4" />}
-      onClick={() => restart({ stack: id, service })}
+      onClick={() => restart({ stack: id, services: service ? [service] : [] })}
       disabled={restartPending}
       loading={restartPending || action_state?.restarting}
     />
@@ -234,7 +236,9 @@ export const StartStopStack = ({
         <ConfirmButton
           title="Start"
           icon={<Play className="h-4 w-4" />}
-          onClick={() => start({ stack: id, service })}
+          onClick={() =>
+            start({ stack: id, services: service ? [service] : [] })
+          }
           disabled={startPending}
           loading={startPending || action_state?.starting}
         />
@@ -244,7 +248,9 @@ export const StartStopStack = ({
           name={`${stack?.name}${service ? ` - ${service}` : ""}`}
           title="Stop"
           icon={<Square className="h-4 w-4" />}
-          onClick={() => stop({ stack: id, service })}
+          onClick={() =>
+            stop({ stack: id, services: service ? [service] : [] })
+          }
           disabled={stopPending}
           loading={stopPending || action_state?.stopping}
         />
@@ -288,7 +294,9 @@ export const PauseUnpauseStack = ({
       <ConfirmButton
         title="Unpause"
         icon={<Play className="h-4 w-4" />}
-        onClick={() => unpause({ stack: id, service })}
+        onClick={() =>
+          unpause({ stack: id, services: service ? [service] : [] })
+        }
         disabled={unpausePending}
         loading={unpausePending || action_state?.unpausing}
       />
@@ -303,7 +311,7 @@ export const PauseUnpauseStack = ({
         name={`${stack?.name}${service ? ` - ${service}` : ""}`}
         title="Pause"
         icon={<Pause className="h-4 w-4" />}
-        onClick={() => pause({ stack: id, service })}
+        onClick={() => pause({ stack: id, services: service ? [service] : [] })}
         disabled={pausePending}
         loading={pausePending || action_state?.pausing}
       />

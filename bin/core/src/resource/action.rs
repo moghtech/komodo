@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use anyhow::Context;
 use komodo_client::entities::{
+  Operation, ResourceTargetVariant,
   action::{
     Action, ActionConfig, ActionConfigDiff, ActionInfo,
     ActionListItem, ActionListItemInfo, ActionQuerySpecifics,
@@ -10,11 +11,10 @@ use komodo_client::entities::{
   resource::Resource,
   update::Update,
   user::User,
-  Operation, ResourceTargetVariant,
 };
 use mungos::{
   find::find_collect,
-  mongodb::{bson::doc, options::FindOneOptions, Collection},
+  mongodb::{Collection, bson::doc, options::FindOneOptions},
 };
 
 use crate::state::{action_state_cache, action_states, db_client};

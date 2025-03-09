@@ -1,6 +1,6 @@
 use clap::Parser;
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -26,12 +26,13 @@ use super::{BatchExecutionResponse, KomodoExecuteRequest};
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct CloneRepo {
   /// Id or name
   pub repo: String,
@@ -47,12 +48,13 @@ pub struct CloneRepo {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
+#[error(serror::Error)]
 pub struct BatchCloneRepo {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.
@@ -82,12 +84,13 @@ pub struct BatchCloneRepo {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct PullRepo {
   /// Id or name
   pub repo: String,
@@ -103,12 +106,13 @@ pub struct PullRepo {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
+#[error(serror::Error)]
 pub struct BatchPullRepo {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.
@@ -142,12 +146,13 @@ pub struct BatchPullRepo {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct BuildRepo {
   /// Id or name
   pub repo: String,
@@ -163,12 +168,13 @@ pub struct BuildRepo {
   PartialEq,
   Serialize,
   Deserialize,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
+#[error(serror::Error)]
 pub struct BatchBuildRepo {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.
@@ -195,12 +201,13 @@ pub struct BatchBuildRepo {
   Debug,
   Clone,
   PartialEq,
-  Request,
+  Resolve,
   EmptyTraits,
   Parser,
 )]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
 pub struct CancelRepoBuild {
   /// Can be id or name
   pub repo: String,

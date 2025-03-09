@@ -23,7 +23,7 @@ pub struct GitProvider {
   /// Whether to use https. Default: true.
   #[serde(default = "default_git_https")]
   pub https: bool,
-  /// The account username. Required.
+  /// The accounts on the git provider. Required.
   #[serde(alias = "account")]
   pub accounts: Vec<ProviderAccount>,
 }
@@ -52,8 +52,8 @@ pub struct DockerRegistry {
   /// The docker provider domain. Default: `docker.io`.
   #[serde(default = "default_docker_provider")]
   pub domain: String,
-  /// The account username. Required.
-  #[serde(default, alias = "account")]
+  /// The accounts on the registry. Required.
+  #[serde(alias = "account")]
   pub accounts: Vec<ProviderAccount>,
   /// Available organizations on the registry provider.
   /// Used to push an image under an organization's repo rather than an account's repo.

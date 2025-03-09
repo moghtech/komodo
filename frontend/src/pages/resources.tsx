@@ -56,12 +56,12 @@ export const Resources = () => {
       actions={<ExportButton targets={targets} />}
     >
       <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap gap-4 items-center justify-between">
           <div className="flex gap-4">
             {(is_admin || !disable_non_admin_create) && <Components.New />}
             <Components.GroupActions />
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <TagsFilter />
             <div className="relative">
               <Search className="w-4 absolute top-[50%] left-3 -translate-y-[50%] text-muted-foreground" />

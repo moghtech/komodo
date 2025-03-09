@@ -45,7 +45,7 @@ const AwsBuilderConfig = ({ id }: { id: string }) => {
   return (
     <Config
       disabled={disabled}
-      config={config}
+      original={config}
       update={update}
       set={set}
       onSave={async () => {
@@ -257,7 +257,7 @@ const ServerBuilderConfig = ({ id }: { id: string }) => {
   return (
     <Config
       disabled={disabled}
-      config={config.params as Types.ServerBuilderConfig}
+      original={config.params as Types.ServerBuilderConfig}
       update={update}
       set={set}
       onSave={async () => {
@@ -319,7 +319,7 @@ const UrlBuilderConfig = ({ id }: { id: string }) => {
   return (
     <Config
       disabled={disabled}
-      config={config.params as Types.UrlBuilderConfig}
+      original={config.params as Types.UrlBuilderConfig}
       update={update}
       set={set}
       onSave={async () => {

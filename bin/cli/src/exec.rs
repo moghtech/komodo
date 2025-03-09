@@ -206,6 +206,9 @@ pub async fn run(execution: Execution) -> anyhow::Result<()> {
     Execution::BatchDestroyStack(data) => {
       println!("{}: {data:?}", "Data".dimmed())
     }
+    Execution::TestAlerter(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
     Execution::Sleep(data) => {
       println!("{}: {data:?}", "Data".dimmed())
     }
@@ -454,6 +457,10 @@ pub async fn run(execution: Execution) -> anyhow::Result<()> {
       .execute(request)
       .await
       .map(ExecutionResult::Batch),
+    Execution::TestAlerter(request) => komodo_client()
+      .execute(request)
+      .await
+      .map(ExecutionResult::Single),
     Execution::Sleep(request) => {
       let duration =
         Duration::from_millis(request.duration_ms as u64);

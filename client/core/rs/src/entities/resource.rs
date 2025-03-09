@@ -1,4 +1,4 @@
-use bson::{doc, Document};
+use bson::{Document, doc};
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
 use serde::{Deserialize, Serialize};
@@ -6,10 +6,10 @@ use typeshare::typeshare;
 
 use crate::{
   deserializers::string_list_deserializer,
-  entities::{MongoId, I64},
+  entities::{I64, MongoId},
 };
 
-use super::{permission::PermissionLevel, ResourceTargetVariant};
+use super::{ResourceTargetVariant, permission::PermissionLevel};
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, Builder)]

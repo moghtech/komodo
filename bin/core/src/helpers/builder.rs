@@ -1,27 +1,27 @@
 use std::time::Duration;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use formatting::muted;
 use komodo_client::entities::{
+  Version,
   builder::{AwsBuilderConfig, Builder, BuilderConfig},
   komodo_timestamp,
   server::Server,
   server_template::aws::AwsServerTemplateConfig,
   update::{Log, Update},
-  Version,
 };
 use periphery_client::{
-  api::{self, GetVersionResponse},
   PeripheryClient,
+  api::{self, GetVersionResponse},
 };
 
 use crate::{
   cloud::{
-    aws::ec2::{
-      launch_ec2_instance, terminate_ec2_instance_with_retry,
-      Ec2Instance,
-    },
     BuildCleanupData,
+    aws::ec2::{
+      Ec2Instance, launch_ec2_instance,
+      terminate_ec2_instance_with_retry,
+    },
   },
   config::core_config,
   helpers::update::update_update,
@@ -122,8 +122,11 @@ async fn get_aws_builder(
   let protocol = if config.use_https { "https" } else { "http" };
   let periphery_address =
     format!("{protocol}://{ip}:{}", config.port);
-  let periphery =
-    PeripheryClient::new(&periphery_address, &core_config().passkey, Duration::from_secs(3));
+  let periphery = PeripheryClient::new(
+    &periphery_address,
+    &core_config().passkey,
+    Duration::from_secs(3),
+  );
 
   let start_connect_ts = komodo_timestamp();
   let mut res = Ok(GetVersionResponse {

@@ -1,6 +1,6 @@
 use serde::{
-  de::{value::SeqAccessDeserializer, Visitor},
   Deserialize, Deserializer,
+  de::{Visitor, value::SeqAccessDeserializer},
 };
 
 use crate::entities::deployment::Conversion;

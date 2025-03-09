@@ -37,19 +37,12 @@ impl<Res: Default> Default for CacheEntry<Res> {
 
 impl<Res: Clone> CacheEntry<Res> {
   pub fn set(&mut self, res: &anyhow::Result<Res>, timestamp: i64) {
-    self.res = res
-      .as_ref()
-      .map(|res| res.clone())
-      .map_err(clone_anyhow_error);
+    self.res = res.as_ref().map_err(clone_anyhow_error).cloned();
     self.last_ts = timestamp;
   }
 
   pub fn clone_res(&self) -> anyhow::Result<Res> {
-    self
-      .res
-      .as_ref()
-      .map(|res| res.clone())
-      .map_err(clone_anyhow_error)
+    self.res.as_ref().map_err(clone_anyhow_error).cloned()
   }
 }
 

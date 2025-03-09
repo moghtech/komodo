@@ -19,7 +19,7 @@ const config: Config = {
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: "mbecker20", // Usually your GitHub org/user name.
+  organizationName: "moghtech", // Usually your GitHub org/user name.
   projectName: "komodo", // Usually your repo name.
   trailingSlash: false,
   deploymentBranch: "gh-pages-docs",
@@ -41,13 +41,11 @@ const config: Config = {
       {
         docs: {
           sidebarPath: "./sidebars.ts",
-          editUrl:
-            "https://github.com/mbecker20/komodo/tree/main/docsite",
+          editUrl: "https://github.com/moghtech/komodo/tree/main/docsite",
         },
         blog: {
           showReadingTime: true,
-          editUrl:
-            "https://github.com/mbecker20/komodo/tree/main/docsite",
+          editUrl: "https://github.com/moghtech/komodo/tree/main/docsite",
         },
         theme: {
           customCss: "./src/css/custom.css",
@@ -67,7 +65,7 @@ const config: Config = {
       title: "Komodo",
       logo: {
         alt: "monitor lizard",
-        src: "img/logo512.png",
+        src: "img/komodo-512x512.png",
         width: "34px",
       },
       items: [
@@ -78,12 +76,17 @@ const config: Config = {
           label: "docs",
         },
         {
-          href: "https://docs.rs/komodo_client/latest/komodo_client/",
+          href: "https://opencollective.com/komodo",
+          label: "Donate",
+          position: "right",
+        },
+        {
+          href: "https://docs.rs/komodo_client/latest/komodo_client",
           label: "Docs.rs",
           position: "right",
         },
         {
-          href: "https://github.com/mbecker20/komodo",
+          href: "https://github.com/moghtech/komodo",
           label: "Github",
           position: "right",
         },
