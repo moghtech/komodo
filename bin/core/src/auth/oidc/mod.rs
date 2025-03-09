@@ -73,7 +73,9 @@ pub fn router() -> Router {
 async fn login(
   Query(RedirectQuery { redirect }): Query<RedirectQuery>,
 ) -> anyhow::Result<Redirect> {
-  let client = oidc_client().context("OIDC Client not configured")?;
+  let client = oidc_client().load();
+  let client =
+    client.as_ref().context("OIDC Client not configured")?;
 
   let (pkce_challenge, pkce_verifier) =
     PkceCodeChallenge::new_random_sha256();
@@ -133,7 +135,9 @@ struct CallbackQuery {
 async fn callback(
   Query(query): Query<CallbackQuery>,
 ) -> anyhow::Result<Redirect> {
-  let client = oidc_client().context("OIDC Client not configured")?;
+  let client = oidc_client().load();
+  let client =
+    client.as_ref().context("OIDC Client not configured")?;
 
   if let Some(e) = query.error {
     return Err(anyhow!("Provider returned error: {e}"));
@@ -182,7 +186,7 @@ async fn callback(
 
   let claims = id_token
     .claims(&verifier, &nonce)
-    .context("Failed to verify token claims")?;
+    .context("Failed to verify token claims. This issue may be temporary (60 seconds max).")?;
 
   // Verify the access token hash to ensure that the access token hasn't been substituted for
   // another user's.

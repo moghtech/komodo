@@ -52,6 +52,7 @@ serde_yaml.workspace = true
 typeshare.workspace = true
 octorust.workspace = true
 wildcard.workspace = true
+arc-swap.workspace = true
 dashmap.workspace = true
 tracing.workspace = true
 reqwest.workspace = true

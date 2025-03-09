@@ -45,10 +45,11 @@ svi = "1.0.1"
 
 # ASYNC
 reqwest = { version = "0.12.12", default-features = false, features = ["json", "rustls-tls-native-roots"] }
-tokio = { version = "1.43.0", features = ["full"] }
+tokio = { version = "1.44.0", features = ["full"] }
 tokio-util = "0.7.13"
 futures = "0.3.31"
 futures-util = "0.3.31"
+arc-swap = "1.7.1"
 
 # SERVER
 axum-extra = { version = "0.10.0", features = ["typed-header"] }

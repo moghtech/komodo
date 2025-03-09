@@ -40,8 +40,8 @@ async fn app() -> anyhow::Result<()> {
   tokio::join!(
     // Init db_client check to crash on db init failure
     state::init_db_client(),
-    // Init OIDC client (defined in config / env vars / compose secret file)
-    auth::oidc::client::init_oidc_client()
+    // Manage OIDC client (defined in config / env vars / compose secret file)
+    auth::oidc::client::spawn_oidc_client_management()
   );
   tokio::join!(
     // Maybe initialize first server
