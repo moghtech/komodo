@@ -124,6 +124,7 @@ disable_non_admin_create = false
 ##  - `lock_login_credentials_for = []` will allow all users to update username / password.
 ##  - `lock_login_credentials_for = ["demo"]` will block the demo user from doing so.
 ##  - `lock_login_credentials_for = ["__ALL__"]` will block all users.
+## Env: KOMODO_LOCK_LOGIN_CREDENTIALS_FOR
 ## Default: empty list
 lock_login_credentials_for = []
 
