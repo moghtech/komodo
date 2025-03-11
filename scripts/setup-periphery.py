@@ -68,7 +68,7 @@ def copy_binary(user_install, bin_dir, version):
 
 	periphery_bin = "periphery-x86_64"
 	arch = platform.machine().lower()
-	if arch == "aarch64" or arch == "amd64":
+	if arch == "aarch64" or arch == "arm64":
 		print("aarch64 detected")
 		periphery_bin = "periphery-aarch64"
 	else:
