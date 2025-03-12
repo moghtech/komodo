@@ -561,7 +561,7 @@ export const StackConfig = ({
             run_directory: {
               label: "Run Directory",
               description:
-                "Set the working directory when running the compose up command, relative to the repo root.",
+                "Set the working directory when running the compose up command, relative to the stack root. ($periphery_stack_dir/$stack_name/$run_directory)",
               placeholder: "./path/to/folder",
             },
             file_paths: (value, set) => (
