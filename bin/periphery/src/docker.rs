@@ -1,20 +1,20 @@
 use std::{collections::HashMap, sync::OnceLock};
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use bollard::{
+  Docker,
   container::{InspectContainerOptions, ListContainersOptions},
   network::InspectNetworkOptions,
-  Docker,
 };
 use command::run_komodo_command;
 use komodo_client::entities::{
+  TerminationSignal,
   docker::{
-    container::*, image::*, network::*, volume::*, ContainerConfig,
-    GraphDriverData, HealthConfig, PortBinding,
+    ContainerConfig, GraphDriverData, HealthConfig, PortBinding,
+    container::*, image::*, network::*, volume::*,
   },
   to_komodo_name,
   update::Log,
-  TerminationSignal,
 };
 use run_command::async_run_command;
 
@@ -969,7 +969,7 @@ pub async fn docker_login(
 #[instrument]
 pub async fn pull_image(image: &str) -> Log {
   let command = format!("docker pull {image}");
-  run_komodo_command("docker pull", None, command, false).await
+  run_komodo_command("Docker Pull", None, command).await
 }
 
 pub fn stop_container_command(

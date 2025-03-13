@@ -11,7 +11,6 @@ import {
   stroke_color_class_by_intention,
 } from "@lib/color";
 import { cn } from "@lib/utils";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@ui/hover-card";
 import { useServer } from "../server";
 import { Types } from "komodo_client";
 import { DashboardPieChart } from "@pages/home/dashboard";
@@ -22,6 +21,7 @@ import { Button } from "@ui/button";
 import { useBuilder } from "../builder";
 import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 
 export const useRepo = (id?: string) =>
   useRead("ListRepos", {}, { refetchInterval: 10_000 }).data?.find(
@@ -97,21 +97,21 @@ export const RepoComponents: RequiredResourceComponents = {
         return null;
       }
       return (
-        <HoverCard openDelay={200}>
-          <HoverCardTrigger asChild>
+        <Tooltip>
+          <TooltipTrigger asChild>
             <Card className="px-3 py-2 hover:bg-accent/50 transition-colors cursor-pointer">
               <div className="text-muted-foreground text-sm text-nowrap overflow-hidden overflow-ellipsis">
                 cloned: {info.cloned_hash}
               </div>
             </Card>
-          </HoverCardTrigger>
-          <HoverCardContent align="start">
+          </TooltipTrigger>
+          <TooltipContent>
             <div className="grid">
               <div className="text-muted-foreground">commit message:</div>
               {info.cloned_message}
             </div>
-          </HoverCardContent>
-        </HoverCard>
+          </TooltipContent>
+        </Tooltip>
       );
     },
     Built: ({ id }) => {
@@ -121,15 +121,15 @@ export const RepoComponents: RequiredResourceComponents = {
         return null;
       }
       return (
-        <HoverCard openDelay={200}>
-          <HoverCardTrigger asChild>
+        <Tooltip>
+          <TooltipTrigger asChild>
             <Card className="px-3 py-2 hover:bg-accent/50 transition-colors cursor-pointer">
               <div className="text-muted-foreground text-sm text-nowrap overflow-hidden overflow-ellipsis">
                 built: {info.built_hash}
               </div>
             </Card>
-          </HoverCardTrigger>
-          <HoverCardContent align="start">
+          </TooltipTrigger>
+          <TooltipContent>
             <div className="grid gap-2">
               <Badge
                 variant="secondary"
@@ -139,8 +139,8 @@ export const RepoComponents: RequiredResourceComponents = {
               </Badge>
               {fullInfo?.built_message}
             </div>
-          </HoverCardContent>
-        </HoverCard>
+          </TooltipContent>
+        </Tooltip>
       );
     },
     Latest: ({ id }) => {
@@ -150,15 +150,15 @@ export const RepoComponents: RequiredResourceComponents = {
         return null;
       }
       return (
-        <HoverCard openDelay={200}>
-          <HoverCardTrigger asChild>
+        <Tooltip>
+          <TooltipTrigger asChild>
             <Card className="px-3 py-2 hover:bg-accent/50 transition-colors cursor-pointer">
               <div className="text-muted-foreground text-sm text-nowrap overflow-hidden overflow-ellipsis">
                 latest: {info.latest_hash}
               </div>
             </Card>
-          </HoverCardTrigger>
-          <HoverCardContent align="start">
+          </TooltipTrigger>
+          <TooltipContent>
             <div className="grid gap-2">
               <Badge
                 variant="secondary"
@@ -168,8 +168,8 @@ export const RepoComponents: RequiredResourceComponents = {
               </Badge>
               {fullInfo?.latest_message}
             </div>
-          </HoverCardContent>
-        </HoverCard>
+          </TooltipContent>
+        </Tooltip>
       );
     },
     Refresh: ({ id }) => {

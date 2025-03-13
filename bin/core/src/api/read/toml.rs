@@ -6,12 +6,12 @@ use komodo_client::{
     ListUserGroups,
   },
   entities::{
-    action::Action, alerter::Alerter, build::Build, builder::Builder,
-    deployment::Deployment, permission::PermissionLevel,
-    procedure::Procedure, repo::Repo, resource::ResourceQuery,
-    server::Server, server_template::ServerTemplate, stack::Stack,
+    ResourceTarget, action::Action, alerter::Alerter, build::Build,
+    builder::Builder, deployment::Deployment,
+    permission::PermissionLevel, procedure::Procedure, repo::Repo,
+    resource::ResourceQuery, server::Server,
+    server_template::ServerTemplate, stack::Stack,
     sync::ResourceSync, toml::ResourcesToml, user::User,
-    ResourceTarget,
   },
 };
 use mungos::find::find_collect;
@@ -22,183 +22,196 @@ use crate::{
     get_all_tags, get_id_to_tags, get_user_user_group_ids,
   },
   resource,
-  state::{db_client, State},
+  state::db_client,
   sync::{
-    toml::{convert_resource, ToToml, TOML_PRETTY_OPTIONS},
-    user_groups::convert_user_groups,
     AllResourcesById,
+    toml::{TOML_PRETTY_OPTIONS, ToToml, convert_resource},
+    user_groups::convert_user_groups,
   },
 };
 
-impl Resolve<ExportAllResourcesToToml, User> for State {
-  async fn resolve(
-    &self,
-    ExportAllResourcesToToml { tags }: ExportAllResourcesToToml,
-    user: User,
-  ) -> anyhow::Result<ExportAllResourcesToTomlResponse> {
-    let mut targets = Vec::<ResourceTarget>::new();
+use super::ReadArgs;
 
-    let all_tags = if tags.is_empty() {
-      vec![]
-    } else {
-      get_all_tags(None).await?
-    };
-
-    targets.extend(
-      resource::list_for_user::<Alerter>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
-        &user,
-        &all_tags,
-      )
-      .await?
-      .into_iter()
-      .map(|resource| ResourceTarget::Alerter(resource.id)),
-    );
-    targets.extend(
-      resource::list_for_user::<Builder>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
-        &user,
-        &all_tags,
-      )
-      .await?
-      .into_iter()
-      .map(|resource| ResourceTarget::Builder(resource.id)),
-    );
-    targets.extend(
-      resource::list_for_user::<Server>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
-        &user,
-        &all_tags,
-      )
-      .await?
-      .into_iter()
-      .map(|resource| ResourceTarget::Server(resource.id)),
-    );
-    targets.extend(
-      resource::list_for_user::<Deployment>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
-        &user,
-        &all_tags,
-      )
-      .await?
-      .into_iter()
-      .map(|resource| ResourceTarget::Deployment(resource.id)),
-    );
-    targets.extend(
-      resource::list_for_user::<Stack>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
-        &user,
-        &all_tags,
-      )
-      .await?
-      .into_iter()
-      .map(|resource| ResourceTarget::Stack(resource.id)),
-    );
-    targets.extend(
-      resource::list_for_user::<Build>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
-        &user,
-        &all_tags,
-      )
-      .await?
-      .into_iter()
-      .map(|resource| ResourceTarget::Build(resource.id)),
-    );
-    targets.extend(
-      resource::list_for_user::<Repo>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
-        &user,
-        &all_tags,
-      )
-      .await?
-      .into_iter()
-      .map(|resource| ResourceTarget::Repo(resource.id)),
-    );
-    targets.extend(
-      resource::list_for_user::<Procedure>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
-        &user,
-        &all_tags,
-      )
-      .await?
-      .into_iter()
-      .map(|resource| ResourceTarget::Procedure(resource.id)),
-    );
-    targets.extend(
-      resource::list_for_user::<Action>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
-        &user,
-        &all_tags,
-      )
-      .await?
-      .into_iter()
-      .map(|resource| ResourceTarget::Action(resource.id)),
-    );
-    targets.extend(
-      resource::list_for_user::<ServerTemplate>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
-        &user,
-        &all_tags,
-      )
-      .await?
-      .into_iter()
-      .map(|resource| ResourceTarget::ServerTemplate(resource.id)),
-    );
-    targets.extend(
-      resource::list_full_for_user::<ResourceSync>(
-        ResourceQuery::builder().tags(tags.clone()).build(),
-        &user,
-        &all_tags,
-      )
-      .await?
-      .into_iter()
-      // These will already be filtered by [ExportResourcesToToml]
-      .map(|resource| ResourceTarget::ResourceSync(resource.id)),
-    );
-
-    let user_groups = if user.admin && tags.is_empty() {
-      find_collect(&db_client().user_groups, None, None)
-        .await
-        .context("failed to query db for user groups")?
-        .into_iter()
-        .map(|user_group| user_group.id)
-        .collect()
-    } else {
-      get_user_user_group_ids(&user.id).await?
-    };
-
-    self
-      .resolve(
-        ExportResourcesToToml {
-          targets,
-          user_groups,
-          include_variables: tags.is_empty(),
-        },
-        user,
-      )
-      .await
-  }
+async fn get_all_targets(
+  tags: &[String],
+  user: &User,
+) -> anyhow::Result<Vec<ResourceTarget>> {
+  let mut targets = Vec::<ResourceTarget>::new();
+  let all_tags = if tags.is_empty() {
+    vec![]
+  } else {
+    get_all_tags(None).await?
+  };
+  targets.extend(
+    resource::list_for_user::<Alerter>(
+      ResourceQuery::builder().tags(tags).build(),
+      user,
+      &all_tags,
+    )
+    .await?
+    .into_iter()
+    .map(|resource| ResourceTarget::Alerter(resource.id)),
+  );
+  targets.extend(
+    resource::list_for_user::<Builder>(
+      ResourceQuery::builder().tags(tags).build(),
+      user,
+      &all_tags,
+    )
+    .await?
+    .into_iter()
+    .map(|resource| ResourceTarget::Builder(resource.id)),
+  );
+  targets.extend(
+    resource::list_for_user::<Server>(
+      ResourceQuery::builder().tags(tags).build(),
+      user,
+      &all_tags,
+    )
+    .await?
+    .into_iter()
+    .map(|resource| ResourceTarget::Server(resource.id)),
+  );
+  targets.extend(
+    resource::list_for_user::<Stack>(
+      ResourceQuery::builder().tags(tags).build(),
+      user,
+      &all_tags,
+    )
+    .await?
+    .into_iter()
+    .map(|resource| ResourceTarget::Stack(resource.id)),
+  );
+  targets.extend(
+    resource::list_for_user::<Deployment>(
+      ResourceQuery::builder().tags(tags).build(),
+      user,
+      &all_tags,
+    )
+    .await?
+    .into_iter()
+    .map(|resource| ResourceTarget::Deployment(resource.id)),
+  );
+  targets.extend(
+    resource::list_for_user::<Build>(
+      ResourceQuery::builder().tags(tags).build(),
+      user,
+      &all_tags,
+    )
+    .await?
+    .into_iter()
+    .map(|resource| ResourceTarget::Build(resource.id)),
+  );
+  targets.extend(
+    resource::list_for_user::<Repo>(
+      ResourceQuery::builder().tags(tags).build(),
+      user,
+      &all_tags,
+    )
+    .await?
+    .into_iter()
+    .map(|resource| ResourceTarget::Repo(resource.id)),
+  );
+  targets.extend(
+    resource::list_for_user::<Procedure>(
+      ResourceQuery::builder().tags(tags).build(),
+      user,
+      &all_tags,
+    )
+    .await?
+    .into_iter()
+    .map(|resource| ResourceTarget::Procedure(resource.id)),
+  );
+  targets.extend(
+    resource::list_for_user::<Action>(
+      ResourceQuery::builder().tags(tags).build(),
+      user,
+      &all_tags,
+    )
+    .await?
+    .into_iter()
+    .map(|resource| ResourceTarget::Action(resource.id)),
+  );
+  targets.extend(
+    resource::list_for_user::<ServerTemplate>(
+      ResourceQuery::builder().tags(tags).build(),
+      user,
+      &all_tags,
+    )
+    .await?
+    .into_iter()
+    .map(|resource| ResourceTarget::ServerTemplate(resource.id)),
+  );
+  targets.extend(
+    resource::list_full_for_user::<ResourceSync>(
+      ResourceQuery::builder().tags(tags).build(),
+      user,
+      &all_tags,
+    )
+    .await?
+    .into_iter()
+    // These will already be filtered by [ExportResourcesToToml]
+    .map(|resource| ResourceTarget::ResourceSync(resource.id)),
+  );
+  Ok(targets)
 }
 
-impl Resolve<ExportResourcesToToml, User> for State {
+impl Resolve<ReadArgs> for ExportAllResourcesToToml {
   async fn resolve(
-    &self,
+    self,
+    args: &ReadArgs,
+  ) -> serror::Result<ExportAllResourcesToTomlResponse> {
+    let targets = if self.include_resources {
+      get_all_targets(&self.tags, &args.user).await?
+    } else {
+      Vec::new()
+    };
+
+    let user_groups = if self.include_user_groups {
+      if args.user.admin {
+        find_collect(&db_client().user_groups, None, None)
+          .await
+          .context("failed to query db for user groups")?
+          .into_iter()
+          .map(|user_group| user_group.id)
+          .collect()
+      } else {
+        get_user_user_group_ids(&args.user.id).await?
+      }
+    } else {
+      Vec::new()
+    };
+
     ExportResourcesToToml {
       targets,
       user_groups,
+      include_variables: self.include_variables,
+    }
+    .resolve(args)
+    .await
+  }
+}
+
+impl Resolve<ReadArgs> for ExportResourcesToToml {
+  async fn resolve(
+    self,
+    args: &ReadArgs,
+  ) -> serror::Result<ExportResourcesToTomlResponse> {
+    let ExportResourcesToToml {
+      targets,
+      user_groups,
       include_variables,
-    }: ExportResourcesToToml,
-    user: User,
-  ) -> anyhow::Result<ExportResourcesToTomlResponse> {
+    } = self;
     let mut res = ResourcesToml::default();
     let all = AllResourcesById::load().await?;
     let id_to_tags = get_id_to_tags(None).await?;
+    let ReadArgs { user } = args;
     for target in targets {
       match target {
         ResourceTarget::Alerter(id) => {
           let alerter = resource::get_check_permissions::<Alerter>(
             &id,
-            &user,
+            user,
             PermissionLevel::Read,
           )
           .await?;
@@ -212,7 +225,7 @@ impl Resolve<ExportResourcesToToml, User> for State {
         ResourceTarget::ResourceSync(id) => {
           let sync = resource::get_check_permissions::<ResourceSync>(
             &id,
-            &user,
+            user,
             PermissionLevel::Read,
           )
           .await?;
@@ -231,9 +244,7 @@ impl Resolve<ExportResourcesToToml, User> for State {
         ResourceTarget::ServerTemplate(id) => {
           let template = resource::get_check_permissions::<
             ServerTemplate,
-          >(
-            &id, &user, PermissionLevel::Read
-          )
+          >(&id, user, PermissionLevel::Read)
           .await?;
           res.server_templates.push(
             convert_resource::<ServerTemplate>(
@@ -247,7 +258,7 @@ impl Resolve<ExportResourcesToToml, User> for State {
         ResourceTarget::Server(id) => {
           let server = resource::get_check_permissions::<Server>(
             &id,
-            &user,
+            user,
             PermissionLevel::Read,
           )
           .await?;
@@ -262,7 +273,7 @@ impl Resolve<ExportResourcesToToml, User> for State {
           let mut builder =
             resource::get_check_permissions::<Builder>(
               &id,
-              &user,
+              user,
               PermissionLevel::Read,
             )
             .await?;
@@ -277,7 +288,7 @@ impl Resolve<ExportResourcesToToml, User> for State {
         ResourceTarget::Build(id) => {
           let mut build = resource::get_check_permissions::<Build>(
             &id,
-            &user,
+            user,
             PermissionLevel::Read,
           )
           .await?;
@@ -293,7 +304,7 @@ impl Resolve<ExportResourcesToToml, User> for State {
           let mut deployment = resource::get_check_permissions::<
             Deployment,
           >(
-            &id, &user, PermissionLevel::Read
+            &id, user, PermissionLevel::Read
           )
           .await?;
           Deployment::replace_ids(&mut deployment, &all);
@@ -307,7 +318,7 @@ impl Resolve<ExportResourcesToToml, User> for State {
         ResourceTarget::Repo(id) => {
           let mut repo = resource::get_check_permissions::<Repo>(
             &id,
-            &user,
+            user,
             PermissionLevel::Read,
           )
           .await?;
@@ -322,7 +333,7 @@ impl Resolve<ExportResourcesToToml, User> for State {
         ResourceTarget::Stack(id) => {
           let mut stack = resource::get_check_permissions::<Stack>(
             &id,
-            &user,
+            user,
             PermissionLevel::Read,
           )
           .await?;
@@ -338,7 +349,7 @@ impl Resolve<ExportResourcesToToml, User> for State {
           let mut procedure = resource::get_check_permissions::<
             Procedure,
           >(
-            &id, &user, PermissionLevel::Read
+            &id, user, PermissionLevel::Read
           )
           .await?;
           Procedure::replace_ids(&mut procedure, &all);
@@ -352,7 +363,7 @@ impl Resolve<ExportResourcesToToml, User> for State {
         ResourceTarget::Action(id) => {
           let mut action = resource::get_check_permissions::<Action>(
             &id,
-            &user,
+            user,
             PermissionLevel::Read,
           )
           .await?;
@@ -368,7 +379,7 @@ impl Resolve<ExportResourcesToToml, User> for State {
       };
     }
 
-    add_user_groups(user_groups, &mut res, &all, &user)
+    add_user_groups(user_groups, &mut res, &all, args)
       .await
       .context("failed to add user groups")?;
 
@@ -398,11 +409,12 @@ async fn add_user_groups(
   user_groups: Vec<String>,
   res: &mut ResourcesToml,
   all: &AllResourcesById,
-  user: &User,
+  args: &ReadArgs,
 ) -> anyhow::Result<()> {
-  let user_groups = State
-    .resolve(ListUserGroups {}, user.clone())
-    .await?
+  let user_groups = ListUserGroups {}
+    .resolve(args)
+    .await
+    .map_err(|e| e.error)?
     .into_iter()
     .filter(|ug| {
       user_groups.contains(&ug.name) || user_groups.contains(&ug.id)

@@ -5,11 +5,11 @@ use serde::{Deserialize, Serialize};
 use strum::{Display, EnumString};
 use typeshare::typeshare;
 
-use crate::entities::{MongoId, I64};
+use crate::entities::{I64, MongoId};
 
 use super::{
-  _Serror, deployment::DeploymentState, stack::StackState,
-  ResourceTarget, Version,
+  _Serror, ResourceTarget, Version, deployment::DeploymentState,
+  stack::StackState,
 };
 
 /// Representation of an alert in the system.
@@ -73,6 +73,15 @@ pub struct Alert {
 pub enum AlertData {
   /// A null alert
   None {},
+
+  /// The user triggered a test of the
+  /// Alerter configuration.
+  Test {
+    /// The id of the alerter
+    id: String,
+    /// The name of the alerter
+    name: String,
+  },
 
   /// A server could not be reached.
   ServerUnreachable {

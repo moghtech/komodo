@@ -1,9 +1,9 @@
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use formatting::{bold, muted};
 use komodo_client::entities::{
-  komodo_timestamp, update::Log, LatestCommit,
+  LatestCommit, komodo_timestamp, update::Log,
 };
 use run_command::async_run_command;
 use tracing::instrument;
@@ -12,13 +12,17 @@ pub mod environment;
 
 mod clone;
 mod commit;
+mod init;
 mod pull;
 mod pull_or_clone;
 
-pub use clone::clone;
-pub use commit::{commit_all, commit_file, write_commit_file};
-pub use pull::pull;
-pub use pull_or_clone::pull_or_clone;
+pub use crate::{
+  clone::clone,
+  commit::{commit_all, commit_file, write_commit_file},
+  init::init_folder_as_repo,
+  pull::pull,
+  pull_or_clone::pull_or_clone,
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct GitRes {
@@ -32,7 +36,10 @@ pub struct GitRes {
 pub async fn get_commit_hash_info(
   repo_dir: &Path,
 ) -> anyhow::Result<LatestCommit> {
-  let command = format!("cd {} && git rev-parse --short HEAD && git rev-parse HEAD && git log -1 --pretty=%B", repo_dir.display());
+  let command = format!(
+    "cd {} && git rev-parse --short HEAD && git rev-parse HEAD && git log -1 --pretty=%B",
+    repo_dir.display()
+  );
   let output = async_run_command(&command).await;
   let mut split = output.stdout.split('\n');
   let (hash, _, message) = (
@@ -54,7 +61,10 @@ pub async fn get_commit_hash_log(
   repo_dir: &Path,
 ) -> anyhow::Result<(Log, String, String)> {
   let start_ts = komodo_timestamp();
-  let command = format!("cd {} && git rev-parse --short HEAD && git rev-parse HEAD && git log -1 --pretty=%B", repo_dir.display());
+  let command = format!(
+    "cd {} && git rev-parse --short HEAD && git rev-parse HEAD && git log -1 --pretty=%B",
+    repo_dir.display()
+  );
   let output = async_run_command(&command).await;
   let mut split = output.stdout.split('\n');
   let (short_hash, _, msg) = (
@@ -69,7 +79,7 @@ pub async fn get_commit_hash_log(
       .to_string(),
   );
   let log = Log {
-    stage: "latest commit".into(),
+    stage: "Latest Commit".into(),
     command,
     stdout: format!(
       "{} {}\n{} {}",

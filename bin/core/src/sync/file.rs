@@ -3,8 +3,8 @@ use std::{
   path::{Path, PathBuf},
 };
 
-use anyhow::{anyhow, Context};
-use formatting::{bold, colored, format_serror, muted, Color};
+use anyhow::{Context, anyhow};
+use formatting::{Color, bold, colored, format_serror, muted};
 use komodo_client::entities::{
   sync::SyncFileContents,
   toml::{ResourceToml, ResourcesToml},
@@ -143,9 +143,7 @@ fn read_resource_file(
     path: file_path.display().to_string(),
     contents: contents.clone(),
   });
-  let more = toml::from_str::<ResourcesToml>(&contents)
-    // the error without this comes through with multiple lines (\n) and looks bad
-    .map_err(|e| anyhow!("{e:#}"))
+  let more = super::deserialize_resources_toml(&contents)
     .context("failed to parse resource file contents")?;
   log.push('\n');
   let path_for_view =
@@ -167,6 +165,7 @@ fn read_resource_file(
 }
 
 /// Reads down into directories.
+#[allow(clippy::too_many_arguments)]
 fn read_resources_directory(
   root_path: &Path,
   // relative to root path.

@@ -22,6 +22,7 @@ import { useToast } from "@ui/use-toast";
 import { useAtom } from "jotai";
 import { MinusCircle, PlusCircle, SearchX, Tag, X } from "lucide-react";
 import { ReactNode, useEffect, useState } from "react";
+import { tag_background_class } from "@lib/color";
 
 type TargetExcludingSystem = Exclude<Types.ResourceTarget, { type: "System" }>;
 
@@ -95,6 +96,12 @@ export const TagsFilter = () => {
                       className="flex items-center justify-between cursor-pointer"
                     >
                       <div className="p-1">{tag.name}</div>
+                      <div
+                        className={cn(
+                          "w-[25px] h-[25px] rounded-sm bg-opacity-70",
+                          tag_background_class(tag.color)
+                        )}
+                      />
                     </CommandItem>
                   ))}
               </CommandGroup>
@@ -114,21 +121,29 @@ export const TagsFilterTags = ({
   onBadgeClick?: (tag_id: string) => void;
 }) => {
   const all_tags = useRead("ListTags", {}).data;
-  const get_name = (tag_id: string) =>
-    all_tags?.find((t) => t._id?.$oid === tag_id)?.name ?? "unknown";
+  const get_tag = (tag_id: string) =>
+    all_tags?.find((t) => t._id?.$oid === tag_id);
   return (
     <>
-      {tag_ids?.map((tag_id) => (
-        <Badge
-          key={tag_id}
-          variant="secondary"
-          className="flex gap-1 px-2 py-1.5 cursor-pointer"
-          onClick={() => onBadgeClick && onBadgeClick(tag_id)}
-        >
-          {get_name(tag_id)}
-          <MinusCircle className="w-3 h-3" />
-        </Badge>
-      ))}
+      {tag_ids?.map((tag_id) => {
+        const tag = get_tag(tag_id);
+        const color = tag_background_class(tag?.color);
+        return (
+          <Badge
+            key={tag_id}
+            variant="secondary"
+            className={cn(
+              "flex gap-1 px-2 py-1.5 cursor-pointer text-nowrap bg-opacity-30 hover:bg-opacity-70",
+              color,
+              `hover:${color}`
+            )}
+            onClick={() => onBadgeClick && onBadgeClick(tag_id)}
+          >
+            {tag?.name ?? "unknown"}
+            <MinusCircle className="w-3 h-3" />
+          </Badge>
+        );
+      })}
     </>
   );
 };
@@ -184,24 +199,30 @@ export const TagsWithBadge = ({
   icon?: ReactNode;
 }) => {
   const all_tags = useRead("ListTags", {}).data;
-  const get_name = (tag_id: string) =>
-    all_tags?.find((t) => t._id?.$oid === tag_id)?.name ?? "unknown";
+  const get_tag = (tag_id: string) =>
+    all_tags?.find((t) => t._id?.$oid === tag_id);
   return (
     <>
-      {tag_ids?.map((tag_id) => (
-        <Badge
-          key={tag_id}
-          variant="secondary"
-          className={cn(
-            "gap-2 px-1.5 py-0.5 cursor-pointer text-nowrap",
-            className
-          )}
-          onClick={() => onBadgeClick && onBadgeClick(tag_id)}
-        >
-          {get_name(tag_id)}
-          {icon}
-        </Badge>
-      ))}
+      {tag_ids?.map((tag_id) => {
+        const tag = get_tag(tag_id);
+        const color = tag_background_class(tag?.color);
+        return (
+          <Badge
+            key={tag_id}
+            variant="secondary"
+            className={cn(
+              "gap-2 px-1.5 py-0.5 cursor-pointer text-nowrap bg-opacity-30 hover:bg-opacity-70",
+              color,
+              `hover:${color}`,
+              className
+            )}
+            onClick={() => onBadgeClick && onBadgeClick(tag_id)}
+          >
+            {tag?.name ?? "unknown"}
+            {icon}
+          </Badge>
+        );
+      })}
     </>
   );
 };
@@ -315,9 +336,15 @@ export const AddTags = ({ target }: { target: TargetExcludingSystem }) => {
                         tags: [...(resource?.tags ?? []), tag._id!.$oid],
                       })
                     }
-                    className="cursor-pointer"
+                    className="cursor-pointer flex items-center justify-between gap-2"
                   >
                     <div className="p-1">{tag.name}</div>
+                    <div
+                      className={cn(
+                        "w-[25px] h-[25px] rounded-sm",
+                        tag_background_class(tag.color)
+                      )}
+                    />
                   </CommandItem>
                 ))}
               {search && !all_tag_names.includes(search) && (

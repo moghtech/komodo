@@ -1,18 +1,21 @@
 use std::{fmt::Write, path::PathBuf};
 
-use anyhow::{anyhow, Context};
-use command::run_komodo_command;
+use anyhow::{Context, anyhow};
+use command::{
+  run_komodo_command, run_komodo_command_multiline,
+  run_komodo_command_with_interpolation,
+};
 use formatting::format_serror;
 use git::environment;
 use komodo_client::entities::{
-  all_logs_success, environment_vars_from_str,
+  CloneArgs, FileContents, all_logs_success,
+  environment_vars_from_str,
   stack::{
     ComposeFile, ComposeService, ComposeServiceDeploy, Stack,
     StackServiceNames,
   },
   to_komodo_name,
   update::Log,
-  CloneArgs, FileContents,
 };
 use periphery_client::api::{
   compose::ComposeUpResponse,
@@ -22,10 +25,8 @@ use resolver_api::Resolve;
 use tokio::fs;
 
 use crate::{
-  config::periphery_config,
-  docker::docker_login,
-  helpers::{interpolate_variables, parse_extra_args},
-  State,
+  config::periphery_config, docker::docker_login,
+  helpers::parse_extra_args,
 };
 
 pub fn docker_compose() -> &'static str {
@@ -39,7 +40,7 @@ pub fn docker_compose() -> &'static str {
 /// If this fn returns Err, the caller of `compose_up` has to write result to the log before return.
 pub async fn compose_up(
   stack: Stack,
-  service: Option<String>,
+  services: Vec<String>,
   git_token: Option<String>,
   registry_token: Option<String>,
   res: &mut ComposeUpResponse,
@@ -48,10 +49,20 @@ pub async fn compose_up(
   // Write the stack to local disk. For repos, will first delete any existing folder to ensure fresh deploy.
   // Will also set additional fields on the reponse.
   // Use the env_file_path in the compose command.
-  let (run_directory, env_file_path) =
+  let (run_directory, env_file_path, periphery_replacers) =
     write_stack(&stack, git_token, &mut *res)
       .await
       .context("Failed to write / clone compose file")?;
+
+  let replacers =
+    if let Some(periphery_replacers) = periphery_replacers {
+      core_replacers
+        .into_iter()
+        .chain(periphery_replacers)
+        .collect()
+    } else {
+      core_replacers
+    };
 
   // Canonicalize the path to ensure it exists, and is the cleanest path to the run directory.
   let run_directory = run_directory.canonicalize().context(
@@ -76,32 +87,35 @@ pub async fn compose_up(
     }
   }
   if !res.missing_files.is_empty() {
-    return Err(anyhow!("A compose file doesn't exist after writing stack. Ensure the run_directory and file_paths are correct."));
+    return Err(anyhow!(
+      "A compose file doesn't exist after writing stack. Ensure the run_directory and file_paths are correct."
+    ));
   }
 
   for (path, full_path) in &file_paths {
-    let file_contents =
-      match fs::read_to_string(&full_path).await.with_context(|| {
+    let file_contents = match fs::read_to_string(&full_path)
+      .await
+      .with_context(|| {
         format!(
           "failed to read compose file contents at {full_path:?}"
         )
       }) {
-        Ok(res) => res,
-        Err(e) => {
-          let error = format_serror(&e.into());
-          res
-            .logs
-            .push(Log::error("read compose file", error.clone()));
-          // This should only happen for repo stacks, ie remote error
-          res.remote_errors.push(FileContents {
-            path: path.to_string(),
-            contents: error,
-          });
-          return Err(anyhow!(
+      Ok(res) => res,
+      Err(e) => {
+        let error = format_serror(&e.into());
+        res
+          .logs
+          .push(Log::error("read compose file", error.clone()));
+        // This should only happen for repo stacks, ie remote error
+        res.remote_errors.push(FileContents {
+          path: path.to_string(),
+          contents: error,
+        });
+        return Err(anyhow!(
           "failed to read compose file at {full_path:?}, stopping run"
         ));
-        }
-      };
+      }
+    };
     res.file_contents.push(FileContents {
       path: path.to_string(),
       contents: file_contents,
@@ -109,10 +123,12 @@ pub async fn compose_up(
   }
 
   let docker_compose = docker_compose();
-  let service_arg = service
-    .as_ref()
-    .map(|service| format!(" {service}"))
-    .unwrap_or_default();
+
+  let service_args = if services.is_empty() {
+    String::new()
+  } else {
+    format!(" {}", services.join(" "))
+  };
 
   let file_args = if stack.config.file_paths.is_empty() {
     String::from("compose.yaml")
@@ -160,13 +176,12 @@ pub async fn compose_up(
   // after performing interpolation
   {
     let command = format!(
-    "{docker_compose} -p {project_name} -f {file_args}{env_file}{additional_env_files} config --format json",
-  );
+      "{docker_compose} -p {project_name} -f {file_args}{additional_env_files}{env_file} config",
+    );
     let config_log = run_komodo_command(
-      "compose build",
+      "Compose Config",
       run_directory.as_ref(),
       command,
-      false,
     )
     .await;
     if !config_log.success {
@@ -175,8 +190,11 @@ pub async fn compose_up(
         "Failed to validate compose files, stopping the run."
       ));
     }
+    // Record sanitized compose config output
+    res.compose_config =
+      Some(svi::replace_in_string(&config_log.stdout, &replacers));
     let compose =
-      serde_json::from_str::<ComposeFile>(&config_log.stdout)
+      serde_yaml::from_str::<ComposeFile>(&config_log.stdout)
         .context("Failed to parse compose contents")?;
     for (
       service_name,
@@ -221,38 +239,26 @@ pub async fn compose_up(
     let build_extra_args =
       parse_extra_args(&stack.config.build_extra_args);
     let command = format!(
-      "{docker_compose} -p {project_name} -f {file_args}{env_file}{additional_env_files} build{build_extra_args}{service_arg}",
+      "{docker_compose} -p {project_name} -f {file_args}{env_file}{additional_env_files} build{build_extra_args}{service_args}",
     );
     if stack.config.skip_secret_interp {
       let log = run_komodo_command(
-        "compose build",
+        "Compose Build",
         run_directory.as_ref(),
         command,
-        false,
       )
       .await;
       res.logs.push(log);
-    } else {
-      let (command, mut replacers) = svi::interpolate_variables(
-        &command,
-        &periphery_config().secrets,
-        svi::Interpolator::DoubleBrackets,
-        true,
-      ).context("failed to interpolate periphery secrets into stack build command")?;
-      replacers.extend(core_replacers.clone());
-
-      let mut log = run_komodo_command(
-        "compose build",
-        run_directory.as_ref(),
-        command,
-        false,
-      )
-      .await;
-
-      log.command = svi::replace_in_string(&log.command, &replacers);
-      log.stdout = svi::replace_in_string(&log.stdout, &replacers);
-      log.stderr = svi::replace_in_string(&log.stderr, &replacers);
-
+    } else if let Some(log) = run_komodo_command_with_interpolation(
+      "Compose Build",
+      run_directory.as_ref(),
+      command,
+      false,
+      &periphery_config().secrets,
+      &replacers,
+    )
+    .await
+    {
       res.logs.push(log);
     }
 
@@ -268,12 +274,11 @@ pub async fn compose_up(
     // Pull images before destroying to minimize downtime.
     // If this fails, do not continue.
     let log = run_komodo_command(
-      "compose pull",
+      "Compose Pull",
       run_directory.as_ref(),
       format!(
-        "{docker_compose} -p {project_name} -f {file_args}{env_file}{additional_env_files} pull{service_arg}",
+        "{docker_compose} -p {project_name} -f {file_args}{env_file}{additional_env_files} pull{service_args}",
       ),
-      false,
     )
     .await;
 
@@ -286,58 +291,33 @@ pub async fn compose_up(
     }
   }
 
-  if !stack.config.pre_deploy.command.is_empty() {
-    let pre_deploy_path =
-      run_directory.join(&stack.config.pre_deploy.path);
-    if !stack.config.skip_secret_interp {
-      let (full_command, mut replacers) =
-        interpolate_variables(&stack.config.pre_deploy.command)
-          .context(
-            "failed to interpolate secrets into pre_deploy command",
-          )?;
-      replacers.extend(core_replacers.to_owned());
-      let mut pre_deploy_log = run_komodo_command(
-        "pre deploy",
-        pre_deploy_path.as_ref(),
-        &full_command,
-        true,
-      )
-      .await;
-
-      pre_deploy_log.command =
-        svi::replace_in_string(&pre_deploy_log.command, &replacers);
-      pre_deploy_log.stdout =
-        svi::replace_in_string(&pre_deploy_log.stdout, &replacers);
-      pre_deploy_log.stderr =
-        svi::replace_in_string(&pre_deploy_log.stderr, &replacers);
-
-      tracing::debug!(
-        "run Stack pre_deploy command | command: {} | cwd: {:?}",
-        pre_deploy_log.command,
-        pre_deploy_path
-      );
-
-      res.logs.push(pre_deploy_log);
-    } else {
-      let pre_deploy_log = run_komodo_command(
-        "pre deploy",
-        pre_deploy_path.as_ref(),
-        &stack.config.pre_deploy.command,
-        true,
-      )
-      .await;
-      tracing::debug!(
-        "run Stack pre_deploy command | command: {} | cwd: {:?}",
-        &stack.config.pre_deploy.command,
-        pre_deploy_path
-      );
-      res.logs.push(pre_deploy_log);
-    }
-    if !all_logs_success(&res.logs) {
-      return Err(anyhow!(
-        "Failed at running pre_deploy command, stopping the run."
-      ));
-    }
+  // Pre deploy command
+  let pre_deploy_path =
+    run_directory.join(&stack.config.pre_deploy.path);
+  if let Some(log) = if stack.config.skip_secret_interp {
+    run_komodo_command_multiline(
+      "Pre Deploy",
+      pre_deploy_path.as_ref(),
+      &stack.config.pre_deploy.command,
+    )
+    .await
+  } else {
+    run_komodo_command_with_interpolation(
+      "Pre Deploy",
+      pre_deploy_path.as_ref(),
+      &stack.config.pre_deploy.command,
+      true,
+      &periphery_config().secrets,
+      &replacers,
+    )
+    .await
+  } {
+    res.logs.push(log);
+  }
+  if !all_logs_success(&res.logs) {
+    return Err(anyhow!(
+      "Failed at running pre_deploy command, stopping the run."
+    ));
   }
 
   if stack.config.destroy_before_deploy
@@ -346,7 +326,7 @@ pub async fn compose_up(
   {
     // Take down the existing containers.
     // This one tries to use the previously deployed service name, to ensure the right stack is taken down.
-    compose_down(&last_project_name, service, res)
+    compose_down(&last_project_name, &services, res)
       .await
       .context("failed to destroy existing containers")?;
   }
@@ -354,43 +334,63 @@ pub async fn compose_up(
   // Run compose up
   let extra_args = parse_extra_args(&stack.config.extra_args);
   let command = format!(
-    "{docker_compose} -p {project_name} -f {file_args}{env_file}{additional_env_files} up -d{extra_args}{service_arg}",
+    "{docker_compose} -p {project_name} -f {file_args}{env_file}{additional_env_files} up -d{extra_args}{service_args}",
   );
 
   let log = if stack.config.skip_secret_interp {
-    run_komodo_command(
-      "compose up",
+    run_komodo_command("Compose Up", run_directory.as_ref(), command)
+      .await
+  } else {
+    match run_komodo_command_with_interpolation(
+      "Compose Up",
       run_directory.as_ref(),
       command,
       false,
+      &periphery_config().secrets,
+      &replacers,
     )
     .await
-  } else {
-    let (command, mut replacers) = svi::interpolate_variables(
-      &command,
-      &periphery_config().secrets,
-      svi::Interpolator::DoubleBrackets,
-      true,
-    ).context("failed to interpolate periphery secrets into stack run command")?;
-    replacers.extend(core_replacers);
-
-    let mut log = run_komodo_command(
-      "compose up",
-      run_directory.as_ref(),
-      command,
-      false,
-    )
-    .await;
-
-    log.command = svi::replace_in_string(&log.command, &replacers);
-    log.stdout = svi::replace_in_string(&log.stdout, &replacers);
-    log.stderr = svi::replace_in_string(&log.stderr, &replacers);
-
-    log
+    {
+      Some(log) => log,
+      // The command is definitely non-empty, the result will never be None.
+      None => unreachable!(),
+    }
   };
 
   res.deployed = log.success;
+
+  // push the compose up command logs to keep the correct order
   res.logs.push(log);
+
+  if res.deployed {
+    let post_deploy_path =
+      run_directory.join(&stack.config.post_deploy.path);
+    if let Some(log) = if stack.config.skip_secret_interp {
+      run_komodo_command_multiline(
+        "Post Deploy",
+        post_deploy_path.as_ref(),
+        &stack.config.post_deploy.command,
+      )
+      .await
+    } else {
+      run_komodo_command_with_interpolation(
+        "Post Deploy",
+        post_deploy_path.as_ref(),
+        &stack.config.post_deploy.command,
+        true,
+        &periphery_config().secrets,
+        &replacers,
+      )
+      .await
+    } {
+      res.logs.push(log)
+    }
+    if !all_logs_success(&res.logs) {
+      return Err(anyhow!(
+        "Failed at running post_deploy command, stopping the run."
+      ));
+    }
+  }
 
   Ok(())
 }
@@ -402,7 +402,7 @@ pub trait WriteStackRes {
   fn set_commit_message(&mut self, _message: Option<String>) {}
 }
 
-impl<'a> WriteStackRes for &'a mut ComposeUpResponse {
+impl WriteStackRes for &mut ComposeUpResponse {
   fn logs(&mut self) -> &mut Vec<Log> {
     &mut self.logs
   }
@@ -418,12 +418,17 @@ impl<'a> WriteStackRes for &'a mut ComposeUpResponse {
 }
 
 /// Either writes the stack file_contents to a file, or clones the repo.
-/// Returns (run_directory, env_file_path)
+/// Performs variable replacement on env and writes file.
+/// Returns (run_directory, env_file_path, periphery_replacers)
 pub async fn write_stack(
   stack: &Stack,
   git_token: Option<String>,
   mut res: impl WriteStackRes,
-) -> anyhow::Result<(PathBuf, Option<&str>)> {
+) -> anyhow::Result<(
+  PathBuf,
+  Option<&str>,
+  Option<Vec<(String, String)>>,
+)> {
   let root = periphery_config()
     .stack_dir
     .join(to_komodo_name(&stack.name));
@@ -432,42 +437,63 @@ pub async fn write_stack(
   // Cannot use 'canonicalize' yet as directory may not exist.
   let run_directory = run_directory.components().collect::<PathBuf>();
 
-  let env_vars = environment_vars_from_str(&stack.config.environment)
+  let (env_interpolated, env_replacers) =
+    if stack.config.skip_secret_interp {
+      (stack.config.environment.clone(), None)
+    } else {
+      let (environment, replacers) = svi::interpolate_variables(
+        &stack.config.environment,
+        &periphery_config().secrets,
+        svi::Interpolator::DoubleBrackets,
+        true,
+      )
+      .context(
+        "Failed to interpolate Periphery secrets into Environment",
+      )?;
+      (environment, Some(replacers))
+    };
+  match &env_replacers {
+    Some(replacers) if !replacers.is_empty() => {
+      res.logs().push(Log::simple(
+      "Interpolate - Environment (Periphery)",
+      replacers
+        .iter()
+        .map(|(_, variable)| format!("<span class=\"text-muted-foreground\">replaced:</span> {variable}"))
+        .collect::<Vec<_>>()
+        .join("\n"),
+      ))
+    }
+    _ => {}
+  }
+
+  let env_vars = environment_vars_from_str(&env_interpolated)
     .context("Invalid environment variables")?;
 
   if stack.config.files_on_host {
     // =============
     // FILES ON HOST
     // =============
-    // Only need to write environment file here (which does nothing if not using this feature)
-    let env_file_path = match environment::write_file(
+    let env_file_path = environment::write_file_simple(
       &env_vars,
       &stack.config.env_file_path,
-      stack
-        .config
-        .skip_secret_interp
-        .then_some(&periphery_config().secrets),
       run_directory.as_ref(),
       res.logs(),
     )
-    .await
-    {
-      Ok(path) => path,
-      Err(_) => {
-        return Err(anyhow!("failed to write environment file"));
-      }
-    };
+    .await?;
     Ok((
       run_directory,
-      // Env file paths are already relative to run directory,
+      // Env file paths are expected to be already relative to run directory,
       // so need to pass original env_file_path here.
       env_file_path
         .is_some()
         .then_some(&stack.config.env_file_path),
+      env_replacers,
     ))
   } else if stack.config.repo.is_empty() {
     if stack.config.file_contents.trim().is_empty() {
-      return Err(anyhow!("Must either input compose file contents directly, or use file one host / git repo options."));
+      return Err(anyhow!(
+        "Must either input compose file contents directly, or use files on host / git repo options."
+      ));
     }
     // ==============
     // UI BASED FILES
@@ -478,23 +504,13 @@ pub async fn write_stack(
         "failed to create stack run directory at {run_directory:?}"
       )
     })?;
-    let env_file_path = match environment::write_file(
+    let env_file_path = environment::write_file_simple(
       &env_vars,
       &stack.config.env_file_path,
-      stack
-        .config
-        .skip_secret_interp
-        .then_some(&periphery_config().secrets),
       run_directory.as_ref(),
       res.logs(),
     )
-    .await
-    {
-      Ok(path) => path,
-      Err(_) => {
-        return Err(anyhow!("failed to write environment file"));
-      }
-    };
+    .await?;
     let file_path = run_directory
       .join(
         stack
@@ -508,7 +524,10 @@ pub async fn write_stack(
       .components()
       .collect::<PathBuf>();
 
-    let file_contents = if !stack.config.skip_secret_interp {
+    let (file_contents, file_replacers) = if !stack
+      .config
+      .skip_secret_interp
+    {
       let (contents, replacers) = svi::interpolate_variables(
         &stack.config.file_contents,
         &periphery_config().secrets,
@@ -518,7 +537,7 @@ pub async fn write_stack(
       .context("failed to interpolate secrets into file contents")?;
       if !replacers.is_empty() {
         res.logs().push(Log::simple(
-        "Interpolate - Compose file",
+        "Interpolate - Compose file (Periphery)",
         replacers
             .iter()
             .map(|(_, variable)| format!("<span class=\"text-muted-foreground\">replaced:</span> {variable}"))
@@ -526,13 +545,13 @@ pub async fn write_stack(
             .join("\n"),
         ));
       }
-      contents
+      (contents, Some(replacers))
     } else {
-      stack.config.file_contents.clone()
+      (stack.config.file_contents.clone(), None)
     };
 
     fs::write(&file_path, &file_contents).await.with_context(
-      || format!("failed to write compose file to {file_path:?}"),
+      || format!("Failed to write compose file to {file_path:?}"),
     )?;
 
     Ok((
@@ -540,6 +559,14 @@ pub async fn write_stack(
       env_file_path
         .is_some()
         .then_some(&stack.config.env_file_path),
+      match (env_replacers, file_replacers) {
+        (Some(env_replacers), Some(file_replacers)) => Some(
+          env_replacers.into_iter().chain(file_replacers).collect(),
+        ),
+        (Some(env_replacers), None) => Some(env_replacers),
+        (None, Some(file_replacers)) => Some(file_replacers),
+        (None, None) => None,
+      },
     ))
   } else {
     // ================
@@ -588,37 +615,29 @@ pub async fn write_stack(
       .to_string();
 
     let clone_or_pull_res = if stack.config.reclone {
-      State
-        .resolve(
-          CloneRepo {
-            args,
-            git_token,
-            environment: env_vars,
-            env_file_path,
-            skip_secret_interp: stack.config.skip_secret_interp,
-            // repo replacer only needed for on_clone / on_pull,
-            // which aren't available for stacks
-            replacers: Default::default(),
-          },
-          (),
-        )
-        .await
+      CloneRepo {
+        args,
+        git_token,
+        environment: env_vars,
+        env_file_path,
+        // Env has already been interpolated above
+        skip_secret_interp: true,
+        replacers: Default::default(),
+      }
+      .resolve(&crate::api::Args)
+      .await
     } else {
-      State
-        .resolve(
-          PullOrCloneRepo {
-            args,
-            git_token,
-            environment: env_vars,
-            env_file_path,
-            skip_secret_interp: stack.config.skip_secret_interp,
-            // repo replacer only needed for on_clone / on_pull,
-            // which aren't available for stacks
-            replacers: Default::default(),
-          },
-          (),
-        )
-        .await
+      PullOrCloneRepo {
+        args,
+        git_token,
+        environment: env_vars,
+        env_file_path,
+        // Env has already been interpolated above
+        skip_secret_interp: true,
+        replacers: Default::default(),
+      }
+      .resolve(&crate::api::Args)
+      .await
     };
 
     let RepoActionResponse {
@@ -630,17 +649,17 @@ pub async fn write_stack(
       Ok(res) => res,
       Err(e) => {
         let error = format_serror(
-          &e.context("failed to pull stack repo").into(),
+          &e.error.context("Failed to pull stack repo").into(),
         );
         res
           .logs()
-          .push(Log::error("pull stack repo", error.clone()));
+          .push(Log::error("Pull Stack Repo", error.clone()));
         res.add_remote_error(FileContents {
           path: Default::default(),
           contents: error,
         });
         return Err(anyhow!(
-          "failed to pull stack repo, stopping run"
+          "Failed to pull stack repo, stopping run"
         ));
       }
     };
@@ -658,31 +677,34 @@ pub async fn write_stack(
       env_file_path
         .is_some()
         .then_some(&stack.config.env_file_path),
+      env_replacers,
     ))
   }
 }
 
 async fn compose_down(
   project: &str,
-  service: Option<String>,
+  services: &[String],
   res: &mut ComposeUpResponse,
 ) -> anyhow::Result<()> {
   let docker_compose = docker_compose();
-  let service_arg = service
-    .as_ref()
-    .map(|service| format!(" {service}"))
-    .unwrap_or_default();
+  let service_args = if services.is_empty() {
+    String::new()
+  } else {
+    format!(" {}", services.join(" "))
+  };
   let log = run_komodo_command(
     "compose down",
     None,
-    format!("{docker_compose} -p {project} down{service_arg}"),
-    false,
+    format!("{docker_compose} -p {project} down{service_args}"),
   )
   .await;
   let success = log.success;
   res.logs.push(log);
   if !success {
-    return Err(anyhow!("Failed to bring down existing container(s) with docker compose down. Stopping run."));
+    return Err(anyhow!(
+      "Failed to bring down existing container(s) with docker compose down. Stopping run."
+    ));
   }
 
   Ok(())

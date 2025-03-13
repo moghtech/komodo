@@ -1,22 +1,22 @@
 use std::{str::FromStr, time::Duration};
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use aws_config::{BehaviorVersion, Region};
 use aws_sdk_ec2::{
+  Client,
   types::{
     BlockDeviceMapping, EbsBlockDevice,
     InstanceNetworkInterfaceSpecification, InstanceStateChange,
     InstanceStateName, InstanceStatus, InstanceType, ResourceType,
     Tag, TagSpecification, VolumeType,
   },
-  Client,
 };
 use base64::Engine;
 use komodo_client::entities::{
+  ResourceTarget,
   alert::{Alert, AlertData, SeverityLevel},
   komodo_timestamp,
   server_template::aws::AwsServerTemplateConfig,
-  ResourceTarget,
 };
 
 use crate::{alert::send_alerts, config::core_config};
@@ -29,20 +29,40 @@ pub struct Ec2Instance {
   pub ip: String,
 }
 
+/// Provides credentials in the core config file to the AWS client
+#[derive(Debug)]
+struct CredentialsFromConfig;
+
+impl aws_credential_types::provider::ProvideCredentials
+  for CredentialsFromConfig
+{
+  fn provide_credentials<'a>(
+    &'a self,
+  ) -> aws_credential_types::provider::future::ProvideCredentials<'a>
+  where
+    Self: 'a,
+  {
+    aws_credential_types::provider::future::ProvideCredentials::new(
+      async {
+        let config = core_config();
+        Ok(aws_credential_types::Credentials::new(
+          &config.aws.access_key_id,
+          &config.aws.secret_access_key,
+          None,
+          None,
+          "komodo-config",
+        ))
+      },
+    )
+  }
+}
+
 #[instrument]
 async fn create_ec2_client(region: String) -> Client {
-  // There may be a better way to pass these keys to client
-  std::env::set_var(
-    "AWS_ACCESS_KEY_ID",
-    &core_config().aws.access_key_id,
-  );
-  std::env::set_var(
-    "AWS_SECRET_ACCESS_KEY",
-    &core_config().aws.secret_access_key,
-  );
   let region = Region::new(region);
-  let config = aws_config::defaults(BehaviorVersion::v2024_03_28())
+  let config = aws_config::defaults(BehaviorVersion::latest())
     .region(region)
+    .credentials_provider(CredentialsFromConfig)
     .load()
     .await;
   Client::new(&config)
@@ -1087,7 +1107,90 @@ fn handle_unknown_instance_type(
     | InstanceType::Z1d6xlarge
     | InstanceType::Z1dLarge
     | InstanceType::Z1dMetal
-    | InstanceType::Z1dXlarge => Ok(instance_type),
+    | InstanceType::Z1dXlarge
+    | InstanceType::C7gdMetal
+    | InstanceType::C7gnMetal
+    | InstanceType::C7iFlex2xlarge
+    | InstanceType::C7iFlex4xlarge
+    | InstanceType::C7iFlex8xlarge
+    | InstanceType::C7iFlexLarge
+    | InstanceType::C7iFlexXlarge
+    | InstanceType::C8g12xlarge
+    | InstanceType::C8g16xlarge
+    | InstanceType::C8g24xlarge
+    | InstanceType::C8g2xlarge
+    | InstanceType::C8g48xlarge
+    | InstanceType::C8g4xlarge
+    | InstanceType::C8g8xlarge
+    | InstanceType::C8gLarge
+    | InstanceType::C8gMedium
+    | InstanceType::C8gMetal24xl
+    | InstanceType::C8gMetal48xl
+    | InstanceType::C8gXlarge
+    | InstanceType::G612xlarge
+    | InstanceType::G616xlarge
+    | InstanceType::G624xlarge
+    | InstanceType::G62xlarge
+    | InstanceType::G648xlarge
+    | InstanceType::G64xlarge
+    | InstanceType::G68xlarge
+    | InstanceType::G6Xlarge
+    | InstanceType::G6e12xlarge
+    | InstanceType::G6e16xlarge
+    | InstanceType::G6e24xlarge
+    | InstanceType::G6e2xlarge
+    | InstanceType::G6e48xlarge
+    | InstanceType::G6e4xlarge
+    | InstanceType::G6e8xlarge
+    | InstanceType::G6eXlarge
+    | InstanceType::Gr64xlarge
+    | InstanceType::Gr68xlarge
+    | InstanceType::M7gdMetal
+    | InstanceType::M8g12xlarge
+    | InstanceType::M8g16xlarge
+    | InstanceType::M8g24xlarge
+    | InstanceType::M8g2xlarge
+    | InstanceType::M8g48xlarge
+    | InstanceType::M8g4xlarge
+    | InstanceType::M8g8xlarge
+    | InstanceType::M8gLarge
+    | InstanceType::M8gMedium
+    | InstanceType::M8gMetal24xl
+    | InstanceType::M8gMetal48xl
+    | InstanceType::M8gXlarge
+    | InstanceType::Mac2M1ultraMetal
+    | InstanceType::R7gdMetal
+    | InstanceType::R7izMetal16xl
+    | InstanceType::R7izMetal32xl
+    | InstanceType::R8g12xlarge
+    | InstanceType::R8g16xlarge
+    | InstanceType::R8g24xlarge
+    | InstanceType::R8g2xlarge
+    | InstanceType::R8g48xlarge
+    | InstanceType::R8g4xlarge
+    | InstanceType::R8g8xlarge
+    | InstanceType::R8gLarge
+    | InstanceType::R8gMedium
+    | InstanceType::R8gMetal24xl
+    | InstanceType::R8gMetal48xl
+    | InstanceType::R8gXlarge
+    | InstanceType::U7i12tb224xlarge
+    | InstanceType::U7ib12tb224xlarge
+    | InstanceType::U7in16tb224xlarge
+    | InstanceType::U7in24tb224xlarge
+    | InstanceType::U7in32tb224xlarge
+    | InstanceType::X8g12xlarge
+    | InstanceType::X8g16xlarge
+    | InstanceType::X8g24xlarge
+    | InstanceType::X8g2xlarge
+    | InstanceType::X8g48xlarge
+    | InstanceType::X8g4xlarge
+    | InstanceType::X8g8xlarge
+    | InstanceType::X8gLarge
+    | InstanceType::X8gMedium
+    | InstanceType::X8gMetal24xl
+    | InstanceType::X8gMetal48xl
+    | InstanceType::X8gXlarge => Ok(instance_type),
     other => Err(anyhow!("unknown InstanceType: {other:?}")),
   }
 }

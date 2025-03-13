@@ -132,7 +132,7 @@ export const Variables = () => {
                 return (
                   <div className="flex items-center gap-2">
                     <Card
-                      className="px-3 py-2 hover:bg-accent/50 transition-colors cursor-pointer w-full"
+                      className="w-full max-w-[200px] xl:max-w-full px-3 py-2 hover:bg-accent/50 transition-colors cursor-pointer text-sm text-nowrap overflow-hidden overflow-ellipsis text-muted-foreground"
                       onClick={() => {
                         setUpdateMenuData({
                           title: `${row.original.name} - Value`,
@@ -147,9 +147,7 @@ export const Variables = () => {
                         });
                       }}
                     >
-                      <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis text-muted-foreground w-[200px] xl:w-[240px] 2xl:w-[340px]">
-                        {valueDisplay || "Set value"}
-                      </div>
+                      {valueDisplay || "Set value"}
                     </Card>
                     <CopyButton content={row.original.value} />
                   </div>

@@ -3,6 +3,7 @@ import { Page } from "@components/layouts";
 import { ResourceComponents } from "@components/resources";
 import { TagsFilter } from "@components/tags";
 import {
+  useFilterByUpdateAvailable,
   useFilterResources,
   useRead,
   useResourceParamType,
@@ -14,6 +15,7 @@ import { Input } from "@ui/input";
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { NotFound } from "@components/util";
+import { Switch } from "@ui/switch";
 
 export const Resources = () => {
   const is_admin = useUser().data?.admin ?? false;
@@ -28,7 +30,17 @@ export const Resources = () => {
         : type;
   useSetTitle(name + "s");
   const [search, set] = useState("");
-  const resources = useRead(`List${type}s`, {}).data;
+  const [filter_update_available, toggle_filter_update_available] =
+    useFilterByUpdateAvailable();
+  const query =
+    type === "Stack" || type === "Deployment"
+      ? {
+          query: {
+            specific: { update_available: filter_update_available },
+          },
+        }
+      : {};
+  const resources = useRead(`List${type}s`, query).data;
   const filtered = useFilterResources(resources as any, search);
 
   const Components = ResourceComponents[type];
@@ -56,12 +68,21 @@ export const Resources = () => {
       actions={<ExportButton targets={targets} />}
     >
       <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap gap-4 items-center justify-between">
           <div className="flex gap-4">
             {(is_admin || !disable_non_admin_create) && <Components.New />}
             <Components.GroupActions />
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            {(type === "Stack" || type === "Deployment") && (
+              <div
+                className="flex gap-2 items-center cursor-pointer px-3 py-2 text-sm text-muted-foreground"
+                onClick={() => toggle_filter_update_available()}
+              >
+                Pending Update
+                <Switch checked={filter_update_available} />
+              </div>
+            )}
             <TagsFilter />
             <div className="relative">
               <Search className="w-4 absolute top-[50%] left-3 -translate-y-[50%] text-muted-foreground" />

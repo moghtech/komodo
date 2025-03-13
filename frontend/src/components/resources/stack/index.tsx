@@ -2,6 +2,7 @@ import { useInvalidate, useLocalStorage, useRead, useWrite } from "@lib/hooks";
 import { RequiredResourceComponents } from "@types";
 import { Card } from "@ui/card";
 import {
+  CircleArrowUp,
   FolderGit,
   Layers,
   Loader2,
@@ -17,7 +18,6 @@ import {
   stroke_color_class_by_intention,
 } from "@lib/color";
 import { cn } from "@lib/utils";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@ui/hover-card";
 import { useServer } from "../server";
 import { Types } from "komodo_client";
 import {
@@ -39,6 +39,8 @@ import { ResourcePageHeader, StatusBadge } from "@components/util";
 import { StackConfig } from "./config";
 import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
+import { StackLogs } from "./log";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@ui/tooltip";
 
 export const useStack = (id?: string) =>
   useRead("ListStacks", {}, { refetchInterval: 10_000 }).data?.find(
@@ -54,22 +56,24 @@ const StackIcon = ({ id, size }: { id?: string; size: number }) => {
   return <Layers className={cn(`w-${size} h-${size}`, state && color)} />;
 };
 
-const ConfigInfoServices = ({ id }: { id: string }) => {
-  const [_view, setView] = useLocalStorage<"Config" | "Info" | "Services">(
-    "stack-tabs-v1",
-    "Config"
-  );
+const ConfigInfoServicesLog = ({ id }: { id: string }) => {
+  const [_view, setView] = useLocalStorage<
+    "Config" | "Info" | "Services" | "Log"
+  >("stack-tabs-v1", "Config");
   const info = useStack(id)?.info;
 
   const state = info?.state;
   const hideInfo = !info?.files_on_host && !info?.repo;
+  // Hides both services and logs
   const hideServices =
     state === undefined ||
     state === Types.StackState.Unknown ||
     state === Types.StackState.Down;
 
   const view =
-    (_view === "Info" && hideInfo) || (_view === "Services" && hideServices)
+    (_view === "Info" && hideInfo) ||
+    (_view === "Services" && hideServices) ||
+    (_view === "Log" && hideServices)
       ? "Config"
       : _view;
 
@@ -92,6 +96,9 @@ const ConfigInfoServices = ({ id }: { id: string }) => {
       >
         Services
       </TabsTrigger>
+      <TabsTrigger value="Log" className="w-[110px]" disabled={hideServices}>
+        Log
+      </TabsTrigger>
     </TabsList>
   );
   return (
@@ -104,6 +111,9 @@ const ConfigInfoServices = ({ id }: { id: string }) => {
       </TabsContent>
       <TabsContent value="Services">
         <StackServices id={id} titleOther={title} />
+      </TabsContent>
+      <TabsContent value="Log">
+        <StackLogs id={id} titleOther={title} />
       </TabsContent>
     </Tabs>
   );
@@ -200,22 +210,22 @@ export const StackComponents: RequiredResourceComponents = {
         return null;
       }
       return (
-        <HoverCard openDelay={200}>
-          <HoverCardTrigger asChild>
+        <Tooltip>
+          <TooltipTrigger asChild>
             <Card className="px-3 py-2 bg-destructive/75 hover:bg-destructive transition-colors cursor-pointer">
               <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis">
                 Config Missing
               </div>
             </Card>
-          </HoverCardTrigger>
-          <HoverCardContent align="start">
+          </TooltipTrigger>
+          <TooltipContent>
             <div className="grid gap-2">
               No configuration provided for stack. Cannot get stack state.
               Either paste the compose file contents into the UI, or configure a
               git repo containing your files.
             </div>
-          </HoverCardContent>
-        </HoverCard>
+          </TooltipContent>
+        </Tooltip>
       );
     },
     ProjectMissing: ({ id }) => {
@@ -229,22 +239,22 @@ export const StackComponents: RequiredResourceComponents = {
         return null;
       }
       return (
-        <HoverCard openDelay={200}>
-          <HoverCardTrigger asChild>
+        <Tooltip>
+          <TooltipTrigger asChild>
             <Card className="px-3 py-2 bg-destructive/75 hover:bg-destructive transition-colors cursor-pointer">
               <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis">
                 Project Missing
               </div>
             </Card>
-          </HoverCardTrigger>
-          <HoverCardContent align="start">
+          </TooltipTrigger>
+          <TooltipContent>
             <div className="grid gap-2">
               The compose project is not on the host. If the compose stack is
               running, the 'Project Name' needs to be set. This can be found
               with 'docker compose ls'.
             </div>
-          </HoverCardContent>
-        </HoverCard>
+          </TooltipContent>
+        </Tooltip>
       );
     },
     RemoteErrors: ({ id }) => {
@@ -254,61 +264,24 @@ export const StackComponents: RequiredResourceComponents = {
         return null;
       }
       return (
-        <HoverCard openDelay={200}>
-          <HoverCardTrigger asChild>
+        <Tooltip>
+          <TooltipTrigger asChild>
             <Card className="px-3 py-2 bg-destructive/75 hover:bg-destructive transition-colors cursor-pointer">
               <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis">
                 Remote Error
               </div>
             </Card>
-          </HoverCardTrigger>
-          <HoverCardContent align="start">
+          </TooltipTrigger>
+          <TooltipContent>
             <div>
               There are errors reading the remote file contents. See{" "}
               <span className="font-bold">Info</span> tab for details.
             </div>
-          </HoverCardContent>
-        </HoverCard>
+          </TooltipContent>
+        </Tooltip>
       );
     },
-    UpdateAvailable: ({ id }) => {
-      const info = useStack(id)?.info;
-      const state = info?.state ?? Types.StackState.Unknown;
-      if (
-        !info ||
-        !!info?.services.every((service) => !service.update_available) ||
-        [Types.StackState.Down, Types.StackState.Unknown].includes(state)
-      ) {
-        return null;
-      }
-      return (
-        <HoverCard openDelay={200}>
-          <HoverCardTrigger asChild>
-            <Card className="px-3 py-2 border-blue-400 hover:border-blue-500 transition-colors cursor-pointer">
-              <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis">
-                Update
-                {(info?.services.filter((s) => s.update_available).length ??
-                  0) > 0
-                  ? "s"
-                  : ""}{" "}
-                Available
-              </div>
-            </Card>
-          </HoverCardTrigger>
-          <HoverCardContent align="start" className="flex flex-col gap-2 w-fit">
-            {info?.services
-              .filter((service) => service.update_available)
-              .map((s) => (
-                <div className="text-sm flex gap-2">
-                  <div className="text-muted-foreground">{s.service}</div>
-                  <div className="text-muted-foreground"> - </div>
-                  <div>{s.image}</div>
-                </div>
-              ))}
-          </HoverCardContent>
-        </HoverCard>
-      );
-    },
+    UpdateAvailable: ({ id }) => <UpdateAvailable id={id} />,
     Hash: ({ id }) => {
       const info = useStack(id)?.info;
       const fullInfo = useFullStack(id)?.info;
@@ -328,8 +301,8 @@ export const StackComponents: RequiredResourceComponents = {
       const out_of_date =
         info.deployed_hash && info.deployed_hash !== info.latest_hash;
       return (
-        <HoverCard openDelay={200}>
-          <HoverCardTrigger asChild>
+        <Tooltip>
+          <TooltipTrigger asChild>
             <Card
               className={cn(
                 "px-3 py-2 hover:bg-accent/50 transition-colors cursor-pointer",
@@ -341,8 +314,8 @@ export const StackComponents: RequiredResourceComponents = {
                 {info.deployed_hash || info.latest_hash}
               </div>
             </Card>
-          </HoverCardTrigger>
-          <HoverCardContent align="start">
+          </TooltipTrigger>
+          <TooltipContent>
             <div className="grid gap-2">
               <Badge
                 variant="secondary"
@@ -371,8 +344,8 @@ export const StackComponents: RequiredResourceComponents = {
                 </>
               )}
             </div>
-          </HoverCardContent>
-        </HoverCard>
+          </TooltipContent>
+        </Tooltip>
       );
     },
     Refresh: ({ id }) => {
@@ -458,7 +431,7 @@ export const StackComponents: RequiredResourceComponents = {
 
   Page: {},
 
-  Config: ConfigInfoServices,
+  Config: ConfigInfoServicesLog,
 
   DangerZone: ({ id }) => (
     <>
@@ -483,4 +456,57 @@ export const StackComponents: RequiredResourceComponents = {
       />
     );
   },
+};
+
+export const UpdateAvailable = ({
+  id,
+  small = false,
+}: {
+  id: string;
+  small?: boolean;
+}) => {
+  const info = useStack(id)?.info;
+  const state = info?.state ?? Types.StackState.Unknown;
+  if (
+    !info ||
+    !!info?.services.every((service) => !service.update_available) ||
+    [Types.StackState.Down, Types.StackState.Unknown].includes(state)
+  ) {
+    return null;
+  }
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          className={cn(
+            "px-2 py-1 border rounded-md border-blue-400 hover:border-blue-500 opacity-50 hover:opacity-70 transition-colors cursor-pointer flex items-center gap-2",
+            small ? "px-2 py-1" : "px-3 py-2"
+          )}
+        >
+          <CircleArrowUp className="w-4 h-4" />
+          {!small && (
+            <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis">
+              Update
+              {(info?.services.filter((s) => s.update_available).length ?? 0) >
+              1
+                ? "s"
+                : ""}{" "}
+              Available
+            </div>
+          )}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent className="flex flex-col gap-2 w-fit">
+        {info?.services
+          .filter((service) => service.update_available)
+          .map((s) => (
+            <div className="text-sm flex gap-2">
+              <div className="text-muted-foreground">{s.service}</div>
+              <div className="text-muted-foreground"> - </div>
+              <div>{s.image}</div>
+            </div>
+          ))}
+      </TooltipContent>
+    </Tooltip>
+  );
 };

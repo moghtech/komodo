@@ -48,7 +48,6 @@ import {
 } from "@ui/command";
 import { Switch } from "@ui/switch";
 import { DataTable } from "@ui/data-table";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@ui/hover-card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,6 +60,7 @@ import { filterBySplit } from "@lib/utils";
 import { useToast } from "@ui/use-toast";
 import { fmt_upper_camelcase } from "@lib/formatting";
 import { TextUpdateMenuMonaco } from "@components/util";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 
 export const ProcedureConfig = ({ id }: { id: string }) => {
   const procedure = useRead("GetProcedure", { procedure: id }).data;
@@ -109,23 +109,23 @@ const ProcedureConfigInner = ({
               <Settings className="w-4 h-4" />
               <h2 className="text-xl">Config</h2>
             </div>
-            <HoverCard openDelay={200}>
-              <HoverCardTrigger asChild>
+            <Tooltip>
+              <TooltipTrigger asChild>
                 <Button variant="outline">
                   <Info className="w-4 h-4" />
                 </Button>
-              </HoverCardTrigger>
-              <HoverCardContent align="start">
+              </TooltipTrigger>
+              <TooltipContent>
                 <div>
                   The executions in a stage are all run in parallel. The stages
                   themselves are run sequentially.
                 </div>
-              </HoverCardContent>
-            </HoverCard>
+              </TooltipContent>
+            </Tooltip>
           </div>
         }
         disabled={disabled}
-        config={config}
+        update={config}
         onConfirm={async () => {
           await mutateAsync({ id: procedure._id!.$oid, config });
           setConfig({});
@@ -632,6 +632,7 @@ type MinExecutionType = Exclude<
   | "DeleteNetwork"
   | "DeleteImage"
   | "DeleteVolume"
+  | "TestAlerter"
 >;
 
 type ExecutionConfigParams<T extends MinExecutionType> = Extract<

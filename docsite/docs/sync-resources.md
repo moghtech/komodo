@@ -209,7 +209,7 @@ tags = ["komodo"]
 server_id = "server-01"
 git_provider = "git.mogh.tech" # use an alternate git provider (default is github.com)
 git_account = "mbecker20"
-repo = "mbecker20/komodo"
+repo = "moghtech/komodo"
 # Run an action after the repo is pulled
 on_pull.path = "."
 on_pull.command = """
@@ -230,7 +230,7 @@ name = "resource-sync"
 [resource_sync.config]
 git_provider = "git.mogh.tech" # use an alternate git provider (default is github.com)
 git_account = "mbecker20"
-repo = "mbecker20/komodo"
+repo = "moghtech/komodo"
 resource_path = ["stacks.toml", "repos.toml"]
 ```
 

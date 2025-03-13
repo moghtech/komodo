@@ -3,7 +3,7 @@ use komodo_client::entities::logger::{LogConfig, StdioLogMode};
 use tracing::level_filters::LevelFilter;
 use tracing_opentelemetry::OpenTelemetryLayer;
 use tracing_subscriber::{
-  layer::SubscriberExt, util::SubscriberInitExt, Registry,
+  Registry, layer::SubscriberExt, util::SubscriberInitExt,
 };
 
 mod otel;

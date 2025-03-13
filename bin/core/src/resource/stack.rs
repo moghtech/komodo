@@ -3,6 +3,7 @@ use formatting::format_serror;
 use komodo_client::{
   api::write::RefreshStackCache,
   entities::{
+    Operation, ResourceTargetVariant,
     permission::PermissionLevel,
     resource::Resource,
     server::Server,
@@ -12,8 +13,7 @@ use komodo_client::{
       StackQuerySpecifics, StackServiceWithUpdate, StackState,
     },
     update::Update,
-    user::{stack_user, User},
-    Operation, ResourceTargetVariant,
+    user::{User, stack_user},
   },
 };
 use mungos::mongodb::Collection;
@@ -21,12 +21,12 @@ use periphery_client::api::compose::ComposeExecution;
 use resolver_api::Resolve;
 
 use crate::{
+  api::write::WriteArgs,
   config::core_config,
   helpers::{periphery_client, query::get_stack_state},
   monitor::update_cache_for_server,
   state::{
-    action_states, db_client, server_status_cache,
-    stack_status_cache, State,
+    action_states, db_client, server_status_cache, stack_status_cache,
   },
 };
 
@@ -152,18 +152,17 @@ impl super::KomodoResource for Stack {
     created: &Resource<Self::Config, Self::Info>,
     update: &mut Update,
   ) -> anyhow::Result<()> {
-    if let Err(e) = State
-      .resolve(
-        RefreshStackCache {
-          stack: created.name.clone(),
-        },
-        stack_user().to_owned(),
-      )
-      .await
+    if let Err(e) = (RefreshStackCache {
+      stack: created.name.clone(),
+    })
+    .resolve(&WriteArgs {
+      user: stack_user().to_owned(),
+    })
+    .await
     {
       update.push_error_log(
         "Refresh stack cache",
-        format_serror(&e.context("The stack cache has failed to refresh. This is likely due to a misconfiguration of the Stack").into())
+        format_serror(&e.error.context("The stack cache has failed to refresh. This is likely due to a misconfiguration of the Stack").into())
       );
     };
     if created.config.server_id.is_empty() {

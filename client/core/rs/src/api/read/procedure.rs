@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -14,10 +14,11 @@ use super::KomodoReadRequest;
 /// Get a specific procedure. Response: [Procedure].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetProcedureResponse)]
+#[error(serror::Error)]
 pub struct GetProcedure {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -32,10 +33,11 @@ pub type GetProcedureResponse = Procedure;
 /// List procedures matching optional query. Response: [ListProceduresResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListProceduresResponse)]
+#[error(serror::Error)]
 pub struct ListProcedures {
   /// optional structured query to filter procedures.
   #[serde(default)]
@@ -50,10 +52,11 @@ pub type ListProceduresResponse = Vec<ProcedureListItem>;
 /// List procedures matching optional query. Response: [ListFullProceduresResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullProceduresResponse)]
+#[error(serror::Error)]
 pub struct ListFullProcedures {
   /// optional structured query to filter procedures.
   #[serde(default)]
@@ -68,10 +71,11 @@ pub type ListFullProceduresResponse = Vec<Procedure>;
 /// Get current action state for the procedure. Response: [ProcedureActionState].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetProcedureActionStateResponse)]
+#[error(serror::Error)]
 pub struct GetProcedureActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -87,10 +91,11 @@ pub type GetProcedureActionStateResponse = ProcedureActionState;
 /// Response: [GetProceduresSummaryResponse].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetProceduresSummaryResponse)]
+#[error(serror::Error)]
 pub struct GetProceduresSummary {}
 
 /// Response for [GetProceduresSummary].

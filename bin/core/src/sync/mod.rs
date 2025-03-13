@@ -1,11 +1,21 @@
 use std::{collections::HashMap, str::FromStr};
 
+use anyhow::anyhow;
 use komodo_client::entities::{
-  action::Action, alerter::Alerter, build::Build, builder::Builder,
-  deployment::Deployment, procedure::Procedure, repo::Repo,
-  server::Server, server_template::ServerTemplate, stack::Stack,
-  sync::ResourceSync, tag::Tag, toml::ResourceToml, ResourceTarget,
-  ResourceTargetVariant,
+  ResourceTarget, ResourceTargetVariant,
+  action::Action,
+  alerter::Alerter,
+  build::Build,
+  builder::Builder,
+  deployment::Deployment,
+  procedure::Procedure,
+  repo::Repo,
+  server::Server,
+  server_template::ServerTemplate,
+  stack::Stack,
+  sync::ResourceSync,
+  tag::Tag,
+  toml::{ResourceToml, ResourcesToml},
 };
 use mungos::mongodb::bson::oid::ObjectId;
 use toml::ToToml;
@@ -22,12 +32,20 @@ pub mod user_groups;
 pub mod variables;
 pub mod view;
 
-pub type ToUpdate<T> = Vec<ToUpdateItem<T>>;
-pub type ToCreate<T> = Vec<ResourceToml<T>>;
-/// Vec of resource names
-pub type ToDelete = Vec<String>;
+#[derive(Default)]
+pub struct SyncDeltas<T: Default> {
+  pub to_create: Vec<ResourceToml<T>>,
+  pub to_update: Vec<ToUpdateItem<T>>,
+  pub to_delete: Vec<String>,
+}
 
-type UpdatesResult<T> = (ToCreate<T>, ToUpdate<T>, ToDelete);
+impl<T: Default> SyncDeltas<T> {
+  pub fn no_changes(&self) -> bool {
+    self.to_create.is_empty()
+      && self.to_update.is_empty()
+      && self.to_delete.is_empty()
+  }
+}
 
 pub struct ToUpdateItem<T: Default> {
   pub id: String,
@@ -208,4 +226,31 @@ impl AllResourcesById {
       .await?,
     })
   }
+}
+
+fn deserialize_resources_toml(
+  toml_str: &str,
+) -> anyhow::Result<ResourcesToml> {
+  ::toml::from_str::<ResourcesToml>(&escape_between_triple_string(
+    toml_str,
+  ))
+  // the error without this comes through with multiple lines (\n) and looks bad
+  .map_err(|e| anyhow!("{e:#}"))
+}
+
+fn escape_between_triple_string(toml_str: &str) -> String {
+  toml_str
+    .split(r#"""""#)
+    .enumerate()
+    .map(|(i, section)| {
+      // The odd entries are between triple string,
+      // and the \ need to be escaped.
+      if i % 2 == 0 {
+        section.to_string()
+      } else {
+        section.replace(r#"\"#, r#"\\"#)
+      }
+    })
+    .collect::<Vec<_>>()
+    .join(r#"""""#)
 }

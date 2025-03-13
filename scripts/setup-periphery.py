@@ -15,7 +15,7 @@ def load_version():
 	return version
 
 def load_latest_version():
-	return json.load(urllib.request.urlopen("https://api.github.com/repos/mbecker20/komodo/releases/latest"))["tag_name"]
+	return json.load(urllib.request.urlopen("https://api.github.com/repos/moghtech/komodo/releases/latest"))["tag_name"]
 
 def uses_systemd():
 	# First check if systemctl is an available command, then check if systemd is the init system
@@ -75,7 +75,7 @@ def copy_binary(user_install, bin_dir, version):
 		print("using x86_64 binary")
 
 	# download the binary to bin path
-	print(os.popen(f'curl -sSL https://github.com/mbecker20/komodo/releases/download/{version}/{periphery_bin} > {bin_path}').read())
+	print(os.popen(f'curl -sSL https://github.com/moghtech/komodo/releases/download/{version}/{periphery_bin} > {bin_path}').read())
 
 	# add executable permissions
 	os.popen(f'chmod +x {bin_path}')
@@ -94,7 +94,7 @@ def copy_config(config_dir):
 	if not os.path.isdir(config_dir):
 		os.makedirs(config_dir)
 
-	print(os.popen(f'curl -sSL https://raw.githubusercontent.com/mbecker20/komodo/main/config/periphery.config.toml > {config_dir}/periphery.config.toml').read())
+	print(os.popen(f'curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/config/periphery.config.toml > {config_dir}/periphery.config.toml').read())
 
 def copy_service_file(home_dir, bin_dir, config_dir, service_dir, user_install):
 	service_file = f'{service_dir}/periphery.service'

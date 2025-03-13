@@ -2,16 +2,17 @@ use std::collections::HashMap;
 
 use anyhow::Context;
 use komodo_client::entities::{
+  ResourceTargetVariant,
   sync::{DiffData, ResourceDiff},
   tag::Tag,
   toml::ResourceToml,
-  ResourceTargetVariant,
 };
 use mungos::find::find_collect;
 use partial_derive2::MaybeNone;
 
 use super::{AllResourcesById, ResourceSyncTrait};
 
+#[allow(clippy::too_many_arguments)]
 pub async fn push_updates_for_view<Resource: ResourceSyncTrait>(
   resources: Vec<ResourceToml<Resource::PartialConfig>>,
   delete: bool,

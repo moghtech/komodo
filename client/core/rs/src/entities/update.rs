@@ -4,7 +4,7 @@ use strum::{Display, EnumString};
 use typeshare::typeshare;
 
 use crate::entities::{
-  all_logs_success, komodo_timestamp, MongoId, Operation, I64,
+  I64, MongoId, Operation, all_logs_success, komodo_timestamp,
 };
 
 use super::{ResourceTarget, Version};

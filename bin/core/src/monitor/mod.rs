@@ -7,7 +7,7 @@ use komodo_client::entities::{
     container::ContainerListItem, image::ImageListItem,
     network::NetworkListItem, volume::VolumeListItem,
   },
-  komodo_timestamp,
+  komodo_timestamp, optional_string,
   server::{Server, ServerHealth, ServerState},
   stack::{ComposeProject, StackService, StackState},
   stats::SystemStats,
@@ -264,6 +264,7 @@ pub async fn update_cache_for_server(server: &Server) {
     let (latest_hash, latest_message) = periphery
       .request(GetLatestCommit {
         name: repo.name.clone(),
+        path: optional_string(&repo.config.path),
       })
       .await
       .map(|r| (r.hash, r.message))

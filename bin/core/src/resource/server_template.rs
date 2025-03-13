@@ -1,4 +1,5 @@
 use komodo_client::entities::{
+  MergePartial, Operation, ResourceTargetVariant,
   resource::Resource,
   server_template::{
     PartialServerTemplateConfig, ServerTemplate,
@@ -8,11 +9,10 @@ use komodo_client::entities::{
   },
   update::Update,
   user::User,
-  MergePartial, Operation, ResourceTargetVariant,
 };
 use mungos::mongodb::{
-  bson::{to_document, Document},
   Collection,
+  bson::{Document, to_document},
 };
 
 use crate::state::db_client;

@@ -70,10 +70,10 @@ const ROUTER = createBrowserRouter([
 ]);
 
 export const Router = () => {
-  const { data: user, isLoading } = useUser();
+  const { data: user, isLoading, error } = useUser();
 
   if (isLoading && !user) return null;
-  if (!user) return <Login />;
+  if (!user || error) return <Login />;
   if (!user.enabled) return <UserDisabled />;
 
   return <RouterProvider router={ROUTER} />;

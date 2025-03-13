@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::OnceLock};
 
-use bson::{doc, Document};
+use bson::{Document, doc};
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
 use partial_derive2::Partial;
@@ -16,9 +16,10 @@ use crate::deserializers::{
 };
 
 use super::{
+  FileContents, SystemCommand,
   docker::container::ContainerListItem,
   resource::{Resource, ResourceListItem, ResourceQuery},
-  to_komodo_name, FileContents, SystemCommand,
+  to_komodo_name,
 };
 
 #[typeshare]
@@ -163,12 +164,15 @@ pub struct StackInfo {
   pub deployed_hash: Option<String>,
   /// Deployed commit message, or null. Only for repo based stacks
   pub deployed_message: Option<String>,
-  /// The deployed compose file contents. This is updated whenever Komodo successfully deploys the stack.
+  /// The deployed compose file contents.
+  /// This is updated whenever Komodo successfully deploys the stack.
   pub deployed_contents: Option<Vec<FileContents>>,
   /// The deployed service names.
   /// This is updated whenever it is empty, or deployed contents is updated.
   pub deployed_services: Option<Vec<StackServiceNames>>,
-
+  /// The output of `docker compose config`.
+  /// This is updated whenever Komodo successfully deploys the stack.
+  pub deployed_config: Option<String>,
   /// The latest service names.
   /// This is updated whenever the stack cache refreshes, using the latest file contents (either db defined or remote).
   #[serde(default)]
@@ -246,6 +250,14 @@ pub struct StackConfig {
   #[serde(default)]
   #[builder(default)]
   pub auto_update: bool,
+
+  /// If auto update is enabled, Komodo will
+  /// by default only update the specific services
+  /// with image updates. If this parameter is set to true,
+  /// Komodo will redeploy the whole Stack (all services).
+  #[serde(default)]
+  #[builder(default)]
+  pub auto_update_all_services: bool,
 
   /// Whether to run `docker compose down` before `compose up`.
   #[serde(default)]
@@ -382,6 +394,11 @@ pub struct StackConfig {
   #[builder(default)]
   pub pre_deploy: SystemCommand,
 
+  /// The optional command to run after the Stack is deployed.
+  #[serde(default)]
+  #[builder(default)]
+  pub post_deploy: SystemCommand,
+
   /// The extra arguments to pass after `docker compose up -d`.
   /// If empty, no extra arguments will be passed.
   #[serde(default, deserialize_with = "string_list_deserializer")]
@@ -487,8 +504,10 @@ impl Default for StackConfig {
       auto_pull: default_auto_pull(),
       poll_for_updates: Default::default(),
       auto_update: Default::default(),
+      auto_update_all_services: Default::default(),
       ignore_services: Default::default(),
       pre_deploy: Default::default(),
+      post_deploy: Default::default(),
       extra_args: Default::default(),
       environment: Default::default(),
       env_file_path: default_env_file_path(),
@@ -585,12 +604,25 @@ pub type StackQuery = ResourceQuery<StackQuerySpecifics>;
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
 pub struct StackQuerySpecifics {
+  /// Query only for Stacks on these Servers.
+  /// If empty, does not filter by Server.
+  /// Only accepts Server id (not name).
+  #[serde(default)]
+  pub server_ids: Vec<String>,
   /// Filter syncs by their repo.
+  #[serde(default)]
   pub repos: Vec<String>,
+  /// Query only for Stack with available image updates.
+  #[serde(default)]
+  pub update_available: bool,
 }
 
 impl super::resource::AddFilters for StackQuerySpecifics {
   fn add_filters(&self, filters: &mut Document) {
+    if !self.server_ids.is_empty() {
+      filters
+        .insert("config.server_id", doc! { "$in": &self.server_ids });
+    }
     if !self.repos.is_empty() {
       filters.insert("config.repo", doc! { "$in": &self.repos });
     }

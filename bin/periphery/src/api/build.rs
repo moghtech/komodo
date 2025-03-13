@@ -1,13 +1,17 @@
-use anyhow::{anyhow, Context};
-use command::run_komodo_command;
+use std::{fmt::Write, path::Path};
+
+use anyhow::{Context, anyhow};
+use command::{
+  run_komodo_command, run_komodo_command_with_interpolation,
+};
 use formatting::format_serror;
 use komodo_client::{
   entities::{
+    EnvironmentVar, Version,
     build::{Build, BuildConfig},
     environment_vars_from_str, get_image_name, optional_string,
     to_komodo_name,
     update::Log,
-    EnvironmentVar, Version,
   },
   parsers::QUOTE_PATTERN,
 };
@@ -20,21 +24,20 @@ use crate::{
   config::periphery_config,
   docker::docker_login,
   helpers::{parse_extra_args, parse_labels},
-  State,
 };
 
-impl Resolve<build::Build> for State {
-  #[instrument(name = "Build", skip_all)]
+impl Resolve<super::Args> for build::Build {
+  #[instrument(name = "Build", skip_all, fields(build = self.build.name.to_string()))]
   async fn resolve(
-    &self,
-    build::Build {
+    self,
+    _: &super::Args,
+  ) -> serror::Result<Vec<Log>> {
+    let build::Build {
       build,
       registry_token,
       additional_tags,
       replacers: core_replacers,
-    }: build::Build,
-    _: (),
-  ) -> anyhow::Result<Vec<Log>> {
+    } = self;
     let Build {
       name,
       config:
@@ -68,7 +71,7 @@ impl Resolve<build::Build> for State {
       Ok(should_push) => should_push,
       Err(e) => {
         logs.push(Log::error(
-          "docker login",
+          "Docker Login",
           format_serror(
             &e.context("failed to login to docker registry").into(),
           ),
@@ -104,8 +107,12 @@ impl Resolve<build::Build> for State {
 
     let secret_args = environment_vars_from_str(secret_args)
       .context("Invalid secret_args")?;
-    let command_secret_args =
-      parse_secret_args(&secret_args, *skip_secret_interp)?;
+    let command_secret_args = parse_secret_args(
+      &secret_args,
+      &build_dir,
+      *skip_secret_interp,
+    )
+    .await?;
 
     let labels = parse_labels(
       &environment_vars_from_str(labels).context("Invalid labels")?,
@@ -123,43 +130,24 @@ impl Resolve<build::Build> for State {
 
     if *skip_secret_interp {
       let build_log = run_komodo_command(
-        "docker build",
+        "Docker Build",
         build_dir.as_ref(),
         command,
-        false,
       )
       .await;
       logs.push(build_log);
-    } else {
-      // Interpolate any missing secrets
-      let (command, mut replacers) = svi::interpolate_variables(
-        &command,
-        &periphery_config().secrets,
-        svi::Interpolator::DoubleBrackets,
-        true,
-      )
-      .context(
-        "failed to interpolate secrets into docker build command",
-      )?;
-      replacers.extend(core_replacers);
-
-      let mut build_log = run_komodo_command(
-        "docker build",
-        build_dir.as_ref(),
-        command,
-        false,
-      )
-      .await;
-      build_log.command =
-        svi::replace_in_string(&build_log.command, &replacers);
-      build_log.stdout =
-        svi::replace_in_string(&build_log.stdout, &replacers);
-      build_log.stderr =
-        svi::replace_in_string(&build_log.stderr, &replacers);
-      logs.push(build_log);
+    } else if let Some(log) = run_komodo_command_with_interpolation(
+      "Docker Build",
+      build_dir.as_ref(),
+      command,
+      false,
+      &periphery_config().secrets,
+      &core_replacers,
+    )
+    .await
+    {
+      logs.push(log)
     }
-
-    cleanup_secret_env_vars(&secret_args);
 
     Ok(logs)
   }
@@ -204,74 +192,77 @@ fn parse_build_args(build_args: &[EnvironmentVar]) -> String {
     .join("")
 }
 
-fn parse_secret_args(
+/// https://docs.docker.com/build/building/secrets/#using-build-secrets
+async fn parse_secret_args(
   secret_args: &[EnvironmentVar],
+  build_dir: &Path,
   skip_secret_interp: bool,
 ) -> anyhow::Result<String> {
   let periphery_config = periphery_config();
-  Ok(
-    secret_args
-      .iter()
-      .map(|EnvironmentVar { variable, value }| {
-        if variable.is_empty() {
-          return Err(anyhow!("secret variable cannot be empty string"))
-        } else if variable.contains('=') {
-          return Err(anyhow!("invalid variable {variable}. variable cannot contain '='"))
-        }
-        let value = if skip_secret_interp {
-          value.to_string()
-        } else {
-          svi::interpolate_variables(
-            value,
-            &periphery_config.secrets,
-            svi::Interpolator::DoubleBrackets,
-            true,
-          )
-          .context(
-            "failed to interpolate periphery secrets into build secrets",
-          )?.0
-        };
-        std::env::set_var(variable, value);
-        anyhow::Ok(format!(" --secret id={variable}"))
-      })
-      .collect::<anyhow::Result<Vec<_>>>()?
-      .join(""),
-  )
-}
-
-fn cleanup_secret_env_vars(secret_args: &[EnvironmentVar]) {
-  secret_args.iter().for_each(
-    |EnvironmentVar { variable, .. }| std::env::remove_var(variable),
-  )
+  let mut res = String::new();
+  for EnvironmentVar { variable, value } in secret_args {
+    // Check edge cases
+    if variable.is_empty() {
+      return Err(anyhow!("secret variable cannot be empty string"));
+    } else if variable.contains('=') {
+      return Err(anyhow!(
+        "invalid variable {variable}. variable cannot contain '='"
+      ));
+    }
+    // Interpolate in value
+    let value = if skip_secret_interp {
+      value.to_string()
+    } else {
+      svi::interpolate_variables(
+        value,
+        &periphery_config.secrets,
+        svi::Interpolator::DoubleBrackets,
+        true,
+      )
+      .context(
+        "Failed to interpolate periphery secrets into build secrets",
+      )?
+      .0
+    };
+    // Write the value to file to mount
+    let path = build_dir.join(variable);
+    tokio::fs::write(&path, value).await.with_context(|| {
+      format!(
+        "Failed to write build secret {variable} to {}",
+        path.display()
+      )
+    })?;
+    // Extend the command
+    write!(
+      &mut res,
+      " --secret id={variable},src={}",
+      path.display()
+    )
+    .with_context(|| {
+      format!(
+        "Failed to format build secret arguments for {variable}"
+      )
+    })?;
+  }
+  Ok(res)
 }
 
 //
 
-impl Resolve<PruneBuilders> for State {
-  #[instrument(name = "PruneBuilders", skip(self))]
-  async fn resolve(
-    &self,
-    _: PruneBuilders,
-    _: (),
-  ) -> anyhow::Result<Log> {
+impl Resolve<super::Args> for PruneBuilders {
+  #[instrument(name = "PruneBuilders", skip_all)]
+  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
     let command = String::from("docker builder prune -a -f");
-    Ok(
-      run_komodo_command("prune builders", None, command, false)
-        .await,
-    )
+    Ok(run_komodo_command("Prune Builders", None, command).await)
   }
 }
 
 //
 
-impl Resolve<PruneBuildx> for State {
-  #[instrument(name = "PruneBuildx", skip(self))]
-  async fn resolve(
-    &self,
-    _: PruneBuildx,
-    _: (),
-  ) -> anyhow::Result<Log> {
+impl Resolve<super::Args> for PruneBuildx {
+  #[instrument(name = "PruneBuildx", skip_all)]
+  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
     let command = String::from("docker buildx prune -a -f");
-    Ok(run_komodo_command("prune buildx", None, command, false).await)
+    Ok(run_komodo_command("Prune Buildx", None, command).await)
   }
 }

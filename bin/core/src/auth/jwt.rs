@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use async_timing_util::{
-  get_timelength_in_ms, unix_timestamp_ms, Timelength,
+  Timelength, get_timelength_in_ms, unix_timestamp_ms,
 };
-use hmac::{Hmac, Mac};
-use jwt::SignWithKey;
+use jsonwebtoken::{
+  DecodingKey, EncodingKey, Header, Validation, decode, encode,
+};
 use komodo_client::entities::config::core::CoreConfig;
 use mungos::mongodb::bson::doc;
 use serde::{Deserialize, Serialize};
-use sha2::Sha256;
 use tokio::sync::Mutex;
 
 use crate::helpers::random_string;
@@ -24,7 +24,10 @@ pub struct JwtClaims {
 }
 
 pub struct JwtClient {
-  pub key: Hmac<Sha256>,
+  header: Header,
+  validation: Validation,
+  encoding_key: EncodingKey,
+  decoding_key: DecodingKey,
   ttl_ms: u128,
   exchange_tokens: ExchangeTokenMap,
 }
@@ -36,10 +39,11 @@ impl JwtClient {
     } else {
       config.jwt_secret.clone()
     };
-    let key = Hmac::new_from_slice(secret.as_bytes())
-      .context("failed at taking HmacSha256 of jwt secret")?;
     Ok(JwtClient {
-      key,
+      header: Header::default(),
+      validation: Validation::new(Default::default()),
+      encoding_key: EncodingKey::from_secret(secret.as_bytes()),
+      decoding_key: DecodingKey::from_secret(secret.as_bytes()),
       ttl_ms: get_timelength_in_ms(
         config.jwt_ttl.to_string().parse()?,
       ),
@@ -47,7 +51,7 @@ impl JwtClient {
     })
   }
 
-  pub fn generate(&self, user_id: String) -> anyhow::Result<String> {
+  pub fn encode(&self, user_id: String) -> anyhow::Result<String> {
     let iat = unix_timestamp_ms();
     let exp = iat + self.ttl_ms;
     let claims = JwtClaims {
@@ -55,10 +59,14 @@ impl JwtClient {
       iat,
       exp,
     };
-    let jwt = claims
-      .sign_with_key(&self.key)
-      .context("failed at signing claim")?;
-    Ok(jwt)
+    encode(&self.header, &claims, &self.encoding_key)
+      .context("failed at signing claim")
+  }
+
+  pub fn decode(&self, jwt: &str) -> anyhow::Result<JwtClaims> {
+    decode::<JwtClaims>(jwt, &self.decoding_key, &self.validation)
+      .map(|res| res.claims)
+      .context("failed to decode token claims")
   }
 
   #[instrument(level = "debug", skip_all)]

@@ -28,7 +28,6 @@ export type ReadResponses = {
     ListUserTargetPermissions: Types.ListUserTargetPermissionsResponse;
     GetUserGroup: Types.GetUserGroupResponse;
     ListUserGroups: Types.ListUserGroupsResponse;
-    FindResources: Types.FindResourcesResponse;
     GetProceduresSummary: Types.GetProceduresSummaryResponse;
     GetProcedure: Types.GetProcedureResponse;
     GetProcedureActionState: Types.GetProcedureActionStateResponse;
@@ -100,8 +99,8 @@ export type ReadResponses = {
     GetStack: Types.GetStackResponse;
     GetStackActionState: Types.GetStackActionStateResponse;
     GetStackWebhooksEnabled: Types.GetStackWebhooksEnabledResponse;
-    GetStackServiceLog: Types.GetStackServiceLogResponse;
-    SearchStackServiceLog: Types.SearchStackServiceLogResponse;
+    GetStackLog: Types.GetStackLogResponse;
+    SearchStackLog: Types.SearchStackLogResponse;
     ListStacks: Types.ListStacksResponse;
     ListFullStacks: Types.ListFullStacksResponse;
     ListStackServices: Types.ListStackServicesResponse;
@@ -227,6 +226,7 @@ export type WriteResponses = {
     CreateTag: Types.Tag;
     DeleteTag: Types.Tag;
     RenameTag: Types.Tag;
+    UpdateTagColor: Types.Tag;
     UpdateTagsOnResource: Types.UpdateTagsOnResourceResponse;
     CreateVariable: Types.CreateVariableResponse;
     UpdateVariableValue: Types.UpdateVariableValueResponse;
@@ -307,4 +307,5 @@ export type ExecuteResponses = {
     PauseStackService: Types.Update;
     UnpauseStackService: Types.Update;
     DestroyStackService: Types.Update;
+    TestAlerter: Types.Update;
 };

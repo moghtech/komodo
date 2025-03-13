@@ -1,11 +1,11 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use git::GitRes;
 use komodo_client::entities::{
+  CloneArgs,
   sync::{ResourceSync, SyncFileContents},
   to_komodo_name,
   toml::ResourcesToml,
   update::Log,
-  CloneArgs,
 };
 
 use crate::{config::core_config, helpers::git_token};
@@ -56,7 +56,7 @@ pub async fn get_remote_resources(
     // ==========
     let mut resources = ResourcesToml::default();
     let resources = if !sync.config.file_contents.is_empty() {
-      toml::from_str::<ResourcesToml>(&sync.config.file_contents)
+      super::deserialize_resources_toml(&sync.config.file_contents)
         .context("failed to parse resource file contents")
         .map(|more| {
           extend_resources(
@@ -133,9 +133,9 @@ pub async fn get_remote_resources(
     format!("Failed to update resource repo at {repo_path:?}")
   })?;
 
-  let hash = hash.context("failed to get commit hash")?;
-  let message =
-    message.context("failed to get commit hash message")?;
+  // let hash = hash.context("failed to get commit hash")?;
+  // let message =
+  //   message.context("failed to get commit hash message")?;
 
   let (mut files, mut file_errors) = (Vec::new(), Vec::new());
   let resources = super::file::read_resources(
@@ -152,7 +152,7 @@ pub async fn get_remote_resources(
     files,
     file_errors,
     logs,
-    hash: Some(hash),
-    message: Some(message),
+    hash,
+    message,
   })
 }

@@ -19,7 +19,6 @@ import { ResourceComponents } from "..";
 import { Types } from "komodo_client";
 import { DashboardPieChart } from "@pages/home/dashboard";
 import { ResourcePageHeader, StatusBadge } from "@components/util";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@ui/hover-card";
 import { Card } from "@ui/card";
 import { Badge } from "@ui/badge";
 import { useToast } from "@ui/use-toast";
@@ -27,6 +26,7 @@ import { Button } from "@ui/button";
 import { useBuilder } from "../builder";
 import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 
 export const useBuild = (id?: string) =>
   useRead("ListBuilds", {}, { refetchInterval: 10_000 }).data?.find(
@@ -153,8 +153,8 @@ export const BuildComponents: RequiredResourceComponents = {
       const out_of_date =
         info.built_hash && info.built_hash !== info.latest_hash;
       return (
-        <HoverCard openDelay={200}>
-          <HoverCardTrigger asChild>
+        <Tooltip>
+          <TooltipTrigger asChild>
             <Card
               className={cn(
                 "px-3 py-2 hover:bg-accent/50 transition-colors cursor-pointer",
@@ -166,8 +166,8 @@ export const BuildComponents: RequiredResourceComponents = {
                 {info.built_hash || info.latest_hash}
               </div>
             </Card>
-          </HoverCardTrigger>
-          <HoverCardContent align="start">
+          </TooltipTrigger>
+          <TooltipContent>
             <div className="grid gap-2">
               <Badge
                 variant="secondary"
@@ -196,8 +196,8 @@ export const BuildComponents: RequiredResourceComponents = {
                 </>
               )}
             </div>
-          </HoverCardContent>
-        </HoverCard>
+          </TooltipContent>
+        </Tooltip>
       );
     },
     Refresh: ({ id }) => {

@@ -1,11 +1,13 @@
 target
-/frontend/build
-/lib/ts_client/build
 node_modules
 dist
 .env
 .env.development
 .DS_Store
+.idea
+
+/frontend/build
+/lib/ts_client/build
 
 creds.toml
-.komodo
+.dev

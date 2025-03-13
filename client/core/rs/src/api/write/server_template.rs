@@ -1,5 +1,5 @@
 use derive_empty_traits::EmptyTraits;
-use resolver_api::derive::Request;
+use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -15,10 +15,11 @@ use super::KomodoWriteRequest;
 /// Create a server template. Response: [ServerTemplate].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ServerTemplate)]
+#[error(serror::Error)]
 pub struct CreateServerTemplate {
   /// The name given to newly created server template.
   pub name: String,
@@ -33,10 +34,11 @@ pub struct CreateServerTemplate {
 /// of the server template at the given `id`. Response: [ServerTemplate]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ServerTemplate)]
+#[error(serror::Error)]
 pub struct CopyServerTemplate {
   /// The name of the new server template.
   pub name: String,
@@ -50,10 +52,11 @@ pub struct CopyServerTemplate {
 /// Response: [ServerTemplate]
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ServerTemplate)]
+#[error(serror::Error)]
 pub struct DeleteServerTemplate {
   /// The id or name of the server template to delete.
   pub id: String,
@@ -71,10 +74,11 @@ pub struct DeleteServerTemplate {
 /// field changes occur from out of date local state.
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ServerTemplate)]
+#[error(serror::Error)]
 pub struct UpdateServerTemplate {
   /// The id of the server template to update.
   pub id: String,
@@ -88,10 +92,12 @@ pub struct UpdateServerTemplate {
 /// Response: [Update].
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Request, EmptyTraits,
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
+#[error(serror::Error)]
+#[error(serror::Error)]
 pub struct RenameServerTemplate {
   /// The id or name of the ServerTemplate to rename.
   pub id: String,

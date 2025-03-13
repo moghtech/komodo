@@ -1,11 +1,9 @@
-use std::time::Duration;
-
 use anyhow::Context;
 use formatting::format_serror;
 use komodo_client::{
   api::write::RefreshResourceSyncPending,
   entities::{
-    komodo_timestamp,
+    Operation, ResourceTargetVariant, komodo_timestamp,
     resource::Resource,
     sync::{
       PartialResourceSyncConfig, ResourceSync, ResourceSyncConfig,
@@ -14,19 +12,16 @@ use komodo_client::{
       ResourceSyncState,
     },
     update::Update,
-    user::{sync_user, User},
-    Operation, ResourceTargetVariant,
+    user::{User, sync_user},
   },
 };
 use mongo_indexed::doc;
-use mungos::{
-  find::find_collect,
-  mongodb::{options::FindOneOptions, Collection},
-};
+use mungos::mongodb::Collection;
 use resolver_api::Resolve;
 
-use crate::state::{
-  action_states, db_client, resource_sync_state_cache, State,
+use crate::{
+  api::write::WriteArgs,
+  state::{action_states, db_client},
 };
 
 impl super::KomodoResource for ResourceSync {
@@ -103,21 +98,19 @@ impl super::KomodoResource for ResourceSync {
     created: &Resource<Self::Config, Self::Info>,
     update: &mut Update,
   ) -> anyhow::Result<()> {
-    if let Err(e) = State
-      .resolve(
-        RefreshResourceSyncPending {
-          sync: created.id.clone(),
-        },
-        sync_user().to_owned(),
-      )
-      .await
+    if let Err(e) = (RefreshResourceSyncPending {
+      sync: created.id.clone(),
+    })
+    .resolve(&WriteArgs {
+      user: sync_user().to_owned(),
+    })
+    .await
     {
       update.push_error_log(
         "Refresh sync pending",
-        format_serror(&e.context("The sync pending cache has failed to refresh. This is likely due to a misconfiguration of the sync").into())
+        format_serror(&e.error.context("The sync pending cache has failed to refresh. This is likely due to a misconfiguration of the sync").into())
       );
     };
-    refresh_resource_sync_state_cache().await;
     Ok(())
   }
 
@@ -180,35 +173,6 @@ impl super::KomodoResource for ResourceSync {
   }
 }
 
-pub fn spawn_resource_sync_state_refresh_loop() {
-  tokio::spawn(async move {
-    loop {
-      refresh_resource_sync_state_cache().await;
-      tokio::time::sleep(Duration::from_secs(60)).await;
-    }
-  });
-}
-
-pub async fn refresh_resource_sync_state_cache() {
-  let _ = async {
-    let resource_syncs =
-      find_collect(&db_client().resource_syncs, None, None)
-        .await
-        .context("failed to get resource_syncs from db")?;
-    let cache = resource_sync_state_cache();
-    for resource_sync in resource_syncs {
-      let state =
-        get_resource_sync_state_from_db(&resource_sync.id).await;
-      cache.insert(resource_sync.id, state).await;
-    }
-    anyhow::Ok(())
-  }
-  .await
-  .inspect_err(|e| {
-    error!("failed to refresh resource_sync state cache | {e:#}")
-  });
-}
-
 async fn get_resource_sync_state(
   id: &String,
   data: &ResourceSyncInfo,
@@ -232,57 +196,15 @@ async fn get_resource_sync_state(
   {
     return state;
   }
-  if data.pending_error.is_some() {
-    return ResourceSyncState::Failed;
-  }
-  if !data.resource_updates.is_empty()
+  if data.pending_error.is_some() || !data.remote_errors.is_empty() {
+    ResourceSyncState::Failed
+  } else if !data.resource_updates.is_empty()
     || !data.variable_updates.is_empty()
     || !data.user_group_updates.is_empty()
     || data.pending_deploy.to_deploy > 0
   {
-    return ResourceSyncState::Pending;
+    ResourceSyncState::Pending
+  } else {
+    ResourceSyncState::Ok
   }
-  resource_sync_state_cache()
-    .get(id)
-    .await
-    .unwrap_or_default()
-}
-
-async fn get_resource_sync_state_from_db(
-  id: &str,
-) -> ResourceSyncState {
-  async {
-    let state = db_client()
-      .updates
-      .find_one(doc! {
-        "target.type": "ResourceSync",
-        "target.id": id,
-        "$or": [
-          { "operation": "RunSync" },
-          { "operation": "CommitSync" },
-        ],
-      })
-      .with_options(
-        FindOneOptions::builder()
-          .sort(doc! { "start_ts": -1 })
-          .build(),
-      )
-      .await?
-      .map(|u| {
-        if u.success {
-          ResourceSyncState::Ok
-        } else {
-          ResourceSyncState::Failed
-        }
-      })
-      .unwrap_or(ResourceSyncState::Ok);
-    anyhow::Ok(state)
-  }
-  .await
-  .inspect_err(|e| {
-    warn!(
-      "failed to get resource sync state from db for {id} | {e:#}"
-    )
-  })
-  .unwrap_or(ResourceSyncState::Unknown)
 }

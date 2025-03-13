@@ -1,6 +1,6 @@
 use anyhow::Context;
 use async_timing_util::{
-  unix_timestamp_ms, wait_until_timelength, Timelength, ONE_DAY_MS,
+  ONE_DAY_MS, Timelength, unix_timestamp_ms, wait_until_timelength,
 };
 use futures::future::join_all;
 use mungos::{find::find_collect, mongodb::bson::doc};
@@ -34,8 +34,9 @@ async fn prune_images() -> anyhow::Result<()> {
     .await
     .context("failed to get servers from db")?
     .into_iter()
-    // This could be done in the mongo query, but rather have rust type system guarantee this.
-    .filter(|server| server.config.auto_prune)
+    .filter(|server| {
+      server.config.enabled && server.config.auto_prune
+    })
     .map(|server| async move {
       (
         async {

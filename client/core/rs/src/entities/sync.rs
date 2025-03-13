@@ -1,4 +1,4 @@
-use bson::{doc, Document};
+use bson::{Document, doc};
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
 use partial_derive2::Partial;
@@ -12,8 +12,8 @@ use crate::deserializers::{
 };
 
 use super::{
+  I64, ResourceTarget,
   resource::{Resource, ResourceListItem, ResourceQuery},
-  ResourceTarget, I64,
 };
 
 #[typeshare]
@@ -244,6 +244,13 @@ pub struct ResourceSyncConfig {
   #[builder(default)]
   pub delete: bool,
 
+  /// Whether sync should include resources.
+  /// Default: true
+  #[serde(default = "default_include_resources")]
+  #[builder(default = "default_include_resources()")]
+  #[partial_default(default_include_resources())]
+  pub include_resources: bool,
+
   /// When using `managed` resource sync, will only export resources
   /// matching all of the given tags. If none, will match all resources.
   #[serde(default, deserialize_with = "string_list_deserializer")]
@@ -253,6 +260,16 @@ pub struct ResourceSyncConfig {
   ))]
   #[builder(default)]
   pub match_tags: Vec<String>,
+
+  /// Whether sync should include variables.
+  #[serde(default)]
+  #[builder(default)]
+  pub include_variables: bool,
+
+  /// Whether sync should include user groups.
+  #[serde(default)]
+  #[builder(default)]
+  pub include_user_groups: bool,
 
   /// Manage the file contents in the UI.
   #[serde(default, deserialize_with = "file_contents_deserializer")]
@@ -297,6 +314,10 @@ fn default_webhook_enabled() -> bool {
   true
 }
 
+fn default_include_resources() -> bool {
+  true
+}
+
 impl Default for ResourceSyncConfig {
   fn default() -> Self {
     Self {
@@ -310,7 +331,10 @@ impl Default for ResourceSyncConfig {
       files_on_host: Default::default(),
       file_contents: Default::default(),
       managed: Default::default(),
+      include_resources: default_include_resources(),
       match_tags: Default::default(),
+      include_variables: Default::default(),
+      include_user_groups: Default::default(),
       delete: Default::default(),
       webhook_enabled: default_webhook_enabled(),
       webhook_secret: Default::default(),

@@ -7,7 +7,7 @@ use komodo_client::{
     user::User,
   },
 };
-use periphery_client::{api::compose::*, PeripheryClient};
+use periphery_client::{PeripheryClient, api::compose::*};
 
 use crate::{
   helpers::{periphery_client, update::update_update},
@@ -23,14 +23,14 @@ pub trait ExecuteCompose {
   async fn execute(
     periphery: PeripheryClient,
     stack: Stack,
-    service: Option<String>,
+    services: Vec<String>,
     extras: Self::Extras,
   ) -> anyhow::Result<Log>;
 }
 
 pub async fn execute_compose<T: ExecuteCompose>(
   stack: &str,
-  service: Option<String>,
+  services: Vec<String>,
   user: &User,
   set_in_progress: impl Fn(&mut StackActionState),
   mut update: Update,
@@ -53,16 +53,19 @@ pub async fn execute_compose<T: ExecuteCompose>(
 
   let periphery = periphery_client(&server)?;
 
-  if let Some(service) = &service {
+  if !services.is_empty() {
     update.logs.push(Log::simple(
-      &format!("Service: {service}"),
-      format!("Execution requested for Stack service {service}"),
+      "Service/s",
+      format!(
+        "Execution requested for Stack service/s {}",
+        services.join(", ")
+      ),
     ))
   }
 
   update
     .logs
-    .push(T::execute(periphery, stack, service, extras).await?);
+    .push(T::execute(periphery, stack, services, extras).await?);
 
   // Ensure cached stack state up to date by updating server cache
   update_cache_for_server(&server).await;
@@ -73,21 +76,27 @@ pub async fn execute_compose<T: ExecuteCompose>(
   Ok(update)
 }
 
+fn service_args(services: &[String]) -> String {
+  if !services.is_empty() {
+    format!(" {}", services.join(" "))
+  } else {
+    String::new()
+  }
+}
+
 impl ExecuteCompose for StartStack {
   type Extras = ();
   async fn execute(
     periphery: PeripheryClient,
     stack: Stack,
-    service: Option<String>,
+    services: Vec<String>,
     _: Self::Extras,
   ) -> anyhow::Result<Log> {
-    let service = service
-      .map(|service| format!(" {service}"))
-      .unwrap_or_default();
+    let service_args = service_args(&services);
     periphery
       .request(ComposeExecution {
         project: stack.project_name(false),
-        command: format!("start{service}"),
+        command: format!("start{service_args}"),
       })
       .await
   }
@@ -98,16 +107,14 @@ impl ExecuteCompose for RestartStack {
   async fn execute(
     periphery: PeripheryClient,
     stack: Stack,
-    service: Option<String>,
+    services: Vec<String>,
     _: Self::Extras,
   ) -> anyhow::Result<Log> {
-    let service = service
-      .map(|service| format!(" {service}"))
-      .unwrap_or_default();
+    let service_args = service_args(&services);
     periphery
       .request(ComposeExecution {
         project: stack.project_name(false),
-        command: format!("restart{service}"),
+        command: format!("restart{service_args}"),
       })
       .await
   }
@@ -118,16 +125,14 @@ impl ExecuteCompose for PauseStack {
   async fn execute(
     periphery: PeripheryClient,
     stack: Stack,
-    service: Option<String>,
+    services: Vec<String>,
     _: Self::Extras,
   ) -> anyhow::Result<Log> {
-    let service = service
-      .map(|service| format!(" {service}"))
-      .unwrap_or_default();
+    let service_args = service_args(&services);
     periphery
       .request(ComposeExecution {
         project: stack.project_name(false),
-        command: format!("pause{service}"),
+        command: format!("pause{service_args}"),
       })
       .await
   }
@@ -138,16 +143,14 @@ impl ExecuteCompose for UnpauseStack {
   async fn execute(
     periphery: PeripheryClient,
     stack: Stack,
-    service: Option<String>,
+    services: Vec<String>,
     _: Self::Extras,
   ) -> anyhow::Result<Log> {
-    let service = service
-      .map(|service| format!(" {service}"))
-      .unwrap_or_default();
+    let service_args = service_args(&services);
     periphery
       .request(ComposeExecution {
         project: stack.project_name(false),
-        command: format!("unpause{service}"),
+        command: format!("unpause{service_args}"),
       })
       .await
   }
@@ -158,17 +161,15 @@ impl ExecuteCompose for StopStack {
   async fn execute(
     periphery: PeripheryClient,
     stack: Stack,
-    service: Option<String>,
+    services: Vec<String>,
     timeout: Self::Extras,
   ) -> anyhow::Result<Log> {
-    let service = service
-      .map(|service| format!(" {service}"))
-      .unwrap_or_default();
+    let service_args = service_args(&services);
     let maybe_timeout = maybe_timeout(timeout);
     periphery
       .request(ComposeExecution {
         project: stack.project_name(false),
-        command: format!("stop{maybe_timeout}{service}"),
+        command: format!("stop{maybe_timeout}{service_args}"),
       })
       .await
   }
@@ -179,12 +180,10 @@ impl ExecuteCompose for DestroyStack {
   async fn execute(
     periphery: PeripheryClient,
     stack: Stack,
-    service: Option<String>,
+    services: Vec<String>,
     (timeout, remove_orphans): Self::Extras,
   ) -> anyhow::Result<Log> {
-    let service = service
-      .map(|service| format!(" {service}"))
-      .unwrap_or_default();
+    let service_args = service_args(&services);
     let maybe_timeout = maybe_timeout(timeout);
     let maybe_remove_orphans = if remove_orphans {
       " --remove-orphans"
@@ -195,7 +194,7 @@ impl ExecuteCompose for DestroyStack {
       .request(ComposeExecution {
         project: stack.project_name(false),
         command: format!(
-          "down{maybe_timeout}{maybe_remove_orphans}{service}"
+          "down{maybe_timeout}{maybe_remove_orphans}{service_args}"
         ),
       })
       .await

@@ -1,15 +1,17 @@
 use anyhow::Context;
-use command::run_komodo_command;
+use command::{
+  run_komodo_command, run_komodo_command_with_interpolation,
+};
 use formatting::format_serror;
 use komodo_client::{
   entities::{
+    EnvironmentVar,
     deployment::{
-      conversions_from_str, extract_registry_domain, Conversion,
-      Deployment, DeploymentConfig, DeploymentImage, RestartMode,
+      Conversion, Deployment, DeploymentConfig, DeploymentImage,
+      RestartMode, conversions_from_str, extract_registry_domain,
     },
     environment_vars_from_str, to_komodo_name,
     update::Log,
-    EnvironmentVar,
   },
   parsers::QUOTE_PATTERN,
 };
@@ -20,25 +22,26 @@ use crate::{
   config::periphery_config,
   docker::{docker_login, pull_image},
   helpers::{parse_extra_args, parse_labels},
-  State,
 };
 
-impl Resolve<Deploy> for State {
+impl Resolve<super::Args> for Deploy {
   #[instrument(
     name = "Deploy",
-    skip(self, core_replacers, registry_token)
+    skip_all,
+    fields(
+      stack = &self.deployment.name,
+      stop_signal = format!("{:?}", self.stop_signal),
+      stop_time = self.stop_time,
+    )
   )]
-  async fn resolve(
-    &self,
-    Deploy {
+  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
+    let Deploy {
       deployment,
       stop_signal,
       stop_time,
       registry_token,
       replacers: core_replacers,
-    }: Deploy,
-    _: (),
-  ) -> anyhow::Result<Log> {
+    } = self;
     let image = if let DeploymentImage::Image { image } =
       &deployment.config.image
     {
@@ -73,16 +76,13 @@ impl Resolve<Deploy> for State {
 
     let _ = pull_image(image).await;
     debug!("image pulled");
-    let _ = State
-      .resolve(
-        RemoveContainer {
-          name: deployment.name.clone(),
-          signal: stop_signal,
-          time: stop_time,
-        },
-        (),
-      )
-      .await;
+    let _ = (RemoveContainer {
+      name: deployment.name.clone(),
+      signal: stop_signal,
+      time: stop_time,
+    })
+    .resolve(&super::Args)
+    .await;
     debug!("container stopped and removed");
 
     let command = docker_run_command(&deployment, image)
@@ -90,33 +90,22 @@ impl Resolve<Deploy> for State {
     debug!("docker run command: {command}");
 
     if deployment.config.skip_secret_interp {
-      Ok(run_komodo_command("docker run", None, command, false).await)
+      Ok(run_komodo_command("Docker Run", None, command).await)
     } else {
-      let command = svi::interpolate_variables(
-        &command,
+      match run_komodo_command_with_interpolation(
+        "Docker Run",
+        None,
+        command,
+        false,
         &periphery_config().secrets,
-        svi::Interpolator::DoubleBrackets,
-        true,
+        &core_replacers,
       )
-      .context(
-        "failed to interpolate secrets into docker run command",
-      );
-
-      let (command, mut replacers) = match command {
-        Ok(res) => res,
-        Err(e) => {
-          return Ok(Log::error("docker run", format!("{e:?}")));
-        }
-      };
-
-      replacers.extend(core_replacers);
-      let mut log =
-        run_komodo_command("docker run", None, command, false).await;
-      log.command = svi::replace_in_string(&log.command, &replacers);
-      log.stdout = svi::replace_in_string(&log.stdout, &replacers);
-      log.stderr = svi::replace_in_string(&log.stderr, &replacers);
-
-      Ok(log)
+      .await
+      {
+        Some(log) => Ok(log),
+        // The None case can not be reached, as the command is always non-empty
+        None => unreachable!(),
+      }
     }
   }
 }
@@ -160,7 +149,9 @@ fn docker_run_command(
   );
   let command = parse_command(command);
   let extra_args = parse_extra_args(extra_args);
-  let command = format!("docker run -d --name {name}{ports}{volumes}{network}{restart}{environment}{labels}{extra_args} {image}{command}");
+  let command = format!(
+    "docker run -d --name {name}{ports}{volumes}{network}{restart}{environment}{labels}{extra_args} {image}{command}"
+  );
   Ok(command)
 }
 

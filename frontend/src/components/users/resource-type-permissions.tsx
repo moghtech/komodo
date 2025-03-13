@@ -86,7 +86,10 @@ const PermissionsOnResourceType = ({
         {RESOURCE_TARGETS.map((type) => {
           const level = all?.[type] ?? Types.PermissionLevel.None;
           return (
-            <div className="flex items-center justify-between w-[270px]">
+            <div
+              key={type}
+              className="flex items-center justify-between w-[270px]"
+            >
               {type}:
               <PermissionLevelSelector
                 level={level}

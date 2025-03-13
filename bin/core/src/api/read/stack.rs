@@ -7,11 +7,10 @@ use komodo_client::{
     config::core::CoreConfig,
     permission::PermissionLevel,
     stack::{Stack, StackActionState, StackListItem, StackState},
-    user::User,
   },
 };
 use periphery_client::api::compose::{
-  GetComposeServiceLog, GetComposeServiceLogSearch,
+  GetComposeLog, GetComposeLogSearch,
 };
 use resolver_api::Resolve;
 
@@ -20,33 +19,35 @@ use crate::{
   helpers::{periphery_client, query::get_all_tags},
   resource,
   stack::get_stack_and_server,
-  state::{action_states, github_client, stack_status_cache, State},
+  state::{action_states, github_client, stack_status_cache},
 };
 
-impl Resolve<GetStack, User> for State {
+use super::ReadArgs;
+
+impl Resolve<ReadArgs> for GetStack {
   async fn resolve(
-    &self,
-    GetStack { stack }: GetStack,
-    user: User,
-  ) -> anyhow::Result<Stack> {
-    resource::get_check_permissions::<Stack>(
-      &stack,
-      &user,
-      PermissionLevel::Read,
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Stack> {
+    Ok(
+      resource::get_check_permissions::<Stack>(
+        &self.stack,
+        user,
+        PermissionLevel::Read,
+      )
+      .await?,
     )
-    .await
   }
 }
 
-impl Resolve<ListStackServices, User> for State {
+impl Resolve<ReadArgs> for ListStackServices {
   async fn resolve(
-    &self,
-    ListStackServices { stack }: ListStackServices,
-    user: User,
-  ) -> anyhow::Result<ListStackServicesResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListStackServicesResponse> {
     let stack = resource::get_check_permissions::<Stack>(
-      &stack,
-      &user,
+      &self.stack,
+      user,
       PermissionLevel::Read,
     )
     .await?;
@@ -63,85 +64,79 @@ impl Resolve<ListStackServices, User> for State {
   }
 }
 
-impl Resolve<GetStackServiceLog, User> for State {
+impl Resolve<ReadArgs> for GetStackLog {
   async fn resolve(
-    &self,
-    GetStackServiceLog {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetStackLogResponse> {
+    let GetStackLog {
       stack,
-      service,
+      services,
       tail,
       timestamps,
-    }: GetStackServiceLog,
-    user: User,
-  ) -> anyhow::Result<GetStackServiceLogResponse> {
-    let (stack, server) = get_stack_and_server(
-      &stack,
-      &user,
-      PermissionLevel::Read,
-      true,
-    )
-    .await?;
-    periphery_client(&server)?
-      .request(GetComposeServiceLog {
+    } = self;
+    let (stack, server) =
+      get_stack_and_server(&stack, user, PermissionLevel::Read, true)
+        .await?;
+    let res = periphery_client(&server)?
+      .request(GetComposeLog {
         project: stack.project_name(false),
-        service,
+        services,
         tail,
         timestamps,
       })
       .await
-      .context("failed to get stack service log from periphery")
+      .context("Failed to get stack log from periphery")?;
+    Ok(res)
   }
 }
 
-impl Resolve<SearchStackServiceLog, User> for State {
+impl Resolve<ReadArgs> for SearchStackLog {
   async fn resolve(
-    &self,
-    SearchStackServiceLog {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<SearchStackLogResponse> {
+    let SearchStackLog {
       stack,
-      service,
+      services,
       terms,
       combinator,
       invert,
       timestamps,
-    }: SearchStackServiceLog,
-    user: User,
-  ) -> anyhow::Result<SearchStackServiceLogResponse> {
-    let (stack, server) = get_stack_and_server(
-      &stack,
-      &user,
-      PermissionLevel::Read,
-      true,
-    )
-    .await?;
-    periphery_client(&server)?
-      .request(GetComposeServiceLogSearch {
+    } = self;
+    let (stack, server) =
+      get_stack_and_server(&stack, user, PermissionLevel::Read, true)
+        .await?;
+    let res = periphery_client(&server)?
+      .request(GetComposeLogSearch {
         project: stack.project_name(false),
-        service,
+        services,
         terms,
         combinator,
         invert,
         timestamps,
       })
       .await
-      .context("failed to get stack service log from periphery")
+      .context("Failed to search stack log from periphery")?;
+    Ok(res)
   }
 }
 
-impl Resolve<ListCommonStackExtraArgs, User> for State {
+impl Resolve<ReadArgs> for ListCommonStackExtraArgs {
   async fn resolve(
-    &self,
-    ListCommonStackExtraArgs { query }: ListCommonStackExtraArgs,
-    user: User,
-  ) -> anyhow::Result<ListCommonStackExtraArgsResponse> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListCommonStackExtraArgsResponse> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    let stacks =
-      resource::list_full_for_user::<Stack>(query, &user, &all_tags)
-        .await
-        .context("failed to get resources matching query")?;
+    let stacks = resource::list_full_for_user::<Stack>(
+      self.query, user, &all_tags,
+    )
+    .await
+    .context("failed to get resources matching query")?;
 
     // first collect with guaranteed uniqueness
     let mut res = HashSet::<String>::new();
@@ -158,21 +153,21 @@ impl Resolve<ListCommonStackExtraArgs, User> for State {
   }
 }
 
-impl Resolve<ListCommonStackBuildExtraArgs, User> for State {
+impl Resolve<ReadArgs> for ListCommonStackBuildExtraArgs {
   async fn resolve(
-    &self,
-    ListCommonStackBuildExtraArgs { query }: ListCommonStackBuildExtraArgs,
-    user: User,
-  ) -> anyhow::Result<ListCommonStackBuildExtraArgsResponse> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListCommonStackBuildExtraArgsResponse> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    let stacks =
-      resource::list_full_for_user::<Stack>(query, &user, &all_tags)
-        .await
-        .context("failed to get resources matching query")?;
+    let stacks = resource::list_full_for_user::<Stack>(
+      self.query, user, &all_tags,
+    )
+    .await
+    .context("failed to get resources matching query")?;
 
     // first collect with guaranteed uniqueness
     let mut res = HashSet::<String>::new();
@@ -189,46 +184,65 @@ impl Resolve<ListCommonStackBuildExtraArgs, User> for State {
   }
 }
 
-impl Resolve<ListStacks, User> for State {
+impl Resolve<ReadArgs> for ListStacks {
   async fn resolve(
-    &self,
-    ListStacks { query }: ListStacks,
-    user: User,
-  ) -> anyhow::Result<Vec<StackListItem>> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Vec<StackListItem>> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    resource::list_for_user::<Stack>(query, &user, &all_tags).await
+    let only_update_available = self.query.specific.update_available;
+    let stacks =
+      resource::list_for_user::<Stack>(self.query, user, &all_tags)
+        .await?;
+    let stacks = if only_update_available {
+      stacks
+        .into_iter()
+        .filter(|stack| {
+          stack
+            .info
+            .services
+            .iter()
+            .any(|service| service.update_available)
+        })
+        .collect()
+    } else {
+      stacks
+    };
+    Ok(stacks)
   }
 }
 
-impl Resolve<ListFullStacks, User> for State {
+impl Resolve<ReadArgs> for ListFullStacks {
   async fn resolve(
-    &self,
-    ListFullStacks { query }: ListFullStacks,
-    user: User,
-  ) -> anyhow::Result<ListFullStacksResponse> {
-    let all_tags = if query.tags.is_empty() {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListFullStacksResponse> {
+    let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
       get_all_tags(None).await?
     };
-    resource::list_full_for_user::<Stack>(query, &user, &all_tags)
-      .await
+    Ok(
+      resource::list_full_for_user::<Stack>(
+        self.query, user, &all_tags,
+      )
+      .await?,
+    )
   }
 }
 
-impl Resolve<GetStackActionState, User> for State {
+impl Resolve<ReadArgs> for GetStackActionState {
   async fn resolve(
-    &self,
-    GetStackActionState { stack }: GetStackActionState,
-    user: User,
-  ) -> anyhow::Result<StackActionState> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<StackActionState> {
     let stack = resource::get_check_permissions::<Stack>(
-      &stack,
-      &user,
+      &self.stack,
+      user,
       PermissionLevel::Read,
     )
     .await?;
@@ -242,15 +256,14 @@ impl Resolve<GetStackActionState, User> for State {
   }
 }
 
-impl Resolve<GetStacksSummary, User> for State {
+impl Resolve<ReadArgs> for GetStacksSummary {
   async fn resolve(
-    &self,
-    GetStacksSummary {}: GetStacksSummary,
-    user: User,
-  ) -> anyhow::Result<GetStacksSummaryResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetStacksSummaryResponse> {
     let stacks = resource::list_full_for_user::<Stack>(
       Default::default(),
-      &user,
+      user,
       &[],
     )
     .await
@@ -276,12 +289,11 @@ impl Resolve<GetStacksSummary, User> for State {
   }
 }
 
-impl Resolve<GetStackWebhooksEnabled, User> for State {
+impl Resolve<ReadArgs> for GetStackWebhooksEnabled {
   async fn resolve(
-    &self,
-    GetStackWebhooksEnabled { stack }: GetStackWebhooksEnabled,
-    user: User,
-  ) -> anyhow::Result<GetStackWebhooksEnabledResponse> {
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetStackWebhooksEnabledResponse> {
     let Some(github) = github_client() else {
       return Ok(GetStackWebhooksEnabledResponse {
         managed: false,
@@ -291,8 +303,8 @@ impl Resolve<GetStackWebhooksEnabled, User> for State {
     };
 
     let stack = resource::get_check_permissions::<Stack>(
-      &stack,
-      &user,
+      &self.stack,
+      user,
       PermissionLevel::Read,
     )
     .await?;

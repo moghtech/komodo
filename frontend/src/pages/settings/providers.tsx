@@ -1,4 +1,8 @@
-import { ConfirmButton, CopyButton, TextUpdateMenuMonaco } from "@components/util";
+import {
+  ConfirmButton,
+  CopyButton,
+  TextUpdateMenuMonaco,
+} from "@components/util";
 import {
   useInvalidate,
   useRead,
@@ -32,6 +36,7 @@ import {
 } from "lucide-react";
 import { ChangeEvent, ReactNode, useState } from "react";
 import { Section } from "@components/layouts";
+import { Badge } from "@ui/badge";
 
 export const ProvidersPage = () => {
   return (
@@ -232,6 +237,7 @@ const Providers = ({ type }: { type: "GitProvider" | "DockerRegistry" }) => {
           },
         ]}
       />
+      <ProvidersFromConfig type={type} />
       {updateMenuData && (
         <TextUpdateMenuMonaco
           title={updateMenuData.title}
@@ -251,6 +257,42 @@ const Providers = ({ type }: { type: "GitProvider" | "DockerRegistry" }) => {
         />
       )}
     </Section>
+  );
+};
+
+const ProvidersFromConfig = ({
+  type,
+}: {
+  type: "GitProvider" | "DockerRegistry";
+}) => {
+  const accounts = useRead(
+    type === "GitProvider"
+      ? "ListGitProvidersFromConfig"
+      : "ListDockerRegistriesFromConfig",
+    {}
+  )
+    .data?.map((provider) =>
+      provider.accounts.map((account) => [provider.domain, account.username])
+    )
+    .flat(1);
+  if (!accounts)
+    return (
+      <div className="w-full flex justify-center">
+        <Loader2 className="w-4 h-4 animate-spin" />
+      </div>
+    );
+  if (accounts.length === 0) return;
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="text-muted-foreground">From config file:</div>
+      <div className="flex gap-3 flex-wrap">
+        {accounts.map(([domain, username]) => (
+          <Badge variant="secondary">
+            {domain} - {username}
+          </Badge>
+        ))}
+      </div>
+    </div>
   );
 };
 
@@ -348,7 +390,7 @@ const CreateAccount = ({
             const [title, value, onChange, bool] = item;
             if (bool) {
               return (
-                <div className="flex items-center justify-between">
+                <div key={title} className="flex items-center justify-between">
                   {title}
                   <Switch
                     checked={value}
@@ -358,7 +400,7 @@ const CreateAccount = ({
               );
             }
             return (
-              <div className="flex items-center justify-between">
+              <div key={title} className="flex items-center justify-between">
                 {title}
                 <Input
                   placeholder={`Input ${title.toLowerCase()}`}

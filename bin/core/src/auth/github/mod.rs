@@ -1,6 +1,6 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use axum::{
-  extract::Query, response::Redirect, routing::get, Router,
+  Router, extract::Query, response::Redirect, routing::get,
 };
 use komodo_client::entities::{
   komodo_timestamp,
@@ -72,7 +72,7 @@ async fn callback(
     .context("failed at find user query from database")?;
   let jwt = match user {
     Some(user) => jwt_client()
-      .generate(user.id)
+      .encode(user.id)
       .context("failed to generate jwt")?,
     None => {
       let ts = komodo_timestamp();
@@ -109,7 +109,7 @@ async fn callback(
         .context("inserted_id is not ObjectId")?
         .to_string();
       jwt_client()
-        .generate(user_id)
+        .encode(user_id)
         .context("failed to generate jwt")?
     }
   };

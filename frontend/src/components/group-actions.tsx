@@ -86,7 +86,9 @@ const GroupActionDropdownMenu = <
       {actions.map((action) => (
         <DropdownMenuItem key={action} onClick={() => onSelect(action)}>
           <Button variant="secondary" className="w-full">
-            {action.replaceAll("Batch", "").replaceAll(type, "")}
+            {action === "RunBuild"
+              ? "Build"
+              : action.replaceAll("Batch", "").replaceAll(type, "")}
           </Button>
         </DropdownMenuItem>
       ))}

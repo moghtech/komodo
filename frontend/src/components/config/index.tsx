@@ -25,7 +25,7 @@ export const ConfigLayout = <
   T extends Types.Resource<unknown, unknown>["config"],
 >({
   original,
-  config,
+  update,
   children,
   disabled,
   onConfirm,
@@ -35,7 +35,7 @@ export const ConfigLayout = <
   file_contents_language,
 }: {
   original: T;
-  config: Partial<T>;
+  update: Partial<T>;
   children: ReactNode;
   disabled: boolean;
   onConfirm: () => void;
@@ -47,7 +47,7 @@ export const ConfigLayout = <
   const titleProps = titleOther
     ? { titleOther }
     : { title: "Config", icon: <Settings className="w-4 h-4" /> };
-  const changesMade = Object.keys(config).length ? true : false;
+  const changesMade = Object.keys(update).length ? true : false;
   return (
     <Section
       {...titleProps}
@@ -61,24 +61,25 @@ export const ConfigLayout = <
           )}
           {selector}
           {changesMade && (
-            <Button
-              variant="outline"
-              onClick={onReset}
-              disabled={disabled || !changesMade}
-              className="flex items-center gap-2"
-            >
-              <History className="w-4 h-4" />
-              Reset
-            </Button>
-          )}
-          {changesMade && (
-            <ConfirmUpdate
-              previous={original}
-              content={config}
-              onConfirm={async () => onConfirm()}
-              disabled={disabled}
-              file_contents_language={file_contents_language}
-            />
+            <>
+              <Button
+                variant="outline"
+                onClick={onReset}
+                disabled={disabled || !changesMade}
+                className="flex items-center gap-2"
+              >
+                <History className="w-4 h-4" />
+                Reset
+              </Button>
+              <ConfirmUpdate
+                previous={original}
+                content={update}
+                onConfirm={async () => onConfirm()}
+                disabled={disabled}
+                file_contents_language={file_contents_language}
+                key_listener
+              />
+            </>
           )}
         </div>
       }
@@ -114,7 +115,7 @@ export type ConfigComponent<T> = {
 };
 
 export const Config = <T,>({
-  config,
+  original,
   update,
   disabled,
   disableSidebar,
@@ -125,7 +126,7 @@ export const Config = <T,>({
   titleOther,
   file_contents_language,
 }: {
-  config: T;
+  original: T;
   update: Partial<T>;
   disabled: boolean;
   disableSidebar?: boolean;
@@ -140,18 +141,20 @@ export const Config = <T,>({
   file_contents_language?: MonacoLanguage;
 }) => {
   const sections = keys(components).filter((section) => !!components[section]);
-
+  const changesMade = Object.keys(update).length ? true : false;
+  const onConfirm = async () => {
+    await onSave();
+    set({});
+  };
+  const onReset = () => set({});
   return (
     <ConfigLayout
-      original={config}
+      original={original}
       titleOther={titleOther}
-      config={update}
+      update={update}
       disabled={disabled}
-      onConfirm={async () => {
-        await onSave();
-        set({});
-      }}
-      onReset={() => set({})}
+      onConfirm={onConfirm}
+      onReset={onReset}
       selector={selector}
       file_contents_language={file_contents_language}
     >
@@ -188,6 +191,26 @@ export const Config = <T,>({
                   </div>
                 </div>
               ))}
+              {changesMade && (
+                <div className="flex flex-col gap-2">
+                  <ConfirmUpdate
+                    previous={original}
+                    content={update}
+                    onConfirm={onConfirm}
+                    disabled={disabled || !changesMade}
+                    file_contents_language={file_contents_language}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={onReset}
+                    disabled={disabled || !changesMade}
+                    className="flex items-center gap-2"
+                  >
+                    <History className="w-4 h-4" />
+                    Reset
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -275,7 +298,7 @@ export const Config = <T,>({
                           )}
                           {!contentHidden && (
                             <ConfigAgain
-                              config={config}
+                              config={original}
                               update={update}
                               set={(u) => set((p) => ({ ...p, ...u }))}
                               components={components}
@@ -288,6 +311,30 @@ export const Config = <T,>({
                   </div>
                 </div>
               )
+          )}
+          {changesMade && (
+            <div className="flex gap-2 justify-end">
+              <div className="text-muted-foreground flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" /> Unsaved changes
+                <AlertTriangle className="w-4 h-4" />
+              </div>
+              <Button
+                variant="outline"
+                onClick={onReset}
+                disabled={disabled}
+                className="flex items-center gap-2"
+              >
+                <History className="w-4 h-4" />
+                Reset
+              </Button>
+              <ConfirmUpdate
+                previous={original}
+                content={update}
+                onConfirm={onConfirm}
+                disabled={disabled}
+                file_contents_language={file_contents_language}
+              />
+            </div>
           )}
         </div>
       </div>

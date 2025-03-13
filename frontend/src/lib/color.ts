@@ -308,14 +308,151 @@ export const alert_level_intention: (
 };
 
 export const diff_type_intention: (
-  level: Types.DiffData["type"]
-) => ColorIntention = (level) => {
+  level: Types.DiffData["type"],
+  reverse: boolean
+) => ColorIntention = (level, reverse) => {
   switch (level) {
     case "Create":
-      return "Good";
+      return reverse ? "Critical" : "Good";
     case "Update":
       return "Neutral";
     case "Delete":
-      return "Critical";
+      return reverse ? "Good" : "Critical";
+  }
+};
+
+export const tag_background_class = (color?: Types.TagColor) => {
+  return `bg-${tag_color(color)}`;
+};
+
+export const tag_color = (color?: Types.TagColor) => {
+  switch (color) {
+    case undefined:
+      return "slate-600";
+    case Types.TagColor.LightSlate:
+      return "slate-400";
+    case Types.TagColor.Slate:
+      return "slate-600";
+    case Types.TagColor.DarkSlate:
+      return "slate-900";
+
+    case Types.TagColor.LightRed:
+      return "red-400";
+    case Types.TagColor.Red:
+      return "red-600";
+    case Types.TagColor.DarkRed:
+      return "red-900";
+
+    case Types.TagColor.LightOrange:
+      return "orange-400";
+    case Types.TagColor.Orange:
+      return "orange-600";
+    case Types.TagColor.DarkOrange:
+      return "orange-900";
+
+    case Types.TagColor.LightAmber:
+      return "amber-400";
+    case Types.TagColor.Amber:
+      return "amber-600";
+    case Types.TagColor.DarkAmber:
+      return "amber-900";
+
+    case Types.TagColor.LightYellow:
+      return "yellow-400";
+    case Types.TagColor.Yellow:
+      return "yellow-600";
+    case Types.TagColor.DarkYellow:
+      return "yellow-900";
+
+    case Types.TagColor.LightLime:
+      return "lime-400";
+    case Types.TagColor.Lime:
+      return "lime-600";
+    case Types.TagColor.DarkLime:
+      return "lime-900";
+
+    case Types.TagColor.LightGreen:
+      return "green-400";
+    case Types.TagColor.Green:
+      return "green-600";
+    case Types.TagColor.DarkGreen:
+      return "green-900";
+
+    case Types.TagColor.LightEmerald:
+      return "emerald-400";
+    case Types.TagColor.Emerald:
+      return "emerald-600";
+    case Types.TagColor.DarkEmerald:
+      return "emerald-900";
+
+    case Types.TagColor.LightTeal:
+      return "teal-400";
+    case Types.TagColor.Teal:
+      return "teal-600";
+    case Types.TagColor.DarkTeal:
+      return "teal-900";
+
+    case Types.TagColor.LightCyan:
+      return "cyan-400";
+    case Types.TagColor.Cyan:
+      return "cyan-600";
+    case Types.TagColor.DarkCyan:
+      return "cyan-900";
+
+    case Types.TagColor.LightSky:
+      return "sky-400";
+    case Types.TagColor.Sky:
+      return "sky-600";
+    case Types.TagColor.DarkSky:
+      return "sky-900";
+
+    case Types.TagColor.LightBlue:
+      return "blue-400";
+    case Types.TagColor.Blue:
+      return "blue-600";
+    case Types.TagColor.DarkBlue:
+      return "blue-900";
+
+    case Types.TagColor.LightIndigo:
+      return "indigo-400";
+    case Types.TagColor.Indigo:
+      return "indigo-600";
+    case Types.TagColor.DarkIndigo:
+      return "indigo-900";
+
+    case Types.TagColor.LightViolet:
+      return "violet-400";
+    case Types.TagColor.Violet:
+      return "violet-600";
+    case Types.TagColor.DarkViolet:
+      return "violet-900";
+
+    case Types.TagColor.LightPurple:
+      return "purple-400";
+    case Types.TagColor.Purple:
+      return "purple-600";
+    case Types.TagColor.DarkPurple:
+      return "purple-900";
+
+    case Types.TagColor.LightFuchsia:
+      return "fuchsia-400";
+    case Types.TagColor.Fuchsia:
+      return "fuchsia-600";
+    case Types.TagColor.DarkFuchsia:
+      return "fuchsia-900";
+
+    case Types.TagColor.LightPink:
+      return "pink-400";
+    case Types.TagColor.Pink:
+      return "pink-600";
+    case Types.TagColor.DarkPink:
+      return "pink-900";
+
+    case Types.TagColor.LightRose:
+      return "rose-400";
+    case Types.TagColor.Rose:
+      return "rose-600";
+    case Types.TagColor.DarkRose:
+      return "rose-900";
   }
 };

@@ -1,4 +1,4 @@
-use bson::{doc, Document};
+use bson::{Document, doc};
 use derive_default_builder::DefaultBuilder;
 use derive_variants::EnumVariants;
 use partial_derive2::{Diff, MaybeNone, PartialDiff};
@@ -11,8 +11,8 @@ use self::{
 };
 
 use super::{
-  resource::{AddFilters, Resource, ResourceListItem, ResourceQuery},
   MergePartial,
+  resource::{AddFilters, Resource, ResourceListItem, ResourceQuery},
 };
 
 pub mod aws;

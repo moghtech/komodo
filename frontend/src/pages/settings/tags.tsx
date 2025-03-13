@@ -1,5 +1,11 @@
 import { ConfirmButton } from "@components/util";
-import { useInvalidate, useRead, useSetTitle, useWrite } from "@lib/hooks";
+import {
+  useInvalidate,
+  useRead,
+  useSetTitle,
+  useUser,
+  useWrite,
+} from "@lib/hooks";
 import {
   Dialog,
   DialogContent,
@@ -11,14 +17,35 @@ import {
 import { Button } from "@ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@ui/card";
 import { useToast } from "@ui/use-toast";
-import { Trash, PlusCircle, Loader2, Check, Search } from "lucide-react";
+import {
+  Trash,
+  PlusCircle,
+  Loader2,
+  Check,
+  Search,
+  SearchX,
+} from "lucide-react";
 import { useState } from "react";
 import { Input } from "@ui/input";
 import { UpdateUser } from "@components/updates/details";
 import { DataTable } from "@ui/data-table";
+import { Types } from "komodo_client";
+import { Popover, PopoverContent, PopoverTrigger } from "@ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@ui/command";
+import { cn, filterBySplit } from "@lib/utils";
+import { fmt_upper_camelcase } from "@lib/formatting";
+import { tag_background_class } from "@lib/color";
 
 export const Tags = () => {
   useSetTitle("Tags");
+  const user = useUser().data!;
 
   const [search, setSearch] = useState("");
 
@@ -46,6 +73,17 @@ export const Tags = () => {
             header: "Name",
             size: 200,
             accessorKey: "name",
+          },
+          {
+            header: "Color",
+            size: 200,
+            cell: ({ row }) => (
+              <ColorSelector
+                tag_id={row.original._id?.$oid!}
+                color={row.original.color!}
+                disabled={!user.admin && row.original.owner !== user._id?.$oid}
+              />
+            ),
           },
           {
             header: "Owner",
@@ -159,5 +197,94 @@ const DeleteTag = ({ tag_id }: { tag_id: string }) => {
       onClick={() => mutate({ id: tag_id })}
       loading={isPending}
     />
+  );
+};
+
+const ColorSelector = ({
+  tag_id,
+  color,
+  disabled,
+}: {
+  tag_id: string;
+  color: Types.TagColor;
+  disabled: boolean;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [loadingColor, setLoadingColor] = useState<Types.TagColor>();
+  const { mutateAsync } = useWrite("UpdateTagColor");
+  const inv = useInvalidate();
+  const onSelect = async (color: Types.TagColor) => {
+    setLoadingColor(color);
+    await mutateAsync({ tag: tag_id, color });
+    inv(["ListTags"]);
+    setLoadingColor(undefined);
+    setOpen(false);
+  };
+  const filtered = filterBySplit(
+    Object.values(Types.TagColor),
+    search,
+    (item) => item
+  );
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="secondary"
+          className="flex justify-between gap-2 w-[160px]"
+          disabled={disabled}
+        >
+          {fmt_upper_camelcase(color) || "Select Color"}
+          {/* {!disabled && <ChevronsUpDown className="w-3 h-3" />} */}
+          {!disabled && (
+            <div
+              className={cn(
+                "w-[25px] h-[25px] rounded-sm bg-opacity-70",
+                tag_background_class(color)
+              )}
+            />
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] max-h-[300px] p-0" align="end">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Search Colors"
+            className="h-9"
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList>
+            <CommandEmpty className="flex justify-evenly items-center pt-3 pb-2">
+              {"No Colors Found"}
+              <SearchX className="w-3 h-3" />
+            </CommandEmpty>
+
+            <CommandGroup>
+              {filtered.map((color) => (
+                <CommandItem
+                  key={color}
+                  onSelect={() => onSelect(color)}
+                  className="flex items-center justify-between gap-2 cursor-pointer"
+                >
+                  {color !== loadingColor && (
+                    <div className="p-1">{fmt_upper_camelcase(color)}</div>
+                  )}
+                  {color === loadingColor && (
+                    <Loader2 className="w-4 h-4 animate-spin mx-1" />
+                  )}
+                  <div
+                    className={cn(
+                      "w-[25px] h-[25px] rounded-sm bg-opacity-70",
+                      tag_background_class(color)
+                    )}
+                  />
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 };

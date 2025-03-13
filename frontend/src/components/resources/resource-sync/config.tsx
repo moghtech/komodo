@@ -190,11 +190,37 @@ export const ResourceSyncConfig = ({
     },
   };
 
+  const include_toggles: ConfigComponent<Types.ResourceSyncConfig> = {
+    label: "Include",
+    components: {
+      include_resources: {
+        label: "Sync Resources",
+        description: "Include resources (servers, stacks, etc.) in the sync.",
+      },
+      include_variables: {
+        label: "Sync Variables",
+        description: "Include variables in the sync.",
+      },
+      include_user_groups: {
+        label: "Sync User Groups",
+        description: "Include user groups in the sync.",
+      },
+    },
+  };
+
+  const include_resources =
+    update.include_resources ?? config.include_resources;
   const match_tags: ConfigComponent<Types.ResourceSyncConfig> = {
     label: "Match Tags",
     description: "Only sync resources matching all of these tags.",
     components: {
-      match_tags: (values, set) => <MatchTags tags={values ?? []} set={set} />,
+      match_tags: (values, set) => (
+        <MatchTags
+          tags={values ?? []}
+          set={set}
+          disabled={disabled || !include_resources}
+        />
+      ),
     },
   };
 
@@ -223,6 +249,7 @@ export const ResourceSyncConfig = ({
             ...general_common.components,
           },
         },
+        include_toggles,
         match_tags,
       ],
     };
@@ -300,6 +327,7 @@ export const ResourceSyncConfig = ({
             ...general_common.components,
           },
         },
+        include_toggles,
         match_tags,
         {
           label: "Git Webhooks",
@@ -499,12 +527,14 @@ export const ResourceSyncConfig = ({
                   }
                   onValueChange={(file_contents) => set({ file_contents })}
                   language="toml"
+                  readOnly={disabled}
                 />
               );
             },
           },
         },
         general_common,
+        include_toggles,
         match_tags,
       ],
     };
@@ -514,7 +544,7 @@ export const ResourceSyncConfig = ({
     <Config
       titleOther={titleOther}
       disabled={disabled}
-      config={config}
+      original={config}
       update={update}
       set={set}
       onSave={async () => {
@@ -529,9 +559,11 @@ export const ResourceSyncConfig = ({
 const MatchTags = ({
   tags,
   set,
+  disabled,
 }: {
   tags: string[];
   set: (update: Partial<Types.ResourceSyncConfig>) => void;
+  disabled: boolean;
 }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -547,7 +579,11 @@ const MatchTags = ({
         }}
       >
         <PopoverTrigger asChild>
-          <Button variant="outline" className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="flex items-center gap-2"
+            disabled={disabled}
+          >
             <Tag className="w-3 h-3" />
             Select Tag
           </Button>
@@ -597,6 +633,7 @@ const MatchTags = ({
         onBadgeClick={(tag) =>
           set({ match_tags: tags.filter((name) => name !== tag) })
         }
+        disabled={disabled}
       />
     </div>
   );
@@ -605,9 +642,11 @@ const MatchTags = ({
 const MatchTagsTags = ({
   tags,
   onBadgeClick,
+  disabled,
 }: {
   tags?: string[];
   onBadgeClick: (tag: string) => void;
+  disabled: boolean;
 }) => {
   return (
     <>
@@ -617,6 +656,7 @@ const MatchTagsTags = ({
           variant="secondary"
           className="flex items-center gap-2"
           onClick={() => onBadgeClick && onBadgeClick(tag)}
+          disabled={disabled}
         >
           {tag}
           <MinusCircle className="w-4 h-4" />

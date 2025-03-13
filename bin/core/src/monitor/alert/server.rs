@@ -3,10 +3,10 @@ use std::{collections::HashMap, path::PathBuf, str::FromStr};
 use anyhow::Context;
 use derive_variants::ExtractVariant;
 use komodo_client::entities::{
+  ResourceTarget,
   alert::{Alert, AlertData, AlertDataVariant, SeverityLevel},
   komodo_timestamp, optional_string,
   server::{Server, ServerState},
-  ResourceTarget,
 };
 use mongo_indexed::Indexed;
 use mungos::{
@@ -85,7 +85,9 @@ pub async fn alert_servers(
             id, name, region, ..
           } => (id, name, region),
           data => {
-            error!("got incorrect alert data in ServerStatus handler. got {data:?}");
+            error!(
+              "got incorrect alert data in ServerStatus handler. got {data:?}"
+            );
             continue;
           }
         };
@@ -530,8 +532,8 @@ async fn resolve_alerts(alerts: &[(Alert, SendAlerts)]) {
 }
 
 #[instrument(level = "debug")]
-async fn get_open_alerts(
-) -> anyhow::Result<(OpenAlertMap, OpenDiskAlertMap)> {
+async fn get_open_alerts()
+-> anyhow::Result<(OpenAlertMap, OpenDiskAlertMap)> {
   let alerts = find_collect(
     &db_client().alerts,
     doc! { "resolved": false },

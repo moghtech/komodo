@@ -1,5 +1,5 @@
 use anyhow::Context;
-use bson::{doc, Document};
+use bson::{Document, doc};
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
 use derive_variants::EnumVariants;
@@ -20,9 +20,9 @@ use crate::{
 };
 
 use super::{
+  TerminationSignal, Version,
   docker::container::ContainerStateStatusEnum,
   resource::{Resource, ResourceListItem, ResourceQuery},
-  TerminationSignal, Version,
 };
 
 #[typeshare]
@@ -453,11 +453,21 @@ pub type DeploymentQuery = ResourceQuery<DeploymentQuerySpecifics>;
   Debug, Clone, Default, Serialize, Deserialize, DefaultBuilder,
 )]
 pub struct DeploymentQuerySpecifics {
+  /// Query only for Deployments on these Servers.
+  /// If empty, does not filter by Server.
+  /// Only accepts Server id (not name).
   #[serde(default)]
   pub server_ids: Vec<String>,
 
+  /// Query only for Deployments with these Builds attached.
+  /// If empty, does not filter by Build.
+  /// Only accepts Build id (not name).
   #[serde(default)]
   pub build_ids: Vec<String>,
+
+  /// Query only for Deployments with available image updates.
+  #[serde(default)]
+  pub update_available: bool,
 }
 
 impl super::resource::AddFilters for DeploymentQuerySpecifics {

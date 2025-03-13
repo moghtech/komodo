@@ -1,21 +1,28 @@
-import { useInvalidate, useUser } from "@lib/hooks";
-import { Types } from "komodo_client";
+import { komodo_client, useInvalidate, useUser } from "@lib/hooks";
+import { CancelToken, Types } from "komodo_client";
 import { Button } from "@ui/button";
 import { toast } from "@ui/use-toast";
 import { atom, useAtom } from "jotai";
-import { Circle } from "lucide-react";
+import { Circle, Loader2 } from "lucide-react";
 import { ReactNode, useCallback, useEffect, useState } from "react";
 import { cn } from "@lib/utils";
-import { AUTH_TOKEN_STORAGE_KEY } from "@main";
 import { ResourceComponents } from "@components/resources";
 import { UsableResource } from "@types";
 import { ResourceName } from "@components/resources/common";
 
-const rws_atom = atom<WebSocket | null>(null);
-const useWebsocket = () => useAtom(rws_atom);
-
 const ws_connected = atom(false);
 export const useWebsocketConnected = () => useAtom(ws_connected);
+
+const ws_cancel = atom(new CancelToken());
+const useWebsocketCancel = () => useAtom(ws_cancel)[0];
+
+const useWebsocketReconnect = () => {
+  const [cancel, set] = useAtom(ws_cancel);
+  return () => {
+    cancel.cancel();
+    set(new CancelToken());
+  };
+};
 
 const onMessageHandlers: {
   [key: string]: (update: Types.UpdateListItem) => void;
@@ -34,13 +41,81 @@ export const useWebsocketMessages = (
   }, []);
 };
 
-const on_message = (
-  { data }: MessageEvent,
+let count = 0;
+
+export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
+  const user = useUser().data;
+  const invalidate = useInvalidate();
+  const cancel = useWebsocketCancel();
+  const [connected, setConnected] = useWebsocketConnected();
+
+  const on_update_fn = useCallback(
+    (update: Types.UpdateListItem) => on_update(update, invalidate),
+    [invalidate]
+  );
+
+  useEffect(() => {
+    if (user && !connected) {
+      count = count + 1;
+      const _count = count;
+      komodo_client().subscribe_to_update_websocket({
+        on_login: () => {
+          setConnected(true);
+          console.info(_count + " | Logged into Update websocket");
+        },
+        on_update: on_update_fn,
+        on_close: () => {
+          setConnected(false);
+          console.info(_count + " | Update websocket connection closed");
+        },
+        cancel,
+      });
+    }
+  }, [user, cancel, connected]);
+
+  return <>{children}</>;
+};
+
+export const WsStatusIndicator = () => {
+  const [refreshing, setRefreshing] = useState(false);
+  const [connected] = useWebsocketConnected();
+  const reconnect = useWebsocketReconnect();
+  const onclick = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 500);
+    reconnect();
+    toast({
+      title: connected
+        ? "Triggered websocket reconnect"
+        : "Triggered websocket connect",
+    });
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      onClick={onclick}
+      size="icon"
+      className="hidden lg:inline-flex"
+    >
+      {refreshing ? (
+        <Loader2 className="w-4 h-4 animate-spin" />
+      ) : (
+        <Circle
+          className={cn(
+            "w-4 h-4 stroke-none transition-colors",
+            connected ? "fill-green-500" : "fill-red-500"
+          )}
+        />
+      )}
+    </Button>
+  );
+};
+
+const on_update = (
+  update: Types.UpdateListItem,
   invalidate: ReturnType<typeof useInvalidate>
 ) => {
-  if (data == "LOGGED_IN") return console.info("logged in to ws");
-  const update = JSON.parse(data) as Types.UpdateListItem;
-
   const Components = ResourceComponents[update.target.type as UsableResource];
   const title = Components ? (
     <div className="flex items-center gap-2">
@@ -141,8 +216,8 @@ const on_message = (
         ["ListDockerContainers"],
         ["ListDockerNetworks"],
         ["ListDockerImages"],
-        ["GetStackServiceLog", { stack: update.target.id }],
-        ["SearchStackServiceLog", { stack: update.target.id }],
+        ["GetStackLog", { stack: update.target.id }],
+        ["SearchStackLog", { stack: update.target.id }],
         ["GetStack"],
         ["ListStackServices"],
         ["GetResourceMatchingContainer"]
@@ -244,110 +319,4 @@ const on_message = (
 
   // Run any attached handlers
   Object.values(onMessageHandlers).forEach((handler) => handler(update));
-};
-
-export const WebsocketProvider = ({
-  url,
-  children,
-}: {
-  url: string;
-  children: ReactNode;
-}) => {
-  const user = useUser().data;
-  const invalidate = useInvalidate();
-  const [ws, set] = useWebsocket();
-  const [connected, setConnected] = useWebsocketConnected();
-  // don't care about value, just use to make sure value changes
-  // to trigger connection useEffect
-  const [reconnect, setReconnect] = useState(false);
-
-  const on_message_fn = useCallback(
-    (e: MessageEvent) => on_message(e, invalidate),
-    [invalidate]
-  );
-
-  // Connection useEffect
-  useEffect(() => {
-    if (user && !connected) {
-      const ws = make_websocket({
-        url,
-        on_open: () => setConnected(true),
-        on_message: on_message_fn,
-        on_close: () => {
-          setConnected(false);
-        },
-      });
-      set(ws);
-    }
-  }, [set, url, user, connected, reconnect]);
-
-  useEffect(() => {
-    // poll for CLOSED state.
-    // trigger reconnect after stale page
-    const interval = setInterval(() => {
-      if (ws?.readyState === WebSocket.CLOSED) {
-        setConnected(false);
-        // toggle to make sure connection useEffect runs.
-        // which could happen if connected is stuck in false state,
-        // so setConnected(false) doesn't trigger reconnect
-        setReconnect(!reconnect);
-      }
-    }, 3_000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  return <>{children}</>;
-};
-
-export const WsStatusIndicator = () => {
-  const [connected] = useWebsocketConnected();
-  const onclick = () =>
-    toast({
-      title: connected ? "Websocket connected" : "Websocket disconnected",
-    });
-
-  return (
-    <Button
-      variant="ghost"
-      onClick={onclick}
-      size="icon"
-      className="hidden lg:inline-flex"
-    >
-      <Circle
-        className={cn(
-          "w-4 h-4 stroke-none transition-colors",
-          connected ? "fill-green-500" : "fill-red-500"
-        )}
-      />
-    </Button>
-  );
-};
-
-const make_websocket = ({
-  url,
-  on_open,
-  on_message,
-  on_close,
-}: {
-  url: string;
-  on_open: () => void;
-  on_message: (e: MessageEvent) => void;
-  on_close: () => void;
-}) => {
-  const ws = new WebSocket(url);
-
-  const _on_open = () => {
-    const jwt = localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
-    if (!ws || !jwt) return;
-    const msg: Types.WsLoginMessage = { type: "Jwt", params: { jwt } };
-    if (jwt && ws) ws.send(JSON.stringify(msg));
-    on_open();
-  };
-
-  ws.addEventListener("open", _on_open);
-  ws.addEventListener("message", on_message);
-  ws.addEventListener("close", on_close);
-
-  return ws;
 };

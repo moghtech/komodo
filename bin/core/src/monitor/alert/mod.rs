@@ -30,8 +30,8 @@ pub async fn check_alerts(ts: i64) {
 }
 
 #[instrument(level = "debug")]
-async fn get_all_servers_map(
-) -> anyhow::Result<(HashMap<String, Server>, HashMap<String, String>)>
+async fn get_all_servers_map()
+-> anyhow::Result<(HashMap<String, Server>, HashMap<String, String>)>
 {
   let servers = resource::list_full_for_user::<Server>(
     ResourceQuery::default(),

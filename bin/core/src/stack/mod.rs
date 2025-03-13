@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::entities::{
   permission::PermissionLevel,
   server::{Server, ServerState},

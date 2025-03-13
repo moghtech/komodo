@@ -70,14 +70,14 @@ const ExportTargetsLoader = ({
 
 const ExportAllLoader = ({
   tags,
-  include_variables,
 }: {
   tags?: string[];
-  include_variables?: boolean;
 }) => {
   const { data, isPending } = useRead("ExportAllResourcesToToml", {
     tags,
-    include_variables,
+    include_resources: true,
+    include_variables: true,
+    include_user_groups: true,
   });
   return <ExportPre loading={isPending} content={data?.toml} />;
 };

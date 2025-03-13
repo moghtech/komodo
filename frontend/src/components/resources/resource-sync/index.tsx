@@ -1,4 +1,4 @@
-import { useLocalStorage, useRead, useUser } from "@lib/hooks";
+import { atomWithStorage, useLocalStorage, useRead, useUser } from "@lib/hooks";
 import { RequiredResourceComponents } from "@types";
 import { Card } from "@ui/card";
 import { Clock, FolderSync } from "lucide-react";
@@ -12,7 +12,6 @@ import {
   stroke_color_class_by_intention,
 } from "@lib/color";
 import { cn, sync_no_changes } from "@lib/utils";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@ui/hover-card";
 import { fmt_date } from "@lib/formatting";
 import { DashboardPieChart } from "@pages/home/dashboard";
 import { ResourcePageHeader, StatusBadge } from "@components/util";
@@ -23,6 +22,8 @@ import { ResourceSyncPending } from "./pending";
 import { Badge } from "@ui/badge";
 import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
+import { useAtom } from "jotai";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 
 export const useResourceSync = (id?: string) =>
   useRead("ListResourceSyncs", {}, { refetchInterval: 10_000 }).data?.find(
@@ -38,6 +39,17 @@ const ResourceSyncIcon = ({ id, size }: { id?: string; size: number }) => {
     resource_sync_state_intention(state)
   );
   return <FolderSync className={cn(`w-${size} h-${size}`, state && color)} />;
+};
+
+const pendingViewAtom = atomWithStorage<"Execute" | "Commit">(
+  "sync-view-v1",
+  "Execute"
+);
+export const usePendingView = () => {
+  return useAtom(pendingViewAtom) as [
+    "Execute" | "Commit",
+    (view: "Execute" | "Commit") => void,
+  ];
 };
 
 const ConfigInfoPending = ({ id }: { id: string }) => {
@@ -172,8 +184,8 @@ export const ResourceSyncComponents: RequiredResourceComponents = {
       const out_of_date =
         info.last_sync_hash && info.last_sync_hash !== info.pending_hash;
       return (
-        <HoverCard openDelay={200}>
-          <HoverCardTrigger asChild>
+        <Tooltip>
+          <TooltipTrigger asChild>
             <Card
               className={cn(
                 "px-3 py-2 hover:bg-accent/50 transition-colors cursor-pointer",
@@ -185,8 +197,8 @@ export const ResourceSyncComponents: RequiredResourceComponents = {
                 {info.last_sync_hash || info.pending_hash}
               </div>
             </Card>
-          </HoverCardTrigger>
-          <HoverCardContent align="start">
+          </TooltipTrigger>
+          <TooltipContent>
             <div className="grid gap-2">
               <Badge
                 variant="secondary"
@@ -215,8 +227,8 @@ export const ResourceSyncComponents: RequiredResourceComponents = {
                 </>
               )}
             </div>
-          </HoverCardContent>
-        </HoverCard>
+          </TooltipContent>
+        </Tooltip>
       );
     },
   },

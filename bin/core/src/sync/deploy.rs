@@ -1,7 +1,7 @@
 use std::{collections::HashMap, time::Duration};
 
-use anyhow::{anyhow, Context};
-use formatting::{bold, colored, format_serror, muted, Color};
+use anyhow::{Context, anyhow};
+use formatting::{Color, bold, colored, format_serror, muted};
 use futures::future::join_all;
 use komodo_client::{
   api::{
@@ -9,6 +9,7 @@ use komodo_client::{
     read::ListBuildVersions,
   },
   entities::{
+    FileContents, ResourceTarget,
     deployment::{
       Deployment, DeploymentConfig, DeploymentImage, DeploymentState,
       PartialDeploymentConfig,
@@ -18,15 +19,17 @@ use komodo_client::{
     toml::ResourceToml,
     update::Log,
     user::sync_user,
-    FileContents, ResourceTarget,
   },
 };
 use resolver_api::Resolve;
 
 use crate::{
-  api::execute::ExecuteRequest,
+  api::{
+    execute::{ExecuteArgs, ExecuteRequest},
+    read::ReadArgs,
+  },
   helpers::update::init_execution_update,
-  state::{deployment_status_cache, stack_status_cache, State},
+  state::{deployment_status_cache, stack_status_cache},
 };
 
 use super::{AllResourcesById, ResourceSyncTrait};
@@ -92,12 +95,17 @@ pub async fn deploy_from_cache(
               let ExecuteRequest::Deploy(req) = req else {
                 unreachable!()
               };
-              State.resolve(req, (user.to_owned(), update)).await
+              req
+                .resolve(&ExecuteArgs {
+                  user: user.to_owned(),
+                  update,
+                })
+                .await
             }
             ResourceTarget::Stack(name) => {
               let req = ExecuteRequest::DeployStack(DeployStack {
                 stack: name.to_string(),
-                service: None,
+                services: Vec::new(),
                 stop_time: None,
               });
 
@@ -105,7 +113,12 @@ pub async fn deploy_from_cache(
               let ExecuteRequest::DeployStack(req) = req else {
                 unreachable!()
               };
-              State.resolve(req, (user.to_owned(), update)).await
+              req
+                .resolve(&ExecuteArgs {
+                  user: user.to_owned(),
+                  update,
+                })
+                .await
             }
             _ => unreachable!(),
           }
@@ -124,10 +137,11 @@ pub async fn deploy_from_cache(
       if let Err(e) = res {
         has_error = true;
         log.push_str(&format!(
-          "\n{}: failed to deploy {resource} '{}' in round {} | {e:#}",
+          "\n{}: failed to deploy {resource} '{}' in round {} | {:#}",
           colored("ERROR", Color::Red),
           bold(name),
-          bold(round)
+          bold(round),
+          e.error
         ));
       } else {
         log.push_str(&format!(
@@ -426,19 +440,18 @@ fn build_cache_for_deployment<'a>(
           // Build version is the same, still need to check 'after'
           Some(_) => {}
           None => {
-            let Some(version) = State
-              .resolve(
-                ListBuildVersions {
-                  build: build_id.to_string(),
-                  limit: Some(1),
-                  ..Default::default()
-                },
-                sync_user().to_owned(),
-              )
-              .await
-              .context("failed to get build versions")?
-              .pop()
-            else {
+            let Some(version) = (ListBuildVersions {
+              build: build_id.to_string(),
+              limit: Some(1),
+              ..Default::default()
+            })
+            .resolve(&ReadArgs {
+              user: sync_user().to_owned(),
+            })
+            .await
+            .map_err(|e| e.error)
+            .context("failed to get build versions")?
+            .pop() else {
               // The build has never been built.
               // Skip deploy regardless of 'after' (it can't be deployed)
               // Not sure how this would be reached on Running deployment...
@@ -716,10 +729,14 @@ async fn insert_target_using_after_list<'a>(
                   )),
                 );
                 return Ok(());
-              },
+              }
               // The parent will not deploy, do nothing here.
-              Some(None) => {},
-              None => return Err(anyhow!("Did not find parent in cache after build recursion. This should not happen."))
+              Some(None) => {}
+              None => {
+                return Err(anyhow!(
+                  "Did not find parent in cache after build recursion. This should not happen."
+                ));
+              }
             }
           }
           ResourceTarget::Stack(name) => {
@@ -759,10 +776,14 @@ async fn insert_target_using_after_list<'a>(
                   )),
                 );
                 return Ok(());
-              },
+              }
               // The parent will not deploy, do nothing here.
-              Some(None) => {},
-              None => return Err(anyhow!("Did not find parent in cache after build recursion. This should not happen."))
+              Some(None) => {}
+              None => {
+                return Err(anyhow!(
+                  "Did not find parent in cache after build recursion. This should not happen."
+                ));
+              }
             }
           }
           _ => unreachable!(),

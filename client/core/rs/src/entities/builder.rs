@@ -10,9 +10,9 @@ use crate::deserializers::{
 };
 
 use super::{
+  MergePartial,
   config::{DockerRegistry, GitProvider},
   resource::{AddFilters, Resource, ResourceListItem, ResourceQuery},
-  MergePartial,
 };
 
 #[typeshare]

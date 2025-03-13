@@ -1,5 +1,5 @@
 use anyhow::Context;
-use bson::{doc, Document};
+use bson::{Document, doc};
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
 use partial_derive2::Partial;
@@ -16,9 +16,8 @@ use crate::{
 };
 
 use super::{
-  environment_vars_from_str,
+  EnvironmentVar, SystemCommand, environment_vars_from_str,
   resource::{Resource, ResourceListItem, ResourceQuery},
-  EnvironmentVar, SystemCommand,
 };
 
 #[typeshare]

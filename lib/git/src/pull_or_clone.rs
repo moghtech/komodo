@@ -33,9 +33,9 @@ where
   T: Into<CloneArgs> + std::fmt::Debug,
 {
   let args: CloneArgs = clone_args.into();
-  let path = args.path(repo_dir);
+  let folder_path = args.path(repo_dir);
 
-  if path.exists() {
+  if folder_path.exists() {
     crate::pull(
       args,
       repo_dir,

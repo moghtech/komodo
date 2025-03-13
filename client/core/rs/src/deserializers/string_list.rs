@@ -1,6 +1,6 @@
 use serde::{
-  de::{value::SeqAccessDeserializer, SeqAccess, Visitor},
   Deserialize, Deserializer,
+  de::{SeqAccess, Visitor, value::SeqAccessDeserializer},
 };
 
 use crate::parsers::parse_string_list;

@@ -40,13 +40,13 @@ function HomepageHeader() {
             </Link>
             <Link
               className="button button--secondary button--lg"
-              to="https://github.com/mbecker20/komodo"
+              to="https://github.com/moghtech/komodo"
             >
               Github
             </Link>
             <Link
               className="button button--secondary button--lg"
-              to="https://github.com/mbecker20/komodo#screenshots"
+              to="https://github.com/moghtech/komodo#screenshots"
               style={{
                 width: "100%",
                 boxSizing: "border-box",

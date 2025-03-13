@@ -1,7 +1,8 @@
 use std::{collections::HashMap, str::FromStr};
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::entities::{
+  Operation, ResourceTarget, ResourceTargetVariant,
   action::Action,
   alerter::Alerter,
   build::Build,
@@ -17,15 +18,14 @@ use komodo_client::entities::{
   sync::ResourceSync,
   tag::Tag,
   update::Update,
-  user::{admin_service_user, User},
+  user::{User, admin_service_user},
   user_group::UserGroup,
   variable::Variable,
-  Operation, ResourceTarget, ResourceTargetVariant,
 };
 use mungos::{
   find::find_collect,
   mongodb::{
-    bson::{doc, oid::ObjectId, Document},
+    bson::{Document, doc, oid::ObjectId},
     options::FindOneOptions,
   },
 };
@@ -359,8 +359,8 @@ pub struct VariablesAndSecrets {
   pub secrets: HashMap<String, String>,
 }
 
-pub async fn get_variables_and_secrets(
-) -> anyhow::Result<VariablesAndSecrets> {
+pub async fn get_variables_and_secrets()
+-> anyhow::Result<VariablesAndSecrets> {
   let variables = find_collect(&db_client().variables, None, None)
     .await
     .context("failed to get all variables from db")?;

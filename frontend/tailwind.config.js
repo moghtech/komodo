@@ -8,6 +8,7 @@ module.exports = {
     "./src/**/*.{ts,tsx}",
   ],
   safelist: [
+    // General UI colors
     // red
     "text-red-400",
     "text-red-500",
@@ -93,6 +94,95 @@ module.exports = {
     "stroke-purple-500",
     "stroke-purple-600",
     "stroke-purple-700",
+
+    // Tag colors
+    "bg-slate-400",
+    "bg-slate-600",
+    "bg-slate-900",
+    //
+    "bg-gray-400",
+    "bg-gray-600",
+    "bg-gray-900",
+    //
+    "bg-zinc-400",
+    "bg-zinc-600",
+    "bg-zinc-900",
+    //
+    "bg-neutral-400",
+    "bg-neutral-600",
+    "bg-neutral-900",
+    //
+    "bg-stone-400",
+    "bg-stone-600",
+    "bg-stone-900",
+    //
+    "bg-red-400",
+    "bg-red-600",
+    "bg-red-900",
+    //
+    "bg-orange-400",
+    "bg-orange-600",
+    "bg-orange-900",
+    //
+    "bg-amber-400",
+    "bg-amber-600",
+    "bg-amber-900",
+    //
+    "bg-yellow-400",
+    "bg-yellow-600",
+    "bg-yellow-900",
+    //
+    "bg-lime-400",
+    "bg-lime-600",
+    "bg-lime-900",
+    //
+    "bg-green-400",
+    "bg-green-600",
+    "bg-green-900",
+    //
+    "bg-emerald-400",
+    "bg-emerald-600",
+    "bg-emerald-900",
+    //
+    "bg-teal-400",
+    "bg-teal-600",
+    "bg-teal-900",
+    //
+    "bg-cyan-400",
+    "bg-cyan-600",
+    "bg-cyan-900",
+    //
+    "bg-sky-400",
+    "bg-sky-600",
+    "bg-sky-900",
+    //
+    "bg-blue-400",
+    "bg-blue-600",
+    "bg-blue-900",
+    //
+    "bg-indigo-400",
+    "bg-indigo-600",
+    "bg-indigo-900",
+    //
+    "bg-violet-400",
+    "bg-violet-600",
+    "bg-violet-900",
+    //
+    "bg-purple-400",
+    "bg-purple-600",
+    "bg-purple-900",
+    //
+    "bg-fuchsia-400",
+    "bg-fuchsia-600",
+    "bg-fuchsia-900",
+    //
+    "bg-pink-400",
+    "bg-pink-600",
+    "bg-pink-900",
+    //
+    "bg-rose-400",
+    "bg-rose-600",
+    "bg-rose-900",
   ],
   prefix: "",
   theme: {

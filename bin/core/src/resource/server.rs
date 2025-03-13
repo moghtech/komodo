@@ -1,6 +1,6 @@
 use anyhow::Context;
 use komodo_client::entities::{
-  komodo_timestamp,
+  Operation, ResourceTargetVariant, komodo_timestamp,
   resource::Resource,
   server::{
     PartialServerConfig, Server, ServerConfig, ServerConfigDiff,
@@ -8,9 +8,8 @@ use komodo_client::entities::{
   },
   update::Update,
   user::User,
-  Operation, ResourceTargetVariant,
 };
-use mungos::mongodb::{bson::doc, Collection};
+use mungos::mongodb::{Collection, bson::doc};
 
 use crate::{
   config::core_config,

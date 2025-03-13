@@ -1,10 +1,12 @@
 use std::time::Duration;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use komodo_client::{
   api::execute::Execution,
   entities::{
+    Operation, ResourceTargetVariant,
     action::Action,
+    alerter::Alerter,
     build::Build,
     deployment::Deployment,
     permission::PermissionLevel,
@@ -20,12 +22,11 @@ use komodo_client::{
     sync::ResourceSync,
     update::Update,
     user::User,
-    Operation, ResourceTargetVariant,
   },
 };
 use mungos::{
   find::find_collect,
-  mongodb::{bson::doc, options::FindOneOptions, Collection},
+  mongodb::{Collection, bson::doc, options::FindOneOptions},
 };
 
 use crate::{
@@ -172,7 +173,7 @@ async fn validate_config(
             Some(id) if procedure.id == id => {
               return Err(anyhow!(
                 "Cannot have self-referential procedure"
-              ))
+              ));
             }
             _ => {}
           }
@@ -686,6 +687,15 @@ async fn validate_config(
               "Non admin user cannot configure Batch executions"
             ));
           }
+        }
+        Execution::TestAlerter(params) => {
+          let alerter = super::get_check_permissions::<Alerter>(
+            &params.alerter,
+            user,
+            PermissionLevel::Execute,
+          )
+          .await?;
+          params.alerter = alerter.id;
         }
         Execution::Sleep(_) => {}
       }

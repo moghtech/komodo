@@ -84,8 +84,8 @@ pub struct UpdateGuard<'a, States: Default + Send + 'static>(
   &'a Mutex<States>,
 );
 
-impl<'a, States: Default + Send + 'static> Drop
-  for UpdateGuard<'a, States>
+impl<States: Default + Send + 'static> Drop
+  for UpdateGuard<'_, States>
 {
   fn drop(&mut self) {
     let mut lock = match self.0.lock() {

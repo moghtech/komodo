@@ -10,9 +10,9 @@ use crate::deserializers::{
 };
 
 use super::{
+  I64,
   alert::SeverityLevel,
   resource::{AddFilters, Resource, ResourceListItem, ResourceQuery},
-  I64,
 };
 
 #[typeshare]

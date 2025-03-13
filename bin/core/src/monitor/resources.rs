@@ -7,6 +7,7 @@ use anyhow::Context;
 use komodo_client::{
   api::execute::{Deploy, DeployStack},
   entities::{
+    ResourceTarget,
     alert::{Alert, AlertData, SeverityLevel},
     build::Build,
     deployment::{Deployment, DeploymentImage, DeploymentState},
@@ -17,7 +18,6 @@ use komodo_client::{
     komodo_timestamp,
     stack::{Stack, StackService, StackServiceNames, StackState},
     user::auto_redeploy_user,
-    ResourceTarget,
   },
 };
 
@@ -222,8 +222,8 @@ pub async fn update_deployment_cache(
 }
 
 /// (StackId, Service)
-fn stack_alert_sent_cache(
-) -> &'static Mutex<HashSet<(String, String)>> {
+fn stack_alert_sent_cache()
+-> &'static Mutex<HashSet<(String, String)>> {
   static CACHE: OnceLock<Mutex<HashSet<(String, String)>>> =
     OnceLock::new();
   CACHE.get_or_init(Default::default)
@@ -322,8 +322,8 @@ pub async fn update_stack_cache(
       }
     }).collect::<Vec<_>>();
 
-    let mut update_available = false;
     let mut images_with_update = Vec::new();
+    let mut services_to_update = Vec::new();
 
     for service in services_with_containers.iter() {
       if service.update_available {
@@ -336,7 +336,7 @@ pub async fn update_stack_cache(
           .map(|c| c.state == ContainerStateStatusEnum::Running)
           .unwrap_or_default()
         {
-          update_available = true
+          services_to_update.push(service.service.clone());
         }
       }
     }
@@ -346,7 +346,7 @@ pub async fn update_stack_cache(
       &services,
       containers,
     );
-    if update_available
+    if !services_to_update.is_empty()
       && stack.config.auto_update
       && state == StackState::Running
       && !action_states()
@@ -358,11 +358,16 @@ pub async fn update_stack_cache(
     {
       let id = stack.id.clone();
       let server_name = server_name.clone();
+      let services = if stack.config.auto_update_all_services {
+        Vec::new()
+      } else {
+        services_to_update
+      };
       tokio::spawn(async move {
         match execute::inner_handler(
           ExecuteRequest::DeployStack(DeployStack {
             stack: stack.name.clone(),
-            service: None,
+            services,
             stop_time: None,
           }),
           auto_redeploy_user().to_owned(),
@@ -395,7 +400,7 @@ pub async fn update_stack_cache(
             send_alerts(&[alert]).await;
           }
           Err(e) => {
-            warn!("Failed auto update Stack {} | {e:#}", stack.name)
+            warn!("Failed auto update Stack {} | {e:#}", stack.name,)
           }
         }
       });

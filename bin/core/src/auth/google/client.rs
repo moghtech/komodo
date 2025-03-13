@@ -1,13 +1,12 @@
 use std::sync::OnceLock;
 
-use anyhow::{anyhow, Context};
-use jwt::Token;
+use anyhow::{Context, anyhow};
+use jsonwebtoken::{DecodingKey, Validation, decode};
 use komodo_client::entities::config::core::{
   CoreConfig, OauthCredentials,
 };
 use reqwest::StatusCode;
-use serde::{de::DeserializeOwned, Deserialize};
-use serde_json::Value;
+use serde::{Deserialize, de::DeserializeOwned};
 use tokio::sync::Mutex;
 
 use crate::{
@@ -49,15 +48,21 @@ impl GoogleOauthClient {
       return None;
     }
     if host.is_empty() {
-      warn!("google oauth is enabled, but 'config.host' is not configured");
+      warn!(
+        "google oauth is enabled, but 'config.host' is not configured"
+      );
       return None;
     }
     if id.is_empty() {
-      warn!("google oauth is enabled, but 'config.google_oauth.id' is not configured");
+      warn!(
+        "google oauth is enabled, but 'config.google_oauth.id' is not configured"
+      );
       return None;
     }
     if secret.is_empty() {
-      warn!("google oauth is enabled, but 'config.google_oauth.secret' is not configured");
+      warn!(
+        "google oauth is enabled, but 'config.google_oauth.secret' is not configured"
+      );
       return None;
     }
     let scopes = urlencoding::encode(
@@ -139,10 +144,16 @@ impl GoogleOauthClient {
     &self,
     id_token: &str,
   ) -> anyhow::Result<GoogleUser> {
-    let t: Token<Value, GoogleUser, jwt::Unverified> =
-      Token::parse_unverified(id_token)
-        .context("failed to parse id_token")?;
-    Ok(t.claims().to_owned())
+    let mut v = Validation::new(Default::default());
+    v.insecure_disable_signature_validation();
+    v.validate_aud = false;
+    let res = decode::<GoogleUser>(
+      id_token,
+      &DecodingKey::from_secret(b""),
+      &v,
+    )
+    .context("failed to decode google id token")?;
+    Ok(res.claims)
   }
 
   #[instrument(level = "debug", skip(self))]

@@ -1,7 +1,7 @@
 import { useLocalStorage, useRead } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { RequiredResourceComponents } from "@types";
-import { HardDrive, Rocket, Server } from "lucide-react";
+import { CircleArrowUp, HardDrive, Rocket, Server } from "lucide-react";
 import { cn } from "@lib/utils";
 import { useServer } from "../server";
 import {
@@ -29,9 +29,8 @@ import {
   StatusBadge,
 } from "@components/util";
 import { RenameResource } from "@components/config/util";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@ui/hover-card";
-import { Card } from "@ui/card";
 import { GroupActions } from "@components/group-actions";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 
 // const configOrLog = atomWithStorage("config-or-log-v1", "Config");
 
@@ -200,34 +199,7 @@ export const DeploymentComponents: RequiredResourceComponents = {
   },
 
   Status: {
-    UpdateAvailable: ({ id }) => {
-      const info = useDeployment(id)?.info;
-      const state = info?.state ?? Types.DeploymentState.Unknown;
-      if (
-        !info ||
-        !info?.update_available ||
-        [
-          Types.DeploymentState.NotDeployed,
-          Types.DeploymentState.Unknown,
-        ].includes(state)
-      ) {
-        return null;
-      }
-      return (
-        <HoverCard openDelay={200}>
-          <HoverCardTrigger asChild>
-            <Card className="px-3 py-2 border-blue-400 hover:border-blue-500 transition-colors cursor-pointer">
-              <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis">
-                Update Available
-              </div>
-            </Card>
-          </HoverCardTrigger>
-          <HoverCardContent align="start" className="w-fit text-sm">
-            There is a newer image available
-          </HoverCardContent>
-        </HoverCard>
-      );
-    },
+    UpdateAvailable: ({ id }) => <UpdateAvailable id={id} />,
   },
 
   Info: {
@@ -326,4 +298,46 @@ export const DeploymentComponents: RequiredResourceComponents = {
       />
     );
   },
+};
+
+export const UpdateAvailable = ({
+  id,
+  small,
+}: {
+  id: string;
+  small?: boolean;
+}) => {
+  const info = useDeployment(id)?.info;
+  const state = info?.state ?? Types.DeploymentState.Unknown;
+  if (
+    !info ||
+    !info?.update_available ||
+    [Types.DeploymentState.NotDeployed, Types.DeploymentState.Unknown].includes(
+      state
+    )
+  ) {
+    return null;
+  }
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          className={cn(
+            "px-2 py-1 border rounded-md border-blue-400 hover:border-blue-500 opacity-50 hover:opacity-70 transition-colors cursor-pointer flex items-center gap-2",
+            small ? "px-2 py-1" : "px-3 py-2"
+          )}
+        >
+          <CircleArrowUp className="w-4 h-4" />
+          {!small && (
+            <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis">
+              Update Available
+            </div>
+          )}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent className="w-fit text-sm">
+        There is a newer image available
+      </TooltipContent>
+    </Tooltip>
+  );
 };

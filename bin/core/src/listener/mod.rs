@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use axum::{http::HeaderMap, Router};
+use axum::{Router, http::HeaderMap};
 use komodo_client::entities::resource::Resource;
 use tokio::sync::Mutex;
 

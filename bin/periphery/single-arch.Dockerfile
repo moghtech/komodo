@@ -1,7 +1,7 @@
 ## Assumes the latest binaries for the required arch are already built (by binaries.Dockerfile).
 ## Sets up the necessary runtime container dependencies for Komodo Periphery.
 
-ARG BINARIES_IMAGE=ghcr.io/mbecker20/komodo-binaries:latest
+ARG BINARIES_IMAGE=ghcr.io/moghtech/komodo-binaries:latest
 
 # This is required to work with COPY --from
 FROM ${BINARIES_IMAGE} AS binaries
@@ -16,7 +16,7 @@ COPY --from=binaries /periphery /usr/local/bin/periphery
 
 EXPOSE 8120
 
-LABEL org.opencontainers.image.source=https://github.com/mbecker20/komodo
+LABEL org.opencontainers.image.source=https://github.com/moghtech/komodo
 LABEL org.opencontainers.image.description="Komodo Periphery"
 LABEL org.opencontainers.image.licenses=GPL-3.0
 

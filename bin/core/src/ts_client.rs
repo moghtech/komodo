@@ -1,9 +1,9 @@
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use axum::{
+  Router,
   extract::Path,
   http::{HeaderMap, HeaderValue},
   routing::get,
-  Router,
 };
 use reqwest::StatusCode;
 use serde::Deserialize;
@@ -13,7 +13,7 @@ use tokio::fs;
 use crate::config::core_config;
 
 pub fn router() -> Router {
-  Router::new().route("/:path", get(serve_client_file))
+  Router::new().route("/{path}", get(serve_client_file))
 }
 
 const ALLOWED_FILES: &[&str] = &[
@@ -30,6 +30,7 @@ struct FilePath {
   path: String,
 }
 
+#[axum::debug_handler]
 async fn serve_client_file(
   Path(FilePath { path }): Path<FilePath>,
 ) -> serror::Result<(HeaderMap, String)> {

@@ -132,8 +132,8 @@ export const Login = () => {
   // Otherwise just standard login
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="container flex justify-between items-center h-16">
-        <img src="/monitor-circle.png" className="w-[28px] dark:invert" />
+      <div className="container flex justify-end items-center h-16">
+        {/* <img src="/komodo-512x512.png" className="w-[32px]" /> */}
         <ThemeToggle />
       </div>
       <div
@@ -144,9 +144,12 @@ export const Login = () => {
       >
         <Card className="w-full max-w-[500px] place-self-center">
           <CardHeader className="flex-row justify-between">
-            <div>
-              <CardTitle className="text-xl">Komodo</CardTitle>
-              <CardDescription>Log In</CardDescription>
+            <div className="flex gap-4 items-center">
+              <img src="/komodo-512x512.png" className="w-[32px] h-[32px]" />
+              <div>
+                <CardTitle className="text-xl">Komodo</CardTitle>{" "}
+                <CardDescription>Log In</CardDescription>
+              </div>
             </div>
             <div className="flex gap-2">
               {(
@@ -236,7 +239,7 @@ export const Login = () => {
               No login methods have been configured. See the
               <Button variant="link" className="text-sm py-0 px-1">
                 <a
-                  href="https://github.com/mbecker20/komodo/blob/main/config/core.config.toml"
+                  href="https://github.com/moghtech/komodo/blob/main/config/core.config.toml"
                   target="_blank"
                   className="flex text-sm"
                 >

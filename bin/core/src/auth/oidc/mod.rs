@@ -1,20 +1,20 @@
 use std::sync::OnceLock;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use axum::{
-  extract::Query, response::Redirect, routing::get, Router,
+  Router, extract::Query, response::Redirect, routing::get,
 };
-use client::default_oidc_client;
+use client::oidc_client;
 use dashmap::DashMap;
 use komodo_client::entities::{
   komodo_timestamp,
   user::{User, UserConfig},
 };
-use mungos::mongodb::bson::{doc, Document};
+use mungos::mongodb::bson::{Document, doc};
 use openidconnect::{
-  core::CoreAuthenticationFlow, AccessTokenHash, AuthorizationCode,
-  CsrfToken, Nonce, OAuth2TokenResponse, PkceCodeChallenge,
-  PkceCodeVerifier, Scope, TokenResponse,
+  AccessTokenHash, AuthorizationCode, CsrfToken, Nonce,
+  OAuth2TokenResponse, PkceCodeChallenge, PkceCodeVerifier, Scope,
+  TokenResponse, core::CoreAuthenticationFlow,
 };
 use reqwest::StatusCode;
 use serde::Deserialize;
@@ -29,16 +29,28 @@ use super::RedirectQuery;
 
 pub mod client;
 
+fn reqwest_client() -> &'static reqwest::Client {
+  static REQWEST: OnceLock<reqwest::Client> = OnceLock::new();
+  REQWEST.get_or_init(|| {
+    reqwest::Client::builder()
+      .redirect(reqwest::redirect::Policy::none())
+      .build()
+      .expect("Invalid OIDC reqwest client")
+  })
+}
+
 /// CSRF tokens can only be used once from the callback,
 /// and must be used within this timeframe
 const CSRF_VALID_FOR_MS: i64 = 120_000; // 2 minutes for user to log in.
 
 type RedirectUrl = Option<String>;
-type CsrfMap =
+/// Maps the csrf secrets to other information added in the "login" method (before auth provider redirect).
+/// This information is retrieved in the "callback" method (after auth provider redirect).
+type VerifierMap =
   DashMap<String, (PkceCodeVerifier, Nonce, RedirectUrl, i64)>;
-fn csrf_verifier_tokens() -> &'static CsrfMap {
-  static CSRF: OnceLock<CsrfMap> = OnceLock::new();
-  CSRF.get_or_init(Default::default)
+fn verifier_tokens() -> &'static VerifierMap {
+  static VERIFIERS: OnceLock<VerifierMap> = OnceLock::new();
+  VERIFIERS.get_or_init(Default::default)
 }
 
 pub fn router() -> Router {
@@ -61,10 +73,10 @@ pub fn router() -> Router {
 async fn login(
   Query(RedirectQuery { redirect }): Query<RedirectQuery>,
 ) -> anyhow::Result<Redirect> {
+  let client = oidc_client().load();
   let client =
-    default_oidc_client().context("OIDC Client not configured")?;
+    client.as_ref().context("OIDC Client not configured")?;
 
-  // Generate a PKCE challenge.
   let (pkce_challenge, pkce_verifier) =
     PkceCodeChallenge::new_random_sha256();
 
@@ -75,13 +87,13 @@ async fn login(
       CsrfToken::new_random,
       Nonce::new_random,
     )
+    .set_pkce_challenge(pkce_challenge)
     .add_scope(Scope::new("openid".to_string()))
     .add_scope(Scope::new("email".to_string()))
-    .set_pkce_challenge(pkce_challenge)
     .url();
 
   // Data inserted here will be matched on callback side for csrf protection.
-  csrf_verifier_tokens().insert(
+  verifier_tokens().insert(
     csrf_token.secret().clone(),
     (
       pkce_verifier,
@@ -123,8 +135,9 @@ struct CallbackQuery {
 async fn callback(
   Query(query): Query<CallbackQuery>,
 ) -> anyhow::Result<Redirect> {
+  let client = oidc_client().load();
   let client =
-    default_oidc_client().context("OIDC Client not configured")?;
+    client.as_ref().context("OIDC Client not configured")?;
 
   if let Some(e) = query.error {
     return Err(anyhow!("Provider returned error: {e}"));
@@ -136,21 +149,21 @@ async fn callback(
   );
 
   let (_, (pkce_verifier, nonce, redirect, valid_until)) =
-    csrf_verifier_tokens()
+    verifier_tokens()
       .remove(state.secret())
-      .context("CSRF Token invalid")?;
+      .context("CSRF token invalid")?;
 
   if komodo_timestamp() > valid_until {
     return Err(anyhow!(
-      "CSRF token invalid (Timed out). The token must be "
+      "CSRF token invalid (Timed out). The token must be used within 2 minutes."
     ));
   }
 
   let token_response = client
     .exchange_code(AuthorizationCode::new(code))
-    // Set the PKCE code verifier.
+    .context("Failed to get Oauth token at exchange code")?
     .set_pkce_verifier(pkce_verifier)
-    .request_async(openidconnect::reqwest::async_http_client)
+    .request_async(reqwest_client())
     .await
     .context("Failed to get Oauth token")?;
 
@@ -173,7 +186,7 @@ async fn callback(
 
   let claims = id_token
     .claims(&verifier, &nonce)
-    .context("Failed to verify token claims")?;
+    .context("Failed to verify token claims. This issue may be temporary (60 seconds max).")?;
 
   // Verify the access token hash to ensure that the access token hasn't been substituted for
   // another user's.
@@ -181,7 +194,8 @@ async fn callback(
   {
     let actual_access_token_hash = AccessTokenHash::from_token(
       token_response.access_token(),
-      &id_token.signing_alg()?,
+      id_token.signing_alg()?,
+      id_token.signing_key(&verifier)?,
     )?;
     if actual_access_token_hash != *expected_access_token_hash {
       return Err(anyhow!("Invalid access token"));
@@ -202,7 +216,7 @@ async fn callback(
 
   let jwt = match user {
     Some(user) => jwt_client()
-      .generate(user.id)
+      .encode(user.id)
       .context("failed to generate jwt")?,
     None => {
       let ts = komodo_timestamp();
@@ -258,7 +272,7 @@ async fn callback(
         .context("inserted_id is not ObjectId")?
         .to_string();
       jwt_client()
-        .generate(user_id)
+        .encode(user_id)
         .context("failed to generate jwt")?
     }
   };
