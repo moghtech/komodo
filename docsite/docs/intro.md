@@ -39,7 +39,7 @@ Komodo Periphery is a small stateless web server that runs on all connected serv
 
 ## Core API
 
-Komodo exposes powerful functionality over the Core's REST and Websocket API, enabling infrastructure engineers to manage their infrastructure programmatically. There is a [rust crate](https://crates.io/crates/komodo_client) to simplify programmatic interaction with the API, but in general this can be accomplished using any programming language that can make REST requests. 
+Komodo exposes powerful functionality over the Core's REST and Websocket API, enabling infrastructure engineers to manage their infrastructure programmatically. There is a [rust crate](https://crates.io/crates/komodo_client) and [npm package](https://www.npmjs.com/package/komodo_client) to simplify programmatic interaction with the API, but in general this can be accomplished using any programming language that can make REST requests. 
 
 ## Permissioning
 
