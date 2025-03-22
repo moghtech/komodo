@@ -73,4 +73,4 @@ cmd = "yarn deploy"
 
 [dev-rustdoc]
 description = "starts the rustdoc site (https://docs.rs/komodo_client/latest/komodo_client/) in dev mode"
-cmd = "cargo watch -s 'cargo doc --no-deps -p komodo_client' & http --quiet target/doc"
+cmd = "cargo doc --no-deps -p komodo_client && http-server -p 8050 target/doc"

@@ -1,7 +1,7 @@
 # Komodo
-*A system to build and deploy software across many servers*
+*A system to build and deploy software across many servers*. [https://komo.do](https://komo.do)
 
-Full Docs: [https://docs.rs/komodo_client/latest/komodo_client](https://docs.rs/komodo_client/latest/komodo_client).
+Docs: [https://docs.rs/komodo_client/latest/komodo_client](https://docs.rs/komodo_client/latest/komodo_client).
 
 This is a client library for the Komodo Core API.
 It contains:

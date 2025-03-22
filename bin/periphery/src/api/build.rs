@@ -192,7 +192,7 @@ fn parse_build_args(build_args: &[EnvironmentVar]) -> String {
     .join("")
 }
 
-/// https://docs.docker.com/build/building/secrets/#using-build-secrets
+/// <https://docs.docker.com/build/building/secrets/#using-build-secrets>
 async fn parse_secret_args(
   secret_args: &[EnvironmentVar],
   build_dir: &Path,
