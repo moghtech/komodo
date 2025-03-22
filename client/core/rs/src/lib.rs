@@ -1,5 +1,5 @@
 //! # Komodo
-//! *A system to build and deploy software across many servers*
+//! *A system to build and deploy software across many servers*. [**https://komo.do**](https://komo.do).
 //!
 //! This is a client library for the Komodo Core API.
 //! It contains:

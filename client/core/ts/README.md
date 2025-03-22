@@ -1,6 +1,6 @@
 # Komodo
 
-_A system to build and deploy software across many servers_
+_A system to build and deploy software across many servers_. [https://komo.do](https://komo.do).
 
 ```sh
 npm install komodo_client
