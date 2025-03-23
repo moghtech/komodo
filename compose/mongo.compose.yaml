@@ -16,8 +16,6 @@ services:
     restart: unless-stopped
     logging:
       driver: ${COMPOSE_LOGGING_DRIVER:-local}
-    networks:
-      - default
     # ports:
     #   - 27017:27017
     volumes:
@@ -36,8 +34,6 @@ services:
       - mongo
     logging:
       driver: ${COMPOSE_LOGGING_DRIVER:-local}
-    networks:
-      - default
     ports:
       - 9120:9120
     env_file: ./compose.env
@@ -67,8 +63,6 @@ services:
     restart: unless-stopped
     logging:
       driver: ${COMPOSE_LOGGING_DRIVER:-local}
-    networks:
-      - default
     env_file: ./compose.env
     environment:
       PERIPHERY_REPO_DIR: ${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}/repos
@@ -92,6 +86,3 @@ volumes:
   mongo-config:
   # Core
   repo-cache:
-
-networks:
-  default: {}
