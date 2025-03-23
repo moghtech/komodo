@@ -252,8 +252,8 @@ export interface BuildConfig {
 	 */
 	image_name?: string;
 	/**
-	 * An extra tag put before the build version, for the image pushed to the repository.
-	 * Eg. in image tag of `aarch64` would push to moghtech/komodo:1.13.2-aarch64.
+	 * An extra tag put after the build version, for the image pushed to the repository.
+	 * Eg. in image tag of `aarch64` would push to moghtech/komodo-core:1.13.2-aarch64.
 	 * If this is empty, the image tag will just be the build version.
 	 * 
 	 * Can be used in conjunction with `image_name` to direct multiple builds
