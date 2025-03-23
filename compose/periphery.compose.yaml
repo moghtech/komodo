@@ -13,7 +13,7 @@ services:
     restart: unless-stopped
     logging:
       driver: ${COMPOSE_LOGGING_DRIVER:-local}
-    env_file: ./compose.env
+    ## https://komo.do/docs/connect-servers#configuration
     environment:
       PERIPHERY_REPO_DIR: ${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}/repos
       PERIPHERY_STACK_DIR: ${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}/stacks
