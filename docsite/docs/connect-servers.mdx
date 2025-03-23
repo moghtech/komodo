@@ -1,5 +1,9 @@
 # Connect More Servers
 
+```mdx-code-block
+import RemoteCodeFile from "@site/src/components/RemoteCodeFile";
+```
+
 Connecting a server to Komodo has 2 steps:
 
 1.  Install the Periphery agent on the server (either binary or container).
@@ -13,7 +17,7 @@ You can install Periphery as a systemd managed process, run it as a [docker cont
 Allowing unintended access to the Periphery agent API is a security risk.
 Ensure to take appropriate measures to block access to the Periphery API, such as firewall rules on port `8120`.
 Additionally, you can whitelist your Komodo Core IP address in the [Periphery config](https://github.com/moghtech/komodo/blob/main/config/periphery.config.toml#L46),
-and configure it to [only accept requests matching including your Core passkey](https://github.com/moghtech/komodo/blob/main/config/periphery.config.toml#L51).
+and configure it to [only accept requests including your Core passkey](https://github.com/moghtech/komodo/blob/main/config/periphery.config.toml#L51).
 :::
 
 ### Install the Periphery agent - systemd
@@ -40,11 +44,9 @@ This script can be run multiple times without issue, and it won't change existin
 You can use a docker compose file:
 
 ```mdx-code-block
-import RemoteCodeFile from "@site/src/components/RemoteCodeFile";
-
 <RemoteCodeFile
-	title="https://github.com/moghtech/komodo/blob/1.17.0/compose/periphery.compose.yaml"
-	url="https://raw.githubusercontent.com/moghtech/komodo/1.17.0/compose/periphery.compose.yaml"
+	title="https://github.com/moghtech/komodo/blob/main/compose/periphery.compose.yaml"
+	url="https://raw.githubusercontent.com/moghtech/komodo/main/compose/periphery.compose.yaml"
 	language="yaml"
 />
 ```
