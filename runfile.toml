@@ -64,12 +64,12 @@ docker compose -p komodo-dev -f dev.compose.yaml build"""
 [dev-docsite]
 description = "starts the documentation site (https://komo.do) in dev mode"
 path = "docsite"
-cmd = "yarn start"
+cmd = "yarn && yarn start"
 
 [deploy-docsite]
 description = "deploys the documentation site (https://komo.do) to github pages"
 path = "docsite"
-cmd = "yarn deploy"
+cmd = "yarn && yarn deploy"
 
 [dev-rustdoc]
 description = "starts the rustdoc site (https://docs.rs/komodo_client/latest/komodo_client/) in dev mode"

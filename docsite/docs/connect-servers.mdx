@@ -37,53 +37,16 @@ This script can be run multiple times without issue, and it won't change existin
 
 ### Install the Periphery agent - container
 
-You can use a docker compose file like this:
-```yaml
-services:
-  periphery:
-    image: ghcr.io/mbecker20/periphery:latest
-    # image: ghcr.io/mbecker20/periphery:latest-aarch64 # use for arm support
-    labels:
-      komodo.skip: # Prevent Komodo from stopping with StopAllContainers
-    logging:
-      driver: local
-    ports:
-      - 8120:8120
-    volumes:
-      ## Mount external docker socket
-      - /var/run/docker.sock:/var/run/docker.sock
-      ## Allow Periphery to see processes outside of container
-      - /proc:/proc
-      ## use self signed certs in docker volume, 
-      ## or mount your own signed certs.
-      - ssl-certs:/etc/komodo/ssl
-      ## manage repos in a docker volume, 
-      ## or change it to an accessible host directory.
-      - repos:/etc/komodo/repos
-      ## manage stack files in a docker volume, 
-      ## or change it to an accessible host directory.
-      - stacks:/etc/komodo/stacks
-      ## Optionally mount a path to store compose files
-      # - /path/to/compose:/host/compose
-    environment:
-      ## Full list: `https://github.com/moghtech/komodo/blob/main/config/periphery.config.toml`
-      ## Configure the same passkey given to Komodo Core (KOMODO_PASSKEY)
-      PERIPHERY_PASSKEYS: your_core_passkey # Alt: PERIPHERY_PASSKEYS_FILE
-      ## Adding IP here will ensure calling IP is in the list. (optional)
-      PERIPHERY_ALLOWED_IPS:
-      ## Enable HTTPS server
-      PERIPHERY_SSL_ENABLED: true
-      ## If the disk size is overreporting, can use one of these to 
-      ## whitelist / blacklist the disks to filter them, whichever is easier.
-      ## Accepts comma separated list of paths.
-      ## Usually whitelisting /etc/hostname gives correct size.
-      PERIPHERY_INCLUDE_DISK_MOUNTS: /etc/hostname
-      # PERIPHERY_EXCLUDE_DISK_MOUNTS: /snap,/etc/repos
+You can use a docker compose file:
 
-volumes:
-  ssl-certs:
-  repos:
-  stacks:
+```mdx-code-block
+import RemoteCodeFile from "@site/src/components/RemoteCodeFile";
+
+<RemoteCodeFile
+	title="https://github.com/moghtech/komodo/blob/1.17.0/compose/periphery.compose.yaml"
+	url="https://raw.githubusercontent.com/moghtech/komodo/1.17.0/compose/periphery.compose.yaml"
+	language="yaml"
+/>
 ```
 
 ### Manual install steps - binaries
@@ -146,8 +109,6 @@ wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/config/per
 ```
 
 ```mdx-code-block
-import RemoteCodeFile from "@site/src/components/RemoteCodeFile";
-
 <RemoteCodeFile
 	title="https://github.com/moghtech/komodo/blob/main/config/periphery.config.toml"
 	url="https://raw.githubusercontent.com/moghtech/komodo/main/config/periphery.config.toml"

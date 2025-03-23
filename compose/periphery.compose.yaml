@@ -6,9 +6,6 @@
 ##   1. Komodo Periphery
 
 services:
-  ## Deploy Periphery container using this block,
-  ## or deploy the Periphery binary with systemd using 
-  ## https://github.com/moghtech/komodo/tree/main/scripts
   periphery:
     image: ghcr.io/moghtech/komodo-periphery:${COMPOSE_KOMODO_IMAGE_TAG:-latest}
     labels:
