@@ -8,7 +8,7 @@ members = [
 ]
 
 [workspace.package]
-version = "1.17.0-dev-7"
+version = "1.17.0"
 edition = "2024"
 authors = ["mbecker20 <becker.maxh@gmail.com>"]
 license = "GPL-3.0-or-later"
@@ -44,9 +44,9 @@ mungos = "3.2.0"
 svi = "1.0.1"
 
 # ASYNC
-reqwest = { version = "0.12.12", default-features = false, features = ["json", "rustls-tls-native-roots"] }
-tokio = { version = "1.44.0", features = ["full"] }
-tokio-util = "0.7.13"
+reqwest = { version = "0.12.15", default-features = false, features = ["json", "rustls-tls-native-roots"] }
+tokio = { version = "1.44.1", features = ["full"] }
+tokio-util = "0.7.14"
 futures = "0.3.31"
 futures-util = "0.3.31"
 arc-swap = "1.7.1"
@@ -54,7 +54,7 @@ arc-swap = "1.7.1"
 # SERVER
 axum-extra = { version = "0.10.0", features = ["typed-header"] }
 tower-http = { version = "0.6.2", features = ["fs", "cors"] }
-axum-server = { version = "0.7.1", features = ["tls-rustls"] }
+axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 axum = { version = "0.8.1", features = ["ws", "json", "macros"] }
 tokio-tungstenite = "0.26.2"
 
@@ -71,12 +71,12 @@ anyhow = "1.0.97"
 thiserror = "2.0.12"
 
 # LOGGING
-opentelemetry-otlp = { version = "0.28.0", features = ["tls-roots", "reqwest-rustls"] }
-opentelemetry_sdk = { version = "0.28.0", features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "0.29.0", features = ["tls-roots", "reqwest-rustls"] }
+opentelemetry_sdk = { version = "0.29.0", features = ["rt-tokio"] }
 tracing-subscriber = { version = "0.3.19", features = ["json"] }
-opentelemetry-semantic-conventions = "0.28.0"
-tracing-opentelemetry = "0.29.0"
-opentelemetry = "0.28.0"
+opentelemetry-semantic-conventions = "0.29.0"
+tracing-opentelemetry = "0.30.0"
+opentelemetry = "0.29.0"
 tracing = "0.1.41"
 
 # CONFIG
@@ -85,14 +85,14 @@ dotenvy = "0.15.7"
 envy = "0.4.2"
 
 # CRYPTO / AUTH
-uuid = { version = "1.15.1", features = ["v4", "fast-rng", "serde"] }
+uuid = { version = "1.16.0", features = ["v4", "fast-rng", "serde"] }
 jsonwebtoken = { version = "9.3.1", default-features = false }
 openidconnect = "4.0.0"
 urlencoding = "2.1.3"
 nom_pem = "4.0.0"
 bcrypt = "0.17.0"
 base64 = "0.22.1"
-rustls = "0.23.23"
+rustls = "0.23.25"
 hmac = "0.12.1"
 sha2 = "0.10.8"
 rand = "0.9.0"
@@ -104,15 +104,15 @@ sysinfo = "0.33.1"
 
 # CLOUD
 aws-config = "1.6.0"
-aws-sdk-ec2 = "1.117.0"
+aws-sdk-ec2 = "1.118.1"
 aws-credential-types = "1.2.2"
 
 # MISC
 derive_builder = "0.20.2"
 typeshare = "1.0.4"
-octorust = "0.9.0"
+octorust = "0.10.0"
 dashmap = "6.1.0"
 wildcard = "0.3.0"
 colored = "3.0.0"
 regex = "1.11.1"
-bson = "2.13.0"
+bson = "2.14.0"
