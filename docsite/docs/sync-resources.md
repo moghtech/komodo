@@ -1,16 +1,22 @@
 # Sync Resources
 
 Komodo is able to create, update, delete, and deploy resources declared in TOML files by diffing them against the existing resources, 
-and apply updates based on the diffs. Push the files to a remote git repo and create a `ResourceSync` pointing to the repo,
-and the core backend will poll for any updates (you can also manually trigger an update poll / execution in the UI).
+and apply updates based on the diffs. Similar to Stacks, the files can be configured in UI, in a local file, or in files pushed to a remote git repo.
+The Komodo Core backend will poll the files for for any updates, and alert about pending changes when diffs are detected.
 
-File detection is additive and recursive, so you can spread out your resource declarations across any number of files
-and use any nesting of folders to organize resources inside a root folder. Additionally, you can create multiple `ResourceSyncs`
+You can spread out your resource declarations across any number of files
+and use any nesting of folders to organize resources inside a root folder.
+Additionally, you can create multiple `ResourceSyncs` and configure `Match Tags` to filter down which resources are synced,
 and each sync will be handled independently. This allows different syncs to manage resources on a "per-project" basis.
 
 The UI will display the computed sync actions and only execute them upon manual confirmation.
 Or the sync execution git webhook may be configured on the git repo to
 automatically execute syncs upon pushes to the configured branch.
+
+## Commit to Syncs
+
+If the Sync is pointing to just a single file, you can enable "Managed Mode" to allow Core to write the updates you made in UI _back to the file_.
+This works no matter where the files are located, and will create a commit to your git repository for repo based files.
 
 ## Example Declarations
 
