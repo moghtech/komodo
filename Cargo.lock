@@ -884,7 +884,7 @@ dependencies = [
 
 [[package]]
 name = "cache"
-version = "1.17.0"
+version = "1.17.1"
 dependencies = [
  "anyhow",
  "tokio",
@@ -1024,7 +1024,7 @@ dependencies = [
 
 [[package]]
 name = "command"
-version = "1.17.0"
+version = "1.17.1"
 dependencies = [
  "anyhow",
  "formatting",
@@ -1503,7 +1503,7 @@ dependencies = [
 
 [[package]]
 name = "environment_file"
-version = "1.17.0"
+version = "1.17.1"
 dependencies = [
  "thiserror 2.0.12",
 ]
@@ -1572,7 +1572,7 @@ dependencies = [
 
 [[package]]
 name = "formatting"
-version = "1.17.0"
+version = "1.17.1"
 dependencies = [
  "serror",
 ]
@@ -1734,7 +1734,7 @@ checksum = "07e28edb80900c19c28f1072f2e8aeca7fa06b23cd4169cefe1af5aa3260783f"
 
 [[package]]
 name = "git"
-version = "1.17.0"
+version = "1.17.1"
 dependencies = [
  "anyhow",
  "cache",
@@ -2474,7 +2474,7 @@ dependencies = [
 
 [[package]]
 name = "komodo_cli"
-version = "1.17.0"
+version = "1.17.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -2490,7 +2490,7 @@ dependencies = [
 
 [[package]]
 name = "komodo_client"
-version = "1.17.0"
+version = "1.17.1"
 dependencies = [
  "anyhow",
  "async_timing_util",
@@ -2521,7 +2521,7 @@ dependencies = [
 
 [[package]]
 name = "komodo_core"
-version = "1.17.0"
+version = "1.17.1"
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -2585,7 +2585,7 @@ dependencies = [
 
 [[package]]
 name = "komodo_periphery"
-version = "1.17.0"
+version = "1.17.1"
 dependencies = [
  "anyhow",
  "async_timing_util",
@@ -2697,7 +2697,7 @@ dependencies = [
 
 [[package]]
 name = "logger"
-version = "1.17.0"
+version = "1.17.1"
 dependencies = [
  "anyhow",
  "komodo_client",
@@ -3425,7 +3425,7 @@ checksum = "e3148f5046208a5d56bcfc03053e3ca6334e51da8dfb19b6cdc8b306fae3283e"
 
 [[package]]
 name = "periphery_client"
-version = "1.17.0"
+version = "1.17.1"
 dependencies = [
  "anyhow",
  "komodo_client",
@@ -3908,7 +3908,7 @@ dependencies = [
 
 [[package]]
 name = "response"
-version = "1.17.0"
+version = "1.17.1"
 dependencies = [
  "anyhow",
  "axum",
@@ -4511,17 +4511,17 @@ dependencies = [
 
 [[package]]
 name = "slack_client_rs"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d7351d61890f030c76e0bebcc203befb73a84cf1888db96597d2f1f6144b693"
+checksum = "52f34c637626082e466d947c124f01a02daa55e7f6d87007031fe205e9ffd84f"
 dependencies = [
  "anyhow",
  "reqwest",
  "serde",
  "serde_derive",
  "serde_json",
- "strum 0.26.3",
- "strum_macros 0.26.4",
+ "strum 0.27.1",
+ "strum_macros 0.27.1",
 ]
 
 [[package]]
