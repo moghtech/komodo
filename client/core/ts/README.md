@@ -18,7 +18,7 @@ import { KomodoClient, Types } from "komodo_client";
 const komodo = KomodoClient("https://demo.komo.do", {
   type: "api-key",
   params: {
-    api_key: "your_key",
+    key: "your_key",
     secret: "your secret",
   },
 });
