@@ -343,7 +343,31 @@ export const atomWithStorage = <T>(key: string, init: T) => {
   );
 };
 
-export const tagsAtom = atomWithStorage<string[]>("tags-v0", []);
+const tagsAtom = atomWithStorage<string[]>("tags-v0", []);
+
+export const useTags = () => {
+  const [tags, setTags] = useAtom<string[]>(tagsAtom);
+
+  const add_tag = (tag_id: string) => setTags([...tags, tag_id]);
+  const remove_tag = (tag_id: string) =>
+    setTags(tags.filter((id) => id !== tag_id));
+  const toggle_tag = (tag_id: string) => {
+    if (tags.includes(tag_id)) {
+      remove_tag(tag_id);
+    } else {
+      add_tag(tag_id);
+    }
+  };
+  const clear_tags = () => setTags([]);
+
+  return {
+    tags,
+    add_tag,
+    remove_tag,
+    toggle_tag,
+    clear_tags,
+  };
+};
 
 export const useTagsFilter = () => {
   const [tags] = useAtom<string[]>(tagsAtom);
