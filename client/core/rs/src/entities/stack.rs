@@ -269,47 +269,6 @@ pub struct StackConfig {
   #[builder(default)]
   pub skip_secret_interp: bool,
 
-  /// If this is checked, the stack will source the files on the host.
-  /// Use `run_directory` and `file_paths` to specify the path on the host.
-  /// This is useful for those who wish to setup their files on the host using SSH or similar,
-  /// rather than defining the contents in UI or in a git repo.
-  #[serde(default)]
-  #[builder(default)]
-  pub files_on_host: bool,
-
-  /// Directory to change to (`cd`) before running `docker compose up -d`.
-  #[serde(default)]
-  #[builder(default)]
-  pub run_directory: String,
-
-  /// Add paths to compose files, relative to the run path.
-  /// If this is empty, will use file `compose.yaml`.
-  #[serde(default, deserialize_with = "string_list_deserializer")]
-  #[partial_attr(serde(
-    default,
-    deserialize_with = "option_string_list_deserializer"
-  ))]
-  #[builder(default)]
-  pub file_paths: Vec<String>,
-
-  /// The name of the written environment file before `docker compose up`.
-  /// Relative to the run directory root.
-  /// Default: .env
-  #[serde(default = "default_env_file_path")]
-  #[builder(default = "default_env_file_path()")]
-  #[partial_default(default_env_file_path())]
-  pub env_file_path: String,
-
-  /// Add additional env files to attach with `--env-file`.
-  /// Relative to the run directory root.
-  #[serde(default, deserialize_with = "string_list_deserializer")]
-  #[partial_attr(serde(
-    default,
-    deserialize_with = "option_string_list_deserializer"
-  ))]
-  #[builder(default)]
-  pub additional_env_files: Vec<String>,
-
   /// The git provider domain. Default: github.com
   #[serde(default = "default_git_provider")]
   #[builder(default = "default_git_provider()")]
@@ -373,6 +332,47 @@ pub struct StackConfig {
   #[builder(default)]
   pub webhook_force_deploy: bool,
 
+  /// If this is checked, the stack will source the files on the host.
+  /// Use `run_directory` and `file_paths` to specify the path on the host.
+  /// This is useful for those who wish to setup their files on the host,
+  /// rather than defining the contents in UI or in a git repo.
+  #[serde(default)]
+  #[builder(default)]
+  pub files_on_host: bool,
+
+  /// Directory to change to (`cd`) before running `docker compose up -d`.
+  #[serde(default)]
+  #[builder(default)]
+  pub run_directory: String,
+
+  /// Add paths to compose files, relative to the run path.
+  /// If this is empty, will use file `compose.yaml`.
+  #[serde(default, deserialize_with = "string_list_deserializer")]
+  #[partial_attr(serde(
+    default,
+    deserialize_with = "option_string_list_deserializer"
+  ))]
+  #[builder(default)]
+  pub file_paths: Vec<String>,
+
+  /// The name of the written environment file before `docker compose up`.
+  /// Relative to the run directory root.
+  /// Default: .env
+  #[serde(default = "default_env_file_path")]
+  #[builder(default = "default_env_file_path()")]
+  #[partial_default(default_env_file_path())]
+  pub env_file_path: String,
+
+  /// Add additional env files to attach with `--env-file`.
+  /// Relative to the run directory root.
+  #[serde(default, deserialize_with = "string_list_deserializer")]
+  #[partial_attr(serde(
+    default,
+    deserialize_with = "option_string_list_deserializer"
+  ))]
+  #[builder(default)]
+  pub additional_env_files: Vec<String>,
+
   /// Whether to send StackStateChange alerts for this stack.
   #[serde(default = "default_send_alerts")]
   #[builder(default = "default_send_alerts()")]
@@ -434,6 +434,7 @@ pub struct StackConfig {
   /// The contents of the file directly, for management in the UI.
   /// If this is empty, it will fall back to checking git config for
   /// repo based compose file.
+  /// Supports variable / secret interpolation.
   #[serde(default, deserialize_with = "file_contents_deserializer")]
   #[partial_attr(serde(
     default,
