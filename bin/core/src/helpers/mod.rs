@@ -78,6 +78,9 @@ pub async fn git_token(
   account_username: &str,
   mut on_https_found: impl FnMut(bool),
 ) -> anyhow::Result<Option<String>> {
+  if provider_domain.is_empty() || account_username.is_empty() {
+    return Ok(None);
+  }
   let db_provider = db_client()
     .git_accounts
     .find_one(doc! { "domain": provider_domain, "username": account_username })
