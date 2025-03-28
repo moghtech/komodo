@@ -294,6 +294,35 @@ pub type ListAllDockerContainersResponse = Vec<ContainerListItem>;
 
 //
 
+/// Gets a summary of data relating to all containers.
+/// Response: [GetDockerContainersSummaryResponse].
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoReadRequest)]
+#[response(GetDockerContainersSummaryResponse)]
+#[error(serror::Error)]
+pub struct GetDockerContainersSummary {}
+
+/// Response for [GetDockerContainersSummary]
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct GetDockerContainersSummaryResponse {
+  /// The total number of Containers
+  pub total: I64,
+  /// The number of Containers with Running state
+  pub running: I64,
+  /// The number of Containers with Stopped or Paused state
+  pub stopped: I64,
+  /// The number of Containers with Restarting or Dead or Created (other) state
+  pub unhealthy: I64,
+  /// The number of Containers with Unknown state
+  pub unknown: I64,
+}
+
+//
+
 /// Inspect a docker container on the server. Response: [Container].
 #[typeshare]
 #[derive(
