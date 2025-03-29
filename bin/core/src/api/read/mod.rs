@@ -116,6 +116,7 @@ enum ReadRequest {
   InspectDockerImage(InspectDockerImage),
   ListDockerImageHistory(ListDockerImageHistory),
   InspectDockerVolume(InspectDockerVolume),
+  GetDockerContainersSummary(GetDockerContainersSummary),
   ListAllDockerContainers(ListAllDockerContainers),
   ListDockerContainers(ListDockerContainers),
   ListDockerNetworks(ListDockerNetworks),
