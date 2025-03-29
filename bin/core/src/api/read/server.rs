@@ -426,7 +426,7 @@ impl Resolve<ReadArgs> for GetDockerContainersSummary {
       &[],
     )
     .await
-    .context("failed to get containers from db")?;
+    .context("failed to get servers from db")?;
 
     let mut res = GetDockerContainersSummaryResponse::default();
 
