@@ -945,7 +945,7 @@ pub async fn docker_login(
     None => crate::helpers::registry_token(domain, account)?,
   };
   let log = async_run_command(&format!(
-    "echo {registry_token} | docker login {domain} --username {account} --password-stdin",
+    "echo {registry_token} | docker login {domain} --username '{account}' --password-stdin",
   ))
   .await;
   if log.success() {
