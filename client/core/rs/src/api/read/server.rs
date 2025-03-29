@@ -313,9 +313,9 @@ pub struct GetDockerContainersSummaryResponse {
   pub total: I64,
   /// The number of Containers with Running state
   pub running: I64,
-  /// The number of Containers with Stopped or Paused state
+  /// The number of Containers with Stopped or Paused or Created state
   pub stopped: I64,
-  /// The number of Containers with Restarting or Dead or Created (other) state
+  /// The number of Containers with Restarting or Dead state
   pub unhealthy: I64,
   /// The number of Containers with Unknown state
   pub unknown: I64,
