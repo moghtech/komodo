@@ -4926,6 +4926,25 @@ export interface GetDeploymentsSummaryResponse {
     unknown: I64;
 }
 /**
+ * Gets a summary of data relating to all containers.
+ * Response: [GetDockerContainersSummaryResponse].
+ */
+export interface GetDockerContainersSummary {
+}
+/** Response for [GetDockerContainersSummary] */
+export interface GetDockerContainersSummaryResponse {
+    /** The total number of Containers */
+    total: number;
+    /** The number of Containers with Running state */
+    running: number;
+    /** The number of Containers with Stopped or Paused or Created state */
+    stopped: number;
+    /** The number of Containers with Restarting or Dead state */
+    unhealthy: number;
+    /** The number of Containers with Unknown state */
+    unknown: number;
+}
+/**
  * Get a specific docker registry account.
  * Response: [GetDockerRegistryAccountResponse].
  */
@@ -7401,6 +7420,9 @@ export type ReadRequest = {
 } | {
     type: "InspectDockerVolume";
     params: InspectDockerVolume;
+} | {
+    type: "GetDockerContainersSummary";
+    params: GetDockerContainersSummary;
 } | {
     type: "ListAllDockerContainers";
     params: ListAllDockerContainers;
