@@ -310,15 +310,15 @@ pub struct GetDockerContainersSummary {}
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct GetDockerContainersSummaryResponse {
   /// The total number of Containers
-  pub total: I64,
+  pub total: u32,
   /// The number of Containers with Running state
-  pub running: I64,
+  pub running: u32,
   /// The number of Containers with Stopped or Paused or Created state
-  pub stopped: I64,
+  pub stopped: u32,
   /// The number of Containers with Restarting or Dead state
-  pub unhealthy: I64,
+  pub unhealthy: u32,
   /// The number of Containers with Unknown state
-  pub unknown: I64,
+  pub unknown: u32,
 }
 
 //

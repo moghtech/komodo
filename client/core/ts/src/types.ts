@@ -5179,15 +5179,15 @@ export interface GetDockerContainersSummary {
 /** Response for [GetDockerContainersSummary] */
 export interface GetDockerContainersSummaryResponse {
 	/** The total number of Containers */
-	total: I64;
+	total: number;
 	/** The number of Containers with Running state */
-	running: I64;
+	running: number;
 	/** The number of Containers with Stopped or Paused or Created state */
-	stopped: I64;
+	stopped: number;
 	/** The number of Containers with Restarting or Dead state */
-	unhealthy: I64;
+	unhealthy: number;
 	/** The number of Containers with Unknown state */
-	unknown: I64;
+	unknown: number;
 }
 
 /**
