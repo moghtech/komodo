@@ -192,7 +192,31 @@ pub async fn send_alert(
     AlertData::None {} => Default::default(),
   };
   if !content.is_empty() {
-    send_message(url, &content).await?;
+    let vars_and_secrets = get_variables_and_secrets().await?;
+    let mut global_replacers = HashSet::new();
+    let mut secret_replacers = HashSet::new();
+    let mut url_interpolated = url.to_string();
+
+    // interpolate variables and secrets into the url
+    interpolate_variables_secrets_into_string(
+      &vars_and_secrets,
+      &mut url_interpolated,
+      &mut global_replacers,
+      &mut secret_replacers,
+    )?;
+
+    send_message(&url_interpolated, &content)
+      .await
+      .map_err(|e| {
+        let replacers =
+          secret_replacers.into_iter().collect::<Vec<_>>();
+        let sanitized_error =
+          svi::replace_in_string(&format!("{e:?}"), &replacers);
+        anyhow::Error::msg(format!(
+          "Error with slack request: {}",
+          sanitized_error
+        ))
+      })?;
   }
   Ok(())
 }

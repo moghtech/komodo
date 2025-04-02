@@ -8,7 +8,7 @@ members = [
 ]
 
 [workspace.package]
-version = "1.17.0"
+version = "1.17.1"
 edition = "2024"
 authors = ["mbecker20 <becker.maxh@gmail.com>"]
 license = "GPL-3.0-or-later"
@@ -30,7 +30,7 @@ git = { path = "lib/git" }
 # MOGH
 run_command = { version = "0.0.6", features = ["async_tokio"] }
 serror = { version = "0.5.0", default-features = false }
-slack = { version = "0.3.0", package = "slack_client_rs", default-features = false, features = ["rustls"] }
+slack = { version = "0.4.0", package = "slack_client_rs", default-features = false, features = ["rustls"] }
 derive_default_builder = "0.1.8"
 derive_empty_traits = "0.1.0"
 merge_config_files = "0.1.5"

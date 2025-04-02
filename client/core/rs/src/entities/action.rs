@@ -63,6 +63,7 @@ pub type _PartialActionConfig = PartialActionConfig;
 #[partial(skip_serializing_none, from, diff)]
 pub struct ActionConfig {
   /// Typescript file contents using pre-initialized `komodo` client.
+  /// Supports variable / secret interpolation.
   #[serde(default, deserialize_with = "file_contents_deserializer")]
   #[partial_attr(serde(
     default,

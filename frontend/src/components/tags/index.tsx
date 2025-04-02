@@ -1,5 +1,5 @@
 import {
-  tagsAtom,
+  useTags,
   useInvalidate,
   useRead,
   useShiftKeyListener,
@@ -19,7 +19,6 @@ import {
 } from "@ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@ui/popover";
 import { useToast } from "@ui/use-toast";
-import { useAtom } from "jotai";
 import { MinusCircle, PlusCircle, SearchX, Tag, X } from "lucide-react";
 import { ReactNode, useEffect, useState } from "react";
 import { tag_background_class } from "@lib/color";
@@ -29,27 +28,24 @@ type TargetExcludingSystem = Exclude<Types.ResourceTarget, { type: "System" }>;
 export const TagsFilter = () => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [tags, setTags] = useAtom<string[]>(tagsAtom);
+  const { tags, add_tag, remove_tag, clear_tags } = useTags();
   const all_tags = useRead("ListTags", {}).data;
   const filtered = filterBySplit(all_tags, search, (item) => item.name);
   useShiftKeyListener("T", () => setOpen(true));
-  useShiftKeyListener("C", () => setTags([]));
+  useShiftKeyListener("C", () => clear_tags());
   return (
     <div className="flex gap-3 items-center">
       {tags.length > 0 && (
         <Button
           variant="destructive"
           className="px-2 py-1.5 h-fit"
-          onClick={() => setTags([])}
+          onClick={() => clear_tags()}
         >
           <X className="w-4 h-4" />
         </Button>
       )}
 
-      <TagsFilterTags
-        tag_ids={tags}
-        onBadgeClick={(tag_id) => setTags(tags.filter((id) => id !== tag_id))}
-      />
+      <TagsFilterTags tag_ids={tags} onBadgeClick={remove_tag} />
 
       <Popover
         open={open}
@@ -89,7 +85,7 @@ export const TagsFilter = () => {
                     <CommandItem
                       key={tag.name}
                       onSelect={() => {
-                        setTags([...tags, tag._id!.$oid]);
+                        add_tag(tag._id!.$oid);
                         setSearch("");
                         setOpen(false);
                       }}
@@ -228,9 +224,10 @@ export const TagsWithBadge = ({
 };
 
 export const TableTags = ({ tag_ids }: { tag_ids: string[] }) => {
+  const { toggle_tag } = useTags();
   return (
     <div className="flex gap-1 flex-wrap">
-      <TagsWithBadge tag_ids={tag_ids} />
+      <TagsWithBadge tag_ids={tag_ids} onBadgeClick={toggle_tag} />
     </div>
   );
 };
