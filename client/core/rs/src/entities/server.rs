@@ -77,6 +77,13 @@ pub struct ServerConfig {
   #[partial_default(default_timeout_seconds())]
   pub timeout_seconds: I64,
 
+  /// An optional override passkey to use
+  /// to authenticate with periphery agent.
+  /// If this is empty, will use passkey in core config.
+  #[serde(default)]
+  #[builder(default)]
+  pub passkey: String,
+
   /// Sometimes the system stats reports a mount path that is not desired.
   /// Use this field to filter it out from the report.
   #[serde(default, deserialize_with = "string_list_deserializer")]
@@ -240,6 +247,7 @@ impl Default for ServerConfig {
       send_mem_alerts: default_send_alerts(),
       send_disk_alerts: default_send_alerts(),
       region: Default::default(),
+      passkey: Default::default(),
       cpu_warning: default_cpu_warning(),
       cpu_critical: default_cpu_critical(),
       mem_warning: default_mem_warning(),

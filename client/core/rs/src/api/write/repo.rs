@@ -101,7 +101,6 @@ pub struct UpdateRepo {
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
-#[error(serror::Error)]
 pub struct RenameRepo {
   /// The id or name of the Repo to rename.
   pub id: String,

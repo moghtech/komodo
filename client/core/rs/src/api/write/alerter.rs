@@ -95,7 +95,6 @@ pub struct UpdateAlerter {
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
-#[error(serror::Error)]
 pub struct RenameAlerter {
   /// The id or name of the Alerter to rename.
   pub id: String,

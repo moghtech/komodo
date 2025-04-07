@@ -194,7 +194,7 @@ fn get_system_information(
     os: System::long_os_version(),
     kernel: System::kernel_version(),
     host_name: System::host_name(),
-    core_count: sys.physical_core_count().map(|c| c as u32),
+    core_count: System::physical_core_count().map(|c| c as u32),
     cpu_brand: sys
       .cpus()
       .iter()

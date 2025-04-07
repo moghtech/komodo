@@ -100,7 +100,6 @@ pub struct UpdateStack {
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
-#[error(serror::Error)]
 pub struct RenameStack {
   /// The id of the stack to rename.
   pub id: String,
@@ -117,7 +116,6 @@ pub struct RenameStack {
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
 #[error(serror::Error)]
 pub struct WriteStackFileContents {
   /// The name or id of the target Stack.

@@ -394,6 +394,8 @@ pub struct CloneArgs {
   pub branch: String,
   /// Specific commit hash. Optional
   pub commit: Option<String>,
+  /// Use PERIPHERY_BUILD_DIR as the parent folder for the clone.
+  pub is_build: bool,
   /// The clone destination path
   pub destination: Option<String>,
   /// Command to run after the repo has been cloned
@@ -459,6 +461,7 @@ impl From<&self::build::Build> for CloneArgs {
       branch: optional_string(&build.config.branch)
         .unwrap_or_else(|| String::from("main")),
       commit: optional_string(&build.config.commit),
+      is_build: true,
       destination: None,
       on_clone: build.config.pre_build.clone().into_option(),
       on_pull: None,
@@ -478,6 +481,7 @@ impl From<&self::repo::Repo> for CloneArgs {
       branch: optional_string(&repo.config.branch)
         .unwrap_or_else(|| String::from("main")),
       commit: optional_string(&repo.config.commit),
+      is_build: false,
       destination: optional_string(&repo.config.path),
       on_clone: repo.config.on_clone.clone().into_option(),
       on_pull: repo.config.on_pull.clone().into_option(),
@@ -497,6 +501,7 @@ impl From<&self::sync::ResourceSync> for CloneArgs {
       branch: optional_string(&sync.config.branch)
         .unwrap_or_else(|| String::from("main")),
       commit: optional_string(&sync.config.commit),
+      is_build: false,
       destination: None,
       on_clone: None,
       on_pull: None,
@@ -516,6 +521,7 @@ impl From<&self::stack::Stack> for CloneArgs {
       branch: optional_string(&stack.config.branch)
         .unwrap_or_else(|| String::from("main")),
       commit: optional_string(&stack.config.commit),
+      is_build: false,
       destination: None,
       on_clone: None,
       on_pull: None,
@@ -713,6 +719,7 @@ pub enum Operation {
   DeleteBuild,
   RunBuild,
   CancelBuild,
+  WriteDockerfile,
 
   // repo
   CreateRepo,

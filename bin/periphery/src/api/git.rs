@@ -12,7 +12,7 @@ use tokio::fs;
 use crate::config::periphery_config;
 
 impl Resolve<super::Args> for GetLatestCommit {
-  #[instrument(name = "CloneRepo", level = "debug")]
+  #[instrument(name = "GetLatestCommit", level = "debug")]
   async fn resolve(
     self,
     _: &super::Args,
@@ -68,9 +68,14 @@ impl Resolve<super::Args> for CloneRepo {
           )?,
       ),
     };
+    let parent_dir = if args.is_build {
+      &periphery_config().build_dir
+    } else {
+      &periphery_config().repo_dir
+    };
     git::clone(
       args,
-      &periphery_config().repo_dir,
+      parent_dir,
       token,
       &environment,
       &env_file_path,
@@ -133,9 +138,14 @@ impl Resolve<super::Args> for PullRepo {
           )?,
       ),
     };
+    let parent_dir = if args.is_build {
+      &periphery_config().build_dir
+    } else {
+      &periphery_config().repo_dir
+    };
     git::pull(
       args,
-      &periphery_config().repo_dir,
+      parent_dir,
       token,
       &environment,
       &env_file_path,
@@ -198,9 +208,14 @@ impl Resolve<super::Args> for PullOrCloneRepo {
           )?,
       ),
     };
+    let parent_dir = if args.is_build {
+      &periphery_config().build_dir
+    } else {
+      &periphery_config().repo_dir
+    };
     git::pull_or_clone(
       args,
-      &periphery_config().repo_dir,
+      parent_dir,
       token,
       &environment,
       &env_file_path,

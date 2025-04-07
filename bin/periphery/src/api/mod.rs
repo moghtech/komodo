@@ -66,6 +66,8 @@ pub enum PeripheryRequest {
   DeleteRepo(DeleteRepo),
 
   // Build
+  GetDockerfileContentsOnHost(GetDockerfileContentsOnHost),
+  WriteDockerfileContentsToHost(WriteDockerfileContentsToHost),
   Build(Build),
   PruneBuilders(PruneBuilders),
   PruneBuildx(PruneBuildx),

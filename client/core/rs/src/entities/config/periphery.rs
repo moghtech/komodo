@@ -118,6 +118,8 @@ pub struct Env {
   pub periphery_repo_dir: Option<PathBuf>,
   /// Override `stack_dir`
   pub periphery_stack_dir: Option<PathBuf>,
+  /// Override `build_dir`
+  pub periphery_build_dir: Option<PathBuf>,
   /// Override `stats_polling_rate`
   pub periphery_stats_polling_rate: Option<Timelength>,
   /// Override `legacy_compose_cli`
@@ -171,6 +173,11 @@ pub struct PeripheryConfig {
   /// Default: `/etc/komodo/stacks`
   #[serde(default = "default_stack_dir")]
   pub stack_dir: PathBuf,
+
+  /// The system directory where builds will managed.
+  /// Default: `/etc/komodo/builds`
+  #[serde(default = "default_build_dir")]
+  pub build_dir: PathBuf,
 
   /// The rate at which the system stats will be polled to update the cache.
   /// Default: `5-sec`
@@ -252,6 +259,10 @@ fn default_stack_dir() -> PathBuf {
   "/etc/komodo/stacks".parse().unwrap()
 }
 
+fn default_build_dir() -> PathBuf {
+  "/etc/komodo/builds".parse().unwrap()
+}
+
 fn default_stats_polling_rate() -> Timelength {
   Timelength::FiveSeconds
 }
@@ -274,6 +285,7 @@ impl Default for PeripheryConfig {
       port: default_periphery_port(),
       repo_dir: default_repo_dir(),
       stack_dir: default_stack_dir(),
+      build_dir: default_build_dir(),
       stats_polling_rate: default_stats_polling_rate(),
       legacy_compose_cli: Default::default(),
       logging: Default::default(),
@@ -297,6 +309,7 @@ impl PeripheryConfig {
       port: self.port,
       repo_dir: self.repo_dir.clone(),
       stack_dir: self.stack_dir.clone(),
+      build_dir: self.build_dir.clone(),
       stats_polling_rate: self.stats_polling_rate,
       legacy_compose_cli: self.legacy_compose_cli,
       logging: self.logging.clone(),

@@ -62,6 +62,21 @@ pub struct Resource<Config: Default, Info: Default = ()> {
   pub base_permission: PermissionLevel,
 }
 
+impl<C: Default, I: Default> Default for Resource<C, I> {
+  fn default() -> Self {
+    Self {
+      id: String::new(),
+      name: String::from("temp-resource"),
+      description: String::new(),
+      updated_at: 0,
+      tags: Vec::new(),
+      info: I::default(),
+      config: C::default(),
+      base_permission: PermissionLevel::None,
+    }
+  }
+}
+
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ResourceListItem<Info> {

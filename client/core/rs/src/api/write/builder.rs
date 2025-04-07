@@ -97,7 +97,6 @@ pub struct UpdateBuilder {
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
-#[error(serror::Error)]
 pub struct RenameBuilder {
   /// The id or name of the Builder to rename.
   pub id: String,

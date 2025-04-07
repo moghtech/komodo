@@ -122,7 +122,6 @@ pub struct UpdateDeployment {
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
-#[error(serror::Error)]
 pub struct RenameDeployment {
   /// The id of the deployment to rename.
   pub id: String,

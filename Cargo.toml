@@ -80,7 +80,7 @@ opentelemetry = "0.29.0"
 tracing = "0.1.41"
 
 # CONFIG
-clap = { version = "4.5.32", features = ["derive"] }
+clap = { version = "4.5.35", features = ["derive"] }
 dotenvy = "0.15.7"
 envy = "0.4.2"
 
@@ -100,11 +100,11 @@ hex = "0.4.3"
 
 # SYSTEM
 bollard = "0.18.1"
-sysinfo = "0.33.1"
+sysinfo = "0.34.2"
 
 # CLOUD
-aws-config = "1.6.0"
-aws-sdk-ec2 = "1.118.1"
+aws-config = "1.6.1"
+aws-sdk-ec2 = "1.121.1"
 aws-credential-types = "1.2.2"
 
 # MISC

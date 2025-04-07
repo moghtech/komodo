@@ -98,12 +98,29 @@ pub struct UpdateBuild {
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
-#[error(serror::Error)]
 pub struct RenameBuild {
   /// The id or name of the Build to rename.
   pub id: String,
   /// The new name.
   pub name: String,
+}
+
+//
+
+/// Update dockerfile contents in Files on Server or Git Repo mode. Response: [Update].
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoWriteRequest)]
+#[response(Update)]
+#[error(serror::Error)]
+pub struct WriteBuildFileContents {
+  /// The name or id of the target Build.
+  #[serde(alias = "id", alias = "name")]
+  pub build: String,
+  /// The dockerfile contents to write.
+  pub contents: String,
 }
 
 //

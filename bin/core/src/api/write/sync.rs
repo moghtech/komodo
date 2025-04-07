@@ -132,6 +132,38 @@ impl Resolve<WriteArgs> for RenameResourceSync {
   }
 }
 
+impl Resolve<WriteArgs> for WriteSyncFileContents {
+  #[instrument(name = "WriteSyncFileContents", skip(args))]
+  async fn resolve(self, args: &WriteArgs) -> serror::Result<Update> {
+    let sync = resource::get_check_permissions::<ResourceSync>(
+      &self.sync,
+      &args.user,
+      PermissionLevel::Write,
+    )
+    .await?;
+
+    if !sync.config.files_on_host && sync.config.repo.is_empty() {
+      return Err(
+        anyhow!(
+          "This method is only for 'files on host' or 'repo' based syncs."
+        )
+        .into(),
+      );
+    }
+
+    let mut update =
+      make_update(&sync, Operation::WriteSyncContents, &args.user);
+
+    update.push_simple_log("File contents", &self.contents);
+
+    if sync.config.files_on_host {
+      write_sync_file_contents_on_host(self, args, sync, update).await
+    } else {
+      write_sync_file_contents_git(self, args, sync, update).await
+    }
+  }
+}
+
 async fn write_sync_file_contents_on_host(
   req: WriteSyncFileContents,
   args: &WriteArgs,
@@ -298,7 +330,7 @@ async fn write_sync_file_contents_git(
     .await
   {
     update.push_error_log(
-      "Refresh failed",
+      "Refresh sync pending",
       format_serror(&e.error.into()),
     );
   }
@@ -307,37 +339,6 @@ async fn write_sync_file_contents_git(
   update.id = add_update(update.clone()).await?;
 
   Ok(update)
-}
-
-impl Resolve<WriteArgs> for WriteSyncFileContents {
-  async fn resolve(self, args: &WriteArgs) -> serror::Result<Update> {
-    let sync = resource::get_check_permissions::<ResourceSync>(
-      &self.sync,
-      &args.user,
-      PermissionLevel::Write,
-    )
-    .await?;
-
-    if !sync.config.files_on_host && sync.config.repo.is_empty() {
-      return Err(
-        anyhow!(
-          "This method is only for 'files on host' or 'repo' based syncs."
-        )
-        .into(),
-      );
-    }
-
-    let mut update =
-      make_update(&sync, Operation::WriteSyncContents, &args.user);
-
-    update.push_simple_log("File contents", &self.contents);
-
-    if sync.config.files_on_host {
-      write_sync_file_contents_on_host(self, args, sync, update).await
-    } else {
-      write_sync_file_contents_git(self, args, sync, update).await
-    }
-  }
 }
 
 impl Resolve<WriteArgs> for CommitSync {

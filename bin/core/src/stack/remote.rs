@@ -26,7 +26,7 @@ pub async fn get_repo_compose_contents(
   let (repo_path, _logs, hash, message) =
     ensure_remote_repo(clone_args)
       .await
-      .context("failed to clone stack repo")?;
+      .context("Failed to clone stack repo")?;
 
   let run_directory = repo_path.join(&stack.config.run_directory);
   // This will remove any intermediate '/./' which can be a problem for some OS.
@@ -44,7 +44,7 @@ pub async fn get_repo_compose_contents(
     }
     // If file does not exist, will show up in err case so the log is handled
     match fs::read_to_string(&file_path).with_context(|| {
-      format!("failed to read file contents from {file_path:?}")
+      format!("Failed to read file contents from {file_path:?}")
     }) {
       Ok(contents) => successful.push(FileContents {
         path: path.to_string(),
@@ -102,6 +102,6 @@ pub async fn ensure_remote_repo(
     &[],
   )
   .await
-  .context("failed to clone stack repo")
+  .context("Failed to clone stack repo")
   .map(|res| (repo_path, res.logs, res.hash, res.message))
 }

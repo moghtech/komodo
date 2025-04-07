@@ -97,7 +97,6 @@ pub struct UpdateServerTemplate {
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
-#[error(serror::Error)]
 pub struct RenameServerTemplate {
   /// The id or name of the ServerTemplate to rename.
   pub id: String,

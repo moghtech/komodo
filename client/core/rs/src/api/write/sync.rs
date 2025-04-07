@@ -99,7 +99,6 @@ pub struct UpdateResourceSync {
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
-#[error(serror::Error)]
 pub struct RenameResourceSync {
   /// The id or name of the ResourceSync to rename.
   pub id: String,
@@ -133,7 +132,6 @@ pub struct RefreshResourceSyncPending {
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
-#[error(serror::Error)]
 pub struct WriteSyncFileContents {
   /// The name or id of the target Sync.
   #[serde(alias = "id", alias = "name")]
@@ -165,7 +163,6 @@ pub struct WriteSyncFileContents {
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
 #[error(serror::Error)]
 pub struct CommitSync {
   /// Id or name

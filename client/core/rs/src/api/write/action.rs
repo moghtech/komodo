@@ -98,7 +98,6 @@ pub struct UpdateAction {
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
-#[error(serror::Error)]
 pub struct RenameAction {
   /// The id or name of the Action to rename.
   pub id: String,

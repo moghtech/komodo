@@ -211,7 +211,7 @@ impl Resolve<WriteArgs> for WriteStackFileContents {
     }
 
     update.finalize();
-    add_update(update.clone()).await?;
+    update.id = add_update(update.clone()).await?;
 
     Ok(update)
   }

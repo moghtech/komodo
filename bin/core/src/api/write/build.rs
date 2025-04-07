@@ -1,12 +1,17 @@
+use std::{path::PathBuf, time::Duration};
+
 use anyhow::{Context, anyhow};
+use formatting::format_serror;
 use git::GitRes;
 use komodo_client::{
   api::write::*,
   entities::{
-    CloneArgs, NoData,
+    CloneArgs, NoData, Operation, all_logs_success,
     build::{Build, BuildInfo, PartialBuildConfig},
+    builder::{Builder, BuilderConfig},
     config::core::CoreConfig,
     permission::PermissionLevel,
+    server::ServerState,
     update::Update,
   },
 };
@@ -15,11 +20,22 @@ use mungos::mongodb::bson::to_document;
 use octorust::types::{
   ReposCreateWebhookRequest, ReposCreateWebhookRequestConfig,
 };
+use periphery_client::{
+  PeripheryClient,
+  api::build::{
+    GetDockerfileContentsOnHost, WriteDockerfileContentsToHost,
+  },
+};
 use resolver_api::Resolve;
+use tokio::fs;
 
 use crate::{
   config::core_config,
-  helpers::git_token,
+  helpers::{
+    git_token, periphery_client,
+    query::get_server_with_state,
+    update::{add_update, make_update},
+  },
   resource,
   state::{db_client, github_client},
 };
@@ -88,6 +104,184 @@ impl Resolve<WriteArgs> for RenameBuild {
   }
 }
 
+impl Resolve<WriteArgs> for WriteBuildFileContents {
+  #[instrument(name = "WriteBuildFileContents", skip(args))]
+  async fn resolve(self, args: &WriteArgs) -> serror::Result<Update> {
+    let build = resource::get_check_permissions::<Build>(
+      &self.build,
+      &args.user,
+      PermissionLevel::Write,
+    )
+    .await?;
+
+    if !build.config.files_on_host && build.config.repo.is_empty() {
+      return Err(anyhow!(
+        "Build is not configured to use Files on Host or Git Repo, can't write dockerfile contents"
+      ).into());
+    }
+
+    let mut update =
+      make_update(&build, Operation::WriteDockerfile, &args.user);
+
+    update.push_simple_log("Dockerfile to write", &self.contents);
+
+    if build.config.files_on_host {
+      match get_on_host_periphery(&build)
+        .await?
+        .request(WriteDockerfileContentsToHost {
+          name: build.name,
+          build_path: build.config.build_path,
+          dockerfile_path: build.config.dockerfile_path,
+          contents: self.contents,
+        })
+        .await
+        .context("Failed to write dockerfile contents to host")
+      {
+        Ok(log) => {
+          update.logs.push(log);
+        }
+        Err(e) => {
+          update.push_error_log(
+            "Write Dockerfile Contents",
+            format_serror(&e.into()),
+          );
+        }
+      };
+
+      if !all_logs_success(&update.logs) {
+        update.finalize();
+        update.id = add_update(update.clone()).await?;
+
+        return Ok(update);
+      }
+
+      if let Err(e) =
+        (RefreshBuildCache { build: build.id }).resolve(args).await
+      {
+        update.push_error_log(
+          "Refresh build cache",
+          format_serror(&e.error.into()),
+        );
+      }
+
+      update.finalize();
+      update.id = add_update(update.clone()).await?;
+
+      Ok(update)
+    } else {
+      write_dockerfile_contents_git(self, args, build, update).await
+    }
+  }
+}
+
+async fn write_dockerfile_contents_git(
+  req: WriteBuildFileContents,
+  args: &WriteArgs,
+  build: Build,
+  mut update: Update,
+) -> serror::Result<Update> {
+  let WriteBuildFileContents { build: _, contents } = req;
+
+  let mut clone_args: CloneArgs = (&build).into();
+  let root = clone_args.unique_path(&core_config().repo_directory)?;
+
+  let build_path = build
+    .config
+    .build_path
+    .parse::<PathBuf>()
+    .context("Invalid build path")?;
+  let dockerfile_path = build
+    .config
+    .dockerfile_path
+    .parse::<PathBuf>()
+    .context("Invalid dockerfile path")?;
+
+  let full_path = root.join(&build_path).join(&dockerfile_path);
+
+  if let Some(parent) = full_path.parent() {
+    fs::create_dir_all(parent).await.with_context(|| {
+      format!(
+        "Failed to initialize dockerfile parent directory {parent:?}"
+      )
+    })?;
+  }
+
+  // Ensure the folder is initialized as git repo.
+  // This allows a new file to be committed on a branch that may not exist.
+  if !root.join(".git").exists() {
+    let access_token = if let Some(account) = &clone_args.account {
+      git_token(&clone_args.provider, account, |https| clone_args.https = https)
+      .await
+      .with_context(
+        || format!("Failed to get git token in call to db. Stopping run. | {} | {account}", clone_args.provider),
+      )?
+    } else {
+      None
+    };
+
+    git::init_folder_as_repo(
+      &root,
+      &clone_args,
+      access_token.as_deref(),
+      &mut update.logs,
+    )
+    .await;
+
+    if !all_logs_success(&update.logs) {
+      update.finalize();
+      update.id = add_update(update.clone()).await?;
+
+      return Ok(update);
+    }
+  }
+
+  if let Err(e) =
+    fs::write(&full_path, &contents).await.with_context(|| {
+      format!("Failed to write dockerfile contents to {full_path:?}")
+    })
+  {
+    update
+      .push_error_log("Write Dockerfile", format_serror(&e.into()));
+  } else {
+    update.push_simple_log(
+      "Write Dockerfile",
+      format!("File written to {full_path:?}"),
+    );
+  };
+
+  if !all_logs_success(&update.logs) {
+    update.finalize();
+    update.id = add_update(update.clone()).await?;
+
+    return Ok(update);
+  }
+
+  let commit_res = git::commit_file(
+    &format!("{}: Commit Dockerfile", args.user.username),
+    &root,
+    &build_path.join(&dockerfile_path),
+    &build.config.branch,
+  )
+  .await;
+
+  update.logs.extend(commit_res.logs);
+
+  if let Err(e) = (RefreshBuildCache { build: build.name })
+    .resolve(args)
+    .await
+  {
+    update.push_error_log(
+      "Refresh build cache",
+      format_serror(&e.error.into()),
+    );
+  }
+
+  update.finalize();
+  update.id = add_update(update.clone()).await?;
+
+  Ok(update)
+}
+
 impl Resolve<WriteArgs> for RefreshBuildCache {
   #[instrument(
     name = "RefreshBuildCache",
@@ -107,55 +301,92 @@ impl Resolve<WriteArgs> for RefreshBuildCache {
     )
     .await?;
 
-    if build.config.repo.is_empty()
-      || build.config.git_provider.is_empty()
-    {
-      // Nothing to do here
-      return Ok(NoData {});
-    }
+    let (remote_contents, remote_error, latest_hash, latest_message) =
+      if build.config.files_on_host {
+        // =============
+        // FILES ON HOST
+        // =============
+        match get_on_host_dockerfile(&build).await {
+          Ok(remote_contents) => {
+            (Some(remote_contents), None, None, None)
+          }
+          Err(e) => {
+            (None, Some(format_serror(&e.into())), None, None)
+          }
+        }
+      } else if !build.config.repo.is_empty() {
+        // ================
+        // REPO BASED BUILD
+        // ================
+        if build.config.git_provider.is_empty() {
+          // Nothing to do here
+          return Ok(NoData {});
+        }
+        let config = core_config();
 
-    let config = core_config();
+        let mut clone_args: CloneArgs = (&build).into();
+        let repo_path =
+          clone_args.unique_path(&core_config().repo_directory)?;
+        clone_args.destination =
+          Some(repo_path.display().to_string());
+        // Don't want to run these on core.
+        clone_args.on_clone = None;
+        clone_args.on_pull = None;
 
-    let mut clone_args: CloneArgs = (&build).into();
-    let repo_path =
-      clone_args.unique_path(&core_config().repo_directory)?;
-    clone_args.destination = Some(repo_path.display().to_string());
-    // Don't want to run these on core.
-    clone_args.on_clone = None;
-    clone_args.on_pull = None;
-
-    let access_token = if let Some(username) = &clone_args.account {
-      git_token(&clone_args.provider, username, |https| {
+        let access_token = if let Some(username) = &clone_args.account
+        {
+          git_token(&clone_args.provider, username, |https| {
           clone_args.https = https
         })
         .await
         .with_context(
           || format!("Failed to get git token in call to db. Stopping run. | {} | {username}", clone_args.provider),
         )?
-    } else {
-      None
-    };
+        } else {
+          None
+        };
 
-    let GitRes {
-      hash: latest_hash,
-      message: latest_message,
-      ..
-    } = git::pull_or_clone(
-      clone_args,
-      &config.repo_directory,
-      access_token,
-      &[],
-      "",
-      None,
-      &[],
-    )
-    .await
-    .context("failed to clone build repo")?;
+        let GitRes { hash, message, .. } = git::pull_or_clone(
+          clone_args,
+          &config.repo_directory,
+          access_token,
+          &[],
+          "",
+          None,
+          &[],
+        )
+        .await
+        .context("failed to clone build repo")?;
+
+        let full_path = repo_path
+          .join(&build.config.build_path)
+          .join(&build.config.dockerfile_path);
+        let (contents, error) = match fs::read_to_string(&full_path)
+          .await
+          .with_context(|| {
+            format!(
+              "Failed to read dockerfile contents at {full_path:?}"
+            )
+          }) {
+          Ok(contents) => (Some(contents), None),
+          Err(e) => (None, Some(format_serror(&e.into()))),
+        };
+
+        (contents, error, hash, message)
+      } else {
+        // =============
+        // UI BASED FILE
+        // =============
+        (None, None, None, None)
+      };
 
     let info = BuildInfo {
       last_built_at: build.info.last_built_at,
       built_hash: build.info.built_hash,
       built_message: build.info.built_message,
+      built_contents: build.info.built_contents,
+      remote_contents,
+      remote_error,
       latest_hash,
       latest_message,
     };
@@ -174,6 +405,66 @@ impl Resolve<WriteArgs> for RefreshBuildCache {
 
     Ok(NoData {})
   }
+}
+
+async fn get_on_host_periphery(
+  build: &Build,
+) -> anyhow::Result<PeripheryClient> {
+  if build.config.builder_id.is_empty() {
+    return Err(anyhow!("No builder associated with build"));
+  }
+
+  let builder = resource::get::<Builder>(&build.config.builder_id)
+    .await
+    .context("Failed to get builder")?;
+
+  match builder.config {
+    BuilderConfig::Aws(_) => {
+      return Err(anyhow!(
+        "Files on host doesn't work with AWS builder"
+      ));
+    }
+    BuilderConfig::Url(config) => {
+      let periphery = PeripheryClient::new(
+        config.address,
+        config.passkey,
+        Duration::from_secs(3),
+      );
+      periphery.health_check().await?;
+      Ok(periphery)
+    }
+    BuilderConfig::Server(config) => {
+      if config.server_id.is_empty() {
+        return Err(anyhow!(
+          "Builder is type server, but has no server attached"
+        ));
+      }
+      let (server, state) =
+        get_server_with_state(&config.server_id).await?;
+      if state != ServerState::Ok {
+        return Err(anyhow!(
+          "Builder server is disabled or not reachable"
+        ));
+      };
+      periphery_client(&server)
+    }
+  }
+}
+
+/// The successful case will be included as Some(remote_contents).
+/// The error case will be included as Some(remote_error)
+async fn get_on_host_dockerfile(
+  build: &Build,
+) -> anyhow::Result<String> {
+  get_on_host_periphery(build)
+    .await?
+    .request(GetDockerfileContentsOnHost {
+      name: build.name.clone(),
+      build_path: build.config.build_path.clone(),
+      dockerfile_path: build.config.dockerfile_path.clone(),
+    })
+    .await
+    .map(|res| res.contents)
 }
 
 impl Resolve<WriteArgs> for CreateBuildWebhook {
