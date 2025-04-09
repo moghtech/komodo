@@ -87,6 +87,11 @@ periphery \
 You can run `periphery --help` to see the manual.
 :::
 
+When running periphery in docker, use [command](https://docs.docker.com/reference/compose-file/services/#command) to pass in additional arguments.
+```
+command: periphery --config-path /path/in/container/to/periphery.config.base.toml
+```
+
 ### Passing config files
 
 Either file paths or directory paths can be passed to `--config-path`.
