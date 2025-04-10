@@ -130,7 +130,9 @@ export type AlerterEndpoint =
 	/** Send alert to a Slack app */
 	| { type: "Slack", params: SlackAlerterEndpoint }
 	/** Send alert to a Discord app */
-	| { type: "Discord", params: DiscordAlerterEndpoint };
+	| { type: "Discord", params: DiscordAlerterEndpoint }
+	/** Send alert to a Ntfy server */
+	| { type: "Ntfy", params: NtfyAlerterEndpoint };
 
 /** Used to reference a specific resource across all resource types */
 export type ResourceTarget = 
@@ -4817,6 +4819,12 @@ export interface DestroyStack {
 /** Configuration for a Discord alerter. */
 export interface DiscordAlerterEndpoint {
 	/** The Discord webhook url */
+	url: string;
+}
+
+/** Configuration for a Ntfy alerter. */
+export interface NtfyAlerterEndpoint {
+	/** The Ntfy url */
 	url: string;
 }
 
