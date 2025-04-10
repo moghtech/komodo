@@ -119,6 +119,12 @@ export type AlerterEndpoint =
  | {
     type: "Discord";
     params: DiscordAlerterEndpoint;
+ }
+/** Send alert to a Ntfy server */
+ | {
+    type: "Ntfy";
+    params: NtfyAlerterEndpoint;
+
 };
 /** Used to reference a specific resource across all resource types */
 export type ResourceTarget = {
@@ -4609,6 +4615,11 @@ export interface DestroyStack {
 /** Configuration for a Discord alerter. */
 export interface DiscordAlerterEndpoint {
     /** The Discord webhook url */
+    url: string;
+}
+/** Configuration for a Ntfy alerter. */
+export interface NtfyAlerterEndpoint {
+    /** The Ntfy webhook url */
     url: string;
 }
 export interface EnvironmentVar {

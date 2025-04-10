@@ -13,6 +13,7 @@ const ENDPOINT_TYPES: Types.AlerterEndpoint["type"][] = [
   "Custom",
   "Discord",
   "Slack",
+  "Ntfy",
 ];
 
 export const EndpointConfig = ({
@@ -67,5 +68,7 @@ const default_url = (type: Types.AlerterEndpoint["type"]) => {
     ? "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
     : type === "Discord"
     ? "https://discord.com/api/webhooks/XXXXXXXXXXXX/XXXX-XXXXXXXXXX"
+    : type === "Ntfy"
+    ? "https://ntfy.sh/komodo"
     : "";
 };
