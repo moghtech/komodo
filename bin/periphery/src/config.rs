@@ -37,6 +37,7 @@ pub fn periphery_config() -> &'static PeripheryConfig {
       port: env.periphery_port.unwrap_or(config.port),
       repo_dir: env.periphery_repo_dir.unwrap_or(config.repo_dir),
       stack_dir: env.periphery_stack_dir.unwrap_or(config.stack_dir),
+      build_dir: env.periphery_build_dir.unwrap_or(config.build_dir),
       stats_polling_rate: env
         .periphery_stats_polling_rate
         .unwrap_or(config.stats_polling_rate),

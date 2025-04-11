@@ -30,6 +30,12 @@ repo_dir = "/etc/komodo/repos"
 ## Default: /etc/komodo/stacks
 stack_dir = "/etc/komodo/stacks"
 
+## The directory periphery will use to manage builds.
+## The periphery user must have write access to this directory.
+## Env: PERIPHERY_BUILD_DIR
+## Default: /etc/komodo/builds
+build_dir = "/etc/komodo/builds"
+
 ## How often Periphery polls the host for system stats,
 ## like CPU / memory usage.
 ## Env: PERIPHERY_STATS_POLLING_RATE

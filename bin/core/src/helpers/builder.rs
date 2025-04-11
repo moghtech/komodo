@@ -188,7 +188,10 @@ pub async fn cleanup_builder_instance(
   match cleanup_data {
     BuildCleanupData::Server { repo_name } => {
       let _ = periphery
-        .request(api::git::DeleteRepo { name: repo_name })
+        .request(api::git::DeleteRepo {
+          name: repo_name,
+          is_build: true,
+        })
         .await;
     }
     BuildCleanupData::Aws {

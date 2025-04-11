@@ -8,18 +8,15 @@ pub fn extract_services_from_stack(
   stack: &Stack,
 ) -> Vec<StackServiceNames> {
   if let Some(mut services) = stack.info.deployed_services.clone() {
-    if services.iter().any(|service| service.image.is_empty()) {
-      for service in
-        services.iter_mut().filter(|s| s.image.is_empty())
-      {
-        service.image = stack
-          .info
-          .latest_services
-          .iter()
-          .find(|s| s.service_name == service.service_name)
-          .map(|s| s.image.clone())
-          .unwrap_or_default();
-      }
+    for service in services.iter_mut().filter(|s| s.image.is_empty())
+    {
+      service.image = stack
+        .info
+        .latest_services
+        .iter()
+        .find(|s| s.service_name == service.service_name)
+        .map(|s| s.image.clone())
+        .unwrap_or_default();
     }
     services
   } else {

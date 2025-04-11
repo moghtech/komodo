@@ -86,7 +86,13 @@ impl Resolve<ExecuteArgs> for RunBuild {
       PermissionLevel::Execute,
     )
     .await?;
+
     let mut vars_and_secrets = get_variables_and_secrets().await?;
+    // Add the $VERSION to variables. Use with [[$VERSION]]
+    vars_and_secrets.variables.insert(
+      String::from("$VERSION"),
+      build.config.version.to_string(),
+    );
 
     if build.config.builder_id.is_empty() {
       return Err(anyhow!("Must attach builder to RunBuild").into());
@@ -109,14 +115,6 @@ impl Resolve<ExecuteArgs> for RunBuild {
 
     update.version = build.config.version;
     update_update(update.clone()).await?;
-
-    // Add the $VERSION to variables. Use with [[$VERSION]]
-    if !vars_and_secrets.variables.contains_key("$VERSION") {
-      vars_and_secrets.variables.insert(
-        String::from("$VERSION"),
-        build.config.version.to_string(),
-      );
-    }
 
     let git_token = git_token(
       &build.config.git_provider,
@@ -177,7 +175,6 @@ impl Resolve<ExecuteArgs> for RunBuild {
     });
 
     // GET BUILDER PERIPHERY
-
     let (periphery, cleanup_data) = match get_builder_periphery(
       build.name.clone(),
       Some(build.config.version),
@@ -203,15 +200,42 @@ impl Resolve<ExecuteArgs> for RunBuild {
       }
     };
 
-    // CLONE REPO
+    // INTERPOLATE VARIABLES
     let secret_replacers = if !build.config.skip_secret_interp {
-      // Interpolate variables / secrets into pre build command
       let mut global_replacers = HashSet::new();
       let mut secret_replacers = HashSet::new();
 
       interpolate_variables_secrets_into_system_command(
         &vars_and_secrets,
         &mut build.config.pre_build,
+        &mut global_replacers,
+        &mut secret_replacers,
+      )?;
+
+      interpolate_variables_secrets_into_string(
+        &vars_and_secrets,
+        &mut build.config.build_args,
+        &mut global_replacers,
+        &mut secret_replacers,
+      )?;
+
+      interpolate_variables_secrets_into_string(
+        &vars_and_secrets,
+        &mut build.config.secret_args,
+        &mut global_replacers,
+        &mut secret_replacers,
+      )?;
+
+      interpolate_variables_secrets_into_string(
+        &vars_and_secrets,
+        &mut build.config.dockerfile,
+        &mut global_replacers,
+        &mut secret_replacers,
+      )?;
+
+      interpolate_variables_secrets_into_extra_args(
+        &vars_and_secrets,
+        &mut build.config.extra_args,
         &mut global_replacers,
         &mut secret_replacers,
       )?;
@@ -227,84 +251,56 @@ impl Resolve<ExecuteArgs> for RunBuild {
       Default::default()
     };
 
-    let res = tokio::select! {
-      res = periphery
-        .request(api::git::CloneRepo {
-          args: (&build).into(),
-          git_token,
-          environment: Default::default(),
-          env_file_path: Default::default(),
-          skip_secret_interp: Default::default(),
-          replacers: secret_replacers.into_iter().collect(),
-        }) => res,
-      _ = cancel.cancelled() => {
-        debug!("build cancelled during clone, cleaning up builder");
-        update.push_error_log("build cancelled", String::from("user cancelled build during repo clone"));
-        cleanup_builder_instance(periphery, cleanup_data, &mut update)
-          .await;
-        info!("builder cleaned up");
-        return handle_early_return(update, build.id, build.name, true).await
-      },
-    };
-
-    let commit_message = match res {
-      Ok(res) => {
-        debug!("finished repo clone");
-        update.logs.extend(res.logs);
-        update.commit_hash =
-          res.commit_hash.unwrap_or_default().to_string();
-        res.commit_message.unwrap_or_default()
-      }
-      Err(e) => {
-        warn!("failed build at clone repo | {e:#}");
-        update.push_error_log(
-          "clone repo",
-          format_serror(&e.context("failed to clone repo").into()),
-        );
-        Default::default()
-      }
-    };
-
-    update_update(update.clone()).await?;
-
-    if all_logs_success(&update.logs) {
-      let secret_replacers = if !build.config.skip_secret_interp {
-        // Interpolate variables / secrets into build args
-        let mut global_replacers = HashSet::new();
-        let mut secret_replacers = HashSet::new();
-
-        interpolate_variables_secrets_into_string(
-          &vars_and_secrets,
-          &mut build.config.build_args,
-          &mut global_replacers,
-          &mut secret_replacers,
-        )?;
-
-        interpolate_variables_secrets_into_string(
-          &vars_and_secrets,
-          &mut build.config.secret_args,
-          &mut global_replacers,
-          &mut secret_replacers,
-        )?;
-
-        interpolate_variables_secrets_into_extra_args(
-          &vars_and_secrets,
-          &mut build.config.extra_args,
-          &mut global_replacers,
-          &mut secret_replacers,
-        )?;
-
-        add_interp_update_log(
-          &mut update,
-          &global_replacers,
-          &secret_replacers,
-        );
-
-        secret_replacers
-      } else {
-        Default::default()
+    let commit_message = if !build.config.files_on_host
+      && !build.config.repo.is_empty()
+    {
+      // CLONE REPO
+      let res = tokio::select! {
+        res = periphery
+          .request(api::git::CloneRepo {
+            args: (&build).into(),
+            git_token,
+            environment: Default::default(),
+            env_file_path: Default::default(),
+            skip_secret_interp: Default::default(),
+            replacers: Default::default(),
+          }) => res,
+        _ = cancel.cancelled() => {
+          debug!("build cancelled during clone, cleaning up builder");
+          update.push_error_log("build cancelled", String::from("user cancelled build during repo clone"));
+          cleanup_builder_instance(periphery, cleanup_data, &mut update)
+            .await;
+          info!("builder cleaned up");
+          return handle_early_return(update, build.id, build.name, true).await
+        },
       };
 
+      let commit_message = match res {
+        Ok(res) => {
+          debug!("finished repo clone");
+          update.logs.extend(res.logs);
+          update.commit_hash =
+            res.commit_hash.unwrap_or_default().to_string();
+          res.commit_message.unwrap_or_default()
+        }
+        Err(e) => {
+          warn!("failed build at clone repo | {e:#}");
+          update.push_error_log(
+            "clone repo",
+            format_serror(&e.context("failed to clone repo").into()),
+          );
+          Default::default()
+        }
+      };
+
+      update_update(update.clone()).await?;
+
+      Some(commit_message)
+    } else {
+      None
+    };
+
+    if all_logs_success(&update.logs) {
       let res = tokio::select! {
         res = periphery
           .request(api::build::Build {

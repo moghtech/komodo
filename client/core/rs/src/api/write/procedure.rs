@@ -109,7 +109,6 @@ pub type UpdateProcedureResponse = Procedure;
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
-#[error(serror::Error)]
 pub struct RenameProcedure {
   /// The id or name of the Procedure to rename.
   pub id: String,

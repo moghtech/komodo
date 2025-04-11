@@ -21,6 +21,46 @@ pub type BuildResponse = Vec<Log>;
 
 //
 
+/// Get the dockerfile contents on the host, for builds using
+/// `files_on_host`.
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
+#[response(GetDockerfileContentsOnHostResponse)]
+#[error(serror::Error)]
+pub struct GetDockerfileContentsOnHost {
+  /// The name of the build
+  pub name: String,
+  /// The build path for the build.
+  pub build_path: String,
+  /// The dockerfile path for the build, relative to the build_path
+  pub dockerfile_path: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct GetDockerfileContentsOnHostResponse {
+  /// The dockerfile contents
+  pub contents: String,
+}
+
+//
+
+/// Write the dockerfile contents to the file on the host, for build using
+/// `files_on_host`.
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
+#[response(Log)]
+#[error(serror::Error)]
+pub struct WriteDockerfileContentsToHost {
+  /// The name of the build
+  pub name: String,
+  /// The build path for the build.
+  pub build_path: String,
+  /// The dockerfile path for the build, relative to the build_path
+  pub dockerfile_path: String,
+  /// The contents to write.
+  pub contents: String,
+}
+
+//
+
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[response(Log)]
 #[error(serror::Error)]

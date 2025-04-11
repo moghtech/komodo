@@ -64,11 +64,6 @@ services:
     logging:
       driver: ${COMPOSE_LOGGING_DRIVER:-local}
     env_file: ./compose.env
-    environment:
-      PERIPHERY_REPO_DIR: ${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}/repos
-      PERIPHERY_STACK_DIR: ${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}/stacks
-      PERIPHERY_SSL_KEY_FILE: ${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}/ssl/key.pem
-      PERIPHERY_SSL_CERT_FILE: ${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}/ssl/cert.pem
     volumes:
       ## Mount external docker socket
       - /var/run/docker.sock:/var/run/docker.sock

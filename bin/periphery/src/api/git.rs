@@ -1,4 +1,5 @@
 use anyhow::{Context, anyhow};
+use formatting::format_serror;
 use git::GitRes;
 use komodo_client::entities::{CloneArgs, LatestCommit, update::Log};
 use periphery_client::api::git::{
@@ -12,7 +13,7 @@ use tokio::fs;
 use crate::config::periphery_config;
 
 impl Resolve<super::Args> for GetLatestCommit {
-  #[instrument(name = "CloneRepo", level = "debug")]
+  #[instrument(name = "GetLatestCommit", level = "debug")]
   async fn resolve(
     self,
     _: &super::Args,
@@ -68,9 +69,14 @@ impl Resolve<super::Args> for CloneRepo {
           )?,
       ),
     };
+    let parent_dir = if args.is_build {
+      &periphery_config().build_dir
+    } else {
+      &periphery_config().repo_dir
+    };
     git::clone(
       args,
-      &periphery_config().repo_dir,
+      parent_dir,
       token,
       &environment,
       &env_file_path,
@@ -133,9 +139,14 @@ impl Resolve<super::Args> for PullRepo {
           )?,
       ),
     };
+    let parent_dir = if args.is_build {
+      &periphery_config().build_dir
+    } else {
+      &periphery_config().repo_dir
+    };
     git::pull(
       args,
-      &periphery_config().repo_dir,
+      parent_dir,
       token,
       &environment,
       &env_file_path,
@@ -198,9 +209,14 @@ impl Resolve<super::Args> for PullOrCloneRepo {
           )?,
       ),
     };
+    let parent_dir = if args.is_build {
+      &periphery_config().build_dir
+    } else {
+      &periphery_config().repo_dir
+    };
     git::pull_or_clone(
       args,
-      &periphery_config().repo_dir,
+      parent_dir,
       token,
       &environment,
       &env_file_path,
@@ -254,16 +270,25 @@ impl Resolve<super::Args> for RenameRepo {
 impl Resolve<super::Args> for DeleteRepo {
   #[instrument(name = "DeleteRepo")]
   async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
-    let DeleteRepo { name } = self;
+    let DeleteRepo { name, is_build } = self;
     // If using custom clone path, it will be passed by core instead of name.
     // So the join will resolve to just the absolute path.
-    let deleted =
-      fs::remove_dir_all(periphery_config().repo_dir.join(&name))
-        .await;
-    let msg = match deleted {
-      Ok(_) => format!("Deleted Repo {name}"),
-      Err(_) => format!("No Repo at {name} to delete"),
+    let root = if is_build {
+      &periphery_config().build_dir
+    } else {
+      &periphery_config().repo_dir
     };
-    Ok(Log::simple("Delete Repo on Host", msg))
+    let full_path = root.join(&name);
+    let deleted =
+      fs::remove_dir_all(&full_path).await.with_context(|| {
+        format!("Failed to delete repo at {full_path:?}")
+      });
+    let log = match deleted {
+      Ok(_) => {
+        Log::simple("Delete repo", format!("Deleted Repo {name}"))
+      }
+      Err(e) => Log::error("Delete repo", format_serror(&e.into())),
+    };
+    Ok(log)
   }
 }

@@ -79,7 +79,6 @@ pub struct UpdateServer {
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
-#[error(serror::Error)]
 pub struct RenameServer {
   /// The id or name of the Server to rename.
   pub id: String,
@@ -99,7 +98,6 @@ pub struct RenameServer {
 )]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
 #[error(serror::Error)]
 pub struct CreateNetwork {
   /// Server Id or name

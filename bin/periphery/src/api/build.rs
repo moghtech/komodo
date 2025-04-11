@@ -1,8 +1,12 @@
-use std::{fmt::Write, path::Path};
+use std::{
+  fmt::Write,
+  path::{Path, PathBuf},
+};
 
 use anyhow::{Context, anyhow};
 use command::{
-  run_komodo_command, run_komodo_command_with_interpolation,
+  run_komodo_command, run_komodo_command_multiline,
+  run_komodo_command_with_interpolation,
 };
 use formatting::format_serror;
 use komodo_client::{
@@ -16,15 +20,95 @@ use komodo_client::{
   parsers::QUOTE_PATTERN,
 };
 use periphery_client::api::build::{
-  self, PruneBuilders, PruneBuildx,
+  self, GetDockerfileContentsOnHost,
+  GetDockerfileContentsOnHostResponse, PruneBuilders, PruneBuildx,
+  WriteDockerfileContentsToHost,
 };
 use resolver_api::Resolve;
+use tokio::fs;
 
 use crate::{
   config::periphery_config,
   docker::docker_login,
   helpers::{parse_extra_args, parse_labels},
 };
+
+impl Resolve<super::Args> for GetDockerfileContentsOnHost {
+  #[instrument(name = "GetDockerfileContentsOnHost", level = "debug")]
+  async fn resolve(
+    self,
+    _: &super::Args,
+  ) -> serror::Result<GetDockerfileContentsOnHostResponse> {
+    let GetDockerfileContentsOnHost {
+      name,
+      build_path,
+      dockerfile_path,
+    } = self;
+
+    let root =
+      periphery_config().build_dir.join(to_komodo_name(&name));
+    let build_dir =
+      root.join(&build_path).components().collect::<PathBuf>();
+
+    if !build_dir.exists() {
+      fs::create_dir_all(&build_dir)
+        .await
+        .context("Failed to initialize build directory")?;
+    }
+
+    let full_path = build_dir
+      .join(&dockerfile_path)
+      .components()
+      .collect::<PathBuf>();
+
+    let contents =
+      fs::read_to_string(&full_path).await.with_context(|| {
+        format!("Failed to read dockerfile contents at {full_path:?}")
+      })?;
+
+    Ok(GetDockerfileContentsOnHostResponse { contents })
+  }
+}
+
+impl Resolve<super::Args> for WriteDockerfileContentsToHost {
+  #[instrument(
+    name = "WriteDockerfileContentsToHost",
+    skip_all,
+    fields(
+      stack = &self.name,
+      build_path = &self.build_path,
+      dockerfile_path = &self.dockerfile_path,
+    )
+  )]
+  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
+    let WriteDockerfileContentsToHost {
+      name,
+      build_path,
+      dockerfile_path,
+      contents,
+    } = self;
+    let file_path = periphery_config()
+      .build_dir
+      .join(to_komodo_name(&name))
+      .join(&build_path)
+      .join(dockerfile_path)
+      .components()
+      .collect::<PathBuf>();
+    // Ensure parent directory exists
+    if let Some(parent) = file_path.parent() {
+      fs::create_dir_all(&parent)
+        .await
+        .with_context(|| format!("Failed to initialize dockerfile parent directory {parent:?}"))?;
+    }
+    fs::write(&file_path, contents).await.with_context(|| {
+      format!("Failed to write dockerfile contents to {file_path:?}")
+    })?;
+    Ok(Log::simple(
+      "Write contents to host",
+      format!("File contents written to {file_path:?}"),
+    ))
+  }
+}
 
 impl Resolve<super::Args> for build::Build {
   #[instrument(name = "Build", skip_all, fields(build = self.build.name.to_string()))]
@@ -36,7 +120,7 @@ impl Resolve<super::Args> for build::Build {
       build,
       registry_token,
       additional_tags,
-      replacers: core_replacers,
+      replacers: mut core_replacers,
     } = self;
     let Build {
       name,
@@ -53,10 +137,18 @@ impl Resolve<super::Args> for build::Build {
           extra_args,
           use_buildx,
           image_registry,
+          repo,
+          files_on_host,
+          dockerfile,
+          pre_build,
           ..
         },
       ..
     } = &build;
+
+    if !*files_on_host && repo.is_empty() && dockerfile.is_empty() {
+      return Err(anyhow!("Build must be files on host mode, have a repo attached, or have dockerfile contents set to build").into());
+    }
 
     let mut logs = Vec::new();
 
@@ -82,13 +174,59 @@ impl Resolve<super::Args> for build::Build {
 
     let name = to_komodo_name(name);
 
-    // Get paths
-    let build_dir =
-      periphery_config().repo_dir.join(&name).join(build_path);
-    let dockerfile_path = match optional_string(dockerfile_path) {
-      Some(dockerfile_path) => dockerfile_path.to_owned(),
-      None => "Dockerfile".to_owned(),
+    let build_path =
+      periphery_config().build_dir.join(&name).join(build_path);
+    let dockerfile_path = optional_string(dockerfile_path)
+      .unwrap_or("Dockerfile".to_owned());
+
+    // Write UI defined Dockerfile to host
+    if !*files_on_host && repo.is_empty() && !dockerfile.is_empty() {
+      let dockerfile = if *skip_secret_interp {
+        dockerfile.to_string()
+      } else {
+        let (dockerfile, replacers) = svi::interpolate_variables(
+          dockerfile,
+          &periphery_config().secrets,
+          svi::Interpolator::DoubleBrackets,
+          true,
+        ).context("Failed to interpolate variables into UI defined dockerfile")?;
+        core_replacers.extend(replacers);
+        dockerfile
+      };
+
+      tokio::fs::write(build_path.join(&dockerfile_path), dockerfile)
+        .await
+        .context("Failed to write Dockerfile to host")?;
     };
+
+    // Pre Build
+    if !pre_build.is_none() {
+      let pre_build_path = build_path.join(&pre_build.path);
+      if let Some(log) = if !skip_secret_interp {
+        run_komodo_command_with_interpolation(
+          "Pre Build",
+          Some(pre_build_path.as_path()),
+          &pre_build.command,
+          true,
+          &periphery_config().secrets,
+          &core_replacers,
+        )
+        .await
+      } else {
+        run_komodo_command_multiline(
+          "Pre Build",
+          Some(pre_build_path.as_path()),
+          &pre_build.command,
+        )
+        .await
+      } {
+        let success = log.success;
+        logs.push(log);
+        if success {
+          return Ok(logs);
+        }
+      };
+    }
 
     // Get command parts
     let image_name =
@@ -109,7 +247,7 @@ impl Resolve<super::Args> for build::Build {
       .context("Invalid secret_args")?;
     let command_secret_args = parse_secret_args(
       &secret_args,
-      &build_dir,
+      &build_path,
       *skip_secret_interp,
     )
     .await?;
@@ -131,14 +269,14 @@ impl Resolve<super::Args> for build::Build {
     if *skip_secret_interp {
       let build_log = run_komodo_command(
         "Docker Build",
-        build_dir.as_ref(),
+        build_path.as_ref(),
         command,
       )
       .await;
       logs.push(build_log);
     } else if let Some(log) = run_komodo_command_with_interpolation(
       "Docker Build",
-      build_dir.as_ref(),
+      build_path.as_ref(),
       command,
       false,
       &periphery_config().secrets,

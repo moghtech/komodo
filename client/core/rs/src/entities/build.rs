@@ -73,11 +73,24 @@ pub enum BuildState {
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct BuildInfo {
+  /// The timestamp build was last built.
   pub last_built_at: I64,
+
   /// Latest built short commit hash, or null.
   pub built_hash: Option<String>,
   /// Latest built commit message, or null. Only for repo based stacks
   pub built_message: Option<String>,
+  /// The last built dockerfile contents.
+  /// This is updated whenever Komodo successfully runs the build.
+  pub built_contents: Option<String>,
+
+  /// The remote dockerfile contents, whether on host or in repo.
+  /// This is updated whenever Komodo refreshes the build cache.
+  /// It will be empty if the dockerfile is defined directly in the build config.
+  pub remote_contents: Option<String>,
+  /// If there was an error in getting the remote contents, it will be here.
+  pub remote_error: Option<String>,
+
   /// Latest remote short commit hash, or null.
   pub latest_hash: Option<String>,
   /// Latest remote commit message, or null
@@ -192,10 +205,13 @@ pub struct BuildConfig {
   #[builder(default)]
   pub webhook_secret: String,
 
-  /// The optional command run after repo clone and before docker build.
+  /// If this is checked, the build will source the files on the host.
+  /// Use `build_path` and `dockerfile_path` to specify the path on the host.
+  /// This is useful for those who wish to setup their files on the host,
+  /// rather than defining the contents in UI or in a git repo.
   #[serde(default)]
   #[builder(default)]
-  pub pre_build: SystemCommand,
+  pub files_on_host: bool,
 
   /// The path of the docker build context relative to the root of the repo.
   /// Default: "." (the root of the repo).
@@ -237,6 +253,17 @@ pub struct BuildConfig {
   ))]
   #[builder(default)]
   pub extra_args: Vec<String>,
+
+  /// The optional command run after repo clone and before docker build.
+  #[serde(default)]
+  #[builder(default)]
+  pub pre_build: SystemCommand,
+
+  /// UI defined dockerfile contents.
+  /// Supports variable / secret interpolation.
+  #[serde(default)]
+  #[builder(default)]
+  pub dockerfile: String,
 
   /// Docker build arguments.
   ///
@@ -338,6 +365,8 @@ impl Default for BuildConfig {
       image_registry: Default::default(),
       webhook_enabled: default_webhook_enabled(),
       webhook_secret: Default::default(),
+      dockerfile: Default::default(),
+      files_on_host: Default::default(),
     }
   }
 }

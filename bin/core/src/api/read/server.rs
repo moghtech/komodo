@@ -14,7 +14,9 @@ use komodo_client::{
     ResourceTarget,
     deployment::Deployment,
     docker::{
-      container::{Container, ContainerListItem},
+      container::{
+        Container, ContainerListItem, ContainerStateStatusEnum,
+      },
       image::{Image, ImageHistoryResponseItem},
       network::Network,
       volume::Volume,
@@ -410,6 +412,45 @@ impl Resolve<ReadArgs> for ListAllDockerContainers {
     }
 
     Ok(containers)
+  }
+}
+
+impl Resolve<ReadArgs> for GetDockerContainersSummary {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<GetDockerContainersSummaryResponse> {
+    let servers = resource::list_full_for_user::<Server>(
+      Default::default(),
+      user,
+      &[],
+    )
+    .await
+    .context("failed to get servers from db")?;
+
+    let mut res = GetDockerContainersSummaryResponse::default();
+
+    for server in servers {
+      let cache = server_status_cache()
+        .get_or_insert_default(&server.id)
+        .await;
+
+      if let Some(containers) = &cache.containers {
+        for container in containers {
+          res.total += 1;
+          match container.state {
+            ContainerStateStatusEnum::Created
+            | ContainerStateStatusEnum::Paused
+            | ContainerStateStatusEnum::Exited => res.stopped += 1,
+            ContainerStateStatusEnum::Running => res.running += 1,
+            ContainerStateStatusEnum::Empty => res.unknown += 1,
+            _ => res.unhealthy += 1,
+          }
+        }
+      }
+    }
+
+    Ok(res)
   }
 }
 

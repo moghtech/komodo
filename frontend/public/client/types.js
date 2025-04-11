@@ -236,6 +236,7 @@ export var Operation;
     Operation["DeleteBuild"] = "DeleteBuild";
     Operation["RunBuild"] = "RunBuild";
     Operation["CancelBuild"] = "CancelBuild";
+    Operation["WriteDockerfile"] = "WriteDockerfile";
     Operation["CreateRepo"] = "CreateRepo";
     Operation["UpdateRepo"] = "UpdateRepo";
     Operation["RenameRepo"] = "RenameRepo";
