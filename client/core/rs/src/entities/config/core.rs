@@ -44,6 +44,8 @@ pub struct Env {
   pub komodo_host: Option<String>,
   /// Override `port`
   pub komodo_port: Option<u16>,
+  /// Override `listener_address`
+  pub komodo_listener_address: Option<String>,
   /// Override `passkey`
   pub komodo_passkey: Option<String>,
   /// Override `passkey` with file
@@ -255,6 +257,11 @@ pub struct CoreConfig {
   /// Default: 9120.
   #[serde(default = "default_core_port")]
   pub port: u16,
+
+  /// Address the core web server listens on.
+  /// Default: [::].
+   #[serde(default = "default_core_listener_address")]
+  pub listener_address: String,
 
   /// Sent in auth header with req to periphery.
   /// Should be some secure hash, maybe 20-40 chars.
@@ -521,6 +528,10 @@ fn default_core_port() -> u16 {
   9120
 }
 
+fn default_core_listener_address() -> String {
+  "[::]".to_string()
+}
+
 fn default_frontend_path() -> String {
   "/app/frontend".to_string()
 }
@@ -571,6 +582,7 @@ impl CoreConfig {
       title: config.title,
       host: config.host,
       port: config.port,
+      listener_address: config.listener_address,
       passkey: empty_or_redacted(&config.passkey),
       first_server: config.first_server,
       frontend_path: config.frontend_path,

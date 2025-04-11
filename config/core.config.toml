@@ -33,6 +33,11 @@ host = "https://demo.komo.do"
 ## Default: 9120
 port = 9120
 
+## The address the core system will listen on.
+## Env: KOMODO_LISTENER_ADDRESS
+## Default: [::]
+listener_address = "[::]"
+
 ## This is the token used to authenticate core requests to periphery.
 ## Ensure this matches a passkey in the connected periphery configs.
 ## If the periphery servers don't have passkeys configured, this doesn't need to be changed.
