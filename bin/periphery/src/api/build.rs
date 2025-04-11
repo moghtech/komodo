@@ -5,7 +5,8 @@ use std::{
 
 use anyhow::{Context, anyhow};
 use command::{
-  run_komodo_command, run_komodo_command_with_interpolation,
+  run_komodo_command, run_komodo_command_multiline,
+  run_komodo_command_with_interpolation,
 };
 use formatting::format_serror;
 use komodo_client::{
@@ -119,7 +120,7 @@ impl Resolve<super::Args> for build::Build {
       build,
       registry_token,
       additional_tags,
-      replacers: core_replacers,
+      replacers: mut core_replacers,
     } = self;
     let Build {
       name,
@@ -139,6 +140,7 @@ impl Resolve<super::Args> for build::Build {
           repo,
           files_on_host,
           dockerfile,
+          pre_build,
           ..
         },
       ..
@@ -172,17 +174,59 @@ impl Resolve<super::Args> for build::Build {
 
     let name = to_komodo_name(name);
 
-    let build_dir =
+    let build_path =
       periphery_config().build_dir.join(&name).join(build_path);
     let dockerfile_path = optional_string(dockerfile_path)
       .unwrap_or("Dockerfile".to_owned());
 
     // Write UI defined Dockerfile to host
     if !*files_on_host && repo.is_empty() && !dockerfile.is_empty() {
-      tokio::fs::write(build_dir.join(&dockerfile_path), dockerfile)
+      let dockerfile = if *skip_secret_interp {
+        dockerfile.to_string()
+      } else {
+        let (dockerfile, replacers) = svi::interpolate_variables(
+          dockerfile,
+          &periphery_config().secrets,
+          svi::Interpolator::DoubleBrackets,
+          true,
+        ).context("Failed to interpolate variables into UI defined dockerfile")?;
+        core_replacers.extend(replacers);
+        dockerfile
+      };
+
+      tokio::fs::write(build_path.join(&dockerfile_path), dockerfile)
         .await
         .context("Failed to write Dockerfile to host")?;
     };
+
+    // Pre Build
+    if !pre_build.is_none() {
+      let pre_build_path = build_path.join(&pre_build.path);
+      if let Some(log) = if !skip_secret_interp {
+        run_komodo_command_with_interpolation(
+          "Pre Build",
+          Some(pre_build_path.as_path()),
+          &pre_build.command,
+          true,
+          &periphery_config().secrets,
+          &core_replacers,
+        )
+        .await
+      } else {
+        run_komodo_command_multiline(
+          "Pre Build",
+          Some(pre_build_path.as_path()),
+          &pre_build.command,
+        )
+        .await
+      } {
+        let success = log.success;
+        logs.push(log);
+        if success {
+          return Ok(logs);
+        }
+      };
+    }
 
     // Get command parts
     let image_name =
@@ -203,7 +247,7 @@ impl Resolve<super::Args> for build::Build {
       .context("Invalid secret_args")?;
     let command_secret_args = parse_secret_args(
       &secret_args,
-      &build_dir,
+      &build_path,
       *skip_secret_interp,
     )
     .await?;
@@ -225,14 +269,14 @@ impl Resolve<super::Args> for build::Build {
     if *skip_secret_interp {
       let build_log = run_komodo_command(
         "Docker Build",
-        build_dir.as_ref(),
+        build_path.as_ref(),
         command,
       )
       .await;
       logs.push(build_log);
     } else if let Some(log) = run_komodo_command_with_interpolation(
       "Docker Build",
-      build_dir.as_ref(),
+      build_path.as_ref(),
       command,
       false,
       &periphery_config().secrets,

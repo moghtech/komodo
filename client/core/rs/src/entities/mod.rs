@@ -463,7 +463,7 @@ impl From<&self::build::Build> for CloneArgs {
       commit: optional_string(&build.config.commit),
       is_build: true,
       destination: None,
-      on_clone: build.config.pre_build.clone().into_option(),
+      on_clone: None,
       on_pull: None,
       https: build.config.git_https,
       account: optional_string(&build.config.git_account),

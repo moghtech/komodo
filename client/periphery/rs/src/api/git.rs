@@ -106,4 +106,6 @@ pub struct RenameRepo {
 #[error(serror::Error)]
 pub struct DeleteRepo {
   pub name: String,
+  /// Clears 
+  pub is_build: bool,
 }

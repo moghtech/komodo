@@ -170,6 +170,7 @@ impl super::KomodoResource for Repo {
         } else {
           repo.config.path.clone()
         },
+        is_build: false,
       })
       .await
     {
