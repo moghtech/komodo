@@ -18,6 +18,11 @@
 ## Default: 8120
 port = 8120
 
+## The address the server will listen on.
+## Env: PERIPHERY_LISTENER_ADDRESS
+## Default: [::]
+listener_address = "[::]"
+
 ## The directory periphery will use to manage repos.
 ## The periphery user must have write access to this directory.
 ## Env: PERIPHERY_REPO_DIR
