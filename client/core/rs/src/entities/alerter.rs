@@ -111,6 +111,9 @@ pub enum AlerterEndpoint {
 
   /// Send alert to a Discord app
   Discord(DiscordAlerterEndpoint),
+
+  /// Send alert to Ntfy
+  Ntfy(NtfyAlerterEndpoint),
 }
 
 impl Default for AlerterEndpoint {
@@ -194,6 +197,31 @@ fn default_discord_url() -> String {
     "https://discord.com/api/webhooks/XXXXXXXXXXXX/XXXX-XXXXXXXXXX",
   )
 }
+
+/// Configuration for a Ntfy alerter.
+#[typeshare]
+#[derive(
+  Debug, Clone, PartialEq, Serialize, Deserialize, Builder,
+)]
+pub struct NtfyAlerterEndpoint {
+  /// The ntfy topic URL
+  #[serde(default = "default_ntfy_url")]
+  #[builder(default = "default_ntfy_url()")]
+  pub url: String,
+}
+
+impl Default for NtfyAlerterEndpoint {
+  fn default() -> Self {
+    Self {
+      url: default_ntfy_url(),
+    }
+  }
+}
+
+fn default_ntfy_url() -> String {
+  String::from("http://localhost:8080/komodo")
+}
+
 
 // QUERY
 

@@ -19,6 +19,7 @@ use crate::{config::core_config, state::db_client};
 
 mod discord;
 mod slack;
+mod ntfy;
 
 #[instrument(level = "debug")]
 pub async fn send_alerts(alerts: &[Alert]) {
@@ -126,6 +127,11 @@ pub async fn send_alert_to_alerter(
           "Failed to send alert to Discord Alerter {}",
           alerter.name
         )
+      })
+    }
+    AlerterEndpoint::Ntfy(NtfyAlerterEndpoint { url }) => {
+      ntfy::send_alert(url, alert).await.with_context(|| {
+        format!("Failed to send alert to ntfy Alerter {}", alerter.name)
       })
     }
   }
