@@ -1,11 +1,12 @@
 use std::sync::OnceLock;
-use tracing::{debug, error, instrument};
-use anyhow::{Context, anyhow};
 
 use super::*;
 
 #[instrument(level = "debug")]
-pub async fn send_alert(url: &str, alert: &Alert) -> anyhow::Result<()> {
+pub async fn send_alert(
+  url: &str,
+  alert: &Alert,
+) -> anyhow::Result<()> {
   let level = fmt_level(alert.level);
   let content = match &alert.data {
     AlertData::Test { id, name } => {
@@ -15,7 +16,12 @@ pub async fn send_alert(url: &str, alert: &Alert) -> anyhow::Result<()> {
         name,
       )
     }
-    AlertData::ServerUnreachable { id, name, region, err } => {
+    AlertData::ServerUnreachable {
+      id,
+      name,
+      region,
+      err,
+    } => {
       let region = fmt_region(region);
       let link = resource_link(ResourceTargetVariant::Server, id);
       match alert.level {
@@ -38,7 +44,12 @@ pub async fn send_alert(url: &str, alert: &Alert) -> anyhow::Result<()> {
         _ => unreachable!(),
       }
     }
-    AlertData::ServerCpu { id, name, region, percentage } => {
+    AlertData::ServerCpu {
+      id,
+      name,
+      region,
+      percentage,
+    } => {
       let region = fmt_region(region);
       let link = resource_link(ResourceTargetVariant::Server, id);
       format!(
@@ -46,7 +57,13 @@ pub async fn send_alert(url: &str, alert: &Alert) -> anyhow::Result<()> {
         name, region,
       )
     }
-    AlertData::ServerMem { id, name, region, used_gb, total_gb } => {
+    AlertData::ServerMem {
+      id,
+      name,
+      region,
+      used_gb,
+      total_gb,
+    } => {
       let region = fmt_region(region);
       let link = resource_link(ResourceTargetVariant::Server, id);
       let percentage = 100.0 * used_gb / total_gb;
@@ -55,7 +72,14 @@ pub async fn send_alert(url: &str, alert: &Alert) -> anyhow::Result<()> {
         name, region,
       )
     }
-    AlertData::ServerDisk { id, name, region, path, used_gb, total_gb } => {
+    AlertData::ServerDisk {
+      id,
+      name,
+      region,
+      path,
+      used_gb,
+      total_gb,
+    } => {
       let region = fmt_region(region);
       let link = resource_link(ResourceTargetVariant::Server, id);
       let percentage = 100.0 * used_gb / total_gb;
@@ -64,7 +88,14 @@ pub async fn send_alert(url: &str, alert: &Alert) -> anyhow::Result<()> {
         name, region, path,
       )
     }
-    AlertData::ContainerStateChange { id, name, server_id: _server_id, server_name, from, to } => {
+    AlertData::ContainerStateChange {
+      id,
+      name,
+      server_id: _server_id,
+      server_name,
+      from,
+      to,
+    } => {
       let link = resource_link(ResourceTargetVariant::Deployment, id);
       let to_state = fmt_docker_container_state(to);
       format!(
@@ -72,21 +103,40 @@ pub async fn send_alert(url: &str, alert: &Alert) -> anyhow::Result<()> {
         name, to_state, server_name, from,
       )
     }
-    AlertData::DeploymentImageUpdateAvailable { id, name, server_id: _server_id, server_name, image } => {
+    AlertData::DeploymentImageUpdateAvailable {
+      id,
+      name,
+      server_id: _server_id,
+      server_name,
+      image,
+    } => {
       let link = resource_link(ResourceTargetVariant::Deployment, id);
       format!(
         "⬆ Deployment {} has an update available\nserver: {}\nimage: {}\n{link}",
         name, server_name, image,
       )
     }
-    AlertData::DeploymentAutoUpdated { id, name, server_id: _server_id, server_name, image } => {
+    AlertData::DeploymentAutoUpdated {
+      id,
+      name,
+      server_id: _server_id,
+      server_name,
+      image,
+    } => {
       let link = resource_link(ResourceTargetVariant::Deployment, id);
       format!(
         "⬆ Deployment {} was updated automatically\nserver: {}\nimage: {}\n{link}",
         name, server_name, image,
       )
     }
-    AlertData::StackStateChange { id, name, server_id: _server_id, server_name, from, to } => {
+    AlertData::StackStateChange {
+      id,
+      name,
+      server_id: _server_id,
+      server_name,
+      from,
+      to,
+    } => {
       let link = resource_link(ResourceTargetVariant::Stack, id);
       let to_state = fmt_stack_state(to);
       format!(
@@ -94,30 +144,48 @@ pub async fn send_alert(url: &str, alert: &Alert) -> anyhow::Result<()> {
         name, to_state, server_name, from,
       )
     }
-    AlertData::StackImageUpdateAvailable { id, name, server_id: _server_id, server_name, service, image } => {
+    AlertData::StackImageUpdateAvailable {
+      id,
+      name,
+      server_id: _server_id,
+      server_name,
+      service,
+      image,
+    } => {
       let link = resource_link(ResourceTargetVariant::Stack, id);
       format!(
         "⬆ Stack {} has an update available\nserver: {}\nservice: {}\nimage: {}\n{link}",
         name, server_name, service, image,
       )
     }
-    AlertData::StackAutoUpdated { id, name, server_id: _server_id, server_name, images } => {
+    AlertData::StackAutoUpdated {
+      id,
+      name,
+      server_id: _server_id,
+      server_name,
+      images,
+    } => {
       let link = resource_link(ResourceTargetVariant::Stack, id);
-      let images_label = if images.len() > 1 { "images" } else { "image" };
+      let images_label =
+        if images.len() > 1 { "images" } else { "image" };
       let images_str = images.join(", ");
       format!(
         "⬆ Stack {} was updated automatically ⏫\nserver: {}\n{}: {}\n{link}",
         name, server_name, images_label, images_str,
       )
     }
-    AlertData::AwsBuilderTerminationFailed { instance_id, message } => {
+    AlertData::AwsBuilderTerminationFailed {
+      instance_id,
+      message,
+    } => {
       format!(
         "{level} | Failed to terminate AWS builder instance\ninstance id: {}\n{}",
         instance_id, message,
       )
     }
     AlertData::ResourceSyncPendingUpdates { id, name } => {
-      let link = resource_link(ResourceTargetVariant::ResourceSync, id);
+      let link =
+        resource_link(ResourceTargetVariant::ResourceSync, id);
       format!(
         "{level} | Pending resource sync updates on {}\n{link}",
         name,
@@ -132,25 +200,25 @@ pub async fn send_alert(url: &str, alert: &Alert) -> anyhow::Result<()> {
     }
     AlertData::RepoBuildFailed { id, name } => {
       let link = resource_link(ResourceTargetVariant::Repo, id);
-      format!(
-        "{level} | Repo build for {} failed\n{link}",
-        name,
-      )
+      format!("{level} | Repo build for {} failed\n{link}", name,)
     }
     AlertData::None {} => Default::default(),
   };
 
   if !content.is_empty() {
-    send_message(url, &content).await?;
+    send_message(url, content).await?;
   }
   Ok(())
 }
 
-async fn send_message(url: &str, content: &str) -> anyhow::Result<()> {
+async fn send_message(
+  url: &str,
+  content: String,
+) -> anyhow::Result<()> {
   let response = http_client()
     .post(url)
     .header("Title", "ntfy Alert")
-    .body(content.to_string())
+    .body(content)
     .send()
     .await
     .context("Failed to send message")?;
@@ -166,7 +234,11 @@ async fn send_message(url: &str, content: &str) -> anyhow::Result<()> {
         status
       )
     })?;
-    Err(anyhow!("Failed to send message to ntfy | {} | {}", status, text))
+    Err(anyhow!(
+      "Failed to send message to ntfy | {} | {}",
+      status,
+      text
+    ))
   }
 }
 
