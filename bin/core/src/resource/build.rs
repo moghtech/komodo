@@ -1,26 +1,32 @@
 use std::time::Duration;
 
 use anyhow::Context;
-use komodo_client::entities::{
-  Operation, ResourceTargetVariant,
-  build::{
-    Build, BuildConfig, BuildConfigDiff, BuildInfo, BuildListItem,
-    BuildListItemInfo, BuildQuerySpecifics, BuildState,
-    PartialBuildConfig,
+use formatting::format_serror;
+use komodo_client::{
+  api::write::RefreshBuildCache,
+  entities::{
+    Operation, ResourceTargetVariant,
+    build::{
+      Build, BuildConfig, BuildConfigDiff, BuildInfo, BuildListItem,
+      BuildListItemInfo, BuildQuerySpecifics, BuildState,
+      PartialBuildConfig,
+    },
+    builder::Builder,
+    environment_vars_from_str,
+    permission::PermissionLevel,
+    resource::Resource,
+    update::Update,
+    user::{User, build_user},
   },
-  builder::Builder,
-  environment_vars_from_str,
-  permission::PermissionLevel,
-  resource::Resource,
-  update::Update,
-  user::User,
 };
 use mungos::{
   find::find_collect,
   mongodb::{Collection, bson::doc, options::FindOptions},
 };
+use resolver_api::Resolve;
 
 use crate::{
+  api::write::WriteArgs,
   config::core_config,
   helpers::{empty_or_only_spaces, query::get_latest_update},
   state::{action_states, build_state_cache, db_client},
@@ -96,10 +102,23 @@ impl super::KomodoResource for Build {
   }
 
   async fn post_create(
-    _created: &Resource<Self::Config, Self::Info>,
-    _update: &mut Update,
+    created: &Resource<Self::Config, Self::Info>,
+    update: &mut Update,
   ) -> anyhow::Result<()> {
     refresh_build_state_cache().await;
+    if let Err(e) = (RefreshBuildCache {
+      build: created.name.clone(),
+    })
+    .resolve(&WriteArgs {
+      user: build_user().to_owned(),
+    })
+    .await
+    {
+      update.push_error_log(
+        "Refresh build cache",
+        format_serror(&e.error.context("The build cache has failed to refresh. This may be due to a misconfiguration of the Build").into())
+      );
+    };
     Ok(())
   }
 
