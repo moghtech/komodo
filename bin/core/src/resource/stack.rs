@@ -162,7 +162,7 @@ impl super::KomodoResource for Stack {
     {
       update.push_error_log(
         "Refresh stack cache",
-        format_serror(&e.error.context("The stack cache has failed to refresh. This is likely due to a misconfiguration of the Stack").into())
+        format_serror(&e.error.context("The stack cache has failed to refresh. This may be due to a misconfiguration of the Stack").into())
       );
     };
     if created.config.server_id.is_empty() {
