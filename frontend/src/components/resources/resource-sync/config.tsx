@@ -90,7 +90,7 @@ export const ResourceSyncConfig = ({
   const disabled = global_disabled || perms !== Types.PermissionLevel.Write;
 
   const git_provider = update.git_provider ?? config.git_provider;
-  const integration = getWebhookIntegration(integrations, git_provider);
+  const webhook_integration = getWebhookIntegration(integrations, git_provider);
 
   const mode = getSyncMode(update, config);
   const managed = update.managed ?? config.managed ?? false;
@@ -360,7 +360,7 @@ export const ResourceSyncConfig = ({
                 description="Trigger an update of the pending sync cache, to display the changes in the UI on push."
               >
                 <CopyWebhook
-                  integration={integration}
+                  integration={webhook_integration}
                   path={`/sync/${id_or_name === "Id" ? id : name}/refresh`}
                 />
               </ConfigItem>
@@ -371,7 +371,7 @@ export const ResourceSyncConfig = ({
                 description="Trigger an execution of the sync on push."
               >
                 <CopyWebhook
-                  integration={integration}
+                  integration={webhook_integration}
                   path={`/sync/${id_or_name === "Id" ? id : name}/sync`}
                 />
               </ConfigItem>
