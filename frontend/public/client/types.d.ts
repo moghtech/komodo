@@ -394,26 +394,28 @@ export declare enum BuildState {
     Unknown = "Unknown"
 }
 export interface BuildListItemInfo {
+    /** State of the build. Reflects whether most recent build successful. */
+    state: BuildState;
     /** Unix timestamp in milliseconds of last build */
     last_built_at: I64;
     /** The current version of the build */
     version: Version;
     /** The builder attached to build. */
     builder_id: string;
+    /** Whether build is in files on host mode. */
+    files_on_host: boolean;
     /** The git provider domain */
-    git_provider: string;
-    /** The image registry domain */
-    image_registry_domain: string;
+    git_provider?: string;
     /** The repo used as the source of the build */
-    repo: string;
+    repo?: string;
     /** The branch of the repo */
-    branch: string;
-    /** State of the build. Reflects whether most recent build successful. */
-    state: BuildState;
+    branch?: string;
     /** Latest built short commit hash, or null. */
     built_hash?: string;
     /** Latest short commit hash, or null. Only for repo based stacks */
     latest_hash?: string;
+    /** The image registry domain */
+    image_registry_domain?: string;
 }
 export type BuildListItem = ResourceListItem<BuildListItemInfo>;
 export interface BuildQuerySpecifics {

@@ -27,10 +27,19 @@ export const BuildTable = ({ builds }: { builds: Types.BuildListItem[] }) => {
           size: 200,
         },
         {
-          accessorKey: "info.repo",
-          header: ({ column }) => (
-            <SortableHeader column={column} title="Repo" />
-          ),
+          // header: ({ column }) => (
+          //   <SortableHeader column={column} title="Source" />
+          // ),
+          header: "Source",
+          accessorFn: ({ info: { files_on_host, repo } }) => {
+            if (files_on_host) {
+              return "Files on Server";
+            } else if (repo) {
+              return repo;
+            } else {
+              return "UI Defined";
+            }
+          },
           size: 200,
         },
         {

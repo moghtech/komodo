@@ -32,26 +32,31 @@ pub type BuildListItem = ResourceListItem<BuildListItemInfo>;
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BuildListItemInfo {
+  /// State of the build. Reflects whether most recent build successful.
+  pub state: BuildState,
   /// Unix timestamp in milliseconds of last build
   pub last_built_at: I64,
   /// The current version of the build
   pub version: Version,
   /// The builder attached to build.
   pub builder_id: String,
+
+  /// Whether build is in files on host mode.
+  pub files_on_host: bool,
+  
   /// The git provider domain
-  pub git_provider: String,
-  /// The image registry domain
-  pub image_registry_domain: String,
+  pub git_provider: Option<String>,
   /// The repo used as the source of the build
-  pub repo: String,
+  pub repo: Option<String>,
   /// The branch of the repo
-  pub branch: String,
-  /// State of the build. Reflects whether most recent build successful.
-  pub state: BuildState,
+  pub branch: Option<String>,
   /// Latest built short commit hash, or null.
   pub built_hash: Option<String>,
   /// Latest short commit hash, or null. Only for repo based stacks
   pub latest_hash: Option<String>,
+
+  /// The image registry domain
+  pub image_registry_domain: Option<String>,
 }
 
 #[typeshare]

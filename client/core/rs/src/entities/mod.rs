@@ -118,11 +118,12 @@ pub fn all_logs_success(logs: &[update::Log]) -> bool {
   true
 }
 
-pub fn optional_string(string: &str) -> Option<String> {
+pub fn optional_string(string: impl Into<String>) -> Option<String> {
+  let string = string.into();
   if string.is_empty() {
     None
   } else {
-    Some(string.to_string())
+    Some(string)
   }
 }
 
