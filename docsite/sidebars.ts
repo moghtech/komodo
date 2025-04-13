@@ -65,7 +65,8 @@ const sidebars: SidebarsConfig = {
     "webhooks",
     "version-upgrades",
     "api",
-    "development"
+    "development",
+    "other-resources"
   ],
 };
 
