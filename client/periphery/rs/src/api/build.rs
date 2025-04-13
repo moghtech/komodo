@@ -1,4 +1,4 @@
-use komodo_client::entities::update::Log;
+use komodo_client::entities::{FileContents, update::Log};
 use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 
@@ -35,11 +35,7 @@ pub struct GetDockerfileContentsOnHost {
   pub dockerfile_path: String,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct GetDockerfileContentsOnHostResponse {
-  /// The dockerfile contents
-  pub contents: String,
-}
+pub type GetDockerfileContentsOnHostResponse = FileContents;
 
 //
 

@@ -238,8 +238,7 @@ export const RepoConfig = ({ id }: { id: string }) => {
           },
           {
             label: "Webhooks",
-            description:
-              "Configure your repo provider to send webhooks to Komodo",
+            description: `Copy the webhook given here, and configure your ${webhook_integration}-style repo provider to send webhooks to Komodo`,
             components: {
               ["Guard" as any]: () => {
                 if (update.branch ?? config.branch) {

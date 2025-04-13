@@ -134,7 +134,7 @@ export type AlerterEndpoint =
 	| { type: "Slack", params: SlackAlerterEndpoint }
 	/** Send alert to a Discord app */
 	| { type: "Discord", params: DiscordAlerterEndpoint }
-	/** Send alert to a Ntfy server */
+	/** Send alert to Ntfy */
 	| { type: "Ntfy", params: NtfyAlerterEndpoint };
 
 /** Used to reference a specific resource across all resource types */
@@ -361,6 +361,8 @@ export interface BuildInfo {
 	 * This is updated whenever Komodo successfully runs the build.
 	 */
 	built_contents?: string;
+	/** The absolute path to the file */
+	remote_path?: string;
 	/**
 	 * The remote dockerfile contents, whether on host or in repo.
 	 * This is updated whenever Komodo refreshes the build cache.
@@ -4861,12 +4863,6 @@ export interface DiscordAlerterEndpoint {
 	url: string;
 }
 
-/** Configuration for a Ntfy alerter. */
-export interface NtfyAlerterEndpoint {
-	/** The Ntfy url */
-	url: string;
-}
-
 export interface EnvironmentVar {
 	variable: string;
 	value: string;
@@ -6420,6 +6416,12 @@ export interface LoginLocalUser {
 export interface NameAndId {
 	name: string;
 	id: string;
+}
+
+/** Configuration for a Ntfy alerter. */
+export interface NtfyAlerterEndpoint {
+	/** The ntfy topic URL */
+	url: string;
 }
 
 /** Pauses all containers on the target server. Response: [Update] */

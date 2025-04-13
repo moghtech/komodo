@@ -31,8 +31,6 @@ import "./theme";
 // Load the parsers
 import "./yaml";
 import "./toml";
+import "./shell"
 import "./key_value";
 import "./string_list";
-import "./shell";
-import "./dockerfile";
-import "./rust";

@@ -1,5 +1,11 @@
 import { Section } from "@components/layouts";
-import { useInvalidate, useRead, useUser, useWrite } from "@lib/hooks";
+import {
+  useInvalidate,
+  useLocalStorage,
+  useRead,
+  useUser,
+  useWrite,
+} from "@lib/hooks";
 import { RequiredResourceComponents } from "@types";
 import { Factory, FolderGit, Hammer, Loader2, RefreshCcw } from "lucide-react";
 import { BuildConfig } from "./config";
@@ -13,7 +19,6 @@ import {
   stroke_color_class_by_intention,
 } from "@lib/color";
 import { cn } from "@lib/utils";
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
 import { ResourceComponents } from "..";
 import { Types } from "komodo_client";
@@ -27,6 +32,7 @@ import { useBuilder } from "../builder";
 import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
+import { BuildInfo } from "./info";
 
 export const useBuild = (id?: string) =>
   useRead("ListBuilds", {}, { refetchInterval: 10_000 }).data?.find(
@@ -42,8 +48,11 @@ const BuildIcon = ({ id, size }: { id?: string; size: number }) => {
   return <Hammer className={cn(`w-${size} h-${size}`, state && color)} />;
 };
 
-const ConfigOrDeployments = ({ id }: { id: string }) => {
-  const [view, setView] = useState("Config");
+const ConfigInfoDeployments = ({ id }: { id: string }) => {
+  const [view, setView] = useLocalStorage<"Config" | "Info" | "Deployments">(
+    "build-tabs-v1",
+    "Config"
+  );
   const deployments = useRead("ListDeployments", {}).data?.filter(
     (deployment) => deployment.info.build_id === id
   );
@@ -52,6 +61,9 @@ const ConfigOrDeployments = ({ id }: { id: string }) => {
     <TabsList className="justify-start w-fit">
       <TabsTrigger value="Config" className="w-[110px]">
         Config
+      </TabsTrigger>
+      <TabsTrigger value="Info" className="w-[110px]">
+        Info
       </TabsTrigger>
       <TabsTrigger
         value="Deployments"
@@ -64,12 +76,15 @@ const ConfigOrDeployments = ({ id }: { id: string }) => {
   );
   return (
     <Tabs
-      value={deploymentsDisabled ? "Config" : view}
-      onValueChange={setView}
+      value={deploymentsDisabled && view === "Deployments" ? "Config" : view}
+      onValueChange={setView as any}
       className="grid gap-4"
     >
       <TabsContent value="Config">
         <BuildConfig id={id} titleOther={titleOther} />
+      </TabsContent>
+      <TabsContent value="Info">
+        <BuildInfo id={id} titleOther={titleOther} />
       </TabsContent>
       <TabsContent value="Deployments">
         <Section
@@ -265,7 +280,7 @@ export const BuildComponents: RequiredResourceComponents = {
 
   Page: {},
 
-  Config: ConfigOrDeployments,
+  Config: ConfigInfoDeployments,
 
   DangerZone: ({ id }) => (
     <>

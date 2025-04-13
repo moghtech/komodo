@@ -66,7 +66,10 @@ impl Resolve<super::Args> for GetDockerfileContentsOnHost {
         format!("Failed to read dockerfile contents at {full_path:?}")
       })?;
 
-    Ok(GetDockerfileContentsOnHostResponse { contents })
+    Ok(GetDockerfileContentsOnHostResponse {
+      contents,
+      path: full_path.display().to_string(),
+    })
   }
 }
 
@@ -87,7 +90,7 @@ impl Resolve<super::Args> for WriteDockerfileContentsToHost {
       dockerfile_path,
       contents,
     } = self;
-    let file_path = periphery_config()
+    let full_path = periphery_config()
       .build_dir
       .join(to_komodo_name(&name))
       .join(&build_path)
@@ -95,17 +98,19 @@ impl Resolve<super::Args> for WriteDockerfileContentsToHost {
       .components()
       .collect::<PathBuf>();
     // Ensure parent directory exists
-    if let Some(parent) = file_path.parent() {
-      fs::create_dir_all(&parent)
-        .await
-        .with_context(|| format!("Failed to initialize dockerfile parent directory {parent:?}"))?;
+    if let Some(parent) = full_path.parent() {
+      if !parent.exists() {
+        tokio::fs::create_dir_all(parent)
+            .await
+            .with_context(|| format!("Failed to initialize dockerfile parent directory {parent:?}"))?;
+      }
     }
-    fs::write(&file_path, contents).await.with_context(|| {
-      format!("Failed to write dockerfile contents to {file_path:?}")
+    fs::write(&full_path, contents).await.with_context(|| {
+      format!("Failed to write dockerfile contents to {full_path:?}")
     })?;
     Ok(Log::simple(
-      "Write contents to host",
-      format!("File contents written to {file_path:?}"),
+      "Write dockerfile to host",
+      format!("dockerfile contents written to {full_path:?}"),
     ))
   }
 }
@@ -194,9 +199,27 @@ impl Resolve<super::Args> for build::Build {
         dockerfile
       };
 
-      tokio::fs::write(build_path.join(&dockerfile_path), dockerfile)
-        .await
-        .context("Failed to write Dockerfile to host")?;
+      let full_path = build_path.join(&dockerfile_path);
+
+      // Ensure parent directory exists
+      if let Some(parent) = full_path.parent() {
+        if !parent.exists() {
+          tokio::fs::create_dir_all(parent)
+            .await
+            .with_context(|| format!("Failed to initialize dockerfile parent directory {parent:?}"))?;
+        }
+      }
+
+      fs::write(&full_path, dockerfile).await.with_context(|| {
+        format!(
+          "Failed to write dockerfile contents to {full_path:?}"
+        )
+      })?;
+
+      logs.push(Log::simple(
+        "Write Dockerfile",
+        format!("Dockerfile contents written to {full_path:?}"),
+      ));
     };
 
     // Pre Build

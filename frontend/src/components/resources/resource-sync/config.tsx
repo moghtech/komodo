@@ -138,6 +138,7 @@ export const ResourceSyncConfig = ({
           <ConfigItem
             label="Choose Mode"
             description="Will the file contents be defined in UI, stored on the server, or pulled from a git repo?"
+            boldLabel
           >
             <Select
               value={mode}
@@ -331,8 +332,7 @@ export const ResourceSyncConfig = ({
         match_tags,
         {
           label: "Git Webhooks",
-          description:
-            "Configure your repo provider to send webhooks to Komodo",
+          description: `Copy the webhook given here, and configure your ${webhook_integration}-style repo provider to send webhooks to Komodo`,
           contentHidden: !show.webhooks,
           actions: (
             <ShowHideButton

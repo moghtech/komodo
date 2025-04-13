@@ -84,6 +84,8 @@ pub struct BuildInfo {
   /// This is updated whenever Komodo successfully runs the build.
   pub built_contents: Option<String>,
 
+  /// The absolute path to the file
+  pub remote_path: Option<String>,
   /// The remote dockerfile contents, whether on host or in repo.
   /// This is updated whenever Komodo refreshes the build cache.
   /// It will be empty if the dockerfile is defined directly in the build config.

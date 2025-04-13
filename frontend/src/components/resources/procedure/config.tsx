@@ -222,7 +222,9 @@ const ProcedureConfigInner = ({
           <CardHeader>
             <CardTitle>Webhook</CardTitle>
             <CardDescription>
-              Trigger this Procedure with a webhook.
+              Copy the webhook given here, and configure your
+              {webhook_integration}-style repo provider to send webhooks to
+              Komodo
             </CardDescription>
           </CardHeader>
           <CardContent>

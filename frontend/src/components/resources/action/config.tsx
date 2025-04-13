@@ -105,7 +105,7 @@ export const ActionConfig = ({ id }: { id: string }) => {
           },
           {
             label: "Webhook",
-            description: `Configure your ${webhook_integration}-style repo provider to send webhooks to Komodo`,
+            description: `Copy the webhook given here, and configure your ${webhook_integration}-style repo provider to send webhooks to Komodo`,
             components: {
               ["Builder" as any]: () => (
                 <WebhookBuilder git_provider={ACTION_GIT_PROVIDER}>

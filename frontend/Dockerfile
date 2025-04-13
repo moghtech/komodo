@@ -1,4 +1,4 @@
-FROM node:20.12-alpine as builder
+FROM node:20.12-alpine AS builder
 
 WORKDIR /builder
 
@@ -7,7 +7,7 @@ COPY ./client/core/ts ./client
 
 # Optionally specify a specific Komodo host.
 ARG VITE_KOMODO_HOST=""
-ENV VITE_KOMODO_HOST=${VITE_KOMODO_HOST}
+ENV VITE_KOMODO_HOST=$VITE_KOMODO_HOST
 
 # Build and link the client
 RUN cd client && yarn && yarn build && yarn link

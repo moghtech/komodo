@@ -164,6 +164,7 @@ export const StackConfig = ({
           <ConfigItem
             label="Choose Mode"
             description="Will the file contents be defined in UI, stored on the server, or pulled from a git repo?"
+            boldLabel
           >
             <Select
               value={mode}
@@ -493,12 +494,10 @@ export const StackConfig = ({
         server_component,
         {
           label: "Files",
-          labelHidden: true,
           components: {
             run_directory: {
               label: "Run Directory",
-              description:
-                "Set the working directory when running the compose up command. Usually is the parent folder of the compose files.",
+              description: `Set the working directory when running the 'compose up' command. Can be absolute path, or relative to $PERIPHERY_STACK_DIR/${stack.name}`,
               placeholder: "/path/to/folder",
             },
             file_paths: (value, set) => (
@@ -583,13 +582,11 @@ export const StackConfig = ({
         },
         {
           label: "Files",
-          labelHidden: true,
           components: {
             run_directory: {
-              label: "Run Directory",
               description:
-                "Set the working directory when running the compose up command, relative to the stack root. ($periphery_stack_dir/$stack_name/$run_directory)",
-              placeholder: "./path/to/folder",
+                "Set the working directory when running the compose up command, relative to the root of the repo.",
+              placeholder: "path/to/folder",
             },
             file_paths: (value, set) => (
               <ConfigList
@@ -607,8 +604,7 @@ export const StackConfig = ({
         ...general_common,
         {
           label: "Webhooks",
-          description:
-            "Configure your repo provider to send webhooks to Komodo",
+          description: `Copy the webhook given here, and configure your ${webhook_integration}-style repo provider to send webhooks to Komodo`,
           actions: (
             <ShowHideButton
               show={show.webhooks}
@@ -846,7 +842,7 @@ export const StackConfig = ({
   );
 };
 
-export const DEFAULT_STACK_FILE_CONTENTS = `## 🦎 Hello Komodo 🦎
+export const DEFAULT_STACK_FILE_CONTENTS = `## Add your compose file here
 services:
   hello_world:
     image: hello-world

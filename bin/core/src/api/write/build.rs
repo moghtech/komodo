@@ -1,4 +1,4 @@
-use std::{path::PathBuf, time::Duration};
+use std::{path::PathBuf, str::FromStr, time::Duration};
 
 use anyhow::{Context, anyhow};
 use formatting::format_serror;
@@ -6,7 +6,7 @@ use git::GitRes;
 use komodo_client::{
   api::write::*,
   entities::{
-    CloneArgs, NoData, Operation, all_logs_success,
+    CloneArgs, FileContents, NoData, Operation, all_logs_success,
     build::{Build, BuildInfo, PartialBuildConfig},
     builder::{Builder, BuilderConfig},
     config::core::CoreConfig,
@@ -301,90 +301,102 @@ impl Resolve<WriteArgs> for RefreshBuildCache {
     )
     .await?;
 
-    let (remote_contents, remote_error, latest_hash, latest_message) =
-      if build.config.files_on_host {
-        // =============
-        // FILES ON HOST
-        // =============
-        match get_on_host_dockerfile(&build).await {
-          Ok(remote_contents) => {
-            (Some(remote_contents), None, None, None)
-          }
-          Err(e) => {
-            (None, Some(format_serror(&e.into())), None, None)
-          }
+    let (
+      remote_path,
+      remote_contents,
+      remote_error,
+      latest_hash,
+      latest_message,
+    ) = if build.config.files_on_host {
+      // =============
+      // FILES ON HOST
+      // =============
+      match get_on_host_dockerfile(&build).await {
+        Ok(FileContents { path, contents }) => {
+          (Some(path), Some(contents), None, None, None)
         }
-      } else if !build.config.repo.is_empty() {
-        // ================
-        // REPO BASED BUILD
-        // ================
-        if build.config.git_provider.is_empty() {
-          // Nothing to do here
-          return Ok(NoData {});
+        Err(e) => {
+          (None, None, Some(format_serror(&e.into())), None, None)
         }
-        let config = core_config();
+      }
+    } else if !build.config.repo.is_empty() {
+      // ================
+      // REPO BASED BUILD
+      // ================
+      if build.config.git_provider.is_empty() {
+        // Nothing to do here
+        return Ok(NoData {});
+      }
+      let config = core_config();
 
-        let mut clone_args: CloneArgs = (&build).into();
-        let repo_path =
-          clone_args.unique_path(&core_config().repo_directory)?;
-        clone_args.destination =
-          Some(repo_path.display().to_string());
-        // Don't want to run these on core.
-        clone_args.on_clone = None;
-        clone_args.on_pull = None;
+      let mut clone_args: CloneArgs = (&build).into();
+      let repo_path =
+        clone_args.unique_path(&core_config().repo_directory)?;
+      clone_args.destination = Some(repo_path.display().to_string());
+      // Don't want to run these on core.
+      clone_args.on_clone = None;
+      clone_args.on_pull = None;
 
-        let access_token = if let Some(username) = &clone_args.account
-        {
-          git_token(&clone_args.provider, username, |https| {
+      let access_token = if let Some(username) = &clone_args.account {
+        git_token(&clone_args.provider, username, |https| {
           clone_args.https = https
         })
         .await
         .with_context(
           || format!("Failed to get git token in call to db. Stopping run. | {} | {username}", clone_args.provider),
         )?
-        } else {
-          None
-        };
-
-        let GitRes { hash, message, .. } = git::pull_or_clone(
-          clone_args,
-          &config.repo_directory,
-          access_token,
-          &[],
-          "",
-          None,
-          &[],
-        )
-        .await
-        .context("failed to clone build repo")?;
-
-        let full_path = repo_path
-          .join(&build.config.build_path)
-          .join(&build.config.dockerfile_path);
-        let (contents, error) = match fs::read_to_string(&full_path)
-          .await
-          .with_context(|| {
-            format!(
-              "Failed to read dockerfile contents at {full_path:?}"
-            )
-          }) {
-          Ok(contents) => (Some(contents), None),
-          Err(e) => (None, Some(format_serror(&e.into()))),
-        };
-
-        (contents, error, hash, message)
       } else {
-        // =============
-        // UI BASED FILE
-        // =============
-        (None, None, None, None)
+        None
       };
+
+      let GitRes { hash, message, .. } = git::pull_or_clone(
+        clone_args,
+        &config.repo_directory,
+        access_token,
+        &[],
+        "",
+        None,
+        &[],
+      )
+      .await
+      .context("failed to clone build repo")?;
+
+      let relative_path = PathBuf::from_str(&build.config.build_path)
+        .context("Invalid build path")?
+        .join(&build.config.dockerfile_path);
+
+      let full_path = repo_path.join(&relative_path);
+      let (contents, error) = match fs::read_to_string(&full_path)
+        .await
+        .with_context(|| {
+          format!(
+            "Failed to read dockerfile contents at {full_path:?}"
+          )
+        }) {
+        Ok(contents) => (Some(contents), None),
+        Err(e) => (None, Some(format_serror(&e.into()))),
+      };
+
+      (
+        Some(relative_path.display().to_string()),
+        contents,
+        error,
+        hash,
+        message,
+      )
+    } else {
+      // =============
+      // UI BASED FILE
+      // =============
+      (None, None, None, None, None)
+    };
 
     let info = BuildInfo {
       last_built_at: build.info.last_built_at,
       built_hash: build.info.built_hash,
       built_message: build.info.built_message,
       built_contents: build.info.built_contents,
+      remote_path,
       remote_contents,
       remote_error,
       latest_hash,
@@ -455,7 +467,7 @@ async fn get_on_host_periphery(
 /// The error case will be included as Some(remote_error)
 async fn get_on_host_dockerfile(
   build: &Build,
-) -> anyhow::Result<String> {
+) -> anyhow::Result<FileContents> {
   get_on_host_periphery(build)
     .await?
     .request(GetDockerfileContentsOnHost {
@@ -464,7 +476,6 @@ async fn get_on_host_dockerfile(
       dockerfile_path: build.config.dockerfile_path.clone(),
     })
     .await
-    .map(|res| res.contents)
 }
 
 impl Resolve<WriteArgs> for CreateBuildWebhook {
