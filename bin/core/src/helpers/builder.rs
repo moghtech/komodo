@@ -61,12 +61,7 @@ pub async fn get_builder_periphery(
         .health_check()
         .await
         .context("Url Builder failed health check")?;
-      Ok((
-        periphery,
-        BuildCleanupData::Server {
-          repo_name: resource_name,
-        },
-      ))
+      Ok((periphery, BuildCleanupData::Server))
     }
     BuilderConfig::Server(config) => {
       if config.server_id.is_empty() {
@@ -74,12 +69,7 @@ pub async fn get_builder_periphery(
       }
       let server = resource::get::<Server>(&config.server_id).await?;
       let periphery = periphery_client(&server)?;
-      Ok((
-        periphery,
-        BuildCleanupData::Server {
-          repo_name: resource_name,
-        },
-      ))
+      Ok((periphery, BuildCleanupData::Server))
     }
     BuilderConfig::Aws(config) => {
       get_aws_builder(&resource_name, version, config, update).await
@@ -179,20 +169,14 @@ async fn get_aws_builder(
   )
 }
 
-#[instrument(skip(periphery, update))]
+#[instrument(skip(update))]
 pub async fn cleanup_builder_instance(
-  periphery: PeripheryClient,
   cleanup_data: BuildCleanupData,
   update: &mut Update,
 ) {
   match cleanup_data {
-    BuildCleanupData::Server { repo_name } => {
-      let _ = periphery
-        .request(api::git::DeleteRepo {
-          name: repo_name,
-          is_build: true,
-        })
-        .await;
+    BuildCleanupData::Server => {
+      // Nothing to clean up
     }
     BuildCleanupData::Aws {
       instance_id,

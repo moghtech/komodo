@@ -268,7 +268,7 @@ impl Resolve<ExecuteArgs> for RunBuild {
         _ = cancel.cancelled() => {
           debug!("build cancelled during clone, cleaning up builder");
           update.push_error_log("build cancelled", String::from("user cancelled build during repo clone"));
-          cleanup_builder_instance(periphery, cleanup_data, &mut update)
+          cleanup_builder_instance(cleanup_data, &mut update)
             .await;
           info!("builder cleaned up");
           return handle_early_return(update, build.id, build.name, true).await
@@ -301,6 +301,7 @@ impl Resolve<ExecuteArgs> for RunBuild {
     };
 
     if all_logs_success(&update.logs) {
+      // RUN BUILD
       let res = tokio::select! {
         res = periphery
           .request(api::build::Build {
@@ -317,7 +318,7 @@ impl Resolve<ExecuteArgs> for RunBuild {
         _ = cancel.cancelled() => {
           info!("build cancelled during build, cleaning up builder");
           update.push_error_log("build cancelled", String::from("user cancelled build during docker build"));
-          cleanup_builder_instance(periphery, cleanup_data, &mut update)
+          cleanup_builder_instance(cleanup_data, &mut update)
             .await;
           return handle_early_return(update, build.id, build.name, true).await
         },
@@ -361,8 +362,9 @@ impl Resolve<ExecuteArgs> for RunBuild {
     // stop the cancel listening task from going forever
     cancel.cancel();
 
-    cleanup_builder_instance(periphery, cleanup_data, &mut update)
-      .await;
+    // If building on temporary cloud server (AWS),
+    // this will terminate the server.
+    cleanup_builder_instance(cleanup_data, &mut update).await;
 
     // Need to manually update the update before cache refresh,
     // and before broadcast with add_update.

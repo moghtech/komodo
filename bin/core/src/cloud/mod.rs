@@ -5,6 +5,8 @@ pub mod hetzner;
 
 #[derive(Debug)]
 pub enum BuildCleanupData {
-  Server { repo_name: String },
+  /// Nothing to clean up
+  Server,
+  /// Clean up AWS instance
   Aws { instance_id: String, region: String },
 }

@@ -462,7 +462,7 @@ impl Resolve<ExecuteArgs> for BuildRepo {
       _ = cancel.cancelled() => {
         debug!("build cancelled during clone, cleaning up builder");
         update.push_error_log("build cancelled", String::from("user cancelled build during repo clone"));
-        cleanup_builder_instance(periphery, cleanup_data, &mut update)
+        cleanup_builder_instance(cleanup_data, &mut update)
           .await;
         info!("builder cleaned up");
         return handle_builder_early_return(update, repo.id, repo.name, true).await
@@ -506,8 +506,9 @@ impl Resolve<ExecuteArgs> for BuildRepo {
     // stop the cancel listening task from going forever
     cancel.cancel();
 
-    cleanup_builder_instance(periphery, cleanup_data, &mut update)
-      .await;
+    // If building on temporary cloud server (AWS),
+    // this will terminate the server.
+    cleanup_builder_instance(cleanup_data, &mut update).await;
 
     // Need to manually update the update before cache refresh,
     // and before broadcast with add_update.
