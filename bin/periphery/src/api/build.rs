@@ -199,7 +199,10 @@ impl Resolve<super::Args> for build::Build {
         dockerfile
       };
 
-      let full_path = build_path.join(&dockerfile_path);
+      let full_path = build_path
+        .join(&dockerfile_path)
+        .components()
+        .collect::<PathBuf>();
 
       // Ensure parent directory exists
       if let Some(parent) = full_path.parent() {
