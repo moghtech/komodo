@@ -61,6 +61,39 @@ pub struct ProcedureConfig {
   #[builder(default)]
   pub stages: Vec<ProcedureStage>,
 
+  /// Optionally provide a schedule for the procedure to run on.
+  ///
+  /// There are 2 ways to specify a schedule:
+  ///
+  /// 1. Regular CRON expression:
+  ///
+  /// ```
+  /// 0 0 0 1,15 * ? *
+  /// ```
+  ///
+  /// 2. "English" expression via [english-to-cron](https://crates.io/crates/english-to-cron):
+  ///
+  /// ```
+  /// at midnight on the 1st and 15th of the month
+  /// ```
+  #[serde(default)]
+  #[builder(default)]
+  pub schedule: String,
+
+  /// Whether schedule is enabled if one is provided.
+  /// Can be used to temporarily disable the schedule.
+  #[serde(default = "default_schedule_enabled")]
+  #[builder(default = "default_schedule_enabled()")]
+  #[partial_default(default_schedule_enabled())]
+  pub schedule_enabled: bool,
+
+  /// A TZ Identifier.
+  /// https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
+  #[serde(default = "default_schedule_timezone")]
+  #[builder(default = "default_schedule_timezone()")]
+  #[partial_default(default_schedule_timezone())]
+  pub schedule_timezone: String,
+
   /// Whether incoming webhooks actually trigger action.
   #[serde(default = "default_webhook_enabled")]
   #[builder(default = "default_webhook_enabled()")]
@@ -80,6 +113,14 @@ impl ProcedureConfig {
   }
 }
 
+fn default_schedule_enabled() -> bool {
+  true
+}
+
+fn default_schedule_timezone() -> String {
+  String::from("Etc/UTC")
+}
+
 fn default_webhook_enabled() -> bool {
   true
 }
@@ -88,6 +129,9 @@ impl Default for ProcedureConfig {
   fn default() -> Self {
     Self {
       stages: Default::default(),
+      schedule: Default::default(),
+      schedule_enabled: default_schedule_enabled(),
+      schedule_timezone: default_schedule_timezone(),
       webhook_enabled: default_webhook_enabled(),
       webhook_secret: Default::default(),
     }

@@ -28,6 +28,7 @@ mod state;
 mod sync;
 mod ts_client;
 mod ws;
+mod schedule;
 
 async fn app() -> anyhow::Result<()> {
   dotenvy::dotenv().ok();
