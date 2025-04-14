@@ -220,6 +220,9 @@ export function KomodoClient(url: string, options: InitOptions) {
           // Sleep for a bit before checking for websocket closed
           await new Promise((resolve) => setTimeout(resolve, 500));
         }
+
+        // Sleep for a bit before retrying connection to avoid spam.
+        await new Promise((resolve) => setTimeout(resolve, retry_timeout_ms));
       } catch (error) {
         console.error(error);
         // Sleep for a bit before retrying, maybe Komodo Core is down temporarily.
