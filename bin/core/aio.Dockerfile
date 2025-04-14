@@ -1,7 +1,7 @@
 ## All in one, multi stage compile + runtime Docker build for your architecture.
 
 # Build Core
-FROM rust:1.85.1-bullseye AS core-builder
+FROM rust:1.86.0-bullseye AS core-builder
 
 WORKDIR /builder
 COPY Cargo.toml Cargo.lock ./
