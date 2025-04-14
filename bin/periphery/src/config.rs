@@ -35,6 +35,7 @@ pub fn periphery_config() -> &'static PeripheryConfig {
 
     PeripheryConfig {
       port: env.periphery_port.unwrap_or(config.port),
+      bind_ip: env.periphery_bind_ip.unwrap_or(config.bind_ip),
       repo_dir: env.periphery_repo_dir.unwrap_or(config.repo_dir),
       stack_dir: env.periphery_stack_dir.unwrap_or(config.stack_dir),
       build_dir: env.periphery_build_dir.unwrap_or(config.build_dir),

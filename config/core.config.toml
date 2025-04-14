@@ -33,6 +33,12 @@ host = "https://demo.komo.do"
 ## Default: 9120
 port = 9120
 
+## The IP address the core server will bind to.
+## The default will allow it to accept external IPv4 and IPv6 connections.
+## Env: KOMODO_BIND_IP
+## Default: [::]
+bind_ip = "[::]"
+
 ## This is the token used to authenticate core requests to periphery.
 ## Ensure this matches a passkey in the connected periphery configs.
 ## If the periphery servers don't have passkeys configured, this doesn't need to be changed.

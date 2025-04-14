@@ -86,9 +86,10 @@ async fn app() -> anyhow::Result<()> {
     )
     .into_make_service();
 
+  let addr = format!("{}:{}", core_config().bind_ip, core_config().port);
   let socket_addr =
-    SocketAddr::from_str(&format!("0.0.0.0:{}", core_config().port))
-      .context("failed to parse socket addr")?;
+    SocketAddr::from_str(&addr)
+    .context("failed to parse listen address")?;
 
   if config.ssl_enabled {
     info!("🔒 Core SSL Enabled");

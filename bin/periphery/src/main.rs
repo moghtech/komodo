@@ -26,9 +26,11 @@ async fn app() -> anyhow::Result<()> {
 
   stats::spawn_system_stats_polling_thread();
 
-  let socket_addr =
-    SocketAddr::from_str(&format!("0.0.0.0:{}", config.port))
-      .context("failed to parse socket addr")?;
+  let addr = format!("{}:{}", config::periphery_config().bind_ip, config::periphery_config().port);
+
+  let socket_addr = 
+    SocketAddr::from_str(&addr)
+    .context("failed to parse listen address")?;
 
   let app = router::router()
     .into_make_service_with_connect_info::<SocketAddr>();
