@@ -86,7 +86,7 @@ async fn app() -> anyhow::Result<()> {
     )
     .into_make_service();
 
-  let addr = format!("{}:{}", core_config().listener_address, core_config().port);
+  let addr = format!("{}:{}", core_config().bind_ip, core_config().port);
   let socket_addr =
     SocketAddr::from_str(&addr)
     .context("failed to parse listen address")?;

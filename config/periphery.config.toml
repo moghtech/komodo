@@ -18,10 +18,11 @@
 ## Default: 8120
 port = 8120
 
-## The address the server will listen on.
-## Env: PERIPHERY_LISTENER_ADDRESS
+## The IP address the periphery server will bind to.
+## The default will allow it to accept external IPv4 and IPv6 connections.
+## Env: PERIPHERY_BIND_IP
 ## Default: [::]
-listener_address = "[::]"
+bind_ip = "[::]"
 
 ## The directory periphery will use to manage repos.
 ## The periphery user must have write access to this directory.

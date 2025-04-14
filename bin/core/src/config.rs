@@ -139,7 +139,7 @@ pub fn core_config() -> &'static CoreConfig {
       title: env.komodo_title.unwrap_or(config.title),
       host: env.komodo_host.unwrap_or(config.host),
       port: env.komodo_port.unwrap_or(config.port),
-      listener_address: env.komodo_listener_address.unwrap_or(config.listener_address),
+      bind_ip: env.komodo_bind_ip.unwrap_or(config.bind_ip),
       first_server: env.komodo_first_server.unwrap_or(config.first_server),
       frontend_path: env.komodo_frontend_path.unwrap_or(config.frontend_path),
       jwt_ttl: env
