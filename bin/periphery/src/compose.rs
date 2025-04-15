@@ -430,7 +430,7 @@ pub async fn write_stack(
   Option<Vec<(String, String)>>,
 )> {
   let root = periphery_config()
-    .stack_dir
+    .stack_dir()
     .join(to_komodo_name(&stack.name));
   let run_directory = root.join(&stack.config.run_directory);
   // This will remove any intermediate '/./' in the path, which is a problem for some OS.

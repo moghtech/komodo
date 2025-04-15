@@ -36,9 +36,12 @@ pub fn periphery_config() -> &'static PeripheryConfig {
     PeripheryConfig {
       port: env.periphery_port.unwrap_or(config.port),
       bind_ip: env.periphery_bind_ip.unwrap_or(config.bind_ip),
-      repo_dir: env.periphery_repo_dir.unwrap_or(config.repo_dir),
-      stack_dir: env.periphery_stack_dir.unwrap_or(config.stack_dir),
-      build_dir: env.periphery_build_dir.unwrap_or(config.build_dir),
+      root_directory: env
+        .periphery_root_directory
+        .unwrap_or(config.root_directory),
+      repo_dir: env.periphery_repo_dir.or(config.repo_dir),
+      stack_dir: env.periphery_stack_dir.or(config.stack_dir),
+      build_dir: env.periphery_build_dir.or(config.build_dir),
       stats_polling_rate: env
         .periphery_stats_polling_rate
         .unwrap_or(config.stats_polling_rate),
@@ -80,10 +83,10 @@ pub fn periphery_config() -> &'static PeripheryConfig {
         .unwrap_or(config.ssl_enabled),
       ssl_key_file: env
         .periphery_ssl_key_file
-        .unwrap_or(config.ssl_key_file),
+        .or(config.ssl_key_file),
       ssl_cert_file: env
         .periphery_ssl_cert_file
-        .unwrap_or(config.ssl_cert_file),
+        .or(config.ssl_cert_file),
       secrets: config.secrets,
       git_providers: config.git_providers,
       docker_registries: config.docker_registries,

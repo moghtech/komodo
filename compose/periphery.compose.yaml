@@ -15,11 +15,7 @@ services:
       driver: ${COMPOSE_LOGGING_DRIVER:-local}
     ## https://komo.do/docs/connect-servers#configuration
     environment:
-      PERIPHERY_REPO_DIR: ${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}/repos
-      PERIPHERY_STACK_DIR: ${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}/stacks
-      PERIPHERY_BUILD_DIR: ${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}/builds
-      PERIPHERY_SSL_KEY_FILE: ${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}/ssl/key.pem
-      PERIPHERY_SSL_CERT_FILE: ${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}/ssl/cert.pem
+      PERIPHERY_ROOT_DIRECTORY: ${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}
       ## Pass the same passkey as used by the Komodo Core connecting to this Periphery agent.
       PERIPHERY_PASSKEYS: abc123
       ## If the disk size is overreporting, can use one of these to 

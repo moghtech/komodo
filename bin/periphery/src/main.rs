@@ -43,8 +43,8 @@ async fn app() -> anyhow::Result<()> {
     ssl::ensure_certs().await;
     info!("Komodo Periphery starting on https://{}", socket_addr);
     let ssl_config = RustlsConfig::from_pem_file(
-      &config.ssl_cert_file,
-      &config.ssl_key_file,
+      config.ssl_cert_file(),
+      config.ssl_key_file(),
     )
     .await
     .context("Invalid ssl cert / key")?;

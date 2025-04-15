@@ -138,7 +138,7 @@ impl Resolve<super::Args> for GetComposeContentsOnHost {
       file_paths,
     } = self;
     let root =
-      periphery_config().stack_dir.join(to_komodo_name(&name));
+      periphery_config().stack_dir().join(to_komodo_name(&name));
     let run_directory =
       root.join(&run_directory).components().collect::<PathBuf>();
 
@@ -196,7 +196,7 @@ impl Resolve<super::Args> for WriteComposeContentsToHost {
       contents,
     } = self;
     let file_path = periphery_config()
-      .stack_dir
+      .stack_dir()
       .join(to_komodo_name(&name))
       .join(&run_directory)
       .join(file_path)

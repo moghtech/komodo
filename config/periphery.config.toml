@@ -24,23 +24,29 @@ port = 8120
 ## Default: [::]
 bind_ip = "[::]"
 
-## The directory periphery will use to manage repos.
+## The directory periphery will use as the default base for the directories it uses.
+## The periphery user must have write access to this directory.
+## Env: PERIPHERY_ROOT_DIRECTORY
+## Default: /etc/komodo
+root_directory = "/etc/komodo"
+
+## Optional. Override the directory periphery will use to manage repos.
 ## The periphery user must have write access to this directory.
 ## Env: PERIPHERY_REPO_DIR
-## Default: /etc/komodo/repos
-repo_dir = "/etc/komodo/repos"
+## Default: ${root_directory}/repos
+# repo_dir = "/etc/komodo/repos"
 
-## The directory periphery will use to manage stacks.
+## Optional. Override the directory periphery will use to manage stacks.
 ## The periphery user must have write access to this directory.
 ## Env: PERIPHERY_STACK_DIR
-## Default: /etc/komodo/stacks
-stack_dir = "/etc/komodo/stacks"
+## Default: ${root_directory}/stacks
+# stack_dir = "/etc/komodo/stacks"
 
-## The directory periphery will use to manage builds.
+## Optional. Override the directory periphery will use to manage builds.
 ## The periphery user must have write access to this directory.
 ## Env: PERIPHERY_BUILD_DIR
-## Default: /etc/komodo/builds
-build_dir = "/etc/komodo/builds"
+## Default: ${root_directory}/builds
+# build_dir = "/etc/komodo/builds"
 
 ## How often Periphery polls the host for system stats,
 ## like CPU / memory usage.

@@ -101,7 +101,7 @@ pub async fn pull_or_clone_stack(
   }
 
   let root = periphery_config()
-    .stack_dir
+    .stack_dir()
     .join(to_komodo_name(&stack.name));
 
   let mut args: CloneArgs = stack.into();
