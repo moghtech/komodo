@@ -23,6 +23,12 @@ pub struct ProcedureListItemInfo {
   pub stages: I64,
   /// Reflect whether last run successful / currently running.
   pub state: ProcedureState,
+  /// If the procedure has schedule enabled, this is the
+  /// next scheduled run time in unix ms.
+  pub next_scheduled_run: Option<I64>,
+  /// If there is an error parsing schedule expression,
+  /// it will be given here.
+  pub schedule_error: Option<String>,
 }
 
 #[typeshare]
@@ -49,6 +55,16 @@ pub type Procedure = Resource<ProcedureConfig, ()>;
 #[typeshare(serialized_as = "Partial<ProcedureConfig>")]
 pub type _PartialProcedureConfig = PartialProcedureConfig;
 
+#[typeshare]
+#[derive(
+  Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize,
+)]
+pub enum ScheduleFormat {
+  #[default]
+  Cron,
+  English,
+}
+
 /// Config for the [Procedure]
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, Partial, Builder)]
@@ -61,14 +77,20 @@ pub struct ProcedureConfig {
   #[builder(default)]
   pub stages: Vec<ProcedureStage>,
 
+  /// Choose whether to specify schedule as regular CRON, or using the english to CRON parser.
+  #[serde(default)]
+  #[builder(default)]
+  pub schedule_format: ScheduleFormat,
+
   /// Optionally provide a schedule for the procedure to run on.
   ///
   /// There are 2 ways to specify a schedule:
   ///
   /// 1. Regular CRON expression:
   ///
+  /// (second, minute, hour, day, month, day-of-week)
   /// ```
-  /// 0 0 0 1,15 * ? *
+  /// 0 0 0 1,15 * ?
   /// ```
   ///
   /// 2. "English" expression via [english-to-cron](https://crates.io/crates/english-to-cron):
@@ -129,6 +151,7 @@ impl Default for ProcedureConfig {
   fn default() -> Self {
     Self {
       stages: Default::default(),
+      schedule_format: Default::default(),
       schedule: Default::default(),
       schedule_enabled: default_schedule_enabled(),
       schedule_timezone: default_schedule_timezone(),

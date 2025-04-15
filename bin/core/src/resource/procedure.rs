@@ -31,6 +31,7 @@ use mungos::{
 
 use crate::{
   config::core_config,
+  schedule::{get_schedule_item_info, update_procedure_scedule},
   state::{action_states, db_client, procedure_state_cache},
 };
 
@@ -55,6 +56,8 @@ impl super::KomodoResource for Procedure {
     procedure: Resource<Self::Config, Self::Info>,
   ) -> Self::ListItem {
     let state = get_procedure_state(&procedure.id).await;
+    let (next_scheduled_run, schedule_error) =
+      get_schedule_item_info(&procedure.id);
     ProcedureListItem {
       name: procedure.name,
       id: procedure.id,
@@ -63,6 +66,8 @@ impl super::KomodoResource for Procedure {
       info: ProcedureListItemInfo {
         stages: procedure.config.stages.len() as i64,
         state,
+        next_scheduled_run,
+        schedule_error,
       },
     }
   }
@@ -94,9 +99,10 @@ impl super::KomodoResource for Procedure {
   }
 
   async fn post_create(
-    _created: &Resource<Self::Config, Self::Info>,
+    created: &Resource<Self::Config, Self::Info>,
     _update: &mut Update,
   ) -> anyhow::Result<()> {
+    update_procedure_scedule(created);
     refresh_procedure_state_cache().await;
     Ok(())
   }

@@ -42,6 +42,11 @@ export var BuildState;
     /** Other case */
     BuildState["Unknown"] = "Unknown";
 })(BuildState || (BuildState = {}));
+export var ScheduleFormat;
+(function (ScheduleFormat) {
+    ScheduleFormat["Cron"] = "Cron";
+    ScheduleFormat["English"] = "English";
+})(ScheduleFormat || (ScheduleFormat = {}));
 export var RestartMode;
 (function (RestartMode) {
     RestartMode["NoRestart"] = "no";

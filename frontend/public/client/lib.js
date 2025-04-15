@@ -117,7 +117,7 @@ export function KomodoClient(url, options) {
                     // Sleep for a bit before checking for websocket closed
                     await new Promise((resolve) => setTimeout(resolve, 500));
                 }
-                // Sleep for a bit before retrying to avoid spam.
+                // Sleep for a bit before retrying connection to avoid spam.
                 await new Promise((resolve) => setTimeout(resolve, retry_timeout_ms));
             }
             catch (error) {

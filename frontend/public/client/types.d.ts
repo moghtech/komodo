@@ -43,11 +43,6 @@ export interface Resource<Config, Info> {
     base_permission?: PermissionLevel;
 }
 export interface ActionConfig {
-    /**
-     * Typescript file contents using pre-initialized `komodo` client.
-     * Supports variable / secret interpolation.
-     */
-    file_contents?: string;
     /** Whether incoming webhooks actually trigger action. */
     webhook_enabled: boolean;
     /**
@@ -55,6 +50,11 @@ export interface ActionConfig {
      * If its an empty string, use the default secret from the config.
      */
     webhook_secret?: string;
+    /**
+     * Typescript file contents using pre-initialized `komodo` client.
+     * Supports variable / secret interpolation.
+     */
+    file_contents?: string;
 }
 export interface ActionInfo {
     /** When action was last run */
@@ -664,10 +664,45 @@ export interface ProcedureStage {
     /** The executions in the stage */
     executions?: EnabledExecution[];
 }
+export declare enum ScheduleFormat {
+    Cron = "Cron",
+    English = "English"
+}
 /** Config for the [Procedure] */
 export interface ProcedureConfig {
     /** The stages to be run by the procedure. */
     stages?: ProcedureStage[];
+    /** Choose whether to specify schedule as regular CRON, or using the english to CRON parser. */
+    schedule_format?: ScheduleFormat;
+    /**
+     * Optionally provide a schedule for the procedure to run on.
+     *
+     * There are 2 ways to specify a schedule:
+     *
+     * 1. Regular CRON expression:
+     *
+     * (second, minute, hour, day, month, day-of-week)
+     * ```
+     * 0 0 0 1,15 * ?
+     * ```
+     *
+     * 2. "English" expression via [english-to-cron](https://crates.io/crates/english-to-cron):
+     *
+     * ```
+     * at midnight on the 1st and 15th of the month
+     * ```
+     */
+    schedule?: string;
+    /**
+     * Whether schedule is enabled if one is provided.
+     * Can be used to temporarily disable the schedule.
+     */
+    schedule_enabled: boolean;
+    /**
+     * A TZ Identifier.
+     * https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
+     */
+    schedule_timezone: string;
     /** Whether incoming webhooks actually trigger action. */
     webhook_enabled: boolean;
     /**
@@ -3259,6 +3294,16 @@ export interface ProcedureListItemInfo {
     stages: I64;
     /** Reflect whether last run successful / currently running. */
     state: ProcedureState;
+    /**
+     * If the procedure has schedule enabled, this is the
+     * next scheduled run time in unix ms.
+     */
+    next_scheduled_run?: I64;
+    /**
+     * If there is an error parsing schedule expression,
+     * it will be given here.
+     */
+    schedule_error?: string;
 }
 export type ProcedureListItem = ResourceListItem<ProcedureListItemInfo>;
 export type ListProceduresResponse = ProcedureListItem[];

@@ -23,12 +23,12 @@ mod helpers;
 mod listener;
 mod monitor;
 mod resource;
+mod schedule;
 mod stack;
 mod state;
 mod sync;
 mod ts_client;
 mod ws;
-mod schedule;
 
 async fn app() -> anyhow::Result<()> {
   dotenvy::dotenv().ok();
@@ -60,6 +60,7 @@ async fn app() -> anyhow::Result<()> {
   resource::spawn_repo_state_refresh_loop();
   resource::spawn_procedure_state_refresh_loop();
   resource::spawn_action_state_refresh_loop();
+  schedule::spawn_schedule_management_threads();
   helpers::prune::spawn_prune_loop();
 
   // Setup static frontend services
@@ -87,9 +88,9 @@ async fn app() -> anyhow::Result<()> {
     )
     .into_make_service();
 
-  let addr = format!("{}:{}", core_config().bind_ip, core_config().port);
-  let socket_addr =
-    SocketAddr::from_str(&addr)
+  let addr =
+    format!("{}:{}", core_config().bind_ip, core_config().port);
+  let socket_addr = SocketAddr::from_str(&addr)
     .context("failed to parse listen address")?;
 
   if config.ssl_enabled {
