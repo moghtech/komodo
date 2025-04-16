@@ -25,7 +25,7 @@ use crate::{
   state::db_client,
 };
 
-pub fn spawn_schedule_management_threads() {
+pub fn spawn_schedule_executor() {
   // Executor thread
   tokio::spawn(async move {
     loop {
@@ -75,6 +75,14 @@ pub fn spawn_schedule_management_threads() {
                       "Scheduled action run on {id} failed | {e:?}"
                     );
                   }
+                  match crate::resource::get::<Action>(&id).await {
+                    Ok(action) => update_schedule(&action),
+                    Err(e) => {
+                      warn!(
+                        "Rescheduling action run on {id} failed | failed to get procedure | {e:?}"
+                      );
+                    }
+                  }
                 }
                 ResourceTarget::Procedure(id) => {
                   let request =
@@ -110,6 +118,14 @@ pub fn spawn_schedule_management_threads() {
                       "Scheduled procedure run on {id} failed | {e:?}"
                     );
                   }
+                  match crate::resource::get::<Procedure>(&id).await {
+                    Ok(procedure) => update_schedule(&procedure),
+                    Err(e) => {
+                      warn!(
+                        "Rescheduling procedure run on {id} failed | failed to get procedure | {e:?}"
+                      );
+                    }
+                  }
                 }
                 _ => unreachable!(),
               }
@@ -128,7 +144,7 @@ pub fn spawn_schedule_management_threads() {
     update_schedules().await;
     loop {
       async_timing_util::wait_until_timelength(
-        Timelength::OneMinute,
+        Timelength::FiveMinutes,
         500,
       )
       .await;

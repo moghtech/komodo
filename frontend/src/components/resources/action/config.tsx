@@ -134,7 +134,6 @@ export const ActionConfig = ({ id }: { id: string }) => {
                       set({
                         schedule_format:
                           schedule_format as Types.ScheduleFormat,
-                        schedule: "",
                       })
                     }
                     disabled={disabled}

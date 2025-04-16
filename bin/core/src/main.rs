@@ -60,7 +60,7 @@ async fn app() -> anyhow::Result<()> {
   resource::spawn_repo_state_refresh_loop();
   resource::spawn_procedure_state_refresh_loop();
   resource::spawn_action_state_refresh_loop();
-  schedule::spawn_schedule_management_threads();
+  schedule::spawn_schedule_executor();
   helpers::prune::spawn_prune_loop();
 
   // Setup static frontend services

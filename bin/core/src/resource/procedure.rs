@@ -31,7 +31,9 @@ use mungos::{
 
 use crate::{
   config::core_config,
-  schedule::{get_schedule_item_info, update_schedule},
+  schedule::{
+    cancel_schedule, get_schedule_item_info, update_schedule,
+  },
   state::{action_states, db_client, procedure_state_cache},
 };
 
@@ -149,9 +151,10 @@ impl super::KomodoResource for Procedure {
   }
 
   async fn post_delete(
-    _resource: &Resource<Self::Config, Self::Info>,
+    resource: &Resource<Self::Config, Self::Info>,
     _update: &mut Update,
   ) -> anyhow::Result<()> {
+    cancel_schedule(&ResourceTarget::Procedure(resource.id.clone()));
     Ok(())
   }
 }
