@@ -9,7 +9,8 @@ use typeshare::typeshare;
 use crate::api::execute::Execution;
 
 use super::{
-  resource::{Resource, ResourceListItem, ResourceQuery}, ScheduleFormat, I64
+  I64, ScheduleFormat,
+  resource::{Resource, ResourceListItem, ResourceQuery},
 };
 
 #[typeshare]
@@ -104,6 +105,18 @@ pub struct ProcedureConfig {
   #[builder(default)]
   pub schedule_timezone: String,
 
+  /// Whether to send alerts when the schedule was run.
+  #[serde(default = "default_schedule_alert")]
+  #[builder(default = "default_schedule_alert()")]
+  #[partial_default(default_schedule_alert())]
+  pub schedule_alert: bool,
+
+  /// Whether to send alerts when this procedure fails.
+  #[serde(default = "default_failure_alert")]
+  #[builder(default = "default_failure_alert()")]
+  #[partial_default(default_failure_alert())]
+  pub failure_alert: bool,
+
   /// Whether incoming webhooks actually trigger action.
   #[serde(default = "default_webhook_enabled")]
   #[builder(default = "default_webhook_enabled()")]
@@ -127,6 +140,14 @@ fn default_schedule_enabled() -> bool {
   true
 }
 
+fn default_schedule_alert() -> bool {
+  true
+}
+
+fn default_failure_alert() -> bool {
+  true
+}
+
 fn default_webhook_enabled() -> bool {
   true
 }
@@ -139,6 +160,8 @@ impl Default for ProcedureConfig {
       schedule: Default::default(),
       schedule_enabled: default_schedule_enabled(),
       schedule_timezone: Default::default(),
+      schedule_alert: default_schedule_alert(),
+      failure_alert: default_failure_alert(),
       webhook_enabled: default_webhook_enabled(),
       webhook_secret: Default::default(),
     }

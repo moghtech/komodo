@@ -373,9 +373,7 @@ pub async fn send_alert(
       let text = format!("{level} | Build {name} has failed");
       let blocks = vec![
         Block::header(text.clone()),
-        Block::section(format!(
-          "build name: *{name}*\nversion: *v{version}*",
-        )),
+        Block::section(format!("version: *v{version}*",)),
         Block::section(resource_link(
           ResourceTargetVariant::Build,
           id,
@@ -388,11 +386,46 @@ pub async fn send_alert(
         format!("{level} | Repo build for *{name}* has *failed*");
       let blocks = vec![
         Block::header(text.clone()),
-        Block::section(format!("repo name: *{name}*",)),
         Block::section(resource_link(
           ResourceTargetVariant::Repo,
           id,
         )),
+      ];
+      (text, blocks.into())
+    }
+    AlertData::ProcedureFailed { id, name } => {
+      let text = format!("{level} | Procedure *{name}* has *failed*");
+      let blocks = vec![
+        Block::header(text.clone()),
+        Block::section(resource_link(
+          ResourceTargetVariant::Procedure,
+          id,
+        )),
+      ];
+      (text, blocks.into())
+    }
+    AlertData::ActionFailed { id, name } => {
+      let text = format!("{level} | Action *{name}* has *failed*");
+      let blocks = vec![
+        Block::header(text.clone()),
+        Block::section(resource_link(
+          ResourceTargetVariant::Action,
+          id,
+        )),
+      ];
+      (text, blocks.into())
+    }
+    AlertData::ScheduleRun {
+      resource_type,
+      id,
+      name,
+    } => {
+      let text = format!(
+        "{level} | *{name}* ({resource_type}) | Scheduled run started 🕝"
+      );
+      let blocks = vec![
+        Block::header(text.clone()),
+        Block::section(resource_link(*resource_type, id)),
       ];
       (text, blocks.into())
     }
@@ -411,7 +444,7 @@ pub async fn send_alert(
       &mut global_replacers,
       &mut secret_replacers,
     )?;
-    
+
     let slack = ::slack::Client::new(url_interpolated);
     slack.send_message(text, blocks).await.map_err(|e| {
       let replacers =

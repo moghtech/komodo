@@ -10,8 +10,10 @@ use formatting::format_serror;
 use komodo_client::{
   api::execute::{RunAction, RunProcedure},
   entities::{
-    ResourceTarget, ScheduleFormat,
+    ResourceTarget, ResourceTargetVariant, ScheduleFormat,
     action::Action,
+    alert::{Alert, AlertData, SeverityLevel},
+    komodo_timestamp,
     procedure::Procedure,
     user::{action_user, procedure_user},
   },
@@ -20,6 +22,7 @@ use mungos::find::find_collect;
 use resolver_api::Resolve;
 
 use crate::{
+  alert::send_alerts,
   api::execute::{ExecuteArgs, ExecuteRequest},
   helpers::update::init_execution_update,
   state::db_client,
@@ -40,8 +43,21 @@ pub fn spawn_schedule_executor() {
         match next_run {
           Ok(next_run_time) if current_time >= next_run_time => {
             tokio::spawn(async move {
-              match target {
+              match &target {
                 ResourceTarget::Action(id) => {
+                  let action = match crate::resource::get::<Action>(
+                    id,
+                  )
+                  .await
+                  {
+                    Ok(action) => action,
+                    Err(e) => {
+                      warn!(
+                        "Scheduled action run on {id} failed | failed to get procedure | {e:?}"
+                      );
+                      return;
+                    }
+                  };
                   let request =
                     ExecuteRequest::RunAction(RunAction {
                       action: id.clone(),
@@ -75,16 +91,38 @@ pub fn spawn_schedule_executor() {
                       "Scheduled action run on {id} failed | {e:?}"
                     );
                   }
-                  match crate::resource::get::<Action>(&id).await {
-                    Ok(action) => update_schedule(&action),
-                    Err(e) => {
-                      warn!(
-                        "Rescheduling action run on {id} failed | failed to get procedure | {e:?}"
-                      );
-                    }
+                  update_schedule(&action);
+                  if action.config.schedule_alert {
+                    let alert = Alert {
+                      id: Default::default(),
+                      target,
+                      ts: komodo_timestamp(),
+                      resolved_ts: Some(komodo_timestamp()),
+                      resolved: true,
+                      level: SeverityLevel::Ok,
+                      data: AlertData::ScheduleRun {
+                        resource_type: ResourceTargetVariant::Action,
+                        id: action.id,
+                        name: action.name,
+                      },
+                    };
+                    send_alerts(&[alert]).await
                   }
                 }
                 ResourceTarget::Procedure(id) => {
+                  let procedure = match crate::resource::get::<
+                    Procedure,
+                  >(id)
+                  .await
+                  {
+                    Ok(procedure) => procedure,
+                    Err(e) => {
+                      warn!(
+                        "Scheduled procedure run on {id} failed | failed to get procedure | {e:?}"
+                      );
+                      return;
+                    }
+                  };
                   let request =
                     ExecuteRequest::RunProcedure(RunProcedure {
                       procedure: id.clone(),
@@ -118,13 +156,23 @@ pub fn spawn_schedule_executor() {
                       "Scheduled procedure run on {id} failed | {e:?}"
                     );
                   }
-                  match crate::resource::get::<Procedure>(&id).await {
-                    Ok(procedure) => update_schedule(&procedure),
-                    Err(e) => {
-                      warn!(
-                        "Rescheduling procedure run on {id} failed | failed to get procedure | {e:?}"
-                      );
-                    }
+                  update_schedule(&procedure);
+                  if procedure.config.schedule_alert {
+                    let alert = Alert {
+                      id: Default::default(),
+                      target,
+                      ts: komodo_timestamp(),
+                      resolved_ts: Some(komodo_timestamp()),
+                      resolved: true,
+                      level: SeverityLevel::Ok,
+                      data: AlertData::ScheduleRun {
+                        resource_type:
+                          ResourceTargetVariant::Procedure,
+                        id: procedure.id,
+                        name: procedure.name,
+                      },
+                    };
+                    send_alerts(&[alert]).await
                   }
                 }
                 _ => unreachable!(),

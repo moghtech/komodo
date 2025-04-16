@@ -13,8 +13,13 @@ use komodo_client::{
     user::{CreateApiKey, CreateApiKeyResponse, DeleteApiKey},
   },
   entities::{
-    action::Action, config::core::CoreConfig,
-    permission::PermissionLevel, update::Update, user::action_user,
+    action::Action,
+    alert::{Alert, AlertData, SeverityLevel},
+    config::core::CoreConfig,
+    komodo_timestamp,
+    permission::PermissionLevel,
+    update::Update,
+    user::action_user,
   },
 };
 use mungos::{by_id::update_one_by_id, mongodb::bson::to_document};
@@ -22,6 +27,7 @@ use resolver_api::Resolve;
 use tokio::fs;
 
 use crate::{
+  alert::send_alerts,
   api::{execute::ExecuteRequest, user::UserArgs},
   config::core_config,
   helpers::{
@@ -177,6 +183,26 @@ impl Resolve<ExecuteArgs> for RunAction {
     }
 
     update_update(update.clone()).await?;
+
+    if !update.success && action.config.failure_alert {
+      warn!("action unsuccessful, alerting...");
+      let target = update.target.clone();
+      tokio::spawn(async move {
+        let alert = Alert {
+          id: Default::default(),
+          target,
+          ts: komodo_timestamp(),
+          resolved_ts: Some(komodo_timestamp()),
+          resolved: true,
+          level: SeverityLevel::Warning,
+          data: AlertData::ActionFailed {
+            id: action.id,
+            name: action.name,
+          },
+        };
+        send_alerts(&[alert]).await
+      });
+    }
 
     Ok(update)
   }
