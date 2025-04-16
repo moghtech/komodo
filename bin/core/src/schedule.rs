@@ -5,6 +5,8 @@ use std::{
 
 use anyhow::{Context, anyhow};
 use async_timing_util::Timelength;
+use chrono::Local;
+use formatting::format_serror;
 use komodo_client::{
   api::execute::RunProcedure,
   entities::{
@@ -158,7 +160,8 @@ pub fn update_procedure_scedule(procedure: &Procedure) {
 
   schedules().write().unwrap().insert(
     procedure.id.clone(),
-    find_next_occurrence(procedure).map_err(|e| format!("{e:#?}")),
+    find_next_occurrence(procedure)
+      .map_err(|e| format_serror(&e.into())),
   );
 }
 
@@ -169,6 +172,8 @@ fn find_next_occurrence(
   let cron = match procedure.config.schedule_format {
     ScheduleFormat::Cron => {
       croner::Cron::new(&procedure.config.schedule)
+        .with_seconds_required()
+        .with_dom_and_dow()
         .parse()
         .context("Failed to parse schedule CRON")?
     }
@@ -183,20 +188,32 @@ fn find_next_occurrence(
           .take(6)
           .collect::<Vec<_>>()
           .join(" ");
-      croner::Cron::new(&cron).parse().with_context(|| {
-        format!("Failed to parse schedule CRON: {cron}")
-      })?
+      croner::Cron::new(&cron)
+        .with_seconds_required()
+        .with_dom_and_dow()
+        .parse()
+        .with_context(|| {
+          format!("Failed to parse schedule CRON: {cron}")
+        })?
     }
   };
-  let tz: chrono_tz::Tz = procedure
-    .config
-    .schedule_timezone
-    .parse()
-    .context("Failed to parse schedule timezone")?;
-  let tz_time = chrono::Local::now().with_timezone(&tz);
-  let next = cron
-    .find_next_occurrence(&tz_time, false)
-    .context("Failed to find next run time")?
-    .timestamp_millis();
+  let next = if procedure.config.schedule_timezone.is_empty() {
+    let tz_time = chrono::Local::now().with_timezone(&Local);
+    cron
+      .find_next_occurrence(&tz_time, false)
+      .context("Failed to find next run time")?
+      .timestamp_millis()
+  } else {
+    let tz: chrono_tz::Tz = procedure
+      .config
+      .schedule_timezone
+      .parse()
+      .context("Failed to parse schedule timezone")?;
+    let tz_time = chrono::Local::now().with_timezone(&tz);
+    cron
+      .find_next_occurrence(&tz_time, false)
+      .context("Failed to find next run time")?
+      .timestamp_millis()
+  };
   Ok(next)
 }

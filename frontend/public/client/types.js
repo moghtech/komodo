@@ -44,8 +44,8 @@ export var BuildState;
 })(BuildState || (BuildState = {}));
 export var ScheduleFormat;
 (function (ScheduleFormat) {
-    ScheduleFormat["Cron"] = "Cron";
     ScheduleFormat["English"] = "English";
+    ScheduleFormat["Cron"] = "Cron";
 })(ScheduleFormat || (ScheduleFormat = {}));
 export var RestartMode;
 (function (RestartMode) {

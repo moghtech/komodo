@@ -541,8 +541,8 @@ export interface ProcedureStage {
 }
 
 export enum ScheduleFormat {
-	Cron = "Cron",
 	English = "English",
+	Cron = "Cron",
 }
 
 /** Config for the [Procedure] */
@@ -576,10 +576,10 @@ export interface ProcedureConfig {
 	 */
 	schedule_enabled: boolean;
 	/**
-	 * A TZ Identifier.
+	 * Optional. A TZ Identifier. If not provided, will use Core local timezone.
 	 * https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
 	 */
-	schedule_timezone: string;
+	schedule_timezone?: string;
 	/** Whether incoming webhooks actually trigger action. */
 	webhook_enabled: boolean;
 	/**

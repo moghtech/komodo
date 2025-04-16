@@ -61,8 +61,8 @@ pub type _PartialProcedureConfig = PartialProcedureConfig;
 )]
 pub enum ScheduleFormat {
   #[default]
-  Cron,
   English,
+  Cron,
 }
 
 /// Config for the [Procedure]
@@ -109,11 +109,10 @@ pub struct ProcedureConfig {
   #[partial_default(default_schedule_enabled())]
   pub schedule_enabled: bool,
 
-  /// A TZ Identifier.
+  /// Optional. A TZ Identifier. If not provided, will use Core local timezone.
   /// https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
-  #[serde(default = "default_schedule_timezone")]
-  #[builder(default = "default_schedule_timezone()")]
-  #[partial_default(default_schedule_timezone())]
+  #[serde(default)]
+  #[builder(default)]
   pub schedule_timezone: String,
 
   /// Whether incoming webhooks actually trigger action.
@@ -139,10 +138,6 @@ fn default_schedule_enabled() -> bool {
   true
 }
 
-fn default_schedule_timezone() -> String {
-  String::from("Etc/UTC")
-}
-
 fn default_webhook_enabled() -> bool {
   true
 }
@@ -154,7 +149,7 @@ impl Default for ProcedureConfig {
       schedule_format: Default::default(),
       schedule: Default::default(),
       schedule_enabled: default_schedule_enabled(),
-      schedule_timezone: default_schedule_timezone(),
+      schedule_timezone: Default::default(),
       webhook_enabled: default_webhook_enabled(),
       webhook_secret: Default::default(),
     }

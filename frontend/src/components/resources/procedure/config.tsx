@@ -61,6 +61,13 @@ import { useToast } from "@ui/use-toast";
 import { fmt_upper_camelcase } from "@lib/formatting";
 import { TextUpdateMenuMonaco } from "@components/util";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@ui/select";
 
 export const ProcedureConfig = ({ id }: { id: string }) => {
   const procedure = useRead("GetProcedure", { procedure: id }).data;
@@ -76,7 +83,8 @@ const ProcedureConfigInner = ({
   procedure: Types.Procedure;
 }) => {
   const [branch, setBranch] = useState("main");
-  const [config, setConfig] = useLocalStorage<Partial<Types.ProcedureConfig>>(
+  const config = procedure.config!;
+  const [update, setUpdate] = useLocalStorage<Partial<Types.ProcedureConfig>>(
     `procedure-${procedure._id?.$oid}-update-v1`,
     {}
   );
@@ -90,19 +98,19 @@ const ProcedureConfigInner = ({
   const [id_or_name] = useWebhookIdOrName();
   const webhook_integration = integrations[PROCEDURE_GIT_PROVIDER] ?? "Github";
 
-  const stages = config.stages || procedure.config?.stages || [];
+  const stages = update.stages || procedure.config?.stages || [];
   const disabled = global_disabled || perms !== Types.PermissionLevel.Write;
 
   const add_stage = () =>
-    setConfig((config) => ({
+    setUpdate((config) => ({
       ...config,
-      stages: [...stages, new_stage()],
+      stages: [...stages, new_stage(stages.length + 1)],
     }));
 
   return (
     <div className="flex flex-col gap-8">
       <ConfigLayout
-        original={procedure.config}
+        original={config}
         titleOther={
           <div className="flex items-center gap-4 text-muted-foreground">
             <div className="flex items-center gap-2">
@@ -125,25 +133,25 @@ const ProcedureConfigInner = ({
           </div>
         }
         disabled={disabled}
-        update={config}
+        update={update}
         onConfirm={async () => {
-          await mutateAsync({ id: procedure._id!.$oid, config });
-          setConfig({});
+          await mutateAsync({ id: procedure._id!.$oid, config: update });
+          setUpdate({});
         }}
-        onReset={() => setConfig({})}
+        onReset={() => setUpdate({})}
       >
         {stages.map((stage, index) => (
           <Stage
             stage={stage}
             setStage={(stage) =>
-              setConfig((config) => ({
-                ...config,
+              setUpdate((update) => ({
+                ...update,
                 stages: stages.map((s, i) => (index === i ? stage : s)),
               }))
             }
             removeStage={() =>
-              setConfig((config) => ({
-                ...config,
+              setUpdate((update) => ({
+                ...update,
                 stages: stages.filter((_, i) => index !== i),
               }))
             }
@@ -151,8 +159,8 @@ const ProcedureConfigInner = ({
               index === 0
                 ? undefined
                 : () =>
-                    setConfig((config) => ({
-                      ...config,
+                    setUpdate((update) => ({
+                      ...update,
                       stages: stages.map((stage, i) => {
                         // Make sure its not the first row
                         if (i === index && index !== 0) {
@@ -170,8 +178,8 @@ const ProcedureConfigInner = ({
               index === stages.length - 1
                 ? undefined
                 : () =>
-                    setConfig((config) => ({
-                      ...config,
+                    setUpdate((update) => ({
+                      ...update,
                       stages: stages.map((stage, i) => {
                         // The index also cannot be the last index, which cannot be moved down
                         if (i === index && index !== stages.length - 1) {
@@ -186,21 +194,21 @@ const ProcedureConfigInner = ({
                     }))
             }
             insertAbove={() =>
-              setConfig((config) => ({
-                ...config,
+              setUpdate((update) => ({
+                ...update,
                 stages: [
                   ...stages.slice(0, index),
-                  new_stage(),
+                  new_stage(index + 1),
                   ...stages.slice(index),
                 ],
               }))
             }
             insertBelow={() =>
-              setConfig((config) => ({
-                ...config,
+              setUpdate((update) => ({
+                ...update,
                 stages: [
                   ...stages.slice(0, index + 1),
-                  new_stage(),
+                  new_stage(index + 2),
                   ...stages.slice(index + 1),
                 ],
               }))
@@ -217,6 +225,104 @@ const ProcedureConfigInner = ({
           Add Stage
         </Button>
       </ConfigLayout>
+      <Section>
+        <Card>
+          <CardHeader>
+            <CardTitle>Schedule</CardTitle>
+            <CardDescription>
+              Configure the Procedure to run at defined times using English or
+              CRON.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-4">
+              <ConfigSwitch
+                label="Enabled"
+                value={
+                  (update.schedule ?? config.schedule)
+                    ? (update.schedule_enabled ?? config.schedule_enabled)
+                    : false
+                }
+                disabled={disabled || !(update.schedule ?? config.schedule)}
+                onChange={(schedule_enabled) =>
+                  setUpdate({ ...update, schedule_enabled })
+                }
+              />
+              <ConfigItem
+                label="Format"
+                description="Choose whether to provide English or CRON schedule expression"
+              >
+                <Select
+                  value={update.schedule_format ?? config.schedule_format}
+                  onValueChange={(schedule_format) =>
+                    setUpdate({
+                      ...update,
+                      schedule_format: schedule_format as Types.ScheduleFormat,
+                      schedule: "",
+                    })
+                  }
+                  disabled={disabled}
+                >
+                  <SelectTrigger className="w-[200px]" disabled={disabled}>
+                    <SelectValue placeholder="Select Format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(Types.ScheduleFormat).map((mode) => (
+                      <SelectItem
+                        key={mode}
+                        value={mode!}
+                        className="cursor-pointer"
+                      >
+                        {mode}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </ConfigItem>
+              <ConfigInput
+                label="Expression"
+                description={
+                  (update.schedule_format ?? config.schedule_format) ===
+                  "Cron" ? (
+                    <div className="pt-1 flex flex-col gap-1">
+                      <code>
+                        second - minute - hour - day - month - day-of-week
+                      </code>
+                    </div>
+                  ) : (
+                    <div className="pt-1 flex flex-col gap-1">
+                      <code>Examples:</code>
+                      <code>- Run every day at 4:00 pm</code>
+                      <code>
+                        - Run at 21:00 on the 1st and 15th of the month
+                      </code>
+                      <code>- Every Sunday at midnight</code>
+                    </div>
+                  )
+                }
+                placeholder={
+                  (update.schedule_format ?? config.schedule_format) === "Cron"
+                    ? "0 0 0 ? * SUN"
+                    : "Enter English expression"
+                }
+                value={update.schedule ?? config.schedule}
+                onChange={(schedule) => setUpdate({ ...update, schedule })}
+                disabled={disabled}
+              />
+              <ConfigInput
+                label="Timezone"
+                description="Optional. Enter specific IANA timezone for schedule expression. If not provided, uses the Core timezone."
+                placeholder="Enter IANA timezone"
+                value={update.schedule_timezone ?? config.schedule_timezone}
+                onChange={(schedule_timezone) =>
+                  setUpdate({ ...update, schedule_timezone })
+                }
+                disabled={disabled}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </Section>
       <Section>
         <Card>
           <CardHeader>
@@ -269,11 +375,11 @@ const ProcedureConfigInner = ({
               <ConfigSwitch
                 label="Webhook Enabled"
                 value={
-                  config.webhook_enabled ?? procedure.config?.webhook_enabled
+                  update.webhook_enabled ?? procedure.config?.webhook_enabled
                 }
                 disabled={disabled}
                 onChange={(webhook_enabled) =>
-                  setConfig({ ...config, webhook_enabled })
+                  setUpdate({ ...update, webhook_enabled })
                 }
               />
               <ConfigInput
@@ -281,11 +387,11 @@ const ProcedureConfigInner = ({
                 description="Provide a custom webhook secret for this resource, or use the global default."
                 placeholder="Input custom secret"
                 value={
-                  config.webhook_secret ?? procedure.config?.webhook_secret
+                  update.webhook_secret ?? procedure.config?.webhook_secret
                 }
                 disabled={disabled}
                 onChange={(webhook_secret) =>
-                  setConfig({ ...config, webhook_secret })
+                  setUpdate({ ...update, webhook_secret })
                 }
               />
             </div>
@@ -542,8 +648,8 @@ const Stage = ({
   );
 };
 
-const new_stage = () => ({
-  name: "Stage",
+const new_stage = (next_index: number) => ({
+  name: `Stage ${next_index}`,
   enabled: true,
   executions: [default_enabled_execution()],
 });
