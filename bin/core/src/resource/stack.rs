@@ -3,17 +3,11 @@ use formatting::format_serror;
 use komodo_client::{
   api::write::RefreshStackCache,
   entities::{
-    Operation, ResourceTargetVariant,
-    permission::PermissionLevel,
-    resource::Resource,
-    server::Server,
-    stack::{
+    permission::PermissionLevel, resource::Resource, server::Server, stack::{
       PartialStackConfig, Stack, StackConfig, StackConfigDiff,
       StackInfo, StackListItem, StackListItemInfo,
       StackQuerySpecifics, StackServiceWithUpdate, StackState,
-    },
-    update::Update,
-    user::{User, stack_user},
+    }, update::Update, user::{stack_user, User}, Operation, ResourceTarget, ResourceTargetVariant
   },
 };
 use mungos::mongodb::Collection;
@@ -42,6 +36,10 @@ impl super::KomodoResource for Stack {
 
   fn resource_type() -> ResourceTargetVariant {
     ResourceTargetVariant::Stack
+  }
+
+  fn resource_target(id: impl Into<String>) -> ResourceTarget {
+    ResourceTarget::Stack(id.into())
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>

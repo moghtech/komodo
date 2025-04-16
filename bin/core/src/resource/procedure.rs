@@ -49,6 +49,10 @@ impl super::KomodoResource for Procedure {
     ResourceTargetVariant::Procedure
   }
 
+  fn resource_target(id: impl Into<String>) -> ResourceTarget {
+    ResourceTarget::Procedure(id.into())
+  }
+
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>
   {
     &db_client().procedures

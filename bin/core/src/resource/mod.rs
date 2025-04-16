@@ -29,7 +29,7 @@ use mungos::{
     options::FindOptions,
   },
 };
-use partial_derive2::{Diff, FieldDiff, MaybeNone, PartialDiff};
+use partial_derive2::{Diff, MaybeNone, PartialDiff};
 use resolver_api::Resolve;
 use serde::{Serialize, de::DeserializeOwned};
 
@@ -107,6 +107,7 @@ pub trait KomodoResource {
   type QuerySpecifics: AddFilters + Default + std::fmt::Debug;
 
   fn resource_type() -> ResourceTargetVariant;
+  fn resource_target(id: impl Into<String>) -> ResourceTarget;
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>;
 
@@ -693,13 +694,17 @@ pub async fn update<T: KomodoResource>(
     return Ok(resource);
   }
 
-  let mut diff_log = String::from("diff");
-
-  for FieldDiff { field, from, to } in diff.iter_field_diffs() {
-    diff_log.push_str(&format!(
-      "\n\n<span class=\"text-muted-foreground\">field</span>: '{field}'\n<span class=\"text-muted-foreground\">from</span>:  <span class=\"text-red-700 dark:text-red-400\">{from}</span>\n<span class=\"text-muted-foreground\">to</span>:    <span class=\"text-green-700 dark:text-green-400\">{to}</span>",
-    ));
+  // Leave this Result unhandled for now
+  let prev_toml = ExportResourcesToToml {
+    targets: vec![T::resource_target(&resource.id)],
+    ..Default::default()
   }
+  .resolve(&ReadArgs {
+    user: system_user().to_owned(),
+  })
+  .await
+  .map_err(|e| e.error)
+  .context("Failed to export resource toml before update");
 
   // This minimizes the update against the existing config
   let config: T::PartialConfig = diff.into();
@@ -715,13 +720,35 @@ pub async fn update<T: KomodoResource>(
     .await
     .context("failed to update resource on database")?;
 
+  let curr_toml = ExportResourcesToToml {
+    targets: vec![T::resource_target(&id)],
+    ..Default::default()
+  }
+  .resolve(&ReadArgs {
+    user: system_user().to_owned(),
+  })
+  .await
+  .map_err(|e| e.error)
+  .context("Failed to export resource toml after update");
+
   let mut update = make_update(
     resource_target::<T>(id),
     T::update_operation(),
     user,
   );
 
-  update.push_simple_log("update config", diff_log);
+  match prev_toml {
+    Ok(res) => update.prev_toml = res.toml,
+    Err(e) => update
+      // These logs are pushed with success == true, so user still knows the update was succesful.
+      .push_simple_log("Failed export", format_serror(&e.into())),
+  }
+  match curr_toml {
+    Ok(res) => update.current_toml = res.toml,
+    Err(e) => update
+      // These logs are pushed with success == true, so user still knows the update was succesful.
+      .push_simple_log("Failed export", format_serror(&e.into())),
+  }
 
   let updated = get::<T>(id_or_name).await?;
 

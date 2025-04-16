@@ -2,7 +2,7 @@ use std::{collections::HashMap, str::FromStr};
 
 use anyhow::anyhow;
 use komodo_client::entities::{
-  ResourceTarget, ResourceTargetVariant,
+  ResourceTargetVariant,
   action::Action,
   alerter::Alerter,
   build::Build,
@@ -55,8 +55,6 @@ pub struct ToUpdateItem<T: Default> {
 }
 
 pub trait ResourceSyncTrait: ToToml + Sized {
-  fn resource_target(id: String) -> ResourceTarget;
-
   /// To exclude resource syncs with "file_contents" (they aren't compatible)
   fn include_resource(
     name: &String,

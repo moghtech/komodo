@@ -3,18 +3,10 @@ use std::time::Duration;
 use anyhow::Context;
 use formatting::format_serror;
 use komodo_client::entities::{
-  Operation, ResourceTargetVariant,
-  builder::Builder,
-  permission::PermissionLevel,
-  repo::{
+  builder::Builder, permission::PermissionLevel, repo::{
     PartialRepoConfig, Repo, RepoConfig, RepoConfigDiff, RepoInfo,
     RepoListItem, RepoListItemInfo, RepoQuerySpecifics, RepoState,
-  },
-  resource::Resource,
-  server::Server,
-  to_komodo_name,
-  update::Update,
-  user::User,
+  }, resource::Resource, server::Server, to_komodo_name, update::Update, user::User, Operation, ResourceTarget, ResourceTargetVariant
 };
 use mungos::{
   find::find_collect,
@@ -42,6 +34,10 @@ impl super::KomodoResource for Repo {
 
   fn resource_type() -> ResourceTargetVariant {
     ResourceTargetVariant::Repo
+  }
+
+  fn resource_target(id: impl Into<String>) -> ResourceTarget {
+    ResourceTarget::Repo(id.into())
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>

@@ -36,6 +36,10 @@ impl super::KomodoResource for Action {
     ResourceTargetVariant::Action
   }
 
+  fn resource_target(id: impl Into<String>) -> ResourceTarget {
+    ResourceTarget::Action(id.into())
+  }
+
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>
   {
     &db_client().actions

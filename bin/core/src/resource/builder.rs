@@ -1,16 +1,10 @@
 use anyhow::Context;
 use komodo_client::entities::{
-  MergePartial, Operation, ResourceTargetVariant,
   builder::{
     Builder, BuilderConfig, BuilderConfigDiff, BuilderConfigVariant,
     BuilderListItem, BuilderListItemInfo, BuilderQuerySpecifics,
     PartialBuilderConfig, PartialServerBuilderConfig,
-  },
-  permission::PermissionLevel,
-  resource::Resource,
-  server::Server,
-  update::Update,
-  user::User,
+  }, permission::PermissionLevel, resource::Resource, server::Server, update::Update, user::User, MergePartial, Operation, ResourceTarget, ResourceTargetVariant
 };
 use mungos::mongodb::{
   Collection,
@@ -29,6 +23,10 @@ impl super::KomodoResource for Builder {
 
   fn resource_type() -> ResourceTargetVariant {
     ResourceTargetVariant::Builder
+  }
+
+  fn resource_target(id: impl Into<String>) -> ResourceTarget {
+    ResourceTarget::Builder(id.into())
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>

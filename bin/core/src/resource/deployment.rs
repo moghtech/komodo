@@ -1,20 +1,9 @@
 use anyhow::Context;
 use formatting::format_serror;
 use komodo_client::entities::{
-  Operation, ResourceTargetVariant,
-  build::Build,
-  deployment::{
-    Deployment, DeploymentConfig, DeploymentConfigDiff,
-    DeploymentImage, DeploymentListItem, DeploymentListItemInfo,
-    DeploymentQuerySpecifics, DeploymentState,
-    PartialDeploymentConfig, conversions_from_str,
-  },
-  environment_vars_from_str,
-  permission::PermissionLevel,
-  resource::Resource,
-  server::Server,
-  update::Update,
-  user::User,
+  build::Build, deployment::{
+    conversions_from_str, Deployment, DeploymentConfig, DeploymentConfigDiff, DeploymentImage, DeploymentListItem, DeploymentListItemInfo, DeploymentQuerySpecifics, DeploymentState, PartialDeploymentConfig
+  }, environment_vars_from_str, permission::PermissionLevel, resource::Resource, server::Server, update::Update, user::User, Operation, ResourceTarget, ResourceTargetVariant
 };
 use mungos::mongodb::Collection;
 use periphery_client::api::container::RemoveContainer;
@@ -41,6 +30,10 @@ impl super::KomodoResource for Deployment {
 
   fn resource_type() -> ResourceTargetVariant {
     ResourceTargetVariant::Deployment
+  }
+
+  fn resource_target(id: impl Into<String>) -> ResourceTarget {
+    ResourceTarget::Deployment(id.into())
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>

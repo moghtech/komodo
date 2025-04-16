@@ -1,14 +1,10 @@
 use komodo_client::entities::{
-  MergePartial, Operation, ResourceTargetVariant,
-  resource::Resource,
-  server_template::{
+  resource::Resource, server_template::{
     PartialServerTemplateConfig, ServerTemplate,
     ServerTemplateConfig, ServerTemplateConfigDiff,
     ServerTemplateConfigVariant, ServerTemplateListItem,
     ServerTemplateListItemInfo, ServerTemplateQuerySpecifics,
-  },
-  update::Update,
-  user::User,
+  }, update::Update, user::User, MergePartial, Operation, ResourceTarget, ResourceTargetVariant
 };
 use mungos::mongodb::{
   Collection,
@@ -27,6 +23,10 @@ impl super::KomodoResource for ServerTemplate {
 
   fn resource_type() -> ResourceTargetVariant {
     ResourceTargetVariant::ServerTemplate
+  }
+
+  fn resource_target(id: impl Into<String>) -> ResourceTarget {
+    ResourceTarget::ServerTemplate(id.into())
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>
