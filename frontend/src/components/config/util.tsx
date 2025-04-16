@@ -180,7 +180,7 @@ export const ConfigSwitch = ({
   >
     <div
       className="py-2 flex flex-row gap-4 items-center text-sm cursor-pointer"
-      onClick={() => onChange(!checked)}
+      onClick={() => !disabled && onChange(!checked)}
     >
       {/* <div
         className={cn(
