@@ -2359,6 +2359,10 @@ export interface Update {
     commit_hash?: string;
     /** Some unstructured, operation specific data. Not for general usage. */
     other_data?: string;
+    /** If the update is for resource config update, give the previous toml contents */
+    prev_toml?: string;
+    /** If the update is for resource config update, give the current (at time of Update) toml contents */
+    current_toml?: string;
 }
 export type GetUpdateResponse = Update;
 /**

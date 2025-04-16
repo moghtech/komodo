@@ -36,6 +36,7 @@ import { UsableResource } from "@types";
 import { UserAvatar } from "@components/util";
 import { ResourceName } from "@components/resources/common";
 import { useWebsocketMessages } from "@lib/socket";
+import { MonacoDiffEditor } from "@components/monaco";
 
 export const UpdateUser = ({
   user_id,
@@ -203,6 +204,21 @@ const UpdateDetailsContent = ({
         </SheetDescription>
       </SheetHeader>
       <div className="grid gap-2 max-h-[calc(85vh-110px)] overflow-y-auto">
+        {update.prev_toml && update.current_toml && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Changes made</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <MonacoDiffEditor
+                original={update.prev_toml}
+                modified={update.current_toml}
+                language="toml"
+                readOnly
+              />
+            </CardContent>
+          </Card>
+        )}
         {update.logs?.map((log, i) => (
           <Card key={i}>
             <CardHeader className="flex-col">
