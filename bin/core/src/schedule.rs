@@ -8,10 +8,12 @@ use async_timing_util::Timelength;
 use chrono::Local;
 use formatting::format_serror;
 use komodo_client::{
-  api::execute::RunProcedure,
+  api::execute::{RunAction, RunProcedure},
   entities::{
-    procedure::{Procedure, ScheduleFormat},
-    user::procedure_user,
+    ResourceTarget, ScheduleFormat,
+    action::Action,
+    procedure::Procedure,
+    user::{action_user, procedure_user},
   },
 };
 use mungos::find::find_collect;
@@ -34,47 +36,87 @@ pub fn spawn_schedule_management_threads() {
       .await as i64;
       let mut lock = schedules().write().unwrap();
       let drained = lock.drain().collect::<Vec<_>>();
-      for (procedure, next_run) in drained {
+      for (target, next_run) in drained {
         match next_run {
           Ok(next_run_time) if current_time >= next_run_time => {
             tokio::spawn(async move {
-              let request =
-                ExecuteRequest::RunProcedure(RunProcedure {
-                  procedure: procedure.clone(),
-                });
-              let update = match init_execution_update(
-                &request,
-                procedure_user(),
-              )
-              .await
-              {
-                Ok(update) => update,
-                Err(e) => {
-                  error!(
-                    "Failed to make update for scheduled procedure run, procedure {procedure} is not being run | {e:#}"
-                  );
-                  return;
+              match target {
+                ResourceTarget::Action(id) => {
+                  let request =
+                    ExecuteRequest::RunAction(RunAction {
+                      action: id.clone(),
+                    });
+                  let update = match init_execution_update(
+                    &request,
+                    action_user(),
+                  )
+                  .await
+                  {
+                    Ok(update) => update,
+                    Err(e) => {
+                      error!(
+                        "Failed to make update for scheduled action run, action {id} is not being run | {e:#}"
+                      );
+                      return;
+                    }
+                  };
+                  let ExecuteRequest::RunAction(request) = request
+                  else {
+                    unreachable!()
+                  };
+                  if let Err(e) = request
+                    .resolve(&ExecuteArgs {
+                      user: action_user().to_owned(),
+                      update,
+                    })
+                    .await
+                  {
+                    warn!(
+                      "Scheduled action run on {id} failed | {e:?}"
+                    );
+                  }
                 }
-              };
-              let ExecuteRequest::RunProcedure(request) = request
-              else {
-                unreachable!()
-              };
-              if let Err(e) = request
-                .resolve(&ExecuteArgs {
-                  user: procedure_user().to_owned(),
-                  update,
-                })
-                .await
-              {
-                warn!(
-                  "scheduled procedure run on {procedure} failed | {e:?}"
-                );
+                ResourceTarget::Procedure(id) => {
+                  let request =
+                    ExecuteRequest::RunProcedure(RunProcedure {
+                      procedure: id.clone(),
+                    });
+                  let update = match init_execution_update(
+                    &request,
+                    procedure_user(),
+                  )
+                  .await
+                  {
+                    Ok(update) => update,
+                    Err(e) => {
+                      error!(
+                        "Failed to make update for scheduled procedure run, procedure {id} is not being run | {e:#}"
+                      );
+                      return;
+                    }
+                  };
+                  let ExecuteRequest::RunProcedure(request) = request
+                  else {
+                    unreachable!()
+                  };
+                  if let Err(e) = request
+                    .resolve(&ExecuteArgs {
+                      user: procedure_user().to_owned(),
+                      update,
+                    })
+                    .await
+                  {
+                    warn!(
+                      "Scheduled procedure run on {id} failed | {e:?}"
+                    );
+                  }
+                }
+                _ => unreachable!(),
               }
             });
           }
           other => {
-            lock.insert(procedure, other);
+            lock.insert(target, other);
             continue;
           }
         };
@@ -83,22 +125,21 @@ pub fn spawn_schedule_management_threads() {
   });
   // Updater thread
   tokio::spawn(async move {
-    update_procedure_schedules().await;
+    update_schedules().await;
     loop {
       async_timing_util::wait_until_timelength(
         Timelength::OneMinute,
         500,
       )
       .await;
-      update_procedure_schedules().await
+      update_schedules().await
     }
   });
 }
 
-type ProcedureId = String;
 type UnixTimestampMs = i64;
 type Schedules =
-  HashMap<ProcedureId, Result<UnixTimestampMs, String>>;
+  HashMap<ResourceTarget, Result<UnixTimestampMs, String>>;
 
 fn schedules() -> &'static RwLock<Schedules> {
   static SCHEDULES: OnceLock<RwLock<Schedules>> = OnceLock::new();
@@ -106,80 +147,91 @@ fn schedules() -> &'static RwLock<Schedules> {
 }
 
 pub fn get_schedule_item_info(
-  procedure_id: &str,
+  target: &ResourceTarget,
 ) -> (Option<i64>, Option<String>) {
-  match schedules().read().unwrap().get(procedure_id) {
+  match schedules().read().unwrap().get(target) {
     Some(Ok(time)) => (Some(*time), None),
     Some(Err(e)) => (None, Some(e.clone())),
     None => (None, None),
   }
 }
 
-pub fn cancel_schedule(procedure_id: &str) {
-  schedules().write().unwrap().remove(procedure_id);
+pub fn cancel_schedule(target: &ResourceTarget) {
+  schedules().write().unwrap().remove(target);
 }
 
-pub async fn update_procedure_schedules() {
-  let procedures =
-    match find_collect(&db_client().procedures, None, None)
-      .await
-      .context("failed to get all procedures from db")
-    {
-      Ok(procedures) => procedures,
+pub async fn update_schedules() {
+  let (procedures, actions) = tokio::join!(
+    find_collect(&db_client().procedures, None, None),
+    find_collect(&db_client().actions, None, None),
+  );
+  let procedures = match procedures
+    .context("failed to get all procedures from db")
+  {
+    Ok(procedures) => procedures,
+    Err(e) => {
+      error!("failed to get procedures for schedule update | {e:#}");
+      Vec::new()
+    }
+  };
+  let actions =
+    match actions.context("failed to get all actions from db") {
+      Ok(actions) => actions,
       Err(e) => {
-        error!(
-          "failed to get procedures for schedule update | {e:#}"
-        );
-        return;
+        error!("failed to get actions for schedule update | {e:#}");
+        Vec::new()
       }
     };
-  // clear out any schedules which don't match to existing procedures
+  // clear out any schedules which don't match to existing resources
   {
     let mut lock = schedules().write().unwrap();
-    lock.retain(|procedure_id, _| {
-      procedures
-        .iter()
-        .any(|procedure| &procedure.id == procedure_id)
+    lock.retain(|target, _| match target {
+      ResourceTarget::Action(id) => {
+        actions.iter().any(|action| &action.id == id)
+      }
+      ResourceTarget::Procedure(id) => {
+        procedures.iter().any(|procedure| &procedure.id == id)
+      }
+      _ => unreachable!(),
     });
   }
   for procedure in procedures {
-    update_procedure_scedule(&procedure);
+    update_schedule(&procedure);
+  }
+  for action in actions {
+    update_schedule(&action);
   }
 }
 
 /// Re/spawns the schedule for the given procedure
-pub fn update_procedure_scedule(procedure: &Procedure) {
+pub fn update_schedule(schedule: impl HasSchedule) {
   // Cancel any existing schedule for the procedure
-  cancel_schedule(&procedure.id);
+  cancel_schedule(&schedule.target());
 
-  if !procedure.config.schedule_enabled
-    || procedure.config.schedule.is_empty()
-  {
+  if !schedule.enabled() || schedule.schedule().is_empty() {
     return;
   }
 
   schedules().write().unwrap().insert(
-    procedure.id.clone(),
-    find_next_occurrence(procedure)
+    schedule.target(),
+    find_next_occurrence(schedule)
       .map_err(|e| format_serror(&e.into())),
   );
 }
 
 /// Finds the next run occurence in UTC ms.
 fn find_next_occurrence(
-  procedure: &Procedure,
+  schedule: impl HasSchedule,
 ) -> anyhow::Result<i64> {
-  let cron = match procedure.config.schedule_format {
-    ScheduleFormat::Cron => {
-      croner::Cron::new(&procedure.config.schedule)
-        .with_seconds_required()
-        .with_dom_and_dow()
-        .parse()
-        .context("Failed to parse schedule CRON")?
-    }
+  let cron = match schedule.format() {
+    ScheduleFormat::Cron => croner::Cron::new(schedule.schedule())
+      .with_seconds_required()
+      .with_dom_and_dow()
+      .parse()
+      .context("Failed to parse schedule CRON")?,
     ScheduleFormat::English => {
       let cron =
-        english_to_cron::str_cron_syntax(&procedure.config.schedule)
+        english_to_cron::str_cron_syntax(&schedule.schedule())
           .map_err(|e| {
             anyhow!("Failed to parse english to cron | {e:?}")
           })?
@@ -197,16 +249,15 @@ fn find_next_occurrence(
         })?
     }
   };
-  let next = if procedure.config.schedule_timezone.is_empty() {
+  let next = if schedule.timezone().is_empty() {
     let tz_time = chrono::Local::now().with_timezone(&Local);
     cron
       .find_next_occurrence(&tz_time, false)
       .context("Failed to find next run time")?
       .timestamp_millis()
   } else {
-    let tz: chrono_tz::Tz = procedure
-      .config
-      .schedule_timezone
+    let tz: chrono_tz::Tz = schedule
+      .timezone()
       .parse()
       .context("Failed to parse schedule timezone")?;
     let tz_time = chrono::Local::now().with_timezone(&tz);
@@ -216,4 +267,48 @@ fn find_next_occurrence(
       .timestamp_millis()
   };
   Ok(next)
+}
+
+pub trait HasSchedule {
+  fn target(&self) -> ResourceTarget;
+  fn enabled(&self) -> bool;
+  fn format(&self) -> ScheduleFormat;
+  fn schedule(&self) -> &str;
+  fn timezone(&self) -> &str;
+}
+
+impl HasSchedule for &Procedure {
+  fn target(&self) -> ResourceTarget {
+    ResourceTarget::Procedure(self.id.clone())
+  }
+  fn enabled(&self) -> bool {
+    self.config.schedule_enabled
+  }
+  fn format(&self) -> ScheduleFormat {
+    self.config.schedule_format
+  }
+  fn schedule(&self) -> &str {
+    &self.config.schedule
+  }
+  fn timezone(&self) -> &str {
+    &self.config.schedule_timezone
+  }
+}
+
+impl HasSchedule for &Action {
+  fn target(&self) -> ResourceTarget {
+    ResourceTarget::Action(self.id.clone())
+  }
+  fn enabled(&self) -> bool {
+    self.config.schedule_enabled
+  }
+  fn format(&self) -> ScheduleFormat {
+    self.config.schedule_format
+  }
+  fn schedule(&self) -> &str {
+    &self.config.schedule
+  }
+  fn timezone(&self) -> &str {
+    &self.config.schedule_timezone
+  }
 }

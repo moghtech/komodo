@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use anyhow::Context;
 use komodo_client::entities::{
-  Operation, ResourceTargetVariant,
+  Operation, ResourceTarget, ResourceTargetVariant,
   action::{
     Action, ActionConfig, ActionConfigDiff, ActionInfo,
     ActionListItem, ActionListItemInfo, ActionQuerySpecifics,
@@ -17,7 +17,10 @@ use mungos::{
   mongodb::{Collection, bson::doc, options::FindOneOptions},
 };
 
-use crate::state::{action_state_cache, action_states, db_client};
+use crate::{
+  schedule::{get_schedule_item_info, update_schedule},
+  state::{action_state_cache, action_states, db_client},
+};
 
 impl super::KomodoResource for Action {
   type Config = ActionConfig;
@@ -40,6 +43,9 @@ impl super::KomodoResource for Action {
     action: Resource<Self::Config, Self::Info>,
   ) -> Self::ListItem {
     let state = get_action_state(&action.id).await;
+    let (next_scheduled_run, schedule_error) = get_schedule_item_info(
+      &ResourceTarget::Action(action.id.clone()),
+    );
     ActionListItem {
       name: action.name,
       id: action.id,
@@ -48,6 +54,8 @@ impl super::KomodoResource for Action {
       info: ActionListItemInfo {
         state,
         last_run_at: action.info.last_run_at,
+        next_scheduled_run,
+        schedule_error,
       },
     }
   }
@@ -83,9 +91,10 @@ impl super::KomodoResource for Action {
   }
 
   async fn post_create(
-    _created: &Resource<Self::Config, Self::Info>,
+    created: &Resource<Self::Config, Self::Info>,
     _update: &mut Update,
   ) -> anyhow::Result<()> {
+    update_schedule(created);
     refresh_action_state_cache().await;
     Ok(())
   }

@@ -9,8 +9,7 @@ use typeshare::typeshare;
 use crate::api::execute::Execution;
 
 use super::{
-  I64,
-  resource::{Resource, ResourceListItem, ResourceQuery},
+  resource::{Resource, ResourceListItem, ResourceQuery}, ScheduleFormat, I64
 };
 
 #[typeshare]
@@ -54,16 +53,6 @@ pub type Procedure = Resource<ProcedureConfig, ()>;
 
 #[typeshare(serialized_as = "Partial<ProcedureConfig>")]
 pub type _PartialProcedureConfig = PartialProcedureConfig;
-
-#[typeshare]
-#[derive(
-  Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize,
-)]
-pub enum ScheduleFormat {
-  #[default]
-  English,
-  Cron,
-}
 
 /// Config for the [Procedure]
 #[typeshare]

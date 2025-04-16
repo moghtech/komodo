@@ -4,7 +4,7 @@ use anyhow::{Context, anyhow};
 use komodo_client::{
   api::execute::Execution,
   entities::{
-    Operation, ResourceTargetVariant,
+    Operation, ResourceTarget, ResourceTargetVariant,
     action::Action,
     alerter::Alerter,
     build::Build,
@@ -31,7 +31,7 @@ use mungos::{
 
 use crate::{
   config::core_config,
-  schedule::{get_schedule_item_info, update_procedure_scedule},
+  schedule::{get_schedule_item_info, update_schedule},
   state::{action_states, db_client, procedure_state_cache},
 };
 
@@ -56,8 +56,9 @@ impl super::KomodoResource for Procedure {
     procedure: Resource<Self::Config, Self::Info>,
   ) -> Self::ListItem {
     let state = get_procedure_state(&procedure.id).await;
-    let (next_scheduled_run, schedule_error) =
-      get_schedule_item_info(&procedure.id);
+    let (next_scheduled_run, schedule_error) = get_schedule_item_info(
+      &ResourceTarget::Procedure(procedure.id.clone()),
+    );
     ProcedureListItem {
       name: procedure.name,
       id: procedure.id,
@@ -102,7 +103,7 @@ impl super::KomodoResource for Procedure {
     created: &Resource<Self::Config, Self::Info>,
     _update: &mut Update,
   ) -> anyhow::Result<()> {
-    update_procedure_scedule(created);
+    update_schedule(created);
     refresh_procedure_state_cache().await;
     Ok(())
   }
