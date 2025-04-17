@@ -114,6 +114,9 @@ pub enum AlerterEndpoint {
 
   /// Send alert to Ntfy
   Ntfy(NtfyAlerterEndpoint),
+
+  /// Send alert to Pushover
+  Pushover(PushoverAlerterEndpoint),
 }
 
 impl Default for AlerterEndpoint {
@@ -222,9 +225,33 @@ fn default_ntfy_url() -> String {
   String::from("http://localhost:8080/komodo")
 }
 
+/// Configuration for a Pushover alerter.
+#[typeshare]
+#[derive(
+  Debug, Clone, PartialEq, Serialize, Deserialize, Builder,
+)]
+pub struct PushoverAlerterEndpoint {
+  /// The pushover URL including application and user tokens in parameters.
+  #[serde(default = "default_pushover_url")]
+  #[builder(default = "default_pushover_url()")]
+  pub url: String,
+}
+
+impl Default for PushoverAlerterEndpoint {
+  fn default() -> Self {
+    Self {
+      url: default_pushover_url(),
+    }
+  }
+}
+
+fn default_pushover_url() -> String {
+  String::from(
+    "https://api.pushover.net/1/messages.json?token=XXXXXXXXXXXXX&user=XXXXXXXXXXXXX",
+  )
+}
 
 // QUERY
-
 #[typeshare]
 pub type AlerterQuery = ResourceQuery<AlerterQuerySpecifics>;
 

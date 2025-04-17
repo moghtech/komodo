@@ -18,8 +18,9 @@ use crate::helpers::query::get_variables_and_secrets;
 use crate::{config::core_config, state::db_client};
 
 mod discord;
-mod slack;
 mod ntfy;
+mod pushover;
+mod slack;
 
 #[instrument(level = "debug")]
 pub async fn send_alerts(alerts: &[Alert]) {
@@ -131,7 +132,18 @@ pub async fn send_alert_to_alerter(
     }
     AlerterEndpoint::Ntfy(NtfyAlerterEndpoint { url }) => {
       ntfy::send_alert(url, alert).await.with_context(|| {
-        format!("Failed to send alert to ntfy Alerter {}", alerter.name)
+        format!(
+          "Failed to send alert to ntfy Alerter {}",
+          alerter.name
+        )
+      })
+    }
+    AlerterEndpoint::Pushover(PushoverAlerterEndpoint { url }) => {
+      pushover::send_alert(url, alert).await.with_context(|| {
+        format!(
+          "Failed to send alert to Pushover Alerter {}",
+          alerter.name
+        )
       })
     }
   }

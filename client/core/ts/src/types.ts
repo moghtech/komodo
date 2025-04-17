@@ -135,7 +135,9 @@ export type AlerterEndpoint =
 	/** Send alert to a Discord app */
 	| { type: "Discord", params: DiscordAlerterEndpoint }
 	/** Send alert to Ntfy */
-	| { type: "Ntfy", params: NtfyAlerterEndpoint };
+	| { type: "Ntfy", params: NtfyAlerterEndpoint }
+	/** Send alert to Pushover */
+	| { type: "Pushover", params: PushoverAlerterEndpoint };
 
 /** Used to reference a specific resource across all resource types */
 export type ResourceTarget = 
@@ -6607,6 +6609,12 @@ export interface PullStack {
 export interface PushRecentlyViewed {
 	/** The target to push. */
 	resource: ResourceTarget;
+}
+
+/** Configuration for a Pushover alerter. */
+export interface PushoverAlerterEndpoint {
+	/** The pushover URL including application and user tokens in parameters. */
+	url: string;
 }
 
 /** Trigger a refresh of the cached latest hash and message. */
