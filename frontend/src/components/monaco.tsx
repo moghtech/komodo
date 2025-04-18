@@ -10,7 +10,6 @@ import * as pluginYaml from "prettier/plugins/yaml";
 import { useWindowDimensions } from "@lib/hooks";
 
 const MIN_EDITOR_HEIGHT = 56;
-// const MAX_EDITOR_HEIGHT = 500;
 
 export type MonacoLanguage =
   | "yaml"
@@ -102,13 +101,9 @@ export const MonacoEditor = ({
     const contentHeight = line_count * 18 + 30;
     const containerNode = editor.getContainerDomNode();
 
-    // containerNode.style.height = `${Math.max(
-    //   Math.ceil(contentHeight),
-    //   minHeight ?? MIN_EDITOR_HEIGHT
-    // )}px`;
-    containerNode.style.height = `${Math.min(
-      Math.max(Math.ceil(contentHeight), minHeight ?? MIN_EDITOR_HEIGHT),
-      Math.floor(dimensions.height * (3 / 5))
+    containerNode.style.height = `${Math.max(
+      Math.min(contentHeight, Math.floor(dimensions.height * 0.5)),
+      minHeight ?? MIN_EDITOR_HEIGHT
     )}px`;
   }, [editor, line_count]);
 
@@ -182,8 +177,9 @@ export const MonacoDiffEditor = ({
     if (!editor) return;
     const contentHeight = line_count * 18 + 30;
     const node = editor.getContainerDomNode();
+
     node.style.height = `${Math.max(
-      Math.min(Math.ceil(contentHeight), MAX_DIFF_HEIGHT),
+      Math.min(contentHeight, MAX_DIFF_HEIGHT),
       MIN_DIFF_HEIGHT
     )}px`;
   }, [editor, line_count]);
