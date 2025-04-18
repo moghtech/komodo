@@ -23,7 +23,12 @@ pub fn init(config: &LogConfig) -> anyhow::Result<()> {
         config.opentelemetry_service_name.clone(),
       );
       registry
-        .with(tracing_subscriber::fmt::layer().pretty())
+        .with(
+          tracing_subscriber::fmt::layer()
+            .pretty()
+            .with_file(false)
+            .with_line_number(false),
+        )
         .with(OpenTelemetryLayer::new(tracer))
         .try_init()
     }
@@ -33,22 +38,16 @@ pub fn init(config: &LogConfig) -> anyhow::Result<()> {
         config.opentelemetry_service_name.clone(),
       );
       registry
-        .with(tracing_subscriber::fmt::layer())
+        .with(
+          tracing_subscriber::fmt::layer()
+            .with_file(false)
+            .with_line_number(false),
+        )
         .with(OpenTelemetryLayer::new(tracer))
         .try_init()
     }
 
-    (StdioLogMode::Json, true, true) => {
-      let tracer = otel::tracer(
-        &config.otlp_endpoint,
-        config.opentelemetry_service_name.clone(),
-      );
-      registry
-        .with(tracing_subscriber::fmt::layer().json().pretty())
-        .with(OpenTelemetryLayer::new(tracer))
-        .try_init()
-    }
-    (StdioLogMode::Json, true, false) => {
+    (StdioLogMode::Json, true, _) => {
       let tracer = otel::tracer(
         &config.otlp_endpoint,
         config.opentelemetry_service_name.clone(),
@@ -60,16 +59,22 @@ pub fn init(config: &LogConfig) -> anyhow::Result<()> {
     }
 
     (StdioLogMode::Standard, false, true) => registry
-      .with(tracing_subscriber::fmt::layer().pretty())
+      .with(
+        tracing_subscriber::fmt::layer()
+          .pretty()
+          .with_file(false)
+          .with_line_number(false),
+      )
       .try_init(),
-    (StdioLogMode::Standard, false, false) => {
-      registry.with(tracing_subscriber::fmt::layer()).try_init()
-    }
+    (StdioLogMode::Standard, false, false) => registry
+      .with(
+        tracing_subscriber::fmt::layer()
+          .with_file(false)
+          .with_line_number(false),
+      )
+      .try_init(),
 
-    (StdioLogMode::Json, false, true) => registry
-      .with(tracing_subscriber::fmt::layer().json().pretty())
-      .try_init(),
-    (StdioLogMode::Json, false, false) => registry
+    (StdioLogMode::Json, false, _) => registry
       .with(tracing_subscriber::fmt::layer().json())
       .try_init(),
 
