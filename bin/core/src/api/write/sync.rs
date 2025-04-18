@@ -829,7 +829,9 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
             .context("failed to open existing pending resource sync updates alert")
             .inspect_err(|e| warn!("{e:#}"))
             .ok();
-          send_alerts(&[alert]).await;
+          if sync.config.pending_alert {
+            send_alerts(&[alert]).await;
+          }
         }
         // CLOSE ALERT
         (Some(existing), false) => {

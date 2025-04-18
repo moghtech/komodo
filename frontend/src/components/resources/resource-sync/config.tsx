@@ -188,6 +188,11 @@ export const ResourceSyncConfig = ({
         description:
           "Enabled managed mode / the 'Commit' button. Commit is the 'reverse' of Execute, and will update the sync file with your configs updated in the UI.",
       },
+      pending_alert: {
+        label: "Pending Alerts",
+        description:
+          "Send a message to your Alerters when the Sync has Pending Changes",
+      },
     },
   };
 

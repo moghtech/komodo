@@ -78,6 +78,10 @@ export interface ActionConfig {
      * https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
      */
     schedule_timezone?: string;
+    /** Whether to send alerts when the schedule was run. */
+    schedule_alert: boolean;
+    /** Whether to send alerts when this action fails. */
+    failure_alert: boolean;
     /** Whether incoming webhooks actually trigger action. */
     webhook_enabled: boolean;
     /**
@@ -744,6 +748,10 @@ export interface ProcedureConfig {
      * https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
      */
     schedule_timezone?: string;
+    /** Whether to send alerts when the schedule was run. */
+    schedule_alert: boolean;
+    /** Whether to send alerts when this procedure fails. */
+    failure_alert: boolean;
     /** Whether incoming webhooks actually trigger action. */
     webhook_enabled: boolean;
     /**
@@ -1360,6 +1368,38 @@ export type AlertData =
         /** The name of the repo */
         name: string;
     };
+}
+/** A procedure has failed */
+ | {
+    type: "ProcedureFailed";
+    data: {
+        /** The id of the procedure */
+        id: string;
+        /** The name of the procedure */
+        name: string;
+    };
+}
+/** An action has failed */
+ | {
+    type: "ActionFailed";
+    data: {
+        /** The id of the action */
+        id: string;
+        /** The name of the action */
+        name: string;
+    };
+}
+/** A schedule was run */
+ | {
+    type: "ScheduleRun";
+    data: {
+        /** Procedure or Action */
+        resource_type: ResourceTarget["type"];
+        /** The resource id */
+        id: string;
+        /** The resource name */
+        name: string;
+    };
 };
 /** Representation of an alert in the system. */
 export interface Alert {
@@ -1608,6 +1648,11 @@ export interface ResourceSyncConfig {
     include_variables?: boolean;
     /** Whether sync should include user groups. */
     include_user_groups?: boolean;
+    /**
+     * Whether sync should send alert when it enters Pending state.
+     * Default: true
+     */
+    pending_alert: boolean;
     /** Manage the file contents in the UI. */
     file_contents?: string;
 }
