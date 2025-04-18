@@ -1,5 +1,5 @@
 import { AuthResponses, ExecuteResponses, ReadResponses, UserResponses, WriteResponses } from "./responses.js";
-import { AuthRequest, ExecuteRequest, ReadRequest, UpdateListItem, UserRequest, WriteRequest } from "./types.js";
+import { AuthRequest, ExecuteRequest, ReadRequest, Update, UpdateListItem, UserRequest, WriteRequest } from "./types.js";
 export * as Types from "./types.js";
 type InitOptions = {
     type: "jwt";
@@ -86,11 +86,36 @@ export declare function KomodoClient(url: string, options: InitOptions): {
      * });
      * ```
      *
+     * NOTE. These calls return immediately when the update is created, NOT when the execution task finishes.
+     * To have the call only return when the task finishes, use [execute_and_poll_until_complete].
+     *
      * https://docs.rs/komodo_client/latest/komodo_client/api/execute/index.html
      */
     execute: <T extends ExecuteRequest["type"], Req extends Extract<ExecuteRequest, {
         type: T;
     }>>(type: T, params: Req["params"]) => Promise<ExecuteResponses[Req["type"]]>;
+    /**
+     * Call the `/execute` api, and poll the update until the task has completed.
+     *
+     * ```
+     * const update = await komodo.execute_and_poll("DeployStack", {
+     *   stack: "my-stack"
+     * });
+     * ```
+     *
+     * https://docs.rs/komodo_client/latest/komodo_client/api/execute/index.html
+     */
+    execute_and_poll: <T extends ExecuteRequest["type"], Req extends Extract<ExecuteRequest, {
+        type: T;
+    }>>(type: T, params: Req["params"]) => Promise<Update | (Update | {
+        status: "Err";
+        data: import("./types.js").BatchExecutionResponseItemErr;
+    })[]>;
+    /**
+     * Poll an Update (returned by the `execute` calls) until the `status` is `Complete`.
+     * https://docs.rs/komodo_client/latest/komodo_client/entities/update/struct.Update.html#structfield.status.
+     */
+    poll_update_until_complete: (update_id: string) => Promise<Update>;
     /** Returns the version of Komodo Core the client is calling to. */
     core_version: () => Promise<string>;
     /**
