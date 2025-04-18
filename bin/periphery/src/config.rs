@@ -57,6 +57,9 @@ pub fn periphery_config() -> &'static PeripheryConfig {
         stdio: env
           .periphery_logging_stdio
           .unwrap_or(config.logging.stdio),
+        pretty: env
+          .periphery_logging_pretty
+          .unwrap_or(config.logging.pretty),
         otlp_endpoint: env
           .periphery_logging_otlp_endpoint
           .unwrap_or(config.logging.otlp_endpoint),

@@ -122,6 +122,12 @@ logging.level = "info"
 ## Default: standard
 logging.stdio = "standard"
 
+## Specify whether logging is more human readable.
+## Note. Single logs will span multiple lines.
+## Env: PERIPHERY_LOGGING_PRETTY
+## Default: false
+logging.pretty = false
+
 ## Specify a opentelemetry otlp endpoint to send traces to.
 ## Example: http://localhost:4317.
 ## Env: PERIPHERY_LOGGING_OTLP_ENDPOINT

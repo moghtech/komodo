@@ -10,6 +10,9 @@ pub struct LogConfig {
   #[serde(default)]
   pub stdio: StdioLogMode,
 
+  #[serde(default)]
+  pub pretty: bool,
+
   /// Enable opentelemetry exporting
   #[serde(default)]
   pub otlp_endpoint: String,
@@ -27,6 +30,7 @@ impl Default for LogConfig {
     Self {
       level: Default::default(),
       stdio: Default::default(),
+      pretty: Default::default(),
       otlp_endpoint: Default::default(),
       opentelemetry_service_name: default_opentelemetry_service_name(
       ),

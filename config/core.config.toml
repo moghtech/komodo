@@ -341,11 +341,17 @@ webhook_base_url = ""
 ## Default: info
 logging.level = "info"
 
-## Specify the logging format for stdout / stderr.
+## Specify the logging format.
 ## Env: KOMODO_LOGGING_STDIO
 ## Options: standard, json, none
 ## Default: standard
 logging.stdio = "standard"
+
+## Specify whether logging is more human readable.
+## Note. Single logs will span multiple lines.
+## Env: KOMODO_LOGGING_PRETTY
+## Default: false
+logging.pretty = false
 
 ## Optionally specify a opentelemetry otlp endpoint to send traces to.
 ## Example: http://localhost:4317

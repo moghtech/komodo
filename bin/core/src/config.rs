@@ -194,6 +194,7 @@ pub fn core_config() -> &'static CoreConfig {
         stdio: env
           .komodo_logging_stdio
           .unwrap_or(config.logging.stdio),
+        pretty: env.komodo_logging_pretty.unwrap_or(config.logging.pretty),
         otlp_endpoint: env
           .komodo_logging_otlp_endpoint
           .unwrap_or(config.logging.otlp_endpoint),
