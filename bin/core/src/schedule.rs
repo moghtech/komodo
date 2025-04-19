@@ -295,7 +295,7 @@ fn find_next_occurrence(
       .context("Failed to parse schedule CRON")?,
     ScheduleFormat::English => {
       let cron =
-        english_to_cron::str_cron_syntax(&schedule.schedule())
+        english_to_cron::str_cron_syntax(schedule.schedule())
           .map_err(|e| {
             anyhow!("Failed to parse english to cron | {e:?}")
           })?

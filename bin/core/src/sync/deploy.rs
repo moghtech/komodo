@@ -424,7 +424,7 @@ fn build_cache_for_deployment<'a>(
         let deployed_version = status
           .container
           .as_ref()
-          .and_then(|c| c.image.as_ref()?.split(':').last())
+          .and_then(|c| c.image.as_ref()?.split(':').next_back())
           .unwrap_or("0.0.0");
         match build_version_cache.get(build_id) {
           Some(version) if deployed_version != version => {

@@ -432,9 +432,7 @@ async fn get_on_host_periphery(
 
   match builder.config {
     BuilderConfig::Aws(_) => {
-      return Err(anyhow!(
-        "Files on host doesn't work with AWS builder"
-      ));
+      Err(anyhow!("Files on host doesn't work with AWS builder"))
     }
     BuilderConfig::Url(config) => {
       let periphery = PeripheryClient::new(
