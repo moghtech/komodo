@@ -898,7 +898,7 @@ dependencies = [
 
 [[package]]
 name = "cache"
-version = "1.17.3"
+version = "1.17.3-dev-1"
 dependencies = [
  "anyhow",
  "tokio",
@@ -1059,7 +1059,7 @@ dependencies = [
 
 [[package]]
 name = "command"
-version = "1.17.3"
+version = "1.17.3-dev-1"
 dependencies = [
  "anyhow",
  "formatting",
@@ -1537,7 +1537,7 @@ dependencies = [
 
 [[package]]
 name = "environment_file"
-version = "1.17.3"
+version = "1.17.3-dev-1"
 dependencies = [
  "thiserror 2.0.12",
 ]
@@ -1590,6 +1590,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28dea519a9695b9977216879a3ebfddf92f1c08c05d984f8996aecd6ecdc811d"
 
 [[package]]
+name = "flume"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da0e4dd2a88388a1f4ccc7c9ce104604dab68d9f408dc34cd45823d5a9069095"
+dependencies = [
+ "futures-core",
+ "futures-sink",
+ "nanorand",
+ "spin",
+]
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1606,7 +1618,7 @@ dependencies = [
 
 [[package]]
 name = "formatting"
-version = "1.17.3"
+version = "1.17.3-dev-1"
 dependencies = [
  "serror",
 ]
@@ -1768,7 +1780,7 @@ checksum = "07e28edb80900c19c28f1072f2e8aeca7fa06b23cd4169cefe1af5aa3260783f"
 
 [[package]]
 name = "git"
-version = "1.17.3"
+version = "1.17.3-dev-1"
 dependencies = [
  "anyhow",
  "cache",
@@ -2505,7 +2517,7 @@ dependencies = [
 
 [[package]]
 name = "komodo_cli"
-version = "1.17.3"
+version = "1.17.3-dev-1"
 dependencies = [
  "anyhow",
  "clap",
@@ -2521,7 +2533,7 @@ dependencies = [
 
 [[package]]
 name = "komodo_client"
-version = "1.17.3"
+version = "1.17.3-dev-1"
 dependencies = [
  "anyhow",
  "async_timing_util",
@@ -2552,7 +2564,7 @@ dependencies = [
 
 [[package]]
 name = "komodo_core"
-version = "1.17.3"
+version = "1.17.3-dev-1"
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -2620,7 +2632,7 @@ dependencies = [
 
 [[package]]
 name = "komodo_periphery"
-version = "1.17.3"
+version = "1.17.3-dev-1"
 dependencies = [
  "anyhow",
  "async_timing_util",
@@ -2634,6 +2646,7 @@ dependencies = [
  "dotenvy",
  "environment_file",
  "envy",
+ "flume",
  "formatting",
  "futures",
  "git",
@@ -2641,6 +2654,7 @@ dependencies = [
  "logger",
  "merge_config_files",
  "periphery_client",
+ "pin-project-lite",
  "resolver_api",
  "response",
  "run_command",
@@ -2652,6 +2666,7 @@ dependencies = [
  "svi",
  "sysinfo",
  "tokio",
+ "tokio-util",
  "tracing",
  "uuid",
 ]
@@ -2732,7 +2747,7 @@ dependencies = [
 
 [[package]]
 name = "logger"
-version = "1.17.3"
+version = "1.17.3-dev-1"
 dependencies = [
  "anyhow",
  "komodo_client",
@@ -2974,6 +2989,15 @@ dependencies = [
  "mongodb",
  "serde",
  "serde_derive",
+]
+
+[[package]]
+name = "nanorand"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6a51313c5820b0b02bd422f4b44776fbf47961755c74ce64afc73bfad10226c3"
+dependencies = [
+ "getrandom 0.2.15",
 ]
 
 [[package]]
@@ -3465,15 +3489,17 @@ checksum = "e3148f5046208a5d56bcfc03053e3ca6334e51da8dfb19b6cdc8b306fae3283e"
 
 [[package]]
 name = "periphery_client"
-version = "1.17.3"
+version = "1.17.3-dev-1"
 dependencies = [
  "anyhow",
+ "futures-util",
  "komodo_client",
  "reqwest",
  "resolver_api",
  "serde",
  "serde_json",
  "serror",
+ "tokio-util",
  "tracing",
 ]
 
@@ -3861,11 +3887,13 @@ dependencies = [
  "system-configuration",
  "tokio",
  "tokio-rustls 0.26.2",
+ "tokio-util",
  "tower 0.5.2",
  "tower-service",
  "url",
  "wasm-bindgen",
  "wasm-bindgen-futures",
+ "wasm-streams",
  "web-sys",
  "webpki-roots 0.26.8",
  "windows-registry",
@@ -3967,7 +3995,7 @@ dependencies = [
 
 [[package]]
 name = "response"
-version = "1.17.3"
+version = "1.17.3-dev-1"
 dependencies = [
  "anyhow",
  "axum",
@@ -4609,6 +4637,9 @@ name = "spin"
 version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6980e8d7511241f8acf4aebddbb1ff938df5eebe98691418c4468d0b72a96a67"
+dependencies = [
+ "lock_api",
+]
 
 [[package]]
 name = "spki"
@@ -5504,6 +5535,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1a05d73b933a847d6cccdda8f838a22ff101ad9bf93e33684f39c1f5f0eece3d"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "wasm-streams"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "15053d8d85c7eccdbefef60f06769760a563c7f0a9d6902a13d35c7800b0ad65"
+dependencies = [
+ "futures-util",
+ "js-sys",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
 ]
 
 [[package]]

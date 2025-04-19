@@ -3670,6 +3670,8 @@ export type ListSystemProcessesResponse = SystemProcess[];
 
 export type ListTagsResponse = Tag[];
 
+export type ListTerminalsResponse = string[];
+
 export type ListUserGroupsResponse = UserGroup[];
 
 export type ListUserTargetPermissionsResponse = Permission[];
@@ -4849,6 +4851,17 @@ export interface DeleteSyncWebhook {
 export interface DeleteTag {
 	/** The id of the tag to delete. */
 	id: string;
+}
+
+/**
+ * Delete a terminal on the server.
+ * Response: [NoData]
+ */
+export interface DeleteTerminal {
+	/** Server Id or name */
+	server: string;
+	/** The name of the terminal on the server to delete. */
+	name: string;
 }
 
 /**
@@ -6438,6 +6451,15 @@ export interface ListTags {
 }
 
 /**
+ * List the current active terminals on specified server.
+ * Response: [ListTerminals].
+ */
+export interface ListTerminals {
+	/** Id or name */
+	server: string;
+}
+
+/**
  * Paginated endpoint for updates matching optional query.
  * More recent updates will be returned first.
  */
@@ -7870,6 +7892,7 @@ export type ReadRequest =
 	| { type: "ListDockerImages", params: ListDockerImages }
 	| { type: "ListDockerVolumes", params: ListDockerVolumes }
 	| { type: "ListComposeProjects", params: ListComposeProjects }
+	| { type: "ListTerminals", params: ListTerminals }
 	| { type: "GetDeploymentsSummary", params: GetDeploymentsSummary }
 	| { type: "GetDeployment", params: GetDeployment }
 	| { type: "GetDeploymentContainer", params: GetDeploymentContainer }
@@ -7968,6 +7991,7 @@ export type WriteRequest =
 	| { type: "UpdateServer", params: UpdateServer }
 	| { type: "RenameServer", params: RenameServer }
 	| { type: "CreateNetwork", params: CreateNetwork }
+	| { type: "DeleteTerminal", params: DeleteTerminal }
 	| { type: "CreateDeployment", params: CreateDeployment }
 	| { type: "CopyDeployment", params: CopyDeployment }
 	| { type: "CreateDeploymentFromContainer", params: CreateDeploymentFromContainer }

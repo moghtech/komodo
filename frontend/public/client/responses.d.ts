@@ -65,6 +65,7 @@ export type ReadResponses = {
     GetHistoricalServerStats: Types.GetHistoricalServerStatsResponse;
     ListServers: Types.ListServersResponse;
     ListFullServers: Types.ListFullServersResponse;
+    ListTerminals: Types.ListTerminalsResponse;
     GetDeploymentsSummary: Types.GetDeploymentsSummaryResponse;
     GetDeployment: Types.GetDeploymentResponse;
     GetDeploymentContainer: Types.GetDeploymentContainerResponse;
@@ -158,6 +159,7 @@ export type WriteResponses = {
     UpdateServer: Types.Server;
     RenameServer: Types.Update;
     CreateNetwork: Types.Update;
+    DeleteTerminal: Types.NoData;
     CreateDeployment: Types.Deployment;
     CopyDeployment: Types.Deployment;
     CreateDeploymentFromContainer: Types.Deployment;

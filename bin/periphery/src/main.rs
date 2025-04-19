@@ -12,9 +12,9 @@ mod compose;
 mod config;
 mod docker;
 mod helpers;
-mod router;
 mod ssl;
 mod stats;
+mod terminal;
 
 async fn app() -> anyhow::Result<()> {
   dotenvy::dotenv().ok();
@@ -35,8 +35,8 @@ async fn app() -> anyhow::Result<()> {
   let socket_addr = SocketAddr::from_str(&addr)
     .context("failed to parse listen address")?;
 
-  let app = router::router()
-    .into_make_service_with_connect_info::<SocketAddr>();
+  let app =
+    api::router().into_make_service_with_connect_info::<SocketAddr>();
 
   if config.ssl_enabled {
     info!("🔒 Periphery SSL Enabled");

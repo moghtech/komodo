@@ -8,11 +8,8 @@ use komodo_client::entities::{
   update::Log,
 };
 use periphery_client::api::{
-  GetDockerLists, GetDockerListsResponse, GetHealth,
-  GetHealthResponse, GetVersion, GetVersionResponse,
-  ListDockerRegistries, ListGitProviders, ListSecrets, PruneSystem,
-  RunCommand, build::*, compose::*, container::*, git::*, image::*,
-  network::*, stats::*, volume::*,
+  build::*, compose::*, container::*, git::*, image::*, network::*,
+  stats::*, terminal::*, volume::*, *,
 };
 use resolver_api::Resolve;
 use response::Response;
@@ -27,8 +24,12 @@ mod deploy;
 mod git;
 mod image;
 mod network;
+mod router;
 mod stats;
+mod terminal;
 mod volume;
+
+pub use router::router;
 
 pub struct Args;
 
@@ -136,6 +137,10 @@ pub enum PeripheryRequest {
 
   // All in one (Write)
   PruneSystem(PruneSystem),
+
+  // Terminal
+  ListTerminals(ListTerminals),
+  DeleteTerminal(DeleteTerminal),
 }
 
 //

@@ -8,6 +8,8 @@ use serde_json::json;
 
 pub mod api;
 
+mod terminal;
+
 fn periphery_http_client() -> &'static reqwest::Client {
   static PERIPHERY_HTTP_CLIENT: OnceLock<reqwest::Client> =
     OnceLock::new();
@@ -95,12 +97,12 @@ impl PeripheryClient {
       req.send().await.context("failed at request to periphery")?;
     let status = res.status();
     tracing::debug!(
-      "got response | type: {req_type} | {status} | body: {res:?}",
+      "got response | type: {req_type} | {status} | response: {res:?}",
     );
     if status == StatusCode::OK {
       tracing::debug!("response ok, deserializing");
       res.json().await.with_context(|| format!(
-        "failed to parse response to json | type: {req_type} | body: {request:?}"
+        "failed to parse response to json | type: {req_type} | request: {request:?}"
       ))
     } else {
       tracing::debug!("response is non-200");

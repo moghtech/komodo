@@ -20,6 +20,7 @@ use crate::config::periphery_config;
 pub fn router() -> Router {
   Router::new()
     .route("/", post(handler))
+    .route("/terminal/exec", post(super::terminal::exec))
     .layer(middleware::from_fn(guard_request_by_ip))
     .layer(middleware::from_fn(guard_request_by_passkey))
 }

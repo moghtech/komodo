@@ -812,3 +812,25 @@ impl Resolve<ReadArgs> for ListComposeProjects {
     }
   }
 }
+
+impl Resolve<ReadArgs> for ListTerminals {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListTerminalsResponse> {
+    let server = resource::get_check_permissions::<Server>(
+      &self.server,
+      user,
+      PermissionLevel::Read,
+    )
+    .await?;
+    let cache = server_status_cache()
+      .get_or_insert_default(&server.id)
+      .await;
+    if let Some(terminals) = &cache.terminals {
+      Ok(terminals.clone())
+    } else {
+      Ok(Vec::new())
+    }
+  }
+}

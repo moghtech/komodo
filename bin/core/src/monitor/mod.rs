@@ -52,6 +52,7 @@ pub struct CachedServerStatus {
   pub images: Option<Vec<ImageListItem>>,
   pub volumes: Option<Vec<VolumeListItem>>,
   pub projects: Option<Vec<ComposeProject>>,
+  pub terminals: Option<Vec<String>>,
   /// Store the error in reaching periphery
   pub err: Option<serror::Serror>,
 }
@@ -152,6 +153,7 @@ pub async fn update_cache_for_server(server: &Server) {
       ServerState::Disabled,
       String::from("unknown"),
       None,
+      None,
       (None, None, None, None, None),
       None,
     )
@@ -177,6 +179,7 @@ pub async fn update_cache_for_server(server: &Server) {
         ServerState::NotOk,
         String::from("unknown"),
         None,
+        None,
         (None, None, None, None, None),
         Serror::from(&e),
       )
@@ -184,6 +187,18 @@ pub async fn update_cache_for_server(server: &Server) {
       return;
     }
   };
+
+  let terminals =
+    match periphery.request(api::terminal::ListTerminals {}).await {
+      Ok(terminals) => Some(terminals),
+      Err(e) => {
+        warn!(
+          "Failed to ListTerminals on Server {} | {e:#}",
+          server.name
+        );
+        None
+      }
+    };
 
   let stats = if server.config.stats_monitoring {
     match periphery.request(api::stats::GetSystemStats {}).await {
@@ -196,6 +211,7 @@ pub async fn update_cache_for_server(server: &Server) {
           server,
           ServerState::NotOk,
           String::from("unknown"),
+          terminals,
           None,
           (None, None, None, None, None),
           Serror::from(&e),
@@ -232,6 +248,7 @@ pub async fn update_cache_for_server(server: &Server) {
         server,
         ServerState::Ok,
         version,
+        terminals,
         stats,
         (
           Some(containers.clone()),
@@ -251,6 +268,7 @@ pub async fn update_cache_for_server(server: &Server) {
         server,
         ServerState::Ok,
         version,
+        terminals,
         stats,
         (None, None, None, None, None),
         Some(e.into()),

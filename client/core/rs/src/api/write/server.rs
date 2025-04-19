@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::entities::{
+  NoData,
   server::{_PartialServerConfig, Server},
   update::Update,
 };
@@ -103,5 +104,23 @@ pub struct CreateNetwork {
   /// Server Id or name
   pub server: String,
   /// The name of the network to create.
+  pub name: String,
+}
+
+//
+
+/// Delete a terminal on the server.
+/// Response: [NoData]
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoWriteRequest)]
+#[response(NoData)]
+#[error(serror::Error)]
+pub struct DeleteTerminal {
+  /// Server Id or name
+  pub server: String,
+  /// The name of the terminal on the server to delete.
   pub name: String,
 }

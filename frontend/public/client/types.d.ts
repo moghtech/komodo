@@ -3625,6 +3625,7 @@ export interface SystemProcess {
 }
 export type ListSystemProcessesResponse = SystemProcess[];
 export type ListTagsResponse = Tag[];
+export type ListTerminalsResponse = string[];
 export type ListUserGroupsResponse = UserGroup[];
 export type ListUserTargetPermissionsResponse = Permission[];
 export type ListUsersResponse = User[];
@@ -4666,6 +4667,16 @@ export interface DeleteSyncWebhook {
 export interface DeleteTag {
     /** The id of the tag to delete. */
     id: string;
+}
+/**
+ * Delete a terminal on the server.
+ * Response: [NoData]
+ */
+export interface DeleteTerminal {
+    /** Server Id or name */
+    server: string;
+    /** The name of the terminal on the server to delete. */
+    name: string;
 }
 /**
  * **Admin only**. Delete a user.
@@ -6091,6 +6102,14 @@ export interface ListSystemProcesses {
  */
 export interface ListTags {
     query?: MongoDocument;
+}
+/**
+ * List the current active terminals on specified server.
+ * Response: [ListTerminals].
+ */
+export interface ListTerminals {
+    /** Id or name */
+    server: string;
 }
 /**
  * Paginated endpoint for updates matching optional query.
@@ -7647,6 +7666,9 @@ export type ReadRequest = {
     type: "ListComposeProjects";
     params: ListComposeProjects;
 } | {
+    type: "ListTerminals";
+    params: ListTerminals;
+} | {
     type: "GetDeploymentsSummary";
     params: GetDeploymentsSummary;
 } | {
@@ -7930,6 +7952,9 @@ export type WriteRequest = {
 } | {
     type: "CreateNetwork";
     params: CreateNetwork;
+} | {
+    type: "DeleteTerminal";
+    params: DeleteTerminal;
 } | {
     type: "CreateDeployment";
     params: CreateDeployment;

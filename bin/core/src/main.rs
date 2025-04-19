@@ -76,6 +76,7 @@ async fn app() -> anyhow::Result<()> {
     .nest("/read", api::read::router())
     .nest("/write", api::write::router())
     .nest("/execute", api::execute::router())
+    .nest("/terminal", api::terminal::router())
     .nest("/listener", listener::router())
     .nest("/ws", ws::router())
     .nest("/client", ts_client::router())

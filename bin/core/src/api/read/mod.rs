@@ -123,6 +123,7 @@ enum ReadRequest {
   ListDockerImages(ListDockerImages),
   ListDockerVolumes(ListDockerVolumes),
   ListComposeProjects(ListComposeProjects),
+  ListTerminals(ListTerminals),
 
   // ==== DEPLOYMENT ====
   GetDeploymentsSummary(GetDeploymentsSummary),

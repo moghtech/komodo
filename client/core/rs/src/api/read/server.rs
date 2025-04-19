@@ -628,3 +628,21 @@ pub struct GetServersSummaryResponse {
   /// The number of disabled servers.
   pub disabled: I64,
 }
+
+/// List the current active terminals on specified server.
+/// Response: [ListTerminals].
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoReadRequest)]
+#[response(ListTerminalsResponse)]
+#[error(serror::Error)]
+pub struct ListTerminals {
+  /// Id or name
+  #[serde(alias = "id", alias = "name")]
+  pub server: String,
+}
+
+#[typeshare]
+pub type ListTerminalsResponse = Vec<String>;
