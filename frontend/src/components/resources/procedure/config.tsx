@@ -327,6 +327,9 @@ export const ProcedureConfig = ({ id }: { id: string }) => {
                   "Optional. Enter specific IANA timezone for schedule expression. If not provided, uses the Core timezone.",
                 placeholder: "Enter IANA timezone",
               },
+              schedule_alert: {
+                description: "Send an alert when the scheduled run occurs",
+              },
             },
           },
           {
