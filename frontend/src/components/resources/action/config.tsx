@@ -107,6 +107,16 @@ export const ActionConfig = ({ id }: { id: string }) => {
             },
           },
           {
+            label: "Alert",
+            labelHidden: true,
+            components: {
+              failure_alert: {
+                boldLabel: true,
+                description: "Send an alert any time the Procedure fails",
+              },
+            },
+          },
+          {
             label: "Schedule",
             description:
               "Configure the Procedure to run at defined times using English or CRON.",
