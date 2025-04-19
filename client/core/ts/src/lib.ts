@@ -9,6 +9,7 @@ import {
   AuthRequest,
   BatchExecutionResponse,
   ExecuteRequest,
+  ExecuteTerminal,
   ReadRequest,
   Update,
   UpdateListItem,
@@ -42,7 +43,7 @@ export function KomodoClient(url: string, options: InitOptions) {
     secret: options.type === "api-key" ? options.params.secret : undefined,
   };
 
-  const request = async <Req, Res>(
+  const request = <Req, Res>(
     path: "/auth" | "/user" | "/read" | "/execute" | "/write",
     request: Req
   ): Promise<Res> =>
@@ -270,6 +271,80 @@ export function KomodoClient(url: string, options: InitOptions) {
     }
   };
 
+  const execute_terminal = (request: ExecuteTerminal) =>
+    new Promise<ReadableStream<string>>(async (res, rej) => {
+      try {
+        let response = await fetch(url + "/terminal", {
+          method: "POST",
+          body: JSON.stringify(request),
+          headers: {
+            ...(state.jwt
+              ? {
+                  authorization: state.jwt,
+                }
+              : state.key && state.secret
+              ? {
+                  "x-api-key": state.key,
+                  "x-api-secret": state.secret,
+                }
+              : {}),
+            "content-type": "application/json",
+          },
+        });
+        if (response.status === 200) {
+          if (response.body) {
+            const stream = response.body
+              .pipeThrough(new TextDecoderStream("utf-8"))
+              .pipeThrough(
+                new TransformStream<string, string>({
+                  start(_controller) {
+                    this.tail = "";
+                  },
+                  transform(chunk, controller) {
+                    const data = this.tail + chunk; // prepend any carry‑over
+                    const parts = data.split(/\r?\n/); // split on CRLF or LF
+                    this.tail = parts.pop()!; // last item may be incomplete
+                    for (const line of parts) controller.enqueue(line);
+                  },
+                  flush(controller) {
+                    if (this.tail) controller.enqueue(this.tail); // final unterminated line
+                  },
+                } as Transformer<string, string> & { tail: string })
+              );
+            res(stream);
+          } else {
+            rej({
+              status: response.status,
+              result: { error: "No response body", trace: [] },
+            });
+          }
+        } else {
+          try {
+            const result = await response.json();
+            rej({ status: response.status, result });
+          } catch (error) {
+            rej({
+              status: response.status,
+              result: {
+                error: "Failed to get response body",
+                trace: [JSON.stringify(error)],
+              },
+              error,
+            });
+          }
+        }
+      } catch (error) {
+        rej({
+          status: 1,
+          result: {
+            error: "Request failed with error",
+            trace: [JSON.stringify(error)],
+          },
+          error,
+        });
+      }
+    });
+
   return {
     /**
      * Call the `/auth` api.
@@ -360,5 +435,17 @@ export function KomodoClient(url: string, options: InitOptions) {
      * Note. Awaiting this method will never finish.
      */
     subscribe_to_update_websocket,
+    /**
+     * Executes a command on a given Server / terminal,
+     * and returns a stream to process the output as it comes in.
+     * 
+     * Note. The final line of the stream will usually be 
+     * something like `__KOMODO_EXIT_CODE__:0`. The number
+     * is the exit code of the command.
+     * 
+     * If this line is NOT present, it means the stream
+     * was terminated early, ie like running `exit`.
+     */
+    execute_terminal,
   };
 }

@@ -1,5 +1,5 @@
 import { AuthResponses, ExecuteResponses, ReadResponses, UserResponses, WriteResponses } from "./responses.js";
-import { AuthRequest, ExecuteRequest, ReadRequest, Update, UpdateListItem, UserRequest, WriteRequest } from "./types.js";
+import { AuthRequest, ExecuteRequest, ExecuteTerminal, ReadRequest, Update, UpdateListItem, UserRequest, WriteRequest } from "./types.js";
 export * as Types from "./types.js";
 type InitOptions = {
     type: "jwt";
@@ -132,4 +132,16 @@ export declare function KomodoClient(url: string, options: InitOptions): {
         cancel?: CancelToken;
         on_cancel?: () => void;
     }) => Promise<void>;
+    /**
+     * Executes a command on a given Server / terminal,
+     * and returns a stream to process the output as it comes in.
+     *
+     * Note. The final line of the stream will usually be
+     * something like `__KOMODO_EXIT_CODE__:0`. The number
+     * is the exit code of the command.
+     *
+     * If this line is NOT present, it means the stream
+     * was terminated early, ie like running `exit`.
+     */
+    execute_terminal: (request: ExecuteTerminal) => Promise<ReadableStream<string>>;
 };

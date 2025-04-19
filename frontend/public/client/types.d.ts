@@ -4824,6 +4824,23 @@ export interface ExchangeForJwt {
     token: string;
 }
 /**
+ * Execute a terminal command on the given server.
+ * TODO: Document calling.
+ */
+export interface ExecuteTerminal {
+    /** Server Id or name */
+    server: string;
+    /**
+     * The name of the terminal on the server to use to execute.
+     * If the terminal at name exists, it will be used to execute the command.
+     * Otherwise, a new terminal will be created for this command, which will
+     * persist until it exits or is deleted.
+     */
+    terminal: string;
+    /** The command to execute. */
+    command: string;
+}
+/**
  * Get pretty formatted monrun sync toml for all resources
  * which the user has permissions to view.
  * Response: [TomlResponse].
