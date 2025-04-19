@@ -144,7 +144,6 @@ pub async fn send_alert_to_alerter(
           "Failed to send alert to Pushover Alerter {}",
           alerter.name
         )
-
       })
     }
   }
