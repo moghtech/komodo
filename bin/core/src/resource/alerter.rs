@@ -1,9 +1,13 @@
 use derive_variants::ExtractVariant;
 use komodo_client::entities::{
+  Operation, ResourceTarget, ResourceTargetVariant,
   alerter::{
     Alerter, AlerterConfig, AlerterConfigDiff, AlerterListItem,
     AlerterListItemInfo, AlerterQuerySpecifics, PartialAlerterConfig,
-  }, resource::Resource, update::Update, user::User, Operation, ResourceTarget, ResourceTargetVariant
+  },
+  resource::Resource,
+  update::Update,
+  user::User,
 };
 use mungos::mongodb::Collection;
 

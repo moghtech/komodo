@@ -6,7 +6,12 @@ use komodo_client::{
     BatchExecutionResponse, BatchRunProcedure, RunProcedure,
   },
   entities::{
-    alert::{Alert, AlertData, SeverityLevel}, komodo_timestamp, permission::PermissionLevel, procedure::Procedure, update::Update, user::User
+    alert::{Alert, AlertData, SeverityLevel},
+    komodo_timestamp,
+    permission::PermissionLevel,
+    procedure::Procedure,
+    update::Update,
+    user::User,
   },
 };
 use mungos::{by_id::update_one_by_id, mongodb::bson::to_document};
@@ -14,7 +19,10 @@ use resolver_api::Resolve;
 use tokio::sync::Mutex;
 
 use crate::{
-  alert::send_alerts, helpers::{procedure::execute_procedure, update::update_update}, resource::{self, refresh_procedure_state_cache}, state::{action_states, db_client}
+  alert::send_alerts,
+  helpers::{procedure::execute_procedure, update::update_update},
+  resource::{self, refresh_procedure_state_cache},
+  state::{action_states, db_client},
 };
 
 use super::{ExecuteArgs, ExecuteRequest};

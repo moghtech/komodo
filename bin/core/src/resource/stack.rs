@@ -3,11 +3,17 @@ use formatting::format_serror;
 use komodo_client::{
   api::write::RefreshStackCache,
   entities::{
-    permission::PermissionLevel, resource::Resource, server::Server, stack::{
+    Operation, ResourceTarget, ResourceTargetVariant,
+    permission::PermissionLevel,
+    resource::Resource,
+    server::Server,
+    stack::{
       PartialStackConfig, Stack, StackConfig, StackConfigDiff,
       StackInfo, StackListItem, StackListItemInfo,
       StackQuerySpecifics, StackServiceWithUpdate, StackState,
-    }, update::Update, user::{stack_user, User}, Operation, ResourceTarget, ResourceTargetVariant
+    },
+    update::Update,
+    user::{User, stack_user},
   },
 };
 use mungos::mongodb::Collection;

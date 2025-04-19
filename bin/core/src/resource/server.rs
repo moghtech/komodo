@@ -1,9 +1,13 @@
 use anyhow::Context;
 use komodo_client::entities::{
-  komodo_timestamp, resource::Resource, server::{
+  Operation, ResourceTarget, ResourceTargetVariant, komodo_timestamp,
+  resource::Resource,
+  server::{
     PartialServerConfig, Server, ServerConfig, ServerConfigDiff,
     ServerListItem, ServerListItemInfo, ServerQuerySpecifics,
-  }, update::Update, user::User, Operation, ResourceTarget, ResourceTargetVariant
+  },
+  update::Update,
+  user::User,
 };
 use mungos::mongodb::{Collection, bson::doc};
 

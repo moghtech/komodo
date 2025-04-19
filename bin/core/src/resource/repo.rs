@@ -3,10 +3,18 @@ use std::time::Duration;
 use anyhow::Context;
 use formatting::format_serror;
 use komodo_client::entities::{
-  builder::Builder, permission::PermissionLevel, repo::{
+  Operation, ResourceTarget, ResourceTargetVariant,
+  builder::Builder,
+  permission::PermissionLevel,
+  repo::{
     PartialRepoConfig, Repo, RepoConfig, RepoConfigDiff, RepoInfo,
     RepoListItem, RepoListItemInfo, RepoQuerySpecifics, RepoState,
-  }, resource::Resource, server::Server, to_komodo_name, update::Update, user::User, Operation, ResourceTarget, ResourceTargetVariant
+  },
+  resource::Resource,
+  server::Server,
+  to_komodo_name,
+  update::Update,
+  user::User,
 };
 use mungos::{
   find::find_collect,

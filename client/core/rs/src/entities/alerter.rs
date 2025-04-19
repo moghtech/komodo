@@ -222,7 +222,6 @@ fn default_ntfy_url() -> String {
   String::from("http://localhost:8080/komodo")
 }
 
-
 // QUERY
 
 #[typeshare]

@@ -43,7 +43,7 @@ pub struct BuildListItemInfo {
 
   /// Whether build is in files on host mode.
   pub files_on_host: bool,
-  
+
   /// The git provider domain
   pub git_provider: Option<String>,
   /// The repo used as the source of the build
