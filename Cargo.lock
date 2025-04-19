@@ -3492,14 +3492,12 @@ name = "periphery_client"
 version = "1.17.3-dev-1"
 dependencies = [
  "anyhow",
- "futures-util",
  "komodo_client",
  "reqwest",
  "resolver_api",
  "serde",
  "serde_json",
  "serror",
- "tokio-util",
  "tracing",
 ]
 

@@ -41,6 +41,9 @@ pub mod entities;
 pub mod parsers;
 pub mod ws;
 
+#[cfg(not(feature = "blocking"))]
+pub mod terminal;
+
 mod request;
 
 /// &'static KomodoClient initialized from environment.

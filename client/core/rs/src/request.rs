@@ -1,5 +1,4 @@
 use anyhow::{Context, anyhow};
-use reqwest::StatusCode;
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::json;
 use serror::deserialize_error;
@@ -208,7 +207,7 @@ impl KomodoClient {
     let res =
       req.send().await.context("failed to reach Komodo API")?;
     let status = res.status();
-    if status == StatusCode::OK {
+    if status.is_success() {
       match res.json().await {
         Ok(res) => Ok(res),
         Err(e) => Err(anyhow!("{e:#?}").context(status)),
@@ -236,7 +235,7 @@ impl KomodoClient {
       .json(&body);
     let res = req.send().context("failed to reach Komodo API")?;
     let status = res.status();
-    if status == StatusCode::OK {
+    if status.is_success() {
       match res.json() {
         Ok(res) => Ok(res),
         Err(e) => Err(anyhow!("{e:#?}").context(status)),

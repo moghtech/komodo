@@ -1,6 +1,5 @@
 use anyhow::Context;
-use futures_util::{Stream, TryStreamExt};
-use tokio_util::codec::LinesCodecError;
+use komodo_client::terminal::TerminalStreamResponse;
 
 use crate::{
   PeripheryClient, api::terminal::ExecuteTerminal,
@@ -31,7 +30,7 @@ impl PeripheryClient {
       "sending request | type: ExecuteTerminal | terminal name: {terminal_name} | command: {command}",
     );
     let req = periphery_http_client()
-      .post(format!("{}/terminal/exec", self.address))
+      .post(format!("{}/terminal", self.address))
       .json(&ExecuteTerminal {
         terminal: terminal_name,
         command,
@@ -59,20 +58,5 @@ impl PeripheryClient {
 
       Err(error)
     }
-  }
-}
-
-pub struct TerminalStreamResponse(reqwest::Response);
-
-impl TerminalStreamResponse {
-  pub fn into_line_stream(
-    self,
-  ) -> impl Stream<Item = Result<String, LinesCodecError>> {
-    tokio_util::codec::FramedRead::new(
-      tokio_util::io::StreamReader::new(
-        self.0.bytes_stream().map_err(|e| std::io::Error::other(e)),
-      ),
-      tokio_util::codec::LinesCodec::new(),
-    )
   }
 }

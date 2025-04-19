@@ -16,8 +16,6 @@ komodo_client.workspace = true
 resolver_api.workspace = true
 serror.workspace = true
 # external
-futures-util.workspace = true
-tokio-util.workspace = true
 serde_json.workspace = true
 reqwest.workspace = true
 tracing.workspace = true
