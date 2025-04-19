@@ -19,6 +19,7 @@ use crate::{config::core_config, state::db_client};
 
 mod discord;
 mod ntfy;
+mod pushover;
 mod slack;
 
 #[instrument(level = "debug")]
@@ -135,6 +136,15 @@ pub async fn send_alert_to_alerter(
           "Failed to send alert to ntfy Alerter {}",
           alerter.name
         )
+      })
+    }
+    AlerterEndpoint::Pushover(PushoverAlerterEndpoint { url }) => {
+      pushover::send_alert(url, alert).await.with_context(|| {
+        format!(
+          "Failed to send alert to Pushover Alerter {}",
+          alerter.name
+        )
+
       })
     }
   }

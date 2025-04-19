@@ -14,6 +14,7 @@ const ENDPOINT_TYPES: Types.AlerterEndpoint["type"][] = [
   "Discord",
   "Slack",
   "Ntfy",
+  "Pushover",
 ];
 
 export const EndpointConfig = ({
@@ -70,5 +71,7 @@ const default_url = (type: Types.AlerterEndpoint["type"]) => {
     ? "https://discord.com/api/webhooks/XXXXXXXXXXXX/XXXX-XXXXXXXXXX"
     : type === "Ntfy"
     ? "https://ntfy.sh/komodo"
+    : type === "Pushover"
+    ? "https://api.pushover.net/1/messages.json?token=XXXXXXXXXXXXX&user=XXXXXXXXXXXXX"
     : "";
 };
