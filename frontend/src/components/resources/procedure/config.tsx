@@ -1,11 +1,4 @@
 import {
-  ConfigInput,
-  ConfigItem,
-  ConfigSwitch,
-  WebhookBuilder,
-} from "@components/config/util";
-import { Section } from "@components/layouts";
-import {
   useLocalStorage,
   useRead,
   useWebhookIdOrName,
@@ -13,31 +6,33 @@ import {
   useWrite,
 } from "@lib/hooks";
 import { Types } from "komodo_client";
+import { Config } from "@components/config";
+import { Button } from "@ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@ui/card";
+  ConfigItem,
+  ConfigSwitch,
+  WebhookBuilder,
+} from "@components/config/util";
 import { Input } from "@ui/input";
 import { useEffect, useState } from "react";
 import { CopyWebhook, ResourceSelector } from "../common";
-import { ConfigLayout } from "@components/config";
-import { Popover, PopoverContent, PopoverTrigger } from "@ui/popover";
-import { Button } from "@ui/button";
+import { Switch } from "@ui/switch";
 import {
   ArrowDown,
   ArrowUp,
   ChevronsUpDown,
-  Info,
   Minus,
   MinusCircle,
   Plus,
   PlusCircle,
   SearchX,
-  Settings,
 } from "lucide-react";
+import { useToast } from "@ui/use-toast";
+import { TextUpdateMenuMonaco } from "@components/util";
+import { Card } from "@ui/card";
+import { filterBySplit } from "@lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@ui/popover";
+import { fmt_upper_camelcase } from "@lib/formatting";
 import {
   Command,
   CommandEmpty,
@@ -46,8 +41,6 @@ import {
   CommandItem,
   CommandList,
 } from "@ui/command";
-import { Switch } from "@ui/switch";
-import { DataTable } from "@ui/data-table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,180 +49,304 @@ import {
   DropdownMenuTrigger,
 } from "@ui/dropdown-menu";
 import { DotsHorizontalIcon } from "@radix-ui/react-icons";
-import { filterBySplit } from "@lib/utils";
-import { useToast } from "@ui/use-toast";
-import { fmt_upper_camelcase } from "@lib/formatting";
-import { TextUpdateMenuMonaco } from "@components/util";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
+import { DataTable } from "@ui/data-table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@ui/select";
 
-export const ProcedureConfig = ({ id }: { id: string }) => {
-  const procedure = useRead("GetProcedure", { procedure: id }).data;
-  if (!procedure) return null;
-  return <ProcedureConfigInner procedure={procedure} />;
+type ExecutionType = Types.Execution["type"];
+
+type ExecutionConfigComponent<
+  T extends ExecutionType,
+  P = Extract<Types.Execution, { type: T }>["params"],
+> = React.FC<{
+  params: P;
+  setParams: React.Dispatch<React.SetStateAction<P>>;
+  disabled: boolean;
+}>;
+
+type MinExecutionType = Exclude<
+  ExecutionType,
+  | "StartContainer"
+  | "RestartContainer"
+  | "PauseContainer"
+  | "UnpauseContainer"
+  | "StopContainer"
+  | "DestroyContainer"
+  | "DeleteNetwork"
+  | "DeleteImage"
+  | "DeleteVolume"
+  | "TestAlerter"
+>;
+
+type ExecutionConfigParams<T extends MinExecutionType> = Extract<
+  Types.Execution,
+  { type: T }
+>["params"];
+
+type ExecutionConfigs = {
+  [ExType in MinExecutionType]: {
+    Component: ExecutionConfigComponent<ExType>;
+    params: ExecutionConfigParams<ExType>;
+  };
 };
 
 const PROCEDURE_GIT_PROVIDER = "Procedure";
 
-const ProcedureConfigInner = ({
-  procedure,
-}: {
-  procedure: Types.Procedure;
-}) => {
+const new_stage = (next_index: number) => ({
+  name: `Stage ${next_index}`,
+  enabled: true,
+  executions: [default_enabled_execution()],
+});
+
+const default_enabled_execution: () => Types.EnabledExecution = () => ({
+  enabled: true,
+  execution: {
+    type: "None",
+    params: {},
+  },
+});
+
+export const ProcedureConfig = ({ id }: { id: string }) => {
   const [branch, setBranch] = useState("main");
-  const [config, setConfig] = useLocalStorage<Partial<Types.ProcedureConfig>>(
-    `procedure-${procedure._id?.$oid}-update-v1`,
-    {}
-  );
   const perms = useRead("GetPermissionLevel", {
-    target: { type: "Procedure", id: procedure._id?.$oid! },
+    target: { type: "Procedure", id },
   }).data;
+  const procedure = useRead("GetProcedure", { procedure: id }).data;
+  const config = procedure?.config;
+  const name = procedure?.name;
   const global_disabled =
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
+  const [update, set] = useLocalStorage<Partial<Types.ProcedureConfig>>(
+    `procedure-${id}-update-v1`,
+    {}
+  );
   const { mutateAsync } = useWrite("UpdateProcedure");
   const { integrations } = useWebhookIntegrations();
   const [id_or_name] = useWebhookIdOrName();
-  const webhook_integration = integrations[PROCEDURE_GIT_PROVIDER] ?? "Github";
 
-  const stages = config.stages || procedure.config?.stages || [];
+  if (!config) return null;
+
   const disabled = global_disabled || perms !== Types.PermissionLevel.Write;
+  const webhook_integration = integrations[PROCEDURE_GIT_PROVIDER] ?? "Github";
+  const stages = update.stages || procedure.config?.stages || [];
 
   const add_stage = () =>
-    setConfig((config) => ({
+    set((config) => ({
       ...config,
-      stages: [...stages, new_stage()],
+      stages: [...stages, new_stage(stages.length + 1)],
     }));
 
   return (
-    <div className="flex flex-col gap-8">
-      <ConfigLayout
-        original={procedure.config}
-        titleOther={
-          <div className="flex items-center gap-4 text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              <h2 className="text-xl">Config</h2>
-            </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline">
-                  <Info className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <div>
-                  The executions in a stage are all run in parallel. The stages
-                  themselves are run sequentially.
+    <Config
+      disabled={disabled}
+      original={config}
+      update={update}
+      set={set}
+      onSave={async () => {
+        await mutateAsync({ id, config: update });
+      }}
+      components={{
+        "": [
+          {
+            label: "Stages",
+            description:
+              "The executions in a stage are all run in parallel. The stages themselves are run sequentially.",
+            components: {
+              stages: (stages, set) => (
+                <div className="flex flex-col gap-4">
+                  {stages &&
+                    stages.map((stage, index) => (
+                      <Stage
+                        stage={stage}
+                        setStage={(stage) =>
+                          set({
+                            stages: stages.map((s, i) =>
+                              index === i ? stage : s
+                            ),
+                          })
+                        }
+                        removeStage={() =>
+                          set({
+                            stages: stages.filter((_, i) => index !== i),
+                          })
+                        }
+                        moveUp={
+                          index === 0
+                            ? undefined
+                            : () =>
+                                set({
+                                  stages: stages.map((stage, i) => {
+                                    // Make sure its not the first row
+                                    if (i === index && index !== 0) {
+                                      return stages[index - 1];
+                                    } else if (i === index - 1) {
+                                      // Reverse the entry, moving this row "Up"
+                                      return stages[index];
+                                    } else {
+                                      return stage;
+                                    }
+                                  }),
+                                })
+                        }
+                        moveDown={
+                          index === stages.length - 1
+                            ? undefined
+                            : () =>
+                                set({
+                                  stages: stages.map((stage, i) => {
+                                    // The index also cannot be the last index, which cannot be moved down
+                                    if (
+                                      i === index &&
+                                      index !== stages.length - 1
+                                    ) {
+                                      return stages[index + 1];
+                                    } else if (i === index + 1) {
+                                      // Move the row "Down"
+                                      return stages[index];
+                                    } else {
+                                      return stage;
+                                    }
+                                  }),
+                                })
+                        }
+                        insertAbove={() =>
+                          set({
+                            stages: [
+                              ...stages.slice(0, index),
+                              new_stage(index + 1),
+                              ...stages.slice(index),
+                            ],
+                          })
+                        }
+                        insertBelow={() =>
+                          set({
+                            stages: [
+                              ...stages.slice(0, index + 1),
+                              new_stage(index + 2),
+                              ...stages.slice(index + 1),
+                            ],
+                          })
+                        }
+                        disabled={disabled}
+                      />
+                    ))}
+                  <Button
+                    variant="secondary"
+                    onClick={add_stage}
+                    className="w-fit"
+                    disabled={disabled}
+                  >
+                    Add Stage
+                  </Button>
                 </div>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        }
-        disabled={disabled}
-        update={config}
-        onConfirm={async () => {
-          await mutateAsync({ id: procedure._id!.$oid, config });
-          setConfig({});
-        }}
-        onReset={() => setConfig({})}
-      >
-        {stages.map((stage, index) => (
-          <Stage
-            stage={stage}
-            setStage={(stage) =>
-              setConfig((config) => ({
-                ...config,
-                stages: stages.map((s, i) => (index === i ? stage : s)),
-              }))
-            }
-            removeStage={() =>
-              setConfig((config) => ({
-                ...config,
-                stages: stages.filter((_, i) => index !== i),
-              }))
-            }
-            moveUp={
-              index === 0
-                ? undefined
-                : () =>
-                    setConfig((config) => ({
-                      ...config,
-                      stages: stages.map((stage, i) => {
-                        // Make sure its not the first row
-                        if (i === index && index !== 0) {
-                          return stages[index - 1];
-                        } else if (i === index - 1) {
-                          // Reverse the entry, moving this row "Up"
-                          return stages[index];
-                        } else {
-                          return stage;
-                        }
-                      }),
-                    }))
-            }
-            moveDown={
-              index === stages.length - 1
-                ? undefined
-                : () =>
-                    setConfig((config) => ({
-                      ...config,
-                      stages: stages.map((stage, i) => {
-                        // The index also cannot be the last index, which cannot be moved down
-                        if (i === index && index !== stages.length - 1) {
-                          return stages[index + 1];
-                        } else if (i === index + 1) {
-                          // Move the row "Down"
-                          return stages[index];
-                        } else {
-                          return stage;
-                        }
-                      }),
-                    }))
-            }
-            insertAbove={() =>
-              setConfig((config) => ({
-                ...config,
-                stages: [
-                  ...stages.slice(0, index),
-                  new_stage(),
-                  ...stages.slice(index),
-                ],
-              }))
-            }
-            insertBelow={() =>
-              setConfig((config) => ({
-                ...config,
-                stages: [
-                  ...stages.slice(0, index + 1),
-                  new_stage(),
-                  ...stages.slice(index + 1),
-                ],
-              }))
-            }
-            disabled={disabled}
-          />
-        ))}
-        <Button
-          variant="secondary"
-          onClick={add_stage}
-          className="w-fit"
-          disabled={disabled}
-        >
-          Add Stage
-        </Button>
-      </ConfigLayout>
-      <Section>
-        <Card>
-          <CardHeader>
-            <CardTitle>Webhook</CardTitle>
-            <CardDescription>
-              Copy the webhook given here, and configure your
-              {webhook_integration}-style repo provider to send webhooks to
-              Komodo
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-4">
-              <ConfigItem>
+              ),
+            },
+          },
+          {
+            label: "Alert",
+            labelHidden: true,
+            components: {
+              failure_alert: {
+                boldLabel: true,
+                description: "Send an alert any time the Procedure fails",
+              },
+            },
+          },
+          {
+            label: "Schedule",
+            description:
+              "Configure the Procedure to run at defined times using English or CRON.",
+            components: {
+              schedule_enabled: (schedule_enabled, set) => (
+                <ConfigSwitch
+                  label="Enabled"
+                  value={
+                    (update.schedule ?? config.schedule)
+                      ? schedule_enabled
+                      : false
+                  }
+                  disabled={disabled || !(update.schedule ?? config.schedule)}
+                  onChange={(schedule_enabled) => set({ schedule_enabled })}
+                />
+              ),
+              schedule_format: (schedule_format, set) => (
+                <ConfigItem
+                  label="Format"
+                  description="Choose whether to provide English or CRON schedule expression"
+                >
+                  <Select
+                    value={schedule_format}
+                    onValueChange={(schedule_format) =>
+                      set({
+                        schedule_format:
+                          schedule_format as Types.ScheduleFormat,
+                      })
+                    }
+                    disabled={disabled}
+                  >
+                    <SelectTrigger className="w-[200px]" disabled={disabled}>
+                      <SelectValue placeholder="Select Format" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.values(Types.ScheduleFormat).map((mode) => (
+                        <SelectItem
+                          key={mode}
+                          value={mode!}
+                          className="cursor-pointer"
+                        >
+                          {mode}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </ConfigItem>
+              ),
+              schedule: {
+                label: "Expression",
+                description:
+                  (update.schedule_format ?? config.schedule_format) ===
+                  "Cron" ? (
+                    <div className="pt-1 flex flex-col gap-1">
+                      <code>
+                        second - minute - hour - day - month - day-of-week
+                      </code>
+                    </div>
+                  ) : (
+                    <div className="pt-1 flex flex-col gap-1">
+                      <code>Examples:</code>
+                      <code>- Run every day at 4:00 pm</code>
+                      <code>
+                        - Run at 21:00 on the 1st and 15th of the month
+                      </code>
+                      <code>- Every Sunday at midnight</code>
+                    </div>
+                  ),
+                placeholder:
+                  (update.schedule_format ?? config.schedule_format) === "Cron"
+                    ? "0 0 0 ? * SUN"
+                    : "Enter English expression",
+              },
+              schedule_timezone: {
+                label: "Timezone",
+                description:
+                  "Optional. Enter specific IANA timezone for schedule expression. If not provided, uses the Core timezone.",
+                placeholder: "Enter IANA timezone",
+              },
+              schedule_alert: {
+                description: "Send an alert when the scheduled run occurs",
+              },
+            },
+          },
+          {
+            label: "Webhook",
+            description: `Copy the webhook given here, and configure your ${webhook_integration}-style repo provider to send webhooks to Komodo`,
+            components: {
+              ["Builder" as any]: () => (
                 <WebhookBuilder git_provider={PROCEDURE_GIT_PROVIDER}>
                   <div className="text-nowrap text-muted-foreground text-sm">
                     Listen on branch:
@@ -259,40 +376,26 @@ const ProcedureConfigInner = ({
                     </div>
                   </div>
                 </WebhookBuilder>
-              </ConfigItem>
-              <ConfigItem label="Webhook Url - Run">
-                <CopyWebhook
-                  integration={webhook_integration}
-                  path={`/procedure/${id_or_name === "Id" ? procedure._id?.$oid! : procedure.name}/${branch}`}
-                />
-              </ConfigItem>
-              <ConfigSwitch
-                label="Webhook Enabled"
-                value={
-                  config.webhook_enabled ?? procedure.config?.webhook_enabled
-                }
-                disabled={disabled}
-                onChange={(webhook_enabled) =>
-                  setConfig({ ...config, webhook_enabled })
-                }
-              />
-              <ConfigInput
-                label="Custom Secret"
-                description="Provide a custom webhook secret for this resource, or use the global default."
-                placeholder="Input custom secret"
-                value={
-                  config.webhook_secret ?? procedure.config?.webhook_secret
-                }
-                disabled={disabled}
-                onChange={(webhook_secret) =>
-                  setConfig({ ...config, webhook_secret })
-                }
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </Section>
-    </div>
+              ),
+              ["run" as any]: () => (
+                <ConfigItem label="Webhook Url - Run">
+                  <CopyWebhook
+                    integration={webhook_integration}
+                    path={`/procedure/${id_or_name === "Id" ? id : name}/${branch}`}
+                  />
+                </ConfigItem>
+              ),
+              webhook_enabled: true,
+              webhook_secret: {
+                description:
+                  "Provide a custom webhook secret for this resource, or use the global default.",
+                placeholder: "Input custom secret",
+              },
+            },
+          },
+        ],
+      }}
+    />
   );
 };
 
@@ -542,20 +645,6 @@ const Stage = ({
   );
 };
 
-const new_stage = () => ({
-  name: "Stage",
-  enabled: true,
-  executions: [default_enabled_execution()],
-});
-
-const default_enabled_execution: () => Types.EnabledExecution = () => ({
-  enabled: true,
-  execution: {
-    type: "None",
-    params: {},
-  },
-});
-
 const ExecutionTypeSelector = ({
   type,
   onSelect,
@@ -610,43 +699,6 @@ const ExecutionTypeSelector = ({
       </PopoverContent>
     </Popover>
   );
-};
-
-type ExecutionType = Types.Execution["type"];
-
-type ExecutionConfigComponent<
-  T extends ExecutionType,
-  P = Extract<Types.Execution, { type: T }>["params"],
-> = React.FC<{
-  params: P;
-  setParams: React.Dispatch<React.SetStateAction<P>>;
-  disabled: boolean;
-}>;
-
-type MinExecutionType = Exclude<
-  ExecutionType,
-  | "StartContainer"
-  | "RestartContainer"
-  | "PauseContainer"
-  | "UnpauseContainer"
-  | "StopContainer"
-  | "DestroyContainer"
-  | "DeleteNetwork"
-  | "DeleteImage"
-  | "DeleteVolume"
-  | "TestAlerter"
->;
-
-type ExecutionConfigParams<T extends MinExecutionType> = Extract<
-  Types.Execution,
-  { type: T }
->["params"];
-
-type ExecutionConfigs = {
-  [ExType in MinExecutionType]: {
-    Component: ExecutionConfigComponent<ExType>;
-    params: ExecutionConfigParams<ExType>;
-  };
 };
 
 const TARGET_COMPONENTS: ExecutionConfigs = {

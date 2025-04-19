@@ -1,6 +1,6 @@
 use anyhow::Context;
 use komodo_client::entities::{
-  MergePartial, Operation, ResourceTargetVariant,
+  MergePartial, Operation, ResourceTarget, ResourceTargetVariant,
   builder::{
     Builder, BuilderConfig, BuilderConfigDiff, BuilderConfigVariant,
     BuilderListItem, BuilderListItemInfo, BuilderQuerySpecifics,
@@ -29,6 +29,10 @@ impl super::KomodoResource for Builder {
 
   fn resource_type() -> ResourceTargetVariant {
     ResourceTargetVariant::Builder
+  }
+
+  fn resource_target(id: impl Into<String>) -> ResourceTarget {
+    ResourceTarget::Builder(id.into())
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>

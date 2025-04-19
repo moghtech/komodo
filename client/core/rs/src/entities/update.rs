@@ -72,6 +72,12 @@ pub struct Update {
   /// Some unstructured, operation specific data. Not for general usage.
   #[serde(default, skip_serializing_if = "String::is_empty")]
   pub other_data: String,
+  /// If the update is for resource config update, give the previous toml contents
+  #[serde(default, skip_serializing_if = "String::is_empty")]
+  pub prev_toml: String,
+  /// If the update is for resource config update, give the current (at time of Update) toml contents
+  #[serde(default, skip_serializing_if = "String::is_empty")]
+  pub current_toml: String,
 }
 
 impl Update {

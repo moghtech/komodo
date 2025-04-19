@@ -8,8 +8,8 @@ use typeshare::typeshare;
 use crate::entities::{I64, MongoId};
 
 use super::{
-  _Serror, ResourceTarget, Version, deployment::DeploymentState,
-  stack::StackState,
+  _Serror, ResourceTarget, ResourceTargetVariant, Version,
+  deployment::DeploymentState, stack::StackState,
 };
 
 /// Representation of an alert in the system.
@@ -258,6 +258,32 @@ pub enum AlertData {
     /// The id of the repo
     id: String,
     /// The name of the repo
+    name: String,
+  },
+
+  /// A procedure has failed
+  ProcedureFailed {
+    /// The id of the procedure
+    id: String,
+    /// The name of the procedure
+    name: String,
+  },
+
+  /// An action has failed
+  ActionFailed {
+    /// The id of the action
+    id: String,
+    /// The name of the action
+    name: String,
+  },
+
+  /// A schedule was run
+  ScheduleRun {
+    /// Procedure or Action
+    resource_type: ResourceTargetVariant,
+    /// The resource id
+    id: String,
+    /// The resource name
     name: String,
   },
 }

@@ -3,7 +3,7 @@ use std::time::Duration;
 use anyhow::Context;
 use formatting::format_serror;
 use komodo_client::entities::{
-  Operation, ResourceTargetVariant,
+  Operation, ResourceTarget, ResourceTargetVariant,
   builder::Builder,
   permission::PermissionLevel,
   repo::{
@@ -42,6 +42,10 @@ impl super::KomodoResource for Repo {
 
   fn resource_type() -> ResourceTargetVariant {
     ResourceTargetVariant::Repo
+  }
+
+  fn resource_target(id: impl Into<String>) -> ResourceTarget {
+    ResourceTarget::Repo(id.into())
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>

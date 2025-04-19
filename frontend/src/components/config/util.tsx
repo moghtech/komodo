@@ -119,7 +119,7 @@ export const ConfigInput = ({
   label: string;
   boldLabel?: boolean;
   value: string | number | undefined;
-  description?: string;
+  description?: ReactNode;
   disabled?: boolean;
   placeholder?: string;
   onChange?: (value: string) => void;
@@ -168,7 +168,7 @@ export const ConfigSwitch = ({
   label: string;
   boldLabel?: boolean;
   value: boolean | undefined;
-  description?: string;
+  description?: ReactNode;
   disabled: boolean;
   onChange: (value: boolean) => void;
 }) => (
@@ -180,7 +180,7 @@ export const ConfigSwitch = ({
   >
     <div
       className="py-2 flex flex-row gap-4 items-center text-sm cursor-pointer"
-      onClick={() => onChange(!checked)}
+      onClick={() => !disabled && onChange(!checked)}
     >
       {/* <div
         className={cn(
@@ -204,83 +204,6 @@ export const ConfigSwitch = ({
     </div>
   </ConfigItem>
 );
-
-export const DoubleInput = <
-  T extends object,
-  K extends keyof T,
-  L extends T[K] extends string | number | undefined ? K : never,
-  R extends T[K] extends string | number | undefined ? K : never,
->({
-  disabled,
-  values,
-  leftval,
-  leftpl,
-  rightval,
-  rightpl,
-  // addName,
-  onLeftChange,
-  onRightChange,
-  // onAdd,
-  onRemove,
-  containerClassName,
-  inputClassName,
-}: {
-  disabled: boolean;
-  values: T[] | undefined;
-  leftval: L;
-  leftpl: string;
-  rightval: R;
-  rightpl: string;
-  // addName: string;
-  onLeftChange: (value: T[L], i: number) => void;
-  onRightChange: (value: T[R], i: number) => void;
-  // onAdd: () => void;
-  onRemove: (i: number) => void;
-  containerClassName?: string;
-  inputClassName?: string;
-}) => {
-  return (
-    <div className={cn("flex flex-col gap-4", containerClassName)}>
-      {values?.map((value, i) => (
-        <div
-          className="flex items-center justify-between gap-4 flex-wrap"
-          key={i}
-        >
-          <Input
-            className={inputClassName}
-            value={value[leftval] as any}
-            placeholder={leftpl}
-            onChange={(e) => onLeftChange(e.target.value as T[L], i)}
-            disabled={disabled}
-          />
-          :
-          <Input
-            className={inputClassName}
-            value={value[rightval] as any}
-            placeholder={rightpl}
-            onChange={(e) => onRightChange(e.target.value as T[R], i)}
-            disabled={disabled}
-          />
-          {!disabled && (
-            <Button variant="secondary" onClick={() => onRemove(i)}>
-              <MinusCircle className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
-      ))}
-      {/* {!disabled && (
-        <Button
-          variant="secondary"
-          className="flex items-center gap-2 w-[200px] place-self-end"
-          onClick={onAdd}
-        >
-          <PlusCircle className="w-4 h-4" />
-          Add {addName}
-        </Button>
-      )} */}
-    </div>
-  );
-};
 
 export const ProviderSelector = ({
   disabled,

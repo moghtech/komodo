@@ -9,7 +9,7 @@ use typeshare::typeshare;
 use crate::api::execute::Execution;
 
 use super::{
-  I64,
+  I64, ScheduleFormat,
   resource::{Resource, ResourceListItem, ResourceQuery},
 };
 
@@ -23,6 +23,12 @@ pub struct ProcedureListItemInfo {
   pub stages: I64,
   /// Reflect whether last run successful / currently running.
   pub state: ProcedureState,
+  /// If the procedure has schedule enabled, this is the
+  /// next scheduled run time in unix ms.
+  pub next_scheduled_run: Option<I64>,
+  /// If there is an error parsing schedule expression,
+  /// it will be given here.
+  pub schedule_error: Option<String>,
 }
 
 #[typeshare]
@@ -61,6 +67,56 @@ pub struct ProcedureConfig {
   #[builder(default)]
   pub stages: Vec<ProcedureStage>,
 
+  /// Choose whether to specify schedule as regular CRON, or using the english to CRON parser.
+  #[serde(default)]
+  #[builder(default)]
+  pub schedule_format: ScheduleFormat,
+
+  /// Optionally provide a schedule for the procedure to run on.
+  ///
+  /// There are 2 ways to specify a schedule:
+  ///
+  /// 1. Regular CRON expression:
+  ///
+  /// (second, minute, hour, day, month, day-of-week)
+  /// ```
+  /// 0 0 0 1,15 * ?
+  /// ```
+  ///
+  /// 2. "English" expression via [english-to-cron](https://crates.io/crates/english-to-cron):
+  ///
+  /// ```
+  /// at midnight on the 1st and 15th of the month
+  /// ```
+  #[serde(default)]
+  #[builder(default)]
+  pub schedule: String,
+
+  /// Whether schedule is enabled if one is provided.
+  /// Can be used to temporarily disable the schedule.
+  #[serde(default = "default_schedule_enabled")]
+  #[builder(default = "default_schedule_enabled()")]
+  #[partial_default(default_schedule_enabled())]
+  pub schedule_enabled: bool,
+
+  /// Optional. A TZ Identifier. If not provided, will use Core local timezone.
+  /// https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
+  #[serde(default)]
+  #[builder(default)]
+  pub schedule_timezone: String,
+
+  /// Whether to send alerts when the schedule was run.
+  #[serde(default = "default_schedule_alert")]
+  #[builder(default = "default_schedule_alert()")]
+  #[partial_default(default_schedule_alert())]
+  pub schedule_alert: bool,
+
+  /// Whether to send alerts when this procedure fails.
+  #[serde(default = "default_failure_alert")]
+  #[builder(default = "default_failure_alert()")]
+  #[partial_default(default_failure_alert())]
+  pub failure_alert: bool,
+
   /// Whether incoming webhooks actually trigger action.
   #[serde(default = "default_webhook_enabled")]
   #[builder(default = "default_webhook_enabled()")]
@@ -80,6 +136,18 @@ impl ProcedureConfig {
   }
 }
 
+fn default_schedule_enabled() -> bool {
+  true
+}
+
+fn default_schedule_alert() -> bool {
+  true
+}
+
+fn default_failure_alert() -> bool {
+  true
+}
+
 fn default_webhook_enabled() -> bool {
   true
 }
@@ -88,6 +156,12 @@ impl Default for ProcedureConfig {
   fn default() -> Self {
     Self {
       stages: Default::default(),
+      schedule_format: Default::default(),
+      schedule: Default::default(),
+      schedule_enabled: default_schedule_enabled(),
+      schedule_timezone: Default::default(),
+      schedule_alert: default_schedule_alert(),
+      failure_alert: default_failure_alert(),
       webhook_enabled: default_webhook_enabled(),
       webhook_secret: Default::default(),
     }

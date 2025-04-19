@@ -999,3 +999,13 @@ impl ResourceTargetVariant {
     }
   }
 }
+
+#[typeshare]
+#[derive(
+  Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize,
+)]
+pub enum ScheduleFormat {
+  #[default]
+  English,
+  Cron,
+}

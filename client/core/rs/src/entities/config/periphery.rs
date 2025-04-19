@@ -116,6 +116,8 @@ pub struct Env {
   pub periphery_port: Option<u16>,
   /// Override `bind_ip`
   pub periphery_bind_ip: Option<String>,
+  /// Override `root_directory`
+  pub periphery_root_directory: Option<PathBuf>,
   /// Override `repo_dir`
   pub periphery_repo_dir: Option<PathBuf>,
   /// Override `stack_dir`
@@ -132,6 +134,8 @@ pub struct Env {
   pub periphery_logging_level: Option<LogLevel>,
   /// Override `logging.stdio`
   pub periphery_logging_stdio: Option<StdioLogMode>,
+  /// Override `logging.pretty`
+  pub periphery_logging_pretty: Option<bool>,
   /// Override `logging.otlp_endpoint`
   pub periphery_logging_otlp_endpoint: Option<String>,
   /// Override `logging.opentelemetry_service_name`
@@ -171,20 +175,33 @@ pub struct PeripheryConfig {
   #[serde(default = "default_periphery_bind_ip")]
   pub bind_ip: String,
 
+  /// The directory Komodo will use as the default root for the specific (repo, stack, build) directories.
+  ///
+  /// repo: ${root_directory}/repos
+  /// stack: ${root_directory}/stacks
+  /// build: ${root_directory}/builds
+  ///
+  /// Note. These can each be overridden with a specific directory
+  /// by specifying `repo_dir`, `stack_dir`, or `build_dir` explicitly
+  ///
+  /// Default: `/etc/komodo`
+  #[serde(default = "default_root_directory")]
+  pub root_directory: PathBuf,
+
   /// The system directory where Komodo managed repos will be cloned.
-  /// Default: `/etc/komodo/repos`
-  #[serde(default = "default_repo_dir")]
-  pub repo_dir: PathBuf,
+  /// If not provided, will default to `${root_directory}/repos`.
+  /// Default: empty
+  pub repo_dir: Option<PathBuf>,
 
   /// The system directory where stacks will managed.
-  /// Default: `/etc/komodo/stacks`
-  #[serde(default = "default_stack_dir")]
-  pub stack_dir: PathBuf,
+  /// If not provided, will default to `${root_directory}/stacks`.
+  /// Default: empty
+  pub stack_dir: Option<PathBuf>,
 
   /// The system directory where builds will managed.
-  /// Default: `/etc/komodo/builds`
-  #[serde(default = "default_build_dir")]
-  pub build_dir: PathBuf,
+  /// If not provided, will default to `${root_directory}/builds`.
+  /// Default: empty
+  pub build_dir: Option<PathBuf>,
 
   /// The rate at which the system stats will be polled to update the cache.
   /// Default: `5-sec`
@@ -244,14 +261,12 @@ pub struct PeripheryConfig {
   pub ssl_enabled: bool,
 
   /// Path to the ssl key.
-  /// Default: `/etc/komodo/ssl/periphery/key.pem`.
-  #[serde(default = "default_ssl_key_file")]
-  pub ssl_key_file: PathBuf,
+  /// Default: `${root_directory}/ssl/key.pem`.
+  pub ssl_key_file: Option<PathBuf>,
 
   /// Path to the ssl cert.
-  /// Default: `/etc/komodo/ssl/periphery/cert.pem`.
-  #[serde(default = "default_ssl_cert_file")]
-  pub ssl_cert_file: PathBuf,
+  /// Default: `${root_directory}/ssl/cert.pem`.
+  pub ssl_cert_file: Option<PathBuf>,
 }
 
 fn default_periphery_port() -> u16 {
@@ -262,16 +277,8 @@ fn default_periphery_bind_ip() -> String {
   "[::]".to_string()
 }
 
-fn default_repo_dir() -> PathBuf {
-  "/etc/komodo/repos".parse().unwrap()
-}
-
-fn default_stack_dir() -> PathBuf {
-  "/etc/komodo/stacks".parse().unwrap()
-}
-
-fn default_build_dir() -> PathBuf {
-  "/etc/komodo/builds".parse().unwrap()
+fn default_root_directory() -> PathBuf {
+  "/etc/komodo".parse().unwrap()
 }
 
 fn default_stats_polling_rate() -> Timelength {
@@ -282,22 +289,15 @@ fn default_ssl_enabled() -> bool {
   false
 }
 
-fn default_ssl_key_file() -> PathBuf {
-  "/etc/komodo/ssl/key.pem".parse().unwrap()
-}
-
-fn default_ssl_cert_file() -> PathBuf {
-  "/etc/komodo/ssl/cert.pem".parse().unwrap()
-}
-
 impl Default for PeripheryConfig {
   fn default() -> Self {
     Self {
       port: default_periphery_port(),
       bind_ip: default_periphery_bind_ip(),
-      repo_dir: default_repo_dir(),
-      stack_dir: default_stack_dir(),
-      build_dir: default_build_dir(),
+      root_directory: default_root_directory(),
+      repo_dir: None,
+      stack_dir: None,
+      build_dir: None,
       stats_polling_rate: default_stats_polling_rate(),
       legacy_compose_cli: Default::default(),
       logging: Default::default(),
@@ -309,8 +309,8 @@ impl Default for PeripheryConfig {
       git_providers: Default::default(),
       docker_registries: Default::default(),
       ssl_enabled: default_ssl_enabled(),
-      ssl_key_file: default_ssl_key_file(),
-      ssl_cert_file: default_ssl_cert_file(),
+      ssl_key_file: None,
+      ssl_cert_file: None,
     }
   }
 }
@@ -320,6 +320,7 @@ impl PeripheryConfig {
     PeripheryConfig {
       port: self.port,
       bind_ip: self.bind_ip.clone(),
+      root_directory: self.root_directory.clone(),
       repo_dir: self.repo_dir.clone(),
       stack_dir: self.stack_dir.clone(),
       build_dir: self.build_dir.clone(),
@@ -376,6 +377,46 @@ impl PeripheryConfig {
       ssl_enabled: self.ssl_enabled,
       ssl_key_file: self.ssl_key_file.clone(),
       ssl_cert_file: self.ssl_cert_file.clone(),
+    }
+  }
+
+  pub fn repo_dir(&self) -> PathBuf {
+    if let Some(dir) = &self.repo_dir {
+      dir.to_owned()
+    } else {
+      self.root_directory.join("repos")
+    }
+  }
+
+  pub fn stack_dir(&self) -> PathBuf {
+    if let Some(dir) = &self.stack_dir {
+      dir.to_owned()
+    } else {
+      self.root_directory.join("stacks")
+    }
+  }
+
+  pub fn build_dir(&self) -> PathBuf {
+    if let Some(dir) = &self.build_dir {
+      dir.to_owned()
+    } else {
+      self.root_directory.join("builds")
+    }
+  }
+
+  pub fn ssl_key_file(&self) -> PathBuf {
+    if let Some(dir) = &self.ssl_key_file {
+      dir.to_owned()
+    } else {
+      self.root_directory.join("ssl/key.pem")
+    }
+  }
+
+  pub fn ssl_cert_file(&self) -> PathBuf {
+    if let Some(dir) = &self.ssl_cert_file {
+      dir.to_owned()
+    } else {
+      self.root_directory.join("ssl/cert.pem")
     }
   }
 }

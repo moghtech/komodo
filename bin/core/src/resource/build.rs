@@ -5,7 +5,7 @@ use formatting::format_serror;
 use komodo_client::{
   api::write::RefreshBuildCache,
   entities::{
-    Operation, ResourceTargetVariant,
+    Operation, ResourceTarget, ResourceTargetVariant,
     build::{
       Build, BuildConfig, BuildConfigDiff, BuildInfo, BuildListItem,
       BuildListItemInfo, BuildQuerySpecifics, BuildState,
@@ -42,6 +42,10 @@ impl super::KomodoResource for Build {
 
   fn resource_type() -> ResourceTargetVariant {
     ResourceTargetVariant::Build
+  }
+
+  fn resource_target(id: impl Into<String>) -> ResourceTarget {
+    ResourceTarget::Build(id.into())
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>

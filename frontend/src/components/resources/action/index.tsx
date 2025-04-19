@@ -5,7 +5,7 @@ import {
 } from "@components/util";
 import { useExecute, useRead } from "@lib/hooks";
 import { RequiredResourceComponents } from "@types";
-import { Clapperboard } from "lucide-react";
+import { Clapperboard, Clock } from "lucide-react";
 import { ActionConfig } from "./config";
 import { ActionTable } from "./table";
 import { DeleteResource, NewResource } from "../common";
@@ -13,11 +13,13 @@ import {
   action_state_intention,
   stroke_color_class_by_intention,
 } from "@lib/color";
-import { cn } from "@lib/utils";
+import { cn, updateLogToHtml } from "@lib/utils";
 import { Types } from "komodo_client";
 import { DashboardPieChart } from "@pages/home/dashboard";
 import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
+import { Card } from "@ui/card";
 
 const useAction = (id?: string) =>
   useRead("ListActions", {}).data?.find((d) => d.id === id);
@@ -78,7 +80,47 @@ export const ActionComponents: RequiredResourceComponents = {
 
   Status: {},
 
-  Info: {},
+  Info: {
+    Schedule: ({ id }) => {
+      const next_scheduled_run = useAction(id)?.info.next_scheduled_run;
+      return (
+        <div className="flex gap-2 items-center">
+          <Clock className="w-4 h-4" />
+          Next Run:
+          <div className="font-bold">
+            {next_scheduled_run
+              ? new Date(next_scheduled_run).toLocaleString()
+              : "Not Scheduled"}
+          </div>
+        </div>
+      );
+    },
+    ScheduleErrors: ({ id }) => {
+      const error = useAction(id)?.info.schedule_error;
+      if (!error) {
+        return null;
+      }
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Card className="px-3 py-2 bg-destructive/75 hover:bg-destructive transition-colors cursor-pointer">
+              <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis">
+                Schedule Error
+              </div>
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent className="w-[400px]">
+            <pre
+              dangerouslySetInnerHTML={{
+                __html: updateLogToHtml(error),
+              }}
+              className="max-h-[500px] overflow-y-auto"
+            />
+          </TooltipContent>
+        </Tooltip>
+      );
+    },
+  },
 
   Actions: {
     RunAction: ({ id }) => {

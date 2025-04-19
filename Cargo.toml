@@ -8,7 +8,7 @@ members = [
 ]
 
 [workspace.package]
-version = "1.17.1"
+version = "1.17.2"
 edition = "2024"
 authors = ["mbecker20 <becker.maxh@gmail.com>"]
 license = "GPL-3.0-or-later"
@@ -67,7 +67,7 @@ serde_yaml = "0.9.34"
 toml = "0.8.20"
 
 # ERROR
-anyhow = "1.0.97"
+anyhow = "1.0.98"
 thiserror = "2.0.12"
 
 # LOGGING
@@ -106,6 +106,12 @@ sysinfo = "0.34.2"
 aws-config = "1.6.1"
 aws-sdk-ec2 = "1.121.1"
 aws-credential-types = "1.2.2"
+
+## CRON
+english-to-cron = "0.1.4"
+chrono-tz = "0.10.3"
+chrono = "0.4.40"
+croner = "2.1.0"
 
 # MISC
 derive_builder = "0.20.2"

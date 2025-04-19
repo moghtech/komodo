@@ -13,6 +13,11 @@ export var PermissionLevel;
     /** Can update the resource configuration */
     PermissionLevel["Write"] = "Write";
 })(PermissionLevel || (PermissionLevel = {}));
+export var ScheduleFormat;
+(function (ScheduleFormat) {
+    ScheduleFormat["English"] = "English";
+    ScheduleFormat["Cron"] = "Cron";
+})(ScheduleFormat || (ScheduleFormat = {}));
 export var ActionState;
 (function (ActionState) {
     /** Unknown case */

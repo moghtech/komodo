@@ -4,7 +4,7 @@ use anyhow::{Context, anyhow};
 use komodo_client::{
   api::execute::Execution,
   entities::{
-    Operation, ResourceTargetVariant,
+    Operation, ResourceTarget, ResourceTargetVariant,
     action::Action,
     alerter::Alerter,
     build::Build,
@@ -31,6 +31,9 @@ use mungos::{
 
 use crate::{
   config::core_config,
+  schedule::{
+    cancel_schedule, get_schedule_item_info, update_schedule,
+  },
   state::{action_states, db_client, procedure_state_cache},
 };
 
@@ -46,6 +49,10 @@ impl super::KomodoResource for Procedure {
     ResourceTargetVariant::Procedure
   }
 
+  fn resource_target(id: impl Into<String>) -> ResourceTarget {
+    ResourceTarget::Procedure(id.into())
+  }
+
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>
   {
     &db_client().procedures
@@ -55,6 +62,9 @@ impl super::KomodoResource for Procedure {
     procedure: Resource<Self::Config, Self::Info>,
   ) -> Self::ListItem {
     let state = get_procedure_state(&procedure.id).await;
+    let (next_scheduled_run, schedule_error) = get_schedule_item_info(
+      &ResourceTarget::Procedure(procedure.id.clone()),
+    );
     ProcedureListItem {
       name: procedure.name,
       id: procedure.id,
@@ -63,6 +73,8 @@ impl super::KomodoResource for Procedure {
       info: ProcedureListItemInfo {
         stages: procedure.config.stages.len() as i64,
         state,
+        next_scheduled_run,
+        schedule_error,
       },
     }
   }
@@ -94,9 +106,10 @@ impl super::KomodoResource for Procedure {
   }
 
   async fn post_create(
-    _created: &Resource<Self::Config, Self::Info>,
+    created: &Resource<Self::Config, Self::Info>,
     _update: &mut Update,
   ) -> anyhow::Result<()> {
+    update_schedule(created);
     refresh_procedure_state_cache().await;
     Ok(())
   }
@@ -142,9 +155,10 @@ impl super::KomodoResource for Procedure {
   }
 
   async fn post_delete(
-    _resource: &Resource<Self::Config, Self::Info>,
+    resource: &Resource<Self::Config, Self::Info>,
     _update: &mut Update,
   ) -> anyhow::Result<()> {
+    cancel_schedule(&ResourceTarget::Procedure(resource.id.clone()));
     Ok(())
   }
 }

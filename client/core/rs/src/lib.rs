@@ -170,4 +170,42 @@ impl KomodoClient {
     self.reqwest = reqwest;
     self
   }
+
+  /// Poll an [Update][entities::update::Update] (returned by the `execute` calls) until the
+  /// [UpdateStatus][entities::update::UpdateStatus] is `Complete`, and then return it.
+  #[cfg(not(feature = "blocking"))]
+  pub async fn poll_update_until_complete(
+    &self,
+    update_id: impl Into<String>,
+  ) -> anyhow::Result<entities::update::Update> {
+    let update_id = update_id.into();
+    loop {
+      let update = self
+        .read(api::read::GetUpdate {
+          id: update_id.clone(),
+        })
+        .await?;
+      if update.status == entities::update::UpdateStatus::Complete {
+        return Ok(update);
+      }
+    }
+  }
+
+  /// Poll an [Update][entities::update::Update] (returned by the `execute` calls) until the
+  /// [UpdateStatus][entities::update::UpdateStatus] is `Complete`, and then return it.
+  #[cfg(feature = "blocking")]
+  pub fn poll_update_until_complete(
+    &self,
+    update_id: impl Into<String>,
+  ) -> anyhow::Result<entities::update::Update> {
+    let update_id = update_id.into();
+    loop {
+      let update = self.read(api::read::GetUpdate {
+        id: update_id.clone(),
+      })?;
+      if update.status == entities::update::UpdateStatus::Complete {
+        return Ok(update);
+      }
+    }
+  }
 }

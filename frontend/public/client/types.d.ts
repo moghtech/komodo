@@ -42,12 +42,46 @@ export interface Resource<Config, Info> {
      */
     base_permission?: PermissionLevel;
 }
+export declare enum ScheduleFormat {
+    English = "English",
+    Cron = "Cron"
+}
 export interface ActionConfig {
+    /** Choose whether to specify schedule as regular CRON, or using the english to CRON parser. */
+    schedule_format?: ScheduleFormat;
     /**
-     * Typescript file contents using pre-initialized `komodo` client.
-     * Supports variable / secret interpolation.
+     * Optionally provide a schedule for the procedure to run on.
+     *
+     * There are 2 ways to specify a schedule:
+     *
+     * 1. Regular CRON expression:
+     *
+     * (second, minute, hour, day, month, day-of-week)
+     * ```
+     * 0 0 0 1,15 * ?
+     * ```
+     *
+     * 2. "English" expression via [english-to-cron](https://crates.io/crates/english-to-cron):
+     *
+     * ```
+     * at midnight on the 1st and 15th of the month
+     * ```
      */
-    file_contents?: string;
+    schedule?: string;
+    /**
+     * Whether schedule is enabled if one is provided.
+     * Can be used to temporarily disable the schedule.
+     */
+    schedule_enabled: boolean;
+    /**
+     * Optional. A TZ Identifier. If not provided, will use Core local timezone.
+     * https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
+     */
+    schedule_timezone?: string;
+    /** Whether to send alerts when the schedule was run. */
+    schedule_alert: boolean;
+    /** Whether to send alerts when this action fails. */
+    failure_alert: boolean;
     /** Whether incoming webhooks actually trigger action. */
     webhook_enabled: boolean;
     /**
@@ -55,6 +89,11 @@ export interface ActionConfig {
      * If its an empty string, use the default secret from the config.
      */
     webhook_secret?: string;
+    /**
+     * Typescript file contents using pre-initialized `komodo` client.
+     * Supports variable / secret interpolation.
+     */
+    file_contents?: string;
 }
 export interface ActionInfo {
     /** When action was last run */
@@ -88,6 +127,16 @@ export interface ActionListItemInfo {
     last_run_at: I64;
     /** Whether last action run successful */
     state: ActionState;
+    /**
+     * If the procedure has schedule enabled, this is the
+     * next scheduled run time in unix ms.
+     */
+    next_scheduled_run?: I64;
+    /**
+     * If there is an error parsing schedule expression,
+     * it will be given here.
+     */
+    schedule_error?: string;
 }
 export type ActionListItem = ResourceListItem<ActionListItemInfo>;
 export declare enum TagBehavior {
@@ -673,6 +722,41 @@ export interface ProcedureStage {
 export interface ProcedureConfig {
     /** The stages to be run by the procedure. */
     stages?: ProcedureStage[];
+    /** Choose whether to specify schedule as regular CRON, or using the english to CRON parser. */
+    schedule_format?: ScheduleFormat;
+    /**
+     * Optionally provide a schedule for the procedure to run on.
+     *
+     * There are 2 ways to specify a schedule:
+     *
+     * 1. Regular CRON expression:
+     *
+     * (second, minute, hour, day, month, day-of-week)
+     * ```
+     * 0 0 0 1,15 * ?
+     * ```
+     *
+     * 2. "English" expression via [english-to-cron](https://crates.io/crates/english-to-cron):
+     *
+     * ```
+     * at midnight on the 1st and 15th of the month
+     * ```
+     */
+    schedule?: string;
+    /**
+     * Whether schedule is enabled if one is provided.
+     * Can be used to temporarily disable the schedule.
+     */
+    schedule_enabled: boolean;
+    /**
+     * Optional. A TZ Identifier. If not provided, will use Core local timezone.
+     * https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
+     */
+    schedule_timezone?: string;
+    /** Whether to send alerts when the schedule was run. */
+    schedule_alert: boolean;
+    /** Whether to send alerts when this procedure fails. */
+    failure_alert: boolean;
     /** Whether incoming webhooks actually trigger action. */
     webhook_enabled: boolean;
     /**
@@ -1289,6 +1373,38 @@ export type AlertData =
         /** The name of the repo */
         name: string;
     };
+}
+/** A procedure has failed */
+ | {
+    type: "ProcedureFailed";
+    data: {
+        /** The id of the procedure */
+        id: string;
+        /** The name of the procedure */
+        name: string;
+    };
+}
+/** An action has failed */
+ | {
+    type: "ActionFailed";
+    data: {
+        /** The id of the action */
+        id: string;
+        /** The name of the action */
+        name: string;
+    };
+}
+/** A schedule was run */
+ | {
+    type: "ScheduleRun";
+    data: {
+        /** Procedure or Action */
+        resource_type: ResourceTarget["type"];
+        /** The resource id */
+        id: string;
+        /** The resource name */
+        name: string;
+    };
 };
 /** Representation of an alert in the system. */
 export interface Alert {
@@ -1537,6 +1653,11 @@ export interface ResourceSyncConfig {
     include_variables?: boolean;
     /** Whether sync should include user groups. */
     include_user_groups?: boolean;
+    /**
+     * Whether sync should send alert when it enters Pending state.
+     * Default: true
+     */
+    pending_alert: boolean;
     /** Manage the file contents in the UI. */
     file_contents?: string;
 }
@@ -2288,6 +2409,10 @@ export interface Update {
     commit_hash?: string;
     /** Some unstructured, operation specific data. Not for general usage. */
     other_data?: string;
+    /** If the update is for resource config update, give the previous toml contents */
+    prev_toml?: string;
+    /** If the update is for resource config update, give the current (at time of Update) toml contents */
+    current_toml?: string;
 }
 export type GetUpdateResponse = Update;
 /**
@@ -3264,6 +3389,16 @@ export interface ProcedureListItemInfo {
     stages: I64;
     /** Reflect whether last run successful / currently running. */
     state: ProcedureState;
+    /**
+     * If the procedure has schedule enabled, this is the
+     * next scheduled run time in unix ms.
+     */
+    next_scheduled_run?: I64;
+    /**
+     * If there is an error parsing schedule expression,
+     * it will be given here.
+     */
+    schedule_error?: string;
 }
 export type ProcedureListItem = ResourceListItem<ProcedureListItemInfo>;
 export type ListProceduresResponse = ProcedureListItem[];

@@ -93,7 +93,7 @@ export type PrimitiveConfigArgs = {
   placeholder?: string;
   label?: string;
   boldLabel?: boolean;
-  description?: string;
+  description?: ReactNode;
 };
 
 export type ConfigComponent<T> = {

@@ -4,7 +4,7 @@ use formatting::{Color, bold, colored, muted};
 use komodo_client::{
   api::execute::Execution,
   entities::{
-    ResourceTarget, ResourceTargetVariant,
+    ResourceTargetVariant,
     action::Action,
     alerter::Alerter,
     build::Build,
@@ -40,10 +40,6 @@ use super::{
 };
 
 impl ResourceSyncTrait for Server {
-  fn resource_target(id: String) -> ResourceTarget {
-    ResourceTarget::Server(id)
-  }
-
   fn get_diff(
     original: Self::Config,
     update: Self::PartialConfig,
@@ -56,10 +52,6 @@ impl ResourceSyncTrait for Server {
 impl ExecuteResourceSync for Server {}
 
 impl ResourceSyncTrait for Deployment {
-  fn resource_target(id: String) -> ResourceTarget {
-    ResourceTarget::Deployment(id)
-  }
-
   fn get_diff(
     mut original: Self::Config,
     update: Self::PartialConfig,
@@ -93,10 +85,6 @@ impl ResourceSyncTrait for Deployment {
 impl ExecuteResourceSync for Deployment {}
 
 impl ResourceSyncTrait for Stack {
-  fn resource_target(id: String) -> ResourceTarget {
-    ResourceTarget::Stack(id)
-  }
-
   fn get_diff(
     mut original: Self::Config,
     update: Self::PartialConfig,
@@ -116,10 +104,6 @@ impl ResourceSyncTrait for Stack {
 impl ExecuteResourceSync for Stack {}
 
 impl ResourceSyncTrait for Build {
-  fn resource_target(id: String) -> ResourceTarget {
-    ResourceTarget::Build(id)
-  }
-
   fn get_diff(
     mut original: Self::Config,
     update: Self::PartialConfig,
@@ -149,10 +133,6 @@ impl ResourceSyncTrait for Build {
 impl ExecuteResourceSync for Build {}
 
 impl ResourceSyncTrait for Repo {
-  fn resource_target(id: String) -> ResourceTarget {
-    ResourceTarget::Repo(id)
-  }
-
   fn get_diff(
     mut original: Self::Config,
     update: Self::PartialConfig,
@@ -179,10 +159,6 @@ impl ResourceSyncTrait for Repo {
 impl ExecuteResourceSync for Repo {}
 
 impl ResourceSyncTrait for Alerter {
-  fn resource_target(id: String) -> ResourceTarget {
-    ResourceTarget::Alerter(id)
-  }
-
   fn get_diff(
     original: Self::Config,
     update: Self::PartialConfig,
@@ -195,10 +171,6 @@ impl ResourceSyncTrait for Alerter {
 impl ExecuteResourceSync for Alerter {}
 
 impl ResourceSyncTrait for Builder {
-  fn resource_target(id: String) -> ResourceTarget {
-    ResourceTarget::Builder(id)
-  }
-
   fn get_diff(
     mut original: Self::Config,
     update: Self::PartialConfig,
@@ -220,10 +192,6 @@ impl ResourceSyncTrait for Builder {
 impl ExecuteResourceSync for Builder {}
 
 impl ResourceSyncTrait for ServerTemplate {
-  fn resource_target(id: String) -> ResourceTarget {
-    ResourceTarget::ServerTemplate(id)
-  }
-
   fn get_diff(
     original: Self::Config,
     update: Self::PartialConfig,
@@ -236,10 +204,6 @@ impl ResourceSyncTrait for ServerTemplate {
 impl ExecuteResourceSync for ServerTemplate {}
 
 impl ResourceSyncTrait for Action {
-  fn resource_target(id: String) -> ResourceTarget {
-    ResourceTarget::Action(id)
-  }
-
   fn get_diff(
     original: Self::Config,
     update: Self::PartialConfig,
@@ -252,10 +216,6 @@ impl ResourceSyncTrait for Action {
 impl ExecuteResourceSync for Action {}
 
 impl ResourceSyncTrait for ResourceSync {
-  fn resource_target(id: String) -> ResourceTarget {
-    ResourceTarget::ResourceSync(id)
-  }
-
   fn include_resource(
     name: &String,
     config: &Self::Config,
@@ -341,10 +301,6 @@ impl ResourceSyncTrait for ResourceSync {
 impl ExecuteResourceSync for ResourceSync {}
 
 impl ResourceSyncTrait for Procedure {
-  fn resource_target(id: String) -> ResourceTarget {
-    ResourceTarget::Procedure(id)
-  }
-
   fn get_diff(
     mut original: Self::Config,
     update: Self::PartialConfig,

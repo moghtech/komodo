@@ -7,9 +7,12 @@ import {
 } from "./responses.js";
 import {
   AuthRequest,
+  BatchExecutionResponse,
   ExecuteRequest,
   ReadRequest,
+  Update,
   UpdateListItem,
+  UpdateStatus,
   UserRequest,
   WriteRequest,
   WsLoginMessage,
@@ -155,6 +158,42 @@ export function KomodoClient(url: string, options: InitOptions) {
       ExecuteResponses[Req["type"]]
     >("/execute", { type, params });
 
+  const execute_and_poll = async <
+    T extends ExecuteRequest["type"],
+    Req extends Extract<ExecuteRequest, { type: T }>
+  >(
+    type: T,
+    params: Req["params"]
+  ) => {
+    const res = await execute(type, params);
+    // Check if its a batch of updates or a single update;
+    if (Array.isArray(res)) {
+      const batch = res as any as BatchExecutionResponse;
+      return await Promise.all(
+        batch.map(async (item) => {
+          if (item.status === "Err") {
+            return item;
+          }
+          return await poll_update_until_complete(item.data._id?.$oid!);
+        })
+      );
+    } else {
+      // it is a single update
+      const update = res as any as Update;
+      return await poll_update_until_complete(update._id?.$oid!);
+    }
+  };
+
+  const poll_update_until_complete = async (update_id: string) => {
+    while (true) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const update = await read("GetUpdate", { id: update_id });
+      if (update.status === UpdateStatus.Complete) {
+        return update;
+      }
+    }
+  };
+
   const core_version = () => read("GetVersion", {}).then((res) => res.version);
 
   const subscribe_to_update_websocket = async ({
@@ -290,9 +329,29 @@ export function KomodoClient(url: string, options: InitOptions) {
      * });
      * ```
      *
+     * NOTE. These calls return immediately when the update is created, NOT when the execution task finishes.
+     * To have the call only return when the task finishes, use [execute_and_poll_until_complete].
+     *
      * https://docs.rs/komodo_client/latest/komodo_client/api/execute/index.html
      */
     execute,
+    /**
+     * Call the `/execute` api, and poll the update until the task has completed.
+     *
+     * ```
+     * const update = await komodo.execute_and_poll("DeployStack", {
+     *   stack: "my-stack"
+     * });
+     * ```
+     *
+     * https://docs.rs/komodo_client/latest/komodo_client/api/execute/index.html
+     */
+    execute_and_poll,
+    /**
+     * Poll an Update (returned by the `execute` calls) until the `status` is `Complete`.
+     * https://docs.rs/komodo_client/latest/komodo_client/entities/update/struct.Update.html#structfield.status.
+     */
+    poll_update_until_complete,
     /** Returns the version of Komodo Core the client is calling to. */
     core_version,
     /**

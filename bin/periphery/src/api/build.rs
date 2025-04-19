@@ -46,7 +46,7 @@ impl Resolve<super::Args> for GetDockerfileContentsOnHost {
     } = self;
 
     let root =
-      periphery_config().build_dir.join(to_komodo_name(&name));
+      periphery_config().build_dir().join(to_komodo_name(&name));
     let build_dir =
       root.join(&build_path).components().collect::<PathBuf>();
 
@@ -91,7 +91,7 @@ impl Resolve<super::Args> for WriteDockerfileContentsToHost {
       contents,
     } = self;
     let full_path = periphery_config()
-      .build_dir
+      .build_dir()
       .join(to_komodo_name(&name))
       .join(&build_path)
       .join(dockerfile_path)
@@ -180,7 +180,7 @@ impl Resolve<super::Args> for build::Build {
     let name = to_komodo_name(name);
 
     let build_path =
-      periphery_config().build_dir.join(&name).join(build_path);
+      periphery_config().build_dir().join(&name).join(build_path);
     let dockerfile_path = optional_string(dockerfile_path)
       .unwrap_or("Dockerfile".to_owned());
 

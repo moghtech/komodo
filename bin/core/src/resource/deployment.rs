@@ -1,7 +1,7 @@
 use anyhow::Context;
 use formatting::format_serror;
 use komodo_client::entities::{
-  Operation, ResourceTargetVariant,
+  Operation, ResourceTarget, ResourceTargetVariant,
   build::Build,
   deployment::{
     Deployment, DeploymentConfig, DeploymentConfigDiff,
@@ -41,6 +41,10 @@ impl super::KomodoResource for Deployment {
 
   fn resource_type() -> ResourceTargetVariant {
     ResourceTargetVariant::Deployment
+  }
+
+  fn resource_target(id: impl Into<String>) -> ResourceTarget {
+    ResourceTarget::Deployment(id.into())
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>

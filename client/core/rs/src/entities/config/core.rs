@@ -85,6 +85,8 @@ pub struct Env {
   pub komodo_logging_level: Option<LogLevel>,
   /// Override `logging.stdio`
   pub komodo_logging_stdio: Option<StdioLogMode>,
+  /// Override `logging.pretty`
+  pub komodo_logging_pretty: Option<bool>,
   /// Override `logging.otlp_endpoint`
   pub komodo_logging_otlp_endpoint: Option<String>,
   /// Override `logging.opentelemetry_service_name`
@@ -260,7 +262,7 @@ pub struct CoreConfig {
 
   /// IP address the core server binds to.
   /// Default: [::].
-   #[serde(default = "default_core_bind_ip")]
+  #[serde(default = "default_core_bind_ip")]
   pub bind_ip: String,
 
   /// Sent in auth header with req to periphery.

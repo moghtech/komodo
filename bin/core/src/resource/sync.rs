@@ -3,7 +3,8 @@ use formatting::format_serror;
 use komodo_client::{
   api::write::RefreshResourceSyncPending,
   entities::{
-    Operation, ResourceTargetVariant, komodo_timestamp,
+    Operation, ResourceTarget, ResourceTargetVariant,
+    komodo_timestamp,
     resource::Resource,
     sync::{
       PartialResourceSyncConfig, ResourceSync, ResourceSyncConfig,
@@ -34,6 +35,10 @@ impl super::KomodoResource for ResourceSync {
 
   fn resource_type() -> ResourceTargetVariant {
     ResourceTargetVariant::ResourceSync
+  }
+
+  fn resource_target(id: impl Into<String>) -> ResourceTarget {
+    ResourceTarget::ResourceSync(id.into())
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>

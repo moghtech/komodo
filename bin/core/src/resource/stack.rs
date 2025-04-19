@@ -3,7 +3,7 @@ use formatting::format_serror;
 use komodo_client::{
   api::write::RefreshStackCache,
   entities::{
-    Operation, ResourceTargetVariant,
+    Operation, ResourceTarget, ResourceTargetVariant,
     permission::PermissionLevel,
     resource::Resource,
     server::Server,
@@ -42,6 +42,10 @@ impl super::KomodoResource for Stack {
 
   fn resource_type() -> ResourceTargetVariant {
     ResourceTargetVariant::Stack
+  }
+
+  fn resource_target(id: impl Into<String>) -> ResourceTarget {
+    ResourceTarget::Stack(id.into())
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>

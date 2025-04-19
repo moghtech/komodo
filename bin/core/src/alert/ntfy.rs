@@ -202,6 +202,24 @@ pub async fn send_alert(
       let link = resource_link(ResourceTargetVariant::Repo, id);
       format!("{level} | Repo build for {} failed\n{link}", name,)
     }
+    AlertData::ProcedureFailed { id, name } => {
+      let link = resource_link(ResourceTargetVariant::Procedure, id);
+      format!("{level} | Procedure {name} failed\n{link}")
+    }
+    AlertData::ActionFailed { id, name } => {
+      let link = resource_link(ResourceTargetVariant::Action, id);
+      format!("{level} | Action {name} failed\n{link}")
+    }
+    AlertData::ScheduleRun {
+      resource_type,
+      id,
+      name,
+    } => {
+      let link = resource_link(*resource_type, id);
+      format!(
+        "{level} | {name} ({resource_type}) | Scheduled run started 🕝\n{link}"
+      )
+    }
     AlertData::None {} => Default::default(),
   };
 

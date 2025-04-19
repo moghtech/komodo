@@ -20,7 +20,7 @@ impl Resolve<super::Args> for GetLatestCommit {
   ) -> serror::Result<LatestCommit> {
     let repo_path = match self.path {
       Some(p) => PathBuf::from(p),
-      None => periphery_config().repo_dir.join(self.name),
+      None => periphery_config().repo_dir().join(self.name),
     };
     if !repo_path.is_dir() {
       return Err(
@@ -70,13 +70,13 @@ impl Resolve<super::Args> for CloneRepo {
       ),
     };
     let parent_dir = if args.is_build {
-      &periphery_config().build_dir
+      periphery_config().build_dir()
     } else {
-      &periphery_config().repo_dir
+      periphery_config().repo_dir()
     };
     git::clone(
       args,
-      parent_dir,
+      &parent_dir,
       token,
       &environment,
       &env_file_path,
@@ -140,13 +140,13 @@ impl Resolve<super::Args> for PullRepo {
       ),
     };
     let parent_dir = if args.is_build {
-      &periphery_config().build_dir
+      periphery_config().build_dir()
     } else {
-      &periphery_config().repo_dir
+      periphery_config().repo_dir()
     };
     git::pull(
       args,
-      parent_dir,
+      &parent_dir,
       token,
       &environment,
       &env_file_path,
@@ -210,13 +210,13 @@ impl Resolve<super::Args> for PullOrCloneRepo {
       ),
     };
     let parent_dir = if args.is_build {
-      &periphery_config().build_dir
+      periphery_config().build_dir()
     } else {
-      &periphery_config().repo_dir
+      periphery_config().repo_dir()
     };
     git::pull_or_clone(
       args,
-      parent_dir,
+      &parent_dir,
       token,
       &environment,
       &env_file_path,
@@ -252,11 +252,10 @@ impl Resolve<super::Args> for RenameRepo {
       curr_name,
       new_name,
     } = self;
-    let renamed = fs::rename(
-      periphery_config().repo_dir.join(&curr_name),
-      periphery_config().repo_dir.join(&new_name),
-    )
-    .await;
+    let repo_dir = periphery_config().repo_dir();
+    let renamed =
+      fs::rename(repo_dir.join(&curr_name), repo_dir.join(&new_name))
+        .await;
     let msg = match renamed {
       Ok(_) => String::from("Renamed Repo directory on Server"),
       Err(_) => format!("No Repo cloned at {curr_name} to rename"),
@@ -274,9 +273,9 @@ impl Resolve<super::Args> for DeleteRepo {
     // If using custom clone path, it will be passed by core instead of name.
     // So the join will resolve to just the absolute path.
     let root = if is_build {
-      &periphery_config().build_dir
+      periphery_config().build_dir()
     } else {
-      &periphery_config().repo_dir
+      periphery_config().repo_dir()
     };
     let full_path = root.join(&name);
     let deleted =

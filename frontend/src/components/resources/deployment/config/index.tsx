@@ -365,7 +365,7 @@ export const DeploymentConfig = ({
                   description="Choose between multiple signals when stopping"
                 >
                   <MonacoEditor
-                    value={value || "  # SIGTERM: your label\n"}
+                    value={value || DEFAULT_TERM_SIGNAL_LABELS}
                     language="key_value"
                     onValueChange={(term_signal_labels) =>
                       set({ term_signal_labels })
@@ -381,3 +381,9 @@ export const DeploymentConfig = ({
     />
   );
 };
+
+export const DEFAULT_TERM_SIGNAL_LABELS = `  # SIGTERM: sigterm label
+  # SIGQUIT: sigquit label
+  # SIGINT: sigint label
+  # SIGHUP: sighup label
+`;

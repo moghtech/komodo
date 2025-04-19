@@ -1,6 +1,6 @@
 use anyhow::Context;
 use komodo_client::entities::{
-  Operation, ResourceTargetVariant, komodo_timestamp,
+  Operation, ResourceTarget, ResourceTargetVariant, komodo_timestamp,
   resource::Resource,
   server::{
     PartialServerConfig, Server, ServerConfig, ServerConfigDiff,
@@ -27,6 +27,10 @@ impl super::KomodoResource for Server {
 
   fn resource_type() -> ResourceTargetVariant {
     ResourceTargetVariant::Server
+  }
+
+  fn resource_target(id: impl Into<String>) -> ResourceTarget {
+    ResourceTarget::Server(id.into())
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>

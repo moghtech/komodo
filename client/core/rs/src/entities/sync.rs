@@ -271,6 +271,13 @@ pub struct ResourceSyncConfig {
   #[builder(default)]
   pub include_user_groups: bool,
 
+  /// Whether sync should send alert when it enters Pending state.
+  /// Default: true
+  #[serde(default = "default_pending_alert")]
+  #[builder(default = "default_pending_alert()")]
+  #[partial_default(default_pending_alert())]
+  pub pending_alert: bool,
+
   /// Manage the file contents in the UI.
   #[serde(default, deserialize_with = "file_contents_deserializer")]
   #[partial_attr(serde(
@@ -318,6 +325,10 @@ fn default_include_resources() -> bool {
   true
 }
 
+fn default_pending_alert() -> bool {
+  true
+}
+
 impl Default for ResourceSyncConfig {
   fn default() -> Self {
     Self {
@@ -338,6 +349,7 @@ impl Default for ResourceSyncConfig {
       delete: Default::default(),
       webhook_enabled: default_webhook_enabled(),
       webhook_secret: Default::default(),
+      pending_alert: default_pending_alert(),
     }
   }
 }
