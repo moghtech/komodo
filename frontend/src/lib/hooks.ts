@@ -526,3 +526,31 @@ export const useFilterByUpdateAvailable: () => [boolean, () => void] = () => {
   const [filter, set] = useAtom<boolean>(filter_by_update_available);
   return [filter, () => set(!filter)];
 };
+
+// export function useReadableLines(stream: ReadableStream<string>): string[] {
+//   const [out, setOut] = useState<string[]>([]);
+//   const cancelRef = useRef<AbortController | null>(null);
+
+//   useEffect(() => {
+//     if (!stream) return;
+
+//     const aborter = new AbortController();
+//     cancelRef.current = aborter;
+//     setOut([]); // reset on new stream
+
+//     (async () => {
+//       try {
+//         for await (const line of lines(stream)) {
+//           if (aborter.signal.aborted) break;
+//           setOut((prev) => [...prev, line]); // append as we go
+//         }
+//       } catch (err) {
+//         if (err.name !== "AbortError") console.error(err);
+//       }
+//     })();
+
+//     return () => aborter.abort(); // stop when unmounted
+//   }, [stream]);
+
+//   return out;
+// }

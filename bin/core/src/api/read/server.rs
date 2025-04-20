@@ -21,6 +21,7 @@ use komodo_client::{
       network::Network,
       volume::Volume,
     },
+    komodo_timestamp,
     permission::PermissionLevel,
     server::{
       Server, ServerActionState, ServerListItem, ServerState,
@@ -813,6 +814,39 @@ impl Resolve<ReadArgs> for ListComposeProjects {
   }
 }
 
+#[derive(Default)]
+struct TerminalCacheItem {
+  terminals: Vec<String>,
+  ttl: i64,
+}
+
+type TerminalsCache =
+  HashMap<String, Arc<tokio::sync::Mutex<TerminalCacheItem>>>;
+const TERMINAL_CACHE_TIMEOUT: i64 = 30_000;
+
+fn terminals_cache() -> &'static std::sync::Mutex<TerminalsCache> {
+  static CACHE: OnceLock<std::sync::Mutex<TerminalsCache>> =
+    OnceLock::new();
+  CACHE.get_or_init(Default::default)
+}
+
+fn terminal_get_or_insert(
+  server_id: String,
+) -> Arc<tokio::sync::Mutex<TerminalCacheItem>> {
+  if let Some(cached) =
+    terminals_cache().lock().unwrap().get(&server_id).cloned()
+  {
+    return cached;
+  }
+  let to_cache =
+    Arc::new(tokio::sync::Mutex::new(TerminalCacheItem::default()));
+  terminals_cache()
+    .lock()
+    .unwrap()
+    .insert(server_id, to_cache.clone());
+  to_cache
+}
+
 impl Resolve<ReadArgs> for ListTerminals {
   async fn resolve(
     self,
@@ -824,13 +858,17 @@ impl Resolve<ReadArgs> for ListTerminals {
       PermissionLevel::Read,
     )
     .await?;
-    let cache = server_status_cache()
-      .get_or_insert_default(&server.id)
-      .await;
-    if let Some(terminals) = &cache.terminals {
-      Ok(terminals.clone())
+    let cache = terminal_get_or_insert(server.id.clone());
+    let mut cache = cache.lock().await;
+    if self.fresh || komodo_timestamp() > cache.ttl {
+      cache.terminals = periphery_client(&server)?
+        .request(periphery_client::api::terminal::ListTerminals {})
+        .await
+        .context("Failed to get fresh terminal list")?;
+      cache.ttl = komodo_timestamp() + TERMINAL_CACHE_TIMEOUT;
+      Ok(cache.terminals.clone())
     } else {
-      Ok(Vec::new())
+      Ok(cache.terminals.clone())
     }
   }
 }

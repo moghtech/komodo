@@ -1010,4 +1010,4 @@ pub enum ScheduleFormat {
   Cron,
 }
 
-pub const KOMODO_EXIT_CODE: &str = "__KOMODO_EXIT_CODE__:";
+pub const KOMODO_EXIT_DATA: &str = "__KOMODO_EXIT_DATA:";

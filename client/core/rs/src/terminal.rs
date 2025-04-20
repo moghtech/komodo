@@ -1,5 +1,5 @@
 use anyhow::{Context, anyhow};
-use futures::{Stream, TryStreamExt};
+use futures::{Stream, StreamExt, TryStreamExt};
 use serror::deserialize_error;
 use tokio_util::codec::LinesCodecError;
 
@@ -43,5 +43,6 @@ impl TerminalStreamResponse {
       ),
       tokio_util::codec::LinesCodec::new(),
     )
+    .map(|line| line.map(|line| line + "\n"))
   }
 }

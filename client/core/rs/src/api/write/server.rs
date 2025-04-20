@@ -122,5 +122,5 @@ pub struct DeleteTerminal {
   /// Server Id or name
   pub server: String,
   /// The name of the terminal on the server to delete.
-  pub name: String,
+  pub terminal: String,
 }

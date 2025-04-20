@@ -2605,6 +2605,7 @@ dependencies = [
  "ordered_hash_map",
  "partial_derive2",
  "periphery_client",
+ "pin-project-lite",
  "rand 0.9.0",
  "regex",
  "reqwest",

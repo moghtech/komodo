@@ -7,7 +7,7 @@ use std::{
 use anyhow::Context;
 use flume::r#async::RecvStream;
 use futures::{Stream, StreamExt};
-use komodo_client::entities::KOMODO_EXIT_CODE;
+use komodo_client::entities::KOMODO_EXIT_DATA;
 use pin_project_lite::pin_project;
 use tokio::io::AsyncWriteExt;
 
@@ -180,8 +180,11 @@ impl Terminal {
     // The bash wrapping combines stdout and stderr,
     // and attaches the command exit code and END_OF_OUTPUT sentinel.
     let full_command = format!(
-      "exec 2>&1; {command}; printf '{KOMODO_EXIT_CODE}%d\n{KOMODO_END_OF_OUTPUT}\\n' $?\n"
+      "exec 2>&1; {command}; printf '{KOMODO_EXIT_DATA}%d:%s\n{KOMODO_END_OF_OUTPUT}\n' \"$?\" \"$PWD\"\n"
     );
+    // let full_command = format!(
+    //   "exec 2>&1; {command}; printf '{KOMODO_EXIT_CODE}%d:%s\n' \"$?\" \"$PWD\"; printf '{KOMODO_END_OF_OUTPUT}'\n"
+    // );
 
     let mut stdin =
       self.stdin.try_lock().context("Shell stdin is busy")?;

@@ -38,6 +38,7 @@ import { ServerInfo } from "./info";
 import { ServerStats } from "./stats";
 import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
+import { ServerTerminals } from "./terminals";
 
 export const useServer = (id?: string) =>
   useRead("ListServers", {}, { refetchInterval: 10_000 }).data?.find(
@@ -59,9 +60,9 @@ const Icon = ({ id, size }: { id?: string; size: number }) => {
   );
 };
 
-const ConfigStatsDockerResources = ({ id }: { id: string }) => {
+const ConfigStatsDockerResourcesTerminals = ({ id }: { id: string }) => {
   const [view, setView] = useLocalStorage<
-    "Config" | "Stats" | "Docker" | "Resources"
+    "Config" | "Stats" | "Docker" | "Resources" | "Terminals"
   >(`server-${id}-tab`, "Config");
 
   const is_admin = useUser().data?.admin ?? false;
@@ -108,6 +109,10 @@ const ConfigStatsDockerResources = ({ id }: { id: string }) => {
         disabled={noResources}
       >
         Resources
+      </TabsTrigger>
+
+      <TabsTrigger value="Terminals" className="w-[110px]">
+        Terminals
       </TabsTrigger>
     </TabsList>
   );
@@ -162,6 +167,10 @@ const ConfigStatsDockerResources = ({ id }: { id: string }) => {
             <RepoTable repos={repos} />
           </Section>
         </Section>
+      </TabsContent>
+
+      <TabsContent value="Terminals">
+        <ServerTerminals id={id} titleOther={tabsList} />
       </TabsContent>
     </Tabs>
   );
@@ -451,7 +460,7 @@ export const ServerComponents: RequiredResourceComponents = {
 
   Page: {},
 
-  Config: ConfigStatsDockerResources,
+  Config: ConfigStatsDockerResourcesTerminals,
 
   DangerZone: ({ id }) => (
     <>

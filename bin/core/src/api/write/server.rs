@@ -120,10 +120,11 @@ impl Resolve<WriteArgs> for DeleteTerminal {
 
     periphery
       .request(api::terminal::DeleteTerminal {
-        terminal: self.name,
+        terminal: self.terminal,
       })
       .await
-      .context("Failed to delete terminal on periphery")
-      .map_err(Into::into)
+      .context("Failed to delete terminal on periphery")?;
+
+    Ok(NoData {})
   }
 }

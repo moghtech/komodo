@@ -4676,7 +4676,7 @@ export interface DeleteTerminal {
     /** Server Id or name */
     server: string;
     /** The name of the terminal on the server to delete. */
-    name: string;
+    terminal: string;
 }
 /**
  * **Admin only**. Delete a user.
@@ -6127,6 +6127,11 @@ export interface ListTags {
 export interface ListTerminals {
     /** Id or name */
     server: string;
+    /**
+     * Force a fresh call to Periphery for the list.
+     * Otherwise the response will be cached for 30s
+     */
+    fresh?: boolean;
 }
 /**
  * Paginated endpoint for updates matching optional query.

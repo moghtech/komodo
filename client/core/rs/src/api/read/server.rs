@@ -642,6 +642,10 @@ pub struct ListTerminals {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
   pub server: String,
+  /// Force a fresh call to Periphery for the list.
+  /// Otherwise the response will be cached for 30s
+  #[serde(default)]
+  pub fresh: bool,
 }
 
 #[typeshare]
