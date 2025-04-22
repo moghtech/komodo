@@ -1,5 +1,5 @@
 import { AuthResponses, ExecuteResponses, ReadResponses, UserResponses, WriteResponses } from "./responses.js";
-import { AuthRequest, ExecuteRequest, ExecuteTerminal, ReadRequest, Update, UpdateListItem, UserRequest, WriteRequest } from "./types.js";
+import { AuthRequest, ConnectPtyQuery, ExecuteRequest, ExecuteTerminal, ReadRequest, Update, UpdateListItem, UserRequest, WriteRequest } from "./types.js";
 export * as Types from "./types.js";
 type InitOptions = {
     type: "jwt";
@@ -144,4 +144,14 @@ export declare function KomodoClient(url: string, options: InitOptions): {
      * was terminated early, ie like running `exit`.
      */
     execute_terminal: (request: ExecuteTerminal) => Promise<ReadableStream<string>>;
+    /**
+     * Subscribes to a terminal pty, for use with xtermjs.
+     */
+    connect_pty: ({ query, on_message, on_login, on_open, on_close, }: {
+        query: ConnectPtyQuery;
+        on_message?: (e: MessageEvent<any>) => void;
+        on_login?: () => void;
+        on_open?: () => void;
+        on_close?: () => void;
+    }) => WebSocket;
 };

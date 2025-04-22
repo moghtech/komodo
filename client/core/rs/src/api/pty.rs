@@ -15,7 +15,8 @@ pub struct ConnectPtyQuery {
   /// which will persist until it is deleted using
   /// [DeletePty][crate::api::write::server::DeletePty]
   pub pty: String,
-  /// The shell to use, eg. 'sh', 'bash', 'zsh', etc
+  /// The shell to use, eg. 'sh', 'bash', 'zsh', etc.
+  /// Default: 'bash'
   #[serde(default = "default_shell")]
   pub shell: String,
   /// Optional. The initial command to execute on connection to the shell.

@@ -8,6 +8,7 @@ import {
 import {
   AuthRequest,
   BatchExecutionResponse,
+  ConnectPtyQuery,
   ExecuteRequest,
   ExecuteTerminal,
   ReadRequest,
@@ -345,6 +346,60 @@ export function KomodoClient(url: string, options: InitOptions) {
       }
     });
 
+  const connect_pty = ({
+    query,
+    on_message,
+    on_login,
+    on_open,
+    on_close,
+  }: {
+    query: ConnectPtyQuery;
+    on_message?: (e: MessageEvent<any>) => void;
+    on_login?: () => void;
+    on_open?: () => void;
+    on_close?: () => void;
+  }) => {
+    const url_query = new URLSearchParams(
+      query as any as Record<string, string>
+    ).toString();
+    const ws = new WebSocket(
+      url.replace("http", "ws") + "/ws/pty?" + url_query
+    );
+    // Handle login on websocket open
+    ws.onopen = () => {
+      const login_msg: WsLoginMessage =
+        options.type === "jwt"
+          ? {
+              type: "Jwt",
+              params: {
+                jwt: options.params.jwt,
+              },
+            }
+          : {
+              type: "ApiKeys",
+              params: {
+                key: options.params.key,
+                secret: options.params.secret,
+              },
+            };
+      ws.send(JSON.stringify(login_msg));
+      on_open?.();
+    };
+
+    ws.onmessage = (e) => {
+      if (e.data == "LOGGED_IN") {
+        ws.binaryType = "arraybuffer";
+        ws.onmessage = (e) => on_message?.(e);
+        on_login?.();
+        return;
+      }
+    };
+
+    ws.onclose = () => on_close?.();
+
+    return ws;
+  };
+
   return {
     /**
      * Call the `/auth` api.
@@ -438,14 +493,18 @@ export function KomodoClient(url: string, options: InitOptions) {
     /**
      * Executes a command on a given Server / terminal,
      * and returns a stream to process the output as it comes in.
-     * 
-     * Note. The final line of the stream will usually be 
+     *
+     * Note. The final line of the stream will usually be
      * something like `__KOMODO_EXIT_CODE__:0`. The number
      * is the exit code of the command.
-     * 
+     *
      * If this line is NOT present, it means the stream
      * was terminated early, ie like running `exit`.
      */
     execute_terminal,
+    /**
+     * Subscribes to a terminal pty, for use with xtermjs.
+     */
+    connect_pty,
   };
 }

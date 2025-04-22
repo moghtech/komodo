@@ -231,6 +231,39 @@ export function KomodoClient(url, options) {
             });
         }
     });
+    const connect_pty = ({ query, on_message, on_login, on_open, on_close, }) => {
+        const url_query = new URLSearchParams(query).toString();
+        const ws = new WebSocket(url.replace("http", "ws") + "/ws/pty?" + url_query);
+        // Handle login on websocket open
+        ws.onopen = () => {
+            const login_msg = options.type === "jwt"
+                ? {
+                    type: "Jwt",
+                    params: {
+                        jwt: options.params.jwt,
+                    },
+                }
+                : {
+                    type: "ApiKeys",
+                    params: {
+                        key: options.params.key,
+                        secret: options.params.secret,
+                    },
+                };
+            ws.send(JSON.stringify(login_msg));
+            on_open?.();
+        };
+        ws.onmessage = (e) => {
+            if (e.data == "LOGGED_IN") {
+                ws.binaryType = "arraybuffer";
+                ws.onmessage = (e) => on_message?.(e);
+                on_login?.();
+                return;
+            }
+        };
+        ws.onclose = () => on_close?.();
+        return ws;
+    };
     return {
         /**
          * Call the `/auth` api.
@@ -333,5 +366,9 @@ export function KomodoClient(url, options) {
          * was terminated early, ie like running `exit`.
          */
         execute_terminal,
+        /**
+         * Subscribes to a terminal pty, for use with xtermjs.
+         */
+        connect_pty,
     };
 }

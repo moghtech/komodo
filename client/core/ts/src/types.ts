@@ -4237,7 +4237,10 @@ export interface ConnectPtyQuery {
 	 * [DeletePty][crate::api::write::server::DeletePty]
 	 */
 	pty: string;
-	/** The shell to use, eg. 'sh', 'bash', 'zsh', etc */
+	/**
+	 * The shell to use, eg. 'sh', 'bash', 'zsh', etc.
+	 * Default: 'bash'
+	 */
 	shell: string;
 	/** Optional. The initial command to execute on connection to the shell. */
 	command?: string;
