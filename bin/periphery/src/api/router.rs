@@ -8,7 +8,7 @@ use axum::{
   http::{Request, StatusCode},
   middleware::{self, Next},
   response::Response,
-  routing::post,
+  routing::{get, post},
 };
 use derive_variants::ExtractVariant;
 use resolver_api::Resolve;
@@ -21,6 +21,7 @@ pub fn router() -> Router {
   Router::new()
     .route("/", post(handler))
     .route("/terminal", post(super::terminal::exec))
+    .route("/pty", get(super::pty::connect_pty))
     .layer(middleware::from_fn(guard_request_by_ip))
     .layer(middleware::from_fn(guard_request_by_passkey))
 }

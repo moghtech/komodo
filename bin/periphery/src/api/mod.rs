@@ -24,6 +24,7 @@ mod deploy;
 mod git;
 mod image;
 mod network;
+mod pty;
 mod router;
 mod stats;
 mod terminal;

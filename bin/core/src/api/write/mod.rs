@@ -82,6 +82,7 @@ pub enum WriteRequest {
   RenameServer(RenameServer),
   CreateNetwork(CreateNetwork),
   DeleteTerminal(DeleteTerminal),
+  DeletePty(DeletePty),
 
   // ==== DEPLOYMENT ====
   CreateDeployment(CreateDeployment),

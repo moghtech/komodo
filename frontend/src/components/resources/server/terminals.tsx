@@ -7,7 +7,6 @@ import { Button } from "@ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@ui/card";
@@ -148,9 +147,9 @@ export const ServerTerminals = ({
                       {history.command}
                       {history.code && <ExitCode code={history.code} />}
                     </CardTitle>
-                    <CardDescription className="pt-1">
-                      {/* {history.next_cwd && <code>{history.next_cwd}</code>} */}
-                    </CardDescription>
+                    {/* <CardDescription className="pt-1">
+                      {history.next_cwd && <code>{history.next_cwd}</code>}
+                    </CardDescription> */}
                   </CardHeader>
                   {output && (
                     <CardContent>
@@ -166,9 +165,9 @@ export const ServerTerminals = ({
                   {curr?.command}
                   <ExitCode code={curr?.code} />
                 </CardTitle>
-                <CardDescription className="pt-1">
-                  {/* {curr?.next_cwd && <code>{curr.next_cwd}</code>} */}
-                </CardDescription>
+                {/* <CardDescription className="pt-1">
+                  {curr?.next_cwd && <code>{curr.next_cwd}</code>}
+                </CardDescription> */}
               </CardHeader>
               <CardContent>
                 <pre ref={logRef} />

@@ -815,36 +815,40 @@ impl Resolve<ReadArgs> for ListComposeProjects {
 }
 
 #[derive(Default)]
-struct TerminalCacheItem {
-  terminals: Vec<String>,
+struct ListCacheItem {
+  list: Vec<String>,
   ttl: i64,
 }
 
-type TerminalsCache =
-  HashMap<String, Arc<tokio::sync::Mutex<TerminalCacheItem>>>;
-const TERMINAL_CACHE_TIMEOUT: i64 = 30_000;
+const LIST_CACHE_TIMEOUT: i64 = 30_000;
 
-fn terminals_cache() -> &'static std::sync::Mutex<TerminalsCache> {
-  static CACHE: OnceLock<std::sync::Mutex<TerminalsCache>> =
-    OnceLock::new();
-  CACHE.get_or_init(Default::default)
+#[derive(Default)]
+struct ListCache(
+  std::sync::Mutex<
+    HashMap<String, Arc<tokio::sync::Mutex<ListCacheItem>>>,
+  >,
+);
+
+impl ListCache {
+  fn get_or_insert(
+    &self,
+    server_id: String,
+  ) -> Arc<tokio::sync::Mutex<ListCacheItem>> {
+    if let Some(cached) =
+      self.0.lock().unwrap().get(&server_id).cloned()
+    {
+      return cached;
+    }
+    let to_cache =
+      Arc::new(tokio::sync::Mutex::new(ListCacheItem::default()));
+    self.0.lock().unwrap().insert(server_id, to_cache.clone());
+    to_cache
+  }
 }
 
-fn terminal_get_or_insert(
-  server_id: String,
-) -> Arc<tokio::sync::Mutex<TerminalCacheItem>> {
-  if let Some(cached) =
-    terminals_cache().lock().unwrap().get(&server_id).cloned()
-  {
-    return cached;
-  }
-  let to_cache =
-    Arc::new(tokio::sync::Mutex::new(TerminalCacheItem::default()));
-  terminals_cache()
-    .lock()
-    .unwrap()
-    .insert(server_id, to_cache.clone());
-  to_cache
+fn terminals_cache() -> &'static ListCache {
+  static TERMINALS: OnceLock<ListCache> = OnceLock::new();
+  TERMINALS.get_or_init(Default::default)
 }
 
 impl Resolve<ReadArgs> for ListTerminals {
@@ -858,17 +862,48 @@ impl Resolve<ReadArgs> for ListTerminals {
       PermissionLevel::Read,
     )
     .await?;
-    let cache = terminal_get_or_insert(server.id.clone());
+    let cache = terminals_cache().get_or_insert(server.id.clone());
     let mut cache = cache.lock().await;
     if self.fresh || komodo_timestamp() > cache.ttl {
-      cache.terminals = periphery_client(&server)?
+      cache.list = periphery_client(&server)?
         .request(periphery_client::api::terminal::ListTerminals {})
         .await
         .context("Failed to get fresh terminal list")?;
-      cache.ttl = komodo_timestamp() + TERMINAL_CACHE_TIMEOUT;
-      Ok(cache.terminals.clone())
+      cache.ttl = komodo_timestamp() + LIST_CACHE_TIMEOUT;
+      Ok(cache.list.clone())
     } else {
-      Ok(cache.terminals.clone())
+      Ok(cache.list.clone())
+    }
+  }
+}
+
+fn ptys_cache() -> &'static ListCache {
+  static PTYS: OnceLock<ListCache> = OnceLock::new();
+  PTYS.get_or_init(Default::default)
+}
+
+impl Resolve<ReadArgs> for ListPtys {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<ListPtysResponse> {
+    let server = resource::get_check_permissions::<Server>(
+      &self.server,
+      user,
+      PermissionLevel::Read,
+    )
+    .await?;
+    let cache = ptys_cache().get_or_insert(server.id.clone());
+    let mut cache = cache.lock().await;
+    if self.fresh || komodo_timestamp() > cache.ttl {
+      cache.list = periphery_client(&server)?
+        .request(periphery_client::api::pty::ListPtys {})
+        .await
+        .context("Failed to get fresh pty list")?;
+      cache.ttl = komodo_timestamp() + LIST_CACHE_TIMEOUT;
+      Ok(cache.list.clone())
+    } else {
+      Ok(cache.list.clone())
     }
   }
 }

@@ -135,7 +135,7 @@ impl Terminal {
       tokio_util::codec::LinesCodec::new(),
     );
 
-    let (stdout_tx, stdout_rx) = flume::unbounded();
+    let (stdout_tx, stdout_rx) = flume::bounded(8192);
 
     // spawn stdout forwarding loop
     tokio::spawn(async move {

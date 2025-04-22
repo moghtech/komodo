@@ -8,6 +8,7 @@ use serde_json::json;
 
 pub mod api;
 
+mod pty;
 mod terminal;
 
 fn periphery_http_client() -> &'static reqwest::Client {
@@ -120,3 +121,5 @@ impl PeripheryClient {
     }
   }
 }
+
+pub const PTY_LOGGED_IN_ACK: &str = "LOGGED_IN";

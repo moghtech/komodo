@@ -38,6 +38,7 @@ slack.workspace = true
 svi.workspace = true
 # external
 aws-credential-types.workspace = true
+tokio-tungstenite.workspace = true
 pin-project-lite.workspace = true
 ordered_hash_map.workspace = true
 english-to-cron.workspace = true
