@@ -3421,6 +3421,8 @@ export type ProcedureListItem = ResourceListItem<ProcedureListItemInfo>;
 
 export type ListProceduresResponse = ProcedureListItem[];
 
+export type ListPtysResponse = string[];
+
 export enum RepoState {
 	/** Unknown case */
 	Unknown = "Unknown",
@@ -4219,6 +4221,28 @@ export interface CommitSync {
 	sync: string;
 }
 
+/**
+ * Connect to a pty (interactive shell) on the given server.
+ * TODO: Document calling.
+ */
+export interface ConnectPtyQuery {
+	/** Server Id or name */
+	server: string;
+	/**
+	 * Each periphery can keep multiple ptys open.
+	 * If a ptys with the specified name already exists,
+	 * it will be attached to.
+	 * Otherwise a new pty will be created for the command,
+	 * which will persist until it is deleted using
+	 * [DeletePty][crate::api::write::server::DeletePty]
+	 */
+	pty: string;
+	/** The shell to use, eg. 'sh', 'bash', 'zsh', etc */
+	shell: string;
+	/** Optional. The initial command to execute on connection to the shell. */
+	command?: string;
+}
+
 export interface Conversion {
 	/** reference on the server. */
 	local: string;
@@ -4766,6 +4790,17 @@ export interface DeleteProcedure {
 }
 
 /**
+ * Delete an active pty (interactive shell) on the server.
+ * Response: [NoData]
+ */
+export interface DeletePty {
+	/** Server Id or name */
+	server: string;
+	/** The name of the pty on the server to delete. */
+	pty: string;
+}
+
+/**
  * Deletes the repo at the given id, and returns the deleted repo.
  * Response: [Repo]
  */
@@ -4854,7 +4889,7 @@ export interface DeleteTag {
 }
 
 /**
- * Delete a terminal on the server.
+ * Delete a terminal (non interactive shell commands) on the server.
  * Response: [NoData]
  */
 export interface DeleteTerminal {
@@ -6400,6 +6435,20 @@ export interface ListProcedures {
 	query?: ProcedureQuery;
 }
 
+/**
+ * List the current active ptys on specified server.
+ * Response: [ListPtysResponse].
+ */
+export interface ListPtys {
+	/** Id or name */
+	server: string;
+	/**
+	 * Force a fresh call to Periphery for the list.
+	 * Otherwise the response will be cached for 30s
+	 */
+	fresh?: boolean;
+}
+
 /** List repos matching optional query. Response: [ListReposResponse]. */
 export interface ListRepos {
 	/** optional structured query to filter repos. */
@@ -6470,7 +6519,7 @@ export interface ListTags {
 
 /**
  * List the current active terminals on specified server.
- * Response: [ListTerminals].
+ * Response: [ListTerminalsResponse].
  */
 export interface ListTerminals {
 	/** Id or name */
@@ -7916,6 +7965,7 @@ export type ReadRequest =
 	| { type: "ListDockerVolumes", params: ListDockerVolumes }
 	| { type: "ListComposeProjects", params: ListComposeProjects }
 	| { type: "ListTerminals", params: ListTerminals }
+	| { type: "ListPtys", params: ListPtys }
 	| { type: "GetDeploymentsSummary", params: GetDeploymentsSummary }
 	| { type: "GetDeployment", params: GetDeployment }
 	| { type: "GetDeploymentContainer", params: GetDeploymentContainer }
@@ -8015,6 +8065,7 @@ export type WriteRequest =
 	| { type: "RenameServer", params: RenameServer }
 	| { type: "CreateNetwork", params: CreateNetwork }
 	| { type: "DeleteTerminal", params: DeleteTerminal }
+	| { type: "DeletePty", params: DeletePty }
 	| { type: "CreateDeployment", params: CreateDeployment }
 	| { type: "CopyDeployment", params: CopyDeployment }
 	| { type: "CreateDeploymentFromContainer", params: CreateDeploymentFromContainer }
