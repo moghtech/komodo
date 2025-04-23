@@ -73,13 +73,15 @@ export const ServerPty = ({
   useEffect(() => {
     if (!term) return;
 
-    console.log("set websocket");
-
     const ws = komodo_client().connect_pty({
       query: {
         server: id,
         pty: "Test Pty",
         shell: "bash",
+        command: "clear",
+      },
+      on_login: () => {
+        console.log("logged in pty");
       },
       on_open: () => {
         fitRef.current.fit();

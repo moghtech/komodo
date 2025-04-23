@@ -260,6 +260,9 @@ export function KomodoClient(url, options) {
                 on_login?.();
                 return;
             }
+            else {
+                on_message?.(e);
+            }
         };
         ws.onclose = () => on_close?.();
         return ws;

@@ -8,9 +8,7 @@ use anyhow::{Context, anyhow};
 use bytes::Bytes;
 use flume::TryRecvError;
 use portable_pty::{CommandBuilder, PtySize, native_pty_system};
-use tokio_util::sync::{
-  CancellationToken, WaitForCancellationFuture,
-};
+use tokio_util::sync::CancellationToken;
 
 type PtyName = String;
 type PtyMap = std::sync::RwLock<HashMap<PtyName, Arc<Pty>>>;
@@ -75,7 +73,7 @@ pub enum StdinMsg {
 pub struct Pty {
   /// The shell that was used as the root command.
   shell: String,
-  cancel: CancellationToken,
+  pub cancel: CancellationToken,
 
   pub stdin: flume::Sender<StdinMsg>,
   pub stdout: flume::Receiver<Bytes>,
@@ -87,6 +85,8 @@ pub struct Pty {
 impl Pty {
   /// shell should be "sh", "bash", "zsh", etc.
   fn new(shell: String) -> anyhow::Result<Pty> {
+    trace!("Creating pty with shell: {shell}");
+
     let pty = native_pty_system()
       .openpty(PtySize::default())
       .context("Failed to open pty")?;
@@ -121,7 +121,7 @@ impl Pty {
         }
         match child.try_wait() {
           Ok(Some(code)) => {
-            println!("child exited with code {code}");
+            debug!("child exited with code {code}");
             _cancel.cancel();
             break;
           }
@@ -129,7 +129,7 @@ impl Pty {
             std::thread::sleep(Duration::from_millis(500));
           }
           Err(e) => {
-            error!("failed to wait for child | {e:?}");
+            debug!("failed to wait for child | {e:?}");
             _cancel.cancel();
             break;
           }
@@ -206,6 +206,8 @@ impl Pty {
       }
     });
 
+    trace!("pty tasks spawned");
+
     Ok(Pty {
       shell,
       cancel,
@@ -220,11 +222,8 @@ impl Pty {
   }
 
   pub fn cancel(&self) {
+    trace!("Cancel called");
     self.cancel.cancel();
     self.abort();
-  }
-
-  pub async fn cancelled(&self) -> WaitForCancellationFuture {
-    self.cancel.cancelled()
   }
 }

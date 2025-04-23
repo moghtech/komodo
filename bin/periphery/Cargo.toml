@@ -54,3 +54,4 @@ axum.workspace = true
 clap.workspace = true
 envy.workspace = true
 uuid.workspace = true
+rand.workspace = true

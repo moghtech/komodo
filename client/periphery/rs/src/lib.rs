@@ -121,5 +121,3 @@ impl PeripheryClient {
     }
   }
 }
-
-pub const PTY_LOGGED_IN_ACK: &str = "LOGGED_IN";

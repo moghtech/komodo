@@ -2682,6 +2682,7 @@ dependencies = [
  "periphery_client",
  "pin-project-lite",
  "portable-pty",
+ "rand 0.9.1",
  "resolver_api",
  "response",
  "run_command",
@@ -3531,10 +3532,10 @@ name = "periphery_client"
 version = "1.17.3-dev-1"
 dependencies = [
  "anyhow",
- "futures-util",
  "komodo_client",
  "reqwest",
  "resolver_api",
+ "rustls 0.23.26",
  "serde",
  "serde_json",
  "serde_qs",
@@ -5100,7 +5101,11 @@ checksum = "7a9daff607c6d2bf6c16fd681ccb7eecc83e4e2cdc1ca067ffaadfca5de7f084"
 dependencies = [
  "futures-util",
  "log",
+ "rustls 0.23.26",
+ "rustls-native-certs 0.8.1",
+ "rustls-pki-types",
  "tokio",
+ "tokio-rustls 0.26.2",
  "tungstenite",
 ]
 
@@ -5373,6 +5378,8 @@ dependencies = [
  "httparse",
  "log",
  "rand 0.9.1",
+ "rustls 0.23.26",
+ "rustls-pki-types",
  "sha1",
  "thiserror 2.0.12",
  "utf-8",

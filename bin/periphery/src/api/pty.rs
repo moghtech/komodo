@@ -1,26 +1,29 @@
+use std::{collections::HashMap, sync::OnceLock};
+
+use anyhow::{Context, anyhow};
 use axum::{
   extract::{
     Query, WebSocketUpgrade,
     ws::{Message, Utf8Bytes},
   },
+  http::StatusCode,
   response::Response,
 };
 use bytes::Bytes;
 use futures::{SinkExt, StreamExt};
-use komodo_client::entities::NoData;
-use periphery_client::{
-  PTY_LOGGED_IN_ACK,
-  api::pty::{ConnectPtyQuery, DeletePty, ListPtys},
+use komodo_client::entities::{NoData, komodo_timestamp};
+use periphery_client::api::pty::{
+  ConnectPtyQuery, CreatePtyAuthToken, CreatePtyAuthTokenResponse,
+  DeletePty, ListPtys,
 };
+use rand::Rng;
 use resolver_api::Resolve;
+use serror::AddStatusCodeError;
 use tokio_util::sync::CancellationToken;
 
-use crate::{
-  config::periphery_config,
-  pty::{
-    ResizeDimensions, StdinMsg, clean_up_ptys, delete_pty,
-    get_or_insert_pty, list_ptys,
-  },
+use crate::pty::{
+  ResizeDimensions, StdinMsg, clean_up_ptys, delete_pty,
+  get_or_insert_pty, list_ptys,
 };
 
 impl Resolve<super::Args> for ListPtys {
@@ -29,6 +32,7 @@ impl Resolve<super::Args> for ListPtys {
     self,
     _: &super::Args,
   ) -> serror::Result<Vec<String>> {
+    clean_up_ptys();
     Ok(list_ptys())
   }
 }
@@ -41,111 +45,95 @@ impl Resolve<super::Args> for DeletePty {
   }
 }
 
+impl Resolve<super::Args> for CreatePtyAuthToken {
+  #[instrument(name = "CreatePtyAuthToken", level = "debug")]
+  async fn resolve(
+    self,
+    _: &super::Args,
+  ) -> serror::Result<CreatePtyAuthTokenResponse> {
+    Ok(CreatePtyAuthTokenResponse {
+      token: auth_tokens().create_auth_token(),
+    })
+  }
+}
+
+/// Tokens valid for 3 seconds
+const TOKEN_VALID_FOR_MS: i64 = 3_000;
+
+fn auth_tokens() -> &'static AuthTokens {
+  static AUTH_TOKENS: OnceLock<AuthTokens> = OnceLock::new();
+  AUTH_TOKENS.get_or_init(Default::default)
+}
+
+#[derive(Default)]
+struct AuthTokens {
+  map: std::sync::Mutex<HashMap<String, i64>>,
+}
+
+impl AuthTokens {
+  pub fn create_auth_token(&self) -> String {
+    let token: String = rand::rng()
+      .sample_iter(&rand::distr::Alphanumeric)
+      .take(30)
+      .map(char::from)
+      .collect();
+    self
+      .map
+      .lock()
+      .unwrap()
+      .insert(token.clone(), komodo_timestamp() + TOKEN_VALID_FOR_MS);
+    token
+  }
+
+  pub fn check_token(&self, token: String) -> serror::Result<()> {
+    let Some(valid_until) = self.map.lock().unwrap().remove(&token)
+    else {
+      return Err(
+        anyhow!("Pty auth token not found")
+          .status_code(StatusCode::UNAUTHORIZED),
+      );
+    };
+    if komodo_timestamp() <= valid_until {
+      Ok(())
+    } else {
+      Err(
+        anyhow!("Pty token is expired")
+          .status_code(StatusCode::UNAUTHORIZED),
+      )
+    }
+  }
+}
+
 pub async fn connect_pty(
   Query(ConnectPtyQuery {
+    token,
     pty,
     command,
     shell,
   }): Query<ConnectPtyQuery>,
   ws: WebSocketUpgrade,
-) -> Response {
+) -> serror::Result<Response> {
   clean_up_ptys();
-  ws.on_upgrade(|mut socket| async move {
-    // Token auth
-    let mut tries = 0;
-    'auth: loop {
-      if tries > 5 {
-        let _ = socket
-          .send(Message::Text(Utf8Bytes::from_static(
-            "Failed to auth",
-          )))
-          .await;
-        let _ = socket.close().await;
-        return;
-      }
-      match socket.recv().await {
-        Some(Ok(Message::Text(incoming))) => {
-          for passkey in &periphery_config().passkeys {
-            if passkey == incoming.as_str() {
-              // Auth successful
-              break 'auth;
-            }
-          }
-          tries += 1;
-        }
-        Some(Ok(Message::Binary(bytes))) => {
-          for passkey in &periphery_config().passkeys {
-            if passkey.as_bytes() == &bytes {
-              // Auth successful
-              break 'auth;
-            }
-          }
-          tries += 1;
-        }
-        Some(Ok(Message::Close(_))) => {
-          return;
-        }
-        Some(Ok(_)) => {}
-        Some(Err(e)) => {
-          let _ = socket
-            .send(Message::Text(Utf8Bytes::from(format!(
-              "Failed to auth | {e:?}"
-            ))))
-            .await;
-          let _ = socket.close().await;
-          return;
-        }
-        None => {
-          tries += 1;
-        }
-      }
-    }
-
-    if let Err(e) = socket
-      .send(Message::Text(Utf8Bytes::from_static(PTY_LOGGED_IN_ACK)))
-      .await
-    {
-      debug!("Failed to send login ack | {e:?}");
-      let _ = socket.close().await;
-      return;
-    };
-
-    let pty = match get_or_insert_pty(pty, shell) {
-      Ok(pty) => pty,
-      Err(e) => {
-        let _ = socket
-          .send(Message::Text(Utf8Bytes::from(format!(
-            "ERROR: {e:#}"
-          ))))
-          .await;
-        let _ = socket.close().await;
-        return;
-      }
-    };
-
-    if let Some(command) = command {
-      if let Err(e) =
-        pty.stdin.send(StdinMsg::Bytes(Bytes::from(command)))
-      {
-        let _ = socket
-          .send(Message::Text(Utf8Bytes::from(format!(
-            "ERROR: Failed to send init command to stdin: {e:?}"
-          ))))
-          .await;
-        let _ = socket.close().await;
-        clean_up_ptys();
-        return;
-      };
-    }
-
+  auth_tokens().check_token(token)?;
+  let pty = get_or_insert_pty(pty, shell)
+    .context("Failed to get pty handle")?;
+  if let Some(command) = command {
+    pty
+      .stdin
+      .send(StdinMsg::Bytes(Bytes::from(command + "\n")))
+      .context("Failed to run init command")?
+  }
+  Ok(ws.on_upgrade(|socket| async move {
     let (mut ws_write, mut ws_read) = socket.split();
+    
+
     let cancel = CancellationToken::new();
 
     let ws_read = async {
       loop {
         let res = tokio::select! {
           res = ws_read.next() => res,
-          _ = pty.cancelled() => {
+          _ = pty.cancel.cancelled() => {
             trace!("ws read: cancelled from outside");
             break
           },
@@ -219,18 +207,18 @@ pub async fn connect_pty(
       loop {
         let res = tokio::select! {
           res = pty.stdout.recv_async() => res,
-          _ = pty.cancelled() => {
-            trace!("ws write: cancelled from outside");
+          _ = pty.cancel.cancelled() => {
+            info!("ws write: cancelled from outside");
             let _ = ws_write.send(Message::Text(Utf8Bytes::from_static("PTY KILLED"))).await;
             if let Err(e) = ws_write.close().await {
-              debug!("Failed to close ws: {e:?}");
+              warn!("Failed to close ws: {e:?}");
             };
             break
           },
           _ = cancel.cancelled() => {
             let _ = ws_write.send(Message::Text(Utf8Bytes::from_static("WS KILLED"))).await;
             if let Err(e) = ws_write.close().await {
-              debug!("Failed to close ws: {e:?}");
+              warn!("Failed to close ws: {e:?}");
             };
             break
           }
@@ -240,13 +228,13 @@ pub async fn connect_pty(
             if let Err(e) =
               ws_write.send(Message::Binary(bytes)).await
             {
-              debug!("Failed to send to WS: {e:?}");
+              warn!("Failed to send to WS: {e:?}");
               cancel.cancel();
               break;
             }
           }
           Err(e) => {
-            debug!("PTY -> WS channel read error: {e:?}");
+            warn!("PTY -> WS channel read error: {e:?}");
             pty.cancel();
             break;
           }
@@ -255,5 +243,5 @@ pub async fn connect_pty(
     };
 
     tokio::join!(ws_read, ws_write);
-  })
+  }))
 }

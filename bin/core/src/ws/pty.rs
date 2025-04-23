@@ -1,4 +1,3 @@
-use anyhow::Context;
 use axum::{
   extract::{
     Query, WebSocketUpgrade,
@@ -16,6 +15,7 @@ use tokio_util::sync::CancellationToken;
 
 use crate::{helpers::periphery_client, resource};
 
+#[instrument(name = "ConnectPtyQuery", skip(ws))]
 pub async fn handler(
   Query(ConnectPtyQuery {
     server,
@@ -40,6 +40,7 @@ pub async fn handler(
     {
       Ok(server) => server,
       Err(e) => {
+        debug!("server not found | {e:#}");
         let _ =
           socket.send(Message::text(format!("ERROR: {e:#}"))).await;
         let _ = socket.close().await;
@@ -50,6 +51,7 @@ pub async fn handler(
     let periphery = match periphery_client(&server) {
       Ok(periphery) => periphery,
       Err(e) => {
+        debug!("couldn't get periphery | {e:#}");
         let _ =
           socket.send(Message::text(format!("ERROR: {e:#}"))).await;
         let _ = socket.close().await;
@@ -57,28 +59,34 @@ pub async fn handler(
       }
     };
 
+    trace!("connecting to periphery pty");
+
     let periphery_socket = match periphery
-      .connect_pty(&periphery_client::api::pty::ConnectPtyQuery {
+      .connect_pty(
         pty,
         shell,
         command,
-      })
+      )
       .await
-      .context("Failed to connect to periphery pty")
     {
       Ok(ws) => ws,
       Err(e) => {
+        debug!("Failed connect to periphery pty | {e:#}");
         let _ =
           socket.send(Message::text(format!("ERROR: {e:#}"))).await;
         let _ = socket.close().await;
         return;
       }
     };
+
+    trace!("connected to periphery pty socket");
 
     let (mut periphery_send, mut periphery_receive) =
       periphery_socket.split();
     let (mut core_send, mut core_receive) = socket.split();
     let cancel = CancellationToken::new();
+
+    trace!("starting ws exchange");
 
     let core_to_periphery = async {
       loop {
@@ -94,7 +102,7 @@ pub async fn handler(
             if let Err(e) =
               periphery_send.send(axum_to_tungstenite(msg)).await
             {
-              warn!("Failed to send pty message to {} | {e:?}", server.name);
+              debug!("Failed to send pty message to {} | {e:?}", server.name);
               cancel.cancel();
               break;
             };

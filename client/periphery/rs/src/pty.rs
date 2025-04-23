@@ -1,80 +1,126 @@
-use anyhow::{Context, anyhow};
-use futures_util::{SinkExt, TryStreamExt};
+use std::sync::Arc;
+
+use anyhow::Context;
+use rustls::{ClientConfig, client::danger::ServerCertVerifier};
 use tokio::net::TcpStream;
-use tokio_tungstenite::{
-  MaybeTlsStream, WebSocketStream,
-  tungstenite::{Message, Utf8Bytes},
-};
+use tokio_tungstenite::{Connector, MaybeTlsStream, WebSocketStream};
 
 use crate::{
-  PTY_LOGGED_IN_ACK, PeripheryClient, api::pty::ConnectPtyQuery,
+  PeripheryClient,
+  api::pty::{ConnectPtyQuery, CreatePtyAuthToken},
 };
 
 impl PeripheryClient {
   /// Handles ws connect and login
   pub async fn connect_pty(
     &self,
-    query: &ConnectPtyQuery,
+    pty: String,
+    shell: String,
+    command: Option<String>,
   ) -> anyhow::Result<WebSocketStream<MaybeTlsStream<TcpStream>>> {
     tracing::trace!(
-      "sending request | type: ConnectPty | pty name: {} | shell: {} | command: {:?}",
-      query.pty,
-      query.shell,
-      query.command
+      "request | type: ConnectPty | pty name: {pty} | shell: {shell} | command: {command:?}",
     );
 
-    let query_str = serde_qs::to_string(&query)
-      .context("Failed to serialize query string")?;
+    let token = self
+      .request(CreatePtyAuthToken {})
+      .await
+      .context("Failed to create pty auth token")?;
+
+    let query_str = serde_qs::to_string(&ConnectPtyQuery {
+      token: token.token,
+      pty,
+      shell,
+      command,
+    })
+    .context("Failed to serialize query string")?;
 
     let url = format!(
       "{}/pty?{query_str}",
       self.address.replacen("http", "ws", 1)
     );
 
-    let (mut stream, _) = tokio_tungstenite::connect_async(url)
+    let (stream, _) = if url.starts_with("wss") {
+      tokio_tungstenite::connect_async_tls_with_config(
+        url,
+        None,
+        false,
+        Some(Connector::Rustls(Arc::new(
+          ClientConfig::builder()
+            .dangerous()
+            .with_custom_certificate_verifier(Arc::new(
+              InsecureVerifier,
+            ))
+            .with_no_client_auth(),
+        ))),
+      )
       .await
-      .context("failed to connect to websocket")?;
-
-    
-
-    stream
-      .send(Message::Text(Utf8Bytes::from(&self.passkey)))
-      .await?;
-
-    let mut tries = 0;
-    loop {
-      if tries > 2 {
-        return Err(anyhow!("Failed to login after 3 tries"));
-      }
-      match stream
-        .try_next()
+      .context("failed to connect to websocket")?
+    } else {
+      tokio_tungstenite::connect_async(url)
         .await
-        .context("Failed to read ws stream")?
-      {
-        Some(Message::Text(text)) => {
-          if text.as_str() == PTY_LOGGED_IN_ACK {
-            break;
-          } else {
-            tries += 1;
-          }
-        }
-        Some(Message::Binary(bytes)) => {
-          if &bytes == PTY_LOGGED_IN_ACK.as_bytes() {
-            break;
-          } else {
-            tries += 1;
-          }
-        }
-        Some(Message::Close(_)) => {
-          return Err(anyhow!("Websocket closed before login ack"));
-        }
-        Some(_) => {}
-        None => {
-          return Err(anyhow!("Websocket EOF before login ack"));
-        }
-      }
-    }
+        .context("failed to connect to websocket")?
+    };
 
     Ok(stream)
+  }
+}
+
+#[derive(Debug)]
+struct InsecureVerifier;
+
+impl ServerCertVerifier for InsecureVerifier {
+  fn verify_server_cert(
+    &self,
+    _end_entity: &rustls::pki_types::CertificateDer<'_>,
+    _intermediates: &[rustls::pki_types::CertificateDer<'_>],
+    _server_name: &rustls::pki_types::ServerName<'_>,
+    _ocsp_response: &[u8],
+    _now: rustls::pki_types::UnixTime,
+  ) -> Result<rustls::client::danger::ServerCertVerified, rustls::Error>
+  {
+    Ok(rustls::client::danger::ServerCertVerified::assertion())
+  }
+
+  fn verify_tls12_signature(
+    &self,
+    _message: &[u8],
+    _cert: &rustls::pki_types::CertificateDer<'_>,
+    _dss: &rustls::DigitallySignedStruct,
+  ) -> Result<
+    rustls::client::danger::HandshakeSignatureValid,
+    rustls::Error,
+  > {
+    Ok(rustls::client::danger::HandshakeSignatureValid::assertion())
+  }
+
+  fn verify_tls13_signature(
+    &self,
+    _message: &[u8],
+    _cert: &rustls::pki_types::CertificateDer<'_>,
+    _dss: &rustls::DigitallySignedStruct,
+  ) -> Result<
+    rustls::client::danger::HandshakeSignatureValid,
+    rustls::Error,
+  > {
+    Ok(rustls::client::danger::HandshakeSignatureValid::assertion())
+  }
+
+  fn supported_verify_schemes(&self) -> Vec<rustls::SignatureScheme> {
+    vec![
+      rustls::SignatureScheme::RSA_PKCS1_SHA1,
+      rustls::SignatureScheme::ECDSA_SHA1_Legacy,
+      rustls::SignatureScheme::RSA_PKCS1_SHA256,
+      rustls::SignatureScheme::ECDSA_NISTP256_SHA256,
+      rustls::SignatureScheme::RSA_PKCS1_SHA384,
+      rustls::SignatureScheme::ECDSA_NISTP384_SHA384,
+      rustls::SignatureScheme::RSA_PKCS1_SHA512,
+      rustls::SignatureScheme::ECDSA_NISTP521_SHA512,
+      rustls::SignatureScheme::RSA_PSS_SHA256,
+      rustls::SignatureScheme::RSA_PSS_SHA384,
+      rustls::SignatureScheme::RSA_PSS_SHA512,
+      rustls::SignatureScheme::ED25519,
+      rustls::SignatureScheme::ED448,
+    ]
   }
 }

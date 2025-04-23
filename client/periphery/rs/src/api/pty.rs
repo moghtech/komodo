@@ -14,8 +14,26 @@ pub struct DeletePty {
   pub pty: String,
 }
 
+//
+
+/// Create a single use auth token to connect to periphery pty websocket.
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[response(CreatePtyAuthTokenResponse)]
+#[error(serror::Error)]
+pub struct CreatePtyAuthToken {}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct CreatePtyAuthTokenResponse {
+  pub token: String,
+}
+
+//
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ConnectPtyQuery {
+  /// Use [CreatePtyAuthToken] to create a single-use
+  /// token to send in the query.
+  pub token: String,
   /// Each periphery can keep multiple ptys open.
   /// If a ptys with the specified name already exists,
   /// it will be attached to.

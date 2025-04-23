@@ -392,6 +392,8 @@ export function KomodoClient(url: string, options: InitOptions) {
         ws.onmessage = (e) => on_message?.(e);
         on_login?.();
         return;
+      } else {
+        on_message?.(e);
       }
     };
 
