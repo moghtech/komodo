@@ -102,6 +102,7 @@ pub enum StdinMsg {
 pub struct Terminal {
   /// The shell that was used as the root command.
   shell: String,
+
   pub cancel: CancellationToken,
 
   pub stdin: StdinSender,
@@ -119,7 +120,10 @@ impl Terminal {
       .openpty(PtySize::default())
       .context("Failed to open terminal")?;
 
-    let cmd = CommandBuilder::new(&shell);
+    let mut cmd = CommandBuilder::new(&shell);
+    
+    cmd.env("TERM", "xterm-256color");
+    cmd.env("COLORTERM", "truecolor");
 
     let mut child = terminal
       .slave
