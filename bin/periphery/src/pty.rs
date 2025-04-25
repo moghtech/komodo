@@ -1,5 +1,5 @@
 use std::{
-  collections::HashMap,
+  collections::{HashMap, VecDeque},
   sync::{Arc, OnceLock},
   time::Duration,
 };
@@ -80,6 +80,8 @@ pub struct Pty {
 
   // need to manually abort this one on cancel
   stdout_task: tokio::task::JoinHandle<()>,
+
+  pub history: Arc<History>,
 }
 
 impl Pty {
@@ -109,6 +111,7 @@ impl Pty {
 
     let cancel = CancellationToken::new();
 
+    // CHILD WAIT TASK
     let _cancel = cancel.clone();
     tokio::task::spawn_blocking(move || {
       loop {
@@ -137,6 +140,7 @@ impl Pty {
       }
     });
 
+    // WS (channel) -> STDIN TASK
     let (stdin, channel_read) = flume::bounded::<StdinMsg>(8192);
     let _cancel = cancel.clone();
     tokio::task::spawn_blocking(move || {
@@ -175,8 +179,12 @@ impl Pty {
       }
     });
 
+    let history = Arc::new(History::default());
+
+    // PTY -> WS (channel) TASK
     let (write, stdout) = flume::bounded::<Bytes>(8192);
     let _cancel = cancel.clone();
+    let _history = history.clone();
     // This task need to be manually aborted on cancel.
     let stdout_task = tokio::task::spawn_blocking(move || {
       let mut buf = [0u8; 8192];
@@ -189,6 +197,7 @@ impl Pty {
             break;
           }
           Ok(n) => {
+            _history.push(&buf[..n]);
             if let Err(e) =
               write.send(Bytes::copy_from_slice(&buf[..n]))
             {
@@ -214,6 +223,7 @@ impl Pty {
       stdin,
       stdout,
       stdout_task,
+      history,
     })
   }
 
@@ -225,5 +235,39 @@ impl Pty {
     trace!("Cancel called");
     self.cancel.cancel();
     self.abort();
+  }
+}
+
+/// 1 MiB
+const MAX_BYTES: usize = 1 * 1024 * 1024;
+
+pub struct History {
+  buf: std::sync::Mutex<VecDeque<u8>>,
+}
+
+impl Default for History {
+  fn default() -> Self {
+    History {
+      buf: VecDeque::with_capacity(MAX_BYTES).into(),
+    }
+  }
+}
+
+impl History {
+  /// Push some bytes, evicting the oldest when full.
+  fn push(&self, bytes: &[u8]) {
+    let mut buf = self.buf.lock().unwrap();
+    for byte in bytes {
+      if buf.len() == MAX_BYTES {
+        buf.pop_front();
+      }
+      buf.push_back(*byte);
+    }
+  }
+
+  pub fn bytes_parts(&self) -> (Bytes, Bytes) {
+    let buf = self.buf.lock().unwrap();
+    let (a, b) = buf.as_slices();
+    (Bytes::copy_from_slice(a), Bytes::copy_from_slice(b))
   }
 }

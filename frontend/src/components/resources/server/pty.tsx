@@ -78,7 +78,7 @@ export const ServerPty = ({
         server: id,
         pty: "Test Pty",
         shell: "bash",
-        command: "clear",
+        // command: "clear",
       },
       on_login: () => {
         console.log("logged in pty");

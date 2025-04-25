@@ -117,15 +117,33 @@ pub async fn connect_pty(
   auth_tokens().check_token(token)?;
   let pty = get_or_insert_pty(pty, shell)
     .context("Failed to get pty handle")?;
-  if let Some(command) = command {
-    pty
-      .stdin
-      .send(StdinMsg::Bytes(Bytes::from(command + "\n")))
-      .context("Failed to run init command")?
-  }
-  Ok(ws.on_upgrade(|socket| async move {
+
+  Ok(ws.on_upgrade(|mut socket| async move {
+    let init_res = async {
+      let (a, b) = pty.history.bytes_parts();
+      if !a.is_empty() {
+        socket.send(Message::Binary(a)).await.context("Failed to send history part a")?;
+      }
+      if !b.is_empty() {
+        socket.send(Message::Binary(b)).await.context("Failed to send history part b")?;
+      }
+
+      if let Some(command) = command {
+        pty
+          .stdin
+          .send(StdinMsg::Bytes(Bytes::from(command + "\n")))
+          .context("Failed to run init command")?
+      }
+      anyhow::Ok(())
+    }.await;
+
+    if let Err(e) = init_res {
+      let _ = socket.send(Message::Text(format!("ERROR: {e:#}").into())).await;
+      let _ = socket.close().await;
+      return;
+    }
+
     let (mut ws_write, mut ws_read) = socket.split();
-    
 
     let cancel = CancellationToken::new();
 
