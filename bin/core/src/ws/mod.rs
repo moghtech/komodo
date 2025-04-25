@@ -1,5 +1,3 @@
-use std::{collections::HashMap, sync::OnceLock};
-
 use crate::{
   auth::{auth_api_key_check_enabled, auth_jwt_check_enabled},
   helpers::query::get_user,
@@ -11,13 +9,7 @@ use axum::{
   routing::get,
 };
 use futures::SinkExt;
-use komodo_client::{
-  entities::{komodo_timestamp, user::User},
-  ws::WsLoginMessage,
-};
-use rand::Rng;
-use reqwest::StatusCode;
-use serror::AddStatusCodeError;
+use komodo_client::{entities::user::User, ws::WsLoginMessage};
 
 mod terminal;
 mod update;
@@ -117,54 +109,4 @@ async fn check_user_valid(user_id: &str) -> anyhow::Result<User> {
     return Err(anyhow!("user not enabled"));
   }
   Ok(user)
-}
-
-/// Tokens valid for 3 seconds
-const TOKEN_VALID_FOR_MS: i64 = 3_000;
-
-fn auth_tokens() -> &'static AuthTokens {
-  static AUTH_TOKENS: OnceLock<AuthTokens> = OnceLock::new();
-  AUTH_TOKENS.get_or_init(Default::default)
-}
-
-#[derive(Default)]
-struct AuthTokens {
-  map: std::sync::Mutex<HashMap<String, (i64, User)>>,
-}
-
-impl AuthTokens {
-  pub fn create_auth_token(&self, user: User) -> String {
-    let token: String = rand::rng()
-      .sample_iter(&rand::distr::Alphanumeric)
-      .take(30)
-      .map(char::from)
-      .collect();
-    self.map.lock().unwrap().insert(
-      token.clone(),
-      (komodo_timestamp() + TOKEN_VALID_FOR_MS, user),
-    );
-    token
-  }
-
-  pub fn check_token_get_user(
-    &self,
-    token: String,
-  ) -> serror::Result<User> {
-    let Some((valid_until, user)) =
-      self.map.lock().unwrap().remove(&token)
-    else {
-      return Err(
-        anyhow!("Ws auth token not found")
-          .status_code(StatusCode::UNAUTHORIZED),
-      );
-    };
-    if komodo_timestamp() <= valid_until {
-      Ok(user)
-    } else {
-      Err(
-        anyhow!("Ws auth token is expired")
-          .status_code(StatusCode::UNAUTHORIZED),
-      )
-    }
-  }
 }
