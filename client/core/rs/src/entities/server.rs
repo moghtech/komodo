@@ -38,6 +38,8 @@ pub struct ServerListItemInfo {
   pub send_mem_alerts: bool,
   /// Whether server is configured to send disk alerts.
   pub send_disk_alerts: bool,
+  /// Whether terminals are disabled for this Server.
+  pub terminals_disabled: bool,
 }
 
 #[typeshare(serialized_as = "Partial<ServerConfig>")]

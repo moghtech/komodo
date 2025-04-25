@@ -37,7 +37,7 @@ export const ServerTerminals = ({
 
   const selected =
     _selected.selected ??
-    terminals?.[0].name ??
+    terminals?.[0]?.name ??
     next_terminal_name(terminals?.map((t) => t.name) ?? []);
 
   const [_reconnect, _setReconnect] = useState(false);
@@ -58,6 +58,12 @@ export const ServerTerminals = ({
       });
     }, 100);
   };
+
+  useEffect(() => {
+    if (terminals && terminals.length === 0) {
+      create();
+    }
+  }, [terminals]);
 
   return (
     <Section titleOther={titleOther}>

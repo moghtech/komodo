@@ -47,7 +47,10 @@ use resolver_api::Resolve;
 use tokio::sync::Mutex;
 
 use crate::{
-  helpers::{periphery_client, query::get_all_tags},
+  helpers::{
+    periphery_client,
+    query::{get_all_tags, get_system_info},
+  },
   resource,
   stack::compose_container_match_regex,
   state::{action_states, db_client, server_status_cache},
@@ -200,16 +203,6 @@ impl Resolve<ReadArgs> for GetServerActionState {
   }
 }
 
-// This protects the peripheries from spam requests
-const SYSTEM_INFO_EXPIRY: u128 = FIFTEEN_SECONDS_MS;
-type SystemInfoCache =
-  Mutex<HashMap<String, Arc<(SystemInformation, u128)>>>;
-fn system_info_cache() -> &'static SystemInfoCache {
-  static SYSTEM_INFO_CACHE: OnceLock<SystemInfoCache> =
-    OnceLock::new();
-  SYSTEM_INFO_CACHE.get_or_init(Default::default)
-}
-
 impl Resolve<ReadArgs> for GetSystemInformation {
   async fn resolve(
     self,
@@ -221,25 +214,7 @@ impl Resolve<ReadArgs> for GetSystemInformation {
       PermissionLevel::Read,
     )
     .await?;
-
-    let mut lock = system_info_cache().lock().await;
-    let res = match lock.get(&server.id) {
-      Some(cached) if cached.1 > unix_timestamp_ms() => {
-        cached.0.clone()
-      }
-      _ => {
-        let stats = periphery_client(&server)?
-          .request(periphery::stats::GetSystemInformation {})
-          .await?;
-        lock.insert(
-          server.id,
-          (stats.clone(), unix_timestamp_ms() + SYSTEM_INFO_EXPIRY)
-            .into(),
-        );
-        stats
-      }
-    };
-    Ok(res)
+    get_system_info(&server).await.map_err(Into::into)
   }
 }
 

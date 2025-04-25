@@ -201,5 +201,6 @@ fn get_system_information(
       .next()
       .map(|cpu| cpu.brand().to_string())
       .unwrap_or_default(),
+    terminals_disabled: periphery_config().disable_terminals,
   }
 }

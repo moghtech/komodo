@@ -1,6 +1,11 @@
-use std::{collections::HashMap, str::FromStr};
+use std::{
+  collections::HashMap,
+  str::FromStr,
+  sync::{Arc, OnceLock},
+};
 
 use anyhow::{Context, anyhow};
+use async_timing_util::{ONE_MIN_MS, unix_timestamp_ms};
 use komodo_client::entities::{
   Operation, ResourceTarget, ResourceTargetVariant,
   action::Action,
@@ -15,6 +20,7 @@ use komodo_client::entities::{
   server::{Server, ServerState},
   server_template::ServerTemplate,
   stack::{Stack, StackServiceNames, StackState},
+  stats::SystemInformation,
   sync::ResourceSync,
   tag::Tag,
   update::Update,
@@ -29,6 +35,8 @@ use mungos::{
     options::FindOneOptions,
   },
 };
+use periphery_client::api::stats;
+use tokio::sync::Mutex;
 
 use crate::{
   config::core_config,
@@ -36,6 +44,8 @@ use crate::{
   stack::compose_container_match_regex,
   state::{db_client, deployment_status_cache, stack_status_cache},
 };
+
+use super::periphery_client;
 
 // user: Id or username
 #[instrument(level = "debug")]
@@ -381,4 +391,37 @@ pub async fn get_variables_and_secrets()
     .collect();
 
   Ok(VariablesAndSecrets { variables, secrets })
+}
+
+// This protects the peripheries from spam requests
+const SYSTEM_INFO_EXPIRY: u128 = ONE_MIN_MS;
+type SystemInfoCache =
+  Mutex<HashMap<String, Arc<(SystemInformation, u128)>>>;
+fn system_info_cache() -> &'static SystemInfoCache {
+  static SYSTEM_INFO_CACHE: OnceLock<SystemInfoCache> =
+    OnceLock::new();
+  SYSTEM_INFO_CACHE.get_or_init(Default::default)
+}
+
+pub async fn get_system_info(
+  server: &Server,
+) -> anyhow::Result<SystemInformation> {
+  let mut lock = system_info_cache().lock().await;
+  let res = match lock.get(&server.id) {
+    Some(cached) if cached.1 > unix_timestamp_ms() => {
+      cached.0.clone()
+    }
+    _ => {
+      let stats = periphery_client(&server)?
+        .request(stats::GetSystemInformation {})
+        .await?;
+      lock.insert(
+        server.id.clone(),
+        (stats.clone(), unix_timestamp_ms() + SYSTEM_INFO_EXPIRY)
+          .into(),
+      );
+      stats
+    }
+  };
+  Ok(res)
 }

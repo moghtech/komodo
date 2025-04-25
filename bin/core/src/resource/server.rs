@@ -13,6 +13,7 @@ use mungos::mongodb::{Collection, bson::doc};
 
 use crate::{
   config::core_config,
+  helpers::query::get_system_info,
   monitor::update_cache_for_server,
   state::{action_states, db_client, server_status_cache},
 };
@@ -42,6 +43,10 @@ impl super::KomodoResource for Server {
     server: Resource<Self::Config, Self::Info>,
   ) -> Self::ListItem {
     let status = server_status_cache().get(&server.id).await;
+    let terminals_disabled = get_system_info(&server)
+      .await
+      .map(|i| i.terminals_disabled)
+      .unwrap_or(true);
     ServerListItem {
       name: server.name,
       id: server.id,
@@ -57,6 +62,7 @@ impl super::KomodoResource for Server {
         send_cpu_alerts: server.config.send_cpu_alerts,
         send_mem_alerts: server.config.send_mem_alerts,
         send_disk_alerts: server.config.send_disk_alerts,
+        terminals_disabled,
       },
     }
   }

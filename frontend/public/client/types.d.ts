@@ -2106,6 +2106,8 @@ export interface SystemInformation {
     host_name?: string;
     /** The CPU's brand */
     cpu_brand: string;
+    /** Whether terminals are disabled on this Periphery */
+    terminals_disabled: boolean;
 }
 export type GetSystemInformationResponse = SystemInformation;
 /** Info for a single disk mounted on the system. */
@@ -3514,6 +3516,8 @@ export interface ServerListItemInfo {
     send_mem_alerts: boolean;
     /** Whether server is configured to send disk alerts. */
     send_disk_alerts: boolean;
+    /** Whether terminals are disabled for this Server. */
+    terminals_disabled: boolean;
 }
 export type ServerListItem = ResourceListItem<ServerListItemInfo>;
 export type ListServersResponse = ServerListItem[];
