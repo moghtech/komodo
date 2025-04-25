@@ -23,9 +23,12 @@ use resolver_api::Resolve;
 use serror::AddStatusCodeError;
 use tokio_util::sync::CancellationToken;
 
-use crate::terminal::{
-  ResizeDimensions, StdinMsg, clean_up_terminals, create_terminal,
-  delete_terminal, get_terminal, list_terminals,
+use crate::{
+  config::periphery_config,
+  terminal::{
+    ResizeDimensions, StdinMsg, clean_up_terminals, create_terminal,
+    delete_terminal, get_terminal, list_terminals,
+  },
 };
 
 impl Resolve<super::Args> for ListTerminals {
@@ -34,6 +37,12 @@ impl Resolve<super::Args> for ListTerminals {
     self,
     _: &super::Args,
   ) -> serror::Result<Vec<TerminalInfo>> {
+    if periphery_config().disable_terminals {
+      return Err(
+        anyhow!("Terminals are disabled in the periphery config")
+          .status_code(StatusCode::FORBIDDEN),
+      );
+    }
     clean_up_terminals();
     Ok(list_terminals())
   }
@@ -42,6 +51,12 @@ impl Resolve<super::Args> for ListTerminals {
 impl Resolve<super::Args> for CreateTerminal {
   #[instrument(name = "CreateTerminal", level = "debug")]
   async fn resolve(self, _: &super::Args) -> serror::Result<NoData> {
+    if periphery_config().disable_terminals {
+      return Err(
+        anyhow!("Terminals are disabled in the periphery config")
+          .status_code(StatusCode::FORBIDDEN),
+      );
+    }
     create_terminal(self.name, self.shell, self.recreate)
       .map(|_| NoData {})
       .map_err(Into::into)
@@ -51,6 +66,12 @@ impl Resolve<super::Args> for CreateTerminal {
 impl Resolve<super::Args> for DeleteTerminal {
   #[instrument(name = "DeleteTerminal", level = "debug")]
   async fn resolve(self, _: &super::Args) -> serror::Result<NoData> {
+    if periphery_config().disable_terminals {
+      return Err(
+        anyhow!("Terminals are disabled in the periphery config")
+          .status_code(StatusCode::FORBIDDEN),
+      );
+    }
     delete_terminal(&self.terminal);
     Ok(NoData {})
   }
@@ -62,6 +83,12 @@ impl Resolve<super::Args> for CreateTerminalAuthToken {
     self,
     _: &super::Args,
   ) -> serror::Result<CreateTerminalAuthTokenResponse> {
+    if periphery_config().disable_terminals {
+      return Err(
+        anyhow!("Terminals are disabled in the periphery config")
+          .status_code(StatusCode::FORBIDDEN),
+      );
+    }
     Ok(CreateTerminalAuthTokenResponse {
       token: auth_tokens().create_auth_token(),
     })
@@ -123,6 +150,13 @@ pub async fn connect_terminal(
   }): Query<ConnectTerminalQuery>,
   ws: WebSocketUpgrade,
 ) -> serror::Result<Response> {
+  if periphery_config().disable_terminals {
+    return Err(
+      anyhow!("Terminals are disabled in the periphery config")
+        .status_code(StatusCode::FORBIDDEN),
+    );
+  }
+
   // Auth the connection with single use token
   auth_tokens().check_token(token)?;
 
@@ -239,17 +273,17 @@ pub async fn connect_terminal(
         let res = tokio::select! {
           res = stdout.recv() => res.context("Failed to get message over stdout receiver"),
           _ = terminal.cancel.cancelled() => {
-            info!("ws write: cancelled from outside");
+            trace!("ws write: cancelled from outside");
             let _ = ws_write.send(Message::Text(Utf8Bytes::from_static("PTY KILLED"))).await;
             if let Err(e) = ws_write.close().await {
-              warn!("Failed to close ws: {e:?}");
+              debug!("Failed to close ws: {e:?}");
             };
             break
           },
           _ = cancel.cancelled() => {
             let _ = ws_write.send(Message::Text(Utf8Bytes::from_static("WS KILLED"))).await;
             if let Err(e) = ws_write.close().await {
-              warn!("Failed to close ws: {e:?}");
+              debug!("Failed to close ws: {e:?}");
             };
             break
           }
@@ -259,13 +293,13 @@ pub async fn connect_terminal(
             if let Err(e) =
               ws_write.send(Message::Binary(bytes)).await
             {
-              warn!("Failed to send to WS: {e:?}");
+              debug!("Failed to send to WS: {e:?}");
               cancel.cancel();
               break;
             }
           }
           Err(e) => {
-            warn!("PTY -> WS channel read error: {e:?}");
+            debug!("PTY -> WS channel read error: {e:?}");
             let _ = ws_write.send(Message::Text(Utf8Bytes::from(format!("ERROR: {e:#}")))).await;
             let _ = ws_write.close().await;
             terminal.cancel();

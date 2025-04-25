@@ -18,6 +18,9 @@ services:
       PERIPHERY_ROOT_DIRECTORY: ${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}
       ## Pass the same passkey as used by the Komodo Core connecting to this Periphery agent.
       PERIPHERY_PASSKEYS: abc123
+      ## Specify whether to disable the terminals feature
+      ## and disallow remote shell access (inside the Periphery container).
+      PERIPHERY_DISABLE_TERMINALS: false
       ## If the disk size is overreporting, can use one of these to 
       ## whitelist / blacklist the disks to filter them, whichever is easier.
       ## Accepts comma separated list of paths.
