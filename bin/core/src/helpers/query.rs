@@ -412,7 +412,7 @@ pub async fn get_system_info(
       cached.0.clone()
     }
     _ => {
-      let stats = periphery_client(&server)?
+      let stats = periphery_client(server)?
         .request(stats::GetSystemInformation {})
         .await?;
       lock.insert(

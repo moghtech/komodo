@@ -276,8 +276,8 @@ impl Terminal {
   }
 }
 
-/// 1 MiB
-const MAX_BYTES: usize = 1 * 1024 * 1024;
+/// 1 MiB max history size per terminal
+const MAX_BYTES: usize = 1024 * 1024;
 
 pub struct History {
   buf: std::sync::RwLock<VecDeque<u8>>,
