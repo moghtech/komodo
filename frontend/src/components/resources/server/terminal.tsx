@@ -34,7 +34,9 @@ export const ServerTerminals = ({
   }>(`server-${id}-selected-terminal-v1`, { selected: undefined });
 
   const selected =
-    _selected.selected ?? terminals?.[0] ?? next_terminal_name(terminals ?? []);
+    _selected.selected ??
+    terminals?.[0] ??
+    next_terminal_name(terminals?.map((t) => t.name) ?? []);
 
   const [_reconnect, _setReconnect] = useState(false);
   const triggerReconnect = () => _setReconnect((r) => !r);
@@ -44,7 +46,7 @@ export const ServerTerminals = ({
       <Card>
         <CardHeader className="flex">
           <div className="flex gap-4">
-            {terminals?.map((terminal) => (
+            {terminals?.map(({ name: terminal }) => (
               <Badge
                 key={terminal}
                 variant={terminal === selected ? "default" : "secondary"}
@@ -69,7 +71,9 @@ export const ServerTerminals = ({
               <Button
                 variant="outline"
                 onClick={() => {
-                  setSelected({ selected: next_terminal_name(terminals) });
+                  setSelected({
+                    selected: next_terminal_name(terminals.map((t) => t.name)),
+                  });
                   setTimeout(() => refetchTerminals(), 1000);
                 }}
               >
@@ -79,7 +83,7 @@ export const ServerTerminals = ({
           </div>
         </CardHeader>
         <CardContent>
-          {terminals?.map((terminal) => (
+          {terminals?.map(({ name: terminal }) => (
             <ServerTerminal
               key={terminal}
               server={id}
@@ -226,10 +230,10 @@ const DARK_THEME: ITheme = {
   selectionBackground: "#6e778a",
 };
 
-const next_terminal_name = (terminals: string[]) => {
-  for (let i = 1; i <= terminals.length + 1; i++) {
+const next_terminal_name = (terminal_names: string[]) => {
+  for (let i = 1; i <= terminal_names.length + 1; i++) {
     const name = `Terminal ${i}`;
-    if (!terminals.includes(name)) {
+    if (!terminal_names.includes(name)) {
       return name;
     }
   }
