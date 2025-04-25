@@ -4119,11 +4119,6 @@ export interface ConnectTerminalQuery {
      * [DeleteTerminal][crate::api::write::server::DeleteTerminal]
      */
     terminal: string;
-    /**
-     * The shell to use, eg. 'sh', 'bash', 'zsh', etc.
-     * Default: 'bash'
-     */
-    shell: string;
     /** Optional. The initial command to execute on connection to the shell. */
     command?: string;
 }
@@ -4495,7 +4490,10 @@ export interface CreateTerminal {
     server: string;
     /** The name of the terminal on the server to create. */
     name: string;
-    /** The shell program (eg bash) of the terminal */
+    /**
+     * The shell program (eg bash) of the terminal.
+     * Default: `bash`
+     */
     shell: string;
     /**
      * Whether to recreate the terminal if
@@ -8012,6 +8010,9 @@ export type WriteRequest = {
 } | {
     type: "CreateNetwork";
     params: CreateNetwork;
+} | {
+    type: "CreateTerminal";
+    params: CreateTerminal;
 } | {
     type: "DeleteTerminal";
     params: DeleteTerminal;

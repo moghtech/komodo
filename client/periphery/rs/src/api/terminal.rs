@@ -1,4 +1,4 @@
-use komodo_client::entities::{server::TerminalInfo, NoData};
+use komodo_client::entities::{NoData, server::TerminalInfo};
 use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 
@@ -14,6 +14,7 @@ pub struct CreateTerminal {
   /// The name of the terminal to create
   pub name: String,
   /// The shell program (eg bash) of the terminal
+  #[serde(default = "default_shell")]
   pub shell: String,
   /// Whether to recreate the terminal if
   /// it already exists. This means first deleting the existing
@@ -21,6 +22,10 @@ pub struct CreateTerminal {
   /// Default: `false`
   #[serde(default)]
   pub recreate: bool,
+}
+
+fn default_shell() -> String {
+  String::from("bash")
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -58,13 +63,6 @@ pub struct ConnectTerminalQuery {
   /// which will persist until it is either exited via command (ie `exit`),
   /// or deleted using [DeleteTerminal]
   pub terminal: String,
-  /// The shell to use, eg. 'sh', 'bash', 'zsh', etc
-  #[serde(default = "default_shell")]
-  pub shell: String,
   /// Optional. The initial command to execute on connection to the shell.
   pub command: Option<String>,
-}
-
-fn default_shell() -> String {
-  String::from("bash")
 }

@@ -50,7 +50,6 @@ tokio-util = { version = "0.7.14", features = ["io", "codec"] }
 futures = "0.3.31"
 futures-util = "0.3.31"
 arc-swap = "1.7.1"
-flume = "0.11.1"
 
 # SERVER
 tokio-tungstenite = { version = "0.26.2", features = ["rustls-tls-native-roots"] }

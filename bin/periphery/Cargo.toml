@@ -47,7 +47,6 @@ anyhow.workspace = true
 rustls.workspace = true
 tokio.workspace = true
 serde.workspace = true
-flume.workspace = true
 bytes.workspace = true
 axum.workspace = true
 clap.workspace = true

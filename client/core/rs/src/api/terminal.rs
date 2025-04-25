@@ -15,14 +15,6 @@ pub struct ConnectTerminalQuery {
   /// which will persist until it is deleted using
   /// [DeleteTerminal][crate::api::write::server::DeleteTerminal]
   pub terminal: String,
-  /// The shell to use, eg. 'sh', 'bash', 'zsh', etc.
-  /// Default: 'bash'
-  #[serde(default = "default_shell")]
-  pub shell: String,
   /// Optional. The initial command to execute on connection to the shell.
   pub command: Option<String>,
-}
-
-fn default_shell() -> String {
-  String::from("bash")
 }

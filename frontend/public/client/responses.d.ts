@@ -159,6 +159,7 @@ export type WriteResponses = {
     UpdateServer: Types.Server;
     RenameServer: Types.Update;
     CreateNetwork: Types.Update;
+    CreateTerminal: Types.NoData;
     DeleteTerminal: Types.NoData;
     CreateDeployment: Types.Deployment;
     CopyDeployment: Types.Deployment;

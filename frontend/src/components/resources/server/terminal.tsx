@@ -8,7 +8,7 @@ import { ITheme } from "@xterm/xterm";
 import { Card, CardContent, CardHeader } from "@ui/card";
 import { Badge } from "@ui/badge";
 import { Button } from "@ui/button";
-import { X } from "lucide-react";
+import { Loader2, Plus, RefreshCcw, X } from "lucide-react";
 import { cn } from "@lib/utils";
 
 export const ServerTerminals = ({
@@ -25,9 +25,11 @@ export const ServerTerminals = ({
       fresh: true,
     },
     {
-      refetchInterval: 3000,
+      refetchInterval: 5000,
     }
   );
+  const { mutateAsync: create_terminal, isPending: create_pending } =
+    useWrite("CreateTerminal");
   const { mutateAsync: delete_terminal } = useWrite("DeleteTerminal");
   const [_selected, setSelected] = useLocalStorage<{
     selected: string | undefined;
@@ -35,16 +37,32 @@ export const ServerTerminals = ({
 
   const selected =
     _selected.selected ??
-    terminals?.[0] ??
+    terminals?.[0].name ??
     next_terminal_name(terminals?.map((t) => t.name) ?? []);
 
   const [_reconnect, _setReconnect] = useState(false);
   const triggerReconnect = () => _setReconnect((r) => !r);
 
+  const create = async () => {
+    if (!terminals) return;
+    const name = next_terminal_name(terminals.map((t) => t.name));
+    await create_terminal({
+      server: id,
+      name,
+      shell: "bash",
+    });
+    refetchTerminals();
+    setTimeout(() => {
+      setSelected({
+        selected: name,
+      });
+    }, 100);
+  };
+
   return (
     <Section titleOther={titleOther}>
       <Card>
-        <CardHeader className="flex">
+        <CardHeader className="flex flex-row gap-4 items-center justify-between">
           <div className="flex gap-4">
             {terminals?.map(({ name: terminal }) => (
               <Badge
@@ -61,6 +79,9 @@ export const ServerTerminals = ({
                     e.stopPropagation();
                     await delete_terminal({ server: id, terminal });
                     refetchTerminals();
+                    if (selected === terminal) {
+                      setSelected({ selected: undefined });
+                    }
                   }}
                 >
                   <X className="w-4 h-4" />
@@ -69,26 +90,37 @@ export const ServerTerminals = ({
             ))}
             {terminals && (
               <Button
+                className="flex items-center gap-2"
                 variant="outline"
-                onClick={() => {
-                  setSelected({
-                    selected: next_terminal_name(terminals.map((t) => t.name)),
-                  });
-                  setTimeout(() => refetchTerminals(), 1000);
-                }}
+                onClick={create}
+                disabled={create_pending}
               >
-                New
+                New Terminal
+                {create_pending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Plus className="w-4 h-4" />
+                )}
               </Button>
             )}
           </div>
+          <Button
+            className="flex items-center gap-2"
+            variant="secondary"
+            onClick={() => triggerReconnect()}
+          >
+            Reconnect
+            <RefreshCcw className="w-4 h-4" />
+          </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-h-[60vh]">
           {terminals?.map(({ name: terminal }) => (
             <ServerTerminal
               key={terminal}
               server={id}
               terminal={terminal}
               selected={selected === terminal}
+              _reconnect={_reconnect}
             />
           ))}
         </CardContent>
@@ -101,10 +133,12 @@ const ServerTerminal = ({
   server,
   terminal,
   selected,
+  _reconnect,
 }: {
   server: string;
   terminal: string;
   selected: boolean;
+  _reconnect: boolean;
 }) => {
   const { theme: __theme } = useTheme();
   const _theme =
@@ -177,7 +211,7 @@ const ServerTerminal = ({
   const { instance: term, ref: termRef } = useXTerm(params);
 
   useEffect(() => {
-    if (!term) return;
+    if (!selected || !term) return;
 
     term.clear();
 
@@ -185,8 +219,6 @@ const ServerTerminal = ({
       query: {
         server,
         terminal,
-        shell: "bash",
-        // command: "clear",
       },
       on_login: () => {
         // console.log("logged in terminal");
@@ -206,7 +238,7 @@ const ServerTerminal = ({
       ws.close();
       wsRef.current = null;
     };
-  }, [term]);
+  }, [term, selected, _reconnect]);
 
   return (
     <div

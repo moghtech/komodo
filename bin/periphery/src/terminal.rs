@@ -6,13 +6,15 @@ use std::{
 
 use anyhow::{Context, anyhow};
 use bytes::Bytes;
-use flume::TryRecvError;
 use komodo_client::entities::server::TerminalInfo;
 use portable_pty::{CommandBuilder, PtySize, native_pty_system};
+use tokio::sync::{broadcast, mpsc};
 use tokio_util::sync::CancellationToken;
 
 type PtyName = String;
 type PtyMap = std::sync::RwLock<HashMap<PtyName, Arc<Terminal>>>;
+type StdinSender = mpsc::Sender<StdinMsg>;
+type StdoutReceiver = broadcast::Receiver<Bytes>;
 
 pub fn create_terminal(
   name: String,
@@ -32,9 +34,12 @@ pub fn create_terminal(
       }
     }
   }
-  if let Some(prev) =
-    terminals.insert(name, Terminal::new(shell)?.into())
-  {
+  if let Some(prev) = terminals.insert(
+    name,
+    Terminal::new(shell)
+      .context("Failed to init terminal")?
+      .into(),
+  ) {
     prev.cancel();
   }
   Ok(())
@@ -62,25 +67,13 @@ pub fn list_terminals() -> Vec<TerminalInfo> {
   terminals
 }
 
-pub fn get_or_insert_terminal(
-  name: String,
-  shell: String,
-) -> anyhow::Result<Arc<Terminal>> {
-  if let Some(terminal) = terminals().read().unwrap().get(&name) {
-    if terminal.shell != shell {
-      return Err(anyhow!(
-        "Shell mismatch. Expected {}, got {shell}",
-        terminal.shell
-      ));
-    } else {
-      return Ok(terminal.clone());
-    }
-  }
-  let terminal = Arc::new(
-    Terminal::new(shell).context("Failed to init terminal")?,
-  );
-  terminals().write().unwrap().insert(name, terminal.clone());
-  Ok(terminal)
+pub fn get_terminal(name: &str) -> anyhow::Result<Arc<Terminal>> {
+  terminals()
+    .read()
+    .unwrap()
+    .get(name)
+    .cloned()
+    .with_context(|| format!("No terminal at {name}"))
 }
 
 pub fn clean_up_terminals() {
@@ -99,12 +92,13 @@ fn terminals() -> &'static PtyMap {
   TERMINALS.get_or_init(Default::default)
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Clone, serde::Deserialize)]
 pub struct ResizeDimensions {
   rows: u16,
   cols: u16,
 }
 
+#[derive(Clone)]
 pub enum StdinMsg {
   Bytes(Bytes),
   Resize(ResizeDimensions),
@@ -115,8 +109,8 @@ pub struct Terminal {
   shell: String,
   pub cancel: CancellationToken,
 
-  pub stdin: flume::Sender<StdinMsg>,
-  pub stdout: flume::Receiver<Bytes>,
+  pub stdin: StdinSender,
+  pub stdout: StdoutReceiver,
 
   // need to manually abort this one on cancel
   stdout_task: tokio::task::JoinHandle<()>,
@@ -181,7 +175,9 @@ impl Terminal {
     });
 
     // WS (channel) -> STDIN TASK
-    let (stdin, channel_read) = flume::bounded::<StdinMsg>(8192);
+    // Theres only one consumer here, so use mpsc
+    let (stdin, mut channel_read) =
+      tokio::sync::mpsc::channel::<StdinMsg>(8192);
     let _cancel = cancel.clone();
     tokio::task::spawn_blocking(move || {
       loop {
@@ -209,12 +205,12 @@ impl Terminal {
               break;
             };
           }
-          Err(TryRecvError::Disconnected) => {
+          Err(mpsc::error::TryRecvError::Disconnected) => {
             debug!("WS -> PTY channel read error: Disconnected");
             _cancel.cancel();
             break;
           }
-          Err(TryRecvError::Empty) => {}
+          Err(mpsc::error::TryRecvError::Empty) => {}
         }
       }
     });
@@ -222,7 +218,9 @@ impl Terminal {
     let history = Arc::new(History::default());
 
     // PTY -> WS (channel) TASK
-    let (write, stdout) = flume::bounded::<Bytes>(8192);
+    // Uses broadcast to output to multiple client simultaneously
+    let (write, stdout) =
+      tokio::sync::broadcast::channel::<Bytes>(8192);
     let _cancel = cancel.clone();
     let _history = history.clone();
     // This task need to be manually aborted on cancel.

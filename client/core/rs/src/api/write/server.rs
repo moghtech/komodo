@@ -123,7 +123,9 @@ pub struct CreateTerminal {
   pub server: String,
   /// The name of the terminal on the server to create.
   pub name: String,
-  /// The shell program (eg bash) of the terminal
+  /// The shell program (eg bash) of the terminal.
+  /// Default: `bash`
+  #[serde(default = "default_shell")]
   pub shell: String,
   /// Whether to recreate the terminal if
   /// it already exists. This means first deleting the existing
@@ -131,6 +133,10 @@ pub struct CreateTerminal {
   /// Default: `false`
   #[serde(default)]
   pub recreate: bool,
+}
+
+fn default_shell() -> String {
+  String::from("bash")
 }
 
 //

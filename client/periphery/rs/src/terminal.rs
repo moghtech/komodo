@@ -16,11 +16,10 @@ impl PeripheryClient {
   pub async fn connect_terminal(
     &self,
     terminal: String,
-    shell: String,
     command: Option<String>,
   ) -> anyhow::Result<WebSocketStream<MaybeTlsStream<TcpStream>>> {
     tracing::trace!(
-      "request | type: ConnectTerminal | terminal name: {terminal} | shell: {shell} | command: {command:?}",
+      "request | type: ConnectTerminal | terminal name: {terminal} | command: {command:?}",
     );
 
     let token = self
@@ -31,7 +30,6 @@ impl PeripheryClient {
     let query_str = serde_qs::to_string(&ConnectTerminalQuery {
       token: token.token,
       terminal,
-      shell,
       command,
     })
     .context("Failed to serialize query string")?;
