@@ -18,7 +18,6 @@ pub mod container;
 pub mod git;
 pub mod image;
 pub mod network;
-pub mod pty;
 pub mod stats;
 pub mod terminal;
 pub mod volume;

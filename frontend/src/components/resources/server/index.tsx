@@ -38,8 +38,7 @@ import { ServerInfo } from "./info";
 import { ServerStats } from "./stats";
 import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
-import { ServerTerminals } from "./terminals";
-import { ServerPty } from "./pty";
+import { ServerTerminals } from "./terminal";
 
 export const useServer = (id?: string) =>
   useRead("ListServers", {}, { refetchInterval: 10_000 }).data?.find(
@@ -63,7 +62,7 @@ const Icon = ({ id, size }: { id?: string; size: number }) => {
 
 const ConfigTabs = ({ id }: { id: string }) => {
   const [view, setView] = useLocalStorage<
-    "Config" | "Stats" | "Docker" | "Resources" | "Terminals" | "Pty"
+    "Config" | "Stats" | "Docker" | "Resources" | "Terminals"
   >(`server-${id}-tab`, "Config");
 
   const is_admin = useUser().data?.admin ?? false;
@@ -114,10 +113,6 @@ const ConfigTabs = ({ id }: { id: string }) => {
 
       <TabsTrigger value="Terminals" className="w-[110px]">
         Terminals
-      </TabsTrigger>
-
-      <TabsTrigger value="Pty" className="w-[110px]">
-        Pty
       </TabsTrigger>
     </TabsList>
   );
@@ -176,10 +171,6 @@ const ConfigTabs = ({ id }: { id: string }) => {
 
       <TabsContent value="Terminals">
         <ServerTerminals id={id} titleOther={tabsList} />
-      </TabsContent>
-
-      <TabsContent value="Pty">
-        <ServerPty id={id} titleOther={tabsList} />
       </TabsContent>
     </Tabs>
   );

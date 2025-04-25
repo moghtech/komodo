@@ -631,7 +631,7 @@ pub struct GetServersSummaryResponse {
 
 //
 
-/// List the current active terminals on specified server.
+/// List the current terminals on specified server.
 /// Response: [ListTerminalsResponse].
 #[typeshare]
 #[derive(
@@ -652,27 +652,3 @@ pub struct ListTerminals {
 
 #[typeshare]
 pub type ListTerminalsResponse = Vec<String>;
-
-//
-
-/// List the current active ptys on specified server.
-/// Response: [ListPtysResponse].
-#[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
-#[empty_traits(KomodoReadRequest)]
-#[response(ListPtysResponse)]
-#[error(serror::Error)]
-pub struct ListPtys {
-  /// Id or name
-  #[serde(alias = "id", alias = "name")]
-  pub server: String,
-  /// Force a fresh call to Periphery for the list.
-  /// Otherwise the response will be cached for 30s
-  #[serde(default)]
-  pub fresh: bool,
-}
-
-#[typeshare]
-pub type ListPtysResponse = Vec<String>;

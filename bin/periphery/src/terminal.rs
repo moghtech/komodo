@@ -1,198 +1,275 @@
 use std::{
-  collections::HashMap,
+  collections::{HashMap, VecDeque},
   sync::{Arc, OnceLock},
-  task::Poll,
+  time::Duration,
 };
 
-use anyhow::Context;
-use flume::r#async::RecvStream;
-use futures::{Stream, StreamExt};
-use komodo_client::entities::KOMODO_EXIT_DATA;
-use pin_project_lite::pin_project;
-use tokio::io::AsyncWriteExt;
+use anyhow::{Context, anyhow};
+use bytes::Bytes;
+use flume::TryRecvError;
+use portable_pty::{CommandBuilder, PtySize, native_pty_system};
+use tokio_util::sync::CancellationToken;
 
-const KOMODO_END_OF_OUTPUT: &str = "__KOMODO_END_OF_OUTPUT__";
+type PtyName = String;
+type PtyMap = std::sync::RwLock<HashMap<PtyName, Arc<Terminal>>>;
 
-type TerminalName = String;
-type TerminalMap =
-  std::sync::RwLock<HashMap<TerminalName, Arc<Terminal>>>;
-
-pub fn delete_terminal(name: &str) -> Option<Arc<Terminal>> {
-  terminals().write().unwrap().remove(name)
+pub fn delete_terminal(name: &str) {
+  if let Some(terminal) = terminals().write().unwrap().remove(name) {
+    terminal.cancel.cancel();
+    terminal.abort();
+  }
 }
 
 pub fn list_terminals() -> Vec<String> {
   terminals().read().unwrap().keys().cloned().collect()
 }
 
-pub async fn run_command_on_terminal(
-  terminal_name: String,
-  command: String,
-) -> anyhow::Result<TerminalStream> {
-  let shell = get_or_insert_terminal(terminal_name.clone());
-  if let Err(e) = shell
-    .run(command)
-    .await
-    .context("Failed to run command on shell")
-  {
-    delete_terminal(&terminal_name);
-    return Err(e);
-  };
-  Ok(TerminalStream {
-    inner: shell.stdout.clone().into_stream(),
-    name: terminal_name,
-  })
+pub fn get_or_insert_terminal(
+  name: String,
+  shell: String,
+) -> anyhow::Result<Arc<Terminal>> {
+  if let Some(terminal) = terminals().read().unwrap().get(&name) {
+    if terminal.shell != shell {
+      return Err(anyhow!(
+        "Shell mismatch. Expected {}, got {shell}",
+        terminal.shell
+      ));
+    } else {
+      return Ok(terminal.clone());
+    }
+  }
+  let terminal = Arc::new(
+    Terminal::new(shell).context("Failed to init terminal")?,
+  );
+  terminals().write().unwrap().insert(name, terminal.clone());
+  Ok(terminal)
 }
 
-fn terminals() -> &'static TerminalMap {
-  static TERMINALS: OnceLock<TerminalMap> = OnceLock::new();
+pub fn clean_up_terminals() {
+  terminals().write().unwrap().retain(|_, terminal| {
+    if terminal.cancel.is_cancelled() {
+      terminal.abort();
+      false
+    } else {
+      true
+    }
+  });
+}
+
+fn terminals() -> &'static PtyMap {
+  static TERMINALS: OnceLock<PtyMap> = OnceLock::new();
   TERMINALS.get_or_init(Default::default)
 }
 
-fn get_or_insert_terminal(name: String) -> Arc<Terminal> {
-  if let Some(terminal) = terminals().read().unwrap().get(&name) {
-    return terminal.clone();
-  }
-  let terminal = Arc::new(Terminal::new());
-  terminals().write().unwrap().insert(name, terminal.clone());
-  terminal
+#[derive(serde::Deserialize)]
+pub struct ResizeDimensions {
+  rows: u16,
+  cols: u16,
 }
 
-fn maybe_delete_terminal(name: &str) {
-  info!("running maybe clear");
-  let shell = terminals().read().unwrap().get(name).cloned();
-  if let Some(shell) = shell {
-    match shell.child.lock().unwrap().try_wait() {
-      Ok(Some(code)) => {
-        warn!("shell {name} has exited with status {code}");
-        delete_terminal(name);
-      }
-      Ok(None) => {}
-      Err(e) => {
-        error!("Shell has error try_wait | {e:?}");
-      }
-    }
-  }
-}
-
-pin_project! {
-  pub struct TerminalStream { #[pin] inner: RecvStream<'static, Result<String, String>>, name: String }
-}
-
-impl Stream for TerminalStream {
-  type Item = Result<String, String>;
-
-  fn poll_next(
-    self: std::pin::Pin<&mut Self>,
-    cx: &mut std::task::Context<'_>,
-  ) -> std::task::Poll<Option<Self::Item>> {
-    let this = self.project();
-    match this.inner.poll_next(cx) {
-      Poll::Ready(None) => {
-        // This is if a None comes in before END_OF_OUTPUT.
-        // This probably means the terminal has exited early,
-        // and needs to be cleaned up
-        maybe_delete_terminal(&this.name);
-        Poll::Ready(None)
-      }
-      Poll::Ready(Some(line)) => {
-        match line {
-          Ok(line) if line == KOMODO_END_OF_OUTPUT => {
-            // Stop the stream on end sentinel
-            Poll::Ready(None)
-          }
-          Ok(line) => Poll::Ready(Some(Ok(line + "\n"))),
-          Err(e) => Poll::Ready(Some(Err(e))),
-        }
-      }
-      Poll::Pending => Poll::Pending,
-    }
-  }
+pub enum StdinMsg {
+  Bytes(Bytes),
+  Resize(ResizeDimensions),
 }
 
 pub struct Terminal {
-  child: std::sync::Mutex<tokio::process::Child>,
-  stdin: tokio::sync::Mutex<tokio::process::ChildStdin>,
-  // receives lines from stdout
-  // use flume channel because you need a receiver that
-  // you can clone off and turn into a stream back to client.
-  stdout: flume::Receiver<Result<String, String>>,
+  /// The shell that was used as the root command.
+  shell: String,
+  pub cancel: CancellationToken,
+
+  pub stdin: flume::Sender<StdinMsg>,
+  pub stdout: flume::Receiver<Bytes>,
+
+  // need to manually abort this one on cancel
+  stdout_task: tokio::task::JoinHandle<()>,
+
+  pub history: Arc<History>,
 }
 
 impl Terminal {
-  fn new() -> Terminal {
-    let mut child = tokio::process::Command::new("bash")
-      .stdin(std::process::Stdio::piped())
-      .stdout(std::process::Stdio::piped())
-      .spawn()
-      .expect("Failed to spawn shell");
+  /// shell should be "sh", "bash", "zsh", etc.
+  fn new(shell: String) -> anyhow::Result<Terminal> {
+    trace!("Creating terminal with shell: {shell}");
 
-    let stdin = child.stdin.take().unwrap();
-    let stdout = child.stdout.take().unwrap();
+    let terminal = native_pty_system()
+      .openpty(PtySize::default())
+      .context("Failed to open terminal")?;
 
-    let mut stdout = tokio_util::codec::FramedRead::new(
-      stdout,
-      tokio_util::codec::LinesCodec::new(),
-    );
+    let cmd = CommandBuilder::new(&shell);
 
-    let (stdout_tx, stdout_rx) = flume::bounded(8192);
+    let mut child = terminal
+      .slave
+      .spawn_command(cmd)
+      .context("Failed to spawn child command")?;
 
-    // spawn stdout forwarding loop
-    tokio::spawn(async move {
-      // info!("spawned stdout forwarder");
+    let mut terminal_write = terminal
+      .master
+      .take_writer()
+      .context("Failed to take terminal writer")?;
+    let mut terminal_read = terminal
+      .master
+      .try_clone_reader()
+      .context("Failed to clone terminal reader")?;
+
+    let cancel = CancellationToken::new();
+
+    // CHILD WAIT TASK
+    let _cancel = cancel.clone();
+    tokio::task::spawn_blocking(move || {
       loop {
-        match stdout.next().await {
-          Some(line) => {
-            // info!("got line: {line:?}");
-            if let Err(e) = stdout_tx
-              .send_async(
-                line
-                  .context("Bad line | LinesCodecError")
-                  .map_err(|e| format!("{e:#}")),
-              )
-              .await
-              .context("Failed to send line")
-            {
-              error!("{e:#}");
-              break;
-            }
+        if _cancel.is_cancelled() {
+          trace!("child wait handle cancelled from outside");
+          if let Err(e) = child.kill() {
+            debug!("Failed to kill child | {e:?}");
           }
-          None => {
-            // warn!("Stream done");
+          break;
+        }
+        match child.try_wait() {
+          Ok(Some(code)) => {
+            debug!("child exited with code {code}");
+            _cancel.cancel();
+            break;
+          }
+          Ok(None) => {
+            std::thread::sleep(Duration::from_millis(500));
+          }
+          Err(e) => {
+            debug!("failed to wait for child | {e:?}");
+            _cancel.cancel();
             break;
           }
         }
       }
     });
 
-    Terminal {
-      child: child.into(),
-      stdin: stdin.into(),
-      stdout: stdout_rx,
+    // WS (channel) -> STDIN TASK
+    let (stdin, channel_read) = flume::bounded::<StdinMsg>(8192);
+    let _cancel = cancel.clone();
+    tokio::task::spawn_blocking(move || {
+      loop {
+        if _cancel.is_cancelled() {
+          trace!("terminal write: cancelled from outside");
+          break;
+        }
+        match channel_read.try_recv() {
+          Ok(StdinMsg::Bytes(bytes)) => {
+            if let Err(e) = terminal_write.write_all(&bytes) {
+              debug!("Failed to write to PTY: {e:?}");
+              _cancel.cancel();
+              break;
+            }
+          }
+          Ok(StdinMsg::Resize(dimensions)) => {
+            if let Err(e) = terminal.master.resize(PtySize {
+              cols: dimensions.cols,
+              rows: dimensions.rows,
+              pixel_width: 0,
+              pixel_height: 0,
+            }) {
+              debug!("Failed to resize | {e:?}");
+              _cancel.cancel();
+              break;
+            };
+          }
+          Err(TryRecvError::Disconnected) => {
+            debug!("WS -> PTY channel read error: Disconnected");
+            _cancel.cancel();
+            break;
+          }
+          Err(TryRecvError::Empty) => {}
+        }
+      }
+    });
+
+    let history = Arc::new(History::default());
+
+    // PTY -> WS (channel) TASK
+    let (write, stdout) = flume::bounded::<Bytes>(8192);
+    let _cancel = cancel.clone();
+    let _history = history.clone();
+    // This task need to be manually aborted on cancel.
+    let stdout_task = tokio::task::spawn_blocking(move || {
+      let mut buf = [0u8; 8192];
+      loop {
+        match terminal_read.read(&mut buf) {
+          Ok(0) => {
+            // EOF
+            trace!("Got PTY read EOF");
+            _cancel.cancel();
+            break;
+          }
+          Ok(n) => {
+            _history.push(&buf[..n]);
+            if let Err(e) =
+              write.send(Bytes::copy_from_slice(&buf[..n]))
+            {
+              debug!("PTY -> WS channel send error: {e:?}");
+              _cancel.cancel();
+              break;
+            }
+          }
+          Err(e) => {
+            debug!("Failed to read for PTY: {e:?}");
+            _cancel.cancel();
+            break;
+          }
+        }
+      }
+    });
+
+    trace!("terminal tasks spawned");
+
+    Ok(Terminal {
+      shell,
+      cancel,
+      stdin,
+      stdout,
+      stdout_task,
+      history,
+    })
+  }
+
+  fn abort(&self) {
+    self.stdout_task.abort();
+  }
+
+  pub fn cancel(&self) {
+    trace!("Cancel called");
+    self.cancel.cancel();
+    self.abort();
+  }
+}
+
+/// 1 MiB
+const MAX_BYTES: usize = 1 * 1024 * 1024;
+
+pub struct History {
+  buf: std::sync::Mutex<VecDeque<u8>>,
+}
+
+impl Default for History {
+  fn default() -> Self {
+    History {
+      buf: VecDeque::with_capacity(MAX_BYTES).into(),
+    }
+  }
+}
+
+impl History {
+  /// Push some bytes, evicting the oldest when full.
+  fn push(&self, bytes: &[u8]) {
+    let mut buf = self.buf.lock().unwrap();
+    for byte in bytes {
+      if buf.len() == MAX_BYTES {
+        buf.pop_front();
+      }
+      buf.push_back(*byte);
     }
   }
 
-  async fn run(
-    &self,
-    command: impl Into<String>,
-  ) -> anyhow::Result<()> {
-    let command: String = command.into();
-    // The bash wrapping combines stdout and stderr,
-    // and attaches the command exit code and END_OF_OUTPUT sentinel.
-    let full_command = format!(
-      "exec 2>&1; {command}; printf '{KOMODO_EXIT_DATA}%d:%s\n{KOMODO_END_OF_OUTPUT}\n' \"$?\" \"$PWD\"\n"
-    );
-    // let full_command = format!(
-    //   "exec 2>&1; {command}; printf '{KOMODO_EXIT_CODE}%d:%s\n' \"$?\" \"$PWD\"; printf '{KOMODO_END_OF_OUTPUT}'\n"
-    // );
-
-    let mut stdin =
-      self.stdin.try_lock().context("Shell stdin is busy")?;
-    stdin
-      .write(full_command.as_bytes())
-      .await
-      .context("Failed to write command to stdin")?;
-
-    Ok(())
+  pub fn bytes_parts(&self) -> (Bytes, Bytes) {
+    let buf = self.buf.lock().unwrap();
+    let (a, b) = buf.as_slices();
+    (Bytes::copy_from_slice(a), Bytes::copy_from_slice(b))
   }
 }

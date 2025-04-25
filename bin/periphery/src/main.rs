@@ -12,7 +12,6 @@ mod compose;
 mod config;
 mod docker;
 mod helpers;
-mod pty;
 mod ssl;
 mod stats;
 mod terminal;

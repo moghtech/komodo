@@ -19,13 +19,13 @@ use rand::Rng;
 use reqwest::StatusCode;
 use serror::AddStatusCodeError;
 
-mod pty;
+mod terminal;
 mod update;
 
 pub fn router() -> Router {
   Router::new()
     .route("/update", get(update::handler))
-    .route("/pty", get(pty::handler))
+    .route("/terminal", get(terminal::handler))
 }
 
 #[instrument(level = "debug")]

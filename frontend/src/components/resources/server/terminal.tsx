@@ -4,14 +4,14 @@ import { FitAddon } from "@xterm/addon-fit";
 import { useXTerm, UseXTermProps } from "react-xtermjs";
 import { komodo_client } from "@lib/hooks";
 
-export const ServerPty = ({
+export const ServerTerminals = ({
   id,
   titleOther,
 }: {
   id: string;
   titleOther?: ReactNode;
 }) => {
-  // const { data: ptys, refetch: refetchPtys } = useRead("ListPtys", {
+  // const { data: ptys, refetch: refetchPtys } = useRead("ListTerminals", {
   //   server: id,
   //   fresh: true,
   // });
@@ -73,15 +73,15 @@ export const ServerPty = ({
   useEffect(() => {
     if (!term) return;
 
-    const ws = komodo_client().connect_pty({
+    const ws = komodo_client().connect_terminal({
       query: {
         server: id,
-        pty: "Test Pty",
+        terminal: "Test Pty",
         shell: "bash",
         // command: "clear",
       },
       on_login: () => {
-        console.log("logged in pty");
+        // console.log("logged in terminal");
       },
       on_open: () => {
         fitRef.current.fit();

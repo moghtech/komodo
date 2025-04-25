@@ -7,7 +7,7 @@ use axum::{
 };
 use futures::{SinkExt, StreamExt};
 use komodo_client::{
-  api::pty::ConnectPtyQuery,
+  api::terminal::ConnectTerminalQuery,
   entities::{permission::PermissionLevel, server::Server},
 };
 use tokio_tungstenite::tungstenite;
@@ -15,14 +15,14 @@ use tokio_util::sync::CancellationToken;
 
 use crate::{helpers::periphery_client, resource};
 
-#[instrument(name = "ConnectPtyQuery", skip(ws))]
+#[instrument(name = "ConnectTerminal", skip(ws))]
 pub async fn handler(
-  Query(ConnectPtyQuery {
+  Query(ConnectTerminalQuery {
     server,
-    pty,
+    terminal,
     shell,
     command,
-  }): Query<ConnectPtyQuery>,
+  }): Query<ConnectTerminalQuery>,
   ws: WebSocketUpgrade,
 ) -> impl IntoResponse {
   ws.on_upgrade(|socket| async move {
@@ -59,11 +59,11 @@ pub async fn handler(
       }
     };
 
-    trace!("connecting to periphery pty");
+    trace!("connecting to periphery terminal");
 
     let periphery_socket = match periphery
-      .connect_pty(
-        pty,
+      .connect_terminal(
+        terminal,
         shell,
         command,
       )
@@ -71,7 +71,7 @@ pub async fn handler(
     {
       Ok(ws) => ws,
       Err(e) => {
-        debug!("Failed connect to periphery pty | {e:#}");
+        debug!("Failed connect to periphery terminal | {e:#}");
         let _ =
           socket.send(Message::text(format!("ERROR: {e:#}"))).await;
         let _ = socket.close().await;
@@ -79,7 +79,7 @@ pub async fn handler(
       }
     };
 
-    trace!("connected to periphery pty socket");
+    trace!("connected to periphery terminal socket");
 
     let (mut periphery_send, mut periphery_receive) =
       periphery_socket.split();
@@ -102,7 +102,7 @@ pub async fn handler(
             if let Err(e) =
               periphery_send.send(axum_to_tungstenite(msg)).await
             {
-              debug!("Failed to send pty message to {} | {e:?}", server.name);
+              debug!("Failed to send terminal message to {} | {e:?}", server.name);
               cancel.cancel();
               break;
             };

@@ -1,12 +1,29 @@
-use komodo_client::entities::NoData;
-use periphery_client::api::terminal::{
-  DeleteTerminal, ExecuteTerminal, ListTerminals,
+use std::{collections::HashMap, sync::OnceLock};
+
+use anyhow::{Context, anyhow};
+use axum::{
+  extract::{
+    Query, WebSocketUpgrade,
+    ws::{Message, Utf8Bytes},
+  },
+  http::StatusCode,
+  response::Response,
 };
+use bytes::Bytes;
+use futures::{SinkExt, StreamExt};
+use komodo_client::entities::{NoData, komodo_timestamp};
+use periphery_client::api::terminal::{
+  ConnectTerminalQuery, CreateTerminalAuthToken,
+  CreateTerminalAuthTokenResponse, DeleteTerminal, ListTerminals,
+};
+use rand::Rng;
 use resolver_api::Resolve;
-use serror::Json;
+use serror::AddStatusCodeError;
+use tokio_util::sync::CancellationToken;
 
 use crate::terminal::{
-  delete_terminal, list_terminals, run_command_on_terminal,
+  ResizeDimensions, StdinMsg, clean_up_terminals, delete_terminal,
+  get_or_insert_terminal, list_terminals,
 };
 
 impl Resolve<super::Args> for ListTerminals {
@@ -15,6 +32,7 @@ impl Resolve<super::Args> for ListTerminals {
     self,
     _: &super::Args,
   ) -> serror::Result<Vec<String>> {
+    clean_up_terminals();
     Ok(list_terminals())
   }
 }
@@ -27,12 +45,221 @@ impl Resolve<super::Args> for DeleteTerminal {
   }
 }
 
-pub async fn exec(
-  Json(ExecuteTerminal {
-    terminal: name,
+impl Resolve<super::Args> for CreateTerminalAuthToken {
+  #[instrument(name = "CreateTerminalAuthToken", level = "debug")]
+  async fn resolve(
+    self,
+    _: &super::Args,
+  ) -> serror::Result<CreateTerminalAuthTokenResponse> {
+    Ok(CreateTerminalAuthTokenResponse {
+      token: auth_tokens().create_auth_token(),
+    })
+  }
+}
+
+/// Tokens valid for 3 seconds
+const TOKEN_VALID_FOR_MS: i64 = 3_000;
+
+fn auth_tokens() -> &'static AuthTokens {
+  static AUTH_TOKENS: OnceLock<AuthTokens> = OnceLock::new();
+  AUTH_TOKENS.get_or_init(Default::default)
+}
+
+#[derive(Default)]
+struct AuthTokens {
+  map: std::sync::Mutex<HashMap<String, i64>>,
+}
+
+impl AuthTokens {
+  pub fn create_auth_token(&self) -> String {
+    let token: String = rand::rng()
+      .sample_iter(&rand::distr::Alphanumeric)
+      .take(30)
+      .map(char::from)
+      .collect();
+    self
+      .map
+      .lock()
+      .unwrap()
+      .insert(token.clone(), komodo_timestamp() + TOKEN_VALID_FOR_MS);
+    token
+  }
+
+  pub fn check_token(&self, token: String) -> serror::Result<()> {
+    let Some(valid_until) = self.map.lock().unwrap().remove(&token)
+    else {
+      return Err(
+        anyhow!("Terminal auth token not found")
+          .status_code(StatusCode::UNAUTHORIZED),
+      );
+    };
+    if komodo_timestamp() <= valid_until {
+      Ok(())
+    } else {
+      Err(
+        anyhow!("Terminal token is expired")
+          .status_code(StatusCode::UNAUTHORIZED),
+      )
+    }
+  }
+}
+
+pub async fn connect_terminal(
+  Query(ConnectTerminalQuery {
+    token,
+    terminal,
     command,
-  }): Json<ExecuteTerminal>,
-) -> serror::Result<axum::body::Body> {
-  let stdout = run_command_on_terminal(name, command).await?;
-  Ok(axum::body::Body::from_stream(stdout))
+    shell,
+  }): Query<ConnectTerminalQuery>,
+  ws: WebSocketUpgrade,
+) -> serror::Result<Response> {
+  clean_up_terminals();
+  auth_tokens().check_token(token)?;
+  let terminal = get_or_insert_terminal(terminal, shell)
+    .context("Failed to get terminal handle")?;
+
+  Ok(ws.on_upgrade(|mut socket| async move {
+    let init_res = async {
+      let (a, b) = terminal.history.bytes_parts();
+      if !a.is_empty() {
+        socket.send(Message::Binary(a)).await.context("Failed to send history part a")?;
+      }
+      if !b.is_empty() {
+        socket.send(Message::Binary(b)).await.context("Failed to send history part b")?;
+      }
+
+      if let Some(command) = command {
+        terminal
+          .stdin
+          .send(StdinMsg::Bytes(Bytes::from(command + "\n")))
+          .context("Failed to run init command")?
+      }
+      anyhow::Ok(())
+    }.await;
+
+    if let Err(e) = init_res {
+      let _ = socket.send(Message::Text(format!("ERROR: {e:#}").into())).await;
+      let _ = socket.close().await;
+      return;
+    }
+
+    let (mut ws_write, mut ws_read) = socket.split();
+
+    let cancel = CancellationToken::new();
+
+    let ws_read = async {
+      loop {
+        let res = tokio::select! {
+          res = ws_read.next() => res,
+          _ = terminal.cancel.cancelled() => {
+            trace!("ws read: cancelled from outside");
+            break
+          },
+          _ = cancel.cancelled() => {
+            trace!("ws read: cancelled from inside");
+            break;
+          }
+        };
+        match res {
+          Some(Ok(Message::Binary(bytes)))
+            if bytes.first() == Some(&0x00) =>
+          {
+            // println!("Got ws read bytes - for stdin");
+            if let Err(e) = terminal.stdin.send(StdinMsg::Bytes(
+              Bytes::copy_from_slice(&bytes[1..]),
+            )) {
+              debug!("WS -> PTY channel send error: {e:}");
+              terminal.cancel();
+              break;
+            };
+          }
+          Some(Ok(Message::Binary(bytes)))
+            if bytes.first() == Some(&0xFF) =>
+          {
+            // println!("Got ws read bytes - for resize");
+            if let Ok(dimensions) =
+              serde_json::from_slice::<ResizeDimensions>(&bytes[1..])
+            {
+              if let Err(e) =
+                terminal.stdin.send(StdinMsg::Resize(dimensions))
+              {
+                debug!("WS -> PTY channel send error: {e:}");
+                terminal.cancel();
+                break;
+              };
+            }
+          }
+          Some(Ok(Message::Text(text))) => {
+            trace!("Got ws read text");
+            if let Err(e) =
+              terminal.stdin.send(StdinMsg::Bytes(Bytes::from(text)))
+            {
+              debug!("WS -> PTY channel send error: {e:?}");
+              terminal.cancel();
+              break;
+            };
+          }
+          Some(Ok(Message::Close(_))) => {
+            debug!("got ws read close");
+            cancel.cancel();
+            break;
+          }
+          Some(Ok(_)) => {
+            // Do nothing (ping, non-prefixed bytes, etc.)
+          }
+          Some(Err(e)) => {
+            debug!("Got ws read error: {e:?}");
+            cancel.cancel();
+            break;
+          }
+          None => {
+            debug!("Got ws read none");
+            cancel.cancel();
+            break;
+          }
+        }
+      }
+    };
+
+    let ws_write = async {
+      loop {
+        let res = tokio::select! {
+          res = terminal.stdout.recv_async() => res,
+          _ = terminal.cancel.cancelled() => {
+            info!("ws write: cancelled from outside");
+            let _ = ws_write.send(Message::Text(Utf8Bytes::from_static("PTY KILLED"))).await;
+            if let Err(e) = ws_write.close().await {
+              warn!("Failed to close ws: {e:?}");
+            };
+            break
+          },
+          _ = cancel.cancelled() => {
+            let _ = ws_write.send(Message::Text(Utf8Bytes::from_static("WS KILLED"))).await;
+            if let Err(e) = ws_write.close().await {
+              warn!("Failed to close ws: {e:?}");
+            };
+            break
+          }
+        };
+        match res {
+          Ok(bytes) => {
+            if let Err(e) =
+              ws_write.send(Message::Binary(bytes)).await
+            {
+              warn!("Failed to send to WS: {e:?}");
+              cancel.cancel();
+              break;
+            }
+          }
+          Err(e) => {
+            warn!("PTY -> WS channel read error: {e:?}");
+            terminal.cancel();
+            break;
+          }
+        }
+      }
+    };
+
+    tokio::join!(ws_read, ws_write);
+  }))
 }

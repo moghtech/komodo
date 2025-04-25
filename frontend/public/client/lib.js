@@ -155,85 +155,9 @@ export function KomodoClient(url, options) {
             }
         }
     };
-    const execute_terminal = (request) => new Promise(async (res, rej) => {
-        try {
-            let response = await fetch(url + "/terminal", {
-                method: "POST",
-                body: JSON.stringify(request),
-                headers: {
-                    ...(state.jwt
-                        ? {
-                            authorization: state.jwt,
-                        }
-                        : state.key && state.secret
-                            ? {
-                                "x-api-key": state.key,
-                                "x-api-secret": state.secret,
-                            }
-                            : {}),
-                    "content-type": "application/json",
-                },
-            });
-            if (response.status === 200) {
-                if (response.body) {
-                    const stream = response.body
-                        .pipeThrough(new TextDecoderStream("utf-8"))
-                        .pipeThrough(new TransformStream({
-                        start(_controller) {
-                            this.tail = "";
-                        },
-                        transform(chunk, controller) {
-                            const data = this.tail + chunk; // prepend any carry‑over
-                            const parts = data.split(/\r?\n/); // split on CRLF or LF
-                            this.tail = parts.pop(); // last item may be incomplete
-                            for (const line of parts)
-                                controller.enqueue(line);
-                        },
-                        flush(controller) {
-                            if (this.tail)
-                                controller.enqueue(this.tail); // final unterminated line
-                        },
-                    }));
-                    res(stream);
-                }
-                else {
-                    rej({
-                        status: response.status,
-                        result: { error: "No response body", trace: [] },
-                    });
-                }
-            }
-            else {
-                try {
-                    const result = await response.json();
-                    rej({ status: response.status, result });
-                }
-                catch (error) {
-                    rej({
-                        status: response.status,
-                        result: {
-                            error: "Failed to get response body",
-                            trace: [JSON.stringify(error)],
-                        },
-                        error,
-                    });
-                }
-            }
-        }
-        catch (error) {
-            rej({
-                status: 1,
-                result: {
-                    error: "Request failed with error",
-                    trace: [JSON.stringify(error)],
-                },
-                error,
-            });
-        }
-    });
-    const connect_pty = ({ query, on_message, on_login, on_open, on_close, }) => {
+    const connect_terminal = ({ query, on_message, on_login, on_open, on_close, }) => {
         const url_query = new URLSearchParams(query).toString();
-        const ws = new WebSocket(url.replace("http", "ws") + "/ws/pty?" + url_query);
+        const ws = new WebSocket(url.replace("http", "ws") + "/ws/terminal?" + url_query);
         // Handle login on websocket open
         ws.onopen = () => {
             const login_msg = options.type === "jwt"
@@ -358,20 +282,9 @@ export function KomodoClient(url, options) {
          */
         subscribe_to_update_websocket,
         /**
-         * Executes a command on a given Server / terminal,
-         * and returns a stream to process the output as it comes in.
-         *
-         * Note. The final line of the stream will usually be
-         * something like `__KOMODO_EXIT_CODE__:0`. The number
-         * is the exit code of the command.
-         *
-         * If this line is NOT present, it means the stream
-         * was terminated early, ie like running `exit`.
+         * Subscribes to terminal io over websocket message,
+         * for use with xtermjs.
          */
-        execute_terminal,
-        /**
-         * Subscribes to a terminal pty, for use with xtermjs.
-         */
-        connect_pty,
+        connect_terminal,
     };
 }

@@ -47,7 +47,6 @@ svi = "1.0.1"
 reqwest = { version = "0.12.15", default-features = false, features = ["json", "stream", "rustls-tls-native-roots"] }
 tokio = { version = "1.44.1", features = ["full"] }
 tokio-util = { version = "0.7.14", features = ["io", "codec"] }
-pin-project-lite = "0.2.16"
 futures = "0.3.31"
 futures-util = "0.3.31"
 arc-swap = "1.7.1"

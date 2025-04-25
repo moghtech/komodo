@@ -14,13 +14,40 @@ pub struct DeleteTerminal {
   pub terminal: String,
 }
 
+//
+
+/// Create a single use auth token to connect to periphery terminal websocket.
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[response(CreateTerminalAuthTokenResponse)]
+#[error(serror::Error)]
+pub struct CreateTerminalAuthToken {}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct CreateTerminalAuthTokenResponse {
+  pub token: String,
+}
+
+//
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ExecuteTerminal {
+pub struct ConnectTerminalQuery {
+  /// Use [CreateTerminalAuthToken] to create a single-use
+  /// token to send in the query.
+  pub token: String,
   /// Each periphery can keep multiple terminals open.
   /// If a terminal with the specified name already exists,
-  /// the command will execute on it.
-  /// Otherwise a new terminal will be created for the command.
+  /// it will be attached to.
+  /// Otherwise a new terminal will be created,
+  /// which will persist until it is either exited via command (ie `exit`),
+  /// or deleted using [DeleteTerminal]
   pub terminal: String,
-  /// The command to execute in the shell.
-  pub command: String,
+  /// The shell to use, eg. 'sh', 'bash', 'zsh', etc
+  #[serde(default = "default_shell")]
+  pub shell: String,
+  /// Optional. The initial command to execute on connection to the shell.
+  pub command: Option<String>,
+}
+
+fn default_shell() -> String {
+  String::from("bash")
 }

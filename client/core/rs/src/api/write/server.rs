@@ -109,7 +109,7 @@ pub struct CreateNetwork {
 
 //
 
-/// Delete a terminal (non interactive shell commands) on the server.
+/// Delete a terminal on the server.
 /// Response: [NoData]
 #[typeshare]
 #[derive(
@@ -123,22 +123,4 @@ pub struct DeleteTerminal {
   pub server: String,
   /// The name of the terminal on the server to delete.
   pub terminal: String,
-}
-
-//
-
-/// Delete an active pty (interactive shell) on the server.
-/// Response: [NoData]
-#[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
-#[empty_traits(KomodoWriteRequest)]
-#[response(NoData)]
-#[error(serror::Error)]
-pub struct DeletePty {
-  /// Server Id or name
-  pub server: String,
-  /// The name of the pty on the server to delete.
-  pub pty: String,
 }

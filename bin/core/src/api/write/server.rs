@@ -128,27 +128,3 @@ impl Resolve<WriteArgs> for DeleteTerminal {
     Ok(NoData {})
   }
 }
-
-impl Resolve<WriteArgs> for DeletePty {
-  #[instrument(name = "DeletePty", skip(user))]
-  async fn resolve(
-    self,
-    WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<NoData> {
-    let server = resource::get_check_permissions::<Server>(
-      &self.server,
-      user,
-      PermissionLevel::Write,
-    )
-    .await?;
-
-    let periphery = periphery_client(&server)?;
-
-    periphery
-      .request(api::pty::DeletePty { pty: self.pty })
-      .await
-      .context("Failed to delete pty on periphery")?;
-
-    Ok(NoData {})
-  }
-}

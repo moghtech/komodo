@@ -876,34 +876,3 @@ impl Resolve<ReadArgs> for ListTerminals {
     }
   }
 }
-
-fn ptys_cache() -> &'static ListCache {
-  static PTYS: OnceLock<ListCache> = OnceLock::new();
-  PTYS.get_or_init(Default::default)
-}
-
-impl Resolve<ReadArgs> for ListPtys {
-  async fn resolve(
-    self,
-    ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListPtysResponse> {
-    let server = resource::get_check_permissions::<Server>(
-      &self.server,
-      user,
-      PermissionLevel::Read,
-    )
-    .await?;
-    let cache = ptys_cache().get_or_insert(server.id.clone());
-    let mut cache = cache.lock().await;
-    if self.fresh || komodo_timestamp() > cache.ttl {
-      cache.list = periphery_client(&server)?
-        .request(periphery_client::api::pty::ListPtys {})
-        .await
-        .context("Failed to get fresh pty list")?;
-      cache.ttl = komodo_timestamp() + LIST_CACHE_TIMEOUT;
-      Ok(cache.list.clone())
-    } else {
-      Ok(cache.list.clone())
-    }
-  }
-}

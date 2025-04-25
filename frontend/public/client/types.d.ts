@@ -3402,7 +3402,6 @@ export interface ProcedureListItemInfo {
 }
 export type ProcedureListItem = ResourceListItem<ProcedureListItemInfo>;
 export type ListProceduresResponse = ProcedureListItem[];
-export type ListPtysResponse = string[];
 export declare enum RepoState {
     /** Unknown case */
     Unknown = "Unknown",
@@ -4093,21 +4092,21 @@ export interface CommitSync {
     sync: string;
 }
 /**
- * Connect to a pty (interactive shell) on the given server.
+ * Query to connect to a terminal (interactive shell over websocket) on the given server.
  * TODO: Document calling.
  */
-export interface ConnectPtyQuery {
+export interface ConnectTerminalQuery {
     /** Server Id or name */
     server: string;
     /**
-     * Each periphery can keep multiple ptys open.
-     * If a ptys with the specified name already exists,
+     * Each periphery can keep multiple terminals open.
+     * If a terminals with the specified name already exists,
      * it will be attached to.
-     * Otherwise a new pty will be created for the command,
+     * Otherwise a new terminal will be created for the command,
      * which will persist until it is deleted using
-     * [DeletePty][crate::api::write::server::DeletePty]
+     * [DeleteTerminal][crate::api::write::server::DeleteTerminal]
      */
-    pty: string;
+    terminal: string;
     /**
      * The shell to use, eg. 'sh', 'bash', 'zsh', etc.
      * Default: 'bash'
@@ -4615,16 +4614,6 @@ export interface DeleteProcedure {
     id: string;
 }
 /**
- * Delete an active pty (interactive shell) on the server.
- * Response: [NoData]
- */
-export interface DeletePty {
-    /** Server Id or name */
-    server: string;
-    /** The name of the pty on the server to delete. */
-    pty: string;
-}
-/**
  * Deletes the repo at the given id, and returns the deleted repo.
  * Response: [Repo]
  */
@@ -4704,7 +4693,7 @@ export interface DeleteTag {
     id: string;
 }
 /**
- * Delete a terminal (non interactive shell commands) on the server.
+ * Delete a terminal on the server.
  * Response: [NoData]
  */
 export interface DeleteTerminal {
@@ -4857,23 +4846,6 @@ export interface EnvironmentVar {
 export interface ExchangeForJwt {
     /** The 'exchange token' */
     token: string;
-}
-/**
- * Execute a terminal command on the given server.
- * TODO: Document calling.
- */
-export interface ExecuteTerminal {
-    /** Server Id or name */
-    server: string;
-    /**
-     * The name of the terminal on the server to use to execute.
-     * If the terminal at name exists, it will be used to execute the command.
-     * Otherwise, a new terminal will be created for this command, which will
-     * persist until it exits or is deleted.
-     */
-    terminal: string;
-    /** The command to execute. */
-    command: string;
 }
 /**
  * Get pretty formatted monrun sync toml for all resources
@@ -6096,19 +6068,6 @@ export interface ListProcedures {
     /** optional structured query to filter procedures. */
     query?: ProcedureQuery;
 }
-/**
- * List the current active ptys on specified server.
- * Response: [ListPtysResponse].
- */
-export interface ListPtys {
-    /** Id or name */
-    server: string;
-    /**
-     * Force a fresh call to Periphery for the list.
-     * Otherwise the response will be cached for 30s
-     */
-    fresh?: boolean;
-}
 /** List repos matching optional query. Response: [ListReposResponse]. */
 export interface ListRepos {
     /** optional structured query to filter repos. */
@@ -6169,7 +6128,7 @@ export interface ListTags {
     query?: MongoDocument;
 }
 /**
- * List the current active terminals on specified server.
+ * List the current terminals on specified server.
  * Response: [ListTerminalsResponse].
  */
 export interface ListTerminals {
@@ -7739,9 +7698,6 @@ export type ReadRequest = {
     type: "ListTerminals";
     params: ListTerminals;
 } | {
-    type: "ListPtys";
-    params: ListPtys;
-} | {
     type: "GetDeploymentsSummary";
     params: GetDeploymentsSummary;
 } | {
@@ -8028,9 +7984,6 @@ export type WriteRequest = {
 } | {
     type: "DeleteTerminal";
     params: DeleteTerminal;
-} | {
-    type: "DeletePty";
-    params: DeletePty;
 } | {
     type: "CreateDeployment";
     params: CreateDeployment;

@@ -22,10 +22,9 @@ pub fn router() -> Router {
     .merge(
       Router::new()
         .route("/", post(handler))
-        .route("/terminal", post(super::terminal::exec))
         .layer(middleware::from_fn(guard_request_by_passkey)),
     )
-    .route("/pty", get(super::pty::connect_pty))
+    .route("/terminal", get(super::terminal::connect_terminal))
     .layer(middleware::from_fn(guard_request_by_ip))
 }
 

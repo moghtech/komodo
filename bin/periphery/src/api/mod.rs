@@ -9,7 +9,7 @@ use komodo_client::entities::{
 };
 use periphery_client::api::{
   build::*, compose::*, container::*, git::*, image::*, network::*,
-  pty::*, stats::*, terminal::*, volume::*, *,
+  stats::*, terminal::*, volume::*, *,
 };
 use resolver_api::Resolve;
 use response::Response;
@@ -24,7 +24,6 @@ mod deploy;
 mod git;
 mod image;
 mod network;
-mod pty;
 mod router;
 mod stats;
 mod terminal;
@@ -142,11 +141,7 @@ pub enum PeripheryRequest {
   // Terminal
   ListTerminals(ListTerminals),
   DeleteTerminal(DeleteTerminal),
-
-  // Pty
-  ListPtys(ListPtys),
-  DeletePty(DeletePty),
-  CreatePtyAuthToken(CreatePtyAuthToken),
+  CreateTerminalAuthToken(CreateTerminalAuthToken),
 }
 
 //

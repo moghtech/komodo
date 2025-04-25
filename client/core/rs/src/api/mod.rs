@@ -68,8 +68,7 @@
 
 pub mod auth;
 pub mod execute;
-pub mod pty;
-pub mod read;
 pub mod terminal;
+pub mod read;
 pub mod user;
 pub mod write;

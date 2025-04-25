@@ -124,7 +124,6 @@ enum ReadRequest {
   ListDockerVolumes(ListDockerVolumes),
   ListComposeProjects(ListComposeProjects),
   ListTerminals(ListTerminals),
-  ListPtys(ListPtys),
 
   // ==== DEPLOYMENT ====
   GetDeploymentsSummary(GetDeploymentsSummary),

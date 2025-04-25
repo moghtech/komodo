@@ -8,7 +8,6 @@ use serde_json::json;
 
 pub mod api;
 
-mod pty;
 mod terminal;
 
 fn periphery_http_client() -> &'static reqwest::Client {
