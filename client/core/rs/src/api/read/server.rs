@@ -13,7 +13,7 @@ use crate::entities::{
   },
   server::{
     Server, ServerActionState, ServerListItem, ServerQuery,
-    ServerState,
+    ServerState, TerminalInfo,
   },
   stack::ComposeProject,
   stats::{
@@ -651,4 +651,4 @@ pub struct ListTerminals {
 }
 
 #[typeshare]
-pub type ListTerminalsResponse = Vec<String>;
+pub type ListTerminalsResponse = Vec<TerminalInfo>;

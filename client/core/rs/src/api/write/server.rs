@@ -109,6 +109,32 @@ pub struct CreateNetwork {
 
 //
 
+/// Create a terminal on the server.
+/// Response: [NoData]
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoWriteRequest)]
+#[response(NoData)]
+#[error(serror::Error)]
+pub struct CreateTerminal {
+  /// Server Id or name
+  pub server: String,
+  /// The name of the terminal on the server to create.
+  pub name: String,
+  /// The shell program (eg bash) of the terminal
+  pub shell: String,
+  /// Whether to recreate the terminal if
+  /// it already exists. This means first deleting the existing
+  /// terminal with the same name.
+  /// Default: `false`
+  #[serde(default)]
+  pub recreate: bool,
+}
+
+//
+
 /// Delete a terminal on the server.
 /// Response: [NoData]
 #[typeshare]

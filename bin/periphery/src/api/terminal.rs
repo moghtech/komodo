@@ -11,9 +11,11 @@ use axum::{
 };
 use bytes::Bytes;
 use futures::{SinkExt, StreamExt};
-use komodo_client::entities::{NoData, komodo_timestamp};
+use komodo_client::entities::{
+  NoData, komodo_timestamp, server::TerminalInfo,
+};
 use periphery_client::api::terminal::{
-  ConnectTerminalQuery, CreateTerminalAuthToken,
+  ConnectTerminalQuery, CreateTerminal, CreateTerminalAuthToken,
   CreateTerminalAuthTokenResponse, DeleteTerminal, ListTerminals,
 };
 use rand::Rng;
@@ -22,8 +24,8 @@ use serror::AddStatusCodeError;
 use tokio_util::sync::CancellationToken;
 
 use crate::terminal::{
-  ResizeDimensions, StdinMsg, clean_up_terminals, delete_terminal,
-  get_or_insert_terminal, list_terminals,
+  ResizeDimensions, StdinMsg, clean_up_terminals, create_terminal,
+  delete_terminal, get_or_insert_terminal, list_terminals,
 };
 
 impl Resolve<super::Args> for ListTerminals {
@@ -31,9 +33,18 @@ impl Resolve<super::Args> for ListTerminals {
   async fn resolve(
     self,
     _: &super::Args,
-  ) -> serror::Result<Vec<String>> {
+  ) -> serror::Result<Vec<TerminalInfo>> {
     clean_up_terminals();
     Ok(list_terminals())
+  }
+}
+
+impl Resolve<super::Args> for CreateTerminal {
+  #[instrument(name = "CreateTerminal", level = "debug")]
+  async fn resolve(self, _: &super::Args) -> serror::Result<NoData> {
+    create_terminal(self.name, self.shell, self.recreate)
+      .map(|_| NoData {})
+      .map_err(Into::into)
   }
 }
 

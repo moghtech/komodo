@@ -3625,7 +3625,19 @@ export interface SystemProcess {
 }
 export type ListSystemProcessesResponse = SystemProcess[];
 export type ListTagsResponse = Tag[];
-export type ListTerminalsResponse = string[];
+/**
+ * Info about an active terminal on a server.
+ * Retrieve with [ListTerminals][crate::api::read::server::ListTerminals].
+ */
+export interface TerminalInfo {
+    /** The name of the terminal. */
+    name: string;
+    /** The shell program of the pty */
+    shell: string;
+    /** The size of the terminal history in memory. */
+    stored_size_kb: number;
+}
+export type ListTerminalsResponse = TerminalInfo[];
 export type ListUserGroupsResponse = UserGroup[];
 export type ListUserTargetPermissionsResponse = Permission[];
 export type ListUsersResponse = User[];
@@ -4473,6 +4485,25 @@ export interface CreateSyncWebhook {
 export interface CreateTag {
     /** The name of the tag. */
     name: string;
+}
+/**
+ * Create a terminal on the server.
+ * Response: [NoData]
+ */
+export interface CreateTerminal {
+    /** Server Id or name */
+    server: string;
+    /** The name of the terminal on the server to create. */
+    name: string;
+    /** The shell program (eg bash) of the terminal */
+    shell: string;
+    /**
+     * Whether to recreate the terminal if
+     * it already exists. This means first deleting the existing
+     * terminal with the same name.
+     * Default: `false`
+     */
+    recreate?: boolean;
 }
 /** **Admin only.** Create a user group. Response: [UserGroup] */
 export interface CreateUserGroup {

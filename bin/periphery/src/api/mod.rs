@@ -140,6 +140,7 @@ pub enum PeripheryRequest {
 
   // Terminal
   ListTerminals(ListTerminals),
+  CreateTerminal(CreateTerminal),
   DeleteTerminal(DeleteTerminal),
   CreateTerminalAuthToken(CreateTerminalAuthToken),
 }

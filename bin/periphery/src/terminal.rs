@@ -7,11 +7,38 @@ use std::{
 use anyhow::{Context, anyhow};
 use bytes::Bytes;
 use flume::TryRecvError;
+use komodo_client::entities::server::TerminalInfo;
 use portable_pty::{CommandBuilder, PtySize, native_pty_system};
 use tokio_util::sync::CancellationToken;
 
 type PtyName = String;
 type PtyMap = std::sync::RwLock<HashMap<PtyName, Arc<Terminal>>>;
+
+pub fn create_terminal(
+  name: String,
+  shell: String,
+  recreate: bool,
+) -> anyhow::Result<()> {
+  let mut terminals = terminals().write().unwrap();
+  if !recreate {
+    if let Some(terminal) = terminals.get(&name) {
+      if terminal.shell == shell {
+        return Ok(());
+      } else {
+        return Err(anyhow!(
+          "Terminal {name} already exists, but has shell {} instead of {shell}",
+          terminal.shell
+        ));
+      }
+    }
+  }
+  if let Some(prev) =
+    terminals.insert(name, Terminal::new(shell)?.into())
+  {
+    prev.cancel();
+  }
+  Ok(())
+}
 
 pub fn delete_terminal(name: &str) {
   if let Some(terminal) = terminals().write().unwrap().remove(name) {
@@ -20,8 +47,19 @@ pub fn delete_terminal(name: &str) {
   }
 }
 
-pub fn list_terminals() -> Vec<String> {
-  terminals().read().unwrap().keys().cloned().collect()
+pub fn list_terminals() -> Vec<TerminalInfo> {
+  let mut terminals = terminals()
+    .read()
+    .unwrap()
+    .iter()
+    .map(|(name, terminal)| TerminalInfo {
+      name: name.to_string(),
+      shell: terminal.shell.clone(),
+      stored_size_kb: terminal.history.size_kb(),
+    })
+    .collect::<Vec<_>>();
+  terminals.sort_by(|a, b| a.name.cmp(&b.name));
+  terminals
 }
 
 pub fn get_or_insert_terminal(
@@ -244,7 +282,7 @@ impl Terminal {
 const MAX_BYTES: usize = 1 * 1024 * 1024;
 
 pub struct History {
-  buf: std::sync::Mutex<VecDeque<u8>>,
+  buf: std::sync::RwLock<VecDeque<u8>>,
 }
 
 impl Default for History {
@@ -258,7 +296,7 @@ impl Default for History {
 impl History {
   /// Push some bytes, evicting the oldest when full.
   fn push(&self, bytes: &[u8]) {
-    let mut buf = self.buf.lock().unwrap();
+    let mut buf = self.buf.write().unwrap();
     for byte in bytes {
       if buf.len() == MAX_BYTES {
         buf.pop_front();
@@ -268,8 +306,12 @@ impl History {
   }
 
   pub fn bytes_parts(&self) -> (Bytes, Bytes) {
-    let buf = self.buf.lock().unwrap();
+    let buf = self.buf.read().unwrap();
     let (a, b) = buf.as_slices();
     (Bytes::copy_from_slice(a), Bytes::copy_from_slice(b))
+  }
+
+  pub fn size_kb(&self) -> f64 {
+    self.buf.read().unwrap().len() as f64 / 1024.0
   }
 }

@@ -103,6 +103,34 @@ impl Resolve<WriteArgs> for CreateNetwork {
   }
 }
 
+impl Resolve<WriteArgs> for CreateTerminal {
+  #[instrument(name = "CreateTerminal", skip(user))]
+  async fn resolve(
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<NoData> {
+    let server = resource::get_check_permissions::<Server>(
+      &self.server,
+      user,
+      PermissionLevel::Write,
+    )
+    .await?;
+
+    let periphery = periphery_client(&server)?;
+
+    periphery
+      .request(api::terminal::CreateTerminal {
+        name: self.name,
+        shell: self.shell,
+        recreate: self.recreate,
+      })
+      .await
+      .context("Failed to create terminal on periphery")?;
+
+    Ok(NoData {})
+  }
+}
+
 impl Resolve<WriteArgs> for DeleteTerminal {
   #[instrument(name = "DeleteTerminal", skip(user))]
   async fn resolve(

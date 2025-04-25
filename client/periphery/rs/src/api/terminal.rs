@@ -1,16 +1,33 @@
-use komodo_client::entities::NoData;
+use komodo_client::entities::{server::TerminalInfo, NoData};
 use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
-#[response(Vec<String>)]
+#[response(Vec<TerminalInfo>)]
 #[error(serror::Error)]
 pub struct ListTerminals {}
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[response(NoData)]
 #[error(serror::Error)]
+pub struct CreateTerminal {
+  /// The name of the terminal to create
+  pub name: String,
+  /// The shell program (eg bash) of the terminal
+  pub shell: String,
+  /// Whether to recreate the terminal if
+  /// it already exists. This means first deleting the existing
+  /// terminal with the same name.
+  /// Default: `false`
+  #[serde(default)]
+  pub recreate: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[response(NoData)]
+#[error(serror::Error)]
 pub struct DeleteTerminal {
+  /// The name of the terminal to delete
   pub terminal: String,
 }
 

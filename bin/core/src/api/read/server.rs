@@ -25,6 +25,7 @@ use komodo_client::{
     permission::PermissionLevel,
     server::{
       Server, ServerActionState, ServerListItem, ServerState,
+      TerminalInfo,
     },
     stack::{Stack, StackServiceNames},
     stats::{SystemInformation, SystemProcess},
@@ -815,39 +816,39 @@ impl Resolve<ReadArgs> for ListComposeProjects {
 }
 
 #[derive(Default)]
-struct ListCacheItem {
-  list: Vec<String>,
+struct TerminalCacheItem {
+  list: Vec<TerminalInfo>,
   ttl: i64,
 }
 
-const LIST_CACHE_TIMEOUT: i64 = 30_000;
+const TERMINAL_CACHE_TIMEOUT: i64 = 30_000;
 
 #[derive(Default)]
-struct ListCache(
+struct TerminalCache(
   std::sync::Mutex<
-    HashMap<String, Arc<tokio::sync::Mutex<ListCacheItem>>>,
+    HashMap<String, Arc<tokio::sync::Mutex<TerminalCacheItem>>>,
   >,
 );
 
-impl ListCache {
+impl TerminalCache {
   fn get_or_insert(
     &self,
     server_id: String,
-  ) -> Arc<tokio::sync::Mutex<ListCacheItem>> {
+  ) -> Arc<tokio::sync::Mutex<TerminalCacheItem>> {
     if let Some(cached) =
       self.0.lock().unwrap().get(&server_id).cloned()
     {
       return cached;
     }
     let to_cache =
-      Arc::new(tokio::sync::Mutex::new(ListCacheItem::default()));
+      Arc::new(tokio::sync::Mutex::new(TerminalCacheItem::default()));
     self.0.lock().unwrap().insert(server_id, to_cache.clone());
     to_cache
   }
 }
 
-fn terminals_cache() -> &'static ListCache {
-  static TERMINALS: OnceLock<ListCache> = OnceLock::new();
+fn terminals_cache() -> &'static TerminalCache {
+  static TERMINALS: OnceLock<TerminalCache> = OnceLock::new();
   TERMINALS.get_or_init(Default::default)
 }
 
@@ -869,7 +870,7 @@ impl Resolve<ReadArgs> for ListTerminals {
         .request(periphery_client::api::terminal::ListTerminals {})
         .await
         .context("Failed to get fresh terminal list")?;
-      cache.ttl = komodo_timestamp() + LIST_CACHE_TIMEOUT;
+      cache.ttl = komodo_timestamp() + TERMINAL_CACHE_TIMEOUT;
       Ok(cache.list.clone())
     } else {
       Ok(cache.list.clone())

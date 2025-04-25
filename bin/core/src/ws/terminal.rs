@@ -40,7 +40,7 @@ pub async fn handler(
     {
       Ok(server) => server,
       Err(e) => {
-        debug!("server not found | {e:#}");
+        debug!("could not get server | {e:#}");
         let _ =
           socket.send(Message::text(format!("ERROR: {e:#}"))).await;
         let _ = socket.close().await;

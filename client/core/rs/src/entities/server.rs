@@ -276,6 +276,19 @@ pub struct ServerHealth {
   pub disks: HashMap<PathBuf, ServerHealthState>,
 }
 
+/// Info about an active terminal on a server.
+/// Retrieve with [ListTerminals][crate::api::read::server::ListTerminals].
+#[typeshare]
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
+pub struct TerminalInfo {
+  /// The name of the terminal.
+  pub name: String,
+  /// The shell program of the pty
+  pub shell: String,
+  /// The size of the terminal history in memory.
+  pub stored_size_kb: f64,
+}
+
 /// Current pending actions on the server.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, Default)]

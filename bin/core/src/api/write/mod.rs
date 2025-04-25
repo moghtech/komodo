@@ -81,6 +81,7 @@ pub enum WriteRequest {
   UpdateServer(UpdateServer),
   RenameServer(RenameServer),
   CreateNetwork(CreateNetwork),
+  CreateTerminal(CreateTerminal),
   DeleteTerminal(DeleteTerminal),
 
   // ==== DEPLOYMENT ====
