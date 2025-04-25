@@ -48,7 +48,6 @@ pub fn create_terminal(
 pub fn delete_terminal(name: &str) {
   if let Some(terminal) = terminals().write().unwrap().remove(name) {
     terminal.cancel.cancel();
-    terminal.abort();
   }
 }
 
@@ -77,14 +76,10 @@ pub fn get_terminal(name: &str) -> anyhow::Result<Arc<Terminal>> {
 }
 
 pub fn clean_up_terminals() {
-  terminals().write().unwrap().retain(|_, terminal| {
-    if terminal.cancel.is_cancelled() {
-      terminal.abort();
-      false
-    } else {
-      true
-    }
-  });
+  terminals()
+    .write()
+    .unwrap()
+    .retain(|_, terminal| !terminal.cancel.is_cancelled());
 }
 
 fn terminals() -> &'static PtyMap {
@@ -111,9 +106,6 @@ pub struct Terminal {
 
   pub stdin: StdinSender,
   pub stdout: StdoutReceiver,
-
-  // need to manually abort this one on cancel
-  stdout_task: tokio::task::JoinHandle<()>,
 
   pub history: Arc<History>,
 }
@@ -185,15 +177,15 @@ impl Terminal {
           trace!("terminal write: cancelled from outside");
           break;
         }
-        match channel_read.try_recv() {
-          Ok(StdinMsg::Bytes(bytes)) => {
+        match channel_read.blocking_recv() {
+          Some(StdinMsg::Bytes(bytes)) => {
             if let Err(e) = terminal_write.write_all(&bytes) {
               debug!("Failed to write to PTY: {e:?}");
               _cancel.cancel();
               break;
             }
           }
-          Ok(StdinMsg::Resize(dimensions)) => {
+          Some(StdinMsg::Resize(dimensions)) => {
             if let Err(e) = terminal.master.resize(PtySize {
               cols: dimensions.cols,
               rows: dimensions.rows,
@@ -205,12 +197,11 @@ impl Terminal {
               break;
             };
           }
-          Err(mpsc::error::TryRecvError::Disconnected) => {
+          None => {
             debug!("WS -> PTY channel read error: Disconnected");
             _cancel.cancel();
             break;
           }
-          Err(mpsc::error::TryRecvError::Empty) => {}
         }
       }
     });
@@ -223,10 +214,13 @@ impl Terminal {
       tokio::sync::broadcast::channel::<Bytes>(8192);
     let _cancel = cancel.clone();
     let _history = history.clone();
-    // This task need to be manually aborted on cancel.
-    let stdout_task = tokio::task::spawn_blocking(move || {
+    tokio::task::spawn_blocking(move || {
       let mut buf = [0u8; 8192];
       loop {
+        if _cancel.is_cancelled() {
+          trace!("terminal read: cancelled from outside");
+          break;
+        }
         match terminal_read.read(&mut buf) {
           Ok(0) => {
             // EOF
@@ -260,19 +254,13 @@ impl Terminal {
       cancel,
       stdin,
       stdout,
-      stdout_task,
       history,
     })
-  }
-
-  fn abort(&self) {
-    self.stdout_task.abort();
   }
 
   pub fn cancel(&self) {
     trace!("Cancel called");
     self.cancel.cancel();
-    self.abort();
   }
 }
 

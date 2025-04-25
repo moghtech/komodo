@@ -183,8 +183,7 @@ const ServerTerminal = ({
       options: {
         convertEol: true,
         cursorBlink: true,
-        cursorStyle: "bar",
-        cursorWidth: 2,
+        cursorStyle: "block",
         fontFamily: "monospace",
         theme,
       },
