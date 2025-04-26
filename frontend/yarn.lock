@@ -2885,10 +2885,10 @@ react-style-singleton@^2.2.2, react-style-singleton@^2.2.3:
     get-nonce "^1.0.0"
     tslib "^2.0.0"
 
-react-xtermjs@^1.0.9:
-  version "1.0.9"
-  resolved "https://registry.yarnpkg.com/react-xtermjs/-/react-xtermjs-1.0.9.tgz#50fbf9376bf177358c5fba0a5b94241585c89447"
-  integrity sha512-lrK1xiWfgxAC+4shtMHh0Irxg2t5t7JbTtpP0W7GIf1gQ9SHW/djmyiLpQSA75mN1DpT0bKeqj1fOKd0XX8RBA==
+react-xtermjs@^1.0.10:
+  version "1.0.10"
+  resolved "https://registry.yarnpkg.com/react-xtermjs/-/react-xtermjs-1.0.10.tgz#faac189f60ca599345b69b5c1a6b662f537df667"
+  integrity sha512-+xpKEKbmsypWzRKE0FR1LNIGcI8gx+R6VMHe8IQW7iTbgeqp3Qg7SbiVNOzR+Ovb1QK4DPA3KqsIQV+XP0iRUA==
 
 react@19.0.0:
   version "19.0.0"

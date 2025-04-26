@@ -1,10 +1,10 @@
 import { Section } from "@components/layouts";
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { FitAddon } from "@xterm/addon-fit";
 import { useXTerm, UseXTermProps } from "react-xtermjs";
 import { komodo_client, useLocalStorage, useRead, useWrite } from "@lib/hooks";
 import { useTheme } from "@ui/theme";
 import { ITheme } from "@xterm/xterm";
+import { FitAddon } from "@xterm/addon-fit";
 import { Card, CardContent, CardHeader } from "@ui/card";
 import { Badge } from "@ui/badge";
 import { Button } from "@ui/button";
@@ -119,7 +119,7 @@ export const ServerTerminals = ({
             <RefreshCcw className="w-4 h-4" />
           </Button>
         </CardHeader>
-        <CardContent className="min-h-[60vh]">
+        <CardContent className="min-h-[65vh]">
           {terminals?.map(({ name: terminal }) => (
             <ServerTerminal
               key={terminal}
@@ -156,8 +156,6 @@ const ServerTerminal = ({
   const theme = _theme === "dark" ? DARK_THEME : LIGHT_THEME;
   const wsRef = useRef<WebSocket | null>(null);
   const fitRef = useRef<FitAddon>(new FitAddon());
-  // const [_reconnect, _setReconnect] = useState(false);
-  // const triggerReconnect = () => _setReconnect((r) => !r);
 
   const resize = () => {
     fitRef.current.fit();
@@ -176,37 +174,33 @@ const ServerTerminal = ({
     }
   };
 
+  const onStdin = (data: string) => {
+    // This is data user writes to stdin
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+
+    const buf = new Uint8Array(data.length + 1);
+    buf[0] = 0x00; // data prefix
+    for (let i = 0; i < data.length; i++) buf[i + 1] = data.charCodeAt(i);
+    wsRef.current.send(buf);
+  };
+
   useEffect(resize, [selected]);
 
   const params: UseXTermProps = useMemo(
     () => ({
       options: {
-        convertEol: true,
+        convertEol: false,
         cursorBlink: true,
         cursorStyle: "block",
         fontFamily: "monospace",
+        scrollback: 5000,
+        // This is handled in ws on_message handler
+        scrollOnUserInput: false,
         theme,
       },
       listeners: {
-        onResize: ({ rows, cols }) => {
-          if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN)
-            return;
-
-          const json = JSON.stringify({ rows, cols });
-          const buf = new Uint8Array(json.length + 1);
-          buf[0] = 0xff; // resize prefix
-          for (let i = 0; i < json.length; i++) buf[i + 1] = json.charCodeAt(i);
-          wsRef.current.send(buf);
-        },
-        onData: (data: string) => {
-          if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN)
-            return;
-
-          const buf = new Uint8Array(data.length + 1);
-          buf[0] = 0x00; // data prefix
-          for (let i = 0; i < data.length; i++) buf[i + 1] = data.charCodeAt(i);
-          wsRef.current.send(buf);
-        },
+        onResize: resize,
+        onData: onStdin,
       },
       addons: [fitRef.current],
     }),
@@ -215,10 +209,34 @@ const ServerTerminal = ({
 
   const { instance: term, ref: termRef } = useXTerm(params);
 
+  const viewport = (term as any)?._core?.viewport?._viewportElement as
+    | HTMLDivElement
+    | undefined;
+
+  useEffect(() => {
+    if (!term || !viewport) return;
+
+    let delta = 0;
+    term.attachCustomWheelEventHandler((e) => {
+      e.preventDefault();
+      // This is used to make touchpad and mousewheel more similar
+      delta += Math.sign(e.deltaY) * Math.sqrt(Math.abs(e.deltaY)) * 20;
+      return false;
+    });
+    const int = setInterval(() => {
+      if (Math.abs(delta) < 1) return;
+      viewport.scrollTop += delta;
+      delta = 0;
+    }, 100);
+    return () => clearInterval(int);
+  }, [term, termRef.current]);
+
   useEffect(() => {
     if (!selected || !term) return;
 
     term.clear();
+
+    let debounce = -1;
 
     const ws = komodo_client().connect_terminal({
       query: {
@@ -230,7 +248,19 @@ const ServerTerminal = ({
       },
       on_open: resize,
       on_message: (e) => {
-        term.write(new Uint8Array(e.data as ArrayBuffer));
+        term.write(new Uint8Array(e.data as ArrayBuffer), () => {
+          if (viewport) {
+            // viewport.scrollTop = viewport.scrollHeight - viewport.clientHeight;
+            viewport.scroll({
+              top: viewport.scrollHeight - viewport.clientHeight,
+            });
+          }
+          clearTimeout(debounce);
+          debounce = setTimeout(() => {
+            if (!viewport) return;
+            viewport.scrollTop = viewport.scrollHeight - viewport.clientHeight;
+          }, 500);
+        });
       },
       on_close: () => {
         term.writeln("\r\n\x1b[33m[connection closed]\x1b[0m");
@@ -243,12 +273,12 @@ const ServerTerminal = ({
       ws.close();
       wsRef.current = null;
     };
-  }, [term, selected, _reconnect]);
+  }, [term, viewport, selected, _reconnect]);
 
   return (
     <div
       ref={termRef}
-      className={cn("w-full h-[60vh]", selected ? "" : "hidden")}
+      className={cn("w-full h-[65vh]", selected ? "" : "hidden")}
     />
   );
 };

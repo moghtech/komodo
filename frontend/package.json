@@ -46,7 +46,7 @@
     "react-dom": "19.0.0",
     "react-minimal-pie-chart": "9.1.0",
     "react-router-dom": "7.3.0",
-    "react-xtermjs": "^1.0.9",
+    "react-xtermjs": "^1.0.10",
     "sanitize-html": "2.14.0",
     "tailwind-merge": "2.6.0",
     "tailwindcss-animate": "1.0.7"

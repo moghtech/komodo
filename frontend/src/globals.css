@@ -95,3 +95,7 @@
 .xterm {
   padding: 12px !important;
 }
+
+.xterm .xterm-viewport::-webkit-scrollbar {
+  @apply w-[16px] rounded-sm
+}
