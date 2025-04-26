@@ -250,10 +250,7 @@ const ServerTerminal = ({
       on_message: (e) => {
         term.write(new Uint8Array(e.data as ArrayBuffer), () => {
           if (viewport) {
-            // viewport.scrollTop = viewport.scrollHeight - viewport.clientHeight;
-            viewport.scroll({
-              top: viewport.scrollHeight - viewport.clientHeight,
-            });
+            viewport.scrollTop = viewport.scrollHeight - viewport.clientHeight;
           }
           clearTimeout(debounce);
           debounce = setTimeout(() => {
