@@ -18,6 +18,8 @@ services:
       PERIPHERY_ROOT_DIRECTORY: ${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}
       ## Pass the same passkey as used by the Komodo Core connecting to this Periphery agent.
       PERIPHERY_PASSKEYS: abc123
+      ## Make server run over https
+      PERIPHERY_SSL_ENABLED: true
       ## Specify whether to disable the terminals feature
       ## and disallow remote shell access (inside the Periphery container).
       PERIPHERY_DISABLE_TERMINALS: false
