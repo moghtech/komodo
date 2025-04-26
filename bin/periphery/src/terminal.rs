@@ -82,6 +82,14 @@ pub fn clean_up_terminals() {
     .retain(|_, terminal| !terminal.cancel.is_cancelled());
 }
 
+pub fn kill_all_terminals() {
+  terminals()
+    .read()
+    .unwrap()
+    .values()
+    .for_each(|terminal| terminal.cancel());
+}
+
 fn terminals() -> &'static PtyMap {
   static TERMINALS: OnceLock<PtyMap> = OnceLock::new();
   TERMINALS.get_or_init(Default::default)
@@ -121,7 +129,7 @@ impl Terminal {
       .context("Failed to open terminal")?;
 
     let mut cmd = CommandBuilder::new(&shell);
-    
+
     cmd.env("TERM", "xterm-256color");
     cmd.env("COLORTERM", "truecolor");
 

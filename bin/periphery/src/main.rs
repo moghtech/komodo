@@ -73,7 +73,9 @@ async fn main() -> anyhow::Result<()> {
 
   tokio::select! {
     res = app => return res?,
-    _ = term_signal.recv() => {},
+    _ = term_signal.recv() => {
+      terminal::kill_all_terminals();
+    },
   }
 
   Ok(())
