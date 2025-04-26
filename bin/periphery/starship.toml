@@ -1,0 +1,63 @@
+## This is used to customize the shell prompt in Periphery container for Terminals
+
+"$schema" = 'https://starship.rs/config-schema.json'
+
+add_newline = true
+
+format = "$time$hostname$memory_usage$all"
+
+[character]
+success_symbol = "[❯](bright-blue bold)"
+error_symbol = "[❯](bright-blue bold)"
+
+[package]
+disabled = true
+
+[time]
+format = "[❯$time](white dimmed) "
+time_format = "%l:%M %p"
+utc_time_offset = '-5'
+disabled = true
+
+[username]
+format = "[❯ $user]($style) "
+style_user = "bright-green"
+show_always = true
+
+[hostname]
+format = "[❯ $hostname]($style) "
+style = "bright-blue"
+ssh_only = false
+
+[directory]
+format = "[❯ $path]($style)[$read_only]($read_only_style) "
+style = "bright-cyan"
+
+[git_branch]
+format = "[❯ $symbol$branch(:$remote_branch)]($style) "
+style = "bright-purple"
+
+[git_status]
+style = "bright-purple"
+
+[rust]
+format = "[❯ $symbol($version )]($style)"
+symbol = "rustc "
+style = "bright-red"
+
+[nodejs]
+format = "[❯ $symbol($version )]($style)"
+symbol = "nodejs "
+style = "bright-red"
+
+[memory_usage]
+format = "[❯ mem ${ram} ${ram_pct}]($style) "
+threshold = -1
+style = "white"
+
+[cmd_duration]
+format = "[❯ $duration]($style)"
+style = "bright-yellow"
+
+[aws]
+disabled = true

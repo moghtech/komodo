@@ -8,10 +8,10 @@ FROM ${BINARIES_IMAGE} AS binaries
 
 FROM debian:bullseye-slim
 
+COPY ./bin/periphery/starship.toml /config/starship.toml
 COPY ./bin/periphery/debian-deps.sh .
 RUN sh ./debian-deps.sh && rm ./debian-deps.sh
 
-WORKDIR /app
 COPY --from=binaries /periphery /usr/local/bin/periphery
 
 EXPOSE 8120

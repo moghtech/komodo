@@ -15,6 +15,7 @@ RUN cargo build -p komodo_periphery --release
 # Final Image
 FROM debian:bullseye-slim
 
+COPY ./bin/periphery/starship.toml /config/starship.toml
 COPY ./bin/periphery/debian-deps.sh .
 RUN sh ./debian-deps.sh && rm ./debian-deps.sh
 
