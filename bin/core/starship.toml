@@ -60,7 +60,7 @@ format = "[❯ $duration]($style)"
 style = "bright-yellow"
 
 [container]
-format = "[❯ 🦎 periphery container ]($style)"
+format = "[❯ 🦎 core container ]($style)"
 style = "bright-green"
 
 [aws]

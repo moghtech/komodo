@@ -1,4 +1,7 @@
 #!/bin/bash
+
+## Periphery deps installer
+
 apt-get update
 apt-get install -y git curl wget ca-certificates
 

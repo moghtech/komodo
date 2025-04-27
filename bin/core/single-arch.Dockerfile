@@ -16,10 +16,9 @@ RUN cd frontend && yarn link komodo_client && yarn && yarn build
 
 FROM debian:bullseye-slim
 
-# Install Deps
-RUN apt update && \
-	apt install -y git ca-certificates && \
-	rm -rf /var/lib/apt/lists/*
+COPY ./bin/core/starship.toml /config/starship.toml
+COPY ./bin/core/debian-deps.sh .
+RUN sh ./debian-deps.sh && rm ./debian-deps.sh
 	
 # Copy
 COPY ./config/core.config.toml /config/config.toml
