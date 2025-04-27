@@ -57,7 +57,7 @@ impl Resolve<super::Args> for CreateTerminal {
           .status_code(StatusCode::FORBIDDEN),
       );
     }
-    create_terminal(self.name, self.shell, self.recreate)
+    create_terminal(self.name, self.command, self.args, self.recreate)
       .map(|_| NoData {})
       .map_err(Into::into)
   }

@@ -121,7 +121,8 @@ impl Resolve<WriteArgs> for CreateTerminal {
     periphery
       .request(api::terminal::CreateTerminal {
         name: self.name,
-        shell: self.shell,
+        command: self.command,
+        args: self.args,
         recreate: self.recreate,
       })
       .await

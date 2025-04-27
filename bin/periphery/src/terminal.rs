@@ -18,25 +18,26 @@ type StdoutReceiver = broadcast::Receiver<Bytes>;
 
 pub fn create_terminal(
   name: String,
-  shell: String,
+  command: String,
+  args: Vec<String>,
   recreate: bool,
 ) -> anyhow::Result<()> {
   let mut terminals = terminals().write().unwrap();
   if !recreate {
     if let Some(terminal) = terminals.get(&name) {
-      if terminal.shell == shell {
+      if terminal.command == command {
         return Ok(());
       } else {
         return Err(anyhow!(
-          "Terminal {name} already exists, but has shell {} instead of {shell}",
-          terminal.shell
+          "Terminal {name} already exists, but has command {} instead of {command}",
+          terminal.command
         ));
       }
     }
   }
   if let Some(prev) = terminals.insert(
     name,
-    Terminal::new(shell)
+    Terminal::new(command, args)
       .context("Failed to init terminal")?
       .into(),
   ) {
@@ -58,7 +59,8 @@ pub fn list_terminals() -> Vec<TerminalInfo> {
     .iter()
     .map(|(name, terminal)| TerminalInfo {
       name: name.to_string(),
-      shell: terminal.shell.clone(),
+      command: terminal.command.clone(),
+      args: terminal.args.clone(),
       stored_size_kb: terminal.history.size_kb(),
     })
     .collect::<Vec<_>>();
@@ -108,8 +110,9 @@ pub enum StdinMsg {
 }
 
 pub struct Terminal {
-  /// The shell that was used as the root command.
-  shell: String,
+  /// The command that was used as the root command, eg `shell`
+  command: String,
+  args: Vec<String>,
 
   pub cancel: CancellationToken,
 
@@ -120,16 +123,22 @@ pub struct Terminal {
 }
 
 impl Terminal {
-  /// shell should be "sh", "bash", "zsh", etc.
-  fn new(shell: String) -> anyhow::Result<Terminal> {
-    trace!("Creating terminal with shell: {shell}");
+  fn new(
+    command: String,
+    args: Vec<String>,
+  ) -> anyhow::Result<Terminal> {
+    trace!(
+      "Creating terminal with command: {command} {}",
+      args.join(" ")
+    );
 
     let terminal = native_pty_system()
       .openpty(PtySize::default())
       .context("Failed to open terminal")?;
 
-    let mut cmd = CommandBuilder::new(&shell);
+    let mut cmd = CommandBuilder::new(&command);
 
+    cmd.args(&args);
     cmd.env("TERM", "xterm-256color");
     cmd.env("COLORTERM", "truecolor");
 
@@ -262,7 +271,8 @@ impl Terminal {
     trace!("terminal tasks spawned");
 
     Ok(Terminal {
-      shell,
+      command,
+      args,
       cancel,
       stdin,
       stdout,

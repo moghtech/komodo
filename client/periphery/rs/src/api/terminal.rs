@@ -13,9 +13,12 @@ pub struct ListTerminals {}
 pub struct CreateTerminal {
   /// The name of the terminal to create
   pub name: String,
-  /// The shell program (eg bash) of the terminal
-  #[serde(default = "default_shell")]
-  pub shell: String,
+  /// The shell command (eg bash) to init the shell.
+  #[serde(default = "default_command")]
+  pub command: String,
+  /// A list of custom args to add to the starting command.
+  #[serde(default)]
+  pub args: Vec<String>,
   /// Whether to recreate the terminal if
   /// it already exists. This means first deleting the existing
   /// terminal with the same name.
@@ -24,7 +27,7 @@ pub struct CreateTerminal {
   pub recreate: bool,
 }
 
-fn default_shell() -> String {
+fn default_command() -> String {
   String::from("bash")
 }
 

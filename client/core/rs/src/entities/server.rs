@@ -285,8 +285,10 @@ pub struct ServerHealth {
 pub struct TerminalInfo {
   /// The name of the terminal.
   pub name: String,
-  /// The shell program of the pty
-  pub shell: String,
+  /// The root program of the pty
+  pub command: String,
+  /// The custom args used to start root command.
+  pub args: Vec<String>,
   /// The size of the terminal history in memory.
   pub stored_size_kb: f64,
 }
