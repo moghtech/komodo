@@ -264,13 +264,11 @@ const LogOrTerminal = ({
       <TabsTrigger value="Log" className="w-[110px]">
         Log
       </TabsTrigger>
-      <TabsTrigger
-        value="Terminal"
-        className="w-[110px]"
-        disabled={terminalDisabled}
-      >
-        Terminal
-      </TabsTrigger>
+      {!terminalDisabled && (
+        <TabsTrigger value="Terminal" className="w-[110px]">
+          Terminal
+        </TabsTrigger>
+      )}
     </TabsList>
   );
   return (

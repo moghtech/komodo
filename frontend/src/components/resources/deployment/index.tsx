@@ -90,13 +90,11 @@ const ConfigTabsInner = ({
       <TabsTrigger value="Log" className="w-[110px]" disabled={logsDisabled}>
         Log
       </TabsTrigger>
-      <TabsTrigger
-        value="Terminal"
-        className="w-[110px]"
-        disabled={terminalDisabled}
-      >
-        Terminal
-      </TabsTrigger>
+      {!terminalDisabled && (
+        <TabsTrigger value="Terminal" className="w-[110px]">
+          Terminal
+        </TabsTrigger>
+      )}
     </TabsList>
   );
   return (
