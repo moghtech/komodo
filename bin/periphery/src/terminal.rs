@@ -12,17 +12,21 @@ use tokio::sync::{broadcast, mpsc};
 use tokio_util::sync::CancellationToken;
 
 type PtyName = String;
-type PtyMap = std::sync::RwLock<HashMap<PtyName, Arc<Terminal>>>;
+type PtyMap = tokio::sync::RwLock<HashMap<PtyName, Arc<Terminal>>>;
 type StdinSender = mpsc::Sender<StdinMsg>;
 type StdoutReceiver = broadcast::Receiver<Bytes>;
 
-pub fn create_terminal(
+pub async fn create_terminal(
   name: String,
   command: String,
   args: Vec<String>,
   recreate: bool,
 ) -> anyhow::Result<()> {
-  let mut terminals = terminals().write().unwrap();
+  trace!(
+    "CreateTerminal: {name} | command: {command} | args: {}",
+    args.join(" ")
+  );
+  let mut terminals = terminals().write().await;
   if !recreate {
     if let Some(terminal) = terminals.get(&name) {
       if terminal.command == command {
@@ -38,6 +42,7 @@ pub fn create_terminal(
   if let Some(prev) = terminals.insert(
     name,
     Terminal::new(command, args)
+      .await
       .context("Failed to init terminal")?
       .into(),
   ) {
@@ -46,16 +51,16 @@ pub fn create_terminal(
   Ok(())
 }
 
-pub fn delete_terminal(name: &str) {
-  if let Some(terminal) = terminals().write().unwrap().remove(name) {
+pub async fn delete_terminal(name: &str) {
+  if let Some(terminal) = terminals().write().await.remove(name) {
     terminal.cancel.cancel();
   }
 }
 
-pub fn list_terminals() -> Vec<TerminalInfo> {
+pub async fn list_terminals() -> Vec<TerminalInfo> {
   let mut terminals = terminals()
     .read()
-    .unwrap()
+    .await
     .iter()
     .map(|(name, terminal)| TerminalInfo {
       name: name.to_string(),
@@ -68,28 +73,30 @@ pub fn list_terminals() -> Vec<TerminalInfo> {
   terminals
 }
 
-pub fn get_terminal(name: &str) -> anyhow::Result<Arc<Terminal>> {
+pub async fn get_terminal(
+  name: &str,
+) -> anyhow::Result<Arc<Terminal>> {
   terminals()
     .read()
-    .unwrap()
+    .await
     .get(name)
     .cloned()
     .with_context(|| format!("No terminal at {name}"))
 }
 
-pub fn clean_up_terminals() {
+pub async fn clean_up_terminals() {
   terminals()
     .write()
-    .unwrap()
+    .await
     .retain(|_, terminal| !terminal.cancel.is_cancelled());
 }
 
-pub fn kill_all_terminals() {
+pub async fn kill_all_terminals() {
   terminals()
-    .read()
-    .unwrap()
-    .values()
-    .for_each(|terminal| terminal.cancel());
+    .write()
+    .await
+    .drain()
+    .for_each(|(_, terminal)| terminal.cancel());
 }
 
 fn terminals() -> &'static PtyMap {
@@ -123,7 +130,7 @@ pub struct Terminal {
 }
 
 impl Terminal {
-  fn new(
+  async fn new(
     command: String,
     args: Vec<String>,
   ) -> anyhow::Result<Terminal> {
@@ -146,6 +153,18 @@ impl Terminal {
       .slave
       .spawn_command(cmd)
       .context("Failed to spawn child command")?;
+
+    // Check the child didn't stop immediately (after a little wait) with error
+    tokio::time::sleep(Duration::from_millis(100)).await;
+    if let Some(status) = child
+      .try_wait()
+      .context("Failed to check child process exit status")?
+    {
+      return Err(anyhow!(
+        "Child process exited immediate with code {}",
+        status.exit_code()
+      ));
+    }
 
     let mut terminal_write = terminal
       .master

@@ -49,7 +49,7 @@ export const ServerTerminals = ({
     await create_terminal({
       server: id,
       name,
-      shell: "bash",
+      command: "bash",
     });
     refetchTerminals();
     setTimeout(() => {

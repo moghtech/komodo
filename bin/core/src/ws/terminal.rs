@@ -20,7 +20,7 @@ pub async fn handler(
   Query(ConnectTerminalQuery {
     server,
     terminal,
-    command,
+    init,
   }): Query<ConnectTerminalQuery>,
   ws: WebSocketUpgrade,
 ) -> impl IntoResponse {
@@ -63,7 +63,7 @@ pub async fn handler(
     let periphery_socket = match periphery
       .connect_terminal(
         terminal,
-        command,
+        init,
       )
       .await
     {

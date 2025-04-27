@@ -43,8 +43,8 @@ impl Resolve<super::Args> for ListTerminals {
           .status_code(StatusCode::FORBIDDEN),
       );
     }
-    clean_up_terminals();
-    Ok(list_terminals())
+    clean_up_terminals().await;
+    Ok(list_terminals().await)
   }
 }
 
@@ -58,6 +58,7 @@ impl Resolve<super::Args> for CreateTerminal {
       );
     }
     create_terminal(self.name, self.command, self.args, self.recreate)
+      .await
       .map(|_| NoData {})
       .map_err(Into::into)
   }
@@ -72,7 +73,7 @@ impl Resolve<super::Args> for DeleteTerminal {
           .status_code(StatusCode::FORBIDDEN),
       );
     }
-    delete_terminal(&self.terminal);
+    delete_terminal(&self.terminal).await;
     Ok(NoData {})
   }
 }
@@ -146,7 +147,7 @@ pub async fn connect_terminal(
   Query(ConnectTerminalQuery {
     token,
     terminal,
-    command,
+    init,
   }): Query<ConnectTerminalQuery>,
   ws: WebSocketUpgrade,
 ) -> serror::Result<Response> {
@@ -160,8 +161,8 @@ pub async fn connect_terminal(
   // Auth the connection with single use token
   auth_tokens().check_token(token)?;
 
-  clean_up_terminals();
-  let terminal = get_terminal(&terminal)?;
+  clean_up_terminals().await;
+  let terminal = get_terminal(&terminal).await?;
 
   Ok(ws.on_upgrade(|mut socket| async move {
     let init_res = async {
@@ -173,10 +174,10 @@ pub async fn connect_terminal(
         socket.send(Message::Binary(b)).await.context("Failed to send history part b")?;
       }
 
-      if let Some(command) = command {
+      if let Some(init) = init {
         terminal
           .stdin
-          .send(StdinMsg::Bytes(Bytes::from(command + "\n")))
+          .send(StdinMsg::Bytes(Bytes::from(init + "\n")))
           .await
           .context("Failed to run init command")?
       }

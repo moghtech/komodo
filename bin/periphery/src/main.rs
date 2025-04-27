@@ -74,7 +74,8 @@ async fn main() -> anyhow::Result<()> {
   tokio::select! {
     res = app => return res?,
     _ = term_signal.recv() => {
-      terminal::kill_all_terminals();
+      info!("Exiting all active Terminals for shutdown");
+      terminal::kill_all_terminals().await;
     },
   }
 

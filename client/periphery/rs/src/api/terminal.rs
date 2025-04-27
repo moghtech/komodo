@@ -67,5 +67,5 @@ pub struct ConnectTerminalQuery {
   /// or deleted using [DeleteTerminal]
   pub terminal: String,
   /// Optional. The initial command to execute on connection to the shell.
-  pub command: Option<String>,
+  pub init: Option<String>,
 }

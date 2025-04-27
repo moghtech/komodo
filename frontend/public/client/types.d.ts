@@ -3636,8 +3636,10 @@ export type ListTagsResponse = Tag[];
 export interface TerminalInfo {
     /** The name of the terminal. */
     name: string;
-    /** The shell program of the pty */
-    shell: string;
+    /** The root program of the pty */
+    command: string;
+    /** The custom args used to start root command. */
+    args: string[];
     /** The size of the terminal history in memory. */
     stored_size_kb: number;
 }
@@ -4124,7 +4126,7 @@ export interface ConnectTerminalQuery {
      */
     terminal: string;
     /** Optional. The initial command to execute on connection to the shell. */
-    command?: string;
+    init?: string;
 }
 export interface Conversion {
     /** reference on the server. */
@@ -4495,10 +4497,15 @@ export interface CreateTerminal {
     /** The name of the terminal on the server to create. */
     name: string;
     /**
-     * The shell program (eg bash) of the terminal.
+     * The shell command (eg bash) to init the shell.
      * Default: `bash`
      */
-    shell: string;
+    command: string;
+    /**
+     * A list of custom args to add to the starting command.
+     * Default: `[]`
+     */
+    args?: string[];
     /**
      * Whether to recreate the terminal if
      * it already exists. This means first deleting the existing
