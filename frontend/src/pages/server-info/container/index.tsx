@@ -249,7 +249,15 @@ const LogOrTerminal = ({
     `server-${server}-${container_name}-tabs-v1`,
     "Log"
   );
-  const terminalDisabled = state !== Types.ContainerStateStatusEnum.Running;
+  const { canWrite } = useEditPermissions({
+    type: "Server",
+    id: server,
+  });
+  const terminals_disabled = useServer(server)?.info.terminals_disabled ?? true;
+  const terminalDisabled =
+    !canWrite ||
+    terminals_disabled ||
+    state !== Types.ContainerStateStatusEnum.Running;
   const view = terminalDisabled && _view === "Terminal" ? "Log" : _view;
   const tabs = (
     <TabsList className="justify-start w-fit">

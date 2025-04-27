@@ -30,6 +30,7 @@ import { ResourceNotifications } from "@pages/resource-notifications";
 import { Fragment } from "react/jsx-runtime";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
 import { ContainerTerminal } from "@components/terminal";
+import { useServer } from "@components/resources/server";
 
 type IdServiceComponent = React.FC<{ id: string; service?: string }>;
 
@@ -214,7 +215,15 @@ const LogOrTerminal = ({
     `stack-${stack.id}-${service}-tabs-v1`,
     "Log"
   );
+  const { canWrite: canWriteServer } = useEditPermissions({
+    type: "Server",
+    id: stack.info.server_id,
+  });
+  const terminals_disabled =
+    useServer(stack.info.server_id)?.info.terminals_disabled ?? true;
   const terminalDisabled =
+    !canWriteServer ||
+    terminals_disabled ||
     container_state !== Types.ContainerStateStatusEnum.Running;
   const view = terminalDisabled && _view === "Terminal" ? "Log" : _view;
   const tabs = (

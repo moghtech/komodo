@@ -32,6 +32,7 @@ import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 import { DeploymentTerminal } from "./terminal";
+import { useEditPermissions } from "@pages/resource";
 
 // const configOrLog = atomWithStorage("config-or-log-v1", "Config");
 
@@ -45,22 +46,42 @@ export const useFullDeployment = (id: string) =>
     .data;
 
 const ConfigTabs = ({ id }: { id: string }) => {
+  const deployment = useDeployment(id);
+  if (!deployment) return null;
+  return <ConfigTabsInner deployment={deployment} />;
+};
+
+const ConfigTabsInner = ({
+  deployment,
+}: {
+  deployment: Types.DeploymentListItem;
+}) => {
   // const [view, setView] = useAtom(configOrLog);
   const [_view, setView] = useLocalStorage<"Config" | "Log" | "Terminal">(
     "deployment-tabs-v1",
     "Config"
   );
-  const state = useDeployment(id)?.info.state;
+  const { canWrite: canWriteServer } = useEditPermissions({
+    type: "Server",
+    id: deployment.info.server_id,
+  });
+  const terminals_disabled =
+    useServer(deployment.info.server_id)?.info.terminals_disabled ?? true;
+  const state = deployment.info.state;
   const logsDisabled =
     state === undefined ||
     state === Types.DeploymentState.Unknown ||
     state === Types.DeploymentState.NotDeployed;
-  const terminalDisabled = state !== Types.DeploymentState.Running;
+  const terminalDisabled =
+    !canWriteServer ||
+    terminals_disabled ||
+    state !== Types.DeploymentState.Running;
   const view =
     (logsDisabled && _view === "Log") ||
     (terminalDisabled && _view === "Terminal")
       ? "Config"
       : _view;
+
   const tabs = (
     <TabsList className="justify-start w-fit">
       <TabsTrigger value="Config" className="w-[110px]">
@@ -81,13 +102,13 @@ const ConfigTabs = ({ id }: { id: string }) => {
   return (
     <Tabs value={view} onValueChange={setView as any} className="grid gap-4">
       <TabsContent value="Config">
-        <DeploymentConfig id={id} titleOther={tabs} />
+        <DeploymentConfig id={deployment.id} titleOther={tabs} />
       </TabsContent>
       <TabsContent value="Log">
-        <DeploymentLogs id={id} titleOther={tabs} />
+        <DeploymentLogs id={deployment.id} titleOther={tabs} />
       </TabsContent>
       <TabsContent value="Terminal">
-        <DeploymentTerminal id={id} titleOther={tabs} />
+        <DeploymentTerminal deployment={deployment} titleOther={tabs} />
       </TabsContent>
     </Tabs>
   );

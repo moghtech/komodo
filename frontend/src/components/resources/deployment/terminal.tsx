@@ -1,18 +1,15 @@
 import { ReactNode } from "react";
-import { useDeployment } from ".";
 import { ContainerTerminal } from "@components/terminal";
+import { Types } from "komodo_client";
 
 export const DeploymentTerminal = ({
-  id,
+  deployment,
   titleOther,
 }: {
-  id: string;
+  deployment: Types.DeploymentListItem;
   titleOther?: ReactNode;
 }) => {
-  const deployment = useDeployment(id);
-
   return (
-    deployment &&
     deployment.info.server_id && (
       <ContainerTerminal
         titleOther={titleOther}
