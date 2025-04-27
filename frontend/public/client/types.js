@@ -489,6 +489,22 @@ export var SyncWebhookAction;
     SyncWebhookAction["Refresh"] = "Refresh";
     SyncWebhookAction["Sync"] = "Sync";
 })(SyncWebhookAction || (SyncWebhookAction = {}));
+/**
+ * Configures the behavior of [CreateTerminal] if the
+ * specified terminal name already exists.
+ */
+export var TerminalRecreateMode;
+(function (TerminalRecreateMode) {
+    /**
+     * Never kill the old terminal if it already exists.
+     * If the command is different, returns error.
+     */
+    TerminalRecreateMode["Never"] = "Never";
+    /** Always kill the old terminal and create new one */
+    TerminalRecreateMode["Always"] = "Always";
+    /** Only kill and recreate if the command is different. */
+    TerminalRecreateMode["DifferentCommand"] = "DifferentCommand";
+})(TerminalRecreateMode || (TerminalRecreateMode = {}));
 export var HetznerDatacenter;
 (function (HetznerDatacenter) {
     HetznerDatacenter["Nuremberg1Dc3"] = "Nuremberg1Dc3";

@@ -108,12 +108,15 @@ export const useManageUser = <
   return useMutation({
     mutationKey: [type],
     mutationFn: (params: P) => komodo_client().user<T, R>(type, params),
-    onError: (e: { result: { error?: string } }, v, c) => {
+    onError: (e: { result: { error?: string; trace?: string[] } }, v, c) => {
       console.log("Auth error:", e);
-      const msg = e.result.error ?? "Unknown error. See console.";
-      let msg_log = msg ? msg + " | " : "";
-      if (msg_log) {
-        msg_log = msg_log[0].toUpperCase() + msg_log.slice(1);
+      const msg = e.result?.error ?? "Unknown error. See console.";
+      const detail = e.result?.trace
+        ?.map((msg) => msg[0].toUpperCase() + msg.slice(1))
+        .join(" | ");
+      let msg_log = msg ? msg[0].toUpperCase() + msg.slice(1) + " | " : "";
+      if (detail) {
+        msg_log += detail + " | ";
       }
       toast({
         title: `Request ${type} Failed`,
@@ -142,12 +145,15 @@ export const useWrite = <
   return useMutation({
     mutationKey: [type],
     mutationFn: (params: P) => komodo_client().write<T, R>(type, params),
-    onError: (e: { result: { error?: string } }, v, c) => {
+    onError: (e: { result: { error?: string; trace?: string[] } }, v, c) => {
       console.log("Write error:", e);
       const msg = e.result.error ?? "Unknown error. See console.";
-      let msg_log = msg ? msg + " - " : "";
-      if (msg_log) {
-        msg_log = msg_log[0].toUpperCase() + msg_log.slice(1);
+      const detail = e.result?.trace
+        ?.map((msg) => msg[0].toUpperCase() + msg.slice(1))
+        .join(" | ");
+      let msg_log = msg ? msg[0].toUpperCase() + msg.slice(1) + " | " : "";
+      if (detail) {
+        msg_log += detail + " | ";
       }
       toast({
         title: `Write request ${type} failed`,
@@ -176,12 +182,15 @@ export const useExecute = <
   return useMutation({
     mutationKey: [type],
     mutationFn: (params: P) => komodo_client().execute<T, R>(type, params),
-    onError: (e: { result: { error?: string } }, v, c) => {
+    onError: (e: { result: { error?: string; trace?: string[] } }, v, c) => {
       console.log("Execute error:", e);
       const msg = e.result.error ?? "Unknown error. See console.";
-      let msg_log = msg ? msg + " | " : "";
-      if (msg_log) {
-        msg_log = msg_log[0].toUpperCase() + msg_log.slice(1);
+      const detail = e.result?.trace
+        ?.map((msg) => msg[0].toUpperCase() + msg.slice(1))
+        .join(" | ");
+      let msg_log = msg ? msg[0].toUpperCase() + msg.slice(1) + " | " : "";
+      if (detail) {
+        msg_log += detail + " | ";
       }
       toast({
         title: `Execute request ${type} failed`,
@@ -210,12 +219,15 @@ export const useAuth = <
   return useMutation({
     mutationKey: [type],
     mutationFn: (params: P) => komodo_client().auth<T, R>(type, params),
-    onError: (e: { result: { error?: string } }, v, c) => {
+    onError: (e: { result: { error?: string; trace?: string[] } }, v, c) => {
       console.log("Auth error:", e);
       const msg = e.result.error ?? "Unknown error. See console.";
-      let msg_log = msg ? msg + " | " : "";
-      if (msg_log) {
-        msg_log = msg_log[0].toUpperCase() + msg_log.slice(1);
+      const detail = e.result?.trace
+        ?.map((msg) => msg[0].toUpperCase() + msg.slice(1))
+        .join(" | ");
+      let msg_log = msg ? msg[0].toUpperCase() + msg.slice(1) + " | " : "";
+      if (detail) {
+        msg_log += detail + " | ";
       }
       toast({
         title: `Auth request ${type} failed`,

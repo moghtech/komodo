@@ -1,14 +1,17 @@
 import { useRead } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { Log, LogSection } from "@components/log";
+import { ReactNode } from "react";
 
 export const StackServiceLogs = ({
   id,
   service,
+  titleOther,
 }: {
   /// Stack id
   id: string;
   service: string;
+  titleOther?: ReactNode;
 }) => {
   // const stack = useStack(id);
   const services = useRead("ListStackServices", { stack: id }).data;
@@ -19,19 +22,22 @@ export const StackServiceLogs = ({
     return null;
   }
 
-  return <StackLogsInner id={id} service={service} />;
+  return <StackLogsInner titleOther={titleOther} id={id} service={service} />;
 };
 
 const StackLogsInner = ({
   id,
   service,
+  titleOther,
 }: {
   /// Stack id
   id: string;
   service: string;
+  titleOther?: ReactNode;
 }) => {
   return (
     <LogSection
+      titleOther={titleOther}
       regular_logs={(timestamps, stream, tail) =>
         NoSearchLogs(id, service, tail, timestamps, stream)
       }

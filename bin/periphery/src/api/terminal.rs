@@ -57,7 +57,7 @@ impl Resolve<super::Args> for CreateTerminal {
           .status_code(StatusCode::FORBIDDEN),
       );
     }
-    create_terminal(self.name, self.command, self.args, self.recreate)
+    create_terminal(self.name, self.command, self.recreate)
       .await
       .map(|_| NoData {})
       .map_err(Into::into)
@@ -311,5 +311,7 @@ pub async fn connect_terminal(
     };
 
     tokio::join!(ws_read, ws_write);
+
+    clean_up_terminals().await;
   }))
 }

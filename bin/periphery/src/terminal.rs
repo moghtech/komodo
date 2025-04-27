@@ -6,7 +6,9 @@ use std::{
 
 use anyhow::{Context, anyhow};
 use bytes::Bytes;
-use komodo_client::entities::server::TerminalInfo;
+use komodo_client::{
+  api::write::TerminalRecreateMode, entities::server::TerminalInfo,
+};
 use portable_pty::{CommandBuilder, PtySize, native_pty_system};
 use tokio::sync::{broadcast, mpsc};
 use tokio_util::sync::CancellationToken;
@@ -19,19 +21,18 @@ type StdoutReceiver = broadcast::Receiver<Bytes>;
 pub async fn create_terminal(
   name: String,
   command: String,
-  args: Vec<String>,
-  recreate: bool,
+  recreate: TerminalRecreateMode,
 ) -> anyhow::Result<()> {
   trace!(
-    "CreateTerminal: {name} | command: {command} | args: {}",
-    args.join(" ")
+    "CreateTerminal: {name} | command: {command} | recreate: {recreate:?}"
   );
   let mut terminals = terminals().write().await;
-  if !recreate {
+  use TerminalRecreateMode::*;
+  if matches!(recreate, Never | DifferentCommand) {
     if let Some(terminal) = terminals.get(&name) {
       if terminal.command == command {
         return Ok(());
-      } else {
+      } else if matches!(recreate, Never) {
         return Err(anyhow!(
           "Terminal {name} already exists, but has command {} instead of {command}",
           terminal.command
@@ -41,7 +42,7 @@ pub async fn create_terminal(
   }
   if let Some(prev) = terminals.insert(
     name,
-    Terminal::new(command, args)
+    Terminal::new(command)
       .await
       .context("Failed to init terminal")?
       .into(),
@@ -65,7 +66,6 @@ pub async fn list_terminals() -> Vec<TerminalInfo> {
     .map(|(name, terminal)| TerminalInfo {
       name: name.to_string(),
       command: terminal.command.clone(),
-      args: terminal.args.clone(),
       stored_size_kb: terminal.history.size_kb(),
     })
     .collect::<Vec<_>>();
@@ -119,7 +119,6 @@ pub enum StdinMsg {
 pub struct Terminal {
   /// The command that was used as the root command, eg `shell`
   command: String,
-  args: Vec<String>,
 
   pub cancel: CancellationToken,
 
@@ -130,22 +129,23 @@ pub struct Terminal {
 }
 
 impl Terminal {
-  async fn new(
-    command: String,
-    args: Vec<String>,
-  ) -> anyhow::Result<Terminal> {
-    trace!(
-      "Creating terminal with command: {command} {}",
-      args.join(" ")
-    );
+  async fn new(command: String) -> anyhow::Result<Terminal> {
+    trace!("Creating terminal with command: {command}");
 
     let terminal = native_pty_system()
       .openpty(PtySize::default())
       .context("Failed to open terminal")?;
 
-    let mut cmd = CommandBuilder::new(&command);
+    let mut command_split = command.split(' ').map(|arg| arg.trim());
+    let cmd =
+      command_split.next().context("Command cannot be empty")?;
 
-    cmd.args(&args);
+    let mut cmd = CommandBuilder::new(cmd);
+
+    for arg in command_split {
+      cmd.arg(arg);
+    }
+
     cmd.env("TERM", "xterm-256color");
     cmd.env("COLORTERM", "truecolor");
 
@@ -161,7 +161,7 @@ impl Terminal {
       .context("Failed to check child process exit status")?
     {
       return Err(anyhow!(
-        "Child process exited immediate with code {}",
+        "Child process exited immediately with code {}",
         status.exit_code()
       ));
     }
@@ -291,7 +291,6 @@ impl Terminal {
 
     Ok(Terminal {
       command,
-      args,
       cancel,
       stdin,
       stdout,

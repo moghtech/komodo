@@ -109,6 +109,21 @@ pub struct CreateNetwork {
 
 //
 
+/// Configures the behavior of [CreateTerminal] if the
+/// specified terminal name already exists.
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, Default)]
+pub enum TerminalRecreateMode {
+  /// Never kill the old terminal if it already exists.
+  /// If the command is different, returns error.
+  #[default]
+  Never,
+  /// Always kill the old terminal and create new one
+  Always,
+  /// Only kill and recreate if the command is different.
+  DifferentCommand,
+}
+
 /// Create a terminal on the server.
 /// Response: [NoData]
 #[typeshare]
@@ -123,20 +138,17 @@ pub struct CreateTerminal {
   pub server: String,
   /// The name of the terminal on the server to create.
   pub name: String,
-  /// The shell command (eg bash) to init the shell.
+  /// The shell command (eg `bash`) to init the shell.
+  ///
+  /// This can also include args:
+  /// `docker exec -it container sh`
+  ///
   /// Default: `bash`
   #[serde(default = "default_command")]
   pub command: String,
-  /// A list of custom args to add to the starting command.
-  /// Default: `[]`
+  /// Default: `Never`
   #[serde(default)]
-  pub args: Vec<String>,
-  /// Whether to recreate the terminal if
-  /// it already exists. This means first deleting the existing
-  /// terminal with the same name.
-  /// Default: `false`
-  #[serde(default)]
-  pub recreate: bool,
+  pub recreate: TerminalRecreateMode,
 }
 
 fn default_command() -> String {

@@ -1,17 +1,20 @@
 import { Log, LogSection } from "@components/log";
 import { useRead } from "@lib/hooks";
 import { Types } from "komodo_client";
+import { ReactNode } from "react";
 
 export const ContainerLogs = ({
   id,
   container_name,
+  titleOther,
 }: {
-  /// Server id
   id: string;
   container_name: string;
+  titleOther?: ReactNode;
 }) => {
   return (
     <LogSection
+      titleOther={titleOther}
       regular_logs={(timestamps, stream, tail) =>
         NoSearchLogs(id, container_name, tail, timestamps, stream)
       }

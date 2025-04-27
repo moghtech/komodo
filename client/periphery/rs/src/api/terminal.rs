@@ -1,4 +1,7 @@
-use komodo_client::entities::{NoData, server::TerminalInfo};
+use komodo_client::{
+  api::write::TerminalRecreateMode,
+  entities::{NoData, server::TerminalInfo},
+};
 use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 
@@ -13,18 +16,15 @@ pub struct ListTerminals {}
 pub struct CreateTerminal {
   /// The name of the terminal to create
   pub name: String,
-  /// The shell command (eg bash) to init the shell.
+  /// The shell command (eg `bash`) to init the shell.
+  ///
+  /// This can also include args:
+  /// `docker exec -it container sh`
   #[serde(default = "default_command")]
   pub command: String,
-  /// A list of custom args to add to the starting command.
+  /// Default: `Never`
   #[serde(default)]
-  pub args: Vec<String>,
-  /// Whether to recreate the terminal if
-  /// it already exists. This means first deleting the existing
-  /// terminal with the same name.
-  /// Default: `false`
-  #[serde(default)]
-  pub recreate: bool,
+  pub recreate: TerminalRecreateMode,
 }
 
 fn default_command() -> String {

@@ -16,7 +16,7 @@ import {
   container_state_intention,
   stroke_color_class_by_intention,
 } from "@lib/color";
-import { useRead, useSetTitle } from "@lib/hooks";
+import { useLocalStorage, useRead, useSetTitle } from "@lib/hooks";
 import { cn } from "@lib/utils";
 import { Types } from "komodo_client";
 import { ChevronLeft, Clapperboard, Layers2 } from "lucide-react";
@@ -28,6 +28,8 @@ import { DockerResourceLink, ResourcePageHeader } from "@components/util";
 import { useEditPermissions } from "@pages/resource";
 import { ResourceNotifications } from "@pages/resource-notifications";
 import { Fragment } from "react/jsx-runtime";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
+import { ContainerTerminal } from "@components/terminal";
 
 type IdServiceComponent = React.FC<{ id: string; service?: string }>;
 
@@ -183,9 +185,66 @@ const StackServicePageInner = ({
 
         {/* Logs */}
         <div className="pt-4">
-          <StackServiceLogs id={stack_id} service={service} />
+          {stack && (
+            <LogOrTerminal
+              stack={stack}
+              service={service}
+              container_name={container?.name}
+              container_state={state}
+            />
+          )}
         </div>
       </div>
     </div>
+  );
+};
+
+const LogOrTerminal = ({
+  stack,
+  service,
+  container_name,
+  container_state,
+}: {
+  stack: Types.StackListItem;
+  service: string;
+  container_name: string | undefined;
+  container_state: Types.ContainerStateStatusEnum;
+}) => {
+  const [_view, setView] = useLocalStorage<"Log" | "Terminal">(
+    `stack-${stack.id}-${service}-tabs-v1`,
+    "Log"
+  );
+  const terminalDisabled =
+    container_state !== Types.ContainerStateStatusEnum.Running;
+  const view = terminalDisabled && _view === "Terminal" ? "Log" : _view;
+  const tabs = (
+    <TabsList className="justify-start w-fit">
+      <TabsTrigger value="Log" className="w-[110px]">
+        Log
+      </TabsTrigger>
+      <TabsTrigger
+        value="Terminal"
+        className="w-[110px]"
+        disabled={terminalDisabled}
+      >
+        Terminal
+      </TabsTrigger>
+    </TabsList>
+  );
+  return (
+    <Tabs value={view} onValueChange={setView as any} className="grid gap-4">
+      <TabsContent value="Log">
+        <StackServiceLogs id={stack.id} service={service} titleOther={tabs} />
+      </TabsContent>
+      <TabsContent value="Terminal">
+        {stack.info.server_id && container_name && (
+          <ContainerTerminal
+            server={stack.info.server_id}
+            container_name={container_name}
+            titleOther={tabs}
+          />
+        )}
+      </TabsContent>
+    </Tabs>
   );
 };

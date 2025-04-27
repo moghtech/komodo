@@ -3636,10 +3636,8 @@ export type ListTagsResponse = Tag[];
 export interface TerminalInfo {
     /** The name of the terminal. */
     name: string;
-    /** The root program of the pty */
+    /** The root program / args of the pty */
     command: string;
-    /** The custom args used to start root command. */
-    args: string[];
     /** The size of the terminal history in memory. */
     stored_size_kb: number;
 }
@@ -4488,6 +4486,21 @@ export interface CreateTag {
     name: string;
 }
 /**
+ * Configures the behavior of [CreateTerminal] if the
+ * specified terminal name already exists.
+ */
+export declare enum TerminalRecreateMode {
+    /**
+     * Never kill the old terminal if it already exists.
+     * If the command is different, returns error.
+     */
+    Never = "Never",
+    /** Always kill the old terminal and create new one */
+    Always = "Always",
+    /** Only kill and recreate if the command is different. */
+    DifferentCommand = "DifferentCommand"
+}
+/**
  * Create a terminal on the server.
  * Response: [NoData]
  */
@@ -4497,22 +4510,16 @@ export interface CreateTerminal {
     /** The name of the terminal on the server to create. */
     name: string;
     /**
-     * The shell command (eg bash) to init the shell.
+     * The shell command (eg `bash`) to init the shell.
+     *
+     * This can also include args:
+     * `docker exec -it container sh`
+     *
      * Default: `bash`
      */
     command: string;
-    /**
-     * A list of custom args to add to the starting command.
-     * Default: `[]`
-     */
-    args?: string[];
-    /**
-     * Whether to recreate the terminal if
-     * it already exists. This means first deleting the existing
-     * terminal with the same name.
-     * Default: `false`
-     */
-    recreate?: boolean;
+    /** Default: `Never` */
+    recreate?: TerminalRecreateMode;
 }
 /** **Admin only.** Create a user group. Response: [UserGroup] */
 export interface CreateUserGroup {

@@ -122,7 +122,6 @@ impl Resolve<WriteArgs> for CreateTerminal {
       .request(api::terminal::CreateTerminal {
         name: self.name,
         command: self.command,
-        args: self.args,
         recreate: self.recreate,
       })
       .await

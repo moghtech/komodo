@@ -9,7 +9,7 @@ import {
   ResourcePageHeader,
   ShowHideButton,
 } from "@components/util";
-import { useRead, useSetTitle, useWrite } from "@lib/hooks";
+import { useLocalStorage, useRead, useSetTitle, useWrite } from "@lib/hooks";
 import { Button } from "@ui/button";
 import { DataTable } from "@ui/data-table";
 import {
@@ -31,6 +31,8 @@ import { useEditPermissions } from "@pages/resource";
 import { ResourceNotifications } from "@pages/resource-notifications";
 import { MonacoEditor } from "@components/monaco";
 import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
+import { ContainerTerminal } from "@components/terminal";
 
 export const ContainerPage = () => {
   const { type, id, container } = useParams() as {
@@ -182,8 +184,11 @@ const ContainerPageInner = ({
           </Section>
         )}
 
-        {/* Logs */}
-        <ContainerLogs id={id} container_name={container_name} />
+        <LogOrTerminal
+          server={id}
+          container_name={container_name}
+          state={state}
+        />
 
         {/* TOP LEVEL CONTAINER INFO */}
         <Section title="Details" icon={<Info className="w-4 h-4" />}>
@@ -229,93 +234,55 @@ const ContainerPageInner = ({
       </div>
     </div>
   );
+};
 
-  // return (
-  //   <div className="flex flex-col gap-16 mb-24">
-  //     {/* HEADER */}
-  //     <div className="flex flex-col gap-4">
-  //       {/* BACK */}
-  //       <div className="flex items-center justify-between mb-4">
-  //         <Button
-  //           className="gap-2"
-  //           variant="secondary"
-  //           onClick={() => nav("/servers/" + id)}
-  //         >
-  //           <ChevronLeft className="w-4" /> Back
-  //         </Button>
-
-  //         <NewDeployment id={id} container={container_name} />
-  //       </div>
-
-  //       {/* TITLE */}
-  //       <div className="flex items-center gap-4">
-  //         <div className="mt-1">
-  //           <DOCKER_LINK_ICONS.container
-  //             server_id={id}
-  //             name={container_name}
-  //             size={8}
-  //           />
-  //         </div>
-  //         <DockerResourcePageName name={container_name} />
-  //         <div className="flex items-center gap-4 flex-wrap">
-  //           <StatusBadge
-  //             text={state}
-  //             intent={container_state_intention(state)}
-  //           />
-  //           {status && (
-  //             <p className="text-sm text-muted-foreground">{status}</p>
-  //           )}
-  //         </div>
-  //       </div>
-
-  //       {/* INFO */}
-  //       <div className="flex flex-wrap gap-4 items-center text-muted-foreground">
-  //         <ResourceLink type="Server" id={id} />
-  //         <AttachedResource id={id} container={container_name} />
-  //       </div>
-  //     </div>
-
-  //     {/* Actions */}
-  //     {canExecute && (
-  //       <Section title="Actions" icon={<Clapperboard className="w-4 h-4" />}>
-  //         <div className="flex gap-4 items-center flex-wrap">
-  //           {Object.entries(Actions).map(([key, Action]) => (
-  //             <Action key={key} id={id} container={container_name} />
-  //           ))}
-  //         </div>
-  //       </Section>
-  //     )}
-
-  //     {/* Updates */}
-  //     <ResourceUpdates type="Server" id={id} />
-
-  //     <ContainerLogs id={id} container_name={container_name} />
-
-  //     {/* TOP LEVEL CONTAINER INFO */}
-  //     <Section title="Details" icon={<Info className="w-4 h-4" />}>
-  //       <DataTable
-  //         tableKey="container-info"
-  //         data={[container]}
-  //         columns={[
-  //           {
-  //             accessorKey: "Id",
-  //             header: "Id",
-  //           },
-  //           {
-  //             accessorKey: "Image",
-  //             header: "Image",
-  //           },
-  //           {
-  //             accessorKey: "Driver",
-  //             header: "Driver",
-  //           },
-  //         ]}
-  //       />
-  //     </Section>
-
-  //     <DockerLabelsSection labels={container.Config?.Labels} />
-  //   </div>
-  // );
+const LogOrTerminal = ({
+  server,
+  container_name,
+  state,
+}: {
+  server: string;
+  container_name: string;
+  state: Types.ContainerStateStatusEnum;
+}) => {
+  const [_view, setView] = useLocalStorage<"Log" | "Terminal">(
+    `server-${server}-${container_name}-tabs-v1`,
+    "Log"
+  );
+  const terminalDisabled = state !== Types.ContainerStateStatusEnum.Running;
+  const view = terminalDisabled && _view === "Terminal" ? "Log" : _view;
+  const tabs = (
+    <TabsList className="justify-start w-fit">
+      <TabsTrigger value="Log" className="w-[110px]">
+        Log
+      </TabsTrigger>
+      <TabsTrigger
+        value="Terminal"
+        className="w-[110px]"
+        disabled={terminalDisabled}
+      >
+        Terminal
+      </TabsTrigger>
+    </TabsList>
+  );
+  return (
+    <Tabs value={view} onValueChange={setView as any} className="grid gap-4">
+      <TabsContent value="Log">
+        <ContainerLogs
+          id={server}
+          container_name={container_name}
+          titleOther={tabs}
+        />
+      </TabsContent>
+      <TabsContent value="Terminal">
+        <ContainerTerminal
+          server={server}
+          container_name={container_name}
+          titleOther={tabs}
+        />
+      </TabsContent>
+    </Tabs>
+  );
 };
 
 const AttachedResource = ({
