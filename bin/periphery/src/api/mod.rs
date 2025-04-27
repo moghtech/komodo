@@ -142,6 +142,7 @@ pub enum PeripheryRequest {
   ListTerminals(ListTerminals),
   CreateTerminal(CreateTerminal),
   DeleteTerminal(DeleteTerminal),
+  DeleteAllTerminals(DeleteAllTerminals),
   CreateTerminalAuthToken(CreateTerminalAuthToken),
 }
 

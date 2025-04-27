@@ -91,12 +91,15 @@ pub async fn clean_up_terminals() {
     .retain(|_, terminal| !terminal.cancel.is_cancelled());
 }
 
-pub async fn kill_all_terminals() {
+pub async fn delete_all_terminals() {
   terminals()
     .write()
     .await
     .drain()
     .for_each(|(_, terminal)| terminal.cancel());
+  // The terminals poll cancel every 500 millis, need to wait for them
+  // to finish cancelling.
+  tokio::time::sleep(Duration::from_millis(100)).await;
 }
 
 fn terminals() -> &'static PtyMap {

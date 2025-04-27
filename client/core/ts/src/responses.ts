@@ -216,6 +216,7 @@ export type WriteResponses = {
   CreateNetwork: Types.Update;
   CreateTerminal: Types.NoData;
   DeleteTerminal: Types.NoData;
+  DeleteAllTerminals: Types.NoData;
 
   // ==== DEPLOYMENT ====
   CreateDeployment: Types.Deployment;

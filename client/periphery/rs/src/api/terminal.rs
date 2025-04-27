@@ -31,6 +31,8 @@ fn default_command() -> String {
   String::from("bash")
 }
 
+//
+
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[response(NoData)]
 #[error(serror::Error)]
@@ -38,6 +40,13 @@ pub struct DeleteTerminal {
   /// The name of the terminal to delete
   pub terminal: String,
 }
+
+//
+
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[response(NoData)]
+#[error(serror::Error)]
+pub struct DeleteAllTerminals {}
 
 //
 

@@ -156,3 +156,27 @@ impl Resolve<WriteArgs> for DeleteTerminal {
     Ok(NoData {})
   }
 }
+
+impl Resolve<WriteArgs> for DeleteAllTerminals {
+  #[instrument(name = "DeleteAllTerminals", skip(user))]
+  async fn resolve(
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<NoData> {
+    let server = resource::get_check_permissions::<Server>(
+      &self.server,
+      user,
+      PermissionLevel::Write,
+    )
+    .await?;
+
+    let periphery = periphery_client(&server)?;
+
+    periphery
+      .request(api::terminal::DeleteAllTerminals {})
+      .await
+      .context("Failed to delete all terminals on periphery")?;
+
+    Ok(NoData {})
+  }
+}

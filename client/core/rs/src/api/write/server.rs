@@ -172,3 +172,17 @@ pub struct DeleteTerminal {
   /// The name of the terminal on the server to delete.
   pub terminal: String,
 }
+
+/// Delete all terminals on the server.
+/// Response: [NoData]
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoWriteRequest)]
+#[response(NoData)]
+#[error(serror::Error)]
+pub struct DeleteAllTerminals {
+  /// Server Id or name
+  pub server: String,
+}

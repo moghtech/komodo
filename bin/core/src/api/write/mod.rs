@@ -83,6 +83,7 @@ pub enum WriteRequest {
   CreateNetwork(CreateNetwork),
   CreateTerminal(CreateTerminal),
   DeleteTerminal(DeleteTerminal),
+  DeleteAllTerminals(DeleteAllTerminals),
 
   // ==== DEPLOYMENT ====
   CreateDeployment(CreateDeployment),

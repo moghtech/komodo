@@ -75,7 +75,7 @@ async fn main() -> anyhow::Result<()> {
     res = app => return res?,
     _ = term_signal.recv() => {
       info!("Exiting all active Terminals for shutdown");
-      terminal::kill_all_terminals().await;
+      terminal::delete_all_terminals().await;
     },
   }
 

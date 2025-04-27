@@ -4736,6 +4736,15 @@ export interface DeleteAlerter {
 }
 
 /**
+ * Delete all terminals on the server.
+ * Response: [NoData]
+ */
+export interface DeleteAllTerminals {
+	/** Server Id or name */
+	server: string;
+}
+
+/**
  * Delete an api key for the calling user.
  * Response: [NoData]
  */
@@ -8073,6 +8082,7 @@ export type WriteRequest =
 	| { type: "CreateNetwork", params: CreateNetwork }
 	| { type: "CreateTerminal", params: CreateTerminal }
 	| { type: "DeleteTerminal", params: DeleteTerminal }
+	| { type: "DeleteAllTerminals", params: DeleteAllTerminals }
 	| { type: "CreateDeployment", params: CreateDeployment }
 	| { type: "CopyDeployment", params: CopyDeployment }
 	| { type: "CreateDeploymentFromContainer", params: CreateDeploymentFromContainer }

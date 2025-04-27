@@ -16,7 +16,8 @@ use komodo_client::entities::{
 };
 use periphery_client::api::terminal::{
   ConnectTerminalQuery, CreateTerminal, CreateTerminalAuthToken,
-  CreateTerminalAuthTokenResponse, DeleteTerminal, ListTerminals,
+  CreateTerminalAuthTokenResponse, DeleteAllTerminals,
+  DeleteTerminal, ListTerminals,
 };
 use rand::Rng;
 use resolver_api::Resolve;
@@ -27,7 +28,8 @@ use crate::{
   config::periphery_config,
   terminal::{
     ResizeDimensions, StdinMsg, clean_up_terminals, create_terminal,
-    delete_terminal, get_terminal, list_terminals,
+    delete_all_terminals, delete_terminal, get_terminal,
+    list_terminals,
   },
 };
 
@@ -74,6 +76,20 @@ impl Resolve<super::Args> for DeleteTerminal {
       );
     }
     delete_terminal(&self.terminal).await;
+    Ok(NoData {})
+  }
+}
+
+impl Resolve<super::Args> for DeleteAllTerminals {
+  #[instrument(name = "DeleteAllTerminals", level = "debug")]
+  async fn resolve(self, _: &super::Args) -> serror::Result<NoData> {
+    if periphery_config().disable_terminals {
+      return Err(
+        anyhow!("Terminals are disabled in the periphery config")
+          .status_code(StatusCode::FORBIDDEN),
+      );
+    }
+    delete_all_terminals().await;
     Ok(NoData {})
   }
 }
