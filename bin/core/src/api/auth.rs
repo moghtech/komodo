@@ -1,11 +1,12 @@
 use std::{sync::OnceLock, time::Instant};
 
-use axum::{Router, http::HeaderMap, routing::post};
+use axum::{Router, extract::Path, http::HeaderMap, routing::post};
 use derive_variants::{EnumVariants, ExtractVariant};
 use komodo_client::{api::auth::*, entities::user::User};
 use resolver_api::Resolve;
 use response::Response;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use serror::Json;
 use typeshare::typeshare;
 use uuid::Uuid;
@@ -21,6 +22,8 @@ use crate::{
   helpers::query::get_user,
   state::jwt_client,
 };
+
+use super::Variant;
 
 pub struct AuthArgs {
   pub headers: HeaderMap,
@@ -45,7 +48,9 @@ pub enum AuthRequest {
 }
 
 pub fn router() -> Router {
-  let mut router = Router::new().route("/", post(handler));
+  let mut router = Router::new()
+    .route("/", post(handler))
+    .route("/{variant}", post(variant_handler));
 
   if core_config().local_auth {
     info!("🔑 Local Login Enabled");
@@ -67,6 +72,18 @@ pub fn router() -> Router {
   }
 
   router
+}
+
+async fn variant_handler(
+  headers: HeaderMap,
+  Path(Variant { variant }): Path<Variant>,
+  Json(params): Json<serde_json::Value>,
+) -> serror::Result<axum::response::Response> {
+  let req: AuthRequest = serde_json::from_value(json!({
+    "type": variant,
+    "params": params,
+  }))?;
+  handler(headers, Json(req)).await
 }
 
 #[instrument(name = "AuthHandler", level = "debug", skip(headers))]

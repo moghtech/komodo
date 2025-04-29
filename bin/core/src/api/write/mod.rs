@@ -1,17 +1,22 @@
 use std::time::Instant;
 
 use anyhow::Context;
-use axum::{Extension, Router, middleware, routing::post};
+use axum::{
+  Extension, Router, extract::Path, middleware, routing::post,
+};
 use derive_variants::{EnumVariants, ExtractVariant};
 use komodo_client::{api::write::*, entities::user::User};
 use resolver_api::Resolve;
 use response::Response;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use serror::Json;
 use typeshare::typeshare;
 use uuid::Uuid;
 
 use crate::auth::auth_request;
+
+use super::Variant;
 
 mod action;
 mod alerter;
@@ -198,7 +203,20 @@ pub enum WriteRequest {
 pub fn router() -> Router {
   Router::new()
     .route("/", post(handler))
+    .route("/{variant}", post(variant_handler))
     .layer(middleware::from_fn(auth_request))
+}
+
+async fn variant_handler(
+  user: Extension<User>,
+  Path(Variant { variant }): Path<Variant>,
+  Json(params): Json<serde_json::Value>,
+) -> serror::Result<axum::response::Response> {
+  let req: WriteRequest = serde_json::from_value(json!({
+    "type": variant,
+    "params": params,
+  }))?;
+  handler(user, Json(req)).await
 }
 
 async fn handler(

@@ -1,7 +1,9 @@
 use std::{pin::Pin, time::Instant};
 
 use anyhow::Context;
-use axum::{Extension, Router, middleware, routing::post};
+use axum::{
+  Extension, Router, extract::Path, middleware, routing::post,
+};
 use axum_extra::{TypedHeader, headers::ContentType};
 use derive_variants::{EnumVariants, ExtractVariant};
 use formatting::format_serror;
@@ -18,6 +20,7 @@ use mungos::by_id::find_one_by_id;
 use resolver_api::Resolve;
 use response::JsonString;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use serror::Json;
 use typeshare::typeshare;
 use uuid::Uuid;
@@ -39,6 +42,8 @@ mod server;
 mod server_template;
 mod stack;
 mod sync;
+
+use super::Variant;
 
 pub use {
   deployment::pull_deployment_inner, stack::pull_stack_inner,
@@ -143,7 +148,20 @@ pub enum ExecuteRequest {
 pub fn router() -> Router {
   Router::new()
     .route("/", post(handler))
+    .route("/{variant}", post(variant_handler))
     .layer(middleware::from_fn(auth_request))
+}
+
+async fn variant_handler(
+  user: Extension<User>,
+  Path(Variant { variant }): Path<Variant>,
+  Json(params): Json<serde_json::Value>,
+) -> serror::Result<(TypedHeader<ContentType>, String)> {
+  let req: ExecuteRequest = serde_json::from_value(json!({
+    "type": variant,
+    "params": params,
+  }))?;
+  handler(user, Json(req)).await
 }
 
 async fn handler(

@@ -1,7 +1,9 @@
 use std::{collections::HashSet, sync::OnceLock, time::Instant};
 
 use anyhow::{Context, anyhow};
-use axum::{Extension, Router, middleware, routing::post};
+use axum::{
+  Extension, Router, extract::Path, middleware, routing::post,
+};
 use komodo_client::{
   api::read::*,
   entities::{
@@ -18,6 +20,7 @@ use komodo_client::{
 use resolver_api::Resolve;
 use response::Response;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use serror::Json;
 use typeshare::typeshare;
 use uuid::Uuid;
@@ -26,6 +29,8 @@ use crate::{
   auth::auth_request, config::core_config, helpers::periphery_client,
   resource,
 };
+
+use super::Variant;
 
 mod action;
 mod alert;
@@ -224,7 +229,20 @@ enum ReadRequest {
 pub fn router() -> Router {
   Router::new()
     .route("/", post(handler))
+    .route("/{variant}", post(variant_handler))
     .layer(middleware::from_fn(auth_request))
+}
+
+async fn variant_handler(
+  user: Extension<User>,
+  Path(Variant { variant }): Path<Variant>,
+  Json(params): Json<serde_json::Value>,
+) -> serror::Result<axum::response::Response> {
+  let req: ReadRequest = serde_json::from_value(json!({
+    "type": variant,
+    "params": params,
+  }))?;
+  handler(user, Json(req)).await
 }
 
 #[instrument(name = "ReadHandler", level = "debug", skip(user), fields(user_id = user.id))]
