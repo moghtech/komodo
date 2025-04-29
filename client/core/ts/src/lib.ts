@@ -43,15 +43,16 @@ export function KomodoClient(url: string, options: InitOptions) {
     secret: options.type === "api-key" ? options.params.secret : undefined,
   };
 
-  const request = <Req, Res>(
+  const request = <Params, Res>(
     path: "/auth" | "/user" | "/read" | "/execute" | "/write",
-    request: Req
+    type: string,
+    params: Params
   ): Promise<Res> =>
     new Promise(async (res, rej) => {
       try {
-        let response = await fetch(url + path, {
+        let response = await fetch(`${url}${path}/${type}`, {
           method: "POST",
-          body: JSON.stringify(request),
+          body: JSON.stringify(params),
           headers: {
             ...(state.jwt
               ? {
@@ -104,12 +105,9 @@ export function KomodoClient(url: string, options: InitOptions) {
     params: Req["params"]
   ) =>
     await request<
-      { type: T; params: Req["params"] },
+      Req["params"],
       AuthResponses[Req["type"]]
-    >("/auth", {
-      type,
-      params,
-    });
+    >("/auth", type, params);
 
   const user = async <
     T extends UserRequest["type"],
@@ -119,9 +117,9 @@ export function KomodoClient(url: string, options: InitOptions) {
     params: Req["params"]
   ) =>
     await request<
-      { type: T; params: Req["params"] },
+      Req["params"],
       UserResponses[Req["type"]]
-    >("/user", { type, params });
+    >("/user", type, params);
 
   const read = async <
     T extends ReadRequest["type"],
@@ -131,9 +129,9 @@ export function KomodoClient(url: string, options: InitOptions) {
     params: Req["params"]
   ) =>
     await request<
-      { type: T; params: Req["params"] },
+      Req["params"],
       ReadResponses[Req["type"]]
-    >("/read", { type, params });
+    >("/read", type, params);
 
   const write = async <
     T extends WriteRequest["type"],
@@ -143,9 +141,9 @@ export function KomodoClient(url: string, options: InitOptions) {
     params: Req["params"]
   ) =>
     await request<
-      { type: T; params: Req["params"] },
+      Req["params"],
       WriteResponses[Req["type"]]
-    >("/write", { type, params });
+    >("/write", type, params);
 
   const execute = async <
     T extends ExecuteRequest["type"],
@@ -155,9 +153,9 @@ export function KomodoClient(url: string, options: InitOptions) {
     params: Req["params"]
   ) =>
     await request<
-      { type: T; params: Req["params"] },
+      Req["params"],
       ExecuteResponses[Req["type"]]
-    >("/execute", { type, params });
+    >("/execute", type, params);
 
   const execute_and_poll = async <
     T extends ExecuteRequest["type"],

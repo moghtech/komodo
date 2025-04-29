@@ -16,11 +16,11 @@ export function KomodoClient(url, options) {
         key: options.type === "api-key" ? options.params.key : undefined,
         secret: options.type === "api-key" ? options.params.secret : undefined,
     };
-    const request = (path, request) => new Promise(async (res, rej) => {
+    const request = (path, type, params) => new Promise(async (res, rej) => {
         try {
-            let response = await fetch(url + path, {
+            let response = await fetch(`${url}${path}/${type}`, {
                 method: "POST",
-                body: JSON.stringify(request),
+                body: JSON.stringify(params),
                 headers: {
                     ...(state.jwt
                         ? {
@@ -67,14 +67,11 @@ export function KomodoClient(url, options) {
             });
         }
     });
-    const auth = async (type, params) => await request("/auth", {
-        type,
-        params,
-    });
-    const user = async (type, params) => await request("/user", { type, params });
-    const read = async (type, params) => await request("/read", { type, params });
-    const write = async (type, params) => await request("/write", { type, params });
-    const execute = async (type, params) => await request("/execute", { type, params });
+    const auth = async (type, params) => await request("/auth", type, params);
+    const user = async (type, params) => await request("/user", type, params);
+    const read = async (type, params) => await request("/read", type, params);
+    const write = async (type, params) => await request("/write", type, params);
+    const execute = async (type, params) => await request("/execute", type, params);
     const execute_and_poll = async (type, params) => {
         const res = await execute(type, params);
         // Check if its a batch of updates or a single update;
