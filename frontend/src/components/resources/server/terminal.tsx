@@ -1,11 +1,20 @@
 import { Section } from "@components/layouts";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useState } from "react";
 import { useLocalStorage, useRead, useWrite } from "@lib/hooks";
 import { Card, CardContent, CardHeader } from "@ui/card";
 import { Badge } from "@ui/badge";
 import { Button } from "@ui/button";
 import { Loader2, Plus, RefreshCcw, X } from "lucide-react";
 import { Terminal } from "@components/terminal";
+import { Popover, PopoverContent, PopoverTrigger } from "@ui/popover";
+import {
+  Command,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@ui/command";
+import { filterBySplit } from "@lib/utils";
 
 export const ServerTerminals = ({
   id,
@@ -31,21 +40,21 @@ export const ServerTerminals = ({
     selected: string | undefined;
   }>(`server-${id}-selected-terminal-v1`, { selected: undefined });
 
-  const selected =
-    _selected.selected ??
-    terminals?.[0]?.name ??
-    next_terminal_name(terminals?.map((t) => t.name) ?? []);
+  const selected = _selected.selected ?? terminals?.[0]?.name;
 
   const [_reconnect, _setReconnect] = useState(false);
   const triggerReconnect = () => _setReconnect((r) => !r);
 
-  const create = async () => {
+  const create = async (command: string) => {
     if (!terminals) return;
-    const name = next_terminal_name(terminals.map((t) => t.name));
+    const name = next_terminal_name(
+      command,
+      terminals.map((t) => t.name)
+    );
     await create_terminal({
       server: id,
       name,
-      command: "bash",
+      command,
     });
     refetchTerminals();
     setTimeout(() => {
@@ -55,17 +64,11 @@ export const ServerTerminals = ({
     }, 100);
   };
 
-  useEffect(() => {
-    if (terminals && terminals.length === 0) {
-      create();
-    }
-  }, [terminals]);
-
   return (
     <Section titleOther={titleOther}>
       <Card>
-        <CardHeader className="flex flex-row gap-4 items-center justify-between">
-          <div className="flex gap-4">
+        <CardHeader className="flex flex-row gap-4 items-center justify-between flex-wrap">
+          <div className="flex gap-4 items-center flex-wrap">
             {terminals?.map(({ name: terminal }) => (
               <Badge
                 key={terminal}
@@ -73,7 +76,12 @@ export const ServerTerminals = ({
                 className="w-fit min-w-[150px] px-2 py-1 cursor-pointer flex gap-4 justify-between"
                 onClick={() => setSelected({ selected: terminal })}
               >
-                {terminal}
+                <div className="text-sm flex gap-1 items-center">
+                  {terminal}
+                  {/* <div className="min-w-[20px] max-w-[70px] text-xs text-muted-foreground text-nowrap whitespace-nowrap overflow-hidden overflow-ellipsis">
+                    {command}
+                  </div> */}
+                </div>
                 <Button
                   className="p-1 h-fit"
                   variant="destructive"
@@ -91,19 +99,7 @@ export const ServerTerminals = ({
               </Badge>
             ))}
             {terminals && (
-              <Button
-                className="flex items-center gap-2"
-                variant="outline"
-                onClick={create}
-                disabled={create_pending}
-              >
-                New Terminal
-                {create_pending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Plus className="w-4 h-4" />
-                )}
-              </Button>
+              <NewTerminal create={create} pending={create_pending} />
             )}
           </div>
           <Button
@@ -131,13 +127,99 @@ export const ServerTerminals = ({
   );
 };
 
-const next_terminal_name = (terminal_names: string[]) => {
+const BASE_SHELLS = ["bash", "sh"];
+
+const NewTerminal = ({
+  create,
+  pending,
+}: {
+  create: (shell: string) => Promise<void>;
+  pending: boolean;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [shells, setShells] = useLocalStorage("server-shells-v1", BASE_SHELLS);
+  const filtered = filterBySplit(shells, search, (item) => item);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className="flex items-center gap-2"
+          disabled={pending}
+        >
+          New Terminal
+          {pending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Plus className="w-4 h-4" />
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] max-h-[300px] p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Enter shell"
+            className="h-9"
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList>
+            <CommandGroup>
+              {filtered.map((shell) => (
+                <CommandItem
+                  key={shell}
+                  onSelect={() => {
+                    create(shell);
+                    setOpen(false);
+                  }}
+                  className="flex items-center justify-between cursor-pointer"
+                >
+                  <div className="p-1">{shell}</div>
+                  {!BASE_SHELLS.includes(shell) && (
+                    <Button
+                      variant="destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShells((shells) =>
+                          shells.filter((s) => s !== shell)
+                        );
+                      }}
+                      className="p-1 h-fit"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </CommandItem>
+              ))}
+              {filtered.length === 0 && (
+                <CommandItem
+                  onSelect={() => {
+                    setShells((shells) => [...shells, search]);
+                    create(search);
+                    setOpen(false);
+                  }}
+                  className="flex items-center justify-between cursor-pointer"
+                >
+                  <div className="p-1">{search}</div>
+                  <Plus className="w-4 h-4" />
+                </CommandItem>
+              )}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+const next_terminal_name = (command: string, terminal_names: string[]) => {
+  const shell = command.split(" ")[0];
   for (let i = 1; i <= terminal_names.length + 1; i++) {
-    const name = `terminal ${i}`;
+    const name = i > 1 ? `${shell} ${i}` : shell;
     if (!terminal_names.includes(name)) {
       return name;
     }
   }
-  // This shouldn't happen
-  return `terminal -1`;
+  return shell;
 };
