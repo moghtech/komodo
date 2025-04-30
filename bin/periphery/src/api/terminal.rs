@@ -15,13 +15,11 @@ use komodo_client::entities::{
   NoData, komodo_timestamp, server::TerminalInfo,
 };
 use periphery_client::api::terminal::{
-  ConnectTerminalQuery, CreateTerminal, CreateTerminalAuthToken,
-  CreateTerminalAuthTokenResponse, DeleteAllTerminals,
-  DeleteTerminal, ListTerminals,
+  ConnectTerminalQuery, CreateTerminal, CreateTerminalAuthToken, CreateTerminalAuthTokenResponse, DeleteAllTerminals, DeleteTerminal, ExecuteTerminalBody, ListTerminals
 };
 use rand::Rng;
 use resolver_api::Resolve;
-use serror::AddStatusCodeError;
+use serror::{AddStatusCodeError, Json};
 use tokio_util::sync::CancellationToken;
 
 use crate::{
@@ -331,3 +329,9 @@ pub async fn connect_terminal(
     clean_up_terminals().await;
   }))
 }
+
+// pub async fn execute_terminal(
+//   Json(body): Json<ExecuteTerminalBody>,
+// ) ->  {
+
+// }
