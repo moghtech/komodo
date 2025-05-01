@@ -20,7 +20,6 @@ import {
 import { ServerTemplateTable } from "./table";
 import { LaunchServer } from "./actions";
 import { ResourcePageHeader } from "@components/util";
-import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
 
 export const useServerTemplate = (id?: string) =>
@@ -141,12 +140,7 @@ export const ServerTemplateComponents: RequiredResourceComponents = {
 
   Config: ServerTemplateConfig,
 
-  DangerZone: ({ id }) => (
-    <>
-      <RenameResource type="ServerTemplate" id={id} />
-      <DeleteResource type="ServerTemplate" id={id} />
-    </>
-  ),
+  DangerZone: ({ id }) => <DeleteResource type="ServerTemplate" id={id} />,
 
   ResourcePageHeader: ({ id }) => {
     const template = useServerTemplate(id);
@@ -154,6 +148,8 @@ export const ServerTemplateComponents: RequiredResourceComponents = {
       <ResourcePageHeader
         intent="None"
         icon={<ServerCog className="w-8" />}
+        type="ServerTemplate"
+        id={id}
         name={template?.name}
         state={undefined}
         status={undefined}

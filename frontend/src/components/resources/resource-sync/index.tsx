@@ -20,7 +20,6 @@ import { ResourceSyncConfig } from "./config";
 import { ResourceSyncInfo } from "./info";
 import { ResourceSyncPending } from "./pending";
 import { Badge } from "@ui/badge";
-import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
 import { useAtom } from "jotai";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
@@ -251,12 +250,7 @@ export const ResourceSyncComponents: RequiredResourceComponents = {
 
   Config: ConfigInfoPending,
 
-  DangerZone: ({ id }) => (
-    <>
-      <RenameResource type="ResourceSync" id={id} />
-      <DeleteResource type="ResourceSync" id={id} />
-    </>
-  ),
+  DangerZone: ({ id }) => <DeleteResource type="ResourceSync" id={id} />,
 
   ResourcePageHeader: ({ id }) => {
     const sync = useResourceSync(id);
@@ -265,6 +259,8 @@ export const ResourceSyncComponents: RequiredResourceComponents = {
       <ResourcePageHeader
         intent={resource_sync_state_intention(sync?.info.state)}
         icon={<ResourceSyncIcon id={id} size={8} />}
+        type="ResourceSync"
+        id={id}
         name={sync?.name}
         state={sync?.info.state}
         status=""

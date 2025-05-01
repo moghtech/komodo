@@ -28,7 +28,6 @@ import {
   ResourcePageHeader,
   StatusBadge,
 } from "@components/util";
-import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 import { DeploymentTerminal } from "./terminal";
@@ -287,12 +286,7 @@ export const DeploymentComponents: RequiredResourceComponents = {
 
   Config: ConfigTabs,
 
-  DangerZone: ({ id }) => (
-    <>
-      <RenameResource type="Deployment" id={id} />
-      <DeleteResource type="Deployment" id={id} />
-    </>
-  ),
+  DangerZone: ({ id }) => <DeleteResource type="Deployment" id={id} />,
 
   ResourcePageHeader: ({ id }) => {
     const deployment = useDeployment(id);
@@ -301,6 +295,8 @@ export const DeploymentComponents: RequiredResourceComponents = {
       <ResourcePageHeader
         intent={deployment_state_intention(deployment?.info.state)}
         icon={<DeploymentIcon id={id} size={8} />}
+        type="Deployment"
+        id={id}
         name={deployment?.name}
         state={
           deployment?.info.state === Types.DeploymentState.NotDeployed

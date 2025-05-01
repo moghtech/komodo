@@ -8,7 +8,6 @@ import { DeleteResource, NewResource } from "../common";
 import { AlerterTable } from "./table";
 import { Types } from "komodo_client";
 import { ConfirmButton, ResourcePageHeader } from "@components/util";
-import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
 
 const useAlerter = (id?: string) =>
@@ -86,12 +85,7 @@ export const AlerterComponents: RequiredResourceComponents = {
 
   Config: AlerterConfig,
 
-  DangerZone: ({ id }) => (
-    <>
-      <RenameResource type="Alerter" id={id} />
-      <DeleteResource type="Alerter" id={id} />
-    </>
-  ),
+  DangerZone: ({ id }) => <DeleteResource type="Alerter" id={id} />,
 
   ResourcePageHeader: ({ id }) => {
     const alerter = useAlerter(id);
@@ -99,6 +93,8 @@ export const AlerterComponents: RequiredResourceComponents = {
       <ResourcePageHeader
         intent="None"
         icon={<AlarmClock className="w-8" />}
+        type="Alerter"
+        id={id}
         name={alerter?.name}
         state={alerter?.info.enabled ? "Enabled" : "Disabled"}
         status={alerter?.info.endpoint_type}

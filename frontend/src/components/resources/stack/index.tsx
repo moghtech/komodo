@@ -37,7 +37,6 @@ import { StackServices } from "./services";
 import { DashboardPieChart } from "@pages/home/dashboard";
 import { ResourcePageHeader, StatusBadge } from "@components/util";
 import { StackConfig } from "./config";
-import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
 import { StackLogs } from "./log";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@ui/tooltip";
@@ -433,12 +432,7 @@ export const StackComponents: RequiredResourceComponents = {
 
   Config: ConfigInfoServicesLog,
 
-  DangerZone: ({ id }) => (
-    <>
-      <RenameResource type="Stack" id={id} />
-      <DeleteResource type="Stack" id={id} />
-    </>
-  ),
+  DangerZone: ({ id }) => <DeleteResource type="Stack" id={id} />,
 
   ResourcePageHeader: ({ id }) => {
     const stack = useStack(id);
@@ -446,6 +440,8 @@ export const StackComponents: RequiredResourceComponents = {
       <ResourcePageHeader
         intent={stack_state_intention(stack?.info.state)}
         icon={<StackIcon id={id} size={8} />}
+        type="Stack"
+        id={id}
         name={stack?.name}
         state={stack?.info.state}
         status={

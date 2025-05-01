@@ -29,7 +29,6 @@ import { Badge } from "@ui/badge";
 import { useToast } from "@ui/use-toast";
 import { Button } from "@ui/button";
 import { useBuilder } from "../builder";
-import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 import { BuildInfo } from "./info";
@@ -282,12 +281,7 @@ export const BuildComponents: RequiredResourceComponents = {
 
   Config: ConfigInfoDeployments,
 
-  DangerZone: ({ id }) => (
-    <>
-      <RenameResource type="Build" id={id} />
-      <DeleteResource type="Build" id={id} />
-    </>
-  ),
+  DangerZone: ({ id }) => <DeleteResource type="Build" id={id} />,
 
   ResourcePageHeader: ({ id }) => {
     const build = useBuild(id);
@@ -296,6 +290,8 @@ export const BuildComponents: RequiredResourceComponents = {
       <ResourcePageHeader
         intent={build_state_intention(build?.info.state)}
         icon={<BuildIcon id={id} size={8} />}
+        type="Build"
+        id={id}
         name={build?.name}
         state={build?.info.state}
         status=""

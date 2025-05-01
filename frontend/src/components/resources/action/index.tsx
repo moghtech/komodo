@@ -16,7 +16,6 @@ import {
 import { cn, updateLogToHtml } from "@lib/utils";
 import { Types } from "komodo_client";
 import { DashboardPieChart } from "@pages/home/dashboard";
-import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 import { Card } from "@ui/card";
@@ -149,12 +148,7 @@ export const ActionComponents: RequiredResourceComponents = {
 
   Config: ActionConfig,
 
-  DangerZone: ({ id }) => (
-    <>
-      <RenameResource type="Action" id={id} />
-      <DeleteResource type="Action" id={id} />
-    </>
-  ),
+  DangerZone: ({ id }) => <DeleteResource type="Action" id={id} />,
 
   ResourcePageHeader: ({ id }) => {
     const action = useAction(id);
@@ -163,6 +157,8 @@ export const ActionComponents: RequiredResourceComponents = {
       <ResourcePageHeader
         intent={action_state_intention(action?.info.state)}
         icon={<ActionIcon id={id} size={8} />}
+        type="Action"
+        id={id}
         name={action?.name}
         state={action?.info.state}
         status={undefined}

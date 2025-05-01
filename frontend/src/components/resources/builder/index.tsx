@@ -19,7 +19,6 @@ import { BuilderConfig } from "./config";
 import { DeleteResource, ResourceLink } from "../common";
 import { BuilderTable } from "./table";
 import { ResourcePageHeader } from "@components/util";
-import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
 
 export const useBuilder = (id?: string) =>
@@ -148,12 +147,7 @@ export const BuilderComponents: RequiredResourceComponents = {
 
   Config: BuilderConfig,
 
-  DangerZone: ({ id }) => (
-    <>
-      <RenameResource type="Builder" id={id} />
-      <DeleteResource type="Builder" id={id} />
-    </>
-  ),
+  DangerZone: ({ id }) => <DeleteResource type="Builder" id={id} />,
 
   ResourcePageHeader: ({ id }) => {
     const builder = useBuilder(id);
@@ -162,6 +156,8 @@ export const BuilderComponents: RequiredResourceComponents = {
       <ResourcePageHeader
         intent="None"
         icon={<Factory className="w-8" />}
+        type="Builder"
+        id={id}
         name={builder?.name}
         state={builder?.info.builder_type}
         status={builder?.info.instance_type}

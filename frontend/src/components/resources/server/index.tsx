@@ -36,7 +36,6 @@ import { StackTable } from "../stack/table";
 import { ResourceComponents } from "..";
 import { ServerInfo } from "./info";
 import { ServerStats } from "./stats";
-import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
 import { ServerTerminals } from "./terminal";
 import { useEditPermissions } from "@pages/resource";
@@ -490,12 +489,7 @@ export const ServerComponents: RequiredResourceComponents = {
 
   Config: ConfigTabs,
 
-  DangerZone: ({ id }) => (
-    <>
-      <RenameResource type="Server" id={id} />
-      <DeleteResource type="Server" id={id} />
-    </>
-  ),
+  DangerZone: ({ id }) => <DeleteResource type="Server" id={id} />,
 
   ResourcePageHeader: ({ id }) => {
     const server = useServer(id);
@@ -504,6 +498,8 @@ export const ServerComponents: RequiredResourceComponents = {
       <ResourcePageHeader
         intent={server_state_intention(server?.info.state)}
         icon={<Icon id={id} size={8} />}
+        type="Server"
+        id={id}
         name={server?.name}
         state={
           server?.info.state === Types.ServerState.NotOk

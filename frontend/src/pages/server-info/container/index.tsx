@@ -113,6 +113,8 @@ const ContainerPageInner = ({
           <div className="flex flex-col gap-2 border rounded-md">
             {/* <Components.ResourcePageHeader id={id} /> */}
             <ResourcePageHeader
+              type={undefined}
+              id={undefined}
               intent={intention}
               icon={
                 <DOCKER_LINK_ICONS.container

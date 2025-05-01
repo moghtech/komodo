@@ -16,7 +16,6 @@ import {
 import { cn, updateLogToHtml } from "@lib/utils";
 import { Types } from "komodo_client";
 import { DashboardPieChart } from "@pages/home/dashboard";
-import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 import { Card } from "@ui/card";
@@ -155,12 +154,7 @@ export const ProcedureComponents: RequiredResourceComponents = {
 
   Config: ProcedureConfig,
 
-  DangerZone: ({ id }) => (
-    <>
-      <RenameResource type="Procedure" id={id} />
-      <DeleteResource type="Procedure" id={id} />
-    </>
-  ),
+  DangerZone: ({ id }) => <DeleteResource type="Procedure" id={id} />,
 
   ResourcePageHeader: ({ id }) => {
     const procedure = useProcedure(id);
@@ -169,6 +163,8 @@ export const ProcedureComponents: RequiredResourceComponents = {
       <ResourcePageHeader
         intent={procedure_state_intention(procedure?.info.state)}
         icon={<ProcedureIcon id={id} size={8} />}
+        type="Procedure"
+        id={id}
         name={procedure?.name}
         state={procedure?.info.state}
         status={`${procedure?.info.stages} Stage${procedure?.info.stages === 1 ? "" : "s"}`}

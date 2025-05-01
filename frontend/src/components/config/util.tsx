@@ -2,10 +2,8 @@
 import {
   WebhookIdOrName,
   useCtrlKeyListener,
-  useInvalidate,
   useRead,
   useWebhookIdOrName,
-  useWrite,
   WebhookIntegration,
   useWebhookIntegrations,
 } from "@lib/hooks";
@@ -23,7 +21,6 @@ import { Switch } from "@ui/switch";
 import {
   CheckCircle,
   MinusCircle,
-  Pen,
   PlusCircle,
   Save,
   Search,
@@ -64,8 +61,6 @@ import {
 } from "@components/monaco";
 import { useSettingsView } from "@pages/settings";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@ui/use-toast";
-import { UsableResource } from "@types";
 
 export const ConfigItem = ({
   label,
@@ -1066,45 +1061,6 @@ export const PermissionLevelSelector = ({
         ))}
       </SelectContent>
     </Select>
-  );
-};
-
-export const RenameResource = ({
-  type,
-  id,
-}: {
-  type: UsableResource;
-  id: string;
-}) => {
-  const invalidate = useInvalidate();
-
-  const { toast } = useToast();
-  const { mutate, isPending } = useWrite(`Rename${type}`, {
-    onSuccess: () => {
-      invalidate([`List${type}s`]);
-      toast({ title: `${type} Renamed` });
-      set("");
-    },
-  });
-
-  const [name, set] = useState("");
-
-  return (
-    <div className="flex gap-4 w-full justify-end flex-wrap">
-      <Input
-        value={name}
-        onChange={(e) => set(e.target.value)}
-        className="w-96"
-        placeholder="Enter new name"
-      />
-      <ConfirmButton
-        title="Rename"
-        icon={<Pen className="w-4 h-4" />}
-        disabled={!name || isPending}
-        loading={isPending}
-        onClick={() => mutate({ id, name })}
-      />
-    </div>
   );
 };
 

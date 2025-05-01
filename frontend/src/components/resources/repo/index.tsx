@@ -19,7 +19,6 @@ import { Badge } from "@ui/badge";
 import { useToast } from "@ui/use-toast";
 import { Button } from "@ui/button";
 import { useBuilder } from "../builder";
-import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 
@@ -245,12 +244,7 @@ export const RepoComponents: RequiredResourceComponents = {
 
   Config: RepoConfig,
 
-  DangerZone: ({ id }) => (
-    <>
-      <RenameResource type="Repo" id={id} />
-      <DeleteResource type="Repo" id={id} />
-    </>
-  ),
+  DangerZone: ({ id }) => <DeleteResource type="Repo" id={id} />,
 
   ResourcePageHeader: ({ id }) => {
     const repo = useRepo(id);
@@ -259,6 +253,8 @@ export const RepoComponents: RequiredResourceComponents = {
       <ResourcePageHeader
         intent={repo_state_intention(repo?.info.state)}
         icon={<RepoIcon id={id} size={8} />}
+        type="Repo"
+        id={id}
         name={repo?.name}
         state={repo?.info.state}
         status=""

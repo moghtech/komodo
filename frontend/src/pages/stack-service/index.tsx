@@ -93,6 +93,8 @@ const StackServicePageInner = ({
           <div className="flex flex-col gap-2 border rounded-md">
             {/* <Components.ResourcePageHeader id={id} /> */}
             <ResourcePageHeader
+              type={undefined}
+              id={undefined}
               intent={intention}
               icon={<Layers2 className={cn("w-8 h-8", stroke_color)} />}
               name={service}
