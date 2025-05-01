@@ -45,18 +45,19 @@ svi = "1.0.1"
 
 # ASYNC
 reqwest = { version = "0.12.15", default-features = false, features = ["json", "stream", "rustls-tls-native-roots"] }
-tokio = { version = "1.44.1", features = ["full"] }
-tokio-util = { version = "0.7.14", features = ["io", "codec"] }
+tokio = { version = "1.44.2", features = ["full"] }
+tokio-util = { version = "0.7.15", features = ["io", "codec"] }
+tokio-stream = { version = "0.1.17" }
 futures = "0.3.31"
 futures-util = "0.3.31"
 arc-swap = "1.7.1"
 
 # SERVER
 tokio-tungstenite = { version = "0.26.2", features = ["rustls-tls-native-roots"] }
-axum-extra = { version = "0.10.0", features = ["typed-header"] }
+axum-extra = { version = "0.10.1", features = ["typed-header"] }
 tower-http = { version = "0.6.2", features = ["fs", "cors"] }
 axum-server = { version = "0.7.2", features = ["tls-rustls"] }
-axum = { version = "0.8.1", features = ["ws", "json", "macros"] }
+axum = { version = "0.8.4", features = ["ws", "json", "macros"] }
 
 # SER/DE
 ordered_hash_map = { version = "0.4.0", features = ["serde"] }
@@ -64,8 +65,8 @@ serde = { version = "1.0.219", features = ["derive"] }
 strum = { version = "0.27.1", features = ["derive"] }
 serde_json = "1.0.140"
 serde_yaml = "0.9.34"
-serde_qs = "0.14.0"
-toml = "0.8.20"
+serde_qs = "0.15.0"
+toml = "0.8.22"
 
 # ERROR
 anyhow = "1.0.98"
@@ -77,7 +78,7 @@ opentelemetry_sdk = { version = "0.29.0", features = ["rt-tokio"] }
 tracing-subscriber = { version = "0.3.19", features = ["json"] }
 opentelemetry-semantic-conventions = "0.29.0"
 tracing-opentelemetry = "0.30.0"
-opentelemetry = "0.29.0"
+opentelemetry = "0.29.1"
 tracing = "0.1.41"
 
 # CONFIG
@@ -95,7 +96,7 @@ bcrypt = "0.17.0"
 base64 = "0.22.1"
 rustls = "0.23.26"
 hmac = "0.12.1"
-sha2 = "0.10.8"
+sha2 = "0.10.9"
 rand = "0.9.1"
 hex = "0.4.3"
 
@@ -105,14 +106,14 @@ bollard = "0.18.1"
 sysinfo = "0.34.2"
 
 # CLOUD
-aws-config = "1.6.1"
-aws-sdk-ec2 = "1.121.1"
-aws-credential-types = "1.2.2"
+aws-config = "1.6.2"
+aws-sdk-ec2 = "1.124.0"
+aws-credential-types = "1.2.3"
 
 ## CRON
 english-to-cron = "0.1.4"
 chrono-tz = "0.10.3"
-chrono = "0.4.40"
+chrono = "0.4.41"
 croner = "2.1.0"
 
 # MISC
