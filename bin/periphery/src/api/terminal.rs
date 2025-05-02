@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::OnceLock};
+use std::{collections::HashMap, sync::OnceLock, task::Poll};
 
 use anyhow::{Context, anyhow};
 use axum::{
@@ -10,26 +10,18 @@ use axum::{
   response::Response,
 };
 use bytes::Bytes;
-use futures::{SinkExt, StreamExt};
+use futures::{SinkExt, Stream, StreamExt};
 use komodo_client::entities::{
   NoData, komodo_timestamp, server::TerminalInfo,
 };
-use periphery_client::api::terminal::{
-  ConnectTerminalQuery, CreateTerminal, CreateTerminalAuthToken, CreateTerminalAuthTokenResponse, DeleteAllTerminals, DeleteTerminal, ExecuteTerminalBody, ListTerminals
-};
+use periphery_client::api::terminal::*;
+use pin_project_lite::pin_project;
 use rand::Rng;
 use resolver_api::Resolve;
 use serror::{AddStatusCodeError, Json};
 use tokio_util::sync::CancellationToken;
 
-use crate::{
-  config::periphery_config,
-  terminal::{
-    ResizeDimensions, StdinMsg, clean_up_terminals, create_terminal,
-    delete_all_terminals, delete_terminal, get_terminal,
-    list_terminals,
-  },
-};
+use crate::{config::periphery_config, terminal::*};
 
 impl Resolve<super::Args> for ListTerminals {
   #[instrument(name = "ListTerminals", level = "debug")]
@@ -330,8 +322,78 @@ pub async fn connect_terminal(
   }))
 }
 
-// pub async fn execute_terminal(
-//   Json(body): Json<ExecuteTerminalBody>,
-// ) ->  {
+/// EOF Sentinal
+const END_OF_OUTPUT: &str = "__KOMODO_END_OF_OUTPUT__";
+const KOMODO_EXIT_DATA: &str = "__KOMODO_EXIT_DATA:";
 
-// }
+pub async fn execute_terminal(
+  Json(ExecuteTerminalBody { terminal, command }): Json<
+    ExecuteTerminalBody,
+  >,
+) -> serror::Result<axum::body::Body> {
+  let terminal = get_terminal(&terminal).await?;
+
+  // Read the bytes into lines
+  // This is done to check the lines for the EOF sentinal
+  let stdout = tokio_util::codec::FramedRead::new(
+    tokio_util::io::StreamReader::new(
+      tokio_stream::wrappers::BroadcastStream::new(
+        terminal.stdout.resubscribe(),
+      )
+      .map(|res| res.map_err(std::io::Error::other)),
+    ),
+    tokio_util::codec::LinesCodec::new(),
+  );
+
+  let full_command = format!(
+    "exec 2>&1; {command}; printf '{KOMODO_EXIT_DATA}%d\n{END_OF_OUTPUT}\n' \"$?\"\n"
+  );
+
+  terminal
+    .stdin
+    .send(StdinMsg::Bytes(Bytes::from(full_command)))
+    .await
+    .context("Failed to send command to terminal stdin")?;
+
+  Ok(axum::body::Body::from_stream(TerminalStream { stdout }))
+}
+
+pin_project! {
+  struct TerminalStream<S> { #[pin] stdout: S }
+}
+
+impl<S> Stream for TerminalStream<S>
+where
+  S:
+    Stream<Item = Result<String, tokio_util::codec::LinesCodecError>>,
+{
+  // Axum expects a stream of results
+  type Item = Result<String, String>;
+
+  fn poll_next(
+    self: std::pin::Pin<&mut Self>,
+    cx: &mut std::task::Context<'_>,
+  ) -> std::task::Poll<Option<Self::Item>> {
+    let this = self.project();
+    match this.stdout.poll_next(cx) {
+      Poll::Ready(None) => {
+        // This is if a None comes in before END_OF_OUTPUT.
+        // This probably means the terminal has exited early,
+        // and needs to be cleaned up
+        tokio::spawn(async move { clean_up_terminals().await });
+        Poll::Ready(None)
+      }
+      Poll::Ready(Some(line)) => {
+        match line {
+          Ok(line) if line.as_str() == END_OF_OUTPUT => {
+            // Stop the stream on end sentinel
+            Poll::Ready(None)
+          }
+          Ok(line) => Poll::Ready(Some(Ok(line + "\n"))),
+          Err(e) => Poll::Ready(Some(Err(format!("{e:?}")))),
+        }
+      }
+      Poll::Pending => Poll::Pending,
+    }
+  }
+}

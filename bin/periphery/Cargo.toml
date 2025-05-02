@@ -33,6 +33,8 @@ resolver_api.workspace = true
 run_command.workspace = true
 svi.workspace = true
 # external
+pin-project-lite.workspace = true
+tokio-stream.workspace = true
 portable-pty.workspace = true
 axum-server.workspace = true
 serde_json.workspace = true

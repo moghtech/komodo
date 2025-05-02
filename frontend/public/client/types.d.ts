@@ -4116,11 +4116,9 @@ export interface ConnectTerminalQuery {
     server: string;
     /**
      * Each periphery can keep multiple terminals open.
-     * If a terminals with the specified name already exists,
-     * it will be attached to.
-     * Otherwise a new terminal will be created for the command,
-     * which will persist until it is deleted using
-     * [DeleteTerminal][crate::api::write::server::DeleteTerminal]
+     * If a terminals with the specified name does not exist,
+     * the call will fail.
+     * Create a terminal using [CreateTerminal][super::write::server::CreateTerminal]
      */
     terminal: string;
     /** Optional. The initial command to execute on connection to the shell. */
@@ -4901,6 +4899,23 @@ export interface EnvironmentVar {
 export interface ExchangeForJwt {
     /** The 'exchange token' */
     token: string;
+}
+/**
+ * Execute a terminal command on the given server.
+ * TODO: Document calling.
+ */
+export interface ExecuteTerminalBody {
+    /** Server Id or name */
+    server: string;
+    /**
+     * The name of the terminal on the server to use to execute.
+     * If the terminal at name exists, it will be used to execute the command.
+     * Otherwise, a new terminal will be created for this command, which will
+     * persist until it exits or is deleted.
+     */
+    terminal: string;
+    /** The command to execute. */
+    command: string;
 }
 /**
  * Get pretty formatted monrun sync toml for all resources
@@ -7063,7 +7078,7 @@ export interface UpdateAlerter {
  * field changes occur from out of date local state.
  */
 export interface UpdateBuild {
-    /** The id of the build to update. */
+    /** The id or name of the build to update. */
     id: string;
     /** The partial config update to apply. */
     config: _PartialBuildConfig;

@@ -24,7 +24,17 @@ pub fn router() -> Router {
         .route("/", post(handler))
         .layer(middleware::from_fn(guard_request_by_passkey)),
     )
-    .route("/terminal", get(super::terminal::connect_terminal))
+    .nest(
+      "/terminal",
+      Router::new()
+        .route("/", get(super::terminal::connect_terminal))
+        .nest(
+          "/execute",
+          Router::new()
+            .route("/", post(super::terminal::execute_terminal))
+            .layer(middleware::from_fn(guard_request_by_passkey)),
+        ),
+    )
     .layer(middleware::from_fn(guard_request_by_ip))
 }
 

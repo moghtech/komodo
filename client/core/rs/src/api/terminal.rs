@@ -9,12 +9,26 @@ pub struct ConnectTerminalQuery {
   /// Server Id or name
   pub server: String,
   /// Each periphery can keep multiple terminals open.
-  /// If a terminals with the specified name already exists,
-  /// it will be attached to.
-  /// Otherwise a new terminal will be created for the command,
-  /// which will persist until it is deleted using
-  /// [DeleteTerminal][crate::api::write::server::DeleteTerminal]
+  /// If a terminals with the specified name does not exist,
+  /// the call will fail.
+  /// Create a terminal using [CreateTerminal][super::write::server::CreateTerminal]
   pub terminal: String,
   /// Optional. The initial command to execute on connection to the shell.
   pub init: Option<String>,
+}
+
+/// Execute a terminal command on the given server.
+/// TODO: Document calling.
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ExecuteTerminalBody {
+  /// Server Id or name
+  pub server: String,
+  /// The name of the terminal on the server to use to execute.
+  /// If the terminal at name exists, it will be used to execute the command.
+  /// Otherwise, a new terminal will be created for this command, which will
+  /// persist until it exits or is deleted.
+  pub terminal: String,
+  /// The command to execute.
+  pub command: String,
 }

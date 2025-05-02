@@ -1010,4 +1010,5 @@ pub enum ScheduleFormat {
   Cron,
 }
 
-pub const KOMODO_EXIT_DATA: &str = "__KOMODO_EXIT_DATA:";
+/// Used with ExecuteTerminal to capture the exit code
+pub const KOMODO_EXIT_CODE: &str = "__KOMODO_EXIT_CODE:";

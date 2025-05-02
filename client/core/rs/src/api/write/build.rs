@@ -81,7 +81,7 @@ pub struct DeleteBuild {
 #[response(Build)]
 #[error(serror::Error)]
 pub struct UpdateBuild {
-  /// The id of the build to update.
+  /// The id or name of the build to update.
   pub id: String,
   /// The partial config update to apply.
   pub config: _PartialBuildConfig,

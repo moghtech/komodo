@@ -10,6 +10,7 @@ import {
   BatchExecutionResponse,
   ConnectTerminalQuery,
   ExecuteRequest,
+  ExecuteTerminalBody,
   ReadRequest,
   Update,
   UpdateListItem,
@@ -104,10 +105,11 @@ export function KomodoClient(url: string, options: InitOptions) {
     type: T,
     params: Req["params"]
   ) =>
-    await request<
-      Req["params"],
-      AuthResponses[Req["type"]]
-    >("/auth", type, params);
+    await request<Req["params"], AuthResponses[Req["type"]]>(
+      "/auth",
+      type,
+      params
+    );
 
   const user = async <
     T extends UserRequest["type"],
@@ -116,10 +118,11 @@ export function KomodoClient(url: string, options: InitOptions) {
     type: T,
     params: Req["params"]
   ) =>
-    await request<
-      Req["params"],
-      UserResponses[Req["type"]]
-    >("/user", type, params);
+    await request<Req["params"], UserResponses[Req["type"]]>(
+      "/user",
+      type,
+      params
+    );
 
   const read = async <
     T extends ReadRequest["type"],
@@ -128,10 +131,11 @@ export function KomodoClient(url: string, options: InitOptions) {
     type: T,
     params: Req["params"]
   ) =>
-    await request<
-      Req["params"],
-      ReadResponses[Req["type"]]
-    >("/read", type, params);
+    await request<Req["params"], ReadResponses[Req["type"]]>(
+      "/read",
+      type,
+      params
+    );
 
   const write = async <
     T extends WriteRequest["type"],
@@ -140,10 +144,11 @@ export function KomodoClient(url: string, options: InitOptions) {
     type: T,
     params: Req["params"]
   ) =>
-    await request<
-      Req["params"],
-      WriteResponses[Req["type"]]
-    >("/write", type, params);
+    await request<Req["params"], WriteResponses[Req["type"]]>(
+      "/write",
+      type,
+      params
+    );
 
   const execute = async <
     T extends ExecuteRequest["type"],
@@ -152,10 +157,11 @@ export function KomodoClient(url: string, options: InitOptions) {
     type: T,
     params: Req["params"]
   ) =>
-    await request<
-      Req["params"],
-      ExecuteResponses[Req["type"]]
-    >("/execute", type, params);
+    await request<Req["params"], ExecuteResponses[Req["type"]]>(
+      "/execute",
+      type,
+      params
+    );
 
   const execute_and_poll = async <
     T extends ExecuteRequest["type"],
@@ -325,6 +331,80 @@ export function KomodoClient(url: string, options: InitOptions) {
     return ws;
   };
 
+  const execute_terminal = (request: ExecuteTerminalBody) =>
+    new Promise<ReadableStream<string>>(async (res, rej) => {
+      try {
+        let response = await fetch(url + "/terminal/execute", {
+          method: "POST",
+          body: JSON.stringify(request),
+          headers: {
+            ...(state.jwt
+              ? {
+                  authorization: state.jwt,
+                }
+              : state.key && state.secret
+              ? {
+                  "x-api-key": state.key,
+                  "x-api-secret": state.secret,
+                }
+              : {}),
+            "content-type": "application/json",
+          },
+        });
+        if (response.status === 200) {
+          if (response.body) {
+            const stream = response.body
+              .pipeThrough(new TextDecoderStream("utf-8"))
+              .pipeThrough(
+                new TransformStream<string, string>({
+                  start(_controller) {
+                    this.tail = "";
+                  },
+                  transform(chunk, controller) {
+                    const data = this.tail + chunk; // prepend any carry‑over
+                    const parts = data.split(/\r?\n/); // split on CRLF or LF
+                    this.tail = parts.pop()!; // last item may be incomplete
+                    for (const line of parts) controller.enqueue(line);
+                  },
+                  flush(controller) {
+                    if (this.tail) controller.enqueue(this.tail); // final unterminated line
+                  },
+                } as Transformer<string, string> & { tail: string })
+              );
+            res(stream);
+          } else {
+            rej({
+              status: response.status,
+              result: { error: "No response body", trace: [] },
+            });
+          }
+        } else {
+          try {
+            const result = await response.json();
+            rej({ status: response.status, result });
+          } catch (error) {
+            rej({
+              status: response.status,
+              result: {
+                error: "Failed to get response body",
+                trace: [JSON.stringify(error)],
+              },
+              error,
+            });
+          }
+        }
+      } catch (error) {
+        rej({
+          status: 1,
+          result: {
+            error: "Request failed with error",
+            trace: [JSON.stringify(error)],
+          },
+          error,
+        });
+      }
+    });
+
   return {
     /**
      * Call the `/auth` api.
@@ -420,5 +500,17 @@ export function KomodoClient(url: string, options: InitOptions) {
      * for use with xtermjs.
      */
     connect_terminal,
+    /**
+     * Executes a command on a given Server / terminal,
+     * and returns a stream to process the output as it comes in.
+     *
+     * Note. The final line of the stream will usually be
+     * something like `__KOMODO_EXIT_CODE__:0`. The number
+     * is the exit code of the command.
+     *
+     * If this line is NOT present, it means the stream
+     * was terminated early, ie like running `exit`.
+     */
+    execute_terminal,
   };
 }
