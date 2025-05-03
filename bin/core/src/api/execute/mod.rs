@@ -105,6 +105,7 @@ pub enum ExecuteRequest {
   DeployStackIfChanged(DeployStackIfChanged),
   BatchDeployStackIfChanged(BatchDeployStackIfChanged),
   PullStack(PullStack),
+  BatchPullStack(BatchPullStack),
   StartStack(StartStack),
   RestartStack(RestartStack),
   StopStack(StopStack),

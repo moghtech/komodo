@@ -185,6 +185,9 @@ pub async fn run(execution: Execution) -> anyhow::Result<()> {
     Execution::PullStack(data) => {
       println!("{}: {data:?}", "Data".dimmed())
     }
+    Execution::BatchPullStack(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
     Execution::StartStack(data) => {
       println!("{}: {data:?}", "Data".dimmed())
     }
@@ -429,6 +432,10 @@ pub async fn run(execution: Execution) -> anyhow::Result<()> {
       .execute(request)
       .await
       .map(ExecutionResult::Single),
+    Execution::BatchPullStack(request) => komodo_client()
+      .execute(request)
+      .await
+      .map(ExecutionResult::Batch),
     Execution::StartStack(request) => komodo_client()
       .execute(request)
       .await

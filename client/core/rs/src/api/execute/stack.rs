@@ -152,6 +152,37 @@ pub struct PullStack {
 
 //
 
+/// Pulls multiple Stacks in parallel that match pattern. Response: [BatchExecutionResponse].
+#[typeshare]
+#[derive(
+  Serialize,
+  Deserialize,
+  Debug,
+  Clone,
+  PartialEq,
+  Resolve,
+  EmptyTraits,
+  Parser,
+)]
+#[empty_traits(KomodoExecuteRequest)]
+#[response(BatchExecutionResponse)]
+#[error(serror::Error)]
+pub struct BatchPullStack {
+  /// Id or name or wildcard pattern or regex.
+  /// Supports multiline and comma delineated combinations of the above.
+  ///
+  /// Example:
+  /// ```
+  /// # match all foo-* stacks
+  /// foo-*
+  /// # add some more
+  /// extra-stack-1, extra-stack-2
+  /// ```
+  pub pattern: String,
+}
+
+//
+
 /// Starts the target stack. `docker compose start`. Response: [Update]
 #[typeshare]
 #[derive(

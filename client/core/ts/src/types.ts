@@ -564,6 +564,7 @@ export type Execution =
 	| { type: "DeployStackIfChanged", params: DeployStackIfChanged }
 	| { type: "BatchDeployStackIfChanged", params: BatchDeployStackIfChanged }
 	| { type: "PullStack", params: PullStack }
+	| { type: "BatchPullStack", params: BatchPullStack }
 	| { type: "StartStack", params: StartStack }
 	| { type: "RestartStack", params: RestartStack }
 	| { type: "PauseStack", params: PauseStack }
@@ -4085,6 +4086,23 @@ export interface BatchPullRepo {
 	 * foo-*
 	 * # add some more
 	 * extra-repo-1, extra-repo-2
+	 * ```
+	 */
+	pattern: string;
+}
+
+/** Pulls multiple Stacks in parallel that match pattern. Response: [BatchExecutionResponse]. */
+export interface BatchPullStack {
+	/**
+	 * Id or name or wildcard pattern or regex.
+	 * Supports multiline and comma delineated combinations of the above.
+	 * 
+	 * Example:
+	 * ```
+	 * # match all foo-* stacks
+	 * foo-*
+	 * # add some more
+	 * extra-stack-1, extra-stack-2
 	 * ```
 	 */
 	pattern: string;
@@ -7912,6 +7930,7 @@ export type ExecuteRequest =
 	| { type: "DeployStackIfChanged", params: DeployStackIfChanged }
 	| { type: "BatchDeployStackIfChanged", params: BatchDeployStackIfChanged }
 	| { type: "PullStack", params: PullStack }
+	| { type: "BatchPullStack", params: BatchPullStack }
 	| { type: "StartStack", params: StartStack }
 	| { type: "RestartStack", params: RestartStack }
 	| { type: "StopStack", params: StopStack }

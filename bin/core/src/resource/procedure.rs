@@ -641,6 +641,13 @@ async fn validate_config(
           .await?;
           params.stack = stack.id;
         }
+        Execution::BatchPullStack(_params) => {
+          if !user.admin {
+            return Err(anyhow!(
+              "Non admin user cannot configure Batch executions"
+            ));
+          }
+        }
         Execution::StartStack(params) => {
           let stack = super::get_check_permissions::<Stack>(
             &params.stack,

@@ -128,6 +128,7 @@ pub enum Execution {
   DeployStackIfChanged(DeployStackIfChanged),
   BatchDeployStackIfChanged(BatchDeployStackIfChanged),
   PullStack(PullStack),
+  BatchPullStack(BatchPullStack),
   StartStack(StartStack),
   RestartStack(RestartStack),
   PauseStack(PauseStack),

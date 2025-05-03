@@ -990,6 +990,22 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
       />
     ),
   },
+  BatchPullStack: {
+    params: { pattern: "" },
+    Component: ({ params, setParams, disabled }) => (
+      <TextUpdateMenuMonaco
+        title="Match stacks"
+        value={
+          params.pattern ||
+          "# Match stacks by name, id, wildcard, or \\regex\\.\n"
+        }
+        onUpdate={(pattern) => setParams({ pattern })}
+        disabled={disabled}
+        language="string_list"
+        fullWidth
+      />
+    ),
+  },
   StartStack: {
     params: { stack: "" },
     Component: ({ params, setParams, disabled }) => (

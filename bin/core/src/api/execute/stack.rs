@@ -385,6 +385,32 @@ impl Resolve<ExecuteArgs> for DeployStackIfChanged {
   }
 }
 
+impl super::BatchExecute for BatchPullStack {
+  type Resource = Stack;
+  fn single_request(stack: String) -> ExecuteRequest {
+    ExecuteRequest::PullStack(PullStack {
+      stack,
+      services: Vec::new(),
+    })
+  }
+}
+
+impl Resolve<ExecuteArgs> for BatchPullStack {
+  #[instrument(name = "BatchPullStack", skip(user), fields(user_id = user.id))]
+  async fn resolve(
+    self,
+    ExecuteArgs { user, .. }: &ExecuteArgs,
+  ) -> serror::Result<BatchExecutionResponse> {
+    Ok(
+      super::batch_execute::<BatchPullStack>(
+        &self.pattern,
+        user,
+      )
+      .await?,
+    )
+  }
+}
+
 pub async fn pull_stack_inner(
   mut stack: Stack,
   services: Vec<String>,

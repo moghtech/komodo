@@ -446,6 +446,9 @@ pub async fn init_execution_update(
         resource::get::<Stack>(&data.stack).await?.id,
       ),
     ),
+    ExecuteRequest::BatchPullStack(_data) => {
+      return Ok(Default::default());
+    }
     ExecuteRequest::RestartStack(data) => (
       if !data.services.is_empty() {
         Operation::RestartStackService

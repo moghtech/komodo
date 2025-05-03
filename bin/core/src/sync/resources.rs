@@ -614,6 +614,7 @@ impl ResourceSyncTrait for Procedure {
               .map(|s| s.name.clone())
               .unwrap_or_default();
           }
+          Execution::BatchPullStack(_config) => {}
           Execution::StartStack(config) => {
             config.stack = resources
               .stacks

@@ -747,6 +747,7 @@ impl ToToml for Procedure {
               .map(|r| &r.name)
               .unwrap_or(&String::new()),
           ),
+          Execution::BatchPullStack(_exec) => {}
           Execution::StartStack(exec) => exec.stack.clone_from(
             all
               .stacks

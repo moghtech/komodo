@@ -398,6 +398,7 @@ export type ExecuteResponses = {
   DeployStackIfChanged: Types.Update;
   BatchDeployStackIfChanged: Types.BatchExecutionResponse;
   PullStack: Types.Update;
+  BatchPullStack: Types.BatchExecutionResponse;
   StartStack: Types.Update;
   RestartStack: Types.Update;
   StopStack: Types.Update;

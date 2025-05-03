@@ -166,6 +166,13 @@ async fn execute_stage(
         )
         .await?;
       }
+      Execution::BatchPullStack(exec) => {
+        extend_batch_exection::<BatchPullStack>(
+          &exec.pattern,
+          &mut executions,
+        )
+        .await?;
+      }
       Execution::BatchDestroyStack(exec) => {
         extend_batch_exection::<BatchDestroyStack>(
           &exec.pattern,
@@ -985,6 +992,12 @@ async fn execute_execution(
       )
       .await?
     }
+    Execution::BatchPullStack(_) => {
+      // All batch executions must be expanded in `execute_stage`
+      return Err(anyhow!(
+        "Batch method BatchPullStack not implemented correctly"
+      ));
+    }
     Execution::StartStack(req) => {
       let req = ExecuteRequest::StartStack(req);
       let update = init_execution_update(&req, &user).await?;
@@ -1271,6 +1284,16 @@ impl ExtendBatch for BatchDeployStackIfChanged {
     Execution::DeployStackIfChanged(DeployStackIfChanged {
       stack,
       stop_time: None,
+    })
+  }
+}
+
+impl ExtendBatch for BatchPullStack {
+  type Resource = Stack;
+  fn single_execution(stack: String) -> Execution {
+    Execution::PullStack(PullStack {
+      stack,
+      services: Vec::new(),
     })
   }
 }

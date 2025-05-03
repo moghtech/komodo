@@ -675,6 +675,9 @@ export type Execution =
     type: "PullStack";
     params: PullStack;
 } | {
+    type: "BatchPullStack";
+    params: BatchPullStack;
+} | {
     type: "StartStack";
     params: StartStack;
 } | {
@@ -3967,6 +3970,22 @@ export interface BatchPullRepo {
      * foo-*
      * # add some more
      * extra-repo-1, extra-repo-2
+     * ```
+     */
+    pattern: string;
+}
+/** Pulls multiple Stacks in parallel that match pattern. Response: [BatchExecutionResponse]. */
+export interface BatchPullStack {
+    /**
+     * Id or name or wildcard pattern or regex.
+     * Supports multiline and comma delineated combinations of the above.
+     *
+     * Example:
+     * ```
+     * # match all foo-* stacks
+     * foo-*
+     * # add some more
+     * extra-stack-1, extra-stack-2
      * ```
      */
     pattern: string;
@@ -7523,6 +7542,9 @@ export type ExecuteRequest = {
 } | {
     type: "PullStack";
     params: PullStack;
+} | {
+    type: "BatchPullStack";
+    params: BatchPullStack;
 } | {
     type: "StartStack";
     params: StartStack;
