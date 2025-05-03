@@ -332,7 +332,7 @@ export function KomodoClient(url: string, options: InitOptions) {
   };
 
   const execute_terminal = (request: ExecuteTerminalBody) =>
-    new Promise<ReadableStream<string>>(async (res, rej) => {
+    new Promise<AsyncIterable<string>>(async (res, rej) => {
       try {
         let response = await fetch(url + "/terminal/execute", {
           method: "POST",

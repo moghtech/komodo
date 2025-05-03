@@ -154,5 +154,5 @@ export declare function KomodoClient(url: string, options: InitOptions): {
      * If this line is NOT present, it means the stream
      * was terminated early, ie like running `exit`.
      */
-    execute_terminal: (request: ExecuteTerminalBody) => Promise<ReadableStream<string>>;
+    execute_terminal: (request: ExecuteTerminalBody) => Promise<AsyncIterable<string>>;
 };
