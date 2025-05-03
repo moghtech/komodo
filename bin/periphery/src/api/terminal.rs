@@ -12,7 +12,7 @@ use axum::{
 use bytes::Bytes;
 use futures::{SinkExt, Stream, StreamExt};
 use komodo_client::entities::{
-  NoData, komodo_timestamp, server::TerminalInfo,
+  KOMODO_EXIT_CODE, NoData, komodo_timestamp, server::TerminalInfo,
 };
 use periphery_client::api::terminal::*;
 use pin_project_lite::pin_project;
@@ -324,7 +324,6 @@ pub async fn connect_terminal(
 
 /// EOF Sentinal
 const END_OF_OUTPUT: &str = "__KOMODO_END_OF_OUTPUT__";
-const KOMODO_EXIT_DATA: &str = "__KOMODO_EXIT_DATA:";
 
 pub async fn execute_terminal(
   Json(ExecuteTerminalBody { terminal, command }): Json<
@@ -346,7 +345,7 @@ pub async fn execute_terminal(
   );
 
   let full_command = format!(
-    "exec 2>&1; {command}; printf '{KOMODO_EXIT_DATA}%d\n{END_OF_OUTPUT}\n' \"$?\"\n"
+    "exec 2>&1; {command}; printf '{KOMODO_EXIT_CODE}%d\n{END_OF_OUTPUT}\n' \"$?\"\n"
   );
 
   terminal
