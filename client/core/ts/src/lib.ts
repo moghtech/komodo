@@ -331,7 +331,7 @@ export function KomodoClient(url: string, options: InitOptions) {
     return ws;
   };
 
-  const execute_terminal = (request: ExecuteTerminalBody) =>
+  const execute_terminal_stream = (request: ExecuteTerminalBody) =>
     new Promise<AsyncIterable<string>>(async (res, rej) => {
       try {
         let response = await fetch(url + "/terminal/execute", {
@@ -404,6 +404,23 @@ export function KomodoClient(url: string, options: InitOptions) {
         });
       }
     });
+
+  const execute_terminal = async (
+    request: ExecuteTerminalBody,
+    callbacks?: {
+      onLine?: (line: string) => void | Promise<void>;
+      onFinish?: (code: string) => void | Promise<void>;
+    }
+  ) => {
+    const stream = await execute_terminal_stream(request);
+    for await (const line of stream) {
+      if (line.startsWith("__KOMODO_EXIT_CODE")) {
+        await callbacks?.onFinish?.(line.split(":")[1]);
+      } else {
+        await callbacks?.onLine?.(line);
+      }
+    }
+  };
 
   return {
     /**
@@ -505,11 +522,42 @@ export function KomodoClient(url: string, options: InitOptions) {
      * and returns a stream to process the output as it comes in.
      *
      * Note. The final line of the stream will usually be
-     * something like `__KOMODO_EXIT_CODE__:0`. The number
+     * `__KOMODO_EXIT_CODE__:0`. The number
      * is the exit code of the command.
      *
      * If this line is NOT present, it means the stream
      * was terminated early, ie like running `exit`.
+     *
+     * ```ts
+     * const stream = await komodo.execute_terminal_stream({
+     *   server: "my-server",
+     *   terminal: "name",
+     *   command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     * });
+     *
+     * for await (const line of stream) {
+     *   console.log(line);
+     * }
+     * ```
+     */
+    execute_terminal_stream,
+    /**
+     * Executes a command on a given Server / terminal,
+     * and gives a callback to handle the output as it comes in.
+     *
+     * ```ts
+     * const stream = await komodo.execute_terminal(
+     *   {
+     *     server: "my-server",
+     *     terminal: "name",
+     *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *   },
+     *   {
+     *     onLine: (line) => console.log(line),
+     *     onFinish: (code) => console.log("Finished:", code),
+     *   }
+     * );
+     * ```
      */
     execute_terminal,
   };

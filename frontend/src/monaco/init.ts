@@ -32,13 +32,20 @@ export async function init_monaco() {
 
   await Promise.all(promises);
 
+  type ExtraOptions = {
+    allowTopLevelAwait?: boolean;
+    moduleDetection?: "force" | "auto" | "legacy" | 3 | 2 | 1; // string or numeric enum
+  };
+
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
     module: monaco.languages.typescript.ModuleKind.ESNext,
     target: monaco.languages.typescript.ScriptTarget.ESNext,
     allowNonTsExtensions: true,
     moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
     typeRoots: ["index.d.ts"],
-  });
+    allowTopLevelAwait: true,
+    moduleDetection: "force",
+  } as monaco.languages.typescript.CompilerOptions & ExtraOptions);
 
   monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
     diagnosticCodesToIgnore: [
