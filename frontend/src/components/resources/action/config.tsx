@@ -208,7 +208,7 @@ export const ActionConfig = ({ id }: { id: string }) => {
               reload_deno_deps: {
                 label: "Reload Dependencies",
                 description:
-                  "Whether deno will be instructed to reload all dependencies. This can usually be kept false outside of development.",
+                  "Whether deno will be instructed to reload all dependencies. This can usually be kept disabled outside of development.",
               },
             },
           },
