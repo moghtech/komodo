@@ -139,7 +139,7 @@ impl Resolve<ExecuteArgs> for RunAction {
       "Execute Action",
       None,
       format!(
-        "deno run --allow-all{https_cert_flag} {}",
+        "deno run --allow-all{https_cert_flag} --reload {}",
         path.display()
       ),
     )
