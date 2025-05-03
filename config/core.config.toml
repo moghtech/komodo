@@ -404,20 +404,11 @@ resource_poll_interval = "5-min"
 ## Komodo can build images by deploying AWS EC2 instances,
 ## running the build, and afterwards destroying the instance.
 
-## Additionally, Komodo can deploy cloud VPS on AWS EC2 and Hetzner.
-## Use the Template resource to configure launch preferences.
-## Hetzner is not supported for builds as their pricing model is by the hour,
-## while AWS is by the minute. This is very important for builds.
-
-## Provide AWS api keys for ephemeral builders / server launch
+## Provide AWS api keys for ephemeral builders
 ## Env: KOMODO_AWS_ACCESS_KEY_ID or KOMODO_AWS_ACCESS_KEY_ID_FILE
 aws.access_key_id = ""
 ## Env: KOMODO_AWS_SECRET_ACCESS_KEY or KOMODO_AWS_SECRET_ACCESS_KEY_FILE
 aws.secret_access_key = ""
-
-## Provide Hetzner api token for server launch
-## Env: KOMODO_HETZNER_TOKEN or KOMODO_HETZNER_TOKEN_FILE
-hetzner.token = ""
 
 #################
 # GIT PROVIDERS #

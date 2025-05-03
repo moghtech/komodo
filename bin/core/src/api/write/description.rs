@@ -4,8 +4,7 @@ use komodo_client::{
   entities::{
     ResourceTarget, action::Action, alerter::Alerter, build::Build,
     builder::Builder, deployment::Deployment, procedure::Procedure,
-    repo::Repo, server::Server, server_template::ServerTemplate,
-    stack::Stack, sync::ResourceSync,
+    repo::Repo, server::Server, stack::Stack, sync::ResourceSync,
   },
 };
 use resolver_api::Resolve;
@@ -87,14 +86,6 @@ impl Resolve<WriteArgs> for UpdateDescription {
       }
       ResourceTarget::Action(id) => {
         resource::update_description::<Action>(
-          &id,
-          &self.description,
-          user,
-        )
-        .await?;
-      }
-      ResourceTarget::ServerTemplate(id) => {
-        resource::update_description::<ServerTemplate>(
           &id,
           &self.description,
           user,

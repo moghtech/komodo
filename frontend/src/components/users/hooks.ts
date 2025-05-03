@@ -14,7 +14,6 @@ export const useUserTargetPermissions = (user_target: Types.UserTarget) => {
   const procedures = useRead("ListProcedures", {}).data;
   const builders = useRead("ListBuilders", {}).data;
   const alerters = useRead("ListAlerters", {}).data;
-  const templates = useRead("ListServerTemplates", {}).data;
   const syncs = useRead("ListResourceSyncs", {}).data;
   const perms: (Types.Permission & { name: string })[] = [];
   addPerms(user_target, permissions, "Server", servers, perms);
@@ -25,7 +24,6 @@ export const useUserTargetPermissions = (user_target: Types.UserTarget) => {
   addPerms(user_target, permissions, "Procedure", procedures, perms);
   addPerms(user_target, permissions, "Builder", builders, perms);
   addPerms(user_target, permissions, "Alerter", alerters, perms);
-  addPerms(user_target, permissions, "ServerTemplate", templates, perms);
   addPerms(user_target, permissions, "ResourceSync", syncs, perms);
   return perms;
 };

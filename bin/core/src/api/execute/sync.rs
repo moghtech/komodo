@@ -16,7 +16,6 @@ use komodo_client::{
     procedure::Procedure,
     repo::Repo,
     server::Server,
-    server_template::ServerTemplate,
     stack::Stack,
     sync::ResourceSync,
     update::{Log, Update},
@@ -142,10 +141,6 @@ impl Resolve<ExecuteArgs> for RunSync {
                 .servers
                 .get(&name_or_id)
                 .map(|s| s.name.clone()),
-              ResourceTargetVariant::ServerTemplate => all_resources
-                .templates
-                .get(&name_or_id)
-                .map(|t| t.name.clone()),
               ResourceTargetVariant::Stack => all_resources
                 .stacks
                 .get(&name_or_id)
@@ -332,20 +327,6 @@ impl Resolve<ExecuteArgs> for RunSync {
     } else {
       Default::default()
     };
-    let server_template_deltas = if sync.config.include_resources {
-      get_updates_for_execution::<ServerTemplate>(
-        resources.server_templates,
-        delete,
-        &all_resources,
-        match_resource_type,
-        match_resources.as_deref(),
-        &id_to_tags,
-        &sync.config.match_tags,
-      )
-      .await?
-    } else {
-      Default::default()
-    };
     let resource_sync_deltas = if sync.config.include_resources {
       get_updates_for_execution::<entities::sync::ResourceSync>(
         resources.resource_syncs,
@@ -397,7 +378,6 @@ impl Resolve<ExecuteArgs> for RunSync {
 
     if deploy_cache.is_empty()
       && resource_sync_deltas.no_changes()
-      && server_template_deltas.no_changes()
       && server_deltas.no_changes()
       && deployment_deltas.no_changes()
       && stack_deltas.no_changes()
@@ -450,11 +430,6 @@ impl Resolve<ExecuteArgs> for RunSync {
     maybe_extend(
       &mut update.logs,
       ResourceSync::execute_sync_updates(resource_sync_deltas).await,
-    );
-    maybe_extend(
-      &mut update.logs,
-      ServerTemplate::execute_sync_updates(server_template_deltas)
-        .await,
     );
     maybe_extend(
       &mut update.logs,

@@ -119,33 +119,26 @@ const MobileDropdown = () => {
   const [view, setView] = useAtom<HomeView>(homeViewAtom);
 
   const [icon, title] = Components
-    ? [
-        <Components.Icon />,
-        (type === "ServerTemplate"
-          ? "Template"
-          : type === "ResourceSync"
-          ? "Sync"
-          : type) + "s",
-      ]
+    ? [<Components.Icon />, (type === "ResourceSync" ? "Sync" : type) + "s"]
     : location.pathname === "/" && view === "Dashboard"
-    ? [<LayoutDashboard className="w-4 h-4" />, "Dashboard"]
-    : location.pathname === "/" && view === "Resources"
-    ? [<Boxes className="w-4 h-4" />, "Resources"]
-    : location.pathname === "/" && view === "Tree"
-    ? [<FolderTree className="w-4 h-4" />, "Tree"]
-    : location.pathname === "/containers"
-    ? [<Box className="w-4 h-4" />, "Containers"]
-    : location.pathname === "/settings"
-    ? [<Settings className="w-4 h-4" />, "Settings"]
-    : location.pathname === "/alerts"
-    ? [<AlertTriangle className="w-4 h-4" />, "Alerts"]
-    : location.pathname === "/updates"
-    ? [<Bell className="w-4 h-4" />, "Updates"]
-    : location.pathname.split("/")[1] === "user-groups"
-    ? [<Users className="w-4 h-4" />, "User Groups"]
-    : location.pathname.split("/")[1] === "users"
-    ? [<User className="w-4 h-4" />, "Users"]
-    : [<FileQuestion className="w-4 h-4" />, "Unknown"];
+      ? [<LayoutDashboard className="w-4 h-4" />, "Dashboard"]
+      : location.pathname === "/" && view === "Resources"
+        ? [<Boxes className="w-4 h-4" />, "Resources"]
+        : location.pathname === "/" && view === "Tree"
+          ? [<FolderTree className="w-4 h-4" />, "Tree"]
+          : location.pathname === "/containers"
+            ? [<Box className="w-4 h-4" />, "Containers"]
+            : location.pathname === "/settings"
+              ? [<Settings className="w-4 h-4" />, "Settings"]
+              : location.pathname === "/alerts"
+                ? [<AlertTriangle className="w-4 h-4" />, "Alerts"]
+                : location.pathname === "/updates"
+                  ? [<Bell className="w-4 h-4" />, "Updates"]
+                  : location.pathname.split("/")[1] === "user-groups"
+                    ? [<Users className="w-4 h-4" />, "User Groups"]
+                    : location.pathname.split("/")[1] === "users"
+                      ? [<User className="w-4 h-4" />, "Users"]
+                      : [<FileQuestion className="w-4 h-4" />, "Unknown"];
 
   return (
     <DropdownMenu>
@@ -182,12 +175,7 @@ const MobileDropdown = () => {
 
           {RESOURCE_TARGETS.map((type) => {
             const RTIcon = ResourceComponents[type].Icon;
-            const name =
-              type === "ServerTemplate"
-                ? "Template"
-                : type === "ResourceSync"
-                ? "Sync"
-                : type;
+            const name = type === "ResourceSync" ? "Sync" : type;
             return (
               <DropdownLinkItem
                 key={type}

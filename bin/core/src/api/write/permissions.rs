@@ -406,20 +406,6 @@ async fn extract_resource_target_with_validation(
         .id;
       Ok((ResourceTargetVariant::Action, id))
     }
-    ResourceTarget::ServerTemplate(ident) => {
-      let filter = match ObjectId::from_str(ident) {
-        Ok(id) => doc! { "_id": id },
-        Err(_) => doc! { "name": ident },
-      };
-      let id = db_client()
-        .server_templates
-        .find_one(filter)
-        .await
-        .context("failed to query db for server templates")?
-        .context("no matching server template found")?
-        .id;
-      Ok((ResourceTargetVariant::ServerTemplate, id))
-    }
     ResourceTarget::ResourceSync(ident) => {
       let filter = match ObjectId::from_str(ident) {
         Ok(id) => doc! { "_id": id },

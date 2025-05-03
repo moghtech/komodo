@@ -76,12 +76,7 @@ const ResourceRow = ({ type }: { type: UsableResource }) => {
   ];
   if (ids.length === 0) return;
   const Components = ResourceComponents[type];
-  const name =
-    type === "ServerTemplate"
-      ? "Server Template"
-      : type === "ResourceSync"
-        ? "Resource Sync"
-        : type;
+  const name = type === "ResourceSync" ? "Resource Sync" : type;
   return (
     <div className="border rounded-md flex flex-col md:flex-row">
       <Link

@@ -12,7 +12,6 @@ mod deployment;
 mod procedure;
 mod repo;
 mod server;
-mod server_template;
 mod stack;
 mod sync;
 
@@ -23,7 +22,6 @@ pub use deployment::*;
 pub use procedure::*;
 pub use repo::*;
 pub use server::*;
-pub use server_template::*;
 pub use stack::*;
 pub use sync::*;
 

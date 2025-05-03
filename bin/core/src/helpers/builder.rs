@@ -7,7 +7,6 @@ use komodo_client::entities::{
   builder::{AwsBuilderConfig, Builder, BuilderConfig},
   komodo_timestamp,
   server::Server,
-  server_template::aws::AwsServerTemplateConfig,
   update::{Log, Update},
 };
 use periphery_client::{
@@ -88,11 +87,8 @@ async fn get_aws_builder(
 
   let version = version.map(|v| format!("-v{v}")).unwrap_or_default();
   let instance_name = format!("BUILDER-{resource_name}{version}");
-  let Ec2Instance { instance_id, ip } = launch_ec2_instance(
-    &instance_name,
-    AwsServerTemplateConfig::from_builder_config(&config),
-  )
-  .await?;
+  let Ec2Instance { instance_id, ip } =
+    launch_ec2_instance(&instance_name, &config).await?;
 
   info!("ec2 instance launched");
 

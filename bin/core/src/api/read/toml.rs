@@ -9,8 +9,7 @@ use komodo_client::{
     ResourceTarget, action::Action, alerter::Alerter, build::Build,
     builder::Builder, deployment::Deployment,
     permission::PermissionLevel, procedure::Procedure, repo::Repo,
-    resource::ResourceQuery, server::Server,
-    server_template::ServerTemplate, stack::Stack,
+    resource::ResourceQuery, server::Server, stack::Stack,
     sync::ResourceSync, toml::ResourcesToml, user::User,
   },
 };
@@ -133,16 +132,6 @@ async fn get_all_targets(
     .map(|resource| ResourceTarget::Action(resource.id)),
   );
   targets.extend(
-    resource::list_for_user::<ServerTemplate>(
-      ResourceQuery::builder().tags(tags).build(),
-      user,
-      &all_tags,
-    )
-    .await?
-    .into_iter()
-    .map(|resource| ResourceTarget::ServerTemplate(resource.id)),
-  );
-  targets.extend(
     resource::list_full_for_user::<ResourceSync>(
       ResourceQuery::builder().tags(tags).build(),
       user,
@@ -240,20 +229,6 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
               &id_to_tags,
             ))
           }
-        }
-        ResourceTarget::ServerTemplate(id) => {
-          let template = resource::get_check_permissions::<
-            ServerTemplate,
-          >(&id, user, PermissionLevel::Read)
-          .await?;
-          res.server_templates.push(
-            convert_resource::<ServerTemplate>(
-              template,
-              false,
-              vec![],
-              &id_to_tags,
-            ),
-          )
         }
         ResourceTarget::Server(id) => {
           let server = resource::get_check_permissions::<Server>(
@@ -501,14 +476,6 @@ fn serialize_resources_toml(
     }
     toml.push_str("[[builder]]\n");
     Builder::push_to_toml_string(builder, &mut toml)?;
-  }
-
-  for server_template in resources.server_templates {
-    if !toml.is_empty() {
-      toml.push_str("\n\n##\n\n");
-    }
-    toml.push_str("[[server_template]]\n");
-    ServerTemplate::push_to_toml_string(server_template, &mut toml)?;
   }
 
   for resource_sync in resources.resource_syncs {

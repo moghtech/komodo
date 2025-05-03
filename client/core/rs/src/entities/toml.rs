@@ -10,7 +10,6 @@ use super::{
   deployment::_PartialDeploymentConfig, permission::PermissionLevel,
   procedure::_PartialProcedureConfig, repo::_PartialRepoConfig,
   server::_PartialServerConfig,
-  server_template::PartialServerTemplateConfig,
   stack::_PartialStackConfig, sync::_PartialResourceSyncConfig,
   variable::Variable,
 };
@@ -81,14 +80,6 @@ pub struct ResourcesToml {
     skip_serializing_if = "Vec::is_empty"
   )]
   pub builders: Vec<ResourceToml<_PartialBuilderConfig>>,
-
-  #[serde(
-    default,
-    alias = "server_template",
-    skip_serializing_if = "Vec::is_empty"
-  )]
-  pub server_templates:
-    Vec<ResourceToml<PartialServerTemplateConfig>>,
 
   #[serde(
     default,

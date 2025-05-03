@@ -51,12 +51,7 @@ export const ResourceDescription = ({
   const { toast } = useToast();
   const inv = useInvalidate();
 
-  const key =
-    type === "ServerTemplate"
-      ? "server_template"
-      : type === "ResourceSync"
-        ? "sync"
-        : type.toLowerCase();
+  const key = type === "ResourceSync" ? "sync" : type.toLowerCase();
 
   const resource = useRead(`Get${type}`, {
     [key]: id,
@@ -283,11 +278,7 @@ export const NewResource = ({
   const { mutateAsync } = useWrite(`Create${type}`);
   const [name, setName] = useState(_name);
   const type_display =
-    type === "ServerTemplate"
-      ? "server-template"
-      : type === "ResourceSync"
-        ? "resource-sync"
-        : type.toLowerCase();
+    type === "ResourceSync" ? "resource-sync" : type.toLowerCase();
   const config: Types._PartialDeploymentConfig | Types._PartialRepoConfig =
     type === "Deployment"
       ? {
@@ -341,12 +332,7 @@ export const DeleteResource = ({
   id: string;
 }) => {
   const nav = useNavigate();
-  const key =
-    type === "ServerTemplate"
-      ? "server_template"
-      : type === "ResourceSync"
-        ? "sync"
-        : type.toLowerCase();
+  const key = type === "ResourceSync" ? "sync" : type.toLowerCase();
   const resource = useRead(`Get${type}`, {
     [key]: id,
   } as any).data;

@@ -8,7 +8,7 @@ use komodo_client::entities::{
   config::core::{
     AwsCredentials, CoreConfig, DatabaseConfig, Env,
     GithubWebhookAppConfig, GithubWebhookAppInstallationConfig,
-    HetznerCredentials, OauthCredentials,
+    OauthCredentials,
   },
   logger::LogConfig,
 };
@@ -119,11 +119,6 @@ pub fn core_config() -> &'static CoreConfig {
         secret_access_key: maybe_read_item_from_file(env.komodo_aws_secret_access_key_file, env
           .komodo_aws_secret_access_key)
           .unwrap_or(config.aws.secret_access_key),
-      },
-      hetzner: HetznerCredentials {
-        token: maybe_read_item_from_file(env.komodo_hetzner_token_file, env
-          .komodo_hetzner_token)
-          .unwrap_or(config.hetzner.token),
       },
       github_webhook_app: GithubWebhookAppConfig {
         app_id: maybe_read_item_from_file(env.komodo_github_webhook_app_app_id_file, env

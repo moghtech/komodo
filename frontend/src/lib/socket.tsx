@@ -291,15 +291,6 @@ const on_update = (
       );
     }
 
-    if (update.target.type === "ServerTemplate") {
-      invalidate(
-        ["ListServerTemplates"],
-        ["ListFullServerTemplates"],
-        ["GetServerTemplatesSummary"],
-        ["GetServerTemplate"]
-      );
-    }
-
     if (update.target.type === "ResourceSync") {
       invalidate(
         ["ListResourceSyncs"],

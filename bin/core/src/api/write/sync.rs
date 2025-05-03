@@ -19,7 +19,6 @@ use komodo_client::{
     procedure::Procedure,
     repo::Repo,
     server::Server,
-    server_template::ServerTemplate,
     stack::Stack,
     sync::{
       PartialResourceSyncConfig, ResourceSync, ResourceSyncInfo,
@@ -677,17 +676,6 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
           .await?;
           push_updates_for_view::<Alerter>(
             resources.alerters,
-            delete,
-            &all_resources,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<ServerTemplate>(
-            resources.server_templates,
             delete,
             &all_resources,
             None,

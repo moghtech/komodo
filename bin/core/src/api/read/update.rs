@@ -14,7 +14,6 @@ use komodo_client::{
     procedure::Procedure,
     repo::Repo,
     server::Server,
-    server_template::ServerTemplate,
     stack::Stack,
     sync::ResourceSync,
     update::{Update, UpdateListItem},
@@ -132,16 +131,6 @@ impl Resolve<ReadArgs> for ListUpdates {
           })
           .unwrap_or_else(|| doc! { "target.type": "Alerter" });
 
-      let server_template_query =
-        resource::get_resource_ids_for_user::<ServerTemplate>(user)
-          .await?
-          .map(|ids| {
-            doc! {
-              "target.type": "ServerTemplate", "target.id": { "$in": ids }
-            }
-          })
-          .unwrap_or_else(|| doc! { "target.type": "ServerTemplate" });
-
       let resource_sync_query =
         resource::get_resource_ids_for_user::<ResourceSync>(
           user,
@@ -166,7 +155,6 @@ impl Resolve<ReadArgs> for ListUpdates {
           action_query,
           alerter_query,
           builder_query,
-          server_template_query,
           resource_sync_query,
         ]
       });
@@ -302,14 +290,6 @@ impl Resolve<ReadArgs> for GetUpdate {
       }
       ResourceTarget::Action(id) => {
         resource::get_check_permissions::<Action>(
-          id,
-          user,
-          PermissionLevel::Read,
-        )
-        .await?;
-      }
-      ResourceTarget::ServerTemplate(id) => {
-        resource::get_check_permissions::<ServerTemplate>(
           id,
           user,
           PermissionLevel::Read,

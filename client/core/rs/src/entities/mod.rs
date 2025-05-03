@@ -54,8 +54,6 @@ pub mod repo;
 pub mod resource;
 /// Subtypes of [Server][server::Server].
 pub mod server;
-/// Subtypes of [ServerTemplate][server_template::ServerTemplate].
-pub mod server_template;
 /// Subtypes of [Stack][stack::Stack]
 pub mod stack;
 /// Subtypes for server stats reporting.
@@ -759,13 +757,6 @@ pub enum Operation {
   DeleteAlerter,
   TestAlerter,
 
-  // server template
-  CreateServerTemplate,
-  UpdateServerTemplate,
-  RenameServerTemplate,
-  DeleteServerTemplate,
-  LaunchServer,
-
   // sync
   CreateResourceSync,
   UpdateResourceSync,
@@ -878,7 +869,6 @@ pub enum ResourceTarget {
   Action(String),
   Builder(String),
   Alerter(String),
-  ServerTemplate(String),
   ResourceSync(String),
 }
 
@@ -897,7 +887,6 @@ impl ResourceTarget {
       ResourceTarget::Alerter(id) => id,
       ResourceTarget::Procedure(id) => id,
       ResourceTarget::Action(id) => id,
-      ResourceTarget::ServerTemplate(id) => id,
       ResourceTarget::ResourceSync(id) => id,
     };
     (self.extract_variant(), id)
@@ -956,12 +945,6 @@ impl From<&procedure::Procedure> for ResourceTarget {
   }
 }
 
-impl From<&server_template::ServerTemplate> for ResourceTarget {
-  fn from(server_template: &server_template::ServerTemplate) -> Self {
-    Self::ServerTemplate(server_template.id.clone())
-  }
-}
-
 impl From<&sync::ResourceSync> for ResourceTarget {
   fn from(resource_sync: &sync::ResourceSync) -> Self {
     Self::ResourceSync(resource_sync.id.clone())
@@ -992,7 +975,6 @@ impl ResourceTargetVariant {
       ResourceTargetVariant::Repo => "repo",
       ResourceTargetVariant::Alerter => "alerter",
       ResourceTargetVariant::Procedure => "procedure",
-      ResourceTargetVariant::ServerTemplate => "server_template",
       ResourceTargetVariant::ResourceSync => "resource_sync",
       ResourceTargetVariant::Stack => "stack",
       ResourceTargetVariant::Action => "action",

@@ -260,9 +260,6 @@ fn resource_link(
     ResourceTargetVariant::Action => {
       format!("/actions/{id}")
     }
-    ResourceTargetVariant::ServerTemplate => {
-      format!("/server-templates/{id}")
-    }
     ResourceTargetVariant::ResourceSync => {
       format!("/resource-syncs/{id}")
     }

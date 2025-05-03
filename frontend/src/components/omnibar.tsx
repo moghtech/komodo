@@ -136,12 +136,7 @@ const useOmniItems = (
           onSelect: () => nav("/"),
         },
         ...RESOURCE_TARGETS.map((_type) => {
-          const type =
-            _type === "ResourceSync"
-              ? "Sync"
-              : _type === "ServerTemplate"
-                ? "Template"
-                : _type;
+          const type = _type === "ResourceSync" ? "Sync" : _type;
           const Components = ResourceComponents[_type];
           return {
             key: type + "s",
@@ -173,12 +168,7 @@ const useOmniItems = (
         }),
       ...Object.fromEntries(
         RESOURCE_TARGETS.map((_type) => {
-          const type =
-            _type === "ResourceSync"
-              ? "Sync"
-              : _type === "ServerTemplate"
-                ? "Template"
-                : _type;
+          const type = _type === "ResourceSync" ? "Sync" : _type;
           const lower_type = type.toLowerCase();
           const Components = ResourceComponents[_type];
           return [

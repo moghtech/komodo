@@ -43,7 +43,6 @@ mod procedure;
 mod provider;
 mod repo;
 mod server;
-mod server_template;
 mod stack;
 mod sync;
 mod tag;
@@ -97,12 +96,6 @@ enum ReadRequest {
   GetActionActionState(GetActionActionState),
   ListActions(ListActions),
   ListFullActions(ListFullActions),
-
-  // ==== SERVER TEMPLATE ====
-  GetServerTemplate(GetServerTemplate),
-  GetServerTemplatesSummary(GetServerTemplatesSummary),
-  ListServerTemplates(ListServerTemplates),
-  ListFullServerTemplates(ListFullServerTemplates),
 
   // ==== SERVER ====
   GetServersSummary(GetServersSummary),

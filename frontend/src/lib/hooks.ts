@@ -245,7 +245,6 @@ export const useAuth = <
 export const useResourceParamType = () => {
   const type = useParams().type;
   if (!type) return undefined;
-  if (type === "server-templates") return "ServerTemplate";
   if (type === "resource-syncs") return "ResourceSync";
   return (type[0].toUpperCase() + type.slice(1, -1)) as UsableResource;
 };
@@ -265,7 +264,6 @@ export const useAllResources = (): ResourceMap => {
     Action: useRead("ListActions", {}).data,
     Builder: useRead("ListBuilders", {}).data,
     Alerter: useRead("ListAlerters", {}).data,
-    ServerTemplate: useRead("ListServerTemplates", {}).data,
     ResourceSync: useRead("ListResourceSyncs", {}).data,
   };
 };

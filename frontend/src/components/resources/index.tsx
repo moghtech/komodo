@@ -6,7 +6,6 @@ import { DeploymentComponents } from "./deployment";
 import { RepoComponents } from "./repo";
 import { ServerComponents } from "./server";
 import { ProcedureComponents } from "./procedure/index";
-import { ServerTemplateComponents } from "./server-template";
 import { ResourceSyncComponents } from "./resource-sync";
 import { StackComponents } from "./stack";
 import { ActionComponents } from "./action";
@@ -24,5 +23,4 @@ export const ResourceComponents: {
   ResourceSync: ResourceSyncComponents,
   Builder: BuilderComponents,
   Alerter: AlerterComponents,
-  ServerTemplate: ServerTemplateComponents,
 };

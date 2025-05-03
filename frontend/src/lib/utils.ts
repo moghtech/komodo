@@ -23,7 +23,6 @@ export const RESOURCE_TARGETS: UsableResource[] = [
   "Action",
   "Builder",
   "Alerter",
-  "ServerTemplate",
   "ResourceSync",
 ];
 
@@ -133,13 +132,11 @@ const tzOffsetMs = new Date().getTimezoneOffset() * 60 * 1000;
 export const convertTsMsToLocalUnixTsInMs = (ts: number) => ts - tzOffsetMs;
 
 export const usableResourcePath = (resource: UsableResource) => {
-  if (resource === "ServerTemplate") return "server-templates";
   if (resource === "ResourceSync") return "resource-syncs";
   return `${resource.toLowerCase()}s`;
 };
 
 export const usableResourceExecuteKey = (resource: UsableResource) => {
-  if (resource === "ServerTemplate") return "template";
   if (resource === "ResourceSync") return "sync";
   return `${resource.toLowerCase()}`;
 };

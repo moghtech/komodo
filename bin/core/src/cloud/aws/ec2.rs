@@ -1,4 +1,4 @@
-use std::{str::FromStr, time::Duration};
+use std::time::Duration;
 
 use anyhow::{Context, anyhow};
 use aws_config::{BehaviorVersion, Region};
@@ -8,15 +8,15 @@ use aws_sdk_ec2::{
     BlockDeviceMapping, EbsBlockDevice,
     InstanceNetworkInterfaceSpecification, InstanceStateChange,
     InstanceStateName, InstanceStatus, InstanceType, ResourceType,
-    Tag, TagSpecification, VolumeType,
+    Tag, TagSpecification,
   },
 };
 use base64::Engine;
 use komodo_client::entities::{
   ResourceTarget,
   alert::{Alert, AlertData, SeverityLevel},
+  builder::AwsBuilderConfig,
   komodo_timestamp,
-  server_template::aws::AwsServerTemplateConfig,
 };
 
 use crate::{alert::send_alerts, config::core_config};
@@ -71,12 +71,12 @@ async fn create_ec2_client(region: String) -> Client {
 #[instrument]
 pub async fn launch_ec2_instance(
   name: &str,
-  config: AwsServerTemplateConfig,
+  config: &AwsBuilderConfig,
 ) -> anyhow::Result<Ec2Instance> {
-  let AwsServerTemplateConfig {
+  let AwsBuilderConfig {
     region,
     instance_type,
-    volumes,
+    volume_gb,
     ami_id,
     subnet_id,
     security_group_ids,
@@ -86,19 +86,22 @@ pub async fn launch_ec2_instance(
     user_data,
     port: _,
     use_https: _,
+    git_providers: _,
+    docker_registries: _,
+    secrets: _,
   } = config;
   let instance_type = handle_unknown_instance_type(
     InstanceType::from(instance_type.as_str()),
   )?;
   let client = create_ec2_client(region.clone()).await;
-  let mut req = client
+  let req = client
     .run_instances()
     .image_id(ami_id)
     .instance_type(instance_type)
     .network_interfaces(
       InstanceNetworkInterfaceSpecification::builder()
         .subnet_id(subnet_id)
-        .associate_public_ip_address(assign_public_ip)
+        .associate_public_ip_address(*assign_public_ip)
         .set_groups(security_group_ids.to_vec().into())
         .device_index(0)
         .build(),
@@ -110,32 +113,23 @@ pub async fn launch_ec2_instance(
         .resource_type(ResourceType::Instance)
         .build(),
     )
+    .block_device_mappings(
+      BlockDeviceMapping::builder()
+        .set_device_name("/dev/sda1".to_string().into())
+        .set_ebs(
+          EbsBlockDevice::builder()
+            .volume_size(*volume_gb)
+            .build()
+            .into(),
+        )
+        .build(),
+    )
     .min_count(1)
     .max_count(1)
     .user_data(
       base64::engine::general_purpose::STANDARD_NO_PAD
         .encode(user_data),
     );
-
-  for volume in volumes {
-    let ebs = EbsBlockDevice::builder()
-      .volume_size(volume.size_gb)
-      .volume_type(
-        VolumeType::from_str(volume.volume_type.as_ref())
-          .context("invalid volume type")?,
-      )
-      .set_iops((volume.iops != 0).then_some(volume.iops))
-      .set_throughput(
-        (volume.throughput != 0).then_some(volume.throughput),
-      )
-      .build();
-    req = req.block_device_mappings(
-      BlockDeviceMapping::builder()
-        .set_device_name(volume.device_name.into())
-        .set_ebs(ebs.into())
-        .build(),
-    )
-  }
 
   let res = req
     .send()
@@ -156,7 +150,7 @@ pub async fn launch_ec2_instance(
     let state_name =
       get_ec2_instance_state_name(&client, &instance_id).await?;
     if state_name == Some(InstanceStateName::Running) {
-      let ip = if use_public_ip {
+      let ip = if *use_public_ip {
         get_ec2_instance_public_ip(&client, &instance_id).await?
       } else {
         instance

@@ -50,12 +50,6 @@ export type ReadResponses = {
   ListActions: Types.ListActionsResponse;
   ListFullActions: Types.ListFullActionsResponse;
 
-  // ==== SERVER TEMPLATE ====
-  GetServerTemplate: Types.GetServerTemplateResponse;
-  GetServerTemplatesSummary: Types.GetServerTemplatesSummaryResponse;
-  ListServerTemplates: Types.ListServerTemplatesResponse;
-  ListFullServerTemplates: Types.ListFullServerTemplatesResponse;
-
   // ==== SERVER ====
   GetServersSummary: Types.GetServersSummaryResponse;
   GetServer: Types.GetServerResponse;
@@ -208,7 +202,6 @@ export type WriteResponses = {
   UpdateDescription: Types.UpdateDescriptionResponse;
 
   // ==== SERVER ====
-  LaunchServer: Types.Update;
   CreateServer: Types.Server;
   DeleteServer: Types.Server;
   UpdateServer: Types.Server;
@@ -243,13 +236,6 @@ export type WriteResponses = {
   DeleteBuilder: Types.Builder;
   UpdateBuilder: Types.Builder;
   RenameBuilder: Types.Update;
-
-  // ==== SERVER TEMPLATE ====
-  CreateServerTemplate: Types.ServerTemplate;
-  CopyServerTemplate: Types.ServerTemplate;
-  DeleteServerTemplate: Types.ServerTemplate;
-  UpdateServerTemplate: Types.ServerTemplate;
-  RenameServerTemplate: Types.Update;
 
   // ==== REPO ====
   CreateRepo: Types.Repo;
@@ -385,9 +371,6 @@ export type ExecuteResponses = {
   // ==== ACTION ====
   RunAction: Types.Update;
   BatchRunAction: Types.BatchExecutionResponse;
-
-  // ==== SERVER TEMPLATE ====
-  LaunchServer: Types.Update;
 
   // ==== SYNC ====
   RunSync: Types.Update;

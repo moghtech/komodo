@@ -271,9 +271,6 @@ pub fn extend_resources(
     .builders
     .extend(filter_by_tag(more.builders, match_tags));
   resources
-    .server_templates
-    .extend(filter_by_tag(more.server_templates, match_tags));
-  resources
     .resource_syncs
     .extend(filter_by_tag(more.resource_syncs, match_tags));
   resources.user_groups.extend(more.user_groups);

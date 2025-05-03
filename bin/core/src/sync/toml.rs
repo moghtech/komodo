@@ -13,7 +13,6 @@ use komodo_client::{
     repo::Repo,
     resource::Resource,
     server::Server,
-    server_template::{PartialServerTemplateConfig, ServerTemplate},
     stack::Stack,
     sync::ResourceSync,
     tag::Tag,
@@ -346,25 +345,6 @@ impl ToToml for Repo {
         Ok((key, value))
       })
       .collect()
-  }
-}
-
-impl ToToml for ServerTemplate {
-  fn push_additional(
-    resource: ResourceToml<Self::PartialConfig>,
-    toml: &mut String,
-  ) {
-    let empty_params = match resource.config {
-      PartialServerTemplateConfig::Aws(config) => config.is_none(),
-      PartialServerTemplateConfig::Hetzner(config) => {
-        config.is_none()
-      }
-    };
-    if empty_params {
-      // toml_pretty will remove empty map
-      // but in this case its needed to deserialize the enums.
-      toml.push_str("\nparams = {}");
-    }
   }
 }
 

@@ -22,12 +22,7 @@ export const Resources = () => {
   const disable_non_admin_create =
     useRead("GetCoreInfo", {}).data?.disable_non_admin_create ?? true;
   const type = useResourceParamType()!;
-  const name =
-    type === "ServerTemplate"
-      ? "Server Template"
-      : type === "ResourceSync"
-        ? "Resource Sync"
-        : type;
+  const name = type === "ResourceSync" ? "Resource Sync" : type;
   useSetTitle(name + "s");
   const [search, set] = useState("");
   const [filter_update_available, toggle_filter_update_available] =

@@ -209,11 +209,6 @@ pub struct Env {
   /// Override `aws.secret_access_key` with file
   pub komodo_aws_secret_access_key_file: Option<PathBuf>,
 
-  /// Override `hetzner.token`
-  pub komodo_hetzner_token: Option<String>,
-  /// Override `hetzner.token` with file
-  pub komodo_hetzner_token_file: Option<PathBuf>,
-
   /// Override `ssl_enabled`.
   pub komodo_ssl_enabled: Option<bool>,
   /// Override `ssl_key_file`
@@ -456,10 +451,6 @@ pub struct CoreConfig {
   #[serde(default)]
   pub aws: AwsCredentials,
 
-  /// Configure Hetzner credentials to use with Hetzner builds / server launches.
-  #[serde(default)]
-  pub hetzner: HetznerCredentials,
-
   // =================
   // = Git Providers =
   // =================
@@ -646,9 +637,6 @@ impl CoreConfig {
           &config.aws.secret_access_key,
         ),
       },
-      hetzner: HetznerCredentials {
-        token: empty_or_redacted(&config.hetzner.token),
-      },
       secrets: config
         .secrets
         .into_iter()
@@ -758,12 +746,6 @@ pub struct AwsCredentials {
   pub access_key_id: String,
   /// The aws SECRET_ACCESS_KEY
   pub secret_access_key: String,
-}
-
-/// Provide Hetzner credentials for Komodo to use.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct HetznerCredentials {
-  pub token: String,
 }
 
 /// Provide configuration for a Github Webhook app.

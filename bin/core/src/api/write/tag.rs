@@ -17,7 +17,6 @@ use komodo_client::{
     procedure::Procedure,
     repo::Repo,
     server::Server,
-    server_template::ServerTemplate,
     stack::Stack,
     sync::ResourceSync,
     tag::{Tag, TagColor},
@@ -131,7 +130,6 @@ impl Resolve<WriteArgs> for DeleteTag {
       resource::remove_tag_from_all::<Builder>(&self.id),
       resource::remove_tag_from_all::<Alerter>(&self.id),
       resource::remove_tag_from_all::<Procedure>(&self.id),
-      resource::remove_tag_from_all::<ServerTemplate>(&self.id),
     )?;
 
     delete_one_by_id(&db_client().tags, &self.id, None).await?;
@@ -224,16 +222,6 @@ impl Resolve<WriteArgs> for UpdateTagsOnResource {
         )
         .await?;
         resource::update_tags::<Action>(&id, self.tags, args).await?
-      }
-      ResourceTarget::ServerTemplate(id) => {
-        resource::get_check_permissions::<ServerTemplate>(
-          &id,
-          user,
-          PermissionLevel::Write,
-        )
-        .await?;
-        resource::update_tags::<ServerTemplate>(&id, self.tags, args)
-          .await?
       }
       ResourceTarget::ResourceSync(id) => {
         resource::get_check_permissions::<ResourceSync>(

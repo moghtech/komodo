@@ -11,7 +11,6 @@ use komodo_client::entities::{
   procedure::Procedure,
   repo::Repo,
   server::Server,
-  server_template::ServerTemplate,
   stack::Stack,
   sync::ResourceSync,
   tag::Tag,
@@ -166,7 +165,6 @@ pub struct AllResourcesById {
   pub actions: HashMap<String, Action>,
   pub builders: HashMap<String, Builder>,
   pub alerters: HashMap<String, Alerter>,
-  pub templates: HashMap<String, ServerTemplate>,
   pub syncs: HashMap<String, ResourceSync>,
 }
 
@@ -209,10 +207,6 @@ impl AllResourcesById {
       alerters: crate::resource::get_id_to_resource_map::<Alerter>(
         id_to_tags, match_tags,
       )
-      .await?,
-      templates: crate::resource::get_id_to_resource_map::<
-        ServerTemplate,
-      >(id_to_tags, match_tags)
       .await?,
       syncs: crate::resource::get_id_to_resource_map::<ResourceSync>(
         id_to_tags, match_tags,

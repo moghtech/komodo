@@ -206,7 +206,6 @@ export type ResourceTarget =
 	| { type: "Action", id: string }
 	| { type: "Builder", id: string }
 	| { type: "Alerter", id: string }
-	| { type: "ServerTemplate", id: string }
 	| { type: "ResourceSync", id: string };
 
 export interface AlerterConfig {
@@ -1725,16 +1724,6 @@ export type Server = Resource<ServerConfig, undefined>;
 
 export type GetServerResponse = Server;
 
-export type ServerTemplateConfig = 
-	/** Template to launch an AWS EC2 instance */
-	| { type: "Aws", params: AwsServerTemplateConfig }
-	/** Template to launch a Hetzner server */
-	| { type: "Hetzner", params: HetznerServerTemplateConfig };
-
-export type ServerTemplate = Resource<ServerTemplateConfig, undefined>;
-
-export type GetServerTemplateResponse = ServerTemplate;
-
 export interface StackActionState {
 	pulling: boolean;
 	deploying: boolean;
@@ -2246,11 +2235,6 @@ export enum Operation {
 	RenameAlerter = "RenameAlerter",
 	DeleteAlerter = "DeleteAlerter",
 	TestAlerter = "TestAlerter",
-	CreateServerTemplate = "CreateServerTemplate",
-	UpdateServerTemplate = "UpdateServerTemplate",
-	RenameServerTemplate = "RenameServerTemplate",
-	DeleteServerTemplate = "DeleteServerTemplate",
-	LaunchServer = "LaunchServer",
 	CreateResourceSync = "CreateResourceSync",
 	UpdateResourceSync = "UpdateResourceSync",
 	RenameResourceSync = "RenameResourceSync",
@@ -3358,8 +3342,6 @@ export type ListFullReposResponse = Repo[];
 
 export type ListFullResourceSyncsResponse = ResourceSync[];
 
-export type ListFullServerTemplatesResponse = ServerTemplate[];
-
 export type ListFullServersResponse = Server[];
 
 export type ListFullStacksResponse = Stack[];
@@ -3518,17 +3500,6 @@ export type ResourceSyncListItem = ResourceListItem<ResourceSyncListItemInfo>;
 export type ListResourceSyncsResponse = ResourceSyncListItem[];
 
 export type ListSecretsResponse = string[];
-
-export interface ServerTemplateListItemInfo {
-	/** The cloud provider */
-	provider: string;
-	/** The instance type, eg c5.2xlarge on for Aws templates */
-	instance_type?: string;
-}
-
-export type ServerTemplateListItem = ResourceListItem<ServerTemplateListItemInfo>;
-
-export type ListServerTemplatesResponse = ServerTemplateListItem[];
 
 export enum ServerState {
 	/** Server is unreachable. */
@@ -3741,12 +3712,6 @@ export interface ServerQuerySpecifics {
 /** Server-specific query */
 export type ServerQuery = ResourceQuery<ServerQuerySpecifics>;
 
-export interface ServerTemplateQuerySpecifics {
-	types: ServerTemplateConfig["type"][];
-}
-
-export type ServerTemplateQuery = ResourceQuery<ServerTemplateQuerySpecifics>;
-
 export type SetLastSeenUpdateResponse = NoData;
 
 export interface StackQuerySpecifics {
@@ -3800,8 +3765,6 @@ export type _PartialAlerterConfig = Partial<AlerterConfig>;
 
 export type _PartialAwsBuilderConfig = Partial<AwsBuilderConfig>;
 
-export type _PartialAwsServerTemplateConfig = Partial<AwsServerTemplateConfig>;
-
 export type _PartialBuildConfig = Partial<BuildConfig>;
 
 export type _PartialBuilderConfig = Partial<BuilderConfig>;
@@ -3811,8 +3774,6 @@ export type _PartialDeploymentConfig = Partial<DeploymentConfig>;
 export type _PartialDockerRegistryAccount = Partial<DockerRegistryAccount>;
 
 export type _PartialGitProviderAccount = Partial<GitProviderAccount>;
-
-export type _PartialHetznerServerTemplateConfig = Partial<HetznerServerTemplateConfig>;
 
 export type _PartialProcedureConfig = Partial<ProcedureConfig>;
 
@@ -3892,67 +3853,6 @@ export interface AwsBuilderConfig {
 	docker_registries?: DockerRegistry[];
 	/** Which secrets are available on the AMI. */
 	secrets?: string[];
-}
-
-export enum AwsVolumeType {
-	Gp2 = "gp2",
-	Gp3 = "gp3",
-	Io1 = "io1",
-	Io2 = "io2",
-}
-
-/**
- * For information on AWS volumes, see
- * `<https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html>`.
- */
-export interface AwsVolume {
-	/** The device name (for example, `/dev/sda1` or `xvdh`). */
-	device_name: string;
-	/** The size of the volume in GB */
-	size_gb: number;
-	/** The type of volume. Options: gp2, gp3, io1, io2. */
-	volume_type: AwsVolumeType;
-	/** The iops of the volume, or 0 for AWS default. */
-	iops: number;
-	/** The throughput of the volume, or 0 for AWS default. */
-	throughput: number;
-}
-
-/** Aws EC2 instance config. */
-export interface AwsServerTemplateConfig {
-	/** The aws region to launch the server in, eg. us-east-1 */
-	region: string;
-	/** The instance type to launch, eg. c5.2xlarge */
-	instance_type: string;
-	/** Specify the ami id to use. Must be set up to start the periphery binary on startup. */
-	ami_id: string;
-	/** The subnet to assign to the instance. */
-	subnet_id: string;
-	/** The key pair name to give to the instance in case SSH access required. */
-	key_pair_name: string;
-	/**
-	 * Assign a public ip to the instance. Depending on how your network is
-	 * setup, this may be required for the instance to reach the public internet.
-	 */
-	assign_public_ip: boolean;
-	/**
-	 * Use the instances public ip as the address for the server.
-	 * Could be used when build instances are created in another non-interconnected network to the core api.
-	 */
-	use_public_ip: boolean;
-	/**
-	 * The port periphery will be running on in AMI.
-	 * Default: `8120`
-	 */
-	port: number;
-	/** Whether Periphery will be running on https */
-	use_https: boolean;
-	/** The security groups to give to the instance. */
-	security_group_ids?: string[];
-	/** Specify the EBS volumes to attach. */
-	volumes: AwsVolume[];
-	/** The user data to deploy the instance with. */
-	user_data: string;
 }
 
 /** Builds multiple Repos in parallel that match pattern. Response: [BatchExecutionResponse]. */
@@ -4373,17 +4273,6 @@ export interface CopyResourceSync {
 }
 
 /**
- * Creates a new server template with given `name` and the configuration
- * of the server template at the given `id`. Response: [ServerTemplate]
- */
-export interface CopyServerTemplate {
-	/** The name of the new server template. */
-	name: string;
-	/** The id of the server template to copy. */
-	id: string;
-}
-
-/**
  * Creates a new stack with given `name` and the configuration
  * of the stack at the given `id`. Response: [Stack].
  */
@@ -4596,18 +4485,6 @@ export interface CreateServer {
 	name: string;
 	/** Optional partial config to initialize the server with. */
 	config?: _PartialServerConfig;
-}
-
-export type PartialServerTemplateConfig = 
-	| { type: "Aws", params: _PartialAwsServerTemplateConfig }
-	| { type: "Hetzner", params: _PartialHetznerServerTemplateConfig };
-
-/** Create a server template. Response: [ServerTemplate]. */
-export interface CreateServerTemplate {
-	/** The name given to newly created server template. */
-	name: string;
-	/** Optional partial config to initialize the server template with. */
-	config?: PartialServerTemplateConfig;
 }
 
 /**
@@ -4905,15 +4782,6 @@ export interface DeleteResourceSync {
  */
 export interface DeleteServer {
 	/** The id or name of the server to delete. */
-	id: string;
-}
-
-/**
- * Deletes the server template at the given id, and returns the deleted server template.
- * Response: [ServerTemplate]
- */
-export interface DeleteServerTemplate {
-	/** The id or name of the server template to delete. */
 	id: string;
 }
 
@@ -5774,25 +5642,6 @@ export interface GetServerStateResponse {
 	status: ServerState;
 }
 
-/** Get a specific server template by id or name. Response: [ServerTemplate]. */
-export interface GetServerTemplate {
-	/** Id or name */
-	server_template: string;
-}
-
-/**
- * Gets a summary of data relating to all server templates.
- * Response: [GetServerTemplatesSummaryResponse].
- */
-export interface GetServerTemplatesSummary {
-}
-
-/** Response for [GetServerTemplatesSummary]. */
-export interface GetServerTemplatesSummaryResponse {
-	/** The total number of server templates. */
-	total: number;
-}
-
 /**
  * Gets a summary of data relating to all servers.
  * Response: [GetServersSummaryResponse].
@@ -6002,112 +5851,6 @@ export interface GetVersionResponse {
 	version: string;
 }
 
-export enum HetznerDatacenter {
-	Nuremberg1Dc3 = "Nuremberg1Dc3",
-	Helsinki1Dc2 = "Helsinki1Dc2",
-	Falkenstein1Dc14 = "Falkenstein1Dc14",
-	AshburnDc1 = "AshburnDc1",
-	HillsboroDc1 = "HillsboroDc1",
-	SingaporeDc1 = "SingaporeDc1",
-}
-
-export enum HetznerServerType {
-	/** CPX11 - AMD 2 Cores, 2 Gb Ram, 40 Gb disk */
-	SharedAmd2Core2Ram40Disk = "SharedAmd2Core2Ram40Disk",
-	/** CAX11 - Arm 2 Cores, 4 Gb Ram, 40 Gb disk */
-	SharedArm2Core4Ram40Disk = "SharedArm2Core4Ram40Disk",
-	/** CX22 - Intel 2 Cores, 4 Gb Ram, 40 Gb disk */
-	SharedIntel2Core4Ram40Disk = "SharedIntel2Core4Ram40Disk",
-	/** CPX21 - AMD 3 Cores, 4 Gb Ram, 80 Gb disk */
-	SharedAmd3Core4Ram80Disk = "SharedAmd3Core4Ram80Disk",
-	/** CAX21 - Arm 4 Cores, 8 Gb Ram, 80 Gb disk */
-	SharedArm4Core8Ram80Disk = "SharedArm4Core8Ram80Disk",
-	/** CX32 - Intel 4 Cores, 8 Gb Ram, 80 Gb disk */
-	SharedIntel4Core8Ram80Disk = "SharedIntel4Core8Ram80Disk",
-	/** CPX31 - AMD 4 Cores, 8 Gb Ram, 160 Gb disk */
-	SharedAmd4Core8Ram160Disk = "SharedAmd4Core8Ram160Disk",
-	/** CAX31 - Arm 8 Cores, 16 Gb Ram, 160 Gb disk */
-	SharedArm8Core16Ram160Disk = "SharedArm8Core16Ram160Disk",
-	/** CX42 - Intel 8 Cores, 16 Gb Ram, 160 Gb disk */
-	SharedIntel8Core16Ram160Disk = "SharedIntel8Core16Ram160Disk",
-	/** CPX41 - AMD 8 Cores, 16 Gb Ram, 240 Gb disk */
-	SharedAmd8Core16Ram240Disk = "SharedAmd8Core16Ram240Disk",
-	/** CAX41 - Arm 16 Cores, 32 Gb Ram, 320 Gb disk */
-	SharedArm16Core32Ram320Disk = "SharedArm16Core32Ram320Disk",
-	/** CX52 - Intel 16 Cores, 32 Gb Ram, 320 Gb disk */
-	SharedIntel16Core32Ram320Disk = "SharedIntel16Core32Ram320Disk",
-	/** CPX51 - AMD 16 Cores, 32 Gb Ram, 360 Gb disk */
-	SharedAmd16Core32Ram360Disk = "SharedAmd16Core32Ram360Disk",
-	/** CCX13 - AMD 2 Cores, 8 Gb Ram, 80 Gb disk */
-	DedicatedAmd2Core8Ram80Disk = "DedicatedAmd2Core8Ram80Disk",
-	/** CCX23 - AMD 4 Cores, 16 Gb Ram, 160 Gb disk */
-	DedicatedAmd4Core16Ram160Disk = "DedicatedAmd4Core16Ram160Disk",
-	/** CCX33 - AMD 8 Cores, 32 Gb Ram, 240 Gb disk */
-	DedicatedAmd8Core32Ram240Disk = "DedicatedAmd8Core32Ram240Disk",
-	/** CCX43 - AMD 16 Cores, 64 Gb Ram, 360 Gb disk */
-	DedicatedAmd16Core64Ram360Disk = "DedicatedAmd16Core64Ram360Disk",
-	/** CCX53 - AMD 32 Cores, 128 Gb Ram, 600 Gb disk */
-	DedicatedAmd32Core128Ram600Disk = "DedicatedAmd32Core128Ram600Disk",
-	/** CCX63 - AMD 48 Cores, 192 Gb Ram, 960 Gb disk */
-	DedicatedAmd48Core192Ram960Disk = "DedicatedAmd48Core192Ram960Disk",
-}
-
-export enum HetznerVolumeFormat {
-	Xfs = "Xfs",
-	Ext4 = "Ext4",
-}
-
-export interface HetznerVolumeSpecs {
-	/** A name for the volume */
-	name: string;
-	/** Size of the volume in GB */
-	size_gb: I64;
-	/** The format for the volume */
-	format?: HetznerVolumeFormat;
-	/** Labels for the volume */
-	labels?: Record<string, string>;
-}
-
-/** Hetzner server config. */
-export interface HetznerServerTemplateConfig {
-	/** ID or name of the Image the Server is created from */
-	image: string;
-	/** ID or name of Datacenter to create Server in */
-	datacenter?: HetznerDatacenter;
-	/**
-	 * ID of the Placement Group the server should be in,
-	 * Or 0 to not use placement group.
-	 */
-	placement_group?: I64;
-	/** ID or name of the Server type this Server should be created with */
-	server_type?: HetznerServerType;
-	/** SSH key IDs ( integer ) or names ( string ) which should be injected into the Server at creation time */
-	ssh_keys?: string[];
-	/** Network IDs which should be attached to the Server private network interface at the creation time */
-	private_network_ids?: I64[];
-	/** Attach an IPv4 on the public NIC. If false, no IPv4 address will be attached. */
-	enable_public_ipv4?: boolean;
-	/** Attach an IPv6 on the public NIC. If false, no IPv6 address will be attached. */
-	enable_public_ipv6?: boolean;
-	/** Connect to the instance using it's public ip. */
-	use_public_ip?: boolean;
-	/**
-	 * The port periphery will be running on in AMI.
-	 * Default: `8120`
-	 */
-	port: number;
-	/** Whether Periphery will be running on https */
-	use_https: boolean;
-	/** The firewalls to attach to the instance */
-	firewall_ids?: I64[];
-	/** Labels for the server */
-	labels?: Record<string, string>;
-	/** Specs for volumes to attach */
-	volumes?: HetznerVolumeSpecs[];
-	/** Cloud-Init user data to use during Server creation. This field is limited to 32KiB. */
-	user_data: string;
-}
-
 /** Inspect a docker container on the server. Response: [Container]. */
 export interface InspectDockerContainer {
 	/** Id or name */
@@ -6143,17 +5886,6 @@ export interface InspectDockerVolume {
 export interface LatestCommit {
 	hash: string;
 	message: string;
-}
-
-/**
- * Launch an EC2 instance with the specified config.
- * Response: [Update].
- */
-export interface LaunchServer {
-	/** The name of the created server. */
-	name: string;
-	/** The server template used to define the config. */
-	server_template: string;
 }
 
 /** List actions matching optional query. Response: [ListActionsResponse]. */
@@ -6446,11 +6178,6 @@ export interface ListFullResourceSyncs {
 	query?: ResourceSyncQuery;
 }
 
-/** List server templates matching structured query. Response: [ListFullServerTemplatesResponse]. */
-export interface ListFullServerTemplates {
-	query?: ServerTemplateQuery;
-}
-
 /** List servers matching optional query. Response: [ListFullServersResponse]. */
 export interface ListFullServers {
 	/** optional structured query to filter servers. */
@@ -6527,11 +6254,6 @@ export interface ListSecrets {
 	 * providers available on that specific resource.
 	 */
 	target?: ResourceTarget;
-}
-
-/** List server templates matching structured query. Response: [ListServerTemplatesResponse]. */
-export interface ListServerTemplates {
-	query?: ServerTemplateQuery;
 }
 
 /** List servers matching optional query. Response: [ListServersResponse]. */
@@ -7032,17 +6754,6 @@ export interface RenameServer {
 	name: string;
 }
 
-/**
- * Rename the ServerTemplate at id to the given name.
- * Response: [Update].
- */
-export interface RenameServerTemplate {
-	/** The id or name of the ServerTemplate to rename. */
-	id: string;
-	/** The new name. */
-	name: string;
-}
-
 /** Rename the stack at id to the given name. Response: [Update]. */
 export interface RenameStack {
 	/** The id of the stack to rename. */
@@ -7115,7 +6826,6 @@ export interface ResourcesToml {
 	actions?: ResourceToml<_PartialActionConfig>[];
 	alerters?: ResourceToml<_PartialAlerterConfig>[];
 	builders?: ResourceToml<_PartialBuilderConfig>[];
-	server_templates?: ResourceToml<PartialServerTemplateConfig>[];
 	resource_syncs?: ResourceToml<_PartialResourceSyncConfig>[];
 	user_groups?: UserGroupToml[];
 	variables?: Variable[];
@@ -7716,23 +7426,6 @@ export interface UpdateServer {
 }
 
 /**
- * Update the server template at the given id, and return the updated server template.
- * Response: [ServerTemplate].
- * 
- * Note. This method updates only the fields which are set in the [PartialServerTemplateConfig],
- * effectively merging diffs into the final document.
- * This is helpful when multiple users are using
- * the same resources concurrently by ensuring no unintentional
- * field changes occur from out of date local state.
- */
-export interface UpdateServerTemplate {
-	/** The id of the server template to update. */
-	id: string;
-	/** The partial config update to apply. */
-	config: PartialServerTemplateConfig;
-}
-
-/**
  * **Admin only.** Update a service user's description.
  * Response: [User].
  */
@@ -7957,7 +7650,6 @@ export type ExecuteRequest =
 	| { type: "BatchRunProcedure", params: BatchRunProcedure }
 	| { type: "RunAction", params: RunAction }
 	| { type: "BatchRunAction", params: BatchRunAction }
-	| { type: "LaunchServer", params: LaunchServer }
 	| { type: "TestAlerter", params: TestAlerter }
 	| { type: "RunSync", params: RunSync };
 
@@ -7994,10 +7686,6 @@ export type ReadRequest =
 	| { type: "GetActionActionState", params: GetActionActionState }
 	| { type: "ListActions", params: ListActions }
 	| { type: "ListFullActions", params: ListFullActions }
-	| { type: "GetServerTemplate", params: GetServerTemplate }
-	| { type: "GetServerTemplatesSummary", params: GetServerTemplatesSummary }
-	| { type: "ListServerTemplates", params: ListServerTemplates }
-	| { type: "ListFullServerTemplates", params: ListFullServerTemplates }
 	| { type: "GetServersSummary", params: GetServersSummary }
 	| { type: "GetServer", params: GetServer }
 	| { type: "GetServerState", params: GetServerState }
@@ -8143,11 +7831,6 @@ export type WriteRequest =
 	| { type: "DeleteBuilder", params: DeleteBuilder }
 	| { type: "UpdateBuilder", params: UpdateBuilder }
 	| { type: "RenameBuilder", params: RenameBuilder }
-	| { type: "CreateServerTemplate", params: CreateServerTemplate }
-	| { type: "CopyServerTemplate", params: CopyServerTemplate }
-	| { type: "DeleteServerTemplate", params: DeleteServerTemplate }
-	| { type: "UpdateServerTemplate", params: UpdateServerTemplate }
-	| { type: "RenameServerTemplate", params: RenameServerTemplate }
 	| { type: "CreateRepo", params: CreateRepo }
 	| { type: "CopyRepo", params: CopyRepo }
 	| { type: "DeleteRepo", params: DeleteRepo }

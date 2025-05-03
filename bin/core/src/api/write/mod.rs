@@ -29,7 +29,6 @@ mod procedure;
 mod provider;
 mod repo;
 mod server;
-mod server_template;
 mod service_user;
 mod stack;
 mod sync;
@@ -115,13 +114,6 @@ pub enum WriteRequest {
   DeleteBuilder(DeleteBuilder),
   UpdateBuilder(UpdateBuilder),
   RenameBuilder(RenameBuilder),
-
-  // ==== SERVER TEMPLATE ====
-  CreateServerTemplate(CreateServerTemplate),
-  CopyServerTemplate(CopyServerTemplate),
-  DeleteServerTemplate(DeleteServerTemplate),
-  UpdateServerTemplate(UpdateServerTemplate),
-  RenameServerTemplate(RenameServerTemplate),
 
   // ==== REPO ====
   CreateRepo(CreateRepo),

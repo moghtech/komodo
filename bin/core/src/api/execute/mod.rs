@@ -39,7 +39,6 @@ mod deployment;
 mod procedure;
 mod repo;
 mod server;
-mod server_template;
 mod stack;
 mod sync;
 
@@ -135,9 +134,6 @@ pub enum ExecuteRequest {
   // ==== ACTION ====
   RunAction(RunAction),
   BatchRunAction(BatchRunAction),
-
-  // ==== SERVER TEMPLATE ====
-  LaunchServer(LaunchServer),
 
   // ==== ALERTER ====
   TestAlerter(TestAlerter),

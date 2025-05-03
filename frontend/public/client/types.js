@@ -269,11 +269,6 @@ export var Operation;
     Operation["RenameAlerter"] = "RenameAlerter";
     Operation["DeleteAlerter"] = "DeleteAlerter";
     Operation["TestAlerter"] = "TestAlerter";
-    Operation["CreateServerTemplate"] = "CreateServerTemplate";
-    Operation["UpdateServerTemplate"] = "UpdateServerTemplate";
-    Operation["RenameServerTemplate"] = "RenameServerTemplate";
-    Operation["DeleteServerTemplate"] = "DeleteServerTemplate";
-    Operation["LaunchServer"] = "LaunchServer";
     Operation["CreateResourceSync"] = "CreateResourceSync";
     Operation["UpdateResourceSync"] = "UpdateResourceSync";
     Operation["RenameResourceSync"] = "RenameResourceSync";
@@ -466,13 +461,6 @@ export var StackState;
     /** Server not reachable */
     StackState["Unknown"] = "unknown";
 })(StackState || (StackState = {}));
-export var AwsVolumeType;
-(function (AwsVolumeType) {
-    AwsVolumeType["Gp2"] = "gp2";
-    AwsVolumeType["Gp3"] = "gp3";
-    AwsVolumeType["Io1"] = "io1";
-    AwsVolumeType["Io2"] = "io2";
-})(AwsVolumeType || (AwsVolumeType = {}));
 export var RepoWebhookAction;
 (function (RepoWebhookAction) {
     RepoWebhookAction["Clone"] = "Clone";
@@ -505,61 +493,6 @@ export var TerminalRecreateMode;
     /** Only kill and recreate if the command is different. */
     TerminalRecreateMode["DifferentCommand"] = "DifferentCommand";
 })(TerminalRecreateMode || (TerminalRecreateMode = {}));
-export var HetznerDatacenter;
-(function (HetznerDatacenter) {
-    HetznerDatacenter["Nuremberg1Dc3"] = "Nuremberg1Dc3";
-    HetznerDatacenter["Helsinki1Dc2"] = "Helsinki1Dc2";
-    HetznerDatacenter["Falkenstein1Dc14"] = "Falkenstein1Dc14";
-    HetznerDatacenter["AshburnDc1"] = "AshburnDc1";
-    HetznerDatacenter["HillsboroDc1"] = "HillsboroDc1";
-    HetznerDatacenter["SingaporeDc1"] = "SingaporeDc1";
-})(HetznerDatacenter || (HetznerDatacenter = {}));
-export var HetznerServerType;
-(function (HetznerServerType) {
-    /** CPX11 - AMD 2 Cores, 2 Gb Ram, 40 Gb disk */
-    HetznerServerType["SharedAmd2Core2Ram40Disk"] = "SharedAmd2Core2Ram40Disk";
-    /** CAX11 - Arm 2 Cores, 4 Gb Ram, 40 Gb disk */
-    HetznerServerType["SharedArm2Core4Ram40Disk"] = "SharedArm2Core4Ram40Disk";
-    /** CX22 - Intel 2 Cores, 4 Gb Ram, 40 Gb disk */
-    HetznerServerType["SharedIntel2Core4Ram40Disk"] = "SharedIntel2Core4Ram40Disk";
-    /** CPX21 - AMD 3 Cores, 4 Gb Ram, 80 Gb disk */
-    HetznerServerType["SharedAmd3Core4Ram80Disk"] = "SharedAmd3Core4Ram80Disk";
-    /** CAX21 - Arm 4 Cores, 8 Gb Ram, 80 Gb disk */
-    HetznerServerType["SharedArm4Core8Ram80Disk"] = "SharedArm4Core8Ram80Disk";
-    /** CX32 - Intel 4 Cores, 8 Gb Ram, 80 Gb disk */
-    HetznerServerType["SharedIntel4Core8Ram80Disk"] = "SharedIntel4Core8Ram80Disk";
-    /** CPX31 - AMD 4 Cores, 8 Gb Ram, 160 Gb disk */
-    HetznerServerType["SharedAmd4Core8Ram160Disk"] = "SharedAmd4Core8Ram160Disk";
-    /** CAX31 - Arm 8 Cores, 16 Gb Ram, 160 Gb disk */
-    HetznerServerType["SharedArm8Core16Ram160Disk"] = "SharedArm8Core16Ram160Disk";
-    /** CX42 - Intel 8 Cores, 16 Gb Ram, 160 Gb disk */
-    HetznerServerType["SharedIntel8Core16Ram160Disk"] = "SharedIntel8Core16Ram160Disk";
-    /** CPX41 - AMD 8 Cores, 16 Gb Ram, 240 Gb disk */
-    HetznerServerType["SharedAmd8Core16Ram240Disk"] = "SharedAmd8Core16Ram240Disk";
-    /** CAX41 - Arm 16 Cores, 32 Gb Ram, 320 Gb disk */
-    HetznerServerType["SharedArm16Core32Ram320Disk"] = "SharedArm16Core32Ram320Disk";
-    /** CX52 - Intel 16 Cores, 32 Gb Ram, 320 Gb disk */
-    HetznerServerType["SharedIntel16Core32Ram320Disk"] = "SharedIntel16Core32Ram320Disk";
-    /** CPX51 - AMD 16 Cores, 32 Gb Ram, 360 Gb disk */
-    HetznerServerType["SharedAmd16Core32Ram360Disk"] = "SharedAmd16Core32Ram360Disk";
-    /** CCX13 - AMD 2 Cores, 8 Gb Ram, 80 Gb disk */
-    HetznerServerType["DedicatedAmd2Core8Ram80Disk"] = "DedicatedAmd2Core8Ram80Disk";
-    /** CCX23 - AMD 4 Cores, 16 Gb Ram, 160 Gb disk */
-    HetznerServerType["DedicatedAmd4Core16Ram160Disk"] = "DedicatedAmd4Core16Ram160Disk";
-    /** CCX33 - AMD 8 Cores, 32 Gb Ram, 240 Gb disk */
-    HetznerServerType["DedicatedAmd8Core32Ram240Disk"] = "DedicatedAmd8Core32Ram240Disk";
-    /** CCX43 - AMD 16 Cores, 64 Gb Ram, 360 Gb disk */
-    HetznerServerType["DedicatedAmd16Core64Ram360Disk"] = "DedicatedAmd16Core64Ram360Disk";
-    /** CCX53 - AMD 32 Cores, 128 Gb Ram, 600 Gb disk */
-    HetznerServerType["DedicatedAmd32Core128Ram600Disk"] = "DedicatedAmd32Core128Ram600Disk";
-    /** CCX63 - AMD 48 Cores, 192 Gb Ram, 960 Gb disk */
-    HetznerServerType["DedicatedAmd48Core192Ram960Disk"] = "DedicatedAmd48Core192Ram960Disk";
-})(HetznerServerType || (HetznerServerType = {}));
-export var HetznerVolumeFormat;
-(function (HetznerVolumeFormat) {
-    HetznerVolumeFormat["Xfs"] = "Xfs";
-    HetznerVolumeFormat["Ext4"] = "Ext4";
-})(HetznerVolumeFormat || (HetznerVolumeFormat = {}));
 export var PortTypeEnum;
 (function (PortTypeEnum) {
     PortTypeEnum["EMPTY"] = "";

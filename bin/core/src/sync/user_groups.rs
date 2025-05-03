@@ -285,13 +285,6 @@ pub async fn get_updates_for_execution(
             .map(|b| b.name.clone())
             .unwrap_or_default()
         }
-        ResourceTarget::ServerTemplate(id) => {
-          *id = all_resources
-            .templates
-            .get(id)
-            .map(|b| b.name.clone())
-            .unwrap_or_default()
-        }
         ResourceTarget::ResourceSync(id) => {
           *id = all_resources
             .syncs
@@ -737,19 +730,6 @@ async fn expand_user_group_permissions(
             });
           expanded.extend(permissions);
         }
-        ResourceTargetVariant::ServerTemplate => {
-          let permissions = all_resources
-            .templates
-            .values()
-            .filter(|resource| regex.is_match(&resource.name))
-            .map(|resource| PermissionToml {
-              target: ResourceTarget::ServerTemplate(
-                resource.name.clone(),
-              ),
-              level: permission.level,
-            });
-          expanded.extend(permissions);
-        }
         ResourceTargetVariant::ResourceSync => {
           let permissions = all_resources
             .syncs
@@ -899,13 +879,6 @@ pub async fn convert_user_groups(
         ResourceTarget::Action(id) => {
           *id = all
             .actions
-            .get(id)
-            .map(|r| r.name.clone())
-            .unwrap_or_default()
-        }
-        ResourceTarget::ServerTemplate(id) => {
-          *id = all
-            .templates
             .get(id)
             .map(|r| r.name.clone())
             .unwrap_or_default()

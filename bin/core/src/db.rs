@@ -12,7 +12,6 @@ use komodo_client::entities::{
   provider::{DockerRegistryAccount, GitProviderAccount},
   repo::Repo,
   server::Server,
-  server_template::ServerTemplate,
   stack::Stack,
   stats::SystemStatsRecord,
   sync::ResourceSync,
@@ -50,7 +49,6 @@ pub struct DbClient {
   pub procedures: Collection<Procedure>,
   pub actions: Collection<Action>,
   pub alerters: Collection<Alerter>,
-  pub server_templates: Collection<ServerTemplate>,
   pub resource_syncs: Collection<ResourceSync>,
   pub stacks: Collection<Stack>,
   //
@@ -120,8 +118,6 @@ impl DbClient {
       alerters: resource_collection(&db, "Alerter").await?,
       procedures: resource_collection(&db, "Procedure").await?,
       actions: resource_collection(&db, "Action").await?,
-      server_templates: resource_collection(&db, "ServerTemplate")
-        .await?,
       resource_syncs: resource_collection(&db, "ResourceSync")
         .await?,
       stacks: resource_collection(&db, "Stack").await?,

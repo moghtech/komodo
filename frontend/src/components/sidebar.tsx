@@ -45,12 +45,7 @@ export const Sidebar = () => {
         <p className="pl-4 pb-1 text-xs text-muted-foreground">Resources</p>
         {RESOURCE_TARGETS.map((type) => {
           const RTIcon = ResourceComponents[type].Icon;
-          const name =
-            type === "ServerTemplate"
-              ? "Template"
-              : type === "ResourceSync"
-              ? "Sync"
-              : type;
+          const name = type === "ResourceSync" ? "Sync" : type;
           return (
             <SidebarLink
               key={type}

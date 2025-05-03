@@ -18,7 +18,6 @@ use komodo_client::entities::{
   procedure::Procedure,
   repo::Repo,
   server::{Server, ServerState},
-  server_template::ServerTemplate,
   stack::{Stack, StackServiceNames, StackState},
   stats::SystemInformation,
   sync::ResourceSync,
@@ -304,10 +303,6 @@ pub async fn get_user_permission_on_target(
     }
     ResourceTarget::Action(id) => {
       get_user_permission_on_resource::<Action>(user, id).await
-    }
-    ResourceTarget::ServerTemplate(id) => {
-      get_user_permission_on_resource::<ServerTemplate>(user, id)
-        .await
     }
     ResourceTarget::ResourceSync(id) => {
       get_user_permission_on_resource::<ResourceSync>(user, id).await

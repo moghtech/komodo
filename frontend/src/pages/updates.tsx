@@ -368,12 +368,6 @@ const OPERATIONS_BY_RESOURCE: { [key: string]: Types.Operation[] } = {
     Types.Operation.UpdateAlerter,
     Types.Operation.DeleteAlerter,
   ],
-  ServerTemplate: [
-    Types.Operation.CreateServerTemplate,
-    Types.Operation.UpdateServerTemplate,
-    Types.Operation.DeleteServerTemplate,
-    Types.Operation.LaunchServer,
-  ],
   ResourceSync: [
     Types.Operation.CreateResourceSync,
     Types.Operation.UpdateResourceSync,
