@@ -269,11 +269,14 @@ export function KomodoClient(url, options) {
         for await (const line of stream) {
             if (line.startsWith("__KOMODO_EXIT_CODE")) {
                 await callbacks?.onFinish?.(line.split(":")[1]);
+                return;
             }
             else {
                 await callbacks?.onLine?.(line);
             }
         }
+        // This is hit if no __KOMODO_EXIT_CODE is sent, ie early exit
+        await callbacks?.onFinish?.("Early exit without code");
     };
     return {
         /**

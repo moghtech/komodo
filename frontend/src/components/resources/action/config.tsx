@@ -202,6 +202,17 @@ export const ActionConfig = ({ id }: { id: string }) => {
             },
           },
           {
+            label: "Reload",
+            labelHidden: true,
+            components: {
+              reload_deno_deps: {
+                label: "Reload Dependencies",
+                description:
+                  "Whether deno will be instructed to reload all dependencies. This can usually be kept false outside of development.",
+              },
+            },
+          },
+          {
             label: "Webhook",
             description: `Copy the webhook given here, and configure your ${webhook_integration}-style repo provider to send webhooks to Komodo`,
             components: {

@@ -133,6 +133,12 @@ pub struct ActionConfig {
   #[builder(default)]
   pub webhook_secret: String,
 
+  /// Whether deno will be instructed to reload all dependencies,
+  /// this can usually be kept false outside of development.
+  #[serde(default)]
+  #[builder(default)]
+  pub reload_deno_deps: bool,
+
   /// Typescript file contents using pre-initialized `komodo` client.
   /// Supports variable / secret interpolation.
   #[serde(default, deserialize_with = "file_contents_deserializer")]
@@ -177,6 +183,7 @@ impl Default for ActionConfig {
       failure_alert: default_failure_alert(),
       webhook_enabled: default_webhook_enabled(),
       webhook_secret: Default::default(),
+      reload_deno_deps: Default::default(),
       file_contents: Default::default(),
     }
   }

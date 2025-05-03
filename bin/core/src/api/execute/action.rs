@@ -134,12 +134,18 @@ impl Resolve<ExecuteArgs> for RunAction {
       ""
     };
 
+    let reload = if action.config.reload_deno_deps {
+      " --reload"
+    } else {
+      ""
+    };
+
     let mut res = run_komodo_command(
       // Keep this stage name as is, the UI will find the latest update log by matching the stage name
       "Execute Action",
       None,
       format!(
-        "deno run --allow-all{https_cert_flag} --reload {}",
+        "deno run --allow-all{https_cert_flag}{reload} {}",
         path.display()
       ),
     )

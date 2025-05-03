@@ -90,6 +90,11 @@ export interface ActionConfig {
      */
     webhook_secret?: string;
     /**
+     * Whether deno will be instructed to reload all dependencies,
+     * this can usually be kept false outside of development.
+     */
+    reload_deno_deps?: boolean;
+    /**
      * Typescript file contents using pre-initialized `komodo` client.
      * Supports variable / secret interpolation.
      */
