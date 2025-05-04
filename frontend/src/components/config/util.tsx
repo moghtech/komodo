@@ -318,6 +318,7 @@ export const ProviderSelectorConfig = (params: {
             variant="outline"
             onClick={params.onHttpsSwitch}
             className="py-0 px-2"
+            disabled={params.disabled}
           >
             {`http${params.https ? "s" : ""}://`}
           </Button>
