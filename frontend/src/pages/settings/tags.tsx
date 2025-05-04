@@ -98,7 +98,12 @@ export const Tags = () => {
           {
             header: "Delete",
             size: 200,
-            cell: ({ row }) => <DeleteTag tag_id={row.original._id!.$oid} />,
+            cell: ({ row }) => (
+              <DeleteTag
+                tag_id={row.original._id!.$oid}
+                disabled={!user.admin && row.original.owner !== user._id?.$oid}
+              />
+            ),
           },
         ]}
       />
@@ -108,6 +113,7 @@ export const Tags = () => {
 
 export const TagCards = () => {
   const tags = useRead("ListTags", {}).data;
+  const user = useUser().data!;
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {tags?.map((tag) => (
@@ -117,7 +123,10 @@ export const TagCards = () => {
         >
           <CardHeader className="flex-row justify-between items-center">
             <CardTitle>{tag.name}</CardTitle>
-            <DeleteTag tag_id={tag._id!.$oid} />
+            <DeleteTag
+              tag_id={tag._id!.$oid}
+              disabled={!user.admin && tag.owner !== user._id?.$oid}
+            />
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
             {tag.owner && (
@@ -181,7 +190,13 @@ export const CreateTag = () => {
   );
 };
 
-const DeleteTag = ({ tag_id }: { tag_id: string }) => {
+const DeleteTag = ({
+  tag_id,
+  disabled,
+}: {
+  tag_id: string;
+  disabled: boolean;
+}) => {
   const invalidate = useInvalidate();
   const { toast } = useToast();
   const { mutate, isPending } = useWrite("DeleteTag", {
@@ -195,6 +210,7 @@ const DeleteTag = ({ tag_id }: { tag_id: string }) => {
       title="Delete"
       icon={<Trash className="w-4 h-4" />}
       onClick={() => mutate({ id: tag_id })}
+      disabled={disabled}
       loading={isPending}
     />
   );
@@ -235,15 +251,12 @@ const ColorSelector = ({
           disabled={disabled}
         >
           {fmt_upper_camelcase(color) || "Select Color"}
-          {/* {!disabled && <ChevronsUpDown className="w-3 h-3" />} */}
-          {!disabled && (
-            <div
-              className={cn(
-                "w-[25px] h-[25px] rounded-sm bg-opacity-70",
-                tag_background_class(color)
-              )}
-            />
-          )}
+          <div
+            className={cn(
+              "w-[25px] h-[25px] rounded-sm bg-opacity-70",
+              tag_background_class(color)
+            )}
+          />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] max-h-[300px] p-0" align="end">
