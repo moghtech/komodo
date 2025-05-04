@@ -31,6 +31,7 @@ pub async fn on_startup() {
     in_progress_update_cleanup(),
     open_alert_cleanup(),
     ensure_first_server_and_builder(),
+    clean_up_server_templates(),
   );
 }
 
@@ -181,4 +182,47 @@ async fn ensure_first_server_and_builder() {
       e.error
     );
   }
+}
+
+/// v1.17.5 removes the ServerTemplate resource.
+/// References to this resource type need to be cleaned up
+/// to avoid type errors reading from the database.
+async fn clean_up_server_templates() {
+  let db = db_client();
+  tokio::join!(
+    async {
+      db.permissions
+        .delete_many(doc! {
+          "resource_target.type": "ServerTemplate",
+        })
+        .await
+        .expect(
+          "Failed to clean up server template permissions on db",
+        );
+    },
+    async {
+      db.updates
+        .delete_many(doc! { "target.type": "ServerTemplate" })
+        .await
+        .expect("Failed to clean up server template updates on db");
+    },
+    async {
+      db.users
+        .update_many(
+          Document::new(),
+          doc! { "$unset": { "recents.ServerTemplate": 1, "all.ServerTemplate": 1 } }
+        )
+        .await
+        .expect("Failed to clean up server template updates on db");
+    },
+    async {
+      db.user_groups
+        .update_many(
+          Document::new(),
+          doc! { "$unset": { "all.ServerTemplate": 1 } },
+        )
+        .await
+        .expect("Failed to clean up server template updates on db");
+    },
+  );
 }
