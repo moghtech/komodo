@@ -1,26 +1,39 @@
 import { komodo_client, useInvalidate, useRead, useUser } from "@lib/hooks";
-import { CancelToken, Types } from "komodo_client";
+import { Types } from "komodo_client";
 import { Button } from "@ui/button";
 import { toast } from "@ui/use-toast";
 import { atom, useAtom } from "jotai";
-import { Circle, Loader2 } from "lucide-react";
-import { ReactNode, useCallback, useEffect, useState } from "react";
+import { Circle } from "lucide-react";
+import { ReactNode, useCallback, useEffect, useRef } from "react";
 import { cn } from "@lib/utils";
 import { ResourceComponents } from "@components/resources";
 import { UsableResource } from "@types";
 import { ResourceName } from "@components/resources/common";
 
-const ws_connected = atom(false);
-export const useWebsocketConnected = () => useAtom(ws_connected);
+const ws_atom = atom<{
+  ws: WebSocket | undefined;
+  connected: boolean;
+  count: number;
+}>({
+  ws: undefined,
+  connected: false,
+  count: 0,
+});
 
-const ws_cancel = atom(new CancelToken());
-const useWebsocketCancel = () => useAtom(ws_cancel)[0];
+export const useWebsocketConnected = () => useAtom(ws_atom)[0].connected;
 
 const useWebsocketReconnect = () => {
-  const [cancel, set] = useAtom(ws_cancel);
+  const [ws, set] = useAtom(ws_atom);
+
   return () => {
-    cancel.cancel();
-    set(new CancelToken());
+    if (ws.ws?.readyState === WebSocket.OPEN) {
+      ws.ws?.close();
+    }
+    set((ws) => ({
+      ws: undefined,
+      connected: false,
+      count: ws.count + 1,
+    }));
   };
 };
 
@@ -44,10 +57,15 @@ export const useWebsocketMessages = (
 export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
   const user = useUser().data;
   const invalidate = useInvalidate();
-  const cancel = useWebsocketCancel();
-  const [_, setConnected] = useWebsocketConnected();
+  const [ws, setWs] = useAtom(ws_atom);
+  const countRef = useRef<number>(ws.count);
+  const reconnect = useWebsocketReconnect();
   const disable_reconnect = useRead("GetCoreInfo", {}).data
     ?.disable_websocket_reconnect;
+
+  useEffect(() => {
+    countRef.current = ws.count;
+  }, [ws.count]);
 
   const on_update_fn = useCallback(
     (update: Types.UpdateListItem) => on_update(update, invalidate),
@@ -55,36 +73,44 @@ export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
   );
 
   useEffect(() => {
-    if (user && disable_reconnect !== undefined) {
-      komodo_client().subscribe_to_update_websocket({
+    if (user && disable_reconnect !== undefined && ws.ws === undefined) {
+      // make a copy of the count to not change.
+      const count = ws.count;
+      let timeout = -1;
+      const socket = komodo_client().get_update_websocket({
         on_login: () => {
-          setConnected(true);
-          console.info("Logged into Update websocket");
+          console.info(count, "| Logged into Update websocket");
+          setWs((ws) => ({ ...ws, connected: true }));
         },
         on_update: on_update_fn,
         on_close: () => {
-          setConnected(false);
-          console.info("Update websocket connection closed");
+          console.info(count, "| Update websocket connection closed");
+          setWs((ws) => ({ ...ws, connected: false }));
+          if (!disable_reconnect) {
+            timeout = setTimeout(() => {
+              if (countRef.current === count) {
+                console.info(count, "| Automatically triggering reconnect");
+                reconnect();
+              }
+            }, 5_000);
+          }
         },
-        retry: !disable_reconnect,
-        cancel,
       });
+      setWs((ws) => ({ ...ws, ws: socket }));
+      return () => clearTimeout(timeout);
     }
-  }, [user, disable_reconnect, cancel]);
+  }, [user, disable_reconnect, ws.ws, ws.count]);
 
   return <>{children}</>;
 };
 
 export const WsStatusIndicator = () => {
-  const [refreshing, setRefreshing] = useState(false);
-  const [connected] = useWebsocketConnected();
+  const [ws] = useAtom(ws_atom);
   const reconnect = useWebsocketReconnect();
   const onclick = () => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 500);
     reconnect();
     toast({
-      title: connected
+      title: ws.connected
         ? "Triggered websocket reconnect"
         : "Triggered websocket connect",
     });
@@ -97,16 +123,12 @@ export const WsStatusIndicator = () => {
       size="icon"
       className="hidden lg:inline-flex"
     >
-      {refreshing ? (
-        <Loader2 className="w-4 h-4 animate-spin" />
-      ) : (
-        <Circle
-          className={cn(
-            "w-4 h-4 stroke-none transition-colors",
-            connected ? "fill-green-500" : "fill-red-500"
-          )}
-        />
-      )}
+      <Circle
+        className={cn(
+          "w-4 h-4 stroke-none transition-colors",
+          ws.connected ? "fill-green-500" : "fill-red-500"
+        )}
+      />
     </Button>
   );
 };

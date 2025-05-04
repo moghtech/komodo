@@ -119,11 +119,21 @@ export declare function KomodoClient(url: string, options: InitOptions): {
     /** Returns the version of Komodo Core the client is calling to. */
     core_version: () => Promise<string>;
     /**
+     * Connects to update websocket, performs login and attaches handlers,
+     * and returns the WebSocket handle.
+     */
+    get_update_websocket: ({ on_update, on_login, on_open, on_close, }: {
+        on_update: (update: UpdateListItem) => void;
+        on_login?: () => void;
+        on_open?: () => void;
+        on_close?: () => void;
+    }) => WebSocket;
+    /**
      * Subscribes to the update websocket with automatic reconnect loop.
      *
      * Note. Awaiting this method will never finish.
      */
-    subscribe_to_update_websocket: ({ on_update, on_login, on_close, retry, retry_timeout_ms, cancel, on_cancel, }: {
+    subscribe_to_update_websocket: ({ on_update, on_open, on_login, on_close, retry, retry_timeout_ms, cancel, on_cancel, }: {
         on_update: (update: UpdateListItem) => void;
         on_login?: () => void;
         on_open?: () => void;

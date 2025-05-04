@@ -202,8 +202,55 @@ export function KomodoClient(url: string, options: InitOptions) {
 
   const core_version = () => read("GetVersion", {}).then((res) => res.version);
 
+  const get_update_websocket = ({
+    on_update,
+    on_login,
+    on_open,
+    on_close,
+  }: {
+    on_update: (update: UpdateListItem) => void;
+    on_login?: () => void;
+    on_open?: () => void;
+    on_close?: () => void;
+  }) => {
+    const ws = new WebSocket(url.replace("http", "ws") + "/ws/update");
+
+    // Handle login on websocket open
+    ws.addEventListener("open", () => {
+      on_open?.();
+      const login_msg: WsLoginMessage =
+        options.type === "jwt"
+          ? {
+              type: "Jwt",
+              params: {
+                jwt: options.params.jwt,
+              },
+            }
+          : {
+              type: "ApiKeys",
+              params: {
+                key: options.params.key,
+                secret: options.params.secret,
+              },
+            };
+      ws.send(JSON.stringify(login_msg));
+    });
+
+    ws.addEventListener("message", ({ data }: MessageEvent) => {
+      if (data == "LOGGED_IN") return on_login?.();
+      on_update(JSON.parse(data));
+    });
+
+    if (on_close) {
+      ws.addEventListener("close", on_close);
+    }
+
+    return ws;
+  };
+
   const subscribe_to_update_websocket = async ({
     on_update,
+    on_open,
     on_login,
     on_close,
     retry = true,
@@ -227,36 +274,12 @@ export function KomodoClient(url: string, options: InitOptions) {
       }
 
       try {
-        const ws = new WebSocket(url.replace("http", "ws") + "/ws/update");
-
-        // Handle login on websocket open
-        ws.addEventListener("open", () => {
-          const login_msg: WsLoginMessage =
-            options.type === "jwt"
-              ? {
-                  type: "Jwt",
-                  params: {
-                    jwt: options.params.jwt,
-                  },
-                }
-              : {
-                  type: "ApiKeys",
-                  params: {
-                    key: options.params.key,
-                    secret: options.params.secret,
-                  },
-                };
-          ws.send(JSON.stringify(login_msg));
+        const ws = get_update_websocket({
+          on_open,
+          on_login,
+          on_update,
+          on_close,
         });
-
-        ws.addEventListener("message", ({ data }: MessageEvent) => {
-          if (data == "LOGGED_IN") return on_login?.();
-          on_update(JSON.parse(data));
-        });
-
-        if (on_close) {
-          ws.addEventListener("close", on_close);
-        }
 
         // This while loop will end when the socket is closed
         while (
@@ -576,6 +599,11 @@ export function KomodoClient(url: string, options: InitOptions) {
     poll_update_until_complete,
     /** Returns the version of Komodo Core the client is calling to. */
     core_version,
+    /**
+     * Connects to update websocket, performs login and attaches handlers,
+     * and returns the WebSocket handle.
+     */
+    get_update_websocket,
     /**
      * Subscribes to the update websocket with automatic reconnect loop.
      *
