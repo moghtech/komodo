@@ -617,16 +617,19 @@ export const BuildConfig = ({
                 update.dockerfile === undefined &&
                 !(update.repo ?? config.repo);
               return (
-                <MonacoEditor
-                  value={
-                    show_default
-                      ? DEFAULT_BUILD_DOCKERFILE_CONTENTS
-                      : dockerfile
-                  }
-                  onValueChange={(dockerfile) => set({ dockerfile })}
-                  language="dockerfile"
-                  readOnly={disabled}
-                />
+                <div className="flex flex-col gap-4">
+                  <SecretsSearch />
+                  <MonacoEditor
+                    value={
+                      show_default
+                        ? DEFAULT_BUILD_DOCKERFILE_CONTENTS
+                        : dockerfile
+                    }
+                    onValueChange={(dockerfile) => set({ dockerfile })}
+                    language="dockerfile"
+                    readOnly={disabled}
+                  />
+                </div>
               );
             },
           },

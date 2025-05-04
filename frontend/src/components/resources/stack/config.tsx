@@ -808,14 +808,17 @@ export const StackConfig = ({
                 update.file_contents === undefined &&
                 !(update.repo ?? config.repo);
               return (
-                <MonacoEditor
-                  value={
-                    show_default ? DEFAULT_STACK_FILE_CONTENTS : file_contents
-                  }
-                  onValueChange={(file_contents) => set({ file_contents })}
-                  language="yaml"
-                  readOnly={disabled}
-                />
+                <div className="flex flex-col gap-4">
+                  <SecretsSearch />
+                  <MonacoEditor
+                    value={
+                      show_default ? DEFAULT_STACK_FILE_CONTENTS : file_contents
+                    }
+                    onValueChange={(file_contents) => set({ file_contents })}
+                    language="yaml"
+                    readOnly={disabled}
+                  />
+                </div>
               );
             },
           },
