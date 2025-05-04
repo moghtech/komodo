@@ -172,6 +172,8 @@ pub fn core_config() -> &'static CoreConfig {
         .unwrap_or(config.ui_write_disabled),
       disable_confirm_dialog: env.komodo_disable_confirm_dialog
         .unwrap_or(config.disable_confirm_dialog),
+      disable_websocket_reconnect: env.komodo_disable_websocket_reconnect
+        .unwrap_or(config.disable_websocket_reconnect),
       enable_new_users: env.komodo_enable_new_users
         .unwrap_or(config.enable_new_users),
       disable_user_registration: env.komodo_disable_user_registration

@@ -100,7 +100,7 @@ export function KomodoClient(url, options) {
         }
     };
     const core_version = () => read("GetVersion", {}).then((res) => res.version);
-    const subscribe_to_update_websocket = async ({ on_update, on_login, on_close, retry_timeout_ms = 5_000, cancel = new CancelToken(), on_cancel, }) => {
+    const subscribe_to_update_websocket = async ({ on_update, on_login, on_close, retry = true, retry_timeout_ms = 5_000, cancel = new CancelToken(), on_cancel, }) => {
         while (true) {
             if (cancel.cancelled) {
                 on_cancel?.();
@@ -142,13 +142,23 @@ export function KomodoClient(url, options) {
                     // Sleep for a bit before checking for websocket closed
                     await new Promise((resolve) => setTimeout(resolve, 500));
                 }
-                // Sleep for a bit before retrying connection to avoid spam.
-                await new Promise((resolve) => setTimeout(resolve, retry_timeout_ms));
+                if (retry) {
+                    // Sleep for a bit before retrying connection to avoid spam.
+                    await new Promise((resolve) => setTimeout(resolve, retry_timeout_ms));
+                }
+                else {
+                    return;
+                }
             }
             catch (error) {
                 console.error(error);
-                // Sleep for a bit before retrying, maybe Komodo Core is down temporarily.
-                await new Promise((resolve) => setTimeout(resolve, retry_timeout_ms));
+                if (retry) {
+                    // Sleep for a bit before retrying, maybe Komodo Core is down temporarily.
+                    await new Promise((resolve) => setTimeout(resolve, retry_timeout_ms));
+                }
+                else {
+                    return;
+                }
             }
         }
     };

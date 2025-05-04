@@ -5036,6 +5036,8 @@ export interface GetCoreInfoResponse {
     disable_confirm_dialog: boolean;
     /** The repo owners for which github webhook management api is available */
     github_webhook_owners: string[];
+    /** Whether to disable websocket automatic reconnect. */
+    disable_websocket_reconnect: boolean;
 }
 /** Get a specific deployment by name or id. Response: [Deployment]. */
 export interface GetDeployment {

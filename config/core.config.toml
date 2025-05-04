@@ -65,6 +65,12 @@ ui_write_disabled = false
 ## Default: false
 disable_confirm_dialog = false
 
+## Disables UI websocket automatic reconnection.
+## Users will still be able to trigger reconnect by clicking the connection indicator.
+## Env: KOMODO_DISABLE_WEBSOCKET_RECONNECT
+## Default: false
+disable_websocket_reconnect = false
+
 ## Configure the directory for sync files (inside the container).
 ## There shouldn't be a need to change this, just mount a volume.
 ## Env: KOMODO_SYNC_DIRECTORY

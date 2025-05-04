@@ -205,6 +205,7 @@ export function KomodoClient(url: string, options: InitOptions) {
     on_update,
     on_login,
     on_close,
+    retry = true,
     retry_timeout_ms = 5_000,
     cancel = new CancelToken(),
     on_cancel,
@@ -213,6 +214,7 @@ export function KomodoClient(url: string, options: InitOptions) {
     on_login?: () => void;
     on_open?: () => void;
     on_close?: () => void;
+    retry?: boolean;
     retry_timeout_ms?: number;
     cancel?: CancelToken;
     on_cancel?: () => void;
@@ -265,12 +267,20 @@ export function KomodoClient(url: string, options: InitOptions) {
           await new Promise((resolve) => setTimeout(resolve, 500));
         }
 
-        // Sleep for a bit before retrying connection to avoid spam.
-        await new Promise((resolve) => setTimeout(resolve, retry_timeout_ms));
+        if (retry) {
+          // Sleep for a bit before retrying connection to avoid spam.
+          await new Promise((resolve) => setTimeout(resolve, retry_timeout_ms));
+        } else {
+          return;
+        }
       } catch (error) {
         console.error(error);
-        // Sleep for a bit before retrying, maybe Komodo Core is down temporarily.
-        await new Promise((resolve) => setTimeout(resolve, retry_timeout_ms));
+        if (retry) {
+          // Sleep for a bit before retrying, maybe Komodo Core is down temporarily.
+          await new Promise((resolve) => setTimeout(resolve, retry_timeout_ms));
+        } else {
+          return;
+        }
       }
     }
   };

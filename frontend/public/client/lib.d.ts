@@ -123,11 +123,12 @@ export declare function KomodoClient(url: string, options: InitOptions): {
      *
      * Note. Awaiting this method will never finish.
      */
-    subscribe_to_update_websocket: ({ on_update, on_login, on_close, retry_timeout_ms, cancel, on_cancel, }: {
+    subscribe_to_update_websocket: ({ on_update, on_login, on_close, retry, retry_timeout_ms, cancel, on_cancel, }: {
         on_update: (update: UpdateListItem) => void;
         on_login?: () => void;
         on_open?: () => void;
         on_close?: () => void;
+        retry?: boolean;
         retry_timeout_ms?: number;
         cancel?: CancelToken;
         on_cancel?: () => void;

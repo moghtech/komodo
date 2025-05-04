@@ -106,6 +106,8 @@ pub struct Env {
   pub komodo_disable_confirm_dialog: Option<bool>,
   /// Override `disable_non_admin_create`
   pub komodo_disable_non_admin_create: Option<bool>,
+  /// Override `disable_websocket_reconnect`
+  pub komodo_disable_websocket_reconnect: Option<bool>,
 
   /// Override `local_auth`
   pub komodo_local_auth: Option<bool>,
@@ -271,6 +273,10 @@ pub struct CoreConfig {
   /// Disable the popup confirm dialogs. All buttons will just be double click.
   #[serde(default)]
   pub disable_confirm_dialog: bool,
+
+  /// Disable the UI websocket from automatically reconnecting.
+  #[serde(default)]
+  pub disable_websocket_reconnect: bool,
 
   /// If defined, ensure an enabled first server exists at this address.
   /// Example: `http://periphery:8120`
@@ -592,6 +598,7 @@ impl CoreConfig {
       transparent_mode: config.transparent_mode,
       ui_write_disabled: config.ui_write_disabled,
       disable_confirm_dialog: config.disable_confirm_dialog,
+      disable_websocket_reconnect: config.disable_websocket_reconnect,
       enable_new_users: config.enable_new_users,
       disable_user_registration: config.disable_user_registration,
       disable_non_admin_create: config.disable_non_admin_create,

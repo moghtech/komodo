@@ -282,6 +282,7 @@ fn core_info() -> &'static GetCoreInfoResponse {
       ui_write_disabled: config.ui_write_disabled,
       disable_confirm_dialog: config.disable_confirm_dialog,
       disable_non_admin_create: config.disable_non_admin_create,
+      disable_websocket_reconnect: config.disable_websocket_reconnect,
       github_webhook_owners: config
         .github_webhook_app
         .installations

@@ -1,4 +1,4 @@
-import { komodo_client, useInvalidate, useUser } from "@lib/hooks";
+import { komodo_client, useInvalidate, useRead, useUser } from "@lib/hooks";
 import { CancelToken, Types } from "komodo_client";
 import { Button } from "@ui/button";
 import { toast } from "@ui/use-toast";
@@ -41,13 +41,13 @@ export const useWebsocketMessages = (
   }, []);
 };
 
-let count = 0;
-
 export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
   const user = useUser().data;
   const invalidate = useInvalidate();
   const cancel = useWebsocketCancel();
-  const [connected, setConnected] = useWebsocketConnected();
+  const [_, setConnected] = useWebsocketConnected();
+  const disable_reconnect = useRead("GetCoreInfo", {}).data
+    ?.disable_websocket_reconnect;
 
   const on_update_fn = useCallback(
     (update: Types.UpdateListItem) => on_update(update, invalidate),
@@ -55,23 +55,22 @@ export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
   );
 
   useEffect(() => {
-    if (user && !connected) {
-      count = count + 1;
-      const _count = count;
+    if (user && disable_reconnect !== undefined) {
       komodo_client().subscribe_to_update_websocket({
         on_login: () => {
           setConnected(true);
-          console.info(_count + " | Logged into Update websocket");
+          console.info("Logged into Update websocket");
         },
         on_update: on_update_fn,
         on_close: () => {
           setConnected(false);
-          console.info(_count + " | Update websocket connection closed");
+          console.info("Update websocket connection closed");
         },
+        retry: !disable_reconnect,
         cancel,
       });
     }
-  }, [user, cancel, connected]);
+  }, [user, disable_reconnect, cancel]);
 
   return <>{children}</>;
 };
