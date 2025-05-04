@@ -362,10 +362,10 @@ pub async fn execute_terminal(
       .await
       .context("Failed to read stdout line")?
     {
-      Some(line) if &line == START_OF_OUTPUT => break,
+      Some(line) if line == START_OF_OUTPUT => break,
       // Keep looping until the start sentinel received.
       Some(line) => {
-        println!("{line}");
+        println!("{line} - {}", line == START_OF_OUTPUT);
       }
       None => {
         return Err(
