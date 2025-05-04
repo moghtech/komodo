@@ -25,6 +25,7 @@ mod monitor;
 mod resource;
 mod schedule;
 mod stack;
+mod startup;
 mod state;
 mod sync;
 mod ts_client;
@@ -44,22 +45,18 @@ async fn app() -> anyhow::Result<()> {
   info!("Komodo Core version: v{}", env!("CARGO_PKG_VERSION"));
   info!("{:?}", config.sanitized());
 
+  // Init jwt client to crash on failure
+  state::jwt_client();
   tokio::join!(
     // Init db_client check to crash on db init failure
     state::init_db_client(),
     // Manage OIDC client (defined in config / env vars / compose secret file)
     auth::oidc::client::spawn_oidc_client_management()
   );
-  tokio::join!(
-    // Maybe initialize first server
-    helpers::ensure_first_server_and_builder(),
-    // Cleanup open updates / invalid alerts
-    helpers::startup_cleanup(),
-  );
-  // init jwt client to crash on failure
-  state::jwt_client();
-
-  // Spawn tasks
+  // Run after db connection.
+  startup::on_startup().await;
+  
+  // Spawn background tasks
   monitor::spawn_monitor_loop();
   resource::spawn_resource_refresh_loop();
   resource::spawn_build_state_refresh_loop();
