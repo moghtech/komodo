@@ -382,8 +382,10 @@ pub async fn execute_terminal(
 }
 
 fn line_compare(a: &str, b: &str) -> String {
-  if a.len() != b.len() {
-    return "different length".to_string();
+  let a_len = a.len();
+  let b_len = b.len();
+  if a_len != b_len {
+    return format!("different length: {a_len} vs {b_len}");
   }
   for (i, (ac, bc)) in a.chars().zip(b.chars()).enumerate() {
     if ac != bc {
