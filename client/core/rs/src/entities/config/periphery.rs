@@ -264,7 +264,7 @@ pub struct PeripheryConfig {
   pub docker_registries: Vec<DockerRegistry>,
 
   /// Whether to enable ssl.
-  /// Default: false (will change in later release)
+  /// Default: true
   #[serde(default = "default_ssl_enabled")]
   pub ssl_enabled: bool,
 
@@ -294,7 +294,7 @@ fn default_stats_polling_rate() -> Timelength {
 }
 
 fn default_ssl_enabled() -> bool {
-  false
+  true
 }
 
 impl Default for PeripheryConfig {
