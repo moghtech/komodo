@@ -364,7 +364,9 @@ pub async fn execute_terminal(
     {
       Some(line) if &line == START_OF_OUTPUT => break,
       // Keep looping until the start sentinel received.
-      Some(_) => {}
+      Some(line) => {
+        println!("{line}");
+      }
       None => {
         return Err(
           anyhow!(
