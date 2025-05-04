@@ -346,7 +346,7 @@ pub async fn execute_terminal(
   );
 
   let full_command = format!(
-    "printf '{START_OF_OUTPUT}\n'; {command}; rc=$? printf '\n{KOMODO_EXIT_CODE}%d\n{END_OF_OUTPUT}\n' \"$rc\"\n"
+    "printf '\n{START_OF_OUTPUT}\n'; {command}; rc=$? printf '\n{KOMODO_EXIT_CODE}%d\n{END_OF_OUTPUT}\n' \"$rc\"\n"
   );
 
   terminal
