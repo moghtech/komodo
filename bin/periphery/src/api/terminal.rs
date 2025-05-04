@@ -365,7 +365,7 @@ pub async fn execute_terminal(
       Some(line) if line == START_OF_OUTPUT => break,
       // Keep looping until the start sentinel received.
       Some(line) => {
-        println!("{line} - {}", line == START_OF_OUTPUT);
+        println!("{line} - {}", line_compare(&line, START_OF_OUTPUT));
       }
       None => {
         return Err(
@@ -379,6 +379,18 @@ pub async fn execute_terminal(
   }
 
   Ok(axum::body::Body::from_stream(TerminalStream { stdout }))
+}
+
+fn line_compare(a: &str, b: &str) -> String {
+  if a.len() != b.len() {
+    return "different length".to_string();
+  }
+  for (i, (ac, bc)) in a.chars().zip(b.chars()).enumerate() {
+    if ac != bc {
+      return format!("[{i}]: '{ac}' != '{bc}'");
+    }
+  }
+  String::from("string are equal")
 }
 
 pin_project! {
