@@ -10,7 +10,7 @@ use axum::{
   response::Response,
 };
 use bytes::Bytes;
-use futures::{SinkExt, Stream, StreamExt};
+use futures::{SinkExt, Stream, StreamExt, TryStreamExt};
 use komodo_client::entities::{
   KOMODO_EXIT_CODE, NoData, komodo_timestamp, server::TerminalInfo,
 };
@@ -322,7 +322,8 @@ pub async fn connect_terminal(
   }))
 }
 
-/// EOF Sentinal
+/// Sentinels
+const START_OF_OUTPUT: &str = "__KOMODO_START_OF_OUTPUT__";
 const END_OF_OUTPUT: &str = "__KOMODO_END_OF_OUTPUT__";
 
 pub async fn execute_terminal(
@@ -334,7 +335,7 @@ pub async fn execute_terminal(
 
   // Read the bytes into lines
   // This is done to check the lines for the EOF sentinal
-  let stdout = tokio_util::codec::FramedRead::new(
+  let mut stdout = tokio_util::codec::FramedRead::new(
     tokio_util::io::StreamReader::new(
       tokio_stream::wrappers::BroadcastStream::new(
         terminal.stdout.resubscribe(),
@@ -345,7 +346,7 @@ pub async fn execute_terminal(
   );
 
   let full_command = format!(
-    "exec 2>&1; {command}; printf '{KOMODO_EXIT_CODE}%d\n{END_OF_OUTPUT}\n' \"$?\"\n"
+    "printf '{START_OF_OUTPUT}\n'; {command}; rc=$? printf '\n{KOMODO_EXIT_CODE}%d\n{END_OF_OUTPUT}\n' \"$rc\"\n"
   );
 
   terminal
@@ -353,6 +354,27 @@ pub async fn execute_terminal(
     .send(StdinMsg::Bytes(Bytes::from(full_command)))
     .await
     .context("Failed to send command to terminal stdin")?;
+
+  // Only start the response AFTER the start sentinel is printed
+  loop {
+    match stdout
+      .try_next()
+      .await
+      .context("Failed to read stdout line")?
+    {
+      Some(line) if &line == START_OF_OUTPUT => break,
+      // Keep looping until the start sentinel received.
+      Some(_) => {}
+      None => {
+        return Err(
+          anyhow!(
+            "Stdout stream terminated before start sentinel received"
+          )
+          .into(),
+        );
+      }
+    }
+  }
 
   Ok(axum::body::Body::from_stream(TerminalStream { stdout }))
 }
