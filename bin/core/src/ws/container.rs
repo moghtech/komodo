@@ -4,7 +4,7 @@ use axum::{
 };
 use futures::SinkExt;
 use komodo_client::{
-  api::terminal::ConnectTerminalQuery,
+  api::terminal::ConnectContainerExecQuery,
   entities::{permission::PermissionLevel, server::Server},
 };
 
@@ -12,16 +12,17 @@ use crate::{
   helpers::periphery_client, resource, ws::core_periphery_forward_ws,
 };
 
-#[instrument(name = "ConnectTerminal", skip(ws))]
+#[instrument(name = "ConnectContainerExec", skip(ws))]
 pub async fn handler(
-  Query(ConnectTerminalQuery { server, terminal }): Query<
-    ConnectTerminalQuery,
-  >,
+  Query(ConnectContainerExecQuery {
+    server,
+    container,
+    shell,
+  }): Query<ConnectContainerExecQuery>,
   ws: WebSocketUpgrade,
 ) -> impl IntoResponse {
   ws.on_upgrade(|socket| async move {
-    let Some((mut client_socket, user)) =
-      super::ws_login(socket).await
+    let Some((mut client_socket, user)) = super::ws_login(socket).await
     else {
       return;
     };
@@ -36,9 +37,8 @@ pub async fn handler(
       Ok(server) => server,
       Err(e) => {
         debug!("could not get server | {e:#}");
-        let _ = client_socket
-          .send(Message::text(format!("ERROR: {e:#}")))
-          .await;
+        let _ =
+          client_socket.send(Message::text(format!("ERROR: {e:#}"))).await;
         let _ = client_socket.close().await;
         return;
       }
@@ -48,30 +48,33 @@ pub async fn handler(
       Ok(periphery) => periphery,
       Err(e) => {
         debug!("couldn't get periphery | {e:#}");
-        let _ = client_socket
-          .send(Message::text(format!("ERROR: {e:#}")))
-          .await;
+        let _ =
+          client_socket.send(Message::text(format!("ERROR: {e:#}"))).await;
         let _ = client_socket.close().await;
         return;
       }
     };
 
-    trace!("connecting to periphery terminal websocket");
+    trace!("connecting to periphery container exec websocket");
 
-    let periphery_socket =
-      match periphery.connect_terminal(terminal).await {
-        Ok(ws) => ws,
-        Err(e) => {
-          debug!("Failed connect to periphery terminal | {e:#}");
-          let _ = client_socket
-            .send(Message::text(format!("ERROR: {e:#}")))
-            .await;
-          let _ = client_socket.close().await;
-          return;
-        }
-      };
+    let periphery_socket = match periphery
+      .connect_container_exec(
+        container,
+        shell
+      )
+      .await
+    {
+      Ok(ws) => ws,
+      Err(e) => {
+        debug!("Failed connect to periphery container exec websocket | {e:#}");
+        let _ =
+          client_socket.send(Message::text(format!("ERROR: {e:#}"))).await;
+        let _ = client_socket.close().await;
+        return;
+      }
+    };
 
-    trace!("connected to periphery terminal websocket");
+    trace!("connected to periphery container exec websocket");
 
     core_periphery_forward_ws(client_socket, periphery_socket).await
   })

@@ -198,6 +198,42 @@ export function KomodoClient(url, options) {
         ws.onclose = () => on_close?.();
         return ws;
     };
+    const connect_container_exec = ({ query, on_message, on_login, on_open, on_close, }) => {
+        const url_query = new URLSearchParams(query).toString();
+        const ws = new WebSocket(url.replace("http", "ws") + "/ws/container?" + url_query);
+        // Handle login on websocket open
+        ws.onopen = () => {
+            const login_msg = options.type === "jwt"
+                ? {
+                    type: "Jwt",
+                    params: {
+                        jwt: options.params.jwt,
+                    },
+                }
+                : {
+                    type: "ApiKeys",
+                    params: {
+                        key: options.params.key,
+                        secret: options.params.secret,
+                    },
+                };
+            ws.send(JSON.stringify(login_msg));
+            on_open?.();
+        };
+        ws.onmessage = (e) => {
+            if (e.data == "LOGGED_IN") {
+                ws.binaryType = "arraybuffer";
+                ws.onmessage = (e) => on_message?.(e);
+                on_login?.();
+                return;
+            }
+            else {
+                on_message?.(e);
+            }
+        };
+        ws.onclose = () => on_close?.();
+        return ws;
+    };
     const execute_terminal_stream = (request) => new Promise(async (res, rej) => {
         try {
             let response = await fetch(url + "/terminal/execute", {
@@ -383,6 +419,11 @@ export function KomodoClient(url, options) {
          * for use with xtermjs.
          */
         connect_terminal,
+        /**
+         * Subscribes to container exec io over websocket message,
+         * for use with xtermjs.
+         */
+        connect_container_exec,
         /**
          * Executes a command on a given Server / terminal,
          * and returns a stream to process the output as it comes in.

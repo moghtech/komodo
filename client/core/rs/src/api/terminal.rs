@@ -13,8 +13,19 @@ pub struct ConnectTerminalQuery {
   /// the call will fail.
   /// Create a terminal using [CreateTerminal][super::write::server::CreateTerminal]
   pub terminal: String,
-  /// Optional. The initial command to execute on connection to the shell.
-  pub init: Option<String>,
+}
+
+/// Query to connect to a container exec session (interactive shell over websocket) on the given server.
+/// TODO: Document calling.
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ConnectContainerExecQuery {
+  /// Server Id or name
+  pub server: String,
+  /// The container name
+  pub container: String,
+  /// The shell to connect to
+  pub shell: String,
 }
 
 /// Execute a terminal command on the given server.

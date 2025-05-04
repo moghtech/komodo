@@ -15,6 +15,7 @@ import {
   CommandList,
 } from "@ui/command";
 import { filterBySplit } from "@lib/utils";
+import { useServer } from ".";
 
 export const ServerTerminals = ({
   id,
@@ -39,6 +40,7 @@ export const ServerTerminals = ({
   const [_selected, setSelected] = useLocalStorage<{
     selected: string | undefined;
   }>(`server-${id}-selected-terminal-v1`, { selected: undefined });
+  const terminals_disabled = useServer(id)?.info.terminals_disabled ?? true;
 
   const selected = _selected.selected ?? terminals?.[0]?.name;
 
@@ -46,7 +48,7 @@ export const ServerTerminals = ({
   const triggerReconnect = () => _setReconnect((r) => !r);
 
   const create = async (command: string) => {
-    if (!terminals) return;
+    if (!terminals || terminals_disabled) return;
     const name = next_terminal_name(
       command,
       terminals.map((t) => t.name)
@@ -101,7 +103,7 @@ export const ServerTerminals = ({
                 </Button>
               </Badge>
             ))}
-            {terminals && (
+            {terminals && !terminals_disabled && (
               <NewTerminal create={create} pending={create_pending} />
             )}
           </div>
@@ -118,8 +120,7 @@ export const ServerTerminals = ({
           {terminals?.map(({ name: terminal }) => (
             <Terminal
               key={terminal}
-              server={id}
-              terminal={terminal}
+              query={{ server: id, terminal }}
               selected={selected === terminal}
               _reconnect={_reconnect}
             />

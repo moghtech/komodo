@@ -1,5 +1,5 @@
 import { AuthResponses, ExecuteResponses, ReadResponses, UserResponses, WriteResponses } from "./responses.js";
-import { AuthRequest, ConnectTerminalQuery, ExecuteRequest, ExecuteTerminalBody, ReadRequest, Update, UpdateListItem, UserRequest, WriteRequest } from "./types.js";
+import { AuthRequest, ConnectContainerExecQuery, ConnectTerminalQuery, ExecuteRequest, ExecuteTerminalBody, ReadRequest, Update, UpdateListItem, UserRequest, WriteRequest } from "./types.js";
 export * as Types from "./types.js";
 type InitOptions = {
     type: "jwt";
@@ -139,6 +139,17 @@ export declare function KomodoClient(url: string, options: InitOptions): {
      */
     connect_terminal: ({ query, on_message, on_login, on_open, on_close, }: {
         query: ConnectTerminalQuery;
+        on_message?: (e: MessageEvent<any>) => void;
+        on_login?: () => void;
+        on_open?: () => void;
+        on_close?: () => void;
+    }) => WebSocket;
+    /**
+     * Subscribes to container exec io over websocket message,
+     * for use with xtermjs.
+     */
+    connect_container_exec: ({ query, on_message, on_login, on_open, on_close, }: {
+        query: ConnectContainerExecQuery;
         on_message?: (e: MessageEvent<any>) => void;
         on_login?: () => void;
         on_open?: () => void;

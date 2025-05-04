@@ -1,9 +1,8 @@
-import { komodo_client, useLocalStorage, useWrite } from "@lib/hooks";
+import { komodo_client, useLocalStorage } from "@lib/hooks";
 import { cn } from "@lib/utils";
 import { useTheme } from "@ui/theme";
 import { FitAddon } from "@xterm/addon-fit";
 import { ITheme } from "@xterm/xterm";
-import { Types } from "komodo_client";
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useXTerm, UseXTermProps } from "react-xtermjs";
 import { Section } from "./layouts";
@@ -24,32 +23,21 @@ const BASE_SHELLS = ["sh", "bash"];
 
 export const ContainerTerminal = ({
   server,
-  container_name,
+  container,
   titleOther,
 }: {
   server: string;
-  container_name: string;
+  container: string;
   titleOther?: ReactNode;
 }) => {
-  const { mutateAsync: create_terminal } = useWrite("CreateTerminal");
   const [_reconnect, _setReconnect] = useState(false);
   const triggerReconnect = () => _setReconnect((r) => !r);
   const [_clear, _setClear] = useState(false);
   const [shell, setShell] = useLocalStorage(
-    `server-${server}-${container_name}-shell-v1`,
+    `server-${server}-${container}-shell-v1`,
     "sh"
   );
   const [otherShell, setOtherShell] = useState("");
-  let command = `docker exec -it ${container_name} ${shell}`;
-
-  useEffect(() => {
-    create_terminal({
-      server,
-      name: container_name,
-      command,
-      recreate: Types.TerminalRecreateMode.DifferentCommand,
-    }).then(() => _setClear((c) => !c));
-  }, [server, container_name, shell]);
 
   return (
     <Section
@@ -57,7 +45,7 @@ export const ContainerTerminal = ({
       actions={
         <div className="flex items-center gap-4 mr-[16px]">
           <CardTitle className="text-muted-foreground flex items-center gap-2">
-            docker exec -it {container_name}
+            docker exec -it {container}
             <Select value={shell} onValueChange={setShell}>
               <SelectTrigger className="w-[120px]">
                 <SelectValue />
@@ -102,10 +90,8 @@ export const ContainerTerminal = ({
     >
       <div className="min-h-[65vh]">
         <Terminal
-          server={server}
-          terminal={container_name}
+          query={{ server, container, shell }}
           selected={true}
-          command={command}
           _clear={_clear}
           _reconnect={_reconnect}
         />
@@ -115,19 +101,16 @@ export const ContainerTerminal = ({
 };
 
 export const Terminal = ({
-  server,
-  terminal,
+  query: { server, ...query },
   selected,
-  command,
   _clear,
   _reconnect,
 }: {
-  server: string;
-  /** The terminal name to connect to */
-  terminal: string;
+  query: { server: string } & (
+    | { terminal: string; container?: undefined; shell?: undefined }
+    | { container: string; shell: string; terminal?: undefined }
+  );
   selected: boolean;
-  /** Pass the command to reconnect if it changes */
-  command?: string;
   _clear?: boolean;
   _reconnect: boolean;
 }) => {
@@ -223,16 +206,12 @@ export const Terminal = ({
 
     let debounce = -1;
 
-    const ws = komodo_client().connect_terminal({
-      query: {
-        server,
-        terminal,
-      },
+    const options = {
       on_login: () => {
         // console.log("logged in terminal");
       },
       on_open: resize,
-      on_message: (e) => {
+      on_message: (e: MessageEvent<any>) => {
         term.write(new Uint8Array(e.data as ArrayBuffer), () => {
           if (viewport) {
             viewport.scrollTop = viewport.scrollHeight - viewport.clientHeight;
@@ -247,7 +226,24 @@ export const Terminal = ({
       on_close: () => {
         term.writeln("\r\n\x1b[33m[connection closed]\x1b[0m");
       },
-    });
+    };
+
+    const ws = query.container
+      ? komodo_client().connect_container_exec({
+          query: {
+            server,
+            container: query.container,
+            shell: query.shell,
+          },
+          ...options,
+        })
+      : komodo_client().connect_terminal({
+          query: {
+            server,
+            terminal: query.terminal!,
+          },
+          ...options,
+        });
 
     wsRef.current = ws;
 
@@ -255,7 +251,7 @@ export const Terminal = ({
       ws.close();
       wsRef.current = null;
     };
-  }, [term, viewport, selected, command, _reconnect]);
+  }, [term, viewport, selected, query.shell, _reconnect]);
 
   useEffect(() => term?.clear(), [_clear]);
 

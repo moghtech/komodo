@@ -9,8 +9,8 @@ use tokio_tungstenite::{Connector, MaybeTlsStream, WebSocketStream};
 use crate::{
   PeripheryClient,
   api::terminal::{
-    ConnectTerminalQuery, CreateTerminalAuthToken,
-    ExecuteTerminalBody,
+    ConnectContainerExecQuery, ConnectTerminalQuery,
+    CreateTerminalAuthToken, ExecuteTerminalBody,
   },
 };
 
@@ -20,10 +20,9 @@ impl PeripheryClient {
   pub async fn connect_terminal(
     &self,
     terminal: String,
-    init: Option<String>,
   ) -> anyhow::Result<WebSocketStream<MaybeTlsStream<TcpStream>>> {
     tracing::trace!(
-      "request | type: ConnectTerminal | terminal name: {terminal} | init command: {init:?}",
+      "request | type: ConnectTerminal | terminal name: {terminal}",
     );
 
     let token = self
@@ -34,7 +33,6 @@ impl PeripheryClient {
     let query_str = serde_qs::to_string(&ConnectTerminalQuery {
       token: token.token,
       terminal,
-      init,
     })
     .context("Failed to serialize query string")?;
 
@@ -43,29 +41,38 @@ impl PeripheryClient {
       self.address.replacen("http", "ws", 1)
     );
 
-    let (stream, _) = if url.starts_with("wss") {
-      tokio_tungstenite::connect_async_tls_with_config(
-        url,
-        None,
-        false,
-        Some(Connector::Rustls(Arc::new(
-          ClientConfig::builder()
-            .dangerous()
-            .with_custom_certificate_verifier(Arc::new(
-              InsecureVerifier,
-            ))
-            .with_no_client_auth(),
-        ))),
-      )
-      .await
-      .context("failed to connect to websocket")?
-    } else {
-      tokio_tungstenite::connect_async(url)
-        .await
-        .context("failed to connect to websocket")?
-    };
+    connect_websocket(&url).await
+  }
 
-    Ok(stream)
+  /// Handles ws connect and login.
+  /// Does not handle reconnect.
+  pub async fn connect_container_exec(
+    &self,
+    container: String,
+    shell: String,
+  ) -> anyhow::Result<WebSocketStream<MaybeTlsStream<TcpStream>>> {
+    tracing::trace!(
+      "request | type: ConnectContainerExec | container name: {container} | shell: {shell}",
+    );
+
+    let token = self
+      .request(CreateTerminalAuthToken {})
+      .await
+      .context("Failed to create terminal auth token")?;
+
+    let query_str = serde_qs::to_string(&ConnectContainerExecQuery {
+      token: token.token,
+      container,
+      shell,
+    })
+    .context("Failed to serialize query string")?;
+
+    let url = format!(
+      "{}/terminal/container?{query_str}",
+      self.address.replacen("http", "ws", 1)
+    );
+
+    connect_websocket(&url).await
   }
 
   /// Executes command on specified terminal,
@@ -117,6 +124,34 @@ impl PeripheryClient {
       Err(error)
     }
   }
+}
+
+async fn connect_websocket(
+  url: &str,
+) -> anyhow::Result<WebSocketStream<MaybeTlsStream<TcpStream>>> {
+  let (stream, _) = if url.starts_with("wss") {
+    tokio_tungstenite::connect_async_tls_with_config(
+      url,
+      None,
+      false,
+      Some(Connector::Rustls(Arc::new(
+        ClientConfig::builder()
+          .dangerous()
+          .with_custom_certificate_verifier(Arc::new(
+            InsecureVerifier,
+          ))
+          .with_no_client_auth(),
+      ))),
+    )
+    .await
+    .context("failed to connect to websocket")?
+  } else {
+    tokio_tungstenite::connect_async(url)
+      .await
+      .context("failed to connect to websocket")?
+  };
+
+  Ok(stream)
 }
 
 #[derive(Debug)]

@@ -40,6 +40,8 @@ pub struct ServerListItemInfo {
   pub send_disk_alerts: bool,
   /// Whether terminals are disabled for this Server.
   pub terminals_disabled: bool,
+  /// Whether container exec is disabled for this Server.
+  pub container_exec_disabled: bool,
 }
 
 #[typeshare(serialized_as = "Partial<ServerConfig>")]

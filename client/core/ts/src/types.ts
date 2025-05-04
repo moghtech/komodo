@@ -1994,8 +1994,10 @@ export interface SystemInformation {
 	host_name?: string;
 	/** The CPU's brand */
 	cpu_brand: string;
-	/** Whether terminals are disabled on this Periphery */
+	/** Whether terminals are disabled on this Periphery server */
 	terminals_disabled: boolean;
+	/** Whether container exec is disabled on this Periphery server */
+	container_exec_disabled: boolean;
 }
 
 export type GetSystemInformationResponse = SystemInformation;
@@ -3527,6 +3529,8 @@ export interface ServerListItemInfo {
 	send_disk_alerts: boolean;
 	/** Whether terminals are disabled for this Server. */
 	terminals_disabled: boolean;
+	/** Whether container exec is disabled for this Server. */
+	container_exec_disabled: boolean;
 }
 
 export type ServerListItem = ResourceListItem<ServerListItemInfo>;
@@ -4160,6 +4164,19 @@ export interface CommitSync {
 }
 
 /**
+ * Query to connect to a container exec session (interactive shell over websocket) on the given server.
+ * TODO: Document calling.
+ */
+export interface ConnectContainerExecQuery {
+	/** Server Id or name */
+	server: string;
+	/** The container name */
+	container: string;
+	/** The shell to connect to */
+	shell: string;
+}
+
+/**
  * Query to connect to a terminal (interactive shell over websocket) on the given server.
  * TODO: Document calling.
  */
@@ -4173,8 +4190,6 @@ export interface ConnectTerminalQuery {
 	 * Create a terminal using [CreateTerminal][super::write::server::CreateTerminal]
 	 */
 	terminal: string;
-	/** Optional. The initial command to execute on connection to the shell. */
-	init?: string;
 }
 
 export interface Conversion {

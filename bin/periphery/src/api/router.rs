@@ -28,6 +28,10 @@ pub fn router() -> Router {
       "/terminal",
       Router::new()
         .route("/", get(super::terminal::connect_terminal))
+        .route(
+          "/container",
+          get(super::terminal::connect_container_exec),
+        )
         .nest(
           "/execute",
           Router::new()

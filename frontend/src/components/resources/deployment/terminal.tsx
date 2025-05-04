@@ -14,7 +14,7 @@ export const DeploymentTerminal = ({
       <ContainerTerminal
         titleOther={titleOther}
         server={deployment.info.server_id}
-        container_name={deployment.name}
+        container={deployment.name}
       />
     )
   );

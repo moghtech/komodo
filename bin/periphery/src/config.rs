@@ -45,6 +45,9 @@ pub fn periphery_config() -> &'static PeripheryConfig {
       disable_terminals: env
         .periphery_disable_terminals
         .unwrap_or(config.disable_terminals),
+      disable_container_exec: env
+        .periphery_disable_container_exec
+        .unwrap_or(config.disable_container_exec),
       stats_polling_rate: env
         .periphery_stats_polling_rate
         .unwrap_or(config.stats_polling_rate),

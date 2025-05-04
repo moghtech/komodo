@@ -11,8 +11,11 @@ use axum::{
 };
 use bytes::Bytes;
 use futures::{SinkExt, Stream, StreamExt, TryStreamExt};
-use komodo_client::entities::{
-  KOMODO_EXIT_CODE, NoData, komodo_timestamp, server::TerminalInfo,
+use komodo_client::{
+  api::write::TerminalRecreateMode,
+  entities::{
+    KOMODO_EXIT_CODE, NoData, komodo_timestamp, server::TerminalInfo,
+  },
 };
 use periphery_client::api::terminal::*;
 use pin_project_lite::pin_project;
@@ -29,12 +32,6 @@ impl Resolve<super::Args> for ListTerminals {
     self,
     _: &super::Args,
   ) -> serror::Result<Vec<TerminalInfo>> {
-    if periphery_config().disable_terminals {
-      return Err(
-        anyhow!("Terminals are disabled in the periphery config")
-          .status_code(StatusCode::FORBIDDEN),
-      );
-    }
     clean_up_terminals().await;
     Ok(list_terminals().await)
   }
@@ -59,12 +56,6 @@ impl Resolve<super::Args> for CreateTerminal {
 impl Resolve<super::Args> for DeleteTerminal {
   #[instrument(name = "DeleteTerminal", level = "debug")]
   async fn resolve(self, _: &super::Args) -> serror::Result<NoData> {
-    if periphery_config().disable_terminals {
-      return Err(
-        anyhow!("Terminals are disabled in the periphery config")
-          .status_code(StatusCode::FORBIDDEN),
-      );
-    }
     delete_terminal(&self.terminal).await;
     Ok(NoData {})
   }
@@ -73,12 +64,6 @@ impl Resolve<super::Args> for DeleteTerminal {
 impl Resolve<super::Args> for DeleteAllTerminals {
   #[instrument(name = "DeleteAllTerminals", level = "debug")]
   async fn resolve(self, _: &super::Args) -> serror::Result<NoData> {
-    if periphery_config().disable_terminals {
-      return Err(
-        anyhow!("Terminals are disabled in the periphery config")
-          .status_code(StatusCode::FORBIDDEN),
-      );
-    }
     delete_all_terminals().await;
     Ok(NoData {})
   }
@@ -90,12 +75,6 @@ impl Resolve<super::Args> for CreateTerminalAuthToken {
     self,
     _: &super::Args,
   ) -> serror::Result<CreateTerminalAuthTokenResponse> {
-    if periphery_config().disable_terminals {
-      return Err(
-        anyhow!("Terminals are disabled in the periphery config")
-          .status_code(StatusCode::FORBIDDEN),
-      );
-    }
     Ok(CreateTerminalAuthTokenResponse {
       token: auth_tokens().create_auth_token(),
     })
@@ -117,16 +96,16 @@ struct AuthTokens {
 
 impl AuthTokens {
   pub fn create_auth_token(&self) -> String {
+    let mut lock = self.map.lock().unwrap();
+    // clear out any old tokens here (prevent unbounded growth)
+    let ts = komodo_timestamp();
+    lock.retain(|_, valid_until| *valid_until > ts);
     let token: String = rand::rng()
       .sample_iter(&rand::distr::Alphanumeric)
       .take(30)
       .map(char::from)
       .collect();
-    self
-      .map
-      .lock()
-      .unwrap()
-      .insert(token.clone(), komodo_timestamp() + TOKEN_VALID_FOR_MS);
+    lock.insert(token.clone(), ts + TOKEN_VALID_FOR_MS);
     token
   }
 
@@ -150,11 +129,7 @@ impl AuthTokens {
 }
 
 pub async fn connect_terminal(
-  Query(ConnectTerminalQuery {
-    token,
-    terminal,
-    init,
-  }): Query<ConnectTerminalQuery>,
+  Query(query): Query<ConnectTerminalQuery>,
   ws: WebSocketUpgrade,
 ) -> serror::Result<Response> {
   if periphery_config().disable_terminals {
@@ -163,7 +138,54 @@ pub async fn connect_terminal(
         .status_code(StatusCode::FORBIDDEN),
     );
   }
+  handle_terminal_websocket(query, ws).await
+}
 
+pub async fn connect_container_exec(
+  Query(ConnectContainerExecQuery {
+    token,
+    container,
+    shell,
+  }): Query<ConnectContainerExecQuery>,
+  ws: WebSocketUpgrade,
+) -> serror::Result<Response> {
+  if periphery_config().disable_container_exec {
+    return Err(
+      anyhow!("Container exec is disabled in the periphery config")
+        .into(),
+    );
+  }
+  if container.contains("&&") || shell.contains("&&") {
+    return Err(
+      anyhow!(
+        "The use of '&&' is forbidden in the container name or shell"
+      )
+      .into(),
+    );
+  }
+  // Create (recreate if shell changed)
+  create_terminal(
+    container.clone(),
+    format!("docker exec -it {container} {shell}"),
+    TerminalRecreateMode::DifferentCommand,
+  )
+  .await
+  .context("Failed to create terminal for container exec")?;
+
+  handle_terminal_websocket(
+    ConnectTerminalQuery {
+      token,
+      terminal: container,
+    },
+    ws,
+  )
+  .await
+}
+
+async fn handle_terminal_websocket(
+  ConnectTerminalQuery { token, terminal }: ConnectTerminalQuery,
+  ws: WebSocketUpgrade,
+) -> serror::Result<Response> {
   // Auth the connection with single use token
   auth_tokens().check_token(token)?;
 
@@ -178,14 +200,6 @@ pub async fn connect_terminal(
       }
       if !b.is_empty() {
         socket.send(Message::Binary(b)).await.context("Failed to send history part b")?;
-      }
-
-      if let Some(init) = init {
-        terminal
-          .stdin
-          .send(StdinMsg::Bytes(Bytes::from(init + "\n")))
-          .await
-          .context("Failed to run init command")?
       }
       anyhow::Ok(())
     }.await;
@@ -331,6 +345,13 @@ pub async fn execute_terminal(
     ExecuteTerminalBody,
   >,
 ) -> serror::Result<axum::body::Body> {
+  if periphery_config().disable_terminals {
+    return Err(
+      anyhow!("Terminals are disabled in the periphery config")
+        .status_code(StatusCode::FORBIDDEN),
+    );
+  }
+
   let terminal = get_terminal(&terminal).await?;
 
   // Read the bytes into lines

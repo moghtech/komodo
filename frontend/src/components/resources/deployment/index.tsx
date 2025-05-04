@@ -64,8 +64,8 @@ const ConfigTabsInner = ({
     type: "Server",
     id: deployment.info.server_id,
   });
-  const terminals_disabled =
-    useServer(deployment.info.server_id)?.info.terminals_disabled ?? true;
+  const container_exec_disabled =
+    useServer(deployment.info.server_id)?.info.container_exec_disabled ?? true;
   const state = deployment.info.state;
   const logsDisabled =
     state === undefined ||
@@ -73,7 +73,7 @@ const ConfigTabsInner = ({
     state === Types.DeploymentState.NotDeployed;
   const terminalDisabled =
     !canWriteServer ||
-    terminals_disabled ||
+    container_exec_disabled ||
     state !== Types.DeploymentState.Running;
   const view =
     (logsDisabled && _view === "Log") ||

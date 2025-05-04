@@ -43,10 +43,11 @@ impl super::KomodoResource for Server {
     server: Resource<Self::Config, Self::Info>,
   ) -> Self::ListItem {
     let status = server_status_cache().get(&server.id).await;
-    let terminals_disabled = get_system_info(&server)
-      .await
-      .map(|i| i.terminals_disabled)
-      .unwrap_or(true);
+    let (terminals_disabled, container_exec_disabled) =
+      get_system_info(&server)
+        .await
+        .map(|i| (i.terminals_disabled, i.container_exec_disabled))
+        .unwrap_or((true, true));
     ServerListItem {
       name: server.name,
       id: server.id,
@@ -63,6 +64,7 @@ impl super::KomodoResource for Server {
         send_mem_alerts: server.config.send_mem_alerts,
         send_disk_alerts: server.config.send_disk_alerts,
         terminals_disabled,
+        container_exec_disabled,
       },
     }
   }

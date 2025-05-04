@@ -126,6 +126,8 @@ pub struct Env {
   pub periphery_build_dir: Option<PathBuf>,
   /// Override `disable_terminals`
   pub periphery_disable_terminals: Option<bool>,
+  /// Override `disable_container_exec`
+  pub periphery_disable_container_exec: Option<bool>,
   /// Override `stats_polling_rate`
   pub periphery_stats_polling_rate: Option<Timelength>,
   /// Override `legacy_compose_cli`
@@ -205,11 +207,17 @@ pub struct PeripheryConfig {
   /// Default: empty
   pub build_dir: Option<PathBuf>,
 
-  /// Whether to disable the terminal APIs
-  /// and disallow remote shell access.
+  /// Whether to disable the create terminal
+  /// and disallow direct remote shell access.
   /// Default: false
   #[serde(default)]
   pub disable_terminals: bool,
+
+  /// Whether to disable the container exec api
+  /// and disallow remote container shell access.
+  /// Default: false
+  #[serde(default)]
+  pub disable_container_exec: bool,
 
   /// The rate at which the system stats will be polled to update the cache.
   /// Default: `5-sec`
@@ -307,6 +315,7 @@ impl Default for PeripheryConfig {
       stack_dir: None,
       build_dir: None,
       disable_terminals: Default::default(),
+      disable_container_exec: Default::default(),
       stats_polling_rate: default_stats_polling_rate(),
       legacy_compose_cli: Default::default(),
       logging: Default::default(),
@@ -334,6 +343,7 @@ impl PeripheryConfig {
       stack_dir: self.stack_dir.clone(),
       build_dir: self.build_dir.clone(),
       disable_terminals: self.disable_terminals,
+      disable_container_exec: self.disable_container_exec,
       stats_polling_rate: self.stats_polling_rate,
       legacy_compose_cli: self.legacy_compose_cli,
       logging: self.logging.clone(),

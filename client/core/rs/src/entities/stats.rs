@@ -21,8 +21,10 @@ pub struct SystemInformation {
   pub host_name: Option<String>,
   /// The CPU's brand
   pub cpu_brand: String,
-  /// Whether terminals are disabled on this Periphery
+  /// Whether terminals are disabled on this Periphery server
   pub terminals_disabled: bool,
+  /// Whether container exec is disabled on this Periphery server
+  pub container_exec_disabled: bool,
 }
 
 /// System stats stored on the database.

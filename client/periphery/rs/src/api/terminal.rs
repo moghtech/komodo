@@ -72,8 +72,6 @@ pub struct ConnectTerminalQuery {
   /// If a terminal with the specified name already exists,
   /// it will be attached to. Otherwise, it will fail.
   pub terminal: String,
-  /// Optional. The initial command to execute on connection to the shell.
-  pub init: Option<String>,
 }
 
 //
@@ -84,4 +82,25 @@ pub struct ExecuteTerminalBody {
   pub terminal: String,
   /// The command to execute.
   pub command: String,
+}
+
+//
+
+//
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ConnectContainerExecQuery {
+  /// Use [CreateTerminalAuthToken] to create a single-use
+  /// token to send in the query.
+  pub token: String,
+  /// The name of the container to connect to.
+  pub container: String,
+  /// The shell to start inside container.
+  /// Default: `sh`
+  #[serde(default = "default_container_shell")]
+  pub shell: String,
+}
+
+fn default_container_shell() -> String {
+  String::from("sh")
 }

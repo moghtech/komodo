@@ -189,6 +189,7 @@ impl StatsClient {
 fn get_system_information(
   sys: &sysinfo::System,
 ) -> SystemInformation {
+  let config = periphery_config();
   SystemInformation {
     name: System::name(),
     os: System::long_os_version(),
@@ -201,6 +202,7 @@ fn get_system_information(
       .next()
       .map(|cpu| cpu.brand().to_string())
       .unwrap_or_default(),
-    terminals_disabled: periphery_config().disable_terminals,
+    terminals_disabled: config.disable_terminals,
+    container_exec_disabled: config.disable_container_exec,
   }
 }

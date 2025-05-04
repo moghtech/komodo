@@ -221,11 +221,11 @@ const LogOrTerminal = ({
     type: "Server",
     id: stack.info.server_id,
   });
-  const terminals_disabled =
-    useServer(stack.info.server_id)?.info.terminals_disabled ?? true;
+  const container_exec_disabled =
+    useServer(stack.info.server_id)?.info.container_exec_disabled ?? true;
   const terminalDisabled =
     !canWriteServer ||
-    terminals_disabled ||
+    container_exec_disabled ||
     container_state !== Types.ContainerStateStatusEnum.Running;
   const view = terminalDisabled && _view === "Terminal" ? "Log" : _view;
   const tabs = (
@@ -249,7 +249,7 @@ const LogOrTerminal = ({
         {stack.info.server_id && container_name && (
           <ContainerTerminal
             server={stack.info.server_id}
-            container_name={container_name}
+            container={container_name}
             titleOther={tabs}
           />
         )}

@@ -188,7 +188,7 @@ const ContainerPageInner = ({
 
         <LogOrTerminal
           server={id}
-          container_name={container_name}
+          container={container_name}
           state={state}
         />
 
@@ -240,25 +240,26 @@ const ContainerPageInner = ({
 
 const LogOrTerminal = ({
   server,
-  container_name,
+  container,
   state,
 }: {
   server: string;
-  container_name: string;
+  container: string;
   state: Types.ContainerStateStatusEnum;
 }) => {
   const [_view, setView] = useLocalStorage<"Log" | "Terminal">(
-    `server-${server}-${container_name}-tabs-v1`,
+    `server-${server}-${container}-tabs-v1`,
     "Log"
   );
   const { canWrite } = useEditPermissions({
     type: "Server",
     id: server,
   });
-  const terminals_disabled = useServer(server)?.info.terminals_disabled ?? true;
+  const container_exec_disabled =
+    useServer(server)?.info.container_exec_disabled ?? true;
   const terminalDisabled =
     !canWrite ||
-    terminals_disabled ||
+    container_exec_disabled ||
     state !== Types.ContainerStateStatusEnum.Running;
   const view = terminalDisabled && _view === "Terminal" ? "Log" : _view;
   const tabs = (
@@ -278,14 +279,14 @@ const LogOrTerminal = ({
       <TabsContent value="Log">
         <ContainerLogs
           id={server}
-          container_name={container_name}
+          container_name={container}
           titleOther={tabs}
         />
       </TabsContent>
       <TabsContent value="Terminal">
         <ContainerTerminal
           server={server}
-          container_name={container_name}
+          container={container}
           titleOther={tabs}
         />
       </TabsContent>
