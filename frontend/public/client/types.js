@@ -493,6 +493,14 @@ export var TerminalRecreateMode;
     /** Only kill and recreate if the command is different. */
     TerminalRecreateMode["DifferentCommand"] = "DifferentCommand";
 })(TerminalRecreateMode || (TerminalRecreateMode = {}));
+export var NtfyMessagePriority;
+(function (NtfyMessagePriority) {
+    NtfyMessagePriority["Max"] = "max";
+    NtfyMessagePriority["High"] = "high";
+    NtfyMessagePriority["Default"] = "default";
+    NtfyMessagePriority["Low"] = "low";
+    NtfyMessagePriority["Min"] = "min";
+})(NtfyMessagePriority || (NtfyMessagePriority = {}));
 export var PortTypeEnum;
 (function (PortTypeEnum) {
     PortTypeEnum["EMPTY"] = "";

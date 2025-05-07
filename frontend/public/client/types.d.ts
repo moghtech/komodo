@@ -6092,10 +6092,21 @@ export interface NameAndId {
     name: string;
     id: string;
 }
+export declare enum NtfyMessagePriority {
+    Max = "max",
+    High = "high",
+    Default = "default",
+    Low = "low",
+    Min = "min"
+}
 /** Configuration for a Ntfy alerter. */
 export interface NtfyAlerterEndpoint {
     /** The ntfy topic URL */
     url: string;
+    /** the Title shown in the notification */
+    title?: string;
+    /** the message priority for the notification. See the [Ntfy Documentation](https://docs.ntfy.sh/publish/#message-title) for more info. */
+    priority?: NtfyMessagePriority;
     email?: string;
 }
 /** Pauses all containers on the target server. Response: [Update] */
