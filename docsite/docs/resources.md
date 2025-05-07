@@ -65,9 +65,3 @@ All resources which depend on git repos / docker registries are able to use thes
 
 - Route alerts to various endpoints.
 - Can configure rules on each Alerter, such as resource whitelist, blacklist, or alert type filter.
-
-## ServerTemplate
-
-- Easily expand your cloud network by storing cloud server lauch templates on various providers.
-- Auto connect the server to Komodo on launch, using `User Data` launch scripts.
-- Currently supports **AWS EC2** and **Hetzner**
