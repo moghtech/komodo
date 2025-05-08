@@ -4,7 +4,7 @@ use super::*;
 
 #[instrument(level = "debug")]
 pub async fn send_alert(
-  url: &str,
+  endpoint: &NtfyAlerterEndpoint,
   alert: &Alert,
 ) -> anyhow::Result<()> {
   let level = fmt_level(alert.level);
@@ -224,22 +224,33 @@ pub async fn send_alert(
   };
 
   if !content.is_empty() {
-    send_message(url, content).await?;
+    send_message(endpoint, content).await?;
   }
   Ok(())
 }
 
 async fn send_message(
-  url: &str,
+  endpoint: &NtfyAlerterEndpoint,
   content: String,
 ) -> anyhow::Result<()> {
-  let response = http_client()
-    .post(url)
-    .header("Title", "ntfy Alert")
-    .body(content)
-    .send()
-    .await
-    .context("Failed to send message")?;
+  let mut request = http_client()
+    .post(&endpoint.url)
+    .header(
+      "Title",
+      endpoint.title.as_deref().unwrap_or("Komodo Alert"),
+    )
+    .header(
+      "X-Priority",
+      endpoint.priority.unwrap_or_default() as i32,
+    )
+    .body(content);
+
+  if let Some(email) = &endpoint.email {
+    request = request.header("X-Email", email);
+  }
+
+  let response =
+    request.send().await.context("Failed to send message")?;
 
   let status = response.status();
   if status.is_success() {

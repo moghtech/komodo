@@ -211,12 +211,46 @@ pub struct NtfyAlerterEndpoint {
   #[serde(default = "default_ntfy_url")]
   #[builder(default = "default_ntfy_url()")]
   pub url: String,
+
+  /// the Title shown in the notification
+  #[builder(default)]
+  #[serde(default)]
+  pub title: Option<String>,
+
+  /// the message priority for the notification. See the [Ntfy Documentation](https://docs.ntfy.sh/publish/#message-title) for more info.
+  #[builder(default)]
+  #[serde(default)]
+  pub priority: Option<NtfyMessagePriority>,
+
+  // optional E-Mail Address to enable ntfy email notifications. SMTP must be configured on the ntfy server
+  #[builder(default)]
+  #[serde(default)]
+  pub email: Option<String>,
+}
+
+#[typeshare]
+#[derive(
+  Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize,
+)]
+#[repr(i32)]
+#[serde(rename_all = "lowercase")]
+pub enum NtfyMessagePriority {
+  #[serde(alias = "urgent")]
+  Max = 5,
+  High = 4,
+  #[default]
+  Default = 3,
+  Low = 2,
+  Min = 1,
 }
 
 impl Default for NtfyAlerterEndpoint {
   fn default() -> Self {
     Self {
       url: default_ntfy_url(),
+      title: None,
+      priority: None,
+      email: None,
     }
   }
 }
