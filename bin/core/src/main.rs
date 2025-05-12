@@ -55,7 +55,7 @@ async fn app() -> anyhow::Result<()> {
   );
   // Run after db connection.
   startup::on_startup().await;
-  
+
   // Spawn background tasks
   monitor::spawn_monitor_loop();
   resource::spawn_resource_refresh_loop();

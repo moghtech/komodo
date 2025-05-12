@@ -1,0 +1,19 @@
+[package]
+name = "komodo_util"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+tracing-subscriber.workspace = true
+futures-util.workspace = true
+dotenvy.workspace = true
+tracing.workspace = true
+anyhow.workspace = true
+mungos.workspace = true
+tokio.workspace = true
+serde.workspace = true
+envy.workspace = true

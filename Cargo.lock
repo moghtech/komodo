@@ -2682,6 +2682,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "komodo_util"
+version = "1.17.5"
+dependencies = [
+ "anyhow",
+ "dotenvy",
+ "envy",
+ "futures-util",
+ "mungos",
+ "serde",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
