@@ -133,7 +133,7 @@ services:
 ### **Step 5**: Final *Compose Up*
 
 Repeat the same `docker compose` command as before to apply the changes, and then try navigating to your Komodo web page.
-If it works, congrats, you are done. You can clean up the compose file if you would like.
+If it works, congrats, **you are done**. You can clean up the compose file if you would like, removing the old volumes etc.
 
 If it does not work, check the logs for any obvious issues, and if necessary you can undo the previous steps
 to go back to using the previous database.
