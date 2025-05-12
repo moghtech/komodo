@@ -75,13 +75,15 @@ pub async fn main() -> anyhow::Result<()> {
           size_bytes += doc.as_bytes().len();
           buffer.push(doc);
           if size_bytes >= FLUSH_BYTES {
-            target
+            if let Err(e) = target
               .insert_many(&buffer)
               .with_options(
                 InsertManyOptions::builder().ordered(false).build(),
               )
               .await
-              .context("Failed to flush documents")?;
+            {
+              error!("Failed to flush document batch | {e:#}");
+            };
             size_bytes = 0;
             buffer.clear();
           }
@@ -89,6 +91,9 @@ pub async fn main() -> anyhow::Result<()> {
         if !buffer.is_empty() {
           target
             .insert_many(&buffer)
+            .with_options(
+              InsertManyOptions::builder().ordered(false).build(),
+            )
             .await
             .context("Failed to flush documents")?;
         }
@@ -98,7 +103,7 @@ pub async fn main() -> anyhow::Result<()> {
       match res {
         Ok(count) => {
           if count > 0 {
-            info!("Finished copying {collection} collection");
+            info!("Finished copying {collection} collection | Copied {count}");
           }
         }
         Err(e) => {
