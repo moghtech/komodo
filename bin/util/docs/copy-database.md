@@ -110,7 +110,7 @@ services:
 Run `docker compose -p komodo --env-file compose.env -f xxxxx.compose.yaml up -d`, filling in the name of your compose.yaml.
 This will start up both the old and new database, and copy the data to the new one.
 
-Wait a few moments for it to finish, and when it exits,
+Wait a few moments for the `copy_database` service to finish. When it exits,
 confirm the logs show the data was moved successfully, and move on to the next step.
 
 ### **Step 4**: Point Komodo Core to the new database
