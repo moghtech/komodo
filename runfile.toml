@@ -11,6 +11,11 @@ cmd = "KOMODO_CONFIG_PATH=.dev/core.config.toml cargo run -p komodo_core --relea
 description = "runs periphery --release pointing to .dev/periphery.config.toml"
 cmd = "PERIPHERY_CONFIG_PATH=.dev/periphery.config.toml cargo run -p komodo_periphery --release"
 
+[dev-docsite]
+description = "starts the documentation site (https://komo.do) in dev mode"
+path = "docsite"
+cmd = "yarn && yarn start"
+
 [yarn-install]
 description = "downloads latest javacript dependencies for client and frontend"
 cmd = """
@@ -60,11 +65,6 @@ docker compose -p komodo-dev -f dev.compose.yaml -f expose.compose.yaml up -d"""
 description = "builds and deploys dev.compose.yaml"
 cmd = """
 docker compose -p komodo-dev -f dev.compose.yaml build"""
-
-[dev-docsite]
-description = "starts the documentation site (https://komo.do) in dev mode"
-path = "docsite"
-cmd = "yarn && yarn start"
 
 [deploy-docsite]
 description = "deploys the documentation site (https://komo.do) to github pages"
