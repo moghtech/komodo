@@ -38,9 +38,6 @@ fn default_startup_sleep_seconds() -> u64 {
   5
 }
 
-/// 10 MiB
-const FLUSH_BYTES: usize = 10 * 1024 * 1024;
-
 pub async fn main() -> anyhow::Result<()> {
   let env = envy::from_env::<Env>()?;
 
@@ -72,10 +69,10 @@ pub async fn main() -> anyhow::Result<()> {
   {
     let source = source_db.collection::<RawDocumentBuf>(&collection);
     let target = target_db.collection::<RawDocumentBuf>(&collection);
+
     handles.push(tokio::spawn(async move {
       let res = async {
         let mut buffer = Vec::<RawDocumentBuf>::new();
-        let mut size_bytes = 0;
         let mut count = 0;
         let mut cursor = source
           .find(Document::new())
@@ -87,9 +84,8 @@ pub async fn main() -> anyhow::Result<()> {
           .context("Failed to get next document")?
         {
           count += 1;
-          size_bytes += doc.as_bytes().len();
           buffer.push(doc);
-          if size_bytes >= FLUSH_BYTES {
+          if buffer.len() >= 20_000 {
             if let Err(e) = target
               .insert_many(&buffer)
               .with_options(
@@ -97,9 +93,8 @@ pub async fn main() -> anyhow::Result<()> {
               )
               .await
             {
-              error!("Failed to flush document batch | {e:#}");
+              error!("Failed to flush document batch in {collection} collection | {e:#}");
             };
-            size_bytes = 0;
             buffer.clear();
           }
         }
