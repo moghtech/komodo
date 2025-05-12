@@ -58,6 +58,7 @@ pub async fn main() -> anyhow::Result<()> {
       let res = async {
         let mut buffer = Vec::<RawDocumentBuf>::new();
         let mut size_bytes = 0;
+        let mut count = 0;
         let mut cursor = source
           .find(Document::new())
           .await
@@ -67,6 +68,7 @@ pub async fn main() -> anyhow::Result<()> {
           .await
           .context("Failed to get next document")?
         {
+          count += 1;
           size_bytes += doc.as_bytes().len();
           buffer.push(doc);
           if size_bytes >= FLUSH_BYTES {
@@ -84,12 +86,14 @@ pub async fn main() -> anyhow::Result<()> {
             .await
             .context("Failed to flush documents")?;
         }
-        anyhow::Ok(())
+        anyhow::Ok(count)
       }
       .await;
       match res {
-        Ok(_) => {
-          info!("Finished copying {collection} collection");
+        Ok(count) => {
+          if count > 0 {
+            info!("Finished copying {collection} collection");
+          }
         }
         Err(e) => {
           error!("Failed to copy {collection} collection | {e:#}")
