@@ -21,7 +21,7 @@ async fn app() -> anyhow::Result<()> {
   tracing_subscriber::fmt::init();
 
   let env = envy::from_env::<Env>()?;
-  
+
   info!("Komodo Util version: v{}", env!("CARGO_PKG_VERSION"));
   info!("Mode: {:?}", env.mode);
 

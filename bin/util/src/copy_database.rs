@@ -2,7 +2,10 @@ use anyhow::Context;
 use futures_util::{TryStreamExt, future::join_all};
 use mungos::{
   init::MongoBuilder,
-  mongodb::bson::{Document, RawDocumentBuf},
+  mongodb::{
+    bson::{Document, RawDocumentBuf},
+    options::InsertManyOptions,
+  },
 };
 use serde::Deserialize;
 
@@ -74,6 +77,9 @@ pub async fn main() -> anyhow::Result<()> {
           if size_bytes >= FLUSH_BYTES {
             target
               .insert_many(&buffer)
+              .with_options(
+                InsertManyOptions::builder().ordered(false).build(),
+              )
               .await
               .context("Failed to flush documents")?;
             size_bytes = 0;
