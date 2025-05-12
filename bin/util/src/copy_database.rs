@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use anyhow::Context;
 use futures_util::{TryStreamExt, future::join_all};
 use mungos::{
@@ -23,10 +25,17 @@ struct Env {
   /// Default: komodo
   #[serde(default = "default_db_name")]
   target_db_name: String,
+  /// Give the target database some time to initialize.
+  #[serde(default = "default_startup_sleep_seconds")]
+  startup_sleep_seconds: u64,
 }
 
 fn default_db_name() -> String {
   String::from("komodo")
+}
+
+fn default_startup_sleep_seconds() -> u64 {
+  5
 }
 
 /// 10 MiB
@@ -34,6 +43,12 @@ const FLUSH_BYTES: usize = 10 * 1024 * 1024;
 
 pub async fn main() -> anyhow::Result<()> {
   let env = envy::from_env::<Env>()?;
+
+  info!("Sleeping for {} seconds...", env.startup_sleep_seconds);
+  tokio::time::sleep(Duration::from_secs(env.startup_sleep_seconds))
+    .await;
+
+  info!("Copying database...");
 
   let source_db = MongoBuilder::default()
     .uri(env.source_uri)
