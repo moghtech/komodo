@@ -23,8 +23,7 @@ const sidebars: SidebarsConfig = {
       },
       items: [
         "setup/mongo",
-        "setup/postgres",
-        "setup/sqlite",
+        "setup/ferretdb",
         "setup/advanced",
       ],
     },
