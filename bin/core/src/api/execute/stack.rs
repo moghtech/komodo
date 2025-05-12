@@ -402,11 +402,8 @@ impl Resolve<ExecuteArgs> for BatchPullStack {
     ExecuteArgs { user, .. }: &ExecuteArgs,
   ) -> serror::Result<BatchExecutionResponse> {
     Ok(
-      super::batch_execute::<BatchPullStack>(
-        &self.pattern,
-        user,
-      )
-      .await?,
+      super::batch_execute::<BatchPullStack>(&self.pattern, user)
+        .await?,
     )
   }
 }

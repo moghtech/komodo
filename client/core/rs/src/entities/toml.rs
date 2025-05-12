@@ -9,9 +9,8 @@ use super::{
   build::_PartialBuildConfig, builder::_PartialBuilderConfig,
   deployment::_PartialDeploymentConfig, permission::PermissionLevel,
   procedure::_PartialProcedureConfig, repo::_PartialRepoConfig,
-  server::_PartialServerConfig,
-  stack::_PartialStackConfig, sync::_PartialResourceSyncConfig,
-  variable::Variable,
+  server::_PartialServerConfig, stack::_PartialStackConfig,
+  sync::_PartialResourceSyncConfig, variable::Variable,
 };
 
 /// Specifies resources to sync on Komodo
