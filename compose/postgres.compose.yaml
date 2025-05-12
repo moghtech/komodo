@@ -20,11 +20,11 @@ services:
     # ports:
     #   - 5432:5432
     volumes:
-      - pg-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: ${KOMODO_DB_USERNAME}
       POSTGRES_PASSWORD: ${KOMODO_DB_PASSWORD}
-      POSTGRES_DB: ${KOMODO_DATABASE_DB_NAME:-komodo}
+      POSTGRES_DB: postgres
 
   ferretdb:
     # Recommended: Pin to a specific version
@@ -39,8 +39,10 @@ services:
       driver: ${COMPOSE_LOGGING_DRIVER:-local}
     # ports:
     #   - 27017:27017
+    volumes:
+      - ferretdb-state:/state
     environment:
-      FERRETDB_POSTGRESQL_URL: postgres://${KOMODO_DB_USERNAME}:${KOMODO_DB_PASSWORD}@postgres:5432/${KOMODO_DATABASE_DB_NAME:-komodo}
+      FERRETDB_POSTGRESQL_URL: postgres://${KOMODO_DB_USERNAME}:${KOMODO_DB_PASSWORD}@postgres:5432/postgres
   
   core:
     image: ghcr.io/moghtech/komodo-core:${COMPOSE_KOMODO_IMAGE_TAG:-latest}
@@ -94,6 +96,8 @@ services:
 
 volumes:
   # Postgres
-  pg-data:
+  postgres-data:
+  # FerretDB
+  ferretdb-state:
   # Core
   repo-cache:
