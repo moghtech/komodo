@@ -7,6 +7,10 @@ license.workspace = true
 repository.workspace = true
 homepage.workspace = true
 
+[[bin]]
+name = "util"
+path = "src/main.rs"
+
 [dependencies]
 tracing-subscriber.workspace = true
 futures-util.workspace = true
