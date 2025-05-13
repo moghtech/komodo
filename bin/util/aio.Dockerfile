@@ -1,6 +1,3 @@
-## Builds the Komodo Core and Periphery binaries
-## for a specific architecture.
-
 FROM rust:1.86.0-bullseye AS builder
 
 WORKDIR /builder
@@ -16,9 +13,9 @@ RUN cargo build -p komodo_util --release
 # Copy binaries to distroless base
 FROM gcr.io/distroless/cc
 
-COPY --from=builder /builder/target/release/komodo_util /komodo_util
+COPY --from=builder /builder/target/release/util /usr/local/bin/util
 
-CMD [ "/komodo_util" ]
+CMD [ "util" ]
 
 LABEL org.opencontainers.image.source=https://github.com/moghtech/komodo
 LABEL org.opencontainers.image.description="Komodo Util"
