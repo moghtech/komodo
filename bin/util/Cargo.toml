@@ -1,6 +1,6 @@
 [package]
 name = "komodo_util"
-version = "1.0.0"
+version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true

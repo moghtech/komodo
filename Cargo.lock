@@ -2683,7 +2683,7 @@ dependencies = [
 
 [[package]]
 name = "komodo_util"
-version = "1.0.0"
+version = "1.17.6"
 dependencies = [
  "anyhow",
  "dotenvy",
