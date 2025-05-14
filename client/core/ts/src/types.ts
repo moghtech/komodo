@@ -6442,6 +6442,7 @@ export interface NameAndId {
 export interface NtfyAlerterEndpoint {
 	/** The ntfy topic URL */
 	url: string;
+	email?: string;
 }
 
 /** Pauses all containers on the target server. Response: [Update] */
