@@ -6,13 +6,26 @@ To enable OAuth2 login, you must create a client on the respective OAuth provide
 for example [Github](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)
 or [Google](https://developers.google.com/identity/protocols/oauth2).
 
-Komodo also supports self hosted Oauth2 providers like [Authentik](https://docs.goauthentik.io/docs/providers/oauth2/) or [Gitea](https://docs.gitea.com/development/oauth2-provider).
+Komodo also supports self hosted Oauth2 providers like [Authentik](https://docs.goauthentik.io/docs/providers/oauth2/), [Gitea](https://docs.gitea.com/development/oauth2-provider) and [Keycloak](https://www.keycloak.org).
 
 - Komodo uses the `web application` login flow.
 - The redirect uri is:
 	- `<KOMODO_HOST>/auth/github/callback` for Github.
 	- `<KOMODO_HOST>/auth/google/callback` for Google.
 	- `<KOMODO_HOST>/auth/oidc/callback` for OIDC.
+
+### Keycloak
+- Create an [OIDC client](https://www.keycloak.org/docs/latest/server_admin/index.html#proc-creating-oidc-client_server_administration_guide) in Keycloak.
+  - Note down the `Client ID` that you enter (e.g.: "komodo"), you will need it for Komodo configuration
+  - `Valid Redirect URIs`: use `<KOMODO_HOST>/auth/oidc/callback` and substitute `<KOMODO_HOST>` with your Komodo url.
+  - Turn `Client authentication` to `On`.
+  - After you finished creating the client, open it and go to `Credentials` tab and copy the `Client Secret`
+- Edit your environment variables for komodo core docker container and set the following:
+  - `KOMODO_OIDC_ENABLED=true`
+  - `KOMODO_OIDC_PROVIDER=https://<your Keycloak url>/realms/master` or replace `master` with another realm if you don't want to use the default one
+  - `KOMODO_OIDC_CLIENT_ID=...` what you specified as `Client ID`
+  - `KOMODO_OIDC_CLIENT_SECRET=...` that you copied from Keycloak
+
 
 ### Mount a config file
 
