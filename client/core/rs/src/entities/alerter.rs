@@ -212,7 +212,8 @@ pub struct NtfyAlerterEndpoint {
   #[builder(default = "default_ntfy_url()")]
   pub url: String,
 
-  // optional E-Mail Address to enable ntfy email notifications. SMTP must be configured on the ntfy server
+  /// Optional E-Mail Address to enable ntfy email notifications.
+  /// SMTP must be configured on the ntfy server.
   pub email: Option<String>,
 }
 

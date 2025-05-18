@@ -6096,6 +6096,10 @@ export interface NameAndId {
 export interface NtfyAlerterEndpoint {
     /** The ntfy topic URL */
     url: string;
+    /**
+     * Optional E-Mail Address to enable ntfy email notifications.
+     * SMTP must be configured on the ntfy server.
+     */
     email?: string;
 }
 /** Pauses all containers on the target server. Response: [Update] */
