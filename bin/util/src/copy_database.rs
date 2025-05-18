@@ -125,5 +125,7 @@ pub async fn main() -> anyhow::Result<()> {
 
   join_all(handles).await;
 
+  info!("Finished copying database ✅");
+
   Ok(())
 }
