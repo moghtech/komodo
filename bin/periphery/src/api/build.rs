@@ -14,7 +14,7 @@ use komodo_client::{
     EnvironmentVar, Version,
     build::{Build, BuildConfig},
     environment_vars_from_str, get_image_name, optional_string,
-    to_komodo_name,
+    to_docker_compatible_name, to_path_compatible_name,
     update::Log,
   },
   parsers::QUOTE_PATTERN,
@@ -45,8 +45,9 @@ impl Resolve<super::Args> for GetDockerfileContentsOnHost {
       dockerfile_path,
     } = self;
 
-    let root =
-      periphery_config().build_dir().join(to_komodo_name(&name));
+    let root = periphery_config()
+      .build_dir()
+      .join(to_path_compatible_name(&name));
     let build_dir =
       root.join(&build_path).components().collect::<PathBuf>();
 
@@ -92,7 +93,7 @@ impl Resolve<super::Args> for WriteDockerfileContentsToHost {
     } = self;
     let full_path = periphery_config()
       .build_dir()
-      .join(to_komodo_name(&name))
+      .join(to_path_compatible_name(&name))
       .join(&build_path)
       .join(dockerfile_path)
       .components()
@@ -177,7 +178,7 @@ impl Resolve<super::Args> for build::Build {
       }
     };
 
-    let name = to_komodo_name(name);
+    let name = to_docker_compatible_name(name);
 
     let build_path =
       periphery_config().build_dir().join(&name).join(build_path);

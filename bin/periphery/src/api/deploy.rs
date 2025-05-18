@@ -10,7 +10,7 @@ use komodo_client::{
       Conversion, Deployment, DeploymentConfig, DeploymentImage,
       RestartMode, conversions_from_str, extract_registry_domain,
     },
-    environment_vars_from_str, to_komodo_name,
+    environment_vars_from_str, to_docker_compatible_name,
     update::Log,
   },
   parsers::QUOTE_PATTERN,
@@ -129,7 +129,7 @@ fn docker_run_command(
   }: &Deployment,
   image: &str,
 ) -> anyhow::Result<String> {
-  let name = to_komodo_name(name);
+  let name = to_docker_compatible_name(name);
   let ports = parse_conversions(
     &conversions_from_str(ports).context("Invalid ports")?,
     "-p",

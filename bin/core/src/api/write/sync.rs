@@ -24,7 +24,7 @@ use komodo_client::{
       PartialResourceSyncConfig, ResourceSync, ResourceSyncInfo,
       SyncDeployUpdate,
     },
-    to_komodo_name,
+    to_path_compatible_name,
     update::{Log, Update},
     user::sync_user,
   },
@@ -178,7 +178,7 @@ async fn write_sync_file_contents_on_host(
 
   let root = core_config()
     .sync_directory
-    .join(to_komodo_name(&sync.name));
+    .join(to_path_compatible_name(&sync.name));
   let file_path =
     file_path.parse::<PathBuf>().context("Invalid file path")?;
   let resource_path = resource_path
@@ -411,7 +411,7 @@ impl Resolve<WriteArgs> for CommitSync {
       };
       let file_path = core_config()
         .sync_directory
-        .join(to_komodo_name(&sync.name))
+        .join(to_path_compatible_name(&sync.name))
         .join(&resource_path);
       if let Some(parent) = file_path.parent() {
         fs::create_dir_all(parent)

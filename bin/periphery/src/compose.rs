@@ -14,7 +14,7 @@ use komodo_client::entities::{
     ComposeFile, ComposeService, ComposeServiceDeploy, Stack,
     StackServiceNames,
   },
-  to_komodo_name,
+  to_path_compatible_name,
   update::Log,
 };
 use periphery_client::api::{
@@ -431,7 +431,7 @@ pub async fn write_stack(
 )> {
   let root = periphery_config()
     .stack_dir()
-    .join(to_komodo_name(&stack.name));
+    .join(to_path_compatible_name(&stack.name));
   let run_directory = root.join(&stack.config.run_directory);
   // This will remove any intermediate '/./' in the path, which is a problem for some OS.
   // Cannot use 'canonicalize' yet as directory may not exist.

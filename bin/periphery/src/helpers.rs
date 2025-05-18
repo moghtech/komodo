@@ -4,7 +4,7 @@ use anyhow::{Context, anyhow};
 use komodo_client::{
   entities::{
     CloneArgs, EnvironmentVar, SearchCombinator, stack::Stack,
-    to_komodo_name,
+    to_path_compatible_name,
   },
   parsers::QUOTE_PATTERN,
 };
@@ -102,7 +102,7 @@ pub async fn pull_or_clone_stack(
 
   let root = periphery_config()
     .stack_dir()
-    .join(to_komodo_name(&stack.name));
+    .join(to_path_compatible_name(&stack.name));
 
   let mut args: CloneArgs = stack.into();
   // Set the clone destination to the one created for this run

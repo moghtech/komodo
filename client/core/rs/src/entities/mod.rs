@@ -143,9 +143,9 @@ pub fn get_image_name(
   }: &build::Build,
 ) -> anyhow::Result<String> {
   let name = if image_name.is_empty() {
-    to_komodo_name(name)
+    to_docker_compatible_name(name)
   } else {
-    to_komodo_name(image_name)
+    to_docker_compatible_name(image_name)
   };
   let name = match (
     !domain.is_empty(),
@@ -164,7 +164,15 @@ pub fn get_image_name(
   Ok(name)
 }
 
-pub fn to_komodo_name(name: &str) -> String {
+pub fn to_general_name(name: &str) -> String {
+  name.replace('\n', "_").trim().to_string()
+}
+
+pub fn to_path_compatible_name(name: &str) -> String {
+  name.replace([' ', '\n'], "_").trim().to_string()
+}
+
+pub fn to_docker_compatible_name(name: &str) -> String {
   name
     .to_lowercase()
     .replace([' ', '.', ',', '\n'], "_")
@@ -409,7 +417,7 @@ impl CloneArgs {
   pub fn path(&self, repo_dir: &Path) -> PathBuf {
     let path = match &self.destination {
       Some(destination) => PathBuf::from(&destination),
-      None => repo_dir.join(to_komodo_name(&self.name)),
+      None => repo_dir.join(to_path_compatible_name(&self.name)),
     };
     path.components().collect::<PathBuf>()
   }

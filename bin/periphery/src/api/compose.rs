@@ -5,7 +5,8 @@ use command::run_komodo_command;
 use formatting::format_serror;
 use git::{GitRes, write_commit_file};
 use komodo_client::entities::{
-  FileContents, stack::ComposeProject, to_komodo_name, update::Log,
+  FileContents, stack::ComposeProject, to_path_compatible_name,
+  update::Log,
 };
 use periphery_client::api::{compose::*, git::RepoActionResponse};
 use resolver_api::Resolve;
@@ -137,8 +138,9 @@ impl Resolve<super::Args> for GetComposeContentsOnHost {
       run_directory,
       file_paths,
     } = self;
-    let root =
-      periphery_config().stack_dir().join(to_komodo_name(&name));
+    let root = periphery_config()
+      .stack_dir()
+      .join(to_path_compatible_name(&name));
     let run_directory =
       root.join(&run_directory).components().collect::<PathBuf>();
 
@@ -197,7 +199,7 @@ impl Resolve<super::Args> for WriteComposeContentsToHost {
     } = self;
     let file_path = periphery_config()
       .stack_dir()
-      .join(to_komodo_name(&name))
+      .join(to_path_compatible_name(&name))
       .join(&run_directory)
       .join(file_path)
       .components()

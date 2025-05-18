@@ -3,7 +3,7 @@ use git::GitRes;
 use komodo_client::entities::{
   CloneArgs,
   sync::{ResourceSync, SyncFileContents},
-  to_komodo_name,
+  to_path_compatible_name,
   toml::ResourcesToml,
   update::Log,
 };
@@ -31,7 +31,7 @@ pub async fn get_remote_resources(
     // =============
     let root_path = core_config()
       .sync_directory
-      .join(to_komodo_name(&sync.name));
+      .join(to_path_compatible_name(&sync.name));
     let (mut logs, mut files, mut file_errors) =
       (Vec::new(), Vec::new(), Vec::new());
     let resources = super::file::read_resources(
