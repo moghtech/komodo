@@ -1,7 +1,7 @@
 ## Builds the Komodo Core, Periphery, and Util binaries
 ## for a specific architecture.
 
-FROM rust:1.86.0-bullseye AS builder
+FROM rust:1.87.0-bullseye AS builder
 
 WORKDIR /builder
 COPY Cargo.toml Cargo.lock ./
