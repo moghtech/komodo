@@ -15,6 +15,7 @@ use komodo_client::{
     environment_vars_from_str, optional_string,
     permission::PermissionLevel,
     resource::Resource,
+    to_docker_compatible_name,
     update::Update,
     user::{User, build_user},
   },
@@ -46,6 +47,10 @@ impl super::KomodoResource for Build {
 
   fn resource_target(id: impl Into<String>) -> ResourceTarget {
     ResourceTarget::Build(id.into())
+  }
+
+  fn validated_name(name: &str) -> String {
+    to_docker_compatible_name(name)
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>

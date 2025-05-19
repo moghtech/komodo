@@ -13,6 +13,7 @@ use komodo_client::entities::{
   permission::PermissionLevel,
   resource::Resource,
   server::Server,
+  to_docker_compatible_name,
   update::Update,
   user::User,
 };
@@ -45,6 +46,10 @@ impl super::KomodoResource for Deployment {
 
   fn resource_target(id: impl Into<String>) -> ResourceTarget {
     ResourceTarget::Deployment(id.into())
+  }
+
+  fn validated_name(name: &str) -> String {
+    to_docker_compatible_name(name)
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>

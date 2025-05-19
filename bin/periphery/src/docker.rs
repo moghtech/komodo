@@ -13,7 +13,7 @@ use komodo_client::entities::{
     ContainerConfig, GraphDriverData, HealthConfig, PortBinding,
     container::*, image::*, network::*, volume::*,
   },
-  to_komodo_name,
+  to_docker_compatible_name,
   update::Log,
 };
 use run_command::async_run_command;
@@ -977,7 +977,7 @@ pub fn stop_container_command(
   signal: Option<TerminationSignal>,
   time: Option<i32>,
 ) -> String {
-  let container_name = to_komodo_name(container_name);
+  let container_name = to_docker_compatible_name(container_name);
   let signal = signal
     .map(|signal| format!(" --signal {signal}"))
     .unwrap_or_default();

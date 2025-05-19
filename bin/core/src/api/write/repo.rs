@@ -10,7 +10,7 @@ use komodo_client::{
     permission::PermissionLevel,
     repo::{PartialRepoConfig, Repo, RepoInfo},
     server::Server,
-    to_komodo_name,
+    to_path_compatible_name,
     update::{Log, Update},
   },
 };
@@ -111,7 +111,7 @@ impl Resolve<WriteArgs> for RenameRepo {
     let _action_guard =
       action_state.update(|state| state.renaming = true)?;
 
-    let name = to_komodo_name(&self.name);
+    let name = to_path_compatible_name(&self.name);
 
     let mut update = make_update(&repo, Operation::RenameRepo, user);
 
@@ -131,7 +131,7 @@ impl Resolve<WriteArgs> for RenameRepo {
 
     let log = match periphery_client(&server)?
       .request(api::git::RenameRepo {
-        curr_name: to_komodo_name(&repo.name),
+        curr_name: to_path_compatible_name(&repo.name),
         new_name: name.clone(),
       })
       .await

@@ -14,7 +14,7 @@ use komodo_client::{
     permission::PermissionLevel,
     resource::{AddFilters, Resource, ResourceQuery},
     tag::Tag,
-    to_komodo_name,
+    to_general_name,
     update::Update,
     user::{User, system_user},
   },
@@ -116,6 +116,13 @@ pub trait KomodoResource {
 
   #[allow(clippy::ptr_arg)]
   async fn busy(id: &String) -> anyhow::Result<bool>;
+
+  /// Some resource types have restrictions on the allowed formatting for names.
+  /// Stacks, Builds, and Deployments all require names to be "docker compatible",
+  /// which means all lowercase, and no spaces or dots.
+  fn validated_name(name: &str) -> String {
+    to_general_name(name)
+  }
 
   // =======
   // CREATE
@@ -590,7 +597,7 @@ pub async fn create<T: KomodoResource>(
     return Err(anyhow!("Must provide non-empty name for resource."));
   }
 
-  let name = to_komodo_name(name);
+  let name = T::validated_name(name);
 
   if ObjectId::from_str(&name).is_ok() {
     return Err(anyhow!("valid ObjectIds cannot be used as names."));
@@ -862,7 +869,7 @@ pub async fn rename<T: KomodoResource>(
     user,
   );
 
-  let name = to_komodo_name(name);
+  let name = T::validated_name(name);
 
   update_one_by_id(
     T::coll(),

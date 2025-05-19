@@ -11,7 +11,7 @@ use komodo_client::{
     komodo_timestamp,
     permission::PermissionLevel,
     server::{Server, ServerState},
-    to_komodo_name,
+    to_docker_compatible_name,
     update::Update,
   },
 };
@@ -206,7 +206,7 @@ impl Resolve<WriteArgs> for RenameDeployment {
     let _action_guard =
       action_state.update(|state| state.renaming = true)?;
 
-    let name = to_komodo_name(&self.name);
+    let name = to_docker_compatible_name(&self.name);
 
     let container_state = get_deployment_state(&deployment).await?;
 

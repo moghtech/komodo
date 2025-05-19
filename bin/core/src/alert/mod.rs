@@ -130,8 +130,8 @@ pub async fn send_alert_to_alerter(
         )
       })
     }
-    AlerterEndpoint::Ntfy(NtfyAlerterEndpoint { url }) => {
-      ntfy::send_alert(url, alert).await.with_context(|| {
+    AlerterEndpoint::Ntfy(NtfyAlerterEndpoint { url, email }) => {
+      ntfy::send_alert(url, email.as_deref(), alert).await.with_context(|| {
         format!(
           "Failed to send alert to ntfy Alerter {}",
           alerter.name

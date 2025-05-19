@@ -143,9 +143,7 @@ async fn core_periphery_forward_ws(
           if let Err(e) =
             periphery_send.send(axum_to_tungstenite(msg)).await
           {
-            debug!(
-              "Failed to send terminal message | {e:?}",
-            );
+            debug!("Failed to send terminal message | {e:?}",);
             cancel.cancel();
             break;
           };

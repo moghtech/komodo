@@ -5,6 +5,7 @@ use super::*;
 #[instrument(level = "debug")]
 pub async fn send_alert(
   url: &str,
+  email: Option<&str>,
   alert: &Alert,
 ) -> anyhow::Result<()> {
   let level = fmt_level(alert.level);
@@ -224,19 +225,26 @@ pub async fn send_alert(
   };
 
   if !content.is_empty() {
-    send_message(url, content).await?;
+    send_message(url, email, content).await?;
   }
   Ok(())
 }
 
 async fn send_message(
   url: &str,
+  email: Option<&str>,
   content: String,
 ) -> anyhow::Result<()> {
-  let response = http_client()
-    .post(url)
-    .header("Title", "ntfy Alert")
-    .body(content)
+  let mut request = http_client()
+      .post(url)
+      .header("Title", "ntfy Alert")
+      .body(content);
+
+  if let Some(email) = email {
+    request = request.header("X-Email", email);
+  }
+
+  let response =request
     .send()
     .await
     .context("Failed to send message")?;

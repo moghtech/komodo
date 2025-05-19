@@ -26,6 +26,7 @@ bind_ip = "[::]"
 
 ## The directory periphery will use as the default base for the directories it uses.
 ## The periphery user must have write access to this directory.
+## Each specific directory (like stack_dir) can be overridden below.
 ## Env: PERIPHERY_ROOT_DIRECTORY
 ## Default: /etc/komodo
 root_directory = "/etc/komodo"
@@ -114,13 +115,13 @@ ssl_enabled = true
 
 ## Path to the ssl key.
 ## Env: PERIPHERY_SSL_KEY_FILE
-## Default: /etc/komodo/ssl/key.pem
-ssl_key_file = "/etc/komodo/ssl/key.pem"
+## Default: ${root_directory}/ssl/key.pem
+# ssl_key_file = "/etc/komodo/ssl/key.pem"
 
 ## Path to the ssl cert.
 ## Env: PERIPHERY_SSL_CERT_FILE
-## Default: /etc/komodo/ssl/cert.pem
-ssl_cert_file = "/etc/komodo/ssl/cert.pem"
+## Default: ${root_directory}/ssl/cert.pem
+# ssl_cert_file = "/etc/komodo/ssl/cert.pem"
 
 ###########
 # LOGGING #
