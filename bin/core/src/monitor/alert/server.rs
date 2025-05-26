@@ -25,6 +25,11 @@ type OpenAlertMap<T = AlertDataVariant> =
   HashMap<ResourceTarget, HashMap<T, Alert>>;
 type OpenDiskAlertMap = OpenAlertMap<PathBuf>;
 
+/// Check if a server is currently in a maintenance window
+fn is_server_in_maintenance(server: &Server, timestamp: i64) -> bool {
+  server.config.maintenance_windows.iter().any(|window| window.is_active_at(timestamp))
+}
+
 #[instrument(level = "debug")]
 pub async fn alert_servers(
   ts: i64,
@@ -51,6 +56,9 @@ pub async fn alert_servers(
     let server_alerts =
       alerts.get(&ResourceTarget::Server(server_status.id.clone()));
 
+    // Check if server is in maintenance mode
+    let in_maintenance = is_server_in_maintenance(&server, ts);
+
     // ===================
     // SERVER HEALTH
     // ===================
@@ -59,23 +67,25 @@ pub async fn alert_servers(
     });
     match (server_status.state, health_alert) {
       (ServerState::NotOk, None) => {
-        // open unreachable alert
-        let alert = Alert {
-          id: Default::default(),
-          ts,
-          resolved: false,
-          resolved_ts: None,
-          level: SeverityLevel::Critical,
-          target: ResourceTarget::Server(server_status.id.clone()),
-          data: AlertData::ServerUnreachable {
-            id: server_status.id.clone(),
-            name: server.name.clone(),
-            region: optional_string(&server.config.region),
-            err: server_status.err.clone(),
-          },
-        };
-        alerts_to_open
-          .push((alert, server.config.send_unreachable_alerts))
+        // Only open unreachable alert if not in maintenance
+        if !in_maintenance {
+          let alert = Alert {
+            id: Default::default(),
+            ts,
+            resolved: false,
+            resolved_ts: None,
+            level: SeverityLevel::Critical,
+            target: ResourceTarget::Server(server_status.id.clone()),
+            data: AlertData::ServerUnreachable {
+              id: server_status.id.clone(),
+              name: server.name.clone(),
+              region: optional_string(&server.config.region),
+              err: server_status.err.clone(),
+            },
+          };
+          alerts_to_open
+            .push((alert, server.config.send_unreachable_alerts))
+        }
       }
       (ServerState::NotOk, Some(alert)) => {
         // update alert err
@@ -124,34 +134,36 @@ pub async fn alert_servers(
     match (health.cpu.level, cpu_alert, health.cpu.should_close_alert)
     {
       (SeverityLevel::Warning | SeverityLevel::Critical, None, _) => {
-        // open alert
-        let alert = Alert {
-          id: Default::default(),
-          ts,
-          resolved: false,
-          resolved_ts: None,
-          level: health.cpu.level,
-          target: ResourceTarget::Server(server_status.id.clone()),
-          data: AlertData::ServerCpu {
-            id: server_status.id.clone(),
-            name: server.name.clone(),
-            region: optional_string(&server.config.region),
-            percentage: server_status
-              .stats
-              .as_ref()
-              .map(|s| s.cpu_perc as f64)
-              .unwrap_or(0.0),
-          },
-        };
-        alerts_to_open.push((alert, server.config.send_cpu_alerts));
+        // Only open CPU alert if not in maintenance
+        if !in_maintenance {
+          let alert = Alert {
+            id: Default::default(),
+            ts,
+            resolved: false,
+            resolved_ts: None,
+            level: health.cpu.level,
+            target: ResourceTarget::Server(server_status.id.clone()),
+            data: AlertData::ServerCpu {
+              id: server_status.id.clone(),
+              name: server.name.clone(),
+              region: optional_string(&server.config.region),
+              percentage: server_status
+                .stats
+                .as_ref()
+                .map(|s| s.cpu_perc as f64)
+                .unwrap_or(0.0),
+            },
+          };
+          alerts_to_open.push((alert, server.config.send_cpu_alerts));
+        }
       }
       (
         SeverityLevel::Warning | SeverityLevel::Critical,
         Some(mut alert),
         _,
       ) => {
-        // modify alert level only if it has increased
-        if alert.level < health.cpu.level {
+        // modify alert level only if it has increased and not in maintenance
+        if alert.level < health.cpu.level && !in_maintenance {
           alert.level = health.cpu.level;
           alert.data = AlertData::ServerCpu {
             id: server_status.id.clone(),
@@ -195,39 +207,41 @@ pub async fn alert_servers(
     match (health.mem.level, mem_alert, health.mem.should_close_alert)
     {
       (SeverityLevel::Warning | SeverityLevel::Critical, None, _) => {
-        // open alert
-        let alert = Alert {
-          id: Default::default(),
-          ts,
-          resolved: false,
-          resolved_ts: None,
-          level: health.mem.level,
-          target: ResourceTarget::Server(server_status.id.clone()),
-          data: AlertData::ServerMem {
-            id: server_status.id.clone(),
-            name: server.name.clone(),
-            region: optional_string(&server.config.region),
-            total_gb: server_status
-              .stats
-              .as_ref()
-              .map(|s| s.mem_total_gb)
-              .unwrap_or(0.0),
-            used_gb: server_status
-              .stats
-              .as_ref()
-              .map(|s| s.mem_used_gb)
-              .unwrap_or(0.0),
-          },
-        };
-        alerts_to_open.push((alert, server.config.send_mem_alerts));
+        // Only open memory alert if not in maintenance
+        if !in_maintenance {
+          let alert = Alert {
+            id: Default::default(),
+            ts,
+            resolved: false,
+            resolved_ts: None,
+            level: health.mem.level,
+            target: ResourceTarget::Server(server_status.id.clone()),
+            data: AlertData::ServerMem {
+              id: server_status.id.clone(),
+              name: server.name.clone(),
+              region: optional_string(&server.config.region),
+              total_gb: server_status
+                .stats
+                .as_ref()
+                .map(|s| s.mem_total_gb)
+                .unwrap_or(0.0),
+              used_gb: server_status
+                .stats
+                .as_ref()
+                .map(|s| s.mem_used_gb)
+                .unwrap_or(0.0),
+            },
+          };
+          alerts_to_open.push((alert, server.config.send_mem_alerts));
+        }
       }
       (
         SeverityLevel::Warning | SeverityLevel::Critical,
         Some(mut alert),
         _,
       ) => {
-        // modify alert level only if it has increased
-        if alert.level < health.mem.level {
+        // modify alert level only if it has increased and not in maintenance
+        if alert.level < health.mem.level && !in_maintenance {
           alert.level = health.mem.level;
           alert.data = AlertData::ServerMem {
             id: server_status.id.clone(),
@@ -289,35 +303,38 @@ pub async fn alert_servers(
           None,
           _,
         ) => {
-          let disk = server_status.stats.as_ref().and_then(|stats| {
-            stats.disks.iter().find(|disk| disk.mount == *path)
-          });
-          let alert = Alert {
-            id: Default::default(),
-            ts,
-            resolved: false,
-            resolved_ts: None,
-            level: health.level,
-            target: ResourceTarget::Server(server_status.id.clone()),
-            data: AlertData::ServerDisk {
-              id: server_status.id.clone(),
-              name: server.name.clone(),
-              region: optional_string(&server.config.region),
-              path: path.to_owned(),
-              total_gb: disk.map(|d| d.total_gb).unwrap_or_default(),
-              used_gb: disk.map(|d| d.used_gb).unwrap_or_default(),
-            },
-          };
-          alerts_to_open
-            .push((alert, server.config.send_disk_alerts));
+          // Only open disk alert if not in maintenance
+          if !in_maintenance {
+            let disk = server_status.stats.as_ref().and_then(|stats| {
+              stats.disks.iter().find(|disk| disk.mount == *path)
+            });
+            let alert = Alert {
+              id: Default::default(),
+              ts,
+              resolved: false,
+              resolved_ts: None,
+              level: health.level,
+              target: ResourceTarget::Server(server_status.id.clone()),
+              data: AlertData::ServerDisk {
+                id: server_status.id.clone(),
+                name: server.name.clone(),
+                region: optional_string(&server.config.region),
+                path: path.to_owned(),
+                total_gb: disk.map(|d| d.total_gb).unwrap_or_default(),
+                used_gb: disk.map(|d| d.used_gb).unwrap_or_default(),
+              },
+            };
+            alerts_to_open
+              .push((alert, server.config.send_disk_alerts));
+          }
         }
         (
           SeverityLevel::Warning | SeverityLevel::Critical,
           Some(mut alert),
           _,
         ) => {
-          // modify alert level only if it has increased
-          if health.level < alert.level {
+          // modify alert level only if it has increased and not in maintenance
+          if health.level < alert.level && !in_maintenance {
             let disk =
               server_status.stats.as_ref().and_then(|stats| {
                 stats.disks.iter().find(|disk| disk.mount == *path)
