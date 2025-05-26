@@ -5,6 +5,7 @@ mod environment;
 mod file_contents;
 mod labels;
 mod maybe_string_i64;
+mod permission;
 mod string_list;
 mod term_signal_labels;
 

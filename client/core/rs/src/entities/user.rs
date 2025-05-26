@@ -5,7 +5,9 @@ use typeshare::typeshare;
 
 use crate::entities::{I64, MongoId};
 
-use super::{ResourceTargetVariant, permission::PermissionLevel};
+use super::{
+  ResourceTargetVariant, permission::PermissionLevelAndSpecifics,
+};
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -66,7 +68,8 @@ pub struct User {
 
   /// Give the user elevated permissions on all resources of a certain type
   #[serde(default)]
-  pub all: HashMap<ResourceTargetVariant, PermissionLevel>,
+  pub all:
+    HashMap<ResourceTargetVariant, PermissionLevelAndSpecifics>,
 
   #[serde(default)]
   pub updated_at: I64,

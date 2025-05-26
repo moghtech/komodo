@@ -175,7 +175,7 @@ pub fn to_path_compatible_name(name: &str) -> String {
 pub fn to_docker_compatible_name(name: &str) -> String {
   name
     .to_lowercase()
-    .replace([' ', '.', ',', '\n'], "_")
+    .replace([' ', '.', ',', '\n', '&'], "_")
     .trim()
     .to_string()
 }

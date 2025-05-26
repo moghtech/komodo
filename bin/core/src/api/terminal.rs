@@ -10,7 +10,8 @@ use serror::Json;
 use uuid::Uuid;
 
 use crate::{
-  auth::auth_request, helpers::periphery_client, resource,
+  auth::auth_request, helpers::periphery_client,
+  permission::get_check_permissions,
 };
 
 pub fn router() -> Router {
@@ -45,10 +46,10 @@ async fn execute_inner(
   info!("/terminal request | user: {}", user.username);
 
   let res = async {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &server,
       &user,
-      PermissionLevel::Write,
+      PermissionLevel::Read.terminal(),
     )
     .await?;
 

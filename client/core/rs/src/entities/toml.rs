@@ -1,16 +1,24 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use super::{
   ResourceTarget, ResourceTargetVariant,
-  action::_PartialActionConfig, alerter::_PartialAlerterConfig,
-  build::_PartialBuildConfig, builder::_PartialBuilderConfig,
-  deployment::_PartialDeploymentConfig, permission::PermissionLevel,
-  procedure::_PartialProcedureConfig, repo::_PartialRepoConfig,
-  server::_PartialServerConfig, stack::_PartialStackConfig,
-  sync::_PartialResourceSyncConfig, variable::Variable,
+  action::_PartialActionConfig,
+  alerter::_PartialAlerterConfig,
+  build::_PartialBuildConfig,
+  builder::_PartialBuilderConfig,
+  deployment::_PartialDeploymentConfig,
+  permission::{
+    PermissionLevel, PermissionLevelAndSpecifics, SpecificPermission,
+  },
+  procedure::_PartialProcedureConfig,
+  repo::_PartialRepoConfig,
+  server::_PartialServerConfig,
+  stack::_PartialStackConfig,
+  sync::_PartialResourceSyncConfig,
+  variable::Variable,
 };
 
 /// Specifies resources to sync on Komodo
@@ -152,7 +160,8 @@ pub struct UserGroupToml {
 
   /// Give the user group elevated permissions on all resources of a certain type
   #[serde(default)]
-  pub all: HashMap<ResourceTargetVariant, PermissionLevel>,
+  pub all:
+    HashMap<ResourceTargetVariant, PermissionLevelAndSpecifics>,
 
   /// Permissions given to the group
   #[serde(default, alias = "permission")]
@@ -173,4 +182,7 @@ pub struct PermissionToml {
   ///   - Execute
   ///   - Write
   pub level: PermissionLevel,
+
+  /// Any [SpecificPermissions](SpecificPermission) on the resource
+  pub specific: HashSet<SpecificPermission>,
 }

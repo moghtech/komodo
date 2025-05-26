@@ -6,6 +6,7 @@ use komodo_client::{
     NoData, Operation,
     permission::PermissionLevel,
     server::Server,
+    to_docker_compatible_name,
     update::{Update, UpdateStatus},
   },
 };
@@ -17,6 +18,7 @@ use crate::{
     periphery_client,
     update::{add_update, make_update, update_update},
   },
+  permission::get_check_permissions,
   resource,
 };
 
@@ -68,10 +70,10 @@ impl Resolve<WriteArgs> for CreateNetwork {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Write,
+      PermissionLevel::Write.into(),
     )
     .await?;
 
@@ -84,7 +86,7 @@ impl Resolve<WriteArgs> for CreateNetwork {
 
     match periphery
       .request(api::network::CreateNetwork {
-        name: self.name,
+        name: to_docker_compatible_name(&self.name),
         driver: None,
       })
       .await
@@ -109,10 +111,10 @@ impl Resolve<WriteArgs> for CreateTerminal {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<NoData> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Write,
+      PermissionLevel::Write.terminal(),
     )
     .await?;
 
@@ -137,10 +139,10 @@ impl Resolve<WriteArgs> for DeleteTerminal {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<NoData> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Write,
+      PermissionLevel::Write.terminal(),
     )
     .await?;
 
@@ -163,10 +165,10 @@ impl Resolve<WriteArgs> for DeleteAllTerminals {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<NoData> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Write,
+      PermissionLevel::Write.terminal(),
     )
     .await?;
 

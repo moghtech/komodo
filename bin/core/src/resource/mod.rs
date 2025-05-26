@@ -5,13 +5,16 @@ use std::{
 
 use anyhow::{Context, anyhow};
 use formatting::format_serror;
-use futures::{FutureExt, future::join_all};
+use futures::future::join_all;
 use komodo_client::{
   api::{read::ExportResourcesToToml, write::CreateTag},
   entities::{
     Operation, ResourceTarget, ResourceTargetVariant,
     komodo_timestamp,
-    permission::PermissionLevel,
+    permission::{
+      PermissionLevel, PermissionLevelAndSpecifics,
+      SpecificPermission,
+    },
     resource::{AddFilters, Resource, ResourceQuery},
     tag::Tag,
     to_general_name,
@@ -35,15 +38,12 @@ use serde::{Serialize, de::DeserializeOwned};
 
 use crate::{
   api::{read::ReadArgs, write::WriteArgs},
-  config::core_config,
   helpers::{
     create_permission, flatten_document,
-    query::{
-      get_tag, get_user_user_groups, id_or_name_filter,
-      user_target_query,
-    },
+    query::{get_tag, id_or_name_filter},
     update::{add_update, make_update},
   },
+  permission::{get_check_permissions, get_resource_ids_for_user},
   state::db_client,
 };
 
@@ -122,6 +122,12 @@ pub trait KomodoResource {
   /// which means all lowercase, and no spaces or dots.
   fn validated_name(name: &str) -> String {
     to_general_name(name)
+  }
+
+  /// These permissions go to the creator of the resource,
+  /// and include full access to the resource.
+  fn creator_specific_permissions() -> HashSet<SpecificPermission> {
+    HashSet::new()
   }
 
   // =======
@@ -220,106 +226,6 @@ pub async fn get<T: KomodoResource>(
     })
 }
 
-pub async fn get_check_permissions<T: KomodoResource>(
-  id_or_name: &str,
-  user: &User,
-  permission_level: PermissionLevel,
-) -> anyhow::Result<Resource<T::Config, T::Info>> {
-  let resource = get::<T>(id_or_name).await?;
-  if user.admin
-    // Allow if its just read or below, and transparent mode enabled
-    || (permission_level <= PermissionLevel::Read
-      && core_config().transparent_mode)
-    // Allow if resource has base permission level greater than or equal to required permission level
-    || resource.base_permission >= permission_level
-  {
-    return Ok(resource);
-  }
-  let permissions =
-    get_user_permission_on_resource::<T>(user, &resource.id).await?;
-  if permissions >= permission_level {
-    Ok(resource)
-  } else {
-    Err(anyhow!(
-      "User does not have required permissions on this {}. Must have at least {permission_level} permissions",
-      T::resource_type()
-    ))
-  }
-}
-
-#[instrument(level = "debug")]
-pub async fn get_user_permission_on_resource<T: KomodoResource>(
-  user: &User,
-  resource_id: &str,
-) -> anyhow::Result<PermissionLevel> {
-  if user.admin {
-    return Ok(PermissionLevel::Write);
-  }
-
-  let resource_type = T::resource_type();
-
-  // Start with base of Read or None
-  let mut base = if core_config().transparent_mode {
-    PermissionLevel::Read
-  } else {
-    PermissionLevel::None
-  };
-
-  // Add in the resource level global base permission
-  let resource_base = get::<T>(resource_id).await?.base_permission;
-  if resource_base > base {
-    base = resource_base;
-  }
-
-  // Overlay users base on resource variant
-  if let Some(level) = user.all.get(&resource_type).cloned() {
-    if level > base {
-      base = level;
-    }
-  }
-  if base == PermissionLevel::Write {
-    // No reason to keep going if already Write at this point.
-    return Ok(PermissionLevel::Write);
-  }
-
-  // Overlay any user groups base on resource variant
-  let groups = get_user_user_groups(&user.id).await?;
-  for group in &groups {
-    if let Some(level) = group.all.get(&resource_type).cloned() {
-      if level > base {
-        base = level;
-      }
-    }
-  }
-  if base == PermissionLevel::Write {
-    // No reason to keep going if already Write at this point.
-    return Ok(PermissionLevel::Write);
-  }
-
-  // Overlay any specific permissions
-  let permission = find_collect(
-    &db_client().permissions,
-    doc! {
-      "$or": user_target_query(&user.id, &groups)?,
-      "resource_target.type": resource_type.as_ref(),
-      "resource_target.id": resource_id
-    },
-    None,
-  )
-  .await
-  .context("failed to query db for permissions")?
-  .into_iter()
-  // get the max permission user has between personal / any user groups
-  .fold(base, |level, permission| {
-    if permission.level > level {
-      permission.level
-    } else {
-      level
-    }
-  });
-  Ok(permission)
-}
-
 // ======
 // LIST
 // ======
@@ -339,80 +245,17 @@ pub async fn get_resource_object_ids_for_user<T: KomodoResource>(
   })
 }
 
-/// Returns None if still no need to filter by resource id (eg transparent mode, group membership with all access).
-#[instrument(level = "debug")]
-pub async fn get_resource_ids_for_user<T: KomodoResource>(
-  user: &User,
-) -> anyhow::Result<Option<Vec<String>>> {
-  // Check admin or transparent mode
-  if user.admin || core_config().transparent_mode {
-    return Ok(None);
-  }
-
-  let resource_type = T::resource_type();
-
-  // Check user 'all' on variant
-  if let Some(level) = user.all.get(&resource_type).cloned() {
-    if level > PermissionLevel::None {
-      return Ok(None);
-    }
-  }
-
-  // Check user groups 'all' on variant
-  let groups = get_user_user_groups(&user.id).await?;
-  for group in &groups {
-    if let Some(level) = group.all.get(&resource_type).cloned() {
-      if level > PermissionLevel::None {
-        return Ok(None);
-      }
-    }
-  }
-
-  let (base, perms) = tokio::try_join!(
-    // Get any resources with non-none base permission,
-    find_collect(
-      T::coll(),
-      doc! { "base_permission": { "$exists": true, "$ne": "None" } },
-      None,
-    )
-    .map(|res| res.with_context(|| format!(
-      "failed to query {resource_type} on db"
-    ))),
-    // And any ids using the permissions table
-    find_collect(
-      &db_client().permissions,
-      doc! {
-        "$or": user_target_query(&user.id, &groups)?,
-        "resource_target.type": resource_type.as_ref(),
-        "level": { "$exists": true, "$ne": "None" }
-      },
-      None,
-    )
-    .map(|res| res.context("failed to query permissions on db"))
-  )?;
-
-  // Add specific ids
-  let ids = perms
-    .into_iter()
-    .map(|p| p.resource_target.extract_variant_id().1.to_string())
-    // Chain in the ones with non-None base permissions
-    .chain(base.into_iter().map(|res| res.id))
-    // collect into hashset first to remove any duplicates
-    .collect::<HashSet<_>>();
-
-  Ok(Some(ids.into_iter().collect()))
-}
-
 #[instrument(level = "debug")]
 pub async fn list_for_user<T: KomodoResource>(
   mut query: ResourceQuery<T::QuerySpecifics>,
   user: &User,
+  permissions: PermissionLevelAndSpecifics,
   all_tags: &[Tag],
 ) -> anyhow::Result<Vec<T::ListItem>> {
   validate_resource_query_tags(&mut query, all_tags)?;
   let mut filters = Document::new();
   query.add_filters(&mut filters);
-  list_for_user_using_document::<T>(filters, user).await
+  list_for_user_using_document::<T>(filters, user, permissions).await
 }
 
 #[instrument(level = "debug")]
@@ -420,10 +263,15 @@ pub async fn list_for_user_using_pattern<T: KomodoResource>(
   pattern: &str,
   query: ResourceQuery<T::QuerySpecifics>,
   user: &User,
+  permissions: PermissionLevelAndSpecifics,
   all_tags: &[Tag],
 ) -> anyhow::Result<Vec<T::ListItem>> {
   let list = list_full_for_user_using_pattern::<T>(
-    pattern, query, user, all_tags,
+    pattern,
+    query,
+    user,
+    permissions,
+    all_tags,
   )
   .await?
   .into_iter()
@@ -435,6 +283,7 @@ pub async fn list_for_user_using_pattern<T: KomodoResource>(
 pub async fn list_for_user_using_document<T: KomodoResource>(
   filters: Document,
   user: &User,
+  permissions: PermissionLevelAndSpecifics,
 ) -> anyhow::Result<Vec<T::ListItem>> {
   let list = list_full_for_user_using_document::<T>(filters, user)
     .await?
@@ -456,10 +305,12 @@ pub async fn list_full_for_user_using_pattern<T: KomodoResource>(
   pattern: &str,
   query: ResourceQuery<T::QuerySpecifics>,
   user: &User,
+  permissions: PermissionLevelAndSpecifics,
   all_tags: &[Tag],
 ) -> anyhow::Result<Vec<Resource<T::Config, T::Info>>> {
   let resources =
-    list_full_for_user::<T>(query, user, all_tags).await?;
+    list_full_for_user::<T>(query, user, permissions, all_tags)
+      .await?;
 
   let patterns = parse_string_list(pattern);
   let mut names = HashSet::<String>::new();
@@ -496,6 +347,7 @@ pub async fn list_full_for_user_using_pattern<T: KomodoResource>(
 pub async fn list_full_for_user<T: KomodoResource>(
   mut query: ResourceQuery<T::QuerySpecifics>,
   user: &User,
+  permissions: PermissionLevelAndSpecifics,
   all_tags: &[Tag],
 ) -> anyhow::Result<Vec<Resource<T::Config, T::Info>>> {
   validate_resource_query_tags(&mut query, all_tags)?;
@@ -605,11 +457,16 @@ pub async fn create<T: KomodoResource>(
 
   // Ensure an existing resource with same name doesn't already exist
   // The database indexing also ensures this but doesn't give a good error message.
-  if list_full_for_user::<T>(Default::default(), system_user(), &[])
-    .await
-    .context("Failed to list all resources for duplicate name check")?
-    .into_iter()
-    .any(|r| r.name == name)
+  if list_full_for_user::<T>(
+    Default::default(),
+    system_user(),
+    PermissionLevel::Read.into(),
+    &[],
+  )
+  .await
+  .context("Failed to list all resources for duplicate name check")?
+  .into_iter()
+  .any(|r| r.name == name)
   {
     return Err(anyhow!("Must provide unique name for resource."));
   }
@@ -626,7 +483,7 @@ pub async fn create<T: KomodoResource>(
     tags: Default::default(),
     config: config.into(),
     info: T::default_info().await?,
-    base_permission: PermissionLevel::None,
+    base_permission: PermissionLevel::None.into(),
   };
 
   let resource_id = T::coll()
@@ -643,8 +500,13 @@ pub async fn create<T: KomodoResource>(
   let resource = get::<T>(&resource_id).await?;
   let target = resource_target::<T>(resource_id);
 
-  create_permission(user, target.clone(), PermissionLevel::Write)
-    .await;
+  create_permission(
+    user,
+    target.clone(),
+    PermissionLevel::Write,
+    T::creator_specific_permissions(),
+  )
+  .await;
 
   let mut update = make_update(target, T::create_operation(), user);
   update.start_ts = start_ts;
@@ -683,7 +545,7 @@ pub async fn update<T: KomodoResource>(
   let resource = get_check_permissions::<T>(
     id_or_name,
     user,
-    PermissionLevel::Write,
+    PermissionLevel::Write.into(),
   )
   .await?;
 
@@ -795,7 +657,7 @@ pub async fn update_description<T: KomodoResource>(
   get_check_permissions::<T>(
     id_or_name,
     user,
-    PermissionLevel::Write,
+    PermissionLevel::Write.into(),
   )
   .await?;
   T::coll()
@@ -859,7 +721,7 @@ pub async fn rename<T: KomodoResource>(
   let resource = get_check_permissions::<T>(
     id_or_name,
     user,
-    PermissionLevel::Write,
+    PermissionLevel::Write.into(),
   )
   .await?;
 
@@ -913,7 +775,7 @@ pub async fn delete<T: KomodoResource>(
   let resource = get_check_permissions::<T>(
     id_or_name,
     &args.user,
-    PermissionLevel::Write,
+    PermissionLevel::Write.into(),
   )
   .await?;
 

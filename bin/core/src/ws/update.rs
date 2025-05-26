@@ -90,9 +90,9 @@ async fn user_can_see_update(
   if user.admin {
     return Ok(());
   }
-  let permissions =
+  let permission =
     get_user_permission_on_target(user, update_target).await?;
-  if permissions > PermissionLevel::None {
+  if permission.level > PermissionLevel::None {
     Ok(())
   } else {
     Err(anyhow!(

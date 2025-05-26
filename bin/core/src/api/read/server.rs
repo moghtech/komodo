@@ -51,6 +51,7 @@ use crate::{
     periphery_client,
     query::{get_all_tags, get_system_info},
   },
+  permission::get_check_permissions,
   resource,
   stack::compose_container_match_regex,
   state::{action_states, db_client, server_status_cache},
@@ -66,6 +67,7 @@ impl Resolve<ReadArgs> for GetServersSummary {
     let servers = resource::list_for_user::<Server>(
       Default::default(),
       user,
+      PermissionLevel::Read.into(),
       &[],
     )
     .await?;
@@ -93,10 +95,10 @@ impl Resolve<ReadArgs> for GetPeripheryVersion {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<GetPeripheryVersionResponse> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
     let version = server_status_cache()
@@ -114,10 +116,10 @@ impl Resolve<ReadArgs> for GetServer {
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<Server> {
     Ok(
-      resource::get_check_permissions::<Server>(
+      get_check_permissions::<Server>(
         &self.server,
         user,
-        PermissionLevel::Read,
+        PermissionLevel::Read.into(),
       )
       .await?,
     )
@@ -135,8 +137,13 @@ impl Resolve<ReadArgs> for ListServers {
       get_all_tags(None).await?
     };
     Ok(
-      resource::list_for_user::<Server>(self.query, user, &all_tags)
-        .await?,
+      resource::list_for_user::<Server>(
+        self.query,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
+      )
+      .await?,
     )
   }
 }
@@ -153,7 +160,10 @@ impl Resolve<ReadArgs> for ListFullServers {
     };
     Ok(
       resource::list_full_for_user::<Server>(
-        self.query, user, &all_tags,
+        self.query,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
       )
       .await?,
     )
@@ -165,10 +175,10 @@ impl Resolve<ReadArgs> for GetServerState {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<GetServerStateResponse> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
     let status = server_status_cache()
@@ -187,10 +197,10 @@ impl Resolve<ReadArgs> for GetServerActionState {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<ServerActionState> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
     let action_state = action_states()
@@ -208,10 +218,10 @@ impl Resolve<ReadArgs> for GetSystemInformation {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<SystemInformation> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
     get_system_info(&server).await.map_err(Into::into)
@@ -223,10 +233,10 @@ impl Resolve<ReadArgs> for GetSystemStats {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<GetSystemStatsResponse> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
     let status =
@@ -255,10 +265,10 @@ impl Resolve<ReadArgs> for ListSystemProcesses {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<ListSystemProcessesResponse> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.process_list(),
     )
     .await?;
     let mut lock = processes_cache().lock().await;
@@ -294,10 +304,10 @@ impl Resolve<ReadArgs> for GetHistoricalServerStats {
       granularity,
       page,
     } = self;
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
     let granularity =
@@ -342,10 +352,10 @@ impl Resolve<ReadArgs> for ListDockerContainers {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<ListDockerContainersResponse> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.docker_list(),
     )
     .await?;
     let cache = server_status_cache()
@@ -367,6 +377,7 @@ impl Resolve<ReadArgs> for ListAllDockerContainers {
     let servers = resource::list_for_user::<Server>(
       Default::default(),
       user,
+      PermissionLevel::Read.docker_list(),
       &[],
     )
     .await?
@@ -400,6 +411,7 @@ impl Resolve<ReadArgs> for GetDockerContainersSummary {
     let servers = resource::list_full_for_user::<Server>(
       Default::default(),
       user,
+      PermissionLevel::Read.into(),
       &[],
     )
     .await
@@ -436,10 +448,10 @@ impl Resolve<ReadArgs> for InspectDockerContainer {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<Container> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.docker_inspect(),
     )
     .await?;
     let cache = server_status_cache()
@@ -476,10 +488,10 @@ impl Resolve<ReadArgs> for GetContainerLog {
       tail,
       timestamps,
     } = self;
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.docker_log(),
     )
     .await?;
     let res = periphery_client(&server)?
@@ -507,10 +519,10 @@ impl Resolve<ReadArgs> for SearchContainerLog {
       invert,
       timestamps,
     } = self;
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.docker_log(),
     )
     .await?;
     let res = periphery_client(&server)?
@@ -532,10 +544,10 @@ impl Resolve<ReadArgs> for GetResourceMatchingContainer {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<GetResourceMatchingContainerResponse> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.docker_list(),
     )
     .await?;
     // first check deployments
@@ -593,10 +605,10 @@ impl Resolve<ReadArgs> for ListDockerNetworks {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<ListDockerNetworksResponse> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.docker_list(),
     )
     .await?;
     let cache = server_status_cache()
@@ -615,10 +627,10 @@ impl Resolve<ReadArgs> for InspectDockerNetwork {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<Network> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.docker_inspect(),
     )
     .await?;
     let cache = server_status_cache()
@@ -645,10 +657,10 @@ impl Resolve<ReadArgs> for ListDockerImages {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<ListDockerImagesResponse> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.docker_list(),
     )
     .await?;
     let cache = server_status_cache()
@@ -667,10 +679,10 @@ impl Resolve<ReadArgs> for InspectDockerImage {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<Image> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.docker_inspect(),
     )
     .await?;
     let cache = server_status_cache()
@@ -694,10 +706,10 @@ impl Resolve<ReadArgs> for ListDockerImageHistory {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<Vec<ImageHistoryResponseItem>> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.docker_inspect(),
     )
     .await?;
     let cache = server_status_cache()
@@ -724,10 +736,10 @@ impl Resolve<ReadArgs> for ListDockerVolumes {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<ListDockerVolumesResponse> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.docker_list(),
     )
     .await?;
     let cache = server_status_cache()
@@ -746,10 +758,10 @@ impl Resolve<ReadArgs> for InspectDockerVolume {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<Volume> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.docker_inspect(),
     )
     .await?;
     let cache = server_status_cache()
@@ -773,10 +785,10 @@ impl Resolve<ReadArgs> for ListComposeProjects {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<ListComposeProjectsResponse> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.docker_list(),
     )
     .await?;
     let cache = server_status_cache()
@@ -832,10 +844,10 @@ impl Resolve<ReadArgs> for ListTerminals {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<ListTerminalsResponse> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.terminal(),
     )
     .await?;
     let cache = terminals_cache().get_or_insert(server.id.clone());

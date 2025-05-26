@@ -22,6 +22,7 @@ mod db;
 mod helpers;
 mod listener;
 mod monitor;
+mod permission;
 mod resource;
 mod schedule;
 mod stack;

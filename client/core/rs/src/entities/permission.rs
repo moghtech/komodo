@@ -1,6 +1,8 @@
+use std::{collections::HashSet, fmt::Write};
+
 use derive_variants::EnumVariants;
 use serde::{Deserialize, Serialize};
-use strum::{AsRefStr, Display, EnumString};
+use strum::{AsRefStr, Display, EnumString, VariantArray};
 use typeshare::typeshare;
 
 use super::{MongoId, ResourceTarget};
@@ -36,9 +38,12 @@ pub struct Permission {
   pub user_target: UserTarget,
   /// The target resource
   pub resource_target: ResourceTarget,
-  /// The permission level
+  /// The permission level for the [user_target] on the [resource_target].
   #[serde(default)]
   pub level: PermissionLevel,
+  /// Any specific permissions for the [user_target] on the [resource_target].
+  #[serde(default)]
+  pub specific: HashSet<SpecificPermission>,
 }
 
 #[typeshare]
@@ -90,7 +95,7 @@ pub enum PermissionLevel {
   /// No permissions.
   #[default]
   None,
-  /// Can see the rousource
+  /// Can read resource information and config
   Read,
   /// Can execute actions on the resource
   Execute,
@@ -101,5 +106,232 @@ pub enum PermissionLevel {
 impl Default for &PermissionLevel {
   fn default() -> Self {
     &PermissionLevel::None
+  }
+}
+
+/// The specific types of permission that a User or UserGroup can have on a resource.
+#[typeshare]
+#[derive(
+  Serialize,
+  Deserialize,
+  Debug,
+  Display,
+  EnumString,
+  AsRefStr,
+  VariantArray,
+  Hash,
+  Clone,
+  Copy,
+  PartialEq,
+  Eq,
+  PartialOrd,
+  Ord,
+)]
+pub enum SpecificPermission {
+  /// On **Server**
+  ///   - Access the terminal apis
+  /// On **Stack / Deployment**
+  ///   - Access the container exec Apis
+  Terminal,
+  /// On **Server**
+  ///   - Allowed to attach Stacks, Deployments, Repos, Builders to the Server
+  /// On **Builder**
+  ///   - Allowed to attach Builds to the Builder
+  /// On **Build**
+  ///   - Allowed to attach Deployments to the Build
+  Attach,
+  /// On **Server**
+  ///   - Access full container / volume / network / image list (beyond Stacks / Deployments with read access)
+  DockerList,
+  /// On **Server**
+  ///   - Access the `docker inspect` apis
+  DockerInspect,
+  /// On **Server**
+  ///   - Read all container logs on the server
+  /// On **Stack / Deployment**
+  ///   - Read the container logs
+  DockerLog,
+  /// On **Server**
+  ///   - Read all the processes on the host
+  ProcessList,
+}
+
+impl SpecificPermission {
+  fn all() -> HashSet<SpecificPermission> {
+    SpecificPermission::VARIANTS.into_iter().cloned().collect()
+  }
+}
+
+#[typeshare]
+#[derive(Debug, Clone, Default)]
+pub struct PermissionLevelAndSpecifics {
+  pub level: PermissionLevel,
+  pub specific: HashSet<SpecificPermission>,
+}
+
+impl From<PermissionLevel> for PermissionLevelAndSpecifics {
+  fn from(level: PermissionLevel) -> Self {
+    Self {
+      level,
+      specific: HashSet::new(),
+    }
+  }
+}
+
+impl From<&Permission> for PermissionLevelAndSpecifics {
+  fn from(value: &Permission) -> Self {
+    Self {
+      level: value.level,
+      specific: value.specific.clone(),
+    }
+  }
+}
+
+impl PermissionLevel {
+  /// Add all possible permissions (for use in admin case)
+  pub fn all(self) -> PermissionLevelAndSpecifics {
+    PermissionLevelAndSpecifics {
+      level: self,
+      specific: SpecificPermission::all(),
+    }
+  }
+
+  pub fn specifics(
+    self,
+    specific: HashSet<SpecificPermission>,
+  ) -> PermissionLevelAndSpecifics {
+    PermissionLevelAndSpecifics {
+      level: self,
+      specific,
+    }
+  }
+
+  fn specific(
+    self,
+    specific: SpecificPermission,
+  ) -> PermissionLevelAndSpecifics {
+    PermissionLevelAndSpecifics {
+      level: self,
+      specific: [specific].into_iter().collect(),
+    }
+  }
+
+  /// Operation requires Terminal permission
+  pub fn terminal(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::Terminal)
+  }
+
+  /// Operation requires Attach permission
+  pub fn attach(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::Attach)
+  }
+
+  /// Operation requires DockerList permission
+  pub fn docker_list(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::DockerList)
+  }
+
+  /// Operation requires DockerInspect permission
+  pub fn docker_inspect(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::DockerInspect)
+  }
+
+  /// Operation requires DockerLog permission
+  pub fn docker_log(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::DockerLog)
+  }
+
+  /// Operation requires ProcessList permission
+  pub fn process_list(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::ProcessList)
+  }
+}
+
+impl PermissionLevelAndSpecifics {
+  /// Returns true when self.level >= other.level,
+  /// and has all required specific permissions.
+  pub fn fulfills(
+    &self,
+    other: &PermissionLevelAndSpecifics,
+  ) -> bool {
+    if self.level < other.level {
+      return false;
+    }
+    for specific in other.specific.iter() {
+      if !self.specific.contains(specific) {
+        return false;
+      }
+    }
+    true
+  }
+
+  /// Returns true when self has all required specific permissions.
+  pub fn fulfills_specific(
+    &self,
+    specifics: &HashSet<SpecificPermission>,
+  ) -> bool {
+    for specific in specifics.iter() {
+      if !self.specific.contains(specific) {
+        return false;
+      }
+    }
+    true
+  }
+
+  pub fn specifics_for_log(&self) -> String {
+    let mut res = String::new();
+    for specific in self.specific.iter() {
+      write!(&mut res, ", {specific}").unwrap();
+    }
+    res
+  }
+
+  pub fn specifics(
+    mut self,
+    specific: HashSet<SpecificPermission>,
+  ) -> PermissionLevelAndSpecifics {
+    self.specific = specific;
+    self
+  }
+
+  fn specific(
+    mut self,
+    specific: SpecificPermission,
+  ) -> PermissionLevelAndSpecifics {
+    self.specific.insert(specific);
+    PermissionLevelAndSpecifics {
+      level: self.level,
+      specific: self.specific,
+    }
+  }
+
+  /// Operation requires Terminal permission
+  pub fn terminal(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::Terminal)
+  }
+
+  /// Operation requires Attach permission
+  pub fn attach(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::Attach)
+  }
+
+  /// Operation requires DockerList permission
+  pub fn docker_list(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::DockerList)
+  }
+
+  /// Operation requires DockerInspect permission
+  pub fn docker_inspect(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::DockerInspect)
+  }
+
+  /// Operation requires DockerLog permission
+  pub fn docker_log(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::DockerLog)
+  }
+
+  /// Operation requires ProcessList permission
+  pub fn process_list(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::ProcessList)
   }
 }

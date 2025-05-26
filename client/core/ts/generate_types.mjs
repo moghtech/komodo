@@ -31,6 +31,7 @@ function fix_types() {
     .replaceAll("AlertDataVariant", 'AlertData["type"]')
     .replaceAll("ServerTemplateConfigVariant", 'ServerTemplateConfig["type"]')
     // Add '| string' to env vars
-    .replaceAll("EnvironmentVar[]", "EnvironmentVar[] | string");
+    .replaceAll("EnvironmentVar[]", "EnvironmentVar[] | string")
+    .replaceAll("HashSet", "Array");
   writeFileSync(types_path, fixed);
 }

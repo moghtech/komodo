@@ -16,7 +16,7 @@ use mungos::{
 use resolver_api::Resolve;
 
 use crate::{
-  config::core_config, resource::get_resource_ids_for_user,
+  config::core_config, permission::get_resource_ids_for_user,
   state::db_client,
 };
 

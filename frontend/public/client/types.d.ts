@@ -7,12 +7,16 @@ export type I64 = number;
 export declare enum PermissionLevel {
     /** No permissions. */
     None = "None",
-    /** Can see the rousource */
+    /** Can read resource information and config */
     Read = "Read",
     /** Can execute actions on the resource */
     Execute = "Execute",
     /** Can update the resource configuration */
     Write = "Write"
+}
+export interface PermissionLevelAndSpecifics {
+    level: PermissionLevel;
+    specific: Array<SpecificPermission>;
 }
 export interface Resource<Config, Info> {
     /**
@@ -40,7 +44,7 @@ export interface Resource<Config, Info> {
      * Set a base permission level that all users will have on the
      * resource.
      */
-    base_permission?: PermissionLevel;
+    base_permission?: PermissionLevelAndSpecifics;
 }
 export declare enum ScheduleFormat {
     English = "English",
@@ -922,7 +926,7 @@ export interface User {
     /** Recently viewed ids */
     recents?: Record<ResourceTarget["type"], string[]>;
     /** Give the user elevated permissions on all resources of a certain type */
-    all?: Record<ResourceTarget["type"], PermissionLevel>;
+    all?: Record<ResourceTarget["type"], PermissionLevelAndSpecifics>;
     updated_at?: I64;
 }
 export type CreateServiceUserResponse = User;
@@ -1484,7 +1488,7 @@ export interface ContainerStats {
 export type GetDeploymentStatsResponse = ContainerStats;
 export type GetDockerRegistryAccountResponse = DockerRegistryAccount;
 export type GetGitProviderAccountResponse = GitProviderAccount;
-export type GetPermissionLevelResponse = PermissionLevel;
+export type GetPermissionResponse = PermissionLevelAndSpecifics;
 export interface ProcedureActionState {
     running: boolean;
 }
@@ -2426,7 +2430,7 @@ export interface UserGroup {
     /** User ids of group members */
     users?: string[];
     /** Give the user group elevated permissions on all resources of a certain type */
-    all?: Record<ResourceTarget["type"], PermissionLevel>;
+    all?: Record<ResourceTarget["type"], PermissionLevelAndSpecifics>;
     /** Unix time (ms) when user group last updated */
     updated_at?: I64;
 }
@@ -3360,8 +3364,10 @@ export interface Permission {
     user_target: UserTarget;
     /** The target resource */
     resource_target: ResourceTarget;
-    /** The permission level */
+    /** The permission level for the [user_target] on the [resource_target]. */
     level?: PermissionLevel;
+    /** Any specific permissions for the [user_target] on the [resource_target]. */
+    specific?: Array<SpecificPermission>;
 }
 export type ListPermissionsResponse = Permission[];
 export declare enum ProcedureState {
@@ -5248,7 +5254,7 @@ export interface GetPeripheryVersionResponse {
  * Factors in any UserGroup's permissions they may be a part of.
  * Response: [PermissionLevel]
  */
-export interface GetPermissionLevel {
+export interface GetPermission {
     /** The target to get user permission on. */
     target: ResourceTarget;
 }
@@ -6152,6 +6158,8 @@ export interface PermissionToml {
      * - Write
      */
     level: PermissionLevel;
+    /** Any [SpecificPermissions](SpecificPermission) on the resource */
+    specific: Array<SpecificPermission>;
 }
 export declare enum PortTypeEnum {
     EMPTY = "",
@@ -6448,7 +6456,7 @@ export interface UserGroupToml {
     /** Users in the group */
     users?: string[];
     /** Give the user group elevated permissions on all resources of a certain type */
-    all?: Record<ResourceTarget["type"], PermissionLevel>;
+    all?: Record<ResourceTarget["type"], PermissionLevelAndSpecifics>;
     /** Permissions given to the group */
     permissions?: PermissionToml[];
 }
@@ -6931,7 +6939,7 @@ export interface UpdatePermissionOnResourceType {
     /** The resource type: eg. Server, Build, Deployment, etc. */
     resource_type: ResourceTarget["type"];
     /** The base permission level. */
-    permission: PermissionLevel;
+    permission: PermissionLevelAndSpecifics;
 }
 /**
  * **Admin only.** Update a user or user groups permission on a resource.
@@ -6943,7 +6951,7 @@ export interface UpdatePermissionOnTarget {
     /** Specify the target resource. */
     resource_target: ResourceTarget;
     /** Specify the permission level. */
-    permission: PermissionLevel;
+    permission: PermissionLevelAndSpecifics;
 }
 /**
  * Update the procedure at the given id, and return the updated procedure.
@@ -7384,8 +7392,8 @@ export type ReadRequest = {
     type: "GetUsername";
     params: GetUsername;
 } | {
-    type: "GetPermissionLevel";
-    params: GetPermissionLevel;
+    type: "GetPermission";
+    params: GetPermission;
 } | {
     type: "FindUser";
     params: FindUser;
@@ -7714,6 +7722,47 @@ export type ReadRequest = {
     type: "ListDockerRegistryAccounts";
     params: ListDockerRegistryAccounts;
 };
+/** The specific types of permission that a User or UserGroup can have on a resource. */
+export declare enum SpecificPermission {
+    /**
+     * On **Server**
+     * - Access the terminal apis
+     * On **Stack / Deployment**
+     * - Access the container exec Apis
+     */
+    Terminal = "Terminal",
+    /**
+     * On **Server**
+     * - Allowed to attach Stacks, Deployments, Repos, Builders to the Server
+     * On **Builder**
+     * - Allowed to attach Builds to the Builder
+     * On **Build**
+     * - Allowed to attach Deployments to the Build
+     */
+    Attach = "Attach",
+    /**
+     * On **Server**
+     * - Access full container / volume / network / image list (beyond Stacks / Deployments with read access)
+     */
+    DockerList = "DockerList",
+    /**
+     * On **Server**
+     * - Access the `docker inspect` apis
+     */
+    DockerInspect = "DockerInspect",
+    /**
+     * On **Server**
+     * - Read all container logs on the server
+     * On **Stack / Deployment**
+     * - Read the container logs
+     */
+    DockerLog = "DockerLog",
+    /**
+     * On **Server**
+     * - Read all the processes on the host
+     */
+    ProcessList = "ProcessList"
+}
 export type UserRequest = {
     type: "PushRecentlyViewed";
     params: PushRecentlyViewed;

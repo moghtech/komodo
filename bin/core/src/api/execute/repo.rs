@@ -26,9 +26,7 @@ use resolver_api::Resolve;
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-  alert::send_alerts,
-  api::write::WriteArgs,
-  helpers::{
+  alert::send_alerts, api::write::WriteArgs, helpers::{
     builder::{cleanup_builder_instance, get_builder_periphery},
     channel::repo_cancel_channel,
     git_token,
@@ -40,9 +38,7 @@ use crate::{
     periphery_client,
     query::get_variables_and_secrets,
     update::update_update,
-  },
-  resource::{self, refresh_repo_state_cache},
-  state::{action_states, db_client},
+  }, permission::get_check_permissions, resource::{self, refresh_repo_state_cache}, state::{action_states, db_client}
 };
 
 use super::{ExecuteArgs, ExecuteRequest};
@@ -73,10 +69,10 @@ impl Resolve<ExecuteArgs> for CloneRepo {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let mut repo = resource::get_check_permissions::<Repo>(
+    let mut repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -185,10 +181,10 @@ impl Resolve<ExecuteArgs> for PullRepo {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let mut repo = resource::get_check_permissions::<Repo>(
+    let mut repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -340,10 +336,10 @@ impl Resolve<ExecuteArgs> for BuildRepo {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let mut repo = resource::get_check_permissions::<Repo>(
+    let mut repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -651,10 +647,10 @@ impl Resolve<ExecuteArgs> for CancelRepoBuild {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let repo = resource::get_check_permissions::<Repo>(
+    let repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 

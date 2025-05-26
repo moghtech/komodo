@@ -5,7 +5,7 @@ use typeshare::typeshare;
 
 use crate::entities::{
   ResourceTarget,
-  permission::{Permission, PermissionLevel, UserTarget},
+  permission::{Permission, PermissionLevelAndSpecifics, UserTarget},
 };
 
 use super::KomodoReadRequest;
@@ -35,15 +35,15 @@ pub type ListPermissionsResponse = Vec<Permission>;
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoReadRequest)]
-#[response(GetPermissionLevelResponse)]
+#[response(GetPermissionResponse)]
 #[error(serror::Error)]
-pub struct GetPermissionLevel {
+pub struct GetPermission {
   /// The target to get user permission on.
   pub target: ResourceTarget,
 }
 
 #[typeshare]
-pub type GetPermissionLevelResponse = PermissionLevel;
+pub type GetPermissionResponse = PermissionLevelAndSpecifics;
 
 //
 

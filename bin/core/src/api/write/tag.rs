@@ -30,6 +30,7 @@ use resolver_api::Resolve;
 
 use crate::{
   helpers::query::{get_tag, get_tag_check_owner},
+  permission::get_check_permissions,
   resource,
   state::db_client,
 };
@@ -150,94 +151,94 @@ impl Resolve<WriteArgs> for UpdateTagsOnResource {
         return Err(anyhow!("Invalid target type: System").into());
       }
       ResourceTarget::Build(id) => {
-        resource::get_check_permissions::<Build>(
+        get_check_permissions::<Build>(
           &id,
           user,
-          PermissionLevel::Write,
+          PermissionLevel::Write.into(),
         )
         .await?;
         resource::update_tags::<Build>(&id, self.tags, args).await?;
       }
       ResourceTarget::Builder(id) => {
-        resource::get_check_permissions::<Builder>(
+        get_check_permissions::<Builder>(
           &id,
           user,
-          PermissionLevel::Write,
+          PermissionLevel::Write.into(),
         )
         .await?;
         resource::update_tags::<Builder>(&id, self.tags, args).await?
       }
       ResourceTarget::Deployment(id) => {
-        resource::get_check_permissions::<Deployment>(
+        get_check_permissions::<Deployment>(
           &id,
           user,
-          PermissionLevel::Write,
+          PermissionLevel::Write.into(),
         )
         .await?;
         resource::update_tags::<Deployment>(&id, self.tags, args)
           .await?
       }
       ResourceTarget::Server(id) => {
-        resource::get_check_permissions::<Server>(
+        get_check_permissions::<Server>(
           &id,
           user,
-          PermissionLevel::Write,
+          PermissionLevel::Write.into(),
         )
         .await?;
         resource::update_tags::<Server>(&id, self.tags, args).await?
       }
       ResourceTarget::Repo(id) => {
-        resource::get_check_permissions::<Repo>(
+        get_check_permissions::<Repo>(
           &id,
           user,
-          PermissionLevel::Write,
+          PermissionLevel::Write.into(),
         )
         .await?;
         resource::update_tags::<Repo>(&id, self.tags, args).await?
       }
       ResourceTarget::Alerter(id) => {
-        resource::get_check_permissions::<Alerter>(
+        get_check_permissions::<Alerter>(
           &id,
           user,
-          PermissionLevel::Write,
+          PermissionLevel::Write.into(),
         )
         .await?;
         resource::update_tags::<Alerter>(&id, self.tags, args).await?
       }
       ResourceTarget::Procedure(id) => {
-        resource::get_check_permissions::<Procedure>(
+        get_check_permissions::<Procedure>(
           &id,
           user,
-          PermissionLevel::Write,
+          PermissionLevel::Write.into(),
         )
         .await?;
         resource::update_tags::<Procedure>(&id, self.tags, args)
           .await?
       }
       ResourceTarget::Action(id) => {
-        resource::get_check_permissions::<Action>(
+        get_check_permissions::<Action>(
           &id,
           user,
-          PermissionLevel::Write,
+          PermissionLevel::Write.into(),
         )
         .await?;
         resource::update_tags::<Action>(&id, self.tags, args).await?
       }
       ResourceTarget::ResourceSync(id) => {
-        resource::get_check_permissions::<ResourceSync>(
+        get_check_permissions::<ResourceSync>(
           &id,
           user,
-          PermissionLevel::Write,
+          PermissionLevel::Write.into(),
         )
         .await?;
         resource::update_tags::<ResourceSync>(&id, self.tags, args)
           .await?
       }
       ResourceTarget::Stack(id) => {
-        resource::get_check_permissions::<Stack>(
+        get_check_permissions::<Stack>(
           &id,
           user,
-          PermissionLevel::Write,
+          PermissionLevel::Write.into(),
         )
         .await?;
         resource::update_tags::<Stack>(&id, self.tags, args).await?

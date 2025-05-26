@@ -9,7 +9,8 @@ use komodo_client::{
 };
 
 use crate::{
-  helpers::periphery_client, resource, ws::core_periphery_forward_ws,
+  helpers::periphery_client, permission::get_check_permissions,
+  ws::core_periphery_forward_ws,
 };
 
 #[instrument(name = "ConnectContainerExec", skip(ws))]
@@ -27,10 +28,10 @@ pub async fn handler(
       return;
     };
 
-    let server = match resource::get_check_permissions::<Server>(
+    let server = match get_check_permissions::<Server>(
       &server,
       &user,
-      PermissionLevel::Write,
+      PermissionLevel::Read.terminal(),
     )
     .await
     {

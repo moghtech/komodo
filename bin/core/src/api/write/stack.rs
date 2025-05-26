@@ -30,6 +30,7 @@ use crate::{
     query::get_server_with_state,
     update::{add_update, make_update},
   },
+  permission::get_check_permissions,
   resource,
   stack::{
     get_stack_and_server,
@@ -60,13 +61,12 @@ impl Resolve<WriteArgs> for CopyStack {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Stack> {
-    let Stack { config, .. } =
-      resource::get_check_permissions::<Stack>(
-        &self.id,
-        user,
-        PermissionLevel::Write,
-      )
-      .await?;
+    let Stack { config, .. } = get_check_permissions::<Stack>(
+      &self.id,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?;
     Ok(
       resource::create::<Stack>(&self.name, config.into(), user)
         .await?,
@@ -115,7 +115,7 @@ impl Resolve<WriteArgs> for WriteStackFileContents {
     let (mut stack, server) = get_stack_and_server(
       &stack,
       user,
-      PermissionLevel::Write,
+      PermissionLevel::Write.into(),
       true,
     )
     .await?;
@@ -229,10 +229,10 @@ impl Resolve<WriteArgs> for RefreshStackCache {
   ) -> serror::Result<NoData> {
     // Even though this is a write request, this doesn't change any config. Anyone that can execute the
     // stack should be able to do this.
-    let stack = resource::get_check_permissions::<Stack>(
+    let stack = get_check_permissions::<Stack>(
       &self.stack,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -432,10 +432,10 @@ impl Resolve<WriteArgs> for CreateStackWebhook {
       );
     };
 
-    let stack = resource::get_check_permissions::<Stack>(
+    let stack = get_check_permissions::<Stack>(
       &self.stack,
       user,
-      PermissionLevel::Write,
+      PermissionLevel::Write.into(),
     )
     .await?;
 
@@ -552,10 +552,10 @@ impl Resolve<WriteArgs> for DeleteStackWebhook {
       );
     };
 
-    let stack = resource::get_check_permissions::<Stack>(
+    let stack = get_check_permissions::<Stack>(
       &self.stack,
       user,
-      PermissionLevel::Write,
+      PermissionLevel::Write.into(),
     )
     .await?;
 

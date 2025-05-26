@@ -19,7 +19,7 @@ export type ReadResponses = {
     ListGitProvidersFromConfig: Types.ListGitProvidersFromConfigResponse;
     ListDockerRegistriesFromConfig: Types.ListDockerRegistriesFromConfigResponse;
     GetUsername: Types.GetUsernameResponse;
-    GetPermissionLevel: Types.GetPermissionLevelResponse;
+    GetPermission: Types.GetPermissionResponse;
     FindUser: Types.FindUserResponse;
     ListUsers: Types.ListUsersResponse;
     ListApiKeys: Types.ListApiKeysResponse;

@@ -29,7 +29,7 @@ use resolver_api::Resolve;
 use crate::{
   api::write::WriteArgs,
   helpers::{query::get_id_to_tags, update::update_update},
-  resource,
+  permission::get_check_permissions,
   state::{action_states, db_client},
   sync::{
     AllResourcesById, ResourceSyncTrait,
@@ -54,9 +54,11 @@ impl Resolve<ExecuteArgs> for RunSync {
       resource_type: match_resource_type,
       resources: match_resources,
     } = self;
-    let sync = resource::get_check_permissions::<
-      entities::sync::ResourceSync,
-    >(&sync, user, PermissionLevel::Execute)
+    let sync = get_check_permissions::<entities::sync::ResourceSync>(
+      &sync,
+      user,
+      PermissionLevel::Execute.into(),
+    )
     .await?;
 
     // get the action state for the sync (or insert default).

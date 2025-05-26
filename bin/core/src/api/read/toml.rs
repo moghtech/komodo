@@ -20,6 +20,7 @@ use crate::{
   helpers::query::{
     get_all_tags, get_id_to_tags, get_user_user_group_ids,
   },
+  permission::get_check_permissions,
   resource,
   state::db_client,
   sync::{
@@ -45,6 +46,7 @@ async fn get_all_targets(
     resource::list_for_user::<Alerter>(
       ResourceQuery::builder().tags(tags).build(),
       user,
+      PermissionLevel::Read.into(),
       &all_tags,
     )
     .await?
@@ -55,6 +57,7 @@ async fn get_all_targets(
     resource::list_for_user::<Builder>(
       ResourceQuery::builder().tags(tags).build(),
       user,
+      PermissionLevel::Read.into(),
       &all_tags,
     )
     .await?
@@ -65,6 +68,7 @@ async fn get_all_targets(
     resource::list_for_user::<Server>(
       ResourceQuery::builder().tags(tags).build(),
       user,
+      PermissionLevel::Read.into(),
       &all_tags,
     )
     .await?
@@ -75,6 +79,7 @@ async fn get_all_targets(
     resource::list_for_user::<Stack>(
       ResourceQuery::builder().tags(tags).build(),
       user,
+      PermissionLevel::Read.into(),
       &all_tags,
     )
     .await?
@@ -85,6 +90,7 @@ async fn get_all_targets(
     resource::list_for_user::<Deployment>(
       ResourceQuery::builder().tags(tags).build(),
       user,
+      PermissionLevel::Read.into(),
       &all_tags,
     )
     .await?
@@ -95,6 +101,7 @@ async fn get_all_targets(
     resource::list_for_user::<Build>(
       ResourceQuery::builder().tags(tags).build(),
       user,
+      PermissionLevel::Read.into(),
       &all_tags,
     )
     .await?
@@ -105,6 +112,7 @@ async fn get_all_targets(
     resource::list_for_user::<Repo>(
       ResourceQuery::builder().tags(tags).build(),
       user,
+      PermissionLevel::Read.into(),
       &all_tags,
     )
     .await?
@@ -115,6 +123,7 @@ async fn get_all_targets(
     resource::list_for_user::<Procedure>(
       ResourceQuery::builder().tags(tags).build(),
       user,
+      PermissionLevel::Read.into(),
       &all_tags,
     )
     .await?
@@ -125,6 +134,7 @@ async fn get_all_targets(
     resource::list_for_user::<Action>(
       ResourceQuery::builder().tags(tags).build(),
       user,
+      PermissionLevel::Read.into(),
       &all_tags,
     )
     .await?
@@ -135,6 +145,7 @@ async fn get_all_targets(
     resource::list_full_for_user::<ResourceSync>(
       ResourceQuery::builder().tags(tags).build(),
       user,
+      PermissionLevel::Read.into(),
       &all_tags,
     )
     .await?
@@ -198,10 +209,10 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
     for target in targets {
       match target {
         ResourceTarget::Alerter(id) => {
-          let alerter = resource::get_check_permissions::<Alerter>(
+          let alerter = get_check_permissions::<Alerter>(
             &id,
             user,
-            PermissionLevel::Read,
+            PermissionLevel::Read.into(),
           )
           .await?;
           res.alerters.push(convert_resource::<Alerter>(
@@ -212,10 +223,10 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
           ))
         }
         ResourceTarget::ResourceSync(id) => {
-          let sync = resource::get_check_permissions::<ResourceSync>(
+          let sync = get_check_permissions::<ResourceSync>(
             &id,
             user,
-            PermissionLevel::Read,
+            PermissionLevel::Read.into(),
           )
           .await?;
           if sync.config.file_contents.is_empty()
@@ -231,10 +242,10 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
           }
         }
         ResourceTarget::Server(id) => {
-          let server = resource::get_check_permissions::<Server>(
+          let server = get_check_permissions::<Server>(
             &id,
             user,
-            PermissionLevel::Read,
+            PermissionLevel::Read.into(),
           )
           .await?;
           res.servers.push(convert_resource::<Server>(
@@ -245,13 +256,12 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
           ))
         }
         ResourceTarget::Builder(id) => {
-          let mut builder =
-            resource::get_check_permissions::<Builder>(
-              &id,
-              user,
-              PermissionLevel::Read,
-            )
-            .await?;
+          let mut builder = get_check_permissions::<Builder>(
+            &id,
+            user,
+            PermissionLevel::Read.into(),
+          )
+          .await?;
           Builder::replace_ids(&mut builder, &all);
           res.builders.push(convert_resource::<Builder>(
             builder,
@@ -261,10 +271,10 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
           ))
         }
         ResourceTarget::Build(id) => {
-          let mut build = resource::get_check_permissions::<Build>(
+          let mut build = get_check_permissions::<Build>(
             &id,
             user,
-            PermissionLevel::Read,
+            PermissionLevel::Read.into(),
           )
           .await?;
           Build::replace_ids(&mut build, &all);
@@ -276,10 +286,10 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
           ))
         }
         ResourceTarget::Deployment(id) => {
-          let mut deployment = resource::get_check_permissions::<
-            Deployment,
-          >(
-            &id, user, PermissionLevel::Read
+          let mut deployment = get_check_permissions::<Deployment>(
+            &id,
+            user,
+            PermissionLevel::Read.into(),
           )
           .await?;
           Deployment::replace_ids(&mut deployment, &all);
@@ -291,10 +301,10 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
           ))
         }
         ResourceTarget::Repo(id) => {
-          let mut repo = resource::get_check_permissions::<Repo>(
+          let mut repo = get_check_permissions::<Repo>(
             &id,
             user,
-            PermissionLevel::Read,
+            PermissionLevel::Read.into(),
           )
           .await?;
           Repo::replace_ids(&mut repo, &all);
@@ -306,10 +316,10 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
           ))
         }
         ResourceTarget::Stack(id) => {
-          let mut stack = resource::get_check_permissions::<Stack>(
+          let mut stack = get_check_permissions::<Stack>(
             &id,
             user,
-            PermissionLevel::Read,
+            PermissionLevel::Read.into(),
           )
           .await?;
           Stack::replace_ids(&mut stack, &all);
@@ -321,10 +331,10 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
           ))
         }
         ResourceTarget::Procedure(id) => {
-          let mut procedure = resource::get_check_permissions::<
-            Procedure,
-          >(
-            &id, user, PermissionLevel::Read
+          let mut procedure = get_check_permissions::<Procedure>(
+            &id,
+            user,
+            PermissionLevel::Read.into(),
           )
           .await?;
           Procedure::replace_ids(&mut procedure, &all);
@@ -336,10 +346,10 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
           ));
         }
         ResourceTarget::Action(id) => {
-          let mut action = resource::get_check_permissions::<Action>(
+          let mut action = get_check_permissions::<Action>(
             &id,
             user,
-            PermissionLevel::Read,
+            PermissionLevel::Read.into(),
           )
           .await?;
           Action::replace_ids(&mut action, &all);

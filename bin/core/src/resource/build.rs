@@ -219,7 +219,7 @@ async fn validate_config(
       let builder = super::get_check_permissions::<Builder>(
         builder_id,
         user,
-        PermissionLevel::Read,
+        PermissionLevel::Read.attach(),
       )
       .await
       .context("Cannot attach Build to this Builder")?;

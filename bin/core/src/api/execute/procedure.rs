@@ -21,7 +21,8 @@ use tokio::sync::Mutex;
 use crate::{
   alert::send_alerts,
   helpers::{procedure::execute_procedure, update::update_update},
-  resource::{self, refresh_procedure_state_cache},
+  permission::get_check_permissions,
+  resource::refresh_procedure_state_cache,
   state::{action_states, db_client},
 };
 
@@ -70,10 +71,10 @@ fn resolve_inner(
   >,
 > {
   Box::pin(async move {
-    let procedure = resource::get_check_permissions::<Procedure>(
+    let procedure = get_check_permissions::<Procedure>(
       &procedure,
       &user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 

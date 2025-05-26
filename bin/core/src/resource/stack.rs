@@ -1,10 +1,12 @@
+use std::collections::HashSet;
+
 use anyhow::Context;
 use formatting::format_serror;
 use komodo_client::{
   api::write::RefreshStackCache,
   entities::{
     Operation, ResourceTarget, ResourceTargetVariant,
-    permission::PermissionLevel,
+    permission::{PermissionLevel, SpecificPermission},
     resource::Resource,
     server::Server,
     stack::{
@@ -51,6 +53,10 @@ impl super::KomodoResource for Stack {
 
   fn validated_name(name: &str) -> String {
     to_docker_compatible_name(name)
+  }
+
+  fn creator_specific_permissions() -> HashSet<SpecificPermission> {
+    [SpecificPermission::Terminal].into_iter().collect()
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>
@@ -319,7 +325,7 @@ async fn validate_config(
       let server = get_check_permissions::<Server>(
         server_id,
         user,
-        PermissionLevel::Write,
+        PermissionLevel::Read.attach(),
       )
       .await
       .context("Cannot attach stack to this Server")?;

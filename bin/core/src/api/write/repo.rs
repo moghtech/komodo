@@ -28,6 +28,7 @@ use crate::{
     git_token, periphery_client,
     update::{add_update, make_update},
   },
+  permission::get_check_permissions,
   resource,
   state::{action_states, db_client, github_client},
 };
@@ -50,13 +51,12 @@ impl Resolve<WriteArgs> for CopyRepo {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Repo> {
-    let Repo { config, .. } =
-      resource::get_check_permissions::<Repo>(
-        &self.id,
-        user,
-        PermissionLevel::Write,
-      )
-      .await?;
+    let Repo { config, .. } = get_check_permissions::<Repo>(
+      &self.id,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?;
     Ok(
       resource::create::<Repo>(&self.name, config.into(), user)
         .await?,
@@ -87,10 +87,10 @@ impl Resolve<WriteArgs> for RenameRepo {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Update> {
-    let repo = resource::get_check_permissions::<Repo>(
+    let repo = get_check_permissions::<Repo>(
       &self.id,
       user,
-      PermissionLevel::Write,
+      PermissionLevel::Write.into(),
     )
     .await?;
 
@@ -169,10 +169,10 @@ impl Resolve<WriteArgs> for RefreshRepoCache {
   ) -> serror::Result<NoData> {
     // Even though this is a write request, this doesn't change any config. Anyone that can execute the
     // repo should be able to do this.
-    let repo = resource::get_check_permissions::<Repo>(
+    let repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -257,10 +257,10 @@ impl Resolve<WriteArgs> for CreateRepoWebhook {
       );
     };
 
-    let repo = resource::get_check_permissions::<Repo>(
+    let repo = get_check_permissions::<Repo>(
       &self.repo,
       &args.user,
-      PermissionLevel::Write,
+      PermissionLevel::Write.into(),
     )
     .await?;
 
@@ -380,10 +380,10 @@ impl Resolve<WriteArgs> for DeleteRepoWebhook {
       );
     };
 
-    let repo = resource::get_check_permissions::<Repo>(
+    let repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
-      PermissionLevel::Write,
+      PermissionLevel::Write.into(),
     )
     .await?;
 

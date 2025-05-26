@@ -1,7 +1,7 @@
 use anyhow::{Context, anyhow};
 use komodo_client::{
   api::read::{
-    GetPermissionLevel, GetPermissionLevelResponse, ListPermissions,
+    GetPermission, GetPermissionResponse, ListPermissions,
     ListPermissionsResponse, ListUserTargetPermissions,
     ListUserTargetPermissionsResponse,
   },
@@ -35,13 +35,13 @@ impl Resolve<ReadArgs> for ListPermissions {
   }
 }
 
-impl Resolve<ReadArgs> for GetPermissionLevel {
+impl Resolve<ReadArgs> for GetPermission {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetPermissionLevelResponse> {
+  ) -> serror::Result<GetPermissionResponse> {
     if user.admin {
-      return Ok(PermissionLevel::Write);
+      return Ok(PermissionLevel::Write.all());
     }
     Ok(get_user_permission_on_target(user, &self.target).await?)
   }

@@ -9,6 +9,7 @@ use komodo_client::{
     action::Action,
     build::Build,
     deployment::Deployment,
+    permission::PermissionLevel,
     procedure::Procedure,
     repo::Repo,
     stack::Stack,
@@ -1189,6 +1190,7 @@ async fn extend_batch_exection<E: ExtendBatch>(
     pattern,
     Default::default(),
     procedure_user(),
+    PermissionLevel::Read.into(),
     &[],
   )
   .await?

@@ -14,7 +14,7 @@ use komodo_client::entities::{
   builder::Builder,
   deployment::{Deployment, DeploymentState},
   docker::container::{ContainerListItem, ContainerStateStatusEnum},
-  permission::PermissionLevel,
+  permission::{PermissionLevel, PermissionLevelAndSpecifics},
   procedure::Procedure,
   repo::Repo,
   server::{Server, ServerState},
@@ -39,7 +39,8 @@ use tokio::sync::Mutex;
 
 use crate::{
   config::core_config,
-  resource::{self, get_user_permission_on_resource},
+  permission::get_user_permission_on_resource,
+  resource,
   stack::compose_container_match_regex,
   state::{db_client, deployment_status_cache, stack_status_cache},
 };
@@ -277,9 +278,9 @@ pub fn user_target_query(
 pub async fn get_user_permission_on_target(
   user: &User,
   target: &ResourceTarget,
-) -> anyhow::Result<PermissionLevel> {
+) -> anyhow::Result<PermissionLevelAndSpecifics> {
   match target {
-    ResourceTarget::System(_) => Ok(PermissionLevel::None),
+    ResourceTarget::System(_) => Ok(PermissionLevel::None.into()),
     ResourceTarget::Build(id) => {
       get_user_permission_on_resource::<Build>(user, id).await
     }

@@ -27,7 +27,11 @@ use mungos::{
 };
 use resolver_api::Resolve;
 
-use crate::{config::core_config, resource, state::db_client};
+use crate::{
+  config::core_config,
+  permission::{get_check_permissions, get_resource_ids_for_user},
+  state::db_client,
+};
 
 use super::ReadArgs;
 
@@ -41,18 +45,17 @@ impl Resolve<ReadArgs> for ListUpdates {
     let query = if user.admin || core_config().transparent_mode {
       self.query
     } else {
-      let server_query =
-        resource::get_resource_ids_for_user::<Server>(user)
-          .await?
-          .map(|ids| {
-            doc! {
-              "target.type": "Server", "target.id": { "$in": ids }
-            }
-          })
-          .unwrap_or_else(|| doc! { "target.type": "Server" });
+      let server_query = get_resource_ids_for_user::<Server>(user)
+        .await?
+        .map(|ids| {
+          doc! {
+            "target.type": "Server", "target.id": { "$in": ids }
+          }
+        })
+        .unwrap_or_else(|| doc! { "target.type": "Server" });
 
       let deployment_query =
-        resource::get_resource_ids_for_user::<Deployment>(user)
+        get_resource_ids_for_user::<Deployment>(user)
           .await?
           .map(|ids| {
             doc! {
@@ -61,38 +64,35 @@ impl Resolve<ReadArgs> for ListUpdates {
           })
           .unwrap_or_else(|| doc! { "target.type": "Deployment" });
 
-      let stack_query =
-        resource::get_resource_ids_for_user::<Stack>(user)
-          .await?
-          .map(|ids| {
-            doc! {
-              "target.type": "Stack", "target.id": { "$in": ids }
-            }
-          })
-          .unwrap_or_else(|| doc! { "target.type": "Stack" });
+      let stack_query = get_resource_ids_for_user::<Stack>(user)
+        .await?
+        .map(|ids| {
+          doc! {
+            "target.type": "Stack", "target.id": { "$in": ids }
+          }
+        })
+        .unwrap_or_else(|| doc! { "target.type": "Stack" });
 
-      let build_query =
-        resource::get_resource_ids_for_user::<Build>(user)
-          .await?
-          .map(|ids| {
-            doc! {
-              "target.type": "Build", "target.id": { "$in": ids }
-            }
-          })
-          .unwrap_or_else(|| doc! { "target.type": "Build" });
+      let build_query = get_resource_ids_for_user::<Build>(user)
+        .await?
+        .map(|ids| {
+          doc! {
+            "target.type": "Build", "target.id": { "$in": ids }
+          }
+        })
+        .unwrap_or_else(|| doc! { "target.type": "Build" });
 
-      let repo_query =
-        resource::get_resource_ids_for_user::<Repo>(user)
-          .await?
-          .map(|ids| {
-            doc! {
-              "target.type": "Repo", "target.id": { "$in": ids }
-            }
-          })
-          .unwrap_or_else(|| doc! { "target.type": "Repo" });
+      let repo_query = get_resource_ids_for_user::<Repo>(user)
+        .await?
+        .map(|ids| {
+          doc! {
+            "target.type": "Repo", "target.id": { "$in": ids }
+          }
+        })
+        .unwrap_or_else(|| doc! { "target.type": "Repo" });
 
       let procedure_query =
-        resource::get_resource_ids_for_user::<Procedure>(user)
+        get_resource_ids_for_user::<Procedure>(user)
           .await?
           .map(|ids| {
             doc! {
@@ -101,47 +101,43 @@ impl Resolve<ReadArgs> for ListUpdates {
           })
           .unwrap_or_else(|| doc! { "target.type": "Procedure" });
 
-      let action_query =
-        resource::get_resource_ids_for_user::<Action>(user)
-          .await?
-          .map(|ids| {
-            doc! {
-              "target.type": "Action", "target.id": { "$in": ids }
-            }
-          })
-          .unwrap_or_else(|| doc! { "target.type": "Action" });
-
-      let builder_query =
-        resource::get_resource_ids_for_user::<Builder>(user)
-          .await?
-          .map(|ids| {
-            doc! {
-              "target.type": "Builder", "target.id": { "$in": ids }
-            }
-          })
-          .unwrap_or_else(|| doc! { "target.type": "Builder" });
-
-      let alerter_query =
-        resource::get_resource_ids_for_user::<Alerter>(user)
-          .await?
-          .map(|ids| {
-            doc! {
-              "target.type": "Alerter", "target.id": { "$in": ids }
-            }
-          })
-          .unwrap_or_else(|| doc! { "target.type": "Alerter" });
-
-      let resource_sync_query =
-        resource::get_resource_ids_for_user::<ResourceSync>(
-          user,
-        )
+      let action_query = get_resource_ids_for_user::<Action>(user)
         .await?
         .map(|ids| {
           doc! {
-            "target.type": "ResourceSync", "target.id": { "$in": ids }
+            "target.type": "Action", "target.id": { "$in": ids }
           }
         })
-        .unwrap_or_else(|| doc! { "target.type": "ResourceSync" });
+        .unwrap_or_else(|| doc! { "target.type": "Action" });
+
+      let builder_query = get_resource_ids_for_user::<Builder>(user)
+        .await?
+        .map(|ids| {
+          doc! {
+            "target.type": "Builder", "target.id": { "$in": ids }
+          }
+        })
+        .unwrap_or_else(|| doc! { "target.type": "Builder" });
+
+      let alerter_query = get_resource_ids_for_user::<Alerter>(user)
+        .await?
+        .map(|ids| {
+          doc! {
+            "target.type": "Alerter", "target.id": { "$in": ids }
+          }
+        })
+        .unwrap_or_else(|| doc! { "target.type": "Alerter" });
+
+      let resource_sync_query = get_resource_ids_for_user::<
+        ResourceSync,
+      >(user)
+      .await?
+      .map(|ids| {
+        doc! {
+          "target.type": "ResourceSync", "target.id": { "$in": ids }
+        }
+      })
+      .unwrap_or_else(|| doc! { "target.type": "ResourceSync" });
 
       let mut query = self.query.unwrap_or_default();
       query.extend(doc! {
@@ -233,82 +229,82 @@ impl Resolve<ReadArgs> for GetUpdate {
         );
       }
       ResourceTarget::Server(id) => {
-        resource::get_check_permissions::<Server>(
+        get_check_permissions::<Server>(
           id,
           user,
-          PermissionLevel::Read,
+          PermissionLevel::Read.into(),
         )
         .await?;
       }
       ResourceTarget::Deployment(id) => {
-        resource::get_check_permissions::<Deployment>(
+        get_check_permissions::<Deployment>(
           id,
           user,
-          PermissionLevel::Read,
+          PermissionLevel::Read.into(),
         )
         .await?;
       }
       ResourceTarget::Build(id) => {
-        resource::get_check_permissions::<Build>(
+        get_check_permissions::<Build>(
           id,
           user,
-          PermissionLevel::Read,
+          PermissionLevel::Read.into(),
         )
         .await?;
       }
       ResourceTarget::Repo(id) => {
-        resource::get_check_permissions::<Repo>(
+        get_check_permissions::<Repo>(
           id,
           user,
-          PermissionLevel::Read,
+          PermissionLevel::Read.into(),
         )
         .await?;
       }
       ResourceTarget::Builder(id) => {
-        resource::get_check_permissions::<Builder>(
+        get_check_permissions::<Builder>(
           id,
           user,
-          PermissionLevel::Read,
+          PermissionLevel::Read.into(),
         )
         .await?;
       }
       ResourceTarget::Alerter(id) => {
-        resource::get_check_permissions::<Alerter>(
+        get_check_permissions::<Alerter>(
           id,
           user,
-          PermissionLevel::Read,
+          PermissionLevel::Read.into(),
         )
         .await?;
       }
       ResourceTarget::Procedure(id) => {
-        resource::get_check_permissions::<Procedure>(
+        get_check_permissions::<Procedure>(
           id,
           user,
-          PermissionLevel::Read,
+          PermissionLevel::Read.into(),
         )
         .await?;
       }
       ResourceTarget::Action(id) => {
-        resource::get_check_permissions::<Action>(
+        get_check_permissions::<Action>(
           id,
           user,
-          PermissionLevel::Read,
+          PermissionLevel::Read.into(),
         )
         .await?;
       }
       ResourceTarget::ResourceSync(id) => {
-        resource::get_check_permissions::<ResourceSync>(
+        get_check_permissions::<ResourceSync>(
           id,
           user,
-          PermissionLevel::Read,
+          PermissionLevel::Read.into(),
         )
         .await?;
       }
       ResourceTarget::Stack(id) => {
-        resource::get_check_permissions::<Stack>(
+        get_check_permissions::<Stack>(
           id,
           user,
-          PermissionLevel::Read,
+          PermissionLevel::Read.into(),
         )
         .await?;
       }

@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use anyhow::Context;
 use formatting::format_serror;
 use komodo_client::entities::{
@@ -10,7 +12,7 @@ use komodo_client::entities::{
     PartialDeploymentConfig, conversions_from_str,
   },
   environment_vars_from_str,
-  permission::PermissionLevel,
+  permission::{PermissionLevel, SpecificPermission},
   resource::Resource,
   server::Server,
   to_docker_compatible_name,
@@ -50,6 +52,10 @@ impl super::KomodoResource for Deployment {
 
   fn validated_name(name: &str) -> String {
     to_docker_compatible_name(name)
+  }
+
+  fn creator_specific_permissions() -> HashSet<SpecificPermission> {
+    [SpecificPermission::Terminal].into_iter().collect()
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>
@@ -289,7 +295,7 @@ async fn validate_config(
       let server = get_check_permissions::<Server>(
         server_id,
         user,
-        PermissionLevel::Write,
+        PermissionLevel::Read.attach(),
       )
       .await
       .context("Cannot attach Deployment to this Server")?;
@@ -303,7 +309,7 @@ async fn validate_config(
       let build = get_check_permissions::<Build>(
         build_id,
         user,
-        PermissionLevel::Read,
+        PermissionLevel::Read.attach(),
       )
       .await
       .context(

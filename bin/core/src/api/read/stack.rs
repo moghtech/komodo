@@ -17,6 +17,7 @@ use resolver_api::Resolve;
 use crate::{
   config::core_config,
   helpers::{periphery_client, query::get_all_tags},
+  permission::get_check_permissions,
   resource,
   stack::get_stack_and_server,
   state::{action_states, github_client, stack_status_cache},
@@ -30,10 +31,10 @@ impl Resolve<ReadArgs> for GetStack {
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<Stack> {
     Ok(
-      resource::get_check_permissions::<Stack>(
+      get_check_permissions::<Stack>(
         &self.stack,
         user,
-        PermissionLevel::Read,
+        PermissionLevel::Read.into(),
       )
       .await?,
     )
@@ -45,10 +46,10 @@ impl Resolve<ReadArgs> for ListStackServices {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<ListStackServicesResponse> {
-    let stack = resource::get_check_permissions::<Stack>(
+    let stack = get_check_permissions::<Stack>(
       &self.stack,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
 
@@ -75,9 +76,13 @@ impl Resolve<ReadArgs> for GetStackLog {
       tail,
       timestamps,
     } = self;
-    let (stack, server) =
-      get_stack_and_server(&stack, user, PermissionLevel::Read, true)
-        .await?;
+    let (stack, server) = get_stack_and_server(
+      &stack,
+      user,
+      PermissionLevel::Read.into(),
+      true,
+    )
+    .await?;
     let res = periphery_client(&server)?
       .request(GetComposeLog {
         project: stack.project_name(false),
@@ -104,9 +109,13 @@ impl Resolve<ReadArgs> for SearchStackLog {
       invert,
       timestamps,
     } = self;
-    let (stack, server) =
-      get_stack_and_server(&stack, user, PermissionLevel::Read, true)
-        .await?;
+    let (stack, server) = get_stack_and_server(
+      &stack,
+      user,
+      PermissionLevel::Read.into(),
+      true,
+    )
+    .await?;
     let res = periphery_client(&server)?
       .request(GetComposeLogSearch {
         project: stack.project_name(false),
@@ -133,7 +142,10 @@ impl Resolve<ReadArgs> for ListCommonStackExtraArgs {
       get_all_tags(None).await?
     };
     let stacks = resource::list_full_for_user::<Stack>(
-      self.query, user, &all_tags,
+      self.query,
+      user,
+      PermissionLevel::Read.into(),
+      &all_tags,
     )
     .await
     .context("failed to get resources matching query")?;
@@ -164,7 +176,10 @@ impl Resolve<ReadArgs> for ListCommonStackBuildExtraArgs {
       get_all_tags(None).await?
     };
     let stacks = resource::list_full_for_user::<Stack>(
-      self.query, user, &all_tags,
+      self.query,
+      user,
+      PermissionLevel::Read.into(),
+      &all_tags,
     )
     .await
     .context("failed to get resources matching query")?;
@@ -195,9 +210,13 @@ impl Resolve<ReadArgs> for ListStacks {
       get_all_tags(None).await?
     };
     let only_update_available = self.query.specific.update_available;
-    let stacks =
-      resource::list_for_user::<Stack>(self.query, user, &all_tags)
-        .await?;
+    let stacks = resource::list_for_user::<Stack>(
+      self.query,
+      user,
+      PermissionLevel::Read.into(),
+      &all_tags,
+    )
+    .await?;
     let stacks = if only_update_available {
       stacks
         .into_iter()
@@ -228,7 +247,10 @@ impl Resolve<ReadArgs> for ListFullStacks {
     };
     Ok(
       resource::list_full_for_user::<Stack>(
-        self.query, user, &all_tags,
+        self.query,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
       )
       .await?,
     )
@@ -240,10 +262,10 @@ impl Resolve<ReadArgs> for GetStackActionState {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<StackActionState> {
-    let stack = resource::get_check_permissions::<Stack>(
+    let stack = get_check_permissions::<Stack>(
       &self.stack,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
     let action_state = action_states()
@@ -264,6 +286,7 @@ impl Resolve<ReadArgs> for GetStacksSummary {
     let stacks = resource::list_full_for_user::<Stack>(
       Default::default(),
       user,
+      PermissionLevel::Read.into(),
       &[],
     )
     .await
@@ -302,10 +325,10 @@ impl Resolve<ReadArgs> for GetStackWebhooksEnabled {
       });
     };
 
-    let stack = resource::get_check_permissions::<Stack>(
+    let stack = get_check_permissions::<Stack>(
       &self.stack,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
 

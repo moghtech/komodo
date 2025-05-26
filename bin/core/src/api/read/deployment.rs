@@ -19,6 +19,7 @@ use resolver_api::Resolve;
 
 use crate::{
   helpers::{periphery_client, query::get_all_tags},
+  permission::get_check_permissions,
   resource,
   state::{action_states, deployment_status_cache},
 };
@@ -31,10 +32,10 @@ impl Resolve<ReadArgs> for GetDeployment {
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<Deployment> {
     Ok(
-      resource::get_check_permissions::<Deployment>(
+      get_check_permissions::<Deployment>(
         &self.deployment,
         user,
-        PermissionLevel::Read,
+        PermissionLevel::Read.into(),
       )
       .await?,
     )
@@ -53,7 +54,10 @@ impl Resolve<ReadArgs> for ListDeployments {
     };
     let only_update_available = self.query.specific.update_available;
     let deployments = resource::list_for_user::<Deployment>(
-      self.query, user, &all_tags,
+      self.query,
+      user,
+      PermissionLevel::Read.into(),
+      &all_tags,
     )
     .await?;
     let deployments = if only_update_available {
@@ -80,7 +84,10 @@ impl Resolve<ReadArgs> for ListFullDeployments {
     };
     Ok(
       resource::list_full_for_user::<Deployment>(
-        self.query, user, &all_tags,
+        self.query,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
       )
       .await?,
     )
@@ -92,10 +99,10 @@ impl Resolve<ReadArgs> for GetDeploymentContainer {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<GetDeploymentContainerResponse> {
-    let deployment = resource::get_check_permissions::<Deployment>(
+    let deployment = get_check_permissions::<Deployment>(
       &self.deployment,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
     let status = deployment_status_cache()
@@ -126,10 +133,10 @@ impl Resolve<ReadArgs> for GetDeploymentLog {
       name,
       config: DeploymentConfig { server_id, .. },
       ..
-    } = resource::get_check_permissions::<Deployment>(
+    } = get_check_permissions::<Deployment>(
       &deployment,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
     if server_id.is_empty() {
@@ -164,10 +171,10 @@ impl Resolve<ReadArgs> for SearchDeploymentLog {
       name,
       config: DeploymentConfig { server_id, .. },
       ..
-    } = resource::get_check_permissions::<Deployment>(
+    } = get_check_permissions::<Deployment>(
       &deployment,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
     if server_id.is_empty() {
@@ -197,10 +204,10 @@ impl Resolve<ReadArgs> for GetDeploymentStats {
       name,
       config: DeploymentConfig { server_id, .. },
       ..
-    } = resource::get_check_permissions::<Deployment>(
+    } = get_check_permissions::<Deployment>(
       &self.deployment,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
     if server_id.is_empty() {
@@ -222,10 +229,10 @@ impl Resolve<ReadArgs> for GetDeploymentActionState {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<DeploymentActionState> {
-    let deployment = resource::get_check_permissions::<Deployment>(
+    let deployment = get_check_permissions::<Deployment>(
       &self.deployment,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
     let action_state = action_states()
@@ -246,6 +253,7 @@ impl Resolve<ReadArgs> for GetDeploymentsSummary {
     let deployments = resource::list_full_for_user::<Deployment>(
       Default::default(),
       user,
+      PermissionLevel::Read.into(),
       &[],
     )
     .await
@@ -289,7 +297,10 @@ impl Resolve<ReadArgs> for ListCommonDeploymentExtraArgs {
       get_all_tags(None).await?
     };
     let deployments = resource::list_full_for_user::<Deployment>(
-      self.query, user, &all_tags,
+      self.query,
+      user,
+      PermissionLevel::Read.into(),
+      &all_tags,
     )
     .await
     .context("failed to get resources matching query")?;

@@ -48,6 +48,7 @@ use crate::{
     query::get_id_to_tags,
     update::{add_update, make_update, update_update},
   },
+  permission::get_check_permissions,
   resource,
   state::{db_client, github_client},
   sync::{
@@ -78,10 +79,10 @@ impl Resolve<WriteArgs> for CopyResourceSync {
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<ResourceSync> {
     let ResourceSync { config, .. } =
-      resource::get_check_permissions::<ResourceSync>(
+      get_check_permissions::<ResourceSync>(
         &self.id,
         user,
-        PermissionLevel::Write,
+        PermissionLevel::Write.into(),
       )
       .await?;
     Ok(
@@ -134,10 +135,10 @@ impl Resolve<WriteArgs> for RenameResourceSync {
 impl Resolve<WriteArgs> for WriteSyncFileContents {
   #[instrument(name = "WriteSyncFileContents", skip(args))]
   async fn resolve(self, args: &WriteArgs) -> serror::Result<Update> {
-    let sync = resource::get_check_permissions::<ResourceSync>(
+    let sync = get_check_permissions::<ResourceSync>(
       &self.sync,
       &args.user,
-      PermissionLevel::Write,
+      PermissionLevel::Write.into(),
     )
     .await?;
 
@@ -345,9 +346,11 @@ impl Resolve<WriteArgs> for CommitSync {
   async fn resolve(self, args: &WriteArgs) -> serror::Result<Update> {
     let WriteArgs { user } = args;
 
-    let sync = resource::get_check_permissions::<
-      entities::sync::ResourceSync,
-    >(&self.sync, user, PermissionLevel::Write)
+    let sync = get_check_permissions::<entities::sync::ResourceSync>(
+      &self.sync,
+      user,
+      PermissionLevel::Write.into(),
+    )
     .await?;
 
     let file_contents_empty = sync.config.file_contents_empty();
@@ -514,10 +517,13 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
   ) -> serror::Result<ResourceSync> {
     // Even though this is a write request, this doesn't change any config. Anyone that can execute the
     // sync should be able to do this.
-    let mut sync = resource::get_check_permissions::<
-      entities::sync::ResourceSync,
-    >(&self.sync, user, PermissionLevel::Execute)
-    .await?;
+    let mut sync =
+      get_check_permissions::<entities::sync::ResourceSync>(
+        &self.sync,
+        user,
+        PermissionLevel::Execute.into(),
+      )
+      .await?;
 
     if !sync.config.managed
       && !sync.config.files_on_host
@@ -864,10 +870,10 @@ impl Resolve<WriteArgs> for CreateSyncWebhook {
       );
     };
 
-    let sync = resource::get_check_permissions::<ResourceSync>(
+    let sync = get_check_permissions::<ResourceSync>(
       &self.sync,
       user,
-      PermissionLevel::Write,
+      PermissionLevel::Write.into(),
     )
     .await?;
 
@@ -984,10 +990,10 @@ impl Resolve<WriteArgs> for DeleteSyncWebhook {
       );
     };
 
-    let sync = resource::get_check_permissions::<ResourceSync>(
+    let sync = get_check_permissions::<ResourceSync>(
       &self.sync,
       user,
-      PermissionLevel::Write,
+      PermissionLevel::Write.into(),
     )
     .await?;
 

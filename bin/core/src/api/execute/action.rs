@@ -39,7 +39,8 @@ use crate::{
     random_string,
     update::update_update,
   },
-  resource::{self, refresh_action_state_cache},
+  permission::get_check_permissions,
+  resource::refresh_action_state_cache,
   state::{action_states, db_client},
 };
 
@@ -71,10 +72,10 @@ impl Resolve<ExecuteArgs> for RunAction {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let mut action = resource::get_check_permissions::<Action>(
+    let mut action = get_check_permissions::<Action>(
       &self.action,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 

@@ -11,7 +11,8 @@ use mungos::mongodb::bson::doc;
 use resolver_api::Resolve;
 
 use crate::{
-  helpers::query::get_all_tags, resource, state::db_client,
+  helpers::query::get_all_tags, permission::get_check_permissions,
+  resource, state::db_client,
 };
 
 use super::ReadArgs;
@@ -22,10 +23,10 @@ impl Resolve<ReadArgs> for GetBuilder {
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<Builder> {
     Ok(
-      resource::get_check_permissions::<Builder>(
+      get_check_permissions::<Builder>(
         &self.builder,
         user,
-        PermissionLevel::Read,
+        PermissionLevel::Read.into(),
       )
       .await?,
     )
@@ -43,8 +44,13 @@ impl Resolve<ReadArgs> for ListBuilders {
       get_all_tags(None).await?
     };
     Ok(
-      resource::list_for_user::<Builder>(self.query, user, &all_tags)
-        .await?,
+      resource::list_for_user::<Builder>(
+        self.query,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
+      )
+      .await?,
     )
   }
 }
@@ -61,7 +67,10 @@ impl Resolve<ReadArgs> for ListFullBuilders {
     };
     Ok(
       resource::list_full_for_user::<Builder>(
-        self.query, user, &all_tags,
+        self.query,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
       )
       .await?,
     )

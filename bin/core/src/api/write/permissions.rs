@@ -11,7 +11,7 @@ use komodo_client::{
 use mungos::{
   by_id::{find_one_by_id, update_one_by_id},
   mongodb::{
-    bson::{Document, doc, oid::ObjectId},
+    bson::{Document, doc, oid::ObjectId, to_bson},
     options::UpdateOptions,
   },
 };
@@ -65,16 +65,16 @@ impl Resolve<WriteArgs> for UpdateUserBasePermissions {
     self,
     WriteArgs { user: admin }: &WriteArgs,
   ) -> serror::Result<UpdateUserBasePermissionsResponse> {
+    if !admin.admin {
+      return Err(anyhow!("this method is admin only").into());
+    }
+
     let UpdateUserBasePermissions {
       user_id,
       enabled,
       create_servers,
       create_builds,
     } = self;
-
-    if !admin.admin {
-      return Err(anyhow!("this method is admin only").into());
-    }
 
     let user = find_one_by_id(&db_client().users, &user_id)
       .await
@@ -122,15 +122,15 @@ impl Resolve<WriteArgs> for UpdatePermissionOnResourceType {
     self,
     WriteArgs { user: admin }: &WriteArgs,
   ) -> serror::Result<UpdatePermissionOnResourceTypeResponse> {
-    let UpdatePermissionOnResourceType {
+    if !admin.admin {
+      return Err(anyhow!("this method is admin only").into());
+    }
+
+    let Self {
       user_target,
       resource_type,
       permission,
     } = self;
-
-    if !admin.admin {
-      return Err(anyhow!("this method is admin only").into());
-    }
 
     // Some extra checks if user target is an actual User
     if let UserTarget::User(user_id) = &user_target {
@@ -153,9 +153,11 @@ impl Resolve<WriteArgs> for UpdatePermissionOnResourceType {
 
     let id = ObjectId::from_str(&user_target_id)
       .context("id is not ObjectId")?;
-    let field = format!("all.{resource_type}");
     let filter = doc! { "_id": id };
-    let update = doc! { "$set": { &field: permission.as_ref() } };
+    let field = format!("all.{resource_type}");
+    let set =
+      to_bson(&permission).context("permission is not Bson")?;
+    let update = doc! { "$set": { &field: &set } };
 
     match user_target_variant {
       UserTargetVariant::User => {
@@ -164,7 +166,7 @@ impl Resolve<WriteArgs> for UpdatePermissionOnResourceType {
           .update_one(filter, update)
           .await
           .with_context(|| {
-            format!("failed to set {field}: {permission} on db")
+            format!("failed to set {field}: {set} on db")
           })?;
       }
       UserTargetVariant::UserGroup => {
@@ -173,7 +175,7 @@ impl Resolve<WriteArgs> for UpdatePermissionOnResourceType {
           .update_one(filter, update)
           .await
           .with_context(|| {
-            format!("failed to set {field}: {permission} on db")
+            format!("failed to set {field}: {set} on db")
           })?;
       }
     }
@@ -188,19 +190,22 @@ impl Resolve<WriteArgs> for UpdatePermissionOnTarget {
     self,
     WriteArgs { user: admin }: &WriteArgs,
   ) -> serror::Result<UpdatePermissionOnTargetResponse> {
+    if !admin.admin {
+      return Err(anyhow!("this method is admin only").into());
+    }
+
     let UpdatePermissionOnTarget {
       user_target,
       resource_target,
       permission,
     } = self;
 
-    if !admin.admin {
-      return Err(anyhow!("this method is admin only").into());
-    }
-
-    // Some extra checks if user target is an actual User
+    // Some extra checks relevant if user target is an actual User
     if let UserTarget::User(user_id) = &user_target {
       let user = get_user(user_id).await?;
+      if !user.enabled {
+        return Err(anyhow!("user not enabled").into());
+      }
       if user.admin {
         return Err(
           anyhow!(
@@ -208,9 +213,6 @@ impl Resolve<WriteArgs> for UpdatePermissionOnTarget {
         )
           .into(),
         );
-      }
-      if !user.enabled {
-        return Err(anyhow!("user not enabled").into());
       }
     }
 
@@ -223,6 +225,9 @@ impl Resolve<WriteArgs> for UpdatePermissionOnTarget {
     let (user_target_variant, resource_variant) =
       (user_target_variant.as_ref(), resource_variant.as_ref());
 
+    let specific = to_bson(&permission.specific)
+      .context("permission.specific is not valid Bson")?;
+    
     db_client()
       .permissions
       .update_one(
@@ -238,7 +243,8 @@ impl Resolve<WriteArgs> for UpdatePermissionOnTarget {
             "user_target.id": user_target_id,
             "resource_target.type": resource_variant,
             "resource_target.id": resource_id,
-            "level": permission.as_ref(),
+            "level": permission.level.as_ref(),
+            "specific": specific
           }
         },
       )

@@ -9,7 +9,9 @@ use crate::{
   entities::{I64, MongoId},
 };
 
-use super::{ResourceTargetVariant, permission::PermissionLevel};
+use super::{
+  ResourceTargetVariant, permission::PermissionLevelAndSpecifics,
+};
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, Builder)]
@@ -59,7 +61,7 @@ pub struct Resource<Config: Default, Info: Default = ()> {
   /// resource.
   #[serde(default)]
   #[builder(default)]
-  pub base_permission: PermissionLevel,
+  pub base_permission: PermissionLevelAndSpecifics,
 }
 
 impl<C: Default, I: Default> Default for Resource<C, I> {
@@ -72,7 +74,7 @@ impl<C: Default, I: Default> Default for Resource<C, I> {
       tags: Vec::new(),
       info: I::default(),
       config: C::default(),
-      base_permission: PermissionLevel::None,
+      base_permission: Default::default(),
     }
   }
 }

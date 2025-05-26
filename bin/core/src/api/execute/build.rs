@@ -33,8 +33,7 @@ use resolver_api::Resolve;
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-  alert::send_alerts,
-  helpers::{
+  alert::send_alerts, helpers::{
     builder::{cleanup_builder_instance, get_builder_periphery},
     channel::build_cancel_channel,
     git_token,
@@ -47,9 +46,7 @@ use crate::{
     query::{get_deployment_state, get_variables_and_secrets},
     registry_token,
     update::{init_execution_update, update_update},
-  },
-  resource::{self, refresh_build_state_cache},
-  state::{action_states, db_client},
+  }, permission::get_check_permissions, resource::{self, refresh_build_state_cache}, state::{action_states, db_client}
 };
 
 use super::{ExecuteArgs, ExecuteRequest};
@@ -80,10 +77,10 @@ impl Resolve<ExecuteArgs> for RunBuild {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let mut build = resource::get_check_permissions::<Build>(
+    let mut build = get_check_permissions::<Build>(
       &self.build,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -513,10 +510,10 @@ impl Resolve<ExecuteArgs> for CancelBuild {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let build = resource::get_check_permissions::<Build>(
+    let build = get_check_permissions::<Build>(
       &self.build,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 

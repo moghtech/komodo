@@ -1,6 +1,9 @@
+use std::collections::HashSet;
+
 use anyhow::Context;
 use komodo_client::entities::{
   Operation, ResourceTarget, ResourceTargetVariant, komodo_timestamp,
+  permission::SpecificPermission,
   resource::Resource,
   server::{
     PartialServerConfig, Server, ServerConfig, ServerConfigDiff,
@@ -32,6 +35,16 @@ impl super::KomodoResource for Server {
 
   fn resource_target(id: impl Into<String>) -> ResourceTarget {
     ResourceTarget::Server(id.into())
+  }
+
+  fn creator_specific_permissions() -> HashSet<SpecificPermission> {
+    [
+      SpecificPermission::Terminal,
+      SpecificPermission::DockerList,
+      SpecificPermission::DockerInspect,
+    ]
+    .into_iter()
+    .collect()
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>
