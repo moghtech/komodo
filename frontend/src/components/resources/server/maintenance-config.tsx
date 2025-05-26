@@ -1,5 +1,5 @@
 import { Section } from "@components/layouts";
-import { useInvalidate, useLocalStorage, useRead, useWrite } from "@lib/hooks";
+import { useInvalidate, useRead, useWrite } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { ReactNode, useState } from "react";
 import { MaintenanceWindows } from "./maintenance-windows";
@@ -58,7 +58,6 @@ export const MaintenanceServerConfig = ({
     <Section
       titleOther={titleOther}
       title="Maintenance Windows"
-      description="Configure scheduled maintenance windows to suppress alerts during planned downtime"
       actions={
         hasChanges && !disabled && (
           <div className="flex gap-2">
@@ -73,6 +72,9 @@ export const MaintenanceServerConfig = ({
         )
       }
     >
+      <div className="mb-4 text-muted-foreground">
+        Configure scheduled maintenance windows to suppress alerts during planned downtime
+      </div>
       <MaintenanceWindows
         windows={maintenanceWindows}
         onUpdate={setMaintenanceWindows}
