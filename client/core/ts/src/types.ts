@@ -53,7 +53,7 @@ export interface Resource<Config, Info> {
 	 * Set a base permission level that all users will have on the
 	 * resource.
 	 */
-	base_permission?: PermissionLevelAndSpecifics;
+	base_permission?: PermissionLevelAndSpecifics | PermissionLevel;
 }
 
 export enum ScheduleFormat {
@@ -803,7 +803,7 @@ export interface User {
 	/** Recently viewed ids */
 	recents?: Record<ResourceTarget["type"], string[]>;
 	/** Give the user elevated permissions on all resources of a certain type */
-	all?: Record<ResourceTarget["type"], PermissionLevelAndSpecifics>;
+	all?: Record<ResourceTarget["type"], PermissionLevelAndSpecifics | PermissionLevel>;
 	updated_at?: I64;
 }
 
@@ -2340,7 +2340,7 @@ export interface UserGroup {
 	/** User ids of group members */
 	users?: string[];
 	/** Give the user group elevated permissions on all resources of a certain type */
-	all?: Record<ResourceTarget["type"], PermissionLevelAndSpecifics>;
+	all?: Record<ResourceTarget["type"], PermissionLevelAndSpecifics | PermissionLevel>;
 	/** Unix time (ms) when user group last updated */
 	updated_at?: I64;
 }
@@ -6841,7 +6841,7 @@ export interface UserGroupToml {
 	/** Users in the group */
 	users?: string[];
 	/** Give the user group elevated permissions on all resources of a certain type */
-	all?: Record<ResourceTarget["type"], PermissionLevelAndSpecifics>;
+	all?: Record<ResourceTarget["type"], PermissionLevelAndSpecifics | PermissionLevel>;
 	/** Permissions given to the group */
 	permissions?: PermissionToml[];
 }
@@ -7369,7 +7369,7 @@ export interface UpdatePermissionOnResourceType {
 	/** The resource type: eg. Server, Build, Deployment, etc. */
 	resource_type: ResourceTarget["type"];
 	/** The base permission level. */
-	permission: PermissionLevelAndSpecifics;
+	permission: PermissionLevelAndSpecifics | PermissionLevel;
 }
 
 /**
@@ -7382,7 +7382,7 @@ export interface UpdatePermissionOnTarget {
 	/** Specify the target resource. */
 	resource_target: ResourceTarget;
 	/** Specify the permission level. */
-	permission: PermissionLevelAndSpecifics;
+	permission: PermissionLevelAndSpecifics | PermissionLevel;
 }
 
 /**

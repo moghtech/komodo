@@ -84,10 +84,7 @@ const PermissionsOnResourceType = ({
       <CardHeader className="border-b pb-6">Base Permissions</CardHeader>
       <CardContent className="mt-6 grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {RESOURCE_TARGETS.map((type) => {
-          const permission = all?.[type] ?? {
-            level: Types.PermissionLevel.None,
-            specific: [],
-          };
+          const permission = all?.[type] ?? Types.PermissionLevel.None;
           return (
             <div
               key={type}
@@ -95,7 +92,9 @@ const PermissionsOnResourceType = ({
             >
               {type}:
               <PermissionLevelSelector
-                level={permission.level}
+                level={
+                  typeof permission === "string" ? permission : permission.level
+                }
                 onSelect={(level) => update(type, level)}
               />
             </div>
