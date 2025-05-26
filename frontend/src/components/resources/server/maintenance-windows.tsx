@@ -38,6 +38,10 @@ export const MaintenanceWindows = ({
     onUpdate(windows.filter(w => w.id !== windowId));
   };
 
+  const toggleWindow = (windowId: string, enabled: boolean) => {
+    onUpdate(windows.map(w => w.id === windowId ? { ...w, enabled } : w));
+  };
+
 
   return (
     <div className="space-y-4">
@@ -67,6 +71,7 @@ export const MaintenanceWindows = ({
                 disabled={disabled}
                 onEdit={setEditingWindow}
                 onDelete={deleteWindow}
+                onToggle={toggleWindow}
               />
             ))}
           </div>
@@ -100,13 +105,15 @@ interface MaintenanceWindowCardProps {
   disabled: boolean;
   onEdit: (window: Types.MaintenanceWindow) => void;
   onDelete: (windowId: string) => void;
+  onToggle: (windowId: string, enabled: boolean) => void;
 }
 
 const MaintenanceWindowCard = ({ 
   window, 
   disabled, 
   onEdit, 
-  onDelete
+  onDelete,
+  onToggle
 }: MaintenanceWindowCardProps) => {
   const formatTime = (time: Types.MaintenanceTime) => {
     const hours = time.hour.toString().padStart(2, '0');
@@ -163,6 +170,10 @@ const MaintenanceWindowCard = ({
             </Badge>
             {!disabled && (
               <div className="flex items-center gap-1">
+                <Switch
+                  checked={window.enabled}
+                  onCheckedChange={(enabled) => onToggle(window.id, enabled)}
+                />
                 <Button
                   variant="ghost"
                   size="sm"
@@ -458,13 +469,6 @@ const MaintenanceWindowForm = ({ initialData, onSave, onCancel }: MaintenanceWin
           />
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Switch
-            checked={formData.enabled}
-            onCheckedChange={(enabled) => setFormData({ ...formData, enabled })}
-          />
-          <label className="text-sm font-medium">Enabled</label>
-        </div>
       </div>
 
       <DialogFooter>
