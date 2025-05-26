@@ -4184,6 +4184,32 @@ export interface ConnectContainerExecQuery {
 }
 
 /**
+ * Query to connect to a container exec session (interactive shell over websocket) on the given Deployment.
+ * This call will use access to the Deployment Terminal to permission the call.
+ * TODO: Document calling.
+ */
+export interface ConnectDeploymentExecQuery {
+	/** Deployment Id or name */
+	deployment: string;
+	/** The shell to connect to */
+	shell: string;
+}
+
+/**
+ * Query to connect to a container exec session (interactive shell over websocket) on the given Stack / service.
+ * This call will use access to the Stack Terminal to permission the call.
+ * TODO: Document calling.
+ */
+export interface ConnectStackExecQuery {
+	/** Stack Id or name */
+	stack: string;
+	/** The service name to connect to */
+	service: string;
+	/** The shell to connect to */
+	shell: string;
+}
+
+/**
  * Query to connect to a terminal (interactive shell over websocket) on the given server.
  * TODO: Document calling.
  */

@@ -8,13 +8,10 @@ use komodo_client::{
   entities::{permission::PermissionLevel, server::Server},
 };
 
-use crate::{
-  helpers::periphery_client, permission::get_check_permissions,
-  ws::core_periphery_forward_ws,
-};
+use crate::permission::get_check_permissions;
 
 #[instrument(name = "ConnectContainerExec", skip(ws))]
-pub async fn handler(
+pub async fn terminal(
   Query(ConnectContainerExecQuery {
     server,
     container,
@@ -23,7 +20,8 @@ pub async fn handler(
   ws: WebSocketUpgrade,
 ) -> impl IntoResponse {
   ws.on_upgrade(|socket| async move {
-    let Some((mut client_socket, user)) = super::ws_login(socket).await
+    let Some((mut client_socket, user)) =
+      super::ws_login(socket).await
     else {
       return;
     };
@@ -38,45 +36,20 @@ pub async fn handler(
       Ok(server) => server,
       Err(e) => {
         debug!("could not get server | {e:#}");
-        let _ =
-          client_socket.send(Message::text(format!("ERROR: {e:#}"))).await;
+        let _ = client_socket
+          .send(Message::text(format!("ERROR: {e:#}")))
+          .await;
         let _ = client_socket.close().await;
         return;
       }
     };
 
-    let periphery = match periphery_client(&server) {
-      Ok(periphery) => periphery,
-      Err(e) => {
-        debug!("couldn't get periphery | {e:#}");
-        let _ =
-          client_socket.send(Message::text(format!("ERROR: {e:#}"))).await;
-        let _ = client_socket.close().await;
-        return;
-      }
-    };
-
-    trace!("connecting to periphery container exec websocket");
-
-    let periphery_socket = match periphery
-      .connect_container_exec(
-        container,
-        shell
-      )
-      .await
-    {
-      Ok(ws) => ws,
-      Err(e) => {
-        debug!("Failed connect to periphery container exec websocket | {e:#}");
-        let _ =
-          client_socket.send(Message::text(format!("ERROR: {e:#}"))).await;
-        let _ = client_socket.close().await;
-        return;
-      }
-    };
-
-    trace!("connected to periphery container exec websocket");
-
-    core_periphery_forward_ws(client_socket, periphery_socket).await
+    super::handle_container_terminal(
+      client_socket,
+      &server,
+      container,
+      shell,
+    )
+    .await
   })
 }

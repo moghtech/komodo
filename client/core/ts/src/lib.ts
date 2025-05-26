@@ -9,6 +9,8 @@ import {
   AuthRequest,
   BatchExecutionResponse,
   ConnectContainerExecQuery,
+  ConnectDeploymentExecQuery,
+  ConnectStackExecQuery,
   ConnectTerminalQuery,
   ExecuteRequest,
   ExecuteTerminalBody,
@@ -365,14 +367,26 @@ export function KomodoClient(url: string, options: InitOptions) {
     return ws;
   };
 
-  const connect_container_exec = ({
-    query,
+  const connect_exec = ({
+    query: { type, query },
     on_message,
     on_login,
     on_open,
     on_close,
   }: {
-    query: ConnectContainerExecQuery;
+    query:
+      | {
+          type: "container";
+          query: ConnectContainerExecQuery;
+        }
+      | {
+          type: "deployment";
+          query: ConnectDeploymentExecQuery;
+        }
+      | {
+          type: "stack";
+          query: ConnectStackExecQuery;
+        };
     on_message?: (e: MessageEvent<any>) => void;
     on_login?: () => void;
     on_open?: () => void;
@@ -382,7 +396,7 @@ export function KomodoClient(url: string, options: InitOptions) {
       query as any as Record<string, string>
     ).toString();
     const ws = new WebSocket(
-      url.replace("http", "ws") + "/ws/container?" + url_query
+      url.replace("http", "ws") + `/ws/${type}/terminal?` + url_query
     );
     // Handle login on websocket open
     ws.onopen = () => {
@@ -617,9 +631,10 @@ export function KomodoClient(url: string, options: InitOptions) {
     connect_terminal,
     /**
      * Subscribes to container exec io over websocket message,
-     * for use with xtermjs.
+     * for use with xtermjs. The permission used to allow the connection
+     * depends on query.type.
      */
-    connect_container_exec,
+    connect_exec,
     /**
      * Executes a command on a given Server / terminal,
      * and returns a stream to process the output as it comes in.

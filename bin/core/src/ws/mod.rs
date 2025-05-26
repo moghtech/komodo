@@ -9,7 +9,10 @@ use axum::{
   routing::get,
 };
 use futures::{SinkExt, StreamExt};
-use komodo_client::{entities::user::User, ws::WsLoginMessage};
+use komodo_client::{
+  entities::{server::Server, user::User},
+  ws::WsLoginMessage,
+};
 use tokio::net::TcpStream;
 use tokio_tungstenite::{
   MaybeTlsStream, WebSocketStream, tungstenite,
@@ -17,6 +20,8 @@ use tokio_tungstenite::{
 use tokio_util::sync::CancellationToken;
 
 mod container;
+mod deployment;
+mod stack;
 mod terminal;
 mod update;
 
@@ -24,7 +29,9 @@ pub fn router() -> Router {
   Router::new()
     .route("/update", get(update::handler))
     .route("/terminal", get(terminal::handler))
-    .route("/container", get(container::handler))
+    .route("/container/terminal", get(container::terminal))
+    .route("/deployment/terminal", get(deployment::terminal))
+    .route("/stack/terminal", get(stack::terminal))
 }
 
 #[instrument(level = "debug")]
@@ -116,6 +123,48 @@ async fn check_user_valid(user_id: &str) -> anyhow::Result<User> {
     return Err(anyhow!("user not enabled"));
   }
   Ok(user)
+}
+
+async fn handle_container_terminal(
+  mut client_socket: WebSocket,
+  server: &Server,
+  container: String,
+  shell: String,
+) {
+  let periphery = match crate::helpers::periphery_client(server) {
+    Ok(periphery) => periphery,
+    Err(e) => {
+      debug!("couldn't get periphery | {e:#}");
+      let _ = client_socket
+        .send(Message::text(format!("ERROR: {e:#}")))
+        .await;
+      let _ = client_socket.close().await;
+      return;
+    }
+  };
+
+  trace!("connecting to periphery container exec websocket");
+
+  let periphery_socket = match periphery
+    .connect_container_exec(container, shell)
+    .await
+  {
+    Ok(ws) => ws,
+    Err(e) => {
+      debug!(
+        "Failed connect to periphery container exec websocket | {e:#}"
+      );
+      let _ = client_socket
+        .send(Message::text(format!("ERROR: {e:#}")))
+        .await;
+      let _ = client_socket.close().await;
+      return;
+    }
+  };
+
+  trace!("connected to periphery container exec websocket");
+
+  core_periphery_forward_ws(client_socket, periphery_socket).await
 }
 
 async fn core_periphery_forward_ws(
