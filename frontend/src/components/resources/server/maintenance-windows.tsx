@@ -3,12 +3,11 @@ import { Input } from "@ui/input";
 import { Switch } from "@ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@ui/card";
 import { Badge } from "@ui/badge";
+import { DataTable, SortableHeader } from "@ui/data-table";
 import { Types } from "komodo_client";
 import { useState } from "react";
 import { PlusCircle, Pen, Trash2, Clock, Calendar, CalendarDays, AlertTriangle } from "lucide-react";
-import { cn } from "@lib/utils";
 
 export interface MaintenanceWindowsProps {
   windows: Types.MaintenanceWindow[];
@@ -42,6 +41,48 @@ export const MaintenanceWindows = ({
     onUpdate(windows.map(w => w.id === windowId ? { ...w, enabled } : w));
   };
 
+  // Helper functions for table display
+  const formatTime = (time: Types.MaintenanceTime) => {
+    const hours = time.hour.toString().padStart(2, '0');
+    const minutes = time.minute.toString().padStart(2, '0');
+    const timezoneDisplay = getTimezoneDisplay(time.timezone_offset_minutes);
+    return `${hours}:${minutes} (${timezoneDisplay})`;
+  };
+
+  const getTimezoneDisplay = (offsetMinutes: number): string => {
+    const timezoneMap: Record<number, string> = {
+      [-720]: "UTC-12", [-660]: "UTC-11", [-600]: "UTC-10 (Hawaii)", [-540]: "UTC-9 (Alaska)",
+      [-480]: "UTC-8 (Pacific)", [-420]: "UTC-7 (Mountain)", [-360]: "UTC-6 (Central)", [-300]: "UTC-5 (Eastern)",
+      [-240]: "UTC-4 (Atlantic)", [-180]: "UTC-3", [-120]: "UTC-2", [-60]: "UTC-1", [0]: "UTC+0 (GMT)",
+      [60]: "UTC+1 (CET)", [120]: "UTC+2 (EET)", [180]: "UTC+3 (Moscow)", [240]: "UTC+4", [300]: "UTC+5",
+      [330]: "UTC+5:30 (India)", [360]: "UTC+6", [420]: "UTC+7", [480]: "UTC+8 (China)", [540]: "UTC+9 (Japan)",
+      [570]: "UTC+9:30", [600]: "UTC+10 (Australia)", [660]: "UTC+11", [720]: "UTC+12 (New Zealand)"
+    };
+    return timezoneMap[offsetMinutes] || getTimezoneValue(offsetMinutes);
+  };
+
+  const getScheduleIcon = (scheduleType: string) => {
+    switch (scheduleType) {
+      case "Daily": return <Clock className="w-4 h-4" />;
+      case "Weekly": return <Calendar className="w-4 h-4" />;
+      case "OneTime": return <CalendarDays className="w-4 h-4" />;
+      default: return <Clock className="w-4 h-4" />;
+    }
+  };
+
+  const getScheduleDescription = (scheduleType: Types.MaintenanceScheduleType): string => {
+    switch (scheduleType.type) {
+      case "Daily":
+        return "Daily";
+      case "Weekly":
+        return `Weekly (${scheduleType.content?.day_of_week || 'Monday'})`;
+      case "OneTime":
+        return `One-time (${scheduleType.content?.date || 'No date'})`;
+      default:
+        return "Unknown";
+    }
+  };
+
 
   return (
     <div className="space-y-4">
@@ -62,22 +103,110 @@ export const MaintenanceWindows = ({
           </Dialog>
         )}
 
-        {windows.length > 0 && (
-          <div className="space-y-3">
-            {windows.map((window) => (
-              <MaintenanceWindowCard
-                key={window.id}
-                window={window}
-                disabled={disabled}
-                onEdit={setEditingWindow}
-                onDelete={deleteWindow}
-                onToggle={toggleWindow}
-              />
-            ))}
-          </div>
-        )}
-
-        {windows.length === 0 && (
+        {windows.length > 0 ? (
+          <DataTable
+            tableKey="maintenance-windows"
+            data={windows}
+            columns={[
+              {
+                accessorKey: "name",
+                header: ({ column }) => (
+                  <SortableHeader column={column} title="Name" />
+                ),
+                cell: ({ row }) => (
+                  <div className="flex items-center gap-2">
+                    {getScheduleIcon(row.original.schedule_type.type)}
+                    <span className="font-medium">{row.original.name}</span>
+                  </div>
+                ),
+                size: 200,
+              },
+              {
+                accessorKey: "schedule_type",
+                header: ({ column }) => (
+                  <SortableHeader column={column} title="Schedule" />
+                ),
+                cell: ({ row }) => (
+                  <span className="text-sm">
+                    {getScheduleDescription(row.original.schedule_type)}
+                  </span>
+                ),
+                size: 150,
+              },
+              {
+                accessorKey: "start_time",
+                header: ({ column }) => (
+                  <SortableHeader column={column} title="Start Time" />
+                ),
+                cell: ({ row }) => (
+                  <span className="text-sm font-mono">
+                    {formatTime(row.original.start_time)}
+                  </span>
+                ),
+                size: 180,
+              },
+              {
+                accessorKey: "duration_minutes",
+                header: ({ column }) => (
+                  <SortableHeader column={column} title="Duration" />
+                ),
+                cell: ({ row }) => (
+                  <span className="text-sm">
+                    {row.original.duration_minutes} min
+                  </span>
+                ),
+                size: 100,
+              },
+              {
+                accessorKey: "enabled",
+                header: ({ column }) => (
+                  <SortableHeader column={column} title="Status" />
+                ),
+                cell: ({ row }) => (
+                  <div className="flex items-center gap-2">
+                    <Badge variant={row.original.enabled ? "default" : "secondary"}>
+                      {row.original.enabled ? "Enabled" : "Disabled"}
+                    </Badge>
+                    {!disabled && (
+                      <Switch
+                        checked={row.original.enabled}
+                        onCheckedChange={(enabled) => toggleWindow(row.original.id, enabled)}
+                      />
+                    )}
+                  </div>
+                ),
+                size: 120,
+              },
+              {
+                id: "actions",
+                header: "Actions",
+                cell: ({ row }) => (
+                  !disabled && (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingWindow(row.original)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Pen className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteWindow(row.original.id)}
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )
+                ),
+                size: 100,
+              },
+            ]}
+          />
+        ) : (
           <div className="text-center py-8 text-muted-foreground">
             <AlertTriangle className="w-12 h-12 mx-auto mb-2 opacity-50" />
             <p>No maintenance windows configured</p>
@@ -100,144 +229,6 @@ export const MaintenanceWindows = ({
   );
 };
 
-interface MaintenanceWindowCardProps {
-  window: Types.MaintenanceWindow;
-  disabled: boolean;
-  onEdit: (window: Types.MaintenanceWindow) => void;
-  onDelete: (windowId: string) => void;
-  onToggle: (windowId: string, enabled: boolean) => void;
-}
-
-const MaintenanceWindowCard = ({ 
-  window, 
-  disabled, 
-  onEdit, 
-  onDelete,
-  onToggle
-}: MaintenanceWindowCardProps) => {
-  const formatTime = (time: Types.MaintenanceTime) => {
-    const hours = time.hour.toString().padStart(2, '0');
-    const minutes = time.minute.toString().padStart(2, '0');
-    const timezoneDisplay = getTimezoneDisplay(time.timezone_offset_minutes);
-    return `${hours}:${minutes} (${timezoneDisplay})`;
-  };
-
-  const getTimezoneDisplay = (offsetMinutes: number): string => {
-    // Convert common timezone offsets to readable names
-    const timezoneMap: Record<number, string> = {
-      [-720]: "UTC-12",
-      [-660]: "UTC-11", 
-      [-600]: "UTC-10 (Hawaii)",
-      [-540]: "UTC-9 (Alaska)",
-      [-480]: "UTC-8 (Pacific)",
-      [-420]: "UTC-7 (Mountain)",
-      [-360]: "UTC-6 (Central)",
-      [-300]: "UTC-5 (Eastern)",
-      [-240]: "UTC-4 (Atlantic)",
-      [-180]: "UTC-3",
-      [-120]: "UTC-2",
-      [-60]: "UTC-1",
-      [0]: "UTC+0 (GMT)",
-      [60]: "UTC+1 (CET)",
-      [120]: "UTC+2 (EET)",
-      [180]: "UTC+3 (Moscow)",
-      [240]: "UTC+4",
-      [300]: "UTC+5",
-      [330]: "UTC+5:30 (India)",
-      [360]: "UTC+6",
-      [420]: "UTC+7",
-      [480]: "UTC+8 (China)",
-      [540]: "UTC+9 (Japan)",
-      [570]: "UTC+9:30",
-      [600]: "UTC+10 (Australia)",
-      [660]: "UTC+11",
-      [720]: "UTC+12 (New Zealand)"
-    };
-
-    return timezoneMap[offsetMinutes] || getTimezoneValue(offsetMinutes);
-  };
-
-  const getScheduleIcon = () => {
-    switch (window.schedule_type.type) {
-      case "Daily": return <Clock className="w-4 h-4" />;
-      case "Weekly": return <Calendar className="w-4 h-4" />;
-      case "OneTime": return <CalendarDays className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
-    }
-  };
-
-  const getScheduleDescription = () => {
-    switch (window.schedule_type.type) {
-      case "Daily":
-        return `Daily at ${formatTime(window.start_time)}`;
-      case "Weekly":
-        if (window.schedule_type.content) {
-          return `Weekly on ${window.schedule_type.content.day_of_week} at ${formatTime(window.start_time)}`;
-        }
-        return `Weekly at ${formatTime(window.start_time)}`;
-      case "OneTime":
-        if (window.schedule_type.content) {
-          return `One-time on ${window.schedule_type.content.date} at ${formatTime(window.start_time)}`;
-        }
-        return `One-time at ${formatTime(window.start_time)}`;
-      default:
-        return `At ${formatTime(window.start_time)}`;
-    }
-  };
-
-  return (
-    <Card className={cn("transition-colors", !window.enabled && "opacity-60")}>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {getScheduleIcon()}
-            <div>
-              <CardTitle className="text-base">{window.name}</CardTitle>
-              <p className="text-sm text-muted-foreground">{getScheduleDescription()}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant={window.enabled ? "default" : "secondary"}>
-              {window.enabled ? "Enabled" : "Disabled"}
-            </Badge>
-            {!disabled && (
-              <div className="flex items-center gap-1">
-                <Switch
-                  checked={window.enabled}
-                  onCheckedChange={(enabled) => onToggle(window.id, enabled)}
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onEdit(window)}
-                  className="h-8 w-8 p-0"
-                >
-                  <Pen className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDelete(window.id)}
-                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      {window.description && (
-        <CardContent className="pt-0">
-          <p className="text-sm text-muted-foreground">{window.description}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Duration: {window.duration_minutes} minutes
-          </p>
-        </CardContent>
-      )}
-    </Card>
-  );
-};
 
 interface MaintenanceWindowFormProps {
   initialData?: Types.MaintenanceWindow;
