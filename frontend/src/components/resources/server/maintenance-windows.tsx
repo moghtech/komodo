@@ -5,9 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@ui/card";
 import { Badge } from "@ui/badge";
-import { ConfigItem } from "@components/config/util";
 import { Types } from "komodo_client";
-import { ReactNode, useState } from "react";
+import { useState } from "react";
 import { PlusCircle, Pen, Trash2, Clock, Calendar, CalendarDays, AlertTriangle } from "lucide-react";
 import { cn } from "@lib/utils";
 
@@ -15,14 +14,12 @@ export interface MaintenanceWindowsProps {
   windows: Types.MaintenanceWindow[];
   onUpdate: (windows: Types.MaintenanceWindow[]) => void;
   disabled: boolean;
-  description?: ReactNode;
 }
 
 export const MaintenanceWindows = ({ 
   windows, 
   onUpdate, 
-  disabled, 
-  description 
+  disabled
 }: MaintenanceWindowsProps) => {
   const [isCreating, setIsCreating] = useState(false);
   const [editingWindow, setEditingWindow] = useState<Types.MaintenanceWindow | null>(null);
@@ -41,13 +38,9 @@ export const MaintenanceWindows = ({
     onUpdate(windows.filter(w => w.id !== windowId));
   };
 
-  const toggleWindow = (windowId: string, enabled: boolean) => {
-    onUpdate(windows.map(w => w.id === windowId ? { ...w, enabled } : w));
-  };
 
   return (
-    <ConfigItem label="Maintenance Windows" description={description}>
-      <div className="space-y-4">
+    <div className="space-y-4">
         {!disabled && (
           <Dialog open={isCreating} onOpenChange={setIsCreating}>
             <DialogTrigger asChild>
@@ -74,7 +67,6 @@ export const MaintenanceWindows = ({
                 disabled={disabled}
                 onEdit={setEditingWindow}
                 onDelete={deleteWindow}
-                onToggle={toggleWindow}
               />
             ))}
           </div>
@@ -99,8 +91,7 @@ export const MaintenanceWindows = ({
             </DialogContent>
           </Dialog>
         )}
-      </div>
-    </ConfigItem>
+    </div>
   );
 };
 
@@ -109,15 +100,13 @@ interface MaintenanceWindowCardProps {
   disabled: boolean;
   onEdit: (window: Types.MaintenanceWindow) => void;
   onDelete: (windowId: string) => void;
-  onToggle: (windowId: string, enabled: boolean) => void;
 }
 
 const MaintenanceWindowCard = ({ 
   window, 
   disabled, 
   onEdit, 
-  onDelete, 
-  onToggle 
+  onDelete
 }: MaintenanceWindowCardProps) => {
   const formatTime = (time: Types.MaintenanceTime) => {
     const hours = time.hour.toString().padStart(2, '0');
@@ -174,10 +163,6 @@ const MaintenanceWindowCard = ({
             </Badge>
             {!disabled && (
               <div className="flex items-center gap-1">
-                <Switch
-                  checked={window.enabled}
-                  onCheckedChange={(enabled) => onToggle(window.id, enabled)}
-                />
                 <Button
                   variant="ghost"
                   size="sm"
