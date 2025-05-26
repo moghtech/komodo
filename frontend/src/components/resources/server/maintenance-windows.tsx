@@ -118,11 +118,43 @@ const MaintenanceWindowCard = ({
   const formatTime = (time: Types.MaintenanceTime) => {
     const hours = time.hour.toString().padStart(2, '0');
     const minutes = time.minute.toString().padStart(2, '0');
-    const offset = time.timezone_offset_minutes;
-    const offsetHours = Math.floor(Math.abs(offset) / 60);
-    const offsetMins = Math.abs(offset) % 60;
-    const offsetSign = offset >= 0 ? '+' : '-';
-    return `${hours}:${minutes} (UTC${offsetSign}${offsetHours.toString().padStart(2, '0')}:${offsetMins.toString().padStart(2, '0')})`;
+    const timezoneDisplay = getTimezoneDisplay(time.timezone_offset_minutes);
+    return `${hours}:${minutes} (${timezoneDisplay})`;
+  };
+
+  const getTimezoneDisplay = (offsetMinutes: number): string => {
+    // Convert common timezone offsets to readable names
+    const timezoneMap: Record<number, string> = {
+      [-720]: "UTC-12",
+      [-660]: "UTC-11", 
+      [-600]: "UTC-10 (Hawaii)",
+      [-540]: "UTC-9 (Alaska)",
+      [-480]: "UTC-8 (Pacific)",
+      [-420]: "UTC-7 (Mountain)",
+      [-360]: "UTC-6 (Central)",
+      [-300]: "UTC-5 (Eastern)",
+      [-240]: "UTC-4 (Atlantic)",
+      [-180]: "UTC-3",
+      [-120]: "UTC-2",
+      [-60]: "UTC-1",
+      [0]: "UTC+0 (GMT)",
+      [60]: "UTC+1 (CET)",
+      [120]: "UTC+2 (EET)",
+      [180]: "UTC+3 (Moscow)",
+      [240]: "UTC+4",
+      [300]: "UTC+5",
+      [330]: "UTC+5:30 (India)",
+      [360]: "UTC+6",
+      [420]: "UTC+7",
+      [480]: "UTC+8 (China)",
+      [540]: "UTC+9 (Japan)",
+      [570]: "UTC+9:30",
+      [600]: "UTC+10 (Australia)",
+      [660]: "UTC+11",
+      [720]: "UTC+12 (New Zealand)"
+    };
+
+    return timezoneMap[offsetMinutes] || getTimezoneValue(offsetMinutes);
   };
 
   const getScheduleIcon = () => {
@@ -212,6 +244,31 @@ interface MaintenanceWindowFormProps {
   onSave: (window: Types.MaintenanceWindow) => void;
   onCancel: () => void;
 }
+
+// Helper functions for timezone conversion
+const getTimezoneOffset = (timezoneValue: string): number => {
+  const match = timezoneValue.match(/UTC([+-]?)(\d+(?:\.\d+)?)/);
+  if (!match) return 0;
+  
+  const sign = match[1] === '-' ? -1 : 1;
+  const hours = parseFloat(match[2]);
+  return sign * hours * 60; // Convert to minutes
+};
+
+const getTimezoneValue = (offsetMinutes: number): string => {
+  if (offsetMinutes === 0) return "UTC+0";
+  
+  const hours = Math.abs(offsetMinutes) / 60;
+  const sign = offsetMinutes >= 0 ? "+" : "-";
+  
+  if (hours === Math.floor(hours)) {
+    return `UTC${sign}${Math.floor(hours)}`;
+  } else {
+    const wholeHours = Math.floor(hours);
+    const minutes = (hours - wholeHours) * 60;
+    return `UTC${sign}${wholeHours}.${minutes === 30 ? '5' : '0'}`;
+  }
+};
 
 const MaintenanceWindowForm = ({ initialData, onSave, onCancel }: MaintenanceWindowFormProps) => {
   const [formData, setFormData] = useState<Types.MaintenanceWindow>(
@@ -383,63 +440,79 @@ const MaintenanceWindowForm = ({ initialData, onSave, onCancel }: MaintenanceWin
           </div>
         )}
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium">Hour (0-23)</label>
+            <label className="text-sm font-medium">Start Time</label>
             <Input
-              type="number"
-              min={0}
-              max={23}
-              value={formData.start_time.hour}
-              onChange={(e) => 
+              type="time"
+              value={`${formData.start_time.hour.toString().padStart(2, '0')}:${formData.start_time.minute.toString().padStart(2, '0')}`}
+              onChange={(e) => {
+                const [hours, minutes] = e.target.value.split(':').map(n => parseInt(n) || 0);
                 setFormData({ 
                   ...formData, 
                   start_time: { 
                     ...formData.start_time, 
-                    hour: parseInt(e.target.value) || 0 
+                    hour: hours,
+                    minute: minutes
                   } 
-                })
-              }
-              className={errors.hour ? "border-destructive" : ""}
+                });
+              }}
+              className={errors.hour || errors.minute ? "border-destructive" : ""}
             />
-            {errors.hour && <p className="text-sm text-destructive mt-1">{errors.hour}</p>}
+            {(errors.hour || errors.minute) && (
+              <p className="text-sm text-destructive mt-1">
+                {errors.hour || errors.minute}
+              </p>
+            )}
           </div>
           <div>
-            <label className="text-sm font-medium">Minute (0-59)</label>
-            <Input
-              type="number"
-              min={0}
-              max={59}
-              value={formData.start_time.minute}
-              onChange={(e) => 
+            <label className="text-sm font-medium">Timezone</label>
+            <Select
+              value={getTimezoneValue(formData.start_time.timezone_offset_minutes)}
+              onValueChange={(value) => {
+                const offsetMinutes = getTimezoneOffset(value);
                 setFormData({ 
                   ...formData, 
                   start_time: { 
                     ...formData.start_time, 
-                    minute: parseInt(e.target.value) || 0 
+                    timezone_offset_minutes: offsetMinutes
                   } 
-                })
-              }
-              className={errors.minute ? "border-destructive" : ""}
-            />
-            {errors.minute && <p className="text-sm text-destructive mt-1">{errors.minute}</p>}
-          </div>
-          <div>
-            <label className="text-sm font-medium">Timezone Offset (minutes)</label>
-            <Input
-              type="number"
-              value={formData.start_time.timezone_offset_minutes}
-              onChange={(e) => 
-                setFormData({ 
-                  ...formData, 
-                  start_time: { 
-                    ...formData.start_time, 
-                    timezone_offset_minutes: parseInt(e.target.value) || 0 
-                  } 
-                })
-              }
-              placeholder="e.g., -300 for EST, 120 for CEST"
-            />
+                });
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="UTC-12">UTC-12 (Baker Island)</SelectItem>
+                <SelectItem value="UTC-11">UTC-11 (American Samoa)</SelectItem>
+                <SelectItem value="UTC-10">UTC-10 (Hawaii)</SelectItem>
+                <SelectItem value="UTC-9">UTC-9 (Alaska)</SelectItem>
+                <SelectItem value="UTC-8">UTC-8 (Pacific Time)</SelectItem>
+                <SelectItem value="UTC-7">UTC-7 (Mountain Time)</SelectItem>
+                <SelectItem value="UTC-6">UTC-6 (Central Time)</SelectItem>
+                <SelectItem value="UTC-5">UTC-5 (Eastern Time)</SelectItem>
+                <SelectItem value="UTC-4">UTC-4 (Atlantic Time)</SelectItem>
+                <SelectItem value="UTC-3">UTC-3 (Argentina)</SelectItem>
+                <SelectItem value="UTC-2">UTC-2 (Mid-Atlantic)</SelectItem>
+                <SelectItem value="UTC-1">UTC-1 (Azores)</SelectItem>
+                <SelectItem value="UTC+0">UTC+0 (London/GMT)</SelectItem>
+                <SelectItem value="UTC+1">UTC+1 (Central Europe)</SelectItem>
+                <SelectItem value="UTC+2">UTC+2 (Eastern Europe)</SelectItem>
+                <SelectItem value="UTC+3">UTC+3 (Moscow)</SelectItem>
+                <SelectItem value="UTC+4">UTC+4 (Dubai)</SelectItem>
+                <SelectItem value="UTC+5">UTC+5 (Pakistan)</SelectItem>
+                <SelectItem value="UTC+5.5">UTC+5:30 (India)</SelectItem>
+                <SelectItem value="UTC+6">UTC+6 (Bangladesh)</SelectItem>
+                <SelectItem value="UTC+7">UTC+7 (Thailand)</SelectItem>
+                <SelectItem value="UTC+8">UTC+8 (China/Singapore)</SelectItem>
+                <SelectItem value="UTC+9">UTC+9 (Japan)</SelectItem>
+                <SelectItem value="UTC+9.5">UTC+9:30 (Australia Central)</SelectItem>
+                <SelectItem value="UTC+10">UTC+10 (Australia East)</SelectItem>
+                <SelectItem value="UTC+11">UTC+11 (Solomon Islands)</SelectItem>
+                <SelectItem value="UTC+12">UTC+12 (New Zealand)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
