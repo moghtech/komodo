@@ -127,3 +127,4 @@ colored = "3.0.0"
 regex = "1.11.1"
 bytes = "1.10.1"
 bson = "2.15.0"
+chrono = { version = "0.4", features = ["serde"] }
