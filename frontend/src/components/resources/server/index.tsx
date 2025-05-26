@@ -38,6 +38,7 @@ import { ServerInfo } from "./info";
 import { ServerStats } from "./stats";
 import { RenameResource } from "@components/config/util";
 import { GroupActions } from "@components/group-actions";
+import { MaintenanceServerConfig } from "./maintenance-config";
 
 export const useServer = (id?: string) =>
   useRead("ListServers", {}, { refetchInterval: 10_000 }).data?.find(
@@ -102,6 +103,10 @@ const ConfigStatsDockerResources = ({ id }: { id: string }) => {
         Docker
       </TabsTrigger>
 
+      <TabsTrigger value="Maintenance" className="w-[110px]">
+        Maintenance
+      </TabsTrigger>
+
       <TabsTrigger
         value="Resources"
         className="w-[110px]"
@@ -127,6 +132,10 @@ const ConfigStatsDockerResources = ({ id }: { id: string }) => {
 
       <TabsContent value="Docker">
         <ServerInfo id={id} titleOther={tabsList} />
+      </TabsContent>
+
+      <TabsContent value="Maintenance">
+        <MaintenanceServerConfig id={id} titleOther={tabsList} />
       </TabsContent>
 
       <TabsContent value="Resources">
