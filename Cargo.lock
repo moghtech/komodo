@@ -2544,6 +2544,7 @@ dependencies = [
  "anyhow",
  "async_timing_util",
  "bson",
+ "chrono",
  "clap",
  "derive_builder",
  "derive_default_builder",
