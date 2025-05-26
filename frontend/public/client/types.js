@@ -492,3 +492,14 @@ export var SearchCombinator;
     SearchCombinator["Or"] = "Or";
     SearchCombinator["And"] = "And";
 })(SearchCombinator || (SearchCombinator = {}));
+/** Days of the week for weekly maintenance schedules */
+export var DayOfWeek;
+(function (DayOfWeek) {
+    DayOfWeek["Monday"] = "Monday";
+    DayOfWeek["Tuesday"] = "Tuesday";
+    DayOfWeek["Wednesday"] = "Wednesday";
+    DayOfWeek["Thursday"] = "Thursday";
+    DayOfWeek["Friday"] = "Friday";
+    DayOfWeek["Saturday"] = "Saturday";
+    DayOfWeek["Sunday"] = "Sunday";
+})(DayOfWeek || (DayOfWeek = {}));

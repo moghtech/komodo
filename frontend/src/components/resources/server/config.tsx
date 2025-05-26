@@ -3,6 +3,7 @@ import { ConfigList } from "@components/config/util";
 import { useInvalidate, useLocalStorage, useRead, useWrite } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { ReactNode } from "react";
+import { MaintenanceWindows } from "./maintenance-windows";
 
 export const ServerConfig = ({
   id,
@@ -196,6 +197,21 @@ export const ServerConfig = ({
                 description:
                   "Send a 'Critical' alert if the disk usage in % is above these thresholds",
               },
+            },
+          },
+        ],
+        maintenance: [
+          {
+            label: "Maintenance Windows",
+            labelHidden: true,
+            components: {
+              maintenance_windows: (values, set) => (
+                <MaintenanceWindows
+                  windows={values ?? []}
+                  onUpdate={(windows: Types.MaintenanceWindow[]) => set({ maintenance_windows: windows })}
+                  disabled={disabled}
+                />
+              ),
             },
           },
         ],
