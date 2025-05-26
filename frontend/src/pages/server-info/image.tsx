@@ -52,7 +52,7 @@ const ImagePageInner = ({
   useSetTitle(`${server?.name} | image | ${image_name}`);
   const nav = useNavigate();
 
-  const perms = useRead("GetPermissionLevel", {
+  const perms = useRead("GetPermission", {
     target: { type: "Server", id },
   }).data;
 

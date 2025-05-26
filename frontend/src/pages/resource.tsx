@@ -17,24 +17,20 @@ import { has_minimum_permissions, usableResourcePath } from "@lib/utils";
 import { Types } from "komodo_client";
 import { UsableResource } from "@types";
 import { Button } from "@ui/button";
-import {
-  AlertTriangle,
-  ChevronLeft,
-  LinkIcon,
-  Zap,
-} from "lucide-react";
+import { AlertTriangle, ChevronLeft, LinkIcon, Zap } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { ResourceNotifications } from "./resource-notifications";
 import { NotFound } from "@components/util";
 
 export const useEditPermissions = ({ type, id }: Types.ResourceTarget) => {
   const user = useUser().data;
-  const perms = useRead("GetPermissionLevel", { target: { type, id } }).data;
+  const perms = useRead("GetPermission", { target: { type, id } }).data;
   const info = useRead("GetCoreInfo", {}).data;
   const ui_write_disabled = info?.ui_write_disabled ?? false;
   const disable_non_admin_create = info?.disable_non_admin_create ?? false;
 
-  const canWrite = !ui_write_disabled && perms === Types.PermissionLevel.Write;
+  const canWrite =
+    !ui_write_disabled && perms?.level === Types.PermissionLevel.Write;
   const canExecute = has_minimum_permissions(
     perms,
     Types.PermissionLevel.Execute

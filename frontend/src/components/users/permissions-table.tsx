@@ -170,7 +170,10 @@ export const PermissionsTable = ({
                   mutate({
                     ...permission,
                     user_target,
-                    permission: value,
+                    permission: {
+                      level: value,
+                      specific: []
+                    },
                   })
                 }
               />

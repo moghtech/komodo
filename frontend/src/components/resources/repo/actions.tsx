@@ -71,7 +71,7 @@ export const PullRepo = ({ id }: { id: string }) => {
 };
 
 export const BuildRepo = ({ id }: { id: string }) => {
-  const perms = useRead("GetPermissionLevel", {
+  const perms = useRead("GetPermission", {
     target: { type: "Repo", id },
   }).data;
   const building = useRead(
@@ -99,8 +99,8 @@ export const BuildRepo = ({ id }: { id: string }) => {
   // make sure hidden without perms.
   // not usually necessary, but this button also used in deployment actions.
   if (
-    perms !== Types.PermissionLevel.Execute &&
-    perms !== Types.PermissionLevel.Write
+    perms?.level !== Types.PermissionLevel.Execute &&
+    perms?.level !== Types.PermissionLevel.Write
   )
     return null;
 

@@ -63,7 +63,7 @@ export const BuildConfig = ({
     git: true,
     webhooks: true,
   });
-  const perms = useRead("GetPermissionLevel", {
+  const perms = useRead("GetPermission", {
     target: { type: "Build", id },
   }).data;
   const build = useRead("GetBuild", { build: id }).data;
@@ -82,7 +82,7 @@ export const BuildConfig = ({
 
   if (!config) return null;
 
-  const disabled = global_disabled || perms !== Types.PermissionLevel.Write;
+  const disabled = global_disabled || perms?.level !== Types.PermissionLevel.Write;
 
   const git_provider = update.git_provider ?? config.git_provider;
   const webhook_integration = getWebhookIntegration(integrations, git_provider);

@@ -6,7 +6,7 @@ import { AlertTypeConfig } from "./alert_types";
 import { ResourcesConfig } from "./resources";
 
 export const AlerterConfig = ({ id }: { id: string }) => {
-  const perms = useRead("GetPermissionLevel", {
+  const perms = useRead("GetPermission", {
     target: { type: "Alerter", id },
   }).data;
   const config = useRead("GetAlerter", { alerter: id }).data?.config;
@@ -19,7 +19,7 @@ export const AlerterConfig = ({ id }: { id: string }) => {
   );
 
   if (!config) return null;
-  const disabled = global_disabled || perms !== Types.PermissionLevel.Write;
+  const disabled = global_disabled || perms?.level !== Types.PermissionLevel.Write;
 
   return (
     <Config

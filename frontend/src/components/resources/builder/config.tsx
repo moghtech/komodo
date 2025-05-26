@@ -26,7 +26,7 @@ export const BuilderConfig = ({ id }: { id: string }) => {
 };
 
 const AwsBuilderConfig = ({ id }: { id: string }) => {
-  const perms = useRead("GetPermissionLevel", {
+  const perms = useRead("GetPermission", {
     target: { type: "Builder", id },
   }).data;
   const config = useRead("GetBuilder", { builder: id }).data?.config
@@ -40,7 +40,7 @@ const AwsBuilderConfig = ({ id }: { id: string }) => {
   const { mutateAsync } = useWrite("UpdateBuilder");
   if (!config) return null;
 
-  const disabled = global_disabled || perms !== Types.PermissionLevel.Write;
+  const disabled = global_disabled || perms?.level !== Types.PermissionLevel.Write;
 
   return (
     <Config
@@ -241,7 +241,7 @@ const AwsBuilderConfig = ({ id }: { id: string }) => {
 };
 
 const ServerBuilderConfig = ({ id }: { id: string }) => {
-  const perms = useRead("GetPermissionLevel", {
+  const perms = useRead("GetPermission", {
     target: { type: "Builder", id },
   }).data;
   const config = useRead("GetBuilder", { builder: id }).data?.config;
@@ -252,7 +252,7 @@ const ServerBuilderConfig = ({ id }: { id: string }) => {
   const { mutateAsync } = useWrite("UpdateBuilder");
   if (!config) return null;
 
-  const disabled = perms !== Types.PermissionLevel.Write;
+  const disabled = perms?.level !== Types.PermissionLevel.Write;
 
   return (
     <Config
@@ -303,7 +303,7 @@ const ServerBuilderConfig = ({ id }: { id: string }) => {
 };
 
 const UrlBuilderConfig = ({ id }: { id: string }) => {
-  const perms = useRead("GetPermissionLevel", {
+  const perms = useRead("GetPermission", {
     target: { type: "Builder", id },
   }).data;
   const config = useRead("GetBuilder", { builder: id }).data?.config;
@@ -314,7 +314,7 @@ const UrlBuilderConfig = ({ id }: { id: string }) => {
   const { mutateAsync } = useWrite("UpdateBuilder");
   if (!config) return null;
 
-  const disabled = perms !== Types.PermissionLevel.Write;
+  const disabled = perms?.level !== Types.PermissionLevel.Write;
 
   return (
     <Config

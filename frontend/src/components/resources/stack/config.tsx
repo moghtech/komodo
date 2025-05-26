@@ -62,7 +62,7 @@ export const StackConfig = ({
     git: true,
     webhooks: true,
   });
-  const perms = useRead("GetPermissionLevel", {
+  const perms = useRead("GetPermission", {
     target: { type: "Stack", id },
   }).data;
   const stack = useRead("GetStack", { stack: id }).data;
@@ -81,7 +81,7 @@ export const StackConfig = ({
 
   if (!config) return null;
 
-  const disabled = global_disabled || perms !== Types.PermissionLevel.Write;
+  const disabled = global_disabled || perms?.level !== Types.PermissionLevel.Write;
 
   const run_build = update.run_build ?? config.run_build;
   const mode = getStackMode(update, config);

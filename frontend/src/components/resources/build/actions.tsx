@@ -5,7 +5,7 @@ import { Ban, Hammer } from "lucide-react";
 import { useBuilder } from "../builder";
 
 export const RunBuild = ({ id }: { id: string }) => {
-  const perms = useRead("GetPermissionLevel", {
+  const perms = useRead("GetPermission", {
     target: { type: "Build", id },
   }).data;
   const building = useRead(
@@ -22,17 +22,15 @@ export const RunBuild = ({ id }: { id: string }) => {
   const { mutate: run_mutate, isPending: runPending } = useExecute("RunBuild");
   const { mutate: cancel_mutate, isPending: cancelPending } =
     useExecute("CancelBuild");
-  const build = useRead("ListBuilds", {}).data?.find(
-    (d) => d.id === id
-  );
+  const build = useRead("ListBuilds", {}).data?.find((d) => d.id === id);
   const builder = useBuilder(build?.info.builder_id);
   const canCancel = builder?.info.builder_type !== "Server";
 
   // make sure hidden without perms.
   // not usually necessary, but this button also used in deployment actions.
   if (
-    perms !== Types.PermissionLevel.Execute &&
-    perms !== Types.PermissionLevel.Write
+    perms?.level !== Types.PermissionLevel.Execute &&
+    perms?.level !== Types.PermissionLevel.Write
   )
     return null;
 

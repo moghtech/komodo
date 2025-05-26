@@ -27,7 +27,7 @@ import { SecretsSearch } from "@components/config/env_vars";
 import { MonacoEditor } from "@components/monaco";
 
 export const RepoConfig = ({ id }: { id: string }) => {
-  const perms = useRead("GetPermissionLevel", {
+  const perms = useRead("GetPermission", {
     target: { type: "Repo", id },
   }).data;
   const repo = useRead("GetRepo", { repo: id }).data;
@@ -46,7 +46,7 @@ export const RepoConfig = ({ id }: { id: string }) => {
 
   if (!config) return null;
 
-  const disabled = global_disabled || perms !== Types.PermissionLevel.Write;
+  const disabled = global_disabled || perms?.level !== Types.PermissionLevel.Write;
 
   const git_provider = update.git_provider ?? config.git_provider;
   const webhook_integration = getWebhookIntegration(integrations, git_provider);
