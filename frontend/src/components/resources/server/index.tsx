@@ -62,7 +62,7 @@ const Icon = ({ id, size }: { id?: string; size: number }) => {
 
 const ConfigStatsDockerResources = ({ id }: { id: string }) => {
   const [view, setView] = useLocalStorage<
-    "Config" | "Stats" | "Docker" | "Resources"
+    "Config" | "Stats" | "Docker" | "Maintenance" | "Resources"
   >(`server-${id}-tab`, "Config");
 
   const is_admin = useUser().data?.admin ?? false;
