@@ -40,6 +40,7 @@ import { GroupActions } from "@components/group-actions";
 import { ServerTerminals } from "@components/terminal/server";
 import { usePermissions } from "@lib/hooks";
 import { Card, CardHeader, CardTitle } from "@ui/card";
+import { MaintenanceServerConfig } from "./maintenance-config";
 
 export const useServer = (id?: string) =>
   useRead("ListServers", {}, { refetchInterval: 10_000 }).data?.find(
@@ -108,6 +109,10 @@ const ConfigTabs = ({ id }: { id: string }) => {
         Docker
       </TabsTrigger>
 
+      <TabsTrigger value="Maintenance" className="w-[110px]">
+        Maintenance
+      </TabsTrigger>
+
       <TabsTrigger
         value="Resources"
         className="w-[110px]"
@@ -139,6 +144,10 @@ const ConfigTabs = ({ id }: { id: string }) => {
 
       <TabsContent value="Docker">
         <ServerInfo id={id} titleOther={tabsList} />
+      </TabsContent>
+
+      <TabsContent value="Maintenance">
+        <MaintenanceServerConfig id={id} titleOther={tabsList} />
       </TabsContent>
 
       <TabsContent value="Resources">
