@@ -1,0 +1,495 @@
+import { Button } from "@ui/button";
+import { Input } from "@ui/input";
+import { Switch } from "@ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ui/select";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@ui/card";
+import { Badge } from "@ui/badge";
+import { ConfigItem } from "@components/config/util";
+import { Types } from "komodo_client";
+import { ReactNode, useState } from "react";
+import { PlusCircle, Pen, Trash2, Clock, Calendar, CalendarDays, AlertTriangle } from "lucide-react";
+import { cn } from "@lib/utils";
+
+export interface MaintenanceWindowsProps {
+  windows: Types.MaintenanceWindow[];
+  onUpdate: (windows: Types.MaintenanceWindow[]) => void;
+  disabled: boolean;
+  description?: ReactNode;
+}
+
+export const MaintenanceWindows = ({ 
+  windows, 
+  onUpdate, 
+  disabled, 
+  description 
+}: MaintenanceWindowsProps) => {
+  const [isCreating, setIsCreating] = useState(false);
+  const [editingWindow, setEditingWindow] = useState<Types.MaintenanceWindow | null>(null);
+
+  const addWindow = (newWindow: Types.MaintenanceWindow) => {
+    onUpdate([...windows, newWindow]);
+    setIsCreating(false);
+  };
+
+  const updateWindow = (updatedWindow: Types.MaintenanceWindow) => {
+    onUpdate(windows.map(w => w.id === updatedWindow.id ? updatedWindow : w));
+    setEditingWindow(null);
+  };
+
+  const deleteWindow = (windowId: string) => {
+    onUpdate(windows.filter(w => w.id !== windowId));
+  };
+
+  const toggleWindow = (windowId: string, enabled: boolean) => {
+    onUpdate(windows.map(w => w.id === windowId ? { ...w, enabled } : w));
+  };
+
+  return (
+    <ConfigItem label="Maintenance Windows" description={description}>
+      <div className="space-y-4">
+        {!disabled && (
+          <Dialog open={isCreating} onOpenChange={setIsCreating}>
+            <DialogTrigger asChild>
+              <Button variant="secondary" className="flex items-center gap-2">
+                <PlusCircle className="w-4 h-4" />
+                Add Maintenance Window
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <MaintenanceWindowForm
+                onSave={addWindow}
+                onCancel={() => setIsCreating(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {windows.length > 0 && (
+          <div className="space-y-3">
+            {windows.map((window) => (
+              <MaintenanceWindowCard
+                key={window.id}
+                window={window}
+                disabled={disabled}
+                onEdit={setEditingWindow}
+                onDelete={deleteWindow}
+                onToggle={toggleWindow}
+              />
+            ))}
+          </div>
+        )}
+
+        {windows.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            <AlertTriangle className="w-12 h-12 mx-auto mb-2 opacity-50" />
+            <p>No maintenance windows configured</p>
+            <p className="text-sm">All alerts will be sent normally</p>
+          </div>
+        )}
+
+        {editingWindow && (
+          <Dialog open={!!editingWindow} onOpenChange={() => setEditingWindow(null)}>
+            <DialogContent className="max-w-2xl">
+              <MaintenanceWindowForm
+                initialData={editingWindow}
+                onSave={updateWindow}
+                onCancel={() => setEditingWindow(null)}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+    </ConfigItem>
+  );
+};
+
+interface MaintenanceWindowCardProps {
+  window: Types.MaintenanceWindow;
+  disabled: boolean;
+  onEdit: (window: Types.MaintenanceWindow) => void;
+  onDelete: (windowId: string) => void;
+  onToggle: (windowId: string, enabled: boolean) => void;
+}
+
+const MaintenanceWindowCard = ({ 
+  window, 
+  disabled, 
+  onEdit, 
+  onDelete, 
+  onToggle 
+}: MaintenanceWindowCardProps) => {
+  const formatTime = (time: Types.MaintenanceTime) => {
+    const hours = time.hour.toString().padStart(2, '0');
+    const minutes = time.minute.toString().padStart(2, '0');
+    const offset = time.timezone_offset_minutes;
+    const offsetHours = Math.floor(Math.abs(offset) / 60);
+    const offsetMins = Math.abs(offset) % 60;
+    const offsetSign = offset >= 0 ? '+' : '-';
+    return `${hours}:${minutes} (UTC${offsetSign}${offsetHours.toString().padStart(2, '0')}:${offsetMins.toString().padStart(2, '0')})`;
+  };
+
+  const getScheduleIcon = () => {
+    switch (window.schedule_type.type) {
+      case "Daily": return <Clock className="w-4 h-4" />;
+      case "Weekly": return <Calendar className="w-4 h-4" />;
+      case "OneTime": return <CalendarDays className="w-4 h-4" />;
+      default: return <Clock className="w-4 h-4" />;
+    }
+  };
+
+  const getScheduleDescription = () => {
+    switch (window.schedule_type.type) {
+      case "Daily":
+        return `Daily at ${formatTime(window.start_time)}`;
+      case "Weekly":
+        if (window.schedule_type.content) {
+          return `Weekly on ${window.schedule_type.content.day_of_week} at ${formatTime(window.start_time)}`;
+        }
+        return `Weekly at ${formatTime(window.start_time)}`;
+      case "OneTime":
+        if (window.schedule_type.content) {
+          return `One-time on ${window.schedule_type.content.date} at ${formatTime(window.start_time)}`;
+        }
+        return `One-time at ${formatTime(window.start_time)}`;
+      default:
+        return `At ${formatTime(window.start_time)}`;
+    }
+  };
+
+  return (
+    <Card className={cn("transition-colors", !window.enabled && "opacity-60")}>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {getScheduleIcon()}
+            <div>
+              <CardTitle className="text-base">{window.name}</CardTitle>
+              <p className="text-sm text-muted-foreground">{getScheduleDescription()}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant={window.enabled ? "default" : "secondary"}>
+              {window.enabled ? "Enabled" : "Disabled"}
+            </Badge>
+            {!disabled && (
+              <div className="flex items-center gap-1">
+                <Switch
+                  checked={window.enabled}
+                  onCheckedChange={(enabled) => onToggle(window.id, enabled)}
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onEdit(window)}
+                  className="h-8 w-8 p-0"
+                >
+                  <Pen className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onDelete(window.id)}
+                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      {window.description && (
+        <CardContent className="pt-0">
+          <p className="text-sm text-muted-foreground">{window.description}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Duration: {window.duration_minutes} minutes
+          </p>
+        </CardContent>
+      )}
+    </Card>
+  );
+};
+
+interface MaintenanceWindowFormProps {
+  initialData?: Types.MaintenanceWindow;
+  onSave: (window: Types.MaintenanceWindow) => void;
+  onCancel: () => void;
+}
+
+const MaintenanceWindowForm = ({ initialData, onSave, onCancel }: MaintenanceWindowFormProps) => {
+  const [formData, setFormData] = useState<Types.MaintenanceWindow>(
+    initialData || {
+      id: crypto.randomUUID(),
+      name: "",
+      schedule_type: { type: "Daily" },
+      start_time: {
+        hour: 5,
+        minute: 0,
+        timezone_offset_minutes: 0,
+      },
+      duration_minutes: 60,
+      enabled: true,
+      description: "",
+    }
+  );
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required";
+    }
+
+    if (formData.start_time.hour < 0 || formData.start_time.hour > 23) {
+      newErrors.hour = "Hour must be between 0 and 23";
+    }
+
+    if (formData.start_time.minute < 0 || formData.start_time.minute > 59) {
+      newErrors.minute = "Minute must be between 0 and 59";
+    }
+
+    if (formData.duration_minutes <= 0) {
+      newErrors.duration = "Duration must be greater than 0";
+    }
+
+    if (formData.schedule_type.type === "OneTime" && formData.schedule_type.content) {
+      const date = formData.schedule_type.content.date;
+      if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        newErrors.date = "Date must be in YYYY-MM-DD format";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSave = () => {
+    if (validate()) {
+      onSave(formData);
+    }
+  };
+
+  const updateScheduleType = (type: "Daily" | "Weekly" | "OneTime") => {
+    let scheduleType: Types.MaintenanceScheduleType;
+    
+    switch (type) {
+      case "Daily":
+        scheduleType = { type: "Daily" };
+        break;
+      case "Weekly":
+        scheduleType = { 
+          type: "Weekly", 
+          content: { day_of_week: "Monday" as Types.DayOfWeek } 
+        };
+        break;
+      case "OneTime":
+        scheduleType = { 
+          type: "OneTime", 
+          content: { date: new Date().toISOString().split('T')[0] } 
+        };
+        break;
+      default:
+        scheduleType = { type: "Daily" };
+    }
+    
+    setFormData({ ...formData, schedule_type: scheduleType });
+  };
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>
+          {initialData ? "Edit Maintenance Window" : "Create Maintenance Window"}
+        </DialogTitle>
+      </DialogHeader>
+
+      <div className="space-y-4">
+        <div>
+          <label className="text-sm font-medium">Name</label>
+          <Input
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder="e.g., Daily Backup"
+            className={errors.name ? "border-destructive" : ""}
+          />
+          {errors.name && <p className="text-sm text-destructive mt-1">{errors.name}</p>}
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Schedule Type</label>
+          <Select
+            value={formData.schedule_type.type}
+            onValueChange={(value: "Daily" | "Weekly" | "OneTime") => updateScheduleType(value)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Daily">Daily</SelectItem>
+              <SelectItem value="Weekly">Weekly</SelectItem>
+              <SelectItem value="OneTime">One-time</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {formData.schedule_type.type === "Weekly" && (
+          <div>
+            <label className="text-sm font-medium">Day of Week</label>
+            <Select
+              value={formData.schedule_type.type === "Weekly" ? (formData.schedule_type.content?.day_of_week || "Monday") : "Monday"}
+              onValueChange={(value: Types.DayOfWeek) => 
+                setFormData({ 
+                  ...formData, 
+                  schedule_type: { 
+                    type: "Weekly", 
+                    content: { day_of_week: value } 
+                  } 
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Monday">Monday</SelectItem>
+                <SelectItem value="Tuesday">Tuesday</SelectItem>
+                <SelectItem value="Wednesday">Wednesday</SelectItem>
+                <SelectItem value="Thursday">Thursday</SelectItem>
+                <SelectItem value="Friday">Friday</SelectItem>
+                <SelectItem value="Saturday">Saturday</SelectItem>
+                <SelectItem value="Sunday">Sunday</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {formData.schedule_type.type === "OneTime" && (
+          <div>
+            <label className="text-sm font-medium">Date</label>
+            <Input
+              type="date"
+              value={formData.schedule_type.type === "OneTime" ? (formData.schedule_type.content?.date || new Date().toISOString().split('T')[0]) : ""}
+              onChange={(e) => 
+                setFormData({ 
+                  ...formData, 
+                  schedule_type: { 
+                    type: "OneTime", 
+                    content: { date: e.target.value } 
+                  } 
+                })
+              }
+              className={errors.date ? "border-destructive" : ""}
+            />
+            {errors.date && <p className="text-sm text-destructive mt-1">{errors.date}</p>}
+          </div>
+        )}
+
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <label className="text-sm font-medium">Hour (0-23)</label>
+            <Input
+              type="number"
+              min={0}
+              max={23}
+              value={formData.start_time.hour}
+              onChange={(e) => 
+                setFormData({ 
+                  ...formData, 
+                  start_time: { 
+                    ...formData.start_time, 
+                    hour: parseInt(e.target.value) || 0 
+                  } 
+                })
+              }
+              className={errors.hour ? "border-destructive" : ""}
+            />
+            {errors.hour && <p className="text-sm text-destructive mt-1">{errors.hour}</p>}
+          </div>
+          <div>
+            <label className="text-sm font-medium">Minute (0-59)</label>
+            <Input
+              type="number"
+              min={0}
+              max={59}
+              value={formData.start_time.minute}
+              onChange={(e) => 
+                setFormData({ 
+                  ...formData, 
+                  start_time: { 
+                    ...formData.start_time, 
+                    minute: parseInt(e.target.value) || 0 
+                  } 
+                })
+              }
+              className={errors.minute ? "border-destructive" : ""}
+            />
+            {errors.minute && <p className="text-sm text-destructive mt-1">{errors.minute}</p>}
+          </div>
+          <div>
+            <label className="text-sm font-medium">Timezone Offset (minutes)</label>
+            <Input
+              type="number"
+              value={formData.start_time.timezone_offset_minutes}
+              onChange={(e) => 
+                setFormData({ 
+                  ...formData, 
+                  start_time: { 
+                    ...formData.start_time, 
+                    timezone_offset_minutes: parseInt(e.target.value) || 0 
+                  } 
+                })
+              }
+              placeholder="e.g., -300 for EST, 120 for CEST"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Duration (minutes)</label>
+          <Input
+            type="number"
+            min={1}
+            value={formData.duration_minutes}
+            onChange={(e) => 
+              setFormData({ 
+                ...formData, 
+                duration_minutes: parseInt(e.target.value) || 60 
+              })
+            }
+            className={errors.duration ? "border-destructive" : ""}
+          />
+          {errors.duration && <p className="text-sm text-destructive mt-1">{errors.duration}</p>}
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Description (optional)</label>
+          <Input
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            placeholder="e.g., Automated backup process"
+          />
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={formData.enabled}
+            onCheckedChange={(enabled) => setFormData({ ...formData, enabled })}
+          />
+          <label className="text-sm font-medium">Enabled</label>
+        </div>
+      </div>
+
+      <DialogFooter>
+        <Button variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button onClick={handleSave}>
+          {initialData ? "Update" : "Create"}
+        </Button>
+      </DialogFooter>
+    </>
+  );
+};
