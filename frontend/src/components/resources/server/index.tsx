@@ -38,7 +38,7 @@ import { ServerInfo } from "./info";
 import { ServerStats } from "./stats";
 import { GroupActions } from "@components/group-actions";
 import { ServerTerminals } from "./terminal";
-import { useEditPermissions } from "@pages/resource";
+import { usePermissions } from "@lib/hooks";
 import { Card, CardHeader, CardTitle } from "@ui/card";
 
 export const useServer = (id?: string) =>
@@ -67,7 +67,7 @@ const ConfigTabs = ({ id }: { id: string }) => {
   >(`server-${id}-tab`, "Config");
 
   const is_admin = useUser().data?.admin ?? false;
-  const { canWrite } = useEditPermissions({ type: "Server", id });
+  const { canWrite } = usePermissions({ type: "Server", id });
   const server_info = useServer(id)?.info;
   const terminals_disabled = server_info?.terminals_disabled ?? true;
   const container_exec_disabled = server_info?.container_exec_disabled ?? true;

@@ -10,7 +10,7 @@ import {
 import { useFullStack, useStack } from ".";
 import { cn, updateLogToHtml } from "@lib/utils";
 import { MonacoEditor } from "@components/monaco";
-import { useEditPermissions } from "@pages/resource";
+import { usePermissions } from "@lib/hooks";
 import { ConfirmUpdate } from "@components/config/util";
 import { useLocalStorage, useWrite } from "@lib/hooks";
 import { Button } from "@ui/button";
@@ -32,7 +32,7 @@ export const StackInfo = ({
     {}
   );
   const [show, setShow] = useState<Record<string, boolean | undefined>>({});
-  const { canWrite } = useEditPermissions({ type: "Stack", id });
+  const { canWrite } = usePermissions({ type: "Stack", id });
   const { toast } = useToast();
   const { mutateAsync, isPending } = useWrite("WriteStackFileContents", {
     onSuccess: (res) => {

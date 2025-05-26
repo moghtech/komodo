@@ -9,7 +9,7 @@ import { diff_type_intention, text_color_class_by_intention } from "@lib/color";
 import { cn, sanitizeOnlySpan } from "@lib/utils";
 import { ConfirmButton } from "@components/util";
 import { SquarePlay } from "lucide-react";
-import { useEditPermissions } from "@pages/resource";
+import { usePermissions } from "@lib/hooks";
 import { useFullResourceSync, usePendingView } from ".";
 import { Tabs, TabsList, TabsTrigger } from "@ui/tabs";
 import { ResourceDiff } from "komodo_client/dist/types";
@@ -24,7 +24,7 @@ export const ResourceSyncPending = ({
   const syncing = useRead("GetResourceSyncActionState", { sync: id }).data
     ?.syncing;
   const sync = useFullResourceSync(id);
-  const { canExecute } = useEditPermissions({ type: "ResourceSync", id });
+  const { canExecute } = usePermissions({ type: "ResourceSync", id });
   const [_pendingView, setPendingView] = usePendingView();
   const pendingView = sync?.config?.managed ? _pendingView : "Execute";
   const { mutate, isPending } = useExecute("RunSync");

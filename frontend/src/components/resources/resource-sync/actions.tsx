@@ -1,7 +1,7 @@
 import { ActionButton, ActionWithDialog } from "@components/util";
 import { useExecute, useInvalidate, useRead, useWrite } from "@lib/hooks";
 import { file_contents_empty, sync_no_changes } from "@lib/utils";
-import { useEditPermissions } from "@pages/resource";
+import { usePermissions } from "@lib/hooks";
 import { NotebookPen, RefreshCcw, SquarePlay } from "lucide-react";
 import { useFullResourceSync, usePendingView } from ".";
 
@@ -69,7 +69,7 @@ export const ExecuteSync = ({ id }: { id: string }) => {
 export const CommitSync = ({ id }: { id: string }) => {
   const { mutate, isPending } = useWrite("CommitSync");
   const sync = useFullResourceSync(id);
-  const { canWrite } = useEditPermissions({ type: "ResourceSync", id });
+  const { canWrite } = usePermissions({ type: "ResourceSync", id });
   const [_pendingView] = usePendingView();
   const pendingView = sync?.config?.managed ? _pendingView : "Execute";
 

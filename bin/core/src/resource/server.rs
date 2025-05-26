@@ -40,7 +40,6 @@ impl super::KomodoResource for Server {
   fn creator_specific_permissions() -> HashSet<SpecificPermission> {
     [
       SpecificPermission::Terminal,
-      SpecificPermission::DockerList,
       SpecificPermission::DockerInspect,
     ]
     .into_iter()

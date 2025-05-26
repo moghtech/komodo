@@ -136,7 +136,7 @@ impl Resolve<ReadArgs> for GetDeploymentLog {
     } = get_check_permissions::<Deployment>(
       &deployment,
       user,
-      PermissionLevel::Read.into(),
+      PermissionLevel::Read.docker_log(),
     )
     .await?;
     if server_id.is_empty() {
@@ -174,7 +174,7 @@ impl Resolve<ReadArgs> for SearchDeploymentLog {
     } = get_check_permissions::<Deployment>(
       &deployment,
       user,
-      PermissionLevel::Read.into(),
+      PermissionLevel::Read.docker_log(),
     )
     .await?;
     if server_id.is_empty() {

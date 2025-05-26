@@ -141,9 +141,6 @@ pub enum SpecificPermission {
   ///   - Allowed to attach Deployments to the Build
   Attach,
   /// On **Server**
-  ///   - Access full container / volume / network / image list (beyond Stacks / Deployments with read access)
-  DockerList,
-  /// On **Server**
   ///   - Access the `docker inspect` apis
   DockerInspect,
   /// On **Server**
@@ -224,11 +221,6 @@ impl PermissionLevel {
   /// Operation requires Attach permission
   pub fn attach(self) -> PermissionLevelAndSpecifics {
     self.specific(SpecificPermission::Attach)
-  }
-
-  /// Operation requires DockerList permission
-  pub fn docker_list(self) -> PermissionLevelAndSpecifics {
-    self.specific(SpecificPermission::DockerList)
   }
 
   /// Operation requires DockerInspect permission
@@ -313,11 +305,6 @@ impl PermissionLevelAndSpecifics {
   /// Operation requires Attach permission
   pub fn attach(self) -> PermissionLevelAndSpecifics {
     self.specific(SpecificPermission::Attach)
-  }
-
-  /// Operation requires DockerList permission
-  pub fn docker_list(self) -> PermissionLevelAndSpecifics {
-    self.specific(SpecificPermission::DockerList)
   }
 
   /// Operation requires DockerInspect permission

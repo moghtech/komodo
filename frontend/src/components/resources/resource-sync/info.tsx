@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from "@ui/card";
 import { useFullResourceSync } from ".";
 import { cn, updateLogToHtml } from "@lib/utils";
 import { MonacoEditor } from "@components/monaco";
-import { useEditPermissions } from "@pages/resource";
+import { usePermissions } from "@lib/hooks";
 import { useLocalStorage, useWrite } from "@lib/hooks";
 import { useToast } from "@ui/use-toast";
 import { Button } from "@ui/button";
@@ -24,7 +24,7 @@ export const ResourceSyncInfo = ({
     {}
   );
   const [show, setShow] = useState<Record<string, boolean | undefined>>({});
-  const { canWrite } = useEditPermissions({ type: "ResourceSync", id });
+  const { canWrite } = usePermissions({ type: "ResourceSync", id });
   const { toast } = useToast();
   const { mutateAsync, isPending } = useWrite("WriteSyncFileContents", {
     onSuccess: (res) => {

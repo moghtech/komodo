@@ -60,7 +60,7 @@ import { Prune } from "./resources/server/actions";
 import { MonacoEditor, MonacoLanguage } from "./monaco";
 import { UsableResource } from "@types";
 import { ResourceComponents } from "./resources";
-import { useEditPermissions } from "@pages/resource";
+import { usePermissions } from "@lib/hooks";
 
 export const WithLoading = ({
   children,
@@ -879,7 +879,7 @@ const ResourceName = ({
 }) => {
   const invalidate = useInvalidate();
   const { toast } = useToast();
-  const { canWrite } = useEditPermissions({ type, id });
+  const { canWrite } = usePermissions({ type, id });
   const [newName, setName] = useState("");
   const [editing, setEditing] = useState(false);
   const { mutate, isPending } = useWrite(`Rename${type}`, {

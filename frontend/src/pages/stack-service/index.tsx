@@ -16,7 +16,12 @@ import {
   container_state_intention,
   stroke_color_class_by_intention,
 } from "@lib/color";
-import { useLocalStorage, useRead, useSetTitle } from "@lib/hooks";
+import {
+  usePermissions,
+  useLocalStorage,
+  useRead,
+  useSetTitle,
+} from "@lib/hooks";
 import { cn } from "@lib/utils";
 import { Types } from "komodo_client";
 import { ChevronLeft, Clapperboard, Layers2 } from "lucide-react";
@@ -25,7 +30,6 @@ import { StackServiceLogs } from "./log";
 import { Button } from "@ui/button";
 import { ExportButton } from "@components/export";
 import { DockerResourceLink, ResourcePageHeader } from "@components/util";
-import { useEditPermissions } from "@pages/resource";
 import { ResourceNotifications } from "@pages/resource-notifications";
 import { Fragment } from "react/jsx-runtime";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
@@ -64,7 +68,7 @@ const StackServicePageInner = ({
 }) => {
   const stack = useStack(stack_id);
   useSetTitle(`${stack?.name} | ${service}`);
-  const { canExecute, canWrite } = useEditPermissions({
+  const { canExecute, canWrite } = usePermissions({
     type: "Stack",
     id: stack_id,
   });
@@ -217,20 +221,23 @@ const LogOrTerminal = ({
     `stack-${stack.id}-${service}-tabs-v1`,
     "Log"
   );
-  const { canWrite: canWriteServer } = useEditPermissions({
-    type: "Server",
-    id: stack.info.server_id,
+  const { specific } = usePermissions({
+    type: "Stack",
+    id: stack.id,
   });
   const container_exec_disabled =
     useServer(stack.info.server_id)?.info.container_exec_disabled ?? true;
   const terminalDisabled =
-    !canWriteServer ||
+    !specific.includes(Types.SpecificPermission.Terminal) ||
     container_exec_disabled ||
     container_state !== Types.ContainerStateStatusEnum.Running;
+  const logDisabled =
+    !specific.includes(Types.SpecificPermission.DockerLog) ||
+    container_state === Types.ContainerStateStatusEnum.Empty;
   const view = terminalDisabled && _view === "Terminal" ? "Log" : _view;
   const tabs = (
     <TabsList className="justify-start w-fit">
-      <TabsTrigger value="Log" className="w-[110px]">
+      <TabsTrigger value="Log" className="w-[110px]" disabled={logDisabled}>
         Log
       </TabsTrigger>
       {!terminalDisabled && (
@@ -243,7 +250,12 @@ const LogOrTerminal = ({
   return (
     <Tabs value={view} onValueChange={setView as any} className="grid gap-4">
       <TabsContent value="Log">
-        <StackServiceLogs id={stack.id} service={service} titleOther={tabs} />
+        <StackServiceLogs
+          id={stack.id}
+          service={service}
+          titleOther={tabs}
+          disabled={logDisabled}
+        />
       </TabsContent>
       <TabsContent value="Terminal">
         {stack.info.server_id && container_name && (

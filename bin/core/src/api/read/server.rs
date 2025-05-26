@@ -355,7 +355,7 @@ impl Resolve<ReadArgs> for ListDockerContainers {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read.docker_list(),
+      PermissionLevel::Read.into(),
     )
     .await?;
     let cache = server_status_cache()
@@ -377,7 +377,7 @@ impl Resolve<ReadArgs> for ListAllDockerContainers {
     let servers = resource::list_for_user::<Server>(
       Default::default(),
       user,
-      PermissionLevel::Read.docker_list(),
+      PermissionLevel::Read.into(),
       &[],
     )
     .await?
@@ -547,7 +547,7 @@ impl Resolve<ReadArgs> for GetResourceMatchingContainer {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read.docker_list(),
+      PermissionLevel::Read.into(),
     )
     .await?;
     // first check deployments
@@ -608,7 +608,7 @@ impl Resolve<ReadArgs> for ListDockerNetworks {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read.docker_list(),
+      PermissionLevel::Read.into(),
     )
     .await?;
     let cache = server_status_cache()
@@ -660,7 +660,7 @@ impl Resolve<ReadArgs> for ListDockerImages {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read.docker_list(),
+      PermissionLevel::Read.into(),
     )
     .await?;
     let cache = server_status_cache()
@@ -739,7 +739,7 @@ impl Resolve<ReadArgs> for ListDockerVolumes {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read.docker_list(),
+      PermissionLevel::Read.into(),
     )
     .await?;
     let cache = server_status_cache()
@@ -788,7 +788,7 @@ impl Resolve<ReadArgs> for ListComposeProjects {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read.docker_list(),
+      PermissionLevel::Read.into(),
     )
     .await?;
     let cache = server_status_cache()

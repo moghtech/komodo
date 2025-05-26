@@ -1,4 +1,10 @@
-import { useInvalidate, useLocalStorage, useRead, useWrite } from "@lib/hooks";
+import {
+  useInvalidate,
+  useLocalStorage,
+  usePermissions,
+  useRead,
+  useWrite,
+} from "@lib/hooks";
 import { RequiredResourceComponents } from "@types";
 import { Card } from "@ui/card";
 import {
@@ -60,19 +66,21 @@ const ConfigInfoServicesLog = ({ id }: { id: string }) => {
     "Config" | "Info" | "Services" | "Log"
   >("stack-tabs-v1", "Config");
   const info = useStack(id)?.info;
+  const { specific } = usePermissions({ type: "Stack", id });
 
   const state = info?.state;
   const hideInfo = !info?.files_on_host && !info?.repo;
-  // Hides both services and logs
   const hideServices =
     state === undefined ||
     state === Types.StackState.Unknown ||
     state === Types.StackState.Down;
+  const hideLogs =
+    hideServices || !specific.includes(Types.SpecificPermission.DockerLog);
 
   const view =
     (_view === "Info" && hideInfo) ||
     (_view === "Services" && hideServices) ||
-    (_view === "Log" && hideServices)
+    (_view === "Log" && hideLogs)
       ? "Config"
       : _view;
 
@@ -95,9 +103,11 @@ const ConfigInfoServicesLog = ({ id }: { id: string }) => {
       >
         Services
       </TabsTrigger>
-      <TabsTrigger value="Log" className="w-[110px]" disabled={hideServices}>
-        Log
-      </TabsTrigger>
+      {specific.includes(Types.SpecificPermission.DockerLog) && (
+        <TabsTrigger value="Log" className="w-[110px]" disabled={hideLogs}>
+          Log
+        </TabsTrigger>
+      )}
     </TabsList>
   );
   return (

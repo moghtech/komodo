@@ -283,23 +283,25 @@ const NetworkPageInner = ({
 
       <DockerLabelsSection labels={network.Labels} />
 
-      <Section
-        title="Inspect"
-        icon={<SearchCode className="w-4 h-4" />}
-        titleRight={
-          <div className="pl-2">
-            <ShowHideButton show={showInspect} setShow={setShowInspect} />
-          </div>
-        }
-      >
-        {showInspect && (
-          <MonacoEditor
-            value={JSON.stringify(network, null, 2)}
-            language="json"
-            readOnly
-          />
-        )}
-      </Section>
+      {perms?.specific.includes(Types.SpecificPermission.DockerInspect) && (
+        <Section
+          title="Inspect"
+          icon={<SearchCode className="w-4 h-4" />}
+          titleRight={
+            <div className="pl-2">
+              <ShowHideButton show={showInspect} setShow={setShowInspect} />
+            </div>
+          }
+        >
+          {showInspect && (
+            <MonacoEditor
+              value={JSON.stringify(network, null, 2)}
+              language="json"
+              readOnly
+            />
+          )}
+        </Section>
+      )}
     </div>
   );
 };

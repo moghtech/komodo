@@ -31,7 +31,7 @@ import {
 import { GroupActions } from "@components/group-actions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 import { DeploymentTerminal } from "./terminal";
-import { useEditPermissions } from "@pages/resource";
+import { usePermissions } from "@lib/hooks";
 
 // const configOrLog = atomWithStorage("config-or-log-v1", "Config");
 
@@ -60,19 +60,20 @@ const ConfigTabsInner = ({
     "deployment-tabs-v1",
     "Config"
   );
-  const { canWrite: canWriteServer } = useEditPermissions({
-    type: "Server",
-    id: deployment.info.server_id,
+  const { specific } = usePermissions({
+    type: "Deployment",
+    id: deployment.id,
   });
   const container_exec_disabled =
     useServer(deployment.info.server_id)?.info.container_exec_disabled ?? true;
   const state = deployment.info.state;
   const logsDisabled =
+    !specific.includes(Types.SpecificPermission.DockerLog) ||
     state === undefined ||
     state === Types.DeploymentState.Unknown ||
     state === Types.DeploymentState.NotDeployed;
   const terminalDisabled =
-    !canWriteServer ||
+    !specific.includes(Types.SpecificPermission.Terminal) ||
     container_exec_disabled ||
     state !== Types.DeploymentState.Running;
   const view =
@@ -86,11 +87,17 @@ const ConfigTabsInner = ({
       <TabsTrigger value="Config" className="w-[110px]">
         Config
       </TabsTrigger>
-      <TabsTrigger value="Log" className="w-[110px]" disabled={logsDisabled}>
-        Log
-      </TabsTrigger>
-      {!terminalDisabled && (
-        <TabsTrigger value="Terminal" className="w-[110px]">
+      {specific.includes(Types.SpecificPermission.DockerLog) && (
+        <TabsTrigger value="Log" className="w-[110px]" disabled={logsDisabled}>
+          Log
+        </TabsTrigger>
+      )}
+      {specific.includes(Types.SpecificPermission.Terminal) && (
+        <TabsTrigger
+          value="Terminal"
+          className="w-[110px]"
+          disabled={terminalDisabled}
+        >
           Terminal
         </TabsTrigger>
       )}

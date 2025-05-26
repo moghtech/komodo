@@ -7,13 +7,13 @@ import {
 } from "@components/resources/common";
 import { AddTags, ResourceTags } from "@components/tags";
 import {
+  usePermissions,
   usePushRecentlyViewed,
   useRead,
   useResourceParamType,
   useSetTitle,
-  useUser,
 } from "@lib/hooks";
-import { has_minimum_permissions, usableResourcePath } from "@lib/utils";
+import { usableResourcePath } from "@lib/utils";
 import { Types } from "komodo_client";
 import { UsableResource } from "@types";
 import { Button } from "@ui/button";
@@ -21,53 +21,6 @@ import { AlertTriangle, ChevronLeft, LinkIcon, Zap } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { ResourceNotifications } from "./resource-notifications";
 import { NotFound } from "@components/util";
-
-export const useEditPermissions = ({ type, id }: Types.ResourceTarget) => {
-  const user = useUser().data;
-  const perms = useRead("GetPermission", { target: { type, id } }).data;
-  const info = useRead("GetCoreInfo", {}).data;
-  const ui_write_disabled = info?.ui_write_disabled ?? false;
-  const disable_non_admin_create = info?.disable_non_admin_create ?? false;
-
-  const canWrite =
-    !ui_write_disabled && perms?.level === Types.PermissionLevel.Write;
-  const canExecute = has_minimum_permissions(
-    perms,
-    Types.PermissionLevel.Execute
-  );
-
-  if (type === "Server") {
-    return {
-      canWrite,
-      canExecute,
-      canCreate:
-        user?.admin ||
-        (!disable_non_admin_create && user?.create_server_permissions),
-    };
-  }
-  if (type === "Build") {
-    return {
-      canWrite,
-      canExecute,
-      canCreate:
-        user?.admin ||
-        (!disable_non_admin_create && user?.create_build_permissions),
-    };
-  }
-  if (type === "Alerter" || type === "Builder") {
-    return {
-      canWrite,
-      canExecute,
-      canCreate: user?.admin,
-    };
-  }
-
-  return {
-    canWrite,
-    canExecute,
-    canCreate: user?.admin || !disable_non_admin_create,
-  };
-};
 
 export const Resource = () => {
   const type = useResourceParamType()!;
@@ -85,7 +38,7 @@ const ResourceInner = ({ type, id }: { type: UsableResource; id: string }) => {
 
   usePushRecentlyViewed({ type, id });
 
-  const { canCreate, canExecute, canWrite } = useEditPermissions({ type, id });
+  const { canCreate, canExecute, canWrite } = usePermissions({ type, id });
 
   if (!type || !id) return null;
 
@@ -170,7 +123,7 @@ export const ResourceHeader = ({
   const infoEntries = Object.entries(Components.Info);
   const statusEntries = Object.entries(Components.Status);
 
-  const { canWrite } = useEditPermissions({ type, id });
+  const { canWrite } = usePermissions({ type, id });
 
   return (
     <div className="w-full flex flex-col gap-4">
