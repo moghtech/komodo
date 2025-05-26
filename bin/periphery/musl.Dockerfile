@@ -43,7 +43,7 @@ COPY --from=builder /app/target/release/periphery /periphery
 
 EXPOSE 8120
 
-LABEL org.opencontainers.image.source=https://github.com/mbecker20/komodo
+LABEL org.opencontainers.image.source=https://github.com/moghtech/komodo
 LABEL org.opencontainers.image.description="Komodo Periphery (musl)"
 LABEL org.opencontainers.image.licenses=GPL-3.0
 

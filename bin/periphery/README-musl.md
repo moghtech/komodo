@@ -6,9 +6,9 @@ This directory contains Docker configurations for building Komodo Periphery with
 
 The musl builds create unique image names to allow migration:
 
-- `ghcr.io/mbecker20/periphery:latest-musl` - Multi-arch musl build
-- `ghcr.io/mbecker20/periphery:latest-musl-amd64` - x86_64 musl build 
-- `ghcr.io/mbecker20/periphery:latest-musl-arm64` - aarch64 musl build
+- `ghcr.io/moghtech/periphery:latest-musl` - Multi-arch musl build
+- `ghcr.io/moghtech/periphery:latest-musl-amd64` - x86_64 musl build 
+- `ghcr.io/moghtech/periphery:latest-musl-arm64` - aarch64 musl build
 
 ## Build Commands
 
@@ -16,7 +16,7 @@ The musl builds create unique image names to allow migration:
 ```bash
 docker buildx build --platform linux/amd64,linux/arm64 \
   -f bin/periphery/musl.Dockerfile \
-  -t ghcr.io/mbecker20/periphery:latest-musl \
+  -t ghcr.io/moghtech/periphery:latest-musl \
   --push .
 ```
 
@@ -25,13 +25,13 @@ docker buildx build --platform linux/amd64,linux/arm64 \
 # AMD64
 docker buildx build --platform linux/amd64 \
   -f bin/periphery/musl.Dockerfile \
-  -t ghcr.io/mbecker20/periphery:latest-musl-amd64 \
+  -t ghcr.io/moghtech/periphery:latest-musl-amd64 \
   --push .
 
 # ARM64  
 docker buildx build --platform linux/arm64 \
   -f bin/periphery/musl.Dockerfile \
-  -t ghcr.io/mbecker20/periphery:latest-musl-arm64 \
+  -t ghcr.io/moghtech/periphery:latest-musl-arm64 \
   --push .
 ```
 
@@ -41,7 +41,7 @@ Replace the periphery image in your compose files:
 
 ```yaml
 periphery:
-  image: ghcr.io/mbecker20/periphery:latest-musl
+  image: ghcr.io/moghtech/periphery:latest-musl
   # ... rest of config
 ```
 
