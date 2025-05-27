@@ -37,12 +37,42 @@ docker buildx build --platform linux/arm64 \
 
 ## Usage
 
+### Docker Containers
+
 Replace the periphery image in your compose files:
 
 ```yaml
 periphery:
   image: ghcr.io/moghtech/periphery:latest-musl
   # ... rest of config
+```
+
+### Host Installation
+
+#### Option 1: Build from source
+```bash
+# Clone repository
+git clone https://github.com/moghtech/komodo.git
+cd komodo
+
+# Install musl development tools (Ubuntu/Debian)
+sudo apt update && sudo apt install musl-tools
+
+# Build musl binary
+./scripts/build-musl.sh
+
+# Install binary
+sudo cp target/musl-release/periphery-musl-$(uname -m) /usr/local/bin/periphery
+sudo chmod +x /usr/local/bin/periphery
+
+# Verify installation
+periphery --version
+```
+
+#### Option 2: Pre-built binaries (future)
+```bash
+# Download and install (when available in releases)
+curl -fsSL https://github.com/moghtech/komodo/raw/main/scripts/install-musl.sh | sudo bash
 ```
 
 ## Technical Details
@@ -55,10 +85,11 @@ periphery:
 
 ## Benefits
 
-- **Smaller images**: Static linking with musl creates minimal container sizes
+- **Smaller images**: Static linking with musl creates minimal container sizes (~15MB vs ~100MB+)
 - **Security**: Reduced attack surface with fewer dependencies  
 - **Portability**: Self-contained binaries work across different environments
 - **Performance**: Potential performance improvements in some scenarios
+- **Host compatibility**: Static binaries work on both musl and glibc systems
 
 ## Migration Notes
 
