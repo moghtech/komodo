@@ -37,7 +37,7 @@ impl super::KomodoResource for Builder {
     ResourceTarget::Builder(id.into())
   }
 
-  fn creator_specific_permissions() -> HashSet<SpecificPermission> {
+  fn creator_specific_permissions() -> IndexSet<SpecificPermission> {
     [SpecificPermission::Attach].into_iter().collect()
   }
 

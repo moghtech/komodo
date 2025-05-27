@@ -3,8 +3,11 @@ use std::{collections::HashMap, sync::OnceLock};
 use anyhow::{Context, anyhow};
 use bollard::{
   Docker,
-  container::{InspectContainerOptions, ListContainersOptions},
-  network::InspectNetworkOptions,
+  query_parameters::{
+    InspectContainerOptions, InspectNetworkOptions,
+    ListContainersOptions, ListImagesOptions, ListNetworksOptions,
+    ListVolumesOptions,
+  },
 };
 use command::run_komodo_command;
 use komodo_client::entities::{
@@ -42,7 +45,7 @@ impl DockerClient {
   ) -> anyhow::Result<Vec<ContainerListItem>> {
     let mut containers = self
       .docker
-      .list_containers(Some(ListContainersOptions::<String> {
+      .list_containers(Some(ListContainersOptions {
         all: true,
         ..Default::default()
       }))
@@ -63,11 +66,16 @@ impl DockerClient {
           created: container.created,
           size_rw: container.size_rw,
           size_root_fs: container.size_root_fs,
-          state: container
-            .state
-            .context("no container state")?
-            .parse()
-            .context("failed to parse container state")?,
+          state: match container.state.context("no container state")? {
+            bollard::secret::ContainerSummaryStateEnum::EMPTY => ContainerStateStatusEnum::Empty,
+            bollard::secret::ContainerSummaryStateEnum::CREATED => ContainerStateStatusEnum::Created,
+            bollard::secret::ContainerSummaryStateEnum::RUNNING => ContainerStateStatusEnum::Running,
+            bollard::secret::ContainerSummaryStateEnum::PAUSED => ContainerStateStatusEnum::Paused,
+            bollard::secret::ContainerSummaryStateEnum::RESTARTING => ContainerStateStatusEnum::Restarting,
+            bollard::secret::ContainerSummaryStateEnum::EXITED => ContainerStateStatusEnum::Exited,
+            bollard::secret::ContainerSummaryStateEnum::REMOVING => ContainerStateStatusEnum::Removing,
+            bollard::secret::ContainerSummaryStateEnum::DEAD => ContainerStateStatusEnum::Dead,
+                  },
           status: container.status,
           network_mode: container
             .host_config
@@ -371,6 +379,7 @@ impl DockerClient {
                 bollard::secret::MountTypeEnum::EMPTY => MountTypeEnum::Empty,
                 bollard::secret::MountTypeEnum::BIND => MountTypeEnum::Bind,
                 bollard::secret::MountTypeEnum::VOLUME => MountTypeEnum::Volume,
+                bollard::secret::MountTypeEnum::IMAGE => MountTypeEnum::Image,
                 bollard::secret::MountTypeEnum::TMPFS => MountTypeEnum::Tmpfs,
                 bollard::secret::MountTypeEnum::NPIPE => MountTypeEnum::Npipe,
                 bollard::secret::MountTypeEnum::CLUSTER => MountTypeEnum::Cluster,
@@ -456,6 +465,7 @@ impl DockerClient {
           bollard::secret::MountPointTypeEnum::EMPTY => MountTypeEnum::Empty,
           bollard::secret::MountPointTypeEnum::BIND => MountTypeEnum::Bind,
           bollard::secret::MountPointTypeEnum::VOLUME => MountTypeEnum::Volume,
+          bollard::secret::MountPointTypeEnum::IMAGE => MountTypeEnum::Image,
           bollard::secret::MountPointTypeEnum::TMPFS => MountTypeEnum::Tmpfs,
           bollard::secret::MountPointTypeEnum::NPIPE => MountTypeEnum::Npipe,
           bollard::secret::MountPointTypeEnum::CLUSTER => MountTypeEnum::Cluster,
@@ -543,7 +553,7 @@ impl DockerClient {
   ) -> anyhow::Result<Vec<NetworkListItem>> {
     let networks = self
       .docker
-      .list_networks::<String>(None)
+      .list_networks(Option::<ListNetworksOptions>::None)
       .await?
       .into_iter()
       .map(|network| {
@@ -593,7 +603,7 @@ impl DockerClient {
   ) -> anyhow::Result<Network> {
     let network = self
       .docker
-      .inspect_network::<String>(
+      .inspect_network(
         network_name,
         InspectNetworkOptions {
           verbose: true,
@@ -653,7 +663,7 @@ impl DockerClient {
   ) -> anyhow::Result<Vec<ImageListItem>> {
     let images = self
       .docker
-      .list_images::<String>(None)
+      .list_images(Option::<ListImagesOptions>::None)
       .await?
       .into_iter()
       .map(|image| {
@@ -787,7 +797,7 @@ impl DockerClient {
   ) -> anyhow::Result<Vec<VolumeListItem>> {
     let volumes = self
       .docker
-      .list_volumes::<String>(None)
+      .list_volumes(Option::<ListVolumesOptions>::None)
       .await?
       .volumes
       .unwrap_or_default()

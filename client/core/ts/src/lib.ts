@@ -367,7 +367,7 @@ export function KomodoClient(url: string, options: InitOptions) {
     return ws;
   };
 
-  const connect_exec = ({
+  const connect_container_exec = ({
     query: { type, query },
     on_message,
     on_login,
@@ -631,10 +631,11 @@ export function KomodoClient(url: string, options: InitOptions) {
     connect_terminal,
     /**
      * Subscribes to container exec io over websocket message,
-     * for use with xtermjs. The permission used to allow the connection
-     * depends on query.type.
+     * for use with xtermjs. Can connect to Deployment, Stack,
+     * or any container on a Server. The permission used to allow the connection
+     * depends on `query.type`.
      */
-    connect_exec,
+    connect_container_exec,
     /**
      * Executes a command on a given Server / terminal,
      * and returns a stream to process the output as it comes in.

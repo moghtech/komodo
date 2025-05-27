@@ -16,7 +16,8 @@ use periphery_client::api::compose::*;
 use resolver_api::Resolve;
 
 use crate::{
-  api::write::WriteArgs, helpers::{
+  api::write::WriteArgs,
+  helpers::{
     interpolate::{
       add_interp_update_log,
       interpolate_variables_secrets_into_extra_args,
@@ -26,7 +27,12 @@ use crate::{
     periphery_client,
     query::get_variables_and_secrets,
     update::{add_update_without_send, update_update},
-  }, monitor::update_cache_for_server, permission::get_check_permissions, resource, stack::{execute::execute_compose, get_stack_and_server}, state::{action_states, db_client}
+  },
+  monitor::update_cache_for_server,
+  permission::get_check_permissions,
+  resource,
+  stack::{execute::execute_compose, get_stack_and_server},
+  state::{action_states, db_client},
 };
 
 use super::{ExecuteArgs, ExecuteRequest};

@@ -11,7 +11,8 @@ use komodo_client::{
 use resolver_api::Resolve;
 
 use crate::{
-  alert::send_alert_to_alerter, helpers::update::update_update, permission::get_check_permissions,
+  alert::send_alert_to_alerter, helpers::update::update_update,
+  permission::get_check_permissions,
 };
 
 use super::ExecuteArgs;

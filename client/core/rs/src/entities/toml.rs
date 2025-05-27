@@ -1,5 +1,6 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
+use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -184,5 +185,5 @@ pub struct PermissionToml {
   pub level: PermissionLevel,
 
   /// Any [SpecificPermissions](SpecificPermission) on the resource
-  pub specific: HashSet<SpecificPermission>,
+  pub specific: IndexSet<SpecificPermission>,
 }

@@ -32,7 +32,11 @@ use crate::{
     query::get_variables_and_secrets,
     registry_token,
     update::update_update,
-  }, monitor::update_cache_for_server, permission::get_check_permissions, resource, state::action_states
+  },
+  monitor::update_cache_for_server,
+  permission::get_check_permissions,
+  resource,
+  state::action_states,
 };
 
 use super::{ExecuteArgs, ExecuteRequest};

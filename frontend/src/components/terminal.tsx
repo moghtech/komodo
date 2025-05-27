@@ -231,9 +231,12 @@ export const Terminal = ({
     const ws = query.container
       ? komodo_client().connect_container_exec({
           query: {
-            server,
-            container: query.container,
-            shell: query.shell,
+            type: "container",
+            query: {
+              server,
+              container: query.container,
+              shell: query.shell,
+            },
           },
           ...options,
         })

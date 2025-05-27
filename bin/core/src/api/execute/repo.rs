@@ -26,7 +26,9 @@ use resolver_api::Resolve;
 use tokio_util::sync::CancellationToken;
 
 use crate::{
-  alert::send_alerts, api::write::WriteArgs, helpers::{
+  alert::send_alerts,
+  api::write::WriteArgs,
+  helpers::{
     builder::{cleanup_builder_instance, get_builder_periphery},
     channel::repo_cancel_channel,
     git_token,
@@ -38,7 +40,10 @@ use crate::{
     periphery_client,
     query::get_variables_and_secrets,
     update::update_update,
-  }, permission::get_check_permissions, resource::{self, refresh_repo_state_cache}, state::{action_states, db_client}
+  },
+  permission::get_check_permissions,
+  resource::{self, refresh_repo_state_cache},
+  state::{action_states, db_client},
 };
 
 use super::{ExecuteArgs, ExecuteRequest};

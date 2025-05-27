@@ -860,8 +860,8 @@ fn diff_group_all(
 }
 
 fn specific_equal(
-  a: &HashSet<SpecificPermission>,
-  b: &HashSet<SpecificPermission>,
+  a: &IndexSet<SpecificPermission>,
+  b: &IndexSet<SpecificPermission>,
 ) -> bool {
   for item in a {
     if !b.contains(item) {

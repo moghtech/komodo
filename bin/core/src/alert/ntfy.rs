@@ -236,18 +236,16 @@ async fn send_message(
   content: String,
 ) -> anyhow::Result<()> {
   let mut request = http_client()
-      .post(url)
-      .header("Title", "ntfy Alert")
-      .body(content);
+    .post(url)
+    .header("Title", "ntfy Alert")
+    .body(content);
 
   if let Some(email) = email {
     request = request.header("X-Email", email);
   }
 
-  let response =request
-    .send()
-    .await
-    .context("Failed to send message")?;
+  let response =
+    request.send().await.context("Failed to send message")?;
 
   let status = response.status();
   if status.is_success() {

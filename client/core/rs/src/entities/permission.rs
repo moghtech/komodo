@@ -1,6 +1,7 @@
-use std::{collections::HashSet, fmt::Write};
+use std::fmt::Write;
 
 use derive_variants::EnumVariants;
+use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
 use strum::{AsRefStr, Display, EnumString, VariantArray};
 use typeshare::typeshare;
@@ -43,7 +44,7 @@ pub struct Permission {
   pub level: PermissionLevel,
   /// Any specific permissions for the [user_target] on the [resource_target].
   #[serde(default)]
-  pub specific: HashSet<SpecificPermission>,
+  pub specific: IndexSet<SpecificPermission>,
 }
 
 #[typeshare]
@@ -154,7 +155,7 @@ pub enum SpecificPermission {
 }
 
 impl SpecificPermission {
-  fn all() -> HashSet<SpecificPermission> {
+  fn all() -> IndexSet<SpecificPermission> {
     SpecificPermission::VARIANTS.into_iter().cloned().collect()
   }
 }
@@ -163,14 +164,14 @@ impl SpecificPermission {
 #[derive(Debug, Clone, Default)]
 pub struct PermissionLevelAndSpecifics {
   pub level: PermissionLevel,
-  pub specific: HashSet<SpecificPermission>,
+  pub specific: IndexSet<SpecificPermission>,
 }
 
 impl From<PermissionLevel> for PermissionLevelAndSpecifics {
   fn from(level: PermissionLevel) -> Self {
     Self {
       level,
-      specific: HashSet::new(),
+      specific: IndexSet::new(),
     }
   }
 }
@@ -195,7 +196,7 @@ impl PermissionLevel {
 
   pub fn specifics(
     self,
-    specific: HashSet<SpecificPermission>,
+    specific: IndexSet<SpecificPermission>,
   ) -> PermissionLevelAndSpecifics {
     PermissionLevelAndSpecifics {
       level: self,
@@ -260,7 +261,7 @@ impl PermissionLevelAndSpecifics {
   /// Returns true when self has all required specific permissions.
   pub fn fulfills_specific(
     &self,
-    specifics: &HashSet<SpecificPermission>,
+    specifics: &IndexSet<SpecificPermission>,
   ) -> bool {
     for specific in specifics.iter() {
       if !self.specific.contains(specific) {
@@ -280,7 +281,7 @@ impl PermissionLevelAndSpecifics {
 
   pub fn specifics(
     mut self,
-    specific: HashSet<SpecificPermission>,
+    specific: IndexSet<SpecificPermission>,
   ) -> PermissionLevelAndSpecifics {
     self.specific = specific;
     self

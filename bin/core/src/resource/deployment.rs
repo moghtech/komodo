@@ -54,7 +54,7 @@ impl super::KomodoResource for Deployment {
     to_docker_compatible_name(name)
   }
 
-  fn creator_specific_permissions() -> HashSet<SpecificPermission> {
+  fn creator_specific_permissions() -> IndexSet<SpecificPermission> {
     [SpecificPermission::Terminal].into_iter().collect()
   }
 

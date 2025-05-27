@@ -6,8 +6,9 @@
 //! ## As expanded with [SpecificPermission]
 //! permission = { level = "Write", specific = ["Terminal"] }
 
-use std::{collections::HashSet, str::FromStr};
+use std::str::FromStr;
 
+use indexmap::IndexSet;
 use serde::{
   Deserialize, Serialize,
   de::{Visitor, value::MapAccessDeserializer},
@@ -22,7 +23,7 @@ struct _PermissionLevelAndSpecifics {
   #[serde(default)]
   level: PermissionLevel,
   #[serde(default)]
-  specific: HashSet<SpecificPermission>,
+  specific: IndexSet<SpecificPermission>,
 }
 
 impl Serialize for PermissionLevelAndSpecifics {
@@ -74,7 +75,7 @@ impl<'de> Visitor<'de> for PermissionLevelAndSpecificsVisitor {
     Ok(PermissionLevelAndSpecifics {
       level: PermissionLevel::from_str(v)
         .map_err(|e| serde::de::Error::custom(e))?,
-      specific: HashSet::new(),
+      specific: IndexSet::new(),
     })
   }
 
@@ -97,7 +98,7 @@ impl<'de> Visitor<'de> for PermissionLevelAndSpecificsVisitor {
   {
     Ok(PermissionLevelAndSpecifics {
       level: PermissionLevel::None,
-      specific: HashSet::new(),
+      specific: IndexSet::new(),
     })
   }
 

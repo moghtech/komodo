@@ -227,7 +227,7 @@ impl Resolve<WriteArgs> for UpdatePermissionOnTarget {
 
     let specific = to_bson(&permission.specific)
       .context("permission.specific is not valid Bson")?;
-    
+
     db_client()
       .permissions
       .update_one(

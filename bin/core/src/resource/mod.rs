@@ -126,7 +126,7 @@ pub trait KomodoResource {
 
   /// These permissions go to the creator of the resource,
   /// and include full access to the resource.
-  fn creator_specific_permissions() -> HashSet<SpecificPermission> {
+  fn creator_specific_permissions() -> IndexSet<SpecificPermission> {
     HashSet::new()
   }
 

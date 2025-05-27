@@ -37,7 +37,7 @@ impl super::KomodoResource for Server {
     ResourceTarget::Server(id.into())
   }
 
-  fn creator_specific_permissions() -> HashSet<SpecificPermission> {
+  fn creator_specific_permissions() -> IndexSet<SpecificPermission> {
     [
       SpecificPermission::Terminal,
       SpecificPermission::DockerInspect,

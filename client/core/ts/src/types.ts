@@ -7855,11 +7855,6 @@ export enum SpecificPermission {
 	Attach = "Attach",
 	/**
 	 * On **Server**
-	 * - Access full container / volume / network / image list (beyond Stacks / Deployments with read access)
-	 */
-	DockerList = "DockerList",
-	/**
-	 * On **Server**
 	 * - Access the `docker inspect` apis
 	 */
 	DockerInspect = "DockerInspect",

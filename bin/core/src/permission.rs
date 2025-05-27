@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use anyhow::{Context, anyhow};
 use futures::FutureExt;
+use indexmap::IndexSet;
 use komodo_client::entities::{
   permission::{PermissionLevel, PermissionLevelAndSpecifics},
   resource::Resource,
@@ -81,7 +82,7 @@ pub async fn get_user_permission_on_resource<T: KomodoResource>(
     } else {
       PermissionLevel::None
     },
-    specific: HashSet::new(),
+    specific: IndexSet::new(),
   };
 
   // Add in the resource level global base permissions

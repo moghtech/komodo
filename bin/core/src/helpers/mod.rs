@@ -1,6 +1,7 @@
-use std::{collections::HashSet, time::Duration};
+use std::time::Duration;
 
 use anyhow::{Context, anyhow};
+use indexmap::IndexSet;
 use komodo_client::entities::{
   ResourceTarget,
   permission::{
@@ -149,7 +150,7 @@ pub async fn create_permission<T>(
   user: &User,
   target: T,
   level: PermissionLevel,
-  specific: HashSet<SpecificPermission>,
+  specific: IndexSet<SpecificPermission>,
 ) where
   T: Into<ResourceTarget> + std::fmt::Debug,
 {

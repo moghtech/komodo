@@ -12,7 +12,11 @@ use komodo_client::{
 use resolver_api::Resolve;
 
 use crate::{
-  config::core_config, helpers::query::get_all_tags, permission::get_check_permissions, resource, state::{action_states, github_client}
+  config::core_config,
+  helpers::query::get_all_tags,
+  permission::get_check_permissions,
+  resource,
+  state::{action_states, github_client},
 };
 
 use super::ReadArgs;
