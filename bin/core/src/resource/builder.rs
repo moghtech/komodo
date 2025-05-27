@@ -1,6 +1,5 @@
-use std::collections::HashSet;
-
 use anyhow::Context;
+use indexmap::IndexSet;
 use komodo_client::entities::{
   MergePartial, Operation, ResourceTarget, ResourceTargetVariant,
   builder::{

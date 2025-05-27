@@ -6,6 +6,7 @@ use std::{
 use anyhow::{Context, anyhow};
 use formatting::format_serror;
 use futures::future::join_all;
+use indexmap::IndexSet;
 use komodo_client::{
   api::{read::ExportResourcesToToml, write::CreateTag},
   entities::{
@@ -127,7 +128,7 @@ pub trait KomodoResource {
   /// These permissions go to the creator of the resource,
   /// and include full access to the resource.
   fn creator_specific_permissions() -> IndexSet<SpecificPermission> {
-    HashSet::new()
+    IndexSet::new()
   }
 
   // =======

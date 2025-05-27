@@ -1,11 +1,8 @@
-use std::{
-  cmp::Ordering,
-  collections::{HashMap, HashSet},
-  sync::OnceLock,
-};
+use std::{cmp::Ordering, collections::HashMap, sync::OnceLock};
 
 use anyhow::Context;
 use formatting::{Color, bold, colored, muted};
+use indexmap::IndexSet;
 use komodo_client::{
   api::{
     read::ListUserTargetPermissions,
@@ -339,7 +336,7 @@ pub async fn get_updates_for_execution(
       .map(|permission| PermissionToml {
         target: permission.target.clone(),
         level: PermissionLevel::None,
-        specific: HashSet::new(),
+        specific: IndexSet::new(),
       })
       .collect::<Vec<_>>();
     user_group.permissions.extend(to_remove);

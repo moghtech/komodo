@@ -1,7 +1,6 @@
-use std::collections::HashSet;
-
 use anyhow::Context;
 use formatting::format_serror;
+use indexmap::IndexSet;
 use komodo_client::entities::{
   Operation, ResourceTarget, ResourceTargetVariant,
   build::Build,

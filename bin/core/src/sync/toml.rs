@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::Context;
+use indexmap::IndexMap;
 use komodo_client::{
   api::execute::Execution,
   entities::{
@@ -19,7 +20,6 @@ use komodo_client::{
     toml::ResourceToml,
   },
 };
-use ordered_hash_map::OrderedHashMap;
 use partial_derive2::{MaybeNone, PartialDiff};
 
 use crate::resource::KomodoResource;
@@ -44,8 +44,8 @@ pub trait ToToml: KomodoResource {
 
   fn edit_config_object(
     _resource: &ResourceToml<Self::PartialConfig>,
-    config: OrderedHashMap<String, serde_json::Value>,
-  ) -> anyhow::Result<OrderedHashMap<String, serde_json::Value>> {
+    config: IndexMap<String, serde_json::Value>,
+  ) -> anyhow::Result<IndexMap<String, serde_json::Value>> {
     Ok(config)
   }
 
@@ -62,9 +62,9 @@ pub trait ToToml: KomodoResource {
     resource.config =
       Self::Config::default().minimize_partial(resource.config);
 
-    let mut resource_map: OrderedHashMap<String, serde_json::Value> =
+    let mut resource_map: IndexMap<String, serde_json::Value> =
       serde_json::from_str(&serde_json::to_string(&resource)?)?;
-    resource_map.remove("config");
+    resource_map.shift_remove("config");
 
     let config = serde_json::from_str(&serde_json::to_string(
       &resource.config,
@@ -182,8 +182,8 @@ impl ToToml for Stack {
 
   fn edit_config_object(
     _resource: &ResourceToml<Self::PartialConfig>,
-    config: OrderedHashMap<String, serde_json::Value>,
-  ) -> anyhow::Result<OrderedHashMap<String, serde_json::Value>> {
+    config: IndexMap<String, serde_json::Value>,
+  ) -> anyhow::Result<IndexMap<String, serde_json::Value>> {
     config
       .into_iter()
       .map(|(key, value)| {
@@ -225,8 +225,8 @@ impl ToToml for Deployment {
 
   fn edit_config_object(
     resource: &ResourceToml<Self::PartialConfig>,
-    config: OrderedHashMap<String, serde_json::Value>,
-  ) -> anyhow::Result<OrderedHashMap<String, serde_json::Value>> {
+    config: IndexMap<String, serde_json::Value>,
+  ) -> anyhow::Result<IndexMap<String, serde_json::Value>> {
     config
       .into_iter()
       .map(|(key, mut value)| {
@@ -278,8 +278,8 @@ impl ToToml for Build {
 
   fn edit_config_object(
     resource: &ResourceToml<Self::PartialConfig>,
-    config: OrderedHashMap<String, serde_json::Value>,
-  ) -> anyhow::Result<OrderedHashMap<String, serde_json::Value>> {
+    config: IndexMap<String, serde_json::Value>,
+  ) -> anyhow::Result<IndexMap<String, serde_json::Value>> {
     config
       .into_iter()
       .map(|(key, value)| match key.as_str() {
@@ -330,8 +330,8 @@ impl ToToml for Repo {
 
   fn edit_config_object(
     _resource: &ResourceToml<Self::PartialConfig>,
-    config: OrderedHashMap<String, serde_json::Value>,
-  ) -> anyhow::Result<OrderedHashMap<String, serde_json::Value>> {
+    config: IndexMap<String, serde_json::Value>,
+  ) -> anyhow::Result<IndexMap<String, serde_json::Value>> {
     config
       .into_iter()
       .map(|(key, value)| {
@@ -791,7 +791,7 @@ impl ToToml for Procedure {
     resource.config =
       Self::Config::default().minimize_partial(resource.config);
 
-    let mut parsed: OrderedHashMap<String, serde_json::Value> =
+    let mut parsed: IndexMap<String, serde_json::Value> =
       serde_json::from_str(&serde_json::to_string(&resource)?)?;
 
     let config = parsed
