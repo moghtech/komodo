@@ -25,11 +25,11 @@ use komodo_client::{
   },
 };
 use mungos::find::find_collect;
-use regex::Regex;
 use resolver_api::Resolve;
 
 use crate::{
   api::{read::ReadArgs, write::WriteArgs},
+  helpers::matcher::Matcher,
   state::db_client,
 };
 
@@ -651,142 +651,131 @@ async fn expand_user_group_permissions(
     if id.is_empty() {
       continue;
     }
-    if id.starts_with('\\') && id.ends_with('\\') {
-      let inner = &id[1..(id.len() - 1)];
-      let regex = Regex::new(inner)
-        .with_context(|| format!("invalid regex. got: {inner}"))?;
-      match variant {
-        ResourceTargetVariant::Build => {
-          let permissions = all_resources
-            .builds
-            .values()
-            .filter(|resource| regex.is_match(&resource.name))
-            .map(|resource| PermissionToml {
-              target: ResourceTarget::Build(resource.name.clone()),
-              level: permission.level,
-              specific: permission.specific.clone(),
-            });
-          expanded.extend(permissions);
-        }
-        ResourceTargetVariant::Builder => {
-          let permissions = all_resources
-            .builders
-            .values()
-            .filter(|resource| regex.is_match(&resource.name))
-            .map(|resource| PermissionToml {
-              target: ResourceTarget::Builder(resource.name.clone()),
-              level: permission.level,
-              specific: permission.specific.clone(),
-            });
-          expanded.extend(permissions);
-        }
-        ResourceTargetVariant::Deployment => {
-          let permissions = all_resources
-            .deployments
-            .values()
-            .filter(|resource| regex.is_match(&resource.name))
-            .map(|resource| PermissionToml {
-              target: ResourceTarget::Deployment(
-                resource.name.clone(),
-              ),
-              level: permission.level,
-              specific: permission.specific.clone(),
-            });
-          expanded.extend(permissions);
-        }
-        ResourceTargetVariant::Server => {
-          let permissions = all_resources
-            .servers
-            .values()
-            .filter(|resource| regex.is_match(&resource.name))
-            .map(|resource| PermissionToml {
-              target: ResourceTarget::Server(resource.name.clone()),
-              level: permission.level,
-              specific: permission.specific.clone(),
-            });
-          expanded.extend(permissions);
-        }
-        ResourceTargetVariant::Repo => {
-          let permissions = all_resources
-            .repos
-            .values()
-            .filter(|resource| regex.is_match(&resource.name))
-            .map(|resource| PermissionToml {
-              target: ResourceTarget::Repo(resource.name.clone()),
-              level: permission.level,
-              specific: permission.specific.clone(),
-            });
-          expanded.extend(permissions);
-        }
-        ResourceTargetVariant::Alerter => {
-          let permissions = all_resources
-            .alerters
-            .values()
-            .filter(|resource| regex.is_match(&resource.name))
-            .map(|resource| PermissionToml {
-              target: ResourceTarget::Alerter(resource.name.clone()),
-              level: permission.level,
-              specific: permission.specific.clone(),
-            });
-          expanded.extend(permissions);
-        }
-        ResourceTargetVariant::Procedure => {
-          let permissions = all_resources
-            .procedures
-            .values()
-            .filter(|resource| regex.is_match(&resource.name))
-            .map(|resource| PermissionToml {
-              target: ResourceTarget::Procedure(
-                resource.name.clone(),
-              ),
-              level: permission.level,
-              specific: permission.specific.clone(),
-            });
-          expanded.extend(permissions);
-        }
-        ResourceTargetVariant::Action => {
-          let permissions = all_resources
-            .actions
-            .values()
-            .filter(|resource| regex.is_match(&resource.name))
-            .map(|resource| PermissionToml {
-              target: ResourceTarget::Action(resource.name.clone()),
-              level: permission.level,
-              specific: permission.specific.clone(),
-            });
-          expanded.extend(permissions);
-        }
-        ResourceTargetVariant::ResourceSync => {
-          let permissions = all_resources
-            .syncs
-            .values()
-            .filter(|resource| regex.is_match(&resource.name))
-            .map(|resource| PermissionToml {
-              target: ResourceTarget::ResourceSync(
-                resource.name.clone(),
-              ),
-              level: permission.level,
-              specific: permission.specific.clone(),
-            });
-          expanded.extend(permissions);
-        }
-        ResourceTargetVariant::Stack => {
-          let permissions = all_resources
-            .stacks
-            .values()
-            .filter(|resource| regex.is_match(&resource.name))
-            .map(|resource| PermissionToml {
-              target: ResourceTarget::Stack(resource.name.clone()),
-              level: permission.level,
-              specific: permission.specific.clone(),
-            });
-          expanded.extend(permissions);
-        }
-        ResourceTargetVariant::System => {}
+    let matcher = Matcher::new(&id)?;
+    match variant {
+      ResourceTargetVariant::Build => {
+        let permissions = all_resources
+          .builds
+          .values()
+          .filter(|resource| matcher.is_match(&resource.name))
+          .map(|resource| PermissionToml {
+            target: ResourceTarget::Build(resource.name.clone()),
+            level: permission.level,
+            specific: permission.specific.clone(),
+          });
+        expanded.extend(permissions);
       }
-    } else {
-      // No regex
-      expanded.push(permission);
+      ResourceTargetVariant::Builder => {
+        let permissions = all_resources
+          .builders
+          .values()
+          .filter(|resource| matcher.is_match(&resource.name))
+          .map(|resource| PermissionToml {
+            target: ResourceTarget::Builder(resource.name.clone()),
+            level: permission.level,
+            specific: permission.specific.clone(),
+          });
+        expanded.extend(permissions);
+      }
+      ResourceTargetVariant::Deployment => {
+        let permissions = all_resources
+          .deployments
+          .values()
+          .filter(|resource| matcher.is_match(&resource.name))
+          .map(|resource| PermissionToml {
+            target: ResourceTarget::Deployment(resource.name.clone()),
+            level: permission.level,
+            specific: permission.specific.clone(),
+          });
+        expanded.extend(permissions);
+      }
+      ResourceTargetVariant::Server => {
+        let permissions = all_resources
+          .servers
+          .values()
+          .filter(|resource| matcher.is_match(&resource.name))
+          .map(|resource| PermissionToml {
+            target: ResourceTarget::Server(resource.name.clone()),
+            level: permission.level,
+            specific: permission.specific.clone(),
+          });
+        expanded.extend(permissions);
+      }
+      ResourceTargetVariant::Repo => {
+        let permissions = all_resources
+          .repos
+          .values()
+          .filter(|resource| matcher.is_match(&resource.name))
+          .map(|resource| PermissionToml {
+            target: ResourceTarget::Repo(resource.name.clone()),
+            level: permission.level,
+            specific: permission.specific.clone(),
+          });
+        expanded.extend(permissions);
+      }
+      ResourceTargetVariant::Alerter => {
+        let permissions = all_resources
+          .alerters
+          .values()
+          .filter(|resource| matcher.is_match(&resource.name))
+          .map(|resource| PermissionToml {
+            target: ResourceTarget::Alerter(resource.name.clone()),
+            level: permission.level,
+            specific: permission.specific.clone(),
+          });
+        expanded.extend(permissions);
+      }
+      ResourceTargetVariant::Procedure => {
+        let permissions = all_resources
+          .procedures
+          .values()
+          .filter(|resource| matcher.is_match(&resource.name))
+          .map(|resource| PermissionToml {
+            target: ResourceTarget::Procedure(resource.name.clone()),
+            level: permission.level,
+            specific: permission.specific.clone(),
+          });
+        expanded.extend(permissions);
+      }
+      ResourceTargetVariant::Action => {
+        let permissions = all_resources
+          .actions
+          .values()
+          .filter(|resource| matcher.is_match(&resource.name))
+          .map(|resource| PermissionToml {
+            target: ResourceTarget::Action(resource.name.clone()),
+            level: permission.level,
+            specific: permission.specific.clone(),
+          });
+        expanded.extend(permissions);
+      }
+      ResourceTargetVariant::ResourceSync => {
+        let permissions = all_resources
+          .syncs
+          .values()
+          .filter(|resource| matcher.is_match(&resource.name))
+          .map(|resource| PermissionToml {
+            target: ResourceTarget::ResourceSync(
+              resource.name.clone(),
+            ),
+            level: permission.level,
+            specific: permission.specific.clone(),
+          });
+        expanded.extend(permissions);
+      }
+      ResourceTargetVariant::Stack => {
+        let permissions = all_resources
+          .stacks
+          .values()
+          .filter(|resource| matcher.is_match(&resource.name))
+          .map(|resource| PermissionToml {
+            target: ResourceTarget::Stack(resource.name.clone()),
+            level: permission.level,
+            specific: permission.specific.clone(),
+          });
+        expanded.extend(permissions);
+      }
+      ResourceTargetVariant::System => {}
     }
   }
 
