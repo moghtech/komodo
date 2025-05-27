@@ -1,7 +1,7 @@
 import { AuthResponses, ExecuteResponses, ReadResponses, UserResponses, WriteResponses } from "./responses.js";
 import { AuthRequest, ConnectContainerExecQuery, ConnectDeploymentExecQuery, ConnectStackExecQuery, ConnectTerminalQuery, ExecuteRequest, ExecuteTerminalBody, ReadRequest, Update, UpdateListItem, UserRequest, WriteRequest } from "./types.js";
 export * as Types from "./types.js";
-type InitOptions = {
+export type InitOptions = {
     type: "jwt";
     params: {
         jwt: string;
@@ -18,6 +18,16 @@ export declare class CancelToken {
     constructor();
     cancel(): void;
 }
+export type ContainerExecQuery = {
+    type: "container";
+    query: ConnectContainerExecQuery;
+} | {
+    type: "deployment";
+    query: ConnectDeploymentExecQuery;
+} | {
+    type: "stack";
+    query: ConnectStackExecQuery;
+};
 /** Initialize a new client for Komodo */
 export declare function KomodoClient(url: string, options: InitOptions): {
     /**
@@ -161,16 +171,7 @@ export declare function KomodoClient(url: string, options: InitOptions): {
      * depends on `query.type`.
      */
     connect_container_exec: ({ query: { type, query }, on_message, on_login, on_open, on_close, }: {
-        query: {
-            type: "container";
-            query: ConnectContainerExecQuery;
-        } | {
-            type: "deployment";
-            query: ConnectDeploymentExecQuery;
-        } | {
-            type: "stack";
-            query: ConnectStackExecQuery;
-        };
+        query: ContainerExecQuery;
         on_message?: (e: MessageEvent<any>) => void;
         on_login?: () => void;
         on_open?: () => void;

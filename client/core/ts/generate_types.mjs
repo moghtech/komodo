@@ -32,7 +32,7 @@ function fix_types() {
     .replaceAll("ServerTemplateConfigVariant", 'ServerTemplateConfig["type"]')
     // Add '| string' to env vars
     .replaceAll("EnvironmentVar[]", "EnvironmentVar[] | string")
-    .replaceAll("HashSet", "Array")
+    .replaceAll("IndexSet", "Array")
     .replaceAll(
       ": PermissionLevelAndSpecifics",
       ": PermissionLevelAndSpecifics | PermissionLevel"

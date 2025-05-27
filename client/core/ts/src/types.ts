@@ -2357,8 +2357,8 @@ export enum ContainerStateStatusEnum {
 	Running = "running",
 	Paused = "paused",
 	Restarting = "restarting",
-	Removing = "removing",
 	Exited = "exited",
+	Removing = "removing",
 	Dead = "dead",
 }
 
@@ -2492,6 +2492,7 @@ export enum MountTypeEnum {
 	Empty = "",
 	Bind = "bind",
 	Volume = "volume",
+	Image = "image",
 	Tmpfs = "tmpfs",
 	Npipe = "npipe",
 	Cluster = "cluster",

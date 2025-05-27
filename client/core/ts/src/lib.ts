@@ -25,7 +25,7 @@ import {
 
 export * as Types from "./types.js";
 
-type InitOptions =
+export type InitOptions =
   | { type: "jwt"; params: { jwt: string } }
   | { type: "api-key"; params: { key: string; secret: string } };
 
@@ -38,6 +38,20 @@ export class CancelToken {
     this.cancelled = true;
   }
 }
+
+export type ContainerExecQuery =
+  | {
+      type: "container";
+      query: ConnectContainerExecQuery;
+    }
+  | {
+      type: "deployment";
+      query: ConnectDeploymentExecQuery;
+    }
+  | {
+      type: "stack";
+      query: ConnectStackExecQuery;
+    };
 
 /** Initialize a new client for Komodo */
 export function KomodoClient(url: string, options: InitOptions) {
@@ -374,19 +388,7 @@ export function KomodoClient(url: string, options: InitOptions) {
     on_open,
     on_close,
   }: {
-    query:
-      | {
-          type: "container";
-          query: ConnectContainerExecQuery;
-        }
-      | {
-          type: "deployment";
-          query: ConnectDeploymentExecQuery;
-        }
-      | {
-          type: "stack";
-          query: ConnectStackExecQuery;
-        };
+    query: ContainerExecQuery;
     on_message?: (e: MessageEvent<any>) => void;
     on_login?: () => void;
     on_open?: () => void;
