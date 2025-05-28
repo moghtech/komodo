@@ -53,6 +53,13 @@ export type ContainerExecQuery =
       query: ConnectStackExecQuery;
     };
 
+export type TerminalCallbacks = {
+  on_message?: (e: MessageEvent<any>) => void;
+  on_login?: () => void;
+  on_open?: () => void;
+  on_close?: () => void;
+};
+
 /** Initialize a new client for Komodo */
 export function KomodoClient(url: string, options: InitOptions) {
   const state = {
@@ -333,11 +340,7 @@ export function KomodoClient(url: string, options: InitOptions) {
     on_close,
   }: {
     query: ConnectTerminalQuery;
-    on_message?: (e: MessageEvent<any>) => void;
-    on_login?: () => void;
-    on_open?: () => void;
-    on_close?: () => void;
-  }) => {
+  } & TerminalCallbacks) => {
     const url_query = new URLSearchParams(
       query as any as Record<string, string>
     ).toString();
@@ -389,11 +392,7 @@ export function KomodoClient(url: string, options: InitOptions) {
     on_close,
   }: {
     query: ContainerExecQuery;
-    on_message?: (e: MessageEvent<any>) => void;
-    on_login?: () => void;
-    on_open?: () => void;
-    on_close?: () => void;
-  }) => {
+  } & TerminalCallbacks) => {
     const url_query = new URLSearchParams(
       query as any as Record<string, string>
     ).toString();

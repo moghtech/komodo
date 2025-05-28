@@ -32,7 +32,7 @@ import { ResourceNotifications } from "@pages/resource-notifications";
 import { MonacoEditor } from "@components/monaco";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
-import { ContainerTerminal } from "@components/terminal";
+import { ContainerTerminal } from "@components/terminal/container";
 
 export const ContainerPage = () => {
   const { type, id, container } = useParams() as {
@@ -287,8 +287,15 @@ const LogOrTerminal = ({
       </TabsContent>
       <TabsContent value="Terminal">
         <ContainerTerminal
-          server={server}
-          container={container}
+          query={{
+            type: "container",
+            query: {
+              server,
+              container,
+              // This is handled inside ContainerTerminal
+              shell: "",
+            },
+          }}
           titleOther={tabs}
         />
       </TabsContent>

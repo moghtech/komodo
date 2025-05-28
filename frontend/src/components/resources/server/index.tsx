@@ -37,7 +37,7 @@ import { ResourceComponents } from "..";
 import { ServerInfo } from "./info";
 import { ServerStats } from "./stats";
 import { GroupActions } from "@components/group-actions";
-import { ServerTerminals } from "./terminal";
+import { ServerTerminals } from "@components/terminal/server";
 import { usePermissions } from "@lib/hooks";
 import { Card, CardHeader, CardTitle } from "@ui/card";
 

@@ -33,7 +33,7 @@ import { DockerResourceLink, ResourcePageHeader } from "@components/util";
 import { ResourceNotifications } from "@pages/resource-notifications";
 import { Fragment } from "react/jsx-runtime";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
-import { ContainerTerminal } from "@components/terminal";
+import { ContainerTerminal } from "@components/terminal/container";
 import { useServer } from "@components/resources/server";
 
 type IdServiceComponent = React.FC<{ id: string; service?: string }>;
@@ -196,7 +196,6 @@ const StackServicePageInner = ({
             <LogOrTerminal
               stack={stack}
               service={service}
-              container_name={container?.name}
               container_state={state}
             />
           )}
@@ -209,12 +208,10 @@ const StackServicePageInner = ({
 const LogOrTerminal = ({
   stack,
   service,
-  container_name,
   container_state,
 }: {
   stack: Types.StackListItem;
   service: string;
-  container_name: string | undefined;
   container_state: Types.ContainerStateStatusEnum;
 }) => {
   const [_view, setView] = useLocalStorage<"Log" | "Terminal">(
@@ -258,13 +255,18 @@ const LogOrTerminal = ({
         />
       </TabsContent>
       <TabsContent value="Terminal">
-        {stack.info.server_id && container_name && (
-          <ContainerTerminal
-            server={stack.info.server_id}
-            container={container_name}
-            titleOther={tabs}
-          />
-        )}
+        <ContainerTerminal
+          query={{
+            type: "stack",
+            query: {
+              stack: stack.id,
+              service,
+              // This is handled inside ContainerTerminal
+              shell: "",
+            },
+          }}
+          titleOther={tabs}
+        />
       </TabsContent>
     </Tabs>
   );

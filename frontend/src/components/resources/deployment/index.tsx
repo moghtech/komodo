@@ -30,8 +30,8 @@ import {
 } from "@components/util";
 import { GroupActions } from "@components/group-actions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
-import { DeploymentTerminal } from "./terminal";
 import { usePermissions } from "@lib/hooks";
+import { ContainerTerminal } from "@components/terminal/container";
 
 // const configOrLog = atomWithStorage("config-or-log-v1", "Config");
 
@@ -112,7 +112,17 @@ const ConfigTabsInner = ({
         <DeploymentLogs id={deployment.id} titleOther={tabs} />
       </TabsContent>
       <TabsContent value="Terminal">
-        <DeploymentTerminal deployment={deployment} titleOther={tabs} />
+        <ContainerTerminal
+          query={{
+            type: "deployment",
+            query: {
+              deployment: deployment.id,
+              // This is handled inside ContainerTerminal
+              shell: "",
+            },
+          }}
+          titleOther={tabs}
+        />
       </TabsContent>
     </Tabs>
   );

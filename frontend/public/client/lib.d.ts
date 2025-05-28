@@ -28,6 +28,12 @@ export type ContainerExecQuery = {
     type: "stack";
     query: ConnectStackExecQuery;
 };
+export type TerminalCallbacks = {
+    on_message?: (e: MessageEvent<any>) => void;
+    on_login?: () => void;
+    on_open?: () => void;
+    on_close?: () => void;
+};
 /** Initialize a new client for Komodo */
 export declare function KomodoClient(url: string, options: InitOptions): {
     /**
@@ -159,11 +165,7 @@ export declare function KomodoClient(url: string, options: InitOptions): {
      */
     connect_terminal: ({ query, on_message, on_login, on_open, on_close, }: {
         query: ConnectTerminalQuery;
-        on_message?: (e: MessageEvent<any>) => void;
-        on_login?: () => void;
-        on_open?: () => void;
-        on_close?: () => void;
-    }) => WebSocket;
+    } & TerminalCallbacks) => WebSocket;
     /**
      * Subscribes to container exec io over websocket message,
      * for use with xtermjs. Can connect to Deployment, Stack,
@@ -172,11 +174,7 @@ export declare function KomodoClient(url: string, options: InitOptions): {
      */
     connect_container_exec: ({ query: { type, query }, on_message, on_login, on_open, on_close, }: {
         query: ContainerExecQuery;
-        on_message?: (e: MessageEvent<any>) => void;
-        on_login?: () => void;
-        on_open?: () => void;
-        on_close?: () => void;
-    }) => WebSocket;
+    } & TerminalCallbacks) => WebSocket;
     /**
      * Executes a command on a given Server / terminal,
      * and returns a stream to process the output as it comes in.
