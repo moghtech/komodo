@@ -38,6 +38,11 @@ pub struct UserGroup {
   #[cfg_attr(feature = "mongo", unique_index)]
   pub name: String,
 
+  /// Whether all users will implicitly have the permissions in this group.
+  #[cfg_attr(feature = "mongo", index)]
+  #[serde(default)]
+  pub everyone: bool,
+
   /// User ids of group members
   #[cfg_attr(feature = "mongo", index)]
   #[serde(default, deserialize_with = "string_list_deserializer")]

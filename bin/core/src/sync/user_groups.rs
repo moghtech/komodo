@@ -983,8 +983,9 @@ pub async fn convert_user_groups(
       user_group.id,
       UserGroupToml {
         name: user_group.name,
-        users,
+        everyone: user_group.everyone,
         all: user_group.all,
+        users,
         permissions,
       },
     ));

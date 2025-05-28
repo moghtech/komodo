@@ -2337,6 +2337,8 @@ export interface UserGroup {
 	_id?: MongoId;
 	/** A name for the user group */
 	name: string;
+	/** Whether all users will implicitly have the permissions in this group. */
+	everyone?: boolean;
 	/** User ids of group members */
 	users?: string[];
 	/** Give the user group elevated permissions on all resources of a certain type */
@@ -6865,6 +6867,8 @@ export interface ResourceToml<PartialConfig> {
 export interface UserGroupToml {
 	/** User group name */
 	name: string;
+	/** Whether all users will implicitly have the permissions in this group. */
+	everyone?: boolean;
 	/** Users in the group */
 	users?: string[];
 	/** Give the user group elevated permissions on all resources of a certain type */
@@ -7075,6 +7079,17 @@ export interface ServerHealth {
 }
 
 /**
+ * **Admin only.** Set `everyone` property of User Group.
+ * Response: [UserGroup]
+ */
+export interface SetEveryoneUserGroup {
+	/** Id or name. */
+	user_group: string;
+	/** Whether this user group applies to everyone. */
+	everyone: boolean;
+}
+
+/**
  * Set the time the user last opened the UI updates.
  * Used for unseen notification dot.
  * Response: [NoData]
@@ -7083,7 +7098,7 @@ export interface SetLastSeenUpdate {
 }
 
 /**
- * **Admin only.** Completely override the user in the group.
+ * **Admin only.** Completely override the users in the group.
  * Response: [UserGroup]
  */
 export interface SetUsersInUserGroup {
@@ -7893,6 +7908,7 @@ export type WriteRequest =
 	| { type: "AddUserToUserGroup", params: AddUserToUserGroup }
 	| { type: "RemoveUserFromUserGroup", params: RemoveUserFromUserGroup }
 	| { type: "SetUsersInUserGroup", params: SetUsersInUserGroup }
+	| { type: "SetEveryoneUserGroup", params: SetEveryoneUserGroup }
 	| { type: "UpdateUserAdmin", params: UpdateUserAdmin }
 	| { type: "UpdateUserBasePermissions", params: UpdateUserBasePermissions }
 	| { type: "UpdatePermissionOnResourceType", params: UpdatePermissionOnResourceType }

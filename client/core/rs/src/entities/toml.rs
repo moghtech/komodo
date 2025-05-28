@@ -155,6 +155,10 @@ pub struct UserGroupToml {
   /// User group name
   pub name: String,
 
+  /// Whether all users will implicitly have the permissions in this group.
+  #[serde(default)]
+  pub everyone: bool,
+
   /// Users in the group
   #[serde(default)]
   pub users: Vec<String>,

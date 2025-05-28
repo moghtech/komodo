@@ -239,7 +239,10 @@ pub async fn get_user_user_groups(
   find_collect(
     &db_client().user_groups,
     doc! {
-      "users": user_id
+      "$or": [
+        { "everyone": true },
+        { "users": user_id },
+      ]
     },
     None,
   )

@@ -69,6 +69,7 @@ pub enum WriteRequest {
   AddUserToUserGroup(AddUserToUserGroup),
   RemoveUserFromUserGroup(RemoveUserFromUserGroup),
   SetUsersInUserGroup(SetUsersInUserGroup),
+  SetEveryoneUserGroup(SetEveryoneUserGroup),
 
   // ==== PERMISSIONS ====
   UpdateUserAdmin(UpdateUserAdmin),

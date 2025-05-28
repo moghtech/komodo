@@ -191,6 +191,7 @@ export type WriteResponses = {
   AddUserToUserGroup: Types.UserGroup;
   RemoveUserFromUserGroup: Types.UserGroup;
   SetUsersInUserGroup: Types.UserGroup;
+  SetEveryoneUserGroup: Types.UserGroup;
 
   // ==== PERMISSIONS ====
   UpdateUserAdmin: Types.UpdateUserAdminResponse;

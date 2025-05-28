@@ -2,10 +2,7 @@ use std::{collections::HashMap, str::FromStr};
 
 use anyhow::{Context, anyhow};
 use komodo_client::{
-  api::write::{
-    AddUserToUserGroup, CreateUserGroup, DeleteUserGroup,
-    RemoveUserFromUserGroup, RenameUserGroup, SetUsersInUserGroup,
-  },
+  api::write::*,
   entities::{komodo_timestamp, user_group::UserGroup},
 };
 use mungos::{
@@ -20,6 +17,7 @@ use crate::state::db_client;
 use super::WriteArgs;
 
 impl Resolve<WriteArgs> for CreateUserGroup {
+  #[instrument(name = "CreateUserGroup", skip(admin), fields(admin = admin.username))]
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
@@ -28,11 +26,12 @@ impl Resolve<WriteArgs> for CreateUserGroup {
       return Err(anyhow!("This call is admin-only").into());
     }
     let user_group = UserGroup {
+      name: self.name,
       id: Default::default(),
+      everyone: Default::default(),
       users: Default::default(),
       all: Default::default(),
       updated_at: komodo_timestamp(),
-      name: self.name,
     };
     let db = db_client();
     let id = db
@@ -53,6 +52,7 @@ impl Resolve<WriteArgs> for CreateUserGroup {
 }
 
 impl Resolve<WriteArgs> for RenameUserGroup {
+  #[instrument(name = "RenameUserGroup", skip(admin), fields(admin = admin.username))]
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
@@ -78,6 +78,7 @@ impl Resolve<WriteArgs> for RenameUserGroup {
 }
 
 impl Resolve<WriteArgs> for DeleteUserGroup {
+  #[instrument(name = "DeleteUserGroup", skip(admin), fields(admin = admin.username))]
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
@@ -110,6 +111,7 @@ impl Resolve<WriteArgs> for DeleteUserGroup {
 }
 
 impl Resolve<WriteArgs> for AddUserToUserGroup {
+  #[instrument(name = "AddUserToUserGroup", skip(admin), fields(admin = admin.username))]
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
@@ -153,6 +155,7 @@ impl Resolve<WriteArgs> for AddUserToUserGroup {
 }
 
 impl Resolve<WriteArgs> for RemoveUserFromUserGroup {
+  #[instrument(name = "RemoveUserFromUserGroup", skip(admin), fields(admin = admin.username))]
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
@@ -196,6 +199,7 @@ impl Resolve<WriteArgs> for RemoveUserFromUserGroup {
 }
 
 impl Resolve<WriteArgs> for SetUsersInUserGroup {
+  #[instrument(name = "SetUsersInUserGroup", skip(admin), fields(admin = admin.username))]
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
@@ -231,6 +235,36 @@ impl Resolve<WriteArgs> for SetUsersInUserGroup {
       .update_one(filter.clone(), doc! { "$set": { "users": users } })
       .await
       .context("failed to set users on user group")?;
+    let res = db
+      .user_groups
+      .find_one(filter)
+      .await
+      .context("failed to query db for UserGroups")?
+      .context("no user group with given id")?;
+    Ok(res)
+  }
+}
+
+impl Resolve<WriteArgs> for SetEveryoneUserGroup {
+  #[instrument(name = "SetEveryoneUserGroup", skip(admin), fields(admin = admin.username))]
+  async fn resolve(
+    self,
+    WriteArgs { user: admin }: &WriteArgs,
+  ) -> serror::Result<UserGroup> {
+    if !admin.admin {
+      return Err(anyhow!("This call is admin-only").into());
+    }
+
+    let db = db_client();
+
+    let filter = match ObjectId::from_str(&self.user_group) {
+      Ok(id) => doc! { "_id": id },
+      Err(_) => doc! { "name": &self.user_group },
+    };
+    db.user_groups
+      .update_one(filter.clone(), doc! { "$set": { "everyone": self.everyone } })
+      .await
+      .context("failed to set everyone on user group")?;
     let res = db
       .user_groups
       .find_one(filter)
