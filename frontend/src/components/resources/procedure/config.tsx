@@ -131,7 +131,8 @@ export const ProcedureConfig = ({ id }: { id: string }) => {
 
   if (!config) return null;
 
-  const disabled = global_disabled || perms?.level !== Types.PermissionLevel.Write;
+  const disabled =
+    global_disabled || perms?.level !== Types.PermissionLevel.Write;
   const webhook_integration = integrations[PROCEDURE_GIT_PROVIDER] ?? "Github";
   const stages = update.stages || procedure.config?.stages || [];
 
@@ -381,7 +382,7 @@ export const ProcedureConfig = ({ id }: { id: string }) => {
                 <ConfigItem label="Webhook Url - Run">
                   <CopyWebhook
                     integration={webhook_integration}
-                    path={`/procedure/${id_or_name === "Id" ? id : name}/${branch}`}
+                    path={`/procedure/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}/${branch}`}
                   />
                 </ConfigItem>
               ),

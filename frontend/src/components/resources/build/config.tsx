@@ -520,7 +520,7 @@ export const BuildConfig = ({
               <ConfigItem label="Webhook Url - Build">
                 <CopyWebhook
                   integration={webhook_integration}
-                  path={`/build/${id_or_name === "Id" ? id : name}`}
+                  path={`/build/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}`}
                 />
               </ConfigItem>
             ),

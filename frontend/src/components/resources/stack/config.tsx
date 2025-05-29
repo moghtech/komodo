@@ -626,21 +626,12 @@ export const StackConfig = ({
             ["Builder" as any]: () => (
               <WebhookBuilder git_provider={git_provider} />
             ),
-            // ["Refresh" as any]: () =>
-            //   (update.branch ?? config.branch) && (
-            //     <ConfigItem label="Refresh Cache">
-            //       <CopyWebhook
-            //         integration={webhook_integration}
-            //         path={`/stack/${id_or_name === "Id" ? id : name}/refresh`}
-            //       />
-            //     </ConfigItem>
-            //   ),
             ["Deploy" as any]: () =>
               (update.branch ?? config.branch) && (
                 <ConfigItem label="Webhook Url - Deploy">
                   <CopyWebhook
                     integration={webhook_integration}
-                    path={`/stack/${id_or_name === "Id" ? id : name}/deploy`}
+                    path={`/stack/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}/deploy`}
                   />
                 </ConfigItem>
               ),

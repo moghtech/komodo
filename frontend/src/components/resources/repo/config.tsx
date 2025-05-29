@@ -257,7 +257,7 @@ export const RepoConfig = ({ id }: { id: string }) => {
                 <ConfigItem label="Webhook Url - Pull">
                   <CopyWebhook
                     integration={webhook_integration}
-                    path={`/repo/${id_or_name === "Id" ? id : name}/pull`}
+                    path={`/repo/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}/pull`}
                   />
                 </ConfigItem>
               ),
@@ -265,7 +265,7 @@ export const RepoConfig = ({ id }: { id: string }) => {
                 <ConfigItem label="Webhook Url - Clone">
                   <CopyWebhook
                     integration={webhook_integration}
-                    path={`/repo/${id_or_name === "Id" ? id : name}/clone`}
+                    path={`/repo/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}/clone`}
                   />
                 </ConfigItem>
               ),
@@ -273,7 +273,7 @@ export const RepoConfig = ({ id }: { id: string }) => {
                 <ConfigItem label="Webhook Url - Build">
                   <CopyWebhook
                     integration={webhook_integration}
-                    path={`/repo/${id_or_name === "Id" ? id : name}/build`}
+                    path={`/repo/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}/build`}
                   />
                 </ConfigItem>
               ),

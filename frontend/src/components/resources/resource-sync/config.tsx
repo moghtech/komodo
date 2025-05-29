@@ -366,7 +366,7 @@ export const ResourceSyncConfig = ({
               >
                 <CopyWebhook
                   integration={webhook_integration}
-                  path={`/sync/${id_or_name === "Id" ? id : name}/refresh`}
+                  path={`/sync/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}/refresh`}
                 />
               </ConfigItem>
             ),
@@ -377,7 +377,7 @@ export const ResourceSyncConfig = ({
               >
                 <CopyWebhook
                   integration={webhook_integration}
-                  path={`/sync/${id_or_name === "Id" ? id : name}/sync`}
+                  path={`/sync/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}/sync`}
                 />
               </ConfigItem>
             ),
