@@ -157,6 +157,10 @@ pub async fn get_updates_for_view(
   }
 
   for mut user_group in user_groups {
+    if user_group.everyone {
+      user_group.users.clear();
+    }
+
     user_group
       .permissions
       .retain(|p| p.level > PermissionLevel::None);
@@ -250,6 +254,10 @@ pub async fn get_updates_for_execution(
     .collect::<HashMap<_, _>>();
 
   for mut user_group in user_groups {
+    if user_group.everyone {
+      user_group.users.clear();
+    }
+
     user_group
       .permissions
       .retain(|p| p.level > PermissionLevel::None);
@@ -1036,11 +1044,16 @@ pub async fn convert_user_groups(
       }
     })
     .collect::<Vec<_>>();
-    let mut users = user_group
-      .users
-      .into_iter()
-      .filter_map(|user_id| usernames.get(&user_id).cloned())
-      .collect::<Vec<_>>();
+
+    let mut users = if user_group.everyone {
+      Vec::new()
+    } else {
+      user_group
+        .users
+        .into_iter()
+        .filter_map(|user_id| usernames.get(&user_id).cloned())
+        .collect::<Vec<_>>()
+    };
 
     permissions.sort_by(sort_permissions);
     users.sort();
@@ -1051,7 +1064,11 @@ pub async fn convert_user_groups(
         name: user_group.name,
         everyone: user_group.everyone,
         all: user_group.all,
-        users,
+        users: if user_group.everyone {
+          Vec::new()
+        } else {
+          users
+        },
         permissions,
       },
     ));
