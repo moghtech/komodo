@@ -24,11 +24,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
 import {
   PermissionLevelSelector,
   SpecificPermissionSelector,
-} from "@components/config/util";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
+} from "./permissions-selector";
 
 export const PermissionsTableTabs = ({
   user_target,

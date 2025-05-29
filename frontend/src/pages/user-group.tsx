@@ -21,6 +21,7 @@ import { useToast } from "@ui/use-toast";
 import { PlusCircle, Save, SearchX, Trash, User, Users } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Switch } from "@ui/switch";
 
 export const UserGroupPage = () => {
   const { toast } = useToast();
@@ -51,6 +52,12 @@ export const UserGroupPage = () => {
       toast({ title: "Removed User from User Group" });
     },
   }).mutate;
+  const everyoneMutate = useWrite("SetEveryoneUserGroup", {
+    onSuccess: () => {
+      inv(["ListUserGroups"]);
+      toast({ title: "Toggled User Group 'everyone'" });
+    },
+  }).mutate;
   if (!group) return null;
   return (
     <Page
@@ -58,33 +65,56 @@ export const UserGroupPage = () => {
       icon={<Users className="w-8 h-8" />}
       actions={<ExportButton user_groups={[group_id]} />}
       subtitle={
-        <div className="text-sm text-muted-foreground flex gap-2">
+        <div className="text-sm text-muted-foreground flex gap-2 items-center">
           <div>User Group</div>|
-          {(group.users ?? []).length > 0 && (
-            <div>
-              {(group.users ?? []).length} User
-              {(group.users ?? []).length > 1 ? "s" : ""}
-            </div>
-          )}
-          {(group.users ?? []).length === 0 && <div>No Users</div>}
+          <div className="font-bold">
+            {group.everyone && "Everyone"}
+            {!group.everyone && (group.users ?? []).length > 0 && (
+              <>
+                {(group.users ?? []).length} User
+                {(group.users ?? []).length > 1 ? "s" : ""}
+              </>
+            )}
+            {!group.everyone && (group.users ?? []).length === 0 && "No Users"}
+          </div>
         </div>
       }
     >
       <Section
         title="Users"
         icon={<User className="w-4 h-4" />}
-        actions={<AddUserToGroup group_id={group_id} />}
+        titleRight={
+          <div className="ml-4 flex gap-4 items-center">
+            {!group.everyone && <AddUserToGroup group_id={group_id} />}
+            <div className="flex gap-2 items-center">
+              Everyone
+              <Switch
+                checked={group.everyone}
+                onCheckedChange={(everyone) =>
+                  everyoneMutate({ user_group: group_id, everyone })
+                }
+              />
+            </div>
+            {group.everyone && (
+              <div className="text-muted-foreground">
+                All users will inherit the permissions in this group.
+              </div>
+            )}
+          </div>
+        }
       >
-        <UserTable
-          users={
-            users?.filter((user) =>
-              group ? (group.users ?? []).includes(user._id?.$oid!) : false
-            ) ?? []
-          }
-          onUserRemove={(user_id) =>
-            removeMutate({ user_group: group_id, user: user_id })
-          }
-        />
+        {!group.everyone && (
+          <UserTable
+            users={
+              users?.filter((user) =>
+                group ? (group.users ?? []).includes(user._id?.$oid!) : false
+              ) ?? []
+            }
+            onUserRemove={(user_id) =>
+              removeMutate({ user_group: group_id, user: user_id })
+            }
+          />
+        )}
       </Section>
 
       <PermissionsTableTabs user_target={{ type: "UserGroup", id: group_id }} />
@@ -157,7 +187,7 @@ const AddUserToGroup = ({ group_id }: { group_id: string }) => {
       <PopoverContent
         className="w-[300px] max-h-[400px] p-0"
         sideOffset={12}
-        align="end"
+        align="start"
       >
         <Command shouldFilter={false}>
           <CommandInput

@@ -44,6 +44,7 @@ struct BasicUserGroupToml {
   name: String,
   #[serde(skip_serializing_if = "is_false")]
   everyone: bool,
+  #[serde(skip_serializing_if = "Vec::is_empty")]
   users: Vec<String>,
 }
 
@@ -64,7 +65,11 @@ pub fn user_group_to_toml(
   let basic = BasicUserGroupToml {
     name: user_group.name,
     everyone: user_group.everyone,
-    users: user_group.users,
+    users: if user_group.everyone {
+      Vec::new()
+    } else {
+      user_group.users
+    },
   };
   let basic = toml_pretty::to_string(&basic, TOML_PRETTY_OPTIONS)
     .context("failed to serialize user group to toml")?;
