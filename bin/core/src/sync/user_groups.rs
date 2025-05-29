@@ -1,4 +1,6 @@
-use std::{cmp::Ordering, collections::HashMap, sync::OnceLock};
+use std::{
+  cmp::Ordering, collections::HashMap, fmt::Write, sync::OnceLock,
+};
 
 use anyhow::Context;
 use formatting::{Color, bold, colored, muted};
@@ -26,6 +28,7 @@ use komodo_client::{
 };
 use mungos::find::find_collect;
 use resolver_api::Resolve;
+use serde::Serialize;
 
 use crate::{
   api::{read::ReadArgs, write::WriteArgs},
@@ -34,6 +37,79 @@ use crate::{
 };
 
 use super::{AllResourcesById, toml::TOML_PRETTY_OPTIONS};
+
+/// Used to serialize user group
+#[derive(Serialize)]
+struct BasicUserGroupToml {
+  name: String,
+  #[serde(skip_serializing_if = "is_false")]
+  everyone: bool,
+  users: Vec<String>,
+}
+
+fn is_false(b: &bool) -> bool {
+  !b
+}
+
+/// Used to serialize user group
+#[derive(Serialize)]
+struct Permissions {
+  permissions: Vec<PermissionToml>,
+}
+
+pub fn user_group_to_toml(
+  user_group: UserGroupToml,
+) -> anyhow::Result<String> {
+  // Start with the basic body
+  let basic = BasicUserGroupToml {
+    name: user_group.name,
+    everyone: user_group.everyone,
+    users: user_group.users,
+  };
+  let basic = toml_pretty::to_string(&basic, TOML_PRETTY_OPTIONS)
+    .context("failed to serialize user group to toml")?;
+  let mut res = format!("[[user_group]]\n{basic}");
+
+  // Add "all" permissions
+  for (variant, PermissionLevelAndSpecifics { level, specific }) in
+    user_group.all
+  {
+    write!(&mut res, "\nall.{variant} = ")
+      .context("failed to serialize user group 'all' to toml")?;
+    if specific.is_empty() {
+      res.push('"');
+      res.push_str(level.as_ref());
+      res.push('"');
+    } else {
+      let specific = serde_json::to_string(&specific)
+        .context(
+          "failed to serialize user group specifics to... json?",
+        )?
+        .replace(",", ", ");
+      write!(
+        &mut res,
+        "{{ level = \"{level}\", specific = {specific} }}"
+      )
+      .context(
+        "failed to serialize user group 'all' with specifics to toml",
+      )?;
+    }
+  }
+
+  // End with resource permissions array
+  res.push('\n');
+  res.push_str(
+    &toml_pretty::to_string(
+      &Permissions {
+        permissions: user_group.permissions,
+      },
+      TOML_PRETTY_OPTIONS,
+    )
+    .context("failed to serialize user group permissions to toml")?,
+  );
+
+  Ok(res)
+}
 
 pub struct UpdateItem {
   user_group: UserGroupToml,
@@ -69,11 +145,7 @@ pub async fn get_updates_for_view(
     for (_id, user_group) in map.values() {
       if !user_groups.iter().any(|ug| ug.name == user_group.name) {
         diffs.push(DiffData::Delete {
-          current: format!(
-            "[[user_group]]\n{}",
-            toml_pretty::to_string(user_group, TOML_PRETTY_OPTIONS)
-              .context("failed to serialize user group to toml")?
-          ),
+          current: user_group_to_toml(user_group.clone())?,
         });
       }
     }
@@ -96,23 +168,17 @@ pub async fn get_updates_for_view(
       )
     })?;
 
-    let (_original_id, original) = match map
-      .get(&user_group.name)
-      .cloned()
-    {
-      Some(original) => original,
-      None => {
-        diffs.push(DiffData::Create {
-          name: user_group.name.clone(),
-          proposed: format!(
-            "[[user_group]]\n{}",
-            toml_pretty::to_string(&user_group, TOML_PRETTY_OPTIONS)
-              .context("failed to serialize user group to toml")?
-          ),
-        });
-        continue;
-      }
-    };
+    let (_original_id, original) =
+      match map.get(&user_group.name).cloned() {
+        Some(original) => original,
+        None => {
+          diffs.push(DiffData::Create {
+            name: user_group.name.clone(),
+            proposed: user_group_to_toml(user_group.clone())?,
+          });
+          continue;
+        }
+      };
     user_group.users.sort();
 
     let all_diff = diff_group_all(&original.all, &user_group.all);
@@ -127,16 +193,8 @@ pub async fn get_updates_for_view(
     // only add log after diff detected
     if update_users || update_all || update_permissions {
       diffs.push(DiffData::Update {
-        proposed: format!(
-          "[[user_group]]\n{}",
-          toml_pretty::to_string(&user_group, TOML_PRETTY_OPTIONS)
-            .context("failed to serialize user group to toml")?
-        ),
-        current: format!(
-          "[[user_group]]\n{}",
-          toml_pretty::to_string(&original, TOML_PRETTY_OPTIONS)
-            .context("failed to serialize user group to toml")?
-        ),
+        proposed: user_group_to_toml(user_group.clone())?,
+        current: user_group_to_toml(original.clone())?,
       });
     }
   }
@@ -611,7 +669,7 @@ async fn run_update_permissions(
     if let Err(e) = (UpdatePermissionOnTarget {
       user_target: UserTarget::UserGroup(user_group.clone()),
       resource_target: target.clone(),
-      permission: level.specifics(specific),
+      permission: level.specifics(specific.clone()),
     })
     .resolve(&WriteArgs {
       user: sync_user().to_owned(),
@@ -627,12 +685,14 @@ async fn run_update_permissions(
       ))
     } else {
       log.push_str(&format!(
-        "\n{}: {} user group '{}' permissions | {}: {target:?} | {}: {level}",
+        "\n{}: {} user group '{}' permissions | {}: {target:?} | {}: {level} | {}: {}",
         muted("INFO"),
         colored("updated", Color::Blue),
         bold(&user_group),
         muted("target"),
-        muted("level")
+        muted("level"),
+        muted("specific"),
+        specific.into_iter().map(|s| s.into()).collect::<Vec<&'static str>>().join(", ")
       ))
     }
   }
@@ -889,6 +949,7 @@ pub async fn convert_user_groups(
     .await
     .map_err(|e| e.error)?
     .into_iter()
+    .filter(|permission| permission.level > PermissionLevel::None)
     .map(|mut permission| {
       match &mut permission.resource_target {
         ResourceTarget::Build(id) => {

@@ -25,8 +25,9 @@ use crate::{
   state::db_client,
   sync::{
     AllResourcesById,
-    toml::{TOML_PRETTY_OPTIONS, ToToml, convert_resource},
-    user_groups::convert_user_groups,
+    toml::{ToToml, convert_resource},
+    user_groups::{convert_user_groups, user_group_to_toml},
+    variables::variable_to_toml,
   },
 };
 
@@ -500,22 +501,14 @@ fn serialize_resources_toml(
     if !toml.is_empty() {
       toml.push_str("\n\n##\n\n");
     }
-    toml.push_str("[[variable]]\n");
-    toml.push_str(
-      &toml_pretty::to_string(variable, TOML_PRETTY_OPTIONS)
-        .context("failed to serialize variables to toml")?,
-    );
+    toml.push_str(&variable_to_toml(variable)?);
   }
 
-  for user_group in &resources.user_groups {
+  for user_group in resources.user_groups {
     if !toml.is_empty() {
       toml.push_str("\n\n##\n\n");
     }
-    toml.push_str("[[user_group]]\n");
-    toml.push_str(
-      &toml_pretty::to_string(user_group, TOML_PRETTY_OPTIONS)
-        .context("failed to serialize user_groups to toml")?,
-    );
+    toml.push_str(&user_group_to_toml(user_group)?);
   }
 
   Ok(toml)

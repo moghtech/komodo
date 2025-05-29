@@ -3,7 +3,7 @@ use std::fmt::Write;
 use derive_variants::EnumVariants;
 use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
-use strum::{AsRefStr, Display, EnumString, VariantArray};
+use strum::{AsRefStr, Display, EnumString, IntoStaticStr, VariantArray};
 use typeshare::typeshare;
 
 use super::{MongoId, ResourceTarget};
@@ -119,6 +119,7 @@ impl Default for &PermissionLevel {
   Display,
   EnumString,
   AsRefStr,
+  IntoStaticStr,
   VariantArray,
   Hash,
   Clone,
