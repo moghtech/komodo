@@ -87,18 +87,6 @@ pub enum ExecuteRequest {
   PruneBuildx(PruneBuildx),
   PruneSystem(PruneSystem),
 
-  // ==== DEPLOYMENT ====
-  Deploy(Deploy),
-  BatchDeploy(BatchDeploy),
-  PullDeployment(PullDeployment),
-  StartDeployment(StartDeployment),
-  RestartDeployment(RestartDeployment),
-  PauseDeployment(PauseDeployment),
-  UnpauseDeployment(UnpauseDeployment),
-  StopDeployment(StopDeployment),
-  DestroyDeployment(DestroyDeployment),
-  BatchDestroyDeployment(BatchDestroyDeployment),
-
   // ==== STACK ====
   DeployStack(DeployStack),
   BatchDeployStack(BatchDeployStack),
@@ -113,6 +101,18 @@ pub enum ExecuteRequest {
   UnpauseStack(UnpauseStack),
   DestroyStack(DestroyStack),
   BatchDestroyStack(BatchDestroyStack),
+
+  // ==== DEPLOYMENT ====
+  Deploy(Deploy),
+  BatchDeploy(BatchDeploy),
+  PullDeployment(PullDeployment),
+  StartDeployment(StartDeployment),
+  RestartDeployment(RestartDeployment),
+  PauseDeployment(PauseDeployment),
+  UnpauseDeployment(UnpauseDeployment),
+  StopDeployment(StopDeployment),
+  DestroyDeployment(DestroyDeployment),
+  BatchDestroyDeployment(BatchDestroyDeployment),
 
   // ==== BUILD ====
   RunBuild(RunBuild),

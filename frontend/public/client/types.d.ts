@@ -7303,36 +7303,6 @@ export type ExecuteRequest = {
     type: "PruneSystem";
     params: PruneSystem;
 } | {
-    type: "Deploy";
-    params: Deploy;
-} | {
-    type: "BatchDeploy";
-    params: BatchDeploy;
-} | {
-    type: "PullDeployment";
-    params: PullDeployment;
-} | {
-    type: "StartDeployment";
-    params: StartDeployment;
-} | {
-    type: "RestartDeployment";
-    params: RestartDeployment;
-} | {
-    type: "PauseDeployment";
-    params: PauseDeployment;
-} | {
-    type: "UnpauseDeployment";
-    params: UnpauseDeployment;
-} | {
-    type: "StopDeployment";
-    params: StopDeployment;
-} | {
-    type: "DestroyDeployment";
-    params: DestroyDeployment;
-} | {
-    type: "BatchDestroyDeployment";
-    params: BatchDestroyDeployment;
-} | {
     type: "DeployStack";
     params: DeployStack;
 } | {
@@ -7371,6 +7341,36 @@ export type ExecuteRequest = {
 } | {
     type: "BatchDestroyStack";
     params: BatchDestroyStack;
+} | {
+    type: "Deploy";
+    params: Deploy;
+} | {
+    type: "BatchDeploy";
+    params: BatchDeploy;
+} | {
+    type: "PullDeployment";
+    params: PullDeployment;
+} | {
+    type: "StartDeployment";
+    params: StartDeployment;
+} | {
+    type: "RestartDeployment";
+    params: RestartDeployment;
+} | {
+    type: "PauseDeployment";
+    params: PauseDeployment;
+} | {
+    type: "UnpauseDeployment";
+    params: UnpauseDeployment;
+} | {
+    type: "StopDeployment";
+    params: StopDeployment;
+} | {
+    type: "DestroyDeployment";
+    params: DestroyDeployment;
+} | {
+    type: "BatchDestroyDeployment";
+    params: BatchDestroyDeployment;
 } | {
     type: "RunBuild";
     params: RunBuild;
@@ -7580,6 +7580,51 @@ export type ReadRequest = {
     type: "ListTerminals";
     params: ListTerminals;
 } | {
+    type: "GetSystemInformation";
+    params: GetSystemInformation;
+} | {
+    type: "GetSystemStats";
+    params: GetSystemStats;
+} | {
+    type: "ListSystemProcesses";
+    params: ListSystemProcesses;
+} | {
+    type: "GetStacksSummary";
+    params: GetStacksSummary;
+} | {
+    type: "GetStack";
+    params: GetStack;
+} | {
+    type: "GetStackActionState";
+    params: GetStackActionState;
+} | {
+    type: "GetStackWebhooksEnabled";
+    params: GetStackWebhooksEnabled;
+} | {
+    type: "GetStackLog";
+    params: GetStackLog;
+} | {
+    type: "SearchStackLog";
+    params: SearchStackLog;
+} | {
+    type: "InspectStackContainer";
+    params: InspectStackContainer;
+} | {
+    type: "ListStacks";
+    params: ListStacks;
+} | {
+    type: "ListFullStacks";
+    params: ListFullStacks;
+} | {
+    type: "ListStackServices";
+    params: ListStackServices;
+} | {
+    type: "ListCommonStackExtraArgs";
+    params: ListCommonStackExtraArgs;
+} | {
+    type: "ListCommonStackBuildExtraArgs";
+    params: ListCommonStackBuildExtraArgs;
+} | {
     type: "GetDeploymentsSummary";
     params: GetDeploymentsSummary;
 } | {
@@ -7600,6 +7645,9 @@ export type ReadRequest = {
 } | {
     type: "SearchDeploymentLog";
     params: SearchDeploymentLog;
+} | {
+    type: "InspectDeploymentContainer";
+    params: InspectDeploymentContainer;
 } | {
     type: "ListDeployments";
     params: ListDeployments;
@@ -7673,39 +7721,6 @@ export type ReadRequest = {
     type: "ListFullResourceSyncs";
     params: ListFullResourceSyncs;
 } | {
-    type: "GetStacksSummary";
-    params: GetStacksSummary;
-} | {
-    type: "GetStack";
-    params: GetStack;
-} | {
-    type: "GetStackActionState";
-    params: GetStackActionState;
-} | {
-    type: "GetStackWebhooksEnabled";
-    params: GetStackWebhooksEnabled;
-} | {
-    type: "GetStackLog";
-    params: GetStackLog;
-} | {
-    type: "SearchStackLog";
-    params: SearchStackLog;
-} | {
-    type: "ListStacks";
-    params: ListStacks;
-} | {
-    type: "ListFullStacks";
-    params: ListFullStacks;
-} | {
-    type: "ListStackServices";
-    params: ListStackServices;
-} | {
-    type: "ListCommonStackExtraArgs";
-    params: ListCommonStackExtraArgs;
-} | {
-    type: "ListCommonStackBuildExtraArgs";
-    params: ListCommonStackBuildExtraArgs;
-} | {
     type: "GetBuildersSummary";
     params: GetBuildersSummary;
 } | {
@@ -7753,15 +7768,6 @@ export type ReadRequest = {
 } | {
     type: "GetAlert";
     params: GetAlert;
-} | {
-    type: "GetSystemInformation";
-    params: GetSystemInformation;
-} | {
-    type: "GetSystemStats";
-    params: GetSystemStats;
-} | {
-    type: "ListSystemProcesses";
-    params: ListSystemProcesses;
 } | {
     type: "GetVariable";
     params: GetVariable;
@@ -7913,6 +7919,33 @@ export type WriteRequest = {
 } | {
     type: "DeleteAllTerminals";
     params: DeleteAllTerminals;
+} | {
+    type: "CreateStack";
+    params: CreateStack;
+} | {
+    type: "CopyStack";
+    params: CopyStack;
+} | {
+    type: "DeleteStack";
+    params: DeleteStack;
+} | {
+    type: "UpdateStack";
+    params: UpdateStack;
+} | {
+    type: "RenameStack";
+    params: RenameStack;
+} | {
+    type: "WriteStackFileContents";
+    params: WriteStackFileContents;
+} | {
+    type: "RefreshStackCache";
+    params: RefreshStackCache;
+} | {
+    type: "CreateStackWebhook";
+    params: CreateStackWebhook;
+} | {
+    type: "DeleteStackWebhook";
+    params: DeleteStackWebhook;
 } | {
     type: "CreateDeployment";
     params: CreateDeployment;
@@ -8072,33 +8105,6 @@ export type WriteRequest = {
 } | {
     type: "DeleteSyncWebhook";
     params: DeleteSyncWebhook;
-} | {
-    type: "CreateStack";
-    params: CreateStack;
-} | {
-    type: "CopyStack";
-    params: CopyStack;
-} | {
-    type: "DeleteStack";
-    params: DeleteStack;
-} | {
-    type: "UpdateStack";
-    params: UpdateStack;
-} | {
-    type: "RenameStack";
-    params: RenameStack;
-} | {
-    type: "WriteStackFileContents";
-    params: WriteStackFileContents;
-} | {
-    type: "RefreshStackCache";
-    params: RefreshStackCache;
-} | {
-    type: "CreateStackWebhook";
-    params: CreateStackWebhook;
-} | {
-    type: "DeleteStackWebhook";
-    params: DeleteStackWebhook;
 } | {
     type: "CreateTag";
     params: CreateTag;

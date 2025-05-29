@@ -124,6 +124,25 @@ enum ReadRequest {
   ListComposeProjects(ListComposeProjects),
   ListTerminals(ListTerminals),
 
+  // ==== SERVER STATS ====
+  GetSystemInformation(GetSystemInformation),
+  GetSystemStats(GetSystemStats),
+  ListSystemProcesses(ListSystemProcesses),
+
+  // ==== STACK ====
+  GetStacksSummary(GetStacksSummary),
+  GetStack(GetStack),
+  GetStackActionState(GetStackActionState),
+  GetStackWebhooksEnabled(GetStackWebhooksEnabled),
+  GetStackLog(GetStackLog),
+  SearchStackLog(SearchStackLog),
+  InspectStackContainer(InspectStackContainer),
+  ListStacks(ListStacks),
+  ListFullStacks(ListFullStacks),
+  ListStackServices(ListStackServices),
+  ListCommonStackExtraArgs(ListCommonStackExtraArgs),
+  ListCommonStackBuildExtraArgs(ListCommonStackBuildExtraArgs),
+
   // ==== DEPLOYMENT ====
   GetDeploymentsSummary(GetDeploymentsSummary),
   GetDeployment(GetDeployment),
@@ -132,6 +151,7 @@ enum ReadRequest {
   GetDeploymentStats(GetDeploymentStats),
   GetDeploymentLog(GetDeploymentLog),
   SearchDeploymentLog(SearchDeploymentLog),
+  InspectDeploymentContainer(InspectDeploymentContainer),
   ListDeployments(ListDeployments),
   ListFullDeployments(ListFullDeployments),
   ListCommonDeploymentExtraArgs(ListCommonDeploymentExtraArgs),
@@ -163,19 +183,6 @@ enum ReadRequest {
   ListResourceSyncs(ListResourceSyncs),
   ListFullResourceSyncs(ListFullResourceSyncs),
 
-  // ==== STACK ====
-  GetStacksSummary(GetStacksSummary),
-  GetStack(GetStack),
-  GetStackActionState(GetStackActionState),
-  GetStackWebhooksEnabled(GetStackWebhooksEnabled),
-  GetStackLog(GetStackLog),
-  SearchStackLog(SearchStackLog),
-  ListStacks(ListStacks),
-  ListFullStacks(ListFullStacks),
-  ListStackServices(ListStackServices),
-  ListCommonStackExtraArgs(ListCommonStackExtraArgs),
-  ListCommonStackBuildExtraArgs(ListCommonStackBuildExtraArgs),
-
   // ==== BUILDER ====
   GetBuildersSummary(GetBuildersSummary),
   GetBuilder(GetBuilder),
@@ -203,11 +210,6 @@ enum ReadRequest {
   // ==== ALERT ====
   ListAlerts(ListAlerts),
   GetAlert(GetAlert),
-
-  // ==== SERVER STATS ====
-  GetSystemInformation(GetSystemInformation),
-  GetSystemStats(GetSystemStats),
-  ListSystemProcesses(ListSystemProcesses),
 
   // ==== VARIABLE ====
   GetVariable(GetVariable),

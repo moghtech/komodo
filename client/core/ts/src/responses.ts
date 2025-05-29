@@ -76,6 +76,20 @@ export type ReadResponses = {
   ListFullServers: Types.ListFullServersResponse;
   ListTerminals: Types.ListTerminalsResponse;
 
+  // ==== STACK ====
+  GetStacksSummary: Types.GetStacksSummaryResponse;
+  GetStack: Types.GetStackResponse;
+  GetStackActionState: Types.GetStackActionStateResponse;
+  GetStackWebhooksEnabled: Types.GetStackWebhooksEnabledResponse;
+  GetStackLog: Types.GetStackLogResponse;
+  SearchStackLog: Types.SearchStackLogResponse;
+  InspectStackContainer: Types.InspectStackContainerResponse;
+  ListStacks: Types.ListStacksResponse;
+  ListFullStacks: Types.ListFullStacksResponse;
+  ListStackServices: Types.ListStackServicesResponse;
+  ListCommonStackExtraArgs: Types.ListCommonStackExtraArgsResponse;
+  ListCommonStackBuildExtraArgs: Types.ListCommonStackBuildExtraArgsResponse;
+
   // ==== DEPLOYMENT ====
   GetDeploymentsSummary: Types.GetDeploymentsSummaryResponse;
   GetDeployment: Types.GetDeploymentResponse;
@@ -84,6 +98,7 @@ export type ReadResponses = {
   GetDeploymentStats: Types.GetDeploymentStatsResponse;
   GetDeploymentLog: Types.GetDeploymentLogResponse;
   SearchDeploymentLog: Types.SearchDeploymentLogResponse;
+  InspectDeploymentContainer: Types.InspectDeploymentContainerResponse;
   ListDeployments: Types.ListDeploymentsResponse;
   ListFullDeployments: Types.ListFullDeploymentsResponse;
   ListCommonDeploymentExtraArgs: Types.ListCommonDeploymentExtraArgsResponse;
@@ -114,19 +129,6 @@ export type ReadResponses = {
   GetSyncWebhooksEnabled: Types.GetSyncWebhooksEnabledResponse;
   ListResourceSyncs: Types.ListResourceSyncsResponse;
   ListFullResourceSyncs: Types.ListFullResourceSyncsResponse;
-
-  // ==== STACK ====
-  GetStacksSummary: Types.GetStacksSummaryResponse;
-  GetStack: Types.GetStackResponse;
-  GetStackActionState: Types.GetStackActionStateResponse;
-  GetStackWebhooksEnabled: Types.GetStackWebhooksEnabledResponse;
-  GetStackLog: Types.GetStackLogResponse;
-  SearchStackLog: Types.SearchStackLogResponse;
-  ListStacks: Types.ListStacksResponse;
-  ListFullStacks: Types.ListFullStacksResponse;
-  ListStackServices: Types.ListStackServicesResponse;
-  ListCommonStackExtraArgs: Types.ListCommonStackExtraArgsResponse;
-  ListCommonStackBuildExtraArgs: Types.ListCommonStackBuildExtraArgsResponse;
 
   // ==== BUILDER ====
   GetBuildersSummary: Types.GetBuildersSummaryResponse;
@@ -212,6 +214,17 @@ export type WriteResponses = {
   DeleteTerminal: Types.NoData;
   DeleteAllTerminals: Types.NoData;
 
+  // ==== STACK ====
+  CreateStack: Types.Stack;
+  CopyStack: Types.Stack;
+  DeleteStack: Types.Stack;
+  UpdateStack: Types.Stack;
+  RenameStack: Types.Update;
+  WriteStackFileContents: Types.Update;
+  RefreshStackCache: Types.NoData;
+  CreateStackWebhook: Types.CreateStackWebhookResponse;
+  DeleteStackWebhook: Types.DeleteStackWebhookResponse;
+
   // ==== DEPLOYMENT ====
   CreateDeployment: Types.Deployment;
   CopyDeployment: Types.Deployment;
@@ -281,17 +294,6 @@ export type WriteResponses = {
   CreateSyncWebhook: Types.CreateSyncWebhookResponse;
   DeleteSyncWebhook: Types.DeleteSyncWebhookResponse;
 
-  // ==== STACK ====
-  CreateStack: Types.Stack;
-  CopyStack: Types.Stack;
-  DeleteStack: Types.Stack;
-  UpdateStack: Types.Stack;
-  RenameStack: Types.Update;
-  WriteStackFileContents: Types.Update;
-  RefreshStackCache: Types.NoData;
-  CreateStackWebhook: Types.CreateStackWebhookResponse;
-  DeleteStackWebhook: Types.DeleteStackWebhookResponse;
-
   // ==== TAG ====
   CreateTag: Types.Tag;
   DeleteTag: Types.Tag;
@@ -339,6 +341,21 @@ export type ExecuteResponses = {
   PruneBuildx: Types.Update;
   PruneSystem: Types.Update;
 
+  // ==== STACK ====
+  DeployStack: Types.Update;
+  BatchDeployStack: Types.BatchExecutionResponse;
+  DeployStackIfChanged: Types.Update;
+  BatchDeployStackIfChanged: Types.BatchExecutionResponse;
+  PullStack: Types.Update;
+  BatchPullStack: Types.BatchExecutionResponse;
+  StartStack: Types.Update;
+  RestartStack: Types.Update;
+  StopStack: Types.Update;
+  PauseStack: Types.Update;
+  UnpauseStack: Types.Update;
+  DestroyStack: Types.Update;
+  BatchDestroyStack: Types.BatchExecutionResponse;
+
   // ==== DEPLOYMENT ====
   Deploy: Types.Update;
   BatchDeploy: Types.BatchExecutionResponse;
@@ -375,21 +392,6 @@ export type ExecuteResponses = {
 
   // ==== SYNC ====
   RunSync: Types.Update;
-
-  // ==== STACK ====
-  DeployStack: Types.Update;
-  BatchDeployStack: Types.BatchExecutionResponse;
-  DeployStackIfChanged: Types.Update;
-  BatchDeployStackIfChanged: Types.BatchExecutionResponse;
-  PullStack: Types.Update;
-  BatchPullStack: Types.BatchExecutionResponse;
-  StartStack: Types.Update;
-  RestartStack: Types.Update;
-  StopStack: Types.Update;
-  PauseStack: Types.Update;
-  UnpauseStack: Types.Update;
-  DestroyStack: Types.Update;
-  BatchDestroyStack: Types.BatchExecutionResponse;
 
   // ==== STACK Service ====
   DeployStackService: Types.Update;

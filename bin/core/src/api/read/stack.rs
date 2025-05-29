@@ -1,16 +1,22 @@
 use std::collections::HashSet;
 
-use anyhow::Context;
+use anyhow::{Context, anyhow};
 use komodo_client::{
   api::read::*,
   entities::{
     config::core::CoreConfig,
+    docker::container::Container,
     permission::PermissionLevel,
-    stack::{Stack, StackActionState, StackListItem, StackState},
+    server::{Server, ServerState},
+    stack::{
+      Stack, StackActionState, StackConfig, StackInfo, StackListItem,
+      StackState,
+    },
   },
 };
-use periphery_client::api::compose::{
-  GetComposeLog, GetComposeLogSearch,
+use periphery_client::api::{
+  compose::{GetComposeLog, GetComposeLogSearch},
+  container::InspectContainer,
 };
 use resolver_api::Resolve;
 
@@ -20,7 +26,10 @@ use crate::{
   permission::get_check_permissions,
   resource,
   stack::get_stack_and_server,
-  state::{action_states, github_client, stack_status_cache},
+  state::{
+    action_states, github_client, server_status_cache,
+    stack_status_cache,
+  },
 };
 
 use super::ReadArgs;
@@ -127,6 +136,65 @@ impl Resolve<ReadArgs> for SearchStackLog {
       })
       .await
       .context("Failed to search stack log from periphery")?;
+    Ok(res)
+  }
+}
+
+impl Resolve<ReadArgs> for InspectStackContainer {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Container> {
+    let InspectStackContainer { stack, service } = self;
+    let Stack {
+      config: StackConfig { server_id, .. },
+      info:
+        StackInfo {
+          deployed_services,
+          latest_services,
+          ..
+        },
+      ..
+    } = get_check_permissions::<Stack>(
+      &stack,
+      user,
+      PermissionLevel::Read.inspect(),
+    )
+    .await?;
+    if server_id.is_empty() {
+      return Err(
+        anyhow!(
+          "Cannot inspect stack, not attached to any server"
+        )
+        .into(),
+      );
+    }
+    let server = resource::get::<Server>(&server_id).await?;
+    let cache = server_status_cache()
+      .get_or_insert_default(&server.id)
+      .await;
+    if cache.state != ServerState::Ok {
+      return Err(
+        anyhow!(
+          "Cannot inspect container: server is {:?}",
+          cache.state
+        )
+        .into(),
+      );
+    }
+    let services = deployed_services.unwrap_or(latest_services);
+    let Some(name) = services
+      .into_iter()
+      .find(|s| s.service_name == service)
+      .map(|s| s.container_name)
+    else {
+      return Err(anyhow!(
+        "No service found matching '{service}'. Was the stack last deployed manually?"
+      ).into());
+    };
+    let res = periphery_client(&server)?
+      .request(InspectContainer { name })
+      .await?;
     Ok(res)
   }
 }

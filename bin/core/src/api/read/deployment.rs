@@ -8,20 +8,22 @@ use komodo_client::{
       Deployment, DeploymentActionState, DeploymentConfig,
       DeploymentListItem, DeploymentState,
     },
-    docker::container::ContainerStats,
+    docker::container::{Container, ContainerStats},
     permission::PermissionLevel,
-    server::Server,
+    server::{Server, ServerState},
     update::Log,
   },
 };
-use periphery_client::api;
+use periphery_client::api::{self, container::InspectContainer};
 use resolver_api::Resolve;
 
 use crate::{
   helpers::{periphery_client, query::get_all_tags},
   permission::get_check_permissions,
   resource,
-  state::{action_states, deployment_status_cache},
+  state::{
+    action_states, deployment_status_cache, server_status_cache,
+  },
 };
 
 use super::ReadArgs;
@@ -191,6 +193,50 @@ impl Resolve<ReadArgs> for SearchDeploymentLog {
       })
       .await
       .context("failed at call to periphery")?;
+    Ok(res)
+  }
+}
+
+impl Resolve<ReadArgs> for InspectDeploymentContainer {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<Container> {
+    let InspectDeploymentContainer { deployment } = self;
+    let Deployment {
+      name,
+      config: DeploymentConfig { server_id, .. },
+      ..
+    } = get_check_permissions::<Deployment>(
+      &deployment,
+      user,
+      PermissionLevel::Read.inspect(),
+    )
+    .await?;
+    if server_id.is_empty() {
+      return Err(
+        anyhow!(
+          "Cannot inspect deployment, not attached to any server"
+        )
+        .into(),
+      );
+    }
+    let server = resource::get::<Server>(&server_id).await?;
+    let cache = server_status_cache()
+      .get_or_insert_default(&server.id)
+      .await;
+    if cache.state != ServerState::Ok {
+      return Err(
+        anyhow!(
+          "Cannot inspect container: server is {:?}",
+          cache.state
+        )
+        .into(),
+      );
+    }
+    let res = periphery_client(&server)?
+      .request(InspectContainer { name })
+      .await?;
     Ok(res)
   }
 }

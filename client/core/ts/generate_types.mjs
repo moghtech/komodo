@@ -40,6 +40,7 @@ function fix_types() {
     .replaceAll(
       ", PermissionLevelAndSpecifics",
       ", PermissionLevelAndSpecifics | PermissionLevel"
-    );
+    )
+    .replaceAll("IndexMap", "Record");
   writeFileSync(types_path, fixed);
 }
