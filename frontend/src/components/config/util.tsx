@@ -1140,7 +1140,7 @@ export const SpecificPermissionSelector = ({
             : specific.map(fmt_upper_camelcase).join(", ")}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="p-1">
+      <PopoverContent className="p-1" align="start">
         <Command shouldFilter={false} loop>
           <CommandInput
             placeholder={"Search Permissions"}

@@ -10,7 +10,12 @@ import { ResourceComponents } from "@components/resources";
 import { Label } from "@ui/label";
 import { Switch } from "@ui/switch";
 import { DataTable, SortableHeader } from "@ui/data-table";
-import { level_to_number, resource_name, RESOURCE_TARGETS } from "@lib/utils";
+import {
+  filterBySplit,
+  level_to_number,
+  resource_name,
+  RESOURCE_TARGETS,
+} from "@lib/utils";
 import { ResourceLink } from "@components/resources/common";
 import {
   Select,
@@ -56,7 +61,7 @@ export const PermissionsTableTabs = ({
   );
 };
 
-export const SpecificPermissionsTable = ({
+const SpecificPermissionsTable = ({
   user_target,
   titleOther,
 }: {
@@ -64,7 +69,10 @@ export const SpecificPermissionsTable = ({
   titleOther: ReactNode;
 }) => {
   const { toast } = useToast();
-  const [showNone, setShowNone] = useState(false);
+  const [showAll, setShowAll] = useLocalStorage(
+    "permissions-show-all-v1",
+    false
+  );
   const [resourceType, setResourceType] = useState<UsableResource | "All">(
     "All"
   );
@@ -78,6 +86,19 @@ export const SpecificPermissionsTable = ({
       inv(["ListUserTargetPermissions"]);
     },
   });
+  const tableData =
+    permissions?.filter(
+      (permission) =>
+        (resourceType === "All"
+          ? true
+          : permission.resource_target.type === resourceType) &&
+        (showAll ? true : permission.level !== Types.PermissionLevel.None) &&
+        searchSplit.every(
+          (search) =>
+            permission.name.toLowerCase().includes(search) ||
+            permission.resource_target.type.toLowerCase().includes(search)
+        )
+    ) ?? [];
   return (
     <Section
       titleOther={titleOther}
@@ -108,35 +129,21 @@ export const SpecificPermissionsTable = ({
           </Select>
           <div
             className="flex gap-3 items-center"
-            onClick={() => setShowNone(!showNone)}
+            onClick={() => setShowAll((showAll) => !showAll)}
           >
-            <Label htmlFor="show-none">Show All Resources</Label>
-            <Switch id="show-none" checked={showNone} />
+            <Label htmlFor="show-all">Show All</Label>
+            <Switch id="show-all" checked={showAll} />
           </div>
         </div>
       }
     >
       <DataTable
-        tableKey="permissions"
-        data={
-          permissions?.filter(
-            (permission) =>
-              (resourceType === "All"
-                ? true
-                : permission.resource_target.type === resourceType) &&
-              (showNone
-                ? true
-                : permission.level !== Types.PermissionLevel.None) &&
-              searchSplit.every(
-                (search) =>
-                  permission.name.toLowerCase().includes(search) ||
-                  permission.resource_target.type.toLowerCase().includes(search)
-              )
-          ) ?? []
-        }
+        tableKey="specific-permissions-v1"
+        data={tableData}
         columns={[
           {
             accessorKey: "resource_target.type",
+            size: 150,
             header: ({ column }) => (
               <SortableHeader column={column} title="Resource" />
             ),
@@ -155,6 +162,7 @@ export const SpecificPermissionsTable = ({
           },
           {
             accessorKey: "resource_target",
+            size: 250,
             sortingFn: (a, b) => {
               const ra = resource_name(
                 a.original.resource_target.type as UsableResource,
@@ -191,6 +199,7 @@ export const SpecificPermissionsTable = ({
           },
           {
             accessorKey: "level",
+            size: 150,
             sortingFn: (a, b) => {
               const al = level_to_number(a.original.level);
               const bl = level_to_number(b.original.level);
@@ -218,6 +227,7 @@ export const SpecificPermissionsTable = ({
           },
           {
             header: "Specific",
+            size: 300,
             cell: ({ row: { original: permission } }) => {
               return (
                 <SpecificPermissionSelector
@@ -249,7 +259,136 @@ export const SpecificPermissionsTable = ({
   );
 };
 
-export const BasePermissionsTable = ({
+type UpdateFn = (
+  resource_type: Types.ResourceTarget["type"],
+  permission: Types.PermissionLevelAndSpecifics
+) => void;
+
+const BasePermissionsTableInner = ({
+  all,
+  update,
+  titleOther,
+}: {
+  all: Types.User["all"];
+  update: UpdateFn;
+  titleOther: ReactNode;
+}) => {
+  const [showAll, setShowAll] = useLocalStorage(
+    "permissions-show-all-v1",
+    false
+  );
+  const [search, setSearch] = useState("");
+  const permissions = RESOURCE_TARGETS.map((type) => {
+    const permission = all?.[type] ?? Types.PermissionLevel.None;
+    return {
+      type,
+      level: typeof permission === "string" ? permission : permission.level,
+      specific: typeof permission === "string" ? [] : permission.specific,
+    };
+  }).filter(
+    (item) =>
+      showAll ||
+      item.level !== Types.PermissionLevel.None ||
+      item.specific.length !== 0
+  );
+  const filtered = filterBySplit(permissions, search, (p) => p.type);
+  return (
+    <Section
+      titleOther={titleOther}
+      actions={
+        <div className="flex gap-6 items-center">
+          <Input
+            placeholder="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-[300px]"
+          />
+          <div
+            className="flex gap-3 items-center"
+            onClick={() => setShowAll((s) => !s)}
+          >
+            <Label htmlFor="show-all">Show All</Label>
+            <Switch id="show-all" checked={showAll} />
+          </div>
+        </div>
+      }
+    >
+      <DataTable
+        tableKey="base-permissions-v1"
+        data={filtered}
+        columns={[
+          {
+            accessorKey: "type",
+            size: 150,
+            header: ({ column }) => (
+              <SortableHeader column={column} title="Resource Type" />
+            ),
+            cell: ({ row }) => {
+              const Components =
+                ResourceComponents[row.original.type as UsableResource];
+              return (
+                <div className="flex gap-2 items-center">
+                  <Components.Icon />
+                  {row.original.type}
+                </div>
+              );
+            },
+          },
+          {
+            accessorKey: "level",
+            size: 150,
+            sortingFn: (a, b) => {
+              const al = level_to_number(a.original.level);
+              const bl = level_to_number(b.original.level);
+              const dif = al - bl;
+              return dif === 0 ? 0 : dif / Math.abs(dif);
+            },
+            header: ({ column }) => (
+              <SortableHeader column={column} title="Level" />
+            ),
+            cell: ({ row }) => (
+              <PermissionLevelSelector
+                level={row.original.level ?? Types.PermissionLevel.None}
+                onSelect={(level) => {
+                  update(row.original.type, {
+                    level,
+                    specific: row.original.specific,
+                  });
+                }}
+              />
+            ),
+          },
+          {
+            header: "Specific",
+            size: 300,
+            cell: ({ row }) => {
+              return (
+                <SpecificPermissionSelector
+                  type={row.original.type}
+                  specific={row.original.specific}
+                  onSelect={(specific_permission) => {
+                    const _specific = row.original.specific ?? [];
+                    const specific = (
+                      _specific.includes(specific_permission)
+                        ? _specific.filter((p) => p !== specific_permission)
+                        : [..._specific, specific_permission]
+                    ).sort();
+                    update(row.original.type, {
+                      level: row.original.level,
+                      specific,
+                    });
+                  }}
+                />
+              );
+            },
+          },
+        ]}
+      />
+    </Section>
+  );
+};
+
+const BasePermissionsTable = ({
   user_target,
   titleOther,
 }: {
@@ -270,12 +409,12 @@ export const BasePermissionsTable = ({
     },
   });
 
-  const update = (resource_type, permission) =>
+  const update: UpdateFn = (resource_type, permission) =>
     mutate({ user_target, resource_type, permission });
 
   if (user_target.type === "User") {
     return (
-      <UserPermissionsOnResourceType
+      <UserBasePermissionsTable
         user_id={user_target.id}
         update={update}
         titleOther={titleOther}
@@ -283,7 +422,7 @@ export const BasePermissionsTable = ({
     );
   } else if (user_target.type === "UserGroup") {
     return (
-      <UserGroupPermissionsOnResourceType
+      <UserGroupBasePermissionsTable
         group_id={user_target.id}
         update={update}
         titleOther={titleOther}
@@ -292,21 +431,18 @@ export const BasePermissionsTable = ({
   }
 };
 
-const UserPermissionsOnResourceType = ({
+const UserBasePermissionsTable = ({
   user_id,
   update,
   titleOther,
 }: {
   user_id: string;
-  update: (
-    resource_type: Types.ResourceTarget["type"],
-    permission: Types.PermissionLevel
-  ) => void;
+  update: UpdateFn;
   titleOther: ReactNode;
 }) => {
   const user = useRead("FindUser", { user: user_id }).data;
   return (
-    <PermissionsOnResourceType
+    <BasePermissionsTableInner
       all={user?.all}
       update={update}
       titleOther={titleOther}
@@ -314,119 +450,21 @@ const UserPermissionsOnResourceType = ({
   );
 };
 
-const UserGroupPermissionsOnResourceType = ({
+const UserGroupBasePermissionsTable = ({
   group_id,
   update,
   titleOther,
 }: {
   group_id: string;
-  update: (
-    resource_type: Types.ResourceTarget["type"],
-    permission: Types.PermissionLevel
-  ) => void;
+  update: UpdateFn;
   titleOther: ReactNode;
 }) => {
   const group = useRead("GetUserGroup", { user_group: group_id }).data;
   return (
-    <PermissionsOnResourceType
+    <BasePermissionsTableInner
       all={group?.all}
       update={update}
       titleOther={titleOther}
     />
-  );
-};
-
-const PermissionsOnResourceType = ({
-  all,
-  update,
-  titleOther,
-}: {
-  all: Types.User["all"];
-  update: (
-    resource_type: Types.ResourceTarget["type"],
-    permission: Types.PermissionLevel
-  ) => void;
-  titleOther: ReactNode;
-}) => {
-  const data = RESOURCE_TARGETS.map((type) => {
-    const permission = all?.[type] ?? Types.PermissionLevel.None;
-    return {
-      type,
-      level: typeof permission === "string" ? permission : permission.level,
-      specific: typeof permission === "string" ? [] : permission.specific,
-    };
-  });
-  return (
-    <Section titleOther={titleOther}>
-      <DataTable
-        tableKey="permissions"
-        data={data}
-        columns={[
-          {
-            accessorKey: "type",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Resource Type" />
-            ),
-            cell: ({ row }) => {
-              const Components =
-                ResourceComponents[row.original.type as UsableResource];
-              return (
-                <div className="flex gap-2 items-center">
-                  <Components.Icon />
-                  {row.original.type}
-                </div>
-              );
-            },
-          },
-          {
-            accessorKey: "level",
-            sortingFn: (a, b) => {
-              const al = level_to_number(a.original.level);
-              const bl = level_to_number(b.original.level);
-              const dif = al - bl;
-              return dif === 0 ? 0 : dif / Math.abs(dif);
-            },
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Level" />
-            ),
-            cell: ({ row }) => (
-              <PermissionLevelSelector
-                level={row.original.level ?? Types.PermissionLevel.None}
-                onSelect={(value) => {
-                  update(row.original.type, value);
-                }}
-              />
-            ),
-          },
-          {
-            header: "Specific",
-            cell: ({ row }) => {
-              return (
-                <SpecificPermissionSelector
-                  type={row.original.type}
-                  specific={row.original.specific}
-                  onSelect={(specific_permission) => {
-                    const _specific = row.original.specific ?? [];
-                    const specific = (
-                      _specific.includes(specific_permission)
-                        ? _specific.filter((p) => p !== specific_permission)
-                        : [..._specific, specific_permission]
-                    ).sort();
-                    // mutate({
-                    //   ...permission,
-                    //   user_target,
-                    //   permission: {
-                    //     level: permission.level ?? Types.PermissionLevel.None,
-                    //     specific,
-                    //   },
-                    // });
-                  }}
-                />
-              );
-            },
-          },
-        ]}
-      />
-    </Section>
   );
 };
