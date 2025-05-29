@@ -72,11 +72,17 @@ export const MaintenanceServerConfig = ({
         )
       }
     >
-      <MaintenanceWindows
-        windows={maintenanceWindows}
-        onUpdate={setMaintenanceWindows}
-        disabled={disabled}
-      />
+      <div className="space-y-4">
+        <div className="text-sm text-muted-foreground">
+          <p>Configure maintenance windows to temporarily disable alerts during scheduled maintenance periods. 
+          When a maintenance window is active, alerts from this server will be suppressed.</p>
+        </div>
+        <MaintenanceWindows
+          windows={maintenanceWindows}
+          onUpdate={setMaintenanceWindows}
+          disabled={disabled}
+        />
+      </div>
     </Section>
   );
 };
