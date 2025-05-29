@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -51,7 +50,7 @@ pub struct UserGroup {
   /// Give the user group elevated permissions on all resources of a certain type
   #[serde(default)]
   pub all:
-    HashMap<ResourceTargetVariant, PermissionLevelAndSpecifics>,
+    IndexMap<ResourceTargetVariant, PermissionLevelAndSpecifics>,
 
   /// Unix time (ms) when user group last updated
   #[serde(default)]

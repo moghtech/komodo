@@ -1,5 +1,6 @@
 use std::{collections::HashMap, sync::OnceLock};
 
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -69,7 +70,7 @@ pub struct User {
   /// Give the user elevated permissions on all resources of a certain type
   #[serde(default)]
   pub all:
-    HashMap<ResourceTargetVariant, PermissionLevelAndSpecifics>,
+    IndexMap<ResourceTargetVariant, PermissionLevelAndSpecifics>,
 
   #[serde(default)]
   pub updated_at: I64,

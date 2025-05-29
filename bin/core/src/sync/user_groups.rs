@@ -2,7 +2,7 @@ use std::{cmp::Ordering, collections::HashMap, sync::OnceLock};
 
 use anyhow::Context;
 use formatting::{Color, bold, colored, muted};
-use indexmap::IndexSet;
+use indexmap::{IndexMap, IndexSet};
 use komodo_client::{
   api::{
     read::ListUserTargetPermissions,
@@ -39,7 +39,7 @@ pub struct UpdateItem {
   user_group: UserGroupToml,
   update_users: bool,
   all_diff:
-    HashMap<ResourceTargetVariant, PermissionLevelAndSpecifics>,
+    IndexMap<ResourceTargetVariant, PermissionLevelAndSpecifics>,
 }
 
 pub struct DeleteItem {
@@ -560,7 +560,7 @@ async fn set_users(
 
 async fn run_update_all(
   user_group: String,
-  all_diff: HashMap<
+  all_diff: IndexMap<
     ResourceTargetVariant,
     PermissionLevelAndSpecifics,
   >,
@@ -782,7 +782,7 @@ async fn expand_user_group_permissions(
   Ok(expanded)
 }
 
-type AllDiff = HashMap<
+type AllDiff = IndexMap<
   ResourceTargetVariant,
   (PermissionLevelAndSpecifics, PermissionLevelAndSpecifics),
 >;
@@ -795,16 +795,16 @@ fn default_permission() -> &'static PermissionLevelAndSpecifics {
 
 /// diffs user_group.all
 fn diff_group_all(
-  original: &HashMap<
+  original: &IndexMap<
     ResourceTargetVariant,
     PermissionLevelAndSpecifics,
   >,
-  incoming: &HashMap<
+  incoming: &IndexMap<
     ResourceTargetVariant,
     PermissionLevelAndSpecifics,
   >,
 ) -> AllDiff {
-  let mut to_update = HashMap::new();
+  let mut to_update = IndexMap::new();
 
   // need to compare both forward and backward because either hashmap could be sparse.
 

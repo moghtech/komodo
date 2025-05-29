@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use indexmap::IndexSet;
+use indexmap::{IndexMap, IndexSet};
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -166,7 +164,7 @@ pub struct UserGroupToml {
   /// Give the user group elevated permissions on all resources of a certain type
   #[serde(default)]
   pub all:
-    HashMap<ResourceTargetVariant, PermissionLevelAndSpecifics>,
+    IndexMap<ResourceTargetVariant, PermissionLevelAndSpecifics>,
 
   /// Permissions given to the group
   #[serde(default, alias = "permission")]
