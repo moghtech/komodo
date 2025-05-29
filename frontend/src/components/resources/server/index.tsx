@@ -64,11 +64,7 @@ const Icon = ({ id, size }: { id?: string; size: number }) => {
 
 const ConfigTabs = ({ id }: { id: string }) => {
   const [view, setView] = useLocalStorage<
-<<<<<<< HEAD
-    "Config" | "Stats" | "Docker" | "Resources" | "Terminals"
-=======
-    "Config" | "Stats" | "Docker" | "Maintenance" | "Resources"
->>>>>>> 41020c31 (fix: add Maintenance to server tab view state type)
+    "Config" | "Stats" | "Docker" | "Maintenance" | "Resources" | "Terminals"
   >(`server-${id}-tab`, "Config");
 
   const is_admin = useUser().data?.admin ?? false;
