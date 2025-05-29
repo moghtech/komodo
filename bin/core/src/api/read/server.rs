@@ -268,7 +268,7 @@ impl Resolve<ReadArgs> for ListSystemProcesses {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read.process_list(),
+      PermissionLevel::Read.inspect(),
     )
     .await?;
     let mut lock = processes_cache().lock().await;
@@ -451,7 +451,7 @@ impl Resolve<ReadArgs> for InspectDockerContainer {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read.docker_inspect(),
+      PermissionLevel::Read.inspect(),
     )
     .await?;
     let cache = server_status_cache()
@@ -491,7 +491,7 @@ impl Resolve<ReadArgs> for GetContainerLog {
     let server = get_check_permissions::<Server>(
       &server,
       user,
-      PermissionLevel::Read.docker_log(),
+      PermissionLevel::Read.logs(),
     )
     .await?;
     let res = periphery_client(&server)?
@@ -522,7 +522,7 @@ impl Resolve<ReadArgs> for SearchContainerLog {
     let server = get_check_permissions::<Server>(
       &server,
       user,
-      PermissionLevel::Read.docker_log(),
+      PermissionLevel::Read.logs(),
     )
     .await?;
     let res = periphery_client(&server)?
@@ -630,7 +630,7 @@ impl Resolve<ReadArgs> for InspectDockerNetwork {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read.docker_inspect(),
+      PermissionLevel::Read.inspect(),
     )
     .await?;
     let cache = server_status_cache()
@@ -682,7 +682,7 @@ impl Resolve<ReadArgs> for InspectDockerImage {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read.docker_inspect(),
+      PermissionLevel::Read.inspect(),
     )
     .await?;
     let cache = server_status_cache()
@@ -709,7 +709,7 @@ impl Resolve<ReadArgs> for ListDockerImageHistory {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read.docker_inspect(),
+      PermissionLevel::Read.inspect(),
     )
     .await?;
     let cache = server_status_cache()
@@ -761,7 +761,7 @@ impl Resolve<ReadArgs> for InspectDockerVolume {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read.docker_inspect(),
+      PermissionLevel::Read.inspect(),
     )
     .await?;
     let cache = server_status_cache()

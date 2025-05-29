@@ -79,7 +79,7 @@ impl Resolve<ReadArgs> for GetStackLog {
     let (stack, server) = get_stack_and_server(
       &stack,
       user,
-      PermissionLevel::Read.docker_log(),
+      PermissionLevel::Read.logs(),
       true,
     )
     .await?;
@@ -112,7 +112,7 @@ impl Resolve<ReadArgs> for SearchStackLog {
     let (stack, server) = get_stack_and_server(
       &stack,
       user,
-      PermissionLevel::Read.docker_log(),
+      PermissionLevel::Read.logs(),
       true,
     )
     .await?;

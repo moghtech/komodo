@@ -2956,6 +2956,7 @@ export interface Container {
     Config?: ContainerConfig;
     NetworkSettings?: NetworkSettings;
 }
+export type InspectDeploymentContainerResponse = Container;
 export type InspectDockerContainerResponse = Container;
 /** Information about the image's RootFS, including the layer IDs. */
 export interface ImageInspectRootFs {
@@ -3177,6 +3178,7 @@ export interface Volume {
     UsageData?: VolumeUsageData;
 }
 export type InspectDockerVolumeResponse = Volume;
+export type InspectStackContainerResponse = Container;
 export type JsonValue = any;
 export type ListActionsResponse = ActionListItem[];
 export type ListAlertersResponse = AlerterListItem[];
@@ -5615,6 +5617,14 @@ export interface GetVersionResponse {
     /** The version of the core api. */
     version: string;
 }
+/**
+ * Inspect the docker container associated with the Deployment.
+ * Response: [Container].
+ */
+export interface InspectDeploymentContainer {
+    /** Id or name */
+    deployment: string;
+}
 /** Inspect a docker container on the server. Response: [Container]. */
 export interface InspectDockerContainer {
     /** Id or name */
@@ -5642,6 +5652,16 @@ export interface InspectDockerVolume {
     server: string;
     /** The volume name */
     volume: string;
+}
+/**
+ * Inspect the docker container associated with the Stack.
+ * Response: [Container].
+ */
+export interface InspectStackContainer {
+    /** Id or name */
+    stack: string;
+    /** The service name to inspect */
+    service: string;
 }
 export interface LatestCommit {
     hash: string;
@@ -7782,20 +7802,22 @@ export declare enum SpecificPermission {
     /**
      * On **Server**
      * - Access the `docker inspect` apis
+     * On **Stack / Deployment**
+     * - Access `docker inspect $container` for associated containers
      */
-    DockerInspect = "DockerInspect",
+    Inspect = "Inspect",
     /**
      * On **Server**
      * - Read all container logs on the server
      * On **Stack / Deployment**
      * - Read the container logs
      */
-    DockerLog = "DockerLog",
+    Logs = "Logs",
     /**
      * On **Server**
      * - Read all the processes on the host
      */
-    ProcessList = "ProcessList"
+    Processes = "Processes"
 }
 export type UserRequest = {
     type: "PushRecentlyViewed";

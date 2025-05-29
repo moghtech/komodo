@@ -212,7 +212,7 @@ const ContainerPageInner = ({
 
         <DockerLabelsSection labels={container.Config?.Labels} />
 
-        {specific.includes(Types.SpecificPermission.DockerInspect) && (
+        {specific.includes(Types.SpecificPermission.Inspect) && (
           <Section
             title="Inspect"
             icon={<SearchCode className="w-4 h-4" />}
@@ -260,7 +260,7 @@ const LogOrTerminal = ({
     container_exec_disabled ||
     state !== Types.ContainerStateStatusEnum.Running;
   const logDisabled =
-    !specific.includes(Types.SpecificPermission.DockerLog) ||
+    !specific.includes(Types.SpecificPermission.Logs) ||
     state === Types.ContainerStateStatusEnum.Empty;
   const view = terminalDisabled && _view === "Terminal" ? "Log" : _view;
   const tabs = (

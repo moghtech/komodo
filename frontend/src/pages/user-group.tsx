@@ -1,7 +1,6 @@
-import { UserTargetPermissionsOnResourceTypes } from "@components/users/resource-type-permissions";
 import { ExportButton } from "@components/export";
 import { Page, Section } from "@components/layouts";
-import { PermissionsTable } from "@components/users/permissions-table";
+import { PermissionsTableTabs } from "@components/users/permissions-table";
 import { UserTable } from "@components/users/table";
 import { ActionWithDialog } from "@components/util";
 import { useInvalidate, useRead, useWrite } from "@lib/hooks";
@@ -87,10 +86,9 @@ export const UserGroupPage = () => {
           }
         />
       </Section>
-      <UserTargetPermissionsOnResourceTypes
-        user_target={{ type: "UserGroup", id: group._id?.$oid! }}
-      />
-      <PermissionsTable user_target={{ type: "UserGroup", id: group_id }} />
+
+      <PermissionsTableTabs user_target={{ type: "UserGroup", id: group_id }} />
+
       <div className="flex flex-col justify-end w-full gap-4">
         <div className="flex justify-end w-full">
           <div className="flex items-center gap-2">

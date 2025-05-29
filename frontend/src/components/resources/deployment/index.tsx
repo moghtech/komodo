@@ -68,7 +68,7 @@ const ConfigTabsInner = ({
     useServer(deployment.info.server_id)?.info.container_exec_disabled ?? true;
   const state = deployment.info.state;
   const logsDisabled =
-    !specific.includes(Types.SpecificPermission.DockerLog) ||
+    !specific.includes(Types.SpecificPermission.Logs) ||
     state === undefined ||
     state === Types.DeploymentState.Unknown ||
     state === Types.DeploymentState.NotDeployed;
@@ -87,7 +87,7 @@ const ConfigTabsInner = ({
       <TabsTrigger value="Config" className="w-[110px]">
         Config
       </TabsTrigger>
-      {specific.includes(Types.SpecificPermission.DockerLog) && (
+      {specific.includes(Types.SpecificPermission.Logs) && (
         <TabsTrigger value="Log" className="w-[110px]" disabled={logsDisabled}>
           Log
         </TabsTrigger>

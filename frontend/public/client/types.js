@@ -528,18 +528,20 @@ export var SpecificPermission;
     /**
      * On **Server**
      * - Access the `docker inspect` apis
+     * On **Stack / Deployment**
+     * - Access `docker inspect $container` for associated containers
      */
-    SpecificPermission["DockerInspect"] = "DockerInspect";
+    SpecificPermission["Inspect"] = "Inspect";
     /**
      * On **Server**
      * - Read all container logs on the server
      * On **Stack / Deployment**
      * - Read the container logs
      */
-    SpecificPermission["DockerLog"] = "DockerLog";
+    SpecificPermission["Logs"] = "Logs";
     /**
      * On **Server**
      * - Read all the processes on the host
      */
-    SpecificPermission["ProcessList"] = "ProcessList";
+    SpecificPermission["Processes"] = "Processes";
 })(SpecificPermission || (SpecificPermission = {}));

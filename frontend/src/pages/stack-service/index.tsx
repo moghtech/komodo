@@ -229,7 +229,7 @@ const LogOrTerminal = ({
     container_exec_disabled ||
     container_state !== Types.ContainerStateStatusEnum.Running;
   const logDisabled =
-    !specific.includes(Types.SpecificPermission.DockerLog) ||
+    !specific.includes(Types.SpecificPermission.Logs) ||
     container_state === Types.ContainerStateStatusEnum.Empty;
   const view = terminalDisabled && _view === "Terminal" ? "Log" : _view;
   const tabs = (

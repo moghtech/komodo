@@ -39,7 +39,10 @@ impl super::KomodoResource for Server {
   fn creator_specific_permissions() -> IndexSet<SpecificPermission> {
     [
       SpecificPermission::Terminal,
-      SpecificPermission::DockerInspect,
+      SpecificPermission::Inspect,
+      SpecificPermission::Attach,
+      SpecificPermission::Logs,
+      SpecificPermission::Processes,
     ]
     .into_iter()
     .collect()

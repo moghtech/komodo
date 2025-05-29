@@ -283,7 +283,7 @@ const NetworkPageInner = ({
 
       <DockerLabelsSection labels={network.Labels} />
 
-      {perms?.specific.includes(Types.SpecificPermission.DockerInspect) && (
+      {perms?.specific.includes(Types.SpecificPermission.Inspect) && (
         <Section
           title="Inspect"
           icon={<SearchCode className="w-4 h-4" />}

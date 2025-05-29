@@ -1,7 +1,6 @@
-import { UserTargetPermissionsOnResourceTypes } from "@components/users/resource-type-permissions";
 import { KeysTable } from "@components/keys/table";
 import { Page } from "@components/layouts";
-import { PermissionsTable } from "@components/users/permissions-table";
+import { PermissionsTableTabs } from "@components/users/permissions-table";
 import {
   CreateKeyForServiceUser,
   DeleteKeyForServiceUser,
@@ -122,10 +121,9 @@ export const UserPage = () => {
       {user.enabled && !user.admin && (
         <>
           <Groups user_id={user_id} />
-          <UserTargetPermissionsOnResourceTypes
+          <PermissionsTableTabs
             user_target={{ type: "User", id: user._id?.$oid! }}
           />
-          <PermissionsTable user_target={{ type: "User", id: user_id }} />
         </>
       )}
     </Page>

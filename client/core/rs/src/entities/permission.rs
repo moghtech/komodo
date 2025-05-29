@@ -143,15 +143,17 @@ pub enum SpecificPermission {
   Attach,
   /// On **Server**
   ///   - Access the `docker inspect` apis
-  DockerInspect,
+  /// On **Stack / Deployment**
+  ///   - Access `docker inspect $container` for associated containers
+  Inspect,
   /// On **Server**
   ///   - Read all container logs on the server
   /// On **Stack / Deployment**
   ///   - Read the container logs
-  DockerLog,
+  Logs,
   /// On **Server**
   ///   - Read all the processes on the host
-  ProcessList,
+  Processes,
 }
 
 impl SpecificPermission {
@@ -224,19 +226,19 @@ impl PermissionLevel {
     self.specific(SpecificPermission::Attach)
   }
 
-  /// Operation requires DockerInspect permission
-  pub fn docker_inspect(self) -> PermissionLevelAndSpecifics {
-    self.specific(SpecificPermission::DockerInspect)
+  /// Operation requires Inspect permission
+  pub fn inspect(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::Inspect)
   }
 
-  /// Operation requires DockerLog permission
-  pub fn docker_log(self) -> PermissionLevelAndSpecifics {
-    self.specific(SpecificPermission::DockerLog)
+  /// Operation requires Logs permission
+  pub fn logs(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::Logs)
   }
 
-  /// Operation requires ProcessList permission
-  pub fn process_list(self) -> PermissionLevelAndSpecifics {
-    self.specific(SpecificPermission::ProcessList)
+  /// Operation requires Processes permission
+  pub fn processes(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::Processes)
   }
 }
 
@@ -308,18 +310,18 @@ impl PermissionLevelAndSpecifics {
     self.specific(SpecificPermission::Attach)
   }
 
-  /// Operation requires DockerInspect permission
-  pub fn docker_inspect(self) -> PermissionLevelAndSpecifics {
-    self.specific(SpecificPermission::DockerInspect)
+  /// Operation requires Inspect permission
+  pub fn inspect(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::Inspect)
   }
 
-  /// Operation requires DockerLog permission
-  pub fn docker_log(self) -> PermissionLevelAndSpecifics {
-    self.specific(SpecificPermission::DockerLog)
+  /// Operation requires Logs permission
+  pub fn logs(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::Logs)
   }
 
-  /// Operation requires ProcessList permission
-  pub fn process_list(self) -> PermissionLevelAndSpecifics {
-    self.specific(SpecificPermission::ProcessList)
+  /// Operation requires Processes permission
+  pub fn processes(self) -> PermissionLevelAndSpecifics {
+    self.specific(SpecificPermission::Processes)
   }
 }

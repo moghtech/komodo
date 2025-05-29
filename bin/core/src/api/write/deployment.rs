@@ -74,7 +74,7 @@ impl Resolve<WriteArgs> for CreateDeploymentFromContainer {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read.docker_inspect().attach(),
+      PermissionLevel::Read.inspect().attach(),
     )
     .await?;
     let cache = server_status_cache()

@@ -54,7 +54,13 @@ impl super::KomodoResource for Deployment {
   }
 
   fn creator_specific_permissions() -> IndexSet<SpecificPermission> {
-    [SpecificPermission::Terminal].into_iter().collect()
+    [
+      SpecificPermission::Inspect,
+      SpecificPermission::Logs,
+      SpecificPermission::Terminal,
+    ]
+    .into_iter()
+    .collect()
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>

@@ -75,7 +75,7 @@ const ConfigInfoServicesLog = ({ id }: { id: string }) => {
     state === Types.StackState.Unknown ||
     state === Types.StackState.Down;
   const hideLogs =
-    hideServices || !specific.includes(Types.SpecificPermission.DockerLog);
+    hideServices || !specific.includes(Types.SpecificPermission.Logs);
 
   const view =
     (_view === "Info" && hideInfo) ||
@@ -103,7 +103,7 @@ const ConfigInfoServicesLog = ({ id }: { id: string }) => {
       >
         Services
       </TabsTrigger>
-      {specific.includes(Types.SpecificPermission.DockerLog) && (
+      {specific.includes(Types.SpecificPermission.Logs) && (
         <TabsTrigger value="Log" className="w-[110px]" disabled={hideLogs}>
           Log
         </TabsTrigger>
