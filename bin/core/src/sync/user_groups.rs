@@ -9,8 +9,9 @@ use komodo_client::{
   api::{
     read::ListUserTargetPermissions,
     write::{
-      CreateUserGroup, DeleteUserGroup, SetUsersInUserGroup,
-      UpdatePermissionOnResourceType, UpdatePermissionOnTarget,
+      CreateUserGroup, DeleteUserGroup, SetEveryoneUserGroup,
+      SetUsersInUserGroup, UpdatePermissionOnResourceType,
+      UpdatePermissionOnTarget,
     },
   },
   entities::{
@@ -119,6 +120,7 @@ pub fn user_group_to_toml(
 pub struct UpdateItem {
   user_group: UserGroupToml,
   update_users: bool,
+  update_everyone: bool,
   all_diff:
     IndexMap<ResourceTargetVariant, PermissionLevelAndSpecifics>,
 }
@@ -195,12 +197,17 @@ pub async fn get_updates_for_view(
     user_group.permissions.sort_by(sort_permissions);
 
     let update_users = user_group.users != original.users;
+    let update_everyone = user_group.everyone != original.everyone;
     let update_all = !all_diff.is_empty();
     let update_permissions =
       user_group.permissions != original.permissions;
 
     // only add log after diff detected
-    if update_users || update_all || update_permissions {
+    if update_users
+      || update_everyone
+      || update_all
+      || update_permissions
+    {
       diffs.push(DiffData::Update {
         proposed: user_group_to_toml(user_group.clone())?,
         current: user_group_to_toml(original.clone())?,
@@ -224,7 +231,12 @@ pub async fn get_updates_for_execution(
     .await
     .context("failed to query db for UserGroups")?
     .into_iter()
-    .map(|ug| (ug.name.clone(), ug))
+    .map(|mut ug| {
+      if ug.everyone {
+        ug.users.clear();
+      }
+      (ug.name.clone(), ug)
+    })
     .collect::<HashMap<_, _>>();
 
   let mut to_create = Vec::<UserGroupToml>::new();
@@ -393,6 +405,7 @@ pub async fn get_updates_for_execution(
     original_permissions.sort_by(sort_permissions);
 
     let update_users = user_group.users != original_users;
+    let update_everyone = user_group.everyone != original.everyone;
 
     // Extend permissions with any existing that have no target in incoming
     // This makes sure to set those permissions back to None.
@@ -430,12 +443,14 @@ pub async fn get_updates_for_execution(
 
     // only push update after diff detected
     if update_users
+      || update_everyone
       || !all_diff.is_empty()
       || !user_group.permissions.is_empty()
     {
       to_update.push(UpdateItem {
         user_group,
         update_users,
+        update_everyone,
         all_diff: all_diff
           .into_iter()
           .map(|(k, (_, v))| (k, v))
@@ -513,6 +528,13 @@ pub async fn run_updates(
       &mut has_error,
     )
     .await;
+    set_everyone(
+      user_group.name.clone(),
+      user_group.everyone,
+      &mut log,
+      &mut has_error,
+    )
+    .await;
     run_update_all(
       user_group.name.clone(),
       user_group.all,
@@ -533,6 +555,7 @@ pub async fn run_updates(
   for UpdateItem {
     user_group,
     update_users,
+    update_everyone,
     all_diff,
   } in to_update
   {
@@ -540,6 +563,15 @@ pub async fn run_updates(
       set_users(
         user_group.name.clone(),
         user_group.users,
+        &mut log,
+        &mut has_error,
+      )
+      .await;
+    }
+    if update_everyone {
+      set_everyone(
+        user_group.name.clone(),
+        user_group.everyone,
         &mut log,
         &mut has_error,
       )
@@ -622,6 +654,38 @@ async fn set_users(
   } else {
     log.push_str(&format!(
       "\n{}: {} user group '{}' users",
+      muted("INFO"),
+      colored("updated", Color::Blue),
+      bold(&user_group)
+    ))
+  }
+}
+
+async fn set_everyone(
+  user_group: String,
+  everyone: bool,
+  log: &mut String,
+  has_error: &mut bool,
+) {
+  if let Err(e) = (SetEveryoneUserGroup {
+    user_group: user_group.clone(),
+    everyone,
+  })
+  .resolve(&WriteArgs {
+    user: sync_user().to_owned(),
+  })
+  .await
+  {
+    *has_error = true;
+    log.push_str(&format!(
+      "\n{}: failed to set everyone for group {} | {:#}",
+      colored("ERROR", Color::Red),
+      bold(&user_group),
+      e.error
+    ))
+  } else {
+    log.push_str(&format!(
+      "\n{}: {} user group '{}' everyone",
       muted("INFO"),
       colored("updated", Color::Blue),
       bold(&user_group)
@@ -1064,11 +1128,7 @@ pub async fn convert_user_groups(
         name: user_group.name,
         everyone: user_group.everyone,
         all: user_group.all,
-        users: if user_group.everyone {
-          Vec::new()
-        } else {
-          users
-        },
+        users,
         permissions,
       },
     ));
