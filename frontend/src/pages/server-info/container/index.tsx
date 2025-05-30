@@ -231,12 +231,12 @@ const ContainerTabs = ({
       <TabsTrigger value="Log" className="w-[110px]" disabled={logDisabled}>
         Log
       </TabsTrigger>
-      {!specific.includes(Types.SpecificPermission.Inspect) && (
+      {specific.includes(Types.SpecificPermission.Inspect) && (
         <TabsTrigger value="Inspect" className="w-[110px]">
           Inspect
         </TabsTrigger>
       )}
-      {!specific.includes(Types.SpecificPermission.Terminal) && (
+      {specific.includes(Types.SpecificPermission.Terminal) && (
         <TabsTrigger value="Terminal" className="w-[110px]">
           Terminal
         </TabsTrigger>
