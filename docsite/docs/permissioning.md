@@ -41,7 +41,7 @@ Some features are additionally gated behind a specific permission for that featu
   - For admins wanting this permission by default for all users with read permissions, see below on default user groups.
 - `ProcessList`: User can retrieve the full running process list on the `Server`
 
-## Global permissions
+## Permissioning by Resource Type
 
 Users or User Groups can be given a base permission level on all Resources of a particular type, such as Stack.
 In TOML form, this looks like:

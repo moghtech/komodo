@@ -247,6 +247,7 @@ resource_path = ["stacks.toml", "repos.toml"]
 ```toml
 [[user_group]]
 name = "groupo"
+everyone = false # Set to true to give these permission to all users.
 users = ["mbecker20", "karamvirsingh98"]
 # Configure write access with all specific permissions
 all.Server = { level = "Write", specific = ["Attach", "Logs", "Inspect", "Terminal", "Processes"] }
