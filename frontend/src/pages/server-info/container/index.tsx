@@ -166,20 +166,20 @@ const ContainerPageInner = ({
               data={[list_container]}
               columns={[
                 {
-                  accessorKey: "Id",
-                  header: "id",
+                  header: "Id",
+                  accessorKey: "id",
                 },
                 {
-                  accessorKey: "Image",
-                  header: "image",
+                  header: "Image",
+                  accessorKey: "image",
                 },
                 {
-                  accessorKey: "network_mode",
                   header: "Network Mode",
+                  accessorKey: "network_mode",
                 },
                 {
-                  accessorKey: "networks",
                   header: "Networks",
+                  accessorKey: "networks",
                 },
               ]}
             />
