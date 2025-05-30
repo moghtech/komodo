@@ -159,30 +159,32 @@ const ContainerPageInner = ({
         <ContainerTabs server={id} container={container_name} state={state} />
 
         {/* TOP LEVEL CONTAINER INFO */}
-        <Section title="Details" icon={<Info className="w-4 h-4" />}>
-          <DataTable
-            tableKey="container-info"
-            data={[list_container]}
-            columns={[
-              {
-                accessorKey: "Id",
-                header: "id",
-              },
-              {
-                accessorKey: "Image",
-                header: "image",
-              },
-              {
-                accessorKey: "network_mode",
-                header: "Network Mode",
-              },
-              {
-                accessorKey: "networks",
-                header: "Networks",
-              },
-            ]}
-          />
-        </Section>
+        {list_container && (
+          <Section title="Details" icon={<Info className="w-4 h-4" />}>
+            <DataTable
+              tableKey="container-info"
+              data={[list_container]}
+              columns={[
+                {
+                  accessorKey: "Id",
+                  header: "id",
+                },
+                {
+                  accessorKey: "Image",
+                  header: "image",
+                },
+                {
+                  accessorKey: "network_mode",
+                  header: "Network Mode",
+                },
+                {
+                  accessorKey: "networks",
+                  header: "Networks",
+                },
+              ]}
+            />
+          </Section>
+        )}
 
         <DockerLabelsSection labels={list_container?.labels} />
       </div>
