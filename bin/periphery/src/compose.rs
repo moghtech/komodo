@@ -694,7 +694,7 @@ async fn compose_down(
     format!(" {}", services.join(" "))
   };
   let log = run_komodo_command(
-    "compose down",
+    "Compose Down",
     None,
     format!("{docker_compose} -p {project} down{service_args}"),
   )
