@@ -9,6 +9,8 @@ import {
   AuthRequest,
   BatchExecutionResponse,
   ConnectContainerExecQuery,
+  ConnectDeploymentExecQuery,
+  ConnectStackExecQuery,
   ConnectTerminalQuery,
   ExecuteRequest,
   ExecuteTerminalBody,
@@ -23,7 +25,7 @@ import {
 
 export * as Types from "./types.js";
 
-type InitOptions =
+export type InitOptions =
   | { type: "jwt"; params: { jwt: string } }
   | { type: "api-key"; params: { key: string; secret: string } };
 
@@ -36,6 +38,27 @@ export class CancelToken {
     this.cancelled = true;
   }
 }
+
+export type ContainerExecQuery =
+  | {
+      type: "container";
+      query: ConnectContainerExecQuery;
+    }
+  | {
+      type: "deployment";
+      query: ConnectDeploymentExecQuery;
+    }
+  | {
+      type: "stack";
+      query: ConnectStackExecQuery;
+    };
+
+export type TerminalCallbacks = {
+  on_message?: (e: MessageEvent<any>) => void;
+  on_login?: () => void;
+  on_open?: () => void;
+  on_close?: () => void;
+};
 
 /** Initialize a new client for Komodo */
 export function KomodoClient(url: string, options: InitOptions) {
@@ -317,11 +340,7 @@ export function KomodoClient(url: string, options: InitOptions) {
     on_close,
   }: {
     query: ConnectTerminalQuery;
-    on_message?: (e: MessageEvent<any>) => void;
-    on_login?: () => void;
-    on_open?: () => void;
-    on_close?: () => void;
-  }) => {
+  } & TerminalCallbacks) => {
     const url_query = new URLSearchParams(
       query as any as Record<string, string>
     ).toString();
@@ -366,23 +385,19 @@ export function KomodoClient(url: string, options: InitOptions) {
   };
 
   const connect_container_exec = ({
-    query,
+    query: { type, query },
     on_message,
     on_login,
     on_open,
     on_close,
   }: {
-    query: ConnectContainerExecQuery;
-    on_message?: (e: MessageEvent<any>) => void;
-    on_login?: () => void;
-    on_open?: () => void;
-    on_close?: () => void;
-  }) => {
+    query: ContainerExecQuery;
+  } & TerminalCallbacks) => {
     const url_query = new URLSearchParams(
       query as any as Record<string, string>
     ).toString();
     const ws = new WebSocket(
-      url.replace("http", "ws") + "/ws/container?" + url_query
+      url.replace("http", "ws") + `/ws/${type}/terminal?` + url_query
     );
     // Handle login on websocket open
     ws.onopen = () => {
@@ -617,7 +632,9 @@ export function KomodoClient(url: string, options: InitOptions) {
     connect_terminal,
     /**
      * Subscribes to container exec io over websocket message,
-     * for use with xtermjs.
+     * for use with xtermjs. Can connect to Deployment, Stack,
+     * or any container on a Server. The permission used to allow the connection
+     * depends on `query.type`.
      */
     connect_container_exec,
     /**

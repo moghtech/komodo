@@ -1,16 +1,22 @@
-use std::collections::HashMap;
-
+use indexmap::{IndexMap, IndexSet};
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use super::{
   ResourceTarget, ResourceTargetVariant,
-  action::_PartialActionConfig, alerter::_PartialAlerterConfig,
-  build::_PartialBuildConfig, builder::_PartialBuilderConfig,
-  deployment::_PartialDeploymentConfig, permission::PermissionLevel,
-  procedure::_PartialProcedureConfig, repo::_PartialRepoConfig,
+  action::_PartialActionConfig,
+  alerter::_PartialAlerterConfig,
+  build::_PartialBuildConfig,
+  builder::_PartialBuilderConfig,
+  deployment::_PartialDeploymentConfig,
+  permission::{
+    PermissionLevel, PermissionLevelAndSpecifics, SpecificPermission,
+  },
+  procedure::_PartialProcedureConfig,
+  repo::_PartialRepoConfig,
   server::_PartialServerConfig,
-  stack::_PartialStackConfig, sync::_PartialResourceSyncConfig,
+  stack::_PartialStackConfig,
+  sync::_PartialResourceSyncConfig,
   variable::Variable,
 };
 
@@ -147,13 +153,18 @@ pub struct UserGroupToml {
   /// User group name
   pub name: String,
 
+  /// Whether all users will implicitly have the permissions in this group.
+  #[serde(default)]
+  pub everyone: bool,
+
   /// Users in the group
   #[serde(default)]
   pub users: Vec<String>,
 
   /// Give the user group elevated permissions on all resources of a certain type
   #[serde(default)]
-  pub all: HashMap<ResourceTargetVariant, PermissionLevel>,
+  pub all:
+    IndexMap<ResourceTargetVariant, PermissionLevelAndSpecifics>,
 
   /// Permissions given to the group
   #[serde(default, alias = "permission")]
@@ -174,4 +185,7 @@ pub struct PermissionToml {
   ///   - Execute
   ///   - Write
   pub level: PermissionLevel,
+
+  /// Any [SpecificPermissions](SpecificPermission) on the resource
+  pub specific: IndexSet<SpecificPermission>,
 }

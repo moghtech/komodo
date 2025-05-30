@@ -62,7 +62,7 @@ export const StackConfig = ({
     git: true,
     webhooks: true,
   });
-  const perms = useRead("GetPermissionLevel", {
+  const perms = useRead("GetPermission", {
     target: { type: "Stack", id },
   }).data;
   const stack = useRead("GetStack", { stack: id }).data;
@@ -81,7 +81,7 @@ export const StackConfig = ({
 
   if (!config) return null;
 
-  const disabled = global_disabled || perms !== Types.PermissionLevel.Write;
+  const disabled = global_disabled || perms?.level !== Types.PermissionLevel.Write;
 
   const run_build = update.run_build ?? config.run_build;
   const mode = getStackMode(update, config);
@@ -626,21 +626,12 @@ export const StackConfig = ({
             ["Builder" as any]: () => (
               <WebhookBuilder git_provider={git_provider} />
             ),
-            // ["Refresh" as any]: () =>
-            //   (update.branch ?? config.branch) && (
-            //     <ConfigItem label="Refresh Cache">
-            //       <CopyWebhook
-            //         integration={webhook_integration}
-            //         path={`/stack/${id_or_name === "Id" ? id : name}/refresh`}
-            //       />
-            //     </ConfigItem>
-            //   ),
             ["Deploy" as any]: () =>
               (update.branch ?? config.branch) && (
                 <ConfigItem label="Webhook Url - Deploy">
                   <CopyWebhook
                     integration={webhook_integration}
-                    path={`/stack/${id_or_name === "Id" ? id : name}/deploy`}
+                    path={`/stack/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}/deploy`}
                   />
                 </ConfigItem>
               ),

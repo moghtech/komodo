@@ -11,7 +11,8 @@ use mungos::mongodb::bson::doc;
 use resolver_api::Resolve;
 
 use crate::{
-  helpers::query::get_all_tags, resource, state::db_client,
+  helpers::query::get_all_tags, permission::get_check_permissions,
+  resource, state::db_client,
 };
 
 use super::ReadArgs;
@@ -22,10 +23,10 @@ impl Resolve<ReadArgs> for GetAlerter {
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<Alerter> {
     Ok(
-      resource::get_check_permissions::<Alerter>(
+      get_check_permissions::<Alerter>(
         &self.alerter,
         user,
-        PermissionLevel::Read,
+        PermissionLevel::Read.into(),
       )
       .await?,
     )
@@ -43,8 +44,13 @@ impl Resolve<ReadArgs> for ListAlerters {
       get_all_tags(None).await?
     };
     Ok(
-      resource::list_for_user::<Alerter>(self.query, user, &all_tags)
-        .await?,
+      resource::list_for_user::<Alerter>(
+        self.query,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
+      )
+      .await?,
     )
   }
 }
@@ -61,7 +67,10 @@ impl Resolve<ReadArgs> for ListFullAlerters {
     };
     Ok(
       resource::list_full_for_user::<Alerter>(
-        self.query, user, &all_tags,
+        self.query,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
       )
       .await?,
     )

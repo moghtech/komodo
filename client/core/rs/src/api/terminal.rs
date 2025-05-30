@@ -28,6 +28,32 @@ pub struct ConnectContainerExecQuery {
   pub shell: String,
 }
 
+/// Query to connect to a container exec session (interactive shell over websocket) on the given Deployment.
+/// This call will use access to the Deployment Terminal to permission the call.
+/// TODO: Document calling.
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ConnectDeploymentExecQuery {
+  /// Deployment Id or name
+  pub deployment: String,
+  /// The shell to connect to
+  pub shell: String,
+}
+
+/// Query to connect to a container exec session (interactive shell over websocket) on the given Stack / service.
+/// This call will use access to the Stack Terminal to permission the call.
+/// TODO: Document calling.
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ConnectStackExecQuery {
+  /// Stack Id or name
+  pub stack: String,
+  /// The service name to connect to
+  pub service: String,
+  /// The shell to connect to
+  pub shell: String,
+}
+
 /// Execute a terminal command on the given server.
 /// TODO: Document calling.
 #[typeshare]

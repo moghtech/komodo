@@ -27,7 +27,7 @@ import { SecretsSearch } from "@components/config/env_vars";
 import { MonacoEditor } from "@components/monaco";
 
 export const RepoConfig = ({ id }: { id: string }) => {
-  const perms = useRead("GetPermissionLevel", {
+  const perms = useRead("GetPermission", {
     target: { type: "Repo", id },
   }).data;
   const repo = useRead("GetRepo", { repo: id }).data;
@@ -46,7 +46,7 @@ export const RepoConfig = ({ id }: { id: string }) => {
 
   if (!config) return null;
 
-  const disabled = global_disabled || perms !== Types.PermissionLevel.Write;
+  const disabled = global_disabled || perms?.level !== Types.PermissionLevel.Write;
 
   const git_provider = update.git_provider ?? config.git_provider;
   const webhook_integration = getWebhookIntegration(integrations, git_provider);
@@ -257,7 +257,7 @@ export const RepoConfig = ({ id }: { id: string }) => {
                 <ConfigItem label="Webhook Url - Pull">
                   <CopyWebhook
                     integration={webhook_integration}
-                    path={`/repo/${id_or_name === "Id" ? id : name}/pull`}
+                    path={`/repo/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}/pull`}
                   />
                 </ConfigItem>
               ),
@@ -265,7 +265,7 @@ export const RepoConfig = ({ id }: { id: string }) => {
                 <ConfigItem label="Webhook Url - Clone">
                   <CopyWebhook
                     integration={webhook_integration}
-                    path={`/repo/${id_or_name === "Id" ? id : name}/clone`}
+                    path={`/repo/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}/clone`}
                   />
                 </ConfigItem>
               ),
@@ -273,7 +273,7 @@ export const RepoConfig = ({ id }: { id: string }) => {
                 <ConfigItem label="Webhook Url - Build">
                   <CopyWebhook
                     integration={webhook_integration}
-                    path={`/repo/${id_or_name === "Id" ? id : name}/build`}
+                    path={`/repo/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}/build`}
                   />
                 </ConfigItem>
               ),

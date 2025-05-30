@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ui/select";
+import { Input } from "@ui/input";
 
 const ENDPOINT_TYPES: Types.AlerterEndpoint["type"][] = [
   "Custom",
@@ -58,6 +59,27 @@ export const EndpointConfig = ({
         }
         readOnly={disabled}
       />
+      {endpoint.type == "Ntfy" ? (
+        <ConfigItem
+          label="Email"
+          description="Request Ntfy to send an email to this address. SMTP must be configured on the Ntfy instance. Only one email address per alerter is supported."
+        >
+          <Input
+            value={endpoint.params.email}
+            type="email"
+            readOnly={disabled}
+            placeholder="john@example.com"
+            onChange={(input) =>
+              set({
+                ...endpoint,
+                params: { ...endpoint.params, email: input.target.value },
+              })
+            }
+          ></Input>
+        </ConfigItem>
+      ) : (
+        ""
+      )}
     </ConfigItem>
   );
 };
@@ -66,12 +88,12 @@ const default_url = (type: Types.AlerterEndpoint["type"]) => {
   return type === "Custom"
     ? "http://localhost:7000"
     : type === "Slack"
-    ? "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
-    : type === "Discord"
-    ? "https://discord.com/api/webhooks/XXXXXXXXXXXX/XXXX-XXXXXXXXXX"
-    : type === "Ntfy"
-    ? "https://ntfy.sh/komodo"
-    : type === "Pushover"
-    ? "https://api.pushover.net/1/messages.json?token=XXXXXXXXXXXXX&user=XXXXXXXXXXXXX"
-    : "";
+      ? "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+      : type === "Discord"
+        ? "https://discord.com/api/webhooks/XXXXXXXXXXXX/XXXX-XXXXXXXXXX"
+        : type === "Ntfy"
+          ? "https://ntfy.sh/komodo"
+          : type === "Pushover"
+            ? "https://api.pushover.net/1/messages.json?token=XXXXXXXXXXXXX&user=XXXXXXXXXXXXX"
+            : "";
 };

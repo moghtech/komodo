@@ -11,7 +11,7 @@ export const ServerConfig = ({
   id: string;
   titleOther: ReactNode;
 }) => {
-  const perms = useRead("GetPermissionLevel", {
+  const perms = useRead("GetPermission", {
     target: { type: "Server", id },
   }).data;
   const invalidate = useInvalidate();
@@ -30,7 +30,7 @@ export const ServerConfig = ({
   });
   if (!config) return null;
 
-  const disabled = global_disabled || perms !== Types.PermissionLevel.Write;
+  const disabled = global_disabled || perms?.level !== Types.PermissionLevel.Write;
 
   return (
     <Config

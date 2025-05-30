@@ -19,7 +19,7 @@ export const Prune = ({
     { server: server_id },
     { refetchInterval: 5000 }
   ).data;
-  const perms = useRead("GetPermissionLevel", {
+  const perms = useRead("GetPermission", {
     target: { type: "Server", id: server_id },
   }).data;
 

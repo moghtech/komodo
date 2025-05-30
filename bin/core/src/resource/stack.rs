@@ -1,10 +1,11 @@
 use anyhow::Context;
 use formatting::format_serror;
+use indexmap::IndexSet;
 use komodo_client::{
   api::write::RefreshStackCache,
   entities::{
     Operation, ResourceTarget, ResourceTargetVariant,
-    permission::PermissionLevel,
+    permission::{PermissionLevel, SpecificPermission},
     resource::Resource,
     server::Server,
     stack::{
@@ -12,6 +13,7 @@ use komodo_client::{
       StackInfo, StackListItem, StackListItemInfo,
       StackQuerySpecifics, StackServiceWithUpdate, StackState,
     },
+    to_docker_compatible_name,
     update::Update,
     user::{User, stack_user},
   },
@@ -46,6 +48,20 @@ impl super::KomodoResource for Stack {
 
   fn resource_target(id: impl Into<String>) -> ResourceTarget {
     ResourceTarget::Stack(id.into())
+  }
+
+  fn validated_name(name: &str) -> String {
+    to_docker_compatible_name(name)
+  }
+
+  fn creator_specific_permissions() -> IndexSet<SpecificPermission> {
+    [
+      SpecificPermission::Inspect,
+      SpecificPermission::Logs,
+      SpecificPermission::Terminal,
+    ]
+    .into_iter()
+    .collect()
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>
@@ -314,7 +330,7 @@ async fn validate_config(
       let server = get_check_permissions::<Server>(
         server_id,
         user,
-        PermissionLevel::Write,
+        PermissionLevel::Read.attach(),
       )
       .await
       .context("Cannot attach stack to this Server")?;

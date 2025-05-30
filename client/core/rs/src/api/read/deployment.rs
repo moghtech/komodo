@@ -9,7 +9,7 @@ use crate::entities::{
     Deployment, DeploymentActionState, DeploymentListItem,
     DeploymentQuery, DeploymentState,
   },
-  docker::container::{ContainerListItem, ContainerStats},
+  docker::container::{Container, ContainerListItem, ContainerStats},
   update::Log,
 };
 
@@ -102,6 +102,26 @@ pub struct GetDeploymentContainerResponse {
   pub state: DeploymentState,
   pub container: Option<ContainerListItem>,
 }
+
+//
+
+/// Inspect the docker container associated with the Deployment.
+/// Response: [Container].
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoReadRequest)]
+#[response(InspectDeploymentContainerResponse)]
+#[error(serror::Error)]
+pub struct InspectDeploymentContainer {
+  /// Id or name
+  #[serde(alias = "id", alias = "name")]
+  pub deployment: String,
+}
+
+#[typeshare]
+pub type InspectDeploymentContainerResponse = Container;
 
 //
 

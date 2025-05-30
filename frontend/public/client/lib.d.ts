@@ -1,7 +1,7 @@
 import { AuthResponses, ExecuteResponses, ReadResponses, UserResponses, WriteResponses } from "./responses.js";
-import { AuthRequest, ConnectContainerExecQuery, ConnectTerminalQuery, ExecuteRequest, ExecuteTerminalBody, ReadRequest, Update, UpdateListItem, UserRequest, WriteRequest } from "./types.js";
+import { AuthRequest, ConnectContainerExecQuery, ConnectDeploymentExecQuery, ConnectStackExecQuery, ConnectTerminalQuery, ExecuteRequest, ExecuteTerminalBody, ReadRequest, Update, UpdateListItem, UserRequest, WriteRequest } from "./types.js";
 export * as Types from "./types.js";
-type InitOptions = {
+export type InitOptions = {
     type: "jwt";
     params: {
         jwt: string;
@@ -18,6 +18,22 @@ export declare class CancelToken {
     constructor();
     cancel(): void;
 }
+export type ContainerExecQuery = {
+    type: "container";
+    query: ConnectContainerExecQuery;
+} | {
+    type: "deployment";
+    query: ConnectDeploymentExecQuery;
+} | {
+    type: "stack";
+    query: ConnectStackExecQuery;
+};
+export type TerminalCallbacks = {
+    on_message?: (e: MessageEvent<any>) => void;
+    on_login?: () => void;
+    on_open?: () => void;
+    on_close?: () => void;
+};
 /** Initialize a new client for Komodo */
 export declare function KomodoClient(url: string, options: InitOptions): {
     /**
@@ -149,22 +165,16 @@ export declare function KomodoClient(url: string, options: InitOptions): {
      */
     connect_terminal: ({ query, on_message, on_login, on_open, on_close, }: {
         query: ConnectTerminalQuery;
-        on_message?: (e: MessageEvent<any>) => void;
-        on_login?: () => void;
-        on_open?: () => void;
-        on_close?: () => void;
-    }) => WebSocket;
+    } & TerminalCallbacks) => WebSocket;
     /**
      * Subscribes to container exec io over websocket message,
-     * for use with xtermjs.
+     * for use with xtermjs. Can connect to Deployment, Stack,
+     * or any container on a Server. The permission used to allow the connection
+     * depends on `query.type`.
      */
-    connect_container_exec: ({ query, on_message, on_login, on_open, on_close, }: {
-        query: ConnectContainerExecQuery;
-        on_message?: (e: MessageEvent<any>) => void;
-        on_login?: () => void;
-        on_open?: () => void;
-        on_close?: () => void;
-    }) => WebSocket;
+    connect_container_exec: ({ query: { type, query }, on_message, on_login, on_open, on_close, }: {
+        query: ContainerExecQuery;
+    } & TerminalCallbacks) => WebSocket;
     /**
      * Executes a command on a given Server / terminal,
      * and returns a stream to process the output as it comes in.

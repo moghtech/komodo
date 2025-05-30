@@ -15,7 +15,7 @@ use resolver_api::Resolve;
 use crate::{
   helpers::{periphery_client, update::update_update},
   monitor::update_cache_for_server,
-  resource,
+  permission::get_check_permissions,
   state::action_states,
 };
 
@@ -27,10 +27,10 @@ impl Resolve<ExecuteArgs> for StartContainer {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -81,10 +81,10 @@ impl Resolve<ExecuteArgs> for RestartContainer {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -137,10 +137,10 @@ impl Resolve<ExecuteArgs> for PauseContainer {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -191,10 +191,10 @@ impl Resolve<ExecuteArgs> for UnpauseContainer {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -247,10 +247,10 @@ impl Resolve<ExecuteArgs> for StopContainer {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -309,10 +309,10 @@ impl Resolve<ExecuteArgs> for DestroyContainer {
       signal,
       time,
     } = self;
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -365,10 +365,10 @@ impl Resolve<ExecuteArgs> for StartAllContainers {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -415,10 +415,10 @@ impl Resolve<ExecuteArgs> for RestartAllContainers {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -467,10 +467,10 @@ impl Resolve<ExecuteArgs> for PauseAllContainers {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -517,10 +517,10 @@ impl Resolve<ExecuteArgs> for UnpauseAllContainers {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -569,10 +569,10 @@ impl Resolve<ExecuteArgs> for StopAllContainers {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -619,10 +619,10 @@ impl Resolve<ExecuteArgs> for PruneContainers {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -675,10 +675,10 @@ impl Resolve<ExecuteArgs> for DeleteNetwork {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -726,10 +726,10 @@ impl Resolve<ExecuteArgs> for PruneNetworks {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -780,10 +780,10 @@ impl Resolve<ExecuteArgs> for DeleteImage {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -828,10 +828,10 @@ impl Resolve<ExecuteArgs> for PruneImages {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -880,10 +880,10 @@ impl Resolve<ExecuteArgs> for DeleteVolume {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -931,10 +931,10 @@ impl Resolve<ExecuteArgs> for PruneVolumes {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -983,10 +983,10 @@ impl Resolve<ExecuteArgs> for PruneDockerBuilders {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -1035,10 +1035,10 @@ impl Resolve<ExecuteArgs> for PruneBuildx {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -1087,10 +1087,10 @@ impl Resolve<ExecuteArgs> for PruneSystem {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 

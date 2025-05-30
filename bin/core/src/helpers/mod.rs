@@ -1,9 +1,12 @@
 use std::time::Duration;
 
 use anyhow::{Context, anyhow};
+use indexmap::IndexSet;
 use komodo_client::entities::{
   ResourceTarget,
-  permission::{Permission, PermissionLevel, UserTarget},
+  permission::{
+    Permission, PermissionLevel, SpecificPermission, UserTarget,
+  },
   server::Server,
   user::User,
 };
@@ -19,6 +22,7 @@ pub mod builder;
 pub mod cache;
 pub mod channel;
 pub mod interpolate;
+pub mod matcher;
 pub mod procedure;
 pub mod prune;
 pub mod query;
@@ -147,6 +151,7 @@ pub async fn create_permission<T>(
   user: &User,
   target: T,
   level: PermissionLevel,
+  specific: IndexSet<SpecificPermission>,
 ) where
   T: Into<ResourceTarget> + std::fmt::Debug,
 {
@@ -162,6 +167,7 @@ pub async fn create_permission<T>(
       user_target: UserTarget::User(user.id.clone()),
       resource_target: target.clone(),
       level,
+      specific,
     })
     .await
   {

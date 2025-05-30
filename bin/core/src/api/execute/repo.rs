@@ -41,6 +41,7 @@ use crate::{
     query::get_variables_and_secrets,
     update::update_update,
   },
+  permission::get_check_permissions,
   resource::{self, refresh_repo_state_cache},
   state::{action_states, db_client},
 };
@@ -73,10 +74,10 @@ impl Resolve<ExecuteArgs> for CloneRepo {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let mut repo = resource::get_check_permissions::<Repo>(
+    let mut repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -185,10 +186,10 @@ impl Resolve<ExecuteArgs> for PullRepo {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let mut repo = resource::get_check_permissions::<Repo>(
+    let mut repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -340,10 +341,10 @@ impl Resolve<ExecuteArgs> for BuildRepo {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let mut repo = resource::get_check_permissions::<Repo>(
+    let mut repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -651,10 +652,10 @@ impl Resolve<ExecuteArgs> for CancelRepoBuild {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let repo = resource::get_check_permissions::<Repo>(
+    let repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 

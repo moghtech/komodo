@@ -30,6 +30,7 @@ import {
   StatusBadge,
 } from "@components/util";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
+import { Card, CardHeader, CardTitle } from "@ui/card";
 import { RepoTable } from "../repo/table";
 import { DashboardPieChart } from "@pages/home/dashboard";
 import { StackTable } from "../stack/table";
@@ -37,9 +38,9 @@ import { ResourceComponents } from "..";
 import { ServerInfo } from "./info";
 import { ServerStats } from "./stats";
 import { GroupActions } from "@components/group-actions";
-import { ServerTerminals } from "./terminal";
-import { useEditPermissions } from "@pages/resource";
-import { Card, CardHeader, CardTitle } from "@ui/card";
+import { ServerTerminals } from "@components/terminal/server";
+import { usePermissions } from "@lib/hooks";
+import { MaintenanceServerConfig } from "./maintenance/config";
 
 export const useServer = (id?: string) =>
   useRead("ListServers", {}, { refetchInterval: 10_000 }).data?.find(
@@ -63,11 +64,11 @@ const Icon = ({ id, size }: { id?: string; size: number }) => {
 
 const ConfigTabs = ({ id }: { id: string }) => {
   const [view, setView] = useLocalStorage<
-    "Config" | "Stats" | "Docker" | "Resources" | "Terminals"
+    "Config" | "Stats" | "Docker" | "Maintenance" | "Resources" | "Terminals"
   >(`server-${id}-tab`, "Config");
 
   const is_admin = useUser().data?.admin ?? false;
-  const { canWrite } = useEditPermissions({ type: "Server", id });
+  const { canWrite } = usePermissions({ type: "Server", id });
   const server_info = useServer(id)?.info;
   const terminals_disabled = server_info?.terminals_disabled ?? true;
   const container_exec_disabled = server_info?.container_exec_disabled ?? true;
@@ -108,6 +109,10 @@ const ConfigTabs = ({ id }: { id: string }) => {
         Docker
       </TabsTrigger>
 
+      <TabsTrigger value="Maintenance" className="w-[110px]">
+        Maintenance
+      </TabsTrigger>
+
       <TabsTrigger
         value="Resources"
         className="w-[110px]"
@@ -139,6 +144,10 @@ const ConfigTabs = ({ id }: { id: string }) => {
 
       <TabsContent value="Docker">
         <ServerInfo id={id} titleOther={tabsList} />
+      </TabsContent>
+
+      <TabsContent value="Maintenance">
+        <MaintenanceServerConfig id={id} titleOther={tabsList} />
       </TabsContent>
 
       <TabsContent value="Resources">

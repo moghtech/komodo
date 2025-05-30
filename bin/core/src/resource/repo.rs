@@ -12,7 +12,7 @@ use komodo_client::entities::{
   },
   resource::Resource,
   server::Server,
-  to_komodo_name,
+  to_path_compatible_name,
   update::Update,
   user::User,
 };
@@ -46,6 +46,10 @@ impl super::KomodoResource for Repo {
 
   fn resource_target(id: impl Into<String>) -> ResourceTarget {
     ResourceTarget::Repo(id.into())
+  }
+
+  fn validated_name(name: &str) -> String {
+    to_path_compatible_name(name)
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>
@@ -170,7 +174,7 @@ impl super::KomodoResource for Repo {
     match periphery
       .request(DeleteRepo {
         name: if repo.config.path.is_empty() {
-          to_komodo_name(&repo.name)
+          to_path_compatible_name(&repo.name)
         } else {
           repo.config.path.clone()
         },
@@ -226,7 +230,7 @@ async fn validate_config(
       let server = get_check_permissions::<Server>(
         server_id,
         user,
-        PermissionLevel::Write,
+        PermissionLevel::Read.attach(),
       )
       .await
       .context("Cannot attach Repo to this Server")?;
@@ -238,7 +242,7 @@ async fn validate_config(
       let builder = super::get_check_permissions::<Builder>(
         builder_id,
         user,
-        PermissionLevel::Read,
+        PermissionLevel::Read.attach(),
       )
       .await
       .context("Cannot attach Repo to this Builder")?;

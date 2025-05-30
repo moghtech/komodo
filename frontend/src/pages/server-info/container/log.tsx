@@ -1,3 +1,4 @@
+import { Section } from "@components/layouts";
 import { Log, LogSection } from "@components/log";
 import { useRead } from "@lib/hooks";
 import { Types } from "komodo_client";
@@ -7,11 +8,20 @@ export const ContainerLogs = ({
   id,
   container_name,
   titleOther,
+  disabled,
 }: {
   id: string;
   container_name: string;
   titleOther?: ReactNode;
+  disabled: boolean;
 }) => {
+  if (disabled) {
+    return (
+      <Section titleOther={titleOther}>
+        <h1>Logs are disabled.</h1>
+      </Section>
+    );
+  }
   return (
     <LogSection
       titleOther={titleOther}

@@ -22,6 +22,7 @@ use resolver_api::Resolve;
 use crate::{
   config::core_config,
   helpers::query::get_all_tags,
+  permission::get_check_permissions,
   resource,
   state::{
     action_states, build_state_cache, db_client, github_client,
@@ -36,10 +37,10 @@ impl Resolve<ReadArgs> for GetBuild {
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<Build> {
     Ok(
-      resource::get_check_permissions::<Build>(
+      get_check_permissions::<Build>(
         &self.build,
         user,
-        PermissionLevel::Read,
+        PermissionLevel::Read.into(),
       )
       .await?,
     )
@@ -57,8 +58,13 @@ impl Resolve<ReadArgs> for ListBuilds {
       get_all_tags(None).await?
     };
     Ok(
-      resource::list_for_user::<Build>(self.query, user, &all_tags)
-        .await?,
+      resource::list_for_user::<Build>(
+        self.query,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
+      )
+      .await?,
     )
   }
 }
@@ -75,7 +81,10 @@ impl Resolve<ReadArgs> for ListFullBuilds {
     };
     Ok(
       resource::list_full_for_user::<Build>(
-        self.query, user, &all_tags,
+        self.query,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
       )
       .await?,
     )
@@ -87,10 +96,10 @@ impl Resolve<ReadArgs> for GetBuildActionState {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<BuildActionState> {
-    let build = resource::get_check_permissions::<Build>(
+    let build = get_check_permissions::<Build>(
       &self.build,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
     let action_state = action_states()
@@ -111,6 +120,7 @@ impl Resolve<ReadArgs> for GetBuildsSummary {
     let builds = resource::list_full_for_user::<Build>(
       Default::default(),
       user,
+      PermissionLevel::Read.into(),
       &[],
     )
     .await
@@ -218,10 +228,10 @@ impl Resolve<ReadArgs> for ListBuildVersions {
       patch,
       limit,
     } = self;
-    let build = resource::get_check_permissions::<Build>(
+    let build = get_check_permissions::<Build>(
       &build,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
 
@@ -274,7 +284,10 @@ impl Resolve<ReadArgs> for ListCommonBuildExtraArgs {
       get_all_tags(None).await?
     };
     let builds = resource::list_full_for_user::<Build>(
-      self.query, user, &all_tags,
+      self.query,
+      user,
+      PermissionLevel::Read.into(),
+      &all_tags,
     )
     .await
     .context("failed to get resources matching query")?;
@@ -306,10 +319,10 @@ impl Resolve<ReadArgs> for GetBuildWebhookEnabled {
       });
     };
 
-    let build = resource::get_check_permissions::<Build>(
+    let build = get_check_permissions::<Build>(
       &self.build,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
 

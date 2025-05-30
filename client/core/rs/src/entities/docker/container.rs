@@ -268,10 +268,10 @@ pub enum ContainerStateStatusEnum {
   Paused,
   #[serde(rename = "restarting")]
   Restarting,
-  #[serde(rename = "removing")]
-  Removing,
   #[serde(rename = "exited")]
   Exited,
+  #[serde(rename = "removing")]
+  Removing,
   #[serde(rename = "dead")]
   Dead,
 }
@@ -866,6 +866,8 @@ pub enum MountTypeEnum {
   Bind,
   #[serde(rename = "volume")]
   Volume,
+  #[serde(rename = "image")]
+  Image,
   #[serde(rename = "tmpfs")]
   Tmpfs,
   #[serde(rename = "npipe")]

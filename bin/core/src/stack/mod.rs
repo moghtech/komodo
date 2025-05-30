@@ -1,13 +1,16 @@
 use anyhow::{Context, anyhow};
 use komodo_client::entities::{
-  permission::PermissionLevel,
+  permission::PermissionLevelAndSpecifics,
   server::{Server, ServerState},
   stack::Stack,
   user::User,
 };
 use regex::Regex;
 
-use crate::{helpers::query::get_server_with_state, resource};
+use crate::{
+  helpers::query::get_server_with_state,
+  permission::get_check_permissions,
+};
 
 pub mod execute;
 pub mod remote;
@@ -16,15 +19,11 @@ pub mod services;
 pub async fn get_stack_and_server(
   stack: &str,
   user: &User,
-  permission_level: PermissionLevel,
+  permissions: PermissionLevelAndSpecifics,
   block_if_server_unreachable: bool,
 ) -> anyhow::Result<(Stack, Server)> {
-  let stack = resource::get_check_permissions::<Stack>(
-    stack,
-    user,
-    permission_level,
-  )
-  .await?;
+  let stack =
+    get_check_permissions::<Stack>(stack, user, permissions).await?;
 
   if stack.config.server_id.is_empty() {
     return Err(anyhow!("Stack has no server configured"));

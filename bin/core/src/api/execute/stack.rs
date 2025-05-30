@@ -29,6 +29,7 @@ use crate::{
     update::{add_update_without_send, update_update},
   },
   monitor::update_cache_for_server,
+  permission::get_check_permissions,
   resource,
   stack::{execute::execute_compose, get_stack_and_server},
   state::{action_states, db_client},
@@ -69,7 +70,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
     let (mut stack, server) = get_stack_and_server(
       &self.stack,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
       true,
     )
     .await?;
@@ -320,10 +321,10 @@ impl Resolve<ExecuteArgs> for DeployStackIfChanged {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let stack = resource::get_check_permissions::<Stack>(
+    let stack = get_check_permissions::<Stack>(
       &self.stack,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
     RefreshStackCache {
@@ -402,11 +403,8 @@ impl Resolve<ExecuteArgs> for BatchPullStack {
     ExecuteArgs { user, .. }: &ExecuteArgs,
   ) -> serror::Result<BatchExecutionResponse> {
     Ok(
-      super::batch_execute::<BatchPullStack>(
-        &self.pattern,
-        user,
-      )
-      .await?,
+      super::batch_execute::<BatchPullStack>(&self.pattern, user)
+        .await?,
     )
   }
 }
@@ -498,7 +496,7 @@ impl Resolve<ExecuteArgs> for PullStack {
     let (stack, server) = get_stack_and_server(
       &self.stack,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
       true,
     )
     .await?;

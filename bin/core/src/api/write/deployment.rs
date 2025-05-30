@@ -11,7 +11,7 @@ use komodo_client::{
     komodo_timestamp,
     permission::PermissionLevel,
     server::{Server, ServerState},
-    to_komodo_name,
+    to_docker_compatible_name,
     update::Update,
   },
 };
@@ -25,6 +25,7 @@ use crate::{
     query::get_deployment_state,
     update::{add_update, make_update},
   },
+  permission::get_check_permissions,
   resource,
   state::{action_states, db_client, server_status_cache},
 };
@@ -51,10 +52,10 @@ impl Resolve<WriteArgs> for CopyDeployment {
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Deployment> {
     let Deployment { config, .. } =
-      resource::get_check_permissions::<Deployment>(
+      get_check_permissions::<Deployment>(
         &self.id,
         user,
-        PermissionLevel::Write,
+        PermissionLevel::Read.into(),
       )
       .await?;
     Ok(
@@ -70,10 +71,10 @@ impl Resolve<WriteArgs> for CreateDeploymentFromContainer {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Deployment> {
-    let server = resource::get_check_permissions::<Server>(
+    let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Write,
+      PermissionLevel::Read.inspect().attach(),
     )
     .await?;
     let cache = server_status_cache()
@@ -188,10 +189,10 @@ impl Resolve<WriteArgs> for RenameDeployment {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Update> {
-    let deployment = resource::get_check_permissions::<Deployment>(
+    let deployment = get_check_permissions::<Deployment>(
       &self.id,
       user,
-      PermissionLevel::Write,
+      PermissionLevel::Write.into(),
     )
     .await?;
 
@@ -206,7 +207,7 @@ impl Resolve<WriteArgs> for RenameDeployment {
     let _action_guard =
       action_state.update(|state| state.renaming = true)?;
 
-    let name = to_komodo_name(&self.name);
+    let name = to_docker_compatible_name(&self.name);
 
     let container_state = get_deployment_state(&deployment).await?;
 

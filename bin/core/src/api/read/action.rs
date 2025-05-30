@@ -12,6 +12,7 @@ use resolver_api::Resolve;
 
 use crate::{
   helpers::query::get_all_tags,
+  permission::get_check_permissions,
   resource,
   state::{action_state_cache, action_states},
 };
@@ -24,10 +25,10 @@ impl Resolve<ReadArgs> for GetAction {
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<Action> {
     Ok(
-      resource::get_check_permissions::<Action>(
+      get_check_permissions::<Action>(
         &self.action,
         user,
-        PermissionLevel::Read,
+        PermissionLevel::Read.into(),
       )
       .await?,
     )
@@ -45,8 +46,13 @@ impl Resolve<ReadArgs> for ListActions {
       get_all_tags(None).await?
     };
     Ok(
-      resource::list_for_user::<Action>(self.query, user, &all_tags)
-        .await?,
+      resource::list_for_user::<Action>(
+        self.query,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
+      )
+      .await?,
     )
   }
 }
@@ -63,7 +69,10 @@ impl Resolve<ReadArgs> for ListFullActions {
     };
     Ok(
       resource::list_full_for_user::<Action>(
-        self.query, user, &all_tags,
+        self.query,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
       )
       .await?,
     )
@@ -75,10 +84,10 @@ impl Resolve<ReadArgs> for GetActionActionState {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<ActionActionState> {
-    let action = resource::get_check_permissions::<Action>(
+    let action = get_check_permissions::<Action>(
       &self.action,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
     let action_state = action_states()
@@ -99,6 +108,7 @@ impl Resolve<ReadArgs> for GetActionsSummary {
     let actions = resource::list_full_for_user::<Action>(
       Default::default(),
       user,
+      PermissionLevel::Read.into(),
       &[],
     )
     .await

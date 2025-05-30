@@ -10,7 +10,7 @@ import {
 import { useFullBuild } from ".";
 import { cn, updateLogToHtml } from "@lib/utils";
 import { MonacoEditor } from "@components/monaco";
-import { useEditPermissions } from "@pages/resource";
+import { usePermissions } from "@lib/hooks";
 import { ConfirmUpdate } from "@components/config/util";
 import { useLocalStorage, useRead, useWrite } from "@lib/hooks";
 import { Button } from "@ui/button";
@@ -32,7 +32,7 @@ export const BuildInfo = ({
     { contents: undefined }
   );
   const [showContents, setShowContents] = useState(true);
-  const { canWrite } = useEditPermissions({ type: "Build", id });
+  const { canWrite } = usePermissions({ type: "Build", id });
   const { toast } = useToast();
   const { mutateAsync, isPending } = useWrite("WriteBuildFileContents", {
     onSuccess: (res) => {

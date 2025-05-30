@@ -10,6 +10,7 @@ use resolver_api::Resolve;
 
 use crate::{
   helpers::query::get_all_tags,
+  permission::get_check_permissions,
   resource,
   state::{action_states, procedure_state_cache},
 };
@@ -22,10 +23,10 @@ impl Resolve<ReadArgs> for GetProcedure {
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<GetProcedureResponse> {
     Ok(
-      resource::get_check_permissions::<Procedure>(
+      get_check_permissions::<Procedure>(
         &self.procedure,
         user,
-        PermissionLevel::Read,
+        PermissionLevel::Read.into(),
       )
       .await?,
     )
@@ -44,7 +45,10 @@ impl Resolve<ReadArgs> for ListProcedures {
     };
     Ok(
       resource::list_for_user::<Procedure>(
-        self.query, user, &all_tags,
+        self.query,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
       )
       .await?,
     )
@@ -63,7 +67,10 @@ impl Resolve<ReadArgs> for ListFullProcedures {
     };
     Ok(
       resource::list_full_for_user::<Procedure>(
-        self.query, user, &all_tags,
+        self.query,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
       )
       .await?,
     )
@@ -78,6 +85,7 @@ impl Resolve<ReadArgs> for GetProceduresSummary {
     let procedures = resource::list_full_for_user::<Procedure>(
       Default::default(),
       user,
+      PermissionLevel::Read.into(),
       &[],
     )
     .await
@@ -120,10 +128,10 @@ impl Resolve<ReadArgs> for GetProcedureActionState {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<GetProcedureActionStateResponse> {
-    let procedure = resource::get_check_permissions::<Procedure>(
+    let procedure = get_check_permissions::<Procedure>(
       &self.procedure,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
     let action_state = action_states()

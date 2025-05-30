@@ -5,7 +5,7 @@ use typeshare::typeshare;
 
 use crate::entities::{
   NoData, ResourceTarget, ResourceTargetVariant,
-  permission::{PermissionLevel, UserTarget},
+  permission::{PermissionLevelAndSpecifics, UserTarget},
 };
 
 use super::KomodoWriteRequest;
@@ -25,7 +25,7 @@ pub struct UpdatePermissionOnTarget {
   /// Specify the target resource.
   pub resource_target: ResourceTarget,
   /// Specify the permission level.
-  pub permission: PermissionLevel,
+  pub permission: PermissionLevelAndSpecifics,
 }
 
 #[typeshare]
@@ -48,7 +48,7 @@ pub struct UpdatePermissionOnResourceType {
   /// The resource type: eg. Server, Build, Deployment, etc.
   pub resource_type: ResourceTargetVariant,
   /// The base permission level.
-  pub permission: PermissionLevel,
+  pub permission: PermissionLevelAndSpecifics,
 }
 
 #[typeshare]

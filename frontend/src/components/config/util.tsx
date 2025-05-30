@@ -1035,36 +1035,6 @@ export const SecretSelector = ({
   );
 };
 
-export const PermissionLevelSelector = ({
-  level,
-  onSelect,
-}: {
-  level: Types.PermissionLevel;
-  onSelect: (level: Types.PermissionLevel) => void;
-}) => {
-  return (
-    <Select
-      value={level}
-      onValueChange={(value) => onSelect(value as Types.PermissionLevel)}
-    >
-      <SelectTrigger className="w-32 capitalize">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent className="w-32">
-        {Object.keys(Types.PermissionLevel).map((permission) => (
-          <SelectItem
-            value={permission}
-            key={permission}
-            className="capitalize"
-          >
-            {permission}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-};
-
 export const WebhookBuilder = ({
   git_provider,
   children,

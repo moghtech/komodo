@@ -19,7 +19,7 @@ use super::{
   FileContents, SystemCommand,
   docker::container::ContainerListItem,
   resource::{Resource, ResourceListItem, ResourceQuery},
-  to_komodo_name,
+  to_docker_compatible_name,
 };
 
 #[typeshare]
@@ -38,8 +38,10 @@ impl Stack {
       .config
       .project_name
       .is_empty()
-      .then(|| to_komodo_name(&self.name))
-      .unwrap_or_else(|| to_komodo_name(&self.config.project_name))
+      .then(|| to_docker_compatible_name(&self.name))
+      .unwrap_or_else(|| {
+        to_docker_compatible_name(&self.config.project_name)
+      })
   }
 
   pub fn file_paths(&self) -> &[String] {

@@ -34,6 +34,7 @@ use crate::{
     update::update_update,
   },
   monitor::update_cache_for_server,
+  permission::get_check_permissions,
   resource,
   state::action_states,
 };
@@ -68,10 +69,10 @@ async fn setup_deployment_execution(
   deployment: &str,
   user: &User,
 ) -> anyhow::Result<(Deployment, Server)> {
-  let deployment = resource::get_check_permissions::<Deployment>(
+  let deployment = get_check_permissions::<Deployment>(
     deployment,
     user,
-    PermissionLevel::Execute,
+    PermissionLevel::Execute.into(),
   )
   .await?;
 

@@ -48,6 +48,7 @@ use crate::{
     registry_token,
     update::{init_execution_update, update_update},
   },
+  permission::get_check_permissions,
   resource::{self, refresh_build_state_cache},
   state::{action_states, db_client},
 };
@@ -80,10 +81,10 @@ impl Resolve<ExecuteArgs> for RunBuild {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let mut build = resource::get_check_permissions::<Build>(
+    let mut build = get_check_permissions::<Build>(
       &self.build,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -513,10 +514,10 @@ impl Resolve<ExecuteArgs> for CancelBuild {
     self,
     ExecuteArgs { user, update }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let build = resource::get_check_permissions::<Build>(
+    let build = get_check_permissions::<Build>(
       &self.build,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 

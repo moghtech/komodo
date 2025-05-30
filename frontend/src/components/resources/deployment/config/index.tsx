@@ -30,7 +30,7 @@ export const DeploymentConfig = ({
   id: string;
   titleOther: ReactNode;
 }) => {
-  const perms = useRead("GetPermissionLevel", {
+  const perms = useRead("GetPermission", {
     target: { type: "Deployment", id },
   }).data;
   const config = useRead("GetDeployment", { deployment: id }).data?.config;
@@ -49,7 +49,7 @@ export const DeploymentConfig = ({
   const hide_ports = network === "host" || network === "none";
   const auto_update = update.auto_update ?? config.auto_update ?? false;
 
-  const disabled = global_disabled || perms !== Types.PermissionLevel.Write;
+  const disabled = global_disabled || perms?.level !== Types.PermissionLevel.Write;
 
   return (
     <Config

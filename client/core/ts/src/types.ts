@@ -14,12 +14,17 @@ export type I64 = number;
 export enum PermissionLevel {
 	/** No permissions. */
 	None = "None",
-	/** Can see the rousource */
+	/** Can read resource information and config */
 	Read = "Read",
 	/** Can execute actions on the resource */
 	Execute = "Execute",
 	/** Can update the resource configuration */
 	Write = "Write",
+}
+
+export interface PermissionLevelAndSpecifics {
+	level: PermissionLevel;
+	specific: Array<SpecificPermission>;
 }
 
 export interface Resource<Config, Info> {
@@ -48,7 +53,7 @@ export interface Resource<Config, Info> {
 	 * Set a base permission level that all users will have on the
 	 * resource.
 	 */
-	base_permission?: PermissionLevel;
+	base_permission?: PermissionLevelAndSpecifics | PermissionLevel;
 }
 
 export enum ScheduleFormat {
@@ -798,7 +803,7 @@ export interface User {
 	/** Recently viewed ids */
 	recents?: Record<ResourceTarget["type"], string[]>;
 	/** Give the user elevated permissions on all resources of a certain type */
-	all?: Record<ResourceTarget["type"], PermissionLevel>;
+	all?: Record<ResourceTarget["type"], PermissionLevelAndSpecifics | PermissionLevel>;
 	updated_at?: I64;
 }
 
@@ -1353,7 +1358,7 @@ export type GetDockerRegistryAccountResponse = DockerRegistryAccount;
 
 export type GetGitProviderAccountResponse = GitProviderAccount;
 
-export type GetPermissionLevelResponse = PermissionLevel;
+export type GetPermissionResponse = PermissionLevelAndSpecifics;
 
 export interface ProcedureActionState {
 	running: boolean;
@@ -1654,6 +1659,47 @@ export interface ServerActionState {
 
 export type GetServerActionStateResponse = ServerActionState;
 
+/** Types of maintenance schedules */
+export type MaintenanceScheduleType = 
+	/** Daily at the specified time */
+	| { type: "Daily", content?: undefined }
+	/** Weekly on the specified day and time */
+	| { type: "Weekly", content: {
+	day_of_week: DayOfWeek;
+}}
+	/** One-time maintenance on a specific date and time */
+	| { type: "OneTime", content: {
+	date: string;
+}};
+
+/** Time specification for maintenance windows */
+export interface MaintenanceTime {
+	/** Hour in 24-hour format (0-23) */
+	hour: number;
+	/** Minute (0-59) */
+	minute: number;
+	/** Timezone offset from UTC in minutes (e.g., -300 for EST, 120 for CEST) */
+	timezone_offset_minutes: number;
+}
+
+/** Represents a scheduled maintenance window for a server */
+export interface MaintenanceWindow {
+	/** Unique identifier for the maintenance window */
+	id: string;
+	/** Human-readable name for the maintenance window */
+	name: string;
+	/** The type of maintenance schedule */
+	schedule_type: MaintenanceScheduleType;
+	/** Start time for the maintenance window */
+	start_time: MaintenanceTime;
+	/** Duration of the maintenance window in minutes */
+	duration_minutes: number;
+	/** Whether this maintenance window is currently enabled */
+	enabled: boolean;
+	/** Optional description of what maintenance is performed */
+	description?: string;
+}
+
 /** Server configuration. */
 export interface ServerConfig {
 	/**
@@ -1718,6 +1764,8 @@ export interface ServerConfig {
 	disk_warning: number;
 	/** The percentage threshhold which triggers CRITICAL state for DISK. */
 	disk_critical: number;
+	/** Scheduled maintenance windows during which alerts will be suppressed. */
+	maintenance_windows?: MaintenanceWindow[];
 }
 
 export type Server = Resource<ServerConfig, undefined>;
@@ -2332,10 +2380,12 @@ export interface UserGroup {
 	_id?: MongoId;
 	/** A name for the user group */
 	name: string;
+	/** Whether all users will implicitly have the permissions in this group. */
+	everyone?: boolean;
 	/** User ids of group members */
 	users?: string[];
 	/** Give the user group elevated permissions on all resources of a certain type */
-	all?: Record<ResourceTarget["type"], PermissionLevel>;
+	all?: Record<ResourceTarget["type"], PermissionLevelAndSpecifics | PermissionLevel>;
 	/** Unix time (ms) when user group last updated */
 	updated_at?: I64;
 }
@@ -2352,8 +2402,8 @@ export enum ContainerStateStatusEnum {
 	Running = "running",
 	Paused = "paused",
 	Restarting = "restarting",
-	Removing = "removing",
 	Exited = "exited",
+	Removing = "removing",
 	Dead = "dead",
 }
 
@@ -2487,6 +2537,7 @@ export enum MountTypeEnum {
 	Empty = "",
 	Bind = "bind",
 	Volume = "volume",
+	Image = "image",
 	Tmpfs = "tmpfs",
 	Npipe = "npipe",
 	Cluster = "cluster",
@@ -2895,6 +2946,8 @@ export interface Container {
 	NetworkSettings?: NetworkSettings;
 }
 
+export type InspectDeploymentContainerResponse = Container;
+
 export type InspectDockerContainerResponse = Container;
 
 /** Information about the image's RootFS, including the layer IDs. */
@@ -3145,6 +3198,8 @@ export interface Volume {
 
 export type InspectDockerVolumeResponse = Volume;
 
+export type InspectStackContainerResponse = Container;
+
 export type JsonValue = any;
 
 export type ListActionsResponse = ActionListItem[];
@@ -3375,8 +3430,10 @@ export interface Permission {
 	user_target: UserTarget;
 	/** The target resource */
 	resource_target: ResourceTarget;
-	/** The permission level */
+	/** The permission level for the [user_target] on the [resource_target]. */
 	level?: PermissionLevel;
+	/** Any specific permissions for the [user_target] on the [resource_target]. */
+	specific?: Array<SpecificPermission>;
 }
 
 export type ListPermissionsResponse = Permission[];
@@ -4172,6 +4229,32 @@ export interface ConnectContainerExecQuery {
 	server: string;
 	/** The container name */
 	container: string;
+	/** The shell to connect to */
+	shell: string;
+}
+
+/**
+ * Query to connect to a container exec session (interactive shell over websocket) on the given Deployment.
+ * This call will use access to the Deployment Terminal to permission the call.
+ * TODO: Document calling.
+ */
+export interface ConnectDeploymentExecQuery {
+	/** Deployment Id or name */
+	deployment: string;
+	/** The shell to connect to */
+	shell: string;
+}
+
+/**
+ * Query to connect to a container exec session (interactive shell over websocket) on the given Stack / service.
+ * This call will use access to the Stack Terminal to permission the call.
+ * TODO: Document calling.
+ */
+export interface ConnectStackExecQuery {
+	/** Stack Id or name */
+	stack: string;
+	/** The service name to connect to */
+	service: string;
 	/** The shell to connect to */
 	shell: string;
 }
@@ -5491,7 +5574,7 @@ export interface GetPeripheryVersionResponse {
  * Factors in any UserGroup's permissions they may be a part of.
  * Response: [PermissionLevel]
  */
-export interface GetPermissionLevel {
+export interface GetPermission {
 	/** The target to get user permission on. */
 	target: ResourceTarget;
 }
@@ -5868,6 +5951,15 @@ export interface GetVersionResponse {
 	version: string;
 }
 
+/**
+ * Inspect the docker container associated with the Deployment.
+ * Response: [Container].
+ */
+export interface InspectDeploymentContainer {
+	/** Id or name */
+	deployment: string;
+}
+
 /** Inspect a docker container on the server. Response: [Container]. */
 export interface InspectDockerContainer {
 	/** Id or name */
@@ -5898,6 +5990,17 @@ export interface InspectDockerVolume {
 	server: string;
 	/** The volume name */
 	volume: string;
+}
+
+/**
+ * Inspect the docker container associated with the Stack.
+ * Response: [Container].
+ */
+export interface InspectStackContainer {
+	/** Id or name */
+	stack: string;
+	/** The service name to inspect */
+	service: string;
 }
 
 export interface LatestCommit {
@@ -6442,6 +6545,11 @@ export interface NameAndId {
 export interface NtfyAlerterEndpoint {
 	/** The ntfy topic URL */
 	url: string;
+	/**
+	 * Optional E-Mail Address to enable ntfy email notifications.
+	 * SMTP must be configured on the ntfy server.
+	 */
+	email?: string;
 }
 
 /** Pauses all containers on the target server. Response: [Update] */
@@ -6498,6 +6606,8 @@ export interface PermissionToml {
 	 * - Write
 	 */
 	level: PermissionLevel;
+	/** Any [SpecificPermissions](SpecificPermission) on the resource */
+	specific: Array<SpecificPermission>;
 }
 
 export enum PortTypeEnum {
@@ -6824,10 +6934,12 @@ export interface ResourceToml<PartialConfig> {
 export interface UserGroupToml {
 	/** User group name */
 	name: string;
+	/** Whether all users will implicitly have the permissions in this group. */
+	everyone?: boolean;
 	/** Users in the group */
 	users?: string[];
 	/** Give the user group elevated permissions on all resources of a certain type */
-	all?: Record<ResourceTarget["type"], PermissionLevel>;
+	all?: Record<ResourceTarget["type"], PermissionLevelAndSpecifics | PermissionLevel>;
 	/** Permissions given to the group */
 	permissions?: PermissionToml[];
 }
@@ -7034,6 +7146,17 @@ export interface ServerHealth {
 }
 
 /**
+ * **Admin only.** Set `everyone` property of User Group.
+ * Response: [UserGroup]
+ */
+export interface SetEveryoneUserGroup {
+	/** Id or name. */
+	user_group: string;
+	/** Whether this user group applies to everyone. */
+	everyone: boolean;
+}
+
+/**
  * Set the time the user last opened the UI updates.
  * Used for unseen notification dot.
  * Response: [NoData]
@@ -7042,7 +7165,7 @@ export interface SetLastSeenUpdate {
 }
 
 /**
- * **Admin only.** Completely override the user in the group.
+ * **Admin only.** Completely override the users in the group.
  * Response: [UserGroup]
  */
 export interface SetUsersInUserGroup {
@@ -7355,7 +7478,7 @@ export interface UpdatePermissionOnResourceType {
 	/** The resource type: eg. Server, Build, Deployment, etc. */
 	resource_type: ResourceTarget["type"];
 	/** The base permission level. */
-	permission: PermissionLevel;
+	permission: PermissionLevelAndSpecifics | PermissionLevel;
 }
 
 /**
@@ -7368,7 +7491,7 @@ export interface UpdatePermissionOnTarget {
 	/** Specify the target resource. */
 	resource_target: ResourceTarget;
 	/** Specify the permission level. */
-	permission: PermissionLevel;
+	permission: PermissionLevelAndSpecifics | PermissionLevel;
 }
 
 /**
@@ -7608,6 +7731,17 @@ export type AuthRequest =
 	| { type: "ExchangeForJwt", params: ExchangeForJwt }
 	| { type: "GetUser", params: GetUser };
 
+/** Days of the week for weekly maintenance schedules */
+export enum DayOfWeek {
+	Monday = "Monday",
+	Tuesday = "Tuesday",
+	Wednesday = "Wednesday",
+	Thursday = "Thursday",
+	Friday = "Friday",
+	Saturday = "Saturday",
+	Sunday = "Sunday",
+}
+
 export type ExecuteRequest = 
 	| { type: "StartContainer", params: StartContainer }
 	| { type: "RestartContainer", params: RestartContainer }
@@ -7684,7 +7818,7 @@ export type ReadRequest =
 	| { type: "ListGitProvidersFromConfig", params: ListGitProvidersFromConfig }
 	| { type: "ListDockerRegistriesFromConfig", params: ListDockerRegistriesFromConfig }
 	| { type: "GetUsername", params: GetUsername }
-	| { type: "GetPermissionLevel", params: GetPermissionLevel }
+	| { type: "GetPermission", params: GetPermission }
 	| { type: "FindUser", params: FindUser }
 	| { type: "ListUsers", params: ListUsers }
 	| { type: "ListApiKeys", params: ListApiKeys }
@@ -7795,6 +7929,45 @@ export type ReadRequest =
 	| { type: "GetDockerRegistryAccount", params: GetDockerRegistryAccount }
 	| { type: "ListDockerRegistryAccounts", params: ListDockerRegistryAccounts };
 
+/** The specific types of permission that a User or UserGroup can have on a resource. */
+export enum SpecificPermission {
+	/**
+	 * On **Server**
+	 * - Access the terminal apis
+	 * On **Stack / Deployment**
+	 * - Access the container exec Apis
+	 */
+	Terminal = "Terminal",
+	/**
+	 * On **Server**
+	 * - Allowed to attach Stacks, Deployments, Repos, Builders to the Server
+	 * On **Builder**
+	 * - Allowed to attach Builds to the Builder
+	 * On **Build**
+	 * - Allowed to attach Deployments to the Build
+	 */
+	Attach = "Attach",
+	/**
+	 * On **Server**
+	 * - Access the `docker inspect` apis
+	 * On **Stack / Deployment**
+	 * - Access `docker inspect $container` for associated containers
+	 */
+	Inspect = "Inspect",
+	/**
+	 * On **Server**
+	 * - Read all container logs on the server
+	 * On **Stack / Deployment**
+	 * - Read the container logs
+	 */
+	Logs = "Logs",
+	/**
+	 * On **Server**
+	 * - Read all the processes on the host
+	 */
+	Processes = "Processes",
+}
+
 export type UserRequest = 
 	| { type: "PushRecentlyViewed", params: PushRecentlyViewed }
 	| { type: "SetLastSeenUpdate", params: SetLastSeenUpdate }
@@ -7815,6 +7988,7 @@ export type WriteRequest =
 	| { type: "AddUserToUserGroup", params: AddUserToUserGroup }
 	| { type: "RemoveUserFromUserGroup", params: RemoveUserFromUserGroup }
 	| { type: "SetUsersInUserGroup", params: SetUsersInUserGroup }
+	| { type: "SetEveryoneUserGroup", params: SetEveryoneUserGroup }
 	| { type: "UpdateUserAdmin", params: UpdateUserAdmin }
 	| { type: "UpdateUserBasePermissions", params: UpdateUserBasePermissions }
 	| { type: "UpdatePermissionOnResourceType", params: UpdatePermissionOnResourceType }

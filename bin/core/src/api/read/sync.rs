@@ -14,6 +14,7 @@ use resolver_api::Resolve;
 use crate::{
   config::core_config,
   helpers::query::get_all_tags,
+  permission::get_check_permissions,
   resource,
   state::{action_states, github_client},
 };
@@ -26,10 +27,10 @@ impl Resolve<ReadArgs> for GetResourceSync {
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<ResourceSync> {
     Ok(
-      resource::get_check_permissions::<ResourceSync>(
+      get_check_permissions::<ResourceSync>(
         &self.sync,
         user,
-        PermissionLevel::Read,
+        PermissionLevel::Read.into(),
       )
       .await?,
     )
@@ -48,7 +49,10 @@ impl Resolve<ReadArgs> for ListResourceSyncs {
     };
     Ok(
       resource::list_for_user::<ResourceSync>(
-        self.query, user, &all_tags,
+        self.query,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
       )
       .await?,
     )
@@ -67,7 +71,10 @@ impl Resolve<ReadArgs> for ListFullResourceSyncs {
     };
     Ok(
       resource::list_full_for_user::<ResourceSync>(
-        self.query, user, &all_tags,
+        self.query,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
       )
       .await?,
     )
@@ -79,10 +86,10 @@ impl Resolve<ReadArgs> for GetResourceSyncActionState {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<ResourceSyncActionState> {
-    let sync = resource::get_check_permissions::<ResourceSync>(
+    let sync = get_check_permissions::<ResourceSync>(
       &self.sync,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
     let action_state = action_states()
@@ -104,6 +111,7 @@ impl Resolve<ReadArgs> for GetResourceSyncsSummary {
       resource::list_full_for_user::<ResourceSync>(
         Default::default(),
         user,
+        PermissionLevel::Read.into(),
         &[],
       )
       .await
@@ -160,10 +168,10 @@ impl Resolve<ReadArgs> for GetSyncWebhooksEnabled {
       });
     };
 
-    let sync = resource::get_check_permissions::<ResourceSync>(
+    let sync = get_check_permissions::<ResourceSync>(
       &self.sync,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
 

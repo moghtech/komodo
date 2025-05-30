@@ -31,6 +31,15 @@ function fix_types() {
     .replaceAll("AlertDataVariant", 'AlertData["type"]')
     .replaceAll("ServerTemplateConfigVariant", 'ServerTemplateConfig["type"]')
     // Add '| string' to env vars
-    .replaceAll("EnvironmentVar[]", "EnvironmentVar[] | string");
+    .replaceAll("EnvironmentVar[]", "EnvironmentVar[] | string")
+    .replaceAll("IndexSet", "Array")
+    .replaceAll(
+      ": PermissionLevelAndSpecifics",
+      ": PermissionLevelAndSpecifics | PermissionLevel"
+    )
+    .replaceAll(
+      ", PermissionLevelAndSpecifics",
+      ", PermissionLevelAndSpecifics | PermissionLevel"
+    );
   writeFileSync(types_path, fixed);
 }

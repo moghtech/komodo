@@ -6,7 +6,7 @@ export var PermissionLevel;
 (function (PermissionLevel) {
     /** No permissions. */
     PermissionLevel["None"] = "None";
-    /** Can see the rousource */
+    /** Can read resource information and config */
     PermissionLevel["Read"] = "Read";
     /** Can execute actions on the resource */
     PermissionLevel["Execute"] = "Execute";
@@ -303,8 +303,8 @@ export var ContainerStateStatusEnum;
     ContainerStateStatusEnum["Running"] = "running";
     ContainerStateStatusEnum["Paused"] = "paused";
     ContainerStateStatusEnum["Restarting"] = "restarting";
-    ContainerStateStatusEnum["Removing"] = "removing";
     ContainerStateStatusEnum["Exited"] = "exited";
+    ContainerStateStatusEnum["Removing"] = "removing";
     ContainerStateStatusEnum["Dead"] = "dead";
 })(ContainerStateStatusEnum || (ContainerStateStatusEnum = {}));
 export var HealthStatusEnum;
@@ -328,6 +328,7 @@ export var MountTypeEnum;
     MountTypeEnum["Empty"] = "";
     MountTypeEnum["Bind"] = "bind";
     MountTypeEnum["Volume"] = "volume";
+    MountTypeEnum["Image"] = "image";
     MountTypeEnum["Tmpfs"] = "tmpfs";
     MountTypeEnum["Npipe"] = "npipe";
     MountTypeEnum["Cluster"] = "cluster";
@@ -505,3 +506,53 @@ export var SearchCombinator;
     SearchCombinator["Or"] = "Or";
     SearchCombinator["And"] = "And";
 })(SearchCombinator || (SearchCombinator = {}));
+/** The specific types of permission that a User or UserGroup can have on a resource. */
+export var SpecificPermission;
+(function (SpecificPermission) {
+    /**
+     * On **Server**
+     * - Access the terminal apis
+     * On **Stack / Deployment**
+     * - Access the container exec Apis
+     */
+    SpecificPermission["Terminal"] = "Terminal";
+    /**
+     * On **Server**
+     * - Allowed to attach Stacks, Deployments, Repos, Builders to the Server
+     * On **Builder**
+     * - Allowed to attach Builds to the Builder
+     * On **Build**
+     * - Allowed to attach Deployments to the Build
+     */
+    SpecificPermission["Attach"] = "Attach";
+    /**
+     * On **Server**
+     * - Access the `docker inspect` apis
+     * On **Stack / Deployment**
+     * - Access `docker inspect $container` for associated containers
+     */
+    SpecificPermission["Inspect"] = "Inspect";
+    /**
+     * On **Server**
+     * - Read all container logs on the server
+     * On **Stack / Deployment**
+     * - Read the container logs
+     */
+    SpecificPermission["Logs"] = "Logs";
+    /**
+     * On **Server**
+     * - Read all the processes on the host
+     */
+    SpecificPermission["Processes"] = "Processes";
+})(SpecificPermission || (SpecificPermission = {}));
+/** Days of the week for weekly maintenance schedules */
+export var DayOfWeek;
+(function (DayOfWeek) {
+    DayOfWeek["Monday"] = "Monday";
+    DayOfWeek["Tuesday"] = "Tuesday";
+    DayOfWeek["Wednesday"] = "Wednesday";
+    DayOfWeek["Thursday"] = "Thursday";
+    DayOfWeek["Friday"] = "Friday";
+    DayOfWeek["Saturday"] = "Saturday";
+    DayOfWeek["Sunday"] = "Sunday";
+})(DayOfWeek || (DayOfWeek = {}));

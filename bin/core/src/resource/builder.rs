@@ -1,4 +1,5 @@
 use anyhow::Context;
+use indexmap::IndexSet;
 use komodo_client::entities::{
   MergePartial, Operation, ResourceTarget, ResourceTargetVariant,
   builder::{
@@ -6,7 +7,7 @@ use komodo_client::entities::{
     BuilderListItem, BuilderListItemInfo, BuilderQuerySpecifics,
     PartialBuilderConfig, PartialServerBuilderConfig,
   },
-  permission::PermissionLevel,
+  permission::{PermissionLevel, SpecificPermission},
   resource::Resource,
   server::Server,
   update::Update,
@@ -33,6 +34,10 @@ impl super::KomodoResource for Builder {
 
   fn resource_target(id: impl Into<String>) -> ResourceTarget {
     ResourceTarget::Builder(id.into())
+  }
+
+  fn creator_specific_permissions() -> IndexSet<SpecificPermission> {
+    [SpecificPermission::Attach].into_iter().collect()
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>
@@ -180,7 +185,7 @@ async fn validate_config(
       let server = super::get_check_permissions::<Server>(
         server_id,
         user,
-        PermissionLevel::Write,
+        PermissionLevel::Read.attach(),
       )
       .await?;
       *server_id = server.id;

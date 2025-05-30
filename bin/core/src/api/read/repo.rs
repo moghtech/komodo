@@ -12,6 +12,7 @@ use resolver_api::Resolve;
 use crate::{
   config::core_config,
   helpers::query::get_all_tags,
+  permission::get_check_permissions,
   resource,
   state::{action_states, github_client, repo_state_cache},
 };
@@ -24,10 +25,10 @@ impl Resolve<ReadArgs> for GetRepo {
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<Repo> {
     Ok(
-      resource::get_check_permissions::<Repo>(
+      get_check_permissions::<Repo>(
         &self.repo,
         user,
-        PermissionLevel::Read,
+        PermissionLevel::Read.into(),
       )
       .await?,
     )
@@ -45,8 +46,13 @@ impl Resolve<ReadArgs> for ListRepos {
       get_all_tags(None).await?
     };
     Ok(
-      resource::list_for_user::<Repo>(self.query, user, &all_tags)
-        .await?,
+      resource::list_for_user::<Repo>(
+        self.query,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
+      )
+      .await?,
     )
   }
 }
@@ -63,7 +69,10 @@ impl Resolve<ReadArgs> for ListFullRepos {
     };
     Ok(
       resource::list_full_for_user::<Repo>(
-        self.query, user, &all_tags,
+        self.query,
+        user,
+        PermissionLevel::Read.into(),
+        &all_tags,
       )
       .await?,
     )
@@ -75,10 +84,10 @@ impl Resolve<ReadArgs> for GetRepoActionState {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<RepoActionState> {
-    let repo = resource::get_check_permissions::<Repo>(
+    let repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
     let action_state = action_states()
@@ -99,6 +108,7 @@ impl Resolve<ReadArgs> for GetReposSummary {
     let repos = resource::list_full_for_user::<Repo>(
       Default::default(),
       user,
+      PermissionLevel::Read.into(),
       &[],
     )
     .await
@@ -160,10 +170,10 @@ impl Resolve<ReadArgs> for GetRepoWebhooksEnabled {
       });
     };
 
-    let repo = resource::get_check_permissions::<Repo>(
+    let repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
-      PermissionLevel::Read,
+      PermissionLevel::Read.into(),
     )
     .await?;
 

@@ -12,6 +12,7 @@ use komodo_client::{
   api::execute::*,
   entities::{
     Operation,
+    permission::PermissionLevel,
     update::{Log, Update},
     user::User,
   },
@@ -298,6 +299,7 @@ async fn batch_execute<E: BatchExecute>(
     pattern,
     Default::default(),
     user,
+    PermissionLevel::Execute.into(),
     &[],
   )
   .await?;

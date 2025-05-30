@@ -1,11 +1,10 @@
 import { Section } from "@components/layouts";
-import { ReactNode, useState } from "react";
-import { useLocalStorage, useRead, useWrite } from "@lib/hooks";
+import { ReactNode, useCallback, useState } from "react";
+import { komodo_client, useLocalStorage, useRead, useWrite } from "@lib/hooks";
 import { Card, CardContent, CardHeader } from "@ui/card";
 import { Badge } from "@ui/badge";
 import { Button } from "@ui/button";
 import { Loader2, Plus, RefreshCcw, X } from "lucide-react";
-import { Terminal } from "@components/terminal";
 import { Popover, PopoverContent, PopoverTrigger } from "@ui/popover";
 import {
   Command,
@@ -15,7 +14,9 @@ import {
   CommandList,
 } from "@ui/command";
 import { filterBySplit } from "@lib/utils";
-import { useServer } from ".";
+import { useServer } from "@components/resources/server";
+import { Terminal } from ".";
+import { TerminalCallbacks } from "komodo_client";
 
 export const ServerTerminals = ({
   id,
@@ -118,9 +119,10 @@ export const ServerTerminals = ({
         </CardHeader>
         <CardContent className="min-h-[65vh]">
           {terminals?.map(({ name: terminal }) => (
-            <Terminal
+            <ServerTerminal
               key={terminal}
-              query={{ server: id, terminal }}
+              server={id}
+              terminal={terminal}
               selected={selected === terminal}
               _reconnect={_reconnect}
             />
@@ -128,6 +130,30 @@ export const ServerTerminals = ({
         </CardContent>
       </Card>
     </Section>
+  );
+};
+
+const ServerTerminal = ({
+  server,
+  terminal,
+  selected,
+  _reconnect,
+}: {
+  server: string;
+  terminal: string;
+  selected: boolean;
+  _reconnect: boolean;
+}) => {
+  const make_ws = useCallback(
+    (callbacks: TerminalCallbacks) =>
+      komodo_client().connect_terminal({
+        query: { server, terminal },
+        ...callbacks,
+      }),
+    [server, terminal]
+  );
+  return (
+    <Terminal make_ws={make_ws} selected={selected} _reconnect={_reconnect} />
   );
 };
 

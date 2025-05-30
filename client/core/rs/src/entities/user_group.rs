@@ -1,12 +1,12 @@
-use std::collections::HashMap;
-
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::deserializers::string_list_deserializer;
 
 use super::{
-  I64, MongoId, ResourceTargetVariant, permission::PermissionLevel,
+  I64, MongoId, ResourceTargetVariant,
+  permission::PermissionLevelAndSpecifics,
 };
 
 /// Permission users at the group level.
@@ -37,6 +37,11 @@ pub struct UserGroup {
   #[cfg_attr(feature = "mongo", unique_index)]
   pub name: String,
 
+  /// Whether all users will implicitly have the permissions in this group.
+  #[cfg_attr(feature = "mongo", index)]
+  #[serde(default)]
+  pub everyone: bool,
+
   /// User ids of group members
   #[cfg_attr(feature = "mongo", index)]
   #[serde(default, deserialize_with = "string_list_deserializer")]
@@ -44,7 +49,8 @@ pub struct UserGroup {
 
   /// Give the user group elevated permissions on all resources of a certain type
   #[serde(default)]
-  pub all: HashMap<ResourceTargetVariant, PermissionLevel>,
+  pub all:
+    IndexMap<ResourceTargetVariant, PermissionLevelAndSpecifics>,
 
   /// Unix time (ms) when user group last updated
   #[serde(default)]

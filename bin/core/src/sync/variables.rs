@@ -15,6 +15,14 @@ use crate::{api::write::WriteArgs, state::db_client};
 
 use super::toml::TOML_PRETTY_OPTIONS;
 
+pub fn variable_to_toml(
+  variable: &Variable,
+) -> anyhow::Result<String> {
+  let inner = toml_pretty::to_string(variable, TOML_PRETTY_OPTIONS)
+    .context("failed to serialize variable to toml")?;
+  Ok(format!("[[variable]]\n{inner}"))
+}
+
 pub struct ToUpdateItem {
   pub variable: Variable,
   pub update_value: bool,
@@ -39,11 +47,7 @@ pub async fn get_updates_for_view(
     for variable in map.values() {
       if !variables.iter().any(|v| v.name == variable.name) {
         diffs.push(DiffData::Delete {
-          current: format!(
-            "[[variable]]\n{}",
-            toml_pretty::to_string(&variable, TOML_PRETTY_OPTIONS)
-              .context("failed to serialize variable to toml")?
-          ),
+          current: variable_to_toml(variable)?,
         });
       }
     }
@@ -58,26 +62,14 @@ pub async fn get_updates_for_view(
           continue;
         }
         diffs.push(DiffData::Update {
-          proposed: format!(
-            "[[variable]]\n{}",
-            toml_pretty::to_string(variable, TOML_PRETTY_OPTIONS)
-              .context("failed to serialize variable to toml")?
-          ),
-          current: format!(
-            "[[variable]]\n{}",
-            toml_pretty::to_string(original, TOML_PRETTY_OPTIONS)
-              .context("failed to serialize variable to toml")?
-          ),
+          proposed: variable_to_toml(variable)?,
+          current: variable_to_toml(original)?,
         });
       }
       None => {
         diffs.push(DiffData::Create {
           name: variable.name.clone(),
-          proposed: format!(
-            "[[variable]]\n{}",
-            toml_pretty::to_string(variable, TOML_PRETTY_OPTIONS)
-              .context("failed to serialize variable to toml")?
-          ),
+          proposed: variable_to_toml(variable)?,
         });
       }
     }

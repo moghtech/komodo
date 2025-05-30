@@ -36,6 +36,7 @@ use crate::{
     query::get_server_with_state,
     update::{add_update, make_update},
   },
+  permission::get_check_permissions,
   resource,
   state::{db_client, github_client},
 };
@@ -61,13 +62,12 @@ impl Resolve<WriteArgs> for CopyBuild {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Build> {
-    let Build { mut config, .. } =
-      resource::get_check_permissions::<Build>(
-        &self.id,
-        user,
-        PermissionLevel::Write,
-      )
-      .await?;
+    let Build { mut config, .. } = get_check_permissions::<Build>(
+      &self.id,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?;
     // reset version to 0.0.0
     config.version = Default::default();
     Ok(
@@ -107,10 +107,10 @@ impl Resolve<WriteArgs> for RenameBuild {
 impl Resolve<WriteArgs> for WriteBuildFileContents {
   #[instrument(name = "WriteBuildFileContents", skip(args))]
   async fn resolve(self, args: &WriteArgs) -> serror::Result<Update> {
-    let build = resource::get_check_permissions::<Build>(
+    let build = get_check_permissions::<Build>(
       &self.build,
       &args.user,
-      PermissionLevel::Write,
+      PermissionLevel::Write.into(),
     )
     .await?;
 
@@ -294,10 +294,10 @@ impl Resolve<WriteArgs> for RefreshBuildCache {
   ) -> serror::Result<NoData> {
     // Even though this is a write request, this doesn't change any config. Anyone that can execute the
     // build should be able to do this.
-    let build = resource::get_check_permissions::<Build>(
+    let build = get_check_permissions::<Build>(
       &self.build,
       user,
-      PermissionLevel::Execute,
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
@@ -493,10 +493,10 @@ impl Resolve<WriteArgs> for CreateBuildWebhook {
 
     let WriteArgs { user } = args;
 
-    let build = resource::get_check_permissions::<Build>(
+    let build = get_check_permissions::<Build>(
       &self.build,
       user,
-      PermissionLevel::Write,
+      PermissionLevel::Write.into(),
     )
     .await?;
 
@@ -606,10 +606,10 @@ impl Resolve<WriteArgs> for DeleteBuildWebhook {
       );
     };
 
-    let build = resource::get_check_permissions::<Build>(
+    let build = get_check_permissions::<Build>(
       &self.build,
       user,
-      PermissionLevel::Write,
+      PermissionLevel::Write.into(),
     )
     .await?;
 

@@ -2,24 +2,35 @@ import { useRead } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { Log, LogSection } from "@components/log";
 import { ReactNode } from "react";
+import { Section } from "@components/layouts";
 
 export const StackServiceLogs = ({
   id,
   service,
   titleOther,
+  disabled,
 }: {
   /// Stack id
   id: string;
   service: string;
   titleOther?: ReactNode;
+  disabled: boolean;
 }) => {
   // const stack = useStack(id);
   const services = useRead("ListStackServices", { stack: id }).data;
   const container = services?.find((s) => s.service === service)?.container;
   const state = container?.state ?? Types.ContainerStateStatusEnum.Empty;
 
-  if (state === undefined || state === Types.ContainerStateStatusEnum.Empty) {
-    return null;
+  if (
+    disabled ||
+    state === undefined ||
+    state === Types.ContainerStateStatusEnum.Empty
+  ) {
+    return (
+      <Section titleOther={titleOther}>
+        <h1>Logs are disabled.</h1>
+      </Section>
+    );
   }
 
   return <StackLogsInner titleOther={titleOther} id={id} service={service} />;

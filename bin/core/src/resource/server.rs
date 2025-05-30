@@ -1,6 +1,8 @@
 use anyhow::Context;
+use indexmap::IndexSet;
 use komodo_client::entities::{
   Operation, ResourceTarget, ResourceTargetVariant, komodo_timestamp,
+  permission::SpecificPermission,
   resource::Resource,
   server::{
     PartialServerConfig, Server, ServerConfig, ServerConfigDiff,
@@ -32,6 +34,18 @@ impl super::KomodoResource for Server {
 
   fn resource_target(id: impl Into<String>) -> ResourceTarget {
     ResourceTarget::Server(id.into())
+  }
+
+  fn creator_specific_permissions() -> IndexSet<SpecificPermission> {
+    [
+      SpecificPermission::Terminal,
+      SpecificPermission::Inspect,
+      SpecificPermission::Attach,
+      SpecificPermission::Logs,
+      SpecificPermission::Processes,
+    ]
+    .into_iter()
+    .collect()
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>

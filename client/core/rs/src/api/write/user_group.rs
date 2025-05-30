@@ -88,7 +88,7 @@ pub struct RemoveUserFromUserGroup {
 
 //
 
-/// **Admin only.** Completely override the user in the group.
+/// **Admin only.** Completely override the users in the group.
 /// Response: [UserGroup]
 #[typeshare]
 #[derive(
@@ -102,4 +102,22 @@ pub struct SetUsersInUserGroup {
   pub user_group: String,
   /// The user ids or usernames to hard set as the group's users.
   pub users: Vec<String>,
+}
+
+//
+
+/// **Admin only.** Set `everyone` property of User Group.
+/// Response: [UserGroup]
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoWriteRequest)]
+#[response(UserGroup)]
+#[error(serror::Error)]
+pub struct SetEveryoneUserGroup {
+  /// Id or name.
+  pub user_group: String,
+  /// Whether this user group applies to everyone.
+  pub everyone: bool,
 }

@@ -208,9 +208,9 @@ export function KomodoClient(url, options) {
         ws.onclose = () => on_close?.();
         return ws;
     };
-    const connect_container_exec = ({ query, on_message, on_login, on_open, on_close, }) => {
+    const connect_container_exec = ({ query: { type, query }, on_message, on_login, on_open, on_close, }) => {
         const url_query = new URLSearchParams(query).toString();
-        const ws = new WebSocket(url.replace("http", "ws") + "/ws/container?" + url_query);
+        const ws = new WebSocket(url.replace("http", "ws") + `/ws/${type}/terminal?` + url_query);
         // Handle login on websocket open
         ws.onopen = () => {
             const login_msg = options.type === "jwt"
@@ -436,7 +436,9 @@ export function KomodoClient(url, options) {
         connect_terminal,
         /**
          * Subscribes to container exec io over websocket message,
-         * for use with xtermjs.
+         * for use with xtermjs. Can connect to Deployment, Stack,
+         * or any container on a Server. The permission used to allow the connection
+         * depends on `query.type`.
          */
         connect_container_exec,
         /**

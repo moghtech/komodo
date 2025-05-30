@@ -120,11 +120,20 @@ export const level_to_number = (level: Types.PermissionLevel | undefined) => {
 };
 
 export const has_minimum_permissions = (
-  level: Types.PermissionLevel | undefined,
-  greater_than: Types.PermissionLevel
+  permission: Types.PermissionLevelAndSpecifics | undefined,
+  greater_than: Types.PermissionLevel,
+  specific?: Types.SpecificPermission[]
 ) => {
-  if (!level) return false;
-  return level_to_number(level) >= level_to_number(greater_than);
+  if (!permission) return false;
+  if (level_to_number(permission.level) < level_to_number(greater_than))
+    return false;
+  if (!specific) return true;
+  for (const s of specific) {
+    if (!permission.specific.includes(s)) {
+      return false;
+    }
+  }
+  return true;
 };
 
 const tzOffsetMs = new Date().getTimezoneOffset() * 60 * 1000;

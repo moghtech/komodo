@@ -68,7 +68,8 @@ const UserGroupsSection = () => {
           { header: "Name", accessorKey: "name" },
           {
             header: "Members",
-            accessorFn: (group) => (group.users ?? []).length,
+            accessorFn: (group) =>
+              group.everyone ? "Everyone" : (group.users ?? []).length,
           },
           {
             header: "Delete",

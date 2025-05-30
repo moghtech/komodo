@@ -20,7 +20,7 @@ import { atom, useAtom } from "jotai";
 import { atomFamily } from "jotai/utils";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { RESOURCE_TARGETS } from "./utils";
+import { has_minimum_permissions, RESOURCE_TARGETS } from "./utils";
 
 // ============== RESOLVER ==============
 
@@ -537,30 +537,53 @@ export const useFilterByUpdateAvailable: () => [boolean, () => void] = () => {
   return [filter, () => set(!filter)];
 };
 
-// export function useReadableLines(stream: ReadableStream<string>): string[] {
-//   const [out, setOut] = useState<string[]>([]);
-//   const cancelRef = useRef<AbortController | null>(null);
+export const usePermissions = ({ type, id }: Types.ResourceTarget) => {
+  const user = useUser().data;
+  const perms = useRead("GetPermission", { target: { type, id } }).data;
+  const info = useRead("GetCoreInfo", {}).data;
+  const ui_write_disabled = info?.ui_write_disabled ?? false;
+  const disable_non_admin_create = info?.disable_non_admin_create ?? false;
 
-//   useEffect(() => {
-//     if (!stream) return;
+  const canWrite =
+    !ui_write_disabled && perms?.level === Types.PermissionLevel.Write;
+  const canExecute = has_minimum_permissions(
+    perms,
+    Types.PermissionLevel.Execute
+  );
 
-//     const aborter = new AbortController();
-//     cancelRef.current = aborter;
-//     setOut([]); // reset on new stream
+  if (type === "Server") {
+    return {
+      canWrite,
+      canExecute,
+      canCreate:
+        user?.admin ||
+        (!disable_non_admin_create && user?.create_server_permissions),
+      specific: perms?.specific ?? [],
+    };
+  }
+  if (type === "Build") {
+    return {
+      canWrite,
+      canExecute,
+      canCreate:
+        user?.admin ||
+        (!disable_non_admin_create && user?.create_build_permissions),
+      specific: perms?.specific ?? [],
+    };
+  }
+  if (type === "Alerter" || type === "Builder") {
+    return {
+      canWrite,
+      canExecute,
+      canCreate: user?.admin,
+      specific: perms?.specific ?? [],
+    };
+  }
 
-//     (async () => {
-//       try {
-//         for await (const line of lines(stream)) {
-//           if (aborter.signal.aborted) break;
-//           setOut((prev) => [...prev, line]); // append as we go
-//         }
-//       } catch (err) {
-//         if (err.name !== "AbortError") console.error(err);
-//       }
-//     })();
-
-//     return () => aborter.abort(); // stop when unmounted
-//   }, [stream]);
-
-//   return out;
-// }
+  return {
+    canWrite,
+    canExecute,
+    canCreate: user?.admin || !disable_non_admin_create,
+    specific: perms?.specific ?? [],
+  };
+};

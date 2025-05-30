@@ -1,5 +1,6 @@
 use anyhow::Context;
 use formatting::format_serror;
+use indexmap::IndexSet;
 use komodo_client::entities::{
   Operation, ResourceTarget, ResourceTargetVariant,
   build::Build,
@@ -10,9 +11,10 @@ use komodo_client::entities::{
     PartialDeploymentConfig, conversions_from_str,
   },
   environment_vars_from_str,
-  permission::PermissionLevel,
+  permission::{PermissionLevel, SpecificPermission},
   resource::Resource,
   server::Server,
+  to_docker_compatible_name,
   update::Update,
   user::User,
 };
@@ -45,6 +47,20 @@ impl super::KomodoResource for Deployment {
 
   fn resource_target(id: impl Into<String>) -> ResourceTarget {
     ResourceTarget::Deployment(id.into())
+  }
+
+  fn validated_name(name: &str) -> String {
+    to_docker_compatible_name(name)
+  }
+
+  fn creator_specific_permissions() -> IndexSet<SpecificPermission> {
+    [
+      SpecificPermission::Inspect,
+      SpecificPermission::Logs,
+      SpecificPermission::Terminal,
+    ]
+    .into_iter()
+    .collect()
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>
@@ -284,7 +300,7 @@ async fn validate_config(
       let server = get_check_permissions::<Server>(
         server_id,
         user,
-        PermissionLevel::Write,
+        PermissionLevel::Read.attach(),
       )
       .await
       .context("Cannot attach Deployment to this Server")?;
@@ -298,7 +314,7 @@ async fn validate_config(
       let build = get_check_permissions::<Build>(
         build_id,
         user,
-        PermissionLevel::Read,
+        PermissionLevel::Read.attach(),
       )
       .await
       .context(

@@ -45,7 +45,7 @@ const VolumePageInner = ({
   useSetTitle(`${server?.name} | volume | ${volume_name}`);
   const nav = useNavigate();
 
-  const perms = useRead("GetPermissionLevel", {
+  const perms = useRead("GetPermission", {
     target: { type: "Server", id },
   }).data;
 
@@ -180,23 +180,25 @@ const VolumePageInner = ({
 
       <DockerLabelsSection labels={volume.Labels} />
 
-      <Section
-        title="Inspect"
-        icon={<SearchCode className="w-4 h-4" />}
-        titleRight={
-          <div className="pl-2">
-            <ShowHideButton show={showInspect} setShow={setShowInspect} />
-          </div>
-        }
-      >
-        {showInspect && (
-          <MonacoEditor
-            value={JSON.stringify(volume, null, 2)}
-            language="json"
-            readOnly
-          />
-        )}
-      </Section>
+      {perms?.specific.includes(Types.SpecificPermission.Inspect) && (
+        <Section
+          title="Inspect"
+          icon={<SearchCode className="w-4 h-4" />}
+          titleRight={
+            <div className="pl-2">
+              <ShowHideButton show={showInspect} setShow={setShowInspect} />
+            </div>
+          }
+        >
+          {showInspect && (
+            <MonacoEditor
+              value={JSON.stringify(volume, null, 2)}
+              language="json"
+              readOnly
+            />
+          )}
+        </Section>
+      )}
     </div>
   );
 };

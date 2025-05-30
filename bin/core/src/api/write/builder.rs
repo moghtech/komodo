@@ -6,7 +6,7 @@ use komodo_client::{
 };
 use resolver_api::Resolve;
 
-use crate::resource;
+use crate::{permission::get_check_permissions, resource};
 
 use super::WriteArgs;
 
@@ -29,13 +29,12 @@ impl Resolve<WriteArgs> for CopyBuilder {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Builder> {
-    let Builder { config, .. } =
-      resource::get_check_permissions::<Builder>(
-        &self.id,
-        user,
-        PermissionLevel::Write,
-      )
-      .await?;
+    let Builder { config, .. } = get_check_permissions::<Builder>(
+      &self.id,
+      user,
+      PermissionLevel::Write.into(),
+    )
+    .await?;
     Ok(
       resource::create::<Builder>(&self.name, config.into(), user)
         .await?,

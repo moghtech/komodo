@@ -27,12 +27,12 @@ import { Types } from "komodo_client";
 import { container_state_intention } from "@lib/color";
 import { UsableResource } from "@types";
 import { Fragment } from "react/jsx-runtime";
-import { useEditPermissions } from "@pages/resource";
+import { usePermissions } from "@lib/hooks";
 import { ResourceNotifications } from "@pages/resource-notifications";
 import { MonacoEditor } from "@components/monaco";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
-import { ContainerTerminal } from "@components/terminal";
+import { ContainerTerminal } from "@components/terminal/container";
 
 export const ContainerPage = () => {
   const { type, id, container } = useParams() as {
@@ -58,7 +58,7 @@ const ContainerPageInner = ({
   const [showInspect, setShowInspect] = useState(false);
   const server = useServer(id);
   useSetTitle(`${server?.name} | container | ${container_name}`);
-  const { canExecute } = useEditPermissions({ type: "Server", id });
+  const { canExecute, specific } = usePermissions({ type: "Server", id });
   const {
     data: container,
     isPending,
@@ -186,11 +186,7 @@ const ContainerPageInner = ({
           </Section>
         )}
 
-        <LogOrTerminal
-          server={id}
-          container={container_name}
-          state={state}
-        />
+        <LogOrTerminal server={id} container={container_name} state={state} />
 
         {/* TOP LEVEL CONTAINER INFO */}
         <Section title="Details" icon={<Info className="w-4 h-4" />}>
@@ -216,23 +212,25 @@ const ContainerPageInner = ({
 
         <DockerLabelsSection labels={container.Config?.Labels} />
 
-        <Section
-          title="Inspect"
-          icon={<SearchCode className="w-4 h-4" />}
-          titleRight={
-            <div className="pl-2">
-              <ShowHideButton show={showInspect} setShow={setShowInspect} />
-            </div>
-          }
-        >
-          {showInspect && (
-            <MonacoEditor
-              value={JSON.stringify(container, null, 2)}
-              language="json"
-              readOnly
-            />
-          )}
-        </Section>
+        {specific.includes(Types.SpecificPermission.Inspect) && (
+          <Section
+            title="Inspect"
+            icon={<SearchCode className="w-4 h-4" />}
+            titleRight={
+              <div className="pl-2">
+                <ShowHideButton show={showInspect} setShow={setShowInspect} />
+              </div>
+            }
+          >
+            {showInspect && (
+              <MonacoEditor
+                value={JSON.stringify(container, null, 2)}
+                language="json"
+                readOnly
+              />
+            )}
+          </Section>
+        )}
       </div>
     </div>
   );
@@ -251,20 +249,23 @@ const LogOrTerminal = ({
     `server-${server}-${container}-tabs-v1`,
     "Log"
   );
-  const { canWrite } = useEditPermissions({
+  const { specific } = usePermissions({
     type: "Server",
     id: server,
   });
   const container_exec_disabled =
     useServer(server)?.info.container_exec_disabled ?? true;
   const terminalDisabled =
-    !canWrite ||
+    !specific.includes(Types.SpecificPermission.Terminal) ||
     container_exec_disabled ||
     state !== Types.ContainerStateStatusEnum.Running;
+  const logDisabled =
+    !specific.includes(Types.SpecificPermission.Logs) ||
+    state === Types.ContainerStateStatusEnum.Empty;
   const view = terminalDisabled && _view === "Terminal" ? "Log" : _view;
   const tabs = (
     <TabsList className="justify-start w-fit">
-      <TabsTrigger value="Log" className="w-[110px]">
+      <TabsTrigger value="Log" className="w-[110px]" disabled={logDisabled}>
         Log
       </TabsTrigger>
       {!terminalDisabled && (
@@ -281,12 +282,20 @@ const LogOrTerminal = ({
           id={server}
           container_name={container}
           titleOther={tabs}
+          disabled={logDisabled}
         />
       </TabsContent>
       <TabsContent value="Terminal">
         <ContainerTerminal
-          server={server}
-          container={container}
+          query={{
+            type: "container",
+            query: {
+              server,
+              container,
+              // This is handled inside ContainerTerminal
+              shell: "",
+            },
+          }}
           titleOther={tabs}
         />
       </TabsContent>

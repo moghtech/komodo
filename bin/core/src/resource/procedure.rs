@@ -180,7 +180,7 @@ async fn validate_config(
           let procedure = super::get_check_permissions::<Procedure>(
             &params.procedure,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           match id {
@@ -204,7 +204,7 @@ async fn validate_config(
           let action = super::get_check_permissions::<Action>(
             &params.action,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.action = action.id;
@@ -220,7 +220,7 @@ async fn validate_config(
           let build = super::get_check_permissions::<Build>(
             &params.build,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.build = build.id;
@@ -236,7 +236,7 @@ async fn validate_config(
           let build = super::get_check_permissions::<Build>(
             &params.build,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.build = build.id;
@@ -246,7 +246,7 @@ async fn validate_config(
             super::get_check_permissions::<Deployment>(
               &params.deployment,
               user,
-              PermissionLevel::Execute,
+              PermissionLevel::Execute.into(),
             )
             .await?;
           params.deployment = deployment.id;
@@ -263,7 +263,7 @@ async fn validate_config(
             super::get_check_permissions::<Deployment>(
               &params.deployment,
               user,
-              PermissionLevel::Execute,
+              PermissionLevel::Execute.into(),
             )
             .await?;
           params.deployment = deployment.id;
@@ -273,7 +273,7 @@ async fn validate_config(
             super::get_check_permissions::<Deployment>(
               &params.deployment,
               user,
-              PermissionLevel::Execute,
+              PermissionLevel::Execute.into(),
             )
             .await?;
           params.deployment = deployment.id;
@@ -283,7 +283,7 @@ async fn validate_config(
             super::get_check_permissions::<Deployment>(
               &params.deployment,
               user,
-              PermissionLevel::Execute,
+              PermissionLevel::Execute.into(),
             )
             .await?;
           params.deployment = deployment.id;
@@ -293,7 +293,7 @@ async fn validate_config(
             super::get_check_permissions::<Deployment>(
               &params.deployment,
               user,
-              PermissionLevel::Execute,
+              PermissionLevel::Execute.into(),
             )
             .await?;
           params.deployment = deployment.id;
@@ -303,7 +303,7 @@ async fn validate_config(
             super::get_check_permissions::<Deployment>(
               &params.deployment,
               user,
-              PermissionLevel::Execute,
+              PermissionLevel::Execute.into(),
             )
             .await?;
           params.deployment = deployment.id;
@@ -313,7 +313,7 @@ async fn validate_config(
             super::get_check_permissions::<Deployment>(
               &params.deployment,
               user,
-              PermissionLevel::Execute,
+              PermissionLevel::Execute.into(),
             )
             .await?;
           params.deployment = deployment.id;
@@ -323,7 +323,7 @@ async fn validate_config(
             super::get_check_permissions::<Deployment>(
               &params.deployment,
               user,
-              PermissionLevel::Execute,
+              PermissionLevel::Execute.into(),
             )
             .await?;
           params.deployment = deployment.id;
@@ -339,7 +339,7 @@ async fn validate_config(
           let repo = super::get_check_permissions::<Repo>(
             &params.repo,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.repo = repo.id;
@@ -355,7 +355,7 @@ async fn validate_config(
           let repo = super::get_check_permissions::<Repo>(
             &params.repo,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.repo = repo.id;
@@ -371,7 +371,7 @@ async fn validate_config(
           let repo = super::get_check_permissions::<Repo>(
             &params.repo,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.repo = repo.id;
@@ -387,7 +387,7 @@ async fn validate_config(
           let repo = super::get_check_permissions::<Repo>(
             &params.repo,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.repo = repo.id;
@@ -396,7 +396,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -405,7 +405,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -414,7 +414,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -423,7 +423,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -432,7 +432,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -441,7 +441,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -450,7 +450,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -459,7 +459,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -468,7 +468,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -477,7 +477,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -486,7 +486,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -495,7 +495,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -504,7 +504,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -513,7 +513,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -522,7 +522,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -531,7 +531,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -540,7 +540,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -549,7 +549,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -558,7 +558,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -567,7 +567,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -576,7 +576,7 @@ async fn validate_config(
           let server = super::get_check_permissions::<Server>(
             &params.server,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.server = server.id;
@@ -585,7 +585,7 @@ async fn validate_config(
           let sync = super::get_check_permissions::<ResourceSync>(
             &params.sync,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.sync = sync.id;
@@ -595,7 +595,7 @@ async fn validate_config(
           let sync = super::get_check_permissions::<ResourceSync>(
             &params.sync,
             user,
-            PermissionLevel::Write,
+            PermissionLevel::Write.into(),
           )
           .await?;
           params.sync = sync.id;
@@ -604,7 +604,7 @@ async fn validate_config(
           let stack = super::get_check_permissions::<Stack>(
             &params.stack,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.stack = stack.id;
@@ -620,7 +620,7 @@ async fn validate_config(
           let stack = super::get_check_permissions::<Stack>(
             &params.stack,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.stack = stack.id;
@@ -636,7 +636,7 @@ async fn validate_config(
           let stack = super::get_check_permissions::<Stack>(
             &params.stack,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.stack = stack.id;
@@ -652,7 +652,7 @@ async fn validate_config(
           let stack = super::get_check_permissions::<Stack>(
             &params.stack,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.stack = stack.id;
@@ -661,7 +661,7 @@ async fn validate_config(
           let stack = super::get_check_permissions::<Stack>(
             &params.stack,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.stack = stack.id;
@@ -670,7 +670,7 @@ async fn validate_config(
           let stack = super::get_check_permissions::<Stack>(
             &params.stack,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.stack = stack.id;
@@ -679,7 +679,7 @@ async fn validate_config(
           let stack = super::get_check_permissions::<Stack>(
             &params.stack,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.stack = stack.id;
@@ -688,7 +688,7 @@ async fn validate_config(
           let stack = super::get_check_permissions::<Stack>(
             &params.stack,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.stack = stack.id;
@@ -697,7 +697,7 @@ async fn validate_config(
           let stack = super::get_check_permissions::<Stack>(
             &params.stack,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.stack = stack.id;
@@ -713,7 +713,7 @@ async fn validate_config(
           let alerter = super::get_check_permissions::<Alerter>(
             &params.alerter,
             user,
-            PermissionLevel::Execute,
+            PermissionLevel::Execute.into(),
           )
           .await?;
           params.alerter = alerter.id;
