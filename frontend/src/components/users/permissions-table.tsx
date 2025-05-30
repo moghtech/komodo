@@ -80,7 +80,7 @@ const SpecificPermissionsTable = ({
     ) ?? [];
   return (
     <Section
-      title="Per Resource"
+      title="Per Resource Permissions"
       actions={
         <div className="flex gap-6 items-center">
           <Input
@@ -271,7 +271,7 @@ const BasePermissionsTableInner = ({
   const filtered = filterBySplit(permissions, search, (p) => p.type);
   return (
     <Section
-      title="Base"
+      title="Base Permissions on Resource Types"
       actions={
         <div className="flex gap-6 items-center">
           <Input
