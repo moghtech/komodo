@@ -7,6 +7,7 @@ Komodo has a granular, layer-based permissioning system to provide non-admin use
 While Komodo can assign permissions to specific users directly, it is recommended to instead **create User Groups and assign permissions to them**, as if they were a user.
 
 Users can then be **added to multiple User Groups** and they **inherit the group's permissions**, similar to linux permissions.
+There is also an `Everyone` mode for User Groups, if this is enabled then **all users implicitly gain the groups permissions**.
 
 For permissioning at scale, users can define [**User Groups in Resource Syncs**](/docs/sync-resources#user-group).
 
@@ -16,11 +17,29 @@ There are 4 permission levels a user / group can be given on a Resource:
 
  1. **None**. The user will not have any access to the resource. The user **will not see it in the GUI, and it will not show up if the user queries the Komodo API directly**. All attempts to view or update the resource will be blocked. This is the default for non-admins, unless using `KOMODO_TRANSPARENT_MODE=true`.
 
- 2. **Read**. This is the first permission level that grants any access. It will enable the user to **see the resource in the GUI, read the configuration, and see any logs**. Any attempts to update configuration or trigger any action **will be blocked**.  Using `KOMODO_TRANSPARENT_MODE=true` will make this level the base level on all resources, for all users.
+ 2. **Read**. This is the first permission level that grants any access. It will enable the user to **see the resource in the GUI and read the configuration**. Any attempts to update configuration or trigger any action **will be blocked**.  Using `KOMODO_TRANSPARENT_MODE=true` will make this level the base level on all resources, for all users.
 
  3. **Execute**. This level will allow the user to execute actions on the resource, **like send a build command** or **trigger a redeploy**. The user will still be blocked from updating configuration on the resource.
 
- 4. **Write**. The user has full access to the resource, **they can execute any actions, update the configuration, and delete the resource**.
+ 4. **Write**. The user has full config write access to the resource, **they can execute any actions, update the configuration, and delete the resource**.
+
+## Specific Permissions
+
+Permission levels alone are not quite enough to provide granular access control.
+Some features are additionally gated behind a specific permission for that feature.
+
+- `Terminal`: User can access the associated resource's terminal.
+  - If given on a `Server`, this allows server level terminal access.
+  - If given on a `Stack` or `Deployment`, this allows container exec terminal (even without `Terminal` on `Server`)
+- `Attach`: User can "attach" *other resources* to the resource.
+  - If given on a `Server`, allows users to attach `Stacks` and `Deployments`
+  - If given on a `Builder`, allows users to attach `Builds`
+- `DockerInspect`:  User can "inspect" docker resources (like containers) on the `Server`
+  - Access to this api will expose all container environments on the given server, and can easily lead to secrets being leaked to unintended users if not protected.
+- `DockerLogs`: User can retrieve docker / docker compose logs on the associated resource.
+  - Valid on `Server`, `Stack`, `Deployment`
+  - For admins wanting this permission by default for all users with read permissions, see below on default user groups.
+- `ProcessList`: User can retrieve the full running process list on the `Server`
 
 ## Global permissions
 
@@ -32,14 +51,15 @@ In TOML form, this looks like:
 name = "groupo"
 users = ["mbecker20", "karamvirsingh98"]
 all.Build = "Execute" # <- Group members can run all builds (but not update config),
-all.Stack = "Read"    # <- And see all Stacks / logs (not deploy / update).
+all.Stack = { level = "Read", specific = ["Logs"] }    # <- And see all Stacks / logs (no deploy / update, inspect, or terminal access).
 ```
 
 A user / group can still be given a greater permission level on select resources:
 
 ```toml
 permissions = [
-  { target.type = "Stack", target.id = "my-stack", level = "Execute" },
+  # Grant addition specific permission (Logs are already granted above)
+  { target.type = "Stack", target.id = "my-stack", level = "Execute", specific = ["Inspect", "Terminal"] },
   # Use regex to match multiple resources, for example give john execute on all of their Stacks
   { target.type = "Stack", target.id = "\\^john-(.+)$\\", level = "Execute" },
 ]

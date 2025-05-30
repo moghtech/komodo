@@ -1,6 +1,6 @@
 # Sync Resources
 
-Komodo is able to create, update, delete, and deploy resources declared in TOML files by diffing them against the existing resources, 
+Komodo is able to create, update, delete, and deploy resources declared in TOML files by diffing them against the existing resources,
 and apply updates based on the diffs. Similar to Stacks, the files can be configured in UI, in a local file, or in files pushed to a remote git repo.
 The Komodo Core backend will poll the files for for any updates, and alert about pending changes when diffs are detected.
 
@@ -97,7 +97,7 @@ value = "http://localhost:4317"
 name = "test-logger-01"
 description = "test logger deployment 1"
 tags = ["test"]
-# sync will deploy the container: 
+# sync will deploy the container:
 #  - if it is not running.
 #  - has relevant config updates.
 #  - the attached build has new version.
@@ -248,9 +248,12 @@ resource_path = ["stacks.toml", "repos.toml"]
 [[user_group]]
 name = "groupo"
 users = ["mbecker20", "karamvirsingh98"]
+# Configure write access with all specific permissions
+all.Server = { level = "Write", specific = ["Attach", "Logs", "Inspect", "Terminal", "Processes"] }
 # Attach base level of Execute on all builds
 all.Build = "Execute"
-all.Alerter = "Write"
+# Allow users to see all Builders, and attach builds to them.
+all.Builder = { level = "Read", specific = ["Attach"] }
 permissions = [
   # Attach permissions to specific resources by name
   { target.type = "Repo", target.id = "komodo-periphery", level = "Execute" },
