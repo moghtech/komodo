@@ -2,7 +2,7 @@ import { useInvalidate, useLocalStorage, useRead, useWrite } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { UsableResource } from "@types";
 import { useToast } from "@ui/use-toast";
-import { ReactNode, useState } from "react";
+import { useState } from "react";
 import { useUserTargetPermissions } from "./hooks";
 import { Section } from "@components/layouts";
 import { Input } from "@ui/input";
@@ -24,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
 import {
   PermissionLevelSelector,
   SpecificPermissionSelector,
@@ -35,38 +34,18 @@ export const PermissionsTableTabs = ({
 }: {
   user_target: Types.UserTarget;
 }) => {
-  const [view, setView] = useLocalStorage<"Base" | "Specific">(
-    "user-permissions-tab-v1",
-    "Base"
-  );
-  const tabs = (
-    <TabsList>
-      <TabsTrigger value="Base" className="w-[100px]">
-        Base
-      </TabsTrigger>
-      <TabsTrigger value="Specific" className="w-[100px]">
-        Specific
-      </TabsTrigger>
-    </TabsList>
-  );
   return (
-    <Tabs value={view} onValueChange={setView as any}>
-      <TabsContent value="Base">
-        <BasePermissionsTable user_target={user_target} titleOther={tabs} />
-      </TabsContent>
-      <TabsContent value="Specific">
-        <SpecificPermissionsTable user_target={user_target} titleOther={tabs} />
-      </TabsContent>
-    </Tabs>
+    <>
+      <BasePermissionsTable user_target={user_target} />
+      <SpecificPermissionsTable user_target={user_target} />
+    </>
   );
 };
 
 const SpecificPermissionsTable = ({
   user_target,
-  titleOther,
 }: {
   user_target: Types.UserTarget;
-  titleOther: ReactNode;
 }) => {
   const { toast } = useToast();
   const [showAll, setShowAll] = useLocalStorage(
@@ -101,7 +80,7 @@ const SpecificPermissionsTable = ({
     ) ?? [];
   return (
     <Section
-      titleOther={titleOther}
+      title="Per Resource"
       actions={
         <div className="flex gap-6 items-center">
           <Input
@@ -267,11 +246,9 @@ type UpdateFn = (
 const BasePermissionsTableInner = ({
   all,
   update,
-  titleOther,
 }: {
   all: Types.User["all"];
   update: UpdateFn;
-  titleOther: ReactNode;
 }) => {
   const [showAll, setShowAll] = useLocalStorage(
     "permissions-show-all-v1",
@@ -294,7 +271,7 @@ const BasePermissionsTableInner = ({
   const filtered = filterBySplit(permissions, search, (p) => p.type);
   return (
     <Section
-      titleOther={titleOther}
+      title="Base"
       actions={
         <div className="flex gap-6 items-center">
           <Input
@@ -390,10 +367,8 @@ const BasePermissionsTableInner = ({
 
 const BasePermissionsTable = ({
   user_target,
-  titleOther,
 }: {
   user_target: Types.UserTarget;
-  titleOther: ReactNode;
 }) => {
   const { toast } = useToast();
   const inv = useInvalidate();
@@ -414,18 +389,13 @@ const BasePermissionsTable = ({
 
   if (user_target.type === "User") {
     return (
-      <UserBasePermissionsTable
-        user_id={user_target.id}
-        update={update}
-        titleOther={titleOther}
-      />
+      <UserBasePermissionsTable user_id={user_target.id} update={update} />
     );
   } else if (user_target.type === "UserGroup") {
     return (
       <UserGroupBasePermissionsTable
         group_id={user_target.id}
         update={update}
-        titleOther={titleOther}
       />
     );
   }
@@ -434,37 +404,21 @@ const BasePermissionsTable = ({
 const UserBasePermissionsTable = ({
   user_id,
   update,
-  titleOther,
 }: {
   user_id: string;
   update: UpdateFn;
-  titleOther: ReactNode;
 }) => {
   const user = useRead("FindUser", { user: user_id }).data;
-  return (
-    <BasePermissionsTableInner
-      all={user?.all}
-      update={update}
-      titleOther={titleOther}
-    />
-  );
+  return <BasePermissionsTableInner all={user?.all} update={update} />;
 };
 
 const UserGroupBasePermissionsTable = ({
   group_id,
   update,
-  titleOther,
 }: {
   group_id: string;
   update: UpdateFn;
-  titleOther: ReactNode;
 }) => {
   const group = useRead("GetUserGroup", { user_group: group_id }).data;
-  return (
-    <BasePermissionsTableInner
-      all={group?.all}
-      update={update}
-      titleOther={titleOther}
-    />
-  );
+  return <BasePermissionsTableInner all={group?.all} update={update} />;
 };
