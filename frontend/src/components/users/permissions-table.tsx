@@ -1,4 +1,4 @@
-import { useInvalidate, useLocalStorage, useRead, useWrite } from "@lib/hooks";
+import { useInvalidate, useRead, useWrite } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { UsableResource } from "@types";
 import { useToast } from "@ui/use-toast";
@@ -48,10 +48,7 @@ const SpecificPermissionsTable = ({
   user_target: Types.UserTarget;
 }) => {
   const { toast } = useToast();
-  const [showAll, setShowAll] = useLocalStorage(
-    "specific-permissions-show-all-v1",
-    false
-  );
+  const [showAll, setShowAll] = useState(false);
   const [resourceType, setResourceType] = useState<UsableResource | "All">(
     "All"
   );
@@ -250,10 +247,7 @@ const BasePermissionsTableInner = ({
   all: Types.User["all"];
   update: UpdateFn;
 }) => {
-  const [showAll, setShowAll] = useLocalStorage(
-    "base-permissions-show-all-v1",
-    false
-  );
+  const [showAll, setShowAll] = useState(false);
   const [search, setSearch] = useState("");
   const permissions = RESOURCE_TARGETS.map((type) => {
     const permission = all?.[type] ?? Types.PermissionLevel.None;
