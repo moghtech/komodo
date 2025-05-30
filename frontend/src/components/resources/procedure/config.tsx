@@ -1,5 +1,6 @@
 import {
   useLocalStorage,
+  usePermissions,
   useRead,
   useWebhookIdOrName,
   useWebhookIntegrations,
@@ -113,9 +114,7 @@ const default_enabled_execution: () => Types.EnabledExecution = () => ({
 
 export const ProcedureConfig = ({ id }: { id: string }) => {
   const [branch, setBranch] = useState("main");
-  const perms = useRead("GetPermission", {
-    target: { type: "Procedure", id },
-  }).data;
+  const { canWrite } = usePermissions({ type: "Procedure", id });
   const procedure = useRead("GetProcedure", { procedure: id }).data;
   const config = procedure?.config;
   const name = procedure?.name;
@@ -131,8 +130,7 @@ export const ProcedureConfig = ({ id }: { id: string }) => {
 
   if (!config) return null;
 
-  const disabled =
-    global_disabled || perms?.level !== Types.PermissionLevel.Write;
+  const disabled = global_disabled || !canWrite;
   const webhook_integration = integrations[PROCEDURE_GIT_PROVIDER] ?? "Github";
   const stages = update.stages || procedure.config?.stages || [];
 

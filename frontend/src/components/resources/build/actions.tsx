@@ -1,13 +1,11 @@
 import { ConfirmButton } from "@components/util";
-import { useExecute, useRead } from "@lib/hooks";
+import { useExecute, usePermissions, useRead } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { Ban, Hammer } from "lucide-react";
 import { useBuilder } from "../builder";
 
 export const RunBuild = ({ id }: { id: string }) => {
-  const perms = useRead("GetPermission", {
-    target: { type: "Build", id },
-  }).data;
+  const { canExecute } = usePermissions({ type: "Build", id });
   const building = useRead(
     "GetBuildActionState",
     { build: id },
@@ -28,11 +26,7 @@ export const RunBuild = ({ id }: { id: string }) => {
 
   // make sure hidden without perms.
   // not usually necessary, but this button also used in deployment actions.
-  if (
-    perms?.level !== Types.PermissionLevel.Execute &&
-    perms?.level !== Types.PermissionLevel.Write
-  )
-    return null;
+  if (!canExecute) return null;
 
   // updates come in in descending order, so 'find' will find latest update matching operation
   const latestBuild = updates?.updates.find(

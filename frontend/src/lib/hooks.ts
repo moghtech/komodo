@@ -539,15 +539,23 @@ export const useFilterByUpdateAvailable: () => [boolean, () => void] = () => {
 
 export const usePermissions = ({ type, id }: Types.ResourceTarget) => {
   const user = useUser().data;
-  const perms = useRead("GetPermission", { target: { type, id } }).data;
+  const perms = useRead("GetPermission", { target: { type, id } }).data as
+    | Types.PermissionLevelAndSpecifics
+    | Types.PermissionLevel
+    | undefined;
   const info = useRead("GetCoreInfo", {}).data;
   const ui_write_disabled = info?.ui_write_disabled ?? false;
   const disable_non_admin_create = info?.disable_non_admin_create ?? false;
 
-  const canWrite =
-    !ui_write_disabled && perms?.level === Types.PermissionLevel.Write;
+  const level =
+    (perms && typeof perms === "string" ? perms : perms?.level) ??
+    Types.PermissionLevel.None;
+  const specific =
+    (perms && typeof perms === "string" ? [] : perms?.specific) ?? [];
+
+  const canWrite = !ui_write_disabled && level === Types.PermissionLevel.Write;
   const canExecute = has_minimum_permissions(
-    perms,
+    { level, specific },
     Types.PermissionLevel.Execute
   );
 
@@ -558,7 +566,7 @@ export const usePermissions = ({ type, id }: Types.ResourceTarget) => {
       canCreate:
         user?.admin ||
         (!disable_non_admin_create && user?.create_server_permissions),
-      specific: perms?.specific ?? [],
+      specific,
     };
   }
   if (type === "Build") {
@@ -568,7 +576,7 @@ export const usePermissions = ({ type, id }: Types.ResourceTarget) => {
       canCreate:
         user?.admin ||
         (!disable_non_admin_create && user?.create_build_permissions),
-      specific: perms?.specific ?? [],
+      specific,
     };
   }
   if (type === "Alerter" || type === "Builder") {
@@ -576,7 +584,7 @@ export const usePermissions = ({ type, id }: Types.ResourceTarget) => {
       canWrite,
       canExecute,
       canCreate: user?.admin,
-      specific: perms?.specific ?? [],
+      specific,
     };
   }
 
@@ -584,6 +592,6 @@ export const usePermissions = ({ type, id }: Types.ResourceTarget) => {
     canWrite,
     canExecute,
     canCreate: user?.admin || !disable_non_admin_create,
-    specific: perms?.specific ?? [],
+    specific,
   };
 };

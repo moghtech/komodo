@@ -1,5 +1,6 @@
 import {
   useLocalStorage,
+  usePermissions,
   useRead,
   useWebhookIdOrName,
   useWebhookIntegrations,
@@ -32,9 +33,7 @@ const ACTION_GIT_PROVIDER = "Action";
 
 export const ActionConfig = ({ id }: { id: string }) => {
   const [branch, setBranch] = useState("main");
-  const perms = useRead("GetPermission", {
-    target: { type: "Action", id },
-  }).data;
+  const { canWrite } = usePermissions({ type: "Action", id });
   const action = useRead("GetAction", { action: id }).data;
   const config = action?.config;
   const name = action?.name;
@@ -50,8 +49,7 @@ export const ActionConfig = ({ id }: { id: string }) => {
 
   if (!config) return null;
 
-  const disabled =
-    global_disabled || perms?.level !== Types.PermissionLevel.Write;
+  const disabled = global_disabled || !canWrite;
   const webhook_integration = integrations[ACTION_GIT_PROVIDER] ?? "Github";
 
   return (

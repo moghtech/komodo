@@ -1,9 +1,7 @@
 import { ActionWithDialog, ConfirmButton } from "@components/util";
-import { useExecute, useRead } from "@lib/hooks";
+import { useExecute, usePermissions, useRead } from "@lib/hooks";
 import { Scissors } from "lucide-react";
 import { useServer } from ".";
-import { has_minimum_permissions } from "@lib/utils";
-import { Types } from "komodo_client";
 
 export const Prune = ({
   server_id,
@@ -19,16 +17,9 @@ export const Prune = ({
     { server: server_id },
     { refetchInterval: 5000 }
   ).data;
-  const perms = useRead("GetPermission", {
-    target: { type: "Server", id: server_id },
-  }).data;
+  const { canExecute } = usePermissions({ type: "Server", id: server_id });
 
   if (!server) return;
-
-  const canExecute = has_minimum_permissions(
-    perms,
-    Types.PermissionLevel.Execute
-  );
 
   const pruningKey =
     type === "Containers"

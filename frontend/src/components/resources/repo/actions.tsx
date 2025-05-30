@@ -1,5 +1,5 @@
 import { ConfirmButton } from "@components/util";
-import { useExecute, useRead } from "@lib/hooks";
+import { useExecute, usePermissions, useRead } from "@lib/hooks";
 import {
   ArrowDownToDot,
   ArrowDownToLine,
@@ -71,9 +71,7 @@ export const PullRepo = ({ id }: { id: string }) => {
 };
 
 export const BuildRepo = ({ id }: { id: string }) => {
-  const perms = useRead("GetPermission", {
-    target: { type: "Repo", id },
-  }).data;
+  const { canExecute } = usePermissions({ type: "Repo", id });
   const building = useRead(
     "GetRepoActionState",
     { repo: id },
@@ -98,11 +96,7 @@ export const BuildRepo = ({ id }: { id: string }) => {
 
   // make sure hidden without perms.
   // not usually necessary, but this button also used in deployment actions.
-  if (
-    perms?.level !== Types.PermissionLevel.Execute &&
-    perms?.level !== Types.PermissionLevel.Write
-  )
-    return null;
+  if (!canExecute) return null;
 
   // updates come in in descending order, so 'find' will find latest update matching operation
   const latestBuild = updates?.updates.find(

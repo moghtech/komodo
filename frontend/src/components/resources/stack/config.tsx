@@ -15,6 +15,7 @@ import {
   getWebhookIntegration,
   useInvalidate,
   useLocalStorage,
+  usePermissions,
   useRead,
   useWebhookIdOrName,
   useWebhookIntegrations,
@@ -62,9 +63,7 @@ export const StackConfig = ({
     git: true,
     webhooks: true,
   });
-  const perms = useRead("GetPermission", {
-    target: { type: "Stack", id },
-  }).data;
+  const { canWrite } = usePermissions({ type: "Stack", id });
   const stack = useRead("GetStack", { stack: id }).data;
   const config = stack?.config;
   const name = stack?.name;
@@ -81,7 +80,7 @@ export const StackConfig = ({
 
   if (!config) return null;
 
-  const disabled = global_disabled || perms?.level !== Types.PermissionLevel.Write;
+  const disabled = global_disabled || !canWrite;
 
   const run_build = update.run_build ?? config.run_build;
   const mode = getStackMode(update, config);

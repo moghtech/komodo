@@ -11,6 +11,7 @@ import {
   getWebhookIntegration,
   useInvalidate,
   useLocalStorage,
+  usePermissions,
   useRead,
   useWebhookIdOrName,
   useWebhookIntegrations,
@@ -27,9 +28,7 @@ import { SecretsSearch } from "@components/config/env_vars";
 import { MonacoEditor } from "@components/monaco";
 
 export const RepoConfig = ({ id }: { id: string }) => {
-  const perms = useRead("GetPermission", {
-    target: { type: "Repo", id },
-  }).data;
+  const { canWrite } = usePermissions({ type: "Repo", id });
   const repo = useRead("GetRepo", { repo: id }).data;
   const config = repo?.config;
   const name = repo?.name;
@@ -46,7 +45,7 @@ export const RepoConfig = ({ id }: { id: string }) => {
 
   if (!config) return null;
 
-  const disabled = global_disabled || perms?.level !== Types.PermissionLevel.Write;
+  const disabled = global_disabled || !canWrite;
 
   const git_provider = update.git_provider ?? config.git_provider;
   const webhook_integration = getWebhookIntegration(integrations, git_provider);

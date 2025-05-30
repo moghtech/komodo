@@ -1,4 +1,4 @@
-import { useLocalStorage, useRead, useWrite } from "@lib/hooks";
+import { useLocalStorage, usePermissions, useRead, useWrite } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { ReactNode } from "react";
 import {
@@ -30,9 +30,7 @@ export const DeploymentConfig = ({
   id: string;
   titleOther: ReactNode;
 }) => {
-  const perms = useRead("GetPermission", {
-    target: { type: "Deployment", id },
-  }).data;
+  const { canWrite } = usePermissions({ type: "Deployment", id });
   const config = useRead("GetDeployment", { deployment: id }).data?.config;
   const builds = useRead("ListBuilds", {}).data;
   const global_disabled =
@@ -49,7 +47,7 @@ export const DeploymentConfig = ({
   const hide_ports = network === "host" || network === "none";
   const auto_update = update.auto_update ?? config.auto_update ?? false;
 
-  const disabled = global_disabled || perms?.level !== Types.PermissionLevel.Write;
+  const disabled = global_disabled || !canWrite;
 
   return (
     <Config

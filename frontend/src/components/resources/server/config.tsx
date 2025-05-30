@@ -1,6 +1,12 @@
 import { Config } from "@components/config";
 import { ConfigList } from "@components/config/util";
-import { useInvalidate, useLocalStorage, useRead, useWrite } from "@lib/hooks";
+import {
+  useInvalidate,
+  useLocalStorage,
+  usePermissions,
+  useRead,
+  useWrite,
+} from "@lib/hooks";
 import { Types } from "komodo_client";
 import { ReactNode } from "react";
 
@@ -11,9 +17,7 @@ export const ServerConfig = ({
   id: string;
   titleOther: ReactNode;
 }) => {
-  const perms = useRead("GetPermission", {
-    target: { type: "Server", id },
-  }).data;
+  const { canWrite } = usePermissions({ type: "Server", id });
   const invalidate = useInvalidate();
   const config = useRead("GetServer", { server: id }).data?.config;
   const global_disabled =
@@ -30,7 +34,7 @@ export const ServerConfig = ({
   });
   if (!config) return null;
 
-  const disabled = global_disabled || perms?.level !== Types.PermissionLevel.Write;
+  const disabled = global_disabled || !canWrite;
 
   return (
     <Config

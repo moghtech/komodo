@@ -1,14 +1,12 @@
 import { Config } from "@components/config";
-import { useLocalStorage, useRead, useWrite } from "@lib/hooks";
+import { useLocalStorage, usePermissions, useRead, useWrite } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { EndpointConfig } from "./endpoint";
 import { AlertTypeConfig } from "./alert_types";
 import { ResourcesConfig } from "./resources";
 
 export const AlerterConfig = ({ id }: { id: string }) => {
-  const perms = useRead("GetPermission", {
-    target: { type: "Alerter", id },
-  }).data;
+  const { canWrite } = usePermissions({ type: "Alerter", id });
   const config = useRead("GetAlerter", { alerter: id }).data?.config;
   const global_disabled =
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
@@ -19,7 +17,7 @@ export const AlerterConfig = ({ id }: { id: string }) => {
   );
 
   if (!config) return null;
-  const disabled = global_disabled || perms?.level !== Types.PermissionLevel.Write;
+  const disabled = global_disabled || !canWrite;
 
   return (
     <Config

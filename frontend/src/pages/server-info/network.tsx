@@ -10,8 +10,7 @@ import {
   DockerResourcePageName,
   ShowHideButton,
 } from "@components/util";
-import { useExecute, useRead, useSetTitle } from "@lib/hooks";
-import { has_minimum_permissions } from "@lib/utils";
+import { useExecute, usePermissions, useRead, useSetTitle } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { Badge } from "@ui/badge";
 import { Button } from "@ui/button";
@@ -53,9 +52,7 @@ const NetworkPageInner = ({
   useSetTitle(`${server?.name} | network | ${network_name}`);
   const nav = useNavigate();
 
-  const perms = useRead("GetPermission", {
-    target: { type: "Server", id },
-  }).data;
+  const { canExecute, specific } = usePermissions({ type: "Server", id });
 
   const {
     data: network,
@@ -92,11 +89,6 @@ const NetworkPageInner = ({
       </div>
     );
   }
-
-  const canExecute = has_minimum_permissions(
-    perms,
-    Types.PermissionLevel.Execute
-  );
 
   const containers = Object.values(network.Containers ?? {});
 
@@ -283,7 +275,7 @@ const NetworkPageInner = ({
 
       <DockerLabelsSection labels={network.Labels} />
 
-      {perms?.specific.includes(Types.SpecificPermission.Inspect) && (
+      {specific.includes(Types.SpecificPermission.Inspect) && (
         <Section
           title="Inspect"
           icon={<SearchCode className="w-4 h-4" />}

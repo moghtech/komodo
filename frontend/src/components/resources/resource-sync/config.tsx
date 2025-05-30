@@ -11,6 +11,7 @@ import {
   getWebhookIntegration,
   useInvalidate,
   useLocalStorage,
+  usePermissions,
   useRead,
   useWebhookIdOrName,
   useWebhookIntegrations,
@@ -68,9 +69,7 @@ export const ResourceSyncConfig = ({
     git: true,
     webhooks: true,
   });
-  const perms = useRead("GetPermission", {
-    target: { type: "ResourceSync", id },
-  }).data;
+  const { canWrite } = usePermissions({ type: "ResourceSync", id });
   const sync = useRead("GetResourceSync", { sync: id }).data;
   const config = sync?.config;
   const name = sync?.name;
@@ -87,7 +86,7 @@ export const ResourceSyncConfig = ({
 
   if (!config) return null;
 
-  const disabled = global_disabled || perms?.level !== Types.PermissionLevel.Write;
+  const disabled = global_disabled || !canWrite;
 
   const git_provider = update.git_provider ?? config.git_provider;
   const webhook_integration = getWebhookIntegration(integrations, git_provider);

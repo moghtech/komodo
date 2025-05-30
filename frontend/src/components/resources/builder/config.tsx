@@ -1,6 +1,6 @@
 import { Config } from "@components/config";
 import { ConfigItem, ConfigList } from "@components/config/util";
-import { useLocalStorage, useRead, useWrite } from "@lib/hooks";
+import { useLocalStorage, usePermissions, useRead, useWrite } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { useState } from "react";
 import { ResourceLink, ResourceSelector } from "../common";
@@ -26,9 +26,7 @@ export const BuilderConfig = ({ id }: { id: string }) => {
 };
 
 const AwsBuilderConfig = ({ id }: { id: string }) => {
-  const perms = useRead("GetPermission", {
-    target: { type: "Builder", id },
-  }).data;
+  const { canWrite } = usePermissions({ type: "Builder", id });
   const config = useRead("GetBuilder", { builder: id }).data?.config
     ?.params as Types.AwsBuilderConfig;
   const global_disabled =
@@ -40,7 +38,7 @@ const AwsBuilderConfig = ({ id }: { id: string }) => {
   const { mutateAsync } = useWrite("UpdateBuilder");
   if (!config) return null;
 
-  const disabled = global_disabled || perms?.level !== Types.PermissionLevel.Write;
+  const disabled = global_disabled || !canWrite;
 
   return (
     <Config
@@ -241,9 +239,7 @@ const AwsBuilderConfig = ({ id }: { id: string }) => {
 };
 
 const ServerBuilderConfig = ({ id }: { id: string }) => {
-  const perms = useRead("GetPermission", {
-    target: { type: "Builder", id },
-  }).data;
+  const { canWrite } = usePermissions({ type: "Builder", id });
   const config = useRead("GetBuilder", { builder: id }).data?.config;
   const [update, set] = useLocalStorage<Partial<Types.ServerBuilderConfig>>(
     `server-builder-${id}-update-v1`,
@@ -252,7 +248,7 @@ const ServerBuilderConfig = ({ id }: { id: string }) => {
   const { mutateAsync } = useWrite("UpdateBuilder");
   if (!config) return null;
 
-  const disabled = perms?.level !== Types.PermissionLevel.Write;
+  const disabled = !canWrite;
 
   return (
     <Config
@@ -303,9 +299,7 @@ const ServerBuilderConfig = ({ id }: { id: string }) => {
 };
 
 const UrlBuilderConfig = ({ id }: { id: string }) => {
-  const perms = useRead("GetPermission", {
-    target: { type: "Builder", id },
-  }).data;
+  const { canWrite } = usePermissions({ type: "Builder", id });
   const config = useRead("GetBuilder", { builder: id }).data?.config;
   const [update, set] = useLocalStorage<Partial<Types.UrlBuilderConfig>>(
     `url-builder-${id}-update-v1`,
@@ -314,7 +308,7 @@ const UrlBuilderConfig = ({ id }: { id: string }) => {
   const { mutateAsync } = useWrite("UpdateBuilder");
   if (!config) return null;
 
-  const disabled = perms?.level !== Types.PermissionLevel.Write;
+  const disabled = !canWrite;
 
   return (
     <Config
@@ -336,7 +330,8 @@ const UrlBuilderConfig = ({ id }: { id: string }) => {
                 placeholder: "https://periphery:8120",
               },
               passkey: {
-                description: "Use a custom passkey to authenticate with Periphery",
+                description:
+                  "Use a custom passkey to authenticate with Periphery",
                 placeholder: "Custom passkey",
               },
             },
