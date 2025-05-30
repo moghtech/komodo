@@ -143,9 +143,9 @@ pub enum SpecificPermission {
   ///   - Allowed to attach Deployments to the Build
   Attach,
   /// On **Server**
-  ///   - Access the `docker inspect` apis
+  ///   - Access the `container inspect` apis
   /// On **Stack / Deployment**
-  ///   - Access `docker inspect $container` for associated containers
+  ///   - Access `container inspect` apis for associated containers
   Inspect,
   /// On **Server**
   ///   - Read all container logs on the server

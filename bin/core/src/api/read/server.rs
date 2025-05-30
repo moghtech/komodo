@@ -268,7 +268,7 @@ impl Resolve<ReadArgs> for ListSystemProcesses {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read.inspect(),
+      PermissionLevel::Read.processes(),
     )
     .await?;
     let mut lock = processes_cache().lock().await;
@@ -630,7 +630,7 @@ impl Resolve<ReadArgs> for InspectDockerNetwork {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read.inspect(),
+      PermissionLevel::Read.into(),
     )
     .await?;
     let cache = server_status_cache()
@@ -682,7 +682,7 @@ impl Resolve<ReadArgs> for InspectDockerImage {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read.inspect(),
+      PermissionLevel::Read.into(),
     )
     .await?;
     let cache = server_status_cache()
@@ -709,7 +709,7 @@ impl Resolve<ReadArgs> for ListDockerImageHistory {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read.inspect(),
+      PermissionLevel::Read.into(),
     )
     .await?;
     let cache = server_status_cache()
@@ -761,7 +761,7 @@ impl Resolve<ReadArgs> for InspectDockerVolume {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
-      PermissionLevel::Read.inspect(),
+      PermissionLevel::Read.into(),
     )
     .await?;
     let cache = server_status_cache()
