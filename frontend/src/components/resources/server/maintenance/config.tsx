@@ -2,7 +2,7 @@ import { Section } from "@components/layouts";
 import { useInvalidate, useLocalStorage, useRead, useWrite } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { ReactNode } from "react";
-import { MaintenanceWindows } from "./maintenance-windows";
+import { MaintenanceWindows } from "./modal";
 import { Button } from "@ui/button";
 import { Save } from "lucide-react";
 

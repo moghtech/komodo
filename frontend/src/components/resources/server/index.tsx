@@ -30,6 +30,7 @@ import {
   StatusBadge,
 } from "@components/util";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
+import { Card, CardHeader, CardTitle } from "@ui/card";
 import { RepoTable } from "../repo/table";
 import { DashboardPieChart } from "@pages/home/dashboard";
 import { StackTable } from "../stack/table";
@@ -39,8 +40,7 @@ import { ServerStats } from "./stats";
 import { GroupActions } from "@components/group-actions";
 import { ServerTerminals } from "@components/terminal/server";
 import { usePermissions } from "@lib/hooks";
-import { Card, CardHeader, CardTitle } from "@ui/card";
-import { MaintenanceServerConfig } from "./maintenance-config";
+import { MaintenanceServerConfig } from "./maintenance/config";
 
 export const useServer = (id?: string) =>
   useRead("ListServers", {}, { refetchInterval: 10_000 }).data?.find(
