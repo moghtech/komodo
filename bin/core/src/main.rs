@@ -44,7 +44,12 @@ async fn app() -> anyhow::Result<()> {
   };
 
   info!("Komodo Core version: v{}", env!("CARGO_PKG_VERSION"));
-  info!("{:?}", config.sanitized());
+
+  if core_config().pretty_startup_config {
+    info!("{:#?}", config.sanitized());
+  } else {
+    info!("{:?}", config.sanitized());
+  }
 
   // Init jwt client to crash on failure
   state::jwt_client();

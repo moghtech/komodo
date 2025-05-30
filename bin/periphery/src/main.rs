@@ -6,6 +6,7 @@ use std::{net::SocketAddr, str::FromStr};
 
 use anyhow::Context;
 use axum_server::tls_rustls::RustlsConfig;
+use config::periphery_config;
 
 mod api;
 mod compose;
@@ -22,7 +23,12 @@ async fn app() -> anyhow::Result<()> {
   logger::init(&config.logging)?;
 
   info!("Komodo Periphery version: v{}", env!("CARGO_PKG_VERSION"));
-  info!("{:?}", config.sanitized());
+
+  if periphery_config().pretty_startup_config {
+    info!("{:#?}", config.sanitized());
+  } else {
+    info!("{:?}", config.sanitized());
+  }
 
   stats::spawn_system_stats_polling_thread();
 
