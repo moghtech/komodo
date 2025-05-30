@@ -91,6 +91,8 @@ pub struct Env {
   pub komodo_logging_otlp_endpoint: Option<String>,
   /// Override `logging.opentelemetry_service_name`
   pub komodo_logging_opentelemetry_service_name: Option<String>,
+  /// Override `pretty_startup_config`
+  pub komodo_pretty_startup_config: Option<bool>,
 
   /// Override `transparent_mode`
   pub komodo_transparent_mode: Option<bool>,
@@ -421,6 +423,11 @@ pub struct CoreConfig {
   #[serde(default)]
   pub logging: LogConfig,
 
+  /// Pretty-log (multi-line) the startup config
+  /// for easier human readability.
+  #[serde(default)]
+  pub pretty_startup_config: bool,
+
   // ===========
   // = Pruning =
   // ===========
@@ -595,6 +602,7 @@ impl CoreConfig {
       keep_stats_for_days: config.keep_stats_for_days,
       keep_alerts_for_days: config.keep_alerts_for_days,
       logging: config.logging,
+      pretty_startup_config: config.pretty_startup_config,
       transparent_mode: config.transparent_mode,
       ui_write_disabled: config.ui_write_disabled,
       disable_confirm_dialog: config.disable_confirm_dialog,

@@ -144,6 +144,8 @@ pub struct Env {
   pub periphery_logging_otlp_endpoint: Option<String>,
   /// Override `logging.opentelemetry_service_name`
   pub periphery_logging_opentelemetry_service_name: Option<String>,
+  /// Override `pretty_startup_config`
+  pub periphery_pretty_startup_config: Option<bool>,
 
   /// Override `allowed_ips`
   pub periphery_allowed_ips: Option<Vec<IpAddr>>,
@@ -234,6 +236,11 @@ pub struct PeripheryConfig {
   #[serde(default)]
   pub logging: LogConfig,
 
+  /// Pretty-log (multi-line) the startup config
+  /// for easier human readability.
+  #[serde(default)]
+  pub pretty_startup_config: bool,
+
   /// Limits which IPv4 addresses are allowed to call the api.
   /// Default: none
   ///
@@ -319,6 +326,7 @@ impl Default for PeripheryConfig {
       stats_polling_rate: default_stats_polling_rate(),
       legacy_compose_cli: Default::default(),
       logging: Default::default(),
+      pretty_startup_config: Default::default(),
       allowed_ips: Default::default(),
       passkeys: Default::default(),
       include_disk_mounts: Default::default(),
@@ -347,6 +355,7 @@ impl PeripheryConfig {
       stats_polling_rate: self.stats_polling_rate,
       legacy_compose_cli: self.legacy_compose_cli,
       logging: self.logging.clone(),
+      pretty_startup_config: self.pretty_startup_config,
       allowed_ips: self.allowed_ips.clone(),
       passkeys: self
         .passkeys

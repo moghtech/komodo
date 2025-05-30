@@ -73,6 +73,9 @@ pub fn periphery_config() -> &'static PeripheryConfig {
           .periphery_logging_opentelemetry_service_name
           .unwrap_or(config.logging.opentelemetry_service_name),
       },
+      pretty_startup_config: env
+        .periphery_pretty_startup_config
+        .unwrap_or(config.pretty_startup_config),
       allowed_ips: env
         .periphery_allowed_ips
         .unwrap_or(config.allowed_ips),

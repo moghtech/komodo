@@ -199,6 +199,7 @@ pub fn core_config() -> &'static CoreConfig {
           .komodo_logging_opentelemetry_service_name
           .unwrap_or(config.logging.opentelemetry_service_name),
       },
+      pretty_startup_config: env.komodo_pretty_startup_config.unwrap_or(config.pretty_startup_config),
       ssl_enabled: env.komodo_ssl_enabled.unwrap_or(config.ssl_enabled),
       ssl_key_file: env.komodo_ssl_key_file.unwrap_or(config.ssl_key_file),
       ssl_cert_file: env.komodo_ssl_cert_file.unwrap_or(config.ssl_cert_file),
