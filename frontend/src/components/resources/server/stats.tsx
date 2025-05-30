@@ -2,7 +2,7 @@ import { Section } from "@components/layouts";
 import { Card, CardContent, CardHeader, CardTitle } from "@ui/card";
 import { Progress } from "@ui/progress";
 import { Cpu, Database, Loader2, MemoryStick } from "lucide-react";
-import { useRead } from "@lib/hooks";
+import { usePermissions, useRead } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { DataTable, SortableHeader } from "@ui/data-table";
 import { ReactNode, useMemo, useState } from "react";
@@ -26,6 +26,8 @@ export const ServerStats = ({
   titleOther?: ReactNode;
 }) => {
   const [interval, setInterval] = useStatsGranularity();
+
+  const { specific } = usePermissions({ type: "Server", id });
 
   const stats = useRead(
     "GetSystemStats",
@@ -138,7 +140,11 @@ export const ServerStats = ({
         >
           <div className="flex flex-col gap-8">
             <StatChart server_id={id} type="Cpu" className="w-full h-[250px]" />
-            <StatChart server_id={id} type="Memory" className="w-full h-[250px]" />
+            <StatChart
+              server_id={id}
+              type="Memory"
+              className="w-full h-[250px]"
+            />
             <StatChart
               server_id={id}
               type="Disk"
@@ -221,7 +227,9 @@ export const ServerStats = ({
           />
         </Section>
 
-        <Processes id={id} />
+        {specific.includes(Types.SpecificPermission.Processes) && (
+          <Processes id={id} />
+        )}
       </div>
     </Section>
   );
