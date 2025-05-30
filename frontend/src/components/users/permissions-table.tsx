@@ -49,7 +49,7 @@ const SpecificPermissionsTable = ({
 }) => {
   const { toast } = useToast();
   const [showAll, setShowAll] = useLocalStorage(
-    "permissions-show-all-v1",
+    "specific-permissions-show-all-v1",
     false
   );
   const [resourceType, setResourceType] = useState<UsableResource | "All">(
@@ -251,7 +251,7 @@ const BasePermissionsTableInner = ({
   update: UpdateFn;
 }) => {
   const [showAll, setShowAll] = useLocalStorage(
-    "permissions-show-all-v1",
+    "base-permissions-show-all-v1",
     false
   );
   const [search, setSearch] = useState("");
