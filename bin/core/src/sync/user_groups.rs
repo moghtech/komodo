@@ -80,6 +80,10 @@ pub fn user_group_to_toml(
   for (variant, PermissionLevelAndSpecifics { level, specific }) in
     user_group.all
   {
+    // skip 'zero' all permissions
+    if level == PermissionLevel::None && specific.is_empty() {
+      continue;
+    }
     write!(&mut res, "\nall.{variant} = ")
       .context("failed to serialize user group 'all' to toml")?;
     if specific.is_empty() {
@@ -103,16 +107,20 @@ pub fn user_group_to_toml(
   }
 
   // End with resource permissions array
-  res.push('\n');
-  res.push_str(
-    &toml_pretty::to_string(
-      &Permissions {
-        permissions: user_group.permissions,
-      },
-      TOML_PRETTY_OPTIONS,
-    )
-    .context("failed to serialize user group permissions to toml")?,
-  );
+  if !user_group.permissions.is_empty() {
+    res.push('\n');
+    res.push_str(
+      &toml_pretty::to_string(
+        &Permissions {
+          permissions: user_group.permissions,
+        },
+        TOML_PRETTY_OPTIONS,
+      )
+      .context(
+        "failed to serialize user group permissions to toml",
+      )?,
+    );
+  }
 
   Ok(res)
 }
@@ -235,6 +243,9 @@ pub async fn get_updates_for_execution(
       if ug.everyone {
         ug.users.clear();
       }
+      ug.all.retain(|_, p| {
+        p.level > PermissionLevel::None || !p.specific.is_empty()
+      });
       (ug.name.clone(), ug)
     })
     .collect::<HashMap<_, _>>();
@@ -1012,7 +1023,11 @@ pub async fn convert_user_groups(
     .map(|user| (user.id, user.username))
     .collect::<HashMap<_, _>>();
 
-  for user_group in user_groups {
+  for mut user_group in user_groups {
+    user_group.all.retain(|_, p| {
+      p.level > PermissionLevel::None || !p.specific.is_empty()
+    });
+
     // this method is admin only, but we already know user can see user group if above does not return Err
     let mut permissions = (ListUserTargetPermissions {
       user_target: UserTarget::UserGroup(user_group.id.clone()),
