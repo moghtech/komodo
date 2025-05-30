@@ -8,10 +8,7 @@ use komodo_client::{
     docker::container::Container,
     permission::PermissionLevel,
     server::{Server, ServerState},
-    stack::{
-      Stack, StackActionState, StackConfig, StackInfo, StackListItem,
-      StackState,
-    },
+    stack::{Stack, StackActionState, StackListItem, StackState},
   },
 };
 use periphery_client::api::{
@@ -146,30 +143,20 @@ impl Resolve<ReadArgs> for InspectStackContainer {
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<Container> {
     let InspectStackContainer { stack, service } = self;
-    let Stack {
-      config: StackConfig { server_id, .. },
-      info:
-        StackInfo {
-          deployed_services,
-          latest_services,
-          ..
-        },
-      ..
-    } = get_check_permissions::<Stack>(
+    let stack = get_check_permissions::<Stack>(
       &stack,
       user,
       PermissionLevel::Read.inspect(),
     )
     .await?;
-    if server_id.is_empty() {
+    if stack.config.server_id.is_empty() {
       return Err(
-        anyhow!(
-          "Cannot inspect stack, not attached to any server"
-        )
-        .into(),
+        anyhow!("Cannot inspect stack, not attached to any server")
+          .into(),
       );
     }
-    let server = resource::get::<Server>(&server_id).await?;
+    let server =
+      resource::get::<Server>(&stack.config.server_id).await?;
     let cache = server_status_cache()
       .get_or_insert_default(&server.id)
       .await;
@@ -182,11 +169,16 @@ impl Resolve<ReadArgs> for InspectStackContainer {
         .into(),
       );
     }
-    let services = deployed_services.unwrap_or(latest_services);
+    let services = &stack_status_cache()
+      .get(&stack.id)
+      .await
+      .unwrap_or_default()
+      .curr
+      .services;
     let Some(name) = services
       .into_iter()
-      .find(|s| s.service_name == service)
-      .map(|s| s.container_name)
+      .find(|s| s.service == service)
+      .and_then(|s| s.container.as_ref().map(|c| c.name.clone()))
     else {
       return Err(anyhow!(
         "No service found matching '{service}'. Was the stack last deployed manually?"
