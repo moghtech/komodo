@@ -32,6 +32,7 @@ import { GroupActions } from "@components/group-actions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 import { usePermissions } from "@lib/hooks";
 import { ContainerTerminal } from "@components/terminal/container";
+import { DeploymentInspect } from "./inspect";
 
 // const configOrLog = atomWithStorage("config-or-log-v1", "Config");
 
@@ -56,10 +57,9 @@ const ConfigTabsInner = ({
   deployment: Types.DeploymentListItem;
 }) => {
   // const [view, setView] = useAtom(configOrLog);
-  const [_view, setView] = useLocalStorage<"Config" | "Log" | "Terminal">(
-    "deployment-tabs-v1",
-    "Config"
-  );
+  const [_view, setView] = useLocalStorage<
+    "Config" | "Log" | "Inspect" | "Terminal"
+  >("deployment-tabs-v1", "Config");
   const { specific } = usePermissions({
     type: "Deployment",
     id: deployment.id,
@@ -72,12 +72,18 @@ const ConfigTabsInner = ({
     state === undefined ||
     state === Types.DeploymentState.Unknown ||
     state === Types.DeploymentState.NotDeployed;
+  const inspectDisabled =
+    !specific.includes(Types.SpecificPermission.Inspect) ||
+    state === undefined ||
+    state === Types.DeploymentState.Unknown ||
+    state === Types.DeploymentState.NotDeployed;
   const terminalDisabled =
     !specific.includes(Types.SpecificPermission.Terminal) ||
     container_exec_disabled ||
     state !== Types.DeploymentState.Running;
   const view =
     (logsDisabled && _view === "Log") ||
+    (inspectDisabled && _view === "Inspect") ||
     (terminalDisabled && _view === "Terminal")
       ? "Config"
       : _view;
@@ -90,6 +96,15 @@ const ConfigTabsInner = ({
       {specific.includes(Types.SpecificPermission.Logs) && (
         <TabsTrigger value="Log" className="w-[110px]" disabled={logsDisabled}>
           Log
+        </TabsTrigger>
+      )}
+      {specific.includes(Types.SpecificPermission.Inspect) && (
+        <TabsTrigger
+          value="Inspect"
+          className="w-[110px]"
+          disabled={inspectDisabled}
+        >
+          Inspect
         </TabsTrigger>
       )}
       {specific.includes(Types.SpecificPermission.Terminal) && (
@@ -110,6 +125,9 @@ const ConfigTabsInner = ({
       </TabsContent>
       <TabsContent value="Log">
         <DeploymentLogs id={deployment.id} titleOther={tabs} />
+      </TabsContent>
+      <TabsContent value="Inspect">
+        <DeploymentInspect id={deployment.id} titleOther={tabs} />
       </TabsContent>
       <TabsContent value="Terminal">
         <ContainerTerminal

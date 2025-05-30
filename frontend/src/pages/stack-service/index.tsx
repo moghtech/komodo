@@ -35,6 +35,7 @@ import { Fragment } from "react/jsx-runtime";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
 import { ContainerTerminal } from "@components/terminal/container";
 import { useServer } from "@components/resources/server";
+import { StackServiceInspect } from "./inspect";
 
 type IdServiceComponent = React.FC<{ id: string; service?: string }>;
 
@@ -190,10 +191,10 @@ const StackServicePageInner = ({
           </Section>
         )}
 
-        {/* Logs */}
+        {/* Tabs */}
         <div className="pt-4">
           {stack && (
-            <LogOrTerminal
+            <StackServiceTabs
               stack={stack}
               service={service}
               container_state={state}
@@ -205,7 +206,7 @@ const StackServicePageInner = ({
   );
 };
 
-const LogOrTerminal = ({
+const StackServiceTabs = ({
   stack,
   service,
   container_state,
@@ -214,7 +215,7 @@ const LogOrTerminal = ({
   service: string;
   container_state: Types.ContainerStateStatusEnum;
 }) => {
-  const [_view, setView] = useLocalStorage<"Log" | "Terminal">(
+  const [_view, setView] = useLocalStorage<"Log" | "Inspect" | "Terminal">(
     `stack-${stack.id}-${service}-tabs-v1`,
     "Log"
   );
@@ -222,23 +223,44 @@ const LogOrTerminal = ({
     type: "Stack",
     id: stack.id,
   });
+  console.log(specific);
   const container_exec_disabled =
     useServer(stack.info.server_id)?.info.container_exec_disabled ?? true;
+  const logDisabled =
+    !specific.includes(Types.SpecificPermission.Logs) ||
+    container_state === Types.ContainerStateStatusEnum.Empty;
+  const inspectDisabled =
+    !specific.includes(Types.SpecificPermission.Inspect) ||
+    container_state === Types.ContainerStateStatusEnum.Empty;
   const terminalDisabled =
     !specific.includes(Types.SpecificPermission.Terminal) ||
     container_exec_disabled ||
     container_state !== Types.ContainerStateStatusEnum.Running;
-  const logDisabled =
-    !specific.includes(Types.SpecificPermission.Logs) ||
-    container_state === Types.ContainerStateStatusEnum.Empty;
-  const view = terminalDisabled && _view === "Terminal" ? "Log" : _view;
+  const view =
+    (inspectDisabled && _view === "Inspect") ||
+    (terminalDisabled && _view === "Terminal")
+      ? "Log"
+      : _view;
   const tabs = (
     <TabsList className="justify-start w-fit">
       <TabsTrigger value="Log" className="w-[110px]" disabled={logDisabled}>
         Log
       </TabsTrigger>
-      {!terminalDisabled && (
-        <TabsTrigger value="Terminal" className="w-[110px]">
+      {specific.includes(Types.SpecificPermission.Inspect) && (
+        <TabsTrigger
+          value="Inspect"
+          className="w-[110px]"
+          disabled={inspectDisabled}
+        >
+          Inspect
+        </TabsTrigger>
+      )}
+      {specific.includes(Types.SpecificPermission.Terminal) && (
+        <TabsTrigger
+          value="Terminal"
+          className="w-[110px]"
+          disabled={terminalDisabled}
+        >
           Terminal
         </TabsTrigger>
       )}
@@ -252,6 +274,13 @@ const LogOrTerminal = ({
           service={service}
           titleOther={tabs}
           disabled={logDisabled}
+        />
+      </TabsContent>
+      <TabsContent value="Inspect">
+        <StackServiceInspect
+          id={stack.id}
+          service={service}
+          titleOther={tabs}
         />
       </TabsContent>
       <TabsContent value="Terminal">
