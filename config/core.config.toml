@@ -353,12 +353,6 @@ logging.level = "info"
 ## Default: standard
 logging.stdio = "standard"
 
-## Specify whether logging is more human readable.
-## Note. Single logs will span multiple lines.
-## Env: KOMODO_LOGGING_PRETTY
-## Default: false
-logging.pretty = false
-
 ## Optionally specify a opentelemetry otlp endpoint to send traces to.
 ## Example: http://localhost:4317
 ## Env: KOMODO_LOGGING_OTLP_ENDPOINT
@@ -369,6 +363,12 @@ logging.otlp_endpoint = ""
 ## Env: KOMODO_LOGGING_OPENTELEMETRY_SERVICE_NAME
 ## Default: "Komodo"
 logging.opentelemetry_service_name = "Komodo"
+
+## Specify whether logging is more human readable.
+## Note. Single logs will span multiple lines.
+## Env: KOMODO_LOGGING_PRETTY
+## Default: false
+logging.pretty = false
 
 ## Specify whether startup config log
 ## is more human readable (multi-line)
