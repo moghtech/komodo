@@ -184,8 +184,10 @@ pub struct PermissionToml {
   ///   - Read
   ///   - Execute
   ///   - Write
+  #[serde(default)]
   pub level: PermissionLevel,
 
   /// Any [SpecificPermissions](SpecificPermission) on the resource
+  #[serde(default, skip_serializing_if = "IndexSet::is_empty")]
   pub specific: IndexSet<SpecificPermission>,
 }
