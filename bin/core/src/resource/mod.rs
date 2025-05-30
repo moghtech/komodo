@@ -131,6 +131,15 @@ pub trait KomodoResource {
     IndexSet::new()
   }
 
+  /// For Stacks / Deployments, they should inherit specific
+  /// permissions like `Logs`, `Inspect`, and `Terminal`
+  /// from their attached Server.
+  fn inherit_specific_permissions_from(
+    _self: &Resource<Self::Config, Self::Info>,
+  ) -> Option<ResourceTarget> {
+    None
+  }
+
   // =======
   // CREATE
   // =======

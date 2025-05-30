@@ -63,6 +63,12 @@ impl super::KomodoResource for Deployment {
     .collect()
   }
 
+  fn inherit_specific_permissions_from(
+    _self: &Resource<Self::Config, Self::Info>,
+  ) -> Option<ResourceTarget> {
+    ResourceTarget::Server(_self.config.server_id.clone()).into()
+  }
+
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>
   {
     &db_client().deployments

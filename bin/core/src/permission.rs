@@ -1,17 +1,22 @@
 use std::collections::HashSet;
 
 use anyhow::{Context, anyhow};
-use futures::FutureExt;
+use futures::{FutureExt, future::BoxFuture};
 use indexmap::IndexSet;
-use komodo_client::entities::{
-  permission::{PermissionLevel, PermissionLevelAndSpecifics},
-  resource::Resource,
-  user::User,
+use komodo_client::{
+  api::read::GetPermission,
+  entities::{
+    permission::{PermissionLevel, PermissionLevelAndSpecifics},
+    resource::Resource,
+    user::User,
+  },
 };
 use mongo_indexed::doc;
 use mungos::find::find_collect;
+use resolver_api::Resolve;
 
 use crate::{
+  api::read::ReadArgs,
   config::core_config,
   helpers::query::{get_user_user_groups, user_target_query},
   resource::{KomodoResource, get},
@@ -64,79 +69,96 @@ pub async fn get_check_permissions<T: KomodoResource>(
 }
 
 #[instrument(level = "debug")]
-pub async fn get_user_permission_on_resource<T: KomodoResource>(
-  user: &User,
-  resource_id: &str,
-) -> anyhow::Result<PermissionLevelAndSpecifics> {
-  // Admin returns early with max permissions
-  if user.admin {
-    return Ok(PermissionLevel::Write.all());
-  }
-
-  let resource_type = T::resource_type();
-  let resource = get::<T>(resource_id).await?;
-
-  let mut permission = PermissionLevelAndSpecifics {
-    level: if core_config().transparent_mode {
-      PermissionLevel::Read
-    } else {
-      PermissionLevel::None
-    },
-    specific: IndexSet::new(),
-  };
-
-  // Add in the resource level global base permissions
-  if resource.base_permission.level > permission.level {
-    permission.level = resource.base_permission.level;
-  }
-  permission
-    .specific
-    .extend(resource.base_permission.specific);
-
-  // Overlay users base on resource variant
-  if let Some(user_permission) = user.all.get(&resource_type).cloned()
-  {
-    if user_permission.level > permission.level {
-      permission.level = user_permission.level;
+pub fn get_user_permission_on_resource<'a, T: KomodoResource>(
+  user: &'a User,
+  resource_id: &'a str,
+) -> BoxFuture<'a, anyhow::Result<PermissionLevelAndSpecifics>> {
+  Box::pin(async {
+    // Admin returns early with max permissions
+    if user.admin {
+      return Ok(PermissionLevel::Write.all());
     }
-    permission.specific.extend(user_permission.specific);
-  }
 
-  // Overlay any user groups base on resource variant
-  let groups = get_user_user_groups(&user.id).await?;
-  for group in &groups {
-    if let Some(group_permission) =
-      group.all.get(&resource_type).cloned()
+    let resource_type = T::resource_type();
+    let resource = get::<T>(resource_id).await?;
+    let initial_specific = if let Some(additional_target) =
+      T::inherit_specific_permissions_from(&resource)
     {
-      if group_permission.level > permission.level {
-        permission.level = group_permission.level;
+      GetPermission {
+        target: additional_target,
       }
-      permission.specific.extend(group_permission.specific);
-    }
-  }
+      .resolve(&ReadArgs { user: user.clone() })
+      .await
+      .map_err(|e| e.error)
+      .context("failed to get user permission on additional target")?
+      .specific
+    } else {
+      IndexSet::new()
+    };
 
-  // Overlay any specific permissions
-  let permission = find_collect(
-    &db_client().permissions,
-    doc! {
-      "$or": user_target_query(&user.id, &groups)?,
-      "resource_target.type": resource_type.as_ref(),
-      "resource_target.id": resource_id
-    },
-    None,
-  )
-  .await
-  .context("failed to query db for permissions")?
-  .into_iter()
-  // get the max resource permission user has between personal / any user groups
-  .fold(permission, |mut permission, resource_permission| {
-    if resource_permission.level > permission.level {
-      permission.level = resource_permission.level
+    let mut permission = PermissionLevelAndSpecifics {
+      level: if core_config().transparent_mode {
+        PermissionLevel::Read
+      } else {
+        PermissionLevel::None
+      },
+      specific: initial_specific,
+    };
+
+    // Add in the resource level global base permissions
+    if resource.base_permission.level > permission.level {
+      permission.level = resource.base_permission.level;
     }
-    permission.specific.extend(resource_permission.specific);
     permission
-  });
-  Ok(permission)
+      .specific
+      .extend(resource.base_permission.specific);
+
+    // Overlay users base on resource variant
+    if let Some(user_permission) =
+      user.all.get(&resource_type).cloned()
+    {
+      if user_permission.level > permission.level {
+        permission.level = user_permission.level;
+      }
+      permission.specific.extend(user_permission.specific);
+    }
+
+    // Overlay any user groups base on resource variant
+    let groups = get_user_user_groups(&user.id).await?;
+    for group in &groups {
+      if let Some(group_permission) =
+        group.all.get(&resource_type).cloned()
+      {
+        if group_permission.level > permission.level {
+          permission.level = group_permission.level;
+        }
+        permission.specific.extend(group_permission.specific);
+      }
+    }
+
+    // Overlay any specific permissions
+    let permission = find_collect(
+      &db_client().permissions,
+      doc! {
+        "$or": user_target_query(&user.id, &groups)?,
+        "resource_target.type": resource_type.as_ref(),
+        "resource_target.id": resource_id
+      },
+      None,
+    )
+    .await
+    .context("failed to query db for permissions")?
+    .into_iter()
+    // get the max resource permission user has between personal / any user groups
+    .fold(permission, |mut permission, resource_permission| {
+      if resource_permission.level > permission.level {
+        permission.level = resource_permission.level
+      }
+      permission.specific.extend(resource_permission.specific);
+      permission
+    });
+    Ok(permission)
+  })
 }
 
 /// Returns None if still no need to filter by resource id (eg transparent mode, group membership with all access).
