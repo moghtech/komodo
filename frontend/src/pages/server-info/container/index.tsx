@@ -7,7 +7,6 @@ import {
   DockerLabelsSection,
   DockerResourceLink,
   ResourcePageHeader,
-  ShowHideButton,
 } from "@components/util";
 import { useLocalStorage, useRead, useSetTitle, useWrite } from "@lib/hooks";
 import { Button } from "@ui/button";
@@ -18,7 +17,6 @@ import {
   Info,
   Loader2,
   PlusCircle,
-  SearchCode,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ContainerLogs } from "./log";
@@ -29,10 +27,9 @@ import { UsableResource } from "@types";
 import { Fragment } from "react/jsx-runtime";
 import { usePermissions } from "@lib/hooks";
 import { ResourceNotifications } from "@pages/resource-notifications";
-import { MonacoEditor } from "@components/monaco";
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
 import { ContainerTerminal } from "@components/terminal/container";
+import { ContainerInspect } from "./inspect";
 
 export const ContainerPage = () => {
   const { type, id, container } = useParams() as {
@@ -55,18 +52,9 @@ const ContainerPageInner = ({
   id: string;
   container: string;
 }) => {
-  const [showInspect, setShowInspect] = useState(false);
   const server = useServer(id);
   useSetTitle(`${server?.name} | container | ${container_name}`);
-  const { canExecute, specific } = usePermissions({ type: "Server", id });
-  const {
-    data: container,
-    isPending,
-    isError,
-  } = useRead("InspectDockerContainer", {
-    server: id,
-    container: container_name,
-  });
+  const { canExecute } = usePermissions({ type: "Server", id });
   const list_container = useRead(
     "ListDockerContainers",
     {
@@ -74,24 +62,6 @@ const ContainerPageInner = ({
     },
     { refetchInterval: 10_000 }
   ).data?.find((container) => container.name === container_name);
-
-  if (isPending) {
-    return (
-      <div className="flex justify-center w-full py-4">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    );
-  }
-  if (isError) {
-    return <div className="flex w-full py-4">Failed to inspect container.</div>;
-  }
-  if (!container) {
-    return (
-      <div className="flex w-full py-4">
-        No container found with given name: {container_name}
-      </div>
-    );
-  }
 
   const state = list_container?.state ?? Types.ContainerStateStatusEnum.Empty;
   const intention = container_state_intention(state);
@@ -186,57 +156,41 @@ const ContainerPageInner = ({
           </Section>
         )}
 
-        <LogOrTerminal server={id} container={container_name} state={state} />
+        <ContainerTabs server={id} container={container_name} state={state} />
 
         {/* TOP LEVEL CONTAINER INFO */}
         <Section title="Details" icon={<Info className="w-4 h-4" />}>
           <DataTable
             tableKey="container-info"
-            data={[container]}
+            data={[list_container]}
             columns={[
               {
                 accessorKey: "Id",
-                header: "Id",
+                header: "id",
               },
               {
                 accessorKey: "Image",
-                header: "Image",
+                header: "image",
               },
               {
-                accessorKey: "Driver",
-                header: "Driver",
+                accessorKey: "network_mode",
+                header: "Network Mode",
+              },
+              {
+                accessorKey: "networks",
+                header: "Networks",
               },
             ]}
           />
         </Section>
 
-        <DockerLabelsSection labels={container.Config?.Labels} />
-
-        {specific.includes(Types.SpecificPermission.Inspect) && (
-          <Section
-            title="Inspect"
-            icon={<SearchCode className="w-4 h-4" />}
-            titleRight={
-              <div className="pl-2">
-                <ShowHideButton show={showInspect} setShow={setShowInspect} />
-              </div>
-            }
-          >
-            {showInspect && (
-              <MonacoEditor
-                value={JSON.stringify(container, null, 2)}
-                language="json"
-                readOnly
-              />
-            )}
-          </Section>
-        )}
+        <DockerLabelsSection labels={list_container?.labels} />
       </div>
     </div>
   );
 };
 
-const LogOrTerminal = ({
+const ContainerTabs = ({
   server,
   container,
   state,
@@ -245,7 +199,7 @@ const LogOrTerminal = ({
   container: string;
   state: Types.ContainerStateStatusEnum;
 }) => {
-  const [_view, setView] = useLocalStorage<"Log" | "Terminal">(
+  const [_view, setView] = useLocalStorage<"Log" | "Inspect" | "Terminal">(
     `server-${server}-${container}-tabs-v1`,
     "Log"
   );
@@ -255,20 +209,32 @@ const LogOrTerminal = ({
   });
   const container_exec_disabled =
     useServer(server)?.info.container_exec_disabled ?? true;
+  const logDisabled =
+    !specific.includes(Types.SpecificPermission.Logs) ||
+    state === Types.ContainerStateStatusEnum.Empty;
+  const inspectDisabled =
+    !specific.includes(Types.SpecificPermission.Inspect) ||
+    state === Types.ContainerStateStatusEnum.Empty;
   const terminalDisabled =
     !specific.includes(Types.SpecificPermission.Terminal) ||
     container_exec_disabled ||
     state !== Types.ContainerStateStatusEnum.Running;
-  const logDisabled =
-    !specific.includes(Types.SpecificPermission.Logs) ||
-    state === Types.ContainerStateStatusEnum.Empty;
-  const view = terminalDisabled && _view === "Terminal" ? "Log" : _view;
+  const view =
+    (inspectDisabled && _view === "Inspect") ||
+    (terminalDisabled && _view === "Terminal")
+      ? "Log"
+      : _view;
   const tabs = (
     <TabsList className="justify-start w-fit">
       <TabsTrigger value="Log" className="w-[110px]" disabled={logDisabled}>
         Log
       </TabsTrigger>
-      {!terminalDisabled && (
+      {!specific.includes(Types.SpecificPermission.Inspect) && (
+        <TabsTrigger value="Inspect" className="w-[110px]">
+          Inspect
+        </TabsTrigger>
+      )}
+      {!specific.includes(Types.SpecificPermission.Terminal) && (
         <TabsTrigger value="Terminal" className="w-[110px]">
           Terminal
         </TabsTrigger>
@@ -284,6 +250,9 @@ const LogOrTerminal = ({
           titleOther={tabs}
           disabled={logDisabled}
         />
+      </TabsContent>
+      <TabsContent value="Inspect">
+        <ContainerInspect id={server} container={container} titleOther={tabs} />
       </TabsContent>
       <TabsContent value="Terminal">
         <ContainerTerminal
