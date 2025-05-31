@@ -9,7 +9,6 @@ import { RequiredResourceComponents } from "@types";
 import { Card } from "@ui/card";
 import {
   CircleArrowUp,
-  GitBranch,
   Layers,
   Loader2,
   NotepadText,
