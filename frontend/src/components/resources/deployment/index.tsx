@@ -245,11 +245,19 @@ export const DeploymentComponents: RequiredResourceComponents = {
     );
   },
 
-  Status: {
-    UpdateAvailable: ({ id }) => <UpdateAvailable id={id} />,
-  },
-
   Info: {
+    Server: ({ id }) => {
+      const info = useDeployment(id)?.info;
+      const server = useServer(info?.server_id);
+      return server?.id ? (
+        <ResourceLink type="Server" id={server?.id} />
+      ) : (
+        <div className="flex gap-2 items-center text-sm">
+          <Server className="w-4 h-4" />
+          <div>Unknown Server</div>
+        </div>
+      );
+    },
     Image: ({ id }) => {
       const config = useFullDeployment(id)?.config;
       const info = useDeployment(id)?.info;
@@ -271,18 +279,6 @@ export const DeploymentComponents: RequiredResourceComponents = {
         </div>
       );
     },
-    Server: ({ id }) => {
-      const info = useDeployment(id)?.info;
-      const server = useServer(info?.server_id);
-      return server?.id ? (
-        <ResourceLink type="Server" id={server?.id} />
-      ) : (
-        <div className="flex gap-2 items-center text-sm">
-          <Server className="w-4 h-4" />
-          <div>Unknown Server</div>
-        </div>
-      );
-    },
     Container: ({ id }) => {
       const deployment = useDeployment(id);
       if (
@@ -301,6 +297,10 @@ export const DeploymentComponents: RequiredResourceComponents = {
         />
       );
     },
+  },
+
+  Status: {
+    UpdateAvailable: ({ id }) => <UpdateAvailable id={id} />,
   },
 
   Actions: {
