@@ -237,7 +237,7 @@ export const StackComponents: RequiredResourceComponents = {
         return (
           <div className="flex items-center gap-2">
             <NotepadText className="w-4 h-4" />
-            Local
+            UI Defined
           </div>
         );
       }

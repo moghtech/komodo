@@ -7,7 +7,15 @@ import {
   useWrite,
 } from "@lib/hooks";
 import { RequiredResourceComponents } from "@types";
-import { Factory, FolderGit, Hammer, Loader2, RefreshCcw } from "lucide-react";
+import {
+  Factory,
+  FolderGit,
+  Hammer,
+  Loader2,
+  NotepadText,
+  RefreshCcw,
+  Server,
+} from "lucide-react";
 import { BuildConfig } from "./config";
 import { BuildTable } from "./table";
 import { DeleteResource, NewResource, ResourceLink } from "../common";
@@ -23,7 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
 import { ResourceComponents } from "..";
 import { Types } from "komodo_client";
 import { DashboardPieChart } from "@pages/home/dashboard";
-import { ResourcePageHeader, StatusBadge } from "@components/util";
+import { RepoLink, ResourcePageHeader, StatusBadge } from "@components/util";
 import { Card } from "@ui/card";
 import { Badge } from "@ui/badge";
 import { useToast } from "@ui/use-toast";
@@ -158,6 +166,59 @@ export const BuildComponents: RequiredResourceComponents = {
     return <StatusBadge text={state} intent={build_state_intention(state)} />;
   },
 
+  Info: {
+    Builder: ({ id }) => {
+      const info = useBuild(id)?.info;
+      const builder = useBuilder(info?.builder_id);
+      return builder?.id ? (
+        <ResourceLink type="Builder" id={builder?.id} />
+      ) : (
+        <div className="flex gap-2 items-center text-sm">
+          <Factory className="w-4 h-4" />
+          <div>Unknown Builder</div>
+        </div>
+      );
+    },
+    Source: ({ id }) => {
+      const config = useFullBuild(id)?.config;
+      if (!config) {
+        return <Loader2 className="w-4 h-4 animate-spin" />;
+      }
+      if (config.files_on_host) {
+        return (
+          <div className="flex items-center gap-2">
+            <Server className="w-4 h-4" />
+            Files on Server
+          </div>
+        );
+      }
+      if (config?.dockerfile) {
+        return (
+          <div className="flex items-center gap-2">
+            <NotepadText className="w-4 h-4" />
+            UI Defined
+          </div>
+        );
+      }
+      return (
+        <RepoLink
+          provider={config.git_provider}
+          repo={config.repo ?? ""}
+          use_https={config.git_https}
+        />
+      );
+    },
+    Branch: ({ id }) => {
+      const branch = useBuild(id)?.info.branch;
+      return (
+        <div className="flex items-center gap-2">
+          <FolderGit className="w-4 h-4" />
+          {branch}
+        </div>
+      );
+    },
+  },
+
   Status: {
     Hash: ({ id }) => {
       const info = useFullBuild(id)?.info;
@@ -238,39 +299,6 @@ export const BuildComponents: RequiredResourceComponents = {
             <RefreshCcw className="w-4 h-4" />
           )}
         </Button>
-      );
-    },
-  },
-
-  Info: {
-    Builder: ({ id }) => {
-      const info = useBuild(id)?.info;
-      const builder = useBuilder(info?.builder_id);
-      return builder?.id ? (
-        <ResourceLink type="Builder" id={builder?.id} />
-      ) : (
-        <div className="flex gap-2 items-center text-sm">
-          <Factory className="w-4 h-4" />
-          <div>Unknown Builder</div>
-        </div>
-      );
-    },
-    Repo: ({ id }) => {
-      const repo = useBuild(id)?.info.repo;
-      return (
-        <div className="flex items-center gap-2">
-          <FolderGit className="w-4 h-4" />
-          {repo}
-        </div>
-      );
-    },
-    Branch: ({ id }) => {
-      const branch = useBuild(id)?.info.branch;
-      return (
-        <div className="flex items-center gap-2">
-          <FolderGit className="w-4 h-4" />
-          {branch}
-        </div>
       );
     },
   },
