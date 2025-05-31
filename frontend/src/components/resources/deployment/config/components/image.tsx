@@ -169,6 +169,7 @@ export const ImageConfig = ({
               },
             })
           }
+          disabled={disabled}
         />
         <BuildVersionSelector
           buildId={image.params.build_id}
