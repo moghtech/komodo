@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{fmt::Write, time::Duration};
 
 use anyhow::{Context, anyhow};
 use indexmap::IndexSet;
@@ -193,4 +193,22 @@ pub fn flatten_document(doc: Document) -> Document {
   }
 
   target
+}
+
+pub fn repo_link(
+  provider: &str,
+  repo: &str,
+  branch: &str,
+  https: bool,
+) -> String {
+  let mut res = format!(
+    "http{}://{provider}/{repo}",
+    if https { "s" } else { "" }
+  );
+  // Each provider uses a different link format to get to branches.
+  // At least can support github for branch aware link.
+  if provider == "github.com" {
+    let _ = write!(&mut res, "/tree/{branch}");
+  }
+  res
 }

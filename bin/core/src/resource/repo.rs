@@ -24,7 +24,7 @@ use periphery_client::api::git::DeleteRepo;
 
 use crate::{
   config::core_config,
-  helpers::periphery_client,
+  helpers::{periphery_client, repo_link},
   state::{
     action_states, db_client, repo_state_cache, repo_status_cache,
   },
@@ -73,6 +73,12 @@ impl super::KomodoResource for Repo {
         builder_id: repo.config.builder_id,
         last_pulled_at: repo.info.last_pulled_at,
         last_built_at: repo.info.last_built_at,
+        repo_link: repo_link(
+          &repo.config.git_provider,
+          &repo.config.repo,
+          &repo.config.branch,
+          repo.config.git_https,
+        ),
         git_provider: repo.config.git_provider,
         repo: repo.config.repo,
         branch: repo.config.branch,

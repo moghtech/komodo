@@ -40,6 +40,8 @@ pub struct RepoListItemInfo {
   pub repo: String,
   /// The configured branch
   pub branch: String,
+  /// Full link to the repo.
+  pub repo_link: String,
   /// The repo state
   pub state: RepoState,
   /// If the repo is cloned, will be the cloned short commit hash.

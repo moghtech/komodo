@@ -39,6 +39,8 @@ pub struct ResourceSyncListItemInfo {
   pub repo: String,
   /// The branch of the repo
   pub branch: String,
+  /// Full link to the repo.
+  pub repo_link: String,
   /// Short commit hash of last sync, or empty string
   pub last_sync_hash: Option<String>,
   /// Commit message of last sync, or empty string

@@ -29,7 +29,9 @@ use resolver_api::Resolve;
 use crate::{
   api::write::WriteArgs,
   config::core_config,
-  helpers::{empty_or_only_spaces, query::get_latest_update},
+  helpers::{
+    empty_or_only_spaces, query::get_latest_update, repo_link,
+  },
   state::{action_states, build_state_cache, db_client},
 };
 
@@ -72,9 +74,15 @@ impl super::KomodoResource for Build {
         version: build.config.version,
         builder_id: build.config.builder_id,
         files_on_host: build.config.files_on_host,
-        git_provider: optional_string(build.config.git_provider),
-        repo: optional_string(build.config.repo),
-        branch: optional_string(build.config.branch),
+        repo_link: repo_link(
+          &build.config.git_provider,
+          &build.config.repo,
+          &build.config.branch,
+          build.config.git_https,
+        ),
+        git_provider: build.config.git_provider,
+        repo: build.config.repo,
+        branch: build.config.branch,
         image_registry_domain: optional_string(
           build.config.image_registry.domain,
         ),

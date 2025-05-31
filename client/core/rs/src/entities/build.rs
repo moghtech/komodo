@@ -45,13 +45,15 @@ pub struct BuildListItemInfo {
   pub files_on_host: bool,
 
   /// The git provider domain
-  pub git_provider: Option<String>,
+  pub git_provider: String,
   /// The repo used as the source of the build
-  pub repo: Option<String>,
-  /// Full link to the build repo.
-  pub repo_link: Option<String>,
+  pub repo: String,
   /// The branch of the repo
-  pub branch: Option<String>,
+  pub branch: String,
+  /// Full link to the repo.
+  pub repo_link: String,
+
+
   /// Latest built short commit hash, or null.
   pub built_hash: Option<String>,
   /// Latest short commit hash, or null. Only for repo based stacks

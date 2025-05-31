@@ -77,6 +77,8 @@ pub struct StackListItemInfo {
   pub repo: String,
   /// The configured branch
   pub branch: String,
+  /// Full link to the repo.
+  pub repo_link: String,
   /// The stack state
   pub state: StackState,
   /// A string given by docker conveying the status of the stack.

@@ -22,6 +22,7 @@ use resolver_api::Resolve;
 
 use crate::{
   api::write::WriteArgs,
+  helpers::repo_link,
   state::{action_states, db_client},
 };
 
@@ -61,6 +62,12 @@ impl super::KomodoResource for ResourceSync {
         file_contents: !resource_sync.config.file_contents.is_empty(),
         files_on_host: resource_sync.config.files_on_host,
         managed: resource_sync.config.managed,
+        repo_link: repo_link(
+          &resource_sync.config.git_provider,
+          &resource_sync.config.repo,
+          &resource_sync.config.branch,
+          resource_sync.config.git_https,
+        ),
         git_provider: resource_sync.config.git_provider,
         repo: resource_sync.config.repo,
         branch: resource_sync.config.branch,
