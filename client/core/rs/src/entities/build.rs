@@ -48,6 +48,8 @@ pub struct BuildListItemInfo {
   pub git_provider: Option<String>,
   /// The repo used as the source of the build
   pub repo: Option<String>,
+  /// Full link to the build repo.
+  pub repo_link: Option<String>,
   /// The branch of the repo
   pub branch: Option<String>,
   /// Latest built short commit hash, or null.

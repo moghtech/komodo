@@ -249,17 +249,17 @@ export const StackComponents: RequiredResourceComponents = {
         />
       );
     },
-    Branch: ({ id }) => {
-      const config = useFullStack(id)?.config;
-      const file_contents = config?.file_contents;
-      if (file_contents || !config?.branch) return null;
-      return (
-        <div className="flex items-center gap-2">
-          <GitBranch className="w-4 h-4" />
-          {config.branch}
-        </div>
-      );
-    },
+    // Branch: ({ id }) => {
+    //   const config = useFullStack(id)?.config;
+    //   const file_contents = config?.file_contents;
+    //   if (file_contents || !config?.branch) return null;
+    //   return (
+    //     <div className="flex items-center gap-2">
+    //       <GitBranch className="w-4 h-4" />
+    //       {config.branch}
+    //     </div>
+    //   );
+    // },
   },
 
   Status: {
