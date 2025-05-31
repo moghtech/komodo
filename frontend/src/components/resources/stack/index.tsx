@@ -374,7 +374,7 @@ export const StackComponents: RequiredResourceComponents = {
               )}
             >
               <div className="text-muted-foreground text-sm text-nowrap overflow-hidden overflow-ellipsis">
-                {/* {info.deployed_hash ? "deployed" : "latest"}:{" "} */}
+                {info.deployed_hash ? "deployed" : "latest"}:{" "}
                 {info.deployed_hash || info.latest_hash}
               </div>
             </Card>

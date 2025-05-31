@@ -1,7 +1,7 @@
 import { useInvalidate, useRead, useWrite } from "@lib/hooks";
 import { RequiredResourceComponents } from "@types";
 import { Card } from "@ui/card";
-import { FolderGit, GitBranch, Loader2, RefreshCcw } from "lucide-react";
+import { GitBranch, Loader2, RefreshCcw } from "lucide-react";
 import { RepoConfig } from "./config";
 import { BuildRepo, CloneRepo, PullRepo } from "./actions";
 import { DeleteResource, NewResource, ResourceLink } from "../common";
@@ -14,7 +14,7 @@ import { cn } from "@lib/utils";
 import { useServer } from "../server";
 import { Types } from "komodo_client";
 import { DashboardPieChart } from "@pages/home/dashboard";
-import { ResourcePageHeader, StatusBadge } from "@components/util";
+import { RepoLink, ResourcePageHeader, StatusBadge } from "@components/util";
 import { Badge } from "@ui/badge";
 import { useToast } from "@ui/use-toast";
 import { Button } from "@ui/button";
@@ -87,6 +87,49 @@ export const RepoComponents: RequiredResourceComponents = {
   State: ({ id }) => {
     const state = useRepo(id)?.info.state;
     return <StatusBadge text={state} intent={repo_state_intention(state)} />;
+  },
+
+  Info: {
+    Target: ({ id }) => {
+      const info = useRepo(id)?.info;
+      const server = useServer(info?.server_id);
+      const builder = useBuilder(info?.builder_id);
+      return (
+        <div className="flex items-center gap-x-4 gap-y-2 flex-wrap">
+          {server?.id &&
+            (builder?.id ? (
+              <div className="pr-4 text-sm border-r">
+                <ResourceLink type="Server" id={server.id} />
+              </div>
+            ) : (
+              <ResourceLink type="Server" id={server.id} />
+            ))}
+          {builder?.id && <ResourceLink type="Builder" id={builder.id} />}
+        </div>
+      );
+    },
+    Source: ({ id }) => {
+      const config = useFullRepo(id)?.config;
+      if (!config) {
+        return <Loader2 className="w-4 h-4 animate-spin" />;
+      }
+      return (
+        <RepoLink
+          provider={config.git_provider}
+          repo={config.repo ?? ""}
+          use_https={config.git_https}
+        />
+      );
+    },
+    Branch: ({ id }) => {
+      const branch = useRepo(id)?.info.branch;
+      return (
+        <div className="flex items-center gap-2">
+          <GitBranch className="w-4 h-4" />
+          {branch}
+        </div>
+      );
+    },
   },
 
   Status: {
@@ -195,45 +238,6 @@ export const RepoComponents: RequiredResourceComponents = {
             <RefreshCcw className="w-4 h-4" />
           )}
         </Button>
-      );
-    },
-  },
-
-  Info: {
-    Target: ({ id }) => {
-      const info = useRepo(id)?.info;
-      const server = useServer(info?.server_id);
-      const builder = useBuilder(info?.builder_id);
-      return (
-        <div className="flex items-center gap-x-4 gap-y-2 flex-wrap">
-          {server?.id &&
-            (builder?.id ? (
-              <div className="pr-4 text-sm border-r">
-                <ResourceLink type="Server" id={server.id} />
-              </div>
-            ) : (
-              <ResourceLink type="Server" id={server.id} />
-            ))}
-          {builder?.id && <ResourceLink type="Builder" id={builder.id} />}
-        </div>
-      );
-    },
-    Repo: ({ id }) => {
-      const repo = useRepo(id)?.info.repo;
-      return (
-        <div className="flex items-center gap-2">
-          <FolderGit className="w-4 h-4" />
-          {repo}
-        </div>
-      );
-    },
-    Branch: ({ id }) => {
-      const branch = useRepo(id)?.info.branch;
-      return (
-        <div className="flex items-center gap-2">
-          <GitBranch className="w-4 h-4" />
-          {branch}
-        </div>
       );
     },
   },
