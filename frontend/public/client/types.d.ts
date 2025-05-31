@@ -465,11 +465,13 @@ export interface BuildListItemInfo {
     /** Whether build is in files on host mode. */
     files_on_host: boolean;
     /** The git provider domain */
-    git_provider?: string;
+    git_provider: string;
     /** The repo used as the source of the build */
-    repo?: string;
+    repo: string;
     /** The branch of the repo */
-    branch?: string;
+    branch: string;
+    /** Full link to the repo. */
+    repo_link: string;
     /** Latest built short commit hash, or null. */
     built_hash?: string;
     /** Latest short commit hash, or null. Only for repo based stacks */
@@ -3433,6 +3435,8 @@ export interface RepoListItemInfo {
     repo: string;
     /** The configured branch */
     branch: string;
+    /** Full link to the repo. */
+    repo_link: string;
     /** The repo state */
     state: RepoState;
     /** If the repo is cloned, will be the cloned short commit hash. */
@@ -3475,6 +3479,8 @@ export interface ResourceSyncListItemInfo {
     repo: string;
     /** The branch of the repo */
     branch: string;
+    /** Full link to the repo. */
+    repo_link: string;
     /** Short commit hash of last sync, or empty string */
     last_sync_hash?: string;
     /** Commit message of last sync, or empty string */
@@ -3568,6 +3574,8 @@ export interface StackListItemInfo {
     repo: string;
     /** The configured branch */
     branch: string;
+    /** Full link to the repo. */
+    repo_link: string;
     /** The stack state */
     state: StackState;
     /** A string given by docker conveying the status of the stack. */
