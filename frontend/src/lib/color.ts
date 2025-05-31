@@ -130,9 +130,9 @@ export const soft_text_color_class_by_intention = (
 };
 
 export const server_state_intention: (
-  status?: Types.ServerState
-) => ColorIntention = (status) => {
-  switch (status) {
+  state?: Types.ServerState
+) => ColorIntention = (state) => {
+  switch (state) {
     case Types.ServerState.Ok:
       return "Good";
     case Types.ServerState.NotOk:

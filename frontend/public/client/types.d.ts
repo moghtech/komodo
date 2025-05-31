@@ -506,9 +506,10 @@ export type BuilderConfig =
 };
 export type Builder = Resource<BuilderConfig, undefined>;
 export interface BuilderListItemInfo {
-    /** 'Server' or 'Aws' */
+    /** 'Url', 'Server', or 'Aws' */
     builder_type: string;
     /**
+     * If 'Url': null
      * If 'Server': the server id
      * If 'Aws': the instance type (eg. c5.xlarge)
      */
@@ -6204,9 +6205,9 @@ export interface PermissionToml {
      * - Execute
      * - Write
      */
-    level: PermissionLevel;
+    level?: PermissionLevel;
     /** Any [SpecificPermissions](SpecificPermission) on the resource */
-    specific: Array<SpecificPermission>;
+    specific?: Array<SpecificPermission>;
 }
 export declare enum PortTypeEnum {
     EMPTY = "",
@@ -7807,9 +7808,9 @@ export declare enum SpecificPermission {
     Attach = "Attach",
     /**
      * On **Server**
-     * - Access the `docker inspect` apis
+     * - Access the `container inspect` apis
      * On **Stack / Deployment**
-     * - Access `docker inspect $container` for associated containers
+     * - Access `container inspect` apis for associated containers
      */
     Inspect = "Inspect",
     /**

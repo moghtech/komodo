@@ -13,18 +13,52 @@ import {
   SelectValue,
 } from "@ui/select";
 import { Cloud, Bot, Factory } from "lucide-react";
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BuilderConfig } from "./config";
 import { DeleteResource, ResourceLink } from "../common";
 import { BuilderTable } from "./table";
 import { ResourcePageHeader } from "@components/util";
 import { GroupActions } from "@components/group-actions";
+import { useServer } from "../server";
+import { cn } from "@lib/utils";
+import {
+  ColorIntention,
+  server_state_intention,
+  stroke_color_class_by_intention,
+} from "@lib/color";
 
 export const useBuilder = (id?: string) =>
   useRead("ListBuilders", {}, { refetchInterval: 10_000 }).data?.find(
     (d) => d.id === id
   );
+
+const Icon = ({ id, size }: { id?: string; size: number }) => {
+  const info = useBuilder(id)?.info;
+  if (info?.builder_type === "Server" && info.instance_type) {
+    return <ServerIcon server_id={info.instance_type} size={size} />;
+  } else {
+    return <Factory className={`w-${size} h-${size}`} />;
+  }
+};
+
+const ServerIcon = ({
+  server_id,
+  size,
+}: {
+  server_id: string;
+  size: number;
+}) => {
+  const state = useServer(server_id)?.info.state;
+  return (
+    <Factory
+      className={cn(
+        `w-${size} h-${size}`,
+        state && stroke_color_class_by_intention(server_state_intention(state))
+      )}
+    />
+  );
+};
 
 export const BuilderInstanceType = ({ id }: { id: string }) => {
   let info = useBuilder(id)?.info;
@@ -35,7 +69,12 @@ export const BuilderInstanceType = ({ id }: { id: string }) => {
       )
     );
   } else {
-    return <>{info?.instance_type}</>;
+    return (
+      <div className="flex items-center gap-2">
+        <Bot className="w-4 h-4" />
+        {info?.instance_type}
+      </div>
+    );
   }
 };
 
@@ -120,25 +159,23 @@ export const BuilderComponents: RequiredResourceComponents = {
     <BuilderTable builders={resources as Types.BuilderListItem[]} />
   ),
 
-  Icon: () => <Factory className="w-4 h-4" />,
-  BigIcon: () => <Factory className="w-8 h-8" />,
+  Icon: ({ id }) => <Icon id={id} size={4} />,
+  BigIcon: ({ id }) => <Icon id={id} size={8} />,
 
   State: () => null,
   Status: {},
 
   Info: {
-    Provider: ({ id }) => (
-      <div className="flex items-center gap-2">
-        <Cloud className="w-4 h-4" />
-        {useBuilder(id)?.info.builder_type}
-      </div>
-    ),
-    InstanceType: ({ id }) => (
-      <div className="flex items-center gap-2">
-        <Bot className="w-4 h-4" />
-        <BuilderInstanceType id={id} />
-      </div>
-    ),
+    Provider: ({ id }) => {
+      const builder_type = useBuilder(id)?.info.builder_type;
+      return (
+        <div className="flex items-center gap-2">
+          <Cloud className="w-4 h-4" />
+          {builder_type}
+        </div>
+      );
+    },
+    InstanceType: ({ id }) => <BuilderInstanceType id={id} />,
   },
 
   Actions: {},
@@ -151,17 +188,67 @@ export const BuilderComponents: RequiredResourceComponents = {
 
   ResourcePageHeader: ({ id }) => {
     const builder = useBuilder(id);
-
+    if (builder?.info.builder_type === "Server" && builder.info.instance_type) {
+      return (
+        <ServerInnerResourcePageHeader
+          builder={builder}
+          server_id={builder.info.instance_type}
+        />
+      );
+    }
     return (
-      <ResourcePageHeader
-        intent="None"
-        icon={<Factory className="w-8" />}
-        type="Builder"
+      <InnerResourcePageHeader
         id={id}
-        name={builder?.name}
-        state={builder?.info.builder_type}
-        status={builder?.info.instance_type}
+        builder={builder}
+        intent="None"
+        icon={<Factory className="w-8 h-8" />}
       />
     );
   },
+};
+
+const ServerInnerResourcePageHeader = ({
+  builder,
+  server_id,
+}: {
+  builder: Types.BuilderListItem;
+  server_id: string;
+}) => {
+  const state = useServer(server_id)?.info.state;
+  return (
+    <InnerResourcePageHeader
+      id={builder.id}
+      builder={builder}
+      intent={server_state_intention(state)}
+      icon={<ServerIcon server_id={server_id} size={8} />}
+    />
+  );
+};
+
+const InnerResourcePageHeader = ({
+  id,
+  builder,
+  intent,
+  icon,
+}: {
+  id: string;
+  builder: Types.BuilderListItem | undefined;
+  intent: ColorIntention;
+  icon: ReactNode;
+}) => {
+  return (
+    <ResourcePageHeader
+      intent={intent}
+      icon={icon}
+      type="Builder"
+      id={id}
+      name={builder?.name}
+      state={builder?.info.builder_type}
+      status={
+        builder?.info.builder_type === "Aws"
+          ? builder?.info.instance_type
+          : undefined
+      }
+    />
+  );
 };
