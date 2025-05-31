@@ -9,7 +9,7 @@ import { RequiredResourceComponents } from "@types";
 import { Card } from "@ui/card";
 import {
   CircleArrowUp,
-  FolderGit,
+  GitBranch,
   Layers,
   Loader2,
   NotepadText,
@@ -41,7 +41,7 @@ import { Button } from "@ui/button";
 import { useToast } from "@ui/use-toast";
 import { StackServices } from "./services";
 import { DashboardPieChart } from "@pages/home/dashboard";
-import { ResourcePageHeader, StatusBadge } from "@components/util";
+import { RepoLink, ResourcePageHeader, StatusBadge } from "@components/util";
 import { StackConfig } from "./config";
 import { GroupActions } from "@components/group-actions";
 import { StackLogs } from "./log";
@@ -207,6 +207,61 @@ export const StackComponents: RequiredResourceComponents = {
     return <StatusBadge text={state} intent={stack_state_intention(state)} />;
   },
 
+  Info: {
+    Server: ({ id }) => {
+      const info = useStack(id)?.info;
+      const server = useServer(info?.server_id);
+      return server?.id ? (
+        <ResourceLink type="Server" id={server?.id} />
+      ) : (
+        <div className="flex gap-2 items-center">
+          <Server className="w-4 h-4" />
+          <div>Unknown Server</div>
+        </div>
+      );
+    },
+    Source: ({ id }) => {
+      const config = useFullStack(id)?.config;
+      if (!config) {
+        return <Loader2 className="w-4 h-4 animate-spin" />;
+      }
+      if (config.files_on_host) {
+        return (
+          <div className="flex items-center gap-2">
+            <Server className="w-4 h-4" />
+            Files on Server
+          </div>
+        );
+      }
+      if (config?.file_contents) {
+        return (
+          <div className="flex items-center gap-2">
+            <NotepadText className="w-4 h-4" />
+            Local
+          </div>
+        );
+      }
+      return (
+        <RepoLink
+          provider={config.git_provider}
+          repo={config.repo ?? ""}
+          use_https={config.git_https}
+        />
+      );
+    },
+    Branch: ({ id }) => {
+      const config = useFullStack(id)?.config;
+      const file_contents = config?.file_contents;
+      if (file_contents || !config?.branch) return null;
+      return (
+        <div className="flex items-center gap-2">
+          <GitBranch className="w-4 h-4" />
+          {config.branch}
+        </div>
+      );
+    },
+  },
+
   Status: {
     NoConfig: ({ id }) => {
       const config = useFullStack(id)?.config;
@@ -319,7 +374,7 @@ export const StackComponents: RequiredResourceComponents = {
               )}
             >
               <div className="text-muted-foreground text-sm text-nowrap overflow-hidden overflow-ellipsis">
-                {info.deployed_hash ? "deployed" : "latest"}:{" "}
+                {/* {info.deployed_hash ? "deployed" : "latest"}:{" "} */}
                 {info.deployed_hash || info.latest_hash}
               </div>
             </Card>
@@ -381,50 +436,6 @@ export const StackComponents: RequiredResourceComponents = {
             <RefreshCcw className="w-4 h-4" />
           )}
         </Button>
-      );
-    },
-  },
-
-  Info: {
-    Contents: ({ id }) => {
-      const config = useFullStack(id)?.config;
-      const file_contents = config?.file_contents;
-      if (file_contents) {
-        return (
-          <div className="flex items-center gap-2">
-            <NotepadText className="w-4 h-4" />
-            Local
-          </div>
-        );
-      }
-      return (
-        <div className="flex items-center gap-2">
-          <FolderGit className="w-4 h-4" />
-          {config?.repo}
-        </div>
-      );
-    },
-    // Branch: ({ id }) => {
-    //   const config = useFullStack(id)?.config;
-    //   const file_contents = config?.file_contents;
-    //   if (file_contents || !config?.branch) return null
-    //   return (
-    //     <div className="flex items-center gap-2">
-    //       <GitBranch className="w-4 h-4" />
-    //       {config.branch}
-    //     </div>
-    //   );
-    // },
-    Server: ({ id }) => {
-      const info = useStack(id)?.info;
-      const server = useServer(info?.server_id);
-      return server?.id ? (
-        <ResourceLink type="Server" id={server?.id} />
-      ) : (
-        <div className="flex gap-2 items-center">
-          <Server className="w-4 h-4" />
-          <div>Unknown Server</div>
-        </div>
       );
     },
   },

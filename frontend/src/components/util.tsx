@@ -18,6 +18,7 @@ import {
   Copy,
   Database,
   Edit2,
+  FolderGit,
   HardDrive,
   Loader2,
   LogOut,
@@ -1077,5 +1078,29 @@ export const NotFound = ({ type }: { type: UsableResource | undefined }) => {
         </div>
       </div>
     </div>
+  );
+};
+
+export const RepoLink = ({
+  provider,
+  repo,
+  use_https,
+}: {
+  provider: string;
+  repo: string;
+  use_https: boolean;
+}) => {
+  const url = `http${use_https ? "s" : ""}://${provider}/${repo}`;
+  return (
+    <a
+      target="_blank"
+      href={url}
+      className="text-sm cursor-pointer hover:underline"
+    >
+      <div className="flex items-center gap-2">
+        <FolderGit className="w-4 h-4" />
+        {repo}
+      </div>
+    </a>
   );
 };

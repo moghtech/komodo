@@ -138,20 +138,24 @@ export const ResourceHeader = ({
           {statusEntries.map(([key, Status]) => (
             <Status key={key} id={id} />
           ))}
-          {links?.map((link) => (
-            <a
-              key={link}
-              target="_blank"
-              href={link}
-              className="flex gap-2 items-center pr-4 text-sm border-r cursor-pointer hover:underline last:pr-0 last:border-none"
-            >
-              <LinkIcon className="w-4" />
-              <div className="max-w-[150px] lg:max-w-[250px] overflow-hidden overflow-ellipsis">
-                {link}
-              </div>
-            </a>
-          ))}
         </div>
+        {links && links.length > 0 && (
+          <div className="flex items-center gap-x-4 gap-y-2 flex-wrap px-4 py-0">
+            {links?.map((link) => (
+              <a
+                key={link}
+                target="_blank"
+                href={link}
+                className="flex gap-2 items-center pr-4 text-sm border-r cursor-pointer hover:underline last:pr-0 last:border-none"
+              >
+                <LinkIcon className="w-4" />
+                <div className="max-w-[150px] lg:max-w-[250px] text-nowrap overflow-hidden overflow-ellipsis">
+                  {link}
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
         <div className="flex items-center gap-2 flex-wrap p-4 pt-0">
           <p className="text-sm text-muted-foreground">Tags:</p>
           <ResourceTags
