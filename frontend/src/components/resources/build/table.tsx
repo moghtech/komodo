@@ -1,7 +1,7 @@
 import { TableTags } from "@components/tags";
 import { DataTable, SortableHeader } from "@ui/data-table";
 import { fmt_version } from "@lib/formatting";
-import { ResourceLink } from "../common";
+import { ResourceLink, StandardSource } from "../common";
 import { BuildComponents } from ".";
 import { Types } from "komodo_client";
 import { useSelectedResources } from "@lib/hooks";
@@ -19,27 +19,19 @@ export const BuildTable = ({ builds }: { builds: Types.BuildListItem[] }) => {
       }}
       columns={[
         {
-          accessorKey: "name",
           header: ({ column }) => (
             <SortableHeader column={column} title="Name" />
           ),
+          accessorKey: "name",
           cell: ({ row }) => <ResourceLink type="Build" id={row.original.id} />,
           size: 200,
         },
         {
-          // header: ({ column }) => (
-          //   <SortableHeader column={column} title="Source" />
-          // ),
-          header: "Source",
-          accessorFn: ({ info: { files_on_host, repo } }) => {
-            if (files_on_host) {
-              return "Files on Server";
-            } else if (repo) {
-              return repo;
-            } else {
-              return "UI Defined";
-            }
-          },
+          header: ({ column }) => (
+            <SortableHeader column={column} title="Source" />
+          ),
+          accessorKey: "info.repo",
+          cell: ({ row }) => <StandardSource info={row.original.info} />,
           size: 200,
         },
         {

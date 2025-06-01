@@ -1081,20 +1081,11 @@ export const NotFound = ({ type }: { type: UsableResource | undefined }) => {
   );
 };
 
-export const RepoLink = ({
-  provider,
-  repo,
-  use_https,
-}: {
-  provider: string;
-  repo: string;
-  use_https: boolean;
-}) => {
-  const url = `http${use_https ? "s" : ""}://${provider}/${repo}`;
+export const RepoLink = ({ repo, link }: { repo: string; link: string }) => {
   return (
     <a
       target="_blank"
-      href={url}
+      href={link}
       className="text-sm cursor-pointer hover:underline"
     >
       <div className="flex items-center gap-2">

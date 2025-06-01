@@ -11,11 +11,15 @@ import {
   CircleArrowUp,
   Layers,
   Loader2,
-  NotepadText,
   RefreshCcw,
   Server,
 } from "lucide-react";
-import { DeleteResource, NewResource, ResourceLink } from "../common";
+import {
+  DeleteResource,
+  NewResource,
+  ResourceLink,
+  StandardSource,
+} from "../common";
 import { StackTable } from "./table";
 import {
   border_color_class_by_intention,
@@ -40,7 +44,7 @@ import { Button } from "@ui/button";
 import { useToast } from "@ui/use-toast";
 import { StackServices } from "./services";
 import { DashboardPieChart } from "@pages/home/dashboard";
-import { RepoLink, ResourcePageHeader, StatusBadge } from "@components/util";
+import { ResourcePageHeader, StatusBadge } from "@components/util";
 import { StackConfig } from "./config";
 import { GroupActions } from "@components/group-actions";
 import { StackLogs } from "./log";
@@ -220,33 +224,8 @@ export const StackComponents: RequiredResourceComponents = {
       );
     },
     Source: ({ id }) => {
-      const config = useFullStack(id)?.config;
-      if (!config) {
-        return <Loader2 className="w-4 h-4 animate-spin" />;
-      }
-      if (config.files_on_host) {
-        return (
-          <div className="flex items-center gap-2">
-            <Server className="w-4 h-4" />
-            Files on Server
-          </div>
-        );
-      }
-      if (config?.file_contents) {
-        return (
-          <div className="flex items-center gap-2">
-            <NotepadText className="w-4 h-4" />
-            UI Defined
-          </div>
-        );
-      }
-      return (
-        <RepoLink
-          provider={config.git_provider}
-          repo={config.repo ?? ""}
-          use_https={config.git_https}
-        />
-      );
+      const info = useStack(id)?.info;
+      return <StandardSource info={info} />;
     },
     // Branch: ({ id }) => {
     //   const config = useFullStack(id)?.config;

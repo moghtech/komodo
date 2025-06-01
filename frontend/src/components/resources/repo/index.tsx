@@ -109,17 +109,11 @@ export const RepoComponents: RequiredResourceComponents = {
       );
     },
     Source: ({ id }) => {
-      const config = useFullRepo(id)?.config;
-      if (!config) {
+      const info = useRepo(id)?.info;
+      if (!info) {
         return <Loader2 className="w-4 h-4 animate-spin" />;
       }
-      return (
-        <RepoLink
-          provider={config.git_provider}
-          repo={config.repo ?? ""}
-          use_https={config.git_https}
-        />
-      );
+      return <RepoLink link={info.repo_link} repo={info.repo} />;
     },
     Branch: ({ id }) => {
       const branch = useRepo(id)?.info.branch;

@@ -1,5 +1,5 @@
 import { DataTable, SortableHeader } from "@ui/data-table";
-import { ResourceLink } from "../common";
+import { ResourceLink, StandardSource } from "../common";
 import { TableTags } from "@components/tags";
 import { Types } from "komodo_client";
 import { ResourceSyncComponents } from ".";
@@ -21,34 +21,35 @@ export const ResourceSyncTable = ({
       }}
       columns={[
         {
-          accessorKey: "name",
           header: ({ column }) => (
             <SortableHeader column={column} title="Name" />
           ),
+          accessorKey: "name",
           cell: ({ row }) => (
             <ResourceLink type="ResourceSync" id={row.original.id} />
           ),
           size: 200,
         },
         {
-          accessorKey: "info.repo",
           header: ({ column }) => (
             <SortableHeader column={column} title="Repo" />
           ),
+          accessorKey: "info.repo",
+          cell: ({ row }) => <StandardSource info={row.original.info} />,
           size: 200,
         },
         {
-          accessorKey: "info.branch",
           header: ({ column }) => (
             <SortableHeader column={column} title="Branch" />
           ),
+          accessorKey: "info.branch",
           size: 200,
         },
         {
-          accessorKey: "info.state",
           header: ({ column }) => (
             <SortableHeader column={column} title="State" />
           ),
+          accessorKey: "info.state",
           cell: ({ row }) => (
             <ResourceSyncComponents.State id={row.original.id} />
           ),

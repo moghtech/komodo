@@ -2,7 +2,7 @@ import { atomWithStorage, useLocalStorage, useRead, useUser } from "@lib/hooks";
 import { RequiredResourceComponents } from "@types";
 import { Card } from "@ui/card";
 import { Clock, FolderSync } from "lucide-react";
-import { DeleteResource, NewResource } from "../common";
+import { DeleteResource, NewResource, StandardSource } from "../common";
 import { ResourceSyncTable } from "./table";
 import { Types } from "komodo_client";
 import { CommitSync, ExecuteSync, RefreshSync } from "./actions";
@@ -174,6 +174,22 @@ export const ResourceSyncComponents: RequiredResourceComponents = {
     );
   },
 
+  Info: {
+    Source: ({ id }) => {
+      const info = useResourceSync(id)?.info;
+      return <StandardSource info={info} />;
+    },
+    LastSync: ({ id }) => {
+      const last_ts = useResourceSync(id)?.info.last_sync_ts;
+      return (
+        <div className="flex items-center gap-2">
+          <Clock className="w-4 h-4" />
+          {last_ts ? fmt_date(new Date(last_ts)) : "Never"}
+        </div>
+      );
+    },
+  },
+
   Status: {
     Hash: ({ id }) => {
       const info = useFullResourceSync(id)?.info;
@@ -228,18 +244,6 @@ export const ResourceSyncComponents: RequiredResourceComponents = {
             </div>
           </TooltipContent>
         </Tooltip>
-      );
-    },
-  },
-
-  Info: {
-    LastSync: ({ id }) => {
-      const last_ts = useResourceSync(id)?.info.last_sync_ts;
-      return (
-        <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4" />
-          {last_ts ? fmt_date(new Date(last_ts)) : "Never"}
-        </div>
       );
     },
   },

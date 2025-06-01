@@ -7,18 +7,15 @@ import {
   useWrite,
 } from "@lib/hooks";
 import { RequiredResourceComponents } from "@types";
-import {
-  Factory,
-  FolderGit,
-  Hammer,
-  Loader2,
-  NotepadText,
-  RefreshCcw,
-  Server,
-} from "lucide-react";
+import { Factory, FolderGit, Hammer, Loader2, RefreshCcw } from "lucide-react";
 import { BuildConfig } from "./config";
 import { BuildTable } from "./table";
-import { DeleteResource, NewResource, ResourceLink } from "../common";
+import {
+  DeleteResource,
+  NewResource,
+  ResourceLink,
+  StandardSource,
+} from "../common";
 import { DeploymentTable } from "../deployment/table";
 import { RunBuild } from "./actions";
 import {
@@ -31,7 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
 import { ResourceComponents } from "..";
 import { Types } from "komodo_client";
 import { DashboardPieChart } from "@pages/home/dashboard";
-import { RepoLink, ResourcePageHeader, StatusBadge } from "@components/util";
+import { ResourcePageHeader, StatusBadge } from "@components/util";
 import { Card } from "@ui/card";
 import { Badge } from "@ui/badge";
 import { useToast } from "@ui/use-toast";
@@ -180,33 +177,8 @@ export const BuildComponents: RequiredResourceComponents = {
       );
     },
     Source: ({ id }) => {
-      const config = useFullBuild(id)?.config;
-      if (!config) {
-        return <Loader2 className="w-4 h-4 animate-spin" />;
-      }
-      if (config.files_on_host) {
-        return (
-          <div className="flex items-center gap-2">
-            <Server className="w-4 h-4" />
-            Files on Server
-          </div>
-        );
-      }
-      if (config?.dockerfile) {
-        return (
-          <div className="flex items-center gap-2">
-            <NotepadText className="w-4 h-4" />
-            UI Defined
-          </div>
-        );
-      }
-      return (
-        <RepoLink
-          provider={config.git_provider}
-          repo={config.repo ?? ""}
-          use_https={config.git_https}
-        />
-      );
+      const info = useBuild(id)?.info;
+      return <StandardSource info={info} />;
     },
     Branch: ({ id }) => {
       const branch = useBuild(id)?.info.branch;

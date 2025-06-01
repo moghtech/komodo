@@ -4,6 +4,7 @@ import { TableTags } from "@components/tags";
 import { RepoComponents } from ".";
 import { Types } from "komodo_client";
 import { useSelectedResources } from "@lib/hooks";
+import { RepoLink } from "@components/util";
 
 export const RepoTable = ({ repos }: { repos: Types.RepoListItem[] }) => {
   const [_, setSelectedResources] = useSelectedResources("Repo");
@@ -18,32 +19,38 @@ export const RepoTable = ({ repos }: { repos: Types.RepoListItem[] }) => {
       }}
       columns={[
         {
-          accessorKey: "name",
           header: ({ column }) => (
             <SortableHeader column={column} title="Name" />
           ),
+          accessorKey: "name",
           cell: ({ row }) => <ResourceLink type="Repo" id={row.original.id} />,
           size: 200,
         },
         {
-          accessorKey: "info.repo",
           header: ({ column }) => (
             <SortableHeader column={column} title="Repo" />
           ),
+          accessorKey: "info.repo",
+          cell: ({ row }) => (
+            <RepoLink
+              repo={row.original.info.repo}
+              link={row.original.info.repo_link}
+            />
+          ),
           size: 200,
         },
         {
-          accessorKey: "info.branch",
           header: ({ column }) => (
             <SortableHeader column={column} title="Branch" />
           ),
+          accessorKey: "info.branch",
           size: 200,
         },
         {
-          accessorKey: "info.state",
           header: ({ column }) => (
             <SortableHeader column={column} title="State" />
           ),
+          accessorKey: "info.state",
           cell: ({ row }) => <RepoComponents.State id={row.original.id} />,
           size: 120,
         },

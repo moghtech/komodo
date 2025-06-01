@@ -2,6 +2,7 @@ import {
   ActionWithDialog,
   ConfirmButton,
   CopyButton,
+  RepoLink,
   TextUpdateMenuSimple,
 } from "@components/util";
 import {
@@ -29,7 +30,16 @@ import {
   DialogTrigger,
 } from "@ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@ui/popover";
-import { Check, ChevronsUpDown, Copy, SearchX, Trash } from "lucide-react";
+import {
+  Check,
+  ChevronsUpDown,
+  Copy,
+  Loader2,
+  NotepadText,
+  SearchX,
+  Server,
+  Trash,
+} from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ResourceComponents } from ".";
@@ -371,6 +381,39 @@ export const CopyWebhook = ({
     <div className="flex gap-2 items-center">
       <Input className="w-[400px] max-w-[70vw]" value={url} readOnly />
       <CopyButton content={url} />
+    </div>
+  );
+};
+
+export const StandardSource = ({
+  info,
+}: {
+  info:
+    | {
+        files_on_host: boolean;
+        repo: string;
+        repo_link: string;
+      }
+    | undefined;
+}) => {
+  if (!info) {
+    return <Loader2 className="w-4 h-4 animate-spin" />;
+  }
+  if (info.files_on_host) {
+    return (
+      <div className="flex items-center gap-2">
+        <Server className="w-4 h-4" />
+        Files on Server
+      </div>
+    );
+  }
+  if (info.repo) {
+    return <RepoLink repo={info.repo} link={info.repo_link} />;
+  }
+  return (
+    <div className="flex items-center gap-2">
+      <NotepadText className="w-4 h-4" />
+      UI Defined
     </div>
   );
 };
