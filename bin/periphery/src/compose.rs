@@ -172,6 +172,35 @@ pub async fn compose_up(
       output
     });
 
+  // Pre deploy command
+  let pre_deploy_path =
+    run_directory.join(&stack.config.pre_deploy.path);
+  if let Some(log) = if stack.config.skip_secret_interp {
+    run_komodo_command_multiline(
+      "Pre Deploy",
+      pre_deploy_path.as_ref(),
+      &stack.config.pre_deploy.command,
+    )
+    .await
+  } else {
+    run_komodo_command_with_interpolation(
+      "Pre Deploy",
+      pre_deploy_path.as_ref(),
+      &stack.config.pre_deploy.command,
+      true,
+      &periphery_config().secrets,
+      &replacers,
+    )
+    .await
+  } {
+    res.logs.push(log);
+  }
+  if !all_logs_success(&res.logs) {
+    return Err(anyhow!(
+      "Failed at running pre_deploy command, stopping the run."
+    ));
+  }
+
   // Uses 'docker compose config' command to extract services (including image)
   // after performing interpolation
   {
@@ -289,35 +318,6 @@ pub async fn compose_up(
         "Failed to pull required images, stopping the run."
       ));
     }
-  }
-
-  // Pre deploy command
-  let pre_deploy_path =
-    run_directory.join(&stack.config.pre_deploy.path);
-  if let Some(log) = if stack.config.skip_secret_interp {
-    run_komodo_command_multiline(
-      "Pre Deploy",
-      pre_deploy_path.as_ref(),
-      &stack.config.pre_deploy.command,
-    )
-    .await
-  } else {
-    run_komodo_command_with_interpolation(
-      "Pre Deploy",
-      pre_deploy_path.as_ref(),
-      &stack.config.pre_deploy.command,
-      true,
-      &periphery_config().secrets,
-      &replacers,
-    )
-    .await
-  } {
-    res.logs.push(log);
-  }
-  if !all_logs_success(&res.logs) {
-    return Err(anyhow!(
-      "Failed at running pre_deploy command, stopping the run."
-    ));
   }
 
   if stack.config.destroy_before_deploy
