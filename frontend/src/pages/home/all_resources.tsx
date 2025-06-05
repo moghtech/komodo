@@ -17,7 +17,7 @@ import { Input } from "@ui/input";
 import { AlertTriangle } from "lucide-react";
 import { useState } from "react";
 
-export const AllResources = () => {
+export default function AllResources() {
   const [search, setSearch] = useState("");
   const tags = useTagsFilter();
   const noResources = useNoResources();
@@ -63,7 +63,7 @@ export const AllResources = () => {
       </div>
     </Page>
   );
-};
+}
 
 const TableSection = ({
   type,

@@ -23,7 +23,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Switch } from "@ui/switch";
 
-export const UserGroupPage = () => {
+export default function UserGroupPage() {
   const { toast } = useToast();
   const inv = useInvalidate();
   const group_id = useParams().id as string;
@@ -143,7 +143,7 @@ export const UserGroupPage = () => {
       </div>
     </Page>
   );
-};
+}
 
 const AddUserToGroup = ({ group_id }: { group_id: string }) => {
   const inv = useInvalidate();

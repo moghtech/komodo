@@ -22,14 +22,14 @@ import { Link, useParams } from "react-router-dom";
 import { ResourceNotifications } from "./resource-notifications";
 import { NotFound } from "@components/util";
 
-export const Resource = () => {
+export default function Resource() {
   const type = useResourceParamType()!;
   const id = useParams().id as string;
 
   if (!type || !id) return null;
 
   return <ResourceInner type={type} id={id} />;
-};
+}
 
 const ResourceInner = ({ type, id }: { type: UsableResource; id: string }) => {
   const resources = useRead(`List${type}s`, {}).data;

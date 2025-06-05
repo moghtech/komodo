@@ -36,7 +36,7 @@ import {
 } from "@ui/select";
 import { ResourceSelector } from "@components/resources/common";
 
-export const UpdatesPage = () => {
+export default function UpdatesPage() {
   const [page, setPage] = useState(0);
   const [params, setParams] = useSearchParams();
 
@@ -168,7 +168,7 @@ export const UpdatesPage = () => {
       </div>
     </Page>
   );
-};
+}
 
 export const Updates = () => {
   const type = useResourceParamType()!;

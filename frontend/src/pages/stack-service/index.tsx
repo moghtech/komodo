@@ -48,7 +48,7 @@ const Actions: { [action: string]: IdServiceComponent } = {
   DestroyStack,
 };
 
-export const StackServicePage = () => {
+export default function StackServicePage() {
   const { type, id, service } = useParams() as {
     type: string;
     id: string;
@@ -58,7 +58,7 @@ export const StackServicePage = () => {
     return <div>This resource type does not have any services.</div>;
   }
   return <StackServicePageInner stack_id={id} service={service} />;
-};
+}
 
 const StackServicePageInner = ({
   stack_id,

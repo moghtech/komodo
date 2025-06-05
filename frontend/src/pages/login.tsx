@@ -62,7 +62,7 @@ const useExchangeToken = () => {
   return true;
 };
 
-export const Login = () => {
+export default function Login() {
   const options = useLoginOptions().data;
   const [creds, set] = useState({ username: "", password: "" });
   const userInvalidate = useUserInvalidate();
@@ -253,4 +253,4 @@ export const Login = () => {
       </div>
     </div>
   );
-};
+}

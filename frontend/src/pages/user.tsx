@@ -15,7 +15,7 @@ import { Link, useParams } from "react-router-dom";
 import { Button } from "@ui/button";
 import { Card, CardContent, CardHeader } from "@ui/card";
 
-export const UserPage = () => {
+export default function UserPage() {
   const admin_user = useUser().data;
   const { toast } = useToast();
   const inv = useInvalidate();
@@ -128,7 +128,7 @@ export const UserPage = () => {
       )}
     </Page>
   );
-};
+}
 
 const ApiKeysTable = ({ user_id }: { user_id: string }) => {
   const keys = useRead("ListApiKeysForServiceUser", { user: user_id }).data;

@@ -24,7 +24,7 @@ import { Link } from "react-router-dom";
 import { UpdateAvailable as StackUpdateAvailable } from "@components/resources/stack";
 import { UpdateAvailable as DeploymentUpdateAvailable } from "@components/resources/deployment";
 
-export const Dashboard = () => {
+export default function Dashboard() {
   const noResources = useNoResources();
   const user = useUser().data!;
   return (
@@ -59,7 +59,7 @@ export const Dashboard = () => {
       </Page>
     </>
   );
-};
+}
 
 const ResourceRow = ({ type }: { type: UsableResource }) => {
   const _recents = useUser().data?.recents?.[type]?.slice(0, 6);

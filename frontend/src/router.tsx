@@ -1,73 +1,28 @@
 import { Layout } from "@components/layouts";
 import { useUser } from "@lib/hooks";
-import { Login } from "@pages/login";
-import { Resource } from "@pages/resource";
-import { Resources } from "@pages/resources";
-import { RouterProvider, createBrowserRouter } from "react-router-dom";
-import { Tree } from "@pages/home/tree";
-import { UpdatesPage } from "@pages/updates";
-import { AllResources } from "@pages/home/all_resources";
-import { UserDisabled } from "@pages/user_disabled";
-import { Home } from "@pages/home";
-import { AlertsPage } from "@pages/alerts";
-import { UserPage } from "@pages/user";
-import { UserGroupPage } from "@pages/user-group";
-import { Settings } from "@pages/settings";
-import { StackServicePage } from "@pages/stack-service";
-import { NetworkPage } from "@pages/server-info/network";
-import { ImagePage } from "@pages/server-info/image";
-import { VolumePage } from "@pages/server-info/volume";
-import { ContainerPage } from "@pages/server-info/container";
-import { ContainersPage } from "@pages/containers";
+import { Loader2 } from "lucide-react";
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-const ROUTER = createBrowserRouter([
-  {
-    path: "/",
-    element: <Layout />,
-    children: [
-      { path: "", element: <Home /> },
-      { path: "settings", element: <Settings /> },
-      { path: "tree", element: <Tree /> },
-      { path: "alerts", element: <AlertsPage /> },
-      { path: "updates", element: <UpdatesPage /> },
-      { path: "updates", element: <UpdatesPage /> },
-      { path: "containers", element: <ContainersPage /> },
-      { path: "resources", element: <AllResources /> },
-      { path: "user-groups/:id", element: <UserGroupPage /> },
-      {
-        path: "users",
-        children: [{ path: ":id", element: <UserPage /> }],
-      },
-      {
-        path: ":type",
-        children: [
-          { path: "", element: <Resources /> },
-          { path: ":id", element: <Resource /> },
-          {
-            path: ":id/service/:service",
-            element: <StackServicePage />,
-          },
-          {
-            path: ":id/container/:container",
-            element: <ContainerPage />,
-          },
-          {
-            path: ":id/network/:network",
-            element: <NetworkPage />,
-          },
-          {
-            path: ":id/image/:image",
-            element: <ImagePage />,
-          },
-          {
-            path: ":id/volume/:volume",
-            element: <VolumePage />,
-          },
-        ],
-      },
-    ],
-  },
-]);
+// Lazy import pages
+const Resources = lazy(() => import("@pages/resources"));
+const Resource = lazy(() => import("@pages/resource"));
+const Login = lazy(() => import("@pages/login"));
+const Tree = lazy(() => import("@pages/home/tree"));
+const UpdatesPage = lazy(() => import("@pages/updates"));
+const AllResources = lazy(() => import("@pages/home/all_resources"));
+const UserDisabled = lazy(() => import("@pages/user_disabled"));
+const Home = lazy(() => import("@pages/home"));
+const AlertsPage = lazy(() => import("@pages/alerts"));
+const UserPage = lazy(() => import("@pages/user"));
+const UserGroupPage = lazy(() => import("@pages/user-group"));
+const Settings = lazy(() => import("@pages/settings"));
+const StackServicePage = lazy(() => import("@pages/stack-service"));
+const NetworkPage = lazy(() => import("@pages/server-info/network"));
+const ImagePage = lazy(() => import("@pages/server-info/image"));
+const VolumePage = lazy(() => import("@pages/server-info/volume"));
+const ContainerPage = lazy(() => import("@pages/server-info/container"));
+const ContainersPage = lazy(() => import("@pages/containers"));
 
 export const Router = () => {
   const { data: user, isLoading, error } = useUser();
@@ -76,5 +31,46 @@ export const Router = () => {
   if (!user || error) return <Login />;
   if (!user.enabled) return <UserDisabled />;
 
-  return <RouterProvider router={ROUTER} />;
+  return (
+    <Suspense
+      fallback={
+        <div className="w-[100vw] h-[100vh] flex items-center justify-center">
+          <Loader2 className="w-16 h-16 animate-spin" />
+        </div>
+      }
+    >
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route path="" element={<Home />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="tree" element={<Tree />} />
+            <Route path="alerts" element={<AlertsPage />} />
+            <Route path="updates" element={<UpdatesPage />} />
+            <Route path="containers" element={<ContainersPage />} />
+            <Route path="resources" element={<AllResources />} />
+            <Route path="user-groups/:id" element={<UserGroupPage />} />
+            <Route path="users/:id" element={<UserPage />} />
+            <Route path=":type">
+              <Route path="" element={<Resources />} />
+              <Route path=":id" element={<Resource />} />
+              <Route
+                path=":id/service/:service"
+                element={<StackServicePage />}
+              />
+              <Route
+                path=":id/container/:container"
+                element={<ContainerPage />}
+              />
+              <Route path=":id/network/:network" element={<NetworkPage />} />
+              <Route path=":id/image/:image" element={<ImagePage />} />
+              <Route path=":id/volume/:volume" element={<VolumePage />} />
+            </Route>
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </Suspense>
+  );
+
+  // return <RouterProvider router={ROUTER} />;
 };

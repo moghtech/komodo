@@ -8,7 +8,7 @@ import { Input } from "@ui/input";
 import { Box, Search } from "lucide-react";
 import { Fragment, useCallback, useMemo, useState } from "react";
 
-export const ContainersPage = () => {
+export default function ContainersPage() {
   const [search, setSearch] = useState("");
   const searchSplit = search
     .toLowerCase()
@@ -183,4 +183,4 @@ export const ContainersPage = () => {
       </div>
     </Page>
   );
-};
+}

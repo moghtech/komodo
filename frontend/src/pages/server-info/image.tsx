@@ -27,7 +27,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import { MonacoEditor } from "@components/monaco";
 
-export const ImagePage = () => {
+export default function ImagePage() {
   const { type, id, image } = useParams() as {
     type: string;
     id: string;
@@ -37,7 +37,7 @@ export const ImagePage = () => {
     return <div>This resource type does not have any images.</div>;
   }
   return <ImagePageInner id={id} image={decodeURIComponent(image)} />;
-};
+}
 
 const ImagePageInner = ({
   id,

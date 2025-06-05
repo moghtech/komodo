@@ -2,7 +2,7 @@ import { AUTH_TOKEN_STORAGE_KEY } from "@main";
 import { Button } from "@ui/button";
 import { UserX } from "lucide-react";
 
-export const UserDisabled = () => {
+export default function UserDisabled() {
   return (
     <div className="w-full h-screen flex justify-center items-center">
       <div className="flex flex-col gap-4 justify-center items-center">
@@ -20,4 +20,4 @@ export const UserDisabled = () => {
       </div>
     </div>
   );
-};
+}

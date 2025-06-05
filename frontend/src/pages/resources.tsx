@@ -17,7 +17,7 @@ import { Search } from "lucide-react";
 import { NotFound } from "@components/util";
 import { Switch } from "@ui/switch";
 
-export const Resources = () => {
+export default function Resources() {
   const is_admin = useUser().data?.admin ?? false;
   const disable_non_admin_create =
     useRead("GetCoreInfo", {}).data?.disable_non_admin_create ?? true;
@@ -94,4 +94,4 @@ export const Resources = () => {
       </div>
     </Page>
   );
-};
+}

@@ -31,7 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
 import { ContainerTerminal } from "@components/terminal/container";
 import { ContainerInspect } from "./inspect";
 
-export const ContainerPage = () => {
+export default function ContainerPage() {
   const { type, id, container } = useParams() as {
     type: string;
     id: string;
@@ -43,7 +43,7 @@ export const ContainerPage = () => {
   return (
     <ContainerPageInner id={id} container={decodeURIComponent(container)} />
   );
-};
+}
 
 const ContainerPageInner = ({
   id,

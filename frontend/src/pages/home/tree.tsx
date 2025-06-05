@@ -14,7 +14,7 @@ import { Link } from "react-router-dom";
 
 const searchAtom = atom("");
 
-export const Tree = () => {
+export default function Tree() {
   const [search, setSearch] = useAtom(searchAtom);
   const tags = useTagsFilter();
   const servers = useRead("ListServers", { query: { tags } }).data;
@@ -37,14 +37,12 @@ export const Tree = () => {
     >
       <Section>
         <div className="grid gap-6">
-          {servers?.map((server) => (
-            <Server key={server.id} id={server.id} />
-          ))}
+          {servers?.map((server) => <Server key={server.id} id={server.id} />)}
         </div>
       </Section>
     </Page>
   );
-};
+}
 
 const Server = ({ id }: { id: string }) => {
   const [search] = useAtom(searchAtom);

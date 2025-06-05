@@ -15,7 +15,7 @@ const viewAtom = atomWithStorage<SettingsView>("settings-view-v2", "Variables");
 
 export const useSettingsView = () => useAtom<SettingsView>(viewAtom);
 
-export const Settings = () => {
+export default function Settings() {
   const user = useUser().data;
   const [view, setView] = useSettingsView();
   const currentView =
@@ -65,4 +65,4 @@ export const Settings = () => {
       </Tabs>
     </Page>
   );
-};
+}

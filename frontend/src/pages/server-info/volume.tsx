@@ -20,7 +20,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import { MonacoEditor } from "@components/monaco";
 
-export const VolumePage = () => {
+export default function VolumePage() {
   const { type, id, volume } = useParams() as {
     type: string;
     id: string;
@@ -30,7 +30,7 @@ export const VolumePage = () => {
     return <div>This resource type does not have any volumes.</div>;
   }
   return <VolumePageInner id={id} volume={decodeURIComponent(volume)} />;
-};
+}
 
 const VolumePageInner = ({
   id,

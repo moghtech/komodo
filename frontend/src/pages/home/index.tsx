@@ -1,11 +1,13 @@
 import { homeViewAtom } from "@main";
 import { useAtom } from "jotai";
-import { Dashboard } from "./dashboard";
-import { AllResources } from "./all_resources";
-import { Tree } from "./tree";
 import { useSetTitle } from "@lib/hooks";
+import { lazy } from "react";
 
-export const Home = () => {
+const Dashboard = lazy(() => import("./dashboard"));
+const AllResources = lazy(() => import("./all_resources"));
+const Tree = lazy(() => import("./tree"));
+
+export default function Home() {
   useSetTitle();
   const [view] = useAtom(homeViewAtom);
   switch (view) {
@@ -16,4 +18,4 @@ export const Home = () => {
     case "Tree":
       return <Tree />;
   }
-};
+}

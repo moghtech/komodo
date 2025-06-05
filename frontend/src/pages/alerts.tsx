@@ -43,7 +43,7 @@ const FALLBACK_ALERT_TYPES = [
   "AwsBuilderTerminationFailed",
 ];
 
-export const AlertsPage = () => {
+export default function AlertsPage() {
   const [page, setPage] = useState(0);
   const [params, setParams] = useSearchParams();
 
@@ -211,4 +211,4 @@ export const AlertsPage = () => {
       </div>
     </Page>
   );
-};
+}

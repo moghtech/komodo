@@ -28,7 +28,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import { MonacoEditor } from "@components/monaco";
 
-export const NetworkPage = () => {
+export default function NetworkPage() {
   const { type, id, network } = useParams() as {
     type: string;
     id: string;
@@ -38,7 +38,7 @@ export const NetworkPage = () => {
     return <div>This resource type does not have any networks.</div>;
   }
   return <NetworkPageInner id={id} network={decodeURIComponent(network)} />;
-};
+}
 
 const NetworkPageInner = ({
   id,

@@ -29,17 +29,18 @@ export const homeViewAtom = atomWithStorage<HomeView>(
   "Dashboard"
 );
 
-init_monaco().then(() =>
-  ReactDOM.createRoot(document.getElementById("root")!).render(
-    // <React.StrictMode>
-    <QueryClientProvider client={query_client}>
-      <WebsocketProvider>
-        <ThemeProvider>
-          <Router />
-          <Toaster />
-        </ThemeProvider>
-      </WebsocketProvider>
-    </QueryClientProvider>
-    // </React.StrictMode>
-  )
+// Don't need to await this to render.
+init_monaco();
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  // <React.StrictMode>
+  <QueryClientProvider client={query_client}>
+    <WebsocketProvider>
+      <ThemeProvider>
+        <Router />
+        <Toaster />
+      </ThemeProvider>
+    </WebsocketProvider>
+  </QueryClientProvider>
+  // </React.StrictMode>
 );
