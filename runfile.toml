@@ -1,3 +1,5 @@
+# Runfile | https://crates.io/crates/runnables-cli
+
 [dev-frontend]
 description = "starts the frontend in dev mode"
 path = "frontend"
