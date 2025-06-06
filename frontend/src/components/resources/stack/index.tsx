@@ -238,6 +238,15 @@ export const StackComponents: RequiredResourceComponents = {
     //     </div>
     //   );
     // },
+    Services: ({ id }) => {
+      const info = useStack(id)?.info;
+      return (
+        <div className="flex gap-1">
+          <div className="font-bold">{info?.services.length}</div>
+          <div>Service{(info?.services.length ?? 0 > 1) ? "s" : ""}</div>
+        </div>
+      );
+    },
   },
 
   Status: {
