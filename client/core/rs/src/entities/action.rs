@@ -10,7 +10,7 @@ use crate::{
   deserializers::{
     file_contents_deserializer, option_file_contents_deserializer,
   },
-  entities::I64,
+  entities::{I64, NoData},
 };
 
 use super::{
@@ -53,7 +53,7 @@ pub enum ActionState {
 }
 
 #[typeshare]
-pub type Action = Resource<ActionConfig, ()>;
+pub type Action = Resource<ActionConfig, NoData>;
 
 #[typeshare(serialized_as = "Partial<ActionConfig>")]
 pub type _PartialActionConfig = PartialActionConfig;

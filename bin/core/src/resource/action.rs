@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use anyhow::Context;
 use komodo_client::entities::{
-  Operation, ResourceTarget, ResourceTargetVariant,
+  NoData, Operation, ResourceTarget, ResourceTargetVariant,
   action::{
     Action, ActionConfig, ActionConfigDiff, ActionListItem,
     ActionListItemInfo, ActionQuerySpecifics, ActionState,
@@ -29,7 +29,7 @@ impl super::KomodoResource for Action {
   type Config = ActionConfig;
   type PartialConfig = PartialActionConfig;
   type ConfigDiff = ActionConfigDiff;
-  type Info = ();
+  type Info = NoData;
   type ListItem = ActionListItem;
   type QuerySpecifics = ActionQuerySpecifics;
 
