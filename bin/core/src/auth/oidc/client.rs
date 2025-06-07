@@ -48,10 +48,9 @@ pub async fn spawn_oidc_client_management() {
   {
     return;
   }
-  reset_oidc_client()
-    .await
-    .context("Failed to initialize OIDC client.")
-    .unwrap();
+  if let Err(e) = reset_oidc_client().await {
+    error!("Failed to initialize OIDC client | {e:#}");
+  }
   tokio::spawn(async move {
     loop {
       tokio::time::sleep(Duration::from_secs(60)).await;

@@ -16,7 +16,7 @@ use crate::{
     get_user_id_from_headers,
     github::{self, client::github_oauth_client},
     google::{self, client::google_oauth_client},
-    oidc,
+    oidc::{self, client::oidc_client},
   },
   config::core_config,
   helpers::query::get_user,
@@ -114,15 +114,9 @@ fn login_options_reponse() -> &'static GetLoginOptionsResponse {
     let config = core_config();
     GetLoginOptionsResponse {
       local: config.local_auth,
-      github: config.github_oauth.enabled
-        && !config.github_oauth.id.is_empty()
-        && !config.github_oauth.secret.is_empty(),
-      google: config.google_oauth.enabled
-        && !config.google_oauth.id.is_empty()
-        && !config.google_oauth.secret.is_empty(),
-      oidc: config.oidc_enabled
-        && !config.oidc_provider.is_empty()
-        && !config.oidc_client_id.is_empty(),
+      github: github_oauth_client().is_some(),
+      google: google_oauth_client().is_some(),
+      oidc: oidc_client().load().is_some(),
       registration_disabled: config.disable_user_registration,
     }
   })
