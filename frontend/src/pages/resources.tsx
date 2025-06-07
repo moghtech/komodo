@@ -16,12 +16,14 @@ import { useState } from "react";
 import { Search } from "lucide-react";
 import { NotFound } from "@components/util";
 import { Switch } from "@ui/switch";
+import { UsableResource } from "@types";
 
-export default function Resources() {
+export default function Resources({ _type }: { _type?: UsableResource }) {
   const is_admin = useUser().data?.admin ?? false;
   const disable_non_admin_create =
     useRead("GetCoreInfo", {}).data?.disable_non_admin_create ?? true;
-  const type = useResourceParamType()!;
+  const __type = useResourceParamType()!;
+  const type = _type ? _type : __type;
   const name = type === "ResourceSync" ? "Resource Sync" : type;
   useSetTitle(name + "s");
   const [search, set] = useState("");

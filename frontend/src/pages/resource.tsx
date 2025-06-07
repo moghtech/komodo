@@ -13,7 +13,7 @@ import {
   useResourceParamType,
   useSetTitle,
 } from "@lib/hooks";
-import { usableResourcePath } from "@lib/utils";
+import { SETTINGS_RESOURCES, usableResourcePath } from "@lib/utils";
 import { Types } from "komodo_client";
 import { UsableResource } from "@types";
 import { Button } from "@ui/button";
@@ -59,7 +59,14 @@ const ResourceInner = ({ type, id }: { type: UsableResource; id: string }) => {
   return (
     <div>
       <div className="w-full flex items-center justify-between mb-12">
-        <Link to={"/" + usableResourcePath(type)}>
+        <Link
+          to={
+            "/" +
+            (SETTINGS_RESOURCES.includes(type)
+              ? "settings"
+              : usableResourcePath(type))
+          }
+        >
           <Button className="gap-2" variant="secondary">
             <ChevronLeft className="w-4" />
             Back

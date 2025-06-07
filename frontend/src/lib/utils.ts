@@ -26,6 +26,12 @@ export const RESOURCE_TARGETS: UsableResource[] = [
   "ResourceSync",
 ];
 
+export const SETTINGS_RESOURCES: UsableResource[] = ["Builder", "Alerter"];
+
+export const SIDEBAR_RESOURCES: UsableResource[] = RESOURCE_TARGETS.filter(
+  (target) => !SETTINGS_RESOURCES.includes(target)
+);
+
 export function env_to_text(envVars: Types.EnvironmentVar[] | undefined) {
   return envVars?.reduce(
     (prev, { variable, value }) =>

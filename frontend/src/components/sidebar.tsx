@@ -1,4 +1,4 @@
-import { RESOURCE_TARGETS, cn, usableResourcePath } from "@lib/utils";
+import { SIDEBAR_RESOURCES, cn, usableResourcePath } from "@lib/utils";
 import { Button } from "@ui/button";
 import {
   AlertTriangle,
@@ -43,7 +43,7 @@ export const Sidebar = () => {
         <Separator className="my-3" />
 
         <p className="pl-4 pb-1 text-xs text-muted-foreground">Resources</p>
-        {RESOURCE_TARGETS.map((type) => {
+        {SIDEBAR_RESOURCES.map((type) => {
           const RTIcon = ResourceComponents[type].Icon;
           const name = type === "ResourceSync" ? "Sync" : type;
           return (

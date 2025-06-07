@@ -1,13 +1,14 @@
+import { useAtom } from "jotai";
 import { atomWithStorage, useUser } from "@lib/hooks";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
+import { Page } from "@components/layouts";
+import { ExportButton } from "@components/export";
+import Resources from "@pages/resources";
 import { Variables } from "./variables";
 import { Tags } from "./tags";
 import { UsersPage } from "./users";
 import { Profile } from "./profile";
-import { Page } from "@components/layouts";
 import { ProvidersPage } from "./providers";
-import { ExportButton } from "@components/export";
-import { useAtom } from "jotai";
 
 type SettingsView = "Variables" | "Tags" | "Providers" | "Users" | "Profile";
 
@@ -33,6 +34,8 @@ export default function Settings() {
           <TabsList className="justify-start w-fit">
             <TabsTrigger value="Variables">Variables</TabsTrigger>
             <TabsTrigger value="Tags">Tags</TabsTrigger>
+            <TabsTrigger value="Builders">Builders</TabsTrigger>
+            <TabsTrigger value="Alerters">Alerters</TabsTrigger>
             {user?.admin && (
               <TabsTrigger value="Providers">Providers</TabsTrigger>
             )}
@@ -48,6 +51,12 @@ export default function Settings() {
         </TabsContent>
         <TabsContent value="Tags">
           <Tags />
+        </TabsContent>
+        <TabsContent value="Builders">
+          <Resources _type="Builder" />
+        </TabsContent>
+        <TabsContent value="Alerters">
+          <Resources _type="Alerter" />
         </TabsContent>
         {user?.admin && (
           <TabsContent value="Providers">
