@@ -24,8 +24,10 @@ export default function SchedulesPage() {
           },
           {
             size: 200,
-            accessorKey: "target.id",
-            header: "Target",
+            accessorKey: "name",
+            header: ({ column }) => (
+              <SortableHeader column={column} title="Target" />
+            ),
             cell: ({ row }) => (
               <ResourceLink
                 type={row.original.target.type as UsableResource}
