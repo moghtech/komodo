@@ -67,6 +67,13 @@ export default function SchedulesPage() {
             },
             {
               size: 200,
+              accessorKey: "schedule",
+              header: ({ column }) => (
+                <SortableHeader column={column} title="Schedule" />
+              ),
+            },
+            {
+              size: 200,
               accessorKey: "next_scheduled_run",
               header: ({ column }) => (
                 <SortableHeader column={column} title="Next Run" />
@@ -87,13 +94,6 @@ export default function SchedulesPage() {
                 row.original.next_scheduled_run
                   ? new Date(row.original.next_scheduled_run).toLocaleString()
                   : "Not Scheduled",
-            },
-            {
-              size: 200,
-              accessorKey: "schedule",
-              header: ({ column }) => (
-                <SortableHeader column={column} title="Schedule" />
-              ),
             },
             {
               size: 100,
