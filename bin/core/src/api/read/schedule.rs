@@ -76,15 +76,15 @@ impl Resolve<ReadArgs> for ListSchedules {
     });
     let procedures = procedures.into_iter().map(async |procedure| {
       let (next_scheduled_run, schedule_error) =
-        get_schedule_item_info(&ResourceTarget::Action(
+        get_schedule_item_info(&ResourceTarget::Procedure(
           procedure.id.clone(),
         ));
       let (state, last_run_at) = tokio::join!(
         get_procedure_state(&procedure.id),
-        get_last_run_at::<Action>(&procedure.id)
+        get_last_run_at::<Procedure>(&procedure.id)
       );
       Schedule {
-        target: ResourceTarget::Action(procedure.id),
+        target: ResourceTarget::Procedure(procedure.id),
         enabled: procedure.config.schedule_enabled,
         schedule_format: procedure.config.schedule_format,
         schedule: procedure.config.schedule,
