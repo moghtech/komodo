@@ -12,8 +12,6 @@ import {
   RefreshCcw,
   Pause,
   Square,
-  AlertCircle,
-  CheckCircle2,
 } from "lucide-react";
 import { Section } from "@components/layouts";
 import { Prune } from "./actions";
@@ -32,6 +30,7 @@ import {
   StatusBadge,
 } from "@components/util";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
+import { Card, CardHeader, CardTitle } from "@ui/card";
 import { RepoTable } from "../repo/table";
 import { DashboardPieChart } from "@pages/home/dashboard";
 import { StackTable } from "../stack/table";
@@ -41,8 +40,7 @@ import { ServerStats } from "./stats";
 import { GroupActions } from "@components/group-actions";
 import { ServerTerminals } from "@components/terminal/server";
 import { usePermissions } from "@lib/hooks";
-import { Card, CardHeader, CardTitle } from "@ui/card";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
+import { MaintenanceServerConfig } from "./maintenance/config";
 
 export const useServer = (id?: string) =>
   useRead("ListServers", {}, { refetchInterval: 10_000 }).data?.find(
@@ -66,7 +64,7 @@ const Icon = ({ id, size }: { id?: string; size: number }) => {
 
 const ConfigTabs = ({ id }: { id: string }) => {
   const [view, setView] = useLocalStorage<
-    "Config" | "Stats" | "Docker" | "Resources" | "Terminals"
+    "Config" | "Stats" | "Docker" | "Maintenance" | "Resources" | "Terminals"
   >(`server-${id}-tab`, "Config");
 
   const is_admin = useUser().data?.admin ?? false;
@@ -111,6 +109,10 @@ const ConfigTabs = ({ id }: { id: string }) => {
         Docker
       </TabsTrigger>
 
+      <TabsTrigger value="Maintenance" className="w-[110px]">
+        Maintenance
+      </TabsTrigger>
+
       <TabsTrigger
         value="Resources"
         className="w-[110px]"
@@ -142,6 +144,10 @@ const ConfigTabs = ({ id }: { id: string }) => {
 
       <TabsContent value="Docker">
         <ServerInfo id={id} titleOther={tabsList} />
+      </TabsContent>
+
+      <TabsContent value="Maintenance">
+        <MaintenanceServerConfig id={id} titleOther={tabsList} />
       </TabsContent>
 
       <TabsContent value="Resources">
@@ -275,56 +281,17 @@ export const ServerComponents: RequiredResourceComponents = {
 
   Info: {
     Version: ({ id }) => {
-      const core_version = useRead("GetVersion", {}).data?.version;
       const version = useRead(
         "GetPeripheryVersion",
         { server: id },
         { refetchInterval: 5000 }
       ).data?.version;
-      const mismatch = !!version && !!core_version && version !== core_version;
+      const _version =
+        version === undefined || version === "unknown" ? "unknown" : version;
       return (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex items-center gap-2 cursor-pointer">
-              {mismatch ? (
-                <AlertCircle
-                  className={cn(
-                    "w-4 h-4",
-                    stroke_color_class_by_intention("Critical")
-                  )}
-                />
-              ) : (
-                <CheckCircle2
-                  className={cn(
-                    "w-4 h-4",
-                    stroke_color_class_by_intention("Good")
-                  )}
-                />
-              )}
-              {version ?? "Unknown"}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            {mismatch ? (
-              <div>
-                Periphery version <span className="font-bold">mismatch</span>.
-                Expected <span className="font-bold">{core_version}</span>.
-              </div>
-            ) : (
-              <div>
-                Periphery and Core version{" "}
-                <span className="font-bold">match</span>.
-              </div>
-            )}
-          </TooltipContent>
-        </Tooltip>
-      );
-      if (mismatch) {
-      }
-      return (
-        <div className={cn("flex items-center gap-2")}>
+        <div className="flex items-center gap-2">
           <Milestone className="w-4 h-4" />
-          {version ?? "Unknown"}
+          {_version}
         </div>
       );
     },
