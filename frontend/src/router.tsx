@@ -1,5 +1,6 @@
 import { Layout } from "@components/layouts";
 import { useUser } from "@lib/hooks";
+import SchedulesPage from "@pages/schedules";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
@@ -49,6 +50,7 @@ export const Router = () => {
             <Route path="updates" element={<UpdatesPage />} />
             <Route path="containers" element={<ContainersPage />} />
             <Route path="resources" element={<AllResources />} />
+            <Route path="schedules" element={<SchedulesPage />} />
             <Route path="user-groups/:id" element={<UserGroupPage />} />
             <Route path="users/:id" element={<UserPage />} />
             <Route path=":type">

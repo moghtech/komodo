@@ -12,13 +12,14 @@ import {
   RefreshCcw,
   Pause,
   Square,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 import { Section } from "@components/layouts";
 import { Prune } from "./actions";
 import {
   server_state_intention,
   stroke_color_class_by_intention,
-  text_color_class_by_intention,
 } from "@lib/color";
 import { ServerConfig } from "./config";
 import { DeploymentTable } from "../deployment/table";
@@ -41,6 +42,7 @@ import { GroupActions } from "@components/group-actions";
 import { ServerTerminals } from "@components/terminal/server";
 import { usePermissions } from "@lib/hooks";
 import { Card, CardHeader, CardTitle } from "@ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 
 export const useServer = (id?: string) =>
   useRead("ListServers", {}, { refetchInterval: 10_000 }).data?.find(
@@ -279,16 +281,48 @@ export const ServerComponents: RequiredResourceComponents = {
         { server: id },
         { refetchInterval: 5000 }
       ).data?.version;
+      const mismatch = !!version && !!core_version && version !== core_version;
       return (
-        <div
-          className={cn(
-            "flex items-center gap-2",
-            version &&
-              core_version &&
-              version !== core_version &&
-              text_color_class_by_intention("Critical")
-          )}
-        >
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center gap-2 cursor-pointer">
+              {mismatch ? (
+                <AlertCircle
+                  className={cn(
+                    "w-4 h-4",
+                    stroke_color_class_by_intention("Critical")
+                  )}
+                />
+              ) : (
+                <CheckCircle2
+                  className={cn(
+                    "w-4 h-4",
+                    stroke_color_class_by_intention("Good")
+                  )}
+                />
+              )}
+              {version ?? "Unknown"}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            {mismatch ? (
+              <div>
+                Periphery version <span className="font-bold">mismatch</span>.
+                Expected <span className="font-bold">{core_version}</span>.
+              </div>
+            ) : (
+              <div>
+                Periphery and Core version{" "}
+                <span className="font-bold">match</span>.
+              </div>
+            )}
+          </TooltipContent>
+        </Tooltip>
+      );
+      if (mismatch) {
+      }
+      return (
+        <div className={cn("flex items-center gap-2")}>
           <Milestone className="w-4 h-4" />
           {version ?? "Unknown"}
         </div>

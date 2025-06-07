@@ -116,12 +116,11 @@ export interface ActionConfig {
 	file_contents?: string;
 }
 
-export interface ActionInfo {
-	/** When action was last run */
-	last_run_at?: I64;
+/** Represents an empty json object: `{}` */
+export interface NoData {
 }
 
-export type Action = Resource<ActionConfig, ActionInfo>;
+export type Action = Resource<ActionConfig, NoData>;
 
 export interface ResourceListItem<Info> {
 	/** The resource id */
@@ -148,10 +147,10 @@ export enum ActionState {
 }
 
 export interface ActionListItemInfo {
-	/** Action last run timestamp in ms. */
-	last_run_at: I64;
 	/** Whether last action run successful */
 	state: ActionState;
+	/** Action last successful run timestamp in ms. */
+	last_run_at?: I64;
 	/**
 	 * If the action has schedule enabled, this is the
 	 * next scheduled run time in unix ms.
@@ -178,6 +177,7 @@ export interface ResourceQuery<T> {
 	names?: string[];
 	/** Pass Vec of tag ids or tag names */
 	tags?: string[];
+	/** 'All' or 'Any' */
 	tag_behavior?: TagBehavior;
 	specific?: T;
 }
@@ -852,10 +852,6 @@ export interface ProcedureConfig {
 export type Procedure = Resource<ProcedureConfig, undefined>;
 
 export type CopyProcedureResponse = Procedure;
-
-/** Represents an empty json object: `{}` */
-export interface NoData {
-}
 
 export type CreateActionWebhookResponse = NoData;
 
@@ -3427,6 +3423,8 @@ export interface ProcedureListItemInfo {
 	stages: I64;
 	/** Reflect whether last run successful / currently running. */
 	state: ProcedureState;
+	/** Procedure last successful run timestamp in ms. */
+	last_run_at?: I64;
 	/**
 	 * If the procedure has schedule enabled, this is the
 	 * next scheduled run time in unix ms.
@@ -3548,7 +3546,9 @@ export interface Schedule {
 	/** Custom schedule timezone if it exists */
 	schedule_timezone: string;
 	/** Last run timestamp in ms. */
-	last_run_at: I64;
+	last_run_at?: I64;
+	/** Whether last run was successful */
+	last_run_success: boolean;
 	/** Next scheduled run time in unix ms. */
 	next_scheduled_run?: I64;
 	/**
@@ -6375,8 +6375,10 @@ export interface ListResourceSyncs {
  * Response: [ListSchedulesResponse].
  */
 export interface ListSchedules {
-	/** Optionally filter resources by tags */
+	/** Pass Vec of tag ids or tag names */
 	tags?: string[];
+	/** 'All' or 'Any' */
+	tag_behavior?: TagBehavior;
 }
 
 /**
