@@ -53,13 +53,6 @@ export default function SchedulesPage() {
           data={filtered}
           columns={[
             {
-              size: 100,
-              accessorKey: "target.type",
-              header: ({ column }) => (
-                <SortableHeader column={column} title="Type" />
-              ),
-            },
-            {
               size: 200,
               accessorKey: "name",
               header: ({ column }) => (
