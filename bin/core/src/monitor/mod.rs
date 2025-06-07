@@ -267,8 +267,9 @@ pub async fn update_cache_for_server(server: &Server) {
         path: optional_string(&repo.config.path),
       })
       .await
-      .map(|r| (r.hash, r.message))
       .ok()
+      .flatten()
+      .map(|c| (c.hash, c.message))
       .unzip();
     status_cache
       .insert(

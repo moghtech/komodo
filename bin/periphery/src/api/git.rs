@@ -1,4 +1,4 @@
-use anyhow::{Context, anyhow};
+use anyhow::Context;
 use formatting::format_serror;
 use git::GitRes;
 use komodo_client::entities::{CloneArgs, LatestCommit, update::Log};
@@ -17,21 +17,16 @@ impl Resolve<super::Args> for GetLatestCommit {
   async fn resolve(
     self,
     _: &super::Args,
-  ) -> serror::Result<LatestCommit> {
+  ) -> serror::Result<Option<LatestCommit>> {
     let repo_path = match self.path {
       Some(p) => PathBuf::from(p),
       None => periphery_config().repo_dir().join(self.name),
     };
-    if !repo_path.is_dir() {
-      return Err(
-        anyhow!(
-          "Repo path {} is not directory. is it cloned?",
-          repo_path.display()
-        )
-        .into(),
-      );
+    // Make sure its a repo, or return null to avoid log spam
+    if !repo_path.is_dir() || !repo_path.join(".git").is_dir() {
+      return Ok(None);
     }
-    Ok(git::get_commit_hash_info(&repo_path).await?)
+    Ok(Some(git::get_commit_hash_info(&repo_path).await?))
   }
 }
 

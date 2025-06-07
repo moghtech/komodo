@@ -163,7 +163,7 @@ impl Resolve<ExecuteArgs> for CloneRepo {
 impl super::BatchExecute for BatchPullRepo {
   type Resource = Repo;
   fn single_request(repo: String) -> ExecuteRequest {
-    ExecuteRequest::CloneRepo(CloneRepo { repo })
+    ExecuteRequest::PullRepo(PullRepo { repo })
   }
 }
 

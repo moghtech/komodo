@@ -54,10 +54,11 @@ where
   T: Into<CloneArgs> + std::fmt::Debug,
 {
   let args: CloneArgs = clone_args.into();
-  let folder_path = args.path(repo_dir);
+  let repo_dir = args.path(repo_dir);
+  let repo_url = args.remote_url(access_token.as_deref())?;
 
   // Acquire the path lock
-  let lock = pull_cache().get_lock(folder_path.clone()).await;
+  let lock = pull_cache().get_lock(repo_dir.clone()).await;
 
   // Lock the path lock, prevents simultaneous pulls by
   // ensuring simultaneous pulls will wait for first to finish
@@ -73,10 +74,10 @@ where
     let mut logs = Vec::new();
 
     // Check for '.git' path to see if the folder is initialized as a git repo
-    let dot_git_path = folder_path.join(".git");
+    let dot_git_path = repo_dir.join(".git");
     if !dot_git_path.exists() {
       crate::init::init_folder_as_repo(
-        &folder_path,
+        &repo_dir,
         &args,
         access_token.as_deref(),
         &mut logs,
@@ -92,12 +93,10 @@ where
       }
     }
 
-    let repo_url = args.remote_url(access_token.as_deref())?;
-
     // Set remote url
     let mut set_remote = run_komodo_command(
       "Set git remote",
-      folder_path.as_ref(),
+      repo_dir.as_ref(),
       format!("git remote set-url origin {repo_url}"),
     )
     .await;
@@ -122,7 +121,7 @@ where
 
     let checkout = run_komodo_command(
       "Checkout branch",
-      folder_path.as_ref(),
+      repo_dir.as_ref(),
       format!("git checkout -f {}", args.branch),
     )
     .await;
@@ -138,7 +137,7 @@ where
 
     let pull_log = run_komodo_command(
       "Git pull",
-      folder_path.as_ref(),
+      repo_dir.as_ref(),
       format!("git pull --rebase --force origin {}", args.branch),
     )
     .await;
@@ -155,7 +154,7 @@ where
     if let Some(commit) = args.commit {
       let reset_log = run_komodo_command(
         "Set commit",
-        folder_path.as_ref(),
+        repo_dir.as_ref(),
         format!("git reset --hard {commit}"),
       )
       .await;
@@ -163,7 +162,7 @@ where
     }
 
     let (hash, message) =
-      match get_commit_hash_log(&folder_path).await {
+      match get_commit_hash_log(&repo_dir).await {
         Ok((log, hash, message)) => {
           logs.push(log);
           (Some(hash), Some(message))
@@ -184,7 +183,7 @@ where
         environment,
         env_file_path,
         secrets,
-        &folder_path,
+        &repo_dir,
         &mut logs,
       )
       .await

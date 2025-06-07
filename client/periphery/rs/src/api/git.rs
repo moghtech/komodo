@@ -6,8 +6,9 @@ use komodo_client::entities::{
 use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 
+/// Returns `null` if not a repo
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
-#[response(LatestCommit)]
+#[response(Option<LatestCommit>)]
 #[error(serror::Error)]
 pub struct GetLatestCommit {
   pub name: String,
