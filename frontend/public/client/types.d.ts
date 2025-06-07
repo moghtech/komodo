@@ -3517,8 +3517,6 @@ export interface Schedule {
     schedule_timezone: string;
     /** Last run timestamp in ms. */
     last_run_at?: I64;
-    /** Whether last run was successful */
-    last_run_success: boolean;
     /** Next scheduled run time in unix ms. */
     next_scheduled_run?: I64;
     /**
@@ -3526,6 +3524,8 @@ export interface Schedule {
      * it will be given here.
      */
     schedule_error?: string;
+    /** Resource tags. */
+    tags: string[];
 }
 export type ListSchedulesResponse = Schedule[];
 export type ListSecretsResponse = string[];
