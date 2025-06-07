@@ -101,6 +101,8 @@ pub async fn alert_servers(
   let mut alerts_to_update = Vec::<(Alert, SendAlerts)>::new();
   let mut alert_ids_to_close = Vec::<(Alert, SendAlerts)>::new();
 
+  let buffer = alert_buffer();
+
   for server_status in server_statuses {
     let Some(server) = servers.remove(&server_status.id) else {
       continue;
@@ -110,7 +112,6 @@ pub async fn alert_servers(
 
     // Check if server is in maintenance mode
     let in_maintenance = is_server_in_maintenance(&server, ts);
-    let buffer = alert_buffer();
 
     // ===================
     // SERVER HEALTH
