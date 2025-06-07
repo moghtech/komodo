@@ -7,7 +7,6 @@ import {
   Cpu,
   MemoryStick,
   Database,
-  Milestone,
   Play,
   RefreshCcw,
   Pause,
@@ -32,6 +31,7 @@ import {
   StatusBadge,
 } from "@components/util";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
+import { Card, CardHeader, CardTitle } from "@ui/card";
 import { RepoTable } from "../repo/table";
 import { DashboardPieChart } from "@pages/home/dashboard";
 import { StackTable } from "../stack/table";
@@ -41,7 +41,7 @@ import { ServerStats } from "./stats";
 import { GroupActions } from "@components/group-actions";
 import { ServerTerminals } from "@components/terminal/server";
 import { usePermissions } from "@lib/hooks";
-import { Card, CardHeader, CardTitle } from "@ui/card";
+import { MaintenanceServerConfig } from "./maintenance/config";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 
 export const useServer = (id?: string) =>
@@ -66,7 +66,7 @@ const Icon = ({ id, size }: { id?: string; size: number }) => {
 
 const ConfigTabs = ({ id }: { id: string }) => {
   const [view, setView] = useLocalStorage<
-    "Config" | "Stats" | "Docker" | "Resources" | "Terminals"
+    "Config" | "Stats" | "Docker" | "Maintenance" | "Resources" | "Terminals"
   >(`server-${id}-tab`, "Config");
 
   const is_admin = useUser().data?.admin ?? false;
@@ -111,6 +111,10 @@ const ConfigTabs = ({ id }: { id: string }) => {
         Docker
       </TabsTrigger>
 
+      <TabsTrigger value="Maintenance" className="w-[110px]">
+        Maintenance
+      </TabsTrigger>
+
       <TabsTrigger
         value="Resources"
         className="w-[110px]"
@@ -142,6 +146,10 @@ const ConfigTabs = ({ id }: { id: string }) => {
 
       <TabsContent value="Docker">
         <ServerInfo id={id} titleOther={tabsList} />
+      </TabsContent>
+
+      <TabsContent value="Maintenance">
+        <MaintenanceServerConfig id={id} titleOther={tabsList} />
       </TabsContent>
 
       <TabsContent value="Resources">
@@ -318,14 +326,6 @@ export const ServerComponents: RequiredResourceComponents = {
             )}
           </TooltipContent>
         </Tooltip>
-      );
-      if (mismatch) {
-      }
-      return (
-        <div className={cn("flex items-center gap-2")}>
-          <Milestone className="w-4 h-4" />
-          {version ?? "Unknown"}
-        </div>
       );
     },
     Cpu: ({ id }) => {

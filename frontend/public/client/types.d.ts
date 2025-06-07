@@ -1955,6 +1955,53 @@ export interface ServerActionState {
     stopping_containers: boolean;
 }
 export type GetServerActionStateResponse = ServerActionState;
+/** Types of maintenance schedules */
+export type MaintenanceScheduleType = 
+/** Daily at the specified time */
+{
+    type: "Daily";
+    content?: undefined;
+}
+/** Weekly on the specified day and time */
+ | {
+    type: "Weekly";
+    content: {
+        day_of_week: DayOfWeek;
+    };
+}
+/** One-time maintenance on a specific date and time */
+ | {
+    type: "OneTime";
+    content: {
+        date: string;
+    };
+};
+/** Time specification for maintenance windows */
+export interface MaintenanceTime {
+    /** Hour in 24-hour format (0-23) */
+    hour: number;
+    /** Minute (0-59) */
+    minute: number;
+    /** Timezone offset from UTC in minutes (e.g., -300 for EST, 120 for CEST) */
+    timezone_offset_minutes: number;
+}
+/** Represents a scheduled maintenance window for a server */
+export interface MaintenanceWindow {
+    /** Unique identifier for the maintenance window */
+    id: string;
+    /** Human-readable name for the maintenance window */
+    name: string;
+    /** The type of maintenance schedule */
+    schedule_type: MaintenanceScheduleType;
+    /** Start time for the maintenance window */
+    start_time: MaintenanceTime;
+    /** Duration of the maintenance window in minutes */
+    duration_minutes: number;
+    /** Whether this maintenance window is currently enabled */
+    enabled: boolean;
+    /** Optional description of what maintenance is performed */
+    description?: string;
+}
 /** Server configuration. */
 export interface ServerConfig {
     /**
@@ -2019,6 +2066,8 @@ export interface ServerConfig {
     disk_warning: number;
     /** The percentage threshhold which triggers CRITICAL state for DISK. */
     disk_critical: number;
+    /** Scheduled maintenance windows during which alerts will be suppressed. */
+    maintenance_windows?: MaintenanceWindow[];
 }
 export type Server = Resource<ServerConfig, undefined>;
 export type GetServerResponse = Server;
@@ -7298,6 +7347,16 @@ export type AuthRequest = {
     type: "GetUser";
     params: GetUser;
 };
+/** Days of the week for weekly maintenance schedules */
+export declare enum DayOfWeek {
+    Monday = "Monday",
+    Tuesday = "Tuesday",
+    Wednesday = "Wednesday",
+    Thursday = "Thursday",
+    Friday = "Friday",
+    Saturday = "Saturday",
+    Sunday = "Sunday"
+}
 export type ExecuteRequest = {
     type: "StartContainer";
     params: StartContainer;
