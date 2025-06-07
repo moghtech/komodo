@@ -23,6 +23,8 @@ pub struct ProcedureListItemInfo {
   pub stages: I64,
   /// Reflect whether last run successful / currently running.
   pub state: ProcedureState,
+  /// Procedure last successful run timestamp in ms.
+  pub last_run_at: Option<I64>,
   /// If the procedure has schedule enabled, this is the
   /// next scheduled run time in unix ms.
   pub next_scheduled_run: Option<I64>,

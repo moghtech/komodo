@@ -52,6 +52,8 @@ pub mod provider;
 pub mod repo;
 /// Subtypes of [Resource][resource::Resource].
 pub mod resource;
+/// Subtypes of [Schedule][schedule::Schedule]
+pub mod schedule;
 /// Subtypes of [Server][server::Server].
 pub mod server;
 /// Subtypes of [Stack][stack::Stack]

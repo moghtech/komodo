@@ -38,6 +38,7 @@ export type ReadResponses = {
     GetActionActionState: Types.GetActionActionStateResponse;
     ListActions: Types.ListActionsResponse;
     ListFullActions: Types.ListFullActionsResponse;
+    ListSchedules: Types.ListSchedulesResponse;
     GetServersSummary: Types.GetServersSummaryResponse;
     GetServer: Types.GetServerResponse;
     GetServerState: Types.GetServerStateResponse;

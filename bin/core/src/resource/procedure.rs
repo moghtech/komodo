@@ -31,6 +31,7 @@ use mungos::{
 
 use crate::{
   config::core_config,
+  helpers::query::{get_last_run_at, get_procedure_state},
   schedule::{
     cancel_schedule, get_schedule_item_info, update_schedule,
   },
@@ -61,7 +62,10 @@ impl super::KomodoResource for Procedure {
   async fn to_list_item(
     procedure: Resource<Self::Config, Self::Info>,
   ) -> Self::ListItem {
-    let state = get_procedure_state(&procedure.id).await;
+    let (state, last_run_at) = tokio::join!(
+      get_procedure_state(&procedure.id),
+      get_last_run_at::<Procedure>(&procedure.id)
+    );
     let (next_scheduled_run, schedule_error) = get_schedule_item_info(
       &ResourceTarget::Procedure(procedure.id.clone()),
     );
@@ -73,6 +77,7 @@ impl super::KomodoResource for Procedure {
       info: ProcedureListItemInfo {
         stages: procedure.config.stages.len() as i64,
         state,
+        last_run_at: last_run_at.unwrap_or(None),
         next_scheduled_run,
         schedule_error,
       },
@@ -752,22 +757,6 @@ pub async fn refresh_procedure_state_cache() {
   .inspect_err(|e| {
     error!("Failed to refresh Procedure state cache | {e:#}")
   });
-}
-
-async fn get_procedure_state(id: &String) -> ProcedureState {
-  if action_states()
-    .procedure
-    .get(id)
-    .await
-    .map(|s| s.get().map(|s| s.running))
-    .transpose()
-    .ok()
-    .flatten()
-    .unwrap_or_default()
-  {
-    return ProcedureState::Running;
-  }
-  procedure_state_cache().get(id).await.unwrap_or_default()
 }
 
 async fn get_procedure_state_from_db(id: &str) -> ProcedureState {

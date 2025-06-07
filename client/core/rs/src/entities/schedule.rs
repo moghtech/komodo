@@ -1,0 +1,29 @@
+use serde::{Deserialize, Serialize};
+use typeshare::typeshare;
+
+use crate::entities::{I64, ResourceTarget, ScheduleFormat};
+
+/// A scheduled Action / Procedure run.
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct Schedule {
+  /// Procedure or Alerter
+  pub target: ResourceTarget,
+  /// The format of the schedule expression
+  pub schedule_format: ScheduleFormat,
+  /// The schedule for the run
+  pub schedule: String,
+  /// Whether the scheduled run is enabled
+  pub enabled: bool,
+  /// Custom schedule timezone if it exists
+  pub schedule_timezone: String,
+  /// Last run timestamp in ms.
+  pub last_run_at: Option<I64>,
+  /// Whether last run was successful
+  pub last_run_success: bool,
+  /// Next scheduled run time in unix ms.
+  pub next_scheduled_run: Option<I64>,
+  /// If there is an error parsing schedule expression,
+  /// it will be given here.
+  pub schedule_error: Option<String>,
+}

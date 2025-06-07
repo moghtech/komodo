@@ -4,9 +4,9 @@ use anyhow::Context;
 use komodo_client::entities::{
   Operation, ResourceTarget, ResourceTargetVariant,
   action::{
-    Action, ActionConfig, ActionConfigDiff, ActionInfo,
-    ActionListItem, ActionListItemInfo, ActionQuerySpecifics,
-    ActionState, PartialActionConfig,
+    Action, ActionConfig, ActionConfigDiff, ActionListItem,
+    ActionListItemInfo, ActionQuerySpecifics, ActionState,
+    PartialActionConfig,
   },
   resource::Resource,
   update::Update,
@@ -18,6 +18,7 @@ use mungos::{
 };
 
 use crate::{
+  helpers::query::{get_action_state, get_last_run_at},
   schedule::{
     cancel_schedule, get_schedule_item_info, update_schedule,
   },
@@ -28,7 +29,7 @@ impl super::KomodoResource for Action {
   type Config = ActionConfig;
   type PartialConfig = PartialActionConfig;
   type ConfigDiff = ActionConfigDiff;
-  type Info = ActionInfo;
+  type Info = ();
   type ListItem = ActionListItem;
   type QuerySpecifics = ActionQuerySpecifics;
 
@@ -48,7 +49,10 @@ impl super::KomodoResource for Action {
   async fn to_list_item(
     action: Resource<Self::Config, Self::Info>,
   ) -> Self::ListItem {
-    let state = get_action_state(&action.id).await;
+    let (state, last_run_at) = tokio::join!(
+      get_action_state(&action.id),
+      get_last_run_at::<Action>(&action.id)
+    );
     let (next_scheduled_run, schedule_error) = get_schedule_item_info(
       &ResourceTarget::Action(action.id.clone()),
     );
@@ -59,7 +63,7 @@ impl super::KomodoResource for Action {
       resource_type: ResourceTargetVariant::Action,
       info: ActionListItemInfo {
         state,
-        last_run_at: action.info.last_run_at,
+        last_run_at: last_run_at.unwrap_or(None),
         next_scheduled_run,
         schedule_error,
       },
@@ -179,22 +183,6 @@ pub async fn refresh_action_state_cache() {
   .inspect_err(|e| {
     error!("Failed to refresh Action state cache | {e:#}")
   });
-}
-
-async fn get_action_state(id: &String) -> ActionState {
-  if action_states()
-    .action
-    .get(id)
-    .await
-    .map(|s| s.get().map(|s| s.running))
-    .transpose()
-    .ok()
-    .flatten()
-    .unwrap_or_default()
-  {
-    return ActionState::Running;
-  }
-  action_state_cache().get(id).await.unwrap_or_default()
 }
 
 async fn get_action_state_from_db(id: &str) -> ActionState {

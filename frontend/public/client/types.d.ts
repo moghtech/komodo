@@ -137,7 +137,7 @@ export interface ActionListItemInfo {
     /** Whether last action run successful */
     state: ActionState;
     /**
-     * If the procedure has schedule enabled, this is the
+     * If the action has schedule enabled, this is the
      * next scheduled run time in unix ms.
      */
     next_scheduled_run?: I64;
@@ -279,11 +279,198 @@ export type BatchExecutionResponseItem = {
     data: BatchExecutionResponseItemErr;
 };
 export type BatchExecutionResponse = BatchExecutionResponseItem[];
+export declare enum Operation {
+    None = "None",
+    CreateServer = "CreateServer",
+    UpdateServer = "UpdateServer",
+    DeleteServer = "DeleteServer",
+    RenameServer = "RenameServer",
+    StartContainer = "StartContainer",
+    RestartContainer = "RestartContainer",
+    PauseContainer = "PauseContainer",
+    UnpauseContainer = "UnpauseContainer",
+    StopContainer = "StopContainer",
+    DestroyContainer = "DestroyContainer",
+    StartAllContainers = "StartAllContainers",
+    RestartAllContainers = "RestartAllContainers",
+    PauseAllContainers = "PauseAllContainers",
+    UnpauseAllContainers = "UnpauseAllContainers",
+    StopAllContainers = "StopAllContainers",
+    PruneContainers = "PruneContainers",
+    CreateNetwork = "CreateNetwork",
+    DeleteNetwork = "DeleteNetwork",
+    PruneNetworks = "PruneNetworks",
+    DeleteImage = "DeleteImage",
+    PruneImages = "PruneImages",
+    DeleteVolume = "DeleteVolume",
+    PruneVolumes = "PruneVolumes",
+    PruneDockerBuilders = "PruneDockerBuilders",
+    PruneBuildx = "PruneBuildx",
+    PruneSystem = "PruneSystem",
+    CreateStack = "CreateStack",
+    UpdateStack = "UpdateStack",
+    RenameStack = "RenameStack",
+    DeleteStack = "DeleteStack",
+    WriteStackContents = "WriteStackContents",
+    RefreshStackCache = "RefreshStackCache",
+    PullStack = "PullStack",
+    DeployStack = "DeployStack",
+    StartStack = "StartStack",
+    RestartStack = "RestartStack",
+    PauseStack = "PauseStack",
+    UnpauseStack = "UnpauseStack",
+    StopStack = "StopStack",
+    DestroyStack = "DestroyStack",
+    DeployStackService = "DeployStackService",
+    PullStackService = "PullStackService",
+    StartStackService = "StartStackService",
+    RestartStackService = "RestartStackService",
+    PauseStackService = "PauseStackService",
+    UnpauseStackService = "UnpauseStackService",
+    StopStackService = "StopStackService",
+    DestroyStackService = "DestroyStackService",
+    CreateDeployment = "CreateDeployment",
+    UpdateDeployment = "UpdateDeployment",
+    RenameDeployment = "RenameDeployment",
+    DeleteDeployment = "DeleteDeployment",
+    Deploy = "Deploy",
+    PullDeployment = "PullDeployment",
+    StartDeployment = "StartDeployment",
+    RestartDeployment = "RestartDeployment",
+    PauseDeployment = "PauseDeployment",
+    UnpauseDeployment = "UnpauseDeployment",
+    StopDeployment = "StopDeployment",
+    DestroyDeployment = "DestroyDeployment",
+    CreateBuild = "CreateBuild",
+    UpdateBuild = "UpdateBuild",
+    RenameBuild = "RenameBuild",
+    DeleteBuild = "DeleteBuild",
+    RunBuild = "RunBuild",
+    CancelBuild = "CancelBuild",
+    WriteDockerfile = "WriteDockerfile",
+    CreateRepo = "CreateRepo",
+    UpdateRepo = "UpdateRepo",
+    RenameRepo = "RenameRepo",
+    DeleteRepo = "DeleteRepo",
+    CloneRepo = "CloneRepo",
+    PullRepo = "PullRepo",
+    BuildRepo = "BuildRepo",
+    CancelRepoBuild = "CancelRepoBuild",
+    CreateProcedure = "CreateProcedure",
+    UpdateProcedure = "UpdateProcedure",
+    RenameProcedure = "RenameProcedure",
+    DeleteProcedure = "DeleteProcedure",
+    RunProcedure = "RunProcedure",
+    CreateAction = "CreateAction",
+    UpdateAction = "UpdateAction",
+    RenameAction = "RenameAction",
+    DeleteAction = "DeleteAction",
+    RunAction = "RunAction",
+    CreateBuilder = "CreateBuilder",
+    UpdateBuilder = "UpdateBuilder",
+    RenameBuilder = "RenameBuilder",
+    DeleteBuilder = "DeleteBuilder",
+    CreateAlerter = "CreateAlerter",
+    UpdateAlerter = "UpdateAlerter",
+    RenameAlerter = "RenameAlerter",
+    DeleteAlerter = "DeleteAlerter",
+    TestAlerter = "TestAlerter",
+    CreateResourceSync = "CreateResourceSync",
+    UpdateResourceSync = "UpdateResourceSync",
+    RenameResourceSync = "RenameResourceSync",
+    DeleteResourceSync = "DeleteResourceSync",
+    WriteSyncContents = "WriteSyncContents",
+    CommitSync = "CommitSync",
+    RunSync = "RunSync",
+    CreateVariable = "CreateVariable",
+    UpdateVariableValue = "UpdateVariableValue",
+    DeleteVariable = "DeleteVariable",
+    CreateGitProviderAccount = "CreateGitProviderAccount",
+    UpdateGitProviderAccount = "UpdateGitProviderAccount",
+    DeleteGitProviderAccount = "DeleteGitProviderAccount",
+    CreateDockerRegistryAccount = "CreateDockerRegistryAccount",
+    UpdateDockerRegistryAccount = "UpdateDockerRegistryAccount",
+    DeleteDockerRegistryAccount = "DeleteDockerRegistryAccount"
+}
+/** Represents the output of some command being run */
+export interface Log {
+    /** A label for the log */
+    stage: string;
+    /** The command which was executed */
+    command: string;
+    /** The output of the command in the standard channel */
+    stdout: string;
+    /** The output of the command in the error channel */
+    stderr: string;
+    /** Whether the command run was successful */
+    success: boolean;
+    /** The start time of the command execution */
+    start_ts: I64;
+    /** The end time of the command execution */
+    end_ts: I64;
+}
+/** An update's status */
+export declare enum UpdateStatus {
+    /** The run is in the system but hasn't started yet */
+    Queued = "Queued",
+    /** The run is currently running */
+    InProgress = "InProgress",
+    /** The run is complete */
+    Complete = "Complete"
+}
 export interface Version {
     major: number;
     minor: number;
     patch: number;
 }
+/** Represents an action performed by Komodo. */
+export interface Update {
+    /**
+     * The Mongo ID of the update.
+     * This field is de/serialized from/to JSON as
+     * `{ "_id": { "$oid": "..." }, ...(rest of serialized Update) }`
+     */
+    _id?: MongoId;
+    /** The operation performed */
+    operation: Operation;
+    /** The time the operation started */
+    start_ts: I64;
+    /** Whether the operation was successful */
+    success: boolean;
+    /**
+     * The user id that triggered the update.
+     *
+     * Also can take these values for operations triggered automatically:
+     * - `Procedure`: The operation was triggered as part of a procedure run
+     * - `Github`: The operation was triggered by a github webhook
+     * - `Auto Redeploy`: The operation (always `Deploy`) was triggered by an attached build finishing.
+     */
+    operator: string;
+    /** The target resource to which this update refers */
+    target: ResourceTarget;
+    /** Logs produced as the operation is performed */
+    logs: Log[];
+    /** The time the operation completed. */
+    end_ts?: I64;
+    /**
+     * The status of the update
+     * - `Queued`
+     * - `InProgress`
+     * - `Complete`
+     */
+    status: UpdateStatus;
+    /** An optional version on the update, ie build version or deployed version. */
+    version?: Version;
+    /** An optional commit hash associated with the update, ie cloned hash or deployed hash. */
+    commit_hash?: string;
+    /** Some unstructured, operation specific data. Not for general usage. */
+    other_data?: string;
+    /** If the update is for resource config update, give the previous toml contents */
+    prev_toml?: string;
+    /** If the update is for resource config update, give the current (at time of Update) toml contents */
+    current_toml?: string;
+}
+export type BoxUpdate = Update;
 /** Configuration for an image registry */
 export interface ImageRegistryConfig {
     /**
@@ -1458,23 +1645,6 @@ export interface BuildActionState {
 export type GetBuildActionStateResponse = BuildActionState;
 export type GetBuildResponse = Build;
 export type GetBuilderResponse = Builder;
-/** Represents the output of some command being run */
-export interface Log {
-    /** A label for the log */
-    stage: string;
-    /** The command which was executed */
-    command: string;
-    /** The output of the command in the standard channel */
-    stdout: string;
-    /** The output of the command in the error channel */
-    stderr: string;
-    /** Whether the command run was successful */
-    success: boolean;
-    /** The start time of the command execution */
-    start_ts: I64;
-    /** The end time of the command execution */
-    end_ts: I64;
-}
 export type GetContainerLogResponse = Log;
 export interface DeploymentActionState {
     pulling: boolean;
@@ -2254,175 +2424,6 @@ export interface Tag {
     owner?: string;
 }
 export type GetTagResponse = Tag;
-export declare enum Operation {
-    None = "None",
-    CreateServer = "CreateServer",
-    UpdateServer = "UpdateServer",
-    DeleteServer = "DeleteServer",
-    RenameServer = "RenameServer",
-    StartContainer = "StartContainer",
-    RestartContainer = "RestartContainer",
-    PauseContainer = "PauseContainer",
-    UnpauseContainer = "UnpauseContainer",
-    StopContainer = "StopContainer",
-    DestroyContainer = "DestroyContainer",
-    StartAllContainers = "StartAllContainers",
-    RestartAllContainers = "RestartAllContainers",
-    PauseAllContainers = "PauseAllContainers",
-    UnpauseAllContainers = "UnpauseAllContainers",
-    StopAllContainers = "StopAllContainers",
-    PruneContainers = "PruneContainers",
-    CreateNetwork = "CreateNetwork",
-    DeleteNetwork = "DeleteNetwork",
-    PruneNetworks = "PruneNetworks",
-    DeleteImage = "DeleteImage",
-    PruneImages = "PruneImages",
-    DeleteVolume = "DeleteVolume",
-    PruneVolumes = "PruneVolumes",
-    PruneDockerBuilders = "PruneDockerBuilders",
-    PruneBuildx = "PruneBuildx",
-    PruneSystem = "PruneSystem",
-    CreateStack = "CreateStack",
-    UpdateStack = "UpdateStack",
-    RenameStack = "RenameStack",
-    DeleteStack = "DeleteStack",
-    WriteStackContents = "WriteStackContents",
-    RefreshStackCache = "RefreshStackCache",
-    PullStack = "PullStack",
-    DeployStack = "DeployStack",
-    StartStack = "StartStack",
-    RestartStack = "RestartStack",
-    PauseStack = "PauseStack",
-    UnpauseStack = "UnpauseStack",
-    StopStack = "StopStack",
-    DestroyStack = "DestroyStack",
-    DeployStackService = "DeployStackService",
-    PullStackService = "PullStackService",
-    StartStackService = "StartStackService",
-    RestartStackService = "RestartStackService",
-    PauseStackService = "PauseStackService",
-    UnpauseStackService = "UnpauseStackService",
-    StopStackService = "StopStackService",
-    DestroyStackService = "DestroyStackService",
-    CreateDeployment = "CreateDeployment",
-    UpdateDeployment = "UpdateDeployment",
-    RenameDeployment = "RenameDeployment",
-    DeleteDeployment = "DeleteDeployment",
-    Deploy = "Deploy",
-    PullDeployment = "PullDeployment",
-    StartDeployment = "StartDeployment",
-    RestartDeployment = "RestartDeployment",
-    PauseDeployment = "PauseDeployment",
-    UnpauseDeployment = "UnpauseDeployment",
-    StopDeployment = "StopDeployment",
-    DestroyDeployment = "DestroyDeployment",
-    CreateBuild = "CreateBuild",
-    UpdateBuild = "UpdateBuild",
-    RenameBuild = "RenameBuild",
-    DeleteBuild = "DeleteBuild",
-    RunBuild = "RunBuild",
-    CancelBuild = "CancelBuild",
-    WriteDockerfile = "WriteDockerfile",
-    CreateRepo = "CreateRepo",
-    UpdateRepo = "UpdateRepo",
-    RenameRepo = "RenameRepo",
-    DeleteRepo = "DeleteRepo",
-    CloneRepo = "CloneRepo",
-    PullRepo = "PullRepo",
-    BuildRepo = "BuildRepo",
-    CancelRepoBuild = "CancelRepoBuild",
-    CreateProcedure = "CreateProcedure",
-    UpdateProcedure = "UpdateProcedure",
-    RenameProcedure = "RenameProcedure",
-    DeleteProcedure = "DeleteProcedure",
-    RunProcedure = "RunProcedure",
-    CreateAction = "CreateAction",
-    UpdateAction = "UpdateAction",
-    RenameAction = "RenameAction",
-    DeleteAction = "DeleteAction",
-    RunAction = "RunAction",
-    CreateBuilder = "CreateBuilder",
-    UpdateBuilder = "UpdateBuilder",
-    RenameBuilder = "RenameBuilder",
-    DeleteBuilder = "DeleteBuilder",
-    CreateAlerter = "CreateAlerter",
-    UpdateAlerter = "UpdateAlerter",
-    RenameAlerter = "RenameAlerter",
-    DeleteAlerter = "DeleteAlerter",
-    TestAlerter = "TestAlerter",
-    CreateResourceSync = "CreateResourceSync",
-    UpdateResourceSync = "UpdateResourceSync",
-    RenameResourceSync = "RenameResourceSync",
-    DeleteResourceSync = "DeleteResourceSync",
-    WriteSyncContents = "WriteSyncContents",
-    CommitSync = "CommitSync",
-    RunSync = "RunSync",
-    CreateVariable = "CreateVariable",
-    UpdateVariableValue = "UpdateVariableValue",
-    DeleteVariable = "DeleteVariable",
-    CreateGitProviderAccount = "CreateGitProviderAccount",
-    UpdateGitProviderAccount = "UpdateGitProviderAccount",
-    DeleteGitProviderAccount = "DeleteGitProviderAccount",
-    CreateDockerRegistryAccount = "CreateDockerRegistryAccount",
-    UpdateDockerRegistryAccount = "UpdateDockerRegistryAccount",
-    DeleteDockerRegistryAccount = "DeleteDockerRegistryAccount"
-}
-/** An update's status */
-export declare enum UpdateStatus {
-    /** The run is in the system but hasn't started yet */
-    Queued = "Queued",
-    /** The run is currently running */
-    InProgress = "InProgress",
-    /** The run is complete */
-    Complete = "Complete"
-}
-/** Represents an action performed by Komodo. */
-export interface Update {
-    /**
-     * The Mongo ID of the update.
-     * This field is de/serialized from/to JSON as
-     * `{ "_id": { "$oid": "..." }, ...(rest of serialized Update) }`
-     */
-    _id?: MongoId;
-    /** The operation performed */
-    operation: Operation;
-    /** The time the operation started */
-    start_ts: I64;
-    /** Whether the operation was successful */
-    success: boolean;
-    /**
-     * The user id that triggered the update.
-     *
-     * Also can take these values for operations triggered automatically:
-     * - `Procedure`: The operation was triggered as part of a procedure run
-     * - `Github`: The operation was triggered by a github webhook
-     * - `Auto Redeploy`: The operation (always `Deploy`) was triggered by an attached build finishing.
-     */
-    operator: string;
-    /** The target resource to which this update refers */
-    target: ResourceTarget;
-    /** Logs produced as the operation is performed */
-    logs: Log[];
-    /** The time the operation completed. */
-    end_ts?: I64;
-    /**
-     * The status of the update
-     * - `Queued`
-     * - `InProgress`
-     * - `Complete`
-     */
-    status: UpdateStatus;
-    /** An optional version on the update, ie build version or deployed version. */
-    version?: Version;
-    /** An optional commit hash associated with the update, ie cloned hash or deployed hash. */
-    commit_hash?: string;
-    /** Some unstructured, operation specific data. Not for general usage. */
-    other_data?: string;
-    /** If the update is for resource config update, give the previous toml contents */
-    prev_toml?: string;
-    /** If the update is for resource config update, give the current (at time of Update) toml contents */
-    current_toml?: string;
-}
 export type GetUpdateResponse = Update;
 /**
  * Permission users at the group level.
@@ -3501,6 +3502,29 @@ export interface ResourceSyncListItemInfo {
 }
 export type ResourceSyncListItem = ResourceListItem<ResourceSyncListItemInfo>;
 export type ListResourceSyncsResponse = ResourceSyncListItem[];
+/** A scheduled Action / Procedure run. */
+export interface Schedule {
+    /** Procedure or Alerter */
+    target: ResourceTarget;
+    /** The format of the schedule expression */
+    schedule_format: ScheduleFormat;
+    /** The schedule for the run */
+    schedule: string;
+    /** Whether the scheduled run is enabled */
+    enabled: boolean;
+    /** Custom schedule timezone if it exists */
+    schedule_timezone: string;
+    /** Last run timestamp in ms. */
+    last_run_at: I64;
+    /** Next scheduled run time in unix ms. */
+    next_scheduled_run?: I64;
+    /**
+     * If there is an error parsing schedule expression,
+     * it will be given here.
+     */
+    schedule_error?: string;
+}
+export type ListSchedulesResponse = Schedule[];
 export type ListSecretsResponse = string[];
 export declare enum ServerState {
     /** Server is unreachable. */
@@ -6007,6 +6031,14 @@ export interface ListResourceSyncs {
     query?: ResourceSyncQuery;
 }
 /**
+ * List configured schedules.
+ * Response: [ListSchedulesResponse].
+ */
+export interface ListSchedules {
+    /** Optionally filter resources by tags */
+    tags?: string[];
+}
+/**
  * List the available secrets from the core config.
  * Response: [ListSecretsResponse].
  */
@@ -7529,6 +7561,9 @@ export type ReadRequest = {
 } | {
     type: "ListFullActions";
     params: ListFullActions;
+} | {
+    type: "ListSchedules";
+    params: ListSchedules;
 } | {
     type: "GetServersSummary";
     params: GetServersSummary;

@@ -8,14 +8,14 @@ use anyhow::{Context, anyhow};
 use async_timing_util::{ONE_MIN_MS, unix_timestamp_ms};
 use komodo_client::entities::{
   Operation, ResourceTarget, ResourceTargetVariant,
-  action::Action,
+  action::{Action, ActionState},
   alerter::Alerter,
   build::Build,
   builder::Builder,
   deployment::{Deployment, DeploymentState},
   docker::container::{ContainerListItem, ContainerStateStatusEnum},
   permission::{PermissionLevel, PermissionLevelAndSpecifics},
-  procedure::Procedure,
+  procedure::{Procedure, ProcedureState},
   repo::Repo,
   server::{Server, ServerState},
   stack::{Stack, StackServiceNames, StackState},
@@ -40,10 +40,11 @@ use tokio::sync::Mutex;
 use crate::{
   config::core_config,
   permission::get_user_permission_on_resource,
-  resource,
+  resource::{self, KomodoResource},
   stack::compose_container_match_regex,
   state::{
-    action_states, db_client, deployment_status_cache,
+    action_state_cache, action_states, db_client,
+    deployment_status_cache, procedure_state_cache,
     stack_status_cache,
   },
 };
@@ -438,4 +439,57 @@ pub async fn get_system_info(
     }
   };
   Ok(res)
+}
+
+/// Get last time procedure / action was run using Update query.
+/// Ignored whether run was successful.
+pub async fn get_last_run_at<R: KomodoResource>(
+  id: &String,
+) -> anyhow::Result<Option<i64>> {
+  let resource_type = R::resource_type();
+  let res = db_client()
+    .updates
+    .find_one(doc! {
+      "target.type": resource_type.as_ref(),
+      "target.id": id,
+      "operation": format!("Run{resource_type}"),
+      "status": "Complete"
+    })
+    .sort(doc! { "start_ts": -1 })
+    .await
+    .context("Failed to query updates collection for last run time")?
+    .map(|u| u.start_ts);
+  Ok(res)
+}
+
+pub async fn get_action_state(id: &String) -> ActionState {
+  if action_states()
+    .action
+    .get(id)
+    .await
+    .map(|s| s.get().map(|s| s.running))
+    .transpose()
+    .ok()
+    .flatten()
+    .unwrap_or_default()
+  {
+    return ActionState::Running;
+  }
+  action_state_cache().get(id).await.unwrap_or_default()
+}
+
+pub async fn get_procedure_state(id: &String) -> ProcedureState {
+  if action_states()
+    .procedure
+    .get(id)
+    .await
+    .map(|s| s.get().map(|s| s.running))
+    .transpose()
+    .ok()
+    .flatten()
+    .unwrap_or_default()
+  {
+    return ProcedureState::Running;
+  }
+  procedure_state_cache().get(id).await.unwrap_or_default()
 }

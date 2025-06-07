@@ -24,11 +24,11 @@ pub type ActionListItem = ResourceListItem<ActionListItemInfo>;
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct ActionListItemInfo {
-  /// Action last run timestamp in ms.
-  pub last_run_at: I64,
   /// Whether last action run successful
   pub state: ActionState,
-  /// If the procedure has schedule enabled, this is the
+  /// Action last successful run timestamp in ms.
+  pub last_run_at: Option<I64>,
+  /// If the action has schedule enabled, this is the
   /// next scheduled run time in unix ms.
   pub next_scheduled_run: Option<I64>,
   /// If there is an error parsing schedule expression,
@@ -53,15 +53,7 @@ pub enum ActionState {
 }
 
 #[typeshare]
-pub type Action = Resource<ActionConfig, ActionInfo>;
-
-#[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
-pub struct ActionInfo {
-  /// When action was last run
-  #[serde(default)]
-  pub last_run_at: I64,
-}
+pub type Action = Resource<ActionConfig, ()>;
 
 #[typeshare(serialized_as = "Partial<ActionConfig>")]
 pub type _PartialActionConfig = PartialActionConfig;

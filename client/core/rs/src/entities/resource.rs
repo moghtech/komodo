@@ -106,6 +106,7 @@ pub struct ResourceQuery<T: Default> {
   /// Pass Vec of tag ids or tag names
   #[serde(default, deserialize_with = "string_list_deserializer")]
   pub tags: Vec<String>,
+  /// 'All' or 'Any'
   #[serde(default)]
   pub tag_behavior: TagBehavior,
   #[serde(default)]

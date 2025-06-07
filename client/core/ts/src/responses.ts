@@ -50,6 +50,9 @@ export type ReadResponses = {
   ListActions: Types.ListActionsResponse;
   ListFullActions: Types.ListFullActionsResponse;
 
+  // ==== SCHEDULE ====
+  ListSchedules: Types.ListSchedulesResponse;
+
   // ==== SERVER ====
   GetServersSummary: Types.GetServersSummaryResponse;
   GetServer: Types.GetServerResponse;

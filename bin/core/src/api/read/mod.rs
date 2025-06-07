@@ -43,6 +43,7 @@ mod permission;
 mod procedure;
 mod provider;
 mod repo;
+mod schedule;
 mod server;
 mod stack;
 mod sync;
@@ -97,6 +98,9 @@ enum ReadRequest {
   GetActionActionState(GetActionActionState),
   ListActions(ListActions),
   ListFullActions(ListFullActions),
+
+  // ==== SCHEDULE ====
+  ListSchedules(ListSchedules),
 
   // ==== SERVER ====
   GetServersSummary(GetServersSummary),
