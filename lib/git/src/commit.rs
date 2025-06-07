@@ -117,7 +117,7 @@ pub async fn commit_file_inner(
   let push_log = run_komodo_command(
     "Push",
     repo_dir,
-    format!("git push -f --set-upstream origin {branch}"),
+    format!("git push --set-upstream origin {branch}"),
   )
   .await;
   res.logs.push(push_log);
@@ -170,7 +170,7 @@ pub async fn commit_all(
   let push_log = run_komodo_command(
     "Push",
     repo_dir,
-    format!("git push -f --set-upstream origin {branch}"),
+    format!("git push --set-upstream origin {branch}"),
   )
   .await;
   res.logs.push(push_log);
