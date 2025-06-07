@@ -26,4 +26,6 @@ pub struct Schedule {
   /// If there is an error parsing schedule expression,
   /// it will be given here.
   pub schedule_error: Option<String>,
+  /// Resource tags.
+  pub tags: Vec<String>,
 }
