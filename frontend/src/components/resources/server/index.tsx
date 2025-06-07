@@ -7,11 +7,12 @@ import {
   Cpu,
   MemoryStick,
   Database,
-  Milestone,
   Play,
   RefreshCcw,
   Pause,
   Square,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 import { Section } from "@components/layouts";
 import { Prune } from "./actions";
@@ -41,6 +42,7 @@ import { GroupActions } from "@components/group-actions";
 import { ServerTerminals } from "@components/terminal/server";
 import { usePermissions } from "@lib/hooks";
 import { MaintenanceServerConfig } from "./maintenance/config";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 
 export const useServer = (id?: string) =>
   useRead("ListServers", {}, { refetchInterval: 10_000 }).data?.find(
@@ -281,18 +283,49 @@ export const ServerComponents: RequiredResourceComponents = {
 
   Info: {
     Version: ({ id }) => {
+      const core_version = useRead("GetVersion", {}).data?.version;
       const version = useRead(
         "GetPeripheryVersion",
         { server: id },
         { refetchInterval: 5000 }
       ).data?.version;
-      const _version =
-        version === undefined || version === "unknown" ? "unknown" : version;
+      const mismatch = !!version && !!core_version && version !== core_version;
       return (
-        <div className="flex items-center gap-2">
-          <Milestone className="w-4 h-4" />
-          {_version}
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center gap-2 cursor-pointer">
+              {mismatch ? (
+                <AlertCircle
+                  className={cn(
+                    "w-4 h-4",
+                    stroke_color_class_by_intention("Critical")
+                  )}
+                />
+              ) : (
+                <CheckCircle2
+                  className={cn(
+                    "w-4 h-4",
+                    stroke_color_class_by_intention("Good")
+                  )}
+                />
+              )}
+              {version ?? "Unknown"}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            {mismatch ? (
+              <div>
+                Periphery version <span className="font-bold">mismatch</span>.
+                Expected <span className="font-bold">{core_version}</span>.
+              </div>
+            ) : (
+              <div>
+                Periphery and Core version{" "}
+                <span className="font-bold">match</span>.
+              </div>
+            )}
+          </TooltipContent>
+        </Tooltip>
       );
     },
     Cpu: ({ id }) => {
