@@ -64,6 +64,7 @@ impl Resolve<ReadArgs> for ListSchedules {
       );
       Schedule {
         target: ResourceTarget::Action(action.id),
+        name: action.name,
         enabled: action.config.schedule_enabled,
         schedule_format: action.config.schedule_format,
         schedule: action.config.schedule,
@@ -85,6 +86,7 @@ impl Resolve<ReadArgs> for ListSchedules {
       );
       Schedule {
         target: ResourceTarget::Procedure(procedure.id),
+        name: procedure.name,
         enabled: procedure.config.schedule_enabled,
         schedule_format: procedure.config.schedule_format,
         schedule: procedure.config.schedule,

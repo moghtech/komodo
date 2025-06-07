@@ -9,6 +9,8 @@ use crate::entities::{I64, ResourceTarget, ScheduleFormat};
 pub struct Schedule {
   /// Procedure or Alerter
   pub target: ResourceTarget,
+  /// Readable name of the target resource
+  pub name: String,
   /// The format of the schedule expression
   pub schedule_format: ScheduleFormat,
   /// The schedule for the run

@@ -1,6 +1,5 @@
 import { Layout } from "@components/layouts";
 import { useUser } from "@lib/hooks";
-import SchedulesPage from "@pages/schedules";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
@@ -24,6 +23,7 @@ const ImagePage = lazy(() => import("@pages/server-info/image"));
 const VolumePage = lazy(() => import("@pages/server-info/volume"));
 const ContainerPage = lazy(() => import("@pages/server-info/container"));
 const ContainersPage = lazy(() => import("@pages/containers"));
+const SchedulesPage = lazy(() => import("@pages/schedules"));
 
 export const Router = () => {
   const { data: user, isLoading, error } = useUser();

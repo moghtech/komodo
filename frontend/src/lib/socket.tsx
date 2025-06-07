@@ -278,6 +278,7 @@ const on_update = (
 
     if (update.target.type === "Procedure") {
       invalidate(
+        ["ListSchedules"],
         ["ListProcedures"],
         ["ListFullProcedures"],
         ["GetProceduresSummary"],
@@ -287,6 +288,7 @@ const on_update = (
 
     if (update.target.type === "Action") {
       invalidate(
+        ["ListSchedules"],
         ["ListActions"],
         ["ListFullActions"],
         ["GetActionsSummary"],

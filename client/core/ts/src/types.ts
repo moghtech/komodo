@@ -3537,6 +3537,8 @@ export type ListResourceSyncsResponse = ResourceSyncListItem[];
 export interface Schedule {
 	/** Procedure or Alerter */
 	target: ResourceTarget;
+	/** Readable name of the target resource */
+	name: string;
 	/** The format of the schedule expression */
 	schedule_format: ScheduleFormat;
 	/** The schedule for the run */

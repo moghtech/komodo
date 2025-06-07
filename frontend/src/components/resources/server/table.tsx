@@ -51,8 +51,8 @@ export const ServerTable = ({
             const sb = resourcesCount(b.original.id);
 
             if (!sa && !sb) return 0;
-            if (!sa) return -1;
-            if (!sb) return 1;
+            if (!sa) return 1;
+            if (!sb) return -1;
 
             if (sa > sb) return 1;
             else if (sa < sb) return -1;

@@ -49,8 +49,8 @@ export const StackTable = ({ stacks }: { stacks: Types.StackListItem[] }) => {
             const sb = serverName(b.original.info.server_id);
 
             if (!sa && !sb) return 0;
-            if (!sa) return -1;
-            if (!sb) return 1;
+            if (!sa) return 1;
+            if (!sb) return -1;
 
             if (sa > sb) return 1;
             else if (sa < sb) return -1;
