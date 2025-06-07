@@ -44,3 +44,4 @@ envy.workspace = true
 uuid.workspace = true
 clap.workspace = true
 bson.workspace = true
+chrono.workspace = true
