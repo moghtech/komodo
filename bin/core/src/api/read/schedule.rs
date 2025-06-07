@@ -98,6 +98,12 @@ impl Resolve<ReadArgs> for ListSchedules {
     let (actions, procedures) =
       tokio::join!(join_all(actions), join_all(procedures));
 
-    Ok(actions.into_iter().chain(procedures).collect())
+    Ok(
+      actions
+        .into_iter()
+        .chain(procedures)
+        .filter(|s| !s.schedule.is_empty())
+        .collect(),
+    )
   }
 }
