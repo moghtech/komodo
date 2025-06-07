@@ -18,6 +18,7 @@ import { Prune } from "./actions";
 import {
   server_state_intention,
   stroke_color_class_by_intention,
+  text_color_class_by_intention,
 } from "@lib/color";
 import { ServerConfig } from "./config";
 import { DeploymentTable } from "../deployment/table";
@@ -272,17 +273,24 @@ export const ServerComponents: RequiredResourceComponents = {
 
   Info: {
     Version: ({ id }) => {
+      const core_version = useRead("GetVersion", {}).data?.version;
       const version = useRead(
         "GetPeripheryVersion",
         { server: id },
         { refetchInterval: 5000 }
       ).data?.version;
-      const _version =
-        version === undefined || version === "unknown" ? "unknown" : version;
       return (
-        <div className="flex items-center gap-2">
+        <div
+          className={cn(
+            "flex items-center gap-2",
+            version &&
+              core_version &&
+              version !== core_version &&
+              text_color_class_by_intention("Critical")
+          )}
+        >
           <Milestone className="w-4 h-4" />
-          {_version}
+          {version ?? "Unknown"}
         </div>
       );
     },
