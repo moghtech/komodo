@@ -467,10 +467,6 @@ pub async fn alert_servers(
     if let Some(disk_alerts) = server_disk_alerts {
       for (path, alert) in disk_alerts {
         if !health.disks.contains_key(path) {
-          buffer.reset(
-            server_status.id.clone(),
-            AlertDataVariant::ServerDisk,
-          );
           let mut alert = alert.clone();
           alert.level = SeverityLevel::Ok;
           alert_ids_to_close
