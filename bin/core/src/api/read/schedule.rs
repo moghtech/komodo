@@ -2,21 +2,15 @@ use futures::future::join_all;
 use komodo_client::{
   api::read::*,
   entities::{
-    ResourceTarget,
-    action::{Action, ActionState},
-    permission::PermissionLevel,
-    procedure::{Procedure, ProcedureState},
-    resource::ResourceQuery,
+    ResourceTarget, action::Action, permission::PermissionLevel,
+    procedure::Procedure, resource::ResourceQuery,
     schedule::Schedule,
   },
 };
 use resolver_api::Resolve;
 
 use crate::{
-  helpers::query::{
-    get_action_state, get_all_tags, get_last_run_at,
-    get_procedure_state,
-  },
+  helpers::query::{get_all_tags, get_last_run_at},
   resource::list_full_for_user,
   schedule::get_schedule_item_info,
 };
@@ -58,10 +52,8 @@ impl Resolve<ReadArgs> for ListSchedules {
         get_schedule_item_info(&ResourceTarget::Action(
           action.id.clone(),
         ));
-      let (state, last_run_at) = tokio::join!(
-        get_action_state(&action.id),
-        get_last_run_at::<Action>(&action.id)
-      );
+      let last_run_at =
+        get_last_run_at::<Action>(&action.id).await.unwrap_or(None);
       Schedule {
         target: ResourceTarget::Action(action.id),
         name: action.name,
@@ -69,8 +61,7 @@ impl Resolve<ReadArgs> for ListSchedules {
         schedule_format: action.config.schedule_format,
         schedule: action.config.schedule,
         schedule_timezone: action.config.schedule_timezone,
-        last_run_at: last_run_at.unwrap_or(None),
-        last_run_success: matches!(state, ActionState::Ok),
+        last_run_at,
         next_scheduled_run,
         schedule_error,
       }
@@ -80,10 +71,9 @@ impl Resolve<ReadArgs> for ListSchedules {
         get_schedule_item_info(&ResourceTarget::Procedure(
           procedure.id.clone(),
         ));
-      let (state, last_run_at) = tokio::join!(
-        get_procedure_state(&procedure.id),
-        get_last_run_at::<Procedure>(&procedure.id)
-      );
+      let last_run_at = get_last_run_at::<Procedure>(&procedure.id)
+        .await
+        .unwrap_or(None);
       Schedule {
         target: ResourceTarget::Procedure(procedure.id),
         name: procedure.name,
@@ -91,8 +81,7 @@ impl Resolve<ReadArgs> for ListSchedules {
         schedule_format: procedure.config.schedule_format,
         schedule: procedure.config.schedule,
         schedule_timezone: procedure.config.schedule_timezone,
-        last_run_at: last_run_at.unwrap_or(None),
-        last_run_success: matches!(state, ProcedureState::Ok),
+        last_run_at,
         next_scheduled_run,
         schedule_error,
       }

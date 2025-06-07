@@ -21,8 +21,6 @@ pub struct Schedule {
   pub schedule_timezone: String,
   /// Last run timestamp in ms.
   pub last_run_at: Option<I64>,
-  /// Whether last run was successful
-  pub last_run_success: bool,
   /// Next scheduled run time in unix ms.
   pub next_scheduled_run: Option<I64>,
   /// If there is an error parsing schedule expression,
