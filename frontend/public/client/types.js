@@ -71,15 +71,26 @@ export var TerminationSignal;
  */
 export var DeploymentState;
 (function (DeploymentState) {
-    DeploymentState["Unknown"] = "unknown";
-    DeploymentState["NotDeployed"] = "not_deployed";
-    DeploymentState["Created"] = "created";
-    DeploymentState["Restarting"] = "restarting";
+    /** The deployment is currently re/deploying */
+    DeploymentState["Deploying"] = "deploying";
+    /** Container is running */
     DeploymentState["Running"] = "running";
+    /** Container is created but not running */
+    DeploymentState["Created"] = "created";
+    /** Container is in restart loop */
+    DeploymentState["Restarting"] = "restarting";
+    /** Container is being removed */
     DeploymentState["Removing"] = "removing";
+    /** Container is paused */
     DeploymentState["Paused"] = "paused";
+    /** Container is exited */
     DeploymentState["Exited"] = "exited";
+    /** Container is dead */
     DeploymentState["Dead"] = "dead";
+    /** The deployment is not deployed (no matching container) */
+    DeploymentState["NotDeployed"] = "not_deployed";
+    /** Server not reachable for status */
+    DeploymentState["Unknown"] = "unknown";
 })(DeploymentState || (DeploymentState = {}));
 /** Severity level of problem. */
 export var SeverityLevel;
@@ -441,6 +452,8 @@ export var ServerState;
 })(ServerState || (ServerState = {}));
 export var StackState;
 (function (StackState) {
+    /** The stack is currently re/deploying */
+    StackState["Deploying"] = "deploying";
     /** All containers are running. */
     StackState["Running"] = "running";
     /** All containers are paused */
@@ -459,7 +472,7 @@ export var StackState;
     StackState["Unhealthy"] = "unhealthy";
     /** The stack is not deployed */
     StackState["Down"] = "down";
-    /** Server not reachable */
+    /** Server not reachable for status */
     StackState["Unknown"] = "unknown";
 })(StackState || (StackState = {}));
 export var RepoWebhookAction;

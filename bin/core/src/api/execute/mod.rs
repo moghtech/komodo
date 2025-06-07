@@ -174,8 +174,11 @@ async fn handler(
   Ok((TypedHeader(ContentType::json()), res))
 }
 
+#[typeshare(serialized_as = "Update")]
+type BoxUpdate = Box<Update>;
+
 pub enum ExecutionResult {
-  Single(Update),
+  Single(BoxUpdate),
   /// The batch contents will be pre serialized here
   Batch(String),
 }
@@ -245,7 +248,7 @@ pub fn inner_handler(
       }
     });
 
-    Ok(ExecutionResult::Single(update))
+    Ok(ExecutionResult::Single(update.into()))
   })
 }
 

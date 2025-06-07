@@ -160,14 +160,14 @@ pub enum BatchExecutionResponseItem {
   Err(BatchExecutionResponseItemErr),
 }
 
-impl From<Result<Update, BatchExecutionResponseItemErr>>
+impl From<Result<Box<Update>, BatchExecutionResponseItemErr>>
   for BatchExecutionResponseItem
 {
   fn from(
-    value: Result<Update, BatchExecutionResponseItemErr>,
+    value: Result<Box<Update>, BatchExecutionResponseItemErr>,
   ) -> Self {
     match value {
-      Ok(update) => Self::Ok(update),
+      Ok(update) => Self::Ok(*update),
       Err(e) => Self::Err(e),
     }
   }

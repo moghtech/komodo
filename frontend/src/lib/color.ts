@@ -150,6 +150,8 @@ export const deployment_state_intention: (
   switch (state) {
     case undefined:
       return "None";
+    case Types.DeploymentState.Deploying:
+      return "Warning";
     case Types.DeploymentState.Running:
       return "Good";
     case Types.DeploymentState.NotDeployed:
@@ -222,6 +224,8 @@ export const stack_state_intention = (state?: Types.StackState) => {
   switch (state) {
     case undefined:
       return "None";
+    case Types.StackState.Deploying:
+      return "Warning";
     case Types.StackState.Running:
       return "Good";
     case Types.StackState.Paused:

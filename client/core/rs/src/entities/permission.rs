@@ -159,7 +159,7 @@ pub enum SpecificPermission {
 
 impl SpecificPermission {
   fn all() -> IndexSet<SpecificPermission> {
-    SpecificPermission::VARIANTS.into_iter().cloned().collect()
+    SpecificPermission::VARIANTS.iter().cloned().collect()
   }
 }
 

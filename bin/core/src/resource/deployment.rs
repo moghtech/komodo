@@ -78,6 +78,20 @@ impl super::KomodoResource for Deployment {
     deployment: Resource<Self::Config, Self::Info>,
   ) -> Self::ListItem {
     let status = deployment_status_cache().get(&deployment.id).await;
+    let state = if action_states()
+      .deployment
+      .get(&deployment.id)
+      .await
+      .map(|s| s.get().map(|s| s.deploying))
+      .transpose()
+      .ok()
+      .flatten()
+      .unwrap_or_default()
+    {
+      DeploymentState::Deploying
+    } else {
+      status.as_ref().map(|s| s.curr.state).unwrap_or_default()
+    };
     let (build_image, build_id) = match deployment.config.image {
       DeploymentImage::Build { build_id, version } => {
         let (build_name, build_id, build_version) =
@@ -117,10 +131,7 @@ impl super::KomodoResource for Deployment {
       tags: deployment.tags,
       resource_type: ResourceTargetVariant::Deployment,
       info: DeploymentListItemInfo {
-        state: status
-          .as_ref()
-          .map(|s| s.curr.state)
-          .unwrap_or_default(),
+        state,
         status: status.as_ref().and_then(|s| {
           s.curr.container.as_ref().and_then(|c| c.status.to_owned())
         }),
@@ -217,9 +228,9 @@ impl super::KomodoResource for Deployment {
     deployment: &Resource<Self::Config, Self::Info>,
     update: &mut Update,
   ) -> anyhow::Result<()> {
-    let state = get_deployment_state(deployment)
+    let state = get_deployment_state(&deployment.id)
       .await
-      .context("failed to get container state")?;
+      .context("Failed to get deployment state")?;
     if matches!(
       state,
       DeploymentState::NotDeployed | DeploymentState::Unknown
@@ -235,7 +246,7 @@ impl super::KomodoResource for Deployment {
       Ok(server) => server,
       Err(e) => {
         update.push_error_log(
-          "remove container",
+          "Remove Container",
           format_serror(
             &e.context(format!(
               "failed to retrieve server at {} from db.",
@@ -250,8 +261,8 @@ impl super::KomodoResource for Deployment {
     if !server.config.enabled {
       // Don't need to
       update.push_simple_log(
-        "remove container",
-        "skipping container removal, server is disabled.",
+        "Remove Container",
+        "Skipping container removal, server is disabled.",
       );
       return Ok(());
     }
@@ -261,9 +272,9 @@ impl super::KomodoResource for Deployment {
         // This case won't ever happen, as periphery_client only fallible if the server is disabled.
         // Leaving it for completeness sake
         update.push_error_log(
-          "remove container",
+          "Remove Container",
           format_serror(
-            &e.context("failed to get periphery client").into(),
+            &e.context("Failed to get periphery client").into(),
           ),
         );
         return Ok(());
@@ -279,9 +290,9 @@ impl super::KomodoResource for Deployment {
     {
       Ok(log) => update.logs.push(log),
       Err(e) => update.push_error_log(
-        "remove container",
+        "Remove Container",
         format_serror(
-          &e.context("failed to remove container").into(),
+          &e.context("Failed to remove container").into(),
         ),
       ),
     };

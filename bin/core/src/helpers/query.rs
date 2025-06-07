@@ -42,7 +42,10 @@ use crate::{
   permission::get_user_permission_on_resource,
   resource,
   stack::compose_container_match_regex,
-  state::{db_client, deployment_status_cache, stack_status_cache},
+  state::{
+    action_states, db_client, deployment_status_cache,
+    stack_status_cache,
+  },
 };
 
 use super::periphery_client;
@@ -88,10 +91,22 @@ pub async fn get_server_state(server: &Server) -> ServerState {
 
 #[instrument(level = "debug")]
 pub async fn get_deployment_state(
-  deployment: &Deployment,
+  id: &String,
 ) -> anyhow::Result<DeploymentState> {
+  if action_states()
+    .deployment
+    .get(id)
+    .await
+    .map(|s| s.get().map(|s| s.deploying))
+    .transpose()
+    .ok()
+    .flatten()
+    .unwrap_or_default()
+  {
+    return Ok(DeploymentState::Deploying);
+  }
   let state = deployment_status_cache()
-    .get(&deployment.id)
+    .get(id)
     .await
     .unwrap_or_default()
     .curr

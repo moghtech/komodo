@@ -799,7 +799,7 @@ async fn expand_user_group_permissions(
     if id.is_empty() {
       continue;
     }
-    let matcher = Matcher::new(&id)?;
+    let matcher = Matcher::new(id)?;
     match variant {
       ResourceTargetVariant::Build => {
         let permissions = all_resources

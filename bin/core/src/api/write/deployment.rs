@@ -209,7 +209,7 @@ impl Resolve<WriteArgs> for RenameDeployment {
 
     let name = to_docker_compatible_name(&self.name);
 
-    let container_state = get_deployment_state(&deployment).await?;
+    let container_state = get_deployment_state(&deployment.id).await?;
 
     if container_state == DeploymentState::Unknown {
       return Err(

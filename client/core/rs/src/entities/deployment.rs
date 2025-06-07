@@ -338,16 +338,27 @@ pub fn conversions_from_str(
 #[serde(rename_all = "snake_case")]
 #[strum(serialize_all = "snake_case")]
 pub enum DeploymentState {
+  /// The deployment is currently re/deploying
+  Deploying,
+  /// Container is running
+  Running,
+  /// Container is created but not running
+  Created,
+  /// Container is in restart loop
+  Restarting,
+  /// Container is being removed
+  Removing,
+  /// Container is paused
+  Paused,
+  /// Container is exited
+  Exited,
+  /// Container is dead
+  Dead,
+  /// The deployment is not deployed (no matching container)
+  NotDeployed,
+  /// Server not reachable for status
   #[default]
   Unknown,
-  NotDeployed,
-  Created,
-  Restarting,
-  Running,
-  Removing,
-  Paused,
-  Exited,
-  Dead,
 }
 
 impl From<ContainerStateStatusEnum> for DeploymentState {

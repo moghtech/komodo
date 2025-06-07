@@ -588,8 +588,9 @@ async fn handle_post_build_redeploy(build_id: &str) {
     redeploy_deployments
       .into_iter()
       .map(|deployment| async move {
-        let state =
-          get_deployment_state(&deployment).await.unwrap_or_default();
+        let state = get_deployment_state(&deployment.id)
+          .await
+          .unwrap_or_default();
         if state == DeploymentState::Running {
           let req = super::ExecuteRequest::Deploy(Deploy {
             deployment: deployment.id.clone(),

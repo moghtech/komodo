@@ -79,8 +79,20 @@ impl super::KomodoResource for Stack {
     stack: Resource<Self::Config, Self::Info>,
   ) -> Self::ListItem {
     let status = stack_status_cache().get(&stack.id).await;
-    let state =
-      status.as_ref().map(|s| s.curr.state).unwrap_or_default();
+    let state = if action_states()
+      .stack
+      .get(&stack.id)
+      .await
+      .map(|s| s.get().map(|s| s.deploying))
+      .transpose()
+      .ok()
+      .flatten()
+      .unwrap_or_default()
+    {
+      StackState::Deploying
+    } else {
+      status.as_ref().map(|s| s.curr.state).unwrap_or_default()
+    };
     let project_name = stack.project_name(false);
     let services = status
       .as_ref()

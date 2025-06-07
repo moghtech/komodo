@@ -1094,15 +1094,26 @@ export type Deployment = Resource<DeploymentConfig, undefined>;
  * - Running -> running.
  */
 export declare enum DeploymentState {
-    Unknown = "unknown",
-    NotDeployed = "not_deployed",
-    Created = "created",
-    Restarting = "restarting",
+    /** The deployment is currently re/deploying */
+    Deploying = "deploying",
+    /** Container is running */
     Running = "running",
+    /** Container is created but not running */
+    Created = "created",
+    /** Container is in restart loop */
+    Restarting = "restarting",
+    /** Container is being removed */
     Removing = "removing",
+    /** Container is paused */
     Paused = "paused",
+    /** Container is exited */
     Exited = "exited",
-    Dead = "dead"
+    /** Container is dead */
+    Dead = "dead",
+    /** The deployment is not deployed (no matching container) */
+    NotDeployed = "not_deployed",
+    /** Server not reachable for status */
+    Unknown = "unknown"
 }
 export interface DeploymentListItemInfo {
     /** The state of the deployment / underlying docker container. */
@@ -3533,6 +3544,8 @@ export interface StackService {
 }
 export type ListStackServicesResponse = StackService[];
 export declare enum StackState {
+    /** The stack is currently re/deploying */
+    Deploying = "deploying",
     /** All containers are running. */
     Running = "running",
     /** All containers are paused */
@@ -3551,7 +3564,7 @@ export declare enum StackState {
     Unhealthy = "unhealthy",
     /** The stack is not deployed */
     Down = "down",
-    /** Server not reachable */
+    /** Server not reachable for status */
     Unknown = "unknown"
 }
 export interface StackServiceWithUpdate {

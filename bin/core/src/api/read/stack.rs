@@ -176,7 +176,7 @@ impl Resolve<ReadArgs> for InspectStackContainer {
       .curr
       .services;
     let Some(name) = services
-      .into_iter()
+      .iter()
       .find(|s| s.service == service)
       .and_then(|s| s.container.as_ref().map(|c| c.name.clone()))
     else {

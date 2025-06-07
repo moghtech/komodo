@@ -555,6 +555,7 @@ fn build_cache_for_stack<'a>(
         // Here can diff the changes, to see if they merit a redeploy.
 
         // See if any remote contents don't match deployed contents
+        #[allow(clippy::single_match)]
         match (
           &original.info.deployed_contents,
           &original.info.remote_contents,
