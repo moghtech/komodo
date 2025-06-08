@@ -13,8 +13,7 @@ use serde::Deserialize;
 use serror::AddStatusCode;
 
 use crate::{
-  config::core_config,
-  state::{db_client, jwt_client},
+  config::core_config, helpers::random_string, state::{db_client, jwt_client}
 };
 
 use self::client::github_oauth_client;
@@ -82,9 +81,23 @@ async fn callback(
       if !no_users_exist && core_config.disable_user_registration {
         return Err(anyhow!("User registration is disabled"));
       }
+      
+      let mut username = github_user.login;
+      // Modify username if it already exists
+      if db_client
+        .users
+        .find_one(doc! { "username": &username })
+        .await
+        .context("Failed to query users collection")?
+        .is_some()
+      {
+        username += "-";
+        username += &random_string(5);
+      };
+
       let user = User {
         id: Default::default(),
-        username: github_user.login,
+        username,
         enabled: no_users_exist || core_config.enable_new_users,
         admin: no_users_exist,
         super_admin: no_users_exist,

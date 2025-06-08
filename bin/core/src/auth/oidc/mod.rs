@@ -23,6 +23,7 @@ use serror::AddStatusCode;
 
 use crate::{
   config::core_config,
+  helpers::random_string,
   state::{db_client, jwt_client},
 };
 
@@ -90,6 +91,7 @@ async fn login(
     )
     .set_pkce_challenge(pkce_challenge)
     .add_scope(Scope::new("openid".to_string()))
+    .add_scope(Scope::new("profile".to_string()))
     .add_scope(Scope::new("email".to_string()))
     .url();
 
@@ -243,7 +245,7 @@ async fn callback(
         .context("Failed to fetch user info for new user")?;
 
       // Will use preferred_username, then email, then user_id if it isn't available.
-      let username = user_info
+      let mut username = user_info
         .preferred_username()
         .map(|username| username.to_string())
         .unwrap_or_else(|| {
@@ -261,7 +263,19 @@ async fn callback(
           }
           .to_string()
         });
-        
+
+      // Modify username if it already exists
+      if db_client
+        .users
+        .find_one(doc! { "username": &username })
+        .await
+        .context("Failed to query users collection")?
+        .is_some()
+      {
+        username += "-";
+        username += &random_string(5);
+      };
+
       let user = User {
         id: Default::default(),
         username,
@@ -279,6 +293,7 @@ async fn callback(
           user_id: user_id.to_string(),
         },
       };
+
       let user_id = db_client
         .users
         .insert_one(user)
@@ -288,6 +303,7 @@ async fn callback(
         .as_object_id()
         .context("inserted_id is not ObjectId")?
         .to_string();
+      
       jwt_client()
         .encode(user_id)
         .context("failed to generate jwt")?
