@@ -1,5 +1,5 @@
 import { Section } from "@components/layouts";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Networks } from "./networks";
 import { useServer } from "..";
 import { Types } from "komodo_client";
@@ -16,6 +16,7 @@ export const ServerInfo = ({
   id: string;
   titleOther: ReactNode;
 }) => {
+  const _search = useState("");
   const state = useServer(id)?.info.state ?? Types.ServerState.NotOk;
   const [show2, setShow2] = useLocalStorage<
     "Containers" | "Networks" | "Volumes" | "Images"
@@ -52,16 +53,16 @@ export const ServerInfo = ({
     <Section titleOther={titleOther}>
       <Tabs value={show2} onValueChange={setShow2 as any}>
         <TabsContent value="Containers">
-          <Containers id={id} titleOther={tabsList} />
+          <Containers id={id} titleOther={tabsList} _search={_search} />
         </TabsContent>
         <TabsContent value="Networks">
-          <Networks id={id} titleOther={tabsList} />
+          <Networks id={id} titleOther={tabsList} _search={_search} />
         </TabsContent>
         <TabsContent value="Volumes">
-          <Volumes id={id} titleOther={tabsList} />
+          <Volumes id={id} titleOther={tabsList} _search={_search} />
         </TabsContent>
         <TabsContent value="Images">
-          <Images id={id} titleOther={tabsList} />
+          <Images id={id} titleOther={tabsList} _search={_search} />
         </TabsContent>
       </Tabs>
     </Section>

@@ -37,6 +37,7 @@ interface DataTableProps<TData, TValue> {
     onSelect: (selected: string[]) => void;
     disableRow?: boolean | ((row: Row<TData>) => boolean);
   };
+  containerClassName?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -48,6 +49,7 @@ export function DataTable<TData, TValue>({
   sortDescFirst = false,
   defaultSort = [],
   selectOptions,
+  containerClassName,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>(defaultSort);
 
@@ -88,7 +90,12 @@ export function DataTable<TData, TValue>({
   }, [rowSelection]);
 
   return (
-    <div className="rounded-md border bg-card text-card-foreground shadow py-1 px-1">
+    <div
+      className={cn(
+        "rounded-md border bg-card text-card-foreground shadow py-1 px-1",
+        containerClassName
+      )}
+    >
       <Table className="xl:table-fixed border-separate border-spacing-0">
         <TableHeader className="sticky top-0">
           {table.getHeaderGroups().map((headerGroup, i) => (
