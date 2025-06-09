@@ -1844,18 +1844,14 @@ export interface ServerActionState {
 export type GetServerActionStateResponse = ServerActionState;
 
 /** Types of maintenance schedules */
-export type MaintenanceScheduleType = 
+export enum MaintenanceScheduleType {
 	/** Daily at the specified time */
-	| { type: "Daily", data: {
-}}
+	Daily = "Daily",
 	/** Weekly on the specified day and time */
-	| { type: "Weekly", data: {
-	day_of_week: DayOfWeek;
-}}
+	Weekly = "Weekly",
 	/** One-time maintenance on a specific date and time */
-	| { type: "OneTime", data: {
-	date: string;
-}};
+	OneTime = "OneTime",
+}
 
 /** Represents a scheduled maintenance window for a server */
 export interface MaintenanceWindow {
@@ -1863,19 +1859,28 @@ export interface MaintenanceWindow {
 	name: string;
 	/** Description of what maintenance is performed (optional) */
 	description?: string;
-	/** The type of maintenance schedule (default: Daily) */
-	schedule_type?: MaintenanceScheduleType;
 	/**
-	 * Timezone for maintenance window specificiation.
-	 * If empty, will use Core timezone.
+	 * The type of maintenance schedule:
+	 * - Daily (default)
+	 * - Weekly
+	 * - OneTime
 	 */
-	timezone?: string;
+	schedule_type?: MaintenanceScheduleType;
+	/** For Weekly schedules: Specify the day of the week (Monday, Tuesday, etc.) */
+	day_of_week?: string;
+	/** For OneTime window: ISO 8601 date format (YYYY-MM-DD) */
+	date?: string;
 	/** Start hour in 24-hour format (0-23) (optional, defaults to 0) */
 	hour?: number;
 	/** Start minute (0-59) (optional, defaults to 0) */
 	minute?: number;
 	/** Duration of the maintenance window in minutes (required) */
 	duration_minutes: number;
+	/**
+	 * Timezone for maintenance window specificiation.
+	 * If empty, will use Core timezone.
+	 */
+	timezone?: string;
 	/** Whether this maintenance window is currently enabled */
 	enabled: boolean;
 }

@@ -98,7 +98,10 @@ export const MaintenanceWindows = ({
               cell: ({ row }) => (
                 <div className="flex items-center gap-2">
                   <ScheduleIcon
-                    scheduleType={row.original.schedule_type!.type}
+                    scheduleType={
+                      row.original.schedule_type ??
+                      Types.MaintenanceScheduleType.Daily
+                    }
                   />
                   <span className="font-medium">{row.original.name}</span>
                 </div>
@@ -112,9 +115,7 @@ export const MaintenanceWindows = ({
               ),
               cell: ({ row }) => (
                 <span className="text-sm">
-                  <ScheduleDescription
-                    scheduleType={row.original.schedule_type!}
-                  />
+                  <ScheduleDescription window={row.original} />
                 </span>
               ),
               size: 150,
@@ -220,7 +221,7 @@ export const MaintenanceWindows = ({
 const ScheduleIcon = ({
   scheduleType,
 }: {
-  scheduleType: Types.MaintenanceScheduleType["type"];
+  scheduleType: Types.MaintenanceScheduleType;
 }) => {
   switch (scheduleType) {
     case "Daily":
@@ -235,17 +236,17 @@ const ScheduleIcon = ({
 };
 
 const ScheduleDescription = ({
-  scheduleType,
+  window,
 }: {
-  scheduleType: Types.MaintenanceScheduleType;
+  window: Types.MaintenanceWindow;
 }): string => {
-  switch (scheduleType.type) {
+  switch (window.schedule_type) {
     case "Daily":
       return "Daily";
     case "Weekly":
-      return `Weekly (${scheduleType.data?.day_of_week || "Monday"})`;
+      return `Weekly (${window.day_of_week || "Monday"})`;
     case "OneTime":
-      return `One-time (${scheduleType.data?.date || "No date"})`;
+      return `One-time (${window.date || "No date"})`;
     default:
       return "Unknown";
   }
@@ -331,7 +332,9 @@ const MaintenanceWindowForm = ({
     initialData || {
       name: "",
       description: "",
-      schedule_type: { type: "Daily", data: {} },
+      schedule_type: Types.MaintenanceScheduleType.Daily,
+      day_of_week: "",
+      date: "",
       hour: 5,
       minute: 0,
       timezone: "",
@@ -361,8 +364,8 @@ const MaintenanceWindowForm = ({
       newErrors.duration = "Duration must be greater than 0";
     }
 
-    if (formData.schedule_type && formData.schedule_type.type === "OneTime") {
-      const date = formData.schedule_type.data.date;
+    if (formData.schedule_type && formData.schedule_type === "OneTime") {
+      const date = formData.date;
       if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         newErrors.date = "Date must be in YYYY-MM-DD format";
       }
@@ -378,30 +381,17 @@ const MaintenanceWindowForm = ({
     }
   };
 
-  const updateScheduleType = (type: "Daily" | "Weekly" | "OneTime") => {
-    let scheduleType: Types.MaintenanceScheduleType;
-
-    switch (type) {
-      case "Daily":
-        scheduleType = { type: "Daily", data: {} };
-        break;
-      case "Weekly":
-        scheduleType = {
-          type: "Weekly",
-          data: { day_of_week: "Monday" as Types.DayOfWeek },
-        };
-        break;
-      case "OneTime":
-        scheduleType = {
-          type: "OneTime",
-          data: { date: new Date().toISOString().split("T")[0] },
-        };
-        break;
-      default:
-        scheduleType = { type: "Daily", data: {} };
-    }
-
-    setFormData({ ...formData, schedule_type: scheduleType });
+  const updateScheduleType = (schedule_type: Types.MaintenanceScheduleType) => {
+    setFormData({
+      ...formData,
+      schedule_type,
+      day_of_week:
+        schedule_type === Types.MaintenanceScheduleType.Weekly ? "Monday" : "",
+      date:
+        schedule_type === Types.MaintenanceScheduleType.OneTime
+          ? new Date().toISOString().split("T")[0]
+          : "",
+    });
   };
 
   return (
@@ -431,8 +421,8 @@ const MaintenanceWindowForm = ({
         <div>
           <label className="text-sm font-medium">Schedule Type</label>
           <Select
-            value={formData.schedule_type!.type}
-            onValueChange={(value: "Daily" | "Weekly" | "OneTime") =>
+            value={formData.schedule_type}
+            onValueChange={(value: Types.MaintenanceScheduleType) =>
               updateScheduleType(value)
             }
           >
@@ -440,29 +430,26 @@ const MaintenanceWindowForm = ({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Daily">Daily</SelectItem>
-              <SelectItem value="Weekly">Weekly</SelectItem>
-              <SelectItem value="OneTime">One-time</SelectItem>
+              {Object.values(Types.MaintenanceScheduleType).map(
+                (schedule_type) => (
+                  <SelectItem key={schedule_type} value={schedule_type}>
+                    {schedule_type}
+                  </SelectItem>
+                )
+              )}
             </SelectContent>
           </Select>
         </div>
 
-        {formData.schedule_type!.type === "Weekly" && (
+        {formData.schedule_type === "Weekly" && (
           <div>
             <label className="text-sm font-medium">Day of Week</label>
             <Select
-              value={
-                formData.schedule_type!.type === "Weekly"
-                  ? formData.schedule_type!.data.day_of_week || "Monday"
-                  : "Monday"
-              }
+              value={formData.day_of_week || "Monday"}
               onValueChange={(value: Types.DayOfWeek) =>
                 setFormData({
                   ...formData,
-                  schedule_type: {
-                    type: "Weekly",
-                    data: { day_of_week: value },
-                  },
+                  day_of_week: value,
                 })
               }
             >
@@ -470,36 +457,26 @@ const MaintenanceWindowForm = ({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Monday">Monday</SelectItem>
-                <SelectItem value="Tuesday">Tuesday</SelectItem>
-                <SelectItem value="Wednesday">Wednesday</SelectItem>
-                <SelectItem value="Thursday">Thursday</SelectItem>
-                <SelectItem value="Friday">Friday</SelectItem>
-                <SelectItem value="Saturday">Saturday</SelectItem>
-                <SelectItem value="Sunday">Sunday</SelectItem>
+                {Object.values(Types.DayOfWeek).map((day_of_week) => (
+                  <SelectItem key={day_of_week} value={day_of_week}>
+                    {day_of_week}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
         )}
 
-        {formData.schedule_type!.type === "OneTime" && (
+        {formData.schedule_type === "OneTime" && (
           <div>
             <label className="text-sm font-medium">Date</label>
             <Input
               type="date"
-              value={
-                formData.schedule_type!.type === "OneTime"
-                  ? formData.schedule_type!.data.date ||
-                    new Date().toISOString().split("T")[0]
-                  : ""
-              }
+              value={formData.date || new Date().toISOString().split("T")[0]}
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  schedule_type: {
-                    type: "OneTime",
-                    data: { date: e.target.value },
-                  },
+                  date: e.target.value,
                 })
               }
               className={errors.date ? "border-destructive" : ""}

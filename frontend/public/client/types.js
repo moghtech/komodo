@@ -226,6 +226,16 @@ export var SeverityLevel;
     /** Problem fully realized. */
     SeverityLevel["Critical"] = "CRITICAL";
 })(SeverityLevel || (SeverityLevel = {}));
+/** Types of maintenance schedules */
+export var MaintenanceScheduleType;
+(function (MaintenanceScheduleType) {
+    /** Daily at the specified time */
+    MaintenanceScheduleType["Daily"] = "Daily";
+    /** Weekly on the specified day and time */
+    MaintenanceScheduleType["Weekly"] = "Weekly";
+    /** One-time maintenance on a specific date and time */
+    MaintenanceScheduleType["OneTime"] = "OneTime";
+})(MaintenanceScheduleType || (MaintenanceScheduleType = {}));
 export var Timelength;
 (function (Timelength) {
     Timelength["OneSecond"] = "1-sec";
