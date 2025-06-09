@@ -22,7 +22,7 @@ use mungos::{
 
 use crate::{
   alert::send_alerts,
-  helpers::maintenance::is_maintenance_window_active,
+  helpers::maintenance::is_in_maintenance,
   state::{db_client, server_status_cache},
 };
 
@@ -73,15 +73,6 @@ fn alert_buffer() -> &'static AlertBuffer {
   BUFFER.get_or_init(AlertBuffer::new)
 }
 
-/// Check if a server is currently in a maintenance window
-fn is_server_in_maintenance(server: &Server, timestamp: i64) -> bool {
-  server
-    .config
-    .maintenance_windows
-    .iter()
-    .any(|window| is_maintenance_window_active(window, timestamp))
-}
-
 #[instrument(level = "debug")]
 pub async fn alert_servers(
   ts: i64,
@@ -112,7 +103,8 @@ pub async fn alert_servers(
       .get(&ResourceTarget::Server(server_status.id.clone()));
 
     // Check if server is in maintenance mode
-    let in_maintenance = is_server_in_maintenance(&server, ts);
+    let in_maintenance =
+      is_in_maintenance(&server.config.maintenance_windows, ts);
 
     // ===================
     // SERVER HEALTH

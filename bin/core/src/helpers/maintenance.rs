@@ -3,11 +3,20 @@ use std::str::FromStr;
 use anyhow::Context;
 use chrono::{Datelike, Local};
 use komodo_client::entities::{
-  DayOfWeek,
-  server::{MaintenanceScheduleType, MaintenanceWindow},
+  DayOfWeek, MaintenanceScheduleType, MaintenanceWindow,
 };
 
 use crate::config::core_config;
+
+/// Check if a timestamp is currently in a maintenance window, given a list of windows.
+pub fn is_in_maintenance(
+  windows: &[MaintenanceWindow],
+  timestamp: i64,
+) -> bool {
+  windows
+    .iter()
+    .any(|window| is_maintenance_window_active(window, timestamp))
+}
 
 /// Check if the current timestamp falls within this maintenance window
 pub fn is_maintenance_window_active(

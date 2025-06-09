@@ -7,14 +7,18 @@ use komodo_client::entities::{
   alert::{Alert, AlertData, AlertDataVariant, SeverityLevel},
   alerter::*,
   deployment::DeploymentState,
+  komodo_timestamp,
   stack::StackState,
 };
 use mungos::{find::find_collect, mongodb::bson::doc};
 use std::collections::HashSet;
 use tracing::Instrument;
 
-use crate::helpers::interpolate::interpolate_variables_secrets_into_string;
 use crate::helpers::query::get_variables_and_secrets;
+use crate::helpers::{
+  interpolate::interpolate_variables_secrets_into_string,
+  maintenance::is_in_maintenance,
+};
 use crate::{config::core_config, state::db_client};
 
 mod discord;
@@ -77,6 +81,13 @@ pub async fn send_alert_to_alerter(
 ) -> anyhow::Result<()> {
   // Don't send if not enabled
   if !alerter.config.enabled {
+    return Ok(());
+  }
+
+  if is_in_maintenance(
+    &alerter.config.maintenance_windows,
+    komodo_timestamp(),
+  ) {
     return Ok(());
   }
 

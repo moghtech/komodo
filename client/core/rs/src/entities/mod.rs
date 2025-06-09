@@ -388,6 +388,48 @@ pub struct FileContents {
   pub contents: String,
 }
 
+/// Represents a scheduled maintenance window
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct MaintenanceWindow {
+  /// Name for the maintenance window (required)
+  pub name: String,
+  /// Description of what maintenance is performed (optional)
+  #[serde(default)]
+  pub description: String,
+  /// The type of maintenance schedule:
+  ///   - Daily (default)
+  ///   - Weekly
+  ///   - OneTime
+  #[serde(default)]
+  pub schedule_type: MaintenanceScheduleType,
+  /// For Weekly schedules: Specify the day of the week (Monday, Tuesday, etc.)
+  #[serde(default)]
+  pub day_of_week: String,
+  /// For OneTime window: ISO 8601 date format (YYYY-MM-DD)
+  #[serde(default)]
+  pub date: String,
+  /// Start hour in 24-hour format (0-23) (optional, defaults to 0)
+  #[serde(default)]
+  pub hour: u8,
+  /// Start minute (0-59) (optional, defaults to 0)
+  #[serde(default)]
+  pub minute: u8,
+  /// Duration of the maintenance window in minutes (required)
+  pub duration_minutes: u32,
+  /// Timezone for maintenance window specificiation.
+  /// If empty, will use Core timezone.
+  #[serde(default)]
+  pub timezone: String,
+  /// Whether this maintenance window is currently enabled
+  #[serde(default = "default_enabled")]
+  pub enabled: bool,
+}
+
+fn default_enabled() -> bool {
+  true
+}
+
 #[typeshare]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct CloneArgs {
@@ -685,6 +727,28 @@ pub enum DayOfWeek {
   #[serde(alias = "sunday", alias = "Sun", alias = "sun")]
   #[strum(serialize = "sunday", serialize = "Sun", serialize = "sun")]
   Sunday,
+}
+
+/// Types of maintenance schedules
+#[typeshare]
+#[derive(
+  Debug,
+  Clone,
+  Copy,
+  PartialEq,
+  Default,
+  EnumString,
+  Serialize,
+  Deserialize,
+)]
+pub enum MaintenanceScheduleType {
+  /// Daily at the specified time
+  #[default]
+  Daily,
+  /// Weekly on the specified day and time
+  Weekly,
+  /// One-time maintenance on a specific date and time
+  OneTime, // ISO 8601 date format (YYYY-MM-DD)
 }
 
 #[typeshare]

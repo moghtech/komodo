@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 use strum::{AsRefStr, Display, EnumString};
 use typeshare::typeshare;
 
+use crate::entities::MaintenanceWindow;
+
 use super::{
   ResourceTarget,
   alert::AlertDataVariant,
@@ -64,6 +66,11 @@ pub struct AlerterConfig {
   #[serde(default)]
   #[builder(default)]
   pub except_resources: Vec<ResourceTarget>,
+
+  /// Scheduled maintenance windows during which alerts will be suppressed.
+  #[serde(default)]
+  #[builder(default)]
+  pub maintenance_windows: Vec<MaintenanceWindow>,
 }
 
 impl AlerterConfig {
@@ -81,6 +88,7 @@ impl Default for AlerterConfig {
       alert_types: Default::default(),
       resources: Default::default(),
       except_resources: Default::default(),
+      maintenance_windows: Default::default(),
     }
   }
 }
