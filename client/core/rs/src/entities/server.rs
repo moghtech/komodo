@@ -1,13 +1,15 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use chrono::Datelike;
 use derive_builder::Builder;
 use partial_derive2::Partial;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::deserializers::{
-  option_string_list_deserializer, string_list_deserializer,
+use crate::{
+  deserializers::{
+    option_string_list_deserializer, string_list_deserializer,
+  },
+  entities::DayOfWeek,
 };
 
 use super::{
@@ -366,120 +368,43 @@ impl AddFilters for ServerQuerySpecifics {}
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct MaintenanceWindow {
-  /// Unique identifier for the maintenance window
-  pub id: String,
-  /// Human-readable name for the maintenance window
+  /// Name for the maintenance window (required)
   pub name: String,
-  /// The type of maintenance schedule
+  /// Description of what maintenance is performed (optional)
+  #[serde(default)]
+  pub description: String,
+  /// The type of maintenance schedule (default: Daily)
+  #[serde(default)]
   pub schedule_type: MaintenanceScheduleType,
-  /// Start time for the maintenance window
-  pub start_time: MaintenanceTime,
-  /// Duration of the maintenance window in minutes
+  /// Timezone for maintenance window specificiation.
+  /// If empty, will use Core timezone.
+  #[serde(default)]
+  pub timezone: String,
+  /// Start hour in 24-hour format (0-23) (optional, defaults to 0)
+  #[serde(default)]
+  pub hour: u8,
+  /// Start minute (0-59) (optional, defaults to 0)
+  #[serde(default)]
+  pub minute: u8,
+  /// Duration of the maintenance window in minutes (required)
   pub duration_minutes: u32,
   /// Whether this maintenance window is currently enabled
   #[serde(default = "default_enabled")]
   pub enabled: bool,
-  /// Optional description of what maintenance is performed
-  #[serde(default)]
-  pub description: String,
 }
 
 /// Types of maintenance schedules
 #[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(tag = "type", content = "content")]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, PartialEq, Default,
+)]
+#[serde(tag = "type", content = "data")]
 pub enum MaintenanceScheduleType {
   /// Daily at the specified time
+  #[default]
   Daily,
   /// Weekly on the specified day and time
   Weekly { day_of_week: DayOfWeek },
   /// One-time maintenance on a specific date and time
   OneTime { date: String }, // ISO 8601 date format (YYYY-MM-DD)
-}
-
-/// Days of the week for weekly maintenance schedules
-#[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum DayOfWeek {
-  Monday,
-  Tuesday,
-  Wednesday,
-  Thursday,
-  Friday,
-  Saturday,
-  Sunday,
-}
-
-/// Time specification for maintenance windows
-#[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct MaintenanceTime {
-  /// Hour in 24-hour format (0-23)
-  pub hour: u8,
-  /// Minute (0-59)
-  pub minute: u8,
-  /// Timezone offset from UTC in minutes (e.g., -300 for EST, 120 for CEST)
-  pub timezone_offset_minutes: i16,
-}
-
-impl MaintenanceWindow {
-  /// Check if the current timestamp falls within this maintenance window
-  pub fn is_active_at(&self, timestamp: i64) -> bool {
-    if !self.enabled {
-      return false;
-    }
-
-    let dt = chrono::DateTime::from_timestamp(timestamp / 1000, 0)
-      .unwrap_or_else(|| chrono::Utc::now());
-    
-    // Convert to the maintenance window's timezone
-    let timezone_offset = chrono::FixedOffset::east_opt(self.start_time.timezone_offset_minutes as i32 * 60)
-      .unwrap_or(chrono::FixedOffset::east_opt(0).unwrap());
-    let local_dt = dt.with_timezone(&timezone_offset);
-
-    match &self.schedule_type {
-      MaintenanceScheduleType::Daily => {
-        self.is_time_in_window(local_dt.time())
-      }
-      MaintenanceScheduleType::Weekly { day_of_week } => {
-        let current_day = match local_dt.weekday() {
-          chrono::Weekday::Mon => DayOfWeek::Monday,
-          chrono::Weekday::Tue => DayOfWeek::Tuesday,
-          chrono::Weekday::Wed => DayOfWeek::Wednesday,
-          chrono::Weekday::Thu => DayOfWeek::Thursday,
-          chrono::Weekday::Fri => DayOfWeek::Friday,
-          chrono::Weekday::Sat => DayOfWeek::Saturday,
-          chrono::Weekday::Sun => DayOfWeek::Sunday,
-        };
-        
-        std::mem::discriminant(&current_day) == std::mem::discriminant(day_of_week)
-          && self.is_time_in_window(local_dt.time())
-      }
-      MaintenanceScheduleType::OneTime { date } => {
-        // Parse the date string and check if it matches current date
-        if let Ok(maintenance_date) = chrono::NaiveDate::parse_from_str(date, "%Y-%m-%d") {
-          local_dt.date_naive() == maintenance_date && self.is_time_in_window(local_dt.time())
-        } else {
-          false
-        }
-      }
-    }
-  }
-
-  fn is_time_in_window(&self, current_time: chrono::NaiveTime) -> bool {
-    let start_time = chrono::NaiveTime::from_hms_opt(
-      self.start_time.hour as u32,
-      self.start_time.minute as u32,
-      0
-    ).unwrap_or(chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap());
-    
-    let end_time = start_time + chrono::Duration::minutes(self.duration_minutes as i64);
-    
-    // Handle case where maintenance window crosses midnight
-    if end_time < start_time {
-      current_time >= start_time || current_time <= end_time
-    } else {
-      current_time >= start_time && current_time <= end_time
-    }
-  }
 }

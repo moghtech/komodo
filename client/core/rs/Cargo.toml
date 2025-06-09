@@ -37,7 +37,6 @@ futures.workspace = true
 reqwest.workspace = true
 tracing.workspace = true
 anyhow.workspace = true
-chrono.workspace = true
 serde.workspace = true
 tokio.workspace = true
 strum.workspace = true

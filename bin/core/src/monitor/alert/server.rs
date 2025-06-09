@@ -22,6 +22,7 @@ use mungos::{
 
 use crate::{
   alert::send_alerts,
+  helpers::maintenance::is_maintenance_window_active,
   state::{db_client, server_status_cache},
 };
 
@@ -78,7 +79,7 @@ fn is_server_in_maintenance(server: &Server, timestamp: i64) -> bool {
     .config
     .maintenance_windows
     .iter()
-    .any(|window| window.is_active_at(timestamp))
+    .any(|window| is_maintenance_window_active(window, timestamp))
 }
 
 #[instrument(level = "debug")]

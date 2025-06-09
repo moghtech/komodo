@@ -633,6 +633,21 @@ impl TryInto<async_timing_util::Timelength> for Timelength {
   }
 }
 
+/// Days of the week
+#[typeshare]
+#[derive(
+  Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize,
+)]
+pub enum DayOfWeek {
+  Monday,
+  Tuesday,
+  Wednesday,
+  Thursday,
+  Friday,
+  Saturday,
+  Sunday,
+}
+
 #[typeshare]
 #[derive(
   Debug,

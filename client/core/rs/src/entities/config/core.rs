@@ -50,6 +50,9 @@ pub struct Env {
   pub komodo_passkey: Option<String>,
   /// Override `passkey` with file
   pub komodo_passkey_file: Option<PathBuf>,
+  /// Override `timezone`
+  #[serde(alias = "tz", alias = "TZ")]
+  pub komodo_timezone: Option<String>,
   /// Override `first_server`
   pub komodo_first_server: Option<String>,
   /// Override `frontend_path`
@@ -267,6 +270,12 @@ pub struct CoreConfig {
   /// Sent in auth header with req to periphery.
   /// Should be some secure hash, maybe 20-40 chars.
   pub passkey: String,
+
+  /// A TZ Identifier. If not provided, will use Core local timezone.
+  /// https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
+  /// This will be populated by TZ env variable in addition to KOMODO_TIMEZONE.
+  #[serde(default)]
+  pub timezone: String,
 
   /// Disable user ability to use the UI to update resource configuration.
   #[serde(default)]
@@ -590,6 +599,7 @@ impl CoreConfig {
       port: config.port,
       bind_ip: config.bind_ip,
       passkey: empty_or_redacted(&config.passkey),
+      timezone: config.timezone,
       first_server: config.first_server,
       frontend_path: config.frontend_path,
       jwt_secret: empty_or_redacted(&config.jwt_secret),

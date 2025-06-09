@@ -24,6 +24,7 @@ use resolver_api::Resolve;
 use crate::{
   alert::send_alerts,
   api::execute::{ExecuteArgs, ExecuteRequest},
+  config::core_config,
   helpers::update::init_execution_update,
   state::db_client,
 };
@@ -313,23 +314,26 @@ fn find_next_occurrence(
         })?
     }
   };
-  let next = if schedule.timezone().is_empty() {
-    let tz_time = chrono::Local::now().with_timezone(&Local);
-    cron
-      .find_next_occurrence(&tz_time, false)
-      .context("Failed to find next run time")?
-      .timestamp_millis()
-  } else {
-    let tz: chrono_tz::Tz = schedule
-      .timezone()
-      .parse()
-      .context("Failed to parse schedule timezone")?;
-    let tz_time = chrono::Local::now().with_timezone(&tz);
-    cron
-      .find_next_occurrence(&tz_time, false)
-      .context("Failed to find next run time")?
-      .timestamp_millis()
-  };
+  let next =
+    match (schedule.timezone(), core_config().timezone.as_str()) {
+      ("", "") => {
+        let tz_time = chrono::Local::now().with_timezone(&Local);
+        cron
+          .find_next_occurrence(&tz_time, false)
+          .context("Failed to find next run time")?
+          .timestamp_millis()
+      }
+      ("", timezone) | (timezone, _) => {
+        let tz: chrono_tz::Tz = timezone
+          .parse()
+          .context("Failed to parse timezone")?;
+        let tz_time = chrono::Local::now().with_timezone(&tz);
+        cron
+          .find_next_occurrence(&tz_time, false)
+          .context("Failed to find next run time")?
+          .timestamp_millis()
+      }
+    };
   Ok(next)
 }
 
