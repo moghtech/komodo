@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use anyhow::Context;
 use chrono::{Datelike, Local};
 use komodo_client::entities::{
@@ -44,18 +46,20 @@ pub fn is_maintenance_window_active(
       }
     };
 
-  match &window.schedule_type {
-    MaintenanceScheduleType::Daily {} => {
+  match window.schedule_type {
+    MaintenanceScheduleType::Daily => {
       is_time_in_window(window, local_time)
     }
-    MaintenanceScheduleType::Weekly { day_of_week } => {
-      convert_day_of_week(local_weekday) == *day_of_week
+    MaintenanceScheduleType::Weekly => {
+      let day_of_week =
+        DayOfWeek::from_str(&window.day_of_week).unwrap_or_default();
+      convert_day_of_week(local_weekday) == day_of_week
         && is_time_in_window(window, local_time)
     }
-    MaintenanceScheduleType::OneTime { date } => {
+    MaintenanceScheduleType::OneTime => {
       // Parse the date string and check if it matches current date
       if let Ok(maintenance_date) =
-        chrono::NaiveDate::parse_from_str(date, "%Y-%m-%d")
+        chrono::NaiveDate::parse_from_str(&window.date, "%Y-%m-%d")
       {
         local_date == maintenance_date
           && is_time_in_window(window, local_time)

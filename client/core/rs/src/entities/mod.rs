@@ -636,15 +636,54 @@ impl TryInto<async_timing_util::Timelength> for Timelength {
 /// Days of the week
 #[typeshare]
 #[derive(
-  Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize,
+  Debug,
+  Clone,
+  Copy,
+  PartialEq,
+  Eq,
+  Default,
+  EnumString,
+  Serialize,
+  Deserialize,
 )]
 pub enum DayOfWeek {
+  #[default]
+  #[serde(alias = "monday", alias = "Mon", alias = "mon")]
+  #[strum(serialize = "monday", serialize = "Mon", serialize = "mon")]
   Monday,
+  #[serde(alias = "tuesday", alias = "Tue", alias = "tue")]
+  #[strum(
+    serialize = "tuesday",
+    serialize = "Tue",
+    serialize = "tue"
+  )]
   Tuesday,
+  #[serde(alias = "wednesday", alias = "Wed", alias = "wed")]
+  #[strum(
+    serialize = "wednesday",
+    serialize = "Wed",
+    serialize = "wed"
+  )]
   Wednesday,
+  #[serde(alias = "thursday", alias = "Thurs", alias = "thurs")]
+  #[strum(
+    serialize = "thursday",
+    serialize = "Thurs",
+    serialize = "thurs"
+  )]
   Thursday,
+  #[serde(alias = "friday", alias = "Fri", alias = "fri")]
+  #[strum(serialize = "friday", serialize = "Fri", serialize = "fri")]
   Friday,
+  #[serde(alias = "saturday", alias = "Sat", alias = "sat")]
+  #[strum(
+    serialize = "saturday",
+    serialize = "Sat",
+    serialize = "sat"
+  )]
   Saturday,
+  #[serde(alias = "sunday", alias = "Sun", alias = "sun")]
+  #[strum(serialize = "sunday", serialize = "Sun", serialize = "sun")]
   Sunday,
 }
 

@@ -3,13 +3,11 @@ use std::{collections::HashMap, path::PathBuf};
 use derive_builder::Builder;
 use partial_derive2::Partial;
 use serde::{Deserialize, Serialize};
+use strum::EnumString;
 use typeshare::typeshare;
 
-use crate::{
-  deserializers::{
-    option_string_list_deserializer, string_list_deserializer,
-  },
-  entities::DayOfWeek,
+use crate::deserializers::{
+  option_string_list_deserializer, string_list_deserializer,
 };
 
 use super::{
@@ -373,13 +371,18 @@ pub struct MaintenanceWindow {
   /// Description of what maintenance is performed (optional)
   #[serde(default)]
   pub description: String,
-  /// The type of maintenance schedule (default: Daily)
+  /// The type of maintenance schedule:
+  ///   - Daily (default)
+  ///   - Weekly
+  ///   - OneTime
   #[serde(default)]
   pub schedule_type: MaintenanceScheduleType,
-  /// Timezone for maintenance window specificiation.
-  /// If empty, will use Core timezone.
+  /// For Weekly schedules: Specify the day of the week (Monday, Tuesday, etc.)
   #[serde(default)]
-  pub timezone: String,
+  pub day_of_week: String,
+  /// For OneTime window: ISO 8601 date format (YYYY-MM-DD)
+  #[serde(default)]
+  pub date: String,
   /// Start hour in 24-hour format (0-23) (optional, defaults to 0)
   #[serde(default)]
   pub hour: u8,
@@ -388,6 +391,10 @@ pub struct MaintenanceWindow {
   pub minute: u8,
   /// Duration of the maintenance window in minutes (required)
   pub duration_minutes: u32,
+  /// Timezone for maintenance window specificiation.
+  /// If empty, will use Core timezone.
+  #[serde(default)]
+  pub timezone: String,
   /// Whether this maintenance window is currently enabled
   #[serde(default = "default_enabled")]
   pub enabled: bool,
@@ -395,19 +402,22 @@ pub struct MaintenanceWindow {
 
 /// Types of maintenance schedules
 #[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(tag = "type", content = "data")]
+#[derive(
+  Debug,
+  Clone,
+  Copy,
+  PartialEq,
+  Default,
+  EnumString,
+  Serialize,
+  Deserialize,
+)]
 pub enum MaintenanceScheduleType {
   /// Daily at the specified time
-  Daily {},
+  #[default]
+  Daily,
   /// Weekly on the specified day and time
-  Weekly { day_of_week: DayOfWeek },
+  Weekly,
   /// One-time maintenance on a specific date and time
-  OneTime { date: String }, // ISO 8601 date format (YYYY-MM-DD)
-}
-
-impl Default for MaintenanceScheduleType {
-  fn default() -> Self {
-    Self::Daily {}
-  }
+  OneTime, // ISO 8601 date format (YYYY-MM-DD)
 }
