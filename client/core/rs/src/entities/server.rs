@@ -395,16 +395,19 @@ pub struct MaintenanceWindow {
 
 /// Types of maintenance schedules
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, PartialEq, Default,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "type", content = "data")]
 pub enum MaintenanceScheduleType {
   /// Daily at the specified time
-  #[default]
-  Daily,
+  Daily {},
   /// Weekly on the specified day and time
   Weekly { day_of_week: DayOfWeek },
   /// One-time maintenance on a specific date and time
   OneTime { date: String }, // ISO 8601 date format (YYYY-MM-DD)
+}
+
+impl Default for MaintenanceScheduleType {
+  fn default() -> Self {
+    Self::Daily {}
+  }
 }

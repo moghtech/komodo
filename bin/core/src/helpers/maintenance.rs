@@ -45,7 +45,7 @@ pub fn is_maintenance_window_active(
     };
 
   match &window.schedule_type {
-    MaintenanceScheduleType::Daily => {
+    MaintenanceScheduleType::Daily {} => {
       is_time_in_window(window, local_time)
     }
     MaintenanceScheduleType::Weekly { day_of_week } => {
