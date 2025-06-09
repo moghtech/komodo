@@ -41,27 +41,29 @@ export const MaintenanceWindows = ({
   disabled,
 }: MaintenanceWindowsProps) => {
   const [isCreating, setIsCreating] = useState(false);
-  const [editingWindow, setEditingWindow] =
-    useState<Types.MaintenanceWindow | null>(null);
+  const [editingWindow, setEditingWindow] = useState<
+    [number, Types.MaintenanceWindow] | null
+  >(null);
 
   const addWindow = (newWindow: Types.MaintenanceWindow) => {
     onUpdate([...windows, newWindow]);
     setIsCreating(false);
   };
 
-  const updateWindow = (updatedWindow: Types.MaintenanceWindow) => {
-    onUpdate(
-      windows.map((w) => (w.id === updatedWindow.id ? updatedWindow : w))
-    );
+  const updateWindow = (
+    index: number,
+    updatedWindow: Types.MaintenanceWindow
+  ) => {
+    onUpdate(windows.map((w, i) => (i === index ? updatedWindow : w)));
     setEditingWindow(null);
   };
 
-  const deleteWindow = (windowId: string) => {
-    onUpdate(windows.filter((w) => w.id !== windowId));
+  const deleteWindow = (index: number) => {
+    onUpdate(windows.filter((_, i) => i === index));
   };
 
-  const toggleWindow = (windowId: string, enabled: boolean) => {
-    onUpdate(windows.map((w) => (w.id === windowId ? { ...w, enabled } : w)));
+  const toggleWindow = (index: number, enabled: boolean) => {
+    onUpdate(windows.map((w, i) => (i === index ? { ...w, enabled } : w)));
   };
 
   return (
@@ -96,7 +98,7 @@ export const MaintenanceWindows = ({
               cell: ({ row }) => (
                 <div className="flex items-center gap-2">
                   <ScheduleIcon
-                    scheduleType={row.original.schedule_type.type}
+                    scheduleType={row.original.schedule_type!.type}
                   />
                   <span className="font-medium">{row.original.name}</span>
                 </div>
@@ -111,7 +113,7 @@ export const MaintenanceWindows = ({
               cell: ({ row }) => (
                 <span className="text-sm">
                   <ScheduleDescription
-                    scheduleType={row.original.schedule_type}
+                    scheduleType={row.original.schedule_type!}
                   />
                 </span>
               ),
@@ -124,7 +126,7 @@ export const MaintenanceWindows = ({
               ),
               cell: ({ row }) => (
                 <span className="text-sm font-mono">
-                  {formatTime(row.original.start_time)}
+                  {formatTime(row.original)}
                 </span>
               ),
               size: 180,
@@ -157,7 +159,7 @@ export const MaintenanceWindows = ({
                     <Switch
                       checked={row.original.enabled}
                       onCheckedChange={(enabled) =>
-                        toggleWindow(row.original.id, enabled)
+                        toggleWindow(row.index, enabled)
                       }
                     />
                   )}
@@ -174,7 +176,9 @@ export const MaintenanceWindows = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setEditingWindow(row.original)}
+                      onClick={() =>
+                        setEditingWindow([row.index, row.original])
+                      }
                       className="h-8 w-8 p-0"
                     >
                       <Pen className="w-4 h-4" />
@@ -182,7 +186,7 @@ export const MaintenanceWindows = ({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => deleteWindow(row.original.id)}
+                      onClick={() => deleteWindow(row.index)}
                       className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -202,8 +206,8 @@ export const MaintenanceWindows = ({
         >
           <DialogContent className="max-w-2xl">
             <MaintenanceWindowForm
-              initialData={editingWindow}
-              onSave={updateWindow}
+              initialData={editingWindow[1]}
+              onSave={(window) => updateWindow(editingWindow[0], window)}
               onCancel={() => setEditingWindow(null)}
             />
           </DialogContent>
@@ -239,53 +243,53 @@ const ScheduleDescription = ({
     case "Daily":
       return "Daily";
     case "Weekly":
-      return `Weekly (${scheduleType.content?.day_of_week || "Monday"})`;
+      return `Weekly (${scheduleType.data?.day_of_week || "Monday"})`;
     case "OneTime":
-      return `One-time (${scheduleType.content?.date || "No date"})`;
+      return `One-time (${scheduleType.data?.date || "No date"})`;
     default:
       return "Unknown";
   }
 };
 
-const formatTime = (time: Types.MaintenanceTime) => {
-  const hours = time.hour.toString().padStart(2, "0");
-  const minutes = time.minute.toString().padStart(2, "0");
-  const timezoneDisplay = getTimezoneDisplay(time.timezone_offset_minutes);
-  return `${hours}:${minutes} (${timezoneDisplay})`;
+const formatTime = (window: Types.MaintenanceWindow) => {
+  const hours = window.hour!.toString().padStart(2, "0");
+  const minutes = window.minute!.toString().padStart(2, "0");
+  // const timezoneDisplay = getTimezoneDisplay(time.timezone_offset_minutes);
+  return `${hours}:${minutes} ${window.timezone ? `(${window.timezone})` : ""}`;
 };
 
-const getTimezoneDisplay = (offsetMinutes: number): string => {
-  const timezoneMap: Record<number, string> = {
-    [-720]: "UTC-12",
-    [-660]: "UTC-11",
-    [-600]: "UTC-10 (Hawaii)",
-    [-540]: "UTC-9 (Alaska)",
-    [-480]: "UTC-8 (Pacific)",
-    [-420]: "UTC-7 (Mountain)",
-    [-360]: "UTC-6 (Central)",
-    [-300]: "UTC-5 (Eastern)",
-    [-240]: "UTC-4 (Atlantic)",
-    [-180]: "UTC-3",
-    [-120]: "UTC-2",
-    [-60]: "UTC-1",
-    [0]: "UTC+0 (GMT)",
-    [60]: "UTC+1 (CET)",
-    [120]: "UTC+2 (EET)",
-    [180]: "UTC+3 (Moscow)",
-    [240]: "UTC+4",
-    [300]: "UTC+5",
-    [330]: "UTC+5:30 (India)",
-    [360]: "UTC+6",
-    [420]: "UTC+7",
-    [480]: "UTC+8 (China)",
-    [540]: "UTC+9 (Japan)",
-    [570]: "UTC+9:30",
-    [600]: "UTC+10 (Australia)",
-    [660]: "UTC+11",
-    [720]: "UTC+12 (New Zealand)",
-  };
-  return timezoneMap[offsetMinutes] || getTimezoneValue(offsetMinutes);
-};
+// const getTimezoneDisplay = (offsetMinutes: number): string => {
+//   const timezoneMap: Record<number, string> = {
+//     [-720]: "UTC-12",
+//     [-660]: "UTC-11",
+//     [-600]: "UTC-10 (Hawaii)",
+//     [-540]: "UTC-9 (Alaska)",
+//     [-480]: "UTC-8 (Pacific)",
+//     [-420]: "UTC-7 (Mountain)",
+//     [-360]: "UTC-6 (Central)",
+//     [-300]: "UTC-5 (Eastern)",
+//     [-240]: "UTC-4 (Atlantic)",
+//     [-180]: "UTC-3",
+//     [-120]: "UTC-2",
+//     [-60]: "UTC-1",
+//     [0]: "UTC+0 (GMT)",
+//     [60]: "UTC+1 (CET)",
+//     [120]: "UTC+2 (EET)",
+//     [180]: "UTC+3 (Moscow)",
+//     [240]: "UTC+4",
+//     [300]: "UTC+5",
+//     [330]: "UTC+5:30 (India)",
+//     [360]: "UTC+6",
+//     [420]: "UTC+7",
+//     [480]: "UTC+8 (China)",
+//     [540]: "UTC+9 (Japan)",
+//     [570]: "UTC+9:30",
+//     [600]: "UTC+10 (Australia)",
+//     [660]: "UTC+11",
+//     [720]: "UTC+12 (New Zealand)",
+//   };
+//   return timezoneMap[offsetMinutes] || getTimezoneValue(offsetMinutes);
+// };
 
 interface MaintenanceWindowFormProps {
   initialData?: Types.MaintenanceWindow;
@@ -294,29 +298,29 @@ interface MaintenanceWindowFormProps {
 }
 
 // Helper functions for timezone conversion
-const getTimezoneOffset = (timezoneValue: string): number => {
-  const match = timezoneValue.match(/UTC([+-]?)(\d+(?:\.\d+)?)/);
-  if (!match) return 0;
+// const getTimezoneOffset = (timezoneValue: string): number => {
+//   const match = timezoneValue.match(/UTC([+-]?)(\d+(?:\.\d+)?)/);
+//   if (!match) return 0;
 
-  const sign = match[1] === "-" ? -1 : 1;
-  const hours = parseFloat(match[2]);
-  return sign * hours * 60; // Convert to minutes
-};
+//   const sign = match[1] === "-" ? -1 : 1;
+//   const hours = parseFloat(match[2]);
+//   return sign * hours * 60; // Convert to minutes
+// };
 
-const getTimezoneValue = (offsetMinutes: number): string => {
-  if (offsetMinutes === 0) return "UTC+0";
+// const getTimezoneValue = (offsetMinutes: number): string => {
+//   if (offsetMinutes === 0) return "UTC+0";
 
-  const hours = Math.abs(offsetMinutes) / 60;
-  const sign = offsetMinutes >= 0 ? "+" : "-";
+//   const hours = Math.abs(offsetMinutes) / 60;
+//   const sign = offsetMinutes >= 0 ? "+" : "-";
 
-  if (hours === Math.floor(hours)) {
-    return `UTC${sign}${Math.floor(hours)}`;
-  } else {
-    const wholeHours = Math.floor(hours);
-    const minutes = (hours - wholeHours) * 60;
-    return `UTC${sign}${wholeHours}.${minutes === 30 ? "5" : "0"}`;
-  }
-};
+//   if (hours === Math.floor(hours)) {
+//     return `UTC${sign}${Math.floor(hours)}`;
+//   } else {
+//     const wholeHours = Math.floor(hours);
+//     const minutes = (hours - wholeHours) * 60;
+//     return `UTC${sign}${wholeHours}.${minutes === 30 ? "5" : "0"}`;
+//   }
+// };
 
 const MaintenanceWindowForm = ({
   initialData,
@@ -325,17 +329,14 @@ const MaintenanceWindowForm = ({
 }: MaintenanceWindowFormProps) => {
   const [formData, setFormData] = useState<Types.MaintenanceWindow>(
     initialData || {
-      id: crypto.randomUUID(),
       name: "",
-      schedule_type: { type: "Daily" },
-      start_time: {
-        hour: 5,
-        minute: 0,
-        timezone_offset_minutes: 0,
-      },
+      description: "",
+      schedule_type: { type: "Daily", data: {} },
+      hour: 5,
+      minute: 0,
+      timezone: "",
       duration_minutes: 60,
       enabled: true,
-      description: "",
     }
   );
 
@@ -348,11 +349,11 @@ const MaintenanceWindowForm = ({
       newErrors.name = "Name is required";
     }
 
-    if (formData.start_time.hour < 0 || formData.start_time.hour > 23) {
+    if (formData.hour! < 0 || formData.hour! > 23) {
       newErrors.hour = "Hour must be between 0 and 23";
     }
 
-    if (formData.start_time.minute < 0 || formData.start_time.minute > 59) {
+    if (formData.minute! < 0 || formData.minute! > 59) {
       newErrors.minute = "Minute must be between 0 and 59";
     }
 
@@ -360,11 +361,8 @@ const MaintenanceWindowForm = ({
       newErrors.duration = "Duration must be greater than 0";
     }
 
-    if (
-      formData.schedule_type.type === "OneTime" &&
-      formData.schedule_type.content
-    ) {
-      const date = formData.schedule_type.content.date;
+    if (formData.schedule_type && formData.schedule_type.type === "OneTime") {
+      const date = formData.schedule_type.data.date;
       if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         newErrors.date = "Date must be in YYYY-MM-DD format";
       }
@@ -385,22 +383,22 @@ const MaintenanceWindowForm = ({
 
     switch (type) {
       case "Daily":
-        scheduleType = { type: "Daily" };
+        scheduleType = { type: "Daily", data: {} };
         break;
       case "Weekly":
         scheduleType = {
           type: "Weekly",
-          content: { day_of_week: "Monday" as Types.DayOfWeek },
+          data: { day_of_week: "Monday" as Types.DayOfWeek },
         };
         break;
       case "OneTime":
         scheduleType = {
           type: "OneTime",
-          content: { date: new Date().toISOString().split("T")[0] },
+          data: { date: new Date().toISOString().split("T")[0] },
         };
         break;
       default:
-        scheduleType = { type: "Daily" };
+        scheduleType = { type: "Daily", data: {} };
     }
 
     setFormData({ ...formData, schedule_type: scheduleType });
@@ -433,7 +431,7 @@ const MaintenanceWindowForm = ({
         <div>
           <label className="text-sm font-medium">Schedule Type</label>
           <Select
-            value={formData.schedule_type.type}
+            value={formData.schedule_type!.type}
             onValueChange={(value: "Daily" | "Weekly" | "OneTime") =>
               updateScheduleType(value)
             }
@@ -449,13 +447,13 @@ const MaintenanceWindowForm = ({
           </Select>
         </div>
 
-        {formData.schedule_type.type === "Weekly" && (
+        {formData.schedule_type!.type === "Weekly" && (
           <div>
             <label className="text-sm font-medium">Day of Week</label>
             <Select
               value={
-                formData.schedule_type.type === "Weekly"
-                  ? formData.schedule_type.content?.day_of_week || "Monday"
+                formData.schedule_type!.type === "Weekly"
+                  ? formData.schedule_type!.data.day_of_week || "Monday"
                   : "Monday"
               }
               onValueChange={(value: Types.DayOfWeek) =>
@@ -463,7 +461,7 @@ const MaintenanceWindowForm = ({
                   ...formData,
                   schedule_type: {
                     type: "Weekly",
-                    content: { day_of_week: value },
+                    data: { day_of_week: value },
                   },
                 })
               }
@@ -484,14 +482,14 @@ const MaintenanceWindowForm = ({
           </div>
         )}
 
-        {formData.schedule_type.type === "OneTime" && (
+        {formData.schedule_type!.type === "OneTime" && (
           <div>
             <label className="text-sm font-medium">Date</label>
             <Input
               type="date"
               value={
-                formData.schedule_type.type === "OneTime"
-                  ? formData.schedule_type.content?.date ||
+                formData.schedule_type!.type === "OneTime"
+                  ? formData.schedule_type!.data.date ||
                     new Date().toISOString().split("T")[0]
                   : ""
               }
@@ -500,7 +498,7 @@ const MaintenanceWindowForm = ({
                   ...formData,
                   schedule_type: {
                     type: "OneTime",
-                    content: { date: e.target.value },
+                    data: { date: e.target.value },
                   },
                 })
               }
@@ -517,18 +515,15 @@ const MaintenanceWindowForm = ({
             <label className="text-sm font-medium">Start Time</label>
             <Input
               type="time"
-              value={`${formData.start_time.hour.toString().padStart(2, "0")}:${formData.start_time.minute.toString().padStart(2, "0")}`}
+              value={`${formData.hour!.toString().padStart(2, "0")}:${formData.minute!.toString().padStart(2, "0")}`}
               onChange={(e) => {
-                const [hours, minutes] = e.target.value
+                const [hour, minute] = e.target.value
                   .split(":")
                   .map((n) => parseInt(n) || 0);
                 setFormData({
                   ...formData,
-                  start_time: {
-                    ...formData.start_time,
-                    hour: hours,
-                    minute: minutes,
-                  },
+                  hour,
+                  minute,
                 });
               }}
               className={
@@ -542,7 +537,7 @@ const MaintenanceWindowForm = ({
             )}
           </div>
           <div>
-            <label className="text-sm font-medium">Timezone</label>
+            {/* <label className="text-sm font-medium">Timezone</label>
             <Select
               value={getTimezoneValue(
                 formData.start_time.timezone_offset_minutes
@@ -592,7 +587,7 @@ const MaintenanceWindowForm = ({
                 <SelectItem value="UTC+11">UTC+11 (Solomon Islands)</SelectItem>
                 <SelectItem value="UTC+12">UTC+12 (New Zealand)</SelectItem>
               </SelectContent>
-            </Select>
+            </Select> */}
           </div>
         </div>
 

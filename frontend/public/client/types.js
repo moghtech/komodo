@@ -519,7 +519,7 @@ export var SearchCombinator;
     SearchCombinator["Or"] = "Or";
     SearchCombinator["And"] = "And";
 })(SearchCombinator || (SearchCombinator = {}));
-/** Days of the week for weekly maintenance schedules */
+/** Days of the week */
 export var DayOfWeek;
 (function (DayOfWeek) {
     DayOfWeek["Monday"] = "Monday";

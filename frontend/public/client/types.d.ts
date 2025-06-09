@@ -1960,47 +1960,43 @@ export type MaintenanceScheduleType =
 /** Daily at the specified time */
 {
     type: "Daily";
-    content?: undefined;
+    data: {};
 }
 /** Weekly on the specified day and time */
  | {
     type: "Weekly";
-    content: {
+    data: {
         day_of_week: DayOfWeek;
     };
 }
 /** One-time maintenance on a specific date and time */
  | {
     type: "OneTime";
-    content: {
+    data: {
         date: string;
     };
 };
-/** Time specification for maintenance windows */
-export interface MaintenanceTime {
-    /** Hour in 24-hour format (0-23) */
-    hour: number;
-    /** Minute (0-59) */
-    minute: number;
-    /** Timezone offset from UTC in minutes (e.g., -300 for EST, 120 for CEST) */
-    timezone_offset_minutes: number;
-}
 /** Represents a scheduled maintenance window for a server */
 export interface MaintenanceWindow {
-    /** Unique identifier for the maintenance window */
-    id: string;
-    /** Human-readable name for the maintenance window */
+    /** Name for the maintenance window (required) */
     name: string;
-    /** The type of maintenance schedule */
-    schedule_type: MaintenanceScheduleType;
-    /** Start time for the maintenance window */
-    start_time: MaintenanceTime;
-    /** Duration of the maintenance window in minutes */
+    /** Description of what maintenance is performed (optional) */
+    description?: string;
+    /** The type of maintenance schedule (default: Daily) */
+    schedule_type?: MaintenanceScheduleType;
+    /**
+     * Timezone for maintenance window specificiation.
+     * If empty, will use Core timezone.
+     */
+    timezone?: string;
+    /** Start hour in 24-hour format (0-23) (optional, defaults to 0) */
+    hour?: number;
+    /** Start minute (0-59) (optional, defaults to 0) */
+    minute?: number;
+    /** Duration of the maintenance window in minutes (required) */
     duration_minutes: number;
     /** Whether this maintenance window is currently enabled */
     enabled: boolean;
-    /** Optional description of what maintenance is performed */
-    description?: string;
 }
 /** Server configuration. */
 export interface ServerConfig {
@@ -5185,6 +5181,8 @@ export interface GetCoreInfoResponse {
     github_webhook_owners: string[];
     /** Whether to disable websocket automatic reconnect. */
     disable_websocket_reconnect: boolean;
+    /** TZ identifier Core is using, if manually set. */
+    timezone: string;
 }
 /** Get a specific deployment by name or id. Response: [Deployment]. */
 export interface GetDeployment {
@@ -7347,7 +7345,7 @@ export type AuthRequest = {
     type: "GetUser";
     params: GetUser;
 };
-/** Days of the week for weekly maintenance schedules */
+/** Days of the week */
 export declare enum DayOfWeek {
     Monday = "Monday",
     Tuesday = "Tuesday",
