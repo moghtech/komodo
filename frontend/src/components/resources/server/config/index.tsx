@@ -9,6 +9,7 @@ import {
 } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { ReactNode } from "react";
+import { MaintenanceWindows } from "./maintenance";
 
 export const ServerConfig = ({
   id,
@@ -199,6 +200,30 @@ export const ServerConfig = ({
               disk_critical: {
                 description:
                   "Send a 'Critical' alert if the disk usage in % is above these thresholds",
+              },
+            },
+          },
+          {
+            label: "Maintenance",
+            boldLabel: false,
+            description: (
+              <>
+                Configure maintenance windows to temporarily disable alerts
+                during scheduled maintenance periods. When a maintenance window
+                is active, alerts from this server will be suppressed.
+              </>
+            ),
+            components: {
+              maintenance_windows: (values, set) => {
+                return (
+                  <MaintenanceWindows
+                    windows={values ?? []}
+                    onUpdate={(maintenance_windows) =>
+                      set({ maintenance_windows })
+                    }
+                    disabled={disabled}
+                  />
+                );
               },
             },
           },

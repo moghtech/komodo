@@ -41,7 +41,6 @@ import { ServerStats } from "./stats";
 import { GroupActions } from "@components/group-actions";
 import { ServerTerminals } from "@components/terminal/server";
 import { usePermissions } from "@lib/hooks";
-import { MaintenanceServerConfig } from "./maintenance/config";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 
 export const useServer = (id?: string) =>
@@ -66,7 +65,7 @@ const Icon = ({ id, size }: { id?: string; size: number }) => {
 
 const ConfigTabs = ({ id }: { id: string }) => {
   const [view, setView] = useLocalStorage<
-    "Config" | "Stats" | "Docker" | "Maintenance" | "Resources" | "Terminals"
+    "Config" | "Stats" | "Docker" | "Resources" | "Terminals"
   >(`server-${id}-tab`, "Config");
 
   const is_admin = useUser().data?.admin ?? false;
@@ -111,10 +110,6 @@ const ConfigTabs = ({ id }: { id: string }) => {
         Docker
       </TabsTrigger>
 
-      <TabsTrigger value="Maintenance" className="w-[110px]">
-        Maintenance
-      </TabsTrigger>
-
       <TabsTrigger
         value="Resources"
         className="w-[110px]"
@@ -146,10 +141,6 @@ const ConfigTabs = ({ id }: { id: string }) => {
 
       <TabsContent value="Docker">
         <ServerInfo id={id} titleOther={tabsList} />
-      </TabsContent>
-
-      <TabsContent value="Maintenance">
-        <MaintenanceServerConfig id={id} titleOther={tabsList} />
       </TabsContent>
 
       <TabsContent value="Resources">
