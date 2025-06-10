@@ -163,7 +163,13 @@ async fn clone_inner(
   destination: &Path,
   access_token: Option<String>,
 ) -> Vec<Log> {
-  let _ = std::fs::remove_dir_all(destination);
+  let _ = tokio::fs::remove_dir_all(destination).await;
+
+  // Ensure parent folder exists
+  if let Some(parent) = destination.parent() {
+    let _ = tokio::fs::create_dir_all(parent).await;
+  }
+
   let command = format!(
     "git clone {repo_url} {} -b {branch}",
     destination.display()
