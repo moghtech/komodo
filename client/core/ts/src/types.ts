@@ -3626,6 +3626,8 @@ export interface ServerListItemInfo {
 	region: string;
 	/** Address of the server. */
 	address: string;
+	/** The Komodo Periphery version of the server. */
+	version: string;
 	/** Whether server is configured to send unreachable alerts. */
 	send_unreachable_alerts: boolean;
 	/** Whether server is configured to send cpu alerts. */

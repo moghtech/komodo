@@ -1,7 +1,7 @@
 import { TableTags } from "@components/tags";
 import { useRead, useSelectedResources } from "@lib/hooks";
 import { DataTable, SortableHeader } from "@ui/data-table";
-import { ServerComponents } from ".";
+import { ServerComponents, ServerVersion } from ".";
 import { ResourceLink } from "../common";
 import { Types } from "komodo_client";
 import { useCallback } from "react";
@@ -70,6 +70,13 @@ export const ServerTable = ({
           header: ({ column }) => (
             <SortableHeader column={column} title="Region" />
           ),
+        },
+        {
+          accessorKey: "info.version",
+          header: ({ column }) => (
+            <SortableHeader column={column} title="Version" />
+          ),
+          cell: ({ row }) => <ServerVersion id={row.original.id} />,
         },
         {
           accessorKey: "info.state",
