@@ -751,6 +751,214 @@ pub enum MaintenanceScheduleType {
   OneTime, // ISO 8601 date format (YYYY-MM-DD)
 }
 
+/// One representative IANA zone for each distinct base UTC offset in the tz database.
+/// https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
+///
+/// The `serde`/`strum` renames ensure the canonical identifier is used
+/// when serializing or parsing from a string such as `"Etc/UTC"`.
+#[derive(
+  Debug,
+  Clone,
+  Copy,
+  PartialEq,
+  Default,
+  EnumString,
+  Serialize,
+  Deserialize,
+)]
+pub enum IanaTimezone {
+  /// UTC−12:00
+  #[serde(rename = "Etc/GMT+12")]
+  #[strum(serialize = "Etc/GMT+12")]
+  EtcGmtMinus12,
+
+  /// UTC−11:00
+  #[serde(rename = "Pacific/Pago_Pago")]
+  #[strum(serialize = "Pacific/Pago_Pago")]
+  PacificPagoPago,
+
+  /// UTC−10:00
+  #[serde(rename = "Pacific/Honolulu")]
+  #[strum(serialize = "Pacific/Honolulu")]
+  PacificHonolulu,
+
+  /// UTC−09:30
+  #[serde(rename = "Pacific/Marquesas")]
+  #[strum(serialize = "Pacific/Marquesas")]
+  PacificMarquesas,
+
+  /// UTC−09:00
+  #[serde(rename = "America/Anchorage")]
+  #[strum(serialize = "America/Anchorage")]
+  AmericaAnchorage,
+
+  /// UTC−08:00
+  #[serde(rename = "America/Los_Angeles")]
+  #[strum(serialize = "America/Los_Angeles")]
+  AmericaLosAngeles,
+
+  /// UTC−07:00
+  #[serde(rename = "America/Denver")]
+  #[strum(serialize = "America/Denver")]
+  AmericaDenver,
+
+  /// UTC−06:00
+  #[serde(rename = "America/Chicago")]
+  #[strum(serialize = "America/Chicago")]
+  AmericaChicago,
+
+  /// UTC−05:00
+  #[serde(rename = "America/New_York")]
+  #[strum(serialize = "America/New_York")]
+  AmericaNewYork,
+
+  /// UTC−04:00
+  #[serde(rename = "America/Halifax")]
+  #[strum(serialize = "America/Halifax")]
+  AmericaHalifax,
+
+  /// UTC−03:30
+  #[serde(rename = "America/St_Johns")]
+  #[strum(serialize = "America/St_Johns")]
+  AmericaStJohns,
+
+  /// UTC−03:00
+  #[serde(rename = "America/Sao_Paulo")]
+  #[strum(serialize = "America/Sao_Paulo")]
+  AmericaSaoPaulo,
+
+  /// UTC−02:00
+  #[serde(rename = "America/Noronha")]
+  #[strum(serialize = "America/Noronha")]
+  AmericaNoronha,
+
+  /// UTC−01:00
+  #[serde(rename = "Atlantic/Azores")]
+  #[strum(serialize = "Atlantic/Azores")]
+  AtlanticAzores,
+
+  /// UTC±00:00
+  #[default]
+  #[serde(rename = "Etc/UTC")]
+  #[strum(serialize = "Etc/UTC")]
+  EtcUtc,
+
+  /// UTC+01:00
+  #[serde(rename = "Europe/Berlin")]
+  #[strum(serialize = "Europe/Berlin")]
+  EuropeBerlin,
+
+  /// UTC+02:00
+  #[serde(rename = "Europe/Bucharest")]
+  #[strum(serialize = "Europe/Bucharest")]
+  EuropeBucharest,
+
+  /// UTC+03:00
+  #[serde(rename = "Europe/Moscow")]
+  #[strum(serialize = "Europe/Moscow")]
+  EuropeMoscow,
+
+  /// UTC+03:30
+  #[serde(rename = "Asia/Tehran")]
+  #[strum(serialize = "Asia/Tehran")]
+  AsiaTehran,
+
+  /// UTC+04:00
+  #[serde(rename = "Asia/Dubai")]
+  #[strum(serialize = "Asia/Dubai")]
+  AsiaDubai,
+
+  /// UTC+04:30
+  #[serde(rename = "Asia/Kabul")]
+  #[strum(serialize = "Asia/Kabul")]
+  AsiaKabul,
+
+  /// UTC+05:00
+  #[serde(rename = "Asia/Karachi")]
+  #[strum(serialize = "Asia/Karachi")]
+  AsiaKarachi,
+
+  /// UTC+05:30
+  #[serde(rename = "Asia/Kolkata")]
+  #[strum(serialize = "Asia/Kolkata")]
+  AsiaKolkata,
+
+  /// UTC+05:45
+  #[serde(rename = "Asia/Kathmandu")]
+  #[strum(serialize = "Asia/Kathmandu")]
+  AsiaKathmandu,
+
+  /// UTC+06:00
+  #[serde(rename = "Asia/Dhaka")]
+  #[strum(serialize = "Asia/Dhaka")]
+  AsiaDhaka,
+
+  /// UTC+06:30
+  #[serde(rename = "Asia/Yangon")]
+  #[strum(serialize = "Asia/Yangon")]
+  AsiaYangon,
+
+  /// UTC+07:00
+  #[serde(rename = "Asia/Bangkok")]
+  #[strum(serialize = "Asia/Bangkok")]
+  AsiaBangkok,
+
+  /// UTC+08:00
+  #[serde(rename = "Asia/Shanghai")]
+  #[strum(serialize = "Asia/Shanghai")]
+  AsiaShanghai,
+
+  /// UTC+08:45
+  #[serde(rename = "Australia/Eucla")]
+  #[strum(serialize = "Australia/Eucla")]
+  AustraliaEucla,
+
+  /// UTC+09:00
+  #[serde(rename = "Asia/Tokyo")]
+  #[strum(serialize = "Asia/Tokyo")]
+  AsiaTokyo,
+
+  /// UTC+09:30
+  #[serde(rename = "Australia/Adelaide")]
+  #[strum(serialize = "Australia/Adelaide")]
+  AustraliaAdelaide,
+
+  /// UTC+10:00
+  #[serde(rename = "Australia/Sydney")]
+  #[strum(serialize = "Australia/Sydney")]
+  AustraliaSydney,
+
+  /// UTC+10:30
+  #[serde(rename = "Australia/Lord_Howe")]
+  #[strum(serialize = "Australia/Lord_Howe")]
+  AustraliaLordHowe,
+
+  /// UTC+11:00
+  #[serde(rename = "Pacific/Port_Moresby")]
+  #[strum(serialize = "Pacific/Port_Moresby")]
+  PacificPortMoresby,
+
+  /// UTC+12:00
+  #[serde(rename = "Pacific/Auckland")]
+  #[strum(serialize = "Pacific/Auckland")]
+  PacificAuckland,
+
+  /// UTC+12:45
+  #[serde(rename = "Pacific/Chatham")]
+  #[strum(serialize = "Pacific/Chatham")]
+  PacificChatham,
+
+  /// UTC+13:00
+  #[serde(rename = "Pacific/Tongatapu")]
+  #[strum(serialize = "Pacific/Tongatapu")]
+  PacificTongatapu,
+
+  /// UTC+14:00
+  #[serde(rename = "Pacific/Kiritimati")]
+  #[strum(serialize = "Pacific/Kiritimati")]
+  PacificKiritimati,
+}
+
 #[typeshare]
 #[derive(
   Debug,
