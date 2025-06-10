@@ -68,7 +68,10 @@ impl super::KomodoResource for Server {
       tags: server.tags,
       resource_type: ResourceTargetVariant::Server,
       info: ServerListItemInfo {
-        state: status.map(|s| s.state).unwrap_or_default(),
+        state: status.as_ref().map(|s| s.state).unwrap_or_default(),
+        version: status
+          .map(|s| s.version.clone())
+          .unwrap_or(String::from("Unknown")),
         region: server.config.region,
         address: server.config.address,
         send_unreachable_alerts: server

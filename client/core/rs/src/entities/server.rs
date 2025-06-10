@@ -33,6 +33,8 @@ pub struct ServerListItemInfo {
   pub region: String,
   /// Address of the server.
   pub address: String,
+  /// The Komodo Periphery version of the server.
+  pub version: String,
   /// Whether server is configured to send unreachable alerts.
   pub send_unreachable_alerts: bool,
   /// Whether server is configured to send cpu alerts.
