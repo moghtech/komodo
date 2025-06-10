@@ -35,6 +35,7 @@ export const ServerTable = ({
       }}
       columns={[
         {
+          size: 250,
           accessorKey: "name",
           header: ({ column }) => (
             <SortableHeader column={column} title="Name" />
@@ -42,9 +43,9 @@ export const ServerTable = ({
           cell: ({ row }) => (
             <ResourceLink type="Server" id={row.original.id} />
           ),
-          size: 200,
         },
         {
+          size: 100,
           accessorKey: "id",
           sortingFn: (a, b) => {
             const sa = resourcesCount(a.original.id);
@@ -66,12 +67,14 @@ export const ServerTable = ({
           },
         },
         {
+          size: 200,
           accessorKey: "info.region",
           header: ({ column }) => (
             <SortableHeader column={column} title="Region" />
           ),
         },
         {
+          size: 150,
           accessorKey: "info.version",
           header: ({ column }) => (
             <SortableHeader column={column} title="Version" />
@@ -79,6 +82,7 @@ export const ServerTable = ({
           cell: ({ row }) => <ServerVersion id={row.original.id} />,
         },
         {
+          size: 150,
           accessorKey: "info.state",
           header: ({ column }) => (
             <SortableHeader column={column} title="State" />
