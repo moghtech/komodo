@@ -28,18 +28,17 @@ import {
   Calendar,
   CalendarDays,
 } from "lucide-react";
-
-export interface MaintenanceWindowsProps {
-  windows: Types.MaintenanceWindow[];
-  onUpdate: (windows: Types.MaintenanceWindow[]) => void;
-  disabled: boolean;
-}
+import { TimezoneSelector } from "@components/util";
 
 export const MaintenanceWindows = ({
   windows,
   onUpdate,
   disabled,
-}: MaintenanceWindowsProps) => {
+}: {
+  windows: Types.MaintenanceWindow[];
+  onUpdate: (windows: Types.MaintenanceWindow[]) => void;
+  disabled: boolean;
+}) => {
   const [isCreating, setIsCreating] = useState(false);
   const [editingWindow, setEditingWindow] = useState<
     [number, Types.MaintenanceWindow] | null
@@ -255,73 +254,14 @@ const ScheduleDescription = ({
 const formatTime = (window: Types.MaintenanceWindow) => {
   const hours = window.hour!.toString().padStart(2, "0");
   const minutes = window.minute!.toString().padStart(2, "0");
-  // const timezoneDisplay = getTimezoneDisplay(time.timezone_offset_minutes);
   return `${hours}:${minutes} ${window.timezone ? `(${window.timezone})` : ""}`;
 };
-
-// const getTimezoneDisplay = (offsetMinutes: number): string => {
-//   const timezoneMap: Record<number, string> = {
-//     [-720]: "UTC-12",
-//     [-660]: "UTC-11",
-//     [-600]: "UTC-10 (Hawaii)",
-//     [-540]: "UTC-9 (Alaska)",
-//     [-480]: "UTC-8 (Pacific)",
-//     [-420]: "UTC-7 (Mountain)",
-//     [-360]: "UTC-6 (Central)",
-//     [-300]: "UTC-5 (Eastern)",
-//     [-240]: "UTC-4 (Atlantic)",
-//     [-180]: "UTC-3",
-//     [-120]: "UTC-2",
-//     [-60]: "UTC-1",
-//     [0]: "UTC+0 (GMT)",
-//     [60]: "UTC+1 (CET)",
-//     [120]: "UTC+2 (EET)",
-//     [180]: "UTC+3 (Moscow)",
-//     [240]: "UTC+4",
-//     [300]: "UTC+5",
-//     [330]: "UTC+5:30 (India)",
-//     [360]: "UTC+6",
-//     [420]: "UTC+7",
-//     [480]: "UTC+8 (China)",
-//     [540]: "UTC+9 (Japan)",
-//     [570]: "UTC+9:30",
-//     [600]: "UTC+10 (Australia)",
-//     [660]: "UTC+11",
-//     [720]: "UTC+12 (New Zealand)",
-//   };
-//   return timezoneMap[offsetMinutes] || getTimezoneValue(offsetMinutes);
-// };
 
 interface MaintenanceWindowFormProps {
   initialData?: Types.MaintenanceWindow;
   onSave: (window: Types.MaintenanceWindow) => void;
   onCancel: () => void;
 }
-
-// Helper functions for timezone conversion
-// const getTimezoneOffset = (timezoneValue: string): number => {
-//   const match = timezoneValue.match(/UTC([+-]?)(\d+(?:\.\d+)?)/);
-//   if (!match) return 0;
-
-//   const sign = match[1] === "-" ? -1 : 1;
-//   const hours = parseFloat(match[2]);
-//   return sign * hours * 60; // Convert to minutes
-// };
-
-// const getTimezoneValue = (offsetMinutes: number): string => {
-//   if (offsetMinutes === 0) return "UTC+0";
-
-//   const hours = Math.abs(offsetMinutes) / 60;
-//   const sign = offsetMinutes >= 0 ? "+" : "-";
-
-//   if (hours === Math.floor(hours)) {
-//     return `UTC${sign}${Math.floor(hours)}`;
-//   } else {
-//     const wholeHours = Math.floor(hours);
-//     const minutes = (hours - wholeHours) * 60;
-//     return `UTC${sign}${wholeHours}.${minutes === 30 ? "5" : "0"}`;
-//   }
-// };
 
 const MaintenanceWindowForm = ({
   initialData,
@@ -382,8 +322,8 @@ const MaintenanceWindowForm = ({
   };
 
   const updateScheduleType = (schedule_type: Types.MaintenanceScheduleType) => {
-    setFormData({
-      ...formData,
+    setFormData((data) => ({
+      ...data,
       schedule_type,
       day_of_week:
         schedule_type === Types.MaintenanceScheduleType.Weekly ? "Monday" : "",
@@ -391,7 +331,7 @@ const MaintenanceWindowForm = ({
         schedule_type === Types.MaintenanceScheduleType.OneTime
           ? new Date().toISOString().split("T")[0]
           : "",
-    });
+    }));
   };
 
   return (
@@ -409,7 +349,9 @@ const MaintenanceWindowForm = ({
           <label className="text-sm font-medium">Name</label>
           <Input
             value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            onChange={(e) =>
+              setFormData((data) => ({ ...data, name: e.target.value }))
+            }
             placeholder="e.g., Daily Backup"
             className={errors.name ? "border-destructive" : ""}
           />
@@ -447,10 +389,10 @@ const MaintenanceWindowForm = ({
             <Select
               value={formData.day_of_week || "Monday"}
               onValueChange={(value: Types.DayOfWeek) =>
-                setFormData({
-                  ...formData,
+                setFormData((data) => ({
+                  ...data,
                   day_of_week: value,
-                })
+                }))
               }
             >
               <SelectTrigger>
@@ -513,60 +455,13 @@ const MaintenanceWindowForm = ({
               </p>
             )}
           </div>
-          <div>
-            {/* <label className="text-sm font-medium">Timezone</label>
-            <Select
-              value={getTimezoneValue(
-                formData.start_time.timezone_offset_minutes
-              )}
-              onValueChange={(value) => {
-                const offsetMinutes = getTimezoneOffset(value);
-                setFormData({
-                  ...formData,
-                  start_time: {
-                    ...formData.start_time,
-                    timezone_offset_minutes: offsetMinutes,
-                  },
-                });
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="UTC-12">UTC-12 (Baker Island)</SelectItem>
-                <SelectItem value="UTC-11">UTC-11 (American Samoa)</SelectItem>
-                <SelectItem value="UTC-10">UTC-10 (Hawaii)</SelectItem>
-                <SelectItem value="UTC-9">UTC-9 (Alaska)</SelectItem>
-                <SelectItem value="UTC-8">UTC-8 (Pacific Time)</SelectItem>
-                <SelectItem value="UTC-7">UTC-7 (Mountain Time)</SelectItem>
-                <SelectItem value="UTC-6">UTC-6 (Central Time)</SelectItem>
-                <SelectItem value="UTC-5">UTC-5 (Eastern Time)</SelectItem>
-                <SelectItem value="UTC-4">UTC-4 (Atlantic Time)</SelectItem>
-                <SelectItem value="UTC-3">UTC-3 (Argentina)</SelectItem>
-                <SelectItem value="UTC-2">UTC-2 (Mid-Atlantic)</SelectItem>
-                <SelectItem value="UTC-1">UTC-1 (Azores)</SelectItem>
-                <SelectItem value="UTC+0">UTC+0 (London/GMT)</SelectItem>
-                <SelectItem value="UTC+1">UTC+1 (Central Europe)</SelectItem>
-                <SelectItem value="UTC+2">UTC+2 (Eastern Europe)</SelectItem>
-                <SelectItem value="UTC+3">UTC+3 (Moscow)</SelectItem>
-                <SelectItem value="UTC+4">UTC+4 (Dubai)</SelectItem>
-                <SelectItem value="UTC+5">UTC+5 (Pakistan)</SelectItem>
-                <SelectItem value="UTC+5.5">UTC+5:30 (India)</SelectItem>
-                <SelectItem value="UTC+6">UTC+6 (Bangladesh)</SelectItem>
-                <SelectItem value="UTC+7">UTC+7 (Thailand)</SelectItem>
-                <SelectItem value="UTC+8">UTC+8 (China/Singapore)</SelectItem>
-                <SelectItem value="UTC+9">UTC+9 (Japan)</SelectItem>
-                <SelectItem value="UTC+9.5">
-                  UTC+9:30 (Australia Central)
-                </SelectItem>
-                <SelectItem value="UTC+10">UTC+10 (Australia East)</SelectItem>
-                <SelectItem value="UTC+11">UTC+11 (Solomon Islands)</SelectItem>
-                <SelectItem value="UTC+12">UTC+12 (New Zealand)</SelectItem>
-              </SelectContent>
-            </Select> */}
-          </div>
         </div>
+        <TimezoneSelector
+          timezone={formData.timezone ?? ""}
+          onChange={(timezone) =>
+            setFormData((data) => ({ ...data, timezone }))
+          }
+        />
 
         <div>
           <label className="text-sm font-medium">Duration (minutes)</label>
@@ -575,10 +470,10 @@ const MaintenanceWindowForm = ({
             min={1}
             value={formData.duration_minutes}
             onChange={(e) =>
-              setFormData({
-                ...formData,
+              setFormData((data) => ({
+                ...data,
                 duration_minutes: parseInt(e.target.value) || 60,
-              })
+              }))
             }
             className={errors.duration ? "border-destructive" : ""}
           />
@@ -592,7 +487,7 @@ const MaintenanceWindowForm = ({
           <Input
             value={formData.description}
             onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
+              setFormData((data) => ({ ...data, description: e.target.value }))
             }
             placeholder="e.g., Automated backup process"
           />

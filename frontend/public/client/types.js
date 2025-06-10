@@ -36,6 +36,16 @@ export var TagBehavior;
     /** Returns resources which have one or more of the tags */
     TagBehavior["Any"] = "Any";
 })(TagBehavior || (TagBehavior = {}));
+/** Types of maintenance schedules */
+export var MaintenanceScheduleType;
+(function (MaintenanceScheduleType) {
+    /** Daily at the specified time */
+    MaintenanceScheduleType["Daily"] = "Daily";
+    /** Weekly on the specified day and time */
+    MaintenanceScheduleType["Weekly"] = "Weekly";
+    /** One-time maintenance on a specific date and time */
+    MaintenanceScheduleType["OneTime"] = "OneTime";
+})(MaintenanceScheduleType || (MaintenanceScheduleType = {}));
 export var Operation;
 (function (Operation) {
     Operation["None"] = "None";
@@ -226,16 +236,6 @@ export var SeverityLevel;
     /** Problem fully realized. */
     SeverityLevel["Critical"] = "CRITICAL";
 })(SeverityLevel || (SeverityLevel = {}));
-/** Types of maintenance schedules */
-export var MaintenanceScheduleType;
-(function (MaintenanceScheduleType) {
-    /** Daily at the specified time */
-    MaintenanceScheduleType["Daily"] = "Daily";
-    /** Weekly on the specified day and time */
-    MaintenanceScheduleType["Weekly"] = "Weekly";
-    /** One-time maintenance on a specific date and time */
-    MaintenanceScheduleType["OneTime"] = "OneTime";
-})(MaintenanceScheduleType || (MaintenanceScheduleType = {}));
 export var Timelength;
 (function (Timelength) {
     Timelength["OneSecond"] = "1-sec";
@@ -540,6 +540,92 @@ export var DayOfWeek;
     DayOfWeek["Saturday"] = "Saturday";
     DayOfWeek["Sunday"] = "Sunday";
 })(DayOfWeek || (DayOfWeek = {}));
+/**
+ * One representative IANA zone for each distinct base UTC offset in the tz database.
+ * https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
+ *
+ * The `serde`/`strum` renames ensure the canonical identifier is used
+ * when serializing or parsing from a string such as `"Etc/UTC"`.
+ */
+export var IanaTimezone;
+(function (IanaTimezone) {
+    /** UTC−12:00 */
+    IanaTimezone["EtcGmtMinus12"] = "Etc/GMT+12";
+    /** UTC−11:00 */
+    IanaTimezone["PacificPagoPago"] = "Pacific/Pago_Pago";
+    /** UTC−10:00 */
+    IanaTimezone["PacificHonolulu"] = "Pacific/Honolulu";
+    /** UTC−09:30 */
+    IanaTimezone["PacificMarquesas"] = "Pacific/Marquesas";
+    /** UTC−09:00 */
+    IanaTimezone["AmericaAnchorage"] = "America/Anchorage";
+    /** UTC−08:00 */
+    IanaTimezone["AmericaLosAngeles"] = "America/Los_Angeles";
+    /** UTC−07:00 */
+    IanaTimezone["AmericaDenver"] = "America/Denver";
+    /** UTC−06:00 */
+    IanaTimezone["AmericaChicago"] = "America/Chicago";
+    /** UTC−05:00 */
+    IanaTimezone["AmericaNewYork"] = "America/New_York";
+    /** UTC−04:00 */
+    IanaTimezone["AmericaHalifax"] = "America/Halifax";
+    /** UTC−03:30 */
+    IanaTimezone["AmericaStJohns"] = "America/St_Johns";
+    /** UTC−03:00 */
+    IanaTimezone["AmericaSaoPaulo"] = "America/Sao_Paulo";
+    /** UTC−02:00 */
+    IanaTimezone["AmericaNoronha"] = "America/Noronha";
+    /** UTC−01:00 */
+    IanaTimezone["AtlanticAzores"] = "Atlantic/Azores";
+    /** UTC±00:00 */
+    IanaTimezone["EtcUtc"] = "Etc/UTC";
+    /** UTC+01:00 */
+    IanaTimezone["EuropeBerlin"] = "Europe/Berlin";
+    /** UTC+02:00 */
+    IanaTimezone["EuropeBucharest"] = "Europe/Bucharest";
+    /** UTC+03:00 */
+    IanaTimezone["EuropeMoscow"] = "Europe/Moscow";
+    /** UTC+03:30 */
+    IanaTimezone["AsiaTehran"] = "Asia/Tehran";
+    /** UTC+04:00 */
+    IanaTimezone["AsiaDubai"] = "Asia/Dubai";
+    /** UTC+04:30 */
+    IanaTimezone["AsiaKabul"] = "Asia/Kabul";
+    /** UTC+05:00 */
+    IanaTimezone["AsiaKarachi"] = "Asia/Karachi";
+    /** UTC+05:30 */
+    IanaTimezone["AsiaKolkata"] = "Asia/Kolkata";
+    /** UTC+05:45 */
+    IanaTimezone["AsiaKathmandu"] = "Asia/Kathmandu";
+    /** UTC+06:00 */
+    IanaTimezone["AsiaDhaka"] = "Asia/Dhaka";
+    /** UTC+06:30 */
+    IanaTimezone["AsiaYangon"] = "Asia/Yangon";
+    /** UTC+07:00 */
+    IanaTimezone["AsiaBangkok"] = "Asia/Bangkok";
+    /** UTC+08:00 */
+    IanaTimezone["AsiaShanghai"] = "Asia/Shanghai";
+    /** UTC+08:45 */
+    IanaTimezone["AustraliaEucla"] = "Australia/Eucla";
+    /** UTC+09:00 */
+    IanaTimezone["AsiaTokyo"] = "Asia/Tokyo";
+    /** UTC+09:30 */
+    IanaTimezone["AustraliaAdelaide"] = "Australia/Adelaide";
+    /** UTC+10:00 */
+    IanaTimezone["AustraliaSydney"] = "Australia/Sydney";
+    /** UTC+10:30 */
+    IanaTimezone["AustraliaLordHowe"] = "Australia/Lord_Howe";
+    /** UTC+11:00 */
+    IanaTimezone["PacificPortMoresby"] = "Pacific/Port_Moresby";
+    /** UTC+12:00 */
+    IanaTimezone["PacificAuckland"] = "Pacific/Auckland";
+    /** UTC+12:45 */
+    IanaTimezone["PacificChatham"] = "Pacific/Chatham";
+    /** UTC+13:00 */
+    IanaTimezone["PacificTongatapu"] = "Pacific/Tongatapu";
+    /** UTC+14:00 */
+    IanaTimezone["PacificKiritimati"] = "Pacific/Kiritimati";
+})(IanaTimezone || (IanaTimezone = {}));
 /** The specific types of permission that a User or UserGroup can have on a resource. */
 export var SpecificPermission;
 (function (SpecificPermission) {

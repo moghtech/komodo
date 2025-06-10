@@ -4,6 +4,7 @@ import { Types } from "komodo_client";
 import { EndpointConfig } from "./endpoint";
 import { AlertTypeConfig } from "./alert_types";
 import { ResourcesConfig } from "./resources";
+import { MaintenanceWindows } from "@components/config/maintenance";
 
 export const AlerterConfig = ({ id }: { id: string }) => {
   const { canWrite } = usePermissions({ type: "Alerter", id });
@@ -80,6 +81,31 @@ export const AlerterConfig = ({ id }: { id: string }) => {
                   blacklist={true}
                 />
               ),
+            },
+          },
+          {
+            label: "Maintenance",
+            boldLabel: false,
+            description: (
+              <>
+                Configure maintenance windows to temporarily disable alerts
+                during scheduled maintenance periods. When a maintenance window
+                is active, alerts which would be sent by this alerter will be
+                suppressed.
+              </>
+            ),
+            components: {
+              maintenance_windows: (values, set) => {
+                return (
+                  <MaintenanceWindows
+                    windows={values ?? []}
+                    onUpdate={(maintenance_windows) =>
+                      set({ maintenance_windows })
+                    }
+                    disabled={disabled}
+                  />
+                );
+              },
             },
           },
         ],

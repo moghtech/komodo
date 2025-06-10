@@ -1,4 +1,5 @@
 import { Config } from "@components/config";
+import { MaintenanceWindows } from "@components/config/maintenance";
 import { ConfigList } from "@components/config/util";
 import {
   useInvalidate,
@@ -9,7 +10,6 @@ import {
 } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { ReactNode } from "react";
-import { MaintenanceWindows } from "./maintenance";
 
 export const ServerConfig = ({
   id,

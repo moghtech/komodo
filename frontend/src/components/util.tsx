@@ -16,6 +16,7 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronLeft,
+  ChevronsUpDown,
   ChevronUp,
   Copy,
   Database,
@@ -47,7 +48,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { AUTH_TOKEN_STORAGE_KEY } from "@main";
 import { Textarea } from "@ui/textarea";
 import { Card } from "@ui/card";
-import { snake_case_to_upper_space_case } from "@lib/formatting";
+import {
+  fmt_utc_offset,
+  snake_case_to_upper_space_case,
+} from "@lib/formatting";
 import {
   ColorIntention,
   container_state_intention,
@@ -65,6 +69,15 @@ import { MonacoEditor, MonacoLanguage } from "./monaco";
 import { UsableResource } from "@types";
 import { ResourceComponents } from "./resources";
 import { usePermissions } from "@lib/hooks";
+import { Popover, PopoverContent, PopoverTrigger } from "@ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@ui/command";
 
 export const WithLoading = ({
   children,
@@ -1121,5 +1134,85 @@ export const RepoLink = ({ repo, link }: { repo: string; link: string }) => {
         {repo}
       </div>
     </a>
+  );
+};
+
+const TIMEZONES: ("Default" | Types.IanaTimezone)[] = [
+  "Default",
+  ...Object.values(Types.IanaTimezone),
+];
+
+export const TimezoneSelector = ({
+  timezone,
+  onChange,
+  disabled,
+}: {
+  timezone: string;
+  onChange: (timezone: "" | Types.IanaTimezone) => void;
+  disabled?: boolean;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const filtered = filterBySplit(TIMEZONES, search, (t) => t);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="secondary"
+          className="flex justify-start gap-2 w-fit max-w-[200px]"
+          disabled={disabled}
+        >
+          {timezone || "Select Timezone"}
+          {!disabled && <ChevronsUpDown className="w-3 h-3" />}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[300px] max-h-[300px] p-0">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder={"Search Timezones"}
+            className="h-9"
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList>
+            <CommandEmpty className="flex justify-evenly items-center pt-3 pb-2">
+              No Timezones Found
+              <SearchX className="w-3 h-3" />
+            </CommandEmpty>
+
+            <CommandGroup>
+              {filtered.map((timezone) =>
+                timezone !== "Default" ? (
+                  <CommandItem
+                    key={timezone}
+                    onSelect={() => {
+                      onChange(timezone);
+                      setOpen(false);
+                    }}
+                    className="flex items-center justify-between cursor-pointer"
+                  >
+                    <div className="p-1">
+                      {timezone} ({fmt_utc_offset(timezone)})
+                    </div>
+                  </CommandItem>
+                ) : (
+                  <CommandItem
+                    key={timezone}
+                    onSelect={() => {
+                      onChange("");
+                      setOpen(false);
+                    }}
+                    className="flex items-center justify-between cursor-pointer"
+                  >
+                    <div className="p-1">Default (Core TZ)</div>
+                  </CommandItem>
+                )
+              )}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 };
