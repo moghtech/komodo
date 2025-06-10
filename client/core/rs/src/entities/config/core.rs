@@ -575,7 +575,7 @@ fn default_prune_days() -> u64 {
 }
 
 fn default_poll_interval() -> Timelength {
-  Timelength::FiveMinutes
+  Timelength::OneHour
 }
 
 fn default_monitoring_interval() -> Timelength {
