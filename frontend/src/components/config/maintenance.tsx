@@ -462,6 +462,7 @@ const MaintenanceWindowForm = ({
               onChange={(timezone) =>
                 setFormData((data) => ({ ...data, timezone }))
               }
+              triggerClassName="w-full"
             />
           </div>
         </div>

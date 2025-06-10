@@ -1146,10 +1146,12 @@ export const TimezoneSelector = ({
   timezone,
   onChange,
   disabled,
+  triggerClassName,
 }: {
   timezone: string;
   onChange: (timezone: "" | Types.IanaTimezone) => void;
   disabled?: boolean;
+  triggerClassName?: string;
 }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -1160,7 +1162,7 @@ export const TimezoneSelector = ({
       <PopoverTrigger asChild>
         <Button
           variant="secondary"
-          className="flex justify-between gap-2 w-full"
+          className={cn("flex justify-between gap-2 w-[200px]", triggerClassName)}
           disabled={disabled}
         >
           {timezone || "Default (Core TZ)"}

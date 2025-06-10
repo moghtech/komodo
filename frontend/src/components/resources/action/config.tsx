@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ui/select";
+import { TimezoneSelector } from "@components/util";
 
 const ACTION_GIT_PROVIDER = "Action";
 
@@ -189,11 +190,21 @@ export const ActionConfig = ({ id }: { id: string }) => {
                     ? "0 0 0 ? * SUN"
                     : "Enter English expression",
               },
-              schedule_timezone: {
-                label: "Timezone",
-                description:
-                  "Optional. Enter specific IANA timezone for schedule expression. If not provided, uses the Core timezone.",
-                placeholder: "Enter IANA timezone",
+              schedule_timezone: (timezone, set) => {
+                return (
+                  <ConfigItem
+                    label="Timezone"
+                    description="Select specific IANA timezone for schedule expression."
+                  >
+                    <TimezoneSelector
+                      timezone={timezone ?? ""}
+                      onChange={(schedule_timezone) =>
+                        set({ schedule_timezone })
+                      }
+                      disabled={disabled}
+                    />
+                  </ConfigItem>
+                );
               },
               schedule_alert: {
                 description: "Send an alert when the scheduled run occurs",
