@@ -10,9 +10,9 @@ use crate::deserializers::{
 };
 
 use super::{
-  I64,
   alert::SeverityLevel,
   resource::{AddFilters, Resource, ResourceListItem, ResourceQuery},
+  I64,
 };
 
 #[typeshare]
@@ -30,6 +30,8 @@ pub struct ServerListItemInfo {
   pub region: String,
   /// Address of the server.
   pub address: String,
+  /// Default stack file contents used when creating a new stack.
+  pub default_stack_file_contents: String,
   /// Whether server is configured to send unreachable alerts.
   pub send_unreachable_alerts: bool,
   /// Whether server is configured to send cpu alerts.
@@ -64,6 +66,11 @@ pub struct ServerConfig {
   #[serde(default)]
   #[builder(default)]
   pub region: String,
+
+  /// Default stack file contents used when creating a new stack.
+  #[serde(default)]
+  #[builder(default)]
+  pub default_stack_file_contents: String,
 
   /// Whether a server is enabled.
   /// If a server is disabled,
@@ -251,6 +258,7 @@ impl Default for ServerConfig {
       send_mem_alerts: default_send_alerts(),
       send_disk_alerts: default_send_alerts(),
       region: Default::default(),
+      default_stack_file_contents: Default::default(),
       passkey: Default::default(),
       cpu_warning: default_cpu_warning(),
       cpu_critical: default_cpu_critical(),

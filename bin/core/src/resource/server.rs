@@ -71,6 +71,7 @@ impl super::KomodoResource for Server {
         state: status.map(|s| s.state).unwrap_or_default(),
         region: server.config.region,
         address: server.config.address,
+        default_stack_file_contents: server.config.default_stack_file_contents,
         send_unreachable_alerts: server
           .config
           .send_unreachable_alerts,

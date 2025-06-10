@@ -19,6 +19,7 @@ import { useToast } from "@ui/use-toast";
 import { ConfirmButton, ShowHideButton } from "@components/util";
 import { DEFAULT_STACK_FILE_CONTENTS } from "./config";
 import { Types } from "komodo_client";
+import { useServer } from "../server";
 
 export const StackInfo = ({
   id,
@@ -29,7 +30,7 @@ export const StackInfo = ({
 }) => {
   const [edits, setEdits] = useLocalStorage<Record<string, string | undefined>>(
     `stack-${id}-edits`,
-    {}
+    {},
   );
   const [show, setShow] = useState<Record<string, boolean | undefined>>({});
   const { canWrite } = usePermissions({ type: "Stack", id });
@@ -49,6 +50,10 @@ export const StackInfo = ({
   // const is_down = [Types.StackState.Down, Types.StackState.Unknown].includes(
   //   state
   // );
+
+  const server = useServer(stack?.config?.server_id);
+  const defaultStackFileContents =
+    server?.info?.default_stack_file_contents || DEFAULT_STACK_FILE_CONTENTS;
 
   const file_on_host = stack?.config?.files_on_host ?? false;
   const git_repo = stack?.config?.repo ? true : false;
@@ -108,7 +113,7 @@ export const StackInfo = ({
                       mutateAsync({
                         stack: stack.name,
                         file_path: error.path,
-                        contents: DEFAULT_STACK_FILE_CONTENTS,
+                        contents: defaultStackFileContents,
                       });
                     }
                   }}
@@ -210,7 +215,7 @@ export const StackInfo = ({
               <CardHeader
                 className={cn(
                   "flex flex-row justify-between items-center",
-                  showContents && "pb-0"
+                  showContents && "pb-0",
                 )}
               >
                 <CardTitle className="font-mono flex gap-2">
@@ -241,7 +246,7 @@ export const StackInfo = ({
                               file_path: content.path,
                               contents: edits[content.path]!,
                             }).then(() =>
-                              setEdits({ ...edits, [content.path]: undefined })
+                              setEdits({ ...edits, [content.path]: undefined }),
                             );
                           }
                         }}

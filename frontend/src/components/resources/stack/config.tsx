@@ -36,13 +36,14 @@ import { MonacoEditor } from "@components/monaco";
 import { useToast } from "@ui/use-toast";
 import { text_color_class_by_intention } from "@lib/color";
 import { Ban, CirclePlus } from "lucide-react";
+import { useServer } from "../server";
 
 type StackMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const STACK_MODES: StackMode[] = ["UI Defined", "Files On Server", "Git Repo"];
 
 function getStackMode(
   update: Partial<Types.StackConfig>,
-  config: Types.StackConfig
+  config: Types.StackConfig,
 ): StackMode {
   if (update.files_on_host ?? config.files_on_host) return "Files On Server";
   if (update.repo ?? config.repo) return "Git Repo";
@@ -65,6 +66,11 @@ export const StackConfig = ({
   });
   const { canWrite } = usePermissions({ type: "Stack", id });
   const stack = useRead("GetStack", { stack: id }).data;
+
+  const server = useServer(stack?.config?.server_id);
+  const defaultStackFileContents =
+    server?.info?.default_stack_file_contents || DEFAULT_STACK_FILE_CONTENTS;
+
   const config = stack?.config;
   const name = stack?.name;
   const webhooks = useRead("GetStackWebhooksEnabled", { stack: id }).data;
@@ -72,7 +78,7 @@ export const StackConfig = ({
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
   const [update, set] = useLocalStorage<Partial<Types.StackConfig>>(
     `stack-${id}-update-v1`,
-    {}
+    {},
   );
   const { mutateAsync } = useWrite("UpdateStack");
   const { integrations } = useWebhookIntegrations();
@@ -105,7 +111,7 @@ export const StackConfig = ({
         file_contents:
           update.file_contents ||
           config.file_contents ||
-          DEFAULT_STACK_FILE_CONTENTS,
+          defaultStackFileContents,
       });
     } else if (mode === undefined) {
       set({
@@ -802,7 +808,7 @@ export const StackConfig = ({
                   <SecretsSearch />
                   <MonacoEditor
                     value={
-                      show_default ? DEFAULT_STACK_FILE_CONTENTS : file_contents
+                      show_default ? defaultStackFileContents : file_contents
                     }
                     onValueChange={(file_contents) => set({ file_contents })}
                     language="yaml"

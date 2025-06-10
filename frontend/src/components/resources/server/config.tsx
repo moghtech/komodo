@@ -9,6 +9,8 @@ import {
 } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { ReactNode } from "react";
+import { DEFAULT_STACK_FILE_CONTENTS } from "../stack/config";
+import { MonacoEditor } from "@components/monaco";
 
 export const ServerConfig = ({
   id,
@@ -24,7 +26,7 @@ export const ServerConfig = ({
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
   const [update, set] = useLocalStorage<Partial<Types.ServerConfig>>(
     `server-${id}-update-v1`,
-    {}
+    {},
   );
   const { mutateAsync } = useWrite("UpdateServer", {
     onSuccess: () => {
@@ -126,6 +128,25 @@ export const ServerConfig = ({
                 description:
                   "Whether to prune unused images every day at UTC 00:00",
               },
+            },
+          },
+          {
+            label: "Default Stack",
+            description:
+              "Default stack file contents used when creating a new stack.",
+            components: {
+              default_stack_file_contents: (contents, set) => (
+                <div className="flex flex-col gap-4">
+                  <MonacoEditor
+                    value={contents || DEFAULT_STACK_FILE_CONTENTS}
+                    onValueChange={(default_stack_file_contents) =>
+                      set({ default_stack_file_contents })
+                    }
+                    language="yaml"
+                    readOnly={disabled}
+                  />
+                </div>
+              ),
             },
           },
         ],
