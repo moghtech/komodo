@@ -1153,6 +1153,7 @@ export const TimezoneSelector = ({
   disabled?: boolean;
   triggerClassName?: string;
 }) => {
+  const core_tz = useRead("GetCoreInfo", {}).data?.timezone || "Core TZ";
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const filtered = filterBySplit(TIMEZONES, search, (t) => t);
@@ -1162,10 +1163,15 @@ export const TimezoneSelector = ({
       <PopoverTrigger asChild>
         <Button
           variant="secondary"
-          className={cn("flex justify-between gap-2 w-[200px]", triggerClassName)}
+          className={cn(
+            "flex justify-between gap-2 w-[300px]",
+            triggerClassName
+          )}
           disabled={disabled}
         >
-          {timezone || "Default (Core TZ)"}
+          {timezone
+            ? `${timezone} (${fmt_utc_offset(timezone as Types.IanaTimezone)})`
+            : `Default (${core_tz})`}
           {!disabled && <ChevronsUpDown className="w-3 h-3" />}
         </Button>
       </PopoverTrigger>
@@ -1207,7 +1213,7 @@ export const TimezoneSelector = ({
                     }}
                     className="flex items-center justify-between cursor-pointer"
                   >
-                    <div className="p-1">Default (Core TZ)</div>
+                    <div className="p-1">Default ({core_tz})</div>
                   </CommandItem>
                 )
               )}
