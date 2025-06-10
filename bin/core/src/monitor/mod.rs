@@ -175,7 +175,7 @@ pub async fn update_cache_for_server(server: &Server) {
       insert_server_status(
         server,
         ServerState::NotOk,
-        String::from("unknown"),
+        String::from("Unknown"),
         None,
         (None, None, None, None, None),
         Serror::from(&e),
