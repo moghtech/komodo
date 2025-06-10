@@ -756,6 +756,7 @@ pub enum MaintenanceScheduleType {
 ///
 /// The `serde`/`strum` renames ensure the canonical identifier is used
 /// when serializing or parsing from a string such as `"Etc/UTC"`.
+#[typeshare]
 #[derive(
   Debug,
   Clone,
