@@ -210,12 +210,20 @@ const ConfigTabs = ({ id }: { id: string }) => {
 export const ServerVersion = ({ id }: { id: string }) => {
   const core_version = useRead("GetVersion", {}).data?.version;
   const version = useServer(id)?.info.version;
+  const unknown = !version || version === "Unknown";
   const mismatch = !!version && !!core_version && version !== core_version;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="flex items-center gap-2 cursor-pointer">
-          {mismatch ? (
+          {unknown ? (
+            <AlertCircle
+              className={cn(
+                "w-4 h-4",
+                stroke_color_class_by_intention("Unknown")
+              )}
+            />
+          ) : mismatch ? (
             <AlertCircle
               className={cn(
                 "w-4 h-4",
@@ -231,7 +239,11 @@ export const ServerVersion = ({ id }: { id: string }) => {
         </div>
       </TooltipTrigger>
       <TooltipContent>
-        {mismatch ? (
+        {unknown ? (
+          <div>
+            Periphery version is <span className="font-bold">unknown</span>.
+          </div>
+        ) : mismatch ? (
           <div>
             Periphery version <span className="font-bold">mismatch</span>.
             Expected <span className="font-bold">{core_version}</span>.
