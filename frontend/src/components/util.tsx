@@ -1156,18 +1156,18 @@ export const TimezoneSelector = ({
   const filtered = filterBySplit(TIMEZONES, search, (t) => t);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal>
       <PopoverTrigger asChild>
         <Button
           variant="secondary"
-          className="flex justify-start gap-2 w-fit max-w-[200px]"
+          className="flex justify-between gap-2 w-full"
           disabled={disabled}
         >
-          {timezone || "Select Timezone"}
+          {timezone || "Default (Core TZ)"}
           {!disabled && <ChevronsUpDown className="w-3 h-3" />}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] max-h-[300px] p-0">
+      <PopoverContent className="w-[300px] max-h-[300px] p-0 z-[100]">
         <Command shouldFilter={false}>
           <CommandInput
             placeholder={"Search Timezones"}

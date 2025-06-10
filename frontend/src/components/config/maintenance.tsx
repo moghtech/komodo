@@ -58,7 +58,7 @@ export const MaintenanceWindows = ({
   };
 
   const deleteWindow = (index: number) => {
-    onUpdate(windows.filter((_, i) => i === index));
+    onUpdate(windows.filter((_, i) => i !== index));
   };
 
   const toggleWindow = (index: number, enabled: boolean) => {
@@ -455,13 +455,16 @@ const MaintenanceWindowForm = ({
               </p>
             )}
           </div>
+          <div>
+            <label className="text-sm font-medium">Timezone</label>
+            <TimezoneSelector
+              timezone={formData.timezone ?? ""}
+              onChange={(timezone) =>
+                setFormData((data) => ({ ...data, timezone }))
+              }
+            />
+          </div>
         </div>
-        <TimezoneSelector
-          timezone={formData.timezone ?? ""}
-          onChange={(timezone) =>
-            setFormData((data) => ({ ...data, timezone }))
-          }
-        />
 
         <div>
           <label className="text-sm font-medium">Duration (minutes)</label>
