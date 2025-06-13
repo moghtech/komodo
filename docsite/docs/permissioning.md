@@ -41,6 +41,7 @@ Some features are additionally gated behind a specific permission for that featu
 - **`Attach`**: User can "attach" *other resources* to the resource.
   - If given on a `Server`, allows users to attach `Stacks`, `Deployments`, `Repos`, and `Builders`.
   - If given on a `Builder`, allows users to attach `Builds`.
+  - If given on a `Build`, allows users to attach it to `Deployments`.
 - **`Processes`**: User can retrieve the full running process list on the `Server`.
 
 ## Permissioning by Resource Type
