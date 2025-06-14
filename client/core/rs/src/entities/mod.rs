@@ -458,12 +458,12 @@ pub struct CloneArgs {
 }
 
 impl CloneArgs {
-  pub fn path(&self, repo_dir: &Path) -> PathBuf {
+  pub fn path(&self, root_repo_dir: &Path) -> PathBuf {
     match &self.destination {
-      Some(destination) => repo_dir
+      Some(destination) => root_repo_dir
         .join(to_path_compatible_name(&self.name))
         .join(destination),
-      None => repo_dir.join(to_path_compatible_name(&self.name)),
+      None => root_repo_dir.join(to_path_compatible_name(&self.name)),
     }
     .components()
     .collect()

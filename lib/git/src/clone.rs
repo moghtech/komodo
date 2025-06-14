@@ -28,7 +28,7 @@ use crate::{GitRes, get_commit_hash_log};
 )]
 pub async fn clone<T>(
   clone_args: T,
-  repo_dir: &Path,
+  root_repo_dir: &Path,
   access_token: Option<String>,
   environment: &[EnvironmentVar],
   env_file_path: &str,
@@ -40,7 +40,7 @@ where
   T: Into<CloneArgs> + std::fmt::Debug,
 {
   let args: CloneArgs = clone_args.into();
-  let path = args.path(repo_dir);
+  let path = args.path(root_repo_dir);
   let repo_url = args.remote_url(access_token.as_deref())?;
 
   let mut logs = clone_inner(

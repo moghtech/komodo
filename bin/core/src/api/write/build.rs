@@ -248,7 +248,7 @@ async fn write_dockerfile_contents_git(
   }
 
   // Pull latest changes to repo to ensure linear commit history
-  if let Err(e) = git::pull_or_clone(
+  match git::pull_or_clone(
     clone_args,
     &core_config().repo_directory,
     access_token,
@@ -260,10 +260,20 @@ async fn write_dockerfile_contents_git(
   .await
   .context("Failed to pull latest changes before commit")
   {
-    update.push_error_log("Pull Repo", format_serror(&e.into()));
-    update.finalize();
-    return Ok(update);
+    Ok(res) => update.logs.extend(res.logs),
+    Err(e) => {
+      update.push_error_log("Pull Repo", format_serror(&e.into()));
+      update.finalize();
+      return Ok(update);
+    }
   };
+
+  if !all_logs_success(&update.logs) {
+    update.finalize();
+    update.id = add_update(update.clone()).await?;
+
+    return Ok(update);
+  }
 
   if let Err(e) =
     fs::write(&full_path, &contents).await.with_context(|| {

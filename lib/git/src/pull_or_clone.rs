@@ -21,7 +21,7 @@ use crate::GitRes;
 )]
 pub async fn pull_or_clone<T>(
   clone_args: T,
-  repo_dir: &Path,
+  root_repo_dir: &Path,
   access_token: Option<String>,
   environment: &[EnvironmentVar],
   env_file_path: &str,
@@ -33,12 +33,12 @@ where
   T: Into<CloneArgs> + std::fmt::Debug,
 {
   let args: CloneArgs = clone_args.into();
-  let folder_path = args.path(repo_dir);
+  let folder_path = args.path(root_repo_dir);
 
   if folder_path.exists() {
     crate::pull(
       args,
-      repo_dir,
+      root_repo_dir,
       access_token,
       environment,
       env_file_path,
@@ -49,7 +49,7 @@ where
   } else {
     crate::clone(
       args,
-      repo_dir,
+      root_repo_dir,
       access_token,
       environment,
       env_file_path,

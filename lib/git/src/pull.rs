@@ -42,7 +42,7 @@ fn pull_cache() -> &'static TimeoutCache<PathBuf, GitRes> {
 #[allow(clippy::too_many_arguments)]
 pub async fn pull<T>(
   clone_args: T,
-  repo_dir: &Path,
+  root_repo_dir: &Path,
   access_token: Option<String>,
   environment: &[EnvironmentVar],
   env_file_path: &str,
@@ -54,7 +54,7 @@ where
   T: Into<CloneArgs> + std::fmt::Debug,
 {
   let args: CloneArgs = clone_args.into();
-  let path = args.path(repo_dir);
+  let path = args.path(root_repo_dir);
   let repo_url = args.remote_url(access_token.as_deref())?;
 
   // Acquire the path lock

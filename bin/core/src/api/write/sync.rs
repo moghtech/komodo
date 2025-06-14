@@ -321,7 +321,7 @@ async fn write_sync_file_contents_git(
   }
 
   // Pull latest changes to repo to ensure linear commit history
-  if let Err(e) = git::pull_or_clone(
+  match git::pull_or_clone(
     clone_args,
     &core_config().repo_directory,
     access_token,
@@ -333,10 +333,19 @@ async fn write_sync_file_contents_git(
   .await
   .context("Failed to pull latest changes before commit")
   {
-    update.push_error_log("Pull Repo", format_serror(&e.into()));
-    update.finalize();
-    return Ok(update);
+    Ok(res) => update.logs.extend(res.logs),
+    Err(e) => {
+      update.push_error_log("Pull Repo", format_serror(&e.into()));
+      update.finalize();
+      return Ok(update);
+    }
   };
+
+  if !all_logs_success(&update.logs) {
+    update.finalize();
+    update.id = add_update(update.clone()).await?;
+    return Ok(update);
+  }
 
   if let Err(e) =
     fs::write(&full_path, &contents).await.with_context(|| {
@@ -573,12 +582,40 @@ impl Resolve<WriteArgs> for CommitSync {
 }
 
 async fn commit_git_sync(
-  args: CloneArgs,
+  mut args: CloneArgs,
   resource_path: &Path,
   toml: &str,
   update: &mut Update,
 ) -> anyhow::Result<()> {
   let root = args.unique_path(&core_config().repo_directory)?;
+  args.destination = Some(root.display().to_string());
+
+  let access_token = if let Some(account) = &args.account {
+    git_token(&args.provider, account, |https| args.https = https)
+      .await
+      .with_context(
+        || format!("Failed to get git token in call to db. Stopping run. | {} | {account}", args.provider),
+      )?
+  } else {
+    None
+  };
+
+  let pull = git::pull_or_clone(
+    args.clone(),
+    &core_config().repo_directory,
+    access_token,
+    Default::default(),
+    Default::default(),
+    Default::default(),
+    Default::default(),
+  )
+  .await?;
+  update.logs.extend(pull.logs);
+
+  if !all_logs_success(&update.logs) {
+    return Ok(());
+  }
+
   let res = git::write_commit_file(
     "Commit Sync",
     &root,
@@ -588,6 +625,7 @@ async fn commit_git_sync(
   )
   .await?;
   update.logs.extend(res.logs);
+
   Ok(())
 }
 
