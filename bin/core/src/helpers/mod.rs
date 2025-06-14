@@ -7,7 +7,9 @@ use komodo_client::entities::{
   permission::{
     Permission, PermissionLevel, SpecificPermission, UserTarget,
   },
+  repo::Repo,
   server::Server,
+  stack::Stack,
   user::User,
 };
 use mongo_indexed::Document;
@@ -93,6 +95,30 @@ pub async fn git_token(
           .find(|account| account.username == account_username)
           .map(|account| account.token.clone())
       }),
+  )
+}
+
+pub async fn stack_git_token(
+  stack: &mut Stack,
+  repo: Option<&mut Repo>,
+) -> anyhow::Result<Option<String>> {
+  if let Some(repo) = repo {
+    return git_token(
+      &repo.config.git_provider,
+      &repo.config.git_account,
+      |https| repo.config.git_https = https,
+    )
+    .await.with_context(
+      || format!("Failed to get git token in call to db. Stopping run. | {} | {}", repo.config.git_provider, repo.config.git_account),
+    );
+  }
+  git_token(
+    &stack.config.git_provider,
+    &stack.config.git_account,
+    |https| stack.config.git_https = https,
+  )
+  .await.with_context(
+    || format!("Failed to get git token in call to db. Stopping run. | {} | {}", stack.config.git_provider, stack.config.git_account),
   )
 }
 

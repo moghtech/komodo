@@ -14,7 +14,11 @@ use serde::{Deserialize, Serialize};
 use tokio::fs;
 
 use crate::{
-  compose::{WriteStackRes, compose_up, docker_compose, write_stack},
+  compose::{
+    docker_compose,
+    up::compose_up,
+    write::{WriteStackRes, write_stack},
+  },
   config::periphery_config,
   docker::docker_login,
   helpers::{log_grep, pull_or_clone_stack},
@@ -240,13 +244,15 @@ impl Resolve<super::Args> for WriteCommitComposeContents {
   ) -> serror::Result<RepoActionResponse> {
     let WriteCommitComposeContents {
       stack,
+      repo,
       username,
       file_path,
       contents,
       git_token,
     } = self;
 
-    let root = pull_or_clone_stack(&stack, git_token).await?;
+    let root =
+      pull_or_clone_stack(&stack, repo.as_ref(), git_token).await?;
 
     let file_path = stack
       .config
@@ -310,13 +316,16 @@ impl Resolve<super::Args> for ComposePull {
     let ComposePull {
       stack,
       services,
+      repo,
       git_token,
       registry_token,
     } = self;
     let mut res = ComposePullResponse::default();
 
     let (run_directory, env_file_path, _replacers) =
-      match write_stack(&stack, git_token, &mut res).await {
+      match write_stack(&stack, repo.as_ref(), git_token, &mut res)
+        .await
+      {
         Ok(res) => res,
         Err(e) => {
           res.logs.push(Log::error(
@@ -432,6 +441,7 @@ impl Resolve<super::Args> for ComposeUp {
     let ComposeUp {
       stack,
       services,
+      repo,
       git_token,
       registry_token,
       replacers,
@@ -440,6 +450,7 @@ impl Resolve<super::Args> for ComposeUp {
     if let Err(e) = compose_up(
       stack,
       services,
+      repo,
       git_token,
       registry_token,
       &mut res,

@@ -6,6 +6,7 @@ use komodo_client::{
     FileContents, NoData, Operation,
     config::core::CoreConfig,
     permission::PermissionLevel,
+    repo::Repo,
     server::ServerState,
     stack::{PartialStackConfig, Stack, StackInfo},
     update::Update,
@@ -26,8 +27,9 @@ use crate::{
   api::execute::pull_stack_inner,
   config::core_config,
   helpers::{
-    git_token, periphery_client,
+    periphery_client,
     query::get_server_with_state,
+    stack_git_token,
     update::{add_update, make_update},
   },
   permission::get_check_permissions,
@@ -120,9 +122,22 @@ impl Resolve<WriteArgs> for WriteStackFileContents {
     )
     .await?;
 
-    if !stack.config.files_on_host && stack.config.repo.is_empty() {
+    let mut repo = if !stack.config.files_on_host
+      && !stack.config.linked_repo.is_empty()
+    {
+      crate::resource::get::<Repo>(&stack.config.linked_repo)
+        .await?
+        .into()
+    } else {
+      None
+    };
+
+    if !stack.config.files_on_host
+      && stack.config.repo.is_empty()
+      && stack.config.linked_repo.is_empty()
+    {
       return Err(anyhow!(
-        "Stack is not configured to use Files on Host or Git Repo, can't write file contents"
+        "Stack is not configured to use Files on Host, Git Repo, or Linked Repo, can't write file contents"
       ).into());
     }
 
@@ -155,25 +170,12 @@ impl Resolve<WriteArgs> for WriteStackFileContents {
         }
       };
     } else {
-      let git_token = if !stack.config.git_account.is_empty() {
-        git_token(
-          &stack.config.git_provider,
-          &stack.config.git_account,
-          |https| stack.config.git_https = https,
-        )
-        .await
-        .with_context(|| {
-          format!(
-            "Failed to get git token. | {} | {}",
-            stack.config.git_account, stack.config.git_provider
-          )
-        })?
-      } else {
-        None
-      };
+      let git_token =
+        stack_git_token(&mut stack, repo.as_mut()).await?;
       match periphery_client(&server)?
         .request(WriteCommitComposeContents {
           stack,
+          repo,
           username: Some(user.username.clone()),
           file_path,
           contents,
@@ -236,8 +238,19 @@ impl Resolve<WriteArgs> for RefreshStackCache {
     )
     .await?;
 
+    let repo = if !stack.config.files_on_host
+      && !stack.config.linked_repo.is_empty()
+    {
+      crate::resource::get::<Repo>(&stack.config.linked_repo)
+        .await?
+        .into()
+    } else {
+      None
+    };
+
     let file_contents_empty = stack.config.file_contents.is_empty();
-    let repo_empty = stack.config.repo.is_empty();
+    let repo_empty =
+      repo.as_ref().is_none() && stack.config.repo.is_empty();
 
     if !stack.config.files_on_host
       && file_contents_empty
@@ -320,8 +333,12 @@ impl Resolve<WriteArgs> for RefreshStackCache {
         hash: latest_hash,
         message: latest_message,
         ..
-      } = get_repo_compose_contents(&stack, Some(&mut missing_files))
-        .await?;
+      } = get_repo_compose_contents(
+        &stack,
+        repo.as_ref(),
+        Some(&mut missing_files),
+      )
+      .await?;
 
       let project_name = stack.project_name(true);
 
@@ -402,7 +419,8 @@ impl Resolve<WriteArgs> for RefreshStackCache {
       if state == ServerState::Ok {
         let name = stack.name.clone();
         if let Err(e) =
-          pull_stack_inner(stack, Vec::new(), &server, None).await
+          pull_stack_inner(stack, Vec::new(), &server, repo, None)
+            .await
         {
           warn!(
             "Failed to pull latest images for Stack {name} | {e:#}",

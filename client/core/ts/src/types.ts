@@ -1636,7 +1636,13 @@ export interface RepoConfig {
 	branch: string;
 	/** Optionally set a specific commit hash. */
 	commit?: string;
-	/** Explicitly specify the folder to clone the repo in. */
+	/**
+	 * Explicitly specify the folder to clone the repo in.
+	 * - If absolute (has leading '/')
+	 * - Used directly as the path
+	 * - If relative
+	 * - Taken relative to Periphery `repo_dir` (ie `${root_directory}/repos`)
+	 */
 	path?: string;
 	/** Whether incoming webhooks actually trigger action. */
 	webhook_enabled: boolean;
@@ -2019,6 +2025,11 @@ export interface StackConfig {
 	destroy_before_deploy?: boolean;
 	/** Whether to skip secret interpolation into the stack environment variables. */
 	skip_secret_interp?: boolean;
+	/**
+	 * Choose a Komodo Repo (Resource) to source the compose files.
+	 * The Repo must be attached to the same Server as the Stack.
+	 */
+	linked_repo?: string;
 	/** The git provider domain. Default: github.com */
 	git_provider: string;
 	/**
@@ -2035,12 +2046,17 @@ export interface StackConfig {
 	 * for the configured git provider.
 	 */
 	git_account?: string;
-	/** The Github repo used as the source of the build. */
+	/**
+	 * The repo used as the source of the build.
+	 * {namespace}/{repo_name}
+	 */
 	repo?: string;
 	/** The branch of the repo. */
 	branch: string;
 	/** Optionally set a specific commit hash. */
 	commit?: string;
+	/** Optionally set a specific clone path */
+	clone_path?: string;
 	/**
 	 * By default, the Stack will `git pull` the repo after it is first cloned.
 	 * If this option is enabled, the repo folder will be deleted and recloned instead.

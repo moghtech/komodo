@@ -3,8 +3,8 @@ use std::path::PathBuf;
 use anyhow::{Context, anyhow};
 use komodo_client::{
   entities::{
-    CloneArgs, EnvironmentVar, SearchCombinator, stack::Stack,
-    to_path_compatible_name,
+    CloneArgs, EnvironmentVar, SearchCombinator, repo::Repo,
+    stack::Stack, to_path_compatible_name,
   },
   parsers::QUOTE_PATTERN,
 };
@@ -89,6 +89,7 @@ pub fn log_grep(
 /// Returns path to root directory of the stack repo.
 pub async fn pull_or_clone_stack(
   stack: &Stack,
+  repo: Option<&Repo>,
   git_token: Option<String>,
 ) -> anyhow::Result<PathBuf> {
   if stack.config.files_on_host {
@@ -96,26 +97,36 @@ pub async fn pull_or_clone_stack(
       "Wrong method called for files on host stack"
     ));
   }
-  if stack.config.repo.is_empty() {
+  if repo.is_none() && stack.config.repo.is_empty() {
     return Err(anyhow!("Repo is not configured"));
   }
 
-  let root = periphery_config()
-    .stack_dir()
-    .join(to_path_compatible_name(&stack.name));
-
-  let mut args: CloneArgs = stack.into();
-  // Set the clone destination to the one created for this run
+  let (root, mut args) = if let Some(repo) = repo {
+    let root = periphery_config()
+      .repo_dir()
+      .join(to_path_compatible_name(&repo.name))
+      .join(&repo.config.path)
+      .components()
+      .collect::<PathBuf>();
+    let args: CloneArgs = repo.into();
+    (root, args)
+  } else {
+    let root = periphery_config()
+      .stack_dir()
+      .join(to_path_compatible_name(&stack.name))
+      .join(&stack.config.clone_path)
+      .components()
+      .collect::<PathBuf>();
+    let args: CloneArgs = stack.into();
+    (root, args)
+  };
   args.destination = Some(root.display().to_string());
 
   let git_token = match git_token {
     Some(token) => Some(token),
     None => {
-      if !stack.config.git_account.is_empty() {
-        match crate::helpers::git_token(
-          &stack.config.git_provider,
-          &stack.config.git_account,
-        ) {
+      if let Some(account) = &args.account {
+        match crate::helpers::git_token(&args.provider, account) {
           Ok(token) => Some(token.to_string()),
           Err(e) => {
             return Err(

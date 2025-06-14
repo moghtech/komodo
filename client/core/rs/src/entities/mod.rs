@@ -459,18 +459,14 @@ pub struct CloneArgs {
 
 impl CloneArgs {
   pub fn path(&self, repo_dir: &Path) -> PathBuf {
-    let path = match &self.destination {
-      Some(destination) => {
-        let path = PathBuf::from(&destination);
-        if path.is_absolute() {
-          path
-        } else {
-          repo_dir.join(path)
-        }
-      }
+    match &self.destination {
+      Some(destination) => repo_dir
+        .join(to_path_compatible_name(&self.name))
+        .join(destination),
       None => repo_dir.join(to_path_compatible_name(&self.name)),
-    };
-    path.components().collect::<PathBuf>()
+    }
+    .components()
+    .collect()
   }
 
   pub fn remote_url(

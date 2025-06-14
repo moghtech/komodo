@@ -6,6 +6,7 @@ use komodo_client::{
   api::{execute::*, write::RefreshStackCache},
   entities::{
     permission::PermissionLevel,
+    repo::Repo,
     server::Server,
     stack::{Stack, StackInfo},
     update::{Log, Update},
@@ -26,6 +27,7 @@ use crate::{
     },
     periphery_client,
     query::get_variables_and_secrets,
+    stack_git_token,
     update::{add_update_without_send, update_update},
   },
   monitor::update_cache_for_server,
@@ -75,6 +77,16 @@ impl Resolve<ExecuteArgs> for DeployStack {
     )
     .await?;
 
+    let mut repo = if !stack.config.files_on_host
+      && !stack.config.linked_repo.is_empty()
+    {
+      crate::resource::get::<Repo>(&stack.config.linked_repo)
+        .await?
+        .into()
+    } else {
+      None
+    };
+
     // get the action state for the stack (or insert default).
     let action_state =
       action_states().stack.get_or_insert_default(&stack.id).await;
@@ -98,13 +110,8 @@ impl Resolve<ExecuteArgs> for DeployStack {
       ))
     }
 
-    let git_token = crate::helpers::git_token(
-      &stack.config.git_provider,
-      &stack.config.git_account,
-      |https| stack.config.git_https = https,
-    ).await.with_context(
-      || format!("Failed to get git token in call to db. Stopping run. | {} | {}", stack.config.git_provider, stack.config.git_account),
-    )?;
+    let git_token =
+      stack_git_token(&mut stack, repo.as_mut()).await?;
 
     let registry_token = crate::helpers::registry_token(
       &stack.config.registry_provider,
@@ -188,6 +195,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
       .request(ComposeUp {
         stack: stack.clone(),
         services: self.services,
+        repo,
         git_token,
         registry_token,
         replacers: secret_replacers.into_iter().collect(),
@@ -413,6 +421,7 @@ pub async fn pull_stack_inner(
   mut stack: Stack,
   services: Vec<String>,
   server: &Server,
+  mut repo: Option<Repo>,
   mut update: Option<&mut Update>,
 ) -> anyhow::Result<ComposePullResponse> {
   if let Some(update) = update.as_mut() {
@@ -427,13 +436,7 @@ pub async fn pull_stack_inner(
     }
   }
 
-  let git_token = crate::helpers::git_token(
-      &stack.config.git_provider,
-      &stack.config.git_account,
-      |https| stack.config.git_https = https,
-    ).await.with_context(
-      || format!("Failed to get git token in call to db. Stopping run. | {} | {}", stack.config.git_provider, stack.config.git_account),
-    )?;
+  let git_token = stack_git_token(&mut stack, repo.as_mut()).await?;
 
   let registry_token = crate::helpers::registry_token(
       &stack.config.registry_provider,
@@ -476,6 +479,7 @@ pub async fn pull_stack_inner(
     .request(ComposePull {
       stack,
       services,
+      repo,
       git_token,
       registry_token,
     })
@@ -501,6 +505,16 @@ impl Resolve<ExecuteArgs> for PullStack {
     )
     .await?;
 
+    let repo = if !stack.config.files_on_host
+      && !stack.config.linked_repo.is_empty()
+    {
+      crate::resource::get::<Repo>(&stack.config.linked_repo)
+        .await?
+        .into()
+    } else {
+      None
+    };
+
     // get the action state for the stack (or insert default).
     let action_state =
       action_states().stack.get_or_insert_default(&stack.id).await;
@@ -517,6 +531,7 @@ impl Resolve<ExecuteArgs> for PullStack {
       stack,
       self.services,
       &server,
+      repo,
       Some(&mut update),
     )
     .await?;
