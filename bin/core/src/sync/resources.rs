@@ -119,6 +119,11 @@ impl ResourceSyncTrait for Build {
       .get(&original.builder_id)
       .map(|b| b.name.clone())
       .unwrap_or_default();
+    original.linked_repo = resources
+      .repos
+      .get(&original.linked_repo)
+      .map(|r| r.name.clone())
+      .unwrap_or_default();
 
     Ok(original.partial_diff(update))
   }
@@ -283,10 +288,16 @@ impl ResourceSyncTrait for ResourceSync {
   }
 
   fn get_diff(
-    original: Self::Config,
+    mut original: Self::Config,
     update: Self::PartialConfig,
-    _resources: &AllResourcesById,
+    resources: &AllResourcesById,
   ) -> anyhow::Result<Self::ConfigDiff> {
+    original.linked_repo = resources
+      .repos
+      .get(&original.linked_repo)
+      .map(|r| r.name.clone())
+      .unwrap_or_default();
+
     Ok(original.partial_diff(update))
   }
 }

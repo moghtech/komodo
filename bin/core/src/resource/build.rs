@@ -14,6 +14,7 @@ use komodo_client::{
     builder::Builder,
     environment_vars_from_str, optional_string,
     permission::PermissionLevel,
+    repo::Repo,
     resource::Resource,
     to_docker_compatible_name,
     update::Update,
@@ -32,6 +33,7 @@ use crate::{
   helpers::{
     empty_or_only_spaces, query::get_latest_update, repo_link,
   },
+  permission::get_check_permissions,
   state::{action_states, build_state_cache, db_client},
 };
 
@@ -232,6 +234,19 @@ async fn validate_config(
       .await
       .context("Cannot attach Build to this Builder")?;
       config.builder_id = Some(builder.id)
+    }
+  }
+  if let Some(linked_repo) = &config.linked_repo {
+    if !linked_repo.is_empty() {
+      let repo = get_check_permissions::<Repo>(
+        linked_repo,
+        user,
+        PermissionLevel::Read.attach(),
+      )
+      .await
+      .context("Cannot attach Repo to this Build")?;
+      // in case it comes in as name
+      config.linked_repo = Some(repo.id);
     }
   }
   if let Some(build_args) = &config.build_args {

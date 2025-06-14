@@ -163,8 +163,22 @@ pub fn convert_resource<R: KomodoResource>(
 // These have no linked resource ids to replace
 impl ToToml for Alerter {}
 impl ToToml for Server {}
-impl ToToml for ResourceSync {}
 impl ToToml for Action {}
+
+impl ToToml for ResourceSync {
+  fn replace_ids(
+    resource: &mut Resource<Self::Config, Self::Info>,
+    all: &AllResourcesById,
+  ) {
+    resource.config.linked_repo.clone_from(
+      all
+        .repos
+        .get(&resource.config.linked_repo)
+        .map(|r| &r.name)
+        .unwrap_or(&String::new()),
+    );
+  }
+}
 
 impl ToToml for Stack {
   fn replace_ids(
@@ -279,6 +293,13 @@ impl ToToml for Build {
         .builders
         .get(&resource.config.builder_id)
         .map(|s| &s.name)
+        .unwrap_or(&String::new()),
+    );
+    resource.config.linked_repo.clone_from(
+      all
+        .repos
+        .get(&resource.config.linked_repo)
+        .map(|r| &r.name)
         .unwrap_or(&String::new()),
     );
   }

@@ -5,6 +5,8 @@ use komodo_client::{
   entities::{
     Operation, ResourceTarget, ResourceTargetVariant,
     komodo_timestamp,
+    permission::PermissionLevel,
+    repo::Repo,
     resource::Resource,
     sync::{
       PartialResourceSyncConfig, ResourceSync, ResourceSyncConfig,
@@ -23,6 +25,7 @@ use resolver_api::Resolve;
 use crate::{
   api::write::WriteArgs,
   helpers::repo_link,
+  permission::get_check_permissions,
   state::{action_states, db_client},
 };
 
@@ -100,10 +103,10 @@ impl super::KomodoResource for ResourceSync {
   }
 
   async fn validate_create_config(
-    _config: &mut Self::PartialConfig,
-    _user: &User,
+    config: &mut Self::PartialConfig,
+    user: &User,
   ) -> anyhow::Result<()> {
-    Ok(())
+    validate_config(config, user).await
   }
 
   async fn post_create(
@@ -134,10 +137,10 @@ impl super::KomodoResource for ResourceSync {
 
   async fn validate_update_config(
     _id: &str,
-    _config: &mut Self::PartialConfig,
-    _user: &User,
+    config: &mut Self::PartialConfig,
+    user: &User,
   ) -> anyhow::Result<()> {
-    Ok(())
+    validate_config(config, user).await
   }
 
   async fn post_update(
@@ -183,6 +186,27 @@ impl super::KomodoResource for ResourceSync {
   ) -> anyhow::Result<()> {
     Ok(())
   }
+}
+
+#[instrument(skip(user))]
+async fn validate_config(
+  config: &mut PartialResourceSyncConfig,
+  user: &User,
+) -> anyhow::Result<()> {
+  if let Some(linked_repo) = &config.linked_repo {
+    if !linked_repo.is_empty() {
+      let repo = get_check_permissions::<Repo>(
+        linked_repo,
+        user,
+        PermissionLevel::Read.attach(),
+      )
+      .await
+      .context("Cannot attach Repo to this Resource Sync")?;
+      // in case it comes in as name
+      config.linked_repo = Some(repo.id);
+    }
+  }
+  Ok(())
 }
 
 async fn get_resource_sync_state(

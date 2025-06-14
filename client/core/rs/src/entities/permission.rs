@@ -3,7 +3,9 @@ use std::fmt::Write;
 use derive_variants::EnumVariants;
 use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
-use strum::{AsRefStr, Display, EnumString, IntoStaticStr, VariantArray};
+use strum::{
+  AsRefStr, Display, EnumString, IntoStaticStr, VariantArray,
+};
 use typeshare::typeshare;
 
 use super::{MongoId, ResourceTarget};
@@ -277,7 +279,11 @@ impl PermissionLevelAndSpecifics {
   pub fn specifics_for_log(&self) -> String {
     let mut res = String::new();
     for specific in self.specific.iter() {
-      write!(&mut res, ", {specific}").unwrap();
+      if res.is_empty() {
+        write!(&mut res, "{specific}").unwrap();
+      } else {
+        write!(&mut res, ", {specific}").unwrap();
+      }
     }
     res
   }

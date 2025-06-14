@@ -275,7 +275,6 @@ pub struct StackConfig {
   pub skip_secret_interp: bool,
 
   /// Choose a Komodo Repo (Resource) to source the compose files.
-  /// The Repo must be attached to the same Server as the Stack.
   #[serde(default)]
   #[builder(default)]
   pub linked_repo: String,

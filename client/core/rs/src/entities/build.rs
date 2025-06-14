@@ -53,7 +53,6 @@ pub struct BuildListItemInfo {
   /// Full link to the repo.
   pub repo_link: String,
 
-
   /// Latest built short commit hash, or null.
   pub built_hash: Option<String>,
   /// Latest short commit hash, or null. Only for repo based stacks
@@ -164,6 +163,11 @@ pub struct BuildConfig {
   ))]
   #[builder(default)]
   pub links: Vec<String>,
+
+  /// Choose a Komodo Repo (Resource) to source the build files.
+  #[serde(default)]
+  #[builder(default)]
+  pub linked_repo: String,
 
   /// The git provider domain. Default: github.com
   #[serde(default = "default_git_provider")]
@@ -359,6 +363,7 @@ impl Default for BuildConfig {
       image_name: Default::default(),
       image_tag: Default::default(),
       links: Default::default(),
+      linked_repo: Default::default(),
       git_provider: default_git_provider(),
       git_https: default_git_https(),
       repo: Default::default(),
