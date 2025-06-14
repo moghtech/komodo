@@ -565,6 +565,8 @@ export interface BuildConfig {
 	image_tag?: string;
 	/** Configure quick links that are displayed in the resource header */
 	links?: string[];
+	/** Choose a Komodo Repo (Resource) to source the build files. */
+	linked_repo?: string;
 	/** The git provider domain. Default: github.com */
 	git_provider: string;
 	/**
@@ -698,6 +700,10 @@ export interface BuildListItemInfo {
 	builder_id: string;
 	/** Whether build is in files on host mode. */
 	files_on_host: boolean;
+	/** Whether build has UI defined dockerfile contents */
+	dockerfile_contents: boolean;
+	/** Linked repo, if one is attached. */
+	linked_repo: string;
 	/** The git provider domain */
 	git_provider: string;
 	/** The repo used as the source of the build */
@@ -1709,6 +1715,8 @@ export type GetResourceSyncActionStateResponse = ResourceSyncActionState;
 
 /** The sync configuration. */
 export interface ResourceSyncConfig {
+	/** Choose a Komodo Repo (Resource) to source the sync files. */
+	linked_repo?: string;
 	/** The git provider domain. Default: github.com */
 	git_provider: string;
 	/**
@@ -2025,10 +2033,7 @@ export interface StackConfig {
 	destroy_before_deploy?: boolean;
 	/** Whether to skip secret interpolation into the stack environment variables. */
 	skip_secret_interp?: boolean;
-	/**
-	 * Choose a Komodo Repo (Resource) to source the compose files.
-	 * The Repo must be attached to the same Server as the Stack.
-	 */
+	/** Choose a Komodo Repo (Resource) to source the compose files. */
 	linked_repo?: string;
 	/** The git provider domain. Default: github.com */
 	git_provider: string;
