@@ -79,6 +79,14 @@ pub struct CachedStackStatus {
   pub state: StackState,
   /// The services connected to the stack
   pub services: Vec<StackService>,
+  /// Resolved linked git provider
+  pub git_provider: String,
+  /// Resolved linked repo
+  pub repo: String,
+  /// Resolved linked branch
+  pub branch: String,
+  /// Resolved linked git https
+  pub git_https: bool,
 }
 
 const ADDITIONAL_MS: u128 = 500;
@@ -145,8 +153,8 @@ pub async fn update_cache_for_server(server: &Server) {
   // Handle server disabled
   if !server.config.enabled {
     insert_deployments_status_unknown(deployments).await;
+    insert_stacks_status_unknown(stacks, &repos).await;
     insert_repos_status_unknown(repos).await;
-    insert_stacks_status_unknown(stacks).await;
     insert_server_status(
       server,
       ServerState::Disabled,
@@ -170,8 +178,8 @@ pub async fn update_cache_for_server(server: &Server) {
     Ok(version) => version.version,
     Err(e) => {
       insert_deployments_status_unknown(deployments).await;
+      insert_stacks_status_unknown(stacks, &repos).await;
       insert_repos_status_unknown(repos).await;
-      insert_stacks_status_unknown(stacks).await;
       insert_server_status(
         server,
         ServerState::NotOk,
@@ -190,8 +198,8 @@ pub async fn update_cache_for_server(server: &Server) {
       Ok(stats) => Some(filter_volumes(server, stats)),
       Err(e) => {
         insert_deployments_status_unknown(deployments).await;
+        insert_stacks_status_unknown(stacks, &repos).await;
         insert_repos_status_unknown(repos).await;
-        insert_stacks_status_unknown(stacks).await;
         insert_server_status(
           server,
           ServerState::NotOk,
@@ -224,6 +232,7 @@ pub async fn update_cache_for_server(server: &Server) {
         resources::update_stack_cache(
           server.name.clone(),
           stacks,
+          &repos,
           &containers,
           &images
         ),
@@ -246,7 +255,7 @@ pub async fn update_cache_for_server(server: &Server) {
     }
     Err(e) => {
       insert_deployments_status_unknown(deployments).await;
-      insert_stacks_status_unknown(stacks).await;
+      insert_stacks_status_unknown(stacks, &repos).await;
       insert_server_status(
         server,
         ServerState::Ok,

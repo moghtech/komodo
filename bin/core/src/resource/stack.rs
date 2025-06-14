@@ -110,6 +110,22 @@ impl super::KomodoResource for Stack {
       })
       .unwrap_or_default();
 
+    let (git_provider, repo, branch, git_https) = status
+      .map(|s| {
+        (
+          s.curr.git_provider.clone(),
+          s.curr.repo.clone(),
+          s.curr.branch.clone(),
+          s.curr.git_https,
+        )
+      })
+      .unwrap_or((
+        stack.config.git_provider,
+        stack.config.repo,
+        stack.config.branch,
+        stack.config.git_https,
+      ));
+
     // This is only true if it is KNOWN to be true. so other cases are false.
     let (project_missing, status) =
       if stack.config.server_id.is_empty()
@@ -154,14 +170,14 @@ impl super::KomodoResource for Stack {
         missing_files: stack.info.missing_files,
         files_on_host: stack.config.files_on_host,
         repo_link: repo_link(
-          &stack.config.git_provider,
-          &stack.config.repo,
-          &stack.config.branch,
-          stack.config.git_https,
+          &git_provider,
+          &repo,
+          &branch,
+          git_https,
         ),
-        git_provider: stack.config.git_provider,
-        repo: stack.config.repo,
-        branch: stack.config.branch,
+        git_provider,
+        repo,
+        branch,
         latest_hash: stack.info.latest_hash,
         deployed_hash: stack.info.deployed_hash,
       },
