@@ -91,6 +91,7 @@ impl super::KomodoResource for ResourceSync {
         file_contents: !resource_sync.config.file_contents.is_empty(),
         files_on_host: resource_sync.config.files_on_host,
         managed: resource_sync.config.managed,
+        linked_repo: resource_sync.config.linked_repo,
         repo_link: repo_link(
           &git_provider,
           &repo,
