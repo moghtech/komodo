@@ -1,4 +1,7 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+  collections::HashMap,
+  path::{Path, PathBuf},
+};
 
 use anyhow::{Context, anyhow};
 use formatting::format_serror;
@@ -496,34 +499,44 @@ impl Resolve<WriteArgs> for CommitSync {
           format!("File contents written to {file_path:?}"),
         );
       }
+    } else if let Some(repo) = &repo {
+      let Some(resource_path) = resource_path else {
+        // Resource path checked above for repo mode.
+        unreachable!()
+      };
+      let args: CloneArgs = repo.into();
+      if let Err(e) =
+        commit_git_sync(args, &resource_path, &res.toml, &mut update)
+          .await
+      {
+        update.push_error_log(
+          "Write resource file",
+          format_serror(&e.into()),
+        );
+        update.finalize();
+        add_update(update.clone()).await?;
+        return Ok(update);
+      }
+      todo!()
     } else if !sync.config.repo.is_empty() {
       let Some(resource_path) = resource_path else {
         // Resource path checked above for repo mode.
         unreachable!()
       };
-      // GIT REPO
       let args: CloneArgs = (&sync).into();
-      let root = args.unique_path(&core_config().repo_directory)?;
-      match git::write_commit_file(
-        "Commit Sync",
-        &root,
-        &resource_path,
-        &res.toml,
-        &sync.config.branch,
-      )
-      .await
+      if let Err(e) =
+        commit_git_sync(args, &resource_path, &res.toml, &mut update)
+          .await
       {
-        Ok(res) => update.logs.extend(res.logs),
-        Err(e) => {
-          update.push_error_log(
-            "Write resource file",
-            format_serror(&e.into()),
-          );
-          update.finalize();
-          add_update(update.clone()).await?;
-          return Ok(update);
-        }
+        update.push_error_log(
+          "Write resource file",
+          format_serror(&e.into()),
+        );
+        update.finalize();
+        add_update(update.clone()).await?;
+        return Ok(update);
       }
+
       // ===========
       // UI DEFINED
     } else if let Err(e) = db_client()
@@ -559,6 +572,25 @@ impl Resolve<WriteArgs> for CommitSync {
 
     Ok(update)
   }
+}
+
+async fn commit_git_sync(
+  args: CloneArgs,
+  resource_path: &Path,
+  toml: &str,
+  update: &mut Update,
+) -> anyhow::Result<()> {
+  let root = args.unique_path(&core_config().repo_directory)?;
+  let res = git::write_commit_file(
+    "Commit Sync",
+    &root,
+    resource_path,
+    toml,
+    &args.branch,
+  )
+  .await?;
+  update.logs.extend(res.logs);
+  Ok(())
 }
 
 impl Resolve<WriteArgs> for RefreshResourceSyncPending {
