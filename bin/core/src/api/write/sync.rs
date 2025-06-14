@@ -517,7 +517,6 @@ impl Resolve<WriteArgs> for CommitSync {
         add_update(update.clone()).await?;
         return Ok(update);
       }
-      todo!()
     } else if !sync.config.repo.is_empty() {
       let Some(resource_path) = resource_path else {
         // Resource path checked above for repo mode.
