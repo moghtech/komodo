@@ -131,7 +131,7 @@ export const ResourceSelector = ({
       <PopoverTrigger asChild>
         <Button
           variant="secondary"
-          className="flex justify-start gap-2 w-fit max-w-[200px]"
+          className="flex justify-start gap-2 w-fit max-w-[350px]"
           disabled={disabled}
         >
           {name || `Select ${type}`}
@@ -153,6 +153,17 @@ export const ResourceSelector = ({
             </CommandEmpty>
 
             <CommandGroup>
+              {!search && (
+                <CommandItem
+                  onSelect={() => {
+                    onSelect && onSelect("");
+                    setOpen(false);
+                  }}
+                  className="flex items-center justify-between cursor-pointer"
+                >
+                  <div className="p-1">None</div>
+                </CommandItem>
+              )}
               {filtered.map((resource) => (
                 <CommandItem
                   key={resource.id}

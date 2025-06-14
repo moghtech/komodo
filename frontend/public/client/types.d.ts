@@ -3670,6 +3670,8 @@ export interface StackListItemInfo {
     files_on_host: boolean;
     /** Whether stack has file contents defined. */
     file_contents: boolean;
+    /** Linked repo, if one is attached. */
+    linked_repo: string;
     /** The git provider domain */
     git_provider: string;
     /** The configured repo */

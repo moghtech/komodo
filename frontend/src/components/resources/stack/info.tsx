@@ -51,7 +51,7 @@ export const StackInfo = ({
   // );
 
   const file_on_host = stack?.config?.files_on_host ?? false;
-  const git_repo = stack?.config?.repo ? true : false;
+  const git_repo = !!(stack?.config?.repo || stack?.config?.linked_repo);
   const canEdit = canWrite && (file_on_host || git_repo);
   const editFileCallback = (path: string) => (contents: string) =>
     setEdits({ ...edits, [path]: contents });
