@@ -6,6 +6,7 @@ use komodo_client::{
   entities::{
     Operation, ResourceTarget, ResourceTargetVariant,
     permission::{PermissionLevel, SpecificPermission},
+    repo::Repo,
     resource::Resource,
     server::Server,
     stack::{
@@ -357,9 +358,22 @@ async fn validate_config(
         PermissionLevel::Read.attach(),
       )
       .await
-      .context("Cannot attach stack to this Server")?;
+      .context("Cannot attach Stack to this Server")?;
       // in case it comes in as name
       config.server_id = Some(server.id);
+    }
+  }
+  if let Some(linked_repo) = &config.linked_repo {
+    if !linked_repo.is_empty() {
+      let repo = get_check_permissions::<Repo>(
+        linked_repo,
+        user,
+        PermissionLevel::Read.attach(),
+      )
+      .await
+      .context("Cannot attach Repo to this Stack")?;
+      // in case it comes in as name
+      config.linked_repo = Some(repo.id);
     }
   }
   Ok(())

@@ -40,8 +40,9 @@ Some features are additionally gated behind a specific permission for that featu
   - If given on a `Stack` or `Deployment`, this allows container exec terminal (even without `Terminal` on `Server`).
 - **`Attach`**: User can "attach" *other resources* to the resource.
   - If given on a `Server`, allows users to attach `Stacks`, `Deployments`, `Repos`, and `Builders`.
-  - If given on a `Builder`, allows users to attach `Builds`.
+  - If given on a `Builder`, allows users to attach `Builds` and `Repos`.
   - If given on a `Build`, allows users to attach it to `Deployments`.
+  - If given on a `Repo`, allows users to attach it to `Stacks`.
 - **`Processes`**: User can retrieve the full running process list on the `Server`.
 
 ## Permissioning by Resource Type
