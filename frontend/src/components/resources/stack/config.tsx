@@ -621,6 +621,22 @@ export const StackConfig = ({
                     description:
                       "Optional. Switch to a specific commit hash after cloning the branch.",
                   },
+                  clone_path: {
+                    placeholder: "/clone/path/on/host",
+                    description: (
+                      <div className="flex flex-col gap-0">
+                        <div>
+                          Explicitly specify the folder on the host to clone the
+                          repo in.
+                        </div>
+                        <div>
+                          If <span className="font-bold">relative</span> (no
+                          leading '/'), relative to{" "}
+                          {"$root_directory/stacks/" + stack.name}
+                        </div>
+                      </div>
+                    ),
+                  },
                 }
               : {}),
             reclone: {
