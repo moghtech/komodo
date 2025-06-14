@@ -500,7 +500,9 @@ impl CloneArgs {
       .join(self.provider.replace('/', "-"))
       .join(repo.replace('/', "-"))
       .join(self.branch.replace('/', "-"))
-      .join(self.commit.as_deref().unwrap_or("latest"));
+      .join(self.commit.as_deref().unwrap_or("latest"))
+      .components()
+      .collect();
     Ok(res)
   }
 }

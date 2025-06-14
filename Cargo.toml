@@ -44,7 +44,7 @@ mungos = "3.2.0"
 svi = "1.0.1"
 
 # ASYNC
-reqwest = { version = "0.12.15", default-features = false, features = ["json", "stream", "rustls-tls-native-roots"] }
+reqwest = { version = "0.12.20", default-features = false, features = ["json", "stream", "rustls-tls-native-roots"] }
 tokio = { version = "1.45.1", features = ["full"] }
 tokio-util = { version = "0.7.15", features = ["io", "codec"] }
 tokio-stream = { version = "0.1.17", features = ["sync"] }
@@ -54,7 +54,7 @@ futures-util = "0.3.31"
 arc-swap = "1.7.1"
 
 # SERVER
-tokio-tungstenite = { version = "0.26.2", features = ["rustls-tls-native-roots"] }
+tokio-tungstenite = { version = "0.27.0", features = ["rustls-tls-native-roots"] }
 axum-extra = { version = "0.10.1", features = ["typed-header"] }
 tower-http = { version = "0.6.4", features = ["fs", "cors"] }
 axum-server = { version = "0.7.2", features = ["tls-rustls"] }

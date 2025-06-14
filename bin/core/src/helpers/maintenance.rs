@@ -28,7 +28,7 @@ pub fn is_maintenance_window_active(
   }
 
   let dt = chrono::DateTime::from_timestamp(timestamp / 1000, 0)
-    .unwrap_or_else(|| chrono::Utc::now());
+    .unwrap_or_else(chrono::Utc::now);
 
   let (local_time, local_weekday, local_date) =
     match (window.timezone.as_str(), core_config().timezone.as_str())

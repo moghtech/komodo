@@ -16,7 +16,6 @@ use komodo_client::{
       image::ImageListItem,
     },
     komodo_timestamp,
-    repo::Repo,
     stack::{Stack, StackService, StackServiceNames, StackState},
     user::auto_redeploy_user,
   },
@@ -233,7 +232,6 @@ fn stack_alert_sent_cache()
 pub async fn update_stack_cache(
   server_name: String,
   stacks: Vec<Stack>,
-  repos: &[Repo],
   containers: &[ContainerListItem],
   images: &[ImageListItem],
 ) {
@@ -413,37 +411,10 @@ pub async fn update_stack_cache(
       .get(&stack.id)
       .await
       .map(|s| s.curr.state);
-    let default_repo_args = (
-      stack.config.git_provider,
-      stack.config.repo,
-      stack.config.branch,
-      stack.config.git_https,
-    );
-    let (git_provider, repo, branch, git_https) =
-      if stack.config.linked_repo.is_empty() {
-        default_repo_args
-      } else {
-        repos
-          .iter()
-          .find(|r| r.id == stack.config.linked_repo)
-          .map(|r| {
-            (
-              r.config.git_provider.clone(),
-              r.config.repo.clone(),
-              r.config.branch.clone(),
-              r.config.git_https,
-            )
-          })
-          .unwrap_or(default_repo_args)
-      };
     let status = CachedStackStatus {
       id: stack.id.clone(),
       state,
       services: services_with_containers,
-      git_provider,
-      repo,
-      branch,
-      git_https,
     };
     stack_status_cache
       .insert(stack.id, History { curr: status, prev }.into())

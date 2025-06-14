@@ -44,6 +44,7 @@ use crate::{
   api::read::ReadArgs,
   config::core_config,
   helpers::{
+    all_resources::AllResourcesById,
     git_token,
     query::get_id_to_tags,
     update::{add_update, make_update, update_update},
@@ -52,8 +53,8 @@ use crate::{
   resource,
   state::{db_client, github_client},
   sync::{
-    AllResourcesById, deploy::SyncDeployParams,
-    remote::RemoteResources, view::push_updates_for_view,
+    deploy::SyncDeployParams, remote::RemoteResources,
+    view::push_updates_for_view,
   },
 };
 
@@ -142,7 +143,20 @@ impl Resolve<WriteArgs> for WriteSyncFileContents {
     )
     .await?;
 
-    if !sync.config.files_on_host && sync.config.repo.is_empty() {
+    let repo = if !sync.config.files_on_host
+      && !sync.config.linked_repo.is_empty()
+    {
+      crate::resource::get::<Repo>(&sync.config.linked_repo)
+        .await?
+        .into()
+    } else {
+      None
+    };
+
+    if !sync.config.files_on_host
+      && sync.config.repo.is_empty()
+      && sync.config.linked_repo.is_empty()
+    {
       return Err(
         anyhow!(
           "This method is only for 'files on host' or 'repo' based syncs."
@@ -159,7 +173,8 @@ impl Resolve<WriteArgs> for WriteSyncFileContents {
     if sync.config.files_on_host {
       write_sync_file_contents_on_host(self, args, sync, update).await
     } else {
-      write_sync_file_contents_git(self, args, sync, update).await
+      write_sync_file_contents_git(self, args, sync, repo, update)
+        .await
     }
   }
 }
@@ -237,6 +252,7 @@ async fn write_sync_file_contents_git(
   req: WriteSyncFileContents,
   args: &WriteArgs,
   sync: ResourceSync,
+  repo: Option<Repo>,
   mut update: Update,
 ) -> serror::Result<Update> {
   let WriteSyncFileContents {
@@ -246,15 +262,34 @@ async fn write_sync_file_contents_git(
     contents,
   } = req;
 
-  let mut clone_args: CloneArgs = (&sync).into();
+  let mut clone_args: CloneArgs = if let Some(repo) = &repo {
+    repo.into()
+  } else {
+    (&sync).into()
+  };
   let root = clone_args.unique_path(&core_config().repo_directory)?;
+  clone_args.destination = Some(root.display().to_string());
+
+  let access_token = if let Some(account) = &clone_args.account {
+    git_token(&clone_args.provider, account, |https| clone_args.https = https)
+    .await
+    .with_context(
+      || format!("Failed to get git token in call to db. Stopping run. | {} | {account}", clone_args.provider),
+    )?
+  } else {
+    None
+  };
 
   let file_path =
     file_path.parse::<PathBuf>().context("Invalid file path")?;
   let resource_path = resource_path
     .parse::<PathBuf>()
     .context("Invalid resource path")?;
-  let full_path = root.join(&resource_path).join(&file_path);
+  let full_path = root
+    .join(&resource_path)
+    .join(&file_path)
+    .components()
+    .collect::<PathBuf>();
 
   if let Some(parent) = full_path.parent() {
     fs::create_dir_all(parent).await.with_context(|| {
@@ -267,16 +302,6 @@ async fn write_sync_file_contents_git(
   // Ensure the folder is initialized as git repo.
   // This allows a new file to be committed on a branch that may not exist.
   if !root.join(".git").exists() {
-    let access_token = if let Some(account) = &clone_args.account {
-      git_token(&clone_args.provider, account, |https| clone_args.https = https)
-      .await
-      .with_context(
-        || format!("Failed to get git token in call to db. Stopping run. | {} | {account}", clone_args.provider),
-      )?
-    } else {
-      None
-    };
-
     git::init_folder_as_repo(
       &root,
       &clone_args,
@@ -288,10 +313,29 @@ async fn write_sync_file_contents_git(
     if !all_logs_success(&update.logs) {
       update.finalize();
       update.id = add_update(update.clone()).await?;
-
       return Ok(update);
     }
   }
+
+  // Pull latest changes to repo to ensure linear commit history
+  if let Err(e) = git::pull_or_clone(
+    clone_args,
+    &core_config().repo_directory,
+    access_token,
+    Default::default(),
+    Default::default(),
+    Default::default(),
+    Default::default(),
+  )
+  .await
+  .context("Failed to pull latest changes before commit")
+  {
+    update
+      .logs
+      .push(Log::error("Pull Repo", format_serror(&e.into())));
+    update.finalize();
+    return Ok(update);
+  };
 
   if let Err(e) =
     fs::write(&full_path, &contents).await.with_context(|| {
@@ -353,6 +397,16 @@ impl Resolve<WriteArgs> for CommitSync {
     )
     .await?;
 
+    let repo = if !sync.config.files_on_host
+      && !sync.config.linked_repo.is_empty()
+    {
+      crate::resource::get::<Repo>(&sync.config.linked_repo)
+        .await?
+        .into()
+    } else {
+      None
+    };
+
     let file_contents_empty = sync.config.file_contents_empty();
 
     let fresh_sync = !sync.config.files_on_host
@@ -367,29 +421,31 @@ impl Resolve<WriteArgs> for CommitSync {
     }
 
     // Get this here so it can fail before update created.
-    let resource_path =
-      if sync.config.files_on_host || !sync.config.repo.is_empty() {
-        let resource_path = sync
-          .config
-          .resource_path
-          .first()
-          .context("Sync does not have resource path configured.")?
-          .parse::<PathBuf>()
-          .context("Invalid resource path")?;
+    let resource_path = if sync.config.files_on_host
+      || !sync.config.repo.is_empty()
+      || repo.is_some()
+    {
+      let resource_path = sync
+        .config
+        .resource_path
+        .first()
+        .context("Sync does not have resource path configured.")?
+        .parse::<PathBuf>()
+        .context("Invalid resource path")?;
 
-        if resource_path
-          .extension()
-          .context("Resource path missing '.toml' extension")?
-          != "toml"
-        {
-          return Err(
-            anyhow!("Resource path missing '.toml' extension").into(),
-          );
-        }
-        Some(resource_path)
-      } else {
-        None
-      };
+      if resource_path
+        .extension()
+        .context("Resource path missing '.toml' extension")?
+        != "toml"
+      {
+        return Err(
+          anyhow!("Resource path missing '.toml' extension").into(),
+        );
+      }
+      Some(resource_path)
+    } else {
+      None
+    };
 
     let res = ExportAllResourcesToToml {
       include_resources: sync.config.include_resources,
@@ -525,10 +581,21 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
       )
       .await?;
 
+    let repo = if !sync.config.files_on_host
+      && !sync.config.linked_repo.is_empty()
+    {
+      crate::resource::get::<Repo>(&sync.config.linked_repo)
+        .await?
+        .into()
+    } else {
+      None
+    };
+
     if !sync.config.managed
       && !sync.config.files_on_host
       && sync.config.file_contents.is_empty()
       && sync.config.repo.is_empty()
+      && sync.config.linked_repo.is_empty()
     {
       // Sync not configured, nothing to refresh
       return Ok(sync);
@@ -542,9 +609,12 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
         hash,
         message,
         ..
-      } = crate::sync::remote::get_remote_resources(&sync)
-        .await
-        .context("failed to get remote resources")?;
+      } = crate::sync::remote::get_remote_resources(
+        &sync,
+        repo.as_ref(),
+      )
+      .await
+      .context("failed to get remote resources")?;
 
       sync.info.remote_contents = files;
       sync.info.remote_errors = file_errors;
@@ -585,7 +655,6 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
                 deployment_map: &deployments_by_name,
                 stacks: &resources.stacks,
                 stack_map: &stacks_by_name,
-                all_resources: &all_resources,
               },
             )
             .await;
@@ -595,7 +664,6 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
           push_updates_for_view::<Server>(
             resources.servers,
             delete,
-            &all_resources,
             None,
             None,
             &id_to_tags,
@@ -606,7 +674,6 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
           push_updates_for_view::<Stack>(
             resources.stacks,
             delete,
-            &all_resources,
             None,
             None,
             &id_to_tags,
@@ -617,7 +684,6 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
           push_updates_for_view::<Deployment>(
             resources.deployments,
             delete,
-            &all_resources,
             None,
             None,
             &id_to_tags,
@@ -628,7 +694,6 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
           push_updates_for_view::<Build>(
             resources.builds,
             delete,
-            &all_resources,
             None,
             None,
             &id_to_tags,
@@ -639,7 +704,6 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
           push_updates_for_view::<Repo>(
             resources.repos,
             delete,
-            &all_resources,
             None,
             None,
             &id_to_tags,
@@ -650,7 +714,6 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
           push_updates_for_view::<Procedure>(
             resources.procedures,
             delete,
-            &all_resources,
             None,
             None,
             &id_to_tags,
@@ -661,7 +724,6 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
           push_updates_for_view::<Action>(
             resources.actions,
             delete,
-            &all_resources,
             None,
             None,
             &id_to_tags,
@@ -672,7 +734,6 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
           push_updates_for_view::<Builder>(
             resources.builders,
             delete,
-            &all_resources,
             None,
             None,
             &id_to_tags,
@@ -683,7 +744,6 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
           push_updates_for_view::<Alerter>(
             resources.alerters,
             delete,
-            &all_resources,
             None,
             None,
             &id_to_tags,
@@ -694,7 +754,6 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
           push_updates_for_view::<ResourceSync>(
             resources.resource_syncs,
             delete,
-            &all_resources,
             None,
             None,
             &id_to_tags,
@@ -722,7 +781,6 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
         crate::sync::user_groups::get_updates_for_view(
           resources.user_groups,
           delete,
-          &all_resources,
         )
         .await?
       } else {

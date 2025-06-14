@@ -65,6 +65,7 @@ async fn app() -> anyhow::Result<()> {
   // Spawn background tasks
   monitor::spawn_monitor_loop();
   resource::spawn_resource_refresh_loop();
+  resource::spawn_all_resources_refresh_loop();
   resource::spawn_build_state_refresh_loop();
   resource::spawn_repo_state_refresh_loop();
   resource::spawn_procedure_state_refresh_loop();

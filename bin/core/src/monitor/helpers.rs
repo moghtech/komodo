@@ -69,37 +69,11 @@ pub async fn insert_repos_status_unknown(repos: Vec<Repo>) {
 }
 
 #[instrument(level = "debug", skip_all)]
-pub async fn insert_stacks_status_unknown(
-  stacks: Vec<Stack>,
-  repos: &[Repo],
-) {
+pub async fn insert_stacks_status_unknown(stacks: Vec<Stack>) {
   let status_cache = stack_status_cache();
   for stack in stacks {
     let prev =
       status_cache.get(&stack.id).await.map(|s| s.curr.state);
-    let default_repo_args = (
-      stack.config.git_provider,
-      stack.config.repo,
-      stack.config.branch,
-      stack.config.git_https,
-    );
-    let (git_provider, repo, branch, git_https) =
-      if stack.config.linked_repo.is_empty() {
-        default_repo_args
-      } else {
-        repos
-          .iter()
-          .find(|r| r.id == stack.config.linked_repo)
-          .map(|r| {
-            (
-              r.config.git_provider.clone(),
-              r.config.repo.clone(),
-              r.config.branch.clone(),
-              r.config.git_https,
-            )
-          })
-          .unwrap_or(default_repo_args)
-      };
     status_cache
       .insert(
         stack.id.clone(),
@@ -108,10 +82,6 @@ pub async fn insert_stacks_status_unknown(
             id: stack.id,
             state: StackState::Unknown,
             services: Vec::new(),
-            git_provider,
-            repo,
-            branch,
-            git_https,
           },
           prev,
         }

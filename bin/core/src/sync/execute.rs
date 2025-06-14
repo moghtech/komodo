@@ -15,9 +15,7 @@ use resolver_api::Resolve;
 
 use crate::api::write::WriteArgs;
 
-use super::{
-  AllResourcesById, ResourceSyncTrait, SyncDeltas, ToUpdateItem,
-};
+use super::{ResourceSyncTrait, SyncDeltas, ToUpdateItem};
 
 /// Gets all the resources to update. For use in sync execution.
 pub async fn get_updates_for_execution<
@@ -25,7 +23,6 @@ pub async fn get_updates_for_execution<
 >(
   resources: Vec<ResourceToml<Resource::PartialConfig>>,
   delete: bool,
-  all_resources: &AllResourcesById,
   match_resource_type: Option<ResourceTargetVariant>,
   match_resources: Option<&[String]>,
   id_to_tags: &HashMap<String, Tag>,
@@ -86,7 +83,6 @@ pub async fn get_updates_for_execution<
         let mut diff = Resource::get_diff(
           original.config.clone(),
           resource.config,
-          all_resources,
         )?;
 
         Resource::validate_diff(&mut diff);

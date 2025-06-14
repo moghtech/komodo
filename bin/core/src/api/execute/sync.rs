@@ -28,11 +28,14 @@ use resolver_api::Resolve;
 
 use crate::{
   api::write::WriteArgs,
-  helpers::{query::get_id_to_tags, update::update_update},
+  helpers::{
+    all_resources::AllResourcesById, query::get_id_to_tags,
+    update::update_update,
+  },
   permission::get_check_permissions,
   state::{action_states, db_client},
   sync::{
-    AllResourcesById, ResourceSyncTrait,
+    ResourceSyncTrait,
     deploy::{
       SyncDeployParams, build_deploy_cache, deploy_from_cache,
     },
@@ -61,6 +64,16 @@ impl Resolve<ExecuteArgs> for RunSync {
     )
     .await?;
 
+    let repo = if !sync.config.files_on_host
+      && !sync.config.linked_repo.is_empty()
+    {
+      crate::resource::get::<Repo>(&sync.config.linked_repo)
+        .await?
+        .into()
+    } else {
+      None
+    };
+
     // get the action state for the sync (or insert default).
     let action_state = action_states()
       .resource_sync
@@ -84,9 +97,10 @@ impl Resolve<ExecuteArgs> for RunSync {
       message,
       file_errors,
       ..
-    } = crate::sync::remote::get_remote_resources(&sync)
-      .await
-      .context("failed to get remote resources")?;
+    } =
+      crate::sync::remote::get_remote_resources(&sync, repo.as_ref())
+        .await
+        .context("failed to get remote resources")?;
 
     update.logs.extend(logs);
     update_update(update.clone()).await?;
@@ -197,7 +211,6 @@ impl Resolve<ExecuteArgs> for RunSync {
       deployment_map: &deployments_by_name,
       stacks: &resources.stacks,
       stack_map: &stacks_by_name,
-      all_resources: &all_resources,
     })
     .await?;
 
@@ -207,7 +220,6 @@ impl Resolve<ExecuteArgs> for RunSync {
       get_updates_for_execution::<Server>(
         resources.servers,
         delete,
-        &all_resources,
         match_resource_type,
         match_resources.as_deref(),
         &id_to_tags,
@@ -221,7 +233,6 @@ impl Resolve<ExecuteArgs> for RunSync {
       get_updates_for_execution::<Stack>(
         resources.stacks,
         delete,
-        &all_resources,
         match_resource_type,
         match_resources.as_deref(),
         &id_to_tags,
@@ -235,7 +246,6 @@ impl Resolve<ExecuteArgs> for RunSync {
       get_updates_for_execution::<Deployment>(
         resources.deployments,
         delete,
-        &all_resources,
         match_resource_type,
         match_resources.as_deref(),
         &id_to_tags,
@@ -249,7 +259,6 @@ impl Resolve<ExecuteArgs> for RunSync {
       get_updates_for_execution::<Build>(
         resources.builds,
         delete,
-        &all_resources,
         match_resource_type,
         match_resources.as_deref(),
         &id_to_tags,
@@ -263,7 +272,6 @@ impl Resolve<ExecuteArgs> for RunSync {
       get_updates_for_execution::<Repo>(
         resources.repos,
         delete,
-        &all_resources,
         match_resource_type,
         match_resources.as_deref(),
         &id_to_tags,
@@ -277,7 +285,6 @@ impl Resolve<ExecuteArgs> for RunSync {
       get_updates_for_execution::<Procedure>(
         resources.procedures,
         delete,
-        &all_resources,
         match_resource_type,
         match_resources.as_deref(),
         &id_to_tags,
@@ -291,7 +298,6 @@ impl Resolve<ExecuteArgs> for RunSync {
       get_updates_for_execution::<Action>(
         resources.actions,
         delete,
-        &all_resources,
         match_resource_type,
         match_resources.as_deref(),
         &id_to_tags,
@@ -305,7 +311,6 @@ impl Resolve<ExecuteArgs> for RunSync {
       get_updates_for_execution::<Builder>(
         resources.builders,
         delete,
-        &all_resources,
         match_resource_type,
         match_resources.as_deref(),
         &id_to_tags,
@@ -319,7 +324,6 @@ impl Resolve<ExecuteArgs> for RunSync {
       get_updates_for_execution::<Alerter>(
         resources.alerters,
         delete,
-        &all_resources,
         match_resource_type,
         match_resources.as_deref(),
         &id_to_tags,
@@ -333,7 +337,6 @@ impl Resolve<ExecuteArgs> for RunSync {
       get_updates_for_execution::<entities::sync::ResourceSync>(
         resources.resource_syncs,
         delete,
-        &all_resources,
         match_resource_type,
         match_resources.as_deref(),
         &id_to_tags,
@@ -371,7 +374,6 @@ impl Resolve<ExecuteArgs> for RunSync {
       crate::sync::user_groups::get_updates_for_execution(
         resources.user_groups,
         delete,
-        &all_resources,
       )
       .await?
     } else {

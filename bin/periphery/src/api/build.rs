@@ -124,6 +124,7 @@ impl Resolve<super::Args> for build::Build {
   ) -> serror::Result<Vec<Log>> {
     let build::Build {
       build,
+      repo: linked_repo,
       registry_token,
       additional_tags,
       replacers: mut core_replacers,
@@ -152,7 +153,11 @@ impl Resolve<super::Args> for build::Build {
       ..
     } = &build;
 
-    if !*files_on_host && repo.is_empty() && dockerfile.is_empty() {
+    if !*files_on_host
+      && repo.is_empty()
+      && linked_repo.is_none()
+      && dockerfile.is_empty()
+    {
       return Err(anyhow!("Build must be files on host mode, have a repo attached, or have dockerfile contents set to build").into());
     }
 
@@ -180,13 +185,29 @@ impl Resolve<super::Args> for build::Build {
 
     let name = to_docker_compatible_name(name);
 
-    let build_path =
-      periphery_config().build_dir().join(&name).join(build_path);
+    let build_path = if let Some(repo) = &linked_repo {
+      periphery_config()
+        .repo_dir()
+        .join(to_path_compatible_name(&repo.name))
+        .join(build_path)
+    } else {
+      periphery_config()
+        .build_dir()
+        .join(to_path_compatible_name(&name))
+        .join(build_path)
+    }
+    .components()
+    .collect::<PathBuf>();
+
     let dockerfile_path = optional_string(dockerfile_path)
       .unwrap_or("Dockerfile".to_owned());
 
     // Write UI defined Dockerfile to host
-    if !*files_on_host && repo.is_empty() && !dockerfile.is_empty() {
+    if !*files_on_host
+      && repo.is_empty()
+      && linked_repo.is_none()
+      && !dockerfile.is_empty()
+    {
       let dockerfile = if *skip_secret_interp {
         dockerfile.to_string()
       } else {
@@ -200,13 +221,13 @@ impl Resolve<super::Args> for build::Build {
         dockerfile
       };
 
-      let full_path = build_path
+      let full_dockerfile_path = build_path
         .join(&dockerfile_path)
         .components()
         .collect::<PathBuf>();
 
       // Ensure parent directory exists
-      if let Some(parent) = full_path.parent() {
+      if let Some(parent) = full_dockerfile_path.parent() {
         if !parent.exists() {
           tokio::fs::create_dir_all(parent)
             .await
@@ -214,15 +235,17 @@ impl Resolve<super::Args> for build::Build {
         }
       }
 
-      fs::write(&full_path, dockerfile).await.with_context(|| {
+      fs::write(&full_dockerfile_path, dockerfile).await.with_context(|| {
         format!(
-          "Failed to write dockerfile contents to {full_path:?}"
+          "Failed to write dockerfile contents to {full_dockerfile_path:?}"
         )
       })?;
 
       logs.push(Log::simple(
         "Write Dockerfile",
-        format!("Dockerfile contents written to {full_path:?}"),
+        format!(
+          "Dockerfile contents written to {full_dockerfile_path:?}"
+        ),
       ));
     };
 

@@ -16,6 +16,7 @@ use komodo_client::{
     deployment::DeploymentState,
     komodo_timestamp,
     permission::PermissionLevel,
+    repo::Repo,
     update::{Log, Update},
     user::auto_redeploy_user,
   },
@@ -35,9 +36,9 @@ use tokio_util::sync::CancellationToken;
 use crate::{
   alert::send_alerts,
   helpers::{
+    build_git_token,
     builder::{cleanup_builder_instance, get_builder_periphery},
     channel::build_cancel_channel,
-    git_token,
     interpolate::{
       add_interp_update_log,
       interpolate_variables_secrets_into_extra_args,
@@ -88,6 +89,16 @@ impl Resolve<ExecuteArgs> for RunBuild {
     )
     .await?;
 
+    let mut repo = if !build.config.files_on_host
+      && !build.config.linked_repo.is_empty()
+    {
+      crate::resource::get::<Repo>(&build.config.linked_repo)
+        .await?
+        .into()
+    } else {
+      None
+    };
+
     let mut vars_and_secrets = get_variables_and_secrets().await?;
     // Add the $VERSION to variables. Use with [[$VERSION]]
     vars_and_secrets.variables.insert(
@@ -117,15 +128,8 @@ impl Resolve<ExecuteArgs> for RunBuild {
     update.version = build.config.version;
     update_update(update.clone()).await?;
 
-    let git_token = git_token(
-      &build.config.git_provider,
-      &build.config.git_account,
-      |https| build.config.git_https = https,
-    )
-    .await
-    .with_context(
-      || format!("Failed to get git token in call to db. This is a database error, not a token exisitence error. Stopping run. | {} | {}", build.config.git_provider, build.config.git_account),
-    )?;
+    let git_token =
+      build_git_token(&mut build, repo.as_mut()).await?;
 
     let registry_token =
       validate_account_extract_registry_token(&build).await?;
@@ -253,13 +257,14 @@ impl Resolve<ExecuteArgs> for RunBuild {
     };
 
     let commit_message = if !build.config.files_on_host
-      && !build.config.repo.is_empty()
+      && (!build.config.repo.is_empty()
+        || !build.config.linked_repo.is_empty())
     {
       // CLONE REPO
       let res = tokio::select! {
         res = periphery
           .request(api::git::CloneRepo {
-            args: (&build).into(),
+            args: repo.as_ref().map(Into::into).unwrap_or((&build).into()),
             git_token,
             environment: Default::default(),
             env_file_path: Default::default(),
@@ -307,6 +312,7 @@ impl Resolve<ExecuteArgs> for RunBuild {
         res = periphery
           .request(api::build::Build {
             build: build.clone(),
+            repo,
             registry_token,
             replacers: secret_replacers.into_iter().collect(),
             // Push a commit hash tagged image

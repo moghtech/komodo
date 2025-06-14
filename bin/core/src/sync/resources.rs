@@ -25,6 +25,7 @@ use partial_derive2::{MaybeNone, PartialDiff};
 use crate::{
   api::write::WriteArgs,
   resource::KomodoResource,
+  state::all_resources_cache,
   sync::{
     ToUpdateItem,
     execute::{run_update_description, run_update_tags},
@@ -32,8 +33,7 @@ use crate::{
 };
 
 use super::{
-  AllResourcesById, ResourceSyncTrait, SyncDeltas,
-  execute::ExecuteResourceSync,
+  ResourceSyncTrait, SyncDeltas, execute::ExecuteResourceSync,
   include_resource_by_resource_type_and_name,
   include_resource_by_tags,
 };
@@ -42,7 +42,6 @@ impl ResourceSyncTrait for Server {
   fn get_diff(
     original: Self::Config,
     update: Self::PartialConfig,
-    _resources: &AllResourcesById,
   ) -> anyhow::Result<Self::ConfigDiff> {
     Ok(original.partial_diff(update))
   }
@@ -54,8 +53,8 @@ impl ResourceSyncTrait for Deployment {
   fn get_diff(
     mut original: Self::Config,
     update: Self::PartialConfig,
-    resources: &AllResourcesById,
   ) -> anyhow::Result<Self::ConfigDiff> {
+    let resources = all_resources_cache().load();
     // need to replace the server id with name
     original.server_id = resources
       .servers
@@ -87,8 +86,8 @@ impl ResourceSyncTrait for Stack {
   fn get_diff(
     mut original: Self::Config,
     update: Self::PartialConfig,
-    resources: &AllResourcesById,
   ) -> anyhow::Result<Self::ConfigDiff> {
+    let resources = all_resources_cache().load();
     // Need to replace server id with name
     original.server_id = resources
       .servers
@@ -112,8 +111,8 @@ impl ResourceSyncTrait for Build {
   fn get_diff(
     mut original: Self::Config,
     update: Self::PartialConfig,
-    resources: &AllResourcesById,
   ) -> anyhow::Result<Self::ConfigDiff> {
+    let resources = all_resources_cache().load();
     original.builder_id = resources
       .builders
       .get(&original.builder_id)
@@ -146,8 +145,8 @@ impl ResourceSyncTrait for Repo {
   fn get_diff(
     mut original: Self::Config,
     update: Self::PartialConfig,
-    resources: &AllResourcesById,
   ) -> anyhow::Result<Self::ConfigDiff> {
+    let resources = all_resources_cache().load();
     // Need to replace server id with name
     original.server_id = resources
       .servers
@@ -172,7 +171,6 @@ impl ResourceSyncTrait for Alerter {
   fn get_diff(
     original: Self::Config,
     update: Self::PartialConfig,
-    _resources: &AllResourcesById,
   ) -> anyhow::Result<Self::ConfigDiff> {
     Ok(original.partial_diff(update))
   }
@@ -184,10 +182,10 @@ impl ResourceSyncTrait for Builder {
   fn get_diff(
     mut original: Self::Config,
     update: Self::PartialConfig,
-    resources: &AllResourcesById,
   ) -> anyhow::Result<Self::ConfigDiff> {
     // need to replace server builder id with name
     if let BuilderConfig::Server(config) = &mut original {
+      let resources = all_resources_cache().load();
       config.server_id = resources
         .servers
         .get(&config.server_id)
@@ -205,7 +203,6 @@ impl ResourceSyncTrait for Action {
   fn get_diff(
     original: Self::Config,
     update: Self::PartialConfig,
-    _resources: &AllResourcesById,
   ) -> anyhow::Result<Self::ConfigDiff> {
     Ok(original.partial_diff(update))
   }
@@ -290,8 +287,8 @@ impl ResourceSyncTrait for ResourceSync {
   fn get_diff(
     mut original: Self::Config,
     update: Self::PartialConfig,
-    resources: &AllResourcesById,
   ) -> anyhow::Result<Self::ConfigDiff> {
+    let resources = all_resources_cache().load();
     original.linked_repo = resources
       .repos
       .get(&original.linked_repo)
@@ -308,8 +305,8 @@ impl ResourceSyncTrait for Procedure {
   fn get_diff(
     mut original: Self::Config,
     update: Self::PartialConfig,
-    resources: &AllResourcesById,
   ) -> anyhow::Result<Self::ConfigDiff> {
+    let resources = all_resources_cache().load();
     for stage in &mut original.stages {
       for execution in &mut stage.executions {
         match &mut execution.execution {

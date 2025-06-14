@@ -43,7 +43,11 @@ pub struct BuildListItemInfo {
 
   /// Whether build is in files on host mode.
   pub files_on_host: bool,
+  /// Whether build has UI defined dockerfile contents
+  pub dockerfile_contents: bool,
 
+  /// Linked repo, if one is attached.
+  pub linked_repo: String,
   /// The git provider domain
   pub git_provider: String,
   /// The repo used as the source of the build

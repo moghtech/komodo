@@ -247,7 +247,7 @@ async fn write_stack_repo(
     None => {
       if let Some(account) = &args.account {
         match crate::helpers::git_token(
-          &args.account.as_deref().unwrap_or("github.com"),
+          args.account.as_deref().unwrap_or("github.com"),
           account,
         ) {
           Ok(token) => Some(token.to_string()),

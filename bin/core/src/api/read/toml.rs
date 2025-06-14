@@ -24,7 +24,6 @@ use crate::{
   resource,
   state::db_client,
   sync::{
-    AllResourcesById,
     toml::{ToToml, convert_resource},
     user_groups::{convert_user_groups, user_group_to_toml},
     variables::variable_to_toml,
@@ -44,7 +43,7 @@ async fn get_all_targets(
     get_all_tags(None).await?
   };
   targets.extend(
-    resource::list_for_user::<Alerter>(
+    resource::list_full_for_user::<Alerter>(
       ResourceQuery::builder().tags(tags).build(),
       user,
       PermissionLevel::Read.into(),
@@ -55,7 +54,7 @@ async fn get_all_targets(
     .map(|resource| ResourceTarget::Alerter(resource.id)),
   );
   targets.extend(
-    resource::list_for_user::<Builder>(
+    resource::list_full_for_user::<Builder>(
       ResourceQuery::builder().tags(tags).build(),
       user,
       PermissionLevel::Read.into(),
@@ -66,7 +65,7 @@ async fn get_all_targets(
     .map(|resource| ResourceTarget::Builder(resource.id)),
   );
   targets.extend(
-    resource::list_for_user::<Server>(
+    resource::list_full_for_user::<Server>(
       ResourceQuery::builder().tags(tags).build(),
       user,
       PermissionLevel::Read.into(),
@@ -77,7 +76,7 @@ async fn get_all_targets(
     .map(|resource| ResourceTarget::Server(resource.id)),
   );
   targets.extend(
-    resource::list_for_user::<Stack>(
+    resource::list_full_for_user::<Stack>(
       ResourceQuery::builder().tags(tags).build(),
       user,
       PermissionLevel::Read.into(),
@@ -88,7 +87,7 @@ async fn get_all_targets(
     .map(|resource| ResourceTarget::Stack(resource.id)),
   );
   targets.extend(
-    resource::list_for_user::<Deployment>(
+    resource::list_full_for_user::<Deployment>(
       ResourceQuery::builder().tags(tags).build(),
       user,
       PermissionLevel::Read.into(),
@@ -99,7 +98,7 @@ async fn get_all_targets(
     .map(|resource| ResourceTarget::Deployment(resource.id)),
   );
   targets.extend(
-    resource::list_for_user::<Build>(
+    resource::list_full_for_user::<Build>(
       ResourceQuery::builder().tags(tags).build(),
       user,
       PermissionLevel::Read.into(),
@@ -110,7 +109,7 @@ async fn get_all_targets(
     .map(|resource| ResourceTarget::Build(resource.id)),
   );
   targets.extend(
-    resource::list_for_user::<Repo>(
+    resource::list_full_for_user::<Repo>(
       ResourceQuery::builder().tags(tags).build(),
       user,
       PermissionLevel::Read.into(),
@@ -121,7 +120,7 @@ async fn get_all_targets(
     .map(|resource| ResourceTarget::Repo(resource.id)),
   );
   targets.extend(
-    resource::list_for_user::<Procedure>(
+    resource::list_full_for_user::<Procedure>(
       ResourceQuery::builder().tags(tags).build(),
       user,
       PermissionLevel::Read.into(),
@@ -132,7 +131,7 @@ async fn get_all_targets(
     .map(|resource| ResourceTarget::Procedure(resource.id)),
   );
   targets.extend(
-    resource::list_for_user::<Action>(
+    resource::list_full_for_user::<Action>(
       ResourceQuery::builder().tags(tags).build(),
       user,
       PermissionLevel::Read.into(),
@@ -204,7 +203,6 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
       include_variables,
     } = self;
     let mut res = ResourcesToml::default();
-    let all = AllResourcesById::load().await?;
     let id_to_tags = get_id_to_tags(None).await?;
     let ReadArgs { user } = args;
     for target in targets {
@@ -263,7 +261,7 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
             PermissionLevel::Read.into(),
           )
           .await?;
-          Builder::replace_ids(&mut builder, &all);
+          Builder::replace_ids(&mut builder);
           res.builders.push(convert_resource::<Builder>(
             builder,
             false,
@@ -278,7 +276,7 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
             PermissionLevel::Read.into(),
           )
           .await?;
-          Build::replace_ids(&mut build, &all);
+          Build::replace_ids(&mut build);
           res.builds.push(convert_resource::<Build>(
             build,
             false,
@@ -293,7 +291,7 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
             PermissionLevel::Read.into(),
           )
           .await?;
-          Deployment::replace_ids(&mut deployment, &all);
+          Deployment::replace_ids(&mut deployment);
           res.deployments.push(convert_resource::<Deployment>(
             deployment,
             false,
@@ -308,7 +306,7 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
             PermissionLevel::Read.into(),
           )
           .await?;
-          Repo::replace_ids(&mut repo, &all);
+          Repo::replace_ids(&mut repo);
           res.repos.push(convert_resource::<Repo>(
             repo,
             false,
@@ -323,7 +321,7 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
             PermissionLevel::Read.into(),
           )
           .await?;
-          Stack::replace_ids(&mut stack, &all);
+          Stack::replace_ids(&mut stack);
           res.stacks.push(convert_resource::<Stack>(
             stack,
             false,
@@ -338,7 +336,7 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
             PermissionLevel::Read.into(),
           )
           .await?;
-          Procedure::replace_ids(&mut procedure, &all);
+          Procedure::replace_ids(&mut procedure);
           res.procedures.push(convert_resource::<Procedure>(
             procedure,
             false,
@@ -353,7 +351,7 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
             PermissionLevel::Read.into(),
           )
           .await?;
-          Action::replace_ids(&mut action, &all);
+          Action::replace_ids(&mut action);
           res.actions.push(convert_resource::<Action>(
             action,
             false,
@@ -365,7 +363,7 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
       };
     }
 
-    add_user_groups(user_groups, &mut res, &all, args)
+    add_user_groups(user_groups, &mut res, args)
       .await
       .context("failed to add user groups")?;
 
@@ -394,7 +392,6 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
 async fn add_user_groups(
   user_groups: Vec<String>,
   res: &mut ResourcesToml,
-  all: &AllResourcesById,
   args: &ReadArgs,
 ) -> anyhow::Result<()> {
   let user_groups = ListUserGroups {}
@@ -406,7 +403,7 @@ async fn add_user_groups(
       user_groups.contains(&ug.name) || user_groups.contains(&ug.id)
     });
   let mut ug = Vec::with_capacity(user_groups.size_hint().0);
-  convert_user_groups(user_groups, all, &mut ug).await?;
+  convert_user_groups(user_groups, &mut ug).await?;
   res.user_groups = ug.into_iter().map(|ug| ug.1).collect();
 
   Ok(())

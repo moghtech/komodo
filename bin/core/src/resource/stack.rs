@@ -29,7 +29,8 @@ use crate::{
   helpers::{periphery_client, query::get_stack_state, repo_link},
   monitor::update_cache_for_server,
   state::{
-    action_states, db_client, server_status_cache, stack_status_cache,
+    action_states, all_resources_cache, db_client,
+    server_status_cache, stack_status_cache,
   },
 };
 
@@ -110,21 +111,30 @@ impl super::KomodoResource for Stack {
       })
       .unwrap_or_default();
 
-    let (git_provider, repo, branch, git_https) = status
-      .map(|s| {
-        (
-          s.curr.git_provider.clone(),
-          s.curr.repo.clone(),
-          s.curr.branch.clone(),
-          s.curr.git_https,
-        )
-      })
-      .unwrap_or((
-        stack.config.git_provider,
-        stack.config.repo,
-        stack.config.branch,
-        stack.config.git_https,
-      ));
+    let default_git = (
+      stack.config.git_provider,
+      stack.config.repo,
+      stack.config.branch,
+      stack.config.git_https,
+    );
+    let (git_provider, repo, branch, git_https) =
+      if stack.config.linked_repo.is_empty() {
+        default_git
+      } else {
+        all_resources_cache()
+          .load()
+          .repos
+          .get(&stack.config.linked_repo)
+          .map(|r| {
+            (
+              r.config.git_provider.clone(),
+              r.config.repo.clone(),
+              r.config.branch.clone(),
+              r.config.git_https,
+            )
+          })
+          .unwrap_or(default_git)
+      };
 
     // This is only true if it is KNOWN to be true. so other cases are false.
     let (project_missing, status) =
