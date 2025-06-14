@@ -178,6 +178,13 @@ impl ToToml for Stack {
         .map(|s| &s.name)
         .unwrap_or(&String::new()),
     );
+    resource.config.linked_repo.clone_from(
+      all
+        .repos
+        .get(&resource.config.linked_repo)
+        .map(|r| &r.name)
+        .unwrap_or(&String::new()),
+    );
   }
 
   fn edit_config_object(
