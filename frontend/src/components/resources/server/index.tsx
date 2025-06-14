@@ -7,7 +7,6 @@ import {
   Cpu,
   MemoryStick,
   Database,
-  Milestone,
   Play,
   RefreshCcw,
   Pause,
@@ -32,6 +31,7 @@ import {
   StatusBadge,
 } from "@components/util";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
+import { Card, CardHeader, CardTitle } from "@ui/card";
 import { RepoTable } from "../repo/table";
 import { DashboardPieChart } from "@pages/home/dashboard";
 import { StackTable } from "../stack/table";
@@ -41,7 +41,6 @@ import { ServerStats } from "./stats";
 import { GroupActions } from "@components/group-actions";
 import { ServerTerminals } from "@components/terminal/server";
 import { usePermissions } from "@lib/hooks";
-import { Card, CardHeader, CardTitle } from "@ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 
 export const useServer = (id?: string) =>
@@ -208,6 +207,57 @@ const ConfigTabs = ({ id }: { id: string }) => {
   );
 };
 
+export const ServerVersion = ({ id }: { id: string }) => {
+  const core_version = useRead("GetVersion", {}).data?.version;
+  const version = useServer(id)?.info.version;
+  const unknown = !version || version === "Unknown";
+  const mismatch = !!version && !!core_version && version !== core_version;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="flex items-center gap-2 cursor-pointer">
+          {unknown ? (
+            <AlertCircle
+              className={cn(
+                "w-4 h-4",
+                stroke_color_class_by_intention("Unknown")
+              )}
+            />
+          ) : mismatch ? (
+            <AlertCircle
+              className={cn(
+                "w-4 h-4",
+                stroke_color_class_by_intention("Critical")
+              )}
+            />
+          ) : (
+            <CheckCircle2
+              className={cn("w-4 h-4", stroke_color_class_by_intention("Good"))}
+            />
+          )}
+          {version ?? "Unknown"}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>
+        {unknown ? (
+          <div>
+            Periphery version is <span className="font-bold">unknown</span>.
+          </div>
+        ) : mismatch ? (
+          <div>
+            Periphery version <span className="font-bold">mismatch</span>.
+            Expected <span className="font-bold">{core_version}</span>.
+          </div>
+        ) : (
+          <div>
+            Periphery and Core version <span className="font-bold">match</span>.
+          </div>
+        )}
+      </TooltipContent>
+    </Tooltip>
+  );
+};
+
 export const ServerComponents: RequiredResourceComponents = {
   list_item: (id) => useServer(id),
   resource_links: (resource) => (resource.config as Types.ServerConfig).links,
@@ -274,60 +324,7 @@ export const ServerComponents: RequiredResourceComponents = {
   Status: {},
 
   Info: {
-    Version: ({ id }) => {
-      const core_version = useRead("GetVersion", {}).data?.version;
-      const version = useRead(
-        "GetPeripheryVersion",
-        { server: id },
-        { refetchInterval: 5000 }
-      ).data?.version;
-      const mismatch = !!version && !!core_version && version !== core_version;
-      return (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex items-center gap-2 cursor-pointer">
-              {mismatch ? (
-                <AlertCircle
-                  className={cn(
-                    "w-4 h-4",
-                    stroke_color_class_by_intention("Critical")
-                  )}
-                />
-              ) : (
-                <CheckCircle2
-                  className={cn(
-                    "w-4 h-4",
-                    stroke_color_class_by_intention("Good")
-                  )}
-                />
-              )}
-              {version ?? "Unknown"}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            {mismatch ? (
-              <div>
-                Periphery version <span className="font-bold">mismatch</span>.
-                Expected <span className="font-bold">{core_version}</span>.
-              </div>
-            ) : (
-              <div>
-                Periphery and Core version{" "}
-                <span className="font-bold">match</span>.
-              </div>
-            )}
-          </TooltipContent>
-        </Tooltip>
-      );
-      if (mismatch) {
-      }
-      return (
-        <div className={cn("flex items-center gap-2")}>
-          <Milestone className="w-4 h-4" />
-          {version ?? "Unknown"}
-        </div>
-      );
-    },
+    Version: ServerVersion,
     Cpu: ({ id }) => {
       const server = useServer(id);
       const core_count =

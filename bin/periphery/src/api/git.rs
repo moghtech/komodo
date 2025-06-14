@@ -82,12 +82,14 @@ impl Resolve<super::Args> for CloneRepo {
     .map(
       |GitRes {
          logs,
+         path,
          hash,
          message,
          env_file_path,
        }| {
         RepoActionResponse {
           logs,
+          path,
           commit_hash: hash,
           commit_message: message,
           env_file_path,
@@ -152,12 +154,14 @@ impl Resolve<super::Args> for PullRepo {
     .map(
       |GitRes {
          logs,
+         path,
          hash,
          message,
          env_file_path,
        }| {
         RepoActionResponse {
           logs,
+          path,
           commit_hash: hash,
           commit_message: message,
           env_file_path,
@@ -222,12 +226,14 @@ impl Resolve<super::Args> for PullOrCloneRepo {
     .map(
       |GitRes {
          logs,
+         path,
          hash,
          message,
          env_file_path,
        }| {
         RepoActionResponse {
           logs,
+          path,
           commit_hash: hash,
           commit_message: message,
           env_file_path,

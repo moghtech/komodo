@@ -296,6 +296,7 @@ fn core_info() -> &'static GetCoreInfoResponse {
         .iter()
         .map(|i| i.namespace.to_string())
         .collect(),
+      timezone: config.timezone.clone(),
     }
   })
 }

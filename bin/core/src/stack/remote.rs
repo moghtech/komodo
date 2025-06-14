@@ -3,7 +3,7 @@ use std::{fs, path::PathBuf};
 use anyhow::Context;
 use formatting::format_serror;
 use komodo_client::entities::{
-  CloneArgs, FileContents, stack::Stack, update::Log,
+  CloneArgs, FileContents, repo::Repo, stack::Stack, update::Log,
 };
 
 use crate::{config::core_config, helpers::git_token};
@@ -19,10 +19,12 @@ pub struct RemoteComposeContents {
 /// Returns Result<(read paths, error paths, logs, short hash, commit message)>
 pub async fn get_repo_compose_contents(
   stack: &Stack,
+  repo: Option<&Repo>,
   // Collect any files which are missing in the repo.
   mut missing_files: Option<&mut Vec<String>>,
 ) -> anyhow::Result<RemoteComposeContents> {
-  let clone_args: CloneArgs = stack.into();
+  let clone_args: CloneArgs =
+    repo.map(Into::into).unwrap_or(stack.into());
   let (repo_path, _logs, hash, message) =
     ensure_remote_repo(clone_args)
       .await

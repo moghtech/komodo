@@ -176,8 +176,18 @@ export const RepoConfig = ({ id }: { id: string }) => {
                 label: "Clone Path",
                 boldLabel: true,
                 placeholder: "/clone/path/on/host",
-                description:
-                  "Explicitly specify the folder on the host to clone the repo in.",
+                description: (
+                  <div className="flex flex-col gap-0">
+                    <div>
+                      Explicitly specify the folder on the host to clone the
+                      repo in.
+                    </div>
+                    <div>
+                      If <span className="font-bold">relative</span> (no leading
+                      '/'), relative to {"$root_directory/repos/" + repo.name}
+                    </div>
+                  </div>
+                ),
               },
             },
           },

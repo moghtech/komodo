@@ -5,8 +5,11 @@ use partial_derive2::Partial;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::deserializers::{
-  option_string_list_deserializer, string_list_deserializer,
+use crate::{
+  deserializers::{
+    option_string_list_deserializer, string_list_deserializer,
+  },
+  entities::MaintenanceWindow,
 };
 
 use super::{
@@ -30,6 +33,8 @@ pub struct ServerListItemInfo {
   pub region: String,
   /// Address of the server.
   pub address: String,
+  /// The Komodo Periphery version of the server.
+  pub version: String,
   /// Whether server is configured to send unreachable alerts.
   pub send_unreachable_alerts: bool,
   /// Whether server is configured to send cpu alerts.
@@ -180,6 +185,11 @@ pub struct ServerConfig {
   #[builder(default = "default_disk_critical()")]
   #[partial_default(default_disk_critical())]
   pub disk_critical: f64,
+
+  /// Scheduled maintenance windows during which alerts will be suppressed.
+  #[serde(default)]
+  #[builder(default)]
+  pub maintenance_windows: Vec<MaintenanceWindow>,
 }
 
 impl ServerConfig {
@@ -258,6 +268,7 @@ impl Default for ServerConfig {
       mem_critical: default_mem_critical(),
       disk_warning: default_disk_warning(),
       disk_critical: default_disk_critical(),
+      maintenance_windows: Default::default(),
     }
   }
 }

@@ -3,16 +3,22 @@ import { DockerResourceLink } from "@components/util";
 import { useRead } from "@lib/hooks";
 import { Badge } from "@ui/badge";
 import { DataTable, SortableHeader } from "@ui/data-table";
-import { ReactNode } from "react";
+import { Dispatch, ReactNode, SetStateAction } from "react";
 import { Prune } from "../actions";
+import { filterBySplit } from "@lib/utils";
+import { Search } from "lucide-react";
+import { Input } from "@ui/input";
 
 export const Networks = ({
   id,
   titleOther,
+  _search
 }: {
   id: string;
   titleOther: ReactNode;
+  _search: [string, Dispatch<SetStateAction<string>>];
 }) => {
+  const [search, setSearch] = _search;
   const networks =
     useRead("ListDockerNetworks", { server: id }, { refetchInterval: 10_000 })
       .data ?? [];
@@ -26,14 +32,34 @@ export const Networks = ({
         : network.in_use
   );
 
+  const filtered = filterBySplit(
+    networks,
+    search,
+    (network) => network.name ?? ""
+  );
+
   return (
     <Section
       titleOther={titleOther}
-      actions={!allInUse && <Prune server_id={id} type="Networks" />}
+      actions={
+        <div className="flex items-center gap-4">
+          {!allInUse && <Prune server_id={id} type="Networks" />}
+          <div className="relative">
+            <Search className="w-4 absolute top-[50%] left-3 -translate-y-[50%] text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="search..."
+              className="pl-8 w-[200px] lg:w-[300px]"
+            />
+          </div>
+        </div>
+      }
     >
       <DataTable
+        containerClassName="min-h-[60vh]"
         tableKey="server-networks"
-        data={networks}
+        data={filtered}
         columns={[
           {
             accessorKey: "name",

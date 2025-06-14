@@ -72,7 +72,7 @@ const ConfigInfoServicesLog = ({ id }: { id: string }) => {
   const { specific } = usePermissions({ type: "Stack", id });
 
   const state = info?.state;
-  const hideInfo = !info?.files_on_host && !info?.repo;
+  const hideInfo = !info?.files_on_host && !info?.repo && !info?.linked_repo;
   const hideServices =
     state === undefined ||
     state === Types.StackState.Unknown ||
@@ -256,6 +256,7 @@ export const StackComponents: RequiredResourceComponents = {
         !config ||
         config?.files_on_host ||
         config?.file_contents ||
+        config?.linked_repo ||
         config?.repo
       ) {
         return null;

@@ -161,6 +161,11 @@ pub type _PartialResourceSyncConfig = PartialResourceSyncConfig;
 #[partial_derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct ResourceSyncConfig {
+  /// Choose a Komodo Repo (Resource) to source the sync files.
+  #[serde(default)]
+  #[builder(default)]
+  pub linked_repo: String,
+
   /// The git provider domain. Default: github.com
   #[serde(default = "default_git_provider")]
   #[builder(default = "default_git_provider()")]
@@ -334,6 +339,7 @@ fn default_pending_alert() -> bool {
 impl Default for ResourceSyncConfig {
   fn default() -> Self {
     Self {
+      linked_repo: Default::default(),
       git_provider: default_git_provider(),
       git_https: default_git_https(),
       repo: Default::default(),

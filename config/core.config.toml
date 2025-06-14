@@ -244,6 +244,23 @@ github_oauth.id = ""
 ## Required if github_oauth is enabled.
 github_oauth.secret = ""
 
+##################
+# POLL INTERVALS #
+##################
+
+## Controls the rate at which servers are polled for health, system stats, and container status.
+## This affects network usage, and the size of the stats stored in mongo.
+## Env: KOMODO_MONITORING_INTERVAL
+## Options: 1-sec, 5-sec, 15-sec, 30-sec, 1-min, 2-min, 5-min, 15-min
+## Default: 15-sec
+monitoring_interval = "15-sec"
+
+## Interval at which to poll Resources for any updates / automated actions.
+## Env: KOMODO_RESOURCE_POLL_INTERVAL
+## Options: `15-min`, `1-hr`, `2-hr`, `6-hr`, `12-hr`, `1-day`
+## Default: 1-hr
+resource_poll_interval = "1-hr"
+
 ############
 # Security #
 ############
@@ -391,23 +408,6 @@ keep_stats_for_days = 14
 ## Env: KOMODO_KEEP_ALERTS_FOR_DAYS
 ## Default: 14
 keep_alerts_for_days = 14
-
-##################
-# POLL INTERVALS #
-##################
-
-## Controls the rate at which servers are polled for health, system stats, and container status.
-## This affects network usage, and the size of the stats stored in mongo.
-## Env: KOMODO_MONITORING_INTERVAL
-## Options: 1-sec, 5-sec, 15-sec, 30-sec, 1-min, 2-min, 5-min, 15-min
-## Default: 15-sec
-monitoring_interval = "15-sec"
-
-## Interval at which to poll Resources for any updates / automated actions.
-## Env: KOMODO_RESOURCE_POLL_INTERVAL
-## Options: `15-sec`, `1-min`, `5-min`, `15-min`, `1-hr`.
-## Default: 5-min
-resource_poll_interval = "5-min"
 
 ###################
 # CLOUD PROVIDERS #

@@ -1,4 +1,4 @@
-import { KomodoClient, Types as KomodoTypes } from "./client/lib.js";
+import { KomodoClient as Client, Types as KomodoTypes } from "./client/lib.js";
 import "./deno.d.ts";
 
 declare global {
@@ -753,7 +753,11 @@ declare global {
   }
 
   /** Pre initialized Komodo client */
-  var komodo: ReturnType<typeof KomodoClient>;
+  var komodo: ReturnType<typeof Client>;
+  /** KomodoClient initializer */
+  var KomodoClient: typeof Client;
+  /** All Komodo Types */
+  export import Types = KomodoTypes;
   /** YAML parsing utilities */
   var YAML: {
     /**
@@ -918,6 +922,4 @@ declare global {
      */
     parseCargoToml: (cargoToml: string) => CargoToml;
   };
-  /** All Komodo Types */
-  export import Types = KomodoTypes;
 }
