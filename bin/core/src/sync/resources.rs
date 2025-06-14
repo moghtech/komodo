@@ -95,6 +95,12 @@ impl ResourceSyncTrait for Stack {
       .get(&original.server_id)
       .map(|s| s.name.clone())
       .unwrap_or_default();
+    // Replace linked repo with name
+    original.linked_repo = resources
+      .repos
+      .get(&original.linked_repo)
+      .map(|r| r.name.clone())
+      .unwrap_or_default();
 
     Ok(original.partial_diff(update))
   }
