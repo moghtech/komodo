@@ -575,7 +575,7 @@ export const StackConfig = ({
           ),
           components: {
             linked_repo: linked_repo_component,
-            ...(!(update.linked_repo ?? config.linked_repo)
+            ...(!repo_linked
               ? {
                   git_provider: (provider, set) => {
                     const https = update.git_https ?? config.git_https;

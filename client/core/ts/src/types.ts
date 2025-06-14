@@ -3580,6 +3580,8 @@ export interface ResourceSyncListItemInfo {
 	managed: boolean;
 	/** Resource paths to the files. */
 	resource_path: string[];
+	/** Linked repo, if one is attached. */
+	linked_repo: string;
 	/** The git provider domain. */
 	git_provider: string;
 	/** The Github repo used as the source of the sync resources */

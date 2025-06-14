@@ -402,7 +402,7 @@ export const StandardSource = ({
 }: {
   info:
     | {
-        linked_repo?: string;
+        linked_repo: string;
         files_on_host: boolean;
         repo: string;
         repo_link: string;

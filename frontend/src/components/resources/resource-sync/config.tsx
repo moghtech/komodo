@@ -19,7 +19,7 @@ import {
 } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { ReactNode, useState } from "react";
-import { CopyWebhook } from "../common";
+import { CopyWebhook, ResourceLink, ResourceSelector } from "../common";
 import { useToast } from "@ui/use-toast";
 import { text_color_class_by_intention } from "@lib/color";
 import { ConfirmButton, ShowHideButton } from "@components/util";
@@ -259,6 +259,46 @@ export const ResourceSyncConfig = ({
       ],
     };
   } else if (mode === "Git Repo") {
+    const repo_linked = !!(update.linked_repo ?? config.linked_repo);
+    const linked_repo_component = (
+      linked_repo: string | undefined,
+      set: (config: Partial<Types.ResourceSyncConfig>) => void
+    ) => {
+      return (
+        <ConfigItem
+          label={
+            linked_repo ? (
+              <div className="flex gap-3 text-lg font-bold">
+                Repo:
+                <ResourceLink type="Repo" id={linked_repo} />
+              </div>
+            ) : (
+              "Select Repo"
+            )
+          }
+          description={`Select an existing Repo to attach${!repo_linked ? ", or configure the repo below" : ""}.`}
+        >
+          <ResourceSelector
+            type="Repo"
+            selected={linked_repo}
+            onSelect={(linked_repo) =>
+              set({
+                linked_repo,
+                // Set other props back to default.
+                git_provider: "github.com",
+                git_account: "",
+                git_https: true,
+                repo: linked_repo ? "" : "namespace/repo",
+                branch: "main",
+                commit: "",
+              })
+            }
+            disabled={disabled}
+            align="start"
+          />
+        </ConfigItem>
+      );
+    };
     components = {
       "": [
         {
@@ -271,47 +311,53 @@ export const ResourceSyncConfig = ({
             />
           ),
           components: {
-            git_provider: (provider: string | undefined, set) => {
-              const https = update.git_https ?? config.git_https;
-              return (
-                <ProviderSelectorConfig
-                  account_type="git"
-                  selected={provider}
-                  disabled={disabled}
-                  onSelect={(git_provider) => set({ git_provider })}
-                  https={https}
-                  onHttpsSwitch={() => set({ git_https: !https })}
-                />
-              );
-            },
-            git_account: (value: string | undefined, set) => {
-              return (
-                <AccountSelectorConfig
-                  account_type="git"
-                  type="None"
-                  provider={update.git_provider ?? config.git_provider}
-                  selected={value}
-                  onSelect={(git_account) => set({ git_account })}
-                  disabled={disabled}
-                  placeholder="None"
-                />
-              );
-            },
-            repo: {
-              placeholder: "Enter repo",
-              description:
-                "The repo path on the provider. {namespace}/{repo_name}",
-            },
-            branch: {
-              placeholder: "Enter branch",
-              description: "Select a custom branch, or default to 'main'.",
-            },
-            commit: {
-              label: "Commit Hash",
-              placeholder: "Input commit hash",
-              description:
-                "Optional. Switch to a specific commit hash after cloning the branch.",
-            },
+            linked_repo: linked_repo_component,
+            ...(!repo_linked
+              ? {
+                  git_provider: (provider: string | undefined, set) => {
+                    const https = update.git_https ?? config.git_https;
+                    return (
+                      <ProviderSelectorConfig
+                        account_type="git"
+                        selected={provider}
+                        disabled={disabled}
+                        onSelect={(git_provider) => set({ git_provider })}
+                        https={https}
+                        onHttpsSwitch={() => set({ git_https: !https })}
+                      />
+                    );
+                  },
+                  git_account: (value: string | undefined, set) => {
+                    return (
+                      <AccountSelectorConfig
+                        account_type="git"
+                        type="None"
+                        provider={update.git_provider ?? config.git_provider}
+                        selected={value}
+                        onSelect={(git_account) => set({ git_account })}
+                        disabled={disabled}
+                        placeholder="None"
+                      />
+                    );
+                  },
+                  repo: {
+                    placeholder: "Enter repo",
+                    description:
+                      "The repo path on the provider. {namespace}/{repo_name}",
+                  },
+                  branch: {
+                    placeholder: "Enter branch",
+                    description:
+                      "Select a custom branch, or default to 'main'.",
+                  },
+                  commit: {
+                    label: "Commit Hash",
+                    placeholder: "Input commit hash",
+                    description:
+                      "Optional. Switch to a specific commit hash after cloning the branch.",
+                  },
+                }
+              : {}),
           },
         },
         {
