@@ -38,6 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ui/select";
+import { LinkedRepoConfig } from "@components/config/linked_repo";
 
 type BuildMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const BUILD_MODES: BuildMode[] = ["UI Defined", "Files On Server", "Git Repo"];
@@ -425,45 +426,6 @@ export const BuildConfig = ({
     };
   } else if (mode === "Git Repo") {
     const repo_linked = !!(update.linked_repo ?? config.linked_repo);
-    const linked_repo_component = (
-      linked_repo: string | undefined,
-      set: (config: Partial<Types.StackConfig>) => void
-    ) => {
-      return (
-        <ConfigItem
-          label={
-            linked_repo ? (
-              <div className="flex gap-3 text-lg font-bold">
-                Repo:
-                <ResourceLink type="Repo" id={linked_repo} />
-              </div>
-            ) : (
-              "Select Repo"
-            )
-          }
-          description={`Select an existing Repo to attach${!repo_linked ? ", or configure the repo below" : ""}.`}
-        >
-          <ResourceSelector
-            type="Repo"
-            selected={linked_repo}
-            onSelect={(linked_repo) =>
-              set({
-                linked_repo,
-                // Set other props back to default.
-                git_provider: "github.com",
-                git_account: "",
-                git_https: true,
-                repo: linked_repo ? "" : "namespace/repo",
-                branch: "main",
-                commit: "",
-              })
-            }
-            disabled={disabled}
-            align="start"
-          />
-        </ConfigItem>
-      );
-    };
     components = {
       "": [
         builder_component,
@@ -478,7 +440,14 @@ export const BuildConfig = ({
             />
           ),
           components: {
-            linked_repo: linked_repo_component,
+            linked_repo: (linked_repo, set) => (
+              <LinkedRepoConfig
+                linked_repo={linked_repo}
+                repo_linked={repo_linked}
+                set={set}
+                disabled={disabled}
+              />
+            ),
             ...(!repo_linked
               ? {
                   git_provider: (provider, set) => {
