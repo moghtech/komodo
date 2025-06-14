@@ -242,7 +242,7 @@ impl ResourceSyncTrait for ResourceSync {
     // The file contents MUST be empty
     contents_empty &&
     // The sync must be files on host mode OR git repo mode
-    (config.files_on_host || !config.repo.is_empty())
+    (config.files_on_host || !config.repo.is_empty() || !config.linked_repo.is_empty())
   }
 
   fn include_resource_partial(
@@ -281,7 +281,7 @@ impl ResourceSyncTrait for ResourceSync {
     // The file contents MUST be empty
     contents_empty &&
     // The sync must be files on host mode OR git repo mode
-    (files_on_host || !config.repo.as_deref().unwrap_or_default().is_empty())
+    (files_on_host || !config.repo.as_deref().unwrap_or_default().is_empty()|| !config.linked_repo.as_deref().unwrap_or_default().is_empty())
   }
 
   fn get_diff(
