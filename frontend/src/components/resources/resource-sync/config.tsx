@@ -52,7 +52,11 @@ function getSyncMode(
   config: Types.ResourceSyncConfig
 ): SyncMode {
   if (update.files_on_host ?? config.files_on_host) return "Files On Server";
-  if (update.repo ?? config.repo) return "Git Repo";
+  if (
+    (update.repo ?? config.repo) ||
+    (update.linked_repo ?? config.linked_repo)
+  )
+    return "Git Repo";
   if (update.file_contents ?? config.file_contents) return "UI Defined";
   return undefined;
 }

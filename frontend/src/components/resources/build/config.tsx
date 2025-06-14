@@ -47,7 +47,11 @@ function getBuildMode(
   config: Types.BuildConfig
 ): BuildMode {
   if (update.files_on_host ?? config.files_on_host) return "Files On Server";
-  if (update.repo ?? config.repo) return "Git Repo";
+  if (
+    (update.repo ?? config.repo) ||
+    (update.linked_repo ?? config.linked_repo)
+  )
+    return "Git Repo";
   if (update.dockerfile ?? config.dockerfile) return "UI Defined";
   return undefined;
 }
