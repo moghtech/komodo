@@ -236,6 +236,7 @@ impl ResourceSyncTrait for ResourceSync {
     if contents_empty
       && !config.files_on_host
       && config.repo.is_empty()
+      && config.linked_repo.is_empty()
     {
       return false;
     }
@@ -275,6 +276,11 @@ impl ResourceSyncTrait for ResourceSync {
     if contents_empty
       && !files_on_host
       && config.repo.as_ref().map(String::is_empty).unwrap_or(true)
+      && config
+        .linked_repo
+        .as_ref()
+        .map(String::is_empty)
+        .unwrap_or(true)
     {
       return false;
     }
