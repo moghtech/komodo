@@ -402,6 +402,7 @@ export const StandardSource = ({
 }: {
   info:
     | {
+        linked_repo?: string;
         files_on_host: boolean;
         repo: string;
         repo_link: string;
@@ -418,6 +419,9 @@ export const StandardSource = ({
         Files on Server
       </div>
     );
+  }
+  if (info.linked_repo) {
+    return <ResourceLink type="Repo" id={info.linked_repo} />;
   }
   if (info.repo) {
     return <RepoLink repo={info.repo} link={info.repo_link} />;
