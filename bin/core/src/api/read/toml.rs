@@ -208,12 +208,13 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
     for target in targets {
       match target {
         ResourceTarget::Alerter(id) => {
-          let alerter = get_check_permissions::<Alerter>(
+          let mut alerter = get_check_permissions::<Alerter>(
             &id,
             user,
             PermissionLevel::Read.into(),
           )
           .await?;
+          Alerter::replace_ids(&mut alerter);
           res.alerters.push(convert_resource::<Alerter>(
             alerter,
             false,
@@ -222,7 +223,7 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
           ))
         }
         ResourceTarget::ResourceSync(id) => {
-          let sync = get_check_permissions::<ResourceSync>(
+          let mut sync = get_check_permissions::<ResourceSync>(
             &id,
             user,
             PermissionLevel::Read.into(),
@@ -233,6 +234,7 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
               || !sync.config.repo.is_empty()
               || !sync.config.linked_repo.is_empty())
           {
+            ResourceSync::replace_ids(&mut sync);
             res.resource_syncs.push(convert_resource::<ResourceSync>(
               sync,
               false,
@@ -242,12 +244,13 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
           }
         }
         ResourceTarget::Server(id) => {
-          let server = get_check_permissions::<Server>(
+          let mut server = get_check_permissions::<Server>(
             &id,
             user,
             PermissionLevel::Read.into(),
           )
           .await?;
+          Server::replace_ids(&mut server);
           res.servers.push(convert_resource::<Server>(
             server,
             false,
