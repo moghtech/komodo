@@ -88,31 +88,8 @@ pub async fn write_stack<'a>(
     .context("Invalid environment variables")?;
 
   if stack.config.files_on_host {
-    // =============
-    // FILES ON HOST
-    // =============
-    let run_directory = periphery_config()
-      .stack_dir()
-      .join(to_path_compatible_name(&stack.name))
-      .join(&stack.config.run_directory)
-      .components()
-      .collect::<PathBuf>();
-    let env_file_path = environment::write_file_simple(
-      &env_vars,
-      &stack.config.env_file_path,
-      run_directory.as_ref(),
-      res.logs(),
-    )
-    .await?;
-    Ok((
-      run_directory,
-      // Env file paths are expected to be already relative to run directory,
-      // so need to pass original env_file_path here.
-      env_file_path
-        .is_some()
-        .then_some(&stack.config.env_file_path),
-      env_replacers,
-    ))
+    write_stack_files_on_host(stack, env_vars, env_replacers, res)
+      .await
   } else if let Some(repo) = repo {
     write_stack_linked_repo(
       stack,
@@ -135,6 +112,43 @@ pub async fn write_stack<'a>(
   } else {
     write_stack_ui_defined(stack, env_vars, env_replacers, res).await
   }
+}
+
+async fn write_stack_files_on_host(
+  stack: &Stack,
+  env_vars: Vec<EnvironmentVar>,
+  env_replacers: Option<Vec<(String, String)>>,
+  mut res: impl WriteStackRes,
+) -> anyhow::Result<(
+  // run_directory
+  PathBuf,
+  // env_file_path
+  Option<&str>,
+  // periphery_replacers
+  Option<Vec<(String, String)>>,
+)> {
+  let run_directory = periphery_config()
+    .stack_dir()
+    .join(to_path_compatible_name(&stack.name))
+    .join(&stack.config.run_directory)
+    .components()
+    .collect::<PathBuf>();
+  let env_file_path = environment::write_file_simple(
+    &env_vars,
+    &stack.config.env_file_path,
+    run_directory.as_ref(),
+    res.logs(),
+  )
+  .await?;
+  Ok((
+    run_directory,
+    // Env file paths are expected to be already relative to run directory,
+    // so need to pass original env_file_path here.
+    env_file_path
+      .is_some()
+      .then_some(&stack.config.env_file_path),
+    env_replacers,
+  ))
 }
 
 async fn write_stack_linked_repo<'a>(
