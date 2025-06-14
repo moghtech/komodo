@@ -115,7 +115,10 @@ impl Resolve<WriteArgs> for WriteBuildFileContents {
     )
     .await?;
 
-    if !build.config.files_on_host && build.config.repo.is_empty() {
+    if !build.config.files_on_host
+      && build.config.repo.is_empty()
+      && build.config.linked_repo.is_empty()
+    {
       return Err(anyhow!(
         "Build is not configured to use Files on Host or Git Repo, can't write dockerfile contents"
       ).into());
@@ -183,8 +186,16 @@ async fn write_dockerfile_contents_git(
 ) -> serror::Result<Update> {
   let WriteBuildFileContents { build: _, contents } = req;
 
-  let mut clone_args: CloneArgs = (&build).into();
+  let mut clone_args: CloneArgs = if !build.config.files_on_host
+    && !build.config.linked_repo.is_empty()
+  {
+    (&crate::resource::get::<Repo>(&build.config.linked_repo).await?)
+      .into()
+  } else {
+    (&build).into()
+  };
   let root = clone_args.unique_path(&core_config().repo_directory)?;
+  clone_args.destination = Some(root.display().to_string());
 
   let build_path = build
     .config
@@ -207,19 +218,19 @@ async fn write_dockerfile_contents_git(
     })?;
   }
 
+  let access_token = if let Some(account) = &clone_args.account {
+    git_token(&clone_args.provider, account, |https| clone_args.https = https)
+    .await
+    .with_context(
+      || format!("Failed to get git token in call to db. Stopping run. | {} | {account}", clone_args.provider),
+    )?
+  } else {
+    None
+  };
+
   // Ensure the folder is initialized as git repo.
   // This allows a new file to be committed on a branch that may not exist.
   if !root.join(".git").exists() {
-    let access_token = if let Some(account) = &clone_args.account {
-      git_token(&clone_args.provider, account, |https| clone_args.https = https)
-      .await
-      .with_context(
-        || format!("Failed to get git token in call to db. Stopping run. | {} | {account}", clone_args.provider),
-      )?
-    } else {
-      None
-    };
-
     git::init_folder_as_repo(
       &root,
       &clone_args,
@@ -235,6 +246,24 @@ async fn write_dockerfile_contents_git(
       return Ok(update);
     }
   }
+
+  // Pull latest changes to repo to ensure linear commit history
+  if let Err(e) = git::pull_or_clone(
+    clone_args,
+    &core_config().repo_directory,
+    access_token,
+    Default::default(),
+    Default::default(),
+    Default::default(),
+    Default::default(),
+  )
+  .await
+  .context("Failed to pull latest changes before commit")
+  {
+    update.push_error_log("Pull Repo", format_serror(&e.into()));
+    update.finalize();
+    return Ok(update);
+  };
 
   if let Err(e) =
     fs::write(&full_path, &contents).await.with_context(|| {

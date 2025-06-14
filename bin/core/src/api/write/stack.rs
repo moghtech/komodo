@@ -250,7 +250,7 @@ impl Resolve<WriteArgs> for RefreshStackCache {
 
     let file_contents_empty = stack.config.file_contents.is_empty();
     let repo_empty =
-      repo.as_ref().is_none() && stack.config.repo.is_empty();
+      stack.config.repo.is_empty() && repo.as_ref().is_none();
 
     if !stack.config.files_on_host
       && file_contents_empty

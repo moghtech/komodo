@@ -189,9 +189,6 @@ async fn refresh_syncs() {
     return;
   };
   for sync in syncs {
-    if sync.config.repo.is_empty() {
-      continue;
-    }
     RefreshResourceSyncPending { sync: sync.id }
       .resolve(
         &WriteArgs { user: sync_user().clone() },

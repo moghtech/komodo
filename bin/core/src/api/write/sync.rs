@@ -333,9 +333,7 @@ async fn write_sync_file_contents_git(
   .await
   .context("Failed to pull latest changes before commit")
   {
-    update
-      .logs
-      .push(Log::error("Pull Repo", format_serror(&e.into())));
+    update.push_error_log("Pull Repo", format_serror(&e.into()));
     update.finalize();
     return Ok(update);
   };
@@ -414,6 +412,7 @@ impl Resolve<WriteArgs> for CommitSync {
 
     let fresh_sync = !sync.config.files_on_host
       && sync.config.repo.is_empty()
+      && repo.is_none()
       && file_contents_empty;
 
     if !sync.config.managed && !fresh_sync {

@@ -230,7 +230,8 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
           .await?;
           if sync.config.file_contents.is_empty()
             && (sync.config.files_on_host
-              || !sync.config.repo.is_empty())
+              || !sync.config.repo.is_empty()
+              || !sync.config.linked_repo.is_empty())
           {
             res.resource_syncs.push(convert_resource::<ResourceSync>(
               sync,
