@@ -150,6 +150,7 @@ impl super::KomodoResource for Stack {
         project_missing,
         file_contents: !stack.config.file_contents.is_empty(),
         server_id: stack.config.server_id,
+        linked_repo: stack.config.linked_repo,
         missing_files: stack.info.missing_files,
         files_on_host: stack.config.files_on_host,
         repo_link: repo_link(

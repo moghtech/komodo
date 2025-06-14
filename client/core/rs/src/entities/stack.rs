@@ -68,6 +68,8 @@ pub struct StackListItemInfo {
   pub files_on_host: bool,
   /// Whether stack has file contents defined.
   pub file_contents: bool,
+  /// Linked repo, if one is attached.
+  pub linked_repo: String,
   /// The git provider domain
   pub git_provider: String,
   /// The configured repo
