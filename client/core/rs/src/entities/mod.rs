@@ -460,7 +460,14 @@ pub struct CloneArgs {
 impl CloneArgs {
   pub fn path(&self, repo_dir: &Path) -> PathBuf {
     let path = match &self.destination {
-      Some(destination) => PathBuf::from(&destination),
+      Some(destination) => {
+        let path = PathBuf::from(&destination);
+        if path.is_absolute() {
+          path
+        } else {
+          repo_dir.join(path)
+        }
+      }
       None => repo_dir.join(to_path_compatible_name(&self.name)),
     };
     path.components().collect::<PathBuf>()
@@ -573,7 +580,7 @@ impl From<&self::stack::Stack> for CloneArgs {
         .unwrap_or_else(|| String::from("main")),
       commit: optional_string(&stack.config.commit),
       is_build: false,
-      destination: None,
+      destination: optional_string(&stack.config.clone_path),
       on_clone: None,
       on_pull: None,
       https: stack.config.git_https,

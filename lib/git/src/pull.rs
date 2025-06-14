@@ -54,11 +54,11 @@ where
   T: Into<CloneArgs> + std::fmt::Debug,
 {
   let args: CloneArgs = clone_args.into();
-  let repo_dir = args.path(repo_dir);
+  let path = args.path(repo_dir);
   let repo_url = args.remote_url(access_token.as_deref())?;
 
   // Acquire the path lock
-  let lock = pull_cache().get_lock(repo_dir.clone()).await;
+  let lock = pull_cache().get_lock(path.clone()).await;
 
   // Lock the path lock, prevents simultaneous pulls by
   // ensuring simultaneous pulls will wait for first to finish
@@ -74,10 +74,10 @@ where
     let mut logs = Vec::new();
 
     // Check for '.git' path to see if the folder is initialized as a git repo
-    let dot_git_path = repo_dir.join(".git");
+    let dot_git_path = path.join(".git");
     if !dot_git_path.exists() {
       crate::init::init_folder_as_repo(
-        &repo_dir,
+        &path,
         &args,
         access_token.as_deref(),
         &mut logs,
@@ -86,6 +86,7 @@ where
       if !all_logs_success(&logs) {
         return Ok(GitRes {
           logs,
+          path,
           hash: None,
           message: None,
           env_file_path: None,
@@ -96,7 +97,7 @@ where
     // Set remote url
     let mut set_remote = run_komodo_command(
       "Set git remote",
-      repo_dir.as_ref(),
+      path.as_ref(),
       format!("git remote set-url origin {repo_url}"),
     )
     .await;
@@ -113,6 +114,7 @@ where
     if !all_logs_success(&logs) {
       return Ok(GitRes {
         logs,
+        path,
         hash: None,
         message: None,
         env_file_path: None,
@@ -121,7 +123,7 @@ where
 
     let checkout = run_komodo_command(
       "Checkout branch",
-      repo_dir.as_ref(),
+      path.as_ref(),
       format!("git checkout -f {}", args.branch),
     )
     .await;
@@ -129,6 +131,7 @@ where
     if !all_logs_success(&logs) {
       return Ok(GitRes {
         logs,
+        path,
         hash: None,
         message: None,
         env_file_path: None,
@@ -137,7 +140,7 @@ where
 
     let pull_log = run_komodo_command(
       "Git pull",
-      repo_dir.as_ref(),
+      path.as_ref(),
       format!("git pull --rebase --force origin {}", args.branch),
     )
     .await;
@@ -145,6 +148,7 @@ where
     if !all_logs_success(&logs) {
       return Ok(GitRes {
         logs,
+        path,
         hash: None,
         message: None,
         env_file_path: None,
@@ -154,42 +158,42 @@ where
     if let Some(commit) = args.commit {
       let reset_log = run_komodo_command(
         "Set commit",
-        repo_dir.as_ref(),
+        path.as_ref(),
         format!("git reset --hard {commit}"),
       )
       .await;
       logs.push(reset_log);
     }
 
-    let (hash, message) =
-      match get_commit_hash_log(&repo_dir).await {
-        Ok((log, hash, message)) => {
-          logs.push(log);
-          (Some(hash), Some(message))
-        }
-        Err(e) => {
-          logs.push(Log::simple(
-            "Latest Commit",
-            format_serror(
-              &e.context("Failed to get latest commit").into(),
-            ),
-          ));
-          (None, None)
-        }
-      };
+    let (hash, message) = match get_commit_hash_log(&path).await {
+      Ok((log, hash, message)) => {
+        logs.push(log);
+        (Some(hash), Some(message))
+      }
+      Err(e) => {
+        logs.push(Log::simple(
+          "Latest Commit",
+          format_serror(
+            &e.context("Failed to get latest commit").into(),
+          ),
+        ));
+        (None, None)
+      }
+    };
 
     let Ok((env_file_path, _replacers)) =
       crate::environment::write_file(
         environment,
         env_file_path,
         secrets,
-        &repo_dir,
+        &path,
         &mut logs,
       )
       .await
     else {
       return Ok(GitRes {
         logs,
+        path,
         hash,
         message,
         env_file_path: None,
@@ -197,7 +201,7 @@ where
     };
 
     if let Some(command) = args.on_pull {
-      let on_pull_path = repo_dir.join(&command.path);
+      let on_pull_path = path.join(&command.path);
       if let Some(log) = if let Some(secrets) = secrets {
         run_komodo_command_with_interpolation(
           "On Pull",
@@ -222,6 +226,7 @@ where
 
     anyhow::Ok(GitRes {
       logs,
+      path,
       hash,
       message,
       env_file_path,

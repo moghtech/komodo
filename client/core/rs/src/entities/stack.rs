@@ -272,6 +272,12 @@ pub struct StackConfig {
   #[builder(default)]
   pub skip_secret_interp: bool,
 
+  /// Choose a Komodo Repo (Resource) to source the compose files.
+  /// The Repo must be attached to the same Server as the Stack.
+  #[serde(default)]
+  #[builder(default)]
+  pub linked_repo: String,
+
   /// The git provider domain. Default: github.com
   #[serde(default = "default_git_provider")]
   #[builder(default = "default_git_provider()")]
@@ -295,7 +301,8 @@ pub struct StackConfig {
   #[builder(default)]
   pub git_account: String,
 
-  /// The Github repo used as the source of the build.
+  /// The repo used as the source of the build.
+  /// {namespace}/{repo_name}
   #[serde(default)]
   #[builder(default)]
   pub repo: String,
@@ -310,6 +317,11 @@ pub struct StackConfig {
   #[serde(default)]
   #[builder(default)]
   pub commit: String,
+
+  /// Optionally set a specific clone path
+  #[serde(default)]
+  #[builder(default)]
+  pub clone_path: String,
 
   /// By default, the Stack will `git pull` the repo after it is first cloned.
   /// If this option is enabled, the repo folder will be deleted and recloned instead.
@@ -520,11 +532,13 @@ impl Default for StackConfig {
       destroy_before_deploy: Default::default(),
       build_extra_args: Default::default(),
       skip_secret_interp: Default::default(),
+      linked_repo: Default::default(),
       git_provider: default_git_provider(),
       git_https: default_git_https(),
       repo: Default::default(),
       branch: default_branch(),
       commit: Default::default(),
+      clone_path: Default::default(),
       reclone: Default::default(),
       git_account: Default::default(),
       webhook_enabled: default_webhook_enabled(),

@@ -263,6 +263,7 @@ impl Resolve<super::Args> for WriteCommitComposeContents {
 
     let GitRes {
       logs,
+      path,
       hash,
       message,
       ..
@@ -277,6 +278,7 @@ impl Resolve<super::Args> for WriteCommitComposeContents {
 
     Ok(RepoActionResponse {
       logs,
+      path,
       commit_hash: hash,
       commit_message: message,
       env_file_path: None,
