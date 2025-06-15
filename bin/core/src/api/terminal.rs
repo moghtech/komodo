@@ -13,6 +13,7 @@ use uuid::Uuid;
 use crate::{
   auth::auth_request, helpers::periphery_client,
   permission::get_check_permissions, resource::get,
+  state::stack_status_cache,
 };
 
 pub fn router() -> Router {
@@ -258,22 +259,25 @@ async fn execute_stack_exec_inner(
 
     let server = get::<Server>(&stack.config.server_id).await?;
 
+    let container = stack_status_cache()
+      .get(&stack.id)
+      .await
+      .context("could not get stack status")?
+      .curr
+      .services
+      .iter()
+      .find(|s| s.service == service)
+      .context("could not find service")?
+      .container
+      .as_ref()
+      .context("could not find service container")?
+      .name
+      .clone();
+
     let periphery = periphery_client(&server)?;
 
-    let services = stack
-      .info
-      .deployed_services
-      .unwrap_or(stack.info.latest_services);
-
-    let service = services
-      .into_iter()
-      .find(|s| s.service_name == service)
-      .with_context(|| {
-        format!("Service {service} could not be found")
-      })?;
-
     let stream = periphery
-      .execute_container_exec(service.container_name, shell, command)
+      .execute_container_exec(container, shell, command)
       .await
       .context(
         "Failed to execute container exec command on periphery",

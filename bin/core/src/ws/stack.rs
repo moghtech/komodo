@@ -10,7 +10,10 @@ use komodo_client::{
   },
 };
 
-use crate::{permission::get_check_permissions, resource::get};
+use crate::{
+  permission::get_check_permissions, resource::get,
+  state::stack_status_cache,
+};
 
 #[instrument(name = "ConnectStackExec", skip(ws))]
 pub async fn terminal(
@@ -58,16 +61,35 @@ pub async fn terminal(
       }
     };
 
-    let services = stack
-      .info
-      .deployed_services
-      .unwrap_or(stack.info.latest_services);
+    let Some(status) = stack_status_cache().get(&stack.id).await
+    else {
+      debug!("could not get stack status");
+      let _ = client_socket
+        .send(Message::text(format!(
+          "ERROR: could not get stack status"
+        )))
+        .await;
+      let _ = client_socket.close().await;
+      return;
+    };
 
-    let container = match services
-      .into_iter()
-      .find(|s| s.service_name == service)
+    let container = match status
+      .curr
+      .services
+      .iter()
+      .find(|s| s.service == service)
+      .map(|s| s.container.as_ref())
     {
-      Some(service) => service.container_name,
+      Some(Some(container)) => container.name.clone(),
+      Some(None) => {
+        let _ = client_socket
+          .send(Message::text(format!(
+            "ERROR: Service {service} container could not be found"
+          )))
+          .await;
+        let _ = client_socket.close().await;
+        return;
+      }
       None => {
         let _ = client_socket
           .send(Message::text(format!(
