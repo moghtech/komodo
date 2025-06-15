@@ -6,6 +6,7 @@ use komodo_client::{
   entities::{
     Operation, ResourceTarget, ResourceTargetVariant,
     permission::{PermissionLevel, SpecificPermission},
+    repo::Repo,
     resource::Resource,
     server::Server,
     stack::{
@@ -28,7 +29,8 @@ use crate::{
   helpers::{periphery_client, query::get_stack_state, repo_link},
   monitor::update_cache_for_server,
   state::{
-    action_states, db_client, server_status_cache, stack_status_cache,
+    action_states, all_resources_cache, db_client,
+    server_status_cache, stack_status_cache,
   },
 };
 
@@ -109,6 +111,31 @@ impl super::KomodoResource for Stack {
       })
       .unwrap_or_default();
 
+    let default_git = (
+      stack.config.git_provider,
+      stack.config.repo,
+      stack.config.branch,
+      stack.config.git_https,
+    );
+    let (git_provider, repo, branch, git_https) =
+      if stack.config.linked_repo.is_empty() {
+        default_git
+      } else {
+        all_resources_cache()
+          .load()
+          .repos
+          .get(&stack.config.linked_repo)
+          .map(|r| {
+            (
+              r.config.git_provider.clone(),
+              r.config.repo.clone(),
+              r.config.branch.clone(),
+              r.config.git_https,
+            )
+          })
+          .unwrap_or(default_git)
+      };
+
     // This is only true if it is KNOWN to be true. so other cases are false.
     let (project_missing, status) =
       if stack.config.server_id.is_empty()
@@ -149,17 +176,18 @@ impl super::KomodoResource for Stack {
         project_missing,
         file_contents: !stack.config.file_contents.is_empty(),
         server_id: stack.config.server_id,
+        linked_repo: stack.config.linked_repo,
         missing_files: stack.info.missing_files,
         files_on_host: stack.config.files_on_host,
         repo_link: repo_link(
-          &stack.config.git_provider,
-          &stack.config.repo,
-          &stack.config.branch,
-          stack.config.git_https,
+          &git_provider,
+          &repo,
+          &branch,
+          git_https,
         ),
-        git_provider: stack.config.git_provider,
-        repo: stack.config.repo,
-        branch: stack.config.branch,
+        git_provider,
+        repo,
+        branch,
         latest_hash: stack.info.latest_hash,
         deployed_hash: stack.info.deployed_hash,
       },
@@ -357,110 +385,23 @@ async fn validate_config(
         PermissionLevel::Read.attach(),
       )
       .await
-      .context("Cannot attach stack to this Server")?;
+      .context("Cannot attach Stack to this Server")?;
       // in case it comes in as name
       config.server_id = Some(server.id);
     }
   }
+  if let Some(linked_repo) = &config.linked_repo {
+    if !linked_repo.is_empty() {
+      let repo = get_check_permissions::<Repo>(
+        linked_repo,
+        user,
+        PermissionLevel::Read.attach(),
+      )
+      .await
+      .context("Cannot attach Repo to this Stack")?;
+      // in case it comes in as name
+      config.linked_repo = Some(repo.id);
+    }
+  }
   Ok(())
 }
-
-// pub fn spawn_resource_sync_state_refresh_loop() {
-//   tokio::spawn(async move {
-//     loop {
-//       refresh_resource_sync_state_cache().await;
-//       tokio::time::sleep(Duration::from_secs(60)).await;
-//     }
-//   });
-// }
-
-// pub async fn refresh_resource_sync_state_cache() {
-//   let _ = async {
-//     let resource_syncs =
-//       find_collect(&db_client().resource_syncs, None, None)
-//         .await
-//         .context("failed to get resource_syncs from db")?;
-//     let cache = resource_sync_state_cache();
-//     for resource_sync in resource_syncs {
-//       let state =
-//         get_resource_sync_state_from_db(&resource_sync.id).await;
-//       cache.insert(resource_sync.id, state).await;
-//     }
-//     anyhow::Ok(())
-//   }
-//   .await
-//   .inspect_err(|e| {
-//     error!("failed to refresh resource_sync state cache | {e:#}")
-//   });
-// }
-
-// async fn get_resource_sync_state(
-//   id: &String,
-//   data: &PendingSyncUpdatesData,
-// ) -> StackState {
-//   if let Some(state) = action_states()
-//     .resource_sync
-//     .get(id)
-//     .await
-//     .and_then(|s| {
-//       s.get()
-//         .map(|s| {
-//           if s.syncing {
-//             Some(StackState::Syncing)
-//           } else {
-//             None
-//           }
-//         })
-//         .ok()
-//     })
-//     .flatten()
-//   {
-//     return state;
-//   }
-//   let data = match data {
-//     PendingSyncUpdatesData::Err(_) => return StackState::Failed,
-//     PendingSyncUpdatesData::Ok(data) => data,
-//   };
-//   if !data.no_updates() {
-//     return StackState::Pending;
-//   }
-//   resource_sync_state_cache()
-//     .get(id)
-//     .await
-//     .unwrap_or_default()
-// }
-
-// async fn get_resource_sync_state_from_db(id: &str) -> StackState {
-//   async {
-//     let state = db_client()
-//       .await
-//       .updates
-//       .find_one(doc! {
-//         "target.type": "Stack",
-//         "target.id": id,
-//         "operation": "RunSync"
-//       })
-//       .with_options(
-//         FindOneOptions::builder()
-//           .sort(doc! { "start_ts": -1 })
-//           .build(),
-//       )
-//       .await?
-//       .map(|u| {
-//         if u.success {
-//           StackState::Ok
-//         } else {
-//           StackState::Failed
-//         }
-//       })
-//       .unwrap_or(StackState::Ok);
-//     anyhow::Ok(state)
-//   }
-//   .await
-//   .inspect_err(|e| {
-//     warn!(
-//       "failed to get resource sync state from db for {id} | {e:#}"
-//     )
-//   })
-//   .unwrap_or(StackState::Unknown)
-// }

@@ -10,13 +10,12 @@ use komodo_client::entities::{
 use mungos::find::find_collect;
 use partial_derive2::MaybeNone;
 
-use super::{AllResourcesById, ResourceSyncTrait};
+use super::ResourceSyncTrait;
 
 #[allow(clippy::too_many_arguments)]
 pub async fn push_updates_for_view<Resource: ResourceSyncTrait>(
   resources: Vec<ResourceToml<Resource::PartialConfig>>,
   delete: bool,
-  all_resources: &AllResourcesById,
   match_resource_type: Option<ResourceTargetVariant>,
   match_resources: Option<&[String]>,
   id_to_tags: &HashMap<String, Tag>,
@@ -68,7 +67,6 @@ pub async fn push_updates_for_view<Resource: ResourceSyncTrait>(
               current_resource.clone(),
               false,
               vec![],
-              all_resources,
               id_to_tags,
             )?,
           },
@@ -97,7 +95,6 @@ pub async fn push_updates_for_view<Resource: ResourceSyncTrait>(
         let mut diff = Resource::get_diff(
           current_resource.config.clone(),
           proposed_resource.config,
-          all_resources,
         )?;
 
         Resource::validate_diff(&mut diff);
@@ -127,7 +124,6 @@ pub async fn push_updates_for_view<Resource: ResourceSyncTrait>(
               current_resource.clone(),
               proposed_resource.deploy,
               proposed_resource.after,
-              all_resources,
               id_to_tags,
             )?,
             proposed,

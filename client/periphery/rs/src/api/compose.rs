@@ -1,5 +1,6 @@
 use komodo_client::entities::{
   FileContents, SearchCombinator,
+  repo::Repo,
   stack::{ComposeProject, Stack, StackServiceNames},
   update::Log,
 };
@@ -119,6 +120,8 @@ pub struct WriteComposeContentsToHost {
 pub struct WriteCommitComposeContents {
   /// The stack to write to.
   pub stack: Stack,
+  /// Optional linked repo.
+  pub repo: Option<Repo>,
   /// The username of user which committed the file.
   pub username: Option<String>,
   /// Relative to the stack folder + run directory.
@@ -143,9 +146,11 @@ pub struct ComposePull {
   /// If empty, will pull all services.
   #[serde(default)]
   pub services: Vec<String>,
-  /// If provided, use it to login in. Otherwise check periphery local registries.
-  pub git_token: Option<String>,
+  /// The linked repo, if it exists.
+  pub repo: Option<Repo>,
   /// If provided, use it to login in. Otherwise check periphery local git providers.
+  pub git_token: Option<String>,
+  /// If provided, use it to login in. Otherwise check periphery local registry providers.
   pub registry_token: Option<String>,
 }
 
@@ -168,6 +173,8 @@ pub struct ComposeUp {
   /// If empty, will deploy all services.
   #[serde(default)]
   pub services: Vec<String>,
+  /// The linked repo, if it exists.
+  pub repo: Option<Repo>,
   /// If provided, use it to login in. Otherwise check periphery local registries.
   pub git_token: Option<String>,
   /// If provided, use it to login in. Otherwise check periphery local git providers.

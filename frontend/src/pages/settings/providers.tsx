@@ -220,7 +220,8 @@ const Providers = ({ type }: { type: "GitProvider" | "DockerRegistry" }) => {
                     }}
                   >
                     <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis text-muted-foreground w-[100px] xl:w-[150px] 2xl:w-[200px]">
-                      {row.original.token || "Set token"}
+                      {"*".repeat(row.original.token?.length || 0) ||
+                        "Set token"}
                     </div>
                   </Card>
                   <CopyButton content={row.original.token} />

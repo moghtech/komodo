@@ -4,6 +4,7 @@ use std::{
 };
 
 use anyhow::Context;
+use arc_swap::ArcSwap;
 use komodo_client::entities::{
   action::ActionState,
   build::BuildState,
@@ -21,7 +22,10 @@ use crate::{
   auth::jwt::JwtClient,
   config::core_config,
   db::DbClient,
-  helpers::{action_state::ActionStates, cache::Cache},
+  helpers::{
+    action_state::ActionStates, all_resources::AllResourcesById,
+    cache::Cache,
+  },
   monitor::{
     CachedDeploymentStatus, CachedRepoStatus, CachedServerStatus,
     CachedStackStatus, History,
@@ -195,4 +199,10 @@ pub fn action_state_cache() -> &'static ActionStateCache {
   static ACTION_STATE_CACHE: OnceLock<ActionStateCache> =
     OnceLock::new();
   ACTION_STATE_CACHE.get_or_init(Default::default)
+}
+
+pub fn all_resources_cache() -> &'static ArcSwap<AllResourcesById> {
+  static ALL_RESOURCES: OnceLock<ArcSwap<AllResourcesById>> =
+    OnceLock::new();
+  ALL_RESOURCES.get_or_init(Default::default)
 }

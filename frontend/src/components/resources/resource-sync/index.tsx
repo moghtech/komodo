@@ -71,7 +71,9 @@ const ConfigInfoPending = ({ id }: { id: string }) => {
     _view === "Info" && hideInfo
       ? "Config"
       : _view === "Pending" && !showPending
-        ? sync?.config?.files_on_host || sync?.config?.repo
+        ? sync?.config?.files_on_host ||
+          sync?.config?.repo ||
+          sync?.config?.linked_repo
           ? "Info"
           : "Config"
         : _view;

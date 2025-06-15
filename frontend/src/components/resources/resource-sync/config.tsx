@@ -43,6 +43,7 @@ import {
   CommandItem,
   CommandList,
 } from "@ui/command";
+import { LinkedRepoConfig } from "@components/config/linked_repo";
 
 type SyncMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const SYNC_MODES: SyncMode[] = ["UI Defined", "Files On Server", "Git Repo"];
@@ -52,7 +53,11 @@ function getSyncMode(
   config: Types.ResourceSyncConfig
 ): SyncMode {
   if (update.files_on_host ?? config.files_on_host) return "Files On Server";
-  if (update.repo ?? config.repo) return "Git Repo";
+  if (
+    (update.repo ?? config.repo) ||
+    (update.linked_repo ?? config.linked_repo)
+  )
+    return "Git Repo";
   if (update.file_contents ?? config.file_contents) return "UI Defined";
   return undefined;
 }
@@ -259,6 +264,7 @@ export const ResourceSyncConfig = ({
       ],
     };
   } else if (mode === "Git Repo") {
+    const repo_linked = !!(update.linked_repo ?? config.linked_repo);
     components = {
       "": [
         {
@@ -271,47 +277,60 @@ export const ResourceSyncConfig = ({
             />
           ),
           components: {
-            git_provider: (provider: string | undefined, set) => {
-              const https = update.git_https ?? config.git_https;
-              return (
-                <ProviderSelectorConfig
-                  account_type="git"
-                  selected={provider}
-                  disabled={disabled}
-                  onSelect={(git_provider) => set({ git_provider })}
-                  https={https}
-                  onHttpsSwitch={() => set({ git_https: !https })}
-                />
-              );
-            },
-            git_account: (value: string | undefined, set) => {
-              return (
-                <AccountSelectorConfig
-                  account_type="git"
-                  type="None"
-                  provider={update.git_provider ?? config.git_provider}
-                  selected={value}
-                  onSelect={(git_account) => set({ git_account })}
-                  disabled={disabled}
-                  placeholder="None"
-                />
-              );
-            },
-            repo: {
-              placeholder: "Enter repo",
-              description:
-                "The repo path on the provider. {namespace}/{repo_name}",
-            },
-            branch: {
-              placeholder: "Enter branch",
-              description: "Select a custom branch, or default to 'main'.",
-            },
-            commit: {
-              label: "Commit Hash",
-              placeholder: "Input commit hash",
-              description:
-                "Optional. Switch to a specific commit hash after cloning the branch.",
-            },
+            linked_repo: (linked_repo, set) => (
+              <LinkedRepoConfig
+                linked_repo={linked_repo}
+                repo_linked={repo_linked}
+                set={set}
+                disabled={disabled}
+              />
+            ),
+            ...(!repo_linked
+              ? {
+                  git_provider: (provider: string | undefined, set) => {
+                    const https = update.git_https ?? config.git_https;
+                    return (
+                      <ProviderSelectorConfig
+                        account_type="git"
+                        selected={provider}
+                        disabled={disabled}
+                        onSelect={(git_provider) => set({ git_provider })}
+                        https={https}
+                        onHttpsSwitch={() => set({ git_https: !https })}
+                      />
+                    );
+                  },
+                  git_account: (value: string | undefined, set) => {
+                    return (
+                      <AccountSelectorConfig
+                        account_type="git"
+                        type="None"
+                        provider={update.git_provider ?? config.git_provider}
+                        selected={value}
+                        onSelect={(git_account) => set({ git_account })}
+                        disabled={disabled}
+                        placeholder="None"
+                      />
+                    );
+                  },
+                  repo: {
+                    placeholder: "Enter repo",
+                    description:
+                      "The repo path on the provider. {namespace}/{repo_name}",
+                  },
+                  branch: {
+                    placeholder: "Enter branch",
+                    description:
+                      "Select a custom branch, or default to 'main'.",
+                  },
+                  commit: {
+                    label: "Commit Hash",
+                    placeholder: "Input commit hash",
+                    description:
+                      "Optional. Switch to a specific commit hash after cloning the branch.",
+                  },
+                }
+              : {}),
           },
         },
         {

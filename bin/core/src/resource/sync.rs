@@ -5,6 +5,8 @@ use komodo_client::{
   entities::{
     Operation, ResourceTarget, ResourceTargetVariant,
     komodo_timestamp,
+    permission::PermissionLevel,
+    repo::Repo,
     resource::Resource,
     sync::{
       PartialResourceSyncConfig, ResourceSync, ResourceSyncConfig,
@@ -23,7 +25,8 @@ use resolver_api::Resolve;
 use crate::{
   api::write::WriteArgs,
   helpers::repo_link,
-  state::{action_states, db_client},
+  permission::get_check_permissions,
+  state::{action_states, all_resources_cache, db_client},
 };
 
 impl super::KomodoResource for ResourceSync {
@@ -53,6 +56,32 @@ impl super::KomodoResource for ResourceSync {
     let state =
       get_resource_sync_state(&resource_sync.id, &resource_sync.info)
         .await;
+
+    let default_git = (
+      resource_sync.config.git_provider,
+      resource_sync.config.repo,
+      resource_sync.config.branch,
+      resource_sync.config.git_https,
+    );
+    let (git_provider, repo, branch, git_https) =
+      if resource_sync.config.linked_repo.is_empty() {
+        default_git
+      } else {
+        all_resources_cache()
+          .load()
+          .repos
+          .get(&resource_sync.config.linked_repo)
+          .map(|r| {
+            (
+              r.config.git_provider.clone(),
+              r.config.repo.clone(),
+              r.config.branch.clone(),
+              r.config.git_https,
+            )
+          })
+          .unwrap_or(default_git)
+      };
+
     ResourceSyncListItem {
       id: resource_sync.id,
       name: resource_sync.name,
@@ -62,15 +91,16 @@ impl super::KomodoResource for ResourceSync {
         file_contents: !resource_sync.config.file_contents.is_empty(),
         files_on_host: resource_sync.config.files_on_host,
         managed: resource_sync.config.managed,
+        linked_repo: resource_sync.config.linked_repo,
         repo_link: repo_link(
-          &resource_sync.config.git_provider,
-          &resource_sync.config.repo,
-          &resource_sync.config.branch,
-          resource_sync.config.git_https,
+          &git_provider,
+          &repo,
+          &branch,
+          git_https,
         ),
-        git_provider: resource_sync.config.git_provider,
-        repo: resource_sync.config.repo,
-        branch: resource_sync.config.branch,
+        git_provider,
+        repo,
+        branch,
         last_sync_ts: resource_sync.info.last_sync_ts,
         last_sync_hash: resource_sync.info.last_sync_hash,
         last_sync_message: resource_sync.info.last_sync_message,
@@ -100,10 +130,10 @@ impl super::KomodoResource for ResourceSync {
   }
 
   async fn validate_create_config(
-    _config: &mut Self::PartialConfig,
-    _user: &User,
+    config: &mut Self::PartialConfig,
+    user: &User,
   ) -> anyhow::Result<()> {
-    Ok(())
+    validate_config(config, user).await
   }
 
   async fn post_create(
@@ -134,10 +164,10 @@ impl super::KomodoResource for ResourceSync {
 
   async fn validate_update_config(
     _id: &str,
-    _config: &mut Self::PartialConfig,
-    _user: &User,
+    config: &mut Self::PartialConfig,
+    user: &User,
   ) -> anyhow::Result<()> {
-    Ok(())
+    validate_config(config, user).await
   }
 
   async fn post_update(
@@ -183,6 +213,27 @@ impl super::KomodoResource for ResourceSync {
   ) -> anyhow::Result<()> {
     Ok(())
   }
+}
+
+#[instrument(skip(user))]
+async fn validate_config(
+  config: &mut PartialResourceSyncConfig,
+  user: &User,
+) -> anyhow::Result<()> {
+  if let Some(linked_repo) = &config.linked_repo {
+    if !linked_repo.is_empty() {
+      let repo = get_check_permissions::<Repo>(
+        linked_repo,
+        user,
+        PermissionLevel::Read.attach(),
+      )
+      .await
+      .context("Cannot attach Repo to this Resource Sync")?;
+      // in case it comes in as name
+      config.linked_repo = Some(repo.id);
+    }
+  }
+  Ok(())
 }
 
 async fn get_resource_sync_state(

@@ -28,7 +28,7 @@ use crate::{GitRes, get_commit_hash_log};
 )]
 pub async fn clone<T>(
   clone_args: T,
-  repo_dir: &Path,
+  root_repo_dir: &Path,
   access_token: Option<String>,
   environment: &[EnvironmentVar],
   env_file_path: &str,
@@ -40,34 +40,35 @@ where
   T: Into<CloneArgs> + std::fmt::Debug,
 {
   let args: CloneArgs = clone_args.into();
-  let repo_dir = args.path(repo_dir);
+  let path = args.path(root_repo_dir);
   let repo_url = args.remote_url(access_token.as_deref())?;
 
   let mut logs = clone_inner(
     &repo_url,
     &args.branch,
     &args.commit,
-    &repo_dir,
+    &path,
     access_token,
   )
   .await;
 
   if !all_logs_success(&logs) {
     tracing::warn!(
-      "Failed to clone repo at {repo_dir:?} | name: {} | {logs:?}",
+      "Failed to clone repo at {path:?} | name: {} | {logs:?}",
       args.name
     );
     return Ok(GitRes {
       logs,
+      path,
       hash: None,
       message: None,
       env_file_path: None,
     });
   }
 
-  tracing::debug!("repo at {repo_dir:?} cloned");
+  tracing::debug!("repo at {path:?} cloned");
 
-  let (hash, message) = match get_commit_hash_log(&repo_dir).await {
+  let (hash, message) = match get_commit_hash_log(&path).await {
     Ok((log, hash, message)) => {
       logs.push(log);
       (Some(hash), Some(message))
@@ -88,13 +89,14 @@ where
       environment,
       env_file_path,
       secrets,
-      &repo_dir,
+      &path,
       &mut logs,
     )
     .await
   else {
     return Ok(GitRes {
       logs,
+      path,
       hash,
       message,
       env_file_path: None,
@@ -102,7 +104,7 @@ where
   };
 
   if let Some(command) = args.on_clone {
-    let on_clone_path = repo_dir.join(&command.path);
+    let on_clone_path = path.join(&command.path);
     if let Some(log) = if let Some(secrets) = secrets {
       run_komodo_command_with_interpolation(
         "On Clone",
@@ -125,7 +127,7 @@ where
     };
   }
   if let Some(command) = args.on_pull {
-    let on_pull_path = repo_dir.join(&command.path);
+    let on_pull_path = path.join(&command.path);
     if let Some(log) = if let Some(secrets) = secrets {
       run_komodo_command_with_interpolation(
         "On Pull",
@@ -150,6 +152,7 @@ where
 
   Ok(GitRes {
     logs,
+    path,
     hash,
     message,
     env_file_path,
@@ -163,7 +166,13 @@ async fn clone_inner(
   destination: &Path,
   access_token: Option<String>,
 ) -> Vec<Log> {
-  let _ = std::fs::remove_dir_all(destination);
+  let _ = tokio::fs::remove_dir_all(destination).await;
+
+  // Ensure parent folder exists
+  if let Some(parent) = destination.parent() {
+    let _ = tokio::fs::create_dir_all(parent).await;
+  }
+
   let command = format!(
     "git clone {repo_url} {} -b {branch}",
     destination.display()
@@ -180,7 +189,7 @@ async fn clone_inner(
     (command, output.stderr)
   };
   let mut logs = vec![Log {
-    stage: "clone repo".to_string(),
+    stage: "Clone Repo".to_string(),
     command,
     success,
     stdout: output.stdout,

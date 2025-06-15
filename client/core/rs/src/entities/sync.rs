@@ -33,6 +33,8 @@ pub struct ResourceSyncListItemInfo {
   pub managed: bool,
   /// Resource paths to the files.
   pub resource_path: Vec<String>,
+  /// Linked repo, if one is attached.
+  pub linked_repo: String,
   /// The git provider domain.
   pub git_provider: String,
   /// The Github repo used as the source of the sync resources
@@ -161,6 +163,11 @@ pub type _PartialResourceSyncConfig = PartialResourceSyncConfig;
 #[partial_derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct ResourceSyncConfig {
+  /// Choose a Komodo Repo (Resource) to source the sync files.
+  #[serde(default)]
+  #[builder(default)]
+  pub linked_repo: String,
+
   /// The git provider domain. Default: github.com
   #[serde(default = "default_git_provider")]
   #[builder(default = "default_git_provider()")]
@@ -334,6 +341,7 @@ fn default_pending_alert() -> bool {
 impl Default for ResourceSyncConfig {
   fn default() -> Self {
     Self {
+      linked_repo: Default::default(),
       git_provider: default_git_provider(),
       git_https: default_git_https(),
       repo: Default::default(),

@@ -36,6 +36,7 @@ import { MonacoEditor } from "@components/monaco";
 import { useToast } from "@ui/use-toast";
 import { text_color_class_by_intention } from "@lib/color";
 import { Ban, CirclePlus } from "lucide-react";
+import { LinkedRepoConfig } from "@components/config/linked_repo";
 
 type StackMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const STACK_MODES: StackMode[] = ["UI Defined", "Files On Server", "Git Repo"];
@@ -45,7 +46,11 @@ function getStackMode(
   config: Types.StackConfig
 ): StackMode {
   if (update.files_on_host ?? config.files_on_host) return "Files On Server";
-  if (update.repo ?? config.repo) return "Git Repo";
+  if (
+    (update.linked_repo ?? config.linked_repo) ||
+    (update.repo ?? config.repo)
+  )
+    return "Git Repo";
   if (update.file_contents ?? config.file_contents) return "UI Defined";
   return undefined;
 }
@@ -517,6 +522,7 @@ export const StackConfig = ({
       advanced,
     };
   } else if (mode === "Git Repo") {
+    const repo_linked = !!(update.linked_repo ?? config.linked_repo);
     components = {
       "": [
         server_component,
@@ -530,49 +536,78 @@ export const StackConfig = ({
             />
           ),
           components: {
-            git_provider: (provider, set) => {
-              const https = update.git_https ?? config.git_https;
-              return (
-                <ProviderSelectorConfig
-                  account_type="git"
-                  selected={provider}
-                  disabled={disabled}
-                  onSelect={(git_provider) => set({ git_provider })}
-                  https={https}
-                  onHttpsSwitch={() => set({ git_https: !https })}
-                />
-              );
-            },
-            git_account: (value, set) => {
-              const server_id = update.server_id || config.server_id;
-              return (
-                <AccountSelectorConfig
-                  id={server_id}
-                  type={server_id ? "Server" : "None"}
-                  account_type="git"
-                  provider={update.git_provider ?? config.git_provider}
-                  selected={value}
-                  onSelect={(git_account) => set({ git_account })}
-                  disabled={disabled}
-                  placeholder="None"
-                />
-              );
-            },
-            repo: {
-              placeholder: "Enter repo",
-              description:
-                "The repo path on the provider. {namespace}/{repo_name}",
-            },
-            branch: {
-              placeholder: "Enter branch",
-              description: "Select a custom branch, or default to 'main'.",
-            },
-            commit: {
-              label: "Commit Hash",
-              placeholder: "Input commit hash",
-              description:
-                "Optional. Switch to a specific commit hash after cloning the branch.",
-            },
+            linked_repo: (linked_repo, set) => (
+              <LinkedRepoConfig
+                linked_repo={linked_repo}
+                repo_linked={repo_linked}
+                set={set}
+                disabled={disabled}
+              />
+            ),
+            ...(!repo_linked
+              ? {
+                  git_provider: (provider, set) => {
+                    const https = update.git_https ?? config.git_https;
+                    return (
+                      <ProviderSelectorConfig
+                        account_type="git"
+                        selected={provider}
+                        disabled={disabled}
+                        onSelect={(git_provider) => set({ git_provider })}
+                        https={https}
+                        onHttpsSwitch={() => set({ git_https: !https })}
+                      />
+                    );
+                  },
+                  git_account: (value, set) => {
+                    const server_id = update.server_id || config.server_id;
+                    return (
+                      <AccountSelectorConfig
+                        id={server_id}
+                        type={server_id ? "Server" : "None"}
+                        account_type="git"
+                        provider={update.git_provider ?? config.git_provider}
+                        selected={value}
+                        onSelect={(git_account) => set({ git_account })}
+                        disabled={disabled}
+                        placeholder="None"
+                      />
+                    );
+                  },
+                  repo: {
+                    placeholder: "Enter repo",
+                    description:
+                      "The repo path on the provider. {namespace}/{repo_name}",
+                  },
+                  branch: {
+                    placeholder: "Enter branch",
+                    description:
+                      "Select a custom branch, or default to 'main'.",
+                  },
+                  commit: {
+                    label: "Commit Hash",
+                    placeholder: "Input commit hash",
+                    description:
+                      "Optional. Switch to a specific commit hash after cloning the branch.",
+                  },
+                  clone_path: {
+                    placeholder: "/clone/path/on/host",
+                    description: (
+                      <div className="flex flex-col gap-0">
+                        <div>
+                          Explicitly specify the folder on the host to clone the
+                          repo in.
+                        </div>
+                        <div>
+                          If <span className="font-bold">relative</span> (no
+                          leading '/'), relative to{" "}
+                          {"$root_directory/stacks/" + stack.name}
+                        </div>
+                      </div>
+                    ),
+                  },
+                }
+              : {}),
             reclone: {
               description:
                 "Delete the repo folder and clone it again, instead of using 'git pull'.",

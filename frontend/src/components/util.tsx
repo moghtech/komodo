@@ -1,8 +1,10 @@
 import {
+  Dispatch,
   FocusEventHandler,
   Fragment,
   MouseEventHandler,
   ReactNode,
+  SetStateAction,
   forwardRef,
   useEffect,
   useState,
@@ -14,6 +16,7 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronLeft,
+  ChevronsUpDown,
   ChevronUp,
   Copy,
   Database,
@@ -23,6 +26,7 @@ import {
   Loader2,
   LogOut,
   Network,
+  Search,
   SearchX,
   Settings,
   Tags,
@@ -39,12 +43,15 @@ import {
   DialogFooter,
 } from "@ui/dialog";
 import { toast, useToast } from "@ui/use-toast";
-import { cn, usableResourcePath } from "@lib/utils";
+import { cn, filterBySplit, usableResourcePath } from "@lib/utils";
 import { Link, useNavigate } from "react-router-dom";
 import { AUTH_TOKEN_STORAGE_KEY } from "@main";
 import { Textarea } from "@ui/textarea";
 import { Card } from "@ui/card";
-import { snake_case_to_upper_space_case } from "@lib/formatting";
+import {
+  fmt_utc_offset,
+  snake_case_to_upper_space_case,
+} from "@lib/formatting";
 import {
   ColorIntention,
   container_state_intention,
@@ -62,6 +69,15 @@ import { MonacoEditor, MonacoLanguage } from "./monaco";
 import { UsableResource } from "@types";
 import { ResourceComponents } from "./resources";
 import { usePermissions } from "@lib/hooks";
+import { Popover, PopoverContent, PopoverTrigger } from "@ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@ui/command";
 
 export const WithLoading = ({
   children,
@@ -715,6 +731,8 @@ export const DockerContainersSection = ({
   setShow,
   pruneButton,
   titleOther,
+  forceTall,
+  _search,
 }: {
   server_id: string;
   containers: Types.ListDockerContainersResponse;
@@ -722,12 +740,17 @@ export const DockerContainersSection = ({
   setShow?: (show: boolean) => void;
   pruneButton?: boolean;
   titleOther?: ReactNode;
+  forceTall?: boolean;
+  _search?: [string, Dispatch<SetStateAction<string>>];
 }) => {
   const allRunning = useRead("ListDockerContainers", {
     server: server_id,
   }).data?.every(
     (container) => container.state === Types.ContainerStateStatusEnum.Running
   );
+  const filtered = _search
+    ? filterBySplit(containers, _search[0], (container) => container.name)
+    : containers;
   return (
     <div className={cn(setShow && show && "mb-8")}>
       <Section
@@ -735,9 +758,20 @@ export const DockerContainersSection = ({
         title={!titleOther ? "Containers" : undefined}
         icon={!titleOther ? <Box className="w-4 h-4" /> : undefined}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             {pruneButton && !allRunning && (
               <Prune server_id={server_id} type="Containers" />
+            )}
+            {_search && (
+              <div className="relative">
+                <Search className="w-4 absolute top-[50%] left-3 -translate-y-[50%] text-muted-foreground" />
+                <Input
+                  value={_search[0]}
+                  onChange={(e) => _search[1](e.target.value)}
+                  placeholder="search..."
+                  className="pl-8 w-[200px] lg:w-[300px]"
+                />
+              </div>
             )}
             {setShow && <ShowHideButton show={show} setShow={setShow} />}
           </div>
@@ -745,8 +779,9 @@ export const DockerContainersSection = ({
       >
         {show && (
           <DataTable
+            containerClassName={forceTall ? "min-h-[60vh]" : undefined}
             tableKey="server-containers"
-            data={containers}
+            data={filtered}
             columns={[
               {
                 accessorKey: "name",
@@ -1099,5 +1134,93 @@ export const RepoLink = ({ repo, link }: { repo: string; link: string }) => {
         {repo}
       </div>
     </a>
+  );
+};
+
+const TIMEZONES: ("Default" | Types.IanaTimezone)[] = [
+  "Default",
+  ...Object.values(Types.IanaTimezone),
+];
+
+export const TimezoneSelector = ({
+  timezone,
+  onChange,
+  disabled,
+  triggerClassName,
+}: {
+  timezone: string;
+  onChange: (timezone: "" | Types.IanaTimezone) => void;
+  disabled?: boolean;
+  triggerClassName?: string;
+}) => {
+  const core_tz = useRead("GetCoreInfo", {}).data?.timezone || "Core TZ";
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const filtered = filterBySplit(TIMEZONES, search, (t) => t);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen} modal>
+      <PopoverTrigger asChild>
+        <Button
+          variant="secondary"
+          className={cn(
+            "flex justify-between gap-2 w-[300px]",
+            triggerClassName
+          )}
+          disabled={disabled}
+        >
+          {timezone
+            ? `${timezone} (${fmt_utc_offset(timezone as Types.IanaTimezone)})`
+            : `Default (${core_tz})`}
+          {!disabled && <ChevronsUpDown className="w-3 h-3" />}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[300px] max-h-[300px] p-0 z-[100]">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder={"Search Timezones"}
+            className="h-9"
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList>
+            <CommandEmpty className="flex justify-evenly items-center pt-3 pb-2">
+              No Timezones Found
+              <SearchX className="w-3 h-3" />
+            </CommandEmpty>
+
+            <CommandGroup>
+              {filtered.map((timezone) =>
+                timezone !== "Default" ? (
+                  <CommandItem
+                    key={timezone}
+                    onSelect={() => {
+                      onChange(timezone);
+                      setOpen(false);
+                    }}
+                    className="flex items-center justify-between cursor-pointer"
+                  >
+                    <div className="p-1">
+                      {timezone} ({fmt_utc_offset(timezone)})
+                    </div>
+                  </CommandItem>
+                ) : (
+                  <CommandItem
+                    key={timezone}
+                    onSelect={() => {
+                      onChange("");
+                      setOpen(false);
+                    }}
+                    className="flex items-center justify-between cursor-pointer"
+                  >
+                    <div className="p-1">Default ({core_tz})</div>
+                  </CommandItem>
+                )
+              )}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 };

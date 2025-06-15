@@ -32,7 +32,7 @@ use crate::{
   state::{deployment_status_cache, stack_status_cache},
 };
 
-use super::{AllResourcesById, ResourceSyncTrait};
+use super::ResourceSyncTrait;
 
 /// All entries in here are due to be deployed,
 /// after the given dependencies,
@@ -48,7 +48,6 @@ pub struct SyncDeployParams<'a> {
   pub stacks: &'a [ResourceToml<PartialStackConfig>],
   // Names to stacks
   pub stack_map: &'a HashMap<String, Stack>,
-  pub all_resources: &'a AllResourcesById,
 }
 
 pub async fn deploy_from_cache(
@@ -307,7 +306,6 @@ fn build_cache_for_deployment<'a>(
     deployment_map,
     stacks,
     stack_map,
-    all_resources,
   }: SyncDeployParams<'a>,
   cache: &'a mut ToDeployCacheInner,
   build_version_cache: &'a mut BuildVersionCache,
@@ -367,11 +365,8 @@ fn build_cache_for_deployment<'a>(
 
         Deployment::validate_partial_config(&mut config);
 
-        let mut diff = Deployment::get_diff(
-          original.config.clone(),
-          config,
-          all_resources,
-        )?;
+        let mut diff =
+          Deployment::get_diff(original.config.clone(), config)?;
 
         Deployment::validate_diff(&mut diff);
         // Needs to only check config fields that affect docker run
@@ -486,7 +481,6 @@ fn build_cache_for_deployment<'a>(
         deployment_map,
         stacks,
         stack_map,
-        all_resources,
       },
       cache,
       build_version_cache,
@@ -502,7 +496,6 @@ fn build_cache_for_stack<'a>(
     deployment_map,
     stacks,
     stack_map,
-    all_resources,
   }: SyncDeployParams<'a>,
   cache: &'a mut ToDeployCacheInner,
   build_version_cache: &'a mut BuildVersionCache,
@@ -600,11 +593,8 @@ fn build_cache_for_stack<'a>(
 
         Stack::validate_partial_config(&mut config);
 
-        let mut diff = Stack::get_diff(
-          original.config.clone(),
-          config,
-          all_resources,
-        )?;
+        let mut diff =
+          Stack::get_diff(original.config.clone(), config)?;
 
         Stack::validate_diff(&mut diff);
         // Needs to only check config fields that affect docker compose command
@@ -650,7 +640,6 @@ fn build_cache_for_stack<'a>(
         deployment_map,
         stacks,
         stack_map,
-        all_resources,
       },
       cache,
       build_version_cache,
@@ -667,7 +656,6 @@ async fn insert_target_using_after_list<'a>(
     deployment_map,
     stacks,
     stack_map,
-    all_resources,
   }: SyncDeployParams<'a>,
   cache: &'a mut ToDeployCacheInner,
   build_version_cache: &'a mut BuildVersionCache,
@@ -709,7 +697,6 @@ async fn insert_target_using_after_list<'a>(
                 deployment_map,
                 stacks,
                 stack_map,
-                all_resources,
               },
               cache,
               build_version_cache,
@@ -756,7 +743,6 @@ async fn insert_target_using_after_list<'a>(
                 deployment_map,
                 stacks,
                 stack_map,
-                all_resources,
               },
               cache,
               build_version_cache,

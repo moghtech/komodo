@@ -22,6 +22,7 @@ use mungos::{
 
 use crate::{
   alert::send_alerts,
+  helpers::maintenance::is_in_maintenance,
   state::{db_client, server_status_cache},
 };
 
@@ -29,6 +30,48 @@ type SendAlerts = bool;
 type OpenAlertMap<T = AlertDataVariant> =
   HashMap<ResourceTarget, HashMap<T, Alert>>;
 type OpenDiskAlertMap = OpenAlertMap<PathBuf>;
+
+/// Alert buffer to prevent immediate alerts on transient issues
+struct AlertBuffer {
+  buffer: Mutex<HashMap<(String, AlertDataVariant), bool>>,
+}
+
+impl AlertBuffer {
+  fn new() -> Self {
+    Self {
+      buffer: Mutex::new(HashMap::new()),
+    }
+  }
+
+  /// Check if alert should be opened. Requires two consecutive calls to return true.
+  fn ready_to_open(
+    &self,
+    server_id: String,
+    variant: AlertDataVariant,
+  ) -> bool {
+    let mut lock = self.buffer.lock().unwrap();
+    let ready = lock.entry((server_id, variant)).or_default();
+    if *ready {
+      *ready = false;
+      true
+    } else {
+      *ready = true;
+      false
+    }
+  }
+
+  /// Reset buffer state for a specific server/alert combination
+  fn reset(&self, server_id: String, variant: AlertDataVariant) {
+    let mut lock = self.buffer.lock().unwrap();
+    lock.remove(&(server_id, variant));
+  }
+}
+
+/// Global alert buffer instance
+fn alert_buffer() -> &'static AlertBuffer {
+  static BUFFER: OnceLock<AlertBuffer> = OnceLock::new();
+  BUFFER.get_or_init(AlertBuffer::new)
+}
 
 #[instrument(level = "debug")]
 pub async fn alert_servers(
@@ -59,6 +102,10 @@ pub async fn alert_servers(
     let server_alerts = open_alerts
       .get(&ResourceTarget::Server(server_status.id.clone()));
 
+    // Check if server is in maintenance mode
+    let in_maintenance =
+      is_in_maintenance(&server.config.maintenance_windows, ts);
+
     // ===================
     // SERVER HEALTH
     // ===================
@@ -67,11 +114,13 @@ pub async fn alert_servers(
     });
     match (server_status.state, health_alert) {
       (ServerState::NotOk, None) => {
-        if buffer.ready_to_open(
-          server_status.id.clone(),
-          AlertDataVariant::ServerUnreachable,
-        ) {
-          // open unreachable alert
+        // Only open unreachable alert if not in maintenance and buffer is ready
+        if !in_maintenance
+          && buffer.ready_to_open(
+            server_status.id.clone(),
+            AlertDataVariant::ServerUnreachable,
+          )
+        {
           let alert = Alert {
             id: Default::default(),
             ts,
@@ -143,11 +192,13 @@ pub async fn alert_servers(
     match (health.cpu.level, cpu_alert, health.cpu.should_close_alert)
     {
       (SeverityLevel::Warning | SeverityLevel::Critical, None, _) => {
-        // open alert
-        if buffer.ready_to_open(
-          server_status.id.clone(),
-          AlertDataVariant::ServerCpu,
-        ) {
+        // Only open CPU alert if not in maintenance and buffer is ready
+        if !in_maintenance
+          && buffer.ready_to_open(
+            server_status.id.clone(),
+            AlertDataVariant::ServerCpu,
+          )
+        {
           let alert = Alert {
             id: Default::default(),
             ts,
@@ -174,8 +225,8 @@ pub async fn alert_servers(
         Some(mut alert),
         _,
       ) => {
-        // modify alert level only if it has increased
-        if alert.level < health.cpu.level {
+        // modify alert level only if it has increased and not in maintenance
+        if !in_maintenance && alert.level < health.cpu.level {
           alert.level = health.cpu.level;
           alert.data = AlertData::ServerCpu {
             id: server_status.id.clone(),
@@ -206,8 +257,7 @@ pub async fn alert_servers(
         alert_ids_to_close
           .push((alert, server.config.send_cpu_alerts))
       }
-      (SeverityLevel::Ok, Some(_), false) => {}
-      (SeverityLevel::Ok, None, _) => buffer
+      (SeverityLevel::Ok, _, _) => buffer
         .reset(server_status.id.clone(), AlertDataVariant::ServerCpu),
     }
 
@@ -221,11 +271,13 @@ pub async fn alert_servers(
     match (health.mem.level, mem_alert, health.mem.should_close_alert)
     {
       (SeverityLevel::Warning | SeverityLevel::Critical, None, _) => {
-        // open alert
-        if buffer.ready_to_open(
-          server_status.id.clone(),
-          AlertDataVariant::ServerMem,
-        ) {
+        // Only open memory alert if not in maintenance and buffer is ready
+        if !in_maintenance
+          && buffer.ready_to_open(
+            server_status.id.clone(),
+            AlertDataVariant::ServerMem,
+          )
+        {
           let alert = Alert {
             id: Default::default(),
             ts,
@@ -257,8 +309,8 @@ pub async fn alert_servers(
         Some(mut alert),
         _,
       ) => {
-        // modify alert level only if it has increased
-        if alert.level < health.mem.level {
+        // modify alert level only if it has increased and not in maintenance
+        if !in_maintenance && alert.level < health.mem.level {
           alert.level = health.mem.level;
           alert.data = AlertData::ServerMem {
             id: server_status.id.clone(),
@@ -299,8 +351,7 @@ pub async fn alert_servers(
         alert_ids_to_close
           .push((alert, server.config.send_mem_alerts))
       }
-      (SeverityLevel::Ok, Some(_), false) => {}
-      (SeverityLevel::Ok, None, _) => buffer
+      (SeverityLevel::Ok, _, _) => buffer
         .reset(server_status.id.clone(), AlertDataVariant::ServerMem),
     }
 
@@ -322,11 +373,13 @@ pub async fn alert_servers(
           None,
           _,
         ) => {
-          // open alert
-          if buffer.ready_to_open(
-            server_status.id.clone(),
-            AlertDataVariant::ServerDisk,
-          ) {
+          // Only open disk alert if not in maintenance and buffer is ready
+          if !in_maintenance
+            && buffer.ready_to_open(
+              server_status.id.clone(),
+              AlertDataVariant::ServerDisk,
+            )
+          {
             let disk =
               server_status.stats.as_ref().and_then(|stats| {
                 stats.disks.iter().find(|disk| disk.mount == *path)
@@ -360,8 +413,8 @@ pub async fn alert_servers(
           Some(mut alert),
           _,
         ) => {
-          // modify alert level only if it has increased
-          if health.level < alert.level {
+          // modify alert level only if it has increased and not in maintenance
+          if !in_maintenance && health.level < alert.level {
             let disk =
               server_status.stats.as_ref().and_then(|stats| {
                 stats.disks.iter().find(|disk| disk.mount == *path)
@@ -396,8 +449,7 @@ pub async fn alert_servers(
           alert_ids_to_close
             .push((alert, server.config.send_disk_alerts))
         }
-        (SeverityLevel::Ok, Some(_), false) => {}
-        (SeverityLevel::Ok, None, _) => buffer.reset(
+        (SeverityLevel::Ok, _, _) => buffer.reset(
           server_status.id.clone(),
           AlertDataVariant::ServerDisk,
         ),
@@ -605,41 +657,4 @@ async fn get_open_alerts()
   }
 
   Ok((map, disk_map))
-}
-
-/// Alerts should only be opened after
-/// 2 *consecutive* alerting conditions.
-/// This reduces alerting noise.
-#[derive(Default)]
-struct AlertBuffer {
-  /// (ServerId, AlertType) -> should_open.
-  buffer: Mutex<HashMap<(String, AlertDataVariant), bool>>,
-}
-
-impl AlertBuffer {
-  fn reset(&self, server_id: String, variant: AlertDataVariant) {
-    let mut lock = self.buffer.lock().unwrap();
-    lock.remove(&(server_id, variant));
-  }
-
-  fn ready_to_open(
-    &self,
-    server_id: String,
-    variant: AlertDataVariant,
-  ) -> bool {
-    let mut lock = self.buffer.lock().unwrap();
-    let ready = lock.entry((server_id, variant)).or_default();
-    if *ready {
-      *ready = false;
-      true
-    } else {
-      *ready = true;
-      false
-    }
-  }
-}
-
-fn alert_buffer() -> &'static AlertBuffer {
-  static ALERT_BUFFER: OnceLock<AlertBuffer> = OnceLock::new();
-  ALERT_BUFFER.get_or_init(Default::default)
 }

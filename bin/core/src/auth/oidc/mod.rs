@@ -12,9 +12,10 @@ use komodo_client::entities::{
 };
 use mungos::mongodb::bson::{Document, doc};
 use openidconnect::{
-  AccessTokenHash, AuthorizationCode, CsrfToken, Nonce,
-  OAuth2TokenResponse, PkceCodeChallenge, PkceCodeVerifier, Scope,
-  TokenResponse, core::CoreAuthenticationFlow,
+  AccessTokenHash, AuthorizationCode, CsrfToken,
+  EmptyAdditionalClaims, Nonce, OAuth2TokenResponse,
+  PkceCodeChallenge, PkceCodeVerifier, Scope, TokenResponse,
+  core::{CoreAuthenticationFlow, CoreGenderClaim},
 };
 use reqwest::StatusCode;
 use serde::Deserialize;
@@ -22,6 +23,7 @@ use serror::AddStatusCode;
 
 use crate::{
   config::core_config,
+  helpers::random_string,
   state::{db_client, jwt_client},
 };
 
@@ -89,6 +91,7 @@ async fn login(
     )
     .set_pkce_challenge(pkce_challenge)
     .add_scope(Scope::new("openid".to_string()))
+    .add_scope(Scope::new("profile".to_string()))
     .add_scope(Scope::new("email".to_string()))
     .url();
 
@@ -137,7 +140,7 @@ async fn callback(
 ) -> anyhow::Result<Redirect> {
   let client = oidc_client().load();
   let client =
-    client.as_ref().context("OIDC Client not configured")?;
+    client.as_ref().context("OIDC Client not initialized successfully. Is the provider properly configured?")?;
 
   if let Some(e) = query.error {
     return Err(anyhow!("Provider returned error: {e}"));
@@ -159,11 +162,12 @@ async fn callback(
     ));
   }
 
+  let reqwest_client = reqwest_client();
   let token_response = client
     .exchange_code(AuthorizationCode::new(code))
     .context("Failed to get Oauth token at exchange code")?
     .set_pkce_verifier(pkce_verifier)
-    .request_async(reqwest_client())
+    .request_async(reqwest_client)
     .await
     .context("Failed to get Oauth token")?;
 
@@ -226,12 +230,26 @@ async fn callback(
       if !no_users_exist && core_config.disable_user_registration {
         return Err(anyhow!("User registration is disabled"));
       }
+
+      // Fetch user info
+      let user_info = client
+        .user_info(
+          token_response.access_token().clone(),
+          claims.subject().clone().into(),
+        )
+        .context("Invalid user info request")?
+        .request_async::<EmptyAdditionalClaims, _, CoreGenderClaim>(
+          reqwest_client,
+        )
+        .await
+        .context("Failed to fetch user info for new user")?;
+
       // Will use preferred_username, then email, then user_id if it isn't available.
-      let username = claims
+      let mut username = user_info
         .preferred_username()
         .map(|username| username.to_string())
         .unwrap_or_else(|| {
-          let email = claims
+          let email = user_info
             .email()
             .map(|email| email.as_str())
             .unwrap_or(user_id);
@@ -245,6 +263,19 @@ async fn callback(
           }
           .to_string()
         });
+
+      // Modify username if it already exists
+      if db_client
+        .users
+        .find_one(doc! { "username": &username })
+        .await
+        .context("Failed to query users collection")?
+        .is_some()
+      {
+        username += "-";
+        username += &random_string(5);
+      };
+
       let user = User {
         id: Default::default(),
         username,
@@ -262,6 +293,7 @@ async fn callback(
           user_id: user_id.to_string(),
         },
       };
+
       let user_id = db_client
         .users
         .insert_one(user)
@@ -271,6 +303,7 @@ async fn callback(
         .as_object_id()
         .context("inserted_id is not ObjectId")?
         .to_string();
+      
       jwt_client()
         .encode(user_id)
         .context("failed to generate jwt")?

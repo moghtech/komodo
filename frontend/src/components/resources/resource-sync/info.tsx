@@ -36,7 +36,8 @@ export const ResourceSyncInfo = ({
   });
   const sync = useFullResourceSync(id);
   const file_on_host = sync?.config?.files_on_host ?? false;
-  const git_repo = sync?.config?.repo ? true : false;
+  const git_repo =
+    sync?.config?.repo || sync?.config?.linked_repo ? true : false;
   const canEdit = canWrite && (file_on_host || git_repo);
   const editFileCallback = (keyPath: string) => (contents: string) =>
     setEdits({ ...edits, [keyPath]: contents });

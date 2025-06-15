@@ -36,6 +36,10 @@ pub fn router() -> Router {
           "/execute",
           Router::new()
             .route("/", post(super::terminal::execute_terminal))
+            .route(
+              "/container",
+              post(super::terminal::execute_container_exec),
+            )
             .layer(middleware::from_fn(guard_request_by_passkey)),
         ),
     )

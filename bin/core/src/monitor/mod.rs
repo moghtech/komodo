@@ -145,8 +145,8 @@ pub async fn update_cache_for_server(server: &Server) {
   // Handle server disabled
   if !server.config.enabled {
     insert_deployments_status_unknown(deployments).await;
-    insert_repos_status_unknown(repos).await;
     insert_stacks_status_unknown(stacks).await;
+    insert_repos_status_unknown(repos).await;
     insert_server_status(
       server,
       ServerState::Disabled,
@@ -170,12 +170,12 @@ pub async fn update_cache_for_server(server: &Server) {
     Ok(version) => version.version,
     Err(e) => {
       insert_deployments_status_unknown(deployments).await;
-      insert_repos_status_unknown(repos).await;
       insert_stacks_status_unknown(stacks).await;
+      insert_repos_status_unknown(repos).await;
       insert_server_status(
         server,
         ServerState::NotOk,
-        String::from("unknown"),
+        String::from("Unknown"),
         None,
         (None, None, None, None, None),
         Serror::from(&e),
@@ -190,8 +190,8 @@ pub async fn update_cache_for_server(server: &Server) {
       Ok(stats) => Some(filter_volumes(server, stats)),
       Err(e) => {
         insert_deployments_status_unknown(deployments).await;
-        insert_repos_status_unknown(repos).await;
         insert_stacks_status_unknown(stacks).await;
+        insert_repos_status_unknown(repos).await;
         insert_server_status(
           server,
           ServerState::NotOk,

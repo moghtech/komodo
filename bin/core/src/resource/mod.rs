@@ -69,7 +69,10 @@ pub use build::{
 pub use procedure::{
   refresh_procedure_state_cache, spawn_procedure_state_refresh_loop,
 };
-pub use refresh::spawn_resource_refresh_loop;
+pub use refresh::{
+  refresh_all_resources_cache, spawn_all_resources_refresh_loop,
+  spawn_resource_refresh_loop,
+};
 pub use repo::{
   refresh_repo_state_cache, spawn_repo_state_refresh_loop,
 };
@@ -537,6 +540,8 @@ pub async fn create<T: KomodoResource>(
 
   T::post_create(&resource, &mut update).await?;
 
+  refresh_all_resources_cache().await;
+
   update.finalize();
   add_update(update).await?;
 
@@ -632,8 +637,9 @@ pub async fn update<T: KomodoResource>(
 
   T::post_update(&updated, &mut update).await?;
 
-  update.finalize();
+  refresh_all_resources_cache().await;
 
+  update.finalize();
   add_update(update).await?;
 
   Ok(updated)
@@ -706,6 +712,7 @@ pub async fn update_tags<T: KomodoResource>(
       doc! { "$set": { "tags": tags } },
     )
     .await?;
+  refresh_all_resources_cache().await;
   Ok(())
 }
 
@@ -769,8 +776,11 @@ pub async fn rename<T: KomodoResource>(
     ),
   );
 
+  refresh_all_resources_cache().await;
+
   update.finalize();
   update.id = add_update(update.clone()).await?;
+
   Ok(update)
 }
 
@@ -828,6 +838,8 @@ pub async fn delete<T: KomodoResource>(
   if let Err(e) = T::post_delete(&resource, &mut update).await {
     update.push_error_log("post delete", format_serror(&e.into()));
   }
+
+  refresh_all_resources_cache().await;
 
   update.finalize();
   add_update(update).await?;

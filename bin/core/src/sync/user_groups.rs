@@ -34,10 +34,10 @@ use serde::Serialize;
 use crate::{
   api::{read::ReadArgs, write::WriteArgs},
   helpers::matcher::Matcher,
-  state::db_client,
+  state::{all_resources_cache, db_client},
 };
 
-use super::{AllResourcesById, toml::TOML_PRETTY_OPTIONS};
+use super::toml::TOML_PRETTY_OPTIONS;
 
 /// Used to serialize user group
 #[derive(Serialize)]
@@ -141,14 +141,12 @@ pub struct DeleteItem {
 pub async fn get_updates_for_view(
   user_groups: Vec<UserGroupToml>,
   delete: bool,
-  all_resources: &AllResourcesById,
 ) -> anyhow::Result<Vec<DiffData>> {
   let _curr = find_collect(&db_client().user_groups, None, None)
     .await
     .context("failed to query db for UserGroups")?;
   let mut curr = Vec::with_capacity(_curr.capacity());
-  convert_user_groups(_curr.into_iter(), all_resources, &mut curr)
-    .await?;
+  convert_user_groups(_curr.into_iter(), &mut curr).await?;
   let map = curr
     .into_iter()
     .map(|ug| (ug.1.name.clone(), ug))
@@ -175,17 +173,15 @@ pub async fn get_updates_for_view(
       .permissions
       .retain(|p| p.level > PermissionLevel::None);
 
-    user_group.permissions = expand_user_group_permissions(
-      user_group.permissions,
-      all_resources,
-    )
-    .await
-    .with_context(|| {
-      format!(
-        "failed to expand user group {} permissions",
-        user_group.name
-      )
-    })?;
+    user_group.permissions =
+      expand_user_group_permissions(user_group.permissions)
+        .await
+        .with_context(|| {
+          format!(
+            "failed to expand user group {} permissions",
+            user_group.name
+          )
+        })?;
 
     let (_original_id, original) =
       match map.get(&user_group.name).cloned() {
@@ -229,7 +225,6 @@ pub async fn get_updates_for_view(
 pub async fn get_updates_for_execution(
   user_groups: Vec<UserGroupToml>,
   delete: bool,
-  all_resources: &AllResourcesById,
 ) -> anyhow::Result<(
   Vec<UserGroupToml>,
   Vec<UpdateItem>,
@@ -285,17 +280,15 @@ pub async fn get_updates_for_execution(
       .permissions
       .retain(|p| p.level > PermissionLevel::None);
 
-    user_group.permissions = expand_user_group_permissions(
-      user_group.permissions,
-      all_resources,
-    )
-    .await
-    .with_context(|| {
-      format!(
-        "Failed to expand user group {} permissions",
-        user_group.name
-      )
-    })?;
+    user_group.permissions =
+      expand_user_group_permissions(user_group.permissions)
+        .await
+        .with_context(|| {
+          format!(
+            "Failed to expand user group {} permissions",
+            user_group.name
+          )
+        })?;
 
     let original = match map.get(&user_group.name).cloned() {
       Some(original) => original,
@@ -312,6 +305,8 @@ pub async fn get_updates_for_execution(
         id_to_user.get(&user_id).map(|u| u.username.clone())
       })
       .collect::<Vec<_>>();
+
+    let all_resources = all_resources_cache().load();
 
     let mut original_permissions = (ListUserTargetPermissions {
       user_target: UserTarget::UserGroup(original.id),
@@ -789,10 +784,10 @@ async fn run_update_permissions(
 /// Expands any regex defined targets into the full list
 async fn expand_user_group_permissions(
   permissions: Vec<PermissionToml>,
-  all_resources: &AllResourcesById,
 ) -> anyhow::Result<Vec<PermissionToml>> {
   let mut expanded =
     Vec::<PermissionToml>::with_capacity(permissions.capacity());
+  let all_resources = all_resources_cache().load();
 
   for permission in permissions {
     let (variant, id) = permission.target.extract_variant_id();
@@ -1012,7 +1007,6 @@ fn specific_equal(
 
 pub async fn convert_user_groups(
   user_groups: impl Iterator<Item = UserGroup>,
-  all: &AllResourcesById,
   res: &mut Vec<(String, UserGroupToml)>,
 ) -> anyhow::Result<()> {
   let db = db_client();
@@ -1022,6 +1016,8 @@ pub async fn convert_user_groups(
     .into_iter()
     .map(|user| (user.id, user.username))
     .collect::<HashMap<_, _>>();
+
+  let all = all_resources_cache().load();
 
   for mut user_group in user_groups {
     user_group.all.retain(|_, p| {

@@ -11,6 +11,7 @@ use komodo_client::{
     builder::{Builder, BuilderConfig},
     config::core::CoreConfig,
     permission::PermissionLevel,
+    repo::Repo,
     server::ServerState,
     update::Update,
   },
@@ -114,7 +115,10 @@ impl Resolve<WriteArgs> for WriteBuildFileContents {
     )
     .await?;
 
-    if !build.config.files_on_host && build.config.repo.is_empty() {
+    if !build.config.files_on_host
+      && build.config.repo.is_empty()
+      && build.config.linked_repo.is_empty()
+    {
       return Err(anyhow!(
         "Build is not configured to use Files on Host or Git Repo, can't write dockerfile contents"
       ).into());
@@ -182,8 +186,16 @@ async fn write_dockerfile_contents_git(
 ) -> serror::Result<Update> {
   let WriteBuildFileContents { build: _, contents } = req;
 
-  let mut clone_args: CloneArgs = (&build).into();
+  let mut clone_args: CloneArgs = if !build.config.files_on_host
+    && !build.config.linked_repo.is_empty()
+  {
+    (&crate::resource::get::<Repo>(&build.config.linked_repo).await?)
+      .into()
+  } else {
+    (&build).into()
+  };
   let root = clone_args.unique_path(&core_config().repo_directory)?;
+  clone_args.destination = Some(root.display().to_string());
 
   let build_path = build
     .config
@@ -206,19 +218,19 @@ async fn write_dockerfile_contents_git(
     })?;
   }
 
+  let access_token = if let Some(account) = &clone_args.account {
+    git_token(&clone_args.provider, account, |https| clone_args.https = https)
+    .await
+    .with_context(
+      || format!("Failed to get git token in call to db. Stopping run. | {} | {account}", clone_args.provider),
+    )?
+  } else {
+    None
+  };
+
   // Ensure the folder is initialized as git repo.
   // This allows a new file to be committed on a branch that may not exist.
   if !root.join(".git").exists() {
-    let access_token = if let Some(account) = &clone_args.account {
-      git_token(&clone_args.provider, account, |https| clone_args.https = https)
-      .await
-      .with_context(
-        || format!("Failed to get git token in call to db. Stopping run. | {} | {account}", clone_args.provider),
-      )?
-    } else {
-      None
-    };
-
     git::init_folder_as_repo(
       &root,
       &clone_args,
@@ -233,6 +245,34 @@ async fn write_dockerfile_contents_git(
 
       return Ok(update);
     }
+  }
+
+  // Pull latest changes to repo to ensure linear commit history
+  match git::pull_or_clone(
+    clone_args,
+    &core_config().repo_directory,
+    access_token,
+    Default::default(),
+    Default::default(),
+    Default::default(),
+    Default::default(),
+  )
+  .await
+  .context("Failed to pull latest changes before commit")
+  {
+    Ok(res) => update.logs.extend(res.logs),
+    Err(e) => {
+      update.push_error_log("Pull Repo", format_serror(&e.into()));
+      update.finalize();
+      return Ok(update);
+    }
+  };
+
+  if !all_logs_success(&update.logs) {
+    update.finalize();
+    update.id = add_update(update.clone()).await?;
+
+    return Ok(update);
   }
 
   if let Err(e) =
@@ -301,6 +341,16 @@ impl Resolve<WriteArgs> for RefreshBuildCache {
     )
     .await?;
 
+    let repo = if !build.config.files_on_host
+      && !build.config.linked_repo.is_empty()
+    {
+      crate::resource::get::<Repo>(&build.config.linked_repo)
+        .await?
+        .into()
+    } else {
+      None
+    };
+
     let (
       remote_path,
       remote_contents,
@@ -319,71 +369,20 @@ impl Resolve<WriteArgs> for RefreshBuildCache {
           (None, None, Some(format_serror(&e.into())), None, None)
         }
       }
-    } else if !build.config.repo.is_empty() {
-      // ================
-      // REPO BASED BUILD
-      // ================
-      if build.config.git_provider.is_empty() {
+    } else if let Some(repo) = &repo {
+      let Some(res) = get_git_remote(&build, repo.into()).await?
+      else {
         // Nothing to do here
         return Ok(NoData {});
-      }
-      let config = core_config();
-
-      let mut clone_args: CloneArgs = (&build).into();
-      let repo_path =
-        clone_args.unique_path(&core_config().repo_directory)?;
-      clone_args.destination = Some(repo_path.display().to_string());
-      // Don't want to run these on core.
-      clone_args.on_clone = None;
-      clone_args.on_pull = None;
-
-      let access_token = if let Some(username) = &clone_args.account {
-        git_token(&clone_args.provider, username, |https| {
-          clone_args.https = https
-        })
-        .await
-        .with_context(
-          || format!("Failed to get git token in call to db. Stopping run. | {} | {username}", clone_args.provider),
-        )?
-      } else {
-        None
       };
-
-      let GitRes { hash, message, .. } = git::pull_or_clone(
-        clone_args,
-        &config.repo_directory,
-        access_token,
-        &[],
-        "",
-        None,
-        &[],
-      )
-      .await
-      .context("failed to clone build repo")?;
-
-      let relative_path = PathBuf::from_str(&build.config.build_path)
-        .context("Invalid build path")?
-        .join(&build.config.dockerfile_path);
-
-      let full_path = repo_path.join(&relative_path);
-      let (contents, error) = match fs::read_to_string(&full_path)
-        .await
-        .with_context(|| {
-          format!(
-            "Failed to read dockerfile contents at {full_path:?}"
-          )
-        }) {
-        Ok(contents) => (Some(contents), None),
-        Err(e) => (None, Some(format_serror(&e.into()))),
+      res
+    } else if !build.config.repo.is_empty() {
+      let Some(res) = get_git_remote(&build, (&build).into()).await?
+      else {
+        // Nothing to do here
+        return Ok(NoData {});
       };
-
-      (
-        Some(relative_path.display().to_string()),
-        contents,
-        error,
-        hash,
-        message,
-      )
+      res
     } else {
       // =============
       // UI BASED FILE
@@ -474,6 +473,74 @@ async fn get_on_host_dockerfile(
       dockerfile_path: build.config.dockerfile_path.clone(),
     })
     .await
+}
+
+async fn get_git_remote(
+  build: &Build,
+  mut clone_args: CloneArgs,
+) -> anyhow::Result<
+  Option<(
+    Option<String>,
+    Option<String>,
+    Option<String>,
+    Option<String>,
+    Option<String>,
+  )>,
+> {
+  if clone_args.provider.is_empty() {
+    // Nothing to do here
+    return Ok(None);
+  }
+  let config = core_config();
+  let repo_path = clone_args.unique_path(&config.repo_directory)?;
+  clone_args.destination = Some(repo_path.display().to_string());
+  // Don't want to run these on core.
+  clone_args.on_clone = None;
+  clone_args.on_pull = None;
+
+  let access_token = if let Some(username) = &clone_args.account {
+    git_token(&clone_args.provider, username, |https| {
+          clone_args.https = https
+        })
+        .await
+        .with_context(
+          || format!("Failed to get git token in call to db. Stopping run. | {} | {username}", clone_args.provider),
+        )?
+  } else {
+    None
+  };
+
+  let GitRes { hash, message, .. } = git::pull_or_clone(
+    clone_args,
+    &config.repo_directory,
+    access_token,
+    &[],
+    "",
+    None,
+    &[],
+  )
+  .await
+  .context("failed to clone build repo")?;
+
+  let relative_path = PathBuf::from_str(&build.config.build_path)
+    .context("Invalid build path")?
+    .join(&build.config.dockerfile_path);
+
+  let full_path = repo_path.join(&relative_path);
+  let (contents, error) =
+    match fs::read_to_string(&full_path).await.with_context(|| {
+      format!("Failed to read dockerfile contents at {full_path:?}")
+    }) {
+      Ok(contents) => (Some(contents), None),
+      Err(e) => (None, Some(format_serror(&e.into()))),
+    };
+  Ok(Some((
+    Some(relative_path.display().to_string()),
+    contents,
+    error,
+    hash,
+    message,
+  )))
 }
 
 impl Resolve<WriteArgs> for CreateBuildWebhook {

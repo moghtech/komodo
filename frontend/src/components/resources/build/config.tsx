@@ -38,6 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ui/select";
+import { LinkedRepoConfig } from "@components/config/linked_repo";
 
 type BuildMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const BUILD_MODES: BuildMode[] = ["UI Defined", "Files On Server", "Git Repo"];
@@ -47,7 +48,11 @@ function getBuildMode(
   config: Types.BuildConfig
 ): BuildMode {
   if (update.files_on_host ?? config.files_on_host) return "Files On Server";
-  if (update.repo ?? config.repo) return "Git Repo";
+  if (
+    (update.repo ?? config.repo) ||
+    (update.linked_repo ?? config.linked_repo)
+  )
+    return "Git Repo";
   if (update.dockerfile ?? config.dockerfile) return "UI Defined";
   return undefined;
 }
@@ -420,6 +425,7 @@ export const BuildConfig = ({
       advanced,
     };
   } else if (mode === "Git Repo") {
+    const repo_linked = !!(update.linked_repo ?? config.linked_repo);
     components = {
       "": [
         builder_component,
@@ -434,46 +440,59 @@ export const BuildConfig = ({
             />
           ),
           components: {
-            git_provider: (provider, set) => {
-              const https = update.git_https ?? config.git_https;
-              return (
-                <ProviderSelectorConfig
-                  account_type="git"
-                  selected={provider}
-                  disabled={disabled}
-                  onSelect={(git_provider) => set({ git_provider })}
-                  https={https}
-                  onHttpsSwitch={() => set({ git_https: !https })}
-                />
-              );
-            },
-            git_account: (account, set) => (
-              <AccountSelectorConfig
-                id={update.builder_id ?? config.builder_id ?? undefined}
-                type="Builder"
-                account_type="git"
-                provider={update.git_provider ?? config.git_provider}
-                selected={account}
-                onSelect={(git_account) => set({ git_account })}
+            linked_repo: (linked_repo, set) => (
+              <LinkedRepoConfig
+                linked_repo={linked_repo}
+                repo_linked={repo_linked}
+                set={set}
                 disabled={disabled}
-                placeholder="None"
               />
             ),
-            repo: {
-              placeholder: "Enter repo",
-              description:
-                "The repo path on the provider. {namespace}/{repo_name}",
-            },
-            branch: {
-              placeholder: "Enter branch",
-              description: "Select a custom branch, or default to 'main'.",
-            },
-            commit: {
-              label: "Commit Hash",
-              placeholder: "Input commit hash",
-              description:
-                "Optional. Switch to a specific commit hash after cloning the branch.",
-            },
+            ...(!repo_linked
+              ? {
+                  git_provider: (provider, set) => {
+                    const https = update.git_https ?? config.git_https;
+                    return (
+                      <ProviderSelectorConfig
+                        account_type="git"
+                        selected={provider}
+                        disabled={disabled}
+                        onSelect={(git_provider) => set({ git_provider })}
+                        https={https}
+                        onHttpsSwitch={() => set({ git_https: !https })}
+                      />
+                    );
+                  },
+                  git_account: (account, set) => (
+                    <AccountSelectorConfig
+                      id={update.builder_id ?? config.builder_id ?? undefined}
+                      type="Builder"
+                      account_type="git"
+                      provider={update.git_provider ?? config.git_provider}
+                      selected={account}
+                      onSelect={(git_account) => set({ git_account })}
+                      disabled={disabled}
+                      placeholder="None"
+                    />
+                  ),
+                  repo: {
+                    placeholder: "Enter repo",
+                    description:
+                      "The repo path on the provider. {namespace}/{repo_name}",
+                  },
+                  branch: {
+                    placeholder: "Enter branch",
+                    description:
+                      "Select a custom branch, or default to 'main'.",
+                  },
+                  commit: {
+                    label: "Commit Hash",
+                    placeholder: "Input commit hash",
+                    description:
+                      "Optional. Switch to a specific commit hash after cloning the branch.",
+                  },
+                }
+              : {}),
           },
         },
         {

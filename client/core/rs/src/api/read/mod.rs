@@ -108,6 +108,8 @@ pub struct GetCoreInfoResponse {
   pub github_webhook_owners: Vec<String>,
   /// Whether to disable websocket automatic reconnect.
   pub disable_websocket_reconnect: bool,
+  /// TZ identifier Core is using, if manually set.
+  pub timezone: String,
 }
 
 //

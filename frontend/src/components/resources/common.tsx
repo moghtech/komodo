@@ -131,7 +131,7 @@ export const ResourceSelector = ({
       <PopoverTrigger asChild>
         <Button
           variant="secondary"
-          className="flex justify-start gap-2 w-fit max-w-[200px]"
+          className="flex justify-start gap-2 w-fit max-w-[350px]"
           disabled={disabled}
         >
           {name || `Select ${type}`}
@@ -153,6 +153,17 @@ export const ResourceSelector = ({
             </CommandEmpty>
 
             <CommandGroup>
+              {!search && (
+                <CommandItem
+                  onSelect={() => {
+                    onSelect && onSelect("");
+                    setOpen(false);
+                  }}
+                  className="flex items-center justify-between cursor-pointer"
+                >
+                  <div className="p-1">None</div>
+                </CommandItem>
+              )}
               {filtered.map((resource) => (
                 <CommandItem
                   key={resource.id}
@@ -391,6 +402,7 @@ export const StandardSource = ({
 }: {
   info:
     | {
+        linked_repo: string;
         files_on_host: boolean;
         repo: string;
         repo_link: string;
@@ -407,6 +419,9 @@ export const StandardSource = ({
         Files on Server
       </div>
     );
+  }
+  if (info.linked_repo) {
+    return <ResourceLink type="Repo" id={info.linked_repo} />;
   }
   if (info.repo) {
     return <RepoLink repo={info.repo} link={info.repo_link} />;

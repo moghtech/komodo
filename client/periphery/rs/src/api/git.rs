@@ -82,8 +82,13 @@ pub struct PullOrCloneRepo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct RepoActionResponse {
+  /// Response logs
   pub logs: Vec<Log>,
+  /// Absolute path to the repo root on the host.
+  pub path: PathBuf,
+  /// Latest short commit hash, if it could be retrieved
   pub commit_hash: Option<String>,
+  /// Latest commit message, if it could be retrieved
   pub commit_message: Option<String>,
   /// Don't need to send this one to core, its only needed for calls local to single periphery
   #[serde(skip_serializing)]

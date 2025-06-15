@@ -22,9 +22,7 @@ use komodo_client::{
 };
 use partial_derive2::{MaybeNone, PartialDiff};
 
-use crate::resource::KomodoResource;
-
-use super::AllResourcesById;
+use crate::{resource::KomodoResource, state::all_resources_cache};
 
 pub const TOML_PRETTY_OPTIONS: toml_pretty::Options =
   toml_pretty::Options {
@@ -36,10 +34,7 @@ pub const TOML_PRETTY_OPTIONS: toml_pretty::Options =
 
 pub trait ToToml: KomodoResource {
   /// Replace linked ids (server_id, build_id, etc) with the resource name.
-  fn replace_ids(
-    _resource: &mut Resource<Self::Config, Self::Info>,
-    _all: &AllResourcesById,
-  ) {
+  fn replace_ids(_resource: &mut Resource<Self::Config, Self::Info>) {
   }
 
   fn edit_config_object(
@@ -108,10 +103,9 @@ pub fn resource_push_to_toml<R: ToToml>(
   deploy: bool,
   after: Vec<String>,
   toml: &mut String,
-  all: &AllResourcesById,
   all_tags: &HashMap<String, Tag>,
 ) -> anyhow::Result<()> {
-  R::replace_ids(&mut resource, all);
+  R::replace_ids(&mut resource);
   if !toml.is_empty() {
     toml.push_str("\n\n##\n\n");
   }
@@ -128,12 +122,11 @@ pub fn resource_to_toml<R: ToToml>(
   resource: Resource<R::Config, R::Info>,
   deploy: bool,
   after: Vec<String>,
-  all: &AllResourcesById,
   all_tags: &HashMap<String, Tag>,
 ) -> anyhow::Result<String> {
   let mut toml = String::new();
   resource_push_to_toml::<R>(
-    resource, deploy, after, &mut toml, all, all_tags,
+    resource, deploy, after, &mut toml, all_tags,
   )?;
   Ok(toml)
 }
@@ -163,19 +156,36 @@ pub fn convert_resource<R: KomodoResource>(
 // These have no linked resource ids to replace
 impl ToToml for Alerter {}
 impl ToToml for Server {}
-impl ToToml for ResourceSync {}
 impl ToToml for Action {}
 
+impl ToToml for ResourceSync {
+  fn replace_ids(resource: &mut Resource<Self::Config, Self::Info>) {
+    let all = all_resources_cache().load();
+    resource.config.linked_repo.clone_from(
+      all
+        .repos
+        .get(&resource.config.linked_repo)
+        .map(|r| &r.name)
+        .unwrap_or(&String::new()),
+    );
+  }
+}
+
 impl ToToml for Stack {
-  fn replace_ids(
-    resource: &mut Resource<Self::Config, Self::Info>,
-    all: &AllResourcesById,
-  ) {
+  fn replace_ids(resource: &mut Resource<Self::Config, Self::Info>) {
+    let all = all_resources_cache().load();
     resource.config.server_id.clone_from(
       all
         .servers
         .get(&resource.config.server_id)
         .map(|s| &s.name)
+        .unwrap_or(&String::new()),
+    );
+    resource.config.linked_repo.clone_from(
+      all
+        .repos
+        .get(&resource.config.linked_repo)
+        .map(|r| &r.name)
         .unwrap_or(&String::new()),
     );
   }
@@ -199,10 +209,8 @@ impl ToToml for Stack {
 }
 
 impl ToToml for Deployment {
-  fn replace_ids(
-    resource: &mut Resource<Self::Config, Self::Info>,
-    all: &AllResourcesById,
-  ) {
+  fn replace_ids(resource: &mut Resource<Self::Config, Self::Info>) {
+    let all = all_resources_cache().load();
     resource.config.server_id.clone_from(
       all
         .servers
@@ -263,15 +271,20 @@ impl ToToml for Deployment {
 }
 
 impl ToToml for Build {
-  fn replace_ids(
-    resource: &mut Resource<Self::Config, Self::Info>,
-    all: &AllResourcesById,
-  ) {
+  fn replace_ids(resource: &mut Resource<Self::Config, Self::Info>) {
+    let all = all_resources_cache().load();
     resource.config.builder_id.clone_from(
       all
         .builders
         .get(&resource.config.builder_id)
         .map(|s| &s.name)
+        .unwrap_or(&String::new()),
+    );
+    resource.config.linked_repo.clone_from(
+      all
+        .repos
+        .get(&resource.config.linked_repo)
+        .map(|r| &r.name)
         .unwrap_or(&String::new()),
     );
   }
@@ -308,10 +321,8 @@ impl ToToml for Build {
 }
 
 impl ToToml for Repo {
-  fn replace_ids(
-    resource: &mut Resource<Self::Config, Self::Info>,
-    all: &AllResourcesById,
-  ) {
+  fn replace_ids(resource: &mut Resource<Self::Config, Self::Info>) {
+    let all = all_resources_cache().load();
     resource.config.server_id.clone_from(
       all
         .servers
@@ -349,11 +360,9 @@ impl ToToml for Repo {
 }
 
 impl ToToml for Builder {
-  fn replace_ids(
-    resource: &mut Resource<Self::Config, Self::Info>,
-    all: &AllResourcesById,
-  ) {
+  fn replace_ids(resource: &mut Resource<Self::Config, Self::Info>) {
     if let BuilderConfig::Server(config) = &mut resource.config {
+      let all = all_resources_cache().load();
       config.server_id.clone_from(
         all
           .servers
@@ -382,10 +391,8 @@ impl ToToml for Builder {
 }
 
 impl ToToml for Procedure {
-  fn replace_ids(
-    resource: &mut Resource<Self::Config, Self::Info>,
-    all: &AllResourcesById,
-  ) {
+  fn replace_ids(resource: &mut Resource<Self::Config, Self::Info>) {
+    let all = all_resources_cache().load();
     for stage in &mut resource.config.stages {
       for execution in &mut stage.executions {
         match &mut execution.execution {

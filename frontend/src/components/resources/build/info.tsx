@@ -58,7 +58,8 @@ export const BuildInfo = ({
   ).data;
 
   const file_on_host = build?.config?.files_on_host ?? false;
-  const git_repo = build?.config?.repo ? true : false;
+  const git_repo =
+    build?.config?.repo || build?.config?.linked_repo ? true : false;
   const canEdit = canWrite && (file_on_host || git_repo);
 
   const remote_path = build?.info?.remote_path;

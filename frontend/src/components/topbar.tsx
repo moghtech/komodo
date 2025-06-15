@@ -98,7 +98,8 @@ const Docs = () => (
 );
 
 const Version = () => {
-  const version = useRead("GetVersion", {}).data?.version;
+  const version = useRead("GetVersion", {}, { refetchInterval: 30_000 }).data
+    ?.version;
 
   if (!version) return null;
   return (

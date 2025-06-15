@@ -1,7 +1,8 @@
-use anyhow::{Context, anyhow};
+use anyhow::Context;
 use git::GitRes;
 use komodo_client::entities::{
   CloneArgs,
+  repo::Repo,
   sync::{ResourceSync, SyncFileContents},
   to_path_compatible_name,
   toml::ResourcesToml,
@@ -24,79 +25,49 @@ pub struct RemoteResources {
 /// Use `match_tags` to filter resources by tag.
 pub async fn get_remote_resources(
   sync: &ResourceSync,
+  repo: Option<&Repo>,
 ) -> anyhow::Result<RemoteResources> {
   if sync.config.files_on_host {
-    // =============
-    // FILES ON HOST
-    // =============
-    let root_path = core_config()
-      .sync_directory
-      .join(to_path_compatible_name(&sync.name));
-    let (mut logs, mut files, mut file_errors) =
-      (Vec::new(), Vec::new(), Vec::new());
-    let resources = super::file::read_resources(
-      &root_path,
-      &sync.config.resource_path,
-      &sync.config.match_tags,
-      &mut logs,
-      &mut files,
-      &mut file_errors,
-    );
-    return Ok(RemoteResources {
-      resources,
-      files,
-      file_errors,
-      logs,
-      hash: None,
-      message: None,
-    });
-  } else if sync.config.repo.is_empty() {
-    // ==========
-    // UI DEFINED
-    // ==========
-    let mut resources = ResourcesToml::default();
-    let resources = if !sync.config.file_contents.is_empty() {
-      super::deserialize_resources_toml(&sync.config.file_contents)
-        .context("failed to parse resource file contents")
-        .map(|more| {
-          extend_resources(
-            &mut resources,
-            more,
-            &sync.config.match_tags,
-          );
-          resources
-        })
-    } else {
-      Ok(resources)
-    };
-
-    return Ok(RemoteResources {
-      resources,
-      files: vec![SyncFileContents {
-        resource_path: String::new(),
-        path: "database file".to_string(),
-        contents: sync.config.file_contents.clone(),
-      }],
-      file_errors: vec![],
-      logs: vec![Log::simple(
-        "Read from database",
-        "Resources added from database file".to_string(),
-      )],
-      hash: None,
-      message: None,
-    });
+    get_files_on_host(sync).await
+  } else if let Some(repo) = repo {
+    get_repo(sync, repo.into()).await
+  } else if !sync.config.repo.is_empty() {
+    get_repo(sync, sync.into()).await
+  } else {
+    get_ui_defined(sync).await
   }
+}
 
-  // ===============
-  // REPO BASED SYNC
-  // ===============
+async fn get_files_on_host(
+  sync: &ResourceSync,
+) -> anyhow::Result<RemoteResources> {
+  let root_path = core_config()
+    .sync_directory
+    .join(to_path_compatible_name(&sync.name));
+  let (mut logs, mut files, mut file_errors) =
+    (Vec::new(), Vec::new(), Vec::new());
+  let resources = super::file::read_resources(
+    &root_path,
+    &sync.config.resource_path,
+    &sync.config.match_tags,
+    &mut logs,
+    &mut files,
+    &mut file_errors,
+  );
+  Ok(RemoteResources {
+    resources,
+    files,
+    file_errors,
+    logs,
+    hash: None,
+    message: None,
+  })
+}
 
-  if sync.config.repo.is_empty() {
-    return Err(anyhow!("No sync files configured"));
-  }
-
-  let mut clone_args: CloneArgs = sync.into();
-
+async fn get_repo(
+  sync: &ResourceSync,
+  mut clone_args: CloneArgs,
+) -> anyhow::Result<RemoteResources> {
   let access_token = if let Some(account) = &clone_args.account {
     git_token(&clone_args.provider, account, |https| clone_args.https = https)
       .await
@@ -154,5 +125,38 @@ pub async fn get_remote_resources(
     logs,
     hash,
     message,
+  })
+}
+
+async fn get_ui_defined(
+  sync: &ResourceSync,
+) -> anyhow::Result<RemoteResources> {
+  let mut resources = ResourcesToml::default();
+  let resources =
+    super::deserialize_resources_toml(&sync.config.file_contents)
+      .context("failed to parse resource file contents")
+      .map(|more| {
+        extend_resources(
+          &mut resources,
+          more,
+          &sync.config.match_tags,
+        );
+        resources
+      });
+
+  Ok(RemoteResources {
+    resources,
+    files: vec![SyncFileContents {
+      resource_path: String::new(),
+      path: "database file".to_string(),
+      contents: sync.config.file_contents.clone(),
+    }],
+    file_errors: vec![],
+    logs: vec![Log::simple(
+      "Read from database",
+      "Resources added from database file".to_string(),
+    )],
+    hash: None,
+    message: None,
   })
 }

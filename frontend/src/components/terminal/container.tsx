@@ -14,7 +14,7 @@ import {
 import { RefreshCcw } from "lucide-react";
 import { ReactNode, useCallback, useState } from "react";
 import { Terminal } from ".";
-import { ContainerExecQuery, TerminalCallbacks } from "komodo_client";
+import { ConnectExecQuery, TerminalCallbacks } from "komodo_client";
 
 const BASE_SHELLS = ["sh", "bash"];
 
@@ -22,7 +22,7 @@ export const ContainerTerminal = ({
   query: { type, query },
   titleOther,
 }: {
-  query: ContainerExecQuery;
+  query: ConnectExecQuery;
   titleOther?: ReactNode;
 }) => {
   const [_reconnect, _setReconnect] = useState(false);
@@ -41,7 +41,7 @@ export const ContainerTerminal = ({
 
   const make_ws = useCallback(
     (callbacks: TerminalCallbacks) =>
-      komodo_client().connect_container_exec({
+      komodo_client().connect_exec({
         query: { type, query: { ...query, shell } } as any,
         ...callbacks,
       }),

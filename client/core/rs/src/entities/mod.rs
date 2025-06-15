@@ -145,9 +145,9 @@ pub fn get_image_name(
   }: &build::Build,
 ) -> anyhow::Result<String> {
   let name = if image_name.is_empty() {
-    to_docker_compatible_name(name)
+    name
   } else {
-    to_docker_compatible_name(image_name)
+    image_name
   };
   let name = match (
     !domain.is_empty(),
@@ -156,24 +156,36 @@ pub fn get_image_name(
   ) {
     // If organization and account provided, name under organization.
     (true, true, true) => {
-      format!("{domain}/{}/{name}", organization.to_lowercase())
+      format!("{domain}/{}/{name}", organization)
     }
     // Just domain / account provided
     (true, false, true) => format!("{domain}/{account}/{name}"),
     // Otherwise, just use name
-    _ => name,
+    _ => name.to_string(),
   };
   Ok(name)
 }
 
 pub fn to_general_name(name: &str) -> String {
-  name.replace('\n', "_").trim().to_string()
+  name.trim().replace('\n', "_").to_string()
 }
 
 pub fn to_path_compatible_name(name: &str) -> String {
-  name.replace([' ', '\n'], "_").trim().to_string()
+  name.trim().replace([' ', '\n'], "_").to_string()
 }
 
+/// Enforce common container naming rules.
+/// [a-zA-Z0-9_.-]
+pub fn to_container_compatible_name(name: &str) -> String {
+  name.trim().replace([' ', ',', '\n', '&'], "_").to_string()
+}
+
+/// Enforce common docker naming rules, such as only lowercase, and no '.'.
+/// These apply to:
+///   - Stacks (docker project name)
+///   - Builds (docker image name)
+///   - Networks
+///   - Volumes
 pub fn to_docker_compatible_name(name: &str) -> String {
   name
     .to_lowercase()
@@ -388,6 +400,48 @@ pub struct FileContents {
   pub contents: String,
 }
 
+/// Represents a scheduled maintenance window
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct MaintenanceWindow {
+  /// Name for the maintenance window (required)
+  pub name: String,
+  /// Description of what maintenance is performed (optional)
+  #[serde(default)]
+  pub description: String,
+  /// The type of maintenance schedule:
+  ///   - Daily (default)
+  ///   - Weekly
+  ///   - OneTime
+  #[serde(default)]
+  pub schedule_type: MaintenanceScheduleType,
+  /// For Weekly schedules: Specify the day of the week (Monday, Tuesday, etc.)
+  #[serde(default)]
+  pub day_of_week: String,
+  /// For OneTime window: ISO 8601 date format (YYYY-MM-DD)
+  #[serde(default)]
+  pub date: String,
+  /// Start hour in 24-hour format (0-23) (optional, defaults to 0)
+  #[serde(default)]
+  pub hour: u8,
+  /// Start minute (0-59) (optional, defaults to 0)
+  #[serde(default)]
+  pub minute: u8,
+  /// Duration of the maintenance window in minutes (required)
+  pub duration_minutes: u32,
+  /// Timezone for maintenance window specificiation.
+  /// If empty, will use Core timezone.
+  #[serde(default)]
+  pub timezone: String,
+  /// Whether this maintenance window is currently enabled
+  #[serde(default = "default_enabled")]
+  pub enabled: bool,
+}
+
+fn default_enabled() -> bool {
+  true
+}
+
 #[typeshare]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct CloneArgs {
@@ -416,12 +470,15 @@ pub struct CloneArgs {
 }
 
 impl CloneArgs {
-  pub fn path(&self, repo_dir: &Path) -> PathBuf {
-    let path = match &self.destination {
-      Some(destination) => PathBuf::from(&destination),
-      None => repo_dir.join(to_path_compatible_name(&self.name)),
-    };
-    path.components().collect::<PathBuf>()
+  pub fn path(&self, root_repo_dir: &Path) -> PathBuf {
+    match &self.destination {
+      Some(destination) => root_repo_dir
+        .join(to_path_compatible_name(&self.name))
+        .join(destination),
+      None => root_repo_dir.join(to_path_compatible_name(&self.name)),
+    }
+    .components()
+    .collect()
   }
 
   pub fn remote_url(
@@ -455,7 +512,9 @@ impl CloneArgs {
       .join(self.provider.replace('/', "-"))
       .join(repo.replace('/', "-"))
       .join(self.branch.replace('/', "-"))
-      .join(self.commit.as_deref().unwrap_or("latest"));
+      .join(self.commit.as_deref().unwrap_or("latest"))
+      .components()
+      .collect();
     Ok(res)
   }
 }
@@ -531,7 +590,7 @@ impl From<&self::stack::Stack> for CloneArgs {
         .unwrap_or_else(|| String::from("main")),
       commit: optional_string(&stack.config.commit),
       is_build: false,
-      destination: None,
+      destination: optional_string(&stack.config.clone_path),
       on_clone: None,
       on_pull: None,
       https: stack.config.git_https,
@@ -631,6 +690,291 @@ impl TryInto<async_timing_util::Timelength> for Timelength {
     async_timing_util::Timelength::from_str(&self.to_string())
       .context("failed to parse timelength?")
   }
+}
+
+/// Days of the week
+#[typeshare]
+#[derive(
+  Debug,
+  Clone,
+  Copy,
+  PartialEq,
+  Eq,
+  Default,
+  EnumString,
+  Serialize,
+  Deserialize,
+)]
+pub enum DayOfWeek {
+  #[default]
+  #[serde(alias = "monday", alias = "Mon", alias = "mon")]
+  #[strum(serialize = "monday", serialize = "Mon", serialize = "mon")]
+  Monday,
+  #[serde(alias = "tuesday", alias = "Tue", alias = "tue")]
+  #[strum(
+    serialize = "tuesday",
+    serialize = "Tue",
+    serialize = "tue"
+  )]
+  Tuesday,
+  #[serde(alias = "wednesday", alias = "Wed", alias = "wed")]
+  #[strum(
+    serialize = "wednesday",
+    serialize = "Wed",
+    serialize = "wed"
+  )]
+  Wednesday,
+  #[serde(alias = "thursday", alias = "Thurs", alias = "thurs")]
+  #[strum(
+    serialize = "thursday",
+    serialize = "Thurs",
+    serialize = "thurs"
+  )]
+  Thursday,
+  #[serde(alias = "friday", alias = "Fri", alias = "fri")]
+  #[strum(serialize = "friday", serialize = "Fri", serialize = "fri")]
+  Friday,
+  #[serde(alias = "saturday", alias = "Sat", alias = "sat")]
+  #[strum(
+    serialize = "saturday",
+    serialize = "Sat",
+    serialize = "sat"
+  )]
+  Saturday,
+  #[serde(alias = "sunday", alias = "Sun", alias = "sun")]
+  #[strum(serialize = "sunday", serialize = "Sun", serialize = "sun")]
+  Sunday,
+}
+
+/// Types of maintenance schedules
+#[typeshare]
+#[derive(
+  Debug,
+  Clone,
+  Copy,
+  PartialEq,
+  Default,
+  EnumString,
+  Serialize,
+  Deserialize,
+)]
+pub enum MaintenanceScheduleType {
+  /// Daily at the specified time
+  #[default]
+  Daily,
+  /// Weekly on the specified day and time
+  Weekly,
+  /// One-time maintenance on a specific date and time
+  OneTime, // ISO 8601 date format (YYYY-MM-DD)
+}
+
+/// One representative IANA zone for each distinct base UTC offset in the tz database.
+/// https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
+///
+/// The `serde`/`strum` renames ensure the canonical identifier is used
+/// when serializing or parsing from a string such as `"Etc/UTC"`.
+#[typeshare]
+#[derive(
+  Debug,
+  Clone,
+  Copy,
+  PartialEq,
+  Default,
+  EnumString,
+  Serialize,
+  Deserialize,
+)]
+pub enum IanaTimezone {
+  /// UTC−12:00
+  #[serde(rename = "Etc/GMT+12")]
+  #[strum(serialize = "Etc/GMT+12")]
+  EtcGmtMinus12,
+
+  /// UTC−11:00
+  #[serde(rename = "Pacific/Pago_Pago")]
+  #[strum(serialize = "Pacific/Pago_Pago")]
+  PacificPagoPago,
+
+  /// UTC−10:00
+  #[serde(rename = "Pacific/Honolulu")]
+  #[strum(serialize = "Pacific/Honolulu")]
+  PacificHonolulu,
+
+  /// UTC−09:30
+  #[serde(rename = "Pacific/Marquesas")]
+  #[strum(serialize = "Pacific/Marquesas")]
+  PacificMarquesas,
+
+  /// UTC−09:00
+  #[serde(rename = "America/Anchorage")]
+  #[strum(serialize = "America/Anchorage")]
+  AmericaAnchorage,
+
+  /// UTC−08:00
+  #[serde(rename = "America/Los_Angeles")]
+  #[strum(serialize = "America/Los_Angeles")]
+  AmericaLosAngeles,
+
+  /// UTC−07:00
+  #[serde(rename = "America/Denver")]
+  #[strum(serialize = "America/Denver")]
+  AmericaDenver,
+
+  /// UTC−06:00
+  #[serde(rename = "America/Chicago")]
+  #[strum(serialize = "America/Chicago")]
+  AmericaChicago,
+
+  /// UTC−05:00
+  #[serde(rename = "America/New_York")]
+  #[strum(serialize = "America/New_York")]
+  AmericaNewYork,
+
+  /// UTC−04:00
+  #[serde(rename = "America/Halifax")]
+  #[strum(serialize = "America/Halifax")]
+  AmericaHalifax,
+
+  /// UTC−03:30
+  #[serde(rename = "America/St_Johns")]
+  #[strum(serialize = "America/St_Johns")]
+  AmericaStJohns,
+
+  /// UTC−03:00
+  #[serde(rename = "America/Sao_Paulo")]
+  #[strum(serialize = "America/Sao_Paulo")]
+  AmericaSaoPaulo,
+
+  /// UTC−02:00
+  #[serde(rename = "America/Noronha")]
+  #[strum(serialize = "America/Noronha")]
+  AmericaNoronha,
+
+  /// UTC−01:00
+  #[serde(rename = "Atlantic/Azores")]
+  #[strum(serialize = "Atlantic/Azores")]
+  AtlanticAzores,
+
+  /// UTC±00:00
+  #[default]
+  #[serde(rename = "Etc/UTC")]
+  #[strum(serialize = "Etc/UTC")]
+  EtcUtc,
+
+  /// UTC+01:00
+  #[serde(rename = "Europe/Berlin")]
+  #[strum(serialize = "Europe/Berlin")]
+  EuropeBerlin,
+
+  /// UTC+02:00
+  #[serde(rename = "Europe/Bucharest")]
+  #[strum(serialize = "Europe/Bucharest")]
+  EuropeBucharest,
+
+  /// UTC+03:00
+  #[serde(rename = "Europe/Moscow")]
+  #[strum(serialize = "Europe/Moscow")]
+  EuropeMoscow,
+
+  /// UTC+03:30
+  #[serde(rename = "Asia/Tehran")]
+  #[strum(serialize = "Asia/Tehran")]
+  AsiaTehran,
+
+  /// UTC+04:00
+  #[serde(rename = "Asia/Dubai")]
+  #[strum(serialize = "Asia/Dubai")]
+  AsiaDubai,
+
+  /// UTC+04:30
+  #[serde(rename = "Asia/Kabul")]
+  #[strum(serialize = "Asia/Kabul")]
+  AsiaKabul,
+
+  /// UTC+05:00
+  #[serde(rename = "Asia/Karachi")]
+  #[strum(serialize = "Asia/Karachi")]
+  AsiaKarachi,
+
+  /// UTC+05:30
+  #[serde(rename = "Asia/Kolkata")]
+  #[strum(serialize = "Asia/Kolkata")]
+  AsiaKolkata,
+
+  /// UTC+05:45
+  #[serde(rename = "Asia/Kathmandu")]
+  #[strum(serialize = "Asia/Kathmandu")]
+  AsiaKathmandu,
+
+  /// UTC+06:00
+  #[serde(rename = "Asia/Dhaka")]
+  #[strum(serialize = "Asia/Dhaka")]
+  AsiaDhaka,
+
+  /// UTC+06:30
+  #[serde(rename = "Asia/Yangon")]
+  #[strum(serialize = "Asia/Yangon")]
+  AsiaYangon,
+
+  /// UTC+07:00
+  #[serde(rename = "Asia/Bangkok")]
+  #[strum(serialize = "Asia/Bangkok")]
+  AsiaBangkok,
+
+  /// UTC+08:00
+  #[serde(rename = "Asia/Shanghai")]
+  #[strum(serialize = "Asia/Shanghai")]
+  AsiaShanghai,
+
+  /// UTC+08:45
+  #[serde(rename = "Australia/Eucla")]
+  #[strum(serialize = "Australia/Eucla")]
+  AustraliaEucla,
+
+  /// UTC+09:00
+  #[serde(rename = "Asia/Tokyo")]
+  #[strum(serialize = "Asia/Tokyo")]
+  AsiaTokyo,
+
+  /// UTC+09:30
+  #[serde(rename = "Australia/Adelaide")]
+  #[strum(serialize = "Australia/Adelaide")]
+  AustraliaAdelaide,
+
+  /// UTC+10:00
+  #[serde(rename = "Australia/Sydney")]
+  #[strum(serialize = "Australia/Sydney")]
+  AustraliaSydney,
+
+  /// UTC+10:30
+  #[serde(rename = "Australia/Lord_Howe")]
+  #[strum(serialize = "Australia/Lord_Howe")]
+  AustraliaLordHowe,
+
+  /// UTC+11:00
+  #[serde(rename = "Pacific/Port_Moresby")]
+  #[strum(serialize = "Pacific/Port_Moresby")]
+  PacificPortMoresby,
+
+  /// UTC+12:00
+  #[serde(rename = "Pacific/Auckland")]
+  #[strum(serialize = "Pacific/Auckland")]
+  PacificAuckland,
+
+  /// UTC+12:45
+  #[serde(rename = "Pacific/Chatham")]
+  #[strum(serialize = "Pacific/Chatham")]
+  PacificChatham,
+
+  /// UTC+13:00
+  #[serde(rename = "Pacific/Tongatapu")]
+  #[strum(serialize = "Pacific/Tongatapu")]
+  PacificTongatapu,
+
+  /// UTC+14:00
+  #[serde(rename = "Pacific/Kiritimati")]
+  #[strum(serialize = "Pacific/Kiritimati")]
+  PacificKiritimati,
 }
 
 #[typeshare]

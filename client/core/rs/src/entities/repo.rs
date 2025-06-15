@@ -156,6 +156,10 @@ pub struct RepoConfig {
   pub commit: String,
 
   /// Explicitly specify the folder to clone the repo in.
+  /// - If absolute (has leading '/')
+  ///   - Used directly as the path
+  /// - If relative
+  ///   - Taken relative to Periphery `repo_dir` (ie `${root_directory}/repos`)
   #[serde(default)]
   #[builder(default)]
   pub path: String,

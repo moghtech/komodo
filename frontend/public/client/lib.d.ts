@@ -1,6 +1,8 @@
 import { AuthResponses, ExecuteResponses, ReadResponses, UserResponses, WriteResponses } from "./responses.js";
-import { AuthRequest, ConnectContainerExecQuery, ConnectDeploymentExecQuery, ConnectStackExecQuery, ConnectTerminalQuery, ExecuteRequest, ExecuteTerminalBody, ReadRequest, Update, UpdateListItem, UserRequest, WriteRequest } from "./types.js";
+import { ConnectExecQuery, ExecuteExecBody, TerminalCallbacks } from "./terminal.js";
+import { AuthRequest, ConnectTerminalQuery, ExecuteRequest, ExecuteTerminalBody, ReadRequest, Update, UpdateListItem, UserRequest, WriteRequest } from "./types.js";
 export * as Types from "./types.js";
+export type { ConnectExecQuery, ExecuteExecBody, TerminalCallbacks };
 export type InitOptions = {
     type: "jwt";
     params: {
@@ -18,21 +20,10 @@ export declare class CancelToken {
     constructor();
     cancel(): void;
 }
-export type ContainerExecQuery = {
-    type: "container";
-    query: ConnectContainerExecQuery;
-} | {
-    type: "deployment";
-    query: ConnectDeploymentExecQuery;
-} | {
-    type: "stack";
-    query: ConnectStackExecQuery;
-};
-export type TerminalCallbacks = {
-    on_message?: (e: MessageEvent<any>) => void;
-    on_login?: () => void;
-    on_open?: () => void;
-    on_close?: () => void;
+export type ClientState = {
+    jwt: string | undefined;
+    key: string | undefined;
+    secret: string | undefined;
 };
 /** Initialize a new client for Komodo */
 export declare function KomodoClient(url: string, options: InitOptions): {
@@ -167,14 +158,24 @@ export declare function KomodoClient(url: string, options: InitOptions): {
         query: ConnectTerminalQuery;
     } & TerminalCallbacks) => WebSocket;
     /**
-     * Subscribes to container exec io over websocket message,
-     * for use with xtermjs. Can connect to Deployment, Stack,
-     * or any container on a Server. The permission used to allow the connection
-     * depends on `query.type`.
+     * Executes a command on a given Server / terminal,
+     * and gives a callback to handle the output as it comes in.
+     *
+     * ```ts
+     * const stream = await komodo.execute_terminal(
+     *   {
+     *     server: "my-server",
+     *     terminal: "name",
+     *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *   },
+     *   {
+     *     onLine: (line) => console.log(line),
+     *     onFinish: (code) => console.log("Finished:", code),
+     *   }
+     * );
+     * ```
      */
-    connect_container_exec: ({ query: { type, query }, on_message, on_login, on_open, on_close, }: {
-        query: ContainerExecQuery;
-    } & TerminalCallbacks) => WebSocket;
+    execute_terminal: (request: ExecuteTerminalBody, callbacks?: import("./terminal.js").ExecuteCallbacks) => Promise<void>;
     /**
      * Executes a command on a given Server / terminal,
      * and returns a stream to process the output as it comes in.
@@ -200,14 +201,32 @@ export declare function KomodoClient(url: string, options: InitOptions): {
      */
     execute_terminal_stream: (request: ExecuteTerminalBody) => Promise<AsyncIterable<string>>;
     /**
-     * Executes a command on a given Server / terminal,
+     * Subscribes to container exec io over websocket message,
+     * for use with xtermjs. Can connect to container on a Server,
+     * or associated with a Deployment or Stack.
+     * Terminal permission on connecting resource required.
+     */
+    connect_exec: ({ query: { type, query }, on_message, on_login, on_open, on_close, }: {
+        query: ConnectExecQuery;
+    } & TerminalCallbacks) => WebSocket;
+    /**
+     * Subscribes to container exec io over websocket message,
+     * for use with xtermjs. Can connect to Container on a Server.
+     * Server Terminal permission required.
+     */
+    connect_container_exec: ({ query, ...callbacks }: {
+        query: import("./types.js").ConnectContainerExecQuery;
+    } & TerminalCallbacks) => WebSocket;
+    /**
+     * Executes a command on a given container,
      * and gives a callback to handle the output as it comes in.
      *
      * ```ts
-     * const stream = await komodo.execute_terminal(
+     * const stream = await komodo.execute_container_exec(
      *   {
      *     server: "my-server",
-     *     terminal: "name",
+     *     container: "name",
+     *     shell: "bash",
      *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
      *   },
      *   {
@@ -217,8 +236,134 @@ export declare function KomodoClient(url: string, options: InitOptions): {
      * );
      * ```
      */
-    execute_terminal: (request: ExecuteTerminalBody, callbacks?: {
-        onLine?: (line: string) => void | Promise<void>;
-        onFinish?: (code: string) => void | Promise<void>;
-    }) => Promise<void>;
+    execute_container_exec: (body: import("./types.js").ExecuteContainerExecBody, callbacks?: import("./terminal.js").ExecuteCallbacks) => Promise<void>;
+    /**
+     * Executes a command on a given container,
+     * and returns a stream to process the output as it comes in.
+     *
+     * Note. The final line of the stream will usually be
+     * `__KOMODO_EXIT_CODE__:0`. The number
+     * is the exit code of the command.
+     *
+     * If this line is NOT present, it means the stream
+     * was terminated early, ie like running `exit`.
+     *
+     * ```ts
+     * const stream = await komodo.execute_container_exec_stream({
+     *   server: "my-server",
+     *   container: "name",
+     *   shell: "bash",
+     *   command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     * });
+     *
+     * for await (const line of stream) {
+     *   console.log(line);
+     * }
+     * ```
+     */
+    execute_container_exec_stream: (body: import("./types.js").ExecuteContainerExecBody) => Promise<AsyncIterable<string>>;
+    /**
+     * Subscribes to deployment container exec io over websocket message,
+     * for use with xtermjs. Can connect to Deployment container.
+     * Deployment Terminal permission required.
+     */
+    connect_deployment_exec: ({ query, ...callbacks }: {
+        query: import("./types.js").ConnectDeploymentExecQuery;
+    } & TerminalCallbacks) => WebSocket;
+    /**
+     * Executes a command on a given deployment container,
+     * and gives a callback to handle the output as it comes in.
+     *
+     * ```ts
+     * const stream = await komodo.execute_deployment_exec(
+     *   {
+     *     deployment: "my-deployment",
+     *     shell: "bash",
+     *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *   },
+     *   {
+     *     onLine: (line) => console.log(line),
+     *     onFinish: (code) => console.log("Finished:", code),
+     *   }
+     * );
+     * ```
+     */
+    execute_deployment_exec: (body: import("./types.js").ExecuteDeploymentExecBody, callbacks?: import("./terminal.js").ExecuteCallbacks) => Promise<void>;
+    /**
+     * Executes a command on a given deployment container,
+     * and returns a stream to process the output as it comes in.
+     *
+     * Note. The final line of the stream will usually be
+     * `__KOMODO_EXIT_CODE__:0`. The number
+     * is the exit code of the command.
+     *
+     * If this line is NOT present, it means the stream
+     * was terminated early, ie like running `exit`.
+     *
+     * ```ts
+     * const stream = await komodo.execute_deployment_exec_stream({
+     *   deployment: "my-deployment",
+     *   shell: "bash",
+     *   command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     * });
+     *
+     * for await (const line of stream) {
+     *   console.log(line);
+     * }
+     * ```
+     */
+    execute_deployment_exec_stream: (body: import("./types.js").ExecuteDeploymentExecBody) => Promise<AsyncIterable<string>>;
+    /**
+     * Subscribes to container exec io over websocket message,
+     * for use with xtermjs. Can connect to Stack service container.
+     * Stack Terminal permission required.
+     */
+    connect_stack_exec: ({ query, ...callbacks }: {
+        query: import("./types.js").ConnectStackExecQuery;
+    } & TerminalCallbacks) => WebSocket;
+    /**
+     * Executes a command on a given stack service container,
+     * and gives a callback to handle the output as it comes in.
+     *
+     * ```ts
+     * const stream = await komodo.execute_stack_exec(
+     *   {
+     *     stack: "my-stack",
+     *     service: "database"
+     *     shell: "bash",
+     *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *   },
+     *   {
+     *     onLine: (line) => console.log(line),
+     *     onFinish: (code) => console.log("Finished:", code),
+     *   }
+     * );
+     * ```
+     */
+    execute_stack_exec: (body: import("./types.js").ExecuteStackExecBody, callbacks?: import("./terminal.js").ExecuteCallbacks) => Promise<void>;
+    /**
+     * Executes a command on a given stack service container,
+     * and returns a stream to process the output as it comes in.
+     *
+     * Note. The final line of the stream will usually be
+     * `__KOMODO_EXIT_CODE__:0`. The number
+     * is the exit code of the command.
+     *
+     * If this line is NOT present, it means the stream
+     * was terminated early, ie like running `exit`.
+     *
+     * ```ts
+     * const stream = await komodo.execute_stack_exec_stream({
+     *   stack: "my-stack",
+     *   service: "service1",
+     *   shell: "bash",
+     *   command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     * });
+     *
+     * for await (const line of stream) {
+     *   console.log(line);
+     * }
+     * ```
+     */
+    execute_stack_exec_stream: (body: import("./types.js").ExecuteStackExecBody) => Promise<AsyncIterable<string>>;
 };

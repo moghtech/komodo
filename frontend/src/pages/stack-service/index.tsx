@@ -223,7 +223,6 @@ const StackServiceTabs = ({
     type: "Stack",
     id: stack.id,
   });
-  console.log(specific);
   const container_exec_disabled =
     useServer(stack.info.server_id)?.info.container_exec_disabled ?? true;
   const logDisabled =

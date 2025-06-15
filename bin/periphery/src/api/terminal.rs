@@ -1,5 +1,3 @@
-use std::{collections::HashMap, sync::OnceLock, task::Poll};
-
 use anyhow::{Context, anyhow};
 use axum::{
   extract::{
@@ -10,16 +8,12 @@ use axum::{
   response::Response,
 };
 use bytes::Bytes;
-use futures::{SinkExt, Stream, StreamExt, TryStreamExt};
+use futures::{SinkExt, StreamExt, TryStreamExt};
 use komodo_client::{
   api::write::TerminalRecreateMode,
-  entities::{
-    KOMODO_EXIT_CODE, NoData, komodo_timestamp, server::TerminalInfo,
-  },
+  entities::{KOMODO_EXIT_CODE, NoData, server::TerminalInfo},
 };
 use periphery_client::api::terminal::*;
-use pin_project_lite::pin_project;
-use rand::Rng;
 use resolver_api::Resolve;
 use serror::{AddStatusCodeError, Json};
 use tokio_util::sync::CancellationToken;
@@ -78,53 +72,6 @@ impl Resolve<super::Args> for CreateTerminalAuthToken {
     Ok(CreateTerminalAuthTokenResponse {
       token: auth_tokens().create_auth_token(),
     })
-  }
-}
-
-/// Tokens valid for 3 seconds
-const TOKEN_VALID_FOR_MS: i64 = 3_000;
-
-fn auth_tokens() -> &'static AuthTokens {
-  static AUTH_TOKENS: OnceLock<AuthTokens> = OnceLock::new();
-  AUTH_TOKENS.get_or_init(Default::default)
-}
-
-#[derive(Default)]
-struct AuthTokens {
-  map: std::sync::Mutex<HashMap<String, i64>>,
-}
-
-impl AuthTokens {
-  pub fn create_auth_token(&self) -> String {
-    let mut lock = self.map.lock().unwrap();
-    // clear out any old tokens here (prevent unbounded growth)
-    let ts = komodo_timestamp();
-    lock.retain(|_, valid_until| *valid_until > ts);
-    let token: String = rand::rng()
-      .sample_iter(&rand::distr::Alphanumeric)
-      .take(30)
-      .map(char::from)
-      .collect();
-    lock.insert(token.clone(), ts + TOKEN_VALID_FOR_MS);
-    token
-  }
-
-  pub fn check_token(&self, token: String) -> serror::Result<()> {
-    let Some(valid_until) = self.map.lock().unwrap().remove(&token)
-    else {
-      return Err(
-        anyhow!("Terminal auth token not found")
-          .status_code(StatusCode::UNAUTHORIZED),
-      );
-    };
-    if komodo_timestamp() <= valid_until {
-      Ok(())
-    } else {
-      Err(
-        anyhow!("Terminal token is expired")
-          .status_code(StatusCode::UNAUTHORIZED),
-      )
-    }
   }
 }
 
@@ -336,10 +283,6 @@ async fn handle_terminal_websocket(
   }))
 }
 
-/// Sentinels
-const START_OF_OUTPUT: &str = "__KOMODO_START_OF_OUTPUT__";
-const END_OF_OUTPUT: &str = "__KOMODO_END_OF_OUTPUT__";
-
 pub async fn execute_terminal(
   Json(ExecuteTerminalBody { terminal, command }): Json<
     ExecuteTerminalBody,
@@ -352,7 +295,47 @@ pub async fn execute_terminal(
     );
   }
 
-  let terminal = get_terminal(&terminal).await?;
+  execute_command_on_terminal(&terminal, &command).await
+}
+
+pub async fn execute_container_exec(
+  Json(ExecuteContainerExecBody {
+    container,
+    shell,
+    command,
+  }): Json<ExecuteContainerExecBody>,
+) -> serror::Result<axum::body::Body> {
+  if periphery_config().disable_container_exec {
+    return Err(
+      anyhow!("Container exec is disabled in the periphery config")
+        .into(),
+    );
+  }
+  if container.contains("&&") || shell.contains("&&") {
+    return Err(
+      anyhow!(
+        "The use of '&&' is forbidden in the container name or shell"
+      )
+      .into(),
+    );
+  }
+  // Create terminal (recreate if shell changed)
+  create_terminal(
+    container.clone(),
+    format!("docker exec -it {container} {shell}"),
+    TerminalRecreateMode::DifferentCommand,
+  )
+  .await
+  .context("Failed to create terminal for container exec")?;
+
+  execute_command_on_terminal(&container, &command).await
+}
+
+async fn execute_command_on_terminal(
+  terminal_name: &str,
+  command: &str,
+) -> serror::Result<axum::body::Body> {
+  let terminal = get_terminal(terminal_name).await?;
 
   // Read the bytes into lines
   // This is done to check the lines for the EOF sentinal
@@ -398,44 +381,4 @@ pub async fn execute_terminal(
   }
 
   Ok(axum::body::Body::from_stream(TerminalStream { stdout }))
-}
-
-pin_project! {
-  struct TerminalStream<S> { #[pin] stdout: S }
-}
-
-impl<S> Stream for TerminalStream<S>
-where
-  S:
-    Stream<Item = Result<String, tokio_util::codec::LinesCodecError>>,
-{
-  // Axum expects a stream of results
-  type Item = Result<String, String>;
-
-  fn poll_next(
-    self: std::pin::Pin<&mut Self>,
-    cx: &mut std::task::Context<'_>,
-  ) -> std::task::Poll<Option<Self::Item>> {
-    let this = self.project();
-    match this.stdout.poll_next(cx) {
-      Poll::Ready(None) => {
-        // This is if a None comes in before END_OF_OUTPUT.
-        // This probably means the terminal has exited early,
-        // and needs to be cleaned up
-        tokio::spawn(async move { clean_up_terminals().await });
-        Poll::Ready(None)
-      }
-      Poll::Ready(Some(line)) => {
-        match line {
-          Ok(line) if line.as_str() == END_OF_OUTPUT => {
-            // Stop the stream on end sentinel
-            Poll::Ready(None)
-          }
-          Ok(line) => Poll::Ready(Some(Ok(line + "\n"))),
-          Err(e) => Poll::Ready(Some(Err(format!("{e:?}")))),
-        }
-      }
-      Poll::Pending => Poll::Pending,
-    }
-  }
 }

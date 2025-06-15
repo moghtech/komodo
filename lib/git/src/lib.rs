@@ -27,6 +27,7 @@ pub use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct GitRes {
   pub logs: Vec<Log>,
+  pub path: PathBuf,
   pub hash: Option<String>,
   pub message: Option<String>,
   pub env_file_path: Option<PathBuf>,

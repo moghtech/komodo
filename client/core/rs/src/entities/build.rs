@@ -43,7 +43,11 @@ pub struct BuildListItemInfo {
 
   /// Whether build is in files on host mode.
   pub files_on_host: bool,
+  /// Whether build has UI defined dockerfile contents
+  pub dockerfile_contents: bool,
 
+  /// Linked repo, if one is attached.
+  pub linked_repo: String,
   /// The git provider domain
   pub git_provider: String,
   /// The repo used as the source of the build
@@ -52,7 +56,6 @@ pub struct BuildListItemInfo {
   pub branch: String,
   /// Full link to the repo.
   pub repo_link: String,
-
 
   /// Latest built short commit hash, or null.
   pub built_hash: Option<String>,
@@ -164,6 +167,11 @@ pub struct BuildConfig {
   ))]
   #[builder(default)]
   pub links: Vec<String>,
+
+  /// Choose a Komodo Repo (Resource) to source the build files.
+  #[serde(default)]
+  #[builder(default)]
+  pub linked_repo: String,
 
   /// The git provider domain. Default: github.com
   #[serde(default = "default_git_provider")]
@@ -359,6 +367,7 @@ impl Default for BuildConfig {
       image_name: Default::default(),
       image_tag: Default::default(),
       links: Default::default(),
+      linked_repo: Default::default(),
       git_provider: default_git_provider(),
       git_https: default_git_https(),
       repo: Default::default(),

@@ -4,10 +4,13 @@ use anyhow::{Context, anyhow};
 use indexmap::IndexSet;
 use komodo_client::entities::{
   ResourceTarget,
+  build::Build,
   permission::{
     Permission, PermissionLevel, SpecificPermission, UserTarget,
   },
+  repo::Repo,
   server::Server,
+  stack::Stack,
   user::User,
 };
 use mongo_indexed::Document;
@@ -18,10 +21,12 @@ use rand::Rng;
 use crate::{config::core_config, state::db_client};
 
 pub mod action_state;
+pub mod all_resources;
 pub mod builder;
 pub mod cache;
 pub mod channel;
 pub mod interpolate;
+pub mod maintenance;
 pub mod matcher;
 pub mod procedure;
 pub mod prune;
@@ -93,6 +98,70 @@ pub async fn git_token(
           .map(|account| account.token.clone())
       }),
   )
+}
+
+pub async fn stack_git_token(
+  stack: &mut Stack,
+  repo: Option<&mut Repo>,
+) -> anyhow::Result<Option<String>> {
+  if let Some(repo) = repo {
+    return git_token(
+      &repo.config.git_provider,
+      &repo.config.git_account,
+      |https| repo.config.git_https = https,
+    )
+    .await
+    .with_context(|| {
+      format!(
+        "Failed to get git token. Stopping run. | {} | {}",
+        repo.config.git_provider, repo.config.git_account
+      )
+    });
+  }
+  git_token(
+    &stack.config.git_provider,
+    &stack.config.git_account,
+    |https| stack.config.git_https = https,
+  )
+  .await
+  .with_context(|| {
+    format!(
+      "Failed to get git token. Stopping run. | {} | {}",
+      stack.config.git_provider, stack.config.git_account
+    )
+  })
+}
+
+pub async fn build_git_token(
+  build: &mut Build,
+  repo: Option<&mut Repo>,
+) -> anyhow::Result<Option<String>> {
+  if let Some(repo) = repo {
+    return git_token(
+      &repo.config.git_provider,
+      &repo.config.git_account,
+      |https| repo.config.git_https = https,
+    )
+    .await
+    .with_context(|| {
+      format!(
+        "Failed to get git token. Stopping run. | {} | {}",
+        repo.config.git_provider, repo.config.git_account
+      )
+    });
+  }
+  git_token(
+    &build.config.git_provider,
+    &build.config.git_account,
+    |https| build.config.git_https = https,
+  )
+  .await
+  .with_context(|| {
+    format!(
+      "Failed to get git token. Stopping run. | {} | {}",
+      build.config.git_provider, build.config.git_account
+    )
+  })
 }
 
 /// First checks db for token, then checks core config.

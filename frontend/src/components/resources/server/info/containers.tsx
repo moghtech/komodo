@@ -1,13 +1,15 @@
 import { DockerContainersSection } from "@components/util";
 import { useRead } from "@lib/hooks";
-import { ReactNode } from "react";
+import { Dispatch, ReactNode, SetStateAction } from "react";
 
 export const Containers = ({
   id,
-  titleOther
+  titleOther,
+  _search,
 }: {
   id: string;
-  titleOther: ReactNode
+  titleOther: ReactNode;
+  _search: [string, Dispatch<SetStateAction<string>>];
 }) => {
   const containers =
     useRead("ListDockerContainers", { server: id }, { refetchInterval: 10_000 })
@@ -17,7 +19,9 @@ export const Containers = ({
       server_id={id}
       containers={containers}
       titleOther={titleOther}
+      _search={_search}
       pruneButton
+      forceTall
     />
   );
 };

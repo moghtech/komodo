@@ -14,8 +14,30 @@ use resolver_api::Resolve;
 use crate::{
   api::{execute::pull_deployment_inner, write::WriteArgs},
   config::core_config,
-  state::db_client,
+  helpers::all_resources::AllResourcesById,
+  state::{all_resources_cache, db_client},
 };
+
+pub fn spawn_all_resources_refresh_loop() {
+  tokio::spawn(async move {
+    let mut interval = tokio::time::interval(Duration::from_secs(15));
+    loop {
+      interval.tick().await;
+      refresh_all_resources_cache().await;
+    }
+  });
+}
+
+pub async fn refresh_all_resources_cache() {
+  let all = match AllResourcesById::load().await {
+    Ok(all) => all,
+    Err(e) => {
+      error!("Failed to load all resources by id cache | {e:#}");
+      return;
+    }
+  };
+  all_resources_cache().store(all.into());
+}
 
 pub fn spawn_resource_refresh_loop() {
   let interval: Timelength = core_config()
@@ -167,9 +189,6 @@ async fn refresh_syncs() {
     return;
   };
   for sync in syncs {
-    if sync.config.repo.is_empty() {
-      continue;
-    }
     RefreshResourceSyncPending { sync: sync.id }
       .resolve(
         &WriteArgs { user: sync_user().clone() },

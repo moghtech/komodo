@@ -213,6 +213,48 @@ export type ResourceTarget =
 	| { type: "Alerter", id: string }
 	| { type: "ResourceSync", id: string };
 
+/** Types of maintenance schedules */
+export enum MaintenanceScheduleType {
+	/** Daily at the specified time */
+	Daily = "Daily",
+	/** Weekly on the specified day and time */
+	Weekly = "Weekly",
+	/** One-time maintenance on a specific date and time */
+	OneTime = "OneTime",
+}
+
+/** Represents a scheduled maintenance window */
+export interface MaintenanceWindow {
+	/** Name for the maintenance window (required) */
+	name: string;
+	/** Description of what maintenance is performed (optional) */
+	description?: string;
+	/**
+	 * The type of maintenance schedule:
+	 * - Daily (default)
+	 * - Weekly
+	 * - OneTime
+	 */
+	schedule_type?: MaintenanceScheduleType;
+	/** For Weekly schedules: Specify the day of the week (Monday, Tuesday, etc.) */
+	day_of_week?: string;
+	/** For OneTime window: ISO 8601 date format (YYYY-MM-DD) */
+	date?: string;
+	/** Start hour in 24-hour format (0-23) (optional, defaults to 0) */
+	hour?: number;
+	/** Start minute (0-59) (optional, defaults to 0) */
+	minute?: number;
+	/** Duration of the maintenance window in minutes (required) */
+	duration_minutes: number;
+	/**
+	 * Timezone for maintenance window specificiation.
+	 * If empty, will use Core timezone.
+	 */
+	timezone?: string;
+	/** Whether this maintenance window is currently enabled */
+	enabled: boolean;
+}
+
 export interface AlerterConfig {
 	/** Whether the alerter is enabled */
 	enabled?: boolean;
@@ -234,6 +276,8 @@ export interface AlerterConfig {
 	resources?: ResourceTarget[];
 	/** DON'T send alerts on these resources. */
 	except_resources?: ResourceTarget[];
+	/** Scheduled maintenance windows during which alerts will be suppressed. */
+	maintenance_windows?: MaintenanceWindow[];
 }
 
 export type Alerter = Resource<AlerterConfig, undefined>;
@@ -521,6 +565,8 @@ export interface BuildConfig {
 	image_tag?: string;
 	/** Configure quick links that are displayed in the resource header */
 	links?: string[];
+	/** Choose a Komodo Repo (Resource) to source the build files. */
+	linked_repo?: string;
 	/** The git provider domain. Default: github.com */
 	git_provider: string;
 	/**
@@ -654,6 +700,10 @@ export interface BuildListItemInfo {
 	builder_id: string;
 	/** Whether build is in files on host mode. */
 	files_on_host: boolean;
+	/** Whether build has UI defined dockerfile contents */
+	dockerfile_contents: boolean;
+	/** Linked repo, if one is attached. */
+	linked_repo: string;
 	/** The git provider domain */
 	git_provider: string;
 	/** The repo used as the source of the build */
@@ -1592,7 +1642,13 @@ export interface RepoConfig {
 	branch: string;
 	/** Optionally set a specific commit hash. */
 	commit?: string;
-	/** Explicitly specify the folder to clone the repo in. */
+	/**
+	 * Explicitly specify the folder to clone the repo in.
+	 * - If absolute (has leading '/')
+	 * - Used directly as the path
+	 * - If relative
+	 * - Taken relative to Periphery `repo_dir` (ie `${root_directory}/repos`)
+	 */
 	path?: string;
 	/** Whether incoming webhooks actually trigger action. */
 	webhook_enabled: boolean;
@@ -1659,6 +1715,8 @@ export type GetResourceSyncActionStateResponse = ResourceSyncActionState;
 
 /** The sync configuration. */
 export interface ResourceSyncConfig {
+	/** Choose a Komodo Repo (Resource) to source the sync files. */
+	linked_repo?: string;
 	/** The git provider domain. Default: github.com */
 	git_provider: string;
 	/**
@@ -1907,6 +1965,8 @@ export interface ServerConfig {
 	disk_warning: number;
 	/** The percentage threshhold which triggers CRITICAL state for DISK. */
 	disk_critical: number;
+	/** Scheduled maintenance windows during which alerts will be suppressed. */
+	maintenance_windows?: MaintenanceWindow[];
 }
 
 export type Server = Resource<ServerConfig, undefined>;
@@ -1973,6 +2033,8 @@ export interface StackConfig {
 	destroy_before_deploy?: boolean;
 	/** Whether to skip secret interpolation into the stack environment variables. */
 	skip_secret_interp?: boolean;
+	/** Choose a Komodo Repo (Resource) to source the compose files. */
+	linked_repo?: string;
 	/** The git provider domain. Default: github.com */
 	git_provider: string;
 	/**
@@ -1989,12 +2051,17 @@ export interface StackConfig {
 	 * for the configured git provider.
 	 */
 	git_account?: string;
-	/** The Github repo used as the source of the build. */
+	/**
+	 * The repo used as the source of the build.
+	 * {namespace}/{repo_name}
+	 */
 	repo?: string;
 	/** The branch of the repo. */
 	branch: string;
 	/** Optionally set a specific commit hash. */
 	commit?: string;
+	/** Optionally set a specific clone path */
+	clone_path?: string;
 	/**
 	 * By default, the Stack will `git pull` the repo after it is first cloned.
 	 * If this option is enabled, the repo folder will be deleted and recloned instead.
@@ -3513,6 +3580,8 @@ export interface ResourceSyncListItemInfo {
 	managed: boolean;
 	/** Resource paths to the files. */
 	resource_path: string[];
+	/** Linked repo, if one is attached. */
+	linked_repo: string;
 	/** The git provider domain. */
 	git_provider: string;
 	/** The Github repo used as the source of the sync resources */
@@ -3580,6 +3649,8 @@ export interface ServerListItemInfo {
 	region: string;
 	/** Address of the server. */
 	address: string;
+	/** The Komodo Periphery version of the server. */
+	version: string;
 	/** Whether server is configured to send unreachable alerts. */
 	send_unreachable_alerts: boolean;
 	/** Whether server is configured to send cpu alerts. */
@@ -3651,6 +3722,8 @@ export interface StackListItemInfo {
 	files_on_host: boolean;
 	/** Whether stack has file contents defined. */
 	file_contents: boolean;
+	/** Linked repo, if one is attached. */
+	linked_repo: string;
 	/** The git provider domain */
 	git_provider: string;
 	/** The configured repo */
@@ -4237,7 +4310,7 @@ export interface ConnectContainerExecQuery {
 	server: string;
 	/** The container name */
 	container: string;
-	/** The shell to connect to */
+	/** The shell to use (eg. `sh` or `bash`) */
 	shell: string;
 }
 
@@ -4249,7 +4322,7 @@ export interface ConnectContainerExecQuery {
 export interface ConnectDeploymentExecQuery {
 	/** Deployment Id or name */
 	deployment: string;
-	/** The shell to connect to */
+	/** The shell to use (eg. `sh` or `bash`) */
 	shell: string;
 }
 
@@ -4263,7 +4336,7 @@ export interface ConnectStackExecQuery {
 	stack: string;
 	/** The service name to connect to */
 	service: string;
-	/** The shell to connect to */
+	/** The shell to use (eg. `sh` or `bash`) */
 	shell: string;
 }
 
@@ -5102,6 +5175,49 @@ export interface ExchangeForJwt {
 }
 
 /**
+ * Execute a command in the given containers shell.
+ * TODO: Document calling.
+ */
+export interface ExecuteContainerExecBody {
+	/** Server Id or name */
+	server: string;
+	/** The container name */
+	container: string;
+	/** The shell to use (eg. `sh` or `bash`) */
+	shell: string;
+	/** The command to execute. */
+	command: string;
+}
+
+/**
+ * Execute a command in the given containers shell.
+ * TODO: Document calling.
+ */
+export interface ExecuteDeploymentExecBody {
+	/** Deployment Id or name */
+	deployment: string;
+	/** The shell to use (eg. `sh` or `bash`) */
+	shell: string;
+	/** The command to execute. */
+	command: string;
+}
+
+/**
+ * Execute a command in the given containers shell.
+ * TODO: Document calling.
+ */
+export interface ExecuteStackExecBody {
+	/** Stack Id or name */
+	stack: string;
+	/** The service name to connect to */
+	service: string;
+	/** The shell to use (eg. `sh` or `bash`) */
+	shell: string;
+	/** The command to execute. */
+	command: string;
+}
+
+/**
  * Execute a terminal command on the given server.
  * TODO: Document calling.
  */
@@ -5366,6 +5482,8 @@ export interface GetCoreInfoResponse {
 	github_webhook_owners: string[];
 	/** Whether to disable websocket automatic reconnect. */
 	disable_websocket_reconnect: boolean;
+	/** TZ identifier Core is using, if manually set. */
+	timezone: string;
 }
 
 /** Get a specific deployment by name or id. Response: [Deployment]. */
@@ -7750,6 +7868,17 @@ export type AuthRequest =
 	| { type: "ExchangeForJwt", params: ExchangeForJwt }
 	| { type: "GetUser", params: GetUser };
 
+/** Days of the week */
+export enum DayOfWeek {
+	Monday = "Monday",
+	Tuesday = "Tuesday",
+	Wednesday = "Wednesday",
+	Thursday = "Thursday",
+	Friday = "Friday",
+	Saturday = "Saturday",
+	Sunday = "Sunday",
+}
+
 export type ExecuteRequest = 
 	| { type: "StartContainer", params: StartContainer }
 	| { type: "RestartContainer", params: RestartContainer }
@@ -7811,6 +7940,92 @@ export type ExecuteRequest =
 	| { type: "BatchRunAction", params: BatchRunAction }
 	| { type: "TestAlerter", params: TestAlerter }
 	| { type: "RunSync", params: RunSync };
+
+/**
+ * One representative IANA zone for each distinct base UTC offset in the tz database.
+ * https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
+ * 
+ * The `serde`/`strum` renames ensure the canonical identifier is used
+ * when serializing or parsing from a string such as `"Etc/UTC"`.
+ */
+export enum IanaTimezone {
+	/** UTC−12:00 */
+	EtcGmtMinus12 = "Etc/GMT+12",
+	/** UTC−11:00 */
+	PacificPagoPago = "Pacific/Pago_Pago",
+	/** UTC−10:00 */
+	PacificHonolulu = "Pacific/Honolulu",
+	/** UTC−09:30 */
+	PacificMarquesas = "Pacific/Marquesas",
+	/** UTC−09:00 */
+	AmericaAnchorage = "America/Anchorage",
+	/** UTC−08:00 */
+	AmericaLosAngeles = "America/Los_Angeles",
+	/** UTC−07:00 */
+	AmericaDenver = "America/Denver",
+	/** UTC−06:00 */
+	AmericaChicago = "America/Chicago",
+	/** UTC−05:00 */
+	AmericaNewYork = "America/New_York",
+	/** UTC−04:00 */
+	AmericaHalifax = "America/Halifax",
+	/** UTC−03:30 */
+	AmericaStJohns = "America/St_Johns",
+	/** UTC−03:00 */
+	AmericaSaoPaulo = "America/Sao_Paulo",
+	/** UTC−02:00 */
+	AmericaNoronha = "America/Noronha",
+	/** UTC−01:00 */
+	AtlanticAzores = "Atlantic/Azores",
+	/** UTC±00:00 */
+	EtcUtc = "Etc/UTC",
+	/** UTC+01:00 */
+	EuropeBerlin = "Europe/Berlin",
+	/** UTC+02:00 */
+	EuropeBucharest = "Europe/Bucharest",
+	/** UTC+03:00 */
+	EuropeMoscow = "Europe/Moscow",
+	/** UTC+03:30 */
+	AsiaTehran = "Asia/Tehran",
+	/** UTC+04:00 */
+	AsiaDubai = "Asia/Dubai",
+	/** UTC+04:30 */
+	AsiaKabul = "Asia/Kabul",
+	/** UTC+05:00 */
+	AsiaKarachi = "Asia/Karachi",
+	/** UTC+05:30 */
+	AsiaKolkata = "Asia/Kolkata",
+	/** UTC+05:45 */
+	AsiaKathmandu = "Asia/Kathmandu",
+	/** UTC+06:00 */
+	AsiaDhaka = "Asia/Dhaka",
+	/** UTC+06:30 */
+	AsiaYangon = "Asia/Yangon",
+	/** UTC+07:00 */
+	AsiaBangkok = "Asia/Bangkok",
+	/** UTC+08:00 */
+	AsiaShanghai = "Asia/Shanghai",
+	/** UTC+08:45 */
+	AustraliaEucla = "Australia/Eucla",
+	/** UTC+09:00 */
+	AsiaTokyo = "Asia/Tokyo",
+	/** UTC+09:30 */
+	AustraliaAdelaide = "Australia/Adelaide",
+	/** UTC+10:00 */
+	AustraliaSydney = "Australia/Sydney",
+	/** UTC+10:30 */
+	AustraliaLordHowe = "Australia/Lord_Howe",
+	/** UTC+11:00 */
+	PacificPortMoresby = "Pacific/Port_Moresby",
+	/** UTC+12:00 */
+	PacificAuckland = "Pacific/Auckland",
+	/** UTC+12:45 */
+	PacificChatham = "Pacific/Chatham",
+	/** UTC+13:00 */
+	PacificTongatapu = "Pacific/Tongatapu",
+	/** UTC+14:00 */
+	PacificKiritimati = "Pacific/Kiritimati",
+}
 
 /** Configuration for the registry to push the built image to. */
 export type ImageRegistryLegacy1_14 = 

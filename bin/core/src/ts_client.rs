@@ -23,6 +23,8 @@ const ALLOWED_FILES: &[&str] = &[
   "types.d.ts",
   "responses.js",
   "responses.d.ts",
+  "terminal.js",
+  "terminal.d.ts",
 ];
 
 #[derive(Deserialize)]

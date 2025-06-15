@@ -14,6 +14,7 @@ use komodo_client::{
     builder::Builder,
     environment_vars_from_str, optional_string,
     permission::PermissionLevel,
+    repo::Repo,
     resource::Resource,
     to_docker_compatible_name,
     update::Update,
@@ -32,7 +33,10 @@ use crate::{
   helpers::{
     empty_or_only_spaces, query::get_latest_update, repo_link,
   },
-  state::{action_states, build_state_cache, db_client},
+  permission::get_check_permissions,
+  state::{
+    action_states, all_resources_cache, build_state_cache, db_client,
+  },
 };
 
 impl super::KomodoResource for Build {
@@ -64,6 +68,32 @@ impl super::KomodoResource for Build {
     build: Resource<Self::Config, Self::Info>,
   ) -> Self::ListItem {
     let state = get_build_state(&build.id).await;
+
+    let default_git = (
+      build.config.git_provider,
+      build.config.repo,
+      build.config.branch,
+      build.config.git_https,
+    );
+    let (git_provider, repo, branch, git_https) =
+      if build.config.linked_repo.is_empty() {
+        default_git
+      } else {
+        all_resources_cache()
+          .load()
+          .repos
+          .get(&build.config.linked_repo)
+          .map(|r| {
+            (
+              r.config.git_provider.clone(),
+              r.config.repo.clone(),
+              r.config.branch.clone(),
+              r.config.git_https,
+            )
+          })
+          .unwrap_or(default_git)
+      };
+
     BuildListItem {
       name: build.name,
       id: build.id,
@@ -74,15 +104,17 @@ impl super::KomodoResource for Build {
         version: build.config.version,
         builder_id: build.config.builder_id,
         files_on_host: build.config.files_on_host,
+        dockerfile_contents: !build.config.dockerfile.is_empty(),
+        linked_repo: build.config.linked_repo,
         repo_link: repo_link(
-          &build.config.git_provider,
-          &build.config.repo,
-          &build.config.branch,
-          build.config.git_https,
+          &git_provider,
+          &repo,
+          &branch,
+          git_https,
         ),
-        git_provider: build.config.git_provider,
-        repo: build.config.repo,
-        branch: build.config.branch,
+        git_provider,
+        repo,
+        branch,
         image_registry_domain: optional_string(
           build.config.image_registry.domain,
         ),
@@ -232,6 +264,19 @@ async fn validate_config(
       .await
       .context("Cannot attach Build to this Builder")?;
       config.builder_id = Some(builder.id)
+    }
+  }
+  if let Some(linked_repo) = &config.linked_repo {
+    if !linked_repo.is_empty() {
+      let repo = get_check_permissions::<Repo>(
+        linked_repo,
+        user,
+        PermissionLevel::Read.attach(),
+      )
+      .await
+      .context("Cannot attach Repo to this Build")?;
+      // in case it comes in as name
+      config.linked_repo = Some(repo.id);
     }
   }
   if let Some(build_args) = &config.build_args {
