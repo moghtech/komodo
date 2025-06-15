@@ -11,6 +11,13 @@ import {
   WsLoginMessage,
 } from "./types";
 
+export type TerminalCallbacks = {
+  on_message?: (e: MessageEvent<any>) => void;
+  on_login?: () => void;
+  on_open?: () => void;
+  on_close?: () => void;
+};
+
 export type ConnectExecQuery =
   | {
       type: "container";
@@ -28,22 +35,20 @@ export type ConnectExecQuery =
 export type ExecuteExecBody =
   | {
       type: "container";
-      query: ExecuteContainerExecBody;
+      body: ExecuteContainerExecBody;
     }
   | {
       type: "deployment";
-      query: ExecuteDeploymentExecBody;
+      body: ExecuteDeploymentExecBody;
     }
   | {
       type: "stack";
-      query: ExecuteStackExecBody;
+      body: ExecuteStackExecBody;
     };
 
-export type TerminalCallbacks = {
-  on_message?: (e: MessageEvent<any>) => void;
-  on_login?: () => void;
-  on_open?: () => void;
-  on_close?: () => void;
+export type ExecuteCallbacks = {
+  onLine?: (line: string) => void | Promise<void>;
+  onFinish?: (code: string) => void | Promise<void>;
 };
 
 export const terminal_methods = (url: string, state: ClientState) => {
@@ -100,10 +105,7 @@ export const terminal_methods = (url: string, state: ClientState) => {
 
   const execute_terminal = async (
     request: ExecuteTerminalBody,
-    callbacks?: {
-      onLine?: (line: string) => void | Promise<void>;
-      onFinish?: (code: string) => void | Promise<void>;
-    }
+    callbacks?: ExecuteCallbacks
   ) => {
     const stream = await execute_terminal_stream(request);
     for await (const line of stream) {
@@ -122,6 +124,30 @@ export const terminal_methods = (url: string, state: ClientState) => {
     execute_stream("/terminal/execute", request);
 
   const connect_container_exec = ({
+    query,
+    ...callbacks
+  }: {
+    query: ConnectContainerExecQuery;
+  } & TerminalCallbacks) =>
+    connect_exec({ query: { type: "container", query }, ...callbacks });
+
+  const connect_deployment_exec = ({
+    query,
+    ...callbacks
+  }: {
+    query: ConnectDeploymentExecQuery;
+  } & TerminalCallbacks) =>
+    connect_exec({ query: { type: "deployment", query }, ...callbacks });
+
+  const connect_stack_exec = ({
+    query,
+    ...callbacks
+  }: {
+    query: ConnectStackExecQuery;
+  } & TerminalCallbacks) =>
+    connect_exec({ query: { type: "stack", query }, ...callbacks });
+
+  const connect_exec = ({
     query: { type, query },
     on_message,
     on_login,
@@ -172,14 +198,26 @@ export const terminal_methods = (url: string, state: ClientState) => {
     return ws;
   };
 
-  const execute_container_exec = async (
+  const execute_container_exec = (
+    body: ExecuteContainerExecBody,
+    callbacks?: ExecuteCallbacks
+  ) => execute_exec({ type: "container", body }, callbacks);
+
+  const execute_deployment_exec = (
+    body: ExecuteDeploymentExecBody,
+    callbacks?: ExecuteCallbacks
+  ) => execute_exec({ type: "deployment", body }, callbacks);
+
+  const execute_stack_exec = (
+    body: ExecuteStackExecBody,
+    callbacks?: ExecuteCallbacks
+  ) => execute_exec({ type: "stack", body }, callbacks);
+
+  const execute_exec = async (
     request: ExecuteExecBody,
-    callbacks?: {
-      onLine?: (line: string) => void | Promise<void>;
-      onFinish?: (code: string) => void | Promise<void>;
-    }
+    callbacks?: ExecuteCallbacks
   ) => {
-    const stream = await execute_container_exec_stream(request);
+    const stream = await execute_exec_stream(request);
     for await (const line of stream) {
       if (line.startsWith("__KOMODO_EXIT_CODE")) {
         await callbacks?.onFinish?.(line.split(":")[1]);
@@ -192,8 +230,17 @@ export const terminal_methods = (url: string, state: ClientState) => {
     await callbacks?.onFinish?.("Early exit without code");
   };
 
-  const execute_container_exec_stream = (request: ExecuteExecBody) =>
-    execute_stream(`/terminal/execute/${request.type}`, request.query);
+  const execute_container_exec_stream = (body: ExecuteContainerExecBody) =>
+    execute_exec_stream({ type: "container", body });
+
+  const execute_deployment_exec_stream = (body: ExecuteDeploymentExecBody) =>
+    execute_exec_stream({ type: "deployment", body });
+
+  const execute_stack_exec_stream = (body: ExecuteStackExecBody) =>
+    execute_exec_stream({ type: "stack", body });
+
+  const execute_exec_stream = (request: ExecuteExecBody) =>
+    execute_stream(`/terminal/execute/${request.type}`, request.body);
 
   const execute_stream = (path: string, request: any) =>
     new Promise<AsyncIterable<string>>(async (res, rej) => {
@@ -273,6 +320,12 @@ export const terminal_methods = (url: string, state: ClientState) => {
     connect_terminal,
     execute_terminal,
     execute_terminal_stream,
+    connect_container_exec,
+    execute_container_exec,
+    execute_container_exec_stream,
+    connect_deployment_exec,
+    execute_deployment_exec,
+    execute_deployment_exec_stream,
     connect_container_exec,
     execute_container_exec,
     execute_container_exec_stream,
