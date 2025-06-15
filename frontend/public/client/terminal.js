@@ -190,6 +190,7 @@ export const terminal_methods = (url, state) => {
         connect_terminal,
         execute_terminal,
         execute_terminal_stream,
+        connect_exec,
         connect_container_exec,
         execute_container_exec,
         execute_container_exec_stream,

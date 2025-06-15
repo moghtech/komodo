@@ -202,6 +202,15 @@ export declare function KomodoClient(url: string, options: InitOptions): {
     execute_terminal_stream: (request: ExecuteTerminalBody) => Promise<AsyncIterable<string>>;
     /**
      * Subscribes to container exec io over websocket message,
+     * for use with xtermjs. Can connect to container on a Server,
+     * or associated with a Deployment or Stack.
+     * Terminal permission on connecting resource required.
+     */
+    connect_exec: ({ query: { type, query }, on_message, on_login, on_open, on_close, }: {
+        query: ConnectExecQuery;
+    } & TerminalCallbacks) => WebSocket;
+    /**
+     * Subscribes to container exec io over websocket message,
      * for use with xtermjs. Can connect to Container on a Server.
      * Server Terminal permission required.
      */

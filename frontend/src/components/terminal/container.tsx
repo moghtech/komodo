@@ -41,7 +41,7 @@ export const ContainerTerminal = ({
 
   const make_ws = useCallback(
     (callbacks: TerminalCallbacks) =>
-      komodo_client().connect_container_exec({
+      komodo_client().connect_exec({
         query: { type, query: { ...query, shell } } as any,
         ...callbacks,
       }),

@@ -326,6 +326,7 @@ export function KomodoClient(url: string, options: InitOptions) {
     connect_terminal,
     execute_terminal,
     execute_terminal_stream,
+    connect_exec,
     connect_container_exec,
     execute_container_exec,
     execute_container_exec_stream,
@@ -480,6 +481,13 @@ export function KomodoClient(url: string, options: InitOptions) {
      * ```
      */
     execute_terminal_stream,
+    /**
+     * Subscribes to container exec io over websocket message,
+     * for use with xtermjs. Can connect to container on a Server,
+     * or associated with a Deployment or Stack.
+     * Terminal permission on connecting resource required.
+     */
+    connect_exec,
     /**
      * Subscribes to container exec io over websocket message,
      * for use with xtermjs. Can connect to Container on a Server.

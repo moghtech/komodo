@@ -320,6 +320,7 @@ export const terminal_methods = (url: string, state: ClientState) => {
     connect_terminal,
     execute_terminal,
     execute_terminal_stream,
+    connect_exec,
     connect_container_exec,
     execute_container_exec,
     execute_container_exec_stream,

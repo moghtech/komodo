@@ -173,7 +173,7 @@ export function KomodoClient(url, options) {
             }
         }
     };
-    const { connect_terminal, execute_terminal, execute_terminal_stream, connect_container_exec, execute_container_exec, execute_container_exec_stream, connect_deployment_exec, execute_deployment_exec, execute_deployment_exec_stream, connect_stack_exec, execute_stack_exec, execute_stack_exec_stream, } = terminal_methods(url, state);
+    const { connect_terminal, execute_terminal, execute_terminal_stream, connect_exec, connect_container_exec, execute_container_exec, execute_container_exec_stream, connect_deployment_exec, execute_deployment_exec, execute_deployment_exec_stream, connect_stack_exec, execute_stack_exec, execute_stack_exec_stream, } = terminal_methods(url, state);
     return {
         /**
          * Call the `/auth` api.
@@ -317,6 +317,13 @@ export function KomodoClient(url, options) {
          * ```
          */
         execute_terminal_stream,
+        /**
+         * Subscribes to container exec io over websocket message,
+         * for use with xtermjs. Can connect to container on a Server,
+         * or associated with a Deployment or Stack.
+         * Terminal permission on connecting resource required.
+         */
+        connect_exec,
         /**
          * Subscribes to container exec io over websocket message,
          * for use with xtermjs. Can connect to Container on a Server.

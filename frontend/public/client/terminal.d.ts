@@ -36,6 +36,9 @@ export declare const terminal_methods: (url: string, state: ClientState) => {
     } & TerminalCallbacks) => WebSocket;
     execute_terminal: (request: ExecuteTerminalBody, callbacks?: ExecuteCallbacks) => Promise<void>;
     execute_terminal_stream: (request: ExecuteTerminalBody) => Promise<AsyncIterable<string>>;
+    connect_exec: ({ query: { type, query }, on_message, on_login, on_open, on_close, }: {
+        query: ConnectExecQuery;
+    } & TerminalCallbacks) => WebSocket;
     connect_container_exec: ({ query, ...callbacks }: {
         query: ConnectContainerExecQuery;
     } & TerminalCallbacks) => WebSocket;
