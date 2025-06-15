@@ -42,7 +42,7 @@ Some features are additionally gated behind a specific permission for that featu
   - If given on a `Server`, allows users to attach `Stacks`, `Deployments`, `Repos`, and `Builders`.
   - If given on a `Builder`, allows users to attach `Builds` and `Repos`.
   - If given on a `Build`, allows users to attach it to `Deployments`.
-  - If given on a `Repo`, allows users to attach it to `Stacks`.
+  - If given on a `Repo`, allows users to attach it to `Stacks`, `Builds`, and `Resource Syncs`.
 - **`Processes`**: User can retrieve the full running process list on the `Server`.
 
 ## Permissioning by Resource Type
