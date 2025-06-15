@@ -1,4 +1,8 @@
-import { ActionButton, ActionWithDialog } from "@components/util";
+import {
+  ActionButton,
+  ActionWithDialog,
+  ConfirmButton,
+} from "@components/util";
 import { useExecute, useInvalidate, useRead, useWrite } from "@lib/hooks";
 import { file_contents_empty, sync_no_changes } from "@lib/utils";
 import { usePermissions } from "@lib/hooks";
@@ -78,7 +82,8 @@ export const CommitSync = ({ id }: { id: string }) => {
   const freshSync =
     !sync.config?.files_on_host &&
     file_contents_empty(sync.config?.file_contents) &&
-    !sync.config?.repo;
+    !sync.config?.repo &&
+    !sync.config?.linked_repo;
 
   if (!freshSync && (!sync.config?.managed || sync_no_changes(sync))) {
     return null;
@@ -86,7 +91,7 @@ export const CommitSync = ({ id }: { id: string }) => {
 
   if (freshSync) {
     return (
-      <ActionButton
+      <ConfirmButton
         title="Commit Changes"
         icon={<NotebookPen className="w-4 h-4" />}
         onClick={() => mutate({ sync: id })}
