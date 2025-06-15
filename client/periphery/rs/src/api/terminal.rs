@@ -76,6 +76,7 @@ pub struct ConnectTerminalQuery {
 
 //
 
+/// Note: The `terminal` must already exist, created by [CreateTerminal].
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ExecuteTerminalBody {
   /// Specify the terminal to execute the command on.
@@ -83,8 +84,6 @@ pub struct ExecuteTerminalBody {
   /// The command to execute.
   pub command: String,
 }
-
-//
 
 //
 
@@ -99,6 +98,20 @@ pub struct ConnectContainerExecQuery {
   /// Default: `sh`
   #[serde(default = "default_container_shell")]
   pub shell: String,
+}
+
+//
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ExecuteContainerExecBody {
+  /// The name of the container to execute command in.
+  pub container: String,
+  /// The shell to start inside container.
+  /// Default: `sh`
+  #[serde(default = "default_container_shell")]
+  pub shell: String,
+  /// The command to execute.
+  pub command: String,
 }
 
 fn default_container_shell() -> String {

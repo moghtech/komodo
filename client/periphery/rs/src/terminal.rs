@@ -44,37 +44,6 @@ impl PeripheryClient {
     connect_websocket(&url).await
   }
 
-  /// Handles ws connect and login.
-  /// Does not handle reconnect.
-  pub async fn connect_container_exec(
-    &self,
-    container: String,
-    shell: String,
-  ) -> anyhow::Result<WebSocketStream<MaybeTlsStream<TcpStream>>> {
-    tracing::trace!(
-      "request | type: ConnectContainerExec | container name: {container} | shell: {shell}",
-    );
-
-    let token = self
-      .request(CreateTerminalAuthToken {})
-      .await
-      .context("Failed to create terminal auth token")?;
-
-    let query_str = serde_qs::to_string(&ConnectContainerExecQuery {
-      token: token.token,
-      container,
-      shell,
-    })
-    .context("Failed to serialize query string")?;
-
-    let url = format!(
-      "{}/terminal/container?{query_str}",
-      self.address.replacen("http", "ws", 1)
-    );
-
-    connect_websocket(&url).await
-  }
-
   /// Executes command on specified terminal,
   /// and streams the response ending in [KOMODO_EXIT_CODE][komodo_client::entities::KOMODO_EXIT_CODE]
   /// sentinal value as the expected final line of the stream.
@@ -123,6 +92,37 @@ impl PeripheryClient {
 
       Err(error)
     }
+  }
+
+  /// Handles ws connect and login.
+  /// Does not handle reconnect.
+  pub async fn connect_container_exec(
+    &self,
+    container: String,
+    shell: String,
+  ) -> anyhow::Result<WebSocketStream<MaybeTlsStream<TcpStream>>> {
+    tracing::trace!(
+      "request | type: ConnectContainerExec | container name: {container} | shell: {shell}",
+    );
+
+    let token = self
+      .request(CreateTerminalAuthToken {})
+      .await
+      .context("Failed to create terminal auth token")?;
+
+    let query_str = serde_qs::to_string(&ConnectContainerExecQuery {
+      token: token.token,
+      container,
+      shell,
+    })
+    .context("Failed to serialize query string")?;
+
+    let url = format!(
+      "{}/terminal/container?{query_str}",
+      self.address.replacen("http", "ws", 1)
+    );
+
+    connect_websocket(&url).await
   }
 }
 

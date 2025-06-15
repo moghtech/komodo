@@ -1,15 +1,23 @@
 use std::{
   collections::{HashMap, VecDeque},
+  pin::Pin,
   sync::{Arc, OnceLock},
+  task::Poll,
   time::Duration,
 };
 
 use anyhow::{Context, anyhow};
+use axum::http::StatusCode;
 use bytes::Bytes;
+use futures::Stream;
 use komodo_client::{
-  api::write::TerminalRecreateMode, entities::server::TerminalInfo,
+  api::write::TerminalRecreateMode,
+  entities::{komodo_timestamp, server::TerminalInfo},
 };
+use pin_project_lite::pin_project;
 use portable_pty::{CommandBuilder, PtySize, native_pty_system};
+use rand::Rng;
+use serror::AddStatusCodeError;
 use tokio::sync::{broadcast, mpsc};
 use tokio_util::sync::CancellationToken;
 
@@ -307,7 +315,7 @@ impl Terminal {
   }
 }
 
-/// 1 MiB max history size per terminal
+/// 1 MiB rolling max history size per terminal
 const MAX_BYTES: usize = 1024 * 1024;
 
 pub struct History {
@@ -342,5 +350,96 @@ impl History {
 
   pub fn size_kb(&self) -> f64 {
     self.buf.read().unwrap().len() as f64 / 1024.0
+  }
+}
+
+/// Execute Sentinels
+pub const START_OF_OUTPUT: &str = "__KOMODO_START_OF_OUTPUT__";
+pub const END_OF_OUTPUT: &str = "__KOMODO_END_OF_OUTPUT__";
+
+pin_project! {
+  pub struct TerminalStream<S> { #[pin] pub stdout: S }
+}
+
+impl<S> Stream for TerminalStream<S>
+where
+  S:
+    Stream<Item = Result<String, tokio_util::codec::LinesCodecError>>,
+{
+  // Axum expects a stream of results
+  type Item = Result<String, String>;
+
+  fn poll_next(
+    self: Pin<&mut Self>,
+    cx: &mut std::task::Context<'_>,
+  ) -> Poll<Option<Self::Item>> {
+    let this = self.project();
+    match this.stdout.poll_next(cx) {
+      Poll::Ready(None) => {
+        // This is if a None comes in before END_OF_OUTPUT.
+        // This probably means the terminal has exited early,
+        // and needs to be cleaned up
+        tokio::spawn(async move { clean_up_terminals().await });
+        Poll::Ready(None)
+      }
+      Poll::Ready(Some(line)) => {
+        match line {
+          Ok(line) if line.as_str() == END_OF_OUTPUT => {
+            // Stop the stream on end sentinel
+            Poll::Ready(None)
+          }
+          Ok(line) => Poll::Ready(Some(Ok(line + "\n"))),
+          Err(e) => Poll::Ready(Some(Err(format!("{e:?}")))),
+        }
+      }
+      Poll::Pending => Poll::Pending,
+    }
+  }
+}
+
+/// Tokens valid for 3 seconds
+const TOKEN_VALID_FOR_MS: i64 = 3_000;
+
+pub fn auth_tokens() -> &'static AuthTokens {
+  static AUTH_TOKENS: OnceLock<AuthTokens> = OnceLock::new();
+  AUTH_TOKENS.get_or_init(Default::default)
+}
+
+#[derive(Default)]
+pub struct AuthTokens {
+  map: std::sync::Mutex<HashMap<String, i64>>,
+}
+
+impl AuthTokens {
+  pub fn create_auth_token(&self) -> String {
+    let mut lock = self.map.lock().unwrap();
+    // clear out any old tokens here (prevent unbounded growth)
+    let ts = komodo_timestamp();
+    lock.retain(|_, valid_until| *valid_until > ts);
+    let token: String = rand::rng()
+      .sample_iter(&rand::distr::Alphanumeric)
+      .take(30)
+      .map(char::from)
+      .collect();
+    lock.insert(token.clone(), ts + TOKEN_VALID_FOR_MS);
+    token
+  }
+
+  pub fn check_token(&self, token: String) -> serror::Result<()> {
+    let Some(valid_until) = self.map.lock().unwrap().remove(&token)
+    else {
+      return Err(
+        anyhow!("Terminal auth token not found")
+          .status_code(StatusCode::UNAUTHORIZED),
+      );
+    };
+    if komodo_timestamp() <= valid_until {
+      Ok(())
+    } else {
+      Err(
+        anyhow!("Terminal token is expired")
+          .status_code(StatusCode::UNAUTHORIZED),
+      )
+    }
   }
 }
