@@ -4181,7 +4181,7 @@ export interface ConnectContainerExecQuery {
     server: string;
     /** The container name */
     container: string;
-    /** The shell to connect to */
+    /** The shell to use (eg. `sh` or `bash`) */
     shell: string;
 }
 /**
@@ -4192,7 +4192,7 @@ export interface ConnectContainerExecQuery {
 export interface ConnectDeploymentExecQuery {
     /** Deployment Id or name */
     deployment: string;
-    /** The shell to connect to */
+    /** The shell to use (eg. `sh` or `bash`) */
     shell: string;
 }
 /**
@@ -4205,7 +4205,7 @@ export interface ConnectStackExecQuery {
     stack: string;
     /** The service name to connect to */
     service: string;
-    /** The shell to connect to */
+    /** The shell to use (eg. `sh` or `bash`) */
     shell: string;
 }
 /**
@@ -4966,6 +4966,46 @@ export interface EnvironmentVar {
 export interface ExchangeForJwt {
     /** The 'exchange token' */
     token: string;
+}
+/**
+ * Execute a command in the given containers shell.
+ * TODO: Document calling.
+ */
+export interface ExecuteContainerExecBody {
+    /** Server Id or name */
+    server: string;
+    /** The container name */
+    container: string;
+    /** The shell to use (eg. `sh` or `bash`) */
+    shell: string;
+    /** The command to execute. */
+    command: string;
+}
+/**
+ * Execute a command in the given containers shell.
+ * TODO: Document calling.
+ */
+export interface ExecuteDeploymentExecBody {
+    /** Deployment Id or name */
+    deployment: string;
+    /** The shell to use (eg. `sh` or `bash`) */
+    shell: string;
+    /** The command to execute. */
+    command: string;
+}
+/**
+ * Execute a command in the given containers shell.
+ * TODO: Document calling.
+ */
+export interface ExecuteStackExecBody {
+    /** Stack Id or name */
+    stack: string;
+    /** The service name to connect to */
+    service: string;
+    /** The shell to use (eg. `sh` or `bash`) */
+    shell: string;
+    /** The command to execute. */
+    command: string;
 }
 /**
  * Execute a terminal command on the given server.
