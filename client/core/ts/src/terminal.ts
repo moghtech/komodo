@@ -326,8 +326,8 @@ export const terminal_methods = (url: string, state: ClientState) => {
     connect_deployment_exec,
     execute_deployment_exec,
     execute_deployment_exec_stream,
-    connect_container_exec,
-    execute_container_exec,
-    execute_container_exec_stream,
+    connect_stack_exec,
+    execute_stack_exec,
+    execute_stack_exec_stream,
   };
 };

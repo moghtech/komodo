@@ -173,7 +173,7 @@ export function KomodoClient(url, options) {
             }
         }
     };
-    const { connect_terminal, execute_terminal, execute_terminal_stream, connect_container_exec, execute_container_exec, execute_container_exec_stream, } = terminal_methods(url, state);
+    const { connect_terminal, execute_terminal, execute_terminal_stream, connect_container_exec, execute_container_exec, execute_container_exec_stream, connect_deployment_exec, execute_deployment_exec, execute_deployment_exec_stream, connect_stack_exec, execute_stack_exec, execute_stack_exec_stream, } = terminal_methods(url, state);
     return {
         /**
          * Call the `/auth` api.
@@ -319,9 +319,8 @@ export function KomodoClient(url, options) {
         execute_terminal_stream,
         /**
          * Subscribes to container exec io over websocket message,
-         * for use with xtermjs. Can connect to Deployment, Stack,
-         * or any container on a Server. The permission used to allow the connection
-         * depends on `query.type`.
+         * for use with xtermjs. Can connect to Container on a Server.
+         * Server Terminal permission required.
          */
         connect_container_exec,
         /**
@@ -331,13 +330,10 @@ export function KomodoClient(url, options) {
          * ```ts
          * const stream = await komodo.execute_container_exec(
          *   {
-         *     type: "container", // or "deployment" or "stack"
-         *     query: {
-         *       server: "my-server",
-         *       container: "name",
-         *       shell: "bash",
-         *       command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
-         *     }
+         *     server: "my-server",
+         *     container: "name",
+         *     shell: "bash",
+         *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
          *   },
          *   {
          *     onLine: (line) => console.log(line),
@@ -360,13 +356,10 @@ export function KomodoClient(url, options) {
          *
          * ```ts
          * const stream = await komodo.execute_container_exec_stream({
-         *   type: "container", // or "deployment" or "stack"
-         *   query: {
-         *     server: "my-server",
-         *     container: "name",
-         *     shell: "bash",
-         *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
-         *   }
+         *   server: "my-server",
+         *   container: "name",
+         *   shell: "bash",
+         *   command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
          * });
          *
          * for await (const line of stream) {
@@ -375,5 +368,105 @@ export function KomodoClient(url, options) {
          * ```
          */
         execute_container_exec_stream,
+        /**
+         * Subscribes to deployment container exec io over websocket message,
+         * for use with xtermjs. Can connect to Deployment container.
+         * Deployment Terminal permission required.
+         */
+        connect_deployment_exec,
+        /**
+         * Executes a command on a given deployment container,
+         * and gives a callback to handle the output as it comes in.
+         *
+         * ```ts
+         * const stream = await komodo.execute_deployment_exec(
+         *   {
+         *     deployment: "my-deployment",
+         *     shell: "bash",
+         *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+         *   },
+         *   {
+         *     onLine: (line) => console.log(line),
+         *     onFinish: (code) => console.log("Finished:", code),
+         *   }
+         * );
+         * ```
+         */
+        execute_deployment_exec,
+        /**
+         * Executes a command on a given deployment container,
+         * and returns a stream to process the output as it comes in.
+         *
+         * Note. The final line of the stream will usually be
+         * `__KOMODO_EXIT_CODE__:0`. The number
+         * is the exit code of the command.
+         *
+         * If this line is NOT present, it means the stream
+         * was terminated early, ie like running `exit`.
+         *
+         * ```ts
+         * const stream = await komodo.execute_deployment_exec_stream({
+         *   deployment: "my-deployment",
+         *   shell: "bash",
+         *   command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+         * });
+         *
+         * for await (const line of stream) {
+         *   console.log(line);
+         * }
+         * ```
+         */
+        execute_deployment_exec_stream,
+        /**
+         * Subscribes to container exec io over websocket message,
+         * for use with xtermjs. Can connect to Stack service container.
+         * Stack Terminal permission required.
+         */
+        connect_stack_exec,
+        /**
+         * Executes a command on a given stack service container,
+         * and gives a callback to handle the output as it comes in.
+         *
+         * ```ts
+         * const stream = await komodo.execute_stack_exec(
+         *   {
+         *     stack: "my-stack",
+         *     service: "database"
+         *     shell: "bash",
+         *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+         *   },
+         *   {
+         *     onLine: (line) => console.log(line),
+         *     onFinish: (code) => console.log("Finished:", code),
+         *   }
+         * );
+         * ```
+         */
+        execute_stack_exec,
+        /**
+         * Executes a command on a given stack service container,
+         * and returns a stream to process the output as it comes in.
+         *
+         * Note. The final line of the stream will usually be
+         * `__KOMODO_EXIT_CODE__:0`. The number
+         * is the exit code of the command.
+         *
+         * If this line is NOT present, it means the stream
+         * was terminated early, ie like running `exit`.
+         *
+         * ```ts
+         * const stream = await komodo.execute_stack_exec_stream({
+         *   stack: "my-stack",
+         *   service: "service1",
+         *   shell: "bash",
+         *   command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+         * });
+         *
+         * for await (const line of stream) {
+         *   console.log(line);
+         * }
+         * ```
+         */
+        execute_stack_exec_stream,
     };
 }

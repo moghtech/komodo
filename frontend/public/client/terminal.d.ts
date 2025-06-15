@@ -1,5 +1,11 @@
 import { ClientState } from "./lib";
 import { ConnectContainerExecQuery, ConnectDeploymentExecQuery, ConnectStackExecQuery, ConnectTerminalQuery, ExecuteContainerExecBody, ExecuteDeploymentExecBody, ExecuteStackExecBody, ExecuteTerminalBody } from "./types";
+export type TerminalCallbacks = {
+    on_message?: (e: MessageEvent<any>) => void;
+    on_login?: () => void;
+    on_open?: () => void;
+    on_close?: () => void;
+};
 export type ConnectExecQuery = {
     type: "container";
     query: ConnectContainerExecQuery;
@@ -12,35 +18,37 @@ export type ConnectExecQuery = {
 };
 export type ExecuteExecBody = {
     type: "container";
-    query: ExecuteContainerExecBody;
+    body: ExecuteContainerExecBody;
 } | {
     type: "deployment";
-    query: ExecuteDeploymentExecBody;
+    body: ExecuteDeploymentExecBody;
 } | {
     type: "stack";
-    query: ExecuteStackExecBody;
+    body: ExecuteStackExecBody;
 };
-export type TerminalCallbacks = {
-    on_message?: (e: MessageEvent<any>) => void;
-    on_login?: () => void;
-    on_open?: () => void;
-    on_close?: () => void;
+export type ExecuteCallbacks = {
+    onLine?: (line: string) => void | Promise<void>;
+    onFinish?: (code: string) => void | Promise<void>;
 };
 export declare const terminal_methods: (url: string, state: ClientState) => {
     connect_terminal: ({ query, on_message, on_login, on_open, on_close, }: {
         query: ConnectTerminalQuery;
     } & TerminalCallbacks) => WebSocket;
-    execute_terminal: (request: ExecuteTerminalBody, callbacks?: {
-        onLine?: (line: string) => void | Promise<void>;
-        onFinish?: (code: string) => void | Promise<void>;
-    }) => Promise<void>;
+    execute_terminal: (request: ExecuteTerminalBody, callbacks?: ExecuteCallbacks) => Promise<void>;
     execute_terminal_stream: (request: ExecuteTerminalBody) => Promise<AsyncIterable<string>>;
-    connect_container_exec: ({ query: { type, query }, on_message, on_login, on_open, on_close, }: {
-        query: ConnectExecQuery;
+    connect_container_exec: ({ query, ...callbacks }: {
+        query: ConnectContainerExecQuery;
     } & TerminalCallbacks) => WebSocket;
-    execute_container_exec: (request: ExecuteExecBody, callbacks?: {
-        onLine?: (line: string) => void | Promise<void>;
-        onFinish?: (code: string) => void | Promise<void>;
-    }) => Promise<void>;
-    execute_container_exec_stream: (request: ExecuteExecBody) => Promise<AsyncIterable<string>>;
+    execute_container_exec: (body: ExecuteContainerExecBody, callbacks?: ExecuteCallbacks) => Promise<void>;
+    execute_container_exec_stream: (body: ExecuteContainerExecBody) => Promise<AsyncIterable<string>>;
+    connect_deployment_exec: ({ query, ...callbacks }: {
+        query: ConnectDeploymentExecQuery;
+    } & TerminalCallbacks) => WebSocket;
+    execute_deployment_exec: (body: ExecuteDeploymentExecBody, callbacks?: ExecuteCallbacks) => Promise<void>;
+    execute_deployment_exec_stream: (body: ExecuteDeploymentExecBody) => Promise<AsyncIterable<string>>;
+    connect_stack_exec: ({ query, ...callbacks }: {
+        query: ConnectStackExecQuery;
+    } & TerminalCallbacks) => WebSocket;
+    execute_stack_exec: (body: ExecuteStackExecBody, callbacks?: ExecuteCallbacks) => Promise<void>;
+    execute_stack_exec_stream: (body: ExecuteStackExecBody) => Promise<AsyncIterable<string>>;
 };

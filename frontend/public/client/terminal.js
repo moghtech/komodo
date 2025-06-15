@@ -50,7 +50,10 @@ export const terminal_methods = (url, state) => {
         await callbacks?.onFinish?.("Early exit without code");
     };
     const execute_terminal_stream = (request) => execute_stream("/terminal/execute", request);
-    const connect_container_exec = ({ query: { type, query }, on_message, on_login, on_open, on_close, }) => {
+    const connect_container_exec = ({ query, ...callbacks }) => connect_exec({ query: { type: "container", query }, ...callbacks });
+    const connect_deployment_exec = ({ query, ...callbacks }) => connect_exec({ query: { type: "deployment", query }, ...callbacks });
+    const connect_stack_exec = ({ query, ...callbacks }) => connect_exec({ query: { type: "stack", query }, ...callbacks });
+    const connect_exec = ({ query: { type, query }, on_message, on_login, on_open, on_close, }) => {
         const url_query = new URLSearchParams(query).toString();
         const ws = new WebSocket(url.replace("http", "ws") + `/ws/${type}/terminal?` + url_query);
         // Handle login on websocket open
@@ -86,8 +89,11 @@ export const terminal_methods = (url, state) => {
         ws.onclose = () => on_close?.();
         return ws;
     };
-    const execute_container_exec = async (request, callbacks) => {
-        const stream = await execute_container_exec_stream(request);
+    const execute_container_exec = (body, callbacks) => execute_exec({ type: "container", body }, callbacks);
+    const execute_deployment_exec = (body, callbacks) => execute_exec({ type: "deployment", body }, callbacks);
+    const execute_stack_exec = (body, callbacks) => execute_exec({ type: "stack", body }, callbacks);
+    const execute_exec = async (request, callbacks) => {
+        const stream = await execute_exec_stream(request);
         for await (const line of stream) {
             if (line.startsWith("__KOMODO_EXIT_CODE")) {
                 await callbacks?.onFinish?.(line.split(":")[1]);
@@ -100,7 +106,10 @@ export const terminal_methods = (url, state) => {
         // This is hit if no __KOMODO_EXIT_CODE is sent, ie early exit
         await callbacks?.onFinish?.("Early exit without code");
     };
-    const execute_container_exec_stream = (request) => execute_stream(`/terminal/execute/${request.type}`, request.query);
+    const execute_container_exec_stream = (body) => execute_exec_stream({ type: "container", body });
+    const execute_deployment_exec_stream = (body) => execute_exec_stream({ type: "deployment", body });
+    const execute_stack_exec_stream = (body) => execute_exec_stream({ type: "stack", body });
+    const execute_exec_stream = (request) => execute_stream(`/terminal/execute/${request.type}`, request.body);
     const execute_stream = (path, request) => new Promise(async (res, rej) => {
         try {
             let response = await fetch(url + path, {
@@ -184,5 +193,11 @@ export const terminal_methods = (url, state) => {
         connect_container_exec,
         execute_container_exec,
         execute_container_exec_stream,
+        connect_deployment_exec,
+        execute_deployment_exec,
+        execute_deployment_exec_stream,
+        connect_stack_exec,
+        execute_stack_exec,
+        execute_stack_exec_stream,
     };
 };
