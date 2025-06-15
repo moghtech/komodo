@@ -3,7 +3,6 @@ use command::run_komodo_command;
 use futures::future::join_all;
 use komodo_client::entities::{
   docker::container::{Container, ContainerListItem, ContainerStats},
-  to_docker_compatible_name,
   update::Log,
 };
 use periphery_client::api::container::*;
@@ -234,8 +233,7 @@ impl Resolve<super::Args> for RenameContainer {
       curr_name,
       new_name,
     } = self;
-    let new = to_docker_compatible_name(&new_name);
-    let command = format!("docker rename {curr_name} {new}");
+    let command = format!("docker rename {curr_name} {new_name}");
     Ok(run_komodo_command("Docker Rename", None, command).await)
   }
 }

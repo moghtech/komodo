@@ -14,7 +14,7 @@ use komodo_client::{
     EnvironmentVar, Version,
     build::{Build, BuildConfig},
     environment_vars_from_str, get_image_name, optional_string,
-    to_docker_compatible_name, to_path_compatible_name,
+    to_path_compatible_name,
     update::Log,
   },
   parsers::QUOTE_PATTERN,
@@ -182,8 +182,6 @@ impl Resolve<super::Args> for build::Build {
         return Ok(logs);
       }
     };
-
-    let name = to_docker_compatible_name(name);
 
     let build_path = if let Some(repo) = &linked_repo {
       periphery_config()

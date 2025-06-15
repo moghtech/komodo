@@ -19,7 +19,6 @@ use super::{
   FileContents, SystemCommand,
   docker::container::ContainerListItem,
   resource::{Resource, ResourceListItem, ResourceQuery},
-  to_docker_compatible_name,
 };
 
 #[typeshare]
@@ -35,9 +34,9 @@ impl Stack {
       }
     }
     if self.config.project_name.is_empty() {
-      to_docker_compatible_name(&self.name)
+      self.name.clone()
     } else {
-      to_docker_compatible_name(&self.config.project_name)
+      self.config.project_name.clone()
     }
   }
 

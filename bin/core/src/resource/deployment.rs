@@ -14,7 +14,7 @@ use komodo_client::entities::{
   permission::{PermissionLevel, SpecificPermission},
   resource::Resource,
   server::Server,
-  to_docker_compatible_name,
+  to_container_compatible_name,
   update::Update,
   user::User,
 };
@@ -50,7 +50,7 @@ impl super::KomodoResource for Deployment {
   }
 
   fn validated_name(name: &str) -> String {
-    to_docker_compatible_name(name)
+    to_container_compatible_name(name)
   }
 
   fn creator_specific_permissions() -> IndexSet<SpecificPermission> {

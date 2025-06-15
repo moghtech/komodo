@@ -145,9 +145,9 @@ pub fn get_image_name(
   }: &build::Build,
 ) -> anyhow::Result<String> {
   let name = if image_name.is_empty() {
-    to_docker_compatible_name(name)
+    name
   } else {
-    to_docker_compatible_name(image_name)
+    image_name
   };
   let name = match (
     !domain.is_empty(),
@@ -156,24 +156,36 @@ pub fn get_image_name(
   ) {
     // If organization and account provided, name under organization.
     (true, true, true) => {
-      format!("{domain}/{}/{name}", organization.to_lowercase())
+      format!("{domain}/{}/{name}", organization)
     }
     // Just domain / account provided
     (true, false, true) => format!("{domain}/{account}/{name}"),
     // Otherwise, just use name
-    _ => name,
+    _ => name.to_string(),
   };
   Ok(name)
 }
 
 pub fn to_general_name(name: &str) -> String {
-  name.replace('\n', "_").trim().to_string()
+  name.trim().replace('\n', "_").to_string()
 }
 
 pub fn to_path_compatible_name(name: &str) -> String {
-  name.replace([' ', '\n'], "_").trim().to_string()
+  name.trim().replace([' ', '\n'], "_").to_string()
 }
 
+/// Enforce common container naming rules.
+/// [a-zA-Z0-9_.-]
+pub fn to_container_compatible_name(name: &str) -> String {
+  name.trim().replace([' ', ',', '\n', '&'], "_").to_string()
+}
+
+/// Enforce common docker naming rules, such as only lowercase, and no '.'.
+/// These apply to:
+///   - Stacks (docker project name)
+///   - Builds (docker image name)
+///   - Networks
+///   - Volumes
 pub fn to_docker_compatible_name(name: &str) -> String {
   name
     .to_lowercase()
