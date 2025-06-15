@@ -131,8 +131,8 @@ impl Resolve<ExecuteArgs> for CloneRepo {
       Ok(res) => res.logs,
       Err(e) => {
         vec![Log::error(
-          "clone repo",
-          format_serror(&e.context("failed to clone repo").into()),
+          "Clone Repo",
+          format_serror(&e.context("Failed to clone repo").into()),
         )]
       }
     };
@@ -479,8 +479,8 @@ impl Resolve<ExecuteArgs> for BuildRepo {
       }
       Err(e) => {
         update.push_error_log(
-          "clone repo",
-          format_serror(&e.context("failed to clone repo").into()),
+          "Clone Repo",
+          format_serror(&e.context("Failed to clone repo").into()),
         );
         Default::default()
       }

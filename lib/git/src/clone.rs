@@ -189,7 +189,7 @@ async fn clone_inner(
     (command, output.stderr)
   };
   let mut logs = vec![Log {
-    stage: "clone repo".to_string(),
+    stage: "Clone Repo".to_string(),
     command,
     success,
     stdout: output.stdout,

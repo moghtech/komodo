@@ -290,10 +290,10 @@ impl Resolve<ExecuteArgs> for RunBuild {
           res.commit_message.unwrap_or_default()
         }
         Err(e) => {
-          warn!("failed build at clone repo | {e:#}");
+          warn!("Failed build at clone repo | {e:#}");
           update.push_error_log(
-            "clone repo",
-            format_serror(&e.context("failed to clone repo").into()),
+            "Clone Repo",
+            format_serror(&e.context("Failed to clone repo").into()),
           );
           Default::default()
         }
