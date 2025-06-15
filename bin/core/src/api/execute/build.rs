@@ -260,10 +260,10 @@ impl Resolve<ExecuteArgs> for RunBuild {
       && (!build.config.repo.is_empty()
         || !build.config.linked_repo.is_empty())
     {
-      // CLONE REPO
+      // PULL OR CLONE REPO
       let res = tokio::select! {
         res = periphery
-          .request(api::git::CloneRepo {
+          .request(api::git::PullOrCloneRepo {
             args: repo.as_ref().map(Into::into).unwrap_or((&build).into()),
             git_token,
             environment: Default::default(),
