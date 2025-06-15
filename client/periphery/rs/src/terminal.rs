@@ -2,17 +2,12 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use komodo_client::terminal::TerminalStreamResponse;
+use reqwest::RequestBuilder;
 use rustls::{ClientConfig, client::danger::ServerCertVerifier};
 use tokio::net::TcpStream;
 use tokio_tungstenite::{Connector, MaybeTlsStream, WebSocketStream};
 
-use crate::{
-  PeripheryClient,
-  api::terminal::{
-    ConnectContainerExecQuery, ConnectTerminalQuery,
-    CreateTerminalAuthToken, ExecuteTerminalBody,
-  },
-};
+use crate::{PeripheryClient, api::terminal::*};
 
 impl PeripheryClient {
   /// Handles ws connect and login.
@@ -70,28 +65,7 @@ impl PeripheryClient {
       .post(format!("{}/terminal/execute", self.address))
       .json(&ExecuteTerminalBody { terminal, command })
       .header("authorization", &self.passkey);
-    let res =
-      req.send().await.context("Failed at request to periphery")?;
-    let status = res.status();
-    tracing::debug!(
-      "got response | type: ExecuteTerminal | {status} | response: {res:?}",
-    );
-    if status.is_success() {
-      Ok(TerminalStreamResponse(res))
-    } else {
-      tracing::debug!("response is non-200");
-
-      let text = res
-        .text()
-        .await
-        .context("Failed to convert response to text")?;
-
-      tracing::debug!("got response text, deserializing error");
-
-      let error = serror::deserialize_error(text).context(status);
-
-      Err(error)
-    }
+    terminal_stream_response(req).await
   }
 
   /// Handles ws connect and login.
@@ -124,6 +98,40 @@ impl PeripheryClient {
 
     connect_websocket(&url).await
   }
+
+  /// Executes command on specified container,
+  /// and streams the response ending in [KOMODO_EXIT_CODE][komodo_client::entities::KOMODO_EXIT_CODE]
+  /// sentinal value as the expected final line of the stream.
+  ///
+  /// Example final line:
+  /// ```
+  /// __KOMODO_EXIT_CODE:0
+  /// ```
+  ///
+  /// This means the command exited with code 0 (success).
+  ///
+  /// If this value is NOT the final item before stream closes, it means
+  /// the container shell exited mid command, before giving status. Example: running `exit`.
+  #[tracing::instrument(level = "debug", skip(self))]
+  pub async fn execute_container_exec(
+    &self,
+    container: String,
+    shell: String,
+    command: String,
+  ) -> anyhow::Result<TerminalStreamResponse> {
+    tracing::trace!(
+      "sending request | type: ExecuteContainerExec | container: {container} | shell: {shell} | command: {command}",
+    );
+    let req = crate::periphery_http_client()
+      .post(format!("{}/terminal/execute/container", self.address))
+      .json(&ExecuteContainerExecBody {
+        container,
+        shell,
+        command,
+      })
+      .header("authorization", &self.passkey);
+    terminal_stream_response(req).await
+  }
 }
 
 async fn connect_websocket(
@@ -152,6 +160,33 @@ async fn connect_websocket(
   };
 
   Ok(stream)
+}
+
+async fn terminal_stream_response(
+  req: RequestBuilder,
+) -> anyhow::Result<TerminalStreamResponse> {
+  let res =
+    req.send().await.context("Failed at request to periphery")?;
+  let status = res.status();
+  tracing::debug!(
+    "got response | type: ExecuteTerminal | {status} | response: {res:?}",
+  );
+  if status.is_success() {
+    Ok(TerminalStreamResponse(res))
+  } else {
+    tracing::debug!("response is non-200");
+
+    let text = res
+      .text()
+      .await
+      .context("Failed to convert response to text")?;
+
+    tracing::debug!("got response text, deserializing error");
+
+    let error = serror::deserialize_error(text).context(status);
+
+    Err(error)
+  }
 }
 
 #[derive(Debug)]
