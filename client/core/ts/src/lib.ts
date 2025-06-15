@@ -5,18 +5,17 @@ import {
   UserResponses,
   WriteResponses,
 } from "./responses.js";
-import { terminal_methods } from "./terminal.js";
+import {
+  terminal_methods,
+  ConnectExecQuery,
+  ExecuteExecBody,
+  TerminalCallbacks,
+} from "./terminal.js";
 import {
   AuthRequest,
   BatchExecutionResponse,
-  ConnectContainerExecQuery,
-  ConnectDeploymentExecQuery,
-  ConnectStackExecQuery,
   ConnectTerminalQuery,
-  ExecuteContainerExecBody,
-  ExecuteDeploymentExecBody,
   ExecuteRequest,
-  ExecuteStackExecBody,
   ExecuteTerminalBody,
   ReadRequest,
   Update,
@@ -28,6 +27,8 @@ import {
 } from "./types.js";
 
 export * as Types from "./types.js";
+
+export type { ConnectExecQuery, ExecuteExecBody, TerminalCallbacks };
 
 export type InitOptions =
   | { type: "jwt"; params: { jwt: string } }

@@ -1,3 +1,4 @@
+import { terminal_methods, } from "./terminal.js";
 import { UpdateStatus, } from "./types.js";
 export * as Types from "./types.js";
 export class CancelToken {
@@ -172,168 +173,7 @@ export function KomodoClient(url, options) {
             }
         }
     };
-    const connect_terminal = ({ query, on_message, on_login, on_open, on_close, }) => {
-        const url_query = new URLSearchParams(query).toString();
-        const ws = new WebSocket(url.replace("http", "ws") + "/ws/terminal?" + url_query);
-        // Handle login on websocket open
-        ws.onopen = () => {
-            const login_msg = options.type === "jwt"
-                ? {
-                    type: "Jwt",
-                    params: {
-                        jwt: options.params.jwt,
-                    },
-                }
-                : {
-                    type: "ApiKeys",
-                    params: {
-                        key: options.params.key,
-                        secret: options.params.secret,
-                    },
-                };
-            ws.send(JSON.stringify(login_msg));
-            on_open?.();
-        };
-        ws.onmessage = (e) => {
-            if (e.data == "LOGGED_IN") {
-                ws.binaryType = "arraybuffer";
-                ws.onmessage = (e) => on_message?.(e);
-                on_login?.();
-                return;
-            }
-            else {
-                on_message?.(e);
-            }
-        };
-        ws.onclose = () => on_close?.();
-        return ws;
-    };
-    const connect_container_exec = ({ query: { type, query }, on_message, on_login, on_open, on_close, }) => {
-        const url_query = new URLSearchParams(query).toString();
-        const ws = new WebSocket(url.replace("http", "ws") + `/ws/${type}/terminal?` + url_query);
-        // Handle login on websocket open
-        ws.onopen = () => {
-            const login_msg = options.type === "jwt"
-                ? {
-                    type: "Jwt",
-                    params: {
-                        jwt: options.params.jwt,
-                    },
-                }
-                : {
-                    type: "ApiKeys",
-                    params: {
-                        key: options.params.key,
-                        secret: options.params.secret,
-                    },
-                };
-            ws.send(JSON.stringify(login_msg));
-            on_open?.();
-        };
-        ws.onmessage = (e) => {
-            if (e.data == "LOGGED_IN") {
-                ws.binaryType = "arraybuffer";
-                ws.onmessage = (e) => on_message?.(e);
-                on_login?.();
-                return;
-            }
-            else {
-                on_message?.(e);
-            }
-        };
-        ws.onclose = () => on_close?.();
-        return ws;
-    };
-    const execute_terminal_stream = (request) => new Promise(async (res, rej) => {
-        try {
-            let response = await fetch(url + "/terminal/execute", {
-                method: "POST",
-                body: JSON.stringify(request),
-                headers: {
-                    ...(state.jwt
-                        ? {
-                            authorization: state.jwt,
-                        }
-                        : state.key && state.secret
-                            ? {
-                                "x-api-key": state.key,
-                                "x-api-secret": state.secret,
-                            }
-                            : {}),
-                    "content-type": "application/json",
-                },
-            });
-            if (response.status === 200) {
-                if (response.body) {
-                    const stream = response.body
-                        .pipeThrough(new TextDecoderStream("utf-8"))
-                        .pipeThrough(new TransformStream({
-                        start(_controller) {
-                            this.tail = "";
-                        },
-                        transform(chunk, controller) {
-                            const data = this.tail + chunk; // prepend any carry‑over
-                            const parts = data.split(/\r?\n/); // split on CRLF or LF
-                            this.tail = parts.pop(); // last item may be incomplete
-                            for (const line of parts)
-                                controller.enqueue(line);
-                        },
-                        flush(controller) {
-                            if (this.tail)
-                                controller.enqueue(this.tail); // final unterminated line
-                        },
-                    }));
-                    res(stream);
-                }
-                else {
-                    rej({
-                        status: response.status,
-                        result: { error: "No response body", trace: [] },
-                    });
-                }
-            }
-            else {
-                try {
-                    const result = await response.json();
-                    rej({ status: response.status, result });
-                }
-                catch (error) {
-                    rej({
-                        status: response.status,
-                        result: {
-                            error: "Failed to get response body",
-                            trace: [JSON.stringify(error)],
-                        },
-                        error,
-                    });
-                }
-            }
-        }
-        catch (error) {
-            rej({
-                status: 1,
-                result: {
-                    error: "Request failed with error",
-                    trace: [JSON.stringify(error)],
-                },
-                error,
-            });
-        }
-    });
-    const execute_terminal = async (request, callbacks) => {
-        const stream = await execute_terminal_stream(request);
-        for await (const line of stream) {
-            if (line.startsWith("__KOMODO_EXIT_CODE")) {
-                await callbacks?.onFinish?.(line.split(":")[1]);
-                return;
-            }
-            else {
-                await callbacks?.onLine?.(line);
-            }
-        }
-        // This is hit if no __KOMODO_EXIT_CODE is sent, ie early exit
-        await callbacks?.onFinish?.("Early exit without code");
-    };
+    const { connect_terminal, execute_terminal, execute_terminal_stream, connect_container_exec, execute_container_exec, execute_container_exec_stream, } = terminal_methods(url, state);
     return {
         /**
          * Call the `/auth` api.
@@ -435,12 +275,24 @@ export function KomodoClient(url, options) {
          */
         connect_terminal,
         /**
-         * Subscribes to container exec io over websocket message,
-         * for use with xtermjs. Can connect to Deployment, Stack,
-         * or any container on a Server. The permission used to allow the connection
-         * depends on `query.type`.
+         * Executes a command on a given Server / terminal,
+         * and gives a callback to handle the output as it comes in.
+         *
+         * ```ts
+         * const stream = await komodo.execute_terminal(
+         *   {
+         *     server: "my-server",
+         *     terminal: "name",
+         *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+         *   },
+         *   {
+         *     onLine: (line) => console.log(line),
+         *     onFinish: (code) => console.log("Finished:", code),
+         *   }
+         * );
+         * ```
          */
-        connect_container_exec,
+        execute_terminal,
         /**
          * Executes a command on a given Server / terminal,
          * and returns a stream to process the output as it comes in.
@@ -466,15 +318,26 @@ export function KomodoClient(url, options) {
          */
         execute_terminal_stream,
         /**
-         * Executes a command on a given Server / terminal,
+         * Subscribes to container exec io over websocket message,
+         * for use with xtermjs. Can connect to Deployment, Stack,
+         * or any container on a Server. The permission used to allow the connection
+         * depends on `query.type`.
+         */
+        connect_container_exec,
+        /**
+         * Executes a command on a given container,
          * and gives a callback to handle the output as it comes in.
          *
          * ```ts
-         * const stream = await komodo.execute_terminal(
+         * const stream = await komodo.execute_container_exec(
          *   {
-         *     server: "my-server",
-         *     terminal: "name",
-         *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+         *     type: "container", // or "deployment" or "stack"
+         *     query: {
+         *       server: "my-server",
+         *       container: "name",
+         *       shell: "bash",
+         *       command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+         *     }
          *   },
          *   {
          *     onLine: (line) => console.log(line),
@@ -483,6 +346,34 @@ export function KomodoClient(url, options) {
          * );
          * ```
          */
-        execute_terminal,
+        execute_container_exec,
+        /**
+         * Executes a command on a given container,
+         * and returns a stream to process the output as it comes in.
+         *
+         * Note. The final line of the stream will usually be
+         * `__KOMODO_EXIT_CODE__:0`. The number
+         * is the exit code of the command.
+         *
+         * If this line is NOT present, it means the stream
+         * was terminated early, ie like running `exit`.
+         *
+         * ```ts
+         * const stream = await komodo.execute_container_exec_stream({
+         *   type: "container", // or "deployment" or "stack"
+         *   query: {
+         *     server: "my-server",
+         *     container: "name",
+         *     shell: "bash",
+         *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+         *   }
+         * });
+         *
+         * for await (const line of stream) {
+         *   console.log(line);
+         * }
+         * ```
+         */
+        execute_container_exec_stream,
     };
 }
