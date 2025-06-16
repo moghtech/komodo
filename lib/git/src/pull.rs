@@ -121,6 +121,24 @@ where
       });
     }
 
+    // First fetch remote branches before checkout
+    let fetch = run_komodo_command(
+      "Git fetch",
+      path.as_ref(),
+      "git fetch --all --prune",
+    )
+    .await;
+    if !fetch.success {
+      logs.push(fetch);
+      return Ok(GitRes {
+        logs,
+        path,
+        hash: None,
+        message: None,
+        env_file_path: None,
+      });
+    }
+
     let checkout = run_komodo_command(
       "Checkout branch",
       path.as_ref(),
