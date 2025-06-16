@@ -414,7 +414,7 @@ impl DockerClient {
                 mode: options.mode
             }),
         }).collect(),
-        console_size: config.console_size.unwrap_or_default(),
+        console_size: config.console_size.map(|v| v.into_iter().map(|s| s as i32).collect()).unwrap_or_default(),
         annotations: config.annotations.unwrap_or_default(),
         cap_add: config.cap_add.unwrap_or_default(),
         cap_drop: config.cap_drop.unwrap_or_default(),

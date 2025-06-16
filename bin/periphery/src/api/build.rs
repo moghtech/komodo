@@ -191,7 +191,7 @@ impl Resolve<super::Args> for build::Build {
     } else {
       periphery_config()
         .build_dir()
-        .join(to_path_compatible_name(&name))
+        .join(to_path_compatible_name(name))
         .join(build_path)
     }
     .components()
