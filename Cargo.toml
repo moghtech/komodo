@@ -8,7 +8,7 @@ members = [
 ]
 
 [workspace.package]
-version = "1.18.3"
+version = "1.18.4-dev-1"
 edition = "2024"
 authors = ["mbecker20 <becker.maxh@gmail.com>"]
 license = "GPL-3.0-or-later"
@@ -67,7 +67,7 @@ strum = { version = "0.27.1", features = ["derive"] }
 serde_json = "1.0.140"
 serde_yaml = "0.9.34"
 serde_qs = "0.15.0"
-toml = "0.8.22"
+toml = "0.8.23"
 
 # ERROR
 anyhow = "1.0.98"
@@ -83,7 +83,7 @@ opentelemetry = "0.29.1"
 tracing = "0.1.41"
 
 # CONFIG
-clap = { version = "4.5.38", features = ["derive"] }
+clap = { version = "4.5.40", features = ["derive"] }
 dotenvy = "0.15.7"
 envy = "0.4.2"
 
@@ -103,12 +103,12 @@ hex = "0.4.3"
 
 # SYSTEM
 portable-pty = "0.9.0"
-bollard = "0.19.0"
-sysinfo = "0.35.1"
+bollard = "0.19.1"
+sysinfo = "0.35.2"
 
 # CLOUD
-aws-config = "1.6.3"
-aws-sdk-ec2 = "1.134.0"
+aws-config = "1.8.0"
+aws-sdk-ec2 = "1.139.0"
 aws-credential-types = "1.2.3"
 
 ## CRON
