@@ -119,6 +119,10 @@ pub struct ResourceToml<PartialConfig: Default> {
   #[serde(default, skip_serializing_if = "String::is_empty")]
   pub description: String,
 
+  /// Mark resource as a template
+  #[serde(default, skip_serializing_if = "is_false")]
+  pub template: bool,
+
   /// Tag ids or names. Optional
   #[serde(default, skip_serializing_if = "Vec::is_empty")]
   pub tags: Vec<String>,

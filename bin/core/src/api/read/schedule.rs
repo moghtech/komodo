@@ -2,8 +2,11 @@ use futures::future::join_all;
 use komodo_client::{
   api::read::*,
   entities::{
-    ResourceTarget, action::Action, permission::PermissionLevel,
-    procedure::Procedure, resource::ResourceQuery,
+    ResourceTarget,
+    action::Action,
+    permission::PermissionLevel,
+    procedure::Procedure,
+    resource::{ResourceQuery, TemplatesQueryBehavior},
     schedule::Schedule,
   },
 };
@@ -27,6 +30,7 @@ impl Resolve<ReadArgs> for ListSchedules {
       list_full_for_user::<Action>(
         ResourceQuery {
           names: Default::default(),
+          templates: TemplatesQueryBehavior::Include,
           tag_behavior: self.tag_behavior,
           tags: self.tags.clone(),
           specific: Default::default(),
@@ -38,6 +42,7 @@ impl Resolve<ReadArgs> for ListSchedules {
       list_full_for_user::<Procedure>(
         ResourceQuery {
           names: Default::default(),
+          templates: TemplatesQueryBehavior::Include,
           tag_behavior: self.tag_behavior,
           tags: self.tags.clone(),
           specific: Default::default(),

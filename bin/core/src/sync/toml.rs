@@ -139,12 +139,13 @@ pub fn convert_resource<R: KomodoResource>(
 ) -> ResourceToml<R::PartialConfig> {
   ResourceToml {
     name: resource.name,
+    description: resource.description,
+    template: resource.template,
     tags: resource
       .tags
       .iter()
       .filter_map(|t| all_tags.get(t).map(|t| t.name.clone()))
       .collect(),
-    description: resource.description,
     deploy,
     after,
     // The config still needs to be minimized.

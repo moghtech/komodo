@@ -65,6 +65,7 @@ impl super::KomodoResource for Server {
     ServerListItem {
       name: server.name,
       id: server.id,
+      template: server.template,
       tags: server.tags,
       resource_type: ResourceTargetVariant::Server,
       info: ServerListItemInfo {

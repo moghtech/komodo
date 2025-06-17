@@ -491,12 +491,13 @@ pub async fn create<T: KomodoResource>(
   let resource = Resource::<T::Config, T::Info> {
     id: Default::default(),
     name,
-    updated_at: start_ts,
     description: Default::default(),
+    template: Default::default(),
     tags: Default::default(),
     config: config.into(),
     info: T::default_info().await?,
     base_permission: PermissionLevel::None.into(),
+    updated_at: start_ts,
   };
 
   let resource_id = T::coll()
@@ -665,52 +666,60 @@ fn resource_target<T: KomodoResource>(id: String) -> ResourceTarget {
   }
 }
 
-pub async fn update_description<T: KomodoResource>(
+pub struct ResourceMetaUpdate {
+  pub description: Option<String>,
+  pub template: Option<bool>,
+  pub tags: Option<Vec<String>>,
+}
+
+impl ResourceMetaUpdate {
+  pub fn is_none(&self) -> bool {
+    self.description.is_none()
+      && self.template.is_none()
+      && self.tags.is_none()
+  }
+}
+
+pub async fn update_meta<T: KomodoResource>(
   id_or_name: &str,
-  description: &str,
-  user: &User,
+  meta: ResourceMetaUpdate,
+  args: &WriteArgs,
 ) -> anyhow::Result<()> {
   get_check_permissions::<T>(
     id_or_name,
-    user,
+    &args.user,
     PermissionLevel::Write.into(),
   )
   .await?;
-  T::coll()
-    .update_one(
-      id_or_name_filter(id_or_name),
-      doc! { "$set": { "description": description } },
-    )
-    .await?;
-  Ok(())
-}
-
-pub async fn update_tags<T: KomodoResource>(
-  id_or_name: &str,
-  tags: Vec<String>,
-  args: &WriteArgs,
-) -> anyhow::Result<()> {
-  let futures = tags.iter().map(|tag| async {
-    match get_tag(tag).await {
-      Ok(tag) => Ok(tag.id),
-      Err(_) => CreateTag {
-        name: tag.to_string(),
+  let mut set = Document::new();
+  if let Some(description) = meta.description {
+    set.insert("description", description);
+  }
+  if let Some(template) = meta.template {
+    set.insert("template", template);
+  }
+  if let Some(tags) = meta.tags {
+    // First normalize to tag ids only
+    let futures = tags.iter().map(|tag| async {
+      match get_tag(tag).await {
+        Ok(tag) => Ok(tag.id),
+        Err(_) => CreateTag {
+          name: tag.to_string(),
+        }
+        .resolve(args)
+        .await
+        .map(|tag| tag.id),
       }
-      .resolve(args)
+    });
+    let tags = join_all(futures)
       .await
-      .map(|tag| tag.id),
-    }
-  });
-  let tags = join_all(futures)
-    .await
-    .into_iter()
-    .flatten()
-    .collect::<Vec<_>>();
+      .into_iter()
+      .flatten()
+      .collect::<Vec<_>>();
+    set.insert("tags", tags);
+  }
   T::coll()
-    .update_one(
-      id_or_name_filter(id_or_name),
-      doc! { "$set": { "tags": tags } },
-    )
+    .update_one(id_or_name_filter(id_or_name), doc! { "$set": set })
     .await?;
   refresh_all_resources_cache().await;
   Ok(())

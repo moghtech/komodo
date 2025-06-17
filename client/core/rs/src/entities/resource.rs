@@ -37,10 +37,10 @@ pub struct Resource<Config: Default, Info: Default = ()> {
   #[builder(default)]
   pub description: String,
 
-  /// When description last updated
+  /// Mark resource as a template
   #[serde(default)]
-  #[builder(setter(skip))]
-  pub updated_at: I64,
+  #[builder(default)]
+  pub template: bool,
 
   /// Tag Ids
   #[serde(default, deserialize_with = "string_list_deserializer")]
@@ -62,6 +62,11 @@ pub struct Resource<Config: Default, Info: Default = ()> {
   #[serde(default)]
   #[builder(default)]
   pub base_permission: PermissionLevelAndSpecifics,
+
+  /// When description last updated
+  #[serde(default)]
+  #[builder(setter(skip))]
+  pub updated_at: I64,
 }
 
 impl<C: Default, I: Default> Default for Resource<C, I> {
@@ -70,11 +75,12 @@ impl<C: Default, I: Default> Default for Resource<C, I> {
       id: String::new(),
       name: String::from("temp-resource"),
       description: String::new(),
-      updated_at: 0,
+      template: Default::default(),
       tags: Vec::new(),
       info: I::default(),
       config: C::default(),
       base_permission: Default::default(),
+      updated_at: 0,
     }
   }
 }
@@ -89,6 +95,8 @@ pub struct ResourceListItem<Info> {
   pub resource_type: ResourceTargetVariant,
   /// The resource name
   pub name: String,
+  /// Whether resource is a template
+  pub template: bool,
   /// Tag Ids
   pub tags: Vec<String>,
   /// Resource specific info
@@ -103,19 +111,33 @@ pub struct ResourceListItem<Info> {
 pub struct ResourceQuery<T: Default> {
   #[serde(default)]
   pub names: Vec<String>,
+  #[serde(default)]
+  pub templates: TemplatesQueryBehavior,
   /// Pass Vec of tag ids or tag names
   #[serde(default, deserialize_with = "string_list_deserializer")]
   pub tags: Vec<String>,
   /// 'All' or 'Any'
   #[serde(default)]
-  pub tag_behavior: TagBehavior,
+  pub tag_behavior: TagQueryBehavior,
   #[serde(default)]
   pub specific: T,
 }
 
 #[typeshare]
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
-pub enum TagBehavior {
+pub enum TemplatesQueryBehavior {
+  /// Exclude templates from results. Default.
+  #[default]
+  Exclude,
+  /// Include templates in results.
+  Include,
+  /// Results *only* includes templates.
+  Only,
+}
+
+#[typeshare]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+pub enum TagQueryBehavior {
   /// Returns resources which have strictly all the tags
   #[default]
   All,
@@ -134,12 +156,23 @@ impl<T: AddFilters + Default> AddFilters for ResourceQuery<T> {
     if !self.names.is_empty() {
       filters.insert("name", doc! { "$in": &self.names });
     }
+    match self.templates {
+      TemplatesQueryBehavior::Exclude => {
+        filters.insert("template", doc! { "$ne": true });
+      }
+      TemplatesQueryBehavior::Only => {
+        filters.insert("template", true);
+      }
+      TemplatesQueryBehavior::Include => {
+        // No query on template field necessary
+      }
+    };
     if !self.tags.is_empty() {
       match self.tag_behavior {
-        TagBehavior::All => {
+        TagQueryBehavior::All => {
           filters.insert("tags", doc! { "$all": &self.tags });
         }
-        TagBehavior::Any => {
+        TagQueryBehavior::Any => {
           let ors = self
             .tags
             .iter()

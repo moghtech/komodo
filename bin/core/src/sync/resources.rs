@@ -24,12 +24,9 @@ use partial_derive2::{MaybeNone, PartialDiff};
 
 use crate::{
   api::write::WriteArgs,
-  resource::KomodoResource,
+  resource::{KomodoResource, ResourceMetaUpdate},
   state::all_resources_cache,
-  sync::{
-    ToUpdateItem,
-    execute::{run_update_description, run_update_tags},
-  },
+  sync::{ToUpdateItem, execute::run_update_meta},
 };
 
 use super::{
@@ -741,28 +738,24 @@ impl ExecuteResourceSync for Procedure {
         id,
         resource,
         update_description,
+        update_template,
         update_tags,
       } in &to_update
       {
-        // Update resource
         let name = resource.name.clone();
-        let tags = resource.tags.clone();
-        let description = resource.description.clone();
-        if *update_description {
-          run_update_description::<Procedure>(
+
+        let meta = ResourceMetaUpdate {
+          description: update_description
+            .then(|| resource.description.clone()),
+          template: update_template.then(|| resource.template),
+          tags: update_tags.then(|| resource.tags.clone()),
+        };
+
+        if !meta.is_none() {
+          run_update_meta::<Procedure>(
             id.clone(),
             &name,
-            description,
-            &mut log,
-            &mut has_error,
-          )
-          .await;
-        }
-        if *update_tags {
-          run_update_tags::<Procedure>(
-            id.clone(),
-            &name,
-            tags,
+            meta,
             &mut log,
             &mut has_error,
           )
@@ -804,8 +797,6 @@ impl ExecuteResourceSync for Procedure {
       let mut to_pull = Vec::new();
       for resource in &to_create {
         let name = resource.name.clone();
-        let tags = resource.tags.clone();
-        let description = resource.description.clone();
         let id = match crate::resource::create::<Procedure>(
           &name,
           resource.config.clone(),
@@ -827,18 +818,14 @@ impl ExecuteResourceSync for Procedure {
             continue;
           }
         };
-        run_update_tags::<Procedure>(
+        run_update_meta::<Procedure>(
           id.clone(),
           &name,
-          tags,
-          &mut log,
-          &mut has_error,
-        )
-        .await;
-        run_update_description::<Procedure>(
-          id,
-          &name,
-          description,
+          ResourceMetaUpdate {
+            description: Some(resource.description.clone()),
+            template: Some(resource.template.clone()),
+            tags: Some(resource.tags.clone()),
+          },
           &mut log,
           &mut has_error,
         )

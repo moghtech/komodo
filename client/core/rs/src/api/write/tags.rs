@@ -3,10 +3,7 @@ use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::entities::{
-  NoData, ResourceTarget,
-  tag::{Tag, TagColor},
-};
+use crate::entities::tag::{Tag, TagColor};
 
 use super::KomodoWriteRequest;
 
@@ -73,25 +70,3 @@ pub struct UpdateTagColor {
   /// The new color for the tag.
   pub color: TagColor,
 }
-
-//
-
-/// Update the tags on a resource.
-/// Response: [NoData]
-#[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
-#[empty_traits(KomodoWriteRequest)]
-#[response(UpdateTagsOnResourceResponse)]
-#[error(serror::Error)]
-pub struct UpdateTagsOnResource {
-  pub target: ResourceTarget,
-  /// Tag Ids
-  pub tags: Vec<String>,
-}
-
-#[typeshare]
-pub type UpdateTagsOnResourceResponse = NoData;
-
-//

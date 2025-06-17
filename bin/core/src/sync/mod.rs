@@ -40,6 +40,7 @@ pub struct ToUpdateItem<T: Default> {
   pub id: String,
   pub resource: ResourceToml<T>,
   pub update_description: bool,
+  pub update_template: bool,
   pub update_tags: bool,
 }
 

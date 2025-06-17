@@ -2,18 +2,14 @@ use std::collections::HashMap;
 
 use anyhow::Context;
 use formatting::{Color, bold, colored, muted};
-use komodo_client::{
-  api::write::{UpdateDescription, UpdateTagsOnResource},
-  entities::{
-    ResourceTargetVariant, tag::Tag, toml::ResourceToml, update::Log,
-    user::sync_user,
-  },
+use komodo_client::entities::{
+  ResourceTargetVariant, tag::Tag, toml::ResourceToml, update::Log,
+  user::sync_user,
 };
 use mungos::find::find_collect;
 use partial_derive2::MaybeNone;
-use resolver_api::Resolve;
 
-use crate::api::write::WriteArgs;
+use crate::{api::write::WriteArgs, resource::ResourceMetaUpdate};
 
 use super::{ResourceSyncTrait, SyncDeltas, ToUpdateItem};
 
@@ -97,6 +93,7 @@ pub async fn get_updates_for_execution<
         // or a change to tags / description
         if diff.is_none()
           && resource.description == original.description
+          && resource.template == original.template
           && resource.tags == original_tags
         {
           continue;
@@ -109,6 +106,7 @@ pub async fn get_updates_for_execution<
           id: original.id.clone(),
           update_description: resource.description
             != original.description,
+          update_template: resource.template != original.template,
           update_tags: resource.tags != original_tags,
           resource,
         };
@@ -143,8 +141,6 @@ pub trait ExecuteResourceSync: ResourceSyncTrait {
 
     for resource in to_create {
       let name = resource.name.clone();
-      let tags = resource.tags.clone();
-      let description = resource.description.clone();
       let id = match crate::resource::create::<Self>(
         &resource.name,
         resource.config,
@@ -164,18 +160,14 @@ pub trait ExecuteResourceSync: ResourceSyncTrait {
           continue;
         }
       };
-      run_update_tags::<Self>(
+      run_update_meta::<Self>(
         id.clone(),
         &name,
-        tags,
-        &mut log,
-        &mut has_error,
-      )
-      .await;
-      run_update_description::<Self>(
-        id,
-        &name,
-        description,
+        ResourceMetaUpdate {
+          description: Some(resource.description),
+          template: Some(resource.template),
+          tags: Some(resource.tags),
+        },
         &mut log,
         &mut has_error,
       )
@@ -193,30 +185,24 @@ pub trait ExecuteResourceSync: ResourceSyncTrait {
       id,
       resource,
       update_description,
+      update_template,
       update_tags,
     } in to_update
     {
-      // Update resource
       let name = resource.name.clone();
-      let tags = resource.tags.clone();
-      let description = resource.description.clone();
 
-      if update_description {
-        run_update_description::<Self>(
+      let meta = ResourceMetaUpdate {
+        description: update_description
+          .then(|| resource.description.clone()),
+        template: update_template.then(|| resource.template),
+        tags: update_tags.then(|| resource.tags.clone()),
+      };
+
+      if !meta.is_none() {
+        run_update_meta::<Self>(
           id.clone(),
           &name,
-          description,
-          &mut log,
-          &mut has_error,
-        )
-        .await;
-      }
-
-      if update_tags {
-        run_update_tags::<Self>(
-          id.clone(),
-          &name,
-          tags,
+          meta,
           &mut log,
           &mut has_error,
         )
@@ -286,21 +272,20 @@ pub trait ExecuteResourceSync: ResourceSyncTrait {
   }
 }
 
-pub async fn run_update_tags<Resource: ResourceSyncTrait>(
+pub async fn run_update_meta<Resource: ResourceSyncTrait>(
   id: String,
   name: &str,
-  tags: Vec<String>,
+  meta: ResourceMetaUpdate,
   log: &mut String,
   has_error: &mut bool,
 ) {
-  // Update tags
-  if let Err(e) = (UpdateTagsOnResource {
-    target: Resource::resource_target(id),
-    tags,
-  })
-  .resolve(&WriteArgs {
-    user: sync_user().to_owned(),
-  })
+  if let Err(e) = crate::resource::update_meta::<Resource>(
+    &id,
+    meta,
+    &WriteArgs {
+      user: sync_user().to_owned(),
+    },
+  )
   .await
   {
     *has_error = true;
@@ -309,46 +294,11 @@ pub async fn run_update_tags<Resource: ResourceSyncTrait>(
       colored("ERROR", Color::Red),
       Resource::resource_type(),
       bold(name),
-      e.error
+      e
     ))
   } else {
     log.push_str(&format!(
-      "\n{}: {} {} '{}' tags",
-      muted("INFO"),
-      colored("updated", Color::Blue),
-      Resource::resource_type(),
-      bold(name)
-    ));
-  }
-}
-
-pub async fn run_update_description<Resource: ResourceSyncTrait>(
-  id: String,
-  name: &str,
-  description: String,
-  log: &mut String,
-  has_error: &mut bool,
-) {
-  if let Err(e) = (UpdateDescription {
-    target: Resource::resource_target(id.clone()),
-    description,
-  })
-  .resolve(&WriteArgs {
-    user: sync_user().to_owned(),
-  })
-  .await
-  {
-    *has_error = true;
-    log.push_str(&format!(
-      "\n{}: failed to update description on {} '{}' | {:#}",
-      colored("ERROR", Color::Red),
-      Resource::resource_type(),
-      bold(name),
-      e.error
-    ))
-  } else {
-    log.push_str(&format!(
-      "\n{}: {} {} '{}' description",
+      "\n{}: {} {} '{}' meta",
       muted("INFO"),
       colored("updated", Color::Blue),
       Resource::resource_type(),

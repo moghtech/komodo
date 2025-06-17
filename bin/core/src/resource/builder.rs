@@ -64,6 +64,7 @@ impl super::KomodoResource for Builder {
     BuilderListItem {
       name: builder.name,
       id: builder.id,
+      template: builder.template,
       tags: builder.tags,
       resource_type: ResourceTargetVariant::Builder,
       info: BuilderListItemInfo {

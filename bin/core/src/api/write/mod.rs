@@ -23,11 +23,11 @@ mod alerter;
 mod build;
 mod builder;
 mod deployment;
-mod description;
 mod permissions;
 mod procedure;
 mod provider;
 mod repo;
+mod resource;
 mod server;
 mod service_user;
 mod stack;
@@ -77,8 +77,8 @@ pub enum WriteRequest {
   UpdatePermissionOnResourceType(UpdatePermissionOnResourceType),
   UpdatePermissionOnTarget(UpdatePermissionOnTarget),
 
-  // ==== DESCRIPTION ====
-  UpdateDescription(UpdateDescription),
+  // ==== RESOURCE ====
+  UpdateResourceMeta(UpdateResourceMeta),
 
   // ==== SERVER ====
   CreateServer(CreateServer),
@@ -175,7 +175,6 @@ pub enum WriteRequest {
   DeleteTag(DeleteTag),
   RenameTag(RenameTag),
   UpdateTagColor(UpdateTagColor),
-  UpdateTagsOnResource(UpdateTagsOnResource),
 
   // ==== VARIABLE ====
   CreateVariable(CreateVariable),

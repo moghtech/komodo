@@ -97,6 +97,7 @@ impl super::KomodoResource for Build {
     BuildListItem {
       name: build.name,
       id: build.id,
+      template: build.template,
       tags: build.tags,
       resource_type: ResourceTargetVariant::Build,
       info: BuildListItemInfo {

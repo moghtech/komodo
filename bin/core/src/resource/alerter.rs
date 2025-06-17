@@ -40,6 +40,7 @@ impl super::KomodoResource for Alerter {
     AlerterListItem {
       name: alerter.name,
       id: alerter.id,
+      template: alerter.template,
       tags: alerter.tags,
       resource_type: ResourceTargetVariant::Alerter,
       info: AlerterListItemInfo {

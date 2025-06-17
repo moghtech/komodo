@@ -59,6 +59,7 @@ impl super::KomodoResource for Action {
     ActionListItem {
       name: action.name,
       id: action.id,
+      template: action.template,
       tags: action.tags,
       resource_type: ResourceTargetVariant::Action,
       info: ActionListItemInfo {

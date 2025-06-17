@@ -128,6 +128,7 @@ impl super::KomodoResource for Deployment {
     DeploymentListItem {
       name: deployment.name,
       id: deployment.id,
+      template: deployment.template,
       tags: deployment.tags,
       resource_type: ResourceTargetVariant::Deployment,
       info: DeploymentListItemInfo {
