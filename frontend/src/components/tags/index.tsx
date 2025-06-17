@@ -159,7 +159,7 @@ export const ResourceTags = ({
   const inv = useInvalidate();
   const { type, id } = target;
   const resource = useRead(`List${type}s`, {}).data?.find((d) => d.id === id);
-  const { mutate } = useWrite("UpdateTagsOnResource", {
+  const { mutate } = useWrite("UpdateResourceMeta", {
     onSuccess: () => {
       inv([`List${type}s`]);
       toast({ title: "Removed tag" });
@@ -248,7 +248,7 @@ export const AddTags = ({ target }: { target: TargetExcludingSystem }) => {
 
   const inv = useInvalidate();
 
-  const { mutate: update } = useWrite("UpdateTagsOnResource", {
+  const { mutate: update } = useWrite("UpdateResourceMeta", {
     onSuccess: () => {
       inv([`List${type}s`]);
       toast({ title: `Added tag ${search}` });

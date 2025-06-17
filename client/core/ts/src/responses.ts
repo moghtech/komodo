@@ -204,8 +204,8 @@ export type WriteResponses = {
   UpdatePermissionOnResourceType: Types.UpdatePermissionOnResourceTypeResponse;
   UpdatePermissionOnTarget: Types.UpdatePermissionOnTargetResponse;
 
-  // ==== DESCRIPTION ====
-  UpdateDescription: Types.UpdateDescriptionResponse;
+  // ==== RESOURCE ====
+  UpdateResourceMeta: Types.UpdateResourceMetaResponse;
 
   // ==== SERVER ====
   CreateServer: Types.Server;
@@ -302,7 +302,6 @@ export type WriteResponses = {
   DeleteTag: Types.Tag;
   RenameTag: Types.Tag;
   UpdateTagColor: Types.Tag;
-  UpdateTagsOnResource: Types.UpdateTagsOnResourceResponse;
 
   // ==== VARIABLE ====
   CreateVariable: Types.CreateVariableResponse;

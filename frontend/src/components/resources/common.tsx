@@ -67,7 +67,7 @@ export const ResourceDescription = ({
     [key]: id,
   } as any).data;
 
-  const { mutate: update_description } = useWrite("UpdateDescription", {
+  const { mutate: update_description } = useWrite("UpdateResourceMeta", {
     onSuccess: () => {
       inv([`Get${type}`]);
       toast({ title: `Updated description on ${type} ${resource?.name}` });

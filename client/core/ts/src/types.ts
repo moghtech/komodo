@@ -8,8 +8,6 @@ export interface MongoIdObj {
 
 export type MongoId = MongoIdObj;
 
-export type I64 = number;
-
 /** The levels of permission that a User or UserGroup can have on a resource. */
 export enum PermissionLevel {
 	/** No permissions. */
@@ -27,6 +25,8 @@ export interface PermissionLevelAndSpecifics {
 	specific: Array<SpecificPermission>;
 }
 
+export type I64 = number;
+
 export interface Resource<Config, Info> {
 	/**
 	 * The Mongo ID of the resource.
@@ -41,8 +41,8 @@ export interface Resource<Config, Info> {
 	name: string;
 	/** A description for the resource */
 	description?: string;
-	/** When description last updated */
-	updated_at?: I64;
+	/** Mark resource as a template */
+	template?: boolean;
 	/** Tag Ids */
 	tags?: string[];
 	/** Resource-specific information (not user configurable). */
@@ -54,6 +54,8 @@ export interface Resource<Config, Info> {
 	 * resource.
 	 */
 	base_permission?: PermissionLevelAndSpecifics | PermissionLevel;
+	/** When description last updated */
+	updated_at?: I64;
 }
 
 export enum ScheduleFormat {
@@ -129,6 +131,8 @@ export interface ResourceListItem<Info> {
 	type: ResourceTarget["type"];
 	/** The resource name */
 	name: string;
+	/** Whether resource is a template */
+	template: boolean;
 	/** Tag Ids */
 	tags: string[];
 	/** Resource specific info */
@@ -165,7 +169,16 @@ export interface ActionListItemInfo {
 
 export type ActionListItem = ResourceListItem<ActionListItemInfo>;
 
-export enum TagBehavior {
+export enum TemplatesQueryBehavior {
+	/** Exclude templates from results. Default. */
+	Exclude = "Exclude",
+	/** Include templates in results. */
+	Include = "Include",
+	/** Results *only* includes templates. */
+	Only = "Only",
+}
+
+export enum TagQueryBehavior {
 	/** Returns resources which have strictly all the tags */
 	All = "All",
 	/** Returns resources which have one or more of the tags */
@@ -175,10 +188,11 @@ export enum TagBehavior {
 /** Passing empty Vec is the same as not filtering by that field */
 export interface ResourceQuery<T> {
 	names?: string[];
+	templates?: TemplatesQueryBehavior;
 	/** Pass Vec of tag ids or tag names */
 	tags?: string[];
 	/** 'All' or 'Any' */
-	tag_behavior?: TagBehavior;
+	tag_behavior?: TagQueryBehavior;
 	specific?: T;
 }
 
@@ -3871,8 +3885,6 @@ export interface StackQuerySpecifics {
 
 export type StackQuery = ResourceQuery<StackQuerySpecifics>;
 
-export type UpdateDescriptionResponse = NoData;
-
 export type UpdateDockerRegistryAccountResponse = DockerRegistryAccount;
 
 export type UpdateGitProviderAccountResponse = GitProviderAccount;
@@ -3883,9 +3895,9 @@ export type UpdatePermissionOnTargetResponse = NoData;
 
 export type UpdateProcedureResponse = Procedure;
 
-export type UpdateServiceUserDescriptionResponse = User;
+export type UpdateResourceMetaResponse = NoData;
 
-export type UpdateTagsOnResourceResponse = NoData;
+export type UpdateServiceUserDescriptionResponse = User;
 
 export type UpdateUserAdminResponse = NoData;
 
@@ -6498,7 +6510,7 @@ export interface ListSchedules {
 	/** Pass Vec of tag ids or tag names */
 	tags?: string[];
 	/** 'All' or 'Any' */
-	tag_behavior?: TagBehavior;
+	tag_behavior?: TagQueryBehavior;
 }
 
 /**
@@ -7047,6 +7059,8 @@ export interface ResourceToml<PartialConfig> {
 	name: string;
 	/** The resource description. Optional. */
 	description?: string;
+	/** Mark resource as a template */
+	template?: boolean;
 	/** Tag ids or names. Optional */
 	tags?: string[];
 	/**
@@ -7573,17 +7587,6 @@ export interface UpdateDeployment {
 }
 
 /**
- * Update a resources description.
- * Response: [NoData].
- */
-export interface UpdateDescription {
-	/** The target resource to set description for. */
-	target: ResourceTarget;
-	/** The new description. */
-	description: string;
-}
-
-/**
  * **Admin only.** Update a docker registry account.
  * Response: [DockerRegistryAccount].
  */
@@ -7669,6 +7672,33 @@ export interface UpdateRepo {
 }
 
 /**
+ * Update a resources common meta fields.
+ * - description
+ * - template
+ * - tags
+ * Response: [NoData].
+ */
+export interface UpdateResourceMeta {
+	/** The target resource to set update meta. */
+	target: ResourceTarget;
+	/**
+	 * New description to set,
+	 * or null for no update
+	 */
+	description?: string;
+	/**
+	 * New template value (true or false),
+	 * or null for no update
+	 */
+	template?: boolean;
+	/**
+	 * The exact tags to set,
+	 * or null for no update
+	 */
+	tags?: string[];
+}
+
+/**
  * Update the sync at the given id, and return the updated sync.
  * Response: [ResourceSync].
  * 
@@ -7739,16 +7769,6 @@ export interface UpdateTagColor {
 	tag: string;
 	/** The new color for the tag. */
 	color: TagColor;
-}
-
-/**
- * Update the tags on a resource.
- * Response: [NoData]
- */
-export interface UpdateTagsOnResource {
-	target: ResourceTarget;
-	/** Tag Ids */
-	tags: string[];
 }
 
 /**
@@ -8219,7 +8239,7 @@ export type WriteRequest =
 	| { type: "UpdateUserBasePermissions", params: UpdateUserBasePermissions }
 	| { type: "UpdatePermissionOnResourceType", params: UpdatePermissionOnResourceType }
 	| { type: "UpdatePermissionOnTarget", params: UpdatePermissionOnTarget }
-	| { type: "UpdateDescription", params: UpdateDescription }
+	| { type: "UpdateResourceMeta", params: UpdateResourceMeta }
 	| { type: "CreateServer", params: CreateServer }
 	| { type: "DeleteServer", params: DeleteServer }
 	| { type: "UpdateServer", params: UpdateServer }
@@ -8294,7 +8314,6 @@ export type WriteRequest =
 	| { type: "DeleteTag", params: DeleteTag }
 	| { type: "RenameTag", params: RenameTag }
 	| { type: "UpdateTagColor", params: UpdateTagColor }
-	| { type: "UpdateTagsOnResource", params: UpdateTagsOnResource }
 	| { type: "CreateVariable", params: CreateVariable }
 	| { type: "UpdateVariableValue", params: UpdateVariableValue }
 	| { type: "UpdateVariableDescription", params: UpdateVariableDescription }
