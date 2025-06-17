@@ -126,11 +126,11 @@ pub struct ResourceQuery<T: Default> {
 #[typeshare]
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub enum TemplatesQueryBehavior {
-  /// Exclude templates from results. Default.
+  /// Include templates in results. Default.
   #[default]
-  Exclude,
-  /// Include templates in results.
   Include,
+  /// Exclude templates from results.
+  Exclude,
   /// Results *only* includes templates.
   Only,
 }
