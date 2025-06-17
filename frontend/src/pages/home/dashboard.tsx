@@ -1,7 +1,7 @@
 import { ExportButton } from "@components/export";
 import { Page, Section } from "@components/layouts";
 import { ResourceComponents } from "@components/resources";
-import { ResourceLink, ResourceName } from "@components/resources/common";
+import { ResourceLink, ResourceNameSimple } from "@components/resources/common";
 import { TagsWithBadge } from "@components/tags";
 import { StatusBadge } from "@components/util";
 import {
@@ -142,7 +142,7 @@ const RecentCard = ({
       <div className="flex items-center justify-between">
         <div className="flex flex-wrap items-center gap-2 text-sm text-nowrap">
           <Components.Icon id={id} />
-          <ResourceName type={type} id={id} />
+          <ResourceNameSimple type={type} id={id} />
         </div>
         {type === "Deployment" && <DeploymentUpdateAvailable id={id} small />}
         {type === "Stack" && <StackUpdateAvailable id={id} small />}

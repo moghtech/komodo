@@ -4,7 +4,12 @@ import { Card } from "@ui/card";
 import { GitBranch, Loader2, RefreshCcw } from "lucide-react";
 import { RepoConfig } from "./config";
 import { BuildRepo, CloneRepo, PullRepo } from "./actions";
-import { DeleteResource, NewResource, ResourceLink } from "../common";
+import {
+  DeleteResource,
+  NewResource,
+  ResourceLink,
+  ResourcePageHeader,
+} from "../common";
 import { RepoTable } from "./table";
 import {
   repo_state_intention,
@@ -14,7 +19,7 @@ import { cn } from "@lib/utils";
 import { useServer } from "../server";
 import { Types } from "komodo_client";
 import { DashboardPieChart } from "@pages/home/dashboard";
-import { RepoLink, ResourcePageHeader, StatusBadge } from "@components/util";
+import { RepoLink, StatusBadge } from "@components/util";
 import { Badge } from "@ui/badge";
 import { useToast } from "@ui/use-toast";
 import { Button } from "@ui/button";
@@ -253,7 +258,7 @@ export const RepoComponents: RequiredResourceComponents = {
         icon={<RepoIcon id={id} size={8} />}
         type="Repo"
         id={id}
-        name={repo?.name}
+        resource={repo}
         state={repo?.info.state}
         status=""
       />

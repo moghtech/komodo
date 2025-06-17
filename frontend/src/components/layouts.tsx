@@ -18,7 +18,7 @@ import { ResourceTags } from "./tags";
 import { Topbar } from "./topbar";
 import { cn, usableResourcePath } from "@lib/utils";
 import { Sidebar } from "./sidebar";
-import { ResourceName } from "./resources/common";
+import { ResourceNameSimple } from "./resources/common";
 import { useShiftKeyListener } from "@lib/hooks";
 
 export const Layout = () => {
@@ -274,7 +274,7 @@ export const ResourceCard = ({
         <CardHeader className="flex-row justify-between">
           <div>
             <CardTitle>
-              <ResourceName type={type} id={id} />
+              <ResourceNameSimple type={type} id={id} />
             </CardTitle>
             {/* <CardDescription>
               <Components.Description id={id} />
@@ -310,7 +310,7 @@ export const ResourceRow = ({
       <Card className="h-full hover:bg-accent/50 group-focus:bg-accent/50 transition-colors">
         <CardHeader className="grid grid-cols-4 items-center">
           <CardTitle>
-            <ResourceName type={type} id={id} />
+            <ResourceNameSimple type={type} id={id} />
           </CardTitle>
           {Object.entries(Components.Info).map(([key, Info]) => (
             <Info key={key} id={id} />

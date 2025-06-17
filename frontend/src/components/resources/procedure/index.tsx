@@ -1,14 +1,10 @@
-import {
-  ActionWithDialog,
-  ResourcePageHeader,
-  StatusBadge,
-} from "@components/util";
+import { ActionWithDialog, StatusBadge } from "@components/util";
 import { useExecute, useRead } from "@lib/hooks";
 import { RequiredResourceComponents } from "@types";
 import { Clock, Route } from "lucide-react";
 import { ProcedureConfig } from "./config";
 import { ProcedureTable } from "./table";
-import { DeleteResource, NewResource } from "../common";
+import { DeleteResource, NewResource, ResourcePageHeader } from "../common";
 import {
   procedure_state_intention,
   stroke_color_class_by_intention,
@@ -165,7 +161,7 @@ export const ProcedureComponents: RequiredResourceComponents = {
         icon={<ProcedureIcon id={id} size={8} />}
         type="Procedure"
         id={id}
-        name={procedure?.name}
+        resource={procedure}
         state={procedure?.info.state}
         status={`${procedure?.info.stages} Stage${procedure?.info.stages === 1 ? "" : "s"}`}
       />

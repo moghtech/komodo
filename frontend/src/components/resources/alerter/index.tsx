@@ -4,10 +4,10 @@ import { AlarmClock, FlaskConical } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardDescription, CardHeader, CardTitle } from "@ui/card";
 import { AlerterConfig } from "./config";
-import { DeleteResource, NewResource } from "../common";
+import { DeleteResource, NewResource, ResourcePageHeader } from "../common";
 import { AlerterTable } from "./table";
 import { Types } from "komodo_client";
-import { ConfirmButton, ResourcePageHeader } from "@components/util";
+import { ConfirmButton } from "@components/util";
 import { GroupActions } from "@components/group-actions";
 
 const useAlerter = (id?: string) =>
@@ -95,7 +95,7 @@ export const AlerterComponents: RequiredResourceComponents = {
         icon={<AlarmClock className="w-8" />}
         type="Alerter"
         id={id}
-        name={alerter?.name}
+        resource={alerter}
         state={alerter?.info.enabled ? "Enabled" : "Disabled"}
         status={alerter?.info.endpoint_type}
       />

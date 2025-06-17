@@ -20,7 +20,6 @@ import {
   ChevronUp,
   Copy,
   Database,
-  Edit2,
   FolderGit,
   HardDrive,
   Loader2,
@@ -31,7 +30,6 @@ import {
   Settings,
   Tags,
   User,
-  X,
 } from "lucide-react";
 import { Input } from "../ui/input";
 import {
@@ -63,12 +61,11 @@ import { Types } from "komodo_client";
 import { Badge } from "@ui/badge";
 import { Section } from "./layouts";
 import { DataTable, SortableHeader } from "@ui/data-table";
-import { useInvalidate, useRead, useUser, useWrite } from "@lib/hooks";
+import { useRead, useUser } from "@lib/hooks";
 import { Prune } from "./resources/server/actions";
 import { MonacoEditor, MonacoLanguage } from "./monaco";
 import { UsableResource } from "@types";
 import { ResourceComponents } from "./resources";
-import { usePermissions } from "@lib/hooks";
 import { Popover, PopoverContent, PopoverTrigger } from "@ui/popover";
 import {
   Command,
@@ -866,134 +863,6 @@ export const DockerContainersSection = ({
       </Section>
     </div>
   );
-};
-
-export const ResourcePageHeader = ({
-  intent,
-  icon,
-  type,
-  id,
-  name,
-  state,
-  status,
-}: {
-  intent: ColorIntention;
-  icon: ReactNode;
-  name: string | undefined;
-  state: string | undefined;
-  status: string | undefined;
-  // Required for rename
-  type: UsableResource | undefined;
-  id: string | undefined;
-}) => {
-  const color = text_color_class_by_intention(intent);
-  const background = hex_color_by_intention(intent) + "15";
-  return (
-    <div
-      className="flex items-center gap-8 pl-8 pr-16 py-4 rounded-t-md w-full"
-      style={{ background }}
-    >
-      {icon}
-      <div>
-        {type && id && name ? (
-          <ResourceName type={type} id={id} name={name} />
-        ) : (
-          <p />
-        )}
-        {!type && <p className="text-3xl font-semibold">{name}</p>}
-        <div className="flex items-center gap-2 text-sm uppercase">
-          <p className={cn(color, "font-semibold")}>{state}</p>
-          <p className="text-muted-foreground">{status}</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const ResourceName = ({
-  type,
-  id,
-  name,
-}: {
-  type: UsableResource;
-  id: string;
-  name: string;
-}) => {
-  const invalidate = useInvalidate();
-  const { toast } = useToast();
-  const { canWrite } = usePermissions({ type, id });
-  const [newName, setName] = useState("");
-  const [editing, setEditing] = useState(false);
-  const { mutate, isPending } = useWrite(`Rename${type}`, {
-    onSuccess: () => {
-      invalidate([`List${type}s`]);
-      toast({ title: `${type} Renamed` });
-      setEditing(false);
-    },
-    onError: () => {
-      // If fails, set name back to original
-      setName(name);
-    },
-  });
-  // Ensure the newName is updated if the outer name changes
-  useEffect(() => setName(name), [name]);
-
-  if (editing) {
-    return (
-      <div className="flex items-center gap-2">
-        <Input
-          className="text-3xl font-semibold px-1 w-[200px] lg:w-[300px]"
-          placeholder="name"
-          value={newName}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              if (newName && name !== newName) {
-                mutate({ id, name: newName });
-              }
-            } else if (e.key === "Escape") {
-              setEditing(false);
-            }
-          }}
-          autoFocus
-        />
-        {name !== newName && (
-          <Button
-            onClick={() => mutate({ id, name: newName })}
-            disabled={!newName || isPending}
-          >
-            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
-          </Button>
-        )}
-        {name === newName && (
-          <Button variant="ghost" onClick={() => setEditing(false)}>
-            <X className="w-4 h-4" />
-          </Button>
-        )}
-      </div>
-    );
-  } else {
-    return (
-      <div
-        className={cn(
-          "flex items-center gap-2 w-full",
-          canWrite && "cursor-pointer"
-        )}
-        onClick={() => {
-          if (canWrite) {
-            setEditing(true);
-          }
-        }}
-      >
-        <p className="text-3xl font-semibold">{name}</p>
-        {canWrite && (
-          <Button variant="ghost" className="p-2 h-fit">
-            <Edit2 className="w-4 h-4" />
-          </Button>
-        )}
-      </div>
-    );
-  }
 };
 
 export const TextUpdateMenuSimple = ({

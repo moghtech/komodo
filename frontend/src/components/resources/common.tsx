@@ -7,6 +7,7 @@ import {
 } from "@components/util";
 import {
   useInvalidate,
+  usePermissions,
   useRead,
   useWrite,
   WebhookIntegration,
@@ -34,20 +35,210 @@ import {
   Check,
   ChevronsUpDown,
   Copy,
+  Edit2,
   Loader2,
   NotepadText,
   SearchX,
   Server,
   Trash,
+  X,
 } from "lucide-react";
-import { useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ResourceComponents } from ".";
 import { Input } from "@ui/input";
 import { useToast } from "@ui/use-toast";
 import { NewLayout } from "@components/layouts";
 import { Types } from "komodo_client";
-import { filterBySplit, usableResourcePath } from "@lib/utils";
+import { cn, filterBySplit, usableResourcePath } from "@lib/utils";
+import {
+  ColorIntention,
+  hex_color_by_intention,
+  text_color_class_by_intention,
+} from "@lib/color";
+import { Switch } from "@ui/switch";
+import { ResourceListItem } from "komodo_client/dist/types";
+import { Badge } from "@ui/badge";
+
+export const ResourcePageHeader = ({
+  type,
+  id,
+  intent,
+  icon,
+  resource,
+  name,
+  state,
+  status,
+}: {
+  type: UsableResource | undefined;
+  id: string | undefined;
+  intent: ColorIntention;
+  icon: ReactNode;
+  resource: Types.ResourceListItem<unknown> | undefined;
+  /** Only pass if not passing resource */
+  name?: string;
+  state: string | undefined;
+  status: string | undefined;
+}) => {
+  const color = text_color_class_by_intention(intent);
+  const background = hex_color_by_intention(intent) + "15";
+  return (
+    <div
+      className="flex items-center justify-between gap-4 pl-8 pr-8 py-4 rounded-t-md w-full"
+      style={{ background }}
+    >
+      <div className="flex items-center gap-8">
+        {icon}
+        <div>
+          {type && id && resource?.name ? (
+            <ResourceName type={type} id={id} name={resource.name} />
+          ) : (
+            <p />
+          )}
+          {!type && (
+            <p className="text-3xl font-semibold">{resource?.name ?? name}</p>
+          )}
+          <div className="flex items-center gap-2 text-sm uppercase">
+            <p className={cn(color, "font-semibold")}>{state}</p>
+            <p className="text-muted-foreground">{status}</p>
+          </div>
+        </div>
+      </div>
+      {type && id && resource && (
+        <TemplateSwitch type={type} id={id} resource={resource} />
+      )}
+    </div>
+  );
+};
+
+const TemplateSwitch = ({
+  type,
+  id,
+  resource,
+}: {
+  type: UsableResource;
+  id: string;
+  resource: ResourceListItem<unknown>;
+}) => {
+  const { toast } = useToast();
+  const inv = useInvalidate();
+  const { canWrite } = usePermissions({ type, id });
+  const { mutate, isPending } = useWrite("UpdateResourceMeta", {
+    onSuccess: () => {
+      inv([`List${type}s`], [`Get${type}`]);
+      toast({ title: `Updated is template on ${type} ${resource.name}` });
+    },
+  });
+  return (
+    <div
+      className="flex items-center flex-wrap gap-2 cursor-pointer"
+      onClick={() =>
+        canWrite &&
+        resource &&
+        !isPending &&
+        mutate({ target: { type, id }, template: !resource.template })
+      }
+    >
+      <Badge
+        variant={resource?.template ? "default" : "secondary"}
+        className="text-sm"
+      >
+        Template
+      </Badge>
+      {isPending ? (
+        <Loader2 className="w-4 h-4 animate-spin" />
+      ) : (
+        <Switch checked={resource?.template} disabled={!canWrite} />
+      )}
+    </div>
+  );
+};
+
+const ResourceName = ({
+  type,
+  id,
+  name,
+}: {
+  type: UsableResource;
+  id: string;
+  name: string;
+}) => {
+  const invalidate = useInvalidate();
+  const { toast } = useToast();
+  const { canWrite } = usePermissions({ type, id });
+  const [newName, setName] = useState("");
+  const [editing, setEditing] = useState(false);
+  const { mutate, isPending } = useWrite(`Rename${type}`, {
+    onSuccess: () => {
+      invalidate([`List${type}s`]);
+      toast({ title: `${type} Renamed` });
+      setEditing(false);
+    },
+    onError: () => {
+      // If fails, set name back to original
+      setName(name);
+    },
+  });
+  // Ensure the newName is updated if the outer name changes
+  useEffect(() => setName(name), [name]);
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-2">
+        <Input
+          className="text-3xl font-semibold px-1 w-[200px] lg:w-[300px]"
+          placeholder="name"
+          value={newName}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              if (newName && name !== newName) {
+                mutate({ id, name: newName });
+              }
+            } else if (e.key === "Escape") {
+              setEditing(false);
+            }
+          }}
+          autoFocus
+        />
+        {name !== newName && (
+          <Button
+            onClick={() => mutate({ id, name: newName })}
+            disabled={!newName || isPending}
+          >
+            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
+          </Button>
+        )}
+        {name === newName && (
+          <Button variant="ghost" onClick={() => setEditing(false)}>
+            <X className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+    );
+  } else {
+    return (
+      <div
+        className={cn(
+          "flex items-center gap-2 w-full",
+          canWrite && "cursor-pointer"
+        )}
+        onClick={() => {
+          if (canWrite) {
+            setEditing(true);
+          }
+        }}
+      >
+        <p className="text-3xl font-semibold">{name}</p>
+        {canWrite && (
+          <Button variant="ghost" className="p-2 h-fit">
+            <Edit2 className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+    );
+  }
+};
 
 export const ResourceDescription = ({
   type,
@@ -204,12 +395,12 @@ export const ResourceLink = ({
       className="flex items-center gap-2 text-sm hover:underline"
     >
       <Components.Icon id={id} />
-      <ResourceName type={type} id={id} />
+      <ResourceNameSimple type={type} id={id} />
     </Link>
   );
 };
 
-export const ResourceName = ({
+export const ResourceNameSimple = ({
   type,
   id,
 }: {

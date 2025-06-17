@@ -16,9 +16,8 @@ import { Cloud, Bot, Factory } from "lucide-react";
 import { ReactNode, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BuilderConfig } from "./config";
-import { DeleteResource, ResourceLink } from "../common";
+import { DeleteResource, ResourceLink, ResourcePageHeader } from "../common";
 import { BuilderTable } from "./table";
-import { ResourcePageHeader } from "@components/util";
 import { GroupActions } from "@components/group-actions";
 import { useServer } from "../server";
 import { cn } from "@lib/utils";
@@ -242,7 +241,7 @@ const InnerResourcePageHeader = ({
       icon={icon}
       type="Builder"
       id={id}
-      name={builder?.name}
+      resource={builder}
       state={builder?.info.builder_type}
       status={
         builder?.info.builder_type === "Aws"

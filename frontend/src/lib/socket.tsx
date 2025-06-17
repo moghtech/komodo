@@ -8,7 +8,7 @@ import { ReactNode, useCallback, useEffect, useRef } from "react";
 import { cn } from "@lib/utils";
 import { ResourceComponents } from "@components/resources";
 import { UsableResource } from "@types";
-import { ResourceName } from "@components/resources/common";
+import { ResourceNameSimple } from "@components/resources/common";
 
 const ws_atom = atom<{
   ws: WebSocket | undefined;
@@ -142,7 +142,7 @@ const on_update = (
     <div className="flex items-center gap-2">
       <div>Update</div> -<div>{update.operation}</div> -
       <div>
-        <ResourceName
+        <ResourceNameSimple
           type={update.target.type as UsableResource}
           id={update.target.id}
         />

@@ -31,10 +31,10 @@ export var ActionState;
 })(ActionState || (ActionState = {}));
 export var TemplatesQueryBehavior;
 (function (TemplatesQueryBehavior) {
-    /** Exclude templates from results. Default. */
-    TemplatesQueryBehavior["Exclude"] = "Exclude";
-    /** Include templates in results. */
+    /** Include templates in results. Default. */
     TemplatesQueryBehavior["Include"] = "Include";
+    /** Exclude templates from results. */
+    TemplatesQueryBehavior["Exclude"] = "Exclude";
     /** Results *only* includes templates. */
     TemplatesQueryBehavior["Only"] = "Only";
 })(TemplatesQueryBehavior || (TemplatesQueryBehavior = {}));

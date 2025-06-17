@@ -170,10 +170,10 @@ export interface ActionListItemInfo {
 export type ActionListItem = ResourceListItem<ActionListItemInfo>;
 
 export enum TemplatesQueryBehavior {
-	/** Exclude templates from results. Default. */
-	Exclude = "Exclude",
-	/** Include templates in results. */
+	/** Include templates in results. Default. */
 	Include = "Include",
+	/** Exclude templates from results. */
+	Exclude = "Exclude",
 	/** Results *only* includes templates. */
 	Only = "Only",
 }

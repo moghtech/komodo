@@ -1,12 +1,11 @@
 import { Section } from "@components/layouts";
-import { ResourceLink } from "@components/resources/common";
+import { ResourceLink, ResourcePageHeader } from "@components/resources/common";
 import { useServer } from "@components/resources/server";
 import {
   ConfirmButton,
   DOCKER_LINK_ICONS,
   DockerLabelsSection,
   DockerResourceLink,
-  ResourcePageHeader,
 } from "@components/util";
 import { useLocalStorage, useRead, useSetTitle, useWrite } from "@lib/hooks";
 import { Button } from "@ui/button";
@@ -93,6 +92,7 @@ const ContainerPageInner = ({
                   size={8}
                 />
               }
+              resource={undefined}
               name={container_name}
               state={state}
               status={list_container?.status}

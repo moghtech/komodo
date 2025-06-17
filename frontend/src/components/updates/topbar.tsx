@@ -13,7 +13,7 @@ import { ResourceComponents } from "@components/resources";
 import { cn, version_is_none } from "@lib/utils";
 import { Types } from "komodo_client";
 import { fmt_date, fmt_operation, fmt_version } from "@lib/formatting";
-import { ResourceName } from "@components/resources/common";
+import { ResourceNameSimple } from "@components/resources/common";
 import { UsableResource } from "@types";
 
 export const TopbarUpdates = () => {
@@ -83,7 +83,7 @@ const SingleUpdate = ({ update }: { update: Types.UpdateListItem }) => {
               {Components && (
                 <>
                   <Components.Icon />
-                  <ResourceName
+                  <ResourceNameSimple
                     type={update.target.type as UsableResource}
                     id={update.target.id}
                   />
