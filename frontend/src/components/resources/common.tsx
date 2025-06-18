@@ -408,7 +408,7 @@ export const ResourceLink = ({
     >
       <Components.Icon id={id} />
       <ResourceNameSimple type={type} id={id} />
-      {resource?.template && <TemplateMarker />}
+      {resource?.template && <TemplateMarker type={type} />}
     </Link>
   );
 };

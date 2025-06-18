@@ -1,3 +1,4 @@
+import { UsableResource } from "@types";
 import { Types } from "komodo_client";
 
 export const fmt_date = (d: Date) => {
@@ -95,6 +96,13 @@ export function format_size_bytes(size_bytes: number) {
   } else {
     return `${(size_bytes / BYTES_PER_MB).toFixed(1)} MB`;
   }
+}
+
+export function fmt_resource_type(type: UsableResource) {
+  if (type === "ResourceSync") {
+    return "Resource Sync";
+  }
+  return type;
 }
 
 export function fmt_utc_offset(tz: Types.IanaTimezone): string {

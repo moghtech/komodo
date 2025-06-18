@@ -16,7 +16,8 @@ import { cn, RESOURCE_TARGETS, usableResourcePath } from "@lib/utils";
 import { Badge } from "@ui/badge";
 import { ResourceComponents } from "./resources";
 import { Switch } from "@ui/switch";
-import { DOCKER_LINK_ICONS } from "./util";
+import { DOCKER_LINK_ICONS, TemplateMarker } from "./util";
+import { UsableResource } from "@types";
 
 export const OmniSearch = ({
   className,
@@ -50,8 +51,10 @@ export const OmniSearch = ({
 
 type OmniItem = {
   key: string;
+  type: UsableResource;
   label: string;
   icon: ReactNode;
+  template: boolean;
   onSelect: () => void;
 };
 
@@ -93,7 +96,7 @@ export const OmniDialog = ({
             <Fragment key={key}>
               {i !== 0 && <CommandSeparator />}
               <CommandGroup heading={key ? key : undefined}>
-                {items.map(({ key, label, icon, onSelect }) => (
+                {items.map(({ key, type, label, icon, onSelect, template }) => (
                   <CommandItem
                     key={key}
                     value={key}
@@ -102,6 +105,7 @@ export const OmniDialog = ({
                   >
                     {icon}
                     {label}
+                    {template && <TemplateMarker type={type} />}
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -131,31 +135,39 @@ const useOmniItems = (
       "": [
         {
           key: "Home",
+          type: "Server" as UsableResource,
           label: "Home",
           icon: <Home className="w-4 h-4" />,
           onSelect: () => nav("/"),
+          template: false,
         },
         ...RESOURCE_TARGETS.map((_type) => {
           const type = _type === "ResourceSync" ? "Sync" : _type;
           const Components = ResourceComponents[_type];
           return {
             key: type + "s",
+            type: _type,
             label: type + "s",
             icon: <Components.Icon />,
             onSelect: () => nav(usableResourcePath(_type)),
+            template: false,
           };
         }),
         {
           key: "Containers",
+          type: "Server" as UsableResource,
           label: "Containers",
           icon: <Box className="w-4 h-4" />,
           onSelect: () => nav("/containers"),
+          template: false,
         },
         (user?.admin && {
           key: "Users",
+          type: "Server" as UsableResource,
           label: "Users",
           icon: <User className="w-4 h-4" />,
           onSelect: () => nav("/users"),
+          template: false,
         }) as OmniItem,
       ]
         .filter((item) => item)
@@ -174,8 +186,8 @@ const useOmniItems = (
           return [
             type + "s",
             resources[_type]
-              ?.filter((item) => {
-                const lower_name = item.name.toLowerCase();
+              ?.filter((resource) => {
+                const lower_name = resource.name.toLowerCase();
                 return (
                   searchTerms.length === 0 ||
                   searchTerms.every(
@@ -184,12 +196,14 @@ const useOmniItems = (
                   )
                 );
               })
-              .map((server) => ({
-                key: type + "-" + server.name,
-                label: server.name,
-                icon: <Components.Icon id={server.id} />,
+              .map((resource) => ({
+                key: type + "-" + resource.name,
+                type: _type,
+                label: resource.name,
+                icon: <Components.Icon id={resource.id} />,
                 onSelect: () =>
-                  nav(`/${usableResourcePath(_type)}/${server.id}`),
+                  nav(`/${usableResourcePath(_type)}/${resource.id}`),
+                template: resource.template,
               })) || [],
           ];
         })

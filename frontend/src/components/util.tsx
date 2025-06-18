@@ -47,6 +47,7 @@ import { AUTH_TOKEN_STORAGE_KEY } from "@main";
 import { Textarea } from "@ui/textarea";
 import { Card } from "@ui/card";
 import {
+  fmt_resource_type,
   fmt_utc_offset,
   snake_case_to_upper_space_case,
 } from "@lib/formatting";
@@ -1102,14 +1103,14 @@ export const TimezoneSelector = ({
   );
 };
 
-export const TemplateMarker = () => {
+export const TemplateMarker = ({ type }: { type: UsableResource }) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <Badge className="px-1 py-0">T</Badge>
       </TooltipTrigger>
       <TooltipContent>
-        <div>This resource is a template.</div>
+        <div>This {fmt_resource_type(type).toLowerCase()} is a template.</div>
       </TooltipContent>
     </Tooltip>
   );
