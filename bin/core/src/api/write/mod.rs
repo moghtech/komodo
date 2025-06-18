@@ -82,6 +82,7 @@ pub enum WriteRequest {
 
   // ==== SERVER ====
   CreateServer(CreateServer),
+  CopyServer(CopyServer),
   DeleteServer(DeleteServer),
   UpdateServer(UpdateServer),
   RenameServer(RenameServer),
