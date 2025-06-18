@@ -501,7 +501,8 @@ export const NewResource = ({
   const nav = useNavigate();
   const { toast } = useToast();
   const showTemplateSelector =
-    useRead(`List${type}s`, {}).data?.filter((r) => r.template).length ?? 0 > 0;
+    (useRead(`List${type}s`, {}).data?.filter((r) => r.template).length ?? 0) >
+    0;
   const { mutateAsync: create } = useWrite(`Create${type}`);
   const { mutateAsync: copy } = useWrite(`Copy${type}`);
   const [templateId, setTemplateId] = useState<string>("");
