@@ -154,6 +154,7 @@ export type WriteResponses = {
     UpdatePermissionOnTarget: Types.UpdatePermissionOnTargetResponse;
     UpdateResourceMeta: Types.UpdateResourceMetaResponse;
     CreateServer: Types.Server;
+    CopyServer: Types.Server;
     DeleteServer: Types.Server;
     UpdateServer: Types.Server;
     RenameServer: Types.Update;

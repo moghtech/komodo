@@ -4322,6 +4322,16 @@ export interface CopyResourceSync {
     id: string;
 }
 /**
+ * Creates a new server with given `name` and the configuration
+ * of the server at the given `id`. Response: [Server].
+ */
+export interface CopyServer {
+    /** The name of the new server. */
+    name: string;
+    /** The id of the server to copy. */
+    id: string;
+}
+/**
  * Creates a new stack with given `name` and the configuration
  * of the stack at the given `id`. Response: [Stack].
  */
@@ -8189,6 +8199,9 @@ export type WriteRequest = {
 } | {
     type: "CreateServer";
     params: CreateServer;
+} | {
+    type: "CopyServer";
+    params: CopyServer;
 } | {
     type: "DeleteServer";
     params: DeleteServer;

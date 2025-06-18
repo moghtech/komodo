@@ -209,6 +209,7 @@ export type WriteResponses = {
 
   // ==== SERVER ====
   CreateServer: Types.Server;
+  CopyServer: Types.Server;
   DeleteServer: Types.Server;
   UpdateServer: Types.Server;
   RenameServer: Types.Update;
