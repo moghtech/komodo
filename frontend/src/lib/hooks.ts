@@ -604,3 +604,14 @@ const templatesQueryBehaviorAtom =
 
 export const useTemplatesQueryBehavior = () =>
   useAtom<Types.TemplatesQueryBehavior>(templatesQueryBehaviorAtom);
+
+export type SettingsView =
+  | "Variables"
+  | "Tags"
+  | "Providers"
+  | "Users"
+  | "Profile";
+
+const viewAtom = atomWithStorage<SettingsView>("settings-view-v2", "Variables");
+
+export const useSettingsView = () => useAtom<SettingsView>(viewAtom);

@@ -1,5 +1,6 @@
 import { ExportButton } from "@components/export";
 import { Section } from "@components/layouts";
+import { DeleteUserGroup } from "@components/users/delete-user-group";
 import { NewServiceUser, NewUserGroup } from "@components/users/new";
 import { UserTable } from "@components/users/table";
 import {
@@ -9,7 +10,6 @@ import {
   useUser,
   useWrite,
 } from "@lib/hooks";
-import { DeleteUserGroup } from "@pages/user-group";
 import { DataTable } from "@ui/data-table";
 import { Input } from "@ui/input";
 import { useToast } from "@ui/use-toast";

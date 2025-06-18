@@ -6,6 +6,7 @@ import {
   useWebhookIdOrName,
   WebhookIntegration,
   useWebhookIntegrations,
+  useSettingsView,
 } from "@lib/hooks";
 import { Types } from "komodo_client";
 import {
@@ -59,7 +60,6 @@ import {
   MonacoEditor,
   MonacoLanguage,
 } from "@components/monaco";
-import { useSettingsView } from "@pages/settings";
 import { useNavigate } from "react-router-dom";
 
 export const ConfigItem = ({

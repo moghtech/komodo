@@ -1,20 +1,15 @@
-import { useAtom } from "jotai";
-import { atomWithStorage, useUser } from "@lib/hooks";
+import { lazy } from "react";
+import { useSettingsView, useUser } from "@lib/hooks";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
 import { Page } from "@components/layouts";
 import { ExportButton } from "@components/export";
-import Resources from "@pages/resources";
 import { Variables } from "./variables";
 import { Tags } from "./tags";
 import { UsersPage } from "./users";
 import { Profile } from "./profile";
 import { ProvidersPage } from "./providers";
 
-type SettingsView = "Variables" | "Tags" | "Providers" | "Users" | "Profile";
-
-const viewAtom = atomWithStorage<SettingsView>("settings-view-v2", "Variables");
-
-export const useSettingsView = () => useAtom<SettingsView>(viewAtom);
+const Resources = lazy(() => import("@pages/resources"));
 
 export default function Settings() {
   const user = useUser().data;
