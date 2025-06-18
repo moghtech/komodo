@@ -61,7 +61,7 @@ import { Types } from "komodo_client";
 import { Badge } from "@ui/badge";
 import { Section } from "./layouts";
 import { DataTable, SortableHeader } from "@ui/data-table";
-import { useRead, useUser } from "@lib/hooks";
+import { useRead, useTemplatesQueryBehavior, useUser } from "@lib/hooks";
 import { Prune } from "./resources/server/actions";
 import { MonacoEditor, MonacoLanguage } from "./monaco";
 import { UsableResource } from "@types";
@@ -75,6 +75,14 @@ import {
   CommandItem,
   CommandList,
 } from "@ui/command";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@ui/select";
 
 export const WithLoading = ({
   children,
@@ -1091,5 +1099,45 @@ export const TimezoneSelector = ({
         </Command>
       </PopoverContent>
     </Popover>
+  );
+};
+
+export const TemplateMarker = () => {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge className="px-1 py-0">T</Badge>
+      </TooltipTrigger>
+      <TooltipContent>
+        <div>This resource is a template.</div>
+      </TooltipContent>
+    </Tooltip>
+  );
+};
+
+export const TemplateQueryBehaviorSelector = () => {
+  const [value, set] = useTemplatesQueryBehavior();
+  return (
+    <Select
+      value={value + " Templates"}
+      onValueChange={(value) =>
+        set(value.replace(" Templates", "") as Types.TemplatesQueryBehavior)
+      }
+    >
+      <SelectTrigger className="w-[180px]">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {[
+          Types.TemplatesQueryBehavior.Exclude,
+          Types.TemplatesQueryBehavior.Include,
+          Types.TemplatesQueryBehavior.Only,
+        ].map((behavior) => (
+          <SelectItem key={behavior} value={behavior + " Templates"}>
+            {behavior} Templates
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 };

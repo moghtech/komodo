@@ -595,3 +595,12 @@ export const usePermissions = ({ type, id }: Types.ResourceTarget) => {
     specific,
   };
 };
+
+const templatesQueryBehaviorAtom =
+  atomWithStorage<Types.TemplatesQueryBehavior>(
+    "templates-query-behavior-v0",
+    Types.TemplatesQueryBehavior.Exclude
+  );
+
+export const useTemplatesQueryBehavior = () =>
+  useAtom<Types.TemplatesQueryBehavior>(templatesQueryBehaviorAtom);

@@ -8,13 +8,14 @@ import {
   useRead,
   useResourceParamType,
   useSetTitle,
+  useTemplatesQueryBehavior,
   useUser,
 } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { Input } from "@ui/input";
 import { useState } from "react";
 import { Search } from "lucide-react";
-import { NotFound } from "@components/util";
+import { NotFound, TemplateQueryBehaviorSelector } from "@components/util";
 import { Switch } from "@ui/switch";
 import { UsableResource } from "@types";
 
@@ -37,8 +38,17 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
           },
         }
       : {};
+  const [templatesQueryBehavior] = useTemplatesQueryBehavior();
   const resources = useRead(`List${type}s`, query).data;
-  const filtered = useFilterResources(resources as any, search);
+  const templatesFilterFn =
+    templatesQueryBehavior === Types.TemplatesQueryBehavior.Exclude
+      ? (resource: Types.ResourceListItem<unknown>) => !resource.template
+      : templatesQueryBehavior === Types.TemplatesQueryBehavior.Only
+        ? (resource: Types.ResourceListItem<unknown>) => resource.template
+        : () => true;
+  const filtered = useFilterResources(resources as any, search).filter(
+    templatesFilterFn
+  );
 
   const Components = ResourceComponents[type];
 
@@ -80,6 +90,7 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
                 <Switch checked={filter_update_available} />
               </div>
             )}
+            <TemplateQueryBehaviorSelector />
             <TagsFilter />
             <div className="relative">
               <Search className="w-4 absolute top-[50%] left-3 -translate-y-[50%] text-muted-foreground" />

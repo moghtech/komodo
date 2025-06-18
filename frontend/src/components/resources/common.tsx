@@ -3,6 +3,7 @@ import {
   ConfirmButton,
   CopyButton,
   RepoLink,
+  TemplateMarker,
   TextUpdateMenuSimple,
 } from "@components/util";
 import {
@@ -288,17 +289,27 @@ export const ResourceSelector = ({
   onSelect,
   disabled,
   align,
+  templates = Types.TemplatesQueryBehavior.Exclude,
+  placeholder,
 }: {
   type: UsableResource;
   selected: string | undefined;
+  templates?: Types.TemplatesQueryBehavior;
   onSelect?: (id: string) => void;
   disabled?: boolean;
   align?: "start" | "center" | "end";
+  placeholder?: string;
 }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const resources = useRead(`List${type}s`, {}).data;
+  const templateFilterFn =
+    templates === Types.TemplatesQueryBehavior.Exclude
+      ? (r: Types.ResourceListItem<unknown>) => !r.template
+      : templates === Types.TemplatesQueryBehavior.Only
+        ? (r: Types.ResourceListItem<unknown>) => r.template
+        : () => true;
+  const resources = useRead(`List${type}s`, {}).data?.filter(templateFilterFn);
   const name = resources?.find((r) => r.id === selected)?.name;
 
   if (!resources) return null;
@@ -325,7 +336,7 @@ export const ResourceSelector = ({
           className="flex justify-start gap-2 w-fit max-w-[350px]"
           disabled={disabled}
         >
-          {name || `Select ${type}`}
+          {name || (placeholder ?? `Select ${type}`)}
           {!disabled && <ChevronsUpDown className="w-3 h-3" />}
         </Button>
       </PopoverTrigger>
@@ -385,6 +396,7 @@ export const ResourceLink = ({
   onClick?: () => void;
 }) => {
   const Components = ResourceComponents[type];
+  const resource = Components.list_item(id);
   return (
     <Link
       to={`/${usableResourcePath(type)}/${id}`}
@@ -396,6 +408,7 @@ export const ResourceLink = ({
     >
       <Components.Icon id={id} />
       <ResourceNameSimple type={type} id={id} />
+      {resource?.template && <TemplateMarker />}
     </Link>
   );
 };
@@ -487,7 +500,11 @@ export const NewResource = ({
 }) => {
   const nav = useNavigate();
   const { toast } = useToast();
-  const { mutateAsync } = useWrite(`Create${type}`);
+  const showTemplateSelector =
+    useRead(`List${type}s`, {}).data?.filter((r) => r.template).length ?? 0 > 0;
+  const { mutateAsync: create } = useWrite(`Create${type}`);
+  const { mutateAsync: copy } = useWrite(`Copy${type}`);
+  const [templateId, setTemplateId] = useState<string>("");
   const [name, setName] = useState(_name);
   const type_display =
     type === "ResourceSync" ? "resource-sync" : type.toLowerCase();
@@ -508,7 +525,9 @@ export const NewResource = ({
             : {};
   const onConfirm = async () => {
     if (!name) toast({ title: "Name cannot be empty" });
-    const id = (await mutateAsync({ name, config }))._id?.$oid!;
+    const id = templateId
+      ? (await copy({ name, id: templateId }))._id?.$oid!
+      : (await create({ name, config }))._id?.$oid!;
     nav(`/${usableResourcePath(type)}/${id}`);
   };
   return (
@@ -532,6 +551,19 @@ export const NewResource = ({
           }}
         />
       </div>
+      {showTemplateSelector && (
+        <div className="flex gap-4 justify-between items-center flex-wrap">
+          Template
+          <ResourceSelector
+            type={type}
+            selected={templateId}
+            onSelect={setTemplateId}
+            templates={Types.TemplatesQueryBehavior.Only}
+            placeholder="Select Template"
+            align="end"
+          />
+        </div>
+      )}
     </NewLayout>
   );
 };

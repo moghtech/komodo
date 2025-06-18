@@ -238,7 +238,7 @@ export const NewLayout = ({
           <DialogTitle>New {entityType}</DialogTitle>
           <DialogDescription>Enter a unique name for the new {entityType}.</DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-4 py-8">{children}</div>
+        <div className="flex flex-col gap-6 py-8">{children}</div>
         <DialogFooter>
           <Button
             variant="secondary"
