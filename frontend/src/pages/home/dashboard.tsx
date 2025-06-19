@@ -3,7 +3,7 @@ import { Page, Section } from "@components/layouts";
 import { ResourceComponents } from "@components/resources";
 import { ResourceLink, ResourceNameSimple } from "@components/resources/common";
 import { TagsWithBadge } from "@components/tags";
-import { StatusBadge } from "@components/util";
+import { StatusBadge, TemplateMarker } from "@components/util";
 import {
   action_state_intention,
   build_state_intention,
@@ -143,6 +143,7 @@ const RecentCard = ({
         <div className="flex flex-wrap items-center gap-2 text-sm text-nowrap">
           <Components.Icon id={id} />
           <ResourceNameSimple type={type} id={id} />
+          {resource.template && <TemplateMarker type={type} />}
         </div>
         {type === "Deployment" && <DeploymentUpdateAvailable id={id} small />}
         {type === "Stack" && <StackUpdateAvailable id={id} small />}
