@@ -44,7 +44,7 @@ You will have to input some information.
 2. For Content-type, choose `application/json`
 3. For Secret, input the secret you configured in the Komodo Core config (`KOMODO_WEBHOOK_SECRET`).
 4. Enable SSL Verification, if you have proper TLS setup to your git provider (recommended).
-5. For "events that trigger the webhook", just the push request is what post people want.
+5. For "events that trigger the webhook", just the push request is what most people want.
 6. Of course, make sure the webhook is "Active" and hit create.
 
 ## When does it trigger?
