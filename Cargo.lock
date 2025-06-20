@@ -2433,6 +2433,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "interpolate"
+version = "1.18.4-dev-5"
+dependencies = [
+ "anyhow",
+ "komodo_client",
+ "svi",
+]
+
+[[package]]
 name = "ipconfig"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2614,6 +2623,7 @@ dependencies = [
  "hex",
  "hmac",
  "indexmap 2.9.0",
+ "interpolate",
  "jsonwebtoken",
  "komodo_client",
  "logger",

@@ -1,7 +1,6 @@
-use std::collections::HashSet;
-
 use anyhow::Context;
 use formatting::format_serror;
+use interpolate::Interpolator;
 use komodo_client::{
   api::{execute::*, write::RefreshStackCache},
   entities::{
@@ -19,14 +18,8 @@ use resolver_api::Resolve;
 use crate::{
   api::write::WriteArgs,
   helpers::{
-    interpolate::{
-      add_interp_update_log,
-      interpolate_variables_secrets_into_extra_args,
-      interpolate_variables_secrets_into_string,
-      interpolate_variables_secrets_into_system_command,
-    },
     periphery_client,
-    query::get_variables_and_secrets,
+    query::{VariablesAndSecrets, get_variables_and_secrets},
     stack_git_token,
     update::{add_update_without_send, update_update},
   },
@@ -123,60 +116,21 @@ impl Resolve<ExecuteArgs> for DeployStack {
     // interpolate variables / secrets, returning the sanitizing replacers to send to
     // periphery so it may sanitize the final command for safe logging (avoids exposing secret values)
     let secret_replacers = if !stack.config.skip_secret_interp {
-      let vars_and_secrets = get_variables_and_secrets().await?;
+      let VariablesAndSecrets { variables, secrets } =
+        get_variables_and_secrets().await?;
 
-      let mut global_replacers = HashSet::new();
-      let mut secret_replacers = HashSet::new();
+      let mut interpolator =
+        Interpolator::new(Some(&variables), &secrets);
 
-      interpolate_variables_secrets_into_string(
-        &vars_and_secrets,
-        &mut stack.config.file_contents,
-        &mut global_replacers,
-        &mut secret_replacers,
-      )?;
+      interpolator.interpolate_stack(&mut stack)?;
+      if let Some(repo) = repo.as_mut() {
+        if !repo.config.skip_secret_interp {
+          interpolator.interpolate_repo(repo)?;
+        }
+      }
+      interpolator.add_log(&mut update);
 
-      interpolate_variables_secrets_into_string(
-        &vars_and_secrets,
-        &mut stack.config.environment,
-        &mut global_replacers,
-        &mut secret_replacers,
-      )?;
-
-      interpolate_variables_secrets_into_extra_args(
-        &vars_and_secrets,
-        &mut stack.config.extra_args,
-        &mut global_replacers,
-        &mut secret_replacers,
-      )?;
-
-      interpolate_variables_secrets_into_extra_args(
-        &vars_and_secrets,
-        &mut stack.config.build_extra_args,
-        &mut global_replacers,
-        &mut secret_replacers,
-      )?;
-
-      interpolate_variables_secrets_into_system_command(
-        &vars_and_secrets,
-        &mut stack.config.pre_deploy,
-        &mut global_replacers,
-        &mut secret_replacers,
-      )?;
-
-      interpolate_variables_secrets_into_system_command(
-        &vars_and_secrets,
-        &mut stack.config.post_deploy,
-        &mut global_replacers,
-        &mut secret_replacers,
-      )?;
-
-      add_interp_update_log(
-        &mut update,
-        &global_replacers,
-        &secret_replacers,
-      );
-
-      secret_replacers
+      interpolator.secret_replacers
     } else {
       Default::default()
     };
@@ -447,31 +401,20 @@ pub async fn pull_stack_inner(
 
   // interpolate variables / secrets
   if !stack.config.skip_secret_interp {
-    let vars_and_secrets = get_variables_and_secrets().await?;
+    let VariablesAndSecrets { variables, secrets } =
+      get_variables_and_secrets().await?;
 
-    let mut global_replacers = HashSet::new();
-    let mut secret_replacers = HashSet::new();
+    let mut interpolator =
+      Interpolator::new(Some(&variables), &secrets);
 
-    interpolate_variables_secrets_into_string(
-      &vars_and_secrets,
-      &mut stack.config.file_contents,
-      &mut global_replacers,
-      &mut secret_replacers,
-    )?;
-
-    interpolate_variables_secrets_into_string(
-      &vars_and_secrets,
-      &mut stack.config.environment,
-      &mut global_replacers,
-      &mut secret_replacers,
-    )?;
-
+    interpolator.interpolate_stack(&mut stack)?;
+    if let Some(repo) = repo.as_mut() {
+      if !repo.config.skip_secret_interp {
+        interpolator.interpolate_repo(repo)?;
+      }
+    }
     if let Some(update) = update {
-      add_interp_update_log(
-        update,
-        &global_replacers,
-        &secret_replacers,
-      );
+      interpolator.add_log(update);
     }
   };
 

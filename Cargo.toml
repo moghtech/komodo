@@ -20,6 +20,7 @@ homepage = "https://komo.do"
 komodo_client = { path = "client/core/rs" }
 periphery_client = { path = "client/periphery/rs" }
 environment_file = { path = "lib/environment_file" }
+interpolate = { path = "lib/interpolate" }
 formatting = { path = "lib/formatting" }
 response = { path = "lib/response" }
 command = { path = "lib/command" }

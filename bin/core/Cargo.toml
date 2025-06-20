@@ -18,6 +18,7 @@ path = "src/main.rs"
 komodo_client = { workspace = true, features = ["mongo"] }
 periphery_client.workspace = true
 environment_file.workspace = true
+interpolate.workspace = true
 formatting.workspace = true
 response.workspace = true
 command.workspace = true
