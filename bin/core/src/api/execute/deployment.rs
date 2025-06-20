@@ -1,8 +1,9 @@
-use std::{collections::HashSet, sync::OnceLock};
+use std::sync::OnceLock;
 
 use anyhow::{Context, anyhow};
 use cache::TimeoutCache;
 use formatting::format_serror;
+use interpolate::Interpolator;
 use komodo_client::{
   api::execute::*,
   entities::{
@@ -23,13 +24,8 @@ use resolver_api::Resolve;
 
 use crate::{
   helpers::{
-    interpolate::{
-      add_interp_update_log,
-      interpolate_variables_secrets_into_extra_args,
-      interpolate_variables_secrets_into_string,
-    },
     periphery_client,
-    query::get_variables_and_secrets,
+    query::{VariablesAndSecrets, get_variables_and_secrets},
     registry_token,
     update::update_update,
   },
@@ -180,53 +176,17 @@ impl Resolve<ExecuteArgs> for Deploy {
     // interpolate variables / secrets, returning the sanitizing replacers to send to
     // periphery so it may sanitize the final command for safe logging (avoids exposing secret values)
     let secret_replacers = if !deployment.config.skip_secret_interp {
-      let vars_and_secrets = get_variables_and_secrets().await?;
+      let VariablesAndSecrets { variables, secrets } =
+        get_variables_and_secrets().await?;
 
-      let mut global_replacers = HashSet::new();
-      let mut secret_replacers = HashSet::new();
+      let mut interpolator =
+        Interpolator::new(Some(&variables), &secrets);
 
-      interpolate_variables_secrets_into_string(
-        &vars_and_secrets,
-        &mut deployment.config.environment,
-        &mut global_replacers,
-        &mut secret_replacers,
-      )?;
+      interpolator
+        .interpolate_deployment(&mut deployment)?
+        .add_log(&mut update);
 
-      interpolate_variables_secrets_into_string(
-        &vars_and_secrets,
-        &mut deployment.config.ports,
-        &mut global_replacers,
-        &mut secret_replacers,
-      )?;
-
-      interpolate_variables_secrets_into_string(
-        &vars_and_secrets,
-        &mut deployment.config.volumes,
-        &mut global_replacers,
-        &mut secret_replacers,
-      )?;
-
-      interpolate_variables_secrets_into_extra_args(
-        &vars_and_secrets,
-        &mut deployment.config.extra_args,
-        &mut global_replacers,
-        &mut secret_replacers,
-      )?;
-
-      interpolate_variables_secrets_into_string(
-        &vars_and_secrets,
-        &mut deployment.config.command,
-        &mut global_replacers,
-        &mut secret_replacers,
-      )?;
-
-      add_interp_update_log(
-        &mut update,
-        &global_replacers,
-        &secret_replacers,
-      );
-
-      secret_replacers
+      interpolator.secret_replacers
     } else {
       Default::default()
     };

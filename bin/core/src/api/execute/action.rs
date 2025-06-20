@@ -7,6 +7,7 @@ use std::{
 
 use anyhow::Context;
 use command::run_komodo_command;
+use interpolate::Interpolator;
 use komodo_client::{
   api::{
     execute::{BatchExecutionResponse, BatchRunAction, RunAction},
@@ -31,11 +32,7 @@ use crate::{
   api::{execute::ExecuteRequest, user::UserArgs},
   config::core_config,
   helpers::{
-    interpolate::{
-      add_interp_update_log,
-      interpolate_variables_secrets_into_string,
-    },
-    query::get_variables_and_secrets,
+    query::{VariablesAndSecrets, get_variables_and_secrets},
     random_string,
     update::update_update,
   },
@@ -221,28 +218,20 @@ async fn interpolate(
   key: String,
   secret: String,
 ) -> serror::Result<HashSet<(String, String)>> {
-  let mut vars_and_secrets = get_variables_and_secrets().await?;
+  let VariablesAndSecrets {
+    variables,
+    mut secrets,
+  } = get_variables_and_secrets().await?;
 
-  vars_and_secrets
-    .secrets
-    .insert(String::from("ACTION_API_KEY"), key);
-  vars_and_secrets
-    .secrets
-    .insert(String::from("ACTION_API_SECRET"), secret);
+  secrets.insert(String::from("ACTION_API_KEY"), key);
+  secrets.insert(String::from("ACTION_API_SECRET"), secret);
 
-  let mut global_replacers = HashSet::new();
-  let mut secret_replacers = HashSet::new();
+  let mut interpolator =
+    Interpolator::new(Some(&variables), &secrets);
 
-  interpolate_variables_secrets_into_string(
-    &vars_and_secrets,
-    contents,
-    &mut global_replacers,
-    &mut secret_replacers,
-  )?;
+  interpolator.interpolate_string(contents)?.add_log(update);
 
-  add_interp_update_log(update, &global_replacers, &secret_replacers);
-
-  Ok(secret_replacers)
+  Ok(interpolator.secret_replacers)
 }
 
 fn full_contents(contents: &str, key: &str, secret: &str) -> String {

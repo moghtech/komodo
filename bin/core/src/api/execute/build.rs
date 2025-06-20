@@ -1,8 +1,9 @@
-use std::{collections::HashSet, future::IntoFuture, time::Duration};
+use std::{future::IntoFuture, time::Duration};
 
 use anyhow::{Context, anyhow};
 use formatting::format_serror;
 use futures::future::join_all;
+use interpolate::Interpolator;
 use komodo_client::{
   api::execute::{
     BatchExecutionResponse, BatchRunBuild, CancelBuild, Deploy,
@@ -39,13 +40,10 @@ use crate::{
     build_git_token,
     builder::{cleanup_builder_instance, get_builder_periphery},
     channel::build_cancel_channel,
-    interpolate::{
-      add_interp_update_log,
-      interpolate_variables_secrets_into_extra_args,
-      interpolate_variables_secrets_into_string,
-      interpolate_variables_secrets_into_system_command,
+    query::{
+      VariablesAndSecrets, get_deployment_state,
+      get_variables_and_secrets,
     },
-    query::{get_deployment_state, get_variables_and_secrets},
     registry_token,
     update::{init_execution_update, update_update},
   },
@@ -99,9 +97,13 @@ impl Resolve<ExecuteArgs> for RunBuild {
       None
     };
 
-    let mut vars_and_secrets = get_variables_and_secrets().await?;
+    let VariablesAndSecrets {
+      mut variables,
+      secrets,
+    } = get_variables_and_secrets().await?;
+
     // Add the $VERSION to variables. Use with [[$VERSION]]
-    vars_and_secrets.variables.insert(
+    variables.insert(
       String::from("$VERSION"),
       build.config.version.to_string(),
     );
@@ -207,51 +209,18 @@ impl Resolve<ExecuteArgs> for RunBuild {
 
     // INTERPOLATE VARIABLES
     let secret_replacers = if !build.config.skip_secret_interp {
-      let mut global_replacers = HashSet::new();
-      let mut secret_replacers = HashSet::new();
+      let mut interpolator =
+        Interpolator::new(Some(&variables), &secrets);
 
-      interpolate_variables_secrets_into_system_command(
-        &vars_and_secrets,
-        &mut build.config.pre_build,
-        &mut global_replacers,
-        &mut secret_replacers,
-      )?;
+      interpolator.interpolate_build(&mut build)?;
 
-      interpolate_variables_secrets_into_string(
-        &vars_and_secrets,
-        &mut build.config.build_args,
-        &mut global_replacers,
-        &mut secret_replacers,
-      )?;
+      if let Some(repo) = repo.as_mut() {
+        interpolator.interpolate_repo(repo)?;
+      }
 
-      interpolate_variables_secrets_into_string(
-        &vars_and_secrets,
-        &mut build.config.secret_args,
-        &mut global_replacers,
-        &mut secret_replacers,
-      )?;
+      interpolator.add_log(&mut update);
 
-      interpolate_variables_secrets_into_string(
-        &vars_and_secrets,
-        &mut build.config.dockerfile,
-        &mut global_replacers,
-        &mut secret_replacers,
-      )?;
-
-      interpolate_variables_secrets_into_extra_args(
-        &vars_and_secrets,
-        &mut build.config.extra_args,
-        &mut global_replacers,
-        &mut secret_replacers,
-      )?;
-
-      add_interp_update_log(
-        &mut update,
-        &global_replacers,
-        &secret_replacers,
-      );
-
-      secret_replacers
+      interpolator.secret_replacers
     } else {
       Default::default()
     };

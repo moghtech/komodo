@@ -2,6 +2,7 @@ use std::{collections::HashSet, future::IntoFuture, time::Duration};
 
 use anyhow::{Context, anyhow};
 use formatting::format_serror;
+use interpolate::Interpolator;
 use komodo_client::{
   api::{execute::*, write::RefreshRepoCache},
   entities::{
@@ -31,14 +32,8 @@ use crate::{
   helpers::{
     builder::{cleanup_builder_instance, get_builder_periphery},
     channel::repo_cancel_channel,
-    git_token,
-    interpolate::{
-      add_interp_update_log,
-      interpolate_variables_secrets_into_string,
-      interpolate_variables_secrets_into_system_command,
-    },
-    periphery_client,
-    query::get_variables_and_secrets,
+    git_token, periphery_client,
+    query::{VariablesAndSecrets, get_variables_and_secrets},
     update::update_update,
   },
   permission::get_check_permissions,
@@ -712,39 +707,15 @@ async fn interpolate(
   update: &mut Update,
 ) -> anyhow::Result<HashSet<(String, String)>> {
   if !repo.config.skip_secret_interp {
-    let vars_and_secrets = get_variables_and_secrets().await?;
+    let VariablesAndSecrets { variables, secrets } =
+      get_variables_and_secrets().await?;
 
-    let mut global_replacers = HashSet::new();
-    let mut secret_replacers = HashSet::new();
+    let mut interpolator =
+      Interpolator::new(Some(&variables), &secrets);
 
-    interpolate_variables_secrets_into_string(
-      &vars_and_secrets,
-      &mut repo.config.environment,
-      &mut global_replacers,
-      &mut secret_replacers,
-    )?;
+    interpolator.interpolate_repo(repo)?.add_log(update);
 
-    interpolate_variables_secrets_into_system_command(
-      &vars_and_secrets,
-      &mut repo.config.on_clone,
-      &mut global_replacers,
-      &mut secret_replacers,
-    )?;
-
-    interpolate_variables_secrets_into_system_command(
-      &vars_and_secrets,
-      &mut repo.config.on_pull,
-      &mut global_replacers,
-      &mut secret_replacers,
-    )?;
-
-    add_interp_update_log(
-      update,
-      &global_replacers,
-      &secret_replacers,
-    );
-
-    Ok(secret_replacers)
+    Ok(interpolator.secret_replacers)
   } else {
     Ok(Default::default())
   }

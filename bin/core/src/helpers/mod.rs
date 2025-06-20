@@ -25,7 +25,6 @@ pub mod all_resources;
 pub mod builder;
 pub mod cache;
 pub mod channel;
-pub mod interpolate;
 pub mod maintenance;
 pub mod matcher;
 pub mod procedure;
