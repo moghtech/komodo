@@ -37,6 +37,25 @@ impl Resolve<WriteArgs> for CreateServer {
   }
 }
 
+impl Resolve<WriteArgs> for CopyServer {
+  #[instrument(name = "CopyServer", skip(user))]
+  async fn resolve(
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> serror::Result<Server> {
+    let Server { config, .. } = get_check_permissions::<Server>(
+      &self.id,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?;
+    Ok(
+      resource::create::<Server>(&self.name, config.into(), user)
+        .await?,
+    )
+  }
+}
+
 impl Resolve<WriteArgs> for DeleteServer {
   #[instrument(name = "DeleteServer", skip(args))]
   async fn resolve(self, args: &WriteArgs) -> serror::Result<Server> {

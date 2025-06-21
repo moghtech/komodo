@@ -9,9 +9,11 @@ use axum_server::tls_rustls::RustlsConfig;
 use config::periphery_config;
 
 mod api;
+mod build;
 mod compose;
 mod config;
 mod docker;
+mod git;
 mod helpers;
 mod ssl;
 mod stats;

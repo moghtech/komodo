@@ -72,6 +72,7 @@ impl super::KomodoResource for Procedure {
     ProcedureListItem {
       name: procedure.name,
       id: procedure.id,
+      template: procedure.template,
       tags: procedure.tags,
       resource_type: ResourceTargetVariant::Procedure,
       info: ProcedureListItemInfo {

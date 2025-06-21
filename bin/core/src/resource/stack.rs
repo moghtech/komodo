@@ -165,8 +165,9 @@ impl super::KomodoResource for Stack {
       };
 
     StackListItem {
-      id: stack.id,
       name: stack.name,
+      id: stack.id,
+      template: stack.template,
       tags: stack.tags,
       resource_type: ResourceTargetVariant::Stack,
       info: StackListItemInfo {

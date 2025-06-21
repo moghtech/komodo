@@ -8,7 +8,7 @@ use formatting::format_serror;
 use komodo_client::{
   api::{read::ExportAllResourcesToToml, write::*},
   entities::{
-    self, CloneArgs, NoData, Operation, ResourceTarget,
+    self, NoData, Operation, RepoExecutionArgs, ResourceTarget,
     action::Action,
     alert::{Alert, AlertData, SeverityLevel},
     alerter::Alerter,
@@ -265,7 +265,7 @@ async fn write_sync_file_contents_git(
     contents,
   } = req;
 
-  let mut clone_args: CloneArgs = if let Some(repo) = &repo {
+  let mut clone_args: RepoExecutionArgs = if let Some(repo) = &repo {
     repo.into()
   } else {
     (&sync).into()
@@ -325,15 +325,11 @@ async fn write_sync_file_contents_git(
     clone_args,
     &core_config().repo_directory,
     access_token,
-    Default::default(),
-    Default::default(),
-    Default::default(),
-    Default::default(),
   )
   .await
   .context("Failed to pull latest changes before commit")
   {
-    Ok(res) => update.logs.extend(res.logs),
+    Ok((res, _)) => update.logs.extend(res.logs),
     Err(e) => {
       update.push_error_log("Pull Repo", format_serror(&e.into()));
       update.finalize();
@@ -512,7 +508,7 @@ impl Resolve<WriteArgs> for CommitSync {
         // Resource path checked above for repo mode.
         unreachable!()
       };
-      let args: CloneArgs = repo.into();
+      let args: RepoExecutionArgs = repo.into();
       if let Err(e) =
         commit_git_sync(args, &resource_path, &res.toml, &mut update)
           .await
@@ -530,7 +526,7 @@ impl Resolve<WriteArgs> for CommitSync {
         // Resource path checked above for repo mode.
         unreachable!()
       };
-      let args: CloneArgs = (&sync).into();
+      let args: RepoExecutionArgs = (&sync).into();
       if let Err(e) =
         commit_git_sync(args, &resource_path, &res.toml, &mut update)
           .await
@@ -582,7 +578,7 @@ impl Resolve<WriteArgs> for CommitSync {
 }
 
 async fn commit_git_sync(
-  mut args: CloneArgs,
+  mut args: RepoExecutionArgs,
   resource_path: &Path,
   toml: &str,
   update: &mut Update,
@@ -600,18 +596,13 @@ async fn commit_git_sync(
     None
   };
 
-  let pull = git::pull_or_clone(
+  let (pull_res, _) = git::pull_or_clone(
     args.clone(),
     &core_config().repo_directory,
     access_token,
-    Default::default(),
-    Default::default(),
-    Default::default(),
-    Default::default(),
   )
   .await?;
-  update.logs.extend(pull.logs);
-
+  update.logs.extend(pull_res.logs);
   if !all_logs_success(&update.logs) {
     return Ok(());
   }

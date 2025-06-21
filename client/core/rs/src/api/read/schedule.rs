@@ -5,7 +5,7 @@ use typeshare::typeshare;
 
 use crate::{
   deserializers::string_list_deserializer,
-  entities::{resource::TagBehavior, schedule::Schedule},
+  entities::{resource::TagQueryBehavior, schedule::Schedule},
 };
 
 use super::KomodoReadRequest;
@@ -25,7 +25,7 @@ pub struct ListSchedules {
   pub tags: Vec<String>,
   /// 'All' or 'Any'
   #[serde(default)]
-  pub tag_behavior: TagBehavior,
+  pub tag_behavior: TagQueryBehavior,
 }
 
 #[typeshare]

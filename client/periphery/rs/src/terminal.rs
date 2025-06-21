@@ -156,11 +156,9 @@ async fn connect_websocket(
       format!("failed to connect to websocket | url: {url}")
     })?
   } else {
-    tokio_tungstenite::connect_async(url)
-      .await
-      .with_context(|| {
-        format!("failed to connect to websocket | url: {url}")
-      })?
+    tokio_tungstenite::connect_async(url).await.with_context(
+      || format!("failed to connect to websocket | url: {url}"),
+    )?
   };
 
   Ok(stream)

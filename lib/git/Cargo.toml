@@ -14,7 +14,6 @@ command.workspace = true
 cache.workspace = true
 #
 run_command.workspace = true
-svi.workspace = true
 #
 tracing.workspace = true
 anyhow.workspace = true

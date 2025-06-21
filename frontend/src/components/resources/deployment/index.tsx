@@ -18,16 +18,17 @@ import {
   stroke_color_class_by_intention,
 } from "@lib/color";
 import { DeploymentTable } from "./table";
-import { DeleteResource, NewResource, ResourceLink } from "../common";
+import {
+  DeleteResource,
+  NewResource,
+  ResourceLink,
+  ResourcePageHeader,
+} from "../common";
 import { RunBuild } from "../build/actions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
 import { DeploymentConfig } from "./config";
 import { DashboardPieChart } from "@pages/home/dashboard";
-import {
-  DockerResourceLink,
-  ResourcePageHeader,
-  StatusBadge,
-} from "@components/util";
+import { DockerResourceLink, StatusBadge } from "@components/util";
 import { GroupActions } from "@components/group-actions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 import { usePermissions } from "@lib/hooks";
@@ -332,7 +333,7 @@ export const DeploymentComponents: RequiredResourceComponents = {
         icon={<DeploymentIcon id={id} size={8} />}
         type="Deployment"
         id={id}
-        name={deployment?.name}
+        resource={deployment}
         state={
           deployment?.info.state === Types.DeploymentState.NotDeployed
             ? "Not Deployed"

@@ -83,8 +83,9 @@ impl super::KomodoResource for ResourceSync {
       };
 
     ResourceSyncListItem {
-      id: resource_sync.id,
       name: resource_sync.name,
+      id: resource_sync.id,
+      template: resource_sync.template,
       tags: resource_sync.tags,
       resource_type: ResourceTargetVariant::ResourceSync,
       info: ResourceSyncListItemInfo {

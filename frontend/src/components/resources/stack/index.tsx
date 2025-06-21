@@ -18,6 +18,7 @@ import {
   DeleteResource,
   NewResource,
   ResourceLink,
+  ResourcePageHeader,
   StandardSource,
 } from "../common";
 import { StackTable } from "./table";
@@ -44,7 +45,7 @@ import { Button } from "@ui/button";
 import { useToast } from "@ui/use-toast";
 import { StackServices } from "./services";
 import { DashboardPieChart } from "@pages/home/dashboard";
-import { ResourcePageHeader, StatusBadge } from "@components/util";
+import { StatusBadge } from "@components/util";
 import { StackConfig } from "./config";
 import { GroupActions } from "@components/group-actions";
 import { StackLogs } from "./log";
@@ -451,7 +452,7 @@ export const StackComponents: RequiredResourceComponents = {
         icon={<StackIcon id={id} size={8} />}
         type="Stack"
         id={id}
-        name={stack?.name}
+        resource={stack}
         state={stack?.info.state}
         status={
           stack?.info.state === Types.StackState.Unhealthy

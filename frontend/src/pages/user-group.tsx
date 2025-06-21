@@ -2,10 +2,8 @@ import { ExportButton } from "@components/export";
 import { Page, Section } from "@components/layouts";
 import { PermissionsTableTabs } from "@components/users/permissions-table";
 import { UserTable } from "@components/users/table";
-import { ActionWithDialog } from "@components/util";
 import { useInvalidate, useRead, useWrite } from "@lib/hooks";
 import { filterBySplit } from "@lib/utils";
-import { Types } from "komodo_client";
 import { Button } from "@ui/button";
 import {
   Command,
@@ -18,10 +16,11 @@ import {
 import { Input } from "@ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@ui/popover";
 import { useToast } from "@ui/use-toast";
-import { PlusCircle, Save, SearchX, Trash, User, Users } from "lucide-react";
+import { PlusCircle, Save, SearchX, User, Users } from "lucide-react";
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Switch } from "@ui/switch";
+import { DeleteUserGroup } from "@components/users/delete-user-group";
 
 export default function UserGroupPage() {
   const { toast } = useToast();
@@ -234,31 +233,3 @@ const UserAvatar = ({ avatar }: { avatar: string | undefined }) =>
   ) : (
     <User className="w-4" />
   );
-
-export const DeleteUserGroup = ({ group }: { group: Types.UserGroup }) => {
-  const nav = useNavigate();
-  const inv = useInvalidate();
-  const { toast } = useToast();
-  const { mutate, isPending } = useWrite("DeleteUserGroup", {
-    onSuccess: () => {
-      inv(
-        ["ListUserGroups"],
-        ["GetUserGroup", { user_group: group._id?.$oid! }]
-      );
-      toast({ title: `Deleted User Group ${group.name}` });
-      nav("/settings");
-    },
-  });
-
-  return (
-    <ActionWithDialog
-      name={group.name}
-      title="Delete"
-      icon={<Trash className="h-4 w-4" />}
-      variant="destructive"
-      onClick={() => mutate({ id: group._id?.$oid! })}
-      disabled={isPending}
-      loading={isPending}
-    />
-  );
-};

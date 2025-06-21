@@ -10,6 +10,4 @@ homepage.workspace = true
 [dependencies]
 komodo_client.workspace = true
 run_command.workspace = true
-formatting.workspace = true
-anyhow.workspace = true
 svi.workspace = true

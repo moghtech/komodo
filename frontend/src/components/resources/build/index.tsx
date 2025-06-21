@@ -14,6 +14,7 @@ import {
   DeleteResource,
   NewResource,
   ResourceLink,
+  ResourcePageHeader,
   StandardSource,
 } from "../common";
 import { DeploymentTable } from "../deployment/table";
@@ -28,7 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
 import { ResourceComponents } from "..";
 import { Types } from "komodo_client";
 import { DashboardPieChart } from "@pages/home/dashboard";
-import { ResourcePageHeader, StatusBadge } from "@components/util";
+import { StatusBadge } from "@components/util";
 import { Card } from "@ui/card";
 import { Badge } from "@ui/badge";
 import { useToast } from "@ui/use-toast";
@@ -285,14 +286,13 @@ export const BuildComponents: RequiredResourceComponents = {
 
   ResourcePageHeader: ({ id }) => {
     const build = useBuild(id);
-
     return (
       <ResourcePageHeader
         intent={build_state_intention(build?.info.state)}
         icon={<BuildIcon id={id} size={8} />}
         type="Build"
         id={id}
-        name={build?.name}
+        resource={build}
         state={build?.info.state}
         status=""
       />

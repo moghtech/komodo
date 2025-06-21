@@ -23,13 +23,8 @@ import {
 import { ServerConfig } from "./config";
 import { DeploymentTable } from "../deployment/table";
 import { ServerTable } from "./table";
-import { DeleteResource, NewResource } from "../common";
-import {
-  ActionWithDialog,
-  ConfirmButton,
-  ResourcePageHeader,
-  StatusBadge,
-} from "@components/util";
+import { DeleteResource, NewResource, ResourcePageHeader } from "../common";
+import { ActionWithDialog, ConfirmButton, StatusBadge } from "@components/util";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
 import { Card, CardHeader, CardTitle } from "@ui/card";
 import { RepoTable } from "../repo/table";
@@ -541,7 +536,7 @@ export const ServerComponents: RequiredResourceComponents = {
         icon={<Icon id={id} size={8} />}
         type="Server"
         id={id}
-        name={server?.name}
+        resource={server}
         state={
           server?.info.state === Types.ServerState.NotOk
             ? "Not Ok"

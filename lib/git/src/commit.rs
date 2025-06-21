@@ -3,11 +3,13 @@ use std::path::{Path, PathBuf};
 use anyhow::Context;
 use command::run_komodo_command;
 use formatting::format_serror;
-use komodo_client::entities::{all_logs_success, update::Log};
+use komodo_client::entities::{
+  RepoExecutionResponse, all_logs_success, update::Log,
+};
 use run_command::async_run_command;
 use tokio::fs;
 
-use crate::{GitRes, get_commit_hash_log};
+use crate::get_commit_hash_log;
 
 /// Write file, add, commit, force push.
 /// Repo must be cloned.
@@ -15,31 +17,48 @@ pub async fn write_commit_file(
   commit_msg: &str,
   repo_dir: &Path,
   // relative to repo root
-  file: &Path,
+  relative_file_path: &Path,
   contents: &str,
   branch: &str,
-) -> anyhow::Result<GitRes> {
-  // Clean up the path by stripping any redundant `/./`
-  let path = repo_dir.join(file).components().collect::<PathBuf>();
+) -> anyhow::Result<RepoExecutionResponse> {
+  let mut res = RepoExecutionResponse {
+    path: repo_dir.to_path_buf(),
+    logs: Vec::new(),
+    commit_hash: None,
+    commit_message: None,
+  };
 
-  if let Some(parent) = path.parent() {
+  // Clean up the path by stripping any redundant `/./`
+  let full_file_path = repo_dir
+    .join(relative_file_path)
+    .components()
+    .collect::<PathBuf>();
+
+  if let Some(parent) = full_file_path.parent() {
     fs::create_dir_all(parent).await.with_context(|| {
       format!("Failed to initialize file parent directory {parent:?}")
     })?;
   }
 
-  fs::write(&path, contents).await.with_context(|| {
-    format!("Failed to write contents to {path:?}")
-  })?;
+  fs::write(&full_file_path, contents)
+    .await
+    .with_context(|| {
+      format!("Failed to write contents to {full_file_path:?}")
+    })?;
 
-  let mut res = GitRes::default();
   res.logs.push(Log::simple(
     "Write file",
-    format!("File contents written to {path:?}"),
+    format!("File contents written to {full_file_path:?}"),
   ));
 
-  commit_file_inner(commit_msg, &mut res, repo_dir, file, branch)
-    .await;
+  commit_file_inner(
+    commit_msg,
+    &mut res,
+    repo_dir,
+    relative_file_path,
+    branch,
+  )
+  .await;
 
   Ok(res)
 }
@@ -52,16 +71,23 @@ pub async fn commit_file(
   // relative to repo root
   file: &Path,
   branch: &str,
-) -> GitRes {
-  let mut res = GitRes::default();
+) -> RepoExecutionResponse {
+  let mut res = RepoExecutionResponse {
+    path: repo_dir.to_path_buf(),
+    logs: Vec::new(),
+    commit_hash: None,
+    commit_message: None,
+  };
+
   commit_file_inner(commit_msg, &mut res, repo_dir, file, branch)
     .await;
+
   res
 }
 
 pub async fn commit_file_inner(
   commit_msg: &str,
-  res: &mut GitRes,
+  res: &mut RepoExecutionResponse,
   repo_dir: &Path,
   // relative to repo root
   file: &Path,
@@ -102,8 +128,8 @@ pub async fn commit_file_inner(
   match get_commit_hash_log(repo_dir).await {
     Ok((log, hash, message)) => {
       res.logs.push(log);
-      res.hash = Some(hash);
-      res.message = Some(message);
+      res.commit_hash = Some(hash);
+      res.commit_message = Some(message);
     }
     Err(e) => {
       res.logs.push(Log::error(
@@ -120,6 +146,7 @@ pub async fn commit_file_inner(
     format!("git push --set-upstream origin {branch}"),
   )
   .await;
+
   res.logs.push(push_log);
 }
 
@@ -129,10 +156,15 @@ pub async fn commit_all(
   repo_dir: &Path,
   message: &str,
   branch: &str,
-) -> GitRes {
+) -> RepoExecutionResponse {
   ensure_global_git_config_set().await;
 
-  let mut res = GitRes::default();
+  let mut res = RepoExecutionResponse {
+    path: repo_dir.to_path_buf(),
+    logs: Vec::new(),
+    commit_hash: None,
+    commit_message: None,
+  };
 
   let add_log =
     run_komodo_command("Add Files", repo_dir, "git add -A").await;
@@ -155,8 +187,8 @@ pub async fn commit_all(
   match get_commit_hash_log(repo_dir).await {
     Ok((log, hash, message)) => {
       res.logs.push(log);
-      res.hash = Some(hash);
-      res.message = Some(message);
+      res.commit_hash = Some(hash);
+      res.commit_message = Some(message);
     }
     Err(e) => {
       res.logs.push(Log::error(

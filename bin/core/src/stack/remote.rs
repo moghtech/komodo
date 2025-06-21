@@ -3,7 +3,8 @@ use std::{fs, path::PathBuf};
 use anyhow::Context;
 use formatting::format_serror;
 use komodo_client::entities::{
-  CloneArgs, FileContents, repo::Repo, stack::Stack, update::Log,
+  FileContents, RepoExecutionArgs, repo::Repo, stack::Stack,
+  update::Log,
 };
 
 use crate::{config::core_config, helpers::git_token};
@@ -23,7 +24,7 @@ pub async fn get_repo_compose_contents(
   // Collect any files which are missing in the repo.
   mut missing_files: Option<&mut Vec<String>>,
 ) -> anyhow::Result<RemoteComposeContents> {
-  let clone_args: CloneArgs =
+  let clone_args: RepoExecutionArgs =
     repo.map(Into::into).unwrap_or(stack.into());
   let (repo_path, _logs, hash, message) =
     ensure_remote_repo(clone_args)
@@ -70,7 +71,7 @@ pub async fn get_repo_compose_contents(
 
 /// Returns (destination, logs, hash, message)
 pub async fn ensure_remote_repo(
-  mut clone_args: CloneArgs,
+  mut clone_args: RepoExecutionArgs,
 ) -> anyhow::Result<(PathBuf, Vec<Log>, Option<String>, Option<String>)>
 {
   let config = core_config();
@@ -90,20 +91,11 @@ pub async fn ensure_remote_repo(
   let repo_path =
     clone_args.unique_path(&core_config().repo_directory)?;
   clone_args.destination = Some(repo_path.display().to_string());
-  // Don't want to run these on core.
-  clone_args.on_clone = None;
-  clone_args.on_pull = None;
 
-  git::pull_or_clone(
-    clone_args,
-    &config.repo_directory,
-    access_token,
-    &[],
-    "",
-    None,
-    &[],
-  )
-  .await
-  .context("Failed to clone stack repo")
-  .map(|res| (repo_path, res.logs, res.hash, res.message))
+  git::pull_or_clone(clone_args, &config.repo_directory, access_token)
+    .await
+    .context("Failed to clone stack repo")
+    .map(|(res, _)| {
+      (repo_path, res.logs, res.commit_hash, res.commit_message)
+    })
 }

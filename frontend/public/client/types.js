@@ -29,13 +29,22 @@ export var ActionState;
     /** Currently running */
     ActionState["Running"] = "Running";
 })(ActionState || (ActionState = {}));
-export var TagBehavior;
-(function (TagBehavior) {
+export var TemplatesQueryBehavior;
+(function (TemplatesQueryBehavior) {
+    /** Include templates in results. Default. */
+    TemplatesQueryBehavior["Include"] = "Include";
+    /** Exclude templates from results. */
+    TemplatesQueryBehavior["Exclude"] = "Exclude";
+    /** Results *only* includes templates. */
+    TemplatesQueryBehavior["Only"] = "Only";
+})(TemplatesQueryBehavior || (TemplatesQueryBehavior = {}));
+export var TagQueryBehavior;
+(function (TagQueryBehavior) {
     /** Returns resources which have strictly all the tags */
-    TagBehavior["All"] = "All";
+    TagQueryBehavior["All"] = "All";
     /** Returns resources which have one or more of the tags */
-    TagBehavior["Any"] = "Any";
-})(TagBehavior || (TagBehavior = {}));
+    TagQueryBehavior["Any"] = "Any";
+})(TagQueryBehavior || (TagQueryBehavior = {}));
 /** Types of maintenance schedules */
 export var MaintenanceScheduleType;
 (function (MaintenanceScheduleType) {

@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
 use komodo_client::entities::{
-  CloneArgs, EnvironmentVar, LatestCommit, update::Log,
+  EnvironmentVar, LatestCommit, RepoExecutionArgs,
+  RepoExecutionResponse, SystemCommand, update::Log,
 };
 use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
@@ -15,19 +16,24 @@ pub struct GetLatestCommit {
   pub path: Option<String>,
 }
 
+//
+
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
-#[response(RepoActionResponse)]
+#[response(PeripheryRepoExecutionResponse)]
 #[error(serror::Error)]
 pub struct CloneRepo {
-  pub args: CloneArgs,
-  #[serde(default)]
-  pub environment: Vec<EnvironmentVar>,
-  #[serde(default = "default_env_file_path")]
-  pub env_file_path: String,
-  #[serde(default)]
-  pub skip_secret_interp: bool,
+  pub args: RepoExecutionArgs,
   /// Override git token with one sent from core.
   pub git_token: Option<String>,
+  #[serde(default)]
+  pub environment: Vec<EnvironmentVar>,
+  /// Relative to repo root
+  #[serde(default = "default_env_file_path")]
+  pub env_file_path: String,
+  pub on_clone: Option<SystemCommand>,
+  pub on_pull: Option<SystemCommand>,
+  #[serde(default)]
+  pub skip_secret_interp: bool,
   /// Propogate any secret replacers from core interpolation.
   #[serde(default)]
   pub replacers: Vec<(String, String)>,
@@ -40,18 +46,19 @@ fn default_env_file_path() -> String {
 //
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
-#[response(RepoActionResponse)]
+#[response(PeripheryRepoExecutionResponse)]
 #[error(serror::Error)]
 pub struct PullRepo {
-  pub args: CloneArgs,
+  pub args: RepoExecutionArgs,
+  /// Override git token with one sent from core.
+  pub git_token: Option<String>,
   #[serde(default)]
   pub environment: Vec<EnvironmentVar>,
   #[serde(default = "default_env_file_path")]
   pub env_file_path: String,
+  pub on_pull: Option<SystemCommand>,
   #[serde(default)]
   pub skip_secret_interp: bool,
-  /// Override git token with one sent from core.
-  pub git_token: Option<String>,
   /// Propogate any secret replacers from core interpolation.
   #[serde(default)]
   pub replacers: Vec<(String, String)>,
@@ -61,18 +68,20 @@ pub struct PullRepo {
 
 /// Either pull or clone depending on whether it exists.
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
-#[response(RepoActionResponse)]
+#[response(PeripheryRepoExecutionResponse)]
 #[error(serror::Error)]
 pub struct PullOrCloneRepo {
-  pub args: CloneArgs,
+  pub args: RepoExecutionArgs,
+  /// Override git token with one sent from core.
+  pub git_token: Option<String>,
   #[serde(default)]
   pub environment: Vec<EnvironmentVar>,
   #[serde(default = "default_env_file_path")]
   pub env_file_path: String,
+  pub on_clone: Option<SystemCommand>,
+  pub on_pull: Option<SystemCommand>,
   #[serde(default)]
   pub skip_secret_interp: bool,
-  /// Override git token with one sent from core.
-  pub git_token: Option<String>,
   /// Propogate any secret replacers from core interpolation.
   #[serde(default)]
   pub replacers: Vec<(String, String)>,
@@ -80,20 +89,13 @@ pub struct PullOrCloneRepo {
 
 //
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct RepoActionResponse {
-  /// Response logs
-  pub logs: Vec<Log>,
-  /// Absolute path to the repo root on the host.
-  pub path: PathBuf,
-  /// Latest short commit hash, if it could be retrieved
-  pub commit_hash: Option<String>,
-  /// Latest commit message, if it could be retrieved
-  pub commit_message: Option<String>,
-  /// Don't need to send this one to core, its only needed for calls local to single periphery
-  #[serde(skip_serializing)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PeripheryRepoExecutionResponse {
+  pub res: RepoExecutionResponse,
   pub env_file_path: Option<PathBuf>,
 }
+
+//
 
 //
 

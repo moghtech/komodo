@@ -1,14 +1,22 @@
 use std::{fmt::Write, path::PathBuf};
 
 use anyhow::{Context, anyhow};
-use command::run_komodo_command;
+use command::{
+  run_komodo_command, run_komodo_command_with_sanitization,
+};
 use formatting::format_serror;
-use git::{GitRes, write_commit_file};
+use git::write_commit_file;
+use interpolate::Interpolator;
 use komodo_client::entities::{
-  FileContents, stack::ComposeProject, to_path_compatible_name,
+  FileContents, RepoExecutionResponse, all_logs_success,
+  stack::{
+    ComposeFile, ComposeProject, ComposeService,
+    ComposeServiceDeploy, StackServiceNames,
+  },
+  to_path_compatible_name,
   update::Log,
 };
-use periphery_client::api::{compose::*, git::RepoActionResponse};
+use periphery_client::api::compose::*;
 use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use tokio::fs;
@@ -16,12 +24,12 @@ use tokio::fs;
 use crate::{
   compose::{
     docker_compose,
-    up::compose_up,
+    up::{maybe_login_registry, validate_files},
     write::{WriteStackRes, write_stack},
   },
   config::periphery_config,
   docker::docker_login,
-  helpers::{log_grep, pull_or_clone_stack},
+  helpers::{log_grep, parse_extra_args, pull_or_clone_stack},
 };
 
 impl Resolve<super::Args> for ListComposeProjects {
@@ -241,7 +249,7 @@ impl Resolve<super::Args> for WriteCommitComposeContents {
   async fn resolve(
     self,
     _: &super::Args,
-  ) -> serror::Result<RepoActionResponse> {
+  ) -> serror::Result<RepoExecutionResponse> {
     let WriteCommitComposeContents {
       stack,
       repo,
@@ -267,28 +275,15 @@ impl Resolve<super::Args> for WriteCommitComposeContents {
       "Write Compose File".to_string()
     };
 
-    let GitRes {
-      logs,
-      path,
-      hash,
-      message,
-      ..
-    } = write_commit_file(
+    write_commit_file(
       &msg,
       &root,
       &file_path,
       &contents,
       &stack.config.branch,
     )
-    .await?;
-
-    Ok(RepoActionResponse {
-      logs,
-      path,
-      commit_hash: hash,
-      commit_message: message,
-      env_file_path: None,
-    })
+    .await
+    .map_err(Into::into)
   }
 }
 
@@ -322,7 +317,7 @@ impl Resolve<super::Args> for ComposePull {
     } = self;
     let mut res = ComposePullResponse::default();
 
-    let (run_directory, env_file_path, _replacers) =
+    let (run_directory, env_file_path) =
       match write_stack(&stack, repo.as_ref(), git_token, &mut res)
         .await
       {
@@ -439,30 +434,253 @@ impl Resolve<super::Args> for ComposeUp {
     _: &super::Args,
   ) -> serror::Result<ComposeUpResponse> {
     let ComposeUp {
-      stack,
+      mut stack,
+      mut repo,
       services,
-      repo,
       git_token,
       registry_token,
-      replacers,
+      mut replacers,
     } = self;
+
     let mut res = ComposeUpResponse::default();
-    if let Err(e) = compose_up(
-      stack,
-      services,
-      repo,
-      git_token,
-      registry_token,
-      &mut res,
-      replacers,
+
+    let mut interpolator =
+      Interpolator::new(None, &periphery_config().secrets);
+    interpolator.interpolate_stack(&mut stack)?;
+    if let Some(repo) = repo.as_mut() {
+      interpolator.interpolate_repo(repo)?;
+    }
+    interpolator.push_logs(&mut res.logs);
+
+    replacers.extend(interpolator.secret_replacers);
+
+    let (run_directory, env_file_path) =
+      write_stack(&stack, repo.as_ref(), git_token, &mut res)
+        .await
+        .context("Failed to write / clone stack files to host")?;
+
+    // Canonicalize the path to ensure it exists, and is the cleanest path to the run directory.
+    let run_directory = run_directory.canonicalize().context(
+      "Failed to validate run directory on host after stack write (canonicalize error)",
+    )?;
+
+    validate_files(&stack, &run_directory, &mut res).await;
+    if !all_logs_success(&res.logs) {
+      return Ok(res);
+    }
+
+    maybe_login_registry(&stack, registry_token, &mut res).await;
+    if !all_logs_success(&res.logs) {
+      return Ok(res);
+    }
+
+    // Pre deploy
+    if !stack.config.pre_deploy.is_none() {
+      let pre_deploy_path =
+        run_directory.join(&stack.config.pre_deploy.path);
+      if let Some(log) = run_komodo_command_with_sanitization(
+        "Pre Deploy",
+        pre_deploy_path.as_path(),
+        &stack.config.pre_deploy.command,
+        true,
+        &replacers,
+      )
+      .await
+      {
+        res.logs.push(log);
+        if !all_logs_success(&res.logs) {
+          return Ok(res);
+        }
+      };
+    }
+
+    let docker_compose = docker_compose();
+
+    let service_args = if services.is_empty() {
+      String::new()
+    } else {
+      format!(" {}", services.join(" "))
+    };
+
+    let file_args = if stack.config.file_paths.is_empty() {
+      String::from("compose.yaml")
+    } else {
+      stack.config.file_paths.join(" -f ")
+    };
+
+    // This will be the last project name, which is the one that needs to be destroyed.
+    // Might be different from the current project name, if user renames stack / changes to custom project name.
+    let last_project_name = stack.project_name(false);
+    let project_name = stack.project_name(true);
+
+    let env_file = env_file_path
+      .map(|path| format!(" --env-file {path}"))
+      .unwrap_or_default();
+
+    let additional_env_files = stack
+      .config
+      .additional_env_files
+      .iter()
+      .fold(String::new(), |mut output, file| {
+        let _ = write!(output, " --env-file {file}");
+        output
+      });
+
+    // Uses 'docker compose config' command to extract services (including image)
+    // after performing interpolation
+    {
+      let command = format!(
+        "{docker_compose} -p {project_name} -f {file_args}{additional_env_files}{env_file} config",
+      );
+      let Some(config_log) = run_komodo_command_with_sanitization(
+        "Compose Config",
+        run_directory.as_path(),
+        command,
+        false,
+        &replacers,
+      )
+      .await
+      else {
+        // Only reachable if command is empty,
+        // not the case since it is provided above.
+        unreachable!()
+      };
+      if !config_log.success {
+        res.logs.push(config_log);
+        return Ok(res);
+      }
+      let compose =
+        serde_yaml::from_str::<ComposeFile>(&config_log.stdout)
+          .context("Failed to parse compose contents")?;
+      // Record sanitized compose config output
+      res.compose_config = Some(config_log.stdout);
+      for (
+        service_name,
+        ComposeService {
+          container_name,
+          deploy,
+          image,
+        },
+      ) in compose.services
+      {
+        let image = image.unwrap_or_default();
+        match deploy {
+          Some(ComposeServiceDeploy {
+            replicas: Some(replicas),
+          }) if replicas > 1 => {
+            for i in 1..1 + replicas {
+              res.services.push(StackServiceNames {
+                container_name: format!(
+                  "{project_name}-{service_name}-{i}"
+                ),
+                service_name: format!("{service_name}-{i}"),
+                image: image.clone(),
+              });
+            }
+          }
+          _ => {
+            res.services.push(StackServiceNames {
+              container_name: container_name.unwrap_or_else(|| {
+                format!("{project_name}-{service_name}")
+              }),
+              service_name,
+              image,
+            });
+          }
+        }
+      }
+    }
+
+    if stack.config.run_build {
+      let build_extra_args =
+        parse_extra_args(&stack.config.build_extra_args);
+      let command = format!(
+        "{docker_compose} -p {project_name} -f {file_args}{env_file}{additional_env_files} build{build_extra_args}{service_args}",
+      );
+      let Some(log) = run_komodo_command_with_sanitization(
+        "Compose Build",
+        run_directory.as_path(),
+        command,
+        false,
+        &replacers,
+      )
+      .await
+      else {
+        unreachable!()
+      };
+      res.logs.push(log);
+      if !all_logs_success(&res.logs) {
+        return Ok(res);
+      }
+    }
+
+    // Pull images before deploying
+    if stack.config.auto_pull {
+      // Pull images before destroying to minimize downtime.
+      // If this fails, do not continue.
+      let command = format!(
+        "{docker_compose} -p {project_name} -f {file_args}{env_file}{additional_env_files} pull{service_args}",
+      );
+      let log = run_komodo_command(
+        "Compose Pull",
+        run_directory.as_ref(),
+        command,
+      )
+      .await;
+      res.logs.push(log);
+      if !all_logs_success(&res.logs) {
+        return Ok(res);
+      }
+    }
+
+    if stack.config.destroy_before_deploy
+      // Also check if project name changed, which also requires taking down.
+      || last_project_name != project_name
+    {
+      // Take down the existing containers.
+      // This one tries to use the previously deployed service name, to ensure the right stack is taken down.
+      crate::compose::down(&last_project_name, &services, &mut res)
+        .await
+        .context("failed to destroy existing containers")?;
+    }
+
+    // Run compose up
+    let extra_args = parse_extra_args(&stack.config.extra_args);
+    let command = format!(
+      "{docker_compose} -p {project_name} -f {file_args}{env_file}{additional_env_files} up -d{extra_args}{service_args}",
+    );
+
+    let Some(log) = run_komodo_command_with_sanitization(
+      "Compose Up",
+      run_directory.as_path(),
+      command,
+      false,
+      &replacers,
     )
     .await
-    {
-      res.logs.push(Log::error(
-        "Compose Up - Failed",
-        format_serror(&e.into()),
-      ));
+    else {
+      unreachable!()
     };
+
+    res.deployed = log.success;
+    res.logs.push(log);
+
+    if res.deployed && !stack.config.post_deploy.is_none() {
+      let post_deploy_path =
+        run_directory.join(&stack.config.post_deploy.path);
+      if let Some(log) = run_komodo_command_with_sanitization(
+        "Post Deploy",
+        post_deploy_path.as_path(),
+        &stack.config.post_deploy.command,
+        true,
+        &replacers,
+      )
+      .await
+      {
+        res.logs.push(log);
+      };
+    }
+
     Ok(res)
   }
 }

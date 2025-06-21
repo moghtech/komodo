@@ -1,216 +1,114 @@
-use std::{collections::HashMap, path::Path};
+use std::path::Path;
 
-use command::{
-  run_komodo_command, run_komodo_command_multiline,
-  run_komodo_command_with_interpolation,
-};
+use anyhow::Context;
+use command::run_komodo_command;
 use formatting::format_serror;
 use komodo_client::entities::{
-  CloneArgs, EnvironmentVar, all_logs_success, komodo_timestamp,
+  RepoExecutionArgs, RepoExecutionResponse, all_logs_success,
   update::Log,
 };
-use run_command::async_run_command;
 
-use crate::{GitRes, get_commit_hash_log};
+use crate::get_commit_hash_log;
 
 /// Will delete the existing repo folder,
 /// clone the repo, get the latest hash / message,
 /// and run on_clone / on_pull.
+///
+/// Assumes all interpolation is already done and takes the list of replacers
+/// for the On Clone command.
 #[tracing::instrument(
   level = "debug",
-  skip(
-    clone_args,
-    access_token,
-    environment,
-    secrets,
-    core_replacers
-  )
+  skip(clone_args, access_token)
 )]
 pub async fn clone<T>(
   clone_args: T,
   root_repo_dir: &Path,
   access_token: Option<String>,
-  environment: &[EnvironmentVar],
-  env_file_path: &str,
-  // if skip_secret_interp is none, make sure to pass None here
-  secrets: Option<&HashMap<String, String>>,
-  core_replacers: &[(String, String)],
-) -> anyhow::Result<GitRes>
+) -> anyhow::Result<RepoExecutionResponse>
 where
-  T: Into<CloneArgs> + std::fmt::Debug,
+  T: Into<RepoExecutionArgs> + std::fmt::Debug,
 {
-  let args: CloneArgs = clone_args.into();
-  let path = args.path(root_repo_dir);
+  let args: RepoExecutionArgs = clone_args.into();
   let repo_url = args.remote_url(access_token.as_deref())?;
 
-  let mut logs = clone_inner(
-    &repo_url,
-    &args.branch,
-    &args.commit,
-    &path,
-    access_token,
-  )
-  .await;
-
-  if !all_logs_success(&logs) {
-    tracing::warn!(
-      "Failed to clone repo at {path:?} | name: {} | {logs:?}",
-      args.name
-    );
-    return Ok(GitRes {
-      logs,
-      path,
-      hash: None,
-      message: None,
-      env_file_path: None,
-    });
-  }
-
-  tracing::debug!("repo at {path:?} cloned");
-
-  let (hash, message) = match get_commit_hash_log(&path).await {
-    Ok((log, hash, message)) => {
-      logs.push(log);
-      (Some(hash), Some(message))
-    }
-    Err(e) => {
-      logs.push(Log::simple(
-        "Latest Commit",
-        format_serror(
-          &e.context("Failed to get latest commit").into(),
-        ),
-      ));
-      (None, None)
-    }
+  let mut res = RepoExecutionResponse {
+    path: args.path(root_repo_dir),
+    logs: Vec::new(),
+    commit_hash: None,
+    commit_message: None,
   };
-
-  let Ok((env_file_path, _replacers)) =
-    crate::environment::write_file(
-      environment,
-      env_file_path,
-      secrets,
-      &path,
-      &mut logs,
-    )
-    .await
-  else {
-    return Ok(GitRes {
-      logs,
-      path,
-      hash,
-      message,
-      env_file_path: None,
-    });
-  };
-
-  if let Some(command) = args.on_clone {
-    let on_clone_path = path.join(&command.path);
-    if let Some(log) = if let Some(secrets) = secrets {
-      run_komodo_command_with_interpolation(
-        "On Clone",
-        Some(on_clone_path.as_path()),
-        &command.command,
-        true,
-        secrets,
-        core_replacers,
-      )
-      .await
-    } else {
-      run_komodo_command_multiline(
-        "On Clone",
-        Some(on_clone_path.as_path()),
-        &command.command,
-      )
-      .await
-    } {
-      logs.push(log)
-    };
-  }
-  if let Some(command) = args.on_pull {
-    let on_pull_path = path.join(&command.path);
-    if let Some(log) = if let Some(secrets) = secrets {
-      run_komodo_command_with_interpolation(
-        "On Pull",
-        Some(on_pull_path.as_path()),
-        &command.command,
-        true,
-        secrets,
-        core_replacers,
-      )
-      .await
-    } else {
-      run_komodo_command_multiline(
-        "On Pull",
-        Some(on_pull_path.as_path()),
-        &command.command,
-      )
-      .await
-    } {
-      logs.push(log)
-    };
-  }
-
-  Ok(GitRes {
-    logs,
-    path,
-    hash,
-    message,
-    env_file_path,
-  })
-}
-
-async fn clone_inner(
-  repo_url: &str,
-  branch: &str,
-  commit: &Option<String>,
-  destination: &Path,
-  access_token: Option<String>,
-) -> Vec<Log> {
-  let _ = tokio::fs::remove_dir_all(destination).await;
 
   // Ensure parent folder exists
-  if let Some(parent) = destination.parent() {
-    let _ = tokio::fs::create_dir_all(parent).await;
+  if let Some(parent) = res.path.parent() {
+    if let Err(e) = tokio::fs::create_dir_all(parent)
+      .await
+      .context("Failed to create clone parent directory.")
+    {
+      res.logs.push(Log::error(
+        "Prepare Repo Root",
+        format_serror(&e.into()),
+      ));
+    }
+  }
+
+  if let Err(e) = tokio::fs::remove_dir_all(&res.path)
+    .await
+    .context("Failed to remove existing repo root before clone.")
+  {
+    res
+      .logs
+      .push(Log::error("Clean Repo Root", format_serror(&e.into())));
   }
 
   let command = format!(
-    "git clone {repo_url} {} -b {branch}",
-    destination.display()
+    "git clone {repo_url} {} -b {}",
+    res.path.display(),
+    args.branch
   );
-  let start_ts = komodo_timestamp();
-  let output = async_run_command(&command).await;
-  let success = output.success();
-  let (command, stderr) = if let Some(token) = access_token {
-    (
-      command.replace(&token, "<TOKEN>"),
-      output.stderr.replace(&token, "<TOKEN>"),
-    )
-  } else {
-    (command, output.stderr)
-  };
-  let mut logs = vec![Log {
-    stage: "Clone Repo".to_string(),
-    command,
-    success,
-    stdout: output.stdout,
-    stderr,
-    start_ts,
-    end_ts: komodo_timestamp(),
-  }];
 
-  if !logs[0].success {
-    return logs;
+  let mut log = run_komodo_command("Clone Repo", None, command).await;
+
+  if let Some(token) = access_token {
+    log.command = log.command.replace(&token, "<TOKEN>");
+    log.stdout = log.stdout.replace(&token, "<TOKEN>");
+    log.stderr = log.stderr.replace(&token, "<TOKEN>");
   }
 
-  if let Some(commit) = commit {
+  res.logs.push(log);
+
+  if !all_logs_success(&res.logs) {
+    return Ok(res);
+  }
+
+  if let Some(commit) = args.commit {
     let reset_log = run_komodo_command(
       "set commit",
-      destination,
+      res.path.as_path(),
       format!("git reset --hard {commit}",),
     )
     .await;
-    logs.push(reset_log);
+    res.logs.push(reset_log);
   }
 
-  logs
+  if !all_logs_success(&res.logs) {
+    return Ok(res);
+  }
+
+  match get_commit_hash_log(&res.path)
+    .await
+    .context("Failed to get latest commit")
+  {
+    Ok((log, hash, message)) => {
+      res.logs.push(log);
+      res.commit_hash = Some(hash);
+      res.commit_message = Some(message);
+    }
+    Err(e) => {
+      res
+        .logs
+        .push(Log::simple("Latest Commit", format_serror(&e.into())));
+    }
+  };
+
+  Ok(res)
 }

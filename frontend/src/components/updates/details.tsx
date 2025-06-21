@@ -34,7 +34,7 @@ import {
 } from "@lib/utils";
 import { UsableResource } from "@types";
 import { UserAvatar } from "@components/util";
-import { ResourceName } from "@components/resources/common";
+import { ResourceNameSimple } from "@components/resources/common";
 import { useWebsocketMessages } from "@lib/socket";
 import { MonacoDiffEditor } from "@components/monaco";
 
@@ -169,7 +169,7 @@ const UpdateDetailsContent = ({
                   onClick={() => setOpen(false)}
                 >
                   <Components.Icon id={update.target.id} />
-                  <ResourceName
+                  <ResourceNameSimple
                     // will be UsableResource because Components exists in this branch
                     type={update.target.type as UsableResource}
                     id={update.target.id}

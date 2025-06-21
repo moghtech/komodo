@@ -595,3 +595,23 @@ export const usePermissions = ({ type, id }: Types.ResourceTarget) => {
     specific,
   };
 };
+
+const templatesQueryBehaviorAtom =
+  atomWithStorage<Types.TemplatesQueryBehavior>(
+    "templates-query-behavior-v0",
+    Types.TemplatesQueryBehavior.Exclude
+  );
+
+export const useTemplatesQueryBehavior = () =>
+  useAtom<Types.TemplatesQueryBehavior>(templatesQueryBehaviorAtom);
+
+export type SettingsView =
+  | "Variables"
+  | "Tags"
+  | "Providers"
+  | "Users"
+  | "Profile";
+
+const viewAtom = atomWithStorage<SettingsView>("settings-view-v2", "Variables");
+
+export const useSettingsView = () => useAtom<SettingsView>(viewAtom);

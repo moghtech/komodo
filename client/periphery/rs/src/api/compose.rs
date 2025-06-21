@@ -1,13 +1,11 @@
 use komodo_client::entities::{
-  FileContents, SearchCombinator,
+  FileContents, RepoExecutionResponse, SearchCombinator,
   repo::Repo,
   stack::{ComposeProject, Stack, StackServiceNames},
   update::Log,
 };
 use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
-
-use super::git::RepoActionResponse;
 
 /// List the compose project names that are on the host.
 /// List running `docker compose ls`
@@ -115,7 +113,7 @@ pub struct WriteComposeContentsToHost {
 /// Write and commit compose contents.
 /// Only works with git repo based stacks.
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
-#[response(RepoActionResponse)]
+#[response(RepoExecutionResponse)]
 #[error(serror::Error)]
 pub struct WriteCommitComposeContents {
   /// The stack to write to.

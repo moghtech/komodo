@@ -65,8 +65,8 @@ pub async fn terminal(
     else {
       debug!("could not get stack status");
       let _ = client_socket
-        .send(Message::text(format!(
-          "ERROR: could not get stack status"
+        .send(Message::text(String::from(
+          "ERROR: could not get stack status",
         )))
         .await;
       let _ = client_socket.close().await;

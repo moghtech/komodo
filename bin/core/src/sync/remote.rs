@@ -1,7 +1,6 @@
 use anyhow::Context;
-use git::GitRes;
 use komodo_client::entities::{
-  CloneArgs,
+  RepoExecutionArgs, RepoExecutionResponse,
   repo::Repo,
   sync::{ResourceSync, SyncFileContents},
   to_path_compatible_name,
@@ -66,7 +65,7 @@ async fn get_files_on_host(
 
 async fn get_repo(
   sync: &ResourceSync,
-  mut clone_args: CloneArgs,
+  mut clone_args: RepoExecutionArgs,
 ) -> anyhow::Result<RemoteResources> {
   let access_token = if let Some(account) = &clone_args.account {
     git_token(&clone_args.provider, account, |https| clone_args.https = https)
@@ -81,23 +80,19 @@ async fn get_repo(
   let repo_path =
     clone_args.unique_path(&core_config().repo_directory)?;
   clone_args.destination = Some(repo_path.display().to_string());
-  // Don't want to run these on core.
-  clone_args.on_clone = None;
-  clone_args.on_pull = None;
 
-  let GitRes {
-    mut logs,
-    hash,
-    message,
-    ..
-  } = git::pull_or_clone(
+  let (
+    RepoExecutionResponse {
+      mut logs,
+      commit_hash,
+      commit_message,
+      ..
+    },
+    _,
+  ) = git::pull_or_clone(
     clone_args,
     &core_config().repo_directory,
     access_token,
-    &[],
-    "",
-    None,
-    &[],
   )
   .await
   .with_context(|| {
@@ -123,8 +118,8 @@ async fn get_repo(
     files,
     file_errors,
     logs,
-    hash,
-    message,
+    hash: commit_hash,
+    message: commit_message,
   })
 }
 

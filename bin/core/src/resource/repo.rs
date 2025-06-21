@@ -66,6 +66,7 @@ impl super::KomodoResource for Repo {
     RepoListItem {
       name: repo.name,
       id: repo.id,
+      template: repo.template,
       tags: repo.tags,
       resource_type: ResourceTargetVariant::Repo,
       info: RepoListItemInfo {

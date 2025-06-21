@@ -2,11 +2,11 @@ use std::{path::PathBuf, str::FromStr, time::Duration};
 
 use anyhow::{Context, anyhow};
 use formatting::format_serror;
-use git::GitRes;
 use komodo_client::{
   api::write::*,
   entities::{
-    CloneArgs, FileContents, NoData, Operation, all_logs_success,
+    FileContents, NoData, Operation, RepoExecutionArgs,
+    all_logs_success,
     build::{Build, BuildInfo, PartialBuildConfig},
     builder::{Builder, BuilderConfig},
     config::core::CoreConfig,
@@ -186,7 +186,9 @@ async fn write_dockerfile_contents_git(
 ) -> serror::Result<Update> {
   let WriteBuildFileContents { build: _, contents } = req;
 
-  let mut clone_args: CloneArgs = if !build.config.files_on_host
+  let mut clone_args: RepoExecutionArgs = if !build
+    .config
+    .files_on_host
     && !build.config.linked_repo.is_empty()
   {
     (&crate::resource::get::<Repo>(&build.config.linked_repo).await?)
@@ -252,15 +254,11 @@ async fn write_dockerfile_contents_git(
     clone_args,
     &core_config().repo_directory,
     access_token,
-    Default::default(),
-    Default::default(),
-    Default::default(),
-    Default::default(),
   )
   .await
   .context("Failed to pull latest changes before commit")
   {
-    Ok(res) => update.logs.extend(res.logs),
+    Ok((res, _)) => update.logs.extend(res.logs),
     Err(e) => {
       update.push_error_log("Pull Repo", format_serror(&e.into()));
       update.finalize();
@@ -477,7 +475,7 @@ async fn get_on_host_dockerfile(
 
 async fn get_git_remote(
   build: &Build,
-  mut clone_args: CloneArgs,
+  mut clone_args: RepoExecutionArgs,
 ) -> anyhow::Result<
   Option<(
     Option<String>,
@@ -494,9 +492,6 @@ async fn get_git_remote(
   let config = core_config();
   let repo_path = clone_args.unique_path(&config.repo_directory)?;
   clone_args.destination = Some(repo_path.display().to_string());
-  // Don't want to run these on core.
-  clone_args.on_clone = None;
-  clone_args.on_pull = None;
 
   let access_token = if let Some(username) = &clone_args.account {
     git_token(&clone_args.provider, username, |https| {
@@ -510,14 +505,10 @@ async fn get_git_remote(
     None
   };
 
-  let GitRes { hash, message, .. } = git::pull_or_clone(
+  let (res, _) = git::pull_or_clone(
     clone_args,
     &config.repo_directory,
     access_token,
-    &[],
-    "",
-    None,
-    &[],
   )
   .await
   .context("failed to clone build repo")?;
@@ -538,8 +529,8 @@ async fn get_git_remote(
     Some(relative_path.display().to_string()),
     contents,
     error,
-    hash,
-    message,
+    res.commit_hash,
+    res.commit_message,
   )))
 }
 

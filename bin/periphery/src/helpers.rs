@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use anyhow::{Context, anyhow};
 use komodo_client::{
   entities::{
-    CloneArgs, EnvironmentVar, SearchCombinator, repo::Repo,
+    EnvironmentVar, RepoExecutionArgs, SearchCombinator, repo::Repo,
     stack::Stack, to_path_compatible_name,
   },
   parsers::QUOTE_PATTERN,
@@ -108,7 +108,7 @@ pub async fn pull_or_clone_stack(
       .join(&repo.config.path)
       .components()
       .collect::<PathBuf>();
-    let args: CloneArgs = repo.into();
+    let args: RepoExecutionArgs = repo.into();
     (root, args)
   } else {
     let root = periphery_config()
@@ -117,7 +117,7 @@ pub async fn pull_or_clone_stack(
       .join(&stack.config.clone_path)
       .components()
       .collect::<PathBuf>();
-    let args: CloneArgs = stack.into();
+    let args: RepoExecutionArgs = stack.into();
     (root, args)
   };
   args.destination = Some(root.display().to_string());
@@ -140,11 +140,16 @@ pub async fn pull_or_clone_stack(
     }
   };
 
+  // Todo: pass through repo on clone / on pull.
+  let todo = String::new();
+
   PullOrCloneRepo {
     args,
     git_token,
     environment: vec![],
     env_file_path: stack.config.env_file_path.clone(),
+    on_clone: None,
+    on_pull: None,
     skip_secret_interp: stack.config.skip_secret_interp,
     // repo replacer only needed for on_clone / on_pull,
     // which aren't available for stacks

@@ -1,14 +1,10 @@
-import {
-  ActionWithDialog,
-  ResourcePageHeader,
-  StatusBadge,
-} from "@components/util";
+import { ActionWithDialog, StatusBadge } from "@components/util";
 import { useExecute, useRead } from "@lib/hooks";
 import { RequiredResourceComponents } from "@types";
 import { Clapperboard, Clock } from "lucide-react";
 import { ActionConfig } from "./config";
 import { ActionTable } from "./table";
-import { DeleteResource, NewResource } from "../common";
+import { DeleteResource, NewResource, ResourcePageHeader } from "../common";
 import {
   action_state_intention,
   stroke_color_class_by_intention,
@@ -152,14 +148,13 @@ export const ActionComponents: RequiredResourceComponents = {
 
   ResourcePageHeader: ({ id }) => {
     const action = useAction(id);
-
     return (
       <ResourcePageHeader
         intent={action_state_intention(action?.info.state)}
         icon={<ActionIcon id={id} size={8} />}
         type="Action"
         id={id}
-        name={action?.name}
+        resource={action}
         state={action?.info.state}
         status={undefined}
       />

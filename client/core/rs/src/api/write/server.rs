@@ -31,6 +31,24 @@ pub struct CreateServer {
 
 //
 
+/// Creates a new server with given `name` and the configuration
+/// of the server at the given `id`. Response: [Server].
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoWriteRequest)]
+#[response(Server)]
+#[error(serror::Error)]
+pub struct CopyServer {
+  /// The name of the new server.
+  pub name: String,
+  /// The id of the server to copy.
+  pub id: String,
+}
+
+//
+
 /// Deletes the server at the given id, and returns the deleted server.
 /// Response: [Server]
 #[typeshare]

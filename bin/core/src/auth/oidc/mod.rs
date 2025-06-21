@@ -303,7 +303,7 @@ async fn callback(
         .as_object_id()
         .context("inserted_id is not ObjectId")?
         .to_string();
-      
+
       jwt_client()
         .encode(user_id)
         .context("failed to generate jwt")?

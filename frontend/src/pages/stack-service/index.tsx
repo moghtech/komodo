@@ -2,6 +2,7 @@ import { Section } from "@components/layouts";
 import {
   ResourceDescription,
   ResourceLink,
+  ResourcePageHeader,
 } from "@components/resources/common";
 import { useStack } from "@components/resources/stack";
 import {
@@ -29,7 +30,7 @@ import { Link, useParams } from "react-router-dom";
 import { StackServiceLogs } from "./log";
 import { Button } from "@ui/button";
 import { ExportButton } from "@components/export";
-import { DockerResourceLink, ResourcePageHeader } from "@components/util";
+import { DockerResourceLink } from "@components/util";
 import { ResourceNotifications } from "@pages/resource-notifications";
 import { Fragment } from "react/jsx-runtime";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
@@ -102,6 +103,7 @@ const StackServicePageInner = ({
               id={undefined}
               intent={intention}
               icon={<Layers2 className={cn("w-8 h-8", stroke_color)} />}
+              resource={undefined}
               name={service}
               state={state}
               status={container?.status}

@@ -1,0 +1,15 @@
+[package]
+name = "interpolate"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+komodo_client.workspace = true
+#
+svi.workspace = true
+#
+anyhow.workspace = true

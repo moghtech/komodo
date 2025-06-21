@@ -2,7 +2,12 @@ import { atomWithStorage, useLocalStorage, useRead, useUser } from "@lib/hooks";
 import { RequiredResourceComponents } from "@types";
 import { Card } from "@ui/card";
 import { Clock, FolderSync } from "lucide-react";
-import { DeleteResource, NewResource, StandardSource } from "../common";
+import {
+  DeleteResource,
+  NewResource,
+  ResourcePageHeader,
+  StandardSource,
+} from "../common";
 import { ResourceSyncTable } from "./table";
 import { Types } from "komodo_client";
 import { CommitSync, ExecuteSync, RefreshSync } from "./actions";
@@ -14,7 +19,7 @@ import {
 import { cn, sync_no_changes } from "@lib/utils";
 import { fmt_date } from "@lib/formatting";
 import { DashboardPieChart } from "@pages/home/dashboard";
-import { ResourcePageHeader, StatusBadge } from "@components/util";
+import { StatusBadge } from "@components/util";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
 import { ResourceSyncConfig } from "./config";
 import { ResourceSyncInfo } from "./info";
@@ -267,7 +272,7 @@ export const ResourceSyncComponents: RequiredResourceComponents = {
         icon={<ResourceSyncIcon id={id} size={8} />}
         type="ResourceSync"
         id={id}
-        name={sync?.name}
+        resource={sync}
         state={sync?.info.state}
         status=""
       />
