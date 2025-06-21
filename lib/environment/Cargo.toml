@@ -1,5 +1,5 @@
 [package]
-name = "command"
+name = "environment"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -9,5 +9,7 @@ homepage.workspace = true
 
 [dependencies]
 komodo_client.workspace = true
-run_command.workspace = true
-svi.workspace = true
+formatting.workspace = true
+#
+anyhow.workspace = true
+tokio.workspace = true

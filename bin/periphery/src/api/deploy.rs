@@ -1,8 +1,7 @@
 use anyhow::Context;
-use command::{
-  run_komodo_command, run_komodo_command_with_interpolation,
-};
+use command::run_komodo_command_with_sanitization;
 use formatting::format_serror;
+use interpolate::Interpolator;
 use komodo_client::{
   entities::{
     EnvironmentVar,
@@ -36,12 +35,18 @@ impl Resolve<super::Args> for Deploy {
   )]
   async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
     let Deploy {
-      deployment,
+      mut deployment,
       stop_signal,
       stop_time,
       registry_token,
-      replacers: core_replacers,
+      mut replacers,
     } = self;
+
+    let mut interpolator =
+      Interpolator::new(None, &periphery_config().secrets);
+    interpolator.interpolate_deployment(&mut deployment)?;
+    replacers.extend(interpolator.secret_replacers);
+
     let image = if let DeploymentImage::Image { image } =
       &deployment.config.image
     {
@@ -76,6 +81,7 @@ impl Resolve<super::Args> for Deploy {
 
     let _ = pull_image(image).await;
     debug!("image pulled");
+
     let _ = (RemoveContainer {
       name: deployment.name.clone(),
       signal: stop_signal,
@@ -87,26 +93,22 @@ impl Resolve<super::Args> for Deploy {
 
     let command = docker_run_command(&deployment, image)
       .context("Unable to generate valid docker run command")?;
-    debug!("docker run command: {command}");
 
-    if deployment.config.skip_secret_interp {
-      Ok(run_komodo_command("Docker Run", None, command).await)
-    } else {
-      match run_komodo_command_with_interpolation(
-        "Docker Run",
-        None,
-        command,
-        false,
-        &periphery_config().secrets,
-        &core_replacers,
-      )
-      .await
-      {
-        Some(log) => Ok(log),
-        // The None case can not be reached, as the command is always non-empty
-        None => unreachable!(),
-      }
-    }
+    let Some(log) = run_komodo_command_with_sanitization(
+      "Docker Run",
+      None,
+      command,
+      false,
+      &replacers,
+    )
+    .await
+    else {
+      // The none case is only for empty command,
+      // this won't be the case given it is populated above.
+      unreachable!()
+    };
+
+    Ok(log)
   }
 }
 

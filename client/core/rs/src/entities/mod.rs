@@ -18,7 +18,7 @@ use strum::{AsRefStr, Display, EnumString};
 use typeshare::typeshare;
 
 use crate::{
-  deserializers::file_contents_deserializer,
+  deserializers::file_contents_deserializer, entities::update::Log,
   parsers::parse_key_value_list,
 };
 
@@ -443,33 +443,48 @@ fn default_enabled() -> bool {
 }
 
 #[typeshare]
+#[derive(
+  Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize,
+)]
+pub enum DefaultRepoFolder {
+  /// /${root_directory}/stacks
+  Stacks,
+  /// /${root_directory}/builds
+  Builds,
+  /// /${root_directory}/repos
+  Repos,
+  /// If the repo is only cloned
+  /// in the core repo cache (resource sync),
+  /// this isn't relevant.
+  NotApplicable,
+}
+
+#[typeshare]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct CloneArgs {
+pub struct RepoExecutionArgs {
   /// Resource name (eg Build name, Repo name)
   pub name: String,
   /// Git provider domain. Default: `github.com`
   pub provider: String,
   /// Use https (vs http).
   pub https: bool,
+  /// Configure the account used to access repo (if private)
+  pub account: Option<String>,
   /// Full repo identifier. {namespace}/{repo_name}
+  /// Its optional to force checking and produce error if not defined.
   pub repo: Option<String>,
   /// Git Branch. Default: `main`
   pub branch: String,
   /// Specific commit hash. Optional
   pub commit: Option<String>,
-  /// Use PERIPHERY_BUILD_DIR as the parent folder for the clone.
-  pub is_build: bool,
   /// The clone destination path
   pub destination: Option<String>,
-  /// Command to run after the repo has been cloned
-  pub on_clone: Option<SystemCommand>,
-  /// Command to run after the repo has been pulled
-  pub on_pull: Option<SystemCommand>,
-  /// Configure the account used to access repo (if private)
-  pub account: Option<String>,
+  /// The default folder to use.
+  /// Depends on the resource type.
+  pub default_folder: DefaultRepoFolder,
 }
 
-impl CloneArgs {
+impl RepoExecutionArgs {
   pub fn path(&self, root_repo_dir: &Path) -> PathBuf {
     match &self.destination {
       Some(destination) => root_repo_dir
@@ -519,99 +534,104 @@ impl CloneArgs {
   }
 }
 
-impl From<&self::build::Build> for CloneArgs {
-  fn from(build: &self::build::Build) -> CloneArgs {
-    CloneArgs {
-      name: build.name.clone(),
-      provider: optional_string(&build.config.git_provider)
-        .unwrap_or_else(|| String::from("github.com")),
-      repo: optional_string(&build.config.repo),
-      branch: optional_string(&build.config.branch)
-        .unwrap_or_else(|| String::from("main")),
-      commit: optional_string(&build.config.commit),
-      is_build: true,
-      destination: None,
-      on_clone: None,
-      on_pull: None,
-      https: build.config.git_https,
-      account: optional_string(&build.config.git_account),
-    }
-  }
-}
-
-impl From<&self::repo::Repo> for CloneArgs {
-  fn from(repo: &self::repo::Repo) -> CloneArgs {
-    CloneArgs {
-      name: repo.name.clone(),
-      provider: optional_string(&repo.config.git_provider)
-        .unwrap_or_else(|| String::from("github.com")),
-      repo: optional_string(&repo.config.repo),
-      branch: optional_string(&repo.config.branch)
-        .unwrap_or_else(|| String::from("main")),
-      commit: optional_string(&repo.config.commit),
-      is_build: false,
-      destination: optional_string(&repo.config.path),
-      on_clone: repo.config.on_clone.clone().into_option(),
-      on_pull: repo.config.on_pull.clone().into_option(),
-      https: repo.config.git_https,
-      account: optional_string(&repo.config.git_account),
-    }
-  }
-}
-
-impl From<&self::sync::ResourceSync> for CloneArgs {
-  fn from(sync: &self::sync::ResourceSync) -> Self {
-    CloneArgs {
-      name: sync.name.clone(),
-      provider: optional_string(&sync.config.git_provider)
-        .unwrap_or_else(|| String::from("github.com")),
-      repo: optional_string(&sync.config.repo),
-      branch: optional_string(&sync.config.branch)
-        .unwrap_or_else(|| String::from("main")),
-      commit: optional_string(&sync.config.commit),
-      is_build: false,
-      destination: None,
-      on_clone: None,
-      on_pull: None,
-      https: sync.config.git_https,
-      account: optional_string(&sync.config.git_account),
-    }
-  }
-}
-
-impl From<&self::stack::Stack> for CloneArgs {
+impl From<&self::stack::Stack> for RepoExecutionArgs {
   fn from(stack: &self::stack::Stack) -> Self {
-    CloneArgs {
+    RepoExecutionArgs {
       name: stack.name.clone(),
       provider: optional_string(&stack.config.git_provider)
         .unwrap_or_else(|| String::from("github.com")),
+      https: stack.config.git_https,
+      account: optional_string(&stack.config.git_account),
       repo: optional_string(&stack.config.repo),
       branch: optional_string(&stack.config.branch)
         .unwrap_or_else(|| String::from("main")),
       commit: optional_string(&stack.config.commit),
-      is_build: false,
       destination: optional_string(&stack.config.clone_path),
-      on_clone: None,
-      on_pull: None,
-      https: stack.config.git_https,
-      account: optional_string(&stack.config.git_account),
+      default_folder: DefaultRepoFolder::Stacks,
+    }
+  }
+}
+
+impl From<&self::build::Build> for RepoExecutionArgs {
+  fn from(build: &self::build::Build) -> RepoExecutionArgs {
+    RepoExecutionArgs {
+      name: build.name.clone(),
+      provider: optional_string(&build.config.git_provider)
+        .unwrap_or_else(|| String::from("github.com")),
+      https: build.config.git_https,
+      account: optional_string(&build.config.git_account),
+      repo: optional_string(&build.config.repo),
+      branch: optional_string(&build.config.branch)
+        .unwrap_or_else(|| String::from("main")),
+      commit: optional_string(&build.config.commit),
+      destination: None,
+      default_folder: DefaultRepoFolder::Builds,
+    }
+  }
+}
+
+impl From<&self::repo::Repo> for RepoExecutionArgs {
+  fn from(repo: &self::repo::Repo) -> RepoExecutionArgs {
+    RepoExecutionArgs {
+      name: repo.name.clone(),
+      provider: optional_string(&repo.config.git_provider)
+        .unwrap_or_else(|| String::from("github.com")),
+      https: repo.config.git_https,
+      account: optional_string(&repo.config.git_account),
+      repo: optional_string(&repo.config.repo),
+      branch: optional_string(&repo.config.branch)
+        .unwrap_or_else(|| String::from("main")),
+      commit: optional_string(&repo.config.commit),
+      destination: optional_string(&repo.config.path),
+      default_folder: DefaultRepoFolder::Repos,
+    }
+  }
+}
+
+impl From<&self::sync::ResourceSync> for RepoExecutionArgs {
+  fn from(sync: &self::sync::ResourceSync) -> Self {
+    RepoExecutionArgs {
+      name: sync.name.clone(),
+      provider: optional_string(&sync.config.git_provider)
+        .unwrap_or_else(|| String::from("github.com")),
+      https: sync.config.git_https,
+      account: optional_string(&sync.config.git_account),
+      repo: optional_string(&sync.config.repo),
+      branch: optional_string(&sync.config.branch)
+        .unwrap_or_else(|| String::from("main")),
+      commit: optional_string(&sync.config.commit),
+      destination: None,
+      default_folder: DefaultRepoFolder::NotApplicable,
     }
   }
 }
 
 #[typeshare]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct RepoExecutionResponse {
+  /// Response logs
+  pub logs: Vec<Log>,
+  /// Absolute path to the repo root on the host.
+  pub path: PathBuf,
+  /// Latest short commit hash, if it could be retrieved
+  pub commit_hash: Option<String>,
+  /// Latest commit message, if it could be retrieved
+  pub commit_message: Option<String>,
+}
+
+#[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
   Debug,
-  Display,
-  EnumString,
-  PartialEq,
-  Hash,
-  Eq,
   Clone,
   Copy,
+  PartialEq,
+  Eq,
+  Hash,
   Default,
+  Serialize,
+  Deserialize,
+  Display,
+  EnumString,
 )]
 #[serde(rename_all = "snake_case")]
 #[strum(serialize_all = "snake_case")]

@@ -184,7 +184,7 @@ impl Resolve<ExecuteArgs> for Deploy {
 
       interpolator
         .interpolate_deployment(&mut deployment)?
-        .add_log(&mut update);
+        .push_logs(&mut update.logs);
 
       interpolator.secret_replacers
     } else {

@@ -194,7 +194,7 @@ pub trait ExecuteResourceSync: ResourceSyncTrait {
       let meta = ResourceMetaUpdate {
         description: update_description
           .then(|| resource.description.clone()),
-        template: update_template.then(|| resource.template),
+        template: update_template.then_some(resource.template),
         tags: update_tags.then(|| resource.tags.clone()),
       };
 

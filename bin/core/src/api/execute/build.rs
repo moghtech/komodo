@@ -218,7 +218,7 @@ impl Resolve<ExecuteArgs> for RunBuild {
         interpolator.interpolate_repo(repo)?;
       }
 
-      interpolator.add_log(&mut update);
+      interpolator.push_logs(&mut update.logs);
 
       interpolator.secret_replacers
     } else {
@@ -237,6 +237,8 @@ impl Resolve<ExecuteArgs> for RunBuild {
             git_token,
             environment: Default::default(),
             env_file_path: Default::default(),
+            on_clone: None,
+            on_pull: None,
             skip_secret_interp: Default::default(),
             replacers: Default::default(),
           }) => res,
@@ -253,10 +255,10 @@ impl Resolve<ExecuteArgs> for RunBuild {
       let commit_message = match res {
         Ok(res) => {
           debug!("finished repo clone");
-          update.logs.extend(res.logs);
+          update.logs.extend(res.res.logs);
           update.commit_hash =
-            res.commit_hash.unwrap_or_default().to_string();
-          res.commit_message.unwrap_or_default()
+            res.res.commit_hash.unwrap_or_default().to_string();
+          res.res.commit_message.unwrap_or_default()
         }
         Err(e) => {
           warn!("Failed build at clone repo | {e:#}");

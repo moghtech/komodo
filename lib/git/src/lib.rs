@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use anyhow::{Context, anyhow};
 use formatting::{bold, muted};
@@ -7,8 +7,6 @@ use komodo_client::entities::{
 };
 use run_command::async_run_command;
 use tracing::instrument;
-
-pub mod environment;
 
 mod clone;
 mod commit;
@@ -23,15 +21,6 @@ pub use crate::{
   pull::pull,
   pull_or_clone::pull_or_clone,
 };
-
-#[derive(Debug, Default, Clone)]
-pub struct GitRes {
-  pub logs: Vec<Log>,
-  pub path: PathBuf,
-  pub hash: Option<String>,
-  pub message: Option<String>,
-  pub env_file_path: Option<PathBuf>,
-}
 
 #[instrument(level = "debug")]
 pub async fn get_commit_hash_info(

@@ -324,9 +324,8 @@ fn find_next_occurrence(
           .timestamp_millis()
       }
       ("", timezone) | (timezone, _) => {
-        let tz: chrono_tz::Tz = timezone
-          .parse()
-          .context("Failed to parse timezone")?;
+        let tz: chrono_tz::Tz =
+          timezone.parse().context("Failed to parse timezone")?;
         let tz_time = chrono::Local::now().with_timezone(&tz);
         cron
           .find_next_occurrence(&tz_time, false)

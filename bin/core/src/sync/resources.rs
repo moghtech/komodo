@@ -823,7 +823,7 @@ impl ExecuteResourceSync for Procedure {
           &name,
           ResourceMetaUpdate {
             description: Some(resource.description.clone()),
-            template: Some(resource.template.clone()),
+            template: Some(resource.template),
             tags: Some(resource.tags.clone()),
           },
           &mut log,

@@ -1,10 +1,9 @@
 use anyhow::{Context, anyhow};
 use formatting::format_serror;
-use git::GitRes;
 use komodo_client::{
   api::write::*,
   entities::{
-    CloneArgs, NoData, Operation,
+    NoData, Operation, RepoExecutionArgs,
     config::core::CoreConfig,
     komodo_timestamp,
     permission::PermissionLevel,
@@ -183,13 +182,10 @@ impl Resolve<WriteArgs> for RefreshRepoCache {
       return Ok(NoData {});
     }
 
-    let mut clone_args: CloneArgs = (&repo).into();
+    let mut clone_args: RepoExecutionArgs = (&repo).into();
     let repo_path =
       clone_args.unique_path(&core_config().repo_directory)?;
     clone_args.destination = Some(repo_path.display().to_string());
-    // Don't want to run these on core.
-    clone_args.on_clone = None;
-    clone_args.on_pull = None;
 
     let access_token = if let Some(username) = &clone_args.account {
       git_token(&clone_args.provider, username, |https| {
@@ -203,14 +199,10 @@ impl Resolve<WriteArgs> for RefreshRepoCache {
       None
     };
 
-    let GitRes { hash, message, .. } = git::pull_or_clone(
+    let (res, _) = git::pull_or_clone(
       clone_args,
       &core_config().repo_directory,
       access_token,
-      &[],
-      "",
-      None,
-      &[],
     )
     .await
     .with_context(|| {
@@ -222,8 +214,8 @@ impl Resolve<WriteArgs> for RefreshRepoCache {
       last_built_at: repo.info.last_built_at,
       built_hash: repo.info.built_hash,
       built_message: repo.info.built_message,
-      latest_hash: hash,
-      latest_message: message,
+      latest_hash: res.commit_hash,
+      latest_message: res.commit_message,
     };
 
     let info = to_document(&info)

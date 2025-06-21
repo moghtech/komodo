@@ -1059,8 +1059,6 @@ dependencies = [
 name = "command"
 version = "1.18.4-dev-5"
 dependencies = [
- "anyhow",
- "formatting",
  "komodo_client",
  "run_command",
  "svi",
@@ -1540,6 +1538,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "environment"
+version = "1.18.4-dev-5"
+dependencies = [
+ "anyhow",
+ "formatting",
+ "komodo_client",
+ "tokio",
+]
+
+[[package]]
 name = "environment_file"
 version = "1.18.4-dev-5"
 dependencies = [
@@ -1791,7 +1799,6 @@ dependencies = [
  "formatting",
  "komodo_client",
  "run_command",
- "svi",
  "tokio",
  "tracing",
 ]
@@ -2676,11 +2683,13 @@ dependencies = [
  "command",
  "derive_variants",
  "dotenvy",
+ "environment",
  "environment_file",
  "envy",
  "formatting",
  "futures",
  "git",
+ "interpolate",
  "komodo_client",
  "logger",
  "merge_config_files",
@@ -4834,11 +4843,11 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "svi"
-version = "1.0.1"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ecfc625e6292e18db65d1a122cb1ea014dd909622ab0154f068a3990413ff017"
+checksum = "e8d4d1d576ce8f4b01ac90fd0d9f4c95bf5cebbc9c08e89499b152bef770cd98"
 dependencies = [
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
 ]
 
 [[package]]

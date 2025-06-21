@@ -1,16 +1,22 @@
-use anyhow::Context;
+use anyhow::{Context, anyhow};
+use axum::http::StatusCode;
 use formatting::format_serror;
-use git::GitRes;
-use komodo_client::entities::{CloneArgs, LatestCommit, update::Log};
+use komodo_client::entities::{
+  DefaultRepoFolder, LatestCommit, RepoExecutionArgs, update::Log,
+};
 use periphery_client::api::git::{
-  CloneRepo, DeleteRepo, GetLatestCommit, PullOrCloneRepo, PullRepo,
-  RenameRepo, RepoActionResponse,
+  CloneRepo, DeleteRepo, GetLatestCommit,
+  PeripheryRepoExecutionResponse, PullOrCloneRepo, PullRepo,
+  RenameRepo,
 };
 use resolver_api::Resolve;
+use serror::AddStatusCodeError;
 use std::path::PathBuf;
 use tokio::fs;
 
-use crate::config::periphery_config;
+use crate::{
+  config::periphery_config, git::handle_post_repo_execution,
+};
 
 impl Resolve<super::Args> for GetLatestCommit {
   #[instrument(name = "GetLatestCommit", level = "debug")]
@@ -42,16 +48,18 @@ impl Resolve<super::Args> for CloneRepo {
   async fn resolve(
     self,
     _: &super::Args,
-  ) -> serror::Result<RepoActionResponse> {
+  ) -> serror::Result<PeripheryRepoExecutionResponse> {
     let CloneRepo {
       args,
       git_token,
       environment,
       env_file_path,
+      on_clone,
+      on_pull,
       skip_secret_interp,
       replacers,
     } = self;
-    let CloneArgs {
+    let RepoExecutionArgs {
       provider, account, ..
     } = &args;
     let token = match (account, git_token) {
@@ -60,42 +68,25 @@ impl Resolve<super::Args> for CloneRepo {
       (Some(account),  None) => Some(
         crate::helpers::git_token(provider, account).map(ToString::to_string)
           .with_context(
-            || format!("Failed to get git token from periphery config | provider: {provider} | account: {account}")
+            || format!("Failed to get git token from periphery config | Provider: {provider} | Account: {account}")
           )?,
       ),
     };
-    let parent_dir = if args.is_build {
-      periphery_config().build_dir()
-    } else {
-      periphery_config().repo_dir()
-    };
-    git::clone(
-      args,
-      &parent_dir,
-      token,
-      &environment,
+
+    let root_repo_dir = default_folder(args.default_folder)?;
+
+    let res = git::clone(args, &root_repo_dir, token).await?;
+
+    handle_post_repo_execution(
+      res,
+      environment,
       &env_file_path,
-      (!skip_secret_interp).then_some(&periphery_config().secrets),
-      &replacers,
+      on_clone,
+      on_pull,
+      skip_secret_interp,
+      replacers,
     )
     .await
-    .map(
-      |GitRes {
-         logs,
-         path,
-         hash,
-         message,
-         env_file_path,
-       }| {
-        RepoActionResponse {
-          logs,
-          path,
-          commit_hash: hash,
-          commit_message: message,
-          env_file_path,
-        }
-      },
-    )
     .map_err(Into::into)
   }
 }
@@ -114,16 +105,17 @@ impl Resolve<super::Args> for PullRepo {
   async fn resolve(
     self,
     _: &super::Args,
-  ) -> serror::Result<RepoActionResponse> {
+  ) -> serror::Result<PeripheryRepoExecutionResponse> {
     let PullRepo {
       args,
       git_token,
       environment,
       env_file_path,
+      on_pull,
       skip_secret_interp,
       replacers,
     } = self;
-    let CloneArgs {
+    let RepoExecutionArgs {
       provider, account, ..
     } = &args;
     let token = match (account, git_token) {
@@ -136,38 +128,21 @@ impl Resolve<super::Args> for PullRepo {
           )?,
       ),
     };
-    let parent_dir = if args.is_build {
-      periphery_config().build_dir()
-    } else {
-      periphery_config().repo_dir()
-    };
-    git::pull(
-      args,
-      &parent_dir,
-      token,
-      &environment,
+
+    let parent_dir = default_folder(args.default_folder)?;
+
+    let res = git::pull(args, &parent_dir, token).await?;
+
+    handle_post_repo_execution(
+      res,
+      environment,
       &env_file_path,
-      (!skip_secret_interp).then_some(&periphery_config().secrets),
-      &replacers,
+      None,
+      on_pull,
+      skip_secret_interp,
+      replacers,
     )
     .await
-    .map(
-      |GitRes {
-         logs,
-         path,
-         hash,
-         message,
-         env_file_path,
-       }| {
-        RepoActionResponse {
-          logs,
-          path,
-          commit_hash: hash,
-          commit_message: message,
-          env_file_path,
-        }
-      },
-    )
     .map_err(Into::into)
   }
 }
@@ -186,16 +161,18 @@ impl Resolve<super::Args> for PullOrCloneRepo {
   async fn resolve(
     self,
     _: &super::Args,
-  ) -> serror::Result<RepoActionResponse> {
+  ) -> serror::Result<PeripheryRepoExecutionResponse> {
     let PullOrCloneRepo {
       args,
       git_token,
       environment,
       env_file_path,
+      on_clone,
+      on_pull,
       skip_secret_interp,
       replacers,
     } = self;
-    let CloneArgs {
+    let RepoExecutionArgs {
       provider, account, ..
     } = &args;
     let token = match (account, git_token) {
@@ -208,38 +185,21 @@ impl Resolve<super::Args> for PullOrCloneRepo {
           )?,
       ),
     };
-    let parent_dir = if args.is_build {
-      periphery_config().build_dir()
-    } else {
-      periphery_config().repo_dir()
-    };
-    git::pull_or_clone(
-      args,
-      &parent_dir,
-      token,
-      &environment,
+    let parent_dir = default_folder(args.default_folder)?;
+
+    let (res, cloned) =
+      git::pull_or_clone(args, &parent_dir, token).await?;
+
+    handle_post_repo_execution(
+      res,
+      environment,
       &env_file_path,
-      (!skip_secret_interp).then_some(&periphery_config().secrets),
-      &replacers,
+      cloned.then_some(on_clone).flatten(),
+      on_pull,
+      skip_secret_interp,
+      replacers,
     )
     .await
-    .map(
-      |GitRes {
-         logs,
-         path,
-         hash,
-         message,
-         env_file_path,
-       }| {
-        RepoActionResponse {
-          logs,
-          path,
-          commit_hash: hash,
-          commit_message: message,
-          env_file_path,
-        }
-      },
-    )
     .map_err(Into::into)
   }
 }
@@ -290,5 +250,23 @@ impl Resolve<super::Args> for DeleteRepo {
       Err(e) => Log::error("Delete repo", format_serror(&e.into())),
     };
     Ok(log)
+  }
+}
+
+//
+
+fn default_folder(
+  default_folder: DefaultRepoFolder,
+) -> serror::Result<PathBuf> {
+  match default_folder {
+    DefaultRepoFolder::Stacks => Ok(periphery_config().stack_dir()),
+    DefaultRepoFolder::Builds => Ok(periphery_config().build_dir()),
+    DefaultRepoFolder::Repos => Ok(periphery_config().repo_dir()),
+    DefaultRepoFolder::NotApplicable => {
+      Err(
+        anyhow!("The clone args should not have a default_folder of NotApplicable using this method.")
+          .status_code(StatusCode::BAD_REQUEST)
+      )
+    }
   }
 }

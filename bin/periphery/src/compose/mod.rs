@@ -15,7 +15,7 @@ pub fn docker_compose() -> &'static str {
   }
 }
 
-async fn compose_down(
+pub async fn down(
   project: &str,
   services: &[String],
   res: &mut ComposeUpResponse,

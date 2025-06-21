@@ -1,28 +1,26 @@
 use std::{
-  collections::HashMap,
   path::{Path, PathBuf},
   sync::OnceLock,
 };
 
 use cache::TimeoutCache;
-use command::{
-  run_komodo_command, run_komodo_command_multiline,
-  run_komodo_command_with_interpolation,
-};
+use command::run_komodo_command;
 use formatting::format_serror;
 use komodo_client::entities::{
-  CloneArgs, EnvironmentVar, all_logs_success, komodo_timestamp,
-  update::Log,
+  RepoExecutionArgs, RepoExecutionResponse, all_logs_success,
+  komodo_timestamp, update::Log,
 };
 
-use crate::{GitRes, get_commit_hash_log};
+use crate::get_commit_hash_log;
 
 /// Wait this long after a pull to allow another pull through
 const PULL_TIMEOUT: i64 = 5_000;
 
-fn pull_cache() -> &'static TimeoutCache<PathBuf, GitRes> {
-  static PULL_CACHE: OnceLock<TimeoutCache<PathBuf, GitRes>> =
-    OnceLock::new();
+fn pull_cache()
+-> &'static TimeoutCache<PathBuf, RepoExecutionResponse> {
+  static PULL_CACHE: OnceLock<
+    TimeoutCache<PathBuf, RepoExecutionResponse>,
+  > = OnceLock::new();
   PULL_CACHE.get_or_init(Default::default)
 }
 
@@ -31,34 +29,29 @@ fn pull_cache() -> &'static TimeoutCache<PathBuf, GitRes> {
 /// can change branch after clone, or even the remote.
 #[tracing::instrument(
   level = "debug",
-  skip(
-    clone_args,
-    access_token,
-    environment,
-    secrets,
-    core_replacers
-  )
+  skip(clone_args, access_token)
 )]
 #[allow(clippy::too_many_arguments)]
 pub async fn pull<T>(
   clone_args: T,
   root_repo_dir: &Path,
   access_token: Option<String>,
-  environment: &[EnvironmentVar],
-  env_file_path: &str,
-  // if skip_secret_interp is none, make sure to pass None here
-  secrets: Option<&HashMap<String, String>>,
-  core_replacers: &[(String, String)],
-) -> anyhow::Result<GitRes>
+) -> anyhow::Result<RepoExecutionResponse>
 where
-  T: Into<CloneArgs> + std::fmt::Debug,
+  T: Into<RepoExecutionArgs> + std::fmt::Debug,
 {
-  let args: CloneArgs = clone_args.into();
-  let path = args.path(root_repo_dir);
+  let args: RepoExecutionArgs = clone_args.into();
   let repo_url = args.remote_url(access_token.as_deref())?;
 
+  let mut res = RepoExecutionResponse {
+    path: args.path(root_repo_dir),
+    logs: Vec::new(),
+    commit_hash: None,
+    commit_message: None,
+  };
+
   // Acquire the path lock
-  let lock = pull_cache().get_lock(path.clone()).await;
+  let lock = pull_cache().get_lock(res.path.clone()).await;
 
   // Lock the path lock, prevents simultaneous pulls by
   // ensuring simultaneous pulls will wait for first to finish
@@ -71,33 +64,25 @@ where
   }
 
   let res = async {
-    let mut logs = Vec::new();
-
     // Check for '.git' path to see if the folder is initialized as a git repo
-    let dot_git_path = path.join(".git");
+    let dot_git_path = res.path.join(".git");
     if !dot_git_path.exists() {
       crate::init::init_folder_as_repo(
-        &path,
+        &res.path,
         &args,
         access_token.as_deref(),
-        &mut logs,
+        &mut res.logs,
       )
       .await;
-      if !all_logs_success(&logs) {
-        return Ok(GitRes {
-          logs,
-          path,
-          hash: None,
-          message: None,
-          env_file_path: None,
-        });
+      if !all_logs_success(&res.logs) {
+        return Ok(res);
       }
     }
 
     // Set remote url
     let mut set_remote = run_komodo_command(
-      "Set git remote",
-      path.as_ref(),
+      "Set Git Remote",
+      res.path.as_ref(),
       format!("git remote set-url origin {repo_url}"),
     )
     .await;
@@ -110,145 +95,75 @@ where
       set_remote.stderr =
         set_remote.stderr.replace(&token, "<TOKEN>");
     }
-    logs.push(set_remote);
-    if !all_logs_success(&logs) {
-      return Ok(GitRes {
-        logs,
-        path,
-        hash: None,
-        message: None,
-        env_file_path: None,
-      });
+    res.logs.push(set_remote);
+    if !all_logs_success(&res.logs) {
+      return Ok(res);
     }
 
     // First fetch remote branches before checkout
     let fetch = run_komodo_command(
-      "Git fetch",
-      path.as_ref(),
+      "Git Fetch",
+      res.path.as_ref(),
       "git fetch --all --prune",
     )
     .await;
     if !fetch.success {
-      logs.push(fetch);
-      return Ok(GitRes {
-        logs,
-        path,
-        hash: None,
-        message: None,
-        env_file_path: None,
-      });
+      res.logs.push(fetch);
+      return Ok(res);
     }
 
     let checkout = run_komodo_command(
       "Checkout branch",
-      path.as_ref(),
+      res.path.as_ref(),
       format!("git checkout -f {}", args.branch),
     )
     .await;
-    logs.push(checkout);
-    if !all_logs_success(&logs) {
-      return Ok(GitRes {
-        logs,
-        path,
-        hash: None,
-        message: None,
-        env_file_path: None,
-      });
+    res.logs.push(checkout);
+    if !all_logs_success(&res.logs) {
+      return Ok(res);
     }
 
     let pull_log = run_komodo_command(
       "Git pull",
-      path.as_ref(),
+      res.path.as_ref(),
       format!("git pull --rebase --force origin {}", args.branch),
     )
     .await;
-    logs.push(pull_log);
-    if !all_logs_success(&logs) {
-      return Ok(GitRes {
-        logs,
-        path,
-        hash: None,
-        message: None,
-        env_file_path: None,
-      });
+    res.logs.push(pull_log);
+    if !all_logs_success(&res.logs) {
+      return Ok(res);
     }
 
     if let Some(commit) = args.commit {
       let reset_log = run_komodo_command(
         "Set commit",
-        path.as_ref(),
+        res.path.as_ref(),
         format!("git reset --hard {commit}"),
       )
       .await;
-      logs.push(reset_log);
+      res.logs.push(reset_log);
+      if !all_logs_success(&res.logs) {
+        return Ok(res);
+      }
     }
 
-    let (hash, message) = match get_commit_hash_log(&path).await {
+    match get_commit_hash_log(&res.path).await {
       Ok((log, hash, message)) => {
-        logs.push(log);
-        (Some(hash), Some(message))
+        res.logs.push(log);
+        res.commit_hash = Some(hash);
+        res.commit_message = Some(message);
       }
       Err(e) => {
-        logs.push(Log::simple(
+        res.logs.push(Log::simple(
           "Latest Commit",
           format_serror(
             &e.context("Failed to get latest commit").into(),
           ),
         ));
-        (None, None)
       }
     };
 
-    let Ok((env_file_path, _replacers)) =
-      crate::environment::write_file(
-        environment,
-        env_file_path,
-        secrets,
-        &path,
-        &mut logs,
-      )
-      .await
-    else {
-      return Ok(GitRes {
-        logs,
-        path,
-        hash,
-        message,
-        env_file_path: None,
-      });
-    };
-
-    if let Some(command) = args.on_pull {
-      let on_pull_path = path.join(&command.path);
-      if let Some(log) = if let Some(secrets) = secrets {
-        run_komodo_command_with_interpolation(
-          "On Pull",
-          Some(on_pull_path.as_path()),
-          &command.command,
-          true,
-          secrets,
-          core_replacers,
-        )
-        .await
-      } else {
-        run_komodo_command_multiline(
-          "On Pull",
-          Some(on_pull_path.as_path()),
-          &command.command,
-        )
-        .await
-      } {
-        logs.push(log)
-      };
-    }
-
-    anyhow::Ok(GitRes {
-      logs,
-      path,
-      hash,
-      message,
-      env_file_path,
-    })
+    anyhow::Ok(res)
   }
   .await;
 

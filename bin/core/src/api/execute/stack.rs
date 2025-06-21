@@ -128,7 +128,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
           interpolator.interpolate_repo(repo)?;
         }
       }
-      interpolator.add_log(&mut update);
+      interpolator.push_logs(&mut update.logs);
 
       interpolator.secret_replacers
     } else {
@@ -414,7 +414,7 @@ pub async fn pull_stack_inner(
       }
     }
     if let Some(update) = update {
-      interpolator.add_log(update);
+      interpolator.push_logs(&mut update.logs);
     }
   };
 

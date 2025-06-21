@@ -20,6 +20,7 @@ homepage = "https://komo.do"
 komodo_client = { path = "client/core/rs" }
 periphery_client = { path = "client/periphery/rs" }
 environment_file = { path = "lib/environment_file" }
+environment = { path = "lib/environment" }
 interpolate = { path = "lib/interpolate" }
 formatting = { path = "lib/formatting" }
 response = { path = "lib/response" }
@@ -42,7 +43,7 @@ mongo_indexed = "2.0.1"
 resolver_api = "3.0.0"
 toml_pretty = "1.1.2"
 mungos = "3.2.0"
-svi = "1.0.1"
+svi = "1.1.0"
 
 # ASYNC
 reqwest = { version = "0.12.20", default-features = false, features = ["json", "stream", "rustls-tls-native-roots"] }

@@ -118,12 +118,14 @@ impl Resolve<ExecuteArgs> for CloneRepo {
         git_token,
         environment: repo.config.env_vars()?,
         env_file_path: repo.config.env_file_path,
+        on_clone: repo.config.on_clone.into(),
+        on_pull: repo.config.on_pull.into(),
         skip_secret_interp: repo.config.skip_secret_interp,
         replacers: secret_replacers.into_iter().collect(),
       })
       .await
     {
-      Ok(res) => res.logs,
+      Ok(res) => res.res.logs,
       Err(e) => {
         vec![Log::error(
           "Clone Repo",
@@ -231,14 +233,15 @@ impl Resolve<ExecuteArgs> for PullRepo {
         git_token,
         environment: repo.config.env_vars()?,
         env_file_path: repo.config.env_file_path,
+        on_pull: repo.config.on_pull.into(),
         skip_secret_interp: repo.config.skip_secret_interp,
         replacers: secret_replacers.into_iter().collect(),
       })
       .await
     {
       Ok(res) => {
-        update.commit_hash = res.commit_hash.unwrap_or_default();
-        res.logs
+        update.commit_hash = res.res.commit_hash.unwrap_or_default();
+        res.res.logs
       }
       Err(e) => {
         vec![Log::error(
@@ -452,6 +455,8 @@ impl Resolve<ExecuteArgs> for BuildRepo {
           git_token,
           environment: repo.config.env_vars()?,
           env_file_path: repo.config.env_file_path,
+          on_clone: repo.config.on_clone.into(),
+          on_pull: repo.config.on_pull.into(),
           skip_secret_interp: repo.config.skip_secret_interp,
           replacers: secret_replacers.into_iter().collect()
         }) => res,
@@ -468,9 +473,10 @@ impl Resolve<ExecuteArgs> for BuildRepo {
     let commit_message = match res {
       Ok(res) => {
         debug!("finished repo clone");
-        update.logs.extend(res.logs);
-        update.commit_hash = res.commit_hash.unwrap_or_default();
-        res.commit_message.unwrap_or_default()
+        update.logs.extend(res.res.logs);
+        update.commit_hash = res.res.commit_hash.unwrap_or_default();
+
+        res.res.commit_message.unwrap_or_default()
       }
       Err(e) => {
         update.push_error_log(
@@ -713,7 +719,9 @@ async fn interpolate(
     let mut interpolator =
       Interpolator::new(Some(&variables), &secrets);
 
-    interpolator.interpolate_repo(repo)?.add_log(update);
+    interpolator
+      .interpolate_repo(repo)?
+      .push_logs(&mut update.logs);
 
     Ok(interpolator.secret_replacers)
   } else {

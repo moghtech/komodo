@@ -1,13 +1,10 @@
-use std::{collections::HashMap, path::Path};
+use std::path::Path;
 
-use anyhow::Context;
-use formatting::format_serror;
 use komodo_client::{
   entities::{komodo_timestamp, update::Log},
   parsers::parse_multiline_command,
 };
 use run_command::{CommandOutput, async_run_command};
-use svi::Interpolator;
 
 pub async fn run_komodo_command(
   stage: &str,
@@ -43,8 +40,7 @@ pub async fn run_komodo_command_multiline(
   Some(run_komodo_command(stage, path, command).await)
 }
 
-/// Interpolates provided secrets into (potentially multiline) command,
-/// executes the command, and sanitizes the output to avoid exposing the secrets.
+/// Executes the command, and sanitizes the output to avoid exposing secrets in the log.
 ///
 /// Checks to make sure the command is non-empty after being multiline-parsed.
 ///
@@ -52,30 +48,13 @@ pub async fn run_komodo_command_multiline(
 /// and chains them together with '&&'.
 /// Supports full line and end of line comments.
 /// See [parse_multiline_command].
-pub async fn run_komodo_command_with_interpolation(
+pub async fn run_komodo_command_with_sanitization(
   stage: &str,
   path: impl Into<Option<&Path>>,
   command: impl AsRef<str>,
   parse_multiline: bool,
-  secrets: &HashMap<String, String>,
-  additional_replacers: &[(String, String)],
+  replacers: &[(String, String)],
 ) -> Option<Log> {
-  let (command, mut replacers) = match svi::interpolate_variables(
-    command.as_ref(),
-    secrets,
-    Interpolator::DoubleBrackets,
-    true,
-  )
-  .context("Failed to interpolate secrets")
-  {
-    Ok(res) => res,
-    Err(e) => {
-      return Some(Log::error(
-        &format!("{stage} - Interpolate Secrets"),
-        format_serror(&e.into()),
-      ));
-    }
-  };
   let mut log = if parse_multiline {
     run_komodo_command_multiline(stage, path, command).await
   } else {
@@ -83,10 +62,9 @@ pub async fn run_komodo_command_with_interpolation(
   }?;
 
   // Sanitize the command and output
-  replacers.extend_from_slice(additional_replacers);
-  log.command = svi::replace_in_string(&log.command, &replacers);
-  log.stdout = svi::replace_in_string(&log.stdout, &replacers);
-  log.stderr = svi::replace_in_string(&log.stderr, &replacers);
+  log.command = svi::replace_in_string(&log.command, replacers);
+  log.stdout = svi::replace_in_string(&log.stdout, replacers);
+  log.stderr = svi::replace_in_string(&log.stderr, replacers);
 
   Some(log)
 }

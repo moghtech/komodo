@@ -229,7 +229,9 @@ async fn interpolate(
   let mut interpolator =
     Interpolator::new(Some(&variables), &secrets);
 
-  interpolator.interpolate_string(contents)?.add_log(update);
+  interpolator
+    .interpolate_string(contents)?
+    .push_logs(&mut update.logs);
 
   Ok(interpolator.secret_replacers)
 }

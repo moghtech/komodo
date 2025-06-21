@@ -2,8 +2,8 @@ use std::collections::{HashMap, HashSet};
 
 use anyhow::Context;
 use komodo_client::entities::{
-  build::Build, deployment::Deployment, repo::Repo, stack::Stack,
-  update::Update,
+  EnvironmentVar, build::Build, deployment::Deployment, repo::Repo,
+  stack::Stack, update::Log,
 };
 
 pub struct Interpolator<'a> {
@@ -30,6 +30,9 @@ impl<'a> Interpolator<'a> {
     &mut self,
     stack: &mut Stack,
   ) -> anyhow::Result<&mut Self> {
+    if stack.config.skip_secret_interp {
+      return Ok(self);
+    }
     self
       .interpolate_string(&mut stack.config.file_contents)?
       .interpolate_string(&mut stack.config.environment)?
@@ -43,6 +46,9 @@ impl<'a> Interpolator<'a> {
     &mut self,
     repo: &mut Repo,
   ) -> anyhow::Result<&mut Self> {
+    if repo.config.skip_secret_interp {
+      return Ok(self);
+    }
     self
       .interpolate_string(&mut repo.config.environment)?
       .interpolate_string(&mut repo.config.on_clone.command)?
@@ -53,9 +59,13 @@ impl<'a> Interpolator<'a> {
     &mut self,
     build: &mut Build,
   ) -> anyhow::Result<&mut Self> {
+    if build.config.skip_secret_interp {
+      return Ok(self);
+    }
     self
       .interpolate_string(&mut build.config.build_args)?
       .interpolate_string(&mut build.config.secret_args)?
+      .interpolate_string(&mut build.config.labels)?
       .interpolate_string(&mut build.config.pre_build.command)?
       .interpolate_string(&mut build.config.dockerfile)?
       .interpolate_extra_args(&mut build.config.extra_args)
@@ -65,6 +75,9 @@ impl<'a> Interpolator<'a> {
     &mut self,
     deployment: &mut Deployment,
   ) -> anyhow::Result<&mut Self> {
+    if deployment.config.skip_secret_interp {
+      return Ok(self);
+    }
     self
       .interpolate_string(&mut deployment.config.environment)?
       .interpolate_string(&mut deployment.config.ports)?
@@ -131,28 +144,37 @@ impl<'a> Interpolator<'a> {
     Ok(self)
   }
 
-  pub fn add_log(&self, update: &mut Update) {
+  pub fn interpolate_env_vars(
+    &mut self,
+    env_vars: &mut Vec<EnvironmentVar>,
+  ) -> anyhow::Result<&mut Self> {
+    for var in env_vars {
+      self
+        .interpolate_string(&mut var.value)
+        .context("failed interpolation into variable value")?;
+    }
+    Ok(self)
+  }
+
+  pub fn push_logs(&self, logs: &mut Vec<Log>) {
     // Show which variables / values were interpolated
     if !self.variable_replacers.is_empty() {
-      update.push_simple_log(
-        "Interpolate Variables",
-        self.variable_replacers
-          .iter()
-          .map(|(value, variable)| format!("<span class=\"text-muted-foreground\">{variable} =></span> {value}"))
-          .collect::<Vec<_>>()
-          .join("\n"),
-      );
+      logs.push(Log::simple("Interpolate Variables", self.variable_replacers
+        .iter()
+        .map(|(value, variable)| format!("<span class=\"text-muted-foreground\">{variable} =></span> {value}"))
+        .collect::<Vec<_>>()
+        .join("\n")));
     }
 
     // Only show names of interpolated secrets
     if !self.secret_replacers.is_empty() {
-      update.push_simple_log(
-        "interpolate core secrets",
+      logs.push(
+        Log::simple("Interpolate Secrets",
         self.secret_replacers
           .iter()
           .map(|(_, variable)| format!("<span class=\"text-muted-foreground\">replaced:</span> {variable}"))
           .collect::<Vec<_>>()
-          .join("\n"),
+          .join("\n"),)
       );
     }
   }

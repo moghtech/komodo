@@ -262,7 +262,10 @@ impl Resolve<WriteArgs> for SetEveryoneUserGroup {
       Err(_) => doc! { "name": &self.user_group },
     };
     db.user_groups
-      .update_one(filter.clone(), doc! { "$set": { "everyone": self.everyone } })
+      .update_one(
+        filter.clone(),
+        doc! { "$set": { "everyone": self.everyone } },
+      )
       .await
       .context("failed to set everyone on user group")?;
     let res = db
