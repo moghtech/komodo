@@ -16,6 +16,7 @@ use crate::{
     option_string_list_deserializer, option_term_labels_deserializer,
     string_list_deserializer, term_labels_deserializer,
   },
+  entities::{EnvironmentVar, environment_vars_from_str},
   parsers::parse_key_value_list,
 };
 
@@ -207,6 +208,11 @@ pub struct DeploymentConfig {
 impl DeploymentConfig {
   pub fn builder() -> DeploymentConfigBuilder {
     DeploymentConfigBuilder::default()
+  }
+
+  pub fn env_vars(&self) -> anyhow::Result<Vec<EnvironmentVar>> {
+    environment_vars_from_str(&self.environment)
+      .context("Invalid environment")
   }
 }
 

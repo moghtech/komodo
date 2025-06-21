@@ -1,5 +1,6 @@
 use std::{collections::HashMap, sync::OnceLock};
 
+use anyhow::Context;
 use bson::{Document, doc};
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
@@ -8,11 +9,14 @@ use serde::{Deserialize, Serialize};
 use strum::Display;
 use typeshare::typeshare;
 
-use crate::deserializers::{
-  env_vars_deserializer, file_contents_deserializer,
-  option_env_vars_deserializer, option_file_contents_deserializer,
-  option_maybe_string_i64_deserializer,
-  option_string_list_deserializer, string_list_deserializer,
+use crate::{
+  deserializers::{
+    env_vars_deserializer, file_contents_deserializer,
+    option_env_vars_deserializer, option_file_contents_deserializer,
+    option_maybe_string_i64_deserializer,
+    option_string_list_deserializer, string_list_deserializer,
+  },
+  entities::{EnvironmentVar, environment_vars_from_str},
 };
 
 use super::{
@@ -475,6 +479,11 @@ pub struct StackConfig {
 impl StackConfig {
   pub fn builder() -> StackConfigBuilder {
     StackConfigBuilder::default()
+  }
+
+  pub fn env_vars(&self) -> anyhow::Result<Vec<EnvironmentVar>> {
+    environment_vars_from_str(&self.environment)
+      .context("Invalid environment")
   }
 }
 

@@ -77,7 +77,7 @@ pub async fn validate_files(
 pub async fn maybe_login_registry(
   stack: &Stack,
   registry_token: Option<String>,
-  res: &mut ComposeUpResponse,
+  logs: &mut Vec<Log>,
 ) {
   if !stack.config.registry_provider.is_empty()
     && !stack.config.registry_account.is_empty()
@@ -96,7 +96,7 @@ pub async fn maybe_login_registry(
     })
     .context("Failed to login to image registry")
     {
-      res.logs.push(Log::error(
+      logs.push(Log::error(
         "Login to Registry",
         format_serror(&e.into()),
       ));

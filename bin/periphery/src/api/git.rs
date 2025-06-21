@@ -2,7 +2,7 @@ use anyhow::{Context, anyhow};
 use axum::http::StatusCode;
 use formatting::format_serror;
 use komodo_client::entities::{
-  DefaultRepoFolder, LatestCommit, RepoExecutionArgs, update::Log,
+  DefaultRepoFolder, LatestCommit, update::Log,
 };
 use periphery_client::api::git::{
   CloneRepo, DeleteRepo, GetLatestCommit,
@@ -59,20 +59,8 @@ impl Resolve<super::Args> for CloneRepo {
       skip_secret_interp,
       replacers,
     } = self;
-    let RepoExecutionArgs {
-      provider, account, ..
-    } = &args;
-    let token = match (account, git_token) {
-      (None, _) => None,
-      (Some(_), Some(token)) => Some(token),
-      (Some(account),  None) => Some(
-        crate::helpers::git_token(provider, account).map(ToString::to_string)
-          .with_context(
-            || format!("Failed to get git token from periphery config | Provider: {provider} | Account: {account}")
-          )?,
-      ),
-    };
 
+    let token = crate::helpers::git_token(git_token, &args)?;
     let root_repo_dir = default_folder(args.default_folder)?;
 
     let res = git::clone(args, &root_repo_dir, token).await?;
@@ -115,20 +103,8 @@ impl Resolve<super::Args> for PullRepo {
       skip_secret_interp,
       replacers,
     } = self;
-    let RepoExecutionArgs {
-      provider, account, ..
-    } = &args;
-    let token = match (account, git_token) {
-      (None, _) => None,
-      (Some(_), Some(token)) => Some(token),
-      (Some(account),  None) => Some(
-        crate::helpers::git_token(provider, account).map(ToString::to_string)
-          .with_context(
-            || format!("Failed to get git token from periphery config | provider: {provider} | account: {account}")
-          )?,
-      ),
-    };
 
+    let token = crate::helpers::git_token(git_token, &args)?;
     let parent_dir = default_folder(args.default_folder)?;
 
     let res = git::pull(args, &parent_dir, token).await?;
@@ -172,19 +148,8 @@ impl Resolve<super::Args> for PullOrCloneRepo {
       skip_secret_interp,
       replacers,
     } = self;
-    let RepoExecutionArgs {
-      provider, account, ..
-    } = &args;
-    let token = match (account, git_token) {
-      (None, _) => None,
-      (Some(_), Some(token)) => Some(token),
-      (Some(account),  None) => Some(
-        crate::helpers::git_token(provider, account).map(ToString::to_string)
-          .with_context(
-            || format!("Failed to get git token from periphery config | provider: {provider} | account: {account}")
-          )?,
-      ),
-    };
+
+    let token = crate::helpers::git_token(git_token, &args)?;
     let parent_dir = default_folder(args.default_folder)?;
 
     let (res, cloned) =

@@ -23,13 +23,12 @@ use tokio::fs;
 
 use crate::{
   compose::{
-    docker_compose,
+    docker_compose, pull_or_clone_stack,
     up::{maybe_login_registry, validate_files},
-    write::{WriteStackRes, write_stack},
+    write::write_stack,
   },
   config::periphery_config,
-  docker::docker_login,
-  helpers::{log_grep, parse_extra_args, pull_or_clone_stack},
+  helpers::{log_grep, parse_extra_args},
 };
 
 impl Resolve<super::Args> for ListComposeProjects {
@@ -289,12 +288,6 @@ impl Resolve<super::Args> for WriteCommitComposeContents {
 
 //
 
-impl WriteStackRes for &mut ComposePullResponse {
-  fn logs(&mut self) -> &mut Vec<Log> {
-    &mut self.logs
-  }
-}
-
 impl Resolve<super::Args> for ComposePull {
   #[instrument(
     name = "ComposePull",
@@ -309,27 +302,42 @@ impl Resolve<super::Args> for ComposePull {
     _: &super::Args,
   ) -> serror::Result<ComposePullResponse> {
     let ComposePull {
-      stack,
-      services,
+      mut stack,
       repo,
+      services,
       git_token,
       registry_token,
+      mut replacers,
     } = self;
+
     let mut res = ComposePullResponse::default();
 
-    let (run_directory, env_file_path) =
-      match write_stack(&stack, repo.as_ref(), git_token, &mut res)
-        .await
-      {
-        Ok(res) => res,
-        Err(e) => {
-          res.logs.push(Log::error(
-            "Write Stack",
-            format_serror(&e.into()),
-          ));
-          return Ok(res);
-        }
-      };
+    let mut interpolator =
+      Interpolator::new(None, &periphery_config().secrets);
+    // Only interpolate Stack. Repo interpolation will be handled
+    // by the CloneRepo / PullOrCloneRepo call.
+    interpolator
+      .interpolate_stack(&mut stack)?
+      .push_logs(&mut res.logs);
+    replacers.extend(interpolator.secret_replacers);
+
+    let (run_directory, env_file_path) = match write_stack(
+      &stack,
+      repo.as_ref(),
+      git_token,
+      replacers.clone(),
+      &mut res,
+    )
+    .await
+    {
+      Ok(res) => res,
+      Err(e) => {
+        res
+          .logs
+          .push(Log::error("Write Stack", format_serror(&e.into())));
+        return Ok(res);
+      }
+    };
 
     // Canonicalize the path to ensure it exists, and is the cleanest path to the run directory.
     let run_directory = run_directory.canonicalize().context(
@@ -348,10 +356,16 @@ impl Resolve<super::Args> for ComposePull {
       })
       .collect::<Vec<_>>();
 
+    // Validate files
     for (path, full_path) in &file_paths {
       if !full_path.exists() {
         return Err(anyhow!("Missing compose file at {path}").into());
       }
+    }
+
+    maybe_login_registry(&stack, registry_token, &mut res.logs).await;
+    if !all_logs_success(&res.logs) {
+      return Ok(res);
     }
 
     let docker_compose = docker_compose();
@@ -367,26 +381,6 @@ impl Resolve<super::Args> for ComposePull {
     } else {
       stack.config.file_paths.join(" -f ")
     };
-
-    // Login to the registry to pull private images, if provider / account are set
-    if !stack.config.registry_provider.is_empty()
-      && !stack.config.registry_account.is_empty()
-    {
-      docker_login(
-        &stack.config.registry_provider,
-        &stack.config.registry_account,
-        registry_token.as_deref(),
-      )
-      .await
-      .with_context(|| {
-        format!(
-          "domain: {} | account: {}",
-          stack.config.registry_provider,
-          stack.config.registry_account
-        )
-      })
-      .context("failed to login to image registry")?;
-    }
 
     let env_file = env_file_path
       .map(|path| format!(" --env-file {path}"))
@@ -435,7 +429,7 @@ impl Resolve<super::Args> for ComposeUp {
   ) -> serror::Result<ComposeUpResponse> {
     let ComposeUp {
       mut stack,
-      mut repo,
+      repo,
       services,
       git_token,
       registry_token,
@@ -446,18 +440,30 @@ impl Resolve<super::Args> for ComposeUp {
 
     let mut interpolator =
       Interpolator::new(None, &periphery_config().secrets);
-    interpolator.interpolate_stack(&mut stack)?;
-    if let Some(repo) = repo.as_mut() {
-      interpolator.interpolate_repo(repo)?;
-    }
-    interpolator.push_logs(&mut res.logs);
-
+    // Only interpolate Stack. Repo interpolation will be handled
+    // by the CloneRepo / PullOrCloneRepo call.
+    interpolator
+      .interpolate_stack(&mut stack)?
+      .push_logs(&mut res.logs);
     replacers.extend(interpolator.secret_replacers);
 
-    let (run_directory, env_file_path) =
-      write_stack(&stack, repo.as_ref(), git_token, &mut res)
-        .await
-        .context("Failed to write / clone stack files to host")?;
+    let (run_directory, env_file_path) = match write_stack(
+      &stack,
+      repo.as_ref(),
+      git_token,
+      replacers.clone(),
+      &mut res,
+    )
+    .await
+    {
+      Ok(res) => res,
+      Err(e) => {
+        res
+          .logs
+          .push(Log::error("Write Stack", format_serror(&e.into())));
+        return Ok(res);
+      }
+    };
 
     // Canonicalize the path to ensure it exists, and is the cleanest path to the run directory.
     let run_directory = run_directory.canonicalize().context(
@@ -469,7 +475,7 @@ impl Resolve<super::Args> for ComposeUp {
       return Ok(res);
     }
 
-    maybe_login_registry(&stack, registry_token, &mut res).await;
+    maybe_login_registry(&stack, registry_token, &mut res.logs).await;
     if !all_logs_success(&res.logs) {
       return Ok(res);
     }

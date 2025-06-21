@@ -1,6 +1,15 @@
+use std::path::PathBuf;
+
 use anyhow::anyhow;
 use command::run_komodo_command;
-use periphery_client::api::compose::ComposeUpResponse;
+use komodo_client::entities::{
+  RepoExecutionArgs, repo::Repo, stack::Stack,
+  to_path_compatible_name,
+};
+use periphery_client::api::{
+  compose::ComposeUpResponse, git::PullOrCloneRepo,
+};
+use resolver_api::Resolve;
 
 use crate::config::periphery_config;
 
@@ -41,4 +50,65 @@ pub async fn down(
   }
 
   Ok(())
+}
+
+/// Only for git repo based Stacks.
+/// Returns path to root directory of the stack repo.
+///
+/// Both Stack and Repo environment, on clone, on pull are ignored.
+pub async fn pull_or_clone_stack(
+  stack: &Stack,
+  repo: Option<&Repo>,
+  git_token: Option<String>,
+) -> anyhow::Result<PathBuf> {
+  if stack.config.files_on_host {
+    return Err(anyhow!(
+      "Wrong method called for files on host stack"
+    ));
+  }
+  if repo.is_none() && stack.config.repo.is_empty() {
+    return Err(anyhow!("Repo is not configured"));
+  }
+
+  let (root, mut args) = if let Some(repo) = repo {
+    let root = periphery_config()
+      .repo_dir()
+      .join(to_path_compatible_name(&repo.name))
+      .join(&repo.config.path)
+      .components()
+      .collect::<PathBuf>();
+    let args: RepoExecutionArgs = repo.into();
+    (root, args)
+  } else {
+    let root = periphery_config()
+      .stack_dir()
+      .join(to_path_compatible_name(&stack.name))
+      .join(&stack.config.clone_path)
+      .components()
+      .collect::<PathBuf>();
+    let args: RepoExecutionArgs = stack.into();
+    (root, args)
+  };
+  args.destination = Some(root.display().to_string());
+
+  let git_token = crate::helpers::git_token(git_token, &args)?;
+
+  PullOrCloneRepo {
+    args,
+    git_token,
+    // All the extra pull functions
+    // (env, on clone, on pull)
+    // are disabled with this method.
+    environment: Default::default(),
+    env_file_path: Default::default(),
+    on_clone: Default::default(),
+    on_pull: Default::default(),
+    skip_secret_interp: Default::default(),
+    replacers: Default::default(),
+  }
+  .resolve(&crate::api::Args)
+  .await
+  .map_err(|e| e.error)?;
+
+  Ok(root)
 }

@@ -150,11 +150,19 @@ pub struct ComposePull {
   pub git_token: Option<String>,
   /// If provided, use it to login in. Otherwise check periphery local registry providers.
   pub registry_token: Option<String>,
+  /// Propogate any secret replacers from core interpolation.
+  #[serde(default)]
+  pub replacers: Vec<(String, String)>,
 }
 
 /// Response for [ComposePull]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ComposePullResponse {
+  /// If any of the required files are missing, they will be here.
+  pub missing_files: Vec<String>,
+  /// The error in getting remote file contents at the path, or null
+  pub remote_errors: Vec<FileContents>,
+  /// The logs produced by the pull
   pub logs: Vec<Log>,
 }
 
