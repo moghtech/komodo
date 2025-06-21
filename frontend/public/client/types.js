@@ -533,6 +533,21 @@ export var PortTypeEnum;
     PortTypeEnum["UDP"] = "udp";
     PortTypeEnum["SCTP"] = "sctp";
 })(PortTypeEnum || (PortTypeEnum = {}));
+export var DefaultRepoFolder;
+(function (DefaultRepoFolder) {
+    /** /${root_directory}/stacks */
+    DefaultRepoFolder["Stacks"] = "Stacks";
+    /** /${root_directory}/builds */
+    DefaultRepoFolder["Builds"] = "Builds";
+    /** /${root_directory}/repos */
+    DefaultRepoFolder["Repos"] = "Repos";
+    /**
+     * If the repo is only cloned
+     * in the core repo cache (resource sync),
+     * this isn't relevant.
+     */
+    DefaultRepoFolder["NotApplicable"] = "NotApplicable";
+})(DefaultRepoFolder || (DefaultRepoFolder = {}));
 export var SearchCombinator;
 (function (SearchCombinator) {
     SearchCombinator["Or"] = "Or";

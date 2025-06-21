@@ -4136,30 +4136,6 @@ export interface CancelRepoBuild {
     /** Can be id or name */
     repo: string;
 }
-export interface CloneArgs {
-    /** Resource name (eg Build name, Repo name) */
-    name: string;
-    /** Git provider domain. Default: `github.com` */
-    provider: string;
-    /** Use https (vs http). */
-    https: boolean;
-    /** Full repo identifier. {namespace}/{repo_name} */
-    repo?: string;
-    /** Git Branch. Default: `main` */
-    branch: string;
-    /** Specific commit hash. Optional */
-    commit?: string;
-    /** Use PERIPHERY_BUILD_DIR as the parent folder for the clone. */
-    is_build: boolean;
-    /** The clone destination path */
-    destination?: string;
-    /** Command to run after the repo has been cloned */
-    on_clone?: SystemCommand;
-    /** Command to run after the repo has been pulled */
-    on_pull?: SystemCommand;
-    /** Configure the account used to access repo (if private) */
-    account?: string;
-}
 /**
  * Clones the target repo. Response: [Update].
  *
@@ -6665,6 +6641,56 @@ export interface RenameUserGroup {
     id: string;
     /** The new name for the UserGroup */
     name: string;
+}
+export declare enum DefaultRepoFolder {
+    /** /${root_directory}/stacks */
+    Stacks = "Stacks",
+    /** /${root_directory}/builds */
+    Builds = "Builds",
+    /** /${root_directory}/repos */
+    Repos = "Repos",
+    /**
+     * If the repo is only cloned
+     * in the core repo cache (resource sync),
+     * this isn't relevant.
+     */
+    NotApplicable = "NotApplicable"
+}
+export interface RepoExecutionArgs {
+    /** Resource name (eg Build name, Repo name) */
+    name: string;
+    /** Git provider domain. Default: `github.com` */
+    provider: string;
+    /** Use https (vs http). */
+    https: boolean;
+    /** Configure the account used to access repo (if private) */
+    account?: string;
+    /**
+     * Full repo identifier. {namespace}/{repo_name}
+     * Its optional to force checking and produce error if not defined.
+     */
+    repo?: string;
+    /** Git Branch. Default: `main` */
+    branch: string;
+    /** Specific commit hash. Optional */
+    commit?: string;
+    /** The clone destination path */
+    destination?: string;
+    /**
+     * The default folder to use.
+     * Depends on the resource type.
+     */
+    default_folder: DefaultRepoFolder;
+}
+export interface RepoExecutionResponse {
+    /** Response logs */
+    logs: Log[];
+    /** Absolute path to the repo root on the host. */
+    path: string;
+    /** Latest short commit hash, if it could be retrieved */
+    commit_hash?: string;
+    /** Latest commit message, if it could be retrieved */
+    commit_message?: string;
 }
 export interface ResourceToml<PartialConfig> {
     /** The resource name. Required */
