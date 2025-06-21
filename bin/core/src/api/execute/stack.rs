@@ -400,7 +400,7 @@ pub async fn pull_stack_inner(
     )?;
 
   // interpolate variables / secrets
-  if !stack.config.skip_secret_interp {
+  let secret_replacers = if !stack.config.skip_secret_interp {
     let VariablesAndSecrets { variables, secrets } =
       get_variables_and_secrets().await?;
 
@@ -416,6 +416,9 @@ pub async fn pull_stack_inner(
     if let Some(update) = update {
       interpolator.push_logs(&mut update.logs);
     }
+    interpolator.secret_replacers
+  } else {
+    Default::default()
   };
 
   let res = periphery_client(server)?
@@ -425,6 +428,7 @@ pub async fn pull_stack_inner(
       repo,
       git_token,
       registry_token,
+      replacers: secret_replacers.into_iter().collect(),
     })
     .await?;
 
