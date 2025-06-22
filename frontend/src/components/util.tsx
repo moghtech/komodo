@@ -7,6 +7,7 @@ import {
   SetStateAction,
   forwardRef,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { Button } from "../ui/button";
@@ -20,8 +21,10 @@ import {
   ChevronUp,
   Copy,
   Database,
+  EthernetPort,
   FolderGit,
   HardDrive,
+  LinkIcon,
   Loader2,
   LogOut,
   Network,
@@ -47,6 +50,7 @@ import { AUTH_TOKEN_STORAGE_KEY } from "@main";
 import { Textarea } from "@ui/textarea";
 import { Card } from "@ui/card";
 import {
+  fmt_port_mount,
   fmt_resource_type,
   fmt_utc_offset,
   snake_case_to_upper_space_case,
@@ -84,6 +88,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ui/select";
+import { useServer } from "./resources/server";
 
 export const WithLoading = ({
   children,
@@ -1140,5 +1145,105 @@ export const TemplateQueryBehaviorSelector = () => {
         ))}
       </SelectContent>
     </Select>
+  );
+};
+
+/**
+ * Map of unique host ports to array of formatted full port map spec
+ * Formatted ex: 0.0.0.0:3000:3000/tcp
+ */
+type PortsMap = { [host_port: string]: Array<Types.Port> };
+
+export const ContainerPortsTableView = ({
+  ports,
+  server_id,
+}: {
+  ports: Types.Port[];
+  server_id: string | undefined;
+}) => {
+  // Get the server address with periphery port removed
+  const server_address = useServer(server_id)
+    ?.info.address.split(":")
+    // take just protocol and dns (indexes 0 and 1)
+    .filter((_, i) => i < 2)
+    .join(":");
+  const map = useMemo(() => {
+    const map: PortsMap = {};
+    for (const port of ports) {
+      if (!port.PublicPort || !port.PrivatePort) continue;
+      if (map[port.PublicPort]) {
+        map[port.PublicPort].push(port);
+      } else {
+        map[port.PublicPort] = [port];
+      }
+    }
+    for (const key in map) {
+      map[key].sort();
+    }
+    return map;
+  }, [ports]);
+  const host_ports = Object.keys(map);
+  return (
+    <div className="flex items-center gap-x-1 flex-wrap">
+      {host_ports.map((host_port, i) => {
+        const link =
+          host_port === "443"
+            ? server_address
+            : server_address?.replace("https", "http") + ":" + host_port;
+        return (
+          <Fragment key={host_port}>
+            <Tooltip>
+              <TooltipTrigger>
+                <a
+                  target="_blank"
+                  href={link}
+                  className="text-sm cursor-pointer hover:underline px-1 py-2 flex items-center gap-1"
+                >
+                  <EthernetPort className="w-3 h-3" />
+                  {host_port}
+                </a>
+              </TooltipTrigger>
+              <TooltipContent className="flex flex-col gap-2 w-fit">
+                <a
+                  target="_blank"
+                  href={link}
+                  className="text-sm cursor-pointer hover:underline flex items-center gap-1"
+                >
+                  <LinkIcon className="w-3 h-3" />
+                  {link}
+                </a>
+                {map[host_port].map((port, i) => (
+                  <div
+                    key={i}
+                    className="flex gap-2 text-sm text-muted-foreground"
+                  >
+                    <div>-</div>
+                    <div>{fmt_port_mount(port)}</div>
+                    {/* {port.IP ? (
+                        <>
+                          <div>{port.IP}</div>
+                          <div className="text-muted-foreground">:</div>
+                        </>
+                      ) : null}
+                      <div>{port.PublicPort}</div>
+                      <div className="text-muted-foreground">:</div>
+                      <div>{port.PrivatePort}</div>
+                      {port.Type ? (
+                        <>
+                          <div className="text-muted-foreground">/</div>
+                          <div>{port.Type}</div>
+                        </>
+                      ) : null} */}
+                  </div>
+                ))}
+              </TooltipContent>
+            </Tooltip>
+            {i !== host_ports.length - 1 && (
+              <div className="text-muted-foreground">|</div>
+            )}
+          </Fragment>
+        );
+      })}
+    </div>
   );
 };

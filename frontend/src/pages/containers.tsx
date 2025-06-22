@@ -1,6 +1,10 @@
 import { Page } from "@components/layouts";
 import { ResourceLink } from "@components/resources/common";
-import { DockerResourceLink, StatusBadge } from "@components/util";
+import {
+  ContainerPortsTableView,
+  DockerResourceLink,
+  StatusBadge,
+} from "@components/util";
 import { container_state_intention } from "@lib/color";
 import { useRead } from "@lib/hooks";
 import { DataTable, SortableHeader } from "@ui/data-table";
@@ -71,22 +75,6 @@ export default function ContainersPage() {
               ),
             },
             {
-              accessorKey: "state",
-              size: 160,
-              header: ({ column }) => (
-                <SortableHeader column={column} title="State" />
-              ),
-              cell: ({ row }) => {
-                const state = row.original?.state;
-                return (
-                  <StatusBadge
-                    text={state}
-                    intent={container_state_intention(state)}
-                  />
-                );
-              },
-            },
-            {
               accessorKey: "server_id",
               size: 200,
               sortingFn: (a, b) => {
@@ -124,8 +112,24 @@ export default function ContainersPage() {
               ),
             },
             {
+              accessorKey: "state",
+              size: 160,
+              header: ({ column }) => (
+                <SortableHeader column={column} title="State" />
+              ),
+              cell: ({ row }) => {
+                const state = row.original?.state;
+                return (
+                  <StatusBadge
+                    text={state}
+                    intent={container_state_intention(state)}
+                  />
+                );
+              },
+            },
+            {
               accessorKey: "networks.0",
-              size: 300,
+              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Networks" />
               ),
@@ -154,6 +158,19 @@ export default function ContainersPage() {
                     />
                   )
                 ),
+            },
+            {
+              accessorKey: "ports.0",
+              size: 200,
+              header: ({ column }) => (
+                <SortableHeader column={column} title="Ports" />
+              ),
+              cell: ({ row }) => (
+                <ContainerPortsTableView
+                  ports={row.original.ports}
+                  server_id={row.original.server_id}
+                />
+              ),
             },
             // {
             //   accessorKey: "volumes.0",

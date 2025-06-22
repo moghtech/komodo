@@ -3256,6 +3256,24 @@ export type ListActionsResponse = ActionListItem[];
 
 export type ListAlertersResponse = AlerterListItem[];
 
+export enum PortTypeEnum {
+	EMPTY = "",
+	TCP = "tcp",
+	UDP = "udp",
+	SCTP = "sctp",
+}
+
+/** An open port on a container */
+export interface Port {
+	/** Host IP address that the container's port is mapped to */
+	IP?: string;
+	/** Port on the container */
+	PrivatePort?: number;
+	/** Port exposed on the host */
+	PublicPort?: number;
+	Type?: PortTypeEnum;
+}
+
 export interface ContainerListItem {
 	/** The Server which holds the container. */
 	server_id?: string;
@@ -3281,6 +3299,8 @@ export interface ContainerListItem {
 	network_mode?: string;
 	/** The network names attached to container */
 	networks: string[];
+	/** Port mappings for the container */
+	ports: Port[];
 	/** The volume names attached to container */
 	volumes: string[];
 	/**
@@ -6743,24 +6763,6 @@ export interface PermissionToml {
 	level?: PermissionLevel;
 	/** Any [SpecificPermissions](SpecificPermission) on the resource */
 	specific?: Array<SpecificPermission>;
-}
-
-export enum PortTypeEnum {
-	EMPTY = "",
-	TCP = "tcp",
-	UDP = "udp",
-	SCTP = "sctp",
-}
-
-/** An open port on a container */
-export interface Port {
-	/** Host IP address that the container's port is mapped to */
-	IP?: string;
-	/** Port on the container */
-	PrivatePort?: number;
-	/** Port exposed on the host */
-	PublicPort?: number;
-	Type?: PortTypeEnum;
 }
 
 /**

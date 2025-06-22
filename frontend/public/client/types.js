@@ -421,6 +421,13 @@ export var ClusterVolumePublishStatusStateEnum;
     ClusterVolumePublishStatusStateEnum["PendingNodeUnpublish"] = "pending-node-unpublish";
     ClusterVolumePublishStatusStateEnum["PendingControllerUnpublish"] = "pending-controller-unpublish";
 })(ClusterVolumePublishStatusStateEnum || (ClusterVolumePublishStatusStateEnum = {}));
+export var PortTypeEnum;
+(function (PortTypeEnum) {
+    PortTypeEnum["EMPTY"] = "";
+    PortTypeEnum["TCP"] = "tcp";
+    PortTypeEnum["UDP"] = "udp";
+    PortTypeEnum["SCTP"] = "sctp";
+})(PortTypeEnum || (PortTypeEnum = {}));
 export var ProcedureState;
 (function (ProcedureState) {
     /** Last run successful */
@@ -526,13 +533,6 @@ export var TerminalRecreateMode;
     /** Only kill and recreate if the command is different. */
     TerminalRecreateMode["DifferentCommand"] = "DifferentCommand";
 })(TerminalRecreateMode || (TerminalRecreateMode = {}));
-export var PortTypeEnum;
-(function (PortTypeEnum) {
-    PortTypeEnum["EMPTY"] = "";
-    PortTypeEnum["TCP"] = "tcp";
-    PortTypeEnum["UDP"] = "udp";
-    PortTypeEnum["SCTP"] = "sctp";
-})(PortTypeEnum || (PortTypeEnum = {}));
 export var DefaultRepoFolder;
 (function (DefaultRepoFolder) {
     /** /${root_directory}/stacks */

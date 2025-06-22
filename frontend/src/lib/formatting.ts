@@ -185,3 +185,7 @@ export function fmt_utc_offset(tz: Types.IanaTimezone): string {
       return "UTC+14:00";
   }
 }
+
+export function fmt_port_mount(port: Types.Port) {
+  return `${port.IP ? port.IP + ":" : ""}${port.PublicPort ?? "NONE"}:${port.PrivatePort ?? "NONE"}${port.Type ? "/" + port.Type : ""}`;
+}
