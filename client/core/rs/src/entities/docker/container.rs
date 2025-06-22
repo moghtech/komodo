@@ -37,6 +37,8 @@ pub struct ContainerListItem {
   pub network_mode: Option<String>,
   /// The network names attached to container
   pub networks: Vec<String>,
+  /// Port mappings for the container
+  pub ports: Vec<Port>,
   /// The volume names attached to container
   pub volumes: Vec<String>,
   /// The labels attached to container.
