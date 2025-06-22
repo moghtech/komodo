@@ -2705,7 +2705,6 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "serror",
- "svi",
  "sysinfo",
  "tokio",
  "tokio-stream",

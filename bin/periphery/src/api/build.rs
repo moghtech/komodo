@@ -121,24 +121,20 @@ impl Resolve<super::Args> for build::Build {
   ) -> serror::Result<Vec<Log>> {
     let build::Build {
       mut build,
-      repo: mut linked_repo,
+      repo: linked_repo,
       registry_token,
       additional_tags,
       mut replacers,
     } = self;
 
+    let mut logs = Vec::new();
+
     // Periphery side interpolation
     let mut interpolator =
       Interpolator::new(None, &periphery_config().secrets);
-
-    interpolator.interpolate_build(&mut build)?;
-
-    if let Some(repo) = linked_repo.as_mut() {
-      interpolator.interpolate_repo(repo)?;
-    }
-
-    let mut logs = Vec::new();
-    interpolator.push_logs(&mut logs);
+    interpolator
+      .interpolate_build(&mut build)?
+      .push_logs(&mut logs);
 
     replacers.extend(interpolator.secret_replacers);
 
@@ -148,7 +144,6 @@ impl Resolve<super::Args> for build::Build {
         BuildConfig {
           version,
           image_tag,
-          skip_secret_interp,
           build_path,
           dockerfile_path,
           build_args,
@@ -266,12 +261,8 @@ impl Resolve<super::Args> for build::Build {
 
     let secret_args = environment_vars_from_str(secret_args)
       .context("Invalid secret_args")?;
-    let command_secret_args = parse_secret_args(
-      &secret_args,
-      &build_path,
-      *skip_secret_interp,
-    )
-    .await?;
+    let command_secret_args =
+      parse_secret_args(&secret_args, &build_path).await?;
 
     let labels = parse_labels(
       &environment_vars_from_str(labels).context("Invalid labels")?,

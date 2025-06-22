@@ -33,7 +33,6 @@ async_timing_util.workspace = true
 derive_variants.workspace = true
 resolver_api.workspace = true
 run_command.workspace = true
-svi.workspace = true
 # external
 pin-project-lite.workspace = true
 tokio-stream.workspace = true

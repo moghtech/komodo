@@ -10,8 +10,6 @@ use komodo_client::{
   parsers::QUOTE_PATTERN,
 };
 
-use crate::config::periphery_config;
-
 pub async fn write_dockerfile(
   build_path: &Path,
   dockerfile_path: &str,
@@ -99,9 +97,7 @@ pub fn parse_build_args(build_args: &[EnvironmentVar]) -> String {
 pub async fn parse_secret_args(
   secret_args: &[EnvironmentVar],
   build_dir: &Path,
-  skip_secret_interp: bool,
 ) -> anyhow::Result<String> {
-  let periphery_config = periphery_config();
   let mut res = String::new();
   for EnvironmentVar { variable, value } in secret_args {
     // Check edge cases
@@ -112,21 +108,6 @@ pub async fn parse_secret_args(
         "invalid variable {variable}. variable cannot contain '='"
       ));
     }
-    // Interpolate in value
-    let value = if skip_secret_interp {
-      value.to_string()
-    } else {
-      svi::interpolate_variables(
-        value,
-        &periphery_config.secrets,
-        svi::Interpolator::DoubleBrackets,
-        true,
-      )
-      .context(
-        "Failed to interpolate periphery secrets into build secrets",
-      )?
-      .0
-    };
     // Write the value to file to mount
     let path = build_dir.join(variable);
     tokio::fs::write(&path, value).await.with_context(|| {
