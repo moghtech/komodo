@@ -9,29 +9,34 @@ use komodo_client::entities::docker::{
   container::*,
 };
 
-use super::DockerClient;
+use super::{DockerClient, stats::container_stats};
 
 impl DockerClient {
   pub async fn list_containers(
     &self,
   ) -> anyhow::Result<Vec<ContainerListItem>> {
-    let mut containers = self
+    let containers = self
       .docker
       .list_containers(Some(ListContainersOptions {
         all: true,
         ..Default::default()
       }))
-      .await?
+      .await?;
+    let stats = container_stats().load();
+    let mut containers = containers
       .into_iter()
       .flat_map(|container| {
+        let name = container
+          .names
+          .context("no names on container")?
+          .pop()
+          .context("no names on container (empty vec)")?
+          .replace('/', "");
+        let stats = stats.get(&name).cloned();
         anyhow::Ok(ContainerListItem {
           server_id: None,
-          name: container
-            .names
-            .context("no names on container")?
-            .pop()
-            .context("no names on container (empty vec)")?
-            .replace('/', ""),
+          name,
+          stats,
           id: container.id,
           image: container.image,
           image_id: container.image_id,

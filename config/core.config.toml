@@ -150,7 +150,7 @@ jwt_secret = ""
 ## Specify how long a user can stay logged in before they have to log in again.
 ## All jwts are invalidated on application restart unless `jwt_secret` is set.
 ## Env: KOMODO_JWT_TTL
-## Options: 1-hr, 12-hr, 1-day, 3-day, 1-wk, 2-wk, 30-day
+## Options: https://docs.rs/komodo_client/latest/komodo_client/entities/enum.Timelength.html
 ## Default: 1-day. 
 jwt_ttl = "1-day"
 
@@ -251,13 +251,13 @@ github_oauth.secret = ""
 ## Controls the rate at which servers are polled for health, system stats, and container status.
 ## This affects network usage, and the size of the stats stored in mongo.
 ## Env: KOMODO_MONITORING_INTERVAL
-## Options: 1-sec, 5-sec, 15-sec, 30-sec, 1-min, 2-min, 5-min, 15-min
+## Options: https://docs.rs/komodo_client/latest/komodo_client/entities/enum.Timelength.html
 ## Default: 15-sec
 monitoring_interval = "15-sec"
 
 ## Interval at which to poll Resources for any updates / automated actions.
 ## Env: KOMODO_RESOURCE_POLL_INTERVAL
-## Options: `15-min`, `1-hr`, `2-hr`, `6-hr`, `12-hr`, `1-day`
+## Options: https://docs.rs/komodo_client/latest/komodo_client/entities/enum.Timelength.html
 ## Default: 1-hr
 resource_poll_interval = "1-hr"
 

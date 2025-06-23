@@ -41,6 +41,8 @@ pub struct ContainerListItem {
   pub ports: Vec<Port>,
   /// The volume names attached to container
   pub volumes: Vec<String>,
+  /// The container stats, if they can be retreived.
+  pub stats: Option<ContainerStats>,
   /// The labels attached to container.
   /// It's too big to send with container list,
   /// can get it using InspectContainer
@@ -1153,7 +1155,7 @@ pub struct EndpointIpamConfig {
 }
 
 #[typeshare]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ContainerStats {
   #[serde(alias = "Name")]
   pub name: String,

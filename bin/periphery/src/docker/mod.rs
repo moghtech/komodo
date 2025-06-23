@@ -1,13 +1,14 @@
 use std::sync::OnceLock;
 
-use anyhow::{anyhow, Context};
+use anyhow::anyhow;
 use bollard::Docker;
 use command::run_komodo_command;
-use komodo_client::entities::{docker::container::ContainerStats, update::Log, TerminationSignal};
+use komodo_client::entities::{TerminationSignal, update::Log};
 use run_command::async_run_command;
 
-pub mod containers;
+pub mod stats;
 
+mod containers;
 mod images;
 mod networks;
 mod volumes;
@@ -85,31 +86,4 @@ pub fn stop_container_command(
     .map(|time| format!(" --time {time}"))
     .unwrap_or_default();
   format!("docker stop{signal}{time} {container_name}")
-}
-
-pub async fn container_stats(
-  container_name: Option<String>,
-) -> anyhow::Result<Vec<ContainerStats>> {
-  let format = "--format \"{{ json . }}\"";
-  let container_name = match container_name {
-    Some(name) => format!(" {name}"),
-    None => "".to_string(),
-  };
-  let command =
-    format!("docker stats{container_name} --no-stream {format}");
-  let output = async_run_command(&command).await;
-  if output.success() {
-    output
-      .stdout
-      .split('\n')
-      .filter(|e| !e.is_empty())
-      .map(|e| {
-        let parsed = serde_json::from_str(e)
-          .context(format!("failed at parsing entry {e}"))?;
-        Ok(parsed)
-      })
-      .collect()
-  } else {
-    Err(anyhow!("{}", output.stderr.replace('\n', "")))
-  }
 }

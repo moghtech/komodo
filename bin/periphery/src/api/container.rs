@@ -9,7 +9,9 @@ use periphery_client::api::container::*;
 use resolver_api::Resolve;
 
 use crate::{
-  docker::{container_stats, docker_client, stop_container_command},
+  docker::{
+    docker_client, stats::get_container_stats, stop_container_command,
+  },
   helpers::log_grep,
 };
 
@@ -81,7 +83,7 @@ impl Resolve<super::Args> for GetContainerStats {
     _: &super::Args,
   ) -> serror::Result<ContainerStats> {
     let error = anyhow!("no stats matching {}", self.name);
-    let mut stats = container_stats(Some(self.name)).await?;
+    let mut stats = get_container_stats(Some(self.name)).await?;
     let stats = stats.pop().ok_or(error)?;
     Ok(stats)
   }
@@ -95,7 +97,7 @@ impl Resolve<super::Args> for GetContainerStatsList {
     self,
     _: &super::Args,
   ) -> serror::Result<Vec<ContainerStats>> {
-    Ok(container_stats(None).await?)
+    Ok(get_container_stats(None).await?)
   }
 }
 

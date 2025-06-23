@@ -32,7 +32,8 @@ async fn app() -> anyhow::Result<()> {
     info!("{:?}", config.sanitized());
   }
 
-  stats::spawn_system_stats_polling_thread();
+  stats::spawn_polling_thread();
+  docker::stats::spawn_polling_thread();
 
   let addr = format!(
     "{}:{}",

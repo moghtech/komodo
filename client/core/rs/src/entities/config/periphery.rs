@@ -130,6 +130,8 @@ pub struct Env {
   pub periphery_disable_container_exec: Option<bool>,
   /// Override `stats_polling_rate`
   pub periphery_stats_polling_rate: Option<Timelength>,
+  /// Override `container_stats_polling_rate`
+  pub periphery_container_stats_polling_rate: Option<Timelength>,
   /// Override `legacy_compose_cli`
   pub periphery_legacy_compose_cli: Option<bool>,
 
@@ -222,9 +224,16 @@ pub struct PeripheryConfig {
   pub disable_container_exec: bool,
 
   /// The rate at which the system stats will be polled to update the cache.
+  /// Options: https://docs.rs/komodo_client/latest/komodo_client/entities/enum.Timelength.html
   /// Default: `5-sec`
   #[serde(default = "default_stats_polling_rate")]
   pub stats_polling_rate: Timelength,
+
+  /// The rate at which the container stats will be polled to update the cache.
+  /// Options: https://docs.rs/komodo_client/latest/komodo_client/entities/enum.Timelength.html
+  /// Default: `30-sec`
+  #[serde(default = "default_container_stats_polling_rate")]
+  pub container_stats_polling_rate: Timelength,
 
   /// Whether stack actions should use `docker-compose ...`
   /// instead of `docker compose ...`.
@@ -308,6 +317,10 @@ fn default_stats_polling_rate() -> Timelength {
   Timelength::FiveSeconds
 }
 
+fn default_container_stats_polling_rate() -> Timelength {
+  Timelength::ThirtySeconds
+}
+
 fn default_ssl_enabled() -> bool {
   true
 }
@@ -324,6 +337,8 @@ impl Default for PeripheryConfig {
       disable_terminals: Default::default(),
       disable_container_exec: Default::default(),
       stats_polling_rate: default_stats_polling_rate(),
+      container_stats_polling_rate:
+        default_container_stats_polling_rate(),
       legacy_compose_cli: Default::default(),
       logging: Default::default(),
       pretty_startup_config: Default::default(),
@@ -353,6 +368,7 @@ impl PeripheryConfig {
       disable_terminals: self.disable_terminals,
       disable_container_exec: self.disable_container_exec,
       stats_polling_rate: self.stats_polling_rate,
+      container_stats_polling_rate: self.container_stats_polling_rate,
       legacy_compose_cli: self.legacy_compose_cli,
       logging: self.logging.clone(),
       pretty_startup_config: self.pretty_startup_config,

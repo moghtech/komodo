@@ -60,13 +60,18 @@ disable_terminals = false
 ## Default: false
 disable_container_exec = false
 
-## How often Periphery polls the host for system stats,
-## like CPU / memory usage. To effectively disable polling,
-## set this to something like 1-hr.
+## How often Periphery polls the host for system stats, like CPU / memory usage.
+## To effectively disable polling, set this to something like 1-hr.
 ## Env: PERIPHERY_STATS_POLLING_RATE
-## Options: 1-sec, 5-sec, 10-sec, 30-sec, 1-min, 5-min, 30-min, 1-hr
+## Options: https://docs.rs/komodo_client/latest/komodo_client/entities/enum.Timelength.html
 ## Default: 5-sec
 stats_polling_rate = "5-sec"
+
+## How often Periphery polls the host for container stats,
+## Env: PERIPHERY_STATS_POLLING_RATE
+## Options: https://docs.rs/komodo_client/latest/komodo_client/entities/enum.Timelength.html
+## Default: 5-sec
+container_stats_polling_rate = "1-min"
 
 ## Whether stack actions should use `docker-compose ...`
 ## instead of `docker compose ...`.

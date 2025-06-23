@@ -17,7 +17,7 @@ pub fn stats_client() -> &'static RwLock<StatsClient> {
 
 /// This should be called before starting the server in main.rs.
 /// Keeps the cached stats up to date
-pub fn spawn_system_stats_polling_thread() {
+pub fn spawn_polling_thread() {
   tokio::spawn(async move {
     let polling_rate = periphery_config()
       .stats_polling_rate

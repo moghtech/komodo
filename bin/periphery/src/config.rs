@@ -51,6 +51,9 @@ pub fn periphery_config() -> &'static PeripheryConfig {
       stats_polling_rate: env
         .periphery_stats_polling_rate
         .unwrap_or(config.stats_polling_rate),
+      container_stats_polling_rate: env
+        .periphery_container_stats_polling_rate
+        .unwrap_or(config.container_stats_polling_rate),
       legacy_compose_cli: env
         .periphery_legacy_compose_cli
         .unwrap_or(config.legacy_compose_cli),
