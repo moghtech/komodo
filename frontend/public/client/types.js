@@ -247,26 +247,47 @@ export var SeverityLevel;
 })(SeverityLevel || (SeverityLevel = {}));
 export var Timelength;
 (function (Timelength) {
+    /** `1-sec` */
     Timelength["OneSecond"] = "1-sec";
+    /** `5-sec` */
     Timelength["FiveSeconds"] = "5-sec";
+    /** `10-sec` */
     Timelength["TenSeconds"] = "10-sec";
+    /** `15-sec` */
     Timelength["FifteenSeconds"] = "15-sec";
+    /** `30-sec` */
     Timelength["ThirtySeconds"] = "30-sec";
+    /** `1-min` */
     Timelength["OneMinute"] = "1-min";
+    /** `2-min` */
     Timelength["TwoMinutes"] = "2-min";
+    /** `5-min` */
     Timelength["FiveMinutes"] = "5-min";
+    /** `10-min` */
     Timelength["TenMinutes"] = "10-min";
+    /** `15-min` */
     Timelength["FifteenMinutes"] = "15-min";
+    /** `30-min` */
     Timelength["ThirtyMinutes"] = "30-min";
+    /** `1-hr` */
     Timelength["OneHour"] = "1-hr";
+    /** `2-hr` */
     Timelength["TwoHours"] = "2-hr";
+    /** `6-hr` */
     Timelength["SixHours"] = "6-hr";
+    /** `8-hr` */
     Timelength["EightHours"] = "8-hr";
+    /** `12-hr` */
     Timelength["TwelveHours"] = "12-hr";
+    /** `1-day` */
     Timelength["OneDay"] = "1-day";
+    /** `3-day` */
     Timelength["ThreeDay"] = "3-day";
+    /** `1-wk` */
     Timelength["OneWeek"] = "1-wk";
+    /** `2-wk` */
     Timelength["TwoWeeks"] = "2-wk";
+    /** `30-day` */
     Timelength["ThirtyDays"] = "30-day";
 })(Timelength || (Timelength = {}));
 export var TagColor;

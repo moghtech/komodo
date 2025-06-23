@@ -2285,26 +2285,47 @@ export interface SingleDiskUsage {
 }
 
 export enum Timelength {
+	/** `1-sec` */
 	OneSecond = "1-sec",
+	/** `5-sec` */
 	FiveSeconds = "5-sec",
+	/** `10-sec` */
 	TenSeconds = "10-sec",
+	/** `15-sec` */
 	FifteenSeconds = "15-sec",
+	/** `30-sec` */
 	ThirtySeconds = "30-sec",
+	/** `1-min` */
 	OneMinute = "1-min",
+	/** `2-min` */
 	TwoMinutes = "2-min",
+	/** `5-min` */
 	FiveMinutes = "5-min",
+	/** `10-min` */
 	TenMinutes = "10-min",
+	/** `15-min` */
 	FifteenMinutes = "15-min",
+	/** `30-min` */
 	ThirtyMinutes = "30-min",
+	/** `1-hr` */
 	OneHour = "1-hr",
+	/** `2-hr` */
 	TwoHours = "2-hr",
+	/** `6-hr` */
 	SixHours = "6-hr",
+	/** `8-hr` */
 	EightHours = "8-hr",
+	/** `12-hr` */
 	TwelveHours = "12-hr",
+	/** `1-day` */
 	OneDay = "1-day",
+	/** `3-day` */
 	ThreeDay = "3-day",
+	/** `1-wk` */
 	OneWeek = "1-wk",
+	/** `2-wk` */
 	TwoWeeks = "2-wk",
+	/** `30-day` */
 	ThirtyDays = "30-day",
 }
 
@@ -3303,6 +3324,8 @@ export interface ContainerListItem {
 	ports: Port[];
 	/** The volume names attached to container */
 	volumes: string[];
+	/** The container stats, if they can be retreived. */
+	stats?: ContainerStats;
 	/**
 	 * The labels attached to container.
 	 * It's too big to send with container list,
