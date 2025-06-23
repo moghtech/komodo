@@ -18,7 +18,7 @@ import { UsableResource } from "@types";
 import { useToast } from "@ui/use-toast";
 import { atom, useAtom } from "jotai";
 import { atomFamily } from "jotai/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { has_minimum_permissions, RESOURCE_TARGETS } from "./utils";
 
@@ -615,3 +615,27 @@ export type SettingsView =
 const viewAtom = atomWithStorage<SettingsView>("settings-view-v2", "Variables");
 
 export const useSettingsView = () => useAtom<SettingsView>(viewAtom);
+
+/**
+ * Map of unique host ports to array of formatted full port map spec
+ * Formatted ex: 0.0.0.0:3000:3000/tcp
+ */
+export type PortsMap = { [host_port: string]: Array<Types.Port> };
+
+export const useContainerPortsMap = (ports: Types.Port[]) => {
+  return useMemo(() => {
+    const map: PortsMap = {};
+    for (const port of ports) {
+      if (!port.PublicPort || !port.PrivatePort) continue;
+      if (map[port.PublicPort]) {
+        map[port.PublicPort].push(port);
+      } else {
+        map[port.PublicPort] = [port];
+      }
+    }
+    for (const key in map) {
+      map[key].sort();
+    }
+    return map;
+  }, [ports]);
+};

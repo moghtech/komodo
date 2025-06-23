@@ -7,7 +7,6 @@ import {
   SetStateAction,
   forwardRef,
   useEffect,
-  useMemo,
   useState,
 } from "react";
 import { Button } from "../ui/button";
@@ -66,7 +65,12 @@ import { Types } from "komodo_client";
 import { Badge } from "@ui/badge";
 import { Section } from "./layouts";
 import { DataTable, SortableHeader } from "@ui/data-table";
-import { useRead, useTemplatesQueryBehavior, useUser } from "@lib/hooks";
+import {
+  useContainerPortsMap,
+  useRead,
+  useTemplatesQueryBehavior,
+  useUser,
+} from "@lib/hooks";
 import { Prune } from "./resources/server/actions";
 import { MonacoEditor, MonacoLanguage } from "./monaco";
 import { UsableResource } from "@types";
@@ -841,7 +845,7 @@ export const DockerContainersSection = ({
               },
               {
                 accessorKey: "networks.0",
-                size: 300,
+                size: 200,
                 header: ({ column }) => (
                   <SortableHeader column={column} title="Networks" />
                 ),
@@ -870,6 +874,19 @@ export const DockerContainersSection = ({
                       />
                     )
                   ),
+              },
+              {
+                accessorKey: "ports.0",
+                size: 200,
+                header: ({ column }) => (
+                  <SortableHeader column={column} title="Ports" />
+                ),
+                cell: ({ row }) => (
+                  <ContainerPortsTableView
+                    ports={row.original.ports}
+                    server_id={row.original.server_id}
+                  />
+                ),
               },
             ]}
           />
@@ -1148,16 +1165,12 @@ export const TemplateQueryBehaviorSelector = () => {
   );
 };
 
-/**
- * Map of unique host ports to array of formatted full port map spec
- * Formatted ex: 0.0.0.0:3000:3000/tcp
- */
-type PortsMap = { [host_port: string]: Array<Types.Port> };
-
-export const ContainerPortsTableView = ({
+export const ContainerPortLink = ({
+  host_port,
   ports,
   server_id,
 }: {
+  host_port: string;
   ports: Types.Port[];
   server_id: string | undefined;
 }) => {
@@ -1167,77 +1180,61 @@ export const ContainerPortsTableView = ({
     // take just protocol and dns (indexes 0 and 1)
     .filter((_, i) => i < 2)
     .join(":");
-  const map = useMemo(() => {
-    const map: PortsMap = {};
-    for (const port of ports) {
-      if (!port.PublicPort || !port.PrivatePort) continue;
-      if (map[port.PublicPort]) {
-        map[port.PublicPort].push(port);
-      } else {
-        map[port.PublicPort] = [port];
-      }
-    }
-    for (const key in map) {
-      map[key].sort();
-    }
-    return map;
-  }, [ports]);
+  const link =
+    host_port === "443"
+      ? server_address
+      : server_address?.replace("https", "http") + ":" + host_port;
+  return (
+    <Tooltip>
+      <TooltipTrigger>
+        <a
+          target="_blank"
+          href={link}
+          className="text-sm cursor-pointer hover:underline px-1 py-2 flex items-center gap-2"
+        >
+          <EthernetPort className="w-4 h-4" />
+          {host_port}
+        </a>
+      </TooltipTrigger>
+      <TooltipContent className="flex flex-col gap-2 w-fit">
+        <a
+          target="_blank"
+          href={link}
+          className="text-sm cursor-pointer hover:underline flex items-center gap-2"
+        >
+          <LinkIcon className="w-3 h-3" />
+          {link}
+        </a>
+        {ports.map((port, i) => (
+          <div key={i} className="flex gap-2 text-sm text-muted-foreground">
+            <div>-</div>
+            <div>{fmt_port_mount(port)}</div>
+          </div>
+        ))}
+      </TooltipContent>
+    </Tooltip>
+  );
+};
+
+export const ContainerPortsTableView = ({
+  ports,
+  server_id,
+}: {
+  ports: Types.Port[];
+  server_id: string | undefined;
+}) => {
+  const map = useContainerPortsMap(ports);
   const host_ports = Object.keys(map);
   return (
     <div className="flex items-center gap-x-1 flex-wrap">
       {host_ports.map((host_port, i) => {
-        const link =
-          host_port === "443"
-            ? server_address
-            : server_address?.replace("https", "http") + ":" + host_port;
         return (
           <Fragment key={host_port}>
-            <Tooltip>
-              <TooltipTrigger>
-                <a
-                  target="_blank"
-                  href={link}
-                  className="text-sm cursor-pointer hover:underline px-1 py-2 flex items-center gap-1"
-                >
-                  <EthernetPort className="w-3 h-3" />
-                  {host_port}
-                </a>
-              </TooltipTrigger>
-              <TooltipContent className="flex flex-col gap-2 w-fit">
-                <a
-                  target="_blank"
-                  href={link}
-                  className="text-sm cursor-pointer hover:underline flex items-center gap-1"
-                >
-                  <LinkIcon className="w-3 h-3" />
-                  {link}
-                </a>
-                {map[host_port].map((port, i) => (
-                  <div
-                    key={i}
-                    className="flex gap-2 text-sm text-muted-foreground"
-                  >
-                    <div>-</div>
-                    <div>{fmt_port_mount(port)}</div>
-                    {/* {port.IP ? (
-                        <>
-                          <div>{port.IP}</div>
-                          <div className="text-muted-foreground">:</div>
-                        </>
-                      ) : null}
-                      <div>{port.PublicPort}</div>
-                      <div className="text-muted-foreground">:</div>
-                      <div>{port.PrivatePort}</div>
-                      {port.Type ? (
-                        <>
-                          <div className="text-muted-foreground">/</div>
-                          <div>{port.Type}</div>
-                        </>
-                      ) : null} */}
-                  </div>
-                ))}
-              </TooltipContent>
-            </Tooltip>
+            <ContainerPortLink
+              host_port={host_port}
+              ports={map[host_port]}
+              server_id={server_id}
+            />
             {i !== host_ports.length - 1 && (
               <div className="text-muted-foreground">|</div>
             )}
