@@ -37,7 +37,7 @@ export const useLoginOptions = () =>
   });
 
 export const useUser = () => {
-  const userInvalidate = useUserInvalidate();
+  const userReset = useUserReset();
   const query = useQuery({
     queryKey: ["GetUser"],
     queryFn: () => komodo_client().auth("GetUser", {}),
@@ -45,7 +45,7 @@ export const useUser = () => {
   });
   useEffect(() => {
     if (query.data && query.error) {
-      userInvalidate();
+      userReset();
     }
   }, [query.data, query.error]);
   return query;
@@ -55,6 +55,13 @@ export const useUserInvalidate = () => {
   const qc = useQueryClient();
   return () => {
     qc.invalidateQueries({ queryKey: ["GetUser"] });
+  };
+};
+
+export const useUserReset = () => {
+  const qc = useQueryClient();
+  return () => {
+    qc.resetQueries({ queryKey: ["GetUser"] });
   };
 };
 
