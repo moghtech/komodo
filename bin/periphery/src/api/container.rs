@@ -1,8 +1,11 @@
-use anyhow::{Context, anyhow};
+use anyhow::Context;
 use command::run_komodo_command;
 use futures::future::join_all;
 use komodo_client::entities::{
-  docker::container::{Container, ContainerListItem, ContainerStats},
+  docker::{
+    container::{Container, ContainerListItem, ContainerStats},
+    stats::FullContainerStats,
+  },
   update::Log,
 };
 use periphery_client::api::container::*;
@@ -82,10 +85,25 @@ impl Resolve<super::Args> for GetContainerStats {
     self,
     _: &super::Args,
   ) -> serror::Result<ContainerStats> {
-    let error = anyhow!("no stats matching {}", self.name);
     let mut stats = get_container_stats(Some(self.name)).await?;
-    let stats = stats.pop().ok_or(error)?;
+    let stats =
+      stats.pop().context("No stats found for container")?;
     Ok(stats)
+  }
+}
+
+//
+
+impl Resolve<super::Args> for GetFullContainerStats {
+  #[instrument(name = "GetFullContainerStats", level = "debug")]
+  async fn resolve(
+    self,
+    _: &super::Args,
+  ) -> serror::Result<FullContainerStats> {
+    docker_client()
+      .full_container_stats(&self.name)
+      .await
+      .map_err(Into::into)
   }
 }
 

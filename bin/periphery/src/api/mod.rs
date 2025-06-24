@@ -92,6 +92,7 @@ pub enum PeripheryRequest {
   GetContainerLogSearch(GetContainerLogSearch),
   GetContainerStats(GetContainerStats),
   GetContainerStatsList(GetContainerStatsList),
+  GetFullContainerStats(GetFullContainerStats),
 
   // Container (Write)
   Deploy(Deploy),

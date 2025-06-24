@@ -8,6 +8,7 @@ use super::I64;
 pub mod container;
 pub mod image;
 pub mod network;
+pub mod stats;
 pub mod volume;
 
 /// PortBinding represents a binding between a host IP address and a host port.

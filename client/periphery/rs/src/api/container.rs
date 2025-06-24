@@ -1,7 +1,10 @@
 use komodo_client::entities::{
   SearchCombinator, TerminationSignal,
   deployment::Deployment,
-  docker::container::{Container, ContainerStats},
+  docker::{
+    container::{Container, ContainerStats},
+    stats::FullContainerStats,
+  },
   update::Log,
 };
 use resolver_api::Resolve;
@@ -66,6 +69,17 @@ pub struct GetContainerStats {
 #[response(Vec<ContainerStats>)]
 #[error(serror::Error)]
 pub struct GetContainerStatsList {}
+
+//
+
+//
+
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[response(FullContainerStats)]
+#[error(serror::Error)]
+pub struct GetFullContainerStats {
+  pub name: String,
+}
 
 //
 

@@ -8,6 +8,7 @@ use crate::entities::{I64, Usize};
 
 use super::{ContainerConfig, GraphDriverData, PortBinding};
 
+/// Container summary returned by container list apis.
 #[typeshare]
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
