@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{io::ErrorKind, path::Path};
 
 use anyhow::Context;
 use command::run_komodo_command;
@@ -48,16 +48,25 @@ where
         "Prepare Repo Root",
         format_serror(&e.into()),
       ));
+      return Ok(res);
     }
   }
 
-  if let Err(e) = tokio::fs::remove_dir_all(&res.path)
-    .await
-    .context("Failed to remove existing repo root before clone.")
-  {
-    res
-      .logs
-      .push(Log::error("Clean Repo Root", format_serror(&e.into())));
+  match tokio::fs::remove_dir_all(&res.path).await {
+    Err(e) if e.kind() != ErrorKind::NotFound => {
+      let e: anyhow::Error = e.into();
+      res.logs.push(Log::error(
+        "Clean Repo Root",
+        format_serror(
+          &e.context(
+            "Failed to remove existing repo root before clone.",
+          )
+          .into(),
+        ),
+      ));
+      return Ok(res);
+    }
+    _ => {}
   }
 
   let command = format!(
