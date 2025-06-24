@@ -12,7 +12,11 @@ import { Fragment, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@ui/button";
 import { Layers2 } from "lucide-react";
-import { DockerResourceLink, StatusBadge } from "@components/util";
+import {
+  ContainerPortsTableView,
+  DockerResourceLink,
+  StatusBadge,
+} from "@components/util";
 
 export const StackServices = ({
   id,
@@ -105,7 +109,7 @@ export const StackServices = ({
             },
             {
               accessorKey: "container.networks.0",
-              size: 300,
+              size: 200,
               header: ({ column }) => (
                 <SortableHeader column={column} title="Networks" />
               ),
@@ -137,6 +141,19 @@ export const StackServices = ({
                     />
                   )
                 ),
+            },
+            {
+              accessorKey: "container.ports.0",
+              size: 200,
+              header: ({ column }) => (
+                <SortableHeader column={column} title="Ports" />
+              ),
+              cell: ({ row }) => (
+                <ContainerPortsTableView
+                  ports={row.original.container?.ports ?? []}
+                  server_id={server_id}
+                />
+              ),
             },
           ]}
         />

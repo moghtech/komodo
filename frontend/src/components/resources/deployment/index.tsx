@@ -28,7 +28,11 @@ import { RunBuild } from "../build/actions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
 import { DeploymentConfig } from "./config";
 import { DashboardPieChart } from "@pages/home/dashboard";
-import { DockerResourceLink, StatusBadge } from "@components/util";
+import {
+  ContainerPortsTableView,
+  DockerResourceLink,
+  StatusBadge,
+} from "@components/util";
 import { GroupActions } from "@components/group-actions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 import { usePermissions } from "@lib/hooks";
@@ -295,6 +299,23 @@ export const DeploymentComponents: RequiredResourceComponents = {
           type="container"
           name={deployment.name}
           server_id={deployment.info.server_id}
+        />
+      );
+    },
+    Ports: ({ id }) => {
+      const deployment = useDeployment(id);
+      const container = useRead(
+        "ListDockerContainers",
+        {
+          server: deployment?.info.server_id!,
+        },
+        { refetchInterval: 10_000, enabled: !!deployment?.info.server_id }
+      ).data?.find((container) => container.name === deployment?.name);
+      if (!container) return null;
+      return (
+        <ContainerPortsTableView
+          ports={container?.ports}
+          server_id={deployment?.info.server_id}
         />
       );
     },

@@ -22,6 +22,7 @@ import {
   useLocalStorage,
   useRead,
   useSetTitle,
+  useContainerPortsMap,
 } from "@lib/hooks";
 import { cn } from "@lib/utils";
 import { Types } from "komodo_client";
@@ -30,7 +31,7 @@ import { Link, useParams } from "react-router-dom";
 import { StackServiceLogs } from "./log";
 import { Button } from "@ui/button";
 import { ExportButton } from "@components/export";
-import { DockerResourceLink } from "@components/util";
+import { ContainerPortLink, DockerResourceLink } from "@components/util";
 import { ResourceNotifications } from "@pages/resource-notifications";
 import { Fragment } from "react/jsx-runtime";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ui/tabs";
@@ -76,6 +77,7 @@ const StackServicePageInner = ({
   });
   const services = useRead("ListStackServices", { stack: stack_id }).data;
   const container = services?.find((s) => s.service === service)?.container;
+  const ports_map = useContainerPortsMap(container?.ports ?? []);
   const state = container?.state ?? Types.ContainerStateStatusEnum.Empty;
   const intention = container_state_intention(state);
   const stroke_color = stroke_color_class_by_intention(intention);
@@ -162,6 +164,17 @@ const StackServicePageInner = ({
                         server_id={stack.info.server_id}
                         name={volume}
                         muted
+                      />
+                    </Fragment>
+                  ))}
+                {stack?.info.server_id &&
+                  Object.keys(ports_map).map((host_port) => (
+                    <Fragment key={host_port}>
+                      |
+                      <ContainerPortLink
+                        host_port={host_port}
+                        ports={ports_map[host_port]}
+                        server_id={stack.info.server_id}
                       />
                     </Fragment>
                   ))}

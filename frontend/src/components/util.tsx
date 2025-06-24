@@ -1192,7 +1192,9 @@ export const ContainerPortLink = ({
           href={link}
           className="text-sm cursor-pointer hover:underline px-1 py-2 flex items-center gap-2"
         >
-          <EthernetPort className="w-4 h-4" />
+          <EthernetPort
+            className={cn("w-4 h-4", stroke_color_class_by_intention("Good"))}
+          />
           {host_port}
         </a>
       </TooltipTrigger>

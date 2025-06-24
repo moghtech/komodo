@@ -41,6 +41,14 @@ export const StackTable = ({ stacks }: { stacks: Types.StackListItem[] }) => {
         },
         {
           header: ({ column }) => (
+            <SortableHeader column={column} title="Source" />
+          ),
+          accessorKey: "info.repo",
+          cell: ({ row }) => <StandardSource info={row.original.info} />,
+          size: 200,
+        },
+        {
+          header: ({ column }) => (
             <SortableHeader column={column} title="Server" />
           ),
           accessorKey: "info.server_id",
@@ -59,14 +67,6 @@ export const StackTable = ({ stacks }: { stacks: Types.StackListItem[] }) => {
           cell: ({ row }) => (
             <ResourceLink type="Server" id={row.original.info.server_id} />
           ),
-          size: 200,
-        },
-        {
-          header: ({ column }) => (
-            <SortableHeader column={column} title="Source" />
-          ),
-          accessorKey: "info.repo",
-          cell: ({ row }) => <StandardSource info={row.original.info} />,
           size: 200,
         },
         {
