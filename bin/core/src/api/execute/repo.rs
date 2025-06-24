@@ -153,7 +153,7 @@ impl Resolve<ExecuteArgs> for CloneRepo {
       );
     };
 
-    handle_server_update_return(update).await
+    handle_repo_update_return(update).await
   }
 }
 
@@ -271,12 +271,12 @@ impl Resolve<ExecuteArgs> for PullRepo {
       );
     };
 
-    handle_server_update_return(update).await
+    handle_repo_update_return(update).await
   }
 }
 
 #[instrument(skip_all, fields(update_id = update.id))]
-async fn handle_server_update_return(
+async fn handle_repo_update_return(
   update: Update,
 ) -> serror::Result<Update> {
   // Need to manually update the update before cache refresh,
