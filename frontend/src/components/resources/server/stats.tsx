@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ui/select";
-import { ShowHideButton } from "@components/util";
+import { DockerResourceLink, ShowHideButton } from "@components/util";
 
 export const ServerStats = ({
   id,
@@ -35,6 +35,11 @@ export const ServerStats = ({
     { refetchInterval: 10_000 }
   ).data;
   const info = useRead("GetSystemInformation", { server: id }).data;
+
+  // Get all the containers with stats
+  const containers = useRead("ListDockerContainers", {
+    server: id,
+  }).data?.filter((c) => c.stats);
 
   const disk_used = stats?.disks.reduce(
     (acc, curr) => (acc += curr.used_gb),
@@ -98,6 +103,72 @@ export const ServerStats = ({
             <DISK stats={stats} />
             <NETWORK stats={stats} />
           </div>
+        </Section>
+
+        <Section title="Containers">
+          <DataTable
+            tableKey="container-stats"
+            data={containers ?? []}
+            columns={[
+              {
+                accessorKey: "name",
+                size: 200,
+                header: ({ column }) => (
+                  <SortableHeader column={column} title="Name" />
+                ),
+                cell: ({ row }) => (
+                  <DockerResourceLink
+                    type="container"
+                    server_id={id}
+                    name={row.original.name}
+                  />
+                ),
+              },
+              {
+                accessorKey: "stats.cpu_perc",
+                size: 100,
+                header: ({ column }) => (
+                  <SortableHeader column={column} title="CPU" />
+                ),
+              },
+              {
+                accessorKey: "stats.mem_perc",
+                size: 200,
+                header: ({ column }) => (
+                  <SortableHeader column={column} title="Memory" />
+                ),
+                cell: ({ row }) => (
+                  <div className="flex items-center gap-2">
+                    {row.original.stats?.mem_perc}
+                    <div className="text-muted-foreground text-sm">
+                      ({row.original.stats?.mem_usage})
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                accessorKey: "stats.net_io",
+                size: 150,
+                header: ({ column }) => (
+                  <SortableHeader column={column} title="Net I/O" />
+                ),
+              },
+              {
+                accessorKey: "stats.block_io",
+                size: 150,
+                header: ({ column }) => (
+                  <SortableHeader column={column} title="Block I/O" />
+                ),
+              },
+              {
+                accessorKey: "stats.pids",
+                size: 100,
+                header: ({ column }) => (
+                  <SortableHeader column={column} title="PIDs" />
+                ),
+              },
+            ]}
+          />
         </Section>
 
         <Section

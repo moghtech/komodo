@@ -3295,6 +3295,7 @@ export interface Port {
 	Type?: PortTypeEnum;
 }
 
+/** Container summary returned by container list apis. */
 export interface ContainerListItem {
 	/** The Server which holds the container. */
 	server_id?: string;
@@ -4386,6 +4387,214 @@ export interface ConnectTerminalQuery {
 	terminal: string;
 }
 
+/** Blkio stats entry.  This type is Linux-specific and omitted for Windows containers. */
+export interface ContainerBlkioStatEntry {
+	major?: U64;
+	minor?: U64;
+	op?: string;
+	value?: U64;
+}
+
+/**
+ * BlkioStats stores all IO service stats for data read and write.
+ * This type is Linux-specific and holds many fields that are specific to cgroups v1.
+ * On a cgroup v2 host, all fields other than `io_service_bytes_recursive` are omitted or `null`.
+ * This type is only populated on Linux and omitted for Windows containers.
+ */
+export interface ContainerBlkioStats {
+	io_service_bytes_recursive?: ContainerBlkioStatEntry[];
+	/**
+	 * This field is only available when using Linux containers with cgroups v1.
+	 * It is omitted or `null` when using cgroups v2.
+	 */
+	io_serviced_recursive?: ContainerBlkioStatEntry[];
+	/**
+	 * This field is only available when using Linux containers with cgroups v1.
+	 * It is omitted or `null` when using cgroups v2.
+	 */
+	io_queue_recursive?: ContainerBlkioStatEntry[];
+	/**
+	 * This field is only available when using Linux containers with cgroups v1.
+	 * It is omitted or `null` when using cgroups v2.
+	 */
+	io_service_time_recursive?: ContainerBlkioStatEntry[];
+	/**
+	 * This field is only available when using Linux containers with cgroups v1.
+	 * It is omitted or `null` when using cgroups v2.
+	 */
+	io_wait_time_recursive?: ContainerBlkioStatEntry[];
+	/**
+	 * This field is only available when using Linux containers with cgroups v1.
+	 * It is omitted or `null` when using cgroups v2.
+	 */
+	io_merged_recursive?: ContainerBlkioStatEntry[];
+	/**
+	 * This field is only available when using Linux containers with cgroups v1.
+	 * It is omitted or `null` when using cgroups v2.
+	 */
+	io_time_recursive?: ContainerBlkioStatEntry[];
+	/**
+	 * This field is only available when using Linux containers with cgroups v1.
+	 * It is omitted or `null` when using cgroups v2.
+	 */
+	sectors_recursive?: ContainerBlkioStatEntry[];
+}
+
+/** All CPU stats aggregated since container inception. */
+export interface ContainerCpuUsage {
+	/** Total CPU time consumed in nanoseconds (Linux) or 100's of nanoseconds (Windows). */
+	total_usage?: U64;
+	/**
+	 * Total CPU time (in nanoseconds) consumed per core (Linux).
+	 * This field is Linux-specific when using cgroups v1.
+	 * It is omitted when using cgroups v2 and Windows containers.
+	 */
+	percpu_usage?: U64[];
+	/**
+	 * Time (in nanoseconds) spent by tasks of the cgroup in kernel mode (Linux),
+	 * or time spent (in 100's of nanoseconds) by all container processes in kernel mode (Windows).
+	 * Not populated for Windows containers using Hyper-V isolation.
+	 */
+	usage_in_kernelmode?: U64;
+	/**
+	 * Time (in nanoseconds) spent by tasks of the cgroup in user mode (Linux),
+	 * or time spent (in 100's of nanoseconds) by all container processes in kernel mode (Windows).
+	 * Not populated for Windows containers using Hyper-V isolation.
+	 */
+	usage_in_usermode?: U64;
+}
+
+/**
+ * CPU throttling stats of the container.
+ * This type is Linux-specific and omitted for Windows containers.
+ */
+export interface ContainerThrottlingData {
+	/** Number of periods with throttling active. */
+	periods?: U64;
+	/** Number of periods when the container hit its throttling limit. */
+	throttled_periods?: U64;
+	/** Aggregated time (in nanoseconds) the container was throttled for. */
+	throttled_time?: U64;
+}
+
+/** CPU related info of the container */
+export interface ContainerCpuStats {
+	/** All CPU stats aggregated since container inception. */
+	cpu_usage?: ContainerCpuUsage;
+	/**
+	 * System Usage.
+	 * This field is Linux-specific and omitted for Windows containers.
+	 */
+	system_cpu_usage?: U64;
+	/**
+	 * Number of online CPUs.
+	 * This field is Linux-specific and omitted for Windows containers.
+	 */
+	online_cpus?: number;
+	/**
+	 * CPU throttling stats of the container.
+	 * This type is Linux-specific and omitted for Windows containers.
+	 */
+	throttling_data?: ContainerThrottlingData;
+}
+
+/**
+ * Aggregates all memory stats since container inception on Linux.
+ * Windows returns stats for commit and private working set only.
+ */
+export interface ContainerMemoryStats {
+	/**
+	 * Current `res_counter` usage for memory.
+	 * This field is Linux-specific and omitted for Windows containers.
+	 */
+	usage?: U64;
+	/**
+	 * Maximum usage ever recorded.
+	 * This field is Linux-specific and only supported on cgroups v1.
+	 * It is omitted when using cgroups v2 and for Windows containers.
+	 */
+	max_usage?: U64;
+	/**
+	 * All the stats exported via memory.stat. when using cgroups v2.
+	 * This field is Linux-specific and omitted for Windows containers.
+	 */
+	stats?: Record<string, U64>;
+	/** Number of times memory usage hits limits.  This field is Linux-specific and only supported on cgroups v1. It is omitted when using cgroups v2 and for Windows containers. */
+	failcnt?: U64;
+	/** This field is Linux-specific and omitted for Windows containers. */
+	limit?: U64;
+	/**
+	 * Committed bytes.
+	 * This field is Windows-specific and omitted for Linux containers.
+	 */
+	commitbytes?: U64;
+	/**
+	 * Peak committed bytes.
+	 * This field is Windows-specific and omitted for Linux containers.
+	 */
+	commitpeakbytes?: U64;
+	/**
+	 * Private working set.
+	 * This field is Windows-specific and omitted for Linux containers.
+	 */
+	privateworkingset?: U64;
+}
+
+/** Aggregates the network stats of one container */
+export interface ContainerNetworkStats {
+	/** Bytes received. Windows and Linux. */
+	rx_bytes?: U64;
+	/** Packets received. Windows and Linux. */
+	rx_packets?: U64;
+	/**
+	 * Received errors. Not used on Windows.
+	 * This field is Linux-specific and always zero for Windows containers.
+	 */
+	rx_errors?: U64;
+	/** Incoming packets dropped. Windows and Linux. */
+	rx_dropped?: U64;
+	/** Bytes sent. Windows and Linux. */
+	tx_bytes?: U64;
+	/** Packets sent. Windows and Linux. */
+	tx_packets?: U64;
+	/**
+	 * Sent errors. Not used on Windows.
+	 * This field is Linux-specific and always zero for Windows containers.
+	 */
+	tx_errors?: U64;
+	/** Outgoing packets dropped. Windows and Linux. */
+	tx_dropped?: U64;
+	/**
+	 * Endpoint ID. Not used on Linux.
+	 * This field is Windows-specific and omitted for Linux containers.
+	 */
+	endpoint_id?: string;
+	/**
+	 * Instance ID. Not used on Linux.
+	 * This field is Windows-specific and omitted for Linux containers.
+	 */
+	instance_id?: string;
+}
+
+/** PidsStats contains Linux-specific stats of a container's process-IDs (PIDs).  This type is Linux-specific and omitted for Windows containers. */
+export interface ContainerPidsStats {
+	/** Current is the number of PIDs in the cgroup. */
+	current?: U64;
+	/** Limit is the hard limit on the number of pids in the cgroup. A \"Limit\" of 0 means that there is no limit. */
+	limit?: U64;
+}
+
+/**
+ * StorageStats is the disk I/O stats for read/write on Windows.
+ * This type is Windows-specific and omitted for Linux containers.
+ */
+export interface ContainerStorageStats {
+	read_count_normalized?: U64;
+	read_size_bytes?: U64;
+	write_count_normalized?: U64;
+	write_size_bytes?: U64;
+}
+
 export interface Conversion {
 	/** reference on the server. */
 	local: string;
@@ -5326,6 +5535,50 @@ export interface ExportResourcesToToml {
 export interface FindUser {
 	/** Id or username */
 	user: string;
+}
+
+/** Statistics sample for a container. */
+export interface FullContainerStats {
+	/** Name of the container */
+	name: string;
+	/** ID of the container */
+	id?: string;
+	/**
+	 * Date and time at which this sample was collected.
+	 * The value is formatted as [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) with nano-seconds.
+	 */
+	read?: string;
+	/**
+	 * Date and time at which this first sample was collected.
+	 * This field is not propagated if the \"one-shot\" option is set.
+	 * If the \"one-shot\" option is set, this field may be omitted, empty,
+	 * or set to a default date (`0001-01-01T00:00:00Z`).
+	 * The value is formatted as [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) with nano-seconds.
+	 */
+	preread?: string;
+	/**
+	 * PidsStats contains Linux-specific stats of a container's process-IDs (PIDs).
+	 * This type is Linux-specific and omitted for Windows containers.
+	 */
+	pids_stats?: ContainerPidsStats;
+	/**
+	 * BlkioStats stores all IO service stats for data read and write.
+	 * This type is Linux-specific and holds many fields that are specific to cgroups v1.
+	 * On a cgroup v2 host, all fields other than `io_service_bytes_recursive` are omitted or `null`.
+	 * This type is only populated on Linux and omitted for Windows containers.
+	 */
+	blkio_stats?: ContainerBlkioStats;
+	/**
+	 * The number of processors on the system.
+	 * This field is Windows-specific and always zero for Linux containers.
+	 */
+	num_procs?: number;
+	storage_stats?: ContainerStorageStats;
+	cpu_stats?: ContainerCpuStats;
+	precpu_stats?: ContainerCpuStats;
+	memory_stats?: ContainerMemoryStats;
+	/** Network statistics for the container per interface.  This field is omitted if the container has no networking enabled. */
+	networks?: ContainerNetworkStats;
 }
 
 /** Get a specific action. Response: [Action]. */
