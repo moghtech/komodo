@@ -29,11 +29,11 @@ pub async fn get_stack_and_server(
     return Err(anyhow!("Stack has no server configured"));
   }
 
-  let (server, status) =
+  let (server, state) =
     get_server_with_state(&stack.config.server_id).await?;
-  if block_if_server_unreachable && status != ServerState::Ok {
+  if block_if_server_unreachable && state != ServerState::Ok {
     return Err(anyhow!(
-      "cannot send action when server is unreachable or disabled"
+      "Cannot send command when server is unreachable or disabled"
     ));
   }
 

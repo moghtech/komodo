@@ -271,26 +271,26 @@ pub async fn list_for_user<T: KomodoResource>(
   list_for_user_using_document::<T>(filters, user, permissions).await
 }
 
-#[instrument(level = "debug")]
-pub async fn list_for_user_using_pattern<T: KomodoResource>(
-  pattern: &str,
-  query: ResourceQuery<T::QuerySpecifics>,
-  user: &User,
-  permissions: PermissionLevelAndSpecifics,
-  all_tags: &[Tag],
-) -> anyhow::Result<Vec<T::ListItem>> {
-  let list = list_full_for_user_using_pattern::<T>(
-    pattern,
-    query,
-    user,
-    permissions,
-    all_tags,
-  )
-  .await?
-  .into_iter()
-  .map(|resource| T::to_list_item(resource));
-  Ok(join_all(list).await)
-}
+// #[instrument(level = "debug")]
+// pub async fn list_for_user_using_pattern<T: KomodoResource>(
+//   pattern: &str,
+//   query: ResourceQuery<T::QuerySpecifics>,
+//   user: &User,
+//   permissions: PermissionLevelAndSpecifics,
+//   all_tags: &[Tag],
+// ) -> anyhow::Result<Vec<T::ListItem>> {
+//   let list = list_full_for_user_using_pattern::<T>(
+//     pattern,
+//     query,
+//     user,
+//     permissions,
+//     all_tags,
+//   )
+//   .await?
+//   .into_iter()
+//   .map(|resource| T::to_list_item(resource));
+//   Ok(join_all(list).await)
+// }
 
 #[instrument(level = "debug")]
 pub async fn list_for_user_using_document<T: KomodoResource>(
@@ -872,7 +872,7 @@ pub fn validate_resource_query_tags<T: Default + std::fmt::Debug>(
         .find(|t| t.name == *tag || t.id == *tag)
         .map(|tag| tag.id.clone())
         .with_context(|| {
-          format!("No tag found matching name or id: {}", tag)
+          format!("No tag found matching name or id: {tag}")
         })
     })
     .collect::<anyhow::Result<Vec<_>>>()?;

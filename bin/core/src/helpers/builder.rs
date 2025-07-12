@@ -128,8 +128,7 @@ async fn get_aws_builder(
         stage: "build instance connected".to_string(),
         success: true,
         stdout: format!(
-          "established contact with periphery on builder\nperiphery version: v{}",
-          version
+          "established contact with periphery on builder\nperiphery version: v{version}"
         ),
         start_ts: start_connect_ts,
         end_ts: komodo_timestamp(),

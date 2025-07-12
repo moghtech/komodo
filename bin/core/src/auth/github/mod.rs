@@ -134,7 +134,7 @@ async fn callback(
     format!("{}?token={exchange_token}", core_config().host)
   } else {
     let splitter = if redirect.contains('?') { '&' } else { '?' };
-    format!("{}{splitter}token={exchange_token}", redirect)
+    format!("{redirect}{splitter}token={exchange_token}")
   };
   Ok(Redirect::to(&redirect_url))
 }

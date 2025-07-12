@@ -79,7 +79,7 @@ pub fn log_grep(
   combinator: SearchCombinator,
   invert: bool,
 ) -> String {
-  let maybe_invert = invert.then_some(" -v").unwrap_or_default();
+  let maybe_invert = if invert { " -v" } else { Default::default() };
   match combinator {
     SearchCombinator::Or => {
       format!("grep{maybe_invert} -E '{}'", terms.join("|"))

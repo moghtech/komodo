@@ -40,7 +40,6 @@ use octorust::types::{
   ReposCreateWebhookRequest, ReposCreateWebhookRequestConfig,
 };
 use resolver_api::Resolve;
-use tokio::fs;
 
 use crate::{
   alert::send_alerts,
@@ -206,15 +205,16 @@ async fn write_sync_file_contents_on_host(
   let full_path = root.join(&resource_path).join(&file_path);
 
   if let Some(parent) = full_path.parent() {
-    fs::create_dir_all(parent).await.with_context(|| {
+    tokio::fs::create_dir_all(parent).await.with_context(|| {
       format!(
         "Failed to initialize resource file parent directory {parent:?}"
       )
     })?;
   }
 
-  if let Err(e) =
-    fs::write(&full_path, &contents).await.with_context(|| {
+  if let Err(e) = tokio::fs::write(&full_path, &contents)
+    .await
+    .with_context(|| {
       format!(
         "Failed to write resource file contents to {full_path:?}"
       )
@@ -265,29 +265,32 @@ async fn write_sync_file_contents_git(
     contents,
   } = req;
 
-  let mut clone_args: RepoExecutionArgs = if let Some(repo) = &repo {
+  let mut repo_args: RepoExecutionArgs = if let Some(repo) = &repo {
     repo.into()
   } else {
     (&sync).into()
   };
-  let root = clone_args.unique_path(&core_config().repo_directory)?;
-  clone_args.destination = Some(root.display().to_string());
+  let root = repo_args.unique_path(&core_config().repo_directory)?;
+  repo_args.destination = Some(root.display().to_string());
 
-  let access_token = if let Some(account) = &clone_args.account {
-    git_token(&clone_args.provider, account, |https| clone_args.https = https)
+  let git_token = if let Some(account) = &repo_args.account {
+    git_token(&repo_args.provider, account, |https| repo_args.https = https)
     .await
     .with_context(
-      || format!("Failed to get git token in call to db. Stopping run. | {} | {account}", clone_args.provider),
+      || format!("Failed to get git token in call to db. Stopping run. | {} | {account}", repo_args.provider),
     )?
   } else {
     None
   };
 
   let file_path =
-    file_path.parse::<PathBuf>().context("Invalid file path")?;
-  let resource_path = resource_path
-    .parse::<PathBuf>()
-    .context("Invalid resource path")?;
+    file_path.parse::<PathBuf>().with_context(|| {
+      format!("File path is not a valid path: {file_path}")
+    })?;
+  let resource_path =
+    resource_path.parse::<PathBuf>().with_context(|| {
+      format!("Resource path is not a valid path: {resource_path}")
+    })?;
   let full_path = root
     .join(&resource_path)
     .join(&file_path)
@@ -295,7 +298,7 @@ async fn write_sync_file_contents_git(
     .collect::<PathBuf>();
 
   if let Some(parent) = full_path.parent() {
-    fs::create_dir_all(parent).await.with_context(|| {
+    tokio::fs::create_dir_all(parent).await.with_context(|| {
       format!(
         "Failed to initialize resource file parent directory {parent:?}"
       )
@@ -307,8 +310,8 @@ async fn write_sync_file_contents_git(
   if !root.join(".git").exists() {
     git::init_folder_as_repo(
       &root,
-      &clone_args,
-      access_token.as_deref(),
+      &repo_args,
+      git_token.as_deref(),
       &mut update.logs,
     )
     .await;
@@ -322,9 +325,9 @@ async fn write_sync_file_contents_git(
 
   // Pull latest changes to repo to ensure linear commit history
   match git::pull_or_clone(
-    clone_args,
+    repo_args,
     &core_config().repo_directory,
-    access_token,
+    git_token,
   )
   .await
   .context("Failed to pull latest changes before commit")
@@ -343,8 +346,9 @@ async fn write_sync_file_contents_git(
     return Ok(update);
   }
 
-  if let Err(e) =
-    fs::write(&full_path, &contents).await.with_context(|| {
+  if let Err(e) = tokio::fs::write(&full_path, &contents)
+    .await
+    .with_context(|| {
       format!(
         "Failed to write resource file contents to {full_path:?}"
       )
@@ -378,10 +382,14 @@ async fn write_sync_file_contents_git(
   if let Err(e) = (RefreshResourceSyncPending { sync: sync.name })
     .resolve(args)
     .await
+    .map_err(|e| e.error)
+    .context(
+      "Failed to refresh sync pending after writing file contents",
+    )
   {
     update.push_error_log(
       "Refresh sync pending",
-      format_serror(&e.error.into()),
+      format_serror(&e.into()),
     );
   }
 
@@ -480,7 +488,7 @@ impl Resolve<WriteArgs> for CommitSync {
         .join(to_path_compatible_name(&sync.name))
         .join(&resource_path);
       if let Some(parent) = file_path.parent() {
-        fs::create_dir_all(parent)
+        tokio::fs::create_dir_all(parent)
           .await
           .with_context(|| format!("Failed to initialize resource file parent directory {parent:?}"))?;
       };

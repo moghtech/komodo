@@ -1,6 +1,5 @@
 use std::{collections::HashMap, hash::Hash};
 
-use komodo_client::busy::Busy;
 use tokio::sync::RwLock;
 
 #[derive(Default)]
@@ -34,7 +33,7 @@ impl<
   #[instrument(level = "debug", skip(self))]
   pub async fn get_list(&self) -> Vec<T> {
     let cache = self.cache.read().await;
-    cache.iter().map(|(_, e)| e.clone()).collect()
+    cache.values().cloned().collect()
   }
 
   #[instrument(level = "debug", skip(self))]
@@ -46,22 +45,22 @@ impl<
     self.cache.write().await.insert(key.into(), val);
   }
 
-  #[instrument(level = "debug", skip(self, handler))]
-  pub async fn update_entry<Key>(
-    &self,
-    key: Key,
-    handler: impl Fn(&mut T),
-  ) where
-    Key: Into<K> + std::fmt::Debug,
-  {
-    let mut cache = self.cache.write().await;
-    handler(cache.entry(key.into()).or_default());
-  }
+  // #[instrument(level = "debug", skip(self, handler))]
+  // pub async fn update_entry<Key>(
+  //   &self,
+  //   key: Key,
+  //   handler: impl Fn(&mut T),
+  // ) where
+  //   Key: Into<K> + std::fmt::Debug,
+  // {
+  //   let mut cache = self.cache.write().await;
+  //   handler(cache.entry(key.into()).or_default());
+  // }
 
-  #[instrument(level = "debug", skip(self))]
-  pub async fn clear(&self) {
-    self.cache.write().await.clear();
-  }
+  // #[instrument(level = "debug", skip(self))]
+  // pub async fn clear(&self) {
+  //   self.cache.write().await.clear();
+  // }
 
   #[instrument(level = "debug", skip(self))]
   pub async fn remove(&self, key: &K) {
@@ -69,16 +68,16 @@ impl<
   }
 }
 
-impl<
-  K: PartialEq + Eq + Hash + std::fmt::Debug + Clone,
-  T: Clone + Default + Busy,
-> Cache<K, T>
-{
-  #[instrument(level = "debug", skip(self))]
-  pub async fn busy(&self, id: &K) -> bool {
-    match self.get(id).await {
-      Some(state) => state.busy(),
-      None => false,
-    }
-  }
-}
+// impl<
+//   K: PartialEq + Eq + Hash + std::fmt::Debug + Clone,
+//   T: Clone + Default + Busy,
+// > Cache<K, T>
+// {
+//   #[instrument(level = "debug", skip(self))]
+//   pub async fn busy(&self, id: &K) -> bool {
+//     match self.get(id).await {
+//       Some(state) => state.busy(),
+//       None => false,
+//     }
+//   }
+// }

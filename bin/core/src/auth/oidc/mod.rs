@@ -312,7 +312,7 @@ async fn callback(
   let exchange_token = jwt_client().create_exchange_token(jwt).await;
   let redirect_url = if let Some(redirect) = redirect {
     let splitter = if redirect.contains('?') { '&' } else { '?' };
-    format!("{}{splitter}token={exchange_token}", redirect)
+    format!("{redirect}{splitter}token={exchange_token}")
   } else {
     format!("{}?token={exchange_token}", core_config().host)
   };

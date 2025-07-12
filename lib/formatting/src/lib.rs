@@ -34,16 +34,16 @@ impl std::fmt::Display for Color {
 }
 
 pub fn format_serror(Serror { error, trace }: &Serror) -> String {
-  let trace = (!trace.is_empty())
-    .then(|| {
-      let mut out = format!("\n\n{}:", muted("TRACE"));
+  let trace = if !trace.is_empty() {
+    let mut out = format!("\n\n{}:", muted("TRACE"));
 
-      for (i, msg) in trace.iter().enumerate() {
-        out.push_str(&format!("\n\t{}: {msg}", muted(i + 1)));
-      }
+    for (i, msg) in trace.iter().enumerate() {
+      out.push_str(&format!("\n\t{}: {msg}", muted(i + 1)));
+    }
 
-      out
-    })
-    .unwrap_or_default();
+    out
+  } else {
+    Default::default()
+  };
   format!("{}: {error}{trace}", colored("ERROR", Color::Red))
 }
