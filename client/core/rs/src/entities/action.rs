@@ -107,6 +107,12 @@ pub struct ActionConfig {
   #[partial_default(default_schedule_alert())]
   pub schedule_alert: bool,
 
+  /// Whether this action should run at startup.
+  #[serde(default = "default_run_at_startup")]
+  #[builder(default = "default_run_at_startup()")]
+  #[partial_default(default_run_at_startup())]
+  pub run_at_startup: bool,
+
   /// Whether to send alerts when this action fails.
   #[serde(default = "default_failure_alert")]
   #[builder(default = "default_failure_alert()")]
@@ -154,6 +160,10 @@ fn default_failure_alert() -> bool {
   true
 }
 
+fn default_run_at_startup() -> bool {
+    false
+}
+
 fn default_webhook_enabled() -> bool {
   true
 }
@@ -177,6 +187,7 @@ impl Default for ActionConfig {
       webhook_secret: Default::default(),
       reload_deno_deps: Default::default(),
       file_contents: Default::default(),
+      run_at_startup: default_run_at_startup(),
     }
   }
 }

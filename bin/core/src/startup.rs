@@ -3,6 +3,7 @@ use std::str::FromStr;
 use futures::future::join_all;
 use komodo_client::{
   api::write::{CreateBuilder, CreateServer},
+  api::execute::{RunAction},
   entities::{
     ResourceTarget,
     builder::{PartialBuilderConfig, PartialServerBuilderConfig},
@@ -10,7 +11,8 @@ use komodo_client::{
     server::{PartialServerConfig, Server},
     sync::ResourceSync,
     update::Log,
-    user::system_user,
+    user::{system_user, action_user},
+    action::Action,
   },
 };
 use mungos::{
@@ -22,6 +24,8 @@ use resolver_api::Resolve;
 use crate::{
   api::write::WriteArgs, config::core_config, helpers::random_string,
   resource, state::db_client,
+  helpers::update::init_execution_update,
+  api::execute::{ExecuteArgs, ExecuteRequest},
 };
 
 /// This function should be run on startup,
@@ -33,6 +37,52 @@ pub async fn on_startup() {
     ensure_first_server_and_builder(),
     clean_up_server_templates(),
   );
+}
+
+pub async fn run_startup_actions() {
+    let actions = match mungos::find::find_collect::<Action>(
+        &db_client().actions,
+        None,
+        None,
+    )
+    .await
+    {
+        Ok(actions) => actions,
+        Err(e) => {
+            error!("Failed to fetch actions for startup | {e:#?}");
+            return;
+        }
+    };
+
+    let startup_actions: Vec<Action> = actions
+        .into_iter()
+        .filter(|action| action.config.run_at_startup)
+        .collect();
+
+    for action in startup_actions {
+        let id = action.id.clone();
+        let user = action_user();
+
+        let update = match init_execution_update(
+            &ExecuteRequest::RunAction(RunAction { action: id.clone() }),
+            &user,
+        )
+        .await
+        {
+            Ok(update) => update,
+            Err(e) => {
+                error!("Failed to initialize update for action {id} | {e:#?}");
+                continue;
+            }
+        };
+
+        if let Err(e) = (RunAction { action: id.clone() })
+            .resolve(&ExecuteArgs { user: user.clone(), update })
+            .await
+        {
+            error!("Failed to execute startup action {id} | {e:#?}");
+        }
+    }
 }
 
 async fn in_progress_update_cleanup() {

@@ -104,6 +104,13 @@ async fn app() -> anyhow::Result<()> {
   let socket_addr = SocketAddr::from_str(&addr)
     .context("failed to parse listen address")?;
 
+  tokio::spawn(async {
+      // Wait for 5 seconds before running the function to give 
+      // server time to startup
+      tokio::time::sleep(std::time::Duration::from_secs(5)).await;
+      startup::run_startup_actions().await;
+  });
+
   if config.ssl_enabled {
     info!("🔒 Core SSL Enabled");
     rustls::crypto::ring::default_provider()
