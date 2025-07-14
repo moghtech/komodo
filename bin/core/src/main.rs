@@ -5,7 +5,10 @@ use std::{net::SocketAddr, str::FromStr};
 
 use anyhow::Context;
 use axum::Router;
-use axum_server::tls_rustls::RustlsConfig;
+use axum_server::{
+  tls_rustls::RustlsConfig,
+  Handle,
+};
 use tower_http::{
   cors::{Any, CorsLayer},
   services::{ServeDir, ServeFile},
@@ -104,11 +107,16 @@ async fn app() -> anyhow::Result<()> {
   let socket_addr = SocketAddr::from_str(&addr)
     .context("failed to parse listen address")?;
 
-  tokio::spawn(async {
-      // Wait for 5 seconds before running the function to give 
-      // server time to startup
-      tokio::time::sleep(std::time::Duration::from_secs(5)).await;
-      startup::run_startup_actions().await;
+  let handle = Handle::new();
+  tokio::spawn({
+      // Cannot run actions until the server is available.
+      // We can use a handle for the server, and wait until
+      // the handle is listening before running actions
+      let handle = handle.clone();
+      async move {
+          handle.listening().await;
+          startup::run_startup_actions().await;
+      }
   });
 
   if config.ssl_enabled {
@@ -124,6 +132,7 @@ async fn app() -> anyhow::Result<()> {
     .await
     .context("Invalid ssl cert / key")?;
     axum_server::bind_rustls(socket_addr, ssl_config)
+      .handle(handle.clone())
       .serve(app)
       .await
       .context("failed to start https server")
@@ -131,6 +140,7 @@ async fn app() -> anyhow::Result<()> {
     info!("🔓 Core SSL Disabled");
     info!("Komodo Core starting on http://{socket_addr}");
     axum_server::bind(socket_addr)
+      .handle(handle.clone()) 
       .serve(app)
       .await
       .context("failed to start http server")
