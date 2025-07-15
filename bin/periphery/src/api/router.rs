@@ -1,5 +1,5 @@
 use std::net::SocketAddr;
-
+use ipnetwork::IpNetwork;
 use anyhow::{Context, anyhow};
 use axum::{
   Router,
@@ -124,12 +124,25 @@ async fn guard_request_by_ip(
     .context("could not get ConnectionInfo of request")
     .status_code(StatusCode::UNAUTHORIZED)?;
   let ip = socket_addr.ip();
-  if periphery_config().allowed_ips.contains(&ip) {
-    Ok(next.run(req).await)
+
+  let ip_match = periphery_config()
+    .allowed_ips
+    .iter()
+    .any(|net| {
+        let candidate = if net.is_ipv4() {
+            ip.to_canonical()
+        } else {
+            ip
+        };
+        net.contains(candidate)
+    });
+
+  if ip_match {
+      Ok(next.run(req).await)
   } else {
-    Err(
-      anyhow!("requesting ip {ip} not allowed")
-        .status_code(StatusCode::UNAUTHORIZED),
-    )
+      Err(
+          anyhow!("requesting ip {ip} not allowed")
+              .status_code(StatusCode::UNAUTHORIZED),
+      )
   }
 }

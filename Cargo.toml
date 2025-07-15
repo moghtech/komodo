@@ -129,3 +129,4 @@ colored = "3.0.0"
 regex = "1.11.1"
 bytes = "1.10.1"
 bson = "2.15.0"
+ipnetwork = { version = "0.21.1", features = ["serde"] }
