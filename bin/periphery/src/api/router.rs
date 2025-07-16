@@ -1,5 +1,4 @@
-use std::net::SocketAddr;
-use ipnetwork::IpNetwork;
+use std::net::{SocketAddr, IpAddr};
 use anyhow::{Context, anyhow};
 use axum::{
   Router,
@@ -129,12 +128,11 @@ async fn guard_request_by_ip(
     .allowed_ips
     .iter()
     .any(|net| {
-        let candidate = if net.is_ipv4() {
-            ip.to_canonical()
-        } else {
-            ip
-        };
-        net.contains(candidate)
+        net.contains(ip) ||
+        match ip {
+            IpAddr::V4(ipv4) => net.contains(IpAddr::V6(ipv4.to_ipv6_mapped())),
+            IpAddr::V6(_) => net.contains(ip.to_canonical()),
+        }
     });
 
   if ip_match {
