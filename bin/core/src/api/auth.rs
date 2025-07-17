@@ -62,7 +62,7 @@ pub fn router() -> Router {
   }
 
   if google_oauth_client().is_some() {
-    info!("🔑 Github Login Enabled");
+    info!("🔑 Google Login Enabled");
     router = router.nest("/google", google::router())
   }
 
