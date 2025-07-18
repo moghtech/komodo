@@ -212,6 +212,16 @@ export const ActionConfig = ({ id }: { id: string }) => {
             },
           },
           {
+            label: "Startup",
+            labelHidden: true,
+            components: {
+              run_at_startup: {
+                label: "Run on Startup",
+                description: "Run this action on completion of startup of Komodo Core",
+              },
+            },
+          },
+          {
             label: "Reload",
             labelHidden: true,
             components: {

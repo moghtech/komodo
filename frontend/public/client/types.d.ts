@@ -86,6 +86,8 @@ export interface ActionConfig {
     schedule_timezone?: string;
     /** Whether to send alerts when the schedule was run. */
     schedule_alert: boolean;
+    /** Whether this action should run at startup. */
+    run_at_startup?: boolean;
     /** Whether to send alerts when this action fails. */
     failure_alert: boolean;
     /** Whether incoming webhooks actually trigger action. */
