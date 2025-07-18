@@ -229,8 +229,7 @@ pub async fn send_alert(
         let sanitized_error =
           svi::replace_in_string(&format!("{e:?}"), &replacers);
         anyhow::Error::msg(format!(
-          "Error with slack request: {}",
-          sanitized_error
+          "Error with slack request: {sanitized_error}"
         ))
       })?;
   }

@@ -195,8 +195,10 @@ pub fn inner_handler(
   Box::pin(async move {
     let req_id = Uuid::new_v4();
 
-    // need to validate no cancel is active before any update is created.
+    // Need to validate no cancel is active before any update is created.
+    // This ensures no double update created if Cancel is called more than once for the same request.
     build::validate_cancel_build(&request).await?;
+    repo::validate_cancel_repo_build(&request).await?;
 
     let update = init_execution_update(&request, &user).await?;
 

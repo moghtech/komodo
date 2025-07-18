@@ -1,9 +1,12 @@
+use std::path::PathBuf;
+
 use anyhow::{Context, anyhow};
 use formatting::format_serror;
 use komodo_client::{
   api::write::*,
   entities::{
-    FileContents, NoData, Operation,
+    FileContents, NoData, Operation, RepoExecutionArgs,
+    all_logs_success,
     config::core::CoreConfig,
     permission::PermissionLevel,
     repo::Repo,
@@ -19,7 +22,7 @@ use octorust::types::{
 };
 use periphery_client::api::compose::{
   GetComposeContentsOnHost, GetComposeContentsOnHostResponse,
-  WriteCommitComposeContents, WriteComposeContentsToHost,
+  WriteComposeContentsToHost,
 };
 use resolver_api::Resolve;
 
@@ -35,7 +38,6 @@ use crate::{
   permission::get_check_permissions,
   resource,
   stack::{
-    get_stack_and_server,
     remote::{RemoteComposeContents, get_repo_compose_contents},
     services::extract_services_into_res,
   },
@@ -114,23 +116,12 @@ impl Resolve<WriteArgs> for WriteStackFileContents {
       file_path,
       contents,
     } = self;
-    let (mut stack, server) = get_stack_and_server(
+    let stack = get_check_permissions::<Stack>(
       &stack,
       user,
       PermissionLevel::Write.into(),
-      true,
     )
     .await?;
-
-    let mut repo = if !stack.config.files_on_host
-      && !stack.config.linked_repo.is_empty()
-    {
-      crate::resource::get::<Repo>(&stack.config.linked_repo)
-        .await?
-        .into()
-    } else {
-      None
-    };
 
     if !stack.config.files_on_host
       && stack.config.repo.is_empty()
@@ -146,77 +137,231 @@ impl Resolve<WriteArgs> for WriteStackFileContents {
 
     update.push_simple_log("File contents to write", &contents);
 
-    let stack_id = stack.id.clone();
-
     if stack.config.files_on_host {
-      match periphery_client(&server)?
-        .request(WriteComposeContentsToHost {
-          name: stack.name,
-          run_directory: stack.config.run_directory,
-          file_path,
-          contents,
-        })
-        .await
-        .context("Failed to write contents to host")
-      {
-        Ok(log) => {
-          update.logs.push(log);
-        }
-        Err(e) => {
-          update.push_error_log(
-            "Write File Contents",
-            format_serror(&e.into()),
-          );
-        }
-      };
-    } else {
-      let git_token =
-        stack_git_token(&mut stack, repo.as_mut()).await?;
-      match periphery_client(&server)?
-        .request(WriteCommitComposeContents {
-          stack,
-          repo,
-          username: Some(user.username.clone()),
-          file_path,
-          contents,
-          git_token,
-        })
-        .await
-        .context("Failed to write contents to host")
-      {
-        Ok(res) => {
-          update.logs.extend(res.logs);
-        }
-        Err(e) => {
-          update.push_error_log(
-            "Write File Contents",
-            format_serror(&e.into()),
-          );
-        }
-      };
-    }
-
-    if let Err(e) = (RefreshStackCache { stack: stack_id })
-      .resolve(&WriteArgs {
-        user: stack_user().to_owned(),
-      })
-      .await
-      .map_err(|e| e.error)
-      .context(
-        "Failed to refresh stack cache after writing file contents",
+      write_stack_file_contents_on_host(
+        stack, file_path, contents, update,
       )
-    {
+      .await
+    } else {
+      write_stack_file_contents_git(
+        stack,
+        &file_path,
+        &contents,
+        &user.username,
+        update,
+      )
+      .await
+    }
+  }
+}
+
+async fn write_stack_file_contents_on_host(
+  stack: Stack,
+  file_path: String,
+  contents: String,
+  mut update: Update,
+) -> serror::Result<Update> {
+  if stack.config.server_id.is_empty() {
+    return Err(anyhow!(
+      "Cannot write file, Files on host Stack has not configured a Server"
+    ).into());
+  }
+  let (server, state) =
+    get_server_with_state(&stack.config.server_id).await?;
+  if state != ServerState::Ok {
+    return Err(
+      anyhow!(
+        "Cannot write file when server is unreachable or disabled"
+      )
+      .into(),
+    );
+  }
+  match periphery_client(&server)?
+    .request(WriteComposeContentsToHost {
+      name: stack.name,
+      run_directory: stack.config.run_directory,
+      file_path,
+      contents,
+    })
+    .await
+    .context("Failed to write contents to host")
+  {
+    Ok(log) => {
+      update.logs.push(log);
+    }
+    Err(e) => {
       update.push_error_log(
-        "Refresh stack cache",
+        "Write File Contents",
         format_serror(&e.into()),
       );
     }
+  };
 
+  if !all_logs_success(&update.logs) {
+    update.finalize();
+    update.id = add_update(update.clone()).await?;
+    return Ok(update);
+  }
+
+  // Finish with a cache refresh
+  if let Err(e) = (RefreshStackCache { stack: stack.id })
+    .resolve(&WriteArgs {
+      user: stack_user().to_owned(),
+    })
+    .await
+    .map_err(|e| e.error)
+    .context(
+      "Failed to refresh stack cache after writing file contents",
+    )
+  {
+    update.push_error_log(
+      "Refresh stack cache",
+      format_serror(&e.into()),
+    );
+  }
+
+  update.finalize();
+  update.id = add_update(update.clone()).await?;
+
+  Ok(update)
+}
+
+async fn write_stack_file_contents_git(
+  mut stack: Stack,
+  file_path: &str,
+  contents: &str,
+  username: &str,
+  mut update: Update,
+) -> serror::Result<Update> {
+  let mut repo = if !stack.config.linked_repo.is_empty() {
+    crate::resource::get::<Repo>(&stack.config.linked_repo)
+      .await?
+      .into()
+  } else {
+    None
+  };
+  let git_token = stack_git_token(&mut stack, repo.as_mut()).await?;
+
+  let mut repo_args: RepoExecutionArgs = if let Some(repo) = &repo {
+    repo.into()
+  } else {
+    (&stack).into()
+  };
+  let root = repo_args.unique_path(&core_config().repo_directory)?;
+  repo_args.destination = Some(root.display().to_string());
+
+  let file_path = stack
+    .config
+    .run_directory
+    .parse::<PathBuf>()
+    .context("Run directory is not a valid path")?
+    .join(file_path);
+  let full_path =
+    root.join(&file_path).components().collect::<PathBuf>();
+
+  if let Some(parent) = full_path.parent() {
+    tokio::fs::create_dir_all(parent).await.with_context(|| {
+      format!(
+        "Failed to initialize stack file parent directory {parent:?}"
+      )
+    })?;
+  }
+
+  // Ensure the folder is initialized as git repo.
+  // This allows a new file to be committed on a branch that may not exist.
+  if !root.join(".git").exists() {
+    git::init_folder_as_repo(
+      &root,
+      &repo_args,
+      git_token.as_deref(),
+      &mut update.logs,
+    )
+    .await;
+
+    if !all_logs_success(&update.logs) {
+      update.finalize();
+      update.id = add_update(update.clone()).await?;
+      return Ok(update);
+    }
+  }
+
+  // Pull latest changes to repo to ensure linear commit history
+  match git::pull_or_clone(
+    repo_args,
+    &core_config().repo_directory,
+    git_token,
+  )
+  .await
+  .context("Failed to pull latest changes before commit")
+  {
+    Ok((res, _)) => update.logs.extend(res.logs),
+    Err(e) => {
+      update.push_error_log("Pull Repo", format_serror(&e.into()));
+      update.finalize();
+      return Ok(update);
+    }
+  };
+
+  if !all_logs_success(&update.logs) {
+    update.finalize();
+    update.id = add_update(update.clone()).await?;
+    return Ok(update);
+  }
+
+  if let Err(e) = tokio::fs::write(&full_path, &contents)
+    .await
+    .with_context(|| {
+      format!(
+        "Failed to write compose file contents to {full_path:?}"
+      )
+    })
+  {
+    update.push_error_log("Write File", format_serror(&e.into()));
+  } else {
+    update.push_simple_log(
+      "Write File",
+      format!("File written to {full_path:?}"),
+    );
+  };
+
+  if !all_logs_success(&update.logs) {
     update.finalize();
     update.id = add_update(update.clone()).await?;
 
-    Ok(update)
+    return Ok(update);
   }
+
+  let commit_res = git::commit_file(
+    &format!("{username}: Write Stack File"),
+    &root,
+    &file_path,
+    &stack.config.branch,
+  )
+  .await;
+
+  update.logs.extend(commit_res.logs);
+
+  // Finish with a cache refresh
+  if let Err(e) = (RefreshStackCache { stack: stack.id })
+    .resolve(&WriteArgs {
+      user: stack_user().to_owned(),
+    })
+    .await
+    .map_err(|e| e.error)
+    .context(
+      "Failed to refresh stack cache after writing file contents",
+    )
+  {
+    update.push_error_log(
+      "Refresh stack cache",
+      format_serror(&e.into()),
+    );
+  }
+
+  update.finalize();
+  update.id = add_update(update.clone()).await?;
+
+  Ok(update)
 }
 
 impl Resolve<WriteArgs> for RefreshStackCache {

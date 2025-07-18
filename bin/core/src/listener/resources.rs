@@ -1,6 +1,5 @@
 use std::sync::OnceLock;
 
-use anyhow::anyhow;
 use komodo_client::{
   api::{
     execute::*,
@@ -43,15 +42,15 @@ pub async fn handle_build_webhook<B: super::VerifyBranch>(
   build: Build,
   body: String,
 ) -> anyhow::Result<()> {
+  if !build.config.webhook_enabled {
+    return Ok(());
+  }
+
   // Acquire and hold lock to make a task queue for
   // subsequent listener calls on same resource.
   // It would fail if we let it go through from action state busy.
   let lock = build_locks().get_or_insert_default(&build.id).await;
   let _lock = lock.lock().await;
-
-  if !build.config.webhook_enabled {
-    return Err(anyhow!("build does not have webhook enabled"));
-  }
 
   B::verify_branch(&body, &build.config.branch)?;
 
@@ -180,15 +179,15 @@ async fn handle_repo_webhook_inner<
   repo: Repo,
   body: String,
 ) -> anyhow::Result<()> {
+  if !repo.config.webhook_enabled {
+    return Ok(());
+  }
+
   // Acquire and hold lock to make a task queue for
   // subsequent listener calls on same resource.
   // It would fail if we let it go through from action state busy.
   let lock = repo_locks().get_or_insert_default(&repo.id).await;
   let _lock = lock.lock().await;
-
-  if !repo.config.webhook_enabled {
-    return Err(anyhow!("repo does not have webhook enabled"));
-  }
 
   B::verify_branch(&body, &repo.config.branch)?;
 
@@ -292,15 +291,15 @@ pub async fn handle_stack_webhook_inner<
   stack: Stack,
   body: String,
 ) -> anyhow::Result<()> {
+  if !stack.config.webhook_enabled {
+    return Ok(());
+  }
+
   // Acquire and hold lock to make a task queue for
   // subsequent listener calls on same resource.
   // It would fail if we let it go through, from "action state busy".
   let lock = stack_locks().get_or_insert_default(&stack.id).await;
   let _lock = lock.lock().await;
-
-  if !stack.config.webhook_enabled {
-    return Err(anyhow!("stack does not have webhook enabled"));
-  }
 
   B::verify_branch(&body, &stack.config.branch)?;
 
@@ -390,15 +389,15 @@ async fn handle_sync_webhook_inner<
   sync: ResourceSync,
   body: String,
 ) -> anyhow::Result<()> {
+  if !sync.config.webhook_enabled {
+    return Ok(());
+  }
+
   // Acquire and hold lock to make a task queue for
   // subsequent listener calls on same resource.
   // It would fail if we let it go through from action state busy.
   let lock = sync_locks().get_or_insert_default(&sync.id).await;
   let _lock = lock.lock().await;
-
-  if !sync.config.webhook_enabled {
-    return Err(anyhow!("sync does not have webhook enabled"));
-  }
 
   B::verify_branch(&body, &sync.config.branch)?;
 
@@ -426,16 +425,16 @@ pub async fn handle_procedure_webhook<B: super::VerifyBranch>(
   target_branch: &str,
   body: String,
 ) -> anyhow::Result<()> {
+  if !procedure.config.webhook_enabled {
+    return Ok(());
+  }
+
   // Acquire and hold lock to make a task queue for
   // subsequent listener calls on same resource.
   // It would fail if we let it go through from action state busy.
   let lock =
     procedure_locks().get_or_insert_default(&procedure.id).await;
   let _lock = lock.lock().await;
-
-  if !procedure.config.webhook_enabled {
-    return Err(anyhow!("procedure does not have webhook enabled"));
-  }
 
   if target_branch != ANY_BRANCH {
     B::verify_branch(&body, target_branch)?;
@@ -476,15 +475,15 @@ pub async fn handle_action_webhook<B: super::VerifyBranch>(
   target_branch: &str,
   body: String,
 ) -> anyhow::Result<()> {
+  if !action.config.webhook_enabled {
+    return Ok(());
+  }
+
   // Acquire and hold lock to make a task queue for
   // subsequent listener calls on same resource.
   // It would fail if we let it go through from action state busy.
   let lock = action_locks().get_or_insert_default(&action.id).await;
   let _lock = lock.lock().await;
-
-  if !action.config.webhook_enabled {
-    return Err(anyhow!("action does not have webhook enabled"));
-  }
 
   if target_branch != ANY_BRANCH {
     B::verify_branch(&body, target_branch)?;

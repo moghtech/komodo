@@ -156,7 +156,7 @@ pub fn get_image_name(
   ) {
     // If organization and account provided, name under organization.
     (true, true, true) => {
-      format!("{domain}/{}/{name}", organization)
+      format!("{domain}/{organization}/{name}")
     }
     // Just domain / account provided
     (true, false, true) => format!("{domain}/{account}/{name}"),
@@ -1268,10 +1268,38 @@ pub enum ResourceTarget {
 }
 
 impl ResourceTarget {
+  pub fn system() -> ResourceTarget {
+    Self::System("system".to_string())
+  }
+}
+
+impl Default for ResourceTarget {
+  fn default() -> Self {
+    ResourceTarget::system()
+  }
+}
+
+impl ResourceTarget {
+  pub fn is_empty(&self) -> bool {
+    match self {
+      ResourceTarget::System(id) => id.is_empty(),
+      ResourceTarget::Server(id) => id.is_empty(),
+      ResourceTarget::Stack(id) => id.is_empty(),
+      ResourceTarget::Deployment(id) => id.is_empty(),
+      ResourceTarget::Build(id) => id.is_empty(),
+      ResourceTarget::Repo(id) => id.is_empty(),
+      ResourceTarget::Procedure(id) => id.is_empty(),
+      ResourceTarget::Action(id) => id.is_empty(),
+      ResourceTarget::Builder(id) => id.is_empty(),
+      ResourceTarget::Alerter(id) => id.is_empty(),
+      ResourceTarget::ResourceSync(id) => id.is_empty(),
+    }
+  }
+
   pub fn extract_variant_id(
     &self,
   ) -> (ResourceTargetVariant, &String) {
-    let id = match &self {
+    let id = match self {
       ResourceTarget::System(id) => id,
       ResourceTarget::Server(id) => id,
       ResourceTarget::Stack(id) => id,
@@ -1285,16 +1313,6 @@ impl ResourceTarget {
       ResourceTarget::ResourceSync(id) => id,
     };
     (self.extract_variant(), id)
-  }
-
-  pub fn system() -> ResourceTarget {
-    Self::System("system".to_string())
-  }
-}
-
-impl Default for ResourceTarget {
-  fn default() -> Self {
-    ResourceTarget::system()
   }
 }
 

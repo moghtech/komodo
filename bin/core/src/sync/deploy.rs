@@ -181,7 +181,7 @@ pub async fn deploy_from_cache(
     "\n{}: finished after {} round{}",
     muted("INFO"),
     bold(round),
-    (round > 1).then_some("s").unwrap_or_default()
+    if round > 1 { "s" } else { Default::default() }
   ));
 
   logs.push(Log::simple("Sync Deploy", log));

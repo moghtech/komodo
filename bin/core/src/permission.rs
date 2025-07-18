@@ -83,6 +83,8 @@ pub fn get_user_permission_on_resource<'a, T: KomodoResource>(
     let resource = get::<T>(resource_id).await?;
     let initial_specific = if let Some(additional_target) =
       T::inherit_specific_permissions_from(&resource)
+      // Ensure target is actually assigned
+      && !additional_target.is_empty()
     {
       GetPermission {
         target: additional_target,

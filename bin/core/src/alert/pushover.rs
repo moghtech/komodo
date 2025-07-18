@@ -12,8 +12,7 @@ pub async fn send_alert(
     AlertData::Test { id, name } => {
       let link = resource_link(ResourceTargetVariant::Alerter, id);
       format!(
-        "{level} | If you see this message, then Alerter {} is working\n{link}",
-        name,
+        "{level} | If you see this message, then Alerter {name} is working\n{link}",
       )
     }
     AlertData::ServerUnreachable {
@@ -26,19 +25,15 @@ pub async fn send_alert(
       let link = resource_link(ResourceTargetVariant::Server, id);
       match alert.level {
         SeverityLevel::Ok => {
-          format!(
-            "{level} | {}{} is now reachable\n{link}",
-            name, region
-          )
+          format!("{level} | {name}{region} is now reachable\n{link}")
         }
         SeverityLevel::Critical => {
           let err = err
             .as_ref()
-            .map(|e| format!("\nerror: {:#?}", e))
+            .map(|e| format!("\nerror: {e:#?}"))
             .unwrap_or_default();
           format!(
-            "{level} | {}{} is unreachable ❌\n{link}{err}",
-            name, region
+            "{level} | {name}{region} is unreachable ❌\n{link}{err}"
           )
         }
         _ => unreachable!(),
@@ -53,8 +48,7 @@ pub async fn send_alert(
       let region = fmt_region(region);
       let link = resource_link(ResourceTargetVariant::Server, id);
       format!(
-        "{level} | {}{} cpu usage at {percentage:.1}%\n{link}",
-        name, region,
+        "{level} | {name}{region} cpu usage at {percentage:.1}%\n{link}",
       )
     }
     AlertData::ServerMem {
@@ -68,8 +62,7 @@ pub async fn send_alert(
       let link = resource_link(ResourceTargetVariant::Server, id);
       let percentage = 100.0 * used_gb / total_gb;
       format!(
-        "{level} | {}{} memory usage at {percentage:.1}%💾\n\nUsing {used_gb:.1} GiB / {total_gb:.1} GiB\n{link}",
-        name, region,
+        "{level} | {name}{region} memory usage at {percentage:.1}%💾\n\nUsing {used_gb:.1} GiB / {total_gb:.1} GiB\n{link}",
       )
     }
     AlertData::ServerDisk {
@@ -84,8 +77,7 @@ pub async fn send_alert(
       let link = resource_link(ResourceTargetVariant::Server, id);
       let percentage = 100.0 * used_gb / total_gb;
       format!(
-        "{level} | {}{} disk usage at {percentage:.1}%💿\nmount point: {:?}\nusing {used_gb:.1} GiB / {total_gb:.1} GiB\n{link}",
-        name, region, path,
+        "{level} | {name}{region} disk usage at {percentage:.1}%💿\nmount point: {path:?}\nusing {used_gb:.1} GiB / {total_gb:.1} GiB\n{link}",
       )
     }
     AlertData::ContainerStateChange {
@@ -99,8 +91,7 @@ pub async fn send_alert(
       let link = resource_link(ResourceTargetVariant::Deployment, id);
       let to_state = fmt_docker_container_state(to);
       format!(
-        "📦Deployment {} is now {}\nserver: {}\nprevious: {}\n{link}",
-        name, to_state, server_name, from,
+        "📦Deployment {name} is now {to_state}\nserver: {server_name}\nprevious: {from}\n{link}",
       )
     }
     AlertData::DeploymentImageUpdateAvailable {
@@ -112,8 +103,7 @@ pub async fn send_alert(
     } => {
       let link = resource_link(ResourceTargetVariant::Deployment, id);
       format!(
-        "⬆ Deployment {} has an update available\nserver: {}\nimage: {}\n{link}",
-        name, server_name, image,
+        "⬆ Deployment {name} has an update available\nserver: {server_name}\nimage: {image}\n{link}",
       )
     }
     AlertData::DeploymentAutoUpdated {
@@ -125,8 +115,7 @@ pub async fn send_alert(
     } => {
       let link = resource_link(ResourceTargetVariant::Deployment, id);
       format!(
-        "⬆ Deployment {} was updated automatically\nserver: {}\nimage: {}\n{link}",
-        name, server_name, image,
+        "⬆ Deployment {name} was updated automatically\nserver: {server_name}\nimage: {image}\n{link}",
       )
     }
     AlertData::StackStateChange {
@@ -140,8 +129,7 @@ pub async fn send_alert(
       let link = resource_link(ResourceTargetVariant::Stack, id);
       let to_state = fmt_stack_state(to);
       format!(
-        "🥞 Stack {} is now {}\nserver: {}\nprevious: {}\n{link}",
-        name, to_state, server_name, from,
+        "🥞 Stack {name} is now {to_state}\nserver: {server_name}\nprevious: {from}\n{link}",
       )
     }
     AlertData::StackImageUpdateAvailable {
@@ -154,8 +142,7 @@ pub async fn send_alert(
     } => {
       let link = resource_link(ResourceTargetVariant::Stack, id);
       format!(
-        "⬆ Stack {} has an update available\nserver: {}\nservice: {}\nimage: {}\n{link}",
-        name, server_name, service, image,
+        "⬆ Stack {name} has an update available\nserver: {server_name}\nservice: {service}\nimage: {image}\n{link}",
       )
     }
     AlertData::StackAutoUpdated {
@@ -170,8 +157,7 @@ pub async fn send_alert(
         if images.len() > 1 { "images" } else { "image" };
       let images_str = images.join(", ");
       format!(
-        "⬆ Stack {} was updated automatically ⏫\nserver: {}\n{}: {}\n{link}",
-        name, server_name, images_label, images_str,
+        "⬆ Stack {name} was updated automatically ⏫\nserver: {server_name}\n{images_label}: {images_str}\n{link}",
       )
     }
     AlertData::AwsBuilderTerminationFailed {
@@ -179,16 +165,14 @@ pub async fn send_alert(
       message,
     } => {
       format!(
-        "{level} | Failed to terminate AWS builder instance\ninstance id: {}\n{}",
-        instance_id, message,
+        "{level} | Failed to terminate AWS builder instance\ninstance id: {instance_id}\n{message}",
       )
     }
     AlertData::ResourceSyncPendingUpdates { id, name } => {
       let link =
         resource_link(ResourceTargetVariant::ResourceSync, id);
       format!(
-        "{level} | Pending resource sync updates on {}\n{link}",
-        name,
+        "{level} | Pending resource sync updates on {name}\n{link}",
       )
     }
     AlertData::BuildFailed { id, name, version } => {
@@ -199,7 +183,7 @@ pub async fn send_alert(
     }
     AlertData::RepoBuildFailed { id, name } => {
       let link = resource_link(ResourceTargetVariant::Repo, id);
-      format!("{level} | Repo build for {} failed\n{link}", name,)
+      format!("{level} | Repo build for {name} failed\n{link}",)
     }
     AlertData::ProcedureFailed { id, name } => {
       let link = resource_link(ResourceTargetVariant::Procedure, id);
@@ -252,8 +236,7 @@ async fn send_message(
   } else {
     let text = response.text().await.with_context(|| {
       format!(
-        "Failed to send message to pushover | {} | failed to get response text",
-        status
+        "Failed to send message to pushover | {status} | failed to get response text"
       )
     })?;
     Err(anyhow!(

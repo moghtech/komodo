@@ -188,8 +188,7 @@ async fn send_custom_alert(
       let sanitized_error =
         svi::replace_in_string(&format!("{e:?}"), &replacers);
       anyhow::Error::msg(format!(
-        "Error with request: {}",
-        sanitized_error
+        "Error with request: {sanitized_error}"
       ))
     })
     .context("failed at post request to alerter")?;

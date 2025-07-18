@@ -9,7 +9,7 @@
 
 services:
   postgres:
-    # Recommended: Pin to a specific version
+    # 🚨 Pin to a specific version. Updates can be breaking.
     # https://github.com/FerretDB/documentdb/pkgs/container/postgres-documentdb
     image: ghcr.io/ferretdb/postgres-documentdb
     labels:
@@ -25,7 +25,7 @@ services:
       POSTGRES_DB: postgres
 
   ferretdb:
-    # Recommended: Pin to a specific version
+    # 🚨 Pin to a specific version. Updates can be breaking.
     # https://github.com/FerretDB/FerretDB/pkgs/container/ferretdb
     image: ghcr.io/ferretdb/ferretdb
     labels:

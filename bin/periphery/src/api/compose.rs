@@ -104,7 +104,7 @@ impl Resolve<super::Args> for GetComposeLog {
     } = self;
     let docker_compose = docker_compose();
     let timestamps =
-      timestamps.then_some(" --timestamps").unwrap_or_default();
+      if timestamps { " --timestamps" } else { Default::default() };
     let command = format!(
       "{docker_compose} -p {project} logs --tail {tail}{timestamps} {}",
       services.join(" ")
@@ -127,7 +127,7 @@ impl Resolve<super::Args> for GetComposeLogSearch {
     let docker_compose = docker_compose();
     let grep = log_grep(&terms, combinator, invert);
     let timestamps =
-      timestamps.then_some(" --timestamps").unwrap_or_default();
+      if timestamps { " --timestamps" } else { Default::default() };
     let command = format!(
       "{docker_compose} -p {project} logs --tail 5000{timestamps} {} 2>&1 | {grep}",
       services.join(" ")
@@ -269,7 +269,7 @@ impl Resolve<super::Args> for WriteCommitComposeContents {
       .join(&file_path);
 
     let msg = if let Some(username) = username {
-      format!("{}: Write Compose File", username)
+      format!("{username}: Write Compose File")
     } else {
       "Write Compose File".to_string()
     };

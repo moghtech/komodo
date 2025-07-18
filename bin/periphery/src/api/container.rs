@@ -45,7 +45,7 @@ impl Resolve<super::Args> for GetContainerLog {
       timestamps,
     } = self;
     let timestamps =
-      timestamps.then_some(" --timestamps").unwrap_or_default();
+      if timestamps { " --timestamps" } else { Default::default() };
     let command =
       format!("docker logs {name} --tail {tail}{timestamps}");
     Ok(run_komodo_command("Get container log", None, command).await)
@@ -66,7 +66,7 @@ impl Resolve<super::Args> for GetContainerLogSearch {
     } = self;
     let grep = log_grep(&terms, combinator, invert);
     let timestamps =
-      timestamps.then_some(" --timestamps").unwrap_or_default();
+      if timestamps { " --timestamps" } else { Default::default() };
     let command = format!(
       "docker logs {name} --tail 5000{timestamps} 2>&1 | {grep}"
     );
