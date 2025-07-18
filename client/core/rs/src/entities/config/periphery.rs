@@ -12,8 +12,8 @@
 //! the configuration file.
 //!
 
-use std::{collections::HashMap, net::IpAddr, path::PathBuf};
-
+use std::{collections::HashMap, path::PathBuf};
+use ipnetwork::IpNetwork;
 use clap::Parser;
 use serde::Deserialize;
 
@@ -150,7 +150,7 @@ pub struct Env {
   pub periphery_pretty_startup_config: Option<bool>,
 
   /// Override `allowed_ips`
-  pub periphery_allowed_ips: Option<Vec<IpAddr>>,
+  pub periphery_allowed_ips: Option<Vec<IpNetwork>>,
   /// Override `passkeys`
   pub periphery_passkeys: Option<Vec<String>>,
   /// Override `passkeys` from file
@@ -250,12 +250,12 @@ pub struct PeripheryConfig {
   #[serde(default)]
   pub pretty_startup_config: bool,
 
-  /// Limits which IPv4 addresses are allowed to call the api.
+  /// Limits which IP addresses are allowed to call the api.
   /// Default: none
   ///
   /// Note: this should be configured to increase security.
   #[serde(default)]
-  pub allowed_ips: Vec<IpAddr>,
+  pub allowed_ips: Vec<IpNetwork>,
 
   /// Limits the accepted passkeys.
   /// Default: none
