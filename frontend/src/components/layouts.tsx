@@ -185,7 +185,7 @@ export const Section = ({
     {(title || icon || titleRight || titleOther || actions) && (
       <div
         className={cn(
-          "flex flex-wrap gap-2 justify-between",
+          "flex flex-wrap gap-2 justify-between overflow-x-scroll",
           itemsCenterTitleRow ? "items-center" : "items-start"
         )}
       >
