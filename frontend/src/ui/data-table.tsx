@@ -97,7 +97,7 @@ export function DataTable<TData, TValue>({
       )}
     >
       <Table className="xl:table-fixed border-separate border-spacing-0">
-        <TableHeader className="sticky top-0">
+        <TableHeader className="sticky top-0 z-50">
           {table.getHeaderGroups().map((headerGroup, i) => (
             <TableRow key={headerGroup.id}>
               {/* placeholder header */}
