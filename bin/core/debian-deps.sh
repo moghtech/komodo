@@ -3,7 +3,7 @@
 ## Core deps installer
 
 apt-get update
-apt-get install -y git curl ca-certificates
+apt-get install -y git curl ca-certificates iproute2
 
 rm -rf /var/lib/apt/lists/*
 
