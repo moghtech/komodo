@@ -151,7 +151,7 @@ export const ActionButton = forwardRef<
     <Button
       size={size}
       variant={variant || "secondary"}
-      className={cn("flex items-center justify-between w-[190px]", className)}
+      className={cn("flex flex-1 shrink-0 gap-4 items-center justify-between max-w-[190px]", className)}
       onClick={onClick}
       onBlur={onBlur}
       disabled={disabled || loading}
