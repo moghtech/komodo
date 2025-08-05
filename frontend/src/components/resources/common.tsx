@@ -85,7 +85,7 @@ export const ResourcePageHeader = ({
   const background = hex_color_by_intention(intent) + "15";
   return (
     <div
-      className="flex items-center justify-between gap-4 pl-8 pr-8 py-4 rounded-t-md w-full"
+      className="flex flex-wrap items-center justify-between gap-4 pl-8 pr-8 py-4 rounded-t-md w-full"
       style={{ background }}
     >
       <div className="flex items-center gap-8">
