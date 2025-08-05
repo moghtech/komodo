@@ -83,7 +83,6 @@ const ConfigInfoDeployments = ({ id }: { id: string }) => {
     <Tabs
       value={deploymentsDisabled && view === "Deployments" ? "Config" : view}
       onValueChange={setView as any}
-      className="grid gap-4"
     >
       <TabsContent value="Config">
         <BuildConfig id={id} titleOther={titleOther} />

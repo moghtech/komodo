@@ -151,7 +151,7 @@ const ConfigTabsInner = ({
     [deployment.id]
   );
   return (
-    <Tabs value={view} onValueChange={setView as any} className="grid gap-4">
+    <Tabs value={view} onValueChange={setView as any}>
       <TabsContent value="Config">
         <DeploymentConfig id={deployment.id} titleOther={tabs} />
       </TabsContent>

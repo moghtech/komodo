@@ -124,7 +124,6 @@ const ConfigTabs = ({ id }: { id: string }) => {
     <Tabs
       value={currentView}
       onValueChange={setView as any}
-      className="grid gap-4"
     >
       <TabsContent value="Config">
         <ServerConfig id={id} titleOther={tabsList} />

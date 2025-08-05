@@ -290,7 +290,7 @@ const ContainerTabs = ({
     [server, container]
   );
   return (
-    <Tabs value={view} onValueChange={setView as any} className="grid gap-4">
+    <Tabs value={view} onValueChange={setView as any}>
       <TabsContent value="Log">
         <ContainerLogs
           id={server}

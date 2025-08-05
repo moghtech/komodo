@@ -303,7 +303,7 @@ const StackServiceTabs = ({
     [stack.id, service]
   );
   return (
-    <Tabs value={view} onValueChange={setView as any} className="grid gap-4">
+    <Tabs value={view} onValueChange={setView as any}>
       <TabsContent value="Log">
         <StackServiceLogs
           id={stack.id}

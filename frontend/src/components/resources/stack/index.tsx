@@ -115,7 +115,7 @@ const ConfigInfoServicesLog = ({ id }: { id: string }) => {
     </TabsList>
   );
   return (
-    <Tabs value={view} onValueChange={setView as any} className="grid gap-4">
+    <Tabs value={view} onValueChange={setView as any}>
       <TabsContent value="Config">
         <StackConfig id={id} titleOther={title} />
       </TabsContent>
