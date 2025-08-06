@@ -219,6 +219,9 @@ pub struct Env {
   /// Override `aws.secret_access_key` with file
   pub komodo_aws_secret_access_key_file: Option<PathBuf>,
 
+  /// Override `internet_interface` - manually specify which network interface to use for internet connectivity
+  pub komodo_internet_interface: Option<String>,
+
   /// Override `ssl_enabled`.
   pub komodo_ssl_enabled: Option<bool>,
   /// Override `ssl_key_file`
@@ -536,6 +539,16 @@ pub struct CoreConfig {
   /// Default: `/action-cache`
   #[serde(default = "default_action_directory")]
   pub action_directory: PathBuf,
+
+
+  /// Manually specify which network interface to use for internet connectivity.
+  /// When specified, Komodo will configure routing to use this interface as default route.
+  /// Useful in Docker environments with multiple networks where Docker's default gateway 
+  /// selection may not choose the internet-connected interface.
+  /// Example: "eth1", "ens18", "enp0s8"
+  /// Default: None (use default system routing)
+  #[serde(default)]
+  pub internet_interface: Option<String>,
 }
 
 fn default_title() -> String {
@@ -610,6 +623,7 @@ impl CoreConfig {
       repo_directory: config.repo_directory,
       action_directory: config.action_directory,
       sync_directory: config.sync_directory,
+      internet_interface: config.internet_interface,
       resource_poll_interval: config.resource_poll_interval,
       monitoring_interval: config.monitoring_interval,
       keep_stats_for_days: config.keep_stats_for_days,

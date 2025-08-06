@@ -27,6 +27,7 @@ use crate::{
   config::core_config,
   helpers::random_string,
   helpers::update::init_execution_update,
+  network,
   resource,
   state::db_client,
 };
@@ -34,6 +35,16 @@ use crate::{
 /// This function should be run on startup,
 /// after the db client has been initialized
 pub async fn on_startup() {
+  // Configure manual network interface if specified
+  let config = core_config();
+  if config.internet_interface.is_some() {
+    if let Err(e) = network::configure_internet_gateway(
+      config.internet_interface.clone()
+    ).await {
+      tracing::warn!("Failed to configure internet gateway: {:#}", e);
+    }
+  }
+
   tokio::join!(
     in_progress_update_cleanup(),
     open_alert_cleanup(),

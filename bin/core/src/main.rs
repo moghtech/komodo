@@ -21,6 +21,7 @@ mod config;
 mod helpers;
 mod listener;
 mod monitor;
+mod network;
 mod permission;
 mod resource;
 mod schedule;
