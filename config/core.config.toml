@@ -39,13 +39,6 @@ port = 9120
 ## Default: [::]
 bind_ip = "[::]"
 
-## Manually specify which network interface to use for internet access.
-## Useful in multi-NIC Docker environments where the default gateway selection
-## doesn't choose the correct internet-connected interface.
-## Env: KOMODO_INTERNET_INTERFACE
-## Optional, no default. Example: "eth1"
-# internet_interface = "eth1"
-
 ## This is the token used to authenticate core requests to periphery.
 ## Ensure this matches a passkey in the connected periphery configs.
 ## If the periphery servers don't have passkeys configured, this doesn't need to be changed.
@@ -95,6 +88,11 @@ repo_directory = "/repo-cache"
 ## Env: KOMODO_ACTION_DIRECTORY
 ## Default: /action-cache
 action_directory = "/action-cache"
+
+## Interface to use as default route in multi-NIC environments.
+## Env: KOMODO_INTERNET_INTERFACE
+## Optional, no default.
+# internet_interface = "eth1"
 
 ################
 # AUTH / LOGIN #

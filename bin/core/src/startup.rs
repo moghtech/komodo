@@ -37,11 +37,11 @@ use crate::{
 pub async fn on_startup() {
   // Configure manual network interface if specified
   let config = core_config();
-  if config.internet_interface.is_some() {
+  if !config.internet_interface.is_empty() {
     if let Err(e) = network::configure_internet_gateway(
       config.internet_interface.clone()
     ).await {
-      tracing::warn!("Failed to configure internet gateway: {:#}", e);
+      tracing::warn!("Failed to configure internet gateway: {e:#?}");
     }
   }
 
