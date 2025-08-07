@@ -65,7 +65,7 @@ pub async fn configure_internet_gateway(internet_interface: String) -> anyhow::R
 async fn configure_manual_interface(interface_name: &str) -> anyhow::Result<()> {    
     // Verify interface exists and is up
     let interface_check = Command::new("ip")
-        .args(&["addr", "show", interface_name])
+        .args(["addr", "show", interface_name])
         .output()
         .await
         .context("Failed to check interface status")?;
@@ -91,14 +91,14 @@ async fn configure_manual_interface(interface_name: &str) -> anyhow::Result<()> 
     debug!("Found gateway {} for {}", gateway, interface_name);
     
     set_default_gateway(&gateway, interface_name).await?;
-    info!("🌐 Successfully configured {} as default gateway via {}", interface_name, gateway);
+    info!("🌐 Configured {} as default gateway via {}", interface_name, gateway);
     Ok(())
 }
 
 /// Find gateway for interface
 async fn find_gateway(interface_name: &str) -> anyhow::Result<String> {
     let addr_output = Command::new("ip")
-        .args(&["addr", "show", interface_name])
+        .args(["addr", "show", interface_name])
         .output()
         .await
         .context("Failed to get interface address")?;
@@ -108,7 +108,7 @@ async fn find_gateway(interface_name: &str) -> anyhow::Result<String> {
     // Extract IP/CIDR from interface info
     for line in addr_info.lines() {
         if line.trim().starts_with("inet ") && !line.contains("127.0.0.1") {
-            let parts: Vec<&str> = line.trim().split_whitespace().collect();
+            let parts: Vec<&str> = line.split_whitespace().collect();
             if let Some(ip_cidr) = parts.get(1) {
                 debug!("Interface {} has IP {}", interface_name, ip_cidr);
                 return find_gateway_for_network(interface_name, ip_cidr).await;
@@ -128,7 +128,7 @@ async fn find_gateway_for_network(interface_name: &str, ip_cidr: &str) -> anyhow
     
     // Try to find gateway from routing table
     let route_output = Command::new("ip")
-        .args(&["route", "show", "dev", interface_name])
+        .args(["route", "show", "dev", interface_name])
         .output()
         .await
         .context("Failed to get routes for interface")?;
@@ -165,7 +165,7 @@ async fn find_gateway_for_network(interface_name: &str, ip_cidr: &str) -> anyhow
                 
                 // Check if gateway is reachable
                 let route_test = Command::new("ip")
-                    .args(&["route", "get", &gateway, "dev", interface_name])
+                    .args(["route", "get", &gateway, "dev", interface_name])
                     .output()
                     .await;
 
@@ -208,7 +208,7 @@ async fn set_default_gateway(gateway: &str, interface_name: &str) -> anyhow::Res
     
     // Remove existing default routes
     let remove_default = Command::new("sh")
-        .args(&["-c", "ip route del default 2>/dev/null || true"])
+        .args(["-c", "ip route del default 2>/dev/null || true"])
         .output()
         .await;
     
@@ -219,17 +219,30 @@ async fn set_default_gateway(gateway: &str, interface_name: &str) -> anyhow::Res
     }
     
     // Add new default route
-    let add_default_cmd = format!("ip route add default via {} dev {}", gateway, interface_name);
+    let add_default_cmd = format!("ip route add default via {gateway} dev {interface_name}");
     trace!("Adding default route: {}", add_default_cmd);
 
     let add_default = Command::new("sh")
-        .args(&["-c", &add_default_cmd])
+        .args(["-c", &add_default_cmd])
         .output()
         .await
         .context("Failed to add default route")?;
     
     if !add_default.status.success() {
         let error = String::from_utf8_lossy(&add_default.stderr).trim().to_string();
+        
+        // Check for specific permission errors
+        if error.contains("Operation not permitted") || error.contains("RTNETLINK answers: Operation not permitted") {
+            warn!("⚠️  Container lacks NET_ADMIN capability for network modification");
+            warn!("Add the following to your docker-compose.yaml:");
+            warn!("cap_add:");
+            warn!("  - NET_ADMIN");
+            return Err(anyhow!(
+                "Permission denied: Container needs NET_ADMIN capability to modify routing table. \
+                Add 'cap_add: [\"NET_ADMIN\"]' to your Docker Compose configuration"
+            ));
+        }
+        
         return Err(anyhow!(
             "Failed to set default gateway via '{}': {}. \
             Verify interface configuration and network permissions", 
@@ -244,13 +257,26 @@ async fn set_default_gateway(gateway: &str, interface_name: &str) -> anyhow::Res
 
 /// Check if we have sufficient network privileges
 async fn check_network_privileges() -> bool {
-    let output = Command::new("ip")
-        .args(&["route", "show"])
+    // Test if we can modify routing table by trying a harmless operation
+    let test_output = Command::new("sh")
+        .args(["-c", "ip route show table main 2>/dev/null | head -1"])
         .output()
         .await;
     
-    match output {
-        Ok(out) => out.status.success(),
+    // If we can't even read routes, we definitely don't have NET_ADMIN
+    if test_output.is_err() {
+        return false;
+    }
+    
+    // Try to test NET_ADMIN capability with a harmless route operation
+    // This attempts to add and immediately delete a test route
+    let capability_test = Command::new("sh")
+        .args(["-c", "ip route add 198.51.100.1/32 dev lo 2>/dev/null && ip route del 198.51.100.1/32 dev lo 2>/dev/null"])
+        .output()
+        .await;
+    
+    match capability_test {
+        Ok(output) => output.status.success(),
         Err(_) => false,
     }
 }
