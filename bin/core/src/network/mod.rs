@@ -65,7 +65,7 @@ pub async fn configure_internet_gateway(internet_interface: String) -> anyhow::R
 async fn configure_manual_interface(interface_name: &str) -> anyhow::Result<()> {    
     // Verify interface exists and is up
     let interface_check = Command::new("ip")
-        .args(&["addr", "show", interface_name])
+        .args(["addr", "show", interface_name])
         .output()
         .await
         .context("Failed to check interface status")?;
@@ -91,44 +91,44 @@ async fn configure_manual_interface(interface_name: &str) -> anyhow::Result<()> 
     debug!("Found gateway {} for {}", gateway, interface_name);
     
     set_default_gateway(&gateway, interface_name).await?;
-    info!("🌐 Successfully configured {} as default gateway via {}", interface_name, gateway);
+    info!("🌐 Configured {} as default gateway via {}", interface_name, gateway);
     Ok(())
 }
 
 /// Find gateway for interface
 async fn find_gateway(interface_name: &str) -> anyhow::Result<String> {
+    // Get interface IP address
     let addr_output = Command::new("ip")
-        .args(&["addr", "show", interface_name])
+        .args(["addr", "show", interface_name])
         .output()
         .await
         .context("Failed to get interface address")?;
     
     let addr_info = String::from_utf8_lossy(&addr_output.stdout);
+    let mut ip_cidr = None;
     
     // Extract IP/CIDR from interface info
     for line in addr_info.lines() {
         if line.trim().starts_with("inet ") && !line.contains("127.0.0.1") {
-            let parts: Vec<&str> = line.trim().split_whitespace().collect();
-            if let Some(ip_cidr) = parts.get(1) {
-                debug!("Interface {} has IP {}", interface_name, ip_cidr);
-                return find_gateway_for_network(interface_name, ip_cidr).await;
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            if let Some(found_ip_cidr) = parts.get(1) {
+                debug!("Interface {} has IP {}", interface_name, found_ip_cidr);
+                ip_cidr = Some(*found_ip_cidr);
+                break;
             }
         }
     }
     
-    Err(anyhow!(
+    let ip_cidr = ip_cidr.ok_or_else(|| anyhow!(
         "Could not find IP address for interface '{}'. Ensure interface has a valid IPv4 address", 
         interface_name
-    ))
-}
-
-/// Find gateway for interface network
-async fn find_gateway_for_network(interface_name: &str, ip_cidr: &str) -> anyhow::Result<String> {
+    ))?;
+    
     trace!("Finding gateway for interface {} in network {}", interface_name, ip_cidr);
     
     // Try to find gateway from routing table
     let route_output = Command::new("ip")
-        .args(&["route", "show", "dev", interface_name])
+        .args(["route", "show", "dev", interface_name])
         .output()
         .await
         .context("Failed to get routes for interface")?;
@@ -165,7 +165,7 @@ async fn find_gateway_for_network(interface_name: &str, ip_cidr: &str) -> anyhow
                 
                 // Check if gateway is reachable
                 let route_test = Command::new("ip")
-                    .args(&["route", "get", &gateway, "dev", interface_name])
+                    .args(["route", "get", &gateway, "dev", interface_name])
                     .output()
                     .await;
 
@@ -199,7 +199,7 @@ async fn set_default_gateway(gateway: &str, interface_name: &str) -> anyhow::Res
     // Check if we have network privileges
     if !check_network_privileges().await {
         warn!("⚠️  Container lacks network privileges (NET_ADMIN capability required)");
-        warn!("   Add 'cap_add: [\"NET_ADMIN\"]' to your docker-compose.yaml");
+        warn!("Add 'cap_add: [\"NET_ADMIN\"]' to your docker-compose.yaml");
         return Err(anyhow!(
             "Insufficient network privileges to modify routing table. \
             Container needs NET_ADMIN capability to configure network interfaces"
@@ -208,7 +208,7 @@ async fn set_default_gateway(gateway: &str, interface_name: &str) -> anyhow::Res
     
     // Remove existing default routes
     let remove_default = Command::new("sh")
-        .args(&["-c", "ip route del default 2>/dev/null || true"])
+        .args(["-c", "ip route del default 2>/dev/null || true"])
         .output()
         .await;
     
@@ -219,11 +219,11 @@ async fn set_default_gateway(gateway: &str, interface_name: &str) -> anyhow::Res
     }
     
     // Add new default route
-    let add_default_cmd = format!("ip route add default via {} dev {}", gateway, interface_name);
+    let add_default_cmd = format!("ip route add default via {gateway} dev {interface_name}");
     trace!("Adding default route: {}", add_default_cmd);
 
     let add_default = Command::new("sh")
-        .args(&["-c", &add_default_cmd])
+        .args(["-c", &add_default_cmd])
         .output()
         .await
         .context("Failed to add default route")?;
@@ -231,26 +231,23 @@ async fn set_default_gateway(gateway: &str, interface_name: &str) -> anyhow::Res
     if !add_default.status.success() {
         let error = String::from_utf8_lossy(&add_default.stderr).trim().to_string();
         return Err(anyhow!(
-            "Failed to set default gateway via '{}': {}. \
+            "❌ Failed to set default gateway via '{}': {}. \
             Verify interface configuration and network permissions", 
             interface_name, error
         ));
     }
     
     trace!("Default gateway set to {} via {}", gateway, interface_name);
-    
     Ok(())
 }
 
 /// Check if we have sufficient network privileges
 async fn check_network_privileges() -> bool {
-    let output = Command::new("ip")
-        .args(&["route", "show"])
+    // Try to test NET_ADMIN capability with a harmless route operation
+    let capability_test = Command::new("sh")
+        .args(["-c", "ip route add 198.51.100.1/32 dev lo 2>/dev/null && ip route del 198.51.100.1/32 dev lo 2>/dev/null"])
         .output()
         .await;
     
-    match output {
-        Ok(out) => out.status.success(),
-        Err(_) => false,
-    }
+    matches!(capability_test, Ok(output) if output.status.success())
 }
