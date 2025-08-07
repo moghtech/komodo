@@ -1,16 +1,48 @@
+//! # Network Configuration Module
+//! 
+//! This module provides manual network interface configuration for multi-NIC Docker environments.
+//! It allows Komodo Core to specify which network interface should be used as the default route
+//! for internet traffic, which is particularly useful in complex networking setups with multiple
+//! network interfaces.
+//! 
+//! ## Features
+//! - Automatic container environment detection
+//! - Interface validation (existence and UP state)
+//! - Gateway discovery from routing tables or network configuration
+//! - Safe default route modification with privilege checking
+//! - Comprehensive error handling and logging
+
 use anyhow::{Context, anyhow};
 use tokio::process::Command;
-use tracing::{info, warn, debug};
+use tracing::{info, warn, debug, trace};
 
-/// Manual network interface configuration for multi-NIC Docker environments.
+/// Standard gateway addresses to test for Docker networks
+const DOCKER_GATEWAY_CANDIDATES: &[&str] = &[".1", ".254"];
+
+/// Container environment detection files
+const DOCKERENV_FILE: &str = "/.dockerenv";
+const CGROUP_FILE: &str = "/proc/1/cgroup";
 
 /// Check if running in container environment
 fn is_container_environment() -> bool {
-    std::path::Path::new("/.dockerenv").exists() ||
-    std::env::var("container").is_ok() ||
-    std::fs::read_to_string("/proc/1/cgroup")
-        .map(|content| content.contains("docker") || content.contains("containerd"))
-        .unwrap_or(false)
+    // Check for Docker-specific indicators
+    if std::path::Path::new(DOCKERENV_FILE).exists() {
+        return true;
+    }
+    
+    // Check container environment variable
+    if std::env::var("container").is_ok() {
+        return true;
+    }
+    
+    // Check cgroup for container runtime indicators
+    if let Ok(content) = std::fs::read_to_string(CGROUP_FILE) {
+        if content.contains("docker") || content.contains("containerd") {
+            return true;
+        }
+    }
+    
+    false
 }
 
 /// Configure internet gateway for specified interface
@@ -39,12 +71,18 @@ async fn configure_manual_interface(interface_name: &str) -> anyhow::Result<()> 
         .context("Failed to check interface status")?;
 
     if !interface_check.status.success() {
-        return Err(anyhow!("Interface {} does not exist or is not accessible", interface_name));
+        return Err(anyhow!(
+            "Interface '{}' does not exist or is not accessible. Available interfaces can be listed with 'ip addr show'", 
+            interface_name
+        ));
     }
     
     let interface_info = String::from_utf8_lossy(&interface_check.stdout);
     if !interface_info.contains("state UP") {
-        return Err(anyhow!("Interface {} is not UP", interface_name));
+        return Err(anyhow!(
+            "Interface '{}' is not UP. Please ensure the interface is enabled and connected", 
+            interface_name
+        ));
     }
     
     debug!("Interface {} is UP", interface_name);
@@ -53,8 +91,7 @@ async fn configure_manual_interface(interface_name: &str) -> anyhow::Result<()> 
     debug!("Found gateway {} for {}", gateway, interface_name);
     
     set_default_gateway(&gateway, interface_name).await?;
-    
-    info!("🌐 Configured {} as default gateway", interface_name);
+    info!("🌐 Successfully configured {} as default gateway via {}", interface_name, gateway);
     Ok(())
 }
 
@@ -79,12 +116,15 @@ async fn find_gateway(interface_name: &str) -> anyhow::Result<String> {
         }
     }
     
-    Err(anyhow!("Could not find IP address for interface {}", interface_name))
+    Err(anyhow!(
+        "Could not find IP address for interface '{}'. Ensure interface has a valid IPv4 address", 
+        interface_name
+    ))
 }
 
 /// Find gateway for interface network
 async fn find_gateway_for_network(interface_name: &str, ip_cidr: &str) -> anyhow::Result<String> {
-    debug!("Finding gateway for interface {} in network {}", interface_name, ip_cidr);
+    trace!("Finding gateway for interface {} in network {}", interface_name, ip_cidr);
     
     // Try to find gateway from routing table
     let route_output = Command::new("ip")
@@ -95,7 +135,7 @@ async fn find_gateway_for_network(interface_name: &str, ip_cidr: &str) -> anyhow
 
     if route_output.status.success() {
         let routes = String::from_utf8(route_output.stdout)?;
-        debug!("Routes for {}: {}", interface_name, routes.trim());
+        trace!("Routes for {}: {}", interface_name, routes.trim());
 
         // Look for routes with gateway
         for line in routes.lines() {
@@ -103,7 +143,7 @@ async fn find_gateway_for_network(interface_name: &str, ip_cidr: &str) -> anyhow
                 let parts: Vec<&str> = line.split_whitespace().collect();
                 if let Some(via_idx) = parts.iter().position(|&x| x == "via") {
                     if let Some(&gateway) = parts.get(via_idx + 1) {
-                        debug!("Found gateway {} for {} from routing table", gateway, interface_name);
+                        trace!("Found gateway {} for {} from routing table", gateway, interface_name);
                         return Ok(gateway.to_string());
                     }
                 }
@@ -115,13 +155,13 @@ async fn find_gateway_for_network(interface_name: &str, ip_cidr: &str) -> anyhow
     if let Some(network_base) = ip_cidr.split('/').next() {
         let ip_parts: Vec<&str> = network_base.split('.').collect();
         if ip_parts.len() == 4 {
-            let potential_gateways = vec![
-                format!("{}.{}.{}.1", ip_parts[0], ip_parts[1], ip_parts[2]),
-                format!("{}.{}.{}.254", ip_parts[0], ip_parts[1], ip_parts[2]),
-            ];
+            let potential_gateways: Vec<String> = DOCKER_GATEWAY_CANDIDATES
+                .iter()
+                .map(|suffix| format!("{}.{}.{}{}", ip_parts[0], ip_parts[1], ip_parts[2], suffix))
+                .collect();
 
             for gateway in potential_gateways {
-                debug!("Testing potential gateway {} for {}", gateway, interface_name);
+                trace!("Testing potential gateway {} for {}", gateway, interface_name);
                 
                 // Check if gateway is reachable
                 let route_test = Command::new("ip")
@@ -131,32 +171,39 @@ async fn find_gateway_for_network(interface_name: &str, ip_cidr: &str) -> anyhow
 
                 if let Ok(output) = route_test {
                     if output.status.success() {
-                        debug!("Gateway {} is reachable via {}", gateway, interface_name);
+                        trace!("Gateway {} is reachable via {}", gateway, interface_name);
                         return Ok(gateway.to_string());
                     }
                 }
                 
                 // Fallback: assume .1 is gateway (Docker standard)
                 if gateway.ends_with(".1") {
-                    debug!("Assuming Docker gateway {} for {}", gateway, interface_name);
+                    trace!("Assuming Docker gateway {} for {}", gateway, interface_name);
                     return Ok(gateway.to_string());
                 }
             }
         }
     }
 
-    Err(anyhow!("Could not determine gateway for interface {}", interface_name))
+    Err(anyhow!(
+        "Could not determine gateway for interface '{}' in network '{}'. \
+        Ensure the interface is properly configured with a valid gateway", 
+        interface_name, ip_cidr
+    ))
 }
 
 /// Set default gateway to use specified interface
 async fn set_default_gateway(gateway: &str, interface_name: &str) -> anyhow::Result<()> {
-    debug!("Setting default gateway to {} via {}", gateway, interface_name);
+    trace!("Setting default gateway to {} via {}", gateway, interface_name);
     
     // Check if we have network privileges
     if !check_network_privileges().await {
-        warn!("Container lacks network privileges (NET_ADMIN capability required)");
-        warn!("add 'cap_add: [NET_ADMIN]' to docker-compose.yaml");
-        return Err(anyhow!("insufficient network privileges to modify routing table"));
+        warn!("⚠️  Container lacks network privileges (NET_ADMIN capability required)");
+        warn!("   Add 'cap_add: [\"NET_ADMIN\"]' to your docker-compose.yaml");
+        return Err(anyhow!(
+            "Insufficient network privileges to modify routing table. \
+            Container needs NET_ADMIN capability to configure network interfaces"
+        ));
     }
     
     // Remove existing default routes
@@ -167,13 +214,13 @@ async fn set_default_gateway(gateway: &str, interface_name: &str) -> anyhow::Res
     
     if let Ok(output) = remove_default {
         if output.status.success() {
-            debug!("Removed existing default routes");
+            trace!("Removed existing default routes");
         }
     }
     
     // Add new default route
     let add_default_cmd = format!("ip route add default via {} dev {}", gateway, interface_name);
-    debug!("Adding default route: {}", add_default_cmd);
+    trace!("Adding default route: {}", add_default_cmd);
 
     let add_default = Command::new("sh")
         .args(&["-c", &add_default_cmd])
@@ -182,20 +229,15 @@ async fn set_default_gateway(gateway: &str, interface_name: &str) -> anyhow::Res
         .context("Failed to add default route")?;
     
     if !add_default.status.success() {
-        let error = String::from_utf8_lossy(&add_default.stderr);
-        return Err(anyhow!("Failed to set default gateway: {}", error));
+        let error = String::from_utf8_lossy(&add_default.stderr).trim().to_string();
+        return Err(anyhow!(
+            "Failed to set default gateway via '{}': {}. \
+            Verify interface configuration and network permissions", 
+            interface_name, error
+        ));
     }
     
-    debug!("Default gateway set to {} via {}", gateway, interface_name);
-    
-    // Verify new routing
-    let verify_route = Command::new("ip")
-        .args(&["route", "show", "default"])
-        .output()
-        .await?;
-    
-    let route_info = String::from_utf8_lossy(&verify_route.stdout);
-    debug!("Current default routes: {}", route_info.trim());
+    trace!("Default gateway set to {} via {}", gateway, interface_name);
     
     Ok(())
 }
