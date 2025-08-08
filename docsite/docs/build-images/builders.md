@@ -47,3 +47,49 @@ The AMI will provide a unique id starting with `ami-`, use this with the builder
 
 ### Configure security groups / firewall
 The builders will need inbound access on port 8120 from Komodo Core, be sure to add a security group with this rule to the Builder configuration.
+
+## Multi-Platform Builds with Docker Buildx
+
+If you need to build Docker images for multiple platforms (such as ARM and x86), Docker Buildx provides an easy way to do this.
+
+
+    Multi-platform builds can take significantly longer than single-platform builds.  
+    When emulating a different architecture (e.g., building ARM images on an x86 host), expect additional time due to QEMU-based emulation.
+
+
+### 1. Create and use a Buildx builder instance
+```sh
+docker buildx create --name builder --use --bootstrap
+```
+This command creates a new builder named `builder` and sets it as the active builder for the current Docker context.
+
+---
+
+### 2. Make Buildx the default for `docker build`
+```sh
+docker buildx install
+```
+This replaces the default `docker build` command with Buildx, so all builds automatically use the current builder instance.
+
+---
+
+### 3. (Optional) View available builders
+```sh
+docker buildx ls
+```
+Use this to list all builder instances and check which one is active.
+
+---
+
+After these steps, any `docker build` command will use Buildx by default, making it straightforward to create multi-platform images.
+
+---
+
+### Platform selection in Komodo
+When building inside **Komodo**, you can specify the target platforms (e.g., `linux/amd64`, `linux/arm64`) directly in the Komodo UI during build configuration.  
+You do **not** need to run Docker commands for this step.
+
+**Example platform string:**
+```
+--platform linux/amd64,linux/arm64
+```
