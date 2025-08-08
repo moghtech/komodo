@@ -36,14 +36,7 @@ use crate::{
 /// after the db client has been initialized
 pub async fn on_startup() {
   // Configure manual network interface if specified
-  let config = core_config();
-  if !config.internet_interface.is_empty() {
-    if let Err(e) = network::configure_internet_gateway(
-      config.internet_interface.clone()
-    ).await {
-      tracing::warn!("Failed to configure internet gateway: {e:#?}");
-    }
-  }
+  network::configure_internet_gateway().await;
 
   tokio::join!(
     in_progress_update_cleanup(),

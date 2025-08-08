@@ -46,19 +46,24 @@ fn is_container_environment() -> bool {
 }
 
 /// Configure internet gateway for specified interface
-pub async fn configure_internet_gateway(internet_interface: String) -> anyhow::Result<()> {
+pub async fn configure_internet_gateway() {
+    use crate::config::core_config;
+    
+    let config = core_config();
+    
     if !is_container_environment() {
         debug!("Not in container, skipping network configuration");
-        return Ok(());
+        return;
     }
 
-    if !internet_interface.is_empty() {
-        debug!("Configuring internet interface: {}", internet_interface);
-        return configure_manual_interface(&internet_interface).await;
+    if !config.internet_interface.is_empty() {
+        debug!("Configuring internet interface: {}", config.internet_interface);
+        if let Err(e) = configure_manual_interface(&config.internet_interface).await {
+            warn!("Failed to configure internet gateway: {e:#}");
+        }
+    } else {
+        debug!("No interface specified, using default routing");
     }
-
-    debug!("No interface specified, using default routing");
-    Ok(())
 }
 
 /// Configure interface as default route
