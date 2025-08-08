@@ -270,7 +270,7 @@ pub struct CoreConfig {
   pub bind_ip: String,
 
   /// Interface to use as default route in multi-NIC environments.
-  #[serde(default = "default_internet_interface")]
+  #[serde(default)]
   pub internet_interface: String,
 
   /// Sent in auth header with req to periphery.
@@ -547,10 +547,6 @@ pub struct CoreConfig {
 
 fn default_title() -> String {
   String::from("Komodo")
-}
-
-fn default_internet_interface() -> String {
-  String::new()
 }
 
 fn default_core_port() -> u16 {
