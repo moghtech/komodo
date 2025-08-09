@@ -86,10 +86,9 @@ After these steps, any `docker build` command will use Buildx by default, making
 ---
 
 ### Platform selection in Komodo
-When building inside **Komodo**, you can specify the target platforms (e.g., `linux/amd64`, `linux/arm64`) directly in the Komodo UI during build configuration.  
-You do **not** need to run Docker commands for this step.
+When building inside **Komodo**, you can specify the target platforms (e.g., `linux/amd64`, `linux/arm64`) directly in the Komodo UI during build configuration in the build "Extra Args" field.   
 
-**Example platform string:**
+**Example platform string for Extra Args:**
 ```
 --platform linux/amd64,linux/arm64
 ```
