@@ -2,6 +2,7 @@ import { ExportButton } from "@components/export";
 import { Page, Section } from "@components/layouts";
 import { ResourceComponents } from "@components/resources";
 import { ResourceLink, ResourceNameSimple } from "@components/resources/common";
+import { ServerStatsMini } from "@components/resources/server";
 import { TagsWithBadge } from "@components/tags";
 import { StatusBadge, TemplateMarker } from "@components/util";
 import {
@@ -135,7 +136,8 @@ const RecentCard = ({
     <Link
       to={`${usableResourcePath(type)}/${id}`}
       className={cn(
-        "w-full px-3 py-2 border rounded-md hover:bg-accent/25 hover:-translate-y-1 transition-all h-20 flex flex-col justify-between",
+        "w-full px-3 py-2 border rounded-md hover:bg-accent/25 hover:-translate-y-1 transition-all flex flex-col justify-between",
+        type === "Server" ? "h-32" : "h-20",
         className
       )}
     >
@@ -148,9 +150,19 @@ const RecentCard = ({
         {type === "Deployment" && <DeploymentUpdateAvailable id={id} small />}
         {type === "Stack" && <StackUpdateAvailable id={id} small />}
       </div>
-      <div className="flex gap-2 w-full">
-        <TagsWithBadge tag_ids={tags} />
-      </div>
+      
+      {type === "Server" ? (
+        <div className="flex flex-col gap-2 mt-2">
+          <ServerStatsMini id={id} />
+          <div className="flex gap-2 w-full">
+            <TagsWithBadge tag_ids={tags} />
+          </div>
+        </div>
+      ) : (
+        <div className="flex gap-2 w-full">
+          <TagsWithBadge tag_ids={tags} />
+        </div>
+      )}
     </Link>
   );
 };
