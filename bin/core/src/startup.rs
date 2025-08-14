@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use anyhow::Context;
+use colored::Colorize;
 use database::mungos::{
   find::find_collect,
   mongodb::bson::{Document, doc, oid::ObjectId, to_document},
@@ -8,10 +9,14 @@ use database::mungos::{
 use futures::future::join_all;
 use komodo_client::{
   api::{
+    auth::{CreateLocalUser, GetUser},
     execute::{
       BackupCoreDatabase, Execution, GlobalAutoUpdate, RunAction,
     },
-    write::{CreateBuilder, CreateServer},
+    write::{
+      CreateBuilder, CreateProcedure, CreateServer, CreateTag,
+      UpdateResourceMeta,
+    },
   },
   entities::{
     ResourceTarget,
@@ -31,11 +36,13 @@ use komodo_client::{
 use resolver_api::Resolve;
 
 use crate::{
-  api::execute::{ExecuteArgs, ExecuteRequest},
-  api::write::WriteArgs,
+  api::{
+    auth::AuthArgs,
+    execute::{ExecuteArgs, ExecuteRequest},
+    write::WriteArgs,
+  },
   config::core_config,
-  helpers::random_string,
-  helpers::update::init_execution_update,
+  helpers::{random_string, update::init_execution_update},
   network, resource,
   state::db_client,
 };
@@ -106,7 +113,7 @@ pub async fn on_startup() {
     open_alert_cleanup(),
     clean_up_server_templates(),
     ensure_first_server_and_builder(),
-    ensure_default_procedures(),
+    ensure_init_user_and_resources(),
   );
 }
 
@@ -259,8 +266,9 @@ async fn ensure_first_server_and_builder() {
   }
 }
 
-async fn ensure_default_procedures() {
+async fn ensure_init_user_and_resources() {
   let db = db_client();
+
   // Assumes if there are any existing users, procedures, or tags,
   // the default procedures do not need to be set up.
   let Ok((None, None, None)) = tokio::try_join!(
@@ -271,36 +279,50 @@ async fn ensure_default_procedures() {
     return
   };
 
-  // Create default 'system' tag
-  let Ok(mut system_tag) = Tag::builder()
-    .name(String::from("system"))
-    .color(TagColor::Red)
-    .owner(system_user().id.clone())
-    .build()
-  else {
-    error!("Failed to build system tag. This shouldn't happen.");
-    return;
-  };
-  if let Err(e) = async {
-    system_tag.id = db
-      .tags
-      .insert_one(&system_tag)
+  let config = core_config();
+
+  // Init admin user if set in config.
+  if let Some(username) = &config.init_admin_username {
+    info!("Creating init admin user...");
+    CreateLocalUser {
+      username: username.clone(),
+      password: config.init_admin_password.clone(),
+    }
+    .resolve(&AuthArgs::default())
+    .await
+    .expect("Failed to initialize default admin user.")
+    .jwt;
+    db.users
+      .find_one(doc! { "username": username })
       .await
-      .context("failed to create tag on db")?
-      .inserted_id
-      .as_object_id()
-      .context("inserted_id is not ObjectId")?
-      .to_string();
-    anyhow::Ok(())
+      .expect("Failed to query database for initial user")
+      .expect("Failed to find initial user after creation");
+  };
+
+  if config.disable_init_resources {
+    info!("System resources init {}", "DISABLED".red());
+    return;
   }
+
+  info!("Creating init system resources...");
+
+  let write_args = WriteArgs {
+    user: system_user().to_owned(),
+  };
+
+  // Create default 'system' tag
+  let default_tags = match (CreateTag {
+    name: String::from("system"),
+    color: Some(TagColor::Red),
+  })
+  .resolve(&write_args)
   .await
   {
-    warn!("Failed to create default tag | {e:#}");
-  };
-  let default_tags = if system_tag.id.is_empty() {
-    Vec::new()
-  } else {
-    vec![system_tag.id]
+    Ok(tag) => vec![tag.id],
+    Err(e) => {
+      warn!("Failed to create default tag | {:#}", e.error);
+      Vec::new()
+    }
   };
 
   // Backup Core Database
@@ -321,24 +343,29 @@ async fn ensure_default_procedures() {
       .inspect_err(|e| error!("Failed to initialize backup core database procedure | Failed to build Procedure | {e:?}")) else {
       return;
     };
-    let db_backup = Procedure {
-      id: String::new(),
+    let procedure = match (CreateProcedure {
       name: String::from("Backup Core Database"),
-      description: String::from(
+      config: config.into()
+    }).resolve(&write_args).await {
+      Ok(procedure) => procedure,
+      Err(e) => {
+        error!(
+          "Failed to initialize default database backup Procedure | Failed to create Procedure | {:#}",
+          e.error
+        );
+        return;
+      }
+    };
+    if let Err(e) = (UpdateResourceMeta {
+      target: ResourceTarget::Procedure(procedure.id),
+      tags: Some(default_tags.clone()),
+      description: Some(String::from(
         "Triggers the Core database backup at the scheduled time.",
-      ),
-      updated_at: komodo_timestamp(),
-      tags: default_tags.clone(),
-      config,
-      template: Default::default(),
-      info: Default::default(),
-      base_permission: Default::default(),
-    };
-    if let Err(e) = db.procedures.insert_one(&db_backup).await {
-      error!(
-        "Failed to initialize default database backup Procedure | Failed to build Procedure | {e:?}"
-      );
-    };
+      )),
+      template: None,
+    }).resolve(&write_args).await {
+      warn!("Failed to update default database backup Procedure tags / description | {:#}", e.error);
+    }
   }.await;
 
   // GlobalAutoUpdate
@@ -359,24 +386,38 @@ async fn ensure_default_procedures() {
       .inspect_err(|e| error!("Failed to initialize global auto update procedure | Failed to build Procedure | {e:?}")) else {
       return;
     };
-    let auto_update = Procedure {
-      id: String::new(),
+    let procedure = match (CreateProcedure {
       name: String::from("Global Auto Update"),
-      description: String::from(
-        "Triggers the global auto update for Stacks / Deployments at the scheduled time.",
-      ),
-      updated_at: komodo_timestamp(),
-      tags: default_tags.clone(),
-      config,
-      template: Default::default(),
-      info: Default::default(),
-      base_permission: Default::default(),
+      config: config.into(),
+    })
+    .resolve(&write_args)
+    .await
+    {
+      Ok(procedure) => procedure,
+      Err(e) => {
+        error!(
+          "Failed to initialize global auto update Procedure | Failed to create Procedure | {:#}",
+          e.error
+        );
+        return;
+      }
     };
-    if let Err(e) = db.procedures.insert_one(&auto_update).await {
-      error!(
-        "Failed to initialize default database backup Procedure | Failed to build Procedure | {e:?}"
+    if let Err(e) = (UpdateResourceMeta {
+      target: ResourceTarget::Procedure(procedure.id),
+      tags: Some(default_tags.clone()),
+      description: Some(String::from(
+        "Triggers the Core database backup at the scheduled time.",
+      )),
+      template: None,
+    })
+    .resolve(&write_args)
+    .await
+    {
+      warn!(
+        "Failed to update global auto update Procedure tags / description | {:#}",
+        e.error
       );
-    };
+    }
   }.await;
 }
 

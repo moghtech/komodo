@@ -109,6 +109,14 @@ pub fn core_config() -> &'static CoreConfig {
           .komodo_database_db_name
           .unwrap_or(config.database.db_name),
       },
+      init_admin_username: maybe_read_item_from_file(
+        env.komodo_init_admin_username_file,
+        env.komodo_init_admin_username
+      ).or(config.init_admin_username),
+      init_admin_password: maybe_read_item_from_file(
+        env.komodo_init_admin_password_file,
+        env.komodo_init_admin_password
+      ).unwrap_or(config.init_admin_password),
       oidc_enabled: env.komodo_oidc_enabled.unwrap_or(config.oidc_enabled),
       oidc_provider: env.komodo_oidc_provider.unwrap_or(config.oidc_provider),
       oidc_redirect_host: env.komodo_oidc_redirect_host.unwrap_or(config.oidc_redirect_host),
@@ -214,6 +222,8 @@ pub fn core_config() -> &'static CoreConfig {
         .unwrap_or(config.disable_user_registration),
       disable_non_admin_create: env.komodo_disable_non_admin_create
         .unwrap_or(config.disable_non_admin_create),
+      disable_init_resources: env.komodo_disable_init_resources
+        .unwrap_or(config.disable_init_resources),
       enable_fancy_toml: env.komodo_enable_fancy_toml
         .unwrap_or(config.enable_fancy_toml),
       lock_login_credentials_for: env.komodo_lock_login_credentials_for

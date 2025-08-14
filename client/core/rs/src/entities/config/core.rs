@@ -140,11 +140,21 @@ pub struct Env {
   pub komodo_disable_non_admin_create: Option<bool>,
   /// Override `disable_websocket_reconnect`
   pub komodo_disable_websocket_reconnect: Option<bool>,
+  /// Override `disable_init_resources`
+  pub komodo_disable_init_resources: Option<bool>,
   /// Override `enable_fancy_toml`
   pub komodo_enable_fancy_toml: Option<bool>,
 
   /// Override `local_auth`
   pub komodo_local_auth: Option<bool>,
+  /// Override `init_admin_username`
+  pub komodo_init_admin_username: Option<String>,
+  /// Override `init_admin_username` from file
+  pub komodo_init_admin_username_file: Option<PathBuf>,
+  /// Override `init_admin_password`
+  pub komodo_init_admin_password: Option<String>,
+  /// Override `init_admin_password` from file
+  pub komodo_init_admin_password_file: Option<PathBuf>,
 
   /// Override `oidc_enabled`
   pub komodo_oidc_enabled: Option<bool>,
@@ -326,6 +336,11 @@ pub struct CoreConfig {
   #[serde(default)]
   pub disable_websocket_reconnect: bool,
 
+  /// Disable init system resource creation on fresh Komodo launch.
+  /// These include the Backup Core Database and Global Auto Update procedures.
+  #[serde(default)]
+  pub disable_init_resources: bool,
+
   /// Enable the fancy TOML syntax highlighting
   #[serde(default)]
   pub enable_fancy_toml: bool,
@@ -349,6 +364,14 @@ pub struct CoreConfig {
   /// enable login with local auth
   #[serde(default)]
   pub local_auth: bool,
+
+  /// Upon fresh launch, initalize an Admin user with this username.
+  /// If this is not provided, no initial user will be created.
+  pub init_admin_username: Option<String>,
+  /// Upon fresh launch, initalize an Admin user with this password.
+  /// Default: `changeme`
+  #[serde(default = "default_init_admin_password")]
+  pub init_admin_password: String,
 
   /// Enable transparent mode, which gives all (enabled) users read access to all resources.
   #[serde(default)]
@@ -604,6 +627,10 @@ fn default_jwt_ttl() -> Timelength {
   Timelength::OneDay
 }
 
+fn default_init_admin_password() -> String {
+  String::from("changeme")
+}
+
 fn default_sync_directory() -> PathBuf {
   // unwrap ok: `/syncs` will always be valid path
   PathBuf::from_str("/syncs").unwrap()
@@ -652,11 +679,14 @@ impl Default for CoreConfig {
       ui_write_disabled: Default::default(),
       disable_confirm_dialog: Default::default(),
       disable_websocket_reconnect: Default::default(),
+      disable_init_resources: Default::default(),
       enable_fancy_toml: Default::default(),
       first_server: Default::default(),
       frontend_path: default_frontend_path(),
       database: Default::default(),
       local_auth: Default::default(),
+      init_admin_username: Default::default(),
+      init_admin_password: default_init_admin_password(),
       transparent_mode: Default::default(),
       enable_new_users: Default::default(),
       disable_user_registration: Default::default(),
@@ -724,12 +754,19 @@ impl CoreConfig {
       ui_write_disabled: config.ui_write_disabled,
       disable_confirm_dialog: config.disable_confirm_dialog,
       disable_websocket_reconnect: config.disable_websocket_reconnect,
+      disable_init_resources: config.disable_init_resources,
       enable_fancy_toml: config.enable_fancy_toml,
       enable_new_users: config.enable_new_users,
       disable_user_registration: config.disable_user_registration,
       disable_non_admin_create: config.disable_non_admin_create,
       lock_login_credentials_for: config.lock_login_credentials_for,
       local_auth: config.local_auth,
+      init_admin_username: config
+        .init_admin_username
+        .map(|u| empty_or_redacted(&u)),
+      init_admin_password: empty_or_redacted(
+        &config.init_admin_password,
+      ),
       oidc_enabled: config.oidc_enabled,
       oidc_provider: config.oidc_provider,
       oidc_redirect_host: config.oidc_redirect_host,

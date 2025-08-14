@@ -25,6 +25,7 @@ use crate::{
 
 use super::Variant;
 
+#[derive(Default)]
 pub struct AuthArgs {
   pub headers: HeaderMap,
 }

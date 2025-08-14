@@ -74,6 +74,13 @@ disable_confirm_dialog = false
 ## Default: false
 disable_websocket_reconnect = false
 
+
+## Disable init system resource creation on fresh Komodo launch.
+## These include the 'Backup Core Database' and 'Global Auto Update' procedures.
+## Env: KOMODO_DISABLE_INIT_RESOURCES
+## Default: false
+disable_init_resources = false
+
 ## Configure the directory for sync files (inside the container).
 ## There shouldn't be a need to change this, just mount a volume.
 ## Env: KOMODO_SYNC_DIRECTORY
@@ -114,6 +121,16 @@ internet_interface = ""
 ## Env: KOMODO_LOCAL_AUTH
 ## Default: false
 local_auth = false
+
+## Initialize the first admin user when starting up Komodo for the first time.
+## Env: KOMODO_INIT_ADMIN_USERNAME or KOMODO_INIT_ADMIN_USERNAME_FILE
+## Default: None
+# init_admin_username = "admin"
+
+## Set password for first admin user
+## Env: KOMODO_INIT_ADMIN_PASSWORD or KOMODO_INIT_ADMIN_PASSWORD_FILE
+## Default: changeme
+init_admin_password = "changeme"
 
 ## Normally new users will be registered, but not enabled until an Admin enables them.
 ## With `disable_user_registration = true`, only the first user to log in will registered as a user.
