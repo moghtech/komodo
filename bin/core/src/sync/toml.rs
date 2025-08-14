@@ -28,6 +28,8 @@ pub const TOML_PRETTY_OPTIONS: toml_pretty::Options =
   toml_pretty::Options {
     tab: "  ",
     skip_empty_string: true,
+    // Usually we do this, but has to be changed for some cases.
+    skip_empty_object: true,
     max_inline_array_length: 30,
     inline_array: false,
   };
@@ -825,8 +827,13 @@ impl ToToml for Procedure {
       for stage in stages {
         toml.push_str("\n\n[[procedure.config.stage]]\n");
         toml.push_str(
-          &toml_pretty::to_string(stage, TOML_PRETTY_OPTIONS)
-            .context("failed to serialize procedures to toml")?,
+          &toml_pretty::to_string(
+            stage,
+            // If the execution.params are fully missing,
+            // deserialization will fail.
+            TOML_PRETTY_OPTIONS.skip_empty_object(false),
+          )
+          .context("failed to serialize procedures to toml")?,
         );
       }
     }

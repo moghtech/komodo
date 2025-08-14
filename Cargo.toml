@@ -42,7 +42,7 @@ partial_derive2 = "0.4.3"
 derive_variants = "1.0.0"
 mongo_indexed = "2.0.2"
 resolver_api = "3.0.0"
-toml_pretty = "1.1.2"
+toml_pretty = "1.2.0"
 mungos = "3.2.1"
 svi = "1.2.0"
 
@@ -74,8 +74,8 @@ serde_qs = "0.15.0"
 toml = "0.9.5"
 
 # ERROR
-anyhow = "1.0.98"
-thiserror = "2.0.12"
+anyhow = "1.0.99"
+thiserror = "2.0.14"
 
 # LOGGING
 opentelemetry-otlp = { version = "0.30.0", features = ["tls-roots", "reqwest-rustls"] }
@@ -108,11 +108,11 @@ hex = "0.4.3"
 # SYSTEM
 portable-pty = "0.9.0"
 bollard = "0.19.2"
-sysinfo = "0.36.1"
+sysinfo = "0.37.0"
 
 # CLOUD
-aws-config = "1.8.4"
-aws-sdk-ec2 = "1.156.0"
+aws-config = "1.8.5"
+aws-sdk-ec2 = "1.159.0"
 aws-credential-types = "1.2.5"
 
 ## CRON
