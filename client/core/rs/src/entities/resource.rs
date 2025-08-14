@@ -1,7 +1,9 @@
 use bson::{Document, doc};
+use clap::ValueEnum;
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
 use serde::{Deserialize, Serialize};
+use strum::Display;
 use typeshare::typeshare;
 
 use crate::{
@@ -124,7 +126,18 @@ pub struct ResourceQuery<T: Default> {
 }
 
 #[typeshare]
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+#[derive(
+  Debug,
+  Clone,
+  Copy,
+  Default,
+  Serialize,
+  Deserialize,
+  ValueEnum,
+  Display,
+)]
+// Only strum serializes lowercase for clap compat.
+#[strum(serialize_all = "lowercase")]
 pub enum TemplatesQueryBehavior {
   /// Include templates in results. Default.
   #[default]

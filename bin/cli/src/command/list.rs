@@ -274,6 +274,7 @@ impl ListResources for ServerListItem {
         query: ResourceQuery::builder()
           .tags(filters.tags.clone())
           // .tag_behavior(TagQueryBehavior::Any)
+          .templates(filters.templates)
           .build(),
       })
       .await?;
@@ -324,6 +325,7 @@ impl ListResources for StackListItem {
         query: ResourceQuery::builder()
           .tags(filters.tags.clone())
           // .tag_behavior(TagQueryBehavior::Any)
+          .templates(filters.templates)
           .build(),
       })
     )?;
@@ -395,6 +397,7 @@ impl ListResources for DeploymentListItem {
         query: ResourceQuery::builder()
           .tags(filters.tags.clone())
           // .tag_behavior(TagQueryBehavior::Any)
+          .templates(filters.templates)
           .build(),
       })
     )?;
@@ -467,6 +470,7 @@ impl ListResources for BuildListItem {
         query: ResourceQuery::builder()
           .tags(filters.tags.clone())
           // .tag_behavior(TagQueryBehavior::Any)
+          .templates(filters.templates)
           .build(),
       })
     )?;
@@ -527,6 +531,7 @@ impl ListResources for RepoListItem {
         query: ResourceQuery::builder()
           .tags(filters.tags.clone())
           // .tag_behavior(TagQueryBehavior::Any)
+          .templates(filters.templates)
           .build(),
       })
       .await?
@@ -574,6 +579,7 @@ impl ListResources for ProcedureListItem {
         query: ResourceQuery::builder()
           .tags(filters.tags.clone())
           // .tag_behavior(TagQueryBehavior::Any)
+          .templates(filters.templates)
           .build(),
       })
       .await?
@@ -621,6 +627,7 @@ impl ListResources for ActionListItem {
         query: ResourceQuery::builder()
           .tags(filters.tags.clone())
           // .tag_behavior(TagQueryBehavior::Any)
+          .templates(filters.templates)
           .build(),
       })
       .await?
@@ -668,6 +675,7 @@ impl ListResources for ResourceSyncListItem {
         query: ResourceQuery::builder()
           .tags(filters.tags.clone())
           // .tag_behavior(TagQueryBehavior::Any)
+          .templates(filters.templates)
           .build(),
       })
       .await?
@@ -712,6 +720,7 @@ impl ListResources for BuilderListItem {
         query: ResourceQuery::builder()
           .tags(filters.tags.clone())
           // .tag_behavior(TagQueryBehavior::Any)
+          .templates(filters.templates)
           .build(),
       })
       .await?
@@ -743,6 +752,7 @@ impl ListResources for AlerterListItem {
         query: ResourceQuery::builder()
           .tags(filters.tags.clone())
           // .tag_behavior(TagQueryBehavior::Any)
+          .templates(filters.templates)
           .build(),
       })
       .await?

@@ -1,3 +1,5 @@
+use crate::entities::resource::TemplatesQueryBehavior;
+
 #[derive(Debug, Clone, clap::Parser)]
 pub struct List {
   /// List specific resources
@@ -24,6 +26,13 @@ pub struct List {
   /// Include links. Makes the table very large.
   #[arg(long, short = 'l', default_value_t = false)]
   pub links: bool,
+  /// Whether to include resources marked as templates in results. Default: 'exclude'.
+  #[arg(
+    long,
+    short = 'm',
+    default_value_t = TemplatesQueryBehavior::Exclude,
+  )]
+  pub templates: TemplatesQueryBehavior,
   /// Filter by a particular name. Supports wildcard.
   /// Can be specified multiple times. (alias `n`)
   #[arg(name = "name", long, short = 'n')]
@@ -53,6 +62,7 @@ impl From<List> for ResourceFilters {
       down: value.down,
       in_progress: value.in_progress,
       links: value.links,
+      templates: value.templates,
       names: value.names,
       tags: value.tags,
       servers: value.servers,
@@ -122,6 +132,13 @@ pub struct ResourceFilters {
   /// Include links. Makes the table very large.
   #[arg(long, short = 'l', default_value_t = false)]
   pub links: bool,
+  /// Whether to include resources marked as templates in results. Default: 'exclude'.
+  #[arg(
+    long,
+    short = 'm',
+    default_value_t = TemplatesQueryBehavior::Exclude,
+  )]
+  pub templates: TemplatesQueryBehavior,
   /// Filter by a particular name. Supports wildcard.
   /// Can be specified multiple times. (alias `n`)
   #[arg(name = "name", long, short = 'n')]
