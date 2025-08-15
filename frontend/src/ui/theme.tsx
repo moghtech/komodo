@@ -1,9 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { Button } from "@ui/button";
 import {
   DropdownMenu,
@@ -66,12 +61,14 @@ export function ThemeProvider({
   useEffect(() => {
     if (theme === "system") {
       const interval = setInterval(() => {
-        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-          .matches
-          ? "dark"
-          : "light";
+        const [systemTheme, other] = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches
+          ? ["dark", "light"]
+          : ["light", "dark"];
         window.document.documentElement.classList.add(systemTheme);
-      }, 10_000);
+        window.document.documentElement.classList.remove(other);
+      }, 5_000);
       return () => clearInterval(interval);
     }
   }, [theme]);
