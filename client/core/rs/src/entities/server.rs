@@ -34,6 +34,9 @@ pub struct ServerListItemInfo {
   pub region: String,
   /// Address of the server.
   pub address: String,
+  /// External address of the server (reachable by users).
+  /// Used with links.
+  pub external_address: String,
   /// The Komodo Periphery version of the server.
   pub version: String,
   /// Whether server is configured to send unreachable alerts.
@@ -65,6 +68,12 @@ pub struct ServerConfig {
   #[builder(default = "default_address()")]
   #[partial_default(default_address())]
   pub address: String,
+
+  /// The address to use with links for containers on the server.
+  /// If empty, will use the 'address' for links.
+  #[serde(default)]
+  #[builder(default)]
+  pub external_address: String,
 
   /// An optional region label
   #[serde(default)]
@@ -250,7 +259,8 @@ fn default_disk_critical() -> f64 {
 impl Default for ServerConfig {
   fn default() -> Self {
     Self {
-      address: Default::default(),
+      address: default_address(),
+      external_address: Default::default(),
       enabled: default_enabled(),
       timeout_seconds: default_timeout_seconds(),
       ignore_mounts: Default::default(),

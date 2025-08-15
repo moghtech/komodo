@@ -50,14 +50,28 @@ export const ServerConfig = ({
       components={{
         "": [
           {
+            label: "Enabled",
+            labelHidden: true,
+            components: {
+              enabled: {
+                description:
+                  "Whether to attempt to connect to this host / send alerts if offline. Disabling will also convert all attached resource's state to 'Unknown'.",
+              },
+            },
+          },
+          {
             label: "Address",
             labelHidden: true,
             components: {
               address: {
-                // boldLabel: true,
                 description:
                   "The http/s address of periphery in your network, eg. https://12.34.56.78:8120",
                 placeholder: "https://12.34.56.78:8120",
+              },
+              external_address: {
+                description:
+                  "Optional. The address of the server reachable by users, if different than the Address.",
+                placeholder: "https://my.server.int",
               },
               region: {
                 placeholder: "Region. Optional.",
@@ -67,22 +81,10 @@ export const ServerConfig = ({
             },
           },
           {
-            label: "Enabled",
-            labelHidden: true,
-            components: {
-              enabled: {
-                // boldLabel: true,
-                description:
-                  "Whether to attempt to connect to this host / send alerts if offline. Disabling will also convert all attached resource's state to 'Unknown'.",
-              },
-            },
-          },
-          {
             label: "Timeout",
             labelHidden: true,
             components: {
               timeout_seconds: {
-                // boldLabel: true,
                 description:
                   "The timeout used with the server health check, in seconds.",
               },

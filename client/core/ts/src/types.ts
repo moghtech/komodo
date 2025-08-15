@@ -1952,6 +1952,11 @@ export interface ServerConfig {
 	 * Default: http://localhost:8120
 	 */
 	address: string;
+	/**
+	 * The address to use with links for containers on the server.
+	 * If empty, will use the 'address' for links.
+	 */
+	external_address?: string;
 	/** An optional region label */
 	region?: string;
 	/**
@@ -3739,6 +3744,11 @@ export interface ServerListItemInfo {
 	region: string;
 	/** Address of the server. */
 	address: string;
+	/**
+	 * External address of the server (reachable by users).
+	 * Used with links.
+	 */
+	external_address: string;
 	/** The Komodo Periphery version of the server. */
 	version: string;
 	/** Whether server is configured to send unreachable alerts. */

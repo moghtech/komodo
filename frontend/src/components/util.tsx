@@ -1181,12 +1181,15 @@ export const ContainerPortLink = ({
   ports: Types.Port[];
   server_id: string | undefined;
 }) => {
+  const server = useServer(server_id);
   // Get the server address with periphery port removed
-  const server_address = useServer(server_id)
-    ?.info.address.split(":")
-    // take just protocol and dns (indexes 0 and 1)
-    .filter((_, i) => i < 2)
-    .join(":");
+  const server_address = server?.info.external_address
+    ? server.info.external_address
+    : server?.info.address
+        .split(":")
+        // take just protocol and dns (indexes 0 and 1)
+        .filter((_, i) => i < 2)
+        .join(":");
   const link =
     host_port === "443"
       ? server_address
