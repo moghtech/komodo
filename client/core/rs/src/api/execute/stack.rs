@@ -1,9 +1,11 @@
 use clap::Parser;
+use anyhow::Context;
 use derive_empty_traits::EmptyTraits;
 use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-
+use std::collections::HashMap;
+use clap::ArgAction::SetTrue;
 use crate::entities::update::Update;
 
 use super::{BatchExecutionResponse, KomodoExecuteRequest};
@@ -344,6 +346,69 @@ pub struct DestroyStack {
   pub remove_orphans: bool,
   /// Override the default termination max time.
   pub stop_time: Option<i32>,
+}
+
+//
+
+/// Runs a one-time command against a service using `docker compose run`. Response: [Update]
+#[typeshare]
+#[derive(
+  Debug,
+  Clone,
+  PartialEq,
+  Serialize,
+  Deserialize,
+  Resolve,
+  EmptyTraits,
+  Parser,
+)]
+#[empty_traits(KomodoExecuteRequest)]
+#[response(Update)]
+#[error(serror::Error)]
+pub struct RunStackService {
+  /// Id or name
+  pub stack: String,
+  /// Service to run
+  pub service: String,
+  /// Command and args to pass to the service container
+  #[serde(default)]
+  pub command: Option<String>,
+  /// Do not allocate TTY
+  #[serde(default)]
+  #[arg(long = "no-tty", action = SetTrue)]
+  pub no_tty: Option<bool>,
+  /// Do not start linked services
+  #[serde(default)]
+  #[arg(long = "no-deps", action = SetTrue)]
+  pub no_deps: Option<bool>,
+  /// Map service ports to the host
+  #[serde(default)]
+  #[arg(long = "service-ports", action = SetTrue)]
+  pub service_ports: Option<bool>,
+  /// Extra environment variables for the run
+  #[serde(default)]
+  #[arg(long = "env", short = 'e', value_parser = env_parser)]
+  pub env: Option<HashMap<String, String>>,
+  /// Working directory inside the container
+  #[serde(default)]
+  #[arg(long = "workdir")]
+  pub workdir: Option<String>,
+  /// User to run as inside the container
+  #[serde(default)]
+  #[arg(long = "user")]
+  pub user: Option<String>,
+  /// Override the default entrypoint
+  #[serde(default)]
+  #[arg(long = "entrypoint")]
+  pub entrypoint: Option<String>,
+  /// Pull the image before running
+  #[serde(default)]
+  #[arg(long = "pull", action = SetTrue)]
+  pub pull: Option<bool>,
+}
+
+fn env_parser(args: &str) -> anyhow::Result<HashMap<String, String>> {
+  serde_qs::from_str(args).context("Failed to parse env")
 }
 
 //

@@ -4,6 +4,7 @@ use komodo_client::entities::{
   stack::{ComposeProject, Stack, StackServiceNames},
   update::Log,
 };
+use std::collections::HashMap;
 use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 
@@ -218,6 +219,14 @@ pub struct ComposeUpResponse {
 
 //
 
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ComposeRunResponse {
+  /// Logs produced during stack write/prepare for the run
+  pub logs: Vec<Log>,
+}
+
+//
+
 /// General compose command runner
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Log)]
@@ -228,4 +237,54 @@ pub struct ComposeExecution {
   pub project: String,
   /// The command in `docker compose -p {project} {command}`
   pub command: String,
+}
+
+//
+
+/// docker compose run one-time service execution.
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
+#[response(Log)]
+#[error(serror::Error)]
+pub struct ComposeRun {
+  /// The stack to run a service for
+  pub stack: Stack,
+  /// The linked repo, if it exists.
+  pub repo: Option<Repo>,
+  /// If provided, use it to login in. Otherwise check periphery local registries.
+  pub git_token: Option<String>,
+  /// If provided, use it to login in. Otherwise check periphery local git providers.
+  pub registry_token: Option<String>,
+  /// Propogate any secret replacers from core interpolation.
+  #[serde(default)]
+  pub replacers: Vec<(String, String)>,
+
+  /// Service to run
+  pub service: String,
+  /// Command
+  #[serde(default)]
+  pub command: Option<String>,
+  /// Do not allocate TTY
+  #[serde(default)]
+  pub no_tty: Option<bool>,
+  /// Do not start linked services
+  #[serde(default)]
+  pub no_deps: Option<bool>,
+  /// Map service ports to the host
+  #[serde(default)]
+  pub service_ports: Option<bool>,
+  /// Extra environment variables for the run
+  #[serde(default)]
+  pub env: Option<HashMap<String, String>>,
+  /// Working directory inside the container
+  #[serde(default)]
+  pub workdir: Option<String>,
+  /// User to run as inside the container
+  #[serde(default)]
+  pub user: Option<String>,
+  /// Override the default entrypoint
+  #[serde(default)]
+  pub entrypoint: Option<String>,
+  /// Pull the image before running
+  #[serde(default)]
+  pub pull: Option<bool>,
 }

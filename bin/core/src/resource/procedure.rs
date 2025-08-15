@@ -709,6 +709,15 @@ async fn validate_config(
           .await?;
           params.stack = stack.id;
         }
+        Execution::RunStackService(params) => {
+          let stack = super::get_check_permissions::<Stack>(
+            &params.stack,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.stack = stack.id;
+        }
         Execution::BatchDestroyStack(_params) => {
           if !user.admin {
             return Err(anyhow!(

@@ -102,6 +102,7 @@ pub enum ExecuteRequest {
   UnpauseStack(UnpauseStack),
   DestroyStack(DestroyStack),
   BatchDestroyStack(BatchDestroyStack),
+  RunStackService(RunStackService),
 
   // ==== DEPLOYMENT ====
   Deploy(Deploy),

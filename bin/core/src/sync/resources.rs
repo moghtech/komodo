@@ -661,6 +661,13 @@ impl ResourceSyncTrait for Procedure {
               .map(|s| s.name.clone())
               .unwrap_or_default();
           }
+          Execution::RunStackService(config) => {
+            config.stack = resources
+              .stacks
+              .get(&config.stack)
+              .map(|s| s.name.clone())
+              .unwrap_or_default();
+          }
           Execution::BatchDestroyStack(_config) => {}
           Execution::TestAlerter(config) => {
             config.alerter = resources

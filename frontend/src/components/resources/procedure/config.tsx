@@ -83,6 +83,7 @@ type MinExecutionType = Exclude<
   | "DeleteImage"
   | "DeleteVolume"
   | "TestAlerter"
+  | "RunStackService"
 >;
 
 type ExecutionConfigParams<T extends MinExecutionType> = Extract<

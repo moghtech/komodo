@@ -308,6 +308,7 @@ export type ExecuteResponses = {
     PauseStackService: Types.Update;
     UnpauseStackService: Types.Update;
     DestroyStackService: Types.Update;
+    RunStackService: Types.Update;
     TestAlerter: Types.Update;
     ClearRepoCache: Types.Update;
     BackupCoreDatabase: Types.Update;

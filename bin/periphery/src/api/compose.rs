@@ -705,3 +705,147 @@ impl Resolve<super::Args> for ComposeExecution {
     Ok(log)
   }
 }
+
+//
+
+impl Resolve<super::Args> for ComposeRun {
+  #[instrument(name = "ComposeRun", level = "debug", skip_all, fields(stack = &self.stack.name, service = &self.service))]
+  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
+    let ComposeRun {
+      mut stack,
+      repo,
+      git_token,
+      registry_token,
+      mut replacers,
+      service,
+      command,
+      no_tty,
+      no_deps,
+      service_ports,
+      env,
+      workdir,
+      user,
+      entrypoint,
+      pull,
+    } = self;
+
+    let mut interpolator =
+      Interpolator::new(None, &periphery_config().secrets);
+    interpolator
+      .interpolate_stack(&mut stack)?
+      .push_logs(&mut Vec::new());
+    replacers.extend(interpolator.secret_replacers);
+
+    let mut res = ComposeRunResponse::default();
+    let (run_directory, env_file_path) = match write_stack(
+      &stack,
+      repo.as_ref(),
+      git_token,
+      replacers.clone(),
+      &mut res,
+    )
+    .await
+    {
+      Ok(res) => res,
+      Err(e) => {
+        return Ok(Log::error(
+          "Write Stack",
+          format_serror(&e.into()),
+        ));
+      }
+    };
+
+    let run_directory = run_directory.canonicalize().context(
+      "Failed to validate run directory on host after stack write (canonicalize error)",
+    )?;
+
+    maybe_login_registry(&stack, registry_token, &mut Vec::new()).await;
+
+    let docker_compose = docker_compose();
+
+    let file_args = if stack.config.file_paths.is_empty() {
+      String::from("compose.yaml")
+    } else {
+      stack.config.file_paths.join(" -f ")
+    };
+
+    let env_file = env_file_path
+      .map(|path| format!(" --env-file {path}"))
+      .unwrap_or_default();
+
+    let additional_env_files = stack
+      .config
+      .additional_env_files
+      .iter()
+      .fold(String::new(), |mut output, file| {
+        let _ = write!(output, " --env-file {file}");
+        output
+      });
+
+    let project_name = stack.project_name(true);
+
+    if pull.unwrap_or_default() {
+      let pull_log = run_komodo_command(
+        "Compose Pull",
+        run_directory.as_ref(),
+        format!(
+          "{docker_compose} -p {project_name} -f {file_args}{additional_env_files}{env_file} pull {service}",
+        ),
+      )
+      .await;
+      if !pull_log.success {
+        return Ok(pull_log);
+      }
+    }
+
+    let mut run_flags = String::from(" --rm");
+    if no_tty.unwrap_or_default() {
+      run_flags.push_str(" --no-tty");
+    }
+    if no_deps.unwrap_or_default() {
+      run_flags.push_str(" --no-deps");
+    }
+    if service_ports.unwrap_or_default() {
+      run_flags.push_str(" --service-ports");
+    }
+    if let Some(dir) = workdir.as_ref() {
+      run_flags.push_str(&format!(" --workdir {dir}"));
+    }
+    if let Some(user) = user.as_ref() {
+      run_flags.push_str(&format!(" --user {user}"));
+    }
+    if let Some(entrypoint) = entrypoint.as_ref() {
+      run_flags.push_str(&format!(" --entrypoint {entrypoint}"));
+    }
+    if let Some(env) = env {
+      for (k, v) in env {
+        run_flags.push_str(&format!(" -e {}={} ", k, v));
+      }
+    }
+
+    let command_args = command
+      .as_deref()
+      .map(str::trim)
+      .filter(|s| !s.is_empty())
+      .map(|s| format!(" {}", s))
+      .unwrap_or_default();
+
+    let command = format!(
+      "{docker_compose} -p {project_name} -f {file_args}{additional_env_files}{env_file} run{run_flags} {service}{command_args}",
+    );
+
+    let Some(log) = run_komodo_command_with_sanitization(
+      "Compose Run",
+      run_directory.as_path(),
+      command,
+      false,
+      &replacers,
+    )
+    .await
+    else {
+      unreachable!()
+    };
+
+    Ok(log)
+  }
+}

@@ -85,6 +85,7 @@ pub enum PeripheryRequest {
   ComposePull(ComposePull),
   ComposeUp(ComposeUp),
   ComposeExecution(ComposeExecution),
+  ComposeRun(ComposeRun),
 
   // Container (Read)
   InspectContainer(InspectContainer),
