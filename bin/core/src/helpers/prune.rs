@@ -3,7 +3,7 @@ use async_timing_util::{
   ONE_DAY_MS, Timelength, unix_timestamp_ms, wait_until_timelength,
 };
 use database::mungos::{find::find_collect, mongodb::bson::doc};
-use futures::future::join_all;
+use futures::{StreamExt, stream::FuturesUnordered};
 use periphery_client::api::image::PruneImages;
 
 use crate::{config::core_config, state::db_client};
@@ -30,24 +30,26 @@ pub fn spawn_prune_loop() {
 }
 
 async fn prune_images() -> anyhow::Result<()> {
-  let futures = find_collect(&db_client().servers, None, None)
-    .await
-    .context("failed to get servers from db")?
-    .into_iter()
-    .filter(|server| {
-      server.config.enabled && server.config.auto_prune
-    })
-    .map(|server| async move {
-      (
-        async {
-          periphery_client(&server)?.request(PruneImages {}).await
-        }
-        .await,
-        server,
-      )
-    });
+  let mut futures = find_collect(
+    &db_client().servers,
+    doc! { "config.enabled": true, "config.auto_prune": true },
+    None,
+  )
+  .await
+  .context("failed to get servers from db")?
+  .into_iter()
+  .map(|server| async move {
+    (
+      async {
+        periphery_client(&server)?.request(PruneImages {}).await
+      }
+      .await,
+      server,
+    )
+  })
+  .collect::<FuturesUnordered<_>>();
 
-  for (res, server) in join_all(futures).await {
+  while let Some((res, server)) = futures.next().await {
     if let Err(e) = res {
       error!(
         "failed to prune images on server {} ({}) | {e:#}",
