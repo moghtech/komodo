@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use anyhow::Context;
 use colored::Colorize;
 use database::mungos::{
   find::find_collect,
@@ -9,7 +8,7 @@ use database::mungos::{
 use futures::future::join_all;
 use komodo_client::{
   api::{
-    auth::{CreateLocalUser, GetUser},
+    auth::CreateLocalUser,
     execute::{
       BackupCoreDatabase, Execution, GlobalAutoUpdate, RunAction,
     },
@@ -20,15 +19,12 @@ use komodo_client::{
   },
   entities::{
     ResourceTarget,
-    action::Action,
     builder::{PartialBuilderConfig, PartialServerBuilderConfig},
     komodo_timestamp,
-    procedure::{
-      EnabledExecution, Procedure, ProcedureConfig, ProcedureStage,
-    },
+    procedure::{EnabledExecution, ProcedureConfig, ProcedureStage},
     server::{PartialServerConfig, Server},
     sync::ResourceSync,
-    tag::{Tag, TagColor},
+    tag::TagColor,
     update::Log,
     user::{action_user, system_user},
   },
@@ -42,27 +38,26 @@ use crate::{
     write::WriteArgs,
   },
   config::core_config,
-  helpers::{random_string, update::init_execution_update},
+  helpers::update::init_execution_update,
   network, resource,
   state::db_client,
 };
 
 /// Runs the Actions with `run_at_startup: true`
 pub async fn run_startup_actions() {
-  let startup_actions =
-    match database::mungos::find::find_collect::<Action>(
-      &db_client().actions,
-      doc! { "config.run_at_startup": true },
-      None,
-    )
-    .await
-    {
-      Ok(actions) => actions,
-      Err(e) => {
-        error!("Failed to fetch actions for startup | {e:#?}");
-        return;
-      }
-    };
+  let startup_actions = match find_collect(
+    &db_client().actions,
+    doc! { "config.run_at_startup": true },
+    None,
+  )
+  .await
+  {
+    Ok(actions) => actions,
+    Err(e) => {
+      error!("Failed to fetch actions for startup | {e:#?}");
+      return;
+    }
+  };
 
   for action in startup_actions {
     let name = action.name;
@@ -202,10 +197,10 @@ async fn open_alert_cleanup() {
 
 /// Ensures a default server / builder exists with the defined address
 async fn ensure_first_server_and_builder() {
-  let first_server = &core_config().first_server;
-  if first_server.is_empty() {
+  let config = core_config();
+  let Some(address) = config.first_server.clone() else {
     return;
-  }
+  };
   let db = db_client();
   let Ok(server) = db
     .servers
@@ -219,9 +214,9 @@ async fn ensure_first_server_and_builder() {
     server
   } else {
     match (CreateServer {
-      name: format!("server-{}", random_string(5)),
+      name: config.first_server_name.clone(),
       config: PartialServerConfig {
-        address: Some(first_server.to_string()),
+        address: Some(address),
         enabled: Some(true),
         ..Default::default()
       },
@@ -247,7 +242,7 @@ async fn ensure_first_server_and_builder() {
       return;
     };
   if let Err(e) = (CreateBuilder {
-    name: String::from("local"),
+    name: String::from("Local"),
     config: PartialBuilderConfig::Server(
       PartialServerBuilderConfig {
         server_id: Some(server.id),

@@ -55,6 +55,11 @@ passkey = "default-passkey-changeme"
 ## Optional, no default.
 first_server = ""
 
+## Give the first server a custom name.
+## Env: KOMODO_FIRST_SERVER_NAME
+## Default: Local
+first_server_name = "Local"
+
 ## Disables write support on resources in the UI.
 ## This protects users that that would normally have write priviledges during their UI usage,
 ## when they intend to fully rely on ResourceSyncs to manage config.

@@ -80,6 +80,8 @@ pub struct Env {
   pub komodo_timezone: Option<String>,
   /// Override `first_server`
   pub komodo_first_server: Option<String>,
+  /// Override `first_server_name`
+  pub komodo_first_server_name: Option<String>,
   /// Override `frontend_path`
   pub komodo_frontend_path: Option<String>,
   /// Override `jwt_secret`
@@ -347,8 +349,13 @@ pub struct CoreConfig {
 
   /// If defined, ensure an enabled first server exists at this address.
   /// Example: `http://periphery:8120`
-  #[serde(default)]
-  pub first_server: String,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub first_server: Option<String>,
+
+  /// Give the first server this name.
+  /// Default: `Local`
+  #[serde(default = "default_first_server_name")]
+  pub first_server_name: String,
 
   /// The path to the built frontend folder.
   #[serde(default = "default_frontend_path")]
@@ -367,6 +374,7 @@ pub struct CoreConfig {
 
   /// Upon fresh launch, initalize an Admin user with this username.
   /// If this is not provided, no initial user will be created.
+  #[serde(skip_serializing_if = "Option::is_none")]
   pub init_admin_username: Option<String>,
   /// Upon fresh launch, initalize an Admin user with this password.
   /// Default: `changeme`
@@ -391,7 +399,7 @@ pub struct CoreConfig {
   /// APIs are disabled. Used by demo to lock the 'demo' : 'demo' login.
   ///
   /// To lock the api for all users, use `lock_login_credentials_for = ["__ALL__"]`
-  #[serde(default)]
+  #[serde(default, skip_serializing_if = "Vec::is_empty")]
   pub lock_login_credentials_for: Vec<String>,
 
   /// Normally all users can create resources.
@@ -452,7 +460,7 @@ pub struct CoreConfig {
 
   /// Your OIDC provider may set additional audiences other than `client_id`,
   /// they must be added here to make claims verification work.
-  #[serde(default)]
+  #[serde(default, skip_serializing_if = "Vec::is_empty")]
   pub oidc_additional_audiences: Vec<String>,
 
   // =========
@@ -542,7 +550,11 @@ pub struct CoreConfig {
   // =================
   /// Configure git credentials used to clone private repos.
   /// Supports any git provider.
-  #[serde(default, alias = "git_provider")]
+  #[serde(
+    default,
+    alias = "git_provider",
+    skip_serializing_if = "Vec::is_empty"
+  )]
   pub git_providers: Vec<GitProvider>,
 
   // ======================
@@ -550,7 +562,11 @@ pub struct CoreConfig {
   // ======================
   /// Configure docker credentials used to push / pull images.
   /// Supports any docker image repository.
-  #[serde(default, alias = "docker_registry")]
+  #[serde(
+    default,
+    alias = "docker_registry",
+    skip_serializing_if = "Vec::is_empty"
+  )]
   pub docker_registries: Vec<DockerRegistry>,
 
   // ===========
@@ -559,7 +575,7 @@ pub struct CoreConfig {
   /// Configure core-based secrets. These will be preferentially interpolated into
   /// values if they contain a matching secret. Otherwise, the periphery will have to have the
   /// secret configured.
-  #[serde(default)]
+  #[serde(default, skip_serializing_if = "HashMap::is_empty")]
   pub secrets: HashMap<String, String>,
 
   // =======
@@ -623,6 +639,10 @@ fn default_frontend_path() -> String {
   "/app/frontend".to_string()
 }
 
+fn default_first_server_name() -> String {
+  String::from("Local")
+}
+
 fn default_jwt_ttl() -> Timelength {
   Timelength::OneDay
 }
@@ -682,6 +702,7 @@ impl Default for CoreConfig {
       disable_init_resources: Default::default(),
       enable_fancy_toml: Default::default(),
       first_server: Default::default(),
+      first_server_name: default_first_server_name(),
       frontend_path: default_frontend_path(),
       database: Default::default(),
       local_auth: Default::default(),
@@ -737,6 +758,7 @@ impl CoreConfig {
       passkey: empty_or_redacted(&config.passkey),
       timezone: config.timezone,
       first_server: config.first_server,
+      first_server_name: config.first_server_name,
       frontend_path: config.frontend_path,
       jwt_secret: empty_or_redacted(&config.jwt_secret),
       jwt_ttl: config.jwt_ttl,
