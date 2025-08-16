@@ -10,14 +10,10 @@ import { atomWithStorage } from "@lib/hooks";
 import "./monaco";
 import { init_monaco } from "./monaco/init";
 
-export const AUTH_TOKEN_STORAGE_KEY = "komodo-auth-token";
-
 export const KOMODO_BASE_URL =
   import.meta.env.VITE_KOMODO_HOST ?? location.origin;
-
 export const UPDATE_WS_URL =
   KOMODO_BASE_URL.replace("http", "ws") + "/ws/update";
-
 const query_client = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });

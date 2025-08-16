@@ -8,13 +8,15 @@ use database::mungos::mongodb::bson::doc;
 use jsonwebtoken::{
   DecodingKey, EncodingKey, Header, Validation, decode, encode,
 };
-use komodo_client::entities::config::core::CoreConfig;
+use komodo_client::{
+  api::auth::JwtResponse, entities::config::core::CoreConfig,
+};
 use serde::{Deserialize, Serialize};
 use tokio::sync::Mutex;
 
 use crate::helpers::random_string;
 
-type ExchangeTokenMap = Mutex<HashMap<String, (String, u128)>>;
+type ExchangeTokenMap = Mutex<HashMap<String, (JwtResponse, u128)>>;
 
 #[derive(Serialize, Deserialize)]
 pub struct JwtClaims {
@@ -51,16 +53,20 @@ impl JwtClient {
     })
   }
 
-  pub fn encode(&self, user_id: String) -> anyhow::Result<String> {
+  pub fn encode(
+    &self,
+    user_id: String,
+  ) -> anyhow::Result<JwtResponse> {
     let iat = unix_timestamp_ms();
     let exp = iat + self.ttl_ms;
     let claims = JwtClaims {
-      id: user_id,
+      id: user_id.clone(),
       iat,
       exp,
     };
-    encode(&self.header, &claims, &self.encoding_key)
-      .context("failed at signing claim")
+    let jwt = encode(&self.header, &claims, &self.encoding_key)
+      .context("failed at signing claim")?;
+    Ok(JwtResponse { user_id, jwt })
   }
 
   pub fn decode(&self, jwt: &str) -> anyhow::Result<JwtClaims> {
@@ -70,7 +76,10 @@ impl JwtClient {
   }
 
   #[instrument(level = "debug", skip_all)]
-  pub async fn create_exchange_token(&self, jwt: String) -> String {
+  pub async fn create_exchange_token(
+    &self,
+    jwt: JwtResponse,
+  ) -> String {
     let exchange_token = random_string(40);
     self.exchange_tokens.lock().await.insert(
       exchange_token.clone(),
@@ -86,7 +95,7 @@ impl JwtClient {
   pub async fn redeem_exchange_token(
     &self,
     exchange_token: &str,
-  ) -> anyhow::Result<String> {
+  ) -> anyhow::Result<JwtResponse> {
     let (jwt, valid_until) = self
       .exchange_tokens
       .lock()

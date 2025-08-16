@@ -11,6 +11,8 @@ pub trait KomodoAuthRequest: HasResponse {}
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JwtResponse {
+  /// User ID for signed in user.
+  pub user_id: String,
   /// A token the user can use to authenticate their requests.
   pub jwt: String,
 }

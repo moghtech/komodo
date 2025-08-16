@@ -139,8 +139,10 @@ impl Resolve<AuthArgs> for ExchangeForJwt {
     self,
     _: &AuthArgs,
   ) -> serror::Result<ExchangeForJwtResponse> {
-    let jwt = jwt_client().redeem_exchange_token(&self.token).await?;
-    Ok(ExchangeForJwtResponse { jwt })
+    jwt_client()
+      .redeem_exchange_token(&self.token)
+      .await
+      .map_err(Into::into)
   }
 }
 

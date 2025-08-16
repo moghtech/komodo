@@ -1,8 +1,9 @@
-import { AUTH_TOKEN_STORAGE_KEY } from "@main";
+import { LOGIN_TOKENS, useUser } from "@lib/hooks";
 import { Button } from "@ui/button";
 import { UserX } from "lucide-react";
 
 export default function UserDisabled() {
+  const user_id = useUser().data?._id?.$oid;
   return (
     <div className="w-full h-screen flex justify-center items-center">
       <div className="flex flex-col gap-4 justify-center items-center">
@@ -11,7 +12,7 @@ export default function UserDisabled() {
         <Button
           variant="outline"
           onClick={() => {
-            localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+            user_id && LOGIN_TOKENS.remove(user_id);
             location.reload();
           }}
         >

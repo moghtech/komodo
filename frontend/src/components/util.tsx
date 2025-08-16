@@ -25,7 +25,6 @@ import {
   HardDrive,
   LinkIcon,
   Loader2,
-  LogOut,
   Network,
   Search,
   SearchX,
@@ -45,7 +44,6 @@ import {
 import { toast, useToast } from "@ui/use-toast";
 import { cn, filterBySplit, usableResourcePath } from "@lib/utils";
 import { Link, useNavigate } from "react-router-dom";
-import { AUTH_TOKEN_STORAGE_KEY } from "@main";
 import { Textarea } from "@ui/textarea";
 import { Card } from "@ui/card";
 import {
@@ -69,7 +67,6 @@ import {
   useContainerPortsMap,
   useRead,
   useTemplatesQueryBehavior,
-  useUser,
 } from "@lib/hooks";
 import { Prune } from "./resources/server/actions";
 import { MonacoEditor, MonacoLanguage } from "./monaco";
@@ -327,27 +324,6 @@ export const ConfirmButton = ({
       loading={loading}
       className={className}
     />
-  );
-};
-
-export const Logout = () => {
-  const user = useUser().data;
-  return (
-    user && (
-      <Button
-        variant="ghost"
-        onClick={() => {
-          localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
-          location.reload();
-        }}
-        className="px-2 flex flex-row gap-2 items-center"
-      >
-        <div className="hidden xl:flex max-w-[120px] overflow-hidden overflow-ellipsis">
-          {user.username}
-        </div>
-        <LogOut className="w-4 h-4" />
-      </Button>
-    )
   );
 };
 

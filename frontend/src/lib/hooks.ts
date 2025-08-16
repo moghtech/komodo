@@ -1,4 +1,4 @@
-import { AUTH_TOKEN_STORAGE_KEY, KOMODO_BASE_URL } from "@main";
+import { KOMODO_BASE_URL } from "@main";
 import { KomodoClient, Types } from "komodo_client";
 import {
   AuthResponses,
@@ -22,19 +22,100 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { has_minimum_permissions, RESOURCE_TARGETS } from "./utils";
 
+export const atomWithStorage = <T>(key: string, init: T) => {
+  const stored = localStorage.getItem(key);
+  const inner = atom(stored ? JSON.parse(stored) : init);
+
+  return atom(
+    (get) => get(inner),
+    (_, set, newValue) => {
+      set(inner, newValue);
+      localStorage.setItem(key, JSON.stringify(newValue));
+    }
+  );
+};
+
 // ============== RESOLVER ==============
 
-const token = () => ({
-  jwt: localStorage.getItem(AUTH_TOKEN_STORAGE_KEY) ?? "",
-});
-export const komodo_client = () =>
-  KomodoClient(KOMODO_BASE_URL, { type: "jwt", params: token() });
+type LoginTokens = {
+  /** Current User ID */
+  current: string | undefined;
+  /** Map of logged in user ids to tokens */
+  tokens: { [user_id: string]: string };
+};
 
-export const useLoginOptions = () =>
-  useQuery({
+const LOGIN_TOKENS_KEY = "komodo-auth-tokens";
+
+export const LOGIN_TOKENS = (() => {
+  const stored = localStorage.getItem(LOGIN_TOKENS_KEY);
+  let tokens: LoginTokens = stored
+    ? JSON.parse(stored)
+    : { current: undefined, tokens: {} };
+  const update_local_storage = () => {
+    localStorage.setItem(LOGIN_TOKENS_KEY, JSON.stringify(tokens));
+  };
+  const add_and_change = (user_id: string, token: string) => {
+    tokens = {
+      current: user_id,
+      tokens: { ...tokens.tokens, [user_id]: token },
+    };
+    update_local_storage();
+  };
+  const remove = (user_id: string) => {
+    tokens = {
+      current: tokens.current === user_id ? undefined : tokens.current,
+      tokens: Object.fromEntries(
+        Object.entries(tokens.tokens).filter(([uid, _]) => uid !== user_id)
+      ),
+    };
+    update_local_storage();
+  };
+  const remove_all = () => {
+    tokens = {
+      current: undefined,
+      tokens: {},
+    };
+    update_local_storage();
+  };
+  const change = (to_id: string) => {
+    tokens = {
+      current: to_id,
+      tokens: tokens.tokens,
+    };
+    update_local_storage();
+  };
+  const accounts = () =>
+  {
+    const accounts = Object.entries(tokens.tokens).map(([user_id, jwt]) => ({
+      user_id,
+      jwt,
+    }));
+    accounts.sortBy
+    return accounts;
+  }
+
+  return {
+    jwt: () => (tokens.current ? (tokens.tokens[tokens.current] ?? "") : ""),
+    accounts,
+    add_and_change,
+    remove,
+    remove_all,
+    change,
+  };
+})();
+
+export const komodo_client = () =>
+  KomodoClient(KOMODO_BASE_URL, {
+    type: "jwt",
+    params: { jwt: LOGIN_TOKENS.jwt() },
+  });
+
+export const useLoginOptions = () => {
+  return useQuery({
     queryKey: ["GetLoginOptions"],
     queryFn: () => komodo_client().auth("GetLoginOptions", {}),
   });
+};
 
 export const useUser = () => {
   const userReset = useUserReset();
@@ -82,12 +163,13 @@ export const useRead = <
   type: T,
   params: P,
   config?: C
-) =>
-  useQuery({
+) => {
+  return useQuery({
     queryKey: [type, params],
     queryFn: () => komodo_client().read<T, R>(type, params),
     ...config,
   });
+};
 
 export const useInvalidate = () => {
   const qc = useQueryClient();
@@ -345,19 +427,6 @@ export const useSetTitle = (more?: string) => {
       document.title = title;
     }
   }, [title]);
-};
-
-export const atomWithStorage = <T>(key: string, init: T) => {
-  const stored = localStorage.getItem(key);
-  const inner = atom(stored ? JSON.parse(stored) : init);
-
-  return atom(
-    (get) => get(inner),
-    (_, set, newValue) => {
-      set(inner, newValue);
-      localStorage.setItem(key, JSON.stringify(newValue));
-    }
-  );
 };
 
 const tagsAtom = atomWithStorage<string[]>("tags-v0", []);

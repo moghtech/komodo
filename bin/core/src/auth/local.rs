@@ -96,11 +96,10 @@ impl Resolve<AuthArgs> for SignUpLocalUser {
       .context("inserted_id is not ObjectId")?
       .to_string();
 
-    let jwt = jwt_client()
-      .encode(user_id)
-      .context("failed to generate jwt for user")?;
-
-    Ok(SignUpLocalUserResponse { jwt })
+    jwt_client()
+      .encode(user_id.clone())
+      .context("failed to generate jwt for user")
+      .map_err(Into::into)
   }
 }
 
@@ -142,10 +141,9 @@ impl Resolve<AuthArgs> for LoginLocalUser {
       return Err(anyhow!("invalid credentials").into());
     }
 
-    let jwt = jwt_client()
-      .encode(user.id)
-      .context("failed at generating jwt for user")?;
-
-    Ok(LoginLocalUserResponse { jwt })
+    jwt_client()
+      .encode(user.id.clone())
+      .context("failed at generating jwt for user")
+      .map_err(Into::into)
   }
 }

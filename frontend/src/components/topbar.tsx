@@ -1,4 +1,11 @@
-import { useRead, useResourceParamType, useShiftKeyListener } from "@lib/hooks";
+import {
+  LOGIN_TOKENS,
+  useRead,
+  useResourceParamType,
+  useShiftKeyListener,
+  useUser,
+  useUserInvalidate,
+} from "@lib/hooks";
 import { ResourceComponents } from "./resources";
 import {
   AlertTriangle,
@@ -10,6 +17,8 @@ import {
   FolderTree,
   Keyboard,
   LayoutDashboard,
+  LogOut,
+  Plus,
   Settings,
   User,
   Users,
@@ -28,7 +37,6 @@ import { RESOURCE_TARGETS, usableResourcePath } from "@lib/utils";
 import { OmniSearch, OmniDialog } from "./omnibar";
 import { WsStatusIndicator } from "@lib/socket";
 import { TopbarUpdates } from "./updates/topbar";
-import { Logout } from "./util";
 import { ThemeToggle } from "@ui/theme";
 import { useAtom } from "jotai";
 import { ReactNode, useState } from "react";
@@ -42,6 +50,7 @@ import {
 } from "@ui/dialog";
 import { Badge } from "@ui/badge";
 import { TopbarAlerts } from "./alert/topbar";
+import { ConfirmButton } from "./util";
 
 export const Topbar = () => {
   const [omniOpen, setOmniOpen] = useState(false);
@@ -77,7 +86,7 @@ export const Topbar = () => {
           <TopbarAlerts />
           <TopbarUpdates />
           <ThemeToggle />
-          <Logout />
+          <UserDropdown />
         </div>
       </div>
       <OmniDialog open={omniOpen} setOpen={setOmniOpen} />
@@ -303,6 +312,97 @@ const KeyboardShortcut = ({
       {divider && (
         <div className="col-span-full bg-gray-600 h-[1px] opacity-40" />
       )}
+    </>
+  );
+};
+
+const UserDropdown = () => {
+  const [open, setOpen] = useState(false);
+  const user = useUser().data;
+  const userInvalidate = useUserInvalidate();
+  const accounts = LOGIN_TOKENS.accounts();
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="flex items-center gap-2 px-2">
+          <UsernameView
+            username={user?.username}
+            avatar={(user?.config.data as any).avatar}
+          />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        className="w-[260px] flex flex-col gap-2 items-end p-2"
+        side="bottom"
+        align="end"
+      >
+        {accounts.map((login) => (
+          <Button
+            variant={
+              login.user_id === user?._id?.$oid ? "secondary" : "outline"
+            }
+            className="flex gap-2 items-center justify-center w-full"
+            onClick={() => {
+              if (login.user_id === user?._id?.$oid) {
+                // Noop
+                setOpen(false);
+                return;
+              }
+              LOGIN_TOKENS.change(login.user_id);
+              location.reload();
+            }}
+          >
+            <Username user_id={login.user_id} />
+          </Button>
+        ))}
+
+        <Link
+          to={`/login?${new URLSearchParams({ backto: `${location.pathname}${location.search}` })}`}
+          className="w-full"
+        >
+          <Button
+            variant="outline"
+            onClick={() => setOpen(false)}
+            className="flex gap-1 items-center justify-center w-full"
+          >
+            Add another
+            <Plus className="w-4" />
+          </Button>
+        </Link>
+
+        <ConfirmButton
+          title="Log Out All"
+          icon={<LogOut className="w-4 h-4" />}
+          variant="destructive"
+          className="flex gap-2 items-center justify-center w-full max-w-full"
+          onClick={() => {
+            LOGIN_TOKENS.remove_all();
+            userInvalidate();
+          }}
+        />
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+const Username = ({ user_id }: { user_id: string }) => {
+  const res = useRead("GetUsername", { user_id }).data;
+  return <UsernameView username={res?.username} avatar={res?.avatar} />;
+};
+
+const UsernameView = ({
+  username,
+  avatar,
+}: {
+  username: string | undefined;
+  avatar: string | undefined;
+}) => {
+  return (
+    <>
+      {avatar ? <img src={avatar} className="w-4" /> : <User className="w-4" />}
+      <div className="hidden xl:flex max-w-[120px] overflow-hidden overflow-ellipsis">
+        {username}
+      </div>
     </>
   );
 };

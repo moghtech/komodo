@@ -30,6 +30,7 @@ export const Router = () => {
   const { data: user, isLoading, error } = useUser();
 
   if (isLoading && !user) return null;
+
   if (!user || error) return <Login />;
   if (!user.enabled) return <UserDisabled />;
 
@@ -43,6 +44,7 @@ export const Router = () => {
     >
       <BrowserRouter>
         <Routes>
+          <Route path="login" element={<Login />} />
           <Route path="/" element={<Layout />}>
             <Route path="" element={<Home />} />
             <Route path="settings" element={<Settings />} />
