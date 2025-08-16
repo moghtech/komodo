@@ -24,8 +24,8 @@ const sidebars: SidebarsConfig = {
       items: [
         "setup/mongo",
         "setup/ferretdb",
-        "setup/advanced",
         "setup/backup",
+        "setup/advanced",
       ],
     },
     "connect-servers",

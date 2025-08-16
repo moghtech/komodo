@@ -3749,7 +3749,7 @@ export interface ServerListItemInfo {
 	 * External address of the server (reachable by users).
 	 * Used with links.
 	 */
-	external_address: string;
+	external_address?: string;
 	/** The Komodo Periphery version of the server. */
 	version: string;
 	/** Whether server is configured to send unreachable alerts. */
