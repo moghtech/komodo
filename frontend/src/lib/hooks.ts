@@ -90,7 +90,7 @@ export const LOGIN_TOKENS = (() => {
       user_id,
       jwt,
     }));
-    accounts.sortBy
+    accounts.sort();
     return accounts;
   }
 
