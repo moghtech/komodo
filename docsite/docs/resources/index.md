@@ -10,18 +10,18 @@ Many resources need access to git repos / docker registries. There is an in-buil
 All resources which depend on git repos / docker registries are able to use these credentials to access private repos.
 :::
 
-## Server
+## [Server](connect-servers)
 
 - Configure the connection to periphery agents.
 - Set alerting thresholds.
 - Can be attached to by **Deployments**, **Stacks**, **Repos**, and **Builders**.
 
-## Deployment
+## [Deployment](resources/deploy-containers/index.mdx)
 
 - Deploy a docker container on the attached Server.
 - Manage services at the container level, perform orchestration using **Procedures** and **ResourceSyncs**.
 
-## Stack
+## [Stack](resources/docker-compose)
 
 - Deploy with docker compose.
 - Provide the compose file in UI, or move the files to a git repo and use a webhook for auto redeploy on push.
@@ -33,29 +33,29 @@ All resources which depend on git repos / docker registries are able to use thes
 - Put scripts in git repos, and run them on a Server, or using a Builder.
 - Can build binaries, perform automation, really whatever you can think of.
 
-## Build
+## [Build](resources/build-images/index.mdx)
 
 - Build application source into docker images, and push them to the configured registry.
 - The source can be any git repo containing a Dockerfile.
 
-## Builder
+## [Builder](resources/build-images/builders)
 
 - Either points to a connected server, or holds configuration to launch a single-use AWS instance to build the image.
 - Can be attached to **Builds** and **Repos**.
 
-## Procedure
+## [Procedure](resources/procedures#procedures)
 
 - Compose many actions on other resource type, like `RunBuild` or `DeployStack`, and run it on button push (or with a webhook).
 - Can run one or more actions in parallel "stages", and compose a series of parallel stages to run sequentially.
 
-## Action
+## [Action](resources/procedures#actions)
 
 - Write scripts calling the Komodo API in Typescript
 - Use a pre-initialized Komodo client within the script, no api keys necessary.
 - Type aware in UI editor. Get suggestions and see in depth docs as you type.
 - The Typescript client is also [published on NPM](https://www.npmjs.com/package/komodo_client).
 
-## ResourceSync
+## [Resource Sync](resources/sync-resources)
 
 - Orchestrate all your configuration declaratively by defining it in `toml` files, which are checked into a git repo.
 - Can deploy **Deployments** and **Stacks** if changes are suggested.

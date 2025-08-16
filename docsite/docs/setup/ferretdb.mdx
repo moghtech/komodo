@@ -14,7 +14,7 @@ wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/compose/fe
   wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/compose/compose.env
 ```
 2. Edit the variables in `komodo/compose.env`.
-3. Deploy:
+3. Deploy using command:
 
 ```bash
 docker compose -p komodo -f komodo/ferretdb.compose.yaml --env-file komodo/compose.env up -d

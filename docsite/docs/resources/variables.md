@@ -6,7 +6,9 @@ A variable / secret in Komodo is just a key-value pair.
 KEY_1 = "value_1"
 ```
 
-You can interpolate the value into any Environment (and most other user configurable inputs, such as Repo `On Clone` and `On Pull`, or Stack `Extra Args`) using double brackets around the key to trigger interpolation:
+You can interpolate the value into any resource Environment
+(and most other user configurable inputs, such as Repo `On Clone` and `On Pull`, or Stack `Extra Args`)
+using double brackets around the key to trigger interpolation:
 
 ```toml
 # Before interpolation

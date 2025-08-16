@@ -1,6 +1,7 @@
 # Procedures and Actions
 
-For orchestrations involving multiple Resources, Komodo offers the `Procedure` and `Action` resource types.
+For orchestrations involving multiple resources and executions,
+Komodo offers the `Procedure` and `Action` resource types.
 
 ## Procedures
 

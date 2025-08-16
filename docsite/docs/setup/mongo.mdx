@@ -1,6 +1,6 @@
 # MongoDB
 
-[**MongoDB**](https://www.mongodb.com) is the traditional database for Komodo.
+[**MongoDB**](https://www.mongodb.com) is the standard database for Komodo.
 Komodo Core communicates with the database using the MongoDB driver.
 
 1. Copy `komodo/mongo.compose.yaml` and `komodo/compose.env` to your host:
@@ -9,7 +9,7 @@ wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/compose/mo
   wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/compose/compose.env
 ```
 2. Edit the variables in `komodo/compose.env`.
-3. Deploy:
+3. Deploy using command:
 
 ```bash
 docker compose -p komodo -f komodo/mongo.compose.yaml --env-file komodo/compose.env up -d

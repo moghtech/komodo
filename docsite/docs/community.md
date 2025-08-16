@@ -1,4 +1,4 @@
-# Other Resources
+# Community
 
 ### Posts and Guides
 - [Migrating to Komodo](https://blog.foxxmd.dev/posts/migrating-to-komodo) by [FoxxMD](https://github.com/FoxxMD)
