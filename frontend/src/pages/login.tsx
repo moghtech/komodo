@@ -26,7 +26,11 @@ import { Types } from "komodo_client";
 type OauthProvider = "Github" | "Google" | "OIDC";
 
 const login_with_oauth = (provider: OauthProvider) => {
-  const redirect = encodeURIComponent(location.href);
+  const _redirect = location.pathname.startsWith("/login")
+    ? location.origin +
+      (new URLSearchParams(location.search).get("backto") ?? "")
+    : location.href;
+  const redirect = encodeURIComponent(_redirect);
   location.replace(
     `${KOMODO_BASE_URL}/auth/${provider.toLowerCase()}/login?redirect=${redirect}`
   );
@@ -76,7 +80,10 @@ export default function Login() {
 
   // If signing in another user, need to redirect away from /login manually
   const maybeNavigate = location.pathname.startsWith("/login")
-    ? () => location.replace(new URLSearchParams(location.search).get("backto") ?? "/")
+    ? () =>
+        location.replace(
+          new URLSearchParams(location.search).get("backto") ?? "/"
+        )
     : undefined;
 
   const onSuccess = ({ user_id, jwt }: Types.JwtResponse) => {
