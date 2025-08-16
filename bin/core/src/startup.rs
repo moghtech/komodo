@@ -8,7 +8,7 @@ use database::mungos::{
 use futures::future::join_all;
 use komodo_client::{
   api::{
-    auth::CreateLocalUser,
+    auth::SignUpLocalUser,
     execute::{
       BackupCoreDatabase, Execution, GlobalAutoUpdate, RunAction,
     },
@@ -279,7 +279,7 @@ async fn ensure_init_user_and_resources() {
   // Init admin user if set in config.
   if let Some(username) = &config.init_admin_username {
     info!("Creating init admin user...");
-    CreateLocalUser {
+    SignUpLocalUser {
       username: username.clone(),
       password: config.init_admin_password.clone(),
     }

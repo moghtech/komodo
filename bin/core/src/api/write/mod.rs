@@ -52,6 +52,7 @@ pub struct WriteArgs {
 #[serde(tag = "type", content = "params")]
 pub enum WriteRequest {
   // ==== USER ====
+  CreateLocalUser(CreateLocalUser),
   UpdateUserUsername(UpdateUserUsername),
   UpdateUserPassword(UpdateUserPassword),
   DeleteUser(DeleteUser),

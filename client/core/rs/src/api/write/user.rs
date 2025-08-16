@@ -69,6 +69,31 @@ pub type DeleteUserResponse = User;
 
 //
 
+/// **Admin only.** Create a local user.
+/// Response: [User].
+///
+/// Note. Not to be confused with /auth/SignUpLocalUser.
+/// This method requires admin user credentials, and can
+/// bypass disabled user registration.
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoWriteRequest)]
+#[response(CreateLocalUserResponse)]
+#[error(serror::Error)]
+pub struct CreateLocalUser {
+  /// The username for the local user.
+  pub username: String,
+  /// A password for the local user.
+  pub password: String,
+}
+
+#[typeshare]
+pub type CreateLocalUserResponse = User;
+
+//
+
 /// **Admin only.** Create a service user.
 /// Response: [User].
 #[typeshare]

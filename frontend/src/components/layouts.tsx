@@ -211,12 +211,14 @@ export const NewLayout = ({
   enabled,
   onConfirm,
   onOpenChange,
+  configureLabel = "a unique name",
 }: {
   entityType: string;
   children: ReactNode;
   enabled: boolean;
   onConfirm: () => Promise<unknown>;
   onOpenChange?: (open: boolean) => void;
+  configureLabel?: string;
 }) => {
   const [open, set] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -236,7 +238,9 @@ export const NewLayout = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>New {entityType}</DialogTitle>
-          <DialogDescription>Enter a unique name for the new {entityType}.</DialogDescription>
+          <DialogDescription>
+            Enter {configureLabel} for the new {entityType}.
+          </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-6 py-8">{children}</div>
         <DialogFooter>

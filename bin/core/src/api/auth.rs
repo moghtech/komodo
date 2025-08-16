@@ -42,7 +42,7 @@ pub struct AuthArgs {
 #[allow(clippy::enum_variant_names, clippy::large_enum_variant)]
 pub enum AuthRequest {
   GetLoginOptions(GetLoginOptions),
-  CreateLocalUser(CreateLocalUser),
+  SignUpLocalUser(SignUpLocalUser),
   LoginLocalUser(LoginLocalUser),
   ExchangeForJwt(ExchangeForJwt),
   GetUser(GetUser),

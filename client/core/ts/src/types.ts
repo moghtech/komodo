@@ -1024,19 +1024,6 @@ export interface GitProviderAccount {
 
 export type CreateGitProviderAccountResponse = GitProviderAccount;
 
-/** JSON containing an authentication token. */
-export interface JwtResponse {
-	/** A token the user can use to authenticate their requests. */
-	jwt: string;
-}
-
-/** Response for [CreateLocalUser]. */
-export type CreateLocalUserResponse = JwtResponse;
-
-export type CreateProcedureResponse = Procedure;
-
-export type CreateRepoWebhookResponse = NoData;
-
 export type UserConfig = 
 	/** User that logs in with username / password */
 	| { type: "Local", data: {
@@ -1091,6 +1078,12 @@ export interface User {
 	all?: Record<ResourceTarget["type"], PermissionLevelAndSpecifics | PermissionLevel>;
 	updated_at?: I64;
 }
+
+export type CreateLocalUserResponse = User;
+
+export type CreateProcedureResponse = Procedure;
+
+export type CreateRepoWebhookResponse = NoData;
 
 export type CreateServiceUserResponse = User;
 
@@ -1327,6 +1320,12 @@ export interface DeploymentQuerySpecifics {
 }
 
 export type DeploymentQuery = ResourceQuery<DeploymentQuerySpecifics>;
+
+/** JSON containing an authentication token. */
+export interface JwtResponse {
+	/** A token the user can use to authenticate their requests. */
+	jwt: string;
+}
 
 /** Response for [ExchangeForJwt]. */
 export type ExchangeForJwtResponse = JwtResponse;
@@ -3956,6 +3955,9 @@ export type ServerQuery = ResourceQuery<ServerQuerySpecifics>;
 
 export type SetLastSeenUpdateResponse = NoData;
 
+/** Response for [SignUpLocalUser]. */
+export type SignUpLocalUserResponse = JwtResponse;
+
 export interface StackQuerySpecifics {
 	/**
 	 * Query only for Stacks on these Servers.
@@ -4900,19 +4902,17 @@ export interface CreateGitProviderAccount {
 }
 
 /**
- * Create a new local user account. Will fail if a user with the
- * given username already exists.
- * Response: [CreateLocalUserResponse].
+ * **Admin only.** Create a local user.
+ * Response: [User].
  * 
- * Note. This method is only available if the core api has `local_auth` enabled.
+ * Note. Not to be confused with /auth/SignUpLocalUser.
+ * This method requires admin user credentials, and can
+ * bypass disabled user registration.
  */
 export interface CreateLocalUser {
-	/** The username for the new user. */
+	/** The username for the local user. */
 	username: string;
-	/**
-	 * The password for the new user.
-	 * This cannot be retreived later.
-	 */
+	/** A password for the local user. */
 	password: string;
 }
 
@@ -7734,6 +7734,24 @@ export interface SetUsersInUserGroup {
 	users: string[];
 }
 
+/**
+ * Sign up a new local user account. Will fail if a user with the
+ * given username already exists.
+ * Response: [SignUpLocalUserResponse].
+ * 
+ * Note. This method is only available if the core api has `local_auth` enabled,
+ * and if user registration is not disabled (after the first user).
+ */
+export interface SignUpLocalUser {
+	/** The username for the new user. */
+	username: string;
+	/**
+	 * The password for the new user.
+	 * This cannot be retreived later.
+	 */
+	password: string;
+}
+
 /** Info for network interface usage. */
 export interface SingleNetworkInterfaceUsage {
 	/** The network interface name */
@@ -8292,7 +8310,7 @@ export interface WriteSyncFileContents {
 
 export type AuthRequest = 
 	| { type: "GetLoginOptions", params: GetLoginOptions }
-	| { type: "CreateLocalUser", params: CreateLocalUser }
+	| { type: "SignUpLocalUser", params: SignUpLocalUser }
 	| { type: "LoginLocalUser", params: LoginLocalUser }
 	| { type: "ExchangeForJwt", params: ExchangeForJwt }
 	| { type: "GetUser", params: GetUser };
@@ -8633,6 +8651,7 @@ export type UserRequest =
 	| { type: "DeleteApiKey", params: DeleteApiKey };
 
 export type WriteRequest = 
+	| { type: "CreateLocalUser", params: CreateLocalUser }
 	| { type: "UpdateUserUsername", params: UpdateUserUsername }
 	| { type: "UpdateUserPassword", params: UpdateUserPassword }
 	| { type: "DeleteUser", params: DeleteUser }

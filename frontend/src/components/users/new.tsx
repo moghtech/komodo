@@ -61,3 +61,69 @@ export const NewServiceUser = () => {
     </NewLayout>
   );
 };
+
+export const NewLocalUser = () => {
+  const { toast } = useToast();
+  const inv = useInvalidate();
+  const { mutateAsync } = useWrite("CreateLocalUser", {
+    onSuccess: () => {
+      inv(["ListUsers"]);
+      toast({ title: "Created Local User" });
+    },
+  });
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+  return (
+    <NewLayout
+      entityType="Local User"
+      configureLabel="unique credentials"
+      onConfirm={async () => {
+        if (
+          username.length === 0 ||
+          password.length === 0 ||
+          password !== passwordConfirm
+        ) {
+          toast({ title: "Invalid user info", variant: "destructive" });
+        }
+        return await mutateAsync({ username, password });
+      }}
+      enabled={!!username && !!password && password === passwordConfirm}
+      onOpenChange={() => {
+        setUsername("");
+        setPassword("");
+        setPasswordConfirm("");
+      }}
+    >
+      <div className="grid md:grid-cols-2 gap-2">
+        Username
+        <Input
+          placeholder="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+        Password
+        <Input
+          placeholder="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        Confirm Password
+        <Input
+          placeholder="confirm password"
+          type="password"
+          value={passwordConfirm}
+          onChange={(e) => setPasswordConfirm(e.target.value)}
+          className={
+            !password
+              ? undefined
+              : password === passwordConfirm
+                ? "border-green-500"
+                : "border-red-500"
+          }
+        />
+      </div>
+    </NewLayout>
+  );
+};

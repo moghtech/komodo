@@ -1,10 +1,15 @@
 import { ExportButton } from "@components/export";
 import { Section } from "@components/layouts";
 import { DeleteUserGroup } from "@components/users/delete-user-group";
-import { NewServiceUser, NewUserGroup } from "@components/users/new";
+import {
+  NewLocalUser,
+  NewServiceUser,
+  NewUserGroup,
+} from "@components/users/new";
 import { UserTable } from "@components/users/table";
 import {
   useInvalidate,
+  useLoginOptions,
   useRead,
   useSetTitle,
   useUser,
@@ -97,6 +102,7 @@ const UsersSection = ({
   const user = useUser().data;
   const inv = useInvalidate();
   const { toast } = useToast();
+  const local_login_enabled = useLoginOptions().data?.local;
   const { mutate: deleteUser } = useWrite("DeleteUser", {
     onSuccess: () => {
       toast({ title: "User deleted." });
@@ -107,17 +113,9 @@ const UsersSection = ({
   const filtered = filterBySplit(users, search, (user) => user.username);
   return (
     <Section title="Users" icon={<User className="w-4 h-4" />}>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        {local_login_enabled && <NewLocalUser />}
         <NewServiceUser />
-        {/* <div className="relative">
-          <Search className="w-4 absolute top-[50%] left-3 -translate-y-[50%] text-muted-foreground" />
-          <Input
-            placeholder="search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 w-[200px] lg:w-[300px]"
-          />
-        </div> */}
       </div>
       <UserTable
         users={filtered}

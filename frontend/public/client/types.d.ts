@@ -1143,15 +1143,6 @@ export interface GitProviderAccount {
     token?: string;
 }
 export type CreateGitProviderAccountResponse = GitProviderAccount;
-/** JSON containing an authentication token. */
-export interface JwtResponse {
-    /** A token the user can use to authenticate their requests. */
-    jwt: string;
-}
-/** Response for [CreateLocalUser]. */
-export type CreateLocalUserResponse = JwtResponse;
-export type CreateProcedureResponse = Procedure;
-export type CreateRepoWebhookResponse = NoData;
 export type UserConfig = 
 /** User that logs in with username / password */
 {
@@ -1220,6 +1211,9 @@ export interface User {
     all?: Record<ResourceTarget["type"], PermissionLevelAndSpecifics | PermissionLevel>;
     updated_at?: I64;
 }
+export type CreateLocalUserResponse = User;
+export type CreateProcedureResponse = Procedure;
+export type CreateRepoWebhookResponse = NoData;
 export type CreateServiceUserResponse = User;
 export type CreateStackWebhookResponse = NoData;
 export type CreateSyncWebhookResponse = NoData;
@@ -1435,6 +1429,11 @@ export interface DeploymentQuerySpecifics {
     update_available?: boolean;
 }
 export type DeploymentQuery = ResourceQuery<DeploymentQuerySpecifics>;
+/** JSON containing an authentication token. */
+export interface JwtResponse {
+    /** A token the user can use to authenticate their requests. */
+    jwt: string;
+}
 /** Response for [ExchangeForJwt]. */
 export type ExchangeForJwtResponse = JwtResponse;
 /** Response containing pretty formatted toml contents. */
@@ -3893,6 +3892,8 @@ export interface ServerQuerySpecifics {
 /** Server-specific query */
 export type ServerQuery = ResourceQuery<ServerQuerySpecifics>;
 export type SetLastSeenUpdateResponse = NoData;
+/** Response for [SignUpLocalUser]. */
+export type SignUpLocalUserResponse = JwtResponse;
 export interface StackQuerySpecifics {
     /**
      * Query only for Stacks on these Servers.
@@ -4749,19 +4750,17 @@ export interface CreateGitProviderAccount {
     account: _PartialGitProviderAccount;
 }
 /**
- * Create a new local user account. Will fail if a user with the
- * given username already exists.
- * Response: [CreateLocalUserResponse].
+ * **Admin only.** Create a local user.
+ * Response: [User].
  *
- * Note. This method is only available if the core api has `local_auth` enabled.
+ * Note. Not to be confused with /auth/SignUpLocalUser.
+ * This method requires admin user credentials, and can
+ * bypass disabled user registration.
  */
 export interface CreateLocalUser {
-    /** The username for the new user. */
+    /** The username for the local user. */
     username: string;
-    /**
-     * The password for the new user.
-     * This cannot be retreived later.
-     */
+    /** A password for the local user. */
     password: string;
 }
 /**
@@ -7311,6 +7310,23 @@ export interface SetUsersInUserGroup {
     /** The user ids or usernames to hard set as the group's users. */
     users: string[];
 }
+/**
+ * Sign up a new local user account. Will fail if a user with the
+ * given username already exists.
+ * Response: [SignUpLocalUserResponse].
+ *
+ * Note. This method is only available if the core api has `local_auth` enabled,
+ * and if user registration is not disabled (after the first user).
+ */
+export interface SignUpLocalUser {
+    /** The username for the new user. */
+    username: string;
+    /**
+     * The password for the new user.
+     * This cannot be retreived later.
+     */
+    password: string;
+}
 /** Info for network interface usage. */
 export interface SingleNetworkInterfaceUsage {
     /** The network interface name */
@@ -7825,8 +7841,8 @@ export type AuthRequest = {
     type: "GetLoginOptions";
     params: GetLoginOptions;
 } | {
-    type: "CreateLocalUser";
-    params: CreateLocalUser;
+    type: "SignUpLocalUser";
+    params: SignUpLocalUser;
 } | {
     type: "LoginLocalUser";
     params: LoginLocalUser;
@@ -8544,6 +8560,9 @@ export type UserRequest = {
     params: DeleteApiKey;
 };
 export type WriteRequest = {
+    type: "CreateLocalUser";
+    params: CreateLocalUser;
+} | {
     type: "UpdateUserUsername";
     params: UpdateUserUsername;
 } | {

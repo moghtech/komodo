@@ -1,7 +1,7 @@
 import * as Types from "./types.js";
 export type AuthResponses = {
     GetLoginOptions: Types.GetLoginOptionsResponse;
-    CreateLocalUser: Types.CreateLocalUserResponse;
+    SignUpLocalUser: Types.SignUpLocalUserResponse;
     LoginLocalUser: Types.LoginLocalUserResponse;
     ExchangeForJwt: Types.ExchangeForJwtResponse;
     GetUser: Types.GetUserResponse;
@@ -134,9 +134,10 @@ export type ReadResponses = {
     ListDockerRegistryAccounts: Types.ListDockerRegistryAccountsResponse;
 };
 export type WriteResponses = {
-    UpdateUserUsername: Types.UpdateUserUsername;
-    UpdateUserPassword: Types.UpdateUserPassword;
-    DeleteUser: Types.DeleteUser;
+    CreateLocalUser: Types.CreateLocalUserResponse;
+    UpdateUserUsername: Types.UpdateUserUsernameResponse;
+    UpdateUserPassword: Types.UpdateUserPasswordResponse;
+    DeleteUser: Types.DeleteUserResponse;
     CreateServiceUser: Types.CreateServiceUserResponse;
     UpdateServiceUserDescription: Types.UpdateServiceUserDescriptionResponse;
     CreateApiKeyForServiceUser: Types.CreateApiKeyForServiceUserResponse;

@@ -8,8 +8,8 @@ use database::{
 };
 use komodo_client::{
   api::auth::{
-    CreateLocalUser, CreateLocalUserResponse, LoginLocalUser,
-    LoginLocalUserResponse,
+    LoginLocalUser, LoginLocalUserResponse, SignUpLocalUser,
+    SignUpLocalUserResponse,
   },
   entities::user::{User, UserConfig},
 };
@@ -21,12 +21,12 @@ use crate::{
   state::{db_client, jwt_client},
 };
 
-impl Resolve<AuthArgs> for CreateLocalUser {
-  #[instrument(name = "CreateLocalUser", skip(self))]
+impl Resolve<AuthArgs> for SignUpLocalUser {
+  #[instrument(name = "SignUpLocalUser", skip(self))]
   async fn resolve(
     self,
     _: &AuthArgs,
-  ) -> serror::Result<CreateLocalUserResponse> {
+  ) -> serror::Result<SignUpLocalUserResponse> {
     let core_config = core_config();
 
     if !core_config.local_auth {
@@ -47,16 +47,27 @@ impl Resolve<AuthArgs> for CreateLocalUser {
       return Err(anyhow!("Password cannot be empty string").into());
     }
 
-    let hashed_password = hash_password(self.password)?;
+    let db = db_client();
 
     let no_users_exist =
-      db_client().users.find_one(Document::new()).await?.is_none();
+      db.users.find_one(Document::new()).await?.is_none();
 
     if !no_users_exist && core_config.disable_user_registration {
       return Err(anyhow!("User registration is disabled").into());
     }
 
+    if db
+      .users
+      .find_one(doc! { "username": &self.username })
+      .await
+      .context("Failed to query for existing users")?
+      .is_some()
+    {
+      return Err(anyhow!("Username already taken.").into());
+    }
+
     let ts = unix_timestamp_ms() as i64;
+    let hashed_password = hash_password(self.password)?;
 
     let user = User {
       id: Default::default(),
@@ -89,7 +100,7 @@ impl Resolve<AuthArgs> for CreateLocalUser {
       .encode(user_id)
       .context("failed to generate jwt for user")?;
 
-    Ok(CreateLocalUserResponse { jwt })
+    Ok(SignUpLocalUserResponse { jwt })
   }
 }
 

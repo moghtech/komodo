@@ -72,7 +72,7 @@ export default function Login() {
     userInvalidate();
   };
   const { mutate: signup, isPending: signupPending } = useAuth(
-    "CreateLocalUser",
+    "SignUpLocalUser",
     {
       onSuccess,
       onError: (e: any) => {

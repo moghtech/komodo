@@ -47,19 +47,20 @@ pub struct GetLoginOptionsResponse {
 
 //
 
-/// Create a new local user account. Will fail if a user with the
+/// Sign up a new local user account. Will fail if a user with the
 /// given username already exists.
-/// Response: [CreateLocalUserResponse].
+/// Response: [SignUpLocalUserResponse].
 ///
-/// Note. This method is only available if the core api has `local_auth` enabled.
+/// Note. This method is only available if the core api has `local_auth` enabled,
+/// and if user registration is not disabled (after the first user).
 #[typeshare]
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
 #[empty_traits(KomodoAuthRequest)]
-#[response(CreateLocalUserResponse)]
+#[response(SignUpLocalUserResponse)]
 #[error(serror::Error)]
-pub struct CreateLocalUser {
+pub struct SignUpLocalUser {
   /// The username for the new user.
   pub username: String,
   /// The password for the new user.
@@ -67,9 +68,9 @@ pub struct CreateLocalUser {
   pub password: String,
 }
 
-/// Response for [CreateLocalUser].
+/// Response for [SignUpLocalUser].
 #[typeshare]
-pub type CreateLocalUserResponse = JwtResponse;
+pub type SignUpLocalUserResponse = JwtResponse;
 
 //
 
