@@ -36,6 +36,7 @@ pub struct ServerListItemInfo {
   pub address: String,
   /// External address of the server (reachable by users).
   /// Used with links.
+  #[serde(default)] // API backward compat
   pub external_address: String,
   /// The Komodo Periphery version of the server.
   pub version: String,
