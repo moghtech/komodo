@@ -18,7 +18,7 @@ import {
 import { useState } from "react";
 import { ThemeToggle } from "@ui/theme";
 import { KOMODO_BASE_URL } from "@main";
-import { KeyRound, Loader2, X } from "lucide-react";
+import { KeyRound, X } from "lucide-react";
 import { cn } from "@lib/utils";
 import { useToast } from "@ui/use-toast";
 import { Types } from "komodo_client";
@@ -34,42 +34,6 @@ const login_with_oauth = (provider: OauthProvider) => {
   location.replace(
     `${KOMODO_BASE_URL}/auth/${provider.toLowerCase()}/login?redirect=${redirect}`
   );
-};
-
-const sanitize_query = (search: URLSearchParams) => {
-  search.delete("token");
-  const query = search.toString();
-  location.replace(
-    `${location.origin}${location.pathname}${query.length ? "?" + query : ""}`
-  );
-};
-
-let exchange_token_sent = false;
-
-/// returns whether to show login / loading screen depending on state of exchange token loop
-const useExchangeToken = () => {
-  const search = new URLSearchParams(location.search);
-  const exchange_token = search.get("token");
-  const { mutate } = useAuth("ExchangeForJwt", {
-    onSuccess: ({ user_id, jwt }) => {
-      LOGIN_TOKENS.add_and_change(user_id, jwt);
-      sanitize_query(search);
-    },
-  });
-
-  // In this case, failed to get user (jwt unset / invalid)
-  // and the exchange token is not in url.
-  // Just show the login.
-  if (!exchange_token) return false;
-
-  // guard against multiple reqs sent
-  // maybe isPending would do this but not sure about with render loop, this for sure will.
-  if (!exchange_token_sent) {
-    mutate({ token: exchange_token });
-    exchange_token_sent = true;
-  }
-
-  return true;
 };
 
 export default function Login() {
@@ -134,15 +98,7 @@ export default function Login() {
     },
   });
 
-  // Handle exchange token loop to avoid showing login flash
-  const exchangeTokenPending = useExchangeToken();
-  if (exchangeTokenPending) {
-    return (
-      <div className="w-screen h-screen flex justify-center items-center">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    );
-  }
+  
 
   const no_auth_configured =
     options !== undefined &&

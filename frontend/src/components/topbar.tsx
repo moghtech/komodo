@@ -33,7 +33,7 @@ import {
 } from "@ui/dropdown-menu";
 import { Button } from "@ui/button";
 import { Link } from "react-router-dom";
-import { RESOURCE_TARGETS, usableResourcePath } from "@lib/utils";
+import { cn, RESOURCE_TARGETS, usableResourcePath } from "@lib/utils";
 import { OmniSearch, OmniDialog } from "./omnibar";
 import { WsStatusIndicator } from "@lib/socket";
 import { TopbarUpdates } from "./updates/topbar";
@@ -406,20 +406,27 @@ const UserDropdown = () => {
 
 const Username = ({ user_id }: { user_id: string }) => {
   const res = useRead("GetUsername", { user_id }).data;
-  return <UsernameView username={res?.username} avatar={res?.avatar} />;
+  return <UsernameView username={res?.username} avatar={res?.avatar} full />;
 };
 
 const UsernameView = ({
   username,
   avatar,
+  full,
 }: {
   username: string | undefined;
   avatar: string | undefined;
+  full?: boolean;
 }) => {
   return (
     <>
       {avatar ? <img src={avatar} className="w-4" /> : <User className="w-4" />}
-      <div className="hidden xl:flex max-w-[120px] overflow-hidden overflow-ellipsis">
+      <div
+        className={cn(
+          "overflow-hidden overflow-ellipsis",
+          full ? "max-w-[200px]" : "hidden xl:flex max-w-[120px]"
+        )}
+      >
         {username}
       </div>
     </>
