@@ -317,6 +317,8 @@ const KeyboardShortcut = ({
 };
 
 const UserDropdown = () => {
+  const [_, setRerender] = useState(false);
+  const rerender = () => setRerender((r) => !r);
   const [open, setOpen] = useState(false);
   const user = useUser().data;
   const userInvalidate = useUserInvalidate();
@@ -335,25 +337,42 @@ const UserDropdown = () => {
         className="w-[260px] flex flex-col gap-2 items-end p-2"
         side="bottom"
         align="end"
+        sideOffset={16}
       >
         {accounts.map((login) => (
-          <Button
-            variant={
-              login.user_id === user?._id?.$oid ? "secondary" : "outline"
-            }
-            className="flex gap-2 items-center justify-center w-full"
-            onClick={() => {
-              if (login.user_id === user?._id?.$oid) {
-                // Noop
-                setOpen(false);
-                return;
+          <div className="flex gap-2 items-center w-full">
+            <Button
+              variant={
+                login.user_id === user?._id?.$oid ? "secondary" : "outline"
               }
-              LOGIN_TOKENS.change(login.user_id);
-              location.reload();
-            }}
-          >
-            <Username user_id={login.user_id} />
-          </Button>
+              className="flex gap-2 items-center justify-center w-full"
+              onClick={() => {
+                if (login.user_id === user?._id?.$oid) {
+                  // Noop
+                  setOpen(false);
+                  return;
+                }
+                LOGIN_TOKENS.change(login.user_id);
+                location.reload();
+              }}
+            >
+              <Username user_id={login.user_id} />
+            </Button>
+            <Button
+              variant="destructive"
+              size="icon"
+              onClick={() => {
+                LOGIN_TOKENS.remove(login.user_id);
+                if (login.user_id === user?._id?.$oid) {
+                  location.reload();
+                } else {
+                  rerender();
+                }
+              }}
+            >
+              <LogOut className="w-4" />
+            </Button>
+          </div>
         ))}
 
         <Link

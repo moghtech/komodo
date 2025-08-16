@@ -35,48 +35,59 @@ export const atomWithStorage = <T>(key: string, init: T) => {
   );
 };
 
-// ============== RESOLVER ==============
-
 type LoginTokens = {
   /** Current User ID */
   current: string | undefined;
-  /** Map of logged in user ids to tokens */
-  tokens: { [user_id: string]: string };
+  /** Array of logged in user ids / tokens */
+  tokens: Array<Types.JwtResponse>;
 };
 
-const LOGIN_TOKENS_KEY = "komodo-auth-tokens";
+const LOGIN_TOKENS_KEY = "komodo-auth-tokens-v1";
 
 export const LOGIN_TOKENS = (() => {
   const stored = localStorage.getItem(LOGIN_TOKENS_KEY);
+
   let tokens: LoginTokens = stored
     ? JSON.parse(stored)
-    : { current: undefined, tokens: {} };
+    : { current: undefined, tokens: [] };
+
   const update_local_storage = () => {
     localStorage.setItem(LOGIN_TOKENS_KEY, JSON.stringify(tokens));
   };
-  const add_and_change = (user_id: string, token: string) => {
+
+  const accounts = () => {
+    return tokens.tokens;
+  };
+
+  const add_and_change = (user_id: string, jwt: string) => {
+    const filtered = tokens.tokens.filter((t) => t.user_id !== user_id);
+    filtered.push({ user_id, jwt });
+    filtered.sort();
     tokens = {
       current: user_id,
-      tokens: { ...tokens.tokens, [user_id]: token },
+      tokens: filtered,
     };
     update_local_storage();
   };
+
   const remove = (user_id: string) => {
+    const filtered = tokens.tokens.filter((t) => t.user_id !== user_id);
     tokens = {
-      current: tokens.current === user_id ? undefined : tokens.current,
-      tokens: Object.fromEntries(
-        Object.entries(tokens.tokens).filter(([uid, _]) => uid !== user_id)
-      ),
+      current:
+        tokens.current === user_id ? filtered[0]?.user_id : tokens.current,
+      tokens: filtered,
     };
     update_local_storage();
   };
+
   const remove_all = () => {
     tokens = {
       current: undefined,
-      tokens: {},
+      tokens: [],
     };
     update_local_storage();
   };
+
   const change = (to_id: string) => {
     tokens = {
       current: to_id,
@@ -84,18 +95,12 @@ export const LOGIN_TOKENS = (() => {
     };
     update_local_storage();
   };
-  const accounts = () =>
-  {
-    const accounts = Object.entries(tokens.tokens).map(([user_id, jwt]) => ({
-      user_id,
-      jwt,
-    }));
-    accounts.sort();
-    return accounts;
-  }
 
   return {
-    jwt: () => (tokens.current ? (tokens.tokens[tokens.current] ?? "") : ""),
+    jwt: () =>
+      tokens.current
+        ? (tokens.tokens.find((t) => t.user_id === tokens.current)?.jwt ?? "")
+        : "",
     accounts,
     add_and_change,
     remove,
@@ -109,6 +114,8 @@ export const komodo_client = () =>
     type: "jwt",
     params: { jwt: LOGIN_TOKENS.jwt() },
   });
+
+// ============== RESOLVER ==============
 
 export const useLoginOptions = () => {
   return useQuery({
