@@ -384,7 +384,7 @@ const UserDropdown = () => {
             onClick={() => setOpen(false)}
             className="flex gap-1 items-center justify-center w-full"
           >
-            Add another
+            Add
             <Plus className="w-4" />
           </Button>
         </Link>
