@@ -56,7 +56,9 @@ export const LOGIN_TOKENS = (() => {
   };
 
   const accounts = () => {
-    return tokens.tokens;
+    const current = tokens.tokens.find((t) => t.user_id === tokens.current);
+    const filtered = tokens.tokens.filter((t) => t.user_id !== tokens.current);
+    return current ? [current, ...filtered] : filtered;
   };
 
   const add_and_change = (user_id: string, jwt: string) => {
