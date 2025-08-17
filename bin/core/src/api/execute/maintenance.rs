@@ -8,7 +8,10 @@ use komodo_client::{
   api::execute::{
     BackupCoreDatabase, ClearRepoCache, GlobalAutoUpdate,
   },
-  entities::server::ServerState,
+  entities::{
+    deployment::DeploymentState, server::ServerState,
+    stack::StackState,
+  },
 };
 use reqwest::StatusCode;
 use resolver_api::Resolve;
@@ -21,7 +24,10 @@ use crate::{
   },
   config::core_config,
   helpers::update::update_update,
-  state::{db_client, server_status_cache},
+  state::{
+    db_client, deployment_status_cache, server_status_cache,
+    stack_status_cache,
+  },
 };
 
 /// Makes sure the method can only be called once at a time
@@ -199,13 +205,24 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
     .context("Failed to query for resources from database")?;
 
     let server_status_cache = server_status_cache();
+    let stack_status_cache = stack_status_cache();
 
     // Will be edited later at update.logs[0]
     update.push_simple_log("Auto Pull", String::new());
 
     for stack in stacks {
+      let Some(status) = stack_status_cache.get(&stack.id).await
+      else {
+        continue;
+      };
+      // Only pull running stacks.
+      if !matches!(status.curr.state, StackState::Running) {
+        continue;
+      }
       if let Some(server) =
         servers.iter().find(|s| s.id == stack.config.server_id)
+        // This check is probably redundant along with running check
+        // but shouldn't hurt
         && server_status_cache
           .get(&server.id)
           .await
@@ -249,13 +266,25 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
       }
     }
 
+    let deployment_status_cache = deployment_status_cache();
     let deployments =
       find_collect(&db_client().deployments, query, None)
         .await
         .context("Failed to query for deployments from database")?;
     for deployment in deployments {
+      let Some(status) =
+        deployment_status_cache.get(&deployment.id).await
+      else {
+        continue;
+      };
+      // Only pull running deployments.
+      if !matches!(status.curr.state, DeploymentState::Running) {
+        continue;
+      }
       if let Some(server) =
         servers.iter().find(|s| s.id == deployment.config.server_id)
+        // This check is probably redundant along with running check
+        // but shouldn't hurt
         && server_status_cache
           .get(&server.id)
           .await
