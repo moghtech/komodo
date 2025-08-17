@@ -26,7 +26,8 @@ executions = [
 
 :::info
 You are also able to integrate `BackupCoreDatabase` into other Procedures, for example to trigger
-this process before launching a backup container.
+this process before launching a backup container. There is nothing special about this Procedure,
+it's just created by default for guidance / convenience.
 :::
 
 ## Backups

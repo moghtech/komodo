@@ -22,7 +22,7 @@ executions = [
 :::info
 You are also able to integrate `GlobalAutoUpdate` into other Procedures
 to coordinate the timing with other processes, such as backup. There is
-nothing special about this Procedure, it was just created for
+nothing special about this Procedure, it's just created by default for
 guidance / convenience.
 :::
 
