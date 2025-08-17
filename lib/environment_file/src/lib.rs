@@ -15,7 +15,7 @@ pub fn maybe_read_item_from_file<T: FromStrDebugErr>(
       err,
     })
     .unwrap();
-  let res = T::from_str(&res)
+  let res = T::from_str(res.trim())
     .map_err(|err| Error::<T>::ParseValueError {
       path,
       err: err.into(),
