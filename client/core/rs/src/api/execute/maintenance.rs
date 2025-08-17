@@ -33,7 +33,7 @@ pub struct ClearRepoCache {}
 /// timestamped database dumps, which can be restored using
 /// the Komodo CLI.
 ///
-/// TODO: Link to docs
+/// https://komo.do/docs/setup/backup
 #[typeshare]
 #[derive(
   Debug,
