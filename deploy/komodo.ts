@@ -4,7 +4,7 @@ const branch = await new Deno.Command("bash", {
   args: ["-c", "git rev-parse --abbrev-ref HEAD"],
 })
   .output()
-  .then((r) => new TextDecoder("utf-8").decode(r.stdout));
+  .then((r) => new TextDecoder("utf-8").decode(r.stdout).trim());
 
 const cargo_toml_str = await Deno.readTextFile("Cargo.toml");
 const prev_version = (
@@ -38,8 +38,7 @@ echo ""
 git push
 echo ""
 
-km run -y action deploy-komodo \
-  "KOMODO_BRANCH=${branch}&KOMODO_VERSION=${version}&KOMODO_TAG=${tag}-${next_count}"
+km run -y action deploy-komodo "KOMODO_BRANCH=${branch}&KOMODO_VERSION=${version}&KOMODO_TAG=${tag}-${next_count}"
 `
   .split("\n")
   .map((line) => line.trim())
