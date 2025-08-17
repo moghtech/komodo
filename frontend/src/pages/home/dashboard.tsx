@@ -114,7 +114,7 @@ const ResourceRow = ({ type }: { type: UsableResource }) => {
     <div className="border rounded-md flex flex-col md:flex-row">
       <Link
         to={`/${usableResourcePath(type)}`}
-        className="shrink-0 px-6 py-4 flex flex-col justify-between lg:border-r group bg-accent/50 hover:bg-accent/15 transition-colors"
+        className="shrink-0 px-6 py-4 flex flex-col justify-center lg:border-r group bg-accent/50 hover:bg-accent/15 transition-colors"
       >
         <div className="flex items-center gap-4 text-xl group-hover:underline">
           <Components.Icon />
@@ -127,7 +127,7 @@ const ResourceRow = ({ type }: { type: UsableResource }) => {
           <History className="w-3" />
           Recently Viewed
         </p>
-        <div className="h-44 grid xl:grid-cols-2 2xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-4 auto-rows-max">
           {ids.map((id, i) => (
             <RecentCard
               key={type + id}
@@ -171,7 +171,7 @@ const RecentCard = ({
       to={`${usableResourcePath(type)}/${id}`}
       className={cn(
         "w-full px-3 py-2 border rounded-md hover:bg-accent/25 hover:-translate-y-1 transition-all flex flex-col justify-between",
-        showServerStats ? "" : "h-20",
+        showServerStats ? "min-h-32" : "h-20",
         className,
       )}
     >
@@ -185,18 +185,17 @@ const RecentCard = ({
         {type === "Stack" && <StackUpdateAvailable id={id} small />}
       </div>
 
-      {showServerStats ? (
-        <div className="flex flex-col gap-2 mt-2">
-          <ServerStatsMini id={id} />
-          <div className="flex gap-2 w-full py-2">
-            <TagsWithBadge tag_ids={tags} />
-          </div>
+      <div
+        className={cn(
+          "flex flex-col gap-2 w-full",
+          showServerStats ? "mt-2 flex-1" : "mt-auto",
+        )}
+      >
+        {showServerStats && <ServerStatsMini id={id} />}
+        <div className="flex gap-2 w-full py-1">
+          <TagsWithBadge className="flex-row" tag_ids={tags} />
         </div>
-      ) : (
-        <div className="flex gap-2 w-full">
-          <TagsWithBadge tag_ids={tags} />
-        </div>
-      )}
+      </div>
     </Link>
   );
 };
