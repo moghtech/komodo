@@ -133,11 +133,14 @@ export const ActionConfig = ({ id }: { id: string }) => {
                           </div>
                         </SelectTrigger>
                         <SelectContent>
-                          {Object.values(Types.FileFormat).map((format) => (
-                            <SelectItem value={format}>
-                              {snake_case_to_upper_space_case(format)}
-                            </SelectItem>
-                          ))}
+                          {Object.values(Types.FileFormat)
+                            // Don't allow selection of Toml, as this option will break resource sync
+                            .filter((f) => f !== Types.FileFormat.Toml)
+                            .map((format) => (
+                              <SelectItem value={format}>
+                                {snake_case_to_upper_space_case(format)}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </div>
