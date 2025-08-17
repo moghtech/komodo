@@ -67,7 +67,7 @@ pub async fn get_container_stats(
                            \"MemUsage\":\"{{ .MemUsage }}\", \
                            \"Name\":\"{{ .Name }}\", \
                            \"NetIO\":\"{{ .NetIO }}\",\
-                           \"PIDs\":\"{{ .PIDs }}\"}'"
+                           \"PIDs\":\"{{ .PIDs }}\"}'";
   let container_name = match container_name {
     Some(name) => format!(" {name}"),
     None => "".to_string(),
