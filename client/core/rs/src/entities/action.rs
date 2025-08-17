@@ -164,7 +164,11 @@ pub struct ActionConfig {
   pub arguments_format: FileFormat,
 
   /// Default arguments to give to the Action for use in the script at `ARGS`.
-  #[serde(default)]
+  #[serde(default, deserialize_with = "file_contents_deserializer")]
+  #[partial_attr(serde(
+    default,
+    deserialize_with = "option_file_contents_deserializer"
+  ))]
   #[builder(default)]
   pub arguments: String,
 }
