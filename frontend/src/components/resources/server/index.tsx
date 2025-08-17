@@ -33,6 +33,7 @@ import { StackTable } from "../stack/table";
 import { ResourceComponents } from "..";
 import { ServerInfo } from "./info";
 import { ServerStats } from "./stats";
+import { ServerStatsMini } from "./stats-mini";
 import { GroupActions } from "@components/group-actions";
 import { ServerTerminals } from "@components/terminal/server";
 import { usePermissions } from "@lib/hooks";
@@ -251,6 +252,8 @@ export const ServerVersion = ({ id }: { id: string }) => {
     </Tooltip>
   );
 };
+
+export { ServerStatsMini };
 
 export const ServerComponents: RequiredResourceComponents = {
   list_item: (id) => useServer(id),

@@ -2,8 +2,12 @@ import { ExportButton } from "@components/export";
 import { Page, Section } from "@components/layouts";
 import { ResourceComponents } from "@components/resources";
 import { ResourceLink, ResourceNameSimple } from "@components/resources/common";
+import { ServerStatsMini } from "@components/resources/server";
 import { TagsWithBadge } from "@components/tags";
 import { StatusBadge, TemplateMarker } from "@components/util";
+import { useDashboardPreferences } from "@lib/dashboard-preferences";
+import { Button } from "@ui/button";
+import { Eye, EyeOff } from "lucide-react";
 import {
   action_state_intention,
   build_state_intention,
@@ -27,13 +31,42 @@ import { UpdateAvailable as DeploymentUpdateAvailable } from "@components/resour
 export default function Dashboard() {
   const noResources = useNoResources();
   const user = useUser().data!;
+  const { preferences, updatePreference } = useDashboardPreferences();
+
   return (
     <>
       <ActiveResources />
       <Page
         title="Dashboard"
         icon={<Box className="w-8 h-8" />}
-        actions={<ExportButton />}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                updatePreference(
+                  "showServerStats",
+                  !preferences.showServerStats,
+                )
+              }
+              className="flex items-center gap-2"
+            >
+              {preferences.showServerStats ? (
+                <>
+                  <EyeOff className="w-4 h-4" />
+                  <span>Hide Server Stats</span>
+                </>
+              ) : (
+                <>
+                  <Eye className="w-4 h-4" />
+                  <span>Show Server Stats</span>
+                </>
+              )}
+            </Button>
+            <ExportButton />
+          </div>
+        }
       >
         <div className="flex flex-col gap-6 w-full">
           {noResources && (
@@ -65,7 +98,7 @@ const ResourceRow = ({ type }: { type: UsableResource }) => {
   const _recents = useUser().data?.recents?.[type]?.slice(0, 6);
   const _resources = useRead(`List${type}s`, {}).data;
   const recents = _recents?.filter(
-    (recent) => !_resources?.every((resource) => resource.id !== recent)
+    (recent) => !_resources?.every((resource) => resource.id !== recent),
   );
   const resources = _resources
     ?.filter((r) => !recents?.includes(r.id))
@@ -81,7 +114,7 @@ const ResourceRow = ({ type }: { type: UsableResource }) => {
     <div className="border rounded-md flex flex-col md:flex-row">
       <Link
         to={`/${usableResourcePath(type)}`}
-        className="shrink-0 px-6 py-4 flex flex-col justify-between lg:border-r group bg-accent/50 hover:bg-accent/15 transition-colors"
+        className="shrink-0 px-6 py-4 flex flex-col justify-center lg:border-r group bg-accent/50 hover:bg-accent/15 transition-colors"
       >
         <div className="flex items-center gap-4 text-xl group-hover:underline">
           <Components.Icon />
@@ -94,7 +127,7 @@ const ResourceRow = ({ type }: { type: UsableResource }) => {
           <History className="w-3" />
           Recently Viewed
         </p>
-        <div className="h-44 grid xl:grid-cols-2 2xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-4 auto-rows-max">
           {ids.map((id, i) => (
             <RecentCard
               key={type + id}
@@ -126,17 +159,20 @@ const RecentCard = ({
 }) => {
   const Components = ResourceComponents[type];
   const resource = Components.list_item(id);
+  const { preferences } = useDashboardPreferences();
 
   if (!resource) return null;
 
   const tags = resource?.tags;
+  const showServerStats = type === "Server" && preferences.showServerStats;
 
   return (
     <Link
       to={`${usableResourcePath(type)}/${id}`}
       className={cn(
-        "w-full px-3 py-2 border rounded-md hover:bg-accent/25 hover:-translate-y-1 transition-all h-20 flex flex-col justify-between",
-        className
+        "w-full px-3 py-2 border rounded-md hover:bg-accent/25 hover:-translate-y-1 transition-all flex flex-col justify-between",
+        showServerStats ? "min-h-32" : "h-20",
+        className,
       )}
     >
       <div className="flex items-center justify-between">
@@ -148,8 +184,17 @@ const RecentCard = ({
         {type === "Deployment" && <DeploymentUpdateAvailable id={id} small />}
         {type === "Stack" && <StackUpdateAvailable id={id} small />}
       </div>
-      <div className="flex gap-2 w-full">
-        <TagsWithBadge tag_ids={tags} />
+
+      <div
+        className={cn(
+          "flex flex-col gap-2 w-full",
+          showServerStats ? "mt-2 flex-1" : "mt-auto",
+        )}
+      >
+        {showServerStats && <ServerStatsMini id={id} />}
+        <div className="flex gap-2 w-full py-1">
+          <TagsWithBadge className="flex-row" tag_ids={tags} />
+        </div>
       </div>
     </Link>
   );
