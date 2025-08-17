@@ -1,13 +1,13 @@
 # Backup and Restore
 
 :::info
-Database backup and restore is actually a function of the [Komodo CLI](../cli),
+Database backup and restore is actually a function of the [Komodo CLI](../ecosystem/cli),
 which is packaged in with the Komodo Core image for convenience.
 :::
 
 Starting from **v1.19.0**, new Komodo installs will automatically create the
-**Backup Core Database** [Procedure](../procedures), scheduled daily. If you don't have it,
-this is the Toml:
+**Backup Core Database** [Procedure](../resources/procedures#procedures), scheduled daily.
+If you don't have it, this is the Toml:
 
 ```toml
 [[procedure]]
@@ -83,8 +83,7 @@ services:
 
 ## Restore
 
-The backup solution wouldn't be very useful without an easy way to restore the database from these files.
-Fortunately the Komodo CLI handles this as well:
+The Komodo CLI handles database restores as well.
 
 ```yaml
 services:
@@ -103,7 +102,7 @@ services:
       KOMODO_CLI_DATABASE_TARGET_ADDRESS: komodo.example.com:27017
       KOMODO_CLI_DATABASE_TARGET_USERNAME: <db username>
       KOMODO_CLI_DATABASE_TARGET_PASSWORD: <db password>
-      KOMODO_CLI_DATABASE_TARGET_DB_NAME: komodo
+      KOMODO_CLI_DATABASE_TARGET_DB_NAME: komodo-restore
 ```
 
 :::warning
@@ -112,3 +111,16 @@ HOWEVER it will not "clear" the target database beforehand. If the restore datab
 those old documents will also remain. You may want to drop / delete the target database
 before restoring to it in this case.
 :::
+
+## Consistency
+
+So long as the backup process completes successfully, the files produces can always be restored
+no matter how active the Komodo instance is at the time of backup. However writes that happen during
+the backup process, such as updates to the resource configuration, may or may not be included in the backup
+depending on the timing.
+
+While it should be rare that this causes any kind of issue when it comes to restoring, if your
+Komodo undergoes a lot of usage at all hours and you are worried about consistency,
+you could consider [locking](https://www.mongodb.com/docs/manual/reference/method/db.fsyncLock/#mongodb-method-db.fsyncLock)
+Mongo before the backup. Just make sure to [unlock](https://www.mongodb.com/docs/manual/reference/method/db.fsyncUnlock/)
+the database afterwards.

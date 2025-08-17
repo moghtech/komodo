@@ -1,4 +1,4 @@
-import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
+import type { SidebarsConfig } from "@docusaurus/plugin-content-docs";
 
 /**
  * Creating a sidebar enables you to:
@@ -26,7 +26,7 @@ const sidebars: SidebarsConfig = {
         "setup/connect-servers",
         "setup/backup",
         "setup/advanced",
-        "setup/version-upgrades"
+        "setup/version-upgrades",
       ],
     },
     {
@@ -64,18 +64,28 @@ const sidebars: SidebarsConfig = {
           ],
         },
         "resources/docker-compose",
+        "resources/auto-update",
         "resources/variables",
         "resources/procedures",
         "resources/sync-resources",
         "resources/webhooks",
         "resources/permissioning",
-        "resources/auto-update"
       ],
     },
-    "cli",
-    "api",
-    "development",
-    "community",
+    {
+      type: "category",
+      label: "Ecosystem",
+      link: {
+        type: "doc",
+        id: "ecosystem/index",
+      },
+      items: [
+        "ecosystem/cli",
+        "ecosystem/api",
+        "ecosystem/community",
+        "ecosystem/development",
+      ],
+    },
   ],
 };
 

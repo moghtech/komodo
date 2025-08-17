@@ -401,7 +401,7 @@ async fn ensure_init_user_and_resources() {
       target: ResourceTarget::Procedure(procedure.id),
       tags: Some(default_tags.clone()),
       description: Some(String::from(
-        "Triggers the Core database backup at the scheduled time.",
+        "Pulls and auto updates Stacks and Deployments using 'poll_for_updates' or 'auto_update'.",
       )),
       template: None,
     })
