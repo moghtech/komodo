@@ -5,6 +5,9 @@ import { ResourceLink, ResourceNameSimple } from "@components/resources/common";
 import { ServerStatsMini } from "@components/resources/server";
 import { TagsWithBadge } from "@components/tags";
 import { StatusBadge, TemplateMarker } from "@components/util";
+import { useDashboardPreferences } from "@lib/dashboard-preferences";
+import { Button } from "@ui/button";
+import { Eye, EyeOff } from "lucide-react";
 import {
   action_state_intention,
   build_state_intention,
@@ -28,13 +31,42 @@ import { UpdateAvailable as DeploymentUpdateAvailable } from "@components/resour
 export default function Dashboard() {
   const noResources = useNoResources();
   const user = useUser().data!;
+  const { preferences, updatePreference } = useDashboardPreferences();
+
   return (
     <>
       <ActiveResources />
       <Page
         title="Dashboard"
         icon={<Box className="w-8 h-8" />}
-        actions={<ExportButton />}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                updatePreference(
+                  "showServerStats",
+                  !preferences.showServerStats,
+                )
+              }
+              className="flex items-center gap-2"
+            >
+              {preferences.showServerStats ? (
+                <>
+                  <EyeOff className="w-4 h-4" />
+                  <span>Hide Server Stats</span>
+                </>
+              ) : (
+                <>
+                  <Eye className="w-4 h-4" />
+                  <span>Show Server Stats</span>
+                </>
+              )}
+            </Button>
+            <ExportButton />
+          </div>
+        }
       >
         <div className="flex flex-col gap-6 w-full">
           {noResources && (
@@ -66,7 +98,7 @@ const ResourceRow = ({ type }: { type: UsableResource }) => {
   const _recents = useUser().data?.recents?.[type]?.slice(0, 6);
   const _resources = useRead(`List${type}s`, {}).data;
   const recents = _recents?.filter(
-    (recent) => !_resources?.every((resource) => resource.id !== recent)
+    (recent) => !_resources?.every((resource) => resource.id !== recent),
   );
   const resources = _resources
     ?.filter((r) => !recents?.includes(r.id))
@@ -127,18 +159,20 @@ const RecentCard = ({
 }) => {
   const Components = ResourceComponents[type];
   const resource = Components.list_item(id);
+  const { preferences } = useDashboardPreferences();
 
   if (!resource) return null;
 
   const tags = resource?.tags;
+  const showServerStats = type === "Server" && preferences.showServerStats;
 
   return (
     <Link
       to={`${usableResourcePath(type)}/${id}`}
       className={cn(
         "w-full px-3 py-2 border rounded-md hover:bg-accent/25 hover:-translate-y-1 transition-all flex flex-col justify-between",
-        type === "Server" ? "h-32" : "h-20",
-        className
+        showServerStats ? "" : "h-20",
+        className,
       )}
     >
       <div className="flex items-center justify-between">
@@ -150,11 +184,11 @@ const RecentCard = ({
         {type === "Deployment" && <DeploymentUpdateAvailable id={id} small />}
         {type === "Stack" && <StackUpdateAvailable id={id} small />}
       </div>
-      
-      {type === "Server" ? (
+
+      {showServerStats ? (
         <div className="flex flex-col gap-2 mt-2">
           <ServerStatsMini id={id} />
-          <div className="flex gap-2 w-full">
+          <div className="flex gap-2 w-full py-2">
             <TagsWithBadge tag_ids={tags} />
           </div>
         </div>
@@ -187,7 +221,7 @@ export const DashboardPieChart = ({
             <span
               className={cn(
                 "font-bold",
-                text_color_class_by_intention(intention)
+                text_color_class_by_intention(intention),
               )}
             >
               {value}
@@ -213,7 +247,7 @@ export const DashboardPieChart = ({
 const ActiveResources = () => {
   const builds =
     useRead("ListBuilds", {}).data?.filter(
-      (build) => build.info.state === Types.BuildState.Building
+      (build) => build.info.state === Types.BuildState.Building,
     ) ?? [];
   const repos =
     useRead("ListRepos", {}).data?.filter((repo) =>
@@ -221,15 +255,15 @@ const ActiveResources = () => {
         Types.RepoState.Building,
         Types.RepoState.Cloning,
         Types.RepoState.Pulling,
-      ].includes(repo.info.state)
+      ].includes(repo.info.state),
     ) ?? [];
   const procedures =
     useRead("ListProcedures", {}).data?.filter(
-      (procedure) => procedure.info.state === Types.ProcedureState.Running
+      (procedure) => procedure.info.state === Types.ProcedureState.Running,
     ) ?? [];
   const actions =
     useRead("ListActions", {}).data?.filter(
-      (action) => action.info.state === Types.ActionState.Running
+      (action) => action.info.state === Types.ActionState.Running,
     ) ?? [];
 
   const resources = [
