@@ -7,13 +7,13 @@ Can be used to move between MongoDB / FerretDB, or upgrade from FerretDB v1 to v
 services:
 
   copy_database:
-    image: ghcr.io/moghtech/komodo-util
+    image: ghcr.io/moghtech/komodo-cli
+    command: km database copy -y
     environment:
-      MODE: CopyDatabase
-      SOURCE_URI: mongodb://${KOMODO_DB_USERNAME}:${KOMODO_DB_PASSWORD}@source:27017
-      SOURCE_DB_NAME: ${KOMODO_DATABASE_DB_NAME:-komodo}
-      TARGET_URI: mongodb://${KOMODO_DB_USERNAME}:${KOMODO_DB_PASSWORD}@target:27017
-      TARGET_DB_NAME: ${KOMODO_DATABASE_DB_NAME:-komodo}
+      KOMODO_DATABASE_URI: mongodb://${KOMODO_DB_USERNAME}:${KOMODO_DB_PASSWORD}@source:27017
+      KOMODO_DATABASE_DB_NAME: ${KOMODO_DATABASE_DB_NAME:-komodo}
+      KOMODO_CLI_DATABASE_TARGET_URI: mongodb://${KOMODO_DB_USERNAME}:${KOMODO_DB_PASSWORD}@target:27017
+      KOMODO_CLI_DATABASE_TARGET_DB_NAME: ${KOMODO_DATABASE_DB_NAME:-komodo}
 
 ```
 
@@ -90,13 +90,13 @@ services:
   ...(new database)
 
   copy_database:
-    image: ghcr.io/moghtech/komodo-util
+    image: ghcr.io/moghtech/komodo-cli
+    command: km database copy -y
     environment:
-      MODE: CopyDatabase
-      SOURCE_URI: mongodb://${KOMODO_DB_USERNAME}:${KOMODO_DB_PASSWORD}@ferretdb:27017/${KOMODO_DATABASE_DB_NAME:-komodo}?authMechanism=PLAIN
-      SOURCE_DB_NAME: ${KOMODO_DATABASE_DB_NAME:-komodo}
-      TARGET_URI: mongodb://${KOMODO_DB_USERNAME}:${KOMODO_DB_PASSWORD}@ferretdb2:27017
-      TARGET_DB_NAME: ${KOMODO_DATABASE_DB_NAME:-komodo}
+      KOMODO_DATABASE_URI: mongodb://${KOMODO_DB_USERNAME}:${KOMODO_DB_PASSWORD}@ferretdb:27017/${KOMODO_DATABASE_DB_NAME:-komodo}?authMechanism=PLAIN
+      KOMODO_DATABASE_DB_NAME: ${KOMODO_DATABASE_DB_NAME:-komodo}
+      KOMODO_CLI_DATABASE_TARGET_URI: mongodb://${KOMODO_DB_USERNAME}:${KOMODO_DB_PASSWORD}@ferretdb2:27017
+      KOMODO_CLI_DATABASE_TARGET_DB_NAME: ${KOMODO_DATABASE_DB_NAME:-komodo}
 
   ...(unchanged)
 ```
