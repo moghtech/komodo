@@ -9,7 +9,7 @@ use komodo_client::entities::{
 use crate::{
   alert::send_alerts,
   resource,
-  state::{db_client, stack_status_cache},
+  state::{action_states, db_client, stack_status_cache},
 };
 
 #[instrument(level = "debug")]
@@ -17,6 +17,7 @@ pub async fn alert_stacks(
   ts: i64,
   server_names: &HashMap<String, String>,
 ) {
+  let action_states = action_states();
   let mut alerts = Vec::<Alert>::new();
   for status in stack_status_cache().get_list().await {
     // Don't alert if prev None
@@ -28,6 +29,20 @@ pub async fn alert_stacks(
     // This will happen if server is unreachable, so this would be redundant.
     if status.curr.state == StackState::Unknown
       || prev == StackState::Unknown
+    {
+      continue;
+    }
+
+    // Don't alert if deploying
+    if action_states
+      .stack
+      .get(&status.curr.id)
+      .await
+      .map(|s| s.get().map(|s| s.deploying))
+      .transpose()
+      .ok()
+      .flatten()
+      .unwrap_or_default()
     {
       continue;
     }
