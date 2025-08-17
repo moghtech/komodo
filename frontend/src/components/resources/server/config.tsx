@@ -70,7 +70,7 @@ export const ServerConfig = ({
               },
               external_address: {
                 description:
-                  "Optional. The address of the server reachable by users, if different than the Address.",
+                  "Optional. The address of the server used in container links, if different than the Address.",
                 placeholder: "https://my.server.int",
               },
               region: {
