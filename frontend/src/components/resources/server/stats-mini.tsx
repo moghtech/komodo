@@ -77,11 +77,11 @@ export const ServerStatsMini = ({ id, className }: ServerStatsMiniProps) => {
   }
 
   const cpuPercentage = stats ? calculatePercentage(stats.cpu_perc) : 0;
-  const memoryPercentage = stats && stats.mem_total_gb > 0? calculatePercentage((stats.mem_used_gb / stats.mem_total_gb) * 100): 0;
+  const memoryPercentage = stats && stats.mem_total_gb > 0 ? calculatePercentage((stats.mem_used_gb / stats.mem_total_gb) * 100) : 0;
 
   const diskUsed = stats ? stats.disks.reduce((acc, disk) => acc + disk.used_gb, 0) : 0;
   const diskTotal = stats ? stats.disks.reduce((acc, disk) => acc + disk.total_gb, 0) : 0;
-  const diskPercentage = diskTotal > 0? calculatePercentage((diskUsed / diskTotal) * 100): 0;
+  const diskPercentage = diskTotal > 0? calculatePercentage((diskUsed / diskTotal) * 100) : 0;
     
   const isUnreachable = !stats || server.info.state === ServerState.NotOk;
   const unreachableClass = isUnreachable ? "opacity-50" : "";

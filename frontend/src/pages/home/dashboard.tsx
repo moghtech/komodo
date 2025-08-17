@@ -220,7 +220,7 @@ export const DashboardPieChart = ({
             <span
               className={cn(
                 "font-bold",
-                text_color_class_by_intention(intention),
+                text_color_class_by_intention(intention)
               )}
             >
               {value}
@@ -246,7 +246,7 @@ export const DashboardPieChart = ({
 const ActiveResources = () => {
   const builds =
     useRead("ListBuilds", {}).data?.filter(
-      (build) => build.info.state === Types.BuildState.Building,
+      (build) => build.info.state === Types.BuildState.Building
     ) ?? [];
   const repos =
     useRead("ListRepos", {}).data?.filter((repo) =>
@@ -254,15 +254,15 @@ const ActiveResources = () => {
         Types.RepoState.Building,
         Types.RepoState.Cloning,
         Types.RepoState.Pulling,
-      ].includes(repo.info.state),
+      ].includes(repo.info.state)
     ) ?? [];
   const procedures =
     useRead("ListProcedures", {}).data?.filter(
-      (procedure) => procedure.info.state === Types.ProcedureState.Running,
+      (procedure) => procedure.info.state === Types.ProcedureState.Running
     ) ?? [];
   const actions =
     useRead("ListActions", {}).data?.filter(
-      (action) => action.info.state === Types.ActionState.Running,
+      (action) => action.info.state === Types.ActionState.Running
     ) ?? [];
 
   const resources = [

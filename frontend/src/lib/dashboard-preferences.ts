@@ -6,16 +6,14 @@ interface DashboardPreferences {
 }
 
 const DEFAULT_PREFERENCES: DashboardPreferences = {
-  showServerStats: false, // Disabled by default as requested
+  showServerStats: false,
 };
 
-// Create a global atom for dashboard preferences
 export const dashboardPreferencesAtom = atomWithStorage<DashboardPreferences>(
   "komodo-dashboard-preferences",
   DEFAULT_PREFERENCES
 );
 
-// Hook to use dashboard preferences
 export const useDashboardPreferences = () => {
   const [preferences, setPreferences] = useAtom(dashboardPreferencesAtom);
 
