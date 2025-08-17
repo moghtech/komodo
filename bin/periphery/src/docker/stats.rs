@@ -60,7 +60,14 @@ async fn update_container_stats() {
 pub async fn get_container_stats(
   container_name: Option<String>,
 ) -> anyhow::Result<Vec<ContainerStats>> {
-  let format = "--format \"{{ json . }}\"";
+  let format = "--format '{\"BlockIO\":\"{{ .BlockIO }}\", \
+                           \"CPUPerc\":\"{{ .CPUPerc }}\", \
+                           \"ID\":\"{{ .ID }}\", \
+                           \"MemPerc\":\"{{ .MemPerc }}\", \
+                           \"MemUsage\":\"{{ .MemUsage }}\", \
+                           \"Name\":\"{{ .Name }}\", \
+                           \"NetIO\":\"{{ .NetIO }}\",\
+                           \"PIDs\":\"{{ .PIDs }}\"}'";
   let container_name = match container_name {
     Some(name) => format!(" {name}"),
     None => "".to_string(),
