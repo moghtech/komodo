@@ -1,5 +1,11 @@
 import * as TOML from "jsr:@std/toml";
 
+const branch = await new Deno.Command("bash", {
+  args: ["-c", "git rev-parse --abbrev-ref HEAD"],
+})
+  .output()
+  .then((r) => new TextDecoder("utf-8").decode(r.stdout));
+
 const cargo_toml_str = await Deno.readTextFile("Cargo.toml");
 const prev_version = (
   TOML.parse(cargo_toml_str) as {
@@ -32,16 +38,8 @@ echo ""
 git push
 echo ""
 
-km set var KOMODO_VERSION ${version} -y
-echo ""
-
-km set var KOMODO_TAG ${tag}-${next_count} -y
-echo ""
-
-km run -y commit variables
-echo ""
-
-km run -y action deploy-komodo
+km run -y action deploy-komodo \
+  "KOMODO_BRANCH=${branch}&KOMODO_VERSION=${version}&KOMODO_TAG=${tag}-${next_count}"
 `
   .split("\n")
   .map((line) => line.trim())
