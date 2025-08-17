@@ -1,5 +1,8 @@
 # Community
 
+### 3rd party tools
+- [Ansible Role Komodo](https://github.com/bpbradley/ansible-role-komodo) by [bpbradley](https://github.com/bpbradley)
+- [Komodo Import](https://foxxmd.github.io/komodo-import/docs/quickstart/) by [FoxxMD](https://github.com/FoxxMD)
 ### Posts and Guides
 - [Migrating to Komodo](https://blog.foxxmd.dev/posts/migrating-to-komodo) by [FoxxMD](https://github.com/FoxxMD)
 - [FAQ, Tips, and Tricks](https://blog.foxxmd.dev/posts/komodo-tips-tricks) by [FoxxMD](https://github.com/FoxxMD)
