@@ -152,8 +152,6 @@ pub enum Execution {
   StopStack(StopStack),
   DestroyStack(DestroyStack),
   BatchDestroyStack(BatchDestroyStack),
-  /// Runs a one-time command against a service using `docker compose run`.
-  #[clap(alias = "run")]
   RunStackService(RunStackService),
 
   // ALERTER

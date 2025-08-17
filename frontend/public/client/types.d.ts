@@ -990,9 +990,7 @@ export type Execution =
 } | {
     type: "BatchDestroyStack";
     params: BatchDestroyStack;
-}
-/** Runs a one-time command against a service using `docker compose run`. */
- | {
+} | {
     type: "RunStackService";
     params: RunStackService;
 } | {

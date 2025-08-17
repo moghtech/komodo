@@ -868,7 +868,6 @@ export type Execution =
 	| { type: "StopStack", params: StopStack }
 	| { type: "DestroyStack", params: DestroyStack }
 	| { type: "BatchDestroyStack", params: BatchDestroyStack }
-	/** Runs a one-time command against a service using `docker compose run`. */
 	| { type: "RunStackService", params: RunStackService }
 	| { type: "TestAlerter", params: TestAlerter }
 	| { type: "ClearRepoCache", params: ClearRepoCache }
