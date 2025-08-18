@@ -71,5 +71,3 @@ volumes:
   # Mongo
   mongo-data:
   mongo-config:
-  # Core
-  repo-cache:
