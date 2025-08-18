@@ -824,10 +824,9 @@ impl Resolve<super::Args> for ComposeRun {
     }
 
     let command_args = command
-      .as_deref()
-      .map(str::trim)
-      .filter(|s| !s.is_empty())
-      .map(|s| format!(" {}", s))
+      .as_ref()
+      .filter(|v| !v.is_empty())
+      .map(|v| format!(" {}", v.join(" ")))
       .unwrap_or_default();
 
     let command = format!(

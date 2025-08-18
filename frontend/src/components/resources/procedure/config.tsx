@@ -1143,7 +1143,7 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
       // local mirrors to allow cancel without committing
       const [stack, setStack] = useState(params.stack ?? "");
       const [service, setService] = useState(params.service ?? "");
-      const [command, setCommand] = useState(params.command ?? "");
+      const [commandText, setCommand] = useState(params.command?.[0] ?? "");
       const [no_tty, setNoTty] = useState(!!params.no_tty);
       const [no_deps, setNoDeps] = useState(!!params.no_deps);
       const [service_ports, setServicePorts] = useState(!!params.service_ports);
@@ -1161,7 +1161,7 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
       useEffect(() => {
         setStack(params.stack ?? "");
         setService(params.service ?? "");
-        setCommand(params.command ?? "");
+        setCommand(params.command?.[0] ?? "");
         setNoTty(!!params.no_tty);
         setNoDeps(!!params.no_deps);
         setServicePorts(!!params.service_ports);
@@ -1186,10 +1186,11 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
               return acc;
             }, {})
           : undefined;
+        const command = commandText.trim() ? [commandText] : [];
         setParams({
           stack,
           service,
-          command: command || undefined,
+          command: command.length ? command : undefined,
           no_tty: no_tty ? true : undefined,
           no_deps: no_deps ? true : undefined,
           service_ports: service_ports ? true : undefined,
@@ -1239,7 +1240,7 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
               <div className="flex flex-col gap-1">
                 <div className="text-muted-foreground text-xs">Command</div>
                 <Input
-                  value={command}
+                  value={commandText}
                   onChange={(e) => setCommand(e.target.value)}
                   disabled={disabled}
                 />

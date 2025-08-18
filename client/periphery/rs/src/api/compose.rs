@@ -262,7 +262,7 @@ pub struct ComposeRun {
   pub service: String,
   /// Command
   #[serde(default)]
-  pub command: Option<String>,
+  pub command: Option<Vec<String>>,
   /// Do not allocate TTY
   #[serde(default)]
   pub no_tty: Option<bool>,

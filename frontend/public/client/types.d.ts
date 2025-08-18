@@ -7198,7 +7198,7 @@ export interface RunStackService {
     /** Service to run */
     service: string;
     /** Command and args to pass to the service container */
-    command?: string;
+    command?: string[];
     /** Do not allocate TTY */
     no_tty?: boolean;
     /** Do not start linked services */

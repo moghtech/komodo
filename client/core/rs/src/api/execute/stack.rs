@@ -371,7 +371,8 @@ pub struct RunStackService {
   /// Service to run
   pub service: String,
   /// Command and args to pass to the service container
-  pub command: Option<String>,
+  #[arg(trailing_var_arg = true, num_args = 1.., allow_hyphen_values = true)]
+  pub command: Option<Vec<String>>,
   /// Do not allocate TTY
   #[arg(long = "no-tty", action = SetTrue)]
   pub no_tty: Option<bool>,
