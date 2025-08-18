@@ -48,7 +48,7 @@ pub struct BatchRunProcedure {
   /// Supports multiline and comma delineated combinations of the above.
   ///
   /// Example:
-  /// ```
+  /// ```text
   /// # match all foo-* procedures
   /// foo-*
   /// # add some more

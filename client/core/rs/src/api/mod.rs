@@ -20,7 +20,7 @@
 //! the schemas given in [read], [mod@write], [execute], and so on.
 //!
 //! For example, this is an example body for [read::GetDeployment]:
-//! ```
+//! ```json
 //! {
 //!   "type": "GetDeployment",
 //!   "params": {
@@ -56,7 +56,7 @@
 //!
 //! Request errors will be returned with a JSON body containing information about the error.
 //! They will have the following common format:
-//! ```
+//! ```json
 //! {
 //!   "error": "top level error message",
 //!   "trace": [

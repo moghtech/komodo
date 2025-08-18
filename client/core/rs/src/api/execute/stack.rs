@@ -57,7 +57,7 @@ pub struct BatchDeployStack {
   /// Supports multiline and comma delineated combinations of the above.
   ///
   /// Example:
-  /// ```
+  /// ```text
   /// # match all foo-* stacks
   /// foo-*
   /// # add some more
@@ -115,7 +115,7 @@ pub struct BatchDeployStackIfChanged {
   /// Supports multiline and comma delineated combinations of the above.
   ///
   /// Example:
-  /// ```
+  /// ```text
   /// # match all foo-* stacks
   /// foo-*
   /// # add some more
@@ -172,7 +172,7 @@ pub struct BatchPullStack {
   /// Supports multiline and comma delineated combinations of the above.
   ///
   /// Example:
-  /// ```
+  /// ```text
   /// # match all foo-* stacks
   /// foo-*
   /// # add some more
@@ -368,7 +368,7 @@ pub struct BatchDestroyStack {
   /// Supports multiline and comma delineated combinations of the above.
   ///d
   /// Example:
-  /// ```
+  /// ```text
   /// # match all foo-* stacks
   /// foo-*
   /// # add some more

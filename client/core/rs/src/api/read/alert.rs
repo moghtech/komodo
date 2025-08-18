@@ -20,7 +20,7 @@ pub struct ListAlerts {
   /// Pass a custom mongo query to filter the alerts.
   ///
   /// ## Example JSON
-  /// ```
+  /// ```json
   /// {
   ///   "resolved": "false",
   ///   "level": "CRITICAL",

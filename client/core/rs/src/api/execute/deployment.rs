@@ -62,7 +62,7 @@ pub struct BatchDeploy {
   /// Supports multiline and comma delineated combinations of the above.
   ///
   /// Example:
-  /// ```
+  /// ```text
   /// # match all foo-* deployments
   /// foo-*
   /// # add some more
@@ -270,7 +270,7 @@ pub struct BatchDestroyDeployment {
   /// Supports multiline and comma delineated combinations of the above.
   ///
   /// Example:
-  /// ```
+  /// ```text
   /// # match all foo-* deployments
   /// foo-*
   /// # add some more
