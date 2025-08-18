@@ -69,6 +69,7 @@ import {
   DialogTrigger,
 } from "@ui/dialog";
 import { MonacoEditor } from "@components/monaco";
+import { quote as shellQuote, parse as shellParse } from "shell-quote";
 
 type ExecutionType = Types.Execution["type"];
 
@@ -1143,7 +1144,9 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
       // local mirrors to allow cancel without committing
       const [stack, setStack] = useState(params.stack ?? "");
       const [service, setService] = useState(params.service ?? "");
-      const [commandText, setCommand] = useState(params.command?.[0] ?? "");
+      const [commandText, setCommand] = useState(
+        params.command && params.command.length ? shellQuote(params.command) : ""
+      );
       const [no_tty, setNoTty] = useState(!!params.no_tty);
       const [no_deps, setNoDeps] = useState(!!params.no_deps);
       const [service_ports, setServicePorts] = useState(!!params.service_ports);
@@ -1161,7 +1164,9 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
       useEffect(() => {
         setStack(params.stack ?? "");
         setService(params.service ?? "");
-        setCommand(params.command?.[0] ?? "");
+        setCommand(
+          params.command && params.command.length ? shellQuote(params.command) : ""
+        );
         setNoTty(!!params.no_tty);
         setNoDeps(!!params.no_deps);
         setServicePorts(!!params.service_ports);
@@ -1186,11 +1191,15 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
               return acc;
             }, {})
           : undefined;
-        const command = commandText.trim() ? [commandText] : [];
+          const parsed = commandText.trim()
+            ? shellParse(commandText.trim()).map((tok) =>
+                typeof tok === "string" ? tok : (tok as any).op ?? String(tok)
+              )
+            : [];
         setParams({
           stack,
           service,
-          command: command.length ? command : undefined,
+          command: parsed.length ? (parsed as string[]) : undefined,
           no_tty: no_tty ? true : undefined,
           no_deps: no_deps ? true : undefined,
           service_ports: service_ports ? true : undefined,

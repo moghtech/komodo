@@ -1,5 +1,5 @@
-use std::{fmt::Write, path::PathBuf};
-
+use std::{fmt::Write, path::PathBuf, borrow::Cow};
+use shell_escape::unix::escape;
 use anyhow::{Context, anyhow};
 use command::{
   run_komodo_command, run_komodo_command_with_sanitization,
@@ -826,7 +826,14 @@ impl Resolve<super::Args> for ComposeRun {
     let command_args = command
       .as_ref()
       .filter(|v| !v.is_empty())
-      .map(|v| format!(" {}", v.join(" ")))
+      .map(|argv| {
+        let joined = argv
+          .iter()
+          .map(|s| escape(Cow::Borrowed(s)).into_owned())
+          .collect::<Vec<_>>()
+          .join(" ");
+        format!(" {joined}")
+      })
       .unwrap_or_default();
 
     let command = format!(
