@@ -24,6 +24,11 @@ This way, it inherits the Core database config in order to easily perform backup
 
 ### Install
 
+There are binaries available for **Linux** (x86_64 / aarch64), **MacOS** (apple silicon), as
+well as a distroless image: **`ghcr.io/moghtech/komodo-cli`**.
+
+#### Linux
+
 You can install the binary using the following command:
 
 System-wide, as root, to `/usr/local/bin/km`:
@@ -31,13 +36,26 @@ System-wide, as root, to `/usr/local/bin/km`:
 curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/scripts/install-cli.py | python3
 ```
 
-Or as non-root, to `${HOME}/.local/bin/km`
+Or as non-root, to `${HOME}/.local/bin/km`:
 ```bash
 curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/scripts/install-cli.py | python3 - --user
 ```
 
-The CLI is also available packaged in into multi-arch docker images.
-  - `ghcr.io/moghtech/komodo-cli`.
+#### MacOS (Homebrew)
+
+Add the `moghtech/komodo` tap, then install `km`:
+```bash
+brew tap moghtech/komodo && \
+  brew install km
+```
+
+#### Container
+
+You can alias a docker run command:
+```bash
+alias km='docker run --rm -v $HOME/.config/komodo:/config ghcr.io/moghtech/komodo-cli km'
+km config
+```
 
 ### Configure
 
