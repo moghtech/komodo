@@ -9,7 +9,7 @@ import {
 } from "@ui/card";
 import { useFullStack, useStack } from ".";
 import { cn, updateLogToHtml } from "@lib/utils";
-import { MonacoEditor } from "@components/monaco";
+import { language_from_path, MonacoEditor } from "@components/monaco";
 import { usePermissions } from "@lib/hooks";
 import { ConfirmUpdate } from "@components/config/util";
 import { useLocalStorage, useWrite } from "@lib/hooks";
@@ -261,7 +261,7 @@ export const StackInfo = ({
                 <CardContent className="pr-8">
                   <MonacoEditor
                     value={edits[content.path] ?? content.contents}
-                    language="yaml"
+                    language={language_from_path(content.path)}
                     readOnly={!canEdit}
                     onValueChange={editFileCallback(content.path)}
                   />

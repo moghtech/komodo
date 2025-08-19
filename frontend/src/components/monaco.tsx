@@ -22,8 +22,32 @@ export type MonacoLanguage =
   | "dockerfile"
   | "rust"
   | "javascript"
-  | "typescript"
-  | undefined;
+  | "typescript";
+
+const LANGUAGE_EXTENSIONS: Record<MonacoLanguage, string[]> = {
+  yaml: [".yaml", ".yml"],
+  toml: [".toml"],
+  fancy_toml: [],
+  json: [".json"],
+  key_value: [".env"],
+  string_list: [],
+  shell: [".sh", ".bash", ".zsh"],
+  dockerfile: ["Dockerfile"],
+  rust: [".rs"],
+  javascript: [".js", ".jsx", ".mjs", ".cjs"],
+  typescript: [".ts", ".tsx"],
+};
+
+export const language_from_path = (path: string) => {
+  for (const [lang, extensions] of Object.entries(LANGUAGE_EXTENSIONS)) {
+    for (const extension of extensions) {
+      if (path.endsWith(extension)) {
+        return lang as MonacoLanguage;
+      }
+    }
+  }
+  return undefined;
+};
 
 export const MonacoEditor = ({
   value,
@@ -35,7 +59,7 @@ export const MonacoEditor = ({
 }: {
   value: string | undefined;
   onValueChange?: (value: string) => void;
-  language: MonacoLanguage;
+  language: MonacoLanguage | undefined;
   readOnly?: boolean;
   minHeight?: number;
   className?: string;
