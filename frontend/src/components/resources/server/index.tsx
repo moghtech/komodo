@@ -312,6 +312,11 @@ export const ServerComponents: RequiredResourceComponents = {
         data={[
           { title: "Healthy", intention: "Good", value: summary?.healthy ?? 0 },
           {
+            title: "Warning",
+            intention: "Warning",
+            value: summary?.warning ?? 0,
+          },
+          {
             title: "Unhealthy",
             intention: "Critical",
             value: summary?.unhealthy ?? 0,

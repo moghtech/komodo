@@ -4107,7 +4107,7 @@ export interface AwsBuilderConfig {
  * timestamped database dumps, which can be restored using
  * the Komodo CLI.
  * 
- * TODO: Link to docs
+ * https://komo.do/docs/setup/backup
  */
 export interface BackupCoreDatabase {
 }
@@ -6243,6 +6243,8 @@ export interface GetServersSummaryResponse {
 	total: I64;
 	/** The number of healthy (`status: OK`) servers. */
 	healthy: I64;
+	/** The number of servers with warnings (e.g., version mismatch). */
+	warning: I64;
 	/** The number of unhealthy servers. */
 	unhealthy: I64;
 	/** The number of disabled servers. */
