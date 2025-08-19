@@ -53,7 +53,7 @@ passkey = "default-passkey-changeme"
 ## upon first startup. Example: `https://periphery:8120`
 ## Env: KOMODO_FIRST_SERVER
 ## Optional, no default.
-first_server = ""
+# first_server = ""
 
 ## Give the first server a custom name.
 ## Env: KOMODO_FIRST_SERVER_NAME

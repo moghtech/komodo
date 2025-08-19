@@ -2,7 +2,7 @@
 
 Komodo Core exposes an RPC-like HTTP API to read data, write configuration, and execute actions.
 There are typesafe clients available in
-[**Rust**](/docs/api#rust-client) and [**Typescript**](/docs/api#typescript-client).
+[**Rust**](/docs/ecosystem/api#rust-client) and [**Typescript**](/docs/ecosystem/api#typescript-client).
 
 The full API documentation is [**available here**](https://docs.rs/komodo_client/latest/komodo_client/api/index.html).
 

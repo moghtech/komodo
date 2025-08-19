@@ -50,12 +50,12 @@ pub struct ClearRepoCache {}
 #[error(serror::Error)]
 pub struct BackupCoreDatabase {}
 
-/// Trigger a global poll for image updateson Stacks and Deployments
+/// Trigger a global poll for image updates on Stacks and Deployments
 /// with `poll_for_updates` or `auto_update` enabled.
 /// Admin only. Response: [Update]
 ///
 /// 1. `docker compose pull` any Stacks / Deployments with `poll_for_updates` or `auto_update` enabled. This will pick up any available updates.
-/// 2. Redeploy Stacks / Deployments that have updates found.
+/// 2. Redeploy Stacks / Deployments that have updates found and 'auto_update' enabled.
 #[typeshare]
 #[derive(
   Debug,

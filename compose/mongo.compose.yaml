@@ -37,11 +37,13 @@ services:
       KOMODO_DATABASE_ADDRESS: mongo:27017
       KOMODO_DATABASE_USERNAME: ${KOMODO_DB_USERNAME}
       KOMODO_DATABASE_PASSWORD: ${KOMODO_DB_PASSWORD}
-    # volumes:
-    #   ## Store sync files on server
-    #   - /path/to/syncs:/syncs
-    #   ## Optionally mount a custom core.config.toml
-    #   - /path/to/core.config.toml:/config/config.toml
+    volumes:
+      ## Store dated backups of the database - https://komo.do/docs/setup/backup
+      - ${COMPOSE_KOMODO_BACKUPS_PATH}:/backups
+      ## Store sync files on server
+      # - /path/to/syncs:/syncs
+      ## Optionally mount a custom core.config.toml
+      # - /path/to/core.config.toml:/config/config.toml
     ## Allows for systemd Periphery connection at 
     ## "https://host.docker.internal:8120"
     # extra_hosts:
@@ -71,5 +73,3 @@ volumes:
   # Mongo
   mongo-data:
   mongo-config:
-  # Core
-  repo-cache:

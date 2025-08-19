@@ -63,7 +63,7 @@ so you may want to encrypt the files before backing up remotely if your backup s
 
 ## Remote Backups
 
-Since database backup is actually a function of the [Komodo CLI](../cli), you can also backup directly to
+Since database backup is actually a function of the [Komodo CLI](../ecosystem/cli), you can also backup directly to
 a remote server using the `ghcr.io/moghtech/komodo-cli` image. This service will backup once and then exit, so the scheduled deployment should still happen using a Procedure or Action:
 
 ```yaml

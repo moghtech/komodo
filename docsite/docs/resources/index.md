@@ -10,7 +10,7 @@ Many resources need access to git repos / docker registries. There is an in-buil
 All resources which depend on git repos / docker registries are able to use these credentials to access private repos.
 :::
 
-## [Server](connect-servers)
+## [Server](setup/connect-servers)
 
 - Configure the connection to periphery agents.
 - Set alerting thresholds.

@@ -9,7 +9,7 @@ While Komodo can assign permissions to specific users directly, it is recommende
 Users can then be **added to multiple User Groups** and they **inherit the group's permissions**, similar to linux permissions.
 There is also an `Everyone` mode for User Groups, if this is enabled then **all users implicitly gain the groups permissions**.
 
-For permissioning at scale, users can define [**User Groups in Resource Syncs**](/docs/sync-resources#user-group).
+For permissioning at scale, users can define [**User Groups in Resource Syncs**](/docs/resources/sync-resources#user-group).
 
 ## Permission Levels
 

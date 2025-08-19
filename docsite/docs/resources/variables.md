@@ -22,7 +22,7 @@ SOME_ENV_VAR = value_1
 
 - **In the UI**, you can go to `Settings` page, `Variables` tab. Here, you can create some Variables to store in the Komodo database.
   - There is a "secret" option you can check, this will **prevent the value from exposure in any updates / logs**, as well as prevent access to the value to any **non-admin** Komodo users.
-  - Variables can also be managed in ResourceSyncs (see [example](/docs/sync-resources#deployments)) but should only be done for non-secret variables, to avoid committing sensitive data. You should manage secrets using one of the following options.
+  - Variables can also be managed in ResourceSyncs (see [example](/docs/resources/sync-resources#deployments)) but should only be done for non-secret variables, to avoid committing sensitive data. You should manage secrets using one of the following options.
 
 - **Mount a config file to Core**: https://komo.do/docs/setup/advanced#mount-a-config-file
   - In the Komodo Core config file, you can configure `secrets` using a block like:

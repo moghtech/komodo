@@ -75,14 +75,14 @@ in the merge ordering, meaning they are **lower priority** than those detected i
 You can also override these default paths by passing `km -c /path/to/1/base.config.yaml -c ./overrides ...`.
 
 If you want `km` to find configuration files in another directory,
-you can use make `.kminclude` file inside one of the configured directories.
+you can make a `.kminclude` file inside one of the configured directories.
 
 ```
 # Supports comments
 
-./.komodo    # relative to directory containing `kmignore`
+./.komodo    # relative to directory containing `.kminclude`
 
-/etc/komodo/komodo.cli.toml
+/etc/komodo/komodo.cli.toml  # also supports absolute path
 ```
 
 Note that wildcards in these paths are **not supported**.
