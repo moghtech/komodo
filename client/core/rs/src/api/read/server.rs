@@ -623,6 +623,8 @@ pub struct GetServersSummaryResponse {
   pub total: I64,
   /// The number of healthy (`status: OK`) servers.
   pub healthy: I64,
+  /// The number of servers with warnings (e.g., version mismatch).
+  pub warning: I64,
   /// The number of unhealthy servers.
   pub unhealthy: I64,
   /// The number of disabled servers.

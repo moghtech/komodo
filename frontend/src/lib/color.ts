@@ -15,7 +15,7 @@ export const hex_color_by_intention = (intention: ColorIntention) => {
     case "Neutral":
       return "#3B82F6";
     case "Warning":
-      return "#F97316";
+      return "#EAB308"; // Gelb statt Orange
     case "Critical":
       return "#EF0044";
     case "Unknown":
@@ -32,7 +32,7 @@ export const fill_color_class_by_intention = (intention: ColorIntention) => {
     case "Neutral":
       return "text-blue-400 dark:text-blue-700";
     case "Warning":
-      return "text-orange-400 dark:text-orange-700";
+      return "text-yellow-400 dark:text-yellow-500";
     case "Critical":
       return "text-red-400 dark:text-red-700";
     case "Unknown":
@@ -49,7 +49,7 @@ export const stroke_color_class_by_intention = (intention: ColorIntention) => {
     case "Neutral":
       return "stroke-blue-600 dark:stroke-blue-500";
     case "Warning":
-      return "stroke-orange-600 dark:stroke-orange-500";
+      return "stroke-yellow-500 dark:stroke-yellow-400";
     case "Critical":
       return "stroke-red-600 dark:stroke-red-500";
     case "Unknown":
@@ -66,7 +66,7 @@ export const bg_color_class_by_intention = (intention: ColorIntention) => {
     case "Neutral":
       return "bg-blue-400 dark:bg-blue-700";
     case "Warning":
-      return "bg-orange-400 dark:bg-orange-500";
+      return "bg-yellow-400 dark:bg-yellow-600";
     case "Critical":
       return "bg-red-400 dark:bg-red-700";
     case "Unknown":
@@ -83,7 +83,7 @@ export const border_color_class_by_intention = (intention: ColorIntention) => {
     case "Neutral":
       return "border-blue-700 dark:border-blue-400";
     case "Warning":
-      return "border-orange-700 dark:border-orange-400";
+      return "border-yellow-600 dark:border-yellow-400";
     case "Critical":
       return "border-red-700 dark:border-red-400";
     case "Unknown":
@@ -100,7 +100,7 @@ export const text_color_class_by_intention = (intention: ColorIntention) => {
     case "Neutral":
       return "text-blue-700 dark:text-blue-400";
     case "Warning":
-      return "text-orange-700 dark:text-orange-400";
+      return "text-yellow-700 dark:text-yellow-400";
     case "Critical":
       return "text-red-700 dark:text-red-400";
     case "Unknown":
@@ -119,7 +119,7 @@ export const soft_text_color_class_by_intention = (
     case "Neutral":
       return "text-blue-700/60 dark:text-blue-400/60";
     case "Warning":
-      return "text-orange-700/60 dark:text-orange-400/60";
+      return "text-yellow-700/60 dark:text-yellow-400/60";
     case "Critical":
       return "text-red-700/60 dark:text-red-400/60";
     case "Unknown":
@@ -142,6 +142,19 @@ export const server_state_intention: (
     case undefined:
       return "None";
   }
+};
+
+export const server_state_intention_with_version: (
+  state?: Types.ServerState,
+  hasVersionMismatch?: boolean
+) => ColorIntention = (state, hasVersionMismatch) => {
+  // If there's a version mismatch and the server is "Ok", show warning instead
+  if (state === Types.ServerState.Ok && hasVersionMismatch) {
+    return "Warning";
+  }
+  
+  // Otherwise use the standard state intention
+  return server_state_intention(state);
 };
 
 export const deployment_state_intention: (

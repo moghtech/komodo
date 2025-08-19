@@ -17,7 +17,7 @@ import {
 import { Section } from "@components/layouts";
 import { Prune } from "./actions";
 import {
-  server_state_intention,
+  server_state_intention_with_version,
   stroke_color_class_by_intention,
 } from "@lib/color";
 import { ServerConfig } from "./config";
@@ -47,13 +47,28 @@ export const useServer = (id?: string) =>
 export const useFullServer = (id: string) =>
   useRead("GetServer", { server: id }, { refetchInterval: 10_000 }).data;
 
+// Helper function to check for version mismatch
+export const useVersionMismatch = (serverId?: string) => {
+  const core_version = useRead("GetVersion", {}).data?.version;
+  const server_version = useServer(serverId)?.info.version;
+  
+  const unknown = !server_version || server_version === "Unknown";
+  const mismatch = !!server_version && !!core_version && server_version !== core_version;
+  
+  return { unknown, mismatch, hasVersionMismatch: mismatch && !unknown };
+};
+
 const Icon = ({ id, size }: { id?: string; size: number }) => {
   const state = useServer(id)?.info.state;
+  const { hasVersionMismatch } = useVersionMismatch(id);
+  
   return (
     <Server
       className={cn(
         `w-${size} h-${size}`,
-        state && stroke_color_class_by_intention(server_state_intention(state))
+        state && stroke_color_class_by_intention(
+          server_state_intention_with_version(state, hasVersionMismatch)
+        )
       )}
     />
   );
@@ -205,8 +220,35 @@ const ConfigTabs = ({ id }: { id: string }) => {
 export const ServerVersion = ({ id }: { id: string }) => {
   const core_version = useRead("GetVersion", {}).data?.version;
   const version = useServer(id)?.info.version;
+  const server_state = useServer(id)?.info.state;
+  
   const unknown = !version || version === "Unknown";
   const mismatch = !!version && !!core_version && version !== core_version;
+  
+  // Don't show version for disabled servers
+  if (server_state === Types.ServerState.Disabled) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex items-center gap-2 cursor-pointer">
+            <AlertCircle
+              className={cn(
+                "w-4 h-4",
+                stroke_color_class_by_intention("Neutral")
+              )}
+            />
+            Disabled
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <div>
+            Server is <span className="font-bold">disabled</span>.
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+  
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -315,7 +357,21 @@ export const ServerComponents: RequiredResourceComponents = {
 
   State: ({ id }) => {
     const state = useServer(id)?.info.state;
-    return <StatusBadge text={state} intent={server_state_intention(state)} />;
+    const { hasVersionMismatch } = useVersionMismatch(id);
+    
+    // Show full version mismatch text
+    const displayState = state === Types.ServerState.Ok && hasVersionMismatch 
+      ? "Version Mismatch" 
+      : state === Types.ServerState.NotOk 
+        ? "Not Ok" 
+        : state;
+    
+    return (
+      <StatusBadge 
+        text={displayState} 
+        intent={server_state_intention_with_version(state, hasVersionMismatch)} 
+      />
+    );
   },
 
   Status: {},
@@ -531,19 +587,23 @@ export const ServerComponents: RequiredResourceComponents = {
 
   ResourcePageHeader: ({ id }) => {
     const server = useServer(id);
+    const { hasVersionMismatch } = useVersionMismatch(id);
+
+    // Determine display state for header (longer text is okay in header)
+    const displayState = server?.info.state === Types.ServerState.Ok && hasVersionMismatch
+      ? "Version Mismatch"
+      : server?.info.state === Types.ServerState.NotOk
+        ? "Not Ok"
+        : server?.info.state;
 
     return (
       <ResourcePageHeader
-        intent={server_state_intention(server?.info.state)}
+        intent={server_state_intention_with_version(server?.info.state, hasVersionMismatch)}
         icon={<Icon id={id} size={8} />}
         type="Server"
         id={id}
         resource={server}
-        state={
-          server?.info.state === Types.ServerState.NotOk
-            ? "Not Ok"
-            : server?.info.state
-        }
+        state={displayState}
         status={server?.info.region}
       />
     );
