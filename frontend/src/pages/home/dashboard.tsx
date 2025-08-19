@@ -185,16 +185,14 @@ const RecentCard = ({
         {type === "Stack" && <StackUpdateAvailable id={id} small />}
       </div>
 
-      <div
-        className={cn(
-          "flex flex-col gap-2 w-full",
-          showServerStats ? "mt-2 flex-1" : "mt-auto",
-        )}
-      >
-        {showServerStats && <ServerStatsMini id={id} />}
-        <div className="flex gap-2 w-full py-1">
-          <TagsWithBadge className="flex-row" tag_ids={tags} />
+      {showServerStats && (
+        <div className="flex flex-col gap-2 w-full py-2">
+          <ServerStatsMini id={id} />
         </div>
+      )}
+
+      <div className="flex flex-row gap-2 w-full py-1">
+        <TagsWithBadge tag_ids={tags} />
       </div>
     </Link>
   );

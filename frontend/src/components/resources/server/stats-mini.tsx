@@ -22,7 +22,7 @@ const StatItem = ({ icon: Icon, label, percentage, type, isUnreachable, getTextC
   <div className="flex items-center gap-2">
     <Icon className="w-3 h-3 text-muted-foreground" aria-hidden="true" />
     <div className="flex-1 min-w-0">
-      <div className="flex items-center justify-between mb-1">
+      <div className="flex items-center justify-between pb-1">
         <span className="text-xs text-muted-foreground">{label}</span>
         <span
           className={cn(
@@ -93,12 +93,7 @@ export const ServerStatsMini = ({ id, className }: ServerStatsMiniProps) => {
   ];
 
   return (
-    <div className={cn("flex flex-col gap-2", unreachableClass, className)}>
-      {isUnreachable && (
-        <div className="text-xs text-muted-foreground italic text-center">
-          Unreachable
-        </div>
-      )}
+    <div className={cn("relative flex flex-col gap-2", unreachableClass, className)}>
       {statItems.map((item) => (
         <StatItem
           key={item.label}
@@ -110,6 +105,11 @@ export const ServerStatsMini = ({ id, className }: ServerStatsMiniProps) => {
           getTextColor={getTextColor}
         />
       ))}
+      {isUnreachable && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-black/60 z-10">
+          <span className="text-xs text-foreground italic text-center">Unreachable</span>
+        </div>
+      )}
     </div>
   );
 };
