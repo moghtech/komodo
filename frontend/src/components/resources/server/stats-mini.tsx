@@ -85,7 +85,7 @@ export const ServerStatsMini = ({ id, className, enabled = true }: ServerStatsMi
     },
   ).data;
 
-  if (!server || server.info.state === ServerState.Disabled) {
+  if (!server) {
     return null;
   }
 
@@ -98,17 +98,19 @@ export const ServerStatsMini = ({ id, className, enabled = true }: ServerStatsMi
     const diskPercentage = diskTotal > 0? calculatePercentage((diskUsed / diskTotal) * 100) : 0;
       
     const isUnreachable = !stats || server.info.state === ServerState.NotOk;
+    const isDisabled = server.info.state === ServerState.Disabled;
     
     return {
       cpuPercentage,
       memoryPercentage,
       diskPercentage,
-      isUnreachable
+      isUnreachable,
+      isDisabled
     };
   }, [stats, server.info.state]);
 
-  const { cpuPercentage, memoryPercentage, diskPercentage, isUnreachable } = calculations;
-  const unreachableClass = isUnreachable ? "opacity-50" : "";
+  const { cpuPercentage, memoryPercentage, diskPercentage, isUnreachable, isDisabled } = calculations;
+  const overlayClass = (isUnreachable || isDisabled) ? "opacity-50" : "";
 
   const statItems = useMemo(() => [
     { icon: Cpu, label: "CPU", percentage: cpuPercentage, type: "cpu" as const },
@@ -117,7 +119,7 @@ export const ServerStatsMini = ({ id, className, enabled = true }: ServerStatsMi
   ], [cpuPercentage, memoryPercentage, diskPercentage]);
 
   return (
-    <div className={cn("relative flex flex-col gap-2", unreachableClass, className)}>
+    <div className={cn("relative flex flex-col gap-2", overlayClass, className)}>
       {statItems.map((item) => (
         <StatItem
           key={item.label}
@@ -125,13 +127,18 @@ export const ServerStatsMini = ({ id, className, enabled = true }: ServerStatsMi
           label={item.label}
           percentage={item.percentage}
           type={item.type}
-          isUnreachable={isUnreachable}
+          isUnreachable={isUnreachable || isDisabled}
           getTextColor={getTextColor}
         />
       ))}
-      {isUnreachable && (
+      {isDisabled && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-black/60 z-10">
-          <span className="text-xs text-foreground italic text-center">Unreachable</span>
+          <span className="text-xs text-foreground font-bold italic text-center">Disabled</span>
+        </div>
+      )}
+      {isUnreachable && !isDisabled && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-black/60 z-10">
+          <span className="text-xs text-foreground font-bold italic text-center">Unreachable</span>
         </div>
       )}
     </div>
