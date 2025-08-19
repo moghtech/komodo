@@ -229,19 +229,21 @@ export const StackConfig = ({
             "The path to write the file to, relative to the 'Run Directory'.",
           placeholder: ".env",
         },
-        additional_env_files: (values, set) => (
-          <ConfigList
-            label="Additional Env Files"
-            boldLabel
-            addLabel="Add Env File"
-            description="Add additional env files to pass with '--env-file', relative to the 'Run Directory'."
-            field="additional_env_files"
-            values={values ?? []}
-            set={set}
-            disabled={disabled}
-            placeholder="Input File Path"
-          />
-        ),
+        additional_env_files:
+          (mode === "Files On Server" || mode === "Git Repo") &&
+          ((values, set) => (
+            <ConfigList
+              label="Additional Env Files"
+              boldLabel
+              addLabel="Add Env File"
+              description="Add additional env files to pass with '--env-file'. Relative to the 'Run Directory'."
+              field="additional_env_files"
+              values={values ?? []}
+              set={set}
+              disabled={disabled}
+              placeholder=".env"
+            />
+          )),
       },
     },
     {
@@ -515,6 +517,17 @@ export const StackConfig = ({
                 placeholder="compose.yaml"
               />
             ),
+            additional_files: (value, set) => (
+              <ConfigList
+                label="Additional files"
+                description="Add other config files to associate with the Stack, and edit in the UI. Relative to 'Run Directory'."
+                field="additional_files"
+                values={value ?? []}
+                set={set}
+                disabled={disabled}
+                placeholder="configs/config.yaml"
+              />
+            ),
           },
         },
         ...general_common,
@@ -631,6 +644,17 @@ export const StackConfig = ({
                 set={set}
                 disabled={disabled}
                 placeholder="compose.yaml"
+              />
+            ),
+            additional_files: (value, set) => (
+              <ConfigList
+                label="Additional files"
+                description="Add other config files to associate with Stack, and edit in the UI. Relative to 'Run Directory'."
+                field="additional_files"
+                values={value ?? []}
+                set={set}
+                disabled={disabled}
+                placeholder="configs/config.yaml"
               />
             ),
           },

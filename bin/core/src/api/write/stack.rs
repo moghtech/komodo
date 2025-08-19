@@ -382,7 +382,7 @@ impl Resolve<WriteArgs> for RefreshStackCache {
     )
     .await?;
 
-    let repo = if !stack.config.files_on_host
+    let repo = if !stack.config.files_on_host 
       && !stack.config.linked_repo.is_empty()
     {
       crate::resource::get::<Repo>(&stack.config.linked_repo)
@@ -429,7 +429,7 @@ impl Resolve<WriteArgs> for RefreshStackCache {
         let GetComposeContentsOnHostResponse { contents, errors } =
           match periphery_client(&server)?
             .request(GetComposeContentsOnHost {
-              file_paths: stack.file_paths().to_vec(),
+              file_paths: stack.all_file_paths(),
               name: stack.name.clone(),
               run_directory: stack.config.run_directory.clone(),
             })
@@ -451,6 +451,10 @@ impl Resolve<WriteArgs> for RefreshStackCache {
         let mut services = Vec::new();
 
         for contents in &contents {
+          // Don't include additional files in service parsing
+          if !stack.is_compose_file(&contents.path) {
+            continue;
+          }
           if let Err(e) = extract_services_into_res(
             &project_name,
             &contents.contents,
@@ -489,6 +493,10 @@ impl Resolve<WriteArgs> for RefreshStackCache {
       let mut services = Vec::new();
 
       for contents in &remote_contents {
+        // Don't include additional files in service parsing
+        if !stack.is_compose_file(&contents.path) {
+          continue;
+        }
         if let Err(e) = extract_services_into_res(
           &project_name,
           &contents.contents,

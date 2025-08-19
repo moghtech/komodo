@@ -2268,8 +2268,18 @@ export interface StackConfig {
     /**
      * Add additional env files to attach with `--env-file`.
      * Relative to the run directory root.
+     *
+     * Note. Already included as an `additional_file`, don't need to add it
+     * again there.
      */
     additional_env_files?: string[];
+    /**
+     * Add additional files either in repo or on host to track.
+     * Can add any env / config files associated with the stack to enable editing them in the UI.
+     * Doing so will also include diffing these when deciding to deploy in `DeployStackIfChanged`.
+     * Relative to the run directory.
+     */
+    additional_files?: string[];
     /** Whether to send StackStateChange alerts for this stack. */
     send_alerts: boolean;
     /** Used with `registry_account` to login to a registry before docker compose up. */
@@ -2346,7 +2356,7 @@ export interface StackServiceNames {
 }
 export interface StackInfo {
     /**
-     * If any of the expected files are missing in the repo,
+     * If any of the expected compose / additional files are missing in the repo,
      * they will be stored here.
      */
     missing_files?: string[];
@@ -2362,7 +2372,7 @@ export interface StackInfo {
     /** Deployed commit message, or null. Only for repo based stacks */
     deployed_message?: string;
     /**
-     * The deployed compose file contents.
+     * The deployed compose / additional file contents.
      * This is updated whenever Komodo successfully deploys the stack.
      */
     deployed_contents?: FileContents[];
@@ -2382,7 +2392,7 @@ export interface StackInfo {
      */
     latest_services?: StackServiceNames[];
     /**
-     * The remote compose file contents, whether on host or in repo.
+     * The remote compose / additional file contents, whether on host or in repo.
      * This is updated whenever Komodo refreshes the stack cache.
      * It will be empty if the file is defined directly in the stack config.
      */
@@ -4007,7 +4017,7 @@ export interface AwsBuilderConfig {
  * timestamped database dumps, which can be restored using
  * the Komodo CLI.
  *
- * TODO: Link to docs
+ * https://komo.do/docs/setup/backup
  */
 export interface BackupCoreDatabase {
 }
@@ -6139,12 +6149,12 @@ export interface GetVersionResponse {
     version: string;
 }
 /**
- * Trigger a global poll for image updateson Stacks and Deployments
+ * Trigger a global poll for image updates on Stacks and Deployments
  * with `poll_for_updates` or `auto_update` enabled.
  * Admin only. Response: [Update]
  *
  * 1. `docker compose pull` any Stacks / Deployments with `poll_for_updates` or `auto_update` enabled. This will pick up any available updates.
- * 2. Redeploy Stacks / Deployments that have updates found.
+ * 2. Redeploy Stacks / Deployments that have updates found and 'auto_update' enabled.
  */
 export interface GlobalAutoUpdate {
 }
