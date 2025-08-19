@@ -169,7 +169,7 @@ const RecentCard = ({
     <Link
       to={`${usableResourcePath(type)}/${id}`}
       className={cn(
-        "w-full px-3 py-2 border rounded-md hover:bg-accent/25 hover:-translate-y-1 transition-all flex flex-col justify-between",
+        "w-full px-3 py-2 border rounded-md hover:bg-accent/25 hover:-translate-y-1 transition-all duration-1000 linear flex flex-col justify-between",
         showServerStats ? "min-h-32" : "h-20",
         className,
       )}
@@ -184,11 +184,18 @@ const RecentCard = ({
         {type === "Stack" && <StackUpdateAvailable id={id} small />}
       </div>
 
-      {showServerStats && (
-        <div className="flex flex-col gap-2 w-full py-2">
+      <div 
+        className={cn(
+          "overflow-hidden w-full transition-opacity transition-all duration-1000 linear",
+          showServerStats 
+            ? "max-h-40 opacity-100 py-2" 
+            : "max-h-0 opacity-0 py-0"
+        )}
+      >
+        <div className="flex flex-col gap-2">
           <ServerStatsMini id={id} enabled={showServerStats} />
         </div>
-      )}
+      </div>
 
       <div className="flex flex-row gap-2 w-full py-1">
         <TagsWithBadge tag_ids={tags} />
