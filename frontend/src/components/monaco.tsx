@@ -191,7 +191,7 @@ export const MonacoDiffEditor = ({
   original: string | undefined;
   modified: string | undefined;
   onModifiedValueChange?: (value: string) => void;
-  language: MonacoLanguage;
+  language: MonacoLanguage | undefined;
   readOnly?: boolean;
   containerClassName?: string;
   hideUnchangedRegions?: boolean;
