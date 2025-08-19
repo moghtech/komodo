@@ -187,7 +187,7 @@ const RecentCard = ({
 
       {showServerStats && (
         <div className="flex flex-col gap-2 w-full py-2">
-          <ServerStatsMini id={id} />
+          <ServerStatsMini id={id} enabled={showServerStats} />
         </div>
       )}
 

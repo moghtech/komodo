@@ -3,10 +3,12 @@ import { cn } from "@lib/utils";
 import { Progress } from "@ui/progress";
 import { ServerState } from "komodo_client/dist/types";
 import { Cpu, Database, MemoryStick, LucideIcon } from "lucide-react";
+import { useMemo } from "react";
 
 interface ServerStatsMiniProps {
   id: string;
   className?: string;
+  enabled?: boolean; // Neue Prop um das Laden zu steuern
 }
 
 interface StatItemProps {
@@ -41,12 +43,21 @@ const StatItem = ({ icon: Icon, label, percentage, type, isUnreachable, getTextC
   </div>
 );
 
-export const ServerStatsMini = ({ id, className }: ServerStatsMiniProps) => {
+export const ServerStatsMini = ({ id, className, enabled = true }: ServerStatsMiniProps) => {
   const calculatePercentage = (value: number) =>
     Number((value ?? 0).toFixed(2));
 
-  const server = useRead("ListServers", {}).data?.find((s) => s.id === id);
-  const serverDetails = useRead("GetServer", { server: id }).data;
+  const servers = useRead("ListServers", {}).data;
+  const server = servers?.find((s) => s.id === id);
+  
+
+  const isServerAvailable = server && 
+    server.info.state !== ServerState.Disabled && 
+    server.info.state !== ServerState.NotOk;
+  
+  const serverDetails = useRead("GetServer", { server: id }, {
+    enabled: enabled && isServerAvailable
+  }).data;
   
   const cpuWarning = serverDetails?.config?.cpu_warning ?? 75;
   const cpuCritical = serverDetails?.config?.cpu_critical ?? 90;
@@ -63,34 +74,47 @@ export const ServerStatsMini = ({ id, className }: ServerStatsMiniProps) => {
     if (percentage >= warning) return "text-yellow-600";
     return "text-green-600";
   };
+  
   const stats = useRead(
     "GetSystemStats",
     { server: id },
     {
-      enabled: server ? server.info.state !== "Disabled" : false,
-      refetchInterval: 10_000,
+      enabled: enabled && isServerAvailable,
+      refetchInterval: 15_000,
+      staleTime: 5_000,
     },
   ).data;
 
-  if (!server || server.info.state === "Disabled") {
+  if (!server || server.info.state === ServerState.Disabled) {
     return null;
   }
 
-  const cpuPercentage = stats ? calculatePercentage(stats.cpu_perc) : 0;
-  const memoryPercentage = stats && stats.mem_total_gb > 0 ? calculatePercentage((stats.mem_used_gb / stats.mem_total_gb) * 100) : 0;
+  const calculations = useMemo(() => {
+    const cpuPercentage = stats ? calculatePercentage(stats.cpu_perc) : 0;
+    const memoryPercentage = stats && stats.mem_total_gb > 0 ? calculatePercentage((stats.mem_used_gb / stats.mem_total_gb) * 100) : 0;
 
-  const diskUsed = stats ? stats.disks.reduce((acc, disk) => acc + disk.used_gb, 0) : 0;
-  const diskTotal = stats ? stats.disks.reduce((acc, disk) => acc + disk.total_gb, 0) : 0;
-  const diskPercentage = diskTotal > 0? calculatePercentage((diskUsed / diskTotal) * 100) : 0;
+    const diskUsed = stats ? stats.disks.reduce((acc, disk) => acc + disk.used_gb, 0) : 0;
+    const diskTotal = stats ? stats.disks.reduce((acc, disk) => acc + disk.total_gb, 0) : 0;
+    const diskPercentage = diskTotal > 0? calculatePercentage((diskUsed / diskTotal) * 100) : 0;
+      
+    const isUnreachable = !stats || server.info.state === ServerState.NotOk;
     
-  const isUnreachable = !stats || server.info.state === ServerState.NotOk;
+    return {
+      cpuPercentage,
+      memoryPercentage,
+      diskPercentage,
+      isUnreachable
+    };
+  }, [stats, server.info.state]);
+
+  const { cpuPercentage, memoryPercentage, diskPercentage, isUnreachable } = calculations;
   const unreachableClass = isUnreachable ? "opacity-50" : "";
 
-  const statItems = [
+  const statItems = useMemo(() => [
     { icon: Cpu, label: "CPU", percentage: cpuPercentage, type: "cpu" as const },
     { icon: MemoryStick, label: "Memory", percentage: memoryPercentage, type: "memory" as const },
     { icon: Database, label: "Disk", percentage: diskPercentage, type: "disk" as const },
-  ];
+  ], [cpuPercentage, memoryPercentage, diskPercentage]);
 
   return (
     <div className={cn("relative flex flex-col gap-2", unreachableClass, className)}>
