@@ -8,7 +8,7 @@ import { useMemo } from "react";
 interface ServerStatsMiniProps {
   id: string;
   className?: string;
-  enabled?: boolean; // Neue Prop um das Laden zu steuern
+  enabled?: boolean;
 }
 
 interface StatItemProps {
@@ -49,7 +49,6 @@ export const ServerStatsMini = ({ id, className, enabled = true }: ServerStatsMi
 
   const servers = useRead("ListServers", {}).data;
   const server = servers?.find((s) => s.id === id);
-  
 
   const isServerAvailable = server && 
     server.info.state !== ServerState.Disabled && 
@@ -95,7 +94,7 @@ export const ServerStatsMini = ({ id, className, enabled = true }: ServerStatsMi
 
     const diskUsed = stats ? stats.disks.reduce((acc, disk) => acc + disk.used_gb, 0) : 0;
     const diskTotal = stats ? stats.disks.reduce((acc, disk) => acc + disk.total_gb, 0) : 0;
-    const diskPercentage = diskTotal > 0? calculatePercentage((diskUsed / diskTotal) * 100) : 0;
+    const diskPercentage = diskTotal > 0 ? calculatePercentage((diskUsed / diskTotal) * 100) : 0;
       
     const isUnreachable = !stats || server.info.state === ServerState.NotOk;
     const isDisabled = server.info.state === ServerState.Disabled;
