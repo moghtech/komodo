@@ -38,8 +38,8 @@ pub async fn get_repo_compose_contents(
   let mut successful = Vec::new();
   let mut errored = Vec::new();
 
-  for path in stack.file_paths() {
-    let file_path = run_directory.join(path);
+  for path in stack.all_file_paths() {
+    let file_path = run_directory.join(&path);
     if !file_path.exists()
       && let Some(missing_files) = &mut missing_files
     {

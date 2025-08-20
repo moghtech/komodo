@@ -4,6 +4,7 @@ use anyhow::Context;
 use bson::{Document, doc};
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
+use indexmap::IndexSet;
 use partial_derive2::Partial;
 use serde::{Deserialize, Serialize};
 use strum::Display;
@@ -44,12 +45,33 @@ impl Stack {
     }
   }
 
-  pub fn file_paths(&self) -> &[String] {
+  pub fn compose_file_paths(&self) -> &[String] {
     if self.config.file_paths.is_empty() {
       default_stack_file_paths()
     } else {
       &self.config.file_paths
     }
+  }
+
+  pub fn is_compose_file(&self, path: &str) -> bool {
+    for compose_path in self.compose_file_paths() {
+      if path.ends_with(compose_path) {
+        return true;
+      }
+    }
+    false
+  }
+
+  pub fn all_file_paths(&self) -> Vec<String> {
+    let mut res = self
+      .compose_file_paths()
+      .into_iter()
+      .cloned()
+      // Makes sure to dedup them, while maintaining ordering
+      .collect::<IndexSet<_>>();
+    res.extend(self.config.additional_env_files.clone());
+    res.extend(self.config.additional_files.clone());
+    res.into_iter().collect()
   }
 }
 
@@ -159,7 +181,7 @@ pub enum StackState {
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct StackInfo {
-  /// If any of the expected files are missing in the repo,
+  /// If any of the expected compose / additional files are missing in the repo,
   /// they will be stored here.
   #[serde(default)]
   pub missing_files: Vec<String>,
@@ -174,7 +196,7 @@ pub struct StackInfo {
   pub deployed_hash: Option<String>,
   /// Deployed commit message, or null. Only for repo based stacks
   pub deployed_message: Option<String>,
-  /// The deployed compose file contents.
+  /// The deployed compose / additional file contents.
   /// This is updated whenever Komodo successfully deploys the stack.
   pub deployed_contents: Option<Vec<FileContents>>,
   /// The deployed service names.
@@ -188,7 +210,7 @@ pub struct StackInfo {
   #[serde(default)]
   pub latest_services: Vec<StackServiceNames>,
 
-  /// The remote compose file contents, whether on host or in repo.
+  /// The remote compose / additional file contents, whether on host or in repo.
   /// This is updated whenever Komodo refreshes the stack cache.
   /// It will be empty if the file is defined directly in the stack config.
   pub remote_contents: Option<Vec<FileContents>>,
@@ -386,6 +408,9 @@ pub struct StackConfig {
 
   /// Add additional env files to attach with `--env-file`.
   /// Relative to the run directory root.
+  ///
+  /// Note. Already included as an `additional_file`, don't need to add it
+  /// again there.
   #[serde(default, deserialize_with = "string_list_deserializer")]
   #[partial_attr(serde(
     default,
@@ -393,6 +418,18 @@ pub struct StackConfig {
   ))]
   #[builder(default)]
   pub additional_env_files: Vec<String>,
+
+  /// Add additional files either in repo or on host to track.
+  /// Can add any env / config files associated with the stack to enable editing them in the UI.
+  /// Doing so will also include diffing these when deciding to deploy in `DeployStackIfChanged`.
+  /// Relative to the run directory.
+  #[serde(default, deserialize_with = "string_list_deserializer")]
+  #[partial_attr(serde(
+    default,
+    deserialize_with = "option_string_list_deserializer"
+  ))]
+  #[builder(default)]
+  pub additional_files: Vec<String>,
 
   /// Whether to send StackStateChange alerts for this stack.
   #[serde(default = "default_send_alerts")]
@@ -539,6 +576,7 @@ impl Default for StackConfig {
       environment: Default::default(),
       env_file_path: default_env_file_path(),
       additional_env_files: Default::default(),
+      additional_files: Default::default(),
       run_build: Default::default(),
       destroy_before_deploy: Default::default(),
       build_extra_args: Default::default(),
@@ -638,6 +676,10 @@ pub struct StackQuerySpecifics {
   /// Only accepts Server id (not name).
   #[serde(default)]
   pub server_ids: Vec<String>,
+  /// Query only for Stacks with these linked repos.
+  /// Only accepts Repo id (not name).
+  #[serde(default)]
+  pub linked_repos: Vec<String>,
   /// Filter syncs by their repo.
   #[serde(default)]
   pub repos: Vec<String>,
@@ -651,6 +693,10 @@ impl super::resource::AddFilters for StackQuerySpecifics {
     if !self.server_ids.is_empty() {
       filters
         .insert("config.server_id", doc! { "$in": &self.server_ids });
+    }
+    if !self.linked_repos.is_empty() {
+      filters
+        .insert("config.linked_repo", doc! { "$in": &self.linked_repos });
     }
     if !self.repos.is_empty() {
       filters.insert("config.repo", doc! { "$in": &self.repos });

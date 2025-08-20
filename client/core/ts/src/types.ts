@@ -83,13 +83,13 @@ export interface ActionConfig {
 	 * 1. Regular CRON expression:
 	 * 
 	 * (second, minute, hour, day, month, day-of-week)
-	 * ```
+	 * ```text
 	 * 0 0 0 1,15 * ?
 	 * ```
 	 * 
 	 * 2. "English" expression via [english-to-cron](https://crates.io/crates/english-to-cron):
 	 * 
-	 * ```
+	 * ```text
 	 * at midnight on the 1st and 15th of the month
 	 * ```
 	 */
@@ -905,13 +905,13 @@ export interface ProcedureConfig {
 	 * 1. Regular CRON expression:
 	 * 
 	 * (second, minute, hour, day, month, day-of-week)
-	 * ```
+	 * ```text
 	 * 0 0 0 1,15 * ?
 	 * ```
 	 * 
 	 * 2. "English" expression via [english-to-cron](https://crates.io/crates/english-to-cron):
 	 * 
-	 * ```
+	 * ```text
 	 * at midnight on the 1st and 15th of the month
 	 * ```
 	 */
@@ -2165,8 +2165,18 @@ export interface StackConfig {
 	/**
 	 * Add additional env files to attach with `--env-file`.
 	 * Relative to the run directory root.
+	 * 
+	 * Note. Already included as an `additional_file`, don't need to add it
+	 * again there.
 	 */
 	additional_env_files?: string[];
+	/**
+	 * Add additional files either in repo or on host to track.
+	 * Can add any env / config files associated with the stack to enable editing them in the UI.
+	 * Doing so will also include diffing these when deciding to deploy in `DeployStackIfChanged`.
+	 * Relative to the run directory.
+	 */
+	additional_files?: string[];
 	/** Whether to send StackStateChange alerts for this stack. */
 	send_alerts: boolean;
 	/** Used with `registry_account` to login to a registry before docker compose up. */
@@ -2246,7 +2256,7 @@ export interface StackServiceNames {
 
 export interface StackInfo {
 	/**
-	 * If any of the expected files are missing in the repo,
+	 * If any of the expected compose / additional files are missing in the repo,
 	 * they will be stored here.
 	 */
 	missing_files?: string[];
@@ -2262,7 +2272,7 @@ export interface StackInfo {
 	/** Deployed commit message, or null. Only for repo based stacks */
 	deployed_message?: string;
 	/**
-	 * The deployed compose file contents.
+	 * The deployed compose / additional file contents.
 	 * This is updated whenever Komodo successfully deploys the stack.
 	 */
 	deployed_contents?: FileContents[];
@@ -2282,7 +2292,7 @@ export interface StackInfo {
 	 */
 	latest_services?: StackServiceNames[];
 	/**
-	 * The remote compose file contents, whether on host or in repo.
+	 * The remote compose / additional file contents, whether on host or in repo.
 	 * This is updated whenever Komodo refreshes the stack cache.
 	 * It will be empty if the file is defined directly in the stack config.
 	 */
@@ -3980,6 +3990,11 @@ export interface StackQuerySpecifics {
 	 * Only accepts Server id (not name).
 	 */
 	server_ids?: string[];
+	/**
+	 * Query only for Stacks with these linked repos.
+	 * Only accepts Repo id (not name).
+	 */
+	linked_repos?: string[];
 	/** Filter syncs by their repo. */
 	repos?: string[];
 	/** Query only for Stack with available image updates. */
@@ -4132,7 +4147,7 @@ export interface BatchBuildRepo {
 	 * Supports multiline and comma delineated combinations of the above.
 	 * 
 	 * Example:
-	 * ```
+	 * ```text
 	 * # match all foo-* repos
 	 * foo-*
 	 * # add some more
@@ -4149,7 +4164,7 @@ export interface BatchCloneRepo {
 	 * Supports multiline and comma delineated combinations of the above.
 	 * 
 	 * Example:
-	 * ```
+	 * ```text
 	 * # match all foo-* repos
 	 * foo-*
 	 * # add some more
@@ -4166,7 +4181,7 @@ export interface BatchDeploy {
 	 * Supports multiline and comma delineated combinations of the above.
 	 * 
 	 * Example:
-	 * ```
+	 * ```text
 	 * # match all foo-* deployments
 	 * foo-*
 	 * # add some more
@@ -4183,7 +4198,7 @@ export interface BatchDeployStack {
 	 * Supports multiline and comma delineated combinations of the above.
 	 * 
 	 * Example:
-	 * ```
+	 * ```text
 	 * # match all foo-* stacks
 	 * foo-*
 	 * # add some more
@@ -4200,7 +4215,7 @@ export interface BatchDeployStackIfChanged {
 	 * Supports multiline and comma delineated combinations of the above.
 	 * 
 	 * Example:
-	 * ```
+	 * ```text
 	 * # match all foo-* stacks
 	 * foo-*
 	 * # add some more
@@ -4217,7 +4232,7 @@ export interface BatchDestroyDeployment {
 	 * Supports multiline and comma delineated combinations of the above.
 	 * 
 	 * Example:
-	 * ```
+	 * ```text
 	 * # match all foo-* deployments
 	 * foo-*
 	 * # add some more
@@ -4234,7 +4249,7 @@ export interface BatchDestroyStack {
 	 * Supports multiline and comma delineated combinations of the above.
 	 * d
 	 * Example:
-	 * ```
+	 * ```text
 	 * # match all foo-* stacks
 	 * foo-*
 	 * # add some more
@@ -4256,7 +4271,7 @@ export interface BatchPullRepo {
 	 * Supports multiline and comma delineated combinations of the above.
 	 * 
 	 * Example:
-	 * ```
+	 * ```text
 	 * # match all foo-* repos
 	 * foo-*
 	 * # add some more
@@ -4273,7 +4288,7 @@ export interface BatchPullStack {
 	 * Supports multiline and comma delineated combinations of the above.
 	 * 
 	 * Example:
-	 * ```
+	 * ```text
 	 * # match all foo-* stacks
 	 * foo-*
 	 * # add some more
@@ -4290,7 +4305,7 @@ export interface BatchRunAction {
 	 * Supports multiline and comma delineated combinations of the above.
 	 * 
 	 * Example:
-	 * ```
+	 * ```text
 	 * # match all foo-* actions
 	 * foo-*
 	 * # add some more
@@ -4307,7 +4322,7 @@ export interface BatchRunBuild {
 	 * Supports multiline and comma delineated combinations of the above.
 	 * 
 	 * Example:
-	 * ```
+	 * ```text
 	 * # match all foo-* builds
 	 * foo-*
 	 * # add some more
@@ -4324,7 +4339,7 @@ export interface BatchRunProcedure {
 	 * Supports multiline and comma delineated combinations of the above.
 	 * 
 	 * Example:
-	 * ```
+	 * ```text
 	 * # match all foo-* procedures
 	 * foo-*
 	 * # add some more
@@ -6455,12 +6470,12 @@ export interface GetVersionResponse {
 }
 
 /**
- * Trigger a global poll for image updateson Stacks and Deployments
+ * Trigger a global poll for image updates on Stacks and Deployments
  * with `poll_for_updates` or `auto_update` enabled.
  * Admin only. Response: [Update]
  * 
  * 1. `docker compose pull` any Stacks / Deployments with `poll_for_updates` or `auto_update` enabled. This will pick up any available updates.
- * 2. Redeploy Stacks / Deployments that have updates found.
+ * 2. Redeploy Stacks / Deployments that have updates found and 'auto_update' enabled.
  */
 export interface GlobalAutoUpdate {
 }
@@ -6543,7 +6558,7 @@ export interface ListAlerts {
 	 * Pass a custom mongo query to filter the alerts.
 	 * 
 	 * ## Example JSON
-	 * ```
+	 * ```json
 	 * {
 	 * "resolved": "false",
 	 * "level": "CRITICAL",

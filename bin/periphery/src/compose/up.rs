@@ -16,18 +16,18 @@ pub async fn validate_files(
   res: &mut ComposeUpResponse,
 ) {
   let file_paths = stack
-    .file_paths()
-    .iter()
+    .all_file_paths()
+    .into_iter()
     .map(|path| {
       (
-        path,
         // This will remove any intermediate uneeded '/./' in the path
-        run_directory.join(path).components().collect::<PathBuf>(),
+        run_directory.join(&path).components().collect::<PathBuf>(),
+        path,
       )
     })
     .collect::<Vec<_>>();
 
-  for (path, full_path) in &file_paths {
+  for (full_path, path) in &file_paths {
     if !full_path.exists() {
       res.missing_files.push(path.to_string());
     }
@@ -37,21 +37,19 @@ pub async fn validate_files(
       "Validate Files",
       format_serror(
         &anyhow!(
-          "Ensure the run_directory and file_paths are correct."
+          "Ensure the run_directory and all file paths are correct."
         )
-        .context("A compose file doesn't exist after writing stack.")
+        .context("A file doesn't exist after writing stack.")
         .into(),
       ),
     ));
     return;
   }
 
-  for (path, full_path) in &file_paths {
+  for (full_path, path) in &file_paths {
     let file_contents =
       match fs::read_to_string(&full_path).await.with_context(|| {
-        format!(
-          "Failed to read compose file contents at {full_path:?}"
-        )
+        format!("Failed to read file contents at {full_path:?}")
       }) {
         Ok(res) => res,
         Err(e) => {

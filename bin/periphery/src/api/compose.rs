@@ -351,19 +351,19 @@ impl Resolve<super::Args> for ComposePull {
     )?;
 
     let file_paths = stack
-      .file_paths()
-      .iter()
+      .all_file_paths()
+      .into_iter()
       .map(|path| {
         (
-          path,
           // This will remove any intermediate uneeded '/./' in the path
-          run_directory.join(path).components().collect::<PathBuf>(),
+          run_directory.join(&path).components().collect::<PathBuf>(),
+          path,
         )
       })
       .collect::<Vec<_>>();
 
     // Validate files
-    for (path, full_path) in &file_paths {
+    for (full_path, path) in &file_paths {
       if !full_path.exists() {
         return Err(anyhow!("Missing compose file at {path}").into());
       }
@@ -382,11 +382,7 @@ impl Resolve<super::Args> for ComposePull {
       format!(" {}", services.join(" "))
     };
 
-    let file_args = if stack.config.file_paths.is_empty() {
-      String::from("compose.yaml")
-    } else {
-      stack.config.file_paths.join(" -f ")
-    };
+    let file_args = stack.compose_file_paths().join(" -f ");
 
     let env_file = env_file_path
       .map(|path| format!(" --env-file {path}"))
@@ -514,11 +510,7 @@ impl Resolve<super::Args> for ComposeUp {
       format!(" {}", services.join(" "))
     };
 
-    let file_args = if stack.config.file_paths.is_empty() {
-      String::from("compose.yaml")
-    } else {
-      stack.config.file_paths.join(" -f ")
-    };
+    let file_args = stack.compose_file_paths().join(" -f ");
 
     // This will be the last project name, which is the one that needs to be destroyed.
     // Might be different from the current project name, if user renames stack / changes to custom project name.
