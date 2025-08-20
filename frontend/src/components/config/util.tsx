@@ -38,6 +38,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@ui/dialog";
 import { snake_case_to_upper_space_case } from "@lib/formatting";
 import { ConfirmButton, ShowHideButton } from "@components/util";
@@ -577,6 +578,9 @@ export function ConfirmUpdate<T>({
       <DialogContent className="max-w-[800px]">
         <DialogHeader>
           <DialogTitle>Confirm Update</DialogTitle>
+          <DialogDescription>
+            Review and confirm the configuration changes below.
+          </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 py-4 my-4 max-h-[70vh] overflow-auto">
           {Object.entries(content).map(([key, val], i) => (
