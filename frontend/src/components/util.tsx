@@ -67,6 +67,7 @@ import {
   useContainerPortsMap,
   useRead,
   useTemplatesQueryBehavior,
+  usePromptHotkeys,
 } from "@lib/hooks";
 import { Prune } from "./resources/server/actions";
 import { MonacoEditor, MonacoLanguage } from "./monaco";
@@ -202,6 +203,26 @@ export const ActionWithDialog = ({
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
 
+  const handleConfirm = () => {
+    if (onClick && name === input) {
+      onClick();
+      setOpen(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setOpen(false);
+    setInput("");
+  };
+
+  // Use prompt hotkeys for enhanced UX
+  usePromptHotkeys({
+    onConfirm: handleConfirm,
+    onCancel: handleCancel,
+    enabled: open,
+    confirmDisabled: disabled || name !== input,
+  });
+
   if (!forceConfirmDialog && disable_confirm_dialog) {
     return (
       <ConfirmButton
@@ -253,7 +274,11 @@ export const ActionWithDialog = ({
               You may click the name in bold to copy it
             </span>
           </p>
-          <Input value={input} onChange={(e) => setInput(e.target.value)} />
+          <Input 
+            value={input} 
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={`Type "${name}" to confirm`}
+          />
           {additional}
         </div>
         <DialogFooter>
@@ -261,10 +286,7 @@ export const ActionWithDialog = ({
             title={title}
             icon={icon}
             disabled={disabled || name !== input}
-            onClick={() => {
-              onClick && onClick();
-              setOpen(false);
-            }}
+            onClick={handleConfirm}
           />
         </DialogFooter>
       </DialogContent>

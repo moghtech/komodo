@@ -539,6 +539,67 @@ export const useCtrlKeyListener = (listenKey: string, onPress: () => void) => {
   });
 };
 
+export interface PromptHotkeysConfig {
+  /** Function to call when Enter is pressed (confirm action) */
+  onConfirm?: () => void;
+  /** Function to call when Escape is pressed (cancel/close action) */
+  onCancel?: () => void;
+  /** Whether the hotkeys are enabled. Defaults to true */
+  enabled?: boolean;
+  /** Whether to ignore hotkeys when inside input/textarea elements. Defaults to true */
+  ignoreInputs?: boolean;
+  /** Whether the confirm action is disabled (e.g., form validation failed) */
+  confirmDisabled?: boolean;
+}
+
+/**
+ * Hook that provides standard prompt/dialog hotkey behavior:
+ * - Enter: Confirm/submit action
+ * - Escape: Cancel/close action
+ * 
+ * This hook respects the existing application patterns and focuses
+ * on natural UX behavior rather than application-wide hotkeys.
+ */
+export const usePromptHotkeys = ({
+  onConfirm,
+  onCancel,
+  enabled = true,
+  ignoreInputs = true,
+  confirmDisabled = false,
+}: PromptHotkeysConfig) => {
+  useEffect(() => {
+    if (!enabled) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Respect existing pattern of ignoring input/textarea unless explicitly disabled
+      if (ignoreInputs) {
+        const target = e.target as HTMLElement;
+        if (target.matches("input") || target.matches("textarea")) {
+          return;
+        }
+      }
+
+      switch (e.key) {
+        case "Enter":
+          if (onConfirm && !confirmDisabled) {
+            e.preventDefault();
+            onConfirm();
+          }
+          break;
+        case "Escape":
+          if (onCancel) {
+            e.preventDefault();
+            onCancel();
+          }
+          break;
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [enabled, onConfirm, onCancel, ignoreInputs, confirmDisabled]);
+};
+
 export type WebhookIntegration = "Github" | "Gitlab";
 export type WebhookIntegrations = {
   [key: string]: WebhookIntegration;
