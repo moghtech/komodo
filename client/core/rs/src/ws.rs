@@ -61,7 +61,7 @@ impl KomodoClient {
   /// and forwards the updates over a channel.
   /// Handles reconnection internally.
   ///
-  /// ```
+  /// ```text
   /// let (mut rx, _) = komodo.subscribe_to_updates()?;
   /// loop {
   ///   let update = match rx.recv().await {

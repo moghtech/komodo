@@ -15,7 +15,7 @@
 //! - `KOMODO_API_SECRET`
 //!
 //! ## Client Example
-//! ```
+//! ```text
 //! dotenvy::dotenv().ok();
 //!
 //! let client = KomodoClient::new_from_env()?;
@@ -109,7 +109,7 @@ impl KomodoClient {
 
   /// Add a healthcheck in the initialization pipeline:
   ///
-  /// ```rust
+  /// ```text
   /// let komodo = KomodoClient::new_from_env()?
   ///   .with_healthcheck().await?;
   /// ```
@@ -121,7 +121,7 @@ impl KomodoClient {
 
   /// Add a healthcheck in the initialization pipeline:
   ///
-  /// ```rust
+  /// ```text
   /// let komodo = KomodoClient::new_from_env()?
   ///   .with_healthcheck().await?;
   /// ```

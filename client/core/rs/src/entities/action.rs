@@ -91,13 +91,13 @@ pub struct ActionConfig {
   /// 1. Regular CRON expression:
   ///
   /// (second, minute, hour, day, month, day-of-week)
-  /// ```
+  /// ```text
   /// 0 0 0 1,15 * ?
   /// ```
   ///
   /// 2. "English" expression via [english-to-cron](https://crates.io/crates/english-to-cron):
   ///
-  /// ```
+  /// ```text
   /// at midnight on the 1st and 15th of the month
   /// ```
   #[serde(default)]

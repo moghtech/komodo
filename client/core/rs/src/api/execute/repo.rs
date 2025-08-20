@@ -60,7 +60,7 @@ pub struct BatchCloneRepo {
   /// Supports multiline and comma delineated combinations of the above.
   ///
   /// Example:
-  /// ```
+  /// ```text
   /// # match all foo-* repos
   /// foo-*
   /// # add some more
@@ -118,7 +118,7 @@ pub struct BatchPullRepo {
   /// Supports multiline and comma delineated combinations of the above.
   ///
   /// Example:
-  /// ```
+  /// ```text
   /// # match all foo-* repos
   /// foo-*
   /// # add some more
@@ -180,7 +180,7 @@ pub struct BatchBuildRepo {
   /// Supports multiline and comma delineated combinations of the above.
   ///
   /// Example:
-  /// ```
+  /// ```text
   /// # match all foo-* repos
   /// foo-*
   /// # add some more

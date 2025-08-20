@@ -64,7 +64,7 @@ pub struct BatchRunBuild {
   /// Supports multiline and comma delineated combinations of the above.
   ///
   /// Example:
-  /// ```
+  /// ```text
   /// # match all foo-* builds
   /// foo-*
   /// # add some more
