@@ -234,15 +234,15 @@ export const ServerVersion = ({ id }: { id: string }) => {
             <AlertCircle
               className={cn(
                 "w-4 h-4",
-                stroke_color_class_by_intention("Neutral")
+                stroke_color_class_by_intention("Unknown")
               )}
             />
-            Disabled
+            Unknown
           </div>
         </TooltipTrigger>
         <TooltipContent>
           <div>
-            Server is <span className="font-bold">disabled</span>.
+            Server is <span className="font-bold">disabled</span> - version unknown.
           </div>
         </TooltipContent>
       </Tooltip>

@@ -145,6 +145,17 @@ export const ServerConfig = ({
             },
           },
           {
+            label: "Version",
+            labelHidden: true,
+            components: {
+              send_version_mismatch_alerts: {
+                label: "Send Version Mismatch Alerts",
+                description:
+                  "Send an alert if the Periphery version differs from the Core version.",
+              },
+            },
+          },
+          {
             label: "CPU",
             labelHidden: true,
             components: {

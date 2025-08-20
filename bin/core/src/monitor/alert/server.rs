@@ -217,7 +217,7 @@ pub async fn alert_servers(
           };
           // Use send_unreachable_alerts as a proxy for general server alerts
           alerts_to_open
-            .push((alert, server.config.send_unreachable_alerts))
+            .push((alert, server.config.send_version_mismatch_alerts))
         }
       }
       (true, Some(alert)) => {
@@ -237,7 +237,7 @@ pub async fn alert_servers(
         // Version is now correct, close the alert
         alert_ids_to_close.push((
           alert.clone(),
-          server.config.send_unreachable_alerts,
+          server.config.send_version_mismatch_alerts,
         ));
       }
       (false, None) => {
