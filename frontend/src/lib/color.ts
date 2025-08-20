@@ -15,7 +15,7 @@ export const hex_color_by_intention = (intention: ColorIntention) => {
     case "Neutral":
       return "#3B82F6";
     case "Warning":
-      return "#EAB308"; // Gelb statt Orange
+      return "#EAB308";
     case "Critical":
       return "#EF0044";
     case "Unknown":
