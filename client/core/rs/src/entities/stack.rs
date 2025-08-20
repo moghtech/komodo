@@ -676,6 +676,10 @@ pub struct StackQuerySpecifics {
   /// Only accepts Server id (not name).
   #[serde(default)]
   pub server_ids: Vec<String>,
+  /// Query only for Stacks with these linked repos.
+  /// Only accepts Repo id (not name).
+  #[serde(default)]
+  pub linked_repos: Vec<String>,
   /// Filter syncs by their repo.
   #[serde(default)]
   pub repos: Vec<String>,
@@ -689,6 +693,10 @@ impl super::resource::AddFilters for StackQuerySpecifics {
     if !self.server_ids.is_empty() {
       filters
         .insert("config.server_id", doc! { "$in": &self.server_ids });
+    }
+    if !self.linked_repos.is_empty() {
+      filters
+        .insert("config.linked_repo", doc! { "$in": &self.linked_repos });
     }
     if !self.repos.is_empty() {
       filters.insert("config.repo", doc! { "$in": &self.repos });

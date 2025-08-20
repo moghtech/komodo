@@ -3977,6 +3977,11 @@ export interface StackQuerySpecifics {
 	 * Only accepts Server id (not name).
 	 */
 	server_ids?: string[];
+	/**
+	 * Query only for Stacks with these linked repos.
+	 * Only accepts Repo id (not name).
+	 */
+	linked_repos?: string[];
 	/** Filter syncs by their repo. */
 	repos?: string[];
 	/** Query only for Stack with available image updates. */
