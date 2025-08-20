@@ -7,6 +7,7 @@ import {
   SetStateAction,
   forwardRef,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { Button } from "../ui/button";
@@ -67,7 +68,6 @@ import {
   useContainerPortsMap,
   useRead,
   useTemplatesQueryBehavior,
-  usePromptHotkeys,
 } from "@lib/hooks";
 import { Prune } from "./resources/server/actions";
 import { MonacoEditor, MonacoLanguage } from "./monaco";
@@ -130,6 +130,7 @@ export const ActionButton = forwardRef<
     onClick?: MouseEventHandler<HTMLButtonElement>;
     onBlur?: FocusEventHandler<HTMLButtonElement>;
     loading?: boolean;
+    "data-confirm-button"?: boolean;
   }
 >(
   (
@@ -143,6 +144,7 @@ export const ActionButton = forwardRef<
       loading,
       onClick,
       onBlur,
+      "data-confirm-button": dataConfirmButton,
     },
     ref
   ) => (
@@ -157,6 +159,7 @@ export const ActionButton = forwardRef<
       onBlur={onBlur}
       disabled={disabled || loading}
       ref={ref}
+      data-confirm-button={dataConfirmButton}
     >
       {title} {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : icon}
     </Button>
@@ -202,26 +205,7 @@ export const ActionWithDialog = ({
     useRead("GetCoreInfo", {}).data?.disable_confirm_dialog ?? false;
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
-
-  const handleConfirm = () => {
-    if (onClick && name === input) {
-      onClick();
-      setOpen(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setOpen(false);
-    setInput("");
-  };
-
-  // Use prompt hotkeys for enhanced UX
-  usePromptHotkeys({
-    onConfirm: handleConfirm,
-    onCancel: handleCancel,
-    enabled: open,
-    confirmDisabled: disabled || name !== input,
-  });
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
   if (!forceConfirmDialog && disable_confirm_dialog) {
     return (
@@ -274,19 +258,19 @@ export const ActionWithDialog = ({
               You may click the name in bold to copy it
             </span>
           </p>
-          <Input 
-            value={input} 
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={`Type "${name}" to confirm`}
-          />
+          <Input value={input} onChange={(e) => setInput(e.target.value)} />
           {additional}
         </div>
         <DialogFooter>
           <ConfirmButton
+            ref={confirmButtonRef}
             title={title}
             icon={icon}
             disabled={disabled || name !== input}
-            onClick={handleConfirm}
+            onClick={() => {
+              onClick && onClick();
+              setOpen(false);
+            }}
           />
         </DialogFooter>
       </DialogContent>
@@ -294,7 +278,27 @@ export const ActionWithDialog = ({
   );
 };
 
-export const ConfirmButton = ({
+export const ConfirmButton = forwardRef<
+  HTMLButtonElement,
+  {
+    variant?:
+      | "link"
+      | "default"
+      | "destructive"
+      | "outline"
+      | "secondary"
+      | "ghost"
+      | null
+      | undefined;
+    size?: "default" | "sm" | "lg" | "icon" | null | undefined;
+    title: string;
+    icon: ReactNode;
+    onClick?: MouseEventHandler<HTMLButtonElement>;
+    loading?: boolean;
+    disabled?: boolean;
+    className?: string;
+  }
+>(({
   variant,
   size,
   title,
@@ -303,28 +307,12 @@ export const ConfirmButton = ({
   loading,
   onClick,
   className,
-}: {
-  variant?:
-    | "link"
-    | "default"
-    | "destructive"
-    | "outline"
-    | "secondary"
-    | "ghost"
-    | null
-    | undefined;
-  size?: "default" | "sm" | "lg" | "icon" | null | undefined;
-  title: string;
-  icon: ReactNode;
-  onClick?: MouseEventHandler<HTMLButtonElement>;
-  loading?: boolean;
-  disabled?: boolean;
-  className?: string;
-}) => {
+}, ref) => {
   const [confirmed, set] = useState(false);
 
   return (
     <ActionButton
+      ref={ref}
       variant={variant}
       size={size}
       title={confirmed ? "Confirm" : title}
@@ -345,9 +333,10 @@ export const ConfirmButton = ({
       onBlur={() => set(false)}
       loading={loading}
       className={className}
+      data-confirm-button={true}
     />
   );
-};
+});
 
 export const UserSettings = () => (
   <Link to="/settings">

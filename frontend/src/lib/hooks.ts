@@ -561,20 +561,45 @@ export interface PromptHotkeysConfig {
  * on natural UX behavior rather than application-wide hotkeys.
  */
 export const usePromptHotkeys = ({
+  enabled = true,
   onConfirm,
   onCancel,
-  enabled = true,
   ignoreInputs = true,
   confirmDisabled = false,
 }: PromptHotkeysConfig) => {
   useEffect(() => {
     if (!enabled) return;
 
+    const findConfirmButton = (): HTMLButtonElement | null => {
+      // First, try to find the button within the focused element's ancestors
+      let currentElement = document.activeElement;
+      while (currentElement && currentElement !== document.body) {
+        const button = currentElement.querySelector ? 
+          currentElement.querySelector('[data-confirm-button]:not([disabled])') as HTMLButtonElement : null;
+        if (button) return button;
+        currentElement = currentElement.parentElement;
+      }
+      
+      // If not found, look within dialog containers
+      const dialogContainers = document.querySelectorAll('[role="dialog"], [data-state="open"], .dialog-content');
+      for (const container of dialogContainers) {
+        const button = container.querySelector('[data-confirm-button]:not([disabled])') as HTMLButtonElement;
+        if (button) return button;
+      }
+      
+      // Final fallback: any enabled ConfirmButton
+      return document.querySelector('[data-confirm-button]:not([disabled])') as HTMLButtonElement;
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Respect existing pattern of ignoring input/textarea unless explicitly disabled
       if (ignoreInputs) {
         const target = e.target as HTMLElement;
-        if (target.matches("input") || target.matches("textarea")) {
+        if (
+          target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable
+        ) {
           return;
         }
       }
@@ -583,7 +608,12 @@ export const usePromptHotkeys = ({
         case "Enter":
           if (onConfirm && !confirmDisabled) {
             e.preventDefault();
-            onConfirm();
+            const confirmButton = findConfirmButton();
+            if (confirmButton) {
+              confirmButton.click();
+            } else {
+              onConfirm();
+            }
           }
           break;
         case "Escape":
