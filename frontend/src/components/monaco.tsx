@@ -17,6 +17,7 @@ export type MonacoLanguage =
   | "fancy_toml"
   | "json"
   | "key_value"
+  | "ini"
   | "string_list"
   | "shell"
   | "dockerfile"
@@ -29,7 +30,8 @@ const LANGUAGE_EXTENSIONS: Record<MonacoLanguage, string[]> = {
   toml: [".toml"],
   fancy_toml: [],
   json: [".json"],
-  key_value: [".env"],
+  key_value: [".env", ".conf"],
+  ini: [".ini"],
   string_list: [],
   shell: [".sh", ".bash", ".zsh"],
   dockerfile: ["Dockerfile"],
