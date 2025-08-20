@@ -176,7 +176,6 @@ export const ActionWithDialog = ({
   additional,
   targetClassName,
   variant,
-  forceConfirmDialog,
 }: {
   name: string;
   title: string;
@@ -195,31 +194,10 @@ export const ActionWithDialog = ({
     | "ghost"
     | null
     | undefined;
-  /**
-   * For some ops (Delete), force confirm dialog
-   * even if disabled.
-   */
-  forceConfirmDialog?: boolean;
 }) => {
-  const disable_confirm_dialog =
-    useRead("GetCoreInfo", {}).data?.disable_confirm_dialog ?? false;
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
-
-  if (!forceConfirmDialog && disable_confirm_dialog) {
-    return (
-      <ConfirmButton
-        variant={variant}
-        title={title}
-        icon={icon}
-        disabled={disabled}
-        loading={loading}
-        className={targetClassName}
-        onClick={onClick}
-      />
-    );
-  }
 
   return (
     <Dialog
