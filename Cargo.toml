@@ -8,7 +8,7 @@ members = [
 ]
 
 [workspace.package]
-version = "1.19.1-dev-2"
+version = "1.19.1-dev-3"
 edition = "2024"
 authors = ["mbecker20 <becker.maxh@gmail.com>"]
 license = "GPL-3.0-or-later"
