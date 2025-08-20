@@ -44,7 +44,7 @@ impl PeripheryClient {
   /// sentinal value as the expected final line of the stream.
   ///
   /// Example final line:
-  /// ```
+  /// ```text
   /// __KOMODO_EXIT_CODE:0
   /// ```
   ///
@@ -104,7 +104,7 @@ impl PeripheryClient {
   /// sentinal value as the expected final line of the stream.
   ///
   /// Example final line:
-  /// ```
+  /// ```text
   /// __KOMODO_EXIT_CODE:0
   /// ```
   ///

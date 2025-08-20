@@ -28,6 +28,7 @@ pub struct GetComposeContentsOnHost {
   /// The name of the stack
   pub name: String,
   pub run_directory: String,
+  /// Both compose files and additional files, all relative to run directory.
   pub file_paths: Vec<String>,
 }
 
@@ -91,7 +92,7 @@ pub struct GetComposeLogSearch {
 
 //
 
-/// Write the compose contents to the file on the host, for stacks using
+/// Write the compose / additional file contents to the file on the host, for stacks using
 /// `files_on_host`.
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Log)]

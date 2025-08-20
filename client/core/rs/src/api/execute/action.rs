@@ -60,7 +60,7 @@ pub struct BatchRunAction {
   /// Supports multiline and comma delineated combinations of the above.
   ///
   /// Example:
-  /// ```
+  /// ```text
   /// # match all foo-* actions
   /// foo-*
   /// # add some more
