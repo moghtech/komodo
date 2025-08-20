@@ -71,13 +71,13 @@ export interface ActionConfig {
      * 1. Regular CRON expression:
      *
      * (second, minute, hour, day, month, day-of-week)
-     * ```
+     * ```text
      * 0 0 0 1,15 * ?
      * ```
      *
      * 2. "English" expression via [english-to-cron](https://crates.io/crates/english-to-cron):
      *
-     * ```
+     * ```text
      * at midnight on the 1st and 15th of the month
      * ```
      */
@@ -1035,13 +1035,13 @@ export interface ProcedureConfig {
      * 1. Regular CRON expression:
      *
      * (second, minute, hour, day, month, day-of-week)
-     * ```
+     * ```text
      * 0 0 0 1,15 * ?
      * ```
      *
      * 2. "English" expression via [english-to-cron](https://crates.io/crates/english-to-cron):
      *
-     * ```
+     * ```text
      * at midnight on the 1st and 15th of the month
      * ```
      */
@@ -4028,7 +4028,7 @@ export interface BatchBuildRepo {
      * Supports multiline and comma delineated combinations of the above.
      *
      * Example:
-     * ```
+     * ```text
      * # match all foo-* repos
      * foo-*
      * # add some more
@@ -4044,7 +4044,7 @@ export interface BatchCloneRepo {
      * Supports multiline and comma delineated combinations of the above.
      *
      * Example:
-     * ```
+     * ```text
      * # match all foo-* repos
      * foo-*
      * # add some more
@@ -4060,7 +4060,7 @@ export interface BatchDeploy {
      * Supports multiline and comma delineated combinations of the above.
      *
      * Example:
-     * ```
+     * ```text
      * # match all foo-* deployments
      * foo-*
      * # add some more
@@ -4076,7 +4076,7 @@ export interface BatchDeployStack {
      * Supports multiline and comma delineated combinations of the above.
      *
      * Example:
-     * ```
+     * ```text
      * # match all foo-* stacks
      * foo-*
      * # add some more
@@ -4092,7 +4092,7 @@ export interface BatchDeployStackIfChanged {
      * Supports multiline and comma delineated combinations of the above.
      *
      * Example:
-     * ```
+     * ```text
      * # match all foo-* stacks
      * foo-*
      * # add some more
@@ -4108,7 +4108,7 @@ export interface BatchDestroyDeployment {
      * Supports multiline and comma delineated combinations of the above.
      *
      * Example:
-     * ```
+     * ```text
      * # match all foo-* deployments
      * foo-*
      * # add some more
@@ -4124,7 +4124,7 @@ export interface BatchDestroyStack {
      * Supports multiline and comma delineated combinations of the above.
      * d
      * Example:
-     * ```
+     * ```text
      * # match all foo-* stacks
      * foo-*
      * # add some more
@@ -4144,7 +4144,7 @@ export interface BatchPullRepo {
      * Supports multiline and comma delineated combinations of the above.
      *
      * Example:
-     * ```
+     * ```text
      * # match all foo-* repos
      * foo-*
      * # add some more
@@ -4160,7 +4160,7 @@ export interface BatchPullStack {
      * Supports multiline and comma delineated combinations of the above.
      *
      * Example:
-     * ```
+     * ```text
      * # match all foo-* stacks
      * foo-*
      * # add some more
@@ -4176,7 +4176,7 @@ export interface BatchRunAction {
      * Supports multiline and comma delineated combinations of the above.
      *
      * Example:
-     * ```
+     * ```text
      * # match all foo-* actions
      * foo-*
      * # add some more
@@ -4192,7 +4192,7 @@ export interface BatchRunBuild {
      * Supports multiline and comma delineated combinations of the above.
      *
      * Example:
-     * ```
+     * ```text
      * # match all foo-* builds
      * foo-*
      * # add some more
@@ -4208,7 +4208,7 @@ export interface BatchRunProcedure {
      * Supports multiline and comma delineated combinations of the above.
      *
      * Example:
-     * ```
+     * ```text
      * # match all foo-* procedures
      * foo-*
      * # add some more
@@ -6227,7 +6227,7 @@ export interface ListAlerts {
      * Pass a custom mongo query to filter the alerts.
      *
      * ## Example JSON
-     * ```
+     * ```json
      * {
      * "resolved": "false",
      * "level": "CRITICAL",
