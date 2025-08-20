@@ -390,6 +390,7 @@ export const TextUpdateMenuMonaco = ({
   setOpen,
   triggerHidden,
   language,
+  triggerChild,
 }: {
   title: string;
   titleRight?: ReactNode;
@@ -404,6 +405,7 @@ export const TextUpdateMenuMonaco = ({
   setOpen?: (open: boolean) => void;
   triggerHidden?: boolean;
   language?: MonacoLanguage;
+  triggerChild?: ReactNode;
 }) => {
   const [_open, _setOpen] = useState(false);
   const [__open, __setOpen] = [open ?? _open, setOpen ?? _setOpen];
@@ -417,23 +419,25 @@ export const TextUpdateMenuMonaco = ({
   return (
     <Dialog open={__open} onOpenChange={__setOpen}>
       <DialogTrigger asChild>
-        <Card
-          className={cn(
-            "px-3 py-2 hover:bg-accent/50 transition-colors cursor-pointer",
-            fullWidth ? "w-full" : "w-fit",
-            triggerHidden && "hidden"
-          )}
-        >
-          <div
+        {triggerChild ?? (
+          <Card
             className={cn(
-              "text-sm text-nowrap overflow-hidden overflow-ellipsis",
-              (!value || !!disabled) && "text-muted-foreground",
-              triggerClassName
+              "px-3 py-2 hover:bg-accent/50 transition-colors cursor-pointer",
+              fullWidth ? "w-full" : "w-fit",
+              triggerHidden && "hidden"
             )}
           >
-            {value.split("\n")[0] || placeholder}
-          </div>
-        </Card>
+            <div
+              className={cn(
+                "text-sm text-nowrap overflow-hidden overflow-ellipsis",
+                (!value || !!disabled) && "text-muted-foreground",
+                triggerClassName
+              )}
+            >
+              {value.split("\n")[0] || placeholder}
+            </div>
+          </Card>
+        )}
       </DialogTrigger>
       <DialogContent className="min-w-[50vw]">
         {titleRight && (

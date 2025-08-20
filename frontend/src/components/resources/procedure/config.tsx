@@ -27,6 +27,7 @@ import {
   Plus,
   PlusCircle,
   SearchX,
+  Settings2,
 } from "lucide-react";
 import { useToast } from "@ui/use-toast";
 import { TextUpdateMenuMonaco, TimezoneSelector } from "@components/util";
@@ -745,14 +746,30 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
   },
   // Action
   RunAction: {
-    params: { action: "" },
+    params: { action: "", args: {} },
     Component: ({ params, setParams, disabled }) => (
-      <ResourceSelector
-        type="Action"
-        selected={params.action}
-        onSelect={(action) => setParams({ action })}
-        disabled={disabled}
-      />
+      <div className="flex gap-2 items-center">
+        <ResourceSelector
+          type="Action"
+          selected={params.action}
+          onSelect={(action) => setParams({ action, args: params.args })}
+          disabled={disabled}
+        />
+        <TextUpdateMenuMonaco
+          title="Action Arguments (JSON)"
+          value={JSON.stringify(params.args ?? {}, undefined, 2)}
+          onUpdate={(args) =>
+            setParams({ action: params.action, args: JSON.parse(args) })
+          }
+          disabled={disabled}
+          language="json"
+          triggerChild={
+            <Button variant="secondary" size="icon">
+              <Settings2 className="w-4" />
+            </Button>
+          }
+        />
+      </div>
     ),
   },
   BatchRunAction: {
