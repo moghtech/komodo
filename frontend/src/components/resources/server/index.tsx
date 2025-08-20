@@ -306,7 +306,7 @@ export const ServerComponents: RequiredResourceComponents = {
   ),
 
   Dashboard: () => {
-    const summary = useRead("GetServersSummary", {}).data;
+    const summary = useRead("GetServersSummary", {}, { refetchInterval: 15_000 }).data;
     return (
       <DashboardPieChart
         data={[

@@ -207,6 +207,28 @@ pub async fn send_alert(
         "{level} | **{name}** ({resource_type}) | Scheduled run started 🕝\n{link}"
       )
     }
+    AlertData::ServerVersionMismatch {
+      id,
+      name,
+      region,
+      server_version,
+      core_version,
+    } => {
+      let region = fmt_region(region);
+      let link = resource_link(ResourceTargetVariant::Server, id);
+      match alert.level {
+        SeverityLevel::Ok => {
+          format!(
+            "{level} | **{name}** ({region}) | Server version now matches core version ✅\n{link}"
+          )
+        }
+        _ => {
+          format!(
+            "{level} | **{name}** ({region}) | Version mismatch detected ⚠️\nServer: **{server_version}** | Core: **{core_version}**\n{link}"
+          )
+        }
+      }
+    }
     AlertData::None {} => Default::default(),
   };
   if !content.is_empty() {

@@ -1427,6 +1427,19 @@ export type AlertData =
 	/** The total size of the disk in GB */
 	total_gb: number;
 }}
+	/** A server has a version mismatch with the core. */
+	| { type: "ServerVersionMismatch", data: {
+	/** The id of the server */
+	id: string;
+	/** The name of the server */
+	name: string;
+	/** The region of the server */
+	region?: string;
+	/** The actual server version */
+	server_version: string;
+	/** The core version */
+	core_version: string;
+}}
 	/** A container's state has changed unexpectedly. */
 	| { type: "ContainerStateChange", data: {
 	/** The id of the deployment */
