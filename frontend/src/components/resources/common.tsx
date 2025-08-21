@@ -598,7 +598,6 @@ export const DeleteResource = ({
         }}
         disabled={isPending}
         loading={isPending}
-        forceConfirmDialog
       />
     </div>
   );
