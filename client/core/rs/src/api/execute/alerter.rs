@@ -46,7 +46,7 @@ pub struct TestAlerter {
 #[response(Update)]
 #[error(serror::Error)]
 pub struct SendAlert {
-  /// The alert level. Default: Ok
+  /// The alert level.
   #[serde(default)]
   #[clap(long, short = 'l', default_value_t = SeverityLevel::Ok)]
   pub level: SeverityLevel,

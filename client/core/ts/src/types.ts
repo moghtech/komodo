@@ -7755,7 +7755,7 @@ export interface SearchStackLog {
 
 /** Send a custom alert message to configured Alerters. Response: [Update] */
 export interface SendAlert {
-	/** The alert level. Default: Ok */
+	/** The alert level. */
 	level?: SeverityLevel;
 	/** The alert message. Required. */
 	message: string;
