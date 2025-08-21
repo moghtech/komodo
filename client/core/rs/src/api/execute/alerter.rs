@@ -54,7 +54,7 @@ pub struct SendAlert {
   pub message: String,
   /// The alert details. Optional.
   #[serde(default)]
-  #[arg(long, short = 'a', default_value_t = String::new())]
+  #[arg(long, short = 'd', default_value_t = String::new())]
   pub details: String,
   /// Specific alerter names or ids.
   /// If empty / not passed, sends to all configured alerters

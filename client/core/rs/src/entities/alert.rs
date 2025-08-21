@@ -330,10 +330,29 @@ impl Default for AlertDataVariant {
 #[strum(serialize_all = "UPPERCASE")]
 pub enum SeverityLevel {
   /// No problem.
+  ///
+  /// Aliases: ok, low, l
   #[default]
+  #[strum(serialize = "ok", serialize = "low", serialize = "l")]
   Ok,
   /// Problem is imminent.
+  ///
+  /// Aliases: warning, w, medium, m
+  #[strum(
+    serialize = "warning",
+    serialize = "w",
+    serialize = "medium",
+    serialize = "m"
+  )]
   Warning,
   /// Problem fully realized.
+  ///
+  /// Aliases: critical, c, high, h
+  #[strum(
+    serialize = "critical",
+    serialize = "c",
+    serialize = "high",
+    serialize = "h"
+  )]
   Critical,
 }
