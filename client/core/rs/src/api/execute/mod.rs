@@ -152,6 +152,7 @@ pub enum Execution {
   StopStack(StopStack),
   DestroyStack(DestroyStack),
   BatchDestroyStack(BatchDestroyStack),
+  RunStackService(RunStackService),
 
   // ALERTER
   TestAlerter(TestAlerter),

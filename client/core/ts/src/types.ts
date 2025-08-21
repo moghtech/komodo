@@ -386,6 +386,7 @@ export enum Operation {
 	UnpauseStack = "UnpauseStack",
 	StopStack = "StopStack",
 	DestroyStack = "DestroyStack",
+	RunStackService = "RunStackService",
 	DeployStackService = "DeployStackService",
 	PullStackService = "PullStackService",
 	StartStackService = "StartStackService",
@@ -868,6 +869,7 @@ export type Execution =
 	| { type: "StopStack", params: StopStack }
 	| { type: "DestroyStack", params: DestroyStack }
 	| { type: "BatchDestroyStack", params: BatchDestroyStack }
+	| { type: "RunStackService", params: RunStackService }
 	| { type: "TestAlerter", params: TestAlerter }
 	| { type: "SendAlert", params: SendAlert }
 	| { type: "ClearRepoCache", params: ClearRepoCache }
@@ -7624,6 +7626,32 @@ export interface RunProcedure {
 	procedure: string;
 }
 
+/** Runs a one-time command against a service using `docker compose run`. Response: [Update] */
+export interface RunStackService {
+	/** Id or name */
+	stack: string;
+	/** Service to run */
+	service: string;
+	/** Command and args to pass to the service container */
+	command?: string[];
+	/** Do not allocate TTY */
+	no_tty?: boolean;
+	/** Do not start linked services */
+	no_deps?: boolean;
+	/** Map service ports to the host */
+	service_ports?: boolean;
+	/** Extra environment variables for the run */
+	env?: Record<string, string>;
+	/** Working directory inside the container */
+	workdir?: string;
+	/** User to run as inside the container */
+	user?: string;
+	/** Override the default entrypoint */
+	entrypoint?: string;
+	/** Pull the image before running */
+	pull?: boolean;
+}
+
 /** Runs the target resource sync. Response: [Update] */
 export interface RunSync {
 	/** Id or name */
@@ -8418,6 +8446,7 @@ export type ExecuteRequest =
 	| { type: "UnpauseStack", params: UnpauseStack }
 	| { type: "DestroyStack", params: DestroyStack }
 	| { type: "BatchDestroyStack", params: BatchDestroyStack }
+	| { type: "RunStackService", params: RunStackService }
 	| { type: "Deploy", params: Deploy }
 	| { type: "BatchDeploy", params: BatchDeploy }
 	| { type: "PullDeployment", params: PullDeployment }

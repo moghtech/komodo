@@ -1083,6 +1083,7 @@ pub enum Operation {
   UnpauseStack,
   StopStack,
   DestroyStack,
+  RunStackService,
 
   // stack (service)
   DeployStackService,

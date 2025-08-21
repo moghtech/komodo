@@ -492,6 +492,13 @@ pub async fn init_execution_update(
       return Ok(Default::default());
     }
 
+    ExecuteRequest::RunStackService(data) => (
+      Operation::RunStackService,
+      ResourceTarget::Stack(
+        resource::get::<Stack>(&data.stack).await?.id,
+      ),
+    ),
+
     // Alerter
     ExecuteRequest::TestAlerter(data) => (
       Operation::TestAlerter,
