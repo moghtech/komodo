@@ -69,6 +69,7 @@ import {
   useContainerPortsMap,
   useRead,
   useTemplatesQueryBehavior,
+  usePromptHotkeys,
 } from "@lib/hooks";
 import { Prune } from "./resources/server/actions";
 import { MonacoEditor, MonacoLanguage } from "./monaco";
@@ -177,6 +178,7 @@ export const ActionWithDialog = ({
   additional,
   targetClassName,
   variant,
+  forceConfirmDialog,
 }: {
   name: string;
   title: string;
@@ -195,10 +197,45 @@ export const ActionWithDialog = ({
     | "ghost"
     | null
     | undefined;
+  /**
+   * For some ops (Delete), force confirm dialog
+   * even if disabled.
+   */
+  forceConfirmDialog?: boolean;
 }) => {
+  const disable_confirm_dialog =
+    useRead("GetCoreInfo", {}).data?.disable_confirm_dialog ?? false;
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Add prompt hotkeys for better UX when dialog is open
+  usePromptHotkeys({
+    onConfirm: () => {
+      if (name === input && !disabled) {
+        onClick && onClick();
+        setOpen(false);
+      }
+    },
+    onCancel: () => setOpen(false),
+    enabled: open,
+    confirmDisabled: disabled || name !== input,
+  });
+
+  // If confirm dialogs are disabled and this isn't forced, use ConfirmButton directly
+  if (!forceConfirmDialog && disable_confirm_dialog) {
+    return (
+      <ConfirmButton
+        variant={variant}
+        title={title}
+        icon={icon}
+        disabled={disabled}
+        loading={loading}
+        className={targetClassName}
+        onClick={onClick}
+      />
+    );
+  }
 
   return (
     <Dialog
