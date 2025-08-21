@@ -556,9 +556,6 @@ export interface PromptHotkeysConfig {
  * Hook that provides standard prompt/dialog hotkey behavior:
  * - Enter: Confirm/submit action
  * - Escape: Cancel/close action
- * 
- * This hook respects the existing application patterns and focuses
- * on natural UX behavior rather than application-wide hotkeys.
  */
 export const usePromptHotkeys = ({
   enabled = true,
@@ -571,23 +568,12 @@ export const usePromptHotkeys = ({
     if (!enabled) return;
 
     const findConfirmButton = (): HTMLButtonElement | null => {
-      // First, try to find the button within the focused element's ancestors
-      let currentElement = document.activeElement;
-      while (currentElement && currentElement !== document.body) {
-        const button = currentElement.querySelector ? 
-          currentElement.querySelector('[data-confirm-button]:not([disabled])') as HTMLButtonElement : null;
-        if (button) return button;
-        currentElement = currentElement.parentElement;
-      }
-      
-      // If not found, look within dialog containers
       const dialogContainers = document.querySelectorAll('[role="dialog"], [data-state="open"], .dialog-content');
       for (const container of dialogContainers) {
         const button = container.querySelector('[data-confirm-button]:not([disabled])') as HTMLButtonElement;
         if (button) return button;
       }
-      
-      // Final fallback: any enabled ConfirmButton
+
       return document.querySelector('[data-confirm-button]:not([disabled])') as HTMLButtonElement;
     };
 

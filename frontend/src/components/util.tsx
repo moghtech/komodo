@@ -41,7 +41,6 @@ import {
   DialogTrigger,
   DialogContent,
   DialogFooter,
-  DialogDescription,
 } from "@ui/dialog";
 import { toast, useToast } from "@ui/use-toast";
 import { cn, filterBySplit, usableResourcePath } from "@lib/utils";
@@ -259,9 +258,6 @@ export const ActionWithDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Confirm {title}</DialogTitle>
-          <DialogDescription>
-            Please enter the name below to confirm this action.
-          </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 my-4">
           <p
