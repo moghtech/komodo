@@ -65,7 +65,7 @@ impl Stack {
   pub fn all_file_paths(&self) -> Vec<String> {
     let mut res = self
       .compose_file_paths()
-      .into_iter()
+      .iter()
       .cloned()
       // Makes sure to dedup them, while maintaining ordering
       .collect::<IndexSet<_>>();
@@ -695,8 +695,10 @@ impl super::resource::AddFilters for StackQuerySpecifics {
         .insert("config.server_id", doc! { "$in": &self.server_ids });
     }
     if !self.linked_repos.is_empty() {
-      filters
-        .insert("config.linked_repo", doc! { "$in": &self.linked_repos });
+      filters.insert(
+        "config.linked_repo",
+        doc! { "$in": &self.linked_repos },
+      );
     }
     if !self.repos.is_empty() {
       filters.insert("config.repo", doc! { "$in": &self.repos });

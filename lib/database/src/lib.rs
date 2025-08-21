@@ -112,13 +112,12 @@ impl Client {
     password: &str,
   ) -> anyhow::Result<()> {
     let UserConfig::Local { .. } = user.config else {
-      return Err(
-        anyhow!("User is not a 'Local' (username / password) user")
-          .into(),
-      );
+      return Err(anyhow!(
+        "User is not a 'Local' (username / password) user"
+      ));
     };
     if password.is_empty() {
-      return Err(anyhow!("Password cannot be empty.").into());
+      return Err(anyhow!("Password cannot be empty."));
     }
     let id = ObjectId::from_str(&user.id)
       .context("User id not valid ObjectId.")?;

@@ -1153,6 +1153,7 @@ pub enum Operation {
   RenameAlerter,
   DeleteAlerter,
   TestAlerter,
+  SendAlert,
 
   // sync
   CreateResourceSync,

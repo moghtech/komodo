@@ -215,6 +215,9 @@ pub async fn handle(
     Execution::TestAlerter(data) => {
       println!("{}: {data:?}", "Data".dimmed())
     }
+    Execution::SendAlert(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
     Execution::ClearRepoCache(data) => {
       println!("{}: {data:?}", "Data".dimmed())
     }
@@ -465,6 +468,10 @@ pub async fn handle(
       client.execute(request).await.map(ExecutionResult::Batch)
     }
     Execution::TestAlerter(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::SendAlert(request) => client
       .execute(request)
       .await
       .map(|u| ExecutionResult::Single(u.into())),

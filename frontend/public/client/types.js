@@ -159,6 +159,7 @@ export var Operation;
     Operation["RenameAlerter"] = "RenameAlerter";
     Operation["DeleteAlerter"] = "DeleteAlerter";
     Operation["TestAlerter"] = "TestAlerter";
+    Operation["SendAlert"] = "SendAlert";
     Operation["CreateResourceSync"] = "CreateResourceSync";
     Operation["UpdateResourceSync"] = "UpdateResourceSync";
     Operation["RenameResourceSync"] = "RenameResourceSync";

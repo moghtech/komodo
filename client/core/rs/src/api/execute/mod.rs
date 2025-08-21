@@ -155,6 +155,8 @@ pub enum Execution {
 
   // ALERTER
   TestAlerter(TestAlerter),
+  #[clap(alias = "alert")]
+  SendAlert(SendAlert),
 
   // MAINTENANCE
   ClearRepoCache(ClearRepoCache),

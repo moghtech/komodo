@@ -36,10 +36,10 @@ fn is_container_environment() -> bool {
   }
 
   // Check cgroup for container runtime indicators
-  if let Ok(content) = std::fs::read_to_string(CGROUP_FILE) {
-    if content.contains("docker") || content.contains("containerd") {
-      return true;
-    }
+  if let Ok(content) = std::fs::read_to_string(CGROUP_FILE)
+    && (content.contains("docker") || content.contains("containerd"))
+  {
+    return true;
   }
 
   false
@@ -142,7 +142,7 @@ async fn find_gateway(
   }
 
   let ip_cidr = ip_cidr.ok_or_else(|| anyhow!(
-        "Could not find IP address for interface '{}'. Ensure interface has a valid IPv4 address", 
+        "Could not find IP address for interface '{}'. Ensure interface has a valid IPv4 address",
         interface_name
     ))?;
 
@@ -167,14 +167,13 @@ async fn find_gateway(
       if line.contains("via") {
         let parts: Vec<&str> = line.split_whitespace().collect();
         if let Some(via_idx) = parts.iter().position(|&x| x == "via")
+          && let Some(&gateway) = parts.get(via_idx + 1)
         {
-          if let Some(&gateway) = parts.get(via_idx + 1) {
-            trace!(
-              "Found gateway {} for {} from routing table",
-              gateway, interface_name
-            );
-            return Ok(gateway.to_string());
-          }
+          trace!(
+            "Found gateway {} for {} from routing table",
+            gateway, interface_name
+          );
+          return Ok(gateway.to_string());
         }
       }
     }

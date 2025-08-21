@@ -499,6 +499,9 @@ pub async fn init_execution_update(
         resource::get::<Alerter>(&data.alerter).await?.id,
       ),
     ),
+    ExecuteRequest::SendAlert(_) => {
+      (Operation::SendAlert, ResourceTarget::system())
+    }
 
     // Maintenance
     ExecuteRequest::ClearRepoCache(_data) => {

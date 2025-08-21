@@ -286,6 +286,16 @@ pub enum AlertData {
     /// The resource name
     name: String,
   },
+
+  /// Custom header / body.
+  /// Produced using `/execute/SendAlert`
+  Custom {
+    /// The alert message.
+    message: String,
+    /// Message details. May be empty string.
+    #[serde(default)]
+    details: String,
+  },
 }
 
 impl Default for AlertData {

@@ -233,7 +233,7 @@ async fn list_schedules(
 }
 
 fn fix_tags<T>(
-  resources: &mut Vec<ResourceListItem<T>>,
+  resources: &mut [ResourceListItem<T>],
   tags: &HashMap<String, String>,
 ) {
   resources.iter_mut().for_each(|resource| {

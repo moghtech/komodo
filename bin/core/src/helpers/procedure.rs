@@ -1124,6 +1124,23 @@ async fn execute_execution(
       )
       .await?
     }
+    Execution::SendAlert(req) => {
+      let req = ExecuteRequest::SendAlert(req);
+      let update = init_execution_update(&req, &user).await?;
+      let ExecuteRequest::SendAlert(req) = req else {
+        unreachable!()
+      };
+      let update_id = update.id.clone();
+      handle_resolve_result(
+        req
+          .resolve(&ExecuteArgs { user, update })
+          .await
+          .map_err(|e| e.error)
+          .context("Failed at SendAlert"),
+        &update_id,
+      )
+      .await?
+    }
     Execution::ClearRepoCache(req) => {
       let req = ExecuteRequest::ClearRepoCache(req);
       let update = init_execution_update(&req, &user).await?;

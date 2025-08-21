@@ -429,6 +429,12 @@ pub async fn send_alert(
       ];
       (text, blocks.into())
     }
+    AlertData::Custom { message, details } => {
+      let text = format!("{level} | {message}");
+      let blocks =
+        vec![Block::header(text.clone()), Block::section(details)];
+      (text, blocks.into())
+    }
     AlertData::None {} => Default::default(),
   };
   if !text.is_empty() {

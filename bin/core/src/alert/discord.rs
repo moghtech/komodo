@@ -207,6 +207,16 @@ pub async fn send_alert(
         "{level} | **{name}** ({resource_type}) | Scheduled run started 🕝\n{link}"
       )
     }
+    AlertData::Custom { message, details } => {
+      format!(
+        "{level} | {message}{}",
+        if details.is_empty() {
+          format_args!("")
+        } else {
+          format_args!("\n{details}")
+        }
+      )
+    }
     AlertData::None {} => Default::default(),
   };
   if !content.is_empty() {
