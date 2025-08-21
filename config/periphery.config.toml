@@ -75,9 +75,9 @@ disable_container_exec = false
 stats_polling_rate = "5-sec"
 
 ## How often Periphery polls the host for container stats,
-## Env: PERIPHERY_STATS_POLLING_RATE
+## Env: PERIPHERY_CONTAINER_STATS_POLLING_RATE
 ## Options: https://docs.rs/komodo_client/latest/komodo_client/entities/enum.Timelength.html
-## Default: 5-sec
+## Default: 30-sec
 container_stats_polling_rate = "1-min"
 
 ## Whether stack actions should use `docker-compose ...`
