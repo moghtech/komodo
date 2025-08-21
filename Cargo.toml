@@ -47,7 +47,7 @@ mungos = "3.2.1"
 svi = "1.2.0"
 
 # ASYNC
-reqwest = { version = "0.12.22", default-features = false, features = ["json", "stream", "rustls-tls-native-roots"] }
+reqwest = { version = "0.12.23", default-features = false, features = ["json", "stream", "rustls-tls-native-roots"] }
 tokio = { version = "1.47.1", features = ["full"] }
 tokio-util = { version = "0.7.16", features = ["io", "codec"] }
 tokio-stream = { version = "0.1.17", features = ["sync"] }
@@ -59,7 +59,7 @@ arc-swap = "1.7.1"
 # SERVER
 tokio-tungstenite = { version = "0.27.0", features = ["rustls-tls-native-roots"] }
 axum-extra = { version = "0.10.1", features = ["typed-header"] }
-tower-http = { version = "0.6.4", features = ["fs", "cors"] }
+tower-http = { version = "0.6.6", features = ["fs", "cors"] }
 axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 axum = { version = "0.8.4", features = ["ws", "json", "macros"] }
 
@@ -69,13 +69,13 @@ indexmap = { version = "2.10.0", features = ["serde"] }
 serde = { version = "1.0.219", features = ["derive"] }
 strum = { version = "0.27.2", features = ["derive"] }
 serde_yaml_ng = "0.10.0"
-serde_json = "1.0.142"
+serde_json = "1.0.143"
 serde_qs = "0.15.0"
 toml = "0.9.5"
 
 # ERROR
 anyhow = "1.0.99"
-thiserror = "2.0.14"
+thiserror = "2.0.16"
 
 # LOGGING
 opentelemetry-otlp = { version = "0.30.0", features = ["tls-roots", "reqwest-rustls"] }
@@ -87,17 +87,17 @@ opentelemetry = "0.30.0"
 tracing = "0.1.41"
 
 # CONFIG
-clap = { version = "4.5.43", features = ["derive"] }
+clap = { version = "4.5.45", features = ["derive"] }
 dotenvy = "0.15.7"
 envy = "0.4.2"
 
 # CRYPTO / AUTH
-uuid = { version = "1.17.0", features = ["v4", "fast-rng", "serde"] }
+uuid = { version = "1.18.0", features = ["v4", "fast-rng", "serde"] }
 jsonwebtoken = { version = "9.3.1", default-features = false }
 openidconnect = "4.0.1"
 urlencoding = "2.1.3"
 nom_pem = "4.0.0"
-bcrypt = "0.17.0"
+bcrypt = "0.17.1"
 base64 = "0.22.1"
 rustls = "0.23.31"
 hmac = "0.12.1"
@@ -112,7 +112,7 @@ sysinfo = "0.37.0"
 
 # CLOUD
 aws-config = "1.8.5"
-aws-sdk-ec2 = "1.159.0"
+aws-sdk-ec2 = "1.160.0"
 aws-credential-types = "1.2.5"
 
 ## CRON
