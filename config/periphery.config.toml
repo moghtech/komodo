@@ -78,7 +78,7 @@ stats_polling_rate = "5-sec"
 ## Env: PERIPHERY_CONTAINER_STATS_POLLING_RATE
 ## Options: https://docs.rs/komodo_client/latest/komodo_client/entities/enum.Timelength.html
 ## Default: 30-sec
-container_stats_polling_rate = "1-min"
+container_stats_polling_rate = "30-sec"
 
 ## Whether stack actions should use `docker-compose ...`
 ## instead of `docker compose ...`.
