@@ -205,15 +205,14 @@ async fn find_gateway(
           .output()
           .await;
 
-        if let Ok(output) = route_test {
-          if output.status.success() {
+        if let Ok(output) = route_test
+          && output.status.success() {
             trace!(
               "Gateway {} is reachable via {}",
               gateway, interface_name
             );
             return Ok(gateway.to_string());
           }
-        }
 
         // Fallback: assume .1 is gateway (Docker standard)
         if gateway.ends_with(".1") {
@@ -265,11 +264,10 @@ async fn set_default_gateway(
     .output()
     .await;
 
-  if let Ok(output) = remove_default {
-    if output.status.success() {
+  if let Ok(output) = remove_default
+    && output.status.success() {
       trace!("Removed existing default routes");
     }
-  }
 
   // Add new default route
   let add_default_cmd = format!(
