@@ -1457,11 +1457,23 @@ export type GetActionActionStateResponse = ActionActionState;
 export type GetActionResponse = Action;
 /** Severity level of problem. */
 export declare enum SeverityLevel {
-    /** No problem. */
+    /**
+     * No problem.
+     *
+     * Aliases: ok, low, l
+     */
     Ok = "OK",
-    /** Problem is imminent. */
+    /**
+     * Problem is imminent.
+     *
+     * Aliases: warning, w, medium, m
+     */
     Warning = "WARNING",
-    /** Problem fully realized. */
+    /**
+     * Problem fully realized.
+     *
+     * Aliases: critical, c, high, h
+     */
     Critical = "CRITICAL"
 }
 /** The variants of data related to the alert. */

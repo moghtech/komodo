@@ -249,11 +249,23 @@ export var DeploymentState;
 /** Severity level of problem. */
 export var SeverityLevel;
 (function (SeverityLevel) {
-    /** No problem. */
+    /**
+     * No problem.
+     *
+     * Aliases: ok, low, l
+     */
     SeverityLevel["Ok"] = "OK";
-    /** Problem is imminent. */
+    /**
+     * Problem is imminent.
+     *
+     * Aliases: warning, w, medium, m
+     */
     SeverityLevel["Warning"] = "WARNING";
-    /** Problem fully realized. */
+    /**
+     * Problem fully realized.
+     *
+     * Aliases: critical, c, high, h
+     */
     SeverityLevel["Critical"] = "CRITICAL";
 })(SeverityLevel || (SeverityLevel = {}));
 export var Timelength;
