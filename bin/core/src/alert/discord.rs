@@ -39,16 +39,6 @@ pub async fn send_alert(
         }
       }
     }
-    AlertData::Custom { message, details } => {
-      format!(
-        "{level} | {message}{}",
-        if details.is_empty() {
-          format_args!("")
-        } else {
-          format_args!("\n{details}")
-        }
-      )
-    }
     AlertData::ServerUnreachable {
       id,
       name,
@@ -237,6 +227,16 @@ pub async fn send_alert(
       let link = resource_link(*resource_type, id);
       format!(
         "{level} | **{name}** ({resource_type}) | Scheduled run started 🕝\n{link}"
+      )
+    }
+    AlertData::Custom { message, details } => {
+      format!(
+        "{level} | {message}{}",
+        if details.is_empty() {
+          format_args!("")
+        } else {
+          format_args!("\n{details}")
+        }
       )
     }
     AlertData::None {} => Default::default(),
