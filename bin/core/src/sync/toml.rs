@@ -752,6 +752,13 @@ impl ToToml for Procedure {
               .map(|r| &r.name)
               .unwrap_or(&String::new()),
           ),
+          Execution::RunStackService(exec) => exec.stack.clone_from(
+            all
+              .stacks
+              .get(&exec.stack)
+              .map(|r| &r.name)
+              .unwrap_or(&String::new()),
+          ),
           Execution::PauseStack(exec) => exec.stack.clone_from(
             all
               .stacks
@@ -788,6 +795,17 @@ impl ToToml for Procedure {
               .map(|a| &a.name)
               .unwrap_or(&String::new()),
           ),
+          Execution::SendAlert(exec) => {
+            exec.alerters.iter_mut().for_each(|a| {
+              a.clone_from(
+                all
+                  .alerters
+                  .get(a)
+                  .map(|a| &a.name)
+                  .unwrap_or(&String::new()),
+              )
+            })
+          }
           Execution::None(_)
           | Execution::Sleep(_)
           | Execution::ClearRepoCache(_)

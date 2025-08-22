@@ -152,9 +152,12 @@ pub enum Execution {
   StopStack(StopStack),
   DestroyStack(DestroyStack),
   BatchDestroyStack(BatchDestroyStack),
+  RunStackService(RunStackService),
 
   // ALERTER
   TestAlerter(TestAlerter),
+  #[clap(alias = "alert")]
+  SendAlert(SendAlert),
 
   // MAINTENANCE
   ClearRepoCache(ClearRepoCache),

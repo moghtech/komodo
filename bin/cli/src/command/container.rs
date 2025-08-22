@@ -292,7 +292,7 @@ impl PrintTable for (Option<&'_ str>, ContainerListItem) {
       Cell::new(self.0.unwrap_or("Unknown")),
       ports,
       Cell::new(networks.join(", ")),
-      Cell::new(clamp_sha(&image)),
+      Cell::new(clamp_sha(image)),
     ];
     if !links {
       return res;

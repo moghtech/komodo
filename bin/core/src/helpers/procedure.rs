@@ -1101,6 +1101,23 @@ async fn execute_execution(
       )
       .await?
     }
+    Execution::RunStackService(req) => {
+      let req = ExecuteRequest::RunStackService(req);
+      let update = init_execution_update(&req, &user).await?;
+      let ExecuteRequest::RunStackService(req) = req else {
+        unreachable!()
+      };
+      let update_id = update.id.clone();
+      handle_resolve_result(
+        req
+          .resolve(&ExecuteArgs { user, update })
+          .await
+          .map_err(|e| e.error)
+          .context("Failed at RunStackService"),
+        &update_id,
+      )
+      .await?
+    }
     Execution::BatchDestroyStack(_) => {
       // All batch executions must be expanded in `execute_stage`
       return Err(anyhow!(
@@ -1120,6 +1137,23 @@ async fn execute_execution(
           .await
           .map_err(|e| e.error)
           .context("Failed at TestAlerter"),
+        &update_id,
+      )
+      .await?
+    }
+    Execution::SendAlert(req) => {
+      let req = ExecuteRequest::SendAlert(req);
+      let update = init_execution_update(&req, &user).await?;
+      let ExecuteRequest::SendAlert(req) = req else {
+        unreachable!()
+      };
+      let update_id = update.id.clone();
+      handle_resolve_result(
+        req
+          .resolve(&ExecuteArgs { user, update })
+          .await
+          .map_err(|e| e.error)
+          .context("Failed at SendAlert"),
         &update_id,
       )
       .await?

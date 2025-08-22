@@ -5,6 +5,7 @@ use database::mungos::{
   find::find_collect,
   mongodb::{Collection, bson::doc, options::FindOneOptions},
 };
+use futures::{TryStreamExt, stream::FuturesUnordered};
 use komodo_client::{
   api::execute::Execution,
   entities::{
@@ -709,6 +710,15 @@ async fn validate_config(
           .await?;
           params.stack = stack.id;
         }
+        Execution::RunStackService(params) => {
+          let stack = super::get_check_permissions::<Stack>(
+            &params.stack,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.stack = stack.id;
+        }
         Execution::BatchDestroyStack(_params) => {
           if !user.admin {
             return Err(anyhow!(
@@ -724,6 +734,24 @@ async fn validate_config(
           )
           .await?;
           params.alerter = alerter.id;
+        }
+        Execution::SendAlert(params) => {
+          params.alerters = params
+            .alerters
+            .iter()
+            .map(async |alerter| {
+              let id = super::get_check_permissions::<Alerter>(
+                alerter,
+                user,
+                PermissionLevel::Execute.into(),
+              )
+              .await?
+              .id;
+              anyhow::Ok(id)
+            })
+            .collect::<FuturesUnordered<_>>()
+            .try_collect::<Vec<_>>()
+            .await?;
         }
         Execution::ClearRepoCache(_params) => {
           if !user.admin {

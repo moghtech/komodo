@@ -405,9 +405,11 @@ export type ExecuteResponses = {
   PauseStackService: Types.Update;
   UnpauseStackService: Types.Update;
   DestroyStackService: Types.Update;
-
+  RunStackService: Types.Update;
+  
   // ==== ALERTER ====
   TestAlerter: Types.Update;
+  SendAlert: Types.Update;
 
   // ==== MAINTENANCE ====
   ClearRepoCache: Types.Update;

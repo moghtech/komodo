@@ -28,11 +28,12 @@ import {
   PlusCircle,
   SearchX,
   Settings2,
+  CheckCircle,
 } from "lucide-react";
 import { useToast } from "@ui/use-toast";
 import { TextUpdateMenuMonaco, TimezoneSelector } from "@components/util";
 import { Card } from "@ui/card";
-import { filterBySplit } from "@lib/utils";
+import { filterBySplit, text_to_env } from "@lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@ui/popover";
 import { fmt_upper_camelcase } from "@lib/formatting";
 import {
@@ -59,6 +60,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@ui/dialog";
+import { MonacoEditor } from "@components/monaco";
+import { quote as shellQuote, parse as shellParse } from "shell-quote";
 
 type ExecutionType = Types.Execution["type"];
 
@@ -123,7 +134,7 @@ export const ProcedureConfig = ({ id }: { id: string }) => {
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
   const [update, set] = useLocalStorage<Partial<Types.ProcedureConfig>>(
     `procedure-${id}-update-v1`,
-    {}
+    {},
   );
   const { mutateAsync } = useWrite("UpdateProcedure");
   const { integrations } = useWebhookIntegrations();
@@ -166,7 +177,7 @@ export const ProcedureConfig = ({ id }: { id: string }) => {
                         setStage={(stage) =>
                           set({
                             stages: stages.map((s, i) =>
-                              index === i ? stage : s
+                              index === i ? stage : s,
                             ),
                           })
                         }
@@ -546,7 +557,7 @@ const Stage = ({
                                 ].params,
                             },
                           } as Types.EnabledExecution)
-                        : item
+                        : item,
                     ),
                   })
                 }
@@ -578,7 +589,7 @@ const Stage = ({
                               ...item,
                               execution: { type, params },
                             }
-                          : item
+                          : item,
                       ) as Types.EnabledExecution[],
                     })
                   }
@@ -613,7 +624,7 @@ const Stage = ({
                     setStage({
                       ...stage,
                       executions: stage.executions!.filter(
-                        (_, i) => i !== index
+                        (_, i) => i !== index,
                       ),
                     })
                   }
@@ -640,7 +651,7 @@ const Stage = ({
                     setStage({
                       ...stage,
                       executions: stage.executions!.map((item, i) =>
-                        i === index ? { ...item, enabled: !enabled } : item
+                        i === index ? { ...item, enabled: !enabled } : item,
                       ),
                     })
                   }
@@ -665,7 +676,7 @@ const ExecutionTypeSelector = ({
   disabled: boolean;
 }) => {
   const execution_types = Object.keys(TARGET_COMPONENTS).filter(
-    (c) => !["None"].includes(c)
+    (c) => !["None"].includes(c),
   );
 
   const [open, setOpen] = useState(false);
@@ -1114,6 +1125,212 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
       />
     ),
   },
+  RunStackService: {
+    params: {
+      stack: "",
+      service: "",
+      command: undefined,
+      no_tty: undefined,
+      no_deps: undefined,
+      service_ports: undefined,
+      env: undefined,
+      workdir: undefined,
+      user: undefined,
+      entrypoint: undefined,
+      pull: undefined,
+    },
+    Component: ({ params, setParams, disabled }) => {
+      const [open, setOpen] = useState(false);
+      // local mirrors to allow cancel without committing
+      const [stack, setStack] = useState(params.stack ?? "");
+      const [service, setService] = useState(params.service ?? "");
+      const [commandText, setCommand] = useState(
+        params.command && params.command.length ? shellQuote(params.command) : ""
+      );
+      const [no_tty, setNoTty] = useState(!!params.no_tty);
+      const [no_deps, setNoDeps] = useState(!!params.no_deps);
+      const [service_ports, setServicePorts] = useState(!!params.service_ports);
+      const [workdir, setWorkdir] = useState(params.workdir ?? "");
+      const [user, setUser] = useState(params.user ?? "");
+      const [entrypoint, setEntrypoint] = useState(params.entrypoint ?? "");
+      const [pull, setPull] = useState(!!params.pull);
+      const env_text = (params.env
+        ? Object.entries(params.env)
+            .map(([k, v]) => `${k}=${v}`)
+            .join("\n")
+        : "  # VARIABLE = value\n") as string;
+      const [envText, setEnvText] = useState(env_text);
+
+      useEffect(() => {
+        setStack(params.stack ?? "");
+        setService(params.service ?? "");
+        setCommand(
+          params.command && params.command.length ? shellQuote(params.command) : ""
+        );
+        setNoTty(!!params.no_tty);
+        setNoDeps(!!params.no_deps);
+        setServicePorts(!!params.service_ports);
+        setWorkdir(params.workdir ?? "");
+        setUser(params.user ?? "");
+        setEntrypoint(params.entrypoint ?? "");
+        setPull(!!params.pull);
+        setEnvText(
+          params.env
+            ? Object.entries(params.env)
+                .map(([k, v]) => `${k}=${v}`)
+                .join("\n")
+            : "  # VARIABLE = value\n"
+        );
+      }, [params]);
+
+      const onConfirm = () => {
+        const envArray = text_to_env(envText);
+        const env = envArray.length
+          ? envArray.reduce<Record<string, string>>((acc, { variable, value }) => {
+              if (variable) acc[variable] = value;
+              return acc;
+            }, {})
+          : undefined;
+          const parsed = commandText.trim()
+            ? shellParse(commandText.trim()).map((tok) =>
+                typeof tok === "string" ? tok : (tok as any).op ?? String(tok)
+              )
+            : [];
+        setParams({
+          stack,
+          service,
+          command: parsed.length ? (parsed as string[]) : undefined,
+          no_tty: no_tty ? true : undefined,
+          no_deps: no_deps ? true : undefined,
+          service_ports: service_ports ? true : undefined,
+          workdir: workdir || undefined,
+          user: user || undefined,
+          entrypoint: entrypoint || undefined,
+          pull: pull ? true : undefined,
+          env,
+        } as any);
+        setOpen(false);
+      };
+
+      return (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button variant="secondary" disabled={disabled}>
+              Configure
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="w-[800px] max-w-[95vw] max-h-[80vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle>Run Stack Service</DialogTitle>
+            </DialogHeader>
+            <div className="flex flex-col gap-3 py-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <div className="text-muted-foreground text-xs">Stack</div>
+                  <ResourceSelector
+                    type="Stack"
+                    selected={stack}
+                    onSelect={(id) => setStack(id)}
+                    disabled={disabled}
+                    align="start"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <div className="text-muted-foreground text-xs">Service</div>
+                  <Input
+                    placeholder="service name"
+                    value={service}
+                    onChange={(e) => setService(e.target.value)}
+                    disabled={disabled}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <div className="text-muted-foreground text-xs">Command</div>
+                <Input
+                  value={commandText}
+                  onChange={(e) => setCommand(e.target.value)}
+                  disabled={disabled}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <label className="flex items-center gap-2">
+                  <Switch checked={no_tty} onCheckedChange={setNoTty} />
+                  <span className="text-sm">No TTY</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <Switch checked={no_deps} onCheckedChange={setNoDeps} />
+                  <span className="text-sm">No Dependencies</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <Switch
+                    checked={service_ports}
+                    onCheckedChange={setServicePorts}
+                  />
+                  <span className="text-sm">Service Ports</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <Switch checked={pull} onCheckedChange={setPull} />
+                  <span className="text-sm">Pull Image</span>
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1">
+                  <div className="text-muted-foreground text-xs">Working Directory</div>
+                  <Input
+                    placeholder="/work/dir"
+                    value={workdir}
+                    onChange={(e) => setWorkdir(e.target.value)}
+                    disabled={disabled}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <div className="text-muted-foreground text-xs">User</div>
+                  <Input
+                    placeholder="uid:gid or user"
+                    value={user}
+                    onChange={(e) => setUser(e.target.value)}
+                    disabled={disabled}
+                  />
+                </div>
+                <div className="flex flex-col gap-1 md:col-span-2">
+                  <div className="text-muted-foreground text-xs">Entrypoint</div>
+                  <Input
+                    value={entrypoint}
+                    onChange={(e) => setEntrypoint(e.target.value)}
+                    disabled={disabled}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <div className="text-muted-foreground text-xs">Extra Environment Variables</div>
+                <MonacoEditor
+                  value={envText}
+                  onValueChange={setEnvText}
+                  language="key_value"
+                  readOnly={disabled}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="secondary"
+                disabled={disabled}
+                onClick={onConfirm}
+                className="flex items-center gap-2"
+              >
+                <CheckCircle className="w-4 h-4" /> Confirm
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      );
+    },
+  },
   // Repo
   CloneRepo: {
     params: { repo: "" },
@@ -1442,12 +1659,27 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
     Component: () => <></>,
   },
 
+  SendAlert: {
+    params: { message: "" },
+    Component: ({ params, setParams, disabled }) => (
+      <TextUpdateMenuMonaco
+        title="Alert message"
+        value={params.message}
+        placeholder="Configure custom alert message"
+        onUpdate={(message) => setParams({ message })}
+        disabled={disabled}
+        language={undefined}
+        fullWidth
+      />
+    ),
+  },
+
   Sleep: {
     params: { duration_ms: 0 },
     Component: ({ params, setParams, disabled }) => {
       const { toast } = useToast();
       const [internal, setInternal] = useState(
-        params.duration_ms?.toString() ?? ""
+        params.duration_ms?.toString() ?? "",
       );
       useEffect(() => {
         setInternal(params.duration_ms?.toString() ?? "");

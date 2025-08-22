@@ -1083,6 +1083,7 @@ pub enum Operation {
   UnpauseStack,
   StopStack,
   DestroyStack,
+  RunStackService,
 
   // stack (service)
   DeployStackService,
@@ -1153,6 +1154,7 @@ pub enum Operation {
   RenameAlerter,
   DeleteAlerter,
   TestAlerter,
+  SendAlert,
 
   // sync
   CreateResourceSync,

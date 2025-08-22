@@ -630,3 +630,93 @@ impl Resolve<ExecuteArgs> for DestroyStack {
     .map_err(Into::into)
   }
 }
+
+impl Resolve<ExecuteArgs> for RunStackService {
+  #[instrument(name = "RunStackService", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  async fn resolve(
+    self,
+    ExecuteArgs { user, update }: &ExecuteArgs,
+  ) -> serror::Result<Update> {
+    let (mut stack, server) = get_stack_and_server(
+      &self.stack,
+      user,
+      PermissionLevel::Execute.into(),
+      true,
+    )
+    .await?;
+
+    let mut repo = if !stack.config.files_on_host
+      && !stack.config.linked_repo.is_empty()
+    {
+      crate::resource::get::<Repo>(&stack.config.linked_repo)
+        .await?
+        .into()
+    } else {
+      None
+    };
+
+    let action_state =
+      action_states().stack.get_or_insert_default(&stack.id).await;
+
+    let _action_guard =
+      action_state.update(|state| state.deploying = true)?;
+
+    let mut update = update.clone();
+    update_update(update.clone()).await?;
+
+    let git_token = stack_git_token(&mut stack, repo.as_mut()).await?;
+
+    let registry_token = crate::helpers::registry_token(
+      &stack.config.registry_provider,
+      &stack.config.registry_account,
+    ).await.with_context(
+      || format!("Failed to get registry token in call to db. Stopping run. | {} | {}", stack.config.registry_provider, stack.config.registry_account),
+    )?;
+
+    let secret_replacers = if !stack.config.skip_secret_interp {
+      let VariablesAndSecrets { variables, secrets } =
+        get_variables_and_secrets().await?;
+
+      let mut interpolator =
+        Interpolator::new(Some(&variables), &secrets);
+
+      interpolator.interpolate_stack(&mut stack)?;
+      if let Some(repo) = repo.as_mut()
+        && !repo.config.skip_secret_interp
+      {
+        interpolator.interpolate_repo(repo)?;
+      }
+      interpolator.push_logs(&mut update.logs);
+
+      interpolator.secret_replacers
+    } else {
+      Default::default()
+    };
+
+  let log = periphery_client(&server)?
+      .request(ComposeRun {
+        stack,
+        repo,
+        git_token,
+        registry_token,
+        replacers: secret_replacers.into_iter().collect(),
+        service: self.service,
+        command: self.command,
+        no_tty: self.no_tty,
+        no_deps: self.no_deps,
+        service_ports: self.service_ports,
+        env: self.env,
+        workdir: self.workdir,
+        user: self.user,
+        entrypoint: self.entrypoint,
+        pull: self.pull,
+      })
+      .await?;
+
+    update.logs.push(log);
+    update.finalize();
+    update_update(update.clone()).await?;
+
+    Ok(update)
+  }
+}

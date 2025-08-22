@@ -111,7 +111,7 @@ fn print_items<T: PrintTable + Serialize>(
       };
       table.load_preset(preset).set_header(
         T::header(links)
-          .into_iter()
+          .iter()
           .map(|h| Cell::new(h).add_attribute(Attribute::Bold)),
       );
       for item in items {

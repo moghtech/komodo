@@ -285,8 +285,7 @@ async fn ensure_init_user_and_resources() {
     }
     .resolve(&AuthArgs::default())
     .await
-    .expect("Failed to initialize default admin user.")
-    .jwt;
+    .expect("Failed to initialize default admin user.");
     db.users
       .find_one(doc! { "username": username })
       .await

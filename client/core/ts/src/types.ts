@@ -386,6 +386,7 @@ export enum Operation {
 	UnpauseStack = "UnpauseStack",
 	StopStack = "StopStack",
 	DestroyStack = "DestroyStack",
+	RunStackService = "RunStackService",
 	DeployStackService = "DeployStackService",
 	PullStackService = "PullStackService",
 	StartStackService = "StartStackService",
@@ -440,6 +441,7 @@ export enum Operation {
 	RenameAlerter = "RenameAlerter",
 	DeleteAlerter = "DeleteAlerter",
 	TestAlerter = "TestAlerter",
+	SendAlert = "SendAlert",
 	CreateResourceSync = "CreateResourceSync",
 	UpdateResourceSync = "UpdateResourceSync",
 	RenameResourceSync = "RenameResourceSync",
@@ -867,7 +869,9 @@ export type Execution =
 	| { type: "StopStack", params: StopStack }
 	| { type: "DestroyStack", params: DestroyStack }
 	| { type: "BatchDestroyStack", params: BatchDestroyStack }
+	| { type: "RunStackService", params: RunStackService }
 	| { type: "TestAlerter", params: TestAlerter }
+	| { type: "SendAlert", params: SendAlert }
 	| { type: "ClearRepoCache", params: ClearRepoCache }
 	| { type: "BackupCoreDatabase", params: BackupCoreDatabase }
 	| { type: "GlobalAutoUpdate", params: GlobalAutoUpdate }
@@ -1354,11 +1358,23 @@ export type GetActionResponse = Action;
 
 /** Severity level of problem. */
 export enum SeverityLevel {
-	/** No problem. */
+	/**
+	 * No problem.
+	 * 
+	 * Aliases: ok, low, l
+	 */
 	Ok = "OK",
-	/** Problem is imminent. */
+	/**
+	 * Problem is imminent.
+	 * 
+	 * Aliases: warning, w, medium, m
+	 */
 	Warning = "WARNING",
-	/** Problem fully realized. */
+	/**
+	 * Problem fully realized.
+	 * 
+	 * Aliases: critical, c, high, h
+	 */
 	Critical = "CRITICAL",
 }
 
@@ -1576,6 +1592,16 @@ export type AlertData =
 	id: string;
 	/** The resource name */
 	name: string;
+}}
+	/**
+	 * Custom header / body.
+	 * Produced using `/execute/SendAlert`
+	 */
+	| { type: "Custom", data: {
+	/** The alert message. */
+	message: string;
+	/** Message details. May be empty string. */
+	details?: string;
 }};
 
 /** Representation of an alert in the system. */
@@ -1977,7 +2003,7 @@ export interface ServerConfig {
 	 * Whether a server is enabled.
 	 * If a server is disabled,
 	 * you won't be able to perform any actions on it or see deployment's status.
-	 * default: true
+	 * Default: false
 	 */
 	enabled: boolean;
 	/**
@@ -7619,6 +7645,32 @@ export interface RunProcedure {
 	procedure: string;
 }
 
+/** Runs a one-time command against a service using `docker compose run`. Response: [Update] */
+export interface RunStackService {
+	/** Id or name */
+	stack: string;
+	/** Service to run */
+	service: string;
+	/** Command and args to pass to the service container */
+	command?: string[];
+	/** Do not allocate TTY */
+	no_tty?: boolean;
+	/** Do not start linked services */
+	no_deps?: boolean;
+	/** Map service ports to the host */
+	service_ports?: boolean;
+	/** Extra environment variables for the run */
+	env?: Record<string, string>;
+	/** Working directory inside the container */
+	workdir?: string;
+	/** User to run as inside the container */
+	user?: string;
+	/** Override the default entrypoint */
+	entrypoint?: string;
+	/** Pull the image before running */
+	pull?: boolean;
+}
+
 /** Runs the target resource sync. Response: [Update] */
 export interface RunSync {
 	/** Id or name */
@@ -7718,6 +7770,22 @@ export interface SearchStackLog {
 	invert?: boolean;
 	/** Enable `--timestamps` */
 	timestamps?: boolean;
+}
+
+/** Send a custom alert message to configured Alerters. Response: [Update] */
+export interface SendAlert {
+	/** The alert level. */
+	level?: SeverityLevel;
+	/** The alert message. Required. */
+	message: string;
+	/** The alert details. Optional. */
+	details?: string;
+	/**
+	 * Specific alerter names or ids.
+	 * If empty / not passed, sends to all configured alerters
+	 * with the `Custom` alert type whitelisted / not blacklisted.
+	 */
+	alerters?: string[];
 }
 
 /** Configuration for a Komodo Server Builder. */
@@ -8397,6 +8465,7 @@ export type ExecuteRequest =
 	| { type: "UnpauseStack", params: UnpauseStack }
 	| { type: "DestroyStack", params: DestroyStack }
 	| { type: "BatchDestroyStack", params: BatchDestroyStack }
+	| { type: "RunStackService", params: RunStackService }
 	| { type: "Deploy", params: Deploy }
 	| { type: "BatchDeploy", params: BatchDeploy }
 	| { type: "PullDeployment", params: PullDeployment }
@@ -8422,6 +8491,7 @@ export type ExecuteRequest =
 	| { type: "RunAction", params: RunAction }
 	| { type: "BatchRunAction", params: BatchRunAction }
 	| { type: "TestAlerter", params: TestAlerter }
+	| { type: "SendAlert", params: SendAlert }
 	| { type: "RunSync", params: RunSync }
 	| { type: "ClearRepoCache", params: ClearRepoCache }
 	| { type: "BackupCoreDatabase", params: BackupCoreDatabase }

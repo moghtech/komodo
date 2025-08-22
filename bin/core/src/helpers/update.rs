@@ -492,6 +492,13 @@ pub async fn init_execution_update(
       return Ok(Default::default());
     }
 
+    ExecuteRequest::RunStackService(data) => (
+      Operation::RunStackService,
+      ResourceTarget::Stack(
+        resource::get::<Stack>(&data.stack).await?.id,
+      ),
+    ),
+
     // Alerter
     ExecuteRequest::TestAlerter(data) => (
       Operation::TestAlerter,
@@ -499,6 +506,9 @@ pub async fn init_execution_update(
         resource::get::<Alerter>(&data.alerter).await?.id,
       ),
     ),
+    ExecuteRequest::SendAlert(_) => {
+      (Operation::SendAlert, ResourceTarget::system())
+    }
 
     // Maintenance
     ExecuteRequest::ClearRepoCache(_data) => {

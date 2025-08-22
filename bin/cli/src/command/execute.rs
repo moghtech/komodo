@@ -212,7 +212,13 @@ pub async fn handle(
     Execution::BatchDestroyStack(data) => {
       println!("{}: {data:?}", "Data".dimmed())
     }
+    Execution::RunStackService(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
     Execution::TestAlerter(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
+    Execution::SendAlert(data) => {
       println!("{}: {data:?}", "Data".dimmed())
     }
     Execution::ClearRepoCache(data) => {
@@ -464,7 +470,15 @@ pub async fn handle(
     Execution::BatchDestroyStack(request) => {
       client.execute(request).await.map(ExecutionResult::Batch)
     }
+    Execution::RunStackService(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
     Execution::TestAlerter(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::SendAlert(request) => client
       .execute(request)
       .await
       .map(|u| ExecutionResult::Single(u.into())),

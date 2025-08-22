@@ -63,8 +63,14 @@ pub enum Command {
   #[clap(alias = "ls", alias = "resources")]
   List(list::List),
 
-  /// Run Komodo executions. (aliases: `x`, `run`, `deploy`, `dep`)
-  #[clap(alias = "x", alias = "run", alias = "deploy", alias = "dep")]
+  /// Run Komodo executions. (aliases: `x`, `run`, `deploy`, `dep`, `send`)
+  #[clap(
+    alias = "x",
+    alias = "run",
+    alias = "deploy",
+    alias = "dep",
+    alias = "send"
+  )]
   Execute(Execute),
 
   /// Update resource configuration. (alias: `set`)

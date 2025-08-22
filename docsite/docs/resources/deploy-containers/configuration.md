@@ -30,7 +30,7 @@ If you do select select a network other than host, you can specify port bindings
 
 In this case, you would access mongo from outside of the container on port `27018`.
 
-Note that this is not the only affect of using a network other than `host`. For example, containers running on different networks can not communicate, and ones on the same network can not reach other containers on `localhost` even when they are running on the same system. This behavior can be a bit confusing if you are not familiar with it, and it can be bypassed entirely by just using `host` network.
+Note that this is not the only effect of using a network other than `host`. For example, containers running on different networks can not communicate, and ones on the same network can not reach other containers on `localhost` even when they are running on the same system. This behavior can be a bit confusing if you are not familiar with it, and it can be bypassed entirely by just using `host` network.
 
 ## Configuring restart behavior
 

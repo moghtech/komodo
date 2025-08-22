@@ -87,7 +87,7 @@ pub struct ServerConfig {
   /// Whether a server is enabled.
   /// If a server is disabled,
   /// you won't be able to perform any actions on it or see deployment's status.
-  /// default: true
+  /// Default: false
   #[serde(default = "default_enabled")]
   #[builder(default = "default_enabled()")]
   #[partial_default(default_enabled())]

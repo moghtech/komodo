@@ -36,10 +36,10 @@ fn is_container_environment() -> bool {
   }
 
   // Check cgroup for container runtime indicators
-  if let Ok(content) = std::fs::read_to_string(CGROUP_FILE) {
-    if content.contains("docker") || content.contains("containerd") {
-      return true;
-    }
+  if let Ok(content) = std::fs::read_to_string(CGROUP_FILE)
+    && (content.contains("docker") || content.contains("containerd"))
+  {
+    return true;
   }
 
   false
@@ -142,7 +142,7 @@ async fn find_gateway(
   }
 
   let ip_cidr = ip_cidr.ok_or_else(|| anyhow!(
-        "Could not find IP address for interface '{}'. Ensure interface has a valid IPv4 address", 
+        "Could not find IP address for interface '{}'. Ensure interface has a valid IPv4 address",
         interface_name
     ))?;
 
@@ -167,14 +167,13 @@ async fn find_gateway(
       if line.contains("via") {
         let parts: Vec<&str> = line.split_whitespace().collect();
         if let Some(via_idx) = parts.iter().position(|&x| x == "via")
+          && let Some(&gateway) = parts.get(via_idx + 1)
         {
-          if let Some(&gateway) = parts.get(via_idx + 1) {
-            trace!(
-              "Found gateway {} for {} from routing table",
-              gateway, interface_name
-            );
-            return Ok(gateway.to_string());
-          }
+          trace!(
+            "Found gateway {} for {} from routing table",
+            gateway, interface_name
+          );
+          return Ok(gateway.to_string());
         }
       }
     }
@@ -206,15 +205,14 @@ async fn find_gateway(
           .output()
           .await;
 
-        if let Ok(output) = route_test {
-          if output.status.success() {
+        if let Ok(output) = route_test
+          && output.status.success() {
             trace!(
               "Gateway {} is reachable via {}",
               gateway, interface_name
             );
             return Ok(gateway.to_string());
           }
-        }
 
         // Fallback: assume .1 is gateway (Docker standard)
         if gateway.ends_with(".1") {
@@ -266,11 +264,10 @@ async fn set_default_gateway(
     .output()
     .await;
 
-  if let Ok(output) = remove_default {
-    if output.status.success() {
+  if let Ok(output) = remove_default
+    && output.status.success() {
       trace!("Removed existing default routes");
     }
-  }
 
   // Add new default route
   let add_default_cmd = format!(
