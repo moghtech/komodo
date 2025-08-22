@@ -25,6 +25,7 @@ const VolumePage = lazy(() => import("@pages/server-info/volume"));
 const ContainerPage = lazy(() => import("@pages/server-info/container"));
 const ContainersPage = lazy(() => import("@pages/containers"));
 const SchedulesPage = lazy(() => import("@pages/schedules"));
+const MonitoringPage = lazy(() => import("@pages/monitoring"));
 
 const sanitize_query = (search: URLSearchParams) => {
   search.delete("token");
@@ -96,6 +97,7 @@ export const Router = () => {
             <Route path="settings" element={<Settings />} />
             <Route path="tree" element={<Tree />} />
             <Route path="containers" element={<ContainersPage />} />
+            <Route path="monitoring" element={<MonitoringPage />} />
             <Route path="resources" element={<AllResources />} />
             <Route path="schedules" element={<SchedulesPage />} />
             <Route path="alerts" element={<AlertsPage />} />

@@ -6,6 +6,7 @@ import {
   Box,
   Boxes,
   CalendarDays,
+  LineChart,
   LayoutDashboard,
   Settings,
 } from "lucide-react";
@@ -39,6 +40,12 @@ export const Sidebar = () => {
           label="Containers"
           to="/containers"
           icon={<Box className="w-4 h-4" />}
+        />
+
+        <SidebarLink
+          label="Monitoring"
+          to="/monitoring"
+          icon={<LineChart className="w-4 h-4" />}
         />
 
         <Separator className="my-3" />
