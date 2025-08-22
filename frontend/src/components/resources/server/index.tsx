@@ -17,7 +17,7 @@ import {
 import { Section } from "@components/layouts";
 import { Prune } from "./actions";
 import {
-  server_state_intention_with_version,
+  server_state_intention,
   stroke_color_class_by_intention,
 } from "@lib/color";
 import { ServerConfig } from "./config";
@@ -67,7 +67,7 @@ const Icon = ({ id, size }: { id?: string; size: number }) => {
       className={cn(
         `w-${size} h-${size}`,
         state && stroke_color_class_by_intention(
-          server_state_intention_with_version(state, hasVersionMismatch)
+          server_state_intention(state, hasVersionMismatch)
         )
       )}
     />
@@ -374,7 +374,7 @@ export const ServerComponents: RequiredResourceComponents = {
     return (
       <StatusBadge 
         text={displayState} 
-        intent={server_state_intention_with_version(state, hasVersionMismatch)} 
+        intent={server_state_intention(state, hasVersionMismatch)} 
       />
     );
   },
@@ -603,7 +603,7 @@ export const ServerComponents: RequiredResourceComponents = {
 
     return (
       <ResourcePageHeader
-        intent={server_state_intention_with_version(server?.info.state, hasVersionMismatch)}
+        intent={server_state_intention(server?.info.state, hasVersionMismatch)}
         icon={<Icon id={id} size={8} />}
         type="Server"
         id={id}

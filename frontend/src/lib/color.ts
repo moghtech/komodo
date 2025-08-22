@@ -130,11 +130,13 @@ export const soft_text_color_class_by_intention = (
 };
 
 export const server_state_intention: (
-  state?: Types.ServerState
-) => ColorIntention = (state) => {
+  state?: Types.ServerState,
+  hasVersionMismatch?: boolean
+) => ColorIntention = (state, hasVersionMismatch) => {
   switch (state) {
     case Types.ServerState.Ok:
-      return "Good";
+      // If there's a version mismatch and the server is "Ok", show warning instead
+      return hasVersionMismatch ? "Warning" : "Good";
     case Types.ServerState.NotOk:
       return "Critical";
     case Types.ServerState.Disabled:
@@ -142,19 +144,6 @@ export const server_state_intention: (
     case undefined:
       return "None";
   }
-};
-
-export const server_state_intention_with_version: (
-  state?: Types.ServerState,
-  hasVersionMismatch?: boolean
-) => ColorIntention = (state, hasVersionMismatch) => {
-  // If there's a version mismatch and the server is "Ok", show warning instead
-  if (state === Types.ServerState.Ok && hasVersionMismatch) {
-    return "Warning";
-  }
-  
-  // Otherwise use the standard state intention
-  return server_state_intention(state);
 };
 
 export const deployment_state_intention: (
