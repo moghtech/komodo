@@ -1,6 +1,6 @@
-use std::path::PathBuf;
+use std::{fmt::Write, path::PathBuf};
 
-use anyhow::anyhow;
+use anyhow::{Context, anyhow};
 use command::run_komodo_command;
 use komodo_client::entities::{
   RepoExecutionArgs, repo::Repo, stack::Stack,
@@ -22,6 +22,35 @@ pub fn docker_compose() -> &'static str {
   } else {
     "docker compose"
   }
+}
+
+pub fn env_file_args(
+  env_file_path: Option<&str>,
+  additional_env_files: &[String],
+) -> anyhow::Result<String> {
+  let mut res = String::new();
+
+  for file in additional_env_files.iter().filter(|&path| {
+    let Some(komodo_path) = env_file_path else {
+      return true;
+    };
+    // Filter komodo env out of additional env file if its also in there.
+    // It will be always be added last / have highest priority.
+    path != komodo_path
+  }) {
+    write!(res, " --env-file {file}").with_context(|| {
+      format!("Failed to write --env-file arg for {file}")
+    })?;
+  }
+
+  // Add this last, so it is applied on top
+  if let Some(file) = env_file_path {
+    write!(res, " --env-file {file}").with_context(|| {
+      format!("Failed to write --env-file arg for {file}")
+    })?;
+  }
+
+  Ok(res)
 }
 
 pub async fn down(

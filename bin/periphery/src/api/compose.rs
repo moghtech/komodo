@@ -1,5 +1,3 @@
-use std::{fmt::Write, path::PathBuf, borrow::Cow};
-use shell_escape::unix::escape;
 use anyhow::{Context, anyhow};
 use command::{
   run_komodo_command, run_komodo_command_with_sanitization,
@@ -19,11 +17,13 @@ use komodo_client::entities::{
 use periphery_client::api::compose::*;
 use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
+use shell_escape::unix::escape;
+use std::{borrow::Cow, path::PathBuf};
 use tokio::fs;
 
 use crate::{
   compose::{
-    docker_compose, pull_or_clone_stack,
+    docker_compose, env_file_args, pull_or_clone_stack,
     up::{maybe_login_registry, validate_files},
     write::write_stack,
   },
@@ -384,18 +384,10 @@ impl Resolve<super::Args> for ComposePull {
 
     let file_args = stack.compose_file_paths().join(" -f ");
 
-    let env_file = env_file_path
-      .map(|path| format!(" --env-file {path}"))
-      .unwrap_or_default();
-
-    let additional_env_files = stack
-      .config
-      .additional_env_files
-      .iter()
-      .fold(String::new(), |mut output, file| {
-        let _ = write!(output, " --env-file {file}");
-        output
-      });
+    let env_file_args = env_file_args(
+      env_file_path,
+      &stack.config.additional_env_files,
+    )?;
 
     let project_name = stack.project_name(false);
 
@@ -403,7 +395,7 @@ impl Resolve<super::Args> for ComposePull {
       "Compose Pull",
       run_directory.as_ref(),
       format!(
-        "{docker_compose} -p {project_name} -f {file_args}{additional_env_files}{env_file} pull{service_args}",
+        "{docker_compose} -p {project_name} -f {file_args}{env_file_args} pull{service_args}",
       ),
     )
     .await;
@@ -517,24 +509,16 @@ impl Resolve<super::Args> for ComposeUp {
     let last_project_name = stack.project_name(false);
     let project_name = stack.project_name(true);
 
-    let env_file = env_file_path
-      .map(|path| format!(" --env-file {path}"))
-      .unwrap_or_default();
-
-    let additional_env_files = stack
-      .config
-      .additional_env_files
-      .iter()
-      .fold(String::new(), |mut output, file| {
-        let _ = write!(output, " --env-file {file}");
-        output
-      });
+    let env_file_args = env_file_args(
+      env_file_path,
+      &stack.config.additional_env_files,
+    )?;
 
     // Uses 'docker compose config' command to extract services (including image)
     // after performing interpolation
     {
       let command = format!(
-        "{docker_compose} -p {project_name} -f {file_args}{additional_env_files}{env_file} config",
+        "{docker_compose} -p {project_name} -f {file_args}{env_file_args} config",
       );
       let Some(config_log) = run_komodo_command_with_sanitization(
         "Compose Config",
@@ -599,7 +583,7 @@ impl Resolve<super::Args> for ComposeUp {
       let build_extra_args =
         parse_extra_args(&stack.config.build_extra_args);
       let command = format!(
-        "{docker_compose} -p {project_name} -f {file_args}{additional_env_files}{env_file} build{build_extra_args}{service_args}",
+        "{docker_compose} -p {project_name} -f {file_args}{env_file_args} build{build_extra_args}{service_args}",
       );
       let Some(log) = run_komodo_command_with_sanitization(
         "Compose Build",
@@ -623,7 +607,7 @@ impl Resolve<super::Args> for ComposeUp {
       // Pull images before destroying to minimize downtime.
       // If this fails, do not continue.
       let command = format!(
-        "{docker_compose} -p {project_name} -f {file_args}{additional_env_files}{env_file} pull{service_args}",
+        "{docker_compose} -p {project_name} -f {file_args}{env_file_args} pull{service_args}",
       );
       let log = run_komodo_command(
         "Compose Pull",
@@ -651,7 +635,7 @@ impl Resolve<super::Args> for ComposeUp {
     // Run compose up
     let extra_args = parse_extra_args(&stack.config.extra_args);
     let command = format!(
-      "{docker_compose} -p {project_name} -f {file_args}{additional_env_files}{env_file} up -d{extra_args}{service_args}",
+      "{docker_compose} -p {project_name} -f {file_args}{env_file_args} up -d{extra_args}{service_args}",
     );
 
     let Some(log) = run_komodo_command_with_sanitization(
@@ -759,7 +743,8 @@ impl Resolve<super::Args> for ComposeRun {
       "Failed to validate run directory on host after stack write (canonicalize error)",
     )?;
 
-    maybe_login_registry(&stack, registry_token, &mut Vec::new()).await;
+    maybe_login_registry(&stack, registry_token, &mut Vec::new())
+      .await;
 
     let docker_compose = docker_compose();
 
@@ -769,18 +754,10 @@ impl Resolve<super::Args> for ComposeRun {
       stack.config.file_paths.join(" -f ")
     };
 
-    let env_file = env_file_path
-      .map(|path| format!(" --env-file {path}"))
-      .unwrap_or_default();
-
-    let additional_env_files = stack
-      .config
-      .additional_env_files
-      .iter()
-      .fold(String::new(), |mut output, file| {
-        let _ = write!(output, " --env-file {file}");
-        output
-      });
+    let env_file_args = env_file_args(
+      env_file_path,
+      &stack.config.additional_env_files,
+    )?;
 
     let project_name = stack.project_name(true);
 
@@ -789,7 +766,7 @@ impl Resolve<super::Args> for ComposeRun {
         "Compose Pull",
         run_directory.as_ref(),
         format!(
-          "{docker_compose} -p {project_name} -f {file_args}{additional_env_files}{env_file} pull {service}",
+          "{docker_compose} -p {project_name} -f {file_args}{env_file_args} pull {service}",
         ),
       )
       .await;
@@ -837,7 +814,7 @@ impl Resolve<super::Args> for ComposeRun {
       .unwrap_or_default();
 
     let command = format!(
-      "{docker_compose} -p {project_name} -f {file_args}{additional_env_files}{env_file} run{run_flags} {service}{command_args}",
+      "{docker_compose} -p {project_name} -f {file_args}{env_file_args} run{run_flags} {service}{command_args}",
     );
 
     let Some(log) = run_komodo_command_with_sanitization(
