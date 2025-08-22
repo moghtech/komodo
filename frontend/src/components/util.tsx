@@ -347,7 +347,7 @@ export const ConfirmButton = forwardRef<
       }
       onBlur={() => set(false)}
       loading={loading}
-      className={`${className || ""} ${confirmed ? "bg-green-600 hover:bg-green-700 text-white transition-colors duration-200" : ""}`}
+      className={className}
       data-confirm-button={true}
     />
   );
