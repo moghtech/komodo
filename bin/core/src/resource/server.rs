@@ -82,9 +82,7 @@ impl super::KomodoResource for Server {
         send_cpu_alerts: server.config.send_cpu_alerts,
         send_mem_alerts: server.config.send_mem_alerts,
         send_disk_alerts: server.config.send_disk_alerts,
-        send_version_mismatch_alerts: server
-          .config
-          .send_version_mismatch_alerts,
+        send_version_mismatch_alerts: server.config.send_version_mismatch_alerts,
         terminals_disabled,
         container_exec_disabled,
       },

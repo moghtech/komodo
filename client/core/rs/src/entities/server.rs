@@ -49,7 +49,6 @@ pub struct ServerListItemInfo {
   /// Whether server is configured to send disk alerts.
   pub send_disk_alerts: bool,
   /// Whether server is configured to send version mismatch alerts.
-  #[serde(default)] // API backward compat
   pub send_version_mismatch_alerts: bool,
   /// Whether terminals are disabled for this Server.
   pub terminals_disabled: bool,
