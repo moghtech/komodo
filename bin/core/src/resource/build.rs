@@ -116,9 +116,11 @@ impl super::KomodoResource for Build {
         git_provider,
         repo,
         branch,
-        image_registry_domain: optional_string(
-          build.config.image_registry.domain,
-        ),
+        image_registry_domain: build
+          .config
+          .image_registry
+          .first()
+          .and_then(|r| optional_string(&r.domain)),
         built_hash: build.info.built_hash,
         latest_hash: build.info.latest_hash,
         state,

@@ -21,7 +21,7 @@ import {
   useWebhookIntegrations,
   useWrite,
 } from "@lib/hooks";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { CopyWebhook, ResourceLink, ResourceSelector } from "../common";
 import {
   Select,
@@ -35,8 +35,30 @@ import { ConfirmButton, ShowHideButton } from "@components/util";
 import { MonacoEditor } from "@components/monaco";
 import { useToast } from "@ui/use-toast";
 import { text_color_class_by_intention } from "@lib/color";
-import { Ban, CirclePlus } from "lucide-react";
+import {
+  Ban,
+  ChevronsUpDown,
+  CirclePlus,
+  MinusCircle,
+  PlusCircle,
+  SearchX,
+  X,
+} from "lucide-react";
 import { LinkedRepoConfig } from "@components/config/linked_repo";
+import { Button } from "@ui/button";
+import { Input } from "@ui/input";
+import { useStack } from ".";
+import { filterBySplit } from "@lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@ui/command";
+import { Checkbox } from "@ui/checkbox";
 
 type StackMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const STACK_MODES: StackMode[] = ["UI Defined", "Files On Server", "Git Repo"];
@@ -199,53 +221,65 @@ export const StackConfig = ({
     },
   };
 
+  const environment: ConfigComponent<Types.StackConfig> = {
+    label: "Environment",
+    description: "Pass these variables to the compose command",
+    actions: (
+      <ShowHideButton
+        show={show.env}
+        setShow={(env) => setShow({ ...show, env })}
+      />
+    ),
+    contentHidden: !show.env,
+    components: {
+      environment: (env, set) => (
+        <div className="flex flex-col gap-4">
+          <SecretsSearch server={update.server_id ?? config.server_id} />
+          <MonacoEditor
+            value={env || "  # VARIABLE = value\n"}
+            onValueChange={(environment) => set({ environment })}
+            language="key_value"
+            readOnly={disabled}
+          />
+        </div>
+      ),
+      env_file_path: {
+        description:
+          "The path to write the file to, relative to the 'Run Directory'.",
+        placeholder: ".env",
+      },
+      additional_env_files:
+        (mode === "Files On Server" || mode === "Git Repo") &&
+        ((values, set) => (
+          <ConfigList
+            label="Additional Env Files"
+            boldLabel
+            addLabel="Add Env File"
+            description="Add additional env files to pass with '--env-file'. Relative to the 'Run Directory'."
+            field="additional_env_files"
+            values={values ?? []}
+            set={set}
+            disabled={disabled}
+            placeholder=".env"
+          />
+        )),
+    },
+  };
+
+  const config_files: ConfigComponent<Types.StackConfig> = {
+    label: "Config Files",
+    description:
+      "Add other config files to associate with the Stack, and edit in the UI. Relative to 'Run Directory'.",
+    components: {
+      config_files: (value, set) => (
+        <ConfigFiles id={id} value={value} set={set} disabled={disabled} />
+      ),
+    },
+  };
+
   const auto_update = update.auto_update ?? config.auto_update ?? false;
 
   const general_common: ConfigComponent<Types.StackConfig>[] = [
-    {
-      label: "Environment",
-      description: "Pass these variables to the compose command",
-      actions: (
-        <ShowHideButton
-          show={show.env}
-          setShow={(env) => setShow({ ...show, env })}
-        />
-      ),
-      contentHidden: !show.env,
-      components: {
-        environment: (env, set) => (
-          <div className="flex flex-col gap-4">
-            <SecretsSearch server={update.server_id ?? config.server_id} />
-            <MonacoEditor
-              value={env || "  # VARIABLE = value\n"}
-              onValueChange={(environment) => set({ environment })}
-              language="key_value"
-              readOnly={disabled}
-            />
-          </div>
-        ),
-        env_file_path: {
-          description:
-            "The path to write the file to, relative to the 'Run Directory'.",
-          placeholder: ".env",
-        },
-        additional_env_files:
-          (mode === "Files On Server" || mode === "Git Repo") &&
-          ((values, set) => (
-            <ConfigList
-              label="Additional Env Files"
-              boldLabel
-              addLabel="Add Env File"
-              description="Add additional env files to pass with '--env-file'. Relative to the 'Run Directory'."
-              field="additional_env_files"
-              values={values ?? []}
-              set={set}
-              disabled={disabled}
-              placeholder=".env"
-            />
-          )),
-      },
-    },
     {
       label: "Auto Update",
       components: {
@@ -517,19 +551,10 @@ export const StackConfig = ({
                 placeholder="compose.yaml"
               />
             ),
-            additional_files: (value, set) => (
-              <ConfigList
-                label="Additional files"
-                description="Add other config files to associate with the Stack, and edit in the UI. Relative to 'Run Directory'."
-                field="additional_files"
-                values={value ?? []}
-                set={set}
-                disabled={disabled}
-                placeholder="configs/config.yaml"
-              />
-            ),
           },
         },
+        environment,
+        config_files,
         ...general_common,
       ],
       advanced,
@@ -646,19 +671,10 @@ export const StackConfig = ({
                 placeholder="compose.yaml"
               />
             ),
-            additional_files: (value, set) => (
-              <ConfigList
-                label="Additional files"
-                description="Add other config files to associate with Stack, and edit in the UI. Relative to 'Run Directory'."
-                field="additional_files"
-                values={value ?? []}
-                set={set}
-                disabled={disabled}
-                placeholder="configs/config.yaml"
-              />
-            ),
           },
         },
+        environment,
+        config_files,
         ...general_common,
         {
           label: "Webhooks",
@@ -872,6 +888,7 @@ export const StackConfig = ({
             },
           },
         },
+        environment,
         ...general_common,
       ],
       advanced,
@@ -911,3 +928,222 @@ services:
 # volumes:
 #   data:
 `;
+
+const ConfigFiles = ({
+  id,
+  value,
+  set,
+  disabled,
+}: {
+  id: string;
+  value: Types.StackFileDependency[] | undefined;
+  set: (value: Partial<Types.StackConfig>) => void;
+  disabled: boolean;
+}) => {
+  const values = value ?? [];
+  return (
+    <ConfigItem>
+      {!disabled && (
+        <Button
+          variant="secondary"
+          onClick={() =>
+            set({
+              config_files: [
+                ...values,
+                {
+                  path: "",
+                  services: [],
+                  requires: Types.StackFileRequires.None,
+                },
+              ],
+            })
+          }
+          className="flex items-center gap-2 w-[200px]"
+        >
+          <PlusCircle className="w-4 h-4" />
+          Add Additional File
+        </Button>
+      )}
+      {values.length > 0 && (
+        <div className="flex w-full">
+          <div className="flex flex-col gap-4 w-fit">
+            {values.map(({ path, services, requires }, i) => (
+              <div className="w-full flex flex-wrap gap-4" key={i}>
+                <Input
+                  placeholder="configs/config.yaml"
+                  value={path}
+                  onChange={(e) => {
+                    values[i] = { ...values[i], path: e.target.value };
+                    set({ config_files: [...values] });
+                  }}
+                  disabled={disabled}
+                  className="w-[400px] max-w-full"
+                />
+
+                {!disabled && (
+                  <Button
+                    variant="secondary"
+                    onClick={() =>
+                      set({
+                        config_files: [...values.filter((_, idx) => idx !== i)],
+                      })
+                    }
+                  >
+                    <MinusCircle className="w-4 h-4" />
+                  </Button>
+                )}
+
+                <ServicesSelector
+                  id={id}
+                  selected_services={services ?? []}
+                  set={(services) => {
+                    values[i] = { ...values[i], services };
+                    set({ config_files: [...values] });
+                  }}
+                  disabled={disabled}
+                />
+
+                <RequiresSelector
+                  requires={requires ?? Types.StackFileRequires.Redeploy}
+                  set={(requires) => {
+                    values[i] = { ...values[i], requires };
+                    set({ config_files: [...values] });
+                  }}
+                  disabled={disabled}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </ConfigItem>
+  );
+};
+
+const ServicesSelector = ({
+  id,
+  selected_services,
+  set,
+  disabled,
+}: {
+  id: string;
+  selected_services: string[];
+  set: (services: string[]) => void;
+  disabled: boolean;
+}) => {
+  const services = useStack(id)?.info.services.map((s) => s.service) ?? [];
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filtered = filterBySplit(services, search, (i) => i).sort();
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="secondary"
+          className="flex justify-between gap-2 w-fit max-w-[350px]"
+          disabled={disabled}
+        >
+          <div className="flex gap-2 items-center">
+            <div className="text-xs text-muted-foreground">Dependents:</div>
+            {selected_services.length === 0
+              ? "All"
+              : selected_services.join(", ")}
+          </div>
+          {!disabled && <ChevronsUpDown className="w-3 h-3" />}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[300px] max-h-[300px] p-0">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Search services"
+            className="h-9"
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList>
+            <CommandEmpty className="flex justify-evenly items-center pt-3 pb-2">
+              No services found
+              <SearchX className="w-3 h-3" />
+            </CommandEmpty>
+
+            <CommandGroup>
+              {filtered.map((service) => (
+                <CommandItem
+                  key={service}
+                  onSelect={() => {
+                    if (selected_services.includes(service)) {
+                      set(selected_services.filter((s) => s !== service));
+                    } else {
+                      set([...selected_services, service].sort());
+                    }
+                    // setOpen(false);
+                  }}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <Checkbox checked={selected_services.includes(service)} />
+                  <div className="p-1">{service}</div>
+                </CommandItem>
+              ))}
+              {!search && selected_services.length > 0 && (
+                <CommandItem
+                  onSelect={() => {
+                    set([]);
+                    setOpen(false);
+                  }}
+                  className="flex items-center gap-2 cursor-pointer"
+                  disabled={services.length === 0}
+                >
+                  <Button
+                    variant="destructive"
+                    className="px-1 py-0 h-fit"
+                    disabled={services.length === 0}
+                  >
+                    <X className="w-4" />
+                  </Button>
+                  <div className="p-1">Clear</div>
+                </CommandItem>
+              )}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+const RequiresSelector = ({
+  requires,
+  set,
+  disabled,
+}: {
+  requires: Types.StackFileRequires;
+  set: (requires: Types.StackFileRequires) => void;
+  disabled: boolean;
+}) => {
+  return (
+    <Select
+      value={requires}
+      onValueChange={(requires: Types.StackFileRequires) => {
+        set(requires);
+      }}
+      disabled={disabled}
+    >
+      <SelectTrigger
+        className="w-[180px] flex gap-2 items-center"
+        disabled={disabled}
+      >
+        <div className="text-xs text-muted-foreground">Requires:</div>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {Object.values(Types.StackFileRequires).map((requires) => (
+          <SelectItem key={requires} value={requires}>
+            {requires}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+};

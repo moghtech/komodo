@@ -7,7 +7,9 @@ use komodo_client::entities::{
   stack::Stack, to_path_compatible_name, update::Log,
 };
 use periphery_client::api::{
-  compose::{ComposePullResponse, ComposeRunResponse, ComposeUpResponse},
+  compose::{
+    ComposePullResponse, ComposeRunResponse, ComposeUpResponse,
+  },
   git::{CloneRepo, PullOrCloneRepo},
 };
 use resolver_api::Resolve;

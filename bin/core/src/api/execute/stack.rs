@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use anyhow::Context;
 use database::mungos::mongodb::bson::{doc, to_document};
 use formatting::format_serror;
@@ -5,11 +7,15 @@ use interpolate::Interpolator;
 use komodo_client::{
   api::{execute::*, write::RefreshStackCache},
   entities::{
+    FileContents,
     permission::PermissionLevel,
     repo::Repo,
     server::Server,
-    stack::{Stack, StackInfo},
+    stack::{
+      Stack, StackFileRequires, StackInfo, StackRemoteFileContents,
+    },
     update::{Log, Update},
+    user::User,
   },
 };
 use periphery_client::api::compose::*;
@@ -21,7 +27,9 @@ use crate::{
     periphery_client,
     query::{VariablesAndSecrets, get_variables_and_secrets},
     stack_git_token,
-    update::{add_update_without_send, update_update},
+    update::{
+      add_update_without_send, init_execution_update, update_update,
+    },
   },
   monitor::update_cache_for_server,
   permission::get_check_permissions,
@@ -179,7 +187,15 @@ impl Resolve<ExecuteArgs> for DeployStack {
       ) = if deployed {
         (
           Some(latest_services.clone()),
-          Some(file_contents.clone()),
+          Some(
+            file_contents
+              .iter()
+              .map(|f| FileContents {
+                path: f.path.clone(),
+                contents: f.contents.clone(),
+              })
+              .collect(),
+          ),
           compose_config,
           commit_hash.clone(),
           commit_message.clone(),
@@ -289,62 +305,279 @@ impl Resolve<ExecuteArgs> for DeployStackIfChanged {
       PermissionLevel::Execute.into(),
     )
     .await?;
+
     RefreshStackCache {
       stack: stack.id.clone(),
     }
     .resolve(&WriteArgs { user: user.clone() })
     .await?;
+
     let stack = resource::get::<Stack>(&stack.id).await?;
-    let changed = match (
+
+    let action = match (
       &stack.info.deployed_contents,
       &stack.info.remote_contents,
     ) {
       (Some(deployed_contents), Some(latest_contents)) => {
-        let changed = || {
-          for latest in latest_contents {
-            let Some(deployed) = deployed_contents
-              .iter()
-              .find(|c| c.path == latest.path)
-            else {
-              return true;
-            };
-            if latest.contents != deployed.contents {
-              return true;
-            }
-          }
-          false
-        };
-        changed()
+        let services = stack
+          .info
+          .latest_services
+          .iter()
+          .map(|s| s.service_name.clone())
+          .collect::<Vec<_>>();
+        resolve_deploy_if_changed_action(
+          deployed_contents,
+          latest_contents,
+          &services,
+        )
       }
-      (None, _) => true,
-      _ => false,
+      (None, _) => DeployIfChangedAction::FullDeploy,
+      _ => DeployIfChangedAction::Services {
+        deploy: Vec::new(),
+        restart: Vec::new(),
+      },
     };
 
     let mut update = update.clone();
 
-    if !changed {
-      update.push_simple_log(
-        "Diff compose files",
-        String::from("Deploy cancelled after no changes detected."),
-      );
-      update.finalize();
-      return Ok(update);
-    }
+    match action {
+      // Existing path pre 1.19.1
+      DeployIfChangedAction::FullDeploy => {
+        // Don't actually send it here, let the handler send it after it can set action state.
+        // This is usually done in crate::helpers::update::init_execution_update.
+        update.id = add_update_without_send(&update).await?;
 
-    // Don't actually send it here, let the handler send it after it can set action state.
-    // This is usually done in crate::helpers::update::init_execution_update.
-    update.id = add_update_without_send(&update).await?;
+        DeployStack {
+          stack: stack.name,
+          services: Vec::new(),
+          stop_time: self.stop_time,
+        }
+        .resolve(&ExecuteArgs {
+          user: user.clone(),
+          update,
+        })
+        .await
+      }
+      DeployIfChangedAction::FullRestart => {
+        // For git repo based stacks, need to do a
+        // PullStack in order to ensure latest repo contents on the
+        // host before restart.
+        maybe_pull_stack(&stack, Some(&mut update)).await?;
 
-    DeployStack {
-      stack: stack.name,
-      services: Vec::new(),
-      stop_time: self.stop_time,
+        // The existing update is initialized to DeployStack,
+        // but also has not been created on database.
+        // Setup a new update here.
+        let req = ExecuteRequest::RestartStack(RestartStack {
+          stack: stack.name,
+          services: Vec::new(),
+        });
+        let update = init_execution_update(&req, user).await?;
+        let ExecuteRequest::RestartStack(req) = req else {
+          unreachable!()
+        };
+        req
+          .resolve(&ExecuteArgs {
+            user: user.clone(),
+            update,
+          })
+          .await
+      }
+      DeployIfChangedAction::Services { deploy, restart } => {
+        match (deploy.is_empty(), restart.is_empty()) {
+          // Both empty, nothing to do
+          (true, true) => {
+            update.push_simple_log(
+              "Diff compose files",
+              String::from(
+                "Deploy cancelled after no changes detected.",
+              ),
+            );
+            update.finalize();
+            Ok(update)
+          }
+          // Only restart
+          (true, false) => {
+            // For git repo based stacks, need to do a
+            // PullStack in order to ensure latest repo contents on the
+            // host before restart. Only necessary if no "deploys" (deploy already pulls stack).
+            maybe_pull_stack(&stack, Some(&mut update)).await?;
+            restart_services(stack.name, restart, user).await
+          }
+          // Only deploy
+          (false, true) => {
+            deploy_services(stack.name, deploy, user).await
+          }
+          // Deploy then restart, returning non-db update with executed services.
+          (false, false) => {
+            update.push_simple_log(
+              "Execute Deploys",
+              format!("Deploying: {}", deploy.join(", "),),
+            );
+            let deploy_update =
+              deploy_services(stack.name.clone(), deploy, user)
+                .await?;
+            if !deploy_update.success {
+              update.push_error_log(
+                "Execute Deploys",
+                String::from("There was a failure in service deploy"),
+              );
+              update.finalize();
+              return Ok(update);
+            }
+
+            update.push_simple_log(
+              "Execute Restarts",
+              format!("Restarting: {}", restart.join(", "),),
+            );
+            let restart_update =
+              restart_services(stack.name, restart, user).await?;
+            if !restart_update.success {
+              update.push_error_log(
+                "Execute Restarts",
+                String::from(
+                  "There was a failure in a service restart",
+                ),
+              );
+            }
+
+            update.finalize();
+            Ok(update)
+          }
+        }
+      }
     }
+  }
+}
+
+async fn deploy_services(
+  stack: String,
+  services: Vec<String>,
+  user: &User,
+) -> serror::Result<Update> {
+  // The existing update is initialized to DeployStack,
+  // but also has not been created on database.
+  // Setup a new update here.
+  let req = ExecuteRequest::DeployStack(DeployStack {
+    stack,
+    services,
+    stop_time: None,
+  });
+  let update = init_execution_update(&req, user).await?;
+  let ExecuteRequest::DeployStack(req) = req else {
+    unreachable!()
+  };
+  req
     .resolve(&ExecuteArgs {
       user: user.clone(),
       update,
     })
     .await
+}
+
+async fn restart_services(
+  stack: String,
+  services: Vec<String>,
+  user: &User,
+) -> serror::Result<Update> {
+  // The existing update is initialized to DeployStack,
+  // but also has not been created on database.
+  // Setup a new update here.
+  let req =
+    ExecuteRequest::RestartStack(RestartStack { stack, services });
+  let update = init_execution_update(&req, user).await?;
+  let ExecuteRequest::RestartStack(req) = req else {
+    unreachable!()
+  };
+  req
+    .resolve(&ExecuteArgs {
+      user: user.clone(),
+      update,
+    })
+    .await
+}
+
+enum DeployIfChangedAction {
+  /// Changes to any compose or env files
+  /// always lead to this.
+  FullDeploy,
+  /// If the above is not met, then changes to
+  /// any changed additional file with `requires = "Restart"`
+  /// and empty services array will lead to this.
+  FullRestart,
+  /// If all changed additional files have specific services
+  /// they depend on, collect the final necessary
+  /// services to deploy / restart.
+  /// If eg `deploy` is empty, no services will be redeployed, same for `restart`.
+  /// If both are empty, nothing is to be done.
+  Services {
+    deploy: Vec<String>,
+    restart: Vec<String>,
+  },
+}
+
+fn resolve_deploy_if_changed_action(
+  deployed_contents: &[FileContents],
+  latest_contents: &[StackRemoteFileContents],
+  all_services: &[String],
+) -> DeployIfChangedAction {
+  let mut full_restart = false;
+  let mut deploy = HashSet::<String>::new();
+  let mut restart = HashSet::<String>::new();
+
+  for latest in latest_contents {
+    let Some(deployed) =
+      deployed_contents.iter().find(|c| c.path == latest.path)
+    else {
+      // If file doesn't exist in deployed contents, do full
+      // deploy to align this.
+      return DeployIfChangedAction::FullDeploy;
+    };
+    // Ignore unchanged files
+    if latest.contents == deployed.contents {
+      continue;
+    }
+    match (latest.requires, latest.services.is_empty()) {
+      (StackFileRequires::Redeploy, true) => {
+        // File has requires = "Redeploy" at global level.
+        // Can do early return here.
+        return DeployIfChangedAction::FullDeploy;
+      }
+      (StackFileRequires::Redeploy, false) => {
+        // Requires redeploy on specific services
+        deploy.extend(latest.services.clone());
+      }
+      (StackFileRequires::Restart, true) => {
+        // Services empty -> Full restart
+        full_restart = true;
+      }
+      (StackFileRequires::Restart, false) => {
+        restart.extend(latest.services.clone());
+      }
+      (StackFileRequires::None, _) => {
+        // File can be ignored even with changes.
+        continue;
+      }
+    }
+  }
+
+  match (full_restart, deploy.is_empty()) {
+    // Full restart required with NO deploys needed -> Full Restart
+    (true, true) => DeployIfChangedAction::FullRestart,
+    // Full restart required WITH deploys needed -> Deploy those, restart all others
+    (true, false) => DeployIfChangedAction::Services {
+      restart: all_services
+        .iter()
+        // Only keep ones that don't need deploy
+        .filter(|&s| !deploy.contains(s))
+        .cloned()
+        .collect(),
+      deploy: deploy.into_iter().collect(),
+    },
+    // No full restart needed -> Deploy / restart as. pickedup.
+    (false, _) => DeployIfChangedAction::Services {
+      deploy: deploy.into_iter().collect(),
+      restart: restart.into_iter().collect(),
+    },
   }
 }
 
@@ -369,6 +602,31 @@ impl Resolve<ExecuteArgs> for BatchPullStack {
         .await?,
     )
   }
+}
+
+async fn maybe_pull_stack(
+  stack: &Stack,
+  update: Option<&mut Update>,
+) -> anyhow::Result<()> {
+  if stack.config.files_on_host
+    || (stack.config.repo.is_empty()
+      && stack.config.linked_repo.is_empty())
+  {
+    // Not repo based, no pull necessary
+    return Ok(());
+  }
+  let server =
+    resource::get::<Server>(&stack.config.server_id).await?;
+  let repo = if stack.config.repo.is_empty()
+    && !stack.config.linked_repo.is_empty()
+  {
+    Some(resource::get::<Repo>(&stack.config.linked_repo).await?)
+  } else {
+    None
+  };
+  pull_stack_inner(stack.clone(), Vec::new(), &server, repo, update)
+    .await?;
+  Ok(())
 }
 
 pub async fn pull_stack_inner(
@@ -664,7 +922,8 @@ impl Resolve<ExecuteArgs> for RunStackService {
     let mut update = update.clone();
     update_update(update.clone()).await?;
 
-    let git_token = stack_git_token(&mut stack, repo.as_mut()).await?;
+    let git_token =
+      stack_git_token(&mut stack, repo.as_mut()).await?;
 
     let registry_token = crate::helpers::registry_token(
       &stack.config.registry_provider,
@@ -693,7 +952,7 @@ impl Resolve<ExecuteArgs> for RunStackService {
       Default::default()
     };
 
-  let log = periphery_client(&server)?
+    let log = periphery_client(&server)?
       .request(ComposeRun {
         stack,
         repo,

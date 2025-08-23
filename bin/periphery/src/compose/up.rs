@@ -3,7 +3,9 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, anyhow};
 use formatting::format_serror;
 use komodo_client::entities::{
-  FileContents, stack::Stack, update::Log,
+  FileContents,
+  stack::{Stack, StackRemoteFileContents},
+  update::Log,
 };
 use periphery_client::api::compose::ComposeUpResponse;
 use tokio::fs;
@@ -16,20 +18,24 @@ pub async fn validate_files(
   res: &mut ComposeUpResponse,
 ) {
   let file_paths = stack
-    .all_file_paths()
+    .all_file_dependencies()
     .into_iter()
-    .map(|path| {
+    .map(|file| {
       (
         // This will remove any intermediate uneeded '/./' in the path
-        run_directory.join(&path).components().collect::<PathBuf>(),
-        path,
+        run_directory
+          .join(&file.path)
+          .components()
+          .collect::<PathBuf>(),
+        file,
       )
     })
     .collect::<Vec<_>>();
 
-  for (full_path, path) in &file_paths {
+  // First validate no missing files
+  for (full_path, file) in &file_paths {
     if !full_path.exists() {
-      res.missing_files.push(path.to_string());
+      res.missing_files.push(file.path.clone());
     }
   }
   if !res.missing_files.is_empty() {
@@ -46,7 +52,7 @@ pub async fn validate_files(
     return;
   }
 
-  for (full_path, path) in &file_paths {
+  for (full_path, file) in file_paths {
     let file_contents =
       match fs::read_to_string(&full_path).await.with_context(|| {
         format!("Failed to read file contents at {full_path:?}")
@@ -59,15 +65,17 @@ pub async fn validate_files(
             .push(Log::error("Read Compose File", error.clone()));
           // This should only happen for repo stacks, ie remote error
           res.remote_errors.push(FileContents {
-            path: path.to_string(),
+            path: file.path,
             contents: error,
           });
           return;
         }
       };
-    res.file_contents.push(FileContents {
-      path: path.to_string(),
+    res.file_contents.push(StackRemoteFileContents {
+      path: file.path,
       contents: file_contents,
+      services: file.services,
+      requires: file.requires,
     });
   }
 }

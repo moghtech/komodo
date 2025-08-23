@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use komodo_client::entities::{
   FileContents, repo::Repo, update::Log,
 };
@@ -11,8 +13,10 @@ pub struct Build {
   pub build: komodo_client::entities::build::Build,
   /// Send the linked repo if it exists.
   pub repo: Option<Repo>,
-  /// Override registry token with one sent from core.
-  pub registry_token: Option<String>,
+  /// Override registry tokens with ones sent from core.
+  /// maps (domain, account) -> token.
+  #[serde(default)]
+  pub registry_tokens: HashMap<(String, String), String>,
   /// Propogate any secret replacers from core interpolation.
   #[serde(default)]
   pub replacers: Vec<(String, String)>,

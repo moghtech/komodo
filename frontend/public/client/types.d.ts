@@ -642,8 +642,11 @@ export interface BuildConfig {
     build_path: string;
     /** The path of the dockerfile relative to the build path. */
     dockerfile_path: string;
-    /** Configuration for the registry to push the built image to. */
-    image_registry?: ImageRegistryConfig;
+    /**
+     * Configuration for the registry/s to push the built image to.
+     * The first registry in this list will be used with attached Deployments.
+     */
+    image_registry?: ImageRegistryConfig[];
     /** Whether to skip secret interpolation in the build_args. */
     skip_secret_interp?: boolean;
     /** Whether to use buildx to build (eg `docker buildx build ...`) */
@@ -744,7 +747,7 @@ export interface BuildListItemInfo {
     built_hash?: string;
     /** Latest short commit hash, or null. Only for repo based stacks */
     latest_hash?: string;
-    /** The image registry domain */
+    /** The first listed image registry domain */
     image_registry_domain?: string;
 }
 export type BuildListItem = ResourceListItem<BuildListItemInfo>;
@@ -1562,6 +1565,22 @@ export type AlertData =
         total_gb: number;
     };
 }
+/** A server has a version mismatch with the core. */
+ | {
+    type: "ServerVersionMismatch";
+    data: {
+        /** The id of the server */
+        id: string;
+        /** The name of the server */
+        name: string;
+        /** The region of the server */
+        region?: string;
+        /** The actual server version */
+        server_version: string;
+        /** The core version */
+        core_version: string;
+    };
+}
 /** A container's state has changed unexpectedly. */
  | {
     type: "ContainerStateChange";
@@ -2158,6 +2177,8 @@ export interface ServerConfig {
     send_mem_alerts: boolean;
     /** Whether to send alerts about the servers DISK status */
     send_disk_alerts: boolean;
+    /** Whether to send alerts about the servers version mismatch with core */
+    send_version_mismatch_alerts: boolean;
     /** The percentage threshhold which triggers WARNING state for CPU. */
     cpu_warning: number;
     /** The percentage threshhold which triggers CRITICAL state for CPU. */
@@ -2187,6 +2208,23 @@ export interface StackActionState {
 }
 export type GetStackActionStateResponse = StackActionState;
 export type GetStackLogResponse = Log;
+export declare enum StackFileRequires {
+    /** Diff requires service redeploy. */
+    Redeploy = "Redeploy",
+    /** Diff requires service restart */
+    Restart = "Restart",
+    /** Diff requires no action. Default. */
+    None = "None"
+}
+/** Configure additional file dependencies of the Stack. */
+export interface StackFileDependency {
+    /** Specify the file */
+    path: string;
+    /** Specify specific service/s */
+    services?: string[];
+    /** Specify */
+    requires?: StackFileRequires;
+}
 /** The compose file configuration. */
 export interface StackConfig {
     /** The server to deploy the stack on. */
@@ -2302,17 +2340,20 @@ export interface StackConfig {
      * Add additional env files to attach with `--env-file`.
      * Relative to the run directory root.
      *
-     * Note. Already included as an `additional_file`, don't need to add it
-     * again there.
+     * Note. It is already included as an `additional_file`.
+     * Don't add it again there.
      */
     additional_env_files?: string[];
     /**
-     * Add additional files either in repo or on host to track.
-     * Can add any env / config files associated with the stack to enable editing them in the UI.
+     * Add additional config files either in repo or on host to track.
+     * Can add any files associated with the stack to enable editing them in the UI.
      * Doing so will also include diffing these when deciding to deploy in `DeployStackIfChanged`.
      * Relative to the run directory.
+     *
+     * Note. If the config file is .env and should be included in compose command
+     * using `--env-file`, add it to `additional_env_files` instead.
      */
-    additional_files?: string[];
+    config_files?: StackFileDependency[];
     /** Whether to send StackStateChange alerts for this stack. */
     send_alerts: boolean;
     /** Used with `registry_account` to login to a registry before docker compose up. */
@@ -2357,7 +2398,7 @@ export interface StackConfig {
     environment?: string;
 }
 export interface FileContents {
-    /** The path of the file on the host */
+    /** The path to the file */
     path: string;
     /** The contents of the file */
     contents: string;
@@ -2386,6 +2427,23 @@ export interface StackServiceNames {
     container_name: string;
     /** The services image. */
     image?: string;
+}
+/**
+ * Same as [FileContents] with some extra
+ * info specific to Stacks.
+ */
+export interface StackRemoteFileContents {
+    /** The path to the file */
+    path: string;
+    /** The contents of the file */
+    contents: string;
+    /**
+     * The services depending on this file,
+     * or empty for global requirement (eg all compose files and env files).
+     */
+    services?: string[];
+    /** Whether diff requires Redeploy / Restart / None */
+    requires?: StackFileRequires;
 }
 export interface StackInfo {
     /**
@@ -2429,7 +2487,7 @@ export interface StackInfo {
      * This is updated whenever Komodo refreshes the stack cache.
      * It will be empty if the file is defined directly in the stack config.
      */
-    remote_contents?: FileContents[];
+    remote_contents?: StackRemoteFileContents[];
     /** If there was an error in getting the remote contents, it will be here. */
     remote_errors?: FileContents[];
     /** Latest commit hash, or null */
@@ -3784,6 +3842,8 @@ export interface ServerListItemInfo {
     send_mem_alerts: boolean;
     /** Whether server is configured to send disk alerts. */
     send_disk_alerts: boolean;
+    /** Whether server is configured to send version mismatch alerts. */
+    send_version_mismatch_alerts: boolean;
     /** Whether terminals are disabled for this Server. */
     terminals_disabled: boolean;
     /** Whether container exec is disabled for this Server. */
@@ -6023,6 +6083,8 @@ export interface GetServersSummaryResponse {
     total: I64;
     /** The number of healthy (`status: OK`) servers. */
     healthy: I64;
+    /** The number of servers with warnings (e.g., version mismatch). */
+    warning: I64;
     /** The number of unhealthy servers. */
     unhealthy: I64;
     /** The number of disabled servers. */
@@ -8246,18 +8308,6 @@ export declare enum IanaTimezone {
     /** UTC+14:00 */
     PacificKiritimati = "Pacific/Kiritimati"
 }
-/** Configuration for the registry to push the built image to. */
-export type ImageRegistryLegacy1_14 = 
-/** Don't push the image to any registry */
-{
-    type: "None";
-    params: NoData;
-}
-/** Push the image to a standard image registry (any domain) */
- | {
-    type: "Standard";
-    params: ImageRegistryConfig;
-};
 export type ReadRequest = {
     type: "GetVersion";
     params: GetVersion;

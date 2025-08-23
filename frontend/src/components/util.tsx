@@ -7,6 +7,7 @@ import {
   SetStateAction,
   forwardRef,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { Button } from "../ui/button";
@@ -67,6 +68,7 @@ import {
   useContainerPortsMap,
   useRead,
   useTemplatesQueryBehavior,
+  usePromptHotkeys,
 } from "@lib/hooks";
 import { Prune } from "./resources/server/actions";
 import { MonacoEditor, MonacoLanguage } from "./monaco";
@@ -129,6 +131,7 @@ export const ActionButton = forwardRef<
     onClick?: MouseEventHandler<HTMLButtonElement>;
     onBlur?: FocusEventHandler<HTMLButtonElement>;
     loading?: boolean;
+    "data-confirm-button"?: boolean;
   }
 >(
   (
@@ -142,6 +145,7 @@ export const ActionButton = forwardRef<
       loading,
       onClick,
       onBlur,
+      "data-confirm-button": dataConfirmButton,
     },
     ref
   ) => (
@@ -156,6 +160,7 @@ export const ActionButton = forwardRef<
       onBlur={onBlur}
       disabled={disabled || loading}
       ref={ref}
+      data-confirm-button={dataConfirmButton}
     >
       {title} {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : icon}
     </Button>
@@ -201,7 +206,22 @@ export const ActionWithDialog = ({
     useRead("GetCoreInfo", {}).data?.disable_confirm_dialog ?? false;
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
+  // Add prompt hotkeys for better UX when dialog is open
+  usePromptHotkeys({
+    onConfirm: () => {
+      if (name === input && !disabled) {
+        onClick && onClick();
+        setOpen(false);
+      }
+    },
+    onCancel: () => setOpen(false),
+    enabled: open,
+    confirmDisabled: disabled || name !== input,
+  });
+
+  // If confirm dialogs are disabled and this isn't forced, use ConfirmButton directly
   if (!forceConfirmDialog && disable_confirm_dialog) {
     return (
       <ConfirmButton
@@ -258,6 +278,7 @@ export const ActionWithDialog = ({
         </div>
         <DialogFooter>
           <ConfirmButton
+            ref={confirmButtonRef}
             title={title}
             icon={icon}
             disabled={disabled || name !== input}
@@ -272,7 +293,27 @@ export const ActionWithDialog = ({
   );
 };
 
-export const ConfirmButton = ({
+export const ConfirmButton = forwardRef<
+  HTMLButtonElement,
+  {
+    variant?:
+      | "link"
+      | "default"
+      | "destructive"
+      | "outline"
+      | "secondary"
+      | "ghost"
+      | null
+      | undefined;
+    size?: "default" | "sm" | "lg" | "icon" | null | undefined;
+    title: string;
+    icon: ReactNode;
+    onClick?: MouseEventHandler<HTMLButtonElement>;
+    loading?: boolean;
+    disabled?: boolean;
+    className?: string;
+  }
+>(({
   variant,
   size,
   title,
@@ -281,28 +322,12 @@ export const ConfirmButton = ({
   loading,
   onClick,
   className,
-}: {
-  variant?:
-    | "link"
-    | "default"
-    | "destructive"
-    | "outline"
-    | "secondary"
-    | "ghost"
-    | null
-    | undefined;
-  size?: "default" | "sm" | "lg" | "icon" | null | undefined;
-  title: string;
-  icon: ReactNode;
-  onClick?: MouseEventHandler<HTMLButtonElement>;
-  loading?: boolean;
-  disabled?: boolean;
-  className?: string;
-}) => {
+}, ref) => {
   const [confirmed, set] = useState(false);
 
   return (
     <ActionButton
+      ref={ref}
       variant={variant}
       size={size}
       title={confirmed ? "Confirm" : title}
@@ -323,9 +348,10 @@ export const ConfirmButton = ({
       onBlur={() => set(false)}
       loading={loading}
       className={className}
+      data-confirm-button={true}
     />
   );
-};
+});
 
 export const UserSettings = () => (
   <Link to="/settings">
@@ -512,16 +538,41 @@ export const StatusBadge = ({
   const background = hex_color_by_intention(intent) + "25";
 
   const _text = text === Types.ServerState.NotOk ? "Not Ok" : text;
+  const displayText = snake_case_to_upper_space_case(_text).toUpperCase();
+
+  // Special handling for "VERSION MISMATCH" with flex layout for responsive design
+  if (displayText === "VERSION MISMATCH") {
+    return (
+      <div
+        className={cn(
+          "px-2 py-1 text-xs text-white rounded-md font-medium tracking-wide",
+          "inline-flex flex-wrap items-center justify-center text-center",
+          "leading-tight gap-x-1",
+          "min-h-[1.5rem]", // Minimum height to match other badges, but can grow
+          color
+        )}
+        style={{ 
+          background,
+          minWidth: "fit-content",
+          maxWidth: "80px", // This controls when it wraps to two lines
+        }}
+      >
+        <span>VERSION</span>
+        <span>MISMATCH</span>
+      </div>
+    );
+  }
 
   return (
     <p
       className={cn(
         "px-2 py-1 w-fit text-xs text-white rounded-md font-medium tracking-wide",
+        "h-6 flex items-center", // Fixed height and center content vertically
         color
       )}
       style={{ background }}
     >
-      {snake_case_to_upper_space_case(_text).toUpperCase()}
+      {displayText}
     </p>
   );
 };

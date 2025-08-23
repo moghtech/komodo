@@ -35,16 +35,22 @@ impl<'de> Visitor<'de> for ConversionVisitor {
     write!(formatter, "string or Vec<Conversion>")
   }
 
-  fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+  fn visit_string<E>(self, out: String) -> Result<Self::Value, E>
   where
     E: serde::de::Error,
   {
-    let out = v.to_string();
     if out.is_empty() || out.ends_with('\n') {
       Ok(out)
     } else {
       Ok(out + "\n")
     }
+  }
+
+  fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+  where
+    E: serde::de::Error,
+  {
+    Self::visit_string(self, v.to_string())
   }
 
   fn visit_seq<A>(self, seq: A) -> Result<Self::Value, A::Error>
@@ -76,6 +82,13 @@ impl<'de> Visitor<'de> for OptionConversionVisitor {
     formatter: &mut std::fmt::Formatter,
   ) -> std::fmt::Result {
     write!(formatter, "null or string or Vec<Conversion>")
+  }
+
+  fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+  where
+    E: serde::de::Error,
+  {
+    ConversionVisitor.visit_string(v).map(Some)
   }
 
   fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>

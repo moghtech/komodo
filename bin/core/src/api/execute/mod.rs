@@ -221,9 +221,13 @@ pub fn inner_handler(
       ));
     }
 
+    // Spawn a task for the execution which continues
+    // running after this method returns.
     let handle =
       tokio::spawn(task(req_id, request, user, update.clone()));
 
+    // Spawns another task to monitor the first for failures,
+    // and add the log to Update about it (which primary task can't do because it errored out)
     tokio::spawn({
       let update_id = update.id.clone();
       async move {
@@ -239,6 +243,11 @@ pub fn inner_handler(
           _ => return,
         };
         let res = async {
+          // Nothing to do if update was never actually created,
+          // which is the case when the id is empty.
+          if update_id.is_empty() {
+            return Ok(());
+          }
           let mut update =
             find_one_by_id(&db_client().updates, &update_id)
               .await

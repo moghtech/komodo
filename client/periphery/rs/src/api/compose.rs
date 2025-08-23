@@ -1,12 +1,15 @@
 use komodo_client::entities::{
   FileContents, RepoExecutionResponse, SearchCombinator,
   repo::Repo,
-  stack::{ComposeProject, Stack, StackServiceNames},
+  stack::{
+    ComposeProject, Stack, StackFileDependency,
+    StackRemoteFileContents, StackServiceNames,
+  },
   update::Log,
 };
-use std::collections::HashMap;
 use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// List the compose project names that are on the host.
 /// List running `docker compose ls`
@@ -29,13 +32,13 @@ pub struct GetComposeContentsOnHost {
   /// The name of the stack
   pub name: String,
   pub run_directory: String,
-  /// Both compose files and additional files, all relative to run directory.
-  pub file_paths: Vec<String>,
+  /// Both compose files and env / additional files, all relative to run directory.
+  pub file_paths: Vec<StackFileDependency>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct GetComposeContentsOnHostResponse {
-  pub contents: Vec<FileContents>,
+  pub contents: Vec<StackRemoteFileContents>,
   pub errors: Vec<FileContents>,
 }
 
@@ -206,7 +209,7 @@ pub struct ComposeUpResponse {
   #[serde(default)]
   pub services: Vec<StackServiceNames>,
   /// The deploy compose file contents if they could be acquired, or empty vec.
-  pub file_contents: Vec<FileContents>,
+  pub file_contents: Vec<StackRemoteFileContents>,
   /// The error in getting remote file contents at the path, or null
   pub remote_errors: Vec<FileContents>,
   /// The output of `docker compose config` at deploy time

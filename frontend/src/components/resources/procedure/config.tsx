@@ -1145,7 +1145,9 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
       const [stack, setStack] = useState(params.stack ?? "");
       const [service, setService] = useState(params.service ?? "");
       const [commandText, setCommand] = useState(
-        params.command && params.command.length ? shellQuote(params.command) : ""
+        params.command && params.command.length
+          ? shellQuote(params.command)
+          : ""
       );
       const [no_tty, setNoTty] = useState(!!params.no_tty);
       const [no_deps, setNoDeps] = useState(!!params.no_deps);
@@ -1154,18 +1156,22 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
       const [user, setUser] = useState(params.user ?? "");
       const [entrypoint, setEntrypoint] = useState(params.entrypoint ?? "");
       const [pull, setPull] = useState(!!params.pull);
-      const env_text = (params.env
-        ? Object.entries(params.env)
-            .map(([k, v]) => `${k}=${v}`)
-            .join("\n")
-        : "  # VARIABLE = value\n") as string;
+      const env_text = (
+        params.env
+          ? Object.entries(params.env)
+              .map(([k, v]) => `${k}=${v}`)
+              .join("\n")
+          : "  # VARIABLE = value\n"
+      ) as string;
       const [envText, setEnvText] = useState(env_text);
 
       useEffect(() => {
         setStack(params.stack ?? "");
         setService(params.service ?? "");
         setCommand(
-          params.command && params.command.length ? shellQuote(params.command) : ""
+          params.command && params.command.length
+            ? shellQuote(params.command)
+            : ""
         );
         setNoTty(!!params.no_tty);
         setNoDeps(!!params.no_deps);
@@ -1186,16 +1192,19 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
       const onConfirm = () => {
         const envArray = text_to_env(envText);
         const env = envArray.length
-          ? envArray.reduce<Record<string, string>>((acc, { variable, value }) => {
-              if (variable) acc[variable] = value;
-              return acc;
-            }, {})
+          ? envArray.reduce<Record<string, string>>(
+              (acc, { variable, value }) => {
+                if (variable) acc[variable] = value;
+                return acc;
+              },
+              {}
+            )
           : undefined;
-          const parsed = commandText.trim()
-            ? shellParse(commandText.trim()).map((tok) =>
-                typeof tok === "string" ? tok : (tok as any).op ?? String(tok)
-              )
-            : [];
+        const parsed = commandText.trim()
+          ? shellParse(commandText.trim()).map((tok) =>
+              typeof tok === "string" ? tok : ((tok as any).op ?? String(tok))
+            )
+          : [];
         setParams({
           stack,
           service,
@@ -1279,7 +1288,9 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1">
-                  <div className="text-muted-foreground text-xs">Working Directory</div>
+                  <div className="text-muted-foreground text-xs">
+                    Working Directory
+                  </div>
                   <Input
                     placeholder="/work/dir"
                     value={workdir}
@@ -1297,7 +1308,9 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
                   />
                 </div>
                 <div className="flex flex-col gap-1 md:col-span-2">
-                  <div className="text-muted-foreground text-xs">Entrypoint</div>
+                  <div className="text-muted-foreground text-xs">
+                    Entrypoint
+                  </div>
                   <Input
                     value={entrypoint}
                     onChange={(e) => setEntrypoint(e.target.value)}
@@ -1307,7 +1320,9 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
               </div>
 
               <div className="flex flex-col gap-1">
-                <div className="text-muted-foreground text-xs">Extra Environment Variables</div>
+                <div className="text-muted-foreground text-xs">
+                  Extra Environment Variables
+                </div>
                 <MonacoEditor
                   value={envText}
                   onValueChange={setEnvText}
@@ -1679,7 +1694,7 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
     Component: ({ params, setParams, disabled }) => {
       const { toast } = useToast();
       const [internal, setInternal] = useState(
-        params.duration_ms?.toString() ?? "",
+        params.duration_ms?.toString() ?? ""
       );
       useEffect(() => {
         setInternal(params.duration_ms?.toString() ?? "");

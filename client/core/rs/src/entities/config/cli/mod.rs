@@ -70,7 +70,7 @@ pub struct Env {
   pub komodo_cli_backups_folder: Option<PathBuf>,
   /// Override `max_backups`
   pub komodo_cli_max_backups: Option<u16>,
-  
+
   /// Override `database_target_uri`
   #[serde(alias = "komodo_cli_database_copy_uri")]
   pub komodo_cli_database_target_uri: Option<String>,
