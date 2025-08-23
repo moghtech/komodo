@@ -1,16 +1,11 @@
-import { Page, Section } from "@components/layouts";
 import { ResourceLink } from "@components/resources/common";
 import { ServerComponents } from "@components/resources/server";
 import { DataTable, SortableHeader } from "@ui/data-table";
-import { Input } from "@ui/input";
-import { LineChart, Search } from "lucide-react";
-import { useRead, useSetTitle } from "@lib/hooks";
-import { useMemo, useState } from "react";
-import { server_state_intention, ColorIntention } from "@lib/color";
+import { useRead } from "@lib/hooks";
+import { useMemo } from "react";
+import { ColorIntention, server_state_intention } from "@lib/color";
 
-export default function MonitoringPage() {
-  useSetTitle("Monitoring");
-  const [search, setSearch] = useState("");
+export const ServerMonitoringTable = ({ search = "" }: { search?: string }) => {
   const servers = useRead("ListServers", {}).data;
   const searchSplit = useMemo(
     () => search.toLowerCase().split(" ").filter((t) => t),
@@ -25,74 +20,55 @@ export default function MonitoringPage() {
       ) ?? [],
     [servers, searchSplit]
   );
-
   return (
-    <Page title="Monitoring" icon={<LineChart className="w-8 h-8" />}>
-      <Section
-        title="All Systems"
-        actions={
-          <div className="relative">
-            <Search className="w-4 absolute top-[50%] left-3 -translate-y-[50%] text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Filter..."
-              className="pl-8 w-[200px] lg:w-[300px]"
-            />
-          </div>
-        }
-      >
-        <div className="text-sm text-muted-foreground px-2 pb-2">
-          Updated in real time. Click on a system to view information.
-        </div>
-        <DataTable<any, any>
-          tableKey="monitoring-systems-v1"
-          data={filtered}
-          columns={[
-            {
-              accessorKey: "name",
-              size: 260,
-              header: ({ column }) => (
-                <SortableHeader column={column} title="System" />
-              ),
-              cell: ({ row }) => (
-                <div className="flex items-center gap-2">
-                  <ServerStateDot id={row.original.id} />
-                  <ResourceLink type="Server" id={row.original.id} />
-                </div>
-              ),
-            },
-            {
-              header: "CPU",
-              size: 240,
-              cell: ({ row }) => <CpuCell id={row.original.id} />,
-            },
-            {
-              header: "Memory",
-              size: 300,
-              cell: ({ row }) => <MemCell id={row.original.id} />,
-            },
-            {
-              header: "Disk",
-              size: 300,
-              cell: ({ row }) => <DiskCell id={row.original.id} />,
-            },
-            {
-              header: "Net",
-              size: 180,
-              cell: ({ row }) => <NetCell id={row.original.id} />,
-            },
-            {
-              header: "Agent",
-              size: 160,
-              cell: ({ row }) => <ServerComponents.Info.Version id={row.original.id} />,
-            },
-          ]}
-        />
-      </Section>
-    </Page>
+    <div className="flex flex-col gap-4">
+      <DataTable<any, any>
+        tableKey="servers-monitoring-v1"
+        data={filtered}
+        columns={[
+          {
+            accessorKey: "name",
+            size: 250,
+            header: ({ column }) => (
+              <SortableHeader column={column} title="System" />
+            ),
+            cell: ({ row }) => (
+              <div className="flex items-center gap-2">
+                <ServerStateDot id={row.original.id} />
+                <ResourceLink type="Server" id={row.original.id} />
+              </div>
+            ),
+          },
+          {
+            header: "CPU",
+            size: 200,
+            cell: ({ row }) => <CpuCell id={row.original.id} />,
+          },
+          {
+            header: "Memory",
+            size: 200,
+            cell: ({ row }) => <MemCell id={row.original.id} />,
+          },
+          {
+            header: "Disk",
+            size: 200,
+            cell: ({ row }) => <DiskCell id={row.original.id} />,
+          },
+          {
+            header: "Net",
+            size: 100,
+            cell: ({ row }) => <NetCell id={row.original.id} />,
+          },
+          {
+            header: "Agent",
+            size: 160,
+            cell: ({ row }) => <ServerComponents.Info.Version id={row.original.id} />,
+          },
+        ]}
+      />
+    </div>
   );
-}
+};
 
 const useStats = (id: string) =>
   useRead("GetSystemStats", { server: id }, { refetchInterval: 10_000 }).data;

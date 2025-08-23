@@ -10,14 +10,16 @@ import {
   useSetTitle,
   useTemplatesQueryBehavior,
   useUser,
+  useLocalStorage,
 } from "@lib/hooks";
-import { Types } from "komodo_client";
 import { Input } from "@ui/input";
+import { Button } from "@ui/button";
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, Eye, EyeOff } from "lucide-react";
 import { NotFound, TemplateQueryBehaviorSelector } from "@components/util";
 import { Switch } from "@ui/switch";
 import { UsableResource } from "@types";
+import { ServerMonitoringTable } from "@components/resources/server/monitoring-table";
 
 export default function Resources({ _type }: { _type?: UsableResource }) {
   const is_admin = useUser().data?.admin ?? false;
@@ -28,6 +30,10 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
   const name = type === "ResourceSync" ? "Resource Sync" : type;
   useSetTitle(name + "s");
   const [search, set] = useState("");
+  const [monitoring, setMonitoring] = useLocalStorage<boolean>(
+    "servers-monitoring-toggle-v1",
+    false
+  );
   const [filter_update_available, toggle_filter_update_available] =
     useFilterByUpdateAvailable();
   const query =
@@ -41,10 +47,10 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
   const [templatesQueryBehavior] = useTemplatesQueryBehavior();
   const resources = useRead(`List${type}s`, query).data;
   const templatesFilterFn =
-    templatesQueryBehavior === Types.TemplatesQueryBehavior.Exclude
-      ? (resource: Types.ResourceListItem<unknown>) => !resource.template
-      : templatesQueryBehavior === Types.TemplatesQueryBehavior.Only
-        ? (resource: Types.ResourceListItem<unknown>) => resource.template
+    String(templatesQueryBehavior) === "Exclude"
+      ? (resource: any) => !resource.template
+      : String(templatesQueryBehavior) === "Only"
+        ? (resource: any) => resource.template
         : () => true;
   const filtered = useFilterResources(resources as any, search).filter(
     templatesFilterFn
@@ -56,12 +62,7 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
     return <NotFound type={undefined} />;
   }
 
-  const targets = filtered?.map(
-    (resource): Types.ResourceTarget => ({
-      type,
-      id: resource.id,
-    })
-  );
+  const targets = filtered?.map((resource) => ({ type, id: resource.id }));
 
   return (
     <Page
@@ -72,13 +73,36 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
         </div>
       }
       icon={<Components.BigIcon />}
-      actions={<ExportButton targets={targets} />}
+      actions={
+        <div className="flex items-center gap-2">
+          {type === "Server" && (
+            <Button
+              variant="outline"
+              className="flex items-center gap-2"
+              onClick={() => setMonitoring(!monitoring)}
+            >
+              {monitoring ? (
+                <>
+                  <EyeOff className="w-4 h-4" />
+                  Hide Server Stats
+                </>
+              ) : (
+                <>
+                  <Eye className="w-4 h-4" />
+                  Show Server Stats
+                </>
+              )}
+            </Button>
+          )}
+          <ExportButton targets={targets} />
+        </div>
+      }
     >
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap gap-4 items-center justify-between">
           <div className="flex gap-4">
             {(is_admin || !disable_non_admin_create) && <Components.New />}
-            <Components.GroupActions />
+            {!(type === "Server" && monitoring) && <Components.GroupActions />}
           </div>
           <div className="flex items-center gap-4 flex-wrap">
             {(type === "Stack" || type === "Deployment") && (
@@ -90,8 +114,10 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
                 <Switch checked={filter_update_available} />
               </div>
             )}
-            <TemplateQueryBehaviorSelector />
-            <TagsFilter />
+            {!(type === "Server" && monitoring) && (
+              <TemplateQueryBehaviorSelector />
+            )}
+            {!(type === "Server" && monitoring) && <TagsFilter />}
             <div className="relative">
               <Search className="w-4 absolute top-[50%] left-3 -translate-y-[50%] text-muted-foreground" />
               <Input
@@ -103,7 +129,11 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
             </div>
           </div>
         </div>
-        <Components.Table resources={filtered ?? []} />
+        {type === "Server" && monitoring ? (
+          <ServerMonitoringTable search={search} />
+        ) : (
+          <Components.Table resources={filtered ?? []} />
+        )}
       </div>
     </Page>
   );
