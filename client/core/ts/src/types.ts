@@ -2415,7 +2415,7 @@ export interface SystemStats {
 	/** Cpu usage percentage */
 	cpu_perc: number;
 	/** Load average (1m, 5m, 15m) */
-	load_average: SystemLoadAverage;
+	load_average?: SystemLoadAverage;
 	/**
 	 * [1.15.9+]
 	 * Free memory in GB.
@@ -6049,7 +6049,7 @@ export interface SystemStatsRecord {
 	/** Cpu usage percentage */
 	cpu_perc: number;
 	/** Load average (1m, 5m, 15m) */
-	load_average: SystemLoadAverage;
+	load_average?: SystemLoadAverage;
 	/** Memory used in GB */
 	mem_used_gb: number;
 	/** Total memory in GB */

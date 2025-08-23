@@ -120,8 +120,8 @@ export const ServerStats = ({
         {/* Current Overview */}
         <Section title="Current">
           <div className="flex flex-col xl:flex-row gap-4">
-            <CPU stats={stats} />
             <LOAD_AVERAGE stats={stats} />
+            <CPU stats={stats} />
             <RAM stats={stats} />
             <DISK stats={stats} />
             <NETWORK stats={stats} />
@@ -501,9 +501,9 @@ const LOAD_AVERAGE = ({ stats }: { stats: Types.SystemStats | undefined }) => {
   const { one, five, fifteen } = stats.load_average || {};
   
   return (
-    <Card className="flex-1">
+    <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Load Average</CardTitle>
+        <CardTitle>Load Average</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">
