@@ -453,9 +453,10 @@ export const ConfigList = <T extends { [key: string]: unknown }>(
           className="flex items-center gap-2 w-[200px]"
         >
           <PlusCircle className="w-4 h-4" />
-          {(props.addLabel ?? "Add " + props.label?.endsWith("s"))
-            ? props.label?.slice(0, -1)
-            : props.label}
+          {props.addLabel ??
+            ("Add " + props.label?.endsWith("s")
+              ? props.label?.slice(0, -1)
+              : props.label)}
         </Button>
       )}
       {props.values.length > 0 && <InputList {...props} />}
@@ -534,7 +535,7 @@ export function ConfirmUpdate<T>({
   key_listener = false,
 }: ConfirmUpdateProps<T>) {
   const [open, set] = useState(false);
-  
+
   const handleConfirm = async () => {
     await onConfirm();
     set(false);

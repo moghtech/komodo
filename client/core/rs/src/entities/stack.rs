@@ -808,10 +808,10 @@ pub struct StackFileDependency {
   /// Specify the file
   pub path: String,
   /// Specify specific service/s
-  #[serde(skip_serializing_if = "Vec::is_empty")]
+  #[serde(default, skip_serializing_if = "Vec::is_empty")]
   pub services: Vec<String>,
   /// Specify
-  #[serde(skip_serializing_if = "is_redeploy")]
+  #[serde(default, skip_serializing_if = "is_redeploy")]
   pub requires: StackFileRequires,
 }
 

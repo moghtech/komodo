@@ -2078,9 +2078,9 @@ export interface StackFileDependency {
 	/** Specify the file */
 	path: string;
 	/** Specify specific service/s */
-	services: string[];
+	services?: string[];
 	/** Specify */
-	requires: StackFileRequires;
+	requires?: StackFileRequires;
 }
 
 /** The compose file configuration. */
