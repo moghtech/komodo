@@ -518,14 +518,10 @@ export const StackConfig = ({
               />
             ),
             additional_files: (value, set) => (
-              <ConfigList
-                label="Additional files"
-                description="Add other config files to associate with the Stack, and edit in the UI. Relative to 'Run Directory'."
-                field="additional_files"
-                values={value ?? []}
+              <ConfigAdditionalFiles
+                value={value}
                 set={set}
                 disabled={disabled}
-                placeholder="configs/config.yaml"
               />
             ),
           },
@@ -647,14 +643,10 @@ export const StackConfig = ({
               />
             ),
             additional_files: (value, set) => (
-              <ConfigList
-                label="Additional files"
-                description="Add other config files to associate with Stack, and edit in the UI. Relative to 'Run Directory'."
-                field="additional_files"
-                values={value ?? []}
+              <ConfigAdditionalFiles
+                value={value}
                 set={set}
                 disabled={disabled}
-                placeholder="configs/config.yaml"
               />
             ),
           },
@@ -911,3 +903,25 @@ services:
 # volumes:
 #   data:
 `;
+
+const ConfigAdditionalFiles = ({
+  value,
+  set,
+  disabled,
+}: {
+  value: Types.StackFileDependency[] | undefined;
+  set: (value: Partial<Types.StackConfig>) => void;
+  disabled: boolean;
+}) => {
+  return (
+    <ConfigList
+      label="Additional files"
+      description="Add other config files to associate with the Stack, and edit in the UI. Relative to 'Run Directory'."
+      field="additional_files"
+      values={value?.map((v) => v.path) ?? []}
+      set={set}
+      disabled={disabled}
+      placeholder="configs/config.yaml"
+    />
+  );
+};
