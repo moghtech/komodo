@@ -539,6 +539,83 @@ export const useCtrlKeyListener = (listenKey: string, onPress: () => void) => {
   });
 };
 
+export interface PromptHotkeysConfig {
+  /** Function to call when Enter is pressed (confirm action) */
+  onConfirm?: () => void;
+  /** Function to call when Escape is pressed (cancel/close action) */
+  onCancel?: () => void;
+  /** Whether the hotkeys are enabled. Defaults to true */
+  enabled?: boolean;
+  /** Whether to ignore hotkeys when inside input/textarea elements. Defaults to true */
+  ignoreInputs?: boolean;
+  /** Whether the confirm action is disabled (e.g., form validation failed) */
+  confirmDisabled?: boolean;
+}
+
+/**
+ * Hook that provides standard prompt/dialog hotkey behavior:
+ * - Enter: Confirm/submit action
+ * - Escape: Cancel/close action
+ */
+export const usePromptHotkeys = ({
+  enabled = true,
+  onConfirm,
+  onCancel,
+  ignoreInputs = true,
+  confirmDisabled = false,
+}: PromptHotkeysConfig) => {
+  useEffect(() => {
+    if (!enabled) return;
+
+    const findConfirmButton = (): HTMLButtonElement | null => {
+      const dialogContainers = document.querySelectorAll('[role="dialog"], [data-state="open"], .dialog-content');
+      for (const container of dialogContainers) {
+        const button = container.querySelector('[data-confirm-button]:not([disabled])') as HTMLButtonElement;
+        if (button) return button;
+      }
+
+      return document.querySelector('[data-confirm-button]:not([disabled])') as HTMLButtonElement;
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (ignoreInputs) {
+        const target = e.target as HTMLElement;
+        if (
+          target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable
+        ) {
+          return;
+        }
+      }
+
+      switch (e.key) {
+        case "Enter":
+          if (onConfirm && !confirmDisabled) {
+            e.preventDefault();
+            const confirmButton = findConfirmButton();
+            if (confirmButton) {
+              confirmButton.click();
+            } else {
+              onConfirm();
+            }
+          }
+          break;
+        case "Escape":
+          if (onCancel) {
+            e.preventDefault();
+            onCancel();
+          }
+          break;
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [enabled, onConfirm, onCancel, ignoreInputs, confirmDisabled]);
+};
+
 export type WebhookIntegration = "Github" | "Gitlab";
 export type WebhookIntegrations = {
   [key: string]: WebhookIntegration;

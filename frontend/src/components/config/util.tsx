@@ -7,6 +7,7 @@ import {
   WebhookIntegration,
   useWebhookIntegrations,
   useSettingsView,
+  usePromptHotkeys,
 } from "@lib/hooks";
 import { Types } from "komodo_client";
 import {
@@ -533,14 +534,34 @@ export function ConfirmUpdate<T>({
   key_listener = false,
 }: ConfirmUpdateProps<T>) {
   const [open, set] = useState(false);
+  
+  const handleConfirm = async () => {
+    await onConfirm();
+    set(false);
+  };
+
+  const handleCancel = () => {
+    set(false);
+  };
+
+  // Keep the existing Ctrl+Enter behavior for backward compatibility
   useCtrlKeyListener("Enter", () => {
     if (!key_listener) return;
     if (open) {
-      onConfirm();
+      handleConfirm();
     } else {
       set(true);
     }
   });
+
+  // Add new prompt hotkeys for better UX
+  usePromptHotkeys({
+    onConfirm: handleConfirm,
+    onCancel: handleCancel,
+    enabled: open,
+    confirmDisabled: disabled || loading,
+  });
+
   return (
     <Dialog open={open} onOpenChange={set}>
       <DialogTrigger asChild>
@@ -573,10 +594,7 @@ export function ConfirmUpdate<T>({
           <ConfirmButton
             title="Update"
             icon={<CheckCircle className="w-4 h-4" />}
-            onClick={async () => {
-              await onConfirm();
-              set(false);
-            }}
+            onClick={handleConfirm}
             loading={loading}
           />
         </DialogFooter>
