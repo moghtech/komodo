@@ -233,8 +233,12 @@ export const BuildConfig = ({
       components: {
         image_registry: (registry, set) => (
           <ImageRegistryConfig
-            registry={registry}
-            setRegistry={(image_registry) => set({ image_registry })}
+            registry={
+              (registry ?? [{ domain: "", organization: "", account: "" }])[0]
+            }
+            setRegistry={(image_registry) =>
+              set({ image_registry: [image_registry] })
+            }
             resource_id={update.builder_id ?? config.builder_id}
             disabled={disabled}
           />

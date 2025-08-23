@@ -1,4 +1,8 @@
-use std::{future::IntoFuture, time::Duration};
+use std::{
+  collections::{HashMap, HashSet},
+  future::IntoFuture,
+  time::Duration,
+};
 
 use anyhow::{Context, anyhow};
 use database::mungos::{
@@ -20,7 +24,7 @@ use komodo_client::{
   entities::{
     alert::{Alert, AlertData, SeverityLevel},
     all_logs_success,
-    build::{Build, BuildConfig, ImageRegistryConfig},
+    build::{Build, BuildConfig},
     builder::{Builder, BuilderConfig},
     deployment::DeploymentState,
     komodo_timestamp,
@@ -133,8 +137,8 @@ impl Resolve<ExecuteArgs> for RunBuild {
     let git_token =
       build_git_token(&mut build, repo.as_mut()).await?;
 
-    let registry_token =
-      validate_account_extract_registry_token(&build).await?;
+    let registry_tokens =
+      validate_account_extract_registry_tokens(&build).await?;
 
     let cancel = CancellationToken::new();
     let cancel_clone = cancel.clone();
@@ -284,7 +288,7 @@ impl Resolve<ExecuteArgs> for RunBuild {
           .request(api::build::Build {
             build: build.clone(),
             repo,
-            registry_token,
+            registry_tokens,
             replacers: secret_replacers.into_iter().collect(),
             // Push a commit hash tagged image
             additional_tags: if update.commit_hash.is_empty() {
@@ -608,34 +612,43 @@ async fn handle_post_build_redeploy(build_id: &str) {
 /// This will make sure that a build with non-none image registry has an account attached,
 /// and will check the core config for a token matching requirements.
 /// Otherwise it is left to periphery.
-async fn validate_account_extract_registry_token(
+async fn validate_account_extract_registry_tokens(
   Build {
-    config:
-      BuildConfig {
-        image_registry:
-          ImageRegistryConfig {
-            domain, account, ..
-          },
-        ..
-      },
+    config: BuildConfig { image_registry, .. },
     ..
   }: &Build,
-) -> serror::Result<Option<String>> {
-  if domain.is_empty() {
-    return Ok(None);
-  }
-  if account.is_empty() {
-    return Err(
-      anyhow!(
-        "Must attach account to use registry provider {domain}"
-      )
-      .into(),
+  // Maps (domain, account) -> token
+) -> serror::Result<HashMap<(String, String), String>> {
+  let mut res = HashMap::with_capacity(image_registry.capacity());
+
+  for (domain, account) in image_registry
+    .iter()
+    .map(|r| (r.domain.as_str(), r.account.as_str()))
+    // This ensures uniqueness / prevents redundant logins
+    .collect::<HashSet<_>>()
+  {
+    if domain.is_empty() {
+      continue;
+    }
+    if account.is_empty() {
+      return Err(
+        anyhow!(
+          "Must attach account to use registry provider {domain}"
+        )
+        .into(),
+      );
+    }
+    let Some(registry_token) = registry_token(domain, account).await.with_context(
+      || format!("Failed to get registry token in call to db. Stopping run. | {domain} | {account}"),
+    )? else {
+      continue;
+    };
+
+    res.insert(
+      (domain.to_string(), account.to_string()),
+      registry_token,
     );
   }
 
-  let registry_token = registry_token(domain, account).await.with_context(
-    || format!("Failed to get registry token in call to db. Stopping run. | {domain} | {account}"),
-  )?;
-
-  Ok(registry_token)
+  Ok(res)
 }

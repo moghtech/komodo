@@ -187,9 +187,9 @@ pub async fn alert_servers(
       && server_status.version != "Unknown"
       && server_status.version != core_version;
 
-    let version_alert = server_alerts
-      .as_ref()
-      .and_then(|alerts| alerts.get(&AlertDataVariant::ServerVersionMismatch));
+    let version_alert = server_alerts.as_ref().and_then(|alerts| {
+      alerts.get(&AlertDataVariant::ServerVersionMismatch)
+    });
 
     match (has_version_mismatch, version_alert) {
       (true, None) => {

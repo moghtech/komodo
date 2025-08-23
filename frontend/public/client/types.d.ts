@@ -642,8 +642,11 @@ export interface BuildConfig {
     build_path: string;
     /** The path of the dockerfile relative to the build path. */
     dockerfile_path: string;
-    /** Configuration for the registry to push the built image to. */
-    image_registry?: ImageRegistryConfig;
+    /**
+     * Configuration for the registry/s to push the built image to.
+     * The first registry in this list will be used with attached Deployments.
+     */
+    image_registry?: ImageRegistryConfig[];
     /** Whether to skip secret interpolation in the build_args. */
     skip_secret_interp?: boolean;
     /** Whether to use buildx to build (eg `docker buildx build ...`) */
@@ -744,7 +747,7 @@ export interface BuildListItemInfo {
     built_hash?: string;
     /** Latest short commit hash, or null. Only for repo based stacks */
     latest_hash?: string;
-    /** The image registry domain */
+    /** The first listed image registry domain */
     image_registry_domain?: string;
 }
 export type BuildListItem = ResourceListItem<BuildListItemInfo>;
@@ -3830,7 +3833,7 @@ export interface ServerListItemInfo {
     /** Whether server is configured to send disk alerts. */
     send_disk_alerts: boolean;
     /** Whether server is configured to send version mismatch alerts. */
-    send_version_mismatch_alerts?: boolean;
+    send_version_mismatch_alerts: boolean;
     /** Whether terminals are disabled for this Server. */
     terminals_disabled: boolean;
     /** Whether container exec is disabled for this Server. */
@@ -8293,18 +8296,6 @@ export declare enum IanaTimezone {
     /** UTC+14:00 */
     PacificKiritimati = "Pacific/Kiritimati"
 }
-/** Configuration for the registry to push the built image to. */
-export type ImageRegistryLegacy1_14 = 
-/** Don't push the image to any registry */
-{
-    type: "None";
-    params: NoData;
-}
-/** Push the image to a standard image registry (any domain) */
- | {
-    type: "Standard";
-    params: ImageRegistryConfig;
-};
 export type ReadRequest = {
     type: "GetVersion";
     params: GetVersion;

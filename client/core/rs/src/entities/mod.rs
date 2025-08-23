@@ -129,43 +129,52 @@ pub fn optional_string(string: impl Into<String>) -> Option<String> {
   }
 }
 
-pub fn get_image_name(
+pub fn get_image_names(
   build::Build {
     name,
     config:
       build::BuildConfig {
         image_name,
-        image_registry:
-          ImageRegistryConfig {
-            domain,
-            account,
-            organization,
-          },
+        image_registry,
         ..
       },
     ..
   }: &build::Build,
-) -> anyhow::Result<String> {
+) -> Vec<String> {
   let name = if image_name.is_empty() {
     name
   } else {
     image_name
   };
-  let name = match (
-    !domain.is_empty(),
-    !organization.is_empty(),
-    !account.is_empty(),
-  ) {
-    // If organization and account provided, name under organization.
-    (true, true, true) => {
-      format!("{domain}/{organization}/{name}")
-    }
-    // Just domain / account provided
-    (true, false, true) => format!("{domain}/{account}/{name}"),
-    // Otherwise, just use name
-    _ => name.to_string(),
-  };
-  Ok(name)
+  // Local only
+  if image_registry.is_empty() {
+    return vec![name.to_string()];
+  }
+  image_registry
+    .iter()
+    .map(
+      |ImageRegistryConfig {
+         domain,
+         account,
+         organization,
+       }| {
+        match (
+          !domain.is_empty(),
+          !organization.is_empty(),
+          !account.is_empty(),
+        ) {
+          // If organization and account provided, name under organization.
+          (true, true, true) => {
+            format!("{domain}/{organization}/{name}")
+          }
+          // Just domain / account provided
+          (true, false, true) => format!("{domain}/{account}/{name}"),
+          // Otherwise, just use name (local only)
+          _ => name.to_string(),
+        }
+      },
+    )
+    .collect()
 }
 
 pub fn to_general_name(name: &str) -> String {

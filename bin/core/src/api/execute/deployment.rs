@@ -12,7 +12,7 @@ use komodo_client::{
     deployment::{
       Deployment, DeploymentImage, extract_registry_domain,
     },
-    get_image_name, komodo_timestamp, optional_string,
+    get_image_names, komodo_timestamp, optional_string,
     permission::PermissionLevel,
     server::Server,
     update::{Log, Update},
@@ -115,8 +115,11 @@ impl Resolve<ExecuteArgs> for Deploy {
     let (version, registry_token) = match &deployment.config.image {
       DeploymentImage::Build { build_id, version } => {
         let build = resource::get::<Build>(build_id).await?;
-        let image_name = get_image_name(&build)
-          .context("failed to create image name")?;
+        let image_names = get_image_names(&build);
+        let image_name = image_names
+          .first()
+          .context("No image name could be created")
+          .context("Failed to create image name")?;
         let version = if version.is_none() {
           build.config.version
         } else {
@@ -133,21 +136,27 @@ impl Resolve<ExecuteArgs> for Deploy {
         deployment.config.image = DeploymentImage::Image {
           image: format!("{image_name}:{version_str}"),
         };
-        if build.config.image_registry.domain.is_empty() {
+        let first_registry = build
+          .config
+          .image_registry
+          .first()
+          .unwrap_or(ImageRegistryConfig::static_default());
+        if first_registry.domain.is_empty() {
           (version, None)
         } else {
           let ImageRegistryConfig {
             domain, account, ..
-          } = build.config.image_registry;
+          } = first_registry;
           if deployment.config.image_registry_account.is_empty() {
-            deployment.config.image_registry_account = account
+            deployment.config.image_registry_account =
+              account.to_string();
           }
           let token = if !deployment
             .config
             .image_registry_account
             .is_empty()
           {
-            registry_token(&domain, &deployment.config.image_registry_account).await.with_context(
+            registry_token(domain, &deployment.config.image_registry_account).await.with_context(
               || format!("Failed to get git token in call to db. Stopping run. | {domain} | {}", deployment.config.image_registry_account),
             )?
           } else {
@@ -240,8 +249,11 @@ pub async fn pull_deployment_inner(
   let (image, account, token) = match deployment.config.image {
     DeploymentImage::Build { build_id, version } => {
       let build = resource::get::<Build>(&build_id).await?;
-      let image_name = get_image_name(&build)
-        .context("failed to create image name")?;
+      let image_names = get_image_names(&build);
+      let image_name = image_names
+        .first()
+        .context("No image name could be created")
+        .context("Failed to create image name")?;
       let version = if version.is_none() {
         build.config.version.to_string()
       } else {
@@ -255,26 +267,31 @@ pub async fn pull_deployment_inner(
       };
       // replace image with corresponding build image.
       let image = format!("{image_name}:{version}");
-      if build.config.image_registry.domain.is_empty() {
+      let first_registry = build
+        .config
+        .image_registry
+        .first()
+        .unwrap_or(ImageRegistryConfig::static_default());
+      if first_registry.domain.is_empty() {
         (image, None, None)
       } else {
         let ImageRegistryConfig {
           domain, account, ..
-        } = build.config.image_registry;
+        } = first_registry;
         let account =
           if deployment.config.image_registry_account.is_empty() {
             account
           } else {
-            deployment.config.image_registry_account
+            &deployment.config.image_registry_account
           };
         let token = if !account.is_empty() {
-          registry_token(&domain, &account).await.with_context(
+          registry_token(domain, account).await.with_context(
               || format!("Failed to get git token in call to db. Stopping run. | {domain} | {account}"),
             )?
         } else {
           None
         };
-        (image, optional_string(&account), token)
+        (image, optional_string(account), token)
       }
     }
     DeploymentImage::Image { image } => {

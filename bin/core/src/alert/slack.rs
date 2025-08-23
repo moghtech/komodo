@@ -45,7 +45,10 @@ pub async fn send_alert(
       };
       let blocks = vec![
         Block::header(text.clone()),
-        Block::section(resource_link(ResourceTargetVariant::Server, id)),
+        Block::section(resource_link(
+          ResourceTargetVariant::Server,
+          id,
+        )),
       ];
       (text, blocks.into())
     }

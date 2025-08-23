@@ -71,10 +71,10 @@ impl Resolve<ReadArgs> for GetServersSummary {
       &[],
     )
     .await?;
-    
+
     let core_version = env!("CARGO_PKG_VERSION");
     let mut res = GetServersSummaryResponse::default();
-    
+
     for server in servers {
       res.total += 1;
       match server.info.state {
@@ -83,7 +83,7 @@ impl Resolve<ReadArgs> for GetServersSummary {
           let has_version_mismatch = !server.info.version.is_empty()
             && server.info.version != "Unknown"
             && server.info.version != core_version;
-            
+
           if has_version_mismatch {
             res.warning += 1;
           } else {
