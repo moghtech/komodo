@@ -181,12 +181,18 @@ const LoadAvgCell = ({ id }: { id: string }) => {
   const five = stats?.load_average?.five;
   const fifteen = stats?.load_average?.fifteen;
   if (one === undefined || five === undefined || fifteen === undefined) {
-    return <span className="tabular-nums whitespace-nowrap text-muted-foreground">N/A</span>;
+    return (
+      <div className="w-full flex items-center gap-[.35em] tabular-nums text-muted-foreground tracking-tight">
+        <span>N/A</span>
+      </div>
+    );
   }
   return (
-    <span className="tabular-nums whitespace-nowrap">
-      {one.toFixed(2)} {five.toFixed(2)} {fifteen.toFixed(2)}
-    </span>
+    <div className="w-full flex items-center gap-[.35em] tabular-nums tracking-tight">
+      <span>{one.toFixed(2)}</span>
+      <span>{five.toFixed(2)}</span>
+      <span>{fifteen.toFixed(2)}</span>
+    </div>
   );
 };
 

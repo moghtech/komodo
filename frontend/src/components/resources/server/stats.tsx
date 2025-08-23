@@ -120,7 +120,7 @@ export const ServerStats = ({
         {/* Current Overview */}
         <Section title="Current">
           <div className="flex flex-col xl:flex-row gap-4">
-            <LOAD_AVERAGE stats={stats} />
+            <LOAD_AVERAGE id={id} stats={stats} />
             <CPU stats={stats} />
             <RAM stats={stats} />
             <DISK stats={stats} />
@@ -496,22 +496,63 @@ const CPU = ({ stats }: { stats: Types.SystemStats | undefined }) => {
   );
 };
 
-const LOAD_AVERAGE = ({ stats }: { stats: Types.SystemStats | undefined }) => {
+const LOAD_AVERAGE = ({ id, stats }: { id: string; stats: Types.SystemStats | undefined }) => {
   if (!stats?.load_average) return null;
-  const { one, five, fifteen } = stats.load_average || {};
-  
+  const { one = 0, five = 0, fifteen = 0 } = stats.load_average || {};
+  const cores = useRead("GetSystemInformation", { server: id }).data?.core_count;
+
+  const pct = (load: number) => (cores && cores > 0) ? Math.min((load / cores) * 100, 100) : undefined;
+  const textColor = (load: number) => {
+    const p = pct(load);
+    if (p === undefined) return "text-muted-foreground";
+    return p <= 50 ? "text-green-600" : p <= 80 ? "text-yellow-600" : "text-red-600";
+  };
+
   return (
     <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle>Load Average</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">
-          {one.toFixed(2)}
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle>Load Average</CardTitle>
         </div>
-        <p className="text-xs text-muted-foreground">
-          1m: {one.toFixed(2)} | 5m: {five.toFixed(2)} | 15m: {fifteen.toFixed(2)}
-        </p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Current Load */}
+        <div className="space-y-2">
+          <div className="flex items-baseline justify-between">
+            <span className={`text-3xl font-bold tabular-nums ${textColor(one)}`}>{one.toFixed(2)}</span>
+            <span className="text-sm text-muted-foreground">
+              {cores && cores > 0 ? `${(pct(one) ?? 0).toFixed(0)}% of ${cores} cores` : "N/A"}
+            </span>
+          </div>
+          <Progress
+            value={pct(one) ?? 0}
+            className="h-2"
+          />
+        </div>
+
+        {/* Time Intervals */}
+        <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            {[
+              ["1m", one],
+              ["5m", five],
+              ["15m", fifteen],
+            ].map(([label, value]) => (
+              <div className="space-y-1" key={label as string}>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">{label}</span>
+                  <span className={`font-medium tabular-nums ${textColor(value as number)}`}>
+                    {(value as number).toFixed(2)}
+                  </span>
+                </div>
+                <Progress
+                  value={(pct(value as number) ?? 0)}
+                  className="h-1"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
