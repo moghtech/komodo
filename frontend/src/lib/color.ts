@@ -32,7 +32,7 @@ export const fill_color_class_by_intention = (intention: ColorIntention) => {
     case "Neutral":
       return "text-blue-400 dark:text-blue-700";
     case "Warning":
-      return "text-yellow-400 dark:text-yellow-500";
+      return "text-yellow-500 dark:text-yellow-400";
     case "Critical":
       return "text-red-400 dark:text-red-700";
     case "Unknown":
@@ -66,7 +66,7 @@ export const bg_color_class_by_intention = (intention: ColorIntention) => {
     case "Neutral":
       return "bg-blue-400 dark:bg-blue-700";
     case "Warning":
-      return "bg-yellow-400 dark:bg-yellow-600";
+      return "bg-yellow-500 dark:bg-yellow-600";
     case "Critical":
       return "bg-red-400 dark:bg-red-700";
     case "Unknown":
@@ -100,7 +100,7 @@ export const text_color_class_by_intention = (intention: ColorIntention) => {
     case "Neutral":
       return "text-blue-700 dark:text-blue-400";
     case "Warning":
-      return "text-yellow-700 dark:text-yellow-400";
+      return "text-yellow-600 dark:text-yellow-400";
     case "Critical":
       return "text-red-700 dark:text-red-400";
     case "Unknown":
@@ -119,7 +119,7 @@ export const soft_text_color_class_by_intention = (
     case "Neutral":
       return "text-blue-700/60 dark:text-blue-400/60";
     case "Warning":
-      return "text-yellow-700/60 dark:text-yellow-400/60";
+      return "text-yellow-600/60 dark:text-yellow-400/60";
     case "Critical":
       return "text-red-700/60 dark:text-red-400/60";
     case "Unknown":

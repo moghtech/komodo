@@ -197,12 +197,6 @@ const on_update = (
   if (update.status === Types.UpdateStatus.Complete) {
     invalidate(["ListAlerts"]);
 
-    // When alerts change, we should also update the server summary 
-    // as it displays version mismatch warnings
-    if (update.target.type === "Server") {
-      invalidate(["GetServersSummary"]);
-    }
-
     // Invalidate docker infos
     if (["Server", "Deployment", "Stack"].includes(update.target.type)) {
       invalidate(
@@ -252,27 +246,14 @@ const on_update = (
     }
 
     if (update.target.type === "Server") {
-      // Always invalidate these for any server update
       invalidate(
         ["ListServers"],
         ["ListFullServers"],
+        ["GetServersSummary"],
         ["GetServer"],
         ["GetServerState"],
         ["GetHistoricalServerStats"]
       );
-
-      // Only invalidate server summary for status-affecting operations, not routine stats updates
-      const statusAffectingOperations = [
-        Types.Operation.CreateServer,
-        Types.Operation.UpdateServer,
-        Types.Operation.DeleteServer,
-        Types.Operation.RenameServer,
-        // Don't include routine monitoring operations that just update stats
-      ];
-
-      if (statusAffectingOperations.includes(update.operation)) {
-        invalidate(["GetServersSummary"]);
-      }
     }
 
     if (update.target.type === "Build") {
