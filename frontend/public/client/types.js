@@ -271,11 +271,11 @@ export var SeverityLevel;
 })(SeverityLevel || (SeverityLevel = {}));
 export var StackFileRequires;
 (function (StackFileRequires) {
-    /** Diff requires service redeploy. Default. */
+    /** Diff requires service redeploy. */
     StackFileRequires["Redeploy"] = "Redeploy";
     /** Diff requires service restart */
     StackFileRequires["Restart"] = "Restart";
-    /** Diff requires no action */
+    /** Diff requires no action. Default. */
     StackFileRequires["None"] = "None";
 })(StackFileRequires || (StackFileRequires = {}));
 export var Timelength;

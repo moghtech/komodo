@@ -74,7 +74,7 @@ impl Stack {
       .collect::<IndexSet<_>>();
     res.extend(self.config.additional_env_files.clone());
     res.extend(
-      self.config.additional_files.iter().map(|f| f.path.clone()),
+      self.config.config_files.iter().map(|f| f.path.clone()),
     );
     res.into_iter().collect()
   }
@@ -95,7 +95,7 @@ impl Stack {
         .cloned()
         .map(StackFileDependency::full_redeploy),
     );
-    res.extend(self.config.additional_files.clone());
+    res.extend(self.config.config_files.clone());
     res.into_iter().collect()
   }
 }
@@ -434,8 +434,8 @@ pub struct StackConfig {
   /// Add additional env files to attach with `--env-file`.
   /// Relative to the run directory root.
   ///
-  /// Note. Already included as an `additional_file`, don't need to add it
-  /// again there.
+  /// Note. It is already included as an `additional_file`.
+  /// Don't add it again there.
   #[serde(default, deserialize_with = "string_list_deserializer")]
   #[partial_attr(serde(
     default,
@@ -444,14 +444,17 @@ pub struct StackConfig {
   #[builder(default)]
   pub additional_env_files: Vec<String>,
 
-  /// Add additional files either in repo or on host to track.
-  /// Can add any env / config files associated with the stack to enable editing them in the UI.
+  /// Add additional config files either in repo or on host to track.
+  /// Can add any files associated with the stack to enable editing them in the UI.
   /// Doing so will also include diffing these when deciding to deploy in `DeployStackIfChanged`.
   /// Relative to the run directory.
+  /// 
+  /// Note. If the config file is .env and should be included in compose command
+  /// using `--env-file`, add it to `additional_env_files` instead.
   #[serde(default)]
   #[partial_attr(serde(default))]
   #[builder(default)]
-  pub additional_files: Vec<StackFileDependency>,
+  pub config_files: Vec<StackFileDependency>,
 
   /// Whether to send StackStateChange alerts for this stack.
   #[serde(default = "default_send_alerts")]
@@ -598,7 +601,7 @@ impl Default for StackConfig {
       environment: Default::default(),
       env_file_path: default_env_file_path(),
       additional_env_files: Default::default(),
-      additional_files: Default::default(),
+      config_files: Default::default(),
       run_build: Default::default(),
       destroy_before_deploy: Default::default(),
       build_extra_args: Default::default(),

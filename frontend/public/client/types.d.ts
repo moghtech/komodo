@@ -2188,11 +2188,11 @@ export interface StackActionState {
 export type GetStackActionStateResponse = StackActionState;
 export type GetStackLogResponse = Log;
 export declare enum StackFileRequires {
-    /** Diff requires service redeploy. Default. */
+    /** Diff requires service redeploy. */
     Redeploy = "Redeploy",
     /** Diff requires service restart */
     Restart = "Restart",
-    /** Diff requires no action */
+    /** Diff requires no action. Default. */
     None = "None"
 }
 /** Configure additional file dependencies of the Stack. */
@@ -2319,17 +2319,20 @@ export interface StackConfig {
      * Add additional env files to attach with `--env-file`.
      * Relative to the run directory root.
      *
-     * Note. Already included as an `additional_file`, don't need to add it
-     * again there.
+     * Note. It is already included as an `additional_file`.
+     * Don't add it again there.
      */
     additional_env_files?: string[];
     /**
-     * Add additional files either in repo or on host to track.
-     * Can add any env / config files associated with the stack to enable editing them in the UI.
+     * Add additional config files either in repo or on host to track.
+     * Can add any files associated with the stack to enable editing them in the UI.
      * Doing so will also include diffing these when deciding to deploy in `DeployStackIfChanged`.
      * Relative to the run directory.
+     *
+     * Note. If the config file is .env and should be included in compose command
+     * using `--env-file`, add it to `additional_env_files` instead.
      */
-    additional_files?: StackFileDependency[];
+    config_files?: StackFileDependency[];
     /** Whether to send StackStateChange alerts for this stack. */
     send_alerts: boolean;
     /** Used with `registry_account` to login to a registry before docker compose up. */

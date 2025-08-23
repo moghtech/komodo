@@ -266,18 +266,13 @@ export const StackConfig = ({
     },
   };
 
-  const additional_files: ConfigComponent<Types.StackConfig> = {
-    label: "Additional Files",
+  const config_files: ConfigComponent<Types.StackConfig> = {
+    label: "Config Files",
     description:
       "Add other config files to associate with the Stack, and edit in the UI. Relative to 'Run Directory'.",
     components: {
-      additional_files: (value, set) => (
-        <ConfigAdditionalFiles
-          id={id}
-          value={value}
-          set={set}
-          disabled={disabled}
-        />
+      config_files: (value, set) => (
+        <ConfigFiles id={id} value={value} set={set} disabled={disabled} />
       ),
     },
   };
@@ -559,7 +554,7 @@ export const StackConfig = ({
           },
         },
         environment,
-        additional_files,
+        config_files,
         ...general_common,
       ],
       advanced,
@@ -679,7 +674,7 @@ export const StackConfig = ({
           },
         },
         environment,
-        additional_files,
+        config_files,
         ...general_common,
         {
           label: "Webhooks",
@@ -934,7 +929,7 @@ services:
 #   data:
 `;
 
-const ConfigAdditionalFiles = ({
+const ConfigFiles = ({
   id,
   value,
   set,
@@ -953,7 +948,7 @@ const ConfigAdditionalFiles = ({
           variant="secondary"
           onClick={() =>
             set({
-              additional_files: [
+              config_files: [
                 ...values,
                 {
                   path: "",
@@ -979,7 +974,7 @@ const ConfigAdditionalFiles = ({
                   value={path}
                   onChange={(e) => {
                     values[i] = { ...values[i], path: e.target.value };
-                    set({ additional_files: [...values] });
+                    set({ config_files: [...values] });
                   }}
                   disabled={disabled}
                   className="w-[400px] max-w-full"
@@ -990,9 +985,7 @@ const ConfigAdditionalFiles = ({
                     variant="secondary"
                     onClick={() =>
                       set({
-                        additional_files: [
-                          ...values.filter((_, idx) => idx !== i),
-                        ],
+                        config_files: [...values.filter((_, idx) => idx !== i)],
                       })
                     }
                   >
@@ -1005,7 +998,7 @@ const ConfigAdditionalFiles = ({
                   selected_services={services ?? []}
                   set={(services) => {
                     values[i] = { ...values[i], services };
-                    set({ additional_files: [...values] });
+                    set({ config_files: [...values] });
                   }}
                   disabled={disabled}
                 />
@@ -1014,7 +1007,7 @@ const ConfigAdditionalFiles = ({
                   requires={requires ?? Types.StackFileRequires.Redeploy}
                   set={(requires) => {
                     values[i] = { ...values[i], requires };
-                    set({ additional_files: [...values] });
+                    set({ config_files: [...values] });
                   }}
                   disabled={disabled}
                 />
