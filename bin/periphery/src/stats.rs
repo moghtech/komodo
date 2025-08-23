@@ -2,7 +2,7 @@ use std::{cmp::Ordering, sync::OnceLock};
 
 use async_timing_util::wait_until_timelength;
 use komodo_client::entities::stats::{
-  SingleDiskUsage, SystemInformation, SystemProcess, SystemStats,
+  SingleDiskUsage, SystemInformation, SystemLoadAverage, SystemProcess, SystemStats,
 };
 use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System};
 use tokio::sync::RwLock;
@@ -95,9 +95,15 @@ impl StatsClient {
       network_egress_bytes += network.transmitted();
     }
 
+    let load_avg = System::load_average();
+
     SystemStats {
       cpu_perc: self.system.global_cpu_usage(),
-      load_average: self.system.load_average(),
+      load_average: SystemLoadAverage {
+        one: load_avg.one,
+        five: load_avg.five,
+        fifteen: load_avg.fifteen,
+      },
       mem_free_gb: self.system.free_memory() as f64 / BYTES_PER_GB,
       mem_used_gb: (total_mem - available_mem) as f64 / BYTES_PER_GB,
       mem_total_gb: total_mem as f64 / BYTES_PER_GB,

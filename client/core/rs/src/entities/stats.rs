@@ -46,7 +46,7 @@ pub struct SystemStatsRecord {
   /// Cpu usage percentage
   pub cpu_perc: f32,
   /// Load average (1m, 5m, 15m)
-  pub load_average: (f64, f64, f64),
+  pub load_average: SystemLoadAverage,
   /// Memory used in GB
   pub mem_used_gb: f64,
   /// Total memory in GB
@@ -75,7 +75,7 @@ pub struct SystemStats {
   /// Cpu usage percentage
   pub cpu_perc: f32,
   ///  Load average (1m, 5m, 15m)
-  pub load_average: (f64, f64, f64),
+  pub load_average: SystemLoadAverage,
   /// [1.15.9+]
   /// Free memory in GB.
   /// This is really the 'Free' memory, not the 'Available' memory.
@@ -178,4 +178,15 @@ pub struct SystemProcess {
   pub disk_read_kb: f64,
   /// Process disk write in KB/s
   pub disk_write_kb: f64,
+}
+
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct SystemLoadAverage {
+  /// 1m load average
+  pub one: f64,
+  /// 5m load average
+  pub five: f64,
+  /// 15m load average
+  pub fifteen: f64,
 }

@@ -498,7 +498,7 @@ const CPU = ({ stats }: { stats: Types.SystemStats | undefined }) => {
 
 const LOAD_AVERAGE = ({ stats }: { stats: Types.SystemStats | undefined }) => {
   if (!stats?.load_average) return null;
-  const [one, five, fifteen] = stats.load_average;
+  const { one, five, fifteen } = stats.load_average || {};
   
   return (
     <Card className="flex-1">

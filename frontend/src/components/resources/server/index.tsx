@@ -352,7 +352,7 @@ export const ServerComponents: RequiredResourceComponents = {
       ).data;
       
       if (!stats?.load_average) return null;
-      const [one] = stats.load_average;
+      const one = stats.load_average?.one;
       
       return (
         <div className="flex gap-2 items-center">
