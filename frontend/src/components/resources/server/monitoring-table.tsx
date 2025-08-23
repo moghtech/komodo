@@ -55,6 +55,11 @@ export const ServerMonitoringTable = ({ search = "" }: { search?: string }) => {
             cell: ({ row }) => <DiskCell id={row.original.id} />,
           },
           {
+            header: "Load Avg",
+            size: 160,
+            cell: ({ row }) => <LoadAvgCell id={row.original.id} />,
+          },
+          {
             header: "Net",
             size: 100,
             cell: ({ row }) => <NetCell id={row.original.id} />,
@@ -166,6 +171,21 @@ const NetCell = ({ id }: { id: string }) => {
   return (
     <span className="tabular-nums whitespace-nowrap">
       {formatRate(ingress + egress)}
+    </span>
+  );
+};
+
+const LoadAvgCell = ({ id }: { id: string }) => {
+  const stats = useStats(id);
+  const one = stats?.load_average?.one;
+  const five = stats?.load_average?.five;
+  const fifteen = stats?.load_average?.fifteen;
+  if (one === undefined || five === undefined || fifteen === undefined) {
+    return <span className="tabular-nums whitespace-nowrap text-muted-foreground">N/A</span>;
+  }
+  return (
+    <span className="tabular-nums whitespace-nowrap">
+      {one.toFixed(2)} {five.toFixed(2)} {fifteen.toFixed(2)}
     </span>
   );
 };
