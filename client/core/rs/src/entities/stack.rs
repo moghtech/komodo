@@ -84,7 +84,7 @@ impl Stack {
       .compose_file_paths()
       .iter()
       .cloned()
-      .map(StackFileDependency::default_from_path)
+      .map(StackFileDependency::full_redeploy)
       // Makes sure to dedup them, while maintaining ordering
       .collect::<IndexSet<_>>();
     res.extend(
@@ -93,7 +93,7 @@ impl Stack {
         .additional_env_files
         .iter()
         .cloned()
-        .map(StackFileDependency::default_from_path),
+        .map(StackFileDependency::full_redeploy),
     );
     res.extend(self.config.additional_files.clone());
     res.into_iter().collect()
@@ -789,14 +789,14 @@ pub struct StackRemoteFileContents {
   Deserialize,
 )]
 pub enum StackFileRequires {
-  /// Diff requires service redeploy. Default.
-  #[default]
+  /// Diff requires service redeploy.
   #[serde(alias = "redeploy")]
   Redeploy,
   /// Diff requires service restart
   #[serde(alias = "restart")]
   Restart,
-  /// Diff requires no action
+  /// Diff requires no action. Default.
+  #[default]
   #[serde(alias = "none")]
   None,
 }
@@ -816,11 +816,11 @@ pub struct StackFileDependency {
 }
 
 impl StackFileDependency {
-  pub fn default_from_path(path: String) -> StackFileDependency {
+  pub fn full_redeploy(path: String) -> StackFileDependency {
     StackFileDependency {
       path,
-      services: Default::default(),
-      requires: Default::default(),
+      services: Vec::new(),
+      requires: StackFileRequires::Redeploy,
     }
   }
 }
@@ -862,8 +862,8 @@ impl<'de> Deserialize<'de> for StackFileDependency {
       {
         Ok(StackFileDependency {
           path,
-          services: Default::default(),
-          requires: Default::default(),
+          services: Vec::new(),
+          requires: StackFileRequires::None,
         })
       }
 
