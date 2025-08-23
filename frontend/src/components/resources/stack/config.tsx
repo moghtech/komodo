@@ -958,7 +958,7 @@ const ConfigAdditionalFiles = ({
                 {
                   path: "",
                   services: [],
-                  requires: Types.StackFileRequires.Redeploy,
+                  requires: Types.StackFileRequires.None,
                 },
               ],
             })
