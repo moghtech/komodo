@@ -836,9 +836,13 @@ fn is_none(requires: &StackFileRequires) -> bool {
 #[derive(Deserialize)]
 struct __StackFileDependency {
   path: String,
-  #[serde(default, deserialize_with = "string_list_deserializer")]
+  #[serde(
+    default,
+    alias = "service",
+    deserialize_with = "string_list_deserializer"
+  )]
   services: Vec<String>,
-  #[serde(default)]
+  #[serde(default, alias = "req")]
   requires: StackFileRequires,
 }
 
