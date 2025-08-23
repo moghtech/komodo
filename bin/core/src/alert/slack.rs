@@ -23,6 +23,32 @@ pub async fn send_alert(
       ];
       (text, blocks.into())
     }
+    AlertData::ServerVersionMismatch {
+      id,
+      name,
+      region,
+      server_version,
+      core_version,
+    } => {
+      let region = fmt_region(region);
+      let text = match alert.level {
+        SeverityLevel::Ok => {
+          format!(
+            "{level} | {name} ({region}) | Server version now matches core version ✅"
+          )
+        }
+        _ => {
+          format!(
+            "{level} | {name} ({region}) | Version mismatch detected ⚠️\nServer: {server_version} | Core: {core_version}"
+          )
+        }
+      };
+      let blocks = vec![
+        Block::header(text.clone()),
+        Block::section(resource_link(ResourceTargetVariant::Server, id)),
+      ];
+      (text, blocks.into())
+    }
     AlertData::ServerUnreachable {
       id,
       name,

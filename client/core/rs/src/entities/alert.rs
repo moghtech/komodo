@@ -137,6 +137,20 @@ pub enum AlertData {
     total_gb: f64,
   },
 
+  /// A server has a version mismatch with the core.
+  ServerVersionMismatch {
+    /// The id of the server
+    id: String,
+    /// The name of the server
+    name: String,
+    /// The region of the server
+    region: Option<String>,
+    /// The actual server version
+    server_version: String,
+    /// The core version
+    core_version: String,
+  },
+
   /// A container's state has changed unexpectedly.
   ContainerStateChange {
     /// The id of the deployment

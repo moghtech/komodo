@@ -538,16 +538,41 @@ export const StatusBadge = ({
   const background = hex_color_by_intention(intent) + "25";
 
   const _text = text === Types.ServerState.NotOk ? "Not Ok" : text;
+  const displayText = snake_case_to_upper_space_case(_text).toUpperCase();
+
+  // Special handling for "VERSION MISMATCH" with flex layout for responsive design
+  if (displayText === "VERSION MISMATCH") {
+    return (
+      <div
+        className={cn(
+          "px-2 py-1 text-xs text-white rounded-md font-medium tracking-wide",
+          "inline-flex flex-wrap items-center justify-center text-center",
+          "leading-tight gap-x-1",
+          "min-h-[1.5rem]", // Minimum height to match other badges, but can grow
+          color
+        )}
+        style={{ 
+          background,
+          minWidth: "fit-content",
+          maxWidth: "80px", // This controls when it wraps to two lines
+        }}
+      >
+        <span>VERSION</span>
+        <span>MISMATCH</span>
+      </div>
+    );
+  }
 
   return (
     <p
       className={cn(
         "px-2 py-1 w-fit text-xs text-white rounded-md font-medium tracking-wide",
+        "h-6 flex items-center", // Fixed height and center content vertically
         color
       )}
       style={{ background }}
     >
-      {snake_case_to_upper_space_case(_text).toUpperCase()}
+      {displayText}
     </p>
   );
 };

@@ -48,6 +48,8 @@ pub struct ServerListItemInfo {
   pub send_mem_alerts: bool,
   /// Whether server is configured to send disk alerts.
   pub send_disk_alerts: bool,
+  /// Whether server is configured to send version mismatch alerts.
+  pub send_version_mismatch_alerts: bool,
   /// Whether terminals are disabled for this Server.
   pub terminals_disabled: bool,
   /// Whether container exec is disabled for this Server.
@@ -161,6 +163,12 @@ pub struct ServerConfig {
   #[partial_default(default_send_alerts())]
   pub send_disk_alerts: bool,
 
+  /// Whether to send alerts about the servers version mismatch with core
+  #[serde(default = "default_send_alerts")]
+  #[builder(default = "default_send_alerts()")]
+  #[partial_default(default_send_alerts())]
+  pub send_version_mismatch_alerts: bool,
+
   /// The percentage threshhold which triggers WARNING state for CPU.
   #[serde(default = "default_cpu_warning")]
   #[builder(default = "default_cpu_warning()")]
@@ -272,6 +280,7 @@ impl Default for ServerConfig {
       send_cpu_alerts: default_send_alerts(),
       send_mem_alerts: default_send_alerts(),
       send_disk_alerts: default_send_alerts(),
+      send_version_mismatch_alerts: default_send_alerts(),
       region: Default::default(),
       passkey: Default::default(),
       cpu_warning: default_cpu_warning(),

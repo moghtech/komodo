@@ -6,6 +6,7 @@ import { MinusCircle } from "lucide-react";
 
 const ALERT_TYPES: Types.AlertData["type"][] = [
   // Server
+  "ServerVersionMismatch",
   "ServerUnreachable",
   "ServerCpu",
   "ServerMem",

@@ -1562,6 +1562,22 @@ export type AlertData =
         total_gb: number;
     };
 }
+/** A server has a version mismatch with the core. */
+ | {
+    type: "ServerVersionMismatch";
+    data: {
+        /** The id of the server */
+        id: string;
+        /** The name of the server */
+        name: string;
+        /** The region of the server */
+        region?: string;
+        /** The actual server version */
+        server_version: string;
+        /** The core version */
+        core_version: string;
+    };
+}
 /** A container's state has changed unexpectedly. */
  | {
     type: "ContainerStateChange";
@@ -2158,6 +2174,8 @@ export interface ServerConfig {
     send_mem_alerts: boolean;
     /** Whether to send alerts about the servers DISK status */
     send_disk_alerts: boolean;
+    /** Whether to send alerts about the servers version mismatch with core */
+    send_version_mismatch_alerts: boolean;
     /** The percentage threshhold which triggers WARNING state for CPU. */
     cpu_warning: number;
     /** The percentage threshhold which triggers CRITICAL state for CPU. */
@@ -3811,6 +3829,8 @@ export interface ServerListItemInfo {
     send_mem_alerts: boolean;
     /** Whether server is configured to send disk alerts. */
     send_disk_alerts: boolean;
+    /** Whether server is configured to send version mismatch alerts. */
+    send_version_mismatch_alerts?: boolean;
     /** Whether terminals are disabled for this Server. */
     terminals_disabled: boolean;
     /** Whether container exec is disabled for this Server. */
@@ -6048,6 +6068,8 @@ export interface GetServersSummaryResponse {
     total: I64;
     /** The number of healthy (`status: OK`) servers. */
     healthy: I64;
+    /** The number of servers with warnings (e.g., version mismatch). */
+    warning: I64;
     /** The number of unhealthy servers. */
     unhealthy: I64;
     /** The number of disabled servers. */
