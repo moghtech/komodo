@@ -6,7 +6,10 @@ use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
 use indexmap::IndexSet;
 use partial_derive2::Partial;
-use serde::{Deserialize, Serialize};
+use serde::{
+  Deserialize, Serialize,
+  de::{IntoDeserializer, Visitor, value::MapAccessDeserializer},
+};
 use strum::Display;
 use typeshare::typeshare;
 
@@ -70,6 +73,28 @@ impl Stack {
       // Makes sure to dedup them, while maintaining ordering
       .collect::<IndexSet<_>>();
     res.extend(self.config.additional_env_files.clone());
+    res.extend(
+      self.config.additional_files.iter().map(|f| f.path.clone()),
+    );
+    res.into_iter().collect()
+  }
+
+  pub fn all_file_dependencies(&self) -> Vec<StackFileDependency> {
+    let mut res = self
+      .compose_file_paths()
+      .iter()
+      .cloned()
+      .map(StackFileDependency::default_from_path)
+      // Makes sure to dedup them, while maintaining ordering
+      .collect::<IndexSet<_>>();
+    res.extend(
+      self
+        .config
+        .additional_env_files
+        .iter()
+        .cloned()
+        .map(StackFileDependency::default_from_path),
+    );
     res.extend(self.config.additional_files.clone());
     res.into_iter().collect()
   }
@@ -213,7 +238,7 @@ pub struct StackInfo {
   /// The remote compose / additional file contents, whether on host or in repo.
   /// This is updated whenever Komodo refreshes the stack cache.
   /// It will be empty if the file is defined directly in the stack config.
-  pub remote_contents: Option<Vec<FileContents>>,
+  pub remote_contents: Option<Vec<StackRemoteFileContents>>,
   /// If there was an error in getting the remote contents, it will be here.
   pub remote_errors: Option<Vec<FileContents>>,
 
@@ -423,13 +448,10 @@ pub struct StackConfig {
   /// Can add any env / config files associated with the stack to enable editing them in the UI.
   /// Doing so will also include diffing these when deciding to deploy in `DeployStackIfChanged`.
   /// Relative to the run directory.
-  #[serde(default, deserialize_with = "string_list_deserializer")]
-  #[partial_attr(serde(
-    default,
-    deserialize_with = "option_string_list_deserializer"
-  ))]
+  #[serde(default)]
+  #[partial_attr(serde(default))]
   #[builder(default)]
-  pub additional_files: Vec<String>,
+  pub additional_files: Vec<StackFileDependency>,
 
   /// Whether to send StackStateChange alerts for this stack.
   #[serde(default = "default_send_alerts")]
@@ -731,3 +753,161 @@ pub struct ComposeServiceDeploy {
   )]
   pub replicas: Option<i64>,
 }
+
+// PRE-1.19.1 BACKWARD COMPAT NOTE
+// This was split from general FileContents in 1.19.1,
+// and must maintain 2 way de/ser backward compatibility
+// with the mentioned struct.
+/// Same as [FileContents] with some extra
+/// info specific to Stacks.
+#[typeshare]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct StackRemoteFileContents {
+  /// The path to the file
+  pub path: String,
+  /// The contents of the file
+  pub contents: String,
+  /// The services depending on this file,
+  /// or empty for global requirement (eg all compose files and env files).
+  #[serde(default)]
+  pub services: Vec<String>,
+  /// Whether diff requires Redeploy / Restart / None
+  #[serde(default)]
+  pub requires: StackFileRequires,
+}
+
+#[typeshare]
+#[derive(
+  Debug,
+  Clone,
+  Copy,
+  PartialEq,
+  Eq,
+  Hash,
+  Default,
+  Serialize,
+  Deserialize,
+)]
+pub enum StackFileRequires {
+  /// Diff requires service redeploy. Default.
+  #[default]
+  #[serde(alias = "redeploy")]
+  Redeploy,
+  /// Diff requires service restart
+  #[serde(alias = "restart")]
+  Restart,
+  /// Diff requires no action
+  #[serde(alias = "none")]
+  None,
+}
+
+/// Configure additional file dependencies of the Stack.
+#[typeshare]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
+pub struct StackFileDependency {
+  /// Specify the file
+  pub path: String,
+  /// Specify specific service/s
+  #[serde(skip_serializing_if = "Vec::is_empty")]
+  pub services: Vec<String>,
+  /// Specify
+  #[serde(skip_serializing_if = "is_redeploy")]
+  pub requires: StackFileRequires,
+}
+
+impl StackFileDependency {
+  pub fn default_from_path(path: String) -> StackFileDependency {
+    StackFileDependency {
+      path,
+      services: Default::default(),
+      requires: Default::default(),
+    }
+  }
+}
+
+fn is_redeploy(requires: &StackFileRequires) -> bool {
+  matches!(requires, StackFileRequires::Redeploy)
+}
+
+/// Used with custom de/serializer for [StackFileDependency]
+#[derive(Deserialize)]
+struct __StackFileDependency {
+  path: String,
+  #[serde(default, deserialize_with = "string_list_deserializer")]
+  services: Vec<String>,
+  #[serde(default)]
+  requires: StackFileRequires,
+}
+
+impl<'de> Deserialize<'de> for StackFileDependency {
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: serde::Deserializer<'de>,
+  {
+    struct StackFileDependencyVisitor;
+
+    impl<'de> Visitor<'de> for StackFileDependencyVisitor {
+      type Value = StackFileDependency;
+
+      fn expecting(
+        &self,
+        formatter: &mut std::fmt::Formatter,
+      ) -> std::fmt::Result {
+        write!(formatter, "string or StackFileDependency (object)")
+      }
+
+      fn visit_string<E>(self, path: String) -> Result<Self::Value, E>
+      where
+        E: serde::de::Error,
+      {
+        Ok(StackFileDependency {
+          path,
+          services: Default::default(),
+          requires: Default::default(),
+        })
+      }
+
+      fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+      where
+        E: serde::de::Error,
+      {
+        Self::visit_string(self, v.to_string())
+      }
+
+      fn visit_map<A>(self, map: A) -> Result<Self::Value, A::Error>
+      where
+        A: serde::de::MapAccess<'de>,
+      {
+        __StackFileDependency::deserialize(
+          MapAccessDeserializer::new(map).into_deserializer(),
+        )
+        .map(|v| StackFileDependency {
+          path: v.path,
+          services: v.services,
+          requires: v.requires,
+        })
+      }
+    }
+
+    deserializer.deserialize_any(StackFileDependencyVisitor)
+  }
+}
+
+// // This one is nice for TOML, but annoying to use on frontend
+// impl Serialize for StackFileDependency {
+//   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//   where
+//     S: serde::Serializer,
+//   {
+//     // Serialize to string in default case
+//     if is_redeploy(&self.requires) && self.services.is_empty() {
+//       return serializer.serialize_str(&self.path);
+//     }
+//     __StackFileDependency {
+//       path: self.path.clone(),
+//       services: self.services.clone(),
+//       requires: self.requires,
+//     }
+//     .serialize(serializer)
+//   }
+// }

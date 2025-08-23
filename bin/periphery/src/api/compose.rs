@@ -9,7 +9,7 @@ use komodo_client::entities::{
   FileContents, RepoExecutionResponse, all_logs_success,
   stack::{
     ComposeFile, ComposeProject, ComposeService,
-    ComposeServiceDeploy, StackServiceNames,
+    ComposeServiceDeploy, StackRemoteFileContents, StackServiceNames,
   },
   to_path_compatible_name,
   update::Log,
@@ -169,9 +169,11 @@ impl Resolve<super::Args> for GetComposeContentsOnHost {
 
     let mut res = GetComposeContentsOnHostResponse::default();
 
-    for path in file_paths {
-      let full_path =
-        run_directory.join(&path).components().collect::<PathBuf>();
+    for file in file_paths {
+      let full_path = run_directory
+        .join(&file.path)
+        .components()
+        .collect::<PathBuf>();
       match fs::read_to_string(&full_path).await.with_context(|| {
         format!(
           "Failed to read compose file contents at {full_path:?}"
@@ -180,11 +182,16 @@ impl Resolve<super::Args> for GetComposeContentsOnHost {
         Ok(contents) => {
           // The path we store here has to be the same as incoming file path in the array,
           // in order for WriteComposeContentsToHost to write to the correct path.
-          res.contents.push(FileContents { path, contents });
+          res.contents.push(StackRemoteFileContents {
+            path: file.path,
+            contents,
+            services: file.services,
+            requires: file.requires,
+          });
         }
         Err(e) => {
           res.errors.push(FileContents {
-            path,
+            path: file.path,
             contents: format_serror(&e.into()),
           });
         }

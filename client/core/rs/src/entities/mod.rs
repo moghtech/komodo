@@ -396,7 +396,7 @@ pub struct LatestCommit {
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct FileContents {
-  /// The path of the file on the host
+  /// The path to the file
   pub path: String,
   /// The contents of the file
   pub contents: String,

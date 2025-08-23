@@ -2064,6 +2064,25 @@ export type GetStackActionStateResponse = StackActionState;
 
 export type GetStackLogResponse = Log;
 
+export enum StackFileRequires {
+	/** Diff requires service redeploy. Default. */
+	Redeploy = "Redeploy",
+	/** Diff requires service restart */
+	Restart = "Restart",
+	/** Diff requires no action */
+	None = "None",
+}
+
+/** Configure additional file dependencies of the Stack. */
+export interface StackFileDependency {
+	/** Specify the file */
+	path: string;
+	/** Specify specific service/s */
+	services: string[];
+	/** Specify */
+	requires: StackFileRequires;
+}
+
 /** The compose file configuration. */
 export interface StackConfig {
 	/** The server to deploy the stack on. */
@@ -2189,7 +2208,7 @@ export interface StackConfig {
 	 * Doing so will also include diffing these when deciding to deploy in `DeployStackIfChanged`.
 	 * Relative to the run directory.
 	 */
-	additional_files?: string[];
+	additional_files?: StackFileDependency[];
 	/** Whether to send StackStateChange alerts for this stack. */
 	send_alerts: boolean;
 	/** Used with `registry_account` to login to a registry before docker compose up. */
@@ -2235,7 +2254,7 @@ export interface StackConfig {
 }
 
 export interface FileContents {
-	/** The path of the file on the host */
+	/** The path to the file */
 	path: string;
 	/** The contents of the file */
 	contents: string;
@@ -2265,6 +2284,24 @@ export interface StackServiceNames {
 	container_name: string;
 	/** The services image. */
 	image?: string;
+}
+
+/**
+ * Same as [FileContents] with some extra
+ * info specific to Stacks.
+ */
+export interface StackRemoteFileContents {
+	/** The path to the file */
+	path: string;
+	/** The contents of the file */
+	contents: string;
+	/**
+	 * The services depending on this file,
+	 * or empty for global requirement (eg all compose files and env files).
+	 */
+	services?: string[];
+	/** Whether diff requires Redeploy / Restart / None */
+	requires?: StackFileRequires;
 }
 
 export interface StackInfo {
@@ -2309,7 +2346,7 @@ export interface StackInfo {
 	 * This is updated whenever Komodo refreshes the stack cache.
 	 * It will be empty if the file is defined directly in the stack config.
 	 */
-	remote_contents?: FileContents[];
+	remote_contents?: StackRemoteFileContents[];
 	/** If there was an error in getting the remote contents, it will be here. */
 	remote_errors?: FileContents[];
 	/** Latest commit hash, or null */

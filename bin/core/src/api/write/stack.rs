@@ -382,7 +382,7 @@ impl Resolve<WriteArgs> for RefreshStackCache {
     )
     .await?;
 
-    let repo = if !stack.config.files_on_host 
+    let repo = if !stack.config.files_on_host
       && !stack.config.linked_repo.is_empty()
     {
       crate::resource::get::<Repo>(&stack.config.linked_repo)
@@ -429,7 +429,7 @@ impl Resolve<WriteArgs> for RefreshStackCache {
         let GetComposeContentsOnHostResponse { contents, errors } =
           match periphery_client(&server)?
             .request(GetComposeContentsOnHost {
-              file_paths: stack.all_file_paths(),
+              file_paths: stack.all_file_dependencies(),
               name: stack.name.clone(),
               run_directory: stack.config.run_directory.clone(),
             })

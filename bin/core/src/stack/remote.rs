@@ -3,14 +3,16 @@ use std::{fs, path::PathBuf};
 use anyhow::Context;
 use formatting::format_serror;
 use komodo_client::entities::{
-  FileContents, RepoExecutionArgs, repo::Repo, stack::Stack,
+  FileContents, RepoExecutionArgs,
+  repo::Repo,
+  stack::{Stack, StackRemoteFileContents},
   update::Log,
 };
 
 use crate::{config::core_config, helpers::git_token};
 
 pub struct RemoteComposeContents {
-  pub successful: Vec<FileContents>,
+  pub successful: Vec<StackRemoteFileContents>,
   pub errored: Vec<FileContents>,
   pub hash: Option<String>,
   pub message: Option<String>,
@@ -38,23 +40,25 @@ pub async fn get_repo_compose_contents(
   let mut successful = Vec::new();
   let mut errored = Vec::new();
 
-  for path in stack.all_file_paths() {
-    let file_path = run_directory.join(&path);
+  for file in stack.all_file_dependencies() {
+    let file_path = run_directory.join(&file.path);
     if !file_path.exists()
       && let Some(missing_files) = &mut missing_files
     {
-      missing_files.push(path.to_string());
+      missing_files.push(file.path.clone());
     }
     // If file does not exist, will show up in err case so the log is handled
     match fs::read_to_string(&file_path).with_context(|| {
       format!("Failed to read file contents from {file_path:?}")
     }) {
-      Ok(contents) => successful.push(FileContents {
-        path: path.to_string(),
+      Ok(contents) => successful.push(StackRemoteFileContents {
+        path: file.path,
         contents,
+        services: file.services,
+        requires: file.requires,
       }),
       Err(e) => errored.push(FileContents {
-        path: path.to_string(),
+        path: file.path,
         contents: format_serror(&e.into()),
       }),
     }

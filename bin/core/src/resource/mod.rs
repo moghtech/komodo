@@ -229,6 +229,12 @@ pub trait KomodoResource {
 pub async fn get<T: KomodoResource>(
   id_or_name: &str,
 ) -> anyhow::Result<Resource<T::Config, T::Info>> {
+  if id_or_name.is_empty() {
+    return Err(anyhow!(
+      "Cannot find {} with empty name / id",
+      T::resource_type()
+    ));
+  }
   T::coll()
     .find_one(id_or_name_filter(id_or_name))
     .await
