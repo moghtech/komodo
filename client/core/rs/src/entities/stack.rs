@@ -448,7 +448,7 @@ pub struct StackConfig {
   /// Can add any files associated with the stack to enable editing them in the UI.
   /// Doing so will also include diffing these when deciding to deploy in `DeployStackIfChanged`.
   /// Relative to the run directory.
-  /// 
+  ///
   /// Note. If the config file is .env and should be included in compose command
   /// using `--env-file`, add it to `additional_env_files` instead.
   #[serde(default)]
@@ -814,7 +814,7 @@ pub struct StackFileDependency {
   #[serde(default, skip_serializing_if = "Vec::is_empty")]
   pub services: Vec<String>,
   /// Specify
-  #[serde(default, skip_serializing_if = "is_redeploy")]
+  #[serde(default, skip_serializing_if = "is_none")]
   pub requires: StackFileRequires,
 }
 
@@ -828,8 +828,8 @@ impl StackFileDependency {
   }
 }
 
-fn is_redeploy(requires: &StackFileRequires) -> bool {
-  matches!(requires, StackFileRequires::Redeploy)
+fn is_none(requires: &StackFileRequires) -> bool {
+  matches!(requires, StackFileRequires::None)
 }
 
 /// Used with custom de/serializer for [StackFileDependency]
