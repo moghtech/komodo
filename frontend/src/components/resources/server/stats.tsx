@@ -121,6 +121,7 @@ export const ServerStats = ({
         <Section title="Current">
           <div className="flex flex-col xl:flex-row gap-4">
             <CPU stats={stats} />
+            <LOAD_AVERAGE stats={stats} />
             <RAM stats={stats} />
             <DISK stats={stats} />
             <NETWORK stats={stats} />
@@ -492,6 +493,27 @@ const CPU = ({ stats }: { stats: Types.SystemStats | undefined }) => {
       icon={<Cpu className="w-5 h-5" />}
       percentage={stats?.cpu_perc}
     />
+  );
+};
+
+const LOAD_AVERAGE = ({ stats }: { stats: Types.SystemStats | undefined }) => {
+  if (!stats?.load_average) return null;
+  const [one, five, fifteen] = stats.load_average;
+  
+  return (
+    <Card className="flex-1">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">Load Average</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">
+          {one.toFixed(2)}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          1m: {one.toFixed(2)} | 5m: {five.toFixed(2)} | 15m: {fifteen.toFixed(2)}
+        </p>
+      </CardContent>
+    </Card>
   );
 };
 

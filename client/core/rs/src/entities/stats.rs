@@ -45,6 +45,8 @@ pub struct SystemStatsRecord {
   // basic stats
   /// Cpu usage percentage
   pub cpu_perc: f32,
+  /// Load average (1m, 5m, 15m)
+  pub load_average: (f64, f64, f64),
   /// Memory used in GB
   pub mem_used_gb: f64,
   /// Total memory in GB
@@ -72,6 +74,8 @@ pub struct SystemStatsRecord {
 pub struct SystemStats {
   /// Cpu usage percentage
   pub cpu_perc: f32,
+  ///  Load average (1m, 5m, 15m)
+  pub load_average: (f64, f64, f64),
   /// [1.15.9+]
   /// Free memory in GB.
   /// This is really the 'Free' memory, not the 'Available' memory.

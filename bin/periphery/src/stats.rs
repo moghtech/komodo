@@ -97,6 +97,7 @@ impl StatsClient {
 
     SystemStats {
       cpu_perc: self.system.global_cpu_usage(),
+      load_average: self.system.load_average(),
       mem_free_gb: self.system.free_memory() as f64 / BYTES_PER_GB,
       mem_used_gb: (total_mem - available_mem) as f64 / BYTES_PER_GB,
       mem_total_gb: total_mem as f64 / BYTES_PER_GB,
