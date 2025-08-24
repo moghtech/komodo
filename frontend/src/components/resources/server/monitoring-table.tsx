@@ -76,6 +76,18 @@ export const ServerMonitoringTable = ({ search = "" }: { search?: string }) => {
 const useStats = (id: string) =>
   useRead("GetSystemStats", { server: id }, { refetchInterval: 10_000 }).data;
 
+const useServerThresholds = (id: string) => {
+  const config = useRead("GetServer", { server: id }).data?.config as any;
+  return {
+    cpuWarning: config?.cpu_warning ?? 75,
+    cpuCritical: config?.cpu_critical ?? 90,
+    memWarning: config?.mem_warning ?? 75,
+    memCritical: config?.mem_critical ?? 90,
+    diskWarning: config?.disk_warning ?? 75,
+    diskCritical: config?.disk_critical ?? 90,
+  };
+};
+
 const Bar = ({ valuePerc, intent }: { valuePerc?: number; intent: "Good" | "Warning" | "Critical" }) => {
   const w = Math.max(0, Math.min(100, valuePerc ?? 0)) / 100;
   const color = intent === "Good" ? "bg-green-500" : intent === "Warning" ? "bg-orange-500" : "bg-red-500";
@@ -89,7 +101,9 @@ const Bar = ({ valuePerc, intent }: { valuePerc?: number; intent: "Good" | "Warn
 const CpuCell = ({ id }: { id: string }) => {
   const stats = useStats(id);
   const cpu = stats?.cpu_perc ?? 0;
-  const intent: "Good" | "Warning" | "Critical" = cpu < 60 ? "Good" : cpu < 85 ? "Warning" : "Critical";
+  const { cpuWarning: warning, cpuCritical: critical } = useServerThresholds(id);
+  const intent: "Good" | "Warning" | "Critical" =
+    cpu < warning ? "Good" : cpu < critical ? "Warning" : "Critical";
   return (
     <div className="flex gap-2 items-center tabular-nums tracking-tight">
       <span className="min-w-8">{cpu.toFixed(2)}%</span>
@@ -103,7 +117,9 @@ const MemCell = ({ id }: { id: string }) => {
   const used = stats?.mem_used_gb ?? 0;
   const total = stats?.mem_total_gb ?? 0;
   const perc = total > 0 ? (used / total) * 100 : 0;
-  const intent: "Good" | "Warning" | "Critical" = perc < 70 ? "Good" : perc < 90 ? "Warning" : "Critical";
+  const { memWarning: warning, memCritical: critical } = useServerThresholds(id);
+  const intent: "Good" | "Warning" | "Critical" =
+    perc < warning ? "Good" : perc < critical ? "Warning" : "Critical";
   return (
     <div className="flex gap-2 items-center tabular-nums tracking-tight">
       <span className="min-w-8">{perc.toFixed(1)}%</span>
@@ -117,7 +133,9 @@ const DiskCell = ({ id }: { id: string }) => {
   const used = stats?.disks?.reduce((acc, d) => acc + (d.used_gb || 0), 0) ?? 0;
   const total = stats?.disks?.reduce((acc, d) => acc + (d.total_gb || 0), 0) ?? 0;
   const perc = total > 0 ? (used / total) * 100 : 0;
-  const intent: "Good" | "Warning" | "Critical" = perc < 70 ? "Good" : perc < 90 ? "Warning" : "Critical";
+  const { diskWarning: warning, diskCritical: critical } = useServerThresholds(id);
+  const intent: "Good" | "Warning" | "Critical" =
+    perc < warning ? "Good" : perc < critical ? "Warning" : "Critical";
   return (
     <div className="flex gap-2 items-center tabular-nums tracking-tight">
       <span className="min-w-8">{perc.toFixed(1)}%</span>
