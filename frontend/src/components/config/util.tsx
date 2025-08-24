@@ -62,6 +62,7 @@ import {
   MonacoLanguage,
 } from "@components/monaco";
 import { useNavigate } from "react-router-dom";
+import { Badge } from "@ui/badge";
 
 export const ConfigItem = ({
   label,
@@ -200,236 +201,6 @@ export const ConfigSwitch = ({
     </div>
   </ConfigItem>
 );
-
-export const ProviderSelector = ({
-  disabled,
-  account_type,
-  selected,
-  onSelect,
-  showCustom = true,
-}: {
-  disabled: boolean;
-  account_type: "git" | "docker";
-  selected: string | undefined;
-  onSelect: (provider: string) => void;
-  showCustom?: boolean;
-}) => {
-  const [db_request, config_request]:
-    | ["ListGitProviderAccounts", "ListGitProvidersFromConfig"]
-    | ["ListDockerRegistryAccounts", "ListDockerRegistriesFromConfig"] =
-    account_type === "git"
-      ? ["ListGitProviderAccounts", "ListGitProvidersFromConfig"]
-      : ["ListDockerRegistryAccounts", "ListDockerRegistriesFromConfig"];
-  const db_providers = useRead(db_request, {}).data;
-  const config_providers = useRead(config_request, {}).data;
-  const [customMode, setCustomMode] = useState(false);
-
-  if (customMode) {
-    return (
-      <Input
-        placeholder="Input custom provider domain"
-        value={selected}
-        onChange={(e) => onSelect(e.target.value)}
-        className="max-w-[75%] lg:max-w-[400px]"
-        onBlur={() => setCustomMode(false)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            setCustomMode(false);
-          }
-        }}
-        autoFocus
-      />
-    );
-  }
-
-  const domains = new Set<string>();
-  for (const provider of db_providers ?? []) {
-    domains.add(provider.domain);
-  }
-  for (const provider of config_providers ?? []) {
-    domains.add(provider.domain);
-  }
-  const providers = [...domains];
-  providers.sort();
-
-  return (
-    <Select
-      value={selected}
-      onValueChange={(value) => {
-        if (value === "Custom") {
-          onSelect("");
-          setCustomMode(true);
-        } else if (value === "None") {
-          onSelect("");
-        } else {
-          onSelect(value);
-        }
-      }}
-      disabled={disabled}
-    >
-      <SelectTrigger
-        className="w-full lg:w-[200px] max-w-[50%]"
-        disabled={disabled}
-      >
-        <SelectValue placeholder="Select Provider" />
-      </SelectTrigger>
-      <SelectContent>
-        {providers
-          ?.filter((provider) => provider)
-          .map((provider) => (
-            <SelectItem key={provider} value={provider}>
-              {provider}
-            </SelectItem>
-          ))}
-        {providers !== undefined &&
-          selected &&
-          !providers.includes(selected) && (
-            <SelectItem value={selected}>{selected}</SelectItem>
-          )}
-        {showCustom && <SelectItem value="Custom">Custom</SelectItem>}
-        {!showCustom && <SelectItem value="None">None</SelectItem>}
-      </SelectContent>
-    </Select>
-  );
-};
-
-export const ProviderSelectorConfig = (params: {
-  disabled: boolean;
-  account_type: "git" | "docker";
-  selected: string | undefined;
-  onSelect: (id: string) => void;
-  https?: boolean;
-  onHttpsSwitch?: () => void;
-  description?: string;
-  boldLabel?: boolean;
-}) => {
-  const select =
-    params.account_type === "git" ? "git provider" : "docker registry";
-  const label =
-    params.account_type === "git" ? "Git Provider" : "Image Registry";
-  return (
-    <ConfigItem
-      label={label}
-      description={params.description ?? `Select ${select} domain`}
-      boldLabel={params.boldLabel}
-    >
-      {params.account_type === "git" ? (
-        <div className="flex items-center gap-2 w-[75%]">
-          <Button
-            variant="outline"
-            onClick={params.onHttpsSwitch}
-            className="py-0 px-2"
-            disabled={params.disabled}
-          >
-            {`http${params.https ? "s" : ""}://`}
-          </Button>
-          <ProviderSelector {...params} />
-        </div>
-      ) : (
-        <ProviderSelector {...params} />
-      )}
-    </ConfigItem>
-  );
-};
-
-export const AccountSelector = ({
-  disabled,
-  id,
-  type,
-  account_type,
-  provider,
-  selected,
-  onSelect,
-  placeholder = "Select Account",
-}: {
-  disabled: boolean;
-  type: "Server" | "Builder" | "None";
-  id?: string;
-  account_type: "git" | "docker";
-  provider: string;
-  selected: string | undefined;
-  onSelect: (id: string) => void;
-  placeholder?: string;
-}) => {
-  const [db_request, config_request]:
-    | ["ListGitProviderAccounts", "ListGitProvidersFromConfig"]
-    | ["ListDockerRegistryAccounts", "ListDockerRegistriesFromConfig"] =
-    account_type === "git"
-      ? ["ListGitProviderAccounts", "ListGitProvidersFromConfig"]
-      : ["ListDockerRegistryAccounts", "ListDockerRegistriesFromConfig"];
-  const config_params =
-    type === "None" ? {} : { target: id ? { type, id } : undefined };
-  const db_accounts = useRead(db_request, {}).data?.filter(
-    (account) => account.domain === provider
-  );
-  const config_providers = useRead(config_request, config_params).data?.filter(
-    (_provider) => _provider.domain === provider
-  );
-
-  const _accounts = new Set<string>();
-  for (const account of db_accounts ?? []) {
-    if (account.username) {
-      _accounts.add(account.username);
-    }
-  }
-  for (const provider of config_providers ?? []) {
-    for (const account of provider.accounts ?? []) {
-      _accounts.add(account.username);
-    }
-  }
-  const accounts = [..._accounts];
-  accounts.sort();
-  return (
-    <Select
-      value={selected}
-      onValueChange={(value) => {
-        onSelect(value === "Empty" ? "" : value);
-      }}
-      disabled={disabled}
-    >
-      <SelectTrigger
-        className="w-full lg:w-[200px] max-w-[50%]"
-        disabled={disabled}
-      >
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value={"Empty"}>None</SelectItem>
-        {accounts
-          ?.filter((account) => account)
-          .map((account) => (
-            <SelectItem key={account} value={account}>
-              {account}
-            </SelectItem>
-          ))}
-      </SelectContent>
-    </Select>
-  );
-};
-
-export const AccountSelectorConfig = (params: {
-  disabled: boolean;
-  id?: string;
-  type: "Server" | "Builder" | "None";
-  account_type: "git" | "docker";
-  provider: string;
-  selected: string | undefined;
-  onSelect: (id: string) => void;
-  placeholder?: string;
-  description?: string;
-}) => {
-  return (
-    <ConfigItem
-      label="Account"
-      description={
-        params.description ??
-        "Select the account used to log in to the provider"
-      }
-    >
-      <AccountSelector {...params} />
-    </ConfigItem>
-  );
-};
 
 export const ConfigList = <T extends { [key: string]: unknown }>(
   props: InputListProps<T> & {
@@ -807,92 +578,339 @@ export const AddExtraArgMenu = ({
   );
 };
 
-const IMAGE_REGISTRY_DESCRIPTION = "Configure where the built image is pushed.";
-
 export const ImageRegistryConfig = ({
   registry,
   setRegistry,
   disabled,
-  resource_id,
+  builder_id,
+  onRemove,
+  imageName,
 }: {
   registry: Types.ImageRegistryConfig | undefined;
   setRegistry: (registry: Types.ImageRegistryConfig) => void;
   disabled: boolean;
-  // For builds, its builder id. For servers, its server id.
-  resource_id?: string;
+  builder_id: string | undefined;
+  onRemove: () => void;
+  imageName: string | undefined;
 }) => {
   // This is the only way to get organizations for now
   const config_provider = useRead("ListDockerRegistriesFromConfig", {
-    target: resource_id ? { type: "Builder", id: resource_id } : undefined,
+    target: builder_id ? { type: "Builder", id: builder_id } : undefined,
   }).data?.find((provider) => {
     return provider.domain === registry?.domain;
   });
 
   const organizations = config_provider?.organizations ?? [];
+  const namespace = registry?.organization || registry?.account;
 
   return (
-    <>
-      <ConfigItem
-        label="Image Registry"
-        boldLabel
-        description={IMAGE_REGISTRY_DESCRIPTION}
-      >
-        <div className="flex items-center justify-stretch gap-4">
-          <ProviderSelector
-            disabled={disabled}
-            account_type="docker"
-            selected={registry?.domain}
-            onSelect={(domain) =>
-              setRegistry({
-                ...registry,
-                domain,
-              })
-            }
-            showCustom={false}
-          />
+    <ConfigItem
+      label={
+        <div className="flex gap-2 items-center flex-wrap">
+          <div className="text-muted-foreground">Pushes to:</div>{" "}
+          {registry?.domain && registry.domain + " / "}
+          {registry?.domain && (namespace ? namespace : "<namespace>") + " / "}
+          {imageName}
+          {!registry?.domain && <Badge variant="secondary">Local</Badge>}
         </div>
-      </ConfigItem>
+      }
+    >
+      <div className="flex items-center gap-4 flex-wrap">
+        <ProviderSelector
+          disabled={disabled}
+          account_type="docker"
+          selected={registry?.domain}
+          onSelect={(domain) =>
+            setRegistry({
+              ...registry,
+              domain,
+            })
+          }
+          showCustom={false}
+          showLabel
+        />
+        <AccountSelector
+          id={builder_id}
+          type="Builder"
+          account_type="docker"
+          provider={registry?.domain!}
+          selected={registry?.account}
+          onSelect={(account) =>
+            setRegistry({
+              ...registry,
+              account,
+            })
+          }
+          disabled={!registry?.domain || disabled}
+          showLabel
+        />
+        <OrganizationSelector
+          organizations={organizations}
+          selected={registry?.organization!}
+          set={(organization) =>
+            setRegistry({
+              ...registry,
+              organization,
+            })
+          }
+          disabled={disabled}
+          showLabel
+        />
+        {!disabled && (
+          <Button
+            variant="destructive"
+            onClick={onRemove}
+            className="px-3 py-1"
+          >
+            <MinusCircle className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+    </ConfigItem>
+  );
+};
 
-      {registry?.domain && (
-        <>
-          <ConfigItem
-            label="Account"
-            description="Select the account used to authenticate against the registry."
+export const ProviderSelector = ({
+  disabled,
+  account_type,
+  selected,
+  onSelect,
+  showCustom = true,
+  showLabel,
+}: {
+  disabled: boolean;
+  account_type: "git" | "docker";
+  selected: string | undefined;
+  onSelect: (provider: string) => void;
+  showCustom?: boolean;
+  showLabel?: boolean;
+}) => {
+  const [db_request, config_request]:
+    | ["ListGitProviderAccounts", "ListGitProvidersFromConfig"]
+    | ["ListDockerRegistryAccounts", "ListDockerRegistriesFromConfig"] =
+    account_type === "git"
+      ? ["ListGitProviderAccounts", "ListGitProvidersFromConfig"]
+      : ["ListDockerRegistryAccounts", "ListDockerRegistriesFromConfig"];
+  const db_providers = useRead(db_request, {}).data;
+  const config_providers = useRead(config_request, {}).data;
+  const [customMode, setCustomMode] = useState(false);
+
+  if (customMode) {
+    return (
+      <Input
+        placeholder="Input custom provider domain"
+        value={selected}
+        onChange={(e) => onSelect(e.target.value)}
+        className="max-w-[75%] lg:max-w-[400px]"
+        onBlur={() => setCustomMode(false)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            setCustomMode(false);
+          }
+        }}
+        autoFocus
+      />
+    );
+  }
+
+  const domains = new Set<string>();
+  for (const provider of db_providers ?? []) {
+    domains.add(provider.domain);
+  }
+  for (const provider of config_providers ?? []) {
+    domains.add(provider.domain);
+  }
+  const providers = [...domains];
+  providers.sort();
+
+  return (
+    <Select
+      value={selected}
+      onValueChange={(value) => {
+        if (value === "Custom") {
+          onSelect("");
+          setCustomMode(true);
+        } else if (value === "None") {
+          onSelect("");
+        } else {
+          onSelect(value);
+        }
+      }}
+      disabled={disabled}
+    >
+      <SelectTrigger
+        className="w-full lg:w-[300px] md:max-w-[50%]"
+        disabled={disabled}
+      >
+        <div className="flex items-center gap-2">
+          {showLabel && selected && (
+            <div className="text-xs text-muted-foreground">Domain:</div>
+          )}
+          <SelectValue placeholder="Select Provider" />
+        </div>
+      </SelectTrigger>
+      <SelectContent>
+        {providers
+          ?.filter((provider) => provider)
+          .map((provider) => (
+            <SelectItem key={provider} value={provider}>
+              {provider}
+            </SelectItem>
+          ))}
+        {providers !== undefined &&
+          selected &&
+          !providers.includes(selected) && (
+            <SelectItem value={selected}>{selected}</SelectItem>
+          )}
+        {showCustom && <SelectItem value="Custom">Custom</SelectItem>}
+        {!showCustom && <SelectItem value="None">None</SelectItem>}
+      </SelectContent>
+    </Select>
+  );
+};
+
+export const ProviderSelectorConfig = (params: {
+  disabled: boolean;
+  account_type: "git" | "docker";
+  selected: string | undefined;
+  onSelect: (id: string) => void;
+  https?: boolean;
+  onHttpsSwitch?: () => void;
+  description?: string;
+  boldLabel?: boolean;
+}) => {
+  const select =
+    params.account_type === "git" ? "git provider" : "docker registry";
+  const label =
+    params.account_type === "git" ? "Git Provider" : "Image Registry";
+  return (
+    <ConfigItem
+      label={label}
+      description={params.description ?? `Select ${select} domain`}
+      boldLabel={params.boldLabel}
+    >
+      {params.account_type === "git" ? (
+        <div className="flex items-center gap-2 w-[75%]">
+          <Button
+            variant="outline"
+            onClick={params.onHttpsSwitch}
+            className="py-0 px-2"
+            disabled={params.disabled}
           >
-            <AccountSelector
-              id={resource_id}
-              type="Builder"
-              account_type="docker"
-              provider={registry.domain!}
-              selected={registry.account}
-              onSelect={(account) =>
-                setRegistry({
-                  ...registry,
-                  account,
-                })
-              }
-              disabled={disabled}
-            />
-          </ConfigItem>
-          <ConfigItem
-            label="Organization"
-            description="Push the build under an organization / project namespace, rather than the account namespace."
-          >
-            <OrganizationSelector
-              organizations={organizations}
-              selected={registry?.organization!}
-              set={(organization) =>
-                setRegistry({
-                  ...registry,
-                  organization,
-                })
-              }
-              disabled={disabled}
-            />
-          </ConfigItem>
-        </>
+            {`http${params.https ? "s" : ""}://`}
+          </Button>
+          <ProviderSelector {...params} />
+        </div>
+      ) : (
+        <ProviderSelector {...params} />
       )}
-    </>
+    </ConfigItem>
+  );
+};
+
+export const AccountSelector = ({
+  disabled,
+  id,
+  type,
+  account_type,
+  provider,
+  selected,
+  onSelect,
+  placeholder = "Select Account",
+  showLabel,
+}: {
+  disabled: boolean;
+  type: "Server" | "Builder" | "None";
+  id?: string;
+  account_type: "git" | "docker";
+  provider: string;
+  selected: string | undefined;
+  onSelect: (id: string) => void;
+  placeholder?: string;
+  showLabel?: boolean;
+}) => {
+  const [db_request, config_request]:
+    | ["ListGitProviderAccounts", "ListGitProvidersFromConfig"]
+    | ["ListDockerRegistryAccounts", "ListDockerRegistriesFromConfig"] =
+    account_type === "git"
+      ? ["ListGitProviderAccounts", "ListGitProvidersFromConfig"]
+      : ["ListDockerRegistryAccounts", "ListDockerRegistriesFromConfig"];
+  const config_params =
+    type === "None" ? {} : { target: id ? { type, id } : undefined };
+  const db_accounts = useRead(db_request, {}).data?.filter(
+    (account) => account.domain === provider
+  );
+  const config_providers = useRead(config_request, config_params).data?.filter(
+    (_provider) => _provider.domain === provider
+  );
+
+  const _accounts = new Set<string>();
+  for (const account of db_accounts ?? []) {
+    if (account.username) {
+      _accounts.add(account.username);
+    }
+  }
+  for (const provider of config_providers ?? []) {
+    for (const account of provider.accounts ?? []) {
+      _accounts.add(account.username);
+    }
+  }
+  const accounts = [..._accounts];
+  accounts.sort();
+  return (
+    <Select
+      value={selected}
+      onValueChange={(value) => {
+        onSelect(value === "Empty" ? "" : value);
+      }}
+      disabled={disabled}
+    >
+      <SelectTrigger
+        className="w-full lg:w-[300px] md:max-w-[50%]"
+        disabled={disabled}
+      >
+        <div className="flex gap-2 items-center">
+          {showLabel && selected && (
+            <div className="text-xs text-muted-foreground">Account:</div>
+          )}
+          <SelectValue placeholder={placeholder} />
+        </div>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={"Empty"}>None</SelectItem>
+        {accounts
+          ?.filter((account) => account)
+          .map((account) => (
+            <SelectItem key={account} value={account}>
+              {account}
+            </SelectItem>
+          ))}
+      </SelectContent>
+    </Select>
+  );
+};
+
+export const AccountSelectorConfig = (params: {
+  disabled: boolean;
+  id?: string;
+  type: "Server" | "Builder" | "None";
+  account_type: "git" | "docker";
+  provider: string;
+  selected: string | undefined;
+  onSelect: (id: string) => void;
+  placeholder?: string;
+  description?: string;
+}) => {
+  return (
+    <ConfigItem
+      label="Account"
+      description={
+        params.description ??
+        "Select the account used to log in to the provider"
+      }
+    >
+      <AccountSelector {...params} />
+    </ConfigItem>
   );
 };
 
@@ -901,11 +919,13 @@ const OrganizationSelector = ({
   selected,
   set,
   disabled,
+  showLabel,
 }: {
   organizations: string[];
   selected: string;
   set: (org: string) => void;
   disabled: boolean;
+  showLabel?: boolean;
 }) => {
   const [customMode, setCustomMode] = useState(false);
   if (customMode) {
@@ -948,10 +968,15 @@ const OrganizationSelector = ({
       disabled={disabled}
     >
       <SelectTrigger
-        className="w-full lg:w-[200px] max-w-[50%]"
+        className="w-full lg:w-[300px] md:max-w-[50%]"
         disabled={disabled}
       >
-        <SelectValue placeholder="Select Organization" />
+        <div className="flex gap-2 items-center">
+          {showLabel && selected && (
+            <div className="text-xs text-muted-foreground">Org:</div>
+          )}
+          <SelectValue placeholder="Select Organization" />
+        </div>
       </SelectTrigger>
       <SelectContent>
         <SelectItem value={"Empty"}>None</SelectItem>

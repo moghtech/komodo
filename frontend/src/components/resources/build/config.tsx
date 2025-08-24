@@ -2,10 +2,10 @@ import { Config, ConfigComponent } from "@components/config";
 import {
   AccountSelectorConfig,
   AddExtraArgMenu,
+  ImageRegistryConfig,
   ConfigInput,
   ConfigItem,
   ConfigList,
-  ImageRegistryConfig,
   InputList,
   ProviderSelectorConfig,
   SystemCommand,
@@ -22,7 +22,7 @@ import {
   useWrite,
 } from "@lib/hooks";
 import { Types } from "komodo_client";
-import { Ban, CirclePlus } from "lucide-react";
+import { Ban, CirclePlus, PlusCircle } from "lucide-react";
 import { ReactNode } from "react";
 import { CopyWebhook, ResourceLink, ResourceSelector } from "../common";
 import { useToast } from "@ui/use-toast";
@@ -39,6 +39,7 @@ import {
   SelectValue,
 } from "@ui/select";
 import { LinkedRepoConfig } from "@components/config/linked_repo";
+import { Button } from "@ui/button";
 
 type BuildMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const BUILD_MODES: BuildMode[] = ["UI Defined", "Files On Server", "Git Repo"];
@@ -226,22 +227,68 @@ export const BuildConfig = ({
     },
   };
 
+  const imageName = (update.image_name ?? config.image_name) || name;
+
   const general_common: ConfigComponent<Types.BuildConfig>[] = [
     {
       label: "Registry",
       labelHidden: true,
       components: {
-        image_registry: (registry, set) => (
-          <ImageRegistryConfig
-            registry={
-              (registry ?? [{ domain: "", organization: "", account: "" }])[0]
-            }
-            setRegistry={(image_registry) =>
-              set({ image_registry: [image_registry] })
-            }
-            resource_id={update.builder_id ?? config.builder_id}
-            disabled={disabled}
-          />
+        image_registry: (image_registries, set) => (
+          <div className="flex flex-col gap-4">
+            <ConfigItem
+              label="Image Registry"
+              boldLabel
+              description="Configure where the built image is pushed."
+            >
+              {!disabled && (
+                <Button
+                  variant="secondary"
+                  onClick={() =>
+                    set({
+                      image_registry: [
+                        ...(image_registries ?? []),
+                        { domain: "", organization: "", account: "" },
+                      ],
+                    })
+                  }
+                  className="flex items-center gap-2 w-[200px]"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  Add Registry
+                </Button>
+              )}
+            </ConfigItem>
+
+            {image_registries?.map((registry, index) => (
+              <ImageRegistryConfig
+                key={
+                  (registry.domain ?? "") +
+                  (registry.organization ?? "") +
+                  (registry.account ?? "") +
+                  index
+                }
+                registry={registry}
+                imageName={imageName}
+                setRegistry={(registry) =>
+                  set({
+                    image_registry:
+                      image_registries?.map((r, i) =>
+                        i === index ? registry : r
+                      ) ?? [],
+                  })
+                }
+                onRemove={() =>
+                  set({
+                    image_registry:
+                      image_registries?.filter((_, i) => i !== index) ?? [],
+                  })
+                }
+                builder_id={update.builder_id ?? config.builder_id}
+                disabled={disabled}
+              />
+            ))}
+          </div>
         ),
       },
     },
