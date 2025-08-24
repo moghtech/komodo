@@ -1046,7 +1046,7 @@ const ServicesSelector = ({
           disabled={disabled}
         >
           <div className="flex gap-2 items-center">
-            <div className="text-xs text-muted-foreground">Dependents:</div>
+            <div className="text-xs text-muted-foreground">Services:</div>
             {selected_services.length === 0
               ? "All"
               : selected_services.join(", ")}
