@@ -371,7 +371,7 @@ impl Resolve<ExecuteArgs> for DeployStackIfChanged {
 
         if update.success {
           // Need to update 'info.deployed_contents' with the
-          // latest contents.
+          // latest contents so next check doesn't read the same diff.
           update_deployed_contents_with_latest(
             &stack.id,
             stack.info.remote_contents,
@@ -407,7 +407,7 @@ impl Resolve<ExecuteArgs> for DeployStackIfChanged {
 
             if update.success {
               // Need to update 'info.deployed_contents' with the
-              // latest contents.
+              // latest contents so next check doesn't read the same diff.
               update_deployed_contents_with_latest(
                 &stack.id,
                 stack.info.remote_contents,
@@ -428,6 +428,8 @@ impl Resolve<ExecuteArgs> for DeployStackIfChanged {
               "Execute Deploys",
               format!("Deploying: {}", deploy.join(", "),),
             );
+            // This already updates 'stack.info.deployed_services',
+            // restart doesn't require this again.
             let deploy_update =
               deploy_services(stack.name.clone(), deploy, user)
                 .await?;
