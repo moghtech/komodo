@@ -234,11 +234,11 @@ pub fn inner_handler(
         let log = match handle.await {
           Ok(Err(e)) => {
             warn!("/execute request {req_id} task error: {e:#}",);
-            Log::error("task error", format_serror(&e.into()))
+            Log::error("Task Error", format_serror(&e.into()))
           }
           Err(e) => {
             warn!("/execute request {req_id} spawn error: {e:?}",);
-            Log::error("spawn error", format!("{e:#?}"))
+            Log::error("Spawn Error", format!("{e:#?}"))
           }
           _ => return,
         };

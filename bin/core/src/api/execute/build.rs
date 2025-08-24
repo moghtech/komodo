@@ -618,7 +618,7 @@ async fn validate_account_extract_registry_tokens(
     ..
   }: &Build,
   // Maps (domain, account) -> token
-) -> serror::Result<HashMap<(String, String), String>> {
+) -> serror::Result<Vec<(String, String, String)>> {
   let mut res = HashMap::with_capacity(image_registry.capacity());
 
   for (domain, account) in image_registry
@@ -650,5 +650,10 @@ async fn validate_account_extract_registry_tokens(
     );
   }
 
-  Ok(res)
+  Ok(
+    res
+      .into_iter()
+      .map(|((domain, account), token)| (domain, account, token))
+      .collect(),
+  )
 }
