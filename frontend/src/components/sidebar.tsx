@@ -41,7 +41,6 @@ export const Sidebar = () => {
           icon={<Box className="w-4 h-4" />}
         />
 
-
         <Separator className="my-3" />
 
         <p className="pl-4 pb-1 text-xs text-muted-foreground">Resources</p>

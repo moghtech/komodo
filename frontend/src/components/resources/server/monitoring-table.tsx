@@ -3,7 +3,6 @@ import { ServerComponents } from "@components/resources/server";
 import { DataTable, SortableHeader } from "@ui/data-table";
 import { useRead } from "@lib/hooks";
 import { useMemo } from "react";
-import { ColorIntention, server_state_intention } from "@lib/color";
 
 export const ServerMonitoringTable = ({ search = "" }: { search?: string }) => {
   const servers = useRead("ListServers", {}).data;
@@ -34,7 +33,6 @@ export const ServerMonitoringTable = ({ search = "" }: { search?: string }) => {
             ),
             cell: ({ row }) => (
               <div className="flex items-center gap-2">
-                <ServerStateDot id={row.original.id} />
                 <ResourceLink type="Server" id={row.original.id} />
               </div>
             ),
@@ -77,31 +75,6 @@ export const ServerMonitoringTable = ({ search = "" }: { search?: string }) => {
 
 const useStats = (id: string) =>
   useRead("GetSystemStats", { server: id }, { refetchInterval: 10_000 }).data;
-
-const dotClass = (intention: ColorIntention) => {
-  switch (intention) {
-    case "Good":
-      return "bg-green-500";
-    case "Warning":
-      return "bg-orange-500";
-    case "Critical":
-      return "bg-red-500";
-    case "Neutral":
-      return "bg-blue-500";
-    case "Unknown":
-      return "bg-purple-500";
-    case "None":
-    default:
-      return "bg-muted-foreground";
-  }
-};
-
-const ServerStateDot = ({ id }: { id: string }) => {
-  const state = useRead("GetServerState", { server: id }, { refetchInterval: 10_000 }).data?.status;
-  const intention = server_state_intention(state);
-  const klass = dotClass(intention);
-  return <span className={`size-2 rounded-full ${klass}`} />;
-};
 
 const Bar = ({ valuePerc, intent }: { valuePerc?: number; intent: "Good" | "Warning" | "Critical" }) => {
   const w = Math.max(0, Math.min(100, valuePerc ?? 0)) / 100;
