@@ -2402,6 +2402,15 @@ export interface SystemInformation {
 
 export type GetSystemInformationResponse = SystemInformation;
 
+export interface SystemLoadAverage {
+	/** 1m load average */
+	one: number;
+	/** 5m load average */
+	five: number;
+	/** 15m load average */
+	fifteen: number;
+}
+
 /** Info for a single disk mounted on the system. */
 export interface SingleDiskUsage {
 	/** The mount point of the disk */
@@ -2463,6 +2472,8 @@ export enum Timelength {
 export interface SystemStats {
 	/** Cpu usage percentage */
 	cpu_perc: number;
+	/** Load average (1m, 5m, 15m) */
+	load_average?: SystemLoadAverage;
 	/**
 	 * [1.15.9+]
 	 * Free memory in GB.
@@ -6097,6 +6108,8 @@ export interface SystemStatsRecord {
 	sid: string;
 	/** Cpu usage percentage */
 	cpu_perc: number;
+	/** Load average (1m, 5m, 15m) */
+	load_average?: SystemLoadAverage;
 	/** Memory used in GB */
 	mem_used_gb: number;
 	/** Total memory in GB */

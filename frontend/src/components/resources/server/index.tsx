@@ -401,6 +401,27 @@ export const ServerComponents: RequiredResourceComponents = {
         </div>
       );
     },
+    LoadAvg: ({ id }) => {
+      const server = useServer(id);
+      const stats = useRead(
+        "GetSystemStats",
+        { server: id },
+        {
+          enabled: server ? server.info.state !== "Disabled" : false,
+          refetchInterval: 5000,
+        }
+      ).data;
+      
+      if (!stats?.load_average) return null;
+      const one = stats.load_average?.one;
+      
+      return (
+        <div className="flex gap-2 items-center">
+          <Cpu className="w-4 h-4" />
+          {one.toFixed(2)}
+        </div>
+      );
+    },
     Mem: ({ id }) => {
       const server = useServer(id);
       const stats = useRead(

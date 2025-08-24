@@ -21,6 +21,7 @@ pub async fn record_server_stats(ts: i64) {
         ts,
         sid: status.id.clone(),
         cpu_perc: stats.cpu_perc,
+        load_average: stats.load_average.clone(),
         mem_total_gb: stats.mem_total_gb,
         mem_used_gb: stats.mem_used_gb,
         disk_total_gb,
