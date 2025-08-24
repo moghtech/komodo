@@ -1,4 +1,7 @@
-use std::{collections::HashSet, path::PathBuf};
+use std::{
+  collections::{HashMap, HashSet},
+  path::PathBuf,
+};
 
 use anyhow::{Context, anyhow};
 use command::{
@@ -169,6 +172,13 @@ impl Resolve<super::Args> for build::Build {
       return Err(anyhow!("Build must be files on host mode, have a repo attached, or have dockerfile contents set to build").into());
     }
 
+    let registry_tokens = registry_tokens
+      .iter()
+      .map(|(domain, account, token)| {
+        ((domain.as_str(), account.as_str()), token.as_str())
+      })
+      .collect::<HashMap<_, _>>();
+
     // Maybe docker login
     let mut should_push = false;
     for (domain, account) in image_registry
@@ -180,9 +190,7 @@ impl Resolve<super::Args> for build::Build {
       match docker_login(
         domain,
         account,
-        registry_tokens
-          .get(&(domain.to_string(), account.to_string()))
-          .map(String::as_str),
+        registry_tokens.get(&(domain, account)).copied(),
       )
       .await
       {
