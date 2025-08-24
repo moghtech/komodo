@@ -166,7 +166,14 @@ export const InnerStatChart = ({
         data: seriesData ?? [{ label: type, data: stats ?? [] }],
         primaryAxis: timeAxis,
         secondaryAxes: valueAxis,
-        defaultColors: [getColor(type)],
+        defaultColors:
+          type === "Load Average"
+            ? [
+                hex_color_by_intention("Good"),
+                hex_color_by_intention("Neutral"),
+                hex_color_by_intention("Unknown"),
+              ]
+            : [getColor(type)],
         dark: theme === "dark",
         padding: {
           left: 10,
