@@ -9,7 +9,7 @@ import { convertTsMsToLocalUnixTsInMs } from "@lib/utils";
 import { useTheme } from "@ui/theme";
 import { fmt_utc_date } from "@lib/formatting";
 
-type StatType = "Cpu" | "Memory" | "Disk" | "Network Ingress" | "Network Egress";
+type StatType = "Cpu" | "Memory" | "Disk" | "Network Ingress" | "Network Egress" | "Load Average";
 
 type StatDatapoint = { date: number; value: number };
 
@@ -29,18 +29,34 @@ export const StatChart = ({
     granularity,
   });
 
-  const stats = useMemo(
-    () =>
-      data?.stats
-        .map((stat) => {
-          return {
-            date: convertTsMsToLocalUnixTsInMs(stat.ts),
-            value: getStat(stat, type),
-          };
-        })
-        .reverse(),
-    [data]
-  );
+  const seriesData = useMemo(() => {
+    if (!data?.stats) return [] as { label: string; data: StatDatapoint[] }[];
+    const records = [...data.stats].reverse();
+    if (type === "Load Average") {
+      const one = records.map((s) => ({
+        date: convertTsMsToLocalUnixTsInMs(s.ts),
+        value: (s.load_average?.one ?? 0),
+      }));
+      const five = records.map((s) => ({
+        date: convertTsMsToLocalUnixTsInMs(s.ts),
+        value: (s.load_average?.five ?? 0),
+      }));
+      const fifteen = records.map((s) => ({
+        date: convertTsMsToLocalUnixTsInMs(s.ts),
+        value: (s.load_average?.fifteen ?? 0),
+      }));
+      return [
+        { label: "1m", data: one },
+        { label: "5m", data: five },
+        { label: "15m", data: fifteen },
+      ];
+    }
+    const single = records.map((stat) => ({
+      date: convertTsMsToLocalUnixTsInMs(stat.ts),
+      value: getStat(stat, type),
+    }));
+    return [{ label: type, data: single }];
+  }, [data, type]);
 
   return (
     <div className={className}>
@@ -49,10 +65,9 @@ export const StatChart = ({
         <div className="w-full max-w-full h-full flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin" />
         </div>
-      ) : (
-        stats &&
-        stats.length > 0 && <InnerStatChart type={type} stats={stats} />
-      )}
+      ) : seriesData.length > 0 ? (
+        <InnerStatChart type={type} stats={seriesData.flatMap((s) => s.data)} seriesData={seriesData} />
+      ) : null}
     </div>
   );
 };
@@ -64,9 +79,11 @@ const BYTES_PER_KB = 1024.0;
 export const InnerStatChart = ({
   type,
   stats,
+  seriesData,
 }: {
   type: StatType;
   stats: StatDatapoint[] | undefined;
+  seriesData?: { label: string; data: StatDatapoint[] }[];
 }) => {
   const { theme: _theme } = useTheme();
   const theme =
@@ -99,7 +116,8 @@ export const InnerStatChart = ({
   }, []);
 
   // Determine the dynamic scaling for network-related types
-  const maxStatValue = Math.max(...(stats?.map((d) => d.value) ?? [0]));
+  const allValues = (seriesData ?? [{ data: stats ?? [] }]).flatMap((s) => s.data.map((d) => d.value));
+  const maxStatValue = Math.max(...(allValues.length ? allValues : [0]));
 
   const { unit, maxUnitValue } = useMemo(() => {
     if (type === "Network Ingress" || type === "Network Egress") {
@@ -112,6 +130,10 @@ export const InnerStatChart = ({
       } else {
         return { unit: "TB", maxUnitValue: BYTES_PER_GB * 1024 }; // Larger scale for high values
       }
+    }
+    if (type === "Load Average") {
+      // Leave unitless; set max slightly above observed
+      return { unit: "", maxUnitValue: maxStatValue === 0 ? 1 : maxStatValue * 1.2 };
     }
     return { unit: "", maxUnitValue: 100 }; // Default for CPU, memory, disk
   }, [type, maxStatValue]);
@@ -128,7 +150,9 @@ export const InnerStatChart = ({
             <div className="text-lg font-mono">
               {(type === "Network Ingress" || type === "Network Egress") && unit
                 ? `${(value ?? 0) / (maxUnitValue / 1024)} ${unit}`
-                : `${value?.toFixed(2)}%`}
+                : type === "Load Average"
+                  ? `${(value ?? 0).toFixed(2)}`
+                  : `${value?.toFixed(2)}%`}
             </div>
           ),
         },
@@ -139,12 +163,7 @@ export const InnerStatChart = ({
   return (
     <Chart
       options={{
-        data: [
-          {
-            label: type,
-            data: stats ?? [],
-          },
-        ],
+        data: seriesData ?? [{ label: type, data: stats ?? [] }],
         primaryAxis: timeAxis,
         secondaryAxes: valueAxis,
         defaultColors: [getColor(type)],
