@@ -142,7 +142,8 @@ export const InnerStatChart = ({
     (): AxisOptions<StatDatapoint>[] => [
       {
         getValue: (datum) => datum.value,
-        elementType: "area",
+        elementType: type === "Load Average" ? "line" : "area",
+        stacked: type !== "Load Average",
         min: 0,
         max: maxUnitValue,
         formatters: {
