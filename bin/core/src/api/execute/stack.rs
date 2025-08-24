@@ -1,7 +1,9 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, str::FromStr};
 
 use anyhow::Context;
-use database::mungos::mongodb::bson::{doc, to_document};
+use database::mungos::mongodb::bson::{
+  doc, oid::ObjectId, to_bson, to_document,
+};
 use formatting::format_serror;
 use interpolate::Interpolator;
 use komodo_client::{
@@ -364,23 +366,21 @@ impl Resolve<ExecuteArgs> for DeployStackIfChanged {
         // host before restart.
         maybe_pull_stack(&stack, Some(&mut update)).await?;
 
-        // The existing update is initialized to DeployStack,
-        // but also has not been created on database.
-        // Setup a new update here.
-        let req = ExecuteRequest::RestartStack(RestartStack {
-          stack: stack.name,
-          services: Vec::new(),
-        });
-        let update = init_execution_update(&req, user).await?;
-        let ExecuteRequest::RestartStack(req) = req else {
-          unreachable!()
-        };
-        req
-          .resolve(&ExecuteArgs {
-            user: user.clone(),
-            update,
-          })
-          .await
+        let mut update =
+          restart_services(stack.name, Vec::new(), user).await?;
+
+        if update.success {
+          // Need to update 'info.deployed_contents' with the
+          // latest contents.
+          update_deployed_contents_with_latest(
+            &stack.id,
+            stack.info.remote_contents,
+            &mut update,
+          )
+          .await;
+        }
+
+        Ok(update)
       }
       DeployIfChangedAction::Services { deploy, restart } => {
         match (deploy.is_empty(), restart.is_empty()) {
@@ -401,7 +401,22 @@ impl Resolve<ExecuteArgs> for DeployStackIfChanged {
             // PullStack in order to ensure latest repo contents on the
             // host before restart. Only necessary if no "deploys" (deploy already pulls stack).
             maybe_pull_stack(&stack, Some(&mut update)).await?;
-            restart_services(stack.name, restart, user).await
+
+            let mut update =
+              restart_services(stack.name, restart, user).await?;
+
+            if update.success {
+              // Need to update 'info.deployed_contents' with the
+              // latest contents.
+              update_deployed_contents_with_latest(
+                &stack.id,
+                stack.info.remote_contents,
+                &mut update,
+              )
+              .await;
+            }
+
+            Ok(update)
           }
           // Only deploy
           (false, true) => {
@@ -494,6 +509,59 @@ async fn restart_services(
       update,
     })
     .await
+}
+
+/// This can safely be called in [DeployStackIfChanged]
+/// when there are ONLY changes to config files requiring restart,
+/// AFTER the restart has been successfully completed.
+///
+/// In the case the if changed action is not FullDeploy,
+/// the only file diff possible is to config files.
+/// Also note either full or service deploy will already update 'deployed_contents'
+/// making this method unnecessary in those cases.
+///
+/// Changes to config files after restart is applied should
+/// be taken as the deployed contents, otherwise next changed check
+/// will restart service again for no reason.
+async fn update_deployed_contents_with_latest(
+  id: &str,
+  contents: Option<Vec<StackRemoteFileContents>>,
+  update: &mut Update,
+) {
+  let Some(contents) = contents else {
+    return;
+  };
+  let contents = contents
+    .into_iter()
+    .map(|f| FileContents {
+      path: f.path,
+      contents: f.contents,
+    })
+    .collect::<Vec<_>>();
+  if let Err(e) = (async {
+    let contents = to_bson(&contents)
+      .context("Failed to serialize contents to bson")?;
+    let id =
+      ObjectId::from_str(id).context("Id is not valid ObjectId")?;
+    db_client()
+      .stacks
+      .update_one(
+        doc! { "_id": id },
+        doc! { "$set": { "info.deployed_contents": contents } },
+      )
+      .await
+      .context("Failed to update stack 'deployed_contents'")?;
+    anyhow::Ok(())
+  })
+  .await
+  {
+    update.push_error_log(
+      "Update content cache",
+      format_serror(&e.into()),
+    );
+    update.finalize();
+    let _ = update_update(update.clone()).await;
+  }
 }
 
 enum DeployIfChangedAction {
