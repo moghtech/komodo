@@ -12,6 +12,7 @@ import {
   useUser,
   useLocalStorage,
 } from "@lib/hooks";
+import { Types } from "komodo_client";
 import { Input } from "@ui/input";
 import { Button } from "@ui/button";
 import { useState } from "react";
@@ -47,10 +48,10 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
   const [templatesQueryBehavior] = useTemplatesQueryBehavior();
   const resources = useRead(`List${type}s`, query).data;
   const templatesFilterFn =
-    String(templatesQueryBehavior) === "Exclude"
-      ? (resource: any) => !resource.template
-      : String(templatesQueryBehavior) === "Only"
-        ? (resource: any) => resource.template
+    templatesQueryBehavior === Types.TemplatesQueryBehavior.Exclude
+      ? (resource: Types.ResourceListItem<unknown>) => !resource.template
+      : templatesQueryBehavior === Types.TemplatesQueryBehavior.Only
+        ? (resource: Types.ResourceListItem<unknown>) => resource.template
         : () => true;
   const filtered = useFilterResources(resources as any, search).filter(
     templatesFilterFn
