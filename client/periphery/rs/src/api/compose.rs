@@ -272,6 +272,9 @@ pub struct ComposeRun {
   /// Do not start linked services
   #[serde(default)]
   pub no_deps: Option<bool>,
+  /// Detach container on run
+  #[serde(default)]
+  pub detach: Option<bool>,
   /// Map service ports to the host
   #[serde(default)]
   pub service_ports: Option<bool>,

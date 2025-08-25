@@ -712,6 +712,7 @@ impl Resolve<super::Args> for ComposeRun {
       command,
       no_tty,
       no_deps,
+      detach,
       service_ports,
       env,
       workdir,
@@ -783,6 +784,9 @@ impl Resolve<super::Args> for ComposeRun {
     }
 
     let mut run_flags = String::from(" --rm");
+    if detach.unwrap_or_default() {
+      run_flags.push_str(" -d");
+    }
     if no_tty.unwrap_or_default() {
       run_flags.push_str(" --no-tty");
     }
