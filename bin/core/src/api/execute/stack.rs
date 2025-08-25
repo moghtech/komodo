@@ -1033,6 +1033,7 @@ impl Resolve<ExecuteArgs> for RunStackService {
         command: self.command,
         no_tty: self.no_tty,
         no_deps: self.no_deps,
+        detach: self.detach,
         service_ports: self.service_ports,
         env: self.env,
         workdir: self.workdir,

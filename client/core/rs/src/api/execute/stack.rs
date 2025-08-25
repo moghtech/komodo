@@ -379,6 +379,9 @@ pub struct RunStackService {
   /// Do not start linked services
   #[arg(long = "no-deps", action = SetTrue)]
   pub no_deps: Option<bool>,
+  /// Detach container on run
+  #[arg(long = "detach", action = SetTrue)]
+  pub detach: Option<bool>,
   /// Map service ports to the host
   #[arg(long = "service-ports", action = SetTrue)]
   pub service_ports: Option<bool>,
