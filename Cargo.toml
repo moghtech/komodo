@@ -43,7 +43,7 @@ derive_variants = "1.0.0"
 mongo_indexed = "2.0.2"
 resolver_api = "3.0.0"
 toml_pretty = "1.2.0"
-mungos = "3.2.1"
+mungos = "3.2.2"
 svi = "1.2.0"
 
 # ASYNC
@@ -65,9 +65,10 @@ axum = { version = "0.8.4", features = ["ws", "json", "macros"] }
 
 # SER/DE
 ipnetwork = { version = "0.21.1", features = ["serde"] }
-indexmap = { version = "2.10.0", features = ["serde"] }
+indexmap = { version = "2.11.0", features = ["serde"] }
 serde = { version = "1.0.219", features = ["derive"] }
 strum = { version = "0.27.2", features = ["derive"] }
+bson = { version = "2.15.0" } # must keep in sync with mongodb version
 serde_yaml_ng = "0.10.0"
 serde_json = "1.0.143"
 serde_qs = "0.15.0"
@@ -112,7 +113,7 @@ sysinfo = "0.37.0"
 
 # CLOUD
 aws-config = "1.8.5"
-aws-sdk-ec2 = "1.160.0"
+aws-sdk-ec2 = "1.161.0"
 aws-credential-types = "1.2.5"
 
 ## CRON
@@ -122,7 +123,7 @@ chrono = "0.4.41"
 croner = "3.0.0"
 
 # MISC
-async-compression = { version = "0.4.27", features = ["tokio", "gzip"] }
+async-compression = { version = "0.4.28", features = ["tokio", "gzip"] }
 derive_builder = "0.20.2"
 comfy-table = "7.1.4"
 typeshare = "1.0.4"
@@ -130,7 +131,6 @@ octorust = "0.10.0"
 dashmap = "6.1.0"
 wildcard = "0.3.0"
 colored = "3.0.0"
-regex = "1.11.1"
+regex = "1.11.2"
 bytes = "1.10.1"
-bson = "2.15.0"
 shell-escape = "0.1.5"
