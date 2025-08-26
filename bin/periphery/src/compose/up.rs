@@ -43,8 +43,9 @@ pub async fn validate_files(
       "Validate Files",
       format_serror(
         &anyhow!(
-          "Ensure the run_directory and all file paths are correct."
+          "Missing files: {}", res.missing_files.join(", ")
         )
+        .context("Ensure the run_directory and all file paths are correct.")
         .context("A file doesn't exist after writing stack.")
         .into(),
       ),
