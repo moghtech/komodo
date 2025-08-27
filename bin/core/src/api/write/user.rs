@@ -220,6 +220,14 @@ impl Resolve<WriteArgs> for DeleteUser {
       .delete_one(query)
       .await
       .context("Failed to delete user from database")?;
+    // Also remove user id from all user groups
+    if let Err(e) = db
+      .user_groups
+      .update_many(doc! {}, doc! { "$pull": { "users": &user.id } })
+      .await
+    {
+      warn!("Failed to remove deleted user from user groups | {e:?}");
+    };
     Ok(user)
   }
 }
