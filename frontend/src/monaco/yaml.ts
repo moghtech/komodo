@@ -1,4 +1,5 @@
 import * as monaco from "monaco-editor";
+import { configureMonacoYaml } from "monaco-yaml";
 
 // This is the one provided by Microsoft.
 // https://github.com/microsoft/monaco-editor/blob/main/src/basic-languages/yaml/yaml.ts
@@ -252,10 +253,22 @@ const yaml_language = <monaco.languages.IMonarchLanguage>{
   },
 };
 
-monaco.languages.register({ id: "yaml" });
+configureMonacoYaml(monaco, {
+  enableSchemaRequest: true,
+  schemas: [
+    {
+      fileMatch: ["**/*compose.yml", "**/*compose.yaml"],
+      uri: new URL(
+        "/schema/compose-spec.json",
+        window.location.href
+      ).toString(),
+    },
+  ],
+});
+
+monaco.languages.register({ id: "yaml", aliases: ["yml"] });
 monaco.languages.setMonarchTokensProvider("yaml", yaml_language);
 monaco.languages.setLanguageConfiguration("yaml", yaml_conf);
-
 
 /// V1
 // const yaml_conf: monaco.languages.LanguageConfiguration = {
