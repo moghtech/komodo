@@ -187,8 +187,8 @@ impl GoogleOauthClient {
       Ok(body)
     } else {
       let text = res.text().await.context(format!(
-                "method: POST | status: {status} | failed to get response text"
-            ))?;
+        "method: POST | status: {status} | failed to get response text"
+      ))?;
       Err(anyhow!("method: POST | status: {status} | text: {text}"))
     }
   }
@@ -207,5 +207,6 @@ pub struct GoogleUser {
   #[serde(rename = "sub")]
   pub id: String,
   pub email: String,
+  #[serde(default)]
   pub picture: String,
 }
