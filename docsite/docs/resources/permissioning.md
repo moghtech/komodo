@@ -71,7 +71,7 @@ permissions = [
 
 ## Administration
 
-Users can be given Admin priviledges by a `Super Admin` (only the first user is given this status, set with `super_admin: true` on a User document in database). Super admins will see the "Make Admin" button when on a User page `/users/${user_id}`.
+Users can be given Admin privileges by a `Super Admin` (only the first user is given this status, set with `super_admin: true` on a User document in database). Super admins will see the "Make Admin" button when on a User page `/users/${user_id}`.
 
 These users have unrestricted access to all Komodo Resources. Additionally, these users can update other (non-admin) user's permissions on resources.
 
