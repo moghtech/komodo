@@ -56,12 +56,14 @@ export const MonacoEditor = ({
   onValueChange,
   language: _language,
   readOnly,
+  filename,
   minHeight,
   className,
 }: {
   value: string | undefined;
   onValueChange?: (value: string) => void;
   language: MonacoLanguage | undefined;
+  filename?: string;
   readOnly?: boolean;
   minHeight?: number;
   className?: string;
@@ -170,6 +172,7 @@ export const MonacoEditor = ({
         language={language}
         value={value}
         theme={theme}
+        defaultPath={filename ? `file:///${filename}` : undefined}
         options={options}
         onChange={(v) => onValueChange?.(v ?? "")}
         onMount={(editor) => setEditor(editor)}
