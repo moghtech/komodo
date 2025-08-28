@@ -347,7 +347,7 @@ async fn execute_command_on_terminal(
   );
 
   let full_command = format!(
-    "printf '\n{START_OF_OUTPUT}\n\n'; {command}; rc=$? printf '\n{KOMODO_EXIT_CODE}%d\n{END_OF_OUTPUT}\n' \"$rc\"\n"
+    "printf '\n{START_OF_OUTPUT}\n\n'; {command}; rc=$?; printf '\n{KOMODO_EXIT_CODE}%d\n{END_OF_OUTPUT}\n' \"$rc\"\n"
   );
 
   terminal
