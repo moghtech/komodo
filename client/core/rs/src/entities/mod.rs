@@ -515,10 +515,12 @@ impl RepoExecutionArgs {
       Some(token) => match token.split_once(':') {
         Some((username, token)) => format!(
           "{}:{}@",
-          urlencoding::encode(username),
-          urlencoding::encode(token)
+          urlencoding::encode(username.trim()),
+          urlencoding::encode(token.trim())
         ),
-        None => format!("token:{}@", urlencoding::encode(token)),
+        None => {
+          format!("token:{}@", urlencoding::encode(token.trim()))
+        }
       },
       None => String::new(),
     };
