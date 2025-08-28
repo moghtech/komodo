@@ -1,5 +1,6 @@
-import { KomodoClient as Client, Types as KomodoTypes } from "./client/lib.js";
+import { KomodoClient as Client } from "./client/lib.js";
 import "./deno.d.ts";
+import "./client/types_namespace.d.ts";
 
 declare global {
   // =================
@@ -756,8 +757,6 @@ declare global {
   var komodo: ReturnType<typeof Client>;
   /** KomodoClient initializer */
   var KomodoClient: typeof Client;
-  /** All Komodo Types */
-  export import Types = KomodoTypes;
   /** The incoming arguments */
   var ARGS: {
     WEBHOOK_BRANCH?: string;
