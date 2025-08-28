@@ -125,6 +125,8 @@ pub struct Env {
   pub komodo_logging_opentelemetry_service_name: Option<String>,
   /// Override `pretty_startup_config`
   pub komodo_pretty_startup_config: Option<bool>,
+  /// Override `unsafe_unsanitized_startup_config`
+  pub komodo_unsafe_unsanitized_startup_config: Option<bool>,
 
   /// Override `transparent_mode`
   pub komodo_transparent_mode: Option<bool>,
@@ -509,6 +511,11 @@ pub struct CoreConfig {
   #[serde(default)]
   pub pretty_startup_config: bool,
 
+  /// Unsafe: logs unsanitized config on startup,
+  /// in order to verify everything is being
+  /// passed correctly.
+  pub unsafe_unsanitized_startup_config: bool,
+
   // ===========
   // = Pruning =
   // ===========
@@ -729,6 +736,7 @@ impl Default for CoreConfig {
       github_webhook_app: Default::default(),
       logging: Default::default(),
       pretty_startup_config: Default::default(),
+      unsafe_unsanitized_startup_config: Default::default(),
       keep_stats_for_days: default_prune_days(),
       keep_alerts_for_days: default_prune_days(),
       resource_poll_interval: default_poll_interval(),
@@ -772,6 +780,8 @@ impl CoreConfig {
       keep_alerts_for_days: config.keep_alerts_for_days,
       logging: config.logging,
       pretty_startup_config: config.pretty_startup_config,
+      unsafe_unsanitized_startup_config: config
+        .unsafe_unsanitized_startup_config,
       transparent_mode: config.transparent_mode,
       ui_write_disabled: config.ui_write_disabled,
       disable_confirm_dialog: config.disable_confirm_dialog,
