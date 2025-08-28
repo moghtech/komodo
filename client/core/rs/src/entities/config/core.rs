@@ -514,6 +514,7 @@ pub struct CoreConfig {
   /// Unsafe: logs unsanitized config on startup,
   /// in order to verify everything is being
   /// passed correctly.
+  #[serde(default)]
   pub unsafe_unsanitized_startup_config: bool,
 
   // ===========
