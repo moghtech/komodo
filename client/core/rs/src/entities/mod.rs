@@ -511,8 +511,15 @@ impl RepoExecutionArgs {
     &self,
     access_token: Option<&str>,
   ) -> anyhow::Result<String> {
-    let access_token_at = match &access_token {
-      Some(token) => format!("token:{token}@"),
+    let access_token_at = match access_token {
+      Some(token) => match token.split_once(':') {
+        Some((username, token)) => format!(
+          "{}:{}@",
+          urlencoding::encode(username),
+          urlencoding::encode(token)
+        ),
+        None => format!("token:{}@", urlencoding::encode(token)),
+      },
       None => String::new(),
     };
     let protocol = if self.https { "https" } else { "http" };

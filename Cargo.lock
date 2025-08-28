@@ -2696,6 +2696,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "typeshare",
+ "urlencoding",
  "uuid",
 ]
 
