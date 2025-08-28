@@ -1,7 +1,13 @@
 import * as monaco from "monaco-editor";
 
 export async function init_monaco() {
-  const promises = ["lib", "responses", "types", "terminal"].map((file) =>
+  const promises = [
+    "lib",
+    "responses",
+    "types",
+    "types_namespace",
+    "terminal",
+  ].map((file) =>
     Promise.all(
       [".js", ".d.ts"].map((extension) =>
         fetch(`/client/${file}${extension}`)
