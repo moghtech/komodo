@@ -284,6 +284,8 @@ async fn write_stack_file_contents_git(
     }
   }
 
+  // Save this for later -- repo_args moved next.
+  let branch = repo_args.branch.clone();
   // Pull latest changes to repo to ensure linear commit history
   match git::pull_or_clone(
     repo_args,
@@ -334,7 +336,7 @@ async fn write_stack_file_contents_git(
     &format!("{username}: Write Stack File"),
     &root,
     &file_path,
-    &stack.config.branch,
+    &branch,
   )
   .await;
 
