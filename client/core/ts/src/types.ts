@@ -7713,6 +7713,8 @@ export interface RunStackService {
 	no_tty?: boolean;
 	/** Do not start linked services */
 	no_deps?: boolean;
+	/** Detach container on run */
+	detach?: boolean;
 	/** Map service ports to the host */
 	service_ports?: boolean;
 	/** Extra environment variables for the run */

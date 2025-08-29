@@ -263,6 +263,7 @@ export const StackInfo = ({
                     value={edits[content.path] ?? content.contents}
                     language={language_from_path(content.path)}
                     readOnly={!canEdit}
+                    filename={content.path}
                     onValueChange={editFileCallback(content.path)}
                   />
                 </CardContent>

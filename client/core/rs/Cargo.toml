@@ -28,6 +28,7 @@ resolver_api.workspace = true
 # external
 tokio-tungstenite.workspace = true
 derive_builder.workspace = true
+urlencoding.workspace = true
 serde_json.workspace = true
 tokio-util.workspace = true
 thiserror.workspace = true

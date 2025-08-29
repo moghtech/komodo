@@ -1132,6 +1132,7 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
       command: undefined,
       no_tty: undefined,
       no_deps: undefined,
+      detach: undefined,
       service_ports: undefined,
       env: undefined,
       workdir: undefined,
@@ -1151,6 +1152,7 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
       );
       const [no_tty, setNoTty] = useState(!!params.no_tty);
       const [no_deps, setNoDeps] = useState(!!params.no_deps);
+      const [detach, setDetach] = useState(!!params.detach);
       const [service_ports, setServicePorts] = useState(!!params.service_ports);
       const [workdir, setWorkdir] = useState(params.workdir ?? "");
       const [user, setUser] = useState(params.user ?? "");
@@ -1175,6 +1177,7 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
         );
         setNoTty(!!params.no_tty);
         setNoDeps(!!params.no_deps);
+        setDetach(!!params.detach);
         setServicePorts(!!params.service_ports);
         setWorkdir(params.workdir ?? "");
         setUser(params.user ?? "");
@@ -1216,6 +1219,7 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
           user: user || undefined,
           entrypoint: entrypoint || undefined,
           pull: pull ? true : undefined,
+          detach: detach ? true : undefined,
           env,
         } as any);
         setOpen(false);
@@ -1272,6 +1276,10 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
                 <label className="flex items-center gap-2">
                   <Switch checked={no_deps} onCheckedChange={setNoDeps} />
                   <span className="text-sm">No Dependencies</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <Switch checked={detach} onCheckedChange={setDetach} />
+                  <span className="text-sm">Detach</span>
                 </label>
                 <label className="flex items-center gap-2">
                   <Switch

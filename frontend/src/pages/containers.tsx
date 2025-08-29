@@ -162,6 +162,23 @@ export default function ContainersPage() {
             {
               accessorKey: "ports.0",
               size: 200,
+              sortingFn: (a, b) => {
+                const getMinHostPort = (row: typeof a) => {
+                  const ports = row.original.ports ?? [];
+                  if (!ports.length) return Number.POSITIVE_INFINITY;
+                  const nums = ports
+                    .map((p) => p.PublicPort)
+                    .filter((p): p is number => typeof p === "number")
+                    .map((n) => Number(n));
+                  if (!nums.length || nums.some((n) => Number.isNaN(n))) {
+                    return Number.POSITIVE_INFINITY;
+                  }
+                  return Math.min(...nums);
+                };
+                const pa = getMinHostPort(a);
+                const pb = getMinHostPort(b);
+                return pa === pb ? 0 : pa > pb ? 1 : -1;
+              },
               header: ({ column }) => (
                 <SortableHeader column={column} title="Ports" />
               ),

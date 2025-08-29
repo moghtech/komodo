@@ -879,6 +879,7 @@ export const StackConfig = ({
                     value={
                       show_default ? DEFAULT_STACK_FILE_CONTENTS : file_contents
                     }
+                    filename="compose.yaml"
                     onValueChange={(file_contents) => set({ file_contents })}
                     language="yaml"
                     readOnly={disabled}

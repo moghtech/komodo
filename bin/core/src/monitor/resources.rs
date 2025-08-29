@@ -81,7 +81,7 @@ pub async fn update_deployment_cache(
         // If image already has tag, leave it,
         // otherwise default the tag to latest
         if image.contains(':') {
-          image
+          image.to_string()
         } else {
           format!("{image}:latest")
         }
@@ -92,6 +92,9 @@ pub async fn update_deployment_cache(
       ..
     }) = &container
     {
+      // Docker will automatically strip `docker.io` from incoming image names re #468.
+      // Need to strip it in order to match by image name and find available updates.
+      let image = image.strip_prefix("docker.io/").unwrap_or(&image);
       images
         .iter()
         .find(|i| i.name == image)
@@ -250,20 +253,21 @@ pub async fn update_stack_cache(
           }
         }.is_match(&container.name)
       }).cloned();
-      // If image already has tag, leave it,
-      // otherwise default the tag to latest
-      let image = image.clone();
       let image = if image.contains(':') {
-        image
+        image.to_string()
       } else {
-        image + ":latest"
+        format!("{image}:latest")
       };
       let update_available = if let Some(ContainerListItem { image_id: Some(curr_image_id), .. }) = &container {
+        // Docker will automatically strip `docker.io` from incoming image names re #468.
+        // Need to strip it in order to match by image tag and find available update.
+        let image =
+          image.strip_prefix("docker.io/").unwrap_or(&image);
         images
-        .iter()
-        .find(|i| i.name == image)
-        .map(|i| &i.id != curr_image_id)
-        .unwrap_or_default()
+          .iter()
+          .find(|i| i.name == image)
+          .map(|i| &i.id != curr_image_id)
+          .unwrap_or_default()
       } else {
         false
       };
