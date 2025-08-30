@@ -93,24 +93,6 @@ import {
 } from "@ui/select";
 import { useServer } from "./resources/server";
 
-export const WithLoading = ({
-  children,
-  isLoading,
-  loading,
-  isError,
-  error,
-}: {
-  children: ReactNode;
-  isLoading: boolean;
-  loading?: ReactNode;
-  isError: boolean;
-  error?: ReactNode;
-}) => {
-  if (isLoading) return <>{loading ?? "loading"}</>;
-  if (isError) return <>{error ?? null}</>;
-  return <>{children}</>;
-};
-
 export const ActionButton = forwardRef<
   HTMLButtonElement,
   {
