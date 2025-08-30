@@ -15,7 +15,7 @@ import {
   useLoginOptions,
   useUserInvalidate,
 } from "@lib/hooks";
-import { useRef, type FormEvent } from "react";
+import { type FormEvent } from "react";
 import { ThemeToggle } from "@ui/theme";
 import { KOMODO_BASE_URL } from "@main";
 import { KeyRound, X } from "lucide-react";
@@ -40,7 +40,6 @@ export default function Login() {
   const options = useLoginOptions().data;
   const userInvalidate = useUserInvalidate();
   const { toast } = useToast();
-  const formRef = useRef<HTMLFormElement>(null);
 
   // If signing in another user, need to redirect away from /login manually
   const maybeNavigate = location.pathname.startsWith("/login")
@@ -98,20 +97,17 @@ export default function Login() {
     },
   });
 
-  const handleLoginSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const username = String(fd.get("username") ?? "");
     const password = String(fd.get("password") ?? "");
-    login({ username, password });
-  };
-
-  const handleSignupClick = () => {
-    if (!formRef.current) return;
-    const fd = new FormData(formRef.current);
-    const username = String(fd.get("username") ?? "");
-    const password = String(fd.get("password") ?? "");
-    signup({ username, password });
+    const action = String(fd.get("action") ?? "login");
+    if (action === "signup") {
+      signup({ username, password });
+    } else {
+      login({ username, password });
+    }
   };
 
   const no_auth_configured =
@@ -124,7 +120,6 @@ export default function Login() {
   return (
     <div className="flex flex-col min-h-screen">
       <div className="container flex justify-end items-center h-16">
-        {/* <img src="/komodo-512x512.png" className="w-[32px]" /> */}
         <ThemeToggle />
       </div>
       <div
@@ -181,8 +176,7 @@ export default function Login() {
           </CardHeader>
           {options?.local && (
             <form
-              ref={formRef}
-              onSubmit={handleLoginSubmit}
+              onSubmit={handleSubmit}
               autoComplete="on"
             >
               <CardContent className="flex flex-col justify-center w-full gap-4">
@@ -210,8 +204,9 @@ export default function Login() {
                 {show_sign_up && (
                   <Button
                     variant="outline"
-                    type="button"
-                    onClick={handleSignupClick}
+                    type="submit"
+                    name="action"
+                    value="signup"
                     disabled={signupPending}
                   >
                     Sign Up
@@ -220,6 +215,8 @@ export default function Login() {
                 <Button
                   variant="default"
                   type="submit"
+                  name="action"
+                  value="login"
                   disabled={loginPending}
                 >
                   Log In
@@ -230,15 +227,14 @@ export default function Login() {
           {no_auth_configured && (
             <CardContent className="w-full gap-2 text-muted-foreground text-sm">
               No login methods have been configured. See the
-              <Button variant="link" className="text-sm py-0 px-1">
-                <a
-                  href="https://github.com/moghtech/komodo/blob/main/config/core.config.toml"
-                  target="_blank"
-                  className="flex text-sm"
-                >
-                  example config
-                </a>
-              </Button>
+              <a
+                href="https://github.com/moghtech/komodo/blob/main/config/core.config.toml"
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm py-0 px-1 underline"
+              >
+                example config
+              </a>
               for information on configuring auth.
             </CardContent>
           )}
