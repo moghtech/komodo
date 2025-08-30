@@ -1220,6 +1220,35 @@ export const TemplateQueryBehaviorSelector = () => {
   );
 };
 
+export type ServerAddress = {
+  raw: string;
+  protocol: "http:" | "https:";
+  hostname: string;
+};
+
+export const useServerAddress = (
+  server_id: string | undefined
+): ServerAddress | null => {
+  const server = useServer(server_id);
+
+  if (!server) return null;
+  const base = server.info.external_address || server.info.address;
+
+  const parsed = (() => {
+    try {
+      return new URL(base);
+    } catch {
+      return new URL("http://" + base);
+    }
+  })();
+
+  return {
+    raw: base,
+    protocol: parsed.protocol === "https:" ? "https:" : "http:",
+    hostname: parsed.hostname,
+  };
+};
+
 export const ContainerPortLink = ({
   host_port,
   ports,
@@ -1229,19 +1258,29 @@ export const ContainerPortLink = ({
   ports: Types.Port[];
   server_id: string | undefined;
 }) => {
-  const server = useServer(server_id);
-  // Get the server address with periphery port removed
-  const server_address = server?.info.external_address
-    ? server.info.external_address
-    : server?.info.address
-        .split(":")
-        // take just protocol and dns (indexes 0 and 1)
-        .filter((_, i) => i < 2)
-        .join(":");
-  const link =
-    host_port === "443"
-      ? server_address
-      : server_address?.replace("https", "http") + ":" + host_port;
+  const server_address = useServerAddress(server_id);
+
+  if (!server_address) return null;
+
+  const isHttps = server_address.protocol === "https:";
+  const link = host_port === "443" && isHttps
+    ? `https://${server_address.hostname}`
+    : `http://${server_address.hostname}:${host_port}`;
+
+  const uniqueHostPorts = Array.from(
+    new Set(
+      ports
+        .map((p) => p.PublicPort)
+        .filter((p): p is number => typeof p === "number")
+        .map((n) => Number(n))
+        .filter((n) => !Number.isNaN(n))
+    )
+  ).sort((a, b) => a - b);
+  const display_text =
+    uniqueHostPorts.length <= 1
+      ? String(uniqueHostPorts[0] ?? host_port)
+      : `${uniqueHostPorts[0]}-${uniqueHostPorts[uniqueHostPorts.length - 1]}`;
+
   return (
     <Tooltip>
       <TooltipTrigger>
@@ -1253,7 +1292,7 @@ export const ContainerPortLink = ({
           <EthernetPort
             className={cn("w-4 h-4", stroke_color_class_by_intention("Good"))}
           />
-          {host_port}
+          {display_text}
         </a>
       </TooltipTrigger>
       <TooltipContent className="flex flex-col gap-2 w-fit">
@@ -1265,12 +1304,18 @@ export const ContainerPortLink = ({
           <LinkIcon className="w-3 h-3" />
           {link}
         </a>
-        {ports.map((port, i) => (
+        {ports.slice(0, 10).map((port, i) => (
           <div key={i} className="flex gap-2 text-sm text-muted-foreground">
-            <div>-</div>
+            <span>-</span>
             <div>{fmt_port_mount(port)}</div>
           </div>
         ))}
+        {ports.length > 10 && (
+          <div className="flex gap-2 text-sm text-muted-foreground">
+            <span>+</span>
+            <div>{ports.length - 10} more…</div>
+          </div>
+        )}
       </TooltipContent>
     </Tooltip>
   );
@@ -1283,24 +1328,38 @@ export const ContainerPortsTableView = ({
   ports: Types.Port[];
   server_id: string | undefined;
 }) => {
-  const map = useContainerPortsMap(ports);
-  const host_ports = Object.keys(map);
+  const portsMap = useContainerPortsMap(ports);
+  const sortedNumericPorts = Object.keys(portsMap)
+    .map(Number)
+    .filter((port) => !Number.isNaN(port))
+    .sort((a, b) => a - b);
+
+  type Group = { start: number; end: number; ports: Types.Port[] };
+
+  const groupedPorts = sortedNumericPorts.reduce<Group[]>((acc, port) => {
+    const lastGroup = acc[acc.length - 1];
+    const currentPorts = portsMap[String(port)] || [];
+    if (lastGroup && port === lastGroup.end + 1) {
+      lastGroup.end = port;
+      lastGroup.ports.push(...currentPorts);
+    } else {
+      acc.push({ start: port, end: port, ports: currentPorts });
+    }
+    return acc;
+  }, []);
+
   return (
     <div className="flex items-center gap-x-1 flex-wrap">
-      {host_ports.map((host_port, i) => {
-        return (
-          <Fragment key={host_port}>
-            <ContainerPortLink
-              host_port={host_port}
-              ports={map[host_port]}
-              server_id={server_id}
-            />
-            {i !== host_ports.length - 1 && (
-              <div className="text-muted-foreground">|</div>
-            )}
-          </Fragment>
-        );
-      })}
+      {groupedPorts.map((group, i) => (
+        <Fragment key={group.start}>
+          {i > 0 && <span className="text-muted-foreground">|</span>}
+          <ContainerPortLink
+            host_port={String(group.start)}
+            ports={group.ports}
+            server_id={server_id}
+          />
+        </Fragment>
+      ))}
     </div>
   );
 };
