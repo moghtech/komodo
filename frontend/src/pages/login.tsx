@@ -15,7 +15,7 @@ import {
   useLoginOptions,
   useUserInvalidate,
 } from "@lib/hooks";
-import { useState } from "react";
+import { useRef, type FormEvent } from "react";
 import { ThemeToggle } from "@ui/theme";
 import { KOMODO_BASE_URL } from "@main";
 import { KeyRound, X } from "lucide-react";
@@ -38,9 +38,9 @@ const login_with_oauth = (provider: OauthProvider) => {
 
 export default function Login() {
   const options = useLoginOptions().data;
-  const [creds, set] = useState({ username: "", password: "" });
   const userInvalidate = useUserInvalidate();
   const { toast } = useToast();
+  const formRef = useRef<HTMLFormElement>(null);
 
   // If signing in another user, need to redirect away from /login manually
   const maybeNavigate = location.pathname.startsWith("/login")
@@ -98,7 +98,21 @@ export default function Login() {
     },
   });
 
-  
+  const handleLoginSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const username = String(fd.get("username") ?? "");
+    const password = String(fd.get("password") ?? "");
+    login({ username, password });
+  };
+
+  const handleSignupClick = () => {
+    if (!formRef.current) return;
+    const fd = new FormData(formRef.current);
+    const username = String(fd.get("username") ?? "");
+    const password = String(fd.get("password") ?? "");
+    signup({ username, password });
+  };
 
   const no_auth_configured =
     options !== undefined &&
@@ -166,28 +180,29 @@ export default function Login() {
             </div>
           </CardHeader>
           {options?.local && (
-            <>
+            <form
+              ref={formRef}
+              onSubmit={handleLoginSubmit}
+              autoComplete="on"
+            >
               <CardContent className="flex flex-col justify-center w-full gap-4">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="username">Username</Label>
                   <Input
                     id="username"
-                    value={creds.username}
-                    onChange={({ target }) =>
-                      set((c) => ({ ...c, username: target.value }))
-                    }
+                    name="username"
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    autoCorrect="off"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="password">Password</Label>
                   <Input
                     id="password"
+                    name="password"
                     type="password"
-                    value={creds.password}
-                    onChange={({ target }) =>
-                      set((c) => ({ ...c, password: target.value }))
-                    }
-                    onKeyDown={(e) => e.key === "Enter" && login(creds)}
+                    autoComplete="current-password"
                   />
                 </div>
               </CardContent>
@@ -195,7 +210,8 @@ export default function Login() {
                 {show_sign_up && (
                   <Button
                     variant="outline"
-                    onClick={() => signup(creds)}
+                    type="button"
+                    onClick={handleSignupClick}
                     disabled={signupPending}
                   >
                     Sign Up
@@ -203,13 +219,13 @@ export default function Login() {
                 )}
                 <Button
                   variant="default"
-                  onClick={() => login(creds)}
+                  type="submit"
                   disabled={loginPending}
                 >
                   Log In
                 </Button>
               </CardFooter>
-            </>
+            </form>
           )}
           {no_auth_configured && (
             <CardContent className="w-full gap-2 text-muted-foreground text-sm">
