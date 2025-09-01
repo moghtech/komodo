@@ -853,9 +853,15 @@ pub async fn delete<T: KomodoResource>(
   );
   update.push_simple_log("Deleted Toml", toml);
 
-  if let Err(e) = T::post_delete(&resource, &mut update).await {
-    update.push_error_log("post delete", format_serror(&e.into()));
-  }
+  tokio::join!(
+    async {
+      if let Err(e) = T::post_delete(&resource, &mut update).await {
+        update
+          .push_error_log("post delete", format_serror(&e.into()));
+      }
+    },
+    delete_from_alerters::<T>(&resource.id)
+  );
 
   refresh_all_resources_cache().await;
 
@@ -863,6 +869,26 @@ pub async fn delete<T: KomodoResource>(
   add_update(update).await?;
 
   Ok(resource)
+}
+
+async fn delete_from_alerters<T: KomodoResource>(id: &str) {
+  let target_bson = doc! {
+    "type": T::resource_type().as_ref(),
+    "id": id,
+  };
+  if let Err(e) = db_client()
+    .alerters
+    .update_many(Document::new(), doc! {
+      "$pull": {
+        "config.resources": &target_bson,
+        "config.except_resources": target_bson,
+      }
+    })
+    .await
+    .context("Failed to clear deleted resource from alerter whitelist / blacklist")
+  {
+    warn!("{e:#}");
+  }
 }
 
 // =======
