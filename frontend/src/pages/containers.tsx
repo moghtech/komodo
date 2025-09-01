@@ -6,33 +6,66 @@ import {
   StatusBadge,
 } from "@components/util";
 import { container_state_intention } from "@lib/color";
-import { useRead } from "@lib/hooks";
+import { useDebounce, useRead } from "@lib/hooks";
 import { DataTable, SortableHeader } from "@ui/data-table";
 import { Input } from "@ui/input";
-import { Box, Search } from "lucide-react";
+import { MultiSelect } from "@ui/multi-select";
+import { Box, Search, RotateCcw } from "lucide-react";
+import { Button } from "@ui/button";
 import { Fragment, useCallback, useMemo, useState } from "react";
 
 export default function ContainersPage() {
   const [search, setSearch] = useState("");
-  const searchSplit = search
+  const [selectedServers, setSelectedServers] = useState<string[]>([]);
+
+  const debouncedSearch = useDebounce(search, 300);
+
+  const searchSplit = debouncedSearch
     .toLowerCase()
     .split(" ")
     .filter((term) => term);
+
   const servers = useRead("ListServers", {}).data;
+  const serverOptions = useMemo(
+    () =>
+      servers?.map((server) => ({
+        label: server.name,
+        value: server.id,
+      })) || [],
+    [servers]
+  );
+
   const serverName = useCallback(
     (id: string) => servers?.find((server) => server.id === id)?.name,
     [servers]
   );
+
   const _containers = useRead("ListAllDockerContainers", {}).data;
+
   const containers = useMemo(
     () =>
       _containers?.filter((c) => {
-        if (searchSplit.length === 0) return true;
-        const lower = c.name.toLowerCase();
-        return searchSplit.every((search) => lower.includes(search));
+        if (searchSplit.length > 0) {
+          const lower = c.name.toLowerCase();
+          const searchMatch = searchSplit.every((search) =>
+            lower.includes(search)
+          );
+          if (!searchMatch) return false;
+        }
+
+        if (selectedServers.length > 0) {
+          return selectedServers.includes(c.server_id!);
+        }
+
+        return true;
       }),
-    [_containers, searchSplit]
+    [_containers, searchSplit, selectedServers]
   );
+
+  const clearAllServers = useCallback(() => {
+    setSelectedServers([]);
+  }, []);
+
   return (
     <Page
       title="Containers"
@@ -44,18 +77,45 @@ export default function ContainersPage() {
       icon={<Box className="w-8 h-8" />}
     >
       <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <div></div>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Server Filter Multi-Select */}
+            <div className="w-[280px]">
+              <MultiSelect
+                options={serverOptions}
+                value={selectedServers}
+                onChange={setSelectedServers}
+                placeholder="Filter by server..."
+                className="w-full h-10"
+              />
+            </div>
+
+            {/* Reset Server Filter Button */}
+            {selectedServers.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearAllServers}
+                className="h-10 px-3"
+              >
+                <RotateCcw className="w-4 h-4 mr-1" />
+                Reset
+              </Button>
+            )}
+          </div>
+
+          {/* Search Input */}
           <div className="relative">
             <Search className="w-4 absolute top-[50%] left-3 -translate-y-[50%] text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="search..."
-              className="pl-8 w-[200px] lg:w-[300px]"
+              className="pl-8 w-[200px] lg:w-[300px] py-0 h-10"
             />
           </div>
         </div>
+
         <DataTable
           data={containers ?? []}
           tableKey="containers-page-v1"
@@ -189,29 +249,6 @@ export default function ContainersPage() {
                 />
               ),
             },
-            // {
-            //   accessorKey: "volumes.0",
-            //   minSize: 300,
-            //   header: ({ column }) => (
-            //     <SortableHeader column={column} title="Volumes" />
-            //   ),
-            //   cell: ({ row }) => (
-            //     <div className="flex items-center gap-x-2 flex-wrap">
-            //       {row.original.volumes.map((volume, i) => (
-            //         <Fragment key={volume}>
-            //           <DockerResourceLink
-            //             type="volume"
-            //             server_id={row.original.server_id!}
-            //             name={volume}
-            //           />
-            //           {i !== row.original.volumes.length - 1 && (
-            //             <div className="text-muted-foreground">|</div>
-            //           )}
-            //         </Fragment>
-            //       ))}
-            //     </div>
-            //   ),
-            // },
           ]}
         />
       </div>
