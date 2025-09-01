@@ -15,7 +15,7 @@ import {
   useLoginOptions,
   useUserInvalidate,
 } from "@lib/hooks";
-import { useState } from "react";
+import { type FormEvent } from "react";
 import { ThemeToggle } from "@ui/theme";
 import { KOMODO_BASE_URL } from "@main";
 import { KeyRound, X } from "lucide-react";
@@ -38,7 +38,6 @@ const login_with_oauth = (provider: OauthProvider) => {
 
 export default function Login() {
   const options = useLoginOptions().data;
-  const [creds, set] = useState({ username: "", password: "" });
   const userInvalidate = useUserInvalidate();
   const { toast } = useToast();
 
@@ -98,7 +97,18 @@ export default function Login() {
     },
   });
 
-  
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const username = String(fd.get("username") ?? "");
+    const password = String(fd.get("password") ?? "");
+    const action = String(fd.get("action") ?? "login");
+    if (action === "signup") {
+      signup({ username, password });
+    } else {
+      login({ username, password });
+    }
+  };
 
   const no_auth_configured =
     options !== undefined &&
@@ -110,7 +120,6 @@ export default function Login() {
   return (
     <div className="flex flex-col min-h-screen">
       <div className="container flex justify-end items-center h-16">
-        {/* <img src="/komodo-512x512.png" className="w-[32px]" /> */}
         <ThemeToggle />
       </div>
       <div
@@ -166,28 +175,28 @@ export default function Login() {
             </div>
           </CardHeader>
           {options?.local && (
-            <>
+            <form
+              onSubmit={handleSubmit}
+              autoComplete="on"
+            >
               <CardContent className="flex flex-col justify-center w-full gap-4">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="username">Username</Label>
                   <Input
                     id="username"
-                    value={creds.username}
-                    onChange={({ target }) =>
-                      set((c) => ({ ...c, username: target.value }))
-                    }
+                    name="username"
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    autoCorrect="off"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="password">Password</Label>
                   <Input
                     id="password"
+                    name="password"
                     type="password"
-                    value={creds.password}
-                    onChange={({ target }) =>
-                      set((c) => ({ ...c, password: target.value }))
-                    }
-                    onKeyDown={(e) => e.key === "Enter" && login(creds)}
+                    autoComplete="current-password"
                   />
                 </div>
               </CardContent>
@@ -195,7 +204,9 @@ export default function Login() {
                 {show_sign_up && (
                   <Button
                     variant="outline"
-                    onClick={() => signup(creds)}
+                    type="submit"
+                    name="action"
+                    value="signup"
                     disabled={signupPending}
                   >
                     Sign Up
@@ -203,26 +214,27 @@ export default function Login() {
                 )}
                 <Button
                   variant="default"
-                  onClick={() => login(creds)}
+                  type="submit"
+                  name="action"
+                  value="login"
                   disabled={loginPending}
                 >
                   Log In
                 </Button>
               </CardFooter>
-            </>
+            </form>
           )}
           {no_auth_configured && (
             <CardContent className="w-full gap-2 text-muted-foreground text-sm">
               No login methods have been configured. See the
-              <Button variant="link" className="text-sm py-0 px-1">
-                <a
-                  href="https://github.com/moghtech/komodo/blob/main/config/core.config.toml"
-                  target="_blank"
-                  className="flex text-sm"
-                >
-                  example config
-                </a>
-              </Button>
+              <a
+                href="https://github.com/moghtech/komodo/blob/main/config/core.config.toml"
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm py-0 px-1 underline"
+              >
+                example config
+              </a>
               for information on configuring auth.
             </CardContent>
           )}

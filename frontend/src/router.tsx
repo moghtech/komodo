@@ -63,7 +63,7 @@ const useExchangeToken = () => {
 };
 
 export const Router = () => {
-  const { data: user, isLoading, error } = useUser();
+  const { data: user, error } = useUser();
 
   // Handle exchange token loop to avoid showing login flash
   const exchangeTokenPending = useExchangeToken();
@@ -74,8 +74,6 @@ export const Router = () => {
       </div>
     );
   }
-
-  if (isLoading && !user) return null;
 
   if (!user || error) return <Login />;
   if (!user.enabled) return <UserDisabled />;
