@@ -75,7 +75,11 @@ export const Router = () => {
     );
   }
 
-  if (!user || error) return <Login />;
+  // Only how login once error indicating logged out state actually recieved
+  if (error) return <Login />;
+  // Don't display anything if !error and !user. This is loading state.
+  if (!user) return null;
+  // Don't try displaying pages if user disabled, will fail to load with many errors.
   if (!user.enabled) return <UserDisabled />;
 
   return (
