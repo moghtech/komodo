@@ -3,7 +3,7 @@ import { LOGIN_TOKENS, useAuth, useUser } from "@lib/hooks";
 import UpdatePage from "@pages/update";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 
 // Lazy import pages
 const Resources = lazy(() => import("@pages/resources"));
@@ -75,13 +75,6 @@ export const Router = () => {
     );
   }
 
-  // Only how login once error indicating logged out state actually recieved
-  if (error) return <Login />;
-  // Don't display anything if !error and !user. This is loading state.
-  if (!user) return null;
-  // Don't try displaying pages if user disabled, will fail to load with many errors.
-  if (!user.enabled) return <UserDisabled />;
-
   return (
     <Suspense
       fallback={
@@ -93,34 +86,36 @@ export const Router = () => {
       <BrowserRouter>
         <Routes>
           <Route path="login" element={<Login />} />
-          <Route path="/" element={<Layout />}>
-            <Route path="" element={<Home />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="tree" element={<Tree />} />
-            <Route path="containers" element={<ContainersPage />} />
-            <Route path="resources" element={<AllResources />} />
-            <Route path="schedules" element={<SchedulesPage />} />
-            <Route path="alerts" element={<AlertsPage />} />
-            <Route path="user-groups/:id" element={<UserGroupPage />} />
-            <Route path="users/:id" element={<UserPage />} />
-            <Route path="updates">
-              <Route path="" element={<UpdatesPage />} />
-              <Route path=":id" element={<UpdatePage />} />
-            </Route>
-            <Route path=":type">
-              <Route path="" element={<Resources />} />
-              <Route path=":id" element={<Resource />} />
-              <Route
-                path=":id/service/:service"
-                element={<StackServicePage />}
-              />
-              <Route
-                path=":id/container/:container"
-                element={<ContainerPage />}
-              />
-              <Route path=":id/network/:network" element={<NetworkPage />} />
-              <Route path=":id/image/:image" element={<ImagePage />} />
-              <Route path=":id/volume/:volume" element={<VolumePage />} />
+          <Route element={<RequireAuth user={user} error={error} />}>
+            <Route path="/" element={<Layout />}>
+              <Route path="" element={<Home />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="tree" element={<Tree />} />
+              <Route path="containers" element={<ContainersPage />} />
+              <Route path="resources" element={<AllResources />} />
+              <Route path="schedules" element={<SchedulesPage />} />
+              <Route path="alerts" element={<AlertsPage />} />
+              <Route path="user-groups/:id" element={<UserGroupPage />} />
+              <Route path="users/:id" element={<UserPage />} />
+              <Route path="updates">
+                <Route path="" element={<UpdatesPage />} />
+                <Route path=":id" element={<UpdatePage />} />
+              </Route>
+              <Route path=":type">
+                <Route path="" element={<Resources />} />
+                <Route path=":id" element={<Resource />} />
+                <Route
+                  path=":id/service/:service"
+                  element={<StackServicePage />}
+                />
+                <Route
+                  path=":id/container/:container"
+                  element={<ContainerPage />}
+                />
+                <Route path=":id/network/:network" element={<NetworkPage />} />
+                <Route path=":id/image/:image" element={<ImagePage />} />
+                <Route path=":id/volume/:volume" element={<VolumePage />} />
+              </Route>
             </Route>
           </Route>
         </Routes>
@@ -129,6 +124,35 @@ export const Router = () => {
   );
 
   // return <RouterProvider router={ROUTER} />;
+};
+
+type RequireAuthProps = {
+  user: ReturnType<typeof useUser>["data"];
+  error: ReturnType<typeof useUser>["error"];
+};
+
+const RequireAuth = ({ user, error }: RequireAuthProps) => {
+  const location = useLocation();
+
+  if (error) {
+    if (location.pathname === "/") {
+      return <Navigate to="/login" replace />;
+    }
+    const backto = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?backto=${backto}`} replace />;
+  }
+
+  if (!user) {
+    return (
+      <div className="w-screen h-screen flex justify-center items-center">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user.enabled) return <UserDisabled />;
+
+  return <Outlet />;
 };
 
 
