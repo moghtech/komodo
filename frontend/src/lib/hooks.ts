@@ -805,3 +805,24 @@ export const useContainerPortsMap = (ports: Types.Port[]) => {
     return map;
   }, [ports]);
 };
+
+/**
+ * A custom React hook that debounces a value, delaying its update until after
+ * a specified period of inactivity. This is useful for performance optimization
+ * in scenarios like search inputs, form validation, or API calls.
+ */
+export function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
