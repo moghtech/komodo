@@ -242,7 +242,7 @@ async fn ensure_first_server_and_builder() {
       return;
     };
   if let Err(e) = (CreateBuilder {
-    name: String::from("Local"),
+    name: config.first_server_name.clone(),
     config: PartialBuilderConfig::Server(
       PartialServerBuilderConfig {
         server_id: Some(server.id),
