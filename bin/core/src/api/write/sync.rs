@@ -323,6 +323,8 @@ async fn write_sync_file_contents_git(
     }
   }
 
+  // Save this for later -- repo_args moved next.
+  let branch = repo_args.branch.clone();
   // Pull latest changes to repo to ensure linear commit history
   match git::pull_or_clone(
     repo_args,
@@ -373,7 +375,7 @@ async fn write_sync_file_contents_git(
     &format!("{}: Commit Resource File", args.user.username),
     &root,
     &resource_path.join(&file_path),
-    &sync.config.branch,
+    &branch,
   )
   .await;
 

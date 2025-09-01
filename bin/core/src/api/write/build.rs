@@ -186,7 +186,7 @@ async fn write_dockerfile_contents_git(
 ) -> serror::Result<Update> {
   let WriteBuildFileContents { build: _, contents } = req;
 
-  let mut clone_args: RepoExecutionArgs = if !build
+  let mut repo_args: RepoExecutionArgs = if !build
     .config
     .files_on_host
     && !build.config.linked_repo.is_empty()
@@ -196,8 +196,8 @@ async fn write_dockerfile_contents_git(
   } else {
     (&build).into()
   };
-  let root = clone_args.unique_path(&core_config().repo_directory)?;
-  clone_args.destination = Some(root.display().to_string());
+  let root = repo_args.unique_path(&core_config().repo_directory)?;
+  repo_args.destination = Some(root.display().to_string());
 
   let build_path = build
     .config
@@ -220,11 +220,11 @@ async fn write_dockerfile_contents_git(
     })?;
   }
 
-  let access_token = if let Some(account) = &clone_args.account {
-    git_token(&clone_args.provider, account, |https| clone_args.https = https)
+  let access_token = if let Some(account) = &repo_args.account {
+    git_token(&repo_args.provider, account, |https| repo_args.https = https)
     .await
     .with_context(
-      || format!("Failed to get git token in call to db. Stopping run. | {} | {account}", clone_args.provider),
+      || format!("Failed to get git token in call to db. Stopping run. | {} | {account}", repo_args.provider),
     )?
   } else {
     None
@@ -235,7 +235,7 @@ async fn write_dockerfile_contents_git(
   if !root.join(".git").exists() {
     git::init_folder_as_repo(
       &root,
-      &clone_args,
+      &repo_args,
       access_token.as_deref(),
       &mut update.logs,
     )
@@ -249,9 +249,11 @@ async fn write_dockerfile_contents_git(
     }
   }
 
+  // Save this for later -- repo_args moved next.
+  let branch = repo_args.branch.clone();
   // Pull latest changes to repo to ensure linear commit history
   match git::pull_or_clone(
-    clone_args,
+    repo_args,
     &core_config().repo_directory,
     access_token,
   )
@@ -298,7 +300,7 @@ async fn write_dockerfile_contents_git(
     &format!("{}: Commit Dockerfile", args.user.username),
     &root,
     &build_path.join(&dockerfile_path),
-    &build.config.branch,
+    &branch,
   )
   .await;
 
