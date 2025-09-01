@@ -34,12 +34,12 @@ pub async fn send_alert(
       let text = match alert.level {
         SeverityLevel::Ok => {
           format!(
-            "{level} | {name} ({region}) | Server version now matches core version ✅"
+            "{level} | *{name}*{region} | Periphery version now matches Core version ✅"
           )
         }
         _ => {
           format!(
-            "{level} | {name} ({region}) | Version mismatch detected ⚠️\nServer: {server_version} | Core: {core_version}"
+            "{level} | *{name}*{region} | Version mismatch detected ⚠️\nPeriphery: {server_version} | Core: {core_version}"
           )
         }
       };
