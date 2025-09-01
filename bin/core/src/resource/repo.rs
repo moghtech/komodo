@@ -300,6 +300,7 @@ async fn get_repo_state_from_db(id: &str) -> RepoState {
         "$or": [
           { "operation": "CloneRepo" },
           { "operation": "PullRepo" },
+          { "operation": "BuildRepo" },
         ],
       })
       .with_options(
