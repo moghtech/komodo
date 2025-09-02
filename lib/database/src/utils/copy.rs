@@ -55,8 +55,9 @@ pub async fn copy(
             }
           }
           if !buffer.is_empty() {
-            bulk_update_retry_too_big(&target_db, &collection, &buffer, true).await.context("Failed to flush documents")?;
-
+            bulk_update_retry_too_big(&target_db, &collection, &buffer, true)
+              .await
+              .context("Failed to flush documents")?;
           }
           anyhow::Ok(count)
         }
