@@ -63,8 +63,6 @@ const useExchangeToken = () => {
 };
 
 export const Router = () => {
-  const { data: user, error } = useUser();
-
   // Handle exchange token loop to avoid showing login flash
   const exchangeTokenPending = useExchangeToken();
   if (exchangeTokenPending) {
@@ -86,7 +84,7 @@ export const Router = () => {
       <BrowserRouter>
         <Routes>
           <Route path="login" element={<Login />} />
-          <Route element={<RequireAuth user={user} error={error} />}>
+          <Route element={<RequireAuth />}>
             <Route path="/" element={<Layout />}>
               <Route path="" element={<Home />} />
               <Route path="settings" element={<Settings />} />
@@ -126,12 +124,8 @@ export const Router = () => {
   // return <RouterProvider router={ROUTER} />;
 };
 
-type RequireAuthProps = {
-  user: ReturnType<typeof useUser>["data"];
-  error: ReturnType<typeof useUser>["error"];
-};
-
-const RequireAuth = ({ user, error }: RequireAuthProps) => {
+const RequireAuth = () => {
+  const { data: user, error } = useUser();
   const location = useLocation();
 
   if (error) {

@@ -174,7 +174,7 @@ export default function Login() {
               )}
             </div>
           </CardHeader>
-          {(options === undefined || options.local) && (
+          {options?.local && (
             <form
               onSubmit={handleSubmit}
               autoComplete="on"
