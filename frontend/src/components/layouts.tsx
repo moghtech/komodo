@@ -222,6 +222,7 @@ export const NewLayout = ({
 }) => {
   const [open, set] = useState(false);
   const [loading, setLoading] = useState(false);
+  
   return (
     <Dialog
       open={open}
@@ -248,9 +249,14 @@ export const NewLayout = ({
             variant="secondary"
             onClick={async () => {
               setLoading(true);
-              await onConfirm();
-              setLoading(false);
-              set(false);
+              try {
+                await onConfirm();
+                set(false);
+              } catch (error) {
+                console.error("Error creating resource:", error);
+              } finally {
+                setLoading(false);
+              }
             }}
             disabled={!enabled || loading}
           >
