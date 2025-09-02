@@ -172,13 +172,21 @@ export const MonacoEditor = ({
         language={language}
         value={value}
         theme={theme}
-        defaultPath={filename ? `file:///${filename}` : undefined}
+        defaultPath={defaultPath(filename)}
         options={options}
         onChange={(v) => onValueChange?.(v ?? "")}
         onMount={(editor) => setEditor(editor)}
       />
     </div>
   );
+};
+
+const defaultPath = (filename?: string) => {
+  if (!filename) return undefined;
+  // Extract only the filename part of path,
+  // avoiding critical issue when path starts with '/'
+  const split = filename.split("/");
+  return split[split.length - 1];
 };
 
 const MIN_DIFF_HEIGHT = 100;
