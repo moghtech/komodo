@@ -15,7 +15,7 @@ import {
   useLoginOptions,
   useUserInvalidate,
 } from "@lib/hooks";
-import { type FormEvent } from "react";
+import { useRef } from "react";
 import { ThemeToggle } from "@ui/theme";
 import { KOMODO_BASE_URL } from "@main";
 import { KeyRound, X } from "lucide-react";
@@ -40,6 +40,7 @@ export default function Login() {
   const options = useLoginOptions().data;
   const userInvalidate = useUserInvalidate();
   const { toast } = useToast();
+  const formRef = useRef<HTMLFormElement>(null);
 
   // If signing in another user, need to redirect away from /login manually
   const maybeNavigate = location.pathname.startsWith("/login")
@@ -63,13 +64,13 @@ export default function Login() {
         const message = e?.response?.data?.error as string | undefined;
         if (message) {
           toast({
-            title: `Failed to login user. '${message}'`,
+            title: `Failed to sign up user. '${message}'`,
             variant: "destructive",
           });
           console.error(e);
         } else {
           toast({
-            title: "Failed to login user. See console log for details.",
+            title: "Failed to sign up user. See console log for details.",
             variant: "destructive",
           });
           console.error(e);
@@ -97,17 +98,24 @@ export default function Login() {
     },
   });
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
+  const getFormCredentials = () => {
+    if (!formRef.current) return undefined;
+    const fd = new FormData(formRef.current);
     const username = String(fd.get("username") ?? "");
     const password = String(fd.get("password") ?? "");
-    const action = String(fd.get("action") ?? "login");
-    if (action === "signup") {
-      signup({ username, password });
-    } else {
-      login({ username, password });
-    }
+    return { username, password };
+  };
+
+  const handleLogin = () => {
+    const creds = getFormCredentials();
+    if (!creds) return;
+    login(creds);
+  };
+  
+  const handleSignUp = () => {
+    const creds = getFormCredentials();
+    if (!creds) return;
+    signup(creds);
   };
 
   const no_auth_configured =
@@ -176,7 +184,7 @@ export default function Login() {
           </CardHeader>
           {options?.local && (
             <form
-              onSubmit={handleSubmit}
+              ref={formRef}
               autoComplete="on"
             >
               <CardContent className="flex flex-col justify-center w-full gap-4">
@@ -204,9 +212,9 @@ export default function Login() {
                 {show_sign_up && (
                   <Button
                     variant="outline"
-                    type="submit"
-                    name="action"
+                    type="button"
                     value="signup"
+                    onClick={handleSignUp}
                     disabled={signupPending}
                   >
                     Sign Up
@@ -214,9 +222,9 @@ export default function Login() {
                 )}
                 <Button
                   variant="default"
-                  type="submit"
-                  name="action"
+                  type="button"
                   value="login"
+                  onClick={handleLogin}
                   disabled={loginPending}
                 >
                   Log In
