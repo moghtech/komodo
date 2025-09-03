@@ -9,14 +9,14 @@
 ## All fields with a "Default" provided are optional. If they are
 ## left out of the file, the "Default" value will be used.
 
-## This file is bundled into the official image, `ghcr.io/moghtech/komodo`,
+## This file is bundled into the official image, `ghcr.io/moghtech/komodo-core`,
 ## as the default config at `/config/.default.config.toml`.
-## Komodo can start with no external config file mounted.
+## Komodo Core can start with no external config file mounted.
 
 ## Most fields can also be configured using environment variables.
 ## Environment variables will override values set in this file.
 
-## Can also use JSON or YAML if preffered. You can convert here:
+## Can also use JSON or YAML if preferred. You can convert here:
 ##   - YAML: https://it-tools.tech/toml-to-yaml
 ##   - JSON: https://it-tools.tech/toml-to-json
 

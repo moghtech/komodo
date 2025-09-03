@@ -9,7 +9,7 @@
 ## Most fields can also be configured using cli arguments and environment variables.
 ## These will will override values set in this file. (cli args > env > config files).
 
-## You can also use JSON or YAML if preffered. You can convert here:
+## You can also use JSON or YAML if preferred. You can convert here:
 ##   - YAML: https://it-tools.tech/toml-to-yaml
 ##   - JSON: https://it-tools.tech/toml-to-json
 
