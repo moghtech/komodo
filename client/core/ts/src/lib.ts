@@ -50,6 +50,25 @@ export type ClientState = {
   secret: string | undefined;
 };
 
+/**
+ * Joins all interim parts with one separator character
+ * 
+ * @see https://stackoverflow.com/a/55142565/1469797
+ */
+const pathJoin = (parts: string[], sep?: string) => {
+    const separator = sep || '/';
+    parts = parts.map((part, index)=>{
+        if (index) {
+            part = part.replace(new RegExp('^' + separator), '');
+        }
+        if (index !== parts.length - 1) {
+            part = part.replace(new RegExp(separator + '$'), '');
+        }
+        return part;
+    })
+    return parts.join(separator);
+}
+
 /** Initialize a new client for Komodo */
 export function KomodoClient(url: string, options: InitOptions) {
   const state: ClientState = {
@@ -65,7 +84,7 @@ export function KomodoClient(url: string, options: InitOptions) {
   ): Promise<Res> =>
     new Promise(async (res, rej) => {
       try {
-        let response = await fetch(`${url}${path}/${type}`, {
+        let response = await fetch(pathJoin([url, `${path}/${type}`]), {
           method: "POST",
           body: JSON.stringify(params),
           headers: {
