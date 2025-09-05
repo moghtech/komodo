@@ -170,6 +170,7 @@ interface SectionProps {
   actions?: ReactNode;
   // otherwise items-start
   itemsCenterTitleRow?: boolean;
+  className?: string;
 }
 
 export const Section = ({
@@ -180,8 +181,9 @@ export const Section = ({
   actions,
   children,
   itemsCenterTitleRow,
+  className,
 }: SectionProps) => (
-  <div className="flex flex-col gap-4">
+  <div className={cn("flex flex-col gap-4", className)}>
     {(title || icon || titleRight || titleOther || actions) && (
       <div
         className={cn(
@@ -222,7 +224,7 @@ export const NewLayout = ({
 }) => {
   const [open, set] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   return (
     <Dialog
       open={open}

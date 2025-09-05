@@ -45,18 +45,7 @@ const ResourceSyncIcon = ({ id, size }: { id?: string; size: number }) => {
   return <FolderSync className={cn(`w-${size} h-${size}`, state && color)} />;
 };
 
-const pendingViewAtom = atomWithStorage<"Execute" | "Commit">(
-  "sync-view-v1",
-  "Execute"
-);
-export const usePendingView = () => {
-  return useAtom(pendingViewAtom) as [
-    "Execute" | "Commit",
-    (view: "Execute" | "Commit") => void,
-  ];
-};
-
-type ResourceSyncTabsView = "Config" | "Info" | "Pending";
+type ResourceSyncTabsView = "Config" | "Info" | "Execute" | "Commit";
 const syncTabsViewAtom = atomWithStorage<ResourceSyncTabsView>(
   "sync-tabs-v4",
   "Config"
@@ -79,13 +68,15 @@ export const useResourceSyncTabsView = (
   const view =
     _view === "Info" && hideInfo
       ? "Config"
-      : _view === "Pending" && !showPending
+      : (_view === "Execute" || _view === "Commit") && !showPending
         ? sync?.config?.files_on_host ||
           sync?.config?.repo ||
           sync?.config?.linked_repo
           ? "Info"
           : "Config"
-        : _view;
+        : _view === "Commit" && !sync?.config?.managed
+          ? "Execute"
+          : _view;
 
   return {
     view,
@@ -113,12 +104,21 @@ const ConfigInfoPending = ({ id }: { id: string }) => {
         Info
       </TabsTrigger>
       <TabsTrigger
-        value="Pending"
+        value="Execute"
         className="w-[110px]"
         disabled={!showPending}
       >
-        Pending
+        Execute
       </TabsTrigger>
+      {sync?.config?.managed && (
+        <TabsTrigger
+          value="Commit"
+          className="w-[110px]"
+          disabled={!showPending}
+        >
+          Commit
+        </TabsTrigger>
+      )}
     </TabsList>
   );
   return (
@@ -129,7 +129,10 @@ const ConfigInfoPending = ({ id }: { id: string }) => {
       <TabsContent value="Info">
         <ResourceSyncInfo id={id} titleOther={title} />
       </TabsContent>
-      <TabsContent value="Pending">
+      <TabsContent value="Execute">
+        <ResourceSyncPending id={id} titleOther={title} />
+      </TabsContent>
+      <TabsContent value="Commit">
         <ResourceSyncPending id={id} titleOther={title} />
       </TabsContent>
     </Tabs>
