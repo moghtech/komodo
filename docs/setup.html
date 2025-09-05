@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.8.1">
 <title data-rh="true">Setup Komodo Core | Komodo</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://komo.do/img/monitor-lizard.png"><meta data-rh="true" name="twitter:image" content="https://komo.do/img/monitor-lizard.png"><meta data-rh="true" property="og:url" content="https://komo.do/docs/setup"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Setup Komodo Core | Komodo"><meta data-rh="true" name="description" content="To run Komodo, you will need Docker. See the docker install docs."><meta data-rh="true" property="og:description" content="To run Komodo, you will need Docker. See the docker install docs."><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://komo.do/docs/setup"><link data-rh="true" rel="alternate" href="https://komo.do/docs/setup" hreflang="en"><link data-rh="true" rel="alternate" href="https://komo.do/docs/setup" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Setup","item":"https://komo.do/docs/setup/"}]}</script><link rel="stylesheet" href="/assets/css/styles.ec6293c3.css">
-<script src="/assets/js/runtime~main.b00cf2f4.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.e79a9ee9.js" defer="defer"></script>
 <script src="/assets/js/main.c0fc3d5e.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -15,18 +15,11 @@
 <p>To run Komodo, you will need Docker. See <a href="https://docs.docker.com/engine/install/" target="_blank" rel="noopener noreferrer">the docker install docs</a>.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="deploy-with-docker-compose">Deploy with Docker Compose<a href="#deploy-with-docker-compose" class="hash-link" aria-label="Direct link to Deploy with Docker Compose" title="Direct link to Deploy with Docker Compose">​</a></h3>
 <ul>
-<li><a href="/docs/setup/mongo"><strong>Using MongoDB</strong></a>
-<ul>
-<li>Lower CPU usage, Higher RAM usage.</li>
-<li>Some systems <a href="https://github.com/moghtech/komodo/issues/59" target="_blank" rel="noopener noreferrer">do not support running the latest MongoDB versions</a>.</li>
+<li><a href="/docs/setup/mongo"><strong>Using MongoDB</strong></a></li>
+<li><a href="/docs/setup/ferretdb"><strong>Using FerretDB</strong> (Postgres)</a></li>
 </ul>
-</li>
-<li><a href="/docs/setup/ferretdb"><strong>Using FerretDB</strong> (Postgres)</a>
-<ul>
-<li>Lower RAM usage, Higher CPU usage.</li>
-</ul>
-</li>
-</ul>
+<div class="theme-admonition theme-admonition-info admonition_xJq3 alert alert--info"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z"></path></svg></span>info</div><div class="admonitionContent_BuS1"><p>Some systems <a href="https://github.com/moghtech/komodo/issues/59" target="_blank" rel="noopener noreferrer">do not support running the latest MongoDB versions</a>.
+Users with these systems should use FerretDB instead.</p></div></div>
 <div class="theme-admonition theme-admonition-info admonition_xJq3 alert alert--info"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z"></path></svg></span>info</div><div class="admonitionContent_BuS1"><p><strong>FerretDB v1</strong> users:
 There is an <a href="https://github.com/moghtech/komodo/blob/main/bin/cli/docs/copy-database.md#ferretdb-v2-update-guide" target="_blank" rel="noopener noreferrer"><strong>upgrade guide for FerretDB v2</strong> available here</a>.</p></div></div>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="first-login">First login<a href="#first-login" class="hash-link" aria-label="Direct link to First login" title="Direct link to First login">​</a></h3>
