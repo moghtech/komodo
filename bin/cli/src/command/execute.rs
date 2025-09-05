@@ -549,7 +549,7 @@ async fn poll_update_until_complete(
   } else {
     format!("{}/updates/{}", cli_config().host, update.id)
   };
-  println!("Link: '{}'", link);
+  println!("Link: '{}'", link.bold());
 
   let client = super::komodo_client().await?;
 
