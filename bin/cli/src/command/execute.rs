@@ -549,20 +549,20 @@ async fn poll_update_until_complete(
   } else {
     format!("{}/updates/{}", cli_config().host, update.id)
   };
-  info!("Link: '{}'", link.bold());
+  println!("Link: '{}'", link);
 
   let client = super::komodo_client().await?;
 
   let timer = tokio::time::Instant::now();
   let update = client.poll_update_until_complete(&update.id).await?;
   if update.success {
-    info!(
+    println!(
       "FINISHED in {}: {}",
       format!("{:.1?}", timer.elapsed()).bold(),
       "EXECUTION SUCCESSFUL".green(),
     );
   } else {
-    warn!(
+    eprintln!(
       "FINISHED in {}: {}",
       format!("{:.1?}", timer.elapsed()).bold(),
       "EXECUTION FAILED".red(),
