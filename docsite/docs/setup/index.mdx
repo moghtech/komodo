@@ -5,10 +5,12 @@ To run Komodo, you will need Docker. See [the docker install docs](https://docs.
 ### Deploy with Docker Compose
 
 - [**Using MongoDB**](./mongo.mdx)
-  - Lower CPU usage, Higher RAM usage.
-  - Some systems [do not support running the latest MongoDB versions](https://github.com/moghtech/komodo/issues/59).
 - [**Using FerretDB** (Postgres)](./ferretdb.mdx)
-  - Lower RAM usage, Higher CPU usage.
+
+:::info
+Some systems [do not support running the latest MongoDB versions](https://github.com/moghtech/komodo/issues/59).
+Users with these systems should use FerretDB instead.
+:::
 
 :::info
 **FerretDB v1** users:
