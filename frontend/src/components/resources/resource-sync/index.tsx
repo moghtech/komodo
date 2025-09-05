@@ -1,4 +1,4 @@
-import { atomWithStorage, useLocalStorage, useRead, useUser } from "@lib/hooks";
+import { atomWithStorage, useRead, useUser } from "@lib/hooks";
 import { RequiredResourceComponents } from "@types";
 import { Card } from "@ui/card";
 import { Clock, FolderSync } from "lucide-react";
@@ -56,12 +56,16 @@ export const usePendingView = () => {
   ];
 };
 
-const ConfigInfoPending = ({ id }: { id: string }) => {
-  const [_view, setView] = useLocalStorage<"Config" | "Info" | "Pending">(
-    "sync-tabs-v3",
-    "Config"
-  );
-  const sync = useFullResourceSync(id);
+type ResourceSyncTabsView = "Config" | "Info" | "Pending";
+const syncTabsViewAtom = atomWithStorage<ResourceSyncTabsView>(
+  "sync-tabs-v4",
+  "Config"
+);
+
+export const useResourceSyncTabsView = (
+  sync: Types.ResourceSync | undefined
+) => {
+  const [_view, setView] = useAtom<ResourceSyncTabsView>(syncTabsViewAtom);
 
   const hideInfo = sync?.config?.files_on_host
     ? false
@@ -82,6 +86,19 @@ const ConfigInfoPending = ({ id }: { id: string }) => {
           ? "Info"
           : "Config"
         : _view;
+
+  return {
+    view,
+    setView,
+    hideInfo,
+    showPending,
+  };
+};
+
+const ConfigInfoPending = ({ id }: { id: string }) => {
+  const sync = useFullResourceSync(id);
+  const { view, setView, hideInfo, showPending } =
+    useResourceSyncTabsView(sync);
 
   const title = (
     <TabsList className="justify-start w-fit">
@@ -164,7 +181,7 @@ export const ResourceSyncComponents: RequiredResourceComponents = {
   },
 
   GroupActions: () => (
-    <GroupActions type="ResourceSync" actions={["RunSync"]} />
+    <GroupActions type="ResourceSync" actions={["RunSync", "CommitSync"]} />
   ),
 
   Table: ({ resources }) => (

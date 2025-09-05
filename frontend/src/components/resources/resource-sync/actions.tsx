@@ -7,7 +7,11 @@ import { useExecute, useInvalidate, useRead, useWrite } from "@lib/hooks";
 import { file_contents_empty, sync_no_changes } from "@lib/utils";
 import { usePermissions } from "@lib/hooks";
 import { NotebookPen, RefreshCcw, SquarePlay } from "lucide-react";
-import { useFullResourceSync, usePendingView } from ".";
+import {
+  useFullResourceSync,
+  usePendingView,
+  useResourceSyncTabsView,
+} from ".";
 
 export const RefreshSync = ({ id }: { id: string }) => {
   const inv = useInvalidate();
@@ -34,10 +38,12 @@ export const ExecuteSync = ({ id }: { id: string }) => {
     { refetchInterval: 5000 }
   ).data?.syncing;
   const sync = useFullResourceSync(id);
+  const { view } = useResourceSyncTabsView(sync);
   const [_pendingView] = usePendingView();
   const pendingView = sync?.config?.managed ? _pendingView : "Execute";
 
   if (
+    view !== "Pending" ||
     pendingView === "Commit" ||
     !sync ||
     sync_no_changes(sync) ||
@@ -73,11 +79,14 @@ export const ExecuteSync = ({ id }: { id: string }) => {
 export const CommitSync = ({ id }: { id: string }) => {
   const { mutate, isPending } = useWrite("CommitSync");
   const sync = useFullResourceSync(id);
+  const { view } = useResourceSyncTabsView(sync);
   const { canWrite } = usePermissions({ type: "ResourceSync", id });
   const [_pendingView] = usePendingView();
   const pendingView = sync?.config?.managed ? _pendingView : "Execute";
 
-  if (pendingView === "Execute" || !canWrite || !sync) return null;
+  if (view !== "Pending" || pendingView === "Execute" || !canWrite || !sync) {
+    return null;
+  }
 
   const freshSync =
     !sync.config?.files_on_host &&
