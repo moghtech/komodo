@@ -1,13 +1,7 @@
 import { Section } from "@components/layouts";
 import { Card, CardContent, CardHeader, CardTitle } from "@ui/card";
 import { Progress } from "@ui/progress";
-import {
-  Cpu,
-  Database,
-  Loader2,
-  MemoryStick,
-  Search,
-} from "lucide-react";
+import { Cpu, Database, Loader2, MemoryStick, Search } from "lucide-react";
 import { useLocalStorage, usePermissions, useRead } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { DataTable, SortableHeader } from "@ui/data-table";
@@ -336,6 +330,11 @@ export const ServerStats = ({
           }
         >
           <div className="flex flex-col gap-8">
+            <StatChart
+              server_id={id}
+              type="Load Average"
+              className="w-full h-[250px]"
+            />
             <StatChart server_id={id} type="Cpu" className="w-full h-[250px]" />
             <StatChart
               server_id={id}
@@ -345,11 +344,6 @@ export const ServerStats = ({
             <StatChart
               server_id={id}
               type="Disk"
-              className="w-full h-[250px]"
-            />
-            <StatChart
-              server_id={id}
-              type="Load Average"
               className="w-full h-[250px]"
             />
             <StatChart
@@ -501,16 +495,28 @@ const CPU = ({ stats }: { stats: Types.SystemStats | undefined }) => {
   );
 };
 
-const LOAD_AVERAGE = ({ id, stats }: { id: string; stats: Types.SystemStats | undefined }) => {
+const LOAD_AVERAGE = ({
+  id,
+  stats,
+}: {
+  id: string;
+  stats: Types.SystemStats | undefined;
+}) => {
   if (!stats?.load_average) return null;
   const { one = 0, five = 0, fifteen = 0 } = stats.load_average || {};
-  const cores = useRead("GetSystemInformation", { server: id }).data?.core_count;
+  const cores = useRead("GetSystemInformation", { server: id }).data
+    ?.core_count;
 
-  const pct = (load: number) => (cores && cores > 0) ? Math.min((load / cores) * 100, 100) : undefined;
+  const pct = (load: number) =>
+    cores && cores > 0 ? Math.min((load / cores) * 100, 100) : undefined;
   const textColor = (load: number) => {
     const p = pct(load);
     if (p === undefined) return "text-muted-foreground";
-    return p <= 50 ? "text-green-600" : p <= 80 ? "text-yellow-600" : "text-red-600";
+    return p <= 50
+      ? "text-green-600"
+      : p <= 80
+        ? "text-yellow-600"
+        : "text-red-600";
   };
 
   return (
@@ -524,15 +530,18 @@ const LOAD_AVERAGE = ({ id, stats }: { id: string; stats: Types.SystemStats | un
         {/* Current Load */}
         <div className="space-y-2">
           <div className="flex items-baseline justify-between">
-            <span className={`text-3xl font-bold tabular-nums ${textColor(one)}`}>{one.toFixed(2)}</span>
+            <span
+              className={`text-3xl font-bold tabular-nums ${textColor(one)}`}
+            >
+              {one.toFixed(2)}
+            </span>
             <span className="text-sm text-muted-foreground">
-              {cores && cores > 0 ? `${(pct(one) ?? 0).toFixed(0)}% of ${cores} cores` : "N/A"}
+              {cores && cores > 0
+                ? `${(pct(one) ?? 0).toFixed(0)}% of ${cores} cores`
+                : "N/A"}
             </span>
           </div>
-          <Progress
-            value={pct(one) ?? 0}
-            className="h-2"
-          />
+          <Progress value={pct(one) ?? 0} className="h-2" />
         </div>
 
         {/* Time Intervals */}
@@ -546,14 +555,13 @@ const LOAD_AVERAGE = ({ id, stats }: { id: string; stats: Types.SystemStats | un
               <div className="space-y-1" key={label as string}>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">{label}</span>
-                  <span className={`font-medium tabular-nums ${textColor(value as number)}`}>
+                  <span
+                    className={`font-medium tabular-nums ${textColor(value as number)}`}
+                  >
                     {(value as number).toFixed(2)}
                   </span>
                 </div>
-                <Progress
-                  value={(pct(value as number) ?? 0)}
-                  className="h-1"
-                />
+                <Progress value={pct(value as number) ?? 0} className="h-1" />
               </div>
             ))}
           </div>

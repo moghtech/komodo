@@ -3,13 +3,19 @@ import { useRead } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { useMemo } from "react";
 import { useStatsGranularity } from "./hooks";
-import { Loader2 } from "lucide-react";
+import { Loader2, OctagonAlert } from "lucide-react";
 import { AxisOptions, Chart } from "react-charts";
 import { convertTsMsToLocalUnixTsInMs } from "@lib/utils";
 import { useTheme } from "@ui/theme";
 import { fmt_utc_date } from "@lib/formatting";
 
-type StatType = "Cpu" | "Memory" | "Disk" | "Network Ingress" | "Network Egress" | "Load Average";
+type StatType =
+  | "Cpu"
+  | "Memory"
+  | "Disk"
+  | "Network Ingress"
+  | "Network Egress"
+  | "Load Average";
 
 type StatDatapoint = { date: number; value: number };
 
@@ -35,15 +41,15 @@ export const StatChart = ({
     if (type === "Load Average") {
       const one = records.map((s) => ({
         date: convertTsMsToLocalUnixTsInMs(s.ts),
-        value: (s.load_average?.one ?? 0),
+        value: s.load_average?.one ?? 0,
       }));
       const five = records.map((s) => ({
         date: convertTsMsToLocalUnixTsInMs(s.ts),
-        value: (s.load_average?.five ?? 0),
+        value: s.load_average?.five ?? 0,
       }));
       const fifteen = records.map((s) => ({
         date: convertTsMsToLocalUnixTsInMs(s.ts),
-        value: (s.load_average?.fifteen ?? 0),
+        value: s.load_average?.fifteen ?? 0,
       }));
       return [
         { label: "1m", data: one },
@@ -65,9 +71,13 @@ export const StatChart = ({
         <div className="w-full max-w-full h-full flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin" />
         </div>
-      ) : seriesData.length > 0 ? (
-        <InnerStatChart type={type} stats={seriesData.flatMap((s) => s.data)} seriesData={seriesData} />
-      ) : null}
+      ) : (
+        <InnerStatChart
+          type={type}
+          stats={seriesData.flatMap((s) => s.data)}
+          seriesData={seriesData}
+        />
+      )}
     </div>
   );
 };
@@ -113,10 +123,12 @@ export const InnerStatChart = ({
         cursor: (_value?: Date) => false,
       },
     };
-  }, []);
+  }, [min, max, diff]);
 
   // Determine the dynamic scaling for network-related types
-  const allValues = (seriesData ?? [{ data: stats ?? [] }]).flatMap((s) => s.data.map((d) => d.value));
+  const allValues = (seriesData ?? [{ data: stats ?? [] }]).flatMap((s) =>
+    s.data.map((d) => d.value)
+  );
   const maxStatValue = Math.max(...(allValues.length ? allValues : [0]));
 
   const { unit, maxUnitValue } = useMemo(() => {
@@ -133,7 +145,10 @@ export const InnerStatChart = ({
     }
     if (type === "Load Average") {
       // Leave unitless; set max slightly above observed
-      return { unit: "", maxUnitValue: maxStatValue === 0 ? 1 : maxStatValue * 1.2 };
+      return {
+        unit: "",
+        maxUnitValue: maxStatValue === 0 ? 1 : maxStatValue * 1.2,
+      };
     }
     return { unit: "", maxUnitValue: 100 }; // Default for CPU, memory, disk
   }, [type, maxStatValue]);
@@ -161,6 +176,16 @@ export const InnerStatChart = ({
     ],
     [type, maxUnitValue, unit]
   );
+
+  if ((seriesData?.[0]?.data.length ?? 0) < 2) {
+    return (
+      <div className="w-full h-full flex gap-4 justify-center items-center">
+        <OctagonAlert className="w-6 h-6" />
+        <h1>Not enough data yet, choose a smaller interval.</h1>
+      </div>
+    );
+  }
+
   return (
     <Chart
       options={{
