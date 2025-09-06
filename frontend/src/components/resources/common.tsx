@@ -439,12 +439,26 @@ export const CopyResource = ({
 
   const nav = useNavigate();
   const inv = useInvalidate();
-  const { mutate } = useWrite(`Copy${type}`, {
-    onSuccess: (res) => {
-      inv([`List${type}s`]);
-      nav(`/${usableResourcePath(type)}/${res._id?.$oid}`);
-    },
-  });
+  const writeHook = useWrite(`Copy${type}`);
+  const { mutate: originalMutate } = writeHook;
+
+  const handleCopy = (params: { id: string; name: string }) => {
+    originalMutate(params, {
+      onSuccess: (res) => {
+        inv([`List${type}s`]);
+        nav(`/${usableResourcePath(type)}/${res._id?.$oid}`);
+        setOpen(false);
+      },
+      onError: (error: any) => {
+        // Keep dialog open for validation errors (409 Conflict, 400 Bad Request)
+        // System errors (500, etc.) will close the dialog
+        if (!error.isValidationError) {
+          setOpen(false);
+        }
+        // The standard error handling (toast, logging) is already handled by the useWrite hook
+      },
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -473,8 +487,7 @@ export const CopyResource = ({
             icon={<Check className="w-4 h-4" />}
             disabled={!name}
             onClick={() => {
-              mutate({ id, name });
-              setOpen(false);
+              handleCopy({ id, name });
             }}
           />
         </DialogFooter>

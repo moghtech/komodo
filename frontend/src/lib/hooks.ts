@@ -129,11 +129,9 @@ export const komodo_client = () => {
       if (status === 409) {
         // 409 Conflict - duplicate names, busy resources, etc.
         error.isValidationError = true;
-        error.userFriendlyMessage = "Name already in use or resource is busy - Please choose a different name or try again later.";
       } else if (status === 400) {
         // 400 Bad Request - invalid input, permissions, etc.
         error.isValidationError = true;
-        error.userFriendlyMessage = "Invalid input - Please check your data and permissions.";
       }
       
       throw error;
@@ -269,7 +267,7 @@ export const useWrite = <
   return useMutation({
     mutationKey: [type],
     mutationFn: (params: P) => komodo_client().write<T, R>(type, params),
-    onError: (e: { result: { error?: string; trace?: string[] }; isValidationError?: boolean; userFriendlyMessage?: string; status?: number; response?: { status?: number } }, v, c) => {
+    onError: (e: { result: { error?: string; trace?: string[] }; isValidationError?: boolean; status?: number; response?: { status?: number } }, v, c) => {
       const msg = e.result.error ?? "Unknown error. See console.";
       
       // Log appropriately based on error type
@@ -285,14 +283,13 @@ export const useWrite = <
         ?.map((msg) => msg[0].toUpperCase() + msg.slice(1))
         .join(" | ");
       
-      // Use user-friendly messages for validation errors
+      // Use appropriate messages for different error types
       let toastTitle: string;
       let toastDescription: string;
       
-      if (e.isValidationError && e.userFriendlyMessage) {
-        const parts = e.userFriendlyMessage.split(' - ');
-        toastTitle = parts[0];
-        toastDescription = parts[1] || "Please check your input.";
+      if (e.isValidationError) {
+        toastTitle = "Invalid Input";
+        toastDescription = msg || "Please check your data and try again.";
       } else {
         let msg_log = msg ? msg[0].toUpperCase() + msg.slice(1) + " | " : "";
         if (detail) {
