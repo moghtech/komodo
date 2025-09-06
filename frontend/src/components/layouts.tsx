@@ -255,16 +255,15 @@ export const NewLayout = ({
                 await onConfirm();
                 set(false);
               } catch (error: any) {
-                // Check if this is an expected validation error
-                const errorMsg = error?.result?.error || '';
-                const isExpectedValidationError = errorMsg.includes("Must provide unique name for resource") ||
-                                                 errorMsg.includes("already exists") ||
-                                                 errorMsg.includes("Name already in use");
+                // Check if this is a validation error based on status code
+                const status = error?.status || error?.response?.status;
+                const isValidationError = status === 409 || status === 400;
                 
-                // Only log unexpected errors
-                if (!isExpectedValidationError) {
-                  console.error("Error creating resource:", error);
+                // Keep dialog open for validation errors, close for system errors
+                if (!isValidationError) {
+                  set(false);
                 }
+                // Note: Error handling (toast, logging) is handled by useWrite hook
               } finally {
                 setLoading(false);
               }
