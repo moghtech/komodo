@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use anyhow::Context;
 use axum::{
-  Extension, Router, extract::Path, middleware, routing::post,
+  Extension, Router, extract::Path, middleware, routing::post, http::StatusCode,
 };
 use derive_variants::{EnumVariants, ExtractVariant};
 use komodo_client::{api::write::*, entities::user::User};
@@ -10,7 +10,7 @@ use resolver_api::Resolve;
 use response::Response;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use serror::Json;
+use serror::{Json, AddStatusCodeError};
 use typeshare::typeshare;
 use uuid::Uuid;
 
@@ -39,6 +39,26 @@ mod variable;
 
 pub struct WriteArgs {
   pub user: User,
+}
+
+/// Helper function to handle resource creation errors with proper HTTP status codes
+pub fn handle_resource_creation_error(e: anyhow::Error) -> serror::Error {
+  let error_msg = e.to_string();
+  
+  // Check if this is a validation error and set appropriate status code
+  if error_msg.contains("Resource with name") && error_msg.contains("already exists") {
+    e.status_code(StatusCode::CONFLICT)
+  } else if error_msg.contains("Must provide unique name for resource") {
+    e.status_code(StatusCode::CONFLICT)
+  } else if error_msg.contains("busy") {
+    e.status_code(StatusCode::CONFLICT)
+  } else if error_msg.contains("Valid ObjectIds cannot be used as names") 
+         || error_msg.contains("Must provide non-empty name") 
+         || error_msg.contains("User does not have permissions") {
+    e.status_code(StatusCode::BAD_REQUEST)
+  } else {
+    e.into()
+  }
 }
 
 #[typeshare]

@@ -22,7 +22,7 @@ use crate::{
   resource,
 };
 
-use super::WriteArgs;
+use super::{WriteArgs, handle_resource_creation_error};
 
 impl Resolve<WriteArgs> for CreateServer {
   #[instrument(name = "CreateServer", skip(user))]
@@ -30,10 +30,10 @@ impl Resolve<WriteArgs> for CreateServer {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Server> {
-    Ok(
-      resource::create::<Server>(&self.name, self.config, user)
-        .await?,
-    )
+    match resource::create::<Server>(&self.name, self.config, user).await {
+      Ok(server) => Ok(server),
+      Err(e) => Err(handle_resource_creation_error(e))
+    }
   }
 }
 
@@ -49,10 +49,11 @@ impl Resolve<WriteArgs> for CopyServer {
       PermissionLevel::Read.into(),
     )
     .await?;
-    Ok(
-      resource::create::<Server>(&self.name, config.into(), user)
-        .await?,
-    )
+    
+    match resource::create::<Server>(&self.name, config.into(), user).await {
+      Ok(server) => Ok(server),
+      Err(e) => Err(handle_resource_creation_error(e))
+    }
   }
 }
 

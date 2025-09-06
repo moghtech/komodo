@@ -467,13 +467,13 @@ pub async fn create<T: KomodoResource>(
   }
 
   if name.is_empty() {
-    return Err(anyhow!("Must provide non-empty name for resource."));
+    return Err(anyhow!("Must provide non-empty name for resource"));
   }
 
   let name = T::validated_name(name);
 
   if ObjectId::from_str(&name).is_ok() {
-    return Err(anyhow!("valid ObjectIds cannot be used as names."));
+    return Err(anyhow!("Valid ObjectIds cannot be used as names"));
   }
 
   // Ensure an existing resource with same name doesn't already exist
@@ -489,7 +489,7 @@ pub async fn create<T: KomodoResource>(
   .into_iter()
   .any(|r| r.name == name)
   {
-    return Err(anyhow!("Must provide unique name for resource."));
+    return Err(anyhow!("Resource with name '{}' already exists", name));
   }
 
   let start_ts = komodo_timestamp();

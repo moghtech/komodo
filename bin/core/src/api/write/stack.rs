@@ -43,7 +43,7 @@ use crate::{
   state::{db_client, github_client},
 };
 
-use super::WriteArgs;
+use super::{WriteArgs, handle_resource_creation_error};
 
 impl Resolve<WriteArgs> for CreateStack {
   #[instrument(name = "CreateStack", skip(user))]
@@ -51,10 +51,10 @@ impl Resolve<WriteArgs> for CreateStack {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Stack> {
-    Ok(
-      resource::create::<Stack>(&self.name, self.config, user)
-        .await?,
-    )
+    match resource::create::<Stack>(&self.name, self.config, user).await {
+      Ok(stack) => Ok(stack),
+      Err(e) => Err(handle_resource_creation_error(e))
+    }
   }
 }
 
@@ -70,10 +70,11 @@ impl Resolve<WriteArgs> for CopyStack {
       PermissionLevel::Read.into(),
     )
     .await?;
-    Ok(
-      resource::create::<Stack>(&self.name, config.into(), user)
-        .await?,
-    )
+    
+    match resource::create::<Stack>(&self.name, config.into(), user).await {
+      Ok(stack) => Ok(stack),
+      Err(e) => Err(handle_resource_creation_error(e))
+    }
   }
 }
 

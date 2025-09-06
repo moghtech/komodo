@@ -254,8 +254,17 @@ export const NewLayout = ({
               try {
                 await onConfirm();
                 set(false);
-              } catch (error) {
-                console.error("Error creating resource:", error);
+              } catch (error: any) {
+                // Check if this is an expected validation error
+                const errorMsg = error?.result?.error || '';
+                const isExpectedValidationError = errorMsg.includes("Must provide unique name for resource") ||
+                                                 errorMsg.includes("already exists") ||
+                                                 errorMsg.includes("Name already in use");
+                
+                // Only log unexpected errors
+                if (!isExpectedValidationError) {
+                  console.error("Error creating resource:", error);
+                }
               } finally {
                 setLoading(false);
               }

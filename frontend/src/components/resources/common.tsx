@@ -525,11 +525,23 @@ export const NewResource = ({
             ? { builder_id }
             : {};
   const onConfirm = async () => {
-    if (!name) toast({ title: "Name cannot be empty" });
-    const id = templateId
-      ? (await copy({ name, id: templateId }))._id?.$oid!
-      : (await create({ name, config }))._id?.$oid!;
-    nav(`/${usableResourcePath(type)}/${id}`);
+    if (!name) {
+      toast({ title: "Name cannot be empty", variant: "destructive" });
+      return;
+    }
+    try {
+      const result = templateId
+        ? await copy({ name, id: templateId })
+        : await create({ name, config });
+      const id = result._id?.$oid;
+      if (id) {
+        nav(`/${usableResourcePath(type)}/${id}`);
+      }
+    } catch (error: any) {
+      // Error handling (toast message) is already done by the useWrite hook
+      // Just re-throw to let NewLayout handle the UI state (keep dialog open, stop loading)
+      throw error;
+    }
   };
   return (
     <NewLayout
@@ -547,7 +559,10 @@ export const NewResource = ({
           onKeyDown={(e) => {
             if (!name) return;
             if (e.key === "Enter") {
-              onConfirm();
+              onConfirm().catch(() => {
+                // Error is already handled by the useWrite hook and onConfirm
+                // Just prevent uncaught promise rejection
+              });
             }
           }}
         />

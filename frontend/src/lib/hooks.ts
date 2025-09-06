@@ -111,11 +111,57 @@ export const LOGIN_TOKENS = (() => {
   };
 })();
 
-export const komodo_client = () =>
-  KomodoClient(KOMODO_BASE_URL, {
+export const komodo_client = () => {
+  const client = KomodoClient(KOMODO_BASE_URL, {
     type: "jwt",
     params: { jwt: LOGIN_TOKENS.jwt() },
   });
+
+  // Wrap the write method to provide better error context based on HTTP status codes
+  const original_write = client.write;
+  client.write = async (type, params) => {
+    try {
+      return await original_write(type, params);
+    } catch (error: any) {
+      // Check HTTP status codes for proper error classification
+      const status = error?.status || error?.response?.status;
+      
+      if (status === 409) {
+        // 409 Conflict - duplicate names, busy resources, etc.
+        error.isValidationError = true;
+        error.userFriendlyMessage = "Name already in use or resource is busy - Please choose a different name or try again later.";
+      } else if (status === 400) {
+        // 400 Bad Request - invalid input, permissions, etc.
+        error.isValidationError = true;
+        error.userFriendlyMessage = "Invalid input - Please check your data and permissions.";
+      } else {
+        // Fallback to message-based detection for backwards compatibility
+        const msg = error?.result?.error || '';
+        const isExpectedValidationError = msg.includes("Must provide unique name for resource") ||
+                                         msg.includes("unique name") ||
+                                         msg.includes("already exists") ||
+                                         msg.includes("Name already in use") ||
+                                         msg.includes("Resource with name") ||
+                                         msg.includes("busy"); // For resource busy errors
+        
+        if (isExpectedValidationError) {
+          error.isValidationError = true;
+          if (msg.includes("Must provide unique name for resource") || msg.includes("Resource with name")) {
+            error.userFriendlyMessage = "Name already in use - Please choose a different name.";
+          } else if (msg.includes("busy")) {
+            error.userFriendlyMessage = "Resource is currently busy - Please try again later.";
+          } else {
+            error.userFriendlyMessage = "Validation error - Please check your input.";
+          }
+        }
+      }
+      
+      throw error;
+    }
+  };
+
+  return client;
+};
 
 // ============== RESOLVER ==============
 
@@ -243,19 +289,57 @@ export const useWrite = <
   return useMutation({
     mutationKey: [type],
     mutationFn: (params: P) => komodo_client().write<T, R>(type, params),
-    onError: (e: { result: { error?: string; trace?: string[] } }, v, c) => {
-      console.log("Write error:", e);
+    onError: (e: { result: { error?: string; trace?: string[] }; isValidationError?: boolean; userFriendlyMessage?: string; status?: number; response?: { status?: number } }, v, c) => {
       const msg = e.result.error ?? "Unknown error. See console.";
+      const status = e.status || e.response?.status;
+      
+      // Check HTTP status codes first, then fall back to message-based detection
+      if (!e.isValidationError) {
+        if (status === 409) {
+          // 409 Conflict - duplicate names, busy resources, etc.
+          e.isValidationError = true;
+          e.userFriendlyMessage = "Name already in use or resource is busy - Please choose a different name or try again later.";
+        } else if (status === 400) {
+          // 400 Bad Request - invalid input, permissions, etc.
+          e.isValidationError = true;
+          e.userFriendlyMessage = "Invalid input - Please check your data and permissions.";
+        } else { 
+          console.log("Unexpected error:", e);
+        }
+      }
+      
+      // Only log unexpected errors to console as errors
+      if (!e.isValidationError) {
+        console.log("Write error:", e);
+      } else {
+        // Log validation errors as warnings instead of errors
+        console.error("Resource validation error (expected):", e);
+      }
+      
       const detail = e.result?.trace
         ?.map((msg) => msg[0].toUpperCase() + msg.slice(1))
         .join(" | ");
-      let msg_log = msg ? msg[0].toUpperCase() + msg.slice(1) + " | " : "";
-      if (detail) {
-        msg_log += detail + " | ";
+      
+      // Use user-friendly messages for validation errors
+      let toastTitle: string;
+      let toastDescription: string;
+      
+      if (e.isValidationError && e.userFriendlyMessage) {
+        const parts = e.userFriendlyMessage.split(' - ');
+        toastTitle = parts[0];
+        toastDescription = parts[1] || "Please check your input.";
+      } else {
+        let msg_log = msg ? msg[0].toUpperCase() + msg.slice(1) + " | " : "";
+        if (detail) {
+          msg_log += detail + " | ";
+        }
+        toastTitle = `Write request ${type} failed`;
+        toastDescription = `${msg_log}See console for details`;
       }
+      
       toast({
-        title: `Write request ${type} failed`,
-        description: `${msg_log}See console for details`,
+        title: toastTitle,
+        description: toastDescription,
         variant: "destructive",
       });
       config?.onError && config.onError(e, v, c);
