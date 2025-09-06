@@ -42,7 +42,7 @@ use crate::{
   state::{db_client, github_client},
 };
 
-use super::WriteArgs;
+use super::{WriteArgs, handle_resource_creation_error};
 
 impl Resolve<WriteArgs> for CreateBuild {
   #[instrument(name = "CreateBuild", skip(user))]
@@ -50,10 +50,10 @@ impl Resolve<WriteArgs> for CreateBuild {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Build> {
-    Ok(
-      resource::create::<Build>(&self.name, self.config, user)
-        .await?,
-    )
+    match resource::create::<Build>(&self.name, self.config, user).await {
+      Ok(build) => Ok(build),
+      Err(e) => Err(handle_resource_creation_error(e))
+    }
   }
 }
 
@@ -71,10 +71,10 @@ impl Resolve<WriteArgs> for CopyBuild {
     .await?;
     // reset version to 0.0.0
     config.version = Default::default();
-    Ok(
-      resource::create::<Build>(&self.name, config.into(), user)
-        .await?,
-    )
+    match resource::create::<Build>(&self.name, config.into(), user).await {
+      Ok(build) => Ok(build),
+      Err(e) => Err(handle_resource_creation_error(e))
+    }
   }
 }
 

@@ -8,7 +8,7 @@ use resolver_api::Resolve;
 
 use crate::{permission::get_check_permissions, resource};
 
-use super::WriteArgs;
+use super::{WriteArgs, handle_resource_creation_error};
 
 impl Resolve<WriteArgs> for CreateAlerter {
   #[instrument(name = "CreateAlerter", skip(user))]
@@ -16,10 +16,10 @@ impl Resolve<WriteArgs> for CreateAlerter {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Alerter> {
-    Ok(
-      resource::create::<Alerter>(&self.name, self.config, user)
-        .await?,
-    )
+    match resource::create::<Alerter>(&self.name, self.config, user).await {
+      Ok(alerter) => Ok(alerter),
+      Err(e) => Err(handle_resource_creation_error(e))
+    }
   }
 }
 
@@ -35,10 +35,10 @@ impl Resolve<WriteArgs> for CopyAlerter {
       PermissionLevel::Write.into(),
     )
     .await?;
-    Ok(
-      resource::create::<Alerter>(&self.name, config.into(), user)
-        .await?,
-    )
+    match resource::create::<Alerter>(&self.name, config.into(), user).await {
+      Ok(alerter) => Ok(alerter),
+      Err(e) => Err(handle_resource_creation_error(e))
+    }
   }
 }
 
