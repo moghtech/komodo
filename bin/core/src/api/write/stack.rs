@@ -67,7 +67,7 @@ impl Resolve<WriteArgs> for CopyStack {
       PermissionLevel::Read.into(),
     )
     .await?;
-    
+
     resource::create::<Stack>(&self.name, config.into(), user).await
   }
 }

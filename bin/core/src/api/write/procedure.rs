@@ -33,7 +33,8 @@ impl Resolve<WriteArgs> for CopyProcedure {
         PermissionLevel::Write.into(),
       )
       .await?;
-    resource::create::<Procedure>(&self.name, config.into(), user).await
+    resource::create::<Procedure>(&self.name, config.into(), user)
+      .await
   }
 }
 

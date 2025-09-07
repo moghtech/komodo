@@ -14,8 +14,6 @@ use database::mungos::{
   },
 };
 use formatting::format_serror;
-use serror::AddStatusCodeError;
-use reqwest::StatusCode;
 use futures::future::join_all;
 use indexmap::IndexSet;
 use komodo_client::{
@@ -36,8 +34,10 @@ use komodo_client::{
   parsers::parse_string_list,
 };
 use partial_derive2::{Diff, MaybeNone, PartialDiff};
+use reqwest::StatusCode;
 use resolver_api::Resolve;
 use serde::{Serialize, de::DeserializeOwned};
+use serror::AddStatusCodeError;
 
 use crate::{
   api::{read::ReadArgs, write::WriteArgs},
@@ -462,20 +462,29 @@ pub async fn create<T: KomodoResource>(
   user: &User,
 ) -> serror::Result<Resource<T::Config, T::Info>> {
   if !T::user_can_create(user) {
-    return Err(anyhow!(
-      "User does not have permissions to create {}.",
-      T::resource_type()
-    ).status_code(StatusCode::UNAUTHORIZED));
+    return Err(
+      anyhow!(
+        "User does not have permissions to create {}.",
+        T::resource_type()
+      )
+      .status_code(StatusCode::UNAUTHORIZED),
+    );
   }
 
   if name.is_empty() {
-    return Err(anyhow!("Must provide non-empty name for resource").status_code(StatusCode::BAD_REQUEST));
+    return Err(
+      anyhow!("Must provide non-empty name for resource")
+        .status_code(StatusCode::BAD_REQUEST),
+    );
   }
 
   let name = T::validated_name(name);
 
   if ObjectId::from_str(&name).is_ok() {
-    return Err(anyhow!("Valid ObjectIds cannot be used as names").status_code(StatusCode::BAD_REQUEST));
+    return Err(
+      anyhow!("Valid ObjectIds cannot be used as names")
+        .status_code(StatusCode::BAD_REQUEST),
+    );
   }
 
   // Ensure an existing resource with same name doesn't already exist
@@ -491,7 +500,10 @@ pub async fn create<T: KomodoResource>(
   .into_iter()
   .any(|r| r.name == name)
   {
-    return Err(anyhow!("Resource with name '{}' already exists", name).status_code(StatusCode::CONFLICT));
+    return Err(
+      anyhow!("Resource with name '{}' already exists", name)
+        .status_code(StatusCode::CONFLICT),
+    );
   }
 
   let start_ts = komodo_timestamp();
