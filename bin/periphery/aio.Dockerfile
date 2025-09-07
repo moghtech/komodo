@@ -1,6 +1,7 @@
 ## All in one, multi stage compile + runtime Docker build for your architecture.
 
 FROM rust:1.89.0-bullseye AS builder
+RUN cargo install cargo-strip
 
 WORKDIR /builder
 COPY Cargo.toml Cargo.lock ./
@@ -10,7 +11,7 @@ COPY ./client/periphery ./client/periphery
 COPY ./bin/periphery ./bin/periphery
 
 # Compile app
-RUN cargo build -p komodo_periphery --release
+RUN cargo build -p komodo_periphery --release && cargo strip
 
 # Final Image
 FROM debian:bullseye-slim
