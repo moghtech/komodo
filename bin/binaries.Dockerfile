@@ -2,6 +2,7 @@
 ## for a specific architecture.
 
 FROM rust:1.89.0-bullseye AS builder
+RUN cargo install cargo-strip
 
 WORKDIR /builder
 COPY Cargo.toml Cargo.lock ./
@@ -16,7 +17,8 @@ COPY ./bin/cli ./bin/cli
 RUN \
   cargo build -p komodo_core --release && \
   cargo build -p komodo_periphery --release && \
-  cargo build -p komodo_cli --release
+  cargo build -p komodo_cli --release && \
+  cargo strip
 
 # Copy just the binaries to scratch image
 FROM scratch

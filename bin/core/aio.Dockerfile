@@ -2,6 +2,7 @@
 
 # Build Core
 FROM rust:1.89.0-bullseye AS core-builder
+RUN cargo install cargo-strip
 
 WORKDIR /builder
 COPY Cargo.toml Cargo.lock ./
@@ -13,7 +14,8 @@ COPY ./bin/cli ./bin/cli
 
 # Compile app
 RUN cargo build -p komodo_core --release && \
-  cargo build -p komodo_cli --release
+  cargo build -p komodo_cli --release && \
+  cargo strip
 
 # Build Frontend
 FROM node:20.12-alpine AS frontend-builder
