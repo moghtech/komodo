@@ -50,10 +50,7 @@ impl Resolve<WriteArgs> for CreateBuild {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Build> {
-    Ok(
-      resource::create::<Build>(&self.name, self.config, user)
-        .await?,
-    )
+    resource::create::<Build>(&self.name, self.config, user).await
   }
 }
 
@@ -71,10 +68,7 @@ impl Resolve<WriteArgs> for CopyBuild {
     .await?;
     // reset version to 0.0.0
     config.version = Default::default();
-    Ok(
-      resource::create::<Build>(&self.name, config.into(), user)
-        .await?,
-    )
+    resource::create::<Build>(&self.name, config.into(), user).await
   }
 }
 

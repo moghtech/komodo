@@ -16,10 +16,7 @@ impl Resolve<WriteArgs> for CreateAction {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Action> {
-    Ok(
-      resource::create::<Action>(&self.name, self.config, user)
-        .await?,
-    )
+    resource::create::<Action>(&self.name, self.config, user).await
   }
 }
 
@@ -35,10 +32,7 @@ impl Resolve<WriteArgs> for CopyAction {
       PermissionLevel::Write.into(),
     )
     .await?;
-    Ok(
-      resource::create::<Action>(&self.name, config.into(), user)
-        .await?,
-    )
+    resource::create::<Action>(&self.name, config.into(), user).await
   }
 }
 
