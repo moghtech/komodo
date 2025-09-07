@@ -8,7 +8,7 @@ use resolver_api::Resolve;
 
 use crate::{permission::get_check_permissions, resource};
 
-use super::{WriteArgs, handle_resource_creation_error};
+use super::WriteArgs;
 
 impl Resolve<WriteArgs> for CreateAction {
   #[instrument(name = "CreateAction", skip(user))]
@@ -16,10 +16,7 @@ impl Resolve<WriteArgs> for CreateAction {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Action> {
-    match resource::create::<Action>(&self.name, self.config, user).await {
-      Ok(action) => Ok(action),
-      Err(e) => Err(handle_resource_creation_error(e))
-    }
+    resource::create::<Action>(&self.name, self.config, user).await
   }
 }
 
@@ -35,10 +32,7 @@ impl Resolve<WriteArgs> for CopyAction {
       PermissionLevel::Write.into(),
     )
     .await?;
-    match resource::create::<Action>(&self.name, config.into(), user).await {
-      Ok(action) => Ok(action),
-      Err(e) => Err(handle_resource_creation_error(e))
-    }
+    resource::create::<Action>(&self.name, config.into(), user).await
   }
 }
 

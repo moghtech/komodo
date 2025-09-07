@@ -111,35 +111,11 @@ export const LOGIN_TOKENS = (() => {
   };
 })();
 
-export const komodo_client = () => {
-  const client = KomodoClient(KOMODO_BASE_URL, {
+export const komodo_client = () =>
+  KomodoClient(KOMODO_BASE_URL, {
     type: "jwt",
     params: { jwt: LOGIN_TOKENS.jwt() },
   });
-
-  // Wrap the write method to provide better error context based on HTTP status codes
-  const original_write = client.write;
-  client.write = async (type, params) => {
-    try {
-      return await original_write(type, params);
-    } catch (error: any) {
-      // Enhanced error with status code classification
-      const status = error?.status || error?.response?.status;
-      
-      if (status === 409) {
-        // 409 Conflict - duplicate names, busy resources, etc.
-        error.isValidationError = true;
-      } else if (status === 400) {
-        // 400 Bad Request - invalid input, permissions, etc.
-        error.isValidationError = true;
-      }
-      
-      throw error;
-    }
-  };
-
-  return client;
-};
 
 // ============== RESOLVER ==============
 
@@ -267,41 +243,19 @@ export const useWrite = <
   return useMutation({
     mutationKey: [type],
     mutationFn: (params: P) => komodo_client().write<T, R>(type, params),
-    onError: (e: { result: { error?: string; trace?: string[] }; isValidationError?: boolean; status?: number; response?: { status?: number } }, v, c) => {
+    onError: (e: { result: { error?: string; trace?: string[] } }, v, c) => {
+      console.log("Write error:", e);
       const msg = e.result.error ?? "Unknown error. See console.";
-      
-      // Log appropriately based on error type
-      if (e.isValidationError) {
-        // Log validation errors as warnings (expected user errors)
-        console.warn("Resource validation error:", e);
-      } else {
-        // Log unexpected system errors
-        console.error("Write error:", e);
-      }
-      
       const detail = e.result?.trace
         ?.map((msg) => msg[0].toUpperCase() + msg.slice(1))
         .join(" | ");
-      
-      // Use appropriate messages for different error types
-      let toastTitle: string;
-      let toastDescription: string;
-      
-      if (e.isValidationError) {
-        toastTitle = "Invalid Input";
-        toastDescription = msg || "Please check your data and try again.";
-      } else {
-        let msg_log = msg ? msg[0].toUpperCase() + msg.slice(1) + " | " : "";
-        if (detail) {
-          msg_log += detail + " | ";
-        }
-        toastTitle = `Write request ${type} failed`;
-        toastDescription = `${msg_log}See console for details`;
+      let msg_log = msg ? msg[0].toUpperCase() + msg.slice(1) + " | " : "";
+      if (detail) {
+        msg_log += detail + " | ";
       }
-      
       toast({
-        title: toastTitle,
-        description: toastDescription,
+        title: `Write request ${type} failed`,
+        description: `${msg_log}See console for details`,
         variant: "destructive",
       });
       config?.onError && config.onError(e, v, c);

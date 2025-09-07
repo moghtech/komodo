@@ -34,7 +34,7 @@ use crate::{
   state::{action_states, db_client, github_client},
 };
 
-use super::{WriteArgs, handle_resource_creation_error};
+use super::WriteArgs;
 
 impl Resolve<WriteArgs> for CreateRepo {
   #[instrument(name = "CreateRepo", skip(user))]
@@ -42,10 +42,7 @@ impl Resolve<WriteArgs> for CreateRepo {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Repo> {
-    match resource::create::<Repo>(&self.name, self.config, user).await {
-      Ok(repo) => Ok(repo),
-      Err(e) => Err(handle_resource_creation_error(e))
-    }
+    resource::create::<Repo>(&self.name, self.config, user).await
   }
 }
 
@@ -61,10 +58,7 @@ impl Resolve<WriteArgs> for CopyRepo {
       PermissionLevel::Read.into(),
     )
     .await?;
-    match resource::create::<Repo>(&self.name, config.into(), user).await {
-      Ok(repo) => Ok(repo),
-      Err(e) => Err(handle_resource_creation_error(e))
-    }
+    resource::create::<Repo>(&self.name, config.into(), user).await
   }
 }
 

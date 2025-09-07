@@ -439,25 +439,22 @@ export const CopyResource = ({
 
   const nav = useNavigate();
   const inv = useInvalidate();
-  const writeHook = useWrite(`Copy${type}`);
-  const { mutate: originalMutate } = writeHook;
+  const { mutateAsync: copy } = useWrite(`Copy${type}`);
 
-  const handleCopy = (params: { id: string; name: string }) => {
-    originalMutate(params, {
-      onSuccess: (res) => {
-        inv([`List${type}s`]);
-        nav(`/${usableResourcePath(type)}/${res._id?.$oid}`);
+  const onConfirm = async () => {
+    if (!name) return;
+    try {
+      const res = await copy({ id, name });
+      inv([`List${type}s`]);
+      nav(`/${usableResourcePath(type)}/${res._id?.$oid}`);
+      setOpen(false);
+    } catch (error: any) {
+      // Keep dialog open for validation errors (409/400), close for system errors
+      const status = error?.status || error?.response?.status;
+      if (status !== 409 && status !== 400) {
         setOpen(false);
-      },
-      onError: (error: any) => {
-        // Keep dialog open for validation errors (409 Conflict, 400 Bad Request)
-        // System errors (500, etc.) will close the dialog
-        if (!error.isValidationError) {
-          setOpen(false);
-        }
-        // The standard error handling (toast, logging) is already handled by the useWrite hook
-      },
-    });
+      }
+    }
   };
 
   return (
@@ -486,8 +483,8 @@ export const CopyResource = ({
             title="Copy"
             icon={<Check className="w-4 h-4" />}
             disabled={!name}
-            onClick={() => {
-              handleCopy({ id, name });
+            onClick={async () => {
+              await onConfirm();
             }}
           />
         </DialogFooter>
@@ -538,22 +535,13 @@ export const NewResource = ({
             ? { builder_id }
             : {};
   const onConfirm = async () => {
-    if (!name) {
-      toast({ title: "Name cannot be empty", variant: "destructive" });
-      return;
-    }
-    try {
-      const result = templateId
-        ? await copy({ name, id: templateId })
-        : await create({ name, config });
-      const id = result._id?.$oid;
-      if (id) {
-        nav(`/${usableResourcePath(type)}/${id}`);
-      }
-    } catch (error: any) {
-      // Error handling (toast message) is already done by the useWrite hook
-      // Just re-throw to let NewLayout handle the UI state (keep dialog open, stop loading)
-      throw error;
+    if (!name) toast({ title: "Name cannot be empty" });
+    const result = templateId
+      ? await copy({ name, id: templateId })
+      : await create({ name, config });
+    const resourceId = result._id?.$oid;
+    if (resourceId) {
+      nav(`/${usableResourcePath(type)}/${resourceId}`);
     }
   };
   return (
@@ -572,10 +560,7 @@ export const NewResource = ({
           onKeyDown={(e) => {
             if (!name) return;
             if (e.key === "Enter") {
-              onConfirm().catch(() => {
-                // Error is already handled by the useWrite hook and onConfirm
-                // Just prevent uncaught promise rejection
-              });
+              onConfirm().catch(() => {});
             }
           }}
         />

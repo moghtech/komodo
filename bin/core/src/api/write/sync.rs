@@ -60,7 +60,7 @@ use crate::{
   },
 };
 
-use super::{WriteArgs, handle_resource_creation_error};
+use super::WriteArgs;
 
 impl Resolve<WriteArgs> for CreateResourceSync {
   #[instrument(name = "CreateResourceSync", skip(user))]
@@ -68,10 +68,7 @@ impl Resolve<WriteArgs> for CreateResourceSync {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<ResourceSync> {
-    match resource::create::<ResourceSync>(&self.name, self.config, user).await {
-      Ok(sync) => Ok(sync),
-      Err(e) => Err(handle_resource_creation_error(e))
-    }
+    resource::create::<ResourceSync>(&self.name, self.config, user).await
   }
 }
 
@@ -88,10 +85,7 @@ impl Resolve<WriteArgs> for CopyResourceSync {
         PermissionLevel::Write.into(),
       )
       .await?;
-    match resource::create::<ResourceSync>(&self.name, config.into(), user).await {
-      Ok(sync) => Ok(sync),
-      Err(e) => Err(handle_resource_creation_error(e))
-    }
+    resource::create::<ResourceSync>(&self.name, config.into(), user).await
   }
 }
 

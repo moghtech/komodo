@@ -255,15 +255,10 @@ export const NewLayout = ({
                 await onConfirm();
                 set(false);
               } catch (error: any) {
-                // Check if this is a validation error based on status code
                 const status = error?.status || error?.response?.status;
-                const isValidationError = status === 409 || status === 400;
-                
-                // Keep dialog open for validation errors, close for system errors
-                if (!isValidationError) {
+                if (status !== 409 && status !== 400) {
                   set(false);
                 }
-                // Note: Error handling (toast, logging) is handled by useWrite hook
               } finally {
                 setLoading(false);
               }

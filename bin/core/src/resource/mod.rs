@@ -14,6 +14,8 @@ use database::mungos::{
   },
 };
 use formatting::format_serror;
+use serror::AddStatusCodeError;
+use reqwest::StatusCode;
 use futures::future::join_all;
 use indexmap::IndexSet;
 use komodo_client::{
@@ -458,22 +460,22 @@ pub async fn create<T: KomodoResource>(
   name: &str,
   mut config: T::PartialConfig,
   user: &User,
-) -> anyhow::Result<Resource<T::Config, T::Info>> {
+) -> serror::Result<Resource<T::Config, T::Info>> {
   if !T::user_can_create(user) {
     return Err(anyhow!(
       "User does not have permissions to create {}.",
       T::resource_type()
-    ));
+    ).status_code(StatusCode::UNAUTHORIZED));
   }
 
   if name.is_empty() {
-    return Err(anyhow!("Must provide non-empty name for resource"));
+    return Err(anyhow!("Must provide non-empty name for resource").status_code(StatusCode::BAD_REQUEST));
   }
 
   let name = T::validated_name(name);
 
   if ObjectId::from_str(&name).is_ok() {
-    return Err(anyhow!("Valid ObjectIds cannot be used as names"));
+    return Err(anyhow!("Valid ObjectIds cannot be used as names").status_code(StatusCode::BAD_REQUEST));
   }
 
   // Ensure an existing resource with same name doesn't already exist
@@ -489,7 +491,7 @@ pub async fn create<T: KomodoResource>(
   .into_iter()
   .any(|r| r.name == name)
   {
-    return Err(anyhow!("Resource with name '{}' already exists", name));
+    return Err(anyhow!("Resource with name '{}' already exists", name).status_code(StatusCode::CONFLICT));
   }
 
   let start_ts = komodo_timestamp();
