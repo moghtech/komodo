@@ -46,7 +46,7 @@ impl Resolve<WriteArgs> for CopyServer {
       PermissionLevel::Read.into(),
     )
     .await?;
-    
+
     resource::create::<Server>(&self.name, config.into(), user).await
   }
 }

@@ -38,7 +38,8 @@ impl Resolve<WriteArgs> for CreateDeployment {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Deployment> {
-    resource::create::<Deployment>(&self.name, self.config, user).await
+    resource::create::<Deployment>(&self.name, self.config, user)
+      .await
   }
 }
 
@@ -55,7 +56,8 @@ impl Resolve<WriteArgs> for CopyDeployment {
         PermissionLevel::Read.into(),
       )
       .await?;
-    resource::create::<Deployment>(&self.name, config.into(), user).await
+    resource::create::<Deployment>(&self.name, config.into(), user)
+      .await
   }
 }
 

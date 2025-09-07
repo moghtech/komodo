@@ -68,7 +68,8 @@ impl Resolve<WriteArgs> for CreateResourceSync {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<ResourceSync> {
-    resource::create::<ResourceSync>(&self.name, self.config, user).await
+    resource::create::<ResourceSync>(&self.name, self.config, user)
+      .await
   }
 }
 
@@ -85,7 +86,8 @@ impl Resolve<WriteArgs> for CopyResourceSync {
         PermissionLevel::Write.into(),
       )
       .await?;
-    resource::create::<ResourceSync>(&self.name, config.into(), user).await
+    resource::create::<ResourceSync>(&self.name, config.into(), user)
+      .await
   }
 }
 
