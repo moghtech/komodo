@@ -15,6 +15,9 @@ license = "GPL-3.0-or-later"
 repository = "https://github.com/moghtech/komodo"
 homepage = "https://komo.do"
 
+[profile.release]
+strip = "debuginfo"
+
 [workspace.dependencies]
 # LOCAL
 komodo_client = { path = "client/core/rs" }

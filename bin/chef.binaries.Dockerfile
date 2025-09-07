@@ -12,6 +12,7 @@ COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
+RUN cargo install cargo-strip
 COPY --from=planner /builder/recipe.json recipe.json
 # Build JUST dependencies - cached layer
 RUN cargo chef cook --release --recipe-path recipe.json
@@ -20,7 +21,8 @@ COPY . .
 RUN \
   cargo build --release --bin core && \
   cargo build --release --bin periphery && \
-  cargo build --release --bin km
+  cargo build --release --bin km && \
+  cargo strip
 
 # Copy just the binaries to scratch image
 FROM scratch
