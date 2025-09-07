@@ -30,10 +30,7 @@ impl Resolve<WriteArgs> for CreateServer {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Server> {
-    Ok(
-      resource::create::<Server>(&self.name, self.config, user)
-        .await?,
-    )
+    resource::create::<Server>(&self.name, self.config, user).await
   }
 }
 
@@ -49,10 +46,8 @@ impl Resolve<WriteArgs> for CopyServer {
       PermissionLevel::Read.into(),
     )
     .await?;
-    Ok(
-      resource::create::<Server>(&self.name, config.into(), user)
-        .await?,
-    )
+    
+    resource::create::<Server>(&self.name, config.into(), user).await
   }
 }
 

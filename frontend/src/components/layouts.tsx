@@ -254,8 +254,11 @@ export const NewLayout = ({
               try {
                 await onConfirm();
                 set(false);
-              } catch (error) {
-                console.error("Error creating resource:", error);
+              } catch (error: any) {
+                const status = error?.status || error?.response?.status;
+                if (status !== 409 && status !== 400) {
+                  set(false);
+                }
               } finally {
                 setLoading(false);
               }

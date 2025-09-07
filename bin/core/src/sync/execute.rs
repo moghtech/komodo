@@ -147,6 +147,7 @@ pub trait ExecuteResourceSync: ResourceSyncTrait {
         sync_user(),
       )
       .await
+      .map_err(|e| e.error)
       {
         Ok(resource) => resource.id,
         Err(e) => {
