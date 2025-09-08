@@ -16,3 +16,4 @@ These provide alerting implementations which can be used with the `Custom` Alert
 - [Ntfy](https://github.com/FoxxMD/deploy-ntfy-alerter) by [FoxxMD](https://github.com/FoxxMD)
 - [Gotify](https://github.com/FoxxMD/deploy-gotify-alerter) by [FoxxMD](https://github.com/FoxxMD)
 - [Apprise](https://github.com/FoxxMD/deploy-apprise-alerter) by [FoxxMD](https://github.com/FoxxMD)
+- [Email](https://github.com/gutenye/email-notification/blob/main/src/templates/Komodo/Komodo.md) by [Guten Ye](https://github.com/gutenye)
