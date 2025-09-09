@@ -136,12 +136,12 @@ const GroupActionDialog = ({
 
   return (
     <Dialog open={!!action} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Group Execute - {formatted}</DialogTitle>
         </DialogHeader>
         <div className="py-8 flex flex-col gap-4">
-          <ul className="p-4 bg-accent text-sm list-disc list-inside">
+          <ul className="p-4 bg-accent text-sm list-disc list-inside max-h-[300px] overflow-y-auto">
             {selected.map((resource) => (
               <li key={resource}>{resource}</li>
             ))}
