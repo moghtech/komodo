@@ -239,50 +239,15 @@ export const UserDropdown = () => {
           </Button>
         </div>
 
-        {accounts.map((login) => {
-          const selected = login.user_id === user?._id?.$oid;
-          return (
-            <div className="flex gap-2 items-center w-full">
-              <Button
-                variant={selected ? "secondary" : "ghost"}
-                className="flex gap-2 items-center justify-between w-full"
-                onClick={() => {
-                  if (selected) {
-                    // Noop
-                    setOpen(false);
-                    return;
-                  }
-                  LOGIN_TOKENS.change(login.user_id);
-                  location.reload();
-                }}
-              >
-                <div className="flex items-center gap-2">
-                  <Username user_id={login.user_id} />
-                </div>
-                {selected && (
-                  <Circle className="w-3 h-3 stroke-none transition-colors fill-green-500" />
-                )}
-              </Button>
-
-              {viewLogout && (
-                <Button
-                  variant="destructive"
-                  className="px-2 py-0"
-                  onClick={() => {
-                    LOGIN_TOKENS.remove(login.user_id);
-                    if (selected) {
-                      location.reload();
-                    } else {
-                      rerender();
-                    }
-                  }}
-                >
-                  <LogOut className="w-4" />
-                </Button>
-              )}
-            </div>
-          );
-        })}
+        {accounts.map((login) => (
+          <Account
+            login={login}
+            current_id={user?._id?.$oid}
+            setOpen={setOpen}
+            rerender={rerender}
+            viewLogout={viewLogout}
+          />
+        ))}
 
         <Separator />
 
@@ -317,9 +282,66 @@ export const UserDropdown = () => {
   );
 };
 
-const Username = ({ user_id }: { user_id: string }) => {
-  const res = useRead("GetUsername", { user_id }).data;
-  return <UsernameView username={res?.username} avatar={res?.avatar} full />;
+const Account = ({
+  login,
+  current_id,
+  setOpen,
+  rerender,
+  viewLogout,
+}: {
+  login: Types.JwtResponse;
+  current_id?: string;
+  setOpen: (open: boolean) => void;
+  rerender: () => void;
+  viewLogout: boolean;
+}) => {
+  const res = useRead("GetUsername", { user_id: login.user_id });
+  if (!res.data) return;
+  const selected = login.user_id === current_id;
+  return (
+    <div className="flex gap-2 items-center w-full">
+      <Button
+        variant={selected ? "secondary" : "ghost"}
+        className="flex gap-2 items-center justify-between w-full"
+        onClick={() => {
+          if (selected) {
+            // Noop
+            setOpen(false);
+            return;
+          }
+          LOGIN_TOKENS.change(login.user_id);
+          location.reload();
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <UsernameView
+            username={res.data?.username}
+            avatar={res.data?.avatar}
+          />
+        </div>
+        {selected && (
+          <Circle className="w-3 h-3 stroke-none transition-colors fill-green-500" />
+        )}
+      </Button>
+
+      {viewLogout && (
+        <Button
+          variant="destructive"
+          className="px-2 py-0"
+          onClick={() => {
+            LOGIN_TOKENS.remove(login.user_id);
+            if (selected) {
+              location.reload();
+            } else {
+              rerender();
+            }
+          }}
+        >
+          <LogOut className="w-4" />
+        </Button>
+      )}
+    </div>
+  );
 };
 
 const UsernameView = ({
