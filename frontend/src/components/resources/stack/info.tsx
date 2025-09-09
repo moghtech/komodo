@@ -212,28 +212,30 @@ export const StackInfo = ({
             <Card key={content.path} className="flex flex-col gap-4">
               <CardHeader
                 className={cn(
-                  "flex flex-row justify-between items-center",
+                  "flex flex-row justify-between items-center group cursor-pointer",
                   showContents && "pb-0"
                 )}
+                onClick={handleToggleShow}
+                tabIndex={0}
+                role="button"
+                aria-pressed={showContents}
+                onKeyDown={(e) => {
+                  if (
+                    (e.key === "Enter" || e.key === " ") &&
+                    e.target === e.currentTarget
+                  ) {
+                    if (e.key === " ") e.preventDefault();
+                    handleToggleShow();
+                  }
+                }}
               >
                 <CardTitle className="font-mono flex gap-2 items-center">
                   <div className="flex gap-2 items-center">
-                    <div
-                      className="cursor-pointer select-none hover:underline"
-                      onClick={handleToggleShow}
-                      tabIndex={0}
-                      role="button"
-                      aria-pressed={showContents}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          handleToggleShow();
-                        }
-                      }}
-                    >
-                      <span className="text-muted-foreground">File:</span>
-                      <span>{content.path}</span>
-                    </div>
-                    <CopyButton content={content.path} label="file path" />
+                    <span className="text-muted-foreground">File:</span>
+                    <span>{content.path}</span>
+                    <span onClick={(e) => e.stopPropagation()} data-copy-button>
+                      <CopyButton content={content.path} label="file path" />
+                    </span>
                   </div>
                 </CardTitle>
                 <div className="flex items-center gap-2">
@@ -241,33 +243,39 @@ export const StackInfo = ({
                     <>
                       <Button
                         variant="outline"
-                        onClick={() =>
-                          setEdits({ ...edits, [content.path]: undefined })
-                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEdits({ ...edits, [content.path]: undefined });
+                        }}
                         className="flex items-center gap-2"
                         disabled={!edits[content.path]}
                       >
                         <History className="w-4 h-4" />
                         Reset
                       </Button>
-                      <ConfirmUpdate
-                        previous={{ contents: content.contents }}
-                        content={{ contents: edits[content.path] }}
-                        onConfirm={async () => {
-                          if (stack) {
-                            return await mutateAsync({
-                              stack: stack.name,
-                              file_path: content.path,
-                              contents: edits[content.path]!,
-                            }).then(() =>
-                              setEdits({ ...edits, [content.path]: undefined })
-                            );
-                          }
-                        }}
-                        disabled={!edits[content.path]}
-                        language="yaml"
-                        loading={isPending}
-                      />
+                      <span onClick={(e) => e.stopPropagation()}>
+                        <ConfirmUpdate
+                          previous={{ contents: content.contents }}
+                          content={{ contents: edits[content.path] }}
+                          onConfirm={async () => {
+                            if (stack) {
+                              return await mutateAsync({
+                                stack: stack.name,
+                                file_path: content.path,
+                                contents: edits[content.path]!,
+                              }).then(() =>
+                                setEdits({
+                                  ...edits,
+                                  [content.path]: undefined,
+                                })
+                              );
+                            }
+                          }}
+                          disabled={!edits[content.path]}
+                          language="yaml"
+                          loading={isPending}
+                        />
+                      </span>
                     </>
                   )}
                   <ShowHideButton
