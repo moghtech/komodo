@@ -16,7 +16,7 @@ import { useLocalStorage, useWrite } from "@lib/hooks";
 import { Button } from "@ui/button";
 import { FilePlus, History } from "lucide-react";
 import { useToast } from "@ui/use-toast";
-import { ConfirmButton, ShowHideButton } from "@components/util";
+import { ConfirmButton, ShowHideButton, CopyButton } from "@components/util";
 import { DEFAULT_STACK_FILE_CONTENTS } from "./config";
 import { Types } from "komodo_client";
 
@@ -205,6 +205,9 @@ export const StackInfo = ({
         latest_contents.length > 0 &&
         latest_contents.map((content) => {
           const showContents = show[content.path] ?? default_show_contents;
+          const handleToggleShow = () => {
+            setShow({ ...show, [content.path]: !showContents });
+          };
           return (
             <Card key={content.path} className="flex flex-col gap-4">
               <CardHeader
@@ -213,9 +216,25 @@ export const StackInfo = ({
                   showContents && "pb-0"
                 )}
               >
-                <CardTitle className="font-mono flex gap-2">
-                  <div className="text-muted-foreground">File:</div>
-                  {content.path}
+                <CardTitle className="font-mono flex gap-2 items-center">
+                  <div className="flex gap-2 items-center">
+                    <div
+                      className="cursor-pointer select-none hover:underline"
+                      onClick={handleToggleShow}
+                      tabIndex={0}
+                      role="button"
+                      aria-pressed={showContents}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          handleToggleShow();
+                        }
+                      }}
+                    >
+                      <span className="text-muted-foreground">File:</span>
+                      <span>{content.path}</span>
+                    </div>
+                    <CopyButton content={content.path} label="file path" />
+                  </div>
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   {canEdit && (
