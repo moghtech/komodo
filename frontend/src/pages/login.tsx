@@ -112,6 +112,11 @@ export default function Login() {
     login(creds);
   };
   
+  const handleSubmit = (e: any) => {
+    e.preventDefault();
+    handleLogin();
+  };
+  
   const handleSignUp = () => {
     const creds = getFormCredentials();
     if (!creds) return;
@@ -185,6 +190,7 @@ export default function Login() {
           {options?.local && (
             <form
               ref={formRef}
+              onSubmit={handleSubmit}
               autoComplete="on"
             >
               <CardContent className="flex flex-col justify-center w-full gap-4">
@@ -222,9 +228,8 @@ export default function Login() {
                 )}
                 <Button
                   variant="default"
-                  type="button"
+                  type="submit"
                   value="login"
-                  onClick={handleLogin}
                   disabled={loginPending}
                 >
                   Log In
