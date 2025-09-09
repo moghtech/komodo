@@ -222,7 +222,7 @@ impl Resolve<ExecuteArgs> for Deploy {
       }
     };
 
-    update_cache_for_server(&server).await;
+    update_cache_for_server(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -343,7 +343,7 @@ pub async fn pull_deployment_inner(
       Err(e) => Log::error("Pull image", format_serror(&e.into())),
     };
 
-    update_cache_for_server(server).await;
+    update_cache_for_server(server, true).await;
     anyhow::Ok(log)
   }
   .await;
@@ -428,7 +428,7 @@ impl Resolve<ExecuteArgs> for StartDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server).await;
+    update_cache_for_server(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -477,7 +477,7 @@ impl Resolve<ExecuteArgs> for RestartDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server).await;
+    update_cache_for_server(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -524,7 +524,7 @@ impl Resolve<ExecuteArgs> for PauseDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server).await;
+    update_cache_for_server(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -573,7 +573,7 @@ impl Resolve<ExecuteArgs> for UnpauseDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server).await;
+    update_cache_for_server(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -628,7 +628,7 @@ impl Resolve<ExecuteArgs> for StopDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server).await;
+    update_cache_for_server(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -711,7 +711,7 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
 
     update.logs.push(log);
     update.finalize();
-    update_cache_for_server(&server).await;
+    update_cache_for_server(&server, true).await;
     update_update(update.clone()).await?;
 
     Ok(update)

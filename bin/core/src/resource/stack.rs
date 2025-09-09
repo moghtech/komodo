@@ -252,7 +252,7 @@ impl super::KomodoResource for Stack {
     else {
       return Ok(());
     };
-    update_cache_for_server(&server).await;
+    update_cache_for_server(&server, true).await;
     Ok(())
   }
 
