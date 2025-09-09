@@ -260,7 +260,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
     }
 
     // Ensure cached stack state up to date by updating server cache
-    update_cache_for_server(&server).await;
+    update_cache_for_server(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -761,7 +761,7 @@ pub async fn pull_stack_inner(
     .await?;
 
   // Ensure cached stack state up to date by updating server cache
-  update_cache_for_server(server).await;
+  update_cache_for_server(server, true).await;
 
   Ok(res)
 }

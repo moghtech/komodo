@@ -72,7 +72,7 @@ pub async fn execute_compose<T: ExecuteCompose>(
     .push(T::execute(periphery, stack, services, extras).await?);
 
   // Ensure cached stack state up to date by updating server cache
-  update_cache_for_server(&server).await;
+  update_cache_for_server(&server, true).await;
 
   update.finalize();
   update_update(update.clone()).await?;
