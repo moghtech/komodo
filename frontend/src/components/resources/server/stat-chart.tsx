@@ -95,13 +95,7 @@ export const InnerStatChart = ({
   stats: StatDatapoint[] | undefined;
   seriesData?: { label: string; data: StatDatapoint[] }[];
 }) => {
-  const { theme: _theme } = useTheme();
-  const theme =
-    _theme === "system"
-      ? window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light"
-      : _theme;
+  const { currentTheme } = useTheme();
 
   const min = stats?.[0]?.date ?? 0;
   const max = stats?.[stats.length - 1]?.date ?? 0;
@@ -200,7 +194,7 @@ export const InnerStatChart = ({
                 hex_color_by_intention("Unknown"),
               ]
             : [getColor(type)],
-        dark: theme === "dark",
+        dark: currentTheme === "dark",
         padding: {
           left: 10,
           right: 10,

@@ -141,13 +141,7 @@ export const MonacoEditor = ({
     )}px`;
   }, [editor, line_count]);
 
-  const { theme: _theme } = useTheme();
-  const theme =
-    _theme === "system"
-      ? window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light"
-      : _theme;
+  const { currentTheme } = useTheme();
 
   const options: monaco.editor.IStandaloneEditorConstructionOptions = {
     minimap: { enabled: false },
@@ -171,7 +165,7 @@ export const MonacoEditor = ({
       <Editor
         language={language}
         value={value}
-        theme={theme}
+        theme={currentTheme}
         defaultPath={defaultPath(filename)}
         options={options}
         onChange={(v) => onValueChange?.(v ?? "")}
@@ -233,13 +227,7 @@ export const MonacoDiffEditor = ({
     )}px`;
   }, [editor, line_count]);
 
-  const { theme: _theme } = useTheme();
-  const theme =
-    _theme === "system"
-      ? window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light"
-      : _theme;
+  const { currentTheme } = useTheme();
 
   const options: monaco.editor.IStandaloneDiffEditorConstructionOptions = {
     minimap: { enabled: true },
@@ -262,7 +250,7 @@ export const MonacoDiffEditor = ({
         language={language}
         original={original}
         modified={modified}
-        theme={theme}
+        theme={currentTheme}
         options={options}
         onMount={(editor) => {
           const modifiedEditor = editor.getModifiedEditor();
