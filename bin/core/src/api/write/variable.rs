@@ -4,7 +4,9 @@ use komodo_client::{
   api::write::*,
   entities::{Operation, ResourceTarget, variable::Variable},
 };
+use reqwest::StatusCode;
 use resolver_api::Resolve;
+use serror::AddStatusCodeError;
 
 use crate::{
   helpers::{
@@ -22,16 +24,19 @@ impl Resolve<WriteArgs> for CreateVariable {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<CreateVariableResponse> {
+    if !user.admin {
+      return Err(
+        anyhow!("Only admins can create variables")
+          .status_code(StatusCode::FORBIDDEN),
+      );
+    }
+
     let CreateVariable {
       name,
       value,
       description,
       is_secret,
     } = self;
-
-    if !user.admin {
-      return Err(anyhow!("only admins can create variables").into());
-    }
 
     let variable = Variable {
       name,
@@ -44,7 +49,7 @@ impl Resolve<WriteArgs> for CreateVariable {
       .variables
       .insert_one(&variable)
       .await
-      .context("failed to create variable on db")?;
+      .context("Failed to create variable on db")?;
 
     let mut update = make_update(
       ResourceTarget::system(),
@@ -69,7 +74,10 @@ impl Resolve<WriteArgs> for UpdateVariableValue {
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<UpdateVariableValueResponse> {
     if !user.admin {
-      return Err(anyhow!("only admins can update variables").into());
+      return Err(
+        anyhow!("Only admins can update variables")
+          .status_code(StatusCode::FORBIDDEN),
+      );
     }
 
     let UpdateVariableValue { name, value } = self;
@@ -87,7 +95,7 @@ impl Resolve<WriteArgs> for UpdateVariableValue {
         doc! { "$set": { "value": &value } },
       )
       .await
-      .context("failed to update variable value on db")?;
+      .context("Failed to update variable value on db")?;
 
     let mut update = make_update(
       ResourceTarget::system(),
@@ -107,7 +115,7 @@ impl Resolve<WriteArgs> for UpdateVariableValue {
       )
     };
 
-    update.push_simple_log("update variable value", log);
+    update.push_simple_log("Update Variable Value", log);
     update.finalize();
 
     add_update(update).await?;
@@ -123,7 +131,10 @@ impl Resolve<WriteArgs> for UpdateVariableDescription {
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<UpdateVariableDescriptionResponse> {
     if !user.admin {
-      return Err(anyhow!("only admins can update variables").into());
+      return Err(
+        anyhow!("Only admins can update variables")
+          .status_code(StatusCode::FORBIDDEN),
+      );
     }
     db_client()
       .variables
@@ -132,7 +143,7 @@ impl Resolve<WriteArgs> for UpdateVariableDescription {
         doc! { "$set": { "description": &self.description } },
       )
       .await
-      .context("failed to update variable description on db")?;
+      .context("Failed to update variable description on db")?;
     Ok(get_variable(&self.name).await?)
   }
 }
@@ -144,7 +155,10 @@ impl Resolve<WriteArgs> for UpdateVariableIsSecret {
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<UpdateVariableIsSecretResponse> {
     if !user.admin {
-      return Err(anyhow!("only admins can update variables").into());
+      return Err(
+        anyhow!("Only admins can update variables")
+          .status_code(StatusCode::FORBIDDEN),
+      );
     }
     db_client()
       .variables
@@ -153,7 +167,7 @@ impl Resolve<WriteArgs> for UpdateVariableIsSecret {
         doc! { "$set": { "is_secret": self.is_secret } },
       )
       .await
-      .context("failed to update variable is secret on db")?;
+      .context("Failed to update variable is secret on db")?;
     Ok(get_variable(&self.name).await?)
   }
 }
@@ -164,14 +178,17 @@ impl Resolve<WriteArgs> for DeleteVariable {
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<DeleteVariableResponse> {
     if !user.admin {
-      return Err(anyhow!("only admins can delete variables").into());
+      return Err(
+        anyhow!("Only admins can delete variables")
+          .status_code(StatusCode::FORBIDDEN),
+      );
     }
     let variable = get_variable(&self.name).await?;
     db_client()
       .variables
       .delete_one(doc! { "name": &self.name })
       .await
-      .context("failed to delete variable on db")?;
+      .context("Failed to delete variable on db")?;
 
     let mut update = make_update(
       ResourceTarget::system(),
@@ -180,7 +197,7 @@ impl Resolve<WriteArgs> for DeleteVariable {
     );
 
     update
-      .push_simple_log("delete variable", format!("{variable:#?}"));
+      .push_simple_log("Delete Variable", format!("{variable:#?}"));
     update.finalize();
 
     add_update(update).await?;

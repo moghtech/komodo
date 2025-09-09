@@ -467,7 +467,7 @@ pub async fn create<T: KomodoResource>(
         "User does not have permissions to create {}.",
         T::resource_type()
       )
-      .status_code(StatusCode::UNAUTHORIZED),
+      .status_code(StatusCode::FORBIDDEN),
     );
   }
 

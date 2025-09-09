@@ -10,7 +10,9 @@ use komodo_client::{
   api::write::*,
   entities::{komodo_timestamp, user_group::UserGroup},
 };
+use reqwest::StatusCode;
 use resolver_api::Resolve;
+use serror::AddStatusCodeError;
 
 use crate::state::db_client;
 
@@ -23,7 +25,10 @@ impl Resolve<WriteArgs> for CreateUserGroup {
     WriteArgs { user: admin }: &WriteArgs,
   ) -> serror::Result<UserGroup> {
     if !admin.admin {
-      return Err(anyhow!("This call is admin-only").into());
+      return Err(
+        anyhow!("This call is admin-only")
+          .status_code(StatusCode::FORBIDDEN),
+      );
     }
     let user_group = UserGroup {
       name: self.name,
@@ -58,7 +63,10 @@ impl Resolve<WriteArgs> for RenameUserGroup {
     WriteArgs { user: admin }: &WriteArgs,
   ) -> serror::Result<UserGroup> {
     if !admin.admin {
-      return Err(anyhow!("This call is admin-only").into());
+      return Err(
+        anyhow!("This call is admin-only")
+          .status_code(StatusCode::FORBIDDEN),
+      );
     }
     let db = db_client();
     update_one_by_id(
@@ -84,7 +92,10 @@ impl Resolve<WriteArgs> for DeleteUserGroup {
     WriteArgs { user: admin }: &WriteArgs,
   ) -> serror::Result<UserGroup> {
     if !admin.admin {
-      return Err(anyhow!("This call is admin-only").into());
+      return Err(
+        anyhow!("This call is admin-only")
+          .status_code(StatusCode::FORBIDDEN),
+      );
     }
 
     let db = db_client();
@@ -117,7 +128,10 @@ impl Resolve<WriteArgs> for AddUserToUserGroup {
     WriteArgs { user: admin }: &WriteArgs,
   ) -> serror::Result<UserGroup> {
     if !admin.admin {
-      return Err(anyhow!("This call is admin-only").into());
+      return Err(
+        anyhow!("This call is admin-only")
+          .status_code(StatusCode::FORBIDDEN),
+      );
     }
 
     let db = db_client();
@@ -161,7 +175,10 @@ impl Resolve<WriteArgs> for RemoveUserFromUserGroup {
     WriteArgs { user: admin }: &WriteArgs,
   ) -> serror::Result<UserGroup> {
     if !admin.admin {
-      return Err(anyhow!("This call is admin-only").into());
+      return Err(
+        anyhow!("This call is admin-only")
+          .status_code(StatusCode::FORBIDDEN),
+      );
     }
 
     let db = db_client();
@@ -205,7 +222,10 @@ impl Resolve<WriteArgs> for SetUsersInUserGroup {
     WriteArgs { user: admin }: &WriteArgs,
   ) -> serror::Result<UserGroup> {
     if !admin.admin {
-      return Err(anyhow!("This call is admin-only").into());
+      return Err(
+        anyhow!("This call is admin-only")
+          .status_code(StatusCode::FORBIDDEN),
+      );
     }
 
     let db = db_client();
@@ -252,7 +272,10 @@ impl Resolve<WriteArgs> for SetEveryoneUserGroup {
     WriteArgs { user: admin }: &WriteArgs,
   ) -> serror::Result<UserGroup> {
     if !admin.admin {
-      return Err(anyhow!("This call is admin-only").into());
+      return Err(
+        anyhow!("This call is admin-only")
+          .status_code(StatusCode::FORBIDDEN),
+      );
     }
 
     let db = db_client();
