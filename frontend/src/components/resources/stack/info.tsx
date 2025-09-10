@@ -208,7 +208,7 @@ export const StackInfo = ({
           const handleToggleShow = () => {
             setShow((show) => ({
               ...show,
-              [content.path]: !show[content.path],
+              [content.path]: !(show[content.path] ?? default_show_contents),
             }));
           };
           return (
