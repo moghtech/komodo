@@ -206,7 +206,10 @@ export const StackInfo = ({
         latest_contents.map((content) => {
           const showContents = show[content.path] ?? default_show_contents;
           const handleToggleShow = () => {
-            setShow((show) => ({ ...show, [content.path]: !show[content.path] }));
+            setShow((show) => ({
+              ...show,
+              [content.path]: !show[content.path],
+            }));
           };
           return (
             <Card key={content.path} className="flex flex-col gap-4">
