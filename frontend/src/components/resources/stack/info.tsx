@@ -16,7 +16,7 @@ import { useLocalStorage, useWrite } from "@lib/hooks";
 import { Button } from "@ui/button";
 import { FilePlus, History } from "lucide-react";
 import { useToast } from "@ui/use-toast";
-import { ConfirmButton, ShowHideButton } from "@components/util";
+import { ConfirmButton, ShowHideButton, CopyButton } from "@components/util";
 import { DEFAULT_STACK_FILE_CONTENTS } from "./config";
 import { Types } from "komodo_client";
 
@@ -205,50 +205,80 @@ export const StackInfo = ({
         latest_contents.length > 0 &&
         latest_contents.map((content) => {
           const showContents = show[content.path] ?? default_show_contents;
+          const handleToggleShow = () => {
+            setShow((show) => ({
+              ...show,
+              [content.path]: !(show[content.path] ?? default_show_contents),
+            }));
+          };
           return (
             <Card key={content.path} className="flex flex-col gap-4">
               <CardHeader
                 className={cn(
-                  "flex flex-row justify-between items-center",
+                  "flex flex-row justify-between items-center group cursor-pointer",
                   showContents && "pb-0"
                 )}
+                onClick={handleToggleShow}
+                tabIndex={0}
+                role="button"
+                aria-pressed={showContents}
+                onKeyDown={(e) => {
+                  if (
+                    (e.key === "Enter" || e.key === " ") &&
+                    e.target === e.currentTarget
+                  ) {
+                    if (e.key === " ") e.preventDefault();
+                    handleToggleShow();
+                  }
+                }}
               >
-                <CardTitle className="font-mono flex gap-2">
-                  <div className="text-muted-foreground">File:</div>
-                  {content.path}
+                <CardTitle className="font-mono flex gap-2 items-center">
+                  <div className="flex gap-2 items-center">
+                    <span className="text-muted-foreground">File:</span>
+                    <span>{content.path}</span>
+                    <span onClick={(e) => e.stopPropagation()} data-copy-button>
+                      <CopyButton content={content.path} label="file path" />
+                    </span>
+                  </div>
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   {canEdit && (
                     <>
                       <Button
                         variant="outline"
-                        onClick={() =>
-                          setEdits({ ...edits, [content.path]: undefined })
-                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEdits({ ...edits, [content.path]: undefined });
+                        }}
                         className="flex items-center gap-2"
                         disabled={!edits[content.path]}
                       >
                         <History className="w-4 h-4" />
                         Reset
                       </Button>
-                      <ConfirmUpdate
-                        previous={{ contents: content.contents }}
-                        content={{ contents: edits[content.path] }}
-                        onConfirm={async () => {
-                          if (stack) {
-                            return await mutateAsync({
-                              stack: stack.name,
-                              file_path: content.path,
-                              contents: edits[content.path]!,
-                            }).then(() =>
-                              setEdits({ ...edits, [content.path]: undefined })
-                            );
-                          }
-                        }}
-                        disabled={!edits[content.path]}
-                        language="yaml"
-                        loading={isPending}
-                      />
+                      <span onClick={(e) => e.stopPropagation()}>
+                        <ConfirmUpdate
+                          previous={{ contents: content.contents }}
+                          content={{ contents: edits[content.path] }}
+                          onConfirm={async () => {
+                            if (stack) {
+                              return await mutateAsync({
+                                stack: stack.name,
+                                file_path: content.path,
+                                contents: edits[content.path]!,
+                              }).then(() =>
+                                setEdits({
+                                  ...edits,
+                                  [content.path]: undefined,
+                                })
+                              );
+                            }
+                          }}
+                          disabled={!edits[content.path]}
+                          language="yaml"
+                          loading={isPending}
+                        />
+                      </span>
                     </>
                   )}
                   <ShowHideButton
