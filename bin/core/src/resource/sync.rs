@@ -113,7 +113,7 @@ impl super::KomodoResource for ResourceSync {
 
   async fn busy(id: &String) -> anyhow::Result<bool> {
     action_states()
-      .resource_sync
+      .sync
       .get(id)
       .await
       .unwrap_or_default()
@@ -242,7 +242,7 @@ async fn get_resource_sync_state(
   data: &ResourceSyncInfo,
 ) -> ResourceSyncState {
   if let Some(state) = action_states()
-    .resource_sync
+    .sync
     .get(id)
     .await
     .and_then(|s| {

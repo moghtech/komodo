@@ -40,6 +40,7 @@ pub fn db_client() -> &'static Client {
     .expect("db_client accessed before initialized")
 }
 
+/// Must be called in app startup sequence.
 pub async fn init_db_client() {
   let client = Client::new(&core_config().database)
     .await

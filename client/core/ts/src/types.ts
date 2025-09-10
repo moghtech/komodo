@@ -1351,8 +1351,8 @@ export type ExportResourcesToTomlResponse = TomlResponse;
 export type FindUserResponse = User;
 
 export interface ActionActionState {
-	/** Whether the action is currently running. */
-	running: boolean;
+	/** Number of instances of the Action currently running */
+	running: number;
 }
 
 export type GetActionActionStateResponse = ActionActionState;

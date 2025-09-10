@@ -13,26 +13,31 @@ use database::mungos::{
     options::FindOneOptions,
   },
 };
-use komodo_client::entities::{
-  Operation, ResourceTarget, ResourceTargetVariant,
-  action::{Action, ActionState},
-  alerter::Alerter,
-  build::Build,
-  builder::Builder,
-  deployment::{Deployment, DeploymentState},
-  docker::container::{ContainerListItem, ContainerStateStatusEnum},
-  permission::{PermissionLevel, PermissionLevelAndSpecifics},
-  procedure::{Procedure, ProcedureState},
-  repo::Repo,
-  server::{Server, ServerState},
-  stack::{Stack, StackServiceNames, StackState},
-  stats::SystemInformation,
-  sync::ResourceSync,
-  tag::Tag,
-  update::Update,
-  user::{User, admin_service_user},
-  user_group::UserGroup,
-  variable::Variable,
+use komodo_client::{
+  busy::Busy,
+  entities::{
+    Operation, ResourceTarget, ResourceTargetVariant,
+    action::{Action, ActionState},
+    alerter::Alerter,
+    build::Build,
+    builder::Builder,
+    deployment::{Deployment, DeploymentState},
+    docker::container::{
+      ContainerListItem, ContainerStateStatusEnum,
+    },
+    permission::{PermissionLevel, PermissionLevelAndSpecifics},
+    procedure::{Procedure, ProcedureState},
+    repo::Repo,
+    server::{Server, ServerState},
+    stack::{Stack, StackServiceNames, StackState},
+    stats::SystemInformation,
+    sync::ResourceSync,
+    tag::Tag,
+    update::Update,
+    user::{User, admin_service_user},
+    user_group::UserGroup,
+    variable::Variable,
+  },
 };
 use periphery_client::api::stats;
 use tokio::sync::Mutex;
@@ -467,7 +472,7 @@ pub async fn get_action_state(id: &String) -> ActionState {
     .action
     .get(id)
     .await
-    .map(|s| s.get().map(|s| s.running))
+    .map(|s| s.get().map(|s| s.busy()))
     .transpose()
     .ok()
     .flatten()
@@ -483,7 +488,7 @@ pub async fn get_procedure_state(id: &String) -> ProcedureState {
     .procedure
     .get(id)
     .await
-    .map(|s| s.get().map(|s| s.running))
+    .map(|s| s.get().map(|s| s.busy()))
     .transpose()
     .ok()
     .flatten()

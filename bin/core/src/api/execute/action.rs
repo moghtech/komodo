@@ -92,8 +92,11 @@ impl Resolve<ExecuteArgs> for RunAction {
 
     // This will set action state back to default when dropped.
     // Will also check to ensure action not already busy before updating.
-    let _action_guard =
-      action_state.update(|state| state.running = true)?;
+    let _action_guard = action_state.update_custom(
+      |state| state.running += 1,
+      |state| state.running -= 1,
+      false,
+    )?;
 
     let mut update = update.clone();
 

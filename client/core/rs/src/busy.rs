@@ -68,7 +68,7 @@ impl Busy for ProcedureActionState {
 
 impl Busy for ActionActionState {
   fn busy(&self) -> bool {
-    self.running
+    self.running > 0
   }
 }
 

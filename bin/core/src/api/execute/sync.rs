@@ -78,7 +78,7 @@ impl Resolve<ExecuteArgs> for RunSync {
 
     // get the action state for the sync (or insert default).
     let action_state = action_states()
-      .resource_sync
+      .sync
       .get_or_insert_default(&sync.id)
       .await;
 

@@ -131,8 +131,8 @@ impl Resolve<ReadArgs> for GetActionsSummary {
           .unwrap_or_default()
           .get()?,
       ) {
-        (_, action_states) if action_states.running => {
-          res.running += 1;
+        (_, action_states) if action_states.running > 0 => {
+          res.running += action_states.running;
         }
         (ActionState::Ok, _) => res.ok += 1,
         (ActionState::Failed, _) => res.failed += 1,

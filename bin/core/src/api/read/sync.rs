@@ -93,7 +93,7 @@ impl Resolve<ReadArgs> for GetResourceSyncActionState {
     )
     .await?;
     let action_state = action_states()
-      .resource_sync
+      .sync
       .get(&sync.id)
       .await
       .unwrap_or_default()
@@ -138,7 +138,7 @@ impl Resolve<ReadArgs> for GetResourceSyncsSummary {
         continue;
       }
       if action_states
-        .resource_sync
+        .sync
         .get(&resource_sync.id)
         .await
         .unwrap_or_default()
