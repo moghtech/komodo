@@ -119,11 +119,12 @@ export const ActionComponents: RequiredResourceComponents = {
 
   Actions: {
     RunAction: ({ id }) => {
-      const running = useRead(
-        "GetActionActionState",
-        { action: id },
-        { refetchInterval: 5000 }
-      ).data?.running;
+      const running =
+        (useRead(
+          "GetActionActionState",
+          { action: id },
+          { refetchInterval: 5000 }
+        ).data?.running ?? 0) > 0;
       const { mutate, isPending } = useExecute("RunAction");
       const action = useAction(id);
       if (!action) return null;

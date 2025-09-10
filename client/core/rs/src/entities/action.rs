@@ -222,8 +222,8 @@ impl Default for ActionConfig {
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, Default)]
 pub struct ActionActionState {
-  /// Whether the action is currently running.
-  pub running: bool,
+  /// Number of instances of the Action currently running
+  pub running: u32,
 }
 
 #[typeshare]
