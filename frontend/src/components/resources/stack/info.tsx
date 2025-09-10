@@ -283,7 +283,7 @@ export const StackInfo = ({
                   )}
                   <ShowHideButton
                     show={showContents}
-                    setShow={(val) => setShow({ ...show, [content.path]: val })}
+                    setShow={() => {}}
                   />
                 </div>
               </CardHeader>
