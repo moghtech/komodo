@@ -202,6 +202,7 @@ export default function Login() {
                     autoComplete="username"
                     autoCapitalize="none"
                     autoCorrect="off"
+                    autoFocus
                   />
                 </div>
                 <div className="flex flex-col gap-2">
