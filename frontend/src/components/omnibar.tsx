@@ -1,4 +1,4 @@
-import { useAllResources, useLocalStorage, useRead, useUser } from "@lib/hooks";
+import { useAllResources, useLocalStorage, useRead, useSettingsView, useUser } from "@lib/hooks";
 import { Button } from "@ui/button";
 import {
   CommandDialog,
@@ -126,6 +126,7 @@ const useOmniItems = (
 ): Record<string, OmniItem[]> => {
   const user = useUser().data;
   const resources = useAllResources();
+  const [_, setSettingsView] = useSettingsView();
   return useMemo(() => {
     const searchTerms = search
       .toLowerCase()
@@ -166,7 +167,10 @@ const useOmniItems = (
           type: "Server" as UsableResource,
           label: "Users",
           icon: <User className="w-4 h-4" />,
-          onSelect: () => nav("/users"),
+          onSelect: () => {
+            setSettingsView("Users");
+            nav("/settings");
+          },
           template: false,
         }) as OmniItem,
       ]
