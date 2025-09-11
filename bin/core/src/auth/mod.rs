@@ -8,7 +8,7 @@ use database::mungos::mongodb::bson::doc;
 use komodo_client::entities::{komodo_timestamp, user::User};
 use reqwest::StatusCode;
 use serde::Deserialize;
-use serror::AddStatusCode;
+use serror::AddStatusCodeError;
 
 use crate::{
   helpers::query::get_user,
@@ -37,9 +37,7 @@ pub async fn auth_request(
   mut req: Request,
   next: Next,
 ) -> serror::Result<Response> {
-  let user = authenticate_check_enabled(&headers)
-    .await
-    .status_code(StatusCode::UNAUTHORIZED)?;
+  let user = authenticate_check_enabled(&headers).await?;
   req.extensions_mut().insert(user);
   Ok(next.run(req).await)
 }
@@ -47,7 +45,7 @@ pub async fn auth_request(
 #[instrument(level = "debug")]
 pub async fn get_user_id_from_headers(
   headers: &HeaderMap,
-) -> anyhow::Result<String> {
+) -> serror::Result<String> {
   match (
     headers.get("authorization"),
     headers.get("x-api-key"),
@@ -59,6 +57,7 @@ pub async fn get_user_id_from_headers(
       auth_jwt_get_user_id(jwt)
         .await
         .context("failed to authenticate jwt")
+        .map_err(|e| e.status_code(StatusCode::UNAUTHORIZED))
     }
     (None, Some(key), Some(secret)) => {
       // USE API KEY / SECRET
@@ -67,12 +66,14 @@ pub async fn get_user_id_from_headers(
       auth_api_key_get_user_id(key, secret)
         .await
         .context("failed to authenticate api key")
+        .map_err(|e| e.status_code(StatusCode::UNAUTHORIZED))
     }
     _ => {
       // AUTH FAIL
-      Err(anyhow!(
-        "must attach either AUTHORIZATION header with jwt OR pass X-API-KEY and X-API-SECRET"
-      ))
+      Err(
+        anyhow!("must attach either AUTHORIZATION header with jwt OR pass X-API-KEY and X-API-SECRET")
+        .status_code(StatusCode::BAD_REQUEST)
+      )
     }
   }
 }
@@ -80,13 +81,18 @@ pub async fn get_user_id_from_headers(
 #[instrument(level = "debug")]
 pub async fn authenticate_check_enabled(
   headers: &HeaderMap,
-) -> anyhow::Result<User> {
+) -> serror::Result<User> {
   let user_id = get_user_id_from_headers(headers).await?;
-  let user = get_user(&user_id).await?;
+  let user = get_user(&user_id).await.map_err(serror::Error::from)?;
   if user.enabled {
     Ok(user)
   } else {
-    Err(anyhow!("user not enabled"))
+    Err(
+      serror::Error::from(
+        anyhow!("user not enabled")
+        .status_code(StatusCode::FORBIDDEN)
+      )
+    )
   }
 }
 
