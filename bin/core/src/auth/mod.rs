@@ -8,7 +8,7 @@ use database::mungos::mongodb::bson::doc;
 use komodo_client::entities::{komodo_timestamp, user::User};
 use reqwest::StatusCode;
 use serde::Deserialize;
-use serror::AddStatusCodeError;
+use serror::{AddStatusCode, AddStatusCodeError};
 
 use crate::{
   helpers::query::get_user,
@@ -57,7 +57,7 @@ pub async fn get_user_id_from_headers(
       auth_jwt_get_user_id(jwt)
         .await
         .context("failed to authenticate jwt")
-        .map_err(|e| e.status_code(StatusCode::UNAUTHORIZED))
+        .status_code(StatusCode::UNAUTHORIZED)
     }
     (None, Some(key), Some(secret)) => {
       // USE API KEY / SECRET
@@ -66,13 +66,14 @@ pub async fn get_user_id_from_headers(
       auth_api_key_get_user_id(key, secret)
         .await
         .context("failed to authenticate api key")
-        .map_err(|e| e.status_code(StatusCode::UNAUTHORIZED))
+        .status_code(StatusCode::UNAUTHORIZED)
     }
     _ => {
       // AUTH FAIL
       Err(
         anyhow!("must attach either AUTHORIZATION header with jwt OR pass X-API-KEY and X-API-SECRET")
         .status_code(StatusCode::BAD_REQUEST)
+        .into()
       )
     }
   }
@@ -100,7 +101,9 @@ pub async fn authenticate_check_enabled(
 pub async fn auth_jwt_get_user_id(
   jwt: &str,
 ) -> anyhow::Result<String> {
-  let claims: JwtClaims = jwt_client().decode(jwt)?;
+  let claims: JwtClaims = jwt_client()
+    .decode(jwt)
+    .context("failed to decode jwt")?;
   if claims.exp > unix_timestamp_ms() {
     Ok(claims.id)
   } else {
@@ -111,8 +114,11 @@ pub async fn auth_jwt_get_user_id(
 #[instrument(level = "debug")]
 pub async fn auth_jwt_check_enabled(
   jwt: &str,
-) -> anyhow::Result<User> {
-  let user_id = auth_jwt_get_user_id(jwt).await?;
+) -> serror::Result<User> {
+  let user_id = auth_jwt_get_user_id(jwt)
+    .await
+    .context("failed to get user id from jwt")
+    .status_code(StatusCode::UNAUTHORIZED)?;
   check_enabled(user_id).await
 }
 
@@ -136,7 +142,7 @@ pub async fn auth_api_key_get_user_id(
     // secret matches
     Ok(key.user_id)
   } else {
-    // secret mismatch
+    // secret mismatch  
     Err(anyhow!("invalid api secret"))
   }
 }
@@ -145,17 +151,25 @@ pub async fn auth_api_key_get_user_id(
 pub async fn auth_api_key_check_enabled(
   key: &str,
   secret: &str,
-) -> anyhow::Result<User> {
-  let user_id = auth_api_key_get_user_id(key, secret).await?;
+) -> serror::Result<User> {
+  let user_id = auth_api_key_get_user_id(key, secret)
+    .await
+    .context("failed to get user id from api key")
+    .status_code(StatusCode::UNAUTHORIZED)?;
   check_enabled(user_id).await
 }
 
 #[instrument(level = "debug")]
-async fn check_enabled(user_id: String) -> anyhow::Result<User> {
-  let user = get_user(&user_id).await?;
+async fn check_enabled(user_id: String) -> serror::Result<User> {
+  let user = get_user(&user_id).await.map_err(serror::Error::from)?;
   if user.enabled {
     Ok(user)
   } else {
-    Err(anyhow!("user not enabled"))
+    Err(
+      serror::Error::from(
+        anyhow!("user not enabled")
+        .status_code(StatusCode::FORBIDDEN)
+      )
+    )
   }
 }
