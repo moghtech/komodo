@@ -178,9 +178,11 @@ export const useRead = <
   params: P,
   config?: C
 ) => {
+  const hasJwt = !!LOGIN_TOKENS.jwt();
   return useQuery({
     queryKey: [type, params],
     queryFn: () => komodo_client().read<T, R>(type, params),
+    enabled: hasJwt && (config?.enabled !== false),
     ...config,
   });
 };
