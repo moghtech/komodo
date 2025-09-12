@@ -18,6 +18,7 @@ import {
 } from "@ui/select";
 import { DockerResourceLink, ShowHideButton } from "@components/util";
 import { filterBySplit } from "@lib/utils";
+import { useIsServerAvailable } from ".";
 
 export const ServerStats = ({
   id,
@@ -29,17 +30,23 @@ export const ServerStats = ({
   const [interval, setInterval] = useStatsGranularity();
 
   const { specific } = usePermissions({ type: "Server", id });
+  const isServerAvailable = useIsServerAvailable(id);
 
   const stats = useRead(
     "GetSystemStats",
     { server: id },
-    { refetchInterval: 10_000 }
+    { 
+      enabled: isServerAvailable,
+      refetchInterval: 10_000 
+    }
   ).data;
-  const info = useRead("GetSystemInformation", { server: id }).data;
+  const info = useRead("GetSystemInformation", { server: id }, { enabled: isServerAvailable }).data;
 
   // Get all the containers with stats
   const containers = useRead("ListDockerContainers", {
     server: id,
+  }, {
+    enabled: isServerAvailable
   }).data?.filter((c) => c.stats);
   const [showContainers, setShowContainers] = useLocalStorage(
     "stats-show-container-table-v1",
@@ -504,8 +511,8 @@ const LOAD_AVERAGE = ({
 }) => {
   if (!stats?.load_average) return null;
   const { one = 0, five = 0, fifteen = 0 } = stats.load_average || {};
-  const cores = useRead("GetSystemInformation", { server: id }).data
-    ?.core_count;
+  const isServerAvailable = useIsServerAvailable(id);
+  const cores = useRead("GetSystemInformation", { server: id }, { enabled: isServerAvailable }).data?.core_count;
 
   const pct = (load: number) =>
     cores && cores > 0 ? Math.min((load / cores) * 100, 100) : undefined;

@@ -43,6 +43,14 @@ export const useServer = (id?: string) =>
   useRead("ListServers", {}, { refetchInterval: 10_000 }).data?.find(
     (d) => d.id === id
   );
+  
+// Helper function to check if server is available for API calls
+export const useIsServerAvailable = (serverId?: string) => {
+  const server = useServer(serverId);
+  return server && 
+    server.info.state !== Types.ServerState.Disabled && 
+    server.info.state !== Types.ServerState.NotOk;
+};
 
 export const useFullServer = (id: string) =>
   useRead("GetServer", { server: id }, { refetchInterval: 10_000 }).data;
@@ -384,13 +392,13 @@ export const ServerComponents: RequiredResourceComponents = {
   Info: {
     Version: ServerVersion,
     Cpu: ({ id }) => {
-      const server = useServer(id);
+      const isServerAvailable = useIsServerAvailable(id);
       const core_count =
         useRead(
           "GetSystemInformation",
           { server: id },
           {
-            enabled: server ? server.info.state !== "Disabled" : false,
+            enabled: isServerAvailable,
             refetchInterval: 5000,
           }
         ).data?.core_count ?? 0;
@@ -402,12 +410,12 @@ export const ServerComponents: RequiredResourceComponents = {
       );
     },
     LoadAvg: ({ id }) => {
-      const server = useServer(id);
+      const isServerAvailable = useIsServerAvailable(id);
       const stats = useRead(
         "GetSystemStats",
         { server: id },
         {
-          enabled: server ? server.info.state !== "Disabled" : false,
+          enabled: isServerAvailable,
           refetchInterval: 5000,
         }
       ).data;
@@ -423,12 +431,12 @@ export const ServerComponents: RequiredResourceComponents = {
       );
     },
     Mem: ({ id }) => {
-      const server = useServer(id);
+      const isServerAvailable = useIsServerAvailable(id);
       const stats = useRead(
         "GetSystemStats",
         { server: id },
         {
-          enabled: server ? server.info.state !== "Disabled" : false,
+          enabled: isServerAvailable,
           refetchInterval: 5000,
         }
       ).data;
@@ -440,12 +448,12 @@ export const ServerComponents: RequiredResourceComponents = {
       );
     },
     Disk: ({ id }) => {
-      const server = useServer(id);
+      const isServerAvailable = useIsServerAvailable(id);
       const stats = useRead(
         "GetSystemStats",
         { server: id },
         {
-          enabled: server ? server.info.state !== "Disabled" : false,
+          enabled: isServerAvailable,
           refetchInterval: 5000,
         }
       ).data;
