@@ -80,9 +80,7 @@ export function DataTable<TData, TValue>({
   }, [tableKey]);
 
   useEffect(() => {
-    if (sorting.length) {
-      localStorage.setItem("data-table-" + tableKey, JSON.stringify(sorting));
-    }
+    localStorage.setItem("data-table-" + tableKey, JSON.stringify(sorting));
   }, [tableKey, sorting]);
 
   useEffect(() => {

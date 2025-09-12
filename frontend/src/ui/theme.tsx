@@ -18,15 +18,20 @@ type ThemeProviderProps = {
 
 type ThemeProviderState = {
   theme: Theme;
+  currentTheme: Exclude<Theme, "system">;
   setTheme: (theme: Theme) => void;
 };
 
 const initialState: ThemeProviderState = {
   theme: "system",
+  currentTheme: "dark",
   setTheme: () => null,
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
+
+const systemTheme = () =>
+  window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 
 export function ThemeProvider({
   children,
@@ -37,44 +42,36 @@ export function ThemeProvider({
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
   );
+  // Tracks the current theme
+  //   - if theme is light or dark, equal to theme.
+  //   - if theme is system, tracks current theme with pool loop
+  const [currentTheme, setCurrentTheme] = useState<Exclude<Theme, "system">>(
+    theme === "system" ? systemTheme() : theme
+  );
+
+  useEffect(() => {
+    if (theme === "system") {
+      setCurrentTheme(systemTheme());
+      // For 'system' theme, need to poll
+      // matchMedia for update to theme.
+      const interval = setInterval(() => {
+        setCurrentTheme(systemTheme());
+      }, 5_000);
+      return () => clearInterval(interval);
+    } else {
+      setCurrentTheme(theme);
+    }
+  }, [theme]);
 
   useEffect(() => {
     const root = window.document.documentElement;
-
-    root.classList.remove("light", "dark");
-
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light";
-
-      root.classList.add(systemTheme);
-      return;
-    }
-
-    root.classList.add(theme);
-  }, [theme]);
-
-  // For 'system' theme, need to poll
-  // matchMedia for update to theme.
-  useEffect(() => {
-    if (theme === "system") {
-      const interval = setInterval(() => {
-        const [systemTheme, other] = window.matchMedia(
-          "(prefers-color-scheme: dark)"
-        ).matches
-          ? ["dark", "light"]
-          : ["light", "dark"];
-        window.document.documentElement.classList.add(systemTheme);
-        window.document.documentElement.classList.remove(other);
-      }, 5_000);
-      return () => clearInterval(interval);
-    }
-  }, [theme]);
+    root.classList.add(currentTheme);
+    return () => root.classList.remove(currentTheme);
+  }, [currentTheme]);
 
   const value = {
     theme,
+    currentTheme,
     setTheme: (theme: Theme) => {
       localStorage.setItem(storageKey, theme);
       setTheme(theme);

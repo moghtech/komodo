@@ -13,9 +13,12 @@ use komodo_client::{
     server::Server, stack::Stack, sync::ResourceSync, tag::Tag,
   },
 };
+use reqwest::StatusCode;
 use resolver_api::Resolve;
+use serror::AddStatusCodeError;
 
 use crate::{
+  config::core_config,
   helpers::query::{get_tag, get_tag_check_owner},
   resource,
   state::db_client,
@@ -29,8 +32,18 @@ impl Resolve<WriteArgs> for CreateTag {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Tag> {
+    if core_config().disable_non_admin_create && !user.admin {
+      return Err(
+        anyhow!("Non admins cannot create tags")
+          .status_code(StatusCode::FORBIDDEN),
+      );
+    }
+
     if ObjectId::from_str(&self.name).is_ok() {
-      return Err(anyhow!("tag name cannot be ObjectId").into());
+      return Err(
+        anyhow!("Tag name cannot be ObjectId")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
     }
 
     let mut tag = Tag {

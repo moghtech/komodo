@@ -123,7 +123,7 @@ impl super::KomodoResource for Server {
     created: &Resource<Self::Config, Self::Info>,
     _update: &mut Update,
   ) -> anyhow::Result<()> {
-    update_cache_for_server(created).await;
+    update_cache_for_server(created, true).await;
     Ok(())
   }
 
@@ -145,7 +145,7 @@ impl super::KomodoResource for Server {
     updated: &Self,
     _update: &mut Update,
   ) -> anyhow::Result<()> {
-    update_cache_for_server(updated).await;
+    update_cache_for_server(updated, true).await;
     Ok(())
   }
 

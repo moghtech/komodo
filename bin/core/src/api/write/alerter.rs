@@ -16,10 +16,7 @@ impl Resolve<WriteArgs> for CreateAlerter {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Alerter> {
-    Ok(
-      resource::create::<Alerter>(&self.name, self.config, user)
-        .await?,
-    )
+    resource::create::<Alerter>(&self.name, self.config, user).await
   }
 }
 
@@ -35,10 +32,7 @@ impl Resolve<WriteArgs> for CopyAlerter {
       PermissionLevel::Write.into(),
     )
     .await?;
-    Ok(
-      resource::create::<Alerter>(&self.name, config.into(), user)
-        .await?,
-    )
+    resource::create::<Alerter>(&self.name, config.into(), user).await
   }
 }
 

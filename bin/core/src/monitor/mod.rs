@@ -1,3 +1,5 @@
+use std::sync::{Arc, OnceLock};
+
 use async_timing_util::wait_until_timelength;
 use database::mungos::{find::find_collect, mongodb::bson::doc};
 use futures::future::join_all;
@@ -15,10 +17,11 @@ use komodo_client::entities::{
 };
 use periphery_client::api::{self, git::GetLatestCommit};
 use serror::Serror;
+use tokio::sync::Mutex;
 
 use crate::{
   config::core_config,
-  helpers::periphery_client,
+  helpers::{cache::Cache, periphery_client},
   monitor::{alert::check_alerts, record::record_server_stats},
   state::{db_client, deployment_status_cache, repo_status_cache},
 };
@@ -110,14 +113,47 @@ async fn refresh_server_cache(ts: i64) {
       }
     };
   let futures = servers.into_iter().map(|server| async move {
-    update_cache_for_server(&server).await;
+    update_cache_for_server(&server, false).await;
   });
   join_all(futures).await;
   tokio::join!(check_alerts(ts), record_server_stats(ts));
 }
 
+/// Makes sure cache for server doesn't update too frequently / simultaneously.
+/// If forced, will still block against simultaneous update.
+fn update_cache_for_server_controller()
+-> &'static Cache<String, Arc<Mutex<i64>>> {
+  static CACHE: OnceLock<Cache<String, Arc<Mutex<i64>>>> =
+    OnceLock::new();
+  CACHE.get_or_init(Default::default)
+}
+
+/// The background loop will call this with force: false,
+/// which exits early if the lock is busy or it was completed too recently.
+/// If force is true, it will wait on simultaneous calls, and will
+/// ignore the restriction on being completed too recently.
 #[instrument(level = "debug")]
-pub async fn update_cache_for_server(server: &Server) {
+pub async fn update_cache_for_server(server: &Server, force: bool) {
+  // Concurrency controller to ensure it isn't done too often
+  // when it happens in other contexts.
+  let controller = update_cache_for_server_controller()
+    .get_or_insert_default(&server.id)
+    .await;
+  let mut lock = match controller.try_lock() {
+    Ok(lock) => lock,
+    Err(_) if force => controller.lock().await,
+    Err(_) => return,
+  };
+
+  let now = komodo_timestamp();
+
+  // early return if called again sooner than 1s.
+  if !force && *lock > now - 1_000 {
+    return;
+  }
+
+  *lock = now;
+
   let (deployments, builds, repos, stacks) = tokio::join!(
     find_collect(
       &db_client().deployments,

@@ -31,14 +31,8 @@ export const Terminal = ({
   _reconnect: boolean;
   _clear?: boolean;
 }) => {
-  const { theme: __theme } = useTheme();
-  const _theme =
-    __theme === "system"
-      ? window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light"
-      : __theme;
-  const theme = _theme === "dark" ? DARK_THEME : LIGHT_THEME;
+  const { currentTheme } = useTheme();
+  const theme = currentTheme === "dark" ? DARK_THEME : LIGHT_THEME;
   const wsRef = useRef<WebSocket | null>(null);
   const fitRef = useRef<FitAddon>(new FitAddon());
 

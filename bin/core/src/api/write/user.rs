@@ -32,7 +32,7 @@ impl Resolve<WriteArgs> for CreateLocalUser {
     if !admin.admin {
       return Err(
         anyhow!("This method is admin-only.")
-          .status_code(StatusCode::UNAUTHORIZED),
+          .status_code(StatusCode::FORBIDDEN),
       );
     }
 
@@ -183,7 +183,7 @@ impl Resolve<WriteArgs> for DeleteUser {
     if !admin.admin {
       return Err(
         anyhow!("This method is admin-only.")
-          .status_code(StatusCode::UNAUTHORIZED),
+          .status_code(StatusCode::FORBIDDEN),
       );
     }
     if admin.username == self.user || admin.id == self.user {

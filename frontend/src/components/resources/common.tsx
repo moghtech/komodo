@@ -439,12 +439,23 @@ export const CopyResource = ({
 
   const nav = useNavigate();
   const inv = useInvalidate();
-  const { mutate } = useWrite(`Copy${type}`, {
-    onSuccess: (res) => {
+  const { mutateAsync: copy } = useWrite(`Copy${type}`);
+
+  const onConfirm = async () => {
+    if (!name) return;
+    try {
+      const res = await copy({ id, name });
       inv([`List${type}s`]);
       nav(`/${usableResourcePath(type)}/${res._id?.$oid}`);
-    },
-  });
+      setOpen(false);
+    } catch (error: any) {
+      // Keep dialog open for validation errors (409/400), close for system errors
+      const status = error?.status || error?.response?.status;
+      if (status !== 409 && status !== 400) {
+        setOpen(false);
+      }
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -472,9 +483,8 @@ export const CopyResource = ({
             title="Copy"
             icon={<Check className="w-4 h-4" />}
             disabled={!name}
-            onClick={() => {
-              mutate({ id, name });
-              setOpen(false);
+            onClick={async () => {
+              await onConfirm();
             }}
           />
         </DialogFooter>
@@ -526,10 +536,13 @@ export const NewResource = ({
             : {};
   const onConfirm = async () => {
     if (!name) toast({ title: "Name cannot be empty" });
-    const id = templateId
-      ? (await copy({ name, id: templateId }))._id?.$oid!
-      : (await create({ name, config }))._id?.$oid!;
-    nav(`/${usableResourcePath(type)}/${id}`);
+    const result = templateId
+      ? await copy({ name, id: templateId })
+      : await create({ name, config });
+    const resourceId = result._id?.$oid;
+    if (resourceId) {
+      nav(`/${usableResourcePath(type)}/${resourceId}`);
+    }
   };
   return (
     <NewLayout
@@ -547,7 +560,7 @@ export const NewResource = ({
           onKeyDown={(e) => {
             if (!name) return;
             if (e.key === "Enter") {
-              onConfirm();
+              onConfirm().catch(() => {});
             }
           }}
         />

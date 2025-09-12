@@ -49,7 +49,7 @@ impl Resolve<ExecuteArgs> for ClearRepoCache {
     if !user.admin {
       return Err(
         anyhow!("This method is admin only.")
-          .status_code(StatusCode::UNAUTHORIZED),
+          .status_code(StatusCode::FORBIDDEN),
       );
     }
 
@@ -124,7 +124,7 @@ impl Resolve<ExecuteArgs> for BackupCoreDatabase {
     if !user.admin {
       return Err(
         anyhow!("This method is admin only.")
-          .status_code(StatusCode::UNAUTHORIZED),
+          .status_code(StatusCode::FORBIDDEN),
       );
     }
 
@@ -173,7 +173,7 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
     if !user.admin {
       return Err(
         anyhow!("This method is admin only.")
-          .status_code(StatusCode::UNAUTHORIZED),
+          .status_code(StatusCode::FORBIDDEN),
       );
     }
 

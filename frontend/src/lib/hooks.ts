@@ -128,16 +128,21 @@ export const useLoginOptions = () => {
 
 export const useUser = () => {
   const userReset = useUserReset();
+  const hasJwt = !!LOGIN_TOKENS.jwt();
+  
   const query = useQuery({
     queryKey: ["GetUser"],
     queryFn: () => komodo_client().auth("GetUser", {}),
     refetchInterval: 30_000,
+    enabled: hasJwt,
   });
+  
   useEffect(() => {
     if (query.data && query.error) {
       userReset();
     }
   }, [query.data, query.error]);
+  
   return query;
 };
 
@@ -173,9 +178,11 @@ export const useRead = <
   params: P,
   config?: C
 ) => {
+  const hasJwt = !!LOGIN_TOKENS.jwt();
   return useQuery({
     queryKey: [type, params],
     queryFn: () => komodo_client().read<T, R>(type, params),
+    enabled: hasJwt && (config?.enabled !== false),
     ...config,
   });
 };

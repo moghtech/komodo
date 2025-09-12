@@ -16,10 +16,7 @@ impl Resolve<WriteArgs> for CreateBuilder {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Builder> {
-    Ok(
-      resource::create::<Builder>(&self.name, self.config, user)
-        .await?,
-    )
+    resource::create::<Builder>(&self.name, self.config, user).await
   }
 }
 
@@ -35,10 +32,7 @@ impl Resolve<WriteArgs> for CopyBuilder {
       PermissionLevel::Write.into(),
     )
     .await?;
-    Ok(
-      resource::create::<Builder>(&self.name, config.into(), user)
-        .await?,
-    )
+    resource::create::<Builder>(&self.name, config.into(), user).await
   }
 }
 
