@@ -127,7 +127,7 @@ pub async fn auth_api_key_get_user_id(
   if bcrypt::verify(secret, &key.secret)
     .context("failed to verify secret hash")?
   {
-    // secret matches
+    // secret matches 
     Ok(key.user_id)
   } else {
     // secret mismatch  
