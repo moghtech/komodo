@@ -1,5 +1,4 @@
 use serde::{
-  __private::de::{Content, ContentDeserializer},
   Deserialize, Deserializer,
   de::{IntoDeserializer, Visitor},
 };
@@ -69,17 +68,15 @@ impl<'de, T: Deserialize<'de>> Visitor<'de>
     let mut res =
       Vec::with_capacity(seq.size_hint().unwrap_or_default());
     loop {
-      match seq.next_element::<Content>() {
-        Ok(Some(content)) => {
-          match T::deserialize::<ContentDeserializer<'_, S::Error>>(
-            content.clone().into_deserializer(),
-          ) {
+      match seq.next_element::<serde_json::Value>() {
+        Ok(Some(value)) => {
+          match T::deserialize(value.clone().into_deserializer()) {
             Ok(item) => res.push(item),
             Err(e) => {
               // Since this is used to parse startup config (including logging config),
               // the tracing logging is not initialized. Need to use eprintln.
               eprintln!(
-                "WARN: failed to parse item in list | {content:?} | {e:?}",
+                "WARN: failed to parse item in list | {value:?} | {e:?}",
               )
             }
           }

@@ -8,7 +8,7 @@ members = [
 ]
 
 [workspace.package]
-version = "1.19.4-dev-6"
+version = "1.19.4-dev-7"
 edition = "2024"
 authors = ["mbecker20 <becker.maxh@gmail.com>"]
 license = "GPL-3.0-or-later"
@@ -36,7 +36,7 @@ git = { path = "lib/git" }
 
 # MOGH
 run_command = { version = "0.0.6", features = ["async_tokio"] }
-serror = { version = "0.5.0", default-features = false }
+serror = { version = "0.5.1", default-features = false }
 slack = { version = "0.4.0", package = "slack_client_rs", default-features = false, features = ["rustls"] }
 derive_default_builder = "0.1.8"
 derive_empty_traits = "0.1.0"
@@ -73,7 +73,7 @@ serde = { version = "1.0.219", features = ["derive"] }
 strum = { version = "0.27.2", features = ["derive"] }
 bson = { version = "2.15.0" } # must keep in sync with mongodb version
 serde_yaml_ng = "0.10.0"
-serde_json = "1.0.143"
+serde_json = "1.0.145"
 serde_qs = "0.15.0"
 toml = "0.9.5"
 
@@ -116,7 +116,7 @@ sysinfo = "0.37.0"
 
 # CLOUD
 aws-config = "1.8.6"
-aws-sdk-ec2 = "1.166.0"
+aws-sdk-ec2 = "1.167.0"
 aws-credential-types = "1.2.6"
 
 ## CRON
@@ -128,7 +128,7 @@ croner = "3.0.0"
 # MISC
 async-compression = { version = "0.4.30", features = ["tokio", "gzip"] }
 derive_builder = "0.20.2"
-comfy-table = "7.2.0"
+comfy-table = "7.2.1"
 typeshare = "1.0.4"
 octorust = "0.10.0"
 dashmap = "6.1.0"
