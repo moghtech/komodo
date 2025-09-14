@@ -3,6 +3,7 @@ import { ServerComponents } from "@components/resources/server";
 import { DataTable, SortableHeader } from "@ui/data-table";
 import { useRead } from "@lib/hooks";
 import { useMemo } from "react";
+import { useIsServerAvailable } from ".";
 
 export const ServerMonitoringTable = ({ search = "" }: { search?: string }) => {
   const servers = useRead("ListServers", {}).data;
@@ -73,11 +74,19 @@ export const ServerMonitoringTable = ({ search = "" }: { search?: string }) => {
   );
 };
 
-const useStats = (id: string) =>
-  useRead("GetSystemStats", { server: id }, { refetchInterval: 10_000 }).data;
+const useStats = (id: string) => {
+  const isServerAvailable = useIsServerAvailable(id);
+  return useRead("GetSystemStats", { server: id }, { 
+    enabled: isServerAvailable,
+    refetchInterval: 10_000 
+  }).data;
+};
 
 const useServerThresholds = (id: string) => {
-  const config = useRead("GetServer", { server: id }).data?.config as any;
+  const isServerAvailable = useIsServerAvailable(id);
+  const config = useRead("GetServer", { server: id }, {
+    enabled: isServerAvailable
+  }).data?.config as any;
   return {
     cpuWarning: config?.cpu_warning ?? 75,
     cpuCritical: config?.cpu_critical ?? 90,
