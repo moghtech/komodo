@@ -77,10 +77,8 @@ impl Resolve<ExecuteArgs> for RunSync {
     };
 
     // get the action state for the sync (or insert default).
-    let action_state = action_states()
-      .sync
-      .get_or_insert_default(&sync.id)
-      .await;
+    let action_state =
+      action_states().sync.get_or_insert_default(&sync.id).await;
 
     // This will set action state back to default when dropped.
     // Will also check to ensure sync not already busy before updating.
