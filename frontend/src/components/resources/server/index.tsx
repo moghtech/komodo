@@ -47,9 +47,7 @@ export const useServer = (id?: string) =>
 // Helper function to check if server is available for API calls
 export const useIsServerAvailable = (serverId?: string) => {
   const server = useServer(serverId);
-  return server && 
-    server.info.state !== Types.ServerState.Disabled && 
-    server.info.state !== Types.ServerState.NotOk;
+   return server?.info.state === Types.ServerState.Ok;
 };
 
 export const useFullServer = (id: string) =>
