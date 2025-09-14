@@ -5,9 +5,10 @@ use derive_variants::{EnumVariants, ExtractVariant};
 use komodo_client::{api::auth::*, entities::user::User};
 use resolver_api::Resolve;
 use response::Response;
+use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use serror::Json;
+use serror::{Json, AddStatusCode};
 use typeshare::typeshare;
 use uuid::Uuid;
 
@@ -152,7 +153,9 @@ impl Resolve<AuthArgs> for GetUser {
     self,
     AuthArgs { headers }: &AuthArgs,
   ) -> serror::Result<User> {
-    let user_id = get_user_id_from_headers(headers).await?;
+    let user_id = get_user_id_from_headers(headers)
+      .await
+      .status_code(StatusCode::UNAUTHORIZED)?;
     Ok(get_user(&user_id).await?)
   }
 }

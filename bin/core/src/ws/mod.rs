@@ -71,7 +71,7 @@ async fn ws_login(
         Err(e) => {
           let _ = socket
             .send(Message::text(format!(
-              "failed to authenticate user using jwt | {e:?}"
+              "failed to authenticate user using jwt | {e:#}"
             )))
             .await;
           let _ = socket.close().await;
@@ -89,7 +89,7 @@ async fn ws_login(
         Err(e) => {
           let _ = socket
             .send(Message::text(format!(
-              "failed to authenticate user using api keys | {e:?}"
+              "failed to authenticate user using api keys | {e:#}"
             )))
             .await;
           let _ = socket.close().await;
