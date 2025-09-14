@@ -153,9 +153,7 @@ impl Resolve<AuthArgs> for GetUser {
     self,
     AuthArgs { headers }: &AuthArgs,
   ) -> serror::Result<User> {
-    let user_id = get_user_id_from_headers(headers)
-      .await
-      .status_code(StatusCode::UNAUTHORIZED)?;
+    let user_id = get_user_id_from_headers(headers).await.status_code(StatusCode::UNAUTHORIZED)?;
     Ok(get_user(&user_id).await?)
   }
 }
