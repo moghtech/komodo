@@ -22,6 +22,7 @@ exec(gen_command, (error, _stdout, _stderr) => {
 
 function fix_types() {
   const types_path = __dirname + "/src/types.ts";
+  const types_namespace_path = __dirname + "/src/types_namespace.ts";
   const contents = readFileSync(types_path);
   const fixed = contents
     .toString()
@@ -43,4 +44,8 @@ function fix_types() {
     )
     .replaceAll("IndexMap", "Record");
   writeFileSync(types_path, fixed);
+  const types_namespace = `declare namespace Types {
+    ${fixed}
+}`;
+  writeFileSync(types_namespace_path, types_namespace);
 }
