@@ -175,6 +175,11 @@ export type ReadResponses = {
   ListGitProviderAccounts: Types.ListGitProviderAccountsResponse;
   GetDockerRegistryAccount: Types.GetDockerRegistryAccountResponse;
   ListDockerRegistryAccounts: Types.ListDockerRegistryAccountsResponse;
+
+  // ==== LOG RECORDING ====
+  ListLogRecordings: Types.ListLogRecordingsResponse;
+  GetLogRecording: Types.GetLogRecordingResponse;
+  GetRecordedLogs: Types.GetRecordedLogsResponse;
 };
 
 export type WriteResponses = {
@@ -319,6 +324,11 @@ export type WriteResponses = {
   CreateDockerRegistryAccount: Types.CreateDockerRegistryAccountResponse;
   UpdateDockerRegistryAccount: Types.UpdateDockerRegistryAccountResponse;
   DeleteDockerRegistryAccount: Types.DeleteDockerRegistryAccountResponse;
+
+  // ==== LOG RECORDING ====
+  StartLogRecording: Types.StartLogRecordingResponse;
+  StopLogRecording: Types.StopLogRecordingResponse;
+  DeleteLogRecording: Types.DeleteLogRecordingResponse;
 };
 
 export type ExecuteResponses = {
