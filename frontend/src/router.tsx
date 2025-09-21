@@ -32,6 +32,8 @@ const VolumePage = lazy(() => import("@pages/server-info/volume"));
 const ContainerPage = lazy(() => import("@pages/server-info/container"));
 const ContainersPage = lazy(() => import("@pages/containers"));
 const SchedulesPage = lazy(() => import("@pages/schedules"));
+const LogRecordingsPage = lazy(() => import("@pages/log-recordings"));
+const LogRecordingViewPage = lazy(() => import("@pages/log-recording-view"));
 
 const sanitize_query = (search: URLSearchParams) => {
   search.delete("token");
@@ -99,6 +101,10 @@ export const Router = () => {
               <Route path="containers" element={<ContainersPage />} />
               <Route path="resources" element={<AllResources />} />
               <Route path="schedules" element={<SchedulesPage />} />
+              <Route path="log-recordings">
+                <Route path="" element={<LogRecordingsPage />} />
+                <Route path=":id" element={<LogRecordingViewPage />} />
+              </Route>
               <Route path="alerts" element={<AlertsPage />} />
               <Route path="user-groups/:id" element={<UserGroupPage />} />
               <Route path="users/:id" element={<UserPage />} />
