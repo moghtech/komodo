@@ -23,6 +23,7 @@ mod update;
 mod user;
 mod user_group;
 mod variable;
+mod log_recording;
 
 pub use action::*;
 pub use alert::*;
@@ -44,6 +45,7 @@ pub use update::*;
 pub use user::*;
 pub use user_group::*;
 pub use variable::*;
+pub use log_recording::*;
 
 use crate::entities::{
   ResourceTarget, Timelength,

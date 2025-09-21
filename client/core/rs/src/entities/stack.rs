@@ -36,10 +36,10 @@ impl Stack {
   /// If fresh is passed, it will bypass the deployed project name.
   /// and get the most up to date one from just project_name field falling back to stack name.
   pub fn project_name(&self, fresh: bool) -> String {
-    if !fresh
-      && let Some(project_name) = &self.info.deployed_project_name
-    {
-      return project_name.clone();
+    if !fresh {
+      if let Some(project_name) = &self.info.deployed_project_name {
+        return project_name.clone();
+      }
     }
     if self.config.project_name.is_empty() {
       self.name.clone()

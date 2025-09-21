@@ -16,6 +16,7 @@ mod tags;
 mod user;
 mod user_group;
 mod variable;
+mod log_recording;
 
 pub use action::*;
 pub use alerter::*;
@@ -35,5 +36,6 @@ pub use tags::*;
 pub use user::*;
 pub use user_group::*;
 pub use variable::*;
+pub use log_recording::*;
 
 pub trait KomodoWriteRequest: resolver_api::HasResponse {}
