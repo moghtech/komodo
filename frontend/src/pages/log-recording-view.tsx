@@ -55,7 +55,6 @@ export default function LogRecordingViewPage() {
       recording_id: id || "",
       tail: 50000, // Large number to get all logs
       timestamps,
-      services: selectedServices.length > 0 ? selectedServices : undefined,
     },
     {
       enabled: !!id,
@@ -111,13 +110,33 @@ export default function LogRecordingViewPage() {
 
   // Get the log content based on stream selection
   const logContent = useMemo(() => {
-    if (!logs) return "";
+    if (!logs) {
+      console.log('No logs object');
+      return "";
+    }
 
-    return stream === "all"
-      ? (logs.stdout || "") + (logs.stderr || "")
-      : stream === "stdout"
-        ? (logs.stdout || "")
-        : (logs.stderr || "");
+    console.log('logs object:', logs);
+    console.log('logs.stdout:', logs.stdout);
+    console.log('logs.stderr:', logs.stderr);
+    console.log('logs.stdout length:', logs.stdout?.length);
+    console.log('logs.stderr length:', logs.stderr?.length);
+
+    const stdout = logs.stdout || "";
+    const stderr = logs.stderr || "";
+
+    let content = "";
+    if (stream === "all") {
+      content = stdout + (stdout && stderr ? "\n" : "") + stderr;
+    } else if (stream === "stdout") {
+      content = stdout;
+    } else {
+      content = stderr;
+    }
+
+    console.log('Final logContent length:', content.length);
+    console.log('Final logContent first 100 chars:', content.substring(0, 100));
+
+    return content || "";
   }, [logs, stream]);
 
   // Handle export

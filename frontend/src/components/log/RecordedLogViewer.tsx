@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useRef } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { LazyLog } from '@melloware/react-logviewer';
 import { Button } from '@ui/button';
 import { Badge } from '@ui/badge';
@@ -26,8 +26,6 @@ export const RecordedLogViewer: React.FC<RecordedLogViewerProps> = ({
   onExport,
   className
 }) => {
-  const logViewerRef = useRef<any>(null);
-
   // Split logs into lines for processing
   const logLines = useMemo(() => logs.split('\n'), [logs]);
 
@@ -71,6 +69,11 @@ export const RecordedLogViewer: React.FC<RecordedLogViewerProps> = ({
 
   // Get the text to display (filtered or original)
   const displayText = searchTerms.length > 0 ? filteredText : logs;
+
+  // Debug log content
+  console.log('RecordedLogViewer - logs length:', logs?.length);
+  console.log('RecordedLogViewer - displayText length:', displayText?.length);
+  console.log('RecordedLogViewer - first 100 chars:', displayText?.substring(0, 100));
 
   // Export functionality
   const handleExport = useCallback((filtered: boolean) => {
@@ -147,28 +150,22 @@ export const RecordedLogViewer: React.FC<RecordedLogViewerProps> = ({
         )}
       </div>
 
-      {/* Log Viewer */}
-      <div className="flex-1 overflow-hidden bg-background">
-        <LazyLog
-          ref={logViewerRef}
-          text={displayText}
-          enableSearch={searchTerms.length > 0}
-          searchWords={searchText}
-          caseInsensitive={!caseSensitive}
-          enableLineNumbers={showLineNumbers}
-          extraLines={1}
-          follow={false}
-          selectableLines
-          highlight={searchTerms.length > 0 ? [0] : undefined}
-          lineClassName="hover:bg-accent/20"
-          highlightLineClassName="bg-yellow-100 dark:bg-yellow-900/30"
-          style={{
-            height: '100%',
-            width: '100%',
-            fontSize: '14px',
-            fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace'
-          }}
-        />
+      {/* Log Viewer - fixed height container */}
+      <div className="flex-1 relative min-h-0">
+        <div className="absolute inset-0">
+          <LazyLog
+            text={displayText}
+            caseInsensitive={!caseSensitive}
+            enableLineNumbers={showLineNumbers}
+            extraLines={1}
+            follow={false}
+            selectableLines={true}
+            enableLinks={true}
+            enableHotKeys={false}
+            height="100%"
+            width="auto"
+          />
+        </div>
       </div>
 
       {/* Status Bar */}
