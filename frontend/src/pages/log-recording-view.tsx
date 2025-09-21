@@ -111,15 +111,8 @@ export default function LogRecordingViewPage() {
   // Get the log content based on stream selection
   const logContent = useMemo(() => {
     if (!logs) {
-      console.log('No logs object');
       return "";
     }
-
-    console.log('logs object:', logs);
-    console.log('logs.stdout:', logs.stdout);
-    console.log('logs.stderr:', logs.stderr);
-    console.log('logs.stdout length:', logs.stdout?.length);
-    console.log('logs.stderr length:', logs.stderr?.length);
 
     const stdout = logs.stdout || "";
     const stderr = logs.stderr || "";
@@ -132,9 +125,6 @@ export default function LogRecordingViewPage() {
     } else {
       content = stderr;
     }
-
-    console.log('Final logContent length:', content.length);
-    console.log('Final logContent first 100 chars:', content.substring(0, 100));
 
     return content || "";
   }, [logs, stream]);

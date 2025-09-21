@@ -70,18 +70,12 @@ export const RecordedLogViewer: React.FC<RecordedLogViewerProps> = ({
   // Get the text to display (filtered or original)
   const displayText = searchTerms.length > 0 ? filteredText : logs;
 
-  // Debug log content
-  console.log('RecordedLogViewer - logs length:', logs?.length);
-  console.log('RecordedLogViewer - displayText length:', displayText?.length);
-  console.log('RecordedLogViewer - first 100 chars:', displayText?.substring(0, 100));
-
   // Export functionality
   const handleExport = useCallback((filtered: boolean) => {
     if (!onExport) return;
     const content = filtered && searchTerms.length > 0 ? filteredText : logs;
     onExport(content, filtered);
   }, [logs, filteredText, searchTerms, onExport]);
-
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
@@ -135,22 +129,33 @@ export const RecordedLogViewer: React.FC<RecordedLogViewerProps> = ({
         )}
       </div>
 
-      {/* Log Viewer - fixed height container */}
-      <div className="flex-1 relative min-h-0">
-        <div className="absolute inset-0">
-          <LazyLog
-            text={displayText}
-            caseInsensitive={!caseSensitive}
-            enableLineNumbers={showLineNumbers}
-            extraLines={1}
-            follow={false}
-            selectableLines={true}
-            enableLinks={true}
-            enableHotKeys={false}
-            height="100%"
-            width="auto"
-          />
-        </div>
+      {/* Log Viewer - Using LazyLog properly */}
+      <div className="flex-1 overflow-hidden" style={{ position: 'relative' }}>
+        <LazyLog
+          text={displayText}
+          caseInsensitive={!caseSensitive}
+          enableLineNumbers={showLineNumbers}
+          extraLines={1}
+          follow={false}
+          selectableLines={true}
+          enableLinks={false}
+          enableHotKeys={false}
+          // Remove height/width as they might be causing issues
+          // Use style instead
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100%',
+            height: '100%',
+            background: 'var(--background)',
+            color: 'var(--foreground)',
+            fontSize: '14px',
+            fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace'
+          }}
+        />
       </div>
 
       {/* Status Bar */}
