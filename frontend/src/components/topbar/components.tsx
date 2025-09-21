@@ -9,6 +9,7 @@ import {
 import { ResourceComponents } from "../resources";
 import {
   AlertTriangle,
+  Archive,
   ArrowLeftRight,
   Bell,
   Box,
@@ -161,6 +162,12 @@ export const MobileDropdown = () => {
             label="Schedules"
             icon={<CalendarDays className="w-4 h-4" />}
             to="/schedules"
+          />
+
+          <DropdownLinkItem
+            label="Log Recordings"
+            icon={<Archive className="w-4 h-4" />}
+            to="/log-recordings"
           />
 
           <DropdownLinkItem
