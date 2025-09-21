@@ -6,7 +6,7 @@ import { Button } from "@ui/button";
 import { Input } from "@ui/input";
 import { Switch } from "@ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@ui/toggle-group";
-import { SimpleLogViewer } from "@components/log/SimpleLogViewer";
+import { LogViewer } from "@components/log";
 import { Skeleton } from "@ui/skeleton";
 import {
   Film,
@@ -40,6 +40,8 @@ export default function LogRecordingViewPage() {
   const [timestamps, setTimestamps] = useState(false);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [showLineNumbers, setShowLineNumbers] = useState(false);
+  const [wrapLines, setWrapLines] = useState(false);
+  const [showLogLevels, setShowLogLevels] = useState(true);
 
   // Fetch the recording metadata
   const { data: recording, isLoading: recordingLoading } = useRead(
@@ -62,23 +64,17 @@ export default function LogRecordingViewPage() {
     }
   );
 
-  // Set page title
   useSetTitle(recording ? `Log Recording - ${getSessionName(recording)}` : "Log Recording");
-
-  // Generate session name from recording data
   function getSessionName(rec: Types.LogRecording | Types.LogRecordingListItem): string {
-    // Use custom name if provided
     if ('name' in rec && rec.name) {
       return rec.name;
     }
 
-    // Otherwise generate default name
     const date = new Date(rec.start_ts);
     const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
     const baseName = `${rec.target.id.slice(0, 8)}_${dateStr}_${timeStr}`;
 
-    // If it's a stack recording with specific services, show them
     if (rec.target.type === 'Stack' && rec.services && rec.services.length > 0) {
       const serviceList = rec.services.length <= 2
         ? rec.services.join(', ')
@@ -89,7 +85,6 @@ export default function LogRecordingViewPage() {
     return baseName;
   }
 
-  // Add search term
   const addSearchTerm = () => {
     if (search && !searchTerms.includes(search)) {
       setSearchTerms([...searchTerms, search]);
@@ -97,18 +92,14 @@ export default function LogRecordingViewPage() {
     }
   };
 
-  // Remove search term
   const removeSearchTerm = (term: string) => {
     setSearchTerms(searchTerms.filter(t => t !== term));
   };
 
-  // Clear all search
   const clearSearch = () => {
     setSearch("");
     setSearchTerms([]);
   };
-
-  // Get the log content based on stream selection
   const logContent = useMemo(() => {
     if (!logs) {
       return "";
@@ -129,17 +120,51 @@ export default function LogRecordingViewPage() {
     return content || "";
   }, [logs, stream]);
 
-  // Handle export
-  const handleExport = useCallback((content: string, filtered: boolean) => {
-    const blob = new Blob([content], { type: "text/plain" });
+  const handleExport = useCallback((content: string, filtered: boolean, format: 'text' | 'json' | 'csv' = 'text') => {
+    let exportContent = content;
+    let mimeType = 'text/plain';
+    let extension = '.log';
+
+    if (format === 'json') {
+      const lines = content.split('\n').map((line, index) => ({
+        lineNumber: index + 1,
+        timestamp: timestamps ? new Date().toISOString() : undefined,
+        content: line,
+        level: detectLogLevel(line)
+      }));
+      exportContent = JSON.stringify(lines, null, 2);
+      mimeType = 'application/json';
+      extension = '.json';
+    } else if (format === 'csv') {
+      const lines = content.split('\n');
+      const csvHeader = 'Line Number,Timestamp,Level,Content\n';
+      const csvContent = lines.map((line, index) => {
+        const level = detectLogLevel(line) || '';
+        const escapedLine = `"${line.replace(/"/g, '""')}"`;
+        return `${index + 1},${timestamps ? new Date().toISOString() : ''},${level},${escapedLine}`;
+      }).join('\n');
+      exportContent = csvHeader + csvContent;
+      mimeType = 'text/csv';
+      extension = '.csv';
+    }
+
+    const blob = new Blob([exportContent], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     const suffix = filtered ? '-filtered' : '';
-    a.download = `${recording ? getSessionName(recording) : 'logs'}${suffix}.log`;
+    a.download = `${recording ? getSessionName(recording) : 'logs'}${suffix}${extension}`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [recording]);
+  }, [recording, timestamps]);
+
+  const detectLogLevel = (line: string): string | null => {
+    if (/\b(ERROR|ERR|FATAL|FAIL)\b/i.test(line)) return 'ERROR';
+    if (/\b(WARN|WARNING)\b/i.test(line)) return 'WARN';
+    if (/\b(INFO|INFORMATION)\b/i.test(line)) return 'INFO';
+    if (/\b(DEBUG|TRACE|VERBOSE)\b/i.test(line)) return 'DEBUG';
+    return null;
+  };
 
   if (!id) {
     return (
@@ -196,12 +221,12 @@ export default function LogRecordingViewPage() {
             </div>
           )}
         </div>
-        {/* Enhanced Toolbar - Two Row Layout */}
-        <div className="flex flex-col gap-2 w-full">
-          {/* Row 1: Display Controls */}
-          <div className="flex items-center justify-between gap-3">
+        {/* Enhanced Toolbar - Three Row Layout */}
+        <div className="flex flex-col gap-4 w-full">
+          {/* Row 1: Data Source Controls (stderr, stdout, services, refresh) */}
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              {/* Stream selector with better styling */}
+              {/* Stream selector */}
               <div className="border rounded-md">
                 <ToggleGroup
                   type="single"
@@ -224,9 +249,9 @@ export default function LogRecordingViewPage() {
               </div>
             </div>
 
-            {/* Service selector for stack recordings */}
-            {recording?.target.type === 'Stack' && recording.services && recording.services.length > 0 && (
-              <div className="ml-auto">
+            {/* Service selector and refresh on the right */}
+            <div className="flex items-center gap-2">
+              {recording?.target.type === 'Stack' && recording.services && recording.services.length > 0 && (
                 <DropdownMenu>
                   <DropdownMenuTrigger>
                     <div className="px-3 py-2 border rounded-md flex items-center gap-2 hover:bg-accent/70 text-sm">
@@ -259,31 +284,43 @@ export default function LogRecordingViewPage() {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
-              </div>
-            )}
+              )}
+              <Button variant="outline" size="icon" onClick={() => refetch()}>
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
-          {/* Row 2: Search & Settings */}
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              {/* Invert toggle before search */}
-              <label className="flex items-center gap-2 cursor-pointer">
+          {/* Row 2: LogViewer Display Settings (timestamps, log levels, line numbers, wrap) */}
+          <div className="flex items-center justify-between gap-4 bg-muted/30 rounded-md p-3">
+            <div className="flex items-center gap-6">
+              <label className="flex items-center gap-2 cursor-pointer px-2 py-1 hover:bg-background/50 rounded transition-colors">
+                <span className="text-muted-foreground text-sm">Timestamps</span>
+                <Switch checked={timestamps} onCheckedChange={setTimestamps} />
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer px-2 py-1 hover:bg-background/50 rounded transition-colors">
+                <span className="text-muted-foreground text-sm">Log Levels</span>
+                <Switch checked={showLogLevels} onCheckedChange={setShowLogLevels} />
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer px-2 py-1 hover:bg-background/50 rounded transition-colors">
+                <span className="text-muted-foreground text-sm">Line Numbers</span>
+                <Switch checked={showLineNumbers} onCheckedChange={setShowLineNumbers} />
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer px-2 py-1 hover:bg-background/50 rounded transition-colors">
+                <span className="text-muted-foreground text-sm">Wrap Lines</span>
+                <Switch checked={wrapLines} onCheckedChange={setWrapLines} />
+              </label>
+            </div>
+          </div>
+
+          {/* Row 3: Search Controls (invert, search input, search terms, case sensitive, regex) */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {/* Invert toggle */}
+              <label className="flex items-center gap-2 cursor-pointer px-2 py-1 hover:bg-muted/50 rounded transition-colors">
                 <span className="text-muted-foreground text-sm">Invert</span>
                 <Switch checked={invert} onCheckedChange={setInvert} />
               </label>
-
-              {/* Search terms */}
-              {searchTerms.map(term => (
-                <Button
-                  key={term}
-                  variant="destructive"
-                  onClick={() => removeSearchTerm(term)}
-                  className="flex gap-2 items-center py-0 px-2 h-8"
-                >
-                  {term}
-                  <X className="w-3 h-3" />
-                </Button>
-              ))}
 
               {/* Search input */}
               <div className="relative">
@@ -306,6 +343,19 @@ export default function LogRecordingViewPage() {
                 </Button>
               </div>
 
+              {/* Search terms */}
+              {searchTerms.map(term => (
+                <Button
+                  key={term}
+                  variant="destructive"
+                  onClick={() => removeSearchTerm(term)}
+                  className="flex gap-2 items-center py-0 px-2 h-8"
+                >
+                  {term}
+                  <X className="w-3 h-3" />
+                </Button>
+              ))}
+
               {searchTerms.length > 0 && (
                 <Button
                   variant="ghost"
@@ -317,33 +367,22 @@ export default function LogRecordingViewPage() {
               )}
             </div>
 
-            {/* Settings (right-aligned) */}
-            <div className="flex items-center gap-3 ml-auto">
-              <label className="flex items-center gap-2 cursor-pointer">
+            {/* Search Settings (right-aligned) */}
+            <div className="flex items-center gap-4 ml-auto">
+              <label className="flex items-center gap-2 cursor-pointer px-2 py-1 hover:bg-muted/50 rounded transition-colors">
                 <span className="text-muted-foreground text-sm">Case sensitive</span>
                 <Switch checked={caseSensitive} onCheckedChange={setCaseSensitive} />
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer px-2 py-1 hover:bg-muted/50 rounded transition-colors">
                 <span className="text-muted-foreground text-sm">Regex</span>
                 <Switch checked={regex} onCheckedChange={setRegex} />
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <span className="text-muted-foreground text-sm">Line Numbers</span>
-                <Switch checked={showLineNumbers} onCheckedChange={setShowLineNumbers} />
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <span className="text-muted-foreground text-sm">Timestamps</span>
-                <Switch checked={timestamps} onCheckedChange={setTimestamps} />
-              </label>
-              <Button variant="outline" size="icon" onClick={() => refetch()}>
-                <RefreshCw className="w-4 h-4" />
-              </Button>
             </div>
           </div>
         </div>
 
         {/* Log content */}
-        <div className="flex-1 relative" style={{ height: '75vh' }}>
+        <div className="flex-1 relative" style={{ height: 'calc(100vh - 320px)' }}>
           {logsLoading ? (
             <div className="space-y-2 p-4">
               <Skeleton className="h-4 w-full" />
@@ -355,7 +394,7 @@ export default function LogRecordingViewPage() {
               <Skeleton className="h-4 w-4/5" />
             </div>
           ) : (
-            <SimpleLogViewer
+            <LogViewer
               logs={logContent}
               searchTerms={searchTerms}
               caseSensitive={caseSensitive}
@@ -364,6 +403,8 @@ export default function LogRecordingViewPage() {
               showLineNumbers={showLineNumbers}
               onExport={handleExport}
               className="h-full"
+              wrapLines={wrapLines}
+              showLogLevels={showLogLevels}
             />
           )}
         </div>

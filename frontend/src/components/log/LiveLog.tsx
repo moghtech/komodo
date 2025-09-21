@@ -18,13 +18,13 @@ import {
   Circle,
 } from "lucide-react";
 import { ReactNode, useEffect, useRef, useState } from "react";
-import { Section } from "./layouts";
+import { Section } from "../layouts";
 import { Switch } from "@ui/switch";
 import { Input } from "@ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@ui/toggle-group";
 import { useToast } from "@ui/use-toast";
 import { useLocalStorage, useRead, useWrite } from "@lib/hooks";
-import { RecordingDialog } from "./log/RecordingDialog";
+import { RecordingDialog } from "./RecordingDialog";
 import {
   Dialog,
   DialogContent,

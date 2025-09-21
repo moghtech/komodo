@@ -2,6 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Forked LazyLog styles */
+.react-lazylog {
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+  font-size: 14px !important;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.react-lazylog .log-line {
+  transition: background-color 0.1s ease;
+}
+
+.react-lazylog .log-line:hover {
+  background: hsl(var(--muted) / 0.5) !important;
+}
+
+.react-lazylog .log-line-highlight {
+  background: hsl(48 96% 53% / 0.3) !important;
+}
+
+.dark .react-lazylog .log-line-highlight {
+  background: hsl(48 96% 53% / 0.15) !important;
+}
+
+/* Search highlighting within logs */
+.log-search-highlight {
+  background-color: yellow !important;
+  color: black !important;
+  font-weight: bold;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+.dark .log-search-highlight {
+  background-color: hsl(48 96% 53% / 0.5) !important;
+  color: white !important;
+}
+
 @layer base {
   * {
     @apply border-border scroll-smooth;

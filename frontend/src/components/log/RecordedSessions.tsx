@@ -4,7 +4,7 @@ import { useRead, useWrite } from "@lib/hooks";
 import { Button } from "@ui/button";
 import { Badge } from "@ui/badge";
 import { Download, Trash2, Square, Eye } from "lucide-react";
-import { Log } from "../log";
+import { Log } from "./LiveLog";
 import { format } from "date-fns";
 import { useToast } from "@ui/use-toast";
 import {
