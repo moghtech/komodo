@@ -82,21 +82,6 @@ export const RecordedLogViewer: React.FC<RecordedLogViewerProps> = ({
     onExport(content, filtered);
   }, [logs, filteredText, searchTerms, onExport]);
 
-  // Build search text for LazyLog
-  const searchText = useMemo(() => {
-    if (searchTerms.length === 0) return '';
-
-    // LazyLog doesn't support multiple search terms, so join them with |
-    if (regex) {
-      return searchTerms.join('|');
-    }
-
-    // For literal search, escape regex special characters and join
-    const escaped = searchTerms.map(term =>
-      term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    );
-    return escaped.join('|');
-  }, [searchTerms, regex]);
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
