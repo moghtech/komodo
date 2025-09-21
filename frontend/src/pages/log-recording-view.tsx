@@ -1,24 +1,22 @@
 import { Page } from "@components/layouts";
 import { ResourceLink } from "@components/resources/common";
 import { useRead, useSetTitle } from "@lib/hooks";
-import { logToHtml } from "@lib/utils";
 import { Types } from "komodo_client";
 import { Button } from "@ui/button";
 import { Input } from "@ui/input";
-import { Badge } from "@ui/badge";
 import { Switch } from "@ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@ui/toggle-group";
+import { RecordedLogViewer } from "@components/log/RecordedLogViewer";
+import { Skeleton } from "@ui/skeleton";
 import {
   Film,
   ChevronLeft,
-  Download,
   X,
   AlertOctagon,
   RefreshCw,
   Clock,
   User,
   Circle,
-  ChevronDown,
 } from "lucide-react";
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import {
@@ -27,12 +25,11 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@ui/dropdown-menu";
-import { useRef, useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Link, useParams } from "react-router-dom";
 
 export default function LogRecordingViewPage() {
   const { id } = useParams<{ id: string }>();
-  const logRef = useRef<HTMLDivElement>(null);
 
   const [search, setSearch] = useState("");
   const [searchTerms, setSearchTerms] = useState<string[]>([]);
@@ -42,12 +39,17 @@ export default function LogRecordingViewPage() {
   const [stream, setStream] = useState<"stdout" | "stderr" | "all">("all");
   const [timestamps, setTimestamps] = useState(false);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [showLineNumbers, setShowLineNumbers] = useState(false);
 
   // Fetch the recording metadata
-  const { data: recording } = useRead("GetLogRecording", { id: id || "" }, { enabled: !!id });
+  const { data: recording, isLoading: recordingLoading } = useRead(
+    "GetLogRecording",
+    { id: id || "" },
+    { enabled: !!id }
+  );
 
-  // Fetch the actual logs
-  const { data: logs, refetch } = useRead(
+  // Fetch the actual logs with auto-refresh for active recordings
+  const { data: logs, refetch, isLoading: logsLoading } = useRead(
     "GetRecordedLogs",
     {
       recording_id: id || "",
@@ -55,7 +57,10 @@ export default function LogRecordingViewPage() {
       timestamps,
       services: selectedServices.length > 0 ? selectedServices : undefined,
     },
-    { enabled: !!id }
+    {
+      enabled: !!id,
+      refetchInterval: recording?.status === Types.LogRecordingStatus.Recording ? 5000 : false
+    }
   );
 
   // Set page title
@@ -104,93 +109,28 @@ export default function LogRecordingViewPage() {
     setSearchTerms([]);
   };
 
-  // Process logs with search
-  const processLogs = () => {
-    if (!logs) return { displayLogs: "", matchCount: 0 };
+  // Get the log content based on stream selection
+  const logContent = useMemo(() => {
+    if (!logs) return "";
 
-    let logContent = stream === "all"
+    return stream === "all"
       ? (logs.stdout || "") + (logs.stderr || "")
       : stream === "stdout"
         ? (logs.stdout || "")
         : (logs.stderr || "");
+  }, [logs, stream]);
 
-    if (searchTerms.length === 0) {
-      return { displayLogs: logContent, matchCount: 0 };
-    }
-
-    const lines = logContent.split('\n');
-    const matchedLines: number[] = [];
-    let matchCount = 0;
-
-    lines.forEach((line, index) => {
-      let matches = false;
-
-      for (const term of searchTerms) {
-        if (regex) {
-          try {
-            const re = new RegExp(term, caseSensitive ? 'g' : 'gi');
-            if (re.test(line)) {
-              matches = true;
-              matchCount += (line.match(re) || []).length;
-            }
-          } catch {
-            // Invalid regex, treat as literal
-            if (caseSensitive ? line.includes(term) : line.toLowerCase().includes(term.toLowerCase())) {
-              matches = true;
-              matchCount++;
-            }
-          }
-        } else {
-          if (caseSensitive ? line.includes(term) : line.toLowerCase().includes(term.toLowerCase())) {
-            matches = true;
-            matchCount++;
-          }
-        }
-      }
-
-      if (invert ? !matches : matches) {
-        matchedLines.push(index);
-      }
-    });
-
-    // Filter lines based on search
-    const filteredLines = invert
-      ? lines.filter((_, i) => !matchedLines.includes(i))
-      : lines.filter((_, i) => matchedLines.includes(i));
-
-    return {
-      displayLogs: searchTerms.length > 0 ? filteredLines.join('\n') : logContent,
-      matchCount
-    };
-  };
-
-  const { displayLogs, matchCount } = processLogs();
-
-  // Scroll to bottom
-  const scrollToBottom = () => {
-    if (logRef.current) {
-      logRef.current.scrollTop = logRef.current.scrollHeight;
-    }
-  };
-
-  // Download logs
-  const handleDownload = () => {
-    if (logs) {
-      const content = stream === "all"
-        ? (logs.stdout || "") + "\n---STDERR---\n" + (logs.stderr || "")
-        : stream === "stdout"
-          ? logs.stdout || ""
-          : logs.stderr || "";
-
-      const blob = new Blob([content], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${recording ? getSessionName(recording) : 'logs'}.log`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-  };
+  // Handle export
+  const handleExport = useCallback((content: string, filtered: boolean) => {
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const suffix = filtered ? '-filtered' : '';
+    a.download = `${recording ? getSessionName(recording) : 'logs'}${suffix}.log`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [recording]);
 
   if (!id) {
     return (
@@ -224,7 +164,13 @@ export default function LogRecordingViewPage() {
               <Circle className="w-6 h-6 text-red-500 animate-pulse" fill="currentColor" />
             )}
           </div>
-          {recording && (
+          {recordingLoading ? (
+            <div className="flex items-center gap-4 mt-4">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-40" />
+            </div>
+          ) : recording && (
             <div className="flex items-center gap-4 text-sm text-muted-foreground mt-4">
               <ResourceLink
                 type={recording.target.type as any}
@@ -352,18 +298,13 @@ export default function LogRecordingViewPage() {
               </div>
 
               {searchTerms.length > 0 && (
-                <>
-                  <Badge variant="secondary">
-                    {matchCount} matches
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearSearch}
-                  >
-                    Clear all
-                  </Button>
-                </>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearSearch}
+                >
+                  Clear all
+                </Button>
               )}
             </div>
 
@@ -378,82 +319,47 @@ export default function LogRecordingViewPage() {
                 <Switch checked={regex} onCheckedChange={setRegex} />
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
+                <span className="text-muted-foreground text-sm">Line Numbers</span>
+                <Switch checked={showLineNumbers} onCheckedChange={setShowLineNumbers} />
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
                 <span className="text-muted-foreground text-sm">Timestamps</span>
                 <Switch checked={timestamps} onCheckedChange={setTimestamps} />
               </label>
               <Button variant="outline" size="icon" onClick={() => refetch()}>
                 <RefreshCw className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="sm" onClick={handleDownload}>
-                <Download className="w-4 h-4 mr-1" />
-                Download
-              </Button>
             </div>
           </div>
         </div>
 
         {/* Log content */}
-        <div className="flex-1 relative">
-          <div
-            ref={logRef}
-            className="h-[75vh] overflow-y-auto font-mono text-sm"
-          >
-            {displayLogs ? (
-              <pre
-                className="pb-[20vh]"
-                dangerouslySetInnerHTML={{
-                  __html: searchTerms.length > 0
-                    ? highlightSearchTerms(displayLogs, searchTerms, caseSensitive, regex)
-                    : logToHtml(displayLogs)
-                }}
-              />
-            ) : (
-              <div className="text-muted-foreground">
-                {logs ? "No logs to display" : "Loading logs..."}
-              </div>
-            )}
-          </div>
-
-          {/* Single scroll to bottom button like other log views */}
-          <Button
-            variant="secondary"
-            className="absolute top-4 right-4"
-            onClick={scrollToBottom}
-          >
-            <ChevronDown className="h-4 w-4" />
-          </Button>
+        <div className="flex-1 relative" style={{ height: '75vh' }}>
+          {logsLoading ? (
+            <div className="space-y-2 p-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-4/5" />
+            </div>
+          ) : (
+            <RecordedLogViewer
+              logs={logContent}
+              searchTerms={searchTerms}
+              caseSensitive={caseSensitive}
+              regex={regex}
+              invert={invert}
+              showLineNumbers={showLineNumbers}
+              onExport={handleExport}
+              className="h-full"
+            />
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-// Helper function to highlight search terms in logs
-function highlightSearchTerms(
-  text: string,
-  terms: string[],
-  caseSensitive: boolean,
-  regex: boolean
-): string {
-  let highlighted = logToHtml(text);
-
-  terms.forEach(term => {
-    if (regex) {
-      try {
-        const re = new RegExp(`(${term})`, caseSensitive ? 'g' : 'gi');
-        highlighted = highlighted.replace(re, '<mark class="bg-yellow-300 text-black">$1</mark>');
-      } catch {
-        // Invalid regex, treat as literal
-        const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const re = new RegExp(`(${escapedTerm})`, caseSensitive ? 'g' : 'gi');
-        highlighted = highlighted.replace(re, '<mark class="bg-yellow-300 text-black">$1</mark>');
-      }
-    } else {
-      const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const re = new RegExp(`(${escapedTerm})`, caseSensitive ? 'g' : 'gi');
-      highlighted = highlighted.replace(re, '<mark class="bg-yellow-300 text-black">$1</mark>');
-    }
-  });
-
-  return highlighted;
-}
