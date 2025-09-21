@@ -85,7 +85,10 @@ function highlightLine(
 }
 
 // Component for rendering individual log lines
-const LogLine = React.memo(({ index, data }: LogLineProps) => {
+const LogLine = React.memo((props: LogLineProps) => {
+  const index = (props as any).index;
+  const data = (props as any).data as LogLineData;
+
   const {
     lines,
     matchedLines,
@@ -241,7 +244,7 @@ export const RecordedLogViewer: React.FC<RecordedLogViewerProps> = ({
     setCurrentMatchIndex(nextIndex);
 
     const lineIndex = sortedMatchIndices[nextIndex];
-    listRef.current?.scrollToRow(lineIndex, 'center');
+    listRef.current?.scrollToRow({ index: lineIndex });
   }, [currentMatchIndex, sortedMatchIndices]);
 
   // Navigate to previous match
@@ -254,7 +257,7 @@ export const RecordedLogViewer: React.FC<RecordedLogViewerProps> = ({
     setCurrentMatchIndex(prevIndex);
 
     const lineIndex = sortedMatchIndices[prevIndex];
-    listRef.current?.scrollToRow(lineIndex, 'center');
+    listRef.current?.scrollToRow({ index: lineIndex });
   }, [currentMatchIndex, sortedMatchIndices]);
 
   // Reset match navigation when search changes
@@ -373,7 +376,7 @@ export const RecordedLogViewer: React.FC<RecordedLogViewerProps> = ({
             rowCount={processedLog.lines.length}
             rowHeight={lineHeight}
             rowComponent={LogLine}
-            rowProps={itemData}
+            rowProps={{ data: itemData } as any}
             className="scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600"
             style={{ height: '100%', width: '100%' }}
           />
