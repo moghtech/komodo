@@ -1259,6 +1259,7 @@ export type DeleteApiKeyResponse = NoData;
 export type DeleteBuildWebhookResponse = NoData;
 export type DeleteDockerRegistryAccountResponse = DockerRegistryAccount;
 export type DeleteGitProviderAccountResponse = GitProviderAccount;
+export type DeleteLogRecordingResponse = NoData;
 export type DeleteProcedureResponse = Procedure;
 export type DeleteRepoWebhookResponse = NoData;
 export type DeleteStackWebhookResponse = NoData;
@@ -1826,12 +1827,39 @@ export interface ContainerStats {
 export type GetDeploymentStatsResponse = ContainerStats;
 export type GetDockerRegistryAccountResponse = DockerRegistryAccount;
 export type GetGitProviderAccountResponse = GitProviderAccount;
+/** Status of a log recording */
+export declare enum LogRecordingStatus {
+    Recording = "Recording",
+    Stopped = "Stopped",
+    Expired = "Expired"
+}
+/** Represents a log recording session for a resource */
+export interface LogRecording {
+    /** The Mongo ID of the recording */
+    _id?: MongoId;
+    /** The target resource being recorded */
+    target: ResourceTarget;
+    /** Optional custom name for the recording */
+    name?: string;
+    /** The user who started the recording */
+    user_id: string;
+    /** When the recording started */
+    start_ts: I64;
+    /** When the recording should expire (None = manual stop only) */
+    expire_ts?: I64;
+    /** Current status of the recording */
+    status: LogRecordingStatus;
+    /** For stacks: which services to record (empty = all) */
+    services?: string[];
+}
+export type GetLogRecordingResponse = LogRecording;
 export type GetPermissionResponse = PermissionLevelAndSpecifics;
 export interface ProcedureActionState {
     running: boolean;
 }
 export type GetProcedureActionStateResponse = ProcedureActionState;
 export type GetProcedureResponse = Procedure;
+export type GetRecordedLogsResponse = Log;
 export interface RepoActionState {
     /** Whether Repo currently cloning on the attached Server */
     cloning: boolean;
@@ -3643,6 +3671,19 @@ export interface GitProvider {
     accounts: ProviderAccount[];
 }
 export type ListGitProvidersFromConfigResponse = GitProvider[];
+/** Minimal representation for listing */
+export interface LogRecordingListItem {
+    id: string;
+    target: ResourceTarget;
+    name?: string;
+    user_id: string;
+    username: string;
+    start_ts: I64;
+    expire_ts?: I64;
+    status: LogRecordingStatus;
+    services: string[];
+}
+export type ListLogRecordingsResponse = LogRecordingListItem[];
 export type UserTarget = 
 /** User Id */
 {
@@ -4001,6 +4042,7 @@ export interface ResourceSyncQuerySpecifics {
 export type ResourceSyncQuery = ResourceQuery<ResourceSyncQuerySpecifics>;
 export type SearchContainerLogResponse = Log;
 export type SearchDeploymentLogResponse = Log;
+export type SearchRecordedLogsResponse = Log;
 export type SearchStackLogResponse = Log;
 export interface ServerQuerySpecifics {
 }
@@ -4027,6 +4069,8 @@ export interface StackQuerySpecifics {
     update_available?: boolean;
 }
 export type StackQuery = ResourceQuery<StackQuerySpecifics>;
+export type StartLogRecordingResponse = LogRecording;
+export type StopLogRecordingResponse = LogRecording;
 export type UpdateDockerRegistryAccountResponse = DockerRegistryAccount;
 export type UpdateGitProviderAccountResponse = GitProviderAccount;
 export type UpdatePermissionOnResourceTypeResponse = NoData;
@@ -5155,6 +5199,9 @@ export interface DeleteImage {
     /** The name of the image to delete. */
     name: string;
 }
+export interface DeleteLogRecording {
+    id: string;
+}
 /**
  * Delete a docker network.
  * Response: [Update]
@@ -5886,6 +5933,9 @@ export interface GetHistoricalServerStatsResponse {
     /** If there is a next page of data, pass this to `page` to get it. */
     next_page?: number;
 }
+export interface GetLogRecording {
+    id: string;
+}
 /**
  * Non authenticated route to see the available options
  * users have to login to Komodo, eg. local auth, github, google.
@@ -5956,6 +6006,11 @@ export interface GetProceduresSummaryResponse {
     failed: number;
     /** The number of procedures with unknown state. */
     unknown: number;
+}
+export interface GetRecordedLogs {
+    recording_id: string;
+    tail: U64;
+    timestamps: boolean;
 }
 /** Get a specific repo. Response: [Repo]. */
 export interface GetRepo {
@@ -6615,6 +6670,10 @@ export interface ListGitProvidersFromConfig {
      */
     target?: ResourceTarget;
 }
+export interface ListLogRecordings {
+    target?: ResourceTarget;
+    active_only: boolean;
+}
 /**
  * List permissions for the calling user.
  * Does not include any permissions on UserGroups they may be a part of.
@@ -6973,6 +7032,21 @@ export interface PushRecentlyViewed {
 export interface PushoverAlerterEndpoint {
     /** The pushover URL including application and user tokens in parameters. */
     url: string;
+}
+/** A single log entry from a recording */
+export interface RecordedLog {
+    /** The Mongo ID of the log entry */
+    _id?: MongoId;
+    /** The recording this log belongs to */
+    recording_id: string;
+    /** Timestamp of the log entry */
+    ts: I64;
+    /** Standard output */
+    stdout?: string;
+    /** Standard error */
+    stderr?: string;
+    /** For stack services */
+    service?: string;
 }
 /** Trigger a refresh of the cached latest hash and message. */
 export interface RefreshBuildCache {
@@ -7389,6 +7463,13 @@ export interface SearchDeploymentLog {
     /** Enable `--timestamps` */
     timestamps?: boolean;
 }
+export interface SearchRecordedLogs {
+    recording_id: string;
+    terms: string[];
+    combinator: SearchCombinator;
+    invert: boolean;
+    timestamps: boolean;
+}
 /**
  * Search the stack log's tail using `grep`. All lines go to stdout.
  * Response: [SearchStackLogResponse].
@@ -7536,6 +7617,15 @@ export interface StartDeployment {
     /** Name or id */
     deployment: string;
 }
+export interface StartLogRecording {
+    target: ResourceTarget;
+    /** Optional custom name for the recording */
+    name?: string;
+    /** Duration in days. None means until manually stopped. */
+    duration_days?: number;
+    /** For stacks: which services to record (empty = all) */
+    services?: string[];
+}
 /** Starts the target stack. `docker compose start`. Response: [Update] */
 export interface StartStack {
     /** Id or name */
@@ -7578,6 +7668,9 @@ export interface StopDeployment {
     signal?: TerminationSignal;
     /** Override the default termination max time. */
     time?: number;
+}
+export interface StopLogRecording {
+    id: string;
 }
 /** Stops the target stack. `docker compose stop`. Response: [Update] */
 export interface StopStack {
@@ -8667,6 +8760,15 @@ export type ReadRequest = {
 } | {
     type: "ListDockerRegistryAccounts";
     params: ListDockerRegistryAccounts;
+} | {
+    type: "ListLogRecordings";
+    params: ListLogRecordings;
+} | {
+    type: "GetLogRecording";
+    params: GetLogRecording;
+} | {
+    type: "GetRecordedLogs";
+    params: GetRecordedLogs;
 };
 /** The specific types of permission that a User or UserGroup can have on a resource. */
 export declare enum SpecificPermission {
@@ -9037,6 +9139,15 @@ export type WriteRequest = {
 } | {
     type: "DeleteDockerRegistryAccount";
     params: DeleteDockerRegistryAccount;
+} | {
+    type: "StartLogRecording";
+    params: StartLogRecording;
+} | {
+    type: "StopLogRecording";
+    params: StopLogRecording;
+} | {
+    type: "DeleteLogRecording";
+    params: DeleteLogRecording;
 };
 export type WsLoginMessage = {
     type: "Jwt";
