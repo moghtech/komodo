@@ -1217,6 +1217,13 @@
   dependencies:
     "@types/react" "^17"
 
+"@types/react-window@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@types/react-window/-/react-window-2.0.0.tgz#9fe45015d6f98ec98a069362518c855fcc1fa8d0"
+  integrity sha512-E8hMDtImEpMk1SjswSvqoSmYvk7GEtyVaTa/GJV++FdDNuMVVEzpAClyJ0nqeKYBrMkGiyH6M1+rPLM0Nu1exQ==
+  dependencies:
+    react-window "*"
+
 "@types/react@19.1.6":
   version "19.1.6"
   resolved "https://registry.npmjs.org/@types/react/-/react-19.1.6.tgz"
@@ -2683,6 +2690,11 @@ react-style-singleton@^2.2.2, react-style-singleton@^2.2.3:
   dependencies:
     get-nonce "^1.0.0"
     tslib "^2.0.0"
+
+react-window@*, react-window@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/react-window/-/react-window-2.1.1.tgz#e6ec773d62d0adf2a1939c2a8718da20a8c816f5"
+  integrity sha512-Wx5yHri8G1nFxImnJRkEEKtRTnG3cWaqknUJyYvgisQtl1mw/d8LQmLXfuKxpn2dY8IwDn5mCIuxm2NVyIvgVQ==
 
 react-xtermjs@1.0.10:
   version "1.0.10"
