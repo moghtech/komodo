@@ -10,6 +10,7 @@ use komodo_client::entities::{
   builder::Builder,
   config::DatabaseConfig,
   deployment::Deployment,
+  log_recording::{LogRecording, RecordedLog},
   permission::Permission,
   procedure::Procedure,
   provider::{DockerRegistryAccount, GitProviderAccount},
@@ -62,6 +63,9 @@ pub struct Client {
   pub alerters: Collection<Alerter>,
   pub resource_syncs: Collection<ResourceSync>,
   pub stacks: Collection<Stack>,
+  // LOG RECORDING
+  pub log_recordings: Collection<LogRecording>,
+  pub recorded_logs: Collection<RecordedLog>,
   //
   pub db: Database,
 }
@@ -99,6 +103,9 @@ impl Client {
       resource_syncs: resource_collection(&db, "ResourceSync")
         .await?,
       stacks: resource_collection(&db, "Stack").await?,
+      // LOG RECORDING
+      log_recordings: mongo_indexed::collection(&db, true).await?,
+      recorded_logs: mongo_indexed::collection(&db, true).await?,
       //
       db,
     };
