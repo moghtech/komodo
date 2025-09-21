@@ -38,6 +38,7 @@ const DeploymentLogsInner = ({
         SearchLogs(id, terms, invert, timestamps, poll)
       }
       titleOther={titleOther}
+      target={{ type: "Deployment", id }}
     />
   );
 };

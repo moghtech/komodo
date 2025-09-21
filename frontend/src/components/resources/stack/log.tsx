@@ -78,6 +78,8 @@ const StackLogsInner = ({
         )
       }
       titleOther={titleOther}
+      target={{ type: "Stack", id }}
+      services={services.filter((s) => s.selected).map((s) => s.service)}
       extraParams={
         <DropdownMenu>
           <DropdownMenuTrigger>
