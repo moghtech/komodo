@@ -36,6 +36,7 @@ mod tag;
 mod user;
 mod user_group;
 mod variable;
+mod log_recording;
 
 pub struct WriteArgs {
   pub user: User,
@@ -192,6 +193,11 @@ pub enum WriteRequest {
   CreateDockerRegistryAccount(CreateDockerRegistryAccount),
   UpdateDockerRegistryAccount(UpdateDockerRegistryAccount),
   DeleteDockerRegistryAccount(DeleteDockerRegistryAccount),
+
+  // ==== LOG RECORDING ====
+  StartLogRecording(StartLogRecording),
+  StopLogRecording(StopLogRecording),
+  DeleteLogRecording(DeleteLogRecording),
 }
 
 pub fn router() -> Router {

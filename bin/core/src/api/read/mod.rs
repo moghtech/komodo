@@ -53,6 +53,7 @@ mod update;
 mod user;
 mod user_group;
 mod variable;
+mod log_recording;
 
 pub struct ReadArgs {
   pub user: User,
@@ -224,6 +225,11 @@ enum ReadRequest {
   ListGitProviderAccounts(ListGitProviderAccounts),
   GetDockerRegistryAccount(GetDockerRegistryAccount),
   ListDockerRegistryAccounts(ListDockerRegistryAccounts),
+
+  // ==== LOG RECORDING ====
+  ListLogRecordings(ListLogRecordings),
+  GetLogRecording(GetLogRecording),
+  GetRecordedLogs(GetRecordedLogs),
 }
 
 pub fn router() -> Router {

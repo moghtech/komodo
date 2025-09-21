@@ -110,6 +110,11 @@ pub async fn on_startup() {
     ensure_first_server_and_builder(),
     ensure_init_user_and_resources(),
   );
+
+  // Initialize log recorder to resume any active recordings
+  if let Err(e) = crate::monitor::log_recorder::init_log_recorder().await {
+    warn!("Failed to initialize log recorder: {e:#}");
+  }
 }
 
 async fn in_progress_update_cleanup() {

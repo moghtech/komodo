@@ -34,6 +34,7 @@ use self::helpers::{
 mod alert;
 mod helpers;
 mod lists;
+pub mod log_recorder;
 mod record;
 mod resources;
 
