@@ -14,6 +14,14 @@ import { Button } from "@ui/button";
 import { Badge } from "@ui/badge";
 import { useToast } from "@ui/use-toast";
 import { Link } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@ui/dialog";
 
 // Helper function to generate session name
 function getSessionName(recording: Types.LogRecordingListItem): string {
@@ -43,6 +51,8 @@ export default function LogRecordingsPage() {
   useSetTitle("Log Recordings");
   const { toast } = useToast();
   const [search, setSearch] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [recordingToDelete, setRecordingToDelete] = useState<Types.LogRecordingListItem | null>(null);
 
   // Fetch all recordings without filter to show all
   const { data: recordings, refetch } = useRead("ListLogRecordings", {
@@ -62,6 +72,8 @@ export default function LogRecordingsPage() {
     onSuccess: () => {
       toast({ title: "Recording deleted" });
       refetch();
+      setDeleteDialogOpen(false);
+      setRecordingToDelete(null);
     },
   });
 
@@ -242,23 +254,65 @@ export default function LogRecordingsPage() {
                       Download
                     </Button>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (confirm("Are you sure you want to delete this recording?")) {
-                        deleteRecording({ id: row.original.id });
-                      }
-                    }}
-                  >
-                    <Trash className="w-3 h-3" />
-                  </Button>
+                  {row.original.status !== Types.LogRecordingStatus.Recording && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setRecordingToDelete(row.original);
+                        setDeleteDialogOpen(true);
+                      }}
+                    >
+                      <Trash className="w-3 h-3" />
+                    </Button>
+                  )}
                 </div>
               ),
             },
           ]}
         />
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Delete Recording?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this recording? This action cannot be undone.
+              {recordingToDelete && (
+                <div className="mt-3 p-2 bg-secondary rounded">
+                  <div className="text-sm font-medium">{getSessionName(recordingToDelete)}</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Recorded on {new Date(recordingToDelete.start_ts).toLocaleString()}
+                  </div>
+                </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setRecordingToDelete(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (recordingToDelete) {
+                  deleteRecording({ id: recordingToDelete.id });
+                }
+              }}
+            >
+              Delete Recording
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Page>
   );
 }
