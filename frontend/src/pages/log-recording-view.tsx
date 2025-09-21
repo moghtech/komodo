@@ -6,7 +6,7 @@ import { Button } from "@ui/button";
 import { Input } from "@ui/input";
 import { Switch } from "@ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@ui/toggle-group";
-import { RecordedLogViewer } from "@components/log/RecordedLogViewer";
+import { SimpleLogViewer } from "@components/log/SimpleLogViewer";
 import { Skeleton } from "@ui/skeleton";
 import {
   Film,
@@ -355,7 +355,7 @@ export default function LogRecordingViewPage() {
               <Skeleton className="h-4 w-4/5" />
             </div>
           ) : (
-            <RecordedLogViewer
+            <SimpleLogViewer
               logs={logContent}
               searchTerms={searchTerms}
               caseSensitive={caseSensitive}
