@@ -24,6 +24,7 @@ import {
   UserRequest,
   WriteRequest,
   WsLoginMessage,
+  __Serror,
 } from "./types.js";
 
 export * as Types from "./types.js";
@@ -50,6 +51,65 @@ export type ClientState = {
   secret: string | undefined;
 };
 
+/**
+ * Joins all interim parts with one separator character
+ * 
+ * @see https://stackoverflow.com/a/55142565/1469797
+ */
+const pathJoin = (parts: string[], sep?: string) => {
+    const separator = sep || '/';
+    parts = parts.map((part, index)=>{
+        if (index) {
+            part = part.replace(new RegExp('^' + separator), '');
+        }
+        if (index !== parts.length - 1) {
+            part = part.replace(new RegExp(separator + '$'), '');
+        }
+        return part;
+    })
+    return parts.join(separator);
+}
+
+export const asSError = (e: unknown): e is __Serror => {
+    return e !== null 
+    && typeof e === 'object'
+    && 'error' in e
+    && typeof e.error === 'string'
+    && 'trace' in e
+    && Array.isArray(e.trace);
+}
+
+export class KomodoApiError extends Error {
+
+    response?: Response;
+    sError?: __Serror;
+
+    constructor(kError?: __Serror | string, options: ErrorOptions & {response?: Response} = {}) {
+      let status = 1;
+
+      const {
+        response
+      } = options;
+      if(response !== undefined) {
+        status = response.status;
+      }
+      super(`(${status}) ${asSError(kError) ? kError.error : kError}`, options);
+
+      this.name = 'KomodoApiError';
+      this.response = response;
+
+      let kTrace: string = '(No trace returned from Komodo)';
+
+      if(asSError(kError)) {
+        this.sError = kError;
+        if(kError.trace.length > 0) {
+          kTrace = `${kError.trace.join('\n')}`
+        } 
+      }
+      this.stack = `${this.stack ?? ''}\nKomodo Trace: ${kTrace}`;
+    }
+}
+
 /** Initialize a new client for Komodo */
 export function KomodoClient(url: string, options: InitOptions) {
   const state: ClientState = {
@@ -63,9 +123,10 @@ export function KomodoClient(url: string, options: InitOptions) {
     type: string,
     params: Params
   ): Promise<Res> =>
+    // deno-lint-ignore no-async-promise-executor
     new Promise(async (res, rej) => {
       try {
-        let response = await fetch(`${url}${path}/${type}`, {
+        let response = await fetch(pathJoin([url, `${path}/${type}`]), {
           method: "POST",
           body: JSON.stringify(params),
           headers: {
@@ -88,27 +149,13 @@ export function KomodoClient(url: string, options: InitOptions) {
         } else {
           try {
             const result = await response.json();
-            rej({ status: response.status, result });
+            rej(new KomodoApiError(result, {response}));
           } catch (error) {
-            rej({
-              status: response.status,
-              result: {
-                error: "Failed to get response body",
-                trace: [JSON.stringify(error)],
-              },
-              error,
-            });
+            rej(new KomodoApiError('Failed to get response body', {response, cause: error}));
           }
         }
       } catch (error) {
-        rej({
-          status: 1,
-          result: {
-            error: "Request failed with error",
-            trace: [JSON.stringify(error)],
-          },
-          error,
-        });
+        rej(new KomodoApiError('Request failed with error', {cause: error}));
       }
     });
 
