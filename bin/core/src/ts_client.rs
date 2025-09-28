@@ -21,6 +21,8 @@ const ALLOWED_FILES: &[&str] = &[
   "lib.d.ts",
   "types.js",
   "types.d.ts",
+  "types_namespace.js",
+  "types_namespace.d.ts",
   "responses.js",
   "responses.d.ts",
   "terminal.js",
