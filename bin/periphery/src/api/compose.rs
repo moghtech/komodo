@@ -108,8 +108,15 @@ impl Resolve<super::Args> for GetComposeLog {
     } else {
       Default::default()
     };
+    let compose_file_path = periphery_config()
+    .stack_dir()
+    .join(to_path_compatible_name(&project))
+    .join("compose.yaml")
+    .components()
+    .collect::<PathBuf>();
     let command = format!(
-      "{docker_compose} -p {project} logs --tail {tail}{timestamps} {}",
+      "{docker_compose} -f {} -p {project} logs --tail {tail}{timestamps} {}",
+      compose_file_path.display(),
       services.join(" ")
     );
     Ok(run_komodo_command("get stack log", None, command).await)
@@ -128,6 +135,12 @@ impl Resolve<super::Args> for GetComposeLogSearch {
       timestamps,
     } = self;
     let docker_compose = docker_compose();
+    let compose_file_path = periphery_config()
+    .stack_dir()
+    .join(to_path_compatible_name(&project))
+    .join("compose.yaml")
+    .components()
+    .collect::<PathBuf>();
     let grep = log_grep(&terms, combinator, invert);
     let timestamps = if timestamps {
       " --timestamps"
@@ -135,7 +148,8 @@ impl Resolve<super::Args> for GetComposeLogSearch {
       Default::default()
     };
     let command = format!(
-      "{docker_compose} -p {project} logs --tail 5000{timestamps} {} 2>&1 | {grep}",
+      "{docker_compose} -f {} -p {project} logs --tail 5000{timestamps} {} 2>&1 | {grep}",
+      compose_file_path.display(),
       services.join(" ")
     );
     Ok(run_komodo_command("Get stack log grep", None, command).await)
