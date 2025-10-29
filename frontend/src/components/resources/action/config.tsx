@@ -45,7 +45,7 @@ export const ActionConfig = ({ id }: { id: string }) => {
     `action-${id}-update-v1`,
     {}
   );
-  const { mutateAsync } = useWrite("UpdateAction");
+  const { mutateAsync, isPending: isSavePending } = useWrite("UpdateAction");
   const { integrations } = useWebhookIntegrations();
   const [id_or_name] = useWebhookIdOrName();
 
@@ -63,6 +63,7 @@ export const ActionConfig = ({ id }: { id: string }) => {
       onSave={async () => {
         await mutateAsync({ id, config: update });
       }}
+      isSavePending={isSavePending}
       components={{
         "": [
           {

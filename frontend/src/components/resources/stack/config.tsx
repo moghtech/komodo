@@ -101,7 +101,7 @@ export const StackConfig = ({
     `stack-${id}-update-v1`,
     {}
   );
-  const { mutateAsync } = useWrite("UpdateStack");
+  const { mutateAsync, isPending: isSavePending } = useWrite("UpdateStack");
   const { integrations } = useWebhookIntegrations();
   const [id_or_name] = useWebhookIdOrName();
 
@@ -906,6 +906,7 @@ export const StackConfig = ({
       onSave={async () => {
         await mutateAsync({ id, config: update });
       }}
+      isSavePending={isSavePending}
       components={components}
       file_contents_language="yaml"
     />

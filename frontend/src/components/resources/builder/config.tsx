@@ -35,7 +35,7 @@ const AwsBuilderConfig = ({ id }: { id: string }) => {
     `aws-builder-${id}-update-v1`,
     {}
   );
-  const { mutateAsync } = useWrite("UpdateBuilder");
+  const { mutateAsync, isPending: isSavePending } = useWrite("UpdateBuilder");
   if (!config) return null;
 
   const disabled = global_disabled || !canWrite;
@@ -49,6 +49,7 @@ const AwsBuilderConfig = ({ id }: { id: string }) => {
       onSave={async () => {
         await mutateAsync({ id, config: { type: "Aws", params: update } });
       }}
+      isSavePending={isSavePending}
       components={{
         "": [
           {
@@ -245,7 +246,7 @@ const ServerBuilderConfig = ({ id }: { id: string }) => {
     `server-builder-${id}-update-v1`,
     {}
   );
-  const { mutateAsync } = useWrite("UpdateBuilder");
+  const { mutateAsync, isPending: isSavePending } = useWrite("UpdateBuilder");
   if (!config) return null;
 
   const disabled = !canWrite;
@@ -259,6 +260,7 @@ const ServerBuilderConfig = ({ id }: { id: string }) => {
       onSave={async () => {
         await mutateAsync({ id, config: { type: "Server", params: update } });
       }}
+      isSavePending={isSavePending}
       components={{
         "": [
           {
@@ -305,7 +307,7 @@ const UrlBuilderConfig = ({ id }: { id: string }) => {
     `url-builder-${id}-update-v1`,
     {}
   );
-  const { mutateAsync } = useWrite("UpdateBuilder");
+  const { mutateAsync, isPending: isSavePending } = useWrite("UpdateBuilder");
   if (!config) return null;
 
   const disabled = !canWrite;
@@ -319,6 +321,7 @@ const UrlBuilderConfig = ({ id }: { id: string }) => {
       onSave={async () => {
         await mutateAsync({ id, config: { type: "Url", params: update } });
       }}
+      isSavePending={isSavePending}
       components={{
         "": [
           {

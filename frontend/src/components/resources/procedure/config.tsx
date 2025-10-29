@@ -136,7 +136,7 @@ export const ProcedureConfig = ({ id }: { id: string }) => {
     `procedure-${id}-update-v1`,
     {},
   );
-  const { mutateAsync } = useWrite("UpdateProcedure");
+  const { mutateAsync, isPending: isSavePending } = useWrite("UpdateProcedure");
   const { integrations } = useWebhookIntegrations();
   const [id_or_name] = useWebhookIdOrName();
 
@@ -161,6 +161,7 @@ export const ProcedureConfig = ({ id }: { id: string }) => {
       onSave={async () => {
         await mutateAsync({ id, config: update });
       }}
+      isSavePending={isSavePending}
       components={{
         "": [
           {

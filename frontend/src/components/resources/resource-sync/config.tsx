@@ -85,7 +85,7 @@ export const ResourceSyncConfig = ({
     `sync-${id}-update-v1`,
     {}
   );
-  const { mutateAsync } = useWrite("UpdateResourceSync");
+  const { mutateAsync, isPending: isSavePending } = useWrite("UpdateResourceSync");
   const { integrations } = useWebhookIntegrations();
   const [id_or_name] = useWebhookIdOrName();
 
@@ -581,6 +581,7 @@ export const ResourceSyncConfig = ({
       onSave={async () => {
         await mutateAsync({ id, config: update });
       }}
+      isSavePending={isSavePending}
       components={components}
       file_contents_language="fancy_toml"
     />

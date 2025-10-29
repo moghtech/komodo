@@ -11,7 +11,7 @@ export const AlerterConfig = ({ id }: { id: string }) => {
   const config = useRead("GetAlerter", { alerter: id }).data?.config;
   const global_disabled =
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
-  const { mutateAsync } = useWrite("UpdateAlerter");
+  const { mutateAsync, isPending: isSavePending } = useWrite("UpdateAlerter");
   const [update, set] = useLocalStorage<Partial<Types.AlerterConfig>>(
     `alerter-${id}-update-v1`,
     {}
@@ -29,6 +29,7 @@ export const AlerterConfig = ({ id }: { id: string }) => {
       onSave={async () => {
         await mutateAsync({ id, config: update });
       }}
+      isSavePending={isSavePending}
       components={{
         "": [
           {

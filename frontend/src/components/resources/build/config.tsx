@@ -81,7 +81,7 @@ export const BuildConfig = ({
     `build-${id}-update-v1`,
     {}
   );
-  const { mutateAsync } = useWrite("UpdateBuild");
+  const { mutateAsync, isPending: isSavePending } = useWrite("UpdateBuild");
   const { integrations } = useWebhookIntegrations();
   const [id_or_name] = useWebhookIdOrName();
 
@@ -733,6 +733,7 @@ export const BuildConfig = ({
       onSave={async () => {
         await mutateAsync({ id, config: update });
       }}
+      isSavePending={isSavePending}
       components={components}
       file_contents_language="dockerfile"
     />

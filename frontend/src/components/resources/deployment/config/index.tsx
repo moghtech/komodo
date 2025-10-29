@@ -39,7 +39,7 @@ export const DeploymentConfig = ({
     `deployment-${id}-update-v1`,
     {}
   );
-  const { mutateAsync } = useWrite("UpdateDeployment");
+  const { mutateAsync, isPending: isSavePending } = useWrite("UpdateDeployment");
 
   if (!config) return null;
 
@@ -59,6 +59,7 @@ export const DeploymentConfig = ({
       onSave={async () => {
         await mutateAsync({ id, config: update });
       }}
+      isSavePending={isSavePending}
       components={{
         "": [
           {

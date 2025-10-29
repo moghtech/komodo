@@ -29,6 +29,7 @@ export const ConfigLayout = <
   children,
   disabled,
   onConfirm,
+  isSavePending,
   onReset,
   selector,
   titleOther,
@@ -39,6 +40,7 @@ export const ConfigLayout = <
   children: ReactNode;
   disabled: boolean;
   onConfirm: () => void;
+  isSavePending: boolean;
   onReset: () => void;
   selector?: ReactNode;
   titleOther?: ReactNode;
@@ -75,6 +77,7 @@ export const ConfigLayout = <
                 previous={original}
                 content={update}
                 onConfirm={async () => onConfirm()}
+                loading={isSavePending}
                 disabled={disabled}
                 file_contents_language={file_contents_language}
                 key_listener
@@ -121,6 +124,7 @@ export const Config = <T,>({
   disableSidebar,
   set,
   onSave,
+  isSavePending,
   components,
   selector,
   titleOther,
@@ -132,6 +136,7 @@ export const Config = <T,>({
   disableSidebar?: boolean;
   set: React.Dispatch<SetStateAction<Partial<T>>>;
   onSave: () => Promise<void>;
+  isSavePending: boolean,
   selector?: ReactNode;
   titleOther?: ReactNode;
   components: Record<
@@ -154,6 +159,7 @@ export const Config = <T,>({
       update={update}
       disabled={disabled}
       onConfirm={onConfirm}
+      isSavePending={isSavePending}
       onReset={onReset}
       selector={selector}
       file_contents_language={file_contents_language}
@@ -199,6 +205,7 @@ export const Config = <T,>({
                     onConfirm={onConfirm}
                     disabled={disabled || !changesMade}
                     file_contents_language={file_contents_language}
+                    loading={isSavePending}
                   />
                   <Button
                     variant="outline"
@@ -331,6 +338,7 @@ export const Config = <T,>({
                 previous={original}
                 content={update}
                 onConfirm={onConfirm}
+                loading={isSavePending}
                 disabled={disabled}
                 file_contents_language={file_contents_language}
               />

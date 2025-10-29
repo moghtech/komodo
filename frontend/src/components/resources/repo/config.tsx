@@ -39,7 +39,7 @@ export const RepoConfig = ({ id }: { id: string }) => {
     `repo-${id}-update-v1`,
     {}
   );
-  const { mutateAsync } = useWrite("UpdateRepo");
+  const { mutateAsync, isPending: isSavePending } = useWrite("UpdateRepo");
   const { integrations } = useWebhookIntegrations();
   const [id_or_name] = useWebhookIdOrName();
 
@@ -59,6 +59,7 @@ export const RepoConfig = ({ id }: { id: string }) => {
       onSave={async () => {
         await mutateAsync({ id, config: update });
       }}
+      isSavePending={isSavePending}
       components={{
         "": [
           {

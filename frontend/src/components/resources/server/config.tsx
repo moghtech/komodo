@@ -27,7 +27,7 @@ export const ServerConfig = ({
     `server-${id}-update-v1`,
     {}
   );
-  const { mutateAsync } = useWrite("UpdateServer", {
+  const { mutateAsync, isPending: isSavePending } = useWrite("UpdateServer", {
     onSuccess: () => {
       // In case of disabling to resolve unreachable alert
       invalidate(["ListAlerts"]);
@@ -43,6 +43,7 @@ export const ServerConfig = ({
       disabled={disabled}
       original={config}
       update={update}
+      isSavePending={isSavePending}
       set={set}
       onSave={async () => {
         await mutateAsync({ id, config: update });
