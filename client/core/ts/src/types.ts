@@ -2205,6 +2205,22 @@ export type GetStackActionStateResponse = StackActionState;
 
 export type GetStackLogResponse = Log;
 
+/**
+ * Additional env file configuration for Stack.
+ * Supports backward compatibility with string-only format.
+ */
+export interface AdditionalEnvFile {
+	/** File path relative to run directory */
+	path: string;
+	/**
+	 * Whether Komodo should track this file's contents.
+	 * If true (default), Komodo will read, display, diff, and validate.
+	 * If false, only passed to docker compose via --env-file.
+	 * Useful for externally managed files (e.g., sops decrypted files).
+	 */
+	track: boolean;
+}
+
 export enum StackFileRequires {
 	/** Diff requires service redeploy. */
 	Redeploy = "Redeploy",
@@ -2342,7 +2358,7 @@ export interface StackConfig {
 	 * Note. It is already included as an `additional_file`.
 	 * Don't add it again there.
 	 */
-	additional_env_files?: string[];
+	additional_env_files?: AdditionalEnvFile[];
 	/**
 	 * Add additional config files either in repo or on host to track.
 	 * Can add any files associated with the stack to enable editing them in the UI.

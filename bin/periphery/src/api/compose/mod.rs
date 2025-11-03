@@ -361,7 +361,7 @@ impl Resolve<super::Args> for ComposePull {
     )?;
 
     let file_paths = stack
-      .all_file_paths()
+      .all_tracked_file_paths()
       .into_iter()
       .map(|path| {
         (

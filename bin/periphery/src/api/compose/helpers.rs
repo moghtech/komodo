@@ -9,7 +9,7 @@ use formatting::format_serror;
 use komodo_client::entities::{
   FileContents, RepoExecutionArgs,
   repo::Repo,
-  stack::{Stack, StackRemoteFileContents},
+  stack::{AdditionalEnvFile, Stack, StackRemoteFileContents},
   to_path_compatible_name,
   update::Log,
 };
@@ -60,24 +60,21 @@ pub async fn maybe_login_registry(
 
 pub fn env_file_args(
   env_file_path: Option<&str>,
-  additional_env_files: &[String],
+  additional_env_files: &[AdditionalEnvFile],
 ) -> anyhow::Result<String> {
   let mut res = String::new();
 
-  for file in additional_env_files.iter().filter(|&path| {
-    let Some(komodo_path) = env_file_path else {
-      return true;
-    };
-    // Filter komodo env out of additional env file if its also in there.
-    // It will be always be added last / have highest priority.
-    path != komodo_path
+  // Add additional env files (except komodo's own, which comes last)
+  for file in additional_env_files.iter().filter(|f| {
+    env_file_path.map_or(true, |komodo_path| f.path.as_str() != komodo_path)
   }) {
-    write!(res, " --env-file {file}").with_context(|| {
-      format!("Failed to write --env-file arg for {file}")
+    let path = &file.path;
+    write!(res, " --env-file {path}").with_context(|| {
+      format!("Failed to write --env-file arg for {path}")
     })?;
   }
 
-  // Add this last, so it is applied on top
+  // Add komodo's env file last for highest priority
   if let Some(file) = env_file_path {
     write!(res, " --env-file {file}").with_context(|| {
       format!("Failed to write --env-file arg for {file}")

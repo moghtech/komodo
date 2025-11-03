@@ -42,6 +42,8 @@ import {
 import { LinkedRepoConfig } from "@components/config/linked_repo";
 import { Button } from "@ui/button";
 import { Input } from "@ui/input";
+import { Label } from "@ui/label";
+import { Switch } from "@ui/switch";
 import { useStack } from ".";
 import { filterBySplit } from "@lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@ui/popover";
@@ -244,19 +246,86 @@ export const StackConfig = ({
       },
       additional_env_files:
         (mode === "Files On Server" || mode === "Git Repo") &&
-        ((values, set) => (
-          <ConfigList
-            label="Additional Env Files"
-            boldLabel
-            addLabel="Add Env File"
-            description="Add additional env files to pass with '--env-file'. Relative to the 'Run Directory'."
-            field="additional_env_files"
-            values={values ?? []}
-            set={set}
-            disabled={disabled}
-            placeholder=".env"
-          />
-        )),
+        ((values, set) => {
+          const files = (values ?? []).map((v: any) =>
+            typeof v === "string" ? { path: v, track: true } : v
+          );
+          return (
+            <ConfigItem label="Additional Env Files" boldLabel>
+              <div className="flex flex-col gap-2 w-full">
+                {files.map((file: any, i: number) => (
+                  <div key={i} className="flex items-center gap-4 w-full">
+                    <Input
+                      value={file.path || ""}
+                      onChange={(e) => {
+                        const newFiles = [...files];
+                        newFiles[i] = {
+                          path: e.target.value,
+                          track: file.track ?? true,
+                        };
+                        set({ additional_env_files: newFiles });
+                      }}
+                      placeholder=".env"
+                      disabled={disabled}
+                      className="w-[400px] max-w-full"
+                    />
+                    <div className="flex items-center gap-1.5">
+                      <Switch
+                        checked={file.track ?? true}
+                        onCheckedChange={(track) => {
+                          const newFiles = [...files];
+                          newFiles[i] = { ...newFiles[i], track };
+                          set({ additional_env_files: newFiles });
+                        }}
+                        disabled={disabled}
+                        id={`track-${i}`}
+                      />
+                      <Label htmlFor={`track-${i}`} className="text-sm">
+                        Track
+                      </Label>
+                    </div>
+                    {!disabled && (
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          set({
+                            additional_env_files: files.filter(
+                              (_: any, idx: number) => idx !== i
+                            ),
+                          });
+                        }}
+                      >
+                        <MinusCircle className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                {!disabled && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      set({
+                        additional_env_files: [
+                          ...files,
+                          { path: "", track: true },
+                        ],
+                      });
+                    }}
+                    className="w-fit"
+                  >
+                    <PlusCircle className="w-4 h-4 mr-2" />
+                    Add Env File
+                  </Button>
+                )}
+                <div className="text-sm text-muted-foreground">
+                  Add additional env files to pass with '--env-file'. Relative
+                  to the 'Run Directory'. Uncheck 'Track' for externally managed
+                  files (e.g., sops decrypted).
+                </div>
+              </div>
+            </ConfigItem>
+          );
+        }),
     },
   };
 

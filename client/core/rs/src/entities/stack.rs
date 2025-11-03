@@ -79,14 +79,24 @@ impl Stack {
     false
   }
 
-  pub fn all_file_paths(&self) -> Vec<String> {
+  /// Get tracked additional env files (those that Komodo should manage)
+  fn tracked_env_files(&self) -> impl Iterator<Item = &str> {
+    self
+      .config
+      .additional_env_files
+      .iter()
+      .filter(|f| f.track)
+      .map(|f| f.path.as_str())
+  }
+
+  pub fn all_tracked_file_paths(&self) -> Vec<String> {
     let mut res = self
       .compose_file_paths()
       .iter()
       .cloned()
       // Makes sure to dedup them, while maintaining ordering
       .collect::<IndexSet<_>>();
-    res.extend(self.config.additional_env_files.clone());
+    res.extend(self.tracked_env_files().map(str::to_string));
     res.extend(
       self.config.config_files.iter().map(|f| f.path.clone()),
     );
@@ -103,11 +113,8 @@ impl Stack {
       .collect::<IndexSet<_>>();
     res.extend(
       self
-        .config
-        .additional_env_files
-        .iter()
-        .cloned()
-        .map(StackFileDependency::full_redeploy),
+        .tracked_env_files()
+        .map(|p| StackFileDependency::full_redeploy(p.to_string())),
     );
     res.extend(self.config.config_files.clone());
     res.into_iter().collect()
@@ -450,13 +457,10 @@ pub struct StackConfig {
   ///
   /// Note. It is already included as an `additional_file`.
   /// Don't add it again there.
-  #[serde(default, deserialize_with = "string_list_deserializer")]
-  #[partial_attr(serde(
-    default,
-    deserialize_with = "option_string_list_deserializer"
-  ))]
+  #[serde(default)]
+  #[partial_attr(serde(default))]
   #[builder(default)]
-  pub additional_env_files: Vec<String>,
+  pub additional_env_files: Vec<AdditionalEnvFile>,
 
   /// Add additional config files either in repo or on host to track.
   /// Can add any files associated with the stack to enable editing them in the UI.
@@ -816,6 +820,86 @@ pub enum StackFileRequires {
   #[default]
   #[serde(alias = "none")]
   None,
+}
+
+/// Additional env file configuration for Stack.
+/// Supports backward compatibility with string-only format.
+#[typeshare]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
+pub struct AdditionalEnvFile {
+  /// File path relative to run directory
+  pub path: String,
+  /// Whether Komodo should track this file's contents.
+  /// If true (default), Komodo will read, display, diff, and validate.
+  /// If false, only passed to docker compose via --env-file.
+  /// Useful for externally managed files (e.g., sops decrypted files).
+  #[serde(default = "default_true")]
+  pub track: bool,
+}
+
+
+fn default_true() -> bool {
+  true
+}
+
+/// Used with custom de/serializer for [AdditionalEnvFile]
+#[derive(Deserialize)]
+struct __AdditionalEnvFile {
+  path: String,
+  #[serde(default = "default_true")]
+  track: bool,
+}
+
+impl<'de> Deserialize<'de> for AdditionalEnvFile {
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: serde::Deserializer<'de>,
+  {
+    struct AdditionalEnvFileVisitor;
+
+    impl<'de> Visitor<'de> for AdditionalEnvFileVisitor {
+      type Value = AdditionalEnvFile;
+
+      fn expecting(
+        &self,
+        formatter: &mut std::fmt::Formatter,
+      ) -> std::fmt::Result {
+        write!(formatter, "string or AdditionalEnvFile (object)")
+      }
+
+      fn visit_string<E>(self, path: String) -> Result<Self::Value, E>
+      where
+        E: serde::de::Error,
+      {
+        Ok(AdditionalEnvFile {
+          path,
+          track: default_true(),
+        })
+      }
+
+      fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+      where
+        E: serde::de::Error,
+      {
+        Self::visit_string(self, v.to_string())
+      }
+
+      fn visit_map<A>(self, map: A) -> Result<Self::Value, A::Error>
+      where
+        A: serde::de::MapAccess<'de>,
+      {
+        __AdditionalEnvFile::deserialize(
+          MapAccessDeserializer::new(map).into_deserializer(),
+        )
+        .map(|v| AdditionalEnvFile {
+          path: v.path,
+          track: v.track,
+        })
+      }
+    }
+
+    deserializer.deserialize_any(AdditionalEnvFileVisitor)
+  }
 }
 
 /// Configure additional file dependencies of the Stack.
