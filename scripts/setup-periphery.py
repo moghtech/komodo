@@ -232,7 +232,7 @@ def main():
 	write_service_file(args, home_dir, bin_dir, config_dir, service_dir)
 
 	user = ""
-	if user_install:
+	if args.user:
 		user = " --user"
 
 	print("Starting Periphery...")
