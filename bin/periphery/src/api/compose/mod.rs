@@ -658,9 +658,14 @@ impl Resolve<super::Args> for ComposeUp {
 
     // Run compose up
     let extra_args = format_extra_args(&stack.config.extra_args);
-    let command = format!(
+    let mut command = format!(
       "{docker_compose} -p {project_name} -f {file_args}{env_file_args} up -d{extra_args}{service_args}",
     );
+    
+    // Apply wrapper if configured
+    if !stack.config.compose_cmd_wrapper.is_empty() {
+      command = stack.config.compose_cmd_wrapper.replace("[[COMPOSE_COMMAND]]", &command);
+    }
 
     let span = info_span!("RunComposeUp");
     let Some(log) = run_komodo_command_with_sanitization(

@@ -369,6 +369,26 @@ export const StackConfig = ({
       },
     },
     {
+      label: "Command Wrapper",
+      description:
+        "Optional wrapper to execute 'docker compose up -d' as a subcommand of tools like secrets management.",
+      components: {
+        compose_cmd_wrapper: (value, set) => (
+          <MonacoEditor
+            value={
+              value ||
+              "# Example: sops exec-env .encrypted.env '[[COMPOSE_COMMAND]]'\n# [[COMPOSE_COMMAND]] is a placeholder for the full compose command\n"
+            }
+            language="shell"
+            onValueChange={(compose_cmd_wrapper) =>
+              set({ compose_cmd_wrapper })
+            }
+            readOnly={disabled}
+          />
+        ),
+      },
+    },
+    {
       label: "Extra Args",
       labelHidden: true,
       components: {

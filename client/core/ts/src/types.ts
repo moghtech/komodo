@@ -2375,6 +2375,16 @@ export interface StackConfig {
 	 */
 	build_extra_args?: string[];
 	/**
+	 * Optional command wrapper for secrets management tools.
+	 * Wraps the docker compose up command with a prefix command.
+	 * Use [[COMPOSE_COMMAND]] as placeholder for the full compose command.
+	 * 
+	 * Examples:
+	 * - "op run -- [[COMPOSE_COMMAND]]" (1password CLI)
+	 * - "sops exec-file --no-fifo /path/to/secret.env '[[COMPOSE_COMMAND]]'" (sops)
+	 */
+	compose_cmd_wrapper?: string;
+	/**
 	 * Ignore certain services declared in the compose file when checking
 	 * the stack status. For example, an init service might be exited, but the
 	 * stack should be healthy. This init service should be in `ignore_services`
@@ -4284,12 +4294,6 @@ export interface AwsBuilderConfig {
 	/** The size of the builder volume in gb */
 	volume_gb: number;
 	/**
-	 * The port periphery will be running on.
-	 * Default: `8120`
-	 */
-	port: number;
-	use_https: boolean;
-	/**
 	 * The EC2 ami id to create.
 	 * The ami should have the periphery client configured to start on startup,
 	 * and should have the necessary github / dockerhub accounts configured.
@@ -4316,6 +4320,12 @@ export interface AwsBuilderConfig {
 	security_group_ids?: string[];
 	/** The user data to deploy the instance with. */
 	user_data?: string;
+	/**
+	 * The port periphery will be running on.
+	 * Default: `8120`
+	 */
+	port: number;
+	use_https: boolean;
 	/**
 	 * An expected public key associated with Periphery private key.
 	 * If empty, doesn't validate Periphery public key.

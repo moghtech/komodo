@@ -517,6 +517,17 @@ pub struct StackConfig {
   #[builder(default)]
   pub build_extra_args: Vec<String>,
 
+  /// Optional command wrapper for secrets management tools.
+  /// Wraps the docker compose up command with a prefix command.
+  /// Use [[COMPOSE_COMMAND]] as placeholder for the full compose command.
+  ///
+  /// Examples:
+  /// - "op run -- [[COMPOSE_COMMAND]]" (1password CLI)
+  /// - "sops exec-file --no-fifo /path/to/secret.env '[[COMPOSE_COMMAND]]'" (sops)
+  #[serde(default)]
+  #[builder(default)]
+  pub compose_cmd_wrapper: String,
+
   /// Ignore certain services declared in the compose file when checking
   /// the stack status. For example, an init service might be exited, but the
   /// stack should be healthy. This init service should be in `ignore_services`
@@ -619,6 +630,7 @@ impl Default for StackConfig {
       run_build: Default::default(),
       destroy_before_deploy: Default::default(),
       build_extra_args: Default::default(),
+      compose_cmd_wrapper: Default::default(),
       skip_secret_interp: Default::default(),
       linked_repo: Default::default(),
       git_provider: default_git_provider(),
