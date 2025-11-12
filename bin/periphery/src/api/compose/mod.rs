@@ -670,6 +670,13 @@ impl Resolve<super::Args> for ComposeUp {
     let compose_cmd_wrapper =
       parse_multiline_command(&stack.config.compose_cmd_wrapper);
     if !compose_cmd_wrapper.is_empty() {
+      if !compose_cmd_wrapper.contains("[[COMPOSE_COMMAND]]") {
+        res.logs.push(Log::error(
+          "Compose Command Wrapper",
+          "compose_cmd_wrapper is configured but does not contain [[COMPOSE_COMMAND]] placeholder. The placeholder is required to inject the compose command.".to_string(),
+        ));
+        return Ok(res);
+      }
       command =
         compose_cmd_wrapper.replace("[[COMPOSE_COMMAND]]", &command);
     }
