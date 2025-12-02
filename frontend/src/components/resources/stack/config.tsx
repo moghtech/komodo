@@ -438,7 +438,7 @@ export const StackConfig = ({
       },
     },
     {
-      label: "Command Wrapper",
+      label: "Wrapper",
       description:
         "Optional wrapper to execute 'docker compose up -d' as a subcommand of tools like secrets management.",
       components: {
