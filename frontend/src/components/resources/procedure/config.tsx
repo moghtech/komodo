@@ -94,6 +94,11 @@ type MinExecutionType = Exclude<
   | "DeleteImage"
   | "DeleteVolume"
   | "TestAlerter"
+  | "RemoveSwarmNodes"
+  | "RemoveSwarmStacks"
+  | "RemoveSwarmServices"
+  | "RemoveSwarmConfigs"
+  | "RemoveSwarmSecrets"
 >;
 
 type ExecutionConfigParams<T extends MinExecutionType> = Extract<
