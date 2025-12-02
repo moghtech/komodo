@@ -70,8 +70,8 @@ impl Resolve<ExecuteArgs> for StartContainer {
     {
       Ok(log) => log,
       Err(e) => Log::error(
-        "start container",
-        format_serror(&e.context("failed to start container").into()),
+        "Start Container",
+        format_serror(&e.context("Failed to start container").into()),
       ),
     };
 
@@ -134,9 +134,9 @@ impl Resolve<ExecuteArgs> for RestartContainer {
     {
       Ok(log) => log,
       Err(e) => Log::error(
-        "restart container",
+        "Restart Container",
         format_serror(
-          &e.context("failed to restart container").into(),
+          &e.context("Failed to restart container").into(),
         ),
       ),
     };
@@ -200,8 +200,8 @@ impl Resolve<ExecuteArgs> for PauseContainer {
     {
       Ok(log) => log,
       Err(e) => Log::error(
-        "pause container",
-        format_serror(&e.context("failed to pause container").into()),
+        "Pause Container",
+        format_serror(&e.context("Failed to pause container").into()),
       ),
     };
 
@@ -264,9 +264,9 @@ impl Resolve<ExecuteArgs> for UnpauseContainer {
     {
       Ok(log) => log,
       Err(e) => Log::error(
-        "unpause container",
+        "Unpause Container",
         format_serror(
-          &e.context("failed to unpause container").into(),
+          &e.context("Failed to unpause container").into(),
         ),
       ),
     };
@@ -334,8 +334,8 @@ impl Resolve<ExecuteArgs> for StopContainer {
     {
       Ok(log) => log,
       Err(e) => Log::error(
-        "stop container",
-        format_serror(&e.context("failed to stop container").into()),
+        "Stop Container",
+        format_serror(&e.context("Failed to stop container").into()),
       ),
     };
 
@@ -408,8 +408,10 @@ impl Resolve<ExecuteArgs> for DestroyContainer {
     {
       Ok(log) => log,
       Err(e) => Log::error(
-        "stop container",
-        format_serror(&e.context("failed to stop container").into()),
+        "Remove Container",
+        format_serror(
+          &e.context("Failed to remove container").into(),
+        ),
       ),
     };
 
@@ -464,13 +466,13 @@ impl Resolve<ExecuteArgs> for StartAllContainers {
       .await?
       .request(api::container::StartAllContainers {})
       .await
-      .context("failed to start all containers on host")?;
+      .context("Failed to start all containers on host")?;
 
     update.logs.extend(logs);
 
     if all_logs_success(&update.logs) {
       update.push_simple_log(
-        "start all containers",
+        "Start All Containers",
         String::from("All containers have been started on the host."),
       );
     }
@@ -524,13 +526,13 @@ impl Resolve<ExecuteArgs> for RestartAllContainers {
       .await?
       .request(api::container::RestartAllContainers {})
       .await
-      .context("failed to restart all containers on host")?;
+      .context("Failed to restart all containers on host")?;
 
     update.logs.extend(logs);
 
     if all_logs_success(&update.logs) {
       update.push_simple_log(
-        "restart all containers",
+        "Restart All Containers",
         String::from(
           "All containers have been restarted on the host.",
         ),
@@ -586,13 +588,13 @@ impl Resolve<ExecuteArgs> for PauseAllContainers {
       .await?
       .request(api::container::PauseAllContainers {})
       .await
-      .context("failed to pause all containers on host")?;
+      .context("Failed to pause all containers on host")?;
 
     update.logs.extend(logs);
 
     if all_logs_success(&update.logs) {
       update.push_simple_log(
-        "pause all containers",
+        "Pause All Containers",
         String::from("All containers have been paused on the host."),
       );
     }
@@ -646,13 +648,13 @@ impl Resolve<ExecuteArgs> for UnpauseAllContainers {
       .await?
       .request(api::container::UnpauseAllContainers {})
       .await
-      .context("failed to unpause all containers on host")?;
+      .context("Failed to unpause all containers on host")?;
 
     update.logs.extend(logs);
 
     if all_logs_success(&update.logs) {
       update.push_simple_log(
-        "unpause all containers",
+        "Unpause All Containers",
         String::from(
           "All containers have been unpaused on the host.",
         ),
@@ -708,13 +710,13 @@ impl Resolve<ExecuteArgs> for StopAllContainers {
       .await?
       .request(api::container::StopAllContainers {})
       .await
-      .context("failed to stop all containers on host")?;
+      .context("Failed to stop all containers on host")?;
 
     update.logs.extend(logs);
 
     if all_logs_success(&update.logs) {
       update.push_simple_log(
-        "stop all containers",
+        "Stop All Containers",
         String::from("All containers have been stopped on the host."),
       );
     }
@@ -770,14 +772,14 @@ impl Resolve<ExecuteArgs> for PruneContainers {
       .request(api::container::PruneContainers {})
       .await
       .context(format!(
-        "failed to prune containers on server {}",
+        "Failed to prune containers on server {}",
         server.name
       )) {
       Ok(log) => log,
       Err(e) => Log::error(
-        "prune containers",
+        "Prune Containers",
         format_serror(
-          &e.context("failed to prune containers").into(),
+          &e.context("Failed to prune containers").into(),
         ),
       ),
     };
@@ -827,15 +829,15 @@ impl Resolve<ExecuteArgs> for DeleteNetwork {
       })
       .await
       .context(format!(
-        "failed to delete network {} on server {}",
+        "Failed to delete network {} on server {}",
         self.name, server.name
       )) {
       Ok(log) => log,
       Err(e) => Log::error(
-        "delete network",
+        "Delete Network",
         format_serror(
           &e.context(format!(
-            "failed to delete network {}",
+            "Failed to delete network {}",
             self.name
           ))
           .into(),
@@ -896,13 +898,13 @@ impl Resolve<ExecuteArgs> for PruneNetworks {
       .request(api::docker::PruneNetworks {})
       .await
       .context(format!(
-        "failed to prune networks on server {}",
+        "Failed to prune networks on server {}",
         server.name
       )) {
       Ok(log) => log,
       Err(e) => Log::error(
-        "prune networks",
-        format_serror(&e.context("failed to prune networks").into()),
+        "Prune Networks",
+        format_serror(&e.context("Failed to prune networks").into()),
       ),
     };
 
@@ -951,14 +953,14 @@ impl Resolve<ExecuteArgs> for DeleteImage {
       })
       .await
       .context(format!(
-        "failed to delete image {} on server {}",
+        "Failed to delete image {} on server {}",
         self.name, server.name
       )) {
       Ok(log) => log,
       Err(e) => Log::error(
         "delete image",
         format_serror(
-          &e.context(format!("failed to delete image {}", self.name))
+          &e.context(format!("Failed to delete image {}", self.name))
             .into(),
         ),
       ),
@@ -1017,9 +1019,9 @@ impl Resolve<ExecuteArgs> for PruneImages {
       match periphery.request(api::docker::PruneImages {}).await {
         Ok(log) => log,
         Err(e) => Log::error(
-          "prune images",
+          "Prune Images",
           format!(
-            "failed to prune images on server {} | {e:#?}",
+            "Failed to prune images on server {} | {e:#?}",
             server.name
           ),
         ),
@@ -1070,7 +1072,7 @@ impl Resolve<ExecuteArgs> for DeleteVolume {
       })
       .await
       .context(format!(
-        "failed to delete volume {} on server {}",
+        "Failed to delete volume {} on server {}",
         self.name, server.name
       )) {
       Ok(log) => log,
@@ -1078,7 +1080,7 @@ impl Resolve<ExecuteArgs> for DeleteVolume {
         "delete volume",
         format_serror(
           &e.context(format!(
-            "failed to delete volume {}",
+            "Failed to delete volume {}",
             self.name
           ))
           .into(),
@@ -1139,9 +1141,9 @@ impl Resolve<ExecuteArgs> for PruneVolumes {
       match periphery.request(api::docker::PruneVolumes {}).await {
         Ok(log) => log,
         Err(e) => Log::error(
-          "prune volumes",
+          "Prune Volumes",
           format!(
-            "failed to prune volumes on server {} | {e:#?}",
+            "Failed to prune volumes on server {} | {e:#?}",
             server.name
           ),
         ),
@@ -1200,9 +1202,9 @@ impl Resolve<ExecuteArgs> for PruneDockerBuilders {
       match periphery.request(api::build::PruneBuilders {}).await {
         Ok(log) => log,
         Err(e) => Log::error(
-          "prune builders",
+          "Prune Builders",
           format!(
-            "failed to docker builder prune on server {} | {e:#?}",
+            "Failed to docker builder prune on server {} | {e:#?}",
             server.name
           ),
         ),
@@ -1261,9 +1263,9 @@ impl Resolve<ExecuteArgs> for PruneBuildx {
       match periphery.request(api::build::PruneBuildx {}).await {
         Ok(log) => log,
         Err(e) => Log::error(
-          "prune buildx",
+          "Prune Buildx",
           format!(
-            "failed to docker buildx prune on server {} | {e:#?}",
+            "Failed to docker buildx prune on server {} | {e:#?}",
             server.name
           ),
         ),
@@ -1321,9 +1323,9 @@ impl Resolve<ExecuteArgs> for PruneSystem {
     let log = match periphery.request(api::PruneSystem {}).await {
       Ok(log) => log,
       Err(e) => Log::error(
-        "prune system",
+        "Prune System",
         format!(
-          "failed to docker system prune on server {} | {e:#?}",
+          "Failed to docker system prune on server {} | {e:#?}",
           server.name
         ),
       ),
