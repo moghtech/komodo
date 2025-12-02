@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+use strum::AsRefStr;
 use typeshare::typeshare;
 
 use super::*;
@@ -111,6 +112,7 @@ pub struct NodeSpec {
   Default,
   Serialize,
   Deserialize,
+  AsRefStr,
 )]
 pub enum NodeSpecRoleEnum {
   #[default]
@@ -134,6 +136,7 @@ pub enum NodeSpecRoleEnum {
   Default,
   Serialize,
   Deserialize,
+  AsRefStr,
 )]
 pub enum NodeSpecAvailabilityEnum {
   #[default]

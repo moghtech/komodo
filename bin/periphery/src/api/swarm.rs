@@ -73,6 +73,104 @@ impl Resolve<super::Args> for InspectSwarmNode {
   }
 }
 
+impl Resolve<super::Args> for UpdateSwarmNode {
+  async fn resolve(self, _: &super::Args) -> anyhow::Result<Log> {
+    let mut command = String::from("docker node update");
+
+    if let Some(role) = self.role {
+      command += " --role=";
+      command += role.as_ref();
+    }
+
+    if let Some(availability) = self.availability {
+      command += " --availability=";
+      command += availability.as_ref();
+    }
+
+    if let Some(label_add) = self.label_add {
+      for (key, value) in label_add {
+        command += " --label-add ";
+        command += &key;
+        if let Some(value) = value {
+          command += "=";
+          command += &value;
+        }
+      }
+    }
+
+    if let Some(label_rm) = self.label_rm {
+      for key in label_rm {
+        command += " --label-rm ";
+        command += &key;
+      }
+    }
+
+    command += " ";
+    command += &self.node;
+
+    Ok(
+      run_komodo_standard_command("Update Swarm Node", None, command)
+        .await,
+    )
+  }
+}
+
+impl Resolve<super::Args> for RemoveSwarmNodes {
+  async fn resolve(self, _: &super::Args) -> anyhow::Result<Log> {
+    let mut command = String::from("docker node rm");
+    if self.force {
+      command += " --force"
+    }
+    for node in self.nodes {
+      command += " ";
+      command += &node;
+    }
+    Ok(
+      run_komodo_standard_command(
+        "Remove Swarm Nodes",
+        None,
+        command,
+      )
+      .await,
+    )
+  }
+}
+
+// =======
+//  Stack
+// =======
+
+impl Resolve<super::Args> for InspectSwarmStack {
+  async fn resolve(
+    self,
+    _: &super::Args,
+  ) -> anyhow::Result<SwarmStackLists> {
+    inspect_swarm_stack(self.stack).await
+  }
+}
+
+impl Resolve<super::Args> for RemoveSwarmStacks {
+  async fn resolve(self, _: &super::Args) -> anyhow::Result<Log> {
+    let mut command = String::from("docker stack rm");
+    // This defaults to true, only need when false
+    if !self.detach {
+      command += " --detach=false"
+    }
+    for stack in self.stacks {
+      command += " ";
+      command += &stack;
+    }
+    Ok(
+      run_komodo_standard_command(
+        "Remove Swarm Stacks",
+        None,
+        command,
+      )
+      .await,
+    )
+  }
+}
+
 // =========
 //  Service
 // =========
@@ -182,6 +280,24 @@ impl Resolve<super::Args> for GetSwarmServiceLogSearch {
   }
 }
 
+impl Resolve<super::Args> for RemoveSwarmServices {
+  async fn resolve(self, _: &super::Args) -> anyhow::Result<Log> {
+    let mut command = String::from("docker service rm");
+    for service in self.services {
+      command += " ";
+      command += &service;
+    }
+    Ok(
+      run_komodo_standard_command(
+        "Remove Swarm Services",
+        None,
+        command,
+      )
+      .await,
+    )
+  }
+}
+
 // ======
 //  Task
 // ======
@@ -197,6 +313,37 @@ impl Resolve<super::Args> for InspectSwarmTask {
       .next()
       .context("Could not connect to docker client")?;
     client.inspect_swarm_task(&self.task).await
+  }
+}
+
+// ========
+//  Config
+// ========
+
+impl Resolve<super::Args> for InspectSwarmConfig {
+  async fn resolve(
+    self,
+    _: &super::Args,
+  ) -> anyhow::Result<Vec<SwarmConfig>> {
+    inspect_swarm_config(&self.config).await
+  }
+}
+
+impl Resolve<super::Args> for RemoveSwarmConfigs {
+  async fn resolve(self, _: &super::Args) -> anyhow::Result<Log> {
+    let mut command = String::from("docker config rm");
+    for config in self.configs {
+      command += " ";
+      command += &config;
+    }
+    Ok(
+      run_komodo_standard_command(
+        "Remove Swarm Configs",
+        None,
+        command,
+      )
+      .await,
+    )
   }
 }
 
@@ -218,28 +365,20 @@ impl Resolve<super::Args> for InspectSwarmSecret {
   }
 }
 
-// ========
-//  Config
-// ========
-
-impl Resolve<super::Args> for InspectSwarmConfig {
-  async fn resolve(
-    self,
-    _: &super::Args,
-  ) -> anyhow::Result<Vec<SwarmConfig>> {
-    inspect_swarm_config(&self.config).await
-  }
-}
-
-// =======
-//  Stack
-// =======
-
-impl Resolve<super::Args> for InspectSwarmStack {
-  async fn resolve(
-    self,
-    _: &super::Args,
-  ) -> anyhow::Result<SwarmStackLists> {
-    inspect_swarm_stack(self.stack).await
+impl Resolve<super::Args> for RemoveSwarmSecrets {
+  async fn resolve(self, _: &super::Args) -> anyhow::Result<Log> {
+    let mut command = String::from("docker secret rm");
+    for secret in self.secrets {
+      command += " ";
+      command += &secret;
+    }
+    Ok(
+      run_komodo_standard_command(
+        "Remove Swarm Secrets",
+        None,
+        command,
+      )
+      .await,
+    )
   }
 }

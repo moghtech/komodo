@@ -359,29 +359,6 @@ export type WriteResponses = {
 };
 
 export type ExecuteResponses = {
-  // ==== SERVER ====
-  StartContainer: Types.Update;
-  RestartContainer: Types.Update;
-  PauseContainer: Types.Update;
-  UnpauseContainer: Types.Update;
-  StopContainer: Types.Update;
-  DestroyContainer: Types.Update;
-  StartAllContainers: Types.Update;
-  RestartAllContainers: Types.Update;
-  PauseAllContainers: Types.Update;
-  UnpauseAllContainers: Types.Update;
-  StopAllContainers: Types.Update;
-  PruneContainers: Types.Update;
-  DeleteNetwork: Types.Update;
-  PruneNetworks: Types.Update;
-  DeleteImage: Types.Update;
-  PruneImages: Types.Update;
-  DeleteVolume: Types.Update;
-  PruneVolumes: Types.Update;
-  PruneDockerBuilders: Types.Update;
-  PruneBuildx: Types.Update;
-  PruneSystem: Types.Update;
-
   // ==== STACK ====
   DeployStack: Types.Update;
   BatchDeployStack: Types.BatchExecutionResponse;
@@ -438,6 +415,36 @@ export type ExecuteResponses = {
   // ==== ALERTER ====
   TestAlerter: Types.Update;
   SendAlert: Types.Update;
+
+  // ==== SERVER ====
+  StartContainer: Types.Update;
+  RestartContainer: Types.Update;
+  PauseContainer: Types.Update;
+  UnpauseContainer: Types.Update;
+  StopContainer: Types.Update;
+  DestroyContainer: Types.Update;
+  StartAllContainers: Types.Update;
+  RestartAllContainers: Types.Update;
+  PauseAllContainers: Types.Update;
+  UnpauseAllContainers: Types.Update;
+  StopAllContainers: Types.Update;
+  PruneContainers: Types.Update;
+  DeleteNetwork: Types.Update;
+  PruneNetworks: Types.Update;
+  DeleteImage: Types.Update;
+  PruneImages: Types.Update;
+  DeleteVolume: Types.Update;
+  PruneVolumes: Types.Update;
+  PruneDockerBuilders: Types.Update;
+  PruneBuildx: Types.Update;
+  PruneSystem: Types.Update;
+
+  // ==== SWARM ====
+  RemoveSwarmNodes: Types.Update;
+  RemoveSwarmStacks: Types.Update;
+  RemoveSwarmServices: Types.Update;
+  RemoveSwarmConfigs: Types.Update;
+  RemoveSwarmSecrets: Types.Update;
 
   // ==== MAINTENANCE ====
   ClearRepoCache: Types.Update;

@@ -1053,6 +1053,11 @@ pub enum Operation {
   UpdateSwarm,
   RenameSwarm,
   DeleteSwarm,
+  RemoveSwarmNodes,
+  RemoveSwarmStacks,
+  RemoveSwarmServices,
+  RemoveSwarmConfigs,
+  RemoveSwarmSecrets,
 
   // Server
   CreateServer,

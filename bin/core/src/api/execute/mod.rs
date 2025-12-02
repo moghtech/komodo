@@ -43,6 +43,7 @@ mod procedure;
 mod repo;
 mod server;
 mod stack;
+mod swarm;
 mod sync;
 
 use super::Variant;
@@ -69,28 +70,7 @@ pub struct ExecuteArgs {
 #[error(serror::Error)]
 #[serde(tag = "type", content = "params")]
 pub enum ExecuteRequest {
-  // ==== SERVER ====
-  StartContainer(StartContainer),
-  RestartContainer(RestartContainer),
-  PauseContainer(PauseContainer),
-  UnpauseContainer(UnpauseContainer),
-  StopContainer(StopContainer),
-  DestroyContainer(DestroyContainer),
-  StartAllContainers(StartAllContainers),
-  RestartAllContainers(RestartAllContainers),
-  PauseAllContainers(PauseAllContainers),
-  UnpauseAllContainers(UnpauseAllContainers),
-  StopAllContainers(StopAllContainers),
-  PruneContainers(PruneContainers),
-  DeleteNetwork(DeleteNetwork),
-  PruneNetworks(PruneNetworks),
-  DeleteImage(DeleteImage),
-  PruneImages(PruneImages),
-  DeleteVolume(DeleteVolume),
-  PruneVolumes(PruneVolumes),
-  PruneDockerBuilders(PruneDockerBuilders),
-  PruneBuildx(PruneBuildx),
-  PruneSystem(PruneSystem),
+  // ==== SWARM ====
 
   // ==== STACK ====
   DeployStack(DeployStack),
@@ -148,6 +128,36 @@ pub enum ExecuteRequest {
   // ==== ALERTER ====
   TestAlerter(TestAlerter),
   SendAlert(SendAlert),
+
+  // ==== SERVER ====
+  StartContainer(StartContainer),
+  RestartContainer(RestartContainer),
+  PauseContainer(PauseContainer),
+  UnpauseContainer(UnpauseContainer),
+  StopContainer(StopContainer),
+  DestroyContainer(DestroyContainer),
+  StartAllContainers(StartAllContainers),
+  RestartAllContainers(RestartAllContainers),
+  PauseAllContainers(PauseAllContainers),
+  UnpauseAllContainers(UnpauseAllContainers),
+  StopAllContainers(StopAllContainers),
+  PruneContainers(PruneContainers),
+  DeleteNetwork(DeleteNetwork),
+  PruneNetworks(PruneNetworks),
+  DeleteImage(DeleteImage),
+  PruneImages(PruneImages),
+  DeleteVolume(DeleteVolume),
+  PruneVolumes(PruneVolumes),
+  PruneDockerBuilders(PruneDockerBuilders),
+  PruneBuildx(PruneBuildx),
+  PruneSystem(PruneSystem),
+
+  // ==== SWARM ====
+  RemoveSwarmNodes(RemoveSwarmNodes),
+  RemoveSwarmStacks(RemoveSwarmStacks),
+  RemoveSwarmServices(RemoveSwarmServices),
+  RemoveSwarmConfigs(RemoveSwarmConfigs),
+  RemoveSwarmSecrets(RemoveSwarmSecrets),
 
   // ==== MAINTENANCE ====
   ClearRepoCache(ClearRepoCache),

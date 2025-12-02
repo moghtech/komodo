@@ -46,7 +46,7 @@ pub struct InspectSwarmNode {
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Log)]
 #[error(anyhow::Error)]
-pub struct RmSwarmNodes {
+pub struct RemoveSwarmNodes {
   pub nodes: Vec<String>,
   pub force: bool,
 }
@@ -67,6 +67,30 @@ pub struct UpdateSwarmNode {
   pub label_rm: Option<Vec<String>>,
   /// Update the node role (`worker`, `manager`)
   pub role: Option<NodeSpecRoleEnum>,
+}
+
+// =======
+//  Stack
+// =======
+
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
+#[response(SwarmStackLists)]
+#[error(anyhow::Error)]
+pub struct InspectSwarmStack {
+  /// The swarm stack name
+  pub stack: String,
+}
+
+/// `docker stack rm [OPTIONS] STACK [STACK...]`
+///
+/// https://docs.docker.com/reference/cli/docker/stack/rm/
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
+#[response(Log)]
+#[error(anyhow::Error)]
+pub struct RemoveSwarmStacks {
+  pub stacks: Vec<String>,
+  /// Do not wait for stack removal
+  pub detach: bool,
 }
 
 // =========
@@ -152,7 +176,7 @@ pub struct GetSwarmServiceLogSearch {
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Log)]
 #[error(anyhow::Error)]
-pub struct RmSwarmServices {
+pub struct RemoveSwarmServices {
   pub services: Vec<String>,
 }
 
@@ -168,17 +192,6 @@ pub struct InspectSwarmTask {
 }
 
 // ========
-//  Secret
-// ========
-
-#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
-#[response(SwarmSecret)]
-#[error(anyhow::Error)]
-pub struct InspectSwarmSecret {
-  pub secret: String,
-}
-
-// ========
 //  Config
 // ========
 
@@ -189,26 +202,33 @@ pub struct InspectSwarmConfig {
   pub config: String,
 }
 
-// =======
-//  Stack
-// =======
-
-#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
-#[response(SwarmStackLists)]
-#[error(anyhow::Error)]
-pub struct InspectSwarmStack {
-  /// The swarm stack name
-  pub stack: String,
-}
-
-/// `docker stack rm [OPTIONS] STACK [STACK...]`
+/// `docker config rm CONFIG [CONFIG...]`
 ///
-/// https://docs.docker.com/reference/cli/docker/stack/rm/
+/// https://docs.docker.com/reference/cli/docker/config/rm/
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Log)]
 #[error(anyhow::Error)]
-pub struct RmSwarmStacks {
-  pub stacks: Vec<String>,
-  /// Do not wait for stack removal
-  pub detach: bool,
+pub struct RemoveSwarmConfigs {
+  pub configs: Vec<String>,
+}
+
+// ========
+//  Secret
+// ========
+
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
+#[response(SwarmSecret)]
+#[error(anyhow::Error)]
+pub struct InspectSwarmSecret {
+  pub secret: String,
+}
+
+/// `docker secret rm SECRET [SECRET...]`
+///
+/// https://docs.docker.com/reference/cli/docker/secret/rm/
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
+#[response(Log)]
+#[error(anyhow::Error)]
+pub struct RemoveSwarmSecrets {
+  pub secrets: Vec<String>,
 }

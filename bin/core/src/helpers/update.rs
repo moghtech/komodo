@@ -14,6 +14,7 @@ use komodo_client::entities::{
   repo::Repo,
   server::Server,
   stack::Stack,
+  swarm::Swarm,
   sync::ResourceSync,
   update::{Update, UpdateListItem},
   user::User,
@@ -121,6 +122,38 @@ pub async fn init_execution_update(
   user: &User,
 ) -> anyhow::Result<Update> {
   let (operation, target) = match &request {
+    // Swarm
+    ExecuteRequest::RemoveSwarmNodes(data) => (
+      Operation::RemoveSwarmNodes,
+      ResourceTarget::Swarm(
+        resource::get::<Swarm>(&data.swarm).await?.id,
+      ),
+    ),
+    ExecuteRequest::RemoveSwarmStacks(data) => (
+      Operation::RemoveSwarmStacks,
+      ResourceTarget::Swarm(
+        resource::get::<Swarm>(&data.swarm).await?.id,
+      ),
+    ),
+    ExecuteRequest::RemoveSwarmServices(data) => (
+      Operation::RemoveSwarmServices,
+      ResourceTarget::Swarm(
+        resource::get::<Swarm>(&data.swarm).await?.id,
+      ),
+    ),
+    ExecuteRequest::RemoveSwarmConfigs(data) => (
+      Operation::RemoveSwarmConfigs,
+      ResourceTarget::Swarm(
+        resource::get::<Swarm>(&data.swarm).await?.id,
+      ),
+    ),
+    ExecuteRequest::RemoveSwarmSecrets(data) => (
+      Operation::RemoveSwarmSecrets,
+      ResourceTarget::Swarm(
+        resource::get::<Swarm>(&data.swarm).await?.id,
+      ),
+    ),
+
     // Server
     ExecuteRequest::StartContainer(data) => (
       Operation::StartContainer,

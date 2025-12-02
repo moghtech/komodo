@@ -358,6 +358,11 @@ export declare enum Operation {
     UpdateSwarm = "UpdateSwarm",
     RenameSwarm = "RenameSwarm",
     DeleteSwarm = "DeleteSwarm",
+    RemoveSwarmNodes = "RemoveSwarmNodes",
+    RemoveSwarmStacks = "RemoveSwarmStacks",
+    RemoveSwarmServices = "RemoveSwarmServices",
+    RemoveSwarmConfigs = "RemoveSwarmConfigs",
+    RemoveSwarmSecrets = "RemoveSwarmSecrets",
     CreateServer = "CreateServer",
     UpdateServer = "UpdateServer",
     UpdateServerKey = "UpdateServerKey",
@@ -815,32 +820,49 @@ export type Execution =
     type: "None";
     params: NoData;
 }
-/** Run the target action. (alias: `action`, `ac`) */
+/** Deploy the target stack. (alias: `stack`, `st`) */
  | {
-    type: "RunAction";
-    params: RunAction;
+    type: "DeployStack";
+    params: DeployStack;
 } | {
-    type: "BatchRunAction";
-    params: BatchRunAction;
-}
-/** Run the target procedure. (alias: `procedure`, `pr`) */
- | {
-    type: "RunProcedure";
-    params: RunProcedure;
+    type: "BatchDeployStack";
+    params: BatchDeployStack;
 } | {
-    type: "BatchRunProcedure";
-    params: BatchRunProcedure;
-}
-/** Run the target build. (alias: `build`, `bd`) */
- | {
-    type: "RunBuild";
-    params: RunBuild;
+    type: "DeployStackIfChanged";
+    params: DeployStackIfChanged;
 } | {
-    type: "BatchRunBuild";
-    params: BatchRunBuild;
+    type: "BatchDeployStackIfChanged";
+    params: BatchDeployStackIfChanged;
 } | {
-    type: "CancelBuild";
-    params: CancelBuild;
+    type: "PullStack";
+    params: PullStack;
+} | {
+    type: "BatchPullStack";
+    params: BatchPullStack;
+} | {
+    type: "StartStack";
+    params: StartStack;
+} | {
+    type: "RestartStack";
+    params: RestartStack;
+} | {
+    type: "PauseStack";
+    params: PauseStack;
+} | {
+    type: "UnpauseStack";
+    params: UnpauseStack;
+} | {
+    type: "StopStack";
+    params: StopStack;
+} | {
+    type: "DestroyStack";
+    params: DestroyStack;
+} | {
+    type: "BatchDestroyStack";
+    params: BatchDestroyStack;
+} | {
+    type: "RunStackService";
+    params: RunStackService;
 }
 /** Deploy the target deployment. (alias: `dp`) */
  | {
@@ -874,6 +896,17 @@ export type Execution =
     type: "BatchDestroyDeployment";
     params: BatchDestroyDeployment;
 }
+/** Run the target build. (alias: `build`, `bd`) */
+ | {
+    type: "RunBuild";
+    params: RunBuild;
+} | {
+    type: "BatchRunBuild";
+    params: BatchRunBuild;
+} | {
+    type: "CancelBuild";
+    params: CancelBuild;
+}
 /** Clone the target repo */
  | {
     type: "CloneRepo";
@@ -896,6 +929,38 @@ export type Execution =
 } | {
     type: "CancelRepoBuild";
     params: CancelRepoBuild;
+}
+/** Run the target procedure. (alias: `procedure`, `pr`) */
+ | {
+    type: "RunProcedure";
+    params: RunProcedure;
+} | {
+    type: "BatchRunProcedure";
+    params: BatchRunProcedure;
+}
+/** Run the target action. (alias: `action`, `ac`) */
+ | {
+    type: "RunAction";
+    params: RunAction;
+} | {
+    type: "BatchRunAction";
+    params: BatchRunAction;
+}
+/** Execute a Resource Sync. (alias: `sync`) */
+ | {
+    type: "RunSync";
+    params: RunSync;
+}
+/** Commit a Resource Sync. (alias: `commit`) */
+ | {
+    type: "CommitSync";
+    params: CommitSync;
+} | {
+    type: "TestAlerter";
+    params: TestAlerter;
+} | {
+    type: "SendAlert";
+    params: SendAlert;
 } | {
     type: "StartContainer";
     params: StartContainer;
@@ -959,66 +1024,21 @@ export type Execution =
 } | {
     type: "PruneSystem";
     params: PruneSystem;
-}
-/** Execute a Resource Sync. (alias: `sync`) */
- | {
-    type: "RunSync";
-    params: RunSync;
-}
-/** Commit a Resource Sync. (alias: `commit`) */
- | {
-    type: "CommitSync";
-    params: CommitSync;
-}
-/** Deploy the target stack. (alias: `stack`, `st`) */
- | {
-    type: "DeployStack";
-    params: DeployStack;
 } | {
-    type: "BatchDeployStack";
-    params: BatchDeployStack;
+    type: "RemoveSwarmNodes";
+    params: RemoveSwarmNodes;
 } | {
-    type: "DeployStackIfChanged";
-    params: DeployStackIfChanged;
+    type: "RemoveSwarmStacks";
+    params: RemoveSwarmStacks;
 } | {
-    type: "BatchDeployStackIfChanged";
-    params: BatchDeployStackIfChanged;
+    type: "RemoveSwarmServices";
+    params: RemoveSwarmServices;
 } | {
-    type: "PullStack";
-    params: PullStack;
+    type: "RemoveSwarmConfigs";
+    params: RemoveSwarmConfigs;
 } | {
-    type: "BatchPullStack";
-    params: BatchPullStack;
-} | {
-    type: "StartStack";
-    params: StartStack;
-} | {
-    type: "RestartStack";
-    params: RestartStack;
-} | {
-    type: "PauseStack";
-    params: PauseStack;
-} | {
-    type: "UnpauseStack";
-    params: UnpauseStack;
-} | {
-    type: "StopStack";
-    params: StopStack;
-} | {
-    type: "DestroyStack";
-    params: DestroyStack;
-} | {
-    type: "BatchDestroyStack";
-    params: BatchDestroyStack;
-} | {
-    type: "RunStackService";
-    params: RunStackService;
-} | {
-    type: "TestAlerter";
-    params: TestAlerter;
-} | {
-    type: "SendAlert";
-    params: SendAlert;
+    type: "RemoveSwarmSecrets";
+    params: RemoveSwarmSecrets;
 } | {
     type: "ClearRepoCache";
     params: ClearRepoCache;
@@ -8216,6 +8236,65 @@ export interface RefreshStackCache {
     /** Id or name */
     stack: string;
 }
+/**
+ * `docker config rm CONFIG [CONFIG...]`
+ *
+ * https://docs.docker.com/reference/cli/docker/config/rm/
+ */
+export interface RemoveSwarmConfigs {
+    /** Name or id */
+    swarm: string;
+    /** Config names or ids */
+    configs: string[];
+}
+/**
+ * `docker node rm [OPTIONS] NODE [NODE...]`
+ *
+ * https://docs.docker.com/reference/cli/docker/node/rm/
+ */
+export interface RemoveSwarmNodes {
+    /** Name or id */
+    swarm: string;
+    /** Node names or ids to remove */
+    nodes: string[];
+    /** Force remove a node from the swarm */
+    force?: boolean;
+}
+/**
+ * `docker secret rm SECRET [SECRET...]`
+ *
+ * https://docs.docker.com/reference/cli/docker/secret/rm/
+ */
+export interface RemoveSwarmSecrets {
+    /** Name or id */
+    swarm: string;
+    /** Secret names or ids */
+    secrets: string[];
+}
+/**
+ * `docker service rm SERVICE [SERVICE...]`
+ *
+ * https://docs.docker.com/reference/cli/docker/service/rm/
+ */
+export interface RemoveSwarmServices {
+    /** Name or id */
+    swarm: string;
+    /** Service names or ids */
+    services: string[];
+}
+/**
+ * `docker stack rm [OPTIONS] STACK [STACK...]`
+ *
+ * https://docs.docker.com/reference/cli/docker/stack/rm/
+ */
+export interface RemoveSwarmStacks {
+    /** Name or id */
+    swarm: string;
+    /** Node names to remove */
+    stacks: string[];
+    /** Do not wait for stack removal */
+    detach: boolean;
+}
 /** **Admin only.** Remove a user from a user group. Response: [UserGroup] */
 export interface RemoveUserFromUserGroup {
     /** The name or id of UserGroup that user should be removed from. */
@@ -9396,69 +9475,6 @@ export declare enum DayOfWeek {
     Sunday = "Sunday"
 }
 export type ExecuteRequest = {
-    type: "StartContainer";
-    params: StartContainer;
-} | {
-    type: "RestartContainer";
-    params: RestartContainer;
-} | {
-    type: "PauseContainer";
-    params: PauseContainer;
-} | {
-    type: "UnpauseContainer";
-    params: UnpauseContainer;
-} | {
-    type: "StopContainer";
-    params: StopContainer;
-} | {
-    type: "DestroyContainer";
-    params: DestroyContainer;
-} | {
-    type: "StartAllContainers";
-    params: StartAllContainers;
-} | {
-    type: "RestartAllContainers";
-    params: RestartAllContainers;
-} | {
-    type: "PauseAllContainers";
-    params: PauseAllContainers;
-} | {
-    type: "UnpauseAllContainers";
-    params: UnpauseAllContainers;
-} | {
-    type: "StopAllContainers";
-    params: StopAllContainers;
-} | {
-    type: "PruneContainers";
-    params: PruneContainers;
-} | {
-    type: "DeleteNetwork";
-    params: DeleteNetwork;
-} | {
-    type: "PruneNetworks";
-    params: PruneNetworks;
-} | {
-    type: "DeleteImage";
-    params: DeleteImage;
-} | {
-    type: "PruneImages";
-    params: PruneImages;
-} | {
-    type: "DeleteVolume";
-    params: DeleteVolume;
-} | {
-    type: "PruneVolumes";
-    params: PruneVolumes;
-} | {
-    type: "PruneDockerBuilders";
-    params: PruneDockerBuilders;
-} | {
-    type: "PruneBuildx";
-    params: PruneBuildx;
-} | {
-    type: "PruneSystem";
-    params: PruneSystem;
-} | {
     type: "DeployStack";
     params: DeployStack;
 } | {
@@ -9581,6 +9597,84 @@ export type ExecuteRequest = {
 } | {
     type: "SendAlert";
     params: SendAlert;
+} | {
+    type: "StartContainer";
+    params: StartContainer;
+} | {
+    type: "RestartContainer";
+    params: RestartContainer;
+} | {
+    type: "PauseContainer";
+    params: PauseContainer;
+} | {
+    type: "UnpauseContainer";
+    params: UnpauseContainer;
+} | {
+    type: "StopContainer";
+    params: StopContainer;
+} | {
+    type: "DestroyContainer";
+    params: DestroyContainer;
+} | {
+    type: "StartAllContainers";
+    params: StartAllContainers;
+} | {
+    type: "RestartAllContainers";
+    params: RestartAllContainers;
+} | {
+    type: "PauseAllContainers";
+    params: PauseAllContainers;
+} | {
+    type: "UnpauseAllContainers";
+    params: UnpauseAllContainers;
+} | {
+    type: "StopAllContainers";
+    params: StopAllContainers;
+} | {
+    type: "PruneContainers";
+    params: PruneContainers;
+} | {
+    type: "DeleteNetwork";
+    params: DeleteNetwork;
+} | {
+    type: "PruneNetworks";
+    params: PruneNetworks;
+} | {
+    type: "DeleteImage";
+    params: DeleteImage;
+} | {
+    type: "PruneImages";
+    params: PruneImages;
+} | {
+    type: "DeleteVolume";
+    params: DeleteVolume;
+} | {
+    type: "PruneVolumes";
+    params: PruneVolumes;
+} | {
+    type: "PruneDockerBuilders";
+    params: PruneDockerBuilders;
+} | {
+    type: "PruneBuildx";
+    params: PruneBuildx;
+} | {
+    type: "PruneSystem";
+    params: PruneSystem;
+} | {
+    type: "RemoveSwarmNodes";
+    params: RemoveSwarmNodes;
+} | {
+    type: "RemoveSwarmStacks";
+    params: RemoveSwarmStacks;
+} | {
+    type: "RemoveSwarmServices";
+    params: RemoveSwarmServices;
+} | {
+    type: "RemoveSwarmConfigs";
+    params: RemoveSwarmConfigs;
+} | {
+    type: "RemoveSwarmSecrets";
+    params: RemoveSwarmSecrets;
 } | {
     type: "ClearRepoCache";
     params: ClearRepoCache;

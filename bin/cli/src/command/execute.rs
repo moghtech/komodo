@@ -221,6 +221,21 @@ pub async fn handle(
     Execution::SendAlert(data) => {
       println!("{}: {data:?}", "Data".dimmed())
     }
+    Execution::RemoveSwarmNodes(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
+    Execution::RemoveSwarmStacks(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
+    Execution::RemoveSwarmServices(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
+    Execution::RemoveSwarmConfigs(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
+    Execution::RemoveSwarmSecrets(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
     Execution::ClearRepoCache(data) => {
       println!("{}: {data:?}", "Data".dimmed())
     }
@@ -485,6 +500,26 @@ pub async fn handle(
       .await
       .map(|u| ExecutionResult::Single(u.into())),
     Execution::SendAlert(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::RemoveSwarmNodes(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::RemoveSwarmStacks(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::RemoveSwarmServices(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::RemoveSwarmConfigs(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::RemoveSwarmSecrets(request) => client
       .execute(request)
       .await
       .map(|u| ExecutionResult::Single(u.into())),

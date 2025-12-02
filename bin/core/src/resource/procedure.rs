@@ -24,6 +24,7 @@ use komodo_client::{
     resource::Resource,
     server::Server,
     stack::Stack,
+    swarm::Swarm,
     sync::ResourceSync,
     update::Update,
     user::User,
@@ -752,6 +753,51 @@ async fn validate_config(
             .collect::<FuturesUnordered<_>>()
             .try_collect::<Vec<_>>()
             .await?;
+        }
+        Execution::RemoveSwarmNodes(params) => {
+          let swarm = super::get_check_permissions::<Swarm>(
+            &params.swarm,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.swarm = swarm.id;
+        }
+        Execution::RemoveSwarmStacks(params) => {
+          let swarm = super::get_check_permissions::<Swarm>(
+            &params.swarm,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.swarm = swarm.id;
+        }
+        Execution::RemoveSwarmServices(params) => {
+          let swarm = super::get_check_permissions::<Swarm>(
+            &params.swarm,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.swarm = swarm.id;
+        }
+        Execution::RemoveSwarmConfigs(params) => {
+          let swarm = super::get_check_permissions::<Swarm>(
+            &params.swarm,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.swarm = swarm.id;
+        }
+        Execution::RemoveSwarmSecrets(params) => {
+          let swarm = super::get_check_permissions::<Swarm>(
+            &params.swarm,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.swarm = swarm.id;
         }
         Execution::ClearRepoCache(_params) => {
           if !user.admin {

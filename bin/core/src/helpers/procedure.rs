@@ -1162,6 +1162,91 @@ async fn execute_execution(
       )
       .await?
     }
+    Execution::RemoveSwarmNodes(req) => {
+      let req = ExecuteRequest::RemoveSwarmNodes(req);
+      let update = init_execution_update(&req, &user).await?;
+      let ExecuteRequest::RemoveSwarmNodes(req) = req else {
+        unreachable!()
+      };
+      let update_id = update.id.clone();
+      handle_resolve_result(
+        req
+          .resolve(&ExecuteArgs { user, update, id })
+          .await
+          .map_err(|e| e.error)
+          .context("Failed at RemoveSwarmNodes"),
+        &update_id,
+      )
+      .await?
+    }
+    Execution::RemoveSwarmStacks(req) => {
+      let req = ExecuteRequest::RemoveSwarmStacks(req);
+      let update = init_execution_update(&req, &user).await?;
+      let ExecuteRequest::RemoveSwarmStacks(req) = req else {
+        unreachable!()
+      };
+      let update_id = update.id.clone();
+      handle_resolve_result(
+        req
+          .resolve(&ExecuteArgs { user, update, id })
+          .await
+          .map_err(|e| e.error)
+          .context("Failed at RemoveSwarmStacks"),
+        &update_id,
+      )
+      .await?
+    }
+    Execution::RemoveSwarmServices(req) => {
+      let req = ExecuteRequest::RemoveSwarmServices(req);
+      let update = init_execution_update(&req, &user).await?;
+      let ExecuteRequest::RemoveSwarmServices(req) = req else {
+        unreachable!()
+      };
+      let update_id = update.id.clone();
+      handle_resolve_result(
+        req
+          .resolve(&ExecuteArgs { user, update, id })
+          .await
+          .map_err(|e| e.error)
+          .context("Failed at RemoveSwarmServices"),
+        &update_id,
+      )
+      .await?
+    }
+    Execution::RemoveSwarmConfigs(req) => {
+      let req = ExecuteRequest::RemoveSwarmConfigs(req);
+      let update = init_execution_update(&req, &user).await?;
+      let ExecuteRequest::RemoveSwarmConfigs(req) = req else {
+        unreachable!()
+      };
+      let update_id = update.id.clone();
+      handle_resolve_result(
+        req
+          .resolve(&ExecuteArgs { user, update, id })
+          .await
+          .map_err(|e| e.error)
+          .context("Failed at RemoveSwarmConfigs"),
+        &update_id,
+      )
+      .await?
+    }
+    Execution::RemoveSwarmSecrets(req) => {
+      let req = ExecuteRequest::RemoveSwarmSecrets(req);
+      let update = init_execution_update(&req, &user).await?;
+      let ExecuteRequest::RemoveSwarmSecrets(req) = req else {
+        unreachable!()
+      };
+      let update_id = update.id.clone();
+      handle_resolve_result(
+        req
+          .resolve(&ExecuteArgs { user, update, id })
+          .await
+          .map_err(|e| e.error)
+          .context("Failed at RemoveSwarmSecrets"),
+        &update_id,
+      )
+      .await?
+    }
     Execution::ClearRepoCache(req) => {
       let req = ExecuteRequest::ClearRepoCache(req);
       let update = init_execution_update(&req, &user).await?;

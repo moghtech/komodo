@@ -700,6 +700,41 @@ impl ResourceSyncTrait for Procedure {
               })
               .collect();
           }
+          Execution::RemoveSwarmNodes(config) => {
+            config.swarm = resources
+              .swarms
+              .get(&config.swarm)
+              .map(|s| s.name.clone())
+              .unwrap_or_default();
+          }
+          Execution::RemoveSwarmStacks(config) => {
+            config.swarm = resources
+              .swarms
+              .get(&config.swarm)
+              .map(|s| s.name.clone())
+              .unwrap_or_default();
+          }
+          Execution::RemoveSwarmServices(config) => {
+            config.swarm = resources
+              .swarms
+              .get(&config.swarm)
+              .map(|s| s.name.clone())
+              .unwrap_or_default();
+          }
+          Execution::RemoveSwarmConfigs(config) => {
+            config.swarm = resources
+              .swarms
+              .get(&config.swarm)
+              .map(|s| s.name.clone())
+              .unwrap_or_default();
+          }
+          Execution::RemoveSwarmSecrets(config) => {
+            config.swarm = resources
+              .swarms
+              .get(&config.swarm)
+              .map(|s| s.name.clone())
+              .unwrap_or_default();
+          }
           Execution::ClearRepoCache(_) => {}
           Execution::BackupCoreDatabase(_) => {}
           Execution::GlobalAutoUpdate(_) => {}

@@ -14,6 +14,7 @@ mod procedure;
 mod repo;
 mod server;
 mod stack;
+mod swarm;
 mod sync;
 
 pub use action::*;
@@ -25,6 +26,7 @@ pub use procedure::*;
 pub use repo::*;
 pub use server::*;
 pub use stack::*;
+pub use swarm::*;
 pub use sync::*;
 
 use crate::{
@@ -59,83 +61,6 @@ pub enum Execution {
   /// The "null" execution. Does nothing.
   None(NoData),
 
-  // ACTION
-  /// Run the target action. (alias: `action`, `ac`)
-  #[clap(alias = "action", alias = "ac")]
-  RunAction(RunAction),
-  BatchRunAction(BatchRunAction),
-
-  // PROCEDURE
-  /// Run the target procedure. (alias: `procedure`, `pr`)
-  #[clap(alias = "procedure", alias = "pr")]
-  RunProcedure(RunProcedure),
-  BatchRunProcedure(BatchRunProcedure),
-
-  // BUILD
-  /// Run the target build. (alias: `build`, `bd`)
-  #[clap(alias = "build", alias = "bd")]
-  RunBuild(RunBuild),
-  BatchRunBuild(BatchRunBuild),
-  CancelBuild(CancelBuild),
-
-  // DEPLOYMENT
-  /// Deploy the target deployment. (alias: `dp`)
-  #[clap(alias = "dp")]
-  Deploy(Deploy),
-  BatchDeploy(BatchDeploy),
-  PullDeployment(PullDeployment),
-  StartDeployment(StartDeployment),
-  RestartDeployment(RestartDeployment),
-  PauseDeployment(PauseDeployment),
-  UnpauseDeployment(UnpauseDeployment),
-  StopDeployment(StopDeployment),
-  DestroyDeployment(DestroyDeployment),
-  BatchDestroyDeployment(BatchDestroyDeployment),
-
-  // REPO
-  /// Clone the target repo
-  #[clap(alias = "clone")]
-  CloneRepo(CloneRepo),
-  BatchCloneRepo(BatchCloneRepo),
-  PullRepo(PullRepo),
-  BatchPullRepo(BatchPullRepo),
-  BuildRepo(BuildRepo),
-  BatchBuildRepo(BatchBuildRepo),
-  CancelRepoBuild(CancelRepoBuild),
-
-  // SERVER (Container)
-  StartContainer(StartContainer),
-  RestartContainer(RestartContainer),
-  PauseContainer(PauseContainer),
-  UnpauseContainer(UnpauseContainer),
-  StopContainer(StopContainer),
-  DestroyContainer(DestroyContainer),
-  StartAllContainers(StartAllContainers),
-  RestartAllContainers(RestartAllContainers),
-  PauseAllContainers(PauseAllContainers),
-  UnpauseAllContainers(UnpauseAllContainers),
-  StopAllContainers(StopAllContainers),
-  PruneContainers(PruneContainers),
-
-  // SERVER (Prune)
-  DeleteNetwork(DeleteNetwork),
-  PruneNetworks(PruneNetworks),
-  DeleteImage(DeleteImage),
-  PruneImages(PruneImages),
-  DeleteVolume(DeleteVolume),
-  PruneVolumes(PruneVolumes),
-  PruneDockerBuilders(PruneDockerBuilders),
-  PruneBuildx(PruneBuildx),
-  PruneSystem(PruneSystem),
-
-  // SYNC
-  /// Execute a Resource Sync. (alias: `sync`)
-  #[clap(alias = "sync")]
-  RunSync(RunSync),
-  /// Commit a Resource Sync. (alias: `commit`)
-  #[clap(alias = "commit")]
-  CommitSync(CommitSync), // This is a special case, its actually a write operation.
-
   // STACK
   /// Deploy the target stack. (alias: `stack`, `st`)
   #[clap(alias = "stack", alias = "st")]
@@ -154,10 +79,92 @@ pub enum Execution {
   BatchDestroyStack(BatchDestroyStack),
   RunStackService(RunStackService),
 
+  // DEPLOYMENT
+  /// Deploy the target deployment. (alias: `dp`)
+  #[clap(alias = "dp")]
+  Deploy(Deploy),
+  BatchDeploy(BatchDeploy),
+  PullDeployment(PullDeployment),
+  StartDeployment(StartDeployment),
+  RestartDeployment(RestartDeployment),
+  PauseDeployment(PauseDeployment),
+  UnpauseDeployment(UnpauseDeployment),
+  StopDeployment(StopDeployment),
+  DestroyDeployment(DestroyDeployment),
+  BatchDestroyDeployment(BatchDestroyDeployment),
+
+  // BUILD
+  /// Run the target build. (alias: `build`, `bd`)
+  #[clap(alias = "build", alias = "bd")]
+  RunBuild(RunBuild),
+  BatchRunBuild(BatchRunBuild),
+  CancelBuild(CancelBuild),
+
+  // REPO
+  /// Clone the target repo
+  #[clap(alias = "clone")]
+  CloneRepo(CloneRepo),
+  BatchCloneRepo(BatchCloneRepo),
+  PullRepo(PullRepo),
+  BatchPullRepo(BatchPullRepo),
+  BuildRepo(BuildRepo),
+  BatchBuildRepo(BatchBuildRepo),
+  CancelRepoBuild(CancelRepoBuild),
+
+  // PROCEDURE
+  /// Run the target procedure. (alias: `procedure`, `pr`)
+  #[clap(alias = "procedure", alias = "pr")]
+  RunProcedure(RunProcedure),
+  BatchRunProcedure(BatchRunProcedure),
+
+  // ACTION
+  /// Run the target action. (alias: `action`, `ac`)
+  #[clap(alias = "action", alias = "ac")]
+  RunAction(RunAction),
+  BatchRunAction(BatchRunAction),
+
+  // SYNC
+  /// Execute a Resource Sync. (alias: `sync`)
+  #[clap(alias = "sync")]
+  RunSync(RunSync),
+  /// Commit a Resource Sync. (alias: `commit`)
+  #[clap(alias = "commit")]
+  CommitSync(CommitSync), // This is a special case, its actually a write operation.
+
   // ALERTER
   TestAlerter(TestAlerter),
   #[clap(alias = "alert")]
   SendAlert(SendAlert),
+
+  // SERVER
+  StartContainer(StartContainer),
+  RestartContainer(RestartContainer),
+  PauseContainer(PauseContainer),
+  UnpauseContainer(UnpauseContainer),
+  StopContainer(StopContainer),
+  DestroyContainer(DestroyContainer),
+  StartAllContainers(StartAllContainers),
+  RestartAllContainers(RestartAllContainers),
+  PauseAllContainers(PauseAllContainers),
+  UnpauseAllContainers(UnpauseAllContainers),
+  StopAllContainers(StopAllContainers),
+  PruneContainers(PruneContainers),
+  DeleteNetwork(DeleteNetwork),
+  PruneNetworks(PruneNetworks),
+  DeleteImage(DeleteImage),
+  PruneImages(PruneImages),
+  DeleteVolume(DeleteVolume),
+  PruneVolumes(PruneVolumes),
+  PruneDockerBuilders(PruneDockerBuilders),
+  PruneBuildx(PruneBuildx),
+  PruneSystem(PruneSystem),
+
+  // SWARM
+  RemoveSwarmNodes(RemoveSwarmNodes),
+  RemoveSwarmStacks(RemoveSwarmStacks),
+  RemoveSwarmServices(RemoveSwarmServices),
+  RemoveSwarmConfigs(RemoveSwarmConfigs),
+  RemoveSwarmSecrets(RemoveSwarmSecrets),
 
   // MAINTENANCE
   ClearRepoCache(ClearRepoCache),

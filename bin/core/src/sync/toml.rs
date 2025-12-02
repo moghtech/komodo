@@ -843,6 +843,49 @@ impl ToToml for Procedure {
               )
             })
           }
+          Execution::RemoveSwarmNodes(exec) => exec.swarm.clone_from(
+            all
+              .swarms
+              .get(&exec.swarm)
+              .map(|a| &a.name)
+              .unwrap_or(&String::new()),
+          ),
+          Execution::RemoveSwarmStacks(exec) => {
+            exec.swarm.clone_from(
+              all
+                .swarms
+                .get(&exec.swarm)
+                .map(|a| &a.name)
+                .unwrap_or(&String::new()),
+            )
+          }
+          Execution::RemoveSwarmServices(exec) => {
+            exec.swarm.clone_from(
+              all
+                .swarms
+                .get(&exec.swarm)
+                .map(|a| &a.name)
+                .unwrap_or(&String::new()),
+            )
+          }
+          Execution::RemoveSwarmConfigs(exec) => {
+            exec.swarm.clone_from(
+              all
+                .swarms
+                .get(&exec.swarm)
+                .map(|a| &a.name)
+                .unwrap_or(&String::new()),
+            )
+          }
+          Execution::RemoveSwarmSecrets(exec) => {
+            exec.swarm.clone_from(
+              all
+                .swarms
+                .get(&exec.swarm)
+                .map(|a| &a.name)
+                .unwrap_or(&String::new()),
+            )
+          }
           Execution::None(_)
           | Execution::Sleep(_)
           | Execution::ClearRepoCache(_)
