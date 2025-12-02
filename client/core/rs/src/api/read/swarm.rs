@@ -10,7 +10,7 @@ use crate::entities::{
     node::{SwarmNode, SwarmNodeListItem},
     secret::{SwarmSecret, SwarmSecretListItem},
     service::{SwarmService, SwarmServiceListItem},
-    stack::{SwarmStackListItem, SwarmStackLists},
+    stack::{SwarmStack, SwarmStackListItem},
     swarm::SwarmInspectInfo,
     task::{SwarmTask, SwarmTaskListItem},
   },
@@ -484,4 +484,4 @@ pub struct InspectSwarmStack {
 }
 
 #[typeshare]
-pub type InspectSwarmStackResponse = SwarmStackLists;
+pub type InspectSwarmStackResponse = SwarmStack;

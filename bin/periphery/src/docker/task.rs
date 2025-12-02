@@ -8,14 +8,19 @@ impl DockerClient {
   pub async fn list_swarm_tasks(
     &self,
   ) -> anyhow::Result<Vec<SwarmTaskListItem>> {
-    let tasks = self
+    let mut tasks = self
       .docker
       .list_tasks(Option::<ListTasksOptions>::None)
       .await
       .context("Failed to query for swarm tasks list")?
       .into_iter()
       .map(convert_task_list_item)
-      .collect();
+      .collect::<Vec<_>>();
+
+    tasks.sort_by(|a, b| {
+      a.state.cmp(&b.state).then_with(|| a.name.cmp(&b.name))
+    });
+
     Ok(tasks)
   }
 

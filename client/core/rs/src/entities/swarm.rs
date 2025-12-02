@@ -29,16 +29,26 @@ pub struct SwarmListItemInfo {
 
 #[typeshare]
 #[derive(
-  Debug, Clone, Copy, Default, Serialize, Deserialize, Display,
+  Debug,
+  Clone,
+  Copy,
+  PartialEq,
+  Eq,
+  PartialOrd,
+  Ord,
+  Default,
+  Serialize,
+  Deserialize,
+  Display,
 )]
 pub enum SwarmState {
-  /// Unknown case
-  #[default]
-  Unknown,
   /// The Swarm is healthy, all nodes OK
   Healthy,
   /// The Swarm is unhealthy
   Unhealthy,
+  /// Unknown case
+  #[default]
+  Unknown,
 }
 
 #[typeshare]

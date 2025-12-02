@@ -1,11 +1,6 @@
-import { Section } from "@components/layouts";
 import { useRead } from "@lib/hooks";
-import { DataTable, SortableHeader } from "@ui/data-table";
 import { Dispatch, ReactNode, SetStateAction } from "react";
-import { Search } from "lucide-react";
-import { Input } from "@ui/input";
-import { filterBySplit } from "@lib/utils";
-import { SwarmLink } from "..";
+import { SwarmTasksTable } from "../table";
 
 export const SwarmTasks = ({
   id,
@@ -16,134 +11,16 @@ export const SwarmTasks = ({
   titleOther: ReactNode;
   _search: [string, Dispatch<SetStateAction<string>>];
 }) => {
-  const [search, setSearch] = _search;
-  const nodes =
-    useRead("ListSwarmNodes", { swarm: id }, { refetchInterval: 10_000 })
-      .data ?? [];
-  const services =
-    useRead("ListSwarmServices", { swarm: id }, { refetchInterval: 10_000 })
-      .data ?? [];
-  const _tasks =
+  const tasks =
     useRead("ListSwarmTasks", { swarm: id }, { refetchInterval: 10_000 })
       .data ?? [];
 
-  const tasks = _tasks.map((task) => {
-    return {
-      ...task,
-      node: nodes.find((node) => task.NodeID === node.ID),
-      service: services.find((service) => task.ServiceID === service.ID),
-    };
-  });
-
-  const filtered = filterBySplit(
-    tasks,
-    search,
-    (task) => task.Name ?? task.service?.Name ?? "Unknown"
-  );
-
   return (
-    <Section
+    <SwarmTasksTable
+      id={id}
+      tasks={tasks}
       titleOther={titleOther}
-      actions={
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="relative">
-            <Search className="w-4 absolute top-[50%] left-3 -translate-y-[50%] text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="search..."
-              className="pl-8 w-[200px] lg:w-[300px]"
-            />
-          </div>
-        </div>
-      }
-    >
-      <DataTable
-        containerClassName="min-h-[60vh]"
-        tableKey="swarm-tasks"
-        data={filtered}
-        columns={[
-          {
-            accessorKey: "ID",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Id" />
-            ),
-            cell: ({ row }) => (
-              <SwarmLink
-                type="Task"
-                swarm_id={id}
-                resource_id={row.original.ID}
-                name={row.original.ID}
-              />
-            ),
-            size: 200,
-          },
-          {
-            accessorKey: "service.Name",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Service" />
-            ),
-            cell: ({ row }) => (
-              <SwarmLink
-                type="Service"
-                swarm_id={id}
-                resource_id={row.original.service?.ID}
-                name={row.original.service?.Name}
-              />
-            ),
-            size: 200,
-          },
-          {
-            accessorKey: "node.Hostname",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Node" />
-            ),
-            cell: ({ row }) => (
-              <SwarmLink
-                type="Node"
-                swarm_id={id}
-                resource_id={row.original.node?.ID}
-                name={row.original.node?.Hostname}
-              />
-            ),
-            size: 200,
-          },
-          {
-            accessorKey: "State",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="State" />
-            ),
-          },
-          {
-            accessorKey: "DesiredState",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Desired State" />
-            ),
-          },
-          {
-            accessorKey: "UpdatedAt",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Updated" />
-            ),
-            cell: ({ row }) =>
-              row.original.UpdatedAt
-                ? new Date(row.original.UpdatedAt).toLocaleString()
-                : "Unknown",
-            size: 200,
-          },
-          {
-            accessorKey: "CreatedAt",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Created" />
-            ),
-            cell: ({ row }) =>
-              row.original.CreatedAt
-                ? new Date(row.original.CreatedAt).toLocaleString()
-                : "Unknown",
-            size: 200,
-          },
-        ]}
-      />
-    </Section>
+      _search={_search}
+    />
   );
 };

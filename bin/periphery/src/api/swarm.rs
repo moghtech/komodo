@@ -5,8 +5,8 @@ use command::{
 use komodo_client::entities::{
   docker::{
     SwarmLists, config::SwarmConfig, node::SwarmNode,
-    secret::SwarmSecret, service::SwarmService,
-    stack::SwarmStackLists, task::SwarmTask,
+    secret::SwarmSecret, service::SwarmService, stack::SwarmStack,
+    task::SwarmTask,
   },
   update::Log,
 };
@@ -144,7 +144,7 @@ impl Resolve<super::Args> for InspectSwarmStack {
   async fn resolve(
     self,
     _: &super::Args,
-  ) -> anyhow::Result<SwarmStackLists> {
+  ) -> anyhow::Result<SwarmStack> {
     inspect_swarm_stack(self.stack).await
   }
 }

@@ -36,7 +36,12 @@ export default function SwarmTaskPage() {
   const { data: tasks, isPending } = useRead("ListSwarmTasks", {
     swarm: id,
   });
-  const task = tasks?.find((task) => task.ID === _task);
+  const task = tasks?.find(
+    (task) =>
+      _task &&
+      // Better to match on start to accept short ids too
+      task.ID?.startsWith(_task)
+  );
   const node = useRead("ListSwarmNodes", { swarm: id }).data?.find(
     (node) => node.ID === task?.NodeID
   );

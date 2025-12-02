@@ -36,7 +36,13 @@ export default function SwarmServicePage() {
   const { data: services, isPending } = useRead("ListSwarmServices", {
     swarm: id,
   });
-  const service = services?.find((service) => service.ID === _service);
+  const service = services?.find(
+    (service) =>
+      _service &&
+      // First match on name here.
+      // Then better to match on ID start to accept short ids too.
+      (service.Name === _service || service.ID?.startsWith(_service))
+  );
   const tasks =
     useRead("ListSwarmTasks", {
       swarm: id,

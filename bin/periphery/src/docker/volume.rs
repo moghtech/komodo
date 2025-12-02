@@ -10,7 +10,7 @@ impl DockerClient {
     &self,
     containers: &[ContainerListItem],
   ) -> anyhow::Result<Vec<VolumeListItem>> {
-    let volumes = self
+    let mut volumes = self
       .docker
       .list_volumes(Option::<ListVolumesOptions>::None)
       .await?
@@ -45,7 +45,12 @@ impl DockerClient {
           in_use,
         }
       })
-      .collect();
+      .collect::<Vec<_>>();
+
+    volumes.sort_by(|a, b| {
+      a.in_use.cmp(&b.in_use).then_with(|| a.name.cmp(&b.name))
+    });
+
     Ok(volumes)
   }
 

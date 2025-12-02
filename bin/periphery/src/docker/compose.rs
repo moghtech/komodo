@@ -29,7 +29,7 @@ pub async fn list_compose_projects()
     )));
   }
 
-  let res =
+  let mut res =
     serde_json::from_str::<Vec<DockerComposeLsItem>>(&res.stdout)
       .with_context(|| res.stdout.clone())
       .with_context(|| {
@@ -48,7 +48,11 @@ pub async fn list_compose_projects()
           .map(str::to_string)
           .collect(),
       })
-      .collect();
+      .collect::<Vec<_>>();
+
+  res.sort_by(|a, b| {
+    a.status.cmp(&b.status).then_with(|| a.name.cmp(&b.name))
+  });
 
   Ok(res)
 }

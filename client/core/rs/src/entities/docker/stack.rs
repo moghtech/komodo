@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
+use crate::entities::swarm::SwarmState;
+
 /// Swarm stack list item.
 /// Returned by `docker stack ls --format json`
 ///
@@ -13,6 +15,14 @@ pub struct SwarmStackListItem {
   /// Swarm stack name.
   #[serde(rename = "Name")]
   pub name: Option<String>,
+
+  /// Swarm stack state.
+  /// - Healthy if all associated tasks match their desired state
+  /// - Unhealthy otherwise
+  ///
+  /// Not included in docker cli return, computed by Komodo
+  #[serde(rename = "State")]
+  pub state: Option<SwarmState>,
 
   /// Number of services which are part of the stack
   #[serde(rename = "Services")]
@@ -37,10 +47,18 @@ pub struct SwarmStackListItem {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-pub struct SwarmStackLists {
+pub struct SwarmStack {
   /// Swarm stack name.
   #[serde(rename = "Name")]
   pub name: String,
+
+  /// Swarm stack state.
+  /// - Healthy if all associated tasks match their desired state (or report no desired state)
+  /// - Unhealthy otherwise
+  ///
+  /// Not included in docker cli return, computed by Komodo
+  #[serde(rename = "State")]
+  pub state: SwarmState,
 
   /// Services part of the stack
   #[serde(rename = "Services")]

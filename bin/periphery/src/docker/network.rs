@@ -12,7 +12,7 @@ impl DockerClient {
     &self,
     containers: &[ContainerListItem],
   ) -> anyhow::Result<Vec<NetworkListItem>> {
-    let networks = self
+    let mut networks = self
       .docker
       .list_networks(Option::<ListNetworksOptions>::None)
       .await?
@@ -54,7 +54,12 @@ impl DockerClient {
           in_use,
         }
       })
-      .collect();
+      .collect::<Vec<_>>();
+
+    networks.sort_by(|a, b| {
+      a.in_use.cmp(&b.in_use).then_with(|| a.name.cmp(&b.name))
+    });
+
     Ok(networks)
   }
 

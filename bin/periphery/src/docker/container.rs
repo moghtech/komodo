@@ -100,6 +100,9 @@ impl DockerClient {
       container.network_mode =
         container_id_to_network.get(container_id).cloned();
     });
+    containers.sort_by(|a, b| {
+      a.state.cmp(&b.state).then_with(|| a.name.cmp(&b.name))
+    });
     Ok(containers)
   }
 

@@ -611,6 +611,15 @@ export var ServiceUpdateStatusStateEnum;
     ServiceUpdateStatusStateEnum["ROLLBACK_PAUSED"] = "rollback_paused";
     ServiceUpdateStatusStateEnum["ROLLBACK_COMPLETED"] = "rollback_completed";
 })(ServiceUpdateStatusStateEnum || (ServiceUpdateStatusStateEnum = {}));
+export var SwarmState;
+(function (SwarmState) {
+    /** The Swarm is healthy, all nodes OK */
+    SwarmState["Healthy"] = "Healthy";
+    /** The Swarm is unhealthy */
+    SwarmState["Unhealthy"] = "Unhealthy";
+    /** Unknown case */
+    SwarmState["Unknown"] = "Unknown";
+})(SwarmState || (SwarmState = {}));
 export var TaskState;
 (function (TaskState) {
     TaskState["NEW"] = "new";
@@ -709,15 +718,6 @@ export var StackState;
     /** Server not reachable for status */
     StackState["Unknown"] = "unknown";
 })(StackState || (StackState = {}));
-export var SwarmState;
-(function (SwarmState) {
-    /** Unknown case */
-    SwarmState["Unknown"] = "Unknown";
-    /** The Swarm is healthy, all nodes OK */
-    SwarmState["Healthy"] = "Healthy";
-    /** The Swarm is unhealthy */
-    SwarmState["Unhealthy"] = "Unhealthy";
-})(SwarmState || (SwarmState = {}));
 /**
  * Configures the behavior of [CreateTerminal] if the
  * specified terminal name already exists.

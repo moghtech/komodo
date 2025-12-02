@@ -4309,6 +4309,14 @@ export interface SwarmService {
     JobStatus?: ServiceJobStatus;
 }
 export type InspectSwarmServiceResponse = SwarmService;
+export declare enum SwarmState {
+    /** The Swarm is healthy, all nodes OK */
+    Healthy = "Healthy",
+    /** The Swarm is unhealthy */
+    Unhealthy = "Unhealthy",
+    /** Unknown case */
+    Unknown = "Unknown"
+}
 /**
  * Swarm stack service list item.
  * Returned by `docker stack services --format json <NAME>`
@@ -4357,15 +4365,23 @@ export interface SwarmStackTaskListItem {
  * docker stack ps --format json <STACK>
  * ```
  */
-export interface SwarmStackLists {
+export interface SwarmStack {
     /** Swarm stack name. */
     Name: string;
+    /**
+     * Swarm stack state.
+     * - Healthy if all associated tasks match their desired state (or report no desired state)
+     * - Unhealthy otherwise
+     *
+     * Not included in docker cli return, computed by Komodo
+     */
+    State: SwarmState;
     /** Services part of the stack */
     Services: SwarmStackServiceListItem[];
     /** Tasks part of the stack */
     Tasks: SwarmStackTaskListItem[];
 }
-export type InspectSwarmStackResponse = SwarmStackLists;
+export type InspectSwarmStackResponse = SwarmStack;
 export declare enum TaskState {
     NEW = "new",
     ALLOCATED = "allocated",
@@ -5005,6 +5021,14 @@ export type ListSwarmServicesResponse = SwarmServiceListItem[];
 export interface SwarmStackListItem {
     /** Swarm stack name. */
     Name?: string;
+    /**
+     * Swarm stack state.
+     * - Healthy if all associated tasks match their desired state
+     * - Unhealthy otherwise
+     *
+     * Not included in docker cli return, computed by Komodo
+     */
+    State?: SwarmState;
     /** Number of services which are part of the stack */
     Services?: string;
     /** The stack orchestrator */
@@ -5031,14 +5055,6 @@ export interface SwarmTaskListItem {
     UpdatedAt?: string;
 }
 export type ListSwarmTasksResponse = SwarmTaskListItem[];
-export declare enum SwarmState {
-    /** Unknown case */
-    Unknown = "Unknown",
-    /** The Swarm is healthy, all nodes OK */
-    Healthy = "Healthy",
-    /** The Swarm is unhealthy */
-    Unhealthy = "Unhealthy"
-}
 export interface SwarmListItemInfo {
     /** Servers part of the swarm */
     server_ids: string[];

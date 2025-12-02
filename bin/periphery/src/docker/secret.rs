@@ -10,14 +10,21 @@ impl DockerClient {
   pub async fn list_swarm_secrets(
     &self,
   ) -> anyhow::Result<Vec<SwarmSecretListItem>> {
-    let secrets = self
+    let mut secrets = self
       .docker
       .list_secrets(Option::<ListSecretsOptions>::None)
       .await
       .context("Failed to query for swarm secret list")?
       .into_iter()
       .map(convert_secret_list_item)
-      .collect();
+      .collect::<Vec<_>>();
+
+    secrets.sort_by(|a, b| {
+      a.name
+        .cmp(&b.name)
+        .then_with(|| b.updated_at.cmp(&a.updated_at))
+    });
+
     Ok(secrets)
   }
 

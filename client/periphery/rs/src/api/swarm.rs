@@ -8,7 +8,7 @@ use komodo_client::entities::{
     node::{NodeSpecAvailabilityEnum, NodeSpecRoleEnum, SwarmNode},
     secret::SwarmSecret,
     service::SwarmService,
-    stack::SwarmStackLists,
+    stack::SwarmStack,
     swarm::SwarmInspectInfo,
     task::SwarmTask,
   },
@@ -74,7 +74,7 @@ pub struct UpdateSwarmNode {
 // =======
 
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
-#[response(SwarmStackLists)]
+#[response(SwarmStack)]
 #[error(anyhow::Error)]
 pub struct InspectSwarmStack {
   /// The swarm stack name

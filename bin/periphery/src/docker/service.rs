@@ -13,14 +13,21 @@ impl DockerClient {
   pub async fn list_swarm_services(
     &self,
   ) -> anyhow::Result<Vec<SwarmServiceListItem>> {
-    let services = self
+    let mut services = self
       .docker
       .list_services(Option::<ListServicesOptions>::None)
       .await
       .context("Failed to query for swarm service list")?
       .into_iter()
       .map(convert_service_list_item)
-      .collect();
+      .collect::<Vec<_>>();
+
+    services.sort_by(|a, b| {
+      a.name
+        .cmp(&b.name)
+        .then_with(|| b.updated_at.cmp(&a.updated_at))
+    });
+
     Ok(services)
   }
 

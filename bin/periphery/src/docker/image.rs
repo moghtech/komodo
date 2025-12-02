@@ -11,7 +11,7 @@ impl DockerClient {
     &self,
     containers: &[ContainerListItem],
   ) -> anyhow::Result<Vec<ImageListItem>> {
-    let images = self
+    let mut images = self
       .docker
       .list_images(Option::<ListImagesOptions>::None)
       .await?
@@ -37,7 +37,12 @@ impl DockerClient {
           in_use,
         }
       })
-      .collect();
+      .collect::<Vec<_>>();
+
+    images.sort_by(|a, b| {
+      a.in_use.cmp(&b.in_use).then_with(|| a.name.cmp(&b.name))
+    });
+
     Ok(images)
   }
 

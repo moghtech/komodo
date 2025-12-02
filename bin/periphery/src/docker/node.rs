@@ -11,14 +11,22 @@ impl DockerClient {
   pub async fn list_swarm_nodes(
     &self,
   ) -> anyhow::Result<Vec<SwarmNodeListItem>> {
-    let nodes = self
+    let mut nodes = self
       .docker
       .list_nodes(Option::<ListNodesOptions>::None)
       .await
       .context("Failed to query for swarm node list")?
       .into_iter()
       .map(convert_node_list_item)
-      .collect();
+      .collect::<Vec<_>>();
+
+    nodes.sort_by(|a, b| {
+      a.state
+        .cmp(&b.state)
+        .then_with(|| a.name.cmp(&b.name))
+        .then_with(|| a.hostname.cmp(&b.hostname))
+    });
+
     Ok(nodes)
   }
 

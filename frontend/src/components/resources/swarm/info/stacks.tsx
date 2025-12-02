@@ -69,6 +69,12 @@ export const SwarmStacks = ({
               <SortableHeader column={column} title="Services" />
             ),
           },
+          {
+            accessorKey: "State",
+            header: ({ column }) => (
+              <SortableHeader column={column} title="State" />
+            ),
+          },
         ]}
       />
     </Section>

@@ -20,11 +20,18 @@ pub async fn list_swarm_configs()
   }
 
   // The output is in JSONL, need to convert to standard JSON vec.
-  serde_json::from_str(&format!(
-    "[{}]",
-    res.stdout.trim().replace('\n', ",")
-  ))
-  .context("Failed to parse 'docker config ls' response from json")
+  let mut res = serde_json::from_str::<Vec<SwarmConfigListItem>>(
+    &format!("[{}]", res.stdout.trim().replace('\n', ",")),
+  )
+  .context("Failed to parse 'docker config ls' response from json")?;
+
+  res.sort_by(|a, b| {
+    a.name
+      .cmp(&b.name)
+      .then_with(|| b.updated_at.cmp(&a.updated_at))
+  });
+
+  Ok(res)
 }
 
 pub async fn inspect_swarm_config(
