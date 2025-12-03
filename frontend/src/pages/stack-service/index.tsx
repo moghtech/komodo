@@ -25,7 +25,7 @@ import {
 } from "@lib/hooks";
 import { cn } from "@lib/utils";
 import { Types } from "komodo_client";
-import { ChevronLeft, Clapperboard, Layers2 } from "lucide-react";
+import { ChevronLeft, Layers2, Zap } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { Button } from "@ui/button";
 import { ExportButton } from "@components/export";
@@ -189,10 +189,7 @@ const StackServicePageInner = ({
       <div className="mt-8 flex flex-col gap-12">
         {/* Actions */}
         {canExecute && (
-          <Section
-            title="Actions (Service)"
-            icon={<Clapperboard className="w-4 h-4" />}
-          >
+          <Section title="Execute (Service)" icon={<Zap className="w-4 h-4" />}>
             <div className="flex gap-4 items-center flex-wrap">
               {Object.entries(Actions).map(([key, Action]) => (
                 <Action key={key} id={stack_id} service={service} />

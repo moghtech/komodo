@@ -78,10 +78,11 @@ pub struct SwarmStack {
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
 pub struct SwarmStackServiceListItem {
+  /// The *short* swarm service ID
   #[serde(rename = "ID")]
   pub id: Option<String>,
 
-  /// Swarm stack task name.
+  /// The service name.
   #[serde(rename = "Name")]
   pub name: Option<String>,
 
@@ -111,6 +112,7 @@ pub struct SwarmStackServiceListItem {
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
 pub struct SwarmStackTaskListItem {
+  /// The task ID
   #[serde(rename = "ID")]
   pub id: Option<String>,
 
@@ -126,9 +128,11 @@ pub struct SwarmStackTaskListItem {
   #[serde(rename = "Node")]
   pub node: Option<String>,
 
+  /// The task desired state. Matches 'CurrentState' when healthy.
   #[serde(rename = "DesiredState")]
   pub desired_state: Option<String>,
 
+  /// The task current state. Matches 'DesiredState' when healthy.
   #[serde(rename = "CurrentState")]
   pub current_state: Option<String>,
 

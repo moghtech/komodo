@@ -19,10 +19,10 @@ import { Button } from "@ui/button";
 import { DataTable } from "@ui/data-table";
 import {
   ChevronLeft,
-  Clapperboard,
   Info,
   Loader2,
   PlusCircle,
+  Zap,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ContainerLogs } from "./log";
@@ -169,7 +169,7 @@ const ContainerPageInner = ({
       <div className="mt-8 flex flex-col gap-12">
         {/* Actions */}
         {canExecute && (
-          <Section title="Actions" icon={<Clapperboard className="w-4 h-4" />}>
+          <Section title="Execute" icon={<Zap className="w-4 h-4" />}>
             <div className="flex gap-4 items-center flex-wrap">
               {Object.entries(Actions).map(([key, Action]) => (
                 <Action key={key} id={id} container={container_name} />

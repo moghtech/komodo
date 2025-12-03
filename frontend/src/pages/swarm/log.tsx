@@ -4,12 +4,12 @@ import { Log, LogSection } from "@components/log";
 import { ReactNode } from "react";
 import { Section } from "@components/layouts";
 
-/* Can be used for service or task logs */
 export const SwarmServiceLogs = ({
   id,
   service,
   titleOther,
   disabled,
+  extraParams,
 }: {
   /* Swarm id */
   id: string;
@@ -17,6 +17,7 @@ export const SwarmServiceLogs = ({
   service: string;
   titleOther?: ReactNode;
   disabled: boolean;
+  extraParams?: ReactNode;
 }) => {
   if (disabled) {
     return (
@@ -27,7 +28,12 @@ export const SwarmServiceLogs = ({
   }
 
   return (
-    <SwarmServiceLogsInner titleOther={titleOther} id={id} service={service} />
+    <SwarmServiceLogsInner
+      titleOther={titleOther}
+      id={id}
+      service={service}
+      extraParams={extraParams}
+    />
   );
 };
 
@@ -35,11 +41,13 @@ const SwarmServiceLogsInner = ({
   id,
   service,
   titleOther,
+  extraParams,
 }: {
   /// Swarm id
   id: string;
   service: string;
   titleOther?: ReactNode;
+  extraParams?: ReactNode;
 }) => {
   return (
     <LogSection
@@ -50,6 +58,7 @@ const SwarmServiceLogsInner = ({
       search_logs={(timestamps, terms, invert, poll) =>
         SearchLogs(id, service, terms, invert, timestamps, poll)
       }
+      extraParams={extraParams}
     />
   );
 };

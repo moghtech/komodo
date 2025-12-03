@@ -4324,8 +4324,9 @@ export declare enum SwarmState {
  * https://docs.docker.com/reference/cli/docker/stack/services/#format
  */
 export interface SwarmStackServiceListItem {
+    /** The *short* swarm service ID */
     ID?: string;
-    /** Swarm stack task name. */
+    /** The service name. */
     Name?: string;
     /** The service mode. */
     Mode?: string;
@@ -4343,6 +4344,7 @@ export interface SwarmStackServiceListItem {
  * https://docs.docker.com/reference/cli/docker/stack/ps/#format
  */
 export interface SwarmStackTaskListItem {
+    /** The task ID */
     ID?: string;
     /** Swarm stack task name. */
     Name?: string;
@@ -4350,7 +4352,9 @@ export interface SwarmStackTaskListItem {
     Image?: string;
     /** The node the task is running on */
     Node?: string;
+    /** The task desired state. Matches 'CurrentState' when healthy. */
     DesiredState?: string;
+    /** The task current state. Matches 'DesiredState' when healthy. */
     CurrentState?: string;
     /** An error message, if one exists */
     Error?: string;

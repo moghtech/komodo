@@ -4,14 +4,15 @@ import {
   ResourcePageHeader,
 } from "@components/resources/common";
 import {
+  useExecute,
   useLocalStorage,
   usePermissions,
   useRead,
   useSetTitle,
 } from "@lib/hooks";
 import { Button } from "@ui/button";
-import { ChevronLeft, Loader2 } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { ChevronLeft, Clapperboard, Loader2, Trash } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { SWARM_ICONS, useSwarm } from "@components/resources/swarm";
 import {
   stroke_color_class_by_intention,
@@ -28,6 +29,15 @@ import {
   SwarmStackServicesTable,
   SwarmStackTasksTable,
 } from "@components/resources/swarm/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@ui/select";
+import { SwarmServiceLogs } from "./log";
+import { ActionWithDialog } from "@components/util";
 
 export default function SwarmStackPage() {
   const { id, stack: __stack } = useParams() as {
@@ -40,7 +50,7 @@ export default function SwarmStackPage() {
     swarm: id,
     stack: _stack,
   });
-  const { canWrite } = usePermissions({
+  const { canWrite, canExecute } = usePermissions({
     type: "Swarm",
     id,
   });
@@ -106,6 +116,13 @@ export default function SwarmStackPage() {
 
       <div className="mt-8 flex flex-col gap-12">
         {/* Actions */}
+        {canExecute && (
+          <Section title="Actions" icon={<Clapperboard className="w-4 h-4" />}>
+            <div className="flex gap-4 items-center flex-wrap">
+              <RemoveStack id={id} stack={stack.Name} />
+            </div>
+          </Section>
+        )}
 
         {/* Tabs */}
         <div className="pt-4">
@@ -116,7 +133,28 @@ export default function SwarmStackPage() {
   );
 }
 
-type SwarmStackTabsView = "Services" | "Tasks" | "Inspect";
+/* ACTIONS */
+
+const RemoveStack = ({ id, stack }: { id: string; stack: string }) => {
+  const nav = useNavigate();
+  const { mutate: remove, isPending } = useExecute("RemoveSwarmStacks", {
+    onSuccess: () => nav("/swarms/" + id),
+  });
+
+  return (
+    <ActionWithDialog
+      name={stack}
+      title="Remove"
+      icon={<Trash className="h-4 w-4" />}
+      onClick={() => remove({ swarm: id, stacks: [stack], detach: false })}
+      disabled={isPending}
+      loading={isPending}
+    />
+  );
+};
+
+/* TABS */
+type SwarmStackTabsView = "Services" | "Tasks" | "Log" | "Inspect";
 
 const SwarmStackTabs = ({
   swarm,
@@ -130,12 +168,16 @@ const SwarmStackTabs = ({
     "Services"
   );
   const _search = useState("");
-  const { specificInspect } = usePermissions({
+  const { specificInspect, specificLogs } = usePermissions({
     type: "Swarm",
     id: swarm.id,
   });
 
-  const view = !specificInspect && _view === "Inspect" ? "Log" : _view;
+  const view =
+    (!specificLogs && _view === "Log") ||
+    (!specificInspect && _view === "Inspect")
+      ? "Services"
+      : _view;
 
   const tabs = useMemo(
     () => [
@@ -146,11 +188,15 @@ const SwarmStackTabs = ({
         value: "Tasks",
       },
       {
+        value: "Log",
+        disabled: !specificLogs,
+      },
+      {
         value: "Inspect",
         disabled: !specificInspect,
       },
     ],
-    [specificInspect]
+    [specificLogs, specificInspect]
   );
 
   const Selector = (
@@ -181,25 +227,85 @@ const SwarmStackTabs = ({
           _search={_search}
         />
       );
+    case "Log":
+      return (
+        <SwarmStackLogs
+          id={swarm.id}
+          stack={stack}
+          disabled={!specificLogs}
+          titleOther={Selector}
+        />
+      );
     case "Inspect":
-      return <SwarmStackInspect stack={stack} titleOther={Selector} />;
+      return (
+        <SwarmStackInspect
+          stack={stack}
+          titleOther={Selector}
+          disabled={!specificInspect}
+        />
+      );
   }
+};
+
+const SwarmStackLogs = ({
+  id,
+  stack,
+  disabled,
+  titleOther,
+}: {
+  id: string;
+  stack: Types.SwarmStack;
+  disabled: boolean;
+  titleOther: ReactNode;
+}) => {
+  const [service, setService] = useState(stack.Services[0].Name ?? "");
+  return (
+    <SwarmServiceLogs
+      id={id}
+      service={service}
+      titleOther={titleOther}
+      disabled={disabled}
+      extraParams={
+        <Select value={service} onValueChange={setService}>
+          <SelectTrigger className="w-fit">
+            <div className="flex items-center gap-2 pr-2">
+              <div className="text-xs text-muted-foreground">Service:</div>
+              <SelectValue placeholder="Select Service" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            {stack.Services.filter((service) => service.Name).map((service) => (
+              <SelectItem key={service.Name} value={service.Name!}>
+                {service.Name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      }
+    />
+  );
 };
 
 const SwarmStackInspect = ({
   stack,
   titleOther,
+  disabled,
 }: {
   stack: Types.SwarmStack;
   titleOther: ReactNode;
+  disabled: boolean;
 }) => {
   return (
     <Section titleOther={titleOther}>
-      <MonacoEditor
-        value={JSON.stringify(stack, null, 2)}
-        language="json"
-        readOnly
-      />
+      {disabled ? (
+        <div>User does not have Inspect permission on Swarm.</div>
+      ) : (
+        <MonacoEditor
+          value={JSON.stringify(stack, null, 2)}
+          language="json"
+          readOnly
+        />
+      )}
     </Section>
   );
 };
