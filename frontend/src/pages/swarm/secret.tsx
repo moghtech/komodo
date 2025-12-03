@@ -1,11 +1,13 @@
 import { ResourceLink } from "@components/resources/common";
 import { PageHeaderName } from "@components/util";
-import { useRead, useSetTitle } from "@lib/hooks";
+import { usePermissions, useRead, useSetTitle } from "@lib/hooks";
 import { Button } from "@ui/button";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { ChevronLeft, Loader2, Zap } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { MonacoEditor } from "@components/monaco";
 import { SWARM_ICONS, useSwarm } from "@components/resources/swarm";
+import { RemoveSwarmResource } from "./remove";
+import { Section } from "@components/layouts";
 
 export default function SwarmSecretPage() {
   const { id, secret: __secret } = useParams() as {
@@ -21,6 +23,10 @@ export default function SwarmSecretPage() {
   useSetTitle(
     `${swarm?.name} | Secret | ${secret?.Spec?.Name ?? secret?.ID ?? "Unknown"}`
   );
+  const { canExecute } = usePermissions({
+    type: "Swarm",
+    id,
+  });
   const nav = useNavigate();
 
   if (isPending) {
@@ -66,6 +72,19 @@ export default function SwarmSecretPage() {
           <ResourceLink type="Swarm" id={id} />
         </div>
       </div>
+
+      {canExecute && secret.ID && (
+        <Section title="Execute" icon={<Zap className="w-4 h-4" />}>
+          <div className="flex gap-4 items-center flex-wrap">
+            <RemoveSwarmResource
+              id={id}
+              type="Secret"
+              resource_id={secret.ID}
+              resource_name={secret.Spec?.Name}
+            />
+          </div>
+        </Section>
+      )}
 
       <MonacoEditor
         value={JSON.stringify(secret, null, 2)}

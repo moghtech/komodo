@@ -187,7 +187,19 @@ const on_update = (
         ["ListSwarms"],
         ["ListFullSwarms"],
         ["GetSwarmsSummary"],
-        ["GetSwarm"]
+        ["GetSwarm"],
+        ["ListSwarmNodes"],
+        ["InspectSwarmNode"],
+        ["ListSwarmStacks"],
+        ["InspectSwarmStack"],
+        ["ListSwarmServices"],
+        ["InspectSwarmService"],
+        ["ListSwarmTasks"],
+        ["InspectSwarmTask"],
+        ["ListSwarmConfigs"],
+        ["InspectSwarmConfig"],
+        ["ListSwarmSecrets"],
+        ["InspectSwarmSecret"]
       );
     }
 

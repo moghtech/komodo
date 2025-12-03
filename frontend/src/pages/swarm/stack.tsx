@@ -4,15 +4,14 @@ import {
   ResourcePageHeader,
 } from "@components/resources/common";
 import {
-  useExecute,
   useLocalStorage,
   usePermissions,
   useRead,
   useSetTitle,
 } from "@lib/hooks";
 import { Button } from "@ui/button";
-import { ChevronLeft, Clapperboard, Loader2, Trash } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { ChevronLeft, Loader2, Zap } from "lucide-react";
+import { Link, useParams } from "react-router-dom";
 import { SWARM_ICONS, useSwarm } from "@components/resources/swarm";
 import {
   stroke_color_class_by_intention,
@@ -37,7 +36,7 @@ import {
   SelectValue,
 } from "@ui/select";
 import { SwarmServiceLogs } from "./log";
-import { ActionWithDialog } from "@components/util";
+import { RemoveSwarmResource } from "./remove";
 
 export default function SwarmStackPage() {
   const { id, stack: __stack } = useParams() as {
@@ -117,9 +116,13 @@ export default function SwarmStackPage() {
       <div className="mt-8 flex flex-col gap-12">
         {/* Actions */}
         {canExecute && (
-          <Section title="Actions" icon={<Clapperboard className="w-4 h-4" />}>
+          <Section title="Execute" icon={<Zap className="w-4 h-4" />}>
             <div className="flex gap-4 items-center flex-wrap">
-              <RemoveStack id={id} stack={stack.Name} />
+              <RemoveSwarmResource
+                id={id}
+                type="Stack"
+                resource_id={stack.Name}
+              />
             </div>
           </Section>
         )}
@@ -132,26 +135,6 @@ export default function SwarmStackPage() {
     </div>
   );
 }
-
-/* ACTIONS */
-
-const RemoveStack = ({ id, stack }: { id: string; stack: string }) => {
-  const nav = useNavigate();
-  const { mutate: remove, isPending } = useExecute("RemoveSwarmStacks", {
-    onSuccess: () => nav("/swarms/" + id),
-  });
-
-  return (
-    <ActionWithDialog
-      name={stack}
-      title="Remove"
-      icon={<Trash className="h-4 w-4" />}
-      onClick={() => remove({ swarm: id, stacks: [stack], detach: false })}
-      disabled={isPending}
-      loading={isPending}
-    />
-  );
-};
 
 /* TABS */
 type SwarmStackTabsView = "Services" | "Tasks" | "Log" | "Inspect";

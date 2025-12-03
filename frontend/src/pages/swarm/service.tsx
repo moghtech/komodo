@@ -10,7 +10,7 @@ import {
   useSetTitle,
 } from "@lib/hooks";
 import { Button } from "@ui/button";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { ChevronLeft, Loader2, Zap } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { MonacoEditor } from "@components/monaco";
 import { SWARM_ICONS, useSwarm } from "@components/resources/swarm";
@@ -25,6 +25,7 @@ import { ReactNode, useMemo } from "react";
 import { MobileFriendlyTabsSelector } from "@ui/mobile-friendly-tabs";
 import { SwarmServiceLogs } from "./log";
 import { Section } from "@components/layouts";
+import { RemoveSwarmResource } from "./remove";
 
 export default function SwarmServicePage() {
   const { id, service: __service } = useParams() as {
@@ -48,7 +49,7 @@ export default function SwarmServicePage() {
       swarm: id,
     }).data?.filter((task) => service?.ID && task.ServiceID === service.ID) ??
     [];
-  const { canWrite } = usePermissions({
+  const { canWrite, canExecute } = usePermissions({
     type: "Swarm",
     id,
   });
@@ -116,6 +117,17 @@ export default function SwarmServicePage() {
 
       <div className="mt-8 flex flex-col gap-12">
         {/* Actions */}
+        {canExecute && service.Name && (
+          <Section title="Execute" icon={<Zap className="w-4 h-4" />}>
+            <div className="flex gap-4 items-center flex-wrap">
+              <RemoveSwarmResource
+                id={id}
+                type="Service"
+                resource_id={service.Name}
+              />
+            </div>
+          </Section>
+        )}
 
         {/* Tabs */}
         <div className="pt-4">
