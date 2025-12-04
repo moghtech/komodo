@@ -521,7 +521,7 @@ pub struct StackConfig {
   /// The extra arguments to pass to the deploy command.
   ///
   /// - For Compose stack, uses `docker compose up -d [EXTRA_ARGS]`.
-  /// - For Swarm mode. `docker stack deploy [OPTIONS] STACK`
+  /// - For Swarm mode. `docker stack deploy [EXTRA_ARGS] STACK_NAME`
   ///
   /// If empty, no extra arguments will be passed.
   #[serde(default, deserialize_with = "string_list_deserializer")]

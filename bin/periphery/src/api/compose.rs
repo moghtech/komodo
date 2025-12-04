@@ -1,4 +1,4 @@
-use std::{borrow::Cow, path::PathBuf};
+use std::{borrow::Cow, fmt::Write, path::PathBuf};
 
 use anyhow::{Context, anyhow};
 use command::{
@@ -12,8 +12,9 @@ use komodo_client::{
   entities::{
     FileContents, RepoExecutionResponse, all_logs_success,
     stack::{
-      ComposeFile, ComposeService, ComposeServiceDeploy,
-      StackRemoteFileContents, StackServiceNames,
+      AdditionalEnvFile, ComposeFile, ComposeService,
+      ComposeServiceDeploy, StackRemoteFileContents,
+      StackServiceNames,
     },
     to_path_compatible_name,
     update::Log,
@@ -29,12 +30,11 @@ use crate::{
   config::periphery_config,
   docker::compose::docker_compose,
   helpers::{format_extra_args, format_log_grep},
+  stack::{
+    maybe_login_registry, pull_or_clone_stack, validate_files,
+    write::write_stack,
+  },
 };
-
-mod helpers;
-mod write;
-
-use helpers::*;
 
 impl Resolve<crate::api::Args> for GetComposeLog {
   async fn resolve(
@@ -287,7 +287,7 @@ impl Resolve<crate::api::Args> for ComposePull {
       .push_logs(&mut res.logs);
     replacers.extend(interpolator.secret_replacers);
 
-    let (run_directory, env_file_path) = match write::stack(
+    let (run_directory, env_file_path) = match write_stack(
       &stack,
       repo.as_ref(),
       git_token,
@@ -396,12 +396,6 @@ impl Resolve<crate::api::Args> for ComposeUp {
       mut replacers,
     } = self;
 
-    if !stack.config.swarm_id.is_empty() {
-      return Err(anyhow!(
-        "This method should only be called for Compose Stacks. This is an internal error and should not happen."
-      ));
-    }
-
     let mut res = DeployStackResponse::default();
 
     let mut interpolator =
@@ -413,7 +407,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
       .push_logs(&mut res.logs);
     replacers.extend(interpolator.secret_replacers);
 
-    let (run_directory, env_file_path) = match write::stack(
+    let (run_directory, env_file_path) = match write_stack(
       &stack,
       repo.as_ref(),
       git_token,
@@ -451,7 +445,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
     if !stack.config.pre_deploy.is_none() {
       let pre_deploy_path =
         run_directory.join(&stack.config.pre_deploy.path);
-      let span = info_span!("RunPreDeploy");
+      let span = info_span!("ExecutePreDeploy");
       if let Some(log) = run_komodo_command_with_sanitization(
         "Pre Deploy",
         pre_deploy_path.as_path(),
@@ -562,7 +556,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
       let command = format!(
         "{docker_compose} -p {project_name} -f {file_args}{env_file_args} build{build_extra_args}{service_args}",
       );
-      let span = info_span!("RunComposeBuild");
+      let span = info_span!("ExecuteComposeBuild");
       let Some(log) = run_komodo_command_with_sanitization(
         "Compose Build",
         run_directory.as_path(),
@@ -606,11 +600,11 @@ impl Resolve<crate::api::Args> for ComposeUp {
       // Also check if project name changed, which also requires taking down.
       || last_project_name != project_name
     {
-      // Take down the existing containers.
+      // Take down the existing compose stack.
       // This one tries to use the previously deployed service name, to ensure the right stack is taken down.
-      helpers::compose_down(&last_project_name, &services, &mut res)
+      compose_down(&last_project_name, &services, &mut res)
         .await
-        .context("failed to destroy existing containers")?;
+        .context("Failed to take down existing compose stack")?;
     }
 
     // Run compose up
@@ -634,7 +628,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
         compose_cmd_wrapper.replace("[[COMPOSE_COMMAND]]", &command);
     }
 
-    let span = info_span!("RunComposeUp");
+    let span = info_span!("ExecuteComposeUp");
     let Some(log) = run_komodo_command_with_sanitization(
       "Compose Up",
       run_directory.as_path(),
@@ -654,7 +648,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
     if res.deployed && !stack.config.post_deploy.is_none() {
       let post_deploy_path =
         run_directory.join(&stack.config.post_deploy.path);
-      let span = info_span!("RunPostDeploy");
+      let span = info_span!("ExecutePostDeploy");
       if let Some(log) = run_komodo_command_with_sanitization(
         "Post Deploy",
         post_deploy_path.as_path(),
@@ -747,7 +741,7 @@ impl Resolve<crate::api::Args> for ComposeRun {
     replacers.extend(interpolator.secret_replacers);
 
     let mut res = ComposeRunResponse::default();
-    let (run_directory, env_file_path) = match write::stack(
+    let (run_directory, env_file_path) = match write_stack(
       &stack,
       repo.as_ref(),
       git_token,
@@ -863,4 +857,60 @@ impl Resolve<crate::api::Args> for ComposeRun {
 
     Ok(log)
   }
+}
+
+fn env_file_args(
+  env_file_path: Option<&str>,
+  additional_env_files: &[AdditionalEnvFile],
+) -> anyhow::Result<String> {
+  let mut res = String::new();
+
+  // Add additional env files (except komodo's own, which comes last)
+  for file in additional_env_files
+    .iter()
+    .filter(|f| env_file_path != Some(f.path.as_str()))
+  {
+    let path = &file.path;
+    write!(res, " --env-file {path}").with_context(|| {
+      format!("Failed to write --env-file arg for {path}")
+    })?;
+  }
+
+  // Add komodo's env file last for highest priority
+  if let Some(file) = env_file_path {
+    write!(res, " --env-file {file}").with_context(|| {
+      format!("Failed to write --env-file arg for {file}")
+    })?;
+  }
+
+  Ok(res)
+}
+
+#[instrument("ComposeDown", skip(res))]
+async fn compose_down(
+  project: &str,
+  services: &[String],
+  res: &mut DeployStackResponse,
+) -> anyhow::Result<()> {
+  let docker_compose = docker_compose();
+  let service_args = if services.is_empty() {
+    String::new()
+  } else {
+    format!(" {}", services.join(" "))
+  };
+  let log = run_komodo_standard_command(
+    "Compose Down",
+    None,
+    format!("{docker_compose} -p {project} down{service_args}"),
+  )
+  .await;
+  let success = log.success;
+  res.logs.push(log);
+  if !success {
+    return Err(anyhow!(
+      "Failed to bring down existing container(s) with docker compose down. Stopping run."
+    ));
+  }
+
+  Ok(())
 }

@@ -168,6 +168,9 @@ pub struct DeploymentConfig {
   /// Extra args which are interpolated into the
   /// `docker run` / `docker service create` command,
   /// and affect the container configuration.
+  /// 
+  /// - Container ref: https://docs.docker.com/reference/cli/docker/container/run/#options
+  /// - Swarm Service ref: https://docs.docker.com/reference/cli/docker/service/create/#options
   #[serde(default, deserialize_with = "string_list_deserializer")]
   #[partial_attr(serde(
     default,

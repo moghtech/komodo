@@ -1,29 +1,26 @@
-use std::{
-  fmt::Write,
-  path::{Path, PathBuf},
-};
+//! Module to handle common parts of deploying Compose and Swarm Stacks.
 
-use anyhow::{Context, anyhow};
-use command::run_komodo_standard_command;
+use std::path::{Path, PathBuf};
+
+use anyhow::{Context as _, anyhow};
 use formatting::format_serror;
 use komodo_client::entities::{
   FileContents, RepoExecutionArgs,
   repo::Repo,
-  stack::{AdditionalEnvFile, Stack, StackRemoteFileContents},
+  stack::{Stack, StackRemoteFileContents},
   to_path_compatible_name,
   update::Log,
 };
 use periphery_client::api::{
   DeployStackResponse, git::PullOrCloneRepo,
 };
-use resolver_api::Resolve;
-use tokio::fs;
+use resolver_api::Resolve as _;
 
 use crate::{
   api::Args, config::periphery_config, docker::docker_login,
 };
 
-use super::docker_compose;
+pub mod write;
 
 #[instrument(
   "MaybeLoginRegistry",
@@ -34,10 +31,11 @@ pub async fn maybe_login_registry(
   stack: &Stack,
   registry_token: Option<String>,
   logs: &mut Vec<Log>,
-) {
+) -> bool {
   if !stack.config.registry_provider.is_empty()
     && !stack.config.registry_account.is_empty()
-    && let Err(e) = docker_login(
+  {
+    if let Err(e) = docker_login(
       &stack.config.registry_provider,
       &stack.config.registry_account,
       registry_token.as_deref(),
@@ -50,68 +48,16 @@ pub async fn maybe_login_registry(
       )
     })
     .context("Failed to login to image registry")
-  {
-    logs.push(Log::error(
-      "Login to Registry",
-      format_serror(&e.into()),
-    ));
-  }
-}
-
-pub fn env_file_args(
-  env_file_path: Option<&str>,
-  additional_env_files: &[AdditionalEnvFile],
-) -> anyhow::Result<String> {
-  let mut res = String::new();
-
-  // Add additional env files (except komodo's own, which comes last)
-  for file in additional_env_files
-    .iter()
-    .filter(|f| env_file_path != Some(f.path.as_str()))
-  {
-    let path = &file.path;
-    write!(res, " --env-file {path}").with_context(|| {
-      format!("Failed to write --env-file arg for {path}")
-    })?;
-  }
-
-  // Add komodo's env file last for highest priority
-  if let Some(file) = env_file_path {
-    write!(res, " --env-file {file}").with_context(|| {
-      format!("Failed to write --env-file arg for {file}")
-    })?;
-  }
-
-  Ok(res)
-}
-
-#[instrument("ComposeDown", skip(res))]
-pub async fn compose_down(
-  project: &str,
-  services: &[String],
-  res: &mut DeployStackResponse,
-) -> anyhow::Result<()> {
-  let docker_compose = docker_compose();
-  let service_args = if services.is_empty() {
-    String::new()
+    {
+      logs.push(Log::error(
+        "Login to Registry",
+        format_serror(&e.into()),
+      ));
+    }
+    true
   } else {
-    format!(" {}", services.join(" "))
-  };
-  let log = run_komodo_standard_command(
-    "Compose Down",
-    None,
-    format!("{docker_compose} -p {project} down{service_args}"),
-  )
-  .await;
-  let success = log.success;
-  res.logs.push(log);
-  if !success {
-    return Err(anyhow!(
-      "Failed to bring down existing container(s) with docker compose down. Stopping run."
-    ));
+    false
   }
-
-  Ok(())
 }
 
 /// Only for git repo based Stacks.
@@ -231,9 +177,9 @@ pub async fn validate_files(
 
   for (full_path, file) in file_paths {
     let file_contents =
-      match fs::read_to_string(&full_path).await.with_context(|| {
-        format!("Failed to read file contents at {full_path:?}")
-      }) {
+      match tokio::fs::read_to_string(&full_path).await.with_context(
+        || format!("Failed to read file contents at {full_path:?}"),
+      ) {
         Ok(res) => res,
         Err(e) => {
           let error = format_serror(&e.into());

@@ -15,6 +15,7 @@ mod config;
 mod connection;
 mod docker;
 mod helpers;
+mod stack;
 mod state;
 mod stats;
 mod terminal;

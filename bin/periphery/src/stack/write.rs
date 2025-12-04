@@ -61,7 +61,7 @@ impl WriteStackRes for &mut ComposeRunResponse {
     repo = repo.as_ref().map(|repo| &repo.name),
   )
 )]
-pub async fn stack<'a>(
+pub async fn write_stack<'a>(
   stack: &'a Stack,
   repo: Option<&Repo>,
   git_token: Option<String>,
