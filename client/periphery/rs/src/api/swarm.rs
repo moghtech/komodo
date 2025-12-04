@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use komodo_client::entities::{
   SearchCombinator,
+  deployment::Deployment,
   docker::{
     SwarmLists,
     config::SwarmConfig,
@@ -12,10 +13,14 @@ use komodo_client::entities::{
     swarm::SwarmInspectInfo,
     task::SwarmTask,
   },
+  repo::Repo,
+  stack::Stack,
   update::Log,
 };
 use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
+
+use crate::api::DeployStackResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(PollSwarmStatusResponse)]
@@ -79,6 +84,26 @@ pub struct UpdateSwarmNode {
 pub struct InspectSwarmStack {
   /// The swarm stack name
   pub stack: String,
+}
+
+/// `docker stack deploy [OPTIONS] STACK`
+///
+/// https://docs.docker.com/reference/cli/docker/stack/deploy/
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
+#[response(DeployStackResponse)]
+#[error(anyhow::Error)]
+pub struct DeploySwarmStack {
+  /// The stack to deploy
+  pub stack: Stack,
+  /// The linked repo, if it exists.
+  pub repo: Option<Repo>,
+  /// If provided, use it to login in. Otherwise check periphery local registries.
+  pub git_token: Option<String>,
+  /// If provided, use it to login in. Otherwise check periphery local git providers.
+  pub registry_token: Option<String>,
+  /// Propogate any secret replacers from core interpolation.
+  #[serde(default)]
+  pub replacers: Vec<(String, String)>,
 }
 
 /// `docker stack rm [OPTIONS] STACK [STACK...]`
@@ -168,6 +193,21 @@ pub struct GetSwarmServiceLogSearch {
   /// Enable `--details`
   #[serde(default)]
   pub details: bool,
+}
+
+/// `docker service create [OPTIONS] IMAGE [COMMAND] [ARG...]`
+///
+/// https://docs.docker.com/reference/cli/docker/service/create/
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[response(Log)]
+#[error(anyhow::Error)]
+pub struct CreateSwarmService {
+  pub deployment: Deployment,
+  /// Override registry token with one sent from core.
+  pub registry_token: Option<String>,
+  /// Propogate any secret replacers from core interpolation.
+  #[serde(default)]
+  pub replacers: Vec<(String, String)>,
 }
 
 /// `docker service rm SERVICE [SERVICE...]`

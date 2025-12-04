@@ -25,10 +25,10 @@ use crate::{
 
 //
 
-impl Resolve<super::Args> for ListTerminals {
+impl Resolve<crate::api::Args> for ListTerminals {
   async fn resolve(
     self,
-    _: &super::Args,
+    _: &crate::api::Args,
   ) -> anyhow::Result<Vec<Terminal>> {
     clean_up_terminals().await;
     Ok(list_terminals(self.target.as_ref()).await)
@@ -37,7 +37,7 @@ impl Resolve<super::Args> for ListTerminals {
 
 //
 
-impl Resolve<super::Args> for CreateServerTerminal {
+impl Resolve<crate::api::Args> for CreateServerTerminal {
   #[instrument(
     "CreateServerTerminal",
     skip_all,
@@ -51,7 +51,7 @@ impl Resolve<super::Args> for CreateServerTerminal {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<NoData> {
     if periphery_config().disable_terminals {
       return Err(anyhow!(
@@ -71,7 +71,7 @@ impl Resolve<super::Args> for CreateServerTerminal {
 
 //
 
-impl Resolve<super::Args> for CreateContainerExecTerminal {
+impl Resolve<crate::api::Args> for CreateContainerExecTerminal {
   #[instrument(
     "CreateContainerExecTerminal",
     skip_all,
@@ -86,7 +86,7 @@ impl Resolve<super::Args> for CreateContainerExecTerminal {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<NoData> {
     if periphery_config().disable_container_terminals {
       return Err(anyhow!(
@@ -119,7 +119,7 @@ impl Resolve<super::Args> for CreateContainerExecTerminal {
 
 //
 
-impl Resolve<super::Args> for CreateContainerAttachTerminal {
+impl Resolve<crate::api::Args> for CreateContainerAttachTerminal {
   #[instrument(
     "CreateContainerAttachTerminal",
     skip_all,
@@ -133,7 +133,7 @@ impl Resolve<super::Args> for CreateContainerAttachTerminal {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<NoData> {
     if periphery_config().disable_container_terminals {
       return Err(anyhow!(
@@ -164,7 +164,7 @@ impl Resolve<super::Args> for CreateContainerAttachTerminal {
 
 //
 
-impl Resolve<super::Args> for DeleteTerminal {
+impl Resolve<crate::api::Args> for DeleteTerminal {
   #[instrument(
     "DeleteTerminal",
     skip_all,
@@ -176,7 +176,7 @@ impl Resolve<super::Args> for DeleteTerminal {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<NoData> {
     delete_terminal(&self.target, &self.terminal).await;
     Ok(NoData {})
@@ -185,7 +185,7 @@ impl Resolve<super::Args> for DeleteTerminal {
 
 //
 
-impl Resolve<super::Args> for DeleteAllTerminals {
+impl Resolve<crate::api::Args> for DeleteAllTerminals {
   #[instrument(
     "DeleteAllTerminals",
     skip_all,
@@ -196,7 +196,7 @@ impl Resolve<super::Args> for DeleteAllTerminals {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<NoData> {
     delete_all_terminals().await;
     Ok(NoData {})
@@ -205,7 +205,7 @@ impl Resolve<super::Args> for DeleteAllTerminals {
 
 //
 
-impl Resolve<super::Args> for ConnectTerminal {
+impl Resolve<crate::api::Args> for ConnectTerminal {
   #[instrument(
     "ConnectTerminal",
     skip_all,
@@ -215,7 +215,10 @@ impl Resolve<super::Args> for ConnectTerminal {
       terminal = self.terminal,
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Uuid> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Uuid> {
     let connection =
       core_connections().get(&args.core).await.with_context(
         || format!("Failed to find channel for {}", args.core),
@@ -234,7 +237,7 @@ impl Resolve<super::Args> for ConnectTerminal {
 
 //
 
-impl Resolve<super::Args> for DisconnectTerminal {
+impl Resolve<crate::api::Args> for DisconnectTerminal {
   #[instrument(
     "DisconnectTerminal",
     skip_all,
@@ -246,7 +249,7 @@ impl Resolve<super::Args> for DisconnectTerminal {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<NoData> {
     terminal_channels().remove(&self.channel).await;
     Ok(NoData {})
@@ -255,7 +258,7 @@ impl Resolve<super::Args> for DisconnectTerminal {
 
 //
 
-impl Resolve<super::Args> for ExecuteTerminal {
+impl Resolve<crate::api::Args> for ExecuteTerminal {
   #[instrument(
     "ExecuteTerminal",
     skip_all,
@@ -266,7 +269,10 @@ impl Resolve<super::Args> for ExecuteTerminal {
       command = self.command,
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Uuid> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Uuid> {
     let channel =
       core_connections().get(&args.core).await.with_context(
         || format!("Failed to find channel for {}", args.core),

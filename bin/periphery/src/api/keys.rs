@@ -12,7 +12,7 @@ use crate::{
 
 //
 
-impl Resolve<super::Args> for RotatePrivateKey {
+impl Resolve<crate::api::Args> for RotatePrivateKey {
   #[instrument(
     "RotatePrivateKey",
     skip_all,
@@ -23,7 +23,7 @@ impl Resolve<super::Args> for RotatePrivateKey {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<RotatePrivateKeyResponse> {
     let public_key = periphery_keys().rotate().await?.into_inner();
     info!("New Public Key: {public_key}");
@@ -33,7 +33,7 @@ impl Resolve<super::Args> for RotatePrivateKey {
 
 //
 
-impl Resolve<super::Args> for RotateCorePublicKey {
+impl Resolve<crate::api::Args> for RotateCorePublicKey {
   #[instrument(
     "RotateCorePublicKey",
     skip_all,
@@ -45,7 +45,7 @@ impl Resolve<super::Args> for RotateCorePublicKey {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<NoData> {
     let config = periphery_config();
 

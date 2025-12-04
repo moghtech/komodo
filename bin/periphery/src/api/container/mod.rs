@@ -19,16 +19,18 @@ use crate::{
   state::docker_client,
 };
 
+mod run;
+
 // ======
 //  READ
 // ======
 
 //
 
-impl Resolve<super::Args> for InspectContainer {
+impl Resolve<crate::api::Args> for InspectContainer {
   async fn resolve(
     self,
-    _: &super::Args,
+    _: &crate::api::Args,
   ) -> anyhow::Result<Container> {
     let client = docker_client().load();
     let client = client
@@ -41,8 +43,11 @@ impl Resolve<super::Args> for InspectContainer {
 
 //
 
-impl Resolve<super::Args> for GetContainerLog {
-  async fn resolve(self, _: &super::Args) -> anyhow::Result<Log> {
+impl Resolve<crate::api::Args> for GetContainerLog {
+  async fn resolve(
+    self,
+    _: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let GetContainerLog {
       name,
       tail,
@@ -64,8 +69,11 @@ impl Resolve<super::Args> for GetContainerLog {
 
 //
 
-impl Resolve<super::Args> for GetContainerLogSearch {
-  async fn resolve(self, _: &super::Args) -> anyhow::Result<Log> {
+impl Resolve<crate::api::Args> for GetContainerLogSearch {
+  async fn resolve(
+    self,
+    _: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let GetContainerLogSearch {
       name,
       terms,
@@ -95,10 +103,10 @@ impl Resolve<super::Args> for GetContainerLogSearch {
 
 //
 
-impl Resolve<super::Args> for GetContainerStats {
+impl Resolve<crate::api::Args> for GetContainerStats {
   async fn resolve(
     self,
-    _: &super::Args,
+    _: &crate::api::Args,
   ) -> anyhow::Result<ContainerStats> {
     let mut stats = get_container_stats(Some(self.name)).await?;
     let stats =
@@ -109,10 +117,10 @@ impl Resolve<super::Args> for GetContainerStats {
 
 //
 
-impl Resolve<super::Args> for GetFullContainerStats {
+impl Resolve<crate::api::Args> for GetFullContainerStats {
   async fn resolve(
     self,
-    _: &super::Args,
+    _: &crate::api::Args,
   ) -> anyhow::Result<FullContainerStats> {
     let client = docker_client().load();
     let client = client
@@ -125,10 +133,10 @@ impl Resolve<super::Args> for GetFullContainerStats {
 
 //
 
-impl Resolve<super::Args> for GetContainerStatsList {
+impl Resolve<crate::api::Args> for GetContainerStatsList {
   async fn resolve(
     self,
-    _: &super::Args,
+    _: &crate::api::Args,
   ) -> anyhow::Result<Vec<ContainerStats>> {
     get_container_stats(None).await
   }
@@ -138,7 +146,7 @@ impl Resolve<super::Args> for GetContainerStatsList {
 //  ACTIONS
 // =========
 
-impl Resolve<super::Args> for StartContainer {
+impl Resolve<crate::api::Args> for StartContainer {
   #[instrument(
     "StartContainer",
     skip_all,
@@ -148,7 +156,10 @@ impl Resolve<super::Args> for StartContainer {
       container = self.name,
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Log> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     Ok(
       run_komodo_standard_command(
         "Docker Start",
@@ -162,7 +173,7 @@ impl Resolve<super::Args> for StartContainer {
 
 //
 
-impl Resolve<super::Args> for RestartContainer {
+impl Resolve<crate::api::Args> for RestartContainer {
   #[instrument(
     "RestartContainer",
     skip_all,
@@ -172,7 +183,10 @@ impl Resolve<super::Args> for RestartContainer {
       container = self.name,
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Log> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     Ok(
       run_komodo_standard_command(
         "Docker Restart",
@@ -186,7 +200,7 @@ impl Resolve<super::Args> for RestartContainer {
 
 //
 
-impl Resolve<super::Args> for PauseContainer {
+impl Resolve<crate::api::Args> for PauseContainer {
   #[instrument(
     "PauseContainer",
     skip_all,
@@ -196,7 +210,10 @@ impl Resolve<super::Args> for PauseContainer {
       container = self.name,
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Log> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     Ok(
       run_komodo_standard_command(
         "Docker Pause",
@@ -208,7 +225,7 @@ impl Resolve<super::Args> for PauseContainer {
   }
 }
 
-impl Resolve<super::Args> for UnpauseContainer {
+impl Resolve<crate::api::Args> for UnpauseContainer {
   #[instrument(
     "UnpauseContainer",
     skip_all,
@@ -218,7 +235,10 @@ impl Resolve<super::Args> for UnpauseContainer {
       container = self.name,
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Log> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     Ok(
       run_komodo_standard_command(
         "Docker Unpause",
@@ -232,7 +252,7 @@ impl Resolve<super::Args> for UnpauseContainer {
 
 //
 
-impl Resolve<super::Args> for StopContainer {
+impl Resolve<crate::api::Args> for StopContainer {
   #[instrument(
     "StopContainer",
     skip_all,
@@ -242,7 +262,10 @@ impl Resolve<super::Args> for StopContainer {
       container = self.name,
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Log> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let StopContainer { name, signal, time } = self;
     let command = stop_container_command(&name, signal, time);
     let log =
@@ -269,7 +292,7 @@ impl Resolve<super::Args> for StopContainer {
 
 //
 
-impl Resolve<super::Args> for RemoveContainer {
+impl Resolve<crate::api::Args> for RemoveContainer {
   #[instrument(
     "RemoveContainer",
     skip_all,
@@ -279,7 +302,10 @@ impl Resolve<super::Args> for RemoveContainer {
       container = self.name,
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Log> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let RemoveContainer { name, signal, time } = self;
     let stop_command = stop_container_command(&name, signal, time);
     let command =
@@ -317,7 +343,7 @@ impl Resolve<super::Args> for RemoveContainer {
 
 //
 
-impl Resolve<super::Args> for RenameContainer {
+impl Resolve<crate::api::Args> for RenameContainer {
   #[instrument(
     "RenameContainer",
     skip_all,
@@ -328,7 +354,10 @@ impl Resolve<super::Args> for RenameContainer {
       new = self.new_name,
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Log> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let RenameContainer {
       curr_name,
       new_name,
@@ -343,7 +372,7 @@ impl Resolve<super::Args> for RenameContainer {
 
 //
 
-impl Resolve<super::Args> for PruneContainers {
+impl Resolve<crate::api::Args> for PruneContainers {
   #[instrument(
     "PruneContainers",
     skip_all,
@@ -352,7 +381,10 @@ impl Resolve<super::Args> for PruneContainers {
       core = args.core
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Log> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let command = String::from("docker container prune -f");
     Ok(
       run_komodo_standard_command("Prune Containers", None, command)
@@ -363,7 +395,7 @@ impl Resolve<super::Args> for PruneContainers {
 
 //
 
-impl Resolve<super::Args> for StartAllContainers {
+impl Resolve<crate::api::Args> for StartAllContainers {
   #[instrument(
     "StartAllContainers",
     skip_all,
@@ -374,7 +406,7 @@ impl Resolve<super::Args> for StartAllContainers {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<Vec<Log>> {
     let client = docker_client().load();
     let client = client
@@ -405,7 +437,7 @@ impl Resolve<super::Args> for StartAllContainers {
 
 //
 
-impl Resolve<super::Args> for RestartAllContainers {
+impl Resolve<crate::api::Args> for RestartAllContainers {
   #[instrument(
     "RestartAllContainers",
     skip_all,
@@ -416,7 +448,7 @@ impl Resolve<super::Args> for RestartAllContainers {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<Vec<Log>> {
     let client = docker_client().load();
     let client = client
@@ -447,7 +479,7 @@ impl Resolve<super::Args> for RestartAllContainers {
 
 //
 
-impl Resolve<super::Args> for PauseAllContainers {
+impl Resolve<crate::api::Args> for PauseAllContainers {
   #[instrument(
     "PauseAllContainers",
     skip_all,
@@ -458,7 +490,7 @@ impl Resolve<super::Args> for PauseAllContainers {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<Vec<Log>> {
     let client = docker_client().load();
     let client = client
@@ -489,7 +521,7 @@ impl Resolve<super::Args> for PauseAllContainers {
 
 //
 
-impl Resolve<super::Args> for UnpauseAllContainers {
+impl Resolve<crate::api::Args> for UnpauseAllContainers {
   #[instrument(
     "UnpauseAllContainers",
     skip_all,
@@ -500,7 +532,7 @@ impl Resolve<super::Args> for UnpauseAllContainers {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<Vec<Log>> {
     let client = docker_client().load();
     let client = client
@@ -531,7 +563,7 @@ impl Resolve<super::Args> for UnpauseAllContainers {
 
 //
 
-impl Resolve<super::Args> for StopAllContainers {
+impl Resolve<crate::api::Args> for StopAllContainers {
   #[instrument(
     "StopAllContainers",
     skip_all,
@@ -542,7 +574,7 @@ impl Resolve<super::Args> for StopAllContainers {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<Vec<Log>> {
     let client = docker_client().load();
     let client = client

@@ -20,7 +20,7 @@ use komodo_client::{
     user::User,
   },
 };
-use periphery_client::api::compose::*;
+use periphery_client::api::{DeployStackResponse, compose::*};
 use resolver_api::Resolve;
 use uuid::Uuid;
 
@@ -165,14 +165,14 @@ impl Resolve<ExecuteArgs> for DeployStack {
       Default::default()
     };
 
-    let ComposeUpResponse {
+    let DeployStackResponse {
       logs,
       deployed,
       services,
       file_contents,
       missing_files,
       remote_errors,
-      compose_config,
+      merged_config,
       commit_hash,
       commit_message,
     } = periphery_client(&server)
@@ -219,7 +219,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
               })
               .collect(),
           ),
-          compose_config,
+          merged_config,
           commit_hash.clone(),
           commit_message.clone(),
         )

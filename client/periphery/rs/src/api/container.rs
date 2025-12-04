@@ -87,10 +87,12 @@ pub struct GetFullContainerStats {
 // ACTIONS
 // =======
 
+/// Executes `docker run` to create a container
+/// using info given by the Deployment
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[response(Log)]
 #[error(anyhow::Error)]
-pub struct Deploy {
+pub struct RunContainer {
   pub deployment: Deployment,
   pub stop_signal: Option<TerminationSignal>,
   pub stop_time: Option<i32>,

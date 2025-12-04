@@ -1,6 +1,6 @@
 use std::{
-  net::IpAddr, path::PathBuf, str::FromStr as _, sync::OnceLock,
-  time::Duration,
+  fmt::Write, net::IpAddr, path::PathBuf, str::FromStr as _,
+  sync::OnceLock, time::Duration,
 };
 
 use anyhow::Context;
@@ -14,6 +14,7 @@ use komodo_client::{
   entities::{
     EnvironmentVar, RepoExecutionArgs, RepoExecutionResponse,
     SearchCombinator, SystemCommand, all_logs_success,
+    deployment::Conversion,
   },
   parsers::QUOTE_PATTERN,
 };
@@ -34,6 +35,17 @@ pub fn format_extra_args(extra_args: &[String]) -> String {
   }
 }
 
+pub fn push_extra_args(
+  command: &mut String,
+  extra_args: &[String],
+) -> anyhow::Result<()> {
+  for arg in extra_args {
+    write!(command, " {arg}")
+      .context("Failed to write extra args to command")?
+  }
+  Ok(())
+}
+
 pub fn format_labels(labels: &[EnvironmentVar]) -> String {
   labels
     .iter()
@@ -49,6 +61,56 @@ pub fn format_labels(labels: &[EnvironmentVar]) -> String {
     })
     .collect::<Vec<_>>()
     .join("")
+}
+
+pub fn push_labels(
+  command: &mut String,
+  labels: &[EnvironmentVar],
+) -> anyhow::Result<()> {
+  for label in labels {
+    if label.value.starts_with(QUOTE_PATTERN)
+      && label.value.ends_with(QUOTE_PATTERN)
+    {
+      write!(command, " --label {}={}", label.variable, label.value)
+    } else {
+      write!(
+        command,
+        " --label {}=\"{}\"",
+        label.variable, label.value
+      )
+    }
+    .context("Failed to write labels to command")?;
+  }
+  Ok(())
+}
+
+pub fn push_conversions(
+  command: &mut String,
+  conversions: &[Conversion],
+  flag: &str,
+) -> anyhow::Result<()> {
+  for Conversion { local, container } in conversions {
+    write!(command, " {flag} {local}:{container}")
+      .context("Failed to format conversions")?;
+  }
+  Ok(())
+}
+
+pub fn push_environment(
+  command: &mut String,
+  environment: &[EnvironmentVar],
+) -> anyhow::Result<()> {
+  for EnvironmentVar { variable, value } in environment {
+    if value.starts_with(QUOTE_PATTERN)
+      && value.ends_with(QUOTE_PATTERN)
+    {
+      write!(command, " --env {variable}={value}")
+    } else {
+      write!(command, " --env {variable}=\"{value}\"")
+    }
+    .context("Failed to format environment")?;
+  }
+  Ok(())
 }
 
 pub fn format_log_grep(

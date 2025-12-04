@@ -1,5 +1,7 @@
 use komodo_client::entities::{
+  FileContents,
   config::{DockerRegistry, GitProvider},
+  stack::{StackRemoteFileContents, StackServiceNames},
   update::Log,
 };
 use resolver_api::Resolve;
@@ -83,3 +85,27 @@ pub struct ListSecrets {}
 #[response(Log)]
 #[error(anyhow::Error)]
 pub struct PruneSystem {}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct DeployStackResponse {
+  /// If any of the required files are missing, they will be here.
+  pub missing_files: Vec<String>,
+  /// The logs produced by the deploy
+  pub logs: Vec<Log>,
+  /// Whether stack was successfully deployed
+  pub deployed: bool,
+  /// The stack services.
+  ///
+  /// Note. The "image" is after interpolation.
+  pub services: Vec<StackServiceNames>,
+  /// The deploy compose file contents if they could be acquired, or empty vec.
+  pub file_contents: Vec<StackRemoteFileContents>,
+  /// The error in getting remote file contents at the path, or null
+  pub remote_errors: Vec<FileContents>,
+  /// The output of `docker compose config` / `docker stack config` at deploy time
+  pub merged_config: Option<String>,
+  /// If its a repo based stack, will include the latest commit hash
+  pub commit_hash: Option<String>,
+  /// If its a repo based stack, will include the latest commit message
+  pub commit_message: Option<String>,
+}

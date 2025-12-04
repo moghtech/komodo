@@ -35,10 +35,10 @@ use crate::{
 mod helpers;
 use helpers::*;
 
-impl Resolve<super::Args> for GetDockerfileContentsOnHost {
+impl Resolve<crate::api::Args> for GetDockerfileContentsOnHost {
   async fn resolve(
     self,
-    _: &super::Args,
+    _: &crate::api::Args,
   ) -> anyhow::Result<GetDockerfileContentsOnHostResponse> {
     let GetDockerfileContentsOnHost {
       name,
@@ -75,7 +75,7 @@ impl Resolve<super::Args> for GetDockerfileContentsOnHost {
   }
 }
 
-impl Resolve<super::Args> for WriteDockerfileContentsToHost {
+impl Resolve<crate::api::Args> for WriteDockerfileContentsToHost {
   #[instrument(
     "WriteDockerfileContentsToHost",
     skip_all,
@@ -87,7 +87,10 @@ impl Resolve<super::Args> for WriteDockerfileContentsToHost {
       dockerfile_path = &self.dockerfile_path,
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Log> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let WriteDockerfileContentsToHost {
       name,
       build_path,
@@ -123,7 +126,7 @@ impl Resolve<super::Args> for WriteDockerfileContentsToHost {
   }
 }
 
-impl Resolve<super::Args> for build::Build {
+impl Resolve<crate::api::Args> for build::Build {
   #[instrument(
     "Build",
     skip_all,
@@ -136,7 +139,7 @@ impl Resolve<super::Args> for build::Build {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<Vec<Log>> {
     let build::Build {
       mut build,
@@ -339,7 +342,7 @@ impl Resolve<super::Args> for build::Build {
 
 //
 
-impl Resolve<super::Args> for PruneBuilders {
+impl Resolve<crate::api::Args> for PruneBuilders {
   #[instrument(
     "PruneBuilders",
     skip_all,
@@ -348,7 +351,10 @@ impl Resolve<super::Args> for PruneBuilders {
       core = args.core,
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Log> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let command = String::from("docker builder prune -a -f");
     Ok(
       run_komodo_standard_command("Prune Builders", None, command)
@@ -359,7 +365,7 @@ impl Resolve<super::Args> for PruneBuilders {
 
 //
 
-impl Resolve<super::Args> for PruneBuildx {
+impl Resolve<crate::api::Args> for PruneBuildx {
   #[instrument(
     "PruneBuildx",
     skip_all,
@@ -368,7 +374,10 @@ impl Resolve<super::Args> for PruneBuildx {
       core = args.core,
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Log> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let command = String::from("docker buildx prune -a -f");
     Ok(
       run_komodo_standard_command("Prune Buildx", None, command)

@@ -278,7 +278,19 @@ pub type _PartialStackConfig = PartialStackConfig;
 #[partial_derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct StackConfig {
-  /// The server to deploy the stack on.
+  /// The Swarm to deploy the Stack on, setting the Stack into Swarm mode.
+  ///
+  /// Note. If both swarm_id and server_id are set,
+  /// swarm_id overrides server_id and the Stack will be in Swarm mode.
+  #[serde(default, alias = "swarm")]
+  #[partial_attr(serde(alias = "swarm"))]
+  #[builder(default)]
+  pub swarm_id: String,
+
+  /// The Server to deploy the Stack on, setting the Stack into Compose mode.
+  ///
+  /// Note. If both swarm_id and server_id are set,
+  /// swarm_id overrides server_id and the Stack will be in Swarm mode.
   #[serde(default, alias = "server")]
   #[partial_attr(serde(alias = "server"))]
   #[builder(default)]
@@ -295,9 +307,9 @@ pub struct StackConfig {
 
   /// Optionally specify a custom project name for the stack.
   /// If this is empty string, it will default to the stack name.
-  /// Used with `docker compose -p {project_name}`.
+  /// Used with `docker compose -p {project_name}` / `docker stack deploy {project_name}`.
   ///
-  /// Note. Can be used to import pre-existing stacks.
+  /// Note. Can be used to import pre-existing stacks with names that do not match Stack name.
   #[serde(default)]
   #[builder(default)]
   pub project_name: String,
@@ -305,6 +317,8 @@ pub struct StackConfig {
   /// Whether to automatically `compose pull` before redeploying stack.
   /// Ensured latest images are deployed.
   /// Will fail if the compose file specifies a locally build image.
+  ///
+  /// Note. Not used in Swarm mode.
   #[serde(default = "default_auto_pull")]
   #[builder(default = "default_auto_pull()")]
   #[partial_default(default_auto_pull())]
@@ -312,6 +326,8 @@ pub struct StackConfig {
 
   /// Whether to `docker compose build` before `compose down` / `compose up`.
   /// Combine with build_extra_args for custom behaviors.
+  ///
+  /// Note. Not used in Swarm mode.
   #[serde(default)]
   #[builder(default)]
   pub run_build: bool,
@@ -447,6 +463,8 @@ pub struct StackConfig {
   /// The name of the written environment file before `docker compose up`.
   /// Relative to the run directory root.
   /// Default: .env
+  ///
+  /// Note. Not used in Swarm mode.
   #[serde(default = "default_env_file_path")]
   #[builder(default = "default_env_file_path()")]
   #[partial_default(default_env_file_path())]
@@ -500,7 +518,11 @@ pub struct StackConfig {
   #[builder(default)]
   pub post_deploy: SystemCommand,
 
-  /// The extra arguments to pass after `docker compose up -d`.
+  /// The extra arguments to pass to the deploy command.
+  ///
+  /// - For Compose stack, uses `docker compose up -d [EXTRA_ARGS]`.
+  /// - For Swarm mode. `docker stack deploy [OPTIONS] STACK`
+  ///
   /// If empty, no extra arguments will be passed.
   #[serde(default, deserialize_with = "string_list_deserializer")]
   #[partial_attr(serde(
@@ -513,6 +535,8 @@ pub struct StackConfig {
   /// The extra arguments to pass after `docker compose build`.
   /// If empty, no extra build arguments will be passed.
   /// Only used if `run_build: true`
+  ///
+  /// Note. Not used in Swarm mode.
   #[serde(default, deserialize_with = "string_list_deserializer")]
   #[partial_attr(serde(
     default,
@@ -560,6 +584,8 @@ pub struct StackConfig {
   /// which is given relative to the run directory.
   ///
   /// If it is empty, no file will be written.
+  ///
+  /// Note. Not used in Swarm mode.
   #[serde(default, deserialize_with = "env_vars_deserializer")]
   #[partial_attr(serde(
     default,
@@ -611,6 +637,7 @@ fn default_send_alerts() -> bool {
 impl Default for StackConfig {
   fn default() -> Self {
     Self {
+      swarm_id: Default::default(),
       server_id: Default::default(),
       project_name: Default::default(),
       run_directory: Default::default(),
@@ -688,6 +715,9 @@ pub struct StackServiceNames {
   ///
   /// This stores only 1. and 2., ie stacko-mongo.
   /// Containers will be matched via regex like `^container_name-?[0-9]*$``
+  ///
+  /// Note. Setting container_name is not supported by Swarm,
+  /// so will always be 1. and 2. in Swarm mode.
   pub container_name: String,
   /// The services image.
   #[serde(default)]

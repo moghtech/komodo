@@ -1,34 +1,36 @@
+use std::fmt::Write;
+
 use anyhow::Context;
 use command::{
   KomodoCommandMode, run_komodo_command_with_sanitization,
 };
 use formatting::format_serror;
 use interpolate::Interpolator;
-use komodo_client::{
-  entities::{
-    EnvironmentVar,
-    deployment::{
-      Conversion, Deployment, DeploymentConfig, DeploymentImage,
-      RestartMode, conversions_from_str, extract_registry_domain,
-    },
-    environment_vars_from_str,
-    update::Log,
+use komodo_client::entities::{
+  deployment::{
+    Deployment, DeploymentConfig, DeploymentImage, RestartMode,
+    conversions_from_str, extract_registry_domain,
   },
-  parsers::QUOTE_PATTERN,
+  environment_vars_from_str,
+  update::Log,
 };
-use periphery_client::api::container::{Deploy, RemoveContainer};
+use periphery_client::api::container::{
+  RemoveContainer, RunContainer,
+};
 use resolver_api::Resolve;
 use tracing::Instrument;
 
 use crate::{
   config::periphery_config,
   docker::{docker_login, pull_image},
-  helpers::{format_extra_args, format_labels},
+  helpers::{
+    push_conversions, push_environment, push_extra_args, push_labels,
+  },
 };
 
-impl Resolve<super::Args> for Deploy {
+impl Resolve<crate::api::Args> for RunContainer {
   #[instrument(
-    "Deploy",
+    "DeployContainer",
     skip_all,
     fields(
       id = args.id.to_string(),
@@ -38,8 +40,11 @@ impl Resolve<super::Args> for Deploy {
       stop_time = self.stop_time,
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Log> {
-    let Deploy {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
+    let RunContainer {
       mut deployment,
       stop_signal,
       stop_time,
@@ -57,15 +62,15 @@ impl Resolve<super::Args> for Deploy {
     {
       if image.is_empty() {
         return Ok(Log::error(
-          "get image",
-          String::from("deployment does not have image attached"),
+          "Get Image",
+          String::from("Deployment does not have image attached"),
         ));
       }
       image
     } else {
       return Ok(Log::error(
-        "get image",
-        String::from("deployment does not have image attached"),
+        "Get Image",
+        String::from("Deployment does not have image attached"),
       ));
     };
 
@@ -77,9 +82,9 @@ impl Resolve<super::Args> for Deploy {
     .await
     {
       return Ok(Log::error(
-        "docker login",
+        "Docker Login",
         format_serror(
-          &e.context("failed to login to docker registry").into(),
+          &e.context("Failed to login to docker registry").into(),
         ),
       ));
     }
@@ -99,7 +104,7 @@ impl Resolve<super::Args> for Deploy {
     let command = docker_run_command(&deployment, image)
       .context("Unable to generate valid docker run command")?;
 
-    let span = info_span!("RunDockerRun");
+    let span = info_span!("ExecuteDockerRun");
     let Some(log) = run_komodo_command_with_sanitization(
       "Docker Run",
       None,
@@ -138,75 +143,53 @@ fn docker_run_command(
   }: &Deployment,
   image: &str,
 ) -> anyhow::Result<String> {
-  let ports = parse_conversions(
+  let mut res =
+    format!("docker run -d --name {name} --network {network}");
+
+  push_conversions(
+    &mut res,
     &conversions_from_str(ports).context("Invalid ports")?,
     "-p",
-  );
-  let volumes = parse_conversions(
+  )?;
+
+  push_conversions(
+    &mut res,
     &conversions_from_str(volumes).context("Invalid volumes")?,
     "-v",
-  );
-  let network = parse_network(network);
-  let restart = parse_restart(restart);
-  let environment = parse_environment(
+  )?;
+
+  push_environment(
+    &mut res,
     &environment_vars_from_str(environment)
       .context("Invalid environment")?,
-  );
-  let labels = format_labels(
+  )?;
+
+  push_restart(&mut res, restart)?;
+
+  push_labels(
+    &mut res,
     &environment_vars_from_str(labels).context("Invalid labels")?,
-  );
-  let command = parse_command(command);
-  let extra_args = format_extra_args(extra_args);
-  let command = format!(
-    "docker run -d --name {name}{ports}{volumes}{network}{restart}{environment}{labels}{extra_args} {image}{command}"
-  );
-  Ok(command)
-}
+  )?;
 
-fn parse_conversions(
-  conversions: &[Conversion],
-  flag: &str,
-) -> String {
-  conversions
-    .iter()
-    .map(|p| format!(" {flag} {}:{}", p.local, p.container))
-    .collect::<Vec<_>>()
-    .join("")
-}
+  push_extra_args(&mut res, extra_args)?;
 
-fn parse_environment(environment: &[EnvironmentVar]) -> String {
-  environment
-    .iter()
-    .map(|p| {
-      if p.value.starts_with(QUOTE_PATTERN)
-        && p.value.ends_with(QUOTE_PATTERN)
-      {
-        // If the value already wrapped in quotes, don't wrap it again
-        format!(" --env {}={}", p.variable, p.value)
-      } else {
-        format!(" --env {}=\"{}\"", p.variable, p.value)
-      }
-    })
-    .collect::<Vec<_>>()
-    .join("")
-}
+  write!(&mut res, " {image}")?;
 
-fn parse_network(network: &str) -> String {
-  format!(" --network {network}")
-}
-
-fn parse_restart(restart: &RestartMode) -> String {
-  let restart = match restart {
-    RestartMode::OnFailure => "on-failure:10".to_string(),
-    _ => restart.to_string(),
-  };
-  format!(" --restart {restart}")
-}
-
-fn parse_command(command: &str) -> String {
-  if command.is_empty() {
-    String::new()
-  } else {
-    format!(" {command}")
+  if !command.is_empty() {
+    write!(&mut res, " {command}")?;
   }
+
+  Ok(res)
+}
+
+fn push_restart(
+  command: &mut String,
+  restart: &RestartMode,
+) -> anyhow::Result<()> {
+  let restart = match restart {
+    RestartMode::OnFailure => "on-failure:10",
+    _ => restart.as_ref(),
+  };
+  write!(command, " --restart {restart}")
+    .context("Failed to write restart mode")
 }

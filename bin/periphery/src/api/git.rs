@@ -16,10 +16,10 @@ use crate::{
   config::periphery_config, helpers::handle_post_repo_execution,
 };
 
-impl Resolve<super::Args> for GetLatestCommit {
+impl Resolve<crate::api::Args> for GetLatestCommit {
   async fn resolve(
     self,
-    _: &super::Args,
+    _: &crate::api::Args,
   ) -> anyhow::Result<Option<LatestCommit>> {
     let repo_path = match self.path {
       Some(p) => PathBuf::from(p),
@@ -33,7 +33,7 @@ impl Resolve<super::Args> for GetLatestCommit {
   }
 }
 
-impl Resolve<super::Args> for CloneRepo {
+impl Resolve<crate::api::Args> for CloneRepo {
   #[instrument(
     "CloneRepo",
     skip_all,
@@ -46,7 +46,7 @@ impl Resolve<super::Args> for CloneRepo {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<PeripheryRepoExecutionResponse> {
     let CloneRepo {
       args,
@@ -79,7 +79,7 @@ impl Resolve<super::Args> for CloneRepo {
 
 //
 
-impl Resolve<super::Args> for PullRepo {
+impl Resolve<crate::api::Args> for PullRepo {
   #[instrument(
     "PullRepo",
     skip_all,
@@ -92,7 +92,7 @@ impl Resolve<super::Args> for PullRepo {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<PeripheryRepoExecutionResponse> {
     let PullRepo {
       args,
@@ -124,7 +124,7 @@ impl Resolve<super::Args> for PullRepo {
 
 //
 
-impl Resolve<super::Args> for PullOrCloneRepo {
+impl Resolve<crate::api::Args> for PullOrCloneRepo {
   #[instrument(
     "PullOrCloneRepo",
     skip_all,
@@ -137,7 +137,7 @@ impl Resolve<super::Args> for PullOrCloneRepo {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<PeripheryRepoExecutionResponse> {
     let PullOrCloneRepo {
       args,
@@ -171,7 +171,7 @@ impl Resolve<super::Args> for PullOrCloneRepo {
 
 //
 
-impl Resolve<super::Args> for RenameRepo {
+impl Resolve<crate::api::Args> for RenameRepo {
   #[instrument(
     "RenameRepo",
     skip_all,
@@ -182,7 +182,10 @@ impl Resolve<super::Args> for RenameRepo {
       new_name = self.new_name,
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Log> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let RenameRepo {
       curr_name,
       new_name,
@@ -201,7 +204,7 @@ impl Resolve<super::Args> for RenameRepo {
 
 //
 
-impl Resolve<super::Args> for DeleteRepo {
+impl Resolve<crate::api::Args> for DeleteRepo {
   #[instrument(
     "DeleteRepo",
     skip_all,
@@ -212,7 +215,10 @@ impl Resolve<super::Args> for DeleteRepo {
       is_build = self.is_build,
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Log> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let DeleteRepo { name, is_build } = self;
     // If using custom clone path, it will be passed by core instead of name.
     // So the join will resolve to just the absolute path.

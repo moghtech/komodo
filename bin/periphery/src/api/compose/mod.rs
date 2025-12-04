@@ -20,7 +20,7 @@ use komodo_client::{
   },
   parsers::parse_multiline_command,
 };
-use periphery_client::api::compose::*;
+use periphery_client::api::{DeployStackResponse, compose::*};
 use resolver_api::Resolve;
 use shell_escape::unix::escape;
 use tracing::Instrument;
@@ -36,8 +36,11 @@ mod write;
 
 use helpers::*;
 
-impl Resolve<super::Args> for GetComposeLog {
-  async fn resolve(self, _: &super::Args) -> anyhow::Result<Log> {
+impl Resolve<crate::api::Args> for GetComposeLog {
+  async fn resolve(
+    self,
+    _: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let GetComposeLog {
       project,
       services,
@@ -61,8 +64,11 @@ impl Resolve<super::Args> for GetComposeLog {
   }
 }
 
-impl Resolve<super::Args> for GetComposeLogSearch {
-  async fn resolve(self, _: &super::Args) -> anyhow::Result<Log> {
+impl Resolve<crate::api::Args> for GetComposeLogSearch {
+  async fn resolve(
+    self,
+    _: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let GetComposeLogSearch {
       project,
       services,
@@ -91,10 +97,10 @@ impl Resolve<super::Args> for GetComposeLogSearch {
 
 //
 
-impl Resolve<super::Args> for GetComposeContentsOnHost {
+impl Resolve<crate::api::Args> for GetComposeContentsOnHost {
   async fn resolve(
     self,
-    _: &super::Args,
+    _: &crate::api::Args,
   ) -> anyhow::Result<GetComposeContentsOnHostResponse> {
     let GetComposeContentsOnHost {
       name,
@@ -146,7 +152,7 @@ impl Resolve<super::Args> for GetComposeContentsOnHost {
 
 //
 
-impl Resolve<super::Args> for WriteComposeContentsToHost {
+impl Resolve<crate::api::Args> for WriteComposeContentsToHost {
   #[instrument(
     "WriteComposeContentsToHost",
     skip_all,
@@ -158,7 +164,10 @@ impl Resolve<super::Args> for WriteComposeContentsToHost {
       file_path = self.file_path,
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Log> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let WriteComposeContentsToHost {
       name,
       run_directory,
@@ -188,7 +197,7 @@ impl Resolve<super::Args> for WriteComposeContentsToHost {
 
 //
 
-impl Resolve<super::Args> for WriteCommitComposeContents {
+impl Resolve<crate::api::Args> for WriteCommitComposeContents {
   #[instrument(
     "WriteCommitComposeContents",
     skip_all,
@@ -202,7 +211,7 @@ impl Resolve<super::Args> for WriteCommitComposeContents {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<RepoExecutionResponse> {
     let WriteCommitComposeContents {
       stack,
@@ -243,7 +252,7 @@ impl Resolve<super::Args> for WriteCommitComposeContents {
 
 //
 
-impl Resolve<super::Args> for ComposePull {
+impl Resolve<crate::api::Args> for ComposePull {
   #[instrument(
     "ComposePull",
     skip_all,
@@ -256,7 +265,7 @@ impl Resolve<super::Args> for ComposePull {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
+    args: &crate::api::Args,
   ) -> anyhow::Result<ComposePullResponse> {
     let ComposePull {
       mut stack,
@@ -362,7 +371,7 @@ impl Resolve<super::Args> for ComposePull {
 
 //
 
-impl Resolve<super::Args> for ComposeUp {
+impl Resolve<crate::api::Args> for ComposeUp {
   #[instrument(
     "ComposeUp",
     skip_all,
@@ -376,8 +385,8 @@ impl Resolve<super::Args> for ComposeUp {
   )]
   async fn resolve(
     self,
-    args: &super::Args,
-  ) -> anyhow::Result<ComposeUpResponse> {
+    args: &crate::api::Args,
+  ) -> anyhow::Result<DeployStackResponse> {
     let ComposeUp {
       mut stack,
       repo,
@@ -387,7 +396,13 @@ impl Resolve<super::Args> for ComposeUp {
       mut replacers,
     } = self;
 
-    let mut res = ComposeUpResponse::default();
+    if !stack.config.swarm_id.is_empty() {
+      return Err(anyhow!(
+        "This method should only be called for Compose Stacks. This is an internal error and should not happen."
+      ));
+    }
+
+    let mut res = DeployStackResponse::default();
 
     let mut interpolator =
       Interpolator::new(None, &periphery_config().secrets);
@@ -502,8 +517,8 @@ impl Resolve<super::Args> for ComposeUp {
       let compose =
         serde_yaml_ng::from_str::<ComposeFile>(&config_log.stdout)
           .context("Failed to parse compose contents")?;
-      // Record sanitized compose config output
-      res.compose_config = Some(config_log.stdout);
+      // Store sanitized compose config output
+      res.merged_config = Some(config_log.stdout);
       for (
         service_name,
         ComposeService {
@@ -660,7 +675,7 @@ impl Resolve<super::Args> for ComposeUp {
 
 //
 
-impl Resolve<super::Args> for ComposeExecution {
+impl Resolve<crate::api::Args> for ComposeExecution {
   #[instrument(
     "ComposeExecution",
     skip_all,
@@ -671,7 +686,10 @@ impl Resolve<super::Args> for ComposeExecution {
       command = self.command,
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Log> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let ComposeExecution { project, command } = self;
     let docker_compose = docker_compose();
     let log = run_komodo_standard_command(
@@ -686,7 +704,7 @@ impl Resolve<super::Args> for ComposeExecution {
 
 //
 
-impl Resolve<super::Args> for ComposeRun {
+impl Resolve<crate::api::Args> for ComposeRun {
   #[instrument(
     "ComposeRun",
     skip_all,
@@ -698,7 +716,10 @@ impl Resolve<super::Args> for ComposeRun {
       service = &self.service
     )
   )]
-  async fn resolve(self, args: &super::Args) -> anyhow::Result<Log> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let ComposeRun {
       mut stack,
       repo,

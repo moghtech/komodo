@@ -7,9 +7,8 @@ use komodo_client::entities::{
   stack::Stack, to_path_compatible_name, update::Log,
 };
 use periphery_client::api::{
-  compose::{
-    ComposePullResponse, ComposeRunResponse, ComposeUpResponse,
-  },
+  DeployStackResponse,
+  compose::{ComposePullResponse, ComposeRunResponse},
   git::{CloneRepo, PullOrCloneRepo},
 };
 use resolver_api::Resolve;
@@ -24,7 +23,7 @@ pub trait WriteStackRes {
   fn set_commit_message(&mut self, _message: Option<String>) {}
 }
 
-impl WriteStackRes for &mut ComposeUpResponse {
+impl WriteStackRes for &mut DeployStackResponse {
   fn logs(&mut self) -> &mut Vec<Log> {
     &mut self.logs
   }

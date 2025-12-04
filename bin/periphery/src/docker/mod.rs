@@ -34,7 +34,7 @@ impl DockerClient {
   }
 }
 
-/// Returns whether build result should be pushed after build
+/// Returns whether login was actually performed.
 #[instrument("DockerLogin", skip(registry_token))]
 pub async fn docker_login(
   domain: &str,
@@ -45,30 +45,33 @@ pub async fn docker_login(
   if domain.is_empty() || account.is_empty() {
     return Ok(false);
   }
+
   let registry_token = match registry_token {
     Some(token) => token,
     None => crate::helpers::registry_token(domain, account)?,
   };
+
   let log = run_shell_command(&format!(
     "echo {registry_token} | docker login {domain} --username '{account}' --password-stdin",
   ), None)
   .await;
+
   if log.success() {
-    Ok(true)
-  } else {
-    let mut e = anyhow!("End of trace");
-    for line in
-      log.stderr.split('\n').filter(|line| !line.is_empty()).rev()
-    {
-      e = e.context(line.to_string());
-    }
-    for line in
-      log.stdout.split('\n').filter(|line| !line.is_empty()).rev()
-    {
-      e = e.context(line.to_string());
-    }
-    Err(e.context(format!("Registry {domain} login error")))
+    return Ok(true);
   }
+
+  let mut e = anyhow!("End of trace");
+  for line in
+    log.stderr.split('\n').filter(|line| !line.is_empty()).rev()
+  {
+    e = e.context(line.to_string());
+  }
+  for line in
+    log.stdout.split('\n').filter(|line| !line.is_empty()).rev()
+  {
+    e = e.context(line.to_string());
+  }
+  Err(e.context(format!("Registry {domain} login error")))
 }
 
 #[instrument("PullImage")]

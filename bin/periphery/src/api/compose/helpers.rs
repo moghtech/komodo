@@ -14,7 +14,7 @@ use komodo_client::entities::{
   update::Log,
 };
 use periphery_client::api::{
-  compose::ComposeUpResponse, git::PullOrCloneRepo,
+  DeployStackResponse, git::PullOrCloneRepo,
 };
 use resolver_api::Resolve;
 use tokio::fs;
@@ -89,7 +89,7 @@ pub fn env_file_args(
 pub async fn compose_down(
   project: &str,
   services: &[String],
-  res: &mut ComposeUpResponse,
+  res: &mut DeployStackResponse,
 ) -> anyhow::Result<()> {
   let docker_compose = docker_compose();
   let service_args = if services.is_empty() {
@@ -191,7 +191,7 @@ pub async fn pull_or_clone_stack(
 pub async fn validate_files(
   stack: &Stack,
   run_directory: &Path,
-  res: &mut ComposeUpResponse,
+  res: &mut DeployStackResponse,
 ) {
   let file_paths = stack
     .all_file_dependencies()

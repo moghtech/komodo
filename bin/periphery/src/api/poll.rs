@@ -13,10 +13,10 @@ use crate::{
   },
 };
 
-impl Resolve<super::Args> for PollStatus {
+impl Resolve<crate::api::Args> for PollStatus {
   async fn resolve(
     self,
-    _: &super::Args,
+    _: &crate::api::Args,
   ) -> anyhow::Result<PollStatusResponse> {
     let stats_client = stats_client().read().await;
 

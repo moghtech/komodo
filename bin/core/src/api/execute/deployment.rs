@@ -225,7 +225,7 @@ impl Resolve<ExecuteArgs> for Deploy {
 
     match periphery_client(&server)
       .await?
-      .request(api::container::Deploy {
+      .request(api::container::RunContainer {
         deployment,
         stop_signal: self.stop_signal,
         stop_time: self.stop_time,

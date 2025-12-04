@@ -21,7 +21,6 @@ pub mod terminal;
 mod build;
 mod compose;
 mod container;
-mod deploy;
 mod docker;
 mod git;
 mod keys;
@@ -94,7 +93,7 @@ pub enum PeripheryRequest {
   GetFullContainerStats(GetFullContainerStats),
 
   // Container (Write)
-  Deploy(Deploy),
+  RunContainer(RunContainer),
   StartContainer(StartContainer),
   RestartContainer(RestartContainer),
   PauseContainer(PauseContainer),
@@ -136,21 +135,25 @@ pub enum PeripheryRequest {
   // All in one (Write)
   PruneSystem(PruneSystem),
 
-  // Swarm
+  // Swarm (Read)
   PollSwarmStatus(PollSwarmStatus),
   InspectSwarmNode(InspectSwarmNode),
-  UpdateSwarmNode(UpdateSwarmNode),
-  RemoveSwarmNodes(RemoveSwarmNodes),
   InspectSwarmStack(InspectSwarmStack),
-  RemoveSwarmStacks(RemoveSwarmStacks),
   InspectSwarmService(InspectSwarmService),
   GetSwarmServiceLog(GetSwarmServiceLog),
   GetSwarmServiceLogSearch(GetSwarmServiceLogSearch),
-  RemoveSwarmServices(RemoveSwarmServices),
   InspectSwarmTask(InspectSwarmTask),
   InspectSwarmConfig(InspectSwarmConfig),
-  RemoveSwarmConfigs(RemoveSwarmConfigs),
   InspectSwarmSecret(InspectSwarmSecret),
+
+  // Swarm (Write)
+  UpdateSwarmNode(UpdateSwarmNode),
+  RemoveSwarmNodes(RemoveSwarmNodes),
+  DeploySwarmStack(DeploySwarmStack),
+  RemoveSwarmStacks(RemoveSwarmStacks),
+  CreateSwarmService(CreateSwarmService),
+  RemoveSwarmServices(RemoveSwarmServices),
+  RemoveSwarmConfigs(RemoveSwarmConfigs),
   RemoveSwarmSecrets(RemoveSwarmSecrets),
 
   // Terminal

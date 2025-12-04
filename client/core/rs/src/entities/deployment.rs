@@ -5,7 +5,7 @@ use derive_default_builder::DefaultBuilder;
 use derive_variants::EnumVariants;
 use partial_derive2::Partial;
 use serde::{Deserialize, Serialize};
-use strum::{Display, EnumString};
+use strum::{AsRefStr, Display, EnumString};
 use typeshare::typeshare;
 
 use crate::{
@@ -58,7 +58,19 @@ pub type _PartialDeploymentConfig = PartialDeploymentConfig;
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct DeploymentConfig {
-  /// The id of server the deployment is deployed on.
+  /// The Swarm to deploy the Deployment on (as a Swarm Service), setting the Deployment into Swarm mode.
+  ///
+  /// Note. If both swarm_id and server_id are set,
+  /// swarm_id overrides server_id and the Deployment will be in Swarm mode.
+  #[serde(default, alias = "swarm")]
+  #[partial_attr(serde(alias = "swarm"))]
+  #[builder(default)]
+  pub swarm_id: String,
+
+  /// The Server to deploy the Deployment on, setting the Deployment into Container mode.
+  ///
+  /// Note. If both swarm_id and server_id are set,
+  /// swarm_id overrides server_id and the Deployment will be in Swarm mode.
   #[serde(default, alias = "server")]
   #[partial_attr(serde(alias = "server"))]
   #[builder(default)]
@@ -134,6 +146,14 @@ pub struct DeploymentConfig {
   #[builder(default)]
   pub command: String,
 
+  /// The number of replicas for the Service.
+  ///
+  /// Note. Only used in Swarm mode.
+  #[serde(default = "default_replicas")]
+  #[builder(default = "default_replicas()")]
+  #[partial_default(default_replicas())]
+  pub replicas: i32,
+
   /// The default termination signal to use to stop the deployment. Defaults to SigTerm (default docker signal).
   #[serde(default)]
   #[builder(default)]
@@ -145,7 +165,8 @@ pub struct DeploymentConfig {
   #[partial_default(default_termination_timeout())]
   pub termination_timeout: i32,
 
-  /// Extra args which are interpolated into the `docker run` command,
+  /// Extra args which are interpolated into the
+  /// `docker run` / `docker service create` command,
   /// and affect the container configuration.
   #[serde(default, deserialize_with = "string_list_deserializer")]
   #[partial_attr(serde(
@@ -156,7 +177,8 @@ pub struct DeploymentConfig {
   pub extra_args: Vec<String>,
 
   /// Labels attached to various termination signal options.
-  /// Used to specify different shutdown functionality depending on the termination signal.
+  /// Used to specify different shutdown functionality depending
+  /// on the termination signal.
   #[serde(default, deserialize_with = "term_labels_deserializer")]
   #[partial_attr(serde(
     default,
@@ -186,7 +208,7 @@ pub struct DeploymentConfig {
   #[builder(default)]
   pub volumes: String,
 
-  /// The environment variables passed to the container.
+  /// The environment variables passed to the container / service.
   #[serde(default, deserialize_with = "env_vars_deserializer")]
   #[partial_attr(serde(
     default,
@@ -216,6 +238,10 @@ impl DeploymentConfig {
   }
 }
 
+fn default_replicas() -> i32 {
+  1
+}
+
 fn default_send_alerts() -> bool {
   true
 }
@@ -231,26 +257,28 @@ fn default_network() -> String {
 impl Default for DeploymentConfig {
   fn default() -> Self {
     Self {
+      swarm_id: Default::default(),
       server_id: Default::default(),
-      send_alerts: default_send_alerts(),
-      links: Default::default(),
       image: Default::default(),
       image_registry_account: Default::default(),
       skip_secret_interp: Default::default(),
       redeploy_on_build: Default::default(),
       poll_for_updates: Default::default(),
       auto_update: Default::default(),
-      term_signal_labels: Default::default(),
+      send_alerts: default_send_alerts(),
+      links: Default::default(),
+      network: default_network(),
+      restart: Default::default(),
+      command: Default::default(),
+      replicas: default_replicas(),
       termination_signal: Default::default(),
       termination_timeout: default_termination_timeout(),
+      extra_args: Default::default(),
+      term_signal_labels: Default::default(),
       ports: Default::default(),
       volumes: Default::default(),
       environment: Default::default(),
       labels: Default::default(),
-      network: default_network(),
-      restart: Default::default(),
-      command: Default::default(),
-      extra_args: Default::default(),
     }
   }
 }
@@ -399,6 +427,7 @@ impl From<ContainerStateStatusEnum> for DeploymentState {
   Default,
   Display,
   EnumString,
+  AsRefStr,
 )]
 pub enum RestartMode {
   #[default]
