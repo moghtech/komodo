@@ -11,7 +11,7 @@ use database::mungos::{
 use komodo_client::{
   busy::Busy,
   entities::{
-    Operation, ResourceTarget, ResourceTargetVariant,
+    Operation, ResourceTarget, ResourceTargetVariant, SwarmOrServer,
     action::{Action, ActionState},
     alerter::Alerter,
     build::Build,
@@ -37,6 +37,7 @@ use komodo_client::{
 
 use crate::{
   config::core_config,
+  helpers::swarm::swarm_request,
   permission::get_user_permission_on_resource,
   resource::{self, KomodoResource},
   stack::compose_container_match_regex,
@@ -58,6 +59,25 @@ pub async fn get_user(user: &str) -> anyhow::Result<User> {
     .await
     .context("Failed to query mongo for user")?
     .with_context(|| format!("No user found matching '{user}'"))
+}
+
+pub async fn get_swarm_with_reachability(
+  swarm_id_or_name: &str,
+) -> anyhow::Result<(Swarm, bool)> {
+  let swarm = resource::get::<Swarm>(swarm_id_or_name).await?;
+  let reachable = get_swarm_reachability(&swarm).await.is_ok();
+  Ok((swarm, reachable))
+}
+
+pub async fn get_swarm_reachability(
+  swarm: &Swarm,
+) -> anyhow::Result<()> {
+  swarm_request(
+    &swarm.config.server_ids,
+    periphery_client::api::GetVersion {},
+  )
+  .await
+  .map(|_| ())
 }
 
 pub async fn get_server_with_state(
@@ -450,4 +470,36 @@ pub async fn get_procedure_state(id: &String) -> ProcedureState {
     return ProcedureState::Running;
   }
   procedure_state_cache().get(id).await.unwrap_or_default()
+}
+
+/// Get's a resource's assigned swarm or server, with swarm taking precedence.
+/// Makes sure the target is reachable before passing along for commands.
+pub async fn get_swarm_or_server(
+  swarm_id: &str,
+  server_id: &str,
+) -> anyhow::Result<SwarmOrServer> {
+  if !swarm_id.is_empty() {
+    let swarm = resource::get::<Swarm>(swarm_id).await?;
+
+    // Errors if not reachable, and returns the error
+    get_swarm_reachability(&swarm).await?;
+
+    return Ok(SwarmOrServer::Swarm(swarm));
+  }
+
+  if server_id.is_empty() {
+    return Err(anyhow!(
+      "Neither Swarm nor Server has been configured in this resource."
+    ));
+  }
+
+  let (server, state) = get_server_with_state(server_id).await?;
+
+  if state != ServerState::Ok {
+    return Err(anyhow!(
+      "Cannot send command when Server is unreachable or disabled"
+    ));
+  }
+
+  Ok(SwarmOrServer::Server(server))
 }

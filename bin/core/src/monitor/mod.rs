@@ -13,6 +13,7 @@ use komodo_client::entities::{
   server::{Server, ServerState},
   stack::Stack,
   stats::SystemStats,
+  swarm::Swarm,
 };
 use periphery_client::api::{
   self, git::GetLatestCommit, poll::PollStatusResponse,
@@ -114,7 +115,7 @@ pub async fn update_cache_for_server(server: &Server, force: bool) {
 
   *lock = now;
 
-  let resources = UpdateCacheResources::load(server).await;
+  let resources = UpdateCacheResources::load_server(server).await;
 
   // Handle server disabled
   if !server.config.enabled {
@@ -255,7 +256,34 @@ struct UpdateCacheResources {
 }
 
 impl UpdateCacheResources {
-  pub async fn load(server: &Server) -> Self {
+  pub async fn load_swarm(swarm: &Swarm) -> Self {
+    let (stacks, deployments, builds) = tokio::join!(
+      find_collect(
+        &db_client().stacks,
+        doc! { "config.swarm_id": &swarm.id },
+        None,
+      ),
+      find_collect(
+        &db_client().deployments,
+        doc! { "config.swarm_id": &swarm.id },
+        None,
+      ),
+      find_collect(&db_client().builds, doc! {}, None,),
+    );
+
+    let stacks = stacks.inspect_err(|e|  error!("Failed to get stacks list from db (update swarm status cache) | swarm: {} | {e:#}", swarm.name)).unwrap_or_default();
+    let deployments =  deployments.inspect_err(|e| error!("Failed to get deployments list from db (update swarm status cache) | swarm : {} | {e:#}", swarm.name)).unwrap_or_default();
+    let builds =  builds.inspect_err(|e| error!("Failed to get builds list from db (update swarm status cache) | swarm : {} | {e:#}", swarm.name)).unwrap_or_default();
+
+    Self {
+      stacks,
+      deployments,
+      builds,
+      repos: Default::default(),
+    }
+  }
+
+  pub async fn load_server(server: &Server) -> Self {
     let (stacks, deployments, builds, repos) = tokio::join!(
       find_collect(
         &db_client().stacks,
@@ -275,10 +303,10 @@ impl UpdateCacheResources {
       ),
     );
 
-    let stacks = stacks.inspect_err(|e|  error!("failed to get stacks list from db (update status cache) | server: {} | {e:#}", server.name)).unwrap_or_default();
-    let deployments =  deployments.inspect_err(|e| error!("failed to get deployments list from db (update status cache) | server : {} | {e:#}", server.name)).unwrap_or_default();
-    let builds =  builds.inspect_err(|e| error!("failed to get builds list from db (update status cache) | server : {} | {e:#}", server.name)).unwrap_or_default();
-    let repos = repos.inspect_err(|e|  error!("failed to get repos list from db (update status cache) | server: {} | {e:#}", server.name)).unwrap_or_default();
+    let stacks = stacks.inspect_err(|e|  error!("Failed to get stacks list from db (update server status cache) | server: {} | {e:#}", server.name)).unwrap_or_default();
+    let deployments =  deployments.inspect_err(|e| error!("Failed to get deployments list from db (update server status cache) | server : {} | {e:#}", server.name)).unwrap_or_default();
+    let builds =  builds.inspect_err(|e| error!("Failed to get builds list from db (update server status cache) | server : {} | {e:#}", server.name)).unwrap_or_default();
+    let repos = repos.inspect_err(|e|  error!("Failed to get repos list from db (update server status cache) | server: {} | {e:#}", server.name)).unwrap_or_default();
 
     Self {
       stacks,

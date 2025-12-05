@@ -7,7 +7,7 @@ use interpolate::Interpolator;
 use komodo_client::{
   api::execute::*,
   entities::{
-    Version,
+    SwarmOrServer, Version,
     build::{Build, ImageRegistryConfig},
     deployment::{
       Deployment, DeploymentImage, extract_registry_domain,
@@ -20,16 +20,22 @@ use komodo_client::{
   },
 };
 use periphery_client::api;
+use reqwest::StatusCode;
 use resolver_api::Resolve;
+use serror::AddStatusCodeError;
 
 use crate::{
   helpers::{
     periphery_client,
-    query::{VariablesAndSecrets, get_variables_and_secrets},
+    query::{
+      VariablesAndSecrets, get_swarm_or_server,
+      get_variables_and_secrets,
+    },
     registry_token,
+    swarm::swarm_request,
     update::update_update,
   },
-  monitor::update_cache_for_server,
+  monitor::{update_cache_for_server, update_cache_for_swarm},
   permission::get_check_permissions,
   resource,
   state::action_states,
@@ -73,7 +79,7 @@ impl Resolve<ExecuteArgs> for BatchDeploy {
 async fn setup_deployment_execution(
   deployment: &str,
   user: &User,
-) -> anyhow::Result<(Deployment, Server)> {
+) -> anyhow::Result<(Deployment, SwarmOrServer)> {
   let deployment = get_check_permissions::<Deployment>(
     deployment,
     user,
@@ -81,18 +87,13 @@ async fn setup_deployment_execution(
   )
   .await?;
 
-  if deployment.config.server_id.is_empty() {
-    return Err(anyhow!("Deployment has no Server configured"));
-  }
+  let swarm_or_server = get_swarm_or_server(
+    &deployment.config.swarm_id,
+    &deployment.config.server_id,
+  )
+  .await?;
 
-  let server =
-    resource::get::<Server>(&deployment.config.server_id).await?;
-
-  if !server.config.enabled {
-    return Err(anyhow!("Attached Server is not enabled"));
-  }
-
-  Ok((deployment, server))
+  Ok((deployment, swarm_or_server))
 }
 
 impl Resolve<ExecuteArgs> for Deploy {
@@ -112,7 +113,7 @@ impl Resolve<ExecuteArgs> for Deploy {
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let (mut deployment, server) =
+    let (mut deployment, swarm_or_server) =
       setup_deployment_execution(&self.deployment, user).await?;
 
     // get the action state for the deployment (or insert default).
@@ -223,27 +224,51 @@ impl Resolve<ExecuteArgs> for Deploy {
     update.version = version;
     update_update(update.clone()).await?;
 
-    match periphery_client(&server)
-      .await?
-      .request(api::container::RunContainer {
-        deployment,
-        stop_signal: self.stop_signal,
-        stop_time: self.stop_time,
-        registry_token,
-        replacers: secret_replacers.into_iter().collect(),
-      })
-      .await
-    {
-      Ok(log) => update.logs.push(log),
-      Err(e) => {
-        update.push_error_log(
-          "Deploy Container",
-          format_serror(&e.into()),
-        );
+    match swarm_or_server {
+      SwarmOrServer::Swarm(swarm) => {
+        match swarm_request(
+          &swarm.config.server_ids,
+          api::swarm::CreateSwarmService {
+            deployment,
+            registry_token,
+            replacers: secret_replacers.into_iter().collect(),
+          },
+        )
+        .await
+        {
+          Ok(log) => update.logs.push(log),
+          Err(e) => {
+            update.push_error_log(
+              "Create Service",
+              format_serror(&e.into()),
+            );
+          }
+        };
+        update_cache_for_swarm(&swarm, true).await;
       }
-    };
-
-    update_cache_for_server(&server, true).await;
+      SwarmOrServer::Server(server) => {
+        match periphery_client(&server)
+          .await?
+          .request(api::container::RunContainer {
+            deployment,
+            stop_signal: self.stop_signal,
+            stop_time: self.stop_time,
+            registry_token,
+            replacers: secret_replacers.into_iter().collect(),
+          })
+          .await
+        {
+          Ok(log) => update.logs.push(log),
+          Err(e) => {
+            update.push_error_log(
+              "Deploy Container",
+              format_serror(&e.into()),
+            );
+          }
+        };
+        update_cache_for_server(&server, true).await;
+      }
+    }
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -400,8 +425,15 @@ impl Resolve<ExecuteArgs> for PullDeployment {
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let (deployment, server) =
+    let (deployment, swarm_or_server) =
       setup_deployment_execution(&self.deployment, user).await?;
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
+      return Err(
+        anyhow!("PullDeployment should not be called for Deployment in Swarm Mode")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -443,8 +475,15 @@ impl Resolve<ExecuteArgs> for StartDeployment {
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let (deployment, server) =
+    let (deployment, swarm_or_server) =
       setup_deployment_execution(&self.deployment, user).await?;
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
+      return Err(
+        anyhow!("StartDeployment should not be called for Deployment in Swarm Mode")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -500,8 +539,15 @@ impl Resolve<ExecuteArgs> for RestartDeployment {
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let (deployment, server) =
+    let (deployment, swarm_or_server) =
       setup_deployment_execution(&self.deployment, user).await?;
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
+      return Err(
+        anyhow!("RestartDeployment should not be called for Deployment in Swarm Mode")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -559,8 +605,15 @@ impl Resolve<ExecuteArgs> for PauseDeployment {
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let (deployment, server) =
+    let (deployment, swarm_or_server) =
       setup_deployment_execution(&self.deployment, user).await?;
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
+      return Err(
+        anyhow!("PauseDeployment should not be called for Deployment in Swarm Mode")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -616,8 +669,15 @@ impl Resolve<ExecuteArgs> for UnpauseDeployment {
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let (deployment, server) =
+    let (deployment, swarm_or_server) =
       setup_deployment_execution(&self.deployment, user).await?;
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
+      return Err(
+        anyhow!("UnpauseDeployment should not be called for Deployment in Swarm Mode")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -677,8 +737,15 @@ impl Resolve<ExecuteArgs> for StopDeployment {
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let (deployment, server) =
+    let (deployment, swarm_or_server) =
       setup_deployment_execution(&self.deployment, user).await?;
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
+      return Err(
+        anyhow!("StopDeployment should not be called for Deployment in Swarm Mode")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -779,8 +846,15 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let (deployment, server) =
+    let (deployment, swarm_or_server) =
       setup_deployment_execution(&self.deployment, user).await?;
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
+      return Err(
+        anyhow!("DestroyDeployment should not be called for Deployment in Swarm Mode")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()

@@ -22,6 +22,7 @@ use tokio::sync::Mutex;
 use crate::{
   config::monitoring_interval,
   helpers::swarm::swarm_request_custom_timeout,
+  monitor::UpdateCacheResources,
   state::{CachedSwarmStatus, db_client, swarm_status_cache},
 };
 
@@ -91,7 +92,10 @@ pub async fn update_cache_for_swarm(swarm: &Swarm, force: bool) {
 
   *lock = now;
 
+  let resources = UpdateCacheResources::load_swarm(swarm).await;
+
   if swarm.config.server_ids.is_empty() {
+    resources.insert_status_unknown().await;
     swarm_status_cache()
       .insert(
         swarm.id.clone(),
@@ -119,6 +123,7 @@ pub async fn update_cache_for_swarm(swarm: &Swarm, force: bool) {
     {
       Ok(info) => info,
       Err(e) => {
+        resources.insert_status_unknown().await;
         swarm_status_cache()
           .insert(
             swarm.id.clone(),
@@ -142,6 +147,8 @@ pub async fn update_cache_for_swarm(swarm: &Swarm, force: bool) {
       state = SwarmState::Unhealthy;
     }
   }
+
+  // TODO: UPDATE STACKS / DEPLOYMENT CACHES
 
   swarm_status_cache()
     .insert(

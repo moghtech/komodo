@@ -1493,3 +1493,8 @@ pub fn resource_link(
   };
   format!("{host}{path}")
 }
+
+pub enum SwarmOrServer {
+  Swarm(swarm::Swarm),
+  Server(server::Server),
+}

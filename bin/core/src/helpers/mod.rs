@@ -4,6 +4,7 @@ use anyhow::{Context, anyhow};
 use database::mongo_indexed::Document;
 use database::mungos::mongodb::bson::{Bson, doc};
 use indexmap::IndexSet;
+use komodo_client::entities::SwarmOrServer;
 use komodo_client::entities::{
   ResourceTarget,
   build::Build,
@@ -15,7 +16,11 @@ use komodo_client::entities::{
   stack::Stack,
   user::User,
 };
+use resolver_api::HasResponse;
+use serde::Serialize;
+use serde::de::DeserializeOwned;
 
+use crate::helpers::swarm::swarm_request;
 use crate::{
   config::core_config, connection::PeripheryConnectionArgs,
   periphery::PeripheryClient, state::db_client,
@@ -263,4 +268,22 @@ pub fn repo_link(
     let _ = write!(&mut res, "/tree/{branch}");
   }
   res
+}
+
+pub async fn swarm_or_server_request<T>(
+  swarm_or_server: &SwarmOrServer,
+  request: T,
+) -> anyhow::Result<T::Response>
+where
+  T: std::fmt::Debug + Clone + Serialize + HasResponse,
+  T::Response: DeserializeOwned,
+{
+  match swarm_or_server {
+    SwarmOrServer::Swarm(swarm) => {
+      swarm_request(&swarm.config.server_ids, request).await
+    }
+    SwarmOrServer::Server(server) => {
+      periphery_client(server).await?.request(request).await
+    }
+  }
 }

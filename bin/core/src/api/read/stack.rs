@@ -4,9 +4,9 @@ use anyhow::{Context, anyhow};
 use komodo_client::{
   api::read::*,
   entities::{
+    SwarmOrServer,
     docker::container::Container,
     permission::PermissionLevel,
-    server::{Server, ServerState},
     stack::{Stack, StackActionState, StackListItem, StackState},
   },
 };
@@ -14,14 +14,18 @@ use periphery_client::api::{
   compose::{GetComposeLog, GetComposeLogSearch},
   container::InspectContainer,
 };
+use reqwest::StatusCode;
 use resolver_api::Resolve;
+use serror::AddStatusCodeError as _;
 
 use crate::{
-  helpers::{periphery_client, query::get_all_tags},
+  helpers::{
+    periphery_client, query::get_all_tags, swarm::swarm_request,
+  },
   permission::get_check_permissions,
   resource,
-  stack::get_stack_and_server,
-  state::{action_states, server_status_cache, stack_status_cache},
+  stack::setup_stack_execution,
+  state::{action_states, stack_status_cache},
 };
 
 use super::ReadArgs;
@@ -73,28 +77,49 @@ impl Resolve<ReadArgs> for GetStackLog {
   ) -> serror::Result<GetStackLogResponse> {
     let GetStackLog {
       stack,
-      services,
+      mut services,
       tail,
       timestamps,
     } = self;
-    let (stack, server) = get_stack_and_server(
+    let (stack, swarm_or_server) = setup_stack_execution(
       &stack,
       user,
       PermissionLevel::Read.logs(),
-      true,
     )
     .await?;
-    let res = periphery_client(&server)
-      .await?
-      .request(GetComposeLog {
-        project: stack.project_name(false),
-        services,
-        tail,
-        timestamps,
-      })
-      .await
-      .context("Failed to get stack log from periphery")?;
-    Ok(res)
+
+    let log = match swarm_or_server {
+      SwarmOrServer::Swarm(swarm) => {
+        let service = services.pop().context(
+          "Must pass single service for Swarm mode Stack logs",
+        )?;
+        swarm_request(
+          &swarm.config.server_ids,
+          periphery_client::api::swarm::GetSwarmServiceLog {
+            service,
+            tail,
+            timestamps,
+            no_task_ids: false,
+            no_resolve: false,
+            details: false,
+          },
+        )
+        .await
+        .context("Failed to get stack service log from swarm")?
+      }
+      SwarmOrServer::Server(server) => periphery_client(&server)
+        .await?
+        .request(GetComposeLog {
+          project: stack.project_name(false),
+          services,
+          tail,
+          timestamps,
+        })
+        .await
+        .context("Failed to get stack log from periphery")?,
+    };
+
+    Ok(log)
   }
 }
 
@@ -105,32 +130,55 @@ impl Resolve<ReadArgs> for SearchStackLog {
   ) -> serror::Result<SearchStackLogResponse> {
     let SearchStackLog {
       stack,
-      services,
+      mut services,
       terms,
       combinator,
       invert,
       timestamps,
     } = self;
-    let (stack, server) = get_stack_and_server(
+    let (stack, swarm_or_server) = setup_stack_execution(
       &stack,
       user,
       PermissionLevel::Read.logs(),
-      true,
     )
     .await?;
-    let res = periphery_client(&server)
-      .await?
-      .request(GetComposeLogSearch {
-        project: stack.project_name(false),
-        services,
-        terms,
-        combinator,
-        invert,
-        timestamps,
-      })
-      .await
-      .context("Failed to search stack log from periphery")?;
-    Ok(res)
+
+    let log = match swarm_or_server {
+      SwarmOrServer::Swarm(swarm) => {
+        let service = services.pop().context(
+          "Must pass single service for Swarm mode Stack logs",
+        )?;
+        swarm_request(
+          &swarm.config.server_ids,
+          periphery_client::api::swarm::GetSwarmServiceLogSearch {
+            service,
+            terms,
+            combinator,
+            invert,
+            timestamps,
+            no_task_ids: false,
+            no_resolve: false,
+            details: false,
+          },
+        )
+        .await
+        .context("Failed to get stack service log from swarm")?
+      }
+      SwarmOrServer::Server(server) => periphery_client(&server)
+        .await?
+        .request(GetComposeLogSearch {
+          project: stack.project_name(false),
+          services,
+          terms,
+          combinator,
+          invert,
+          timestamps,
+        })
+        .await
+        .context("Failed to search stack log from periphery")?,
+    };
+
+    Ok(log)
   }
 }
 
@@ -140,38 +188,29 @@ impl Resolve<ReadArgs> for InspectStackContainer {
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<Container> {
     let InspectStackContainer { stack, service } = self;
-    let stack = get_check_permissions::<Stack>(
+    let (stack, swarm_or_server) = setup_stack_execution(
       &stack,
       user,
-      PermissionLevel::Read.inspect(),
+      PermissionLevel::Read.logs(),
     )
     .await?;
-    if stack.config.server_id.is_empty() {
-      return Err(
-        anyhow!("Cannot inspect stack, not attached to any server")
-          .into(),
-      );
-    }
-    let server =
-      resource::get::<Server>(&stack.config.server_id).await?;
-    let cache = server_status_cache()
-      .get_or_insert_default(&server.id)
-      .await;
-    if cache.state != ServerState::Ok {
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
       return Err(
         anyhow!(
-          "Cannot inspect container: server is {:?}",
-          cache.state
+          "InspectStackContainer should not be called for Stack in Swarm Mode"
         )
-        .into(),
+        .status_code(StatusCode::BAD_REQUEST),
       );
-    }
+    };
+
     let services = &stack_status_cache()
       .get(&stack.id)
       .await
       .unwrap_or_default()
       .curr
       .services;
+
     let Some(name) = services
       .iter()
       .find(|s| s.service == service)
@@ -181,10 +220,12 @@ impl Resolve<ReadArgs> for InspectStackContainer {
         "No service found matching '{service}'. Was the stack last deployed manually?"
       ).into());
     };
+
     let res = periphery_client(&server)
       .await?
       .request(InspectContainer { name })
       .await?;
+
     Ok(res)
   }
 }

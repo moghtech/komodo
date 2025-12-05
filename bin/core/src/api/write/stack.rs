@@ -10,7 +10,6 @@ use komodo_client::{
     all_logs_success,
     permission::PermissionLevel,
     repo::Repo,
-    server::ServerState,
     stack::{Stack, StackInfo},
     update::Update,
     user::stack_user,
@@ -25,9 +24,8 @@ use resolver_api::Resolve;
 use crate::{
   config::core_config,
   helpers::{
-    periphery_client,
-    query::get_server_with_state,
-    stack_git_token,
+    query::get_swarm_or_server,
+    stack_git_token, swarm_or_server_request,
     update::{add_update, make_update},
   },
   permission::get_check_permissions,
@@ -204,32 +202,24 @@ async fn write_stack_file_contents_on_host(
   contents: String,
   mut update: Update,
 ) -> serror::Result<Update> {
-  if stack.config.server_id.is_empty() {
-    return Err(anyhow!(
-      "Cannot write file, Files on host Stack has not configured a Server"
-    ).into());
-  }
-  let (server, state) =
-    get_server_with_state(&stack.config.server_id).await?;
-  if state != ServerState::Ok {
-    return Err(
-      anyhow!(
-        "Cannot write file when server is unreachable or disabled"
-      )
-      .into(),
-    );
-  }
-  match periphery_client(&server)
-    .await?
-    .request(WriteComposeContentsToHost {
+  let swarm_or_server = get_swarm_or_server(
+    &stack.config.swarm_id,
+    &stack.config.server_id,
+  )
+  .await?;
+
+  let res = swarm_or_server_request(
+    &swarm_or_server,
+    WriteComposeContentsToHost {
       name: stack.name,
       run_directory: stack.config.run_directory,
       file_path,
       contents,
-    })
-    .await
-    .context("Failed to write contents to host")
-  {
+    },
+  )
+  .await;
+
+  match res {
     Ok(log) => {
       update.logs.push(log);
     }
@@ -239,7 +229,7 @@ async fn write_stack_file_contents_on_host(
         format_serror(&e.into()),
       );
     }
-  };
+  }
 
   if !all_logs_success(&update.logs) {
     update.finalize();
@@ -459,26 +449,22 @@ impl Resolve<WriteArgs> for RefreshStackCache {
       // =============
       // FILES ON HOST
       // =============
-      let (server, state) = if stack.config.server_id.is_empty() {
-        (None, ServerState::Disabled)
-      } else {
-        let (server, state) =
-          get_server_with_state(&stack.config.server_id).await?;
-        (Some(server), state)
-      };
-      if state != ServerState::Ok {
-        (vec![], None, None, None, None)
-      } else if let Some(server) = server {
+      if let Ok(swarm_or_server) = get_swarm_or_server(
+        &stack.config.swarm_id,
+        &stack.config.server_id,
+      )
+      .await
+      {
         let GetComposeContentsOnHostResponse { contents, errors } =
-          match periphery_client(&server)
-            .await?
-            .request(GetComposeContentsOnHost {
+          match swarm_or_server_request(
+            &swarm_or_server,
+            GetComposeContentsOnHost {
               file_paths: stack.all_file_dependencies(),
               name: stack.name.clone(),
               run_directory: stack.config.run_directory.clone(),
-            })
-            .await
-            .context("failed to get compose file contents from host")
+            },
+          )
+          .await
           {
             Ok(res) => res,
             Err(e) => GetComposeContentsOnHostResponse {
@@ -489,7 +475,6 @@ impl Resolve<WriteArgs> for RefreshStackCache {
               }],
             },
           };
-
         let project_name = stack.project_name(true);
 
         let mut services = Vec::new();

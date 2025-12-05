@@ -1,6 +1,8 @@
+use anyhow::anyhow;
 use komodo_client::{
   api::execute::*,
   entities::{
+    SwarmOrServer,
     permission::PermissionLevel,
     stack::{Stack, StackActionState},
     update::{Log, Update},
@@ -16,7 +18,7 @@ use crate::{
   state::action_states,
 };
 
-use super::get_stack_and_server;
+use super::setup_stack_execution;
 
 pub trait ExecuteCompose {
   type Extras;
@@ -37,13 +39,18 @@ pub async fn execute_compose<T: ExecuteCompose>(
   mut update: Update,
   extras: T::Extras,
 ) -> anyhow::Result<Update> {
-  let (stack, server) = get_stack_and_server(
+  let (stack, swarm_or_server) = setup_stack_execution(
     stack,
     user,
     PermissionLevel::Execute.into(),
-    true,
   )
   .await?;
+
+  let SwarmOrServer::Server(server) = swarm_or_server else {
+    return Err(anyhow!(
+      "Compose executions (Start, Stop, Restart) should not be called for Stack in Swarm Mode"
+    ));
+  };
 
   // get the action state for the stack (or insert default).
   let action_state =

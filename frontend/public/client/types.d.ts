@@ -1364,7 +1364,19 @@ export declare enum TerminationSignal {
     SigTerm = "SIGTERM"
 }
 export interface DeploymentConfig {
-    /** The id of server the deployment is deployed on. */
+    /**
+     * The Swarm to deploy the Deployment on (as a Swarm Service), setting the Deployment into Swarm mode.
+     *
+     * Note. If both swarm_id and server_id are set,
+     * swarm_id overrides server_id and the Deployment will be in Swarm mode.
+     */
+    swarm_id?: string;
+    /**
+     * The Server to deploy the Deployment on, setting the Deployment into Container mode.
+     *
+     * Note. If both swarm_id and server_id are set,
+     * swarm_id overrides server_id and the Deployment will be in Swarm mode.
+     */
     server_id?: string;
     /**
      * The image which the deployment deploys.
@@ -1411,18 +1423,29 @@ export interface DeploymentConfig {
      * Empty is no command.
      */
     command?: string;
+    /**
+     * The number of replicas for the Service.
+     *
+     * Note. Only used in Swarm mode.
+     */
+    replicas: number;
     /** The default termination signal to use to stop the deployment. Defaults to SigTerm (default docker signal). */
     termination_signal?: TerminationSignal;
     /** The termination timeout. */
     termination_timeout: number;
     /**
-     * Extra args which are interpolated into the `docker run` command,
+     * Extra args which are interpolated into the
+     * `docker run` / `docker service create` command,
      * and affect the container configuration.
+     *
+     * - Container ref: https://docs.docker.com/reference/cli/docker/container/run/#options
+     * - Swarm Service ref: https://docs.docker.com/reference/cli/docker/service/create/#options
      */
     extra_args?: string[];
     /**
      * Labels attached to various termination signal options.
-     * Used to specify different shutdown functionality depending on the termination signal.
+     * Used to specify different shutdown functionality depending
+     * on the termination signal.
      */
     term_signal_labels?: string;
     /**
@@ -1436,7 +1459,7 @@ export interface DeploymentConfig {
      * Maps files / folders on host to files / folders in container.
      */
     volumes?: string;
-    /** The environment variables passed to the container. */
+    /** The environment variables passed to the container / service. */
     environment?: string;
     /** The docker labels given to the container. */
     labels?: string;
@@ -2414,27 +2437,43 @@ export interface StackFileDependency {
 }
 /** The compose file configuration. */
 export interface StackConfig {
-    /** The server to deploy the stack on. */
+    /**
+     * The Swarm to deploy the Stack on, setting the Stack into Swarm mode.
+     *
+     * Note. If both swarm_id and server_id are set,
+     * swarm_id overrides server_id and the Stack will be in Swarm mode.
+     */
+    swarm_id?: string;
+    /**
+     * The Server to deploy the Stack on, setting the Stack into Compose mode.
+     *
+     * Note. If both swarm_id and server_id are set,
+     * swarm_id overrides server_id and the Stack will be in Swarm mode.
+     */
     server_id?: string;
     /** Configure quick links that are displayed in the resource header */
     links?: string[];
     /**
      * Optionally specify a custom project name for the stack.
      * If this is empty string, it will default to the stack name.
-     * Used with `docker compose -p {project_name}`.
+     * Used with `docker compose -p {project_name}` / `docker stack deploy {project_name}`.
      *
-     * Note. Can be used to import pre-existing stacks.
+     * Note. Can be used to import pre-existing stacks with names that do not match Stack name.
      */
     project_name?: string;
     /**
      * Whether to automatically `compose pull` before redeploying stack.
      * Ensured latest images are deployed.
      * Will fail if the compose file specifies a locally build image.
+     *
+     * Note. Not used in Swarm mode.
      */
     auto_pull: boolean;
     /**
      * Whether to `docker compose build` before `compose down` / `compose up`.
      * Combine with build_extra_args for custom behaviors.
+     *
+     * Note. Not used in Swarm mode.
      */
     run_build?: boolean;
     /** Whether to poll for any updates to the images. */
@@ -2521,6 +2560,8 @@ export interface StackConfig {
      * The name of the written environment file before `docker compose up`.
      * Relative to the run directory root.
      * Default: .env
+     *
+     * Note. Not used in Swarm mode.
      */
     env_file_path: string;
     /**
@@ -2552,7 +2593,11 @@ export interface StackConfig {
     /** The optional command to run after the Stack is deployed. */
     post_deploy?: SystemCommand;
     /**
-     * The extra arguments to pass after `docker compose up -d`.
+     * The extra arguments to pass to the deploy command.
+     *
+     * - For Compose stack, uses `docker compose up -d [EXTRA_ARGS]`.
+     * - For Swarm mode. `docker stack deploy [EXTRA_ARGS] STACK_NAME`
+     *
      * If empty, no extra arguments will be passed.
      */
     extra_args?: string[];
@@ -2560,6 +2605,8 @@ export interface StackConfig {
      * The extra arguments to pass after `docker compose build`.
      * If empty, no extra build arguments will be passed.
      * Only used if `run_build: true`
+     *
+     * Note. Not used in Swarm mode.
      */
     build_extra_args?: string[];
     /**
@@ -2591,6 +2638,8 @@ export interface StackConfig {
      * which is given relative to the run directory.
      *
      * If it is empty, no file will be written.
+     *
+     * Note. Not used in Swarm mode.
      */
     environment?: string;
 }
@@ -2620,6 +2669,9 @@ export interface StackServiceNames {
      *
      * This stores only 1. and 2., ie stacko-mongo.
      * Containers will be matched via regex like `^container_name-?[0-9]*$``
+     *
+     * Note. Setting container_name is not supported by Swarm,
+     * so will always be 1. and 2. in Swarm mode.
      */
     container_name: string;
     /** The services image. */
@@ -6491,6 +6543,8 @@ export interface DeployStack {
     /**
      * Filter to only deploy specific services.
      * If empty, will deploy all services.
+     *
+     * Note. For Swarm mode Stacks, this field is not supported and will be ignored.
      */
     services?: string[];
     /**
