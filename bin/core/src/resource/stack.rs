@@ -5,7 +5,7 @@ use indexmap::IndexSet;
 use komodo_client::{
   api::write::RefreshStackCache,
   entities::{
-    Operation, ResourceTarget, ResourceTargetVariant,
+    Operation, ResourceTarget, ResourceTargetVariant, SwarmOrServer,
     permission::{PermissionLevel, SpecificPermission},
     repo::Repo,
     resource::Resource,
@@ -20,14 +20,21 @@ use komodo_client::{
     user::{User, stack_user},
   },
 };
-use periphery_client::api::compose::ComposeExecution;
+use periphery_client::api::{
+  compose::ComposeExecution, swarm::RemoveSwarmStacks,
+};
 use resolver_api::Resolve;
 
 use crate::{
   api::write::WriteArgs,
   config::core_config,
-  helpers::{periphery_client, query::get_stack_state, repo_link},
-  monitor::update_cache_for_server,
+  helpers::{
+    periphery_client,
+    query::{get_stack_state, get_swarm_or_server},
+    repo_link,
+    swarm::swarm_request,
+  },
+  monitor::{update_cache_for_server, update_cache_for_swarm},
   state::{
     action_states, all_resources_cache, db_client,
     server_status_cache, stack_status_cache,
@@ -138,14 +145,14 @@ impl super::KomodoResource for Stack {
 
     // This is only true if it is KNOWN to be true. so other cases are false.
     let (project_missing, status) =
-      if stack.config.server_id.is_empty()
-        || matches!(state, StackState::Down | StackState::Unknown)
-      {
+      if matches!(state, StackState::Down | StackState::Unknown) {
         (false, None)
-      } else if let Some(status) = server_status_cache()
-        .get(&stack.config.server_id)
-        .await
-        .as_ref()
+      } else if stack.config.swarm_id.is_empty()
+        && !stack.config.server_id.is_empty()
+        && let Some(status) = server_status_cache()
+          .get(&stack.config.server_id)
+          .await
+          .as_ref()
       {
         if let Some(docker) = &status.docker {
           if let Some(project) = docker
@@ -177,6 +184,7 @@ impl super::KomodoResource for Stack {
         services,
         project_missing,
         file_contents: !stack.config.file_contents.is_empty(),
+        swarm_id: stack.config.swarm_id,
         server_id: stack.config.server_id,
         linked_repo: stack.config.linked_repo,
         missing_files: stack.info.missing_files,
@@ -239,21 +247,32 @@ impl super::KomodoResource for Stack {
         format_serror(&e.error.context("The stack cache has failed to refresh. This may be due to a misconfiguration of the Stack").into())
       );
     };
-    if created.config.server_id.is_empty() {
+    if created.config.swarm_id.is_empty()
+      && created.config.server_id.is_empty()
+    {
       return Ok(());
     }
-    let Ok(server) = super::get::<Server>(&created.config.server_id)
-      .await
-      .inspect_err(|e| {
-        warn!(
-          "Failed to get Server for Stack {} | {e:#}",
-          created.name
-        )
-      })
-    else {
+    let Ok(swarm_or_server) = get_swarm_or_server(
+      &created.config.swarm_id,
+      &created.config.server_id,
+    )
+    .await
+    .inspect_err(|e| {
+      warn!(
+        "Failed to get Swarm or Server for Stack {} | {e:#}",
+        created.name
+      )
+    }) else {
       return Ok(());
     };
-    update_cache_for_server(&server, true).await;
+    match swarm_or_server {
+      SwarmOrServer::Swarm(swarm) => {
+        update_cache_for_swarm(&swarm, true).await;
+      }
+      SwarmOrServer::Server(server) => {
+        update_cache_for_server(&server, true).await;
+      }
+    }
     Ok(())
   }
 
@@ -302,65 +321,94 @@ impl super::KomodoResource for Stack {
       return Ok(());
     }
     // stack needs to be destroyed
-    let server =
-      match super::get::<Server>(&stack.config.server_id).await {
-        Ok(server) => server,
-        Err(e) => {
-          update.push_error_log(
-            "destroy stack",
-            format_serror(
-              &e.context(format!(
-                "failed to retrieve server at {} from db.",
-                stack.config.server_id
-              ))
-              .into(),
-            ),
-          );
-          return Ok(());
-        }
-      };
-
-    if !server.config.enabled {
-      update.push_simple_log(
-        "destroy stack",
-        "skipping stack destroy, server is disabled.",
-      );
-      return Ok(());
-    }
-
-    let periphery = match periphery_client(&server).await {
-      Ok(periphery) => periphery,
+    let swarm_or_server = match get_swarm_or_server(
+      &stack.config.swarm_id,
+      &stack.config.server_id,
+    )
+    .await
+    {
+      Ok(res) => res,
       Err(e) => {
-        // This case won't ever happen, as periphery_client only fallible if the server is disabled.
-        // Leaving it for completeness sake
         update.push_error_log(
-          "destroy stack",
+          "Destroy Stack",
           format_serror(
-            &e.context("failed to get periphery client").into(),
+            &e.context(
+              "Failed to retrieve Swarm or Server from database.",
+            )
+            .into(),
           ),
         );
         return Ok(());
       }
     };
 
-    match periphery
-      .request(ComposeExecution {
-        project: stack.project_name(false),
-        command: String::from("down --remove-orphans"),
-      })
-      .await
-    {
-      Ok(log) => update.logs.push(log),
-      Err(e) => update.push_simple_log(
-        "Failed to destroy stack",
-        format_serror(
-          &e.context(
-            "failed to destroy stack on periphery server before delete",
-          )
-          .into(),
-        ),
-      ),
-    };
+    match swarm_or_server {
+      SwarmOrServer::Swarm(swarm) => {
+        match swarm_request(
+          &swarm.config.server_ids,
+          RemoveSwarmStacks {
+            stacks: vec![stack.project_name(false)],
+            detach: true,
+          },
+        )
+        .await
+        {
+          Ok(log) => update.logs.push(log),
+          Err(e) => update.push_simple_log(
+            "Failed to destroy stack",
+            format_serror(
+              &e.context(
+                "Failed to destroy Stack on Swarm before delete",
+              )
+              .into(),
+            ),
+          ),
+        }
+      }
+      SwarmOrServer::Server(server) => {
+        if !server.config.enabled {
+          update.push_simple_log(
+            "Destroy Stack",
+            "Skipping stack destroy, Server is disabled.",
+          );
+          return Ok(());
+        }
+
+        let periphery = match periphery_client(&server).await {
+          Ok(periphery) => periphery,
+          Err(e) => {
+            // This case won't ever happen, as periphery_client only fallible if the server is disabled.
+            // Leaving it for completeness sake
+            update.push_error_log(
+              "Destroy Stack",
+              format_serror(
+                &e.context("Failed to get periphery client").into(),
+              ),
+            );
+            return Ok(());
+          }
+        };
+
+        match periphery
+          .request(ComposeExecution {
+            project: stack.project_name(false),
+            command: String::from("down --remove-orphans"),
+          })
+          .await
+        {
+          Ok(log) => update.logs.push(log),
+          Err(e) => update.push_simple_log(
+            "Failed to destroy stack",
+            format_serror(
+              &e.context(
+                "failed to destroy stack on periphery server before delete",
+              )
+              .into(),
+            ),
+          ),
+        };
+      }
+    }
 
     Ok(())
   }

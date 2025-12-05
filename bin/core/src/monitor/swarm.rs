@@ -22,7 +22,12 @@ use tokio::sync::Mutex;
 use crate::{
   config::monitoring_interval,
   helpers::swarm::swarm_request_custom_timeout,
-  monitor::UpdateCacheResources,
+  monitor::{
+    UpdateCacheResources,
+    resources::{
+      update_swarm_deployment_cache, update_swarm_stack_cache,
+    },
+  },
   state::{CachedSwarmStatus, db_client, swarm_status_cache},
 };
 
@@ -30,17 +35,16 @@ const ADDITIONAL_MS: u128 = 1000;
 
 pub fn spawn_swarm_monitoring_loop() {
   tokio::spawn(async move {
-    refresh_swarm_cache(komodo_timestamp()).await;
+    refresh_swarm_cache().await;
     let interval = monitoring_interval();
     loop {
-      let ts = (wait_until_timelength(interval, ADDITIONAL_MS).await
-        - ADDITIONAL_MS) as i64;
-      refresh_swarm_cache(ts).await;
+      wait_until_timelength(interval, ADDITIONAL_MS).await;
+      refresh_swarm_cache().await;
     }
   });
 }
 
-async fn refresh_swarm_cache(_ts: i64) {
+async fn refresh_swarm_cache() {
   let swarms =
     match find_collect(&db_client().swarms, None, None).await {
       Ok(swarms) => swarms,
@@ -148,7 +152,18 @@ pub async fn update_cache_for_swarm(swarm: &Swarm, force: bool) {
     }
   }
 
-  // TODO: UPDATE STACKS / DEPLOYMENT CACHES
+  tokio::join!(
+    update_swarm_stack_cache(
+      resources.stacks,
+      &lists.stacks,
+      &lists.services,
+    ),
+    update_swarm_deployment_cache(
+      resources.deployments,
+      &lists.services,
+      &lists.tasks,
+    )
+  );
 
   swarm_status_cache()
     .insert(

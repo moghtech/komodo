@@ -60,6 +60,7 @@ pub async fn insert_stacks_status_unknown(stacks: Vec<Stack>) {
             id: stack.id,
             state: StackState::Unknown,
             services: Vec::new(),
+            swarm_stack: None,
           },
           prev,
         }
@@ -84,6 +85,7 @@ pub async fn insert_deployments_status_unknown(
             id: deployment.id,
             state: DeploymentState::Unknown,
             container: None,
+            service: None,
             update_available: false,
           },
           prev,

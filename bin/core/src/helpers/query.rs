@@ -61,14 +61,6 @@ pub async fn get_user(user: &str) -> anyhow::Result<User> {
     .with_context(|| format!("No user found matching '{user}'"))
 }
 
-pub async fn get_swarm_with_reachability(
-  swarm_id_or_name: &str,
-) -> anyhow::Result<(Swarm, bool)> {
-  let swarm = resource::get::<Swarm>(swarm_id_or_name).await?;
-  let reachable = get_swarm_reachability(&swarm).await.is_ok();
-  Ok((swarm, reachable))
-}
-
 pub async fn get_swarm_reachability(
   swarm: &Swarm,
 ) -> anyhow::Result<()> {
@@ -202,7 +194,9 @@ pub fn get_stack_state_from_containers(
 pub async fn get_stack_state(
   stack: &Stack,
 ) -> anyhow::Result<StackState> {
-  if stack.config.server_id.is_empty() {
+  if stack.config.swarm_id.is_empty()
+    && stack.config.server_id.is_empty()
+  {
     return Ok(StackState::Down);
   }
   let state = stack_status_cache()

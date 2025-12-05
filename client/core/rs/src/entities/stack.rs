@@ -20,7 +20,10 @@ use crate::{
     option_maybe_string_i64_deserializer,
     option_string_list_deserializer, string_list_deserializer,
   },
-  entities::{EnvironmentVar, environment_vars_from_str},
+  entities::{
+    EnvironmentVar, docker::service::SwarmServiceListItem,
+    environment_vars_from_str,
+  },
 };
 
 use super::{
@@ -133,7 +136,9 @@ pub type StackListItem = ResourceListItem<StackListItemInfo>;
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StackListItemInfo {
-  /// The server that stack is deployed on.
+  /// The swarm that stack is deployed on, when in Swarm mode.
+  pub swarm_id: String,
+  /// The server that stack is deployed on, when in Server mode.
   pub server_id: String,
   /// Whether stack is using files on host mode
   pub files_on_host: bool,
@@ -731,8 +736,10 @@ pub struct StackService {
   pub service: String,
   /// The service image
   pub image: String,
-  /// The container
+  /// The container (Server mode)
   pub container: Option<ContainerListItem>,
+  /// The service (Swarm mode)
+  pub swarm_service: Option<SwarmServiceListItem>,
   /// Whether there is an update available for this services image.
   pub update_available: bool,
 }

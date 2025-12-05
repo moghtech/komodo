@@ -197,18 +197,18 @@ pub async fn update_cache_for_server(server: &Server, force: bool) {
     .unwrap_or(&[]);
 
   tokio::join!(
-    resources::update_deployment_cache(
+    resources::update_server_stack_cache(
+      server.name.clone(),
+      resources.stacks,
+      containers,
+      images
+    ),
+    resources::update_server_deployment_cache(
       server.name.clone(),
       resources.deployments,
       containers,
       images,
       &resources.builds,
-    ),
-    resources::update_stack_cache(
-      server.name.clone(),
-      resources.stacks,
-      containers,
-      images
     ),
   );
 

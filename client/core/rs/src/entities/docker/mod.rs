@@ -33,11 +33,11 @@ pub mod volume;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SwarmLists {
   pub nodes: Vec<SwarmNodeListItem>,
+  pub stacks: Vec<SwarmStackListItem>,
   pub services: Vec<SwarmServiceListItem>,
   pub tasks: Vec<SwarmTaskListItem>,
-  pub secrets: Vec<SwarmSecretListItem>,
   pub configs: Vec<SwarmConfigListItem>,
-  pub stacks: Vec<SwarmStackListItem>,
+  pub secrets: Vec<SwarmSecretListItem>,
 }
 
 /// Standard docker lists available from a Server.

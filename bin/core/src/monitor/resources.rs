@@ -15,9 +15,13 @@ use komodo_client::{
     docker::{
       container::{ContainerListItem, ContainerStateStatusEnum},
       image::ImageListItem,
+      service::SwarmServiceListItem,
+      stack::SwarmStackListItem,
+      task::SwarmTaskListItem,
     },
     komodo_timestamp,
     stack::{Stack, StackService, StackServiceNames, StackState},
+    swarm::SwarmState,
     user::auto_redeploy_user,
   },
 };
@@ -44,7 +48,87 @@ fn stack_alert_sent_cache() -> &'static AlertCache<(String, String)> {
   CACHE.get_or_init(Default::default)
 }
 
-pub async fn update_stack_cache(
+pub async fn update_swarm_stack_cache(
+  stacks: Vec<Stack>,
+  swarm_stacks: &[SwarmStackListItem],
+  swarm_services: &[SwarmServiceListItem],
+) {
+  let stack_status_cache = stack_status_cache();
+  for stack in stacks {
+    let project_name = stack.project_name(false);
+    let swarm_stack = swarm_stacks
+      .iter()
+      .find(|stack| {
+        stack
+          .name
+          .as_ref()
+          .map(|name| name == &project_name)
+          .unwrap_or_default()
+      })
+      .cloned();
+    let services = extract_services_from_stack(&stack);
+    let mut services_with_swarm_services = services
+      .iter()
+      .map(
+        |StackServiceNames {
+           service_name,
+           image,
+           ..
+         }| {
+          let swarm_service = swarm_services
+            .iter()
+            .find(|service| {
+              service
+                .name
+                .as_ref()
+                .map(|name| name == service_name)
+                .unwrap_or_default()
+            })
+            .cloned();
+          StackService {
+            service: service_name.clone(),
+            image: image.clone(),
+            container: None,
+            swarm_service,
+            update_available: false,
+          }
+        },
+      )
+      .collect::<Vec<_>>();
+    services_with_swarm_services
+      .sort_by(|a, b| a.service.cmp(&b.service));
+    let current_state = swarm_stack
+      .as_ref()
+      .map(|stack| match stack.state {
+        Some(SwarmState::Healthy) => StackState::Running,
+        Some(SwarmState::Unhealthy) => StackState::Unhealthy,
+        Some(SwarmState::Unknown) | None => StackState::Unknown,
+      })
+      .unwrap_or(StackState::Down);
+    let prev_state = stack_status_cache
+      .get(&stack.id)
+      .await
+      .map(|s| s.curr.state);
+    let status = CachedStackStatus {
+      id: stack.id.clone(),
+      state: current_state,
+      services: services_with_swarm_services,
+      swarm_stack,
+    };
+    stack_status_cache
+      .insert(
+        stack.id,
+        History {
+          curr: status,
+          prev: prev_state,
+        }
+        .into(),
+      )
+      .await;
+  }
+}
+
+pub async fn update_server_stack_cache(
   server_name: String,
   stacks: Vec<Stack>,
   containers: &[ContainerListItem],
@@ -132,6 +216,7 @@ pub async fn update_stack_cache(
         service: service_name.clone(),
         image: image.clone(),
         container,
+        swarm_service: None,
         update_available,
       }
     }).collect::<Vec<_>>();
@@ -155,14 +240,14 @@ pub async fn update_stack_cache(
       }
     }
 
-    let state = get_stack_state_from_containers(
+    let current_state = get_stack_state_from_containers(
       &stack.config.ignore_services,
       &services,
       containers,
     );
     if !services_to_update.is_empty()
       && stack.config.auto_update
-      && state == StackState::Running
+      && current_state == StackState::Running
       && !action_states()
         .stack
         .get_or_insert_default(&stack.id)
@@ -221,17 +306,25 @@ pub async fn update_stack_cache(
     }
     services_with_containers
       .sort_by(|a, b| a.service.cmp(&b.service));
-    let prev = stack_status_cache
+    let prev_state = stack_status_cache
       .get(&stack.id)
       .await
       .map(|s| s.curr.state);
     let status = CachedStackStatus {
       id: stack.id.clone(),
-      state,
+      state: current_state,
       services: services_with_containers,
+      swarm_stack: None,
     };
     stack_status_cache
-      .insert(stack.id, History { curr: status, prev }.into())
+      .insert(
+        stack.id,
+        History {
+          curr: status,
+          prev: prev_state,
+        }
+        .into(),
+      )
       .await;
   }
 }
@@ -241,7 +334,75 @@ fn deployment_alert_sent_cache() -> &'static AlertCache<String> {
   CACHE.get_or_init(Default::default)
 }
 
-pub async fn update_deployment_cache(
+pub async fn update_swarm_deployment_cache(
+  deployments: Vec<Deployment>,
+  swarm_services: &[SwarmServiceListItem],
+  swarm_tasks: &[SwarmTaskListItem],
+) {
+  let deployment_status_cache = deployment_status_cache();
+  for deployment in deployments {
+    let service = swarm_services
+      .iter()
+      .find(|service| {
+        service
+          .name
+          .as_ref()
+          .map(|name| name == &deployment.name)
+          .unwrap_or_default()
+      })
+      .cloned();
+    let prev_state = deployment_status_cache
+      .get(&deployment.id)
+      .await
+      .map(|s| s.curr.state);
+    let current_state = service
+      .as_ref()
+      .map(|service| {
+        let Some(service_id) = &service.id else {
+          return DeploymentState::Unknown;
+        };
+        let tasks = swarm_tasks
+          .iter()
+          .filter(|task| {
+            task
+              .service_id
+              .as_ref()
+              .map(|id| id == service_id)
+              .unwrap_or_default()
+          })
+          .collect::<Vec<_>>();
+        // If service exists but no tasks, it is unhealthy
+        if tasks.is_empty() {
+          return DeploymentState::Unhealthy;
+        }
+        for task in tasks {
+          if task.desired_state != task.state {
+            return DeploymentState::Unhealthy;
+          }
+        }
+        DeploymentState::Running
+      })
+      .unwrap_or(DeploymentState::NotDeployed);
+    deployment_status_cache
+      .insert(
+        deployment.id.clone(),
+        History {
+          curr: CachedDeploymentStatus {
+            id: deployment.id,
+            state: current_state,
+            service,
+            container: None,
+            update_available: false,
+          },
+          prev: prev_state,
+        }
+        .into(),
+      )
+      .await;
+  }
+}
+
+pub async fn update_server_deployment_cache(
   server_name: String,
   deployments: Vec<Deployment>,
   containers: &[ContainerListItem],
@@ -256,11 +417,11 @@ pub async fn update_deployment_cache(
       .iter()
       .find(|container| container.name == deployment.name)
       .cloned();
-    let prev = deployment_status_cache
+    let prev_state = deployment_status_cache
       .get(&deployment.id)
       .await
       .map(|s| s.curr.state);
-    let state = container
+    let current_state = container
       .as_ref()
       .map(|c| c.state.into())
       .unwrap_or(DeploymentState::NotDeployed);
@@ -307,7 +468,7 @@ pub async fn update_deployment_cache(
 
     if update_available {
       if deployment.config.auto_update {
-        if state == DeploymentState::Running
+        if current_state == DeploymentState::Running
           && !action_states()
             .deployment
             .get_or_insert_default(&deployment.id)
@@ -362,7 +523,7 @@ pub async fn update_deployment_cache(
             }
           });
         }
-      } else if state == DeploymentState::Running
+      } else if current_state == DeploymentState::Running
         && deployment.config.send_alerts
         && deployment_alert_sent_cache.contains(&deployment.id)
       {
@@ -404,11 +565,12 @@ pub async fn update_deployment_cache(
         History {
           curr: CachedDeploymentStatus {
             id: deployment.id,
-            state,
+            state: current_state,
             container,
+            service: None,
             update_available,
           },
-          prev,
+          prev: prev_state,
         }
         .into(),
       )

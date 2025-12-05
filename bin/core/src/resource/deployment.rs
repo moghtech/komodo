@@ -3,7 +3,7 @@ use database::mungos::mongodb::Collection;
 use formatting::format_serror;
 use indexmap::IndexSet;
 use komodo_client::entities::{
-  Operation, ResourceTarget, ResourceTargetVariant,
+  Operation, ResourceTarget, ResourceTargetVariant, SwarmOrServer,
   build::Build,
   deployment::{
     Deployment, DeploymentConfig, DeploymentConfigDiff,
@@ -19,13 +19,16 @@ use komodo_client::entities::{
   update::Update,
   user::User,
 };
-use periphery_client::api::container::RemoveContainer;
+use periphery_client::api::{
+  container::RemoveContainer, swarm::RemoveSwarmServices,
+};
 
 use crate::{
   config::core_config,
   helpers::{
     empty_or_only_spaces, periphery_client,
-    query::get_deployment_state,
+    query::{get_deployment_state, get_swarm_or_server},
+    swarm::swarm_request,
   },
   monitor::update_cache_for_server,
   state::{action_states, db_client, deployment_status_cache},
@@ -115,14 +118,28 @@ impl super::KomodoResource for Deployment {
     let (image, update_available) = status
       .as_ref()
       .and_then(|s| {
-        s.curr.container.as_ref().map(|c| {
-          (
-            c.image
-              .clone()
-              .unwrap_or_else(|| String::from("Unknown")),
-            s.curr.update_available,
-          )
-        })
+        s.curr
+          .service
+          .as_ref()
+          .map(|service| {
+            (
+              service
+                .image
+                .clone()
+                .unwrap_or_else(|| String::from("Unknown")),
+              s.curr.update_available,
+            )
+          })
+          .or_else(|| {
+            s.curr.container.as_ref().map(|c| {
+              (
+                c.image
+                  .clone()
+                  .unwrap_or_else(|| String::from("Unknown")),
+                s.curr.update_available,
+              )
+            })
+          })
       })
       .unwrap_or((build_image, false));
     DeploymentListItem {
@@ -229,6 +246,11 @@ impl super::KomodoResource for Deployment {
     deployment: &Resource<Self::Config, Self::Info>,
     update: &mut Update,
   ) -> anyhow::Result<()> {
+    if deployment.config.swarm_id.is_empty()
+      && deployment.config.server_id.is_empty()
+    {
+      return Ok(());
+    }
     let state = get_deployment_state(&deployment.id)
       .await
       .context("Failed to get deployment state")?;
@@ -238,65 +260,86 @@ impl super::KomodoResource for Deployment {
     ) {
       return Ok(());
     }
-    // container needs to be destroyed
-    let server = match super::get::<Server>(
+    // container / service needs to be destroyed
+    let swarm_or_server = match get_swarm_or_server(
+      &deployment.config.swarm_id,
       &deployment.config.server_id,
     )
     .await
     {
-      Ok(server) => server,
+      Ok(res) => res,
       Err(e) => {
         update.push_error_log(
-          "Remove Container",
+          "Remove Container / Service",
           format_serror(
-            &e.context(format!(
-              "failed to retrieve server at {} from db.",
-              deployment.config.server_id
-            ))
+            &e.context(
+              "Failed to retrieve Swarm / Server from database",
+            )
             .into(),
           ),
         );
         return Ok(());
       }
     };
-    if !server.config.enabled {
-      // Don't need to
-      update.push_simple_log(
-        "Remove Container",
-        "Skipping container removal, server is disabled.",
-      );
-      return Ok(());
-    }
-    let periphery = match periphery_client(&server).await {
-      Ok(periphery) => periphery,
-      Err(e) => {
-        // This case won't ever happen, as periphery_client only fallible if the server is disabled.
-        // Leaving it for completeness sake
-        update.push_error_log(
-          "Remove Container",
-          format_serror(
-            &e.context("Failed to get periphery client").into(),
-          ),
-        );
-        return Ok(());
-      }
-    };
-    match periphery
-      .request(RemoveContainer {
-        name: deployment.name.clone(),
-        signal: deployment.config.termination_signal.into(),
-        time: deployment.config.termination_timeout.into(),
-      })
+    match swarm_or_server {
+      SwarmOrServer::Swarm(swarm) => match swarm_request(
+        &swarm.config.server_ids,
+        RemoveSwarmServices {
+          services: vec![deployment.name.clone()],
+        },
+      )
       .await
-    {
-      Ok(log) => update.logs.push(log),
-      Err(e) => update.push_error_log(
-        "Remove Container",
-        format_serror(
-          &e.context("Failed to remove container").into(),
+      {
+        Ok(log) => update.logs.push(log),
+        Err(e) => update.push_error_log(
+          "Remove Service",
+          format_serror(
+            &e.context("Failed to remove service").into(),
+          ),
         ),
-      ),
-    };
+      },
+      SwarmOrServer::Server(server) => {
+        if !server.config.enabled {
+          // Don't need to
+          update.push_simple_log(
+            "Remove Container",
+            "Skipping container removal, server is disabled.",
+          );
+          return Ok(());
+        }
+        let periphery = match periphery_client(&server).await {
+          Ok(periphery) => periphery,
+          Err(e) => {
+            // This case won't ever happen, as periphery_client only fallible if the server is disabled.
+            // Leaving it for completeness sake
+            update.push_error_log(
+              "Remove Container",
+              format_serror(
+                &e.context("Failed to get periphery client").into(),
+              ),
+            );
+            return Ok(());
+          }
+        };
+        match periphery
+          .request(RemoveContainer {
+            name: deployment.name.clone(),
+            signal: deployment.config.termination_signal.into(),
+            time: deployment.config.termination_timeout.into(),
+          })
+          .await
+        {
+          Ok(log) => update.logs.push(log),
+          Err(e) => update.push_error_log(
+            "Remove Container",
+            format_serror(
+              &e.context("Failed to remove container").into(),
+            ),
+          ),
+        };
+      }
+    }
+
     Ok(())
   }
 

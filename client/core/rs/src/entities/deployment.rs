@@ -168,7 +168,7 @@ pub struct DeploymentConfig {
   /// Extra args which are interpolated into the
   /// `docker run` / `docker service create` command,
   /// and affect the container configuration.
-  /// 
+  ///
   /// - Container ref: https://docs.docker.com/reference/cli/docker/container/run/#options
   /// - Swarm Service ref: https://docs.docker.com/reference/cli/docker/service/create/#options
   #[serde(default, deserialize_with = "string_list_deserializer")]
@@ -379,23 +379,25 @@ pub fn conversions_from_str(
 pub enum DeploymentState {
   /// The deployment is currently re/deploying
   Deploying,
-  /// Container is running
+  /// Container / Service is running
   Running,
-  /// Container is created but not running
+  /// Server mode only. Container is created but not running.
   Created,
-  /// Container is in restart loop
+  /// Server mode only. Container is in restart loop
   Restarting,
-  /// Container is being removed
+  /// Server mode only. Container is being removed
   Removing,
-  /// Container is paused
+  /// Server mode only. Container is paused
   Paused,
-  /// Container is exited
+  /// Server mode only. Container is exited
   Exited,
-  /// Container is dead
+  /// Server mode only. Container is dead
   Dead,
-  /// The deployment is not deployed (no matching container)
+  /// Swarm mode only. Some tasks don't match their desired state.
+  Unhealthy,
+  /// The deployment is not deployed (no matching Container / Service)
   NotDeployed,
-  /// Server not reachable for status
+  /// Server / Swarm not reachable for status
   #[default]
   Unknown,
 }
