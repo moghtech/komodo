@@ -240,23 +240,25 @@ export var DeploymentState;
 (function (DeploymentState) {
     /** The deployment is currently re/deploying */
     DeploymentState["Deploying"] = "deploying";
-    /** Container is running */
+    /** Container / Service is running */
     DeploymentState["Running"] = "running";
-    /** Container is created but not running */
+    /** Server mode only. Container is created but not running. */
     DeploymentState["Created"] = "created";
-    /** Container is in restart loop */
+    /** Server mode only. Container is in restart loop */
     DeploymentState["Restarting"] = "restarting";
-    /** Container is being removed */
+    /** Server mode only. Container is being removed */
     DeploymentState["Removing"] = "removing";
-    /** Container is paused */
+    /** Server mode only. Container is paused */
     DeploymentState["Paused"] = "paused";
-    /** Container is exited */
+    /** Server mode only. Container is exited */
     DeploymentState["Exited"] = "exited";
-    /** Container is dead */
+    /** Server mode only. Container is dead */
     DeploymentState["Dead"] = "dead";
-    /** The deployment is not deployed (no matching container) */
+    /** Swarm mode only. Some tasks don't match their desired state. */
+    DeploymentState["Unhealthy"] = "unhealthy";
+    /** The deployment is not deployed (no matching Container / Service) */
     DeploymentState["NotDeployed"] = "not_deployed";
-    /** Server not reachable for status */
+    /** Server / Swarm not reachable for status */
     DeploymentState["Unknown"] = "unknown";
 })(DeploymentState || (DeploymentState = {}));
 /** Severity level of problem. */

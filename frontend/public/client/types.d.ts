@@ -1476,23 +1476,25 @@ export type Deployment = Resource<DeploymentConfig, undefined>;
 export declare enum DeploymentState {
     /** The deployment is currently re/deploying */
     Deploying = "deploying",
-    /** Container is running */
+    /** Container / Service is running */
     Running = "running",
-    /** Container is created but not running */
+    /** Server mode only. Container is created but not running. */
     Created = "created",
-    /** Container is in restart loop */
+    /** Server mode only. Container is in restart loop */
     Restarting = "restarting",
-    /** Container is being removed */
+    /** Server mode only. Container is being removed */
     Removing = "removing",
-    /** Container is paused */
+    /** Server mode only. Container is paused */
     Paused = "paused",
-    /** Container is exited */
+    /** Server mode only. Container is exited */
     Exited = "exited",
-    /** Container is dead */
+    /** Server mode only. Container is dead */
     Dead = "dead",
-    /** The deployment is not deployed (no matching container) */
+    /** Swarm mode only. Some tasks don't match their desired state. */
+    Unhealthy = "unhealthy",
+    /** The deployment is not deployed (no matching Container / Service) */
     NotDeployed = "not_deployed",
-    /** Server not reachable for status */
+    /** Server / Swarm not reachable for status */
     Unknown = "unknown"
 }
 export interface DeploymentListItemInfo {
@@ -4913,13 +4915,31 @@ export interface ServerListItemInfo {
 }
 export type ServerListItem = ResourceListItem<ServerListItemInfo>;
 export type ListServersResponse = ServerListItem[];
+/** Swarm service list item. */
+export interface SwarmServiceListItem {
+    ID?: string;
+    /** Name of the service. */
+    Name?: string;
+    /** The image associated with service */
+    Image?: string;
+    /** Runtime is the type of runtime specified for the task executor. */
+    Runtime?: string;
+    /** Condition for restart. */
+    Restart?: TaskSpecRestartPolicyConditionEnum;
+    /** Number of replicas */
+    Replicas?: I64;
+    CreatedAt?: string;
+    UpdatedAt?: string;
+}
 export interface StackService {
     /** The service name */
     service: string;
     /** The service image */
     image: string;
-    /** The container */
+    /** The container (Server mode) */
     container?: ContainerListItem;
+    /** The service (Swarm mode) */
+    swarm_service?: SwarmServiceListItem;
     /** Whether there is an update available for this services image. */
     update_available: boolean;
 }
@@ -4956,7 +4976,9 @@ export interface StackServiceWithUpdate {
     update_available: boolean;
 }
 export interface StackListItemInfo {
-    /** The server that stack is deployed on. */
+    /** The swarm that stack is deployed on, when in Swarm mode. */
+    swarm_id: string;
+    /** The server that stack is deployed on, when in Server mode. */
     server_id: string;
     /** Whether stack is using files on host mode */
     files_on_host: boolean;
@@ -5051,22 +5073,6 @@ export interface SwarmSecretListItem {
     UpdatedAt?: string;
 }
 export type ListSwarmSecretsResponse = SwarmSecretListItem[];
-/** Swarm service list item. */
-export interface SwarmServiceListItem {
-    ID?: string;
-    /** Name of the service. */
-    Name?: string;
-    /** The image associated with service */
-    Image?: string;
-    /** Runtime is the type of runtime specified for the task executor. */
-    Runtime?: string;
-    /** Condition for restart. */
-    Restart?: TaskSpecRestartPolicyConditionEnum;
-    /** Number of replicas */
-    Replicas?: I64;
-    CreatedAt?: string;
-    UpdatedAt?: string;
-}
 export type ListSwarmServicesResponse = SwarmServiceListItem[];
 /**
  * Swarm stack list item.
