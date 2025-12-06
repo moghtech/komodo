@@ -44,7 +44,9 @@ pub struct DeploymentListItemInfo {
   pub image: String,
   /// Whether there is a newer image available at the same tag.
   pub update_available: bool,
-  /// The server that deployment sits on.
+  /// The swarm that deployment is deployed on, when in Swarm mode.
+  pub swarm_id: String,
+  /// The server that deployment is deployed on, when in Server mode.
   pub server_id: String,
   /// An attached Komodo Build, if it exists.
   pub build_id: Option<String>,

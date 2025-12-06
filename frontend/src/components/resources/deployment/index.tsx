@@ -33,6 +33,7 @@ import {
 import { GroupActions } from "@components/group-actions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 import { DeploymentTabs } from "./tabs";
+import { SwarmResourceLink, useSwarm } from "../swarm";
 
 // const configOrLog = atomWithStorage("config-or-log-v1", "Config");
 
@@ -98,18 +99,21 @@ export const DeploymentComponents: RequiredResourceComponents = {
     );
   },
 
-  New: ({ server_id: _server_id, build_id }) => {
+  New: ({ swarm_id, server_id: _server_id, build_id }) => {
+    const swarmsExist = useRead("ListSwarms", {}).data?.length ? true : false;
     const servers = useRead("ListServers", {}).data;
     const server_id = _server_id
       ? _server_id
-      : servers && servers.length === 1
+      : !swarmsExist && servers && servers.length === 1
         ? servers[0].id
         : undefined;
     return (
       <NewResource
         type="Deployment"
+        swarm_id={swarm_id}
+        selectSwarm={!swarm_id && !server_id}
         server_id={server_id}
-        selectServer={!server_id}
+        selectServer={!swarm_id && !server_id}
         build_id={build_id}
       />
     );
@@ -146,15 +150,18 @@ export const DeploymentComponents: RequiredResourceComponents = {
   },
 
   Info: {
-    Server: ({ id }) => {
+    DeployTarget: ({ id }) => {
       const info = useDeployment(id)?.info;
+      const swarm = useSwarm(info?.swarm_id);
       const server = useServer(info?.server_id);
-      return server?.id ? (
+      return swarm?.id ? (
+        <ResourceLink type="Swarm" id={swarm?.id} />
+      ) : server?.id ? (
         <ResourceLink type="Server" id={server?.id} />
       ) : (
-        <div className="flex gap-2 items-center text-sm">
+        <div className="flex gap-2 items-center">
           <Server className="w-4 h-4" />
-          <div>Unknown Server</div>
+          <div>Unknown</div>
         </div>
       );
     },
@@ -179,7 +186,7 @@ export const DeploymentComponents: RequiredResourceComponents = {
         </div>
       );
     },
-    Container: ({ id }) => {
+    DockerResource: ({ id }) => {
       const deployment = useDeployment(id);
       if (
         !deployment ||
@@ -189,6 +196,16 @@ export const DeploymentComponents: RequiredResourceComponents = {
         ].includes(deployment.info.state)
       )
         return null;
+      if (deployment.info.swarm_id) {
+        return (
+          <SwarmResourceLink
+            type="Service"
+            swarm_id={deployment.info.swarm_id}
+            resource_id={deployment.name}
+            name={deployment.name}
+          />
+        );
+      }
       return (
         <DockerResourceLink
           type="container"

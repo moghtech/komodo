@@ -20,7 +20,12 @@ export interface RequiredResourceComponents {
   Dashboard: React.FC;
 
   /** New resource button / dialog */
-  New: React.FC<{ server_id?: string; builder_id?: string; build_id?: string }>;
+  New: React.FC<{
+    swarm_id?: string;
+    server_id?: string;
+    builder_id?: string;
+    build_id?: string;
+  }>;
 
   /** A table component to view resource list */
   Table: React.FC<{ resources: Types.ResourceListItem<unknown>[] }>;

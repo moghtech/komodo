@@ -1,7 +1,7 @@
 import { DataTable, SortableHeader } from "@ui/data-table";
 import { ResourceLink } from "../common";
 import { TableTags } from "@components/tags";
-import { SwarmComponents, SwarmLink } from ".";
+import { SwarmComponents, SwarmResourceLink } from ".";
 import { Types } from "komodo_client";
 import { useRead, useSelectedResources } from "@lib/hooks";
 import { Dispatch, ReactNode, SetStateAction } from "react";
@@ -92,7 +92,7 @@ export const SwarmServicesTable = ({
               <SortableHeader column={column} title="Name" />
             ),
             cell: ({ row }) => (
-              <SwarmLink
+              <SwarmResourceLink
                 type="Service"
                 swarm_id={id}
                 resource_id={row.original.Name}
@@ -182,7 +182,7 @@ export const SwarmStackServicesTable = ({
               <SortableHeader column={column} title="Name" />
             ),
             cell: ({ row }) => (
-              <SwarmLink
+              <SwarmResourceLink
                 type="Service"
                 swarm_id={id}
                 resource_id={row.original.Name}
@@ -291,7 +291,7 @@ export const SwarmTasksTable = ({
               <SortableHeader column={column} title="Id" />
             ),
             cell: ({ row }) => (
-              <SwarmLink
+              <SwarmResourceLink
                 type="Task"
                 swarm_id={id}
                 resource_id={row.original.ID}
@@ -306,7 +306,7 @@ export const SwarmTasksTable = ({
               <SortableHeader column={column} title="Service" />
             ),
             cell: ({ row }) => (
-              <SwarmLink
+              <SwarmResourceLink
                 type="Service"
                 swarm_id={id}
                 resource_id={row.original.service?.ID}
@@ -321,7 +321,7 @@ export const SwarmTasksTable = ({
               <SortableHeader column={column} title="Node" />
             ),
             cell: ({ row }) => (
-              <SwarmLink
+              <SwarmResourceLink
                 type="Node"
                 swarm_id={id}
                 resource_id={row.original.node?.ID}
@@ -433,7 +433,7 @@ export const SwarmStackTasksTable = ({
               <SortableHeader column={column} title="Id" />
             ),
             cell: ({ row }) => (
-              <SwarmLink
+              <SwarmResourceLink
                 type="Task"
                 swarm_id={id}
                 resource_id={row.original.ID}
@@ -448,7 +448,7 @@ export const SwarmStackTasksTable = ({
               <SortableHeader column={column} title="Node" />
             ),
             cell: ({ row }) => (
-              <SwarmLink
+              <SwarmResourceLink
                 type="Node"
                 swarm_id={id}
                 resource_id={row.original.node?.ID}

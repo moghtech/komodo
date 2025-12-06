@@ -203,6 +203,7 @@ export const DeploymentConfig = ({
             components: {
               network: (value, set) => (
                 <NetworkModeSelector
+                  swarm_id={update.swarm_id ?? config.swarm_id}
                   server_id={update.server_id ?? config.server_id}
                   selected={value}
                   onSelect={(network) => set({ network })}
@@ -273,6 +274,7 @@ export const DeploymentConfig = ({
           },
           {
             label: "Restart",
+            hidden: !!curr_swarm_id,
             labelHidden: true,
             components: {
               restart: (value, set) => (
@@ -318,13 +320,15 @@ export const DeploymentConfig = ({
                     <div className="flex flex-row flex-wrap gap-2">
                       <div>Replace the CMD, or extend the ENTRYPOINT.</div>
                       <Link
-                        to="https://docs.docker.com/engine/reference/run/#commands-and-arguments"
+                        to={
+                          curr_swarm_id
+                            ? "https://docs.docker.com/reference/cli/docker/service/create/#create-a-service"
+                            : "https://docs.docker.com/engine/reference/run/#commands-and-arguments"
+                        }
                         target="_blank"
                         className="text-primary"
                       >
                         See docker docs.
-                        {/* <Button variant="link" className="p-0">
-                        </Button> */}
                       </Link>
                     </div>
                   }
@@ -363,9 +367,17 @@ export const DeploymentConfig = ({
                   boldLabel
                   description={
                     <div className="flex flex-row flex-wrap gap-2">
-                      <div>Pass extra arguments to 'docker run'.</div>
+                      <div>
+                        Pass extra arguments to '
+                        {curr_swarm_id ? "docker service create" : "docker run"}
+                        '.
+                      </div>
                       <Link
-                        to="https://docs.docker.com/engine/reference/run/#commands-and-arguments"
+                        to={
+                          curr_swarm_id
+                            ? "https://docs.docker.com/reference/cli/docker/service/create/#options"
+                            : "https://docs.docker.com/reference/cli/docker/container/run/#options"
+                        }
                         target="_blank"
                         className="text-primary"
                       >
@@ -401,6 +413,7 @@ export const DeploymentConfig = ({
           },
           {
             label: "Termination",
+            hidden: !!curr_swarm_id,
             description:
               "Configure the signals used to 'docker stop' the container. Options are SIGTERM, SIGQUIT, SIGINT, and SIGHUP.",
             components: {

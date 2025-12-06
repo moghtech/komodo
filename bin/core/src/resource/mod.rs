@@ -69,6 +69,7 @@ pub use action::{
 pub use build::{
   refresh_build_state_cache, spawn_build_state_refresh_loop,
 };
+pub use deployment::setup_deployment_execution;
 pub use procedure::{
   refresh_procedure_state_cache, spawn_procedure_state_refresh_loop,
 };

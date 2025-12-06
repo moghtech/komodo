@@ -7,6 +7,7 @@ use crate::entities::{
   SearchCombinator, U64,
   docker::{
     config::{SwarmConfig, SwarmConfigListItem},
+    network::NetworkListItem,
     node::{SwarmNode, SwarmNodeListItem},
     secret::{SwarmSecret, SwarmSecretListItem},
     service::{SwarmService, SwarmServiceListItem},
@@ -485,3 +486,25 @@ pub struct InspectSwarmStack {
 
 #[typeshare]
 pub type InspectSwarmStackResponse = SwarmStack;
+
+//
+
+/// List the networks on the swarm. Response: [ListSwarmNetworksResponse].
+///
+/// This only includes the overlay networks.
+/// They will be the same across all nodes in the swarm.
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoReadRequest)]
+#[response(ListSwarmNetworksResponse)]
+#[error(serror::Error)]
+pub struct ListSwarmNetworks {
+  /// Id or name
+  #[serde(alias = "id", alias = "name")]
+  pub swarm: String,
+}
+
+#[typeshare]
+pub type ListSwarmNetworksResponse = Vec<NetworkListItem>;

@@ -13,7 +13,7 @@ import { Button } from "@ui/button";
 import { ChevronLeft, Loader2 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { MonacoEditor } from "@components/monaco";
-import { SWARM_ICONS, SwarmLink, useSwarm } from "@components/resources/swarm";
+import { SWARM_ICONS, SwarmResourceLink, useSwarm } from "@components/resources/swarm";
 import { Types } from "komodo_client";
 import {
   stroke_color_class_by_intention,
@@ -107,14 +107,14 @@ export default function SwarmTaskPage() {
                 |
                 <ResourceLink type="Swarm" id={id} />
                 |
-                <SwarmLink
+                <SwarmResourceLink
                   type="Service"
                   swarm_id={id}
                   resource_id={service?.ID}
                   name={service?.Name}
                 />
                 |
-                <SwarmLink
+                <SwarmResourceLink
                   type="Node"
                   swarm_id={id}
                   resource_id={node?.ID}

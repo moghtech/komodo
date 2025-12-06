@@ -12,9 +12,12 @@ use komodo_client::entities::{
     PartialDeploymentConfig, conversions_from_str,
   },
   environment_vars_from_str,
-  permission::{PermissionLevel, SpecificPermission},
+  permission::{
+    PermissionLevel, PermissionLevelAndSpecifics, SpecificPermission,
+  },
   resource::Resource,
   server::Server,
+  swarm::Swarm,
   to_container_compatible_name,
   update::Update,
   user::User,
@@ -30,7 +33,7 @@ use crate::{
     query::{get_deployment_state, get_swarm_or_server},
     swarm::swarm_request,
   },
-  monitor::update_cache_for_server,
+  monitor::{update_cache_for_server, update_cache_for_swarm},
   state::{action_states, db_client, deployment_status_cache},
 };
 
@@ -155,6 +158,7 @@ impl super::KomodoResource for Deployment {
         }),
         image,
         update_available,
+        swarm_id: deployment.config.swarm_id,
         server_id: deployment.config.server_id,
         build_id,
       },
@@ -191,21 +195,32 @@ impl super::KomodoResource for Deployment {
     created: &Resource<Self::Config, Self::Info>,
     _update: &mut Update,
   ) -> anyhow::Result<()> {
-    if created.config.server_id.is_empty() {
+    if created.config.swarm_id.is_empty()
+      && created.config.server_id.is_empty()
+    {
       return Ok(());
     }
-    let Ok(server) = super::get::<Server>(&created.config.server_id)
-      .await
-      .inspect_err(|e| {
-        warn!(
-          "Failed to get Server for Deployment {} | {e:#}",
-          created.name
-        )
-      })
-    else {
+    let Ok(swarm_or_server) = get_swarm_or_server(
+      &created.config.swarm_id,
+      &created.config.server_id,
+    )
+    .await
+    .inspect_err(|e| {
+      warn!(
+        "Failed to get Swarm or Server for Deployment {} | {e:#}",
+        created.name
+      )
+    }) else {
       return Ok(());
     };
-    update_cache_for_server(&server, true).await;
+    match swarm_or_server {
+      SwarmOrServer::Swarm(swarm) => {
+        update_cache_for_swarm(&swarm, true).await;
+      }
+      SwarmOrServer::Server(server) => {
+        update_cache_for_server(&server, true).await;
+      }
+    }
     Ok(())
   }
 
@@ -357,6 +372,18 @@ async fn validate_config(
   config: &mut PartialDeploymentConfig,
   user: &User,
 ) -> anyhow::Result<()> {
+  if let Some(swarm_id) = &config.swarm_id
+    && !swarm_id.is_empty()
+  {
+    let swarm = get_check_permissions::<Swarm>(
+      swarm_id,
+      user,
+      PermissionLevel::Read.attach(),
+    )
+    .await
+    .context("Cannot attach Deployment to this Swarm")?;
+    config.swarm_id = Some(swarm.id);
+  }
   if let Some(server_id) = &config.server_id
     && !server_id.is_empty()
   {
@@ -399,4 +426,25 @@ async fn validate_config(
     extra_args.retain(|v| !empty_or_only_spaces(v))
   }
   Ok(())
+}
+
+pub async fn setup_deployment_execution(
+  deployment: &str,
+  user: &User,
+  required_permissions: PermissionLevelAndSpecifics,
+) -> anyhow::Result<(Deployment, SwarmOrServer)> {
+  let deployment = get_check_permissions::<Deployment>(
+    deployment,
+    user,
+    required_permissions,
+  )
+  .await?;
+
+  let swarm_or_server = get_swarm_or_server(
+    &deployment.config.swarm_id,
+    &deployment.config.server_id,
+  )
+  .await?;
+
+  Ok((deployment, swarm_or_server))
 }

@@ -5,7 +5,7 @@ import { Dispatch, ReactNode, SetStateAction } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@ui/input";
 import { filterBySplit } from "@lib/utils";
-import { SwarmLink } from "..";
+import { SwarmResourceLink } from "..";
 
 export const SwarmStacks = ({
   id,
@@ -55,7 +55,7 @@ export const SwarmStacks = ({
               <SortableHeader column={column} title="Name" />
             ),
             cell: ({ row }) => (
-              <SwarmLink
+              <SwarmResourceLink
                 type="Stack"
                 swarm_id={id}
                 resource_id={row.original.Name}

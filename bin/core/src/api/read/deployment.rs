@@ -4,6 +4,7 @@ use anyhow::{Context, anyhow};
 use komodo_client::{
   api::read::*,
   entities::{
+    SwarmOrServer,
     deployment::{
       Deployment, DeploymentActionState, DeploymentConfig,
       DeploymentListItem, DeploymentState,
@@ -18,9 +19,11 @@ use periphery_client::api::{self, container::InspectContainer};
 use resolver_api::Resolve;
 
 use crate::{
-  helpers::{periphery_client, query::get_all_tags},
+  helpers::{
+    periphery_client, query::get_all_tags, swarm::swarm_request,
+  },
   permission::get_check_permissions,
-  resource,
+  resource::{self, setup_deployment_execution},
   state::{
     action_states, deployment_status_cache, server_status_cache,
   },
@@ -131,30 +134,40 @@ impl Resolve<ReadArgs> for GetDeploymentLog {
       tail,
       timestamps,
     } = self;
-    let Deployment {
-      name,
-      config: DeploymentConfig { server_id, .. },
-      ..
-    } = get_check_permissions::<Deployment>(
+
+    let (deployment, swarm_or_server) = setup_deployment_execution(
       &deployment,
       user,
       PermissionLevel::Read.logs(),
     )
     .await?;
-    if server_id.is_empty() {
-      return Ok(Log::default());
-    }
-    let server = resource::get::<Server>(&server_id).await?;
-    let res = periphery_client(&server)
-      .await?
-      .request(api::container::GetContainerLog {
-        name,
-        tail: cmp::min(tail, MAX_LOG_LENGTH),
-        timestamps,
-      })
+
+    let log = match swarm_or_server {
+      SwarmOrServer::Swarm(swarm) => swarm_request(
+        &swarm.config.server_ids,
+        periphery_client::api::swarm::GetSwarmServiceLog {
+          service: deployment.name,
+          tail,
+          timestamps,
+          no_task_ids: false,
+          no_resolve: false,
+          details: false,
+        },
+      )
       .await
-      .context("failed at call to periphery")?;
-    Ok(res)
+      .context("Failed to get service log from swarm")?,
+      SwarmOrServer::Server(server) => periphery_client(&server)
+        .await?
+        .request(api::container::GetContainerLog {
+          name: deployment.name,
+          tail: cmp::min(tail, MAX_LOG_LENGTH),
+          timestamps,
+        })
+        .await
+        .context("failed at call to periphery")?,
+    };
+
+    Ok(log)
   }
 }
 
@@ -170,32 +183,44 @@ impl Resolve<ReadArgs> for SearchDeploymentLog {
       invert,
       timestamps,
     } = self;
-    let Deployment {
-      name,
-      config: DeploymentConfig { server_id, .. },
-      ..
-    } = get_check_permissions::<Deployment>(
+
+    let (deployment, swarm_or_server) = setup_deployment_execution(
       &deployment,
       user,
       PermissionLevel::Read.logs(),
     )
     .await?;
-    if server_id.is_empty() {
-      return Ok(Log::default());
-    }
-    let server = resource::get::<Server>(&server_id).await?;
-    let res = periphery_client(&server)
-      .await?
-      .request(api::container::GetContainerLogSearch {
-        name,
-        terms,
-        combinator,
-        invert,
-        timestamps,
-      })
+
+    let log = match swarm_or_server {
+      SwarmOrServer::Swarm(swarm) => swarm_request(
+        &swarm.config.server_ids,
+        periphery_client::api::swarm::GetSwarmServiceLogSearch {
+          service: deployment.name,
+          terms,
+          combinator,
+          invert,
+          timestamps,
+          no_task_ids: false,
+          no_resolve: false,
+          details: false,
+        },
+      )
       .await
-      .context("failed at call to periphery")?;
-    Ok(res)
+      .context("Failed to search service log from swarm")?,
+      SwarmOrServer::Server(server) => periphery_client(&server)
+        .await?
+        .request(api::container::GetContainerLogSearch {
+          name: deployment.name,
+          terms,
+          combinator,
+          invert,
+          timestamps,
+        })
+        .await
+        .context("Failed to search container log from server")?,
+    };
+
+    Ok(log)
   }
 }
 

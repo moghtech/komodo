@@ -250,7 +250,7 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
 
     let span = info_span!("ExecuteStackDeploy");
     let Some(log) = run_komodo_command_with_sanitization(
-      "Stack Deploy",
+      "Deploy Swarm Stack",
       run_directory.as_path(),
       command,
       KomodoCommandMode::Shell,

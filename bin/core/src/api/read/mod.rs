@@ -97,6 +97,7 @@ enum ReadRequest {
   InspectSwarmService(InspectSwarmService),
   GetSwarmServiceLog(GetSwarmServiceLog),
   SearchSwarmServiceLog(SearchSwarmServiceLog),
+  ListSwarmNetworks(ListSwarmNetworks),
 
   // ==== SERVER ====
   GetServersSummary(GetServersSummary),

@@ -16,7 +16,6 @@ use komodo_client::{
     permission::PermissionLevel,
     server::Server,
     update::{Log, Update},
-    user::User,
   },
 };
 use periphery_client::api;
@@ -27,17 +26,13 @@ use serror::AddStatusCodeError;
 use crate::{
   helpers::{
     periphery_client,
-    query::{
-      VariablesAndSecrets, get_swarm_or_server,
-      get_variables_and_secrets,
-    },
+    query::{VariablesAndSecrets, get_variables_and_secrets},
     registry_token,
     swarm::swarm_request,
     update::update_update,
   },
   monitor::{update_cache_for_server, update_cache_for_swarm},
-  permission::get_check_permissions,
-  resource,
+  resource::{self, setup_deployment_execution},
   state::action_states,
 };
 
@@ -75,27 +70,6 @@ impl Resolve<ExecuteArgs> for BatchDeploy {
   }
 }
 
-#[instrument("SetupDeploy", skip_all)]
-async fn setup_deployment_execution(
-  deployment: &str,
-  user: &User,
-) -> anyhow::Result<(Deployment, SwarmOrServer)> {
-  let deployment = get_check_permissions::<Deployment>(
-    deployment,
-    user,
-    PermissionLevel::Execute.into(),
-  )
-  .await?;
-
-  let swarm_or_server = get_swarm_or_server(
-    &deployment.config.swarm_id,
-    &deployment.config.server_id,
-  )
-  .await?;
-
-  Ok((deployment, swarm_or_server))
-}
-
 impl Resolve<ExecuteArgs> for Deploy {
   #[instrument(
     "Deploy",
@@ -114,7 +88,12 @@ impl Resolve<ExecuteArgs> for Deploy {
     ExecuteArgs { user, update, id }: &ExecuteArgs,
   ) -> serror::Result<Update> {
     let (mut deployment, swarm_or_server) =
-      setup_deployment_execution(&self.deployment, user).await?;
+      setup_deployment_execution(
+        &self.deployment,
+        user,
+        PermissionLevel::Execute.into(),
+      )
+      .await?;
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -425,8 +404,12 @@ impl Resolve<ExecuteArgs> for PullDeployment {
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let (deployment, swarm_or_server) =
-      setup_deployment_execution(&self.deployment, user).await?;
+    let (deployment, swarm_or_server) = setup_deployment_execution(
+      &self.deployment,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
 
     let SwarmOrServer::Server(server) = swarm_or_server else {
       return Err(
@@ -475,8 +458,12 @@ impl Resolve<ExecuteArgs> for StartDeployment {
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let (deployment, swarm_or_server) =
-      setup_deployment_execution(&self.deployment, user).await?;
+    let (deployment, swarm_or_server) = setup_deployment_execution(
+      &self.deployment,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
 
     let SwarmOrServer::Server(server) = swarm_or_server else {
       return Err(
@@ -539,8 +526,12 @@ impl Resolve<ExecuteArgs> for RestartDeployment {
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let (deployment, swarm_or_server) =
-      setup_deployment_execution(&self.deployment, user).await?;
+    let (deployment, swarm_or_server) = setup_deployment_execution(
+      &self.deployment,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
 
     let SwarmOrServer::Server(server) = swarm_or_server else {
       return Err(
@@ -605,8 +596,12 @@ impl Resolve<ExecuteArgs> for PauseDeployment {
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let (deployment, swarm_or_server) =
-      setup_deployment_execution(&self.deployment, user).await?;
+    let (deployment, swarm_or_server) = setup_deployment_execution(
+      &self.deployment,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
 
     let SwarmOrServer::Server(server) = swarm_or_server else {
       return Err(
@@ -669,8 +664,12 @@ impl Resolve<ExecuteArgs> for UnpauseDeployment {
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let (deployment, swarm_or_server) =
-      setup_deployment_execution(&self.deployment, user).await?;
+    let (deployment, swarm_or_server) = setup_deployment_execution(
+      &self.deployment,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
 
     let SwarmOrServer::Server(server) = swarm_or_server else {
       return Err(
@@ -737,8 +736,12 @@ impl Resolve<ExecuteArgs> for StopDeployment {
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let (deployment, swarm_or_server) =
-      setup_deployment_execution(&self.deployment, user).await?;
+    let (deployment, swarm_or_server) = setup_deployment_execution(
+      &self.deployment,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
 
     let SwarmOrServer::Server(server) = swarm_or_server else {
       return Err(
@@ -846,8 +849,12 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    let (deployment, swarm_or_server) =
-      setup_deployment_execution(&self.deployment, user).await?;
+    let (deployment, swarm_or_server) = setup_deployment_execution(
+      &self.deployment,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
 
     let SwarmOrServer::Server(server) = swarm_or_server else {
       return Err(

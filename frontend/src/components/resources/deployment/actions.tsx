@@ -156,7 +156,8 @@ export const PullDeployment = ({ id }: DeploymentId) => {
     },
     { refetchInterval: 5000 }
   ).data;
-  if (!deployment) return null;
+
+  if (!deployment || deployment.info.swarm_id) return null;
 
   return (
     <ConfirmButton
@@ -181,7 +182,8 @@ export const RestartDeployment = ({ id }: DeploymentId) => {
     },
     { refetchInterval: 5000 }
   ).data;
-  if (!deployment) return null;
+
+  if (!deployment || deployment.info.swarm_id) return null;
 
   if (state !== Types.DeploymentState.Running) {
     return null;
@@ -211,7 +213,8 @@ export const StartStopDeployment = ({ id }: DeploymentId) => {
     },
     { refetchInterval: 5000 }
   ).data;
-  if (!deployment) return null;
+
+  if (!deployment || deployment.info.swarm_id) return null;
 
   if (state === Types.DeploymentState.Exited) {
     return (
@@ -246,6 +249,7 @@ const StopDeployment = ({ id }: DeploymentId) => {
     },
     { refetchInterval: 5000 }
   ).data?.stopping;
+
   const pending = isPending || stopping;
 
   if (!deployment) return null;
@@ -330,7 +334,8 @@ export const PauseUnpauseDeployment = ({ id }: DeploymentId) => {
     },
     { refetchInterval: 5000 }
   ).data;
-  if (!deployment) return null;
+  
+  if (!deployment || deployment.info.swarm_id) return null;
 
   if (state === Types.DeploymentState.Paused) {
     return (

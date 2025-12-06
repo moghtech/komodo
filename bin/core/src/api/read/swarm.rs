@@ -1,4 +1,4 @@
-use anyhow::Context;
+use anyhow::{Context, anyhow};
 use komodo_client::{
   api::read::*,
   entities::{
@@ -12,7 +12,7 @@ use crate::{
   helpers::{query::get_all_tags, swarm::swarm_request},
   permission::get_check_permissions,
   resource,
-  state::{action_states, swarm_status_cache},
+  state::{action_states, server_status_cache, swarm_status_cache},
 };
 
 use super::ReadArgs;
@@ -149,7 +149,7 @@ impl Resolve<ReadArgs> for InspectSwarm {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
-      PermissionLevel::Read.into(),
+      PermissionLevel::Read.inspect(),
     )
     .await?;
     let cache =
@@ -192,7 +192,7 @@ impl Resolve<ReadArgs> for InspectSwarmNode {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
-      PermissionLevel::Read.into(),
+      PermissionLevel::Read.inspect(),
     )
     .await?;
     swarm_request(
@@ -235,7 +235,7 @@ impl Resolve<ReadArgs> for InspectSwarmService {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
-      PermissionLevel::Read.into(),
+      PermissionLevel::Read.inspect(),
     )
     .await?;
     swarm_request(
@@ -334,7 +334,7 @@ impl Resolve<ReadArgs> for InspectSwarmTask {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
-      PermissionLevel::Read.into(),
+      PermissionLevel::Read.inspect(),
     )
     .await?;
     swarm_request(
@@ -377,7 +377,7 @@ impl Resolve<ReadArgs> for InspectSwarmSecret {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
-      PermissionLevel::Read.into(),
+      PermissionLevel::Read.inspect(),
     )
     .await?;
     swarm_request(
@@ -420,7 +420,7 @@ impl Resolve<ReadArgs> for InspectSwarmConfig {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
-      PermissionLevel::Read.into(),
+      PermissionLevel::Read.inspect(),
     )
     .await?;
     swarm_request(
@@ -463,7 +463,7 @@ impl Resolve<ReadArgs> for InspectSwarmStack {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
-      PermissionLevel::Read.into(),
+      PermissionLevel::Read.inspect(),
     )
     .await?;
     swarm_request(
@@ -474,5 +474,46 @@ impl Resolve<ReadArgs> for InspectSwarmStack {
     )
     .await
     .map_err(Into::into)
+  }
+}
+
+impl Resolve<ReadArgs> for ListSwarmNetworks {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> Result<Self::Response, Self::Error> {
+    let swarm = get_check_permissions::<Swarm>(
+      &self.swarm,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?;
+
+    let cache = server_status_cache();
+
+    for server_id in swarm.config.server_ids {
+      let Some(status) = cache.get(&server_id).await else {
+        continue;
+      };
+      let Some(docker) = &status.docker else {
+        continue;
+      };
+      let networks = docker
+        .networks
+        .iter()
+        .filter(|network| {
+          network.driver.as_deref() == Some("overlay")
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+      return Ok(networks);
+    }
+
+    Err(
+      anyhow!(
+        "Failed to retrieve swarm networks from any manager node."
+      )
+      .into(),
+    )
   }
 }

@@ -517,19 +517,23 @@ export const CopyResource = ({
 export const NewResource = ({
   type,
   readable_type,
+  swarm_id,
   server_id,
   builder_id,
   build_id,
   name: _name = "",
+  selectSwarm,
   selectServer,
   selectBuilder,
 }: {
   type: UsableResource;
   readable_type?: string;
+  swarm_id?: string;
   server_id?: string;
   builder_id?: string;
   build_id?: string;
   name?: string;
+  selectSwarm?: boolean;
   selectServer?: boolean;
   selectBuilder?: boolean;
 }) => {
@@ -538,8 +542,13 @@ export const NewResource = ({
   const showTemplateSelector =
     (useRead(`List${type}s`, {}).data?.filter((r) => r.template).length ?? 0) >
     0;
+  const swarmsExist = useRead("ListSwarms", {}, { enabled: selectSwarm }).data
+    ?.length
+    ? true
+    : false;
   const { mutateAsync: create } = useWrite(`Create${type}`);
   const { mutateAsync: copy } = useWrite(`Copy${type}`);
+  const [swarmId, setSwarmId] = useState("");
   const [serverId, setServerId] = useState("");
   const [builderId, setBuilderId] = useState("");
   const [templateId, setTemplateId] = useState("");
@@ -549,13 +558,14 @@ export const NewResource = ({
   const config: Types._PartialDeploymentConfig | Types._PartialRepoConfig =
     type === "Deployment"
       ? {
+          swarm_id: swarm_id ?? swarmId,
           server_id: server_id ?? serverId,
           image: build_id
             ? { type: "Build", params: { build_id } }
             : { type: "Image", params: { image: "" } },
         }
       : type === "Stack"
-        ? { server_id: server_id ?? serverId }
+        ? { swarm_id: swarm_id ?? swarmId, server_id: server_id ?? serverId }
         : type === "Repo"
           ? {
               server_id: server_id ?? serverId,
@@ -598,6 +608,18 @@ export const NewResource = ({
             }
           }}
         />
+        {selectSwarm && swarmsExist && (
+          <>
+            Swarm
+            <ResourceSelector
+              type="Swarm"
+              selected={swarmId}
+              onSelect={setSwarmId}
+              targetClassName="w-full justify-between"
+              align="end"
+            />
+          </>
+        )}
         {selectServer && (
           <>
             Server

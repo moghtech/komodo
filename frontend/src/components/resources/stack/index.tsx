@@ -114,10 +114,11 @@ export const StackComponents: RequiredResourceComponents = {
   ),
 
   New: ({ server_id: _server_id }) => {
+    const swarmsExist = useRead("ListSwarms", {}).data?.length ? true : false;
     const servers = useRead("ListServers", {}).data;
     const server_id = _server_id
       ? _server_id
-      : servers && servers.length === 1
+      : !swarmsExist && servers && servers.length === 1
         ? servers[0].id
         : undefined;
     return (
@@ -125,6 +126,7 @@ export const StackComponents: RequiredResourceComponents = {
         type="Stack"
         server_id={server_id}
         selectServer={!server_id}
+        selectSwarm
       />
     );
   },
@@ -142,7 +144,7 @@ export const StackComponents: RequiredResourceComponents = {
   },
 
   Info: {
-    Server: ({ id }) => {
+    DeployTarget: ({ id }) => {
       const info = useStack(id)?.info;
       const swarm = useSwarm(info?.swarm_id);
       const server = useServer(info?.server_id);

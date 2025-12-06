@@ -165,7 +165,7 @@ export const SWARM_ICONS: {
   ),
 };
 
-export const SwarmLink = ({
+export const SwarmResourceLink = ({
   type,
   swarm_id,
   resource_id,

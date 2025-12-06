@@ -11,11 +11,13 @@ import {
 import { useState } from "react";
 
 export const NetworkModeSelector = ({
+  swarm_id,
   server_id,
   selected,
   onSelect,
   disabled,
 }: {
+  swarm_id: string | undefined;
   server_id: string | undefined;
   selected: string | undefined;
   onSelect: (type: string) => void;
@@ -23,12 +25,13 @@ export const NetworkModeSelector = ({
 }) => {
   const _networks =
     useRead(
-      "ListDockerNetworks",
-      { server: server_id! },
-      { enabled: !!server_id }
+      swarm_id ? "ListSwarmNetworks" : "ListDockerNetworks",
+      { swarm: swarm_id, server: server_id! },
+      { enabled: !!swarm_id || !!server_id }
     )
       .data?.filter((n) => n.name)
       .map((network) => network.name) ?? [];
+
   const [customMode, setCustomMode] = useState(false);
 
   const networks =

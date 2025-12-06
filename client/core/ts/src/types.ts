@@ -1366,7 +1366,9 @@ export interface DeploymentListItemInfo {
 	image: string;
 	/** Whether there is a newer image available at the same tag. */
 	update_available: boolean;
-	/** The server that deployment sits on. */
+	/** The swarm that deployment is deployed on, when in Swarm mode. */
+	swarm_id: string;
+	/** The server that deployment is deployed on, when in Server mode. */
 	server_id: string;
 	/** An attached Komodo Build, if it exists. */
 	build_id?: string;
@@ -5171,6 +5173,8 @@ export interface SwarmConfigListItem {
 
 export type ListSwarmConfigsResponse = SwarmConfigListItem[];
 
+export type ListSwarmNetworksResponse = NetworkListItem[];
+
 /** Swarm node list item. */
 export interface SwarmNodeListItem {
 	ID?: string;
@@ -8415,6 +8419,17 @@ export interface ListSwarmConfigs {
 }
 
 /**
+ * List the networks on the swarm. Response: [ListSwarmNetworksResponse].
+ * 
+ * This only includes the overlay networks.
+ * They will be the same across all nodes in the swarm.
+ */
+export interface ListSwarmNetworks {
+	/** Id or name */
+	swarm: string;
+}
+
+/**
  * List nodes part of the target Swarm.
  * Response: [ListSwarmNodesResponse].
  */
@@ -10339,6 +10354,7 @@ export type ReadRequest =
 	| { type: "InspectSwarmService", params: InspectSwarmService }
 	| { type: "GetSwarmServiceLog", params: GetSwarmServiceLog }
 	| { type: "SearchSwarmServiceLog", params: SearchSwarmServiceLog }
+	| { type: "ListSwarmNetworks", params: ListSwarmNetworks }
 	| { type: "GetServersSummary", params: GetServersSummary }
 	| { type: "GetServer", params: GetServer }
 	| { type: "GetServerState", params: GetServerState }

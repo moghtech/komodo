@@ -56,6 +56,7 @@ import {
   CommandList,
 } from "@ui/command";
 import { Checkbox } from "@ui/checkbox";
+import { Link } from "react-router-dom";
 
 type StackMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const STACK_MODES: StackMode[] = ["UI Defined", "Files On Server", "Git Repo"];
@@ -522,7 +523,26 @@ export const StackConfig = ({
           <ConfigItem
             label="Extra Args"
             boldLabel
-            description="Add extra args inserted after 'docker compose up -d'"
+            description={
+              <div className="flex flex-row flex-wrap gap-2">
+                <div>
+                  Pass extra arguments to '
+                  {curr_swarm_id ? "docker stack deploy" : "docker compose up"}
+                  '.
+                </div>
+                <Link
+                  to={
+                    curr_swarm_id
+                      ? "https://docs.docker.com/reference/cli/docker/stack/deploy/#options"
+                      : "https://docs.docker.com/reference/cli/docker/service/create/#options"
+                  }
+                  target="_blank"
+                  className="text-primary"
+                >
+                  See docker docs.
+                </Link>
+              </div>
+            }
           >
             {!disabled && (
               <AddExtraArgMenu

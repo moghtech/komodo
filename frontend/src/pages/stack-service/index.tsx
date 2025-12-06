@@ -34,7 +34,7 @@ import { ContainerPortLink, DockerResourceLink } from "@components/util";
 import { ResourceNotifications } from "@pages/resource-notifications";
 import { Fragment } from "react/jsx-runtime";
 import { StackServiceTabs } from "./tabs";
-import { SwarmLink } from "@components/resources/swarm";
+import { SwarmResourceLink } from "@components/resources/swarm";
 
 type IdServiceComponent = React.FC<{ id: string; service?: string }>;
 
@@ -130,7 +130,7 @@ const StackServicePageInner = ({
                     {swarm_service?.Name && (
                       <>
                         |
-                        <SwarmLink
+                        <SwarmResourceLink
                           type="Service"
                           swarm_id={stack.info.swarm_id}
                           resource_id={swarm_service.ID}

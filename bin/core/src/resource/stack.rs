@@ -5,19 +5,11 @@ use indexmap::IndexSet;
 use komodo_client::{
   api::write::RefreshStackCache,
   entities::{
-    Operation, ResourceTarget, ResourceTargetVariant, SwarmOrServer,
-    permission::{PermissionLevel, SpecificPermission},
-    repo::Repo,
-    resource::Resource,
-    server::Server,
-    stack::{
+    Operation, ResourceTarget, ResourceTargetVariant, SwarmOrServer, permission::{PermissionLevel, SpecificPermission}, repo::Repo, resource::Resource, server::Server, stack::{
       PartialStackConfig, Stack, StackConfig, StackConfigDiff,
       StackInfo, StackListItem, StackListItemInfo,
       StackQuerySpecifics, StackServiceWithUpdate, StackState,
-    },
-    to_docker_compatible_name,
-    update::Update,
-    user::{User, stack_user},
+    }, swarm::Swarm, to_docker_compatible_name, update::Update, user::{User, stack_user}
   },
 };
 use periphery_client::api::{
@@ -427,6 +419,18 @@ async fn validate_config(
   config: &mut PartialStackConfig,
   user: &User,
 ) -> anyhow::Result<()> {
+  if let Some(swarm_id) = &config.swarm_id
+    && !swarm_id.is_empty()
+  {
+    let swarm = get_check_permissions::<Swarm>(
+      swarm_id,
+      user,
+      PermissionLevel::Read.attach(),
+    )
+    .await
+    .context("Cannot attach Stack to this Swarm")?;
+    config.swarm_id = Some(swarm.id);
+  }
   if let Some(server_id) = &config.server_id
     && !server_id.is_empty()
   {
