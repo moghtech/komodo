@@ -140,6 +140,7 @@ enum ReadRequest {
   GetStackLog(GetStackLog),
   SearchStackLog(SearchStackLog),
   InspectStackContainer(InspectStackContainer),
+  InspectStackSwarmService(InspectStackSwarmService),
   ListStacks(ListStacks),
   ListFullStacks(ListFullStacks),
   ListStackServices(ListStackServices),

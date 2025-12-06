@@ -499,39 +499,6 @@ export var ClusterVolumePublishStatusStateEnum;
     ClusterVolumePublishStatusStateEnum["PendingNodeUnpublish"] = "pending-node-unpublish";
     ClusterVolumePublishStatusStateEnum["PendingControllerUnpublish"] = "pending-controller-unpublish";
 })(ClusterVolumePublishStatusStateEnum || (ClusterVolumePublishStatusStateEnum = {}));
-export var NodeSpecRoleEnum;
-(function (NodeSpecRoleEnum) {
-    NodeSpecRoleEnum["EMPTY"] = "";
-    NodeSpecRoleEnum["WORKER"] = "worker";
-    NodeSpecRoleEnum["MANAGER"] = "manager";
-})(NodeSpecRoleEnum || (NodeSpecRoleEnum = {}));
-export var NodeSpecAvailabilityEnum;
-(function (NodeSpecAvailabilityEnum) {
-    NodeSpecAvailabilityEnum["EMPTY"] = "";
-    NodeSpecAvailabilityEnum["ACTIVE"] = "active";
-    NodeSpecAvailabilityEnum["PAUSE"] = "pause";
-    NodeSpecAvailabilityEnum["DRAIN"] = "drain";
-})(NodeSpecAvailabilityEnum || (NodeSpecAvailabilityEnum = {}));
-/** NodeState represents the state of a node. */
-export var NodeState;
-(function (NodeState) {
-    NodeState["UNKNOWN"] = "unknown";
-    NodeState["DOWN"] = "down";
-    NodeState["READY"] = "ready";
-    NodeState["DISCONNECTED"] = "disconnected";
-})(NodeState || (NodeState = {}));
-/** Reachability represents the reachability of a node. */
-export var NodeReachability;
-(function (NodeReachability) {
-    NodeReachability["UNKNOWN"] = "unknown";
-    NodeReachability["UNREACHABLE"] = "unreachable";
-    NodeReachability["REACHABLE"] = "reachable";
-})(NodeReachability || (NodeReachability = {}));
-export var SwarmSpecCaConfigExternalCasProtocolEnum;
-(function (SwarmSpecCaConfigExternalCasProtocolEnum) {
-    SwarmSpecCaConfigExternalCasProtocolEnum["EMPTY"] = "";
-    SwarmSpecCaConfigExternalCasProtocolEnum["CFSSL"] = "cfssl";
-})(SwarmSpecCaConfigExternalCasProtocolEnum || (SwarmSpecCaConfigExternalCasProtocolEnum = {}));
 export var TaskSpecContainerSpecPrivilegesSeccompModeEnum;
 (function (TaskSpecContainerSpecPrivilegesSeccompModeEnum) {
     TaskSpecContainerSpecPrivilegesSeccompModeEnum["EMPTY"] = "";
@@ -613,6 +580,39 @@ export var ServiceUpdateStatusStateEnum;
     ServiceUpdateStatusStateEnum["ROLLBACK_PAUSED"] = "rollback_paused";
     ServiceUpdateStatusStateEnum["ROLLBACK_COMPLETED"] = "rollback_completed";
 })(ServiceUpdateStatusStateEnum || (ServiceUpdateStatusStateEnum = {}));
+export var NodeSpecRoleEnum;
+(function (NodeSpecRoleEnum) {
+    NodeSpecRoleEnum["EMPTY"] = "";
+    NodeSpecRoleEnum["WORKER"] = "worker";
+    NodeSpecRoleEnum["MANAGER"] = "manager";
+})(NodeSpecRoleEnum || (NodeSpecRoleEnum = {}));
+export var NodeSpecAvailabilityEnum;
+(function (NodeSpecAvailabilityEnum) {
+    NodeSpecAvailabilityEnum["EMPTY"] = "";
+    NodeSpecAvailabilityEnum["ACTIVE"] = "active";
+    NodeSpecAvailabilityEnum["PAUSE"] = "pause";
+    NodeSpecAvailabilityEnum["DRAIN"] = "drain";
+})(NodeSpecAvailabilityEnum || (NodeSpecAvailabilityEnum = {}));
+/** NodeState represents the state of a node. */
+export var NodeState;
+(function (NodeState) {
+    NodeState["UNKNOWN"] = "unknown";
+    NodeState["DOWN"] = "down";
+    NodeState["READY"] = "ready";
+    NodeState["DISCONNECTED"] = "disconnected";
+})(NodeState || (NodeState = {}));
+/** Reachability represents the reachability of a node. */
+export var NodeReachability;
+(function (NodeReachability) {
+    NodeReachability["UNKNOWN"] = "unknown";
+    NodeReachability["UNREACHABLE"] = "unreachable";
+    NodeReachability["REACHABLE"] = "reachable";
+})(NodeReachability || (NodeReachability = {}));
+export var SwarmSpecCaConfigExternalCasProtocolEnum;
+(function (SwarmSpecCaConfigExternalCasProtocolEnum) {
+    SwarmSpecCaConfigExternalCasProtocolEnum["EMPTY"] = "";
+    SwarmSpecCaConfigExternalCasProtocolEnum["CFSSL"] = "cfssl";
+})(SwarmSpecCaConfigExternalCasProtocolEnum || (SwarmSpecCaConfigExternalCasProtocolEnum = {}));
 export var SwarmState;
 (function (SwarmState) {
     /** The Swarm is healthy, all nodes OK */

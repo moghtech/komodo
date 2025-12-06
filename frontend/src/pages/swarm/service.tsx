@@ -99,7 +99,7 @@ export default function SwarmServicePage() {
               resource={undefined}
               name={service.Name}
               state={state}
-              status={`${tasks.length} Tasks`}
+              status={`${tasks.length} Task${tasks.length === 1 ? "" : "s"}`}
             />
             <div className="flex flex-col pb-2 px-4">
               <div className="flex items-center gap-x-4 gap-y-0 flex-wrap text-muted-foreground">

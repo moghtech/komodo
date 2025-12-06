@@ -6,7 +6,7 @@ import { Section } from "@components/layouts";
 
 export const StackServiceLogs = ({
   id,
-  service,
+  service: _service,
   titleOther,
   disabled,
 }: {
@@ -18,22 +18,21 @@ export const StackServiceLogs = ({
 }) => {
   // const stack = useStack(id);
   const services = useRead("ListStackServices", { stack: id }).data;
-  const container = services?.find((s) => s.service === service)?.container;
-  const state = container?.state ?? Types.ContainerStateStatusEnum.Empty;
+  const service = services?.find((s) => s.service === _service);
+  const logsAvailable = service?.swarm_service
+    ? service.swarm_service.State !== Types.SwarmState.Unknown
+    : (service?.container?.state ?? Types.ContainerStateStatusEnum.Empty) !==
+      Types.ContainerStateStatusEnum.Empty;
 
-  if (
-    disabled ||
-    state === undefined ||
-    state === Types.ContainerStateStatusEnum.Empty
-  ) {
+  if (disabled || !logsAvailable) {
     return (
       <Section titleOther={titleOther}>
-        <h1>Logs are disabled.</h1>
+        <h1>Logs are not available or disabled.</h1>
       </Section>
     );
   }
 
-  return <StackLogsInner titleOther={titleOther} id={id} service={service} />;
+  return <StackLogsInner titleOther={titleOther} id={id} service={_service} />;
 };
 
 const StackLogsInner = ({

@@ -2,8 +2,9 @@ use anyhow::Context;
 use bollard::query_parameters::{
   InspectServiceOptions, ListServicesOptions,
 };
-use komodo_client::entities::docker::{
-  NetworkAttachmentConfig, service::*,
+use komodo_client::entities::{
+  docker::{NetworkAttachmentConfig, service::*},
+  swarm::SwarmState,
 };
 
 use super::*;
@@ -12,6 +13,7 @@ impl DockerClient {
   /// List swarm services
   pub async fn list_swarm_services(
     &self,
+    tasks: &[SwarmTaskListItem],
   ) -> anyhow::Result<Vec<SwarmServiceListItem>> {
     let mut services = self
       .docker
@@ -19,7 +21,7 @@ impl DockerClient {
       .await
       .context("Failed to query for swarm service list")?
       .into_iter()
-      .map(convert_service_list_item)
+      .map(|service| convert_service_list_item(service, tasks))
       .collect::<Vec<_>>();
 
     services.sort_by(|a, b| {
@@ -55,6 +57,7 @@ impl DockerClient {
 
 fn convert_service_list_item(
   service: bollard::models::Service,
+  tasks: &[SwarmTaskListItem],
 ) -> SwarmServiceListItem {
   let (name, (image, restart, runtime), replicas) = service
     .spec
@@ -81,9 +84,15 @@ fn convert_service_list_item(
       )
     })
     .unwrap_or_default();
+  let state = service
+    .id
+    .as_ref()
+    .map(|service_id| service_state_from_tasks(service_id, tasks))
+    .unwrap_or(SwarmState::Unknown);
   SwarmServiceListItem {
     id: service.id,
     name,
+    state,
     replicas,
     image,
     restart,
@@ -91,6 +100,25 @@ fn convert_service_list_item(
     created_at: service.created_at,
     updated_at: service.updated_at,
   }
+}
+
+fn service_state_from_tasks(
+  service_id: &str,
+  tasks: &[SwarmTaskListItem],
+) -> SwarmState {
+  let tasks = tasks.iter().filter(|task| {
+    task
+      .service_id
+      .as_ref()
+      .map(|sid| sid == service_id)
+      .unwrap_or_default()
+  });
+  for task in tasks {
+    if task.state != task.desired_state {
+      return SwarmState::Unhealthy;
+    }
+  }
+  SwarmState::Healthy
 }
 
 fn convert_service(

@@ -3677,257 +3677,6 @@ export interface Volume {
 }
 export type InspectDockerVolumeResponse = Volume;
 export type InspectStackContainerResponse = Container;
-export type InspectSwarmConfigResponse = SwarmConfig[];
-export declare enum NodeSpecRoleEnum {
-    EMPTY = "",
-    WORKER = "worker",
-    MANAGER = "manager"
-}
-export declare enum NodeSpecAvailabilityEnum {
-    EMPTY = "",
-    ACTIVE = "active",
-    PAUSE = "pause",
-    DRAIN = "drain"
-}
-export interface NodeSpec {
-    /** Name for the node. */
-    Name?: string;
-    /** User-defined key/value metadata. */
-    Labels?: Record<string, string>;
-    /** Role of the node. */
-    Role?: NodeSpecRoleEnum;
-    /** Availability of the node. */
-    Availability?: NodeSpecAvailabilityEnum;
-}
-export interface Platform {
-    /** Architecture represents the hardware architecture (for example, `x86_64`). */
-    Architecture?: string;
-    /** OS represents the Operating System (for example, `linux` or `windows`). */
-    OS?: string;
-}
-export interface ResourceObject {
-    NanoCPUs?: I64;
-    MemoryBytes?: I64;
-    GenericResources?: GenericResources;
-}
-export interface EngineDescriptionPlugins {
-    Type?: string;
-    Name?: string;
-}
-/** EngineDescription provides information about an engine. */
-export interface EngineDescription {
-    EngineVersion?: string;
-    Labels?: Record<string, string>;
-    Plugins?: EngineDescriptionPlugins[];
-}
-/** Information about the issuer of leaf TLS certificates and the trusted root CA certificate. */
-export interface TlsInfo {
-    /** The root CA certificate(s) that are used to validate leaf TLS certificates. */
-    TrustRoot?: string;
-    /** The base64-url-safe-encoded raw subject bytes of the issuer. */
-    CertIssuerSubject?: string;
-    /** The base64-url-safe-encoded raw public key bytes of the issuer. */
-    CertIssuerPublicKey?: string;
-}
-export interface NodeDescription {
-    Hostname?: string;
-    Platform?: Platform;
-    Resources?: ResourceObject;
-    Engine?: EngineDescription;
-    TLSInfo?: TlsInfo;
-}
-/** NodeState represents the state of a node. */
-export declare enum NodeState {
-    UNKNOWN = "unknown",
-    DOWN = "down",
-    READY = "ready",
-    DISCONNECTED = "disconnected"
-}
-/** NodeStatus represents the status of a node.  It provides the current status of the node, as seen by the manager. */
-export interface NodeStatus {
-    State?: NodeState;
-    Message?: string;
-    /** IP address of the node. */
-    Addr?: string;
-}
-/** Reachability represents the reachability of a node. */
-export declare enum NodeReachability {
-    UNKNOWN = "unknown",
-    UNREACHABLE = "unreachable",
-    REACHABLE = "reachable"
-}
-/** ManagerStatus represents the status of a manager.  It provides the current status of a node's manager component, if the node is a manager. */
-export interface ManagerStatus {
-    Leader?: boolean;
-    Reachability?: NodeReachability;
-    /** The IP address and port at which the manager is reachable. */
-    Addr?: string;
-}
-/** Swarm node details. */
-export interface SwarmNode {
-    ID?: string;
-    Version?: ObjectVersion;
-    /** Date and time at which the node was added to the swarm in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds. */
-    CreatedAt?: string;
-    /** Date and time at which the node was last updated in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds. */
-    UpdatedAt?: string;
-    Spec?: NodeSpec;
-    Description?: NodeDescription;
-    Status?: NodeStatus;
-    ManagerStatus?: ManagerStatus;
-}
-export type InspectSwarmNodeResponse = SwarmNode;
-/** Orchestration configuration. */
-export interface SwarmSpecOrchestration {
-    /**
-     * The number of historic tasks to keep per instance or node.
-     * If negative, never remove completed or failed tasks.
-     */
-    TaskHistoryRetentionLimit?: I64;
-}
-/** Raft configuration. */
-export interface SwarmSpecRaft {
-    /** The number of log entries between snapshots. */
-    SnapshotInterval?: U64;
-    /** The number of snapshots to keep beyond the current snapshot. */
-    KeepOldSnapshots?: U64;
-    /** The number of log entries to keep around to sync up slow followers after a snapshot is created. */
-    LogEntriesForSlowFollowers?: U64;
-    /** The number of ticks that a follower will wait for a message from the leader before becoming a candidate and starting an election. `ElectionTick` must be greater than `HeartbeatTick`.  A tick currently defaults to one second, so these translate directly to seconds currently, but this is NOT guaranteed. */
-    ElectionTick?: I64;
-    /**
-     * The number of ticks between heartbeats.
-     * Every HeartbeatTick ticks, the leader will send a heartbeat to the followers.
-     * A tick currently defaults to one second, so these translate directly to seconds currently, but this is NOT guaranteed.
-     */
-    HeartbeatTick?: I64;
-}
-/** Dispatcher configuration. */
-export interface SwarmSpecDispatcher {
-    /** The delay for an agent to send a heartbeat to the dispatcher. */
-    HeartbeatPeriod?: I64;
-}
-export declare enum SwarmSpecCaConfigExternalCasProtocolEnum {
-    EMPTY = "",
-    CFSSL = "cfssl"
-}
-export interface SwarmSpecCaConfigExternalCas {
-    /** Protocol for communication with the external CA (currently only `cfssl` is supported). */
-    Protocol?: SwarmSpecCaConfigExternalCasProtocolEnum;
-    /** URL where certificate signing requests should be sent. */
-    URL?: string;
-    /** An object with key/value pairs that are interpreted as protocol-specific options for the external CA driver. */
-    Options?: Record<string, string>;
-    /** The root CA certificate (in PEM format) this external CA uses to issue TLS certificates (assumed to be to the current swarm root CA certificate if not provided). */
-    CACert?: string;
-}
-/** CA configuration. */
-export interface SwarmSpecCaConfig {
-    /** The duration node certificates are issued for. */
-    NodeCertExpiry?: I64;
-    /** Configuration for forwarding signing requests to an external certificate authority. */
-    ExternalCAs?: SwarmSpecCaConfigExternalCas[];
-    /** The desired signing CA certificate for all swarm node TLS leaf certificates, in PEM format. */
-    SigningCACert?: string;
-    /** The desired signing CA key for all swarm node TLS leaf certificates, in PEM format. */
-    SigningCAKey?: string;
-    /** An integer whose purpose is to force swarm to generate a new signing CA certificate and key, if none have been specified in `SigningCACert` and `SigningCAKey` */
-    ForceRotate?: U64;
-}
-/** Parameters related to encryption-at-rest. */
-export interface SwarmSpecEncryptionConfig {
-    /** If set, generate a key and use it to lock data stored on the managers. */
-    AutoLockManagers?: boolean;
-}
-/** The log driver to use for tasks created in the orchestrator if unspecified by a service.  Updating this value only affects new tasks. Existing tasks continue to use their previously configured log driver until recreated. */
-export interface SwarmSpecTaskDefaultsLogDriver {
-    /** The log driver to use as a default for new tasks. */
-    Name?: string;
-    /** Driver-specific options for the selected log driver, specified as key/value pairs. */
-    Options?: Record<string, string>;
-}
-/** Defaults for creating tasks in this cluster. */
-export interface SwarmSpecTaskDefaults {
-    LogDriver?: SwarmSpecTaskDefaultsLogDriver;
-}
-/** User modifiable swarm configuration. */
-export interface SwarmSpec {
-    /** Name of the swarm. */
-    Name?: string;
-    /** User-defined key/value metadata. */
-    Labels?: Record<string, string>;
-    Orchestration?: SwarmSpecOrchestration;
-    Raft?: SwarmSpecRaft;
-    Dispatcher?: SwarmSpecDispatcher;
-    CAConfig?: SwarmSpecCaConfig;
-    EncryptionConfig?: SwarmSpecEncryptionConfig;
-    TaskDefaults?: SwarmSpecTaskDefaults;
-}
-/** JoinTokens contains the tokens workers and managers need to join the swarm. */
-export interface JoinTokens {
-    /** The token workers can use to join the swarm. */
-    Worker?: string;
-    /** The token managers can use to join the swarm. */
-    Manager?: string;
-}
-/** Docker-level information about the Swarm. */
-export interface SwarmInspectInfo {
-    /** The (Docker) ID of the swarm. */
-    ID?: string;
-    Version?: ObjectVersion;
-    /** Date and time at which the swarm was initialised in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds. */
-    CreatedAt?: string;
-    /** Date and time at which the swarm was last updated in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds. */
-    UpdatedAt?: string;
-    Spec?: SwarmSpec;
-    TLSInfo?: TlsInfo;
-    /** Whether there is currently a root CA rotation in progress for the swarm */
-    RootRotationInProgress?: boolean;
-    /** DataPathPort specifies the data path port number for data traffic. Acceptable port range is 1024 to 49151. If no port is set or is set to 0, the default port (4789) is used. */
-    DataPathPort?: number;
-    /** Default Address Pool specifies default subnet pools for global scope networks. */
-    DefaultAddrPool?: string[];
-    /** SubnetSize specifies the subnet size of the networks created from the default subnet pool. */
-    SubnetSize?: number;
-    JoinTokens?: JoinTokens;
-}
-export type InspectSwarmResponse = SwarmInspectInfo;
-/** Driver represents a driver (network, logging, secrets). */
-export interface Driver {
-    /** Name of the driver. */
-    Name: string;
-    /** Key/value map of driver-specific options. */
-    Options?: Record<string, string>;
-}
-export interface SecretSpec {
-    /** User-defined name of the secret. */
-    Name?: string;
-    /** User-defined key/value metadata. */
-    Labels?: Record<string, string>;
-    /**
-     * Data is the data to store as a secret, formatted as a Base64-url-safe-encoded ([RFC 4648](https://tools.ietf.org/html/rfc4648#section-5)) string.
-     * It must be empty if the Driver field is set, in which case the data is loaded from an external secret store.
-     * The maximum allowed size is 500KB, as defined in [MaxSecretSize](https://pkg.go.dev/github.com/moby/swarmkit/v2@v2.0.0-20250103191802-8c1959736554/api/validation#MaxSecretSize).
-     * This field is only used to _create_ a secret, and is not returned by other endpoints.
-     */
-    Data?: string;
-    /** Name of the secrets driver used to fetch the secret's value from an external secret store. */
-    Driver?: Driver;
-    /**
-     * Templating driver, if applicable  Templating controls whether and how to evaluate the config payload as a template.
-     * If no driver is set, no templating is used.
-     */
-    Templating?: Driver;
-}
-/** Swarm secret details. */
-export interface SwarmSecret {
-    ID?: string;
-    Version?: ObjectVersion;
-    CreatedAt?: string;
-    UpdatedAt?: string;
-    Spec?: SecretSpec;
-}
-export type InspectSwarmSecretResponse = SwarmSecret;
 /** Describes a permission the user has to accept upon installing the plugin. */
 export interface PluginPrivilege {
     Name?: string;
@@ -4113,6 +3862,11 @@ export interface Limit {
     /** Limits the maximum number of PIDs in the container. Set `0` for unlimited. */
     Pids?: I64;
 }
+export interface ResourceObject {
+    NanoCPUs?: I64;
+    MemoryBytes?: I64;
+    GenericResources?: GenericResources;
+}
 /** Resource requirements which apply to each individual container created as part of the service. */
 export interface TaskSpecResources {
     /** Define resources limits. */
@@ -4143,6 +3897,12 @@ export interface TaskSpecPlacementSpread {
 }
 export interface TaskSpecPlacementPreferences {
     Spread?: TaskSpecPlacementSpread;
+}
+export interface Platform {
+    /** Architecture represents the hardware architecture (for example, `x86_64`). */
+    Architecture?: string;
+    /** OS represents the Operating System (for example, `linux` or `windows`). */
+    OS?: string;
 }
 export interface TaskSpecPlacement {
     /** An array of constraint expressions to limit the set of nodes where a task can be scheduled. Constraint expressions can either use a _match_ (`==`) or _exclude_ (`!=`) rule. Multiple constraints find nodes that satisfy every expression (AND match). Constraints can match node or Docker Engine labels as follows:  node attribute       | matches                        | example ---------------------|--------------------------------|----------------------------------------------- `node.id`            | Node ID                        | `node.id==2ivku8v2gvtg4` `node.hostname`      | Node hostname                  | `node.hostname!=node-2` `node.role`          | Node role (`manager`/`worker`) | `node.role==manager` `node.platform.os`   | Node operating system          | `node.platform.os==windows` `node.platform.arch` | Node architecture              | `node.platform.arch==x86_64` `node.labels`        | User-defined node labels       | `node.labels.security==high` `engine.labels`      | Docker Engine's labels         | `engine.labels.operatingsystem==ubuntu-24.04`  `engine.labels` apply to Docker Engine labels like operating system, drivers, etc. Swarm administrators add `node.labels` for operational purposes by using the [`node update endpoint`](#operation/NodeUpdate). */
@@ -4362,6 +4122,247 @@ export interface SwarmService {
     ServiceStatus?: ServiceServiceStatus;
     JobStatus?: ServiceJobStatus;
 }
+export type InspectStackSwarmServiceResponse = SwarmService;
+export type InspectSwarmConfigResponse = SwarmConfig[];
+export declare enum NodeSpecRoleEnum {
+    EMPTY = "",
+    WORKER = "worker",
+    MANAGER = "manager"
+}
+export declare enum NodeSpecAvailabilityEnum {
+    EMPTY = "",
+    ACTIVE = "active",
+    PAUSE = "pause",
+    DRAIN = "drain"
+}
+export interface NodeSpec {
+    /** Name for the node. */
+    Name?: string;
+    /** User-defined key/value metadata. */
+    Labels?: Record<string, string>;
+    /** Role of the node. */
+    Role?: NodeSpecRoleEnum;
+    /** Availability of the node. */
+    Availability?: NodeSpecAvailabilityEnum;
+}
+export interface EngineDescriptionPlugins {
+    Type?: string;
+    Name?: string;
+}
+/** EngineDescription provides information about an engine. */
+export interface EngineDescription {
+    EngineVersion?: string;
+    Labels?: Record<string, string>;
+    Plugins?: EngineDescriptionPlugins[];
+}
+/** Information about the issuer of leaf TLS certificates and the trusted root CA certificate. */
+export interface TlsInfo {
+    /** The root CA certificate(s) that are used to validate leaf TLS certificates. */
+    TrustRoot?: string;
+    /** The base64-url-safe-encoded raw subject bytes of the issuer. */
+    CertIssuerSubject?: string;
+    /** The base64-url-safe-encoded raw public key bytes of the issuer. */
+    CertIssuerPublicKey?: string;
+}
+export interface NodeDescription {
+    Hostname?: string;
+    Platform?: Platform;
+    Resources?: ResourceObject;
+    Engine?: EngineDescription;
+    TLSInfo?: TlsInfo;
+}
+/** NodeState represents the state of a node. */
+export declare enum NodeState {
+    UNKNOWN = "unknown",
+    DOWN = "down",
+    READY = "ready",
+    DISCONNECTED = "disconnected"
+}
+/** NodeStatus represents the status of a node.  It provides the current status of the node, as seen by the manager. */
+export interface NodeStatus {
+    State?: NodeState;
+    Message?: string;
+    /** IP address of the node. */
+    Addr?: string;
+}
+/** Reachability represents the reachability of a node. */
+export declare enum NodeReachability {
+    UNKNOWN = "unknown",
+    UNREACHABLE = "unreachable",
+    REACHABLE = "reachable"
+}
+/** ManagerStatus represents the status of a manager.  It provides the current status of a node's manager component, if the node is a manager. */
+export interface ManagerStatus {
+    Leader?: boolean;
+    Reachability?: NodeReachability;
+    /** The IP address and port at which the manager is reachable. */
+    Addr?: string;
+}
+/** Swarm node details. */
+export interface SwarmNode {
+    ID?: string;
+    Version?: ObjectVersion;
+    /** Date and time at which the node was added to the swarm in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds. */
+    CreatedAt?: string;
+    /** Date and time at which the node was last updated in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds. */
+    UpdatedAt?: string;
+    Spec?: NodeSpec;
+    Description?: NodeDescription;
+    Status?: NodeStatus;
+    ManagerStatus?: ManagerStatus;
+}
+export type InspectSwarmNodeResponse = SwarmNode;
+/** Orchestration configuration. */
+export interface SwarmSpecOrchestration {
+    /**
+     * The number of historic tasks to keep per instance or node.
+     * If negative, never remove completed or failed tasks.
+     */
+    TaskHistoryRetentionLimit?: I64;
+}
+/** Raft configuration. */
+export interface SwarmSpecRaft {
+    /** The number of log entries between snapshots. */
+    SnapshotInterval?: U64;
+    /** The number of snapshots to keep beyond the current snapshot. */
+    KeepOldSnapshots?: U64;
+    /** The number of log entries to keep around to sync up slow followers after a snapshot is created. */
+    LogEntriesForSlowFollowers?: U64;
+    /** The number of ticks that a follower will wait for a message from the leader before becoming a candidate and starting an election. `ElectionTick` must be greater than `HeartbeatTick`.  A tick currently defaults to one second, so these translate directly to seconds currently, but this is NOT guaranteed. */
+    ElectionTick?: I64;
+    /**
+     * The number of ticks between heartbeats.
+     * Every HeartbeatTick ticks, the leader will send a heartbeat to the followers.
+     * A tick currently defaults to one second, so these translate directly to seconds currently, but this is NOT guaranteed.
+     */
+    HeartbeatTick?: I64;
+}
+/** Dispatcher configuration. */
+export interface SwarmSpecDispatcher {
+    /** The delay for an agent to send a heartbeat to the dispatcher. */
+    HeartbeatPeriod?: I64;
+}
+export declare enum SwarmSpecCaConfigExternalCasProtocolEnum {
+    EMPTY = "",
+    CFSSL = "cfssl"
+}
+export interface SwarmSpecCaConfigExternalCas {
+    /** Protocol for communication with the external CA (currently only `cfssl` is supported). */
+    Protocol?: SwarmSpecCaConfigExternalCasProtocolEnum;
+    /** URL where certificate signing requests should be sent. */
+    URL?: string;
+    /** An object with key/value pairs that are interpreted as protocol-specific options for the external CA driver. */
+    Options?: Record<string, string>;
+    /** The root CA certificate (in PEM format) this external CA uses to issue TLS certificates (assumed to be to the current swarm root CA certificate if not provided). */
+    CACert?: string;
+}
+/** CA configuration. */
+export interface SwarmSpecCaConfig {
+    /** The duration node certificates are issued for. */
+    NodeCertExpiry?: I64;
+    /** Configuration for forwarding signing requests to an external certificate authority. */
+    ExternalCAs?: SwarmSpecCaConfigExternalCas[];
+    /** The desired signing CA certificate for all swarm node TLS leaf certificates, in PEM format. */
+    SigningCACert?: string;
+    /** The desired signing CA key for all swarm node TLS leaf certificates, in PEM format. */
+    SigningCAKey?: string;
+    /** An integer whose purpose is to force swarm to generate a new signing CA certificate and key, if none have been specified in `SigningCACert` and `SigningCAKey` */
+    ForceRotate?: U64;
+}
+/** Parameters related to encryption-at-rest. */
+export interface SwarmSpecEncryptionConfig {
+    /** If set, generate a key and use it to lock data stored on the managers. */
+    AutoLockManagers?: boolean;
+}
+/** The log driver to use for tasks created in the orchestrator if unspecified by a service.  Updating this value only affects new tasks. Existing tasks continue to use their previously configured log driver until recreated. */
+export interface SwarmSpecTaskDefaultsLogDriver {
+    /** The log driver to use as a default for new tasks. */
+    Name?: string;
+    /** Driver-specific options for the selected log driver, specified as key/value pairs. */
+    Options?: Record<string, string>;
+}
+/** Defaults for creating tasks in this cluster. */
+export interface SwarmSpecTaskDefaults {
+    LogDriver?: SwarmSpecTaskDefaultsLogDriver;
+}
+/** User modifiable swarm configuration. */
+export interface SwarmSpec {
+    /** Name of the swarm. */
+    Name?: string;
+    /** User-defined key/value metadata. */
+    Labels?: Record<string, string>;
+    Orchestration?: SwarmSpecOrchestration;
+    Raft?: SwarmSpecRaft;
+    Dispatcher?: SwarmSpecDispatcher;
+    CAConfig?: SwarmSpecCaConfig;
+    EncryptionConfig?: SwarmSpecEncryptionConfig;
+    TaskDefaults?: SwarmSpecTaskDefaults;
+}
+/** JoinTokens contains the tokens workers and managers need to join the swarm. */
+export interface JoinTokens {
+    /** The token workers can use to join the swarm. */
+    Worker?: string;
+    /** The token managers can use to join the swarm. */
+    Manager?: string;
+}
+/** Docker-level information about the Swarm. */
+export interface SwarmInspectInfo {
+    /** The (Docker) ID of the swarm. */
+    ID?: string;
+    Version?: ObjectVersion;
+    /** Date and time at which the swarm was initialised in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds. */
+    CreatedAt?: string;
+    /** Date and time at which the swarm was last updated in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds. */
+    UpdatedAt?: string;
+    Spec?: SwarmSpec;
+    TLSInfo?: TlsInfo;
+    /** Whether there is currently a root CA rotation in progress for the swarm */
+    RootRotationInProgress?: boolean;
+    /** DataPathPort specifies the data path port number for data traffic. Acceptable port range is 1024 to 49151. If no port is set or is set to 0, the default port (4789) is used. */
+    DataPathPort?: number;
+    /** Default Address Pool specifies default subnet pools for global scope networks. */
+    DefaultAddrPool?: string[];
+    /** SubnetSize specifies the subnet size of the networks created from the default subnet pool. */
+    SubnetSize?: number;
+    JoinTokens?: JoinTokens;
+}
+export type InspectSwarmResponse = SwarmInspectInfo;
+/** Driver represents a driver (network, logging, secrets). */
+export interface Driver {
+    /** Name of the driver. */
+    Name: string;
+    /** Key/value map of driver-specific options. */
+    Options?: Record<string, string>;
+}
+export interface SecretSpec {
+    /** User-defined name of the secret. */
+    Name?: string;
+    /** User-defined key/value metadata. */
+    Labels?: Record<string, string>;
+    /**
+     * Data is the data to store as a secret, formatted as a Base64-url-safe-encoded ([RFC 4648](https://tools.ietf.org/html/rfc4648#section-5)) string.
+     * It must be empty if the Driver field is set, in which case the data is loaded from an external secret store.
+     * The maximum allowed size is 500KB, as defined in [MaxSecretSize](https://pkg.go.dev/github.com/moby/swarmkit/v2@v2.0.0-20250103191802-8c1959736554/api/validation#MaxSecretSize).
+     * This field is only used to _create_ a secret, and is not returned by other endpoints.
+     */
+    Data?: string;
+    /** Name of the secrets driver used to fetch the secret's value from an external secret store. */
+    Driver?: Driver;
+    /**
+     * Templating driver, if applicable  Templating controls whether and how to evaluate the config payload as a template.
+     * If no driver is set, no templating is used.
+     */
+    Templating?: Driver;
+}
+/** Swarm secret details. */
+export interface SwarmSecret {
+    ID?: string;
+    Version?: ObjectVersion;
+    CreatedAt?: string;
+    UpdatedAt?: string;
+    Spec?: SecretSpec;
+}
+export type InspectSwarmSecretResponse = SwarmSecret;
 export type InspectSwarmServiceResponse = SwarmService;
 export declare enum SwarmState {
     /** The Swarm is healthy, all nodes OK */
@@ -4928,6 +4929,14 @@ export interface SwarmServiceListItem {
     Restart?: TaskSpecRestartPolicyConditionEnum;
     /** Number of replicas */
     Replicas?: I64;
+    /**
+     * Swarm service state.
+     * - Healthy if all associated tasks match their desired state (or report no desired state)
+     * - Unhealthy otherwise
+     *
+     * Not included in docker cli return, computed by Komodo
+     */
+    State: SwarmState;
     CreatedAt?: string;
     UpdatedAt?: string;
 }
@@ -7493,10 +7502,20 @@ export interface InspectDockerVolume {
     volume: string;
 }
 /**
- * Inspect the docker container associated with the Stack.
+ * Inspect a docker container associated with a Stack.
  * Response: [Container].
  */
 export interface InspectStackContainer {
+    /** Id or name */
+    stack: string;
+    /** The service name to inspect */
+    service: string;
+}
+/**
+ * Inspect a swarm service associated with a Stack.
+ * Response: [Container].
+ */
+export interface InspectStackSwarmService {
     /** Id or name */
     stack: string;
     /** The service name to inspect */
@@ -10030,6 +10049,9 @@ export type ReadRequest = {
 } | {
     type: "InspectStackContainer";
     params: InspectStackContainer;
+} | {
+    type: "InspectStackSwarmService";
+    params: InspectStackSwarmService;
 } | {
     type: "ListStacks";
     params: ListStacks;

@@ -31,24 +31,25 @@ impl Resolve<crate::api::Args> for PollSwarmStatus {
       .iter()
       .next()
       .context("Could not connect to docker client")?;
-    let (inspect, nodes, services, tasks, secrets, configs, stacks) = tokio::join!(
+    let (inspect, nodes, tasks, secrets, configs, stacks) = tokio::join!(
       client.inspect_swarm(),
       client.list_swarm_nodes(),
-      client.list_swarm_services(),
       client.list_swarm_tasks(),
       client.list_swarm_secrets(),
       list_swarm_configs(),
       list_swarm_stacks(),
     );
+    let tasks = tasks.unwrap_or_default();
+    let services = client.list_swarm_services(&tasks).await;
     Ok(PollSwarmStatusResponse {
       inspect: inspect.ok(),
       lists: SwarmLists {
         nodes: nodes.unwrap_or_default(),
         services: services.unwrap_or_default(),
-        tasks: tasks.unwrap_or_default(),
         secrets: secrets.unwrap_or_default(),
         configs: configs.unwrap_or_default(),
         stacks: stacks.unwrap_or_default(),
+        tasks,
       },
     })
   }

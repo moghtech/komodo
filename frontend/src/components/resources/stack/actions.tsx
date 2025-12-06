@@ -131,7 +131,11 @@ export const PullStack = ({
     { refetchInterval: 5000 }
   ).data;
 
-  if (!stack || (stack?.info.missing_files.length ?? 0) > 0) {
+  if (
+    !stack ||
+    stack.info.swarm_id ||
+    (stack?.info.missing_files.length ?? 0) > 0
+  ) {
     return null;
   }
 
@@ -170,6 +174,7 @@ export const RestartStack = ({
 
   if (
     !stack ||
+    stack.info.swarm_id ||
     stack?.info.project_missing ||
     (service && container_state !== Types.ContainerStateStatusEnum.Running) ||
     // Only show if running or unhealthy
@@ -214,6 +219,7 @@ export const StartStopStack = ({
 
   if (
     !stack ||
+    stack.info.swarm_id ||
     [Types.StackState.Down, Types.StackState.Unknown].includes(state)
   ) {
     return null;
@@ -282,7 +288,7 @@ export const PauseUnpauseStack = ({
       ? services?.find((s) => s.service === service)?.container?.state
       : undefined) ?? Types.ContainerStateStatusEnum.Empty;
 
-  if (!stack || stack?.info.project_missing) {
+  if (!stack || stack.info.swarm_id || stack?.info.project_missing) {
     return null;
   }
 

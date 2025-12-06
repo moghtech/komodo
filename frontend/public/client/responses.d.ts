@@ -71,6 +71,7 @@ export type ReadResponses = {
     GetStackLog: Types.GetStackLogResponse;
     SearchStackLog: Types.SearchStackLogResponse;
     InspectStackContainer: Types.InspectStackContainerResponse;
+    InspectStackSwarmService: Types.InspectStackSwarmServiceResponse;
     ListStacks: Types.ListStacksResponse;
     ListFullStacks: Types.ListFullStacksResponse;
     ListStackServices: Types.ListStackServicesResponse;

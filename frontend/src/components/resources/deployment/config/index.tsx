@@ -22,6 +22,8 @@ import {
   TerminationTimeout,
 } from "./components/term-signal";
 import { extract_registry_domain } from "@lib/utils";
+import { Button } from "@ui/button";
+import { X } from "lucide-react";
 
 export const DeploymentConfig = ({
   id,
@@ -35,6 +37,7 @@ export const DeploymentConfig = ({
   const builds = useRead("ListBuilds", {}).data;
   const global_disabled =
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
+  const swarms_exist = useRead("ListSwarms", {}).data?.length ? true : false;
   const [update, set] = useLocalStorage<Partial<Types.DeploymentConfig>>(
     `deployment-${id}-update-v1`,
     {}
@@ -49,6 +52,21 @@ export const DeploymentConfig = ({
 
   const disabled = global_disabled || !canWrite;
 
+  const curr_swarm_id = update.swarm_id ?? config.swarm_id;
+  const curr_server_id = update.server_id ?? config.server_id;
+  const ClearServerSwarmButton = (
+    <Button
+      size="icon"
+      variant="secondary"
+      onClick={() =>
+        set((update) => ({ ...update, swarm_id: "", server_id: "" }))
+      }
+      disabled={disabled}
+    >
+      <X className="w-4 h-4" />
+    </Button>
+  );
+
   return (
     <Config
       titleOther={titleOther}
@@ -62,8 +80,44 @@ export const DeploymentConfig = ({
       components={{
         "": [
           {
+            label: "Swarm",
+            labelHidden: true,
+            hidden: !swarms_exist || !!curr_server_id,
+            components: {
+              swarm_id: (swarm_id, set) => {
+                return (
+                  <ConfigItem
+                    label={
+                      swarm_id ? (
+                        <div className="flex gap-3 text-lg font-bold">
+                          Swarm:
+                          <ResourceLink type="Swarm" id={swarm_id} />
+                        </div>
+                      ) : (
+                        "Select Swarm"
+                      )
+                    }
+                    description="Select the Swarm to deploy on."
+                  >
+                    <div className="flex items-center gap-4">
+                      <ResourceSelector
+                        type="Swarm"
+                        selected={swarm_id}
+                        onSelect={(swarm_id) => set({ swarm_id })}
+                        disabled={disabled}
+                        align="start"
+                      />
+                      {ClearServerSwarmButton}
+                    </div>
+                  </ConfigItem>
+                );
+              },
+            },
+          },
+          {
             label: "Server",
             labelHidden: true,
+            hidden: !!curr_swarm_id,
             components: {
               server_id: (server_id, set) => {
                 return (
@@ -80,13 +134,16 @@ export const DeploymentConfig = ({
                     }
                     description="Select the Server to deploy on."
                   >
-                    <ResourceSelector
-                      type="Server"
-                      selected={server_id}
-                      onSelect={(server_id) => set({ server_id })}
-                      disabled={disabled}
-                      align="start"
-                    />
+                    <div className="flex items-center gap-4">
+                      <ResourceSelector
+                        type="Server"
+                        selected={server_id}
+                        onSelect={(server_id) => set({ server_id })}
+                        disabled={disabled}
+                        align="start"
+                      />
+                      {ClearServerSwarmButton}
+                    </div>
                   </ConfigItem>
                 );
               },

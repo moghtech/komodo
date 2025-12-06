@@ -67,6 +67,7 @@ pub async fn update_swarm_stack_cache(
       })
       .cloned();
     let services = extract_services_from_stack(&stack);
+    let service_prefix = format!("{project_name}_");
     let mut services_with_swarm_services = services
       .iter()
       .map(
@@ -81,7 +82,15 @@ pub async fn update_swarm_stack_cache(
               service
                 .name
                 .as_ref()
-                .map(|name| name == service_name)
+                .map(|name| {
+                  // The services are named like {stackname_servicename}.
+                  // If they don't match this pattern, they aren't part of stack.
+                  let Some(name) = name.strip_prefix(&service_prefix)
+                  else {
+                    return false;
+                  };
+                  name == service_name
+                })
                 .unwrap_or_default()
             })
             .cloned();

@@ -5,6 +5,7 @@ use typeshare::typeshare;
 
 use crate::entities::{
   I64, U64, docker::task::TaskSpecRestartPolicyConditionEnum,
+  swarm::SwarmState,
 };
 
 use super::{
@@ -40,6 +41,14 @@ pub struct SwarmServiceListItem {
   /// Number of replicas
   #[serde(rename = "Replicas")]
   pub replicas: Option<I64>,
+
+  /// Swarm service state.
+  /// - Healthy if all associated tasks match their desired state (or report no desired state)
+  /// - Unhealthy otherwise
+  ///
+  /// Not included in docker cli return, computed by Komodo
+  #[serde(rename = "State")]
+  pub state: SwarmState,
 
   #[serde(rename = "CreatedAt")]
   pub created_at: Option<String>,

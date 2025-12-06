@@ -59,6 +59,7 @@ import {
   container_state_intention,
   hex_color_by_intention,
   stroke_color_class_by_intention,
+  swarm_state_intention,
   text_color_class_by_intention,
 } from "@lib/color";
 import { Types } from "komodo_client";
@@ -632,11 +633,7 @@ export const ShowHideButton = ({
   );
 };
 
-type DockerResourceType =
-  | "container"
-  | "network"
-  | "image"
-  | "volume";
+type DockerResourceType = "container" | "network" | "image" | "volume";
 
 export const DOCKER_LINK_ICONS: {
   [type in DockerResourceType]: React.FC<{
@@ -759,7 +756,7 @@ export const DockerResourceLink = ({
 
 export const StackServiceLink = ({
   id,
-  service,
+  service: _service,
 }: {
   id: string;
   service: string;
@@ -769,19 +766,19 @@ export const StackServiceLink = ({
     { stack: id },
     { refetchInterval: 10_000 }
   ).data;
-  const container = services?.find((s) => s.service === service)?.container;
-  const state = container?.state;
-  const color = stroke_color_class_by_intention(
-    container_state_intention(state)
-  );
+  const service = services?.find((s) => s.service === _service);
+  const intention = service?.swarm_service?.State
+    ? swarm_state_intention(service?.swarm_service?.State)
+    : container_state_intention(service?.container?.state);
+  const color = stroke_color_class_by_intention(intention);
   return (
     <Link
-      to={`/stacks/${id}/service/${service}`}
+      to={`/stacks/${id}/service/${_service}`}
       onClick={(e) => e.stopPropagation()}
       className="flex items-center gap-2 text-sm hover:underline"
     >
       <Layers2 className={cn("w-4 h-4", color)} />
-      {service}
+      {_service}
     </Link>
   );
 };

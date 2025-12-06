@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use anyhow::{Context as _, anyhow};
 use command::{
   KomodoCommandMode, run_komodo_command_with_sanitization,
@@ -229,6 +231,7 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
       command += " --with-registry-auth";
     }
     push_extra_args(&mut command, &stack.config.extra_args)?;
+    write!(&mut command, " {project_name}")?;
 
     // Apply compose cmd wrapper if configured
     let compose_cmd_wrapper =

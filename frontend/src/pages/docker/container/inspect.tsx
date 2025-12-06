@@ -2,7 +2,7 @@ import { usePermissions, useRead } from "@lib/hooks";
 import { ReactNode } from "react";
 import { Types } from "komodo_client";
 import { Section } from "@components/layouts";
-import { InspectContainerView } from "@components/inspect";
+import { InspectResponseViewer } from "@components/inspect";
 
 export const ContainerInspect = ({
   id,
@@ -47,8 +47,8 @@ const ContainerInspectInner = ({
     container,
   });
   return (
-    <InspectContainerView
-      container={inspect_container}
+    <InspectResponseViewer
+      response={inspect_container}
       error={error}
       isPending={isPending}
       isError={isError}

@@ -4,6 +4,7 @@ use komodo_client::{
   entities::{
     SwarmOrServer,
     permission::PermissionLevel,
+    server::Server,
     stack::{Stack, StackActionState},
     update::{Log, Update},
     user::User,
@@ -36,7 +37,7 @@ pub async fn execute_compose<T: ExecuteCompose>(
   services: Vec<String>,
   user: &User,
   set_in_progress: impl Fn(&mut StackActionState),
-  mut update: Update,
+  update: Update,
   extras: T::Extras,
 ) -> anyhow::Result<Update> {
   let (stack, swarm_or_server) = setup_stack_execution(
@@ -52,6 +53,27 @@ pub async fn execute_compose<T: ExecuteCompose>(
     ));
   };
 
+  execute_compose_with_stack_and_server::<T>(
+    stack,
+    server,
+    services,
+    set_in_progress,
+    update,
+    extras,
+  )
+  .await
+}
+
+pub async fn execute_compose_with_stack_and_server<
+  T: ExecuteCompose,
+>(
+  stack: Stack,
+  server: Server,
+  services: Vec<String>,
+  set_in_progress: impl Fn(&mut StackActionState),
+  mut update: Update,
+  extras: T::Extras,
+) -> anyhow::Result<Update> {
   // get the action state for the stack (or insert default).
   let action_state =
     action_states().stack.get_or_insert_default(&stack.id).await;

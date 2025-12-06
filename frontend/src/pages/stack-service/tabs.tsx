@@ -1,7 +1,10 @@
 import { useServer } from "@components/resources/server";
 import { ContainerTerminals } from "@components/terminal/container";
 import { useLocalStorage, usePermissions } from "@lib/hooks";
-import { MobileFriendlyTabsSelector } from "@ui/mobile-friendly-tabs";
+import {
+  MobileFriendlyTabsSelector,
+  TabNoContent,
+} from "@ui/mobile-friendly-tabs";
 import { Types } from "komodo_client";
 import { useMemo } from "react";
 import { StackServiceInspect } from "./inspect";
@@ -12,11 +15,13 @@ type StackServiceTabsView = "Log" | "Inspect" | "Terminals";
 export const StackServiceTabs = ({
   stack,
   service,
-  container_state,
+  container,
+  swarm_service,
 }: {
   stack: Types.StackListItem;
   service: string;
-  container_state: Types.ContainerStateStatusEnum;
+  container: Types.ContainerListItem | undefined;
+  swarm_service: Types.SwarmServiceListItem | undefined;
 }) => {
   const [_view, setView] = useLocalStorage<StackServiceTabsView>(
     `stack-${stack.id}-${service}-tabs-v2`,
@@ -26,24 +31,24 @@ export const StackServiceTabs = ({
     type: "Stack",
     id: stack.id,
   });
+
+  const down = !swarm_service && !container;
+
   const container_terminals_disabled =
     useServer(stack.info.server_id)?.info.container_terminals_disabled ?? false;
-  const logDisabled =
-    !specificLogs || container_state === Types.ContainerStateStatusEnum.Empty;
-  const inspectDisabled =
-    !specificInspect ||
-    container_state === Types.ContainerStateStatusEnum.Empty;
+  const logDisabled = !specificLogs || down;
+  const inspectDisabled = !specificInspect || down;
   const terminalDisabled =
     !specificTerminal ||
     container_terminals_disabled ||
-    container_state !== Types.ContainerStateStatusEnum.Running;
+    container?.state !== Types.ContainerStateStatusEnum.Running;
   const view =
     (inspectDisabled && _view === "Inspect") ||
     (terminalDisabled && _view === "Terminals")
       ? "Log"
       : _view;
 
-  const tabs = useMemo(
+  const tabs = useMemo<TabNoContent[]>(
     () => [
       {
         value: "Log",
@@ -56,6 +61,7 @@ export const StackServiceTabs = ({
       {
         value: "Terminals",
         disabled: terminalDisabled,
+        hidden: !container,
       },
     ],
     [logDisabled, inspectDisabled, terminalDisabled]
@@ -97,6 +103,7 @@ export const StackServiceTabs = ({
           id={stack.id}
           service={service}
           titleOther={Selector}
+          useSwarm={!!swarm_service}
         />
       );
     case "Terminals":

@@ -40,6 +40,7 @@ import { StatusBadge } from "@components/util";
 import { GroupActions } from "@components/group-actions";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@ui/tooltip";
 import { StackTabs } from "./tabs";
+import { useSwarm } from "../swarm";
 
 export const useStack = (id?: string) =>
   useRead("ListStacks", {}, { refetchInterval: 10_000 }).data?.find(
@@ -143,13 +144,16 @@ export const StackComponents: RequiredResourceComponents = {
   Info: {
     Server: ({ id }) => {
       const info = useStack(id)?.info;
+      const swarm = useSwarm(info?.swarm_id);
       const server = useServer(info?.server_id);
-      return server?.id ? (
+      return swarm?.id ? (
+        <ResourceLink type="Swarm" id={swarm?.id} />
+      ) : server?.id ? (
         <ResourceLink type="Server" id={server?.id} />
       ) : (
         <div className="flex gap-2 items-center">
           <Server className="w-4 h-4" />
-          <div>Unknown Server</div>
+          <div>Unknown</div>
         </div>
       );
     },

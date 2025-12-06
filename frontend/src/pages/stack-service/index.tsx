@@ -16,6 +16,7 @@ import {
 import {
   container_state_intention,
   stroke_color_class_by_intention,
+  swarm_state_intention,
 } from "@lib/color";
 import {
   usePermissions,
@@ -33,6 +34,7 @@ import { ContainerPortLink, DockerResourceLink } from "@components/util";
 import { ResourceNotifications } from "@pages/resource-notifications";
 import { Fragment } from "react/jsx-runtime";
 import { StackServiceTabs } from "./tabs";
+import { SwarmLink } from "@components/resources/swarm";
 
 type IdServiceComponent = React.FC<{ id: string; service?: string }>;
 
@@ -59,22 +61,30 @@ export default function StackServicePage() {
 
 const StackServicePageInner = ({
   stack_id,
-  service,
+  service: _service,
 }: {
   stack_id: string;
   service: string;
 }) => {
   const stack = useStack(stack_id);
-  useSetTitle(`${stack?.name} | ${service}`);
+  useSetTitle(`${stack?.name} | ${_service}`);
   const { canExecute, canWrite } = usePermissions({
     type: "Stack",
     id: stack_id,
   });
   const services = useRead("ListStackServices", { stack: stack_id }).data;
-  const container = services?.find((s) => s.service === service)?.container;
+  const service = services?.find((s) => s.service === _service);
+  const container = service?.container;
+  const swarm_service = service?.swarm_service;
   const ports_map = useContainerPortsMap(container?.ports ?? []);
-  const state = container?.state ?? Types.ContainerStateStatusEnum.Empty;
-  const intention = container_state_intention(state);
+  const state = swarm_service?.State
+    ? swarm_service?.State
+    : (container?.state ?? Types.ContainerStateStatusEnum.Empty);
+  const intention = swarm_service?.State
+    ? swarm_state_intention(swarm_service.State)
+    : container_state_intention(
+        container?.state ?? Types.ContainerStateStatusEnum.Empty
+      );
   const stroke_color = stroke_color_class_by_intention(intention);
 
   return (
@@ -101,78 +111,97 @@ const StackServicePageInner = ({
               intent={intention}
               icon={<Layers2 className={cn("w-8 h-8", stroke_color)} />}
               resource={undefined}
-              name={service}
+              name={_service}
               state={state}
-              status={container?.status}
+              status={
+                swarm_service
+                  ? `${swarm_service.Replicas} Replica${swarm_service.Replicas === 1 ? "" : "s"}`
+                  : container?.status
+              }
             />
             <div className="flex flex-col pb-2 px-4">
               <div className="flex items-center gap-x-4 gap-y-0 flex-wrap text-muted-foreground">
                 <ResourceLink type="Stack" id={stack_id} />
-                {stack?.info.server_id && (
+                {/* SWARM ONLY */}
+                {stack?.info.swarm_id && (
+                  <>
+                    |
+                    <ResourceLink type="Swarm" id={stack.info.swarm_id} />
+                    {swarm_service?.Name && (
+                      <>
+                        |
+                        <SwarmLink
+                          type="Service"
+                          swarm_id={stack.info.swarm_id}
+                          resource_id={swarm_service.ID}
+                          name={swarm_service.Name}
+                        />
+                      </>
+                    )}
+                  </>
+                )}
+                {/* SERVER ONLY */}
+                {!stack?.info.swarm_id && stack?.info.server_id && (
                   <>
                     |
                     <ResourceLink type="Server" id={stack.info.server_id} />
+                    {container?.name && (
+                      <>
+                        |
+                        <DockerResourceLink
+                          type="container"
+                          server_id={stack.info.server_id}
+                          name={container.name}
+                          muted
+                        />
+                      </>
+                    )}
+                    {container?.image && (
+                      <>
+                        |
+                        <DockerResourceLink
+                          type="image"
+                          server_id={stack.info.server_id}
+                          name={container.image}
+                          id={container.image_id}
+                          muted
+                        />
+                      </>
+                    )}
+                    {container?.networks?.map((network) => (
+                      <Fragment key={network}>
+                        |
+                        <DockerResourceLink
+                          type="network"
+                          server_id={stack.info.server_id}
+                          name={network}
+                          muted
+                        />
+                      </Fragment>
+                    ))}
+                    {container?.volumes?.map((volume) => (
+                      <Fragment key={volume}>
+                        |
+                        <DockerResourceLink
+                          type="volume"
+                          server_id={stack.info.server_id}
+                          name={volume}
+                          muted
+                        />
+                      </Fragment>
+                    ))}
+                    {Object.keys(ports_map).map((host_port) => (
+                      <Fragment key={host_port}>
+                        |
+                        <ContainerPortLink
+                          host_port={host_port}
+                          ports={ports_map[host_port]}
+                          server_id={stack.info.server_id}
+                        />
+                      </Fragment>
+                    ))}
                   </>
                 )}
-                {stack?.info.server_id && container?.name && (
-                  <>
-                    |
-                    <DockerResourceLink
-                      type="container"
-                      server_id={stack.info.server_id}
-                      name={container.name}
-                      muted
-                    />
-                  </>
-                )}
-                {stack?.info.server_id && container?.image && (
-                  <>
-                    |
-                    <DockerResourceLink
-                      type="image"
-                      server_id={stack.info.server_id}
-                      name={container.image}
-                      id={container.image_id}
-                      muted
-                    />
-                  </>
-                )}
-                {stack?.info.server_id &&
-                  container?.networks?.map((network) => (
-                    <Fragment key={network}>
-                      |
-                      <DockerResourceLink
-                        type="network"
-                        server_id={stack.info.server_id}
-                        name={network}
-                        muted
-                      />
-                    </Fragment>
-                  ))}
-                {stack?.info.server_id &&
-                  container &&
-                  container.volumes?.map((volume) => (
-                    <Fragment key={volume}>
-                      |
-                      <DockerResourceLink
-                        type="volume"
-                        server_id={stack.info.server_id}
-                        name={volume}
-                        muted
-                      />
-                    </Fragment>
-                  ))}
-                {stack?.info.server_id &&
-                  Object.keys(ports_map).map((host_port) => (
-                    <Fragment key={host_port}>
-                      |
-                      <ContainerPortLink
-                        host_port={host_port}
-                        ports={ports_map[host_port]}
-                        server_id={stack.info.server_id}
-                      />
-                    </Fragment>
-                  ))}
               </div>
             </div>
           </div>
@@ -192,7 +221,7 @@ const StackServicePageInner = ({
           <Section title="Execute (Service)" icon={<Zap className="w-4 h-4" />}>
             <div className="flex gap-4 items-center flex-wrap">
               {Object.entries(Actions).map(([key, Action]) => (
-                <Action key={key} id={stack_id} service={service} />
+                <Action key={key} id={stack_id} service={_service} />
               ))}
             </div>
           </Section>
@@ -203,8 +232,9 @@ const StackServicePageInner = ({
           {stack && (
             <StackServiceTabs
               stack={stack}
-              service={service}
-              container_state={state}
+              service={_service}
+              container={container}
+              swarm_service={swarm_service}
             />
           )}
         </div>

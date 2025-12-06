@@ -42,7 +42,12 @@ use crate::{
   monitor::{update_cache_for_server, update_cache_for_swarm},
   permission::get_check_permissions,
   resource,
-  stack::{execute::execute_compose, setup_stack_execution},
+  stack::{
+    execute::{
+      execute_compose, execute_compose_with_stack_and_server,
+    },
+    setup_stack_execution,
+  },
   state::{action_states, db_client},
 };
 
@@ -1142,16 +1147,77 @@ impl Resolve<ExecuteArgs> for DestroyStack {
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
   ) -> serror::Result<Update> {
-    execute_compose::<DestroyStack>(
+    let (stack, swarm_or_server) = setup_stack_execution(
       &self.stack,
-      self.services,
       user,
-      |state| state.destroying = true,
-      update.clone(),
-      (self.stop_time, self.remove_orphans),
+      PermissionLevel::Execute.into(),
     )
-    .await
-    .map_err(Into::into)
+    .await?;
+
+    match swarm_or_server {
+      SwarmOrServer::Swarm(swarm) => {
+        if !self.services.is_empty() {
+          return Err(
+            anyhow!("Cannot destroy specific Stack services when in Swarm mode.")
+              .status_code(StatusCode::BAD_REQUEST)
+          );
+        }
+
+        // get the action state for the stack (or insert default).
+        let action_state = action_states()
+          .stack
+          .get_or_insert_default(&stack.id)
+          .await;
+
+        // Will check to ensure stack not already busy before updating, and return Err if so.
+        // The returned guard will set the action state back to default when dropped.
+        let _action_guard =
+          action_state.update(|state| state.destroying = true)?;
+
+        let mut update = update.clone();
+        // Send update here for frontend to recheck action state
+        update_update(update.clone()).await?;
+
+        match swarm_request(
+          &swarm.config.server_ids,
+          periphery_client::api::swarm::RemoveSwarmStacks {
+            stacks: vec![stack.project_name(false)],
+            detach: false,
+          },
+        )
+        .await
+        {
+          Ok(log) => update.logs.push(log),
+          Err(e) => update.push_error_log(
+            "Destroy Stack",
+            format_serror(
+              &e.context("Failed to 'docker stack rm' on swarm")
+                .into(),
+            ),
+          ),
+        }
+
+        // Ensure cached stack state up to date by updating swarm cache
+        update_cache_for_swarm(&swarm, true).await;
+
+        update.finalize();
+        update_update(update.clone()).await?;
+
+        Ok(update)
+      }
+      SwarmOrServer::Server(server) => {
+        execute_compose_with_stack_and_server::<DestroyStack>(
+          stack,
+          server,
+          self.services,
+          |state| state.destroying = true,
+          update.clone(),
+          (self.stop_time, self.remove_orphans),
+        )
+        .await
+        .map_err(Into::into)
+      }
+    }
   }
 }
 

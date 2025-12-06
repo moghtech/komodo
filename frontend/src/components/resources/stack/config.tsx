@@ -93,6 +93,7 @@ export const StackConfig = ({
   const name = stack?.name;
   const global_disabled =
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
+  const swarms_exist = useRead("ListSwarms", {}).data?.length ? true : false;
   const [update, set] = useLocalStorage<Partial<Types.StackConfig>>(
     `stack-${id}-update-v1`,
     {}
@@ -145,37 +146,93 @@ export const StackConfig = ({
     false | ConfigComponent<Types.StackConfig>[] | undefined
   > = {};
 
-  const server_component: ConfigComponent<Types.StackConfig> = {
-    label: "Server",
-    labelHidden: true,
-    components: {
-      server_id: (server_id, set) => {
-        return (
-          <ConfigItem
-            label={
-              server_id ? (
-                <div className="flex gap-3 text-lg font-bold">
-                  Server:
-                  <ResourceLink type="Server" id={server_id} />
-                </div>
-              ) : (
-                "Select Server"
-              )
-            }
-            description="Select the Server to deploy on."
-          >
-            <ResourceSelector
-              type="Server"
-              selected={server_id}
-              onSelect={(server_id) => set({ server_id })}
-              disabled={disabled}
-              align="start"
-            />
-          </ConfigItem>
-        );
+  const curr_swarm_id = update.swarm_id ?? config.swarm_id;
+  const curr_server_id = update.server_id ?? config.server_id;
+  const ClearServerSwarmButton = (
+    <Button
+      size="icon"
+      variant="secondary"
+      onClick={() =>
+        set((update) => ({ ...update, swarm_id: "", server_id: "" }))
+      }
+      disabled={disabled}
+    >
+      <X className="w-4 h-4" />
+    </Button>
+  );
+
+  const swarm_server_components: ConfigComponent<Types.StackConfig>[] = [
+    {
+      label: "Swarm",
+      labelHidden: true,
+      hidden: !swarms_exist || !!curr_server_id,
+      components: {
+        swarm_id: (swarm_id, set) => {
+          return (
+            <ConfigItem
+              label={
+                swarm_id ? (
+                  <div className="flex gap-3 text-lg font-bold">
+                    Swarm:
+                    <ResourceLink type="Swarm" id={swarm_id} />
+                  </div>
+                ) : (
+                  "Select Swarm"
+                )
+              }
+              description="Select the Swarm to deploy on."
+            >
+              <div className="flex items-center gap-4">
+                <ResourceSelector
+                  type="Swarm"
+                  selected={swarm_id}
+                  onSelect={(swarm_id) => set({ swarm_id })}
+                  disabled={disabled}
+                  align="start"
+                />
+                {ClearServerSwarmButton}
+              </div>
+            </ConfigItem>
+          );
+        },
       },
     },
-  };
+    {
+      label: "Server",
+      labelHidden: true,
+      hidden: !!curr_swarm_id,
+      components: {
+        server_id: (server_id, set) => {
+          return (
+            <ConfigItem
+              label={
+                server_id ? (
+                  <div className="flex gap-3 text-lg font-bold">
+                    Server:
+                    <ResourceLink type="Server" id={server_id} />
+                  </div>
+                ) : (
+                  "Select Server"
+                )
+              }
+              description="Select the Server to deploy on."
+            >
+              <div className="flex items-center gap-4">
+                <ResourceSelector
+                  type="Server"
+                  selected={server_id}
+                  onSelect={(server_id) => set({ server_id })}
+                  disabled={disabled}
+                  align="start"
+                />
+                {ClearServerSwarmButton}
+              </div>
+            </ConfigItem>
+          );
+        },
+      },
+    },
+  ];
 
   const choose_mode: ConfigComponent<Types.StackConfig> = {
     label: "Choose Mode",
@@ -219,6 +276,7 @@ export const StackConfig = ({
 
   const environment: ConfigComponent<Types.StackConfig> = {
     label: "Environment",
+    hidden: !!curr_swarm_id,
     description: "Pass these variables to the compose command",
     actions: (
       <ShowHideButton
@@ -445,8 +503,7 @@ export const StackConfig = ({
         compose_cmd_wrapper: (value, set) => (
           <MonacoEditor
             value={
-              value ??
-              "# sops exec-env .encrypted.env '[[COMPOSE_COMMAND]]'\n"
+              value ?? "# sops exec-env .encrypted.env '[[COMPOSE_COMMAND]]'\n"
             }
             language="shell"
             onValueChange={(compose_cmd_wrapper) =>
@@ -547,6 +604,7 @@ export const StackConfig = ({
         },
         auto_pull: {
           label: "Pre Pull Images",
+          hidden: !!curr_swarm_id,
           description:
             "Ensure 'docker compose pull' is run before redeploying the Stack. Otherwise, use 'pull_policy' in docker compose file.",
         },
@@ -554,6 +612,7 @@ export const StackConfig = ({
     },
     {
       label: "Build Images",
+      hidden: !!curr_swarm_id,
       labelHidden: true,
       components: {
         run_build: {
@@ -600,8 +659,9 @@ export const StackConfig = ({
       components: {
         destroy_before_deploy: {
           label: "Destroy Before Deploy",
-          description:
-            "Ensure 'docker compose down' is run before redeploying the Stack.",
+          description: `Ensure '${
+            curr_swarm_id ? "docker service rm" : "docker compose down"
+          }' is run before redeploying the Stack.`,
         },
       },
     },
@@ -609,12 +669,12 @@ export const StackConfig = ({
 
   if (mode === undefined) {
     components = {
-      "": [server_component, choose_mode],
+      "": [...swarm_server_components, choose_mode],
     };
   } else if (mode === "Files On Server") {
     components = {
       "": [
-        server_component,
+        ...swarm_server_components,
         {
           label: "Files",
           components: {
@@ -646,7 +706,7 @@ export const StackConfig = ({
     const repo_linked = !!(update.linked_repo ?? config.linked_repo);
     components = {
       "": [
-        server_component,
+        ...swarm_server_components,
         {
           label: "Source",
           contentHidden: !show.git,
@@ -810,7 +870,7 @@ export const StackConfig = ({
   } else if (mode === "UI Defined") {
     components = {
       "": [
-        server_component,
+        ...swarm_server_components,
         {
           label: "Compose File",
           description: "Manage the compose file contents here.",
@@ -924,7 +984,10 @@ const ConfigFiles = ({
         <div className="flex w-full">
           <div className="flex flex-col gap-4 w-fit">
             {values.map(({ path, services, requires }, i) => (
-              <div key={i} className="w-full md:w-fit flex flex-wrap gap-4 pb-4 border-b-2">
+              <div
+                key={i}
+                className="w-full md:w-fit flex flex-wrap gap-4 pb-4 border-b-2"
+              >
                 <div className="w-full md:w-fit flex gap-4">
                   <Input
                     placeholder="configs/config.yaml"

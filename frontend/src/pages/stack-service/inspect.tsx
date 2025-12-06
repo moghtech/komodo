@@ -2,15 +2,17 @@ import { usePermissions, useRead } from "@lib/hooks";
 import { ReactNode } from "react";
 import { Types } from "komodo_client";
 import { Section } from "@components/layouts";
-import { InspectContainerView } from "@components/inspect";
+import { InspectResponseViewer } from "@components/inspect";
 
 export const StackServiceInspect = ({
   id,
   service,
+  useSwarm,
   titleOther,
 }: {
   id: string;
   service: string;
+  useSwarm: boolean;
   titleOther: ReactNode;
 }) => {
   const { specific } = usePermissions({ type: "Stack", id });
@@ -25,7 +27,7 @@ export const StackServiceInspect = ({
   }
   return (
     <Section titleOther={titleOther}>
-      <StackServiceInspectInner id={id} service={service} />
+      <StackServiceInspectInner id={id} service={service} useSwarm={useSwarm} />
     </Section>
   );
 };
@@ -33,22 +35,24 @@ export const StackServiceInspect = ({
 const StackServiceInspectInner = ({
   id,
   service,
+  useSwarm,
 }: {
   id: string;
   service: string;
+  useSwarm: boolean;
 }) => {
   const {
     data: container,
     error,
     isPending,
     isError,
-  } = useRead("InspectStackContainer", {
+  } = useRead(`InspectStack${useSwarm ? "SwarmService" : "Container"}`, {
     stack: id,
     service,
   });
   return (
-    <InspectContainerView
-      container={container}
+    <InspectResponseViewer
+      response={container}
       error={error}
       isPending={isPending}
       isError={isError}

@@ -5,7 +5,7 @@ use komodo_client::{
   api::read::*,
   entities::{
     SwarmOrServer,
-    docker::container::Container,
+    docker::{container::Container, service::SwarmService},
     permission::PermissionLevel,
     stack::{Stack, StackActionState, StackListItem, StackState},
   },
@@ -96,7 +96,11 @@ impl Resolve<ReadArgs> for GetStackLog {
         swarm_request(
           &swarm.config.server_ids,
           periphery_client::api::swarm::GetSwarmServiceLog {
-            service,
+            // The actual service name on swarm will be stackname_servicename
+            service: format!(
+              "{}_{service}",
+              stack.project_name(false)
+            ),
             tail,
             timestamps,
             no_task_ids: false,
@@ -224,7 +228,60 @@ impl Resolve<ReadArgs> for InspectStackContainer {
     let res = periphery_client(&server)
       .await?
       .request(InspectContainer { name })
-      .await?;
+      .await
+      .context("Failed to inspect container on server")?;
+
+    Ok(res)
+  }
+}
+
+impl Resolve<ReadArgs> for InspectStackSwarmService {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<SwarmService> {
+    let InspectStackSwarmService { stack, service } = self;
+    let (stack, swarm_or_server) = setup_stack_execution(
+      &stack,
+      user,
+      PermissionLevel::Read.logs(),
+    )
+    .await?;
+
+    let SwarmOrServer::Swarm(swarm) = swarm_or_server else {
+      return Err(
+        anyhow!(
+          "InspectStackSwarmService should only be called for Stack in Swarm Mode"
+        )
+        .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
+
+    let services = &stack_status_cache()
+      .get(&stack.id)
+      .await
+      .unwrap_or_default()
+      .curr
+      .services;
+
+    let Some(service) = services
+      .iter()
+      .find(|s| s.service == service)
+      .and_then(|s| {
+        s.swarm_service.as_ref().and_then(|c| c.name.clone())
+      })
+    else {
+      return Err(anyhow!(
+        "No service found matching '{service}'. Was the stack last deployed manually?"
+      ).into());
+    };
+
+    let res = swarm_request(
+      &swarm.config.server_ids,
+      periphery_client::api::swarm::InspectSwarmService { service },
+    )
+    .await
+    .context("Failed to inspect service on swarm")?;
 
     Ok(res)
   }
@@ -247,7 +304,7 @@ impl Resolve<ReadArgs> for ListCommonStackExtraArgs {
       &all_tags,
     )
     .await
-    .context("failed to get resources matching query")?;
+    .context("Failed to get resources matching query")?;
 
     // first collect with guaranteed uniqueness
     let mut res = HashSet::<String>::new();
@@ -281,7 +338,7 @@ impl Resolve<ReadArgs> for ListCommonStackBuildExtraArgs {
       &all_tags,
     )
     .await
-    .context("failed to get resources matching query")?;
+    .context("Failed to get resources matching query")?;
 
     // first collect with guaranteed uniqueness
     let mut res = HashSet::<String>::new();
@@ -389,7 +446,7 @@ impl Resolve<ReadArgs> for GetStacksSummary {
       &[],
     )
     .await
-    .context("failed to get stacks from db")?;
+    .context("Failed to get stacks from database")?;
 
     let mut res = GetStacksSummaryResponse::default();
 

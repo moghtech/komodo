@@ -1,14 +1,13 @@
-import { Types } from "komodo_client";
 import { Loader2 } from "lucide-react";
 import { MonacoEditor } from "./monaco";
 
-export const InspectContainerView = ({
-  container,
+export const InspectResponseViewer = ({
+  response,
   error,
   isPending,
   isError,
 }: {
-  container: Types.Container | undefined;
+  response: Record<any, any> | undefined;
   error: unknown;
   isPending: boolean;
   isError: boolean;
@@ -23,7 +22,7 @@ export const InspectContainerView = ({
   if (isError) {
     return (
       <div className="min-h-[60vh] flex flex-col">
-        <h1 className="flex w-full py-4">Failed to inspect container.</h1>
+        <h1 className="flex w-full py-4">Failed to inspect.</h1>
         {(error ?? undefined) && (
           <MonacoEditor
             value={JSON.stringify(error, null, 2)}
@@ -37,7 +36,7 @@ export const InspectContainerView = ({
   return (
     <div className="min-h-[60vh]">
       <MonacoEditor
-        value={JSON.stringify(container, null, 2)}
+        value={JSON.stringify(response, null, 2)}
         language="json"
         readOnly
       />
