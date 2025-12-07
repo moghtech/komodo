@@ -819,7 +819,7 @@ export interface BuilderQuerySpecifics {
 
 export type BuilderQuery = ResourceQuery<BuilderQuerySpecifics>;
 
-/** JSON containing an authentication token. */
+/** JSON containing a jwt authentication token. */
 export interface JwtResponse {
 	/** User ID for signed in user. */
 	user_id: string;
@@ -5387,6 +5387,16 @@ export type ListUserTargetPermissionsResponse = Permission[];
 export type ListUsersResponse = User[];
 
 export type ListVariablesResponse = Variable[];
+
+/** JSON containing either an authentication token or a TwoFactor pending token. */
+export type JwtOrTwoFactor = 
+	| { type: "Jwt", data: JwtResponse }
+	| { type: "TwoFactor", data: {
+	token: string;
+}};
+
+/** The response for [LoginLocalUser] */
+export type LoginLocalUserResponse = JwtOrTwoFactor;
 
 export type MongoDocument = any;
 
@@ -10428,13 +10438,6 @@ export enum IanaTimezone {
 	/** UTC+14:00 */
 	PacificKiritimati = "Pacific/Kiritimati",
 }
-
-/** The response for [LoginLocalUser] */
-export type LoginLocalUserResponse = 
-	| { type: "Jwt", data: JwtResponse }
-	| { type: "Totp", data: {
-	token: string;
-}};
 
 export type ReadRequest = 
 	| { type: "GetVersion", params: GetVersion }

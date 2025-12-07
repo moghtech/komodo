@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 use anyhow::{Context, anyhow};
-use async_timing_util::unix_timestamp_ms;
+use async_timing_util::{ONE_MIN_MS, unix_timestamp_ms};
 use axum::{
   Router,
   extract::{ConnectInfo, Query},
@@ -12,9 +12,12 @@ use axum::{
 use database::mongo_indexed::Document;
 use database::mungos::mongodb::bson::doc;
 use futures_util::TryFutureExt;
-use komodo_client::entities::{
-  random_string,
-  user::{User, UserConfig},
+use komodo_client::{
+  api::auth::JwtOrTwoFactor,
+  entities::{
+    random_string,
+    user::{User, UserConfig},
+  },
 };
 use rate_limit::WithFailureRateLimit;
 use reqwest::StatusCode;
@@ -23,7 +26,10 @@ use serror::{AddStatusCode, AddStatusCodeError as _};
 
 use crate::{
   config::core_config,
-  state::{auth_rate_limiter, db_client, jwt_client},
+  state::{
+    auth_rate_limiter, db_client, jwt_client,
+    totp_pending_login_cache,
+  },
 };
 
 use self::client::google_oauth_client;
@@ -99,10 +105,24 @@ async fn callback(
     .find_one(doc! { "config.data.google_id": &google_id })
     .await
     .context("failed at find user query from mongo")?;
-  let jwt = match user {
-    Some(user) => jwt_client()
-      .encode(user.id)
-      .context("failed to generate jwt")?,
+  let jwt_or_two_factor = match user {
+    Some(user) => {
+      if user.totp.secret.is_empty() {
+        let jwt = jwt_client()
+          .encode(user.id)
+          .context("Failed to generate jwt")?;
+        JwtOrTwoFactor::Jwt(jwt)
+      } else {
+        let token = random_string(20);
+        totp_pending_login_cache()
+          .insert(
+            token.clone(),
+            (user.id, unix_timestamp_ms() + ONE_MIN_MS),
+          )
+          .await;
+        JwtOrTwoFactor::TwoFactor { token }
+      }
+    }
     None => {
       let ts = unix_timestamp_ms() as i64;
       let no_users_exist =
@@ -147,29 +167,44 @@ async fn callback(
           avatar: google_user.picture,
         },
         totp: Default::default(),
-        webauthn: Default::default()
+        webauthn: Default::default(),
       };
       let user_id = db_client
         .users
         .insert_one(user)
         .await
-        .context("failed to create user on mongo")?
+        .context("Failed to create user on mongo")?
         .inserted_id
         .as_object_id()
         .context("inserted_id is not ObjectId")?
         .to_string();
-      jwt_client()
+      let jwt = jwt_client()
         .encode(user_id)
-        .context("failed to generate jwt")?
+        .context("Failed to generate jwt")?;
+      JwtOrTwoFactor::Jwt(jwt)
     }
   };
-  let exchange_token = jwt_client().create_exchange_token(jwt).await;
   let redirect = &state[STATE_PREFIX_LENGTH..];
-  let redirect_url = if redirect.is_empty() {
-    format!("{}?token={exchange_token}", core_config().host)
-  } else {
-    let splitter = if redirect.contains('?') { '&' } else { '?' };
-    format!("{redirect}{splitter}token={exchange_token}")
-  };
-  Ok(Redirect::to(&redirect_url))
+  match jwt_or_two_factor {
+    JwtOrTwoFactor::Jwt(jwt) => {
+      let exchange_token =
+        jwt_client().create_exchange_token(jwt).await;
+      let redirect_url = if redirect.is_empty() {
+        format!("{}?token={exchange_token}", core_config().host)
+      } else {
+        let splitter = if redirect.contains('?') { '&' } else { '?' };
+        format!("{redirect}{splitter}token={exchange_token}")
+      };
+      Ok(Redirect::to(&redirect_url))
+    }
+    JwtOrTwoFactor::TwoFactor { token } => {
+      let redirect_url = if redirect.is_empty() {
+        format!("{}?two_factor={token}", core_config().host)
+      } else {
+        let splitter = if redirect.contains('?') { '&' } else { '?' };
+        format!("{redirect}{splitter}two_factor={token}")
+      };
+      Ok(Redirect::to(&redirect_url))
+    }
+  }
 }

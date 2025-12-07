@@ -1,5 +1,6 @@
 import { Layout } from "@components/layouts";
 import { LOGIN_TOKENS, useAuth, useUser } from "@lib/hooks";
+import { sanitize_query_inner } from "@main";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense } from "react";
 import {
@@ -39,45 +40,46 @@ const SwarmSecretPage = lazy(() => import("@pages/swarm/secret"));
 const SwarmConfigPage = lazy(() => import("@pages/swarm/config"));
 const SwarmStackPage = lazy(() => import("@pages/swarm/stack"));
 
-const sanitize_query = (search: URLSearchParams) => {
-  search.delete("token");
-  const query = search.toString();
-  location.replace(
-    `${location.origin}${location.pathname}${query.length ? "?" + query : ""}`
-  );
-};
-
 let exchange_token_sent = false;
 
 /// returns whether to show login / loading screen depending on state of exchange token loop
-const useExchangeToken = () => {
+const useQueryToken = () => {
   const search = new URLSearchParams(location.search);
-  const exchange_token = search.get("token");
+  const twoFactorToken = search.get("two_factor");
+  const exchangeToken = search.get("token");
   const { mutate } = useAuth("ExchangeForJwt", {
     onSuccess: ({ user_id, jwt }) => {
       LOGIN_TOKENS.add_and_change(user_id, jwt);
-      sanitize_query(search);
+      sanitize_query_inner(search);
     },
   });
+
+  if (twoFactorToken) return { twoFactorToken, exchangeTokenPending: false };
 
   // In this case, failed to get user (jwt unset / invalid)
   // and the exchange token is not in url.
   // Just show the login.
-  if (!exchange_token) return false;
+  if (!exchangeToken)
+    return { twoFactorToken: "", exchangeTokenPending: false };
 
   // guard against multiple reqs sent
   // maybe isPending would do this but not sure about with render loop, this for sure will.
   if (!exchange_token_sent) {
-    mutate({ token: exchange_token });
+    mutate({ token: exchangeToken });
     exchange_token_sent = true;
   }
 
-  return true;
+  return { twoFactorToken: "", exchangeTokenPending: true };
 };
 
 export const Router = () => {
   // Handle exchange token loop to avoid showing login flash
-  const exchangeTokenPending = useExchangeToken();
+  const { twoFactorToken, exchangeTokenPending } = useQueryToken();
+
+  if (twoFactorToken) {
+    return <Login twoFactorToken={twoFactorToken} />;
+  }
+
   if (exchangeTokenPending) {
     return (
       <div className="w-screen h-screen flex justify-center items-center">

@@ -17,6 +17,19 @@ const query_client = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });
 
+export const sanitize_query = () => {
+  sanitize_query_inner(new URLSearchParams(location.search));
+};
+
+export const sanitize_query_inner = (search: URLSearchParams) => {
+  search.delete("two_factor");
+  search.delete("token");
+  const query = search.toString();
+  location.replace(
+    `${location.origin}${location.pathname}${query.length ? "?" + query : ""}`
+  );
+};
+
 // Don't need to await this to render.
 init_monaco();
 

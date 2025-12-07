@@ -7,7 +7,7 @@ use crate::entities::user::User;
 
 pub trait KomodoAuthRequest: HasResponse {}
 
-/// JSON containing an authentication token.
+/// JSON containing a jwt authentication token.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JwtResponse {
@@ -15,6 +15,15 @@ pub struct JwtResponse {
   pub user_id: String,
   /// A token the user can use to authenticate their requests.
   pub jwt: String,
+}
+
+/// JSON containing either an authentication token or a TwoFactor pending token.
+#[typeshare]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", content = "data")]
+pub enum JwtOrTwoFactor {
+  Jwt(JwtResponse),
+  TwoFactor { token: String },
 }
 
 //
@@ -96,12 +105,7 @@ pub struct LoginLocalUser {
 
 /// The response for [LoginLocalUser]
 #[typeshare]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type", content = "data")]
-pub enum LoginLocalUserResponse {
-  Jwt(JwtResponse),
-  Totp { token: String },
-}
+pub type LoginLocalUserResponse = JwtOrTwoFactor;
 
 //
 

@@ -17,7 +17,7 @@ import {
 } from "@lib/hooks";
 import { useRef, useState } from "react";
 import { ThemeToggle } from "@ui/theme";
-import { KOMODO_BASE_URL } from "@main";
+import { KOMODO_BASE_URL, sanitize_query } from "@main";
 import { KeyRound, X } from "lucide-react";
 import { cn } from "@lib/utils";
 import { Types } from "komodo_client";
@@ -35,12 +35,12 @@ const login_with_oauth = (provider: OauthProvider) => {
   );
 };
 
-export default function Login() {
+export default function Login({ twoFactorToken }: { twoFactorToken?: string }) {
   const options = useLoginOptions().data;
   const userInvalidate = useUserInvalidate();
   const formRef = useRef<HTMLFormElement>(null);
   const totpFormRef = useRef<HTMLFormElement>(null);
-  const [totpPendingToken, setTotpPendingToken] = useState("");
+  const [totpPendingToken, setTotpPendingToken] = useState(twoFactorToken);
 
   // If signing in another user, need to redirect away from /login manually
   const maybeNavigate = location.pathname.startsWith("/login")
@@ -67,7 +67,7 @@ export default function Login() {
       switch (type) {
         case "Jwt":
           return onSuccess(data);
-        case "Totp":
+        case "TwoFactor":
           return setTotpPendingToken(data.token);
       }
     },
@@ -75,7 +75,10 @@ export default function Login() {
   const { mutate: totp, isPending: totpPending } = useAuth(
     "CompleteTotpLogin",
     {
-      onSuccess,
+      onSuccess: ({ user_id, jwt }) => {
+        LOGIN_TOKENS.add_and_change(user_id, jwt);
+        sanitize_query();
+      },
     }
   );
 
@@ -114,7 +117,7 @@ export default function Login() {
   const handleTotpSubmit = (e: any) => {
     e.preventDefault();
     const creds = getTotpFormCredentials();
-    if (!creds) return;
+    if (!creds || !totpPendingToken) return;
     totp({ token: totpPendingToken, code: creds.code });
   };
 

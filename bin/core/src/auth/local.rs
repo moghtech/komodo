@@ -215,6 +215,6 @@ async fn login_local_user(
     totp_pending_login_cache()
       .insert(token.clone(), (user.id, expiry))
       .await;
-    Ok(LoginLocalUserResponse::Totp { token })
+    Ok(LoginLocalUserResponse::TwoFactor { token })
   }
 }
