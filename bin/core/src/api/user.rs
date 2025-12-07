@@ -302,7 +302,7 @@ impl Resolve<UserArgs> for ConfirmTotpEnrollment {
     }
 
     let recovery_codes =
-      (0..10).map(|_| random_string(10)).collect::<Vec<_>>();
+      (0..10).map(|_| random_string(20)).collect::<Vec<_>>();
     let hashed_recovery_codes = recovery_codes
       .iter()
       .map(|code| hash_password(code))
