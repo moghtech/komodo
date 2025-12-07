@@ -15,7 +15,7 @@ import {
   useLoginOptions,
   useUserInvalidate,
 } from "@lib/hooks";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { ThemeToggle } from "@ui/theme";
 import { KOMODO_BASE_URL } from "@main";
 import { KeyRound, X } from "lucide-react";
@@ -39,6 +39,8 @@ export default function Login() {
   const options = useLoginOptions().data;
   const userInvalidate = useUserInvalidate();
   const formRef = useRef<HTMLFormElement>(null);
+  const totpFormRef = useRef<HTMLFormElement>(null);
+  const [totpPendingToken, setTotpPendingToken] = useState("");
 
   // If signing in another user, need to redirect away from /login manually
   const maybeNavigate = location.pathname.startsWith("/login")
@@ -61,8 +63,21 @@ export default function Login() {
     }
   );
   const { mutate: login, isPending: loginPending } = useAuth("LoginLocalUser", {
-    onSuccess,
+    onSuccess: ({ type, data }) => {
+      switch (type) {
+        case "Jwt":
+          return onSuccess(data);
+        case "Totp":
+          return setTotpPendingToken(data.token);
+      }
+    },
   });
+  const { mutate: totp, isPending: totpPending } = useAuth(
+    "CompleteTotpLogin",
+    {
+      onSuccess,
+    }
+  );
 
   const getFormCredentials = () => {
     if (!formRef.current) return undefined;
@@ -87,6 +102,20 @@ export default function Login() {
     const creds = getFormCredentials();
     if (!creds) return;
     signup(creds);
+  };
+
+  const getTotpFormCredentials = () => {
+    if (!totpFormRef.current) return undefined;
+    const fd = new FormData(totpFormRef.current);
+    const code = String(fd.get("code") ?? "");
+    return { code };
+  };
+
+  const handleTotpSubmit = (e: any) => {
+    e.preventDefault();
+    const creds = getTotpFormCredentials();
+    if (!creds) return;
+    totp({ token: totpPendingToken, code: creds.code });
   };
 
   const no_auth_configured =
@@ -116,44 +145,46 @@ export default function Login() {
                 <CardDescription>Log In</CardDescription>
               </div>
             </div>
-            <div className="flex gap-2">
-              {(
-                [
-                  [options?.google, "Google"],
-                  [options?.github, "Github"],
-                  [options?.oidc, "OIDC"],
-                ] as Array<[boolean | undefined, OauthProvider]>
-              ).map(
-                ([enabled, provider]) =>
-                  enabled && (
-                    <Button
-                      key={provider}
-                      variant="outline"
-                      className="flex gap-2 px-3 items-center"
-                      onClick={() => login_with_oauth(provider)}
-                    >
-                      {provider}
-                      {provider === "OIDC" ? (
-                        <KeyRound className="w-4 h-4" />
-                      ) : (
-                        <img
-                          src={`/icons/${provider.toLowerCase()}.svg`}
-                          alt={provider}
-                          className="w-4 h-4"
-                        />
-                      )}
-                    </Button>
-                  )
-              )}
-              {no_auth_configured && (
-                <Button variant="destructive" size="icon">
-                  {" "}
-                  <X className="w-4 h-4" />{" "}
-                </Button>
-              )}
-            </div>
+            {!totpPendingToken && (
+              <div className="flex gap-2">
+                {(
+                  [
+                    [options?.google, "Google"],
+                    [options?.github, "Github"],
+                    [options?.oidc, "OIDC"],
+                  ] as Array<[boolean | undefined, OauthProvider]>
+                ).map(
+                  ([enabled, provider]) =>
+                    enabled && (
+                      <Button
+                        key={provider}
+                        variant="outline"
+                        className="flex gap-2 px-3 items-center"
+                        onClick={() => login_with_oauth(provider)}
+                      >
+                        {provider}
+                        {provider === "OIDC" ? (
+                          <KeyRound className="w-4 h-4" />
+                        ) : (
+                          <img
+                            src={`/icons/${provider.toLowerCase()}.svg`}
+                            alt={provider}
+                            className="w-4 h-4"
+                          />
+                        )}
+                      </Button>
+                    )
+                )}
+                {no_auth_configured && (
+                  <Button variant="destructive" size="icon">
+                    {" "}
+                    <X className="w-4 h-4" />{" "}
+                  </Button>
+                )}
+              </div>
+            )}
           </CardHeader>
-          {options?.local && (
+          {options?.local && !totpPendingToken && (
             <form ref={formRef} onSubmit={handleSubmit} autoComplete="on">
               <CardContent className="flex flex-col justify-center w-full gap-4">
                 <div className="flex flex-col gap-2">
@@ -194,6 +225,37 @@ export default function Login() {
                   type="submit"
                   value="login"
                   disabled={loginPending}
+                >
+                  Log In
+                </Button>
+              </CardFooter>
+            </form>
+          )}
+          {totpPendingToken && (
+            <form
+              ref={totpFormRef}
+              onSubmit={handleTotpSubmit}
+              autoComplete="on"
+            >
+              <CardContent className="flex flex-col justify-center w-full gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="code">2FA Code</Label>
+                  <Input
+                    id="code"
+                    name="code"
+                    autoComplete="code"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    autoFocus
+                  />
+                </div>
+              </CardContent>
+              <CardFooter className="flex gap-4 w-full justify-end">
+                <Button
+                  variant="default"
+                  type="submit"
+                  value="login"
+                  disabled={totpPending}
                 >
                   Log In
                 </Button>

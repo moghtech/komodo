@@ -99,3 +99,49 @@ pub struct DeleteApiKey {
 
 #[typeshare]
 pub type DeleteApiKeyResponse = NoData;
+
+//
+
+/// Starts enrollment flow for TOTP 2FA auth support.
+/// Response: [BeginTotpEnrollmentResponse]
+///
+/// This generates an otpauth URI for the user. User must confirm
+/// by providing a valid 6 digit code for the URI to [ConfirmTotpEnrollment].
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoUserRequest)]
+#[response(BeginTotpEnrollmentResponse)]
+#[error(serror::Error)]
+pub struct BeginTotpEnrollment {}
+
+/// Response for [BeginTotpEnrollment].
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct BeginTotpEnrollmentResponse {
+  pub uri: String,
+  /// Base64 encoded PNG embeddable in HTML to display uri QR code.
+  pub png: String,
+}
+
+//
+
+/// Confirm enrollment flow for TOTP 2FA auth support
+/// Response: [NoData]
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoUserRequest)]
+#[response(ConfirmTotpEnrollmentResponse)]
+#[error(serror::Error)]
+pub struct ConfirmTotpEnrollment {
+  pub code: String,
+}
+
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ConfirmTotpEnrollmentResponse {
+  pub recovery_codes: Vec<String>,
+}

@@ -59,6 +59,14 @@ pub struct User {
   /// The user-type specific config.
   pub config: UserConfig,
 
+  /// TOTP 2fa credentials
+  #[serde(default)]
+  pub totp: Totp,
+
+  /// WebAuthn 2fa credentials
+  #[serde(default)]
+  pub webauthn: WebAuthn,
+
   /// When the user last opened updates dropdown.
   #[serde(default)]
   pub last_update_view: I64,
@@ -76,12 +84,82 @@ pub struct User {
   pub updated_at: I64,
 }
 
-impl User {
-  /// Prepares user object for transport by removing any sensitive fields
-  pub fn sanitize(&mut self) {
-    if let UserConfig::Local { .. } = &self.config {
-      self.config = UserConfig::default();
+#[typeshare]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", content = "data")]
+pub enum UserConfig {
+  /// User that logs in with username / password
+  Local { password: String },
+
+  /// User that logs in via Google Oauth
+  Google { google_id: String, avatar: String },
+
+  /// User that logs in via Github Oauth
+  Github { github_id: String, avatar: String },
+
+  /// User that logs in via Oidc provider
+  Oidc { provider: String, user_id: String },
+
+  /// Non-human managed user, can have it's own permissions / api keys
+  Service { description: String },
+}
+
+impl Default for UserConfig {
+  fn default() -> Self {
+    Self::Local {
+      password: String::new(),
     }
+  }
+}
+
+#[typeshare]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct Totp {
+  /// TOTP shared secret, encrypted
+  pub secret: String,
+  /// Unix timestamp in milliseconds when secret confirmed
+  pub confirmed_at: I64,
+  /// Hashed recovery codes.
+  pub recovery_codes: Vec<String>,
+}
+
+impl Totp {
+  pub fn sanitize(&mut self) {
+    self.secret.clear();
+    self.recovery_codes.clear();
+  }
+}
+
+#[typeshare]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct WebAuthn {
+  /// Credential Name
+  pub name: String,
+  /// Credential ID
+  pub id: String,
+  /// COSE-encoded public key
+  pub public_key: String,
+  /// WebAuthn signature count
+  pub sign_count: I64,
+  /// Unix timestamp in milliseconds when key created
+  pub created_at: I64,
+}
+
+impl WebAuthn {
+  pub fn sanitize(&mut self) {
+    self.id.clear();
+    self.public_key.clear();
+  }
+}
+
+impl User {
+  /// Prepares user object for transport by clearing any sensitive fields
+  pub fn sanitize(&mut self) {
+    if let UserConfig::Local { password } = &mut self.config {
+      password.clear();
+    }
+    self.totp.sanitize();
+    self.webauthn.sanitize();
   }
 
   /// Returns whether user is an inbuilt service user
@@ -269,32 +347,4 @@ pub fn repo_user() -> &'static User {
       ..Default::default()
     }
   })
-}
-
-#[typeshare]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type", content = "data")]
-pub enum UserConfig {
-  /// User that logs in with username / password
-  Local { password: String },
-
-  /// User that logs in via Google Oauth
-  Google { google_id: String, avatar: String },
-
-  /// User that logs in via Github Oauth
-  Github { github_id: String, avatar: String },
-
-  /// User that logs in via Oidc provider
-  Oidc { provider: String, user_id: String },
-
-  /// Non-human managed user, can have it's own permissions / api keys
-  Service { description: String },
-}
-
-impl Default for UserConfig {
-  fn default() -> Self {
-    Self::Local {
-      password: String::new(),
-    }
-  }
 }

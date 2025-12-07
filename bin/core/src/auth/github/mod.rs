@@ -129,6 +129,8 @@ async fn callback(
           github_id,
           avatar: github_user.avatar_url,
         },
+        totp: Default::default(),
+        webauthn: Default::default()
       };
       let user_id = db_client
         .users

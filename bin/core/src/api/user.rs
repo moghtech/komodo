@@ -1,15 +1,18 @@
 use std::{collections::VecDeque, time::Instant};
 
 use anyhow::{Context, anyhow};
+use async_timing_util::{FIVE_MINS_MS, unix_timestamp_ms};
 use axum::{
   Extension, Json, Router, extract::Path, middleware, routing::post,
 };
+use data_encoding::BASE32_NOPAD;
+use database::hash_password;
 use database::mongo_indexed::doc;
 use database::mungos::{
   by_id::update_one_by_id, mongodb::bson::to_bson,
 };
 use derive_variants::EnumVariants;
-use komodo_client::entities::random_string;
+use komodo_client::entities::{random_bytes, random_string};
 use komodo_client::{
   api::user::*,
   entities::{api_key::ApiKey, komodo_timestamp, user::User},
@@ -23,7 +26,9 @@ use serror::{AddStatusCode, AddStatusCodeError};
 use typeshare::typeshare;
 use uuid::Uuid;
 
+use crate::auth::totp::make_totp;
 use crate::helpers::validations::validate_api_key_name;
+use crate::state::totp_enrollment_cache;
 use crate::{
   auth::auth_request, helpers::query::get_user, state::db_client,
 };
@@ -47,6 +52,8 @@ enum UserRequest {
   SetLastSeenUpdate(SetLastSeenUpdate),
   CreateApiKey(CreateApiKey),
   DeleteApiKey(DeleteApiKey),
+  BeginTotpEnrollment(BeginTotpEnrollment),
+  ConfirmTotpEnrollment(ConfirmTotpEnrollment),
 }
 
 pub fn router() -> Router {
@@ -225,5 +232,97 @@ impl Resolve<UserArgs> for DeleteApiKey {
       .context("Failed to delete api key from database")?;
 
     Ok(DeleteApiKeyResponse {})
+  }
+}
+
+const TOTP_ENROLLMENT_SECRET_LENGTH: usize = 20;
+
+impl Resolve<UserArgs> for BeginTotpEnrollment {
+  #[instrument(
+    "BeginTotpEnrollment",
+    skip_all,
+    fields(operator = user.id)
+  )]
+  async fn resolve(
+    self,
+    UserArgs { user }: &UserArgs,
+  ) -> serror::Result<BeginTotpEnrollmentResponse> {
+    let secret_bytes = random_bytes(TOTP_ENROLLMENT_SECRET_LENGTH);
+    let totp = make_totp(secret_bytes.clone(), user.id.clone())?;
+    let png = totp
+      .get_qr_base64()
+      .map_err(|e| anyhow::Error::msg(e))
+      .context("Failed to generate QR code png")?;
+    let expiry = unix_timestamp_ms() + FIVE_MINS_MS;
+    totp_enrollment_cache()
+      .insert(user.id.clone(), (secret_bytes, expiry))
+      .await;
+
+    Ok(BeginTotpEnrollmentResponse {
+      uri: totp.get_url(),
+      png,
+    })
+  }
+}
+
+impl Resolve<UserArgs> for ConfirmTotpEnrollment {
+  #[instrument(
+    "ConfirmTotpEnrollment",
+    skip_all,
+    fields(operator = user.id)
+  )]
+  async fn resolve(
+    self,
+    UserArgs { user }: &UserArgs,
+  ) -> serror::Result<ConfirmTotpEnrollmentResponse> {
+    let (secret_bytes, expiry) =
+      totp_enrollment_cache().remove(&user.id).await.context(
+        "User has not called BeginTotpEnrollment within 5 minutes.",
+      )?;
+
+    if unix_timestamp_ms() > expiry {
+      return Err(anyhow!(
+        "Totp enrollment timed out, please try BeginTotpEnrollment again and confirm the Totp code within 5 minutes."
+      ).status_code(StatusCode::REQUEST_TIMEOUT));
+    }
+
+    let encoded_secret = BASE32_NOPAD.encode(&secret_bytes);
+
+    let totp = make_totp(secret_bytes, None)?;
+
+    let valid = totp
+      .check_current(&self.code)
+      .context("Failed to check code validity")?;
+
+    if !valid {
+      return Err(anyhow!(
+        "The provided code was not valid. Please try BeginTotpEnrollment flow again."
+      ).status_code(StatusCode::BAD_REQUEST));
+    }
+
+    let recovery_codes =
+      (0..10).map(|_| random_string(10)).collect::<Vec<_>>();
+    let hashed_recovery_codes = recovery_codes
+      .iter()
+      .map(|code| hash_password(code))
+      .collect::<anyhow::Result<Vec<_>>>()
+      .context("Failed to generate valid recovery codes")?;
+
+    update_one_by_id(
+      &db_client().users,
+      &user.id,
+      doc! {
+        "$set": {
+          "totp.secret": encoded_secret,
+          "totp.confirmed_at": komodo_timestamp(),
+          "totp.recovery_codes": hashed_recovery_codes,
+        }
+      },
+      None,
+    )
+    .await
+    .context("Failed to update user totp fields on database")?;
+
+    Ok(ConfirmTotpEnrollmentResponse { recovery_codes })
   }
 }

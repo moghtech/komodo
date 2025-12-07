@@ -1,7 +1,7 @@
 use std::sync::{Arc, OnceLock};
 
 use anyhow::{Context, anyhow};
-use async_timing_util::unix_timestamp_ms;
+use async_timing_util::{ONE_MIN_MS, unix_timestamp_ms};
 use database::{
   hash_password,
   mungos::mongodb::bson::{Document, doc},
@@ -11,7 +11,10 @@ use komodo_client::{
     LoginLocalUser, LoginLocalUserResponse, SignUpLocalUser,
     SignUpLocalUserResponse,
   },
-  entities::user::{User, UserConfig},
+  entities::{
+    random_string,
+    user::{User, UserConfig},
+  },
 };
 use rate_limit::{RateLimiter, WithFailureRateLimit};
 use reqwest::StatusCode;
@@ -22,7 +25,10 @@ use crate::{
   api::auth::AuthArgs,
   config::core_config,
   helpers::validations::{validate_password, validate_username},
-  state::{auth_rate_limiter, db_client, jwt_client},
+  state::{
+    auth_rate_limiter, db_client, jwt_client,
+    totp_pending_login_cache,
+  },
 };
 
 impl Resolve<AuthArgs> for SignUpLocalUser {
@@ -102,6 +108,8 @@ async fn sign_up_local_user(
     config: UserConfig::Local {
       password: hashed_password,
     },
+    totp: Default::default(),
+    webauthn: Default::default(),
   };
 
   let user_id = db_client()
@@ -194,9 +202,19 @@ async fn login_local_user(
     );
   }
 
-  jwt_client()
-    .encode(user.id)
-    // This is in internal error (500), not auth error
-    .context("Failed to generate JWT for user")
-    .map_err(Into::into)
+  if user.totp.secret.is_empty() {
+    jwt_client()
+      .encode(user.id)
+      // This is in internal error (500), not auth error
+      .context("Failed to generate JWT for user")
+      .map(|jwt| LoginLocalUserResponse::Jwt(jwt))
+      .map_err(Into::into)
+  } else {
+    let token = random_string(20);
+    let expiry = unix_timestamp_ms() + ONE_MIN_MS;
+    totp_pending_login_cache()
+      .insert(token.clone(), (user.id, expiry))
+      .await;
+    Ok(LoginLocalUserResponse::Totp { token })
+  }
 }

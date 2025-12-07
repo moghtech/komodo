@@ -1,8 +1,8 @@
 use std::path::Path;
 
 use anyhow::{Context, anyhow};
-use base64::{Engine as _, prelude::BASE64_STANDARD};
 use der::{Decode as _, Encode as _, asn1::BitStringRef};
+use data_encoding::BASE64;
 use spki::SubjectPublicKeyInfoRef;
 
 #[derive(PartialEq, Clone)]
@@ -90,8 +90,8 @@ impl SpkiPublicKey {
             .unwrap();
         public_key_der
       } else {
-        BASE64_STANDARD
-          .decode(public_key_maybe_pem)
+        BASE64
+          .decode(public_key_maybe_pem.as_bytes())
           .context("Public key is not base64")?
       };
     Self::from_der(&public_key_der)
@@ -124,7 +124,7 @@ impl SpkiPublicKey {
       .map_err(anyhow::Error::msg)
       .context("Failed to write subject public key info into der")?;
 
-    Ok(Self(BASE64_STANDARD.encode(public_key)))
+    Ok(Self(BASE64.encode(public_key)))
   }
 
   pub fn from_private_key(

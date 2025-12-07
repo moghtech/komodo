@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use anyhow::Context;
 use axum::http::{HeaderMap, HeaderValue};
-use base64::{Engine, prelude::BASE64_STANDARD};
+use data_encoding::BASE64;
 use noise::{NoiseHandshake, key::SpkiPublicKey};
 use periphery_client::transport::LoginMessage;
 use rand::RngCore;
@@ -336,5 +336,5 @@ pub fn compute_accept(sec_websocket_key: &[u8]) -> String {
   sha1.update(sec_websocket_key);
   sha1.update(GUID);
   let digest = sha1.finalize();
-  BASE64_STANDARD.encode(digest)
+  BASE64.encode(&digest)
 }

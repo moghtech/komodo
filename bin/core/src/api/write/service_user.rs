@@ -51,6 +51,8 @@ impl Resolve<WriteArgs> for CreateServiceUser {
       id: Default::default(),
       username: self.username,
       config,
+      totp: Default::default(),
+      webauthn: Default::default(),
       enabled: true,
       admin: false,
       super_admin: false,

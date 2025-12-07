@@ -146,6 +146,8 @@ async fn callback(
           google_id,
           avatar: google_user.picture,
         },
+        totp: Default::default(),
+        webauthn: Default::default()
       };
       let user_id = db_client
         .users

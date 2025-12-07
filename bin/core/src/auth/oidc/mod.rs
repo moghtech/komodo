@@ -310,6 +310,8 @@ async fn callback(
           provider: core_config.oidc_provider.clone(),
           user_id: user_id.to_string(),
         },
+        totp: Default::default(),
+        webauthn: Default::default()
       };
 
       let user_id = db_client

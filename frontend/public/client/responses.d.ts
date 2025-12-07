@@ -4,6 +4,7 @@ export type AuthResponses = {
     SignUpLocalUser: Types.SignUpLocalUserResponse;
     LoginLocalUser: Types.LoginLocalUserResponse;
     ExchangeForJwt: Types.ExchangeForJwtResponse;
+    CompleteTotpLogin: Types.CompleteTotpLoginResponse;
     GetUser: Types.GetUserResponse;
 };
 export type UserResponses = {
@@ -11,6 +12,8 @@ export type UserResponses = {
     SetLastSeenUpdate: Types.SetLastSeenUpdateResponse;
     CreateApiKey: Types.CreateApiKeyResponse;
     DeleteApiKey: Types.DeleteApiKeyResponse;
+    BeginTotpEnrollment: Types.BeginTotpEnrollmentResponse;
+    ConfirmTotpEnrollment: Types.ConfirmTotpEnrollmentResponse;
 };
 export type ReadResponses = {
     GetVersion: Types.GetVersionResponse;

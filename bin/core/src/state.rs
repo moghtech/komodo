@@ -241,3 +241,21 @@ pub fn auth_rate_limiter() -> &'static RateLimiter {
     )
   })
 }
+
+/// User id -> (unconfirmed secret, expiry)
+pub type TotpEnrollmentCache = CloneCache<String, (Vec<u8>, u128)>;
+
+pub fn totp_enrollment_cache() -> &'static TotpEnrollmentCache {
+  static TOTP_ENROLLMENT_CACHE: OnceLock<TotpEnrollmentCache> =
+    OnceLock::new();
+  TOTP_ENROLLMENT_CACHE.get_or_init(Default::default)
+}
+
+/// totp pending token -> (user id, expiry)
+pub type TotpPendingLoginCache = CloneCache<String, (String, u128)>;
+
+pub fn totp_pending_login_cache() -> &'static TotpPendingLoginCache {
+  static TOTP_LOGIN_CACHE: OnceLock<TotpPendingLoginCache> =
+    OnceLock::new();
+  TOTP_LOGIN_CACHE.get_or_init(Default::default)
+}

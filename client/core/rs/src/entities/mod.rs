@@ -125,6 +125,13 @@ pub fn random_string(length: usize) -> String {
     .collect()
 }
 
+pub fn random_bytes(length: usize) -> Vec<u8> {
+  rand::rng()
+    .sample_iter(&rand::distr::Alphanumeric)
+    .take(length)
+    .collect()
+}
+
 pub fn all_logs_success(logs: &[update::Log]) -> bool {
   for log in logs {
     if !log.success {

@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use anyhow::{Context, anyhow};
-use base64::{Engine as _, prelude::BASE64_STANDARD};
+use data_encoding::BASE64;
 use der::{Decode as _, Encode as _, asn1::OctetStringRef};
 
 #[derive(PartialEq, Clone)]
@@ -89,7 +89,7 @@ impl Pkcs8PrivateKey {
         pem_rfc7468::decode_vec(maybe_pkcs8_private_key.as_bytes())
           .map_err(anyhow::Error::msg)
           .context("Failed to get der from pem")?;
-      return Ok(Self(BASE64_STANDARD.encode(private_key_der)));
+      return Ok(Self(BASE64.encode(&private_key_der)));
     }
     let len = maybe_pkcs8_private_key.len();
     if len == 64 {
@@ -136,7 +136,7 @@ impl Pkcs8PrivateKey {
       .map_err(anyhow::Error::msg)
       .context("Failed to write private key info into der")?;
 
-    Ok(Self(BASE64_STANDARD.encode(private_key)))
+    Ok(Self(BASE64.encode(private_key)))
   }
 
   pub fn as_raw_bytes(&self) -> anyhow::Result<Vec<u8>> {
@@ -148,7 +148,7 @@ impl Pkcs8PrivateKey {
   pub fn raw_bytes(
     pkcs8_private_key: &[u8],
   ) -> anyhow::Result<Vec<u8>> {
-    let decoded = BASE64_STANDARD
+    let decoded = BASE64
       .decode(pkcs8_private_key)
       .context("Private key is not valid base64 encoding")?;
     Self::raw_bytes_after_decode(&decoded)

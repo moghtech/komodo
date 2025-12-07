@@ -819,6 +819,17 @@ export interface BuilderQuerySpecifics {
 
 export type BuilderQuery = ResourceQuery<BuilderQuerySpecifics>;
 
+/** JSON containing an authentication token. */
+export interface JwtResponse {
+	/** User ID for signed in user. */
+	user_id: string;
+	/** A token the user can use to authenticate their requests. */
+	jwt: string;
+}
+
+/** Response for [CompleteTotpLogin]. */
+export type CompleteTotpLoginResponse = JwtResponse;
+
 /** A wrapper for all Komodo exections. */
 export type Execution = 
 	/** The "null" execution. Does nothing. */
@@ -1078,6 +1089,28 @@ export type UserConfig =
 	description: string;
 }};
 
+export interface Totp {
+	/** TOTP shared secret, encrypted */
+	secret: string;
+	/** Unix timestamp in milliseconds when secret confirmed */
+	confirmed_at: I64;
+	/** Hashed recovery codes. */
+	recovery_codes: string[];
+}
+
+export interface WebAuthn {
+	/** Credential Name */
+	name: string;
+	/** Credential ID */
+	id: string;
+	/** COSE-encoded public key */
+	public_key: string;
+	/** WebAuthn signature count */
+	sign_count: I64;
+	/** Unix timestamp in milliseconds when key created */
+	created_at: I64;
+}
+
 export interface User {
 	/**
 	 * The Mongo ID of the User.
@@ -1099,6 +1132,10 @@ export interface User {
 	create_build_permissions?: boolean;
 	/** The user-type specific config. */
 	config: UserConfig;
+	/** TOTP 2fa credentials */
+	totp?: Totp;
+	/** WebAuthn 2fa credentials */
+	webauthn?: WebAuthn;
 	/** When the user last opened updates dropdown. */
 	last_update_view?: I64;
 	/** Recently viewed ids */
@@ -1394,14 +1431,6 @@ export interface DeploymentQuerySpecifics {
 }
 
 export type DeploymentQuery = ResourceQuery<DeploymentQuerySpecifics>;
-
-/** JSON containing an authentication token. */
-export interface JwtResponse {
-	/** User ID for signed in user. */
-	user_id: string;
-	/** A token the user can use to authenticate their requests. */
-	jwt: string;
-}
 
 /** Response for [ExchangeForJwt]. */
 export type ExchangeForJwtResponse = JwtResponse;
@@ -5359,9 +5388,6 @@ export type ListUsersResponse = User[];
 
 export type ListVariablesResponse = Variable[];
 
-/** The response for [LoginLocalUser] */
-export type LoginLocalUserResponse = JwtResponse;
-
 export type MongoDocument = any;
 
 export interface ProcedureQuerySpecifics {
@@ -5798,6 +5824,23 @@ export interface BatchRunProcedure {
 }
 
 /**
+ * Starts enrollment flow for TOTP 2FA auth support.
+ * Response: [BeginTotpEnrollmentResponse]
+ * 
+ * This generates an otpauth URI for the user. User must confirm
+ * by providing a valid 6 digit code for the URI to [ConfirmTotpEnrollment].
+ */
+export interface BeginTotpEnrollment {
+}
+
+/** Response for [BeginTotpEnrollment]. */
+export interface BeginTotpEnrollmentResponse {
+	uri: string;
+	/** Base64 encoded PNG embeddable in HTML to display uri QR code. */
+	png: string;
+}
+
+/**
  * Builds the target repo, using the attached builder. Response: [Update].
  * 
  * Note. Repo must have builder attached at `builder_id`.
@@ -5883,6 +5926,17 @@ export interface CommitSync {
 	sync: string;
 }
 
+/**
+ * Confirm a single use 2fa pending token + time-dependent user totp code for a jwt.
+ * Response: [CompleteTotpLoginResponse].
+ */
+export interface CompleteTotpLogin {
+	/** The '2fa token' */
+	token: string;
+	/** The time dependent totp code for user. */
+	code: string;
+}
+
 export interface ConfigSpec {
 	/** User-defined name of the config. */
 	Name?: string;
@@ -5896,6 +5950,18 @@ export interface ConfigSpec {
 	Data?: string;
 	/** Templating driver, if applicable  Templating controls whether and how to evaluate the config payload as a template. If no driver is set, no templating is used. */
 	Templating?: Driver;
+}
+
+/**
+ * Confirm enrollment flow for TOTP 2FA auth support
+ * Response: [NoData]
+ */
+export interface ConfirmTotpEnrollment {
+	code: string;
+}
+
+export interface ConfirmTotpEnrollmentResponse {
+	recovery_codes: string[];
 }
 
 /**
@@ -10179,6 +10245,7 @@ export type AuthRequest =
 	| { type: "SignUpLocalUser", params: SignUpLocalUser }
 	| { type: "LoginLocalUser", params: LoginLocalUser }
 	| { type: "ExchangeForJwt", params: ExchangeForJwt }
+	| { type: "CompleteTotpLogin", params: CompleteTotpLogin }
 	| { type: "GetUser", params: GetUser };
 
 /** Days of the week */
@@ -10351,6 +10418,13 @@ export enum IanaTimezone {
 	/** UTC+14:00 */
 	PacificKiritimati = "Pacific/Kiritimati",
 }
+
+/** The response for [LoginLocalUser] */
+export type LoginLocalUserResponse = 
+	| { type: "Jwt", data: JwtResponse }
+	| { type: "Totp", data: {
+	token: string;
+}};
 
 export type ReadRequest = 
 	| { type: "GetVersion", params: GetVersion }
@@ -10552,7 +10626,9 @@ export type UserRequest =
 	| { type: "PushRecentlyViewed", params: PushRecentlyViewed }
 	| { type: "SetLastSeenUpdate", params: SetLastSeenUpdate }
 	| { type: "CreateApiKey", params: CreateApiKey }
-	| { type: "DeleteApiKey", params: DeleteApiKey };
+	| { type: "DeleteApiKey", params: DeleteApiKey }
+	| { type: "BeginTotpEnrollment", params: BeginTotpEnrollment }
+	| { type: "ConfirmTotpEnrollment", params: ConfirmTotpEnrollment };
 
 export type WriteRequest = 
 	| { type: "UpdateResourceMeta", params: UpdateResourceMeta }

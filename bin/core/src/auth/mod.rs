@@ -27,6 +27,7 @@ pub mod github;
 pub mod google;
 pub mod jwt;
 pub mod oidc;
+pub mod totp;
 
 mod local;
 

@@ -4,12 +4,15 @@ use std::{
   time::Instant,
 };
 
+use anyhow::{Context, anyhow};
+use async_timing_util::unix_timestamp_ms;
 use axum::{
   Router,
   extract::{ConnectInfo, Path},
   http::HeaderMap,
   routing::post,
 };
+use data_encoding::BASE32_NOPAD;
 use derive_variants::{EnumVariants, ExtractVariant};
 use komodo_client::{api::auth::*, entities::user::User};
 use rate_limit::WithFailureRateLimit;
@@ -18,7 +21,7 @@ use resolver_api::Resolve;
 use response::Response;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use serror::{AddStatusCode, Json};
+use serror::{AddStatusCode, AddStatusCodeError, Json};
 use typeshare::typeshare;
 use uuid::Uuid;
 
@@ -28,10 +31,11 @@ use crate::{
     github::{self, client::github_oauth_client},
     google::{self, client::google_oauth_client},
     oidc::{self, client::oidc_client},
+    totp::make_totp,
   },
   config::core_config,
   helpers::query::get_user,
-  state::{auth_rate_limiter, jwt_client},
+  state::{auth_rate_limiter, jwt_client, totp_pending_login_cache},
 };
 
 use super::Variant;
@@ -58,6 +62,7 @@ pub enum AuthRequest {
   SignUpLocalUser(SignUpLocalUser),
   LoginLocalUser(LoginLocalUser),
   ExchangeForJwt(ExchangeForJwt),
+  CompleteTotpLogin(CompleteTotpLogin),
   GetUser(GetUser),
 }
 
@@ -164,6 +169,64 @@ impl Resolve<AuthArgs> for ExchangeForJwt {
         Some(*ip),
       )
       .await
+  }
+}
+
+impl Resolve<AuthArgs> for CompleteTotpLogin {
+  async fn resolve(
+    self,
+    AuthArgs { headers, ip }: &AuthArgs,
+  ) -> serror::Result<CompleteTotpLoginResponse> {
+    async {
+      let (user_id, expiry) = totp_pending_login_cache()
+        .remove(&self.token)
+        .await
+        .context("Did not find any matching pending totp tokens")
+        .status_code(StatusCode::UNAUTHORIZED)?;
+
+      if unix_timestamp_ms() > expiry {
+        return Err(
+          anyhow!("Totp login flow has expired")
+            .status_code(StatusCode::UNAUTHORIZED),
+        );
+      }
+
+      let user = get_user(&user_id)
+        .await
+        .status_code(StatusCode::UNAUTHORIZED)?;
+
+      if user.totp.secret.is_empty() {
+        return Err(
+          anyhow!("User is not enrolled in totp")
+            .status_code(StatusCode::BAD_REQUEST),
+        );
+      }
+
+      let secret_bytes = BASE32_NOPAD
+        .decode(user.totp.secret.as_bytes())
+        .context("Failed to decode totp secret to bytes")?;
+
+      let totp = make_totp(secret_bytes, None)?;
+
+      let valid = totp
+        .check_current(&self.code)
+        .context("Failed to check TOTP code validity")?;
+
+      if !valid {
+        return Err(
+          anyhow!("Invalid totp code")
+            .status_code(StatusCode::UNAUTHORIZED),
+        );
+      }
+
+      jwt_client().encode(user_id).map_err(Into::into)
+    }
+    .with_failure_rate_limit_using_headers(
+      auth_rate_limiter(),
+      headers,
+      Some(*ip),
+    )
+    .await
   }
 }
 

@@ -67,7 +67,7 @@ arc-swap = "1.7.1"
 tokio-tungstenite = { version = "0.28.0", features = ["rustls-tls-native-roots"] }
 axum-extra = { version = "0.12.2", features = ["typed-header"] }
 tower-http = { version = "0.6.7", features = ["fs", "cors", "set-header"] }
-axum-server = { version = "0.7.3", features = ["tls-rustls"] }
+axum-server = { version = "0.8.0", features = ["tls-rustls"] }
 axum = { version = "0.8.7", features = ["ws", "json", "macros"] }
 
 # SER/DE
@@ -102,22 +102,23 @@ envy = "0.4.2"
 
 # CRYPTO / AUTH
 openidconnect = { version = "4.0.1", features = ["accept-rfc3339-timestamps"] }
-uuid = { version = "1.18.1", features = ["v4", "fast-rng", "serde"] }
+uuid = { version = "1.19.0", features = ["v4", "fast-rng", "serde"] }
 jsonwebtoken = { version = "10.2.0", features = ["aws_lc_rs"] } # locked back with octorust
 rustls = { version = "0.23.35", features = ["aws-lc-rs"] }
 pem-rfc7468 = { version = "1.0.0", features = ["alloc"] }
+totp-rs = { version = "5.7.0", features = ["qr"] }
+data-encoding = "2.9.0"
 urlencoding = "2.1.3"
 bcrypt = "0.17.1"
-base64 = "0.22.1"
 pkcs8 = "0.10.2"
 snow = "0.10.0"
 hmac = "0.12.1"
 sha1 = "0.10.6"
 sha2 = "0.10.9"
 rand = "0.9.2"
-hex = "0.4.3"
 spki = "0.7.3"
 der = "0.7.10"
+hex = "0.4.3"
 
 # SYSTEM
 hickory-resolver = "0.25.2"
@@ -140,7 +141,7 @@ chrono = "0.4.42"
 croner = "3.0.1"
 
 # MISC
-async-compression = { version = "0.4.34", features = ["tokio", "gzip"] }
+async-compression = { version = "0.4.35", features = ["tokio", "gzip"] }
 derive_builder = "0.20.2"
 comfy-table = "7.2.1"
 typeshare = "1.0.4"

@@ -11,7 +11,7 @@ use aws_sdk_ec2::{
     Tag, TagSpecification,
   },
 };
-use base64::Engine;
+use data_encoding::BASE64_NOPAD;
 use komodo_client::entities::{
   ResourceTarget,
   alert::{Alert, AlertData, SeverityLevel},
@@ -127,10 +127,7 @@ pub async fn launch_ec2_instance(
     )
     .min_count(1)
     .max_count(1)
-    .user_data(
-      base64::engine::general_purpose::STANDARD_NO_PAD
-        .encode(user_data),
-    );
+    .user_data(BASE64_NOPAD.encode(user_data.as_bytes()));
 
   let res = req
     .send()

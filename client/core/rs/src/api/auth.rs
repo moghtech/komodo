@@ -96,7 +96,12 @@ pub struct LoginLocalUser {
 
 /// The response for [LoginLocalUser]
 #[typeshare]
-pub type LoginLocalUserResponse = JwtResponse;
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", content = "data")]
+pub enum LoginLocalUserResponse {
+  Jwt(JwtResponse),
+  Totp { token: String },
+}
 
 //
 
@@ -118,6 +123,28 @@ pub struct ExchangeForJwt {
 /// Response for [ExchangeForJwt].
 #[typeshare]
 pub type ExchangeForJwtResponse = JwtResponse;
+
+//
+
+/// Confirm a single use 2fa pending token + time-dependent user totp code for a jwt.
+/// Response: [CompleteTotpLoginResponse].
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoAuthRequest)]
+#[response(CompleteTotpLoginResponse)]
+#[error(serror::Error)]
+pub struct CompleteTotpLogin {
+  /// The '2fa token'
+  pub token: String,
+  /// The time dependent totp code for user.
+  pub code: String,
+}
+
+/// Response for [CompleteTotpLogin].
+#[typeshare]
+pub type CompleteTotpLoginResponse = JwtResponse;
 
 //
 

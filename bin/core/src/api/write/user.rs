@@ -82,6 +82,8 @@ impl Resolve<WriteArgs> for CreateLocalUser {
       config: UserConfig::Local {
         password: hashed_password,
       },
+      totp: Default::default(),
+      webauthn: Default::default(),
     };
 
     user.id = db_client()
