@@ -145,3 +145,20 @@ pub struct ConfirmTotpEnrollment {
 pub struct ConfirmTotpEnrollmentResponse {
   pub recovery_codes: Vec<String>,
 }
+
+//
+
+/// Unenrolls user in TOTP 2FA.
+/// Response: [UnenrollTotpResponse]
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoUserRequest)]
+#[response(UnenrollTotpResponse)]
+#[error(serror::Error)]
+pub struct UnenrollTotp {}
+
+/// Response for [UnenrollTotp].
+#[typeshare]
+pub type UnenrollTotpResponse = NoData;

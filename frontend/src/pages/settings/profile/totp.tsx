@@ -1,5 +1,5 @@
-import { CopyButton } from "@components/util";
-import { useManageUser } from "@lib/hooks";
+import { ConfirmButton, CopyButton } from "@components/util";
+import { useManageUser, useUserInvalidate } from "@lib/hooks";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
   DialogTrigger,
 } from "@ui/dialog";
 import { Button } from "@ui/button";
-import { PlusCircle, Loader2, Check } from "lucide-react";
+import { PlusCircle, Loader2, Check, Trash } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@ui/input";
 
@@ -121,5 +121,21 @@ export const EnrollTotp = () => {
         )}
       </DialogContent>
     </Dialog>
+  );
+};
+
+export const UnenrollTotp = () => {
+  const userInvalidate = useUserInvalidate();
+  const { mutate, isPending } = useManageUser("UnenrollTotp", {
+    onSuccess: () => userInvalidate(),
+  });
+  return (
+    <ConfirmButton
+      variant="destructive"
+      title="Unenroll TOTP 2FA"
+      icon={<Trash className="w-4 h-4" />}
+      loading={isPending}
+      onClick={() => mutate({})}
+    />
   );
 };

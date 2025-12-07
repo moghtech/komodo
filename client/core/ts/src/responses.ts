@@ -16,6 +16,7 @@ export type UserResponses = {
   DeleteApiKey: Types.DeleteApiKeyResponse;
   BeginTotpEnrollment: Types.BeginTotpEnrollmentResponse;
   ConfirmTotpEnrollment: Types.ConfirmTotpEnrollmentResponse;
+  UnenrollTotp: Types.UnenrollTotpResponse;
 };
 
 export type ReadResponses = {

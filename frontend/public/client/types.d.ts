@@ -5294,6 +5294,8 @@ export interface SwarmQuerySpecifics {
     servers: string[];
 }
 export type SwarmQuery = ResourceQuery<SwarmQuerySpecifics>;
+/** Response for [UnenrollTotp]. */
+export type UnenrollTotpResponse = NoData;
 export type UpdateDockerRegistryAccountResponse = DockerRegistryAccount;
 export type UpdateGitProviderAccountResponse = GitProviderAccount;
 export type UpdateOnboardingKeyResponse = OnboardingKey;
@@ -9182,6 +9184,12 @@ export interface TotalDiskUsage {
     /** Total size in GB */
     total_gb: number;
 }
+/**
+ * Unenrolls user in TOTP 2FA.
+ * Response: [UnenrollTotpResponse]
+ */
+export interface UnenrollTotp {
+}
 /** Unpauses all containers on the target server. Response: [Update] */
 export interface UnpauseAllContainers {
     /** Name or id */
@@ -10467,6 +10475,9 @@ export type UserRequest = {
 } | {
     type: "ConfirmTotpEnrollment";
     params: ConfirmTotpEnrollment;
+} | {
+    type: "UnenrollTotp";
+    params: UnenrollTotp;
 };
 export type WriteRequest = {
     type: "UpdateResourceMeta";

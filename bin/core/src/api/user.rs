@@ -54,6 +54,7 @@ enum UserRequest {
   DeleteApiKey(DeleteApiKey),
   BeginTotpEnrollment(BeginTotpEnrollment),
   ConfirmTotpEnrollment(ConfirmTotpEnrollment),
+  UnenrollTotp(UnenrollTotp),
 }
 
 pub fn router() -> Router {
@@ -324,5 +325,33 @@ impl Resolve<UserArgs> for ConfirmTotpEnrollment {
     .context("Failed to update user totp fields on database")?;
 
     Ok(ConfirmTotpEnrollmentResponse { recovery_codes })
+  }
+}
+
+impl Resolve<UserArgs> for UnenrollTotp {
+  #[instrument(
+    "UnenrollTotp",
+    skip_all,
+    fields(operator = user.id)
+  )]
+  async fn resolve(
+    self,
+    UserArgs { user }: &UserArgs,
+  ) -> serror::Result<UnenrollTotpResponse> {
+    update_one_by_id(
+      &db_client().users,
+      &user.id,
+      doc! {
+        "$set": {
+          "totp.secret": "",
+          "totp.confirmed_at": 0,
+          "totp.recovery_codes": [],
+        }
+      },
+      None,
+    )
+    .await
+    .context("Failed to clear user totp fields on database")?;
+    Ok(UnenrollTotpResponse {})
   }
 }
