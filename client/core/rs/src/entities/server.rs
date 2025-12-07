@@ -303,7 +303,7 @@ impl Default for ServerConfig {
       insecure_tls: default_insecure_tls(),
       external_address: Default::default(),
       enabled: default_enabled(),
-      auto_rotate_keys: Default::default(),
+      auto_rotate_keys: default_auto_rotate_keys(),
       ignore_mounts: Default::default(),
       stats_monitoring: default_stats_monitoring(),
       auto_prune: default_auto_prune(),
