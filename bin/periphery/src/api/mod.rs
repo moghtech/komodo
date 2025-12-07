@@ -152,6 +152,7 @@ pub enum PeripheryRequest {
   DeploySwarmStack(DeploySwarmStack),
   RemoveSwarmStacks(RemoveSwarmStacks),
   CreateSwarmService(CreateSwarmService),
+  UpdateSwarmService(UpdateSwarmService),
   RemoveSwarmServices(RemoveSwarmServices),
   RemoveSwarmConfigs(RemoveSwarmConfigs),
   RemoveSwarmSecrets(RemoveSwarmSecrets),

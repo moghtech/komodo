@@ -457,7 +457,7 @@ async fn execute_execution(
           .resolve(&ExecuteArgs { user, update, id })
           .await
           .map_err(|e| e.error)
-          .context("Failed at RemoveDeployment"),
+          .context("Failed at DestroyDeployment"),
         &update_id,
       )
       .await?

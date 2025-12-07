@@ -37,7 +37,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@ui/dropdown-menu";
-import { KeysTable } from "@components/keys/table";
+import { ApiKeysTable } from "@components/api-keys/table";
 import { Section } from "@components/layouts";
 import { Card, CardHeader } from "@ui/card";
 import { Types } from "komodo_client";
@@ -141,7 +141,7 @@ const ProfileInner = ({ user }: { user: Types.User }) => {
         <div>
           <CreateKey />
         </div>
-        <KeysTable keys={keys} DeleteKey={DeleteKey} />
+        <ApiKeysTable keys={keys} DeleteKey={DeleteKey} />
       </Section>
     </div>
   );

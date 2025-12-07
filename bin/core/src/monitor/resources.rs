@@ -56,7 +56,7 @@ pub async fn update_swarm_stack_cache(
   let stack_status_cache = stack_status_cache();
   for stack in stacks {
     let project_name = stack.project_name(false);
-    let swarm_stack = swarm_stacks
+    let current_state = swarm_stacks
       .iter()
       .find(|stack| {
         stack
@@ -65,7 +65,12 @@ pub async fn update_swarm_stack_cache(
           .map(|name| name == &project_name)
           .unwrap_or_default()
       })
-      .cloned();
+      .map(|stack| match stack.state {
+        Some(SwarmState::Healthy) => StackState::Running,
+        Some(SwarmState::Unhealthy) => StackState::Unhealthy,
+        Some(SwarmState::Unknown) | None => StackState::Unknown,
+      })
+      .unwrap_or(StackState::Down);
     let services = extract_services_from_stack(&stack);
     let service_prefix = format!("{project_name}_");
     let mut services_with_swarm_services = services
@@ -106,14 +111,6 @@ pub async fn update_swarm_stack_cache(
       .collect::<Vec<_>>();
     services_with_swarm_services
       .sort_by(|a, b| a.service.cmp(&b.service));
-    let current_state = swarm_stack
-      .as_ref()
-      .map(|stack| match stack.state {
-        Some(SwarmState::Healthy) => StackState::Running,
-        Some(SwarmState::Unhealthy) => StackState::Unhealthy,
-        Some(SwarmState::Unknown) | None => StackState::Unknown,
-      })
-      .unwrap_or(StackState::Down);
     let prev_state = stack_status_cache
       .get(&stack.id)
       .await
@@ -122,7 +119,6 @@ pub async fn update_swarm_stack_cache(
       id: stack.id.clone(),
       state: current_state,
       services: services_with_swarm_services,
-      swarm_stack,
     };
     stack_status_cache
       .insert(
@@ -323,7 +319,6 @@ pub async fn update_server_stack_cache(
       id: stack.id.clone(),
       state: current_state,
       services: services_with_containers,
-      swarm_stack: None,
     };
     stack_status_cache
       .insert(

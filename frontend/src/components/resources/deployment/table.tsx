@@ -1,22 +1,18 @@
 import { TableTags } from "@components/tags";
 import { Types } from "komodo_client";
 import { DataTable, SortableHeader } from "@ui/data-table";
-import { useRead, useSelectedResources } from "@lib/hooks";
+import { useRead, useResourceName, useSelectedResources } from "@lib/hooks";
 import { ResourceLink } from "../common";
 import { DeploymentComponents, UpdateAvailable } from ".";
 import { HardDrive } from "lucide-react";
-import { useCallback } from "react";
 
 export const DeploymentTable = ({
   deployments,
 }: {
   deployments: Types.DeploymentListItem[];
 }) => {
-  const servers = useRead("ListServers", {}).data;
-  const serverName = useCallback(
-    (id: string) => servers?.find((server) => server.id === id)?.name,
-    [servers]
-  );
+  const swarmName = useResourceName("Swarm");
+  const serverName = useResourceName("Server");
 
   const [_, setSelectedResources] = useSelectedResources("Deployment");
 
@@ -57,25 +53,32 @@ export const DeploymentTable = ({
           size: 200,
         },
         {
+          header: ({ column }) => (
+            <SortableHeader column={column} title="Host" />
+          ),
           accessorKey: "info.server_id",
           sortingFn: (a, b) => {
-            const sa = serverName(a.original.info.server_id);
-            const sb = serverName(b.original.info.server_id);
+            const name_a = a.original.info.swarm_id
+              ? swarmName(a.original.info.swarm_id)
+              : serverName(a.original.info.server_id);
+            const name_b = b.original.info.swarm_id
+              ? swarmName(b.original.info.swarm_id)
+              : serverName(b.original.info.server_id);
 
-            if (!sa && !sb) return 0;
-            if (!sa) return 1;
-            if (!sb) return -1;
+            if (!name_a && !name_b) return 0;
+            if (!name_a) return 1;
+            if (!name_b) return -1;
 
-            if (sa > sb) return 1;
-            else if (sa < sb) return -1;
+            if (name_a > name_b) return 1;
+            else if (name_a < name_b) return -1;
             else return 0;
           },
-          header: ({ column }) => (
-            <SortableHeader column={column} title="Server" />
-          ),
-          cell: ({ row }) => (
-            <ResourceLink type="Server" id={row.original.info.server_id} />
-          ),
+          cell: ({ row }) =>
+            row.original.info.swarm_id ? (
+              <ResourceLink type="Swarm" id={row.original.info.swarm_id} />
+            ) : (
+              <ResourceLink type="Server" id={row.original.info.server_id} />
+            ),
           size: 200,
         },
         {

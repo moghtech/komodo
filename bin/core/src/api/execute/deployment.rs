@@ -215,15 +215,17 @@ impl Resolve<ExecuteArgs> for Deploy {
         )
         .await
         {
-          Ok(log) => update.logs.push(log),
+          Ok(logs) => {
+            update_cache_for_swarm(&swarm, true).await;
+            update.logs.extend(logs)
+          }
           Err(e) => {
             update.push_error_log(
-              "Create Service",
+              "Create Swarm Service",
               format_serror(&e.into()),
             );
           }
         };
-        update_cache_for_swarm(&swarm, true).await;
       }
       SwarmOrServer::Server(server) => {
         match periphery_client(&server)
@@ -237,7 +239,10 @@ impl Resolve<ExecuteArgs> for Deploy {
           })
           .await
         {
-          Ok(log) => update.logs.push(log),
+          Ok(log) => {
+            update_cache_for_server(&server, true).await;
+            update.logs.push(log)
+          }
           Err(e) => {
             update.push_error_log(
               "Deploy Container",
@@ -245,7 +250,6 @@ impl Resolve<ExecuteArgs> for Deploy {
             );
           }
         };
-        update_cache_for_server(&server, true).await;
       }
     }
 
@@ -856,13 +860,6 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
     )
     .await?;
 
-    let SwarmOrServer::Server(server) = swarm_or_server else {
-      return Err(
-        anyhow!("DestroyDeployment should not be called for Deployment in Swarm Mode")
-          .status_code(StatusCode::BAD_REQUEST),
-      );
-    };
-
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
       .deployment
@@ -879,31 +876,61 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
     // Send update after setting action state, this way frontend gets correct state.
     update_update(update.clone()).await?;
 
-    let log = match periphery_client(&server)
-      .await?
-      .request(api::container::RemoveContainer {
-        name: deployment.name,
-        signal: self
-          .signal
-          .unwrap_or(deployment.config.termination_signal)
-          .into(),
-        time: self
-          .time
-          .unwrap_or(deployment.config.termination_timeout)
-          .into(),
-      })
-      .await
-    {
-      Ok(log) => log,
-      Err(e) => Log::error(
-        "stop container",
-        format_serror(&e.context("failed to stop container").into()),
-      ),
+    let log = match swarm_or_server {
+      SwarmOrServer::Swarm(swarm) => {
+        match swarm_request(
+          &swarm.config.server_ids,
+          api::swarm::RemoveSwarmServices {
+            services: vec![deployment.name],
+          },
+        )
+        .await
+        {
+          Ok(log) => {
+            update_cache_for_swarm(&swarm, true).await;
+            log
+          }
+          Err(e) => Log::error(
+            "Remove Swarm Service",
+            format_serror(
+              &e.context("Failed to remove swarm service").into(),
+            ),
+          ),
+        }
+      }
+      SwarmOrServer::Server(server) => {
+        match periphery_client(&server)
+          .await?
+          .request(api::container::RemoveContainer {
+            name: deployment.name,
+            signal: self
+              .signal
+              .unwrap_or(deployment.config.termination_signal)
+              .into(),
+            time: self
+              .time
+              .unwrap_or(deployment.config.termination_timeout)
+              .into(),
+          })
+          .await
+        {
+          Ok(log) => {
+            update_cache_for_server(&server, true).await;
+            log
+          }
+          Err(e) => Log::error(
+            "Destroy Container",
+            format_serror(
+              &e.context("Failed to destroy container").into(),
+            ),
+          ),
+        }
+      }
     };
 
     update.logs.push(log);
     update.finalize();
-    update_cache_for_server(&server, true).await;
+
     update_update(update.clone()).await?;
 
     Ok(update)

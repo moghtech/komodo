@@ -1733,6 +1733,7 @@ export type GetContainerLogResponse = Log;
 export interface DeploymentActionState {
 	pulling: boolean;
 	deploying: boolean;
+	updating: boolean;
 	starting: boolean;
 	restarting: boolean;
 	pausing: boolean;
@@ -3380,257 +3381,12 @@ export interface Container {
 
 export type InspectDeploymentContainerResponse = Container;
 
-export type InspectDockerContainerResponse = Container;
-
-/** Information about the image's RootFS, including the layer IDs. */
-export interface ImageInspectRootFs {
-	Type?: string;
-	Layers?: string[];
-}
-
-/** Additional metadata of the image in the local cache. This information is local to the daemon, and not part of the image itself. */
-export interface ImageInspectMetadata {
-	/** Date and time at which the image was last tagged in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds.  This information is only available if the image was tagged locally, and omitted otherwise. */
-	LastTagTime?: string;
-}
-
-/** Information about an image in the local image cache. */
-export interface Image {
-	/** ID is the content-addressable ID of an image.  This identifier is a content-addressable digest calculated from the image's configuration (which includes the digests of layers used by the image).  Note that this digest differs from the `RepoDigests` below, which holds digests of image manifests that reference the image. */
-	Id?: string;
-	/** List of image names/tags in the local image cache that reference this image.  Multiple image tags can refer to the same image, and this list may be empty if no tags reference the image, in which case the image is \"untagged\", in which case it can still be referenced by its ID. */
-	RepoTags?: string[];
-	/** List of content-addressable digests of locally available image manifests that the image is referenced from. Multiple manifests can refer to the same image.  These digests are usually only available if the image was either pulled from a registry, or if the image was pushed to a registry, which is when the manifest is generated and its digest calculated. */
-	RepoDigests?: string[];
-	/** ID of the parent image.  Depending on how the image was created, this field may be empty and is only set for images that were built/created locally. This field is empty if the image was pulled from an image registry. */
-	Parent?: string;
-	/** Optional message that was set when committing or importing the image. */
-	Comment?: string;
-	/** Date and time at which the image was created, formatted in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds.  This information is only available if present in the image, and omitted otherwise. */
-	Created?: string;
-	/** The version of Docker that was used to build the image.  Depending on how the image was created, this field may be empty. */
-	DockerVersion?: string;
-	/** Name of the author that was specified when committing the image, or as specified through MAINTAINER (deprecated) in the Dockerfile. */
-	Author?: string;
-	/** Configuration for a container that is portable between hosts. */
-	Config?: ContainerConfig;
-	/** Hardware CPU architecture that the image runs on. */
-	Architecture?: string;
-	/** CPU architecture variant (presently ARM-only). */
-	Variant?: string;
-	/** Operating System the image is built to run on. */
-	Os?: string;
-	/** Operating System version the image is built to run on (especially for Windows). */
-	OsVersion?: string;
-	/** Total size of the image including all layers it is composed of. */
-	Size?: I64;
-	GraphDriver?: GraphDriverData;
-	RootFS?: ImageInspectRootFs;
-	Metadata?: ImageInspectMetadata;
-}
-
-export type InspectDockerImageResponse = Image;
-
-export interface IpamConfig {
-	Subnet?: string;
-	IPRange?: string;
-	Gateway?: string;
-	AuxiliaryAddresses: Record<string, string>;
-}
-
-export interface Ipam {
-	/** Name of the IPAM driver to use. */
-	Driver?: string;
-	/** List of IPAM configuration options, specified as a map:  ``` {\"Subnet\": <CIDR>, \"IPRange\": <CIDR>, \"Gateway\": <IP address>, \"AuxAddress\": <device_name:IP address>} ``` */
-	Config: IpamConfig[];
-	/** Driver-specific options, specified as a map. */
-	Options: Record<string, string>;
-}
-
-export interface NetworkContainer {
-	/** This is the key on the incoming map of NetworkContainer */
-	ContainerID?: string;
-	Name?: string;
-	EndpointID?: string;
-	MacAddress?: string;
-	IPv4Address?: string;
-	IPv6Address?: string;
-}
-
-export interface Network {
-	Name?: string;
-	Id?: string;
-	Created?: string;
-	Scope?: string;
-	Driver?: string;
-	EnableIPv6?: boolean;
-	IPAM?: Ipam;
-	Internal?: boolean;
-	Attachable?: boolean;
-	Ingress?: boolean;
-	/** This field is turned from map into array for easier usability. */
-	Containers: NetworkContainer[];
-	Options?: Record<string, string>;
-	Labels?: Record<string, string>;
-}
-
-export type InspectDockerNetworkResponse = Network;
-
-export enum VolumeScopeEnum {
-	Empty = "",
-	Local = "local",
-	Global = "global",
-}
-
 export type U64 = number;
 
 /** The version number of the object such as node, service, etc. This is needed to avoid conflicting writes. The client must send the version number along with the modified specification when updating these objects.  This approach ensures safe concurrency and determinism in that the change on the object may not be applied if the version number has changed from the last read. In other words, if two update requests specify the same base version, only one of the requests can succeed. As a result, two separate update requests that happen at the same time will not unintentionally overwrite each other. */
 export interface ObjectVersion {
 	Index?: U64;
 }
-
-export enum ClusterVolumeSpecAccessModeScopeEnum {
-	Empty = "",
-	Single = "single",
-	Multi = "multi",
-}
-
-export enum ClusterVolumeSpecAccessModeSharingEnum {
-	Empty = "",
-	None = "none",
-	Readonly = "readonly",
-	Onewriter = "onewriter",
-	All = "all",
-}
-
-/** One cluster volume secret entry. Defines a key-value pair that is passed to the plugin. */
-export interface ClusterVolumeSpecAccessModeSecrets {
-	/** Key is the name of the key of the key-value pair passed to the plugin. */
-	Key?: string;
-	/** Secret is the swarm Secret object from which to read data. This can be a Secret name or ID. The Secret data is retrieved by swarm and used as the value of the key-value pair passed to the plugin. */
-	Secret?: string;
-}
-
-export type Topology = Record<string, PortBinding[]>;
-
-/** Requirements for the accessible topology of the volume. These fields are optional. For an in-depth description of what these fields mean, see the CSI specification. */
-export interface ClusterVolumeSpecAccessModeAccessibilityRequirements {
-	/** A list of required topologies, at least one of which the volume must be accessible from. */
-	Requisite?: Topology[];
-	/** A list of topologies that the volume should attempt to be provisioned in. */
-	Preferred?: Topology[];
-}
-
-/** The desired capacity that the volume should be created with. If empty, the plugin will decide the capacity. */
-export interface ClusterVolumeSpecAccessModeCapacityRange {
-	/** The volume must be at least this big. The value of 0 indicates an unspecified minimum */
-	RequiredBytes?: I64;
-	/** The volume must not be bigger than this. The value of 0 indicates an unspecified maximum. */
-	LimitBytes?: I64;
-}
-
-export enum ClusterVolumeSpecAccessModeAvailabilityEnum {
-	Empty = "",
-	Active = "active",
-	Pause = "pause",
-	Drain = "drain",
-}
-
-/** Defines how the volume is used by tasks. */
-export interface ClusterVolumeSpecAccessMode {
-	/** The set of nodes this volume can be used on at one time. - `single` The volume may only be scheduled to one node at a time. - `multi` the volume may be scheduled to any supported number of nodes at a time. */
-	Scope?: ClusterVolumeSpecAccessModeScopeEnum;
-	/** The number and way that different tasks can use this volume at one time. - `none` The volume may only be used by one task at a time. - `readonly` The volume may be used by any number of tasks, but they all must mount the volume as readonly - `onewriter` The volume may be used by any number of tasks, but only one may mount it as read/write. - `all` The volume may have any number of readers and writers. */
-	Sharing?: ClusterVolumeSpecAccessModeSharingEnum;
-	/** Swarm Secrets that are passed to the CSI storage plugin when operating on this volume. */
-	Secrets?: ClusterVolumeSpecAccessModeSecrets[];
-	AccessibilityRequirements?: ClusterVolumeSpecAccessModeAccessibilityRequirements;
-	CapacityRange?: ClusterVolumeSpecAccessModeCapacityRange;
-	/** The availability of the volume for use in tasks. - `active` The volume is fully available for scheduling on the cluster - `pause` No new workloads should use the volume, but existing workloads are not stopped. - `drain` All workloads using this volume should be stopped and rescheduled, and no new ones should be started. */
-	Availability?: ClusterVolumeSpecAccessModeAvailabilityEnum;
-}
-
-/** Cluster-specific options used to create the volume. */
-export interface ClusterVolumeSpec {
-	/** Group defines the volume group of this volume. Volumes belonging to the same group can be referred to by group name when creating Services.  Referring to a volume by group instructs Swarm to treat volumes in that group interchangeably for the purpose of scheduling. Volumes with an empty string for a group technically all belong to the same, emptystring group. */
-	Group?: string;
-	AccessMode?: ClusterVolumeSpecAccessMode;
-}
-
-/** Information about the global status of the volume. */
-export interface ClusterVolumeInfo {
-	/** The capacity of the volume in bytes. A value of 0 indicates that the capacity is unknown. */
-	CapacityBytes?: I64;
-	/** A map of strings to strings returned from the storage plugin when the volume is created. */
-	VolumeContext?: Record<string, string>;
-	/** The ID of the volume as returned by the CSI storage plugin. This is distinct from the volume's ID as provided by Docker. This ID is never used by the user when communicating with Docker to refer to this volume. If the ID is blank, then the Volume has not been successfully created in the plugin yet. */
-	VolumeID?: string;
-	/** The topology this volume is actually accessible from. */
-	AccessibleTopology?: Topology[];
-}
-
-export enum ClusterVolumePublishStatusStateEnum {
-	Empty = "",
-	PendingPublish = "pending-publish",
-	Published = "published",
-	PendingNodeUnpublish = "pending-node-unpublish",
-	PendingControllerUnpublish = "pending-controller-unpublish",
-}
-
-export interface ClusterVolumePublishStatus {
-	/** The ID of the Swarm node the volume is published on. */
-	NodeID?: string;
-	/** The published state of the volume. * `pending-publish` The volume should be published to this node, but the call to the controller plugin to do so has not yet been successfully completed. * `published` The volume is published successfully to the node. * `pending-node-unpublish` The volume should be unpublished from the node, and the manager is awaiting confirmation from the worker that it has done so. * `pending-controller-unpublish` The volume is successfully unpublished from the node, but has not yet been successfully unpublished on the controller. */
-	State?: ClusterVolumePublishStatusStateEnum;
-	/** A map of strings to strings returned by the CSI controller plugin when a volume is published. */
-	PublishContext?: Record<string, string>;
-}
-
-/** Options and information specific to, and only present on, Swarm CSI cluster volumes. */
-export interface ClusterVolume {
-	/** The Swarm ID of this volume. Because cluster volumes are Swarm objects, they have an ID, unlike non-cluster volumes. This ID can be used to refer to the Volume instead of the name. */
-	ID?: string;
-	Version?: ObjectVersion;
-	CreatedAt?: string;
-	UpdatedAt?: string;
-	Spec?: ClusterVolumeSpec;
-	Info?: ClusterVolumeInfo;
-	/** The status of the volume as it pertains to its publishing and use on specific nodes */
-	PublishStatus?: ClusterVolumePublishStatus[];
-}
-
-/** Usage details about the volume. This information is used by the `GET /system/df` endpoint, and omitted in other endpoints. */
-export interface VolumeUsageData {
-	/** Amount of disk space used by the volume (in bytes). This information is only available for volumes created with the `\"local\"` volume driver. For volumes created with other volume drivers, this field is set to `-1` (\"not available\") */
-	Size: I64;
-	/** The number of containers referencing this volume. This field is set to `-1` if the reference-count is not available. */
-	RefCount: I64;
-}
-
-export interface Volume {
-	/** Name of the volume. */
-	Name: string;
-	/** Name of the volume driver used by the volume. */
-	Driver: string;
-	/** Mount path of the volume on the host. */
-	Mountpoint: string;
-	/** Date/Time the volume was created. */
-	CreatedAt?: string;
-	/** Low-level details about the volume, provided by the volume driver. Details are returned as a map with key/value pairs: `{\"key\":\"value\",\"key2\":\"value2\"}`.  The `Status` field is optional, and is omitted if the volume driver does not support this feature. */
-	Status?: Record<string, Record<string, undefined>>;
-	/** User-defined key/value metadata. */
-	Labels?: Record<string, string>;
-	/** The level at which the volume exists. Either `global` for cluster-wide, or `local` for machine level. */
-	Scope?: VolumeScopeEnum;
-	ClusterVolume?: ClusterVolume;
-	/** The driver specific options used when creating the volume. */
-	Options?: Record<string, string>;
-	UsageData?: VolumeUsageData;
-}
-
-export type InspectDockerVolumeResponse = Volume;
-
-export type InspectStackContainerResponse = Container;
 
 /** Describes a permission the user has to accept upon installing the plugin. */
 export interface PluginPrivilege {
@@ -4127,6 +3883,335 @@ export interface SwarmService {
 	JobStatus?: ServiceJobStatus;
 }
 
+export type InspectDeploymentSwarmServiceResponse = SwarmService;
+
+export type InspectDockerContainerResponse = Container;
+
+/** Information about the image's RootFS, including the layer IDs. */
+export interface ImageInspectRootFs {
+	Type?: string;
+	Layers?: string[];
+}
+
+/** Additional metadata of the image in the local cache. This information is local to the daemon, and not part of the image itself. */
+export interface ImageInspectMetadata {
+	/** Date and time at which the image was last tagged in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds.  This information is only available if the image was tagged locally, and omitted otherwise. */
+	LastTagTime?: string;
+}
+
+/** Information about an image in the local image cache. */
+export interface Image {
+	/** ID is the content-addressable ID of an image.  This identifier is a content-addressable digest calculated from the image's configuration (which includes the digests of layers used by the image).  Note that this digest differs from the `RepoDigests` below, which holds digests of image manifests that reference the image. */
+	Id?: string;
+	/** List of image names/tags in the local image cache that reference this image.  Multiple image tags can refer to the same image, and this list may be empty if no tags reference the image, in which case the image is \"untagged\", in which case it can still be referenced by its ID. */
+	RepoTags?: string[];
+	/** List of content-addressable digests of locally available image manifests that the image is referenced from. Multiple manifests can refer to the same image.  These digests are usually only available if the image was either pulled from a registry, or if the image was pushed to a registry, which is when the manifest is generated and its digest calculated. */
+	RepoDigests?: string[];
+	/** ID of the parent image.  Depending on how the image was created, this field may be empty and is only set for images that were built/created locally. This field is empty if the image was pulled from an image registry. */
+	Parent?: string;
+	/** Optional message that was set when committing or importing the image. */
+	Comment?: string;
+	/** Date and time at which the image was created, formatted in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds.  This information is only available if present in the image, and omitted otherwise. */
+	Created?: string;
+	/** The version of Docker that was used to build the image.  Depending on how the image was created, this field may be empty. */
+	DockerVersion?: string;
+	/** Name of the author that was specified when committing the image, or as specified through MAINTAINER (deprecated) in the Dockerfile. */
+	Author?: string;
+	/** Configuration for a container that is portable between hosts. */
+	Config?: ContainerConfig;
+	/** Hardware CPU architecture that the image runs on. */
+	Architecture?: string;
+	/** CPU architecture variant (presently ARM-only). */
+	Variant?: string;
+	/** Operating System the image is built to run on. */
+	Os?: string;
+	/** Operating System version the image is built to run on (especially for Windows). */
+	OsVersion?: string;
+	/** Total size of the image including all layers it is composed of. */
+	Size?: I64;
+	GraphDriver?: GraphDriverData;
+	RootFS?: ImageInspectRootFs;
+	Metadata?: ImageInspectMetadata;
+}
+
+export type InspectDockerImageResponse = Image;
+
+export interface IpamConfig {
+	Subnet?: string;
+	IPRange?: string;
+	Gateway?: string;
+	AuxiliaryAddresses: Record<string, string>;
+}
+
+export interface Ipam {
+	/** Name of the IPAM driver to use. */
+	Driver?: string;
+	/** List of IPAM configuration options, specified as a map:  ``` {\"Subnet\": <CIDR>, \"IPRange\": <CIDR>, \"Gateway\": <IP address>, \"AuxAddress\": <device_name:IP address>} ``` */
+	Config: IpamConfig[];
+	/** Driver-specific options, specified as a map. */
+	Options: Record<string, string>;
+}
+
+export interface NetworkContainer {
+	/** This is the key on the incoming map of NetworkContainer */
+	ContainerID?: string;
+	Name?: string;
+	EndpointID?: string;
+	MacAddress?: string;
+	IPv4Address?: string;
+	IPv6Address?: string;
+}
+
+export interface Network {
+	Name?: string;
+	Id?: string;
+	Created?: string;
+	Scope?: string;
+	Driver?: string;
+	EnableIPv6?: boolean;
+	IPAM?: Ipam;
+	Internal?: boolean;
+	Attachable?: boolean;
+	Ingress?: boolean;
+	/** This field is turned from map into array for easier usability. */
+	Containers: NetworkContainer[];
+	Options?: Record<string, string>;
+	Labels?: Record<string, string>;
+}
+
+export type InspectDockerNetworkResponse = Network;
+
+export enum VolumeScopeEnum {
+	Empty = "",
+	Local = "local",
+	Global = "global",
+}
+
+export enum ClusterVolumeSpecAccessModeScopeEnum {
+	Empty = "",
+	Single = "single",
+	Multi = "multi",
+}
+
+export enum ClusterVolumeSpecAccessModeSharingEnum {
+	Empty = "",
+	None = "none",
+	Readonly = "readonly",
+	Onewriter = "onewriter",
+	All = "all",
+}
+
+/** One cluster volume secret entry. Defines a key-value pair that is passed to the plugin. */
+export interface ClusterVolumeSpecAccessModeSecrets {
+	/** Key is the name of the key of the key-value pair passed to the plugin. */
+	Key?: string;
+	/** Secret is the swarm Secret object from which to read data. This can be a Secret name or ID. The Secret data is retrieved by swarm and used as the value of the key-value pair passed to the plugin. */
+	Secret?: string;
+}
+
+export type Topology = Record<string, PortBinding[]>;
+
+/** Requirements for the accessible topology of the volume. These fields are optional. For an in-depth description of what these fields mean, see the CSI specification. */
+export interface ClusterVolumeSpecAccessModeAccessibilityRequirements {
+	/** A list of required topologies, at least one of which the volume must be accessible from. */
+	Requisite?: Topology[];
+	/** A list of topologies that the volume should attempt to be provisioned in. */
+	Preferred?: Topology[];
+}
+
+/** The desired capacity that the volume should be created with. If empty, the plugin will decide the capacity. */
+export interface ClusterVolumeSpecAccessModeCapacityRange {
+	/** The volume must be at least this big. The value of 0 indicates an unspecified minimum */
+	RequiredBytes?: I64;
+	/** The volume must not be bigger than this. The value of 0 indicates an unspecified maximum. */
+	LimitBytes?: I64;
+}
+
+export enum ClusterVolumeSpecAccessModeAvailabilityEnum {
+	Empty = "",
+	Active = "active",
+	Pause = "pause",
+	Drain = "drain",
+}
+
+/** Defines how the volume is used by tasks. */
+export interface ClusterVolumeSpecAccessMode {
+	/** The set of nodes this volume can be used on at one time. - `single` The volume may only be scheduled to one node at a time. - `multi` the volume may be scheduled to any supported number of nodes at a time. */
+	Scope?: ClusterVolumeSpecAccessModeScopeEnum;
+	/** The number and way that different tasks can use this volume at one time. - `none` The volume may only be used by one task at a time. - `readonly` The volume may be used by any number of tasks, but they all must mount the volume as readonly - `onewriter` The volume may be used by any number of tasks, but only one may mount it as read/write. - `all` The volume may have any number of readers and writers. */
+	Sharing?: ClusterVolumeSpecAccessModeSharingEnum;
+	/** Swarm Secrets that are passed to the CSI storage plugin when operating on this volume. */
+	Secrets?: ClusterVolumeSpecAccessModeSecrets[];
+	AccessibilityRequirements?: ClusterVolumeSpecAccessModeAccessibilityRequirements;
+	CapacityRange?: ClusterVolumeSpecAccessModeCapacityRange;
+	/** The availability of the volume for use in tasks. - `active` The volume is fully available for scheduling on the cluster - `pause` No new workloads should use the volume, but existing workloads are not stopped. - `drain` All workloads using this volume should be stopped and rescheduled, and no new ones should be started. */
+	Availability?: ClusterVolumeSpecAccessModeAvailabilityEnum;
+}
+
+/** Cluster-specific options used to create the volume. */
+export interface ClusterVolumeSpec {
+	/** Group defines the volume group of this volume. Volumes belonging to the same group can be referred to by group name when creating Services.  Referring to a volume by group instructs Swarm to treat volumes in that group interchangeably for the purpose of scheduling. Volumes with an empty string for a group technically all belong to the same, emptystring group. */
+	Group?: string;
+	AccessMode?: ClusterVolumeSpecAccessMode;
+}
+
+/** Information about the global status of the volume. */
+export interface ClusterVolumeInfo {
+	/** The capacity of the volume in bytes. A value of 0 indicates that the capacity is unknown. */
+	CapacityBytes?: I64;
+	/** A map of strings to strings returned from the storage plugin when the volume is created. */
+	VolumeContext?: Record<string, string>;
+	/** The ID of the volume as returned by the CSI storage plugin. This is distinct from the volume's ID as provided by Docker. This ID is never used by the user when communicating with Docker to refer to this volume. If the ID is blank, then the Volume has not been successfully created in the plugin yet. */
+	VolumeID?: string;
+	/** The topology this volume is actually accessible from. */
+	AccessibleTopology?: Topology[];
+}
+
+export enum ClusterVolumePublishStatusStateEnum {
+	Empty = "",
+	PendingPublish = "pending-publish",
+	Published = "published",
+	PendingNodeUnpublish = "pending-node-unpublish",
+	PendingControllerUnpublish = "pending-controller-unpublish",
+}
+
+export interface ClusterVolumePublishStatus {
+	/** The ID of the Swarm node the volume is published on. */
+	NodeID?: string;
+	/** The published state of the volume. * `pending-publish` The volume should be published to this node, but the call to the controller plugin to do so has not yet been successfully completed. * `published` The volume is published successfully to the node. * `pending-node-unpublish` The volume should be unpublished from the node, and the manager is awaiting confirmation from the worker that it has done so. * `pending-controller-unpublish` The volume is successfully unpublished from the node, but has not yet been successfully unpublished on the controller. */
+	State?: ClusterVolumePublishStatusStateEnum;
+	/** A map of strings to strings returned by the CSI controller plugin when a volume is published. */
+	PublishContext?: Record<string, string>;
+}
+
+/** Options and information specific to, and only present on, Swarm CSI cluster volumes. */
+export interface ClusterVolume {
+	/** The Swarm ID of this volume. Because cluster volumes are Swarm objects, they have an ID, unlike non-cluster volumes. This ID can be used to refer to the Volume instead of the name. */
+	ID?: string;
+	Version?: ObjectVersion;
+	CreatedAt?: string;
+	UpdatedAt?: string;
+	Spec?: ClusterVolumeSpec;
+	Info?: ClusterVolumeInfo;
+	/** The status of the volume as it pertains to its publishing and use on specific nodes */
+	PublishStatus?: ClusterVolumePublishStatus[];
+}
+
+/** Usage details about the volume. This information is used by the `GET /system/df` endpoint, and omitted in other endpoints. */
+export interface VolumeUsageData {
+	/** Amount of disk space used by the volume (in bytes). This information is only available for volumes created with the `\"local\"` volume driver. For volumes created with other volume drivers, this field is set to `-1` (\"not available\") */
+	Size: I64;
+	/** The number of containers referencing this volume. This field is set to `-1` if the reference-count is not available. */
+	RefCount: I64;
+}
+
+export interface Volume {
+	/** Name of the volume. */
+	Name: string;
+	/** Name of the volume driver used by the volume. */
+	Driver: string;
+	/** Mount path of the volume on the host. */
+	Mountpoint: string;
+	/** Date/Time the volume was created. */
+	CreatedAt?: string;
+	/** Low-level details about the volume, provided by the volume driver. Details are returned as a map with key/value pairs: `{\"key\":\"value\",\"key2\":\"value2\"}`.  The `Status` field is optional, and is omitted if the volume driver does not support this feature. */
+	Status?: Record<string, Record<string, undefined>>;
+	/** User-defined key/value metadata. */
+	Labels?: Record<string, string>;
+	/** The level at which the volume exists. Either `global` for cluster-wide, or `local` for machine level. */
+	Scope?: VolumeScopeEnum;
+	ClusterVolume?: ClusterVolume;
+	/** The driver specific options used when creating the volume. */
+	Options?: Record<string, string>;
+	UsageData?: VolumeUsageData;
+}
+
+export type InspectDockerVolumeResponse = Volume;
+
+export type InspectStackContainerResponse = Container;
+
+export enum SwarmState {
+	/** The Swarm is healthy, all nodes OK */
+	Healthy = "Healthy",
+	/** The Swarm is unhealthy */
+	Unhealthy = "Unhealthy",
+	/** Unknown case */
+	Unknown = "Unknown",
+}
+
+/**
+ * Swarm stack service list item.
+ * Returned by `docker stack services --format json <NAME>`
+ * 
+ * https://docs.docker.com/reference/cli/docker/stack/services/#format
+ */
+export interface SwarmStackServiceListItem {
+	/** The *short* swarm service ID */
+	ID?: string;
+	/** The service name. */
+	Name?: string;
+	/** The service mode. */
+	Mode?: string;
+	/** The service replicas, formatted as string. */
+	Replicas?: string;
+	/** The image associated with service */
+	Image?: string;
+	/** Task exposed ports, formatted as a string. */
+	Ports?: string;
+}
+
+/**
+ * Swarm stack task list item.
+ * Returned by `docker stack ps --format json <NAME>`
+ * 
+ * https://docs.docker.com/reference/cli/docker/stack/ps/#format
+ */
+export interface SwarmStackTaskListItem {
+	/** The task ID */
+	ID?: string;
+	/** Swarm stack task name. */
+	Name?: string;
+	/** The image associated with task */
+	Image?: string;
+	/** The node the task is running on */
+	Node?: string;
+	/** The task desired state. Matches 'CurrentState' when healthy. */
+	DesiredState?: string;
+	/** The task current state. Matches 'DesiredState' when healthy. */
+	CurrentState?: string;
+	/** An error message, if one exists */
+	Error?: string;
+	/** Task exposed ports, formatted as a string. */
+	Ports?: string;
+}
+
+/**
+ * All entities related to docker stack available over CLI.
+ * Returned by:
+ * ```
+ * docker stack services --format json <STACK>
+ * docker stack ps --format json <STACK>
+ * ```
+ */
+export interface SwarmStack {
+	/** Swarm stack name. */
+	Name: string;
+	/**
+	 * Swarm stack state.
+	 * - Healthy if all associated tasks match their desired state (or report no desired state)
+	 * - Unhealthy otherwise
+	 * 
+	 * Not included in docker cli return, computed by Komodo
+	 */
+	State: SwarmState;
+	/** Services part of the stack */
+	Services: SwarmStackServiceListItem[];
+	/** Tasks part of the stack */
+	Tasks: SwarmStackTaskListItem[];
+}
+
+export type InspectStackSwarmInfoResponse = SwarmStack;
+
 export type InspectStackSwarmServiceResponse = SwarmService;
 
 export type InspectSwarmConfigResponse = SwarmConfig[];
@@ -4401,86 +4486,6 @@ export interface SwarmSecret {
 export type InspectSwarmSecretResponse = SwarmSecret;
 
 export type InspectSwarmServiceResponse = SwarmService;
-
-export enum SwarmState {
-	/** The Swarm is healthy, all nodes OK */
-	Healthy = "Healthy",
-	/** The Swarm is unhealthy */
-	Unhealthy = "Unhealthy",
-	/** Unknown case */
-	Unknown = "Unknown",
-}
-
-/**
- * Swarm stack service list item.
- * Returned by `docker stack services --format json <NAME>`
- * 
- * https://docs.docker.com/reference/cli/docker/stack/services/#format
- */
-export interface SwarmStackServiceListItem {
-	/** The *short* swarm service ID */
-	ID?: string;
-	/** The service name. */
-	Name?: string;
-	/** The service mode. */
-	Mode?: string;
-	/** The service replicas, formatted as string. */
-	Replicas?: string;
-	/** The image associated with service */
-	Image?: string;
-	/** Task exposed ports, formatted as a string. */
-	Ports?: string;
-}
-
-/**
- * Swarm stack task list item.
- * Returned by `docker stack ps --format json <NAME>`
- * 
- * https://docs.docker.com/reference/cli/docker/stack/ps/#format
- */
-export interface SwarmStackTaskListItem {
-	/** The task ID */
-	ID?: string;
-	/** Swarm stack task name. */
-	Name?: string;
-	/** The image associated with task */
-	Image?: string;
-	/** The node the task is running on */
-	Node?: string;
-	/** The task desired state. Matches 'CurrentState' when healthy. */
-	DesiredState?: string;
-	/** The task current state. Matches 'DesiredState' when healthy. */
-	CurrentState?: string;
-	/** An error message, if one exists */
-	Error?: string;
-	/** Task exposed ports, formatted as a string. */
-	Ports?: string;
-}
-
-/**
- * All entities related to docker stack available over CLI.
- * Returned by:
- * ```
- * docker stack services --format json <STACK>
- * docker stack ps --format json <STACK>
- * ```
- */
-export interface SwarmStack {
-	/** Swarm stack name. */
-	Name: string;
-	/**
-	 * Swarm stack state.
-	 * - Healthy if all associated tasks match their desired state (or report no desired state)
-	 * - Unhealthy otherwise
-	 * 
-	 * Not included in docker cli return, computed by Komodo
-	 */
-	State: SwarmState;
-	/** Services part of the stack */
-	Services: SwarmStackServiceListItem[];
-	/** Tasks part of the stack */
-	Tasks: SwarmStackTaskListItem[];
-}
 
 export type InspectSwarmStackResponse = SwarmStack;
 
@@ -6822,8 +6827,9 @@ export interface DeleteVolume {
 }
 
 /**
- * Deploys the container for the target deployment. Response: [Update].
+ * Deploys the container / swarm service for the target Deployment. Response: [Update].
  * 
+ * For Server based Deployments (just a container):
  * 1. Pulls the image onto the target server.
  * 2. If the container is already running,
  * it will be stopped and removed using `docker container rm ${container_name}`.
@@ -7863,6 +7869,15 @@ export interface InspectDeploymentContainer {
 	deployment: string;
 }
 
+/**
+ * Inspect the swarm service associated with the Deployment.
+ * Response: [SwarmService].
+ */
+export interface InspectDeploymentSwarmService {
+	/** Id or name */
+	deployment: string;
+}
+
 /** Inspect a docker container on the server. Response: [Container]. */
 export interface InspectDockerContainer {
 	/** Id or name */
@@ -7907,8 +7922,17 @@ export interface InspectStackContainer {
 }
 
 /**
+ * Inspect swarm info associated with a Stack.
+ * Response: [SwarmStack].
+ */
+export interface InspectStackSwarmInfo {
+	/** Id or name */
+	stack: string;
+}
+
+/**
  * Inspect a swarm service associated with a Stack.
- * Response: [Container].
+ * Response: [SwarmService].
  */
 export interface InspectStackSwarmService {
 	/** Id or name */
@@ -10402,6 +10426,7 @@ export type ReadRequest =
 	| { type: "GetDeploymentLog", params: GetDeploymentLog }
 	| { type: "SearchDeploymentLog", params: SearchDeploymentLog }
 	| { type: "InspectDeploymentContainer", params: InspectDeploymentContainer }
+	| { type: "InspectDeploymentSwarmService", params: InspectDeploymentSwarmService }
 	| { type: "ListDeployments", params: ListDeployments }
 	| { type: "ListFullDeployments", params: ListFullDeployments }
 	| { type: "ListCommonDeploymentExtraArgs", params: ListCommonDeploymentExtraArgs }

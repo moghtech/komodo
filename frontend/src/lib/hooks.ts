@@ -18,7 +18,7 @@ import { UsableResource } from "@types";
 import { useToast } from "@ui/use-toast";
 import { atom, useAtom } from "jotai";
 import { atomFamily } from "jotai/utils";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   has_minimum_permissions,
@@ -350,6 +350,14 @@ export const useExecute = <
 };
 
 // ============== UTILITY ==============
+
+export const useResourceName = (type: UsableResource) => {
+  const resources = useRead(`List${type}s`, {}).data;
+  return useCallback(
+    (id: string) => resources?.find((resource) => resource.id === id)?.name,
+    [resources]
+  );
+};
 
 export const useResourceParamType = () => {
   const type = useParams().type;

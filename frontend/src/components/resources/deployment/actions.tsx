@@ -334,7 +334,7 @@ export const PauseUnpauseDeployment = ({ id }: DeploymentId) => {
     },
     { refetchInterval: 5000 }
   ).data;
-  
+
   if (!deployment || deployment.info.swarm_id) return null;
 
   if (state === Types.DeploymentState.Paused) {

@@ -8,8 +8,9 @@ use crate::entities::{TerminationSignal, update::Update};
 
 use super::{BatchExecutionResponse, KomodoExecuteRequest};
 
-/// Deploys the container for the target deployment. Response: [Update].
+/// Deploys the container / swarm service for the target Deployment. Response: [Update].
 ///
+/// For Server based Deployments (just a container):
 /// 1. Pulls the image onto the target server.
 /// 2. If the container is already running,
 /// it will be stopped and removed using `docker container rm ${container_name}`.

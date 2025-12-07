@@ -5,7 +5,9 @@ use typeshare::typeshare;
 
 use crate::entities::{
   SearchCombinator, U64,
-  docker::{container::Container, service::SwarmService},
+  docker::{
+    container::Container, service::SwarmService, stack::SwarmStack,
+  },
   stack::{
     Stack, StackActionState, StackListItem, StackQuery, StackService,
   },
@@ -77,7 +79,7 @@ pub type InspectStackContainerResponse = Container;
 //
 
 /// Inspect a swarm service associated with a Stack.
-/// Response: [Container].
+/// Response: [SwarmService].
 #[typeshare]
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
@@ -95,6 +97,26 @@ pub struct InspectStackSwarmService {
 
 #[typeshare]
 pub type InspectStackSwarmServiceResponse = SwarmService;
+
+//
+
+/// Inspect swarm info associated with a Stack.
+/// Response: [SwarmStack].
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoReadRequest)]
+#[response(InspectStackSwarmInfoResponse)]
+#[error(serror::Error)]
+pub struct InspectStackSwarmInfo {
+  /// Id or name
+  #[serde(alias = "id", alias = "name")]
+  pub stack: String,
+}
+
+#[typeshare]
+pub type InspectStackSwarmInfoResponse = SwarmStack;
 
 //
 

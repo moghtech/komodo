@@ -199,7 +199,7 @@ pub struct GetSwarmServiceLogSearch {
 ///
 /// https://docs.docker.com/reference/cli/docker/service/create/
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
-#[response(Log)]
+#[response(Vec<Log>)]
 #[error(anyhow::Error)]
 pub struct CreateSwarmService {
   pub deployment: Deployment,
@@ -208,6 +208,24 @@ pub struct CreateSwarmService {
   /// Propogate any secret replacers from core interpolation.
   #[serde(default)]
   pub replacers: Vec<(String, String)>,
+}
+
+/// `docker service update [OPTIONS] SERVICE`
+///
+/// https://docs.docker.com/reference/cli/docker/service/create/
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[response(Log)]
+#[error(anyhow::Error)]
+pub struct UpdateSwarmService {
+  /// Th service name
+  pub service: String,
+  /// The image may require login to another registry
+  pub registry_account: Option<String>,
+  pub registry_token: Option<String>,
+  pub image: Option<String>,
+  pub replicas: Option<u32>,
+  pub rollback: bool,
+  pub extra_args: Vec<String>,
 }
 
 /// `docker service rm SERVICE [SERVICE...]`

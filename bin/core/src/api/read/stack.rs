@@ -5,7 +5,9 @@ use komodo_client::{
   api::read::*,
   entities::{
     SwarmOrServer,
-    docker::{container::Container, service::SwarmService},
+    docker::{
+      container::Container, service::SwarmService, stack::SwarmStack,
+    },
     permission::PermissionLevel,
     stack::{Stack, StackActionState, StackListItem, StackState},
   },
@@ -195,7 +197,7 @@ impl Resolve<ReadArgs> for InspectStackContainer {
     let (stack, swarm_or_server) = setup_stack_execution(
       &stack,
       user,
-      PermissionLevel::Read.logs(),
+      PermissionLevel::Read.inspect(),
     )
     .await?;
 
@@ -244,7 +246,7 @@ impl Resolve<ReadArgs> for InspectStackSwarmService {
     let (stack, swarm_or_server) = setup_stack_execution(
       &stack,
       user,
-      PermissionLevel::Read.logs(),
+      PermissionLevel::Read.inspect(),
     )
     .await?;
 
@@ -276,14 +278,46 @@ impl Resolve<ReadArgs> for InspectStackSwarmService {
       ).into());
     };
 
-    let res = swarm_request(
+    swarm_request(
       &swarm.config.server_ids,
       periphery_client::api::swarm::InspectSwarmService { service },
     )
     .await
-    .context("Failed to inspect service on swarm")?;
+    .context("Failed to inspect service on swarm")
+    .map_err(Into::into)
+  }
+}
 
-    Ok(res)
+impl Resolve<ReadArgs> for InspectStackSwarmInfo {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<SwarmStack> {
+    let (stack, swarm_or_server) = setup_stack_execution(
+      &self.stack,
+      user,
+      PermissionLevel::Read.inspect(),
+    )
+    .await?;
+
+    let SwarmOrServer::Swarm(swarm) = swarm_or_server else {
+      return Err(
+        anyhow!(
+          "InspectStackSwarmInfo should only be called for Stack in Swarm Mode"
+        )
+        .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
+
+    swarm_request(
+      &swarm.config.server_ids,
+      periphery_client::api::swarm::InspectSwarmStack {
+        stack: stack.project_name(false),
+      },
+    )
+    .await
+    .context("Failed to inspect stack info on swarm")
+    .map_err(Into::into)
   }
 }
 

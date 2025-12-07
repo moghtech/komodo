@@ -491,6 +491,7 @@ pub fn term_signal_labels_from_str(
 pub struct DeploymentActionState {
   pub pulling: bool,
   pub deploying: bool,
+  pub updating: bool,
   pub starting: bool,
   pub restarting: bool,
   pub pausing: bool,

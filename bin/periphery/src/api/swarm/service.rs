@@ -18,7 +18,7 @@ use komodo_client::entities::{
 };
 use periphery_client::api::swarm::{
   CreateSwarmService, GetSwarmServiceLog, GetSwarmServiceLogSearch,
-  InspectSwarmService, RemoveSwarmServices,
+  InspectSwarmService, RemoveSwarmServices, UpdateSwarmService,
 };
 use resolver_api::Resolve;
 use tracing::Instrument;
@@ -194,6 +194,8 @@ impl Resolve<crate::api::Args> for CreateSwarmService {
       mut replacers,
     } = self;
 
+    let mut logs = Vec::new();
+
     let mut interpolator =
       Interpolator::new(None, &periphery_config().secrets);
     interpolator.interpolate_deployment(&mut deployment)?;
@@ -203,19 +205,21 @@ impl Resolve<crate::api::Args> for CreateSwarmService {
       &deployment.config.image
     {
       if image.is_empty() {
-        return Ok(Log::error(
+        logs.push(Log::error(
           "Get Image",
           String::from("Deployment does not have image attached"),
         ));
+        return Ok(logs);
       }
       image
     } else {
-      return Ok(Log::error(
+      logs.push(Log::error(
         "Get Image",
         String::from(
           "Deployment does not have build replaced by Core",
         ),
       ));
+      return Ok(logs);
     };
 
     let use_with_registry_auth = match docker_login(
@@ -227,14 +231,29 @@ impl Resolve<crate::api::Args> for CreateSwarmService {
     {
       Ok(res) => res,
       Err(e) => {
-        return Ok(Log::error(
+        logs.push(Log::error(
           "Docker Login",
           format_serror(
             &e.context("Failed to login to docker registry").into(),
           ),
         ));
+        return Ok(logs);
       }
     };
+
+    let log = (RemoveSwarmServices {
+      services: vec![deployment.name.clone()],
+    })
+    .resolve(args)
+    .await;
+
+    // This is only necessary when it successfully
+    // takes down existing service before redeploy.
+    if let Ok(log) = log
+      && log.success
+    {
+      logs.push(log)
+    }
 
     let command = docker_service_create_command(
       &deployment,
@@ -246,7 +265,7 @@ impl Resolve<crate::api::Args> for CreateSwarmService {
     )?;
 
     let span = info_span!("ExecuteDockerServiceCreate");
-    let Some(log) = run_komodo_command_with_sanitization(
+    if let Some(log) = run_komodo_command_with_sanitization(
       "Docker Service Create",
       None,
       command,
@@ -255,13 +274,11 @@ impl Resolve<crate::api::Args> for CreateSwarmService {
     )
     .instrument(span)
     .await
-    else {
-      // The none case is only for empty command,
-      // this won't be the case given it is populated above.
-      unreachable!()
+    {
+      logs.push(log)
     };
 
-    Ok(log)
+    Ok(logs)
   }
 }
 
@@ -324,4 +341,81 @@ fn docker_service_create_command(
   }
 
   Ok(res)
+}
+
+impl Resolve<crate::api::Args> for UpdateSwarmService {
+  #[instrument(
+    "UpdateSwarmService",
+    skip_all,
+    fields(
+      id = args.id.to_string(),
+      core = args.core,
+      service = self.service,
+      update = serde_json::to_string(&self).unwrap_or_else(|e| e.to_string()),
+    )
+  )]
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> Result<Self::Response, Self::Error> {
+    let UpdateSwarmService {
+      service,
+      registry_account,
+      registry_token,
+      image,
+      replicas,
+      rollback,
+      extra_args,
+    } = self;
+
+    let mut command = format!("docker service update");
+
+    if let Some(image) = image {
+      write!(&mut command, " --image {image}")?;
+
+      match docker_login(
+        &extract_registry_domain(&image)?,
+        &registry_account.unwrap_or_default(),
+        registry_token.as_deref(),
+      )
+      .await
+      {
+        Ok(res) if res => {
+          write!(&mut command, " --with-registry-auth")?;
+        }
+        Ok(_) => {}
+        Err(e) => {
+          return Ok(Log::error(
+            "Docker Login",
+            format_serror(
+              &e.context("Failed to login to docker registry").into(),
+            ),
+          ));
+        }
+      };
+    }
+
+    if let Some(replicas) = replicas {
+      write!(&mut command, " --replicas={replicas}")?;
+    }
+
+    if rollback {
+      write!(&mut command, " --rollback")?;
+    }
+
+    push_extra_args(&mut command, &extra_args)?;
+
+    write!(&mut command, " {service}")?;
+
+    let span = info_span!("ExecuteDockerServiceCreate");
+    let log = run_komodo_standard_command(
+      "Docker Service Create",
+      None,
+      command,
+    )
+    .instrument(span)
+    .await;
+
+    Ok(log)
+  }
 }

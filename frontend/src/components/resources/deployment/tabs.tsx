@@ -70,9 +70,10 @@ const DeploymentTabsInner = ({
       {
         value: "Terminals",
         disabled: terminalDisabled,
+        hidden: !!deployment.info.swarm_id,
       },
     ],
-    [logsDisabled, inspectDisabled, terminalDisabled]
+    [logsDisabled, inspectDisabled, terminalDisabled, deployment.info.swarm_id]
   );
 
   const Selector = (
@@ -100,7 +101,13 @@ const DeploymentTabsInner = ({
     case "Log":
       return <DeploymentLogs id={deployment.id} titleOther={Selector} />;
     case "Inspect":
-      return <DeploymentInspect id={deployment.id} titleOther={Selector} />;
+      return (
+        <DeploymentInspect
+          id={deployment.id}
+          titleOther={Selector}
+          useSwarm={!!deployment.info.swarm_id}
+        />
+      );
     case "Terminals":
       return <ContainerTerminals target={target} titleOther={Selector} />;
   }

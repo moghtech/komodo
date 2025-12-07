@@ -70,8 +70,6 @@ pub struct ExecuteArgs {
 #[error(serror::Error)]
 #[serde(tag = "type", content = "params")]
 pub enum ExecuteRequest {
-  // ==== SWARM ====
-
   // ==== STACK ====
   DeployStack(DeployStack),
   BatchDeployStack(BatchDeployStack),

@@ -9,7 +9,10 @@ use crate::entities::{
     Deployment, DeploymentActionState, DeploymentListItem,
     DeploymentQuery, DeploymentState,
   },
-  docker::container::{Container, ContainerListItem, ContainerStats},
+  docker::{
+    container::{Container, ContainerListItem, ContainerStats},
+    service::SwarmService,
+  },
   update::Log,
 };
 
@@ -122,6 +125,26 @@ pub struct InspectDeploymentContainer {
 
 #[typeshare]
 pub type InspectDeploymentContainerResponse = Container;
+
+//
+
+/// Inspect the swarm service associated with the Deployment.
+/// Response: [SwarmService].
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoReadRequest)]
+#[response(InspectDeploymentSwarmServiceResponse)]
+#[error(serror::Error)]
+pub struct InspectDeploymentSwarmService {
+  /// Id or name
+  #[serde(alias = "id", alias = "name")]
+  pub deployment: String,
+}
+
+#[typeshare]
+pub type InspectDeploymentSwarmServiceResponse = SwarmService;
 
 //
 

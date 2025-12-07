@@ -157,6 +157,7 @@ enum ReadRequest {
   GetDeploymentLog(GetDeploymentLog),
   SearchDeploymentLog(SearchDeploymentLog),
   InspectDeploymentContainer(InspectDeploymentContainer),
+  InspectDeploymentSwarmService(InspectDeploymentSwarmService),
   ListDeployments(ListDeployments),
   ListFullDeployments(ListFullDeployments),
   ListCommonDeploymentExtraArgs(ListCommonDeploymentExtraArgs),

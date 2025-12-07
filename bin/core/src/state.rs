@@ -9,8 +9,7 @@ use komodo_client::entities::{
   deployment::DeploymentState,
   docker::{
     DockerLists, SwarmLists, container::ContainerListItem,
-    service::SwarmServiceListItem, stack::SwarmStackListItem,
-    swarm::SwarmInspectInfo,
+    service::SwarmServiceListItem, swarm::SwarmInspectInfo,
   },
   procedure::ProcedureState,
   repo::RepoState,
@@ -142,8 +141,6 @@ pub struct CachedStackStatus {
   pub state: StackState,
   /// The services connected to the stack
   pub services: Vec<StackService>,
-  /// Swarm mode only. Associated swarm stack.
-  pub swarm_stack: Option<SwarmStackListItem>,
 }
 
 pub type StackStatusCache =

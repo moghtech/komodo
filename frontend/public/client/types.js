@@ -464,41 +464,6 @@ export var HostConfigIsolationEnum;
     HostConfigIsolationEnum["Process"] = "process";
     HostConfigIsolationEnum["Hyperv"] = "hyperv";
 })(HostConfigIsolationEnum || (HostConfigIsolationEnum = {}));
-export var VolumeScopeEnum;
-(function (VolumeScopeEnum) {
-    VolumeScopeEnum["Empty"] = "";
-    VolumeScopeEnum["Local"] = "local";
-    VolumeScopeEnum["Global"] = "global";
-})(VolumeScopeEnum || (VolumeScopeEnum = {}));
-export var ClusterVolumeSpecAccessModeScopeEnum;
-(function (ClusterVolumeSpecAccessModeScopeEnum) {
-    ClusterVolumeSpecAccessModeScopeEnum["Empty"] = "";
-    ClusterVolumeSpecAccessModeScopeEnum["Single"] = "single";
-    ClusterVolumeSpecAccessModeScopeEnum["Multi"] = "multi";
-})(ClusterVolumeSpecAccessModeScopeEnum || (ClusterVolumeSpecAccessModeScopeEnum = {}));
-export var ClusterVolumeSpecAccessModeSharingEnum;
-(function (ClusterVolumeSpecAccessModeSharingEnum) {
-    ClusterVolumeSpecAccessModeSharingEnum["Empty"] = "";
-    ClusterVolumeSpecAccessModeSharingEnum["None"] = "none";
-    ClusterVolumeSpecAccessModeSharingEnum["Readonly"] = "readonly";
-    ClusterVolumeSpecAccessModeSharingEnum["Onewriter"] = "onewriter";
-    ClusterVolumeSpecAccessModeSharingEnum["All"] = "all";
-})(ClusterVolumeSpecAccessModeSharingEnum || (ClusterVolumeSpecAccessModeSharingEnum = {}));
-export var ClusterVolumeSpecAccessModeAvailabilityEnum;
-(function (ClusterVolumeSpecAccessModeAvailabilityEnum) {
-    ClusterVolumeSpecAccessModeAvailabilityEnum["Empty"] = "";
-    ClusterVolumeSpecAccessModeAvailabilityEnum["Active"] = "active";
-    ClusterVolumeSpecAccessModeAvailabilityEnum["Pause"] = "pause";
-    ClusterVolumeSpecAccessModeAvailabilityEnum["Drain"] = "drain";
-})(ClusterVolumeSpecAccessModeAvailabilityEnum || (ClusterVolumeSpecAccessModeAvailabilityEnum = {}));
-export var ClusterVolumePublishStatusStateEnum;
-(function (ClusterVolumePublishStatusStateEnum) {
-    ClusterVolumePublishStatusStateEnum["Empty"] = "";
-    ClusterVolumePublishStatusStateEnum["PendingPublish"] = "pending-publish";
-    ClusterVolumePublishStatusStateEnum["Published"] = "published";
-    ClusterVolumePublishStatusStateEnum["PendingNodeUnpublish"] = "pending-node-unpublish";
-    ClusterVolumePublishStatusStateEnum["PendingControllerUnpublish"] = "pending-controller-unpublish";
-})(ClusterVolumePublishStatusStateEnum || (ClusterVolumePublishStatusStateEnum = {}));
 export var TaskSpecContainerSpecPrivilegesSeccompModeEnum;
 (function (TaskSpecContainerSpecPrivilegesSeccompModeEnum) {
     TaskSpecContainerSpecPrivilegesSeccompModeEnum["EMPTY"] = "";
@@ -580,6 +545,50 @@ export var ServiceUpdateStatusStateEnum;
     ServiceUpdateStatusStateEnum["ROLLBACK_PAUSED"] = "rollback_paused";
     ServiceUpdateStatusStateEnum["ROLLBACK_COMPLETED"] = "rollback_completed";
 })(ServiceUpdateStatusStateEnum || (ServiceUpdateStatusStateEnum = {}));
+export var VolumeScopeEnum;
+(function (VolumeScopeEnum) {
+    VolumeScopeEnum["Empty"] = "";
+    VolumeScopeEnum["Local"] = "local";
+    VolumeScopeEnum["Global"] = "global";
+})(VolumeScopeEnum || (VolumeScopeEnum = {}));
+export var ClusterVolumeSpecAccessModeScopeEnum;
+(function (ClusterVolumeSpecAccessModeScopeEnum) {
+    ClusterVolumeSpecAccessModeScopeEnum["Empty"] = "";
+    ClusterVolumeSpecAccessModeScopeEnum["Single"] = "single";
+    ClusterVolumeSpecAccessModeScopeEnum["Multi"] = "multi";
+})(ClusterVolumeSpecAccessModeScopeEnum || (ClusterVolumeSpecAccessModeScopeEnum = {}));
+export var ClusterVolumeSpecAccessModeSharingEnum;
+(function (ClusterVolumeSpecAccessModeSharingEnum) {
+    ClusterVolumeSpecAccessModeSharingEnum["Empty"] = "";
+    ClusterVolumeSpecAccessModeSharingEnum["None"] = "none";
+    ClusterVolumeSpecAccessModeSharingEnum["Readonly"] = "readonly";
+    ClusterVolumeSpecAccessModeSharingEnum["Onewriter"] = "onewriter";
+    ClusterVolumeSpecAccessModeSharingEnum["All"] = "all";
+})(ClusterVolumeSpecAccessModeSharingEnum || (ClusterVolumeSpecAccessModeSharingEnum = {}));
+export var ClusterVolumeSpecAccessModeAvailabilityEnum;
+(function (ClusterVolumeSpecAccessModeAvailabilityEnum) {
+    ClusterVolumeSpecAccessModeAvailabilityEnum["Empty"] = "";
+    ClusterVolumeSpecAccessModeAvailabilityEnum["Active"] = "active";
+    ClusterVolumeSpecAccessModeAvailabilityEnum["Pause"] = "pause";
+    ClusterVolumeSpecAccessModeAvailabilityEnum["Drain"] = "drain";
+})(ClusterVolumeSpecAccessModeAvailabilityEnum || (ClusterVolumeSpecAccessModeAvailabilityEnum = {}));
+export var ClusterVolumePublishStatusStateEnum;
+(function (ClusterVolumePublishStatusStateEnum) {
+    ClusterVolumePublishStatusStateEnum["Empty"] = "";
+    ClusterVolumePublishStatusStateEnum["PendingPublish"] = "pending-publish";
+    ClusterVolumePublishStatusStateEnum["Published"] = "published";
+    ClusterVolumePublishStatusStateEnum["PendingNodeUnpublish"] = "pending-node-unpublish";
+    ClusterVolumePublishStatusStateEnum["PendingControllerUnpublish"] = "pending-controller-unpublish";
+})(ClusterVolumePublishStatusStateEnum || (ClusterVolumePublishStatusStateEnum = {}));
+export var SwarmState;
+(function (SwarmState) {
+    /** The Swarm is healthy, all nodes OK */
+    SwarmState["Healthy"] = "Healthy";
+    /** The Swarm is unhealthy */
+    SwarmState["Unhealthy"] = "Unhealthy";
+    /** Unknown case */
+    SwarmState["Unknown"] = "Unknown";
+})(SwarmState || (SwarmState = {}));
 export var NodeSpecRoleEnum;
 (function (NodeSpecRoleEnum) {
     NodeSpecRoleEnum["EMPTY"] = "";
@@ -613,15 +622,6 @@ export var SwarmSpecCaConfigExternalCasProtocolEnum;
     SwarmSpecCaConfigExternalCasProtocolEnum["EMPTY"] = "";
     SwarmSpecCaConfigExternalCasProtocolEnum["CFSSL"] = "cfssl";
 })(SwarmSpecCaConfigExternalCasProtocolEnum || (SwarmSpecCaConfigExternalCasProtocolEnum = {}));
-export var SwarmState;
-(function (SwarmState) {
-    /** The Swarm is healthy, all nodes OK */
-    SwarmState["Healthy"] = "Healthy";
-    /** The Swarm is unhealthy */
-    SwarmState["Unhealthy"] = "Unhealthy";
-    /** Unknown case */
-    SwarmState["Unknown"] = "Unknown";
-})(SwarmState || (SwarmState = {}));
 export var TaskState;
 (function (TaskState) {
     TaskState["NEW"] = "new";

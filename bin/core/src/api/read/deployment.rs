@@ -9,14 +9,19 @@ use komodo_client::{
       Deployment, DeploymentActionState, DeploymentConfig,
       DeploymentListItem, DeploymentState,
     },
-    docker::container::{Container, ContainerStats},
+    docker::{
+      container::{Container, ContainerStats},
+      service::SwarmService,
+    },
     permission::PermissionLevel,
     server::{Server, ServerState},
     update::Log,
   },
 };
 use periphery_client::api::{self, container::InspectContainer};
+use reqwest::StatusCode;
 use resolver_api::Resolve;
+use serror::AddStatusCodeError as _;
 
 use crate::{
   helpers::{
@@ -230,42 +235,78 @@ impl Resolve<ReadArgs> for InspectDeploymentContainer {
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<Container> {
     let InspectDeploymentContainer { deployment } = self;
-    let Deployment {
-      name,
-      config: DeploymentConfig { server_id, .. },
-      ..
-    } = get_check_permissions::<Deployment>(
+    let (deployment, swarm_or_server) = setup_deployment_execution(
       &deployment,
       user,
       PermissionLevel::Read.inspect(),
     )
     .await?;
-    if server_id.is_empty() {
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
       return Err(
         anyhow!(
-          "Cannot inspect deployment, not attached to any server"
+          "InspectDeploymentContainer should not be called for Deployment in Swarm Mode"
         )
-        .into(),
+        .status_code(StatusCode::BAD_REQUEST),
       );
-    }
-    let server = resource::get::<Server>(&server_id).await?;
+    };
+
     let cache = server_status_cache()
       .get_or_insert_default(&server.id)
       .await;
+
     if cache.state != ServerState::Ok {
       return Err(
         anyhow!(
-          "Cannot inspect container: server is {:?}",
+          "Cannot inspect container: Server is {:?}",
           cache.state
         )
         .into(),
       );
     }
-    let res = periphery_client(&server)
+
+    periphery_client(&server)
       .await?
-      .request(InspectContainer { name })
-      .await?;
-    Ok(res)
+      .request(InspectContainer {
+        name: deployment.name,
+      })
+      .await
+      .context("Failed to inspect container on server")
+      .map_err(Into::into)
+  }
+}
+
+impl Resolve<ReadArgs> for InspectDeploymentSwarmService {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> serror::Result<SwarmService> {
+    let InspectDeploymentSwarmService { deployment } = self;
+    let (deployment, swarm_or_server) = setup_deployment_execution(
+      &deployment,
+      user,
+      PermissionLevel::Read.logs(),
+    )
+    .await?;
+
+    let SwarmOrServer::Swarm(swarm) = swarm_or_server else {
+      return Err(
+        anyhow!(
+          "InspectDeploymentSwarmService should only be called for Deployment in Swarm Mode"
+        )
+        .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
+
+    swarm_request(
+      &swarm.config.server_ids,
+      periphery_client::api::swarm::InspectSwarmService {
+        service: deployment.name,
+      },
+    )
+    .await
+    .context("Failed to inspect service on swarm")
+    .map_err(Into::into)
   }
 }
 

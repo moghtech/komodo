@@ -86,6 +86,7 @@ export type ReadResponses = {
     GetDeploymentLog: Types.GetDeploymentLogResponse;
     SearchDeploymentLog: Types.SearchDeploymentLogResponse;
     InspectDeploymentContainer: Types.InspectDeploymentContainerResponse;
+    InspectDeploymentSwarmService: Types.InspectDeploymentSwarmServiceResponse;
     ListDeployments: Types.ListDeploymentsResponse;
     ListFullDeployments: Types.ListFullDeploymentsResponse;
     ListCommonDeploymentExtraArgs: Types.ListCommonDeploymentExtraArgsResponse;

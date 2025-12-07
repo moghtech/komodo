@@ -1,4 +1,4 @@
-import { KeysTable } from "@components/keys/table";
+import { ApiKeysTable as InnerApiKeysTable } from "@components/api-keys/table";
 import { Page } from "@components/layouts";
 import { PermissionsTableTabs } from "@components/users/permissions-table";
 import {
@@ -138,7 +138,10 @@ const ApiKeysTable = ({ user_id }: { user_id: string }) => {
         Api Keys <CreateKeyForServiceUser user_id={user_id} />
       </CardHeader>
       <CardContent>
-        <KeysTable keys={keys ?? []} DeleteKey={DeleteKeyForServiceUser} />
+        <InnerApiKeysTable
+          keys={keys ?? []}
+          DeleteKey={DeleteKeyForServiceUser}
+        />
       </CardContent>
     </Card>
   );

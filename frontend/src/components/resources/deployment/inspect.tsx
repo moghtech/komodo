@@ -6,9 +6,11 @@ import { InspectResponseViewer } from "@components/inspect";
 
 export const DeploymentInspect = ({
   id,
+  useSwarm,
   titleOther,
 }: {
   id: string;
+  useSwarm: boolean;
   titleOther: ReactNode;
 }) => {
   const { specific } = usePermissions({ type: "Deployment", id });
@@ -23,18 +25,24 @@ export const DeploymentInspect = ({
   }
   return (
     <Section titleOther={titleOther}>
-      <DeploymentInspectInner id={id} />
+      <DeploymentInspectInner id={id} useSwarm={useSwarm} />
     </Section>
   );
 };
 
-const DeploymentInspectInner = ({ id }: { id: string }) => {
+const DeploymentInspectInner = ({
+  id,
+  useSwarm,
+}: {
+  id: string;
+  useSwarm: boolean;
+}) => {
   const {
     data: container,
     error,
     isPending,
     isError,
-  } = useRead("InspectDeploymentContainer", {
+  } = useRead(`InspectDeployment${useSwarm ? "SwarmService" : "Container"}`, {
     deployment: id,
   });
   return (
