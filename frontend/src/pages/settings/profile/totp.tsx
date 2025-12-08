@@ -12,8 +12,11 @@ import { Button } from "@ui/button";
 import { PlusCircle, Loader2, Check, Trash } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@ui/input";
+import { Types } from "komodo_client";
+import { cn } from "@lib/utils";
 
-export const EnrollTotp = () => {
+export const EnrollTotp = ({ user }: { user: Types.User }) => {
+  const userInvalidate = useUserInvalidate();
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState<{ uri: string; png: string }>();
   const [confirm, setConfirm] = useState("");
@@ -25,6 +28,12 @@ export const EnrollTotp = () => {
     useManageUser("ConfirmTotpEnrollment", {
       onSuccess: ({ recovery_codes }) => setRecovery(recovery_codes),
     });
+  const { mutate: unenroll, isPending: unenroll_pending } = useManageUser(
+    "UnenrollTotp",
+    {
+      onSuccess: () => userInvalidate(),
+    }
+  );
   const onOpenChange = (open: boolean) => {
     setOpen(open);
     if (open) {
@@ -35,107 +44,107 @@ export const EnrollTotp = () => {
     }
   };
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="secondary" className="items-center gap-2">
-          Enroll TOTP 2FA <PlusCircle className="w-4 h-4" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Enroll TOTP 2FA</DialogTitle>
-        </DialogHeader>
-        {recovery ? (
-          <>
-            <div className="py-8 flex flex-col gap-4">
-              {recovery.map((code) => (
-                <Input key={code} className="w-72" value={code} disabled />
-              ))}
-              <CopyButton content={recovery.join("\n")} />
-            </div>
-            <DialogFooter className="flex justify-end">
-              <Button
-                variant="secondary"
-                className="gap-4"
-                onClick={() => onOpenChange(false)}
-              >
-                Confirm <Check className="w-4" />
-              </Button>
-            </DialogFooter>
-          </>
-        ) : submitted ? (
-          <>
-            <div className="py-8 flex flex-col gap-4">
-              <div className="flex items-center justify-center">
-                <img
-                  className="w-72"
-                  src={"data:image/png;base64," + submitted.png}
-                  alt="QR"
-                />
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogTrigger asChild>
+          <Button
+            variant="secondary"
+            className={cn(
+              "items-center gap-2",
+              !!user.totp?.confirmed_at && "hidden"
+            )}
+          >
+            Enroll TOTP 2FA <PlusCircle className="w-4 h-4" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enroll TOTP 2FA</DialogTitle>
+          </DialogHeader>
+          {recovery ? (
+            <>
+              <div className="py-8 flex flex-col gap-4">
+                {recovery.map((code) => (
+                  <Input key={code} className="w-72" value={code} disabled />
+                ))}
+                <CopyButton content={recovery.join("\n")} />
               </div>
-              <div className="flex items-center justify-between">
-                URI
-                <Input className="w-72" value={submitted.uri} disabled />
-                <CopyButton content={submitted.uri} />
+              <DialogFooter className="flex justify-end">
+                <Button
+                  variant="secondary"
+                  className="gap-4"
+                  onClick={() => onOpenChange(false)}
+                >
+                  Confirm <Check className="w-4" />
+                </Button>
+              </DialogFooter>
+            </>
+          ) : submitted ? (
+            <>
+              <div className="py-8 flex flex-col gap-4">
+                <div className="flex items-center justify-center">
+                  <img
+                    className="w-72"
+                    src={"data:image/png;base64," + submitted.png}
+                    alt="QR"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  URI
+                  <Input className="w-72" value={submitted.uri} disabled />
+                  <CopyButton content={submitted.uri} />
+                </div>
+                <div className="flex items-center justify-between">
+                  Confirm Code
+                  <Input
+                    className="w-72"
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
+                  />
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                Confirm Code
-                <Input
-                  className="w-72"
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                />
+              <DialogFooter className="flex justify-end">
+                <Button
+                  variant="secondary"
+                  className="gap-4"
+                  onClick={() => confirm_enrollment({ code: confirm })}
+                  disabled={confirm.length !== 6 || confirm_pending}
+                >
+                  Confirm{" "}
+                  {confirm_pending ? (
+                    <Loader2 className="w-4 animate-spin" />
+                  ) : (
+                    <Check className="w-4" />
+                  )}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>Create Api Key</DialogTitle>
+              </DialogHeader>
+              <div className="py-8 flex justify-center gap-4">
+                <Loader2 className="w-8 animate-spin py-2" />
               </div>
-            </div>
-            <DialogFooter className="flex justify-end">
-              <Button
-                variant="secondary"
-                className="gap-4"
-                onClick={() => confirm_enrollment({ code: confirm })}
-                disabled={confirm.length !== 6 || confirm_pending}
-              >
-                Confirm{" "}
-                {confirm_pending ? (
+              <DialogFooter className="flex justify-end">
+                <Button variant="secondary" className="gap-4" disabled>
+                  Confirm
                   <Loader2 className="w-4 animate-spin" />
-                ) : (
-                  <Check className="w-4" />
-                )}
-              </Button>
-            </DialogFooter>
-          </>
-        ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle>Create Api Key</DialogTitle>
-            </DialogHeader>
-            <div className="py-8 flex justify-center gap-4">
-              <Loader2 className="w-8 animate-spin py-2" />
-            </div>
-            <DialogFooter className="flex justify-end">
-              <Button variant="secondary" className="gap-4" disabled>
-                Confirm
-                <Loader2 className="w-4 animate-spin" />
-              </Button>
-            </DialogFooter>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-export const UnenrollTotp = () => {
-  const userInvalidate = useUserInvalidate();
-  const { mutate, isPending } = useManageUser("UnenrollTotp", {
-    onSuccess: () => userInvalidate(),
-  });
-  return (
-    <ConfirmButton
-      variant="destructive"
-      title="Unenroll TOTP 2FA"
-      icon={<Trash className="w-4 h-4" />}
-      loading={isPending}
-      onClick={() => mutate({})}
-    />
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+      <ConfirmButton
+        className={!user.totp?.confirmed_at ? "hidden" : undefined}
+        variant="destructive"
+        title="Unenroll TOTP 2FA"
+        icon={<Trash className="w-4 h-4" />}
+        loading={unenroll_pending}
+        onClick={() => unenroll({})}
+      />
+    </>
   );
 };

@@ -10,7 +10,7 @@ import { Section } from "@components/layouts";
 import { Card, CardHeader } from "@ui/card";
 import { Types } from "komodo_client";
 import { CreateKey, DeleteKey } from "./api-key";
-import { EnrollTotp, UnenrollTotp } from "./totp";
+import { EnrollTotp } from "./totp";
 
 export const Profile = () => {
   useSetTitle("Profile");
@@ -109,17 +109,11 @@ const ProfileInner = ({ user }: { user: Types.User }) => {
       {/* 2FA */}
       <Section title="2FA" icon={<KeyRound className="w-4 h-4" />}>
         <div className="flex items-center gap-4">
-          {user.totp?.confirmed_at ? (
-            <>
-              <UnenrollTotp />
-              <StatusBadge text="Enrolled" intent="Good" />
-            </>
-          ) : (
-            <>
-              <EnrollTotp />
-              <StatusBadge text="Not Enrolled" intent="Critical" />
-            </>
-          )}
+          <EnrollTotp user={user} />
+          <StatusBadge
+            text={user.totp?.confirmed_at ? "Enrolled" : "Not Enrolled"}
+            intent={user.totp?.confirmed_at ? "Good" : "Critical"}
+          />
         </div>
       </Section>
 

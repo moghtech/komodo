@@ -75,9 +75,9 @@ export default function Login({ twoFactorToken }: { twoFactorToken?: string }) {
   const { mutate: totp, isPending: totpPending } = useAuth(
     "CompleteTotpLogin",
     {
-      onSuccess: ({ user_id, jwt }) => {
-        LOGIN_TOKENS.add_and_change(user_id, jwt);
+      onSuccess: (res) => {
         sanitize_query();
+        onSuccess(res);
       },
     }
   );
