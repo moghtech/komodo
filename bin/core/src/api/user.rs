@@ -27,6 +27,7 @@ use typeshare::typeshare;
 use uuid::Uuid;
 
 use crate::auth::totp::make_totp;
+use crate::config::core_config;
 use crate::helpers::validations::validate_api_key_name;
 use crate::state::totp_enrollment_cache;
 use crate::{
@@ -248,6 +249,14 @@ impl Resolve<UserArgs> for BeginTotpEnrollment {
     self,
     UserArgs { user }: &UserArgs,
   ) -> serror::Result<BeginTotpEnrollmentResponse> {
+    for locked_username in &core_config().lock_login_credentials_for {
+      if *locked_username == user.username {
+        return Err(
+          anyhow!("User not allowed to enroll in 2FA.").into(),
+        );
+      }
+    }
+
     let secret_bytes = random_bytes(TOTP_ENROLLMENT_SECRET_LENGTH);
     let totp = make_totp(secret_bytes.clone(), user.id.clone())?;
     let png = totp
