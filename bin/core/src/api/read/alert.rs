@@ -8,15 +8,15 @@ use komodo_client::{
   api::read::{
     GetAlert, GetAlertResponse, ListAlerts, ListAlertsResponse,
   },
-  entities::{
-    deployment::Deployment, permission::PermissionLevel,
-    server::Server, stack::Stack, sync::ResourceSync,
-  },
+  entities::permission::PermissionLevel,
 };
 use resolver_api::Resolve;
 
 use crate::{
-  config::core_config, permission::list_resource_ids_for_user,
+  config::core_config,
+  permission::{
+    check_user_target_access, user_resource_target_query,
+  },
   state::db_client,
 };
 
@@ -29,40 +29,10 @@ impl Resolve<ReadArgs> for ListAlerts {
     self,
     ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<ListAlertsResponse> {
-    let mut query = self.query.unwrap_or_default();
-    if !user.admin && !core_config().transparent_mode {
-      let (server_ids, stack_ids, deployment_ids, sync_ids) = tokio::try_join!(
-        list_resource_ids_for_user::<Server>(
-          None,
-          user,
-          PermissionLevel::Read.into(),
-        ),
-        list_resource_ids_for_user::<Stack>(
-          None,
-          user,
-          PermissionLevel::Read.into(),
-        ),
-        list_resource_ids_for_user::<Deployment>(
-          None,
-          user,
-          PermissionLevel::Read.into(),
-        ),
-        list_resource_ids_for_user::<ResourceSync>(
-          None,
-          user,
-          PermissionLevel::Read.into(),
-        )
-      )?;
-      // All of the vecs will be non-none if !admin and !transparent mode.
-      query.extend(doc! {
-        "$or": [
-          { "target.type": "Server", "target.id": { "$in": &server_ids } },
-          { "target.type": "Stack", "target.id": { "$in": &stack_ids } },
-          { "target.type": "Deployment", "target.id": { "$in": &deployment_ids } },
-          { "target.type": "ResourceSync", "target.id": { "$in": &sync_ids } },
-        ]
-      });
-    }
+    // Alerts
+    let query = user_resource_target_query(user, self.query)
+      .await?
+      .unwrap_or_default();
 
     let alerts = find_collect(
       &db_client().alerts,
@@ -91,13 +61,21 @@ impl Resolve<ReadArgs> for ListAlerts {
 impl Resolve<ReadArgs> for GetAlert {
   async fn resolve(
     self,
-    _: &ReadArgs,
+    ReadArgs { user }: &ReadArgs,
   ) -> serror::Result<GetAlertResponse> {
-    Ok(
-      find_one_by_id(&db_client().alerts, &self.id)
-        .await
-        .context("failed to query db for alert")?
-        .context("no alert found with given id")?,
+    let alert = find_one_by_id(&db_client().alerts, &self.id)
+      .await
+      .context("failed to query db for alert")?
+      .context("no alert found with given id")?;
+    if user.admin || core_config().transparent_mode {
+      return Ok(alert);
+    }
+    check_user_target_access(
+      &alert.target,
+      user,
+      PermissionLevel::Read.into(),
     )
+    .await?;
+    Ok(alert)
   }
 }

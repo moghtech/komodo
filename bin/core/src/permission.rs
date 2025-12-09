@@ -6,7 +6,18 @@ use database::{bson::Document, mongo_indexed::doc};
 use futures_util::{FutureExt, future::BoxFuture};
 use indexmap::IndexSet;
 use komodo_client::entities::ResourceTarget;
+use komodo_client::entities::action::Action;
+use komodo_client::entities::alerter::Alerter;
+use komodo_client::entities::build::Build;
+use komodo_client::entities::builder::Builder;
+use komodo_client::entities::deployment::Deployment;
 use komodo_client::entities::permission::SpecificPermission;
+use komodo_client::entities::procedure::Procedure;
+use komodo_client::entities::repo::Repo;
+use komodo_client::entities::server::Server;
+use komodo_client::entities::stack::Stack;
+use komodo_client::entities::swarm::Swarm;
+use komodo_client::entities::sync::ResourceSync;
 use komodo_client::{
   api::read::GetPermission,
   entities::{
@@ -347,4 +358,282 @@ pub async fn list_resource_ids_for_user<T: KomodoResource>(
     .collect();
 
   Ok(Some(ids))
+}
+
+/// Usable for Update and Alert queries.
+pub async fn user_resource_target_query(
+  user: &User,
+  incoming_query: Option<Document>,
+) -> anyhow::Result<Option<Document>> {
+  if user.admin || core_config().transparent_mode {
+    Ok(incoming_query)
+  } else {
+    let swarm_query = list_resource_ids_for_user::<Swarm>(
+      None,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?
+    .map(|ids| {
+      doc! {
+        "target.type": "Swarm", "target.id": { "$in": ids }
+      }
+    })
+    // If 'list_resource_ids_for_user' returns Ok(None), user
+    // can read all resources of this type.
+    .unwrap_or_else(|| doc! { "target.type": "Swarm" });
+
+    let server_query = list_resource_ids_for_user::<Server>(
+      None,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?
+    .map(|ids| {
+      doc! {
+        "target.type": "Server", "target.id": { "$in": ids }
+      }
+    })
+    .unwrap_or_else(|| doc! { "target.type": "Server" });
+
+    let stack_query = list_resource_ids_for_user::<Stack>(
+      None,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?
+    .map(|ids| {
+      doc! {
+        "target.type": "Stack", "target.id": { "$in": ids }
+      }
+    })
+    .unwrap_or_else(|| doc! { "target.type": "Stack" });
+
+    let deployment_query = list_resource_ids_for_user::<Deployment>(
+      None,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?
+    .map(|ids| {
+      doc! {
+        "target.type": "Deployment", "target.id": { "$in": ids }
+      }
+    })
+    .unwrap_or_else(|| doc! { "target.type": "Deployment" });
+
+    let build_query = list_resource_ids_for_user::<Build>(
+      None,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?
+    .map(|ids| {
+      doc! {
+        "target.type": "Build", "target.id": { "$in": ids }
+      }
+    })
+    .unwrap_or_else(|| doc! { "target.type": "Build" });
+
+    let repo_query = list_resource_ids_for_user::<Repo>(
+      None,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?
+    .map(|ids| {
+      doc! {
+        "target.type": "Repo", "target.id": { "$in": ids }
+      }
+    })
+    .unwrap_or_else(|| doc! { "target.type": "Repo" });
+
+    let procedure_query = list_resource_ids_for_user::<Procedure>(
+      None,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?
+    .map(|ids| {
+      doc! {
+        "target.type": "Procedure", "target.id": { "$in": ids }
+      }
+    })
+    .unwrap_or_else(|| doc! { "target.type": "Procedure" });
+
+    let action_query = list_resource_ids_for_user::<Action>(
+      None,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?
+    .map(|ids| {
+      doc! {
+        "target.type": "Action", "target.id": { "$in": ids }
+      }
+    })
+    .unwrap_or_else(|| doc! { "target.type": "Action" });
+
+    let builder_query = list_resource_ids_for_user::<Builder>(
+      None,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?
+    .map(|ids| {
+      doc! {
+        "target.type": "Builder", "target.id": { "$in": ids }
+      }
+    })
+    .unwrap_or_else(|| doc! { "target.type": "Builder" });
+
+    let alerter_query = list_resource_ids_for_user::<Alerter>(
+      None,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?
+    .map(|ids| {
+      doc! {
+        "target.type": "Alerter", "target.id": { "$in": ids }
+      }
+    })
+    .unwrap_or_else(|| doc! { "target.type": "Alerter" });
+
+    let resource_sync_query =
+      list_resource_ids_for_user::<ResourceSync>(
+        None,
+        user,
+        PermissionLevel::Read.into(),
+      )
+      .await?
+      .map(|ids| {
+        doc! {
+          "target.type": "ResourceSync", "target.id": { "$in": ids }
+        }
+      })
+      // If 'list_resource_ids_for_user' returns Ok(None), user
+      // can read all resources of this type.
+      .unwrap_or_else(|| doc! { "target.type": "ResourceSync" });
+
+    let query = if let Some(query) = incoming_query {
+      doc! {
+        "$and": [
+          {
+            "$or": [
+              swarm_query,
+              server_query,
+              stack_query,
+              deployment_query,
+              build_query,
+              repo_query,
+              procedure_query,
+              action_query,
+              builder_query,
+              alerter_query,
+              resource_sync_query,
+            ]
+          },
+          query
+        ]
+      }
+    } else {
+      doc! {
+        "$or": [
+          swarm_query,
+          server_query,
+          stack_query,
+          deployment_query,
+          build_query,
+          repo_query,
+          procedure_query,
+          action_query,
+          builder_query,
+          alerter_query,
+          resource_sync_query,
+        ]
+      }
+    };
+
+    Ok(Some(query))
+  }
+}
+
+pub async fn check_user_target_access(
+  target: &ResourceTarget,
+  user: &User,
+  required_permissions: PermissionLevelAndSpecifics,
+) -> anyhow::Result<()> {
+  match target {
+    ResourceTarget::System(_) => {
+      return Err(anyhow!(
+        "user must be admin to view system updates"
+      ));
+    }
+    ResourceTarget::Swarm(id) => {
+      get_check_permissions::<Swarm>(id, user, required_permissions)
+        .await?;
+    }
+    ResourceTarget::Server(id) => {
+      get_check_permissions::<Server>(id, user, required_permissions)
+        .await?;
+    }
+    ResourceTarget::Stack(id) => {
+      get_check_permissions::<Stack>(id, user, required_permissions)
+        .await?;
+    }
+    ResourceTarget::Deployment(id) => {
+      get_check_permissions::<Deployment>(
+        id,
+        user,
+        required_permissions,
+      )
+      .await?;
+    }
+    ResourceTarget::Build(id) => {
+      get_check_permissions::<Build>(id, user, required_permissions)
+        .await?;
+    }
+    ResourceTarget::Repo(id) => {
+      get_check_permissions::<Repo>(id, user, required_permissions)
+        .await?;
+    }
+    ResourceTarget::Procedure(id) => {
+      get_check_permissions::<Procedure>(
+        id,
+        user,
+        required_permissions,
+      )
+      .await?;
+    }
+    ResourceTarget::Action(id) => {
+      get_check_permissions::<Action>(id, user, required_permissions)
+        .await?;
+    }
+    ResourceTarget::ResourceSync(id) => {
+      get_check_permissions::<ResourceSync>(
+        id,
+        user,
+        required_permissions,
+      )
+      .await?;
+    }
+    ResourceTarget::Builder(id) => {
+      get_check_permissions::<Builder>(
+        id,
+        user,
+        required_permissions,
+      )
+      .await?;
+    }
+    ResourceTarget::Alerter(id) => {
+      get_check_permissions::<Alerter>(
+        id,
+        user,
+        required_permissions,
+      )
+      .await?;
+    }
+  }
+  Ok(())
 }
