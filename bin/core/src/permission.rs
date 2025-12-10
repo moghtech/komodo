@@ -1,39 +1,39 @@
 use std::collections::HashMap;
 
 use anyhow::{Context, anyhow};
-use database::mungos::find::find_collect;
-use database::{bson::Document, mongo_indexed::doc};
+use database::{
+  bson::Document, mongo_indexed::doc, mungos::find::find_collect,
+};
 use futures_util::{FutureExt, future::BoxFuture};
 use indexmap::IndexSet;
-use komodo_client::entities::ResourceTarget;
-use komodo_client::entities::action::Action;
-use komodo_client::entities::alerter::Alerter;
-use komodo_client::entities::build::Build;
-use komodo_client::entities::builder::Builder;
-use komodo_client::entities::deployment::Deployment;
-use komodo_client::entities::permission::SpecificPermission;
-use komodo_client::entities::procedure::Procedure;
-use komodo_client::entities::repo::Repo;
-use komodo_client::entities::server::Server;
-use komodo_client::entities::stack::Stack;
-use komodo_client::entities::swarm::Swarm;
-use komodo_client::entities::sync::ResourceSync;
 use komodo_client::{
   api::read::GetPermission,
   entities::{
+    ResourceTarget,
+    action::Action,
+    alerter::Alerter,
+    build::Build,
+    builder::Builder,
+    deployment::Deployment,
+    permission::SpecificPermission,
     permission::{PermissionLevel, PermissionLevelAndSpecifics},
+    procedure::Procedure,
+    repo::Repo,
     resource::Resource,
+    server::Server,
+    stack::Stack,
+    swarm::Swarm,
+    sync::ResourceSync,
     user::User,
   },
 };
 use resolver_api::Resolve;
 
-use crate::resource::list_all_resources;
 use crate::{
   api::read::ReadArgs,
   config::core_config,
   helpers::query::{get_user_user_groups, user_target_query},
-  resource::{KomodoResource, get},
+  resource::{KomodoResource, get, list_all_resources},
   state::db_client,
 };
 
