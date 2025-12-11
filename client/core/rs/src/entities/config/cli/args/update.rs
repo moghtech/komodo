@@ -83,4 +83,10 @@ pub enum UpdateUserCommand {
     #[arg(long, short = 'y', default_value_t = false)]
     yes: bool,
   },
+  /// Clears user 2fa factors in case user loses access to them.
+  Clear2fa {
+    /// Always continue on user confirmation prompts.
+    #[arg(long, short = 'y', default_value_t = false)]
+    yes: bool,
+  },
 }

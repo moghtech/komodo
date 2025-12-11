@@ -142,6 +142,33 @@ impl Client {
       .context("Failed to update user password on database.")?;
     Ok(())
   }
+
+  /// Clears users configured passkey / totp 2FA methods.
+  /// Useful if user gets locked out after losing access to their second factor.
+  pub async fn clear_user_2fa_methods(
+    &self,
+    // Username or id
+    id_or_username: &str,
+  ) -> anyhow::Result<()> {
+    let query = match ObjectId::from_str(id_or_username) {
+      Ok(id) => doc! { "_id": id },
+      Err(_) => doc! { "username": id_or_username },
+    };
+    self
+      .users
+      .update_one(
+        query,
+        doc! {
+          "$unset": {
+            "passkey": "",
+            "totp": "",
+          }
+        },
+      )
+      .await
+      .context("Failed to clear user 2FA methods on database.")?;
+    Ok(())
+  }
 }
 
 /// Initializes unindexed database handle.
