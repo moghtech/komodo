@@ -9,14 +9,16 @@ import {
   DialogTrigger,
 } from "@ui/dialog";
 import { Button } from "@ui/button";
-import { PlusCircle, Loader2, Check, Trash } from "lucide-react";
+import { Loader2, Check, Trash, RotateCcwKey } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@ui/input";
 import { Types } from "komodo_client";
 import { cn } from "@lib/utils";
+import { useToast } from "@ui/use-toast";
 
 export const EnrollTotp = ({ user }: { user: Types.User }) => {
   const userInvalidate = useUserInvalidate();
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState<{ uri: string; png: string }>();
   const [confirm, setConfirm] = useState("");
@@ -34,7 +36,10 @@ export const EnrollTotp = ({ user }: { user: Types.User }) => {
   const { mutate: unenroll, isPending: unenroll_pending } = useManageUser(
     "UnenrollTotp",
     {
-      onSuccess: () => userInvalidate(),
+      onSuccess: () => {
+        userInvalidate();
+        toast({ title: "Unenrolled in TOTP 2FA" });
+      },
     }
   );
   const onOpenChange = (open: boolean) => {
@@ -54,10 +59,11 @@ export const EnrollTotp = ({ user }: { user: Types.User }) => {
             variant="secondary"
             className={cn(
               "items-center gap-2",
-              !!user.totp?.confirmed_at && "hidden"
+              (user.passkey?.created_at || !!user.totp?.confirmed_at) &&
+                "hidden"
             )}
           >
-            Enroll TOTP 2FA <PlusCircle className="w-4 h-4" />
+            Enroll TOTP 2FA <RotateCcwKey className="w-4 h-4" />
           </Button>
         </DialogTrigger>
         <DialogContent>
@@ -86,6 +92,10 @@ export const EnrollTotp = ({ user }: { user: Types.User }) => {
           ) : submitted ? (
             <>
               <div className="py-8 flex flex-col gap-4">
+                <h2>
+                  Scan this QR code with your authenticator app, and enter the 6
+                  digit code below.
+                </h2>
                 <div className="flex items-center justify-center">
                   <img
                     className="w-72"
@@ -104,6 +114,7 @@ export const EnrollTotp = ({ user }: { user: Types.User }) => {
                     className="w-72"
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
+                    autoFocus
                   />
                 </div>
               </div>

@@ -138,6 +138,15 @@ const UserProfile = ({ user }: { user: Types.User }) => {
 
       <div className="font-mono text-muted-foreground">|</div>
 
+      <div className="font-mono text-muted-foreground">2FA:</div>
+      {user.passkey?.created_at
+        ? "Passkey"
+        : user.totp?.confirmed_at
+          ? "TOTP"
+          : "None"}
+
+      <div className="font-mono text-muted-foreground">|</div>
+
       <div className="font-mono text-muted-foreground">Admin:</div>
       {user.admin ? "True" : "False"}
 

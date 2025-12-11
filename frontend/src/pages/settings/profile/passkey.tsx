@@ -1,7 +1,7 @@
 import { ConfirmButton } from "@components/util";
 import { useManageUser, useUserInvalidate } from "@lib/hooks";
 import { Button } from "@ui/button";
-import { PlusCircle, Trash } from "lucide-react";
+import { Fingerprint, Trash } from "lucide-react";
 import { Types } from "komodo_client";
 import { base64urlToArrayBuffer, cn } from "@lib/utils";
 import { useToast } from "@ui/use-toast";
@@ -15,7 +15,7 @@ export const EnrollPasskey = ({ user }: { user: Types.User }) => {
     {
       onSuccess: () => {
         userInvalidate();
-        toast({ title: "Unenrolled in passkey authentication" });
+        toast({ title: "Unenrolled in passkey 2FA" });
       },
     }
   );
@@ -66,11 +66,11 @@ export const EnrollPasskey = ({ user }: { user: Types.User }) => {
         variant="secondary"
         className={cn(
           "items-center gap-2",
-          !!user.passkey?.created_at && "hidden"
+          (user.totp?.confirmed_at || !!user.passkey?.created_at) && "hidden"
         )}
         onClick={() => begin_enrollment({})}
       >
-        Enroll Passkey 2FA <PlusCircle className="w-4 h-4" />
+        Enroll Passkey 2FA <Fingerprint className="w-4 h-4" />
       </Button>
       <ConfirmButton
         className={!user.passkey?.created_at ? "hidden" : "max-w-[220px]"}
