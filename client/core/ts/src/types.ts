@@ -345,6 +345,11 @@ export type BatchExecutionResponseItem =
 
 export type BatchExecutionResponse = BatchExecutionResponseItem[];
 
+export type _CreationChallengeResponse = any;
+
+/** Response for [BeginPasskeyEnrollment]. */
+export type BeginPasskeyEnrollmentResponse = _CreationChallengeResponse;
+
 export enum Operation {
 	None = "None",
 	CreateSwarm = "CreateSwarm",
@@ -819,6 +824,8 @@ export interface BuilderQuerySpecifics {
 
 export type BuilderQuery = ResourceQuery<BuilderQuerySpecifics>;
 
+export type BytesArray = number[];
+
 /** JSON containing a jwt authentication token. */
 export interface JwtResponse {
 	/** User ID for signed in user. */
@@ -827,8 +834,14 @@ export interface JwtResponse {
 	jwt: string;
 }
 
+/** Response for [CompletePasskeyLogin]. */
+export type CompletePasskeyLoginResponse = JwtResponse;
+
 /** Response for [CompleteTotpLogin]. */
 export type CompleteTotpLoginResponse = JwtResponse;
+
+/** Response for [ConfirmPasskeyEnrollment]. */
+export type ConfirmPasskeyEnrollmentResponse = NoData;
 
 /** A wrapper for all Komodo exections. */
 export type Execution = 
@@ -1089,7 +1102,7 @@ export type UserConfig =
 	description: string;
 }};
 
-export interface Totp {
+export interface UserTotpConfig {
 	/** TOTP shared secret, encrypted */
 	secret: string;
 	/** Unix timestamp in milliseconds when secret confirmed */
@@ -1098,15 +1111,10 @@ export interface Totp {
 	recovery_codes: string[];
 }
 
-export interface WebAuthn {
-	/** Credential Name */
-	name: string;
-	/** Credential ID */
-	id: string;
-	/** COSE-encoded public key */
-	public_key: string;
-	/** WebAuthn signature count */
-	sign_count: I64;
+export type _Passkey = any;
+
+export interface UserPasskeyConfig {
+	passkey?: _Passkey;
 	/** Unix timestamp in milliseconds when key created */
 	created_at: I64;
 }
@@ -1133,9 +1141,9 @@ export interface User {
 	/** The user-type specific config. */
 	config: UserConfig;
 	/** TOTP 2fa credentials */
-	totp?: Totp;
-	/** WebAuthn 2fa credentials */
-	webauthn?: WebAuthn;
+	totp?: UserTotpConfig;
+	/** WebAuthn Passkey 2fa credentials */
+	passkey?: UserPasskeyConfig;
 	/** When the user last opened updates dropdown. */
 	last_update_view?: I64;
 	/** Recently viewed ids */
@@ -5391,8 +5399,8 @@ export type ListVariablesResponse = Variable[];
 /** JSON containing either an authentication token or a TwoFactor pending token. */
 export type JwtOrTwoFactor = 
 	| { type: "Jwt", data: JwtResponse }
-	| { type: "TwoFactor", data: {
-	token: string;
+	| { type: "Passkey", data: _RequestChallengeResponse }
+	| { type: "Totp", data: {
 }};
 
 /** The response for [LoginLocalUser] */
@@ -5467,6 +5475,9 @@ export interface SwarmQuerySpecifics {
 
 export type SwarmQuery = ResourceQuery<SwarmQuerySpecifics>;
 
+/** Response for [UnenrollPasskey]. */
+export type UnenrollPasskeyResponse = NoData;
+
 /** Response for [UnenrollTotp]. */
 export type UnenrollTotpResponse = NoData;
 
@@ -5499,6 +5510,8 @@ export type UpdateVariableDescriptionResponse = Variable;
 export type UpdateVariableIsSecretResponse = Variable;
 
 export type UpdateVariableValueResponse = Variable;
+
+export type _Base64UrlSafeData = BytesArray;
 
 export type _PartialActionConfig = Partial<ActionConfig>;
 
@@ -5533,6 +5546,12 @@ export type _PartialSwarmConfig = Partial<SwarmConfig>;
 export type _PartialTag = Partial<Tag>;
 
 export type _PartialUrlBuilderConfig = Partial<UrlBuilderConfig>;
+
+export type _PublicKeyCredential = any;
+
+export type _RegisterPublicKeyCredential = any;
+
+export type _RequestChallengeResponse = any;
 
 export interface __Serror {
 	error: string;
@@ -5837,6 +5856,13 @@ export interface BatchRunProcedure {
 }
 
 /**
+ * Starts enrollment flow for WebAuthn passkey auth support.
+ * Response: [BeginPasskeyEnrollmentResponse]
+ */
+export interface BeginPasskeyEnrollment {
+}
+
+/**
  * Starts enrollment flow for TOTP 2FA auth support.
  * Response: [BeginTotpEnrollmentResponse]
  * 
@@ -5941,11 +5967,17 @@ export interface CommitSync {
 
 /**
  * Confirm a single use 2fa pending token + time-dependent user totp code for a jwt.
+ * Response: [CompletePasskeyLoginResponse].
+ */
+export interface CompletePasskeyLogin {
+	credential: _PublicKeyCredential;
+}
+
+/**
+ * Confirm a single use 2fa pending token + time-dependent user totp code for a jwt.
  * Response: [CompleteTotpLoginResponse].
  */
 export interface CompleteTotpLogin {
-	/** The '2fa token' */
-	token: string;
 	/** The time dependent totp code for user. */
 	code: string;
 }
@@ -5969,10 +6001,19 @@ export interface ConfigSpec {
  * Confirm enrollment flow for TOTP 2FA auth support
  * Response: [NoData]
  */
+export interface ConfirmPasskeyEnrollment {
+	credential: _RegisterPublicKeyCredential;
+}
+
+/**
+ * Confirm enrollment flow for TOTP 2FA auth support
+ * Response: [ConfirmTotpEnrollmentResponse]
+ */
 export interface ConfirmTotpEnrollment {
 	code: string;
 }
 
+/** Response for [ConfirmTotpEnrollment]. */
 export interface ConfirmTotpEnrollmentResponse {
 	recovery_codes: string[];
 }
@@ -7031,13 +7072,10 @@ export interface EnvironmentVar {
 }
 
 /**
- * Exchange a single use exchange token (safe for transport in url query)
- * for a jwt.
+ * Retrieve a JWT after completing third party login flows.
  * Response: [ExchangeForJwtResponse].
  */
 export interface ExchangeForJwt {
-	/** The 'exchange token' */
-	token: string;
 }
 
 /** Execute a terminal command on the given server. */
@@ -9763,6 +9801,13 @@ export interface TotalDiskUsage {
 
 /**
  * Unenrolls user in TOTP 2FA.
+ * Response: [NoData]
+ */
+export interface UnenrollPasskey {
+}
+
+/**
+ * Unenrolls user in TOTP 2FA.
  * Response: [UnenrollTotpResponse]
  */
 export interface UnenrollTotp {
@@ -10266,6 +10311,7 @@ export type AuthRequest =
 	| { type: "LoginLocalUser", params: LoginLocalUser }
 	| { type: "ExchangeForJwt", params: ExchangeForJwt }
 	| { type: "CompleteTotpLogin", params: CompleteTotpLogin }
+	| { type: "CompletePasskeyLogin", params: CompletePasskeyLogin }
 	| { type: "GetUser", params: GetUser };
 
 /** Days of the week */
@@ -10635,6 +10681,13 @@ export enum SyncWebhookAction {
 	Sync = "Sync",
 }
 
+/** JSON containing either a user id or the required 2fa auth check. */
+export type UserIdOrTwoFactor = 
+	| { type: "UserId", data: string }
+	| { type: "Passkey", data: _RequestChallengeResponse }
+	| { type: "Totp", data: {
+}};
+
 export type UserRequest = 
 	| { type: "PushRecentlyViewed", params: PushRecentlyViewed }
 	| { type: "SetLastSeenUpdate", params: SetLastSeenUpdate }
@@ -10642,7 +10695,10 @@ export type UserRequest =
 	| { type: "DeleteApiKey", params: DeleteApiKey }
 	| { type: "BeginTotpEnrollment", params: BeginTotpEnrollment }
 	| { type: "ConfirmTotpEnrollment", params: ConfirmTotpEnrollment }
-	| { type: "UnenrollTotp", params: UnenrollTotp };
+	| { type: "UnenrollTotp", params: UnenrollTotp }
+	| { type: "BeginPasskeyEnrollment", params: BeginPasskeyEnrollment }
+	| { type: "ConfirmPasskeyEnrollment", params: ConfirmPasskeyEnrollment }
+	| { type: "UnenrollPasskey", params: UnenrollPasskey };
 
 export type WriteRequest = 
 	| { type: "UpdateResourceMeta", params: UpdateResourceMeta }

@@ -1,4 +1,4 @@
-import { ConfirmButton, StatusBadge } from "@components/util";
+import { ConfirmButton } from "@components/util";
 import { useRead, useSetTitle, useUser, useWrite } from "@lib/hooks";
 import { Button } from "@ui/button";
 import { useToast } from "@ui/use-toast";
@@ -11,6 +11,7 @@ import { Card, CardHeader } from "@ui/card";
 import { Types } from "komodo_client";
 import { CreateKey, DeleteKey } from "./api-key";
 import { EnrollTotp } from "./totp";
+import { EnrollPasskey } from "./passkey";
 
 export const Profile = () => {
   useSetTitle("Profile");
@@ -109,11 +110,12 @@ const ProfileInner = ({ user }: { user: Types.User }) => {
       {/* 2FA */}
       <Section title="2FA" icon={<KeyRound className="w-4 h-4" />}>
         <div className="flex items-center gap-4">
+          <EnrollPasskey user={user} />
           <EnrollTotp user={user} />
-          <StatusBadge
+          {/* <StatusBadge
             text={user.totp?.confirmed_at ? "Enrolled" : "Not Enrolled"}
             intent={user.totp?.confirmed_at ? "Good" : "Critical"}
-          />
+          /> */}
         </div>
       </Section>
 

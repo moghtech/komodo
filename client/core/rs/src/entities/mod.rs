@@ -68,7 +68,7 @@ pub mod swarm;
 pub mod sync;
 /// Subtypes of [Tag][tag::Tag].
 pub mod tag;
-
+/// Subtypes of [Terminal][terminal::Terminal].
 pub mod terminal;
 /// Subtypes of [ResourcesToml][toml::ResourcesToml].
 pub mod toml;

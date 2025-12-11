@@ -65,10 +65,11 @@ arc-swap = "1.7.1"
 
 # SERVER
 tokio-tungstenite = { version = "0.28.0", features = ["rustls-tls-native-roots"] }
-axum-extra = { version = "0.12.2", features = ["typed-header"] }
-tower-http = { version = "0.6.7", features = ["fs", "cors", "set-header"] }
-axum-server = { version = "0.8.0", features = ["tls-rustls"] }
+tower-http = { version = "0.6.8", features = ["fs", "cors", "set-header"] }
 axum = { version = "0.8.7", features = ["ws", "json", "macros"] }
+axum-extra = { version = "0.12.2", features = ["typed-header"] }
+axum-server = { version = "0.8.0", features = ["tls-rustls"] }
+tower-sessions = "0.14.0"
 
 # SER/DE
 ipnetwork = { version = "0.21.1", features = ["serde"] }
@@ -101,12 +102,15 @@ dotenvy = "0.15.7"
 envy = "0.4.2"
 
 # CRYPTO / AUTH
+webauthn-rs = { version = "0.5.4", features = ["danger-allow-state-serialisation"] }
 openidconnect = { version = "4.0.1", features = ["accept-rfc3339-timestamps"] }
 uuid = { version = "1.19.0", features = ["v4", "fast-rng", "serde"] }
 jsonwebtoken = { version = "10.2.0", features = ["aws_lc_rs"] } # locked back with octorust
 rustls = { version = "0.23.35", features = ["aws-lc-rs"] }
 pem-rfc7468 = { version = "1.0.0", features = ["alloc"] }
 totp-rs = { version = "5.7.0", features = ["qr"] }
+webauthn-rs-proto = "0.5.4"
+base64urlsafedata = "0.5.4"
 data-encoding = "2.9.0"
 urlencoding = "2.1.3"
 bcrypt = "0.17.1"
@@ -130,9 +134,9 @@ sysinfo = "0.37.1"
 shlex = "1.3.0"
 
 # CLOUD
-aws-config = "1.8.11"
-aws-sdk-ec2 = "1.194.0"
-aws-credential-types = "1.2.10"
+aws-config = "1.8.12"
+aws-sdk-ec2 = "1.196.0"
+aws-credential-types = "1.2.11"
 
 ## CRON
 english-to-cron = "0.1.7"

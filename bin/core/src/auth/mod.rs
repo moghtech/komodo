@@ -6,7 +6,7 @@ use axum::{
   extract::{ConnectInfo, Request},
   http::HeaderMap,
   middleware::Next,
-  response::Response,
+  response::{Redirect, Response},
 };
 use database::mungos::mongodb::bson::doc;
 use futures_util::TryFutureExt;
@@ -17,6 +17,7 @@ use serde::Deserialize;
 use serror::AddStatusCodeError as _;
 
 use crate::{
+  config::core_config,
   helpers::query::get_user,
   state::{auth_rate_limiter, db_client, jwt_client},
 };
@@ -35,8 +36,6 @@ mod local;
 const STATE_PREFIX_LENGTH: usize = 20;
 /// JWT Clock skew tolerance in milliseconds (10 seconds for JWTs)
 const JWT_CLOCK_SKEW_TOLERANCE_MS: u128 = 10 * 1000;
-/// Exchange Token Clock skew tolerance in milliseconds (5 seconds for Exchange tokens)
-const EXCHANGE_TOKEN_CLOCK_SKEW_TOLERANCE_MS: u128 = 5 * 1000;
 /// Api Key Clock skew tolerance in milliseconds (5 minutes for Api Keys)
 const API_KEY_CLOCK_SKEW_TOLERANCE_MS: i64 = 5 * 60 * 1000;
 
@@ -54,7 +53,7 @@ pub async fn auth_request(
     .extensions()
     .get::<ConnectInfo<SocketAddr>>()
     .map(|addr| addr.ip());
-  let user = authenticate_check_enabled(&headers)
+  let mut user = authenticate_check_enabled(&headers)
     .map_err(|e| e.status_code(StatusCode::UNAUTHORIZED))
     .with_failure_rate_limit_using_headers(
       auth_rate_limiter(),
@@ -62,6 +61,9 @@ pub async fn auth_request(
       fallback,
     )
     .await?;
+  // Sanitize the user for safety before
+  // attaching to the request handlers. 
+  user.sanitize();
   req.extensions_mut().insert(user);
   Ok(next.run(req).await)
 }
@@ -179,4 +181,16 @@ async fn check_enabled(user_id: String) -> anyhow::Result<User> {
   } else {
     Err(anyhow!("Invalid user credentials"))
   }
+}
+
+fn format_redirect(redirect: Option<&str>, extra: &str) -> Redirect {
+  let redirect_url = if let Some(redirect) = redirect
+    && !redirect.is_empty()
+  {
+    let splitter = if redirect.contains('?') { '&' } else { '?' };
+    format!("{redirect}{splitter}{extra}")
+  } else {
+    format!("{}?{extra}", core_config().host)
+  };
+  Redirect::to(&redirect_url)
 }

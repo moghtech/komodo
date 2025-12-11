@@ -1,7 +1,7 @@
 use std::sync::{Arc, OnceLock};
 
 use anyhow::{Context, anyhow};
-use async_timing_util::{ONE_MIN_MS, unix_timestamp_ms};
+use async_timing_util::unix_timestamp_ms;
 use database::{
   hash_password,
   mungos::mongodb::bson::{Document, doc},
@@ -11,31 +11,32 @@ use komodo_client::{
     LoginLocalUser, LoginLocalUserResponse, SignUpLocalUser,
     SignUpLocalUserResponse,
   },
-  entities::{
-    random_string,
-    user::{User, UserConfig},
-  },
+  entities::user::{User, UserConfig},
 };
 use rate_limit::{RateLimiter, WithFailureRateLimit};
 use reqwest::StatusCode;
 use resolver_api::Resolve;
 use serror::{AddStatusCode as _, AddStatusCodeError};
+use tower_sessions::Session;
 
 use crate::{
-  api::auth::AuthArgs,
+  api::{
+    SESSION_KEY_PASSKEY_LOGIN, SESSION_KEY_TOTP_LOGIN, auth::AuthArgs,
+  },
   config::core_config,
   helpers::validations::{validate_password, validate_username},
-  state::{
-    auth_rate_limiter, db_client, jwt_client,
-    totp_pending_login_cache,
-  },
+  state::{auth_rate_limiter, db_client, jwt_client, webauthn},
 };
 
 impl Resolve<AuthArgs> for SignUpLocalUser {
   #[instrument("SignUpLocalUser", skip(self))]
   async fn resolve(
     self,
-    AuthArgs { headers, ip }: &AuthArgs,
+    AuthArgs {
+      headers,
+      ip,
+      session,
+    }: &AuthArgs,
   ) -> serror::Result<SignUpLocalUserResponse> {
     sign_up_local_user(self)
       .with_failure_rate_limit_using_headers(
@@ -109,7 +110,7 @@ async fn sign_up_local_user(
       password: hashed_password,
     },
     totp: Default::default(),
-    webauthn: Default::default(),
+    passkey: Default::default(),
   };
 
   let user_id = db_client()
@@ -148,20 +149,30 @@ fn login_local_user_rate_limiter() -> &'static RateLimiter {
 impl Resolve<AuthArgs> for LoginLocalUser {
   async fn resolve(
     self,
-    AuthArgs { headers, ip }: &AuthArgs,
+    AuthArgs {
+      headers,
+      ip,
+      session,
+    }: &AuthArgs,
   ) -> serror::Result<LoginLocalUserResponse> {
-    login_local_user(self)
-      .with_failure_rate_limit_using_headers(
-        login_local_user_rate_limiter(),
-        headers,
-        Some(*ip),
-      )
-      .await
+    login_local_user(
+      self,
+      session
+        .as_ref()
+        .context("Method called in context without session")?,
+    )
+    .with_failure_rate_limit_using_headers(
+      login_local_user_rate_limiter(),
+      headers,
+      Some(*ip),
+    )
+    .await
   }
 }
 
 async fn login_local_user(
   req: LoginLocalUser,
+  session: &Session,
 ) -> serror::Result<LoginLocalUserResponse> {
   if !core_config().local_auth {
     return Err(
@@ -202,19 +213,33 @@ async fn login_local_user(
     );
   }
 
-  if user.totp.secret.is_empty() {
-    jwt_client()
-      .encode(user.id)
-      // This is in internal error (500), not auth error
-      .context("Failed to generate JWT for user")
-      .map(|jwt| LoginLocalUserResponse::Jwt(jwt))
-      .map_err(Into::into)
-  } else {
-    let token = random_string(20);
-    let expiry = unix_timestamp_ms() + ONE_MIN_MS;
-    totp_pending_login_cache()
-      .insert(token.clone(), (user.id, expiry))
-      .await;
-    Ok(LoginLocalUserResponse::TwoFactor { token })
+  match (user.passkey.passkey, user.totp.enrolled()) {
+    // WebAuthn 2FA
+    (Some(passkey), _) => {
+      let webauthn = webauthn().context(
+        "No webauthn provider available, invalid KOMODO_HOST config",
+      )?;
+      let (response, server_state) = webauthn
+        .start_passkey_authentication(&[passkey])
+        .context("Failed to start passkey authentication flow")?;
+      session
+        .insert(SESSION_KEY_PASSKEY_LOGIN, (user.id, server_state))
+        .await?;
+      Ok(LoginLocalUserResponse::Passkey(response))
+    }
+    // TOTP 2FA
+    (None, true) => {
+      session.insert(SESSION_KEY_TOTP_LOGIN, user.id).await?;
+      Ok(LoginLocalUserResponse::Totp {})
+    }
+    // No 2FA, can return JWT immediately
+    (None, false) => {
+      jwt_client()
+        .encode(user.id)
+        // This is in internal error (500), not auth error
+        .context("Failed to generate JWT for user")
+        .map(|jwt| LoginLocalUserResponse::Jwt(jwt))
+        .map_err(Into::into)
+    }
   }
 }

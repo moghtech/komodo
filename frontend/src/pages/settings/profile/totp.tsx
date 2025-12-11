@@ -26,7 +26,10 @@ export const EnrollTotp = ({ user }: { user: Types.User }) => {
   });
   const { mutate: confirm_enrollment, isPending: confirm_pending } =
     useManageUser("ConfirmTotpEnrollment", {
-      onSuccess: ({ recovery_codes }) => setRecovery(recovery_codes),
+      onSuccess: ({ recovery_codes }) => {
+        setRecovery(recovery_codes);
+        userInvalidate();
+      },
     });
   const { mutate: unenroll, isPending: unenroll_pending } = useManageUser(
     "UnenrollTotp",
@@ -64,6 +67,7 @@ export const EnrollTotp = ({ user }: { user: Types.User }) => {
           {recovery ? (
             <>
               <div className="py-8 flex flex-col gap-4">
+                <h2>Save recovery keys</h2>
                 {recovery.map((code) => (
                   <Input key={code} className="w-72" value={code} disabled />
                 ))}

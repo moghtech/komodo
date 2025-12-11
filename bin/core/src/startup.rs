@@ -310,6 +310,7 @@ async fn ensure_init_user_and_resources() {
     .resolve(&AuthArgs {
       headers: Default::default(),
       ip: IpAddr::V4(Ipv4Addr::UNSPECIFIED),
+      session: None,
     })
     .await
     {

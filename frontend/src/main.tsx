@@ -22,8 +22,9 @@ export const sanitize_query = () => {
 };
 
 export const sanitize_query_inner = (search: URLSearchParams) => {
-  search.delete("two_factor");
-  search.delete("token");
+  search.delete("redeem_ready");
+  search.delete("totp");
+  search.delete("passkey");
   const query = search.toString();
   location.replace(
     `${location.origin}${location.pathname}${query.length ? "?" + query : ""}`

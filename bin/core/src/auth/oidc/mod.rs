@@ -1,7 +1,6 @@
 use std::{net::SocketAddr, sync::OnceLock};
 
 use anyhow::{Context, anyhow};
-use async_timing_util::{ONE_MIN_MS, unix_timestamp_ms};
 use axum::{
   Router,
   extract::{ConnectInfo, Query},
@@ -14,7 +13,7 @@ use dashmap::DashMap;
 use database::mungos::mongodb::bson::{Document, doc};
 use futures_util::TryFutureExt;
 use komodo_client::{
-  api::auth::JwtOrTwoFactor,
+  api::auth::UserIdOrTwoFactor,
   entities::{
     komodo_timestamp, random_string,
     user::{User, UserConfig},
@@ -30,13 +29,16 @@ use rate_limit::WithFailureRateLimit;
 use reqwest::StatusCode;
 use serde::Deserialize;
 use serror::{AddStatusCode as _, AddStatusCodeError};
+use tower_sessions::Session;
 
 use crate::{
-  config::core_config,
-  state::{
-    auth_rate_limiter, db_client, jwt_client,
-    totp_pending_login_cache,
+  api::{
+    SESSION_KEY_PASSKEY_LOGIN, SESSION_KEY_TOTP_LOGIN,
+    SESSION_KEY_USER_ID,
   },
+  auth::format_redirect,
+  config::core_config,
+  state::{auth_rate_limiter, db_client, webauthn},
 };
 
 use super::RedirectQuery;
@@ -83,9 +85,10 @@ pub fn router() -> Router {
       "/callback",
       get(
         |query,
+         session: Session,
          headers: HeaderMap,
          ConnectInfo(info): ConnectInfo<SocketAddr>| async move {
-          callback(query)
+          callback(query, session)
             .map_err(|e| e.status_code(StatusCode::UNAUTHORIZED))
             .with_failure_rate_limit_using_headers(
               auth_rate_limiter(),
@@ -162,6 +165,7 @@ struct CallbackQuery {
 
 async fn callback(
   Query(query): Query<CallbackQuery>,
+  session: Session,
 ) -> anyhow::Result<Redirect> {
   let client = oidc_client().load();
   let client =
@@ -241,24 +245,39 @@ async fn callback(
       "config.data.user_id": user_id
     })
     .await
-    .context("failed at find user query from database")?;
+    .context("Failed at find user query from database")?;
 
-  let jwt_or_two_factor = match user {
+  let user_id_or_two_factor = match user {
     Some(user) => {
-      if user.totp.secret.is_empty() {
-        let jwt = jwt_client()
-          .encode(user.id)
-          .context("failed to generate jwt")?;
-        JwtOrTwoFactor::Jwt(jwt)
-      } else {
-        let token = random_string(20);
-        totp_pending_login_cache()
-          .insert(
-            token.clone(),
-            (user.id, unix_timestamp_ms() + ONE_MIN_MS),
-          )
-          .await;
-        JwtOrTwoFactor::TwoFactor { token }
+      match (user.passkey.passkey, user.totp.enrolled()) {
+        // WebAuthn Passkey 2FA
+        (Some(passkey), _) => {
+          let webauthn = webauthn().context(
+            "No webauthn provider available, invalid KOMODO_HOST config",
+          )?;
+          let (response, server_state) = webauthn
+            .start_passkey_authentication(&[passkey])
+            .context("Failed to start passkey authentication flow")?;
+          session
+            .insert(
+              SESSION_KEY_PASSKEY_LOGIN,
+              (user.id, server_state),
+            )
+            .await?;
+          UserIdOrTwoFactor::Passkey(response)
+        }
+        // TOTP 2FA
+        (None, true) => {
+          session
+            .insert(SESSION_KEY_TOTP_LOGIN, user.id)
+            .await
+            .context(
+              "Failed to store totp login state in for user session",
+            )?;
+          UserIdOrTwoFactor::Totp {}
+        }
+        // No 2FA
+        (None, false) => UserIdOrTwoFactor::UserId(user.id),
       }
     }
     None => {
@@ -332,7 +351,7 @@ async fn callback(
           user_id: user_id.to_string(),
         },
         totp: Default::default(),
-        webauthn: Default::default(),
+        passkey: Default::default(),
       };
 
       let user_id = db_client
@@ -345,32 +364,29 @@ async fn callback(
         .context("inserted_id is not ObjectId")?
         .to_string();
 
-      let jwt = jwt_client()
-        .encode(user_id)
-        .context("failed to generate jwt")?;
-      JwtOrTwoFactor::Jwt(jwt)
+      UserIdOrTwoFactor::UserId(user_id)
     }
   };
-  match jwt_or_two_factor {
-    JwtOrTwoFactor::Jwt(jwt) => {
-      let exchange_token =
-        jwt_client().create_exchange_token(jwt).await;
-      let redirect_url = if let Some(redirect) = redirect {
-        let splitter = if redirect.contains('?') { '&' } else { '?' };
-        format!("{redirect}{splitter}token={exchange_token}")
-      } else {
-        format!("{}?token={exchange_token}", core_config().host)
-      };
-      Ok(Redirect::to(&redirect_url))
+
+  match user_id_or_two_factor {
+    UserIdOrTwoFactor::UserId(user_id) => {
+      session
+        .insert(SESSION_KEY_USER_ID, user_id)
+        .await
+        .context("Failed to store user id for client session")?;
+      Ok(format_redirect(redirect.as_deref(), "redeem_ready=true"))
     }
-    JwtOrTwoFactor::TwoFactor { token } => {
-      let redirect_url = if let Some(redirect) = redirect {
-        let splitter = if redirect.contains('?') { '&' } else { '?' };
-        format!("{redirect}{splitter}two_factor={token}")
-      } else {
-        format!("{}?two_factor={token}", core_config().host)
-      };
-      Ok(Redirect::to(&redirect_url))
+    UserIdOrTwoFactor::Totp {} => {
+      Ok(format_redirect(redirect.as_deref(), "totp=true"))
+    }
+    UserIdOrTwoFactor::Passkey(passkey) => {
+      let passkey = serde_json::to_string(&passkey)
+        .context("Failed to serialize passkey response")?;
+      let passkey = urlencoding::encode(&passkey);
+      Ok(format_redirect(
+        redirect.as_deref(),
+        &format!("passkey={passkey}"),
+      ))
     }
   }
 }

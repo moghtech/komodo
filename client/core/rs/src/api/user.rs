@@ -2,6 +2,9 @@ use derive_empty_traits::EmptyTraits;
 use resolver_api::{HasResponse, Resolve};
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
+use webauthn_rs_proto::{
+  CreationChallengeResponse, RegisterPublicKeyCredential,
+};
 
 use crate::entities::{I64, NoData, ResourceTarget};
 
@@ -128,7 +131,7 @@ pub struct BeginTotpEnrollmentResponse {
 //
 
 /// Confirm enrollment flow for TOTP 2FA auth support
-/// Response: [NoData]
+/// Response: [ConfirmTotpEnrollmentResponse]
 #[typeshare]
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
@@ -140,6 +143,7 @@ pub struct ConfirmTotpEnrollment {
   pub code: String,
 }
 
+/// Response for [ConfirmTotpEnrollment].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ConfirmTotpEnrollmentResponse {
@@ -162,3 +166,62 @@ pub struct UnenrollTotp {}
 /// Response for [UnenrollTotp].
 #[typeshare]
 pub type UnenrollTotpResponse = NoData;
+
+//
+
+#[typeshare(serialized_as = "any")]
+pub type _CreationChallengeResponse = CreationChallengeResponse;
+
+/// Starts enrollment flow for WebAuthn passkey auth support.
+/// Response: [BeginPasskeyEnrollmentResponse]
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoUserRequest)]
+#[response(BeginPasskeyEnrollmentResponse)]
+#[error(serror::Error)]
+pub struct BeginPasskeyEnrollment {}
+
+/// Response for [BeginPasskeyEnrollment].
+#[typeshare]
+pub type BeginPasskeyEnrollmentResponse = _CreationChallengeResponse;
+
+//
+
+#[typeshare(serialized_as = "any")]
+pub type _RegisterPublicKeyCredential = RegisterPublicKeyCredential;
+
+/// Confirm enrollment flow for TOTP 2FA auth support
+/// Response: [NoData]
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoUserRequest)]
+#[response(ConfirmPasskeyEnrollmentResponse)]
+#[error(serror::Error)]
+pub struct ConfirmPasskeyEnrollment {
+  pub credential: _RegisterPublicKeyCredential,
+}
+
+/// Response for [ConfirmPasskeyEnrollment].
+#[typeshare]
+pub type ConfirmPasskeyEnrollmentResponse = NoData;
+
+//
+
+/// Unenrolls user in TOTP 2FA.
+/// Response: [NoData]
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoUserRequest)]
+#[response(UnenrollPasskeyResponse)]
+#[error(serror::Error)]
+pub struct UnenrollPasskey {}
+
+/// Response for [UnenrollPasskey].
+#[typeshare]
+pub type UnenrollPasskeyResponse = NoData;

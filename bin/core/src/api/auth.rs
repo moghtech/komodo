@@ -5,7 +5,6 @@ use std::{
 };
 
 use anyhow::{Context, anyhow};
-use async_timing_util::unix_timestamp_ms;
 use axum::{
   Router,
   extract::{ConnectInfo, Path},
@@ -13,6 +12,10 @@ use axum::{
   routing::post,
 };
 use data_encoding::BASE32_NOPAD;
+use database::{
+  bson::{doc, to_bson},
+  mungos::by_id::update_one_by_id,
+};
 use derive_variants::{EnumVariants, ExtractVariant};
 use komodo_client::{api::auth::*, entities::user::User};
 use rate_limit::WithFailureRateLimit;
@@ -22,10 +25,16 @@ use response::Response;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serror::{AddStatusCode, AddStatusCodeError, Json};
+use tower_sessions::Session;
 use typeshare::typeshare;
 use uuid::Uuid;
+use webauthn_rs::prelude::PasskeyAuthentication;
 
 use crate::{
+  api::{
+    SESSION_KEY_PASSKEY_LOGIN, SESSION_KEY_TOTP_LOGIN,
+    SESSION_KEY_USER_ID, memory_session_layer,
+  },
   auth::{
     get_user_id_from_headers,
     github::{self, client::github_oauth_client},
@@ -35,7 +44,7 @@ use crate::{
   },
   config::core_config,
   helpers::query::get_user,
-  state::{auth_rate_limiter, jwt_client, totp_pending_login_cache},
+  state::{auth_rate_limiter, db_client, jwt_client, webauthn},
 };
 
 use super::Variant;
@@ -45,6 +54,8 @@ pub struct AuthArgs {
   /// Prefer extracting IP from headers.
   /// This IP will be the IP of reverse proxy itself.
   pub ip: IpAddr,
+  /// Per-client session state
+  pub session: Option<Session>,
 }
 
 #[typeshare]
@@ -63,6 +74,7 @@ pub enum AuthRequest {
   LoginLocalUser(LoginLocalUser),
   ExchangeForJwt(ExchangeForJwt),
   CompleteTotpLogin(CompleteTotpLogin),
+  CompletePasskeyLogin(CompletePasskeyLogin),
   GetUser(GetUser),
 }
 
@@ -90,11 +102,12 @@ pub fn router() -> Router {
     router = router.nest("/oidc", oidc::router())
   }
 
-  router
+  router.layer(memory_session_layer(60))
 }
 
 async fn variant_handler(
   headers: HeaderMap,
+  session: Session,
   info: ConnectInfo<SocketAddr>,
   Path(Variant { variant }): Path<Variant>,
   Json(params): Json<serde_json::Value>,
@@ -103,11 +116,12 @@ async fn variant_handler(
     "type": variant,
     "params": params,
   }))?;
-  handler(headers, info, Json(req)).await
+  handler(headers, session, info, Json(req)).await
 }
 
 async fn handler(
   headers: HeaderMap,
+  session: Session,
   ConnectInfo(info): ConnectInfo<SocketAddr>,
   Json(request): Json<AuthRequest>,
 ) -> serror::Result<axum::response::Response> {
@@ -121,6 +135,7 @@ async fn handler(
     .resolve(&AuthArgs {
       headers,
       ip: info.ip(),
+      session: Some(session),
     })
     .await;
   if let Err(e) = &res {
@@ -159,37 +174,55 @@ impl Resolve<AuthArgs> for GetLoginOptions {
 impl Resolve<AuthArgs> for ExchangeForJwt {
   async fn resolve(
     self,
-    AuthArgs { headers, ip }: &AuthArgs,
+    AuthArgs {
+      headers,
+      ip,
+      session,
+    }: &AuthArgs,
   ) -> serror::Result<ExchangeForJwtResponse> {
-    jwt_client()
-      .redeem_exchange_token(&self.token)
-      .with_failure_rate_limit_using_headers(
-        auth_rate_limiter(),
-        headers,
-        Some(*ip),
-      )
+    async {
+      let session = session.as_ref().context(
+        "Method called in invalid context. This should not happen",
+      )?;
+
+      let user_id = session
+      .remove::<String>(SESSION_KEY_USER_ID)
       .await
+      .context("Internal session type error")?
+      .context("Authentication steps must be completed before JWT can be retrieved")?;
+
+      jwt_client().encode(user_id).map_err(Into::into)
+    }
+    .with_failure_rate_limit_using_headers(
+      auth_rate_limiter(),
+      headers,
+      Some(*ip),
+    )
+    .await
   }
 }
 
 impl Resolve<AuthArgs> for CompleteTotpLogin {
   async fn resolve(
     self,
-    AuthArgs { headers, ip }: &AuthArgs,
+    AuthArgs {
+      headers,
+      ip,
+      session,
+    }: &AuthArgs,
   ) -> serror::Result<CompleteTotpLoginResponse> {
     async {
-      let (user_id, expiry) = totp_pending_login_cache()
-        .remove(&self.token)
-        .await
-        .context("Did not find any matching pending totp tokens")
-        .status_code(StatusCode::UNAUTHORIZED)?;
+      let session = session.as_ref().context(
+        "Method called in invalid context. This should not happen",
+      )?;
 
-      if unix_timestamp_ms() > expiry {
-        return Err(
-          anyhow!("Totp login flow has expired")
-            .status_code(StatusCode::UNAUTHORIZED),
-        );
-      }
+      let user_id = session
+        .get::<String>(SESSION_KEY_TOTP_LOGIN)
+        .await
+        .context("Internal session type error")?
+        .context(
+          "Totp login has not been initiated for this session",
+        )?;
 
       let user = get_user(&user_id)
         .await
@@ -230,18 +263,94 @@ impl Resolve<AuthArgs> for CompleteTotpLogin {
   }
 }
 
+impl Resolve<AuthArgs> for CompletePasskeyLogin {
+  async fn resolve(
+    self,
+    AuthArgs {
+      headers,
+      ip,
+      session,
+    }: &AuthArgs,
+  ) -> serror::Result<CompletePasskeyLoginResponse> {
+    async {
+      let session = session.as_ref().context(
+        "Method called in invalid context. This should not happen",
+      )?;
+
+      let webauthn = webauthn().context(
+        "No webauthn provider available, invalid KOMODO_HOST config",
+      )?;
+
+      let (user_id, server_state) = session
+        .get::<(String, PasskeyAuthentication)>(
+          SESSION_KEY_PASSKEY_LOGIN,
+        )
+        .await
+        .context("Internal session type error")?
+        .context(
+          "Passkey login has not been initiated for this session",
+        )?;
+
+      // The result of this call must be used to
+      // update the stored passkey info on database.
+      let update = webauthn
+        .finish_passkey_authentication(
+          &self.credential,
+          &server_state,
+        )
+        .context("Failed to validate passkey")?;
+
+      let mut passkey = get_user(&user_id)
+        .await?
+        .passkey
+        .passkey
+        .context("Could not find passkey on database.")?;
+
+      passkey.update_credential(&update);
+
+      let passkey = to_bson(&passkey)
+        .context("Failed to serialize passkey to BSON")?;
+
+      let update = doc! { "$set": { "passkey.passkey": passkey } };
+
+      let _ =
+        update_one_by_id(&db_client().users, &user_id, update, None)
+          .await
+          .context(
+            "Failed to update user passkey on database after login",
+          )
+          .inspect_err(|e| warn!("{e:#}"));
+
+      jwt_client().encode(user_id).map_err(Into::into)
+    }
+    .with_failure_rate_limit_using_headers(
+      auth_rate_limiter(),
+      headers,
+      Some(*ip),
+    )
+    .await
+  }
+}
+
 impl Resolve<AuthArgs> for GetUser {
   async fn resolve(
     self,
-    AuthArgs { headers, ip }: &AuthArgs,
+    AuthArgs {
+      headers,
+      ip,
+      session: _,
+    }: &AuthArgs,
   ) -> serror::Result<User> {
     async {
       let user_id = get_user_id_from_headers(headers)
         .await
         .status_code(StatusCode::UNAUTHORIZED)?;
-      get_user(&user_id)
+      let mut user = get_user(&user_id)
         .await
-        .status_code(StatusCode::UNAUTHORIZED)
+        .status_code(StatusCode::UNAUTHORIZED)?;
+      // Sanitize before sending to client.
+      user.sanitize();
+      Ok(user)
     }
     .with_failure_rate_limit_using_headers(
       auth_rate_limiter(),

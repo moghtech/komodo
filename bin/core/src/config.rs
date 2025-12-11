@@ -100,25 +100,28 @@ pub fn periphery_public_keys() -> Option<&'static [SpkiPublicKey]> {
 pub fn cors_layer() -> CorsLayer {
   let config = core_config();
   let mut cors = CorsLayer::new()
-    .allow_methods(tower_http::cors::Any)
-    .allow_headers(tower_http::cors::Any)
+    .allow_methods(tower_http::cors::AllowMethods::mirror_request())
+    .allow_headers(tower_http::cors::AllowHeaders::mirror_request())
     .allow_credentials(config.cors_allow_credentials);
   if config.cors_allowed_origins.is_empty() {
+    warn!(
+      "CORS using allowed origin 'Any' (*). Use KOMODO_CORS_ALLOWED_ORIGINS to configure specific origins."
+    );
     cors = cors.allow_origin(tower_http::cors::Any)
   } else {
-    cors = cors.allow_origin(
-      config
-        .cors_allowed_origins
-        .iter()
-        .filter_map(|origin| {
-          HeaderValue::from_str(origin)
-            .inspect_err(|e| {
-              warn!("Invalid CORS allowed origin: {origin} | {e:?}")
-            })
-            .ok()
-        })
-        .collect::<Vec<_>>(),
-    );
+    let allowed_origins = config
+      .cors_allowed_origins
+      .iter()
+      .filter_map(|origin| {
+        HeaderValue::from_str(origin)
+          .inspect_err(|e| {
+            warn!("Invalid CORS allowed origin: {origin} | {e:?}")
+          })
+          .ok()
+      })
+      .collect::<Vec<_>>();
+    info!("CORS using allowed origin/s: {allowed_origins:?}");
+    cors = cors.allow_origin(allowed_origins);
   };
   cors
 }
@@ -135,6 +138,21 @@ pub fn monitoring_interval() -> async_timing_util::Timelength {
       },
     )
   })
+}
+
+pub fn core_host() -> Option<&'static url::Url> {
+  static CORE_URL: OnceLock<Option<url::Url>> = OnceLock::new();
+  CORE_URL
+    .get_or_init(|| {
+      url::Url::parse(&core_config().host)
+      .inspect_err(|e| {
+        warn!(
+          "Invalid KOMODO_HOST: not URL. Passkeys won't work. | {e:?}"
+        )
+      })
+      .ok()
+    })
+    .as_ref()
 }
 
 pub fn core_config() -> &'static CoreConfig {

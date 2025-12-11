@@ -1,7 +1,6 @@
 use std::{collections::VecDeque, time::Instant};
 
 use anyhow::{Context, anyhow};
-use async_timing_util::{FIVE_MINS_MS, unix_timestamp_ms};
 use axum::{
   Extension, Json, Router, extract::Path, middleware, routing::post,
 };
@@ -23,13 +22,19 @@ use response::Response;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serror::{AddStatusCode, AddStatusCodeError};
+use tower_sessions::Session;
 use typeshare::typeshare;
 use uuid::Uuid;
+use webauthn_rs::prelude::PasskeyRegistration;
 
+use crate::api::{
+  SESSION_KEY_PASSKEY_ENROLLMENT, SESSION_KEY_TOTP_ENROLLMENT,
+  memory_session_layer,
+};
 use crate::auth::totp::make_totp;
 use crate::config::core_config;
 use crate::helpers::validations::validate_api_key_name;
-use crate::state::totp_enrollment_cache;
+use crate::state::webauthn;
 use crate::{
   auth::auth_request, helpers::query::get_user, state::db_client,
 };
@@ -38,6 +43,8 @@ use super::Variant;
 
 pub struct UserArgs {
   pub user: User,
+  /// Per-client session state
+  pub session: Option<Session>,
 }
 
 #[typeshare]
@@ -56,16 +63,21 @@ enum UserRequest {
   BeginTotpEnrollment(BeginTotpEnrollment),
   ConfirmTotpEnrollment(ConfirmTotpEnrollment),
   UnenrollTotp(UnenrollTotp),
+  BeginPasskeyEnrollment(BeginPasskeyEnrollment),
+  ConfirmPasskeyEnrollment(ConfirmPasskeyEnrollment),
+  UnenrollPasskey(UnenrollPasskey),
 }
 
 pub fn router() -> Router {
   Router::new()
     .route("/", post(handler))
     .route("/{variant}", post(variant_handler))
+    .layer(memory_session_layer(60))
     .layer(middleware::from_fn(auth_request))
 }
 
 async fn variant_handler(
+  session: Session,
   user: Extension<User>,
   Path(Variant { variant }): Path<Variant>,
   Json(params): Json<serde_json::Value>,
@@ -74,10 +86,11 @@ async fn variant_handler(
     "type": variant,
     "params": params,
   }))?;
-  handler(user, Json(req)).await
+  handler(session, user, Json(req)).await
 }
 
 async fn handler(
+  session: Session,
   Extension(user): Extension<User>,
   Json(request): Json<UserRequest>,
 ) -> serror::Result<axum::response::Response> {
@@ -87,7 +100,12 @@ async fn handler(
     "/user request {req_id} | user: {} ({})",
     user.username, user.id
   );
-  let res = request.resolve(&UserArgs { user }).await;
+  let res = request
+    .resolve(&UserArgs {
+      user,
+      session: Some(session),
+    })
+    .await;
   if let Err(e) = &res {
     warn!("/user request {req_id} error: {:#}", e.error);
   }
@@ -101,7 +119,7 @@ const RECENTLY_VIEWED_MAX: usize = 10;
 impl Resolve<UserArgs> for PushRecentlyViewed {
   async fn resolve(
     self,
-    UserArgs { user }: &UserArgs,
+    UserArgs { user, .. }: &UserArgs,
   ) -> serror::Result<PushRecentlyViewedResponse> {
     let user = get_user(&user.id).await?;
 
@@ -142,7 +160,7 @@ impl Resolve<UserArgs> for PushRecentlyViewed {
 impl Resolve<UserArgs> for SetLastSeenUpdate {
   async fn resolve(
     self,
-    UserArgs { user }: &UserArgs,
+    UserArgs { user, .. }: &UserArgs,
   ) -> serror::Result<SetLastSeenUpdateResponse> {
     update_one_by_id(
       &db_client().users,
@@ -170,7 +188,7 @@ impl Resolve<UserArgs> for CreateApiKey {
   )]
   async fn resolve(
     self,
-    UserArgs { user }: &UserArgs,
+    UserArgs { user, .. }: &UserArgs,
   ) -> serror::Result<CreateApiKeyResponse> {
     let user = get_user(&user.id).await?;
 
@@ -209,7 +227,7 @@ impl Resolve<UserArgs> for DeleteApiKey {
   )]
   async fn resolve(
     self,
-    UserArgs { user }: &UserArgs,
+    UserArgs { user, .. }: &UserArgs,
   ) -> serror::Result<DeleteApiKeyResponse> {
     let client = db_client();
 
@@ -247,15 +265,19 @@ impl Resolve<UserArgs> for BeginTotpEnrollment {
   )]
   async fn resolve(
     self,
-    UserArgs { user }: &UserArgs,
+    UserArgs { user, session }: &UserArgs,
   ) -> serror::Result<BeginTotpEnrollmentResponse> {
     for locked_username in &core_config().lock_login_credentials_for {
       if *locked_username == user.username {
         return Err(
-          anyhow!("User not allowed to enroll in 2FA.").into(),
+          anyhow!("User not allowed to enroll in TOTP 2FA.").into(),
         );
       }
     }
+
+    let session = session.as_ref().context(
+      "Method called in invalid context. This should not happen",
+    )?;
 
     let secret_bytes = random_bytes(TOTP_ENROLLMENT_SECRET_LENGTH);
     let totp = make_totp(secret_bytes.clone(), user.id.clone())?;
@@ -263,10 +285,9 @@ impl Resolve<UserArgs> for BeginTotpEnrollment {
       .get_qr_base64()
       .map_err(|e| anyhow::Error::msg(e))
       .context("Failed to generate QR code png")?;
-    let expiry = unix_timestamp_ms() + FIVE_MINS_MS;
-    totp_enrollment_cache()
-      .insert(user.id.clone(), (secret_bytes, expiry))
-      .await;
+    session
+      .insert(SESSION_KEY_TOTP_ENROLLMENT, secret_bytes)
+      .await?;
 
     Ok(BeginTotpEnrollmentResponse {
       uri: totp.get_url(),
@@ -283,18 +304,19 @@ impl Resolve<UserArgs> for ConfirmTotpEnrollment {
   )]
   async fn resolve(
     self,
-    UserArgs { user }: &UserArgs,
+    UserArgs { user, session }: &UserArgs,
   ) -> serror::Result<ConfirmTotpEnrollmentResponse> {
-    let (secret_bytes, expiry) =
-      totp_enrollment_cache().remove(&user.id).await.context(
-        "User has not called BeginTotpEnrollment within 5 minutes.",
-      )?;
+    let session = session.as_ref().context(
+      "Method called in invalid context. This should not happen",
+    )?;
 
-    if unix_timestamp_ms() > expiry {
-      return Err(anyhow!(
-        "Totp enrollment timed out, please try BeginTotpEnrollment again and confirm the Totp code within 5 minutes."
-      ).status_code(StatusCode::REQUEST_TIMEOUT));
-    }
+    let secret_bytes = session
+      .remove::<Vec<u8>>(SESSION_KEY_TOTP_ENROLLMENT)
+      .await
+      .context("Totp enrollment was not initiated correctly")?
+      .context(
+        "Totp enrollment was not initiated correctly or timed out",
+      )?;
 
     let encoded_secret = BASE32_NOPAD.encode(&secret_bytes);
 
@@ -345,7 +367,7 @@ impl Resolve<UserArgs> for UnenrollTotp {
   )]
   async fn resolve(
     self,
-    UserArgs { user }: &UserArgs,
+    UserArgs { user, .. }: &UserArgs,
   ) -> serror::Result<UnenrollTotpResponse> {
     update_one_by_id(
       &db_client().users,
@@ -362,5 +384,140 @@ impl Resolve<UserArgs> for UnenrollTotp {
     .await
     .context("Failed to clear user totp fields on database")?;
     Ok(UnenrollTotpResponse {})
+  }
+}
+
+//
+
+impl Resolve<UserArgs> for BeginPasskeyEnrollment {
+  #[instrument(
+    "BeginPasskeyEnrollment",
+    skip_all,
+    fields(operator = user.id)
+  )]
+  async fn resolve(
+    self,
+    UserArgs { user, session }: &UserArgs,
+  ) -> serror::Result<BeginPasskeyEnrollmentResponse> {
+    for locked_username in &core_config().lock_login_credentials_for {
+      if *locked_username == user.username {
+        return Err(
+          anyhow!(
+            "User not allowed to enroll in Passkey authentication."
+          )
+          .into(),
+        );
+      }
+    }
+
+    let session = session.as_ref().context(
+      "Method called in invalid context. This should not happen",
+    )?;
+
+    let webauthn = webauthn().context(
+      "No webauthn provider available, invalid KOMODO_HOST config",
+    )?;
+
+    // Get two parts from this, the first is returned to the client.
+    // The second must stay server side and is used in confirmation flow.
+    let (challenge, server_state) = webauthn
+      .start_passkey_registration(
+        Uuid::new_v4(),
+        &user.username,
+        &user.username,
+        None,
+      )?;
+
+    session
+      .insert(
+        SESSION_KEY_PASSKEY_ENROLLMENT,
+        (&user.id, server_state),
+      )
+      .await
+      .context(
+        "Failed to store passkey enrollment state in server side client session",
+      )?;
+
+    Ok(challenge.into())
+  }
+}
+
+//
+
+impl Resolve<UserArgs> for ConfirmPasskeyEnrollment {
+  #[instrument(
+    "ConfirmPasskeyEnrollment",
+    skip_all,
+    fields(operator = user.id)
+  )]
+  async fn resolve(
+    self,
+    UserArgs { user, session }: &UserArgs,
+  ) -> serror::Result<ConfirmPasskeyEnrollmentResponse> {
+    let session = session.as_ref().context(
+      "Method called in invalid context. This should not happen",
+    )?;
+
+    let webauthn = webauthn().context(
+      "No webauthn provider available, invalid KOMODO_HOST config",
+    )?;
+
+    let (user_id, server_state) = session
+      .remove::<(String, PasskeyRegistration)>(
+        SESSION_KEY_PASSKEY_ENROLLMENT,
+      )
+      .await
+      .context("Passkey enrollment was not initiated correctly")?
+      .context(
+        "Passkey enrollment was not initiated correctly or timed out",
+      )?;
+
+    let passkey = webauthn
+      .finish_passkey_registration(
+        &self.credential.into(),
+        &server_state,
+      )
+      .context("Failed to finish passkey registration")?;
+
+    let passkey = to_bson(&passkey)
+      .context("Failed to serialize passkey to BSON")?;
+
+    let update = doc! {
+      "$set": {
+        "passkey.passkey": passkey,
+        "passkey.created_at": komodo_timestamp()
+      }
+    };
+
+    update_one_by_id(&db_client().users, &user_id, update, None)
+      .await
+      .context("Failed to update user passkey options on database")?;
+
+    Ok(ConfirmPasskeyEnrollmentResponse {})
+  }
+}
+
+//
+
+impl Resolve<UserArgs> for UnenrollPasskey {
+  #[instrument(
+    "UnenrollPasskey",
+    skip_all,
+    fields(operator = user.id)
+  )]
+  async fn resolve(
+    self,
+    UserArgs { user, .. }: &UserArgs,
+  ) -> serror::Result<UnenrollPasskeyResponse> {
+    let update = doc! {
+      "$set": {
+        "passkey.passkey": null,
+        "passkey.created_at": 0
+      }
+    };
+    update_one_by_id(&db_client().users, &user.id, update, None)
+      .await
+      .context("Failed to update user passkey options on database")?;
+    Ok(UnenrollPasskeyResponse {})
   }
 }

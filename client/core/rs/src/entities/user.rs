@@ -1,14 +1,23 @@
 use std::{collections::HashMap, sync::OnceLock};
 
+use base64urlsafedata::Base64UrlSafeData;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
+use webauthn_rs::prelude::Passkey;
 
 use crate::entities::{I64, MongoId};
 
 use super::{
   ResourceTargetVariant, permission::PermissionLevelAndSpecifics,
 };
+
+#[typeshare]
+pub type BytesArray = Vec<u8>;
+#[typeshare(serialized_as = "BytesArray")]
+pub type _Base64UrlSafeData = Base64UrlSafeData;
+#[typeshare(serialized_as = "any")]
+pub type _Passkey = Passkey;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -61,11 +70,11 @@ pub struct User {
 
   /// TOTP 2fa credentials
   #[serde(default)]
-  pub totp: Totp,
+  pub totp: UserTotpConfig,
 
-  /// WebAuthn 2fa credentials
+  /// WebAuthn Passkey 2fa credentials
   #[serde(default)]
-  pub webauthn: WebAuthn,
+  pub passkey: UserPasskeyConfig,
 
   /// When the user last opened updates dropdown.
   #[serde(default)]
@@ -114,7 +123,7 @@ impl Default for UserConfig {
 
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct Totp {
+pub struct UserTotpConfig {
   /// TOTP shared secret, encrypted
   pub secret: String,
   /// Unix timestamp in milliseconds when secret confirmed
@@ -123,32 +132,28 @@ pub struct Totp {
   pub recovery_codes: Vec<String>,
 }
 
-impl Totp {
+impl UserTotpConfig {
   pub fn sanitize(&mut self) {
     self.secret.clear();
     self.recovery_codes.clear();
+  }
+
+  pub fn enrolled(&self) -> bool {
+    !self.secret.is_empty()
   }
 }
 
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct WebAuthn {
-  /// Credential Name
-  pub name: String,
-  /// Credential ID
-  pub id: String,
-  /// COSE-encoded public key
-  pub public_key: String,
-  /// WebAuthn signature count
-  pub sign_count: I64,
+pub struct UserPasskeyConfig {
+  pub passkey: Option<_Passkey>,
   /// Unix timestamp in milliseconds when key created
   pub created_at: I64,
 }
 
-impl WebAuthn {
+impl UserPasskeyConfig {
   pub fn sanitize(&mut self) {
-    self.id.clear();
-    self.public_key.clear();
+    self.passkey = None;
   }
 }
 
@@ -159,7 +164,7 @@ impl User {
       password.clear();
     }
     self.totp.sanitize();
-    self.webauthn.sanitize();
+    self.passkey.sanitize();
   }
 
   /// Returns whether user is an inbuilt service user

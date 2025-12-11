@@ -19,10 +19,11 @@ use komodo_client::entities::{
   swarm::SwarmState,
 };
 use rate_limit::RateLimiter;
+use webauthn_rs::{Webauthn, WebauthnBuilder};
 
 use crate::{
   auth::jwt::JwtClient,
-  config::core_config,
+  config::{core_config, core_host},
   connection::PeripheryConnections,
   helpers::{
     action_state::ActionStates, all_resources::AllResourcesById,
@@ -242,20 +243,20 @@ pub fn auth_rate_limiter() -> &'static RateLimiter {
   })
 }
 
-/// User id -> (unconfirmed secret, expiry)
-pub type TotpEnrollmentCache = CloneCache<String, (Vec<u8>, u128)>;
-
-pub fn totp_enrollment_cache() -> &'static TotpEnrollmentCache {
-  static TOTP_ENROLLMENT_CACHE: OnceLock<TotpEnrollmentCache> =
-    OnceLock::new();
-  TOTP_ENROLLMENT_CACHE.get_or_init(Default::default)
-}
-
-/// totp pending token -> (user id, expiry)
-pub type TotpPendingLoginCache = CloneCache<String, (String, u128)>;
-
-pub fn totp_pending_login_cache() -> &'static TotpPendingLoginCache {
-  static TOTP_LOGIN_CACHE: OnceLock<TotpPendingLoginCache> =
-    OnceLock::new();
-  TOTP_LOGIN_CACHE.get_or_init(Default::default)
+pub fn webauthn() -> Option<&'static Webauthn> {
+  static WEBAUTHN: OnceLock<Option<Webauthn>> = OnceLock::new();
+  WEBAUTHN
+    .get_or_init(|| {
+      let rp_origin = core_host()?;
+      // The relying party id (the effective domain)
+      let rp_id = rp_origin.domain()?;
+      info!("Using '{rp_id}' as WebAuthn rp_id");
+      WebauthnBuilder::new(rp_id, &rp_origin)
+        .inspect_err(|e| warn!("Failed to init webauthn provider | Invalid KOMODO_HOST: could not build webauthn provider builder | {e:?}"))
+        .ok()?
+        .build()
+        .inspect_err(|e| warn!("Failed to init webauthn provider | Invalid KOMODO_HOST: could not build webauthn provider | {e:?}"))
+        .ok()
+    })
+    .as_ref()
 }

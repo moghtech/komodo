@@ -6,6 +6,7 @@ export type AuthResponses = {
   LoginLocalUser: Types.LoginLocalUserResponse;
   ExchangeForJwt: Types.ExchangeForJwtResponse;
   CompleteTotpLogin: Types.CompleteTotpLoginResponse;
+  CompletePasskeyLogin: Types.CompletePasskeyLoginResponse;
   GetUser: Types.GetUserResponse;
 };
 
@@ -17,6 +18,9 @@ export type UserResponses = {
   BeginTotpEnrollment: Types.BeginTotpEnrollmentResponse;
   ConfirmTotpEnrollment: Types.ConfirmTotpEnrollmentResponse;
   UnenrollTotp: Types.UnenrollTotpResponse;
+  BeginPasskeyEnrollment: Types.BeginPasskeyEnrollmentResponse;
+  ConfirmPasskeyEnrollment: Types.ConfirmPasskeyEnrollmentResponse;
+  UnenrollPasskey: Types.UnenrollPasskeyResponse;
 };
 
 export type ReadResponses = {

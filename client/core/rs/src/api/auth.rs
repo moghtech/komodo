@@ -2,6 +2,9 @@ use derive_empty_traits::EmptyTraits;
 use resolver_api::{HasResponse, Resolve};
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
+use webauthn_rs_proto::{
+  PublicKeyCredential, RequestChallengeResponse,
+};
 
 use crate::entities::user::User;
 
@@ -17,13 +20,27 @@ pub struct JwtResponse {
   pub jwt: String,
 }
 
+#[typeshare(serialized_as = "any")]
+pub type _RequestChallengeResponse = RequestChallengeResponse;
+
 /// JSON containing either an authentication token or a TwoFactor pending token.
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
 pub enum JwtOrTwoFactor {
   Jwt(JwtResponse),
-  TwoFactor { token: String },
+  Passkey(_RequestChallengeResponse),
+  Totp {},
+}
+
+/// JSON containing either a user id or the required 2fa auth check.
+#[typeshare]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", content = "data")]
+pub enum UserIdOrTwoFactor {
+  UserId(String),
+  Passkey(_RequestChallengeResponse),
+  Totp {},
 }
 
 //
@@ -109,8 +126,7 @@ pub type LoginLocalUserResponse = JwtOrTwoFactor;
 
 //
 
-/// Exchange a single use exchange token (safe for transport in url query)
-/// for a jwt.
+/// Retrieve a JWT after completing third party login flows.
 /// Response: [ExchangeForJwtResponse].
 #[typeshare]
 #[derive(
@@ -119,10 +135,7 @@ pub type LoginLocalUserResponse = JwtOrTwoFactor;
 #[empty_traits(KomodoAuthRequest)]
 #[response(ExchangeForJwtResponse)]
 #[error(serror::Error)]
-pub struct ExchangeForJwt {
-  /// The 'exchange token'
-  pub token: String,
-}
+pub struct ExchangeForJwt {}
 
 /// Response for [ExchangeForJwt].
 #[typeshare]
@@ -140,8 +153,6 @@ pub type ExchangeForJwtResponse = JwtResponse;
 #[response(CompleteTotpLoginResponse)]
 #[error(serror::Error)]
 pub struct CompleteTotpLogin {
-  /// The '2fa token'
-  pub token: String,
   /// The time dependent totp code for user.
   pub code: String,
 }
@@ -149,6 +160,28 @@ pub struct CompleteTotpLogin {
 /// Response for [CompleteTotpLogin].
 #[typeshare]
 pub type CompleteTotpLoginResponse = JwtResponse;
+
+//
+
+#[typeshare(serialized_as = "any")]
+pub type _PublicKeyCredential = PublicKeyCredential;
+
+/// Confirm a single use 2fa pending token + time-dependent user totp code for a jwt.
+/// Response: [CompletePasskeyLoginResponse].
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoAuthRequest)]
+#[response(CompletePasskeyLoginResponse)]
+#[error(serror::Error)]
+pub struct CompletePasskeyLogin {
+  pub credential: _PublicKeyCredential,
+}
+
+/// Response for [CompletePasskeyLogin].
+#[typeshare]
+pub type CompletePasskeyLoginResponse = JwtResponse;
 
 //
 

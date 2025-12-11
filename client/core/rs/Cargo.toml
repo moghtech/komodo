@@ -26,10 +26,13 @@ partial_derive2.workspace = true
 derive_variants.workspace = true
 resolver_api.workspace = true
 # external
+base64urlsafedata.workspace = true
+webauthn-rs-proto.workspace = true
 tokio-tungstenite.workspace = true
 derive_builder.workspace = true
 futures-util.workspace = true
 urlencoding.workspace = true
+webauthn-rs.workspace = true
 serde_json.workspace = true
 tokio-util.workspace = true
 ipnetwork.workspace = true

@@ -52,7 +52,7 @@ impl Resolve<WriteArgs> for CreateServiceUser {
       username: self.username,
       config,
       totp: Default::default(),
-      webauthn: Default::default(),
+      passkey: Default::default(),
       enabled: true,
       admin: false,
       super_admin: false,
@@ -176,7 +176,10 @@ impl Resolve<WriteArgs> for CreateApiKeyForServiceUser {
       name: self.name,
       expires: self.expires,
     }
-    .resolve(&UserArgs { user: service_user })
+    .resolve(&UserArgs {
+      user: service_user,
+      session: None,
+    })
     .await
   }
 }

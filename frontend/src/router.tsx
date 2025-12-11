@@ -1,6 +1,9 @@
 import { Layout } from "@components/layouts";
 import { LOGIN_TOKENS, useAuth, useUser } from "@lib/hooks";
+import { preparePasskeyCredential } from "@lib/utils";
 import { sanitize_query_inner } from "@main";
+import { useToast } from "@ui/use-toast";
+import { Types } from "komodo_client";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense } from "react";
 import {
@@ -40,47 +43,73 @@ const SwarmSecretPage = lazy(() => import("@pages/swarm/secret"));
 const SwarmConfigPage = lazy(() => import("@pages/swarm/config"));
 const SwarmStackPage = lazy(() => import("@pages/swarm/stack"));
 
-let exchange_token_sent = false;
+let jwt_redeem_sent = false;
+let passkey_sent = false;
 
 /// returns whether to show login / loading screen depending on state of exchange token loop
-const useQueryToken = () => {
-  const search = new URLSearchParams(location.search);
-  const twoFactorToken = search.get("two_factor");
-  const exchangeToken = search.get("token");
-  const { mutate } = useAuth("ExchangeForJwt", {
-    onSuccess: ({ user_id, jwt }) => {
-      LOGIN_TOKENS.add_and_change(user_id, jwt);
-      sanitize_query_inner(search);
-    },
+const useQueryState = () => {
+  const { toast } = useToast();
+  const onSuccess = ({ user_id, jwt }: Types.JwtResponse) => {
+    LOGIN_TOKENS.add_and_change(user_id, jwt);
+    sanitize_query_inner(search);
+  };
+  const { mutate: redeemJwt, isPending: redeem_pending } = useAuth(
+    "ExchangeForJwt",
+    {
+      onSuccess,
+    }
+  );
+  const { mutate: completePasskeyLogin } = useAuth("CompletePasskeyLogin", {
+    onSuccess,
   });
+  const search = new URLSearchParams(location.search);
 
-  if (twoFactorToken) return { twoFactorToken, exchangeTokenPending: false };
-
-  // In this case, failed to get user (jwt unset / invalid)
-  // and the exchange token is not in url.
-  // Just show the login.
-  if (!exchangeToken)
-    return { twoFactorToken: "", exchangeTokenPending: false };
+  const _passkey = search.get("passkey");
+  const passkey = _passkey ? JSON.parse(_passkey) : null;
 
   // guard against multiple reqs sent
   // maybe isPending would do this but not sure about with render loop, this for sure will.
-  if (!exchange_token_sent) {
-    mutate({ token: exchangeToken });
-    exchange_token_sent = true;
+  if (passkey && !passkey_sent) {
+    navigator.credentials
+      .get(preparePasskeyCredential(passkey))
+      .then((credential) => completePasskeyLogin({ credential }))
+      .catch((e) => {
+        console.error(e);
+        toast({
+          title: "Failed to select passkey",
+          description: "See console for details",
+          variant: "destructive",
+        });
+      });
+    passkey_sent = true;
   }
 
-  return { twoFactorToken: "", exchangeTokenPending: true };
+  const jwt_redeem_ready = search.get("redeem_ready") === "true";
+
+  // guard against multiple reqs sent
+  // maybe isPending would do this but not sure about with render loop, this for sure will.
+  if (jwt_redeem_ready && !jwt_redeem_sent) {
+    redeemJwt({});
+    jwt_redeem_sent = true;
+  }
+
+  return {
+    jwt_redeem_ready,
+    redeem_pending,
+    passkey_pending: !!passkey,
+    totp: search.get("totp") === "true",
+  };
 };
 
 export const Router = () => {
   // Handle exchange token loop to avoid showing login flash
-  const { twoFactorToken, exchangeTokenPending } = useQueryToken();
+  const { redeem_pending, passkey_pending, totp } = useQueryState();
 
-  if (twoFactorToken) {
-    return <Login twoFactorToken={twoFactorToken} />;
+  if (totp) {
+    return <Login totpIsPending />;
   }
 
-  if (exchangeTokenPending) {
+  if (redeem_pending || passkey_pending) {
     return (
       <div className="w-screen h-screen flex justify-center items-center">
         <Loader2 className="w-8 h-8 animate-spin" />

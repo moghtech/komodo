@@ -19,8 +19,9 @@ import { useRef, useState } from "react";
 import { ThemeToggle } from "@ui/theme";
 import { KOMODO_BASE_URL, sanitize_query } from "@main";
 import { KeyRound, X } from "lucide-react";
-import { cn } from "@lib/utils";
+import { cn, preparePasskeyCredential } from "@lib/utils";
 import { Types } from "komodo_client";
+import { useToast } from "@ui/use-toast";
 
 type OauthProvider = "Github" | "Google" | "OIDC";
 
@@ -35,12 +36,17 @@ const login_with_oauth = (provider: OauthProvider) => {
   );
 };
 
-export default function Login({ twoFactorToken }: { twoFactorToken?: string }) {
+export default function Login({
+  totpIsPending: _totpIsPending,
+}: {
+  totpIsPending?: boolean;
+}) {
+  const { toast } = useToast();
   const options = useLoginOptions().data;
   const userInvalidate = useUserInvalidate();
   const formRef = useRef<HTMLFormElement>(null);
   const totpFormRef = useRef<HTMLFormElement>(null);
-  const [totpPendingToken, setTotpPendingToken] = useState(twoFactorToken);
+  const [totpIsPending, setTotpPending] = useState(_totpIsPending ?? false);
 
   // If signing in another user, need to redirect away from /login manually
   const maybeNavigate = location.pathname.startsWith("/login")
@@ -56,31 +62,51 @@ export default function Login({ twoFactorToken }: { twoFactorToken?: string }) {
     maybeNavigate?.();
   };
 
+  const secondFactorOnSuccess = (res: Types.JwtResponse) => {
+    sanitize_query();
+    onSuccess(res);
+  };
+
   const { mutate: signup, isPending: signupPending } = useAuth(
     "SignUpLocalUser",
     {
       onSuccess,
     }
   );
+
+  const { mutate: completeTotpLogin, isPending: totpPending } = useAuth(
+    "CompleteTotpLogin",
+    {
+      onSuccess: secondFactorOnSuccess,
+    }
+  );
+
+  const { mutate: completePasskeyLogin } = useAuth("CompletePasskeyLogin", {
+    onSuccess: secondFactorOnSuccess,
+  });
+
   const { mutate: login, isPending: loginPending } = useAuth("LoginLocalUser", {
     onSuccess: ({ type, data }) => {
       switch (type) {
         case "Jwt":
           return onSuccess(data);
-        case "TwoFactor":
-          return setTotpPendingToken(data.token);
+        case "Passkey":
+          return navigator.credentials
+            .get(preparePasskeyCredential(data))
+            .then((credential) => completePasskeyLogin({ credential }))
+            .catch((e) => {
+              console.error(e);
+              toast({
+                title: "Failed to select passkey",
+                description: "See console for details",
+                variant: "destructive",
+              });
+            });
+        case "Totp":
+          return setTotpPending(true);
       }
     },
   });
-  const { mutate: totp, isPending: totpPending } = useAuth(
-    "CompleteTotpLogin",
-    {
-      onSuccess: (res) => {
-        sanitize_query();
-        onSuccess(res);
-      },
-    }
-  );
 
   const getFormCredentials = () => {
     if (!formRef.current) return undefined;
@@ -117,8 +143,8 @@ export default function Login({ twoFactorToken }: { twoFactorToken?: string }) {
   const handleTotpSubmit = (e: any) => {
     e.preventDefault();
     const creds = getTotpFormCredentials();
-    if (!creds || !totpPendingToken) return;
-    totp({ token: totpPendingToken, code: creds.code });
+    if (!creds || !totpIsPending) return;
+    completeTotpLogin({ code: creds.code });
   };
 
   const no_auth_configured =
@@ -148,7 +174,7 @@ export default function Login({ twoFactorToken }: { twoFactorToken?: string }) {
                 <CardDescription>Log In</CardDescription>
               </div>
             </div>
-            {!totpPendingToken && (
+            {!totpIsPending && (
               <div className="flex gap-2">
                 {(
                   [
@@ -187,7 +213,7 @@ export default function Login({ twoFactorToken }: { twoFactorToken?: string }) {
               </div>
             )}
           </CardHeader>
-          {options?.local && !totpPendingToken && (
+          {options?.local && !totpIsPending && (
             <form ref={formRef} onSubmit={handleSubmit} autoComplete="on">
               <CardContent className="flex flex-col justify-center w-full gap-4">
                 <div className="flex flex-col gap-2">
@@ -234,7 +260,7 @@ export default function Login({ twoFactorToken }: { twoFactorToken?: string }) {
               </CardFooter>
             </form>
           )}
-          {totpPendingToken && (
+          {totpIsPending && (
             <form
               ref={totpFormRef}
               onSubmit={handleTotpSubmit}

@@ -76,6 +76,7 @@ export function KomodoClient(url: string, options: InitOptions) {
               : {}),
             "content-type": "application/json",
           },
+          credentials: "include",
         });
         if (response.status === 200) {
           const body: Res = await response.json();
