@@ -14,6 +14,8 @@ import { SwarmTable } from "./table";
 import {
   swarm_state_intention,
   stroke_color_class_by_intention,
+  swarm_node_state_intention,
+  swarm_task_state_intention,
 } from "@lib/color";
 import { cn, updateLogToHtml } from "@lib/utils";
 import { Types } from "komodo_client";
@@ -143,25 +145,88 @@ export type SwarmResourceType =
   | "Stack";
 
 export const SWARM_ICONS: {
-  [type in SwarmResourceType]: React.FC<{ size?: number; className?: string }>;
+  [type in SwarmResourceType]: React.FC<{
+    swarm_id?: string;
+    resource_id?: string;
+    size?: number;
+    className?: string;
+  }>;
 } = {
-  Node: ({ size, className }) => (
-    <Diamond className={cn(`w-${size} h-${size}`, className)} />
-  ),
-  Service: ({ size, className }) => (
-    <FolderCode className={cn(`w-${size} h-${size}`, className)} />
-  ),
-  Task: ({ size, className }) => (
-    <ListTodo className={cn(`w-${size} h-${size}`, className)} />
-  ),
+  Node: ({ swarm_id, resource_id, size, className }) => {
+    const state = useRead(
+      "ListSwarmNodes",
+      { swarm: swarm_id! },
+      { enabled: !!swarm_id }
+    ).data?.find((node) => resource_id && node.ID === resource_id)?.State;
+    return (
+      <Diamond
+        className={cn(
+          `w-${size} h-${size}`,
+          stroke_color_class_by_intention(swarm_node_state_intention(state)),
+          className
+        )}
+      />
+    );
+  },
+  Stack: ({ swarm_id, resource_id, size, className }) => {
+    const state = useRead(
+      "ListSwarmStacks",
+      { swarm: swarm_id! },
+      { enabled: !!swarm_id }
+    ).data?.find((stack) => resource_id && stack.Name === resource_id)?.State;
+    return (
+      <SquareStack
+        className={cn(
+          `w-${size} h-${size}`,
+          stroke_color_class_by_intention(swarm_state_intention(state)),
+          className
+        )}
+      />
+    );
+  },
+  Service: ({ swarm_id, resource_id, size, className }) => {
+    const state = useRead(
+      "ListSwarmServices",
+      { swarm: swarm_id! },
+      { enabled: !!swarm_id }
+    ).data?.find(
+      (service) =>
+        resource_id &&
+        (service.ID === resource_id || service.Name === resource_id)
+    )?.State;
+    return (
+      <FolderCode
+        className={cn(
+          `w-${size} h-${size}`,
+          stroke_color_class_by_intention(swarm_state_intention(state)),
+          className
+        )}
+      />
+    );
+  },
+  Task: ({ swarm_id, resource_id, size, className }) => {
+    const task = useRead(
+      "ListSwarmTasks",
+      { swarm: swarm_id! },
+      { enabled: !!swarm_id }
+    ).data?.find((task) => resource_id && task.ID === resource_id);
+    return (
+      <ListTodo
+        className={cn(
+          `w-${size} h-${size}`,
+          stroke_color_class_by_intention(
+            swarm_task_state_intention(task?.State, task?.DesiredState)
+          ),
+          className
+        )}
+      />
+    );
+  },
   Secret: ({ size, className }) => (
     <KeyRound className={cn(`w-${size} h-${size}`, className)} />
   ),
   Config: ({ size, className }) => (
     <Settings className={cn(`w-${size} h-${size}`, className)} />
-  ),
-  Stack: ({ size, className }) => (
-    <SquareStack className={cn(`w-${size} h-${size}`, className)} />
   ),
 };
 
@@ -180,10 +245,15 @@ export const SwarmResourceLink = ({
   return (
     <Link
       to={`/swarms/${swarm_id}/swarm-${type.toLowerCase()}/${resource_id}`}
-      className="flex gap-2 items-center hover:underline"
+      className="flex items-center gap-2 text-sm hover:underline py-1"
     >
-      <Icon size={4} />
-      {name ?? "Unknown"}
+      <Icon swarm_id={swarm_id} resource_id={resource_id} size={4} />
+      <div
+        title={name}
+        className="max-w-[250px] lg:max-w-[300px] overflow-hidden overflow-ellipsis break-words text-nowrap"
+      >
+        {name ?? "Unknown"}
+      </div>
     </Link>
   );
 };

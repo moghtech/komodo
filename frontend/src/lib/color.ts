@@ -144,6 +144,55 @@ export const swarm_state_intention: (
   }
 };
 
+export const swarm_node_state_intention: (
+  state?: Types.NodeState
+) => ColorIntention = (state) => {
+  switch (state) {
+    case Types.NodeState.READY:
+      return "Good";
+    case Types.NodeState.DOWN:
+      return "Warning";
+    case Types.NodeState.DISCONNECTED:
+      return "Critical";
+    case Types.NodeState.UNKNOWN:
+      return "Neutral";
+    case undefined:
+      return "None";
+  }
+};
+
+export const swarm_task_state_intention: (
+  state?: Types.TaskState,
+  desired?: Types.TaskState
+) => ColorIntention = (state, desired) => {
+  // Case when its desired running
+  if (desired === Types.TaskState.RUNNING) {
+    if (state === Types.TaskState.RUNNING) {
+      return "Good";
+    } else {
+      return "Critical";
+    }
+  }
+
+  // Case when its desired shutdown
+  if (desired === Types.TaskState.SHUTDOWN) {
+    // If you want it shutdown, then running is critical.
+    if (state === Types.TaskState.RUNNING) {
+      return "Critical";
+    } else {
+      // Otherwise, it is "Down", give neutral color
+      return "Neutral";
+    }
+  }
+
+  // Others
+  if (state === desired) {
+    return "Good";
+  } else {
+    return "Critical";
+  }
+};
+
 export const server_state_intention: (
   state?: Types.ServerState,
   hasVersionMismatch?: boolean
@@ -216,6 +265,8 @@ export const container_state_intention: (
     case Types.ContainerStateStatusEnum.Paused:
       return "Warning";
     case Types.ContainerStateStatusEnum.Empty:
+      return "Unknown";
+    case undefined:
       return "Unknown";
     default:
       return "Critical";
