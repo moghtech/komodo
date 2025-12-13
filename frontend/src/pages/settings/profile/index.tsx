@@ -131,7 +131,7 @@ const ProfileInner = ({ user }: { user: Types.User }) => {
             <UserProfile user={user} />
 
             {/* Update Username */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-wrap">
               <div className="text-muted-foreground font-mono">Username:</div>
               <div className="w-[200px] lg:w-[300px]">
                 <Input
@@ -150,7 +150,7 @@ const ProfileInner = ({ user }: { user: Types.User }) => {
 
             {/* Update Password */}
             {options?.local && (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 flex-wrap">
                 <div className="text-muted-foreground font-mono">Password:</div>
                 <div className="w-[200px] lg:w-[300px] flex items-center gap-2">
                   <Input
