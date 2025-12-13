@@ -30,6 +30,11 @@ export const ServerTabs = ({ id }: { id: string }) => {
   const terminalDisabled =
     !specificTerminal || (server_info?.terminals_disabled ?? true);
 
+  const stacks =
+    useRead("ListStacks", {}).data?.filter(
+      (stack) => stack.info.server_id === id
+    ) ?? [];
+  const noStacks = stacks.length === 0;
   const deployments =
     useRead("ListDeployments", {}).data?.filter(
       (deployment) => deployment.info.server_id === id
@@ -40,11 +45,6 @@ export const ServerTabs = ({ id }: { id: string }) => {
       (repo) => repo.info.server_id === id
     ) ?? [];
   const noRepos = repos.length === 0;
-  const stacks =
-    useRead("ListStacks", {}).data?.filter(
-      (stack) => stack.info.server_id === id
-    ) ?? [];
-  const noStacks = stacks.length === 0;
 
   const noResources = noDeployments && noRepos && noStacks;
 
@@ -88,7 +88,15 @@ export const ServerTabs = ({ id }: { id: string }) => {
     case "Docker":
       return <ServerInfo id={id} titleOther={Selector} />;
     case "Resources":
-      return <ServerTabsResources id={id} Selector={Selector} />;
+      return (
+        <ServerTabsResources
+          id={id}
+          stacks={stacks}
+          deployments={deployments}
+          repos={repos}
+          Selector={Selector}
+        />
+      );
     case "Terminals":
       return <ServerTabsTerminals id={id} Selector={Selector} />;
   }
@@ -97,39 +105,22 @@ export const ServerTabs = ({ id }: { id: string }) => {
 const ServerTabsResources = ({
   Selector,
   id,
+  stacks,
+  deployments,
+  repos,
 }: {
   Selector: ReactNode;
   id: string;
+  stacks: Types.StackListItem[];
+  deployments: Types.DeploymentListItem[];
+  repos: Types.RepoListItem[];
 }) => {
   const is_admin = useUser().data?.admin ?? false;
   const disable_non_admin_create =
     useRead("GetCoreInfo", {}).data?.disable_non_admin_create ?? true;
 
-  const deployments =
-    useRead("ListDeployments", {}).data?.filter(
-      (deployment) => deployment.info.server_id === id
-    ) ?? [];
-  const repos =
-    useRead("ListRepos", {}).data?.filter(
-      (repo) => repo.info.server_id === id
-    ) ?? [];
-  const stacks =
-    useRead("ListStacks", {}).data?.filter(
-      (stack) => stack.info.server_id === id
-    ) ?? [];
-
   return (
     <Section titleOther={Selector}>
-      <Section
-        title="Deployments"
-        actions={
-          (is_admin || !disable_non_admin_create) && (
-            <ResourceComponents.Deployment.New server_id={id} />
-          )
-        }
-      >
-        <DeploymentTable deployments={deployments} />
-      </Section>
       <Section
         title="Stacks"
         actions={
@@ -139,6 +130,16 @@ const ServerTabsResources = ({
         }
       >
         <StackTable stacks={stacks} />
+      </Section>
+      <Section
+        title="Deployments"
+        actions={
+          (is_admin || !disable_non_admin_create) && (
+            <ResourceComponents.Deployment.New server_id={id} />
+          )
+        }
+      >
+        <DeploymentTable deployments={deployments} />
       </Section>
       <Section
         title="Repos"

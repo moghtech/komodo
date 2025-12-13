@@ -1,13 +1,18 @@
-import { useLocalStorage } from "@lib/hooks";
-import { useMemo } from "react";
+import { useLocalStorage, useRead, useUser } from "@lib/hooks";
+import { ReactNode, useMemo } from "react";
 import {
   MobileFriendlyTabsSelector,
   TabNoContent,
 } from "@ui/mobile-friendly-tabs";
 import { SwarmConfig } from "./config";
 import { SwarmInfo } from "./info";
+import { Section } from "@components/layouts";
+import { ResourceComponents } from "..";
+import { StackTable } from "../stack/table";
+import { DeploymentTable } from "../deployment/table";
+import { Types } from "komodo_client";
 
-type SwarmTabsView = "Config" | "Info";
+type SwarmTabsView = "Config" | "Info" | "Resources";
 
 export const SwarmTabs = ({ id }: { id: string }) => {
   const [view, setView] = useLocalStorage<SwarmTabsView>(
@@ -15,7 +20,17 @@ export const SwarmTabs = ({ id }: { id: string }) => {
     "Config"
   );
 
-  // const swarm_info = useSwarm(id)?.info;
+  const stacks =
+    useRead("ListStacks", {}).data?.filter(
+      (stack) => stack.info.swarm_id === id
+    ) ?? [];
+  const noStacks = stacks.length === 0;
+  const deployments =
+    useRead("ListDeployments", {}).data?.filter(
+      (deployment) => deployment.info.swarm_id === id
+    ) ?? [];
+  const noDeployments = deployments.length === 0;
+  const noResources = noDeployments && noStacks;
 
   const tabs = useMemo<TabNoContent<SwarmTabsView>[]>(
     () => [
@@ -24,6 +39,10 @@ export const SwarmTabs = ({ id }: { id: string }) => {
       },
       {
         value: "Info",
+      },
+      {
+        value: "Resources",
+        disabled: noResources,
       },
     ],
     []
@@ -43,5 +62,55 @@ export const SwarmTabs = ({ id }: { id: string }) => {
       return <SwarmConfig id={id} titleOther={Selector} />;
     case "Info":
       return <SwarmInfo id={id} titleOther={Selector} />;
+    case "Resources":
+      return (
+        <SwarmTabsResources
+          id={id}
+          stacks={stacks}
+          deployments={deployments}
+          Selector={Selector}
+        />
+      );
   }
+};
+
+const SwarmTabsResources = ({
+  Selector,
+  id,
+  stacks,
+  deployments,
+}: {
+  Selector: ReactNode;
+  id: string;
+  stacks: Types.StackListItem[];
+  deployments: Types.DeploymentListItem[];
+}) => {
+  const is_admin = useUser().data?.admin ?? false;
+  const disable_non_admin_create =
+    useRead("GetCoreInfo", {}).data?.disable_non_admin_create ?? true;
+
+  return (
+    <Section titleOther={Selector}>
+      <Section
+        title="Stacks"
+        actions={
+          (is_admin || !disable_non_admin_create) && (
+            <ResourceComponents.Stack.New swarm_id={id} />
+          )
+        }
+      >
+        <StackTable stacks={stacks} />
+      </Section>
+      <Section
+        title="Deployments"
+        actions={
+          (is_admin || !disable_non_admin_create) && (
+            <ResourceComponents.Deployment.New swarm_id={id} />
+          )
+        }
+      >
+        <DeploymentTable deployments={deployments} />
+      </Section>
+    </Section>
+  );
 };

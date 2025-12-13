@@ -16,13 +16,13 @@ import { SwarmConfigs } from "./configs";
 import { SwarmStacks } from "./stacks";
 
 type SwarmInfoView =
-  | "Inspect"
   | "Nodes"
   | "Stacks"
   | "Services"
   | "Tasks"
+  | "Configs"
   | "Secrets"
-  | "Configs";
+  | "Inspect";
 
 export const SwarmInfo = ({
   id,
@@ -51,9 +51,6 @@ export const SwarmInfo = ({
   const tabsNoContent = useMemo<TabNoContent<SwarmInfoView>[]>(
     () => [
       {
-        value: "Inspect",
-      },
-      {
         value: "Nodes",
       },
       {
@@ -66,10 +63,13 @@ export const SwarmInfo = ({
         value: "Tasks",
       },
       {
+        value: "Configs",
+      },
+      {
         value: "Secrets",
       },
       {
-        value: "Configs",
+        value: "Inspect",
       },
     ],
     []
@@ -86,8 +86,6 @@ export const SwarmInfo = ({
 
   const Component = () => {
     switch (view) {
-      case "Inspect":
-        return <SwarmInspect id={id} titleOther={Selector} />;
       case "Nodes":
         return <SwarmNodes id={id} titleOther={Selector} _search={_search} />;
       case "Stacks":
@@ -98,10 +96,12 @@ export const SwarmInfo = ({
         );
       case "Tasks":
         return <SwarmTasks id={id} titleOther={Selector} _search={_search} />;
-      case "Secrets":
-        return <SwarmSecrets id={id} titleOther={Selector} _search={_search} />;
       case "Configs":
         return <SwarmConfigs id={id} titleOther={Selector} _search={_search} />;
+      case "Secrets":
+        return <SwarmSecrets id={id} titleOther={Selector} _search={_search} />;
+      case "Inspect":
+        return <SwarmInspect id={id} titleOther={Selector} />;
     }
   };
 
