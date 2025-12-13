@@ -1153,6 +1153,8 @@ export interface User {
 	totp?: UserTotpConfig;
 	/** WebAuthn Passkey 2fa credentials */
 	passkey?: UserPasskeyConfig;
+	/** Allow third party logins to skip 2fa. */
+	third_party_skip_2fa?: boolean;
 	/** When the user last opened updates dropdown. */
 	last_update_view?: I64;
 	/** Recently viewed ids */
@@ -5509,6 +5511,9 @@ export type UpdateProcedureResponse = Procedure;
 export type UpdateResourceMetaResponse = NoData;
 
 export type UpdateServiceUserDescriptionResponse = User;
+
+/** Response for [UpdateThirdPartySkip2fa]. */
+export type UpdateThirdPartySkip2faResponse = NoData;
 
 export type UpdateUserAdminResponse = NoData;
 
@@ -10231,6 +10236,14 @@ export interface UpdateTagColor {
 }
 
 /**
+ * Updates's whether user can skip 2fa when logging in using a third party (Oauth / OIDC).
+ * Response: [NoData]
+ */
+export interface UpdateThirdPartySkip2fa {
+	skip: boolean;
+}
+
+/**
  * **Super Admin only.** Update's whether a user is admin.
  * Response: [NoData].
  */
@@ -10743,7 +10756,8 @@ export type UserRequest =
 	| { type: "ConfirmPasskeyEnrollment", params: ConfirmPasskeyEnrollment }
 	| { type: "UnenrollPasskey", params: UnenrollPasskey }
 	| { type: "BeginThirdPartyLoginLink", params: BeginThirdPartyLoginLink }
-	| { type: "UnlinkLogin", params: UnlinkLogin };
+	| { type: "UnlinkLogin", params: UnlinkLogin }
+	| { type: "UpdateThirdPartySkip2fa", params: UpdateThirdPartySkip2fa };
 
 export type WriteRequest = 
 	| { type: "UpdateResourceMeta", params: UpdateResourceMeta }

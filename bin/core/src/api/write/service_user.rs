@@ -53,6 +53,7 @@ impl Resolve<WriteArgs> for CreateServiceUser {
       config,
       totp: Default::default(),
       passkey: Default::default(),
+      third_party_skip_2fa: Default::default(),
       enabled: true,
       admin: false,
       super_admin: false,

@@ -84,6 +84,10 @@ pub struct User {
   #[serde(default)]
   pub passkey: UserPasskeyConfig,
 
+  /// Allow third party logins to skip 2fa.
+  #[serde(default = "default_third_party_skip_2fa")]
+  pub third_party_skip_2fa: bool,
+
   /// When the user last opened updates dropdown.
   #[serde(default)]
   pub last_update_view: I64,
@@ -99,6 +103,10 @@ pub struct User {
 
   #[serde(default)]
   pub updated_at: I64,
+}
+
+fn default_third_party_skip_2fa() -> bool {
+  true
 }
 
 #[typeshare]

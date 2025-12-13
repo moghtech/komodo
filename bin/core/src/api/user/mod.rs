@@ -68,6 +68,7 @@ enum UserRequest {
   UnenrollPasskey(UnenrollPasskey),
   BeginThirdPartyLoginLink(BeginThirdPartyLoginLink),
   UnlinkLogin(UnlinkLogin),
+  UpdateThirdPartySkip2fa(UpdateThirdPartySkip2fa),
 }
 
 pub fn router() -> Router {
@@ -316,6 +317,32 @@ impl Resolve<UserArgs> for UnlinkLogin {
     let update = doc! {
       "$unset": {
         field: ""
+      }
+    };
+
+    update_one_by_id(&db_client().users, &user.id, update, None)
+      .await
+      .context("Failed to unlink third partly login on database")?;
+
+    Ok(NoData {})
+  }
+}
+
+impl Resolve<UserArgs> for UpdateThirdPartySkip2fa {
+  #[instrument(
+    "UpdateThirdPartySkip2fa",
+    skip_all,
+    fields(operator = user.id)
+  )]
+  async fn resolve(
+    self,
+    UserArgs { user, .. }: &UserArgs,
+  ) -> serror::Result<UpdateThirdPartySkip2faResponse> {
+    check_locked(&user.username)?;
+
+    let update = doc! {
+      "$set": {
+        "third_party_skip_2fa": self.skip
       }
     };
 

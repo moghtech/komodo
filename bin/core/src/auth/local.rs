@@ -111,6 +111,7 @@ async fn sign_up_local_user(
     linked_logins: Default::default(),
     totp: Default::default(),
     passkey: Default::default(),
+    third_party_skip_2fa: Default::default(),
   };
 
   let user_id = db_client()

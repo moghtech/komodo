@@ -29,6 +29,9 @@ import { EnrollTotp } from "./totp";
 import { EnrollPasskey } from "./passkey";
 import { KOMODO_BASE_URL } from "@main";
 import { DataTable } from "@ui/data-table";
+import { Switch } from "@ui/switch";
+import { Label } from "@ui/label";
+import { cn } from "@lib/utils";
 
 type LinkedLoginProvider = "Local" | "Github" | "Google" | "Oidc";
 
@@ -71,6 +74,12 @@ const ProfileInner = ({ user }: { user: Types.User }) => {
     onSuccess: () => {
       toast({ title: "Password updated." });
       setPassword("");
+    },
+  });
+  const { mutate: update_skip_2fa } = useManageUser("UpdateThirdPartySkip2fa", {
+    onSuccess: () => {
+      toast({ title: "Updated user third party skip 2fa." });
+      refetchUser();
     },
   });
   const { mutate: unlink } = useManageUser("UnlinkLogin", {
@@ -225,36 +234,36 @@ const ProfileInner = ({ user }: { user: Types.User }) => {
               },
             ]}
           />
-          {/* <div className="flex items-center gap-4">
-            {thirdPartyProviders.map((provider) => (
-              <Button
-                key={provider}
-                variant="outline"
-                className="flex gap-2 px-3 items-center"
-                onClick={() => linkWithOauth(provider)}
-                disabled={!!user.linked_logins?.[provider]}
-              >
-                {provider}
-                {provider === "Oidc" ? (
-                  <KeyRound className="w-4 h-4" />
-                ) : (
-                  <img
-                    src={`/icons/${provider.toLowerCase()}.svg`}
-                    alt={provider}
-                    className="w-4 h-4"
-                  />
-                )}
-              </Button>
-            ))}
-          </div> */}
         </Section>
       )}
 
       {/* 2FA */}
       <Section title="2FA" icon={<KeyRound className="w-4 h-4" />}>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-x-6 gap-y-4 flex-wrap">
           <EnrollPasskey user={user} />
           <EnrollTotp user={user} />
+          <div
+            className={cn(
+              "flex items-center gap-2",
+              !user.passkey?.created_at && !user.totp?.confirmed_at && "hidden"
+            )}
+          >
+            <Switch
+              id="update-skip-2fa"
+              checked={user.third_party_skip_2fa}
+              onCheckedChange={(skip) => update_skip_2fa({ skip })}
+            />
+            <Label
+              htmlFor="update-skip-2fa"
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              Skip 2FA for third party logins
+              <StatusBadge
+                text={user.third_party_skip_2fa ? "ENABLED" : "DISABLED"}
+                intent={user.third_party_skip_2fa ? "Good" : "Critical"}
+              />
+            </Label>
+          </div>
         </div>
       </Section>
 

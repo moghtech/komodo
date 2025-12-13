@@ -310,3 +310,22 @@ pub struct UnenrollPasskey {}
 /// Response for [UnenrollPasskey].
 #[typeshare]
 pub type UnenrollPasskeyResponse = NoData;
+
+//
+
+/// Updates's whether user can skip 2fa when logging in using a third party (Oauth / OIDC).
+/// Response: [NoData]
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoUserRequest)]
+#[response(UpdateThirdPartySkip2faResponse)]
+#[error(serror::Error)]
+pub struct UpdateThirdPartySkip2fa {
+  pub skip: bool,
+}
+
+/// Response for [UpdateThirdPartySkip2fa].
+#[typeshare]
+pub type UpdateThirdPartySkip2faResponse = NoData;

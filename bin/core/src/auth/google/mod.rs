@@ -181,9 +181,24 @@ async fn callback(
 
   let user_id_or_two_factor = match user {
     Some(user) => {
-      match (user.passkey.passkey, user.totp.enrolled()) {
+      match (
+        user.third_party_skip_2fa,
+        user.passkey.passkey,
+        user.totp.enrolled(),
+      ) {
+        // Skip / No 2FA
+        (true, _, _) | (false, None, false) => {
+          session
+            .insert(
+              SessionUserId::KEY,
+              SessionUserId(user.id.clone()),
+            )
+            .await
+            .context("Failed to store user id for client session")?;
+          UserIdOrTwoFactor::UserId(user.id)
+        }
         // WebAuthn Passkey 2FA
-        (Some(passkey), _) => {
+        (false, Some(passkey), _) => {
           let webauthn = webauthn().context(
             "No webauthn provider available, invalid KOMODO_HOST config",
           )?;
@@ -202,7 +217,7 @@ async fn callback(
           UserIdOrTwoFactor::Passkey(response)
         }
         // TOTP 2FA
-        (None, true) => {
+        (false, None, true) => {
           session
             .insert(
               SessionTotpLogin::KEY,
@@ -213,17 +228,6 @@ async fn callback(
               "Failed to store totp login state in for user session",
             )?;
           UserIdOrTwoFactor::Totp {}
-        }
-        // No 2FA
-        (None, false) => {
-          session
-            .insert(
-              SessionUserId::KEY,
-              SessionUserId(user.id.clone()),
-            )
-            .await
-            .context("Failed to store user id for client session")?;
-          UserIdOrTwoFactor::UserId(user.id)
         }
       }
     }
@@ -274,6 +278,7 @@ async fn callback(
         linked_logins: Default::default(),
         totp: Default::default(),
         passkey: Default::default(),
+        third_party_skip_2fa: Default::default(),
       };
       let user_id = db_client
         .users

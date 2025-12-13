@@ -25,6 +25,7 @@ export type UserResponses = {
   UnenrollPasskey: Types.UnenrollPasskeyResponse;
   BeginThirdPartyLoginLink: Types.BeginThirdPartyLoginLinkResponse;
   UnlinkLogin: Types.UnlinkLoginResponse;
+  UpdateThirdPartySkip2fa: Types.UpdateThirdPartySkip2faResponse;
 };
 
 export type ReadResponses = {

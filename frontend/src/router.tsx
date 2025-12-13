@@ -53,12 +53,9 @@ const useQueryState = () => {
     LOGIN_TOKENS.add_and_change(user_id, jwt);
     sanitize_query_inner(search);
   };
-  const { mutate: redeemJwt, isPending: redeem_pending } = useAuth(
-    "ExchangeForJwt",
-    {
-      onSuccess,
-    }
-  );
+  const { mutate: redeemJwt } = useAuth("ExchangeForJwt", {
+    onSuccess,
+  });
   const { mutate: completePasskeyLogin } = useAuth("CompletePasskeyLogin", {
     onSuccess,
   });
@@ -95,7 +92,6 @@ const useQueryState = () => {
 
   return {
     jwt_redeem_ready,
-    redeem_pending,
     passkey_pending: !!passkey,
     totp: search.get("totp") === "true",
   };
@@ -103,13 +99,13 @@ const useQueryState = () => {
 
 export const Router = () => {
   // Handle exchange token loop to avoid showing login flash
-  const { redeem_pending, passkey_pending, totp } = useQueryState();
+  const { jwt_redeem_ready, passkey_pending, totp } = useQueryState();
 
   if (totp) {
     return <Login totpIsPending />;
   }
 
-  if (redeem_pending || passkey_pending) {
+  if (jwt_redeem_ready || passkey_pending) {
     return (
       <div className="w-screen h-screen flex justify-center items-center">
         <Loader2 className="w-8 h-8 animate-spin" />

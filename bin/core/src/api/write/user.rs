@@ -81,6 +81,7 @@ impl Resolve<WriteArgs> for CreateLocalUser {
       linked_logins: Default::default(),
       totp: Default::default(),
       passkey: Default::default(),
+      third_party_skip_2fa: Default::default(),
     };
 
     user.id = db_client()
