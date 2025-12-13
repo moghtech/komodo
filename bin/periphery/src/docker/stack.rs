@@ -152,8 +152,21 @@ pub fn state_from_tasks<'a>(
     let Some(current) = current.split(" ").next() else {
       continue;
     };
-    if current != desired {
-      return SwarmState::Unhealthy;
+    match (current, desired.as_str()) {
+      // Both running, healthy
+      ("Running", "Running") => continue,
+      // Not running when it should be, unhealthy
+      (_, "Running") => return SwarmState::Unhealthy,
+      // Should be shutdown but its running, unhealthy
+      ("Running", "Shutdown") => return SwarmState::Unhealthy,
+      // Very likely healthy
+      (_, "Shutdown") => continue,
+      // All others must match
+      (current, desired) => {
+        if current != desired {
+          return SwarmState::Unhealthy;
+        }
+      }
     }
   }
   SwarmState::Healthy

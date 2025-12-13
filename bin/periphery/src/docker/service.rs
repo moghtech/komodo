@@ -114,8 +114,28 @@ fn service_state_from_tasks(
       .unwrap_or_default()
   });
   for task in tasks {
-    if task.state != task.desired_state {
-      return SwarmState::Unhealthy;
+    let (Some(state), Some(desired_state)) =
+      (task.state, task.desired_state)
+    else {
+      continue;
+    };
+    match (state, desired_state) {
+      // Both running, healthy
+      (TaskState::RUNNING, TaskState::RUNNING) => continue,
+      // Not running when it should be, unhealthy
+      (_, TaskState::RUNNING) => return SwarmState::Unhealthy,
+      // Should be shutdown but its running, unhealthy
+      (TaskState::RUNNING, TaskState::SHUTDOWN) => {
+        return SwarmState::Unhealthy;
+      }
+      // Very likely healthy
+      (_, TaskState::SHUTDOWN) => continue,
+      // All others must match
+      (state, desired) => {
+        if state != desired {
+          return SwarmState::Unhealthy;
+        }
+      }
     }
   }
   SwarmState::Healthy
