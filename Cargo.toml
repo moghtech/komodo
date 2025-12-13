@@ -149,7 +149,6 @@ async-compression = { version = "0.4.35", features = ["tokio", "gzip"] }
 derive_builder = "0.20.2"
 comfy-table = "7.2.1"
 typeshare = "1.0.4"
-dashmap = "6.1.0"
 wildcard = "0.3.0"
 colored = "3.0.0"
 bytes = "1.11.0"

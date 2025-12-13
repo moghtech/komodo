@@ -28,14 +28,10 @@ use serror::{AddStatusCode, AddStatusCodeError, Json};
 use tower_sessions::Session;
 use typeshare::typeshare;
 use uuid::Uuid;
-use webauthn_rs::prelude::PasskeyAuthentication;
 
 use crate::{
-  api::{
-    SESSION_KEY_PASSKEY_LOGIN, SESSION_KEY_TOTP_LOGIN,
-    SESSION_KEY_USER_ID, memory_session_layer,
-  },
   auth::{
+    SessionPasskeyLogin, SessionTotpLogin, SessionUserId,
     get_user_id_from_headers,
     github::{self, client::github_oauth_client},
     google::{self, client::google_oauth_client},
@@ -102,7 +98,7 @@ pub fn router() -> Router {
     router = router.nest("/oidc", oidc::router())
   }
 
-  router.layer(memory_session_layer(60))
+  router
 }
 
 async fn variant_handler(
@@ -185,11 +181,11 @@ impl Resolve<AuthArgs> for ExchangeForJwt {
         "Method called in invalid context. This should not happen",
       )?;
 
-      let user_id = session
-      .remove::<String>(SESSION_KEY_USER_ID)
-      .await
-      .context("Internal session type error")?
-      .context("Authentication steps must be completed before JWT can be retrieved")?;
+      let SessionUserId(user_id) = session
+        .remove(SessionUserId::KEY)
+        .await
+        .context("Internal session type error")?
+        .context("Authentication steps must be completed before JWT can be retrieved")?;
 
       jwt_client().encode(user_id).map_err(Into::into)
     }
@@ -216,8 +212,8 @@ impl Resolve<AuthArgs> for CompleteTotpLogin {
         "Method called in invalid context. This should not happen",
       )?;
 
-      let user_id = session
-        .get::<String>(SESSION_KEY_TOTP_LOGIN)
+      let SessionTotpLogin { user_id } = session
+        .get(SessionTotpLogin::KEY)
         .await
         .context("Internal session type error")?
         .context(
@@ -281,10 +277,8 @@ impl Resolve<AuthArgs> for CompletePasskeyLogin {
         "No webauthn provider available, invalid KOMODO_HOST config",
       )?;
 
-      let (user_id, server_state) = session
-        .get::<(String, PasskeyAuthentication)>(
-          SESSION_KEY_PASSKEY_LOGIN,
-        )
+      let SessionPasskeyLogin { user_id, state } = session
+        .get(SessionPasskeyLogin::KEY)
         .await
         .context("Internal session type error")?
         .context(
@@ -294,10 +288,7 @@ impl Resolve<AuthArgs> for CompletePasskeyLogin {
       // The result of this call must be used to
       // update the stored passkey info on database.
       let update = webauthn
-        .finish_passkey_authentication(
-          &self.credential,
-          &server_state,
-        )
+        .finish_passkey_authentication(&self.credential, &state)
         .context("Failed to validate passkey")?;
 
       let mut passkey = get_user(&user_id)

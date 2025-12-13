@@ -3,47 +3,9 @@ use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::entities::{NoData, user::User};
+use crate::entities::user::User;
 
 use super::KomodoWriteRequest;
-
-//
-
-/// **Only for local users**. Update the calling users username.
-/// Response: [NoData].
-#[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
-#[empty_traits(KomodoWriteRequest)]
-#[response(UpdateUserUsernameResponse)]
-#[error(serror::Error)]
-pub struct UpdateUserUsername {
-  pub username: String,
-}
-
-#[typeshare]
-pub type UpdateUserUsernameResponse = NoData;
-
-//
-
-/// **Only for local users**. Update the calling users password.
-/// Response: [NoData].
-#[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
-#[empty_traits(KomodoWriteRequest)]
-#[response(UpdateUserPasswordResponse)]
-#[error(serror::Error)]
-pub struct UpdateUserPassword {
-  pub password: String,
-}
-
-#[typeshare]
-pub type UpdateUserPasswordResponse = NoData;
-
-//
 
 /// **Admin only**. Delete a user.
 /// Admins can delete any non-admin user.

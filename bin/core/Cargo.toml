@@ -67,7 +67,6 @@ wildcard.workspace = true
 arc-swap.workspace = true
 serde_qs.workspace = true
 colored.workspace = true
-dashmap.workspace = true
 tracing.workspace = true
 reqwest.workspace = true
 dotenvy.workspace = true

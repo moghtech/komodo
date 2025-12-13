@@ -13,6 +13,8 @@ export type AuthResponses = {
 export type UserResponses = {
   PushRecentlyViewed: Types.PushRecentlyViewedResponse;
   SetLastSeenUpdate: Types.SetLastSeenUpdateResponse;
+  UpdateUsername: Types.UpdateUsernameResponse;
+  UpdatePassword: Types.UpdatePasswordResponse;
   CreateApiKey: Types.CreateApiKeyResponse;
   DeleteApiKey: Types.DeleteApiKeyResponse;
   BeginTotpEnrollment: Types.BeginTotpEnrollmentResponse;
@@ -21,6 +23,8 @@ export type UserResponses = {
   BeginPasskeyEnrollment: Types.BeginPasskeyEnrollmentResponse;
   ConfirmPasskeyEnrollment: Types.ConfirmPasskeyEnrollmentResponse;
   UnenrollPasskey: Types.UnenrollPasskeyResponse;
+  BeginThirdPartyLoginLink: Types.BeginThirdPartyLoginLinkResponse;
+  UnlinkLogin: Types.UnlinkLoginResponse;
 };
 
 export type ReadResponses = {
@@ -319,8 +323,6 @@ export type WriteResponses = {
 
   // ==== USER ====
   CreateLocalUser: Types.CreateLocalUserResponse;
-  UpdateUserUsername: Types.UpdateUserUsernameResponse;
-  UpdateUserPassword: Types.UpdateUserPasswordResponse;
   DeleteUser: Types.DeleteUserResponse;
 
   // ==== SERVICE USER ====

@@ -7,15 +7,15 @@ use komodo_client::entities::{
 };
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
-use tokio::sync::Mutex;
 
 use crate::{auth::STATE_PREFIX_LENGTH, config::core_config};
 
-pub fn github_oauth_client() -> &'static Option<GithubOauthClient> {
+pub fn github_oauth_client() -> Option<&'static GithubOauthClient> {
   static GITHUB_OAUTH_CLIENT: OnceLock<Option<GithubOauthClient>> =
     OnceLock::new();
   GITHUB_OAUTH_CLIENT
     .get_or_init(|| GithubOauthClient::new(core_config()))
+    .as_ref()
 }
 
 pub struct GithubOauthClient {
@@ -24,7 +24,6 @@ pub struct GithubOauthClient {
   client_secret: String,
   redirect_uri: String,
   scopes: String,
-  states: Mutex<Vec<String>>,
   user_agent: String,
 }
 
@@ -69,15 +68,14 @@ impl GithubOauthClient {
       redirect_uri: format!("{host}/auth/github/callback"),
       user_agent: Default::default(),
       scopes: Default::default(),
-      states: Default::default(),
     }
     .into()
   }
 
-  pub async fn get_login_redirect_url(
+  pub async fn get_state_and_login_redirect_url(
     &self,
     redirect: Option<String>,
-  ) -> String {
+  ) -> (String, String) {
     let state_prefix = random_string(STATE_PREFIX_LENGTH);
     let state = match redirect {
       Some(redirect) => format!("{state_prefix}{redirect}"),
@@ -87,22 +85,7 @@ impl GithubOauthClient {
       "https://github.com/login/oauth/authorize?state={state}&client_id={}&redirect_uri={}&scope={}",
       self.client_id, self.redirect_uri, self.scopes
     );
-    let mut states = self.states.lock().await;
-    states.push(state);
-    redirect_url
-  }
-
-  pub async fn check_state(&self, state: &str) -> bool {
-    let mut contained = false;
-    self.states.lock().await.retain(|s| {
-      if s.as_str() == state {
-        contained = true;
-        false
-      } else {
-        true
-      }
-    });
-    contained
+    (state, redirect_url)
   }
 
   pub async fn get_access_token(

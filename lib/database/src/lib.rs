@@ -28,10 +28,11 @@ use komodo_client::entities::{
 };
 use mongo_indexed::{create_index, create_unique_index};
 use mungos::{
+  by_id::update_one_by_id,
   init::MongoBuilder,
   mongodb::{
     Collection, Database,
-    bson::{doc, oid::ObjectId},
+    bson::{doc, oid::ObjectId, to_bson},
   },
 };
 
@@ -118,28 +119,44 @@ impl Client {
     user: &User,
     password: &str,
   ) -> anyhow::Result<()> {
-    let UserConfig::Local { .. } = user.config else {
-      return Err(anyhow!(
-        "User is not a 'Local' (username / password) user"
-      ));
-    };
     if password.is_empty() {
       return Err(anyhow!("Password cannot be empty."));
     }
-    let id = ObjectId::from_str(&user.id)
-      .context("User id not valid ObjectId.")?;
     let hashed_password =
       hash_password(password).context("Failed to hash password")?;
-    self
-      .users
-      .update_one(
-        doc! { "_id": id },
-        doc! { "$set": {
-          "config.data.password": hashed_password
-        } },
-      )
+    //
+    let update = match user.config {
+      UserConfig::Service { .. } => {
+        return Err(anyhow!(
+          "Service Users cannot add additional login methods"
+        ));
+      }
+      // Update a primary 'Local' user's password directly.
+      UserConfig::Local { .. } => {
+        doc! {
+          "$set": {
+            "config.data.password": hashed_password
+          }
+        }
+      }
+      // Update User with Local password as an entry in 'additional_logins'
+      _ => {
+        let bson = to_bson(&UserConfig::Local {
+          password: hashed_password,
+        })
+        .context("Failed to serialize login method to bson")?;
+        doc! {
+          "$set": {
+            "linked_logins.Local": bson
+          }
+        }
+      }
+    };
+
+    update_one_by_id(&self.users, &user.id, update, None)
       .await
       .context("Failed to update user password on database.")?;
+
     Ok(())
   }
 

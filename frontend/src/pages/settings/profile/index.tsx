@@ -1,9 +1,24 @@
-import { ConfirmButton } from "@components/util";
-import { useRead, useSetTitle, useUser, useWrite } from "@lib/hooks";
+import { ConfirmButton, StatusBadge } from "@components/util";
+import {
+  useLoginOptions,
+  useManageUser,
+  useRead,
+  useSetTitle,
+  useUser,
+} from "@lib/hooks";
 import { Button } from "@ui/button";
 import { useToast } from "@ui/use-toast";
-import { Loader2, User, Eye, EyeOff, KeyRound, UserPen } from "lucide-react";
-import { useState } from "react";
+import {
+  Loader2,
+  User,
+  Eye,
+  EyeOff,
+  KeyRound,
+  UserPen,
+  Trash,
+  CirclePlus,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { Input } from "@ui/input";
 import { ApiKeysTable } from "@components/api-keys/table";
 import { Section } from "@components/layouts";
@@ -12,6 +27,18 @@ import { Types } from "komodo_client";
 import { CreateKey, DeleteKey } from "./api-key";
 import { EnrollTotp } from "./totp";
 import { EnrollPasskey } from "./passkey";
+import { KOMODO_BASE_URL } from "@main";
+import { DataTable } from "@ui/data-table";
+
+type LinkedLoginProvider = "Local" | "Github" | "Google" | "Oidc";
+
+const useLinkWithOauth = () => {
+  const { mutateAsync } = useManageUser("BeginThirdPartyLoginLink");
+  return (provider: LinkedLoginProvider) =>
+    mutateAsync({}).then(() =>
+      location.replace(`${KOMODO_BASE_URL}/auth/${provider.toLowerCase()}/link`)
+    );
+};
 
 export const Profile = () => {
   useSetTitle("Profile");
@@ -30,21 +57,61 @@ const ProfileInner = ({ user }: { user: Types.User }) => {
   const { refetch: refetchUser } = useUser();
   const { toast } = useToast();
   const keys = useRead("ListApiKeys", {}).data ?? [];
+  const options = useLoginOptions().data;
   const [username, setUsername] = useState(user.username);
   const [password, setPassword] = useState("");
   const [hidePassword, setHidePassword] = useState(true);
-  const { mutate: updateUsername } = useWrite("UpdateUserUsername", {
+  const { mutate: updateUsername } = useManageUser("UpdateUsername", {
     onSuccess: () => {
       toast({ title: "Username updated." });
       refetchUser();
     },
   });
-  const { mutate: updatePassword } = useWrite("UpdateUserPassword", {
+  const { mutate: updatePassword } = useManageUser("UpdatePassword", {
     onSuccess: () => {
       toast({ title: "Password updated." });
       setPassword("");
     },
   });
+  const { mutate: unlink } = useManageUser("UnlinkLogin", {
+    onSuccess: () => {
+      toast({ title: "Unlinked login." });
+      refetchUser();
+    },
+  });
+  const thirdPartyProviders: Array<{
+    provider: LinkedLoginProvider;
+    enabled: boolean;
+    linked: boolean;
+  }> = useMemo(
+    () =>
+      [
+        {
+          provider: "Local" as LinkedLoginProvider,
+          enabled: !!options?.local,
+          linked: !!user?.linked_logins?.Local,
+        },
+        {
+          provider: "Google" as LinkedLoginProvider,
+          enabled: !!options?.google,
+          linked: !!user?.linked_logins?.Google,
+        },
+        {
+          provider: "Github" as LinkedLoginProvider,
+          enabled: !!options?.github,
+          linked: !!user?.linked_logins?.Github,
+        },
+        {
+          provider: "Oidc" as LinkedLoginProvider,
+          enabled: !!options?.oidc,
+          linked: !!user?.linked_logins?.Oidc,
+        },
+      ].filter(
+        ({ enabled, provider }) => enabled && user.config.type !== provider
+      ),
+    [user, options]
+  );
+  const linkWithOauth = useLinkWithOauth();
   return (
     <div className="flex flex-col gap-6">
       {/* Profile */}
@@ -73,7 +140,7 @@ const ProfileInner = ({ user }: { user: Types.User }) => {
             </div>
 
             {/* Update Password */}
-            {user.config.type === "Local" && (
+            {options?.local && (
               <div className="flex items-center gap-4">
                 <div className="text-muted-foreground font-mono">Password:</div>
                 <div className="w-[200px] lg:w-[300px] flex items-center gap-2">
@@ -107,15 +174,87 @@ const ProfileInner = ({ user }: { user: Types.User }) => {
         </Card>
       </Section>
 
+      {/* Linked Logins */}
+      {!!thirdPartyProviders.length && (
+        <Section title="Linked Logins" icon={<KeyRound className="w-4 h-4" />}>
+          <DataTable
+            tableKey="linked-logins-v1"
+            data={thirdPartyProviders}
+            columns={[
+              { header: "Provider", accessorKey: "provider" },
+              {
+                header: "Linked",
+                cell: ({
+                  row: {
+                    original: { linked },
+                  },
+                }) => (
+                  <StatusBadge
+                    text={linked ? "Linked" : "Unlinked"}
+                    intent={linked ? "Good" : "Critical"}
+                  />
+                ),
+              },
+              {
+                header: "Link",
+                cell: ({
+                  row: {
+                    original: { provider, linked },
+                  },
+                }) =>
+                  linked ? (
+                    <ConfirmButton
+                      title="Unlink"
+                      icon={<Trash className="w-4 h-4" />}
+                      variant="destructive"
+                      onClick={() => unlink({ provider })}
+                    />
+                  ) : provider === "Local" ? (
+                    <>Set password above to enable.</>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="flex gap-2 px-3 items-center"
+                      onClick={() => linkWithOauth(provider)}
+                      disabled={!!user.linked_logins?.[provider]}
+                    >
+                      Link {provider}
+                      <CirclePlus className="w-4 h-4" />
+                    </Button>
+                  ),
+              },
+            ]}
+          />
+          {/* <div className="flex items-center gap-4">
+            {thirdPartyProviders.map((provider) => (
+              <Button
+                key={provider}
+                variant="outline"
+                className="flex gap-2 px-3 items-center"
+                onClick={() => linkWithOauth(provider)}
+                disabled={!!user.linked_logins?.[provider]}
+              >
+                {provider}
+                {provider === "Oidc" ? (
+                  <KeyRound className="w-4 h-4" />
+                ) : (
+                  <img
+                    src={`/icons/${provider.toLowerCase()}.svg`}
+                    alt={provider}
+                    className="w-4 h-4"
+                  />
+                )}
+              </Button>
+            ))}
+          </div> */}
+        </Section>
+      )}
+
       {/* 2FA */}
       <Section title="2FA" icon={<KeyRound className="w-4 h-4" />}>
         <div className="flex items-center gap-4">
           <EnrollPasskey user={user} />
           <EnrollTotp user={user} />
-          {/* <StatusBadge
-            text={user.totp?.confirmed_at ? "Enrolled" : "Not Enrolled"}
-            intent={user.totp?.confirmed_at ? "Good" : "Critical"}
-          /> */}
         </div>
       </Section>
 

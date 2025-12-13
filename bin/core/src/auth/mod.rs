@@ -13,8 +13,9 @@ use futures_util::TryFutureExt;
 use komodo_client::entities::{komodo_timestamp, user::User};
 use rate_limit::WithFailureRateLimit;
 use reqwest::StatusCode;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serror::AddStatusCodeError as _;
+use webauthn_rs::prelude::PasskeyAuthentication;
 
 use crate::{
   config::core_config,
@@ -44,6 +45,30 @@ struct RedirectQuery {
   redirect: Option<String>,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct SessionUserId(pub String);
+impl SessionUserId {
+  pub const KEY: &str = "user-id";
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SessionTotpLogin {
+  pub user_id: String,
+}
+impl SessionTotpLogin {
+  pub const KEY: &str = "totp-login";
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SessionPasskeyLogin {
+  pub user_id: String,
+  /// This must stay server side only
+  pub state: PasskeyAuthentication,
+}
+impl SessionPasskeyLogin {
+  pub const KEY: &str = "passkey-login";
+}
+
 pub async fn auth_request(
   headers: HeaderMap,
   mut req: Request,
@@ -62,7 +87,7 @@ pub async fn auth_request(
     )
     .await?;
   // Sanitize the user for safety before
-  // attaching to the request handlers. 
+  // attaching to the request handlers.
   user.sanitize();
   req.extensions_mut().insert(user);
   Ok(next.run(req).await)

@@ -11,7 +11,7 @@ use komodo_client::{
     LoginLocalUser, LoginLocalUserResponse, SignUpLocalUser,
     SignUpLocalUserResponse,
   },
-  entities::user::{User, UserConfig},
+  entities::user::{User, UserConfig, UserConfigVariant},
 };
 use rate_limit::{RateLimiter, WithFailureRateLimit};
 use reqwest::StatusCode;
@@ -20,9 +20,8 @@ use serror::{AddStatusCode as _, AddStatusCodeError};
 use tower_sessions::Session;
 
 use crate::{
-  api::{
-    SESSION_KEY_PASSKEY_LOGIN, SESSION_KEY_TOTP_LOGIN, auth::AuthArgs,
-  },
+  api::auth::AuthArgs,
+  auth::{SessionPasskeyLogin, SessionTotpLogin},
   config::core_config,
   helpers::validations::{validate_password, validate_username},
   state::{auth_rate_limiter, db_client, jwt_client, webauthn},
@@ -109,6 +108,7 @@ async fn sign_up_local_user(
     config: UserConfig::Local {
       password: hashed_password,
     },
+    linked_logins: Default::default(),
     totp: Default::default(),
     passkey: Default::default(),
   };
@@ -192,15 +192,19 @@ async fn login_local_user(
     .context("Invalid login credentials")
     .status_code(StatusCode::UNAUTHORIZED)?;
 
-  let UserConfig::Local {
-    password: user_pw_hash,
-  } = user.config
-  else {
-    return Err(
-      anyhow!("Invalid login credentials")
-        .status_code(StatusCode::UNAUTHORIZED),
-    );
-  };
+  let user_pw_hash =
+    if let UserConfig::Local { password } = &user.config {
+      password
+    } else if let Some(UserConfig::Local { password }) =
+      user.linked_logins.get(UserConfigVariant::Local)
+    {
+      password
+    } else {
+      return Err(
+        anyhow!("Invalid login credentials")
+          .status_code(StatusCode::UNAUTHORIZED),
+      );
+    };
 
   let verified = bcrypt::verify(req.password, &user_pw_hash)
     .context("Invalid login credentials")
@@ -223,13 +227,24 @@ async fn login_local_user(
         .start_passkey_authentication(&[passkey])
         .context("Failed to start passkey authentication flow")?;
       session
-        .insert(SESSION_KEY_PASSKEY_LOGIN, (user.id, server_state))
+        .insert(
+          SessionPasskeyLogin::KEY,
+          SessionPasskeyLogin {
+            user_id: user.id,
+            state: server_state,
+          },
+        )
         .await?;
       Ok(LoginLocalUserResponse::Passkey(response))
     }
     // TOTP 2FA
     (None, true) => {
-      session.insert(SESSION_KEY_TOTP_LOGIN, user.id).await?;
+      session
+        .insert(
+          SessionTotpLogin::KEY,
+          SessionTotpLogin { user_id: user.id },
+        )
+        .await?;
       Ok(LoginLocalUserResponse::Totp {})
     }
     // No 2FA, can return JWT immediately

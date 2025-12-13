@@ -8,17 +8,13 @@ use database::{
 };
 use komodo_client::{
   api::write::*,
-  entities::{
-    NoData,
-    user::{User, UserConfig},
-  },
+  entities::user::{User, UserConfig},
 };
 use reqwest::StatusCode;
 use resolver_api::Resolve;
 use serror::{AddStatusCode as _, AddStatusCodeError};
 
 use crate::{
-  config::core_config,
   helpers::validations::{validate_password, validate_username},
   state::db_client,
 };
@@ -82,6 +78,7 @@ impl Resolve<WriteArgs> for CreateLocalUser {
       config: UserConfig::Local {
         password: hashed_password,
       },
+      linked_logins: Default::default(),
       totp: Default::default(),
       passkey: Default::default(),
     };
@@ -99,93 +96,6 @@ impl Resolve<WriteArgs> for CreateLocalUser {
     user.sanitize();
 
     Ok(user)
-  }
-}
-
-//
-
-impl Resolve<WriteArgs> for UpdateUserUsername {
-  #[instrument(
-    "UpdateUserUsername",
-    skip_all,
-    fields(
-      operator = user.id,
-      new_username = self.username,
-    )
-  )]
-  async fn resolve(
-    self,
-    WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<UpdateUserUsernameResponse> {
-    for locked_username in &core_config().lock_login_credentials_for {
-      if locked_username == "__ALL__"
-        || *locked_username == user.username
-      {
-        return Err(
-          anyhow!("User not allowed to update their username.")
-            .into(),
-        );
-      }
-    }
-
-    validate_username(&self.username)?;
-
-    let db = db_client();
-
-    if db
-      .users
-      .find_one(doc! { "username": &self.username })
-      .await
-      .context("Failed to query for existing users")?
-      .is_some()
-    {
-      return Err(anyhow!("Username already taken.").into());
-    }
-
-    let id = ObjectId::from_str(&user.id)
-      .context("User id not valid ObjectId.")?;
-
-    db.users
-      .update_one(
-        doc! { "_id": id },
-        doc! { "$set": { "username": self.username } },
-      )
-      .await
-      .context("Failed to update user username on database.")?;
-
-    Ok(NoData {})
-  }
-}
-
-//
-
-impl Resolve<WriteArgs> for UpdateUserPassword {
-  #[instrument(
-    "UpdateUserPassword",
-    skip_all,
-    fields(operator = user.id)
-  )]
-  async fn resolve(
-    self,
-    WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<UpdateUserPasswordResponse> {
-    for locked_username in &core_config().lock_login_credentials_for {
-      if locked_username == "__ALL__"
-        || *locked_username == user.username
-      {
-        return Err(
-          anyhow!("User not allowed to update their password.")
-            .into(),
-        );
-      }
-    }
-
-    validate_password(&self.password)
-      .status_code(StatusCode::BAD_REQUEST)?;
-
-    db_client().set_user_password(user, &self.password).await?;
-
-    Ok(NoData {})
   }
 }
 

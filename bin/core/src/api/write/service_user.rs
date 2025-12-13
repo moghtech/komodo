@@ -59,6 +59,7 @@ impl Resolve<WriteArgs> for CreateServiceUser {
       create_server_permissions: false,
       create_build_permissions: false,
       last_update_view: 0,
+      linked_logins: Default::default(),
       recents: Default::default(),
       all: Default::default(),
       updated_at: komodo_timestamp(),

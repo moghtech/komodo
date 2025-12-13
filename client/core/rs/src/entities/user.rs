@@ -1,8 +1,11 @@
 use std::{collections::HashMap, sync::OnceLock};
 
+use anyhow::anyhow;
 use base64urlsafedata::Base64UrlSafeData;
+use derive_variants::{EnumVariants, ExtractVariant};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
+use strum::{AsRefStr, Display, EnumString};
 use typeshare::typeshare;
 use webauthn_rs::prelude::Passkey;
 
@@ -65,8 +68,13 @@ pub struct User {
   #[serde(default)]
   pub create_build_permissions: bool,
 
-  /// The user-type specific config.
+  /// The primary user login.
   pub config: UserConfig,
+
+  /// Additional linked login methods.
+  /// May not contain 'Service' type config.
+  #[serde(default)]
+  pub linked_logins: LinkedLoginsMap,
 
   /// TOTP 2fa credentials
   #[serde(default)]
@@ -94,7 +102,22 @@ pub struct User {
 }
 
 #[typeshare]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, EnumVariants)]
+#[variant_derive(
+  Debug,
+  Clone,
+  Copy,
+  PartialEq,
+  Eq,
+  PartialOrd,
+  Ord,
+  Hash,
+  Serialize,
+  Deserialize,
+  Display,
+  EnumString,
+  AsRefStr
+)]
 #[serde(tag = "type", content = "data")]
 pub enum UserConfig {
   /// User that logs in with username / password
@@ -118,6 +141,42 @@ impl Default for UserConfig {
     Self::Local {
       password: String::new(),
     }
+  }
+}
+
+impl UserConfig {
+  pub fn sanitize(&mut self) {
+    if let UserConfig::Local { password } = self {
+      password.clear();
+    }
+  }
+}
+
+#[typeshare]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct LinkedLoginsMap(HashMap<UserConfigVariant, UserConfig>);
+
+impl LinkedLoginsMap {
+  pub fn get(
+    &self,
+    variant: UserConfigVariant,
+  ) -> Option<&UserConfig> {
+    self.0.get(&variant)
+  }
+
+  pub fn update(&mut self, login: UserConfig) -> anyhow::Result<()> {
+    if let UserConfig::Service { .. } = &login {
+      return Err(anyhow!(
+        "Cannot insert Service type configuration as additional login method."
+      ));
+    }
+    let key = login.extract_variant();
+    self.0.insert(key, login);
+    Ok(())
+  }
+
+  pub fn remove(&mut self, variant: UserConfigVariant) {
+    self.0.remove(&variant);
   }
 }
 
@@ -160,9 +219,12 @@ impl UserPasskeyConfig {
 impl User {
   /// Prepares user object for transport by clearing any sensitive fields
   pub fn sanitize(&mut self) {
-    if let UserConfig::Local { password } = &mut self.config {
-      password.clear();
-    }
+    self.config.sanitize();
+    self
+      .linked_logins
+      .0
+      .values_mut()
+      .for_each(UserConfig::sanitize);
     self.totp.sanitize();
     self.passkey.sanitize();
   }

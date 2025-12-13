@@ -355,6 +355,7 @@ export type BatchExecutionResponse = BatchExecutionResponseItem[];
 export type _CreationChallengeResponse = any;
 /** Response for [BeginPasskeyEnrollment]. */
 export type BeginPasskeyEnrollmentResponse = _CreationChallengeResponse;
+export type BeginThirdPartyLoginLinkResponse = NoData;
 export declare enum Operation {
     None = "None",
     CreateSwarm = "CreateSwarm",
@@ -1250,6 +1251,7 @@ export type UserConfig =
         description: string;
     };
 };
+export type LinkedLoginsMap = Record<UserConfig["type"], UserConfig>;
 export interface UserTotpConfig {
     /** TOTP shared secret, encrypted */
     secret: string;
@@ -1283,8 +1285,13 @@ export interface User {
     create_server_permissions?: boolean;
     /** Whether the user has permission to create builds */
     create_build_permissions?: boolean;
-    /** The user-type specific config. */
+    /** The primary user login. */
     config: UserConfig;
+    /**
+     * Additional linked login methods.
+     * May not contain 'Service' type config.
+     */
+    linked_logins?: LinkedLoginsMap;
     /** TOTP 2fa credentials */
     totp?: UserTotpConfig;
     /** WebAuthn Passkey 2fa credentials */
@@ -5313,9 +5320,11 @@ export type SwarmQuery = ResourceQuery<SwarmQuerySpecifics>;
 export type UnenrollPasskeyResponse = NoData;
 /** Response for [UnenrollTotp]. */
 export type UnenrollTotpResponse = NoData;
+export type UnlinkLoginResponse = NoData;
 export type UpdateDockerRegistryAccountResponse = DockerRegistryAccount;
 export type UpdateGitProviderAccountResponse = GitProviderAccount;
 export type UpdateOnboardingKeyResponse = OnboardingKey;
+export type UpdatePasswordResponse = NoData;
 export type UpdatePermissionOnResourceTypeResponse = NoData;
 export type UpdatePermissionOnTargetResponse = NoData;
 export type UpdateProcedureResponse = Procedure;
@@ -5323,8 +5332,7 @@ export type UpdateResourceMetaResponse = NoData;
 export type UpdateServiceUserDescriptionResponse = User;
 export type UpdateUserAdminResponse = NoData;
 export type UpdateUserBasePermissionsResponse = NoData;
-export type UpdateUserPasswordResponse = NoData;
-export type UpdateUserUsernameResponse = NoData;
+export type UpdateUsernameResponse = NoData;
 export type UpdateVariableDescriptionResponse = Variable;
 export type UpdateVariableIsSecretResponse = Variable;
 export type UpdateVariableValueResponse = Variable;
@@ -5637,6 +5645,19 @@ export interface BatchRunProcedure {
  * Response: [BeginPasskeyEnrollmentResponse]
  */
 export interface BeginPasskeyEnrollment {
+}
+/**
+ * Begin linking flow for a third party login. Response: [NoData].
+ *
+ * First call this method when authenticated, then
+ * redirect user to /api/auth/{provider}/link.
+ *
+ * 'provider' can be:
+ * - github
+ * - google
+ * - oidc
+ */
+export interface BeginThirdPartyLoginLink {
 }
 /**
  * Starts enrollment flow for TOTP 2FA auth support.
@@ -9233,6 +9254,17 @@ export interface UnenrollPasskey {
  */
 export interface UnenrollTotp {
 }
+/** Unlink a login. Response: [NoData]. */
+export interface UnlinkLogin {
+    /**
+     * 'provider' can be:
+     * - Local
+     * - Github
+     * - Google
+     * - Oidc
+     */
+    provider: string;
+}
 /** Unpauses all containers on the target server. Response: [Update] */
 export interface UnpauseAllContainers {
     /** Name or id */
@@ -9396,6 +9428,15 @@ export interface UpdateOnboardingKey {
     copy_server?: string;
     /** Update whether to create Builder */
     create_builder?: boolean;
+}
+/**
+ * Update the calling user's password. Response: [NoData].
+ *
+ * If the User was created using third party login method,
+ * using [UpdatePassword] adds or updates the Local linked (additional) login method.
+ */
+export interface UpdatePassword {
+    password: string;
 }
 /**
  * **Admin only.** Update a user or user groups base permission level on a resource type.
@@ -9604,17 +9645,12 @@ export interface UpdateUserBasePermissions {
     create_builds?: boolean;
 }
 /**
- * **Only for local users**. Update the calling users password.
+ * Update the calling users username.
  * Response: [NoData].
+ *
+ * Will fail if the new username is invalid or already taken.
  */
-export interface UpdateUserPassword {
-    password: string;
-}
-/**
- * **Only for local users**. Update the calling users username.
- * Response: [NoData].
- */
-export interface UpdateUserUsername {
+export interface UpdateUsername {
     username: string;
 }
 /** **Admin only.** Update variable description. Response: [Variable]. */
@@ -10511,6 +10547,12 @@ export type UserRequest = {
     type: "SetLastSeenUpdate";
     params: SetLastSeenUpdate;
 } | {
+    type: "UpdateUsername";
+    params: UpdateUsername;
+} | {
+    type: "UpdatePassword";
+    params: UpdatePassword;
+} | {
     type: "CreateApiKey";
     params: CreateApiKey;
 } | {
@@ -10534,6 +10576,12 @@ export type UserRequest = {
 } | {
     type: "UnenrollPasskey";
     params: UnenrollPasskey;
+} | {
+    type: "BeginThirdPartyLoginLink";
+    params: BeginThirdPartyLoginLink;
+} | {
+    type: "UnlinkLogin";
+    params: UnlinkLogin;
 };
 export type WriteRequest = {
     type: "UpdateResourceMeta";
@@ -10763,12 +10811,6 @@ export type WriteRequest = {
 } | {
     type: "CreateLocalUser";
     params: CreateLocalUser;
-} | {
-    type: "UpdateUserUsername";
-    params: UpdateUserUsername;
-} | {
-    type: "UpdateUserPassword";
-    params: UpdateUserPassword;
 } | {
     type: "DeleteUser";
     params: DeleteUser;

@@ -159,8 +159,6 @@ pub enum WriteRequest {
 
   // ==== USER ====
   CreateLocalUser(CreateLocalUser),
-  UpdateUserUsername(UpdateUserUsername),
-  UpdateUserPassword(UpdateUserPassword),
   DeleteUser(DeleteUser),
 
   // ==== SERVICE USER ====

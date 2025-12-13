@@ -9,8 +9,10 @@ use axum::{
   response::Redirect,
   routing::get,
 };
-use database::mongo_indexed::Document;
 use database::mungos::mongodb::bson::doc;
+use database::{
+  mongo_indexed::Document, mungos::by_id::update_one_by_id,
+};
 use futures_util::TryFutureExt;
 use komodo_client::{
   api::auth::UserIdOrTwoFactor,
@@ -21,14 +23,18 @@ use komodo_client::{
 };
 use rate_limit::WithFailureRateLimit;
 use reqwest::StatusCode;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serror::{AddStatusCode, AddStatusCodeError as _};
 use tower_sessions::Session;
 
 use crate::{
-  api::{SESSION_KEY_PASSKEY_LOGIN, SESSION_KEY_TOTP_LOGIN, SESSION_KEY_USER_ID},
-  auth::format_redirect,
+  api::user::SessionThirdPartyLinkInfo,
+  auth::{
+    SessionPasskeyLogin, SessionTotpLogin, SessionUserId,
+    format_redirect, google::client::GoogleOauthClient,
+  },
   config::core_config,
+  helpers::query::{find_google_user, get_user},
   state::{auth_rate_limiter, db_client, webauthn},
 };
 
@@ -40,26 +46,16 @@ pub mod client;
 
 pub fn router() -> Router {
   Router::new()
-    .route(
-      "/login",
-      get(|Query(query): Query<RedirectQuery>| async move {
-        let uri = google_oauth_client()
-          .as_ref()
-          .context("Google Oauth not configured")
-          .status_code(StatusCode::UNAUTHORIZED)?
-          .get_login_redirect_url(query.redirect)
-          .await;
-        serror::Result::Ok(Redirect::to(&uri))
-      }),
-    )
+    .route("/login", get(login))
+    .route("/link", get(link))
     .route(
       "/callback",
       get(
         |query,
-         session: Session,
+         session,
          headers: HeaderMap,
          ConnectInfo(info): ConnectInfo<SocketAddr>| async move {
-          callback(query, session)
+          callback(session, query)
             .map_err(|e| e.status_code(StatusCode::UNAUTHORIZED))
             .with_failure_rate_limit_using_headers(
               auth_rate_limiter(),
@@ -72,6 +68,67 @@ pub fn router() -> Router {
     )
 }
 
+#[derive(Serialize, Deserialize)]
+struct SessionGoogleVerificationInfo {
+  state: String,
+}
+
+impl SessionGoogleVerificationInfo {
+  const KEY: &str = "google-verification-info";
+}
+
+async fn login(
+  session: Session,
+  Query(query): Query<RedirectQuery>,
+) -> serror::Result<Redirect> {
+  let (state, uri) = google_oauth_client()
+    .as_ref()
+    .context("Google Oauth not configured")
+    .status_code(StatusCode::UNAUTHORIZED)?
+    .get_state_and_login_redirect_url(query.redirect)
+    .await;
+  session
+    .insert(
+      SessionGoogleVerificationInfo::KEY,
+      SessionGoogleVerificationInfo { state },
+    )
+    .await
+    .context("Failed to insert google oauth session state")?;
+  Ok(Redirect::to(&uri))
+}
+
+#[derive(Serialize, Deserialize)]
+struct SessionGoogleLinkInfo {
+  user_id: String,
+  state: String,
+}
+
+impl SessionGoogleLinkInfo {
+  const KEY: &str = "google-link-info";
+}
+
+async fn link(session: Session) -> serror::Result<Redirect> {
+  let SessionThirdPartyLinkInfo { user_id } = session
+    .remove(SessionThirdPartyLinkInfo::KEY)
+    .await
+    .context("Invalid session third party link info.")?
+    .context("Missing session third party link info")?;
+  let (state, uri) = google_oauth_client()
+    .as_ref()
+    .context("Google Oauth not configured")
+    .status_code(StatusCode::UNAUTHORIZED)?
+    .get_state_and_login_redirect_url(None)
+    .await;
+  session
+    .insert(
+      SessionGoogleLinkInfo::KEY,
+      SessionGoogleLinkInfo { user_id, state },
+    )
+    .await
+    .context("Failed to insert session link info")?;
+  Ok(Redirect::to(&uri))
+}
+
 #[derive(Debug, Deserialize)]
 struct CallbackQuery {
   state: Option<String>,
@@ -80,33 +137,48 @@ struct CallbackQuery {
 }
 
 async fn callback(
-  Query(query): Query<CallbackQuery>,
   session: Session,
+  Query(query): Query<CallbackQuery>,
 ) -> anyhow::Result<Redirect> {
-  // Safe: the method is only called after the client is_some
-  let client = google_oauth_client().as_ref().unwrap();
+  let client =
+    google_oauth_client().context("Missing google oauth client")?;
+
   if let Some(error) = query.error {
-    return Err(anyhow!("auth error from google: {error}"));
+    return Err(anyhow!("Auth error from google: {error}"));
   }
-  let state = query
+
+  let client_state = query
     .state
-    .context("callback query does not contain state")?;
-  if !client.check_state(&state).await {
-    return Err(anyhow!("state mismatch"));
+    .context("Callback query does not contain state")?;
+  let code =
+    query.code.context("callback query does not contain code")?;
+
+  // Check first if this is a link callback
+  // and use the linking handler if so.
+  if let Ok(Some(info)) =
+    session.remove(SessionGoogleLinkInfo::KEY).await
+  {
+    return link_google_callback(client, info, client_state, code)
+      .await;
   }
-  let token = client
-    .get_access_token(
-      &query.code.context("callback query does not contain code")?,
-    )
-    .await?;
+
+  let SessionGoogleVerificationInfo { state } = session
+    .get(SessionGoogleVerificationInfo::KEY)
+    .await
+    .context("Invalid google oauth session state")?
+    .context("Missing google oauth session state")?;
+
+  if client_state != state {
+    return Err(anyhow!("State mismatch"));
+  }
+
+  let token = client.get_access_token(&code).await?;
+
   let google_user = client.get_google_user(&token.id_token)?;
   let google_id = google_user.id.to_string();
-  let db_client = db_client();
-  let user = db_client
-    .users
-    .find_one(doc! { "config.data.google_id": &google_id })
-    .await
-    .context("failed at find user query from mongo")?;
+
+  let user = find_google_user(&google_id).await?;
+
   let user_id_or_two_factor = match user {
     Some(user) => {
       match (user.passkey.passkey, user.totp.enrolled()) {
@@ -120,8 +192,11 @@ async fn callback(
             .context("Failed to start passkey authentication flow")?;
           session
             .insert(
-              SESSION_KEY_PASSKEY_LOGIN,
-              (user.id, server_state),
+              SessionPasskeyLogin::KEY,
+              SessionPasskeyLogin {
+                user_id: user.id,
+                state: server_state,
+              },
             )
             .await?;
           UserIdOrTwoFactor::Passkey(response)
@@ -129,7 +204,10 @@ async fn callback(
         // TOTP 2FA
         (None, true) => {
           session
-            .insert(SESSION_KEY_TOTP_LOGIN, user.id)
+            .insert(
+              SessionTotpLogin::KEY,
+              SessionTotpLogin { user_id: user.id },
+            )
             .await
             .context(
               "Failed to store totp login state in for user session",
@@ -137,10 +215,20 @@ async fn callback(
           UserIdOrTwoFactor::Totp {}
         }
         // No 2FA
-        (None, false) => UserIdOrTwoFactor::UserId(user.id),
+        (None, false) => {
+          session
+            .insert(
+              SessionUserId::KEY,
+              SessionUserId(user.id.clone()),
+            )
+            .await
+            .context("Failed to store user id for client session")?;
+          UserIdOrTwoFactor::UserId(user.id)
+        }
       }
     }
     None => {
+      let db_client = db_client();
       let ts = unix_timestamp_ms() as i64;
       let no_users_exist =
         db_client.users.find_one(Document::new()).await?.is_none();
@@ -183,6 +271,7 @@ async fn callback(
           google_id,
           avatar: google_user.picture,
         },
+        linked_logins: Default::default(),
         totp: Default::default(),
         passkey: Default::default(),
       };
@@ -200,11 +289,7 @@ async fn callback(
   };
   let redirect = Some(&state[STATE_PREFIX_LENGTH..]);
   match user_id_or_two_factor {
-    UserIdOrTwoFactor::UserId(user_id) => {
-      session
-        .insert(SESSION_KEY_USER_ID, user_id)
-        .await
-        .context("Failed to store user id for client session")?;
+    UserIdOrTwoFactor::UserId(_) => {
       Ok(format_redirect(redirect, "redeem_ready=true"))
     }
     UserIdOrTwoFactor::Totp {} => {
@@ -217,4 +302,58 @@ async fn callback(
       Ok(format_redirect(redirect, &format!("passkey={passkey}")))
     }
   }
+}
+
+/// This intercepts during the normal oauth callback if
+/// 'google-link-info' is found on session.
+async fn link_google_callback(
+  client: &GoogleOauthClient,
+  SessionGoogleLinkInfo { user_id, state }: SessionGoogleLinkInfo,
+  client_state: String,
+  code: String,
+) -> anyhow::Result<Redirect> {
+  if client_state != state {
+    return Err(anyhow!("State mismatch"));
+  }
+
+  let token = client.get_access_token(&code).await?;
+
+  let google_user = client.get_google_user(&token.id_token)?;
+  let google_id = google_user.id.to_string();
+
+  if let Some(existing_user) = find_google_user(&google_id).await? {
+    if existing_user.id == user_id {
+      // Link is already complete, this is a no-op
+      return Ok(Redirect::to(&format!(
+        "{}/settings",
+        core_config().host,
+      )));
+    } else {
+      return Err(anyhow!("Account already linked to another user."));
+    }
+  }
+
+  let user = get_user(&user_id).await?;
+
+  if let UserConfig::Google { .. } = &user.config {
+    return Err(anyhow!(
+      "User is primary Google user, cannot link another Google login."
+    ));
+  }
+
+  let update = doc! {
+    "$set": {
+      "linked_logins.Google.type": "Google",
+      "linked_logins.Google.data.google_id": &google_id,
+      "linked_logins.Google.data.avatar": &google_user.picture,
+    }
+  };
+
+  update_one_by_id(&db_client().users, &user_id, update, None)
+    .await
+    .context(
+      "Failed to link Google login to existing user on database",
+    )?;
+
+  Ok(Redirect::to(&format!("{}/settings", core_config().host,)))
 }

@@ -8,15 +8,15 @@ use komodo_client::entities::{
 };
 use reqwest::StatusCode;
 use serde::{Deserialize, de::DeserializeOwned};
-use tokio::sync::Mutex;
 
 use crate::{auth::STATE_PREFIX_LENGTH, config::core_config};
 
-pub fn google_oauth_client() -> &'static Option<GoogleOauthClient> {
+pub fn google_oauth_client() -> Option<&'static GoogleOauthClient> {
   static GOOGLE_OAUTH_CLIENT: OnceLock<Option<GoogleOauthClient>> =
     OnceLock::new();
   GOOGLE_OAUTH_CLIENT
     .get_or_init(|| GoogleOauthClient::new(core_config()))
+    .as_ref()
 }
 
 pub struct GoogleOauthClient {
@@ -25,7 +25,6 @@ pub struct GoogleOauthClient {
   client_secret: String,
   redirect_uri: String,
   scopes: String,
-  states: Mutex<Vec<String>>,
   user_agent: String,
 }
 
@@ -77,16 +76,15 @@ impl GoogleOauthClient {
       client_secret: secret.clone(),
       redirect_uri: format!("{host}/auth/google/callback"),
       user_agent: String::from("komodo"),
-      states: Default::default(),
       scopes,
     }
     .into()
   }
 
-  pub async fn get_login_redirect_url(
+  pub async fn get_state_and_login_redirect_url(
     &self,
     redirect: Option<String>,
-  ) -> String {
+  ) -> (String, String) {
     let state_prefix = random_string(STATE_PREFIX_LENGTH);
     let state = match redirect {
       Some(redirect) => format!("{state_prefix}{redirect}"),
@@ -96,22 +94,7 @@ impl GoogleOauthClient {
       "https://accounts.google.com/o/oauth2/v2/auth?response_type=code&state={state}&client_id={}&redirect_uri={}&scope={}",
       self.client_id, self.redirect_uri, self.scopes
     );
-    let mut states = self.states.lock().await;
-    states.push(state);
-    redirect_url
-  }
-
-  pub async fn check_state(&self, state: &str) -> bool {
-    let mut contained = false;
-    self.states.lock().await.retain(|s| {
-      if s.as_str() == state {
-        contained = true;
-        false
-      } else {
-        true
-      }
-    });
-    contained
+    (state, redirect_url)
   }
 
   pub async fn get_access_token(

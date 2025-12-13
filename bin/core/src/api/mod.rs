@@ -8,7 +8,8 @@ use tower_http::{
   set_header::SetResponseHeaderLayer,
 };
 use tower_sessions::{
-  Expiry, MemoryStore, SessionManagerLayer, cookie::time::Duration,
+  Expiry, MemoryStore, SessionManagerLayer,
+  cookie::{SameSite, time::Duration},
 };
 
 use crate::{
@@ -52,6 +53,7 @@ pub fn app() -> Router {
     .nest("/listener", listener::router())
     .nest("/ws", ws::router())
     .nest("/client", ts_client::router())
+    .layer(memory_session_layer())
     .fallback_service(serve_frontend)
     .layer(cors_layer())
     .layer(SetResponseHeaderLayer::overriding(
@@ -72,21 +74,20 @@ pub fn app() -> Router {
     ))
 }
 
-fn memory_session_layer(
-  expiry: i64,
-) -> SessionManagerLayer<MemoryStore> {
+const MEMORY_SESSION_EXPIRY_SECONDS: i64 = 60;
+
+fn memory_session_layer() -> SessionManagerLayer<MemoryStore> {
   let config = core_config();
   let mut layer = SessionManagerLayer::new(MemoryStore::default())
-    .with_expiry(Expiry::OnInactivity(Duration::seconds(expiry)))
-    .with_secure(config.host.starts_with("https://"));
+    .with_expiry(Expiry::OnInactivity(Duration::seconds(
+      MEMORY_SESSION_EXPIRY_SECONDS,
+    )))
+    .with_secure(config.host.starts_with("https://"))
+    // Needs Lax in order for sessions to work
+    // accross oauth redirects.
+    .with_same_site(SameSite::Lax);
   if let Some(domain) = core_host().and_then(|url| url.domain()) {
     layer = layer.with_domain(domain);
   }
   layer
 }
-
-pub const SESSION_KEY_USER_ID: &str = "user-id";
-pub const SESSION_KEY_TOTP_LOGIN: &str = "totp-user-id";
-pub const SESSION_KEY_TOTP_ENROLLMENT: &str = "totp-enrollment";
-pub const SESSION_KEY_PASSKEY_LOGIN: &str = "passkey-user-id";
-pub const SESSION_KEY_PASSKEY_ENROLLMENT: &str = "passkey-enrollment";

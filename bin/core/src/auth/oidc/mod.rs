@@ -1,4 +1,4 @@
-use std::{net::SocketAddr, sync::OnceLock};
+use std::net::SocketAddr;
 
 use anyhow::{Context, anyhow};
 use axum::{
@@ -9,8 +9,10 @@ use axum::{
   routing::get,
 };
 use client::oidc_client;
-use dashmap::DashMap;
-use database::mungos::mongodb::bson::{Document, doc};
+use database::mungos::{
+  by_id::update_one_by_id,
+  mongodb::bson::{Document, doc},
+};
 use futures_util::TryFutureExt;
 use komodo_client::{
   api::auth::UserIdOrTwoFactor,
@@ -20,24 +22,22 @@ use komodo_client::{
   },
 };
 use openidconnect::{
-  AccessTokenHash, AuthorizationCode, CsrfToken,
-  EmptyAdditionalClaims, Nonce, OAuth2TokenResponse,
-  PkceCodeChallenge, PkceCodeVerifier, Scope, TokenResponse,
-  core::{CoreAuthenticationFlow, CoreGenderClaim},
+  CsrfToken, Nonce, PkceCodeChallenge, PkceCodeVerifier,
 };
 use rate_limit::WithFailureRateLimit;
 use reqwest::StatusCode;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serror::{AddStatusCode as _, AddStatusCodeError};
 use tower_sessions::Session;
 
 use crate::{
-  api::{
-    SESSION_KEY_PASSKEY_LOGIN, SESSION_KEY_TOTP_LOGIN,
-    SESSION_KEY_USER_ID,
+  api::user::SessionThirdPartyLinkInfo,
+  auth::{
+    SessionPasskeyLogin, SessionTotpLogin, SessionUserId,
+    format_redirect, oidc::client::OidcClient,
   },
-  auth::format_redirect,
   config::core_config,
+  helpers::query::{find_oidc_user, get_user},
   state::{auth_rate_limiter, db_client, webauthn},
 };
 
@@ -45,50 +45,30 @@ use super::RedirectQuery;
 
 pub mod client;
 
-static APP_USER_AGENT: &str =
-  concat!("Komodo/", env!("CARGO_PKG_VERSION"),);
-
-fn reqwest_client() -> &'static reqwest::Client {
-  static REQWEST: OnceLock<reqwest::Client> = OnceLock::new();
-  REQWEST.get_or_init(|| {
-    reqwest::Client::builder()
-      .redirect(reqwest::redirect::Policy::none())
-      .user_agent(APP_USER_AGENT)
-      .build()
-      .expect("Invalid OIDC reqwest client")
-  })
-}
-
-/// CSRF tokens can only be used once from the callback,
-/// and must be used within this timeframe
-const CSRF_VALID_FOR_MS: i64 = 120_000; // 2 minutes for user to log in.
-
-type RedirectUrl = Option<String>;
-/// Maps the csrf secrets to other information added in the "login" method (before auth provider redirect).
-/// This information is retrieved in the "callback" method (after auth provider redirect).
-type VerifierMap =
-  DashMap<String, (PkceCodeVerifier, Nonce, RedirectUrl, i64)>;
-fn verifier_tokens() -> &'static VerifierMap {
-  static VERIFIERS: OnceLock<VerifierMap> = OnceLock::new();
-  VERIFIERS.get_or_init(Default::default)
-}
-
 pub fn router() -> Router {
   Router::new()
     .route(
       "/login",
-      get(|query| async {
-        login(query).await.status_code(StatusCode::UNAUTHORIZED)
+      get(|session, query| async {
+        login(session, query)
+          .await
+          .status_code(StatusCode::UNAUTHORIZED)
+      }),
+    )
+    .route(
+      "/link",
+      get(|session| async {
+        link(session).await.status_code(StatusCode::UNAUTHORIZED)
       }),
     )
     .route(
       "/callback",
       get(
         |query,
-         session: Session,
+         session,
          headers: HeaderMap,
          ConnectInfo(info): ConnectInfo<SocketAddr>| async move {
-          callback(query, session)
+          callback(session, query)
             .map_err(|e| e.status_code(StatusCode::UNAUTHORIZED))
             .with_failure_rate_limit_using_headers(
               auth_rate_limiter(),
@@ -101,7 +81,22 @@ pub fn router() -> Router {
     )
 }
 
+type RedirectUrl = Option<String>;
+
+#[derive(Serialize, Deserialize)]
+struct SessionOidcVerificationInfo {
+  csrf_token: String,
+  pkce_verifier: PkceCodeVerifier,
+  nonce: Nonce,
+  redirect: RedirectUrl,
+}
+
+impl SessionOidcVerificationInfo {
+  const KEY: &str = "oidc-verification-info";
+}
+
 async fn login(
+  session: Session,
   Query(RedirectQuery { redirect }): Query<RedirectQuery>,
 ) -> anyhow::Result<Redirect> {
   let client = oidc_client().load();
@@ -112,32 +107,76 @@ async fn login(
     PkceCodeChallenge::new_random_sha256();
 
   // Generate the authorization URL.
-  let (auth_url, csrf_token, nonce) = client
-    .authorize_url(
-      CoreAuthenticationFlow::AuthorizationCode,
-      CsrfToken::new_random,
-      Nonce::new_random,
-    )
-    .set_pkce_challenge(pkce_challenge)
-    .add_scope(Scope::new("openid".to_string()))
-    .add_scope(Scope::new("profile".to_string()))
-    .add_scope(Scope::new("email".to_string()))
-    .url();
+  let (auth_url, csrf_token, nonce) =
+    client.authorize_url(pkce_challenge);
 
   // Data inserted here will be matched on callback side for csrf protection.
-  verifier_tokens().insert(
-    csrf_token.secret().clone(),
-    (
-      pkce_verifier,
-      nonce,
-      redirect,
-      komodo_timestamp() + CSRF_VALID_FOR_MS,
-    ),
-  );
+  session
+    .insert(
+      SessionOidcVerificationInfo::KEY,
+      SessionOidcVerificationInfo {
+        csrf_token: csrf_token.secret().clone(),
+        pkce_verifier,
+        nonce,
+        redirect,
+      },
+    )
+    .await
+    .context("Failed to insert session verification info")?;
 
+  auth_redirect(auth_url.as_str())
+}
+
+#[derive(Serialize, Deserialize)]
+struct SessionOidcLinkInfo {
+  user_id: String,
+  csrf_token: String,
+  pkce_verifier: PkceCodeVerifier,
+  nonce: Nonce,
+}
+
+impl SessionOidcLinkInfo {
+  const KEY: &str = "oidc-link-info";
+}
+
+async fn link(session: Session) -> anyhow::Result<Redirect> {
+  let SessionThirdPartyLinkInfo { user_id } = session
+    .remove(SessionThirdPartyLinkInfo::KEY)
+    .await
+    .context("Invalid session third party link info.")?
+    .context("Missing session third party link info")?;
+
+  let client = oidc_client().load();
+  let client =
+    client.as_ref().context("OIDC Client not configured")?;
+
+  let (pkce_challenge, pkce_verifier) =
+    PkceCodeChallenge::new_random_sha256();
+
+  // Generate the authorization URL.
+  let (auth_url, csrf_token, nonce) =
+    client.authorize_url(pkce_challenge);
+
+  session
+    .insert(
+      SessionOidcLinkInfo::KEY,
+      SessionOidcLinkInfo {
+        user_id,
+        csrf_token: csrf_token.secret().clone(),
+        pkce_verifier,
+        nonce,
+      },
+    )
+    .await
+    .context("Failed to insert session link info")?;
+
+  auth_redirect(auth_url.as_str())
+}
+
+/// Applies 'oidc_redirect_host'
+fn auth_redirect(auth_url: &str) -> anyhow::Result<Redirect> {
   let config = core_config();
   let redirect = if !config.oidc_redirect_host.is_empty() {
-    let auth_url = auth_url.as_str();
     let (protocol, rest) = auth_url
       .split_once("://")
       .context("Invalid URL: Missing protocol (eg 'https://')")?;
@@ -150,22 +189,21 @@ async fn login(
       &config.oidc_redirect_host,
     ))
   } else {
-    Redirect::to(auth_url.as_str())
+    Redirect::to(auth_url)
   };
-
   Ok(redirect)
 }
 
 #[derive(Debug, Deserialize)]
-struct CallbackQuery {
+pub struct OidcCallbackQuery {
   state: Option<String>,
   code: Option<String>,
   error: Option<String>,
 }
 
 async fn callback(
-  Query(query): Query<CallbackQuery>,
   session: Session,
+  Query(query): Query<OidcCallbackQuery>,
 ) -> anyhow::Result<Redirect> {
   let client = oidc_client().load();
   let client =
@@ -180,72 +218,37 @@ async fn callback(
     query.state.context("Provider did not return state")?,
   );
 
-  let (_, (pkce_verifier, nonce, redirect, valid_until)) =
-    verifier_tokens()
-      .remove(state.secret())
-      .context("CSRF token invalid")?;
-
-  if komodo_timestamp() > valid_until {
-    return Err(anyhow!(
-      "CSRF token invalid (Timed out). The token must be used within 2 minutes."
-    ));
-  }
-
-  let reqwest_client = reqwest_client();
-  let token_response = client
-    .exchange_code(AuthorizationCode::new(code))
-    .context("Failed to get Oauth token at exchange code")?
-    .set_pkce_verifier(pkce_verifier)
-    .request_async(reqwest_client)
-    .await
-    .context("Failed to get Oauth token")?;
-
-  // Extract the ID token claims after verifying its authenticity and nonce.
-  let id_token = token_response
-    .id_token()
-    .context("OIDC Server did not return an ID token")?;
-
-  // Some providers attach additional audiences, they must be added here
-  // so token verification succeeds.
-  let verifier = client.id_token_verifier();
-  let additional_audiences = &core_config().oidc_additional_audiences;
-  let verifier = if additional_audiences.is_empty() {
-    verifier
-  } else {
-    verifier.set_other_audience_verifier_fn(|aud| {
-      additional_audiences.contains(aud)
-    })
-  };
-
-  let claims = id_token
-    .claims(&verifier, &nonce)
-    .context("Failed to verify token claims. This issue may be temporary (60 seconds max).")?;
-
-  // Verify the access token hash to ensure that the access token hasn't been substituted for
-  // another user's.
-  if let Some(expected_access_token_hash) = claims.access_token_hash()
+  // Check first if this is a link callback
+  // and use the linking handler if so.
+  if let Ok(Some(info)) =
+    session.remove(SessionOidcLinkInfo::KEY).await
   {
-    let actual_access_token_hash = AccessTokenHash::from_token(
-      token_response.access_token(),
-      id_token.signing_alg()?,
-      id_token.signing_key(&verifier)?,
-    )?;
-    if actual_access_token_hash != *expected_access_token_hash {
-      return Err(anyhow!("Invalid access token"));
-    }
+    return link_oidc_callback(client, info, state, code).await;
   }
 
-  let user_id = claims.subject().as_str();
-
-  let db_client = db_client();
-  let user = db_client
-    .users
-    .find_one(doc! {
-      "config.data.provider": &core_config().oidc_provider,
-      "config.data.user_id": user_id
-    })
+  let SessionOidcVerificationInfo {
+    csrf_token,
+    pkce_verifier,
+    nonce,
+    redirect,
+  } = session
+    .remove(SessionOidcVerificationInfo::KEY)
     .await
-    .context("Failed at find user query from database")?;
+    .context("Invalid session verification info.")?
+    .context(
+      "Missing session verification info for CSRF protection.",
+    )?;
+
+  let (subject, token) = client
+    .validate_extract_subject_and_token(
+      (state, csrf_token),
+      code,
+      pkce_verifier,
+      nonce,
+    )
+    .await?;
+
+  let user = find_oidc_user(&subject).await?;
 
   let user_id_or_two_factor = match user {
     Some(user) => {
@@ -260,8 +263,11 @@ async fn callback(
             .context("Failed to start passkey authentication flow")?;
           session
             .insert(
-              SESSION_KEY_PASSKEY_LOGIN,
-              (user.id, server_state),
+              SessionPasskeyLogin::KEY,
+              SessionPasskeyLogin {
+                user_id: user.id,
+                state: server_state,
+              },
             )
             .await?;
           UserIdOrTwoFactor::Passkey(response)
@@ -269,7 +275,10 @@ async fn callback(
         // TOTP 2FA
         (None, true) => {
           session
-            .insert(SESSION_KEY_TOTP_LOGIN, user.id)
+            .insert(
+              SessionTotpLogin::KEY,
+              SessionTotpLogin { user_id: user.id },
+            )
             .await
             .context(
               "Failed to store totp login state in for user session",
@@ -277,11 +286,21 @@ async fn callback(
           UserIdOrTwoFactor::Totp {}
         }
         // No 2FA
-        (None, false) => UserIdOrTwoFactor::UserId(user.id),
+        (None, false) => {
+          session
+            .insert(
+              SessionUserId::KEY,
+              SessionUserId(user.id.clone()),
+            )
+            .await
+            .context("Failed to store user id for client session")?;
+          UserIdOrTwoFactor::UserId(user.id)
+        }
       }
     }
     None => {
       let ts = komodo_timestamp();
+      let db_client = db_client();
       let no_users_exist =
         db_client.users.find_one(Document::new()).await?.is_none();
       let core_config = core_config();
@@ -290,17 +309,8 @@ async fn callback(
       }
 
       // Fetch user info
-      let user_info = client
-        .user_info(
-          token_response.access_token().clone(),
-          claims.subject().clone().into(),
-        )
-        .context("Invalid user info request")?
-        .request_async::<EmptyAdditionalClaims, _, CoreGenderClaim>(
-          reqwest_client,
-        )
-        .await
-        .context("Failed to fetch user info for new user")?;
+      let user_info =
+        client.fetch_user_info(token, subject.clone()).await?;
 
       // Will use preferred_username, then email, then user_id if it isn't available.
       let mut username = user_info
@@ -310,7 +320,7 @@ async fn callback(
           let email = user_info
             .email()
             .map(|email| email.as_str())
-            .unwrap_or(user_id);
+            .unwrap_or(subject.as_str());
           if core_config.oidc_use_full_email {
             email
           } else {
@@ -348,8 +358,9 @@ async fn callback(
         all: Default::default(),
         config: UserConfig::Oidc {
           provider: core_config.oidc_provider.clone(),
-          user_id: user_id.to_string(),
+          user_id: subject.to_string(),
         },
+        linked_logins: Default::default(),
         totp: Default::default(),
         passkey: Default::default(),
       };
@@ -369,11 +380,7 @@ async fn callback(
   };
 
   match user_id_or_two_factor {
-    UserIdOrTwoFactor::UserId(user_id) => {
-      session
-        .insert(SESSION_KEY_USER_ID, user_id)
-        .await
-        .context("Failed to store user id for client session")?;
+    UserIdOrTwoFactor::UserId(_) => {
       Ok(format_redirect(redirect.as_deref(), "redeem_ready=true"))
     }
     UserIdOrTwoFactor::Totp {} => {
@@ -389,4 +396,67 @@ async fn callback(
       ))
     }
   }
+}
+
+/// This intercepts during the normal oauth callback if
+/// 'oidc-link-info' is found on session.
+async fn link_oidc_callback(
+  client: &OidcClient,
+  SessionOidcLinkInfo {
+    user_id,
+    csrf_token,
+    pkce_verifier,
+    nonce,
+  }: SessionOidcLinkInfo,
+  state: CsrfToken,
+  code: String,
+) -> anyhow::Result<Redirect> {
+  let (subject, _) = client
+    .validate_extract_subject_and_token(
+      (state, csrf_token),
+      code,
+      pkce_verifier,
+      nonce,
+    )
+    .await?;
+
+  let oidc_provider = &core_config().oidc_provider;
+  let oidc_user_id = subject.as_str();
+
+  // Ensure there are no other existing users with this login linked.
+  if let Some(existing_user) = find_oidc_user(&subject).await? {
+    if existing_user.id == user_id {
+      // Link is already complete, this is a no-op
+      return Ok(Redirect::to(&format!(
+        "{}/settings",
+        core_config().host,
+      )));
+    } else {
+      return Err(anyhow!("Account already linked to another user."));
+    }
+  }
+
+  let user = get_user(&user_id).await?;
+
+  if let UserConfig::Oidc { .. } = &user.config {
+    return Err(anyhow!(
+      "User is primary Oidc user, cannot link another Oidc login."
+    ));
+  }
+
+  let update = doc! {
+    "$set": {
+      "linked_logins.Oidc.type": "Oidc",
+      "linked_logins.Oidc.data.provider": oidc_provider,
+      "linked_logins.Oidc.data.user_id": oidc_user_id,
+    }
+  };
+
+  update_one_by_id(&db_client().users, &user_id, update, None)
+    .await
+    .context(
+      "Failed to link OIDC login to existing user on database",
+    )?;
+
+  Ok(Redirect::to(&format!("{}/settings", core_config().host,)))
 }

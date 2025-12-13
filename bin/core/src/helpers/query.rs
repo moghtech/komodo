@@ -34,6 +34,7 @@ use komodo_client::{
     variable::Variable,
   },
 };
+use openidconnect::SubjectIdentifier;
 
 use crate::{
   config::core_config,
@@ -496,4 +497,66 @@ pub async fn get_swarm_or_server(
   }
 
   Ok(SwarmOrServer::Server(server))
+}
+
+pub async fn find_github_user(
+  github_id: &str,
+) -> anyhow::Result<Option<User>> {
+  db_client()
+    .users
+    .find_one(doc! {
+      // Find either primary or linked Github user
+      "$or": [
+        // User is primary Github user
+        { "config.data.github_id": &github_id },
+        // User has linked this Github login
+        { "linked_logins.Github.data.github_id": &github_id }
+      ]
+    })
+    .await
+    .context("Failed at find user query from database")
+}
+
+pub async fn find_google_user(
+  google_id: &str,
+) -> anyhow::Result<Option<User>> {
+  db_client()
+    .users
+    .find_one(doc! {
+      // Find either primary or linked Google user
+      "$or": [
+        // User is primary Google user
+        { "config.data.google_id": &google_id },
+        // User has linked this Google login
+        { "linked_logins.Google.data.google_id": &google_id }
+      ]
+    })
+    .await
+    .context("Failed at find user query from database")
+}
+
+pub async fn find_oidc_user(
+  subject: &SubjectIdentifier,
+) -> anyhow::Result<Option<User>> {
+  let oidc_provider = &core_config().oidc_provider;
+  let oidc_user_id = subject.as_str();
+  db_client()
+    .users
+    .find_one(doc! {
+      // Find either primary or linked Oidc user
+      "$or": [
+        // User is primary Oidc user
+        {
+          "config.data.provider": oidc_provider,
+          "config.data.user_id": oidc_user_id
+        },
+        // User has linked this Oidc login
+        {
+          "linked_logins.Oidc.data.provider": oidc_provider,
+          "linked_logins.Oidc.data.user_id": oidc_user_id
+        }
+      ]
+    })
+    .await
+    .context("Failed at find user query from database")
 }

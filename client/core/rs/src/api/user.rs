@@ -48,6 +48,91 @@ pub type SetLastSeenUpdateResponse = NoData;
 
 //
 
+/// Begin linking flow for a third party login. Response: [NoData].
+///
+/// First call this method when authenticated, then
+/// redirect user to /api/auth/{provider}/link.
+///
+/// 'provider' can be:
+/// - github
+/// - google
+/// - oidc
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoUserRequest)]
+#[response(BeginThirdPartyLoginLinkResponse)]
+#[error(serror::Error)]
+pub struct BeginThirdPartyLoginLink {}
+
+#[typeshare]
+pub type BeginThirdPartyLoginLinkResponse = NoData;
+
+//
+
+/// Unlink a login. Response: [NoData].
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoUserRequest)]
+#[response(UnlinkLoginResponse)]
+#[error(serror::Error)]
+pub struct UnlinkLogin {
+  /// 'provider' can be:
+  /// - Local
+  /// - Github
+  /// - Google
+  /// - Oidc
+  pub provider: String,
+}
+
+#[typeshare]
+pub type UnlinkLoginResponse = NoData;
+
+//
+
+/// Update the calling users username.
+/// Response: [NoData].
+///
+/// Will fail if the new username is invalid or already taken.
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoUserRequest)]
+#[response(UpdateUsernameResponse)]
+#[error(serror::Error)]
+pub struct UpdateUsername {
+  pub username: String,
+}
+
+#[typeshare]
+pub type UpdateUsernameResponse = NoData;
+
+//
+
+/// Update the calling user's password. Response: [NoData].
+///
+/// If the User was created using third party login method,
+/// using [UpdatePassword] adds or updates the Local linked (additional) login method.
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+)]
+#[empty_traits(KomodoUserRequest)]
+#[response(UpdatePasswordResponse)]
+#[error(serror::Error)]
+pub struct UpdatePassword {
+  pub password: String,
+}
+
+#[typeshare]
+pub type UpdatePasswordResponse = NoData;
+
+//
+
 /// Create an api key for the calling user.
 /// Response: [CreateApiKeyResponse].
 ///
