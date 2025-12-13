@@ -213,7 +213,7 @@ const ProfileInner = ({ user }: { user: Types.User }) => {
                 }) =>
                   linked ? (
                     <ConfirmButton
-                      title="Unlink"
+                      title={`Unlink ${provider}`}
                       icon={<Trash className="w-4 h-4" />}
                       variant="destructive"
                       onClick={() => unlink({ provider })}

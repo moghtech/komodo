@@ -1297,7 +1297,7 @@ export interface User {
     /** WebAuthn Passkey 2fa credentials */
     passkey?: UserPasskeyConfig;
     /** Allow third party logins to skip 2fa. */
-    third_party_skip_2fa?: boolean;
+    third_party_skip_2fa: boolean;
     /** When the user last opened updates dropdown. */
     last_update_view?: I64;
     /** Recently viewed ids */

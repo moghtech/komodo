@@ -23,7 +23,7 @@ mod alerter;
 mod build;
 mod builder;
 mod deployment;
-mod onboarding_key;
+mod onboarding;
 mod permissions;
 mod procedure;
 mod provider;

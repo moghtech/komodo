@@ -36,8 +36,8 @@ impl Resolve<UserArgs> for CreateApiKey {
     validate_api_key_name(&self.name)
       .status_code(StatusCode::BAD_REQUEST)?;
 
-    let key = format!("K-{}", random_string(SECRET_LENGTH));
-    let secret = format!("S-{}", random_string(SECRET_LENGTH));
+    let key = format!("K_{}_K", random_string(SECRET_LENGTH));
+    let secret = format!("S_{}_S", random_string(SECRET_LENGTH));
     let secret_hash = bcrypt::hash(&secret, BCRYPT_COST)
       .context("Failed at hashing secret string")?;
 

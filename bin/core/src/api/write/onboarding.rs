@@ -45,7 +45,7 @@ impl Resolve<WriteArgs> for CreateOnboardingKey {
     let private_key = if let Some(private_key) = self.private_key {
       private_key
     } else {
-      format!("O-{}", random_string(30))
+      format!("O_{}_O", random_string(28))
     };
     let public_key = EncodedKeyPair::from_private_key(&private_key)?
       .public
