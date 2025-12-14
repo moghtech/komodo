@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::entities::swarm::SwarmState;
+use crate::entities::{
+  docker::{service::SwarmServiceListItem, task::SwarmTaskListItem},
+  swarm::SwarmState,
+};
 
 /// Swarm stack list item.
 /// Returned by `docker stack ls --format json`
@@ -62,11 +65,11 @@ pub struct SwarmStack {
 
   /// Services part of the stack
   #[serde(rename = "Services")]
-  pub services: Vec<SwarmStackServiceListItem>,
+  pub services: Vec<SwarmServiceListItem>,
 
   /// Tasks part of the stack
   #[serde(rename = "Tasks")]
-  pub tasks: Vec<SwarmStackTaskListItem>,
+  pub tasks: Vec<SwarmTaskListItem>,
 }
 
 /// Swarm stack service list item.
@@ -81,26 +84,25 @@ pub struct SwarmStackServiceListItem {
   /// The *short* swarm service ID
   #[serde(rename = "ID")]
   pub id: Option<String>,
+  // /// The service name.
+  // #[serde(rename = "Name")]
+  // pub name: Option<String>,
 
-  /// The service name.
-  #[serde(rename = "Name")]
-  pub name: Option<String>,
+  // /// The service mode.
+  // #[serde(rename = "Mode")]
+  // pub mode: Option<String>,
 
-  /// The service mode.
-  #[serde(rename = "Mode")]
-  pub mode: Option<String>,
+  // /// The service replicas, formatted as string.
+  // #[serde(rename = "Replicas")]
+  // pub replicas: Option<String>,
 
-  /// The service replicas, formatted as string.
-  #[serde(rename = "Replicas")]
-  pub replicas: Option<String>,
+  // /// The image associated with service
+  // #[serde(rename = "Image")]
+  // pub image: Option<String>,
 
-  /// The image associated with service
-  #[serde(rename = "Image")]
-  pub image: Option<String>,
-
-  /// Task exposed ports, formatted as a string.
-  #[serde(rename = "Ports")]
-  pub ports: Option<String>,
+  // /// Task exposed ports, formatted as a string.
+  // #[serde(rename = "Ports")]
+  // pub ports: Option<String>,
 }
 
 /// Swarm stack task list item.
@@ -116,31 +118,30 @@ pub struct SwarmStackTaskListItem {
   #[serde(rename = "ID")]
   pub id: Option<String>,
 
-  /// Swarm stack task name.
-  #[serde(rename = "Name")]
-  pub name: Option<String>,
-
-  /// The image associated with task
-  #[serde(rename = "Image")]
-  pub image: Option<String>,
-
-  /// The node the task is running on
-  #[serde(rename = "Node")]
-  pub node: Option<String>,
-
-  /// The task desired state. Matches 'CurrentState' when healthy.
-  #[serde(rename = "DesiredState")]
-  pub desired_state: Option<String>,
-
   /// The task current state. Matches 'DesiredState' when healthy.
   #[serde(rename = "CurrentState")]
   pub current_state: Option<String>,
 
-  /// An error message, if one exists
-  #[serde(rename = "Error")]
-  pub error: Option<String>,
+  /// The task desired state. Matches 'CurrentState' when healthy.
+  #[serde(rename = "DesiredState")]
+  pub desired_state: Option<String>,
+  // /// Swarm stack task name.
+  // #[serde(rename = "Name")]
+  // pub name: Option<String>,
 
-  /// Task exposed ports, formatted as a string.
-  #[serde(rename = "Ports")]
-  pub ports: Option<String>,
+  // /// The image associated with task
+  // #[serde(rename = "Image")]
+  // pub image: Option<String>,
+
+  // /// The node the task is running on
+  // #[serde(rename = "Node")]
+  // pub node: Option<String>,
+
+  // /// An error message, if one exists
+  // #[serde(rename = "Error")]
+  // pub error: Option<String>,
+
+  // /// Task exposed ports, formatted as a string.
+  // #[serde(rename = "Ports")]
+  // pub ports: Option<String>,
 }

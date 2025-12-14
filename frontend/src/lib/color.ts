@@ -161,6 +161,38 @@ export const swarm_node_state_intention: (
   }
 };
 
+export const swarm_node_availability_intention: (
+  state?: Types.NodeSpecAvailabilityEnum
+) => ColorIntention = (state) => {
+  switch (state) {
+    case Types.NodeSpecAvailabilityEnum.ACTIVE:
+      return "Good";
+    case Types.NodeSpecAvailabilityEnum.DRAIN:
+      return "Warning";
+    case Types.NodeSpecAvailabilityEnum.PAUSE:
+      return "Critical";
+    case Types.NodeSpecAvailabilityEnum.EMPTY:
+      return "Neutral";
+    case undefined:
+      return "None";
+  }
+};
+
+export const swarm_node_role_intention: (
+  state?: Types.NodeSpecRoleEnum
+) => ColorIntention = (state) => {
+  switch (state) {
+    case Types.NodeSpecRoleEnum.MANAGER:
+      return "Good";
+    case Types.NodeSpecRoleEnum.WORKER:
+      return "Neutral";
+    case Types.NodeSpecRoleEnum.EMPTY:
+      return "None";
+    case undefined:
+      return "None";
+  }
+};
+
 export const swarm_task_state_intention: (
   state?: Types.TaskState,
   desired?: Types.TaskState
@@ -265,8 +297,6 @@ export const container_state_intention: (
     case Types.ContainerStateStatusEnum.Paused:
       return "Warning";
     case Types.ContainerStateStatusEnum.Empty:
-      return "Unknown";
-    case undefined:
       return "Unknown";
     default:
       return "Critical";

@@ -21,11 +21,12 @@ import {
   swarm_state_intention,
 } from "@lib/color";
 import { ResourceNotifications } from "@pages/resource-notifications";
-import { ReactNode, useMemo } from "react";
+import { Dispatch, ReactNode, SetStateAction, useMemo, useState } from "react";
 import { MobileFriendlyTabsSelector } from "@ui/mobile-friendly-tabs";
 import { SwarmServiceLogs } from "./log";
 import { Section } from "@components/layouts";
 import { RemoveSwarmResource } from "./remove";
+import { SwarmTasksTable } from "@components/resources/swarm/table";
 
 export default function SwarmServicePage() {
   const { id, service: __service } = useParams() as {
@@ -73,6 +74,7 @@ export default function SwarmServicePage() {
   const state = get_service_state_from_tasks(tasks);
   const intention = swarm_state_intention(state);
   const strokeColor = stroke_color_class_by_intention(intention);
+  const service_id = service.ID;
 
   return (
     <div>
@@ -131,35 +133,51 @@ export default function SwarmServicePage() {
 
         {/* Tabs */}
         <div className="pt-4">
-          {swarm && <SwarmServiceTabs swarm={swarm} service={_service} />}
+          {swarm && (
+            <SwarmServiceTabs
+              swarm={swarm}
+              service={_service}
+              service_id={service_id}
+            />
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-type SwarmServiceTabsView = "Log" | "Inspect";
+type SwarmServiceTabsView = "Tasks" | "Log" | "Inspect";
 
 const SwarmServiceTabs = ({
   swarm,
   service,
+  service_id,
 }: {
   swarm: Types.SwarmListItem;
   service: string;
+  service_id: string | undefined;
 }) => {
+  const _search = useState("");
   const [_view, setView] = useLocalStorage<SwarmServiceTabsView>(
     `swarm-${swarm.id}-service-${service}-tabs-v2`,
-    "Log"
+    "Tasks"
   );
   const { specificLogs, specificInspect } = usePermissions({
     type: "Swarm",
     id: swarm.id,
   });
 
-  const view = !specificInspect && _view === "Inspect" ? "Log" : _view;
+  const view =
+    (!specificLogs && _view === "Log") ||
+    (!specificInspect && _view === "Inspect")
+      ? "Tasks"
+      : _view;
 
   const tabs = useMemo(
     () => [
+      {
+        value: "Tasks",
+      },
       {
         value: "Log",
         disabled: !specificLogs,
@@ -182,6 +200,15 @@ const SwarmServiceTabs = ({
   );
 
   switch (view) {
+    case "Tasks":
+      return (
+        <SwarmServiceTasksTable
+          id={swarm.id}
+          service_id={service_id}
+          titleOther={Selector}
+          _search={_search}
+        />
+      );
     case "Log":
       return (
         <SwarmServiceLogs
@@ -236,6 +263,33 @@ const SwarmServiceInspect = ({
         readOnly
       />
     </Section>
+  );
+};
+
+const SwarmServiceTasksTable = ({
+  id,
+  service_id,
+  titleOther,
+  _search,
+}: {
+  id: string;
+  service_id: string | undefined;
+  titleOther: ReactNode;
+  _search: [string, Dispatch<SetStateAction<string>>];
+}) => {
+  const tasks =
+    useRead(
+      "ListSwarmTasks",
+      { swarm: id },
+      { enabled: !!service_id }
+    ).data?.filter((task) => service_id && task.ServiceID === service_id) ?? [];
+  return (
+    <SwarmTasksTable
+      id={id}
+      tasks={tasks}
+      titleOther={titleOther}
+      _search={_search}
+    />
   );
 };
 

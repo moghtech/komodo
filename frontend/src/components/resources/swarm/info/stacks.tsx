@@ -6,6 +6,8 @@ import { Search } from "lucide-react";
 import { Input } from "@ui/input";
 import { filterBySplit } from "@lib/utils";
 import { SwarmResourceLink } from "..";
+import { StatusBadge } from "@components/util";
+import { swarm_state_intention } from "@lib/color";
 
 export const SwarmStacks = ({
   id,
@@ -64,15 +66,21 @@ export const SwarmStacks = ({
             ),
           },
           {
-            accessorKey: "Services",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Services" />
-            ),
-          },
-          {
             accessorKey: "State",
             header: ({ column }) => (
               <SortableHeader column={column} title="State" />
+            ),
+            cell: ({ row }) => (
+              <StatusBadge
+                text={row.original.State}
+                intent={swarm_state_intention(row.original.State)}
+              />
+            ),
+          },
+          {
+            accessorKey: "Services",
+            header: ({ column }) => (
+              <SortableHeader column={column} title="Services" />
             ),
           },
         ]}

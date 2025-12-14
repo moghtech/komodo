@@ -2,27 +2,68 @@ use anyhow::{Context, anyhow};
 use command::run_komodo_standard_command;
 use futures_util::{StreamExt, stream::FuturesOrdered};
 use komodo_client::entities::{
-  docker::stack::{
-    SwarmStack, SwarmStackListItem, SwarmStackServiceListItem,
-    SwarmStackTaskListItem,
+  docker::{
+    service::SwarmServiceListItem,
+    stack::{
+      SwarmStack, SwarmStackListItem, SwarmStackServiceListItem,
+      SwarmStackTaskListItem,
+    },
   },
   swarm::SwarmState,
 };
 
-pub async fn inspect_swarm_stack(
-  name: String,
-) -> anyhow::Result<SwarmStack> {
-  let (tasks, services) = tokio::try_join!(
-    list_swarm_stack_tasks(&name),
-    list_swarm_stack_services(&name)
-  )?;
-  let state = state_from_tasks(&tasks);
-  Ok(SwarmStack {
-    name,
-    state,
-    services,
-    tasks,
-  })
+use super::*;
+
+impl DockerClient {
+  pub async fn inspect_swarm_stack(
+    &self,
+    name: String,
+  ) -> anyhow::Result<SwarmStack> {
+    let (service_ids, swarm_tasks, tasks) = tokio::try_join!(
+      list_swarm_stack_service_ids(&name),
+      list_swarm_stack_tasks(&name),
+      self.list_swarm_tasks(),
+    )?;
+    let services = self
+      .list_swarm_services(&tasks)
+      .await?
+      .into_iter()
+      .filter(|service| {
+        service
+          .id
+          .as_ref()
+          .map(|long_id| {
+            service_ids
+              .iter()
+              // These service ids are shortened coming from docker,
+              // only need to check that long id starts with short id
+              .any(|short_id| long_id.starts_with(short_id))
+          })
+          .unwrap_or_default()
+      })
+      .collect::<Vec<_>>();
+    let task_ids = swarm_tasks
+      .into_iter()
+      .filter_map(|task| task.id)
+      .collect::<Vec<_>>();
+    let tasks = tasks
+      .into_iter()
+      .filter(|task| {
+        task
+          .id
+          .as_ref()
+          .map(|id| task_ids.contains(id))
+          .unwrap_or_default()
+      })
+      .collect::<Vec<_>>();
+    let state = state_from_services(&services);
+    Ok(SwarmStack {
+      name,
+      state,
+      services,
+      tasks,
+    })
+  }
 }
 
 pub async fn list_swarm_stacks()
@@ -72,9 +113,9 @@ pub async fn list_swarm_stacks()
   Ok(stacks)
 }
 
-pub async fn list_swarm_stack_services(
+pub async fn list_swarm_stack_service_ids(
   stack: &str,
-) -> anyhow::Result<Vec<SwarmStackServiceListItem>> {
+) -> anyhow::Result<Vec<String>> {
   let res = run_komodo_standard_command(
     "List Swarm Stack Services",
     None,
@@ -89,18 +130,17 @@ pub async fn list_swarm_stack_services(
   }
 
   // The output is in JSONL, need to convert to standard JSON vec.
-  let mut services =
-    serde_json::from_str::<Vec<SwarmStackServiceListItem>>(&format!(
-      "[{}]",
-      res.stdout.trim().replace('\n', ",")
-    ))
-    .context(
-      "Failed to parse 'docker stack services' response from json",
-    )?;
+  let ids = serde_json::from_str::<Vec<SwarmStackServiceListItem>>(
+    &format!("[{}]", res.stdout.trim().replace('\n', ",")),
+  )
+  .context(
+    "Failed to parse 'docker stack services' response from json",
+  )?
+  .into_iter()
+  .filter_map(|service| service.id)
+  .collect::<Vec<_>>();
 
-  services.sort_by(|a, b| a.name.cmp(&b.name));
-
-  Ok(services)
+  Ok(ids)
 }
 
 pub async fn list_swarm_stack_tasks(
@@ -120,22 +160,23 @@ pub async fn list_swarm_stack_tasks(
   }
 
   // The output is in JSONL, need to convert to standard JSON vec.
-  let mut tasks =
-    serde_json::from_str::<Vec<SwarmStackTaskListItem>>(&format!(
-      "[{}]",
-      res.stdout.trim().replace('\n', ",")
-    ))
-    .context(
-      "Failed to parse 'docker stack ps' response from json",
-    )?;
-
-  tasks.sort_by(|a, b| {
-    a.desired_state
-      .cmp(&b.desired_state)
-      .then_with(|| a.name.cmp(&b.name))
-  });
+  let tasks = serde_json::from_str::<Vec<SwarmStackTaskListItem>>(
+    &format!("[{}]", res.stdout.trim().replace('\n', ",")),
+  )
+  .context("Failed to parse 'docker stack ps' response from json")?;
 
   Ok(tasks)
+}
+
+pub fn state_from_services<'a>(
+  services: impl IntoIterator<Item = &'a SwarmServiceListItem>,
+) -> SwarmState {
+  for service in services {
+    if matches!(service.state, SwarmState::Unhealthy) {
+      return SwarmState::Unhealthy;
+    }
+  }
+  SwarmState::Healthy
 }
 
 pub fn state_from_tasks<'a>(

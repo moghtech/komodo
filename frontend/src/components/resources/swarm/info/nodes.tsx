@@ -6,6 +6,12 @@ import { Search } from "lucide-react";
 import { Input } from "@ui/input";
 import { filterBySplit } from "@lib/utils";
 import { SwarmResourceLink } from "..";
+import { StatusBadge } from "@components/util";
+import {
+  swarm_node_availability_intention,
+  swarm_node_role_intention,
+  swarm_node_state_intention,
+} from "@lib/color";
 
 export const SwarmNodes = ({
   id,
@@ -77,21 +83,38 @@ export const SwarmNodes = ({
             header: ({ column }) => (
               <SortableHeader column={column} title="Role" />
             ),
-            cell: ({ row }) => row.original.Role ?? "Unknown",
-          },
-          {
-            accessorKey: "Availability",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Availability" />
+            cell: ({ row }) => (
+              <StatusBadge
+                text={row.original.Role}
+                intent={swarm_node_role_intention(row.original.Role)}
+              />
             ),
-            cell: ({ row }) => row.original.Availability ?? "Unknown",
           },
           {
             accessorKey: "State",
             header: ({ column }) => (
               <SortableHeader column={column} title="State" />
             ),
-            cell: ({ row }) => row.original.State ?? "Unknown",
+            cell: ({ row }) => (
+              <StatusBadge
+                text={row.original.State}
+                intent={swarm_node_state_intention(row.original.State)}
+              />
+            ),
+          },
+          {
+            accessorKey: "Availability",
+            header: ({ column }) => (
+              <SortableHeader column={column} title="Availability" />
+            ),
+            cell: ({ row }) => (
+              <StatusBadge
+                text={row.original.Availability}
+                intent={swarm_node_availability_intention(
+                  row.original.Availability
+                )}
+              />
+            ),
           },
           {
             accessorKey: "UpdatedAt",
@@ -104,17 +127,17 @@ export const SwarmNodes = ({
                 : "Unknown",
             size: 200,
           },
-          {
-            accessorKey: "CreatedAt",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Created" />
-            ),
-            cell: ({ row }) =>
-              row.original.CreatedAt
-                ? new Date(row.original.CreatedAt).toLocaleString()
-                : "Unknown",
-            size: 200,
-          },
+          // {
+          //   accessorKey: "CreatedAt",
+          //   header: ({ column }) => (
+          //     <SortableHeader column={column} title="Created" />
+          //   ),
+          //   cell: ({ row }) =>
+          //     row.original.CreatedAt
+          //       ? new Date(row.original.CreatedAt).toLocaleString()
+          //       : "Unknown",
+          //   size: 200,
+          // },
         ]}
       />
     </Section>

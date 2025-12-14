@@ -9,6 +9,8 @@ import { filterBySplit } from "@lib/utils";
 import { Section } from "@components/layouts";
 import { Search } from "lucide-react";
 import { Input } from "@ui/input";
+import { StatusBadge } from "@components/util";
+import { swarm_task_state_intention } from "@lib/color";
 
 export const SwarmTable = ({ swarms }: { swarms: Types.SwarmListItem[] }) => {
   const [_, setSelectedResources] = useSelectedResources("Swarm");
@@ -137,98 +139,6 @@ export const SwarmServicesTable = ({
   );
 };
 
-export const SwarmStackServicesTable = ({
-  id,
-  services,
-  titleOther,
-  _search,
-}: {
-  id: string;
-  services: Types.SwarmStackServiceListItem[];
-  titleOther: ReactNode;
-  _search: [string, Dispatch<SetStateAction<string>>];
-}) => {
-  const [search, setSearch] = _search;
-  const filtered = filterBySplit(
-    services,
-    search,
-    (service) => service.Name ?? service.ID ?? "Unknown"
-  );
-  return (
-    <Section
-      titleOther={titleOther}
-      actions={
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="relative">
-            <Search className="w-4 absolute top-[50%] left-3 -translate-y-[50%] text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="search..."
-              className="pl-8 w-[200px] lg:w-[300px]"
-            />
-          </div>
-        </div>
-      }
-    >
-      <DataTable
-        containerClassName="min-h-[60vh]"
-        tableKey="swarm-services"
-        data={filtered}
-        columns={[
-          {
-            accessorKey: "Name",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Name" />
-            ),
-            cell: ({ row }) => (
-              <SwarmResourceLink
-                type="Service"
-                swarm_id={id}
-                resource_id={row.original.Name}
-                name={row.original.Name}
-              />
-            ),
-            size: 200,
-          },
-          {
-            accessorKey: "ID",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Id" />
-            ),
-            size: 200,
-          },
-          {
-            accessorKey: "Image",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Image" />
-            ),
-            size: 200,
-          },
-          {
-            accessorKey: "Mode",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Mode" />
-            ),
-          },
-          {
-            accessorKey: "Replicas",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Replicas" />
-            ),
-          },
-          {
-            accessorKey: "Ports",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Ports" />
-            ),
-          },
-        ]}
-      />
-    </Section>
-  );
-};
-
 export const SwarmTasksTable = ({
   id,
   tasks: _tasks,
@@ -298,6 +208,21 @@ export const SwarmTasksTable = ({
                 name={row.original.ID}
               />
             ),
+            size: 150,
+          },
+          {
+            accessorKey: "node.Hostname",
+            header: ({ column }) => (
+              <SortableHeader column={column} title="Node" />
+            ),
+            cell: ({ row }) => (
+              <SwarmResourceLink
+                type="Node"
+                swarm_id={id}
+                resource_id={row.original.node?.ID}
+                name={row.original.node?.Hostname}
+              />
+            ),
             size: 200,
           },
           {
@@ -316,30 +241,33 @@ export const SwarmTasksTable = ({
             size: 200,
           },
           {
-            accessorKey: "node.Hostname",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Node" />
-            ),
-            cell: ({ row }) => (
-              <SwarmResourceLink
-                type="Node"
-                swarm_id={id}
-                resource_id={row.original.node?.ID}
-                name={row.original.node?.Hostname}
-              />
-            ),
-            size: 200,
-          },
-          {
             accessorKey: "State",
             header: ({ column }) => (
               <SortableHeader column={column} title="State" />
+            ),
+            cell: ({ row }) => (
+              <StatusBadge
+                text={row.original.State}
+                intent={swarm_task_state_intention(
+                  row.original.State,
+                  row.original.DesiredState
+                )}
+              />
             ),
           },
           {
             accessorKey: "DesiredState",
             header: ({ column }) => (
               <SortableHeader column={column} title="Desired State" />
+            ),
+            cell: ({ row }) => (
+              <StatusBadge
+                text={row.original.DesiredState}
+                intent={swarm_task_state_intention(
+                  row.original.State,
+                  row.original.DesiredState
+                )}
+              />
             ),
           },
           {
@@ -353,128 +281,17 @@ export const SwarmTasksTable = ({
                 : "Unknown",
             size: 200,
           },
-          {
-            accessorKey: "CreatedAt",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Created" />
-            ),
-            cell: ({ row }) =>
-              row.original.CreatedAt
-                ? new Date(row.original.CreatedAt).toLocaleString()
-                : "Unknown",
-            size: 200,
-          },
-        ]}
-      />
-    </Section>
-  );
-};
-
-export const SwarmStackTasksTable = ({
-  id,
-  tasks: _tasks,
-  titleOther,
-  _search,
-}: {
-  id: string;
-  tasks: Types.SwarmStackTaskListItem[];
-  titleOther: ReactNode;
-  _search: [string, Dispatch<SetStateAction<string>>];
-}) => {
-  const [search, setSearch] = _search;
-
-  const nodes =
-    useRead("ListSwarmNodes", { swarm: id }, { refetchInterval: 10_000 })
-      .data ?? [];
-  const tasks = _tasks.map((task) => {
-    return {
-      ...task,
-      node: nodes.find(
-        (node) =>
-          (task.Node ?? false) &&
-          (task.Node === node.ID ||
-            task.Node === node.Hostname ||
-            task.Node === node.Name)
-      ),
-    };
-  });
-
-  const filtered = filterBySplit(
-    tasks,
-    search,
-    (task) => task.Name ?? task.node?.Hostname ?? "Unknown"
-  );
-
-  return (
-    <Section
-      titleOther={titleOther}
-      actions={
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="relative">
-            <Search className="w-4 absolute top-[50%] left-3 -translate-y-[50%] text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="search..."
-              className="pl-8 w-[200px] lg:w-[300px]"
-            />
-          </div>
-        </div>
-      }
-    >
-      <DataTable
-        containerClassName="min-h-[60vh]"
-        tableKey="swarm-tasks"
-        data={filtered}
-        columns={[
-          {
-            accessorKey: "ID",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Id" />
-            ),
-            cell: ({ row }) => (
-              <SwarmResourceLink
-                type="Task"
-                swarm_id={id}
-                resource_id={row.original.ID}
-                name={row.original.ID}
-              />
-            ),
-            size: 200,
-          },
-          {
-            accessorKey: "node.Hostname",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Node" />
-            ),
-            cell: ({ row }) => (
-              <SwarmResourceLink
-                type="Node"
-                swarm_id={id}
-                resource_id={row.original.node?.ID}
-                name={row.original.node?.Hostname}
-              />
-            ),
-            size: 200,
-          },
-          {
-            accessorKey: "Image",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Image" />
-            ),
-          },
-          {
-            accessorKey: "CurrentState",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="State" />
-            ),
-          },
-          {
-            accessorKey: "DesiredState",
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Desired State" />
-            ),
-          },
+          // {
+          //   accessorKey: "CreatedAt",
+          //   header: ({ column }) => (
+          //     <SortableHeader column={column} title="Created" />
+          //   ),
+          //   cell: ({ row }) =>
+          //     row.original.CreatedAt
+          //       ? new Date(row.original.CreatedAt).toLocaleString()
+          //       : "Unknown",
+          //   size: 200,
+          // },
         ]}
       />
     </Section>

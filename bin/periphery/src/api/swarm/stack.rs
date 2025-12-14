@@ -25,9 +25,9 @@ use tracing::Instrument as _;
 
 use crate::{
   config::periphery_config,
-  docker::stack::inspect_swarm_stack,
   helpers::push_extra_args,
   stack::{maybe_login_registry, validate_files, write::write_stack},
+  state::docker_client,
 };
 
 impl Resolve<crate::api::Args> for InspectSwarmStack {
@@ -35,7 +35,12 @@ impl Resolve<crate::api::Args> for InspectSwarmStack {
     self,
     _: &crate::api::Args,
   ) -> anyhow::Result<SwarmStack> {
-    inspect_swarm_stack(self.stack).await
+    let client = docker_client().load();
+    let client = client
+      .iter()
+      .next()
+      .context("Could not connect to docker client")?;
+    client.inspect_swarm_stack(self.stack).await
   }
 }
 

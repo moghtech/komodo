@@ -4187,50 +4187,65 @@ export enum SwarmState {
 	Unknown = "Unknown",
 }
 
-/**
- * Swarm stack service list item.
- * Returned by `docker stack services --format json <NAME>`
- * 
- * https://docs.docker.com/reference/cli/docker/stack/services/#format
- */
-export interface SwarmStackServiceListItem {
-	/** The *short* swarm service ID */
+/** Swarm service list item. */
+export interface SwarmServiceListItem {
 	ID?: string;
-	/** The service name. */
+	/** Name of the service. */
 	Name?: string;
-	/** The service mode. */
-	Mode?: string;
-	/** The service replicas, formatted as string. */
-	Replicas?: string;
 	/** The image associated with service */
 	Image?: string;
-	/** Task exposed ports, formatted as a string. */
-	Ports?: string;
+	/** Runtime is the type of runtime specified for the task executor. */
+	Runtime?: string;
+	/** Condition for restart. */
+	Restart?: TaskSpecRestartPolicyConditionEnum;
+	/** Number of replicas */
+	Replicas?: I64;
+	/**
+	 * Swarm service state.
+	 * - Healthy if all associated tasks match their desired state (or report no desired state)
+	 * - Unhealthy otherwise
+	 * 
+	 * Not included in docker cli return, computed by Komodo
+	 */
+	State: SwarmState;
+	CreatedAt?: string;
+	UpdatedAt?: string;
 }
 
-/**
- * Swarm stack task list item.
- * Returned by `docker stack ps --format json <NAME>`
- * 
- * https://docs.docker.com/reference/cli/docker/stack/ps/#format
- */
-export interface SwarmStackTaskListItem {
-	/** The task ID */
+export enum TaskState {
+	NEW = "new",
+	ALLOCATED = "allocated",
+	PENDING = "pending",
+	ASSIGNED = "assigned",
+	ACCEPTED = "accepted",
+	PREPARING = "preparing",
+	READY = "ready",
+	STARTING = "starting",
+	RUNNING = "running",
+	COMPLETE = "complete",
+	SHUTDOWN = "shutdown",
+	FAILED = "failed",
+	REJECTED = "rejected",
+	REMOVE = "remove",
+	ORPHANED = "orphaned",
+}
+
+/** Swarm task list item. */
+export interface SwarmTaskListItem {
+	/** The ID of the task. */
 	ID?: string;
-	/** Swarm stack task name. */
+	/** Name of the task. */
 	Name?: string;
-	/** The image associated with task */
-	Image?: string;
-	/** The node the task is running on */
-	Node?: string;
-	/** The task desired state. Matches 'CurrentState' when healthy. */
-	DesiredState?: string;
-	/** The task current state. Matches 'DesiredState' when healthy. */
-	CurrentState?: string;
-	/** An error message, if one exists */
-	Error?: string;
-	/** Task exposed ports, formatted as a string. */
-	Ports?: string;
+	/** The ID of the node that this task is on. */
+	NodeID?: string;
+	/** The ID of the service this task is part of. */
+	ServiceID?: string;
+	/** The ID of container associated with this task. */
+	ContainerID?: string;
+	State?: TaskState;
+	DesiredState?: TaskState;
+	CreatedAt?: string;
+	UpdatedAt?: string;
 }
 
 /**
@@ -4253,9 +4268,9 @@ export interface SwarmStack {
 	 */
 	State: SwarmState;
 	/** Services part of the stack */
-	Services: SwarmStackServiceListItem[];
+	Services: SwarmServiceListItem[];
 	/** Tasks part of the stack */
-	Tasks: SwarmStackTaskListItem[];
+	Tasks: SwarmTaskListItem[];
 }
 
 export type InspectStackSwarmInfoResponse = SwarmStack;
@@ -4536,24 +4551,6 @@ export type InspectSwarmSecretResponse = SwarmSecret;
 export type InspectSwarmServiceResponse = SwarmService;
 
 export type InspectSwarmStackResponse = SwarmStack;
-
-export enum TaskState {
-	NEW = "new",
-	ALLOCATED = "allocated",
-	PENDING = "pending",
-	ASSIGNED = "assigned",
-	ACCEPTED = "accepted",
-	PREPARING = "preparing",
-	READY = "ready",
-	STARTING = "starting",
-	RUNNING = "running",
-	COMPLETE = "complete",
-	SHUTDOWN = "shutdown",
-	FAILED = "failed",
-	REJECTED = "rejected",
-	REMOVE = "remove",
-	ORPHANED = "orphaned",
-}
 
 /** represents the status of a container. */
 export interface ContainerStatus {
@@ -5084,31 +5081,6 @@ export type ServerListItem = ResourceListItem<ServerListItemInfo>;
 
 export type ListServersResponse = ServerListItem[];
 
-/** Swarm service list item. */
-export interface SwarmServiceListItem {
-	ID?: string;
-	/** Name of the service. */
-	Name?: string;
-	/** The image associated with service */
-	Image?: string;
-	/** Runtime is the type of runtime specified for the task executor. */
-	Runtime?: string;
-	/** Condition for restart. */
-	Restart?: TaskSpecRestartPolicyConditionEnum;
-	/** Number of replicas */
-	Replicas?: I64;
-	/**
-	 * Swarm service state.
-	 * - Healthy if all associated tasks match their desired state (or report no desired state)
-	 * - Unhealthy otherwise
-	 * 
-	 * Not included in docker cli return, computed by Komodo
-	 */
-	State: SwarmState;
-	CreatedAt?: string;
-	UpdatedAt?: string;
-}
-
 export interface StackService {
 	/** The service name */
 	service: string;
@@ -5294,24 +5266,6 @@ export interface SwarmStackListItem {
 }
 
 export type ListSwarmStacksResponse = SwarmStackListItem[];
-
-/** Swarm task list item. */
-export interface SwarmTaskListItem {
-	/** The ID of the task. */
-	ID?: string;
-	/** Name of the task. */
-	Name?: string;
-	/** The ID of the node that this task is on. */
-	NodeID?: string;
-	/** The ID of the service this task is part of. */
-	ServiceID?: string;
-	/** The ID of container associated with this task. */
-	ContainerID?: string;
-	State?: TaskState;
-	DesiredState?: TaskState;
-	CreatedAt?: string;
-	UpdatedAt?: string;
-}
 
 export type ListSwarmTasksResponse = SwarmTaskListItem[];
 
@@ -9802,6 +9756,32 @@ export interface SwarmConfig {
 	CreatedAt?: string;
 	UpdatedAt?: string;
 	Spec?: ConfigSpec;
+}
+
+/**
+ * Swarm stack service list item.
+ * Returned by `docker stack services --format json <NAME>`
+ * 
+ * https://docs.docker.com/reference/cli/docker/stack/services/#format
+ */
+export interface SwarmStackServiceListItem {
+	/** The *short* swarm service ID */
+	ID?: string;
+}
+
+/**
+ * Swarm stack task list item.
+ * Returned by `docker stack ps --format json <NAME>`
+ * 
+ * https://docs.docker.com/reference/cli/docker/stack/ps/#format
+ */
+export interface SwarmStackTaskListItem {
+	/** The task ID */
+	ID?: string;
+	/** The task current state. Matches 'DesiredState' when healthy. */
+	CurrentState?: string;
+	/** The task desired state. Matches 'CurrentState' when healthy. */
+	DesiredState?: string;
 }
 
 /** JSON structure to send new terminal window dimensions */

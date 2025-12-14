@@ -25,8 +25,8 @@ import { MobileFriendlyTabsSelector } from "@ui/mobile-friendly-tabs";
 import { Section } from "@components/layouts";
 import { MonacoEditor } from "@components/monaco";
 import {
-  SwarmStackServicesTable,
-  SwarmStackTasksTable,
+  SwarmServicesTable,
+  SwarmTasksTable,
 } from "@components/resources/swarm/table";
 import {
   Select,
@@ -194,7 +194,7 @@ const SwarmStackTabs = ({
   switch (view) {
     case "Services":
       return (
-        <SwarmStackServicesTable
+        <SwarmServicesTable
           id={swarm.id}
           services={stack.Services}
           titleOther={Selector}
@@ -203,7 +203,7 @@ const SwarmStackTabs = ({
       );
     case "Tasks":
       return (
-        <SwarmStackTasksTable
+        <SwarmTasksTable
           id={swarm.id}
           tasks={stack.Tasks}
           titleOther={Selector}

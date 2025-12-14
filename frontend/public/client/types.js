@@ -589,6 +589,24 @@ export var SwarmState;
     /** Unknown case */
     SwarmState["Unknown"] = "Unknown";
 })(SwarmState || (SwarmState = {}));
+export var TaskState;
+(function (TaskState) {
+    TaskState["NEW"] = "new";
+    TaskState["ALLOCATED"] = "allocated";
+    TaskState["PENDING"] = "pending";
+    TaskState["ASSIGNED"] = "assigned";
+    TaskState["ACCEPTED"] = "accepted";
+    TaskState["PREPARING"] = "preparing";
+    TaskState["READY"] = "ready";
+    TaskState["STARTING"] = "starting";
+    TaskState["RUNNING"] = "running";
+    TaskState["COMPLETE"] = "complete";
+    TaskState["SHUTDOWN"] = "shutdown";
+    TaskState["FAILED"] = "failed";
+    TaskState["REJECTED"] = "rejected";
+    TaskState["REMOVE"] = "remove";
+    TaskState["ORPHANED"] = "orphaned";
+})(TaskState || (TaskState = {}));
 export var NodeSpecRoleEnum;
 (function (NodeSpecRoleEnum) {
     NodeSpecRoleEnum["EMPTY"] = "";
@@ -622,24 +640,6 @@ export var SwarmSpecCaConfigExternalCasProtocolEnum;
     SwarmSpecCaConfigExternalCasProtocolEnum["EMPTY"] = "";
     SwarmSpecCaConfigExternalCasProtocolEnum["CFSSL"] = "cfssl";
 })(SwarmSpecCaConfigExternalCasProtocolEnum || (SwarmSpecCaConfigExternalCasProtocolEnum = {}));
-export var TaskState;
-(function (TaskState) {
-    TaskState["NEW"] = "new";
-    TaskState["ALLOCATED"] = "allocated";
-    TaskState["PENDING"] = "pending";
-    TaskState["ASSIGNED"] = "assigned";
-    TaskState["ACCEPTED"] = "accepted";
-    TaskState["PREPARING"] = "preparing";
-    TaskState["READY"] = "ready";
-    TaskState["STARTING"] = "starting";
-    TaskState["RUNNING"] = "running";
-    TaskState["COMPLETE"] = "complete";
-    TaskState["SHUTDOWN"] = "shutdown";
-    TaskState["FAILED"] = "failed";
-    TaskState["REJECTED"] = "rejected";
-    TaskState["REMOVE"] = "remove";
-    TaskState["ORPHANED"] = "orphaned";
-})(TaskState || (TaskState = {}));
 export var PortTypeEnum;
 (function (PortTypeEnum) {
     PortTypeEnum["EMPTY"] = "";
