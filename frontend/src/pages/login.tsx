@@ -18,7 +18,7 @@ import {
 import { useRef, useState } from "react";
 import { ThemeToggle } from "@ui/theme";
 import { KOMODO_BASE_URL, sanitize_query } from "@main";
-import { KeyRound, X } from "lucide-react";
+import { KeyRound, Loader2, X } from "lucide-react";
 import { cn, preparePasskeyCredential } from "@lib/utils";
 import { Types } from "komodo_client";
 import { useToast } from "@ui/use-toast";
@@ -37,8 +37,10 @@ const login_with_oauth = (provider: OauthProvider) => {
 };
 
 export default function Login({
+  passkeyIsPending: _passkeyIsPending,
   totpIsPending: _totpIsPending,
 }: {
+  passkeyIsPending?: boolean;
   totpIsPending?: boolean;
 }) {
   const { toast } = useToast();
@@ -46,7 +48,11 @@ export default function Login({
   const userInvalidate = useUserInvalidate();
   const formRef = useRef<HTMLFormElement>(null);
   const totpFormRef = useRef<HTMLFormElement>(null);
+  const [passkeyIsPending, setPasskeyPending] = useState(
+    _passkeyIsPending ?? false
+  );
   const [totpIsPending, setTotpPending] = useState(_totpIsPending ?? false);
+  const secondFactorPending = passkeyIsPending || totpIsPending;
 
   // If signing in another user, need to redirect away from /login manually
   const maybeNavigate = location.pathname.startsWith("/login")
@@ -91,6 +97,7 @@ export default function Login({
         case "Jwt":
           return onSuccess(data);
         case "Passkey":
+          setPasskeyPending(true);
           return navigator.credentials
             .get(preparePasskeyCredential(data))
             .then((credential) => completePasskeyLogin({ credential }))
@@ -147,11 +154,11 @@ export default function Login({
     completeTotpLogin({ code: creds.code });
   };
 
-  const no_auth_configured =
+  const noAuthConfigured =
     options !== undefined &&
     Object.values(options).every((value) => value === false);
 
-  const show_sign_up = options !== undefined && !options.registration_disabled;
+  const showSignUp = options !== undefined && !options.registration_disabled;
 
   // Otherwise just standard login
   return (
@@ -174,7 +181,8 @@ export default function Login({
                 <CardDescription>Log In</CardDescription>
               </div>
             </div>
-            {!totpIsPending && (
+
+            {!secondFactorPending && (
               <div className="flex gap-2">
                 {(
                   [
@@ -204,7 +212,7 @@ export default function Login({
                       </Button>
                     )
                 )}
-                {no_auth_configured && (
+                {noAuthConfigured && (
                   <Button variant="destructive" size="icon">
                     {" "}
                     <X className="w-4 h-4" />{" "}
@@ -213,7 +221,8 @@ export default function Login({
               </div>
             )}
           </CardHeader>
-          {options?.local && !totpIsPending && (
+
+          {options?.local && !secondFactorPending && (
             <form ref={formRef} onSubmit={handleSubmit} autoComplete="on">
               <CardContent className="flex flex-col justify-center w-full gap-4">
                 <div className="flex flex-col gap-2">
@@ -238,7 +247,7 @@ export default function Login({
                 </div>
               </CardContent>
               <CardFooter className="flex gap-4 w-full justify-end">
-                {show_sign_up && (
+                {showSignUp && (
                   <Button
                     variant="outline"
                     type="button"
@@ -260,6 +269,17 @@ export default function Login({
               </CardFooter>
             </form>
           )}
+
+          {passkeyIsPending && (
+            <CardContent className="flex flex-col justify-center items-center w-full gap-4">
+              <KeyRound className="w-16 h-16" />
+              <div className="flex items-center gap-4">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <h2>Provide your passkey to finish login</h2>
+              </div>
+            </CardContent>
+          )}
+
           {totpIsPending && (
             <form
               ref={totpFormRef}
@@ -268,7 +288,10 @@ export default function Login({
             >
               <CardContent className="flex flex-col justify-center w-full gap-4">
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="code">2FA Code</Label>
+                  <Label htmlFor="code" className="flex items-center gap-2">
+                    <KeyRound className="w-4 h-4" />
+                    2FA Code{" "}
+                  </Label>
                   <Input
                     id="code"
                     name="code"
@@ -291,7 +314,8 @@ export default function Login({
               </CardFooter>
             </form>
           )}
-          {no_auth_configured && (
+
+          {noAuthConfigured && (
             <CardContent className="w-full gap-2 text-muted-foreground text-sm">
               No login methods have been configured. See the
               <a

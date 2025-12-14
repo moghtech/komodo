@@ -47,7 +47,7 @@ let jwt_redeem_sent = false;
 let passkey_sent = false;
 
 /// returns whether to show login / loading screen depending on state of exchange token loop
-const useQueryState = () => {
+const useAuthState = () => {
   const { toast } = useToast();
   const onSuccess = ({ user_id, jwt }: Types.JwtResponse) => {
     LOGIN_TOKENS.add_and_change(user_id, jwt);
@@ -99,18 +99,18 @@ const useQueryState = () => {
 
 export const Router = () => {
   // Handle exchange token loop to avoid showing login flash
-  const { jwt_redeem_ready, passkey_pending, totp } = useQueryState();
+  const { jwt_redeem_ready, passkey_pending, totp } = useAuthState();
 
-  if (totp) {
-    return <Login totpIsPending />;
-  }
-
-  if (jwt_redeem_ready || passkey_pending) {
+  if (jwt_redeem_ready) {
     return (
       <div className="w-screen h-screen flex justify-center items-center">
         <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     );
+  }
+
+  if (passkey_pending || totp) {
+    return <Login passkeyIsPending={passkey_pending} totpIsPending={totp} />;
   }
 
   return (
