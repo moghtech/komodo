@@ -63,14 +63,19 @@ impl ResourceSyncTrait for Deployment {
     update: Self::PartialConfig,
   ) -> anyhow::Result<Self::ConfigDiff> {
     let resources = all_resources_cache().load();
-    // need to replace the server id with name
+
+    original.swarm_id = resources
+      .swarms
+      .get(&original.swarm_id)
+      .map(|s| s.name.clone())
+      .unwrap_or_default();
+
     original.server_id = resources
       .servers
       .get(&original.server_id)
       .map(|s| s.name.clone())
       .unwrap_or_default();
 
-    // need to replace the build id with name
     if let DeploymentImage::Build { build_id, version } =
       &original.image
     {
@@ -96,13 +101,19 @@ impl ResourceSyncTrait for Stack {
     update: Self::PartialConfig,
   ) -> anyhow::Result<Self::ConfigDiff> {
     let resources = all_resources_cache().load();
-    // Need to replace server id with name
+
+    original.swarm_id = resources
+      .swarms
+      .get(&original.swarm_id)
+      .map(|s| s.name.clone())
+      .unwrap_or_default();
+
     original.server_id = resources
       .servers
       .get(&original.server_id)
       .map(|s| s.name.clone())
       .unwrap_or_default();
-    // Replace linked repo with name
+    
     original.linked_repo = resources
       .repos
       .get(&original.linked_repo)

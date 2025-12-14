@@ -214,6 +214,15 @@ impl ToToml for Swarm {
 impl ToToml for Stack {
   fn replace_ids(resource: &mut Resource<Self::Config, Self::Info>) {
     let all = all_resources_cache().load();
+
+    resource.config.swarm_id.clone_from(
+      all
+        .swarms
+        .get(&resource.config.swarm_id)
+        .map(|s| &s.name)
+        .unwrap_or(&String::new()),
+    );
+
     resource.config.server_id.clone_from(
       all
         .servers
@@ -221,6 +230,7 @@ impl ToToml for Stack {
         .map(|s| &s.name)
         .unwrap_or(&String::new()),
     );
+
     resource.config.linked_repo.clone_from(
       all
         .repos
@@ -239,6 +249,7 @@ impl ToToml for Stack {
       .map(|(key, value)| {
         #[allow(clippy::single_match)]
         match key.as_str() {
+          "swarm_id" => return Ok((String::from("swarm"), value)),
           "server_id" => return Ok((String::from("server"), value)),
           _ => {}
         }
@@ -251,6 +262,15 @@ impl ToToml for Stack {
 impl ToToml for Deployment {
   fn replace_ids(resource: &mut Resource<Self::Config, Self::Info>) {
     let all = all_resources_cache().load();
+
+    resource.config.swarm_id.clone_from(
+      all
+        .swarms
+        .get(&resource.config.swarm_id)
+        .map(|s| &s.name)
+        .unwrap_or(&String::new()),
+    );
+    
     resource.config.server_id.clone_from(
       all
         .servers
@@ -258,6 +278,7 @@ impl ToToml for Deployment {
         .map(|s| &s.name)
         .unwrap_or(&String::new()),
     );
+
     if let DeploymentImage::Build { build_id, .. } =
       &mut resource.config.image
     {
@@ -279,6 +300,7 @@ impl ToToml for Deployment {
       .into_iter()
       .map(|(key, mut value)| {
         match key.as_str() {
+          "swarm_id" => return Ok((String::from("swarm"), value)),
           "server_id" => return Ok((String::from("server"), value)),
           "image" => {
             if let Some(DeploymentImage::Build { version, .. }) =
