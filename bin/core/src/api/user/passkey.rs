@@ -71,7 +71,7 @@ impl Resolve<UserArgs> for BeginPasskeyEnrollment {
         "Failed to store passkey enrollment state in server side client session",
       )?;
 
-    Ok(challenge.into())
+    Ok(challenge)
   }
 }
 
@@ -104,7 +104,7 @@ impl Resolve<UserArgs> for ConfirmPasskeyEnrollment {
       )?;
 
     let passkey = webauthn
-      .finish_passkey_registration(&self.credential.into(), &state)
+      .finish_passkey_registration(&self.credential, &state)
       .context("Failed to finish passkey registration")?;
 
     let passkey = to_bson(&passkey)

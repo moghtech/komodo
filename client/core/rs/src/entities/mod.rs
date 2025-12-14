@@ -1501,6 +1501,7 @@ pub fn resource_link(
   format!("{host}{path}")
 }
 
+#[allow(clippy::large_enum_variant)]
 pub enum SwarmOrServer {
   Swarm(swarm::Swarm),
   Server(server::Server),

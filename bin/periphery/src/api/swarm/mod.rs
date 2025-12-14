@@ -2,8 +2,7 @@ use anyhow::Context as _;
 use command::run_komodo_standard_command;
 use komodo_client::entities::{
   docker::{
-    SwarmLists, config::SwarmConfig, node::SwarmNode,
-    secret::SwarmSecret, task::SwarmTask,
+    SwarmLists, node::SwarmNode, secret::SwarmSecret, task::SwarmTask,
   },
   update::Log,
 };
@@ -11,13 +10,11 @@ use periphery_client::api::swarm::*;
 use resolver_api::Resolve;
 
 use crate::{
-  docker::{
-    config::{inspect_swarm_config, list_swarm_configs},
-    stack::list_swarm_stacks,
-  },
+  docker::{config::list_swarm_configs, stack::list_swarm_stacks},
   state::docker_client,
 };
 
+mod config;
 mod service;
 mod stack;
 
@@ -40,7 +37,7 @@ impl Resolve<crate::api::Args> for PollSwarmStatus {
       list_swarm_stacks(),
     );
     let tasks = tasks.unwrap_or_default();
-    let services = client.list_swarm_services(&tasks).await;
+    let services = client.list_swarm_services(Some(&tasks)).await;
     Ok(PollSwarmStatusResponse {
       inspect: inspect.ok(),
       lists: SwarmLists {
@@ -177,49 +174,6 @@ impl Resolve<crate::api::Args> for InspectSwarmTask {
       .next()
       .context("Could not connect to docker client")?;
     client.inspect_swarm_task(&self.task).await
-  }
-}
-
-// ========
-//  Config
-// ========
-
-impl Resolve<crate::api::Args> for InspectSwarmConfig {
-  async fn resolve(
-    self,
-    _: &crate::api::Args,
-  ) -> anyhow::Result<Vec<SwarmConfig>> {
-    inspect_swarm_config(&self.config).await
-  }
-}
-
-impl Resolve<crate::api::Args> for RemoveSwarmConfigs {
-  #[instrument(
-    "RemoveSwarmConfigs",
-    skip_all,
-    fields(
-      id = args.id.to_string(),
-      core = args.core,
-      configs = serde_json::to_string(&self.configs).unwrap_or_else(|e| e.to_string()),
-    )
-  )]
-  async fn resolve(
-    self,
-    args: &crate::api::Args,
-  ) -> anyhow::Result<Log> {
-    let mut command = String::from("docker config rm");
-    for config in self.configs {
-      command += " ";
-      command += &config;
-    }
-    Ok(
-      run_komodo_standard_command(
-        "Remove Swarm Configs",
-        None,
-        command,
-      )
-      .await,
-    )
   }
 }
 

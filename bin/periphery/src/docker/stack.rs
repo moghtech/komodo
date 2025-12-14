@@ -25,7 +25,7 @@ impl DockerClient {
       self.list_swarm_tasks(),
     )?;
     let services = self
-      .list_swarm_services(&tasks)
+      .list_swarm_services(Some(&tasks))
       .await?
       .into_iter()
       .filter(|service| {

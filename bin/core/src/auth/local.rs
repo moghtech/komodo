@@ -207,7 +207,7 @@ async fn login_local_user(
       );
     };
 
-  let verified = bcrypt::verify(req.password, &user_pw_hash)
+  let verified = bcrypt::verify(req.password, user_pw_hash)
     .context("Invalid login credentials")
     .status_code(StatusCode::UNAUTHORIZED)?;
 
@@ -254,7 +254,7 @@ async fn login_local_user(
         .encode(user.id)
         // This is in internal error (500), not auth error
         .context("Failed to generate JWT for user")
-        .map(|jwt| LoginLocalUserResponse::Jwt(jwt))
+        .map(LoginLocalUserResponse::Jwt)
         .map_err(Into::into)
     }
   }

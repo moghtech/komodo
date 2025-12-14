@@ -2,6 +2,7 @@ use anyhow::Context;
 use bollard::query_parameters::{
   InspectServiceOptions, ListServicesOptions,
 };
+use futures_util::{TryStreamExt as _, stream::FuturesUnordered};
 use komodo_client::entities::{
   docker::{NetworkAttachmentConfig, service::*},
   swarm::SwarmState,
@@ -13,7 +14,7 @@ impl DockerClient {
   /// List swarm services
   pub async fn list_swarm_services(
     &self,
-    tasks: &[SwarmTaskListItem],
+    tasks: Option<&[SwarmTaskListItem]>,
   ) -> anyhow::Result<Vec<SwarmServiceListItem>> {
     let mut services = self
       .docker
@@ -31,6 +32,30 @@ impl DockerClient {
     });
 
     Ok(services)
+  }
+
+  pub async fn filter_map_swarm_services<T>(
+    &self,
+    filter_map: impl Fn(SwarmService) -> Option<T>,
+  ) -> anyhow::Result<Vec<T>> {
+    let res = self
+      .list_swarm_services(None)
+      .await?
+      .into_iter()
+      .map(|service| async {
+        let Some(name) = service.name else {
+          return Ok(None);
+        };
+        let service = self.inspect_swarm_service(&name).await?;
+        anyhow::Ok(filter_map(service))
+      })
+      .collect::<FuturesUnordered<_>>()
+      .try_collect::<Vec<_>>()
+      .await?
+      .into_iter()
+      .flatten()
+      .collect::<Vec<_>>();
+    Ok(res)
   }
 
   pub async fn inspect_swarm_service(
@@ -57,7 +82,7 @@ impl DockerClient {
 
 fn convert_service_list_item(
   service: bollard::models::Service,
-  tasks: &[SwarmTaskListItem],
+  tasks: Option<&[SwarmTaskListItem]>,
 ) -> SwarmServiceListItem {
   let (name, (image, restart, runtime), replicas) = service
     .spec
@@ -87,7 +112,9 @@ fn convert_service_list_item(
   let state = service
     .id
     .as_ref()
-    .map(|service_id| service_state_from_tasks(service_id, tasks))
+    .and_then(|service_id| {
+      tasks.map(|tasks| service_state_from_tasks(service_id, tasks))
+    })
     .unwrap_or(SwarmState::Unknown);
   SwarmServiceListItem {
     id: service.id,

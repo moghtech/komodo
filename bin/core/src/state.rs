@@ -251,7 +251,7 @@ pub fn webauthn() -> Option<&'static Webauthn> {
       // The relying party id (the effective domain)
       let rp_id = rp_origin.domain()?;
       info!("Using '{rp_id}' as WebAuthn rp_id");
-      WebauthnBuilder::new(rp_id, &rp_origin)
+      WebauthnBuilder::new(rp_id, rp_origin)
         .inspect_err(|e| warn!("Failed to init webauthn provider | Invalid KOMODO_HOST: could not build webauthn provider builder | {e:?}"))
         .ok()?
         .build()

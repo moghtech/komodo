@@ -155,6 +155,7 @@ pub enum PeripheryRequest {
   UpdateSwarmService(UpdateSwarmService),
   RemoveSwarmServices(RemoveSwarmServices),
   RemoveSwarmConfigs(RemoveSwarmConfigs),
+  RotateSwarmConfig(RotateSwarmConfig),
   RemoveSwarmSecrets(RemoveSwarmSecrets),
 
   // Terminal

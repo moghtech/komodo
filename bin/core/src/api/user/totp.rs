@@ -50,7 +50,7 @@ impl Resolve<UserArgs> for BeginTotpEnrollment {
     let totp = make_totp(secret.clone(), user.id.clone())?;
     let png = totp
       .get_qr_base64()
-      .map_err(|e| anyhow::Error::msg(e))
+      .map_err(anyhow::Error::msg)
       .context("Failed to generate QR code png")?;
     session
       .insert(
@@ -106,7 +106,7 @@ impl Resolve<UserArgs> for ConfirmTotpEnrollment {
       (0..10).map(|_| random_string(20)).collect::<Vec<_>>();
     let hashed_recovery_codes = recovery_codes
       .iter()
-      .map(|code| hash_password(code))
+      .map(hash_password)
       .collect::<anyhow::Result<Vec<_>>>()
       .context("Failed to generate valid recovery codes")?;
 

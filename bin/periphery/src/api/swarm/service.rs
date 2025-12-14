@@ -368,7 +368,7 @@ impl Resolve<crate::api::Args> for UpdateSwarmService {
       extra_args,
     } = self;
 
-    let mut command = format!("docker service update");
+    let mut command = String::from("docker service update");
 
     if let Some(image) = image {
       write!(&mut command, " --image {image}")?;

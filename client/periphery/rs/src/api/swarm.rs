@@ -260,6 +260,8 @@ pub struct InspectSwarmConfig {
   pub config: String,
 }
 
+//
+
 /// `docker config rm CONFIG [CONFIG...]`
 ///
 /// https://docs.docker.com/reference/cli/docker/config/rm/
@@ -268,6 +270,31 @@ pub struct InspectSwarmConfig {
 #[error(anyhow::Error)]
 pub struct RemoveSwarmConfigs {
   pub configs: Vec<String>,
+}
+
+//
+
+/// https://docs.docker.com/engine/swarm/configs/#example-rotate-a-config
+///
+/// Swarm configs / secrets are immutable after creation.
+/// This making updating values awkward when you have services actively using them.
+/// The following steps allows for config rotation while minimizing downtime.
+///
+/// 1. Query for all services using the config
+///    - If not in use by any services, can simply `remove` and `create` the config.
+///    - Otherwise, continue with following steps
+/// 2. `Create` config `{config}-tmp` using provided data
+/// 3. `Update` services to use `tmp` config
+/// 4. `Remove` and `create` the actual config. This is now possible because services are using the tmp config.
+/// 5. `Update` services to use actual (not `tmp`) config again.
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
+#[response(Vec<Log>)]
+#[error(anyhow::Error)]
+pub struct RotateSwarmConfig {
+  /// Config name
+  pub config: String,
+  /// The config file data as a string
+  pub data: String,
 }
 
 // ========
