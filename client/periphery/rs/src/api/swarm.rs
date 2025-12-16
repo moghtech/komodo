@@ -298,7 +298,7 @@ pub struct CreateSwarmConfig {
 #[response(Vec<Log>)]
 #[error(anyhow::Error)]
 pub struct RotateSwarmConfig {
-  /// Config name
+  /// Config name or id
   pub config: String,
   /// The config file data as a string
   pub data: String,
@@ -325,6 +325,50 @@ pub struct RemoveSwarmConfigs {
 #[error(anyhow::Error)]
 pub struct InspectSwarmSecret {
   pub secret: String,
+}
+
+//
+
+/// `docker secret create [OPTIONS] CONFIG file|-`
+///
+/// https://docs.docker.com/reference/cli/docker/secret/create/
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
+#[response(Log)]
+#[error(anyhow::Error)]
+pub struct CreateSwarmSecret {
+  /// The name of the secret to create
+  pub name: String,
+  /// The data to store in the secret
+  pub data: String,
+  /// Use a custom secret driver
+  pub driver: Option<String>,
+  /// Docker labels to give the secret
+  pub labels: Vec<String>,
+  /// Optional custom template driver
+  pub template_driver: Option<String>,
+}
+
+/// https://docs.docker.com/engine/swarm/secrets/#example-rotate-a-secret
+///
+/// Swarm configs / secrets are immutable after creation.
+/// This making updating values awkward when you have services actively using them.
+/// The following steps allows for config rotation while minimizing downtime.
+///
+/// 1. Query for all services using the secret
+///    - If not in use by any services, can simply `remove` and `create` the secret.
+///    - Otherwise, continue with following steps
+/// 2. `Create` secret `{secret}-tmp` using provided data
+/// 3. `Update` services to use `tmp` secret instead of original secret
+/// 4. `Remove` and `create` the actual secret. This is now possible because services are using the tmp secret.
+/// 5. `Update` services to use actual (not `tmp`) secret again.
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
+#[response(Vec<Log>)]
+#[error(anyhow::Error)]
+pub struct RotateSwarmSecret {
+  /// Secret name or id
+  pub secret: String,
+  /// The new secret data as a string
+  pub data: String,
 }
 
 /// `docker secret rm SECRET [SECRET...]`

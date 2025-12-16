@@ -159,6 +159,18 @@ pub async fn init_execution_update(
         resource::get::<Swarm>(&data.swarm).await?.id,
       ),
     ),
+    ExecuteRequest::CreateSwarmSecret(data) => (
+      Operation::CreateSwarmSecret,
+      ResourceTarget::Swarm(
+        resource::get::<Swarm>(&data.swarm).await?.id,
+      ),
+    ),
+    ExecuteRequest::RotateSwarmSecret(data) => (
+      Operation::RotateSwarmSecret,
+      ResourceTarget::Swarm(
+        resource::get::<Swarm>(&data.swarm).await?.id,
+      ),
+    ),
     ExecuteRequest::RemoveSwarmSecrets(data) => (
       Operation::RemoveSwarmSecrets,
       ResourceTarget::Swarm(

@@ -1264,6 +1264,40 @@ async fn execute_execution(
       )
       .await?
     }
+    Execution::CreateSwarmSecret(req) => {
+      let req = ExecuteRequest::CreateSwarmSecret(req);
+      let update = init_execution_update(&req, &user).await?;
+      let ExecuteRequest::CreateSwarmSecret(req) = req else {
+        unreachable!()
+      };
+      let update_id = update.id.clone();
+      handle_resolve_result(
+        req
+          .resolve(&ExecuteArgs { user, update, id })
+          .await
+          .map_err(|e| e.error)
+          .context("Failed at CreateSwarmSecret"),
+        &update_id,
+      )
+      .await?
+    }
+    Execution::RotateSwarmSecret(req) => {
+      let req = ExecuteRequest::RotateSwarmSecret(req);
+      let update = init_execution_update(&req, &user).await?;
+      let ExecuteRequest::RotateSwarmSecret(req) = req else {
+        unreachable!()
+      };
+      let update_id = update.id.clone();
+      handle_resolve_result(
+        req
+          .resolve(&ExecuteArgs { user, update, id })
+          .await
+          .map_err(|e| e.error)
+          .context("Failed at RotateSwarmSecret"),
+        &update_id,
+      )
+      .await?
+    }
     Execution::RemoveSwarmSecrets(req) => {
       let req = ExecuteRequest::RemoveSwarmSecrets(req);
       let update = init_execution_update(&req, &user).await?;

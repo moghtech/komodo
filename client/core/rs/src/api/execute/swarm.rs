@@ -173,7 +173,7 @@ pub struct RotateSwarmConfig {
   pub swarm: String,
   /// Config name
   pub config: String,
-  /// The config file data as a string
+  /// The new config data as a string
   pub data: String,
 }
 
@@ -206,6 +206,77 @@ pub struct RemoveSwarmConfigs {
 // ==========
 // = Secret =
 // ==========
+
+/// `docker config create [OPTIONS] CONFIG file|-`
+///
+/// https://docs.docker.com/reference/cli/docker/config/create/
+#[typeshare]
+#[derive(
+  Serialize,
+  Deserialize,
+  Debug,
+  Clone,
+  PartialEq,
+  Resolve,
+  EmptyTraits,
+  Parser,
+)]
+#[empty_traits(KomodoExecuteRequest)]
+#[response(Update)]
+#[error(serror::Error)]
+pub struct CreateSwarmSecret {
+  /// Name or id
+  pub swarm: String,
+  /// The name of the secret to create
+  pub name: String,
+  /// The data to store in the secret
+  pub data: String,
+  /// Optional custom secret driver
+  pub driver: Option<String>,
+  /// Docker labels to give the secret
+  #[serde(default)]
+  pub labels: Vec<String>,
+  /// Optional custom template driver
+  pub template_driver: Option<String>,
+}
+
+//
+
+/// https://docs.docker.com/engine/swarm/secrets/#example-rotate-a-secret
+///
+/// Swarm configs / secrets are immutable after creation.
+/// This making updating values awkward when you have services actively using them.
+/// The following steps allows for secret rotation while minimizing downtime.
+///
+/// 1. Query for all services using the secret
+///    - If not in use by any services, can simply `remove` and `create` the secret.
+///    - Otherwise, continue with following steps
+/// 2. `Create` secret `{secret}-tmp` using provided data
+/// 3. `Update` services to use `tmp` secret
+/// 4. `Remove` and `create` the actual secret. This is now possible because services are using the tmp secret.
+/// 5. `Update` services to use actual (not `tmp`) secret again.
+#[typeshare]
+#[derive(
+  Serialize,
+  Deserialize,
+  Debug,
+  Clone,
+  PartialEq,
+  Resolve,
+  EmptyTraits,
+  Parser,
+)]
+#[empty_traits(KomodoExecuteRequest)]
+#[response(Update)]
+#[error(serror::Error)]
+pub struct RotateSwarmSecret {
+  /// Name or id
+  pub swarm: String,
+  /// Secret name
+  pub secret: String,
+  /// The new secret data as a string
+  pub data: String,
+}
 
 /// `docker secret rm SECRET [SECRET...]`
 ///

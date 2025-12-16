@@ -1,9 +1,7 @@
 use anyhow::Context as _;
 use command::run_komodo_standard_command;
 use komodo_client::entities::{
-  docker::{
-    SwarmLists, node::SwarmNode, secret::SwarmSecret, task::SwarmTask,
-  },
+  docker::{SwarmLists, node::SwarmNode, task::SwarmTask},
   update::Log,
 };
 use periphery_client::api::swarm::*;
@@ -15,6 +13,7 @@ use crate::{
 };
 
 mod config;
+mod secret;
 mod service;
 mod stack;
 
@@ -174,53 +173,5 @@ impl Resolve<crate::api::Args> for InspectSwarmTask {
       .next()
       .context("Could not connect to docker client")?;
     client.inspect_swarm_task(&self.task).await
-  }
-}
-
-// ========
-//  Secret
-// ========
-
-impl Resolve<crate::api::Args> for InspectSwarmSecret {
-  async fn resolve(
-    self,
-    _: &crate::api::Args,
-  ) -> anyhow::Result<SwarmSecret> {
-    let client = docker_client().load();
-    let client = client
-      .iter()
-      .next()
-      .context("Could not connect to docker client")?;
-    client.inspect_swarm_secret(&self.secret).await
-  }
-}
-
-impl Resolve<crate::api::Args> for RemoveSwarmSecrets {
-  #[instrument(
-    "RemoveSwarmSecrets",
-    skip_all,
-    fields(
-      id = args.id.to_string(),
-      core = args.core,
-      secrets = serde_json::to_string(&self.secrets).unwrap_or_else(|e| e.to_string()),
-    )
-  )]
-  async fn resolve(
-    self,
-    args: &crate::api::Args,
-  ) -> anyhow::Result<Log> {
-    let mut command = String::from("docker secret rm");
-    for secret in self.secrets {
-      command += " ";
-      command += &secret;
-    }
-    Ok(
-      run_komodo_standard_command(
-        "Remove Swarm Secrets",
-        None,
-        command,
-      )
-      .await,
-    )
   }
 }

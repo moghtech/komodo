@@ -14,6 +14,7 @@ use komodo_client::entities::{
   },
   random_string,
 };
+use periphery_client::api::swarm::CreateSwarmConfig;
 
 use super::*;
 
@@ -91,10 +92,12 @@ pub async fn inspect_swarm_config(
 }
 
 pub async fn create_swarm_config(
-  name: &str,
-  data: &str,
-  labels: &[String],
-  template_driver: Option<&str>,
+  CreateSwarmConfig {
+    name,
+    data,
+    labels,
+    template_driver,
+  }: &CreateSwarmConfig,
 ) -> anyhow::Result<Log> {
   let mut command = String::from("docker config create");
 
@@ -109,28 +112,15 @@ pub async fn create_swarm_config(
   write!(
     &mut command,
     r#" {name} - <<'EOF'
-{data}
-EOF
-"#
+{}
+EOF"#,
+    data.trim()
   )?;
 
   let log =
     run_komodo_shell_command("Create Config", None, command).await;
 
   Ok(log)
-}
-
-pub async fn create_swarm_config_push_log(
-  name: &str,
-  data: &str,
-  labels: &[String],
-  template_driver: Option<&str>,
-  logs: &mut Vec<Log>,
-) -> anyhow::Result<()> {
-  let log =
-    create_swarm_config(name, data, labels, template_driver).await?;
-  logs.push(log);
-  Ok(())
 }
 
 pub async fn remove_swarm_configs(
@@ -146,26 +136,19 @@ pub async fn remove_swarm_configs(
 }
 
 pub async fn recreate_swarm_config(
-  name: &str,
-  data: &str,
-  labels: &[String],
-  template_driver: Option<&str>,
+  config: &CreateSwarmConfig,
   logs: &mut Vec<Log>,
 ) -> anyhow::Result<()> {
-  let remove = remove_swarm_configs([name].into_iter()).await;
+  let remove =
+    remove_swarm_configs([config.name.as_str()].into_iter()).await;
   let success = remove.success;
   logs.push(remove);
   if !success {
     return Ok(());
   }
-  create_swarm_config_push_log(
-    name,
-    data,
-    labels,
-    template_driver,
-    logs,
-  )
-  .await
+  let log = create_swarm_config(config).await?;
+  logs.push(log);
+  Ok(())
 }
 
 struct ServiceConfigFile {
@@ -179,7 +162,7 @@ impl DockerClient {
   pub async fn rotate_swarm_config(
     &self,
     config: &str,
-    data: &str,
+    data: String,
     logs: &mut Vec<Log>,
   ) -> anyhow::Result<()> {
     let config = inspect_swarm_config(config).await?;
@@ -198,48 +181,36 @@ impl DockerClient {
     let template_driver =
       spec.templating.map(|templating| templating.name);
 
+    let create_config = CreateSwarmConfig {
+      name,
+      data,
+      labels,
+      template_driver,
+    };
+
     let services = self
       .filter_map_swarm_services(|service| {
         extract_from_service(service, &config_id)
       })
       .await?;
     if services.is_empty() {
-      return recreate_swarm_config(
-        &name,
-        data,
-        &labels,
-        template_driver.as_deref(),
-        logs,
-      )
-      .await;
+      return recreate_swarm_config(&create_config, logs).await;
     }
 
     // Create a tmp config
-    let tmp_name = format!("{name}-tmp-{}", random_string(10));
-    create_swarm_config_push_log(
-      &tmp_name,
-      data,
-      &labels,
-      template_driver.as_deref(),
-      logs,
-    )
-    .await?;
+    let tmp_name =
+      format!("{}-tmp-{}", create_config.name, random_string(10));
+    let log = create_swarm_config(&create_config).await?;
+    logs.push(log);
     if !all_logs_success(logs) {
       return Ok(());
     }
 
     // Update services to tmp
-    switch_services_config(&services, &name, &tmp_name, logs).await?;
-    if !all_logs_success(logs) {
-      return Ok(());
-    }
-
-    // Recreate actual config
-    recreate_swarm_config(
-      &name,
-      data,
-      &labels,
-      template_driver.as_deref(),
+    switch_services_config(
+      &services,
+      &create_config.name,
+      &tmp_name,
       logs,
     )
     .await?;
@@ -247,8 +218,20 @@ impl DockerClient {
       return Ok(());
     }
 
+    // Recreate actual config
+    recreate_swarm_config(&create_config, logs).await?;
+    if !all_logs_success(logs) {
+      return Ok(());
+    }
+
     // Update back to original
-    switch_services_config(&services, &tmp_name, &name, logs).await?;
+    switch_services_config(
+      &services,
+      &tmp_name,
+      &create_config.name,
+      logs,
+    )
+    .await?;
     if !all_logs_success(logs) {
       return Ok(());
     }

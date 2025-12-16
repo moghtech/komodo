@@ -1066,6 +1066,8 @@ pub enum Operation {
   CreateSwarmConfig,
   RotateSwarmConfig,
   RemoveSwarmConfigs,
+  CreateSwarmSecret,
+  RotateSwarmSecret,
   RemoveSwarmSecrets,
 
   // Server

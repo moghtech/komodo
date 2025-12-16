@@ -917,6 +917,24 @@ impl ToToml for Procedure {
                 .unwrap_or(&String::new()),
             )
           }
+          Execution::CreateSwarmSecret(exec) => {
+            exec.swarm.clone_from(
+              all
+                .swarms
+                .get(&exec.swarm)
+                .map(|a| &a.name)
+                .unwrap_or(&String::new()),
+            )
+          }
+          Execution::RotateSwarmSecret(exec) => {
+            exec.swarm.clone_from(
+              all
+                .swarms
+                .get(&exec.swarm)
+                .map(|a| &a.name)
+                .unwrap_or(&String::new()),
+            )
+          }
           Execution::RemoveSwarmSecrets(exec) => {
             exec.swarm.clone_from(
               all

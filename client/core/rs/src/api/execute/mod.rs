@@ -166,6 +166,8 @@ pub enum Execution {
   CreateSwarmConfig(CreateSwarmConfig),
   RotateSwarmConfig(RotateSwarmConfig),
   RemoveSwarmConfigs(RemoveSwarmConfigs),
+  CreateSwarmSecret(CreateSwarmSecret),
+  RotateSwarmSecret(RotateSwarmSecret),
   RemoveSwarmSecrets(RemoveSwarmSecrets),
 
   // MAINTENANCE

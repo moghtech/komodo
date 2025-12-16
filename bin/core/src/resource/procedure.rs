@@ -808,6 +808,24 @@ async fn validate_config(
           .await?;
           params.swarm = swarm.id;
         }
+        Execution::CreateSwarmSecret(params) => {
+          let swarm = super::get_check_permissions::<Swarm>(
+            &params.swarm,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.swarm = swarm.id;
+        }
+        Execution::RotateSwarmSecret(params) => {
+          let swarm = super::get_check_permissions::<Swarm>(
+            &params.swarm,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.swarm = swarm.id;
+        }
         Execution::RemoveSwarmSecrets(params) => {
           let swarm = super::get_check_permissions::<Swarm>(
             &params.swarm,

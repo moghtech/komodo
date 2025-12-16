@@ -1,9 +1,9 @@
 use formatting::format_serror;
 use komodo_client::{
   api::execute::{
-    CreateSwarmConfig, RemoveSwarmConfigs, RemoveSwarmNodes,
-    RemoveSwarmSecrets, RemoveSwarmServices, RemoveSwarmStacks,
-    RotateSwarmConfig,
+    CreateSwarmConfig, CreateSwarmSecret, RemoveSwarmConfigs,
+    RemoveSwarmNodes, RemoveSwarmSecrets, RemoveSwarmServices,
+    RemoveSwarmStacks, RotateSwarmConfig, RotateSwarmSecret,
   },
   entities::{permission::PermissionLevel, swarm::Swarm},
 };
@@ -182,60 +182,6 @@ impl Resolve<ExecuteArgs> for RemoveSwarmServices {
   }
 }
 
-impl Resolve<ExecuteArgs> for RemoveSwarmConfigs {
-  #[instrument(
-    "RemoveSwarmConfigs",
-    skip_all,
-    fields(
-      id = id.to_string(),
-      operator = user.id,
-      update_id = update.id,
-      swarm = self.swarm,
-      configs = serde_json::to_string(&self.configs).unwrap_or_else(|e| e.to_string()),
-    )
-  )]
-  async fn resolve(
-    self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> Result<Self::Response, Self::Error> {
-    let swarm = get_check_permissions::<Swarm>(
-      &self.swarm,
-      user,
-      PermissionLevel::Execute.into(),
-    )
-    .await?;
-
-    update_update(update.clone()).await?;
-
-    let mut update = update.clone();
-
-    match swarm_request(
-      &swarm.config.server_ids,
-      periphery_client::api::swarm::RemoveSwarmConfigs {
-        configs: self.configs,
-      },
-    )
-    .await
-    {
-      Ok(log) => {
-        update.logs.push(log);
-        update_cache_for_swarm(&swarm, true).await;
-      }
-      Err(e) => update.push_error_log(
-        "Remove Swarm Configs",
-        format_serror(
-          &e.context("Failed to remove swarm configs").into(),
-        ),
-      ),
-    };
-
-    update.finalize();
-    update_update(update.clone()).await?;
-
-    Ok(update)
-  }
-}
-
 impl Resolve<ExecuteArgs> for CreateSwarmConfig {
   #[instrument(
     "CreateSwarmConfig",
@@ -337,6 +283,173 @@ impl Resolve<ExecuteArgs> for RotateSwarmConfig {
         "Rotate Swarm Config",
         format_serror(
           &e.context("Failed to rotate swarm config").into(),
+        ),
+      ),
+    };
+
+    update.finalize();
+    update_update(update.clone()).await?;
+
+    Ok(update)
+  }
+}
+
+impl Resolve<ExecuteArgs> for RemoveSwarmConfigs {
+  #[instrument(
+    "RemoveSwarmConfigs",
+    skip_all,
+    fields(
+      id = id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      swarm = self.swarm,
+      configs = serde_json::to_string(&self.configs).unwrap_or_else(|e| e.to_string()),
+    )
+  )]
+  async fn resolve(
+    self,
+    ExecuteArgs { user, update, id }: &ExecuteArgs,
+  ) -> Result<Self::Response, Self::Error> {
+    let swarm = get_check_permissions::<Swarm>(
+      &self.swarm,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
+
+    update_update(update.clone()).await?;
+
+    let mut update = update.clone();
+
+    match swarm_request(
+      &swarm.config.server_ids,
+      periphery_client::api::swarm::RemoveSwarmConfigs {
+        configs: self.configs,
+      },
+    )
+    .await
+    {
+      Ok(log) => {
+        update.logs.push(log);
+        update_cache_for_swarm(&swarm, true).await;
+      }
+      Err(e) => update.push_error_log(
+        "Remove Swarm Configs",
+        format_serror(
+          &e.context("Failed to remove swarm configs").into(),
+        ),
+      ),
+    };
+
+    update.finalize();
+    update_update(update.clone()).await?;
+
+    Ok(update)
+  }
+}
+
+impl Resolve<ExecuteArgs> for CreateSwarmSecret {
+  #[instrument(
+    "CreateSwarmSecret",
+    skip_all,
+    fields(
+      id = id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      swarm = self.swarm,
+      secret = self.name,
+    )
+  )]
+  async fn resolve(
+    self,
+    ExecuteArgs { user, update, id }: &ExecuteArgs,
+  ) -> Result<Self::Response, Self::Error> {
+    let swarm = get_check_permissions::<Swarm>(
+      &self.swarm,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
+
+    update_update(update.clone()).await?;
+
+    let mut update = update.clone();
+
+    match swarm_request(
+      &swarm.config.server_ids,
+      periphery_client::api::swarm::CreateSwarmSecret {
+        name: self.name,
+        data: self.data,
+        driver: self.driver,
+        labels: self.labels,
+        template_driver: self.template_driver,
+      },
+    )
+    .await
+    {
+      Ok(log) => {
+        update.logs.push(log);
+        update_cache_for_swarm(&swarm, true).await;
+      }
+      Err(e) => update.push_error_log(
+        "Create Swarm Secret",
+        format_serror(
+          &e.context("Failed to create swarm secret").into(),
+        ),
+      ),
+    };
+
+    update.finalize();
+    update_update(update.clone()).await?;
+
+    Ok(update)
+  }
+}
+
+impl Resolve<ExecuteArgs> for RotateSwarmSecret {
+  #[instrument(
+    "RotateSwarmSecret",
+    skip_all,
+    fields(
+      id = id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      swarm = self.swarm,
+      secret = self.secret,
+    )
+  )]
+  async fn resolve(
+    self,
+    ExecuteArgs { user, update, id }: &ExecuteArgs,
+  ) -> Result<Self::Response, Self::Error> {
+    let swarm = get_check_permissions::<Swarm>(
+      &self.swarm,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
+
+    update_update(update.clone()).await?;
+
+    let mut update = update.clone();
+
+    match swarm_request(
+      &swarm.config.server_ids,
+      periphery_client::api::swarm::RotateSwarmSecret {
+        secret: self.secret,
+        data: self.data,
+      },
+    )
+    .await
+    {
+      Ok(logs) => {
+        update.logs.extend(logs);
+        update_cache_for_swarm(&swarm, true).await;
+      }
+      Err(e) => update.push_error_log(
+        "Rotate Swarm Secret",
+        format_serror(
+          &e.context("Failed to rotate swarm secret").into(),
         ),
       ),
     };

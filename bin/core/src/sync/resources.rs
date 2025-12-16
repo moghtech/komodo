@@ -753,6 +753,20 @@ impl ResourceSyncTrait for Procedure {
               .map(|s| s.name.clone())
               .unwrap_or_default();
           }
+          Execution::CreateSwarmSecret(config) => {
+            config.swarm = resources
+              .swarms
+              .get(&config.swarm)
+              .map(|s| s.name.clone())
+              .unwrap_or_default();
+          }
+          Execution::RotateSwarmSecret(config) => {
+            config.swarm = resources
+              .swarms
+              .get(&config.swarm)
+              .map(|s| s.name.clone())
+              .unwrap_or_default();
+          }
           Execution::RemoveSwarmSecrets(config) => {
             config.swarm = resources
               .swarms

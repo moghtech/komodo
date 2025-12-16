@@ -460,6 +460,8 @@ export type ExecuteResponses = {
   CreateSwarmConfig: Types.Update;
   RotateSwarmConfig: Types.Update;
   RemoveSwarmConfigs: Types.Update;
+  CreateSwarmSecret: Types.Update;
+  RotateSwarmSecret: Types.Update;
   RemoveSwarmSecrets: Types.Update;
 
   // ==== MAINTENANCE ====

@@ -1,5 +1,5 @@
 import { Section } from "@components/layouts";
-import { useExecute, useInvalidate, usePermissions, useRead } from "@lib/hooks";
+import { useExecute, usePermissions, useRead } from "@lib/hooks";
 import { DataTable, SortableHeader } from "@ui/data-table";
 import { Dispatch, ReactNode, SetStateAction, useMemo, useState } from "react";
 import { PlusCircle, Search } from "lucide-react";
@@ -104,7 +104,6 @@ export const SwarmConfigs = ({
 };
 
 const CreateSwarmConfig = ({ id }: { id: string }) => {
-  const inv = useInvalidate();
   const { canExecute } = usePermissions({ type: "Swarm", id });
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -114,7 +113,6 @@ const CreateSwarmConfig = ({ id }: { id: string }) => {
   const { mutate, isPending } = useExecute("CreateSwarmConfig", {
     onSuccess: () => {
       toast({ title: "Created swarm config." });
-      inv(["ListSwarmConfigs"]);
       setName("");
       setData("");
       setOpen(false);
@@ -139,8 +137,8 @@ const CreateSwarmConfig = ({ id }: { id: string }) => {
           <DialogDescription>
             <p>Enter a unique name and data for the new Swarm Config.</p>
             <p>
-              For better file syntax support, choose a name with appropriate file
-              extension, like <code>config.yaml</code>
+              For better file syntax support, choose a name with appropriate
+              file extension, like <code>config.yaml</code>
             </p>
           </DialogDescription>
         </DialogHeader>

@@ -230,13 +230,19 @@ pub async fn handle(
     Execution::RemoveSwarmServices(data) => {
       println!("{}: {data:?}", "Data".dimmed())
     }
-    Execution::RotateSwarmConfig(data) => {
-      println!("{}: {data:?}", "Data".dimmed())
-    }
     Execution::CreateSwarmConfig(data) => {
       println!("{}: {data:?}", "Data".dimmed())
     }
+    Execution::RotateSwarmConfig(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
     Execution::RemoveSwarmConfigs(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
+    Execution::CreateSwarmSecret(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
+    Execution::RotateSwarmSecret(data) => {
       println!("{}: {data:?}", "Data".dimmed())
     }
     Execution::RemoveSwarmSecrets(data) => {
@@ -530,6 +536,14 @@ pub async fn handle(
       .await
       .map(|u| ExecutionResult::Single(u.into())),
     Execution::RemoveSwarmConfigs(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::CreateSwarmSecret(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::RotateSwarmSecret(request) => client
       .execute(request)
       .await
       .map(|u| ExecutionResult::Single(u.into())),

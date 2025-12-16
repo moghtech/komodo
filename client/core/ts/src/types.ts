@@ -364,6 +364,8 @@ export enum Operation {
 	CreateSwarmConfig = "CreateSwarmConfig",
 	RotateSwarmConfig = "RotateSwarmConfig",
 	RemoveSwarmConfigs = "RemoveSwarmConfigs",
+	CreateSwarmSecret = "CreateSwarmSecret",
+	RotateSwarmSecret = "RotateSwarmSecret",
 	RemoveSwarmSecrets = "RemoveSwarmSecrets",
 	CreateServer = "CreateServer",
 	UpdateServer = "UpdateServer",
@@ -928,6 +930,8 @@ export type Execution =
 	| { type: "CreateSwarmConfig", params: CreateSwarmConfig }
 	| { type: "RotateSwarmConfig", params: RotateSwarmConfig }
 	| { type: "RemoveSwarmConfigs", params: RemoveSwarmConfigs }
+	| { type: "CreateSwarmSecret", params: CreateSwarmSecret }
+	| { type: "RotateSwarmSecret", params: RotateSwarmSecret }
 	| { type: "RemoveSwarmSecrets", params: RemoveSwarmSecrets }
 	| { type: "ClearRepoCache", params: ClearRepoCache }
 	| { type: "BackupCoreDatabase", params: BackupCoreDatabase }
@@ -6657,6 +6661,26 @@ export interface CreateSwarmConfig {
 	template_driver?: string;
 }
 
+/**
+ * `docker config create [OPTIONS] CONFIG file|-`
+ * 
+ * https://docs.docker.com/reference/cli/docker/config/create/
+ */
+export interface CreateSwarmSecret {
+	/** Name or id */
+	swarm: string;
+	/** The name of the secret to create */
+	name: string;
+	/** The data to store in the secret */
+	data: string;
+	/** Optional custom secret driver */
+	driver?: string;
+	/** Docker labels to give the secret */
+	labels?: string[];
+	/** Optional custom template driver */
+	template_driver?: string;
+}
+
 /** Create a tag. Response: [Tag]. */
 export interface CreateTag {
 	/** The name of the tag. */
@@ -9395,7 +9419,31 @@ export interface RotateSwarmConfig {
 	swarm: string;
 	/** Config name */
 	config: string;
-	/** The config file data as a string */
+	/** The new config data as a string */
+	data: string;
+}
+
+/**
+ * https://docs.docker.com/engine/swarm/secrets/#example-rotate-a-secret
+ * 
+ * Swarm configs / secrets are immutable after creation.
+ * This making updating values awkward when you have services actively using them.
+ * The following steps allows for secret rotation while minimizing downtime.
+ * 
+ * 1. Query for all services using the secret
+ * - If not in use by any services, can simply `remove` and `create` the secret.
+ * - Otherwise, continue with following steps
+ * 2. `Create` secret `{secret}-tmp` using provided data
+ * 3. `Update` services to use `tmp` secret
+ * 4. `Remove` and `create` the actual secret. This is now possible because services are using the tmp secret.
+ * 5. `Update` services to use actual (not `tmp`) secret again.
+ */
+export interface RotateSwarmSecret {
+	/** Name or id */
+	swarm: string;
+	/** Secret name */
+	secret: string;
+	/** The new secret data as a string */
 	data: string;
 }
 
@@ -10474,6 +10522,8 @@ export type ExecuteRequest =
 	| { type: "CreateSwarmConfig", params: CreateSwarmConfig }
 	| { type: "RotateSwarmConfig", params: RotateSwarmConfig }
 	| { type: "RemoveSwarmConfigs", params: RemoveSwarmConfigs }
+	| { type: "CreateSwarmSecret", params: CreateSwarmSecret }
+	| { type: "RotateSwarmSecret", params: RotateSwarmSecret }
 	| { type: "RemoveSwarmSecrets", params: RemoveSwarmSecrets }
 	| { type: "ClearRepoCache", params: ClearRepoCache }
 	| { type: "BackupCoreDatabase", params: BackupCoreDatabase }
