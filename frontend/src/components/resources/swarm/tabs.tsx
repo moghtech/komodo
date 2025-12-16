@@ -1,4 +1,4 @@
-import { useLocalStorage, useRead, useUser } from "@lib/hooks";
+import { useLocalStorage, usePermissions, useRead, useUser } from "@lib/hooks";
 import { ReactNode, useMemo } from "react";
 import {
   MobileFriendlyTabsSelector,
@@ -11,14 +11,17 @@ import { ResourceComponents } from "..";
 import { StackTable } from "../stack/table";
 import { DeploymentTable } from "../deployment/table";
 import { Types } from "komodo_client";
+import { SwarmInspect } from "./info/inspect";
 
-type SwarmTabsView = "Config" | "Info" | "Resources";
+type SwarmTabsView = "Config" | "Info" | "Resources" | "Inspect";
 
 export const SwarmTabs = ({ id }: { id: string }) => {
   const [view, setView] = useLocalStorage<SwarmTabsView>(
     `swarm-${id}-tab-v1`,
     "Config"
   );
+
+  const { specificInspect } = usePermissions({ type: "Swarm", id });
 
   const stacks =
     useRead("ListStacks", {}).data?.filter(
@@ -39,6 +42,10 @@ export const SwarmTabs = ({ id }: { id: string }) => {
       },
       {
         value: "Info",
+      },
+      {
+        value: "Inspect",
+        disabled: !specificInspect,
       },
       {
         value: "Resources",
@@ -62,6 +69,8 @@ export const SwarmTabs = ({ id }: { id: string }) => {
       return <SwarmConfig id={id} titleOther={Selector} />;
     case "Info":
       return <SwarmInfo id={id} titleOther={Selector} />;
+    case "Inspect":
+      return <SwarmInspect id={id} titleOther={Selector} />;
     case "Resources":
       return (
         <SwarmTabsResources
