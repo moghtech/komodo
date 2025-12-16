@@ -781,6 +781,24 @@ async fn validate_config(
           .await?;
           params.swarm = swarm.id;
         }
+        Execution::CreateSwarmConfig(params) => {
+          let swarm = super::get_check_permissions::<Swarm>(
+            &params.swarm,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.swarm = swarm.id;
+        }
+        Execution::RotateSwarmConfig(params) => {
+          let swarm = super::get_check_permissions::<Swarm>(
+            &params.swarm,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.swarm = swarm.id;
+        }
         Execution::RemoveSwarmConfigs(params) => {
           let swarm = super::get_check_permissions::<Swarm>(
             &params.swarm,

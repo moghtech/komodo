@@ -443,7 +443,7 @@ pub struct InspectSwarmConfig {
 }
 
 #[typeshare]
-pub type InspectSwarmConfigResponse = Vec<SwarmConfig>;
+pub type InspectSwarmConfigResponse = SwarmConfig;
 
 //
 

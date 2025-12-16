@@ -154,6 +154,8 @@ pub enum ExecuteRequest {
   RemoveSwarmNodes(RemoveSwarmNodes),
   RemoveSwarmStacks(RemoveSwarmStacks),
   RemoveSwarmServices(RemoveSwarmServices),
+  CreateSwarmConfig(CreateSwarmConfig),
+  RotateSwarmConfig(RotateSwarmConfig),
   RemoveSwarmConfigs(RemoveSwarmConfigs),
   RemoveSwarmSecrets(RemoveSwarmSecrets),
 

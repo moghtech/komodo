@@ -141,6 +141,18 @@ pub async fn init_execution_update(
         resource::get::<Swarm>(&data.swarm).await?.id,
       ),
     ),
+    ExecuteRequest::CreateSwarmConfig(data) => (
+      Operation::CreateSwarmConfig,
+      ResourceTarget::Swarm(
+        resource::get::<Swarm>(&data.swarm).await?.id,
+      ),
+    ),
+    ExecuteRequest::RotateSwarmConfig(data) => (
+      Operation::RotateSwarmConfig,
+      ResourceTarget::Swarm(
+        resource::get::<Swarm>(&data.swarm).await?.id,
+      ),
+    ),
     ExecuteRequest::RemoveSwarmConfigs(data) => (
       Operation::RemoveSwarmConfigs,
       ResourceTarget::Swarm(

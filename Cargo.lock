@@ -3109,6 +3109,7 @@ dependencies = [
  "colored",
  "command",
  "config",
+ "data-encoding",
  "derive_variants",
  "dotenvy",
  "encoding",

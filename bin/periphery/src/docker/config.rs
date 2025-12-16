@@ -4,17 +4,16 @@ use anyhow::{Context, anyhow};
 use command::{
   run_komodo_shell_command, run_komodo_standard_command,
 };
+use data_encoding::BASE64URL;
 use futures_util::{TryStreamExt as _, stream::FuturesUnordered};
 use komodo_client::entities::{
-  EnvironmentVar, all_logs_success,
+  all_logs_success,
   docker::{
     config::{SwarmConfig, SwarmConfigListItem},
     service::SwarmService,
   },
   random_string,
 };
-
-use crate::helpers::push_labels;
 
 use super::*;
 
@@ -50,7 +49,7 @@ pub async fn list_swarm_configs()
 
 pub async fn inspect_swarm_config(
   config: &str,
-) -> anyhow::Result<Vec<SwarmConfig>> {
+) -> anyhow::Result<SwarmConfig> {
   let res = run_komodo_standard_command(
     "Inspect Swarm Config",
     None,
@@ -64,20 +63,48 @@ pub async fn inspect_swarm_config(
     )));
   }
 
-  serde_json::from_str(&res.stdout).context(
-    "Failed to parse 'docker config inspect' response from json",
-  )
+  let mut res = serde_json::from_str::<Vec<SwarmConfig>>(&res.stdout)
+    .context(
+      "Failed to parse 'docker config inspect' response from json",
+    )?
+    .pop()
+    .with_context(|| {
+      format!("Did not find any config matching {config}")
+    })?;
+
+  // Convert data back to readable / editable format
+  res.spec.iter_mut().next().map(|spec| {
+    spec.data.iter_mut().next().map(|data| {
+      if let Ok(res) = BASE64URL
+        .decode(data.as_bytes())
+        .map_err(anyhow::Error::new)
+        .and_then(|data| {
+          String::from_utf8(data).map_err(anyhow::Error::new)
+        })
+      {
+        *data = res;
+      }
+    })
+  });
+
+  Ok(res)
 }
 
 pub async fn create_swarm_config(
   name: &str,
   data: &str,
-  labels: &[EnvironmentVar],
-  logs: &mut Vec<Log>,
-) -> anyhow::Result<()> {
+  labels: &[String],
+  template_driver: Option<&str>,
+) -> anyhow::Result<Log> {
   let mut command = String::from("docker config create");
 
-  push_labels(&mut command, labels)?;
+  for label in labels {
+    write!(&mut command, " --label {label}")?;
+  }
+
+  if let Some(driver) = template_driver {
+    write!(&mut command, " --template-driver {driver}")?;
+  }
 
   write!(
     &mut command,
@@ -90,8 +117,19 @@ EOF
   let log =
     run_komodo_shell_command("Create Config", None, command).await;
 
-  logs.push(log);
+  Ok(log)
+}
 
+pub async fn create_swarm_config_push_log(
+  name: &str,
+  data: &str,
+  labels: &[String],
+  template_driver: Option<&str>,
+  logs: &mut Vec<Log>,
+) -> anyhow::Result<()> {
+  let log =
+    create_swarm_config(name, data, labels, template_driver).await?;
+  logs.push(log);
   Ok(())
 }
 
@@ -110,7 +148,8 @@ pub async fn remove_swarm_configs(
 pub async fn recreate_swarm_config(
   name: &str,
   data: &str,
-  labels: &[EnvironmentVar],
+  labels: &[String],
+  template_driver: Option<&str>,
   logs: &mut Vec<Log>,
 ) -> anyhow::Result<()> {
   let remove = remove_swarm_configs([name].into_iter()).await;
@@ -119,7 +158,14 @@ pub async fn recreate_swarm_config(
   if !success {
     return Ok(());
   }
-  create_swarm_config(name, data, labels, logs).await
+  create_swarm_config_push_log(
+    name,
+    data,
+    labels,
+    template_driver,
+    logs,
+  )
+  .await
 }
 
 struct ServiceConfigFile {
@@ -136,53 +182,73 @@ impl DockerClient {
     data: &str,
     logs: &mut Vec<Log>,
   ) -> anyhow::Result<()> {
-    let labels = inspect_swarm_config(config)
-      .await?
-      .pop()
-      .context("Did not find any matching config")?
-      .spec
-      .and_then(|spec| spec.labels)
+    let config = inspect_swarm_config(config).await?;
+    let config_id = config.id.context("Failed to get config id")?;
+    let spec = config.spec.context("Failed to get config spec")?;
+    let name = spec.name.context("Failed to get config name")?;
+    let labels = spec
+      .labels
       .map(|labels| {
         labels
           .into_iter()
-          .map(|(variable, value)| EnvironmentVar { variable, value })
+          .map(|(variable, value)| format!("{variable}={value}"))
           .collect::<Vec<_>>()
       })
       .unwrap_or_default();
+    let template_driver =
+      spec.templating.map(|templating| templating.name);
 
     let services = self
       .filter_map_swarm_services(|service| {
-        extract_from_service(service, config)
+        extract_from_service(service, &config_id)
       })
       .await?;
     if services.is_empty() {
-      return recreate_swarm_config(config, data, &labels, logs)
-        .await;
+      return recreate_swarm_config(
+        &name,
+        data,
+        &labels,
+        template_driver.as_deref(),
+        logs,
+      )
+      .await;
     }
 
     // Create a tmp config
-    let tmp_name = format!("{config}-tmp-{}", random_string(10));
-    create_swarm_config(&tmp_name, data, &labels, logs).await?;
+    let tmp_name = format!("{name}-tmp-{}", random_string(10));
+    create_swarm_config_push_log(
+      &tmp_name,
+      data,
+      &labels,
+      template_driver.as_deref(),
+      logs,
+    )
+    .await?;
     if !all_logs_success(logs) {
       return Ok(());
     }
 
     // Update services to tmp
-    switch_services_config(&services, config, &tmp_name, logs)
-      .await?;
+    switch_services_config(&services, &name, &tmp_name, logs).await?;
     if !all_logs_success(logs) {
       return Ok(());
     }
 
     // Recreate actual config
-    recreate_swarm_config(config, data, &labels, logs).await?;
+    recreate_swarm_config(
+      &name,
+      data,
+      &labels,
+      template_driver.as_deref(),
+      logs,
+    )
+    .await?;
     if !all_logs_success(logs) {
       return Ok(());
     }
 
     // Update back to original
-    switch_services_config(&services, &tmp_name, config, logs)
-      .await?;
+    switch_services_config(&services, &tmp_name, &name, logs).await?;
     if !all_logs_success(logs) {
       return Ok(());
     }
@@ -258,7 +324,7 @@ async fn switch_service_config(
 
 fn extract_from_service(
   service: SwarmService,
-  config: &str,
+  config_id: &str,
 ) -> Option<ServiceConfigFile> {
   let spec = service.spec?;
   let configs = spec.task_template?.container_spec?.configs?;
@@ -266,15 +332,8 @@ fn extract_from_service(
     cfg
       .config_id
       .as_ref()
-      // Supports passing short id
-      .map(|id| id.starts_with(config))
+      .map(|id| id == config_id)
       .unwrap_or_default()
-      || cfg
-        .config_name
-        .as_ref()
-        // Has to match by name exactly
-        .map(|name| name == config)
-        .unwrap_or_default()
   })?;
   Some(ServiceConfigFile {
     service: spec.name?,

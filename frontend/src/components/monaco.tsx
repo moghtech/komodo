@@ -59,6 +59,7 @@ export const MonacoEditor = ({
   filename,
   minHeight,
   className,
+  id,
 }: {
   value: string | undefined;
   onValueChange?: (value: string) => void;
@@ -67,6 +68,7 @@ export const MonacoEditor = ({
   readOnly?: boolean;
   minHeight?: number;
   className?: string;
+  id?: string;
 }) => {
   const enable_fancy_toml =
     useRead("GetCoreInfo", {}).data?.enable_fancy_toml ?? false;
@@ -161,7 +163,7 @@ export const MonacoEditor = ({
   };
 
   return (
-    <div className={cn("mx-2 my-1 w-full", className)}>
+    <div id={id} className={cn("mx-2 my-1 w-full", className)}>
       <Editor
         language={language}
         value={value}

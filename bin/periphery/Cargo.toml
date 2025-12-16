@@ -38,6 +38,7 @@ resolver_api.workspace = true
 # external
 hickory-resolver.workspace = true
 serde_yaml_ng.workspace = true
+data-encoding.workspace = true
 futures-util.workspace = true
 tokio-stream.workspace = true
 portable-pty.workspace = true

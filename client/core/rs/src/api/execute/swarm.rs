@@ -108,6 +108,77 @@ pub struct RemoveSwarmServices {
 // = Config =
 // ==========
 
+/// `docker config create [OPTIONS] CONFIG file|-`
+///
+/// https://docs.docker.com/reference/cli/docker/config/create/
+#[typeshare]
+#[derive(
+  Serialize,
+  Deserialize,
+  Debug,
+  Clone,
+  PartialEq,
+  Resolve,
+  EmptyTraits,
+  Parser,
+)]
+#[empty_traits(KomodoExecuteRequest)]
+#[response(Update)]
+#[error(serror::Error)]
+pub struct CreateSwarmConfig {
+  /// Name or id
+  pub swarm: String,
+  /// The name of the config to create
+  pub name: String,
+  /// The data to store in the config
+  pub data: String,
+  /// Docker labels to give the config
+  #[serde(default)]
+  pub labels: Vec<String>,
+  /// Optional custom template driver
+  pub template_driver: Option<String>,
+}
+
+//
+
+/// https://docs.docker.com/engine/swarm/configs/#example-rotate-a-config
+///
+/// Swarm configs / secrets are immutable after creation.
+/// This making updating values awkward when you have services actively using them.
+/// The following steps allows for config rotation while minimizing downtime.
+///
+/// 1. Query for all services using the config
+///    - If not in use by any services, can simply `remove` and `create` the config.
+///    - Otherwise, continue with following steps
+/// 2. `Create` config `{config}-tmp` using provided data
+/// 3. `Update` services to use `tmp` config
+/// 4. `Remove` and `create` the actual config. This is now possible because services are using the tmp config.
+/// 5. `Update` services to use actual (not `tmp`) config again.
+#[typeshare]
+#[derive(
+  Serialize,
+  Deserialize,
+  Debug,
+  Clone,
+  PartialEq,
+  Resolve,
+  EmptyTraits,
+  Parser,
+)]
+#[empty_traits(KomodoExecuteRequest)]
+#[response(Update)]
+#[error(serror::Error)]
+pub struct RotateSwarmConfig {
+  /// Name or id
+  pub swarm: String,
+  /// Config name
+  pub config: String,
+  /// The config file data as a string
+  pub data: String,
+}
+
+//
+
 /// `docker config rm CONFIG [CONFIG...]`
 ///
 /// https://docs.docker.com/reference/cli/docker/config/rm/

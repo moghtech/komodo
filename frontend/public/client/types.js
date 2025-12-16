@@ -72,6 +72,8 @@ export var Operation;
     Operation["RemoveSwarmNodes"] = "RemoveSwarmNodes";
     Operation["RemoveSwarmStacks"] = "RemoveSwarmStacks";
     Operation["RemoveSwarmServices"] = "RemoveSwarmServices";
+    Operation["CreateSwarmConfig"] = "CreateSwarmConfig";
+    Operation["RotateSwarmConfig"] = "RotateSwarmConfig";
     Operation["RemoveSwarmConfigs"] = "RemoveSwarmConfigs";
     Operation["RemoveSwarmSecrets"] = "RemoveSwarmSecrets";
     Operation["CreateServer"] = "CreateServer";

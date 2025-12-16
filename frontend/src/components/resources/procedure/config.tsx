@@ -97,6 +97,8 @@ type MinExecutionType = Exclude<
   | "RemoveSwarmNodes"
   | "RemoveSwarmStacks"
   | "RemoveSwarmServices"
+  | "CreateSwarmConfig"
+  | "RotateSwarmConfig"
   | "RemoveSwarmConfigs"
   | "RemoveSwarmSecrets"
 >;

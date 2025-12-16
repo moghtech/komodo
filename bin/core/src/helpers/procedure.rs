@@ -1213,6 +1213,40 @@ async fn execute_execution(
       )
       .await?
     }
+    Execution::CreateSwarmConfig(req) => {
+      let req = ExecuteRequest::CreateSwarmConfig(req);
+      let update = init_execution_update(&req, &user).await?;
+      let ExecuteRequest::CreateSwarmConfig(req) = req else {
+        unreachable!()
+      };
+      let update_id = update.id.clone();
+      handle_resolve_result(
+        req
+          .resolve(&ExecuteArgs { user, update, id })
+          .await
+          .map_err(|e| e.error)
+          .context("Failed at CreateSwarmConfig"),
+        &update_id,
+      )
+      .await?
+    }
+    Execution::RotateSwarmConfig(req) => {
+      let req = ExecuteRequest::RotateSwarmConfig(req);
+      let update = init_execution_update(&req, &user).await?;
+      let ExecuteRequest::RotateSwarmConfig(req) = req else {
+        unreachable!()
+      };
+      let update_id = update.id.clone();
+      handle_resolve_result(
+        req
+          .resolve(&ExecuteArgs { user, update, id })
+          .await
+          .map_err(|e| e.error)
+          .context("Failed at RotateSwarmConfig"),
+        &update_id,
+      )
+      .await?
+    }
     Execution::RemoveSwarmConfigs(req) => {
       let req = ExecuteRequest::RemoveSwarmConfigs(req);
       let update = init_execution_update(&req, &user).await?;

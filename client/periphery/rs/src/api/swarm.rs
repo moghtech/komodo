@@ -254,7 +254,7 @@ pub struct InspectSwarmTask {
 // ========
 
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
-#[response(Vec<SwarmConfig>)]
+#[response(SwarmConfig)]
 #[error(anyhow::Error)]
 pub struct InspectSwarmConfig {
   pub config: String,
@@ -262,14 +262,21 @@ pub struct InspectSwarmConfig {
 
 //
 
-/// `docker config rm CONFIG [CONFIG...]`
+/// `docker config create [OPTIONS] CONFIG file|-`
 ///
-/// https://docs.docker.com/reference/cli/docker/config/rm/
+/// https://docs.docker.com/reference/cli/docker/config/create/
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Log)]
 #[error(anyhow::Error)]
-pub struct RemoveSwarmConfigs {
-  pub configs: Vec<String>,
+pub struct CreateSwarmConfig {
+  /// The name of the config to create
+  pub name: String,
+  /// The data to store in the config
+  pub data: String,
+  /// Docker labels to give the config
+  pub labels: Vec<String>,
+  /// Optional custom template driver
+  pub template_driver: Option<String>,
 }
 
 //
@@ -295,6 +302,18 @@ pub struct RotateSwarmConfig {
   pub config: String,
   /// The config file data as a string
   pub data: String,
+}
+
+//
+
+/// `docker config rm CONFIG [CONFIG...]`
+///
+/// https://docs.docker.com/reference/cli/docker/config/rm/
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
+#[response(Log)]
+#[error(anyhow::Error)]
+pub struct RemoveSwarmConfigs {
+  pub configs: Vec<String>,
 }
 
 // ========

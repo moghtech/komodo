@@ -270,7 +270,7 @@ impl ToToml for Deployment {
         .map(|s| &s.name)
         .unwrap_or(&String::new()),
     );
-    
+
     resource.config.server_id.clone_from(
       all
         .servers
@@ -882,6 +882,24 @@ impl ToToml for Procedure {
             )
           }
           Execution::RemoveSwarmServices(exec) => {
+            exec.swarm.clone_from(
+              all
+                .swarms
+                .get(&exec.swarm)
+                .map(|a| &a.name)
+                .unwrap_or(&String::new()),
+            )
+          }
+          Execution::CreateSwarmConfig(exec) => {
+            exec.swarm.clone_from(
+              all
+                .swarms
+                .get(&exec.swarm)
+                .map(|a| &a.name)
+                .unwrap_or(&String::new()),
+            )
+          }
+          Execution::RotateSwarmConfig(exec) => {
             exec.swarm.clone_from(
               all
                 .swarms

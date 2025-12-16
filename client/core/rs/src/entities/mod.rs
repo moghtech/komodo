@@ -354,7 +354,7 @@ impl Version {
 
 #[typeshare]
 #[derive(
-  Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize,
+  Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, Parser,
 )]
 pub struct EnvironmentVar {
   pub variable: String,
@@ -1063,6 +1063,8 @@ pub enum Operation {
   RemoveSwarmNodes,
   RemoveSwarmStacks,
   RemoveSwarmServices,
+  CreateSwarmConfig,
+  RotateSwarmConfig,
   RemoveSwarmConfigs,
   RemoveSwarmSecrets,
 

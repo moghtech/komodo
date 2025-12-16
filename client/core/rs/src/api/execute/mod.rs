@@ -163,6 +163,8 @@ pub enum Execution {
   RemoveSwarmNodes(RemoveSwarmNodes),
   RemoveSwarmStacks(RemoveSwarmStacks),
   RemoveSwarmServices(RemoveSwarmServices),
+  CreateSwarmConfig(CreateSwarmConfig),
+  RotateSwarmConfig(RotateSwarmConfig),
   RemoveSwarmConfigs(RemoveSwarmConfigs),
   RemoveSwarmSecrets(RemoveSwarmSecrets),
 

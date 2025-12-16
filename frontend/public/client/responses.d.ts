@@ -342,6 +342,8 @@ export type ExecuteResponses = {
     RemoveSwarmNodes: Types.Update;
     RemoveSwarmStacks: Types.Update;
     RemoveSwarmServices: Types.Update;
+    CreateSwarmConfig: Types.Update;
+    RotateSwarmConfig: Types.Update;
     RemoveSwarmConfigs: Types.Update;
     RemoveSwarmSecrets: Types.Update;
     ClearRepoCache: Types.Update;

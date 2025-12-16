@@ -113,7 +113,7 @@ impl ResourceSyncTrait for Stack {
       .get(&original.server_id)
       .map(|s| s.name.clone())
       .unwrap_or_default();
-    
+
     original.linked_repo = resources
       .repos
       .get(&original.linked_repo)
@@ -726,6 +726,20 @@ impl ResourceSyncTrait for Procedure {
               .unwrap_or_default();
           }
           Execution::RemoveSwarmServices(config) => {
+            config.swarm = resources
+              .swarms
+              .get(&config.swarm)
+              .map(|s| s.name.clone())
+              .unwrap_or_default();
+          }
+          Execution::CreateSwarmConfig(config) => {
+            config.swarm = resources
+              .swarms
+              .get(&config.swarm)
+              .map(|s| s.name.clone())
+              .unwrap_or_default();
+          }
+          Execution::RotateSwarmConfig(config) => {
             config.swarm = resources
               .swarms
               .get(&config.swarm)

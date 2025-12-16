@@ -23,7 +23,9 @@ export const RemoveSwarmResource = ({
 }) => {
   const nav = useNavigate();
   const { mutate: remove, isPending } = useExecute(`RemoveSwarm${type}s`, {
-    onSuccess: () => nav("/swarms/" + id),
+    onSuccess: () => {
+      nav("/swarms/" + id);
+    },
   });
   let key = `${type.toLowerCase()}s`;
   return (

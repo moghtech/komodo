@@ -361,6 +361,8 @@ export enum Operation {
 	RemoveSwarmNodes = "RemoveSwarmNodes",
 	RemoveSwarmStacks = "RemoveSwarmStacks",
 	RemoveSwarmServices = "RemoveSwarmServices",
+	CreateSwarmConfig = "CreateSwarmConfig",
+	RotateSwarmConfig = "RotateSwarmConfig",
 	RemoveSwarmConfigs = "RemoveSwarmConfigs",
 	RemoveSwarmSecrets = "RemoveSwarmSecrets",
 	CreateServer = "CreateServer",
@@ -923,6 +925,8 @@ export type Execution =
 	| { type: "RemoveSwarmNodes", params: RemoveSwarmNodes }
 	| { type: "RemoveSwarmStacks", params: RemoveSwarmStacks }
 	| { type: "RemoveSwarmServices", params: RemoveSwarmServices }
+	| { type: "CreateSwarmConfig", params: CreateSwarmConfig }
+	| { type: "RotateSwarmConfig", params: RotateSwarmConfig }
 	| { type: "RemoveSwarmConfigs", params: RemoveSwarmConfigs }
 	| { type: "RemoveSwarmSecrets", params: RemoveSwarmSecrets }
 	| { type: "ClearRepoCache", params: ClearRepoCache }
@@ -4277,7 +4281,7 @@ export type InspectStackSwarmInfoResponse = SwarmStack;
 
 export type InspectStackSwarmServiceResponse = SwarmService;
 
-export type InspectSwarmConfigResponse = SwarmConfig[];
+export type InspectSwarmConfigResponse = SwarmConfig;
 
 export enum NodeSpecRoleEnum {
 	EMPTY = "",
@@ -6633,6 +6637,24 @@ export interface CreateSwarm {
 	name: string;
 	/** Optional partial config to initialize the swarm with. */
 	config?: _PartialSwarmConfig;
+}
+
+/**
+ * `docker config create [OPTIONS] CONFIG file|-`
+ * 
+ * https://docs.docker.com/reference/cli/docker/config/create/
+ */
+export interface CreateSwarmConfig {
+	/** Name or id */
+	swarm: string;
+	/** The name of the config to create */
+	name: string;
+	/** The data to store in the config */
+	data: string;
+	/** Docker labels to give the config */
+	labels?: string[];
+	/** Optional custom template driver */
+	template_driver?: string;
 }
 
 /** Create a tag. Response: [Tag]. */
@@ -9353,6 +9375,30 @@ export interface RotateServerKeys {
 	server: string;
 }
 
+/**
+ * https://docs.docker.com/engine/swarm/configs/#example-rotate-a-config
+ * 
+ * Swarm configs / secrets are immutable after creation.
+ * This making updating values awkward when you have services actively using them.
+ * The following steps allows for config rotation while minimizing downtime.
+ * 
+ * 1. Query for all services using the config
+ * - If not in use by any services, can simply `remove` and `create` the config.
+ * - Otherwise, continue with following steps
+ * 2. `Create` config `{config}-tmp` using provided data
+ * 3. `Update` services to use `tmp` config
+ * 4. `Remove` and `create` the actual config. This is now possible because services are using the tmp config.
+ * 5. `Update` services to use actual (not `tmp`) config again.
+ */
+export interface RotateSwarmConfig {
+	/** Name or id */
+	swarm: string;
+	/** Config name */
+	config: string;
+	/** The config file data as a string */
+	data: string;
+}
+
 /** Runs the target Action. Response: [Update] */
 export interface RunAction {
 	/** Id or name */
@@ -10425,6 +10471,8 @@ export type ExecuteRequest =
 	| { type: "RemoveSwarmNodes", params: RemoveSwarmNodes }
 	| { type: "RemoveSwarmStacks", params: RemoveSwarmStacks }
 	| { type: "RemoveSwarmServices", params: RemoveSwarmServices }
+	| { type: "CreateSwarmConfig", params: CreateSwarmConfig }
+	| { type: "RotateSwarmConfig", params: RotateSwarmConfig }
 	| { type: "RemoveSwarmConfigs", params: RemoveSwarmConfigs }
 	| { type: "RemoveSwarmSecrets", params: RemoveSwarmSecrets }
 	| { type: "ClearRepoCache", params: ClearRepoCache }
