@@ -197,10 +197,18 @@ impl DockerClient {
       return recreate_swarm_config(&create_config, logs).await;
     }
 
-    // Create a tmp config
-    let tmp_name =
-      format!("{}-tmp-{}", create_config.name, random_string(10));
-    let log = create_swarm_config(&create_config).await?;
+    // Create a tmp config for rotation
+    let tmp_create_config = CreateSwarmConfig {
+      name: format!(
+        "{}-tmp-{}",
+        create_config.name,
+        random_string(10)
+      ),
+      data: create_config.data.clone(),
+      labels: create_config.labels.clone(),
+      template_driver: create_config.template_driver.clone(),
+    };
+    let log = create_swarm_config(&tmp_create_config).await?;
     logs.push(log);
     if !all_logs_success(logs) {
       return Ok(());
@@ -210,7 +218,7 @@ impl DockerClient {
     switch_services_config(
       &services,
       &create_config.name,
-      &tmp_name,
+      &tmp_create_config.name,
       logs,
     )
     .await?;
@@ -227,7 +235,7 @@ impl DockerClient {
     // Update back to original
     switch_services_config(
       &services,
-      &tmp_name,
+      &tmp_create_config.name,
       &create_config.name,
       logs,
     )
@@ -237,8 +245,10 @@ impl DockerClient {
     }
 
     // Remove tmp config
-    let log =
-      remove_swarm_configs([tmp_name.as_str()].into_iter()).await;
+    let log = remove_swarm_configs(
+      [tmp_create_config.name.as_str()].into_iter(),
+    )
+    .await;
     logs.push(log);
 
     Ok(())

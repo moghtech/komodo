@@ -213,13 +213,13 @@ const SwarmConfigEdit = ({
         title: res.success ? "Config updated." : "Failed to update config.",
         variant: res.success ? undefined : "destructive",
       });
-      setEdit(undefined);
+      setEdit({ edit: undefined });
       refetch();
     },
   });
-  const [edit, setEdit] = useLocalStorage<string | undefined>(
-    `swarm-${swarm}-config-${config}-edit`,
-    undefined
+  const [{ edit }, setEdit] = useLocalStorage<{ edit: string | undefined }>(
+    `swarm-${swarm}-config-${config}-edit-v2`,
+    { edit: undefined }
   );
 
   if (isPending) {
@@ -248,7 +248,7 @@ const SwarmConfigEdit = ({
               variant="outline"
               onClick={(e) => {
                 e.stopPropagation();
-                setEdit(undefined);
+                setEdit({ edit: undefined });
               }}
               className="flex items-center gap-2"
               disabled={edit === undefined}
@@ -275,7 +275,7 @@ const SwarmConfigEdit = ({
       <MonacoEditor
         value={edit ?? data ?? "Failed to retrieve config data"}
         language={language}
-        onValueChange={(edit) => setEdit(edit)}
+        onValueChange={(edit) => setEdit({ edit })}
         readOnly={!canExecute}
       />
     </Section>

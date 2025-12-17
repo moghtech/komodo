@@ -54,7 +54,7 @@ export const StackLogs = ({
 const StackLogsInner = ({
   id,
   titleOther,
-  services,
+  services: __services,
   setServices,
   useSwarm,
 }: {
@@ -64,38 +64,27 @@ const StackLogsInner = ({
   setServices: (state: string[] | LocalStorageSetter<string[]>) => void;
   useSwarm: boolean;
 }) => {
+  const _services = __services.filter((s) => s.selected).map((s) => s.service);
+  const services =
+    useSwarm && !_services.length ? [__services[0].service] : _services;
   return (
     <LogSection
       regular_logs={(timestamps, stream, tail, poll) =>
-        NoSearchLogs(
-          id,
-          services.filter((s) => s.selected).map((s) => s.service),
-          tail,
-          timestamps,
-          stream,
-          poll
-        )
+        NoSearchLogs(id, services, tail, timestamps, stream, poll)
       }
       search_logs={(timestamps, terms, invert, poll) =>
-        SearchLogs(
-          id,
-          services.filter((s) => s.selected).map((s) => s.service),
-          terms,
-          invert,
-          timestamps,
-          poll
-        )
+        SearchLogs(id, services, terms, invert, timestamps, poll)
       }
       titleOther={titleOther}
       extraParams={
         useSwarm ? (
           <StackLogsSingleServiceSelector
-            services={services}
+            services={__services}
             setServices={setServices}
           />
         ) : (
           <StackLogsMultiServiceSelector
-            services={services}
+            services={__services}
             setServices={setServices}
           />
         )

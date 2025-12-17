@@ -222,10 +222,19 @@ impl DockerClient {
       return recreate_swarm_secret(&create_secret, logs).await;
     }
 
-    // Create a tmp secret
-    let tmp_name =
-      format!("{}-tmp-{}", create_secret.name, random_string(10));
-    let log = create_swarm_secret(&create_secret).await?;
+    // Create a tmp secret for rotation
+    let tmp_create_config = CreateSwarmSecret {
+      name: format!(
+        "{}-tmp-{}",
+        create_secret.name,
+        random_string(10)
+      ),
+      data: create_secret.data.clone(),
+      driver: create_secret.driver.clone(),
+      labels: create_secret.labels.clone(),
+      template_driver: create_secret.template_driver.clone(),
+    };
+    let log = create_swarm_secret(&tmp_create_config).await?;
     logs.push(log);
     if !all_logs_success(logs) {
       return Ok(());
@@ -235,7 +244,7 @@ impl DockerClient {
     switch_services_secret(
       &services,
       &create_secret.name,
-      &tmp_name,
+      &tmp_create_config.name,
       logs,
     )
     .await?;
@@ -252,7 +261,7 @@ impl DockerClient {
     // Update back to original
     switch_services_secret(
       &services,
-      &tmp_name,
+      &tmp_create_config.name,
       &create_secret.name,
       logs,
     )
@@ -262,8 +271,10 @@ impl DockerClient {
     }
 
     // Remove tmp secret
-    let log =
-      remove_swarm_secrets([tmp_name.as_str()].into_iter()).await;
+    let log = remove_swarm_secrets(
+      [tmp_create_config.name.as_str()].into_iter(),
+    )
+    .await;
     logs.push(log);
 
     Ok(())
