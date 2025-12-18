@@ -181,38 +181,67 @@ export const DeploymentComponents: RequiredResourceComponents = {
                     { type: "Image" }
                   >
                 )?.params.image
-              : info?.image || "N/A"}
+              : info?.image.split("@")[0] || "N/A"}
           </div>
         </div>
       );
     },
     DockerResource: ({ id }) => {
       const deployment = useDeployment(id);
+      const service = useRead(
+        "ListSwarmServices",
+        { swarm: deployment?.info.swarm_id! },
+        { enabled: !!deployment?.info.swarm_id }
+      ).data?.find((service) => service.Name === deployment?.name);
       if (
         !deployment ||
         [
           Types.DeploymentState.Unknown,
           Types.DeploymentState.NotDeployed,
         ].includes(deployment.info.state)
-      )
+      ) {
         return null;
+      }
       if (deployment.info.swarm_id) {
         return (
-          <SwarmResourceLink
-            type="Service"
-            swarm_id={deployment.info.swarm_id}
-            resource_id={deployment.name}
+          <div className="flex items-center gap-x-4 gap-y-2 flex-wrap">
+            <SwarmResourceLink
+              type="Service"
+              swarm_id={deployment.info.swarm_id}
+              resource_id={deployment.name}
+              name={deployment.name}
+            />
+            {service?.Configs.map((config) => (
+              <div key={config} className="border-l pl-4 text-sm">
+                <SwarmResourceLink
+                  type="Config"
+                  swarm_id={deployment.info.swarm_id}
+                  resource_id={config}
+                  name={config}
+                />
+              </div>
+            ))}
+            {service?.Secrets.map((secret) => (
+              <div key={secret} className="border-l pl-4 text-sm">
+                <SwarmResourceLink
+                  type="Secret"
+                  swarm_id={deployment.info.swarm_id}
+                  resource_id={secret}
+                  name={secret}
+                />
+              </div>
+            ))}
+          </div>
+        );
+      } else {
+        return (
+          <DockerResourceLink
+            type="container"
             name={deployment.name}
+            server_id={deployment.info.server_id}
           />
         );
       }
-      return (
-        <DockerResourceLink
-          type="container"
-          name={deployment.name}
-          server_id={deployment.info.server_id}
-        />
-      );
     },
     Ports: ({ id }) => {
       const deployment = useDeployment(id);

@@ -13,7 +13,11 @@ import { Button } from "@ui/button";
 import { ChevronLeft, Loader2, Zap } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { MonacoEditor } from "@components/monaco";
-import { SWARM_ICONS, useSwarm } from "@components/resources/swarm";
+import {
+  SWARM_ICONS,
+  SwarmResourceLink,
+  useSwarm,
+} from "@components/resources/swarm";
 import { ExportButton } from "@components/export";
 import { Types } from "komodo_client";
 import {
@@ -21,7 +25,7 @@ import {
   swarm_state_intention,
 } from "@lib/color";
 import { ResourceNotifications } from "@pages/resource-notifications";
-import { ReactNode, useMemo, useState } from "react";
+import { Fragment, ReactNode, useMemo, useState } from "react";
 import { MobileFriendlyTabsSelector } from "@ui/mobile-friendly-tabs";
 import { SwarmServiceLogs } from "./log";
 import { Section } from "@components/layouts";
@@ -105,9 +109,31 @@ export default function SwarmServicePage() {
             />
             <div className="flex flex-col pb-2 px-4">
               <div className="flex items-center gap-x-4 gap-y-0 flex-wrap text-muted-foreground">
-                <ResourceLink type="Swarm" id={id} />
-                <div>|</div>
                 <div>Swarm Service</div>
+                |
+                <ResourceLink type="Swarm" id={id} />
+                {service?.Configs.map((config) => (
+                  <Fragment key={config}>
+                    |
+                    <SwarmResourceLink
+                      type="Config"
+                      swarm_id={id}
+                      resource_id={config}
+                      name={config}
+                    />
+                  </Fragment>
+                ))}
+                {service?.Secrets.map((secret) => (
+                  <Fragment key={secret}>
+                    |
+                    <SwarmResourceLink
+                      type="Secret"
+                      swarm_id={id}
+                      resource_id={secret}
+                      name={secret}
+                    />
+                  </Fragment>
+                ))}
               </div>
             </div>
           </div>

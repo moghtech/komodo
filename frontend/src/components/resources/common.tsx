@@ -84,8 +84,8 @@ export const ResourcePageHeader = ({
   resource: Types.ResourceListItem<unknown> | undefined;
   /** Only pass if not passing resource */
   name?: string;
-  state: string | undefined;
-  status: string | undefined;
+  state: ReactNode | undefined;
+  status: ReactNode | undefined;
 }) => {
   const color = text_color_class_by_intention(intent);
   const background = hex_color_by_intention(intent) + "15";

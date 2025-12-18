@@ -25,6 +25,7 @@ import { MobileFriendlyTabsSelector } from "@ui/mobile-friendly-tabs";
 import { RemoveSwarmResource } from "./remove";
 import { ConfirmUpdate } from "@components/config/util";
 import { useToast } from "@ui/use-toast";
+import { Badge } from "@ui/badge";
 
 export default function SwarmConfigPage() {
   const { id, config: __config } = useParams() as {
@@ -33,6 +34,9 @@ export default function SwarmConfigPage() {
   };
   const _config = decodeURIComponent(__config);
   const swarm = useSwarm(id);
+  const inUse = useRead("ListSwarmConfigs", { swarm: id }).data?.find(
+    (config) => config.ID === _config || config.Name === _config
+  )?.InUse;
   const { data: config, isPending } = useRead("InspectSwarmConfig", {
     swarm: id,
     config: _config,
@@ -56,6 +60,7 @@ export default function SwarmConfigPage() {
   }
 
   const Icon = SWARM_ICONS.Config;
+  const intent = inUse ? "Good" : "Critical";
 
   return (
     <div>
@@ -77,16 +82,16 @@ export default function SwarmConfigPage() {
             <ResourcePageHeader
               type={undefined}
               id={undefined}
-              intent="Good"
+              intent={intent}
               icon={
                 <Icon
                   size={8}
-                  className={stroke_color_class_by_intention("Good")}
+                  className={stroke_color_class_by_intention(intent)}
                 />
               }
               resource={undefined}
               name={config.Spec?.Name}
-              state={undefined}
+              state={!inUse && <Badge variant="destructive">Unused</Badge>}
               status={undefined}
             />
             <div className="flex flex-col pb-2 px-4">

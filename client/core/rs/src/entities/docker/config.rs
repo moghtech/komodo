@@ -19,6 +19,10 @@ pub struct SwarmConfigListItem {
   #[serde(rename = "ID")]
   pub id: Option<String>,
 
+  /// Whether the config is in use by any service
+  #[serde(default, rename = "InUse")]
+  pub in_use: bool,
+
   #[serde(rename = "CreatedAt")]
   pub created_at: Option<String>,
 

@@ -84,31 +84,57 @@ fn convert_service_list_item(
   service: bollard::models::Service,
   tasks: Option<&[SwarmTaskListItem]>,
 ) -> SwarmServiceListItem {
-  let (name, (image, restart, runtime), replicas) = service
-    .spec
-    .map(|spec| {
-      (
-        spec.name,
-        spec
-          .task_template
-          .map(|template| {
-            (
-              template.container_spec.and_then(|spec| spec.image),
-              template.restart_policy.and_then(|policy| {
-                policy
-                  .condition
-                  .map(convert_task_spec_restart_policy_condition)
-              }),
-              template.runtime,
-            )
-          })
-          .unwrap_or_default(),
-        spec.mode.and_then(|mode| {
-          mode.replicated.and_then(|replicated| replicated.replicas)
-        }),
-      )
-    })
-    .unwrap_or_default();
+  let (name, ((image, configs, secrets), restart, runtime), replicas) =
+    service
+      .spec
+      .map(|spec| {
+        (
+          spec.name,
+          spec
+            .task_template
+            .map(|template| {
+              (
+                template
+                  .container_spec
+                  .map(|spec| {
+                    (
+                      spec.image,
+                      spec
+                        .configs
+                        .map(|configs| {
+                          configs
+                            .into_iter()
+                            .filter_map(|config| config.config_name)
+                            .collect::<Vec<_>>()
+                        })
+                        .unwrap_or_default(),
+                      spec
+                        .secrets
+                        .map(|secrets| {
+                          secrets
+                            .into_iter()
+                            .filter_map(|secret| secret.secret_name)
+                            .collect::<Vec<_>>()
+                        })
+                        .unwrap_or_default(),
+                    )
+                  })
+                  .unwrap_or_default(),
+                template.restart_policy.and_then(|policy| {
+                  policy
+                    .condition
+                    .map(convert_task_spec_restart_policy_condition)
+                }),
+                template.runtime,
+              )
+            })
+            .unwrap_or_default(),
+          spec.mode.and_then(|mode| {
+            mode.replicated.and_then(|replicated| replicated.replicas)
+          }),
+        )
+      })
+      .unwrap_or_default();
   let state = service
     .id
     .as_ref()
@@ -124,6 +150,8 @@ fn convert_service_list_item(
     image,
     restart,
     runtime,
+    configs,
+    secrets,
     created_at: service.created_at,
     updated_at: service.updated_at,
   }

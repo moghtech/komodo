@@ -4200,6 +4200,10 @@ export interface SwarmServiceListItem {
     Restart?: TaskSpecRestartPolicyConditionEnum;
     /** Number of replicas */
     Replicas?: I64;
+    /** Attached config names */
+    Configs: string[];
+    /** Attached secret names */
+    Secrets: string[];
     /**
      * Swarm service state.
      * - Healthy if all associated tasks match their desired state (or report no desired state)
@@ -5070,6 +5074,8 @@ export interface SwarmConfigListItem {
     /** User-defined name of the config. */
     Name?: string;
     ID?: string;
+    /** Whether the config is in use by any service */
+    InUse?: boolean;
     CreatedAt?: string;
     UpdatedAt?: string;
     /**
@@ -5110,6 +5116,8 @@ export interface SwarmSecretListItem {
      * If no driver is set, no templating is used.
      */
     Templating?: string;
+    /** Whether the secret is in use by any service */
+    InUse: boolean;
     CreatedAt?: string;
     UpdatedAt?: string;
 }

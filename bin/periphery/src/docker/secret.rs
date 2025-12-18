@@ -10,7 +10,7 @@ use komodo_client::entities::{
   all_logs_success,
   docker::{
     secret::{SecretSpec, SwarmSecret, SwarmSecretListItem},
-    service::SwarmService,
+    service::{SwarmService, SwarmServiceListItem},
     task::TaskSpecContainerSpecFile,
   },
   random_string,
@@ -23,6 +23,7 @@ use super::DockerClient;
 impl DockerClient {
   pub async fn list_swarm_secrets(
     &self,
+    services: &[SwarmServiceListItem],
   ) -> anyhow::Result<Vec<SwarmSecretListItem>> {
     let mut secrets = self
       .docker
@@ -30,7 +31,7 @@ impl DockerClient {
       .await
       .context("Failed to query for swarm secret list")?
       .into_iter()
-      .map(convert_secret_list_item)
+      .map(|secret| convert_secret_list_item(secret, services))
       .collect::<Vec<_>>();
 
     secrets.sort_by(|a, b| {
@@ -61,6 +62,7 @@ impl DockerClient {
 
 fn convert_secret_list_item(
   secret: bollard::models::Secret,
+  services: &[SwarmServiceListItem],
 ) -> SwarmSecretListItem {
   let (name, driver, templating) = secret
     .spec
@@ -72,11 +74,20 @@ fn convert_secret_list_item(
       )
     })
     .unwrap_or_default();
+  let in_use = name
+    .as_ref()
+    .map(|name| {
+      services
+        .iter()
+        .any(|service| service.secrets.contains(name))
+    })
+    .unwrap_or_default();
   SwarmSecretListItem {
     id: secret.id,
     name,
     driver,
     templating,
+    in_use,
     created_at: secret.created_at,
     updated_at: secret.updated_at,
   }

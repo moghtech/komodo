@@ -10,7 +10,7 @@ use komodo_client::entities::{
   all_logs_success,
   docker::{
     config::{SwarmConfig, SwarmConfigListItem},
-    service::SwarmService,
+    service::{SwarmService, SwarmServiceListItem},
   },
   random_string,
 };
@@ -18,8 +18,9 @@ use periphery_client::api::swarm::CreateSwarmConfig;
 
 use super::*;
 
-pub async fn list_swarm_configs()
--> anyhow::Result<Vec<SwarmConfigListItem>> {
+pub async fn list_swarm_configs(
+  services: &[SwarmServiceListItem],
+) -> anyhow::Result<Vec<SwarmConfigListItem>> {
   let res = run_komodo_standard_command(
     "List Swarm Configs",
     None,
@@ -37,7 +38,21 @@ pub async fn list_swarm_configs()
   let mut res = serde_json::from_str::<Vec<SwarmConfigListItem>>(
     &format!("[{}]", res.stdout.trim().replace('\n', ",")),
   )
-  .context("Failed to parse 'docker config ls' response from json")?;
+  .context("Failed to parse 'docker config ls' response from json")?
+  .into_iter()
+  .map(|mut res| {
+    res.in_use = res
+      .name
+      .as_ref()
+      .map(|name| {
+        services
+          .iter()
+          .any(|service| service.configs.contains(name))
+      })
+      .unwrap_or_default();
+    res
+  })
+  .collect::<Vec<_>>();
 
   res.sort_by(|a, b| {
     a.name

@@ -133,11 +133,33 @@ const StackServicePageInner = ({
                         <SwarmResourceLink
                           type="Service"
                           swarm_id={stack.info.swarm_id}
-                          resource_id={swarm_service.ID}
+                          resource_id={swarm_service.Name}
                           name={swarm_service.Name}
                         />
                       </>
                     )}
+                    {swarm_service?.Configs.map((config) => (
+                      <Fragment key={config}>
+                        |
+                        <SwarmResourceLink
+                          type="Config"
+                          swarm_id={stack.info.swarm_id}
+                          resource_id={config}
+                          name={config}
+                        />
+                      </Fragment>
+                    ))}
+                    {swarm_service?.Secrets.map((secret) => (
+                      <Fragment key={secret}>
+                        |
+                        <SwarmResourceLink
+                          type="Secret"
+                          swarm_id={stack.info.swarm_id}
+                          resource_id={secret}
+                          name={secret}
+                        />
+                      </Fragment>
+                    ))}
                   </>
                 )}
                 {/* SERVER ONLY */}

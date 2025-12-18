@@ -20,6 +20,7 @@ import {
 import { Button } from "@ui/button";
 import { Label } from "@ui/label";
 import { language_from_path, MonacoEditor } from "@components/monaco";
+import { Badge } from "@ui/badge";
 
 export const SwarmSecrets = ({
   id,
@@ -75,6 +76,11 @@ export const SwarmSecrets = ({
                 swarm_id={id}
                 resource_id={row.original.Name}
                 name={row.original.Name}
+                extra={
+                  !row.original.InUse && (
+                    <Badge variant="destructive">Unused</Badge>
+                  )
+                }
               />
             ),
             size: 200,

@@ -42,6 +42,14 @@ pub struct SwarmServiceListItem {
   #[serde(rename = "Replicas")]
   pub replicas: Option<I64>,
 
+  /// Attached config names
+  #[serde(rename = "Configs")]
+  pub configs: Vec<String>,
+
+  /// Attached secret names
+  #[serde(rename = "Secrets")]
+  pub secrets: Vec<String>,
+
   /// Swarm service state.
   /// - Healthy if all associated tasks match their desired state (or report no desired state)
   /// - Unhealthy otherwise

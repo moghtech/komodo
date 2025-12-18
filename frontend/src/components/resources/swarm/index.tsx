@@ -26,6 +26,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 import { Card } from "@ui/card";
 import { SwarmTabs } from "./tabs";
 import { Link } from "react-router-dom";
+import { ReactNode } from "react";
 
 export const useSwarm = (id?: string) =>
   useRead("ListSwarms", {}, { refetchInterval: 10_000 }).data?.find(
@@ -222,12 +223,46 @@ export const SWARM_ICONS: {
       />
     );
   },
-  Secret: ({ size, className }) => (
-    <KeyRound className={cn(`w-${size} h-${size}`, className)} />
-  ),
-  Config: ({ size, className }) => (
-    <Settings className={cn(`w-${size} h-${size}`, className)} />
-  ),
+  Config: ({ swarm_id, resource_id, size, className }) => {
+    const inUse = useRead(
+      "ListSwarmConfigs",
+      { swarm: swarm_id! },
+      { enabled: !!swarm_id }
+    ).data?.find(
+      (config) =>
+        resource_id &&
+        (config.ID === resource_id || config.Name === resource_id)
+    )?.InUse;
+    return (
+      <Settings
+        className={cn(
+          `w-${size} h-${size}`,
+          stroke_color_class_by_intention(inUse ? "Good" : "Critical"),
+          className
+        )}
+      />
+    );
+  },
+  Secret: ({ swarm_id, resource_id, size, className }) => {
+    const inUse = useRead(
+      "ListSwarmSecrets",
+      { swarm: swarm_id! },
+      { enabled: !!swarm_id }
+    ).data?.find(
+      (secret) =>
+        resource_id &&
+        (secret.ID === resource_id || secret.Name === resource_id)
+    )?.InUse;
+    return (
+      <KeyRound
+        className={cn(
+          `w-${size} h-${size}`,
+          stroke_color_class_by_intention(inUse ? "Good" : "Critical"),
+          className
+        )}
+      />
+    );
+  },
 };
 
 export const SwarmResourceLink = ({
@@ -235,11 +270,13 @@ export const SwarmResourceLink = ({
   swarm_id,
   resource_id,
   name,
+  extra,
 }: {
   type: SwarmResourceType;
   swarm_id: string;
   resource_id: string | undefined;
   name: string | undefined;
+  extra?: ReactNode;
 }) => {
   const Icon = SWARM_ICONS[type];
   return (
@@ -254,6 +291,7 @@ export const SwarmResourceLink = ({
       >
         {name ?? "Unknown"}
       </div>
+      {extra && <div className="no-underline">{extra}</div>}
     </Link>
   );
 };

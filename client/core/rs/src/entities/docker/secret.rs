@@ -27,6 +27,10 @@ pub struct SwarmSecretListItem {
   #[serde(rename = "Templating")]
   pub templating: Option<String>,
 
+  /// Whether the secret is in use by any service
+  #[serde(rename = "InUse")]
+  pub in_use: bool,
+
   #[serde(rename = "CreatedAt")]
   pub created_at: Option<String>,
 

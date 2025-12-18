@@ -25,6 +25,7 @@ import { MobileFriendlyTabsSelector } from "@ui/mobile-friendly-tabs";
 import { RemoveSwarmResource } from "./remove";
 import { ConfirmUpdate } from "@components/config/util";
 import { useToast } from "@ui/use-toast";
+import { Badge } from "@ui/badge";
 
 export default function SwarmSecretPage() {
   const { id, secret: __secret } = useParams() as {
@@ -33,6 +34,9 @@ export default function SwarmSecretPage() {
   };
   const _secret = decodeURIComponent(__secret);
   const swarm = useSwarm(id);
+  const inUse = useRead("ListSwarmSecrets", { swarm: id }).data?.find(
+    (secret) => secret.ID === _secret || secret.Name === _secret
+  )?.InUse;
   const { data: secret, isPending } = useRead("InspectSwarmSecret", {
     swarm: id,
     secret: _secret,
@@ -56,6 +60,7 @@ export default function SwarmSecretPage() {
   }
 
   const Icon = SWARM_ICONS.Secret;
+  const intent = inUse ? "Good" : "Critical";
 
   return (
     <div>
@@ -77,16 +82,16 @@ export default function SwarmSecretPage() {
             <ResourcePageHeader
               type={undefined}
               id={undefined}
-              intent="Good"
+              intent={intent}
               icon={
                 <Icon
                   size={8}
-                  className={stroke_color_class_by_intention("Good")}
+                  className={stroke_color_class_by_intention(intent)}
                 />
               }
               resource={undefined}
               name={secret.Spec?.Name}
-              state={undefined}
+              state={!inUse && <Badge variant="destructive">Unused</Badge>}
               status={undefined}
             />
             <div className="flex flex-col pb-2 px-4">
