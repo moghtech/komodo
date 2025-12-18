@@ -15,11 +15,13 @@ export const RemoveSwarmResource = ({
   type,
   resource_id,
   resource_name,
+  disabled,
 }: {
   id: string;
   type: RemovableSwarmResourceType;
   resource_id: string;
   resource_name?: string;
+  disabled?: boolean;
 }) => {
   const nav = useNavigate();
   const { mutate: remove, isPending } = useExecute(`RemoveSwarm${type}s`, {
@@ -37,7 +39,7 @@ export const RemoveSwarmResource = ({
       onClick={() =>
         remove({ swarm: id, [key]: [resource_id], detach: false } as any)
       }
-      disabled={isPending}
+      disabled={disabled || isPending}
       loading={isPending}
     />
   );

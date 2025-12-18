@@ -20,12 +20,16 @@ import { ExportButton } from "@components/export";
 import { stroke_color_class_by_intention } from "@lib/color";
 import { ResourceNotifications } from "@pages/resource-notifications";
 import { Types } from "komodo_client";
-import { ReactNode, useMemo } from "react";
+import { Dispatch, ReactNode, SetStateAction, useMemo, useState } from "react";
 import { MobileFriendlyTabsSelector } from "@ui/mobile-friendly-tabs";
 import { RemoveSwarmResource } from "./remove";
 import { ConfirmUpdate } from "@components/config/util";
 import { useToast } from "@ui/use-toast";
 import { Badge } from "@ui/badge";
+import {
+  SwarmServicesTable,
+  SwarmTasksTable,
+} from "@components/resources/swarm/table";
 
 export default function SwarmSecretPage() {
   const { id, secret: __secret } = useParams() as {
@@ -41,7 +45,7 @@ export default function SwarmSecretPage() {
     swarm: id,
     secret: _secret,
   });
-  const { canWrite } = usePermissions({
+  const { canWrite, canExecute } = usePermissions({
     type: "Swarm",
     id,
   });
@@ -110,12 +114,13 @@ export default function SwarmSecretPage() {
 
       <div className="mt-8 flex flex-col gap-12">
         {/* Actions */}
-        {secret.ID && (
+        {canExecute && secret.ID && (
           <RemoveSwarmResource
             id={id}
             type="Secret"
             resource_id={secret.ID}
             resource_name={secret.Spec?.Name}
+            disabled={inUse}
           />
         )}
 
@@ -128,7 +133,7 @@ export default function SwarmSecretPage() {
   );
 }
 
-type SwarmSecretTabsView = "Edit" | "Inspect";
+type SwarmSecretTabsView = "Edit" | "Services" | "Tasks" | "Inspect";
 
 const SwarmSecretTabs = ({
   swarm,
@@ -145,6 +150,7 @@ const SwarmSecretTabs = ({
     type: "Swarm",
     id: swarm.id,
   });
+  const _search = useState("");
 
   const view = !specificInspect && _view === "Inspect" ? "Edit" : _view;
 
@@ -152,6 +158,12 @@ const SwarmSecretTabs = ({
     () => [
       {
         value: "Edit",
+      },
+      {
+        value: "Services",
+      },
+      {
+        value: "Tasks",
       },
       {
         value: "Inspect",
@@ -177,6 +189,24 @@ const SwarmSecretTabs = ({
           swarm={swarm.id}
           secret={secret}
           titleOther={Selector}
+        />
+      );
+    case "Services":
+      return (
+        <SwarmSecretServices
+          id={swarm.id}
+          secret={secret}
+          Selector={Selector}
+          _search={_search}
+        />
+      );
+    case "Tasks":
+      return (
+        <SwarmSecretTasks
+          id={swarm.id}
+          secret={secret}
+          Selector={Selector}
+          _search={_search}
         />
       );
     case "Inspect":
@@ -283,6 +313,56 @@ const SwarmSecretEdit = ({
         readOnly={!canExecute}
       />
     </Section>
+  );
+};
+
+const SwarmSecretServices = ({
+  id,
+  secret,
+  Selector,
+  _search,
+}: {
+  id: string;
+  secret: string | undefined;
+  Selector: ReactNode;
+  _search: [string, Dispatch<SetStateAction<string>>];
+}) => {
+  const services =
+    useRead("ListSwarmServices", { swarm: id }).data?.filter(
+      (service) => secret && service.Secrets.includes(secret)
+    ) ?? [];
+  return (
+    <SwarmServicesTable
+      id={id}
+      services={services}
+      _search={_search}
+      titleOther={Selector}
+    />
+  );
+};
+
+const SwarmSecretTasks = ({
+  id,
+  secret,
+  Selector,
+  _search,
+}: {
+  id: string;
+  secret: string | undefined;
+  Selector: ReactNode;
+  _search: [string, Dispatch<SetStateAction<string>>];
+}) => {
+  const tasks =
+    useRead("ListSwarmTasks", { swarm: id }).data?.filter(
+      (service) => secret && service.Secrets.includes(secret)
+    ) ?? [];
+  return (
+    <SwarmTasksTable
+      id={id}
+      tasks={tasks}
+      _search={_search}
+      titleOther={Selector}
+    />
   );
 };
 

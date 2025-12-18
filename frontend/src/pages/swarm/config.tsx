@@ -20,12 +20,16 @@ import { ExportButton } from "@components/export";
 import { stroke_color_class_by_intention } from "@lib/color";
 import { ResourceNotifications } from "@pages/resource-notifications";
 import { Types } from "komodo_client";
-import { ReactNode, useMemo } from "react";
+import { Dispatch, ReactNode, SetStateAction, useMemo, useState } from "react";
 import { MobileFriendlyTabsSelector } from "@ui/mobile-friendly-tabs";
 import { RemoveSwarmResource } from "./remove";
 import { ConfirmUpdate } from "@components/config/util";
 import { useToast } from "@ui/use-toast";
 import { Badge } from "@ui/badge";
+import {
+  SwarmServicesTable,
+  SwarmTasksTable,
+} from "@components/resources/swarm/table";
 
 export default function SwarmConfigPage() {
   const { id, config: __config } = useParams() as {
@@ -41,7 +45,7 @@ export default function SwarmConfigPage() {
     swarm: id,
     config: _config,
   });
-  const { canWrite } = usePermissions({
+  const { canWrite, canExecute } = usePermissions({
     type: "Swarm",
     id,
   });
@@ -110,12 +114,13 @@ export default function SwarmConfigPage() {
 
       <div className="mt-8 flex flex-col gap-12">
         {/* Actions */}
-        {config.ID && (
+        {canExecute && config.ID && (
           <RemoveSwarmResource
             id={id}
             type="Config"
             resource_id={config.ID}
             resource_name={config.Spec?.Name}
+            disabled={inUse}
           />
         )}
 
@@ -128,7 +133,7 @@ export default function SwarmConfigPage() {
   );
 }
 
-type SwarmConfigTabsView = "Edit" | "Inspect";
+type SwarmConfigTabsView = "Edit" | "Services" | "Tasks" | "Inspect";
 
 const SwarmConfigTabs = ({
   swarm,
@@ -145,6 +150,7 @@ const SwarmConfigTabs = ({
     type: "Swarm",
     id: swarm.id,
   });
+  const _search = useState("");
 
   const view = !specificInspect && _view === "Inspect" ? "Edit" : _view;
 
@@ -152,6 +158,12 @@ const SwarmConfigTabs = ({
     () => [
       {
         value: "Edit",
+      },
+      {
+        value: "Services",
+      },
+      {
+        value: "Tasks",
       },
       {
         value: "Inspect",
@@ -177,6 +189,24 @@ const SwarmConfigTabs = ({
           swarm={swarm.id}
           config={config}
           titleOther={Selector}
+        />
+      );
+    case "Services":
+      return (
+        <SwarmConfigServices
+          id={swarm.id}
+          config={config}
+          Selector={Selector}
+          _search={_search}
+        />
+      );
+    case "Tasks":
+      return (
+        <SwarmConfigTasks
+          id={swarm.id}
+          config={config}
+          Selector={Selector}
+          _search={_search}
         />
       );
     case "Inspect":
@@ -284,6 +314,56 @@ const SwarmConfigEdit = ({
         readOnly={!canExecute}
       />
     </Section>
+  );
+};
+
+const SwarmConfigServices = ({
+  id,
+  config,
+  Selector,
+  _search,
+}: {
+  id: string;
+  config: string | undefined;
+  Selector: ReactNode;
+  _search: [string, Dispatch<SetStateAction<string>>];
+}) => {
+  const services =
+    useRead("ListSwarmServices", { swarm: id }).data?.filter(
+      (service) => config && service.Configs.includes(config)
+    ) ?? [];
+  return (
+    <SwarmServicesTable
+      id={id}
+      services={services}
+      _search={_search}
+      titleOther={Selector}
+    />
+  );
+};
+
+const SwarmConfigTasks = ({
+  id,
+  config,
+  Selector,
+  _search,
+}: {
+  id: string;
+  config: string | undefined;
+  Selector: ReactNode;
+  _search: [string, Dispatch<SetStateAction<string>>];
+}) => {
+  const tasks =
+    useRead("ListSwarmTasks", { swarm: id }).data?.filter(
+      (service) => config && service.Configs.includes(config)
+    ) ?? [];
+  return (
+    <SwarmTasksTable
+      id={id}
+      tasks={tasks}
+      _search={_search}
+      titleOther={Selector}
+    />
   );
 };
 
