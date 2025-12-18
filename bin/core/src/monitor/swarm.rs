@@ -161,7 +161,6 @@ pub async fn update_cache_for_swarm(swarm: &Swarm, force: bool) {
     update_swarm_deployment_cache(
       resources.deployments,
       &lists.services,
-      &lists.tasks,
     )
   );
 

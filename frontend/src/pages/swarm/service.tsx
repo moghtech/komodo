@@ -21,12 +21,12 @@ import {
   swarm_state_intention,
 } from "@lib/color";
 import { ResourceNotifications } from "@pages/resource-notifications";
-import { Dispatch, ReactNode, SetStateAction, useMemo, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { MobileFriendlyTabsSelector } from "@ui/mobile-friendly-tabs";
 import { SwarmServiceLogs } from "./log";
 import { Section } from "@components/layouts";
 import { RemoveSwarmResource } from "./remove";
-import { SwarmTasksTable } from "@components/resources/swarm/table";
+import { SwarmServiceTasksTable } from "@components/resources/swarm/table";
 
 export default function SwarmServicePage() {
   const { id, service: __service } = useParams() as {
@@ -71,7 +71,7 @@ export default function SwarmServicePage() {
   }
 
   const Icon = SWARM_ICONS.Service;
-  const state = get_service_state_from_tasks(tasks);
+  const state = service.State;
   const intention = swarm_state_intention(state);
   const strokeColor = stroke_color_class_by_intention(intention);
   const service_id = service.ID;
@@ -264,42 +264,4 @@ const SwarmServiceInspect = ({
       />
     </Section>
   );
-};
-
-const SwarmServiceTasksTable = ({
-  id,
-  service_id,
-  titleOther,
-  _search,
-}: {
-  id: string;
-  service_id: string | undefined;
-  titleOther: ReactNode;
-  _search: [string, Dispatch<SetStateAction<string>>];
-}) => {
-  const tasks =
-    useRead(
-      "ListSwarmTasks",
-      { swarm: id },
-      { enabled: !!service_id }
-    ).data?.filter((task) => service_id && task.ServiceID === service_id) ?? [];
-  return (
-    <SwarmTasksTable
-      id={id}
-      tasks={tasks}
-      titleOther={titleOther}
-      _search={_search}
-    />
-  );
-};
-
-const get_service_state_from_tasks = (
-  tasks: Types.SwarmTaskListItem[]
-): Types.SwarmState => {
-  for (const task of tasks) {
-    if (task.State !== task.DesiredState) {
-      return Types.SwarmState.Unhealthy;
-    }
-  }
-  return Types.SwarmState.Healthy;
 };

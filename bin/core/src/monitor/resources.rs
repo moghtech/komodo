@@ -17,7 +17,6 @@ use komodo_client::{
       image::ImageListItem,
       service::SwarmServiceListItem,
       stack::SwarmStackListItem,
-      task::SwarmTaskListItem,
     },
     komodo_timestamp,
     stack::{Stack, StackService, StackServiceNames, StackState},
@@ -341,7 +340,6 @@ fn deployment_alert_sent_cache() -> &'static AlertCache<String> {
 pub async fn update_swarm_deployment_cache(
   deployments: Vec<Deployment>,
   swarm_services: &[SwarmServiceListItem],
-  swarm_tasks: &[SwarmTaskListItem],
 ) {
   let deployment_status_cache = deployment_status_cache();
   for deployment in deployments {
@@ -361,30 +359,10 @@ pub async fn update_swarm_deployment_cache(
       .map(|s| s.curr.state);
     let current_state = service
       .as_ref()
-      .map(|service| {
-        let Some(service_id) = &service.id else {
-          return DeploymentState::Unknown;
-        };
-        let tasks = swarm_tasks
-          .iter()
-          .filter(|task| {
-            task
-              .service_id
-              .as_ref()
-              .map(|id| id == service_id)
-              .unwrap_or_default()
-          })
-          .collect::<Vec<_>>();
-        // If service exists but no tasks, it is unhealthy
-        if tasks.is_empty() {
-          return DeploymentState::Unhealthy;
-        }
-        for task in tasks {
-          if task.desired_state != task.state {
-            return DeploymentState::Unhealthy;
-          }
-        }
-        DeploymentState::Running
+      .map(|service| match service.state {
+        SwarmState::Healthy => DeploymentState::Running,
+        SwarmState::Unhealthy => DeploymentState::Unhealthy,
+        SwarmState::Unknown => DeploymentState::Unknown,
       })
       .unwrap_or(DeploymentState::NotDeployed);
     deployment_status_cache

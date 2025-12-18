@@ -9,7 +9,7 @@ use formatting::format_serror;
 use interpolate::Interpolator;
 use komodo_client::entities::{
   deployment::{
-    Deployment, DeploymentConfig, DeploymentImage,
+    Conversion, Deployment, DeploymentConfig, DeploymentImage,
     conversions_from_str, extract_registry_domain,
   },
   docker::service::SwarmService,
@@ -311,10 +311,9 @@ fn docker_service_create_command(
     "-p",
   )?;
 
-  push_conversions(
+  push_mounts(
     &mut res,
     &conversions_from_str(volumes).context("Invalid volumes")?,
-    "--mount",
   )?;
 
   push_environment(
@@ -418,4 +417,37 @@ impl Resolve<crate::api::Args> for UpdateSwarmService {
 
     Ok(log)
   }
+}
+
+pub fn push_mounts(
+  command: &mut String,
+  mounts: &[Conversion],
+) -> anyhow::Result<()> {
+  for Conversion { local, container } in mounts {
+    let (typ, src) = if local == "tmpfs" {
+      ("tmpfs", None)
+    } else if local.starts_with('/') || local.starts_with('.') {
+      ("bind", Some(local))
+    } else {
+      ("volume", Some(local))
+    };
+    let (dst, readonly) =
+      if let Some((container, mode)) = container.split_once(':') {
+        (container, mode == "ro")
+      } else {
+        (container.as_str(), false)
+      };
+    write!(command, " --mount type={typ}")
+      .context("Failed to format mounts 'type'")?;
+    if let Some(src) = src {
+      write!(command, ",src={src}")
+        .context("Failed to format mounts 'src'")?;
+    }
+    write!(command, ",dst={dst}")
+      .context("Failed to format mounts 'dst'")?;
+    if readonly {
+      command.push_str(",ro=true");
+    }
+  }
+  Ok(())
 }

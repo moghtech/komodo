@@ -139,6 +139,33 @@ export const SwarmServicesTable = ({
   );
 };
 
+export const SwarmServiceTasksTable = ({
+  id,
+  service_id,
+  titleOther,
+  _search,
+}: {
+  id: string;
+  service_id: string | undefined;
+  titleOther: ReactNode;
+  _search: [string, Dispatch<SetStateAction<string>>];
+}) => {
+  const tasks =
+    useRead(
+      "ListSwarmTasks",
+      { swarm: id },
+      { enabled: !!service_id }
+    ).data?.filter((task) => service_id && task.ServiceID === service_id) ?? [];
+  return (
+    <SwarmTasksTable
+      id={id}
+      tasks={tasks}
+      titleOther={titleOther}
+      _search={_search}
+    />
+  );
+};
+
 export const SwarmTasksTable = ({
   id,
   tasks: _tasks,

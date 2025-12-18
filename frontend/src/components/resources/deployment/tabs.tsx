@@ -1,8 +1,8 @@
 import { Types } from "komodo_client";
 import { useDeployment } from ".";
-import { useLocalStorage, usePermissions } from "@lib/hooks";
+import { useLocalStorage, usePermissions, useRead } from "@lib/hooks";
 import { useServer } from "../server";
-import { useMemo } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import {
   MobileFriendlyTabsSelector,
   TabNoContent,
@@ -11,6 +11,8 @@ import { DeploymentConfig } from "./config";
 import { DeploymentLogs } from "./log";
 import { DeploymentInspect } from "./inspect";
 import { ContainerTerminals } from "@components/terminal/container";
+import { SwarmServiceTasksTable } from "../swarm/table";
+import { useWebsocketMessages } from "@lib/socket";
 
 export const DeploymentTabs = ({ id }: { id: string }) => {
   const deployment = useDeployment(id);
@@ -18,7 +20,7 @@ export const DeploymentTabs = ({ id }: { id: string }) => {
   return <DeploymentTabsInner deployment={deployment} />;
 };
 
-type DeploymentTabsView = "Config" | "Log" | "Inspect" | "Terminals";
+type DeploymentTabsView = "Config" | "Tasks" | "Log" | "Inspect" | "Terminals";
 
 const DeploymentTabsInner = ({
   deployment,
@@ -37,18 +39,24 @@ const DeploymentTabsInner = ({
     useServer(deployment.info.server_id)?.info.container_terminals_disabled ??
     false;
   const state = deployment.info.state;
+
   const downOrUnknown =
     state === undefined ||
     state === Types.DeploymentState.Unknown ||
+    state === Types.DeploymentState.Deploying ||
     state === Types.DeploymentState.NotDeployed;
+
   const logsDisabled = !specificLogs || downOrUnknown;
   const inspectDisabled = !specificInspect || downOrUnknown;
+
   const terminalDisabled =
     !specificTerminal ||
     container_terminals_disabled ||
     state !== Types.DeploymentState.Running;
+
   const view =
     (logsDisabled && _view === "Log") ||
+    (downOrUnknown && _view === "Tasks") ||
     (inspectDisabled && _view === "Inspect") ||
     (terminalDisabled && _view === "Terminals")
       ? "Config"
@@ -58,6 +66,11 @@ const DeploymentTabsInner = ({
     () => [
       {
         value: "Config",
+      },
+      {
+        value: "Tasks",
+        disabled: downOrUnknown,
+        hidden: !deployment.info.swarm_id,
       },
       {
         value: "Log",
@@ -98,6 +111,10 @@ const DeploymentTabsInner = ({
   switch (view) {
     case "Config":
       return <DeploymentConfig id={deployment.id} titleOther={Selector} />;
+    case "Tasks":
+      return (
+        <DeploymentTasksTable deployment={deployment} Selector={Selector} />
+      );
     case "Log":
       return <DeploymentLogs id={deployment.id} titleOther={Selector} />;
     case "Inspect":
@@ -111,4 +128,33 @@ const DeploymentTabsInner = ({
     case "Terminals":
       return <ContainerTerminals target={target} titleOther={Selector} />;
   }
+};
+
+const DeploymentTasksTable = ({
+  deployment,
+  Selector,
+}: {
+  deployment: Types.DeploymentListItem;
+  Selector: ReactNode;
+}) => {
+  const { data, refetch } = useRead("ListSwarmServices", {
+    swarm: deployment.info.swarm_id,
+  });
+  const service = data?.find((service) => service.Name === deployment.name);
+  useWebsocketMessages(
+    "deployment-swarm-tasks",
+    (update) =>
+      update.operation === Types.Operation.Deploy &&
+      update.target.id === deployment.id &&
+      refetch()
+  );
+  const _search = useState("");
+  return (
+    <SwarmServiceTasksTable
+      id={deployment.info.swarm_id}
+      service_id={service?.ID}
+      titleOther={Selector}
+      _search={_search}
+    />
+  );
 };
