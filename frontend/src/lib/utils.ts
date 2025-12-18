@@ -241,6 +241,26 @@ export const filterBySplit = <T>(
   );
 };
 
+export const filterMultitermBySplit = <T>(
+  items: T[] | undefined,
+  search: string,
+  extract: (item: T) => (string | undefined)[]
+) => {
+  const split = search.toLowerCase().split(" ");
+  return (
+    (split.length
+      ? items?.filter((item) => {
+          const target = extract(item)
+            .filter((str) => str)
+            .map((str) => str!.toLowerCase());
+          return split.every(
+            (term) => target.findIndex((t) => t.includes(term)) !== -1
+          );
+        })
+      : items) ?? []
+  );
+};
+
 export const sync_no_changes = (sync: Types.ResourceSync) => {
   return (
     (sync.info?.pending_deploy?.to_deploy ?? 0) === 0 &&

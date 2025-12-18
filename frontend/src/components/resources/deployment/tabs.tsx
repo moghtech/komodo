@@ -43,7 +43,6 @@ const DeploymentTabsInner = ({
   const downOrUnknown =
     state === undefined ||
     state === Types.DeploymentState.Unknown ||
-    state === Types.DeploymentState.Deploying ||
     state === Types.DeploymentState.NotDeployed;
 
   const logsDisabled = !specificLogs || downOrUnknown;

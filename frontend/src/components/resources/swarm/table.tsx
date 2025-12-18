@@ -5,7 +5,7 @@ import { SwarmComponents, SwarmResourceLink } from ".";
 import { Types } from "komodo_client";
 import { useRead, useSelectedResources } from "@lib/hooks";
 import { Dispatch, ReactNode, SetStateAction } from "react";
-import { filterBySplit } from "@lib/utils";
+import { filterBySplit, filterMultitermBySplit } from "@lib/utils";
 import { Section } from "@components/layouts";
 import { Search } from "lucide-react";
 import { Input } from "@ui/input";
@@ -178,7 +178,6 @@ export const SwarmTasksTable = ({
   _search: [string, Dispatch<SetStateAction<string>>];
 }) => {
   const [search, setSearch] = _search;
-
   const nodes =
     useRead("ListSwarmNodes", { swarm: id }, { refetchInterval: 10_000 })
       .data ?? [];
@@ -193,12 +192,11 @@ export const SwarmTasksTable = ({
     };
   });
 
-  const filtered = filterBySplit(
-    tasks,
-    search,
-    (task) =>
-      task.Name ?? task.service?.Name ?? task.node?.Hostname ?? "Unknown"
-  );
+  const filtered = filterMultitermBySplit(tasks, search, (task) => [
+    task.ID,
+    task.node?.Hostname,
+    task.service?.Name,
+  ]);
 
   return (
     <Section

@@ -217,7 +217,7 @@ const StackServicePageInner = ({
 
       <div className="mt-8 flex flex-col gap-12">
         {/* Actions */}
-        {canExecute && (
+        {canExecute && !stack?.info.swarm_id && (
           <Section title="Execute (Service)" icon={<Zap className="w-4 h-4" />}>
             <div className="flex gap-4 items-center flex-wrap">
               {Object.entries(Actions).map(([key, Action]) => (

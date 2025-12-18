@@ -6,11 +6,12 @@ import {
   TabNoContent,
 } from "@ui/mobile-friendly-tabs";
 import { Types } from "komodo_client";
-import { useMemo } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import { StackServiceInspect } from "./inspect";
 import { StackServiceLogs } from "./log";
+import { SwarmServiceTasksTable } from "@components/resources/swarm/table";
 
-type StackServiceTabsView = "Log" | "Inspect" | "Terminals";
+type StackServiceTabsView = "Tasks" | "Log" | "Inspect" | "Terminals";
 
 export const StackServiceTabs = ({
   stack,
@@ -36,13 +37,17 @@ export const StackServiceTabs = ({
 
   const container_terminals_disabled =
     useServer(stack.info.server_id)?.info.container_terminals_disabled ?? false;
+
   const logDisabled = !specificLogs || down;
   const inspectDisabled = !specificInspect || down;
+
   const terminalDisabled =
     !specificTerminal ||
     container_terminals_disabled ||
     container?.state !== Types.ContainerStateStatusEnum.Running;
+
   const view =
+    (!stack.info.swarm_id && _view === "Tasks") ||
     (inspectDisabled && _view === "Inspect") ||
     (terminalDisabled && _view === "Terminals")
       ? "Log"
@@ -50,6 +55,10 @@ export const StackServiceTabs = ({
 
   const tabs = useMemo<TabNoContent[]>(
     () => [
+      {
+        value: "Tasks",
+        hidden: !swarm_service,
+      },
       {
         value: "Log",
         disabled: logDisabled,
@@ -64,7 +73,7 @@ export const StackServiceTabs = ({
         hidden: !container,
       },
     ],
-    [logDisabled, inspectDisabled, terminalDisabled]
+    [!swarm_service, logDisabled, inspectDisabled, terminalDisabled]
   );
 
   const Selector = (
@@ -88,6 +97,14 @@ export const StackServiceTabs = ({
   );
 
   switch (view) {
+    case "Tasks":
+      return (
+        <StackServiceTasksTable
+          stack={stack}
+          swarm_service={swarm_service}
+          Selector={Selector}
+        />
+      );
     case "Log":
       return (
         <StackServiceLogs
@@ -109,4 +126,24 @@ export const StackServiceTabs = ({
     case "Terminals":
       return <ContainerTerminals target={target} titleOther={Selector} />;
   }
+};
+
+const StackServiceTasksTable = ({
+  stack,
+  swarm_service,
+  Selector,
+}: {
+  stack: Types.StackListItem;
+  swarm_service: Types.SwarmServiceListItem | undefined;
+  Selector: ReactNode;
+}) => {
+  const _search = useState("");
+  return (
+    <SwarmServiceTasksTable
+      id={stack.info.swarm_id}
+      service_id={swarm_service?.ID}
+      titleOther={Selector}
+      _search={_search}
+    />
+  );
 };

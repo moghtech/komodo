@@ -31,6 +31,7 @@ export const RemoveSwarmResource = ({
   return (
     <ActionWithDialog
       name={resource_name ?? resource_id}
+      variant="destructive"
       title="Remove"
       icon={<Trash className="h-4 w-4" />}
       onClick={() =>
