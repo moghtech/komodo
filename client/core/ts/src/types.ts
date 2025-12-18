@@ -4256,6 +4256,10 @@ export interface SwarmTaskListItem {
 	ContainerID?: string;
 	State?: TaskState;
 	DesiredState?: TaskState;
+	/** Attached config names */
+	Configs: string[];
+	/** Attached secret names */
+	Secrets: string[];
 	CreatedAt?: string;
 	UpdatedAt?: string;
 }

@@ -35,6 +35,14 @@ pub struct SwarmTaskListItem {
   #[serde(rename = "DesiredState")]
   pub desired_state: Option<TaskState>,
 
+  /// Attached config names
+  #[serde(rename = "Configs")]
+  pub configs: Vec<String>,
+
+  /// Attached secret names
+  #[serde(rename = "Secrets")]
+  pub secrets: Vec<String>,
+
   #[serde(rename = "CreatedAt")]
   pub created_at: Option<String>,
 

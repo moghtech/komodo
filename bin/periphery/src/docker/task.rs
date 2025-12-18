@@ -53,6 +53,33 @@ fn convert_task_list_item(
       )
     })
     .unwrap_or_default();
+  let (configs, secrets) = task
+    .spec
+    .and_then(|spec| {
+      spec.container_spec.map(|spec| {
+        (
+          spec
+            .configs
+            .map(|config| {
+              config
+                .into_iter()
+                .filter_map(|config| config.config_name)
+                .collect::<Vec<_>>()
+            })
+            .unwrap_or_default(),
+          spec
+            .secrets
+            .map(|secret| {
+              secret
+                .into_iter()
+                .filter_map(|secret| secret.secret_name)
+                .collect::<Vec<_>>()
+            })
+            .unwrap_or_default(),
+        )
+      })
+    })
+    .unwrap_or_default();
   SwarmTaskListItem {
     id: task.id,
     name: task.name,
@@ -61,6 +88,8 @@ fn convert_task_list_item(
     container_id,
     state,
     desired_state: task.desired_state.map(convert_task_state),
+    configs,
+    secrets,
     created_at: task.created_at,
     updated_at: task.updated_at,
   }

@@ -23,7 +23,7 @@ import {
   stroke_color_class_by_intention,
   swarm_state_intention,
 } from "@lib/color";
-import { ReactNode, useMemo } from "react";
+import { Fragment, ReactNode, useMemo } from "react";
 import { MobileFriendlyTabsSelector } from "@ui/mobile-friendly-tabs";
 import { SwarmServiceLogs } from "./log";
 import { Section } from "@components/layouts";
@@ -124,6 +124,28 @@ export default function SwarmTaskPage() {
                   resource_id={service?.ID}
                   name={service?.Name}
                 />
+                {task?.Configs.map((config) => (
+                  <Fragment key={config}>
+                    |
+                    <SwarmResourceLink
+                      type="Config"
+                      swarm_id={id}
+                      resource_id={config}
+                      name={config}
+                    />
+                  </Fragment>
+                ))}
+                {task?.Secrets.map((secret) => (
+                  <Fragment key={secret}>
+                    |
+                    <SwarmResourceLink
+                      type="Secret"
+                      swarm_id={id}
+                      resource_id={secret}
+                      name={secret}
+                    />
+                  </Fragment>
+                ))}
               </div>
             </div>
           </div>
