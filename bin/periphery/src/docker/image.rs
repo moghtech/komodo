@@ -1,8 +1,11 @@
+use anyhow::Context;
 use bollard::query_parameters::ListImagesOptions;
+use command::run_komodo_standard_command;
 use komodo_client::entities::docker::{
   ContainerConfig, GraphDriverData, HealthConfig,
   container::ContainerListItem, image::*,
 };
+use serde::Deserialize;
 
 use super::DockerClient;
 
@@ -145,4 +148,25 @@ impl DockerClient {
       .collect();
     Ok(res)
   }
+}
+
+/// Private images will require `docker login`
+/// for this to work.
+pub async fn get_image_digest_from_registry(
+  image: &str,
+) -> anyhow::Result<String> {
+  let command = String::from(
+    "docker buildx imagetools inspect --format \"{{json .Manifest}}\" ",
+  ) + image;
+  let log = run_komodo_standard_command("", None, command).await;
+  if !log.success {
+    return Err(anyhow::Error::msg(log.combined()));
+  }
+  #[derive(Deserialize)]
+  struct ImageManifest {
+    digest: String,
+  }
+  let ImageManifest { digest } = serde_json::from_str(&log.stdout)
+    .context("Failed to parse image manifest from 'docker buildx imagetools inspect' output")?;
+  Ok(digest)
 }
