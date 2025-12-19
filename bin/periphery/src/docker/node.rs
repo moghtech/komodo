@@ -72,6 +72,7 @@ fn convert_node_list_item(
     state: node
       .status
       .and_then(|status| status.state.map(convert_state)),
+    manager_addr: node.manager_status.and_then(|status| status.addr),
     created_at: node.created_at,
     updated_at: node.updated_at,
   }

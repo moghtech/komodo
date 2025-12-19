@@ -52,7 +52,7 @@ export const SwarmTabs = ({ id }: { id: string }) => {
         disabled: noResources,
       },
     ],
-    []
+    [specificInspect, noResources]
   );
 
   const Selector = (

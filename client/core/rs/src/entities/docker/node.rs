@@ -36,6 +36,10 @@ pub struct SwarmNodeListItem {
   #[serde(rename = "State")]
   pub state: Option<NodeState>,
 
+  /// For manager nodes, include the manager addr.
+  #[serde(rename = "ManagerAddr")]
+  pub manager_addr: Option<String>,
+
   /// Date and time at which the node was added to the swarm in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds.
   #[serde(rename = "CreatedAt")]
   pub created_at: Option<String>,

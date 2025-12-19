@@ -1,11 +1,13 @@
-import { useRead } from "@lib/hooks";
+import { usePermissions, useRead } from "@lib/hooks";
 import { RequiredResourceComponents } from "@types";
 import {
+  Check,
   Component,
   Diamond,
   FolderCode,
   KeyRound,
   ListTodo,
+  Loader2,
   Settings,
   SquareStack,
 } from "lucide-react";
@@ -19,14 +21,25 @@ import {
 } from "@lib/color";
 import { cn, updateLogToHtml } from "@lib/utils";
 import { Types } from "komodo_client";
-import { DashboardPieChart } from "@components/util";
+import { CopyButton, DashboardPieChart } from "@components/util";
 import { StatusBadge } from "@components/util";
 import { GroupActions } from "@components/group-actions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 import { Card } from "@ui/card";
 import { SwarmTabs } from "./tabs";
 import { Link } from "react-router-dom";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@ui/dialog";
+import { Button } from "@ui/button";
+import { Input } from "@ui/input";
 
 export const useSwarm = (id?: string) =>
   useRead("ListSwarms", {}, { refetchInterval: 10_000 }).data?.find(
@@ -85,7 +98,24 @@ export const SwarmComponents: RequiredResourceComponents = {
     return <StatusBadge text={state} intent={swarm_state_intention(state)} />;
   },
 
-  Info: {},
+  Info: {
+    Join: ({ id }) => {
+      const [open, setOpen] = useState(false);
+      const { specificInspect } = usePermissions({ type: "Swarm", id });
+      return (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" disabled={!specificInspect}>
+              Join
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="w-[95vw] max-w-[600px]">
+            <JoinSwarmCommands id={id} close={() => setOpen(false)} />
+          </DialogContent>
+        </Dialog>
+      );
+    },
+  },
 
   Status: {
     Err: ({ id }) => {
@@ -293,5 +323,58 @@ export const SwarmResourceLink = ({
       </div>
       {extra && <div className="no-underline">{extra}</div>}
     </Link>
+  );
+};
+
+const JoinSwarmCommands = ({
+  id,
+  close,
+}: {
+  id: string;
+  close: () => void;
+}) => {
+  const addr = useRead("ListSwarmNodes", { swarm: id }).data?.find(
+    (node) => node.State === Types.NodeState.READY && node.ManagerAddr
+  )?.ManagerAddr;
+  const tokens = useRead("InspectSwarm", { swarm: id }).data?.JoinTokens;
+  const managerCmd = `docker swarm join --token ${tokens?.Manager} ${addr}`;
+  const workerCmd = `docker swarm join --token ${tokens?.Worker} ${addr}`;
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>Join Swarm</DialogTitle>
+        <DialogDescription>
+          Copy a command below and run it on the target host to join it to the
+          swarm.
+        </DialogDescription>
+      </DialogHeader>
+      <div className="py-8 flex flex-col gap-4">
+        {addr && tokens ? (
+          <>
+            <div className="flex items-center justify-between flex-wrap">
+              As Manager
+              <div className="flex items-center gap-4">
+                <Input className="w-[250px]" value={managerCmd} disabled />
+                <CopyButton content={managerCmd} />
+              </div>
+            </div>
+            <div className="flex items-center justify-between flex-wrap">
+              As Worker
+              <div className="flex items-center gap-4">
+                <Input className="w-[250px]" value={workerCmd} disabled />
+                <CopyButton content={workerCmd} />
+              </div>
+            </div>
+          </>
+        ) : (
+          <Loader2 className="w-16 h-16 animate-spin" />
+        )}
+      </div>
+      <DialogFooter className="flex justify-end">
+        <Button variant="secondary" className="gap-4" onClick={close}>
+          Close <Check className="w-4" />
+        </Button>
+      </DialogFooter>
+    </>
   );
 };
