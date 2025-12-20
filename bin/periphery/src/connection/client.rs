@@ -28,12 +28,11 @@ use crate::{
 pub async fn handler(
   address: &str,
 ) -> anyhow::Result<tokio::task::JoinHandle<anyhow::Result<()>>> {
+  let config = periphery_config();
   let address = fix_ws_address(address);
   let identifiers = AddressConnectionIdentifiers::extract(&address)?;
-  let query = format!(
-    "server={}",
-    urlencoding::encode(&periphery_config().connect_as)
-  );
+  let query =
+    format!("server={}", urlencoding::encode(&config.connect_as));
   let endpoint = format!("{address}/ws/periphery?{query}");
 
   info!("Initiating outbound connection to {endpoint}");
@@ -70,7 +69,6 @@ pub async fn handler(
         };
 
       // Receive whether to use Server connection flow vs Server onboarding flow.
-
       let onboarding_flow = match socket
         .recv_login_onboarding_flow()
         .await
@@ -100,7 +98,11 @@ pub async fn handler(
         identifiers.build(accept.as_bytes(), query.as_bytes());
 
       if onboarding_flow {
-        if let Err(e) = handle_onboarding(socket, identifiers).await {
+        if let Err(e) = handle_onboarding(socket, identifiers).await.map(|onboarding_key| if onboarding_key {
+          Ok(())
+        } else {
+          Err(anyhow!("Server '{}' does not exist or is misconfigured, and no PERIPHERY_ONBOARDING_KEY is provided.", config.connect_as))
+        }) {
           if !already_logged_onboarding_error {
             error!("{e:#}");
             already_logged_onboarding_error = true;
@@ -121,12 +123,22 @@ pub async fn handler(
           super::handle_login::<_, ClientLoginFlow>(
             &mut socket,
             identifiers,
+            false,
           )
           .await
         }
         .instrument(span)
         .await;
         if let Err(e) = login {
+          // Try using onboarding key to fix public key issue.
+          let e = match handle_onboarding(socket, identifiers).await {
+            // Should work on next reconnect
+            Ok(true) => continue,
+            // No onboarding key available, use original error.
+            Ok(false) => e,
+            // Onboarding key available but failed.
+            Err(e) => e,
+          };
           if !already_logged_login_error {
             warn!("Failed to login | {e:#}");
             already_logged_login_error = true;
@@ -158,18 +170,20 @@ pub async fn handler(
 async fn handle_onboarding(
   mut socket: TungsteniteWebsocket,
   identifiers: ConnectionIdentifiers<'_>,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<bool> {
   let config = periphery_config();
-  let onboarding_key = config
-    .onboarding_key
-    .as_deref()
-    .with_context(|| format!("Server {} does not exist, and no PERIPHERY_ONBOARDING_KEY is provided.", config.connect_as))?;
+  let Some(onboarding_key) = config.onboarding_key.as_deref() else {
+    return Ok(false);
+  };
+
+  // .with_context(|| format!("Server '{}' does not exist or is misconfigured, and no PERIPHERY_ONBOARDING_KEY is provided.", config.connect_as))?;
 
   ClientLoginFlow::login(LoginFlowArgs {
     private_key: onboarding_key,
     identifiers,
     public_key_validator: core_public_keys(),
     socket: &mut socket,
+    should_close: true,
   })
   .await
   .context("Onboarding failed")?;
@@ -185,14 +199,14 @@ async fn handle_onboarding(
   socket
     .recv_login_success()
     .await
-    .context("Failed to receive Server creation result")?;
+    .context("Failed to receive Server onboarding result")?;
 
   info!(
     "Server onboarding flow for '{}' successful ✅",
     config.connect_as
   );
 
-  Ok(())
+  Ok(true)
 }
 
 async fn connect_websocket(

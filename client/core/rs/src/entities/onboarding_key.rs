@@ -46,6 +46,14 @@ pub struct OnboardingKey {
   #[serde(default)]
   pub tags: Vec<String>,
 
+  /// Allows the Onboarding Key to be used to:
+  /// 
+  /// 1. Enable a disabled Server
+  /// 2. Remove Server 'address' configuration, allowing Periphery -> Core connection.
+  /// 3. Update existing Server's public keys.
+  #[serde(default)]
+  pub fix_existing_servers: bool,
+
   /// Optional. If specified, copy this Server config when initializing
   /// the Server.
   #[serde(default)]

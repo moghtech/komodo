@@ -5,11 +5,20 @@ use indexmap::IndexSet;
 use komodo_client::{
   api::write::RefreshStackCache,
   entities::{
-    Operation, ResourceTarget, ResourceTargetVariant, SwarmOrServer, permission::{PermissionLevel, SpecificPermission}, repo::Repo, resource::Resource, server::Server, stack::{
+    Operation, ResourceTarget, ResourceTargetVariant, SwarmOrServer,
+    permission::{PermissionLevel, SpecificPermission},
+    repo::Repo,
+    resource::Resource,
+    server::Server,
+    stack::{
       PartialStackConfig, Stack, StackConfig, StackConfigDiff,
       StackInfo, StackListItem, StackListItemInfo,
       StackQuerySpecifics, StackServiceWithUpdate, StackState,
-    }, swarm::Swarm, to_docker_compatible_name, update::Update, user::{User, stack_user}
+    },
+    swarm::Swarm,
+    to_docker_compatible_name,
+    update::Update,
+    user::{User, stack_user},
   },
 };
 use periphery_client::api::{

@@ -1378,6 +1378,14 @@ export interface OnboardingKey {
     /** Default tags to give to Servers created with this key. */
     tags?: string[];
     /**
+     * Allows the Onboarding Key to be used to:
+     *
+     * 1. Enable a disabled Server
+     * 2. Remove Server 'address' configuration, allowing Periphery -> Core connection.
+     * 3. Update existing Server's public keys.
+     */
+    fix_existing_servers?: boolean;
+    /**
      * Optional. If specified, copy this Server config when initializing
      * the Server.
      */
@@ -6315,6 +6323,14 @@ export interface CreateOnboardingKey {
     private_key?: string;
     /** Default tags to apply to Servers created using this key. */
     tags?: string[];
+    /**
+     * Allows the Onboarding Key to be used to:
+     *
+     * 1. Enable a disabled Server
+     * 2. Remove Server 'address' configuration, allowing Periphery -> Core connection.
+     * 3. Update existing Server's public keys.
+     */
+    fix_existing_servers?: boolean;
     /** Optional. New Servers copy this Server's config. */
     copy_server?: string;
     /** Optional. Whether to also create a Builder for the Server. */
@@ -9520,6 +9536,14 @@ export interface UpdateOnboardingKey {
     expires?: I64;
     /** Update the tags */
     tags?: string[];
+    /**
+     * Allows the Onboarding Key to be used to:
+     *
+     * 1. Enable a disabled Server
+     * 2. Remove Server 'address' configuration, allowing Periphery -> Core connection.
+     * 3. Update existing Server's public keys.
+     */
+    fix_existing_servers?: boolean;
     /** Update the copy server */
     copy_server?: string;
     /** Update whether to create Builder */

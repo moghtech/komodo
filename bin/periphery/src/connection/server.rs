@@ -180,8 +180,12 @@ async fn handle_login(
         .send_message(LoginMessage::V1PasskeyFlow(false))
         .await
         .context("Failed to send Login V1PasskeyFlow message")?;
-      super::handle_login::<_, ServerLoginFlow>(socket, identifiers)
-        .await
+      super::handle_login::<_, ServerLoginFlow>(
+        socket,
+        identifiers,
+        true,
+      )
+      .await
     }
     (None, Some(passkeys)) => {
       handle_passkey_login(socket, passkeys).await
@@ -241,7 +245,7 @@ async fn handle_passkey_login(
     if let Err(e) = socket
       .send_login_error(&e)
       .await
-      .context("Failed to send login failed to client")
+      .context("Failed to send login failed to Core")
     {
       // Log additional error
       warn!("{e:#}");

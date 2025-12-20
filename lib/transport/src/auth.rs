@@ -10,7 +10,7 @@ use noise::{NoiseHandshake, key::SpkiPublicKey};
 use periphery_client::transport::LoginMessage;
 use rand::RngCore;
 use sha2::{Digest, Sha256};
-use tracing::warn;
+use tracing::debug;
 
 use crate::websocket::{
   Websocket, WebsocketExt, login::LoginWebsocketExt,
@@ -28,6 +28,7 @@ pub struct LoginFlowArgs<'a, 's, V, W> {
   pub identifiers: ConnectionIdentifiers<'a>,
   pub private_key: &'a str,
   pub public_key_validator: V,
+  pub should_close: bool,
   pub socket: &'s mut W,
 }
 
@@ -47,6 +48,7 @@ impl LoginFlow for ServerLoginFlow {
       identifiers,
       private_key,
       public_key_validator,
+      should_close,
       socket,
     }: LoginFlowArgs<'a, 's, V, W>,
   ) -> anyhow::Result<V::ValidationResult> {
@@ -57,7 +59,7 @@ impl LoginFlow for ServerLoginFlow {
       socket
         .send_message(LoginMessage::Nonce(nonce))
         .await
-        .context("Failed to send connection nonce")?;
+        .context("[Server] Failed to send connection nonce")?;
 
       let mut handshake = NoiseHandshake::new_responder(
         private_key,
@@ -65,39 +67,39 @@ impl LoginFlow for ServerLoginFlow {
         // The prologue must be the same on both sides of connection.
         &identifiers.hash(&nonce),
       )
-      .context("Failed to initialize handshake")?;
+      .context("[Server] Failed to initialize handshake")?;
 
       // Receive and read handshake_m1
       let handshake_m1 = socket
         .recv_login_handshake_bytes()
         .await
-        .context("Failed to get handshake_m1")?;
+        .context("[Server] Failed to get handshake_m1")?;
       handshake
         .read_message(&handshake_m1)
-        .context("Failed to read handshake_m1")?;
+        .context("[Server] Failed to read handshake_m1")?;
 
       // Send handshake_m2
       let handshake_m2 = handshake
         .next_message()
-        .context("Failed to write handshake_m2")?;
+        .context("[Server] Failed to write handshake_m2")?;
       socket
         .send_message(LoginMessage::Handshake(handshake_m2))
         .await
-        .context("Failed to send handshake_m2")?;
+        .context("[Server] Failed to send handshake_m2")?;
 
       // Receive and read handshake_m3
       let handshake_m3 = socket
         .recv_login_handshake_bytes()
         .await
-        .context("Failed to get handshake_m3")?;
+        .context("[Server] Failed to get handshake_m3")?;
       handshake
         .read_message(&handshake_m3)
-        .context("Failed to read handshake_m3")?;
+        .context("[Server] Failed to read handshake_m3")?;
 
       // Server now has client public key
       let public_key =
         SpkiPublicKey::from_raw_bytes(handshake.remote_public_key()?)
-          .context("Invalid public key")?
+          .context("[Server] Invalid public key")?
           .into_inner();
 
       public_key_validator.validate(public_key).await
@@ -106,23 +108,24 @@ impl LoginFlow for ServerLoginFlow {
 
     match res {
       Ok(res) => {
-        socket
-          .send_message(LoginMessage::Success)
-          .await
-          .context("Failed to send login successful to client")?;
+        socket.send_message(LoginMessage::Success).await.context(
+          "[Server] Failed to send login successful to client",
+        )?;
         Ok(res)
       }
       Err(e) => {
         if let Err(e) = socket
           .send_login_error(&e)
           .await
-          .context("Failed to send login failed to client")
+          .context("[Server] Failed to send login failed to client")
         {
           // Log additional error
-          warn!("{e:#}");
+          debug!("{e:#}");
         }
-        // Close socket
-        let _ = socket.close().await;
+        if should_close {
+          // Close socket
+          let _ = socket.close().await;
+        }
         // Return the original error
         Err(e)
       }
@@ -138,6 +141,7 @@ impl LoginFlow for ClientLoginFlow {
       identifiers,
       private_key,
       public_key_validator,
+      should_close,
       socket,
     }: LoginFlowArgs<'a, 's, V, W>,
   ) -> anyhow::Result<V::ValidationResult> {
@@ -146,7 +150,7 @@ impl LoginFlow for ClientLoginFlow {
       let nonce = socket
         .recv_login_nonce()
         .await
-        .context("Failed to receive connection nonce")?;
+        .context("[Client] Failed to receive connection nonce")?;
 
       let mut handshake = NoiseHandshake::new_initiator(
         private_key,
@@ -154,31 +158,31 @@ impl LoginFlow for ClientLoginFlow {
         // The prologue must be the same on both sides of connection.
         &identifiers.hash(&nonce),
       )
-      .context("Failed to initialize handshake")?;
+      .context("[Client] Failed to initialize handshake")?;
 
       // Send handshake_m1
       let handshake_m1 = handshake
         .next_message()
-        .context("Failed to write handshake m1")?;
+        .context("[Client] Failed to write handshake m1")?;
       socket
         .send_message(LoginMessage::Handshake(handshake_m1))
         .await
-        .context("Failed to send handshake_m1")?;
+        .context("[Client] Failed to send handshake_m1")?;
 
       // Receive and read handshake_m2
       let handshake_m2 = socket
         .recv_login_handshake_bytes()
         .await
-        .context("Failed to get handshake_m2")?;
+        .context("[Client] Failed to get handshake_m2")?;
       handshake
         .read_message(&handshake_m2)
-        .context("Failed to read handshake_m2")?;
+        .context("[Client] Failed to read handshake_m2")?;
 
       // Client now has server public key.
       // Perform validation before proceeding.
       let public_key =
         SpkiPublicKey::from_raw_bytes(handshake.remote_public_key()?)
-          .context("Invalid public key")?
+          .context("[Client] Invalid public key")?
           .into_inner();
       let validation_result =
         public_key_validator.validate(public_key).await?;
@@ -186,17 +190,16 @@ impl LoginFlow for ClientLoginFlow {
       // Send handshake_m3
       let handshake_m3 = handshake
         .next_message()
-        .context("Failed to write handshake_m3")?;
+        .context("[Client] Failed to write handshake_m3")?;
       socket
         .send_message(LoginMessage::Handshake(handshake_m3))
         .await
-        .context("Failed to send handshake_m3")?;
+        .context("[Client] Failed to send handshake_m3")?;
 
       // Receive login sucessful
-      socket
-        .recv_login_success()
-        .await
-        .context("Failed to receive Login Success message")?;
+      socket.recv_login_success().await.context(
+        "[Client] Failed to receive Login Success message",
+      )?;
 
       anyhow::Ok(validation_result)
     }
@@ -208,13 +211,15 @@ impl LoginFlow for ClientLoginFlow {
         if let Err(e) = socket
           .send_login_error(&e)
           .await
-          .context("Failed to send login failed to client")
+          .context("[Client] Failed to send login failed to client")
         {
           // Log additional error
-          warn!("{e:#}");
+          debug!("{e:#}");
         }
-        // Close socket
-        let _ = socket.close().await;
+        if should_close {
+          // Close socket
+          let _ = socket.close().await;
+        }
         // Return the original error
         Err(e)
       }

@@ -49,12 +49,14 @@ impl PublicKeyValidator for &CorePublicKeys {
 async fn handle_login<W: Websocket, L: LoginFlow>(
   socket: &mut W,
   identifiers: ConnectionIdentifiers<'_>,
+  should_close: bool,
 ) -> anyhow::Result<()> {
   L::login(LoginFlowArgs {
     socket,
     identifiers,
     private_key: periphery_keys().load().private.as_str(),
     public_key_validator: core_public_keys(),
+    should_close,
   })
   .await
 }

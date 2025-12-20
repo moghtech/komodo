@@ -99,6 +99,28 @@ export const Onboarding = () => {
       },
       {
         size: 100,
+        accessorKey: "fix_existing_servers",
+        header: ({ column }) => (
+          <SortableHeader
+            column={column}
+            title="Priviledged"
+            description="Allow the onboarding key to update an existing Server's public key and configuration to enable the connection."
+          />
+        ),
+        cell: ({ row }) => (
+          <Switch
+            checked={row.original.fix_existing_servers}
+            onCheckedChange={(fix_existing_servers) =>
+              mutate({
+                public_key: row.original.public_key,
+                fix_existing_servers,
+              })
+            }
+          />
+        ),
+      },
+      {
+        size: 100,
         accessorKey: "create_builder",
         header: ({ column }) => (
           <SortableHeader column={column} title="Create Builder" />
@@ -109,6 +131,24 @@ export const Onboarding = () => {
             onCheckedChange={(create_builder) =>
               mutate({ public_key: row.original.public_key, create_builder })
             }
+          />
+        ),
+      },
+      {
+        size: 100,
+        accessorKey: "enabled",
+        header: ({ column }) => (
+          <SortableHeader column={column} title="Enabled" />
+        ),
+        cell: ({
+          row: {
+            original: { public_key, expires, enabled },
+          },
+        }) => (
+          <Switch
+            checked={expires && expires <= Date.now() ? false : enabled}
+            onCheckedChange={(enabled) => mutate({ public_key, enabled })}
+            disabled={!!expires && expires <= Date.now()}
           />
         ),
       },
@@ -130,24 +170,6 @@ export const Onboarding = () => {
           >
             {expires ? fmt_date_with_minutes(new Date(expires)) : "Never"}
           </Badge>
-        ),
-      },
-      {
-        size: 100,
-        accessorKey: "enabled",
-        header: ({ column }) => (
-          <SortableHeader column={column} title="Enabled" />
-        ),
-        cell: ({
-          row: {
-            original: { public_key, expires, enabled },
-          },
-        }) => (
-          <Switch
-            checked={expires && expires <= Date.now() ? false : enabled}
-            onCheckedChange={(enabled) => mutate({ public_key, enabled })}
-            disabled={!!expires && expires <= Date.now()}
-          />
         ),
       },
       {

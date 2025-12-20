@@ -19,9 +19,10 @@ import {
   TableHeader,
   TableRow,
 } from "@ui/table";
-import { ArrowDown, ArrowUp, Minus } from "lucide-react";
+import { ArrowDown, ArrowUp, Info, Minus } from "lucide-react";
 import { ReactNode, useEffect, useState } from "react";
 import { Checkbox } from "./checkbox";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 interface DataTableProps<TData, TValue> {
   /** Unique key given to table so sorting can be remembered on local storage */
@@ -191,10 +192,12 @@ export function DataTable<TData, TValue>({
 export const SortableHeader = <T, V>({
   column,
   title,
+  description,
   sortDescFirst,
 }: {
   column: Column<T, V>;
   title: string;
+  description?: ReactNode;
   sortDescFirst?: boolean;
 }) => (
   <div
@@ -202,6 +205,14 @@ export const SortableHeader = <T, V>({
     onClick={() => column.toggleSorting()}
   >
     {title}
+    {description && (
+      <Tooltip>
+        <TooltipTrigger>
+          <Info className="w-4 h-4" />
+        </TooltipTrigger>
+        <TooltipContent>{description}</TooltipContent>
+      </Tooltip>
+    )}
     {column.getIsSorted() === "asc" ? (
       sortDescFirst ? (
         <ArrowUp className="w-4" />

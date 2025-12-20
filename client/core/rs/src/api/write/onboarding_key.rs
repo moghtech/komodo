@@ -35,6 +35,13 @@ pub struct CreateOnboardingKey {
   /// Default tags to apply to Servers created using this key.
   #[serde(default)]
   pub tags: Vec<String>,
+  /// Allows the Onboarding Key to be used to:
+  ///
+  /// 1. Enable a disabled Server
+  /// 2. Remove Server 'address' configuration, allowing Periphery -> Core connection.
+  /// 3. Update existing Server's public keys.
+  #[serde(default)]
+  pub fix_existing_servers: bool,
   /// Optional. New Servers copy this Server's config.
   #[serde(default)]
   pub copy_server: String,
@@ -75,6 +82,12 @@ pub struct UpdateOnboardingKey {
   pub expires: Option<I64>,
   /// Update the tags
   pub tags: Option<Vec<String>>,
+  /// Allows the Onboarding Key to be used to:
+  ///
+  /// 1. Enable a disabled Server
+  /// 2. Remove Server 'address' configuration, allowing Periphery -> Core connection.
+  /// 3. Update existing Server's public keys.
+  pub fix_existing_servers: Option<bool>,
   /// Update the copy server
   pub copy_server: Option<String>,
   /// Update whether to create Builder
@@ -87,6 +100,7 @@ impl UpdateOnboardingKey {
       && self.name.is_none()
       && self.expires.is_none()
       && self.tags.is_none()
+      && self.fix_existing_servers.is_none()
       && self.copy_server.is_none()
       && self.create_builder.is_none()
   }

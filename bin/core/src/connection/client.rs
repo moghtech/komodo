@@ -122,7 +122,7 @@ impl PeripheryConnection {
       handle_passkey_login(socket, self.args.passkey.as_deref()).await
     } else {
       self
-        .handle_login::<_, ClientLoginFlow>(socket, identifiers)
+        .handle_login::<_, ClientLoginFlow>(socket, identifiers, true)
         .await
     }
   }
@@ -164,7 +164,7 @@ async fn handle_passkey_login(
     if let Err(e) = socket
       .send_login_error(&e)
       .await
-      .context("Failed to send login failed to client")
+      .context("Failed to send login failed to Periphery")
     {
       // Log additional error
       warn!("{e:#}");

@@ -337,12 +337,14 @@ impl PeripheryConnection {
     &self,
     socket: &mut W,
     identifiers: ConnectionIdentifiers<'_>,
+    should_close: bool,
   ) -> anyhow::Result<()> {
     L::login(LoginFlowArgs {
       socket,
       identifiers,
       private_key: core_keys().load().private.as_str(),
       public_key_validator: self.args.borrow(),
+      should_close,
     })
     .await?;
     // Clear attempted public key after successful login

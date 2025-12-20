@@ -1,8 +1,8 @@
 use std::path::Path;
 
 use anyhow::{Context, anyhow};
-use der::{Decode as _, Encode as _, asn1::BitStringRef};
 use data_encoding::BASE64;
+use der::{Decode as _, Encode as _, asn1::BitStringRef};
 use spki::SubjectPublicKeyInfoRef;
 
 #[derive(PartialEq, Clone)]
