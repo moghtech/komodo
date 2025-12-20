@@ -3,7 +3,13 @@
 ## Core deps installer
 
 apt-get update
-apt-get install -y git curl ca-certificates iproute2
+apt-get install -y git curl ca-certificates iproute2 age
+
+# Sops only available as a binary
+SOPS_VERSION="v3.11.0"
+ARCH=$(dpkg --print-architecture)
+curl -L "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.${ARCH}" -o /usr/local/bin/sops
+chmod +x /usr/local/bin/sops
 
 rm -rf /var/lib/apt/lists/*
 
