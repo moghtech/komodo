@@ -55,7 +55,7 @@ mungos = "3.2.2"
 svi = "1.2.0"
 
 # ASYNC
-reqwest = { version = "0.12.24", default-features = false, features = ["json", "stream", "rustls-tls-native-roots"] }
+reqwest = { version = "0.12.26", default-features = false, features = ["json", "stream", "rustls-tls-native-roots"] }
 tokio = { version = "1.48.0", features = ["full"] }
 tokio-util = { version = "0.7.17", features = ["io", "codec"] }
 tokio-stream = { version = "0.1.17", features = ["sync"] }
@@ -66,8 +66,8 @@ arc-swap = "1.7.1"
 # SERVER
 tokio-tungstenite = { version = "0.28.0", features = ["rustls-tls-native-roots"] }
 tower-http = { version = "0.6.8", features = ["fs", "cors", "set-header"] }
-axum = { version = "0.8.7", features = ["ws", "json", "macros"] }
-axum-extra = { version = "0.12.2", features = ["typed-header"] }
+axum = { version = "0.8.8", features = ["ws", "json", "macros"] }
+axum-extra = { version = "0.12.3", features = ["typed-header"] }
 axum-server = { version = "0.8.0", features = ["tls-rustls"] }
 tower-sessions = "0.14.0"
 
@@ -94,7 +94,7 @@ tracing-subscriber = { version = "0.3.22", features = ["json"] }
 opentelemetry-semantic-conventions = "0.31.0"
 tracing-opentelemetry = "0.32.0"
 opentelemetry = "0.31.0"
-tracing = "0.1.43"
+tracing = "0.1.44"
 
 # CONFIG
 clap = { version = "4.5.53", features = ["derive"] }
@@ -135,7 +135,7 @@ shlex = "1.3.0"
 
 # CLOUD
 aws-config = "1.8.12"
-aws-sdk-ec2 = "1.196.0"
+aws-sdk-ec2 = "1.198.0"
 aws-credential-types = "1.2.11"
 
 ## CRON
@@ -145,7 +145,7 @@ chrono = "0.4.42"
 croner = "3.0.1"
 
 # MISC
-async-compression = { version = "0.4.35", features = ["tokio", "gzip"] }
+async-compression = { version = "0.4.36", features = ["tokio", "gzip"] }
 derive_builder = "0.20.2"
 comfy-table = "7.2.1"
 typeshare = "1.0.4"
