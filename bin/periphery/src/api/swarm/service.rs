@@ -18,7 +18,8 @@ use komodo_client::entities::{
 };
 use periphery_client::api::swarm::{
   CreateSwarmService, GetSwarmServiceLog, GetSwarmServiceLogSearch,
-  InspectSwarmService, RemoveSwarmServices, UpdateSwarmService,
+  InspectSwarmService, RemoveSwarmServices, RollbackSwarmService,
+  UpdateSwarmService,
 };
 use resolver_api::Resolve;
 use tracing::Instrument;
@@ -168,6 +169,31 @@ impl Resolve<crate::api::Args> for RemoveSwarmServices {
         "Remove Swarm Services",
         None,
         command,
+      )
+      .await,
+    )
+  }
+}
+
+impl Resolve<crate::api::Args> for RollbackSwarmService {
+  #[instrument(
+    "RollbackSwarmService",
+    skip_all,
+    fields(
+      id = args.id.to_string(),
+      core = args.core,
+      service = self.service,
+    )
+  )]
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
+    Ok(
+      run_komodo_standard_command(
+        "Rollback Swarm Service",
+        None,
+        format!("docker service rollback {}", self.service),
       )
       .await,
     )

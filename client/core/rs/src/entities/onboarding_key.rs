@@ -47,7 +47,7 @@ pub struct OnboardingKey {
   pub tags: Vec<String>,
 
   /// Allows the Onboarding Key to be used to:
-  /// 
+  ///
   /// 1. Enable a disabled Server
   /// 2. Remove Server 'address' configuration, allowing Periphery -> Core connection.
   /// 3. Update existing Server's public keys.

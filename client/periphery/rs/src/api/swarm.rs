@@ -217,7 +217,7 @@ pub struct CreateSwarmService {
 #[response(Log)]
 #[error(anyhow::Error)]
 pub struct UpdateSwarmService {
-  /// Th service name
+  /// The service name / id
   pub service: String,
   /// The image may require login to another registry
   pub registry_account: Option<String>,
@@ -226,6 +226,17 @@ pub struct UpdateSwarmService {
   pub replicas: Option<u32>,
   pub rollback: bool,
   pub extra_args: Vec<String>,
+}
+
+/// `docker service rollback SERVICE`
+///
+/// https://docs.docker.com/reference/cli/docker/service/rollback/
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[response(Log)]
+#[error(anyhow::Error)]
+pub struct RollbackSwarmService {
+  /// The service name / id
+  pub service: String,
 }
 
 /// `docker service rm SERVICE [SERVICE...]`

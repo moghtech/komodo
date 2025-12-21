@@ -32,6 +32,26 @@ pub struct ImageHistory {
 //
 
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
+#[response(GetLatestImageDigestResponse)]
+#[error(anyhow::Error)]
+pub struct GetLatestImageDigest {
+  /// The name of the image.
+  pub name: String,
+  /// Optional account to use to pull the image
+  pub account: Option<String>,
+  /// Override registry token for account with one sent from core.
+  pub token: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetLatestImageDigestResponse {
+  /// The latest digest for the image.
+  pub digest: String,
+}
+
+//
+
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Log)]
 #[error(anyhow::Error)]
 pub struct PullImage {

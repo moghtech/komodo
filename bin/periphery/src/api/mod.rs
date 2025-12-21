@@ -119,6 +119,7 @@ pub enum PeripheryRequest {
   // Image (Read)
   InspectImage(InspectImage),
   ImageHistory(ImageHistory),
+  GetLatestImageDigest(GetLatestImageDigest),
 
   // Image (Write)
   PullImage(PullImage),
@@ -153,6 +154,7 @@ pub enum PeripheryRequest {
   RemoveSwarmStacks(RemoveSwarmStacks),
   CreateSwarmService(CreateSwarmService),
   UpdateSwarmService(UpdateSwarmService),
+  RollbackSwarmService(RollbackSwarmService),
   RemoveSwarmServices(RemoveSwarmServices),
   CreateSwarmConfig(CreateSwarmConfig),
   RotateSwarmConfig(RotateSwarmConfig),

@@ -9,12 +9,12 @@ use komodo_client::entities::{
 
 pub mod compose;
 pub mod config;
+pub mod image;
 pub mod secret;
 pub mod stack;
 pub mod stats;
 
 mod container;
-mod image;
 mod network;
 mod node;
 mod service;

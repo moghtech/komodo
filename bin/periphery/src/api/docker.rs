@@ -16,7 +16,10 @@ use komodo_client::entities::{
 use periphery_client::api::docker::*;
 use resolver_api::Resolve;
 
-use crate::{docker::docker_login, state::docker_client};
+use crate::{
+  docker::{docker_login, image::get_image_digest_from_registry},
+  state::docker_client,
+};
 
 // =====
 // IMAGE
@@ -49,6 +52,29 @@ impl Resolve<crate::api::Args> for ImageHistory {
       .next()
       .context("Could not connect to docker client")?;
     client.image_history(&self.name).await
+  }
+}
+
+//
+
+impl Resolve<crate::api::Args> for GetLatestImageDigest {
+  async fn resolve(
+    self,
+    _: &crate::api::Args,
+  ) -> anyhow::Result<GetLatestImageDigestResponse> {
+    let GetLatestImageDigest {
+      name,
+      account,
+      token,
+    } = self;
+    docker_login(
+      &extract_registry_domain(&name)?,
+      account.as_deref().unwrap_or_default(),
+      token.as_deref(),
+    )
+    .await?;
+    let digest = get_image_digest_from_registry(&name).await?;
+    Ok(GetLatestImageDigestResponse { digest })
   }
 }
 
