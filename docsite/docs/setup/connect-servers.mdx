@@ -139,3 +139,24 @@ wget -P komodo https://raw.githubusercontent.com/moghtech/komodo/main/config/per
 	language="toml"
 />
 ```
+
+## Add Server to Komodo
+After installing Periphery on your server, you need to add it to Komodo Core:
+
+### Via UI
+1. Navigate to the Servers page in Komodo
+2. Click Create Server
+3. Enter the server details:
+	- Name: A name for your server
+	- Address: The HTTPS/HTTP address of your Periphery agent (e.g., https://12.34.56.78:8120)
+
+:::warning
+After creating the server, it will be **disabled by default**
+:::
+
+4. Click on your newly created server and toggle "Enabled" to ON
+
+### Via API
+You can also add servers programmatically using the Komodo API. When creating via API, ensure you set `"enabled": true` in the server config to avoid the server being disabled by default.
+
+See the [CreateServer documentation](https://docs.rs/komodo_client/latest/komodo_client/api/write/struct.CreateServer.html) for full details on the /write/CreateServer endpoint.
