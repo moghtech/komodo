@@ -74,6 +74,7 @@ const ProfileInner = ({ user }: { user: Types.User }) => {
     onSuccess: () => {
       toast({ title: "Password updated." });
       setPassword("");
+      refetchUser();
     },
   });
   const { mutate: update_skip_2fa } = useManageUser("UpdateThirdPartySkip2fa", {
