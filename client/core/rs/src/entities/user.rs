@@ -109,6 +109,47 @@ fn default_third_party_skip_2fa() -> bool {
   true
 }
 
+pub struct NewUserParams {
+  pub username: String,
+  pub enabled: bool,
+  pub admin: bool,
+  pub super_admin: bool,
+  pub config: UserConfig,
+  pub updated_at: i64,
+}
+
+impl User {
+  pub fn new(
+    NewUserParams {
+      username,
+      enabled,
+      admin,
+      super_admin,
+      config,
+      updated_at,
+    }: NewUserParams,
+  ) -> User {
+    User {
+      id: Default::default(),
+      username,
+      enabled,
+      admin,
+      super_admin,
+      create_server_permissions: admin,
+      create_build_permissions: admin,
+      updated_at,
+      last_update_view: 0,
+      config,
+      recents: Default::default(),
+      all: Default::default(),
+      linked_logins: Default::default(),
+      totp: Default::default(),
+      passkey: Default::default(),
+      third_party_skip_2fa: Default::default(),
+    }
+  }
+}
+
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, EnumVariants)]
 #[variant_derive(

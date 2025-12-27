@@ -17,7 +17,7 @@ use komodo_client::{
   api::auth::UserIdOrTwoFactor,
   entities::{
     komodo_timestamp, random_string,
-    user::{User, UserConfig},
+    user::{NewUserParams, User, UserConfig},
   },
 };
 use rate_limit::WithFailureRateLimit;
@@ -244,27 +244,18 @@ async fn callback(
         username += &random_string(5);
       };
 
-      let user = User {
-        id: Default::default(),
+      let user = User::new(NewUserParams {
         username,
         enabled: no_users_exist || core_config.enable_new_users,
         admin: no_users_exist,
         super_admin: no_users_exist,
-        create_server_permissions: no_users_exist,
-        create_build_permissions: no_users_exist,
-        updated_at: ts,
-        last_update_view: 0,
-        recents: Default::default(),
-        all: Default::default(),
         config: UserConfig::Github {
           github_id,
           avatar: github_user.avatar_url,
         },
-        linked_logins: Default::default(),
-        totp: Default::default(),
-        passkey: Default::default(),
-        third_party_skip_2fa: Default::default(),
-      };
+        updated_at: ts,
+      });
+
       let user_id = db_client
         .users
         .insert_one(user)

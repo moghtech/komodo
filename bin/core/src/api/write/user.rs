@@ -8,7 +8,7 @@ use database::{
 };
 use komodo_client::{
   api::write::*,
-  entities::user::{User, UserConfig},
+  entities::user::{NewUserParams, User, UserConfig},
 };
 use reqwest::StatusCode;
 use resolver_api::Resolve;
@@ -63,26 +63,16 @@ impl Resolve<WriteArgs> for CreateLocalUser {
     let ts = unix_timestamp_ms() as i64;
     let hashed_password = hash_password(self.password)?;
 
-    let mut user = User {
-      id: Default::default(),
+    let mut user = User::new(NewUserParams {
       username: self.username,
       enabled: true,
       admin: false,
       super_admin: false,
-      create_server_permissions: false,
-      create_build_permissions: false,
-      updated_at: ts,
-      last_update_view: 0,
-      recents: Default::default(),
-      all: Default::default(),
       config: UserConfig::Local {
         password: hashed_password,
       },
-      linked_logins: Default::default(),
-      totp: Default::default(),
-      passkey: Default::default(),
-      third_party_skip_2fa: Default::default(),
-    };
+      updated_at: ts,
+    });
 
     user.id = db_client()
       .users

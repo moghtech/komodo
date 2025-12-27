@@ -11,7 +11,9 @@ use komodo_client::{
     LoginLocalUser, LoginLocalUserResponse, SignUpLocalUser,
     SignUpLocalUserResponse,
   },
-  entities::user::{User, UserConfig, UserConfigVariant},
+  entities::user::{
+    NewUserParams, User, UserConfig, UserConfigVariant,
+  },
 };
 use rate_limit::{RateLimiter, WithFailureRateLimit};
 use reqwest::StatusCode;
@@ -93,26 +95,16 @@ async fn sign_up_local_user(
   let ts = unix_timestamp_ms() as i64;
   let hashed_password = hash_password(req.password)?;
 
-  let user = User {
-    id: Default::default(),
+  let user = User::new(NewUserParams {
     username: req.username,
     enabled: no_users_exist || config.enable_new_users,
     admin: no_users_exist,
     super_admin: no_users_exist,
-    create_server_permissions: no_users_exist,
-    create_build_permissions: no_users_exist,
-    updated_at: ts,
-    last_update_view: 0,
-    recents: Default::default(),
-    all: Default::default(),
     config: UserConfig::Local {
       password: hashed_password,
     },
-    linked_logins: Default::default(),
-    totp: Default::default(),
-    passkey: Default::default(),
-    third_party_skip_2fa: Default::default(),
-  };
+    updated_at: ts,
+  });
 
   let user_id = db_client()
     .users

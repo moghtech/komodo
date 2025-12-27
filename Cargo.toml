@@ -105,7 +105,7 @@ envy = "0.4.2"
 webauthn-rs = { version = "0.5.4", features = ["danger-allow-state-serialisation"] }
 openidconnect = { version = "4.0.1", features = ["accept-rfc3339-timestamps"] }
 uuid = { version = "1.19.0", features = ["v4", "fast-rng", "serde"] }
-jsonwebtoken = { version = "10.2.0", features = ["aws_lc_rs"] } # locked back with octorust
+jsonwebtoken = { version = "10.2.0", features = ["aws_lc_rs"] }
 rustls = { version = "0.23.35", features = ["aws-lc-rs"] }
 pem-rfc7468 = { version = "1.0.0", features = ["alloc"] }
 totp-rs = { version = "5.7.0", features = ["qr"] }

@@ -4,7 +4,7 @@ use komodo_client::{
   api::{user::CreateApiKey, write::*},
   entities::{
     komodo_timestamp,
-    user::{User, UserConfig},
+    user::{NewUserParams, User, UserConfig},
   },
 };
 use reqwest::StatusCode;
@@ -47,24 +47,14 @@ impl Resolve<WriteArgs> for CreateServiceUser {
       description: self.description,
     };
 
-    let mut user = User {
-      id: Default::default(),
+    let mut user = User::new(NewUserParams {
       username: self.username,
-      config,
-      totp: Default::default(),
-      passkey: Default::default(),
-      third_party_skip_2fa: Default::default(),
       enabled: true,
       admin: false,
       super_admin: false,
-      create_server_permissions: false,
-      create_build_permissions: false,
-      last_update_view: 0,
-      linked_logins: Default::default(),
-      recents: Default::default(),
-      all: Default::default(),
+      config,
       updated_at: komodo_timestamp(),
-    };
+    });
 
     user.id = db_client()
       .users
