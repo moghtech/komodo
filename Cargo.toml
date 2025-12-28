@@ -67,7 +67,7 @@ arc-swap = "1.8.0"
 tokio-tungstenite = { version = "0.28.0", features = ["rustls-tls-native-roots"] }
 tower-http = { version = "0.6.8", features = ["fs", "cors", "set-header"] }
 axum = { version = "0.8.8", features = ["ws", "json", "macros"] }
-axum-extra = { version = "0.12.4", features = ["typed-header"] }
+axum-extra = { version = "0.12.5", features = ["typed-header"] }
 axum-server = { version = "0.8.0", features = ["tls-rustls"] }
 tower-sessions = "0.14.0"
 
