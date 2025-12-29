@@ -1,4 +1,4 @@
-use std::{sync::OnceLock, time::Duration};
+use std::sync::{Arc, OnceLock};
 
 use anyhow::{Context, anyhow};
 use arc_swap::ArcSwapOption;
@@ -47,71 +47,81 @@ pub type InnerOidcClient = Client<
   EndpointMaybeSet,
 >;
 
-pub struct OidcClient(InnerOidcClient);
+/// Cache discovery data for 1min
+const CLIENT_VALID_FOR_MS: u128 = 60_000;
 
-pub fn oidc_client() -> &'static ArcSwapOption<OidcClient> {
+fn oidc_client() -> &'static ArcSwapOption<OidcClient> {
   static OIDC_CLIENT: OnceLock<ArcSwapOption<OidcClient>> =
     OnceLock::new();
   OIDC_CLIENT.get_or_init(Default::default)
 }
 
-/// The OIDC client must be reinitialized to
-/// pick up the latest provider JWKs. This
-/// function spawns a management thread to do this
-/// on a loop.
-pub async fn spawn_oidc_client_management() {
-  let config = core_config();
-  if !config.oidc_enabled
-    || config.oidc_provider.is_empty()
-    || config.oidc_client_id.is_empty()
+pub async fn load_oidc_client() -> Option<Arc<OidcClient>> {
+  let now = async_timing_util::unix_timestamp_ms();
+
+  if let Some(curr) = oidc_client().load().as_ref()
+    && curr.1 > now
   {
-    return;
+    return Some(curr.clone());
   }
-  if let Err(e) = reset_oidc_client().await {
-    error!("Failed to initialize OIDC client | {e:#}");
-  }
-  tokio::spawn(async move {
-    loop {
-      tokio::time::sleep(Duration::from_secs(60)).await;
-      if let Err(e) = reset_oidc_client().await {
-        warn!("Failed to reinitialize OIDC client | {e:#}");
-      }
+
+  let client = match OidcClient::new(now + CLIENT_VALID_FOR_MS).await
+  {
+    Ok(client) => Arc::new(client),
+    Err(e) => {
+      error!("Failed to initialize OIDC client | {e:#}");
+      return None;
     }
-  });
+  };
+
+  oidc_client().store(Some(client.clone()));
+
+  Some(client)
 }
 
-async fn reset_oidc_client() -> anyhow::Result<()> {
-  let config = core_config();
-  // Use OpenID Connect Discovery to fetch the provider metadata.
-  let provider_metadata = CoreProviderMetadata::discover_async(
-    IssuerUrl::new(config.oidc_provider.clone())?,
-    oidc_reqwest_client(),
-  )
-  .await
-  .context("Failed to get OIDC /.well-known/openid-configuration")?;
-
-  let client = CoreClient::from_provider_metadata(
-    provider_metadata,
-    ClientId::new(config.oidc_client_id.to_string()),
-    // The secret may be empty / ommitted if auth provider supports PKCE
-    if config.oidc_client_secret.is_empty() {
-      None
-    } else {
-      Some(ClientSecret::new(config.oidc_client_secret.to_string()))
-    },
-  )
-  // Set the URL the user will be redirected to after the authorization process.
-  .set_redirect_uri(RedirectUrl::new(format!(
-    "{}/auth/oidc/callback",
-    core_config().host
-  ))?);
-
-  oidc_client().store(Some(OidcClient(client).into()));
-
-  Ok(())
-}
+pub struct OidcClient(InnerOidcClient, u128);
 
 impl OidcClient {
+  /// Initialize a new OIDC client using the configured provider's
+  /// discovery endpoint.
+  pub async fn new(valid_until: u128) -> anyhow::Result<OidcClient> {
+    let config = core_config();
+
+    if !config.oidc_enabled() {
+      return Err(anyhow!(
+        "OIDC provider is disabled or not configured."
+      ));
+    }
+
+    // Use OpenID Connect Discovery to fetch the provider metadata.
+    let provider_metadata = CoreProviderMetadata::discover_async(
+      IssuerUrl::new(config.oidc_provider.clone())?,
+      oidc_reqwest_client(),
+    )
+    .await
+    .context(
+      "Failed to get OIDC /.well-known/openid-configuration",
+    )?;
+
+    let client = CoreClient::from_provider_metadata(
+      provider_metadata,
+      ClientId::new(config.oidc_client_id.to_string()),
+      // The secret may be empty / ommitted if auth provider supports PKCE
+      if config.oidc_client_secret.is_empty() {
+        None
+      } else {
+        Some(ClientSecret::new(config.oidc_client_secret.to_string()))
+      },
+    )
+    // Set the URL the user will be redirected to after the authorization process.
+    .set_redirect_uri(RedirectUrl::new(format!(
+      "{}/auth/oidc/callback",
+      core_config().host
+    ))?);
+
+    Ok(OidcClient(client, valid_until))
+  }
+
   pub fn authorize_url(
     &self,
     pkce_challenge: PkceCodeChallenge,

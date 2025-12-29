@@ -8,7 +8,6 @@ use axum::{
   response::Redirect,
   routing::get,
 };
-use client::oidc_client;
 use database::mungos::{
   by_id::update_one_by_id,
   mongodb::bson::{Document, doc},
@@ -34,7 +33,8 @@ use crate::{
   api::user::SessionThirdPartyLinkInfo,
   auth::{
     SessionPasskeyLogin, SessionTotpLogin, SessionUserId,
-    format_redirect, oidc::client::OidcClient,
+    format_redirect,
+    oidc::client::{OidcClient, load_oidc_client},
   },
   config::core_config,
   helpers::query::{find_oidc_user, get_user},
@@ -99,9 +99,9 @@ async fn login(
   session: Session,
   Query(RedirectQuery { redirect }): Query<RedirectQuery>,
 ) -> anyhow::Result<Redirect> {
-  let client = oidc_client().load();
-  let client =
-    client.as_ref().context("OIDC Client not configured")?;
+  let client = load_oidc_client()
+    .await
+    .context("OIDC Client not available")?;
 
   let (pkce_challenge, pkce_verifier) =
     PkceCodeChallenge::new_random_sha256();
@@ -146,9 +146,9 @@ async fn link(session: Session) -> anyhow::Result<Redirect> {
     .context("Invalid session third party link info.")?
     .context("Missing session third party link info")?;
 
-  let client = oidc_client().load();
-  let client =
-    client.as_ref().context("OIDC Client not configured")?;
+  let client = load_oidc_client()
+    .await
+    .context("OIDC Client not available")?;
 
   let (pkce_challenge, pkce_verifier) =
     PkceCodeChallenge::new_random_sha256();
@@ -205,9 +205,9 @@ async fn callback(
   session: Session,
   Query(query): Query<OidcCallbackQuery>,
 ) -> anyhow::Result<Redirect> {
-  let client = oidc_client().load();
-  let client =
-    client.as_ref().context("OIDC Client not initialized successfully. Is the provider properly configured?")?;
+  let client = load_oidc_client()
+    .await
+    .context("OIDC Client not available")?;
 
   if let Some(e) = query.error {
     return Err(anyhow!("Provider returned error: {e}"));
@@ -223,7 +223,7 @@ async fn callback(
   if let Ok(Some(info)) =
     session.remove(SessionOidcLinkInfo::KEY).await
   {
-    return link_oidc_callback(client, info, state, code).await;
+    return link_oidc_callback(&client, info, state, code).await;
   }
 
   let SessionOidcVerificationInfo {

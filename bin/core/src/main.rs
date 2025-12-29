@@ -59,12 +59,8 @@ async fn app() -> anyhow::Result<()> {
 
     // Init jwt client to crash on failure
     state::jwt_client();
-    tokio::join!(
-      // Init db_client check to crash on db init failure
-      state::init_db_client(),
-      // Manage OIDC client (defined in config / env vars / compose secret file)
-      auth::oidc::client::spawn_oidc_client_management()
-    );
+    // Init db_client check to crash on db init failure
+    state::init_db_client().await;
     // Run after db connection.
     startup::on_startup().await;
 

@@ -35,7 +35,7 @@ use crate::{
     get_user_id_from_headers,
     github::{self, client::github_oauth_client},
     google::{self, client::google_oauth_client},
-    oidc::{self, client::oidc_client},
+    oidc::{self},
     totp::make_totp,
   },
   config::core_config,
@@ -79,7 +79,9 @@ pub fn router() -> Router {
     .route("/", post(handler))
     .route("/{variant}", post(variant_handler));
 
-  if core_config().local_auth {
+  let config = core_config();
+
+  if config.local_auth {
     info!("🔑 Local Login Enabled");
   }
 
@@ -93,7 +95,7 @@ pub fn router() -> Router {
     router = router.nest("/google", google::router())
   }
 
-  if core_config().oidc_enabled {
+  if config.oidc_enabled() {
     info!("🔑 OIDC Login Enabled");
     router = router.nest("/oidc", oidc::router())
   }
@@ -152,7 +154,7 @@ fn login_options_reponse() -> &'static GetLoginOptionsResponse {
       local: config.local_auth,
       github: github_oauth_client().is_some(),
       google: google_oauth_client().is_some(),
-      oidc: oidc_client().load().is_some(),
+      oidc: config.oidc_enabled(),
       registration_disabled: config.disable_user_registration,
     }
   })

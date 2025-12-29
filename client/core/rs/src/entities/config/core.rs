@@ -970,6 +970,12 @@ impl CoreConfig {
       ssl_cert_file: config.ssl_cert_file,
     }
   }
+
+  pub fn oidc_enabled(&self) -> bool {
+    self.oidc_enabled
+      && !self.oidc_provider.is_empty()
+      && !self.oidc_client_id.is_empty()
+  }
 }
 
 /// Generic Oauth credentials
