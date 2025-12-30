@@ -290,7 +290,7 @@ impl Resolve<AuthArgs> for CompletePasskeyLogin {
       // The result of this call must be used to
       // update the stored passkey info on database.
       let update = webauthn
-        .finish_passkey_authentication(&self.credential, &state)
+        .finish_passkey_authentication(&self.credential.0, &state)
         .context("Failed to validate passkey")?;
 
       let mut passkey = get_user(&user_id)

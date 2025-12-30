@@ -14,7 +14,7 @@ use database::{
 };
 use futures_util::TryFutureExt;
 use komodo_client::{
-  api::auth::UserIdOrTwoFactor,
+  api::auth::{_RequestChallengeResponse, UserIdOrTwoFactor},
   entities::{
     komodo_timestamp, random_string,
     user::{NewUserParams, User, UserConfig},
@@ -205,7 +205,9 @@ async fn callback(
               },
             )
             .await?;
-          UserIdOrTwoFactor::Passkey(response)
+          UserIdOrTwoFactor::Passkey(_RequestChallengeResponse(
+            response,
+          ))
         }
         // TOTP 2FA
         (false, None, true) => {

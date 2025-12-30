@@ -16,6 +16,7 @@ pub mod update;
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(tag = "type", content = "params")]
 pub enum WsLoginMessage {
   Jwt { jwt: String },

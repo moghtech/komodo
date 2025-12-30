@@ -19,6 +19,7 @@ use super::KomodoWriteRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateOnboardingKeyResponse)]
 #[error(serror::Error)]
@@ -68,6 +69,7 @@ pub struct CreateOnboardingKeyResponse {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateOnboardingKeyResponse)]
 #[error(serror::Error)]
@@ -117,6 +119,7 @@ pub type UpdateOnboardingKeyResponse = OnboardingKey;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteOnboardingKeyResponse)]
 #[error(serror::Error)]

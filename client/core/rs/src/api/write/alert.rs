@@ -13,6 +13,7 @@ use crate::{api::write::KomodoWriteRequest, entities::NoData};
 #[derive(
   Debug, Clone, Serialize, Deserialize, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
 #[error(serror::Error)]

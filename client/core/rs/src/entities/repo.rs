@@ -25,6 +25,7 @@ pub type RepoListItem = ResourceListItem<RepoListItemInfo>;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct RepoListItemInfo {
   /// The server that repo sits on.
   pub server_id: String,
@@ -58,6 +59,7 @@ pub struct RepoListItemInfo {
 #[derive(
   Debug, Clone, Copy, Default, Serialize, Deserialize, Display,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum RepoState {
   /// Unknown case
   #[default]
@@ -79,6 +81,7 @@ pub type Repo = Resource<RepoConfig, RepoInfo>;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct RepoInfo {
   /// When repo was last pulled
   #[serde(default)]
@@ -101,7 +104,9 @@ pub type _PartialRepoConfig = PartialRepoConfig;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Builder, Partial)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct RepoConfig {
   /// The server to clone the repo on.
@@ -279,8 +284,20 @@ impl Default for RepoConfig {
   }
 }
 
+#[cfg(feature = "openapi")]
+impl utoipa::PartialSchema for PartialRepoConfig {
+  fn schema()
+  -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+    utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
+  }
+}
+
+#[cfg(feature = "openapi")]
+impl utoipa::ToSchema for PartialRepoConfig {}
+
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, Default)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct RepoActionState {
   /// Whether Repo currently cloning on the attached Server
   pub cloning: bool,
@@ -299,6 +316,7 @@ pub type RepoQuery = ResourceQuery<RepoQuerySpecifics>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct RepoQuerySpecifics {
   /// Filter repos by their repo.
   pub repos: Vec<String>,

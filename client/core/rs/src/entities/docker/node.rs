@@ -13,6 +13,7 @@ use super::*;
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SwarmNodeListItem {
   #[serde(rename = "ID")]
   pub id: Option<String>,
@@ -54,6 +55,7 @@ pub struct SwarmNodeListItem {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SwarmNode {
   #[serde(rename = "ID")]
   pub id: Option<String>,
@@ -86,6 +88,7 @@ pub struct SwarmNode {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct NodeSpec {
   /// Name for the node.
   #[serde(rename = "Name")]
@@ -118,6 +121,7 @@ pub struct NodeSpec {
   Deserialize,
   AsRefStr,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum NodeSpecRoleEnum {
   #[default]
   #[serde(rename = "")]
@@ -142,6 +146,7 @@ pub enum NodeSpecRoleEnum {
   Deserialize,
   AsRefStr,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum NodeSpecAvailabilityEnum {
   #[default]
   #[serde(rename = "")]
@@ -158,6 +163,7 @@ pub enum NodeSpecAvailabilityEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct NodeDescription {
   #[serde(rename = "Hostname")]
   pub hostname: Option<String>,
@@ -180,6 +186,7 @@ pub struct NodeDescription {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct EngineDescription {
   #[serde(rename = "EngineVersion")]
   pub engine_version: Option<String>,
@@ -195,6 +202,7 @@ pub struct EngineDescription {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct EngineDescriptionPlugins {
   #[serde(rename = "Type")]
   pub typ: Option<String>,
@@ -208,6 +216,7 @@ pub struct EngineDescriptionPlugins {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct NodeStatus {
   #[serde(rename = "State")]
   pub state: Option<NodeState>,
@@ -234,6 +243,7 @@ pub struct NodeStatus {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum NodeState {
   #[default]
   #[serde(rename = "unknown")]
@@ -251,6 +261,7 @@ pub enum NodeState {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ManagerStatus {
   #[serde(rename = "Leader")]
   pub leader: Option<bool>,
@@ -277,6 +288,7 @@ pub struct ManagerStatus {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum NodeReachability {
   #[default]
   #[serde(rename = "unknown")]

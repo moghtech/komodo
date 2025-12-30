@@ -104,7 +104,7 @@ impl Resolve<UserArgs> for ConfirmPasskeyEnrollment {
       )?;
 
     let passkey = webauthn
-      .finish_passkey_registration(&self.credential, &state)
+      .finish_passkey_registration(&self.credential.0, &state)
       .context("Failed to finish passkey registration")?;
 
     let passkey = to_bson(&passkey)

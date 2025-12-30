@@ -21,6 +21,7 @@ use super::{BatchExecutionResponse, KomodoExecuteRequest};
   EmptyTraits,
   Parser,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -33,6 +34,7 @@ pub struct RunAction {
   ///
   /// Webhook-triggered actions use this to pass WEBHOOK_BRANCH and WEBHOOK_BODY.
   #[clap(value_parser = args_parser)]
+  #[cfg_attr(feature = "openapi", schema(value_type = Option<std::collections::HashMap<String, serde_json::Value>>))]
   pub args: Option<JsonObject>,
 }
 
@@ -52,6 +54,7 @@ fn args_parser(args: &str) -> anyhow::Result<JsonObject> {
   EmptyTraits,
   Parser,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
 #[error(serror::Error)]

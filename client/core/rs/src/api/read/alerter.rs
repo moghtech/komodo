@@ -16,6 +16,7 @@ use super::KomodoReadRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetAlerterResponse)]
 #[error(serror::Error)]
@@ -35,6 +36,7 @@ pub type GetAlerterResponse = Alerter;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListAlertersResponse)]
 #[error(serror::Error)]
@@ -52,6 +54,7 @@ pub type ListAlertersResponse = Vec<AlerterListItem>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullAlertersResponse)]
 #[error(serror::Error)]
@@ -72,6 +75,7 @@ pub type ListFullAlertersResponse = Vec<Alerter>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetAlertersSummaryResponse)]
 #[error(serror::Error)]
@@ -80,6 +84,7 @@ pub struct GetAlertersSummary {}
 /// Response for [GetAlertersSummary].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct GetAlertersSummaryResponse {
   pub total: u32,
 }

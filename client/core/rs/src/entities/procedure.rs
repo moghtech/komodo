@@ -18,6 +18,7 @@ pub type ProcedureListItem = ResourceListItem<ProcedureListItemInfo>;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ProcedureListItemInfo {
   /// Number of stages procedure has.
   pub stages: I64,
@@ -47,6 +48,7 @@ pub struct ProcedureListItemInfo {
   Deserialize,
   Display,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum ProcedureState {
   /// Currently running
   Running,
@@ -70,7 +72,9 @@ pub type _PartialProcedureConfig = PartialProcedureConfig;
 /// Config for the [Procedure]
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, Partial, Builder)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[partial_derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[diff_derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct ProcedureConfig {
   /// The stages to be run by the procedure.
@@ -180,9 +184,21 @@ impl Default for ProcedureConfig {
   }
 }
 
+#[cfg(feature = "openapi")]
+impl utoipa::PartialSchema for PartialProcedureConfig {
+  fn schema()
+  -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+    utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
+  }
+}
+
+#[cfg(feature = "openapi")]
+impl utoipa::ToSchema for PartialProcedureConfig {}
+
 /// A single stage of a procedure. Runs a list of executions in parallel.
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ProcedureStage {
   /// A name for the procedure
   pub name: String,
@@ -197,6 +213,7 @@ pub struct ProcedureStage {
 /// Allows to enable / disabled procedures in the sequence / parallel vec on the fly
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct EnabledExecution {
   /// The execution request to run.
   pub execution: Execution,
@@ -211,6 +228,7 @@ fn default_enabled() -> bool {
 
 #[typeshare]
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ProcedureActionState {
   pub running: bool,
 }
@@ -224,6 +242,7 @@ pub type ProcedureQuery = ResourceQuery<ProcedureQuerySpecifics>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ProcedureQuerySpecifics {}
 
 impl super::resource::AddFilters for ProcedureQuerySpecifics {

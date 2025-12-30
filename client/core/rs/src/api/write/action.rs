@@ -17,6 +17,7 @@ use super::KomodoWriteRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Action)]
 #[error(serror::Error)]
@@ -36,6 +37,7 @@ pub struct CreateAction {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Action)]
 #[error(serror::Error)]
@@ -54,6 +56,7 @@ pub struct CopyAction {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Action)]
 #[error(serror::Error)]
@@ -76,6 +79,7 @@ pub struct DeleteAction {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Action)]
 #[error(serror::Error)]
@@ -94,6 +98,7 @@ pub struct UpdateAction {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
 #[error(serror::Error)]

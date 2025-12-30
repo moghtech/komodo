@@ -22,6 +22,7 @@ pub type ResourceSyncListItem =
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ResourceSyncListItemInfo {
   /// Unix timestamp of last sync, or 0
   pub last_sync_ts: I64,
@@ -65,6 +66,7 @@ pub struct ResourceSyncListItemInfo {
   Deserialize,
   Display,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum ResourceSyncState {
   /// Currently syncing
   Syncing,
@@ -85,6 +87,7 @@ pub type ResourceSync =
 
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ResourceSyncInfo {
   /// Unix timestamp of last applied sync
   #[serde(default)]
@@ -123,6 +126,7 @@ pub struct ResourceSyncInfo {
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ResourceDiff {
   /// The resource target.
   /// The target id will be empty if "Create" ResourceDiffType.
@@ -133,6 +137,7 @@ pub struct ResourceDiff {
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(tag = "type", content = "data")]
 pub enum DiffData {
   /// Resource will be created
@@ -157,6 +162,7 @@ pub enum DiffData {
 
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SyncDeployUpdate {
   /// Resources to deploy
   pub to_deploy: i32,
@@ -170,7 +176,9 @@ pub type _PartialResourceSyncConfig = PartialResourceSyncConfig;
 /// The sync configuration.
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, Builder, Partial)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[partial_derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[diff_derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct ResourceSyncConfig {
   /// Choose a Komodo Repo (Resource) to source the sync files.
@@ -374,8 +382,20 @@ impl Default for ResourceSyncConfig {
   }
 }
 
+#[cfg(feature = "openapi")]
+impl utoipa::PartialSchema for PartialResourceSyncConfig {
+  fn schema()
+  -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+    utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
+  }
+}
+
+#[cfg(feature = "openapi")]
+impl utoipa::ToSchema for PartialResourceSyncConfig {}
+
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SyncFileContents {
   /// The base resource path.
   #[serde(default)]
@@ -388,6 +408,7 @@ pub struct SyncFileContents {
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, Default)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ResourceSyncActionState {
   /// Whether sync currently syncing
   pub syncing: bool,
@@ -401,6 +422,7 @@ pub type ResourceSyncQuery =
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ResourceSyncQuerySpecifics {
   /// Filter syncs by their repo.
   pub repos: Vec<String>,

@@ -17,6 +17,7 @@ use super::KomodoWriteRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Deployment)]
 #[error(serror::Error)]
@@ -36,6 +37,7 @@ pub struct CreateDeployment {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Deployment)]
 #[error(serror::Error)]
@@ -53,6 +55,7 @@ pub struct CopyDeployment {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Deployment)]
 #[error(serror::Error)]
@@ -74,6 +77,7 @@ pub struct CreateDeploymentFromContainer {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Deployment)]
 #[error(serror::Error)]
@@ -99,6 +103,7 @@ pub struct DeleteDeployment {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Deployment)]
 #[error(serror::Error)]
@@ -119,6 +124,7 @@ pub struct UpdateDeployment {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
 #[error(serror::Error)]

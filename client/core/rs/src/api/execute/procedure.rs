@@ -20,6 +20,7 @@ use super::{BatchExecutionResponse, KomodoExecuteRequest};
   EmptyTraits,
   Parser,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -40,6 +41,7 @@ pub struct RunProcedure {
   EmptyTraits,
   Parser,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
 #[error(serror::Error)]

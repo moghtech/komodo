@@ -18,6 +18,7 @@ use super::{
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SwarmServiceListItem {
   #[serde(rename = "ID")]
   pub id: Option<String>,
@@ -70,6 +71,7 @@ pub struct SwarmServiceListItem {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SwarmService {
   #[serde(rename = "ID")]
   pub id: Option<String>,
@@ -104,6 +106,7 @@ pub struct SwarmService {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ServiceSpec {
   /// Name of the service.
   #[serde(rename = "Name")]
@@ -138,6 +141,7 @@ pub struct ServiceSpec {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ServiceSpecMode {
   #[serde(rename = "Replicated")]
   pub replicated: Option<ServiceSpecModeReplicated>,
@@ -155,6 +159,7 @@ pub struct ServiceSpecMode {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ServiceSpecModeReplicated {
   #[serde(rename = "Replicas")]
   pub replicas: Option<I64>,
@@ -165,6 +170,7 @@ pub struct ServiceSpecModeReplicated {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ServiceSpecModeReplicatedJob {
   /// The maximum number of replicas to run simultaneously.
   #[serde(rename = "MaxConcurrent")]
@@ -180,6 +186,7 @@ pub struct ServiceSpecModeReplicatedJob {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ServiceSpecUpdateConfig {
   /// Maximum number of tasks to be updated in one iteration (0 means unlimited parallelism).
   #[serde(rename = "Parallelism")]
@@ -220,6 +227,7 @@ pub struct ServiceSpecUpdateConfig {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum ServiceSpecUpdateConfigFailureActionEnum {
   #[default]
   #[serde(rename = "")]
@@ -246,6 +254,7 @@ pub enum ServiceSpecUpdateConfigFailureActionEnum {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum ServiceSpecUpdateConfigOrderEnum {
   #[default]
   #[serde(rename = "")]
@@ -261,6 +270,7 @@ pub enum ServiceSpecUpdateConfigOrderEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ServiceSpecRollbackConfig {
   /// Maximum number of tasks to be rolled back in one iteration (0 means unlimited parallelism).
   #[serde(rename = "Parallelism")]
@@ -301,6 +311,7 @@ pub struct ServiceSpecRollbackConfig {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum ServiceSpecRollbackConfigFailureActionEnum {
   #[default]
   #[serde(rename = "")]
@@ -325,6 +336,7 @@ pub enum ServiceSpecRollbackConfigFailureActionEnum {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum ServiceSpecRollbackConfigOrderEnum {
   #[default]
   #[serde(rename = "")]
@@ -340,6 +352,7 @@ pub enum ServiceSpecRollbackConfigOrderEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct EndpointSpec {
   /// The mode of resolution to use for internal load balancing between tasks.
   #[serde(rename = "Mode")]
@@ -363,6 +376,7 @@ pub struct EndpointSpec {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum EndpointSpecModeEnum {
   #[default]
   #[serde(rename = "")]
@@ -377,6 +391,7 @@ pub enum EndpointSpecModeEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ServiceEndpoint {
   #[serde(rename = "Spec")]
   pub spec: Option<EndpointSpec>,
@@ -392,6 +407,7 @@ pub struct ServiceEndpoint {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ServiceEndpointVirtualIps {
   #[serde(rename = "NetworkID")]
   pub network_id: Option<String>,
@@ -405,6 +421,7 @@ pub struct ServiceEndpointVirtualIps {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ServiceUpdateStatus {
   #[serde(rename = "State")]
   pub state: Option<ServiceUpdateStatusStateEnum>,
@@ -433,6 +450,7 @@ pub struct ServiceUpdateStatus {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum ServiceUpdateStatusStateEnum {
   #[default]
   #[serde(rename = "")]
@@ -456,6 +474,7 @@ pub enum ServiceUpdateStatusStateEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ServiceServiceStatus {
   /// The number of tasks for the service currently in the Running state.
   #[serde(rename = "RunningTasks")]
@@ -479,6 +498,7 @@ pub struct ServiceServiceStatus {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ServiceJobStatus {
   /// JobIteration is a value increased each time a Job is executed, successfully or otherwise. \"Executed\", in this case, means the job as a whole has been started, not that an individual Task has been launched. A job is \"Executed\" when its ServiceSpec is updated. JobIteration can be used to disambiguate Tasks belonging to different executions of a job.  Though JobIteration will increase with each subsequent execution, it may not necessarily increase by 1, and so JobIteration should not be used to
   #[serde(rename = "JobIteration")]

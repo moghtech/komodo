@@ -18,6 +18,7 @@ use super::KomodoWriteRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Stack)]
 #[error(serror::Error)]
@@ -37,6 +38,7 @@ pub struct CreateStack {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Stack)]
 #[error(serror::Error)]
@@ -55,6 +57,7 @@ pub struct CopyStack {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Stack)]
 #[error(serror::Error)]
@@ -80,6 +83,7 @@ pub struct DeleteStack {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Stack)]
 #[error(serror::Error)]
@@ -97,6 +101,7 @@ pub struct UpdateStack {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -114,6 +119,7 @@ pub struct RenameStack {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -138,6 +144,7 @@ pub struct WriteStackFileContents {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
 #[error(serror::Error)]
@@ -151,6 +158,7 @@ pub struct RefreshStackCache {
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum StackWebhookAction {
   Refresh,
   Deploy,

@@ -294,14 +294,27 @@ async fn handler(
   res.map(|res| res.0)
 }
 
+#[utoipa::path(
+  post,
+  path = "/read/GetVersion",
+  description = "Get the Komodo Core api version",
+  request_body(content = GetVersion),
+  responses(
+    (status = 200, body = GetVersionResponse),
+  ),
+)]
+async fn get_version() -> serror::Result<GetVersionResponse> {
+  Ok(GetVersionResponse {
+    version: env!("CARGO_PKG_VERSION").to_string(),
+  })
+}
+
 impl Resolve<ReadArgs> for GetVersion {
   async fn resolve(
     self,
     _: &ReadArgs,
   ) -> serror::Result<GetVersionResponse> {
-    Ok(GetVersionResponse {
-      version: env!("CARGO_PKG_VERSION").to_string(),
-    })
+    get_version().await
   }
 }
 

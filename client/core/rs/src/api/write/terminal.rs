@@ -22,6 +22,7 @@ use super::KomodoWriteRequest;
 #[derive(
   Debug, Clone, Serialize, Deserialize, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
 #[error(serror::Error)]
@@ -56,6 +57,7 @@ pub struct CreateTerminal {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
 #[error(serror::Error)]
@@ -74,6 +76,7 @@ pub struct DeleteTerminal {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
 #[error(serror::Error)]
@@ -90,6 +93,7 @@ pub struct DeleteAllTerminals {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
 #[error(serror::Error)]

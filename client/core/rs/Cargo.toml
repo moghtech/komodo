@@ -14,6 +14,7 @@ repository.workspace = true
 # default = ["blocking"] # use to dev client blocking mode
 mongo = ["dep:mongo_indexed"]
 blocking = ["reqwest/blocking"]
+openapi = ["dep:utoipa", "serror/utoipa"]
 
 [dependencies]
 # mogh
@@ -26,6 +27,7 @@ partial_derive2.workspace = true
 derive_variants.workspace = true
 resolver_api.workspace = true
 # external
+utoipa = { workspace = true, optional = true }
 base64urlsafedata.workspace = true
 webauthn-rs-proto.workspace = true
 tokio-tungstenite.workspace = true

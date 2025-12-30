@@ -16,6 +16,7 @@ use super::KomodoWriteRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateResourceMetaResponse)]
 #[error(serror::Error)]

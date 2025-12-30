@@ -8,6 +8,7 @@ use super::*;
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SwarmInspectInfo {
   /// The (Docker) ID of the swarm.
   #[serde(rename = "ID")]
@@ -55,6 +56,7 @@ pub struct SwarmInspectInfo {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SwarmSpec {
   /// Name of the swarm.
   #[serde(rename = "Name")]
@@ -88,6 +90,7 @@ pub struct SwarmSpec {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SwarmSpecOrchestration {
   /// The number of historic tasks to keep per instance or node.
   /// If negative, never remove completed or failed tasks.
@@ -100,6 +103,7 @@ pub struct SwarmSpecOrchestration {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SwarmSpecRaft {
   /// The number of log entries between snapshots.
   #[serde(rename = "SnapshotInterval")]
@@ -129,6 +133,7 @@ pub struct SwarmSpecRaft {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SwarmSpecDispatcher {
   /// The delay for an agent to send a heartbeat to the dispatcher.
   #[serde(rename = "HeartbeatPeriod")]
@@ -140,6 +145,7 @@ pub struct SwarmSpecDispatcher {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SwarmSpecCaConfig {
   /// The duration node certificates are issued for.
   #[serde(rename = "NodeCertExpiry")]
@@ -166,6 +172,7 @@ pub struct SwarmSpecCaConfig {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SwarmSpecCaConfigExternalCas {
   /// Protocol for communication with the external CA (currently only `cfssl` is supported).
   #[serde(rename = "Protocol")]
@@ -197,6 +204,7 @@ pub struct SwarmSpecCaConfigExternalCas {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum SwarmSpecCaConfigExternalCasProtocolEnum {
   #[default]
   #[serde(rename = "")]
@@ -210,6 +218,7 @@ pub enum SwarmSpecCaConfigExternalCasProtocolEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SwarmSpecEncryptionConfig {
   /// If set, generate a key and use it to lock data stored on the managers.
   #[serde(rename = "AutoLockManagers")]
@@ -221,6 +230,7 @@ pub struct SwarmSpecEncryptionConfig {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SwarmSpecTaskDefaults {
   #[serde(rename = "LogDriver")]
   pub log_driver: Option<SwarmSpecTaskDefaultsLogDriver>,
@@ -231,6 +241,7 @@ pub struct SwarmSpecTaskDefaults {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SwarmSpecTaskDefaultsLogDriver {
   /// The log driver to use as a default for new tasks.
   #[serde(rename = "Name")]
@@ -246,6 +257,7 @@ pub struct SwarmSpecTaskDefaultsLogDriver {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct JoinTokens {
   /// The token workers can use to join the swarm.
   #[serde(rename = "Worker")]

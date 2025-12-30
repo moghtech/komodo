@@ -16,6 +16,7 @@ use super::KomodoReadRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetProcedureResponse)]
 #[error(serror::Error)]
@@ -35,6 +36,7 @@ pub type GetProcedureResponse = Procedure;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListProceduresResponse)]
 #[error(serror::Error)]
@@ -54,6 +56,7 @@ pub type ListProceduresResponse = Vec<ProcedureListItem>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullProceduresResponse)]
 #[error(serror::Error)]
@@ -73,6 +76,7 @@ pub type ListFullProceduresResponse = Vec<Procedure>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetProcedureActionStateResponse)]
 #[error(serror::Error)]
@@ -93,6 +97,7 @@ pub type GetProcedureActionStateResponse = ProcedureActionState;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetProceduresSummaryResponse)]
 #[error(serror::Error)]
@@ -101,6 +106,7 @@ pub struct GetProceduresSummary {}
 /// Response for [GetProceduresSummary].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct GetProceduresSummaryResponse {
   /// The total number of procedures.
   pub total: u32,

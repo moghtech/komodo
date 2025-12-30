@@ -26,6 +26,7 @@ pub type _PartialBuilderConfig = PartialBuilderConfig;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct BuilderListItemInfo {
   /// 'Url', 'Server', or 'Aws'
   pub builder_type: String,
@@ -37,6 +38,7 @@ pub struct BuilderListItemInfo {
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, EnumVariants)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[variant_derive(
   Serialize,
   Deserialize,
@@ -68,14 +70,31 @@ impl Default for BuilderConfig {
 /// Partial representation of [BuilderConfig]
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, EnumVariants)]
-#[variant_derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  Copy,
-  Display,
-  EnumString
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(
+  not(feature = "openapi"),
+  variant_derive(
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    Copy,
+    Display,
+    EnumString
+  )
+)]
+#[cfg_attr(
+  feature = "openapi",
+  variant_derive(
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    Copy,
+    Display,
+    EnumString,
+    utoipa::ToSchema
+  )
 )]
 #[serde(tag = "type", content = "params")]
 #[allow(clippy::large_enum_variant)]
@@ -321,7 +340,16 @@ pub type _PartialUrlBuilderConfig = PartialUrlBuilderConfig;
 /// Configuration for a Komodo Url Builder.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Builder, Partial)]
-#[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(
+  not(feature = "openapi"),
+  partial_derive(Serialize, Deserialize, Debug, Clone, Default)
+)]
+#[cfg_attr(
+  feature = "openapi",
+  partial_derive(Serialize, Deserialize, Debug, Clone, Default,)
+)]
+#[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct UrlBuilderConfig {
   /// The address of the Periphery agent
@@ -373,6 +401,17 @@ impl UrlBuilderConfig {
   }
 }
 
+#[cfg(feature = "openapi")]
+impl utoipa::PartialSchema for PartialUrlBuilderConfig {
+  fn schema()
+  -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+    utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
+  }
+}
+
+#[cfg(feature = "openapi")]
+impl utoipa::ToSchema for PartialUrlBuilderConfig {}
+
 #[typeshare(serialized_as = "Partial<ServerBuilderConfig>")]
 pub type _PartialServerBuilderConfig = PartialServerBuilderConfig;
 
@@ -381,7 +420,9 @@ pub type _PartialServerBuilderConfig = PartialServerBuilderConfig;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Builder, Partial,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct ServerBuilderConfig {
   /// The server id of the builder
@@ -396,13 +437,26 @@ impl ServerBuilderConfig {
   }
 }
 
+#[cfg(feature = "openapi")]
+impl utoipa::PartialSchema for PartialServerBuilderConfig {
+  fn schema()
+  -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+    utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
+  }
+}
+
+#[cfg(feature = "openapi")]
+impl utoipa::ToSchema for PartialServerBuilderConfig {}
+
 #[typeshare(serialized_as = "Partial<AwsBuilderConfig>")]
 pub type _PartialAwsBuilderConfig = PartialAwsBuilderConfig;
 
 /// Configuration for an AWS builder.
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, Builder, Partial)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct AwsBuilderConfig {
   /// The AWS region to create the instance in
@@ -552,11 +606,23 @@ fn default_use_https() -> bool {
   true
 }
 
+#[cfg(feature = "openapi")]
+impl utoipa::PartialSchema for PartialAwsBuilderConfig {
+  fn schema()
+  -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+    utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
+  }
+}
+
+#[cfg(feature = "openapi")]
+impl utoipa::ToSchema for PartialAwsBuilderConfig {}
+
 #[typeshare]
 pub type BuilderQuery = ResourceQuery<BuilderQuerySpecifics>;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct BuilderQuerySpecifics {}
 
 impl AddFilters for BuilderQuerySpecifics {}

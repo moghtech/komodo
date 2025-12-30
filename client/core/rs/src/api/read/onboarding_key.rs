@@ -13,6 +13,7 @@ use super::KomodoReadRequest;
 #[derive(
   Debug, Clone, Serialize, Deserialize, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListOnboardingKeysResponse)]
 #[error(serror::Error)]

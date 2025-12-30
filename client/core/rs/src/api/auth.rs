@@ -13,6 +13,7 @@ pub trait KomodoAuthRequest: HasResponse {}
 /// JSON containing a jwt authentication token.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct JwtResponse {
   /// User ID for signed in user.
   pub user_id: String,
@@ -21,11 +22,24 @@ pub struct JwtResponse {
 }
 
 #[typeshare(serialized_as = "any")]
-pub type _RequestChallengeResponse = RequestChallengeResponse;
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct _RequestChallengeResponse(pub RequestChallengeResponse);
+
+#[cfg(feature = "openapi")]
+impl utoipa::PartialSchema for _RequestChallengeResponse {
+  fn schema()
+  -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+    utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
+  }
+}
+
+#[cfg(feature = "openapi")]
+impl utoipa::ToSchema for _RequestChallengeResponse {}
 
 /// JSON containing either an authentication token or a TwoFactor pending token.
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(tag = "type", content = "data")]
 pub enum JwtOrTwoFactor {
   Jwt(JwtResponse),
@@ -36,6 +50,7 @@ pub enum JwtOrTwoFactor {
 /// JSON containing either a user id or the required 2fa auth check.
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(tag = "type", content = "data")]
 pub enum UserIdOrTwoFactor {
   UserId(String),
@@ -52,6 +67,7 @@ pub enum UserIdOrTwoFactor {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoAuthRequest)]
 #[response(GetLoginOptionsResponse)]
 #[error(serror::Error)]
@@ -60,6 +76,7 @@ pub struct GetLoginOptions {}
 /// The response for [GetLoginOptions].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct GetLoginOptionsResponse {
   /// Whether local auth is enabled.
   pub local: bool,
@@ -85,6 +102,7 @@ pub struct GetLoginOptionsResponse {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoAuthRequest)]
 #[response(SignUpLocalUserResponse)]
 #[error(serror::Error)]
@@ -110,6 +128,7 @@ pub type SignUpLocalUserResponse = JwtResponse;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoAuthRequest)]
 #[response(LoginLocalUserResponse)]
 #[error(serror::Error)]
@@ -132,6 +151,7 @@ pub type LoginLocalUserResponse = JwtOrTwoFactor;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoAuthRequest)]
 #[response(ExchangeForJwtResponse)]
 #[error(serror::Error)]
@@ -149,6 +169,7 @@ pub type ExchangeForJwtResponse = JwtResponse;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoAuthRequest)]
 #[response(CompleteTotpLoginResponse)]
 #[error(serror::Error)]
@@ -164,7 +185,19 @@ pub type CompleteTotpLoginResponse = JwtResponse;
 //
 
 #[typeshare(serialized_as = "any")]
-pub type _PublicKeyCredential = PublicKeyCredential;
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct _PublicKeyCredential(pub PublicKeyCredential);
+
+#[cfg(feature = "openapi")]
+impl utoipa::PartialSchema for _PublicKeyCredential {
+  fn schema()
+  -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+    utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
+  }
+}
+
+#[cfg(feature = "openapi")]
+impl utoipa::ToSchema for _PublicKeyCredential {}
 
 /// Confirm a single use 2fa pending token + time-dependent user totp code for a jwt.
 /// Response: [CompletePasskeyLoginResponse].
@@ -172,6 +205,7 @@ pub type _PublicKeyCredential = PublicKeyCredential;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoAuthRequest)]
 #[response(CompletePasskeyLoginResponse)]
 #[error(serror::Error)]
@@ -191,6 +225,7 @@ pub type CompletePasskeyLoginResponse = JwtResponse;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoAuthRequest)]
 #[response(GetUserResponse)]
 #[error(serror::Error)]

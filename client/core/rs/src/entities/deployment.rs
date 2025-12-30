@@ -35,6 +35,7 @@ pub type DeploymentListItem =
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct DeploymentListItemInfo {
   /// The state of the deployment / underlying docker container.
   pub state: DeploymentState,
@@ -57,7 +58,9 @@ pub type _PartialDeploymentConfig = PartialDeploymentConfig;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Builder, Partial)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct DeploymentConfig {
   /// The Swarm to deploy the Deployment on (as a Swarm Service), setting the Deployment into Swarm mode.
@@ -288,10 +291,22 @@ impl Default for DeploymentConfig {
   }
 }
 
+#[cfg(feature = "openapi")]
+impl utoipa::PartialSchema for PartialDeploymentConfig {
+  fn schema()
+  -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+    utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
+  }
+}
+
+#[cfg(feature = "openapi")]
+impl utoipa::ToSchema for PartialDeploymentConfig {}
+
 #[typeshare]
 #[derive(
   Serialize, Deserialize, Debug, Clone, PartialEq, EnumVariants,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[variant_derive(
   Serialize,
   Deserialize,
@@ -336,6 +351,7 @@ impl Default for DeploymentImage {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct Conversion {
   /// reference on the server.
   pub local: String,
@@ -376,6 +392,7 @@ pub fn conversions_from_str(
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "snake_case")]
 #[strum(serialize_all = "snake_case")]
 pub enum DeploymentState {
@@ -436,6 +453,7 @@ impl From<ContainerStateStatusEnum> for DeploymentState {
   EnumString,
   AsRefStr,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum RestartMode {
   #[default]
   #[serde(rename = "no")]
@@ -463,6 +481,7 @@ pub enum RestartMode {
   Eq,
   Builder,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct TerminationSignalLabel {
   #[builder(default)]
   pub signal: TerminationSignal,
@@ -488,6 +507,7 @@ pub fn term_signal_labels_from_str(
 
 #[typeshare]
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct DeploymentActionState {
   pub pulling: bool,
   pub deploying: bool,
@@ -508,6 +528,7 @@ pub type DeploymentQuery = ResourceQuery<DeploymentQuerySpecifics>;
 #[derive(
   Debug, Clone, Default, Serialize, Deserialize, DefaultBuilder,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct DeploymentQuerySpecifics {
   /// Query only for Deployments on these Servers.
   /// If empty, does not filter by Server.

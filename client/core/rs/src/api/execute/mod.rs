@@ -47,14 +47,31 @@ pub trait KomodoExecuteRequest: HasResponse {}
   EnumVariants,
   Subcommand,
 )]
-#[variant_derive(
-  Debug,
-  Clone,
-  Copy,
-  Serialize,
-  Deserialize,
-  Display,
-  EnumString
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(
+  not(feature = "openapi"),
+  variant_derive(
+    Debug,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString
+  )
+)]
+#[cfg_attr(
+  feature = "openapi",
+  variant_derive(
+    Debug,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    utoipa::ToSchema
+  )
 )]
 #[serde(tag = "type", content = "params")]
 pub enum Execution {
@@ -191,6 +208,7 @@ pub enum Execution {
 /// Sleeps for the specified time.
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Parser)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct Sleep {
   #[serde(default)]
   pub duration_ms: I64,

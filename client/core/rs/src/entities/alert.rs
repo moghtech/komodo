@@ -15,6 +15,7 @@ use super::{
 /// Representation of an alert in the system.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[cfg_attr(
   feature = "mongo",
   derive(mongo_indexed::derive::MongoIndexed)
@@ -59,15 +60,33 @@ pub struct Alert {
 /// The variants of data related to the alert.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, EnumVariants)]
-#[variant_derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  Copy,
-  PartialEq,
-  Eq,
-  Hash
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(
+  not(feature = "openapi"),
+  variant_derive(
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash
+  )
+)]
+#[cfg_attr(
+  feature = "openapi",
+  variant_derive(
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    utoipa::ToSchema
+  )
 )]
 #[serde(tag = "type", content = "data")]
 pub enum AlertData {
@@ -130,6 +149,7 @@ pub enum AlertData {
     /// The region of the server
     region: Option<String>,
     /// The mount path of the disk
+    #[cfg_attr(feature = "openapi", schema(value_type = String))]
     path: PathBuf,
     /// The used portion of the disk in GB
     used_gb: f64,
@@ -340,6 +360,7 @@ impl Default for AlertDataVariant {
   Display,
   EnumString,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "UPPERCASE")]
 #[strum(serialize_all = "UPPERCASE")]
 pub enum SeverityLevel {

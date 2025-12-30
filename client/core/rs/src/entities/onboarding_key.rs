@@ -11,6 +11,7 @@ use super::I64;
 /// The private key will not be stored or available afterwards, just like the api key "secret".
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[cfg_attr(
   feature = "mongo",
   derive(mongo_indexed::derive::MongoIndexed)

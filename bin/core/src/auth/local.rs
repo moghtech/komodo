@@ -8,8 +8,8 @@ use database::{
 };
 use komodo_client::{
   api::auth::{
-    LoginLocalUser, LoginLocalUserResponse, SignUpLocalUser,
-    SignUpLocalUserResponse,
+    _RequestChallengeResponse, LoginLocalUser,
+    LoginLocalUserResponse, SignUpLocalUser, SignUpLocalUserResponse,
   },
   entities::user::{
     NewUserParams, User, UserConfig, UserConfigVariant,
@@ -228,7 +228,9 @@ async fn login_local_user(
           },
         )
         .await?;
-      Ok(LoginLocalUserResponse::Passkey(response))
+      Ok(LoginLocalUserResponse::Passkey(_RequestChallengeResponse(
+        response,
+      )))
     }
     // TOTP 2FA
     (None, true) => {

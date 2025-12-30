@@ -17,6 +17,7 @@ use super::{
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ContainerListItem {
   /// The Server which hosts the container.
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -72,6 +73,7 @@ pub struct ContainerListItem {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct NameAndId {
   pub name: String,
   pub id: String,
@@ -82,6 +84,7 @@ pub struct NameAndId {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct Port {
   /// Host IP address that the container's port is mapped to
   #[serde(rename = "IP")]
@@ -112,6 +115,7 @@ pub struct Port {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum PortTypeEnum {
   #[default]
   #[serde(rename = "")]
@@ -128,6 +132,7 @@ pub enum PortTypeEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct Container {
   /// The ID of the container
   #[serde(rename = "Id")]
@@ -218,6 +223,7 @@ pub struct Container {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ContainerState {
   /// String representation of the container state. Can be one of \"created\", \"running\", \"paused\", \"restarting\", \"removing\", \"exited\", or \"dead\".
   #[serde(default, rename = "Status")]
@@ -279,6 +285,7 @@ pub struct ContainerState {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]
 pub enum ContainerStateStatusEnum {
@@ -317,6 +324,7 @@ impl ::std::str::FromStr for ContainerStateStatusEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ContainerHealth {
   /// Status is one of `none`, `starting`, `healthy` or `unhealthy`  - \"none\"      Indicates there is no healthcheck - \"starting\"  Starting indicates that the container is not yet ready - \"healthy\"   Healthy indicates that the container is running correctly - \"unhealthy\" Unhealthy indicates that the container has a problem
   #[serde(default, rename = "Status")]
@@ -344,6 +352,7 @@ pub struct ContainerHealth {
   Ord,
   Default,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum HealthStatusEnum {
   #[default]
   #[serde(rename = "")]
@@ -363,6 +372,7 @@ pub enum HealthStatusEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct HealthcheckResult {
   /// Date and time at which this check started in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds.
   #[serde(rename = "Start")]
@@ -386,6 +396,7 @@ pub struct HealthcheckResult {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct HostConfig {
   /// An integer value representing this container's relative CPU weight versus other containers.
   #[serde(rename = "CpuShares")]
@@ -669,6 +680,7 @@ pub struct HostConfig {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ResourcesBlkioWeightDevice {
   #[serde(rename = "Path")]
   pub path: Option<String>,
@@ -681,6 +693,7 @@ pub struct ResourcesBlkioWeightDevice {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ThrottleDevice {
   /// Device path
   #[serde(rename = "Path")]
@@ -696,6 +709,7 @@ pub struct ThrottleDevice {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct DeviceMapping {
   #[serde(rename = "PathOnHost")]
   pub path_on_host: Option<String>,
@@ -712,6 +726,7 @@ pub struct DeviceMapping {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct DeviceRequest {
   #[serde(rename = "Driver")]
   pub driver: Option<String>,
@@ -744,6 +759,7 @@ pub struct DeviceRequest {
   Ord,
   Default,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum HostConfigIsolationEnum {
   #[default]
   #[serde(rename = "")]
@@ -761,6 +777,7 @@ pub enum HostConfigIsolationEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct HostConfigLogConfig {
   #[serde(rename = "Type")]
   pub typ: Option<String>,
@@ -774,6 +791,7 @@ pub struct HostConfigLogConfig {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct RestartPolicy {
   /// - Empty string means not to restart - `no` Do not automatically restart - `always` Always restart - `unless-stopped` Restart always except when the user has manually stopped the container - `on-failure` Restart only when the container exit code is non-zero
   #[serde(default, rename = "Name")]
@@ -797,6 +815,7 @@ pub struct RestartPolicy {
   Ord,
   Default,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum RestartPolicyNameEnum {
   #[default]
   #[serde(rename = "")]
@@ -824,6 +843,7 @@ pub enum RestartPolicyNameEnum {
   Ord,
   Default,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum HostConfigCgroupnsModeEnum {
   #[default]
   #[serde(rename = "")]
@@ -839,6 +859,7 @@ pub enum HostConfigCgroupnsModeEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct MountPoint {
   /// The mount type:  - `bind` a mount of a file or directory from the host into the container. - `volume` a docker volume with the given `Name`. - `tmpfs` a `tmpfs`. - `npipe` a named pipe from the host into the container. - `cluster` a Swarm cluster volume
   #[serde(default, rename = "Type")]
@@ -878,6 +899,7 @@ pub struct MountPoint {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct NetworkSettings {
   /// Name of the default bridge interface when dockerd's --bridge flag is set.
   #[serde(rename = "Bridge")]
@@ -904,6 +926,7 @@ pub struct NetworkSettings {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct EndpointSettings {
   #[serde(rename = "IPAMConfig")]
   pub ipam_config: Option<EndpointIpamConfig>,
@@ -964,6 +987,7 @@ pub struct EndpointSettings {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct EndpointIpamConfig {
   #[serde(rename = "IPv4Address")]
   pub ipv4_address: Option<String>,
@@ -977,6 +1001,7 @@ pub struct EndpointIpamConfig {
 
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ContainerStats {
   #[serde(alias = "Name")]
   pub name: String,

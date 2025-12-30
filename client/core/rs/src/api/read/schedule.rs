@@ -16,6 +16,7 @@ use super::KomodoReadRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSchedulesResponse)]
 #[error(serror::Error)]

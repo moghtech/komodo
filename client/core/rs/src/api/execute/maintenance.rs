@@ -21,6 +21,7 @@ use super::KomodoExecuteRequest;
   EmptyTraits,
   Parser,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -47,6 +48,7 @@ pub struct ClearRepoCache {}
   EmptyTraits,
   Parser,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -71,6 +73,7 @@ pub struct BackupCoreDatabase {}
   EmptyTraits,
   Parser,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -91,6 +94,7 @@ pub struct GlobalAutoUpdate {}
   EmptyTraits,
   Parser,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -115,6 +119,7 @@ pub struct RotateAllServerKeys {}
   EmptyTraits,
   Parser,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]

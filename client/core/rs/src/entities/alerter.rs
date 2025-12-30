@@ -23,6 +23,7 @@ pub type AlerterListItem = ResourceListItem<AlerterListItemInfo>;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct AlerterListItemInfo {
   /// Whether alerter is enabled for sending alerts
   pub enabled: bool,
@@ -35,7 +36,9 @@ pub type _PartialAlerterConfig = PartialAlerterConfig;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Builder, Partial)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct AlerterConfig {
   /// Whether the alerter is enabled
@@ -93,25 +96,58 @@ impl Default for AlerterConfig {
   }
 }
 
+#[cfg(feature = "openapi")]
+impl utoipa::PartialSchema for PartialAlerterConfig {
+  fn schema()
+  -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+    utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
+  }
+}
+
+#[cfg(feature = "openapi")]
+impl utoipa::ToSchema for PartialAlerterConfig {}
+
 // ENDPOINTS
 
 #[typeshare]
 #[derive(
   Debug, Clone, PartialEq, Serialize, Deserialize, EnumVariants,
 )]
-#[variant_derive(
-  Debug,
-  Clone,
-  Copy,
-  PartialEq,
-  Eq,
-  PartialOrd,
-  Ord,
-  Display,
-  EnumString,
-  AsRefStr,
-  Serialize,
-  Deserialize
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(
+  not(feature = "openapi"),
+  variant_derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Display,
+    EnumString,
+    AsRefStr,
+    Serialize,
+    Deserialize
+  )
+)]
+#[cfg_attr(
+  feature = "openapi",
+  variant_derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Display,
+    EnumString,
+    AsRefStr,
+    Serialize,
+    Deserialize,
+    utoipa::ToSchema
+  )
 )]
 #[serde(tag = "type", content = "params")]
 pub enum AlerterEndpoint {
@@ -142,6 +178,7 @@ impl Default for AlerterEndpoint {
 #[derive(
   Debug, Clone, PartialEq, Serialize, Deserialize, Builder,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct CustomAlerterEndpoint {
   /// The http/s endpoint to send the POST to
   #[serde(default = "default_custom_url")]
@@ -166,6 +203,7 @@ fn default_custom_url() -> String {
 #[derive(
   Debug, Clone, PartialEq, Serialize, Deserialize, Builder,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SlackAlerterEndpoint {
   /// The Slack app webhook url
   #[serde(default = "default_slack_url")]
@@ -192,6 +230,7 @@ fn default_slack_url() -> String {
 #[derive(
   Debug, Clone, PartialEq, Serialize, Deserialize, Builder,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct DiscordAlerterEndpoint {
   /// The Discord webhook url
   #[serde(default = "default_discord_url")]
@@ -218,6 +257,7 @@ fn default_discord_url() -> String {
 #[derive(
   Debug, Clone, PartialEq, Serialize, Deserialize, Builder,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct NtfyAlerterEndpoint {
   /// The ntfy topic URL
   #[serde(default = "default_ntfy_url")]
@@ -247,6 +287,7 @@ fn default_ntfy_url() -> String {
 #[derive(
   Debug, Clone, PartialEq, Serialize, Deserialize, Builder,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct PushoverAlerterEndpoint {
   /// The pushover URL including application and user tokens in parameters.
   #[serde(default = "default_pushover_url")]
@@ -276,6 +317,7 @@ pub type AlerterQuery = ResourceQuery<AlerterQuerySpecifics>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct AlerterQuerySpecifics {
   /// Filter alerters by enabled.
   /// - `None`: Don't filter by enabled

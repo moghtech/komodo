@@ -10,6 +10,7 @@ use crate::entities::U64;
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct FullContainerStats {
   /// Name of the container
   pub name: String,
@@ -69,6 +70,7 @@ pub struct FullContainerStats {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ContainerPidsStats {
   /// Current is the number of PIDs in the cgroup.
   pub current: Option<U64>,
@@ -85,6 +87,7 @@ pub struct ContainerPidsStats {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ContainerBlkioStats {
   #[serde(rename = "io_service_bytes_recursive")]
   #[serde(skip_serializing_if = "Option::is_none")]
@@ -139,6 +142,7 @@ pub struct ContainerBlkioStats {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ContainerBlkioStatEntry {
   pub major: Option<U64>,
   pub minor: Option<U64>,
@@ -152,6 +156,7 @@ pub struct ContainerBlkioStatEntry {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ContainerStorageStats {
   pub read_count_normalized: Option<U64>,
   pub read_size_bytes: Option<U64>,
@@ -164,6 +169,7 @@ pub struct ContainerStorageStats {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ContainerCpuStats {
   /// All CPU stats aggregated since container inception.
   pub cpu_usage: Option<ContainerCpuUsage>,
@@ -186,6 +192,7 @@ pub struct ContainerCpuStats {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ContainerCpuUsage {
   /// Total CPU time consumed in nanoseconds (Linux) or 100's of nanoseconds (Windows).
   pub total_usage: Option<U64>,
@@ -212,6 +219,7 @@ pub struct ContainerCpuUsage {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ContainerThrottlingData {
   /// Number of periods with throttling active.
   pub periods: Option<U64>,
@@ -229,6 +237,7 @@ pub struct ContainerThrottlingData {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ContainerMemoryStats {
   /// Current `res_counter` usage for memory.
   /// This field is Linux-specific and omitted for Windows containers.
@@ -267,6 +276,7 @@ pub struct ContainerMemoryStats {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ContainerNetworkStats {
   /// Bytes received. Windows and Linux.
   pub rx_bytes: Option<U64>,

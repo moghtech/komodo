@@ -15,7 +15,7 @@ path = "src/main.rs"
 
 [dependencies]
 # local
-komodo_client = { workspace = true, features = ["mongo"] }
+komodo_client = { workspace = true, features = ["mongo", "openapi"] }
 periphery_client.workspace = true
 environment_file.workspace = true
 interpolate.workspace = true
@@ -49,6 +49,7 @@ tower-sessions.workspace = true
 openidconnect.workspace = true
 data-encoding.workspace = true
 serde_yaml_ng.workspace = true
+utoipa-scalar.workspace = true
 jsonwebtoken.workspace = true
 futures-util.workspace = true
 axum-server.workspace = true
@@ -72,10 +73,11 @@ reqwest.workspace = true
 dotenvy.workspace = true
 totp-rs.workspace = true
 anyhow.workspace = true
+bcrypt.workspace = true
 croner.workspace = true
 chrono.workspace = true
-bcrypt.workspace = true
 rustls.workspace = true
+utoipa.workspace = true
 bytes.workspace = true
 tokio.workspace = true
 serde.workspace = true

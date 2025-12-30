@@ -23,6 +23,7 @@ use super::KomodoReadRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStackResponse)]
 #[error(serror::Error)]
@@ -42,6 +43,7 @@ pub type GetStackResponse = Stack;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListStackServicesResponse)]
 #[error(serror::Error)]
@@ -62,6 +64,7 @@ pub type ListStackServicesResponse = Vec<StackService>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectStackContainerResponse)]
 #[error(serror::Error)]
@@ -84,6 +87,7 @@ pub type InspectStackContainerResponse = Container;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectStackSwarmServiceResponse)]
 #[error(serror::Error)]
@@ -106,6 +110,7 @@ pub type InspectStackSwarmServiceResponse = SwarmService;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectStackSwarmInfoResponse)]
 #[error(serror::Error)]
@@ -127,6 +132,7 @@ pub type InspectStackSwarmInfoResponse = SwarmStack;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStackLogResponse)]
 #[error(serror::Error)]
@@ -164,6 +170,7 @@ pub type GetStackLogResponse = Log;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(SearchStackLogResponse)]
 #[error(serror::Error)]
@@ -201,6 +208,7 @@ pub type SearchStackLogResponse = Log;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonStackExtraArgsResponse)]
 #[error(serror::Error)]
@@ -221,6 +229,7 @@ pub type ListCommonStackExtraArgsResponse = Vec<String>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonStackBuildExtraArgsResponse)]
 #[error(serror::Error)]
@@ -240,6 +249,7 @@ pub type ListCommonStackBuildExtraArgsResponse = Vec<String>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListStacksResponse)]
 #[error(serror::Error)]
@@ -259,6 +269,7 @@ pub type ListStacksResponse = Vec<StackListItem>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullStacksResponse)]
 #[error(serror::Error)]
@@ -278,6 +289,7 @@ pub type ListFullStacksResponse = Vec<Stack>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStackActionStateResponse)]
 #[error(serror::Error)]
@@ -298,6 +310,7 @@ pub type GetStackActionStateResponse = StackActionState;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStacksSummaryResponse)]
 #[error(serror::Error)]
@@ -306,6 +319,7 @@ pub struct GetStacksSummary {}
 /// Response for [GetStacksSummary]
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct GetStacksSummaryResponse {
   /// The total number of stacks
   pub total: u32,

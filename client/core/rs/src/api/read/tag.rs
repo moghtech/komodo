@@ -14,6 +14,7 @@ use super::KomodoReadRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetTagResponse)]
 #[error(serror::Error)]
@@ -34,10 +35,12 @@ pub type GetTagResponse = Tag;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListTagsResponse)]
 #[error(serror::Error)]
 pub struct ListTags {
+  #[cfg_attr(feature = "openapi", schema(value_type = Option<serde_json::Value>))]
   pub query: Option<MongoDocument>,
 }
 

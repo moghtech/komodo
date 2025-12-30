@@ -12,6 +12,7 @@ use super::KomodoWriteRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
 #[error(serror::Error)]
@@ -27,6 +28,7 @@ pub struct CreateUserGroup {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
 #[error(serror::Error)]
@@ -44,6 +46,7 @@ pub struct RenameUserGroup {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
 #[error(serror::Error)]
@@ -59,6 +62,7 @@ pub struct DeleteUserGroup {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
 #[error(serror::Error)]
@@ -76,6 +80,7 @@ pub struct AddUserToUserGroup {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
 #[error(serror::Error)]
@@ -94,6 +99,7 @@ pub struct RemoveUserFromUserGroup {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
 #[error(serror::Error)]
@@ -112,6 +118,7 @@ pub struct SetUsersInUserGroup {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
 #[error(serror::Error)]

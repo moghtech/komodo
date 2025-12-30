@@ -11,6 +11,7 @@ use crate::entities::I64;
 /// Retrieve with [ListTerminals][crate::api::read::server::ListTerminals].
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct Terminal {
   /// The name of the terminal.
   pub name: String,
@@ -29,6 +30,7 @@ pub struct Terminal {
 #[derive(
   Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(tag = "type", content = "params")]
 pub enum TerminalTarget {
   Server {
@@ -79,6 +81,7 @@ impl TerminalTarget {
 #[derive(
   Debug, Clone, Copy, Default, Serialize, Deserialize, AsRefStr,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]
 pub enum ContainerTerminalMode {
@@ -93,6 +96,7 @@ pub enum ContainerTerminalMode {
 #[derive(
   Debug, Clone, Copy, Default, Serialize, Deserialize, AsRefStr,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum TerminalRecreateMode {
   /// Never kill the old terminal if it already exists.
   /// If the init command is different, returns error.
@@ -107,6 +111,7 @@ pub enum TerminalRecreateMode {
 /// JSON structure to send new terminal window dimensions
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct TerminalResizeMessage {
   pub rows: u16,
   pub cols: u16,

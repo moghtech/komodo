@@ -13,6 +13,7 @@ use super::KomodoReadRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListApiKeysResponse)]
 #[error(serror::Error)]
@@ -31,6 +32,7 @@ pub type ListApiKeysResponse = Vec<ApiKey>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListApiKeysForServiceUserResponse)]
 #[error(serror::Error)]
@@ -52,6 +54,7 @@ pub type ListApiKeysForServiceUserResponse = Vec<ApiKey>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(FindUserResponse)]
 #[error(serror::Error)]
@@ -73,6 +76,7 @@ pub type FindUserResponse = User;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListUsersResponse)]
 #[error(serror::Error)]
@@ -89,6 +93,7 @@ pub type ListUsersResponse = Vec<User>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetUsernameResponse)]
 #[error(serror::Error)]
@@ -100,6 +105,7 @@ pub struct GetUsername {
 /// Response for [GetUsername].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct GetUsernameResponse {
   /// The username of the user.
   pub username: String,

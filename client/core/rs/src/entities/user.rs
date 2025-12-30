@@ -24,6 +24,7 @@ pub type _Passkey = Passkey;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[cfg_attr(
   feature = "mongo",
   derive(mongo_indexed::derive::MongoIndexed)
@@ -98,6 +99,7 @@ pub struct User {
 
   /// Give the user elevated permissions on all resources of a certain type
   #[serde(default)]
+  #[cfg_attr(feature = "openapi", schema(value_type = HashMap<ResourceTargetVariant, PermissionLevelAndSpecifics>))]
   pub all:
     IndexMap<ResourceTargetVariant, PermissionLevelAndSpecifics>,
 
@@ -152,20 +154,43 @@ impl User {
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, EnumVariants)]
-#[variant_derive(
-  Debug,
-  Clone,
-  Copy,
-  PartialEq,
-  Eq,
-  PartialOrd,
-  Ord,
-  Hash,
-  Serialize,
-  Deserialize,
-  Display,
-  EnumString,
-  AsRefStr
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(
+  not(feature = "openapi"),
+  variant_derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr
+  )
+)]
+#[cfg_attr(
+  feature = "openapi",
+  variant_derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr,
+    utoipa::ToSchema
+  )
 )]
 #[serde(tag = "type", content = "data")]
 pub enum UserConfig {
@@ -203,6 +228,7 @@ impl UserConfig {
 
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct LinkedLoginsMap(HashMap<UserConfigVariant, UserConfig>);
 
 impl LinkedLoginsMap {
@@ -231,6 +257,7 @@ impl LinkedLoginsMap {
 
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UserTotpConfig {
   /// TOTP shared secret, encrypted
   pub secret: String,
@@ -253,7 +280,9 @@ impl UserTotpConfig {
 
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct UserPasskeyConfig {
+  #[cfg_attr(feature = "openapi", schema(value_type = Option<serde_json::Value>))]
   pub passkey: Option<_Passkey>,
   /// Unix timestamp in milliseconds when key created
   pub created_at: I64,

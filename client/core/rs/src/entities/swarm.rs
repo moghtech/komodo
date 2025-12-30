@@ -17,6 +17,7 @@ pub type SwarmListItem = ResourceListItem<SwarmListItemInfo>;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SwarmListItemInfo {
   /// Servers part of the swarm
   pub server_ids: Vec<String>,
@@ -41,6 +42,7 @@ pub struct SwarmListItemInfo {
   Deserialize,
   Display,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum SwarmState {
   /// The Swarm is healthy, all nodes OK
   Healthy,
@@ -56,6 +58,7 @@ pub type Swarm = Resource<SwarmConfig, SwarmInfo>;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SwarmInfo {}
 
 #[typeshare(serialized_as = "Partial<SwarmConfig>")]
@@ -65,7 +68,9 @@ pub type _PartialSwarmConfig = PartialSwarmConfig;
 #[derive(
   Debug, Clone, Default, Serialize, Deserialize, Builder, Partial,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct SwarmConfig {
   /// The Servers which are swarm manager nodes.
@@ -86,8 +91,20 @@ pub struct SwarmConfig {
   pub links: Vec<String>,
 }
 
+#[cfg(feature = "openapi")]
+impl utoipa::PartialSchema for PartialSwarmConfig {
+  fn schema()
+  -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+    utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
+  }
+}
+
+#[cfg(feature = "openapi")]
+impl utoipa::ToSchema for PartialSwarmConfig {}
+
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, Default)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SwarmActionState {}
 
 #[typeshare]
@@ -97,6 +114,7 @@ pub type SwarmQuery = ResourceQuery<SwarmQuerySpecifics>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct SwarmQuerySpecifics {
   /// Filter swarms by server ids.
   pub servers: Vec<String>,

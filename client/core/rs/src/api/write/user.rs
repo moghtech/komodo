@@ -17,6 +17,7 @@ use super::KomodoWriteRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteUserResponse)]
 #[error(serror::Error)]
@@ -41,6 +42,7 @@ pub type DeleteUserResponse = User;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateLocalUserResponse)]
 #[error(serror::Error)]
@@ -62,6 +64,7 @@ pub type CreateLocalUserResponse = User;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateServiceUserResponse)]
 #[error(serror::Error)]
@@ -83,6 +86,7 @@ pub type CreateServiceUserResponse = User;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateServiceUserDescriptionResponse)]
 #[error(serror::Error)]

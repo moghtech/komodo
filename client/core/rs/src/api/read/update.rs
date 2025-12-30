@@ -16,6 +16,7 @@ use super::KomodoReadRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetUpdateResponse)]
 #[error(serror::Error)]
@@ -35,11 +36,13 @@ pub type GetUpdateResponse = Update;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListUpdatesResponse)]
 #[error(serror::Error)]
 pub struct ListUpdates {
   /// An optional mongo query to filter the updates.
+  #[cfg_attr(feature = "openapi", schema(value_type = Option<serde_json::Value>))]
   pub query: Option<MongoDocument>,
   /// Page of updates. Default is 0, which is the most recent data.
   /// Use with the `next_page` field of the response.
@@ -50,6 +53,7 @@ pub struct ListUpdates {
 /// Response for [ListUpdates].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct ListUpdatesResponse {
   /// The page of updates, sorted by timestamp descending.
   pub updates: Vec<UpdateListItem>,
