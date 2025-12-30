@@ -81,10 +81,9 @@ async fn app() -> anyhow::Result<()> {
   let app =
     api::app().into_make_service_with_connect_info::<SocketAddr>();
 
-  let addr =
-    format!("{}:{}", core_config().bind_ip, core_config().port);
+  let addr = format!("{}:{}", config.bind_ip, config.port);
   let socket_addr = SocketAddr::from_str(&addr)
-    .context("failed to parse listen address")?;
+    .context("Failed to parse listen address")?;
 
   let handle = Handle::new();
   tokio::spawn({
