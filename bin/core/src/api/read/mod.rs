@@ -297,10 +297,10 @@ async fn handler(
 #[utoipa::path(
   post,
   path = "/read/GetVersion",
-  description = "Get the Komodo Core api version",
+  description = "Get the Komodo Core version",
   request_body(content = GetVersion),
   responses(
-    (status = 200, body = GetVersionResponse),
+    (status = 200, description = "Komodo Core version", body = GetVersionResponse),
   ),
 )]
 async fn get_version() -> serror::Result<GetVersionResponse> {

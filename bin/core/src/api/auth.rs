@@ -160,12 +160,26 @@ fn login_options_reponse() -> &'static GetLoginOptionsResponse {
   })
 }
 
+#[utoipa::path(
+  post,
+  path = "/auth/GetLoginOptions",
+  description = "Get the configured login options",
+  request_body(content = GetLoginOptions),
+  responses(
+    (status = 200, description = "The login options", body = GetLoginOptionsResponse),
+  ),
+)]
+async fn get_login_options() -> serror::Result<GetLoginOptionsResponse>
+{
+  Ok(*login_options_reponse())
+}
+
 impl Resolve<AuthArgs> for GetLoginOptions {
   async fn resolve(
     self,
     _: &AuthArgs,
   ) -> serror::Result<GetLoginOptionsResponse> {
-    Ok(*login_options_reponse())
+    get_login_options().await
   }
 }
 
