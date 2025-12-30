@@ -6,7 +6,7 @@ use super::{auth, read};
 
 pub fn serve_docs() -> Scalar<utoipa::openapi::OpenApi> {
   Scalar::with_url("/docs", KomodoApi::openapi())
-    .custom_html(include_str!("scalar.html"))
+    .custom_html(include_str!("docs.html"))
 }
 
 #[derive(OpenApi)]
