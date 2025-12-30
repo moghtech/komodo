@@ -285,6 +285,9 @@ pub fn core_config() -> &'static CoreConfig {
         env.komodo_oidc_additional_audiences,
       )
       .unwrap_or(config.oidc_additional_audiences),
+      oidc_allow_additional_audiences: env
+        .komodo_oidc_allow_additional_audiences
+        .unwrap_or(config.oidc_allow_additional_audiences),
       google_oauth: OauthCredentials {
         enabled: env
           .komodo_google_oauth_enabled

@@ -174,11 +174,13 @@ impl OidcClient {
     let verifier = self.0.id_token_verifier();
     let additional_audiences =
       &core_config().oidc_additional_audiences;
-    let verifier = if additional_audiences.is_empty() {
+    let allow_additional_audiences = 
+      &core_config().oidc_allow_additional_audiences;
+    let verifier = if additional_audiences.is_empty() && !allow_additional_audiences {      
       verifier
     } else {
       verifier.set_other_audience_verifier_fn(|aud| {
-        additional_audiences.contains(aud)
+        additional_audiences.contains(aud) || *allow_additional_audiences
       })
     };
 
