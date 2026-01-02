@@ -105,19 +105,20 @@ export const DeploymentConfig = ({
               ),
               image_registry_account: (account, set) => {
                 const image = update.image ?? config.image;
-                const provider =
+                const suggested_provider =
                   image?.type === "Image" && image.params.image
                     ? extract_registry_domain(image.params.image)
                     : image?.type === "Build" && image.params.build_id
                       ? builds?.find((b) => b.id === image.params.build_id)
                           ?.info.image_registry_domain
                       : undefined;
+
                 return (
                   <AccountSelectorConfig
                     id={update.server_id ?? config.server_id ?? undefined}
-                    type="Server"
+                    type={update.server_id ?? config.server_id ? "Server" : "None"}
                     account_type="docker"
-                    provider={provider ?? "docker.io"}
+                    provider={suggested_provider ?? "docker.io"}
                     selected={account}
                     onSelect={(image_registry_account) =>
                       set({ image_registry_account })

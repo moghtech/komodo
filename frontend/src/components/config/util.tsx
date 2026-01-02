@@ -837,26 +837,47 @@ export const AccountSelector = ({
       : ["ListDockerRegistryAccounts", "ListDockerRegistriesFromConfig"];
   const config_params =
     type === "None" ? {} : { target: id ? { type, id } : undefined };
-  const db_accounts = useRead(db_request, {}).data?.filter(
-    (account) => account.domain === provider
-  );
-  const config_providers = useRead(config_request, config_params).data?.filter(
-    (_provider) => _provider.domain === provider
-  );
-
-  const _accounts = new Set<string>();
+  
+  // For docker registry, get ALL accounts (cross-domain), not just for this provider
+  const db_accounts = account_type === "docker" 
+    ? useRead(db_request, {}).data 
+    : useRead(db_request, {}).data?.filter((account) => account.domain === provider);
+  
+  const config_providers = useRead(config_request, config_params).data;
+  
+  const _accounts = new Map<string, { username: string; domain?: string }>();
+  
   for (const account of db_accounts ?? []) {
     if (account.username) {
-      _accounts.add(account.username);
+      _accounts.set(account.username, { username: account.username, domain: account.domain });
     }
   }
-  for (const provider of config_providers ?? []) {
-    for (const account of provider.accounts ?? []) {
-      _accounts.add(account.username);
+  
+  if (account_type === "docker") {
+    // Show accounts from all registries
+    for (const provider of config_providers ?? []) {
+      for (const account of provider.accounts ?? []) {
+        if (account.username) {
+          _accounts.set(account.username, { username: account.username, domain: provider.domain });
+        }
+      }
+    }
+  } else {
+    // For git, filter by provider as before
+    for (const provider_obj of config_providers ?? []) {
+      if (provider_obj.domain === provider) {
+        for (const account of provider_obj.accounts ?? []) {
+          if (account.username) {
+            _accounts.set(account.username, { username: account.username, domain: provider_obj.domain });
+          }
+        }
+      }
     }
   }
-  const accounts = [..._accounts];
-  accounts.sort();
+  
+  const accounts = [..._accounts.values()];
+  accounts.sort((a, b) => a.username.localeCompare(b.username));
+  
   return (
     <Select
       value={selected}
@@ -879,15 +900,16 @@ export const AccountSelector = ({
       <SelectContent>
         <SelectItem value={"Empty"}>None</SelectItem>
         {accounts
-          ?.filter((account) => account)
+          ?.filter((account) => account.username)
           .map((account) => (
-            <SelectItem key={account} value={account}>
-              {account}
+            <SelectItem key={`${account.domain}:${account.username}`} value={account.username}>
+              {account_type === "docker" && account.domain ? `${account.username} (${account.domain})` : account.username}
             </SelectItem>
           ))}
       </SelectContent>
     </Select>
   );
+
 };
 
 export const AccountSelectorConfig = (params: {
