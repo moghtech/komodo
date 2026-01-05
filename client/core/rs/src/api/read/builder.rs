@@ -16,7 +16,7 @@ use super::KomodoReadRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuilderResponse)]
 #[error(serror::Error)]
@@ -36,7 +36,7 @@ pub type GetBuilderResponse = Builder;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListBuildersResponse)]
 #[error(serror::Error)]
@@ -55,7 +55,7 @@ pub type ListBuildersResponse = Vec<BuilderListItem>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullBuildersResponse)]
 #[error(serror::Error)]
@@ -75,7 +75,7 @@ pub type ListFullBuildersResponse = Vec<Builder>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildersSummaryResponse)]
 #[error(serror::Error)]
@@ -84,7 +84,7 @@ pub struct GetBuildersSummary {}
 /// Response for [GetBuildersSummary].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetBuildersSummaryResponse {
   /// The total number of builders.
   pub total: u32,

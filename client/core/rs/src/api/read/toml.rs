@@ -10,7 +10,7 @@ use super::KomodoReadRequest;
 /// Response containing pretty formatted toml contents.
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TomlResponse {
   pub toml: String,
 }
@@ -24,7 +24,7 @@ pub struct TomlResponse {
 #[derive(
   Debug, Clone, Default, Serialize, Deserialize, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ExportAllResourcesToTomlResponse)]
 #[error(serror::Error)]
@@ -63,7 +63,7 @@ pub type ExportAllResourcesToTomlResponse = TomlResponse;
 #[derive(
   Debug, Clone, Default, Serialize, Deserialize, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ExportResourcesToTomlResponse)]
 #[error(serror::Error)]

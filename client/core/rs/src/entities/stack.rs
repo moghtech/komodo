@@ -135,7 +135,7 @@ pub type StackListItem = ResourceListItem<StackListItemInfo>;
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct StackListItemInfo {
   /// The swarm that stack is deployed on, when in Swarm mode.
   pub swarm_id: String,
@@ -178,7 +178,7 @@ pub struct StackListItemInfo {
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct StackServiceWithUpdate {
   pub service: String,
   /// The service's image
@@ -201,7 +201,7 @@ pub struct StackServiceWithUpdate {
   Deserialize,
   Display,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 // Do this one snake_case in line with DeploymentState.
 // Also in line with docker terminology.
 #[serde(rename_all = "snake_case")]
@@ -234,7 +234,7 @@ pub enum StackState {
 
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct StackInfo {
   /// If any of the expected compose / additional files are missing in the repo,
   /// they will be stored here.
@@ -284,7 +284,7 @@ pub type _PartialStackConfig = PartialStackConfig;
 /// The compose file configuration.
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, Builder, Partial)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[diff_derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[partial(skip_serializing_none, from, diff)]
@@ -692,7 +692,7 @@ impl Default for StackConfig {
   }
 }
 
-#[cfg(feature = "openapi")]
+#[cfg(feature = "utoipa")]
 impl utoipa::PartialSchema for PartialStackConfig {
   fn schema()
   -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
@@ -700,14 +700,14 @@ impl utoipa::PartialSchema for PartialStackConfig {
   }
 }
 
-#[cfg(feature = "openapi")]
+#[cfg(feature = "utoipa")]
 impl utoipa::ToSchema for PartialStackConfig {}
 
 #[typeshare]
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ComposeProject {
   /// The compose project name.
   pub name: String,
@@ -719,7 +719,7 @@ pub struct ComposeProject {
 
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct StackServiceNames {
   /// The name of the service
   pub service_name: String,
@@ -750,7 +750,7 @@ pub struct StackServiceNames {
 
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct StackService {
   /// The service name
   pub service: String,
@@ -766,7 +766,7 @@ pub struct StackService {
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, Default)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct StackActionState {
   pub pulling: bool,
   pub deploying: bool,
@@ -785,7 +785,7 @@ pub type StackQuery = ResourceQuery<StackQuerySpecifics>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct StackQuerySpecifics {
   /// Query only for Stacks on these Servers.
   /// If empty, does not filter by Server.
@@ -856,7 +856,7 @@ pub struct ComposeServiceDeploy {
 /// info specific to Stacks.
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct StackRemoteFileContents {
   /// The path to the file
   pub path: String,
@@ -883,7 +883,7 @@ pub struct StackRemoteFileContents {
   Serialize,
   Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum StackFileRequires {
   /// Diff requires service redeploy.
   #[serde(alias = "redeploy")]
@@ -901,7 +901,7 @@ pub enum StackFileRequires {
 /// Supports backward compatibility with string-only format.
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct AdditionalEnvFile {
   /// File path relative to run directory
   pub path: String,
@@ -980,7 +980,7 @@ impl<'de> Deserialize<'de> for AdditionalEnvFile {
 /// Configure additional file dependencies of the Stack.
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct StackFileDependency {
   /// Specify the file
   pub path: String,

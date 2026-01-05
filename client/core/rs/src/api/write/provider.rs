@@ -13,7 +13,7 @@ use super::KomodoWriteRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateGitProviderAccountResponse)]
 #[error(serror::Error)]
@@ -34,7 +34,7 @@ pub type CreateGitProviderAccountResponse = GitProviderAccount;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateGitProviderAccountResponse)]
 #[error(serror::Error)]
@@ -56,7 +56,7 @@ pub type UpdateGitProviderAccountResponse = GitProviderAccount;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteGitProviderAccountResponse)]
 #[error(serror::Error)]
@@ -76,7 +76,7 @@ pub type DeleteGitProviderAccountResponse = GitProviderAccount;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateDockerRegistryAccountResponse)]
 #[error(serror::Error)]
@@ -95,7 +95,7 @@ pub type CreateDockerRegistryAccountResponse = DockerRegistryAccount;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateDockerRegistryAccountResponse)]
 #[error(serror::Error)]
@@ -117,7 +117,7 @@ pub type UpdateDockerRegistryAccountResponse = DockerRegistryAccount;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteDockerRegistryAccountResponse)]
 #[error(serror::Error)]

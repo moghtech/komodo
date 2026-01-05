@@ -9,7 +9,7 @@ use super::{ContainerConfig, GraphDriverData};
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ImageListItem {
   /// The first tag in `repo_tags`, or Id if no tags.
   pub name: String,
@@ -30,7 +30,7 @@ pub struct ImageListItem {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Image {
   /// ID is the content-addressable ID of an image.  This identifier is a content-addressable digest calculated from the image's configuration (which includes the digests of layers used by the image).  Note that this digest differs from the `RepoDigests` below, which holds digests of image manifests that reference the image.
   #[serde(rename = "Id")]
@@ -104,7 +104,7 @@ pub struct Image {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ImageInspectRootFs {
   #[serde(default, rename = "Type")]
   pub typ: String,
@@ -118,7 +118,7 @@ pub struct ImageInspectRootFs {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ImageInspectMetadata {
   /// Date and time at which the image was last tagged in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds.  This information is only available if the image was tagged locally, and omitted otherwise.
   #[serde(rename = "LastTagTime")]
@@ -130,7 +130,7 @@ pub struct ImageInspectMetadata {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ImageHistoryResponseItem {
   #[serde(rename = "Id")]
   pub id: String,

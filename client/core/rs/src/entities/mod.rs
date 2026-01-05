@@ -110,7 +110,7 @@ pub type _Serror = Serror;
   Parser,
   EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct NoData {}
 
 pub trait MergePartial: Sized {
@@ -190,7 +190,7 @@ pub fn komodo_timestamp() -> i64 {
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct MongoIdObj {
   #[serde(rename = "$oid")]
   pub oid: String,
@@ -198,7 +198,7 @@ pub struct MongoIdObj {
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct __Serror {
   pub error: String,
   pub trace: Vec<String>,
@@ -208,7 +208,7 @@ pub struct __Serror {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SystemCommand {
   #[serde(default)]
   pub path: String,
@@ -236,7 +236,7 @@ impl SystemCommand {
 
 #[typeshare]
 #[derive(Serialize, Debug, Clone, Copy, Default, PartialEq)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Version {
   pub major: i32,
   pub minor: i32,
@@ -361,7 +361,7 @@ impl Version {
 #[derive(
   Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct EnvironmentVar {
   pub variable: String,
   pub value: String,
@@ -380,7 +380,7 @@ pub fn environment_vars_from_str(
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct LatestCommit {
   pub hash: String,
   pub message: String,
@@ -388,7 +388,7 @@ pub struct LatestCommit {
 
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct FileContents {
   /// The path to the file
   pub path: String,
@@ -399,7 +399,7 @@ pub struct FileContents {
 /// Represents a scheduled maintenance window
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct MaintenanceWindow {
   /// Name for the maintenance window (required)
   pub name: String,
@@ -443,7 +443,7 @@ fn default_enabled() -> bool {
 #[derive(
   Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum DefaultRepoFolder {
   /// /${root_directory}/stacks
   Stacks,
@@ -459,7 +459,7 @@ pub enum DefaultRepoFolder {
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct RepoExecutionArgs {
   /// Resource name (eg Build name, Repo name)
   pub name: String,
@@ -616,12 +616,12 @@ impl From<&self::sync::ResourceSync> for RepoExecutionArgs {
 
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct RepoExecutionResponse {
   /// Response logs
   pub logs: Vec<Log>,
   /// Absolute path to the repo root on the host.
-  #[cfg_attr(feature = "openapi", schema(value_type = String))]
+  #[cfg_attr(feature = "utoipa", schema(value_type = String))]
   pub path: PathBuf,
   /// Latest short commit hash, if it could be retrieved
   pub commit_hash: Option<String>,
@@ -643,7 +643,7 @@ pub struct RepoExecutionResponse {
   Display,
   EnumString,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "snake_case")]
 #[strum(serialize_all = "snake_case")]
 pub enum Timelength {
@@ -777,7 +777,7 @@ impl TryInto<async_timing_util::Timelength> for Timelength {
   Serialize,
   Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum DayOfWeek {
   #[default]
   #[serde(alias = "monday", alias = "Mon", alias = "mon")]
@@ -831,7 +831,7 @@ pub enum DayOfWeek {
   Serialize,
   Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum MaintenanceScheduleType {
   /// Daily at the specified time
   #[default]
@@ -858,7 +858,7 @@ pub enum MaintenanceScheduleType {
   Serialize,
   Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum IanaTimezone {
   /// UTC−12:00
   #[serde(rename = "Etc/GMT+12")]
@@ -1067,7 +1067,7 @@ pub enum IanaTimezone {
   EnumString,
   AsRefStr,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum Operation {
   // do nothing
   #[default]
@@ -1251,7 +1251,7 @@ pub enum Operation {
   Clone,
   Copy,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum SearchCombinator {
   #[default]
   Or,
@@ -1272,7 +1272,7 @@ pub enum SearchCombinator {
   Display,
   EnumString,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "UPPERCASE")]
 #[strum(serialize_all = "UPPERCASE")]
 pub enum TerminationSignal {
@@ -1299,9 +1299,9 @@ pub enum TerminationSignal {
   Deserialize,
   EnumVariants,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
-  not(feature = "openapi"),
+  not(feature = "utoipa"),
   variant_derive(
     Debug,
     Clone,
@@ -1319,7 +1319,7 @@ pub enum TerminationSignal {
   )
 )]
 #[cfg_attr(
-  feature = "openapi",
+  feature = "utoipa",
   variant_derive(
     Debug,
     Clone,
@@ -1488,7 +1488,7 @@ impl ResourceTargetVariant {
 #[derive(
   Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum ScheduleFormat {
   #[default]
   English,
@@ -1499,7 +1499,7 @@ pub enum ScheduleFormat {
 #[derive(
   Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum FileFormat {
   #[default]

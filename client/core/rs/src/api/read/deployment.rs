@@ -25,7 +25,7 @@ use super::KomodoReadRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentResponse)]
 #[error(serror::Error)]
@@ -46,7 +46,7 @@ pub type GetDeploymentResponse = Deployment;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDeploymentsResponse)]
 #[error(serror::Error)]
@@ -67,7 +67,7 @@ pub type ListDeploymentsResponse = Vec<DeploymentListItem>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullDeploymentsResponse)]
 #[error(serror::Error)]
@@ -92,7 +92,7 @@ pub type ListFullDeploymentsResponse = Vec<Deployment>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentContainerResponse)]
 #[error(serror::Error)]
@@ -105,7 +105,7 @@ pub struct GetDeploymentContainer {
 /// Response for [GetDeploymentContainer].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetDeploymentContainerResponse {
   pub state: DeploymentState,
   pub container: Option<ContainerListItem>,
@@ -119,7 +119,7 @@ pub struct GetDeploymentContainerResponse {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDeploymentContainerResponse)]
 #[error(serror::Error)]
@@ -140,7 +140,7 @@ pub type InspectDeploymentContainerResponse = Container;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDeploymentSwarmServiceResponse)]
 #[error(serror::Error)]
@@ -163,7 +163,7 @@ pub type InspectDeploymentSwarmServiceResponse = SwarmService;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentLogResponse)]
 #[error(serror::Error)]
@@ -198,7 +198,7 @@ pub type GetDeploymentLogResponse = Log;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(SearchDeploymentLogResponse)]
 #[error(serror::Error)]
@@ -235,7 +235,7 @@ pub type SearchDeploymentLogResponse = Log;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentStatsResponse)]
 #[error(serror::Error)]
@@ -256,7 +256,7 @@ pub type GetDeploymentStatsResponse = ContainerStats;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(DeploymentActionState)]
 #[error(serror::Error)]
@@ -277,7 +277,7 @@ pub type GetDeploymentActionStateResponse = DeploymentActionState;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentsSummaryResponse)]
 #[error(serror::Error)]
@@ -286,7 +286,7 @@ pub struct GetDeploymentsSummary {}
 /// Response for [GetDeploymentsSummary].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetDeploymentsSummaryResponse {
   /// The total number of Deployments
   pub total: I64,
@@ -310,7 +310,7 @@ pub struct GetDeploymentsSummaryResponse {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonDeploymentExtraArgsResponse)]
 #[error(serror::Error)]

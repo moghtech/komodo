@@ -68,7 +68,7 @@ pub trait KomodoReadRequest: HasResponse {}
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetVersionResponse)]
 #[error(serror::Error)]
@@ -77,7 +77,7 @@ pub struct GetVersion {}
 /// Response for [GetVersion].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetVersionResponse {
   /// The version of the core api.
   pub version: String,
@@ -91,7 +91,7 @@ pub struct GetVersionResponse {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetCoreInfoResponse)]
 #[error(serror::Error)]
@@ -100,7 +100,7 @@ pub struct GetCoreInfo {}
 /// Response for [GetCoreInfo].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetCoreInfoResponse {
   /// The title assigned to this core api.
   pub title: String,
@@ -139,7 +139,7 @@ pub struct GetCoreInfoResponse {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListGitProvidersFromConfigResponse)]
 #[error(serror::Error)]
@@ -165,7 +165,7 @@ pub type ListGitProvidersFromConfigResponse = Vec<GitProvider>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerRegistriesFromConfigResponse)]
 #[error(serror::Error)]
@@ -186,7 +186,7 @@ pub type ListDockerRegistriesFromConfigResponse = Vec<DockerRegistry>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSecretsResponse)]
 #[error(serror::Error)]

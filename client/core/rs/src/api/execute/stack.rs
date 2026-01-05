@@ -22,7 +22,7 @@ use super::{BatchExecutionResponse, KomodoExecuteRequest};
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -54,7 +54,7 @@ pub struct DeployStack {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
 #[error(serror::Error)]
@@ -88,7 +88,7 @@ pub struct BatchDeployStack {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -114,7 +114,7 @@ pub struct DeployStackIfChanged {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
 #[error(serror::Error)]
@@ -146,7 +146,7 @@ pub struct BatchDeployStackIfChanged {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -173,7 +173,7 @@ pub struct PullStack {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
 #[error(serror::Error)]
@@ -205,7 +205,7 @@ pub struct BatchPullStack {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -232,7 +232,7 @@ pub struct StartStack {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -259,7 +259,7 @@ pub struct RestartStack {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -288,7 +288,7 @@ pub struct PauseStack {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -315,7 +315,7 @@ pub struct UnpauseStack {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -344,7 +344,7 @@ pub struct StopStack {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -376,7 +376,7 @@ pub struct DestroyStack {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -435,7 +435,7 @@ fn env_parser(args: &str) -> anyhow::Result<HashMap<String, String>> {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
 #[error(serror::Error)]

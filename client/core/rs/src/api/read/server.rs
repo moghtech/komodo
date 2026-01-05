@@ -23,7 +23,7 @@ use super::KomodoReadRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(Server)]
 #[error(serror::Error)]
@@ -43,7 +43,7 @@ pub type GetServerResponse = Server;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListServersResponse)]
 #[error(serror::Error)]
@@ -63,7 +63,7 @@ pub type ListServersResponse = Vec<ServerListItem>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullServersResponse)]
 #[error(serror::Error)]
@@ -83,7 +83,7 @@ pub type ListFullServersResponse = Vec<Server>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetServerStateResponse)]
 #[error(serror::Error)]
@@ -96,7 +96,7 @@ pub struct GetServerState {
 /// The response for [GetServerState].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetServerStateResponse {
   /// The server status.
   pub status: ServerState,
@@ -109,7 +109,7 @@ pub struct GetServerStateResponse {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ServerActionState)]
 #[error(serror::Error)]
@@ -131,7 +131,7 @@ pub type GetServerActionStateResponse = ServerActionState;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetPeripheryInformationResponse)]
 #[error(serror::Error)]
@@ -152,7 +152,7 @@ pub type GetPeripheryInformationResponse = PeripheryInformation;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetSystemInformationResponse)]
 #[error(serror::Error)]
@@ -176,7 +176,7 @@ pub type GetSystemInformationResponse = SystemInformation;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetSystemStatsResponse)]
 #[error(serror::Error)]
@@ -201,7 +201,7 @@ pub type GetSystemStatsResponse = SystemStats;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSystemProcessesResponse)]
 #[error(serror::Error)]
@@ -222,7 +222,7 @@ pub type ListSystemProcessesResponse = Vec<SystemProcess>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetHistoricalServerStatsResponse)]
 #[error(serror::Error)]
@@ -241,7 +241,7 @@ pub struct GetHistoricalServerStats {
 /// Response to [GetHistoricalServerStats].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetHistoricalServerStatsResponse {
   /// The timeseries page of data.
   pub stats: Vec<SystemStatsRecord>,
@@ -257,7 +257,7 @@ pub struct GetHistoricalServerStatsResponse {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetServersSummaryResponse)]
 #[error(serror::Error)]
@@ -266,7 +266,7 @@ pub struct GetServersSummary {}
 /// Response for [GetServersSummary].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetServersSummaryResponse {
   /// The total number of servers.
   pub total: I64,

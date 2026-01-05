@@ -17,7 +17,7 @@ use super::{
 /// any groups they are a part of.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
   feature = "mongo",
   derive(mongo_indexed::derive::MongoIndexed)
@@ -50,7 +50,7 @@ pub struct UserGroup {
 
   /// Give the user group elevated permissions on all resources of a certain type
   #[serde(default)]
-  #[cfg_attr(feature = "openapi", schema(value_type = HashMap<ResourceTargetVariant, PermissionLevelAndSpecifics>))]
+  #[cfg_attr(feature = "utoipa", schema(value_type = HashMap<ResourceTargetVariant, PermissionLevelAndSpecifics>))]
   pub all:
     IndexMap<ResourceTargetVariant, PermissionLevelAndSpecifics>,
 

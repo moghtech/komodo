@@ -13,7 +13,7 @@ use super::KomodoReadRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListAlertsResponse)]
 #[error(serror::Error)]
@@ -42,7 +42,7 @@ pub struct ListAlerts {
   /// }
   /// ```
   /// This will filter to only include open alerts that have CRITICAL level on those two servers.
-  #[cfg_attr(feature = "openapi", schema(value_type = serde_json::Value))]
+  #[cfg_attr(feature = "utoipa", schema(value_type = serde_json::Value))]
   pub query: Option<MongoDocument>,
   /// Retrieve older results by incrementing the page.
   /// `page: 0` is default, and returns the most recent results.
@@ -53,7 +53,7 @@ pub struct ListAlerts {
 /// Response for [ListAlerts].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ListAlertsResponse {
   pub alerts: Vec<Alert>,
   /// If more alerts exist, the next page will be given here.
@@ -68,7 +68,7 @@ pub struct ListAlertsResponse {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetAlertResponse)]
 #[error(serror::Error)]

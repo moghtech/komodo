@@ -13,7 +13,7 @@ use super::KomodoReadRequest;
 #[derive(
   Debug, Clone, Serialize, Deserialize, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetUserGroupResponse)]
 #[error(serror::Error)]
@@ -35,7 +35,7 @@ pub type GetUserGroupResponse = UserGroup;
 #[derive(
   Debug, Clone, Default, Serialize, Deserialize, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListUserGroupsResponse)]
 #[error(serror::Error)]

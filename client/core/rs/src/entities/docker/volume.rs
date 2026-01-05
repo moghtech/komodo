@@ -11,7 +11,7 @@ use super::{ObjectVersion, PortBinding};
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct VolumeListItem {
   /// The name of the volume
   pub name: String,
@@ -29,7 +29,7 @@ pub struct VolumeListItem {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Volume {
   /// Name of the volume.
   #[serde(rename = "Name")]
@@ -83,7 +83,7 @@ pub struct Volume {
   Ord,
   Default,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum VolumeScopeEnum {
   #[default]
   #[serde(rename = "")]
@@ -99,7 +99,7 @@ pub enum VolumeScopeEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ClusterVolume {
   /// The Swarm ID of this volume. Because cluster volumes are Swarm objects, they have an ID, unlike non-cluster volumes. This ID can be used to refer to the Volume instead of the name.
   #[serde(rename = "ID")]
@@ -130,7 +130,7 @@ pub struct ClusterVolume {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ClusterVolumeInfo {
   /// The capacity of the volume in bytes. A value of 0 indicates that the capacity is unknown.
   #[serde(rename = "CapacityBytes")]
@@ -153,7 +153,7 @@ pub struct ClusterVolumeInfo {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ClusterVolumePublishStatus {
   /// The ID of the Swarm node the volume is published on.
   #[serde(rename = "NodeID")]
@@ -181,7 +181,7 @@ pub struct ClusterVolumePublishStatus {
   Ord,
   Default,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum ClusterVolumePublishStatusStateEnum {
   #[default]
   #[serde(rename = "")]
@@ -201,7 +201,7 @@ pub enum ClusterVolumePublishStatusStateEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ClusterVolumeSpec {
   /// Group defines the volume group of this volume. Volumes belonging to the same group can be referred to by group name when creating Services.  Referring to a volume by group instructs Swarm to treat volumes in that group interchangeably for the purpose of scheduling. Volumes with an empty string for a group technically all belong to the same, emptystring group.
   #[serde(rename = "Group")]
@@ -216,7 +216,7 @@ pub struct ClusterVolumeSpec {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ClusterVolumeSpecAccessMode {
   /// The set of nodes this volume can be used on at one time. - `single` The volume may only be scheduled to one node at a time. - `multi` the volume may be scheduled to any supported number of nodes at a time.
   #[serde(default, rename = "Scope")]
@@ -256,7 +256,7 @@ pub struct ClusterVolumeSpecAccessMode {
   Ord,
   Default,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum ClusterVolumeSpecAccessModeScopeEnum {
   #[default]
   #[serde(rename = "")]
@@ -280,7 +280,7 @@ pub enum ClusterVolumeSpecAccessModeScopeEnum {
   Ord,
   Default,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum ClusterVolumeSpecAccessModeSharingEnum {
   #[default]
   #[serde(rename = "")]
@@ -300,7 +300,7 @@ pub enum ClusterVolumeSpecAccessModeSharingEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ClusterVolumeSpecAccessModeSecrets {
   /// Key is the name of the key of the key-value pair passed to the plugin.
   #[serde(rename = "Key")]
@@ -316,7 +316,7 @@ pub struct ClusterVolumeSpecAccessModeSecrets {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ClusterVolumeSpecAccessModeAccessibilityRequirements {
   /// A list of required topologies, at least one of which the volume must be accessible from.
   #[serde(default, rename = "Requisite")]
@@ -335,7 +335,7 @@ pub type Topology = HashMap<String, Vec<PortBinding>>;
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ClusterVolumeSpecAccessModeCapacityRange {
   /// The volume must be at least this big. The value of 0 indicates an unspecified minimum
   #[serde(rename = "RequiredBytes")]
@@ -359,7 +359,7 @@ pub struct ClusterVolumeSpecAccessModeCapacityRange {
   Ord,
   Default,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum ClusterVolumeSpecAccessModeAvailabilityEnum {
   #[default]
   #[serde(rename = "")]
@@ -377,7 +377,7 @@ pub enum ClusterVolumeSpecAccessModeAvailabilityEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct VolumeUsageData {
   /// Amount of disk space used by the volume (in bytes). This information is only available for volumes created with the `\"local\"` volume driver. For volumes created with other volume drivers, this field is set to `-1` (\"not available\")
   #[serde(rename = "Size")]

@@ -26,7 +26,7 @@ use crate::{
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -59,7 +59,7 @@ pub struct RemoveSwarmNodes {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -96,7 +96,7 @@ fn default_detach() -> bool {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -125,7 +125,7 @@ pub struct RemoveSwarmServices {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -169,7 +169,7 @@ pub struct CreateSwarmConfig {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -198,7 +198,7 @@ pub struct RotateSwarmConfig {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -227,7 +227,7 @@ pub struct RemoveSwarmConfigs {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -273,7 +273,7 @@ pub struct CreateSwarmSecret {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]
@@ -300,7 +300,7 @@ pub struct RotateSwarmSecret {
   EmptyTraits,
   Parser,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(serror::Error)]

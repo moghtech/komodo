@@ -15,7 +15,7 @@ path = "src/main.rs"
 
 [dependencies]
 # local
-komodo_client = { workspace = true, features = ["mongo", "openapi"] }
+komodo_client = { workspace = true, features = ["core"] }
 periphery_client.workspace = true
 environment_file.workspace = true
 interpolate.workspace = true

@@ -25,7 +25,7 @@ use super::KomodoReadRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDockerContainersSummaryResponse)]
 #[error(serror::Error)]
@@ -34,7 +34,7 @@ pub struct GetDockerContainersSummary {}
 /// Response for [GetDockerContainersSummary]
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetDockerContainersSummaryResponse {
   /// The total number of Containers
   pub total: u32,
@@ -55,7 +55,9 @@ pub struct GetDockerContainersSummaryResponse {
 #[typeshare]
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]#[empty_traits(KomodoReadRequest)]
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoReadRequest)]
 #[response(ListAllDockerContainersResponse)]
 #[error(serror::Error)]
 pub struct ListAllDockerContainers {
@@ -79,7 +81,7 @@ pub type ListAllDockerContainersResponse = Vec<ContainerListItem>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerContainersResponse)]
 #[error(serror::Error)]
@@ -99,7 +101,7 @@ pub type ListDockerContainersResponse = Vec<ContainerListItem>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDockerContainerResponse)]
 #[error(serror::Error)]
@@ -121,7 +123,7 @@ pub type InspectDockerContainerResponse = Container;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetResourceMatchingContainerResponse)]
 #[error(serror::Error)]
@@ -136,7 +138,7 @@ pub struct GetResourceMatchingContainer {
 /// Response for [GetResourceMatchingContainer]. Resource is either Deployment, Stack, or None.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetResourceMatchingContainerResponse {
   pub resource: Option<ResourceTarget>,
 }
@@ -151,7 +153,7 @@ pub struct GetResourceMatchingContainerResponse {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetContainerLogResponse)]
 #[error(serror::Error)]
@@ -188,7 +190,7 @@ pub type GetContainerLogResponse = Log;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(SearchContainerLogResponse)]
 #[error(serror::Error)]
@@ -225,7 +227,7 @@ pub type SearchContainerLogResponse = Log;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListComposeProjectsResponse)]
 #[error(serror::Error)]
@@ -245,7 +247,7 @@ pub type ListComposeProjectsResponse = Vec<ComposeProject>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerNetworksResponse)]
 #[error(serror::Error)]
@@ -265,7 +267,7 @@ pub type ListDockerNetworksResponse = Vec<NetworkListItem>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDockerNetworkResponse)]
 #[error(serror::Error)]
@@ -288,7 +290,7 @@ pub type InspectDockerNetworkResponse = Network;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerImagesResponse)]
 #[error(serror::Error)]
@@ -308,7 +310,7 @@ pub type ListDockerImagesResponse = Vec<ImageListItem>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDockerImageResponse)]
 #[error(serror::Error)]
@@ -330,7 +332,7 @@ pub type InspectDockerImageResponse = Image;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerImageHistoryResponse)]
 #[error(serror::Error)]
@@ -354,7 +356,7 @@ pub type ListDockerImageHistoryResponse =
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerVolumesResponse)]
 #[error(serror::Error)]
@@ -374,7 +376,7 @@ pub type ListDockerVolumesResponse = Vec<VolumeListItem>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDockerVolumeResponse)]
 #[error(serror::Error)]

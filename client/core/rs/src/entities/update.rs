@@ -12,7 +12,7 @@ use super::{ResourceTarget, Version};
 /// Represents an action performed by Komodo.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
   feature = "mongo",
   derive(mongo_indexed::derive::MongoIndexed)
@@ -112,7 +112,7 @@ impl Update {
 /// Minimal representation of an action performed by Komodo.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct UpdateListItem {
   /// The id of the update
   pub id: String,
@@ -149,7 +149,7 @@ pub struct UpdateListItem {
 /// Represents the output of some command being run
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Log {
   /// A label for the log
   pub stage: String,
@@ -220,7 +220,7 @@ impl Log {
   Copy,
   Default,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum UpdateStatus {
   /// The run is in the system but hasn't started yet
   Queued,

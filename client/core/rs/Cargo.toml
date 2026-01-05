@@ -12,9 +12,10 @@ repository.workspace = true
 
 [features]
 # default = ["blocking"] # use to dev client blocking mode
-mongo = ["dep:mongo_indexed"]
 blocking = ["reqwest/blocking"]
-openapi = ["dep:utoipa", "serror/utoipa"]
+mongo = ["dep:mongo_indexed"]
+utoipa = ["dep:utoipa", "serror/utoipa"]
+core = ["mongo", "utoipa"]
 
 [dependencies]
 # mogh

@@ -19,7 +19,7 @@ use super::{
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, Builder)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Resource<Config: Default, Info: Default = ()> {
   /// The Mongo ID of the resource.
   /// This field is de/serialized from/to JSON as
@@ -92,7 +92,7 @@ impl<C: Default, I: Default> Default for Resource<C, I> {
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ResourceListItem<Info> {
   /// The resource id
   pub id: String,
@@ -114,7 +114,7 @@ pub struct ResourceListItem<Info> {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ResourceQuery<T: Default> {
   #[serde(default)]
   pub names: Vec<String>,
@@ -141,7 +141,7 @@ pub struct ResourceQuery<T: Default> {
   ValueEnum,
   Display,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 // Only strum serializes lowercase for clap compat.
 #[strum(serialize_all = "lowercase")]
 pub enum TemplatesQueryBehavior {
@@ -156,7 +156,7 @@ pub enum TemplatesQueryBehavior {
 
 #[typeshare]
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum TagQueryBehavior {
   /// Returns resources which have strictly all the tags
   #[default]

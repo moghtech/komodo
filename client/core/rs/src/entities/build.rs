@@ -152,7 +152,7 @@ pub type BuildListItem = ResourceListItem<BuildListItemInfo>;
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct BuildListItemInfo {
   /// State of the build. Reflects whether most recent build successful.
   pub state: BuildState,
@@ -202,7 +202,7 @@ pub struct BuildListItemInfo {
   Deserialize,
   Display,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum BuildState {
   /// Currently building
   Building,
@@ -217,7 +217,7 @@ pub enum BuildState {
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct BuildInfo {
   /// The timestamp build was last built.
   pub last_built_at: I64,
@@ -251,7 +251,7 @@ pub type _PartialBuildConfig = PartialBuildConfig;
 /// The build configuration.
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, Builder, Partial)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[diff_derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[partial(skip_serializing_none, from, diff)]
@@ -553,7 +553,7 @@ impl Default for BuildConfig {
   }
 }
 
-#[cfg(feature = "openapi")]
+#[cfg(feature = "utoipa")]
 impl utoipa::PartialSchema for PartialBuildConfig {
   fn schema()
   -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
@@ -561,7 +561,7 @@ impl utoipa::PartialSchema for PartialBuildConfig {
   }
 }
 
-#[cfg(feature = "openapi")]
+#[cfg(feature = "utoipa")]
 impl utoipa::ToSchema for PartialBuildConfig {}
 
 /// Configuration for an image registry
@@ -569,7 +569,7 @@ impl utoipa::ToSchema for PartialBuildConfig {}
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ImageRegistryConfig {
   /// Specify the registry provider domain, eg `docker.io`.
   /// If not provided, will not push to any registry.
@@ -595,7 +595,7 @@ impl ImageRegistryConfig {
 
 #[typeshare]
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct BuildActionState {
   pub building: bool,
 }
@@ -607,7 +607,7 @@ pub type BuildQuery = ResourceQuery<BuildQuerySpecifics>;
 #[derive(
   Debug, Clone, Default, Serialize, Deserialize, DefaultBuilder,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct BuildQuerySpecifics {
   #[serde(default)]
   pub builder_ids: Vec<String>,

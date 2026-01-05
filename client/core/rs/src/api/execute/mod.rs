@@ -47,9 +47,9 @@ pub trait KomodoExecuteRequest: HasResponse {}
   EnumVariants,
   Subcommand,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
-  not(feature = "openapi"),
+  not(feature = "utoipa"),
   variant_derive(
     Debug,
     Clone,
@@ -61,7 +61,7 @@ pub trait KomodoExecuteRequest: HasResponse {}
   )
 )]
 #[cfg_attr(
-  feature = "openapi",
+  feature = "utoipa",
   variant_derive(
     Debug,
     Clone,
@@ -208,7 +208,7 @@ pub enum Execution {
 /// Sleeps for the specified time.
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Parser)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Sleep {
   #[serde(default)]
   pub duration_ms: I64,

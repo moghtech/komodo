@@ -26,7 +26,7 @@ pub type ServerListItem = ResourceListItem<ServerListItemInfo>;
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ServerListItemInfo {
   /// The server's state.
   pub state: ServerState,
@@ -65,7 +65,7 @@ pub struct ServerListItemInfo {
 
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ServerInfo {
   /// If a Periphery fails to authenticate to Core
   /// for a disconnected server with invalid Periphery public key,
@@ -84,7 +84,7 @@ pub type _PartialServerConfig = PartialServerConfig;
 /// Server configuration.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Builder, Partial)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
@@ -330,7 +330,7 @@ impl Default for ServerConfig {
   }
 }
 
-#[cfg(feature = "openapi")]
+#[cfg(feature = "utoipa")]
 impl utoipa::PartialSchema for PartialServerConfig {
   fn schema()
   -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
@@ -338,13 +338,13 @@ impl utoipa::PartialSchema for PartialServerConfig {
   }
 }
 
-#[cfg(feature = "openapi")]
+#[cfg(feature = "utoipa")]
 impl utoipa::ToSchema for PartialServerConfig {}
 
 /// The health of a part of the server.
 #[typeshare]
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ServerHealthState {
   pub level: SeverityLevel,
   /// Whether the health is good enough to close an open alert.
@@ -354,18 +354,18 @@ pub struct ServerHealthState {
 /// Summary of the health of the server.
 #[typeshare]
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ServerHealth {
   pub cpu: ServerHealthState,
   pub mem: ServerHealthState,
-  #[cfg_attr(feature = "openapi", schema(value_type = HashMap<String, ServerHealthState>))]
+  #[cfg_attr(feature = "utoipa", schema(value_type = HashMap<String, ServerHealthState>))]
   pub disks: HashMap<PathBuf, ServerHealthState>,
 }
 
 /// Info about Periphery configuration
 #[typeshare]
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PeripheryInformation {
   /// The Periphery version.
   pub version: String,
@@ -386,7 +386,7 @@ pub struct PeripheryInformation {
 /// Current pending actions on the server.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, Default)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ServerActionState {
   /// Server currently pruning networks
   pub pruning_networks: bool,
@@ -429,7 +429,7 @@ pub struct ServerActionState {
   Serialize,
   Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[strum(serialize_all = "kebab-case")]
 pub enum ServerState {
   /// Server health check passing.
@@ -447,7 +447,7 @@ pub type ServerQuery = ResourceQuery<ServerQuerySpecifics>;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ServerQuerySpecifics {}
 
 impl AddFilters for ServerQuerySpecifics {}

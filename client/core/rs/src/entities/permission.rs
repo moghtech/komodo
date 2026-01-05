@@ -13,7 +13,7 @@ use super::{MongoId, ResourceTarget};
 /// Representation of a User or UserGroups permission on a resource.
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
   feature = "mongo",
   derive(mongo_indexed::derive::MongoIndexed)
@@ -47,13 +47,13 @@ pub struct Permission {
   pub level: PermissionLevel,
   /// Any specific permissions for the [user_target] on the [resource_target].
   #[serde(default)]
-  #[cfg_attr(feature = "openapi", schema(value_type = Vec<SpecificPermission>))]
+  #[cfg_attr(feature = "utoipa", schema(value_type = Vec<SpecificPermission>))]
   pub specific: IndexSet<SpecificPermission>,
 }
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, EnumVariants)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[variant_derive(
   Debug,
   Clone,
@@ -97,7 +97,7 @@ impl UserTarget {
   Ord,
   Default,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum PermissionLevel {
   /// No permissions.
   #[default]
@@ -135,7 +135,7 @@ impl Default for &PermissionLevel {
   PartialOrd,
   Ord,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum SpecificPermission {
   /// On **Server**
   ///   - Access the terminal apis
@@ -172,10 +172,10 @@ impl SpecificPermission {
 
 #[typeshare]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PermissionLevelAndSpecifics {
   pub level: PermissionLevel,
-  #[cfg_attr(feature = "openapi", schema(value_type = Vec<SpecificPermission>))]
+  #[cfg_attr(feature = "utoipa", schema(value_type = Vec<SpecificPermission>))]
   pub specific: IndexSet<SpecificPermission>,
 }
 

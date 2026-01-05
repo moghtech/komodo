@@ -112,7 +112,7 @@ impl DatabaseConfig {
   Serialize,
   Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GitProvider {
   /// The git provider domain. Default: `github.com`.
   #[serde(default = "default_git_provider")]
@@ -145,7 +145,7 @@ fn default_git_https() -> bool {
   Serialize,
   Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct DockerRegistry {
   /// The docker provider domain. Default: `docker.io`.
   #[serde(default = "default_docker_provider")]
@@ -175,7 +175,7 @@ fn default_docker_provider() -> String {
   Serialize,
   Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ProviderAccount {
   /// The account username. Required.
   #[serde(alias = "account")]

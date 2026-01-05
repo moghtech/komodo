@@ -5,7 +5,7 @@ use typeshare::typeshare;
 
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct NetworkListItem {
   pub name: Option<String>,
   pub id: Option<String>,
@@ -27,7 +27,7 @@ pub struct NetworkListItem {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Network {
   #[serde(rename = "Name")]
   pub name: Option<String>,
@@ -72,7 +72,7 @@ pub struct Network {
 
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Ipam {
   /// Name of the IPAM driver to use.
   #[serde(rename = "Driver")]
@@ -87,7 +87,7 @@ pub struct Ipam {
 
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct IpamConfig {
   #[serde(rename = "Subnet")]
   pub subnet: Option<String>,
@@ -101,7 +101,7 @@ pub struct IpamConfig {
 
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct NetworkContainer {
   /// This is the key on the incoming map of NetworkContainer
   #[serde(default, rename = "ContainerID")]

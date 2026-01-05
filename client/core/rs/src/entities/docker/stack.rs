@@ -14,7 +14,7 @@ use crate::entities::{
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SwarmStackListItem {
   /// Swarm stack name.
   #[serde(rename = "Name")]
@@ -51,7 +51,7 @@ pub struct SwarmStackListItem {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SwarmStack {
   /// Swarm stack name.
   #[serde(rename = "Name")]
@@ -82,7 +82,7 @@ pub struct SwarmStack {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SwarmStackServiceListItem {
   /// The *short* swarm service ID
   #[serde(rename = "ID")]
@@ -116,7 +116,7 @@ pub struct SwarmStackServiceListItem {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SwarmStackTaskListItem {
   /// The task ID
   #[serde(rename = "ID")]

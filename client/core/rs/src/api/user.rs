@@ -18,7 +18,7 @@ pub trait KomodoUserRequest: HasResponse {}
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(PushRecentlyViewedResponse)]
 #[error(serror::Error)]
@@ -39,7 +39,7 @@ pub type PushRecentlyViewedResponse = NoData;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(SetLastSeenUpdateResponse)]
 #[error(serror::Error)]
@@ -63,7 +63,7 @@ pub type SetLastSeenUpdateResponse = NoData;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(BeginThirdPartyLoginLinkResponse)]
 #[error(serror::Error)]
@@ -79,7 +79,7 @@ pub type BeginThirdPartyLoginLinkResponse = NoData;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(UnlinkLoginResponse)]
 #[error(serror::Error)]
@@ -105,7 +105,7 @@ pub type UnlinkLoginResponse = NoData;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(UpdateUsernameResponse)]
 #[error(serror::Error)]
@@ -126,7 +126,7 @@ pub type UpdateUsernameResponse = NoData;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(UpdatePasswordResponse)]
 #[error(serror::Error)]
@@ -148,7 +148,7 @@ pub type UpdatePasswordResponse = NoData;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(CreateApiKeyResponse)]
 #[error(serror::Error)]
@@ -184,7 +184,7 @@ pub struct CreateApiKeyResponse {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(DeleteApiKeyResponse)]
 #[error(serror::Error)]
@@ -207,7 +207,7 @@ pub type DeleteApiKeyResponse = NoData;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(BeginTotpEnrollmentResponse)]
 #[error(serror::Error)]
@@ -230,7 +230,7 @@ pub struct BeginTotpEnrollmentResponse {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(ConfirmTotpEnrollmentResponse)]
 #[error(serror::Error)]
@@ -253,7 +253,7 @@ pub struct ConfirmTotpEnrollmentResponse {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(UnenrollTotpResponse)]
 #[error(serror::Error)]
@@ -274,7 +274,7 @@ pub type _CreationChallengeResponse = CreationChallengeResponse;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(BeginPasskeyEnrollmentResponse)]
 #[error(serror::Error)]
@@ -288,9 +288,11 @@ pub type BeginPasskeyEnrollmentResponse = _CreationChallengeResponse;
 
 #[typeshare(serialized_as = "any")]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct _RegisterPublicKeyCredential(pub RegisterPublicKeyCredential);
+pub struct _RegisterPublicKeyCredential(
+  pub RegisterPublicKeyCredential,
+);
 
-#[cfg(feature = "openapi")]
+#[cfg(feature = "utoipa")]
 impl utoipa::PartialSchema for _RegisterPublicKeyCredential {
   fn schema()
   -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
@@ -298,7 +300,7 @@ impl utoipa::PartialSchema for _RegisterPublicKeyCredential {
   }
 }
 
-#[cfg(feature = "openapi")]
+#[cfg(feature = "utoipa")]
 impl utoipa::ToSchema for _RegisterPublicKeyCredential {}
 
 /// Confirm enrollment flow for TOTP 2FA auth support
@@ -307,7 +309,7 @@ impl utoipa::ToSchema for _RegisterPublicKeyCredential {}
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(ConfirmPasskeyEnrollmentResponse)]
 #[error(serror::Error)]
@@ -327,7 +329,7 @@ pub type ConfirmPasskeyEnrollmentResponse = NoData;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(UnenrollPasskeyResponse)]
 #[error(serror::Error)]
@@ -345,7 +347,7 @@ pub type UnenrollPasskeyResponse = NoData;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(UpdateThirdPartySkip2faResponse)]
 #[error(serror::Error)]

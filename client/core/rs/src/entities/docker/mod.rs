@@ -45,7 +45,7 @@ pub struct SwarmLists {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct DockerLists {
   pub containers: Vec<ContainerListItem>,
   pub networks: Vec<NetworkListItem>,
@@ -59,7 +59,7 @@ pub struct DockerLists {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PortBinding {
   /// Host IP address that the container's port is mapped to.
   #[serde(rename = "HostIp")]
@@ -75,7 +75,7 @@ pub struct PortBinding {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GraphDriverData {
   /// Name of the storage driver.
   #[serde(default, rename = "Name")]
@@ -90,7 +90,7 @@ pub struct GraphDriverData {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ContainerConfig {
   /// The hostname to use for the container, as a valid RFC 1123 hostname.
   #[serde(rename = "Hostname")]
@@ -197,7 +197,7 @@ pub struct ContainerConfig {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct HealthConfig {
   /// The test to perform. Possible values are:  - `[]` inherit healthcheck from image or parent image - `[\"NONE\"]` disable healthcheck - `[\"CMD\", args...]` exec arguments directly - `[\"CMD-SHELL\", command]` run command with system's default shell
   #[serde(default, rename = "Test")]
@@ -229,7 +229,7 @@ pub struct HealthConfig {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ObjectVersion {
   #[serde(rename = "Index")]
   pub index: Option<U64>,
@@ -240,7 +240,7 @@ pub struct ObjectVersion {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Driver {
   /// Name of the driver.
   #[serde(rename = "Name")]
@@ -255,7 +255,7 @@ pub struct Driver {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Mount {
   /// Container path.
   #[serde(rename = "Target")]
@@ -304,7 +304,7 @@ pub struct Mount {
   Ord,
   Default,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum MountTypeEnum {
   #[default]
   #[serde(rename = "")]
@@ -328,7 +328,7 @@ pub enum MountTypeEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct MountBindOptions {
   /// A propagation mode with the value `[r]private`, `[r]shared`, or `[r]slave`.
   #[serde(default, rename = "Propagation")]
@@ -364,7 +364,7 @@ pub struct MountBindOptions {
   Ord,
   Default,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum MountBindOptionsPropagationEnum {
   #[default]
   #[serde(rename = "")]
@@ -388,7 +388,7 @@ pub enum MountBindOptionsPropagationEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct MountVolumeOptions {
   /// Populate volume with data from the target.
   #[serde(rename = "NoCopy")]
@@ -411,7 +411,7 @@ pub struct MountVolumeOptions {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct MountVolumeOptionsDriverConfig {
   /// Name of the driver to use to create the volume.
   #[serde(rename = "Name")]
@@ -427,7 +427,7 @@ pub struct MountVolumeOptionsDriverConfig {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct MountTmpfsOptions {
   /// The size for the tmpfs mount in bytes.
   #[serde(rename = "SizeBytes")]
@@ -442,7 +442,7 @@ pub struct MountTmpfsOptions {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ResourcesUlimits {
   /// Name of ulimit
   #[serde(rename = "Name")]
@@ -461,7 +461,7 @@ pub struct ResourcesUlimits {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ResourceObject {
   #[serde(rename = "NanoCPUs")]
   pub nano_cpus: Option<I64>,
@@ -481,7 +481,7 @@ pub type GenericResources = Vec<GenericResourcesInner>;
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GenericResourcesInner {
   #[serde(rename = "NamedResourceSpec")]
   pub named_resource_spec:
@@ -496,7 +496,7 @@ pub struct GenericResourcesInner {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GenericResourcesInnerDiscreteResourceSpec {
   #[serde(rename = "Kind")]
   pub kind: Option<String>,
@@ -509,7 +509,7 @@ pub struct GenericResourcesInnerDiscreteResourceSpec {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GenericResourcesInnerNamedResourceSpec {
   #[serde(rename = "Kind")]
   pub kind: Option<String>,
@@ -522,7 +522,7 @@ pub struct GenericResourcesInnerNamedResourceSpec {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Platform {
   /// Architecture represents the hardware architecture (for example, `x86_64`).
   #[serde(rename = "Architecture")]
@@ -538,7 +538,7 @@ pub struct Platform {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct NetworkAttachmentConfig {
   /// The target network for attachment. Must be a network name or ID.
   #[serde(rename = "Target")]
@@ -557,7 +557,7 @@ pub struct NetworkAttachmentConfig {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct EndpointPortConfig {
   #[serde(rename = "Name")]
   pub name: Option<String>,
@@ -591,7 +591,7 @@ pub struct EndpointPortConfig {
   Serialize,
   Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum EndpointPortConfigProtocolEnum {
   #[default]
   #[serde(rename = "")]
@@ -617,7 +617,7 @@ pub enum EndpointPortConfigProtocolEnum {
   Serialize,
   Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum EndpointPortConfigPublishModeEnum {
   #[default]
   #[serde(rename = "")]
@@ -633,7 +633,7 @@ pub enum EndpointPortConfigPublishModeEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TlsInfo {
   /// The root CA certificate(s) that are used to validate leaf TLS certificates.
   #[serde(rename = "TrustRoot")]

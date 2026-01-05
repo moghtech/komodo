@@ -8,7 +8,7 @@ use super::*;
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SwarmTaskListItem {
   /// The ID of the task.
   #[serde(rename = "ID")]
@@ -56,7 +56,7 @@ pub struct SwarmTaskListItem {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SwarmTask {
   /// The ID of the task.
   #[serde(rename = "ID")]
@@ -112,7 +112,7 @@ pub struct SwarmTask {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpec {
   #[serde(rename = "PluginSpec")]
   pub plugin_spec: Option<TaskSpecPluginSpec>,
@@ -155,7 +155,7 @@ pub struct TaskSpec {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpecPluginSpec {
   /// The name or 'alias' to use for the plugin.
   #[serde(rename = "Name")]
@@ -178,7 +178,7 @@ pub struct TaskSpecPluginSpec {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PluginPrivilege {
   #[serde(rename = "Name")]
   pub name: Option<String>,
@@ -198,7 +198,7 @@ pub struct PluginPrivilege {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpecContainerSpec {
   /// The image name to use for the container
   #[serde(rename = "Image")]
@@ -315,7 +315,7 @@ pub struct TaskSpecContainerSpec {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpecContainerSpecPrivileges {
   #[serde(rename = "CredentialSpec")]
   pub credential_spec:
@@ -341,7 +341,7 @@ pub struct TaskSpecContainerSpecPrivileges {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpecContainerSpecPrivilegesCredentialSpec {
   /// Load credential spec from a Swarm Config with the given ID. The specified config must also be present in the Configs field with the Runtime property set.  <p><br /></p>   > **Note**: `CredentialSpec.File`, `CredentialSpec.Registry`, > and `CredentialSpec.Config` are mutually exclusive.
   #[serde(rename = "Config")]
@@ -361,7 +361,7 @@ pub struct TaskSpecContainerSpecPrivilegesCredentialSpec {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpecContainerSpecPrivilegesSeLinuxContext {
   /// Disable SELinux
   #[serde(rename = "Disable")]
@@ -389,7 +389,7 @@ pub struct TaskSpecContainerSpecPrivilegesSeLinuxContext {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpecContainerSpecPrivilegesSeccomp {
   #[serde(rename = "Mode")]
   pub mode: Option<TaskSpecContainerSpecPrivilegesSeccompModeEnum>,
@@ -412,7 +412,7 @@ pub struct TaskSpecContainerSpecPrivilegesSeccomp {
   Serialize,
   Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum TaskSpecContainerSpecPrivilegesSeccompModeEnum {
   #[default]
   #[serde(rename = "")]
@@ -430,7 +430,7 @@ pub enum TaskSpecContainerSpecPrivilegesSeccompModeEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpecContainerSpecPrivilegesAppArmor {
   #[serde(rename = "Mode")]
   pub mode: Option<TaskSpecContainerSpecPrivilegesAppArmorModeEnum>,
@@ -449,7 +449,7 @@ pub struct TaskSpecContainerSpecPrivilegesAppArmor {
   Serialize,
   Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum TaskSpecContainerSpecPrivilegesAppArmorModeEnum {
   #[default]
   #[serde(rename = "")]
@@ -465,7 +465,7 @@ pub enum TaskSpecContainerSpecPrivilegesAppArmorModeEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpecContainerSpecDnsConfig {
   /// The IP addresses of the name servers.
   #[serde(rename = "Nameservers")]
@@ -484,7 +484,7 @@ pub struct TaskSpecContainerSpecDnsConfig {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpecContainerSpecSecrets {
   #[serde(rename = "File")]
   pub file: Option<TaskSpecContainerSpecFile>,
@@ -503,7 +503,7 @@ pub struct TaskSpecContainerSpecSecrets {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpecContainerSpecFile {
   /// Name represents the final filename in the filesystem.
   #[serde(rename = "Name")]
@@ -526,7 +526,7 @@ pub struct TaskSpecContainerSpecFile {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpecContainerSpecConfigs {
   #[serde(rename = "File")]
   pub file: Option<TaskSpecContainerSpecFile>,
@@ -556,7 +556,7 @@ pub struct TaskSpecContainerSpecConfigs {
   Serialize,
   Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum TaskSpecContainerSpecIsolationEnum {
   #[serde(rename = "default")]
   DEFAULT,
@@ -574,7 +574,7 @@ pub enum TaskSpecContainerSpecIsolationEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpecNetworkAttachmentSpec {
   /// ID of the container represented by this task
   #[serde(rename = "ContainerID")]
@@ -586,7 +586,7 @@ pub struct TaskSpecNetworkAttachmentSpec {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpecResources {
   /// Define resources limits.
   #[serde(rename = "Limits")]
@@ -602,7 +602,7 @@ pub struct TaskSpecResources {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Limit {
   #[serde(rename = "NanoCPUs")]
   pub nano_cpus: Option<I64>,
@@ -620,7 +620,7 @@ pub struct Limit {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpecRestartPolicy {
   /// Condition for restart.
   #[serde(rename = "Condition")]
@@ -653,7 +653,7 @@ pub struct TaskSpecRestartPolicy {
   Serialize,
   Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum TaskSpecRestartPolicyConditionEnum {
   #[default]
   #[serde(rename = "")]
@@ -670,7 +670,7 @@ pub enum TaskSpecRestartPolicyConditionEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpecPlacement {
   /// An array of constraint expressions to limit the set of nodes where a task can be scheduled. Constraint expressions can either use a _match_ (`==`) or _exclude_ (`!=`) rule. Multiple constraints find nodes that satisfy every expression (AND match). Constraints can match node or Docker Engine labels as follows:  node attribute       | matches                        | example ---------------------|--------------------------------|----------------------------------------------- `node.id`            | Node ID                        | `node.id==2ivku8v2gvtg4` `node.hostname`      | Node hostname                  | `node.hostname!=node-2` `node.role`          | Node role (`manager`/`worker`) | `node.role==manager` `node.platform.os`   | Node operating system          | `node.platform.os==windows` `node.platform.arch` | Node architecture              | `node.platform.arch==x86_64` `node.labels`        | User-defined node labels       | `node.labels.security==high` `engine.labels`      | Docker Engine's labels         | `engine.labels.operatingsystem==ubuntu-24.04`  `engine.labels` apply to Docker Engine labels like operating system, drivers, etc. Swarm administrators add `node.labels` for operational purposes by using the [`node update endpoint`](#operation/NodeUpdate).
   #[serde(rename = "Constraints")]
@@ -693,7 +693,7 @@ pub struct TaskSpecPlacement {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpecPlacementPreferences {
   #[serde(rename = "Spread")]
   pub spread: Option<TaskSpecPlacementSpread>,
@@ -703,7 +703,7 @@ pub struct TaskSpecPlacementPreferences {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpecPlacementSpread {
   /// label descriptor, such as `engine.labels.az`.
   #[serde(rename = "SpreadDescriptor")]
@@ -717,7 +717,7 @@ pub struct TaskSpecPlacementSpread {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskSpecLogDriver {
   #[serde(rename = "Name")]
   pub name: Option<String>,
@@ -731,7 +731,7 @@ pub struct TaskSpecLogDriver {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TaskStatus {
   #[serde(rename = "Timestamp")]
   pub timestamp: Option<String>,
@@ -764,7 +764,7 @@ pub struct TaskStatus {
   Serialize,
   Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum TaskState {
   #[serde(rename = "new")]
   NEW,
@@ -803,7 +803,7 @@ pub enum TaskState {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ContainerStatus {
   #[serde(rename = "ContainerID")]
   pub container_id: Option<String>,
@@ -820,7 +820,7 @@ pub struct ContainerStatus {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PortStatus {
   #[serde(rename = "Ports")]
   pub ports: Option<Vec<EndpointPortConfig>>,

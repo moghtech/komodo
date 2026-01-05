@@ -11,7 +11,7 @@ use super::*;
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SwarmConfigListItem {
   /// User-defined name of the config.
   #[serde(rename = "Name")]
@@ -41,7 +41,7 @@ pub struct SwarmConfigListItem {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SwarmConfig {
   #[serde(rename = "ID")]
   pub id: Option<String>,
@@ -63,7 +63,7 @@ pub struct SwarmConfig {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ConfigSpec {
   /// User-defined name of the config.
   #[serde(rename = "Name")]

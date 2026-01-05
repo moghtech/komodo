@@ -10,7 +10,7 @@ use super::*;
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SwarmSecretListItem {
   #[serde(rename = "ID")]
   pub id: Option<String>,
@@ -44,7 +44,7 @@ pub struct SwarmSecretListItem {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SwarmSecret {
   #[serde(rename = "ID")]
   pub id: Option<String>,
@@ -66,7 +66,7 @@ pub struct SwarmSecret {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SecretSpec {
   /// User-defined name of the secret.
   #[serde(rename = "Name")]

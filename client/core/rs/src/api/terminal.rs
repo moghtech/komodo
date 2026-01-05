@@ -8,7 +8,7 @@ use crate::entities::terminal::{
 /// Connect to a Terminal.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ConnectTerminalQuery {
   /// The target to create terminal for.
   pub target: TerminalTarget,
@@ -27,7 +27,7 @@ pub struct ConnectTerminalQuery {
 /// Args to init the Terminal if needed.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct InitTerminal {
   /// The shell command (eg `bash`) to init the shell.
   ///
@@ -47,7 +47,7 @@ pub struct InitTerminal {
 /// Execute a terminal command on the given server.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ExecuteTerminalBody {
   /// The target to create terminal for.
   pub target: TerminalTarget,

@@ -19,7 +19,7 @@ use super::KomodoReadRequest;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildResponse)]
 #[error(serror::Error)]
@@ -39,7 +39,7 @@ pub type GetBuildResponse = Build;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListBuildsResponse)]
 #[error(serror::Error)]
@@ -59,7 +59,7 @@ pub type ListBuildsResponse = Vec<BuildListItem>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullBuildsResponse)]
 #[error(serror::Error)]
@@ -79,7 +79,7 @@ pub type ListFullBuildsResponse = Vec<Build>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildActionStateResponse)]
 #[error(serror::Error)]
@@ -100,7 +100,7 @@ pub type GetBuildActionStateResponse = BuildActionState;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildsSummaryResponse)]
 #[error(serror::Error)]
@@ -109,7 +109,7 @@ pub struct GetBuildsSummary {}
 /// Response for [GetBuildsSummary].
 #[typeshare]
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetBuildsSummaryResponse {
   /// The total number of builds in Komodo.
   pub total: u32,
@@ -134,7 +134,7 @@ pub struct GetBuildsSummaryResponse {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildMonthlyStatsResponse)]
 #[error(serror::Error)]
@@ -148,7 +148,7 @@ pub struct GetBuildMonthlyStats {
 /// Response for [GetBuildMonthlyStats].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetBuildMonthlyStatsResponse {
   pub total_time: f64,  // in hours
   pub total_count: f64, // number of builds
@@ -158,7 +158,7 @@ pub struct GetBuildMonthlyStatsResponse {
 /// Item in [GetBuildMonthlyStatsResponse]
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct BuildStatsDay {
   pub time: f64,
   pub count: f64,
@@ -199,7 +199,7 @@ impl GetBuildMonthlyStatsResponse {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListBuildVersionsResponse)]
 #[error(serror::Error)]
@@ -222,7 +222,7 @@ pub type ListBuildVersionsResponse = Vec<BuildVersionResponseItem>;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct BuildVersionResponseItem {
   pub version: Version,
   pub ts: I64,
@@ -236,7 +236,7 @@ pub struct BuildVersionResponseItem {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonBuildExtraArgsResponse)]
 #[error(serror::Error)]

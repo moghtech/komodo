@@ -26,7 +26,7 @@ pub type _PartialBuilderConfig = PartialBuilderConfig;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct BuilderListItemInfo {
   /// 'Url', 'Server', or 'Aws'
   pub builder_type: String,
@@ -38,7 +38,7 @@ pub struct BuilderListItemInfo {
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, EnumVariants)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[variant_derive(
   Serialize,
   Deserialize,
@@ -70,9 +70,9 @@ impl Default for BuilderConfig {
 /// Partial representation of [BuilderConfig]
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, EnumVariants)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
-  not(feature = "openapi"),
+  not(feature = "utoipa"),
   variant_derive(
     Serialize,
     Deserialize,
@@ -84,7 +84,7 @@ impl Default for BuilderConfig {
   )
 )]
 #[cfg_attr(
-  feature = "openapi",
+  feature = "utoipa",
   variant_derive(
     Serialize,
     Deserialize,
@@ -340,13 +340,13 @@ pub type _PartialUrlBuilderConfig = PartialUrlBuilderConfig;
 /// Configuration for a Komodo Url Builder.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Builder, Partial)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
-  not(feature = "openapi"),
+  not(feature = "utoipa"),
   partial_derive(Serialize, Deserialize, Debug, Clone, Default)
 )]
 #[cfg_attr(
-  feature = "openapi",
+  feature = "utoipa",
   partial_derive(Serialize, Deserialize, Debug, Clone, Default,)
 )]
 #[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -401,7 +401,7 @@ impl UrlBuilderConfig {
   }
 }
 
-#[cfg(feature = "openapi")]
+#[cfg(feature = "utoipa")]
 impl utoipa::PartialSchema for PartialUrlBuilderConfig {
   fn schema()
   -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
@@ -409,7 +409,7 @@ impl utoipa::PartialSchema for PartialUrlBuilderConfig {
   }
 }
 
-#[cfg(feature = "openapi")]
+#[cfg(feature = "utoipa")]
 impl utoipa::ToSchema for PartialUrlBuilderConfig {}
 
 #[typeshare(serialized_as = "Partial<ServerBuilderConfig>")]
@@ -420,7 +420,7 @@ pub type _PartialServerBuilderConfig = PartialServerBuilderConfig;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Builder, Partial,
 )]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
@@ -437,7 +437,7 @@ impl ServerBuilderConfig {
   }
 }
 
-#[cfg(feature = "openapi")]
+#[cfg(feature = "utoipa")]
 impl utoipa::PartialSchema for PartialServerBuilderConfig {
   fn schema()
   -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
@@ -445,7 +445,7 @@ impl utoipa::PartialSchema for PartialServerBuilderConfig {
   }
 }
 
-#[cfg(feature = "openapi")]
+#[cfg(feature = "utoipa")]
 impl utoipa::ToSchema for PartialServerBuilderConfig {}
 
 #[typeshare(serialized_as = "Partial<AwsBuilderConfig>")]
@@ -454,7 +454,7 @@ pub type _PartialAwsBuilderConfig = PartialAwsBuilderConfig;
 /// Configuration for an AWS builder.
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, Builder, Partial)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
@@ -606,7 +606,7 @@ fn default_use_https() -> bool {
   true
 }
 
-#[cfg(feature = "openapi")]
+#[cfg(feature = "utoipa")]
 impl utoipa::PartialSchema for PartialAwsBuilderConfig {
   fn schema()
   -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
@@ -614,7 +614,7 @@ impl utoipa::PartialSchema for PartialAwsBuilderConfig {
   }
 }
 
-#[cfg(feature = "openapi")]
+#[cfg(feature = "utoipa")]
 impl utoipa::ToSchema for PartialAwsBuilderConfig {}
 
 #[typeshare]
@@ -622,7 +622,7 @@ pub type BuilderQuery = ResourceQuery<BuilderQuerySpecifics>;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct BuilderQuerySpecifics {}
 
 impl AddFilters for BuilderQuerySpecifics {}

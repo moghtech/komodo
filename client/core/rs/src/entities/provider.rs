@@ -11,7 +11,7 @@ pub type _PartialGitProviderAccount = PartialGitProviderAccount;
 /// Note. Cannot create two accounts with the same domain and username.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default, Partial)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
@@ -61,7 +61,7 @@ fn default_https() -> bool {
   true
 }
 
-#[cfg(feature = "openapi")]
+#[cfg(feature = "utoipa")]
 impl utoipa::PartialSchema for PartialGitProviderAccount {
   fn schema()
   -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
@@ -69,7 +69,7 @@ impl utoipa::PartialSchema for PartialGitProviderAccount {
   }
 }
 
-#[cfg(feature = "openapi")]
+#[cfg(feature = "utoipa")]
 impl utoipa::ToSchema for PartialGitProviderAccount {}
 
 #[typeshare(serialized_as = "Partial<DockerRegistryAccount>")]
@@ -78,7 +78,7 @@ pub type _PartialDockerRegistryAccount = PartialDockerRegistryAccount;
 /// Configuration to access private image repositories on various registries.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default, Partial)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
@@ -121,7 +121,7 @@ fn default_registry_domain() -> String {
   String::from("docker.io")
 }
 
-#[cfg(feature = "openapi")]
+#[cfg(feature = "utoipa")]
 impl utoipa::PartialSchema for PartialDockerRegistryAccount {
   fn schema()
   -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
@@ -129,5 +129,5 @@ impl utoipa::PartialSchema for PartialDockerRegistryAccount {
   }
 }
 
-#[cfg(feature = "openapi")]
+#[cfg(feature = "utoipa")]
 impl utoipa::ToSchema for PartialDockerRegistryAccount {}
