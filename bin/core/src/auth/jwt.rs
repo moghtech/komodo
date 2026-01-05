@@ -56,7 +56,7 @@ impl JwtClient {
     };
     let jwt = encode(&self.header, &claims, &self.encoding_key)
       .context("Failed at signing claim")?;
-    Ok(JwtResponse { user_id, jwt })
+    Ok(JwtResponse { jwt })
   }
 
   pub fn decode(&self, jwt: &str) -> anyhow::Result<JwtClaims> {

@@ -15,8 +15,6 @@ pub trait KomodoAuthRequest: HasResponse {}
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct JwtResponse {
-  /// User ID for signed in user.
-  pub user_id: String,
   /// A token the user can use to authenticate their requests.
   pub jwt: String,
 }

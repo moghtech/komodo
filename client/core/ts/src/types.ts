@@ -834,8 +834,6 @@ export type BytesArray = number[];
 
 /** JSON containing a jwt authentication token. */
 export interface JwtResponse {
-	/** User ID for signed in user. */
-	user_id: string;
 	/** A token the user can use to authenticate their requests. */
 	jwt: string;
 }

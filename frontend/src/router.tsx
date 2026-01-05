@@ -49,8 +49,8 @@ let passkey_sent = false;
 /// returns whether to show login / loading screen depending on state of exchange token loop
 const useAuthState = () => {
   const { toast } = useToast();
-  const onSuccess = ({ user_id, jwt }: Types.JwtResponse) => {
-    LOGIN_TOKENS.add_and_change(user_id, jwt);
+  const onSuccess = ({ jwt }: Types.JwtResponse) => {
+    LOGIN_TOKENS.add_and_change(jwt);
     sanitize_query_inner(search);
   };
   const { mutate: redeemJwt } = useAuth("ExchangeForJwt", {

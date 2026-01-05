@@ -141,7 +141,7 @@ export const MonacoEditor = ({
       Math.min(contentHeight, Math.floor(dimensions.height * 0.5)),
       minHeight ?? MIN_EDITOR_HEIGHT
     )}px`;
-  }, [editor, line_count]);
+  }, [dimensions.height, editor, line_count]);
 
   const { currentTheme } = useTheme();
 

@@ -62,8 +62,8 @@ export default function Login({
         )
     : undefined;
 
-  const onSuccess = ({ user_id, jwt }: Types.JwtResponse) => {
-    LOGIN_TOKENS.add_and_change(user_id, jwt);
+  const onSuccess = ({ jwt }: Types.JwtResponse) => {
+    LOGIN_TOKENS.add_and_change(jwt);
     userInvalidate();
     maybeNavigate?.();
   };

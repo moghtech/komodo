@@ -21,6 +21,7 @@ import { atomFamily } from "jotai/utils";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
+  extractUserIdFromJwt,
   has_minimum_permissions,
   RESOURCE_TARGETS,
   resourceTargetFromTerminalTarget,
@@ -43,7 +44,7 @@ type LoginTokens = {
   /** Current User ID */
   current: string | undefined;
   /** Array of logged in user ids / tokens */
-  tokens: Array<Types.JwtResponse>;
+  tokens: Array<{ user_id: string; jwt: string }>;
 };
 
 const LOGIN_TOKENS_KEY = "komodo-auth-tokens-v1";
@@ -65,7 +66,9 @@ export const LOGIN_TOKENS = (() => {
     return current ? [current, ...filtered] : filtered;
   };
 
-  const add_and_change = (user_id: string, jwt: string) => {
+  const add_and_change = (jwt: string) => {
+    const user_id = extractUserIdFromJwt(jwt);
+    if (!user_id) return;
     const filtered = tokens.tokens.filter((t) => t.user_id !== user_id);
     filtered.push({ user_id, jwt });
     filtered.sort();

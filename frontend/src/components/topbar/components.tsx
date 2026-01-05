@@ -41,11 +41,12 @@ import { Button } from "@ui/button";
 import { Link } from "react-router-dom";
 import {
   cn,
+  extractUserIdFromJwt,
   SIDEBAR_RESOURCES,
   usableResourcePath,
   version_is_none,
 } from "@lib/utils";
-import { ReactNode, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -296,9 +297,14 @@ const Account = ({
   viewLogout: boolean;
   full?: boolean;
 }) => {
-  const res = useRead("GetUsername", { user_id: login.user_id });
-  if (!res.data) return;
-  const selected = login.user_id === current_id;
+  const user_id = useMemo(() => extractUserIdFromJwt(login.jwt), [login.jwt]);
+  const { data: user } = useRead(
+    "GetUsername",
+    { user_id: user_id! },
+    { enabled: !!user_id }
+  );
+  if (!user_id || !user) return;
+  const selected = user_id === current_id;
   return (
     <div className="flex gap-2 items-center w-full">
       <Button
@@ -310,14 +316,14 @@ const Account = ({
             setOpen(false);
             return;
           }
-          LOGIN_TOKENS.change(login.user_id);
+          LOGIN_TOKENS.change(user_id);
           location.reload();
         }}
       >
         <div className="flex items-center gap-2">
           <UsernameView
-            username={res.data?.username}
-            avatar={res.data?.avatar}
+            username={user.username}
+            avatar={user.avatar}
             full={full}
           />
         </div>
@@ -331,7 +337,7 @@ const Account = ({
           variant="destructive"
           className="px-2 py-0"
           onClick={() => {
-            LOGIN_TOKENS.remove(login.user_id);
+            LOGIN_TOKENS.remove(user_id);
             if (selected) {
               location.reload();
             } else {
