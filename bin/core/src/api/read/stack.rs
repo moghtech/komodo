@@ -95,6 +95,7 @@ impl Resolve<ReadArgs> for GetStackLog {
         services,
         tail,
         timestamps,
+        compose_files: stack.compose_file_paths().to_vec(),
       })
       .await
       .context("Failed to get stack log from periphery")?;
@@ -130,6 +131,7 @@ impl Resolve<ReadArgs> for SearchStackLog {
         combinator,
         invert,
         timestamps,
+        compose_files: stack.compose_file_paths().to_vec(),
       })
       .await
       .context("Failed to search stack log from periphery")?;

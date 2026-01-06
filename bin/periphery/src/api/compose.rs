@@ -101,6 +101,7 @@ impl Resolve<super::Args> for GetComposeLog {
       services,
       tail,
       timestamps,
+      compose_files,
     } = self;
     let docker_compose = docker_compose();
     let timestamps = if timestamps {
@@ -108,15 +109,15 @@ impl Resolve<super::Args> for GetComposeLog {
     } else {
       Default::default()
     };
-    let compose_file_path = periphery_config()
-    .stack_dir()
-    .join(to_path_compatible_name(&project))
-    .join("compose.yaml")
-    .components()
-    .collect::<PathBuf>();
+    // Convert compose files into -f <file> strings
+    let compose_flags = compose_files
+            .iter()
+            .map(|f| format!("-f {}", f))
+            .collect::<Vec<_>>()
+            .join(" ");
+
     let command = format!(
-      "{docker_compose} -f {} -p {project} logs --tail {tail}{timestamps} {}",
-      compose_file_path.display(),
+      "{docker_compose} {compose_flags} -p {project} logs --tail {tail}{timestamps} {}",
       services.join(" ")
     );
     Ok(run_komodo_command("get stack log", None, command).await)
@@ -133,14 +134,17 @@ impl Resolve<super::Args> for GetComposeLogSearch {
       combinator,
       invert,
       timestamps,
+      compose_files,
     } = self;
     let docker_compose = docker_compose();
-    let compose_file_path = periphery_config()
-    .stack_dir()
-    .join(to_path_compatible_name(&project))
-    .join("compose.yaml")
-    .components()
-    .collect::<PathBuf>();
+    
+    // Convert compose files into -f <file> strings
+    let compose_flags = compose_files
+            .iter()
+            .map(|f| format!("-f {}", f))
+            .collect::<Vec<_>>()
+            .join(" ");
+
     let grep = log_grep(&terms, combinator, invert);
     let timestamps = if timestamps {
       " --timestamps"
@@ -148,8 +152,7 @@ impl Resolve<super::Args> for GetComposeLogSearch {
       Default::default()
     };
     let command = format!(
-      "{docker_compose} -f {} -p {project} logs --tail 5000{timestamps} {} 2>&1 | {grep}",
-      compose_file_path.display(),
+      "{docker_compose} {compose_flags} -p {project} logs --tail 5000{timestamps} {} 2>&1 | {grep}",
       services.join(" ")
     );
     Ok(run_komodo_command("Get stack log grep", None, command).await)
