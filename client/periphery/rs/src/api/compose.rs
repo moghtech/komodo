@@ -61,6 +61,8 @@ pub struct GetComposeLog {
   /// Enable `--timestamps`
   #[serde(default)]
   pub timestamps: bool,
+  /// Compose files used in the project (required for podman)
+  pub compose_files: Vec<String>,
 }
 
 fn default_tail() -> u64 {
@@ -92,6 +94,8 @@ pub struct GetComposeLogSearch {
   /// Enable `--timestamps`
   #[serde(default)]
   pub timestamps: bool,
+  /// Compose files used in the project (required for podman)
+  pub compose_files: Vec<String>,
 }
 
 //
