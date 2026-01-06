@@ -79,7 +79,7 @@ using public key authentication**. Note you must be an Admin user on Komodo.
 ## If provided, Periphery will operate in outbound mode.
 ## Env: PERIPHERY_CORE_ADDRESS
 ## Default: None
-core_address = "<YOUR_KOMODO_CORE_ADDRESS>" # Example: demo.komo.do, localhost:9120
+core_address = "<YOUR_KOMODO_CORE_ADDRESS>" # Example: demo.komo.do, ws://localhost:9120
 
 ## The Server this Periphery agent should "connect as".
 ## Systemd periphery can use the system hostname by setting `connect_as = "$(hostname)"`.

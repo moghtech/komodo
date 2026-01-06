@@ -50,7 +50,7 @@ impl JwtClient {
     let iat = unix_timestamp_ms();
     let exp = iat + self.ttl_ms;
     let claims = JwtClaims {
-      id: user_id.clone(),
+      id: user_id,
       iat,
       exp,
     };
