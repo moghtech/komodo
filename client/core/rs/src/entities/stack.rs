@@ -503,6 +503,11 @@ pub struct StackConfig {
   #[builder(default)]
   pub build_extra_args: Vec<String>,
 
+  /// Whether to add `--volumes` flag to `docker compose down` to remove named and anonymous volumes.
+  #[serde(default)]
+  #[builder(default)]
+  pub remove_volumes: bool,
+
   /// Ignore certain services declared in the compose file when checking
   /// the stack status. For example, an init service might be exited, but the
   /// stack should be healthy. This init service should be in `ignore_services`
@@ -605,6 +610,7 @@ impl Default for StackConfig {
       run_build: Default::default(),
       destroy_before_deploy: Default::default(),
       build_extra_args: Default::default(),
+      remove_volumes: Default::default(),
       skip_secret_interp: Default::default(),
       linked_repo: Default::default(),
       git_provider: default_git_provider(),

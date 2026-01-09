@@ -634,9 +634,14 @@ impl Resolve<super::Args> for ComposeUp {
     {
       // Take down the existing containers.
       // This one tries to use the previously deployed service name, to ensure the right stack is taken down.
-      crate::compose::down(&last_project_name, &services, &mut res)
-        .await
-        .context("failed to destroy existing containers")?;
+      crate::compose::down(
+        &last_project_name,
+        &services,
+        stack.config.remove_volumes,
+        &mut res,
+      )
+      .await
+      .context("failed to destroy existing containers")?;
     }
 
     // Run compose up

@@ -2258,6 +2258,10 @@ export interface StackConfig {
 	 */
 	build_extra_args?: string[];
 	/**
+	 * Whether to append `--volumes` when doing `docker compose down`.
+	 */
+	remove_volumes?: boolean;
+	/**
 	 * Ignore certain services declared in the compose file when checking
 	 * the stack status. For example, an init service might be exited, but the
 	 * stack should be healthy. This init service should be in `ignore_services`

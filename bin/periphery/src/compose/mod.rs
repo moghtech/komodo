@@ -56,6 +56,7 @@ pub fn env_file_args(
 pub async fn down(
   project: &str,
   services: &[String],
+  remove_volumes: bool,
   res: &mut ComposeUpResponse,
 ) -> anyhow::Result<()> {
   let docker_compose = docker_compose();
@@ -64,10 +65,13 @@ pub async fn down(
   } else {
     format!(" {}", services.join(" "))
   };
+  let maybe_volumes = if remove_volumes { " --volumes" } else { "" };
   let log = run_komodo_command(
     "Compose Down",
     None,
-    format!("{docker_compose} -p {project} down{service_args}"),
+    format!(
+      "{docker_compose} -p {project} down{maybe_volumes}{service_args}"
+    ),
   )
   .await;
   let success = log.success;

@@ -194,11 +194,16 @@ impl ExecuteCompose for DestroyStack {
     } else {
       ""
     };
+    let maybe_volumes = if stack.config.remove_volumes {
+      " --volumes"
+    } else {
+      ""
+    };
     periphery
       .request(ComposeExecution {
         project: stack.project_name(false),
         command: format!(
-          "down{maybe_timeout}{maybe_remove_orphans}{service_args}"
+          "down{maybe_timeout}{maybe_remove_orphans}{maybe_volumes}{service_args}"
         ),
       })
       .await
