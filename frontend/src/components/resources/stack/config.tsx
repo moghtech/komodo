@@ -410,6 +410,24 @@ export const StackConfig = ({
       },
     },
     {
+      label: "Remove Volumes",
+      labelHidden: true,
+      components: {
+        remove_volumes: (value, set) => {
+          return (
+            <ConfigSwitch
+              label="Remove Volumes"
+              description="Add '--volumes' to docker compose down to remove named and anonymous volumes."
+              value={value}
+              onChange={(remove_volumes) => set({ remove_volumes })}
+              disabled={disabled}
+            />
+          );
+        },
+      },
+    },
+
+    {
       label: "Ignore Services",
       labelHidden: true,
       components: {
