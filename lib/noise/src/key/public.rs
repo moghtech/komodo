@@ -49,7 +49,7 @@ impl SpkiPublicKey {
   ) -> anyhow::Result<()> {
     let path = path.as_ref();
     tracing::info!("Writing public key to {path:?}");
-    secret_file::write_sync(path, self.as_pem()).with_context(|| {
+    secret_file::write(path, self.as_pem()).with_context(|| {
       format!("Failed to write public key pem to {path:?}")
     })
   }

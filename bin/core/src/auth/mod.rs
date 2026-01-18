@@ -70,7 +70,6 @@ impl SessionPasskeyLogin {
 }
 
 pub async fn auth_request(
-  headers: HeaderMap,
   mut req: Request,
   next: Next,
 ) -> serror::Result<Response> {
@@ -78,11 +77,11 @@ pub async fn auth_request(
     .extensions()
     .get::<ConnectInfo<SocketAddr>>()
     .map(|addr| addr.ip());
-  let mut user = authenticate_check_enabled(&headers)
+  let mut user = authenticate_check_enabled(req.headers())
     .map_err(|e| e.status_code(StatusCode::UNAUTHORIZED))
     .with_failure_rate_limit_using_headers(
       auth_rate_limiter(),
-      &headers,
+      req.headers(),
       fallback,
     )
     .await?;

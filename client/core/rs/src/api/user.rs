@@ -268,7 +268,7 @@ pub type UnenrollTotpResponse = NoData;
 #[typeshare(serialized_as = "any")]
 pub type _CreationChallengeResponse = CreationChallengeResponse;
 
-/// Starts enrollment flow for WebAuthn passkey auth support.
+/// Starts enrollment flow for Passkey 2fa support.
 /// Response: [BeginPasskeyEnrollmentResponse]
 #[typeshare]
 #[derive(
@@ -303,7 +303,7 @@ impl utoipa::PartialSchema for _RegisterPublicKeyCredential {
 #[cfg(feature = "utoipa")]
 impl utoipa::ToSchema for _RegisterPublicKeyCredential {}
 
-/// Confirm enrollment flow for TOTP 2FA auth support
+/// Confirm enrollment flow for Passkey 2FA auth support
 /// Response: [NoData]
 #[typeshare]
 #[derive(
@@ -323,7 +323,7 @@ pub type ConfirmPasskeyEnrollmentResponse = NoData;
 
 //
 
-/// Unenrolls user in TOTP 2FA.
+/// Unenrolls user in Passkey 2FA.
 /// Response: [NoData]
 #[typeshare]
 #[derive(

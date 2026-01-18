@@ -3,12 +3,12 @@ use std::{path::PathBuf, sync::OnceLock};
 use clap::Parser;
 use colored::Colorize;
 use config::ConfigLoader;
-use environment_file::{
-  maybe_read_item_from_file, maybe_read_list_from_file,
-};
 use komodo_client::entities::{
   config::periphery::{CliArgs, Env, PeripheryConfig},
   logger::{LogConfig, LogLevel},
+};
+use secret_file::{
+  maybe_read_item_from_file, maybe_read_list_from_file,
 };
 
 pub fn periphery_args() -> &'static CliArgs {

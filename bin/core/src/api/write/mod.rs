@@ -5,7 +5,7 @@ use axum::{
 use derive_variants::{EnumVariants, ExtractVariant};
 use komodo_client::{api::write::*, entities::user::User};
 use resolver_api::Resolve;
-use response::Response;
+use serror::Response;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serror::Json;

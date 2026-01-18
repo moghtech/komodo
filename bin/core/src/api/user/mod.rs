@@ -15,7 +15,7 @@ use komodo_client::{
 };
 use reqwest::StatusCode;
 use resolver_api::Resolve;
-use response::Response;
+use serror::Response;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serror::{AddStatusCode as _, AddStatusCodeError};

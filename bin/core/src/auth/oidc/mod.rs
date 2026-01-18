@@ -372,6 +372,11 @@ async fn callback(
         .context("inserted_id is not ObjectId")?
         .to_string();
 
+      session
+        .insert(SessionUserId::KEY, SessionUserId(user_id.clone()))
+        .await
+        .context("Failed to store user id for client session")?;
+
       UserIdOrTwoFactor::UserId(user_id)
     }
   };

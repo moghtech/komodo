@@ -15,9 +15,8 @@ path = "src/main.rs"
 
 [dependencies]
 # local
-komodo_client.workspace = true
+komodo_client = { workspace = true, features = ["logger"] }
 periphery_client.workspace = true
-environment_file.workspace = true
 environment.workspace = true
 interpolate.workspace = true
 secret_file.workspace = true

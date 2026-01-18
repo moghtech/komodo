@@ -17,7 +17,6 @@ path = "src/main.rs"
 # local
 komodo_client = { workspace = true, features = ["core"] }
 periphery_client.workspace = true
-environment_file.workspace = true
 interpolate.workspace = true
 secret_file.workspace = true
 validations.workspace = true
@@ -26,7 +25,6 @@ rate_limit.workspace = true
 transport.workspace = true
 database.workspace = true
 encoding.workspace = true
-response.workspace = true
 command.workspace = true
 config.workspace = true
 logger.workspace = true

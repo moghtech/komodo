@@ -49,7 +49,7 @@ impl Pkcs8PrivateKey {
     let path = path.as_ref();
     // Ensure the parent directory exists
     tracing::info!("Writing private key to {path:?}");
-    secret_file::write_sync(path, self.as_pem()).with_context(|| {
+    secret_file::write(path, self.as_pem()).with_context(|| {
       format!("Failed to write private key pem to {path:?}")
     })
   }

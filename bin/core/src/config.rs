@@ -4,9 +4,6 @@ use anyhow::Context;
 use axum::http::HeaderValue;
 use colored::Colorize;
 use config::ConfigLoader;
-use environment_file::{
-  maybe_read_item_from_file, maybe_read_list_from_file,
-};
 use komodo_client::entities::{
   config::{
     DatabaseConfig,
@@ -15,6 +12,9 @@ use komodo_client::entities::{
   logger::LogConfig,
 };
 use noise::key::{RotatableKeyPair, SpkiPublicKey};
+use secret_file::{
+  maybe_read_item_from_file, maybe_read_list_from_file,
+};
 use tower_http::cors::CorsLayer;
 
 /// Should call in startup to ensure Core errors without valid private key.

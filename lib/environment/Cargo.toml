@@ -8,8 +8,8 @@ repository.workspace = true
 homepage.workspace = true
 
 [dependencies]
+secret_file = { workspace = true, features = ["write", "tokio"] }
 komodo_client.workspace = true
-secret_file.workspace = true
 formatting.workspace = true
 #
 anyhow.workspace = true

@@ -18,8 +18,8 @@ use komodo_client::{
     user::User,
   },
 };
+use serror::Response;
 use resolver_api::Resolve;
-use response::Response;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serror::Json;

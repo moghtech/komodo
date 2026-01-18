@@ -9,7 +9,7 @@ homepage.workspace = true
 
 [dependencies]
 komodo_client.workspace = true
-secret_file.workspace = true
+secret_file = { workspace = true, features = ["write", "tokio"] }
 #
 data-encoding.workspace = true
 pem-rfc7468.workspace = true

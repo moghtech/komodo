@@ -3,7 +3,7 @@ use std::{path::PathBuf, sync::OnceLock};
 use anyhow::Context;
 use clap::Parser;
 use colored::Colorize;
-use environment_file::maybe_read_item_from_file;
+use secret_file::maybe_read_item_from_file;
 use komodo_client::entities::{
   config::{
     DatabaseConfig,

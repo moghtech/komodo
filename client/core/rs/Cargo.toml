@@ -15,11 +15,13 @@ repository.workspace = true
 blocking = ["reqwest/blocking"]
 mongo = ["dep:mongo_indexed"]
 utoipa = ["dep:utoipa", "serror/utoipa"]
-core = ["mongo", "utoipa"]
+logger = ["dep:logger"]
+core = ["mongo", "utoipa", "logger"]
 
 [dependencies]
 # mogh
 mongo_indexed = { workspace = true, optional = true }
+logger = { workspace = true, optional = true }
 serror = { workspace = true, features = ["axum"] }
 derive_default_builder.workspace = true
 derive_empty_traits.workspace = true

@@ -137,7 +137,7 @@ export const EnrollTotp = ({ user }: { user: Types.User }) => {
           ) : (
             <>
               <DialogHeader>
-                <DialogTitle>Create Api Key</DialogTitle>
+                <DialogTitle>Enroll TOTP</DialogTitle>
               </DialogHeader>
               <div className="py-8 flex justify-center gap-4">
                 <Loader2 className="w-8 animate-spin py-2" />
