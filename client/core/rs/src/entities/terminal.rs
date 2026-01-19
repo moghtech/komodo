@@ -1,7 +1,6 @@
 use anyhow::{Context as _, anyhow};
-use derive_variants::EnumVariants;
 use serde::{Deserialize, Serialize};
-use strum::AsRefStr;
+use strum::{AsRefStr, EnumDiscriminants};
 use tokio_tungstenite::tungstenite;
 use typeshare::typeshare;
 
@@ -158,8 +157,8 @@ impl TerminalMessage {
 }
 
 /// This is message send from clients -> PTY stdin.
-#[derive(Debug, EnumVariants)]
-#[variant_derive(Debug, Clone, Copy)]
+#[derive(Debug, EnumDiscriminants)]
+#[strum_discriminants(name(TerminalStdinMessageVariant))]
 pub enum TerminalStdinMessage {
   /// This triggers forwarding to begin.
   Begin,

@@ -1,8 +1,7 @@
 use std::path::PathBuf;
 
-use derive_variants::EnumVariants;
 use serde::{Deserialize, Serialize};
-use strum::{Display, EnumString};
+use strum::{Display, EnumDiscriminants, EnumString};
 use typeshare::typeshare;
 
 use crate::entities::{I64, MongoId};
@@ -59,34 +58,21 @@ pub struct Alert {
 
 /// The variants of data related to the alert.
 #[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, EnumVariants)]
+#[derive(Serialize, Deserialize, Debug, Clone, EnumDiscriminants)]
+#[strum_discriminants(name(AlertDataVariant))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
   not(feature = "utoipa"),
-  variant_derive(
-    Serialize,
-    Deserialize,
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    Hash
-  )
+  strum_discriminants(derive(Serialize, Deserialize, Hash))
 )]
 #[cfg_attr(
   feature = "utoipa",
-  variant_derive(
+  strum_discriminants(derive(
     Serialize,
     Deserialize,
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
     Hash,
     utoipa::ToSchema
-  )
+  ))
 )]
 #[serde(tag = "type", content = "data")]
 pub enum AlertData {

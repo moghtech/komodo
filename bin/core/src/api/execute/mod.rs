@@ -6,7 +6,6 @@ use axum::{
 };
 use axum_extra::{TypedHeader, headers::ContentType};
 use database::mungos::by_id::find_one_by_id;
-use derive_variants::{EnumVariants, ExtractVariant};
 use formatting::format_serror;
 use futures_util::future::join_all;
 use komodo_client::{
@@ -23,7 +22,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serror::Json;
 use serror::JsonString;
-use strum::Display;
+use strum::{Display, EnumDiscriminants};
 use typeshare::typeshare;
 use uuid::Uuid;
 
@@ -62,9 +61,9 @@ pub struct ExecuteArgs {
 
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EnumVariants,
+  Serialize, Deserialize, Debug, Clone, Resolve, EnumDiscriminants,
 )]
-#[variant_derive(Debug, Display)]
+#[strum_discriminants(name(ExecuteRequestVariant), derive(Display))]
 #[args(ExecuteArgs)]
 #[response(JsonString)]
 #[error(serror::Error)]
@@ -295,7 +294,7 @@ async fn task(
   user: User,
   update: Update,
 ) -> anyhow::Result<String> {
-  let variant = request.extract_variant();
+  let variant: ExecuteRequestVariant = (&request).into();
 
   info!(
     "/execute request {id} | {variant} | user: {}",

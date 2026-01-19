@@ -2,14 +2,14 @@ use anyhow::Context;
 use axum::{
   Extension, Router, extract::Path, middleware, routing::post,
 };
-use derive_variants::{EnumVariants, ExtractVariant};
 use komodo_client::{api::write::*, entities::user::User};
 use resolver_api::Resolve;
-use serror::Response;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serror::Json;
+use serror::Response;
 use strum::Display;
+use strum::EnumDiscriminants;
 use typeshare::typeshare;
 use uuid::Uuid;
 
@@ -46,9 +46,9 @@ pub struct WriteArgs {
 
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EnumVariants,
+  Serialize, Deserialize, Debug, Clone, Resolve, EnumDiscriminants,
 )]
-#[variant_derive(Debug, Display)]
+#[strum_discriminants(name(WriteRequestVariant), derive(Display))]
 #[args(WriteArgs)]
 #[response(Response)]
 #[error(serror::Error)]
@@ -244,7 +244,7 @@ async fn task(
   request: WriteRequest,
   user: User,
 ) -> serror::Result<axum::response::Response> {
-  let variant = request.extract_variant();
+  let variant: WriteRequestVariant = (&request).into();
   info!("/write request | {variant} | user: {}", user.username);
 
   let res = request.resolve(&WriteArgs { user }).await;

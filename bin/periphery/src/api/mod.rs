@@ -1,5 +1,4 @@
 use command::run_komodo_standard_command;
-use derive_variants::EnumVariants;
 use encoding::{EncodedJsonMessage, EncodedResponse};
 use komodo_client::entities::{
   config::{DockerRegistry, GitProvider},
@@ -12,6 +11,7 @@ use periphery_client::api::{
 };
 use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
+use strum::EnumDiscriminants;
 use uuid::Uuid;
 
 use crate::{config::periphery_config, state::stats_client};
@@ -36,12 +36,12 @@ pub struct Args {
 }
 
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EnumVariants,
+  Serialize, Deserialize, Debug, Clone, Resolve, EnumDiscriminants,
 )]
+#[strum_discriminants(name(PeripheryRequestVariant))]
 #[args(Args)]
 #[response(EncodedResponse<EncodedJsonMessage>)]
 #[error(anyhow::Error)]
-#[variant_derive(Debug)]
 #[serde(tag = "type", content = "params")]
 #[allow(clippy::enum_variant_names, clippy::large_enum_variant)]
 pub enum PeripheryRequest {

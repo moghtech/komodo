@@ -1,10 +1,9 @@
 use bson::{Document, doc};
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
-use derive_variants::EnumVariants;
 use partial_derive2::Partial;
 use serde::{Deserialize, Serialize};
-use strum::{AsRefStr, Display, EnumString};
+use strum::{AsRefStr, Display, EnumDiscriminants, EnumString};
 use typeshare::typeshare;
 
 use crate::entities::MaintenanceWindow;
@@ -111,43 +110,36 @@ impl utoipa::ToSchema for PartialAlerterConfig {}
 
 #[typeshare]
 #[derive(
-  Debug, Clone, PartialEq, Serialize, Deserialize, EnumVariants,
+  Debug, Clone, PartialEq, Serialize, Deserialize, EnumDiscriminants,
 )]
+#[strum_discriminants(name(AlerterEndpointVariant))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
   not(feature = "utoipa"),
-  variant_derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
+  strum_discriminants(derive(
     PartialOrd,
     Ord,
+    Hash,
+    Serialize,
+    Deserialize,
     Display,
     EnumString,
-    AsRefStr,
-    Serialize,
-    Deserialize
-  )
+    AsRefStr
+  ))
 )]
 #[cfg_attr(
   feature = "utoipa",
-  variant_derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
+  strum_discriminants(derive(
     PartialOrd,
     Ord,
+    Hash,
+    Serialize,
+    Deserialize,
     Display,
     EnumString,
     AsRefStr,
-    Serialize,
-    Deserialize,
     utoipa::ToSchema
-  )
+  ))
 )]
 #[serde(tag = "type", content = "params")]
 pub enum AlerterEndpoint {

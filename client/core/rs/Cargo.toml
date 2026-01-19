@@ -31,7 +31,6 @@ derive_empty_traits.workspace = true
 async_timing_util.workspace = true
 mogh_auth_client.workspace = true
 partial_derive2.workspace = true
-derive_variants.workspace = true
 resolver_api.workspace = true
 # external
 ipnetwork = { workspace = true, optional = true }

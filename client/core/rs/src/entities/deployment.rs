@@ -2,10 +2,9 @@ use anyhow::Context;
 use bson::{Document, doc};
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
-use derive_variants::EnumVariants;
 use partial_derive2::Partial;
 use serde::{Deserialize, Serialize};
-use strum::{AsRefStr, Display, EnumString};
+use strum::{AsRefStr, Display, EnumDiscriminants, EnumString};
 use typeshare::typeshare;
 
 use crate::{
@@ -304,19 +303,36 @@ impl utoipa::ToSchema for PartialDeploymentConfig {}
 
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, PartialEq, EnumVariants,
+  Serialize, Deserialize, Debug, Clone, PartialEq, EnumDiscriminants,
 )]
+#[strum_discriminants(name(DeploymentImageVariant))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[variant_derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  Copy,
-  PartialEq,
-  Eq,
-  Display,
-  EnumString
+#[cfg_attr(
+  not(feature = "utoipa"),
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr
+  ))
+)]
+#[cfg_attr(
+  feature = "utoipa",
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr,
+    utoipa::ToSchema
+  ))
 )]
 #[serde(tag = "type", content = "params")]
 pub enum DeploymentImage {

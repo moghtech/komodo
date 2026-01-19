@@ -1,8 +1,7 @@
 use derive_builder::Builder;
-use derive_variants::EnumVariants;
 use partial_derive2::{Diff, MaybeNone, Partial, PartialDiff};
 use serde::{Deserialize, Serialize};
-use strum::{Display, EnumString};
+use strum::{AsRefStr, Display, EnumDiscriminants, EnumString};
 use typeshare::typeshare;
 
 use crate::deserializers::{
@@ -37,16 +36,35 @@ pub struct BuilderListItemInfo {
 }
 
 #[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, EnumVariants)]
+#[derive(Serialize, Deserialize, Debug, Clone, EnumDiscriminants)]
+#[strum_discriminants(name(BuilderConfigVariant))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[variant_derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  Copy,
-  Display,
-  EnumString
+#[cfg_attr(
+  not(feature = "utoipa"),
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr
+  ))
+)]
+#[cfg_attr(
+  feature = "utoipa",
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr,
+    utoipa::ToSchema
+  ))
 )]
 #[serde(tag = "type", content = "params")]
 #[allow(clippy::large_enum_variant)]
@@ -69,32 +87,35 @@ impl Default for BuilderConfig {
 
 /// Partial representation of [BuilderConfig]
 #[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, EnumVariants)]
+#[derive(Serialize, Deserialize, Debug, Clone, EnumDiscriminants)]
+#[strum_discriminants(name(PartialBuilderConfigVariant))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
   not(feature = "utoipa"),
-  variant_derive(
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
     Serialize,
     Deserialize,
-    Debug,
-    Clone,
-    Copy,
     Display,
-    EnumString
-  )
+    EnumString,
+    AsRefStr
+  ))
 )]
 #[cfg_attr(
   feature = "utoipa",
-  variant_derive(
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
     Serialize,
     Deserialize,
-    Debug,
-    Clone,
-    Copy,
     Display,
     EnumString,
+    AsRefStr,
     utoipa::ToSchema
-  )
+  ))
 )]
 #[serde(tag = "type", content = "params")]
 #[allow(clippy::large_enum_variant)]

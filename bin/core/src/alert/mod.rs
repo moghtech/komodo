@@ -1,6 +1,5 @@
 use anyhow::{Context, anyhow};
 use database::mungos::{find::find_collect, mongodb::bson::doc};
-use derive_variants::ExtractVariant;
 use futures_util::future::join_all;
 use interpolate::Interpolator;
 use komodo_client::entities::{
@@ -81,14 +80,14 @@ pub async fn send_alert_to_alerter(
     return Ok(());
   }
 
-  let alert_type = alert.data.extract_variant();
+  let alert_variant: AlertDataVariant = (&alert.data).into();
 
   // In the test case, we don't want the filters inside this
   // block to stop the test from being sent to the alerting endpoint.
-  if alert_type != AlertDataVariant::Test {
+  if alert_variant != AlertDataVariant::Test {
     // Don't send if alert type not configured on the alerter
     if !alerter.config.alert_types.is_empty()
-      && !alerter.config.alert_types.contains(&alert_type)
+      && !alerter.config.alert_types.contains(&alert_variant)
     {
       return Ok(());
     }

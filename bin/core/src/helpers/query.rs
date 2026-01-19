@@ -34,7 +34,7 @@ use komodo_client::{
     variable::Variable,
   },
 };
-use openidconnect::SubjectIdentifier;
+use mogh_auth_server::provider::oidc::SubjectIdentifier;
 
 use crate::{
   config::core_config,

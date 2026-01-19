@@ -1,10 +1,10 @@
 use anyhow::{Context, anyhow};
-use derive_variants::{EnumVariants, ExtractVariant};
 use encoding::{
   CastBytes, Decode, Encode, EncodedResponse, impl_cast_bytes_vec,
   impl_from_for_wrapper,
 };
 use pki::SpkiPublicKey;
+use strum::EnumDiscriminants;
 
 use crate::transport::{EncodedTransportMessage, TransportMessage};
 
@@ -28,8 +28,8 @@ pub struct InnerEncodedLoginMessage(Vec<u8>);
 
 impl_cast_bytes_vec!(InnerEncodedLoginMessage, Vec);
 
-#[derive(EnumVariants, Clone)]
-#[variant_derive(Debug, Clone, Copy)]
+#[derive(Clone, EnumDiscriminants)]
+#[strum_discriminants(name(LoginMessageVariant))]
 pub enum LoginMessage {
   /// At the end of every login flow,
   /// Send a success message
@@ -60,7 +60,8 @@ pub enum LoginMessage {
 
 impl Encode<EncodedTransportMessage> for LoginMessage {
   fn encode(self) -> EncodedTransportMessage {
-    let variant_byte = self.extract_variant().as_byte();
+    let variant: LoginMessageVariant = (&self).into();
+    let variant_byte = variant.as_byte();
     let mut bytes = match self {
       LoginMessage::Success => Vec::new(),
       LoginMessage::Nonce(nonce) => nonce.to_vec(),

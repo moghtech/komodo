@@ -37,7 +37,6 @@ mogh_auth_client = { workspace = true, features = ["utoipa"] }
 mogh_auth_server.workspace = true
 async_timing_util.workspace = true
 partial_derive2.workspace = true
-derive_variants.workspace = true
 resolver_api.workspace = true
 mogh_server.workspace = true
 toml_pretty.workspace = true
@@ -46,7 +45,6 @@ svi.workspace = true
 # external
 aws-credential-types.workspace = true
 english-to-cron.workspace = true
-openidconnect.workspace = true
 data-encoding.workspace = true
 serde_yaml_ng.workspace = true
 utoipa-scalar.workspace = true

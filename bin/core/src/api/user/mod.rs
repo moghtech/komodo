@@ -8,7 +8,6 @@ use database::{
   bson::{doc, to_bson},
   mungos::by_id::update_one_by_id,
 };
-use derive_variants::EnumVariants;
 use komodo_client::{
   api::user::*,
   entities::{komodo_timestamp, user::User},
@@ -17,6 +16,7 @@ use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serror::Response;
+use strum::EnumDiscriminants;
 use typeshare::typeshare;
 use uuid::Uuid;
 
@@ -34,8 +34,9 @@ pub struct UserArgs {
 
 #[typeshare]
 #[derive(
-  Debug, Clone, Serialize, Deserialize, Resolve, EnumVariants,
+  Debug, Clone, Serialize, Deserialize, Resolve, EnumDiscriminants,
 )]
+#[strum_discriminants(name(UserRequestVariant))]
 #[args(UserArgs)]
 #[response(Response)]
 #[error(serror::Error)]

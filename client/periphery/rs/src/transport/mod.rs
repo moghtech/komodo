@@ -1,5 +1,4 @@
 use anyhow::{Context as _, anyhow};
-use derive_variants::{EnumVariants, ExtractVariant as _};
 use encoding::{
   CastBytes, Decode, Encode, EncodedChannel, EncodedJsonMessage,
   EncodedResponse, WithChannel, impl_cast_bytes_vec,
@@ -9,6 +8,7 @@ use encoding::{
 mod login;
 pub use login::*;
 use serde::de::DeserializeOwned;
+use strum::EnumDiscriminants;
 use uuid::Uuid;
 
 // ===================
@@ -26,8 +26,8 @@ impl_cast_bytes_vec!(EncodedTransportMessage, Vec);
 /// Note that inner bytes for top level message variants are left as is,
 /// as their decoding is left to specific handler.
 /// The main receiving hot loop should do minimal parsing.
-#[derive(Debug, EnumVariants)]
-#[variant_derive(Debug, Clone, Copy)]
+#[derive(Debug, EnumDiscriminants)]
+#[strum_discriminants(name(TransportMessageVariant))]
 pub enum TransportMessage {
   Login(EncodedLoginMessage),
   Request(EncodedRequestMessage),
@@ -37,7 +37,8 @@ pub enum TransportMessage {
 
 impl Encode<EncodedTransportMessage> for TransportMessage {
   fn encode(self) -> EncodedTransportMessage {
-    let variant_byte = self.extract_variant().as_byte();
+    let variant: TransportMessageVariant = (&self).into();
+    let variant_byte = variant.as_byte();
     let mut bytes = match self {
       TransportMessage::Login(data) => data.into_vec(),
       TransportMessage::Request(data) => data.0.into_vec(),

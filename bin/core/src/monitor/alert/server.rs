@@ -12,7 +12,6 @@ use database::mungos::{
   find::find_collect,
   mongodb::bson::{doc, oid::ObjectId, to_bson},
 };
-use derive_variants::ExtractVariant;
 use komodo_client::entities::{
   ResourceTarget,
   alert::{Alert, AlertData, AlertDataVariant, SeverityLevel},
@@ -725,7 +724,7 @@ async fn get_open_alerts()
       }
       _ => {
         let inner = map.entry(alert.target.clone()).or_default();
-        inner.insert(alert.data.extract_variant(), alert);
+        inner.insert((&alert.data).into(), alert);
       }
     }
   }

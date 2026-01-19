@@ -7,14 +7,13 @@ use anyhow::Context;
 use async_timing_util::unix_timestamp_ms;
 use clap::Parser;
 use derive_empty_traits::EmptyTraits;
-use derive_variants::{EnumVariants, ExtractVariant};
 use rand::Rng as _;
 use serde::{
   Deserialize, Serialize,
   de::{Visitor, value::MapAccessDeserializer},
 };
 use serror::Serror;
-use strum::{AsRefStr, Display, EnumString};
+use strum::{AsRefStr, Display, EnumDiscriminants, EnumString};
 use typeshare::typeshare;
 
 use crate::{
@@ -1297,17 +1296,13 @@ pub enum TerminationSignal {
   Hash,
   Serialize,
   Deserialize,
-  EnumVariants,
+  EnumDiscriminants,
 )]
+#[strum_discriminants(name(ResourceTargetVariant))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
   not(feature = "utoipa"),
-  variant_derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
+  strum_discriminants(derive(
     PartialOrd,
     Ord,
     Hash,
@@ -1316,16 +1311,11 @@ pub enum TerminationSignal {
     Display,
     EnumString,
     AsRefStr
-  )
+  ))
 )]
 #[cfg_attr(
   feature = "utoipa",
-  variant_derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
+  strum_discriminants(derive(
     PartialOrd,
     Ord,
     Hash,
@@ -1335,7 +1325,7 @@ pub enum TerminationSignal {
     EnumString,
     AsRefStr,
     utoipa::ToSchema
-  )
+  ))
 )]
 #[serde(tag = "type", content = "id")]
 pub enum ResourceTarget {
@@ -1383,6 +1373,10 @@ impl ResourceTarget {
     }
   }
 
+  pub fn extract_variant(&self) -> ResourceTargetVariant {
+    self.into()
+  }
+
   pub fn extract_variant_id(
     &self,
   ) -> (ResourceTargetVariant, &String) {
@@ -1400,7 +1394,7 @@ impl ResourceTarget {
       ResourceTarget::Action(id) => id,
       ResourceTarget::ResourceSync(id) => id,
     };
-    (self.extract_variant(), id)
+    (self.into(), id)
   }
 }
 

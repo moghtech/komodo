@@ -8,7 +8,6 @@ use database::mungos::{
     options::UpdateOptions,
   },
 };
-use derive_variants::ExtractVariant as _;
 use komodo_client::{
   api::write::*,
   entities::{

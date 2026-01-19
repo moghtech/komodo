@@ -48,7 +48,6 @@ async_timing_util = "1.1.0"
 mogh_auth_client = "0.1.0"
 mogh_auth_server = "0.2.0"
 partial_derive2 = "0.4.5"
-derive_variants = "1.0.0"
 mongo_indexed = "2.0.2"
 resolver_api = "3.0.0"
 mogh_server = "1.1.2"
@@ -99,7 +98,6 @@ dotenvy = "0.15.7"
 envy = "0.4.2"
 
 # CRYPTO / AUTH
-openidconnect = { version = "4.0.1", features = ["accept-rfc3339-timestamps"] }
 uuid = { version = "1.19.0", features = ["v4", "fast-rng", "serde"] }
 rustls = { version = "0.23.36", features = ["aws-lc-rs"] }
 data-encoding = "2.9.0"

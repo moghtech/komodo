@@ -19,12 +19,14 @@ use mogh_auth_client::{
 };
 use mogh_auth_server::{
   AuthImpl, RequestClientArgs,
-  provider::{jwt::JwtProvider, passkey::PasskeyProvider},
+  provider::{
+    jwt::JwtProvider, oidc::SubjectIdentifier,
+    passkey::PasskeyProvider,
+  },
   rand::random_string,
   user::{AuthUserImpl, BoxAuthUser},
   validations::{validate_password, validate_username},
 };
-use openidconnect::SubjectIdentifier;
 use rate_limit::RateLimiter;
 use serror::{AddStatusCode, AddStatusCodeError, StatusCode};
 

@@ -1,5 +1,4 @@
 use anyhow::anyhow;
-use derive_variants::ExtractVariant as _;
 use komodo_client::{
   api::write::{UpdateResourceMeta, UpdateResourceMetaResponse},
   entities::{

@@ -1,8 +1,7 @@
 use clap::{Parser, Subcommand};
-use derive_variants::EnumVariants;
 use resolver_api::HasResponse;
 use serde::{Deserialize, Serialize};
-use strum::{Display, EnumString};
+use strum::{AsRefStr, Display, EnumDiscriminants, EnumString};
 use typeshare::typeshare;
 
 mod action;
@@ -44,34 +43,37 @@ pub trait KomodoExecuteRequest: HasResponse {}
   PartialEq,
   Serialize,
   Deserialize,
-  EnumVariants,
+  EnumDiscriminants,
   Subcommand,
 )]
+#[strum_discriminants(name(ExecutionVariant))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
   not(feature = "utoipa"),
-  variant_derive(
-    Debug,
-    Clone,
-    Copy,
-    Serialize,
-    Deserialize,
-    Display,
-    EnumString
-  )
-)]
-#[cfg_attr(
-  feature = "utoipa",
-  variant_derive(
-    Debug,
-    Clone,
-    Copy,
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
     Serialize,
     Deserialize,
     Display,
     EnumString,
+    AsRefStr
+  ))
+)]
+#[cfg_attr(
+  feature = "utoipa",
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr,
     utoipa::ToSchema
-  )
+  ))
 )]
 #[serde(tag = "type", content = "params")]
 pub enum Execution {

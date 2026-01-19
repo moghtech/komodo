@@ -1,10 +1,10 @@
 use std::fmt::Write;
 
-use derive_variants::EnumVariants;
 use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
 use strum::{
-  AsRefStr, Display, EnumString, IntoStaticStr, VariantArray,
+  AsRefStr, Display, EnumDiscriminants, EnumString, IntoStaticStr,
+  VariantArray,
 };
 use typeshare::typeshare;
 
@@ -52,15 +52,35 @@ pub struct Permission {
 }
 
 #[typeshare]
-#[derive(Debug, Clone, Serialize, Deserialize, EnumVariants)]
+#[derive(Debug, Clone, Serialize, Deserialize, EnumDiscriminants)]
+#[strum_discriminants(name(UserTargetVariant))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[variant_derive(
-  Debug,
-  Clone,
-  Copy,
-  Serialize,
-  Deserialize,
-  AsRefStr
+#[cfg_attr(
+  not(feature = "utoipa"),
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr
+  ))
+)]
+#[cfg_attr(
+  feature = "utoipa",
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr,
+    utoipa::ToSchema
+  ))
 )]
 #[serde(tag = "type", content = "id")]
 pub enum UserTarget {

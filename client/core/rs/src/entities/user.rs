@@ -1,10 +1,9 @@
 use std::{collections::HashMap, sync::OnceLock};
 
 use anyhow::anyhow;
-use derive_variants::{EnumVariants, ExtractVariant};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
-use strum::{AsRefStr, Display, EnumString};
+use strum::{AsRefStr, Display, EnumDiscriminants, EnumString};
 use typeshare::typeshare;
 
 use crate::entities::{I64, MongoId};
@@ -145,16 +144,12 @@ impl User {
 }
 
 #[typeshare]
-#[derive(Debug, Clone, Serialize, Deserialize, EnumVariants)]
+#[derive(Debug, Clone, Serialize, Deserialize, EnumDiscriminants)]
+#[strum_discriminants(name(UserConfigVariant))]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
   not(feature = "utoipa"),
-  variant_derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
+  strum_discriminants(derive(
     PartialOrd,
     Ord,
     Hash,
@@ -163,16 +158,11 @@ impl User {
     Display,
     EnumString,
     AsRefStr
-  )
+  ))
 )]
 #[cfg_attr(
   feature = "utoipa",
-  variant_derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
+  strum_discriminants(derive(
     PartialOrd,
     Ord,
     Hash,
@@ -182,7 +172,7 @@ impl User {
     EnumString,
     AsRefStr,
     utoipa::ToSchema
-  )
+  ))
 )]
 #[serde(tag = "type", content = "data")]
 pub enum UserConfig {
@@ -237,8 +227,7 @@ impl LinkedLoginsMap {
         "Cannot insert Service type configuration as additional login method."
       ));
     }
-    let key = login.extract_variant();
-    self.0.insert(key, login);
+    self.0.insert((&login).into(), login);
     Ok(())
   }
 
