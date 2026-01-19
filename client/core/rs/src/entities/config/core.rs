@@ -1017,6 +1017,9 @@ impl mogh_server::cors::CorsConfig for &CoreConfig {
   fn allowed_origins(&self) -> &[String] {
     &self.cors_allowed_origins
   }
+  fn allow_credentials(&self) -> bool {
+    self.cors_allow_credentials
+  }
 }
 
 impl mogh_server::session::SessionConfig for &CoreConfig {
