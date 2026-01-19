@@ -5,7 +5,6 @@ import Convert from "ansi-to-html";
 import { type ClassValue, clsx } from "clsx";
 import sanitizeHtml from "sanitize-html";
 import { twMerge } from "tailwind-merge";
-import { jwtDecode } from "jwt-decode";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -361,8 +360,4 @@ export const preparePasskeyCredential = (data: any) => {
       })),
     },
   };
-};
-
-export const extractUserIdFromJwt = (jwt: string) => {
-  return jwtDecode(jwt).sub;
 };

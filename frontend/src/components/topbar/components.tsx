@@ -40,7 +40,6 @@ import { Button } from "@ui/button";
 import { Link } from "react-router-dom";
 import {
   cn,
-  extractUserIdFromJwt,
   SIDEBAR_RESOURCES,
   usableResourcePath,
   version_is_none,
@@ -297,7 +296,10 @@ const Account = ({
   viewLogout: boolean;
   full?: boolean;
 }) => {
-  const user_id = useMemo(() => extractUserIdFromJwt(login.jwt), [login.jwt]);
+  const user_id = useMemo(
+    () => MoghAuth.extractUserIdFromJwt(login.jwt),
+    [login.jwt],
+  );
   const { data: user } = useRead(
     "GetUsername",
     { user_id: user_id! },
