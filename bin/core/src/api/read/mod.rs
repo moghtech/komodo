@@ -18,11 +18,11 @@ use komodo_client::{
     user::User,
   },
 };
+use mogh_error::Json;
+use mogh_error::Response;
 use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use serror::Json;
-use serror::Response;
 use typeshare::typeshare;
 use uuid::Uuid;
 
@@ -67,7 +67,7 @@ pub struct ReadArgs {
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[args(ReadArgs)]
 #[response(Response)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 #[serde(tag = "type", content = "params")]
 enum ReadRequest {
   GetVersion(GetVersion),
@@ -270,7 +270,7 @@ async fn variant_handler(
   user: Extension<User>,
   Path(Variant { variant }): Path<Variant>,
   Json(params): Json<serde_json::Value>,
-) -> serror::Result<axum::response::Response> {
+) -> mogh_error::Result<axum::response::Response> {
   let req: ReadRequest = serde_json::from_value(json!({
     "type": variant,
     "params": params,
@@ -281,7 +281,7 @@ async fn variant_handler(
 async fn handler(
   Extension(user): Extension<User>,
   Json(request): Json<ReadRequest>,
-) -> serror::Result<axum::response::Response> {
+) -> mogh_error::Result<axum::response::Response> {
   let timer = Instant::now();
   let req_id = Uuid::new_v4();
   debug!("/read request | user: {}", user.username);
@@ -303,7 +303,7 @@ async fn handler(
     (status = 200, description = "Komodo Core version", body = GetVersionResponse),
   ),
 )]
-async fn get_version() -> serror::Result<GetVersionResponse> {
+async fn get_version() -> mogh_error::Result<GetVersionResponse> {
   Ok(GetVersionResponse {
     version: env!("CARGO_PKG_VERSION").to_string(),
   })
@@ -313,7 +313,7 @@ impl Resolve<ReadArgs> for GetVersion {
   async fn resolve(
     self,
     _: &ReadArgs,
-  ) -> serror::Result<GetVersionResponse> {
+  ) -> mogh_error::Result<GetVersionResponse> {
     get_version().await
   }
 }
@@ -322,7 +322,7 @@ impl Resolve<ReadArgs> for GetCoreInfo {
   async fn resolve(
     self,
     _: &ReadArgs,
-  ) -> serror::Result<GetCoreInfoResponse> {
+  ) -> mogh_error::Result<GetCoreInfoResponse> {
     let config = core_config();
     let info = GetCoreInfoResponse {
       title: config.title.clone(),
@@ -349,7 +349,7 @@ impl Resolve<ReadArgs> for ListSecrets {
   async fn resolve(
     self,
     _: &ReadArgs,
-  ) -> serror::Result<ListSecretsResponse> {
+  ) -> mogh_error::Result<ListSecretsResponse> {
     let mut secrets = core_config()
       .secrets
       .keys()
@@ -402,7 +402,7 @@ impl Resolve<ReadArgs> for ListGitProvidersFromConfig {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListGitProvidersFromConfigResponse> {
+  ) -> mogh_error::Result<ListGitProvidersFromConfigResponse> {
     let mut providers = core_config().git_providers.clone();
 
     if let Some(target) = self.target {
@@ -504,7 +504,7 @@ impl Resolve<ReadArgs> for ListDockerRegistriesFromConfig {
   async fn resolve(
     self,
     _: &ReadArgs,
-  ) -> serror::Result<ListDockerRegistriesFromConfigResponse> {
+  ) -> mogh_error::Result<ListDockerRegistriesFromConfigResponse> {
     let mut registries = core_config().docker_registries.clone();
 
     if let Some(target) = self.target {
@@ -548,7 +548,7 @@ impl Resolve<ReadArgs> for ListDockerRegistriesFromConfig {
 async fn merge_git_providers_for_server(
   providers: &mut Vec<GitProvider>,
   server_id: &str,
-) -> serror::Result<()> {
+) -> mogh_error::Result<()> {
   let server = resource::get::<Server>(server_id).await?;
   let more = periphery_client(&server)
     .await?
@@ -587,7 +587,7 @@ fn merge_git_providers(
 async fn merge_docker_registries_for_server(
   registries: &mut Vec<DockerRegistry>,
   server_id: &str,
-) -> serror::Result<()> {
+) -> mogh_error::Result<()> {
   let server = resource::get::<Server>(server_id).await?;
   let more = periphery_client(&server)
     .await?

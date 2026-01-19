@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use anyhow::Context;
 use futures_util::TryStreamExt;
-use serror::serialize_error;
+use mogh_error::serialize_error;
 use thiserror::Error;
 use tokio::sync::broadcast;
 use tokio_tungstenite::tungstenite::Message;

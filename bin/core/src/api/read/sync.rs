@@ -21,7 +21,7 @@ impl Resolve<ReadArgs> for GetResourceSync {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ResourceSync> {
+  ) -> mogh_error::Result<ResourceSync> {
     Ok(
       get_check_permissions::<ResourceSync>(
         &self.sync,
@@ -37,7 +37,7 @@ impl Resolve<ReadArgs> for ListResourceSyncs {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Vec<ResourceSyncListItem>> {
+  ) -> mogh_error::Result<Vec<ResourceSyncListItem>> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -59,7 +59,7 @@ impl Resolve<ReadArgs> for ListFullResourceSyncs {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListFullResourceSyncsResponse> {
+  ) -> mogh_error::Result<ListFullResourceSyncsResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -81,7 +81,7 @@ impl Resolve<ReadArgs> for GetResourceSyncActionState {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ResourceSyncActionState> {
+  ) -> mogh_error::Result<ResourceSyncActionState> {
     let sync = get_check_permissions::<ResourceSync>(
       &self.sync,
       user,
@@ -102,7 +102,7 @@ impl Resolve<ReadArgs> for GetResourceSyncsSummary {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetResourceSyncsSummaryResponse> {
+  ) -> mogh_error::Result<GetResourceSyncsSummaryResponse> {
     let resource_syncs =
       resource::list_full_for_user::<ResourceSync>(
         Default::default(),

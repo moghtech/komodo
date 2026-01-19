@@ -20,18 +20,18 @@ periphery_client.workspace = true
 environment.workspace = true
 interpolate.workspace = true
 mogh_server.workspace = true
-secret_file.workspace = true
+mogh_secret_file.workspace = true
 formatting.workspace = true
 transport.workspace = true
 encoding.workspace = true
 command.workspace = true
-config.workspace = true
-logger.workspace = true
-cache.workspace = true
+mogh_config.workspace = true
+mogh_logger.workspace = true
+mogh_cache.workspace = true
 mogh_pki.workspace = true
 git.workspace = true
 # mogh
-serror = { workspace = true, features = ["axum"] }
+mogh_error = { workspace = true, features = ["axum"] }
 async_timing_util.workspace = true
 mogh_resolver.workspace = true
 # external

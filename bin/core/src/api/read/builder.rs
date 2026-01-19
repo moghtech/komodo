@@ -23,7 +23,7 @@ impl Resolve<ReadArgs> for GetBuilder {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Builder> {
+  ) -> mogh_error::Result<Builder> {
     Ok(
       get_check_permissions::<Builder>(
         &self.builder,
@@ -39,7 +39,7 @@ impl Resolve<ReadArgs> for ListBuilders {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Vec<BuilderListItem>> {
+  ) -> mogh_error::Result<Vec<BuilderListItem>> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -61,7 +61,7 @@ impl Resolve<ReadArgs> for ListFullBuilders {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListFullBuildersResponse> {
+  ) -> mogh_error::Result<ListFullBuildersResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -83,7 +83,7 @@ impl Resolve<ReadArgs> for GetBuildersSummary {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetBuildersSummaryResponse> {
+  ) -> mogh_error::Result<GetBuildersSummaryResponse> {
     let query = match list_resource_ids_for_user::<Builder>(
       None,
       user,

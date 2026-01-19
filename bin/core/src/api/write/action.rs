@@ -23,7 +23,7 @@ impl Resolve<WriteArgs> for CreateAction {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Action> {
+  ) -> mogh_error::Result<Action> {
     resource::create::<Action>(&self.name, self.config, None, user)
       .await
   }
@@ -42,7 +42,7 @@ impl Resolve<WriteArgs> for CopyAction {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Action> {
+  ) -> mogh_error::Result<Action> {
     let Action { config, .. } = get_check_permissions::<Action>(
       &self.id,
       user,
@@ -67,7 +67,7 @@ impl Resolve<WriteArgs> for UpdateAction {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Action> {
+  ) -> mogh_error::Result<Action> {
     Ok(resource::update::<Action>(&self.id, self.config, user).await?)
   }
 }
@@ -85,7 +85,7 @@ impl Resolve<WriteArgs> for RenameAction {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     Ok(resource::rename::<Action>(&self.id, &self.name, user).await?)
   }
 }
@@ -102,7 +102,7 @@ impl Resolve<WriteArgs> for DeleteAction {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Action> {
+  ) -> mogh_error::Result<Action> {
     Ok(resource::delete::<Action>(&self.id, user).await?)
   }
 }

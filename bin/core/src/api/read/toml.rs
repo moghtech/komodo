@@ -161,7 +161,7 @@ impl Resolve<ReadArgs> for ExportAllResourcesToToml {
   async fn resolve(
     self,
     args: &ReadArgs,
-  ) -> serror::Result<ExportAllResourcesToTomlResponse> {
+  ) -> mogh_error::Result<ExportAllResourcesToTomlResponse> {
     let targets = if self.include_resources {
       get_all_targets(&self.tags, &args.user).await?
     } else {
@@ -197,7 +197,7 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
   async fn resolve(
     self,
     args: &ReadArgs,
-  ) -> serror::Result<ExportResourcesToTomlResponse> {
+  ) -> mogh_error::Result<ExportResourcesToTomlResponse> {
     let ExportResourcesToToml {
       targets,
       user_groups,

@@ -1,7 +1,7 @@
 use std::sync::OnceLock;
 
 use anyhow::Context;
-use cache::TimeoutCache;
+use mogh_cache::TimeoutCache;
 use command::run_komodo_standard_command;
 use komodo_client::entities::{
   deployment::extract_registry_domain,

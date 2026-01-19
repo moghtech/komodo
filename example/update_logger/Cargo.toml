@@ -12,7 +12,7 @@ repository.workspace = true
 [dependencies]
 # local
 komodo_client.workspace = true
-logger.workspace = true
+mogh_logger.workspace = true
 # external
 tokio.workspace = true
 tracing.workspace = true

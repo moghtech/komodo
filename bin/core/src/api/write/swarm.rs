@@ -23,7 +23,7 @@ impl Resolve<WriteArgs> for CreateSwarm {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Swarm> {
+  ) -> mogh_error::Result<Swarm> {
     resource::create::<Swarm>(&self.name, self.config, None, user)
       .await
   }
@@ -42,7 +42,7 @@ impl Resolve<WriteArgs> for CopySwarm {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Swarm> {
+  ) -> mogh_error::Result<Swarm> {
     let Swarm { config, .. } = get_check_permissions::<Swarm>(
       &self.id,
       user,
@@ -66,7 +66,7 @@ impl Resolve<WriteArgs> for DeleteSwarm {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Swarm> {
+  ) -> mogh_error::Result<Swarm> {
     Ok(resource::delete::<Swarm>(&self.id, user).await?)
   }
 }
@@ -84,7 +84,7 @@ impl Resolve<WriteArgs> for UpdateSwarm {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Swarm> {
+  ) -> mogh_error::Result<Swarm> {
     Ok(resource::update::<Swarm>(&self.id, self.config, user).await?)
   }
 }
@@ -102,7 +102,7 @@ impl Resolve<WriteArgs> for RenameSwarm {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     Ok(resource::rename::<Swarm>(&self.id, &self.name, user).await?)
   }
 }

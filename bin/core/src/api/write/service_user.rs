@@ -9,7 +9,7 @@ use komodo_client::{
 };
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use serror::{AddStatusCode as _, AddStatusCodeError as _};
+use mogh_error::{AddStatusCode as _, AddStatusCodeError as _};
 
 use crate::{
   api::user::UserArgs,
@@ -32,7 +32,7 @@ impl Resolve<WriteArgs> for CreateServiceUser {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<CreateServiceUserResponse> {
+  ) -> mogh_error::Result<CreateServiceUserResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only Admins can manage Service Users")
@@ -83,7 +83,7 @@ impl Resolve<WriteArgs> for UpdateServiceUserDescription {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<UpdateServiceUserDescriptionResponse> {
+  ) -> mogh_error::Result<UpdateServiceUserDescriptionResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only Admins can manage Service Users")
@@ -140,7 +140,7 @@ impl Resolve<WriteArgs> for CreateApiKeyForServiceUser {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<CreateApiKeyForServiceUserResponse> {
+  ) -> mogh_error::Result<CreateApiKeyForServiceUserResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only Admins can manage Service Users")
@@ -185,7 +185,7 @@ impl Resolve<WriteArgs> for DeleteApiKeyForServiceUser {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<DeleteApiKeyForServiceUserResponse> {
+  ) -> mogh_error::Result<DeleteApiKeyForServiceUserResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only Admins can manage Service Users")

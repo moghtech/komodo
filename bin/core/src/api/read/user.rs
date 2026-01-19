@@ -23,7 +23,7 @@ impl Resolve<ReadArgs> for GetUsername {
   async fn resolve(
     self,
     _: &ReadArgs,
-  ) -> serror::Result<GetUsernameResponse> {
+  ) -> mogh_error::Result<GetUsernameResponse> {
     if let Some(user) = admin_service_user(&self.user_id) {
       return Ok(GetUsernameResponse {
         username: user.username,
@@ -53,7 +53,7 @@ impl Resolve<ReadArgs> for FindUser {
   async fn resolve(
     self,
     ReadArgs { user: admin }: &ReadArgs,
-  ) -> serror::Result<FindUserResponse> {
+  ) -> mogh_error::Result<FindUserResponse> {
     if !admin.admin {
       return Err(anyhow!("This method is admin only.").into());
     }
@@ -65,7 +65,7 @@ impl Resolve<ReadArgs> for ListUsers {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListUsersResponse> {
+  ) -> mogh_error::Result<ListUsersResponse> {
     if !user.admin {
       return Err(
         anyhow!("this route is only accessable by admins").into(),
@@ -87,7 +87,7 @@ impl Resolve<ReadArgs> for ListApiKeys {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListApiKeysResponse> {
+  ) -> mogh_error::Result<ListApiKeysResponse> {
     let api_keys = find_collect(
       &db_client().api_keys,
       doc! { "user_id": &user.id },
@@ -109,7 +109,7 @@ impl Resolve<ReadArgs> for ListApiKeysForServiceUser {
   async fn resolve(
     self,
     ReadArgs { user: admin }: &ReadArgs,
-  ) -> serror::Result<ListApiKeysForServiceUserResponse> {
+  ) -> mogh_error::Result<ListApiKeysForServiceUserResponse> {
     if !admin.admin {
       return Err(anyhow!("This method is admin only.").into());
     }

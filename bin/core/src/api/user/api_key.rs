@@ -9,7 +9,7 @@ use komodo_client::{
 };
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use serror::{AddStatusCode as _, AddStatusCodeError as _};
+use mogh_error::{AddStatusCode as _, AddStatusCodeError as _};
 
 use crate::{
   helpers::{query::get_user, validations::validate_api_key_name},
@@ -30,7 +30,7 @@ impl Resolve<UserArgs> for CreateApiKey {
   async fn resolve(
     self,
     UserArgs { user, .. }: &UserArgs,
-  ) -> serror::Result<CreateApiKeyResponse> {
+  ) -> mogh_error::Result<CreateApiKeyResponse> {
     let user = get_user(&user.id).await?;
 
     validate_api_key_name(&self.name)
@@ -69,7 +69,7 @@ impl Resolve<UserArgs> for DeleteApiKey {
   async fn resolve(
     self,
     UserArgs { user, .. }: &UserArgs,
-  ) -> serror::Result<DeleteApiKeyResponse> {
+  ) -> mogh_error::Result<DeleteApiKeyResponse> {
     let client = db_client();
 
     let key = client

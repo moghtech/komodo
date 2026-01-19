@@ -54,7 +54,7 @@ impl Resolve<WriteArgs> for CreateBuild {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Build> {
+  ) -> mogh_error::Result<Build> {
     resource::create::<Build>(&self.name, self.config, None, user)
       .await
   }
@@ -73,7 +73,7 @@ impl Resolve<WriteArgs> for CopyBuild {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Build> {
+  ) -> mogh_error::Result<Build> {
     let Build { mut config, .. } = get_check_permissions::<Build>(
       &self.id,
       user,
@@ -99,7 +99,7 @@ impl Resolve<WriteArgs> for DeleteBuild {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Build> {
+  ) -> mogh_error::Result<Build> {
     Ok(resource::delete::<Build>(&self.id, user).await?)
   }
 }
@@ -117,7 +117,7 @@ impl Resolve<WriteArgs> for UpdateBuild {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Build> {
+  ) -> mogh_error::Result<Build> {
     Ok(resource::update::<Build>(&self.id, self.config, user).await?)
   }
 }
@@ -135,7 +135,7 @@ impl Resolve<WriteArgs> for RenameBuild {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     Ok(resource::rename::<Build>(&self.id, &self.name, user).await?)
   }
 }
@@ -149,7 +149,10 @@ impl Resolve<WriteArgs> for WriteBuildFileContents {
       build = self.build,
     )
   )]
-  async fn resolve(self, args: &WriteArgs) -> serror::Result<Update> {
+  async fn resolve(
+    self,
+    args: &WriteArgs,
+  ) -> mogh_error::Result<Update> {
     let build = get_check_permissions::<Build>(
       &self.build,
       &args.user,
@@ -226,7 +229,7 @@ async fn write_dockerfile_contents_git(
   args: &WriteArgs,
   build: Build,
   mut update: Update,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   let WriteBuildFileContents { build: _, contents } = req;
 
   let mut repo_args: RepoExecutionArgs = if !build
@@ -318,7 +321,7 @@ async fn write_dockerfile_contents_git(
     return Ok(update);
   }
 
-  if let Err(e) = secret_file::write_async(&full_path, &contents)
+  if let Err(e) = mogh_secret_file::write_async(&full_path, &contents)
     .await
     .with_context(|| {
       format!("Failed to write dockerfile contents to {full_path:?}")
@@ -370,7 +373,7 @@ impl Resolve<WriteArgs> for RefreshBuildCache {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<NoData> {
+  ) -> mogh_error::Result<NoData> {
     // Even though this is a write request, this doesn't change any config. Anyone that can execute the
     // build should be able to do this.
     let build = get_check_permissions::<Build>(

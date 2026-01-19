@@ -15,11 +15,11 @@ path = "src/main.rs"
 [dependencies]
 # local
 komodo_client = { workspace = true, features = ["cli"] }
-secret_file.workspace = true
+mogh_secret_file.workspace = true
 mogh_pki.workspace = true
 database.workspace = true
-config.workspace = true
-logger.workspace = true
+mogh_config.workspace = true
+mogh_logger.workspace = true
 # external
 futures-util.workspace = true
 comfy-table.workspace = true

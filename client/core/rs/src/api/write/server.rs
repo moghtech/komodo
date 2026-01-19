@@ -17,7 +17,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Server)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateServer {
   /// The name given to newly created server.
   pub name: String,
@@ -37,7 +37,7 @@ pub struct CreateServer {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Server)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CopyServer {
   /// The name of the new server.
   pub name: String,
@@ -56,7 +56,7 @@ pub struct CopyServer {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Server)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteServer {
   /// The id or name of the server to delete.
   pub id: String,
@@ -77,7 +77,7 @@ pub struct DeleteServer {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Server)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateServer {
   /// The id or name of the server to update.
   pub id: String,
@@ -94,7 +94,7 @@ pub struct UpdateServer {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RenameServer {
   /// The id or name of the Server to rename.
   pub id: String,
@@ -113,7 +113,7 @@ pub struct RenameServer {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateNetwork {
   /// Server Id or name
   pub server: String,
@@ -130,7 +130,7 @@ pub struct CreateNetwork {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateServerPublicKey {
   /// Server Id or name
   pub server: String,
@@ -147,7 +147,7 @@ pub struct UpdateServerPublicKey {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RotateServerKeys {
   /// Server Id or name
   pub server: String,

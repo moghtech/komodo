@@ -21,7 +21,7 @@ impl Resolve<ReadArgs> for GetSwarm {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Swarm> {
+  ) -> mogh_error::Result<Swarm> {
     Ok(
       get_check_permissions::<Swarm>(
         &self.swarm,
@@ -37,7 +37,7 @@ impl Resolve<ReadArgs> for ListSwarms {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Vec<SwarmListItem>> {
+  ) -> mogh_error::Result<Vec<SwarmListItem>> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -59,7 +59,7 @@ impl Resolve<ReadArgs> for ListFullSwarms {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListFullSwarmsResponse> {
+  ) -> mogh_error::Result<ListFullSwarmsResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -81,7 +81,7 @@ impl Resolve<ReadArgs> for GetSwarmActionState {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<SwarmActionState> {
+  ) -> mogh_error::Result<SwarmActionState> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
@@ -102,7 +102,7 @@ impl Resolve<ReadArgs> for GetSwarmsSummary {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetSwarmsSummaryResponse> {
+  ) -> mogh_error::Result<GetSwarmsSummaryResponse> {
     let swarms = resource::list_full_for_user::<Swarm>(
       Default::default(),
       user,
@@ -145,7 +145,7 @@ impl Resolve<ReadArgs> for InspectSwarm {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<InspectSwarmResponse> {
+  ) -> mogh_error::Result<InspectSwarmResponse> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
@@ -167,7 +167,7 @@ impl Resolve<ReadArgs> for ListSwarmNodes {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListSwarmNodesResponse> {
+  ) -> mogh_error::Result<ListSwarmNodesResponse> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
@@ -188,7 +188,7 @@ impl Resolve<ReadArgs> for InspectSwarmNode {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<InspectSwarmNodeResponse> {
+  ) -> mogh_error::Result<InspectSwarmNodeResponse> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
@@ -210,7 +210,7 @@ impl Resolve<ReadArgs> for ListSwarmServices {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListSwarmServicesResponse> {
+  ) -> mogh_error::Result<ListSwarmServicesResponse> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
@@ -231,7 +231,7 @@ impl Resolve<ReadArgs> for InspectSwarmService {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<InspectSwarmServiceResponse> {
+  ) -> mogh_error::Result<InspectSwarmServiceResponse> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
@@ -253,7 +253,7 @@ impl Resolve<ReadArgs> for GetSwarmServiceLog {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetSwarmServiceLogResponse> {
+  ) -> mogh_error::Result<GetSwarmServiceLogResponse> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
@@ -280,7 +280,7 @@ impl Resolve<ReadArgs> for SearchSwarmServiceLog {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<SearchSwarmServiceLogResponse> {
+  ) -> mogh_error::Result<SearchSwarmServiceLogResponse> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
@@ -309,7 +309,7 @@ impl Resolve<ReadArgs> for ListSwarmTasks {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListSwarmTasksResponse> {
+  ) -> mogh_error::Result<ListSwarmTasksResponse> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
@@ -330,7 +330,7 @@ impl Resolve<ReadArgs> for InspectSwarmTask {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<InspectSwarmTaskResponse> {
+  ) -> mogh_error::Result<InspectSwarmTaskResponse> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
@@ -352,7 +352,7 @@ impl Resolve<ReadArgs> for ListSwarmSecrets {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListSwarmSecretsResponse> {
+  ) -> mogh_error::Result<ListSwarmSecretsResponse> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
@@ -373,7 +373,7 @@ impl Resolve<ReadArgs> for InspectSwarmSecret {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<InspectSwarmSecretResponse> {
+  ) -> mogh_error::Result<InspectSwarmSecretResponse> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
@@ -395,7 +395,7 @@ impl Resolve<ReadArgs> for ListSwarmConfigs {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListSwarmConfigsResponse> {
+  ) -> mogh_error::Result<ListSwarmConfigsResponse> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
@@ -416,7 +416,7 @@ impl Resolve<ReadArgs> for InspectSwarmConfig {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<InspectSwarmConfigResponse> {
+  ) -> mogh_error::Result<InspectSwarmConfigResponse> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
@@ -438,7 +438,7 @@ impl Resolve<ReadArgs> for ListSwarmStacks {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListSwarmStacksResponse> {
+  ) -> mogh_error::Result<ListSwarmStacksResponse> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,
@@ -459,7 +459,7 @@ impl Resolve<ReadArgs> for InspectSwarmStack {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<InspectSwarmStackResponse> {
+  ) -> mogh_error::Result<InspectSwarmStackResponse> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
       user,

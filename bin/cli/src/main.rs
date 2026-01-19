@@ -12,7 +12,7 @@ mod config;
 
 async fn app() -> anyhow::Result<()> {
   dotenvy::dotenv().ok();
-  logger::init(&config::cli_config().cli_logging)?;
+  mogh_logger::init(&config::cli_config().cli_logging)?;
   let args = config::cli_args();
   let env = config::cli_env();
   let debug_load =

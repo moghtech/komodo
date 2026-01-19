@@ -15,7 +15,7 @@ use super::KomodoExecuteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RunSync {
   /// Id or name
   pub sync: String,

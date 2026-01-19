@@ -22,7 +22,7 @@ use super::{BatchExecutionResponse, KomodoExecuteRequest};
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct Deploy {
   /// Name or id
   pub deployment: String,
@@ -44,7 +44,7 @@ pub struct Deploy {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct BatchDeploy {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.
@@ -69,7 +69,7 @@ pub struct BatchDeploy {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct PullDeployment {
   /// Name or id
   pub deployment: String,
@@ -87,7 +87,7 @@ pub struct PullDeployment {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct StartDeployment {
   /// Name or id
   pub deployment: String,
@@ -105,7 +105,7 @@ pub struct StartDeployment {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RestartDeployment {
   /// Name or id
   pub deployment: String,
@@ -123,7 +123,7 @@ pub struct RestartDeployment {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct PauseDeployment {
   /// Name or id
   pub deployment: String,
@@ -143,7 +143,7 @@ pub struct PauseDeployment {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UnpauseDeployment {
   /// Name or id
   pub deployment: String,
@@ -161,7 +161,7 @@ pub struct UnpauseDeployment {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct StopDeployment {
   /// Name or id
   pub deployment: String,
@@ -184,7 +184,7 @@ pub struct StopDeployment {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DestroyDeployment {
   /// Name or id.
   pub deployment: String,
@@ -204,7 +204,7 @@ pub struct DestroyDeployment {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct BatchDestroyDeployment {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.

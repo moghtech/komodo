@@ -27,8 +27,8 @@ use mogh_auth_server::{
   user::{AuthUserImpl, BoxAuthUser},
   validations::{validate_password, validate_username},
 };
-use rate_limit::RateLimiter;
-use serror::{AddStatusCode, AddStatusCodeError, StatusCode};
+use mogh_error::{AddStatusCode, AddStatusCodeError, StatusCode};
+use mogh_rate_limit::RateLimiter;
 
 use crate::{
   config::core_config,
@@ -166,7 +166,8 @@ impl AuthImpl for KomodoAuthImpl {
   fn get_user(
     &self,
     user_id: String,
-  ) -> mogh_auth_server::DynFuture<serror::Result<BoxAuthUser>> {
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<BoxAuthUser>>
+  {
     Box::pin(async move {
       Ok(Box::new(AuthUser(
         get_user(&user_id)
@@ -178,7 +179,7 @@ impl AuthImpl for KomodoAuthImpl {
 
   fn no_users_exist(
     &self,
-  ) -> mogh_auth_server::DynFuture<serror::Result<bool>> {
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<bool>> {
     Box::pin(async {
       Ok(db_client().users.find_one(Document::new()).await?.is_none())
     })
@@ -192,7 +193,10 @@ impl AuthImpl for KomodoAuthImpl {
     core_config().disable_user_registration
   }
 
-  fn validate_username(&self, username: &str) -> serror::Result<()> {
+  fn validate_username(
+    &self,
+    username: &str,
+  ) -> mogh_error::Result<()> {
     validate_username(username).status_code(StatusCode::BAD_REQUEST)
   }
 
@@ -237,7 +241,7 @@ impl AuthImpl for KomodoAuthImpl {
     username: String,
     hashed_password: String,
     no_users_exist: bool,
-  ) -> mogh_auth_server::DynFuture<serror::Result<String>> {
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<String>> {
     Box::pin(async move {
       let user = User::new(NewUserParams {
         username,
@@ -265,8 +269,9 @@ impl AuthImpl for KomodoAuthImpl {
   fn find_user_with_username(
     &self,
     username: String,
-  ) -> mogh_auth_server::DynFuture<serror::Result<Option<BoxAuthUser>>>
-  {
+  ) -> mogh_auth_server::DynFuture<
+    mogh_error::Result<Option<BoxAuthUser>>,
+  > {
     Box::pin(async move {
       let user = db_client()
         .users
@@ -281,7 +286,7 @@ impl AuthImpl for KomodoAuthImpl {
     &self,
     user_id: String,
     username: String,
-  ) -> mogh_auth_server::DynFuture<serror::Result<()>> {
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
     Box::pin(async move {
       let update = doc! { "$set": { "username": username } };
 
@@ -293,7 +298,10 @@ impl AuthImpl for KomodoAuthImpl {
     })
   }
 
-  fn validate_password(&self, password: &str) -> serror::Result<()> {
+  fn validate_password(
+    &self,
+    password: &str,
+  ) -> mogh_error::Result<()> {
     validate_password(password).status_code(StatusCode::BAD_REQUEST)
   }
 
@@ -301,7 +309,7 @@ impl AuthImpl for KomodoAuthImpl {
     &self,
     user_id: String,
     hashed_password: String,
-  ) -> mogh_auth_server::DynFuture<serror::Result<()>> {
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
     Box::pin(async move {
       let user = get_user(&user_id).await?;
       db_client()
@@ -336,8 +344,9 @@ impl AuthImpl for KomodoAuthImpl {
   fn find_user_with_oidc_subject(
     &self,
     subject: SubjectIdentifier,
-  ) -> mogh_auth_server::DynFuture<serror::Result<Option<BoxAuthUser>>>
-  {
+  ) -> mogh_auth_server::DynFuture<
+    mogh_error::Result<Option<BoxAuthUser>>,
+  > {
     Box::pin(async move {
       let user = find_oidc_user(&subject)
         .await
@@ -352,7 +361,7 @@ impl AuthImpl for KomodoAuthImpl {
     username: String,
     subject: SubjectIdentifier,
     no_users_exist: bool,
-  ) -> mogh_auth_server::DynFuture<serror::Result<String>> {
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<String>> {
     Box::pin(async move {
       let user = User::new(NewUserParams {
         username,
@@ -384,7 +393,7 @@ impl AuthImpl for KomodoAuthImpl {
     &self,
     user_id: String,
     subject: SubjectIdentifier,
-  ) -> mogh_auth_server::DynFuture<serror::Result<()>> {
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
     Box::pin(async move {
       let user = get_user(&user_id).await?;
 
@@ -426,8 +435,9 @@ impl AuthImpl for KomodoAuthImpl {
   fn find_user_with_github_id(
     &self,
     github_id: String,
-  ) -> mogh_auth_server::DynFuture<serror::Result<Option<BoxAuthUser>>>
-  {
+  ) -> mogh_auth_server::DynFuture<
+    mogh_error::Result<Option<BoxAuthUser>>,
+  > {
     Box::pin(async move {
       Ok(
         find_github_user(&github_id)
@@ -443,7 +453,7 @@ impl AuthImpl for KomodoAuthImpl {
     github_id: String,
     avatar_url: String,
     no_users_exist: bool,
-  ) -> mogh_auth_server::DynFuture<serror::Result<String>> {
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<String>> {
     Box::pin(async move {
       let user = User::new(NewUserParams {
         username,
@@ -476,7 +486,7 @@ impl AuthImpl for KomodoAuthImpl {
     user_id: String,
     github_id: String,
     avatar_url: String,
-  ) -> mogh_auth_server::DynFuture<serror::Result<()>> {
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
     Box::pin(async move {
       let user = get_user(&user_id).await?;
 
@@ -515,8 +525,9 @@ impl AuthImpl for KomodoAuthImpl {
   fn find_user_with_google_id(
     &self,
     google_id: String,
-  ) -> mogh_auth_server::DynFuture<serror::Result<Option<BoxAuthUser>>>
-  {
+  ) -> mogh_auth_server::DynFuture<
+    mogh_error::Result<Option<BoxAuthUser>>,
+  > {
     Box::pin(async move {
       Ok(
         find_google_user(&google_id)
@@ -532,7 +543,7 @@ impl AuthImpl for KomodoAuthImpl {
     google_id: String,
     avatar_url: String,
     no_users_exist: bool,
-  ) -> mogh_auth_server::DynFuture<serror::Result<String>> {
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<String>> {
     Box::pin(async move {
       let user = User::new(NewUserParams {
         username,
@@ -565,7 +576,7 @@ impl AuthImpl for KomodoAuthImpl {
     user_id: String,
     google_id: String,
     avatar_url: String,
-  ) -> mogh_auth_server::DynFuture<serror::Result<()>> {
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
     Box::pin(async move {
       let user = get_user(&user_id).await?;
 
@@ -601,7 +612,7 @@ impl AuthImpl for KomodoAuthImpl {
     &self,
     user_id: String,
     provider: LoginProvider,
-  ) -> mogh_auth_server::DynFuture<serror::Result<()>> {
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
     Box::pin(async move {
       let field = format!("linked_logins.{provider}");
 
@@ -627,7 +638,7 @@ impl AuthImpl for KomodoAuthImpl {
     &self,
     user_id: String,
     passkey: Option<Passkey>,
-  ) -> mogh_auth_server::DynFuture<serror::Result<()>> {
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
     Box::pin(async move {
       let update = if let Some(passkey) = passkey {
         let passkey = to_bson(&passkey)
@@ -666,7 +677,7 @@ impl AuthImpl for KomodoAuthImpl {
     user_id: String,
     totp_secret: String,
     hashed_recovery_codes: Vec<String>,
-  ) -> mogh_auth_server::DynFuture<serror::Result<()>> {
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
     Box::pin(async move {
       update_one_by_id(
         &db_client().users,
@@ -689,7 +700,7 @@ impl AuthImpl for KomodoAuthImpl {
   fn remove_user_stored_totp(
     &self,
     user_id: String,
-  ) -> mogh_auth_server::DynFuture<serror::Result<()>> {
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
     Box::pin(async move {
       update_one_by_id(
         &db_client().users,
@@ -716,7 +727,7 @@ impl AuthImpl for KomodoAuthImpl {
     &self,
     user_id: String,
     external_skip_2fa: bool,
-  ) -> mogh_auth_server::DynFuture<serror::Result<()>> {
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
     Box::pin(async move {
       let update = doc! {
         "$set": {

@@ -1,7 +1,7 @@
 use std::sync::OnceLock;
 
 use anyhow::{Context, anyhow};
-use cache::TimeoutCache;
+use mogh_cache::TimeoutCache;
 use formatting::format_serror;
 use interpolate::Interpolator;
 use komodo_client::{
@@ -21,7 +21,7 @@ use komodo_client::{
 use mogh_resolver::Resolve;
 use periphery_client::api;
 use reqwest::StatusCode;
-use serror::AddStatusCodeError;
+use mogh_error::AddStatusCodeError;
 
 use crate::{
   helpers::{
@@ -62,7 +62,7 @@ impl Resolve<ExecuteArgs> for BatchDeploy {
   async fn resolve(
     self,
     ExecuteArgs { user, id, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchDeploy>(&self.pattern, user)
         .await?,
@@ -86,7 +86,7 @@ impl Resolve<ExecuteArgs> for Deploy {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let (mut deployment, swarm_or_server) =
       setup_deployment_execution(
         &self.deployment,
@@ -407,7 +407,7 @@ impl Resolve<ExecuteArgs> for PullDeployment {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let (deployment, swarm_or_server) = setup_deployment_execution(
       &self.deployment,
       user,
@@ -461,7 +461,7 @@ impl Resolve<ExecuteArgs> for StartDeployment {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let (deployment, swarm_or_server) = setup_deployment_execution(
       &self.deployment,
       user,
@@ -529,7 +529,7 @@ impl Resolve<ExecuteArgs> for RestartDeployment {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let (deployment, swarm_or_server) = setup_deployment_execution(
       &self.deployment,
       user,
@@ -599,7 +599,7 @@ impl Resolve<ExecuteArgs> for PauseDeployment {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let (deployment, swarm_or_server) = setup_deployment_execution(
       &self.deployment,
       user,
@@ -667,7 +667,7 @@ impl Resolve<ExecuteArgs> for UnpauseDeployment {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let (deployment, swarm_or_server) = setup_deployment_execution(
       &self.deployment,
       user,
@@ -739,7 +739,7 @@ impl Resolve<ExecuteArgs> for StopDeployment {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let (deployment, swarm_or_server) = setup_deployment_execution(
       &self.deployment,
       user,
@@ -825,7 +825,7 @@ impl Resolve<ExecuteArgs> for BatchDestroyDeployment {
   async fn resolve(
     self,
     ExecuteArgs { user, id, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchDestroyDeployment>(
         &self.pattern,
@@ -852,7 +852,7 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let (deployment, swarm_or_server) = setup_deployment_execution(
       &self.deployment,
       user,

@@ -13,7 +13,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetUserGroupResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetUserGroup {
   /// Name or Id
   pub user_group: String,
@@ -33,7 +33,7 @@ pub type GetUserGroupResponse = UserGroup;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListUserGroupsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListUserGroups {}
 
 #[typeshare]

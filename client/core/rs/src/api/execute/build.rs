@@ -29,7 +29,7 @@ use super::{BatchExecutionResponse, KomodoExecuteRequest};
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RunBuild {
   /// Can be build id or name
   pub build: String,
@@ -45,7 +45,7 @@ pub struct RunBuild {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct BatchRunBuild {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.
@@ -72,7 +72,7 @@ pub struct BatchRunBuild {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CancelBuild {
   /// Can be id or name
   pub build: String,

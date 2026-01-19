@@ -4,7 +4,7 @@
 //! invalid data from entering the system and improve security.
 
 use anyhow::Context;
-use validations::{StringValidator, StringValidatorMatches};
+use mogh_validations::{StringValidator, StringValidatorMatches};
 
 use crate::config::core_config;
 

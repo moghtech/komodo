@@ -6,8 +6,8 @@ use komodo_client::{api::write::*, entities::user::User};
 use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use serror::Json;
-use serror::Response;
+use mogh_error::Json;
+use mogh_error::Response;
 use strum::Display;
 use strum::EnumDiscriminants;
 use typeshare::typeshare;
@@ -51,7 +51,7 @@ pub struct WriteArgs {
 #[strum_discriminants(name(WriteRequestVariant), derive(Display))]
 #[args(WriteArgs)]
 #[response(Response)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 #[serde(tag = "type", content = "params")]
 pub enum WriteRequest {
   // ==== RESOURCE ====
@@ -218,7 +218,7 @@ async fn variant_handler(
   user: Extension<User>,
   Path(Variant { variant }): Path<Variant>,
   Json(params): Json<serde_json::Value>,
-) -> serror::Result<axum::response::Response> {
+) -> mogh_error::Result<axum::response::Response> {
   let req: WriteRequest = serde_json::from_value(json!({
     "type": variant,
     "params": params,
@@ -229,7 +229,7 @@ async fn variant_handler(
 async fn handler(
   Extension(user): Extension<User>,
   Json(request): Json<WriteRequest>,
-) -> serror::Result<axum::response::Response> {
+) -> mogh_error::Result<axum::response::Response> {
   let req_id = Uuid::new_v4();
 
   let res = tokio::spawn(task(req_id, request, user))
@@ -243,7 +243,7 @@ async fn task(
   req_id: Uuid,
   request: WriteRequest,
   user: User,
-) -> serror::Result<axum::response::Response> {
+) -> mogh_error::Result<axum::response::Response> {
   let variant: WriteRequestVariant = (&request).into();
   info!("/write request | {variant} | user: {}", user.username);
 

@@ -21,7 +21,7 @@ use crate::{
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RemoveSwarmNodes {
   /// Name or id
   pub swarm: String,
@@ -47,7 +47,7 @@ pub struct RemoveSwarmNodes {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RemoveSwarmStacks {
   /// Name or id
   pub swarm: String,
@@ -77,7 +77,7 @@ fn default_detach() -> bool {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RemoveSwarmServices {
   /// Name or id
   pub swarm: String,
@@ -99,7 +99,7 @@ pub struct RemoveSwarmServices {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateSwarmConfig {
   /// Name or id
   pub swarm: String,
@@ -136,7 +136,7 @@ pub struct CreateSwarmConfig {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RotateSwarmConfig {
   /// Name or id
   pub swarm: String,
@@ -158,7 +158,7 @@ pub struct RotateSwarmConfig {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RemoveSwarmConfigs {
   /// Name or id
   pub swarm: String,
@@ -180,7 +180,7 @@ pub struct RemoveSwarmConfigs {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateSwarmSecret {
   /// Name or id
   pub swarm: String,
@@ -219,7 +219,7 @@ pub struct CreateSwarmSecret {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RotateSwarmSecret {
   /// Name or id
   pub swarm: String,
@@ -239,7 +239,7 @@ pub struct RotateSwarmSecret {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RemoveSwarmSecrets {
   /// Name or id
   pub swarm: String,

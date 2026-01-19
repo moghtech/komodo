@@ -19,7 +19,7 @@ use axum::{
 use periphery_client::{
   api::CoreConnectionQuery, transport::LoginMessage,
 };
-use serror::{AddStatusCode, AddStatusCodeError};
+use mogh_error::{AddStatusCode, AddStatusCodeError};
 use transport::{
   auth::{
     ConnectionIdentifiers, HeaderConnectionIdentifiers,
@@ -63,7 +63,7 @@ async fn handler(
   Query(CoreConnectionQuery { core }): Query<CoreConnectionQuery>,
   mut headers: HeaderMap,
   ws: WebSocketUpgrade,
-) -> serror::Result<Response> {
+) -> mogh_error::Result<Response> {
   let identifiers =
     HeaderConnectionIdentifiers::extract(&mut headers)
       .status_code(StatusCode::UNAUTHORIZED)?;
@@ -235,7 +235,7 @@ async fn handle_passkey_login(
 async fn guard_request_by_ip(
   req: Request<Body>,
   next: Next,
-) -> serror::Result<Response> {
+) -> mogh_error::Result<Response> {
   if periphery_config().allowed_ips.is_empty() {
     return Ok(next.run(req).await);
   }

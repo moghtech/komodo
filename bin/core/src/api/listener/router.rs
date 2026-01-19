@@ -6,10 +6,10 @@ use komodo_client::entities::{
   resource::Resource, stack::Stack, sync::ResourceSync,
 };
 use mogh_auth_server::request_ip::RequestIp;
-use rate_limit::WithFailureRateLimit;
+use mogh_rate_limit::WithFailureRateLimit;
 use reqwest::StatusCode;
 use serde::Deserialize;
-use serror::AddStatusCode;
+use mogh_error::AddStatusCode;
 use tracing::Instrument;
 
 use crate::{auth::GENERAL_RATE_LIMITER, resource::KomodoResource};
@@ -70,7 +70,7 @@ pub fn router<P: VerifySecret + ExtractBranch>() -> Router {
           .instrument(span)
           .await
         });
-        serror::Result::Ok(())
+        mogh_error::Result::Ok(())
       },
     ),
   )
@@ -96,7 +96,7 @@ pub fn router<P: VerifySecret + ExtractBranch>() -> Router {
           .instrument(span)
           .await
         });
-        serror::Result::Ok(())
+        mogh_error::Result::Ok(())
       },
     ),
   )
@@ -122,7 +122,7 @@ pub fn router<P: VerifySecret + ExtractBranch>() -> Router {
           .instrument(span)
           .await
         });
-        serror::Result::Ok(())
+        mogh_error::Result::Ok(())
       },
     ),
   )
@@ -148,7 +148,7 @@ pub fn router<P: VerifySecret + ExtractBranch>() -> Router {
           .instrument(span)
           .await
         });
-        serror::Result::Ok(())
+        mogh_error::Result::Ok(())
       },
     ),
   )
@@ -174,7 +174,7 @@ pub fn router<P: VerifySecret + ExtractBranch>() -> Router {
           .instrument(span)
           .await
         });
-        serror::Result::Ok(())
+        mogh_error::Result::Ok(())
       },
     ),
   )
@@ -200,7 +200,7 @@ pub fn router<P: VerifySecret + ExtractBranch>() -> Router {
           .instrument(span)
           .await
         });
-        serror::Result::Ok(())
+        mogh_error::Result::Ok(())
       },
     ),
   )
@@ -211,7 +211,7 @@ async fn auth_webhook<P, R>(
   headers: &HeaderMap,
   ip: IpAddr,
   body: &str,
-) -> serror::Result<Resource<R::Config, R::Info>>
+) -> mogh_error::Result<Resource<R::Config, R::Info>>
 where
   P: VerifySecret,
   R: KomodoResource + CustomSecret,
@@ -222,7 +222,7 @@ where
       .status_code(StatusCode::BAD_REQUEST)?;
     P::verify_secret(headers, body, R::custom_secret(&resource))
       .status_code(StatusCode::UNAUTHORIZED)?;
-    serror::Result::Ok(resource)
+    mogh_error::Result::Ok(resource)
   }
   .with_failure_rate_limit_using_ip(&GENERAL_RATE_LIMITER, &ip)
   .await

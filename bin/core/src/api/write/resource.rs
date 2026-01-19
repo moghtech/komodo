@@ -10,7 +10,7 @@ use komodo_client::{
 };
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use serror::AddStatusCodeError;
+use mogh_error::AddStatusCodeError;
 
 use crate::resource::{self, ResourceMetaUpdate};
 
@@ -32,7 +32,7 @@ impl Resolve<WriteArgs> for UpdateResourceMeta {
   async fn resolve(
     self,
     args: &WriteArgs,
-  ) -> serror::Result<UpdateResourceMetaResponse> {
+  ) -> mogh_error::Result<UpdateResourceMetaResponse> {
     let meta = ResourceMetaUpdate {
       description: self.description,
       template: self.template,

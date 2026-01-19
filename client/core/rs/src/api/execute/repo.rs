@@ -25,7 +25,7 @@ use super::{BatchExecutionResponse, KomodoExecuteRequest};
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CloneRepo {
   /// Id or name
   pub repo: String,
@@ -41,7 +41,7 @@ pub struct CloneRepo {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct BatchCloneRepo {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.
@@ -71,7 +71,7 @@ pub struct BatchCloneRepo {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct PullRepo {
   /// Id or name
   pub repo: String,
@@ -87,7 +87,7 @@ pub struct PullRepo {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct BatchPullRepo {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.
@@ -121,7 +121,7 @@ pub struct BatchPullRepo {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct BuildRepo {
   /// Id or name
   pub repo: String,
@@ -137,7 +137,7 @@ pub struct BuildRepo {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct BatchBuildRepo {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.
@@ -164,7 +164,7 @@ pub struct BatchBuildRepo {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CancelRepoBuild {
   /// Can be id or name
   pub repo: String,

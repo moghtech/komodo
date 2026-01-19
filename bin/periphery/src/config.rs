@@ -2,12 +2,12 @@ use std::{path::PathBuf, sync::OnceLock};
 
 use clap::Parser;
 use colored::Colorize;
-use config::ConfigLoader;
 use komodo_client::entities::{
   config::periphery::{CliArgs, Env, PeripheryConfig},
   logger::{LogConfig, LogLevel},
 };
-use secret_file::{
+use mogh_config::ConfigLoader;
+use mogh_secret_file::{
   maybe_read_item_from_file, maybe_read_list_from_file,
 };
 

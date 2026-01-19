@@ -17,7 +17,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Builder)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateBuilder {
   /// The name given to newly created builder.
   pub name: String,
@@ -35,7 +35,7 @@ pub struct CreateBuilder {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Builder)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CopyBuilder {
   /// The name of the new builder.
   pub name: String,
@@ -52,7 +52,7 @@ pub struct CopyBuilder {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Builder)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteBuilder {
   /// The id or name of the builder to delete.
   pub id: String,
@@ -73,7 +73,7 @@ pub struct DeleteBuilder {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Builder)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateBuilder {
   /// The id of the builder to update.
   pub id: String,
@@ -90,7 +90,7 @@ pub struct UpdateBuilder {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RenameBuilder {
   /// The id or name of the Builder to rename.
   pub id: String,

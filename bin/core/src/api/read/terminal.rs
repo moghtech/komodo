@@ -15,7 +15,7 @@ use komodo_client::{
 };
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use serror::AddStatusCode;
+use mogh_error::AddStatusCode;
 
 use crate::{
   helpers::periphery_client, permission::get_check_permissions,
@@ -30,7 +30,7 @@ impl Resolve<ReadArgs> for ListTerminals {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListTerminalsResponse> {
+  ) -> mogh_error::Result<ListTerminalsResponse> {
     let Some(target) = self.target else {
       return list_all_terminals_for_user(user, self.use_names).await;
     };
@@ -88,7 +88,7 @@ impl Resolve<ReadArgs> for ListTerminals {
 async fn list_all_terminals_for_user(
   user: &User,
   use_names: bool,
-) -> serror::Result<Vec<Terminal>> {
+) -> mogh_error::Result<Vec<Terminal>> {
   let (mut servers, stacks, deployments) = tokio::try_join!(
     resource::list_full_for_user::<Server>(
       Default::default(),
@@ -230,7 +230,7 @@ async fn list_all_terminals_for_user(
 async fn list_terminals_on_server(
   server: &Server,
   target: Option<TerminalTarget>,
-) -> serror::Result<Vec<Terminal>> {
+) -> mogh_error::Result<Vec<Terminal>> {
   periphery_client(server)
     .await?
     .request(periphery_client::api::terminal::ListTerminals {

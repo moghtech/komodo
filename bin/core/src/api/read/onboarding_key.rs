@@ -7,7 +7,7 @@ use komodo_client::api::read::{
 };
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use serror::AddStatusCodeError;
+use mogh_error::AddStatusCodeError;
 
 use crate::{api::read::ReadArgs, state::db_client};
 
@@ -17,7 +17,7 @@ impl Resolve<ReadArgs> for ListOnboardingKeys {
   async fn resolve(
     self,
     ReadArgs { user: admin }: &ReadArgs,
-  ) -> serror::Result<ListOnboardingKeysResponse> {
+  ) -> mogh_error::Result<ListOnboardingKeysResponse> {
     if !admin.admin {
       return Err(
         anyhow!("This call is admin only")

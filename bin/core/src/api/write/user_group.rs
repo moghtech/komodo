@@ -12,7 +12,7 @@ use komodo_client::{
 };
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use serror::AddStatusCodeError;
+use mogh_error::AddStatusCodeError;
 
 use crate::state::db_client;
 
@@ -30,7 +30,7 @@ impl Resolve<WriteArgs> for CreateUserGroup {
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<UserGroup> {
+  ) -> mogh_error::Result<UserGroup> {
     if !admin.admin {
       return Err(
         anyhow!("This call is admin only")
@@ -76,7 +76,7 @@ impl Resolve<WriteArgs> for RenameUserGroup {
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<UserGroup> {
+  ) -> mogh_error::Result<UserGroup> {
     if !admin.admin {
       return Err(
         anyhow!("This call is admin only")
@@ -112,7 +112,7 @@ impl Resolve<WriteArgs> for DeleteUserGroup {
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<UserGroup> {
+  ) -> mogh_error::Result<UserGroup> {
     if !admin.admin {
       return Err(
         anyhow!("This call is admin only")
@@ -156,7 +156,7 @@ impl Resolve<WriteArgs> for AddUserToUserGroup {
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<UserGroup> {
+  ) -> mogh_error::Result<UserGroup> {
     if !admin.admin {
       return Err(
         anyhow!("This call is admin only")
@@ -211,7 +211,7 @@ impl Resolve<WriteArgs> for RemoveUserFromUserGroup {
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<UserGroup> {
+  ) -> mogh_error::Result<UserGroup> {
     if !admin.admin {
       return Err(
         anyhow!("This call is admin only")
@@ -266,7 +266,7 @@ impl Resolve<WriteArgs> for SetUsersInUserGroup {
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<UserGroup> {
+  ) -> mogh_error::Result<UserGroup> {
     if !admin.admin {
       return Err(
         anyhow!("This call is admin only")
@@ -324,7 +324,7 @@ impl Resolve<WriteArgs> for SetEveryoneUserGroup {
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<UserGroup> {
+  ) -> mogh_error::Result<UserGroup> {
     if !admin.admin {
       return Err(
         anyhow!("This call is admin only")

@@ -21,7 +21,7 @@ use komodo_client::{
 use mogh_resolver::Resolve;
 use periphery_client::api::{self, container::InspectContainer};
 use reqwest::StatusCode;
-use serror::AddStatusCodeError as _;
+use mogh_error::AddStatusCodeError as _;
 
 use crate::{
   helpers::{
@@ -40,7 +40,7 @@ impl Resolve<ReadArgs> for GetDeployment {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Deployment> {
+  ) -> mogh_error::Result<Deployment> {
     Ok(
       get_check_permissions::<Deployment>(
         &self.deployment,
@@ -56,7 +56,7 @@ impl Resolve<ReadArgs> for ListDeployments {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Vec<DeploymentListItem>> {
+  ) -> mogh_error::Result<Vec<DeploymentListItem>> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -86,7 +86,7 @@ impl Resolve<ReadArgs> for ListFullDeployments {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListFullDeploymentsResponse> {
+  ) -> mogh_error::Result<ListFullDeploymentsResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -108,7 +108,7 @@ impl Resolve<ReadArgs> for GetDeploymentContainer {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetDeploymentContainerResponse> {
+  ) -> mogh_error::Result<GetDeploymentContainerResponse> {
     let deployment = get_check_permissions::<Deployment>(
       &self.deployment,
       user,
@@ -133,7 +133,7 @@ impl Resolve<ReadArgs> for GetDeploymentLog {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Log> {
+  ) -> mogh_error::Result<Log> {
     let GetDeploymentLog {
       deployment,
       tail,
@@ -180,7 +180,7 @@ impl Resolve<ReadArgs> for SearchDeploymentLog {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Log> {
+  ) -> mogh_error::Result<Log> {
     let SearchDeploymentLog {
       deployment,
       terms,
@@ -233,7 +233,7 @@ impl Resolve<ReadArgs> for InspectDeploymentContainer {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Container> {
+  ) -> mogh_error::Result<Container> {
     let InspectDeploymentContainer { deployment } = self;
     let (deployment, swarm_or_server) = setup_deployment_execution(
       &deployment,
@@ -280,7 +280,7 @@ impl Resolve<ReadArgs> for InspectDeploymentSwarmService {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<SwarmService> {
+  ) -> mogh_error::Result<SwarmService> {
     let InspectDeploymentSwarmService { deployment } = self;
     let (deployment, swarm_or_server) = setup_deployment_execution(
       &deployment,
@@ -314,7 +314,7 @@ impl Resolve<ReadArgs> for GetDeploymentStats {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ContainerStats> {
+  ) -> mogh_error::Result<ContainerStats> {
     let Deployment {
       name,
       config: DeploymentConfig { server_id, .. },
@@ -344,7 +344,7 @@ impl Resolve<ReadArgs> for GetDeploymentActionState {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<DeploymentActionState> {
+  ) -> mogh_error::Result<DeploymentActionState> {
     let deployment = get_check_permissions::<Deployment>(
       &self.deployment,
       user,
@@ -365,7 +365,7 @@ impl Resolve<ReadArgs> for GetDeploymentsSummary {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetDeploymentsSummaryResponse> {
+  ) -> mogh_error::Result<GetDeploymentsSummaryResponse> {
     let deployments = resource::list_full_for_user::<Deployment>(
       Default::default(),
       user,
@@ -408,7 +408,7 @@ impl Resolve<ReadArgs> for ListCommonDeploymentExtraArgs {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListCommonDeploymentExtraArgsResponse> {
+  ) -> mogh_error::Result<ListCommonDeploymentExtraArgsResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {

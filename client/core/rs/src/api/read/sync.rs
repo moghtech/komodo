@@ -17,7 +17,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ResourceSync)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetResourceSync {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -35,7 +35,7 @@ pub type GetResourceSyncResponse = ResourceSync;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListResourceSyncsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListResourceSyncs {
   /// optional structured query to filter syncs.
   #[serde(default)]
@@ -53,7 +53,7 @@ pub type ListResourceSyncsResponse = Vec<ResourceSyncListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullResourceSyncsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListFullResourceSyncs {
   /// optional structured query to filter syncs.
   #[serde(default)]
@@ -71,7 +71,7 @@ pub type ListFullResourceSyncsResponse = Vec<ResourceSync>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetResourceSyncActionStateResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetResourceSyncActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -90,7 +90,7 @@ pub type GetResourceSyncActionStateResponse = ResourceSyncActionState;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetResourceSyncsSummaryResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetResourceSyncsSummary {}
 
 /// Response for [GetResourceSyncsSummary]

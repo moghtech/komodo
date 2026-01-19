@@ -3,13 +3,13 @@ use std::{
   sync::OnceLock,
 };
 
-use cache::TimeoutCache;
 use command::run_komodo_standard_command;
 use formatting::format_serror;
 use komodo_client::entities::{
   RepoExecutionArgs, RepoExecutionResponse, all_logs_success,
   komodo_timestamp, update::Log,
 };
+use mogh_cache::TimeoutCache;
 
 use crate::get_commit_hash_log;
 

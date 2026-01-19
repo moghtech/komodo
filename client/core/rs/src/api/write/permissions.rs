@@ -16,7 +16,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdatePermissionOnTargetResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdatePermissionOnTarget {
   /// Specify the user or user group.
   pub user_target: UserTarget,
@@ -38,7 +38,7 @@ pub type UpdatePermissionOnTargetResponse = NoData;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdatePermissionOnResourceTypeResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdatePermissionOnResourceType {
   /// Specify the user or user group.
   pub user_target: UserTarget,
@@ -60,7 +60,7 @@ pub type UpdatePermissionOnResourceTypeResponse = NoData;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateUserBasePermissionsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateUserBasePermissions {
   /// The target user.
   pub user_id: String,
@@ -82,7 +82,7 @@ pub type UpdateUserBasePermissionsResponse = NoData;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateUserAdminResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateUserAdmin {
   /// The target user.
   pub user_id: String,

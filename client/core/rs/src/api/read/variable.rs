@@ -16,7 +16,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetVariableResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetVariable {
   /// The name of the variable to get.
   pub name: String,
@@ -37,7 +37,7 @@ pub type GetVariableResponse = Variable;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListVariablesResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListVariables {}
 
 #[typeshare]

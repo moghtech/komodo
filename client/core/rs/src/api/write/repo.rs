@@ -18,7 +18,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Repo)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateRepo {
   /// The name given to newly created repo.
   pub name: String,
@@ -36,7 +36,7 @@ pub struct CreateRepo {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Repo)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CopyRepo {
   /// The name of the new repo.
   pub name: String,
@@ -53,7 +53,7 @@ pub struct CopyRepo {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Repo)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteRepo {
   /// The id or name of the repo to delete.
   pub id: String,
@@ -77,7 +77,7 @@ pub struct DeleteRepo {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Repo)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateRepo {
   /// The id of the repo to update.
   pub id: String,
@@ -94,7 +94,7 @@ pub struct UpdateRepo {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RenameRepo {
   /// The id or name of the Repo to rename.
   pub id: String,
@@ -110,7 +110,7 @@ pub struct RenameRepo {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RefreshRepoCache {
   /// Id or name
   #[serde(alias = "id", alias = "name")]

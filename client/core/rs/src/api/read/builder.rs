@@ -16,7 +16,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuilderResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetBuilder {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -34,7 +34,7 @@ pub type GetBuilderResponse = Builder;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListBuildersResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListBuilders {
   #[serde(default)]
   pub query: BuilderQuery,
@@ -51,7 +51,7 @@ pub type ListBuildersResponse = Vec<BuilderListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullBuildersResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListFullBuilders {
   #[serde(default)]
   pub query: BuilderQuery,
@@ -69,7 +69,7 @@ pub type ListFullBuildersResponse = Vec<Builder>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildersSummaryResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetBuildersSummary {}
 
 /// Response for [GetBuildersSummary].

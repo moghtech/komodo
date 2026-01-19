@@ -46,7 +46,7 @@ impl Resolve<ExecuteArgs> for BatchRunProcedure {
   async fn resolve(
     self,
     ExecuteArgs { user, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchRunProcedure>(&self.pattern, user)
         .await?,
@@ -68,7 +68,7 @@ impl Resolve<ExecuteArgs> for RunProcedure {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     Ok(
       resolve_inner(self.procedure, user.clone(), update.clone())
         .await?,

@@ -17,7 +17,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateProcedureResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateProcedure {
   /// The name given to newly created build.
   pub name: String,
@@ -38,7 +38,7 @@ pub type CreateProcedureResponse = Procedure;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CopyProcedureResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CopyProcedure {
   /// The name of the new procedure.
   pub name: String,
@@ -58,7 +58,7 @@ pub type CopyProcedureResponse = Procedure;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteProcedureResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteProcedure {
   /// The id or name of the procedure to delete.
   pub id: String,
@@ -82,7 +82,7 @@ pub type DeleteProcedureResponse = Procedure;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateProcedureResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateProcedure {
   /// The id of the procedure to update.
   pub id: String,
@@ -102,7 +102,7 @@ pub type UpdateProcedureResponse = Procedure;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RenameProcedure {
   /// The id or name of the Procedure to rename.
   pub id: String,

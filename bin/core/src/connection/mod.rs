@@ -7,7 +7,6 @@ use std::{
 };
 
 use anyhow::anyhow;
-use cache::CloneCache;
 use database::mungos::{by_id::update_one_by_id, mongodb::bson::doc};
 use encoding::{
   CastBytes as _, Decode as _, EncodedJsonMessage, EncodedResponse,
@@ -18,10 +17,11 @@ use komodo_client::entities::{
   optional_str,
   server::Server,
 };
+use mogh_cache::CloneCache;
+use mogh_error::serror_into_anyhow_error;
 use periphery_client::transport::{
   EncodedTransportMessage, ResponseMessage, TransportMessage,
 };
-use serror::serror_into_anyhow_error;
 use tokio::sync::RwLock;
 use tokio_util::sync::CancellationToken;
 use transport::{
@@ -273,7 +273,7 @@ pub struct PeripheryConnection {
   // These fields must be maintained if new connection replaces old
   // at the same server id.
   /// Stores latest connection error
-  pub error: Arc<RwLock<Option<serror::Serror>>>,
+  pub error: Arc<RwLock<Option<mogh_error::Serror>>>,
   /// Forward bytes from Periphery to response channel handlers.
   pub responses: Arc<ResponseChannels>,
   /// Forward bytes from Periphery to terminal channel handlers.
@@ -500,7 +500,7 @@ impl PeripheryConnection {
     }
   }
 
-  pub async fn error(&self) -> Option<serror::Serror> {
+  pub async fn error(&self) -> Option<mogh_error::Serror> {
     self.error.read().await.clone()
   }
 

@@ -16,7 +16,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateResourceMetaResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateResourceMeta {
   /// The target resource to set update meta.
   pub target: ResourceTarget,

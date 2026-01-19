@@ -18,7 +18,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateApiKeyForServiceUserResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateApiKeyForServiceUser {
   /// Must be service user
   pub user_id: String,
@@ -42,7 +42,7 @@ pub type CreateApiKeyForServiceUserResponse = CreateApiKeyResponse;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteApiKeyForServiceUserResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteApiKeyForServiceUser {
   pub key: String,
 }

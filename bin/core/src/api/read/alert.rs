@@ -28,7 +28,7 @@ impl Resolve<ReadArgs> for ListAlerts {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListAlertsResponse> {
+  ) -> mogh_error::Result<ListAlertsResponse> {
     // Alerts
     let query = user_resource_target_query(user, self.query)
       .await?
@@ -62,7 +62,7 @@ impl Resolve<ReadArgs> for GetAlert {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetAlertResponse> {
+  ) -> mogh_error::Result<GetAlertResponse> {
     let alert = find_one_by_id(&db_client().alerts, &self.id)
       .await
       .context("failed to query db for alert")?

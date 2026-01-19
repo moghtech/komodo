@@ -14,7 +14,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Tag)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateTag {
   /// The name of the tag.
   pub name: String,
@@ -32,7 +32,7 @@ pub struct CreateTag {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Tag)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteTag {
   /// The id of the tag to delete.
   pub id: String,
@@ -46,7 +46,7 @@ pub struct DeleteTag {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Tag)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RenameTag {
   /// The id of the tag to rename.
   pub id: String,
@@ -60,7 +60,7 @@ pub struct RenameTag {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Tag)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateTagColor {
   /// The name or id of the tag to update.
   pub tag: String,

@@ -32,7 +32,7 @@ impl Resolve<ReadArgs> for ListUpdates {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListUpdatesResponse> {
+  ) -> mogh_error::Result<ListUpdatesResponse> {
     let query = user_resource_target_query(user, self.query).await?;
 
     let usernames = find_collect(&db_client().users, None, None)
@@ -92,7 +92,7 @@ impl Resolve<ReadArgs> for GetUpdate {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let update = find_one_by_id(&db_client().updates, &self.id)
       .await
       .context("failed to query to db")?

@@ -25,7 +25,7 @@ use periphery_client::api::{
   DeployStackResponse, compose::*, swarm::DeploySwarmStack,
 };
 use reqwest::StatusCode;
-use serror::AddStatusCodeError as _;
+use mogh_error::AddStatusCodeError as _;
 use uuid::Uuid;
 
 use crate::{
@@ -77,7 +77,7 @@ impl Resolve<ExecuteArgs> for BatchDeployStack {
   async fn resolve(
     self,
     ExecuteArgs { user, id, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchDeployStack>(&self.pattern, user)
         .await?,
@@ -101,7 +101,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let (mut stack, swarm_or_server) = setup_stack_execution(
       &self.stack,
       user,
@@ -346,7 +346,7 @@ impl Resolve<ExecuteArgs> for BatchDeployStackIfChanged {
   async fn resolve(
     self,
     ExecuteArgs { user, id, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchDeployStackIfChanged>(
         &self.pattern,
@@ -372,7 +372,7 @@ impl Resolve<ExecuteArgs> for DeployStackIfChanged {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let stack = get_check_permissions::<Stack>(
       &self.stack,
       user,
@@ -551,7 +551,7 @@ async fn deploy_services(
   stack: String,
   services: Vec<String>,
   user: &User,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   // The existing update is initialized to DeployStack,
   // but also has not been created on database.
   // Setup a new update here.
@@ -585,7 +585,7 @@ async fn restart_services(
   stack: String,
   services: Vec<String>,
   user: &User,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   // The existing update is initialized to DeployStack,
   // but also has not been created on database.
   // Setup a new update here.
@@ -770,7 +770,7 @@ impl Resolve<ExecuteArgs> for BatchPullStack {
   async fn resolve(
     self,
     ExecuteArgs { user, id, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchPullStack>(&self.pattern, user)
         .await?,
@@ -894,7 +894,7 @@ impl Resolve<ExecuteArgs> for PullStack {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let (stack, swarm_or_server) = setup_stack_execution(
       &self.stack,
       user,
@@ -965,7 +965,7 @@ impl Resolve<ExecuteArgs> for StartStack {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     execute_compose::<StartStack>(
       &self.stack,
       self.services,
@@ -994,7 +994,7 @@ impl Resolve<ExecuteArgs> for RestartStack {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     execute_compose::<RestartStack>(
       &self.stack,
       self.services,
@@ -1025,7 +1025,7 @@ impl Resolve<ExecuteArgs> for PauseStack {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     execute_compose::<PauseStack>(
       &self.stack,
       self.services,
@@ -1054,7 +1054,7 @@ impl Resolve<ExecuteArgs> for UnpauseStack {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     execute_compose::<UnpauseStack>(
       &self.stack,
       self.services,
@@ -1083,7 +1083,7 @@ impl Resolve<ExecuteArgs> for StopStack {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     execute_compose::<StopStack>(
       &self.stack,
       self.services,
@@ -1122,7 +1122,7 @@ impl Resolve<ExecuteArgs> for BatchDestroyStack {
   async fn resolve(
     self,
     ExecuteArgs { user, id, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     super::batch_execute::<BatchDestroyStack>(&self.pattern, user)
       .await
       .map_err(Into::into)
@@ -1146,7 +1146,7 @@ impl Resolve<ExecuteArgs> for DestroyStack {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let (stack, swarm_or_server) = setup_stack_execution(
       &self.stack,
       user,
@@ -1237,7 +1237,7 @@ impl Resolve<ExecuteArgs> for RunStackService {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let (mut stack, swarm_or_server) = setup_stack_execution(
       &self.stack,
       user,

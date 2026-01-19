@@ -14,7 +14,7 @@ impl Resolve<ReadArgs> for GetVariable {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetVariableResponse> {
+  ) -> mogh_error::Result<GetVariableResponse> {
     let mut variable = get_variable(&self.name).await?;
     if !variable.is_secret || user.admin {
       return Ok(variable);
@@ -28,7 +28,7 @@ impl Resolve<ReadArgs> for ListVariables {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListVariablesResponse> {
+  ) -> mogh_error::Result<ListVariablesResponse> {
     let variables = find_collect(
       &db_client().variables,
       None,

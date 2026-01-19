@@ -18,7 +18,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ResourceSync)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateResourceSync {
   /// The name given to newly created sync.
   pub name: String,
@@ -36,7 +36,7 @@ pub struct CreateResourceSync {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ResourceSync)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CopyResourceSync {
   /// The name of the new sync.
   pub name: String,
@@ -53,7 +53,7 @@ pub struct CopyResourceSync {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ResourceSync)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteResourceSync {
   /// The id or name of the sync to delete.
   pub id: String,
@@ -74,7 +74,7 @@ pub struct DeleteResourceSync {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ResourceSync)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateResourceSync {
   /// The id of the sync to update.
   pub id: String,
@@ -91,7 +91,7 @@ pub struct UpdateResourceSync {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RenameResourceSync {
   /// The id or name of the ResourceSync to rename.
   pub id: String,
@@ -107,7 +107,7 @@ pub struct RenameResourceSync {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ResourceSync)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RefreshResourceSyncPending {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -122,7 +122,7 @@ pub struct RefreshResourceSyncPending {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct WriteSyncFileContents {
   /// The name or id of the target Sync.
   #[serde(alias = "id", alias = "name")]
@@ -148,7 +148,7 @@ pub struct WriteSyncFileContents {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CommitSync {
   /// Id or name
   #[serde(alias = "id", alias = "name")]

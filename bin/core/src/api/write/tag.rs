@@ -15,7 +15,7 @@ use komodo_client::{
 };
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use serror::AddStatusCodeError;
+use mogh_error::AddStatusCodeError;
 
 use crate::{
   config::core_config,
@@ -39,7 +39,7 @@ impl Resolve<WriteArgs> for CreateTag {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Tag> {
+  ) -> mogh_error::Result<Tag> {
     if core_config().disable_non_admin_create && !user.admin {
       return Err(
         anyhow!("Non admins cannot create tags")
@@ -88,7 +88,7 @@ impl Resolve<WriteArgs> for RenameTag {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Tag> {
+  ) -> mogh_error::Result<Tag> {
     if ObjectId::from_str(&self.name).is_ok() {
       return Err(anyhow!("tag name cannot be ObjectId").into());
     }
@@ -121,7 +121,7 @@ impl Resolve<WriteArgs> for UpdateTagColor {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Tag> {
+  ) -> mogh_error::Result<Tag> {
     let tag = get_tag_check_owner(&self.tag, user).await?;
 
     update_one_by_id(
@@ -149,7 +149,7 @@ impl Resolve<WriteArgs> for DeleteTag {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Tag> {
+  ) -> mogh_error::Result<Tag> {
     let tag = get_tag_check_owner(&self.id, user).await?;
 
     tokio::try_join!(

@@ -44,7 +44,7 @@ use periphery_client::api::{
   },
 };
 use reqwest::StatusCode;
-use serror::AddStatusCode;
+use mogh_error::AddStatusCode;
 use tokio::sync::Mutex;
 
 use crate::{
@@ -61,7 +61,7 @@ impl Resolve<ReadArgs> for GetServersSummary {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetServersSummaryResponse> {
+  ) -> mogh_error::Result<GetServersSummaryResponse> {
     let servers = resource::list_for_user::<Server>(
       Default::default(),
       user,
@@ -103,7 +103,7 @@ impl Resolve<ReadArgs> for GetServer {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Server> {
+  ) -> mogh_error::Result<Server> {
     Ok(
       get_check_permissions::<Server>(
         &self.server,
@@ -119,7 +119,7 @@ impl Resolve<ReadArgs> for ListServers {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Vec<ServerListItem>> {
+  ) -> mogh_error::Result<Vec<ServerListItem>> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -141,7 +141,7 @@ impl Resolve<ReadArgs> for ListFullServers {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListFullServersResponse> {
+  ) -> mogh_error::Result<ListFullServersResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -163,7 +163,7 @@ impl Resolve<ReadArgs> for GetServerState {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetServerStateResponse> {
+  ) -> mogh_error::Result<GetServerStateResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -185,7 +185,7 @@ impl Resolve<ReadArgs> for GetServerActionState {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ServerActionState> {
+  ) -> mogh_error::Result<ServerActionState> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -206,7 +206,7 @@ impl Resolve<ReadArgs> for GetPeripheryInformation {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetPeripheryInformationResponse> {
+  ) -> mogh_error::Result<GetPeripheryInformationResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -229,7 +229,7 @@ impl Resolve<ReadArgs> for GetSystemInformation {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<SystemInformation> {
+  ) -> mogh_error::Result<SystemInformation> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -253,7 +253,7 @@ impl Resolve<ReadArgs> for GetSystemStats {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetSystemStatsResponse> {
+  ) -> mogh_error::Result<GetSystemStatsResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -285,7 +285,7 @@ impl Resolve<ReadArgs> for ListSystemProcesses {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListSystemProcessesResponse> {
+  ) -> mogh_error::Result<ListSystemProcessesResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -320,7 +320,7 @@ impl Resolve<ReadArgs> for GetHistoricalServerStats {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetHistoricalServerStatsResponse> {
+  ) -> mogh_error::Result<GetHistoricalServerStatsResponse> {
     let GetHistoricalServerStats {
       server,
       granularity,
@@ -373,7 +373,7 @@ impl Resolve<ReadArgs> for ListDockerContainers {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListDockerContainersResponse> {
+  ) -> mogh_error::Result<ListDockerContainersResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -395,7 +395,7 @@ impl Resolve<ReadArgs> for ListAllDockerContainers {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListAllDockerContainersResponse> {
+  ) -> mogh_error::Result<ListAllDockerContainersResponse> {
     let servers = resource::list_for_user::<Server>(
       ServerQuery::builder().names(self.servers.clone()).build(),
       user,
@@ -432,7 +432,7 @@ impl Resolve<ReadArgs> for GetDockerContainersSummary {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetDockerContainersSummaryResponse> {
+  ) -> mogh_error::Result<GetDockerContainersSummaryResponse> {
     let servers = resource::list_full_for_user::<Server>(
       Default::default(),
       user,
@@ -472,7 +472,7 @@ impl Resolve<ReadArgs> for InspectDockerContainer {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Container> {
+  ) -> mogh_error::Result<Container> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -507,7 +507,7 @@ impl Resolve<ReadArgs> for GetContainerLog {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Log> {
+  ) -> mogh_error::Result<Log> {
     let GetContainerLog {
       server,
       container,
@@ -537,7 +537,7 @@ impl Resolve<ReadArgs> for SearchContainerLog {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Log> {
+  ) -> mogh_error::Result<Log> {
     let SearchContainerLog {
       server,
       container,
@@ -571,7 +571,7 @@ impl Resolve<ReadArgs> for GetResourceMatchingContainer {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetResourceMatchingContainerResponse> {
+  ) -> mogh_error::Result<GetResourceMatchingContainerResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -632,7 +632,7 @@ impl Resolve<ReadArgs> for ListDockerNetworks {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListDockerNetworksResponse> {
+  ) -> mogh_error::Result<ListDockerNetworksResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -654,7 +654,7 @@ impl Resolve<ReadArgs> for InspectDockerNetwork {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Network> {
+  ) -> mogh_error::Result<Network> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -685,7 +685,7 @@ impl Resolve<ReadArgs> for ListDockerImages {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListDockerImagesResponse> {
+  ) -> mogh_error::Result<ListDockerImagesResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -707,7 +707,7 @@ impl Resolve<ReadArgs> for InspectDockerImage {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Image> {
+  ) -> mogh_error::Result<Image> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -735,7 +735,7 @@ impl Resolve<ReadArgs> for ListDockerImageHistory {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Vec<ImageHistoryResponseItem>> {
+  ) -> mogh_error::Result<Vec<ImageHistoryResponseItem>> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -766,7 +766,7 @@ impl Resolve<ReadArgs> for ListDockerVolumes {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListDockerVolumesResponse> {
+  ) -> mogh_error::Result<ListDockerVolumesResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -788,7 +788,7 @@ impl Resolve<ReadArgs> for InspectDockerVolume {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Volume> {
+  ) -> mogh_error::Result<Volume> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -816,7 +816,7 @@ impl Resolve<ReadArgs> for ListComposeProjects {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListComposeProjectsResponse> {
+  ) -> mogh_error::Result<ListComposeProjectsResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,

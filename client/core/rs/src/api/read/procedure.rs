@@ -16,7 +16,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetProcedureResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetProcedure {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -34,7 +34,7 @@ pub type GetProcedureResponse = Procedure;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListProceduresResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListProcedures {
   /// optional structured query to filter procedures.
   #[serde(default)]
@@ -52,7 +52,7 @@ pub type ListProceduresResponse = Vec<ProcedureListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullProceduresResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListFullProcedures {
   /// optional structured query to filter procedures.
   #[serde(default)]
@@ -70,7 +70,7 @@ pub type ListFullProceduresResponse = Vec<Procedure>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetProcedureActionStateResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetProcedureActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -89,7 +89,7 @@ pub type GetProcedureActionStateResponse = ProcedureActionState;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetProceduresSummaryResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetProceduresSummary {}
 
 /// Response for [GetProceduresSummary].

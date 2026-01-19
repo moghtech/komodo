@@ -12,7 +12,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateUserGroup {
   /// The name to assign to the new UserGroup
   pub name: String,
@@ -26,7 +26,7 @@ pub struct CreateUserGroup {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RenameUserGroup {
   /// The id of the UserGroup
   pub id: String,
@@ -42,7 +42,7 @@ pub struct RenameUserGroup {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteUserGroup {
   /// The id of the UserGroup
   pub id: String,
@@ -56,7 +56,7 @@ pub struct DeleteUserGroup {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct AddUserToUserGroup {
   /// The name or id of UserGroup that user should be added to.
   pub user_group: String,
@@ -72,7 +72,7 @@ pub struct AddUserToUserGroup {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RemoveUserFromUserGroup {
   /// The name or id of UserGroup that user should be removed from.
   pub user_group: String,
@@ -89,7 +89,7 @@ pub struct RemoveUserFromUserGroup {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct SetUsersInUserGroup {
   /// Id or name.
   pub user_group: String,
@@ -106,7 +106,7 @@ pub struct SetUsersInUserGroup {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UserGroup)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct SetEveryoneUserGroup {
   /// Id or name.
   pub user_group: String,

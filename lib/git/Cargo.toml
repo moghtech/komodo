@@ -11,7 +11,7 @@ homepage.workspace = true
 komodo_client.workspace = true
 formatting.workspace = true
 command.workspace = true
-cache.workspace = true
+mogh_cache.workspace = true
 #
 anyhow.workspace = true
 tokio.workspace = true

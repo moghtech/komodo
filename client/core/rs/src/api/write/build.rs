@@ -18,7 +18,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Build)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateBuild {
   /// The name given to newly created build.
   pub name: String,
@@ -36,7 +36,7 @@ pub struct CreateBuild {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Build)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CopyBuild {
   /// The name of the new build.
   pub name: String,
@@ -53,7 +53,7 @@ pub struct CopyBuild {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Build)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteBuild {
   /// The id or name of the build to delete.
   pub id: String,
@@ -74,7 +74,7 @@ pub struct DeleteBuild {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Build)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateBuild {
   /// The id or name of the build to update.
   pub id: String,
@@ -91,7 +91,7 @@ pub struct UpdateBuild {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RenameBuild {
   /// The id or name of the Build to rename.
   pub id: String,
@@ -107,7 +107,7 @@ pub struct RenameBuild {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct WriteBuildFileContents {
   /// The name or id of the target Build.
   #[serde(alias = "id", alias = "name")]
@@ -124,7 +124,7 @@ pub struct WriteBuildFileContents {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RefreshBuildCache {
   /// Id or name
   #[serde(alias = "id", alias = "name")]

@@ -5,7 +5,7 @@ use database::mungos::mongodb::bson::{doc, oid::ObjectId};
 use komodo_client::{api::write::CloseAlert, entities::NoData};
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use serror::AddStatusCodeError;
+use mogh_error::AddStatusCodeError;
 
 use crate::{api::write::WriteArgs, state::db_client};
 

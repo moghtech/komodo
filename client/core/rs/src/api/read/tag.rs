@@ -14,7 +14,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetTagResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetTag {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -33,7 +33,7 @@ pub type GetTagResponse = Tag;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListTagsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListTags {
   #[cfg_attr(feature = "utoipa", schema(value_type = Option<serde_json::Value>))]
   pub query: Option<MongoDocument>,

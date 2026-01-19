@@ -21,7 +21,7 @@ use komodo_client::{
 use mogh_resolver::Resolve;
 use periphery_client::api;
 use reqwest::StatusCode;
-use serror::AddStatusCodeError;
+use mogh_error::AddStatusCodeError;
 use tokio::sync::Mutex;
 
 use crate::{

@@ -18,7 +18,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Stack)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateStack {
   /// The name given to newly created stack.
   pub name: String,
@@ -36,7 +36,7 @@ pub struct CreateStack {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Stack)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CopyStack {
   /// The name of the new stack.
   pub name: String,
@@ -53,7 +53,7 @@ pub struct CopyStack {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Stack)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteStack {
   /// The id or name of the stack to delete.
   pub id: String,
@@ -77,7 +77,7 @@ pub struct DeleteStack {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Stack)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateStack {
   /// The id of the Stack to update.
   pub id: String,
@@ -93,7 +93,7 @@ pub struct UpdateStack {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RenameStack {
   /// The id of the stack to rename.
   pub id: String,
@@ -109,7 +109,7 @@ pub struct RenameStack {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct WriteStackFileContents {
   /// The name or id of the target Stack.
   #[serde(alias = "id", alias = "name")]
@@ -132,7 +132,7 @@ pub struct WriteStackFileContents {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RefreshStackCache {
   /// Id or name
   #[serde(alias = "id", alias = "name")]

@@ -21,7 +21,7 @@ impl Resolve<ReadArgs> for GetRepo {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Repo> {
+  ) -> mogh_error::Result<Repo> {
     Ok(
       get_check_permissions::<Repo>(
         &self.repo,
@@ -37,7 +37,7 @@ impl Resolve<ReadArgs> for ListRepos {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Vec<RepoListItem>> {
+  ) -> mogh_error::Result<Vec<RepoListItem>> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -59,7 +59,7 @@ impl Resolve<ReadArgs> for ListFullRepos {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListFullReposResponse> {
+  ) -> mogh_error::Result<ListFullReposResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -81,7 +81,7 @@ impl Resolve<ReadArgs> for GetRepoActionState {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<RepoActionState> {
+  ) -> mogh_error::Result<RepoActionState> {
     let repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
@@ -102,7 +102,7 @@ impl Resolve<ReadArgs> for GetReposSummary {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetReposSummaryResponse> {
+  ) -> mogh_error::Result<GetReposSummaryResponse> {
     let repos = resource::list_full_for_user::<Repo>(
       Default::default(),
       user,

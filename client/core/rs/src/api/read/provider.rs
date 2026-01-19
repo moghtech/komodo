@@ -15,7 +15,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetGitProviderAccountResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetGitProviderAccount {
   pub id: String,
 }
@@ -32,7 +32,7 @@ pub type GetGitProviderAccountResponse = GitProviderAccount;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListGitProviderAccountsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListGitProviderAccounts {
   /// Optionally filter by accounts with a specific domain.
   pub domain: Option<String>,
@@ -52,7 +52,7 @@ pub type ListGitProviderAccountsResponse = Vec<GitProviderAccount>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDockerRegistryAccountResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetDockerRegistryAccount {
   pub id: String,
 }
@@ -69,7 +69,7 @@ pub type GetDockerRegistryAccountResponse = DockerRegistryAccount;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerRegistryAccountsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListDockerRegistryAccounts {
   /// Optionally filter by accounts with a specific domain.
   pub domain: Option<String>,

@@ -15,7 +15,7 @@ use komodo_client::{
 use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use serror::Response;
+use mogh_error::Response;
 use strum::EnumDiscriminants;
 use typeshare::typeshare;
 use uuid::Uuid;
@@ -39,7 +39,7 @@ pub struct UserArgs {
 #[strum_discriminants(name(UserRequestVariant))]
 #[args(UserArgs)]
 #[response(Response)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 #[serde(tag = "type", content = "params")]
 enum UserRequest {
   PushRecentlyViewed(PushRecentlyViewed),
@@ -64,7 +64,7 @@ async fn variant_handler(
   user: Extension<User>,
   Path(Variant { variant }): Path<Variant>,
   Json(params): Json<serde_json::Value>,
-) -> serror::Result<axum::response::Response> {
+) -> mogh_error::Result<axum::response::Response> {
   let req: UserRequest = serde_json::from_value(json!({
     "type": variant,
     "params": params,
@@ -75,7 +75,7 @@ async fn variant_handler(
 async fn handler(
   Extension(user): Extension<User>,
   Json(request): Json<UserRequest>,
-) -> serror::Result<axum::response::Response> {
+) -> mogh_error::Result<axum::response::Response> {
   let timer = Instant::now();
   let req_id = Uuid::new_v4();
   debug!(
@@ -97,7 +97,7 @@ impl Resolve<UserArgs> for PushRecentlyViewed {
   async fn resolve(
     self,
     UserArgs { user, .. }: &UserArgs,
-  ) -> serror::Result<PushRecentlyViewedResponse> {
+  ) -> mogh_error::Result<PushRecentlyViewedResponse> {
     let user = get_user(&user.id).await?;
 
     let (resource_type, id) = self.resource.extract_variant_id();
@@ -138,7 +138,7 @@ impl Resolve<UserArgs> for SetLastSeenUpdate {
   async fn resolve(
     self,
     UserArgs { user, .. }: &UserArgs,
-  ) -> serror::Result<SetLastSeenUpdateResponse> {
+  ) -> mogh_error::Result<SetLastSeenUpdateResponse> {
     update_one_by_id(
       &db_client().users,
       &user.id,

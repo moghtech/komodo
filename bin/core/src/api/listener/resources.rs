@@ -241,11 +241,11 @@ fn stack_locks() -> &'static ListenerLockCache {
 }
 
 pub trait StackExecution {
-  async fn resolve(stack: Stack) -> serror::Result<()>;
+  async fn resolve(stack: Stack) -> mogh_error::Result<()>;
 }
 
 impl StackExecution for RefreshStackCache {
-  async fn resolve(stack: Stack) -> serror::Result<()> {
+  async fn resolve(stack: Stack) -> mogh_error::Result<()> {
     RefreshStackCache { stack: stack.id }
       .resolve(&WriteArgs {
         user: git_webhook_user().to_owned(),
@@ -256,7 +256,7 @@ impl StackExecution for RefreshStackCache {
 }
 
 impl StackExecution for DeployStack {
-  async fn resolve(stack: Stack) -> serror::Result<()> {
+  async fn resolve(stack: Stack) -> mogh_error::Result<()> {
     let user = git_webhook_user().to_owned();
     if stack.config.webhook_force_deploy {
       let req = ExecuteRequest::DeployStack(DeployStack {

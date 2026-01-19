@@ -5,11 +5,11 @@ use std::{
 };
 
 use anyhow::Context;
-use cache::CloneCache;
 use futures_util::Stream;
 use komodo_client::entities::terminal::{
   TerminalStdinMessageVariant, TerminalTarget,
 };
+use mogh_cache::CloneCache;
 use periphery_client::{
   api::terminal::{ConnectTerminal, END_OF_OUTPUT, ExecuteTerminal},
   transport::EncodedTransportMessage,

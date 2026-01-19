@@ -112,7 +112,7 @@ impl Resolve<crate::api::Args> for WriteDockerfileContentsToHost {
         .await
         .with_context(|| format!("Failed to initialize dockerfile parent directory {parent:?}"))?;
     }
-    secret_file::write_async(&full_path, contents)
+    mogh_secret_file::write_async(&full_path, contents)
       .await
       .with_context(|| {
         format!(

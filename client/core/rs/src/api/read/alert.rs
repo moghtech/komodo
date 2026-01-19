@@ -13,7 +13,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListAlertsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListAlerts {
   /// Pass a custom mongo query to filter the alerts.
   ///
@@ -66,7 +66,7 @@ pub struct ListAlertsResponse {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetAlertResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetAlert {
   pub id: String,
 }

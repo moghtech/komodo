@@ -13,7 +13,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListApiKeysResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListApiKeys {}
 
 #[typeshare]
@@ -30,7 +30,7 @@ pub type ListApiKeysResponse = Vec<ApiKey>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListApiKeysForServiceUserResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListApiKeysForServiceUser {
   /// Id or username
   #[serde(alias = "id", alias = "username")]
@@ -50,7 +50,7 @@ pub type ListApiKeysForServiceUserResponse = Vec<ApiKey>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(FindUserResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct FindUser {
   /// Id or username
   #[serde(alias = "id", alias = "username")]
@@ -70,7 +70,7 @@ pub type FindUserResponse = User;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListUsersResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListUsers {}
 
 #[typeshare]
@@ -85,7 +85,7 @@ pub type ListUsersResponse = Vec<User>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetUsernameResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetUsername {
   /// The id of the user.
   pub user_id: String,

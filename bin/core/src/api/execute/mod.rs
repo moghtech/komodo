@@ -17,11 +17,11 @@ use komodo_client::{
     user::User,
   },
 };
+use mogh_error::Json;
+use mogh_error::JsonString;
 use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use serror::Json;
-use serror::JsonString;
 use strum::{Display, EnumDiscriminants};
 use typeshare::typeshare;
 use uuid::Uuid;
@@ -66,7 +66,7 @@ pub struct ExecuteArgs {
 #[strum_discriminants(name(ExecuteRequestVariant), derive(Display))]
 #[args(ExecuteArgs)]
 #[response(JsonString)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 #[serde(tag = "type", content = "params")]
 pub enum ExecuteRequest {
   // ==== STACK ====
@@ -179,7 +179,7 @@ async fn variant_handler(
   user: Extension<User>,
   Path(Variant { variant }): Path<Variant>,
   Json(params): Json<serde_json::Value>,
-) -> serror::Result<(TypedHeader<ContentType>, String)> {
+) -> mogh_error::Result<(TypedHeader<ContentType>, String)> {
   let req: ExecuteRequest = serde_json::from_value(json!({
     "type": variant,
     "params": params,
@@ -190,7 +190,7 @@ async fn variant_handler(
 async fn handler(
   Extension(user): Extension<User>,
   Json(request): Json<ExecuteRequest>,
-) -> serror::Result<(TypedHeader<ContentType>, String)> {
+) -> mogh_error::Result<(TypedHeader<ContentType>, String)> {
   let res = match inner_handler(request, user).await? {
     ExecutionResult::Single(update) => serde_json::to_string(&update)
       .context("Failed to serialize Update")?,

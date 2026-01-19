@@ -12,7 +12,7 @@ use komodo_client::{
 };
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use serror::AddStatusCodeError;
+use mogh_error::AddStatusCodeError;
 
 use crate::{
   helpers::update::{add_update, make_update},
@@ -35,7 +35,7 @@ impl Resolve<WriteArgs> for CreateGitProviderAccount {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<CreateGitProviderAccountResponse> {
+  ) -> mogh_error::Result<CreateGitProviderAccountResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only admins can create git provider accounts")
@@ -111,7 +111,7 @@ impl Resolve<WriteArgs> for UpdateGitProviderAccount {
   async fn resolve(
     mut self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<UpdateGitProviderAccountResponse> {
+  ) -> mogh_error::Result<UpdateGitProviderAccountResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only admins can update git provider accounts")
@@ -199,7 +199,7 @@ impl Resolve<WriteArgs> for DeleteGitProviderAccount {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<DeleteGitProviderAccountResponse> {
+  ) -> mogh_error::Result<DeleteGitProviderAccountResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only admins can delete git provider accounts")
@@ -261,7 +261,7 @@ impl Resolve<WriteArgs> for CreateDockerRegistryAccount {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<CreateDockerRegistryAccountResponse> {
+  ) -> mogh_error::Result<CreateDockerRegistryAccountResponse> {
     if !user.admin {
       return Err(
         anyhow!(
@@ -340,7 +340,7 @@ impl Resolve<WriteArgs> for UpdateDockerRegistryAccount {
   async fn resolve(
     mut self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<UpdateDockerRegistryAccountResponse> {
+  ) -> mogh_error::Result<UpdateDockerRegistryAccountResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only admins can update docker registry accounts")
@@ -435,7 +435,7 @@ impl Resolve<WriteArgs> for DeleteDockerRegistryAccount {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<DeleteDockerRegistryAccountResponse> {
+  ) -> mogh_error::Result<DeleteDockerRegistryAccountResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only admins can delete docker registry accounts")

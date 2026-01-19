@@ -68,7 +68,7 @@ pub trait KomodoReadRequest: HasResponse {}
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetVersionResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetVersion {}
 
 /// Response for [GetVersion].
@@ -89,7 +89,7 @@ pub struct GetVersionResponse {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetCoreInfoResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetCoreInfo {}
 
 /// Response for [GetCoreInfo].
@@ -135,7 +135,7 @@ pub struct GetCoreInfoResponse {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListGitProvidersFromConfigResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListGitProvidersFromConfig {
   /// Accepts an optional Server or Builder target to expand the core list with
   /// providers available on that specific resource.
@@ -159,7 +159,7 @@ pub type ListGitProvidersFromConfigResponse = Vec<GitProvider>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerRegistriesFromConfigResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListDockerRegistriesFromConfig {
   /// Accepts an optional Server or Builder target to expand the core list with
   /// providers available on that specific resource.
@@ -178,7 +178,7 @@ pub type ListDockerRegistriesFromConfigResponse = Vec<DockerRegistry>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSecretsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListSecrets {
   /// Accepts an optional Server or Builder target to expand the core list with
   /// providers available on that specific resource.

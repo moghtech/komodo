@@ -13,7 +13,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListOnboardingKeysResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListOnboardingKeys {}
 
 #[typeshare]

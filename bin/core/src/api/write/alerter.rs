@@ -23,7 +23,7 @@ impl Resolve<WriteArgs> for CreateAlerter {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Alerter> {
+  ) -> mogh_error::Result<Alerter> {
     resource::create::<Alerter>(&self.name, self.config, None, user)
       .await
   }
@@ -42,7 +42,7 @@ impl Resolve<WriteArgs> for CopyAlerter {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Alerter> {
+  ) -> mogh_error::Result<Alerter> {
     let Alerter { config, .. } = get_check_permissions::<Alerter>(
       &self.id,
       user,
@@ -66,7 +66,7 @@ impl Resolve<WriteArgs> for DeleteAlerter {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Alerter> {
+  ) -> mogh_error::Result<Alerter> {
     Ok(resource::delete::<Alerter>(&self.id, user).await?)
   }
 }
@@ -84,7 +84,7 @@ impl Resolve<WriteArgs> for UpdateAlerter {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Alerter> {
+  ) -> mogh_error::Result<Alerter> {
     Ok(
       resource::update::<Alerter>(&self.id, self.config, user)
         .await?,
@@ -105,7 +105,7 @@ impl Resolve<WriteArgs> for RenameAlerter {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     Ok(resource::rename::<Alerter>(&self.id, &self.name, user).await?)
   }
 }

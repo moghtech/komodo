@@ -181,7 +181,7 @@ impl Resolve<crate::api::Args> for WriteComposeContentsToHost {
       .join(file_path)
       .components()
       .collect::<PathBuf>();
-    secret_file::write_async(&file_path, contents)
+    mogh_secret_file::write_async(&file_path, contents)
       .await
       .with_context(|| {
         format!(

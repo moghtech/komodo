@@ -7,9 +7,9 @@ use database::mungos::mongodb::bson::doc;
 use futures_util::TryFutureExt;
 use komodo_client::entities::{komodo_timestamp, user::User};
 use mogh_auth_server::request_ip::RequestIp;
-use rate_limit::WithFailureRateLimit;
+use mogh_error::AddStatusCodeError as _;
+use mogh_rate_limit::WithFailureRateLimit;
 use reqwest::StatusCode;
-use serror::AddStatusCodeError as _;
 
 use crate::{
   auth::JWT_PROVIDER, helpers::query::get_user, state::db_client,
@@ -19,7 +19,7 @@ pub async fn auth_request(
   RequestIp(ip): RequestIp,
   mut req: Request,
   next: Next,
-) -> serror::Result<Response> {
+) -> mogh_error::Result<Response> {
   let mut user = authenticate_check_enabled(req.headers())
     .map_err(|e| e.status_code(StatusCode::UNAUTHORIZED))
     .with_failure_rate_limit_using_ip(

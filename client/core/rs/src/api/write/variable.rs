@@ -12,7 +12,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateVariableResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateVariable {
   /// The name of the variable to create.
   pub name: String,
@@ -38,7 +38,7 @@ pub type CreateVariableResponse = Variable;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateVariableValueResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateVariableValue {
   /// The name of the variable to update.
   pub name: String,
@@ -57,7 +57,7 @@ pub type UpdateVariableValueResponse = Variable;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateVariableDescriptionResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateVariableDescription {
   /// The name of the variable to update.
   pub name: String,
@@ -76,7 +76,7 @@ pub type UpdateVariableDescriptionResponse = Variable;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateVariableIsSecretResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateVariableIsSecret {
   /// The name of the variable to update.
   pub name: String,
@@ -95,7 +95,7 @@ pub type UpdateVariableIsSecretResponse = Variable;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteVariableResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteVariable {
   pub name: String,
 }

@@ -10,7 +10,7 @@ use komodo_client::entities::{
   stack::{Stack, StackState},
   stats::{SingleDiskUsage, SystemInformation, SystemStats},
 };
-use serror::Serror;
+use mogh_error::Serror;
 
 use crate::state::{
   CachedDeploymentStatus, CachedRepoStatus, CachedServerStatus,

@@ -17,7 +17,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteUserResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteUser {
   /// User id or username
   #[serde(alias = "username", alias = "id")]
@@ -40,7 +40,7 @@ pub type DeleteUserResponse = User;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateLocalUserResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateLocalUser {
   /// The username for the local user.
   pub username: String,
@@ -60,7 +60,7 @@ pub type CreateLocalUserResponse = User;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateServiceUserResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateServiceUser {
   /// The username for the service user.
   pub username: String,
@@ -80,7 +80,7 @@ pub type CreateServiceUserResponse = User;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateServiceUserDescriptionResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateServiceUserDescription {
   /// The service user's username
   pub username: String,

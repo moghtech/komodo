@@ -32,11 +32,14 @@ pub async fn write_env_file(
     .collect::<Vec<_>>()
     .join("\n");
 
-  if let Err(e) = secret_file::write_async(&env_file_path, contents)
-    .await
-    .with_context(|| {
-      format!("Failed to write environment file to {env_file_path:?}")
-    })
+  if let Err(e) =
+    mogh_secret_file::write_async(&env_file_path, contents)
+      .await
+      .with_context(|| {
+        format!(
+          "Failed to write environment file to {env_file_path:?}"
+        )
+      })
   {
     logs.push(Log::error(
       "Write Environment File",

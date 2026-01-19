@@ -2,7 +2,6 @@ use std::sync::{Arc, OnceLock};
 
 use anyhow::{Context, anyhow};
 use arc_swap::ArcSwap;
-use cache::CloneCache;
 use komodo_client::entities::{
   action::ActionState,
   build::BuildState,
@@ -18,6 +17,7 @@ use komodo_client::entities::{
   stats::{SystemInformation, SystemStats},
   swarm::SwarmState,
 };
+use mogh_cache::CloneCache;
 
 use crate::{
   config::core_config,
@@ -106,7 +106,7 @@ pub struct CachedServerStatus {
   pub system_stats: Option<SystemStats>,
   pub docker: Option<DockerLists>,
   /// Store the error in reaching periphery
-  pub err: Option<serror::Serror>,
+  pub err: Option<mogh_error::Serror>,
 }
 
 pub type ServerStatusCache =

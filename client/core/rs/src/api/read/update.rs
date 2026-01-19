@@ -16,7 +16,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetUpdateResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetUpdate {
   /// The update id.
   pub id: String,
@@ -34,7 +34,7 @@ pub type GetUpdateResponse = Update;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListUpdatesResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListUpdates {
   /// An optional mongo query to filter the updates.
   #[cfg_attr(feature = "utoipa", schema(value_type = Option<serde_json::Value>))]

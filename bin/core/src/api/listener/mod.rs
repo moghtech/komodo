@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::anyhow;
 use axum::{Router, http::HeaderMap};
-use cache::CloneCache;
+use mogh_cache::CloneCache;
 use komodo_client::entities::resource::Resource;
 use tokio::sync::Mutex;
 

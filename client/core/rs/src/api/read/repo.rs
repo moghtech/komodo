@@ -16,7 +16,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(Repo)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetRepo {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -34,7 +34,7 @@ pub type GetRepoResponse = Repo;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListReposResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListRepos {
   /// optional structured query to filter repos.
   #[serde(default)]
@@ -52,7 +52,7 @@ pub type ListReposResponse = Vec<RepoListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullReposResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListFullRepos {
   /// optional structured query to filter repos.
   #[serde(default)]
@@ -70,7 +70,7 @@ pub type ListFullReposResponse = Vec<Repo>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetRepoActionStateResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetRepoActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -89,7 +89,7 @@ pub type GetRepoActionStateResponse = RepoActionState;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetReposSummaryResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetReposSummary {}
 
 /// Response for [GetReposSummary]

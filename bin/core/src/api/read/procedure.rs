@@ -21,7 +21,7 @@ impl Resolve<ReadArgs> for GetProcedure {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetProcedureResponse> {
+  ) -> mogh_error::Result<GetProcedureResponse> {
     Ok(
       get_check_permissions::<Procedure>(
         &self.procedure,
@@ -37,7 +37,7 @@ impl Resolve<ReadArgs> for ListProcedures {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListProceduresResponse> {
+  ) -> mogh_error::Result<ListProceduresResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -59,7 +59,7 @@ impl Resolve<ReadArgs> for ListFullProcedures {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListFullProceduresResponse> {
+  ) -> mogh_error::Result<ListFullProceduresResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -81,7 +81,7 @@ impl Resolve<ReadArgs> for GetProceduresSummary {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetProceduresSummaryResponse> {
+  ) -> mogh_error::Result<GetProceduresSummaryResponse> {
     let procedures = resource::list_full_for_user::<Procedure>(
       Default::default(),
       user,
@@ -127,7 +127,7 @@ impl Resolve<ReadArgs> for GetProcedureActionState {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetProcedureActionStateResponse> {
+  ) -> mogh_error::Result<GetProcedureActionStateResponse> {
     let procedure = get_check_permissions::<Procedure>(
       &self.procedure,
       user,

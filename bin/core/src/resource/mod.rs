@@ -37,7 +37,7 @@ use mogh_resolver::Resolve;
 use partial_derive2::{Diff, MaybeNone, PartialDiff};
 use reqwest::StatusCode;
 use serde::{Serialize, de::DeserializeOwned};
-use serror::AddStatusCodeError;
+use mogh_error::AddStatusCodeError;
 
 use crate::{
   api::{read::ReadArgs, write::WriteArgs},
@@ -437,7 +437,7 @@ pub async fn create<T: KomodoResource>(
   mut config: T::PartialConfig,
   info: Option<T::Info>,
   user: &User,
-) -> serror::Result<Resource<T::Config, T::Info>> {
+) -> mogh_error::Result<Resource<T::Config, T::Info>> {
   if !T::user_can_create(user) {
     return Err(
       anyhow!(

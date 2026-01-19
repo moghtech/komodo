@@ -44,7 +44,7 @@ impl Resolve<WriteArgs> for CreateRepo {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Repo> {
+  ) -> mogh_error::Result<Repo> {
     resource::create::<Repo>(&self.name, self.config, None, user)
       .await
   }
@@ -63,7 +63,7 @@ impl Resolve<WriteArgs> for CopyRepo {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Repo> {
+  ) -> mogh_error::Result<Repo> {
     let Repo { config, .. } = get_check_permissions::<Repo>(
       &self.id,
       user,
@@ -87,7 +87,7 @@ impl Resolve<WriteArgs> for DeleteRepo {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Repo> {
+  ) -> mogh_error::Result<Repo> {
     Ok(resource::delete::<Repo>(&self.id, user).await?)
   }
 }
@@ -105,7 +105,7 @@ impl Resolve<WriteArgs> for UpdateRepo {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Repo> {
+  ) -> mogh_error::Result<Repo> {
     Ok(resource::update::<Repo>(&self.id, self.config, user).await?)
   }
 }
@@ -123,7 +123,7 @@ impl Resolve<WriteArgs> for RenameRepo {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let repo = get_check_permissions::<Repo>(
       &self.id,
       user,
@@ -199,7 +199,7 @@ impl Resolve<WriteArgs> for RefreshRepoCache {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<NoData> {
+  ) -> mogh_error::Result<NoData> {
     // Even though this is a write request, this doesn't change any config. Anyone that can execute the
     // repo should be able to do this.
     let repo = get_check_permissions::<Repo>(

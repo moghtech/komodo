@@ -1,4 +1,4 @@
-use serror::Serror;
+use mogh_error::Serror;
 
 pub fn muted(content: impl std::fmt::Display) -> String {
   format!("<span class=\"text-muted-foreground\">{content}</span>")

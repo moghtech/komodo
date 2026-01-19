@@ -63,7 +63,7 @@ impl Resolve<ExecuteArgs> for BatchCloneRepo {
   async fn resolve(
     self,
     ExecuteArgs { user, id, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchCloneRepo>(&self.pattern, user)
         .await?,
@@ -85,7 +85,7 @@ impl Resolve<ExecuteArgs> for CloneRepo {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let mut repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
@@ -194,7 +194,7 @@ impl Resolve<ExecuteArgs> for BatchPullRepo {
   async fn resolve(
     self,
     ExecuteArgs { user, id, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchPullRepo>(&self.pattern, user)
         .await?,
@@ -216,7 +216,7 @@ impl Resolve<ExecuteArgs> for PullRepo {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let mut repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
@@ -316,7 +316,7 @@ impl Resolve<ExecuteArgs> for PullRepo {
 )]
 async fn handle_repo_update_return(
   update: Update,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   // Need to manually update the update before cache refresh,
   // and before broadcast with add_update.
   // The Err case of to_document should be unreachable,
@@ -371,7 +371,7 @@ impl Resolve<ExecuteArgs> for BatchBuildRepo {
   async fn resolve(
     self,
     ExecuteArgs { user, id, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchBuildRepo>(&self.pattern, user)
         .await?,
@@ -393,7 +393,7 @@ impl Resolve<ExecuteArgs> for BuildRepo {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let mut repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
@@ -614,7 +614,7 @@ async fn handle_builder_early_return(
   repo_id: String,
   repo_name: String,
   is_cancel: bool,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   update.finalize();
   // Need to manually update the update before cache refresh,
   // and before broadcast with add_update.
@@ -714,7 +714,7 @@ impl Resolve<ExecuteArgs> for CancelRepoBuild {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let repo = get_check_permissions::<Repo>(
       &self.repo,
       user,

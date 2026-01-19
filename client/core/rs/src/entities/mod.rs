@@ -6,12 +6,12 @@ use std::{
 use anyhow::Context;
 use async_timing_util::unix_timestamp_ms;
 use clap::Parser;
+use mogh_error::Serror;
 use rand::Rng as _;
 use serde::{
   Deserialize, Serialize,
   de::{Visitor, value::MapAccessDeserializer},
 };
-use serror::Serror;
 use strum::{AsRefStr, Display, EnumDiscriminants, EnumString};
 use typeshare::typeshare;
 

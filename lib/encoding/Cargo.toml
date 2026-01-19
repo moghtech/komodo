@@ -10,7 +10,7 @@ homepage.workspace = true
 [dependencies]
 bytes.workspace = true
 #
-serror.workspace = true
+mogh_error.workspace = true
 #
 serde_json.workspace = true
 anyhow.workspace = true

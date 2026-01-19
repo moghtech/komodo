@@ -17,7 +17,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Swarm)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateSwarm {
   /// The name given to newly created swarm.
   pub name: String,
@@ -35,7 +35,7 @@ pub struct CreateSwarm {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Swarm)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CopySwarm {
   /// The name of the new swarm.
   pub name: String,
@@ -52,7 +52,7 @@ pub struct CopySwarm {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Swarm)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteSwarm {
   /// The id or name of the swarm to delete.
   pub id: String,
@@ -76,7 +76,7 @@ pub struct DeleteSwarm {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Swarm)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateSwarm {
   /// The id of the swarm to update.
   pub id: String,
@@ -93,7 +93,7 @@ pub struct UpdateSwarm {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RenameSwarm {
   /// The id or name of the Swarm to rename.
   pub id: String,

@@ -19,7 +19,7 @@ impl Resolve<ReadArgs> for GetUserGroup {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetUserGroupResponse> {
+  ) -> mogh_error::Result<GetUserGroupResponse> {
     let mut filter = match ObjectId::from_str(&self.user_group) {
       Ok(id) => doc! { "_id": id },
       Err(_) => doc! { "name": &self.user_group },
@@ -43,7 +43,7 @@ impl Resolve<ReadArgs> for ListUserGroups {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListUserGroupsResponse> {
+  ) -> mogh_error::Result<ListUserGroupsResponse> {
     let mut filter = Document::new();
     if !user.admin {
       filter.insert("users", &user.id);

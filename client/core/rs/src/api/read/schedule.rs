@@ -16,7 +16,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSchedulesResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListSchedules {
   /// Pass Vec of tag ids or tag names
   #[serde(default, deserialize_with = "string_list_deserializer")]

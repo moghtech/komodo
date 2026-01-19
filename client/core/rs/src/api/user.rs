@@ -15,7 +15,7 @@ pub trait KomodoUserRequest: HasResponse {}
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(PushRecentlyViewedResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct PushRecentlyViewed {
   /// The target to push.
   pub resource: ResourceTarget,
@@ -34,7 +34,7 @@ pub type PushRecentlyViewedResponse = NoData;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(SetLastSeenUpdateResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct SetLastSeenUpdate {}
 
 #[typeshare]
@@ -52,7 +52,7 @@ pub type SetLastSeenUpdateResponse = NoData;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(CreateApiKeyResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateApiKey {
   /// The name for the api key.
   pub name: String,
@@ -86,7 +86,7 @@ pub struct CreateApiKeyResponse {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(DeleteApiKeyResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteApiKey {
   /// The key which the user intends to delete.
   pub key: String,

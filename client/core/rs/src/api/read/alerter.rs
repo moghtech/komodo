@@ -16,7 +16,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetAlerterResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetAlerter {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -34,7 +34,7 @@ pub type GetAlerterResponse = Alerter;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListAlertersResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListAlerters {
   /// Structured query to filter alerters.
   #[serde(default)]
@@ -50,7 +50,7 @@ pub type ListAlertersResponse = Vec<AlerterListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullAlertersResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListFullAlerters {
   /// Structured query to filter alerters.
   #[serde(default)]
@@ -69,7 +69,7 @@ pub type ListFullAlertersResponse = Vec<Alerter>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetAlertersSummaryResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetAlertersSummary {}
 
 /// Response for [GetAlertersSummary].

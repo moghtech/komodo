@@ -25,7 +25,7 @@ use partial_derive2::MaybeNone;
 use periphery_client::{
   api::PeripheryConnectionQuery, transport::LoginMessage,
 };
-use serror::{AddStatusCode, AddStatusCodeError};
+use mogh_error::{AddStatusCode, AddStatusCodeError};
 use tracing::Instrument;
 use transport::{
   auth::{
@@ -54,7 +54,7 @@ pub async fn handler(
   }): Query<PeripheryConnectionQuery>,
   mut headers: HeaderMap,
   ws: WebSocketUpgrade,
-) -> serror::Result<Response> {
+) -> mogh_error::Result<Response> {
   let identifiers =
     HeaderConnectionIdentifiers::extract(&mut headers)
       .status_code(StatusCode::UNAUTHORIZED)?;
@@ -107,7 +107,7 @@ async fn existing_server_handler(
   server: Server,
   identifiers: HeaderConnectionIdentifiers,
   ws: WebSocketUpgrade,
-) -> serror::Result<Response> {
+) -> mogh_error::Result<Response> {
   let (connection, mut receiver) = periphery_connections()
     .insert(
       server.id.clone(),
@@ -202,7 +202,7 @@ async fn fix_existing_server_handler(
   server: Server,
   identifiers: HeaderConnectionIdentifiers,
   ws: WebSocketUpgrade,
-) -> serror::Result<Response> {
+) -> mogh_error::Result<Response> {
   Ok(ws.on_upgrade(|socket| async move {
     let query =
       format!("server={}", urlencoding::encode(&server_query));
@@ -316,7 +316,7 @@ async fn onboard_new_server_handler(
   server_query: String,
   identifiers: HeaderConnectionIdentifiers,
   ws: WebSocketUpgrade,
-) -> serror::Result<Response> {
+) -> mogh_error::Result<Response> {
   Ok(ws.on_upgrade(|socket| async move {
     let query =
       format!("server={}", urlencoding::encode(&server_query));

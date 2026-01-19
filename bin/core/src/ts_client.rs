@@ -7,7 +7,7 @@ use axum::{
 };
 use reqwest::StatusCode;
 use serde::Deserialize;
-use serror::AddStatusCodeError;
+use mogh_error::AddStatusCodeError;
 use tokio::fs;
 
 use crate::config::core_config;
@@ -35,7 +35,7 @@ struct FilePath {
 #[axum::debug_handler]
 async fn serve_client_file(
   Path(FilePath { path }): Path<FilePath>,
-) -> serror::Result<(HeaderMap, String)> {
+) -> mogh_error::Result<(HeaderMap, String)> {
   if !ALLOWED_FILES.contains(&path.as_str()) {
     return Err(
       anyhow!("File {path} not found.")

@@ -2,7 +2,6 @@ use std::{path::PathBuf, sync::OnceLock};
 
 use anyhow::Context;
 use colored::Colorize;
-use config::ConfigLoader;
 use komodo_client::entities::{
   config::{
     DatabaseConfig,
@@ -11,8 +10,9 @@ use komodo_client::entities::{
   logger::LogConfig,
 };
 use mogh_auth_client::config::NamedOauthConfig;
+use mogh_config::ConfigLoader;
 use mogh_pki::{PkiKind, RotatableKeyPair, SpkiPublicKey};
-use secret_file::{
+use mogh_secret_file::{
   maybe_read_item_from_file, maybe_read_list_from_file,
 };
 

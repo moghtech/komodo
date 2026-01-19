@@ -23,7 +23,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStackResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetStack {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -41,7 +41,7 @@ pub type GetStackResponse = Stack;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListStackServicesResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListStackServices {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -60,7 +60,7 @@ pub type ListStackServicesResponse = Vec<StackService>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectStackContainerResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct InspectStackContainer {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -81,7 +81,7 @@ pub type InspectStackContainerResponse = Container;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectStackSwarmServiceResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct InspectStackSwarmService {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -102,7 +102,7 @@ pub type InspectStackSwarmServiceResponse = SwarmService;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectStackSwarmInfoResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct InspectStackSwarmInfo {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -122,7 +122,7 @@ pub type InspectStackSwarmInfoResponse = SwarmStack;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStackLogResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetStackLog {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -158,7 +158,7 @@ pub type GetStackLogResponse = Log;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(SearchStackLogResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct SearchStackLog {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -194,7 +194,7 @@ pub type SearchStackLogResponse = Log;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonStackExtraArgsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListCommonStackExtraArgs {
   /// optional structured query to filter stacks.
   #[serde(default)]
@@ -213,7 +213,7 @@ pub type ListCommonStackExtraArgsResponse = Vec<String>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonStackBuildExtraArgsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListCommonStackBuildExtraArgs {
   /// optional structured query to filter stacks.
   #[serde(default)]
@@ -231,7 +231,7 @@ pub type ListCommonStackBuildExtraArgsResponse = Vec<String>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListStacksResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListStacks {
   /// optional structured query to filter stacks.
   #[serde(default)]
@@ -249,7 +249,7 @@ pub type ListStacksResponse = Vec<StackListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullStacksResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListFullStacks {
   /// optional structured query to filter stacks.
   #[serde(default)]
@@ -267,7 +267,7 @@ pub type ListFullStacksResponse = Vec<Stack>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStackActionStateResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetStackActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -286,7 +286,7 @@ pub type GetStackActionStateResponse = StackActionState;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStacksSummaryResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetStacksSummary {}
 
 /// Response for [GetStacksSummary]

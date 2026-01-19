@@ -1,6 +1,6 @@
 use anyhow::{Context, Result as AnyhowResult};
 use bytes::Bytes;
-use serror::{deserialize_error_bytes, serialize_error_bytes};
+use mogh_error::{deserialize_error_bytes, serialize_error_bytes};
 
 use crate::{CastBytes, Decode, Encode};
 

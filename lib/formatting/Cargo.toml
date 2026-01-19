@@ -8,4 +8,4 @@ repository.workspace = true
 homepage.workspace = true
 
 [dependencies]
-serror.workspace = true
+mogh_error.workspace = true

@@ -13,7 +13,7 @@ use komodo_client::{
 use mogh_pki::EncodedKeyPair;
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use serror::{AddStatusCode, AddStatusCodeError};
+use mogh_error::{AddStatusCode, AddStatusCodeError};
 
 use crate::{api::write::WriteArgs, state::db_client};
 
@@ -35,7 +35,7 @@ impl Resolve<WriteArgs> for CreateOnboardingKey {
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<CreateOnboardingKeyResponse> {
+  ) -> mogh_error::Result<CreateOnboardingKeyResponse> {
     if !admin.admin {
       return Err(
         anyhow!("This call is admin only")
@@ -103,7 +103,7 @@ impl Resolve<WriteArgs> for UpdateOnboardingKey {
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<UpdateOnboardingKeyResponse> {
+  ) -> mogh_error::Result<UpdateOnboardingKeyResponse> {
     if !admin.admin {
       return Err(
         anyhow!("This call is admin only")
@@ -184,7 +184,7 @@ impl Resolve<WriteArgs> for DeleteOnboardingKey {
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<DeleteOnboardingKeyResponse> {
+  ) -> mogh_error::Result<DeleteOnboardingKeyResponse> {
     if !admin.admin {
       return Err(
         anyhow!("This call is admin only")

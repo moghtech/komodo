@@ -16,7 +16,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetActionResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetAction {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -34,7 +34,7 @@ pub type GetActionResponse = Action;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListActionsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListActions {
   /// optional structured query to filter actions.
   #[serde(default)]
@@ -52,7 +52,7 @@ pub type ListActionsResponse = Vec<ActionListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullActionsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListFullActions {
   /// optional structured query to filter actions.
   #[serde(default)]
@@ -70,7 +70,7 @@ pub type ListFullActionsResponse = Vec<Action>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetActionActionStateResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetActionActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -89,7 +89,7 @@ pub type GetActionActionStateResponse = ActionActionState;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetActionsSummaryResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetActionsSummary {}
 
 /// Response for [GetActionsSummary].

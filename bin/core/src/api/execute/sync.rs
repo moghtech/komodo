@@ -64,7 +64,7 @@ impl Resolve<ExecuteArgs> for RunSync {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let RunSync {
       sync,
       resource_type: match_resource_type,

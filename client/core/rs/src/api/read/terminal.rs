@@ -15,7 +15,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListTerminalsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListTerminals {
   /// Filter the Terminals returned by the Target.
   pub target: Option<TerminalTarget>,

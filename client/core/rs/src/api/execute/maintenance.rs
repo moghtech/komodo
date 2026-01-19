@@ -16,7 +16,7 @@ use super::KomodoExecuteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ClearRepoCache {}
 
 //
@@ -36,7 +36,7 @@ pub struct ClearRepoCache {}
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct BackupCoreDatabase {}
 
 //
@@ -54,7 +54,7 @@ pub struct BackupCoreDatabase {}
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GlobalAutoUpdate {}
 
 //
@@ -68,7 +68,7 @@ pub struct GlobalAutoUpdate {}
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RotateAllServerKeys {}
 
 //
@@ -86,7 +86,7 @@ pub struct RotateAllServerKeys {}
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RotateCoreKeys {
   /// Force the rotation to proceed even if a Server is `NotOk`.
   /// The Core Public Key in Periphery config may have to be updated manually.

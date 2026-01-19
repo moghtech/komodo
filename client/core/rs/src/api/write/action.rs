@@ -17,7 +17,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Action)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateAction {
   /// The name given to newly created action.
   pub name: String,
@@ -35,7 +35,7 @@ pub struct CreateAction {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Action)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CopyAction {
   /// The name of the new action.
   pub name: String,
@@ -52,7 +52,7 @@ pub struct CopyAction {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Action)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteAction {
   /// The id or name of the action to delete.
   pub id: String,
@@ -73,7 +73,7 @@ pub struct DeleteAction {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Action)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateAction {
   /// The id of the action to update.
   pub id: String,
@@ -90,7 +90,7 @@ pub struct UpdateAction {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RenameAction {
   /// The id or name of the Action to rename.
   pub id: String,

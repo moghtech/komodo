@@ -11,7 +11,7 @@ use komodo_client::{
 use mogh_resolver::Resolve;
 use periphery_client::api;
 use reqwest::StatusCode;
-use serror::AddStatusCode;
+use mogh_error::AddStatusCode;
 
 use crate::{
   helpers::{
@@ -47,7 +47,7 @@ impl Resolve<WriteArgs> for CreateTerminal {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<NoData> {
+  ) -> mogh_error::Result<NoData> {
     match self.target.clone() {
       TerminalTarget::Server { server } => {
         let server = server
@@ -159,7 +159,7 @@ impl Resolve<WriteArgs> for DeleteTerminal {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<NoData> {
+  ) -> mogh_error::Result<NoData> {
     let server = match &self.target {
       TerminalTarget::Server { server } => {
         let server = server
@@ -233,7 +233,7 @@ impl Resolve<WriteArgs> for DeleteAllTerminals {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<NoData> {
+  ) -> mogh_error::Result<NoData> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,

@@ -23,7 +23,7 @@ impl Resolve<WriteArgs> for CreateProcedure {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<CreateProcedureResponse> {
+  ) -> mogh_error::Result<CreateProcedureResponse> {
     resource::create::<Procedure>(&self.name, self.config, None, user)
       .await
   }
@@ -42,7 +42,7 @@ impl Resolve<WriteArgs> for CopyProcedure {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<CopyProcedureResponse> {
+  ) -> mogh_error::Result<CopyProcedureResponse> {
     let Procedure { config, .. } =
       get_check_permissions::<Procedure>(
         &self.id,
@@ -73,7 +73,7 @@ impl Resolve<WriteArgs> for UpdateProcedure {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<UpdateProcedureResponse> {
+  ) -> mogh_error::Result<UpdateProcedureResponse> {
     Ok(
       resource::update::<Procedure>(&self.id, self.config, user)
         .await?,
@@ -94,7 +94,7 @@ impl Resolve<WriteArgs> for RenameProcedure {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     Ok(
       resource::rename::<Procedure>(&self.id, &self.name, user)
         .await?,
@@ -114,7 +114,7 @@ impl Resolve<WriteArgs> for DeleteProcedure {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<DeleteProcedureResponse> {
+  ) -> mogh_error::Result<DeleteProcedureResponse> {
     Ok(resource::delete::<Procedure>(&self.id, user).await?)
   }
 }

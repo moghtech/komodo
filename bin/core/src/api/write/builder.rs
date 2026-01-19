@@ -23,7 +23,7 @@ impl Resolve<WriteArgs> for CreateBuilder {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Builder> {
+  ) -> mogh_error::Result<Builder> {
     resource::create::<Builder>(&self.name, self.config, None, user)
       .await
   }
@@ -42,7 +42,7 @@ impl Resolve<WriteArgs> for CopyBuilder {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Builder> {
+  ) -> mogh_error::Result<Builder> {
     let Builder { config, .. } = get_check_permissions::<Builder>(
       &self.id,
       user,
@@ -66,7 +66,7 @@ impl Resolve<WriteArgs> for DeleteBuilder {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Builder> {
+  ) -> mogh_error::Result<Builder> {
     Ok(resource::delete::<Builder>(&self.id, user).await?)
   }
 }
@@ -84,7 +84,7 @@ impl Resolve<WriteArgs> for UpdateBuilder {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Builder> {
+  ) -> mogh_error::Result<Builder> {
     Ok(
       resource::update::<Builder>(&self.id, self.config, user)
         .await?,
@@ -105,7 +105,7 @@ impl Resolve<WriteArgs> for RenameBuilder {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     Ok(resource::rename::<Builder>(&self.id, &self.name, user).await?)
   }
 }

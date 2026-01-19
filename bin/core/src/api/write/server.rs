@@ -37,7 +37,7 @@ impl Resolve<WriteArgs> for CreateServer {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Server> {
+  ) -> mogh_error::Result<Server> {
     resource::create::<Server>(
       &self.name,
       self.config,
@@ -64,7 +64,7 @@ impl Resolve<WriteArgs> for CopyServer {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Server> {
+  ) -> mogh_error::Result<Server> {
     let Server { config, .. } = get_check_permissions::<Server>(
       &self.id,
       user,
@@ -97,7 +97,7 @@ impl Resolve<WriteArgs> for DeleteServer {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Server> {
+  ) -> mogh_error::Result<Server> {
     Ok(resource::delete::<Server>(&self.id, user).await?)
   }
 }
@@ -115,7 +115,7 @@ impl Resolve<WriteArgs> for UpdateServer {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Server> {
+  ) -> mogh_error::Result<Server> {
     Ok(resource::update::<Server>(&self.id, self.config, user).await?)
   }
 }
@@ -133,7 +133,7 @@ impl Resolve<WriteArgs> for RenameServer {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     Ok(resource::rename::<Server>(&self.id, &self.name, user).await?)
   }
 }
@@ -151,7 +151,7 @@ impl Resolve<WriteArgs> for CreateNetwork {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,

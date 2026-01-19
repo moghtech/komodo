@@ -23,7 +23,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(Server)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetServer {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -41,7 +41,7 @@ pub type GetServerResponse = Server;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListServersResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListServers {
   /// optional structured query to filter servers.
   #[serde(default)]
@@ -59,7 +59,7 @@ pub type ListServersResponse = Vec<ServerListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullServersResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListFullServers {
   /// optional structured query to filter servers.
   #[serde(default)]
@@ -77,7 +77,7 @@ pub type ListFullServersResponse = Vec<Server>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetServerStateResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetServerState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -101,7 +101,7 @@ pub struct GetServerStateResponse {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ServerActionState)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetServerActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -121,7 +121,7 @@ pub type GetServerActionStateResponse = ServerActionState;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetPeripheryInformationResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetPeripheryInformation {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -140,7 +140,7 @@ pub type GetPeripheryInformationResponse = PeripheryInformation;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetSystemInformationResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetSystemInformation {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -162,7 +162,7 @@ pub type GetSystemInformationResponse = SystemInformation;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetSystemStatsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetSystemStats {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -185,7 +185,7 @@ pub type GetSystemStatsResponse = SystemStats;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSystemProcessesResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListSystemProcesses {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -204,7 +204,7 @@ pub type ListSystemProcessesResponse = Vec<SystemProcess>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetHistoricalServerStatsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetHistoricalServerStats {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -237,7 +237,7 @@ pub struct GetHistoricalServerStatsResponse {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetServersSummaryResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetServersSummary {}
 
 /// Response for [GetServersSummary].

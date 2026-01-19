@@ -21,7 +21,7 @@ use super::KomodoExecuteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct StartContainer {
   /// Name or id
   pub server: String,
@@ -41,7 +41,7 @@ pub struct StartContainer {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RestartContainer {
   /// Name or id
   pub server: String,
@@ -61,7 +61,7 @@ pub struct RestartContainer {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct PauseContainer {
   /// Name or id
   pub server: String,
@@ -83,7 +83,7 @@ pub struct PauseContainer {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UnpauseContainer {
   /// Name or id
   pub server: String,
@@ -103,7 +103,7 @@ pub struct UnpauseContainer {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct StopContainer {
   /// Name or id
   pub server: String,
@@ -128,7 +128,7 @@ pub struct StopContainer {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DestroyContainer {
   /// Name or id
   pub server: String,
@@ -150,7 +150,7 @@ pub struct DestroyContainer {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct StartAllContainers {
   /// Name or id
   pub server: String,
@@ -166,7 +166,7 @@ pub struct StartAllContainers {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RestartAllContainers {
   /// Name or id
   pub server: String,
@@ -182,7 +182,7 @@ pub struct RestartAllContainers {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct PauseAllContainers {
   /// Name or id
   pub server: String,
@@ -198,7 +198,7 @@ pub struct PauseAllContainers {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UnpauseAllContainers {
   /// Name or id
   pub server: String,
@@ -214,7 +214,7 @@ pub struct UnpauseAllContainers {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct StopAllContainers {
   /// Name or id
   pub server: String,
@@ -232,7 +232,7 @@ pub struct StopAllContainers {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct PruneContainers {
   /// Id or name
   pub server: String,
@@ -251,7 +251,7 @@ pub struct PruneContainers {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteNetwork {
   /// Id or name.
   pub server: String,
@@ -271,7 +271,7 @@ pub struct DeleteNetwork {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct PruneNetworks {
   /// Id or name
   pub server: String,
@@ -288,7 +288,7 @@ pub struct PruneNetworks {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteImage {
   /// Id or name.
   pub server: String,
@@ -308,7 +308,7 @@ pub struct DeleteImage {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct PruneImages {
   /// Id or name
   pub server: String,
@@ -325,7 +325,7 @@ pub struct PruneImages {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteVolume {
   /// Id or name.
   pub server: String,
@@ -345,7 +345,7 @@ pub struct DeleteVolume {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct PruneVolumes {
   /// Id or name
   pub server: String,
@@ -363,7 +363,7 @@ pub struct PruneVolumes {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct PruneDockerBuilders {
   /// Id or name
   pub server: String,
@@ -381,7 +381,7 @@ pub struct PruneDockerBuilders {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct PruneBuildx {
   /// Id or name
   pub server: String,
@@ -399,7 +399,7 @@ pub struct PruneBuildx {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct PruneSystem {
   /// Id or name
   pub server: String,

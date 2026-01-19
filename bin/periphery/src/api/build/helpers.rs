@@ -26,7 +26,7 @@ pub async fn write_dockerfile(
       .components()
       .collect::<PathBuf>();
 
-    secret_file::write_async(&full_dockerfile_path, dockerfile).await.with_context(|| {
+    mogh_secret_file::write_async(&full_dockerfile_path, dockerfile).await.with_context(|| {
       format!(
         "Failed to write dockerfile contents to {full_dockerfile_path:?}"
       )
@@ -79,14 +79,14 @@ pub async fn parse_secret_args(
     }
     // Write the value to file to mount
     let path = build_dir.join(variable);
-    secret_file::write_async(&path, value).await.with_context(
-      || {
+    mogh_secret_file::write_async(&path, value)
+      .await
+      .with_context(|| {
         format!(
           "Failed to write build secret {variable} to {}",
           path.display()
         )
-      },
-    )?;
+      })?;
     // Extend the command
     write!(
       &mut res,

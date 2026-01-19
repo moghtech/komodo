@@ -18,7 +18,7 @@ use periphery_client::api::{
   container::InspectContainer,
 };
 use reqwest::StatusCode;
-use serror::AddStatusCodeError as _;
+use mogh_error::AddStatusCodeError as _;
 
 use crate::{
   helpers::{
@@ -36,7 +36,7 @@ impl Resolve<ReadArgs> for GetStack {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Stack> {
+  ) -> mogh_error::Result<Stack> {
     Ok(
       get_check_permissions::<Stack>(
         &self.stack,
@@ -52,7 +52,7 @@ impl Resolve<ReadArgs> for ListStackServices {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListStackServicesResponse> {
+  ) -> mogh_error::Result<ListStackServicesResponse> {
     let stack = get_check_permissions::<Stack>(
       &self.stack,
       user,
@@ -76,7 +76,7 @@ impl Resolve<ReadArgs> for GetStackLog {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetStackLogResponse> {
+  ) -> mogh_error::Result<GetStackLogResponse> {
     let GetStackLog {
       stack,
       mut services,
@@ -133,7 +133,7 @@ impl Resolve<ReadArgs> for SearchStackLog {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<SearchStackLogResponse> {
+  ) -> mogh_error::Result<SearchStackLogResponse> {
     let SearchStackLog {
       stack,
       mut services,
@@ -192,7 +192,7 @@ impl Resolve<ReadArgs> for InspectStackContainer {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Container> {
+  ) -> mogh_error::Result<Container> {
     let InspectStackContainer { stack, service } = self;
     let (stack, swarm_or_server) = setup_stack_execution(
       &stack,
@@ -241,7 +241,7 @@ impl Resolve<ReadArgs> for InspectStackSwarmService {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<SwarmService> {
+  ) -> mogh_error::Result<SwarmService> {
     let InspectStackSwarmService { stack, service } = self;
     let (stack, swarm_or_server) = setup_stack_execution(
       &stack,
@@ -292,7 +292,7 @@ impl Resolve<ReadArgs> for InspectStackSwarmInfo {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<SwarmStack> {
+  ) -> mogh_error::Result<SwarmStack> {
     let (stack, swarm_or_server) = setup_stack_execution(
       &self.stack,
       user,
@@ -325,7 +325,7 @@ impl Resolve<ReadArgs> for ListCommonStackExtraArgs {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListCommonStackExtraArgsResponse> {
+  ) -> mogh_error::Result<ListCommonStackExtraArgsResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -359,7 +359,7 @@ impl Resolve<ReadArgs> for ListCommonStackBuildExtraArgs {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListCommonStackBuildExtraArgsResponse> {
+  ) -> mogh_error::Result<ListCommonStackBuildExtraArgsResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -393,7 +393,7 @@ impl Resolve<ReadArgs> for ListStacks {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Vec<StackListItem>> {
+  ) -> mogh_error::Result<Vec<StackListItem>> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -429,7 +429,7 @@ impl Resolve<ReadArgs> for ListFullStacks {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListFullStacksResponse> {
+  ) -> mogh_error::Result<ListFullStacksResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -451,7 +451,7 @@ impl Resolve<ReadArgs> for GetStackActionState {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<StackActionState> {
+  ) -> mogh_error::Result<StackActionState> {
     let stack = get_check_permissions::<Stack>(
       &self.stack,
       user,
@@ -472,7 +472,7 @@ impl Resolve<ReadArgs> for GetStacksSummary {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetStacksSummaryResponse> {
+  ) -> mogh_error::Result<GetStacksSummaryResponse> {
     let stacks = resource::list_full_for_user::<Stack>(
       Default::default(),
       user,

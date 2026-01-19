@@ -6,7 +6,7 @@ use std::{
 
 use anyhow::{Context, anyhow};
 use arc_swap::ArcSwap;
-use cache::{CloneCache, CloneVecCache};
+use mogh_cache::{CloneCache, CloneVecCache};
 use komodo_client::entities::{
   docker::container::ContainerStats, terminal::TerminalStdinMessage,
 };

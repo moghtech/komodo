@@ -36,7 +36,7 @@ impl Resolve<ExecuteArgs> for StartContainer {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -100,7 +100,7 @@ impl Resolve<ExecuteArgs> for RestartContainer {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -166,7 +166,7 @@ impl Resolve<ExecuteArgs> for PauseContainer {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -230,7 +230,7 @@ impl Resolve<ExecuteArgs> for UnpauseContainer {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -298,7 +298,7 @@ impl Resolve<ExecuteArgs> for StopContainer {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -366,7 +366,7 @@ impl Resolve<ExecuteArgs> for DestroyContainer {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let DestroyContainer {
       server,
       container,
@@ -439,7 +439,7 @@ impl Resolve<ExecuteArgs> for StartAllContainers {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -499,7 +499,7 @@ impl Resolve<ExecuteArgs> for RestartAllContainers {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -561,7 +561,7 @@ impl Resolve<ExecuteArgs> for PauseAllContainers {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -621,7 +621,7 @@ impl Resolve<ExecuteArgs> for UnpauseAllContainers {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -683,7 +683,7 @@ impl Resolve<ExecuteArgs> for StopAllContainers {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -743,7 +743,7 @@ impl Resolve<ExecuteArgs> for PruneContainers {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -809,7 +809,7 @@ impl Resolve<ExecuteArgs> for DeleteNetwork {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -869,7 +869,7 @@ impl Resolve<ExecuteArgs> for PruneNetworks {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -933,7 +933,7 @@ impl Resolve<ExecuteArgs> for DeleteImage {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -990,7 +990,7 @@ impl Resolve<ExecuteArgs> for PruneImages {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -1052,7 +1052,7 @@ impl Resolve<ExecuteArgs> for DeleteVolume {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -1112,7 +1112,7 @@ impl Resolve<ExecuteArgs> for PruneVolumes {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -1173,7 +1173,7 @@ impl Resolve<ExecuteArgs> for PruneDockerBuilders {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -1234,7 +1234,7 @@ impl Resolve<ExecuteArgs> for PruneBuildx {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -1295,7 +1295,7 @@ impl Resolve<ExecuteArgs> for PruneSystem {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,

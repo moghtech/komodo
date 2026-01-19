@@ -25,7 +25,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetDeployment {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -44,7 +44,7 @@ pub type GetDeploymentResponse = Deployment;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDeploymentsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListDeployments {
   /// optional structured query to filter deployments.
   #[serde(default)]
@@ -63,7 +63,7 @@ pub type ListDeploymentsResponse = Vec<DeploymentListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullDeploymentsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListFullDeployments {
   /// optional structured query to filter deployments.
   #[serde(default)]
@@ -86,7 +86,7 @@ pub type ListFullDeploymentsResponse = Vec<Deployment>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentContainerResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetDeploymentContainer {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -111,7 +111,7 @@ pub struct GetDeploymentContainerResponse {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDeploymentContainerResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct InspectDeploymentContainer {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -130,7 +130,7 @@ pub type InspectDeploymentContainerResponse = Container;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDeploymentSwarmServiceResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct InspectDeploymentSwarmService {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -151,7 +151,7 @@ pub type InspectDeploymentSwarmServiceResponse = SwarmService;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentLogResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetDeploymentLog {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -184,7 +184,7 @@ pub type GetDeploymentLogResponse = Log;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(SearchDeploymentLogResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct SearchDeploymentLog {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -219,7 +219,7 @@ pub type SearchDeploymentLogResponse = Log;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentStatsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetDeploymentStats {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -238,7 +238,7 @@ pub type GetDeploymentStatsResponse = ContainerStats;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(DeploymentActionState)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetDeploymentActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -257,7 +257,7 @@ pub type GetDeploymentActionStateResponse = DeploymentActionState;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentsSummaryResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetDeploymentsSummary {}
 
 /// Response for [GetDeploymentsSummary].
@@ -288,7 +288,7 @@ pub struct GetDeploymentsSummaryResponse {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonDeploymentExtraArgsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListCommonDeploymentExtraArgs {
   /// optional structured query to filter deployments.
   #[serde(default)]

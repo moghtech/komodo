@@ -13,7 +13,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateGitProviderAccountResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateGitProviderAccount {
   /// The initial account config. Anything in the _id field will be ignored,
   /// as this is generated on creation.
@@ -32,7 +32,7 @@ pub type CreateGitProviderAccountResponse = GitProviderAccount;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateGitProviderAccountResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateGitProviderAccount {
   /// The id of the git provider account to update.
   pub id: String,
@@ -52,7 +52,7 @@ pub type UpdateGitProviderAccountResponse = GitProviderAccount;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteGitProviderAccountResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteGitProviderAccount {
   /// The id of the git provider to delete
   pub id: String,
@@ -70,7 +70,7 @@ pub type DeleteGitProviderAccountResponse = GitProviderAccount;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateDockerRegistryAccountResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateDockerRegistryAccount {
   pub account: _PartialDockerRegistryAccount,
 }
@@ -87,7 +87,7 @@ pub type CreateDockerRegistryAccountResponse = DockerRegistryAccount;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateDockerRegistryAccountResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateDockerRegistryAccount {
   /// The id of the docker registry to update
   pub id: String,
@@ -107,7 +107,7 @@ pub type UpdateDockerRegistryAccountResponse = DockerRegistryAccount;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteDockerRegistryAccountResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteDockerRegistryAccount {
   /// The id of the docker registry account to delete
   pub id: String,

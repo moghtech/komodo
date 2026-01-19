@@ -9,7 +9,7 @@ use komodo_client::entities::{
 };
 use mogh_auth_server::request_ip::RequestIp;
 use serde_json::json;
-use serror::serialize_error;
+use mogh_error::serialize_error;
 use tokio::select;
 use tokio_util::sync::CancellationToken;
 

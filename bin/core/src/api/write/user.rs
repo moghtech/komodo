@@ -12,7 +12,7 @@ use komodo_client::{
 };
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use serror::{AddStatusCode as _, AddStatusCodeError};
+use mogh_error::{AddStatusCode as _, AddStatusCodeError};
 
 use crate::{
   helpers::validations::{validate_password, validate_username},
@@ -35,7 +35,7 @@ impl Resolve<WriteArgs> for CreateLocalUser {
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<CreateLocalUserResponse> {
+  ) -> mogh_error::Result<CreateLocalUserResponse> {
     if !admin.admin {
       return Err(
         anyhow!("This method is Admin Only.")
@@ -104,7 +104,7 @@ impl Resolve<WriteArgs> for DeleteUser {
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<DeleteUserResponse> {
+  ) -> mogh_error::Result<DeleteUserResponse> {
     if !admin.admin {
       return Err(
         anyhow!("This method is admin-only.")

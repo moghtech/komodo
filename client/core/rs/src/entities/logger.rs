@@ -145,7 +145,7 @@ pub enum StdioLogMode {
 }
 
 #[cfg(feature = "logger")]
-impl logger::LogConfig for &LogConfig {
+impl mogh_logger::LogConfig for &LogConfig {
   fn ansi(&self) -> bool {
     self.ansi
   }
@@ -167,11 +167,11 @@ impl logger::LogConfig for &LogConfig {
   fn pretty(&self) -> bool {
     self.pretty
   }
-  fn stdio(&self) -> logger::StdioLogMode {
+  fn stdio(&self) -> mogh_logger::StdioLogMode {
     match self.stdio {
-      StdioLogMode::Standard => logger::StdioLogMode::Standard,
-      StdioLogMode::Json => logger::StdioLogMode::Json,
-      StdioLogMode::None => logger::StdioLogMode::None,
+      StdioLogMode::Standard => mogh_logger::StdioLogMode::Standard,
+      StdioLogMode::Json => mogh_logger::StdioLogMode::Json,
+      StdioLogMode::None => mogh_logger::StdioLogMode::None,
     }
   }
 }

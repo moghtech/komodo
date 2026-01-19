@@ -28,7 +28,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(Swarm)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetSwarm {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -46,7 +46,7 @@ pub type GetSwarmResponse = Swarm;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSwarmsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListSwarms {
   /// Optional structured query to filter Swarms.
   #[serde(default)]
@@ -64,7 +64,7 @@ pub type ListSwarmsResponse = Vec<SwarmListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullSwarmsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListFullSwarms {
   /// optional structured query to filter swarms.
   #[serde(default)]
@@ -82,7 +82,7 @@ pub type ListFullSwarmsResponse = Vec<Swarm>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetSwarmActionStateResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetSwarmActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -101,7 +101,7 @@ pub type GetSwarmActionStateResponse = SwarmActionState;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetSwarmsSummaryResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetSwarmsSummary {}
 
 /// Response for [GetSwarmsSummary]
@@ -128,7 +128,7 @@ pub struct GetSwarmsSummaryResponse {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectSwarmResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct InspectSwarm {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -147,7 +147,7 @@ pub type InspectSwarmResponse = SwarmInspectInfo;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSwarmNodesResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListSwarmNodes {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -166,7 +166,7 @@ pub type ListSwarmNodesResponse = Vec<SwarmNodeListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectSwarmNodeResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct InspectSwarmNode {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -187,7 +187,7 @@ pub type InspectSwarmNodeResponse = SwarmNode;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSwarmServicesResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListSwarmServices {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -206,7 +206,7 @@ pub type ListSwarmServicesResponse = Vec<SwarmServiceListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectSwarmServiceResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct InspectSwarmService {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -228,7 +228,7 @@ pub type InspectSwarmServiceResponse = SwarmService;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetSwarmServiceLogResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetSwarmServiceLog {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -272,7 +272,7 @@ pub type GetSwarmServiceLogResponse = Log;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(SearchSwarmServiceLogResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct SearchSwarmServiceLog {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -316,7 +316,7 @@ pub type SearchSwarmServiceLogResponse = Log;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSwarmTasksResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListSwarmTasks {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -335,7 +335,7 @@ pub type ListSwarmTasksResponse = Vec<SwarmTaskListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectSwarmTaskResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct InspectSwarmTask {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -356,7 +356,7 @@ pub type InspectSwarmTaskResponse = SwarmTask;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSwarmSecretsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListSwarmSecrets {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -375,7 +375,7 @@ pub type ListSwarmSecretsResponse = Vec<SwarmSecretListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectSwarmSecretResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct InspectSwarmSecret {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -396,7 +396,7 @@ pub type InspectSwarmSecretResponse = SwarmSecret;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSwarmConfigsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListSwarmConfigs {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -415,7 +415,7 @@ pub type ListSwarmConfigsResponse = Vec<SwarmConfigListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectSwarmConfigResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct InspectSwarmConfig {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -436,7 +436,7 @@ pub type InspectSwarmConfigResponse = SwarmConfig;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSwarmStacksResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListSwarmStacks {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -455,7 +455,7 @@ pub type ListSwarmStacksResponse = Vec<SwarmStackListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectSwarmStackResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct InspectSwarmStack {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -478,7 +478,7 @@ pub type InspectSwarmStackResponse = SwarmStack;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSwarmNetworksResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListSwarmNetworks {
   /// Id or name
   #[serde(alias = "id", alias = "name")]

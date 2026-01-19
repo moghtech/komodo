@@ -83,7 +83,7 @@ impl Resolve<ExecuteArgs> for BatchRunBuild {
   async fn resolve(
     self,
     ExecuteArgs { user, id, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchRunBuild>(&self.pattern, user)
         .await?,
@@ -105,7 +105,7 @@ impl Resolve<ExecuteArgs> for RunBuild {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let mut build = get_check_permissions::<Build>(
       &self.build,
       user,
@@ -431,7 +431,7 @@ async fn handle_early_return(
   build_id: String,
   build_name: String,
   is_cancel: bool,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   update.finalize();
   // Need to manually update the update before cache refresh,
   // and before broadcast with add_update.
@@ -531,7 +531,7 @@ impl Resolve<ExecuteArgs> for CancelBuild {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let build = get_check_permissions::<Build>(
       &self.build,
       user,
@@ -660,7 +660,7 @@ async fn validate_account_extract_registry_tokens(
     ..
   }: &Build,
   // Maps (domain, account) -> token
-) -> serror::Result<Vec<(String, String, String)>> {
+) -> mogh_error::Result<Vec<(String, String, String)>> {
   let mut res = HashMap::with_capacity(image_registry.capacity());
 
   for (domain, account) in image_registry

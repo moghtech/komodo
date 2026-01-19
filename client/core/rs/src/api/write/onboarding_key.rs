@@ -19,7 +19,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateOnboardingKeyResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateOnboardingKey {
   /// The name for the creation key
   pub name: String,
@@ -67,7 +67,7 @@ pub struct CreateOnboardingKeyResponse {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateOnboardingKeyResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateOnboardingKey {
   /// The onboarding public key.
   pub public_key: String,
@@ -115,7 +115,7 @@ pub type UpdateOnboardingKeyResponse = OnboardingKey;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteOnboardingKeyResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteOnboardingKey {
   pub public_key: String,
 }

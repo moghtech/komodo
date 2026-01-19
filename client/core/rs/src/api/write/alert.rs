@@ -13,7 +13,7 @@ use crate::{api::write::KomodoWriteRequest, entities::NoData};
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CloseAlert {
   /// The id of the Alert to close.
   pub id: String,

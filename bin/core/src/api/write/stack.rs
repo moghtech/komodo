@@ -52,7 +52,7 @@ impl Resolve<WriteArgs> for CreateStack {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Stack> {
+  ) -> mogh_error::Result<Stack> {
     resource::create::<Stack>(&self.name, self.config, None, user)
       .await
   }
@@ -71,7 +71,7 @@ impl Resolve<WriteArgs> for CopyStack {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Stack> {
+  ) -> mogh_error::Result<Stack> {
     let Stack { config, .. } = get_check_permissions::<Stack>(
       &self.id,
       user,
@@ -96,7 +96,7 @@ impl Resolve<WriteArgs> for DeleteStack {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Stack> {
+  ) -> mogh_error::Result<Stack> {
     Ok(resource::delete::<Stack>(&self.id, user).await?)
   }
 }
@@ -114,7 +114,7 @@ impl Resolve<WriteArgs> for UpdateStack {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Stack> {
+  ) -> mogh_error::Result<Stack> {
     Ok(resource::update::<Stack>(&self.id, self.config, user).await?)
   }
 }
@@ -132,7 +132,7 @@ impl Resolve<WriteArgs> for RenameStack {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     Ok(resource::rename::<Stack>(&self.id, &self.name, user).await?)
   }
 }
@@ -150,7 +150,7 @@ impl Resolve<WriteArgs> for WriteStackFileContents {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let WriteStackFileContents {
       stack,
       file_path,
@@ -201,7 +201,7 @@ async fn write_stack_file_contents_on_host(
   file_path: String,
   contents: String,
   mut update: Update,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   let swarm_or_server = get_swarm_or_server(
     &stack.config.swarm_id,
     &stack.config.server_id,
@@ -267,7 +267,7 @@ async fn write_stack_file_contents_git(
   contents: &str,
   username: &str,
   mut update: Update,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   let mut repo = if !stack.config.linked_repo.is_empty() {
     crate::resource::get::<Repo>(&stack.config.linked_repo)
       .await?
@@ -405,7 +405,7 @@ impl Resolve<WriteArgs> for RefreshStackCache {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<NoData> {
+  ) -> mogh_error::Result<NoData> {
     // Even though this is a write request, this doesn't change any config. Anyone that can execute the
     // stack should be able to do this.
     let stack = get_check_permissions::<Stack>(

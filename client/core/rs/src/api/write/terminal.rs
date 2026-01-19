@@ -22,7 +22,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateTerminal {
   /// A name for the Terminal session.
   pub name: String,
@@ -55,7 +55,7 @@ pub struct CreateTerminal {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteTerminal {
   /// Server / Container / Stack / Deployment
   pub target: TerminalTarget,
@@ -72,7 +72,7 @@ pub struct DeleteTerminal {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteAllTerminals {
   /// Server Id or name
   pub server: String,
@@ -87,7 +87,7 @@ pub struct DeleteAllTerminals {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct BatchDeleteAllTerminals {
   /// Optional structured query to filter servers.
   #[serde(default)]

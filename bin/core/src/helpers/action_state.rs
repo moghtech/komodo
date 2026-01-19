@@ -14,7 +14,7 @@
 use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
-use cache::CloneCache;
+use mogh_cache::CloneCache;
 use komodo_client::{
   busy::Busy,
   entities::{

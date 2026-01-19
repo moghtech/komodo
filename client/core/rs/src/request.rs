@@ -4,7 +4,7 @@ use mogh_auth_client::api::{
 };
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::json;
-use serror::deserialize_error;
+use mogh_error::deserialize_error;
 
 use crate::{
   KomodoClient,

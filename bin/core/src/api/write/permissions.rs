@@ -34,7 +34,7 @@ impl Resolve<WriteArgs> for UpdateUserAdmin {
   async fn resolve(
     self,
     WriteArgs { user: super_admin }: &WriteArgs,
-  ) -> serror::Result<UpdateUserAdminResponse> {
+  ) -> mogh_error::Result<UpdateUserAdminResponse> {
     if !super_admin.super_admin {
       return Err(
         anyhow!("Only super admins can call this method.").into(),
@@ -82,7 +82,7 @@ impl Resolve<WriteArgs> for UpdateUserBasePermissions {
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<UpdateUserBasePermissionsResponse> {
+  ) -> mogh_error::Result<UpdateUserBasePermissionsResponse> {
     if !admin.admin {
       return Err(anyhow!("this method is admin only").into());
     }
@@ -148,7 +148,7 @@ impl Resolve<WriteArgs> for UpdatePermissionOnResourceType {
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<UpdatePermissionOnResourceTypeResponse> {
+  ) -> mogh_error::Result<UpdatePermissionOnResourceTypeResponse> {
     if !admin.admin {
       return Err(anyhow!("this method is admin only").into());
     }
@@ -226,7 +226,7 @@ impl Resolve<WriteArgs> for UpdatePermissionOnTarget {
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<UpdatePermissionOnTargetResponse> {
+  ) -> mogh_error::Result<UpdatePermissionOnTargetResponse> {
     if !admin.admin {
       return Err(anyhow!("this method is admin only").into());
     }
@@ -295,7 +295,7 @@ impl Resolve<WriteArgs> for UpdatePermissionOnTarget {
 /// checks if inner id is actually a `name`, and replaces it with id if so.
 async fn extract_user_target_with_validation(
   user_target: &UserTarget,
-) -> serror::Result<(UserTargetVariant, String)> {
+) -> mogh_error::Result<(UserTargetVariant, String)> {
   match user_target {
     UserTarget::User(ident) => {
       let filter = match ObjectId::from_str(ident) {
@@ -331,7 +331,7 @@ async fn extract_user_target_with_validation(
 /// checks if inner id is actually a `name`, and replaces it with id if so.
 async fn extract_resource_target_with_validation(
   resource_target: &ResourceTarget,
-) -> serror::Result<(ResourceTargetVariant, String)> {
+) -> mogh_error::Result<(ResourceTargetVariant, String)> {
   match resource_target {
     ResourceTarget::System(_) => {
       let res = resource_target.extract_variant_id();

@@ -12,7 +12,7 @@ periphery_client.workspace = true
 encoding.workspace = true
 mogh_pki.workspace = true
 #
-serror.workspace = true
+mogh_error.workspace = true
 #
 tokio-tungstenite.workspace = true
 pin-project-lite.workspace = true

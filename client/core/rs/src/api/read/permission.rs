@@ -17,7 +17,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListPermissionsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListPermissions {}
 
 #[typeshare]
@@ -33,7 +33,7 @@ pub type ListPermissionsResponse = Vec<Permission>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetPermissionResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetPermission {
   /// The target to get user permission on.
   pub target: ResourceTarget,
@@ -51,7 +51,7 @@ pub type GetPermissionResponse = PermissionLevelAndSpecifics;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListUserTargetPermissionsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListUserTargetPermissions {
   /// Specify either a user or a user group.
   pub user_target: UserTarget,

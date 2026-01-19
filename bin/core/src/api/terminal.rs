@@ -1,7 +1,7 @@
 use anyhow::Context;
 use axum::{Extension, Router, middleware, routing::post};
 use komodo_client::{api::terminal::*, entities::user::User};
-use serror::Json;
+use mogh_error::Json;
 
 use crate::{
   auth::auth_request, helpers::terminal::setup_target_for_user,
@@ -35,7 +35,7 @@ async fn execute_terminal(
     command,
     init,
   }): Json<ExecuteTerminalBody>,
-) -> serror::Result<axum::body::Body> {
+) -> mogh_error::Result<axum::body::Body> {
   info!("/terminal/execute request | user: {}", user.username);
 
   let (target, terminal, periphery) =

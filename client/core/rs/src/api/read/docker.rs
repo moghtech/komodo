@@ -25,7 +25,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDockerContainersSummaryResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetDockerContainersSummary {}
 
 /// Response for [GetDockerContainersSummary]
@@ -54,7 +54,7 @@ pub struct GetDockerContainersSummaryResponse {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListAllDockerContainersResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListAllDockerContainers {
   /// Filter by server id or name.
   #[serde(default)]
@@ -77,7 +77,7 @@ pub type ListAllDockerContainersResponse = Vec<ContainerListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerContainersResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListDockerContainers {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -95,7 +95,7 @@ pub type ListDockerContainersResponse = Vec<ContainerListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDockerContainerResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct InspectDockerContainer {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -115,7 +115,7 @@ pub type InspectDockerContainerResponse = Container;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetResourceMatchingContainerResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetResourceMatchingContainer {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -143,7 +143,7 @@ pub struct GetResourceMatchingContainerResponse {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetContainerLogResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetContainerLog {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -178,7 +178,7 @@ pub type GetContainerLogResponse = Log;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(SearchContainerLogResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct SearchContainerLog {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -213,7 +213,7 @@ pub type SearchContainerLogResponse = Log;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListComposeProjectsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListComposeProjects {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -231,7 +231,7 @@ pub type ListComposeProjectsResponse = Vec<ComposeProject>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerNetworksResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListDockerNetworks {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -249,7 +249,7 @@ pub type ListDockerNetworksResponse = Vec<NetworkListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDockerNetworkResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct InspectDockerNetwork {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -270,7 +270,7 @@ pub type InspectDockerNetworkResponse = Network;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerImagesResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListDockerImages {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -288,7 +288,7 @@ pub type ListDockerImagesResponse = Vec<ImageListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDockerImageResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct InspectDockerImage {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -308,7 +308,7 @@ pub type InspectDockerImageResponse = Image;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerImageHistoryResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListDockerImageHistory {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -330,7 +330,7 @@ pub type ListDockerImageHistoryResponse =
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerVolumesResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListDockerVolumes {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -348,7 +348,7 @@ pub type ListDockerVolumesResponse = Vec<VolumeListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDockerVolumeResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct InspectDockerVolume {
   /// Id or name
   #[serde(alias = "id", alias = "name")]

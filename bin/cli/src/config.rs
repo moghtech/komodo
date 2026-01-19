@@ -13,7 +13,7 @@ use komodo_client::entities::{
   },
   logger::LogConfig,
 };
-use secret_file::maybe_read_item_from_file;
+use mogh_secret_file::maybe_read_item_from_file;
 
 pub fn cli_args() -> &'static CliArgs {
   static CLI_ARGS: OnceLock<CliArgs> = OnceLock::new();
@@ -74,7 +74,7 @@ pub fn cli_config() -> &'static CliConfig {
         "Config File Keywords".dimmed(),
       );
     }
-    let mut unparsed_config = (config::ConfigLoader {
+    let mut unparsed_config = (mogh_config::ConfigLoader {
       paths: &config_paths
         .iter()
         .map(PathBuf::as_path)
@@ -166,7 +166,7 @@ pub fn cli_config() -> &'static CliConfig {
       else {
         panic!("Profile config is not Object type.");
       };
-      config::merge_config(
+      mogh_config::merge_config(
         unparsed_config,
         profile_config.clone(),
         env.komodo_cli_merge_nested_config,

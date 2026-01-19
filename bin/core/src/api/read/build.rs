@@ -31,7 +31,7 @@ impl Resolve<ReadArgs> for GetBuild {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Build> {
+  ) -> mogh_error::Result<Build> {
     Ok(
       get_check_permissions::<Build>(
         &self.build,
@@ -47,7 +47,7 @@ impl Resolve<ReadArgs> for ListBuilds {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Vec<BuildListItem>> {
+  ) -> mogh_error::Result<Vec<BuildListItem>> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -69,7 +69,7 @@ impl Resolve<ReadArgs> for ListFullBuilds {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListFullBuildsResponse> {
+  ) -> mogh_error::Result<ListFullBuildsResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -91,7 +91,7 @@ impl Resolve<ReadArgs> for GetBuildActionState {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<BuildActionState> {
+  ) -> mogh_error::Result<BuildActionState> {
     let build = get_check_permissions::<Build>(
       &self.build,
       user,
@@ -112,7 +112,7 @@ impl Resolve<ReadArgs> for GetBuildsSummary {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetBuildsSummaryResponse> {
+  ) -> mogh_error::Result<GetBuildsSummaryResponse> {
     let builds = resource::list_full_for_user::<Build>(
       Default::default(),
       user,
@@ -160,7 +160,7 @@ impl Resolve<ReadArgs> for GetBuildMonthlyStats {
   async fn resolve(
     self,
     _: &ReadArgs,
-  ) -> serror::Result<GetBuildMonthlyStatsResponse> {
+  ) -> mogh_error::Result<GetBuildMonthlyStatsResponse> {
     let curr_ts = unix_timestamp_ms() as i64;
     let next_day = curr_ts - curr_ts % ONE_DAY_MS + ONE_DAY_MS;
 
@@ -216,7 +216,7 @@ impl Resolve<ReadArgs> for ListBuildVersions {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Vec<BuildVersionResponseItem>> {
+  ) -> mogh_error::Result<Vec<BuildVersionResponseItem>> {
     let ListBuildVersions {
       build,
       major,
@@ -273,7 +273,7 @@ impl Resolve<ReadArgs> for ListCommonBuildExtraArgs {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListCommonBuildExtraArgsResponse> {
+  ) -> mogh_error::Result<ListCommonBuildExtraArgsResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {

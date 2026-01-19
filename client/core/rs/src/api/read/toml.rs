@@ -24,7 +24,7 @@ pub struct TomlResponse {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ExportAllResourcesToTomlResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ExportAllResourcesToToml {
   /// Whether to include any resources (servers, stacks, etc.)
   /// in the exported contents.
@@ -61,7 +61,7 @@ pub type ExportAllResourcesToTomlResponse = TomlResponse;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ExportResourcesToTomlResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ExportResourcesToToml {
   /// The targets to include in the export.
   #[serde(default)]

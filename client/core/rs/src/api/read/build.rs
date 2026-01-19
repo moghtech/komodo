@@ -19,7 +19,7 @@ use super::KomodoReadRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetBuild {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -37,7 +37,7 @@ pub type GetBuildResponse = Build;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListBuildsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListBuilds {
   /// optional structured query to filter builds.
   #[serde(default)]
@@ -55,7 +55,7 @@ pub type ListBuildsResponse = Vec<BuildListItem>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullBuildsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListFullBuilds {
   /// optional structured query to filter builds.
   #[serde(default)]
@@ -73,7 +73,7 @@ pub type ListFullBuildsResponse = Vec<Build>;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildActionStateResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetBuildActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -92,7 +92,7 @@ pub type GetBuildActionStateResponse = BuildActionState;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildsSummaryResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetBuildsSummary {}
 
 /// Response for [GetBuildsSummary].
@@ -124,7 +124,7 @@ pub struct GetBuildsSummaryResponse {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildMonthlyStatsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetBuildMonthlyStats {
   /// Query for older data by incrementing the page.
   /// `page: 0` is the default, and will return the most recent data.
@@ -187,7 +187,7 @@ impl GetBuildMonthlyStatsResponse {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListBuildVersionsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListBuildVersions {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -222,7 +222,7 @@ pub struct BuildVersionResponseItem {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonBuildExtraArgsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListCommonBuildExtraArgs {
   /// optional structured query to filter builds.
   #[serde(default)]

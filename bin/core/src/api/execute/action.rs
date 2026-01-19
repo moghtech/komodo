@@ -6,7 +6,6 @@ use std::{
 
 use anyhow::Context;
 use command::run_komodo_standard_command;
-use config::merge_objects;
 use database::mungos::{
   by_id::update_one_by_id, mongodb::bson::to_document,
 };
@@ -29,6 +28,7 @@ use komodo_client::{
   },
   parsers::parse_key_value_list,
 };
+use mogh_config::merge_objects;
 use mogh_resolver::Resolve;
 use tokio::fs;
 
@@ -70,7 +70,7 @@ impl Resolve<ExecuteArgs> for BatchRunAction {
   async fn resolve(
     self,
     ExecuteArgs { user, id, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchRunAction>(&self.pattern, user)
         .await?,
@@ -92,7 +92,7 @@ impl Resolve<ExecuteArgs> for RunAction {
   async fn resolve(
     self,
     ExecuteArgs { user, update, id }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let mut action = get_check_permissions::<Action>(
       &self.action,
       user,
@@ -158,7 +158,7 @@ impl Resolve<ExecuteArgs> for RunAction {
     let file = format!("{}.ts", random_string(10));
     let path = core_config().action_directory.join(&file);
 
-    secret_file::write_async(&path, contents)
+    mogh_secret_file::write_async(&path, contents)
       .await
       .with_context(|| {
         format!("Failed to write action file to {path:?}")
@@ -257,7 +257,7 @@ async fn interpolate(
   update: &mut Update,
   key: String,
   secret: String,
-) -> serror::Result<HashSet<(String, String)>> {
+) -> mogh_error::Result<HashSet<(String, String)>> {
   let VariablesAndSecrets {
     variables,
     mut secrets,

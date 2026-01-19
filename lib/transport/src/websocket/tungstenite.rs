@@ -10,7 +10,7 @@ use futures_util::{
 };
 use periphery_client::transport::EncodedTransportMessage;
 use rustls::{ClientConfig, client::danger::ServerCertVerifier};
-use serror::AddStatusCodeError;
+use mogh_error::AddStatusCodeError;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{
   Connector, MaybeTlsStream, WebSocketStream,
@@ -172,7 +172,7 @@ impl TungsteniteWebsocket {
   pub async fn connect_maybe_tls_insecure(
     url: &str,
     insecure: bool,
-  ) -> serror::Result<(Self, HeaderValue)> {
+  ) -> mogh_error::Result<(Self, HeaderValue)> {
     if insecure {
       Self::connect_tls_insecure(url).await
     } else {
@@ -182,14 +182,14 @@ impl TungsteniteWebsocket {
 
   pub async fn connect(
     url: &str,
-  ) -> serror::Result<(Self, HeaderValue)> {
+  ) -> mogh_error::Result<(Self, HeaderValue)> {
     let res = tokio_tungstenite::connect_async(url).await;
     Self::handle_connection_result(url, res)
   }
 
   pub async fn connect_tls_insecure(
     url: &str,
-  ) -> serror::Result<(Self, HeaderValue)> {
+  ) -> mogh_error::Result<(Self, HeaderValue)> {
     let res = tokio_tungstenite::connect_async_tls_with_config(
       url,
       None,
@@ -213,7 +213,7 @@ impl TungsteniteWebsocket {
       (WebSocketStream<MaybeTlsStream<TcpStream>>, Response),
       tungstenite::Error,
     >,
-  ) -> serror::Result<(Self, HeaderValue)> {
+  ) -> mogh_error::Result<(Self, HeaderValue)> {
     let (ws, mut response) = res
       .map_err(|e| {
         let status = if let tungstenite::Error::Http(response) = &e {

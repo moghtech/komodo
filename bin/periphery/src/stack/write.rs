@@ -361,11 +361,14 @@ async fn write_stack_ui_defined(
     .components()
     .collect::<PathBuf>();
 
-  secret_file::write_async(&file_path, &stack.config.file_contents)
-    .await
-    .with_context(|| {
-      format!("Failed to write compose file to {file_path:?}")
-    })?;
+  mogh_secret_file::write_async(
+    &file_path,
+    &stack.config.file_contents,
+  )
+  .await
+  .with_context(|| {
+    format!("Failed to write compose file to {file_path:?}")
+  })?;
 
   Ok((
     run_directory,

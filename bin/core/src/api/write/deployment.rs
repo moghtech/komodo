@@ -45,7 +45,7 @@ impl Resolve<WriteArgs> for CreateDeployment {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Deployment> {
+  ) -> mogh_error::Result<Deployment> {
     resource::create::<Deployment>(
       &self.name,
       self.config,
@@ -69,7 +69,7 @@ impl Resolve<WriteArgs> for CopyDeployment {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Deployment> {
+  ) -> mogh_error::Result<Deployment> {
     let Deployment { config, .. } =
       get_check_permissions::<Deployment>(
         &self.id,
@@ -100,7 +100,7 @@ impl Resolve<WriteArgs> for CreateDeploymentFromContainer {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Deployment> {
+  ) -> mogh_error::Result<Deployment> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -201,7 +201,7 @@ impl Resolve<WriteArgs> for DeleteDeployment {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Deployment> {
+  ) -> mogh_error::Result<Deployment> {
     Ok(resource::delete::<Deployment>(&self.id, user).await?)
   }
 }
@@ -219,7 +219,7 @@ impl Resolve<WriteArgs> for UpdateDeployment {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Deployment> {
+  ) -> mogh_error::Result<Deployment> {
     Ok(
       resource::update::<Deployment>(&self.id, self.config, user)
         .await?,
@@ -240,7 +240,7 @@ impl Resolve<WriteArgs> for RenameDeployment {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let deployment = get_check_permissions::<Deployment>(
       &self.id,
       user,

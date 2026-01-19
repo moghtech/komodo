@@ -6,7 +6,7 @@ use komodo_client::{
 };
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use serror::{AddStatusCode as _, AddStatusCodeError};
+use mogh_error::{AddStatusCode as _, AddStatusCodeError};
 
 use crate::{
   helpers::{
@@ -33,7 +33,7 @@ impl Resolve<WriteArgs> for CreateVariable {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<CreateVariableResponse> {
+  ) -> mogh_error::Result<CreateVariableResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only Admins can create Variables")
@@ -95,7 +95,7 @@ impl Resolve<WriteArgs> for UpdateVariableValue {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<UpdateVariableValueResponse> {
+  ) -> mogh_error::Result<UpdateVariableValueResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only Admins can update Variables")
@@ -165,7 +165,7 @@ impl Resolve<WriteArgs> for UpdateVariableDescription {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<UpdateVariableDescriptionResponse> {
+  ) -> mogh_error::Result<UpdateVariableDescriptionResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only Admins can update Variables")
@@ -199,7 +199,7 @@ impl Resolve<WriteArgs> for UpdateVariableIsSecret {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<UpdateVariableIsSecretResponse> {
+  ) -> mogh_error::Result<UpdateVariableIsSecretResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only Admins can update Variables")
@@ -232,7 +232,7 @@ impl Resolve<WriteArgs> for DeleteVariable {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<DeleteVariableResponse> {
+  ) -> mogh_error::Result<DeleteVariableResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only Admins can delete Variables")

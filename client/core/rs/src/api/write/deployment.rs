@@ -17,7 +17,7 @@ use super::KomodoWriteRequest;
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Deployment)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateDeployment {
   /// The name given to newly created deployment.
   pub name: String,
@@ -35,7 +35,7 @@ pub struct CreateDeployment {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Deployment)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CopyDeployment {
   /// The name of the new deployment.
   pub name: String,
@@ -51,7 +51,7 @@ pub struct CopyDeployment {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Deployment)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateDeploymentFromContainer {
   /// The name or id of the existing container.
   pub name: String,
@@ -71,7 +71,7 @@ pub struct CreateDeploymentFromContainer {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Deployment)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteDeployment {
   /// The id or name of the deployment to delete.
   pub id: String,
@@ -95,7 +95,7 @@ pub struct DeleteDeployment {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Deployment)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateDeployment {
   /// The deployment id to update.
   pub id: String,
@@ -114,7 +114,7 @@ pub struct UpdateDeployment {
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RenameDeployment {
   /// The id of the deployment to rename.
   pub id: String,

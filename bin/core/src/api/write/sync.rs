@@ -69,7 +69,7 @@ impl Resolve<WriteArgs> for CreateResourceSync {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<ResourceSync> {
+  ) -> mogh_error::Result<ResourceSync> {
     resource::create::<ResourceSync>(
       &self.name,
       self.config,
@@ -93,7 +93,7 @@ impl Resolve<WriteArgs> for CopyResourceSync {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<ResourceSync> {
+  ) -> mogh_error::Result<ResourceSync> {
     let ResourceSync { config, .. } =
       get_check_permissions::<ResourceSync>(
         &self.id,
@@ -123,7 +123,7 @@ impl Resolve<WriteArgs> for DeleteResourceSync {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<ResourceSync> {
+  ) -> mogh_error::Result<ResourceSync> {
     Ok(resource::delete::<ResourceSync>(&self.id, user).await?)
   }
 }
@@ -141,7 +141,7 @@ impl Resolve<WriteArgs> for UpdateResourceSync {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<ResourceSync> {
+  ) -> mogh_error::Result<ResourceSync> {
     Ok(
       resource::update::<ResourceSync>(&self.id, self.config, user)
         .await?,
@@ -162,7 +162,7 @@ impl Resolve<WriteArgs> for RenameResourceSync {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     Ok(
       resource::rename::<ResourceSync>(&self.id, &self.name, user)
         .await?,
@@ -181,7 +181,10 @@ impl Resolve<WriteArgs> for WriteSyncFileContents {
       file_path = self.file_path,
     )
   )]
-  async fn resolve(self, args: &WriteArgs) -> serror::Result<Update> {
+  async fn resolve(
+    self,
+    args: &WriteArgs,
+  ) -> mogh_error::Result<Update> {
     let sync = get_check_permissions::<ResourceSync>(
       &self.sync,
       &args.user,
@@ -231,7 +234,7 @@ async fn write_sync_file_contents_on_host(
   args: &WriteArgs,
   sync: ResourceSync,
   mut update: Update,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   let WriteSyncFileContents {
     sync: _,
     resource_path,
@@ -249,7 +252,7 @@ async fn write_sync_file_contents_on_host(
     .context("Invalid resource path")?;
   let full_path = root.join(&resource_path).join(&file_path);
 
-  if let Err(e) = secret_file::write_async(&full_path, &contents)
+  if let Err(e) = mogh_secret_file::write_async(&full_path, &contents)
     .await
     .with_context(|| {
       format!(
@@ -295,7 +298,7 @@ async fn write_sync_file_contents_git(
   sync: ResourceSync,
   repo: Option<Repo>,
   mut update: Update,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   let WriteSyncFileContents {
     sync: _,
     resource_path,
@@ -448,7 +451,10 @@ impl Resolve<WriteArgs> for CommitSync {
       sync = self.sync,
     )
   )]
-  async fn resolve(self, args: &WriteArgs) -> serror::Result<Update> {
+  async fn resolve(
+    self,
+    args: &WriteArgs,
+  ) -> mogh_error::Result<Update> {
     let WriteArgs { user } = args;
 
     let sync = get_check_permissions::<entities::sync::ResourceSync>(
@@ -535,12 +541,13 @@ impl Resolve<WriteArgs> for CommitSync {
         .join(to_path_compatible_name(&sync.name))
         .join(&resource_path);
       let span = info_span!("CommitSyncOnHost");
-      if let Err(e) = secret_file::write_async(&file_path, &res.toml)
-        .instrument(span)
-        .await
-        .with_context(|| {
-          format!("Failed to write resource file to {file_path:?}",)
-        })
+      if let Err(e) =
+        mogh_secret_file::write_async(&file_path, &res.toml)
+          .instrument(span)
+          .await
+          .with_context(|| {
+            format!("Failed to write resource file to {file_path:?}",)
+          })
       {
         update.push_error_log(
           "Write resource file",
@@ -677,7 +684,7 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<ResourceSync> {
+  ) -> mogh_error::Result<ResourceSync> {
     // Even though this is a write request, this doesn't change any config. Anyone that can execute the
     // sync should be able to do this.
     let mut sync =
