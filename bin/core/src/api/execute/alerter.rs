@@ -12,8 +12,8 @@ use komodo_client::{
     permission::PermissionLevel,
   },
 };
+use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use resolver_api::Resolve;
 use serror::AddStatusCodeError;
 
 use crate::{

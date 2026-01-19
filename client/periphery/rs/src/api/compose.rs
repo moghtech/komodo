@@ -4,7 +4,7 @@ use komodo_client::entities::{
   stack::{Stack, StackFileDependency, StackRemoteFileContents},
   update::Log,
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

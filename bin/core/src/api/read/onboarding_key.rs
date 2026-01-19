@@ -5,8 +5,8 @@ use database::mungos::find::find_collect;
 use komodo_client::api::read::{
   ListOnboardingKeys, ListOnboardingKeysResponse,
 };
+use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use resolver_api::Resolve;
 use serror::AddStatusCodeError;
 
 use crate::{api::read::ReadArgs, state::db_client};

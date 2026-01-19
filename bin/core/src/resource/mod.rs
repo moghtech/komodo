@@ -33,9 +33,9 @@ use komodo_client::{
   },
   parsers::parse_string_list,
 };
+use mogh_resolver::Resolve;
 use partial_derive2::{Diff, MaybeNone, PartialDiff};
 use reqwest::StatusCode;
-use resolver_api::Resolve;
 use serde::{Serialize, de::DeserializeOwned};
 use serror::AddStatusCodeError;
 

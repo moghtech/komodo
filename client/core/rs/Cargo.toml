@@ -15,7 +15,7 @@ blocking = ["reqwest/blocking"]
 mongo = ["dep:mongo_indexed"]
 utoipa = ["dep:utoipa", "serror/utoipa"]
 logger = ["dep:logger"]
-cli = ["dep:pki", "logger"]
+cli = ["logger", "dep:mogh_pki",]
 core = ["mongo", "utoipa", "logger", "dep:mogh_server"]
 periphery = ["cli", "dep:ipnetwork", "dep:mogh_server"]
 
@@ -24,14 +24,13 @@ periphery = ["cli", "dep:ipnetwork", "dep:mogh_server"]
 mongo_indexed = { workspace = true, optional = true }
 logger = { workspace = true, optional = true }
 serror = { workspace = true, features = ["axum"] }
-pki = { workspace = true, optional = true, features = ["cli"] }
+mogh_pki = { workspace = true, optional = true, features = ["cli"] }
 mogh_server = { workspace = true, optional = true }
 derive_default_builder.workspace = true
-derive_empty_traits.workspace = true
 async_timing_util.workspace = true
 mogh_auth_client.workspace = true
 partial_derive2.workspace = true
-resolver_api.workspace = true
+mogh_resolver.workspace = true
 # external
 ipnetwork = { workspace = true, optional = true }
 utoipa = { workspace = true, optional = true }

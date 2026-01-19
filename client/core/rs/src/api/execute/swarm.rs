@@ -1,6 +1,5 @@
 use clap::Parser;
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -17,14 +16,7 @@ use crate::{
 /// https://docs.docker.com/reference/cli/docker/node/rm/
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  PartialEq,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
@@ -50,14 +42,7 @@ pub struct RemoveSwarmNodes {
 /// https://docs.docker.com/reference/cli/docker/stack/rm/
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  PartialEq,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
@@ -87,14 +72,7 @@ fn default_detach() -> bool {
 /// https://docs.docker.com/reference/cli/docker/service/rm/
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  PartialEq,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
@@ -116,14 +94,7 @@ pub struct RemoveSwarmServices {
 /// https://docs.docker.com/reference/cli/docker/config/create/
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  PartialEq,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
@@ -160,14 +131,7 @@ pub struct CreateSwarmConfig {
 /// 5. `Update` services to use actual (not `tmp`) config again.
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  PartialEq,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
@@ -189,14 +153,7 @@ pub struct RotateSwarmConfig {
 /// https://docs.docker.com/reference/cli/docker/config/rm/
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  PartialEq,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
@@ -218,14 +175,7 @@ pub struct RemoveSwarmConfigs {
 /// https://docs.docker.com/reference/cli/docker/config/create/
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  PartialEq,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
@@ -264,14 +214,7 @@ pub struct CreateSwarmSecret {
 /// 5. `Update` services to use actual (not `tmp`) secret again.
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  PartialEq,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
@@ -291,14 +234,7 @@ pub struct RotateSwarmSecret {
 /// https://docs.docker.com/reference/cli/docker/secret/rm/
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  PartialEq,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]

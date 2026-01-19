@@ -1,6 +1,5 @@
 use clap::Parser;
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -11,14 +10,7 @@ use super::{BatchExecutionResponse, KomodoExecuteRequest};
 /// Runs the target Procedure. Response: [Update]
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
@@ -32,14 +24,7 @@ pub struct RunProcedure {
 /// Runs multiple Procedures in parallel that match pattern. Response: [BatchExecutionResponse].
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]

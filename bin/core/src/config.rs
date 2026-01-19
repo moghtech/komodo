@@ -11,7 +11,7 @@ use komodo_client::entities::{
   logger::LogConfig,
 };
 use mogh_auth_client::config::NamedOauthConfig;
-use pki::{PkiKind, RotatableKeyPair, SpkiPublicKey};
+use mogh_pki::{PkiKind, RotatableKeyPair, SpkiPublicKey};
 use secret_file::{
   maybe_read_item_from_file, maybe_read_list_from_file,
 };

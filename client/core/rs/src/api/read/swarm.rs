@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -25,9 +24,7 @@ use super::KomodoReadRequest;
 
 /// Get a specific swarm. Response: [Swarm].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(Swarm)]
@@ -45,9 +42,7 @@ pub type GetSwarmResponse = Swarm;
 
 /// List Swarms matching optional query. Response: [ListSwarmsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSwarmsResponse)]
@@ -65,9 +60,7 @@ pub type ListSwarmsResponse = Vec<SwarmListItem>;
 
 /// List Swarms matching optional query. Response: [ListFullSwarmsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullSwarmsResponse)]
@@ -85,9 +78,7 @@ pub type ListFullSwarmsResponse = Vec<Swarm>;
 
 /// Get current action state for the swarm. Response: [SwarmActionState].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetSwarmActionStateResponse)]
@@ -106,9 +97,7 @@ pub type GetSwarmActionStateResponse = SwarmActionState;
 /// Gets a summary of data relating to all swarms.
 /// Response: [GetSwarmsSummaryResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetSwarmsSummaryResponse)]
@@ -135,9 +124,7 @@ pub struct GetSwarmsSummaryResponse {
 /// Inspect information about the swarm.
 /// Response: [SwarmInspectInfo].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectSwarmResponse)]
@@ -156,9 +143,7 @@ pub type InspectSwarmResponse = SwarmInspectInfo;
 /// List nodes part of the target Swarm.
 /// Response: [ListSwarmNodesResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSwarmNodesResponse)]
@@ -177,9 +162,7 @@ pub type ListSwarmNodesResponse = Vec<SwarmNodeListItem>;
 /// Inspect a Swarm node.
 /// Response: [SwarmNode].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectSwarmNodeResponse)]
@@ -200,9 +183,7 @@ pub type InspectSwarmNodeResponse = SwarmNode;
 /// List services on the target Swarm.
 /// Response: [ListSwarmServicesResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSwarmServicesResponse)]
@@ -221,9 +202,7 @@ pub type ListSwarmServicesResponse = Vec<SwarmServiceListItem>;
 /// Inspect a Swarm service.
 /// Response: [SwarmService].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectSwarmServiceResponse)]
@@ -245,9 +224,7 @@ pub type InspectSwarmServiceResponse = SwarmService;
 ///
 /// Note. This call will hit the underlying server directly for most up to date log.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetSwarmServiceLogResponse)]
@@ -291,9 +268,7 @@ pub type GetSwarmServiceLogResponse = Log;
 ///
 /// Note. This call will hit the underlying server directly for most up to date log.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(SearchSwarmServiceLogResponse)]
@@ -337,9 +312,7 @@ pub type SearchSwarmServiceLogResponse = Log;
 /// List tasks on the target Swarm.
 /// Response: [ListSwarmTasksResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSwarmTasksResponse)]
@@ -358,9 +331,7 @@ pub type ListSwarmTasksResponse = Vec<SwarmTaskListItem>;
 /// Inspect a Swarm task.
 /// Response: [SwarmTask].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectSwarmTaskResponse)]
@@ -381,9 +352,7 @@ pub type InspectSwarmTaskResponse = SwarmTask;
 /// List secrets on the target Swarm.
 /// Response: [ListSwarmSecretsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSwarmSecretsResponse)]
@@ -402,9 +371,7 @@ pub type ListSwarmSecretsResponse = Vec<SwarmSecretListItem>;
 /// Inspect a Swarm secret.
 /// Response: [SwarmSecret].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectSwarmSecretResponse)]
@@ -425,9 +392,7 @@ pub type InspectSwarmSecretResponse = SwarmSecret;
 /// List configs on the target Swarm.
 /// Response: [ListSwarmConfigsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSwarmConfigsResponse)]
@@ -446,9 +411,7 @@ pub type ListSwarmConfigsResponse = Vec<SwarmConfigListItem>;
 /// Inspect a config on the target Swarm.
 /// Response: [InspectSwarmConfigResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectSwarmConfigResponse)]
@@ -469,9 +432,7 @@ pub type InspectSwarmConfigResponse = SwarmConfig;
 /// List stacks on the target Swarm.
 /// Response: [ListSwarmStacksResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSwarmStacksResponse)]
@@ -490,9 +451,7 @@ pub type ListSwarmStacksResponse = Vec<SwarmStackListItem>;
 /// Inspect a stack on the target Swarm.
 /// Response: [SwarmStackLists].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectSwarmStackResponse)]
@@ -515,9 +474,7 @@ pub type InspectSwarmStackResponse = SwarmStack;
 /// This only includes the overlay networks.
 /// They will be the same across all nodes in the swarm.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSwarmNetworksResponse)]

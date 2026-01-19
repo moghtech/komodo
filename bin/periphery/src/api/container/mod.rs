@@ -10,8 +10,8 @@ use komodo_client::entities::{
   },
   update::Log,
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::container::*;
-use resolver_api::Resolve;
 
 use crate::{
   docker::{stats::get_container_stats, stop_container_command},

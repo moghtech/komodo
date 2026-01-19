@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -15,9 +14,7 @@ use super::KomodoWriteRequest;
 /// Admin only method to create an api key for a service user.
 /// Response: [CreateApiKeyResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateApiKeyForServiceUserResponse)]
@@ -41,9 +38,7 @@ pub type CreateApiKeyForServiceUserResponse = CreateApiKeyResponse;
 /// Admin only method to delete an api key for a service user.
 /// Response: [NoData].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteApiKeyForServiceUserResponse)]

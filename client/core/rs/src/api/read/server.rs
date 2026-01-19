@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -20,9 +19,7 @@ use super::KomodoReadRequest;
 
 /// Get a specific server. Response: [Server].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(Server)]
@@ -40,9 +37,7 @@ pub type GetServerResponse = Server;
 
 /// List servers matching optional query. Response: [ListServersResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListServersResponse)]
@@ -60,9 +55,7 @@ pub type ListServersResponse = Vec<ServerListItem>;
 
 /// List servers matching optional query. Response: [ListFullServersResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullServersResponse)]
@@ -80,9 +73,7 @@ pub type ListFullServersResponse = Vec<Server>;
 
 /// Get the state of the target server. Response: [GetServerStateResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetServerStateResponse)]
@@ -106,9 +97,7 @@ pub struct GetServerStateResponse {
 
 /// Get current action state for the servers. Response: [ServerActionState].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ServerActionState)]
@@ -128,9 +117,7 @@ pub type GetServerActionStateResponse = ServerActionState;
 /// including the Periphery version and public key.
 /// Response: [PeripheryInformation].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetPeripheryInformationResponse)]
@@ -149,9 +136,7 @@ pub type GetPeripheryInformationResponse = PeripheryInformation;
 /// Get the system information of the target server.
 /// Response: [SystemInformation].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetSystemInformationResponse)]
@@ -173,9 +158,7 @@ pub type GetSystemInformationResponse = SystemInformation;
 /// in memory cache on the core, which hits the server periodically
 /// to keep it up to date.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetSystemStatsResponse)]
@@ -198,9 +181,7 @@ pub type GetSystemStatsResponse = SystemStats;
 /// in memory cache on the core, which hits the server periodically
 /// to keep it up to date.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSystemProcessesResponse)]
@@ -219,9 +200,7 @@ pub type ListSystemProcessesResponse = Vec<SystemProcess>;
 /// Paginated endpoint serving historical (timeseries) server stats for graphing.
 /// Response: [GetHistoricalServerStatsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetHistoricalServerStatsResponse)]
@@ -254,9 +233,7 @@ pub struct GetHistoricalServerStatsResponse {
 /// Gets a summary of data relating to all servers.
 /// Response: [GetServersSummaryResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetServersSummaryResponse)]

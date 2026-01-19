@@ -1,6 +1,5 @@
 use clap::Parser;
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -11,14 +10,7 @@ use super::KomodoExecuteRequest;
 /// Tests an Alerters ability to reach the configured endpoint. Response: [Update]
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  PartialEq,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
@@ -35,14 +27,7 @@ pub struct TestAlerter {
 /// Alias: `alert`
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  PartialEq,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]

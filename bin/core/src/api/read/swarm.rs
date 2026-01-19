@@ -6,7 +6,7 @@ use komodo_client::{
     swarm::{Swarm, SwarmActionState, SwarmListItem, SwarmState},
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{
   helpers::{query::get_all_tags, swarm::swarm_request},

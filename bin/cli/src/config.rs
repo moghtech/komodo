@@ -3,7 +3,6 @@ use std::{path::PathBuf, sync::OnceLock};
 use anyhow::Context;
 use clap::Parser;
 use colored::Colorize;
-use secret_file::maybe_read_item_from_file;
 use komodo_client::entities::{
   config::{
     DatabaseConfig,
@@ -14,6 +13,7 @@ use komodo_client::entities::{
   },
   logger::LogConfig,
 };
+use secret_file::maybe_read_item_from_file;
 
 pub fn cli_args() -> &'static CliArgs {
   static CLI_ARGS: OnceLock<CliArgs> = OnceLock::new();

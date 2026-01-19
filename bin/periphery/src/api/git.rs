@@ -3,12 +3,12 @@ use formatting::format_serror;
 use komodo_client::entities::{
   DefaultRepoFolder, LatestCommit, update::Log,
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::git::{
   CloneRepo, DeleteRepo, GetLatestCommit,
   PeripheryRepoExecutionResponse, PullOrCloneRepo, PullRepo,
   RenameRepo,
 };
-use resolver_api::Resolve;
 use std::path::PathBuf;
 use tokio::fs;
 

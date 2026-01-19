@@ -10,7 +10,7 @@ use komodo_client::{
     schedule::Schedule,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{
   helpers::query::{get_all_tags, get_last_run_at},

@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -10,9 +9,7 @@ use super::KomodoReadRequest;
 /// Get a specific user group by name or id.
 /// Response: [UserGroup].
 #[typeshare]
-#[derive(
-  Debug, Clone, Serialize, Deserialize, Resolve, EmptyTraits,
-)]
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetUserGroupResponse)]
@@ -32,9 +29,7 @@ pub type GetUserGroupResponse = UserGroup;
 /// Admins can see all user groups,
 /// and users can see user groups to which they belong.
 #[typeshare]
-#[derive(
-  Debug, Clone, Default, Serialize, Deserialize, Resolve, EmptyTraits,
-)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListUserGroupsResponse)]

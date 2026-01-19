@@ -10,8 +10,8 @@ use komodo_client::{
   api::write::*,
   entities::user::{NewUserParams, User, UserConfig},
 };
+use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use resolver_api::Resolve;
 use serror::{AddStatusCode as _, AddStatusCodeError};
 
 use crate::{

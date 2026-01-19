@@ -1,7 +1,6 @@
 use std::cmp::Ordering;
 
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -16,9 +15,7 @@ use super::KomodoReadRequest;
 
 /// Get a specific build. Response: [Build].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildResponse)]
@@ -36,9 +33,7 @@ pub type GetBuildResponse = Build;
 
 /// List builds matching optional query. Response: [ListBuildsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListBuildsResponse)]
@@ -56,9 +51,7 @@ pub type ListBuildsResponse = Vec<BuildListItem>;
 
 /// List builds matching optional query. Response: [ListFullBuildsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullBuildsResponse)]
@@ -76,9 +69,7 @@ pub type ListFullBuildsResponse = Vec<Build>;
 
 /// Get current action state for the build. Response: [BuildActionState].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildActionStateResponse)]
@@ -97,9 +88,7 @@ pub type GetBuildActionStateResponse = BuildActionState;
 /// Gets a summary of data relating to all builds.
 /// Response: [GetBuildsSummaryResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildsSummaryResponse)]
@@ -131,9 +120,7 @@ pub struct GetBuildsSummaryResponse {
 /// Note. This method is paginated. One page is 30 days of data.
 /// Query for older pages by incrementing the page, starting at 0.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildMonthlyStatsResponse)]
@@ -196,9 +183,7 @@ impl GetBuildMonthlyStatsResponse {
 /// sorted by most recent first.
 /// Response: [ListBuildVersionsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListBuildVersionsResponse)]
@@ -233,9 +218,7 @@ pub struct BuildVersionResponseItem {
 /// Gets a list of existing values used as extra args across other builds.
 /// Useful to offer suggestions. Response: [ListCommonBuildExtraArgsResponse]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonBuildExtraArgsResponse)]

@@ -4,7 +4,7 @@ use database::mungos::{
   find::find_collect, mongodb::options::FindOptions,
 };
 use komodo_client::api::read::*;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{helpers::query::get_variable, state::db_client};
 

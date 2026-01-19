@@ -8,9 +8,9 @@ use komodo_client::{
     user::User,
   },
 };
+use mogh_resolver::Resolve;
 use periphery_client::api;
 use reqwest::StatusCode;
-use resolver_api::Resolve;
 use serror::AddStatusCode;
 
 use crate::{

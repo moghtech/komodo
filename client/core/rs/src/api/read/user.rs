@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -10,9 +9,7 @@ use super::KomodoReadRequest;
 /// Gets list of api keys for the calling user.
 /// Response: [ListApiKeysResponse]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListApiKeysResponse)]
@@ -29,9 +26,7 @@ pub type ListApiKeysResponse = Vec<ApiKey>;
 /// Will still fail if you call for a user_id that isn't a service user.
 /// Response: [ListApiKeysForServiceUserResponse]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListApiKeysForServiceUserResponse)]
@@ -51,9 +46,7 @@ pub type ListApiKeysForServiceUserResponse = Vec<ApiKey>;
 /// Find a user.
 /// Response: [FindUserResponse]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(FindUserResponse)]
@@ -73,9 +66,7 @@ pub type FindUserResponse = User;
 /// Gets list of Komodo users.
 /// Response: [ListUsersResponse]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListUsersResponse)]
@@ -90,9 +81,7 @@ pub type ListUsersResponse = Vec<User>;
 /// Gets the username of a specific user.
 /// Response: [GetUsernameResponse]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetUsernameResponse)]

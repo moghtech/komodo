@@ -15,7 +15,7 @@ use komodo_client::{
     permission::{UserTarget, UserTargetVariant},
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{helpers::query::get_user, state::db_client};
 

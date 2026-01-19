@@ -4,7 +4,7 @@ use komodo_client::{
     action::Action, permission::PermissionLevel, update::Update,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{permission::get_check_permissions, resource};
 

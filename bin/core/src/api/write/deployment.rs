@@ -16,8 +16,8 @@ use komodo_client::{
     update::Update,
   },
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::{self, container::InspectContainer};
-use resolver_api::Resolve;
 
 use crate::{
   helpers::{

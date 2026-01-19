@@ -11,7 +11,7 @@ use komodo_client::{
     stack::Stack, sync::ResourceSync, user::git_webhook_user,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;

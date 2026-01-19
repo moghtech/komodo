@@ -6,12 +6,12 @@ use komodo_client::entities::{
   FileContents, RepoExecutionArgs, all_logs_success, repo::Repo,
   stack::Stack, to_path_compatible_name, update::Log,
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::{
   DeployStackResponse,
   compose::{ComposePullResponse, ComposeRunResponse},
   git::{CloneRepo, PullOrCloneRepo},
 };
-use resolver_api::Resolve;
 use tokio::fs;
 
 use crate::{api::Args, config::periphery_config, helpers};

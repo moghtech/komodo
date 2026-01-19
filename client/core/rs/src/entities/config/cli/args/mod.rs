@@ -95,7 +95,7 @@ pub enum Command {
   #[clap(alias = "k")]
   Key {
     #[command(subcommand)]
-    command: pki::cli::KeyCommand,
+    command: mogh_pki::cli::KeyCommand,
   },
 
   /// Database utilities. (alias: `db`)

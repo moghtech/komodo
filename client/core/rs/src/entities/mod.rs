@@ -6,7 +6,6 @@ use std::{
 use anyhow::Context;
 use async_timing_util::unix_timestamp_ms;
 use clap::Parser;
-use derive_empty_traits::EmptyTraits;
 use rand::Rng as _;
 use serde::{
   Deserialize, Serialize,
@@ -100,14 +99,7 @@ pub type _Serror = Serror;
 /// Represents an empty json object: `{}`
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  Default,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Parser,
-  EmptyTraits,
+  Debug, Clone, Default, PartialEq, Serialize, Deserialize, Parser,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct NoData {}

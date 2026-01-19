@@ -28,7 +28,7 @@ use komodo_client::{
     user_group::UserGroup,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::Serialize;
 
 use crate::{

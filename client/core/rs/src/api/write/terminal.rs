@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -19,9 +18,7 @@ use super::KomodoWriteRequest;
 /// Requires minimum Read + Terminal permission on the target Resource.
 /// Response: [NoData]
 #[typeshare]
-#[derive(
-  Debug, Clone, Serialize, Deserialize, Resolve, EmptyTraits,
-)]
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
@@ -54,9 +51,7 @@ pub struct CreateTerminal {
 /// Delete a terminal.
 /// Response: [NoData]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
@@ -73,9 +68,7 @@ pub struct DeleteTerminal {
 /// Delete all Terminals on the Server.
 /// Response: [NoData]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
@@ -90,9 +83,7 @@ pub struct DeleteAllTerminals {
 /// Delete all terminals on many or all Servers.
 /// Response: [NoData]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]

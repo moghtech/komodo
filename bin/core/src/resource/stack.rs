@@ -21,10 +21,10 @@ use komodo_client::{
     user::{User, stack_user},
   },
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::{
   compose::ComposeExecution, swarm::RemoveSwarmStacks,
 };
-use resolver_api::Resolve;
 
 use crate::{
   api::write::WriteArgs,

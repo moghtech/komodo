@@ -13,8 +13,8 @@ use komodo_client::entities::{
   komodo_timestamp,
   update::Log,
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::docker::*;
-use resolver_api::Resolve;
 
 use crate::{
   docker::{docker_login, image::get_image_digest_from_registry},

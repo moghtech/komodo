@@ -25,7 +25,7 @@ Komodo is a distributed system for building and deploying software across multip
 **When modifying entities**: Always run the `gen-client` (alias: `gc`) runfile task to regenerate TypeScript types.
 
 ### API Pattern (Resolver-Based)
-Core and Periphery use `resolver_api::Resolve` trait for RPC-style endpoints:
+Core and Periphery use `mogh_resolver::Resolve` trait for RPC-style endpoints:
 - Request enums in `client/*/rs/src/api/` implement `Resolve<Response = T, Error = E>`
 - Core handlers in `bin/core/src/api/{read,write,execute}/*.rs`
 - Periphery handlers in `bin/periphery/src/api/*.rs`

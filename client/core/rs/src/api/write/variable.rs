@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -9,9 +8,7 @@ use super::KomodoWriteRequest;
 
 /// **Admin only.** Create variable. Response: [Variable].
 #[typeshare]
-#[derive(
-  Debug, Clone, Serialize, Deserialize, Resolve, EmptyTraits,
-)]
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateVariableResponse)]
@@ -37,9 +34,7 @@ pub type CreateVariableResponse = Variable;
 
 /// **Admin only.** Update variable value. Response: [Variable].
 #[typeshare]
-#[derive(
-  Debug, Clone, Serialize, Deserialize, Resolve, EmptyTraits,
-)]
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateVariableValueResponse)]
@@ -58,9 +53,7 @@ pub type UpdateVariableValueResponse = Variable;
 
 /// **Admin only.** Update variable description. Response: [Variable].
 #[typeshare]
-#[derive(
-  Debug, Clone, Serialize, Deserialize, Resolve, EmptyTraits,
-)]
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateVariableDescriptionResponse)]
@@ -79,9 +72,7 @@ pub type UpdateVariableDescriptionResponse = Variable;
 
 /// **Admin only.** Update whether variable is secret. Response: [Variable].
 #[typeshare]
-#[derive(
-  Debug, Clone, Serialize, Deserialize, Resolve, EmptyTraits,
-)]
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateVariableIsSecretResponse)]
@@ -100,9 +91,7 @@ pub type UpdateVariableIsSecretResponse = Variable;
 
 /// **Admin only.** Delete a variable. Response: [Variable].
 #[typeshare]
-#[derive(
-  Debug, Clone, Serialize, Deserialize, Resolve, EmptyTraits,
-)]
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteVariableResponse)]

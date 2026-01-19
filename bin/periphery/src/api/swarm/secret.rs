@@ -3,8 +3,8 @@ use formatting::format_serror;
 use komodo_client::entities::{
   docker::secret::SwarmSecret, update::Log,
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::swarm::*;
-use resolver_api::Resolve;
 
 use crate::{
   docker::secret::{create_swarm_secret, remove_swarm_secrets},

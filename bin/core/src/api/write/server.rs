@@ -10,8 +10,8 @@ use komodo_client::{
     update::{Update, UpdateStatus},
   },
 };
+use mogh_resolver::Resolve;
 use periphery_client::api;
-use resolver_api::Resolve;
 
 use crate::{
   helpers::{

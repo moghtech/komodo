@@ -7,7 +7,7 @@ use anyhow::Context;
 use axum::http::{HeaderMap, HeaderValue};
 use data_encoding::BASE64;
 use periphery_client::transport::LoginMessage;
-use pki::{SpkiPublicKey, mutual::MutualNoiseHandshake};
+use mogh_pki::{SpkiPublicKey, mutual::MutualNoiseHandshake};
 use rand::RngCore;
 use sha2::{Digest, Sha256};
 use tracing::debug;

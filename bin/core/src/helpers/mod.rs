@@ -16,7 +16,7 @@ use komodo_client::entities::{
   stack::Stack,
   user::User,
 };
-use resolver_api::HasResponse;
+use mogh_resolver::HasResponse;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 

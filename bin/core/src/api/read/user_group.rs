@@ -9,7 +9,7 @@ use database::mungos::{
   },
 };
 use komodo_client::api::read::*;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::state::db_client;
 

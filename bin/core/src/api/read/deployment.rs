@@ -18,9 +18,9 @@ use komodo_client::{
     update::Log,
   },
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::{self, container::InspectContainer};
 use reqwest::StatusCode;
-use resolver_api::Resolve;
 use serror::AddStatusCodeError as _;
 
 use crate::{

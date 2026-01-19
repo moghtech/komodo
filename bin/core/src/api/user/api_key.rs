@@ -7,8 +7,8 @@ use komodo_client::{
   },
   entities::{api_key::ApiKey, komodo_timestamp, random_string},
 };
+use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use resolver_api::Resolve;
 use serror::{AddStatusCode as _, AddStatusCodeError as _};
 
 use crate::{

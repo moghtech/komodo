@@ -7,7 +7,7 @@ use komodo_client::entities::{
   },
   update::Log,
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 
 //

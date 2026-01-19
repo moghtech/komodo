@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -14,9 +13,7 @@ use super::KomodoReadRequest;
 
 /// Get a specific sync. Response: [ResourceSync].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ResourceSync)]
@@ -34,9 +31,7 @@ pub type GetResourceSyncResponse = ResourceSync;
 
 /// List syncs matching optional query. Response: [ListResourceSyncsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListResourceSyncsResponse)]
@@ -54,9 +49,7 @@ pub type ListResourceSyncsResponse = Vec<ResourceSyncListItem>;
 
 /// List syncs matching optional query. Response: [ListFullResourceSyncsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullResourceSyncsResponse)]
@@ -74,9 +67,7 @@ pub type ListFullResourceSyncsResponse = Vec<ResourceSync>;
 
 /// Get current action state for the sync. Response: [ResourceSyncActionState].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetResourceSyncActionStateResponse)]
@@ -95,9 +86,7 @@ pub type GetResourceSyncActionStateResponse = ResourceSyncActionState;
 /// Gets a summary of data relating to all syncs.
 /// Response: [GetResourceSyncsSummaryResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetResourceSyncsSummaryResponse)]

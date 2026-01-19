@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use resolver_api::HasResponse;
+use mogh_resolver::HasResponse;
 use serde::{Deserialize, Serialize};
 use strum::{AsRefStr, Display, EnumDiscriminants, EnumString};
 use typeshare::typeshare;

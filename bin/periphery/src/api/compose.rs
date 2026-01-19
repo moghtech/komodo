@@ -21,8 +21,8 @@ use komodo_client::{
   },
   parsers::parse_multiline_command,
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::{DeployStackResponse, compose::*};
-use resolver_api::Resolve;
 use shell_escape::unix::escape;
 use tracing::Instrument;
 

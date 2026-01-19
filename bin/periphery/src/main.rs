@@ -101,7 +101,8 @@ async fn app() -> anyhow::Result<()> {
 async fn main() -> anyhow::Result<()> {
   // Handle `periphery key gen` and `periphery key compute <private-key>`
   if let Some(Command::Key { command }) = &periphery_args().command {
-    return pki::cli::handle(command, pki::PkiKind::Mutual).await;
+    return mogh_pki::cli::handle(command, mogh_pki::PkiKind::Mutual)
+      .await;
   }
 
   let mut term_signal = tokio::signal::unix::signal(

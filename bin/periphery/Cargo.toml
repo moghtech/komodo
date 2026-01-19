@@ -28,12 +28,12 @@ command.workspace = true
 config.workspace = true
 logger.workspace = true
 cache.workspace = true
-pki.workspace = true
+mogh_pki.workspace = true
 git.workspace = true
 # mogh
 serror = { workspace = true, features = ["axum"] }
 async_timing_util.workspace = true
-resolver_api.workspace = true
+mogh_resolver.workspace = true
 # external
 hickory-resolver.workspace = true
 serde_yaml_ng.workspace = true

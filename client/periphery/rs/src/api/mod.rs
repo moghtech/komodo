@@ -4,7 +4,7 @@ use komodo_client::entities::{
   stack::{StackRemoteFileContents, StackServiceNames},
   update::Log,
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 
 pub mod build;

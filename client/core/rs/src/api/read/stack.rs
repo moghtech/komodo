@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -20,9 +19,7 @@ use super::KomodoReadRequest;
 
 /// Get a specific stack. Response: [Stack].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStackResponse)]
@@ -40,9 +37,7 @@ pub type GetStackResponse = Stack;
 
 /// Lists a specific stacks services (the containers). Response: [ListStackServicesResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListStackServicesResponse)]
@@ -61,9 +56,7 @@ pub type ListStackServicesResponse = Vec<StackService>;
 /// Inspect a docker container associated with a Stack.
 /// Response: [Container].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectStackContainerResponse)]
@@ -84,9 +77,7 @@ pub type InspectStackContainerResponse = Container;
 /// Inspect a swarm service associated with a Stack.
 /// Response: [SwarmService].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectStackSwarmServiceResponse)]
@@ -107,9 +98,7 @@ pub type InspectStackSwarmServiceResponse = SwarmService;
 /// Inspect swarm info associated with a Stack.
 /// Response: [SwarmStack].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectStackSwarmInfoResponse)]
@@ -129,9 +118,7 @@ pub type InspectStackSwarmInfoResponse = SwarmStack;
 ///
 /// Note. This call will hit the underlying server directly for most up to date log.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStackLogResponse)]
@@ -167,9 +154,7 @@ pub type GetStackLogResponse = Log;
 ///
 /// Note. This call will hit the underlying server directly for most up to date log.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(SearchStackLogResponse)]
@@ -205,9 +190,7 @@ pub type SearchStackLogResponse = Log;
 /// Gets a list of existing values used as extra args across other stacks.
 /// Useful to offer suggestions. Response: [ListCommonStackExtraArgsResponse]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonStackExtraArgsResponse)]
@@ -226,9 +209,7 @@ pub type ListCommonStackExtraArgsResponse = Vec<String>;
 /// Gets a list of existing values used as build extra args across other stacks.
 /// Useful to offer suggestions. Response: [ListCommonStackBuildExtraArgsResponse]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonStackBuildExtraArgsResponse)]
@@ -246,9 +227,7 @@ pub type ListCommonStackBuildExtraArgsResponse = Vec<String>;
 
 /// List stacks matching optional query. Response: [ListStacksResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListStacksResponse)]
@@ -266,9 +245,7 @@ pub type ListStacksResponse = Vec<StackListItem>;
 
 /// List stacks matching optional query. Response: [ListFullStacksResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullStacksResponse)]
@@ -286,9 +263,7 @@ pub type ListFullStacksResponse = Vec<Stack>;
 
 /// Get current action state for the stack. Response: [StackActionState].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStackActionStateResponse)]
@@ -307,9 +282,7 @@ pub type GetStackActionStateResponse = StackActionState;
 /// Gets a summary of data relating to all syncs.
 /// Response: [GetStacksSummaryResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStacksSummaryResponse)]

@@ -32,7 +32,7 @@ use komodo_client::{
     user::{action_user, system_user},
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use uuid::Uuid;
 
 use crate::{

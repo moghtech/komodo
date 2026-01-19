@@ -10,8 +10,8 @@ use cache::{CloneCache, CloneVecCache};
 use komodo_client::entities::{
   docker::container::ContainerStats, terminal::TerminalStdinMessage,
 };
+use mogh_pki::{PkiKind, RotatableKeyPair, SpkiPublicKey};
 use periphery_client::transport::EncodedTransportMessage;
-use pki::{PkiKind, RotatableKeyPair, SpkiPublicKey};
 use tokio::sync::{Mutex, OnceCell, RwLock, mpsc, oneshot};
 use tokio_util::sync::CancellationToken;
 use transport::channel::BufferedChannel;

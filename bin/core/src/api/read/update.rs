@@ -14,7 +14,7 @@ use komodo_client::{
     user::User,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{
   config::core_config,

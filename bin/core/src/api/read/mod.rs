@@ -18,11 +18,11 @@ use komodo_client::{
     user::User,
   },
 };
-use serror::Response;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serror::Json;
+use serror::Response;
 use typeshare::typeshare;
 use uuid::Uuid;
 

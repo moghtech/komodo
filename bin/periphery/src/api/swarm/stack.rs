@@ -16,11 +16,11 @@ use komodo_client::{
   },
   parsers::parse_multiline_command,
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::{
   DeployStackResponse,
   swarm::{DeploySwarmStack, InspectSwarmStack, RemoveSwarmStacks},
 };
-use resolver_api::Resolve;
 use tracing::Instrument as _;
 
 use crate::{

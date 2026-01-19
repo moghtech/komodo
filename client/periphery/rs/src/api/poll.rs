@@ -3,7 +3,7 @@ use komodo_client::entities::{
   server::PeripheryInformation,
   stats::{SystemInformation, SystemStats},
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 
 /// This is the data Core uses to update all Server-related status caches.

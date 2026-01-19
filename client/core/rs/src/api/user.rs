@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::{HasResponse, Resolve};
+use mogh_resolver::{HasResponse, Resolve};
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -12,9 +11,7 @@ pub trait KomodoUserRequest: HasResponse {}
 /// Push a resource to the front of the users 10 most recently viewed resources.
 /// Response: [NoData].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(PushRecentlyViewedResponse)]
@@ -33,9 +30,7 @@ pub type PushRecentlyViewedResponse = NoData;
 /// Used for unseen notification dot.
 /// Response: [NoData]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(SetLastSeenUpdateResponse)]
@@ -53,9 +48,7 @@ pub type SetLastSeenUpdateResponse = NoData;
 /// Note. After the response is served, there will be no way
 /// to get the secret later.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(CreateApiKeyResponse)]
@@ -89,9 +82,7 @@ pub struct CreateApiKeyResponse {
 /// Delete an api key for the calling user.
 /// Response: [NoData]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoUserRequest)]
 #[response(DeleteApiKeyResponse)]

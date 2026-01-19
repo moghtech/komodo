@@ -6,7 +6,7 @@ use komodo_client::{
     repo::{Repo, RepoActionState, RepoListItem, RepoState},
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{
   helpers::query::get_all_tags,

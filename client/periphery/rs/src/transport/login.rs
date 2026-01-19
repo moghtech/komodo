@@ -3,7 +3,7 @@ use encoding::{
   CastBytes, Decode, Encode, EncodedResponse, impl_cast_bytes_vec,
   impl_from_for_wrapper,
 };
-use pki::SpkiPublicKey;
+use mogh_pki::SpkiPublicKey;
 use strum::EnumDiscriminants;
 
 use crate::transport::{EncodedTransportMessage, TransportMessage};

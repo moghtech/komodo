@@ -29,7 +29,7 @@ use komodo_client::{
   },
   parsers::parse_key_value_list,
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use tokio::fs;
 
 use crate::{

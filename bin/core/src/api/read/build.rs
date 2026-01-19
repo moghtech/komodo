@@ -16,7 +16,7 @@ use komodo_client::{
     update::UpdateStatus,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{
   helpers::query::get_all_tags,

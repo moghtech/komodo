@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -21,9 +20,7 @@ pub struct TomlResponse {
 /// which the user has permissions to view.
 /// Response: [TomlResponse].
 #[typeshare]
-#[derive(
-  Debug, Clone, Default, Serialize, Deserialize, Resolve, EmptyTraits,
-)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ExportAllResourcesToTomlResponse)]
@@ -60,9 +57,7 @@ pub type ExportAllResourcesToTomlResponse = TomlResponse;
 /// Get pretty formatted monrun sync toml for specific resources and user groups.
 /// Response: [TomlResponse].
 #[typeshare]
-#[derive(
-  Debug, Clone, Default, Serialize, Deserialize, Resolve, EmptyTraits,
-)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ExportResourcesToTomlResponse)]

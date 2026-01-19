@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use anyhow::anyhow;
 use komodo_client::entities::server::{Server, ServerState};
-use resolver_api::HasResponse;
+use mogh_resolver::HasResponse;
 use serde::{Serialize, de::DeserializeOwned};
 
 use crate::{

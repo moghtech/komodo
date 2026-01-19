@@ -44,4 +44,4 @@ pub use user::*;
 pub use user_group::*;
 pub use variable::*;
 
-pub trait KomodoWriteRequest: resolver_api::HasResponse {}
+pub trait KomodoWriteRequest: mogh_resolver::HasResponse {}

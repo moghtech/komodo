@@ -17,7 +17,7 @@ use komodo_client::entities::{
   stack::Stack,
   update::Log,
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 
 use crate::api::DeployStackResponse;

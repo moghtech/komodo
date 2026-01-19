@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -12,9 +11,7 @@ use super::KomodoReadRequest;
 /// Get a specific git provider account.
 /// Response: [GetGitProviderAccountResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetGitProviderAccountResponse)]
@@ -31,9 +28,7 @@ pub type GetGitProviderAccountResponse = GitProviderAccount;
 /// List git provider accounts matching optional query.
 /// Response: [ListGitProviderAccountsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListGitProviderAccountsResponse)]
@@ -53,9 +48,7 @@ pub type ListGitProviderAccountsResponse = Vec<GitProviderAccount>;
 /// Get a specific docker registry account.
 /// Response: [GetDockerRegistryAccountResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDockerRegistryAccountResponse)]
@@ -72,9 +65,7 @@ pub type GetDockerRegistryAccountResponse = DockerRegistryAccount;
 /// List docker registry accounts matching optional query.
 /// Response: [ListDockerRegistryAccountsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerRegistryAccountsResponse)]

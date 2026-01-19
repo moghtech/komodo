@@ -6,10 +6,10 @@ use komodo_client::entities::{
   KOMODO_EXIT_CODE, NoData,
   terminal::{Terminal, TerminalStdinMessage, TerminalTarget},
 };
+use mogh_resolver::Resolve;
 use periphery_client::{
   api::terminal::*, transport::EncodedTransportMessage,
 };
-use resolver_api::Resolve;
 use tokio_util::{codec::LinesCodecError, sync::CancellationToken};
 use transport::channel::{BufferedChannel, Sender};
 use uuid::Uuid;

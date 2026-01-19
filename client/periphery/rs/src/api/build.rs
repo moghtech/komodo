@@ -1,7 +1,7 @@
 use komodo_client::entities::{
   FileContents, repo::Repo, update::Log,
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]

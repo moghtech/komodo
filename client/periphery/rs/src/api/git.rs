@@ -4,7 +4,7 @@ use komodo_client::entities::{
   EnvironmentVar, LatestCommit, RepoExecutionArgs,
   RepoExecutionResponse, SystemCommand, update::Log,
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 
 /// Returns `null` if not a repo

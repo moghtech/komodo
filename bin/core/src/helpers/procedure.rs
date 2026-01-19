@@ -18,7 +18,7 @@ use komodo_client::{
     user::procedure_user,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 

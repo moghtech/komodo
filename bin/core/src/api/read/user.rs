@@ -13,7 +13,7 @@ use komodo_client::{
   },
   entities::user::{UserConfig, admin_service_user},
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{helpers::query::get_user, state::db_client};
 

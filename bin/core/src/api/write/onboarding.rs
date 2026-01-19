@@ -10,9 +10,9 @@ use komodo_client::{
     komodo_timestamp, onboarding_key::OnboardingKey, random_string,
   },
 };
-use pki::EncodedKeyPair;
+use mogh_pki::EncodedKeyPair;
+use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use resolver_api::Resolve;
 use serror::{AddStatusCode, AddStatusCodeError};
 
 use crate::{api::write::WriteArgs, state::db_client};
@@ -48,7 +48,7 @@ impl Resolve<WriteArgs> for CreateOnboardingKey {
       format!("O_{}_O", random_string(28))
     };
     let public_key = EncodedKeyPair::from_private_key(
-      pki::PkiKind::Mutual,
+      mogh_pki::PkiKind::Mutual,
       &private_key,
     )?
     .public

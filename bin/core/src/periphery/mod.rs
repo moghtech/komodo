@@ -2,8 +2,8 @@ use std::{sync::Arc, time::Duration};
 
 use anyhow::{Context, anyhow};
 use encoding::Decode as _;
+use mogh_resolver::HasResponse;
 use periphery_client::api;
-use resolver_api::HasResponse;
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::json;
 use transport::channel::channel;

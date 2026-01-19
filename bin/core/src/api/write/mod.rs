@@ -3,7 +3,7 @@ use axum::{
   Extension, Router, extract::Path, middleware, routing::post,
 };
 use komodo_client::{api::write::*, entities::user::User};
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use serror::Json;

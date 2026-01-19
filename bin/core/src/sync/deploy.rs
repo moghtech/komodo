@@ -24,7 +24,7 @@ use komodo_client::{
     user::sync_user,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use uuid::Uuid;
 
 use crate::{

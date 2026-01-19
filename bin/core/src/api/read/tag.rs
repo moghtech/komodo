@@ -7,7 +7,7 @@ use komodo_client::{
   api::read::{GetTag, ListTags},
   entities::tag::Tag,
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{helpers::query::get_tag, state::db_client};
 

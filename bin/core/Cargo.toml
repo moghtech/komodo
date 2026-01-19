@@ -29,7 +29,7 @@ command.workspace = true
 config.workspace = true
 logger.workspace = true
 cache.workspace = true
-pki.workspace = true
+mogh_pki.workspace = true
 git.workspace = true
 # mogh
 serror = { workspace = true, features = ["axum"] }
@@ -37,7 +37,7 @@ mogh_auth_client = { workspace = true, features = ["utoipa"] }
 mogh_auth_server.workspace = true
 async_timing_util.workspace = true
 partial_derive2.workspace = true
-resolver_api.workspace = true
+mogh_resolver.workspace = true
 mogh_server.workspace = true
 toml_pretty.workspace = true
 slack.workspace = true

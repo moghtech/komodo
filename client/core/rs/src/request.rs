@@ -36,7 +36,10 @@ impl KomodoClient {
   }
 
   #[cfg(feature = "blocking")]
-  pub fn auth_login<T>(&self, request: T) -> anyhow::Result<T::Response>
+  pub fn auth_login<T>(
+    &self,
+    request: T,
+  ) -> anyhow::Result<T::Response>
   where
     T: Serialize + MoghAuthLoginRequest,
     T::Response: DeserializeOwned,
@@ -71,7 +74,10 @@ impl KomodoClient {
   }
 
   #[cfg(feature = "blocking")]
-  pub fn auth_manage<T>(&self, request: T) -> anyhow::Result<T::Response>
+  pub fn auth_manage<T>(
+    &self,
+    request: T,
+  ) -> anyhow::Result<T::Response>
   where
     T: Serialize + MoghAuthManageRequest,
     T::Response: DeserializeOwned,

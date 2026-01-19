@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -10,9 +9,7 @@ use super::KomodoWriteRequest;
 /// **Admin only.** Create a git provider account.
 /// Response: [GitProviderAccount].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateGitProviderAccountResponse)]
@@ -31,9 +28,7 @@ pub type CreateGitProviderAccountResponse = GitProviderAccount;
 /// **Admin only.** Update a git provider account.
 /// Response: [GitProviderAccount].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateGitProviderAccountResponse)]
@@ -53,9 +48,7 @@ pub type UpdateGitProviderAccountResponse = GitProviderAccount;
 /// **Admin only.** Delete a git provider account.
 /// Response: [DeleteGitProviderAccountResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteGitProviderAccountResponse)]
@@ -73,9 +66,7 @@ pub type DeleteGitProviderAccountResponse = GitProviderAccount;
 /// **Admin only.** Create a docker registry account.
 /// Response: [DockerRegistryAccount].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateDockerRegistryAccountResponse)]
@@ -92,9 +83,7 @@ pub type CreateDockerRegistryAccountResponse = DockerRegistryAccount;
 /// **Admin only.** Update a docker registry account.
 /// Response: [DockerRegistryAccount].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateDockerRegistryAccountResponse)]
@@ -114,9 +103,7 @@ pub type UpdateDockerRegistryAccountResponse = DockerRegistryAccount;
 /// **Admin only.** Delete a docker registry account.
 /// Response: [DockerRegistryAccount].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteDockerRegistryAccountResponse)]

@@ -5,11 +5,11 @@ use komodo_client::entities::{
   stats::SystemProcess,
   update::Log,
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::{
   build::*, compose::*, container::*, docker::*, git::*, keys::*,
   poll::*, stats::*, swarm::*, terminal::*, *,
 };
-use resolver_api::Resolve;
 use serde::{Deserialize, Serialize};
 use strum::EnumDiscriminants;
 use uuid::Uuid;

@@ -25,7 +25,7 @@ use komodo_client::{
     user::{User, build_user},
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{
   api::write::WriteArgs,

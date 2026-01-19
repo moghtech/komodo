@@ -17,12 +17,12 @@ use komodo_client::entities::{
   to_path_compatible_name,
   update::Log,
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::build::{
   self, GetDockerfileContentsOnHost,
   GetDockerfileContentsOnHostResponse, PruneBuilders, PruneBuildx,
   WriteDockerfileContentsToHost,
 };
-use resolver_api::Resolve;
 use tokio::fs;
 use tracing::Instrument;
 

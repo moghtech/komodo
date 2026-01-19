@@ -1,9 +1,9 @@
 use komodo_client::entities::NoData;
+use mogh_pki::SpkiPublicKey;
+use mogh_resolver::Resolve;
 use periphery_client::api::keys::{
   RotateCorePublicKey, RotatePrivateKey, RotatePrivateKeyResponse,
 };
-use pki::SpkiPublicKey;
-use resolver_api::Resolve;
 
 use crate::{
   config::periphery_config,
@@ -26,7 +26,7 @@ impl Resolve<crate::api::Args> for RotatePrivateKey {
     args: &crate::api::Args,
   ) -> anyhow::Result<RotatePrivateKeyResponse> {
     let public_key = periphery_keys()
-      .rotate(pki::PkiKind::Mutual)
+      .rotate(mogh_pki::PkiKind::Mutual)
       .await?
       .into_inner();
     info!("New Public Key: {public_key}");

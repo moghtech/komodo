@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::{HasResponse, Resolve};
+use mogh_resolver::{HasResponse, Resolve};
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -65,9 +64,7 @@ pub trait KomodoReadRequest: HasResponse {}
 /// Get the version of the Komodo Core api.
 /// Response: [GetVersionResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetVersionResponse)]
@@ -88,9 +85,7 @@ pub struct GetVersionResponse {
 /// Get info about the core api configuration.
 /// Response: [GetCoreInfoResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetCoreInfoResponse)]
@@ -136,9 +131,7 @@ pub struct GetCoreInfoResponse {
 ///   - providers configured on builds, repos, syncs
 ///   - providers on the optional Server or Builder
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListGitProvidersFromConfigResponse)]
@@ -162,9 +155,7 @@ pub type ListGitProvidersFromConfigResponse = Vec<GitProvider>;
 ///   - registries configured on builds, deployments
 ///   - registries on the optional Server or Builder
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerRegistriesFromConfigResponse)]
@@ -183,9 +174,7 @@ pub type ListDockerRegistriesFromConfigResponse = Vec<DockerRegistry>;
 /// List the available secrets from the core config.
 /// Response: [ListSecretsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSecretsResponse)]

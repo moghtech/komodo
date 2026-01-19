@@ -4,11 +4,11 @@ use anyhow::anyhow;
 use encoding::{
   CastBytes as _, Decode as _, Encode as _, WithChannel,
 };
+use mogh_resolver::Resolve;
 use periphery_client::transport::{
   EncodedRequestMessage, EncodedTransportMessage, RequestMessage,
   TransportMessage,
 };
-use resolver_api::Resolve;
 use transport::{
   auth::{
     ConnectionIdentifiers, LoginFlow, LoginFlowArgs,

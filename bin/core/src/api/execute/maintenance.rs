@@ -18,9 +18,9 @@ use komodo_client::{
     stack::StackState,
   },
 };
+use mogh_resolver::Resolve;
 use periphery_client::api;
 use reqwest::StatusCode;
-use resolver_api::Resolve;
 use serror::AddStatusCodeError;
 use tokio::sync::Mutex;
 
@@ -523,8 +523,10 @@ impl Resolve<ExecuteArgs> for RotateCoreKeys {
       );
     }
 
-    let public_key =
-      core_keys.rotate(pki::PkiKind::Mutual).await?.into_inner();
+    let public_key = core_keys
+      .rotate(mogh_pki::PkiKind::Mutual)
+      .await?
+      .into_inner();
 
     info!("New Public Key: {public_key}");
 

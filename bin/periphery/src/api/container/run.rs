@@ -14,10 +14,10 @@ use komodo_client::entities::{
   environment_vars_from_str,
   update::Log,
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::container::{
   RemoveContainer, RunContainer,
 };
-use resolver_api::Resolve;
 use tracing::Instrument;
 
 use crate::{

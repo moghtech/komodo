@@ -20,7 +20,7 @@ use komodo_client::{
     user::{action_user, procedure_user},
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use uuid::Uuid;
 
 use crate::{

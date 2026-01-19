@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -22,9 +21,7 @@ use super::KomodoReadRequest;
 /// Gets a summary of data relating to all containers.
 /// Response: [GetDockerContainersSummaryResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDockerContainersSummaryResponse)]
@@ -53,9 +50,7 @@ pub struct GetDockerContainersSummaryResponse {
 /// List all docker containers on the target servers.
 /// Response: [ListDockerContainersResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListAllDockerContainersResponse)]
@@ -78,9 +73,7 @@ pub type ListAllDockerContainersResponse = Vec<ContainerListItem>;
 /// List all docker containers on the target server.
 /// Response: [ListDockerContainersResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerContainersResponse)]
@@ -98,9 +91,7 @@ pub type ListDockerContainersResponse = Vec<ContainerListItem>;
 
 /// Inspect a docker container on the server. Response: [Container].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDockerContainerResponse)]
@@ -120,9 +111,7 @@ pub type InspectDockerContainerResponse = Container;
 
 /// Find the attached resource for a container. Either Deployment or Stack. Response: [GetResourceMatchingContainerResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetResourceMatchingContainerResponse)]
@@ -150,9 +139,7 @@ pub struct GetResourceMatchingContainerResponse {
 ///
 /// Note. This call will hit the underlying server directly for most up to date log.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetContainerLogResponse)]
@@ -187,9 +174,7 @@ pub type GetContainerLogResponse = Log;
 ///
 /// Note. This call will hit the underlying server directly for most up to date log.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(SearchContainerLogResponse)]
@@ -224,9 +209,7 @@ pub type SearchContainerLogResponse = Log;
 /// List all docker compose projects on the target server.
 /// Response: [ListComposeProjectsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListComposeProjectsResponse)]
@@ -244,9 +227,7 @@ pub type ListComposeProjectsResponse = Vec<ComposeProject>;
 
 /// List the docker networks on the server. Response: [ListDockerNetworksResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerNetworksResponse)]
@@ -264,9 +245,7 @@ pub type ListDockerNetworksResponse = Vec<NetworkListItem>;
 
 /// Inspect a docker network on the server. Response: [InspectDockerNetworkResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDockerNetworkResponse)]
@@ -287,9 +266,7 @@ pub type InspectDockerNetworkResponse = Network;
 /// List the docker images locally cached on the target server.
 /// Response: [ListDockerImagesResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerImagesResponse)]
@@ -307,9 +284,7 @@ pub type ListDockerImagesResponse = Vec<ImageListItem>;
 
 /// Inspect a docker image on the server. Response: [Image].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDockerImageResponse)]
@@ -329,9 +304,7 @@ pub type InspectDockerImageResponse = Image;
 
 /// Get image history from the server. Response: [ListDockerImageHistoryResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerImageHistoryResponse)]
@@ -353,9 +326,7 @@ pub type ListDockerImageHistoryResponse =
 /// List all docker volumes on the target server.
 /// Response: [ListDockerVolumesResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerVolumesResponse)]
@@ -373,9 +344,7 @@ pub type ListDockerVolumesResponse = Vec<VolumeListItem>;
 
 /// Inspect a docker volume on the server. Response: [Volume].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDockerVolumeResponse)]

@@ -8,7 +8,7 @@ use komodo_client::{
     permission::PermissionLevel,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{
   helpers::query::get_all_tags,

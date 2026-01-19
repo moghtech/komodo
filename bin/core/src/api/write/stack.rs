@@ -15,11 +15,11 @@ use komodo_client::{
     user::stack_user,
   },
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::compose::{
   GetComposeContentsOnHost, GetComposeContentsOnHostResponse,
   WriteComposeContentsToHost,
 };
-use resolver_api::Resolve;
 
 use crate::{
   config::core_config,

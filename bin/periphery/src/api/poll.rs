@@ -2,8 +2,8 @@ use futures_util::FutureExt;
 use komodo_client::entities::{
   docker::DockerLists, server::PeripheryInformation,
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::poll::{PollStatus, PollStatusResponse};
-use resolver_api::Resolve;
 
 use crate::{
   config::periphery_config,

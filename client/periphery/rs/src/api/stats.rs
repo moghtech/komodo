@@ -1,5 +1,5 @@
 use komodo_client::entities::stats::SystemProcess;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 
 //

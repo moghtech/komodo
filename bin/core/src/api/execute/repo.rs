@@ -22,8 +22,8 @@ use komodo_client::{
     update::{Log, Update},
   },
 };
+use mogh_resolver::Resolve;
 use periphery_client::api;
-use resolver_api::Resolve;
 use tokio_util::sync::CancellationToken;
 
 use crate::{

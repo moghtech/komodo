@@ -32,24 +32,22 @@ command = { path = "lib/command" }
 git = { path = "lib/git" }
 
 # MOGH
-# resolver_api = {package = "mogh_resolver", version = "1.0.0" }
 validations = { package = "mogh_validations", version = "1.0.0" }
 secret_file = { package = "mogh_secret_file", version = "1.0.0" }
 rate_limit = { package = "mogh_rate_limit", version = "1.0.0" }
 config = { package = "mogh_config", version = "1.0.1" }
 logger = { package = "mogh_logger", version = "1.0.0" }
 cache = { package = "mogh_cache", version = "1.0.0" }
-pki = { package = "mogh_pki", version = "1.1.0" }
 serror = { package = "mogh_error", version = "1.0.3", default-features = false }
+mogh_pki = { package = "mogh_pki", version = "1.1.0" }
 slack = { version = "2.0.0", package = "slack_client_rs", default-features = false, features = ["rustls"] }
 derive_default_builder = "0.1.8"
-derive_empty_traits = "0.1.0"
 async_timing_util = "1.1.0"
 mogh_auth_client = "0.1.0"
 mogh_auth_server = "0.2.0"
 partial_derive2 = "0.4.5"
 mongo_indexed = "2.0.2"
-resolver_api = "3.0.0"
+mogh_resolver = "1.0.0"
 mogh_server = "1.1.2"
 toml_pretty = "2.0.0"
 mungos = "3.2.2"
@@ -79,7 +77,7 @@ indexmap = { version = "2.13.0", features = ["serde"] }
 serde = { version = "1.0.227", features = ["derive"] }
 strum = { version = "0.27.2", features = ["derive"] }
 bson = { version = "2.15.0" } # must keep in sync with mongodb version
-toml = "0.9.11+spec-1.1.0"
+toml = "0.9.11"
 serde_yaml_ng = "0.10.0"
 serde_json = "1.0.148"
 serde_qs = "0.15.0"

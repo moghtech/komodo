@@ -20,11 +20,11 @@ use komodo_client::{
     user::system_user,
   },
 };
+use mogh_resolver::Resolve;
 use partial_derive2::MaybeNone;
 use periphery_client::{
   api::PeripheryConnectionQuery, transport::LoginMessage,
 };
-use resolver_api::Resolve;
 use serror::{AddStatusCode, AddStatusCodeError};
 use tracing::Instrument;
 use transport::{

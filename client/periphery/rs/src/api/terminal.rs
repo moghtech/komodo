@@ -2,7 +2,7 @@ use komodo_client::entities::{
   NoData,
   terminal::{Terminal, TerminalRecreateMode, TerminalTarget},
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

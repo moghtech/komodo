@@ -7,7 +7,7 @@ use komodo_client::{
   },
   entities::{permission::PermissionLevel, swarm::Swarm},
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{
   api::execute::ExecuteArgs,

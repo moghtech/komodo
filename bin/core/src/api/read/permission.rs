@@ -8,7 +8,7 @@ use komodo_client::{
   },
   entities::permission::PermissionLevel,
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{
   helpers::query::get_user_permission_on_target, state::db_client,

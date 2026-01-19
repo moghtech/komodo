@@ -11,10 +11,10 @@ use komodo_client::entities::{
   to_path_compatible_name,
   update::Log,
 };
+use mogh_resolver::Resolve as _;
 use periphery_client::api::{
   DeployStackResponse, git::PullOrCloneRepo,
 };
-use resolver_api::Resolve as _;
 
 use crate::{
   api::Args, config::periphery_config, docker::docker_login,

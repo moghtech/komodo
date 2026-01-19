@@ -4,8 +4,8 @@ use komodo_client::entities::{
   docker::{SwarmLists, node::SwarmNode, task::SwarmTask},
   update::Log,
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::swarm::*;
-use resolver_api::Resolve;
 
 use crate::{
   docker::{config::list_swarm_configs, stack::list_swarm_stacks},

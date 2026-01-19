@@ -10,7 +10,7 @@ homepage.workspace = true
 [dependencies]
 periphery_client.workspace = true
 encoding.workspace = true
-pki.workspace = true
+mogh_pki.workspace = true
 #
 serror.workspace = true
 #

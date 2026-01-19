@@ -35,6 +35,7 @@ use komodo_client::{
     update::Log,
   },
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::{
   self as periphery,
   container::InspectContainer,
@@ -43,7 +44,6 @@ use periphery_client::api::{
   },
 };
 use reqwest::StatusCode;
-use resolver_api::Resolve;
 use serror::AddStatusCode;
 use tokio::sync::Mutex;
 

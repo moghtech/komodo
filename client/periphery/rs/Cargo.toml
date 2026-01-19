@@ -13,9 +13,9 @@ repository.workspace = true
 # local
 komodo_client.workspace = true
 encoding.workspace = true
-pki.workspace = true
+mogh_pki.workspace = true
 # mogh
-resolver_api.workspace = true
+mogh_resolver.workspace = true
 # external
 anyhow.workspace = true
 serde.workspace = true

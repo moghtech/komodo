@@ -19,10 +19,10 @@ use komodo_client::{
     update::Update,
   },
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::build::{
   GetDockerfileContentsOnHost, WriteDockerfileContentsToHost,
 };
-use resolver_api::Resolve;
 use tokio::fs;
 
 use crate::{
