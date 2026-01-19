@@ -64,7 +64,7 @@ impl DockerClient {
       driver: volume.driver,
       mountpoint: volume.mountpoint,
       created_at: volume.created_at,
-      status: volume.status.unwrap_or_default().into_keys().map(|k| (k, Default::default())).collect(),
+      status: volume.status,
       labels: volume.labels,
       scope: volume
         .scope

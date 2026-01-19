@@ -66,9 +66,12 @@
 //! }
 //! ```
 
-pub mod auth;
 pub mod execute;
 pub mod read;
 pub mod terminal;
 pub mod user;
 pub mod write;
+
+pub mod auth {
+  pub use mogh_auth_client::api::*;
+}

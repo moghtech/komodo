@@ -3,10 +3,7 @@
 #[macro_use]
 extern crate tracing;
 
-use std::{net::SocketAddr, str::FromStr};
-
-use anyhow::Context;
-use axum_server::{Handle, tls_rustls::RustlsConfig};
+use mogh_server::axum_server::Handle;
 use tracing::Instrument;
 
 use crate::config::{core_config, core_keys};
@@ -57,8 +54,8 @@ async fn app() -> anyhow::Result<()> {
       .install_default()
       .expect("Failed to install default crypto provider");
 
-    // Init jwt client to crash on failure
-    state::jwt_client();
+    // Init jwt provider to crash on failure
+    let _ = &auth::JWT_PROVIDER;
     // Init db_client check to crash on db init failure
     state::init_db_client().await;
     // Run after db connection.
@@ -78,13 +75,6 @@ async fn app() -> anyhow::Result<()> {
   .instrument(startup_span)
   .await;
 
-  let app =
-    api::app().into_make_service_with_connect_info::<SocketAddr>();
-
-  let addr = format!("{}:{}", config.bind_ip, config.port);
-  let socket_addr = SocketAddr::from_str(&addr)
-    .context("Failed to parse listen address")?;
-
   let handle = Handle::new();
   tokio::spawn({
     // Cannot run actions until the server is available.
@@ -97,29 +87,7 @@ async fn app() -> anyhow::Result<()> {
     }
   });
 
-  if config.ssl_enabled {
-    info!("🔒 Core SSL Enabled");
-    info!("Komodo Core starting on https://{socket_addr}");
-    let ssl_config = RustlsConfig::from_pem_file(
-      &config.ssl_cert_file,
-      &config.ssl_key_file,
-    )
-    .await
-    .context("Invalid ssl cert / key")?;
-    axum_server::bind_rustls(socket_addr, ssl_config)
-      .handle(handle)
-      .serve(app)
-      .await
-      .context("failed to start https server")
-  } else {
-    info!("🔓 Core SSL Disabled");
-    info!("Komodo Core starting on http://{socket_addr}");
-    axum_server::bind(socket_addr)
-      .handle(handle)
-      .serve(app)
-      .await
-      .context("failed to start http server")
-  }
+  mogh_server::serve_app(api::app(), config, handle).await
 }
 
 #[tokio::main]

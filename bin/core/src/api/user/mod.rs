@@ -1,6 +1,6 @@
 use std::{collections::VecDeque, time::Instant};
 
-use anyhow::{Context, anyhow};
+use anyhow::Context;
 use axum::{
   Extension, Json, Router, extract::Path, middleware, routing::post,
 };
@@ -11,38 +11,25 @@ use database::{
 use derive_variants::EnumVariants;
 use komodo_client::{
   api::user::*,
-  entities::{NoData, komodo_timestamp, user::User},
+  entities::{komodo_timestamp, user::User},
 };
-use reqwest::StatusCode;
 use resolver_api::Resolve;
-use serror::Response;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use serror::{AddStatusCode as _, AddStatusCodeError};
-use tower_sessions::Session;
+use serror::Response;
 use typeshare::typeshare;
 use uuid::Uuid;
 
 use crate::{
-  auth::auth_request,
-  config::core_config,
-  helpers::{
-    query::get_user,
-    validations::{validate_password, validate_username},
-  },
-  state::db_client,
+  auth::auth_request, helpers::query::get_user, state::db_client,
 };
 
 use super::Variant;
 
 mod api_key;
-mod passkey;
-mod totp;
 
 pub struct UserArgs {
   pub user: User,
-  /// Per-client session state
-  pub session: Option<Session>,
 }
 
 #[typeshare]
@@ -56,30 +43,23 @@ pub struct UserArgs {
 enum UserRequest {
   PushRecentlyViewed(PushRecentlyViewed),
   SetLastSeenUpdate(SetLastSeenUpdate),
-  UpdateUsername(UpdateUsername),
-  UpdatePassword(UpdatePassword),
   CreateApiKey(CreateApiKey),
   DeleteApiKey(DeleteApiKey),
-  BeginTotpEnrollment(BeginTotpEnrollment),
-  ConfirmTotpEnrollment(ConfirmTotpEnrollment),
-  UnenrollTotp(UnenrollTotp),
-  BeginPasskeyEnrollment(BeginPasskeyEnrollment),
-  ConfirmPasskeyEnrollment(ConfirmPasskeyEnrollment),
-  UnenrollPasskey(UnenrollPasskey),
-  BeginThirdPartyLoginLink(BeginThirdPartyLoginLink),
-  UnlinkLogin(UnlinkLogin),
-  UpdateThirdPartySkip2fa(UpdateThirdPartySkip2fa),
 }
 
 pub fn router() -> Router {
   Router::new()
-    .route("/", post(handler))
+    .route(
+      "/",
+      post(handler)
+        // TODO: allow this to return when user not enabled to display "not enabled" page.
+        .get(|Extension(user): Extension<User>| async { Json(user) }),
+    )
     .route("/{variant}", post(variant_handler))
     .layer(middleware::from_fn(auth_request))
 }
 
 async fn variant_handler(
-  session: Session,
   user: Extension<User>,
   Path(Variant { variant }): Path<Variant>,
   Json(params): Json<serde_json::Value>,
@@ -88,11 +68,10 @@ async fn variant_handler(
     "type": variant,
     "params": params,
   }))?;
-  handler(session, user, Json(req)).await
+  handler(user, Json(req)).await
 }
 
 async fn handler(
-  session: Session,
   Extension(user): Extension<User>,
   Json(request): Json<UserRequest>,
 ) -> serror::Result<axum::response::Response> {
@@ -102,12 +81,7 @@ async fn handler(
     "/user request {req_id} | user: {} ({})",
     user.username, user.id
   );
-  let res = request
-    .resolve(&UserArgs {
-      user,
-      session: Some(session),
-    })
-    .await;
+  let res = request.resolve(&UserArgs { user }).await;
   if let Err(e) = &res {
     warn!("/user request {req_id} error: {:#}", e.error);
   }
@@ -177,191 +151,4 @@ impl Resolve<UserArgs> for SetLastSeenUpdate {
 
     Ok(SetLastSeenUpdateResponse {})
   }
-}
-
-//
-
-impl Resolve<UserArgs> for UpdateUsername {
-  #[instrument(
-    "UpdateUsername",
-    skip_all,
-    fields(
-      operator = user.id,
-      new_username = self.username,
-    )
-  )]
-  async fn resolve(
-    self,
-    UserArgs { user, .. }: &UserArgs,
-  ) -> serror::Result<UpdateUsernameResponse> {
-    check_locked(&user.username)?;
-
-    validate_username(&self.username)?;
-
-    let db = db_client();
-
-    if db
-      .users
-      .find_one(doc! { "username": &self.username })
-      .await
-      .context("Failed to query for existing users")?
-      .is_some()
-    {
-      return Err(anyhow!("Username already taken.").into());
-    }
-
-    let update = doc! { "$set": { "username": self.username } };
-
-    update_one_by_id(&db.users, &user.id, update, None)
-      .await
-      .context("Failed to update user username on database.")?;
-
-    Ok(NoData {})
-  }
-}
-
-//
-
-impl Resolve<UserArgs> for UpdatePassword {
-  #[instrument(
-    "UpdatePassword",
-    skip_all,
-    fields(operator = user.id)
-  )]
-  async fn resolve(
-    self,
-    UserArgs { user, .. }: &UserArgs,
-  ) -> serror::Result<UpdatePasswordResponse> {
-    check_locked(&user.username)?;
-
-    validate_password(&self.password)
-      .status_code(StatusCode::BAD_REQUEST)?;
-
-    db_client().set_user_password(user, &self.password).await?;
-
-    Ok(NoData {})
-  }
-}
-
-//
-
-#[derive(Serialize, Deserialize)]
-pub struct SessionThirdPartyLinkInfo {
-  pub user_id: String,
-}
-
-impl SessionThirdPartyLinkInfo {
-  pub const KEY: &str = "third-party-link-info";
-}
-
-impl Resolve<UserArgs> for BeginThirdPartyLoginLink {
-  #[instrument(
-    "BeginThirdPartyLoginLink",
-    skip_all,
-    fields(operator = user.id)
-  )]
-  async fn resolve(
-    self,
-    UserArgs { user, session }: &UserArgs,
-  ) -> serror::Result<BeginThirdPartyLoginLinkResponse> {
-    check_locked(&user.username)?;
-
-    let session = session.as_ref().context(
-      "Method called in invalid context. This should not happen",
-    )?;
-
-    session
-      .insert(
-        SessionThirdPartyLinkInfo::KEY,
-        SessionThirdPartyLinkInfo {
-          user_id: user.id.clone(),
-        },
-      )
-      .await
-      .context(
-        "Failed to insert third party link info into client session",
-      )?;
-
-    Ok(NoData {})
-  }
-}
-
-impl Resolve<UserArgs> for UnlinkLogin {
-  #[instrument(
-    "UnlinkLogin",
-    skip_all,
-    fields(operator = user.id)
-  )]
-  async fn resolve(
-    self,
-    UserArgs { user, .. }: &UserArgs,
-  ) -> serror::Result<UnlinkLoginResponse> {
-    check_locked(&user.username)?;
-
-    let field = match self.provider.to_lowercase().as_str() {
-      "local" => "linked_logins.Local",
-      "github" => "linked_logins.Github",
-      "google" => "linked_logins.Google",
-      "oidc" => "linked_logins.Oidc",
-      _ => {
-        return Err(
-          anyhow!(
-            "Unrecognized third party login provider: {}",
-            self.provider
-          )
-          .status_code(StatusCode::BAD_REQUEST),
-        );
-      }
-    };
-
-    let update = doc! {
-      "$unset": {
-        field: ""
-      }
-    };
-
-    update_one_by_id(&db_client().users, &user.id, update, None)
-      .await
-      .context("Failed to unlink third partly login on database")?;
-
-    Ok(NoData {})
-  }
-}
-
-impl Resolve<UserArgs> for UpdateThirdPartySkip2fa {
-  #[instrument(
-    "UpdateThirdPartySkip2fa",
-    skip_all,
-    fields(operator = user.id)
-  )]
-  async fn resolve(
-    self,
-    UserArgs { user, .. }: &UserArgs,
-  ) -> serror::Result<UpdateThirdPartySkip2faResponse> {
-    check_locked(&user.username)?;
-
-    let update = doc! {
-      "$set": {
-        "third_party_skip_2fa": self.skip
-      }
-    };
-
-    update_one_by_id(&db_client().users, &user.id, update, None)
-      .await
-      .context("Failed to unlink third partly login on database")?;
-
-    Ok(NoData {})
-  }
-}
-
-fn check_locked(username: &str) -> serror::Result<()> {
-  for locked_username in &core_config().lock_login_credentials_for {
-    if locked_username == "__ALL__" || *locked_username == username {
-      return Err(
-        anyhow!("User login credentials are locked.")
-          .status_code(StatusCode::UNAUTHORIZED),
-      );
-    }
-  }
-  Ok(())
 }

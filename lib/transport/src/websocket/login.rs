@@ -1,9 +1,9 @@
 use anyhow::anyhow;
 use encoding::{Decode as _, Encode as _};
-use noise::key::SpkiPublicKey;
 use periphery_client::transport::{
   EncodedLoginMessage, LoginMessage, TransportMessage,
 };
+use pki::SpkiPublicKey;
 
 use crate::{
   auth::AUTH_TIMEOUT,

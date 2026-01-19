@@ -1,7 +1,6 @@
-import { KOMODO_BASE_URL } from "@main";
-import { KomodoClient, Types } from "komodo_client";
+import { KOMODO_BASE_URL, sanitize_query_inner } from "@main";
+import { KomodoClient, MoghAuth, Types } from "komodo_client";
 import {
-  AuthResponses,
   ExecuteResponses,
   ReadResponses,
   UserResponses,
@@ -21,7 +20,6 @@ import { atomFamily } from "jotai/utils";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
-  extractUserIdFromJwt,
   has_minimum_permissions,
   RESOURCE_TARGETS,
   resourceTargetFromTerminalTarget,
@@ -36,92 +34,14 @@ export const atomWithStorage = <T>(key: string, init: T) => {
     (_, set, newValue) => {
       set(inner, newValue);
       localStorage.setItem(key, JSON.stringify(newValue));
-    }
+    },
   );
 };
-
-type LoginTokens = {
-  /** Current User ID */
-  current: string | undefined;
-  /** Array of logged in user ids / tokens */
-  tokens: Array<{ user_id: string; jwt: string }>;
-};
-
-const LOGIN_TOKENS_KEY = "komodo-auth-tokens-v1";
-
-export const LOGIN_TOKENS = (() => {
-  const stored = localStorage.getItem(LOGIN_TOKENS_KEY);
-
-  let tokens: LoginTokens = stored
-    ? JSON.parse(stored)
-    : { current: undefined, tokens: [] };
-
-  const update_local_storage = () => {
-    localStorage.setItem(LOGIN_TOKENS_KEY, JSON.stringify(tokens));
-  };
-
-  const accounts = () => {
-    const current = tokens.tokens.find((t) => t.user_id === tokens.current);
-    const filtered = tokens.tokens.filter((t) => t.user_id !== tokens.current);
-    return current ? [current, ...filtered] : filtered;
-  };
-
-  const add_and_change = (jwt: string) => {
-    const user_id = extractUserIdFromJwt(jwt);
-    if (!user_id) return;
-    const filtered = tokens.tokens.filter((t) => t.user_id !== user_id);
-    filtered.push({ user_id, jwt });
-    filtered.sort();
-    tokens = {
-      current: user_id,
-      tokens: filtered,
-    };
-    update_local_storage();
-  };
-
-  const remove = (user_id: string) => {
-    const filtered = tokens.tokens.filter((t) => t.user_id !== user_id);
-    tokens = {
-      current:
-        tokens.current === user_id ? filtered[0]?.user_id : tokens.current,
-      tokens: filtered,
-    };
-    update_local_storage();
-  };
-
-  const remove_all = () => {
-    tokens = {
-      current: undefined,
-      tokens: [],
-    };
-    update_local_storage();
-  };
-
-  const change = (to_id: string) => {
-    tokens = {
-      current: to_id,
-      tokens: tokens.tokens,
-    };
-    update_local_storage();
-  };
-
-  return {
-    jwt: () =>
-      tokens.current
-        ? (tokens.tokens.find((t) => t.user_id === tokens.current)?.jwt ?? "")
-        : "",
-    accounts,
-    add_and_change,
-    remove,
-    remove_all,
-    change,
-  };
-})();
 
 export const komodo_client = () =>
   KomodoClient(KOMODO_BASE_URL, {
     type: "jwt",
-    params: { jwt: LOGIN_TOKENS.jwt() },
+    params: { jwt: MoghAuth.LOGIN_TOKENS.jwt() },
   });
 
 // ============== RESOLVER ==============
@@ -129,17 +49,145 @@ export const komodo_client = () =>
 export const useLoginOptions = () => {
   return useQuery({
     queryKey: ["GetLoginOptions"],
-    queryFn: () => komodo_client().auth("GetLoginOptions", {}),
+    queryFn: () => komodo_client().auth.login("GetLoginOptions", {}),
   });
+};
+
+export const useLogin = <
+  T extends MoghAuth.Types.LoginRequest["type"],
+  R extends Extract<MoghAuth.Types.LoginRequest, { type: T }>,
+  P extends R["params"],
+  C extends Omit<
+    UseMutationOptions<MoghAuth.LoginResponses[T], unknown, P, unknown>,
+    "mutationKey" | "mutationFn"
+  >,
+>(
+  type: T,
+  config?: C,
+) => {
+  const { toast } = useToast();
+  return useMutation({
+    mutationKey: [type],
+    mutationFn: (params: P) => komodo_client().auth.login<T, R>(type, params),
+    onError: (e: { result: { error?: string; trace?: string[] } }, v, c) => {
+      console.log("Login error:", e);
+      const msg = e.result.error ?? "Unknown error. See console.";
+      const detail = e.result?.trace
+        ?.map((msg) => msg[0].toUpperCase() + msg.slice(1))
+        .join(" | ");
+      let msg_log = msg ? msg[0].toUpperCase() + msg.slice(1) + " | " : "";
+      if (detail) {
+        msg_log += detail + " | ";
+      }
+      toast({
+        title: `Login request ${type} failed`,
+        description: `${msg_log}See console for details`,
+        variant: "destructive",
+      });
+      config?.onError && config.onError(e, v, c);
+    },
+    ...config,
+  });
+};
+
+export const useManageAuth = <
+  T extends MoghAuth.Types.ManageRequest["type"],
+  R extends Extract<MoghAuth.Types.ManageRequest, { type: T }>,
+  P extends R["params"],
+  C extends Omit<
+    UseMutationOptions<MoghAuth.ManageResponses[T], unknown, P, unknown>,
+    "mutationKey" | "mutationFn"
+  >,
+>(
+  type: T,
+  config?: C,
+) => {
+  const { toast } = useToast();
+  return useMutation({
+    mutationKey: [type],
+    mutationFn: (params: P) => komodo_client().auth.manage<T, R>(type, params),
+    onError: (e: { result: { error?: string; trace?: string[] } }, v, c) => {
+      console.log("Manage auth error:", e);
+      const msg = e.result.error ?? "Unknown error. See console.";
+      const detail = e.result?.trace
+        ?.map((msg) => msg[0].toUpperCase() + msg.slice(1))
+        .join(" | ");
+      let msg_log = msg ? msg[0].toUpperCase() + msg.slice(1) + " | " : "";
+      if (detail) {
+        msg_log += detail + " | ";
+      }
+      toast({
+        title: `Manage auth request ${type} failed`,
+        description: `${msg_log}See console for details`,
+        variant: "destructive",
+      });
+      config?.onError && config.onError(e, v, c);
+    },
+    ...config,
+  });
+};
+
+let jwt_redeem_sent = false;
+let passkey_sent = false;
+
+/// returns whether to show login / loading screen depending on state of exchange token loop
+export const useAuthState = () => {
+  const { toast } = useToast();
+  const onSuccess = ({ jwt }: MoghAuth.Types.JwtResponse) => {
+    MoghAuth.LOGIN_TOKENS.add_and_change(jwt);
+    sanitize_query_inner(search);
+  };
+  const { mutate: redeemJwt } = useLogin("ExchangeForJwt", {
+    onSuccess,
+  });
+  const { mutate: completePasskeyLogin } = useLogin("CompletePasskeyLogin", {
+    onSuccess,
+  });
+  const search = new URLSearchParams(location.search);
+
+  const _passkey = search.get("passkey");
+  const passkey = _passkey ? JSON.parse(_passkey) : null;
+
+  // guard against multiple reqs sent
+  // maybe isPending would do this but not sure about with render loop, this for sure will.
+  if (passkey && !passkey_sent) {
+    navigator.credentials
+      .get(MoghAuth.Passkey.prepareRequestChallengeResponse(passkey))
+      .then((credential) => completePasskeyLogin({ credential }))
+      .catch((e) => {
+        console.error(e);
+        toast({
+          title: "Failed to select passkey",
+          description: "See console for details",
+          variant: "destructive",
+        });
+      });
+    passkey_sent = true;
+  }
+
+  const jwt_redeem_ready = search.get("redeem_ready") === "true";
+
+  // guard against multiple reqs sent
+  // maybe isPending would do this but not sure about with render loop, this for sure will.
+  if (jwt_redeem_ready && !jwt_redeem_sent) {
+    redeemJwt({});
+    jwt_redeem_sent = true;
+  }
+
+  return {
+    jwt_redeem_ready,
+    passkey_pending: !!passkey,
+    totp: search.get("totp") === "true",
+  };
 };
 
 export const useUser = () => {
   const userReset = useUserReset();
-  const hasJwt = !!LOGIN_TOKENS.jwt();
+  const hasJwt = !!MoghAuth.LOGIN_TOKENS.jwt();
 
   const query = useQuery({
     queryKey: ["GetUser"],
-    queryFn: () => komodo_client().auth("GetUser", {}),
+    queryFn: () => komodo_client().getUser(),
     refetchInterval: 30_000,
     enabled: hasJwt,
   });
@@ -177,7 +225,7 @@ export const useManageUser = <
   >,
 >(
   type: T,
-  config?: C
+  config?: C,
 ) => {
   const { toast } = useToast();
   return useMutation({
@@ -204,43 +252,6 @@ export const useManageUser = <
   });
 };
 
-export const useAuth = <
-  T extends Types.AuthRequest["type"],
-  R extends Extract<Types.AuthRequest, { type: T }>,
-  P extends R["params"],
-  C extends Omit<
-    UseMutationOptions<AuthResponses[T], unknown, P, unknown>,
-    "mutationKey" | "mutationFn"
-  >,
->(
-  type: T,
-  config?: C
-) => {
-  const { toast } = useToast();
-  return useMutation({
-    mutationKey: [type],
-    mutationFn: (params: P) => komodo_client().auth<T, R>(type, params),
-    onError: (e: { result: { error?: string; trace?: string[] } }, v, c) => {
-      console.log("Auth error:", e);
-      const msg = e.result.error ?? "Unknown error. See console.";
-      const detail = e.result?.trace
-        ?.map((msg) => msg[0].toUpperCase() + msg.slice(1))
-        .join(" | ");
-      let msg_log = msg ? msg[0].toUpperCase() + msg.slice(1) + " | " : "";
-      if (detail) {
-        msg_log += detail + " | ";
-      }
-      toast({
-        title: `Auth request ${type} failed`,
-        description: `${msg_log}See console for details`,
-        variant: "destructive",
-      });
-      config?.onError && config.onError(e, v, c);
-    },
-    ...config,
-  });
-};
-
 export const useRead = <
   T extends Types.ReadRequest["type"],
   R extends Extract<Types.ReadRequest, { type: T }>,
@@ -257,9 +268,9 @@ export const useRead = <
 >(
   type: T,
   params: P,
-  config?: C
+  config?: C,
 ) => {
-  const hasJwt = !!LOGIN_TOKENS.jwt();
+  const hasJwt = !!MoghAuth.LOGIN_TOKENS.jwt();
   return useQuery({
     queryKey: [type, params],
     queryFn: () => komodo_client().read<T, R>(type, params),
@@ -288,7 +299,7 @@ export const useWrite = <
   >,
 >(
   type: T,
-  config?: C
+  config?: C,
 ) => {
   const { toast } = useToast();
   return useMutation({
@@ -325,7 +336,7 @@ export const useExecute = <
   >,
 >(
   type: T,
-  config?: C
+  config?: C,
 ) => {
   const { toast } = useToast();
   return useMutation({
@@ -358,7 +369,7 @@ export const useResourceName = (type: UsableResource) => {
   const resources = useRead(`List${type}s`, {}).data;
   return useCallback(
     (id: string) => resources?.find((resource) => resource.id === id)?.name,
-    [resources]
+    [resources],
   );
 };
 
@@ -406,7 +417,7 @@ export const useCheckResourceExists = () => {
   return (target: Types.ResourceTarget) => {
     return (
       resources[target.type as UsableResource]?.some(
-        (resource) => resource.id === target.id
+        (resource) => resource.id === target.id,
       ) || false
     );
   };
@@ -414,7 +425,7 @@ export const useCheckResourceExists = () => {
 
 export const useFilterResources = <Info>(
   resources?: Types.ResourceListItem<Info>[],
-  search?: string
+  search?: string,
 ) => {
   const tags = useTagsFilter();
   const searchSplit = search?.toLowerCase()?.split(" ") || [];
@@ -424,9 +435,9 @@ export const useFilterResources = <Info>(
         tags.every((tag: string) => resource.tags.includes(tag)) &&
         (searchSplit.length > 0
           ? searchSplit.every((search) =>
-              resource.name.toLowerCase().includes(search)
+              resource.name.toLowerCase().includes(search),
             )
-          : true)
+          : true),
     ) ?? []
   );
 };
@@ -439,7 +450,7 @@ export const usePushRecentlyViewed = ({ type, id }: Types.ResourceTarget) => {
   }).mutate;
 
   const exists = useRead(`List${type as UsableResource}s`, {}).data?.find(
-    (r) => r.id === id
+    (r) => r.id === id,
   )
     ? true
     : false;
@@ -496,7 +507,7 @@ export type LocalStorageSetter<T> = (state: T) => T;
 
 export const useLocalStorage = <T>(
   key: string,
-  init: T
+  init: T,
 ): [T, (state: T | LocalStorageSetter<T>) => void] => {
   const stored = localStorage.getItem(key);
   const parsed = stored ? (JSON.parse(stored) as T) : undefined;
@@ -590,17 +601,17 @@ export const usePromptHotkeys = ({
 
     const findConfirmButton = (): HTMLButtonElement | null => {
       const dialogContainers = document.querySelectorAll(
-        '[role="dialog"], [data-state="open"], .dialog-content'
+        '[role="dialog"], [data-state="open"], .dialog-content',
       );
       for (const container of dialogContainers) {
         const button = container.querySelector(
-          "[data-confirm-button]:not([disabled])"
+          "[data-confirm-button]:not([disabled])",
         ) as HTMLButtonElement;
         if (button) return button;
       }
 
       return document.querySelector(
-        "[data-confirm-button]:not([disabled])"
+        "[data-confirm-button]:not([disabled])",
       ) as HTMLButtonElement;
     };
 
@@ -650,12 +661,12 @@ export type WebhookIntegrations = {
 
 const WEBHOOK_INTEGRATIONS_ATOM = atomWithStorage<WebhookIntegrations>(
   "webhook-integrations-v2",
-  {}
+  {},
 );
 
 export const useWebhookIntegrations = () => {
   const [integrations, setIntegrations] = useAtom<WebhookIntegrations>(
-    WEBHOOK_INTEGRATIONS_ATOM
+    WEBHOOK_INTEGRATIONS_ATOM,
   );
   return {
     integrations,
@@ -669,7 +680,7 @@ export const useWebhookIntegrations = () => {
 
 export const getWebhookIntegration = (
   integrations: WebhookIntegrations,
-  git_provider: string
+  git_provider: string,
 ) => {
   return integrations[git_provider]
     ? integrations[git_provider]
@@ -682,7 +693,7 @@ export type WebhookIdOrName = "Id" | "Name";
 
 const WEBHOOK_ID_OR_NAME_ATOM = atomWithStorage<WebhookIdOrName>(
   "webhook-id-or-name-v1",
-  "Id"
+  "Id",
 );
 
 export const useWebhookIdOrName = () => {
@@ -712,14 +723,14 @@ export const useWindowDimensions = () => {
 };
 
 const selected_resources = atomFamily((_: UsableResource) =>
-  atom<string[]>([])
+  atom<string[]>([]),
 );
 export const useSelectedResources = (type: UsableResource) =>
   useAtom(selected_resources(type));
 
 const filter_by_update_available = atomWithStorage<boolean>(
   "update-available-filter-v1",
-  false
+  false,
 );
 export const useFilterByUpdateAvailable: () => [boolean, () => void] = () => {
   const [filter, set] = useAtom<boolean>(filter_by_update_available);
@@ -745,7 +756,7 @@ export const usePermissions = ({ type, id }: Types.ResourceTarget) => {
   const canWrite = !ui_write_disabled && level === Types.PermissionLevel.Write;
   const canExecute = has_minimum_permissions(
     { level, specific },
-    Types.PermissionLevel.Execute
+    Types.PermissionLevel.Execute,
   );
 
   const [
@@ -797,7 +808,7 @@ export const useTerminalTargetPermissions = (target: Types.TerminalTarget) => {
 const templatesQueryBehaviorAtom =
   atomWithStorage<Types.TemplatesQueryBehavior>(
     "templates-query-behavior-v0",
-    Types.TemplatesQueryBehavior.Exclude
+    Types.TemplatesQueryBehavior.Exclude,
   );
 
 export const useTemplatesQueryBehavior = () =>

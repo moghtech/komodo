@@ -1,5 +1,5 @@
 import { ConfirmButton } from "@components/util";
-import { useManageUser, useUserInvalidate } from "@lib/hooks";
+import { useManageAuth, useUserInvalidate } from "@lib/hooks";
 import { Button } from "@ui/button";
 import { Fingerprint, Trash } from "lucide-react";
 import { Types } from "komodo_client";
@@ -10,27 +10,27 @@ export const EnrollPasskey = ({ user }: { user: Types.User }) => {
   const userInvalidate = useUserInvalidate();
   const { toast } = useToast();
 
-  const { mutate: unenroll, isPending: unenroll_pending } = useManageUser(
+  const { mutate: unenroll, isPending: unenroll_pending } = useManageAuth(
     "UnenrollPasskey",
     {
       onSuccess: () => {
         userInvalidate();
         toast({ title: "Unenrolled in passkey 2FA" });
       },
-    }
+    },
   );
 
-  const { mutate: confirm_enrollment } = useManageUser(
+  const { mutate: confirm_enrollment } = useManageAuth(
     "ConfirmPasskeyEnrollment",
     {
       onSuccess: () => {
         userInvalidate();
         toast({ title: "Enrolled in passkey authentication" });
       },
-    }
+    },
   );
 
-  const { mutate: begin_enrollment } = useManageUser("BeginPasskeyEnrollment", {
+  const { mutate: begin_enrollment } = useManageAuth("BeginPasskeyEnrollment", {
     onSuccess: (challenge) => {
       const formatted_challenge = {
         ...challenge,
@@ -42,7 +42,7 @@ export const EnrollPasskey = ({ user }: { user: Types.User }) => {
             id: base64urlToArrayBuffer(challenge.publicKey.user.id),
           },
           excludeCredentials: challenge.publicKey.excludeCredentials?.map(
-            (cred: any) => ({ ...cred, id: base64urlToArrayBuffer(cred.id) })
+            (cred: any) => ({ ...cred, id: base64urlToArrayBuffer(cred.id) }),
           ),
         },
       };
@@ -66,7 +66,7 @@ export const EnrollPasskey = ({ user }: { user: Types.User }) => {
         variant="secondary"
         className={cn(
           "items-center gap-2",
-          (user.totp?.confirmed_at || !!user.passkey?.created_at) && "hidden"
+          (user.totp?.confirmed_at || !!user.passkey?.created_at) && "hidden",
         )}
         onClick={() => begin_enrollment({})}
       >

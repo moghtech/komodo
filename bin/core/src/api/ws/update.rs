@@ -1,15 +1,13 @@
-use std::net::SocketAddr;
-
 use anyhow::anyhow;
 use axum::{
-  extract::{ConnectInfo, WebSocketUpgrade, ws::Message},
-  http::HeaderMap,
+  extract::{WebSocketUpgrade, ws::Message},
   response::IntoResponse,
 };
 use futures_util::{SinkExt, StreamExt};
 use komodo_client::entities::{
   ResourceTarget, permission::PermissionLevel, user::User,
 };
+use mogh_auth_server::request_ip::RequestIp;
 use serde_json::json;
 use serror::serialize_error;
 use tokio::select;
@@ -20,18 +18,16 @@ use crate::helpers::{
 };
 
 pub async fn handler(
-  headers: HeaderMap,
-  ConnectInfo(info): ConnectInfo<SocketAddr>,
+  RequestIp(ip): RequestIp,
   ws: WebSocketUpgrade,
 ) -> impl IntoResponse {
   // get a reveiver for internal update messages.
   let mut receiver = update_channel().receiver.resubscribe();
-  let ip = info.ip();
 
   // handle http -> ws updgrade
   ws.on_upgrade(move |socket| async move {
     let Some((client_socket, user)) =
-      super::user_ws_login(socket, &headers, ip).await
+      super::user_ws_login(socket,  ip).await
     else {
       return;
     };

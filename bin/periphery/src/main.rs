@@ -101,7 +101,7 @@ async fn app() -> anyhow::Result<()> {
 async fn main() -> anyhow::Result<()> {
   // Handle `periphery key gen` and `periphery key compute <private-key>`
   if let Some(Command::Key { command }) = &periphery_args().command {
-    return noise::key::command::handle(command).await;
+    return pki::cli::handle(command, pki::PkiKind::Mutual).await;
   }
 
   let mut term_signal = tokio::signal::unix::signal(

@@ -1,7 +1,4 @@
-use std::{
-  net::{IpAddr, Ipv4Addr},
-  str::FromStr,
-};
+use std::str::FromStr;
 
 use anyhow::Context;
 use colored::Colorize;
@@ -14,7 +11,6 @@ use database::mungos::{
 use futures_util::future::join_all;
 use komodo_client::{
   api::{
-    auth::SignUpLocalUser,
     execute::{
       BackupCoreDatabase, Execution, GlobalAutoUpdate,
       RotateAllServerKeys, RunAction,
@@ -41,7 +37,6 @@ use uuid::Uuid;
 
 use crate::{
   api::{
-    auth::AuthArgs,
     execute::{ExecuteArgs, ExecuteRequest},
     write::WriteArgs,
   },
@@ -303,20 +298,20 @@ async fn ensure_init_user_and_resources() {
   // Init admin user if set in config.
   if let Some(username) = &config.init_admin_username {
     info!("Creating init admin user...");
-    if let Err(e) = (SignUpLocalUser {
-      username: username.clone(),
-      password: config.init_admin_password.clone(),
-    })
-    .resolve(&AuthArgs {
-      headers: Default::default(),
-      ip: IpAddr::V4(Ipv4Addr::UNSPECIFIED),
-      session: None,
-    })
-    .await
-    {
-      error!("Failed to create init admin user | {:#}", e.error);
-      return;
-    }
+    // if let Err(e) = (SignUpLocalUser {
+    //   username: username.clone(),
+    //   password: config.init_admin_password.clone(),
+    // })
+    // .resolve(&AuthArgs {
+    //   headers: Default::default(),
+    //   ip: IpAddr::V4(Ipv4Addr::UNSPECIFIED),
+    //   session: None,
+    // })
+    // .await
+    // {
+    //   error!("Failed to create init admin user | {:#}", e.error);
+    //   return;
+    // }
     match db
       .users
       .find_one(doc! { "username": username })

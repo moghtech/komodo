@@ -118,7 +118,7 @@ pub struct ContainerConfig {
 
   /// An object mapping ports to an empty object in the form:  `{\"<port>/<tcp|udp|sctp>\": {}}`
   #[serde(default, rename = "ExposedPorts")]
-  pub exposed_ports: HashMap<String, HashMap<String, ()>>,
+  pub exposed_ports: Vec<String>,
 
   /// Attach standard streams to a TTY, including `stdin` if it is not closed.
   #[serde(rename = "Tty")]
@@ -153,7 +153,7 @@ pub struct ContainerConfig {
 
   /// An object mapping mount point paths inside the container to empty objects.
   #[serde(default, rename = "Volumes")]
-  pub volumes: HashMap<String, HashMap<String, ()>>,
+  pub volumes: Vec<String>,
 
   /// The working directory for commands to run in.
   #[serde(rename = "WorkingDir")]
@@ -166,10 +166,6 @@ pub struct ContainerConfig {
   /// Disable networking for the container.
   #[serde(rename = "NetworkDisabled")]
   pub network_disabled: Option<bool>,
-
-  /// MAC address of the container.  Deprecated: this field is deprecated in API v1.44 and up. Use EndpointSettings.MacAddress instead.
-  #[serde(rename = "MacAddress")]
-  pub mac_address: Option<String>,
 
   /// `ONBUILD` metadata that were defined in the image's `Dockerfile`.
   #[serde(default, rename = "OnBuild")]

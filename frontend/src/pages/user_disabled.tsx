@@ -1,5 +1,6 @@
-import { LOGIN_TOKENS, useUser } from "@lib/hooks";
+import { useUser } from "@lib/hooks";
 import { Button } from "@ui/button";
+import { MoghAuth } from "komodo_client";
 import { UserX } from "lucide-react";
 
 export default function UserDisabled() {
@@ -12,7 +13,7 @@ export default function UserDisabled() {
         <Button
           variant="outline"
           onClick={() => {
-            user_id && LOGIN_TOKENS.remove(user_id);
+            user_id && MoghAuth.LOGIN_TOKENS.remove(user_id);
             location.reload();
           }}
         >

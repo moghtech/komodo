@@ -1,31 +1,10 @@
 import * as Types from "./types.js";
 
-export type AuthResponses = {
-  GetLoginOptions: Types.GetLoginOptionsResponse;
-  SignUpLocalUser: Types.SignUpLocalUserResponse;
-  LoginLocalUser: Types.LoginLocalUserResponse;
-  ExchangeForJwt: Types.ExchangeForJwtResponse;
-  CompleteTotpLogin: Types.CompleteTotpLoginResponse;
-  CompletePasskeyLogin: Types.CompletePasskeyLoginResponse;
-  GetUser: Types.GetUserResponse;
-};
-
 export type UserResponses = {
   PushRecentlyViewed: Types.PushRecentlyViewedResponse;
   SetLastSeenUpdate: Types.SetLastSeenUpdateResponse;
-  UpdateUsername: Types.UpdateUsernameResponse;
-  UpdatePassword: Types.UpdatePasswordResponse;
   CreateApiKey: Types.CreateApiKeyResponse;
   DeleteApiKey: Types.DeleteApiKeyResponse;
-  BeginTotpEnrollment: Types.BeginTotpEnrollmentResponse;
-  ConfirmTotpEnrollment: Types.ConfirmTotpEnrollmentResponse;
-  UnenrollTotp: Types.UnenrollTotpResponse;
-  BeginPasskeyEnrollment: Types.BeginPasskeyEnrollmentResponse;
-  ConfirmPasskeyEnrollment: Types.ConfirmPasskeyEnrollmentResponse;
-  UnenrollPasskey: Types.UnenrollPasskeyResponse;
-  BeginThirdPartyLoginLink: Types.BeginThirdPartyLoginLinkResponse;
-  UnlinkLogin: Types.UnlinkLoginResponse;
-  UpdateThirdPartySkip2fa: Types.UpdateThirdPartySkip2faResponse;
 };
 
 export type ReadResponses = {

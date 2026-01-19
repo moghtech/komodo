@@ -14,12 +14,12 @@ path = "src/main.rs"
 
 [dependencies]
 # local
-komodo_client.workspace = true
+komodo_client = { workspace = true, features = ["cli"] }
 secret_file.workspace = true
 database.workspace = true
 config.workspace = true
 logger.workspace = true
-noise.workspace = true
+pki.workspace = true
 # external
 futures-util.workspace = true
 comfy-table.workspace = true

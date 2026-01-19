@@ -141,7 +141,6 @@ impl Resolve<ExecuteArgs> for RunAction {
     }
     .resolve(&UserArgs {
       user: action_user().to_owned(),
-      session: None,
     })
     .await?;
 
@@ -200,7 +199,6 @@ impl Resolve<ExecuteArgs> for RunAction {
     if let Err(e) = (DeleteApiKey { key })
       .resolve(&UserArgs {
         user: action_user().to_owned(),
-        session: None,
       })
       .await
     {

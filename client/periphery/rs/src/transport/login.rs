@@ -4,7 +4,7 @@ use encoding::{
   CastBytes, Decode, Encode, EncodedResponse, impl_cast_bytes_vec,
   impl_from_for_wrapper,
 };
-use noise::key::SpkiPublicKey;
+use pki::SpkiPublicKey;
 
 use crate::transport::{EncodedTransportMessage, TransportMessage};
 

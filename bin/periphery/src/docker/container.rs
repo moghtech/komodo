@@ -248,7 +248,6 @@ impl DockerClient {
             options: request.options.unwrap_or_default(),
           })
           .collect(),
-        kernel_memory_tcp: config.kernel_memory_tcp,
         memory_reservation: config.memory_reservation,
         memory_swap: config.memory_swap,
         memory_swappiness: config.memory_swappiness,
@@ -381,12 +380,7 @@ impl DockerClient {
         attach_stdin: config.attach_stdin,
         attach_stdout: config.attach_stdout,
         attach_stderr: config.attach_stderr,
-        exposed_ports: config
-          .exposed_ports
-          .unwrap_or_default()
-          .into_keys()
-          .map(|k| (k, Default::default()))
-          .collect(),
+        exposed_ports: config.exposed_ports.unwrap_or_default(),
         tty: config.tty,
         open_stdin: config.open_stdin,
         stdin_once: config.stdin_once,
@@ -395,16 +389,10 @@ impl DockerClient {
         healthcheck: config.healthcheck.map(convert_health_config),
         args_escaped: config.args_escaped,
         image: config.image,
-        volumes: config
-          .volumes
-          .unwrap_or_default()
-          .into_keys()
-          .map(|k| (k, Default::default()))
-          .collect(),
+        volumes: config.volumes.unwrap_or_default(),
         working_dir: config.working_dir,
         entrypoint: config.entrypoint.unwrap_or_default(),
         network_disabled: config.network_disabled,
-        mac_address: config.mac_address,
         on_build: config.on_build.unwrap_or_default(),
         labels: config.labels.unwrap_or_default(),
         stop_signal: config.stop_signal,
@@ -413,7 +401,6 @@ impl DockerClient {
       }),
       network_settings: container.network_settings.map(|settings| {
         NetworkSettings {
-          bridge: settings.bridge,
           sandbox_id: settings.sandbox_id,
           ports: settings
             .ports
@@ -536,16 +523,18 @@ fn convert_container_state_status(
 }
 
 fn convert_port_type(
-  typ: bollard::secret::PortTypeEnum,
+  typ: bollard::secret::PortSummaryTypeEnum,
 ) -> PortTypeEnum {
   match typ {
-    bollard::secret::PortTypeEnum::EMPTY => PortTypeEnum::EMPTY,
-    bollard::secret::PortTypeEnum::TCP => PortTypeEnum::TCP,
-    bollard::secret::PortTypeEnum::UDP => PortTypeEnum::UDP,
-    bollard::secret::PortTypeEnum::SCTP => PortTypeEnum::SCTP,
+    bollard::secret::PortSummaryTypeEnum::EMPTY => {
+      PortTypeEnum::EMPTY
+    }
+    bollard::secret::PortSummaryTypeEnum::TCP => PortTypeEnum::TCP,
+    bollard::secret::PortSummaryTypeEnum::UDP => PortTypeEnum::UDP,
+    bollard::secret::PortSummaryTypeEnum::SCTP => PortTypeEnum::SCTP,
   }
 }
-fn convert_port(port: bollard::secret::Port) -> Port {
+fn convert_port(port: bollard::secret::PortSummary) -> Port {
   Port {
     ip: port.ip,
     private_port: port.private_port,

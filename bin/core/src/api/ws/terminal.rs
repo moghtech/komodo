@@ -1,9 +1,7 @@
-use std::net::SocketAddr;
-
 use anyhow::anyhow;
 use axum::{
-  extract::{ConnectInfo, FromRequestParts, WebSocketUpgrade, ws},
-  http::{HeaderMap, request},
+  extract::{FromRequestParts, WebSocketUpgrade, ws},
+  http::request,
   response::IntoResponse,
 };
 use bytes::Bytes;
@@ -11,6 +9,7 @@ use futures_util::{SinkExt, StreamExt as _};
 use komodo_client::{
   api::terminal::ConnectTerminalQuery, entities::user::User,
 };
+use mogh_auth_server::request_ip::RequestIp;
 use periphery_client::api::terminal::DisconnectTerminal;
 use serde::de::DeserializeOwned;
 use tokio_util::sync::CancellationToken;
@@ -23,15 +22,13 @@ use crate::{
 
 #[instrument("ConnectTerminal", skip(ws))]
 pub async fn handler(
+  RequestIp(ip): RequestIp,
   Qs(query): Qs<ConnectTerminalQuery>,
-  ConnectInfo(info): ConnectInfo<SocketAddr>,
-  headers: HeaderMap,
   ws: WebSocketUpgrade,
 ) -> impl IntoResponse {
-  let ip = info.ip();
   ws.on_upgrade(move |socket| async move {
     let Some((mut client_socket, user)) =
-      super::user_ws_login(socket, &headers, ip).await
+      super::user_ws_login(socket, ip).await
     else {
       return;
     };

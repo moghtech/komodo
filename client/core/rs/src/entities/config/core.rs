@@ -11,6 +11,7 @@
 
 use std::{collections::HashMap, path::PathBuf};
 
+use mogh_auth_client::config::NamedOauthConfig;
 use serde::Deserialize;
 
 use crate::{
@@ -275,9 +276,9 @@ pub struct Env {
   /// Override `ssl_enabled`.
   pub komodo_ssl_enabled: Option<bool>,
   /// Override `ssl_key_file`
-  pub komodo_ssl_key_file: Option<PathBuf>,
+  pub komodo_ssl_key_file: Option<String>,
   /// Override `ssl_cert_file`
-  pub komodo_ssl_cert_file: Option<PathBuf>,
+  pub komodo_ssl_cert_file: Option<String>,
 }
 
 fn default_core_config_paths() -> Vec<PathBuf> {
@@ -525,11 +526,11 @@ pub struct CoreConfig {
   // =========
   /// Configure google oauth
   #[serde(default)]
-  pub google_oauth: OauthCredentials,
+  pub google_oauth: NamedOauthConfig,
 
   /// Configure github oauth
   #[serde(default)]
-  pub github_oauth: OauthCredentials,
+  pub github_oauth: NamedOauthConfig,
 
   // =================
   // = Rate Limiting =
@@ -675,12 +676,12 @@ pub struct CoreConfig {
   /// Path to the ssl key.
   /// Default: `/config/ssl/key.pem`.
   #[serde(default = "default_ssl_key_file")]
-  pub ssl_key_file: PathBuf,
+  pub ssl_key_file: String,
 
   /// Path to the ssl cert.
   /// Default: `/config/ssl/cert.pem`.
   #[serde(default = "default_ssl_cert_file")]
-  pub ssl_cert_file: PathBuf,
+  pub ssl_cert_file: String,
 
   // =========
   // = Other =
@@ -770,12 +771,12 @@ fn default_monitoring_interval() -> Timelength {
   Timelength::FifteenSeconds
 }
 
-fn default_ssl_key_file() -> PathBuf {
-  "/config/ssl/key.pem".parse().unwrap()
+fn default_ssl_key_file() -> String {
+  "/config/ssl/key.pem".to_string()
 }
 
-fn default_ssl_cert_file() -> PathBuf {
-  "/config/ssl/cert.pem".parse().unwrap()
+fn default_ssl_cert_file() -> String {
+  "/config/ssl/cert.pem".to_string()
 }
 
 impl Default for CoreConfig {
@@ -913,15 +914,19 @@ impl CoreConfig {
         .iter()
         .map(|aud| empty_or_redacted(aud))
         .collect(),
-      google_oauth: OauthCredentials {
+      google_oauth: NamedOauthConfig {
         enabled: config.google_oauth.enabled,
-        id: empty_or_redacted(&config.google_oauth.id),
-        secret: empty_or_redacted(&config.google_oauth.id),
+        client_id: empty_or_redacted(&config.google_oauth.client_id),
+        client_secret: empty_or_redacted(
+          &config.google_oauth.client_secret,
+        ),
       },
-      github_oauth: OauthCredentials {
+      github_oauth: NamedOauthConfig {
         enabled: config.github_oauth.enabled,
-        id: empty_or_redacted(&config.github_oauth.id),
-        secret: empty_or_redacted(&config.github_oauth.id),
+        client_id: empty_or_redacted(&config.github_oauth.client_id),
+        client_secret: empty_or_redacted(
+          &config.github_oauth.client_secret,
+        ),
       },
       auth_rate_limit_disabled: config.auth_rate_limit_disabled,
       auth_rate_limit_max_attempts: config
@@ -978,20 +983,6 @@ impl CoreConfig {
   }
 }
 
-/// Generic Oauth credentials
-#[derive(Debug, Clone, Default, Deserialize)]
-pub struct OauthCredentials {
-  /// Whether this oauth method is available for usage.
-  #[serde(default)]
-  pub enabled: bool,
-  /// The Oauth client id.
-  #[serde(default)]
-  pub id: String,
-  /// The Oauth client secret.
-  #[serde(default)]
-  pub secret: String,
-}
-
 /// Provide AWS credentials for Komodo to use.
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct AwsCredentials {
@@ -999,4 +990,43 @@ pub struct AwsCredentials {
   pub access_key_id: String,
   /// The aws SECRET_ACCESS_KEY
   pub secret_access_key: String,
+}
+
+impl mogh_server::ServerConfig for &CoreConfig {
+  fn bind_ip(&self) -> &str {
+    &self.bind_ip
+  }
+  fn port(&self) -> u16 {
+    self.port
+  }
+  fn ssl_enabled(&self) -> bool {
+    self.ssl_enabled
+  }
+  fn ssl_key_file(&self) -> &str {
+    &self.ssl_key_file
+  }
+  fn ssl_cert_file(&self) -> &str {
+    &self.ssl_cert_file
+  }
+}
+
+impl mogh_server::cors::CorsConfig for &CoreConfig {
+  fn allowed_origins_env_field(&self) -> &'static str {
+    "KOMODO_CORS_ALLOWED_ORIGINS"
+  }
+  fn allowed_origins(&self) -> &[String] {
+    &self.cors_allowed_origins
+  }
+}
+
+impl mogh_server::session::SessionConfig for &CoreConfig {
+  fn expiry_seconds(&self) -> i64 {
+    60
+  }
+  fn host_env_field(&self) -> &str {
+    "KOMODO_HOST"
+  }
+  fn host(&self) -> &str {
+    &self.host
+  }
 }

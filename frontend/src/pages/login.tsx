@@ -9,18 +9,13 @@ import {
 } from "@ui/card";
 import { Input } from "@ui/input";
 import { Label } from "@ui/label";
-import {
-  LOGIN_TOKENS,
-  useAuth,
-  useLoginOptions,
-  useUserInvalidate,
-} from "@lib/hooks";
+import { useLogin, useLoginOptions, useUserInvalidate } from "@lib/hooks";
 import { useRef, useState } from "react";
 import { ThemeToggle } from "@ui/theme";
 import { KOMODO_BASE_URL, sanitize_query } from "@main";
 import { KeyRound, Loader2, X } from "lucide-react";
 import { cn, preparePasskeyCredential } from "@lib/utils";
-import { Types } from "komodo_client";
+import { MoghAuth } from "komodo_client";
 import { useToast } from "@ui/use-toast";
 
 type OauthProvider = "Github" | "Google" | "OIDC";
@@ -32,7 +27,7 @@ const login_with_oauth = (provider: OauthProvider) => {
     : location.href;
   const redirect = encodeURIComponent(_redirect);
   location.replace(
-    `${KOMODO_BASE_URL}/auth/${provider.toLowerCase()}/login?redirect=${redirect}`
+    `${KOMODO_BASE_URL}/auth/${provider.toLowerCase()}/login?redirect=${redirect}`,
   );
 };
 
@@ -49,7 +44,7 @@ export default function Login({
   const formRef = useRef<HTMLFormElement>(null);
   const totpFormRef = useRef<HTMLFormElement>(null);
   const [passkeyIsPending, setPasskeyPending] = useState(
-    _passkeyIsPending ?? false
+    _passkeyIsPending ?? false,
   );
   const [totpIsPending, setTotpPending] = useState(_totpIsPending ?? false);
   const secondFactorPending = passkeyIsPending || totpIsPending;
@@ -58,62 +53,65 @@ export default function Login({
   const maybeNavigate = location.pathname.startsWith("/login")
     ? () =>
         location.replace(
-          new URLSearchParams(location.search).get("backto") ?? "/"
+          new URLSearchParams(location.search).get("backto") ?? "/",
         )
     : undefined;
 
-  const onSuccess = ({ jwt }: Types.JwtResponse) => {
-    LOGIN_TOKENS.add_and_change(jwt);
+  const onSuccess = ({ jwt }: MoghAuth.Types.JwtResponse) => {
+    MoghAuth.LOGIN_TOKENS.add_and_change(jwt);
     userInvalidate();
     maybeNavigate?.();
   };
 
-  const secondFactorOnSuccess = (res: Types.JwtResponse) => {
+  const secondFactorOnSuccess = (res: MoghAuth.Types.JwtResponse) => {
     sanitize_query();
     onSuccess(res);
   };
 
-  const { mutate: signup, isPending: signupPending } = useAuth(
+  const { mutate: signup, isPending: signupPending } = useLogin(
     "SignUpLocalUser",
     {
       onSuccess,
-    }
+    },
   );
 
-  const { mutate: completeTotpLogin, isPending: totpPending } = useAuth(
+  const { mutate: completeTotpLogin, isPending: totpPending } = useLogin(
     "CompleteTotpLogin",
     {
       onSuccess: secondFactorOnSuccess,
-    }
+    },
   );
 
-  const { mutate: completePasskeyLogin } = useAuth("CompletePasskeyLogin", {
+  const { mutate: completePasskeyLogin } = useLogin("CompletePasskeyLogin", {
     onSuccess: secondFactorOnSuccess,
   });
 
-  const { mutate: login, isPending: loginPending } = useAuth("LoginLocalUser", {
-    onSuccess: ({ type, data }) => {
-      switch (type) {
-        case "Jwt":
-          return onSuccess(data);
-        case "Passkey":
-          setPasskeyPending(true);
-          return navigator.credentials
-            .get(preparePasskeyCredential(data))
-            .then((credential) => completePasskeyLogin({ credential }))
-            .catch((e) => {
-              console.error(e);
-              toast({
-                title: "Failed to select passkey",
-                description: "See console for details",
-                variant: "destructive",
+  const { mutate: login, isPending: loginPending } = useLogin(
+    "LoginLocalUser",
+    {
+      onSuccess: ({ type, data }) => {
+        switch (type) {
+          case "Jwt":
+            return onSuccess(data);
+          case "Passkey":
+            setPasskeyPending(true);
+            return navigator.credentials
+              .get(preparePasskeyCredential(data))
+              .then((credential) => completePasskeyLogin({ credential }))
+              .catch((e) => {
+                console.error(e);
+                toast({
+                  title: "Failed to select passkey",
+                  description: "See console for details",
+                  variant: "destructive",
+                });
               });
-            });
-        case "Totp":
-          return setTotpPending(true);
-      }
+          case "Totp":
+            return setTotpPending(true);
+        }
+      },
     },
-  });
+  );
 
   const getFormCredentials = () => {
     if (!formRef.current) return undefined;
@@ -169,7 +167,7 @@ export default function Login({
       <div
         className={cn(
           "flex justify-center items-center container",
-          options?.local ? "mt-32" : "mt-64"
+          options?.local ? "mt-32" : "mt-64",
         )}
       >
         <Card className="w-full max-w-[500px] place-self-center">
@@ -210,7 +208,7 @@ export default function Login({
                           />
                         )}
                       </Button>
-                    )
+                    ),
                 )}
                 {noAuthConfigured && (
                   <Button variant="destructive" size="icon">

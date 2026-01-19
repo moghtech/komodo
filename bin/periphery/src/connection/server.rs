@@ -1,6 +1,5 @@
 use std::{
   net::{IpAddr, SocketAddr},
-  str::FromStr,
   sync::{
     OnceLock,
     atomic::{self, AtomicBool},
@@ -17,7 +16,6 @@ use axum::{
   response::Response,
   routing::get,
 };
-use axum_server::tls_rustls::RustlsConfig;
 use periphery_client::{
   api::CoreConnectionQuery, transport::LoginMessage,
 };
@@ -40,43 +38,18 @@ pub async fn run()
 -> anyhow::Result<tokio::task::JoinHandle<anyhow::Result<()>>> {
   let config = periphery_config();
 
-  let addr = format!("{}:{}", config.bind_ip, config.port);
-
-  let socket_addr = SocketAddr::from_str(&addr)
-    .context("failed to parse listen address")?;
+  if config.ssl_enabled {
+    crate::helpers::ensure_ssl_certs().await;
+  }
 
   let app = Router::new()
     .route("/version", get(|| async { env!("CARGO_PKG_VERSION") }))
     .route("/", get(crate::connection::server::handler))
-    .layer(middleware::from_fn(guard_request_by_ip))
-    .into_make_service_with_connect_info::<SocketAddr>();
+    .layer(middleware::from_fn(guard_request_by_ip));
 
-  let handle = if config.ssl_enabled {
-    info!("🔒 Periphery SSL Enabled");
-    crate::helpers::ensure_ssl_certs().await;
-    info!("Komodo Periphery starting on wss://{}", socket_addr);
-    let ssl_config = RustlsConfig::from_pem_file(
-      config.ssl_cert_file(),
-      config.ssl_key_file(),
-    )
-    .await
-    .context("Invalid ssl cert / key")?;
-    tokio::spawn(async move {
-      axum_server::bind_rustls(socket_addr, ssl_config)
-        .serve(app)
-        .await
-        .context("Server crashed")
-    })
-  } else {
-    info!("🔓 Periphery SSL Disabled");
-    info!("Komodo Periphery starting on ws://{}", socket_addr);
-    tokio::spawn(async move {
-      axum_server::bind(socket_addr)
-        .serve(app)
-        .await
-        .context("Server crashed")
-    })
-  };
+  let handle = tokio::spawn(async move {
+    mogh_server::serve_app(app, config, None).await
+  });
 
   Ok(handle)
 }

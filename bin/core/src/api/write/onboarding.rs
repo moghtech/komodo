@@ -10,7 +10,7 @@ use komodo_client::{
     komodo_timestamp, onboarding_key::OnboardingKey, random_string,
   },
 };
-use noise::key::EncodedKeyPair;
+use pki::EncodedKeyPair;
 use reqwest::StatusCode;
 use resolver_api::Resolve;
 use serror::{AddStatusCode, AddStatusCodeError};
@@ -47,9 +47,12 @@ impl Resolve<WriteArgs> for CreateOnboardingKey {
     } else {
       format!("O_{}_O", random_string(28))
     };
-    let public_key = EncodedKeyPair::from_private_key(&private_key)?
-      .public
-      .into_inner();
+    let public_key = EncodedKeyPair::from_private_key(
+      pki::PkiKind::Mutual,
+      &private_key,
+    )?
+    .public
+    .into_inner();
     let onboarding_key = OnboardingKey {
       public_key,
       name: self.name,

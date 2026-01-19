@@ -1,26 +1,18 @@
 use std::{collections::HashMap, sync::OnceLock};
 
 use anyhow::anyhow;
-use base64urlsafedata::Base64UrlSafeData;
 use derive_variants::{EnumVariants, ExtractVariant};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use strum::{AsRefStr, Display, EnumString};
 use typeshare::typeshare;
-use webauthn_rs::prelude::Passkey;
 
 use crate::entities::{I64, MongoId};
 
 use super::{
-  ResourceTargetVariant, permission::PermissionLevelAndSpecifics,
+  JsonValue, ResourceTargetVariant,
+  permission::PermissionLevelAndSpecifics,
 };
-
-#[typeshare]
-pub type BytesArray = Vec<u8>;
-#[typeshare(serialized_as = "BytesArray")]
-pub type _Base64UrlSafeData = Base64UrlSafeData;
-#[typeshare(serialized_as = "any")]
-pub type _Passkey = Passkey;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -85,9 +77,9 @@ pub struct User {
   #[serde(default)]
   pub passkey: UserPasskeyConfig,
 
-  /// Allow third party logins to skip 2fa.
-  #[serde(default = "default_third_party_skip_2fa")]
-  pub third_party_skip_2fa: bool,
+  /// Allow external / third party logins to skip 2fa.
+  #[serde(default = "default_external_skip_2fa")]
+  pub external_skip_2fa: bool,
 
   /// When the user last opened updates dropdown.
   #[serde(default)]
@@ -107,7 +99,7 @@ pub struct User {
   pub updated_at: I64,
 }
 
-fn default_third_party_skip_2fa() -> bool {
+fn default_external_skip_2fa() -> bool {
   true
 }
 
@@ -147,7 +139,7 @@ impl User {
       linked_logins: Default::default(),
       totp: Default::default(),
       passkey: Default::default(),
-      third_party_skip_2fa: Default::default(),
+      external_skip_2fa: Default::default(),
     }
   }
 }
@@ -282,8 +274,8 @@ impl UserTotpConfig {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct UserPasskeyConfig {
-  #[cfg_attr(feature = "utoipa", schema(value_type = Option<serde_json::Value>))]
-  pub passkey: Option<_Passkey>,
+  /// Passkey config for 2fa. The exact schema is not public.
+  pub passkey: Option<JsonValue>,
   /// Unix timestamp in milliseconds when key created
   pub created_at: I64,
 }

@@ -1,7 +1,7 @@
 import { ConfirmButton, StatusBadge } from "@components/util";
 import {
   useLoginOptions,
-  useManageUser,
+  useManageAuth,
   useRead,
   useSetTitle,
   useUser,
@@ -23,7 +23,7 @@ import { Input } from "@ui/input";
 import { ApiKeysTable } from "@components/api-keys/table";
 import { Section } from "@components/layouts";
 import { Card, CardHeader } from "@ui/card";
-import { Types } from "komodo_client";
+import { MoghAuth, Types } from "komodo_client";
 import { CreateKey, DeleteKey } from "./api-key";
 import { EnrollTotp } from "./totp";
 import { EnrollPasskey } from "./passkey";
@@ -33,13 +33,13 @@ import { Switch } from "@ui/switch";
 import { Label } from "@ui/label";
 import { cn } from "@lib/utils";
 
-type LinkedLoginProvider = "Local" | "Github" | "Google" | "Oidc";
-
-const useLinkWithOauth = () => {
-  const { mutateAsync } = useManageUser("BeginThirdPartyLoginLink");
-  return (provider: LinkedLoginProvider) =>
+const useLinkWithExternalLogin = () => {
+  const { mutateAsync } = useManageAuth("BeginExternalLoginLink");
+  return (provider: MoghAuth.Types.ExternalLoginProvider) =>
     mutateAsync({}).then(() =>
-      location.replace(`${KOMODO_BASE_URL}/auth/${provider.toLowerCase()}/link`)
+      location.replace(
+        `${KOMODO_BASE_URL}/auth/${provider.toLowerCase()}/link`,
+      ),
     );
 };
 
@@ -64,64 +64,64 @@ const ProfileInner = ({ user }: { user: Types.User }) => {
   const [username, setUsername] = useState(user.username);
   const [password, setPassword] = useState("");
   const [hidePassword, setHidePassword] = useState(true);
-  const { mutate: updateUsername } = useManageUser("UpdateUsername", {
+  const { mutate: updateUsername } = useManageAuth("UpdateUsername", {
     onSuccess: () => {
       toast({ title: "Username updated." });
       refetchUser();
     },
   });
-  const { mutate: updatePassword } = useManageUser("UpdatePassword", {
+  const { mutate: updatePassword } = useManageAuth("UpdatePassword", {
     onSuccess: () => {
       toast({ title: "Password updated." });
       setPassword("");
       refetchUser();
     },
   });
-  const { mutate: update_skip_2fa } = useManageUser("UpdateThirdPartySkip2fa", {
+  const { mutate: update_skip_2fa } = useManageAuth("UpdateExternalSkip2fa", {
     onSuccess: () => {
-      toast({ title: "Updated user third party skip 2fa." });
+      toast({ title: "Updated user external skip 2fa." });
       refetchUser();
     },
   });
-  const { mutate: unlink } = useManageUser("UnlinkLogin", {
+  const { mutate: unlink } = useManageAuth("UnlinkLogin", {
     onSuccess: () => {
       toast({ title: "Unlinked login." });
       refetchUser();
     },
   });
   const thirdPartyProviders: Array<{
-    provider: LinkedLoginProvider;
+    provider: MoghAuth.Types.LoginProvider;
     enabled: boolean;
     linked: boolean;
   }> = useMemo(
     () =>
       [
         {
-          provider: "Local" as LinkedLoginProvider,
+          provider: MoghAuth.Types.LoginProvider.Local,
           enabled: !!options?.local,
           linked: !!user?.linked_logins?.Local,
         },
         {
-          provider: "Google" as LinkedLoginProvider,
+          provider: MoghAuth.Types.LoginProvider.Google,
           enabled: !!options?.google,
           linked: !!user?.linked_logins?.Google,
         },
         {
-          provider: "Github" as LinkedLoginProvider,
+          provider: MoghAuth.Types.LoginProvider.Github,
           enabled: !!options?.github,
           linked: !!user?.linked_logins?.Github,
         },
         {
-          provider: "Oidc" as LinkedLoginProvider,
+          provider: MoghAuth.Types.LoginProvider.Oidc,
           enabled: !!options?.oidc,
           linked: !!user?.linked_logins?.Oidc,
         },
       ].filter(
-        ({ enabled, provider }) => enabled && user.config.type !== provider
+        ({ enabled, provider }) => enabled && user.config.type !== provider,
       ),
-    [user, options]
+    [user, options],
   );
-  const linkWithOauth = useLinkWithOauth();
+  const linkWithExternalLogin = useLinkWithExternalLogin();
   return (
     <div className="flex flex-col gap-6">
       {/* Profile */}
@@ -225,7 +225,7 @@ const ProfileInner = ({ user }: { user: Types.User }) => {
                     <Button
                       variant="outline"
                       className="flex gap-2 px-3 items-center"
-                      onClick={() => linkWithOauth(provider)}
+                      onClick={() => linkWithExternalLogin(provider as any)}
                       disabled={!!user.linked_logins?.[provider]}
                     >
                       Link {provider}
@@ -246,22 +246,24 @@ const ProfileInner = ({ user }: { user: Types.User }) => {
           <div
             className={cn(
               "flex items-center gap-2",
-              !user.passkey?.created_at && !user.totp?.confirmed_at && "hidden"
+              !user.passkey?.created_at && !user.totp?.confirmed_at && "hidden",
             )}
           >
             <Switch
               id="update-skip-2fa"
-              checked={user.third_party_skip_2fa}
-              onCheckedChange={(skip) => update_skip_2fa({ skip })}
+              checked={user.external_skip_2fa}
+              onCheckedChange={(external_skip_2fa) =>
+                update_skip_2fa({ external_skip_2fa })
+              }
             />
             <Label
               htmlFor="update-skip-2fa"
               className="flex items-center gap-2 cursor-pointer"
             >
-              Skip 2FA for third party logins
+              Skip 2FA for external logins
               <StatusBadge
-                text={user.third_party_skip_2fa ? "ENABLED" : "DISABLED"}
-                intent={user.third_party_skip_2fa ? "Good" : "Critical"}
+                text={user.external_skip_2fa ? "ENABLED" : "DISABLED"}
+                intent={user.external_skip_2fa ? "Good" : "Critical"}
               />
             </Label>
           </div>

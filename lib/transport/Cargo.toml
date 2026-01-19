@@ -10,7 +10,7 @@ homepage.workspace = true
 [dependencies]
 periphery_client.workspace = true
 encoding.workspace = true
-noise.workspace = true
+pki.workspace = true
 #
 serror.workspace = true
 #

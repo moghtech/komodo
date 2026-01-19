@@ -1,5 +1,5 @@
 import { ConfirmButton, CopyButton } from "@components/util";
-import { useManageUser, useUserInvalidate } from "@lib/hooks";
+import { useManageAuth, useUserInvalidate } from "@lib/hooks";
 import {
   Dialog,
   DialogContent,
@@ -23,24 +23,24 @@ export const EnrollTotp = ({ user }: { user: Types.User }) => {
   const [submitted, setSubmitted] = useState<{ uri: string; png: string }>();
   const [confirm, setConfirm] = useState("");
   const [recovery, setRecovery] = useState<string[] | undefined>(undefined);
-  const { mutate: begin_enrollment } = useManageUser("BeginTotpEnrollment", {
+  const { mutate: begin_enrollment } = useManageAuth("BeginTotpEnrollment", {
     onSuccess: ({ uri, png }) => setSubmitted({ uri, png }),
   });
   const { mutate: confirm_enrollment, isPending: confirm_pending } =
-    useManageUser("ConfirmTotpEnrollment", {
+    useManageAuth("ConfirmTotpEnrollment", {
       onSuccess: ({ recovery_codes }) => {
         setRecovery(recovery_codes);
         userInvalidate();
       },
     });
-  const { mutate: unenroll, isPending: unenroll_pending } = useManageUser(
+  const { mutate: unenroll, isPending: unenroll_pending } = useManageAuth(
     "UnenrollTotp",
     {
       onSuccess: () => {
         userInvalidate();
         toast({ title: "Unenrolled in TOTP 2FA" });
       },
-    }
+    },
   );
   const onOpenChange = (open: boolean) => {
     setOpen(open);
@@ -60,7 +60,7 @@ export const EnrollTotp = ({ user }: { user: Types.User }) => {
             className={cn(
               "items-center gap-2",
               (user.passkey?.created_at || !!user.totp?.confirmed_at) &&
-                "hidden"
+                "hidden",
             )}
           >
             Enroll TOTP 2FA <RotateCcwKey className="w-4 h-4" />

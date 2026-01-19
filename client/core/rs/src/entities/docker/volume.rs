@@ -49,7 +49,7 @@ pub struct Volume {
 
   /// Low-level details about the volume, provided by the volume driver. Details are returned as a map with key/value pairs: `{\"key\":\"value\",\"key2\":\"value2\"}`.  The `Status` field is optional, and is omitted if the volume driver does not support this feature.
   #[serde(default, rename = "Status")]
-  pub status: HashMap<String, HashMap<String, ()>>,
+  pub status: Option<Vec<String>>,
 
   /// User-defined key/value metadata.
   #[serde(default, rename = "Labels")]

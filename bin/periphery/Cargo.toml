@@ -15,10 +15,11 @@ path = "src/main.rs"
 
 [dependencies]
 # local
-komodo_client = { workspace = true, features = ["logger"] }
+komodo_client = { workspace = true, features = ["periphery"] }
 periphery_client.workspace = true
 environment.workspace = true
 interpolate.workspace = true
+mogh_server.workspace = true
 secret_file.workspace = true
 formatting.workspace = true
 transport.workspace = true
@@ -27,7 +28,7 @@ command.workspace = true
 config.workspace = true
 logger.workspace = true
 cache.workspace = true
-noise.workspace = true
+pki.workspace = true
 git.workspace = true
 # mogh
 serror = { workspace = true, features = ["axum"] }
@@ -42,7 +43,6 @@ futures-util.workspace = true
 tokio-stream.workspace = true
 portable-pty.workspace = true
 shell-escape.workspace = true
-axum-server.workspace = true
 urlencoding.workspace = true
 serde_json.workspace = true
 tokio-util.workspace = true

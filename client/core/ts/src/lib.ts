@@ -1,5 +1,5 @@
+import { MoghAuthClient, Types } from "mogh_auth_client";
 import {
-  AuthResponses,
   ExecuteResponses,
   ReadResponses,
   UserResponses,
@@ -7,7 +7,6 @@ import {
 } from "./responses.js";
 import { terminal_methods, TerminalCallbacks } from "./terminal.js";
 import {
-  AuthRequest,
   BatchExecutionResponse,
   ConnectTerminalQuery,
   ExecuteRequest,
@@ -16,14 +15,22 @@ import {
   Update,
   UpdateListItem,
   UpdateStatus,
+  User,
   UserRequest,
   WriteRequest,
   WsLoginMessage,
 } from "./types.js";
 
+export * as MoghAuth from "mogh_auth_client";
 export * as Types from "./types.js";
 
-export type { TerminalCallbacks };
+export type {
+  ExecuteResponses,
+  ReadResponses,
+  UserResponses,
+  WriteResponses,
+  TerminalCallbacks,
+};
 
 export type InitOptions =
   | { type: "jwt"; params: { jwt: string } }
@@ -53,15 +60,18 @@ export function KomodoClient(url: string, options: InitOptions) {
     secret: options.type === "api-key" ? options.params.secret : undefined,
   };
 
-  const request = <Params, Res>(
-    path: "/auth" | "/user" | "/read" | "/execute" | "/write",
+  const auth = MoghAuthClient(url + "/auth", state.jwt);
+
+  const request = <Params = undefined, Res = unknown>(
+    path: "/user" | "/read" | "/execute" | "/write",
     type: string,
-    params: Params
+    params: Params,
+    method = "POST",
   ): Promise<Res> =>
     new Promise(async (res, rej) => {
       try {
-        let response = await fetch(`${url}${path}/${type}`, {
-          method: "POST",
+        let response = await fetch(`${url}${path}${type ? "/" + type : ""}`, {
+          method,
           body: JSON.stringify(params),
           headers: {
             ...(state.jwt
@@ -69,11 +79,11 @@ export function KomodoClient(url: string, options: InitOptions) {
                   authorization: state.jwt,
                 }
               : state.key && state.secret
-              ? {
-                  "x-api-key": state.key,
-                  "x-api-secret": state.secret,
-                }
-              : {}),
+                ? {
+                    "x-api-key": state.key,
+                    "x-api-secret": state.secret,
+                  }
+                : {}),
             "content-type": "application/json",
           },
           credentials: "include",
@@ -108,77 +118,67 @@ export function KomodoClient(url: string, options: InitOptions) {
       }
     });
 
-  const auth = async <
-    T extends AuthRequest["type"],
-    Req extends Extract<AuthRequest, { type: T }>
-  >(
-    type: T,
-    params: Req["params"]
-  ) =>
-    await request<Req["params"], AuthResponses[Req["type"]]>(
-      "/auth",
-      type,
-      params
-    );
+  const getUser = async () =>
+    await request<undefined, User>("/user", "", undefined, "GET");
 
   const user = async <
     T extends UserRequest["type"],
-    Req extends Extract<UserRequest, { type: T }>
+    Req extends Extract<UserRequest, { type: T }>,
   >(
     type: T,
-    params: Req["params"]
+    params: Req["params"],
   ) =>
     await request<Req["params"], UserResponses[Req["type"]]>(
       "/user",
       type,
-      params
+      params,
     );
 
   const read = async <
     T extends ReadRequest["type"],
-    Req extends Extract<ReadRequest, { type: T }>
+    Req extends Extract<ReadRequest, { type: T }>,
   >(
     type: T,
-    params: Req["params"]
+    params: Req["params"],
   ) =>
     await request<Req["params"], ReadResponses[Req["type"]]>(
       "/read",
       type,
-      params
+      params,
     );
 
   const write = async <
     T extends WriteRequest["type"],
-    Req extends Extract<WriteRequest, { type: T }>
+    Req extends Extract<WriteRequest, { type: T }>,
   >(
     type: T,
-    params: Req["params"]
+    params: Req["params"],
   ) =>
     await request<Req["params"], WriteResponses[Req["type"]]>(
       "/write",
       type,
-      params
+      params,
     );
 
   const execute = async <
     T extends ExecuteRequest["type"],
-    Req extends Extract<ExecuteRequest, { type: T }>
+    Req extends Extract<ExecuteRequest, { type: T }>,
   >(
     type: T,
-    params: Req["params"]
+    params: Req["params"],
   ) =>
     await request<Req["params"], ExecuteResponses[Req["type"]]>(
       "/execute",
       type,
-      params
+      params,
     );
 
   const execute_and_poll = async <
     T extends ExecuteRequest["type"],
-    Req extends Extract<ExecuteRequest, { type: T }>
+    Req extends Extract<ExecuteRequest, { type: T }>,
   >(
     type: T,
-    params: Req["params"]
+    params: Req["params"],
   ) => {
     const res = await execute(type, params);
     // Check if its a batch of updates or a single update;
@@ -190,7 +190,7 @@ export function KomodoClient(url: string, options: InitOptions) {
             return item;
           }
           return await poll_update_until_complete(item.data._id?.$oid!);
-        })
+        }),
       );
     } else {
       // it is a single update
@@ -338,12 +338,25 @@ export function KomodoClient(url: string, options: InitOptions) {
      * Call the `/auth` api.
      *
      * ```
-     * const login_options = await komodo.auth("GetLoginOptions", {});
+     * const { jwt } = await komodo.auth.login("LoginLocalUser", {
+     *   username: "test-user",
+     *   password: "test-pass"
+     * });
      * ```
      *
-     * https://docs.rs/komodo_client/latest/komodo_client/api/auth/index.html
+     * https://docs.rs/mogh_auth_client/latest/mogh_auth_client/api/index.html
      */
     auth,
+    /**
+     * Get the current (calling) user.
+     *
+     * ```
+     * const user = await komodo.getUser();
+     * ```
+     *
+     * https://docs.rs/komodo_client/latest/komodo_client/api/user/index.html
+     */
+    getUser,
     /**
      * Call the `/user` api.
      *

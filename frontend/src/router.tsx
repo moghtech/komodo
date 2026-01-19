@@ -1,9 +1,6 @@
 import { Layout } from "@components/layouts";
-import { LOGIN_TOKENS, useAuth, useUser } from "@lib/hooks";
-import { preparePasskeyCredential } from "@lib/utils";
-import { sanitize_query_inner } from "@main";
-import { useToast } from "@ui/use-toast";
-import { Types } from "komodo_client";
+import { useAuthState, useUser } from "@lib/hooks";
+import { MoghAuth } from "komodo_client";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense } from "react";
 import {
@@ -42,60 +39,6 @@ const SwarmTaskPage = lazy(() => import("@pages/swarm/task"));
 const SwarmSecretPage = lazy(() => import("@pages/swarm/secret"));
 const SwarmConfigPage = lazy(() => import("@pages/swarm/config"));
 const SwarmStackPage = lazy(() => import("@pages/swarm/stack"));
-
-let jwt_redeem_sent = false;
-let passkey_sent = false;
-
-/// returns whether to show login / loading screen depending on state of exchange token loop
-const useAuthState = () => {
-  const { toast } = useToast();
-  const onSuccess = ({ jwt }: Types.JwtResponse) => {
-    LOGIN_TOKENS.add_and_change(jwt);
-    sanitize_query_inner(search);
-  };
-  const { mutate: redeemJwt } = useAuth("ExchangeForJwt", {
-    onSuccess,
-  });
-  const { mutate: completePasskeyLogin } = useAuth("CompletePasskeyLogin", {
-    onSuccess,
-  });
-  const search = new URLSearchParams(location.search);
-
-  const _passkey = search.get("passkey");
-  const passkey = _passkey ? JSON.parse(_passkey) : null;
-
-  // guard against multiple reqs sent
-  // maybe isPending would do this but not sure about with render loop, this for sure will.
-  if (passkey && !passkey_sent) {
-    navigator.credentials
-      .get(preparePasskeyCredential(passkey))
-      .then((credential) => completePasskeyLogin({ credential }))
-      .catch((e) => {
-        console.error(e);
-        toast({
-          title: "Failed to select passkey",
-          description: "See console for details",
-          variant: "destructive",
-        });
-      });
-    passkey_sent = true;
-  }
-
-  const jwt_redeem_ready = search.get("redeem_ready") === "true";
-
-  // guard against multiple reqs sent
-  // maybe isPending would do this but not sure about with render loop, this for sure will.
-  if (jwt_redeem_ready && !jwt_redeem_sent) {
-    redeemJwt({});
-    jwt_redeem_sent = true;
-  }
-
-  return {
-    jwt_redeem_ready,
-    passkey_pending: !!passkey,
-    totp: search.get("totp") === "true",
-  };
-};
 
 export const Router = () => {
   // Handle exchange token loop to avoid showing login flash
@@ -210,7 +153,7 @@ const RequireAuth = () => {
 
   if (
     (error as { error?: TypeError } | undefined)?.error?.message?.startsWith(
-      "NetworkError"
+      "NetworkError",
     )
   ) {
     // Will just show the spinner without navigate to login,
@@ -222,7 +165,7 @@ const RequireAuth = () => {
     );
   }
 
-  if (!LOGIN_TOKENS.jwt() || error) {
+  if (!MoghAuth.LOGIN_TOKENS.jwt() || error) {
     if (location.pathname === "/") {
       return <Navigate to="/login" replace />;
     }

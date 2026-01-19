@@ -95,7 +95,7 @@ pub enum Command {
   #[clap(alias = "k")]
   Key {
     #[command(subcommand)]
-    command: crate::entities::config::KeyCommand,
+    command: pki::cli::KeyCommand,
   },
 
   /// Database utilities. (alias: `db`)

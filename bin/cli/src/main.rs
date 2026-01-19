@@ -65,7 +65,7 @@ async fn app() -> anyhow::Result<()> {
       command::terminal::handle_attach(attach).await
     }
     args::Command::Key { command } => {
-      noise::key::command::handle(command).await
+      pki::cli::handle(command, pki::PkiKind::Mutual).await
     }
     args::Command::Database { command } => {
       command::database::handle(command).await

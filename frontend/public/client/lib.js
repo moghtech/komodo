@@ -1,5 +1,7 @@
+import { MoghAuthClient } from "mogh_auth_client";
 import { terminal_methods } from "./terminal.js";
 import { UpdateStatus, } from "./types.js";
+export * as MoghAuth from "mogh_auth_client";
 export * as Types from "./types.js";
 export class CancelToken {
     cancelled;
@@ -17,10 +19,11 @@ export function KomodoClient(url, options) {
         key: options.type === "api-key" ? options.params.key : undefined,
         secret: options.type === "api-key" ? options.params.secret : undefined,
     };
-    const request = (path, type, params) => new Promise(async (res, rej) => {
+    const auth = MoghAuthClient(url + "/auth", state.jwt);
+    const request = (path, type, params, method = "POST") => new Promise(async (res, rej) => {
         try {
-            let response = await fetch(`${url}${path}/${type}`, {
-                method: "POST",
+            let response = await fetch(`${url}${path}${type ? "/" + type : ""}`, {
+                method,
                 body: JSON.stringify(params),
                 headers: {
                     ...(state.jwt
@@ -69,7 +72,7 @@ export function KomodoClient(url, options) {
             });
         }
     });
-    const auth = async (type, params) => await request("/auth", type, params);
+    const getUser = async () => await request("/user", "", undefined, "GET");
     const user = async (type, params) => await request("/user", type, params);
     const read = async (type, params) => await request("/read", type, params);
     const write = async (type, params) => await request("/write", type, params);
@@ -183,12 +186,25 @@ export function KomodoClient(url, options) {
          * Call the `/auth` api.
          *
          * ```
-         * const login_options = await komodo.auth("GetLoginOptions", {});
+         * const { jwt } = await komodo.auth.login("LoginLocalUser", {
+         *   username: "test-user",
+         *   password: "test-pass"
+         * });
          * ```
          *
-         * https://docs.rs/komodo_client/latest/komodo_client/api/auth/index.html
+         * https://docs.rs/mogh_auth_client/latest/mogh_auth_client/api/index.html
          */
         auth,
+        /**
+         * Get the current (calling) user.
+         *
+         * ```
+         * const user = await komodo.getUser();
+         * ```
+         *
+         * https://docs.rs/komodo_client/latest/komodo_client/api/user/index.html
+         */
+        getUser,
         /**
          * Call the `/user` api.
          *

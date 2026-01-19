@@ -10,8 +10,8 @@ use cache::{CloneCache, CloneVecCache};
 use komodo_client::entities::{
   docker::container::ContainerStats, terminal::TerminalStdinMessage,
 };
-use noise::key::{RotatableKeyPair, SpkiPublicKey};
 use periphery_client::transport::EncodedTransportMessage;
+use pki::{PkiKind, RotatableKeyPair, SpkiPublicKey};
 use tokio::sync::{Mutex, OnceCell, RwLock, mpsc, oneshot};
 use tokio_util::sync::CancellationToken;
 use transport::channel::BufferedChannel;
@@ -29,16 +29,22 @@ pub fn periphery_keys() -> &'static RotatableKeyPair {
   PERIPHERY_KEYS.get_or_init(|| {
     let config = periphery_config();
     if let Some(private_key_spec) = config.private_key.as_deref() {
-      RotatableKeyPair::from_private_key_spec(private_key_spec)
+      RotatableKeyPair::from_private_key_spec(
+        PkiKind::Mutual,
+        private_key_spec,
+      )
     } else {
-      RotatableKeyPair::from_private_key_spec(&format!(
-        "file:{}",
-        config
-          .root_directory
-          .join("keys/periphery.key")
-          .to_str()
-          .expect("Invalid root directory")
-      ))
+      RotatableKeyPair::from_private_key_spec(
+        PkiKind::Mutual,
+        &format!(
+          "file:{}",
+          config
+            .root_directory
+            .join("keys/periphery.key")
+            .to_str()
+            .expect("Invalid root directory")
+        ),
+      )
     }
     .unwrap()
   })

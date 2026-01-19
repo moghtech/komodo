@@ -345,13 +345,6 @@ export type BatchExecutionResponseItem =
 
 export type BatchExecutionResponse = BatchExecutionResponseItem[];
 
-export type _CreationChallengeResponse = any;
-
-/** Response for [BeginPasskeyEnrollment]. */
-export type BeginPasskeyEnrollmentResponse = _CreationChallengeResponse;
-
-export type BeginThirdPartyLoginLinkResponse = NoData;
-
 export enum Operation {
 	None = "None",
 	CreateSwarm = "CreateSwarm",
@@ -830,23 +823,6 @@ export interface BuilderQuerySpecifics {
 
 export type BuilderQuery = ResourceQuery<BuilderQuerySpecifics>;
 
-export type BytesArray = number[];
-
-/** JSON containing a jwt authentication token. */
-export interface JwtResponse {
-	/** A token the user can use to authenticate their requests. */
-	jwt: string;
-}
-
-/** Response for [CompletePasskeyLogin]. */
-export type CompletePasskeyLoginResponse = JwtResponse;
-
-/** Response for [CompleteTotpLogin]. */
-export type CompleteTotpLoginResponse = JwtResponse;
-
-/** Response for [ConfirmPasskeyEnrollment]. */
-export type ConfirmPasskeyEnrollmentResponse = NoData;
-
 /** A wrapper for all Komodo exections. */
 export type Execution = 
 	/** The "null" execution. Does nothing. */
@@ -1121,10 +1097,11 @@ export interface UserTotpConfig {
 	recovery_codes: string[];
 }
 
-export type _Passkey = any;
+export type JsonValue = any;
 
 export interface UserPasskeyConfig {
-	passkey?: _Passkey;
+	/** Passkey config for 2fa. The exact schema is not public. */
+	passkey?: JsonValue;
 	/** Unix timestamp in milliseconds when key created */
 	created_at: I64;
 }
@@ -1159,8 +1136,8 @@ export interface User {
 	totp?: UserTotpConfig;
 	/** WebAuthn Passkey 2fa credentials */
 	passkey?: UserPasskeyConfig;
-	/** Allow third party logins to skip 2fa. */
-	third_party_skip_2fa: boolean;
+	/** Allow external / third party logins to skip 2fa. */
+	external_skip_2fa: boolean;
 	/** When the user last opened updates dropdown. */
 	last_update_view?: I64;
 	/** Recently viewed ids */
@@ -1464,9 +1441,6 @@ export interface DeploymentQuerySpecifics {
 }
 
 export type DeploymentQuery = ResourceQuery<DeploymentQuerySpecifics>;
-
-/** Response for [ExchangeForJwt]. */
-export type ExchangeForJwtResponse = JwtResponse;
 
 /** Response containing pretty formatted toml contents. */
 export interface TomlResponse {
@@ -2881,8 +2855,6 @@ export interface UserGroup {
 
 export type GetUserGroupResponse = UserGroup;
 
-export type GetUserResponse = User;
-
 export type GetVariableResponse = Variable;
 
 export enum ContainerStateStatusEnum {
@@ -3156,8 +3128,6 @@ export interface HostConfig {
 	DeviceCgroupRules?: string[];
 	/** A list of requests for devices to be sent to device drivers. */
 	DeviceRequests?: DeviceRequest[];
-	/** Hard limit for kernel TCP buffer memory (in bytes). Depending on the OCI runtime in use, this option may be ignored. It is no longer supported by the default (runc) runtime.  This field is omitted when empty. */
-	KernelMemoryTCP?: I64;
 	/** Memory soft limit in bytes. */
 	MemoryReservation?: I64;
 	/** Total memory limit (memory + swap). Set as `-1` to enable unlimited swap. */
@@ -3318,7 +3288,7 @@ export interface ContainerConfig {
 	/** Whether to attach to `stderr`. */
 	AttachStderr?: boolean;
 	/** An object mapping ports to an empty object in the form:  `{\"<port>/<tcp|udp|sctp>\": {}}` */
-	ExposedPorts?: Record<string, Record<string, undefined>>;
+	ExposedPorts?: string[];
 	/** Attach standard streams to a TTY, including `stdin` if it is not closed. */
 	Tty?: boolean;
 	/** Open `stdin` */
@@ -3335,15 +3305,13 @@ export interface ContainerConfig {
 	/** The name (or reference) of the image to use when creating the container, or which was used when the container was created. */
 	Image?: string;
 	/** An object mapping mount point paths inside the container to empty objects. */
-	Volumes?: Record<string, Record<string, undefined>>;
+	Volumes?: string[];
 	/** The working directory for commands to run in. */
 	WorkingDir?: string;
 	/** The entry point for the container as a string or an array of strings.  If the array consists of exactly one empty string (`[\"\"]`) then the entry point is reset to system default (i.e., the entry point used by docker when there is no `ENTRYPOINT` instruction in the `Dockerfile`). */
 	Entrypoint?: string[];
 	/** Disable networking for the container. */
 	NetworkDisabled?: boolean;
-	/** MAC address of the container.  Deprecated: this field is deprecated in API v1.44 and up. Use EndpointSettings.MacAddress instead. */
-	MacAddress?: string;
 	/** `ONBUILD` metadata that were defined in the image's `Dockerfile`. */
 	OnBuild?: string[];
 	/** User-defined key/value metadata. */
@@ -3394,8 +3362,6 @@ export interface EndpointSettings {
 
 /** NetworkSettings exposes the network settings in the API */
 export interface NetworkSettings {
-	/** Name of the default bridge interface when dockerd's --bridge flag is set. */
-	Bridge?: string;
 	/** SandboxID uniquely represents a container's network stack. */
 	SandboxID?: string;
 	Ports?: Record<string, PortBinding[]>;
@@ -3949,6 +3915,116 @@ export type InspectDeploymentSwarmServiceResponse = SwarmService;
 
 export type InspectDockerContainerResponse = Container;
 
+/** Describes the platform which the image in the manifest runs on, as defined in the [OCI Image Index Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/image-index.md). */
+export interface OciPlatform {
+	/** The CPU architecture, for example `amd64` or `ppc64`. */
+	architecture?: string;
+	/** The operating system, for example `linux` or `windows`. */
+	os?: string;
+	/** Optional field specifying the operating system version, for example on Windows `10.0.19041.1165`. */
+	os_version?: string;
+	/** Optional field specifying an array of strings, each listing a required OS feature (for example on Windows `win32k`). */
+	os_features?: string[];
+	/** Optional field specifying a variant of the CPU, for example `v7` to specify ARMv7 when architecture is `arm`. */
+	variant?: string;
+}
+
+/** A descriptor struct containing digest, media type, and size, as defined in the [OCI Content Descriptors Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md). */
+export interface OciDescriptor {
+	/** The media type of the object this schema refers to. */
+	mediaType?: string;
+	/** The digest of the targeted content. */
+	digest?: string;
+	/** The size in bytes of the blob. */
+	size?: I64;
+	/** List of URLs from which this object MAY be downloaded. */
+	urls?: string[];
+	/** Arbitrary metadata relating to the targeted content. */
+	annotations?: Record<string, string>;
+	/** Data is an embedding of the targeted content. This is encoded as a base64 string when marshalled to JSON (automatically, by encoding/json). If present, Data can be used directly to avoid fetching the targeted content. */
+	data?: string;
+	platform?: OciPlatform;
+	/** ArtifactType is the IANA media type of this artifact. */
+	artifactType?: string;
+}
+
+export interface ImageManifestSummarySize {
+	/** Total is the total size (in bytes) of all the locally present data (both distributable and non-distributable) that's related to this manifest and its children. This equal to the sum of [Content] size AND all the sizes in the [Size] struct present in the Kind-specific data struct. For example, for an image kind (Kind == \"image\") this would include the size of the image content and unpacked image snapshots ([Size.Content] + [ImageData.Size.Unpacked]). */
+	Total: I64;
+	/** Content is the size (in bytes) of all the locally present content in the content store (e.g. image config, layers) referenced by this manifest and its children. This only includes blobs in the content store. */
+	Content: I64;
+}
+
+export enum ImageManifestSummaryKindEnum {
+	Empty = "",
+	Image = "image",
+	Attestation = "attestation",
+	Unknown = "unknown",
+}
+
+export interface ImageManifestSummaryImageDataSize {
+	/** Unpacked is the size (in bytes) of the locally unpacked (uncompressed) image content that's directly usable by the containers running this image. It's independent of the distributable content - e.g. the image might still have an unpacked data that's still used by some container even when the distributable/compressed content is already gone. */
+	Unpacked: I64;
+}
+
+/** The image data for the image manifest. This field is only populated when Kind is \"image\". */
+export interface ImageManifestSummaryImageData {
+	/** OCI platform of the image. This will be the platform specified in the manifest descriptor from the index/manifest list. If it's not available, it will be obtained from the image config. */
+	Platform: OciPlatform;
+	/** The IDs of the containers that are using this image. */
+	Containers: string[];
+	Size: ImageManifestSummaryImageDataSize;
+}
+
+/** The image data for the attestation manifest. This field is only populated when Kind is \"attestation\". */
+export interface ImageManifestSummaryAttestationData {
+	/** The digest of the image manifest that this attestation is for. */
+	For: string;
+}
+
+/** ImageManifestSummary represents a summary of an image manifest. */
+export interface ImageManifestSummary {
+	/** ID is the content-addressable ID of an image and is the same as the digest of the image manifest. */
+	ID: string;
+	Descriptor: OciDescriptor;
+	/** Indicates whether all the child content (image config, layers) is fully available locally. */
+	Available: boolean;
+	Size: ImageManifestSummarySize;
+	/** The kind of the manifest.  kind         | description -------------|----------------------------------------------------------- image        | Image manifest that can be used to start a container. attestation  | Attestation manifest produced by the Buildkit builder for a specific image manifest. */
+	Kind?: ImageManifestSummaryKindEnum;
+	ImageData?: ImageManifestSummaryImageData;
+	AttestationData?: ImageManifestSummaryAttestationData;
+}
+
+/** Configuration of the image. These fields are used as defaults when starting a container from the image. */
+export interface ImageConfig {
+	/** The user that commands are run as inside the container. */
+	User?: string;
+	/** An object mapping ports to an empty object in the form:  `{\"<port>/<tcp|udp|sctp>\": {}}` */
+	ExposedPorts?: string[];
+	/** A list of environment variables to set inside the container in the form `[\"VAR=value\", ...]`. A variable without `=` is removed from the environment, rather than to have an empty value. */
+	Env?: string[];
+	/** Command to run specified as a string or an array of strings. */
+	Cmd?: string[];
+	Healthcheck?: HealthConfig;
+	/** Command is already escaped (Windows only) */
+	ArgsEscaped?: boolean;
+	/** An object mapping mount point paths inside the container to empty objects. */
+	Volumes?: string[];
+	/** The working directory for commands to run in. */
+	WorkingDir?: string;
+	/** The entry point for the container as a string or an array of strings.  If the array consists of exactly one empty string (`[\"\"]`) then the entry point is reset to system default (i.e., the entry point used by docker when there is no `ENTRYPOINT` instruction in the `Dockerfile`). */
+	Entrypoint?: string[];
+	/** `ONBUILD` metadata that were defined in the image's `Dockerfile`. */
+	OnBuild?: string[];
+	/** User-defined key/value metadata. */
+	Labels?: Record<string, string>;
+	/** Signal to stop a container as a string or unsigned integer. */
+	StopSignal?: string;
+	/** Shell for when `RUN`, `CMD`, and `ENTRYPOINT` uses a shell. */
+	Shell?: string[];
+}
+
 /** Information about the image's RootFS, including the layer IDs. */
 export interface ImageInspectRootFs {
 	Type?: string;
@@ -3965,22 +4041,21 @@ export interface ImageInspectMetadata {
 export interface Image {
 	/** ID is the content-addressable ID of an image.  This identifier is a content-addressable digest calculated from the image's configuration (which includes the digests of layers used by the image).  Note that this digest differs from the `RepoDigests` below, which holds digests of image manifests that reference the image. */
 	Id?: string;
+	/** Descriptor is an OCI descriptor of the image target. In case of a multi-platform image, this descriptor points to the OCI index or a manifest list.  This field is only present if the daemon provides a multi-platform image store.  WARNING: This is experimental and may change at any time without any backward compatibility. */
+	Descriptor?: OciDescriptor;
+	/** Manifests is a list of image manifests available in this image. It provides a more detailed view of the platform-specific image manifests or other image-attached data like build attestations.  Only available if the daemon provides a multi-platform image store and the `manifests` option is set in the inspect request.  WARNING: This is experimental and may change at any time without any backward compatibility. */
+	Manifests?: ImageManifestSummary[];
 	/** List of image names/tags in the local image cache that reference this image.  Multiple image tags can refer to the same image, and this list may be empty if no tags reference the image, in which case the image is \"untagged\", in which case it can still be referenced by its ID. */
 	RepoTags?: string[];
 	/** List of content-addressable digests of locally available image manifests that the image is referenced from. Multiple manifests can refer to the same image.  These digests are usually only available if the image was either pulled from a registry, or if the image was pushed to a registry, which is when the manifest is generated and its digest calculated. */
 	RepoDigests?: string[];
-	/** ID of the parent image.  Depending on how the image was created, this field may be empty and is only set for images that were built/created locally. This field is empty if the image was pulled from an image registry. */
-	Parent?: string;
 	/** Optional message that was set when committing or importing the image. */
 	Comment?: string;
 	/** Date and time at which the image was created, formatted in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds.  This information is only available if present in the image, and omitted otherwise. */
 	Created?: string;
-	/** The version of Docker that was used to build the image.  Depending on how the image was created, this field may be empty. */
-	DockerVersion?: string;
 	/** Name of the author that was specified when committing the image, or as specified through MAINTAINER (deprecated) in the Dockerfile. */
 	Author?: string;
-	/** Configuration for a container that is portable between hosts. */
-	Config?: ContainerConfig;
+	Config?: ImageConfig;
 	/** Hardware CPU architecture that the image runs on. */
 	Architecture?: string;
 	/** CPU architecture variant (presently ARM-only). */
@@ -4177,7 +4252,7 @@ export interface Volume {
 	/** Date/Time the volume was created. */
 	CreatedAt?: string;
 	/** Low-level details about the volume, provided by the volume driver. Details are returned as a map with key/value pairs: `{\"key\":\"value\",\"key2\":\"value2\"}`.  The `Status` field is optional, and is omitted if the volume driver does not support this feature. */
-	Status?: Record<string, Record<string, undefined>>;
+	Status?: string[];
 	/** User-defined key/value metadata. */
 	Labels?: Record<string, string>;
 	/** The level at which the volume exists. Either `global` for cluster-wide, or `local` for machine level. */
@@ -4623,8 +4698,6 @@ export interface SwarmTask {
 export type InspectSwarmTaskResponse = SwarmTask;
 
 export type JsonObject = any;
-
-export type JsonValue = any;
 
 export type ListActionsResponse = ActionListItem[];
 
@@ -5389,16 +5462,6 @@ export type ListUsersResponse = User[];
 
 export type ListVariablesResponse = Variable[];
 
-/** JSON containing either an authentication token or a TwoFactor pending token. */
-export type JwtOrTwoFactor = 
-	| { type: "Jwt", data: JwtResponse }
-	| { type: "Passkey", data: _RequestChallengeResponse }
-	| { type: "Totp", data: {
-}};
-
-/** The response for [LoginLocalUser] */
-export type LoginLocalUserResponse = JwtOrTwoFactor;
-
 export type MongoDocument = any;
 
 export interface ProcedureQuerySpecifics {
@@ -5438,9 +5501,6 @@ export type ServerQuery = ResourceQuery<ServerQuerySpecifics>;
 
 export type SetLastSeenUpdateResponse = NoData;
 
-/** Response for [SignUpLocalUser]. */
-export type SignUpLocalUserResponse = JwtResponse;
-
 export interface StackQuerySpecifics {
 	/**
 	 * Query only for Stacks on these Servers.
@@ -5468,21 +5528,11 @@ export interface SwarmQuerySpecifics {
 
 export type SwarmQuery = ResourceQuery<SwarmQuerySpecifics>;
 
-/** Response for [UnenrollPasskey]. */
-export type UnenrollPasskeyResponse = NoData;
-
-/** Response for [UnenrollTotp]. */
-export type UnenrollTotpResponse = NoData;
-
-export type UnlinkLoginResponse = NoData;
-
 export type UpdateDockerRegistryAccountResponse = DockerRegistryAccount;
 
 export type UpdateGitProviderAccountResponse = GitProviderAccount;
 
 export type UpdateOnboardingKeyResponse = OnboardingKey;
-
-export type UpdatePasswordResponse = NoData;
 
 export type UpdatePermissionOnResourceTypeResponse = NoData;
 
@@ -5494,22 +5544,15 @@ export type UpdateResourceMetaResponse = NoData;
 
 export type UpdateServiceUserDescriptionResponse = User;
 
-/** Response for [UpdateThirdPartySkip2fa]. */
-export type UpdateThirdPartySkip2faResponse = NoData;
-
 export type UpdateUserAdminResponse = NoData;
 
 export type UpdateUserBasePermissionsResponse = NoData;
-
-export type UpdateUsernameResponse = NoData;
 
 export type UpdateVariableDescriptionResponse = Variable;
 
 export type UpdateVariableIsSecretResponse = Variable;
 
 export type UpdateVariableValueResponse = Variable;
-
-export type _Base64UrlSafeData = BytesArray;
 
 export type _PartialActionConfig = Partial<ActionConfig>;
 
@@ -5544,12 +5587,6 @@ export type _PartialSwarmConfig = Partial<SwarmConfig>;
 export type _PartialTag = Partial<Tag>;
 
 export type _PartialUrlBuilderConfig = Partial<UrlBuilderConfig>;
-
-export type _PublicKeyCredential = any;
-
-export type _RegisterPublicKeyCredential = any;
-
-export type _RequestChallengeResponse = any;
 
 export interface __Serror {
 	error: string;
@@ -5854,44 +5891,6 @@ export interface BatchRunProcedure {
 }
 
 /**
- * Starts enrollment flow for WebAuthn passkey auth support.
- * Response: [BeginPasskeyEnrollmentResponse]
- */
-export interface BeginPasskeyEnrollment {
-}
-
-/**
- * Begin linking flow for a third party login. Response: [NoData].
- * 
- * First call this method when authenticated, then
- * redirect user to /api/auth/{provider}/link.
- * 
- * 'provider' can be:
- * - github
- * - google
- * - oidc
- */
-export interface BeginThirdPartyLoginLink {
-}
-
-/**
- * Starts enrollment flow for TOTP 2FA auth support.
- * Response: [BeginTotpEnrollmentResponse]
- * 
- * This generates an otpauth URI for the user. User must confirm
- * by providing a valid 6 digit code for the URI to [ConfirmTotpEnrollment].
- */
-export interface BeginTotpEnrollment {
-}
-
-/** Response for [BeginTotpEnrollment]. */
-export interface BeginTotpEnrollmentResponse {
-	uri: string;
-	/** Base64 encoded PNG embeddable in HTML to display uri QR code. */
-	png: string;
-}
-
-/**
  * Builds the target repo, using the attached builder. Response: [Update].
  * 
  * Note. Repo must have builder attached at `builder_id`.
@@ -5977,23 +5976,6 @@ export interface CommitSync {
 	sync: string;
 }
 
-/**
- * Confirm a single use 2fa pending token + time-dependent user totp code for a jwt.
- * Response: [CompletePasskeyLoginResponse].
- */
-export interface CompletePasskeyLogin {
-	credential: _PublicKeyCredential;
-}
-
-/**
- * Confirm a single use 2fa pending token + time-dependent user totp code for a jwt.
- * Response: [CompleteTotpLoginResponse].
- */
-export interface CompleteTotpLogin {
-	/** The time dependent totp code for user. */
-	code: string;
-}
-
 export interface ConfigSpec {
 	/** User-defined name of the config. */
 	Name?: string;
@@ -6007,27 +5989,6 @@ export interface ConfigSpec {
 	Data?: string;
 	/** Templating driver, if applicable  Templating controls whether and how to evaluate the config payload as a template. If no driver is set, no templating is used. */
 	Templating?: Driver;
-}
-
-/**
- * Confirm enrollment flow for TOTP 2FA auth support
- * Response: [NoData]
- */
-export interface ConfirmPasskeyEnrollment {
-	credential: _RegisterPublicKeyCredential;
-}
-
-/**
- * Confirm enrollment flow for TOTP 2FA auth support
- * Response: [ConfirmTotpEnrollmentResponse]
- */
-export interface ConfirmTotpEnrollment {
-	code: string;
-}
-
-/** Response for [ConfirmTotpEnrollment]. */
-export interface ConfirmTotpEnrollmentResponse {
-	recovery_codes: string[];
 }
 
 /**
@@ -7129,13 +7090,6 @@ export interface EnvironmentVar {
 	value: string;
 }
 
-/**
- * Retrieve a JWT after completing third party login flows.
- * Response: [ExchangeForJwtResponse].
- */
-export interface ExchangeForJwt {
-}
-
 /** Execute a terminal command on the given server. */
 export interface ExecuteTerminalBody {
 	/** The target to create terminal for. */
@@ -7611,28 +7565,6 @@ export interface GetHistoricalServerStatsResponse {
 }
 
 /**
- * Non authenticated route to see the available options
- * users have to login to Komodo, eg. local auth, github, google.
- * Response: [GetLoginOptionsResponse].
- */
-export interface GetLoginOptions {
-}
-
-/** The response for [GetLoginOptions]. */
-export interface GetLoginOptionsResponse {
-	/** Whether local auth is enabled. */
-	local: boolean;
-	/** Whether github login is enabled. */
-	github: boolean;
-	/** Whether google login is enabled. */
-	google: boolean;
-	/** Whether OIDC login is enabled. */
-	oidc: boolean;
-	/** Whether user registration (Sign Up) has been disabled */
-	registration_disabled: boolean;
-}
-
-/**
  * Get the Periphery information of the target server,
  * including the Periphery version and public key.
  * Response: [PeripheryInformation].
@@ -7964,13 +7896,6 @@ export interface GetTag {
 export interface GetUpdate {
 	/** The update id. */
 	id: string;
-}
-
-/**
- * Get the user extracted from the request headers.
- * Response: [User].
- */
-export interface GetUser {
 }
 
 /**
@@ -8803,19 +8728,6 @@ export interface ListUsers {
  * secret variables will have their values obscured.
  */
 export interface ListVariables {
-}
-
-/**
- * Login as a local user. Will fail if the users credentials don't match
- * any local user.
- * 
- * Note. This method is only available if the core api has `local_auth` enabled.
- */
-export interface LoginLocalUser {
-	/** The user's username */
-	username: string;
-	/** The user's password */
-	password: string;
 }
 
 export interface NameAndId {
@@ -9744,24 +9656,6 @@ export interface SetUsersInUserGroup {
 	users: string[];
 }
 
-/**
- * Sign up a new local user account. Will fail if a user with the
- * given username already exists.
- * Response: [SignUpLocalUserResponse].
- * 
- * Note. This method is only available if the core api has `local_auth` enabled,
- * and if user registration is not disabled (after the first user).
- */
-export interface SignUpLocalUser {
-	/** The username for the new user. */
-	username: string;
-	/**
-	 * The password for the new user.
-	 * This cannot be retreived later.
-	 */
-	password: string;
-}
-
 /** Info for network interface usage. */
 export interface SingleNetworkInterfaceUsage {
 	/** The network interface name */
@@ -9929,32 +9823,6 @@ export interface TotalDiskUsage {
 	used_gb: number;
 	/** Total size in GB */
 	total_gb: number;
-}
-
-/**
- * Unenrolls user in TOTP 2FA.
- * Response: [NoData]
- */
-export interface UnenrollPasskey {
-}
-
-/**
- * Unenrolls user in TOTP 2FA.
- * Response: [UnenrollTotpResponse]
- */
-export interface UnenrollTotp {
-}
-
-/** Unlink a login. Response: [NoData]. */
-export interface UnlinkLogin {
-	/**
-	 * 'provider' can be:
-	 * - Local
-	 * - Github
-	 * - Google
-	 * - Oidc
-	 */
-	provider: string;
 }
 
 /** Unpauses all containers on the target server. Response: [Update] */
@@ -10139,16 +10007,6 @@ export interface UpdateOnboardingKey {
 	copy_server?: string;
 	/** Update whether to create Builder */
 	create_builder?: boolean;
-}
-
-/**
- * Update the calling user's password. Response: [NoData].
- * 
- * If the User was created using third party login method,
- * using [UpdatePassword] adds or updates the Local linked (additional) login method.
- */
-export interface UpdatePassword {
-	password: string;
 }
 
 /**
@@ -10346,14 +10204,6 @@ export interface UpdateTagColor {
 }
 
 /**
- * Updates's whether user can skip 2fa when logging in using a third party (Oauth / OIDC).
- * Response: [NoData]
- */
-export interface UpdateThirdPartySkip2fa {
-	skip: boolean;
-}
-
-/**
  * **Super Admin only.** Update's whether a user is admin.
  * Response: [NoData].
  */
@@ -10377,16 +10227,6 @@ export interface UpdateUserBasePermissions {
 	create_servers?: boolean;
 	/** If specified, will update user's ability to create builds. */
 	create_builds?: boolean;
-}
-
-/**
- * Update the calling users username.
- * Response: [NoData].
- * 
- * Will fail if the new username is invalid or already taken.
- */
-export interface UpdateUsername {
-	username: string;
 }
 
 /** **Admin only.** Update variable description. Response: [Variable]. */
@@ -10468,15 +10308,6 @@ export interface WriteSyncFileContents {
 	/** The contents to write. */
 	contents: string;
 }
-
-export type AuthRequest = 
-	| { type: "GetLoginOptions", params: GetLoginOptions }
-	| { type: "SignUpLocalUser", params: SignUpLocalUser }
-	| { type: "LoginLocalUser", params: LoginLocalUser }
-	| { type: "ExchangeForJwt", params: ExchangeForJwt }
-	| { type: "CompleteTotpLogin", params: CompleteTotpLogin }
-	| { type: "CompletePasskeyLogin", params: CompletePasskeyLogin }
-	| { type: "GetUser", params: GetUser };
 
 /** Days of the week */
 export enum DayOfWeek {
@@ -10849,29 +10680,11 @@ export enum SyncWebhookAction {
 	Sync = "Sync",
 }
 
-/** JSON containing either a user id or the required 2fa auth check. */
-export type UserIdOrTwoFactor = 
-	| { type: "UserId", data: string }
-	| { type: "Passkey", data: _RequestChallengeResponse }
-	| { type: "Totp", data: {
-}};
-
 export type UserRequest = 
 	| { type: "PushRecentlyViewed", params: PushRecentlyViewed }
 	| { type: "SetLastSeenUpdate", params: SetLastSeenUpdate }
-	| { type: "UpdateUsername", params: UpdateUsername }
-	| { type: "UpdatePassword", params: UpdatePassword }
 	| { type: "CreateApiKey", params: CreateApiKey }
-	| { type: "DeleteApiKey", params: DeleteApiKey }
-	| { type: "BeginTotpEnrollment", params: BeginTotpEnrollment }
-	| { type: "ConfirmTotpEnrollment", params: ConfirmTotpEnrollment }
-	| { type: "UnenrollTotp", params: UnenrollTotp }
-	| { type: "BeginPasskeyEnrollment", params: BeginPasskeyEnrollment }
-	| { type: "ConfirmPasskeyEnrollment", params: ConfirmPasskeyEnrollment }
-	| { type: "UnenrollPasskey", params: UnenrollPasskey }
-	| { type: "BeginThirdPartyLoginLink", params: BeginThirdPartyLoginLink }
-	| { type: "UnlinkLogin", params: UnlinkLogin }
-	| { type: "UpdateThirdPartySkip2fa", params: UpdateThirdPartySkip2fa };
+	| { type: "DeleteApiKey", params: DeleteApiKey };
 
 export type WriteRequest = 
 	| { type: "UpdateResourceMeta", params: UpdateResourceMeta }

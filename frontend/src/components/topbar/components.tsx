@@ -1,5 +1,4 @@
 import {
-  LOGIN_TOKENS,
   useManageUser,
   useRead,
   useResourceParamType,
@@ -56,7 +55,7 @@ import {
 } from "@ui/dialog";
 import { Badge } from "@ui/badge";
 import { ConfirmButton, CopyButton } from "../util";
-import { Types } from "komodo_client";
+import { MoghAuth, Types } from "komodo_client";
 import { UpdateDetails, UpdateUser } from "@components/updates/details";
 import { fmt_date, fmt_operation, fmt_version } from "@lib/formatting";
 import { ResourceLink, ResourceNameSimple } from "@components/resources/common";
@@ -207,7 +206,7 @@ export const UserDropdown = () => {
   };
   const user = useUser().data;
   const userInvalidate = useUserInvalidate();
-  const accounts = LOGIN_TOKENS.accounts();
+  const accounts = MoghAuth.LOGIN_TOKENS.accounts();
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
@@ -240,6 +239,7 @@ export const UserDropdown = () => {
 
         {accounts.map((login) => (
           <Account
+            key={login.user_id}
             login={login}
             current_id={user?._id?.$oid}
             setOpen={setOpen}
@@ -272,7 +272,7 @@ export const UserDropdown = () => {
             variant="destructive"
             className="flex gap-2 items-center justify-center w-full max-w-full"
             onClick={() => {
-              LOGIN_TOKENS.remove_all();
+              MoghAuth.LOGIN_TOKENS.remove_all();
               userInvalidate();
             }}
           />
@@ -290,7 +290,7 @@ const Account = ({
   viewLogout,
   full,
 }: {
-  login: Types.JwtResponse;
+  login: MoghAuth.Types.JwtResponse;
   current_id?: string;
   setOpen: (open: boolean) => void;
   rerender: () => void;
@@ -301,7 +301,7 @@ const Account = ({
   const { data: user } = useRead(
     "GetUsername",
     { user_id: user_id! },
-    { enabled: !!user_id }
+    { enabled: !!user_id },
   );
   if (!user_id || !user) return;
   const selected = user_id === current_id;
@@ -316,7 +316,7 @@ const Account = ({
             setOpen(false);
             return;
           }
-          LOGIN_TOKENS.change(user_id);
+          MoghAuth.LOGIN_TOKENS.change(user_id);
           location.reload();
         }}
       >
@@ -337,7 +337,7 @@ const Account = ({
           variant="destructive"
           className="px-2 py-0"
           onClick={() => {
-            LOGIN_TOKENS.remove(user_id);
+            MoghAuth.LOGIN_TOKENS.remove(user_id);
             if (selected) {
               location.reload();
             } else {
@@ -367,7 +367,7 @@ const UsernameView = ({
       <div
         className={cn(
           "overflow-hidden overflow-ellipsis",
-          full ? "max-w-[200px]" : "hidden xl:flex max-w-[140px]"
+          full ? "max-w-[200px]" : "hidden xl:flex max-w-[140px]",
         )}
       >
         {username}
@@ -381,7 +381,7 @@ export const TopbarUpdates = () => {
 
   const last_opened = useUser().data?.last_update_view;
   const unseen_update = updates?.updates.some(
-    (u) => u.start_ts > (last_opened ?? Number.MAX_SAFE_INTEGER)
+    (u) => u.start_ts > (last_opened ?? Number.MAX_SAFE_INTEGER),
   );
 
   const userInvalidate = useUserInvalidate();
@@ -397,7 +397,7 @@ export const TopbarUpdates = () => {
           <Circle
             className={cn(
               "absolute top-2 right-2 w-2 h-2 stroke-blue-500 fill-blue-500 transition-opacity",
-              unseen_update ? "opacity-1" : "opacity-0"
+              unseen_update ? "opacity-1" : "opacity-0",
             )}
           />
         </Button>
@@ -481,7 +481,7 @@ export const TopbarAlerts = () => {
   const { data } = useRead(
     "ListAlerts",
     { query: { resolved: false } },
-    { refetchInterval: 3_000 }
+    { refetchInterval: 3_000 },
   );
   const [open, setOpen] = useState(false);
 
@@ -600,7 +600,7 @@ export const WsStatusIndicator = () => {
           <Circle
             className={cn(
               "w-4 h-4 stroke-none transition-colors",
-              connected ? "fill-green-500" : "fill-red-500"
+              connected ? "fill-green-500" : "fill-red-500",
             )}
           />
         </Button>

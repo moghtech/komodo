@@ -18,12 +18,9 @@ use komodo_client::entities::{
   stats::{SystemInformation, SystemStats},
   swarm::SwarmState,
 };
-use rate_limit::RateLimiter;
-use webauthn_rs::{Webauthn, WebauthnBuilder};
 
 use crate::{
-  auth::jwt::JwtClient,
-  config::{core_config, core_host},
+  config::core_config,
   connection::PeripheryConnections,
   helpers::{
     action_state::ActionStates, all_resources::AllResourcesById,
@@ -61,19 +58,6 @@ pub async fn init_db_client() {
     );
     std::process::exit(1)
   }
-}
-
-pub fn jwt_client() -> &'static JwtClient {
-  static JWT_CLIENT: OnceLock<JwtClient> = OnceLock::new();
-  JWT_CLIENT.get_or_init(|| match JwtClient::new(core_config()) {
-    Ok(client) => client,
-    Err(e) => {
-      error!(
-        "FATAL: Failed to initialialize JwtClient | {e:#} | Exiting..."
-      );
-      std::process::exit(1)
-    }
-  })
 }
 
 /// server id => connection
@@ -225,38 +209,4 @@ pub fn all_resources_cache() -> &'static ArcSwap<AllResourcesById> {
   static ALL_RESOURCES: OnceLock<ArcSwap<AllResourcesById>> =
     OnceLock::new();
   ALL_RESOURCES.get_or_init(Default::default)
-}
-
-pub fn auth_rate_limiter() -> &'static RateLimiter {
-  static AUTH_RATE_LIMITER: OnceLock<Arc<RateLimiter>> =
-    OnceLock::new();
-  AUTH_RATE_LIMITER.get_or_init(|| {
-    let config = core_config();
-    if config.auth_rate_limit_disabled {
-      warn!("Auth rate limiting is disabled")
-    }
-    RateLimiter::new(
-      config.auth_rate_limit_disabled,
-      config.auth_rate_limit_max_attempts as usize,
-      config.auth_rate_limit_window_seconds,
-    )
-  })
-}
-
-pub fn webauthn() -> Option<&'static Webauthn> {
-  static WEBAUTHN: OnceLock<Option<Webauthn>> = OnceLock::new();
-  WEBAUTHN
-    .get_or_init(|| {
-      let rp_origin = core_host()?;
-      // The relying party id (the effective domain)
-      let rp_id = rp_origin.domain()?;
-      info!("Using '{rp_id}' as WebAuthn rp_id");
-      WebauthnBuilder::new(rp_id, rp_origin)
-        .inspect_err(|e| warn!("Failed to init webauthn provider | Invalid KOMODO_HOST: could not build webauthn provider builder | {e:?}"))
-        .ok()?
-        .build()
-        .inspect_err(|e| warn!("Failed to init webauthn provider | Invalid KOMODO_HOST: could not build webauthn provider | {e:?}"))
-        .ok()
-    })
-    .as_ref()
 }

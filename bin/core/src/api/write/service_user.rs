@@ -168,10 +168,7 @@ impl Resolve<WriteArgs> for CreateApiKeyForServiceUser {
       name: self.name,
       expires: self.expires,
     }
-    .resolve(&UserArgs {
-      user: service_user,
-      session: None,
-    })
+    .resolve(&UserArgs { user: service_user })
     .await
   }
 }

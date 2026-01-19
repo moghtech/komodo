@@ -31,14 +31,14 @@ export const RESOURCE_TARGETS: UsableResource[] = [
 export const SETTINGS_RESOURCES: UsableResource[] = ["Builder", "Alerter"];
 
 export const SIDEBAR_RESOURCES: UsableResource[] = RESOURCE_TARGETS.filter(
-  (target) => !SETTINGS_RESOURCES.includes(target)
+  (target) => !SETTINGS_RESOURCES.includes(target),
 );
 
 export function env_to_text(envVars: Types.EnvironmentVar[] | undefined) {
   return envVars?.reduce(
     (prev, { variable, value }) =>
       prev + (prev ? "\n" : "") + `${variable}: ${value}`,
-    ""
+    "",
   );
 }
 
@@ -68,7 +68,7 @@ function keep_line(line: string) {
 }
 
 export function parse_key_value(
-  input: string
+  input: string,
 ): Array<{ key: string; value: string }> {
   const trimmed = input.trim();
   if (trimmed.length === 0) return [];
@@ -77,7 +77,7 @@ export function parse_key_value(
     .map((line) => line.trim())
     .filter(
       (line) =>
-        line.length > 0 && !line.startsWith("#") && !line.startsWith("//")
+        line.length > 0 && !line.startsWith("#") && !line.startsWith("//"),
     )
     .map((line) => {
       const no_comment = line.split(" #", 1)[0].trim();
@@ -130,7 +130,7 @@ export const level_to_number = (level: Types.PermissionLevel | undefined) => {
 export const has_minimum_permissions = (
   permission: Types.PermissionLevelAndSpecifics | undefined,
   greater_than: Types.PermissionLevel,
-  specific?: Types.SpecificPermission[]
+  specific?: Types.SpecificPermission[],
 ) => {
   if (!permission) return false;
   if (level_to_number(permission.level) < level_to_number(greater_than))
@@ -187,7 +187,7 @@ export const logToHtml = (log: string) => {
   if (!log) return "No log.";
   const sanitized = sanitizeHtml(log, {
     allowedTags: sanitizeHtml.defaults.allowedTags.filter(
-      (tag) => tag !== "script"
+      (tag) => tag !== "script",
     ),
     allowedAttributes: sanitizeHtml.defaults.allowedAttributes,
   });
@@ -196,7 +196,7 @@ export const logToHtml = (log: string) => {
 
 export const getUpdateQuery = (
   target: Types.ResourceTarget,
-  deployments: Types.DeploymentListItem[] | undefined
+  deployments: Types.DeploymentListItem[] | undefined,
 ) => {
   const build_id =
     target.type === "Deployment"
@@ -229,7 +229,7 @@ export const getUpdateQuery = (
 export const filterBySplit = <T>(
   items: T[] | undefined,
   search: string,
-  extract: (item: T) => string
+  extract: (item: T) => string,
 ) => {
   const split = search.toLowerCase().split(" ");
   return (
@@ -245,7 +245,7 @@ export const filterBySplit = <T>(
 export const filterMultitermBySplit = <T>(
   items: T[] | undefined,
   search: string,
-  extract: (item: T) => (string | undefined)[]
+  extract: (item: T) => (string | undefined)[],
 ) => {
   const split = search.toLowerCase().split(" ");
   return (
@@ -255,7 +255,7 @@ export const filterMultitermBySplit = <T>(
             .filter((str) => str)
             .map((str) => str!.toLowerCase());
           return split.every(
-            (term) => target.findIndex((t) => t.includes(term)) !== -1
+            (term) => target.findIndex((t) => t.includes(term)) !== -1,
           );
         })
       : items) ?? []
@@ -293,7 +293,7 @@ export const file_contents_empty = (contents?: string) => {
 };
 
 export const resourceTargetFromTerminalTarget = (
-  target: Types.TerminalTarget
+  target: Types.TerminalTarget,
 ): Types.ResourceTarget => {
   switch (target.type) {
     case "Server":
@@ -364,5 +364,5 @@ export const preparePasskeyCredential = (data: any) => {
 };
 
 export const extractUserIdFromJwt = (jwt: string) => {
-  return jwtDecode<{ id: string | undefined }>(jwt).id;
+  return jwtDecode(jwt).sub;
 };

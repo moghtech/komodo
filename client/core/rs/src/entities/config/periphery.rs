@@ -15,7 +15,7 @@
 use clap::Parser;
 use ipnetwork::IpNetwork;
 use serde::Deserialize;
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::PathBuf, sync::OnceLock};
 
 use crate::{
   deserializers::{
@@ -86,13 +86,14 @@ pub struct CliArgs {
   pub log_level: Option<tracing::Level>,
 }
 
+#[cfg(feature = "cli")]
 #[derive(Debug, Clone, clap::Subcommand)]
 pub enum Command {
   /// Private-Public key utilities. (alias: `k`)
   #[clap(alias = "k")]
   Key {
     #[command(subcommand)]
-    command: crate::entities::config::KeyCommand,
+    command: pki::cli::KeyCommand,
   },
 }
 
@@ -217,9 +218,9 @@ pub struct Env {
   /// Override `ssl_enabled`
   pub periphery_ssl_enabled: Option<bool>,
   /// Override `ssl_key_file`
-  pub periphery_ssl_key_file: Option<PathBuf>,
+  pub periphery_ssl_key_file: Option<String>,
   /// Override `ssl_cert_file`
-  pub periphery_ssl_cert_file: Option<PathBuf>,
+  pub periphery_ssl_cert_file: Option<String>,
 }
 
 /// # Periphery Configuration File
@@ -317,12 +318,12 @@ pub struct PeripheryConfig {
   /// Path to the ssl key.
   /// Default: `${root_directory}/ssl/key.pem`.
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub ssl_key_file: Option<PathBuf>,
+  pub ssl_key_file: Option<String>,
 
   /// Path to the ssl cert.
   /// Default: `${root_directory}/ssl/cert.pem`.
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub ssl_cert_file: Option<PathBuf>,
+  pub ssl_cert_file: Option<String>,
 
   // ==================
   // = OTHER SETTINGS =
@@ -631,7 +632,7 @@ impl PeripheryConfig {
 
   pub fn ssl_key_file(&self) -> PathBuf {
     if let Some(dir) = &self.ssl_key_file {
-      dir.to_owned()
+      dir.into()
     } else {
       self.root_directory.join("ssl/key.pem")
     }
@@ -639,9 +640,39 @@ impl PeripheryConfig {
 
   pub fn ssl_cert_file(&self) -> PathBuf {
     if let Some(dir) = &self.ssl_cert_file {
-      dir.to_owned()
+      dir.into()
     } else {
       self.root_directory.join("ssl/cert.pem")
     }
+  }
+}
+
+impl mogh_server::ServerConfig for &PeripheryConfig {
+  fn bind_ip(&self) -> &str {
+    &self.bind_ip
+  }
+  fn port(&self) -> u16 {
+    self.port
+  }
+  fn ssl_enabled(&self) -> bool {
+    self.ssl_enabled
+  }
+  fn ssl_key_file(&self) -> &str {
+    static SSL_KEY_FILE: OnceLock<String> = OnceLock::new();
+    SSL_KEY_FILE.get_or_init(|| {
+      PeripheryConfig::ssl_key_file(self)
+        .into_os_string()
+        .into_string()
+        .expect("Invalid ssl key file path.")
+    })
+  }
+  fn ssl_cert_file(&self) -> &str {
+    static SSL_CERT_FILE: OnceLock<String> = OnceLock::new();
+    SSL_CERT_FILE.get_or_init(|| {
+      PeripheryConfig::ssl_cert_file(self)
+        .into_os_string()
+        .into_string()
+        .expect("Invalid ssl cert file path.")
+    })
   }
 }

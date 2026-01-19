@@ -1,15 +1,14 @@
 use std::net::IpAddr;
 
 use crate::{
+  auth::GENERAL_RATE_LIMITER,
   auth::{auth_api_key_check_enabled, auth_jwt_check_enabled},
   helpers::query::get_user,
-  state::auth_rate_limiter,
 };
 use anyhow::{Context, anyhow};
 use axum::{
   Router,
   extract::ws::{self, WebSocket},
-  http::HeaderMap,
   routing::get,
 };
 use komodo_client::{entities::user::User, ws::WsLoginMessage};
@@ -31,8 +30,7 @@ pub fn router() -> Router {
 
 async fn user_ws_login(
   mut socket: WebSocket,
-  headers: &HeaderMap,
-  fallback_ip: IpAddr,
+  ip: IpAddr,
 ) -> Option<(WebSocket, User)> {
   let res = async {
     let message = match socket
@@ -69,11 +67,7 @@ async fn user_ws_login(
       }
     }
   }
-  .with_failure_rate_limit_using_headers(
-    auth_rate_limiter(),
-    headers,
-    Some(fallback_ip),
-  )
+  .with_failure_rate_limit_using_ip(&GENERAL_RATE_LIMITER, &ip)
   .await;
   match res {
     Ok(user) => {

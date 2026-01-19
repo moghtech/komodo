@@ -29,35 +29,33 @@ command.workspace = true
 config.workspace = true
 logger.workspace = true
 cache.workspace = true
-noise.workspace = true
+pki.workspace = true
 git.workspace = true
 # mogh
 serror = { workspace = true, features = ["axum"] }
+mogh_auth_client = { workspace = true, features = ["utoipa"] }
+mogh_auth_server.workspace = true
 async_timing_util.workspace = true
 partial_derive2.workspace = true
 derive_variants.workspace = true
 resolver_api.workspace = true
+mogh_server.workspace = true
 toml_pretty.workspace = true
 slack.workspace = true
 svi.workspace = true
 # external
 aws-credential-types.workspace = true
 english-to-cron.workspace = true
-tower-sessions.workspace = true
 openidconnect.workspace = true
 data-encoding.workspace = true
 serde_yaml_ng.workspace = true
 utoipa-scalar.workspace = true
-jsonwebtoken.workspace = true
 futures-util.workspace = true
-axum-server.workspace = true
 aws-sdk-ec2.workspace = true
 urlencoding.workspace = true
-webauthn-rs.workspace = true
 aws-config.workspace = true
 tokio-util.workspace = true
 axum-extra.workspace = true
-tower-http.workspace = true
 serde_json.workspace = true
 typeshare.workspace = true
 chrono-tz.workspace = true
@@ -69,7 +67,6 @@ colored.workspace = true
 tracing.workspace = true
 reqwest.workspace = true
 dotenvy.workspace = true
-totp-rs.workspace = true
 anyhow.workspace = true
 bcrypt.workspace = true
 croner.workspace = true

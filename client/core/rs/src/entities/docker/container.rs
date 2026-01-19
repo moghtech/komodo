@@ -470,10 +470,6 @@ pub struct HostConfig {
   #[serde(default, rename = "DeviceRequests")]
   pub device_requests: Vec<DeviceRequest>,
 
-  /// Hard limit for kernel TCP buffer memory (in bytes). Depending on the OCI runtime in use, this option may be ignored. It is no longer supported by the default (runc) runtime.  This field is omitted when empty.
-  #[serde(rename = "KernelMemoryTCP")]
-  pub kernel_memory_tcp: Option<I64>,
-
   /// Memory soft limit in bytes.
   #[serde(rename = "MemoryReservation")]
   pub memory_reservation: Option<I64>,
@@ -901,10 +897,6 @@ pub struct MountPoint {
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct NetworkSettings {
-  /// Name of the default bridge interface when dockerd's --bridge flag is set.
-  #[serde(rename = "Bridge")]
-  pub bridge: Option<String>,
-
   /// SandboxID uniquely represents a container's network stack.
   #[serde(rename = "SandboxID")]
   pub sandbox_id: Option<String>,

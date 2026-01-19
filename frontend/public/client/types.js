@@ -549,6 +549,13 @@ export var ServiceUpdateStatusStateEnum;
     ServiceUpdateStatusStateEnum["ROLLBACK_PAUSED"] = "rollback_paused";
     ServiceUpdateStatusStateEnum["ROLLBACK_COMPLETED"] = "rollback_completed";
 })(ServiceUpdateStatusStateEnum || (ServiceUpdateStatusStateEnum = {}));
+export var ImageManifestSummaryKindEnum;
+(function (ImageManifestSummaryKindEnum) {
+    ImageManifestSummaryKindEnum["Empty"] = "";
+    ImageManifestSummaryKindEnum["Image"] = "image";
+    ImageManifestSummaryKindEnum["Attestation"] = "attestation";
+    ImageManifestSummaryKindEnum["Unknown"] = "unknown";
+})(ImageManifestSummaryKindEnum || (ImageManifestSummaryKindEnum = {}));
 export var VolumeScopeEnum;
 (function (VolumeScopeEnum) {
     VolumeScopeEnum["Empty"] = "";

@@ -2,8 +2,8 @@ use anyhow::Context;
 use bollard::query_parameters::ListImagesOptions;
 use command::run_komodo_standard_command;
 use komodo_client::entities::docker::{
-  ContainerConfig, GraphDriverData, HealthConfig,
-  container::ContainerListItem, image::*,
+  GraphDriverData, HealthConfig, container::ContainerListItem,
+  image::*,
 };
 use serde::Deserialize;
 
@@ -56,12 +56,39 @@ impl DockerClient {
     let image = self.docker.inspect_image(image_name).await?;
     Ok(Image {
       id: image.id,
-      repo_tags: image.repo_tags.unwrap_or_default(),
-      repo_digests: image.repo_digests.unwrap_or_default(),
-      parent: image.parent,
+      descriptor: image.descriptor.map(convert_oci_descriptor),
+      manifests: image.manifests.map(|manifests| {
+        manifests
+          .into_iter()
+          .map(|manifest| ImageManifestSummary {
+            id: manifest.id,
+            descriptor: convert_oci_descriptor(manifest.descriptor),
+            available: manifest.available,
+            size: ImageManifestSummarySize {
+              total: manifest.size.total,
+              content: manifest.size.content,
+            },
+            kind: manifest.kind.map(|kind| match kind {
+                bollard::secret::ImageManifestSummaryKindEnum::EMPTY => ImageManifestSummaryKindEnum::Empty,
+                bollard::secret::ImageManifestSummaryKindEnum::IMAGE => ImageManifestSummaryKindEnum::Image,
+                bollard::secret::ImageManifestSummaryKindEnum::ATTESTATION => ImageManifestSummaryKindEnum::Attestation,
+                bollard::secret::ImageManifestSummaryKindEnum::UNKNOWN => ImageManifestSummaryKindEnum::Unknown,
+            }),
+            image_data: manifest.image_data.map(|data| {
+              ImageManifestSummaryImageData {
+                platform: convert_oci_platform(data.platform),
+                containers: data.containers,
+                size: ImageManifestSummaryImageDataSize { unpacked: data.size.unpacked }
+              }
+            }),
+            attestation_data: manifest.attestation_data.map(|data| ImageManifestSummaryAttestationData { _for: data._for }),
+          })
+          .collect()
+      }),
+      repo_tags: image.repo_tags,
+      repo_digests: image.repo_digests,
       comment: image.comment,
       created: image.created,
-      docker_version: image.docker_version,
       author: image.author,
       architecture: image.architecture,
       variant: image.variant,
@@ -81,24 +108,11 @@ impl DockerClient {
       metadata: image.metadata.map(|metadata| ImageInspectMetadata {
         last_tag_time: metadata.last_tag_time,
       }),
-      config: image.config.map(|config| ContainerConfig {
-        hostname: config.hostname,
-        domainname: config.domainname,
+      config: image.config.map(|config| ImageConfig {
         user: config.user,
-        attach_stdin: config.attach_stdin,
-        attach_stdout: config.attach_stdout,
-        attach_stderr: config.attach_stderr,
-        exposed_ports: config
-          .exposed_ports
-          .unwrap_or_default()
-          .into_keys()
-          .map(|k| (k, Default::default()))
-          .collect(),
-        tty: config.tty,
-        open_stdin: config.open_stdin,
-        stdin_once: config.stdin_once,
-        env: config.env.unwrap_or_default(),
-        cmd: config.cmd.unwrap_or_default(),
+        exposed_ports: config.exposed_ports,
+        env: config.env,
+        cmd: config.cmd,
         healthcheck: config.healthcheck.map(|health| HealthConfig {
           test: health.test.unwrap_or_default(),
           interval: health.interval,
@@ -108,22 +122,13 @@ impl DockerClient {
           start_interval: health.start_interval,
         }),
         args_escaped: config.args_escaped,
-        image: config.image,
-        volumes: config
-          .volumes
-          .unwrap_or_default()
-          .into_keys()
-          .map(|k| (k, Default::default()))
-          .collect(),
+        volumes: config.volumes,
         working_dir: config.working_dir,
-        entrypoint: config.entrypoint.unwrap_or_default(),
-        network_disabled: config.network_disabled,
-        mac_address: config.mac_address,
-        on_build: config.on_build.unwrap_or_default(),
-        labels: config.labels.unwrap_or_default(),
+        entrypoint: config.entrypoint,
+        on_build: config.on_build,
+        labels: config.labels,
         stop_signal: config.stop_signal,
-        stop_timeout: config.stop_timeout,
-        shell: config.shell.unwrap_or_default(),
+        shell: config.shell,
       }),
     })
   }
@@ -147,6 +152,33 @@ impl DockerClient {
       })
       .collect();
     Ok(res)
+  }
+}
+
+fn convert_oci_descriptor(
+  descriptor: bollard::secret::OciDescriptor,
+) -> OciDescriptor {
+  OciDescriptor {
+    media_type: descriptor.media_type,
+    digest: descriptor.digest,
+    size: descriptor.size,
+    urls: descriptor.urls,
+    annotations: descriptor.annotations,
+    data: descriptor.data,
+    platform: descriptor.platform.map(convert_oci_platform),
+    artifact_type: descriptor.artifact_type,
+  }
+}
+
+fn convert_oci_platform(
+  platform: bollard::secret::OciPlatform,
+) -> OciPlatform {
+  OciPlatform {
+    architecture: platform.architecture,
+    os: platform.os,
+    os_version: platform.os_version,
+    os_features: platform.os_features,
+    variant: platform.variant,
   }
 }
 

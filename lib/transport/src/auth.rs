@@ -6,8 +6,8 @@ use std::time::Duration;
 use anyhow::Context;
 use axum::http::{HeaderMap, HeaderValue};
 use data_encoding::BASE64;
-use noise::{NoiseHandshake, key::SpkiPublicKey};
 use periphery_client::transport::LoginMessage;
+use pki::{SpkiPublicKey, mutual::MutualNoiseHandshake};
 use rand::RngCore;
 use sha2::{Digest, Sha256};
 use tracing::debug;
@@ -61,7 +61,7 @@ impl LoginFlow for ServerLoginFlow {
         .await
         .context("[Server] Failed to send connection nonce")?;
 
-      let mut handshake = NoiseHandshake::new_responder(
+      let mut handshake = MutualNoiseHandshake::new_responder(
         private_key,
         // Builds the handshake using the connection-unique prologue hash.
         // The prologue must be the same on both sides of connection.
@@ -152,7 +152,7 @@ impl LoginFlow for ClientLoginFlow {
         .await
         .context("[Client] Failed to receive connection nonce")?;
 
-      let mut handshake = NoiseHandshake::new_initiator(
+      let mut handshake = MutualNoiseHandshake::new_initiator(
         private_key,
         // Builds the handshake using the connection-unique prologue hash.
         // The prologue must be the same on both sides of connection.

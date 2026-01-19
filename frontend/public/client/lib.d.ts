@@ -1,8 +1,10 @@
-import { AuthResponses, ExecuteResponses, ReadResponses, UserResponses, WriteResponses } from "./responses.js";
+import { Types } from "mogh_auth_client";
+import { ExecuteResponses, ReadResponses, UserResponses, WriteResponses } from "./responses.js";
 import { TerminalCallbacks } from "./terminal.js";
-import { AuthRequest, ConnectTerminalQuery, ExecuteRequest, ExecuteTerminalBody, ReadRequest, Update, UpdateListItem, UserRequest, WriteRequest } from "./types.js";
+import { ConnectTerminalQuery, ExecuteRequest, ExecuteTerminalBody, ReadRequest, Update, UpdateListItem, User, UserRequest, WriteRequest } from "./types.js";
+export * as MoghAuth from "mogh_auth_client";
 export * as Types from "./types.js";
-export type { TerminalCallbacks };
+export type { ExecuteResponses, ReadResponses, UserResponses, WriteResponses, TerminalCallbacks, };
 export type InitOptions = {
     type: "jwt";
     params: {
@@ -31,14 +33,33 @@ export declare function KomodoClient(url: string, options: InitOptions): {
      * Call the `/auth` api.
      *
      * ```
-     * const login_options = await komodo.auth("GetLoginOptions", {});
+     * const { jwt } = await komodo.auth.login("LoginLocalUser", {
+     *   username: "test-user",
+     *   password: "test-pass"
+     * });
      * ```
      *
-     * https://docs.rs/komodo_client/latest/komodo_client/api/auth/index.html
+     * https://docs.rs/mogh_auth_client/latest/mogh_auth_client/api/index.html
      */
-    auth: <T extends AuthRequest["type"], Req extends Extract<AuthRequest, {
-        type: T;
-    }>>(type: T, params: Req["params"]) => Promise<AuthResponses[Req["type"]]>;
+    auth: {
+        login: <T extends Types.LoginRequest["type"], Req extends Extract<Types.LoginRequest, {
+            type: T;
+        }>>(type: T, params: Req["params"]) => Promise<import("mogh_auth_client").LoginResponses[Req["type"]]>;
+        manage: <T extends Types.ManageRequest["type"], Req extends Extract<Types.ManageRequest, {
+            type: T;
+        }>>(type: T, params: Req["params"]) => Promise<import("mogh_auth_client").ManageResponses[Req["type"]]>;
+        externalLogin: (provider: Types.ExternalLoginProvider) => void;
+    };
+    /**
+     * Get the current (calling) user.
+     *
+     * ```
+     * const user = await komodo.getUser();
+     * ```
+     *
+     * https://docs.rs/komodo_client/latest/komodo_client/api/user/index.html
+     */
+    getUser: () => Promise<User>;
     /**
      * Call the `/user` api.
      *

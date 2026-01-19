@@ -1,23 +1,11 @@
-use axum::{
-  Router,
-  http::{HeaderName, HeaderValue},
-  routing::get,
-};
-use tower_http::{
-  services::{ServeDir, ServeFile},
-  set_header::SetResponseHeaderLayer,
-};
-use tower_sessions::{
-  Expiry, MemoryStore, SessionManagerLayer,
-  cookie::{SameSite, time::Duration},
+use axum::{Router, routing::get};
+use mogh_server::{
+  cors::cors_layer, session::memory_session_layer,
+  ui::serve_static_ui,
 };
 
-use crate::{
-  config::{core_config, core_host, cors_layer},
-  ts_client,
-};
+use crate::{auth::KomodoAuthImpl, config::core_config, ts_client};
 
-pub mod auth;
 pub mod execute;
 pub mod read;
 pub mod user;
@@ -36,17 +24,10 @@ struct Variant {
 pub fn app() -> Router {
   let config = core_config();
 
-  // Setup static frontend services
-  let frontend_path = &config.frontend_path;
-  let frontend_index =
-    ServeFile::new(format!("{frontend_path}/index.html"));
-  let serve_frontend = ServeDir::new(frontend_path)
-    .not_found_service(frontend_index.clone());
-
   Router::new()
     .merge(openapi::serve_docs())
     .route("/version", get(|| async { env!("CARGO_PKG_VERSION") }))
-    .nest("/auth", auth::router())
+    .nest("/auth", mogh_auth_server::api::router::<KomodoAuthImpl>())
     .nest("/user", user::router())
     .nest("/read", read::router())
     .nest("/write", write::router())
@@ -55,41 +36,7 @@ pub fn app() -> Router {
     .nest("/listener", listener::router())
     .nest("/ws", ws::router())
     .nest("/client", ts_client::router())
-    .layer(memory_session_layer())
-    .fallback_service(serve_frontend)
-    .layer(cors_layer())
-    .layer(SetResponseHeaderLayer::overriding(
-      HeaderName::from_static("x-content-type-options"),
-      HeaderValue::from_static("nosniff"),
-    ))
-    .layer(SetResponseHeaderLayer::overriding(
-      HeaderName::from_static("x-frame-options"),
-      HeaderValue::from_static("DENY"),
-    ))
-    .layer(SetResponseHeaderLayer::overriding(
-      HeaderName::from_static("x-xss-protection"),
-      HeaderValue::from_static("1; mode=block"),
-    ))
-    .layer(SetResponseHeaderLayer::overriding(
-      HeaderName::from_static("referrer-policy"),
-      HeaderValue::from_static("strict-origin-when-cross-origin"),
-    ))
-}
-
-const MEMORY_SESSION_EXPIRY_SECONDS: i64 = 60;
-
-fn memory_session_layer() -> SessionManagerLayer<MemoryStore> {
-  let config = core_config();
-  let mut layer = SessionManagerLayer::new(MemoryStore::default())
-    .with_expiry(Expiry::OnInactivity(Duration::seconds(
-      MEMORY_SESSION_EXPIRY_SECONDS,
-    )))
-    .with_secure(config.host.starts_with("https://"))
-    // Needs Lax in order for sessions to work
-    // accross oauth redirects.
-    .with_same_site(SameSite::Lax);
-  if let Some(domain) = core_host().and_then(|url| url.domain()) {
-    layer = layer.with_domain(domain);
-  }
-  layer
+    .layer(memory_session_layer(config))
+    .fallback_service(serve_static_ui(&config.frontend_path))
+    .layer(cors_layer(config))
 }

@@ -124,7 +124,15 @@ impl Client {
     }
     let hashed_password =
       hash_password(password).context("Failed to hash password")?;
-    //
+    self.set_user_hashed_password(user, hashed_password).await
+  }
+
+  /// Updates a user's password using a DB call.
+  pub async fn set_user_hashed_password(
+    &self,
+    user: &User,
+    hashed_password: String,
+  ) -> anyhow::Result<()> {
     let update = match user.config {
       UserConfig::Service { .. } => {
         return Err(anyhow!(
