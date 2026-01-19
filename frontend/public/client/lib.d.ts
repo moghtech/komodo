@@ -1,8 +1,8 @@
-import { Types } from "mogh_auth_client";
+import { Types } from "npm:mogh_auth_client";
 import { ExecuteResponses, ReadResponses, UserResponses, WriteResponses } from "./responses.js";
 import { TerminalCallbacks } from "./terminal.js";
 import { ConnectTerminalQuery, ExecuteRequest, ExecuteTerminalBody, ReadRequest, Update, UpdateListItem, User, UserRequest, WriteRequest } from "./types.js";
-export * as MoghAuth from "mogh_auth_client";
+export * as MoghAuth from "npm:mogh_auth_client";
 export * as Types from "./types.js";
 export type { ExecuteResponses, ReadResponses, UserResponses, WriteResponses, TerminalCallbacks, };
 export type InitOptions = {

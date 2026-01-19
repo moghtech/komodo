@@ -30,7 +30,8 @@ after = "yarn-install"
 cmd = """
 node ./client/core/ts/generate_types.mjs && \
 cd ./client/core/ts && yarn build && \
-cp -r dist/. ../../../frontend/public/client/."""
+cp -r dist/. ../../../frontend/public/client/. &&
+cd ../../../frontend && node fix_public_client.mjs"""
 
 [link-client]
 description = "yarn links the ts client to the frontend"

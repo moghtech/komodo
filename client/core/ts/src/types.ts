@@ -2660,43 +2660,15 @@ export interface SwarmActionState {
 
 export type GetSwarmActionStateResponse = SwarmActionState;
 
-export type U64 = number;
-
-/** The version number of the object such as node, service, etc. This is needed to avoid conflicting writes. The client must send the version number along with the modified specification when updating these objects.  This approach ensures safe concurrency and determinism in that the change on the object may not be applied if the version number has changed from the last read. In other words, if two update requests specify the same base version, only one of the requests can succeed. As a result, two separate update requests that happen at the same time will not unintentionally overwrite each other. */
-export interface ObjectVersion {
-	Index?: U64;
-}
-
-/** Driver represents a driver (network, logging, secrets). */
-export interface Driver {
-	/** Name of the driver. */
-	Name: string;
-	/** Key/value map of driver-specific options. */
-	Options?: Record<string, string>;
-}
-
-export interface ConfigSpec {
-	/** User-defined name of the config. */
-	Name?: string;
-	/** User-defined key/value metadata. */
-	Labels?: Record<string, string>;
-	/**
-	 * Data is the data to store as a config, formatted as a Base64-url-safe-encoded ([RFC 4648](https://tools.ietf.org/html/rfc4648#section-5)) string.
-	 * It must be empty if the Driver field is set, in which case the data is loaded from an external secret store.
-	 * The maximum allowed size is 500KB, as defined in [MaxSecretSize](https://pkg.go.dev/github.com/moby/swarmkit/v2@v2.0.0-20250103191802-8c1959736554/api/validation#MaxSecretSize).
-	 */
-	Data?: string;
-	/** Templating driver, if applicable  Templating controls whether and how to evaluate the config payload as a template. If no driver is set, no templating is used. */
-	Templating?: Driver;
-}
-
-/** Swarm config details. */
 export interface SwarmConfig {
-	ID?: string;
-	Version?: ObjectVersion;
-	CreatedAt?: string;
-	UpdatedAt?: string;
-	Spec?: ConfigSpec;
+	/**
+	 * The Servers which are swarm manager nodes.
+	 * If a Server is not reachable or gives error,
+	 * tries the next Server.
+	 */
+	server_ids?: string[];
+	/** Configure quick links that are displayed in the resource header */
+	links?: string[];
 }
 
 export interface SwarmInfo {
@@ -3436,6 +3408,13 @@ export interface Container {
 }
 
 export type InspectDeploymentContainerResponse = Container;
+
+export type U64 = number;
+
+/** The version number of the object such as node, service, etc. This is needed to avoid conflicting writes. The client must send the version number along with the modified specification when updating these objects.  This approach ensures safe concurrency and determinism in that the change on the object may not be applied if the version number has changed from the last read. In other words, if two update requests specify the same base version, only one of the requests can succeed. As a result, two separate update requests that happen at the same time will not unintentionally overwrite each other. */
+export interface ObjectVersion {
+	Index?: U64;
+}
 
 /** Describes a permission the user has to accept upon installing the plugin. */
 export interface PluginPrivilege {
@@ -4625,6 +4604,14 @@ export interface SwarmInspectInfo {
 }
 
 export type InspectSwarmResponse = SwarmInspectInfo;
+
+/** Driver represents a driver (network, logging, secrets). */
+export interface Driver {
+	/** Name of the driver. */
+	Name: string;
+	/** Key/value map of driver-specific options. */
+	Options?: Record<string, string>;
+}
 
 export interface SecretSpec {
 	/** User-defined name of the secret. */
@@ -5987,6 +5974,21 @@ export interface CloseAlert {
 export interface CommitSync {
 	/** Id or name */
 	sync: string;
+}
+
+export interface ConfigSpec {
+	/** User-defined name of the config. */
+	Name?: string;
+	/** User-defined key/value metadata. */
+	Labels?: Record<string, string>;
+	/**
+	 * Data is the data to store as a config, formatted as a Base64-url-safe-encoded ([RFC 4648](https://tools.ietf.org/html/rfc4648#section-5)) string.
+	 * It must be empty if the Driver field is set, in which case the data is loaded from an external secret store.
+	 * The maximum allowed size is 500KB, as defined in [MaxSecretSize](https://pkg.go.dev/github.com/moby/swarmkit/v2@v2.0.0-20250103191802-8c1959736554/api/validation#MaxSecretSize).
+	 */
+	Data?: string;
+	/** Templating driver, if applicable  Templating controls whether and how to evaluate the config payload as a template. If no driver is set, no templating is used. */
+	Templating?: Driver;
 }
 
 /**
@@ -9763,15 +9765,13 @@ export interface StopStack {
 	services?: string[];
 }
 
+/** Swarm config details. */
 export interface SwarmConfig {
-	/**
-	 * The Servers which are swarm manager nodes.
-	 * If a Server is not reachable or gives error,
-	 * tries the next Server.
-	 */
-	server_ids?: string[];
-	/** Configure quick links that are displayed in the resource header */
-	links?: string[];
+	ID?: string;
+	Version?: ObjectVersion;
+	CreatedAt?: string;
+	UpdatedAt?: string;
+	Spec?: ConfigSpec;
 }
 
 /**
