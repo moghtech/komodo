@@ -146,6 +146,26 @@ pub enum StdioLogMode {
 
 #[cfg(feature = "logger")]
 impl mogh_logger::LogConfig for &LogConfig {
+  fn targets(&self) -> &[String] {
+    use std::sync::LazyLock;
+
+    static TARGETS: LazyLock<Vec<String>> = LazyLock::new(|| {
+      [
+        "km",
+        "core",
+        "periphery",
+        "database",
+        "mogh_pki",
+        "mogh_server",
+        "mogh_auth_server",
+      ]
+      .into_iter()
+      .map(str::to_string)
+      .collect()
+    });
+    &TARGETS
+  }
+
   fn ansi(&self) -> bool {
     self.ansi
   }

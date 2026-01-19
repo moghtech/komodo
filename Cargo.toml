@@ -18,6 +18,9 @@ homepage = "https://komo.do"
 [profile.release]
 strip = "debuginfo"
 
+[patch.crates-io]
+mogh_logger = { path = "../lib/crates/logger" }
+
 [workspace.dependencies]
 # LOCAL
 komodo_client = { path = "client/core/rs" }
@@ -45,7 +48,7 @@ partial_derive2 = "0.4.5"
 mongo_indexed = "2.0.2"
 mogh_resolver = "1.0.0"
 mogh_config = "1.0.1"
-mogh_logger = "1.1.0"
+mogh_logger = "1.3.0"
 mogh_server = "1.1.2"
 toml_pretty = "2.0.0"
 mogh_cache = "1.0.0"

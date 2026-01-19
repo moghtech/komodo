@@ -10,7 +10,7 @@ pub mod core;
 #[cfg(feature = "periphery")]
 pub mod periphery;
 
-#[cfg(any(feature = "cli", feature = "core", feature = "periphery"))]
+#[cfg(any(feature = "core", feature = "periphery"))]
 fn default_config_keywords() -> Vec<String> {
   vec![String::from("*config.*")]
 }
