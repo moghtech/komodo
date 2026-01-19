@@ -12,10 +12,10 @@ use komodo_client::{
   api::user::*,
   entities::{komodo_timestamp, user::User},
 };
+use mogh_error::Response;
 use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use mogh_error::Response;
 use strum::EnumDiscriminants;
 use typeshare::typeshare;
 use uuid::Uuid;
@@ -26,7 +26,7 @@ use crate::{
 
 use super::Variant;
 
-mod api_key;
+pub mod api_key;
 
 pub struct UserArgs {
   pub user: User,

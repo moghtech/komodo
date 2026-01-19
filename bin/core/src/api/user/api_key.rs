@@ -7,9 +7,9 @@ use komodo_client::{
   },
   entities::{api_key::ApiKey, komodo_timestamp, random_string},
 };
+use mogh_error::{AddStatusCode as _, AddStatusCodeError as _};
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use mogh_error::{AddStatusCode as _, AddStatusCodeError as _};
 
 use crate::{
   helpers::{query::get_user, validations::validate_api_key_name},
@@ -77,7 +77,8 @@ impl Resolve<UserArgs> for DeleteApiKey {
       .find_one(doc! { "key": &self.key })
       .await
       .context("Failed at database query")?
-      .context("No api key with key found")?;
+      .context("No api key with key found")
+      .status_code(StatusCode::NOT_FOUND)?;
 
     if user.id != key.user_id {
       return Err(

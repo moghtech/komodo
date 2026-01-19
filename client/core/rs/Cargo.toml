@@ -13,7 +13,7 @@ repository.workspace = true
 [features]
 blocking = ["reqwest/blocking"]
 mongo = ["dep:mongo_indexed"]
-utoipa = ["dep:utoipa", "mogh_error/utoipa"]
+utoipa = ["dep:utoipa", "mogh_auth_client/utoipa", "mogh_error/utoipa"]
 logger = ["dep:mogh_logger"]
 cli = ["logger", "dep:mogh_pki",]
 core = ["mongo", "utoipa", "logger", "dep:mogh_server"]

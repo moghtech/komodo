@@ -18,9 +18,10 @@ use komodo_client::{
     user::User,
   },
 };
-use mogh_error::Json;
 use mogh_error::Response;
+use mogh_error::{AddStatusCodeError, Json};
 use mogh_resolver::Resolve;
+use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use typeshare::typeshare;
@@ -294,29 +295,18 @@ async fn handler(
   res.map(|res| res.0)
 }
 
-#[utoipa::path(
-  post,
-  path = "/read/GetVersion",
-  description = "Get the Komodo Core version",
-  request_body(content = GetVersion),
-  responses(
-    (status = 200, description = "Komodo Core version", body = GetVersionResponse),
-  ),
-)]
-async fn get_version() -> mogh_error::Result<GetVersionResponse> {
-  Ok(GetVersionResponse {
-    version: env!("CARGO_PKG_VERSION").to_string(),
-  })
-}
-
 impl Resolve<ReadArgs> for GetVersion {
   async fn resolve(
     self,
     _: &ReadArgs,
   ) -> mogh_error::Result<GetVersionResponse> {
-    get_version().await
+    Ok(GetVersionResponse {
+      version: env!("CARGO_PKG_VERSION").to_string(),
+    })
   }
 }
+
+//
 
 impl Resolve<ReadArgs> for GetCoreInfo {
   async fn resolve(
@@ -345,6 +335,8 @@ impl Resolve<ReadArgs> for GetCoreInfo {
   }
 }
 
+//
+
 impl Resolve<ReadArgs> for ListSecrets {
   async fn resolve(
     self,
@@ -371,7 +363,8 @@ impl Resolve<ReadArgs> for ListSecrets {
         }
         _ => {
           return Err(
-            anyhow!("target must be `Server` or `Builder`").into(),
+            anyhow!("target must be `Server` or `Builder`")
+              .status_code(StatusCode::BAD_REQUEST),
           );
         }
       };
@@ -397,6 +390,8 @@ impl Resolve<ReadArgs> for ListSecrets {
     Ok(secrets)
   }
 }
+
+//
 
 impl Resolve<ReadArgs> for ListGitProvidersFromConfig {
   async fn resolve(
@@ -430,7 +425,8 @@ impl Resolve<ReadArgs> for ListGitProvidersFromConfig {
         }
         _ => {
           return Err(
-            anyhow!("target must be `Server` or `Builder`").into(),
+            anyhow!("target must be `Server` or `Builder`")
+              .status_code(StatusCode::BAD_REQUEST),
           );
         }
       }
@@ -499,6 +495,8 @@ impl Resolve<ReadArgs> for ListGitProvidersFromConfig {
     Ok(providers)
   }
 }
+
+//
 
 impl Resolve<ReadArgs> for ListDockerRegistriesFromConfig {
   async fn resolve(

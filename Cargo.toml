@@ -39,8 +39,8 @@ slack = { version = "2.0.0", package = "slack_client_rs", default-features = fal
 mogh_error = { version = "1.0.3", default-features = false }
 derive_default_builder = "0.1.8"
 async_timing_util = "1.1.0"
-mogh_auth_client = "0.1.0"
-mogh_auth_server = "0.2.0"
+mogh_auth_client = "1.0.0"
+mogh_auth_server = "1.0.0"
 mogh_secret_file = "1.0.0"
 mogh_validations = "1.0.0"
 mogh_rate_limit = "1.0.0"

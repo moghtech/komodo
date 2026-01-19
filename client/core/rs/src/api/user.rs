@@ -8,6 +8,19 @@ pub trait KomodoUserRequest: HasResponse {}
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/user/PushRecentlyViewed",
+  description = "Add a resource to user recently viewed.",
+  request_body(content = PushRecentlyViewed),
+  responses(
+    (status = 200, description = "Successful", body = PushRecentlyViewedResponse),
+    (status = 500, description = "Failed", body = mogh_error::Serror),
+  ),
+)]
+pub fn push_recently_viewed() {}
+
 /// Push a resource to the front of the users 10 most recently viewed resources.
 /// Response: [NoData].
 #[typeshare]
@@ -26,6 +39,19 @@ pub type PushRecentlyViewedResponse = NoData;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/user/SetLastSeenUpdate",
+  description = "Set the time the user last opened the UI updates.",
+  request_body(content = SetLastSeenUpdate),
+  responses(
+    (status = 200, description = "Successful", body = SetLastSeenUpdateResponse),
+    (status = 500, description = "Failed", body = mogh_error::Serror),
+  ),
+)]
+pub fn set_last_seen_update() {}
+
 /// Set the time the user last opened the UI updates.
 /// Used for unseen notification dot.
 /// Response: [NoData]
@@ -41,6 +67,20 @@ pub struct SetLastSeenUpdate {}
 pub type SetLastSeenUpdateResponse = NoData;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/user/CreateApiKey",
+  description = "Create an api key for the calling user.",
+  request_body(content = CreateApiKey),
+  responses(
+    (status = 200, description = "The api key and secret. The secret is not available again after this response is returned.", body = CreateApiKeyResponse),
+    (status = 400, description = "Invalid api key name", body = mogh_error::Serror),
+    (status = 500, description = "Failed", body = mogh_error::Serror),
+  ),
+)]
+pub fn create_api_key() {}
 
 /// Create an api key for the calling user.
 /// Response: [CreateApiKeyResponse].
@@ -66,6 +106,7 @@ pub struct CreateApiKey {
 /// Response for [CreateApiKey].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CreateApiKeyResponse {
   /// X-API-KEY
   pub key: String,
@@ -78,6 +119,21 @@ pub struct CreateApiKeyResponse {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/user/DeleteApiKey",
+  description = "Delete an api key for the calling user.",
+  request_body(content = DeleteApiKey),
+  responses(
+    (status = 200, description = "Api key deleted.", body = DeleteApiKeyResponse),
+    (status = 403, description = "Api key belongs to another user", body = mogh_error::Serror),
+    (status = 404, description = "Api key not found", body = mogh_error::Serror),
+    (status = 500, description = "Failed", body = mogh_error::Serror),
+  ),
+)]
+pub fn delete_api_key() {}
 
 /// Delete an api key for the calling user.
 /// Response: [NoData]

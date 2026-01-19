@@ -7358,7 +7358,7 @@ export interface GetContainerLog {
 }
 
 /**
- * Get info about the core api configuration.
+ * Get information about the Komodo Core API configuration.
  * Response: [GetCoreInfoResponse].
  */
 export interface GetCoreInfo {
@@ -7937,7 +7937,7 @@ export interface GetVariable {
 }
 
 /**
- * Get the version of the Komodo Core api.
+ * Get the version of the Komodo Core API.
  * Response: [GetVersionResponse].
  */
 export interface GetVersion {
@@ -7945,7 +7945,7 @@ export interface GetVersion {
 
 /** Response for [GetVersion]. */
 export interface GetVersionResponse {
-	/** The version of the core api. */
+	/** The version of the Komodo Core API. */
 	version: string;
 }
 
@@ -8504,7 +8504,7 @@ export interface ListSchedules {
 }
 
 /**
- * List the available secrets from the core config.
+ * List the secret keys (not values) in the core configuration file.
  * Response: [ListSecretsResponse].
  */
 export interface ListSecrets {
