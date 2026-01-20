@@ -8,6 +8,18 @@ use super::KomodoWriteRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateOnboardingKey",
+  description = "**Admin only.** Create a Server onboarding key.",
+  request_body(content = CreateOnboardingKey),
+  responses(
+    (status = 200, description = "The create response", body = CreateOnboardingKeyResponse),
+  ),
+)]
+pub fn create_onboarding_key() {}
+
 /// **Admin only.** Create a Server onboarding key.
 /// Response: [CreateOnboardingKeyResponse].
 ///
@@ -48,9 +60,10 @@ pub struct CreateOnboardingKey {
   pub create_builder: bool,
 }
 
-/// The response for [CreateServerOnboardingKey]
+/// The response for [CreateOnboardingKey]
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CreateOnboardingKeyResponse {
   /// pkcs8 encoded private key
   pub private_key: String,
@@ -60,8 +73,21 @@ pub struct CreateOnboardingKeyResponse {
 
 //
 
-/// **Admin only.** Delete an onboarding key.
-/// Response: The deleted [OnboardingKey].
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UpdateOnboardingKey",
+  description = "**Admin only.** Update an onboarding key.",
+  request_body(content = UpdateOnboardingKey),
+  responses(
+    (status = 200, description = "The updated onboarding key", body = UpdateOnboardingKeyResponse),
+  ),
+)]
+pub fn update_onboarding_key() {}
+
+/// **Admin only.** Update an onboarding key.
+/// Response: The updated [OnboardingKey].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
@@ -107,6 +133,18 @@ impl UpdateOnboardingKey {
 pub type UpdateOnboardingKeyResponse = OnboardingKey;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteOnboardingKey",
+  description = "**Admin only.** Delete an onboarding key.",
+  request_body(content = DeleteOnboardingKey),
+  responses(
+    (status = 200, description = "The deleted onboarding key", body = DeleteOnboardingKeyResponse),
+  ),
+)]
+pub fn delete_onboarding_key() {}
 
 /// **Admin only.** Delete an onboarding key.
 /// Response: The deleted [OnboardingKey].

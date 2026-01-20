@@ -11,7 +11,19 @@ use super::KomodoWriteRequest;
 
 //
 
-/// Admin only method to create an api key for a service user.
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateApiKeyForServiceUser",
+  description = "**Admin only**. Create an api key for a service user.",
+  request_body(content = CreateApiKeyForServiceUser),
+  responses(
+    (status = 200, description = "The new alerter", body = crate::entities::alerter::AlerterSchema),
+  ),
+)]
+pub fn create_api_key_for_service_user() {}
+
+/// **Admin only**. Create an api key for a service user.
 /// Response: [CreateApiKeyResponse].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -35,7 +47,19 @@ pub type CreateApiKeyForServiceUserResponse = CreateApiKeyResponse;
 
 //
 
-/// Admin only method to delete an api key for a service user.
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteApiKeyForServiceUser",
+  description = "**Admin only.** Delete an api key for a service user.",
+  request_body(content = DeleteApiKeyForServiceUser),
+  responses(
+    (status = 200, description = "The new alerter", body = crate::entities::alerter::AlerterSchema),
+  ),
+)]
+pub fn delete_api_key_for_service_user() {}
+
+/// **Admin only.** Delete an api key for a service user.
 /// Response: [NoData].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]

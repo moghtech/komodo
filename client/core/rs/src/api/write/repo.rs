@@ -12,6 +12,18 @@ use super::KomodoWriteRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateRepo",
+  description = "Create a repo.",
+  request_body(content = CreateRepo),
+  responses(
+    (status = 200, description = "The new repo", body = crate::entities::repo::RepoSchema),
+  ),
+)]
+pub fn create_repo() {}
+
 /// Create a repo. Response: [Repo].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -28,6 +40,18 @@ pub struct CreateRepo {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CopyRepo",
+  description = "Copy a repo.",
+  request_body(content = CopyRepo),
+  responses(
+    (status = 200, description = "The new repo", body = crate::entities::repo::RepoSchema),
+  ),
+)]
+pub fn copy_repo() {}
 
 /// Creates a new repo with given `name` and the configuration
 /// of the repo at the given `id`. Response: [Repo].
@@ -46,6 +70,18 @@ pub struct CopyRepo {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteRepo",
+  description = "Delete a repo.",
+  request_body(content = DeleteRepo),
+  responses(
+    (status = 200, description = "The deleted repo", body = crate::entities::repo::RepoSchema),
+  ),
+)]
+pub fn delete_repo() {}
+
 /// Deletes the repo at the given id, and returns the deleted repo.
 /// Response: [Repo]
 #[typeshare]
@@ -60,6 +96,18 @@ pub struct DeleteRepo {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UpdateRepo",
+  description = "Update a repo.",
+  request_body(content = UpdateRepo),
+  responses(
+    (status = 200, description = "The updated repo", body = crate::entities::repo::RepoSchema),
+  ),
+)]
+pub fn update_repo() {}
 
 /// Update the repo at the given id, and return the updated repo.
 /// Response: [Repo].
@@ -87,6 +135,18 @@ pub struct UpdateRepo {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RenameRepo",
+  description = "Rename a repo.",
+  request_body(content = RenameRepo),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn rename_repo() {}
+
 /// Rename the Repo at id to the given name.
 /// Response: [Update].
 #[typeshare]
@@ -103,6 +163,18 @@ pub struct RenameRepo {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RefreshRepoCache",
+  description = "Trigger a refresh of the cached latest hash and message.",
+  request_body(content = RefreshRepoCache),
+  responses(
+    (status = 200, description = "Repo cache refreshed.", body = NoData),
+  ),
+)]
+pub fn refresh_repo_cache() {}
 
 /// Trigger a refresh of the cached latest hash and message.
 #[typeshare]

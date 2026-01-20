@@ -11,6 +11,18 @@ use super::KomodoWriteRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateSwarm",
+  description = "Create a Swarm.",
+  request_body(content = CreateSwarm),
+  responses(
+    (status = 200, description = "The new swarm", body = crate::entities::swarm::SwarmSchema),
+  ),
+)]
+pub fn create_swarm() {}
+
 /// Create a Swarm. Response: [Swarm].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -27,6 +39,18 @@ pub struct CreateSwarm {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CopySwarm",
+  description = "Copy a Swarm.",
+  request_body(content = CopySwarm),
+  responses(
+    (status = 200, description = "The new swarm", body = crate::entities::swarm::SwarmSchema),
+  ),
+)]
+pub fn copy_swarm() {}
 
 /// Creates a new Swarm with given `name` and the configuration
 /// of the Swarm at the given `id`. Response: [Swarm].
@@ -45,6 +69,18 @@ pub struct CopySwarm {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteSwarm",
+  description = "Delete a Swarm.",
+  request_body(content = DeleteSwarm),
+  responses(
+    (status = 200, description = "The deleted swarm", body = crate::entities::swarm::SwarmSchema),
+  ),
+)]
+pub fn delete_swarm() {}
+
 /// Deletes the Swarm at the given id, and returns the deleted Swarm.
 /// Response: [Swarm]
 #[typeshare]
@@ -59,6 +95,18 @@ pub struct DeleteSwarm {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UpdateSwarm",
+  description = "Update a Swarm.",
+  request_body(content = UpdateSwarm),
+  responses(
+    (status = 200, description = "The updated swarm", body = crate::entities::swarm::SwarmSchema),
+  ),
+)]
+pub fn update_swarm() {}
 
 /// Update the Swarm at the given id, and return the updated Swarm.
 /// Response: [Swarm].
@@ -85,6 +133,18 @@ pub struct UpdateSwarm {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RenameSwarm",
+  description = "Rename a Swarm.",
+  request_body(content = RenameSwarm),
+  responses(
+    (status = 200, description = "The update", body = crate::entities::update::Update),
+  ),
+)]
+pub fn rename_swarm() {}
 
 /// Rename the Swarm at id to the given name.
 /// Response: [Update].

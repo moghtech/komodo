@@ -6,6 +6,20 @@ use crate::entities::{NoData, ResourceTarget};
 
 use super::KomodoWriteRequest;
 
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UpdateResourceMeta",
+  description = "Update a resource's common meta fields.",
+  request_body(content = UpdateResourceMeta),
+  responses(
+    (status = 200, description = "Resource meta updated.", body = UpdateResourceMetaResponse),
+  ),
+)]
+pub fn update_resource_meta() {}
+
 /// Update a resources common meta fields.
 /// - description
 /// - template

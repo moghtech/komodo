@@ -12,6 +12,18 @@ use super::KomodoWriteRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateResourceSync",
+  description = "Create a resource sync.",
+  request_body(content = CreateResourceSync),
+  responses(
+    (status = 200, description = "The created resource sync", body = crate::entities::sync::ResourceSyncSchema),
+  ),
+)]
+pub fn create_resource_sync() {}
+
 /// Create a sync. Response: [ResourceSync].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -28,6 +40,18 @@ pub struct CreateResourceSync {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CopyResourceSync",
+  description = "Copy a resource sync.",
+  request_body(content = CopyResourceSync),
+  responses(
+    (status = 200, description = "The copied resource sync", body = crate::entities::sync::ResourceSyncSchema),
+  ),
+)]
+pub fn copy_resource_sync() {}
 
 /// Creates a new sync with given `name` and the configuration
 /// of the sync at the given `id`. Response: [ResourceSync].
@@ -46,6 +70,18 @@ pub struct CopyResourceSync {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteResourceSync",
+  description = "Delete a resource sync.",
+  request_body(content = DeleteResourceSync),
+  responses(
+    (status = 200, description = "The deleted resource sync", body = crate::entities::sync::ResourceSyncSchema),
+  ),
+)]
+pub fn delete_resource_sync() {}
+
 /// Deletes the sync at the given id, and returns the deleted sync.
 /// Response: [ResourceSync]
 #[typeshare]
@@ -60,6 +96,18 @@ pub struct DeleteResourceSync {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UpdateResourceSync",
+  description = "Update a resource sync.",
+  request_body(content = UpdateResourceSync),
+  responses(
+    (status = 200, description = "The updated resource sync", body = crate::entities::sync::ResourceSyncSchema),
+  ),
+)]
+pub fn update_resource_sync() {}
 
 /// Update the sync at the given id, and return the updated sync.
 /// Response: [ResourceSync].
@@ -84,6 +132,18 @@ pub struct UpdateResourceSync {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RenameResourceSync",
+  description = "Rename a resource sync.",
+  request_body(content = RenameResourceSync),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn rename_resource_sync() {}
+
 /// Rename the ResourceSync at id to the given name.
 /// Response: [Update].
 #[typeshare]
@@ -101,6 +161,18 @@ pub struct RenameResourceSync {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RefreshResourceSyncPending",
+  description = "Refresh resource sync pending state.",
+  request_body(content = RefreshResourceSyncPending),
+  responses(
+    (status = 200, description = "The refreshed sync", body = crate::entities::sync::ResourceSyncSchema),
+  ),
+)]
+pub fn refresh_resource_sync_pending() {}
+
 /// Trigger a refresh of the computed diff logs for view. Response: [ResourceSync]
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -116,7 +188,19 @@ pub struct RefreshResourceSyncPending {
 
 //
 
-/// Rename the stack at id to the given name. Response: [Update].
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/WriteSyncFileContents",
+  description = "Write to the sync toml file contents.",
+  request_body(content = WriteSyncFileContents),
+  responses(
+    (status = 200, description = "The update result", body = Update),
+  ),
+)]
+pub fn write_sync_file_contents() {}
+
+/// Write to the sync toml file contents. Response: [Update].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
@@ -137,6 +221,18 @@ pub struct WriteSyncFileContents {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CommitSync",
+  description = "Exports matching resources, and writes to the target sync's resource file.",
+  request_body(content = CommitSync),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn commit_sync() {}
 
 /// Exports matching resources, and writes to the target sync's resource file. Response: [Update]
 ///
