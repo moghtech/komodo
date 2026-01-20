@@ -26,7 +26,7 @@ use super::KomodoReadRequest;
   description = "Get a specific deployment by name or id.",
   request_body(content = GetDeployment),
   responses(
-    (status = 200, description = "The deployment", body = GetDeploymentResponse),
+    (status = 200, description = "The deployment", body = crate::entities::deployment::DeploymentSchema),
   ),
 )]
 pub fn get_deployment() {}

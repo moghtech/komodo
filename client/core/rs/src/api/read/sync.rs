@@ -18,7 +18,7 @@ use super::KomodoReadRequest;
   description = "Get a specific sync.",
   request_body(content = GetResourceSync),
   responses(
-    (status = 200, description = "The resource sync", body = GetResourceSyncResponse),
+    (status = 200, description = "The resource sync", body = crate::entities::sync::ResourceSyncSchema),
   ),
 )]
 pub fn get_resource_sync() {}

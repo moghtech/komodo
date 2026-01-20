@@ -14,6 +14,14 @@ use super::{
   resource::{AddFilters, Resource, ResourceListItem, ResourceQuery},
 };
 
+#[cfg(feature = "utoipa")]
+#[derive(utoipa::ToSchema)]
+#[schema(as = Builder)]
+pub struct BuilderSchema(
+  #[schema(inline)]
+  pub  Resource<BuilderConfig, crate::entities::NoData>,
+);
+
 #[typeshare]
 pub type Builder = Resource<BuilderConfig, ()>;
 

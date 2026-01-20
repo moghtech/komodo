@@ -14,6 +14,14 @@ use super::{
   resource::{Resource, ResourceListItem, ResourceQuery},
 };
 
+#[cfg(feature = "utoipa")]
+#[derive(utoipa::ToSchema)]
+#[schema(as = Alerter)]
+pub struct AlerterSchema(
+  #[schema(inline)]
+  pub  Resource<AlerterConfig, crate::entities::NoData>,
+);
+
 #[typeshare]
 pub type Alerter = Resource<AlerterConfig, ()>;
 

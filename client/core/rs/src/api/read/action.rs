@@ -17,7 +17,7 @@ use super::KomodoReadRequest;
   description = "Get a specific action.",
   request_body(content = GetAction),
   responses(
-    (status = 200, description = "The action", body = GetActionResponse),
+    (status = 200, description = "The action", body = crate::entities::action::ActionSchema),
   ),
 )]
 pub fn get_action() {}

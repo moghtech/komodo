@@ -24,7 +24,7 @@ use super::KomodoReadRequest;
   description = "Get a specific server.",
   request_body(content = GetServer),
   responses(
-    (status = 200, description = "The server", body = GetServerResponse),
+    (status = 200, description = "The server", body = crate::entities::server::ServerSchema),
   ),
 )]
 pub fn get_server() {}

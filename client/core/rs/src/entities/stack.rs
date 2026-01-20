@@ -32,6 +32,13 @@ use super::{
   resource::{Resource, ResourceListItem, ResourceQuery},
 };
 
+#[cfg(feature = "utoipa")]
+#[derive(utoipa::ToSchema)]
+#[schema(as = Stack)]
+pub struct StackSchema(
+  #[schema(inline)] pub Resource<StackConfig, StackInfo>,
+);
+
 #[typeshare]
 pub type Stack = Resource<StackConfig, StackInfo>;
 

@@ -29,7 +29,7 @@ use super::KomodoReadRequest;
   description = "Get a specific swarm.",
   request_body(content = GetSwarm),
   responses(
-    (status = 200, description = "The swarm", body = GetSwarmResponse),
+    (status = 200, description = "The swarm", body = crate::entities::swarm::SwarmSchema),
   ),
 )]
 pub fn get_swarm() {}
@@ -39,7 +39,7 @@ pub fn get_swarm() {}
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
-#[response(Swarm)]
+#[response(GetSwarmResponse)]
 #[error(mogh_error::Error)]
 pub struct GetSwarm {
   /// Id or name

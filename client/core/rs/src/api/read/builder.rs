@@ -17,7 +17,7 @@ use super::KomodoReadRequest;
   description = "Get a specific builder by id or name.",
   request_body(content = GetBuilder),
   responses(
-    (status = 200, description = "The builder", body = GetBuilderResponse),
+    (status = 200, description = "The builder", body = crate::entities::builder::BuilderSchema),
   ),
 )]
 pub fn get_builder() {}

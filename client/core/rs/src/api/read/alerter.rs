@@ -17,7 +17,7 @@ use super::KomodoReadRequest;
   description = "Get a specific alerter.",
   request_body(content = GetAlerter),
   responses(
-    (status = 200, description = "The alerter", body = GetAlerterResponse),
+    (status = 200, description = "The alerter", body = crate::entities::alerter::AlerterSchema),
   ),
 )]
 pub fn get_alerter() {}

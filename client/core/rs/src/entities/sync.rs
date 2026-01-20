@@ -81,6 +81,13 @@ pub enum ResourceSyncState {
   Unknown,
 }
 
+#[cfg(feature = "utoipa")]
+#[derive(utoipa::ToSchema)]
+#[schema(as = ResourceSync)]
+pub struct ResourceSyncSchema(
+  #[schema(inline)] pub Resource<ResourceSyncConfig, ResourceSyncInfo>,
+);
+
 #[typeshare]
 pub type ResourceSync =
   Resource<ResourceSyncConfig, ResourceSyncInfo>;

@@ -18,6 +18,13 @@ use super::{
   resource::{AddFilters, Resource, ResourceListItem, ResourceQuery},
 };
 
+#[cfg(feature = "utoipa")]
+#[derive(utoipa::ToSchema)]
+#[schema(as = Server)]
+pub struct ServerSchema(
+  #[schema(inline)] pub Resource<ServerConfig, ServerInfo>,
+);
+
 #[typeshare]
 pub type Server = Resource<ServerConfig, ServerInfo>;
 

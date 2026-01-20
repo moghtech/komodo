@@ -17,7 +17,7 @@ use super::KomodoReadRequest;
   description = "Get a specific procedure.",
   request_body(content = GetProcedure),
   responses(
-    (status = 200, description = "The procedure", body = GetProcedureResponse),
+    (status = 200, description = "The procedure", body = crate::entities::procedure::ProcedureSchema),
   ),
 )]
 pub fn get_procedure() {}

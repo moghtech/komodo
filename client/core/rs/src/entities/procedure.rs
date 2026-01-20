@@ -61,6 +61,14 @@ pub enum ProcedureState {
   Unknown,
 }
 
+#[cfg(feature = "utoipa")]
+#[derive(utoipa::ToSchema)]
+#[schema(as = Procedure)]
+pub struct ProcedureSchema(
+  #[schema(inline)]
+  pub  Resource<ProcedureConfig, crate::entities::NoData>,
+);
+
 /// Procedures run a series of stages sequentially, where
 /// each stage runs executions in parallel.
 #[typeshare]

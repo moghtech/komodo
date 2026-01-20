@@ -20,7 +20,10 @@ use super::{
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, Builder)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct Resource<Config: Default, Info: Default = ()> {
+pub struct Resource<Config, Info: Default = ()>
+where
+  Config: Default,
+{
   /// The Mongo ID of the resource.
   /// This field is de/serialized from/to JSON as
   /// `{ "_id": { "$oid": "..." }, ...(rest of serialized Resource<T>) }`
@@ -31,6 +34,7 @@ pub struct Resource<Config: Default, Info: Default = ()> {
     with = "bson::serde_helpers::hex_string_as_object_id"
   )]
   #[builder(setter(skip))]
+  #[cfg_attr(feature = "utoipa", schema(value_type = crate::entities::MongoIdObj))]
   pub id: MongoId,
 
   /// The resource name.

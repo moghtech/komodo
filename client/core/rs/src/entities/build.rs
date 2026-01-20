@@ -23,6 +23,13 @@ use super::{
   resource::{Resource, ResourceListItem, ResourceQuery},
 };
 
+#[cfg(feature = "utoipa")]
+#[derive(utoipa::ToSchema)]
+#[schema(as = Build)]
+pub struct BuildSchema(
+  #[schema(inline)] pub Resource<BuildConfig, BuildInfo>,
+);
+
 #[typeshare]
 pub type Build = Resource<BuildConfig, BuildInfo>;
 

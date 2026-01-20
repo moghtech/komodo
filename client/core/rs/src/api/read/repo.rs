@@ -17,7 +17,7 @@ use super::KomodoReadRequest;
   description = "Get a specific repo.",
   request_body(content = GetRepo),
   responses(
-    (status = 200, description = "The repo", body = GetRepoResponse),
+    (status = 200, description = "The repo", body = crate::entities::repo::RepoSchema),
   ),
 )]
 pub fn get_repo() {}

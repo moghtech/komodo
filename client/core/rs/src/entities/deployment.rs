@@ -25,6 +25,14 @@ use super::{
   resource::{Resource, ResourceListItem, ResourceQuery},
 };
 
+#[cfg(feature = "utoipa")]
+#[derive(utoipa::ToSchema)]
+#[schema(as = Deployment)]
+pub struct DeploymentSchema(
+  #[schema(inline)]
+  pub  Resource<DeploymentConfig, crate::entities::NoData>,
+);
+
 #[typeshare]
 pub type Deployment = Resource<DeploymentConfig, ()>;
 

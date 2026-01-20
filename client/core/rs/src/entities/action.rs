@@ -64,6 +64,13 @@ pub enum ActionState {
   Running,
 }
 
+#[cfg(feature = "utoipa")]
+#[derive(utoipa::ToSchema)]
+#[schema(as = Action)]
+pub struct ActionSchema(
+  #[schema(inline)] pub Resource<ActionConfig, NoData>,
+);
+
 #[typeshare]
 pub type Action = Resource<ActionConfig, NoData>;
 

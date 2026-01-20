@@ -24,7 +24,7 @@ use super::KomodoReadRequest;
   description = "Get a specific stack.",
   request_body(content = GetStack),
   responses(
-    (status = 200, description = "The stack", body = GetStackResponse),
+    (status = 200, description = "The stack", body = crate::entities::stack::StackSchema),
   ),
 )]
 pub fn get_stack() {}

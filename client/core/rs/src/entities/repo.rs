@@ -76,6 +76,13 @@ pub enum RepoState {
   Building,
 }
 
+#[cfg(feature = "utoipa")]
+#[derive(utoipa::ToSchema)]
+#[schema(as = Repo)]
+pub struct RepoSchema(
+  #[schema(inline)] pub Resource<RepoConfig, RepoInfo>,
+);
+
 #[typeshare]
 pub type Repo = Resource<RepoConfig, RepoInfo>;
 

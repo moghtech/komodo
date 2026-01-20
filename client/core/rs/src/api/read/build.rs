@@ -20,7 +20,7 @@ use super::KomodoReadRequest;
   description = "Get a specific build.",
   request_body(content = GetBuild),
   responses(
-    (status = 200, description = "The build", body = GetBuildResponse),
+    (status = 200, description = "The build", body = crate::entities::build::BuildSchema),
   ),
 )]
 pub fn get_build() {}

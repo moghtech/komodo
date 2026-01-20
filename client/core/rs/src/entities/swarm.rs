@@ -53,6 +53,13 @@ pub enum SwarmState {
   Unknown,
 }
 
+#[cfg(feature = "utoipa")]
+#[derive(utoipa::ToSchema)]
+#[schema(as = Swarm)]
+pub struct SwarmSchema(
+  #[schema(inline)] pub Resource<SwarmConfig, SwarmInfo>,
+);
+
 #[typeshare]
 pub type Swarm = Resource<SwarmConfig, SwarmInfo>;
 
