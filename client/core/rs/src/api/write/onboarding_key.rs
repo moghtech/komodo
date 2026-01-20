@@ -73,7 +73,6 @@ pub struct CreateOnboardingKeyResponse {
 
 //
 
-
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,

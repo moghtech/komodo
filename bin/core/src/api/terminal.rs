@@ -1,16 +1,19 @@
 use anyhow::Context;
 use axum::{Extension, Router, middleware, routing::post};
 use komodo_client::{api::terminal::*, entities::user::User};
+use mogh_auth_server::middleware::authenticate_request;
 use mogh_error::Json;
 
 use crate::{
-  auth::auth_request, helpers::terminal::setup_target_for_user,
+  auth::KomodoAuthImpl, helpers::terminal::setup_target_for_user,
 };
 
 pub fn router() -> Router {
   Router::new()
     .route("/execute", post(execute_terminal))
-    .layer(middleware::from_fn(auth_request))
+    .layer(middleware::from_fn(
+      authenticate_request::<KomodoAuthImpl>,
+    ))
 }
 
 // =================

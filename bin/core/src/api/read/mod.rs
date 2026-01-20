@@ -18,6 +18,7 @@ use komodo_client::{
     user::User,
   },
 };
+use mogh_auth_server::middleware::authenticate_request;
 use mogh_error::Response;
 use mogh_error::{AddStatusCodeError, Json};
 use mogh_resolver::Resolve;
@@ -28,7 +29,7 @@ use typeshare::typeshare;
 use uuid::Uuid;
 
 use crate::{
-  auth::auth_request,
+  auth::KomodoAuthImpl,
   config::{core_config, core_keys},
   helpers::periphery_client,
   resource,
@@ -264,7 +265,9 @@ pub fn router() -> Router {
   Router::new()
     .route("/", post(handler))
     .route("/{variant}", post(variant_handler))
-    .layer(middleware::from_fn(auth_request))
+    .layer(middleware::from_fn(
+      authenticate_request::<KomodoAuthImpl>,
+    ))
 }
 
 async fn variant_handler(

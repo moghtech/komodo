@@ -9,6 +9,7 @@ use database::{
   mungos::by_id::update_one_by_id,
 };
 use komodo_client::entities::{
+  api_key::ApiKey,
   komodo_timestamp, optional_str,
   user::{NewUserParams, User, UserConfig, UserConfigVariant},
 };
@@ -25,13 +26,16 @@ use mogh_auth_server::{
   },
   rand::random_string,
   user::{AuthUserImpl, BoxAuthUser},
-  validations::{validate_password, validate_username},
+  validations::{
+    validate_api_key_name, validate_password, validate_username,
+  },
 };
 use mogh_error::{AddStatusCode, AddStatusCodeError, StatusCode};
+use mogh_pki::RotatableKeyPair;
 use mogh_rate_limit::RateLimiter;
 
 use crate::{
-  config::core_config,
+  config::{core_config, core_keys},
   helpers::query::{
     find_github_user, find_google_user, find_oidc_user, get_user,
   },
@@ -174,6 +178,25 @@ impl AuthImpl for KomodoAuthImpl {
           .await
           .status_code(StatusCode::NOT_FOUND)?,
       )) as BoxAuthUser)
+    })
+  }
+
+  fn handle_request_authentication(
+    &self,
+    auth: mogh_auth_server::RequestAuthentication,
+    mut req: axum::extract::Request,
+  ) -> mogh_auth_server::DynFuture<
+    mogh_error::Result<axum::extract::Request>,
+  > {
+    Box::pin(async move {
+      let mut user = extract_user_from_auth(auth)
+        .await
+        .status_code(StatusCode::UNAUTHORIZED)?;
+      // Sanitize the user for safety before
+      // attaching to the request handlers.
+      user.sanitize();
+      req.extensions_mut().insert(user);
+      Ok(req)
     })
   }
 
@@ -323,7 +346,7 @@ impl AuthImpl for KomodoAuthImpl {
   // = OIDC AUTH =
   // =============
 
-  fn oidc_config(&self) -> &OidcConfig {
+  fn oidc_config(&self) -> Option<&OidcConfig> {
     static OIDC_CONFIG: LazyLock<OidcConfig> = LazyLock::new(|| {
       let config = core_config();
       OidcConfig {
@@ -338,7 +361,7 @@ impl AuthImpl for KomodoAuthImpl {
           .clone(),
       }
     });
-    &OIDC_CONFIG
+    Some(&OIDC_CONFIG)
   }
 
   fn find_user_with_oidc_subject(
@@ -428,8 +451,8 @@ impl AuthImpl for KomodoAuthImpl {
   // = GITHUB AUTH =
   // ===============
 
-  fn github_config(&self) -> &NamedOauthConfig {
-    &core_config().github_oauth
+  fn github_config(&self) -> Option<&NamedOauthConfig> {
+    Some(&core_config().github_oauth)
   }
 
   fn find_user_with_github_id(
@@ -518,8 +541,8 @@ impl AuthImpl for KomodoAuthImpl {
   // = GOOGLE AUTH =
   // ===============
 
-  fn google_config(&self) -> &NamedOauthConfig {
-    &core_config().google_oauth
+  fn google_config(&self) -> Option<&NamedOauthConfig> {
+    Some(&core_config().google_oauth)
   }
 
   fn find_user_with_google_id(
@@ -743,5 +766,77 @@ impl AuthImpl for KomodoAuthImpl {
 
       Ok(())
     })
+  }
+
+  // ============
+  // = API KEYS =
+  // ============
+  fn validate_api_key_name(
+    &self,
+    api_key_name: &str,
+  ) -> mogh_error::Result<()> {
+    validate_api_key_name(api_key_name)
+      .status_code(StatusCode::BAD_REQUEST)
+  }
+
+  fn get_api_key_user_id(
+    &self,
+    key: String,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<String>> {
+    Box::pin(async move {
+      let key = db_client()
+        .api_keys
+        .find_one(doc! { "key": key })
+        .await
+        .context("Failed at database query")?
+        .context("No api key with key found")
+        .status_code(StatusCode::NOT_FOUND)?;
+      Ok(key.user_id)
+    })
+  }
+
+  fn create_api_key(
+    &self,
+    user_id: String,
+    body: mogh_auth_client::api::manage::CreateApiKey,
+    key: String,
+    hashed_secret: String,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
+    Box::pin(async move {
+      let api_key = ApiKey {
+        name: body.name,
+        key: key.clone(),
+        secret: hashed_secret,
+        user_id,
+        created_at: komodo_timestamp(),
+        expires: body.expires as i64,
+      };
+
+      db_client()
+        .api_keys
+        .insert_one(api_key)
+        .await
+        .context("Failed to create api key on database")?;
+
+      Ok(())
+    })
+  }
+
+  fn delete_api_key(
+    &self,
+    key: String,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
+    Box::pin(async move {
+      db_client()
+        .api_keys
+        .delete_one(doc! { "key": key })
+        .await
+        .context("Failed to delete api key from database")?;
+      Ok(())
+    })
+  }
+
+  fn server_private_key(&self) -> Option<&RotatableKeyPair> {
+    Some(core_keys())
   }
 }

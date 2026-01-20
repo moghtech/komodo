@@ -1,9 +1,9 @@
 use anyhow::anyhow;
 use encoding::{Decode as _, Encode as _};
+use mogh_pki::SpkiPublicKey;
 use periphery_client::transport::{
   EncodedLoginMessage, LoginMessage, TransportMessage,
 };
-use mogh_pki::SpkiPublicKey;
 
 use crate::{
   auth::AUTH_TIMEOUT,

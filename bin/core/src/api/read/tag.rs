@@ -20,7 +20,10 @@ impl Resolve<ReadArgs> for GetTag {
 }
 
 impl Resolve<ReadArgs> for ListTags {
-  async fn resolve(self, _: &ReadArgs) -> mogh_error::Result<Vec<Tag>> {
+  async fn resolve(
+    self,
+    _: &ReadArgs,
+  ) -> mogh_error::Result<Vec<Tag>> {
     let res = find_collect(
       &db_client().tags,
       self.query,

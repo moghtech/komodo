@@ -20,12 +20,12 @@ use komodo_client::{
     user::User,
   },
 };
+use mogh_error::AddStatusCodeError as _;
 use mogh_resolver::Resolve;
 use periphery_client::api::{
   DeployStackResponse, compose::*, swarm::DeploySwarmStack,
 };
 use reqwest::StatusCode;
-use mogh_error::AddStatusCodeError as _;
 use uuid::Uuid;
 
 use crate::{

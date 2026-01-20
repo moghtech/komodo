@@ -8,8 +8,8 @@ use komodo_client::entities::{
   ResourceTarget, permission::PermissionLevel, user::User,
 };
 use mogh_auth_server::request_ip::RequestIp;
-use serde_json::json;
 use mogh_error::serialize_error;
+use serde_json::json;
 use tokio::select;
 use tokio_util::sync::CancellationToken;
 

@@ -10,10 +10,10 @@ use komodo_client::{
     komodo_timestamp, onboarding_key::OnboardingKey, random_string,
   },
 };
+use mogh_error::{AddStatusCode, AddStatusCodeError};
 use mogh_pki::EncodedKeyPair;
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use mogh_error::{AddStatusCode, AddStatusCodeError};
 
 use crate::{api::write::WriteArgs, state::db_client};
 

@@ -12,9 +12,9 @@ use axum::{
   routing::get,
 };
 use komodo_client::{entities::user::User, ws::WsLoginMessage};
+use mogh_error::{AddStatusCode, AddStatusCodeError};
 use mogh_rate_limit::WithFailureRateLimit;
 use reqwest::StatusCode;
-use mogh_error::{AddStatusCode, AddStatusCodeError};
 
 mod terminal;
 mod update;

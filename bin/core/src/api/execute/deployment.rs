@@ -1,7 +1,6 @@
 use std::sync::OnceLock;
 
 use anyhow::{Context, anyhow};
-use mogh_cache::TimeoutCache;
 use formatting::format_serror;
 use interpolate::Interpolator;
 use komodo_client::{
@@ -18,10 +17,11 @@ use komodo_client::{
     update::{Log, Update},
   },
 };
+use mogh_cache::TimeoutCache;
+use mogh_error::AddStatusCodeError;
 use mogh_resolver::Resolve;
 use periphery_client::api;
 use reqwest::StatusCode;
-use mogh_error::AddStatusCodeError;
 
 use crate::{
   helpers::{

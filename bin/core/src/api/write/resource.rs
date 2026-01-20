@@ -8,9 +8,9 @@ use komodo_client::{
     sync::ResourceSync,
   },
 };
+use mogh_error::AddStatusCodeError;
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use mogh_error::AddStatusCodeError;
 
 use crate::resource::{self, ResourceMetaUpdate};
 

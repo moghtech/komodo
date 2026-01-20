@@ -16,10 +16,10 @@ use axum::{
   response::Response,
   routing::get,
 };
+use mogh_error::{AddStatusCode, AddStatusCodeError};
 use periphery_client::{
   api::CoreConnectionQuery, transport::LoginMessage,
 };
-use mogh_error::{AddStatusCode, AddStatusCodeError};
 use transport::{
   auth::{
     ConnectionIdentifiers, HeaderConnectionIdentifiers,

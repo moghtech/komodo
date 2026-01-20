@@ -12,9 +12,9 @@ use komodo_client::{
     permission::PermissionLevel,
   },
 };
+use mogh_error::AddStatusCodeError;
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use mogh_error::AddStatusCodeError;
 
 use crate::{
   alert::send_alert_to_alerter, helpers::update::update_update,

@@ -7,9 +7,9 @@ use komodo_client::{
     user::{NewUserParams, User, UserConfig},
   },
 };
+use mogh_error::{AddStatusCode as _, AddStatusCodeError as _};
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use mogh_error::{AddStatusCode as _, AddStatusCodeError as _};
 
 use crate::{
   api::user::UserArgs,

@@ -12,6 +12,7 @@ use komodo_client::{
   api::user::*,
   entities::{komodo_timestamp, user::User},
 };
+use mogh_auth_server::middleware::authenticate_request;
 use mogh_error::Response;
 use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
@@ -21,7 +22,7 @@ use typeshare::typeshare;
 use uuid::Uuid;
 
 use crate::{
-  auth::auth_request, helpers::query::get_user, state::db_client,
+  auth::KomodoAuthImpl, helpers::query::get_user, state::db_client,
 };
 
 use super::Variant;
@@ -57,7 +58,9 @@ pub fn router() -> Router {
         .get(|Extension(user): Extension<User>| async { Json(user) }),
     )
     .route("/{variant}", post(variant_handler))
-    .layer(middleware::from_fn(auth_request))
+    .layer(middleware::from_fn(
+      authenticate_request::<KomodoAuthImpl>,
+    ))
 }
 
 async fn variant_handler(

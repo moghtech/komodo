@@ -10,9 +10,9 @@ use komodo_client::{
     provider::{DockerRegistryAccount, GitProviderAccount},
   },
 };
+use mogh_error::AddStatusCodeError;
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use mogh_error::AddStatusCodeError;
 
 use crate::{
   helpers::update::{add_update, make_update},

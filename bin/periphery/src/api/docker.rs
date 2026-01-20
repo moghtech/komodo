@@ -1,7 +1,6 @@
 use std::sync::OnceLock;
 
 use anyhow::Context;
-use mogh_cache::TimeoutCache;
 use command::run_komodo_standard_command;
 use komodo_client::entities::{
   deployment::extract_registry_domain,
@@ -13,6 +12,7 @@ use komodo_client::entities::{
   komodo_timestamp,
   update::Log,
 };
+use mogh_cache::TimeoutCache;
 use mogh_resolver::Resolve;
 use periphery_client::api::docker::*;
 

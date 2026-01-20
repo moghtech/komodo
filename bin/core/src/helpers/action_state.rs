@@ -14,7 +14,6 @@
 use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
-use mogh_cache::CloneCache;
 use komodo_client::{
   busy::Busy,
   entities::{
@@ -25,6 +24,7 @@ use komodo_client::{
     swarm::SwarmActionState, sync::ResourceSyncActionState,
   },
 };
+use mogh_cache::CloneCache;
 
 #[derive(Default)]
 pub struct ActionStates {

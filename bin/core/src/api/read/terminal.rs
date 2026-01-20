@@ -13,9 +13,9 @@ use komodo_client::{
     user::User,
   },
 };
+use mogh_error::AddStatusCode;
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use mogh_error::AddStatusCode;
 
 use crate::{
   helpers::periphery_client, permission::get_check_permissions,

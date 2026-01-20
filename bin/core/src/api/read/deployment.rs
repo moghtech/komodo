@@ -18,10 +18,10 @@ use komodo_client::{
     update::Log,
   },
 };
+use mogh_error::AddStatusCodeError as _;
 use mogh_resolver::Resolve;
 use periphery_client::api::{self, container::InspectContainer};
 use reqwest::StatusCode;
-use mogh_error::AddStatusCodeError as _;
 
 use crate::{
   helpers::{

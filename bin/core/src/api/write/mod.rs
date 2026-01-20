@@ -3,17 +3,18 @@ use axum::{
   Extension, Router, extract::Path, middleware, routing::post,
 };
 use komodo_client::{api::write::*, entities::user::User};
+use mogh_auth_server::middleware::authenticate_request;
+use mogh_error::Json;
+use mogh_error::Response;
 use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use mogh_error::Json;
-use mogh_error::Response;
 use strum::Display;
 use strum::EnumDiscriminants;
 use typeshare::typeshare;
 use uuid::Uuid;
 
-use crate::auth::auth_request;
+use crate::auth::KomodoAuthImpl;
 
 use super::Variant;
 
@@ -211,7 +212,9 @@ pub fn router() -> Router {
   Router::new()
     .route("/", post(handler))
     .route("/{variant}", post(variant_handler))
-    .layer(middleware::from_fn(auth_request))
+    .layer(middleware::from_fn(
+      authenticate_request::<KomodoAuthImpl>,
+    ))
 }
 
 async fn variant_handler(

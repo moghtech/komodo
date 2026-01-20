@@ -10,9 +10,9 @@ use komodo_client::{
   api::write::*,
   entities::{komodo_timestamp, user_group::UserGroup},
 };
+use mogh_error::AddStatusCodeError;
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use mogh_error::AddStatusCodeError;
 
 use crate::state::db_client;
 

@@ -1,81 +1,23 @@
 use anyhow::{Context, anyhow};
-use axum::{
-  extract::Request, http::HeaderMap, middleware::Next,
-  response::Response,
-};
 use database::mungos::mongodb::bson::doc;
-use futures_util::TryFutureExt;
 use komodo_client::entities::{komodo_timestamp, user::User};
-use mogh_auth_server::request_ip::RequestIp;
-use mogh_error::AddStatusCodeError as _;
-use mogh_rate_limit::WithFailureRateLimit;
-use reqwest::StatusCode;
+use mogh_auth_server::RequestAuthentication;
 
 use crate::{
   auth::JWT_PROVIDER, helpers::query::get_user, state::db_client,
 };
 
-pub async fn auth_request(
-  RequestIp(ip): RequestIp,
-  mut req: Request,
-  next: Next,
-) -> mogh_error::Result<Response> {
-  let mut user = authenticate_check_enabled(req.headers())
-    .map_err(|e| e.status_code(StatusCode::UNAUTHORIZED))
-    .with_failure_rate_limit_using_ip(
-      &super::GENERAL_RATE_LIMITER,
-      &ip,
-    )
-    .await?;
-  // Sanitize the user for safety before
-  // attaching to the request handlers.
-  user.sanitize();
-  req.extensions_mut().insert(user);
-  Ok(next.run(req).await)
-}
-
-pub async fn get_user_id_from_headers(
-  headers: &HeaderMap,
-) -> anyhow::Result<String> {
-  match (
-    headers.get("authorization"),
-    headers.get("x-api-key"),
-    headers.get("x-api-secret"),
-  ) {
-    (Some(jwt), _, _) => {
-      // USE JWT
-      let jwt = jwt.to_str().context("JWT is not valid UTF-8")?;
-      auth_jwt_get_user_id(jwt).await
-    }
-    (None, Some(key), Some(secret)) => {
-      // USE API KEY / SECRET
-      let key =
-        key.to_str().context("X-API-KEY is not valid UTF-8")?;
-      let secret =
-        secret.to_str().context("X-API-SECRET is not valid UTF-8")?;
-      auth_api_key_get_user_id(key, secret).await
-    }
-    _ => {
-      // AUTH FAIL
-      Err(anyhow!(
-        "Must attach either AUTHORIZATION header with jwt OR pass X-API-KEY and X-API-SECRET"
-      ))
-    }
-  }
-}
-
-pub async fn authenticate_check_enabled(
-  headers: &HeaderMap,
+pub async fn extract_user_from_auth(
+  auth: RequestAuthentication,
 ) -> anyhow::Result<User> {
-  let user_id = get_user_id_from_headers(headers).await?;
-  let user = get_user(&user_id)
-    .await
-    .map_err(|_| anyhow!("Invalid user credentials"))?;
-  if user.enabled {
-    Ok(user)
-  } else {
-    Err(anyhow!("Invalid user credentials"))
-  }
+  let user_id = match auth {
+    RequestAuthentication::UserId(user_id) => user_id,
+    RequestAuthentication::KeyAndSecret { key, secret } => {
+      auth_api_key_get_user_id(&key, &secret).await?
+    }
+    RequestAuthentication::PublicKey(_) => todo!(),
+  };
+  check_enabled(user_id).await
 }
 
 pub async fn auth_jwt_get_user_id(

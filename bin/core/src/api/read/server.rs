@@ -35,6 +35,7 @@ use komodo_client::{
     update::Log,
   },
 };
+use mogh_error::AddStatusCode;
 use mogh_resolver::Resolve;
 use periphery_client::api::{
   self as periphery,
@@ -44,7 +45,6 @@ use periphery_client::api::{
   },
 };
 use reqwest::StatusCode;
-use mogh_error::AddStatusCode;
 use tokio::sync::Mutex;
 
 use crate::{

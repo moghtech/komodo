@@ -8,9 +8,9 @@ use futures_util::{
   SinkExt, Stream, StreamExt, TryStreamExt,
   stream::{SplitSink, SplitStream},
 };
+use mogh_error::AddStatusCodeError;
 use periphery_client::transport::EncodedTransportMessage;
 use rustls::{ClientConfig, client::danger::ServerCertVerifier};
-use mogh_error::AddStatusCodeError;
 use tokio::net::TcpStream;
 use tokio_tungstenite::{
   Connector, MaybeTlsStream, WebSocketStream,
