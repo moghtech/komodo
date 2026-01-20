@@ -11,6 +11,18 @@ use super::KomodoExecuteRequest;
 // = CONTAINER =
 // =============
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/StartContainer",
+  description = "Starts the container on the target server.",
+  request_body(content = StartContainer),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn start_container() {}
+
 /// Starts the container on the target server. Response: [Update]
 ///
 /// 1. Runs `docker start ${container_name}`.
@@ -30,6 +42,18 @@ pub struct StartContainer {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RestartContainer",
+  description = "Restarts the container on the target server.",
+  request_body(content = RestartContainer),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn restart_container() {}
 
 /// Restarts the container on the target server. Response: [Update]
 ///
@@ -51,6 +75,18 @@ pub struct RestartContainer {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/PauseContainer",
+  description = "Pauses the container on the target server.",
+  request_body(content = PauseContainer),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn pause_container() {}
+
 /// Pauses the container on the target server. Response: [Update]
 ///
 /// 1. Runs `docker pause ${container_name}`.
@@ -70,6 +106,18 @@ pub struct PauseContainer {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UnpauseContainer",
+  description = "Unpauses the container on the target server.",
+  request_body(content = UnpauseContainer),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn unpause_container() {}
 
 /// Unpauses the container on the target server. Response: [Update]
 ///
@@ -92,6 +140,18 @@ pub struct UnpauseContainer {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/StopContainer",
+  description = "Stops the container on the target server.",
+  request_body(content = StopContainer),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn stop_container() {}
 
 /// Stops the container on the target server. Response: [Update]
 ///
@@ -116,6 +176,18 @@ pub struct StopContainer {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DestroyContainer",
+  description = "Stops and destroys the container on the target server.",
+  request_body(content = DestroyContainer),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn destroy_container() {}
 
 /// Stops and destroys the container on the target server.
 /// Reponse: [Update].
@@ -142,6 +214,18 @@ pub struct DestroyContainer {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/StartAllContainers",
+  description = "Starts all containers on the target server.",
+  request_body(content = StartAllContainers),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn start_all_containers() {}
+
 /// Starts all containers on the target server. Response: [Update]
 #[typeshare]
 #[derive(
@@ -157,6 +241,18 @@ pub struct StartAllContainers {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RestartAllContainers",
+  description = "Restarts all containers on the target server.",
+  request_body(content = RestartAllContainers),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn restart_all_containers() {}
 
 /// Restarts all containers on the target server. Response: [Update]
 #[typeshare]
@@ -174,6 +270,18 @@ pub struct RestartAllContainers {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/PauseAllContainers",
+  description = "Pauses all containers on the target server.",
+  request_body(content = PauseAllContainers),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn pause_all_containers() {}
+
 /// Pauses all containers on the target server. Response: [Update]
 #[typeshare]
 #[derive(
@@ -189,6 +297,18 @@ pub struct PauseAllContainers {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UnpauseAllContainers",
+  description = "Unpauses all containers on the target server.",
+  request_body(content = UnpauseAllContainers),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn unpause_all_containers() {}
 
 /// Unpauses all containers on the target server. Response: [Update]
 #[typeshare]
@@ -206,6 +326,18 @@ pub struct UnpauseAllContainers {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/StopAllContainers",
+  description = "Stops all containers on the target server.",
+  request_body(content = StopAllContainers),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn stop_all_containers() {}
+
 /// Stops all containers on the target server. Response: [Update]
 #[typeshare]
 #[derive(
@@ -221,6 +353,18 @@ pub struct StopAllContainers {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/PruneContainers",
+  description = "Prunes the docker containers on the target server.",
+  request_body(content = PruneContainers),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn prune_containers() {}
 
 /// Prunes the docker containers on the target server. Response: [Update].
 ///
@@ -242,6 +386,18 @@ pub struct PruneContainers {
 // = NETWORK / IMAGE / VOLUME =
 // ============================
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteNetwork",
+  description = "Delete a docker network.",
+  request_body(content = DeleteNetwork),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn delete_network() {}
+
 /// Delete a docker network.
 /// Response: [Update]
 #[typeshare]
@@ -261,6 +417,18 @@ pub struct DeleteNetwork {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/PruneNetworks",
+  description = "Prunes the docker networks on the target server.",
+  request_body(content = PruneNetworks),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn prune_networks() {}
+
 /// Prunes the docker networks on the target server. Response: [Update].
 ///
 /// 1. Runs `docker network prune -f`.
@@ -278,6 +446,18 @@ pub struct PruneNetworks {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteImage",
+  description = "Delete a docker image.",
+  request_body(content = DeleteImage),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn delete_image() {}
 
 /// Delete a docker image.
 /// Response: [Update]
@@ -298,6 +478,18 @@ pub struct DeleteImage {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/PruneImages",
+  description = "Prunes the docker images on the target server.",
+  request_body(content = PruneImages),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn prune_images() {}
+
 /// Prunes the docker images on the target server. Response: [Update].
 ///
 /// 1. Runs `docker image prune -a -f`.
@@ -315,6 +507,18 @@ pub struct PruneImages {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteVolume",
+  description = "Delete a docker volume.",
+  request_body(content = DeleteVolume),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn delete_volume() {}
 
 /// Delete a docker volume.
 /// Response: [Update]
@@ -335,6 +539,18 @@ pub struct DeleteVolume {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/PruneVolumes",
+  description = "Prunes the docker volumes on the target server.",
+  request_body(content = PruneVolumes),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn prune_volumes() {}
+
 /// Prunes the docker volumes on the target server. Response: [Update].
 ///
 /// 1. Runs `docker volume prune -a -f`.
@@ -353,7 +569,19 @@ pub struct PruneVolumes {
 
 //
 
-/// Prunes the docker builders (build cache) on the target server. Response: [Update].
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/PruneDockerBuilders",
+  description = "Prunes the docker builders on the target server.",
+  request_body(content = PruneDockerBuilders),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn prune_docker_builders() {}
+
+/// Prunes the docker builders on the target server. Response: [Update].
 ///
 /// 1. Runs `docker builder prune -a -f`.
 #[typeshare]
@@ -370,6 +598,18 @@ pub struct PruneDockerBuilders {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/PruneBuildx",
+  description = "Prunes the docker buildx cache on the target server.",
+  request_body(content = PruneBuildx),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn prune_buildx() {}
 
 /// Prunes the docker buildx cache on the target server. Response: [Update].
 ///
@@ -388,6 +628,18 @@ pub struct PruneBuildx {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/PruneSystem",
+  description = "Prunes the docker system on the target server, including volumes.",
+  request_body(content = PruneSystem),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn prune_system() {}
 
 /// Prunes the docker system on the target server, including volumes. Response: [Update].
 ///
