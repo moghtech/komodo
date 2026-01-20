@@ -20,7 +20,7 @@ pub struct TomlResponse {
 #[utoipa::path(
   post,
   path = "/read/ExportAllResourcesToToml",
-  description = "Get pretty formatted monrun sync toml for all resources which the user has permissions to view.",
+  description = "Get sync toml for all resources which the user has permissions to view.",
   request_body(content = ExportAllResourcesToToml),
   responses(
     (status = 200, description = "The toml response", body = ExportAllResourcesToTomlResponse),
@@ -28,8 +28,7 @@ pub struct TomlResponse {
 )]
 pub fn export_all_resources_to_toml() {}
 
-/// Get pretty formatted monrun sync toml for all resources
-/// which the user has permissions to view.
+/// Get sync toml for all resources which the user has permissions to view.
 /// Response: [TomlResponse].
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize, Resolve)]
@@ -70,7 +69,7 @@ pub type ExportAllResourcesToTomlResponse = TomlResponse;
 #[utoipa::path(
   post,
   path = "/read/ExportResourcesToToml",
-  description = "Get pretty formatted monrun sync toml for specific resources and user groups.",
+  description = "Get sync toml for specific resources, variables, and user groups.",
   request_body(content = ExportResourcesToToml),
   responses(
     (status = 200, description = "The toml response", body = ExportResourcesToTomlResponse),
@@ -78,7 +77,7 @@ pub type ExportAllResourcesToTomlResponse = TomlResponse;
 )]
 pub fn export_resources_to_toml() {}
 
-/// Get pretty formatted monrun sync toml for specific resources and user groups.
+/// Get sync toml for specific resources, variables, and user groups.
 /// Response: [TomlResponse].
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize, Resolve)]
