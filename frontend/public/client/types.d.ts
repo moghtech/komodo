@@ -5588,7 +5588,7 @@ export interface BatchDestroyStack {
     /**
      * Id or name or wildcard pattern or regex.
      * Supports multiline and comma delineated combinations of the above.
-     * d
+     *
      * Example:
      * ```text
      * # match all foo-* stacks
@@ -6150,7 +6150,7 @@ export interface CopySwarm {
     /** The id of the swarm to copy. */
     id: string;
 }
-/** Create a action. Response: [Action]. */
+/** Create an action. Response: [Action]. */
 export interface CreateAction {
     /** The name given to newly created action. */
     name: string;
@@ -6181,7 +6181,7 @@ export interface CreateApiKey {
     expires?: I64;
 }
 /**
- * Admin only method to create an api key for a service user.
+ * **Admin only**. Create an api key for a service user.
  * Response: [CreateApiKeyResponse].
  */
 export interface CreateApiKeyForServiceUser {
@@ -6314,7 +6314,7 @@ export interface CreateOnboardingKey {
     /** Optional. Whether to also create a Builder for the Server. */
     create_builder?: boolean;
 }
-/** The response for [CreateServerOnboardingKey] */
+/** The response for [CreateOnboardingKey] */
 export interface CreateOnboardingKeyResponse {
     /** pkcs8 encoded private key */
     private_key: string;
@@ -6502,7 +6502,7 @@ export interface DeleteApiKey {
     key: string;
 }
 /**
- * Admin only method to delete an api key for a service user.
+ * **Admin only.** Delete an api key for a service user.
  * Response: [NoData].
  */
 export interface DeleteApiKeyForServiceUser {
@@ -6812,8 +6812,7 @@ export interface ExecuteTerminalBody {
     init?: InitTerminal;
 }
 /**
- * Get pretty formatted monrun sync toml for all resources
- * which the user has permissions to view.
+ * Get sync toml for all resources which the user has permissions to view.
  * Response: [TomlResponse].
  */
 export interface ExportAllResourcesToToml {
@@ -6840,7 +6839,7 @@ export interface ExportAllResourcesToToml {
     include_user_groups?: boolean;
 }
 /**
- * Get pretty formatted monrun sync toml for specific resources and user groups.
+ * Get sync toml for specific resources, variables, and user groups.
  * Response: [TomlResponse].
  */
 export interface ExportResourcesToToml {
@@ -8354,7 +8353,7 @@ export interface PruneContainers {
     server: string;
 }
 /**
- * Prunes the docker builders (build cache) on the target server. Response: [Update].
+ * Prunes the docker builders on the target server. Response: [Update].
  *
  * 1. Runs `docker builder prune -a -f`.
  */
@@ -9416,8 +9415,8 @@ export interface UpdateGitProviderAccount {
     account: _PartialGitProviderAccount;
 }
 /**
- * **Admin only.** Delete an onboarding key.
- * Response: The deleted [OnboardingKey].
+ * **Admin only.** Update an onboarding key.
+ * Response: The updated [OnboardingKey].
  */
 export interface UpdateOnboardingKey {
     /** The onboarding public key. */
@@ -9708,7 +9707,7 @@ export interface WriteStackFileContents {
     /** The contents to write. */
     contents: string;
 }
-/** Rename the stack at id to the given name. Response: [Update]. */
+/** Write to the sync toml file contents. Response: [Update]. */
 export interface WriteSyncFileContents {
     /** The name or id of the target Sync. */
     sync: string;

@@ -5788,7 +5788,7 @@ export interface BatchDestroyStack {
 	/**
 	 * Id or name or wildcard pattern or regex.
 	 * Supports multiline and comma delineated combinations of the above.
-	 * d
+	 * 
 	 * Example:
 	 * ```text
 	 * # match all foo-* stacks
@@ -6391,7 +6391,7 @@ export interface CopySwarm {
 	id: string;
 }
 
-/** Create a action. Response: [Action]. */
+/** Create an action. Response: [Action]. */
 export interface CreateAction {
 	/** The name given to newly created action. */
 	name: string;
@@ -6425,7 +6425,7 @@ export interface CreateApiKey {
 }
 
 /**
- * Admin only method to create an api key for a service user.
+ * **Admin only**. Create an api key for a service user.
  * Response: [CreateApiKeyResponse].
  */
 export interface CreateApiKeyForServiceUser {
@@ -6563,7 +6563,7 @@ export interface CreateOnboardingKey {
 	create_builder?: boolean;
 }
 
-/** The response for [CreateServerOnboardingKey] */
+/** The response for [CreateOnboardingKey] */
 export interface CreateOnboardingKeyResponse {
 	/** pkcs8 encoded private key */
 	private_key: string;
@@ -6770,7 +6770,7 @@ export interface DeleteApiKey {
 }
 
 /**
- * Admin only method to delete an api key for a service user.
+ * **Admin only.** Delete an api key for a service user.
  * Response: [NoData].
  */
 export interface DeleteApiKeyForServiceUser {
@@ -7111,8 +7111,7 @@ export interface ExecuteTerminalBody {
 }
 
 /**
- * Get pretty formatted monrun sync toml for all resources
- * which the user has permissions to view.
+ * Get sync toml for all resources which the user has permissions to view.
  * Response: [TomlResponse].
  */
 export interface ExportAllResourcesToToml {
@@ -7140,7 +7139,7 @@ export interface ExportAllResourcesToToml {
 }
 
 /**
- * Get pretty formatted monrun sync toml for specific resources and user groups.
+ * Get sync toml for specific resources, variables, and user groups.
  * Response: [TomlResponse].
  */
 export interface ExportResourcesToToml {
@@ -8825,7 +8824,7 @@ export interface PruneContainers {
 }
 
 /**
- * Prunes the docker builders (build cache) on the target server. Response: [Update].
+ * Prunes the docker builders on the target server. Response: [Update].
  * 
  * 1. Runs `docker builder prune -a -f`.
  */
@@ -9981,8 +9980,8 @@ export interface UpdateGitProviderAccount {
 }
 
 /**
- * **Admin only.** Delete an onboarding key.
- * Response: The deleted [OnboardingKey].
+ * **Admin only.** Update an onboarding key.
+ * Response: The updated [OnboardingKey].
  */
 export interface UpdateOnboardingKey {
 	/** The onboarding public key. */
@@ -10294,7 +10293,7 @@ export interface WriteStackFileContents {
 	contents: string;
 }
 
-/** Rename the stack at id to the given name. Response: [Update]. */
+/** Write to the sync toml file contents. Response: [Update]. */
 export interface WriteSyncFileContents {
 	/** The name or id of the target Sync. */
 	sync: string;
