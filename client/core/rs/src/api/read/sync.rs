@@ -14,7 +14,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetResourceSync",
+  path = "/GetResourceSync",
   description = "Get a specific sync.",
   request_body(content = GetResourceSync),
   responses(
@@ -44,7 +44,7 @@ pub type GetResourceSyncResponse = ResourceSync;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListResourceSyncs",
+  path = "/ListResourceSyncs",
   description = "List syncs matching optional query.",
   request_body(content = ListResourceSyncs),
   responses(
@@ -74,7 +74,7 @@ pub type ListResourceSyncsResponse = Vec<ResourceSyncListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListFullResourceSyncs",
+  path = "/ListFullResourceSyncs",
   description = "List syncs matching optional query.",
   request_body(content = ListFullResourceSyncs),
   responses(
@@ -104,7 +104,7 @@ pub type ListFullResourceSyncsResponse = Vec<ResourceSync>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetResourceSyncActionState",
+  path = "/GetResourceSyncActionState",
   description = "Get current action state for the sync.",
   request_body(content = GetResourceSyncActionState),
   responses(
@@ -134,7 +134,7 @@ pub type GetResourceSyncActionStateResponse = ResourceSyncActionState;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetResourceSyncsSummary",
+  path = "/GetResourceSyncsSummary",
   description = "Gets a summary of data relating to all syncs.",
   request_body(content = GetResourceSyncsSummary),
   responses(

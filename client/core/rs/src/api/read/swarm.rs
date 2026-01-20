@@ -25,7 +25,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetSwarm",
+  path = "/GetSwarm",
   description = "Get a specific swarm.",
   request_body(content = GetSwarm),
   responses(
@@ -55,7 +55,7 @@ pub type GetSwarmResponse = Swarm;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListSwarms",
+  path = "/ListSwarms",
   description = "List Swarms matching optional query.",
   request_body(content = ListSwarms),
   responses(
@@ -85,7 +85,7 @@ pub type ListSwarmsResponse = Vec<SwarmListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListFullSwarms",
+  path = "/ListFullSwarms",
   description = "List Swarms matching optional query.",
   request_body(content = ListFullSwarms),
   responses(
@@ -115,7 +115,7 @@ pub type ListFullSwarmsResponse = Vec<Swarm>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetSwarmActionState",
+  path = "/GetSwarmActionState",
   description = "Get current action state for the swarm.",
   request_body(content = GetSwarmActionState),
   responses(
@@ -145,7 +145,7 @@ pub type GetSwarmActionStateResponse = SwarmActionState;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetSwarmsSummary",
+  path = "/GetSwarmsSummary",
   description = "Gets a summary of data relating to all swarms.",
   request_body(content = GetSwarmsSummary),
   responses(
@@ -184,7 +184,7 @@ pub struct GetSwarmsSummaryResponse {
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/InspectSwarm",
+  path = "/InspectSwarm",
   description = "Inspect information about the swarm.",
   request_body(content = InspectSwarm),
   responses(
@@ -215,7 +215,7 @@ pub type InspectSwarmResponse = SwarmInspectInfo;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListSwarmNodes",
+  path = "/ListSwarmNodes",
   description = "List nodes part of the target Swarm.",
   request_body(content = ListSwarmNodes),
   responses(
@@ -246,7 +246,7 @@ pub type ListSwarmNodesResponse = Vec<SwarmNodeListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/InspectSwarmNode",
+  path = "/InspectSwarmNode",
   description = "Inspect a Swarm node.",
   request_body(content = InspectSwarmNode),
   responses(
@@ -279,7 +279,7 @@ pub type InspectSwarmNodeResponse = SwarmNode;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListSwarmServices",
+  path = "/ListSwarmServices",
   description = "List services on the target Swarm.",
   request_body(content = ListSwarmServices),
   responses(
@@ -310,7 +310,7 @@ pub type ListSwarmServicesResponse = Vec<SwarmServiceListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/InspectSwarmService",
+  path = "/InspectSwarmService",
   description = "Inspect a Swarm service.",
   request_body(content = InspectSwarmService),
   responses(
@@ -343,7 +343,7 @@ pub type InspectSwarmServiceResponse = SwarmService;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetSwarmServiceLog",
+  path = "/GetSwarmServiceLog",
   description = "Get a swarm service's logs.",
   request_body(content = GetSwarmServiceLog),
   responses(
@@ -398,7 +398,7 @@ pub type GetSwarmServiceLogResponse = Log;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/SearchSwarmServiceLog",
+  path = "/SearchSwarmServiceLog",
   description = "Search the swarm service log's tail using `grep`.",
   request_body(content = SearchSwarmServiceLog),
   responses(
@@ -456,7 +456,7 @@ pub type SearchSwarmServiceLogResponse = Log;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListSwarmTasks",
+  path = "/ListSwarmTasks",
   description = "List tasks on the target Swarm.",
   request_body(content = ListSwarmTasks),
   responses(
@@ -487,7 +487,7 @@ pub type ListSwarmTasksResponse = Vec<SwarmTaskListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/InspectSwarmTask",
+  path = "/InspectSwarmTask",
   description = "Inspect a Swarm task.",
   request_body(content = InspectSwarmTask),
   responses(
@@ -520,7 +520,7 @@ pub type InspectSwarmTaskResponse = SwarmTask;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListSwarmSecrets",
+  path = "/ListSwarmSecrets",
   description = "List secrets on the target Swarm.",
   request_body(content = ListSwarmSecrets),
   responses(
@@ -551,7 +551,7 @@ pub type ListSwarmSecretsResponse = Vec<SwarmSecretListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/InspectSwarmSecret",
+  path = "/InspectSwarmSecret",
   description = "Inspect a Swarm secret.",
   request_body(content = InspectSwarmSecret),
   responses(
@@ -584,7 +584,7 @@ pub type InspectSwarmSecretResponse = SwarmSecret;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListSwarmConfigs",
+  path = "/ListSwarmConfigs",
   description = "List configs on the target Swarm.",
   request_body(content = ListSwarmConfigs),
   responses(
@@ -615,7 +615,7 @@ pub type ListSwarmConfigsResponse = Vec<SwarmConfigListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/InspectSwarmConfig",
+  path = "/InspectSwarmConfig",
   description = "Inspect a config on the target Swarm.",
   request_body(content = InspectSwarmConfig),
   responses(
@@ -648,7 +648,7 @@ pub type InspectSwarmConfigResponse = SwarmConfig;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListSwarmStacks",
+  path = "/ListSwarmStacks",
   description = "List stacks on the target Swarm.",
   request_body(content = ListSwarmStacks),
   responses(
@@ -679,7 +679,7 @@ pub type ListSwarmStacksResponse = Vec<SwarmStackListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/InspectSwarmStack",
+  path = "/InspectSwarmStack",
   description = "Inspect a stack on the target Swarm.",
   request_body(content = InspectSwarmStack),
   responses(
@@ -712,7 +712,7 @@ pub type InspectSwarmStackResponse = SwarmStack;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListSwarmNetworks",
+  path = "/ListSwarmNetworks",
   description = "List the networks on the swarm.",
   request_body(content = ListSwarmNetworks),
   responses(

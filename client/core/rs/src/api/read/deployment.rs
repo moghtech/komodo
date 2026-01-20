@@ -22,7 +22,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetDeployment",
+  path = "/GetDeployment",
   description = "Get a specific deployment by name or id.",
   request_body(content = GetDeployment),
   responses(
@@ -52,7 +52,7 @@ pub type GetDeploymentResponse = Deployment;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListDeployments",
+  path = "/ListDeployments",
   description = "List deployments matching optional query.",
   request_body(content = ListDeployments),
   responses(
@@ -83,7 +83,7 @@ pub type ListDeploymentsResponse = Vec<DeploymentListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListFullDeployments",
+  path = "/ListFullDeployments",
   description = "List deployments matching optional query.",
   request_body(content = ListFullDeployments),
   responses(
@@ -114,7 +114,7 @@ pub type ListFullDeploymentsResponse = Vec<Deployment>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetDeploymentContainer",
+  path = "/GetDeploymentContainer",
   description = "Get the container, including image / status, of the target deployment.",
   request_body(content = GetDeploymentContainer),
   responses(
@@ -155,7 +155,7 @@ pub struct GetDeploymentContainerResponse {
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/InspectDeploymentContainer",
+  path = "/InspectDeploymentContainer",
   description = "Inspect the docker container associated with the Deployment.",
   request_body(content = InspectDeploymentContainer),
   responses(
@@ -186,7 +186,7 @@ pub type InspectDeploymentContainerResponse = Container;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/InspectDeploymentSwarmService",
+  path = "/InspectDeploymentSwarmService",
   description = "Inspect the swarm service associated with the Deployment.",
   request_body(content = InspectDeploymentSwarmService),
   responses(
@@ -217,7 +217,7 @@ pub type InspectDeploymentSwarmServiceResponse = SwarmService;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetDeploymentLog",
+  path = "/GetDeploymentLog",
   description = "Get the deployment log's tail, split by stdout/stderr.",
   request_body(content = GetDeploymentLog),
   responses(
@@ -262,7 +262,7 @@ pub type GetDeploymentLogResponse = Log;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/SearchDeploymentLog",
+  path = "/SearchDeploymentLog",
   description = "Search the deployment log's tail using `grep`.",
   request_body(content = SearchDeploymentLog),
   responses(
@@ -309,7 +309,7 @@ pub type SearchDeploymentLogResponse = Log;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetDeploymentStats",
+  path = "/GetDeploymentStats",
   description = "Get the deployment container's stats using `docker stats`.",
   request_body(content = GetDeploymentStats),
   responses(
@@ -342,7 +342,7 @@ pub type GetDeploymentStatsResponse = ContainerStats;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetDeploymentActionState",
+  path = "/GetDeploymentActionState",
   description = "Get current action state for the deployment.",
   request_body(content = GetDeploymentActionState),
   responses(
@@ -373,7 +373,7 @@ pub type GetDeploymentActionStateResponse = DeploymentActionState;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetDeploymentsSummary",
+  path = "/GetDeploymentsSummary",
   description = "Gets a summary of data relating to all deployments.",
   request_body(content = GetDeploymentsSummary),
   responses(
@@ -416,7 +416,7 @@ pub struct GetDeploymentsSummaryResponse {
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListCommonDeploymentExtraArgs",
+  path = "/ListCommonDeploymentExtraArgs",
   description = "Gets a list of existing values used as extra args across other deployments.",
   request_body(content = ListCommonDeploymentExtraArgs),
   responses(

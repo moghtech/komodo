@@ -14,7 +14,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetUpdate",
+  path = "/GetUpdate",
   description = "Get all data for the target update.",
   request_body(content = GetUpdate),
   responses(
@@ -44,7 +44,7 @@ pub type GetUpdateResponse = Update;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListUpdates",
+  path = "/ListUpdates",
   description = "Paginated endpoint for updates matching optional query.",
   request_body(content = ListUpdates),
   responses(

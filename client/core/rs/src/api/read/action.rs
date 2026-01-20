@@ -13,7 +13,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetAction",
+  path = "/GetAction",
   description = "Get a specific action.",
   request_body(content = GetAction),
   responses(
@@ -43,7 +43,7 @@ pub type GetActionResponse = Action;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListActions",
+  path = "/ListActions",
   description = "List actions matching optional query.",
   request_body(content = ListActions),
   responses(
@@ -73,7 +73,7 @@ pub type ListActionsResponse = Vec<ActionListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListFullActions",
+  path = "/ListFullActions",
   description = "List actions matching optional query.",
   request_body(content = ListFullActions),
   responses(
@@ -103,7 +103,7 @@ pub type ListFullActionsResponse = Vec<Action>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetActionActionState",
+  path = "/GetActionActionState",
   description = "Get current action state for the action.",
   request_body(content = GetActionActionState),
   responses(
@@ -133,7 +133,7 @@ pub type GetActionActionStateResponse = ActionActionState;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetActionsSummary",
+  path = "/GetActionsSummary",
   description = "Gets a summary of data relating to all actions.",
   request_body(content = GetActionsSummary),
   responses(

@@ -11,7 +11,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetTag",
+  path = "/GetTag",
   description = "Get data for a specific tag.",
   request_body(content = GetTag),
   responses(
@@ -41,7 +41,7 @@ pub type GetTagResponse = Tag;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListTags",
+  path = "/ListTags",
   description = "List data for tags matching optional mongo query.",
   request_body(content = ListTags),
   responses(

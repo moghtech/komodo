@@ -11,7 +11,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetVariable",
+  path = "/GetVariable",
   description = "List all available global variables.",
   request_body(content = GetVariable),
   responses(
@@ -44,7 +44,7 @@ pub type GetVariableResponse = Variable;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListVariables",
+  path = "/ListVariables",
   description = "List all available global variables.",
   request_body(content = ListVariables),
   responses(

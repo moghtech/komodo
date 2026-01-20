@@ -13,7 +13,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetGitProviderAccount",
+  path = "/GetGitProviderAccount",
   description = "Get a specific git provider account.",
   request_body(content = GetGitProviderAccount),
   responses(
@@ -42,7 +42,7 @@ pub type GetGitProviderAccountResponse = GitProviderAccount;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListGitProviderAccounts",
+  path = "/ListGitProviderAccounts",
   description = "List git provider accounts matching optional query.",
   request_body(content = ListGitProviderAccounts),
   responses(
@@ -74,7 +74,7 @@ pub type ListGitProviderAccountsResponse = Vec<GitProviderAccount>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetDockerRegistryAccount",
+  path = "/GetDockerRegistryAccount",
   description = "Get a specific docker registry account.",
   request_body(content = GetDockerRegistryAccount),
   responses(
@@ -103,7 +103,7 @@ pub type GetDockerRegistryAccountResponse = DockerRegistryAccount;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListDockerRegistryAccounts",
+  path = "/ListDockerRegistryAccounts",
   description = "List docker registry accounts matching optional query.",
   request_body(content = ListDockerRegistryAccounts),
   responses(

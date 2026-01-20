@@ -11,7 +11,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListOnboardingKeys",
+  path = "/ListOnboardingKeys",
   description = "**Admin only.** Gets list of onboarding keys.",
   request_body(content = ListOnboardingKeys),
   responses(

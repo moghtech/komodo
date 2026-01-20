@@ -11,7 +11,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetUserGroup",
+  path = "/GetUserGroup",
   description = "Get a specific user group by name or id.",
   request_body(content = GetUserGroup),
   responses(
@@ -41,7 +41,7 @@ pub type GetUserGroupResponse = UserGroup;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListUserGroups",
+  path = "/ListUserGroups",
   description = "List all user groups which user can see.",
   request_body(content = ListUserGroups),
   responses(

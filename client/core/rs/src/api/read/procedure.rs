@@ -13,7 +13,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetProcedure",
+  path = "/GetProcedure",
   description = "Get a specific procedure.",
   request_body(content = GetProcedure),
   responses(
@@ -43,7 +43,7 @@ pub type GetProcedureResponse = Procedure;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListProcedures",
+  path = "/ListProcedures",
   description = "List procedures matching optional query.",
   request_body(content = ListProcedures),
   responses(
@@ -73,7 +73,7 @@ pub type ListProceduresResponse = Vec<ProcedureListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListFullProcedures",
+  path = "/ListFullProcedures",
   description = "List procedures matching optional query.",
   request_body(content = ListFullProcedures),
   responses(
@@ -103,7 +103,7 @@ pub type ListFullProceduresResponse = Vec<Procedure>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetProcedureActionState",
+  path = "/GetProcedureActionState",
   description = "Get current action state for the procedure.",
   request_body(content = GetProcedureActionState),
   responses(
@@ -133,7 +133,7 @@ pub type GetProcedureActionStateResponse = ProcedureActionState;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetProceduresSummary",
+  path = "/GetProceduresSummary",
   description = "Gets a summary of data relating to all procedures.",
   request_body(content = GetProceduresSummary),
   responses(

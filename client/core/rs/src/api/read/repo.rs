@@ -13,7 +13,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetRepo",
+  path = "/GetRepo",
   description = "Get a specific repo.",
   request_body(content = GetRepo),
   responses(
@@ -43,7 +43,7 @@ pub type GetRepoResponse = Repo;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListRepos",
+  path = "/ListRepos",
   description = "List repos matching optional query.",
   request_body(content = ListRepos),
   responses(
@@ -73,7 +73,7 @@ pub type ListReposResponse = Vec<RepoListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListFullRepos",
+  path = "/ListFullRepos",
   description = "List repos matching optional query.",
   request_body(content = ListFullRepos),
   responses(
@@ -103,7 +103,7 @@ pub type ListFullReposResponse = Vec<Repo>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetRepoActionState",
+  path = "/GetRepoActionState",
   description = "Get current action state for the repo.",
   request_body(content = GetRepoActionState),
   responses(
@@ -133,7 +133,7 @@ pub type GetRepoActionStateResponse = RepoActionState;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetReposSummary",
+  path = "/GetReposSummary",
   description = "Gets a summary of data relating to all repos.",
   request_body(content = GetReposSummary),
   responses(

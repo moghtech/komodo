@@ -20,7 +20,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetStack",
+  path = "/GetStack",
   description = "Get a specific stack.",
   request_body(content = GetStack),
   responses(
@@ -50,7 +50,7 @@ pub type GetStackResponse = Stack;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListStackServices",
+  path = "/ListStackServices",
   description = "Lists a specific stacks services (the containers).",
   request_body(content = ListStackServices),
   responses(
@@ -80,7 +80,7 @@ pub type ListStackServicesResponse = Vec<StackService>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/InspectStackContainer",
+  path = "/InspectStackContainer",
   description = "Inspect a docker container associated with a Stack.",
   request_body(content = InspectStackContainer),
   responses(
@@ -113,7 +113,7 @@ pub type InspectStackContainerResponse = Container;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/InspectStackSwarmService",
+  path = "/InspectStackSwarmService",
   description = "Inspect a swarm service associated with a Stack.",
   request_body(content = InspectStackSwarmService),
   responses(
@@ -146,7 +146,7 @@ pub type InspectStackSwarmServiceResponse = SwarmService;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/InspectStackSwarmInfo",
+  path = "/InspectStackSwarmInfo",
   description = "Inspect swarm info associated with a Stack.",
   request_body(content = InspectStackSwarmInfo),
   responses(
@@ -177,7 +177,7 @@ pub type InspectStackSwarmInfoResponse = SwarmStack;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetStackLog",
+  path = "/GetStackLog",
   description = "Get a stack's logs. Filter down included services.",
   request_body(content = GetStackLog),
   responses(
@@ -224,7 +224,7 @@ pub type GetStackLogResponse = Log;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/SearchStackLog",
+  path = "/SearchStackLog",
   description = "Search the stack log's tail using `grep`.",
   request_body(content = SearchStackLog),
   responses(
@@ -274,7 +274,7 @@ pub type SearchStackLogResponse = Log;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListCommonStackExtraArgs",
+  path = "/ListCommonStackExtraArgs",
   description = "Gets a list of existing values used as extra args across other stacks.",
   request_body(content = ListCommonStackExtraArgs),
   responses(
@@ -305,7 +305,7 @@ pub type ListCommonStackExtraArgsResponse = Vec<String>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListCommonStackBuildExtraArgs",
+  path = "/ListCommonStackBuildExtraArgs",
   description = "Gets a list of existing values used as build extra args across other stacks.",
   request_body(content = ListCommonStackBuildExtraArgs),
   responses(
@@ -336,7 +336,7 @@ pub type ListCommonStackBuildExtraArgsResponse = Vec<String>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListStacks",
+  path = "/ListStacks",
   description = "List stacks matching optional query.",
   request_body(content = ListStacks),
   responses(
@@ -366,7 +366,7 @@ pub type ListStacksResponse = Vec<StackListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListFullStacks",
+  path = "/ListFullStacks",
   description = "List stacks matching optional query.",
   request_body(content = ListFullStacks),
   responses(
@@ -396,7 +396,7 @@ pub type ListFullStacksResponse = Vec<Stack>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetStackActionState",
+  path = "/GetStackActionState",
   description = "Get current action state for the stack.",
   request_body(content = GetStackActionState),
   responses(
@@ -426,7 +426,7 @@ pub type GetStackActionStateResponse = StackActionState;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetStacksSummary",
+  path = "/GetStacksSummary",
   description = "Gets a summary of data relating to all syncs.",
   request_body(content = GetStacksSummary),
   responses(

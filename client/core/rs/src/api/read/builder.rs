@@ -13,7 +13,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetBuilder",
+  path = "/GetBuilder",
   description = "Get a specific builder by id or name.",
   request_body(content = GetBuilder),
   responses(
@@ -43,7 +43,7 @@ pub type GetBuilderResponse = Builder;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListBuilders",
+  path = "/ListBuilders",
   description = "List builders matching structured query.",
   request_body(content = ListBuilders),
   responses(
@@ -72,7 +72,7 @@ pub type ListBuildersResponse = Vec<BuilderListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListFullBuilders",
+  path = "/ListFullBuilders",
   description = "List builders matching structured query.",
   request_body(content = ListFullBuilders),
   responses(
@@ -101,7 +101,7 @@ pub type ListFullBuildersResponse = Vec<Builder>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetBuildersSummary",
+  path = "/GetBuildersSummary",
   description = "Gets a summary of data relating to all builders.",
   request_body(content = GetBuildersSummary),
   responses(

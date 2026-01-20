@@ -4,6 +4,23 @@ use typeshare::typeshare;
 
 use crate::entities::{I64, NoData, ResourceTarget};
 
+#[cfg(feature = "utoipa")]
+mod user {
+  pub use crate::api::user::*;
+}
+
+#[cfg(feature = "utoipa")]
+#[derive(utoipa::OpenApi)]
+#[openapi(paths(
+  user::push_recently_viewed,
+  user::set_last_seen_update,
+  user::create_api_key,
+  user::delete_api_key,
+))]
+pub struct KomodoUserApi;
+
+//
+
 pub trait KomodoUserRequest: HasResponse {}
 
 //
@@ -11,7 +28,7 @@ pub trait KomodoUserRequest: HasResponse {}
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/user/PushRecentlyViewed",
+  path = "/PushRecentlyViewed",
   description = "Add a resource to user recently viewed.",
   request_body(content = PushRecentlyViewed),
   responses(
@@ -42,7 +59,7 @@ pub type PushRecentlyViewedResponse = NoData;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/user/SetLastSeenUpdate",
+  path = "/SetLastSeenUpdate",
   description = "Set the time the user last opened the UI updates.",
   request_body(content = SetLastSeenUpdate),
   responses(
@@ -71,7 +88,7 @@ pub type SetLastSeenUpdateResponse = NoData;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/user/CreateApiKey",
+  path = "/CreateApiKey",
   description = "Create an api key for the calling user.",
   request_body(content = CreateApiKey),
   responses(
@@ -123,7 +140,7 @@ pub struct CreateApiKeyResponse {
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/user/DeleteApiKey",
+  path = "/DeleteApiKey",
   description = "Delete an api key for the calling user.",
   request_body(content = DeleteApiKey),
   responses(

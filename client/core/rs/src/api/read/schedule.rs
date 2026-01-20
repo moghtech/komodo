@@ -14,7 +14,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListSchedules",
+  path = "/ListSchedules",
   description = "List configured schedules.",
   request_body(content = ListSchedules),
   responses(

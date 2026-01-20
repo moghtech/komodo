@@ -19,7 +19,7 @@ pub struct TomlResponse {
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ExportAllResourcesToToml",
+  path = "/ExportAllResourcesToToml",
   description = "Get sync toml for all resources which the user has permissions to view.",
   request_body(content = ExportAllResourcesToToml),
   responses(
@@ -68,7 +68,7 @@ pub type ExportAllResourcesToTomlResponse = TomlResponse;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ExportResourcesToToml",
+  path = "/ExportResourcesToToml",
   description = "Get sync toml for specific resources, variables, and user groups.",
   request_body(content = ExportResourcesToToml),
   responses(

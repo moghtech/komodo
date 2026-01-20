@@ -11,7 +11,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListTerminals",
+  path = "/ListTerminals",
   description = "List Terminals.",
   request_body(content = ListTerminals),
   responses(

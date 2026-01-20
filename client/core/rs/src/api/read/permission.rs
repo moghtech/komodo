@@ -14,7 +14,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListPermissions",
+  path = "/ListPermissions",
   description = "List permissions for the calling user.",
   request_body(content = ListPermissions),
   responses(
@@ -42,7 +42,7 @@ pub type ListPermissionsResponse = Vec<Permission>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetPermission",
+  path = "/GetPermission",
   description = "Gets the calling user's permission level on a specific resource.",
   request_body(content = GetPermission),
   responses(
@@ -73,7 +73,7 @@ pub type GetPermissionResponse = PermissionLevelAndSpecifics;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListUserTargetPermissions",
+  path = "/ListUserTargetPermissions",
   description = "List permissions for a specific user.",
   request_body(content = ListUserTargetPermissions),
   responses(

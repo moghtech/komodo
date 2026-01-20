@@ -11,7 +11,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListApiKeys",
+  path = "/ListApiKeys",
   description = "Gets list of api keys for the calling user.",
   request_body(content = ListApiKeys),
   responses(
@@ -38,7 +38,7 @@ pub type ListApiKeysResponse = Vec<ApiKey>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListApiKeysForServiceUser",
+  path = "/ListApiKeysForServiceUser",
   description = "**Admin only.** Gets list of api keys for the user.",
   request_body(content = ListApiKeysForServiceUser),
   responses(
@@ -71,7 +71,7 @@ pub type ListApiKeysForServiceUserResponse = Vec<ApiKey>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/FindUser",
+  path = "/FindUser",
   description = "**Admin only.** Find a user.",
   request_body(content = FindUser),
   responses(
@@ -103,7 +103,7 @@ pub type FindUserResponse = User;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListUsers",
+  path = "/ListUsers",
   description = "**Admin only.** Gets list of Komodo users.",
   request_body(content = ListUsers),
   responses(
@@ -131,7 +131,7 @@ pub type ListUsersResponse = Vec<User>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetUsername",
+  path = "/GetUsername",
   description = "Gets the username of a specific user.",
   request_body(content = GetUsername),
   responses(

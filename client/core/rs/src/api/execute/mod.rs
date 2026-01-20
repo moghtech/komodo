@@ -33,6 +33,9 @@ use crate::{
   entities::{_Serror, I64, NoData, update::Update},
 };
 
+#[cfg(feature = "utoipa")]
+pub mod openapi;
+
 pub trait KomodoExecuteRequest: HasResponse {}
 
 /// A wrapper for all Komodo exections.

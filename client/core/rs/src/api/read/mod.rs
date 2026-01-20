@@ -57,6 +57,9 @@ use crate::entities::{
   config::{DockerRegistry, GitProvider},
 };
 
+#[cfg(feature = "utoipa")]
+pub mod openapi;
+
 pub trait KomodoReadRequest: HasResponse {}
 
 //
@@ -64,7 +67,7 @@ pub trait KomodoReadRequest: HasResponse {}
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetVersion",
+  path = "/GetVersion",
   description = "Get the version of the Komodo Core API.",
   request_body(content = GetVersion),
   responses(
@@ -97,7 +100,7 @@ pub struct GetVersionResponse {
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetCoreInfo",
+  path = "/GetCoreInfo",
   description = "Get information about the Komodo Core API configuration.",
   request_body(content = GetCoreInfo),
   responses(
@@ -150,7 +153,7 @@ pub struct GetCoreInfoResponse {
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListGitProvidersFromConfig",
+  path = "/ListGitProvidersFromConfig",
   description = "List the git providers available in Core / Periphery config files.",
   request_body(content = ListGitProvidersFromConfig),
   responses(
@@ -188,7 +191,7 @@ pub type ListGitProvidersFromConfigResponse = Vec<GitProvider>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListDockerRegistriesFromConfig",
+  path = "/ListDockerRegistriesFromConfig",
   description = "List the docker registry providers available in Core / Periphery config files.",
   request_body(content = ListDockerRegistriesFromConfig),
   responses(
@@ -226,7 +229,7 @@ pub type ListDockerRegistriesFromConfigResponse = Vec<DockerRegistry>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListSecrets",
+  path = "/ListSecrets",
   description = "List the secret keys (not values) in the core configuration file.",
   request_body(content = ListSecrets),
   responses(

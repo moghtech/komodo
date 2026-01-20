@@ -13,7 +13,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetAlerter",
+  path = "/GetAlerter",
   description = "Get a specific alerter.",
   request_body(content = GetAlerter),
   responses(
@@ -43,7 +43,7 @@ pub type GetAlerterResponse = Alerter;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListAlerters",
+  path = "/ListAlerters",
   description = "List alerters matching optional query.",
   request_body(content = ListAlerters),
   responses(
@@ -73,7 +73,7 @@ pub type ListAlertersResponse = Vec<AlerterListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListFullAlerters",
+  path = "/ListFullAlerters",
   description = "List full alerters matching optional query.",
   request_body(content = ListFullAlerters),
   responses(
@@ -103,7 +103,7 @@ pub type ListFullAlertersResponse = Vec<Alerter>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetAlertersSummary",
+  path = "/GetAlertersSummary",
   description = "Gets a summary of data relating to all alerters.",
   request_body(content = GetAlertersSummary),
   responses(

@@ -11,7 +11,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListAlerts",
+  path = "/ListAlerts",
   description = "Get a paginated list of alerts sorted by timestamp descending.",
   request_body(content = ListAlerts),
   responses(
@@ -77,7 +77,7 @@ pub struct ListAlertsResponse {
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetAlert",
+  path = "/GetAlert",
   description = "Get an alert.",
   request_body(content = GetAlert),
   responses(

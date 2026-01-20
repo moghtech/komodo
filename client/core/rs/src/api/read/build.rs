@@ -16,7 +16,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetBuild",
+  path = "/GetBuild",
   description = "Get a specific build.",
   request_body(content = GetBuild),
   responses(
@@ -46,7 +46,7 @@ pub type GetBuildResponse = Build;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListBuilds",
+  path = "/ListBuilds",
   description = "List builds matching optional query.",
   request_body(content = ListBuilds),
   responses(
@@ -76,7 +76,7 @@ pub type ListBuildsResponse = Vec<BuildListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListFullBuilds",
+  path = "/ListFullBuilds",
   description = "List builds matching optional query.",
   request_body(content = ListFullBuilds),
   responses(
@@ -106,7 +106,7 @@ pub type ListFullBuildsResponse = Vec<Build>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetBuildActionState",
+  path = "/GetBuildActionState",
   description = "Get current action state for the build.",
   request_body(content = GetBuildActionState),
   responses(
@@ -136,7 +136,7 @@ pub type GetBuildActionStateResponse = BuildActionState;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetBuildsSummary",
+  path = "/GetBuildsSummary",
   description = "Gets a summary of data relating to all builds.",
   request_body(content = GetBuildsSummary),
   responses(
@@ -177,7 +177,7 @@ pub struct GetBuildsSummaryResponse {
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetBuildMonthlyStats",
+  path = "/GetBuildMonthlyStats",
   description = "Gets summary and timeseries breakdown of the last months build count / time for charting.",
   request_body(content = GetBuildMonthlyStats),
   responses(
@@ -254,7 +254,7 @@ impl GetBuildMonthlyStatsResponse {
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListBuildVersions",
+  path = "/ListBuildVersions",
   description = "Retrieve versions of the build that were built in the past and available for deployment, sorted by most recent first.",
   request_body(content = ListBuildVersions),
   responses(
@@ -302,7 +302,7 @@ pub struct BuildVersionResponseItem {
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListCommonBuildExtraArgs",
+  path = "/ListCommonBuildExtraArgs",
   description = "Gets a list of existing values used as extra args across other builds.",
   request_body(content = ListCommonBuildExtraArgs),
   responses(

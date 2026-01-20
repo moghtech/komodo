@@ -44,4 +44,7 @@ pub use user::*;
 pub use user_group::*;
 pub use variable::*;
 
+#[cfg(feature = "utoipa")]
+pub mod openapi;
+
 pub trait KomodoWriteRequest: mogh_resolver::HasResponse {}

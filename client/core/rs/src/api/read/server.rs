@@ -20,7 +20,7 @@ use super::KomodoReadRequest;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetServer",
+  path = "/GetServer",
   description = "Get a specific server.",
   request_body(content = GetServer),
   responses(
@@ -50,7 +50,7 @@ pub type GetServerResponse = Server;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListServers",
+  path = "/ListServers",
   description = "List servers matching optional query.",
   request_body(content = ListServers),
   responses(
@@ -80,7 +80,7 @@ pub type ListServersResponse = Vec<ServerListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListFullServers",
+  path = "/ListFullServers",
   description = "List servers matching optional query.",
   request_body(content = ListFullServers),
   responses(
@@ -110,7 +110,7 @@ pub type ListFullServersResponse = Vec<Server>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetServerState",
+  path = "/GetServerState",
   description = "Get the state of the target server.",
   request_body(content = GetServerState),
   responses(
@@ -146,7 +146,7 @@ pub struct GetServerStateResponse {
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetServerActionState",
+  path = "/GetServerActionState",
   description = "Get current action state for the servers.",
   request_body(content = GetServerActionState),
   responses(
@@ -176,7 +176,7 @@ pub type GetServerActionStateResponse = ServerActionState;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetPeripheryInformation",
+  path = "/GetPeripheryInformation",
   description = "Get the Periphery information of the target server, including the Periphery version and public key.",
   request_body(content = GetPeripheryInformation),
   responses(
@@ -208,7 +208,7 @@ pub type GetPeripheryInformationResponse = PeripheryInformation;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetSystemInformation",
+  path = "/GetSystemInformation",
   description = "Get the system information of the target server.",
   request_body(content = GetSystemInformation),
   responses(
@@ -239,7 +239,7 @@ pub type GetSystemInformationResponse = SystemInformation;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetSystemStats",
+  path = "/GetSystemStats",
   description = "Get the system stats on the target server.",
   request_body(content = GetSystemStats),
   responses(
@@ -273,7 +273,7 @@ pub type GetSystemStatsResponse = SystemStats;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListSystemProcesses",
+  path = "/ListSystemProcesses",
   description = "List the processes running on the target server.",
   request_body(content = ListSystemProcesses),
   responses(
@@ -308,7 +308,7 @@ pub type ListSystemProcessesResponse = Vec<SystemProcess>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetHistoricalServerStats",
+  path = "/GetHistoricalServerStats",
   description = "Paginated endpoint serving historical (timeseries) server stats for graphing.",
   request_body(content = GetHistoricalServerStats),
   responses(
@@ -353,7 +353,7 @@ pub struct GetHistoricalServerStatsResponse {
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetServersSummary",
+  path = "/GetServersSummary",
   description = "Gets a summary of data relating to all servers.",
   request_body(content = GetServersSummary),
   responses(
