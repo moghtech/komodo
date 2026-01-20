@@ -413,6 +413,18 @@ pub struct GetDeploymentsSummaryResponse {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListCommonDeploymentExtraArgs",
+  description = "Gets a list of existing values used as extra args across other deployments.",
+  request_body(content = ListCommonDeploymentExtraArgs),
+  responses(
+    (status = 200, description = "The common extra args", body = ListCommonDeploymentExtraArgsResponse),
+  ),
+)]
+pub fn list_common_deployment_extra_args() {}
+
 /// Gets a list of existing values used as extra args across other deployments.
 /// Useful to offer suggestions. Response: [ListCommonDeploymentExtraArgsResponse]
 #[typeshare]

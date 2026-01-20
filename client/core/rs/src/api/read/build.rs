@@ -251,6 +251,18 @@ impl GetBuildMonthlyStatsResponse {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListBuildVersions",
+  description = "Retrieve versions of the build that were built in the past and available for deployment, sorted by most recent first.",
+  request_body(content = ListBuildVersions),
+  responses(
+    (status = 200, description = "The list of build versions", body = ListBuildVersionsResponse),
+  ),
+)]
+pub fn list_build_versions() {}
+
 /// Retrieve versions of the build that were built in the past and available for deployment,
 /// sorted by most recent first.
 /// Response: [ListBuildVersionsResponse].
@@ -286,6 +298,18 @@ pub struct BuildVersionResponseItem {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListCommonBuildExtraArgs",
+  description = "Gets a list of existing values used as extra args across other builds.",
+  request_body(content = ListCommonBuildExtraArgs),
+  responses(
+    (status = 200, description = "The common extra args", body = ListCommonBuildExtraArgsResponse),
+  ),
+)]
+pub fn list_common_build_extra_args() {}
 
 /// Gets a list of existing values used as extra args across other builds.
 /// Useful to offer suggestions. Response: [ListCommonBuildExtraArgsResponse]

@@ -59,6 +59,17 @@ pub struct GetDockerContainersSummaryResponse {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListAllDockerContainers",
+  description = "List all docker containers on the target servers.",
+  request_body(content = ListAllDockerContainers),
+  responses(
+    (status = 200, description = "The list of containers", body = ListAllDockerContainersResponse),
+  ),
+)]
+pub fn list_all_docker_containers() {}
 
 /// List all docker containers on the target servers.
 /// Response: [ListDockerContainersResponse].
@@ -86,14 +97,14 @@ pub type ListAllDockerContainersResponse = Vec<ContainerListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListAllDockerContainers",
-  description = "List all docker containers on the target servers.",
-  request_body(content = ListAllDockerContainers),
+  path = "/read/ListDockerContainers",
+  description = "List all docker containers on the target server.",
+  request_body(content = ListDockerContainers),
   responses(
-    (status = 200, description = "The list of containers", body = ListAllDockerContainersResponse),
+    (status = 200, description = "The list of containers", body = ListDockerContainersResponse),
   ),
 )]
-pub fn list_all_docker_containers() {}
+pub fn list_docker_containers() {}
 
 /// List all docker containers on the target server.
 /// Response: [ListDockerContainersResponse].
@@ -117,14 +128,14 @@ pub type ListDockerContainersResponse = Vec<ContainerListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListDockerContainers",
-  description = "List all docker containers on the target server.",
-  request_body(content = ListDockerContainers),
+  path = "/read/InspectDockerContainer",
+  description = "Inspect a docker container on the server.",
+  request_body(content = InspectDockerContainer),
   responses(
-    (status = 200, description = "The list of containers", body = ListDockerContainersResponse),
+    (status = 200, description = "The container", body = InspectDockerContainerResponse),
   ),
 )]
-pub fn list_docker_containers() {}
+pub fn inspect_docker_container() {}
 
 /// Inspect a docker container on the server. Response: [Container].
 #[typeshare]
@@ -149,14 +160,14 @@ pub type InspectDockerContainerResponse = Container;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/InspectDockerContainer",
-  description = "Inspect a docker container on the server.",
-  request_body(content = InspectDockerContainer),
+  path = "/read/GetResourceMatchingContainer",
+  description = "Find the attached resource for a container.",
+  request_body(content = GetResourceMatchingContainer),
   responses(
-    (status = 200, description = "The container", body = InspectDockerContainerResponse),
+    (status = 200, description = "The resource matching the container", body = GetResourceMatchingContainerResponse),
   ),
 )]
-pub fn inspect_docker_container() {}
+pub fn get_resource_matching_container() {}
 
 /// Find the attached resource for a container. Either Deployment or Stack. Response: [GetResourceMatchingContainerResponse].
 #[typeshare]
@@ -186,14 +197,14 @@ pub struct GetResourceMatchingContainerResponse {
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetResourceMatchingContainer",
-  description = "Find the attached resource for a container.",
-  request_body(content = GetResourceMatchingContainer),
+  path = "/read/GetContainerLog",
+  description = "Get the container log's tail, split by stdout/stderr.",
+  request_body(content = GetContainerLog),
   responses(
-    (status = 200, description = "The resource matching the container", body = GetResourceMatchingContainerResponse),
+    (status = 200, description = "The container log", body = GetContainerLogResponse),
   ),
 )]
-pub fn get_resource_matching_container() {}
+pub fn get_container_log() {}
 
 /// Get the container log's tail, split by stdout/stderr.
 /// Response: [Log].
@@ -233,14 +244,14 @@ pub type GetContainerLogResponse = Log;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/GetContainerLog",
-  description = "Get the container log's tail, split by stdout/stderr.",
-  request_body(content = GetContainerLog),
+  path = "/read/SearchContainerLog",
+  description = "Search the container log's tail using `grep`.",
+  request_body(content = SearchContainerLog),
   responses(
-    (status = 200, description = "The container log", body = GetContainerLogResponse),
+    (status = 200, description = "The search results", body = SearchContainerLogResponse),
   ),
 )]
-pub fn get_container_log() {}
+pub fn search_container_log() {}
 
 /// Search the container log's tail using `grep`. All lines go to stdout.
 /// Response: [Log].
@@ -282,14 +293,14 @@ pub type SearchContainerLogResponse = Log;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/SearchContainerLog",
-  description = "Search the container log's tail using `grep`.",
-  request_body(content = SearchContainerLog),
+  path = "/read/ListComposeProjects",
+  description = "List all docker compose projects on the target server.",
+  request_body(content = ListComposeProjects),
   responses(
-    (status = 200, description = "The search results", body = SearchContainerLogResponse),
+    (status = 200, description = "The list of compose projects", body = ListComposeProjectsResponse),
   ),
 )]
-pub fn search_container_log() {}
+pub fn list_compose_projects() {}
 
 /// List all docker compose projects on the target server.
 /// Response: [ListComposeProjectsResponse].
@@ -313,14 +324,14 @@ pub type ListComposeProjectsResponse = Vec<ComposeProject>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListComposeProjects",
-  description = "List all docker compose projects on the target server.",
-  request_body(content = ListComposeProjects),
+  path = "/read/ListDockerNetworks",
+  description = "List the docker networks on the server.",
+  request_body(content = ListDockerNetworks),
   responses(
-    (status = 200, description = "The list of compose projects", body = ListComposeProjectsResponse),
+    (status = 200, description = "The list of networks", body = ListDockerNetworksResponse),
   ),
 )]
-pub fn list_compose_projects() {}
+pub fn list_docker_networks() {}
 
 /// List the docker networks on the server. Response: [ListDockerNetworksResponse].
 #[typeshare]
@@ -343,14 +354,14 @@ pub type ListDockerNetworksResponse = Vec<NetworkListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListDockerNetworks",
-  description = "List the docker networks on the server.",
-  request_body(content = ListDockerNetworks),
+  path = "/read/InspectDockerNetwork",
+  description = "Inspect a docker network on the server.",
+  request_body(content = InspectDockerNetwork),
   responses(
-    (status = 200, description = "The list of networks", body = ListDockerNetworksResponse),
+    (status = 200, description = "The network", body = InspectDockerNetworkResponse),
   ),
 )]
-pub fn list_docker_networks() {}
+pub fn inspect_docker_network() {}
 
 /// Inspect a docker network on the server. Response: [InspectDockerNetworkResponse].
 #[typeshare]
@@ -375,14 +386,14 @@ pub type InspectDockerNetworkResponse = Network;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/InspectDockerNetwork",
-  description = "Inspect a docker network on the server.",
-  request_body(content = InspectDockerNetwork),
+  path = "/read/ListDockerImages",
+  description = "List the docker images locally cached on the target server.",
+  request_body(content = ListDockerImages),
   responses(
-    (status = 200, description = "The network", body = InspectDockerNetworkResponse),
+    (status = 200, description = "The list of images", body = ListDockerImagesResponse),
   ),
 )]
-pub fn inspect_docker_network() {}
+pub fn list_docker_images() {}
 
 /// List the docker images locally cached on the target server.
 /// Response: [ListDockerImagesResponse].
@@ -406,14 +417,14 @@ pub type ListDockerImagesResponse = Vec<ImageListItem>;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListDockerImages",
-  description = "List the docker images locally cached on the target server.",
-  request_body(content = ListDockerImages),
+  path = "/read/InspectDockerImage",
+  description = "Inspect a docker image on the server.",
+  request_body(content = InspectDockerImage),
   responses(
-    (status = 200, description = "The list of images", body = ListDockerImagesResponse),
+    (status = 200, description = "The image", body = InspectDockerImageResponse),
   ),
 )]
-pub fn list_docker_images() {}
+pub fn inspect_docker_image() {}
 
 /// Inspect a docker image on the server. Response: [Image].
 #[typeshare]
@@ -438,14 +449,14 @@ pub type InspectDockerImageResponse = Image;
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/InspectDockerImage",
-  description = "Inspect a docker image on the server.",
-  request_body(content = InspectDockerImage),
+  path = "/read/ListDockerImageHistory",
+  description = "Get image history from the server.",
+  request_body(content = ListDockerImageHistory),
   responses(
-    (status = 200, description = "The image", body = InspectDockerImageResponse),
+    (status = 200, description = "The image history", body = ListDockerImageHistoryResponse),
   ),
 )]
-pub fn inspect_docker_image() {}
+pub fn list_docker_image_history() {}
 
 /// Get image history from the server. Response: [ListDockerImageHistoryResponse].
 #[typeshare]
@@ -471,14 +482,14 @@ pub type ListDockerImageHistoryResponse =
 #[cfg(feature = "utoipa")]
 #[utoipa::path(
   post,
-  path = "/read/ListDockerImageHistory",
-  description = "Get image history from the server.",
-  request_body(content = ListDockerImageHistory),
+  path = "/read/ListDockerVolumes",
+  description = "List all docker volumes on the target server.",
+  request_body(content = ListDockerVolumes),
   responses(
-    (status = 200, description = "The image history", body = ListDockerImageHistoryResponse),
+    (status = 200, description = "The list of volumes", body = ListDockerVolumesResponse),
   ),
 )]
-pub fn list_docker_image_history() {}
+pub fn list_docker_volumes() {}
 
 /// List all docker volumes on the target server.
 /// Response: [ListDockerVolumesResponse].
@@ -498,6 +509,18 @@ pub struct ListDockerVolumes {
 pub type ListDockerVolumesResponse = Vec<VolumeListItem>;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/InspectDockerVolume",
+  description = "Inspect a docker volume on the server.",
+  request_body(content = InspectDockerVolume),
+  responses(
+    (status = 200, description = "The volume", body = InspectDockerVolumeResponse),
+  ),
+)]
+pub fn inspect_docker_volume() {}
 
 /// Inspect a docker volume on the server. Response: [Volume].
 #[typeshare]
