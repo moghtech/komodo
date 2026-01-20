@@ -11,7 +11,19 @@ use super::KomodoWriteRequest;
 
 //
 
-/// Create a action. Response: [Action].
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateAction",
+  description = "Create an action.",
+  request_body(content = CreateAction),
+  responses(
+    (status = 200, description = "The new action", body = crate::entities::action::ActionSchema),
+  ),
+)]
+pub fn create_action() {}
+
+/// Create an action. Response: [Action].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
@@ -27,6 +39,18 @@ pub struct CreateAction {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CopyAction",
+  description = "Copy an action.",
+  request_body(content = CopyAction),
+  responses(
+    (status = 200, description = "The new action", body = crate::entities::action::ActionSchema),
+  ),
+)]
+pub fn copy_action() {}
 
 /// Creates a new action with given `name` and the configuration
 /// of the action at the given `id`. Response: [Action].
@@ -45,6 +69,18 @@ pub struct CopyAction {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteAction",
+  description = "Delete an action.",
+  request_body(content = DeleteAction),
+  responses(
+    (status = 200, description = "The deleted action", body = crate::entities::action::ActionSchema),
+  ),
+)]
+pub fn delete_action() {}
+
 /// Deletes the action at the given id, and returns the deleted action.
 /// Response: [Action]
 #[typeshare]
@@ -59,6 +95,18 @@ pub struct DeleteAction {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UpdateAction",
+  description = "Update an action.",
+  request_body(content = UpdateAction),
+  responses(
+    (status = 200, description = "The updated action", body = crate::entities::action::ActionSchema),
+  ),
+)]
+pub fn update_action() {}
 
 /// Update the action at the given id, and return the updated action.
 /// Response: [Action].
@@ -82,6 +130,18 @@ pub struct UpdateAction {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RenameAction",
+  description = "Rename an action.",
+  request_body(content = RenameAction),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn rename_action() {}
 
 /// Rename the Action at id to the given name.
 /// Response: [Update].

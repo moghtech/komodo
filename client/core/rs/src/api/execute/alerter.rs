@@ -7,6 +7,20 @@ use crate::entities::{alert::SeverityLevel, update::Update};
 
 use super::KomodoExecuteRequest;
 
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/TestAlerter",
+  description = "Tests an Alerter's ability to reach the configured endpoint.",
+  request_body(content = TestAlerter),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn test_alerter() {}
+
 /// Tests an Alerters ability to reach the configured endpoint. Response: [Update]
 #[typeshare]
 #[derive(
@@ -22,6 +36,18 @@ pub struct TestAlerter {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/SendAlert",
+  description = "Send a custom alert message to configured Alerters.",
+  request_body(content = SendAlert),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn send_alert() {}
 
 /// Send a custom alert message to configured Alerters. Response: [Update].
 /// Alias: `alert`

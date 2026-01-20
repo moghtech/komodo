@@ -7,6 +7,20 @@ use crate::entities::{TerminationSignal, update::Update};
 
 use super::{BatchExecutionResponse, KomodoExecuteRequest};
 
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/Deploy",
+  description = "Deploys the container / swarm service for the target Deployment.",
+  request_body(content = Deploy),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn deploy() {}
+
 /// Deploys the container / swarm service for the target Deployment. Response: [Update].
 ///
 /// For Server based Deployments (just a container):
@@ -36,6 +50,18 @@ pub struct Deploy {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BatchDeploy",
+  description = "Deploys multiple Deployments in parallel that match pattern.",
+  request_body(content = BatchDeploy),
+  responses(
+    (status = 200, description = "The batch execution response", body = BatchExecutionResponse),
+  ),
+)]
+pub fn batch_deploy() {}
+
 /// Deploys multiple Deployments in parallel that match pattern. Response: [BatchExecutionResponse].
 #[typeshare]
 #[derive(
@@ -61,6 +87,18 @@ pub struct BatchDeploy {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/PullDeployment",
+  description = "Pulls the image for the target deployment.",
+  request_body(content = PullDeployment),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn pull_deployment() {}
+
 /// Pulls the image for the target deployment. Response: [Update]
 #[typeshare]
 #[derive(
@@ -76,6 +114,18 @@ pub struct PullDeployment {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/StartDeployment",
+  description = "Starts the container for the target deployment.",
+  request_body(content = StartDeployment),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn start_deployment() {}
 
 /// Starts the container for the target deployment. Response: [Update]
 ///
@@ -95,6 +145,18 @@ pub struct StartDeployment {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RestartDeployment",
+  description = "Restarts the container for the target deployment.",
+  request_body(content = RestartDeployment),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn restart_deployment() {}
+
 /// Restarts the container for the target deployment. Response: [Update]
 ///
 /// 1. Runs `docker restart ${container_name}`.
@@ -113,6 +175,18 @@ pub struct RestartDeployment {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/PauseDeployment",
+  description = "Pauses the container for the target deployment.",
+  request_body(content = PauseDeployment),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn pause_deployment() {}
+
 /// Pauses the container for the target deployment. Response: [Update]
 ///
 /// 1. Runs `docker pause ${container_name}`.
@@ -130,6 +204,19 @@ pub struct PauseDeployment {
 }
 
 //
+
+//
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UnpauseDeployment",
+  description = "Unpauses the container for the target deployment.",
+  request_body(content = UnpauseDeployment),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn unpause_deployment() {}
 
 /// Unpauses the container for the target deployment. Response: [Update]
 ///
@@ -151,6 +238,18 @@ pub struct UnpauseDeployment {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/StopDeployment",
+  description = "Stops the container for the target deployment.",
+  request_body(content = StopDeployment),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn stop_deployment() {}
+
 /// Stops the container for the target deployment. Response: [Update]
 ///
 /// 1. Runs `docker stop ${container_name}`.
@@ -170,6 +269,20 @@ pub struct StopDeployment {
   /// Override the default termination max time.
   pub time: Option<i32>,
 }
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DestroyDeployment",
+  description = "Destroys the container for the target deployment.",
+  request_body(content = DestroyDeployment),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn destroy_deployment() {}
 
 //
 
@@ -195,6 +308,18 @@ pub struct DestroyDeployment {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BatchDestroyDeployment",
+  description = "Destroys multiple Deployments in parallel that match pattern.",
+  request_body(content = BatchDestroyDeployment),
+  responses(
+    (status = 200, description = "The batch execution response", body = BatchExecutionResponse),
+  ),
+)]
+pub fn batch_destroy_deployment() {}
 
 /// Destroys multiple Deployments in parallel that match pattern. Response: [BatchExecutionResponse].
 #[typeshare]

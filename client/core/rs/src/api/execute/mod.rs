@@ -224,6 +224,7 @@ pub type BatchExecutionResponse = Vec<BatchExecutionResponseItem>;
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(tag = "status", content = "data")]
 pub enum BatchExecutionResponseItem {
   Ok(Update),
@@ -245,6 +246,7 @@ impl From<Result<Box<Update>, BatchExecutionResponseItemErr>>
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct BatchExecutionResponseItemErr {
   pub name: String,
   pub error: _Serror,

@@ -9,6 +9,18 @@ use super::{BatchExecutionResponse, KomodoExecuteRequest};
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CloneRepo",
+  description = "Clones the target repo.",
+  request_body(content = CloneRepo),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn clone_repo() {}
+
 /// Clones the target repo. Response: [Update].
 ///
 /// Note. Repo must have server attached at `server_id`.
@@ -32,6 +44,18 @@ pub struct CloneRepo {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BatchCloneRepo",
+  description = "Clones multiple Repos in parallel that match pattern.",
+  request_body(content = BatchCloneRepo),
+  responses(
+    (status = 200, description = "The batch execution response", body = BatchExecutionResponse),
+  ),
+)]
+pub fn batch_clone_repo() {}
 
 /// Clones multiple Repos in parallel that match pattern. Response: [BatchExecutionResponse].
 #[typeshare]
@@ -58,6 +82,18 @@ pub struct BatchCloneRepo {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/PullRepo",
+  description = "Pulls the target repo.",
+  request_body(content = PullRepo),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn pull_repo() {}
+
 /// Pulls the target repo. Response: [Update].
 ///
 /// Note. Repo must have server attached at `server_id`.
@@ -78,6 +114,18 @@ pub struct PullRepo {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BatchPullRepo",
+  description = "Pulls multiple Repos in parallel that match pattern.",
+  request_body(content = BatchPullRepo),
+  responses(
+    (status = 200, description = "The batch execution response", body = BatchExecutionResponse),
+  ),
+)]
+pub fn batch_pull_repo() {}
 
 /// Pulls multiple Repos in parallel that match pattern. Response: [BatchExecutionResponse].
 #[typeshare]
@@ -104,6 +152,18 @@ pub struct BatchPullRepo {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BuildRepo",
+  description = "Builds the target repo, using the attached builder.",
+  request_body(content = BuildRepo),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn build_repo() {}
+
 /// Builds the target repo, using the attached builder. Response: [Update].
 ///
 /// Note. Repo must have builder attached at `builder_id`.
@@ -129,6 +189,18 @@ pub struct BuildRepo {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BatchBuildRepo",
+  description = "Builds multiple Repos in parallel that match pattern.",
+  request_body(content = BatchBuildRepo),
+  responses(
+    (status = 200, description = "The batch execution response", body = BatchExecutionResponse),
+  ),
+)]
+pub fn batch_build_repo() {}
+
 /// Builds multiple Repos in parallel that match pattern. Response: [BatchExecutionResponse].
 #[typeshare]
 #[derive(
@@ -153,6 +225,18 @@ pub struct BatchBuildRepo {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CancelRepoBuild",
+  description = "Cancels the target repo build.",
+  request_body(content = CancelRepoBuild),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn cancel_repo_build() {}
 
 /// Cancels the target repo build.
 /// Only does anything if the repo build is `building` when called.

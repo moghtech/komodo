@@ -8,6 +8,20 @@ use crate::entities::{JsonObject, update::Update};
 
 use super::{BatchExecutionResponse, KomodoExecuteRequest};
 
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RunAction",
+  description = "Run an action.",
+  request_body(content = RunAction),
+  responses(
+    (status = 200, description = "In progress update", body = Update),
+  ),
+)]
+pub fn run_action() {}
+
 /// Runs the target Action. Response: [Update]
 #[typeshare]
 #[derive(
@@ -33,6 +47,20 @@ pub struct RunAction {
 fn args_parser(args: &str) -> anyhow::Result<JsonObject> {
   serde_qs::from_str(args).context("Failed to parse args")
 }
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BatchRunAction",
+  description = "Runs multiple Actions in parallel that match pattern.",
+  request_body(content = BatchRunAction),
+  responses(
+    (status = 200, description = "The batch execution updates", body = BatchExecutionResponse),
+  ),
+)]
+pub fn batch_run_action() {}
 
 /// Runs multiple Actions in parallel that match pattern. Response: [BatchExecutionResponse]
 #[typeshare]

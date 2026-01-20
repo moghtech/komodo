@@ -11,6 +11,18 @@ use crate::{
 // = Node =
 // ========
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RemoveSwarmNodes",
+  description = "Remove swarm nodes.",
+  request_body(content = RemoveSwarmNodes),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn remove_swarm_nodes() {}
+
 /// `docker node rm [OPTIONS] NODE [NODE...]`
 ///
 /// https://docs.docker.com/reference/cli/docker/node/rm/
@@ -36,6 +48,18 @@ pub struct RemoveSwarmNodes {
 // =========
 // = Stack =
 // =========
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RemoveSwarmStacks",
+  description = "Remove swarm stacks.",
+  request_body(content = RemoveSwarmStacks),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn remove_swarm_stacks() {}
 
 /// `docker stack rm [OPTIONS] STACK [STACK...]`
 ///
@@ -67,6 +91,18 @@ fn default_detach() -> bool {
 // = Service =
 // ===========
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RemoveSwarmServices",
+  description = "Remove swarm services.",
+  request_body(content = RemoveSwarmServices),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn remove_swarm_services() {}
+
 /// `docker service rm SERVICE [SERVICE...]`
 ///
 /// https://docs.docker.com/reference/cli/docker/service/rm/
@@ -88,6 +124,18 @@ pub struct RemoveSwarmServices {
 // ==========
 // = Config =
 // ==========
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateSwarmConfig",
+  description = "Create a swarm config.",
+  request_body(content = CreateSwarmConfig),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn create_swarm_config() {}
 
 /// `docker config create [OPTIONS] CONFIG file|-`
 ///
@@ -115,6 +163,18 @@ pub struct CreateSwarmConfig {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RotateSwarmConfig",
+  description = "Rotate a swarm config.",
+  request_body(content = RotateSwarmConfig),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn rotate_swarm_config() {}
 
 /// https://docs.docker.com/engine/swarm/configs/#example-rotate-a-config
 ///
@@ -148,6 +208,18 @@ pub struct RotateSwarmConfig {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RemoveSwarmConfigs",
+  description = "Remove swarm configs.",
+  request_body(content = RemoveSwarmConfigs),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn remove_swarm_configs() {}
+
 /// `docker config rm CONFIG [CONFIG...]`
 ///
 /// https://docs.docker.com/reference/cli/docker/config/rm/
@@ -169,6 +241,18 @@ pub struct RemoveSwarmConfigs {
 // ==========
 // = Secret =
 // ==========
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateSwarmSecret",
+  description = "Create a swarm secret.",
+  request_body(content = CreateSwarmSecret),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn create_swarm_secret() {}
 
 /// `docker config create [OPTIONS] CONFIG file|-`
 ///
@@ -199,6 +283,18 @@ pub struct CreateSwarmSecret {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RotateSwarmSecret",
+  description = "Rotate a swarm secret.",
+  request_body(content = RotateSwarmSecret),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn rotate_swarm_secret() {}
+
 /// https://docs.docker.com/engine/swarm/secrets/#example-rotate-a-secret
 ///
 /// Swarm configs / secrets are immutable after creation.
@@ -228,6 +324,20 @@ pub struct RotateSwarmSecret {
   /// The new secret data as a string
   pub data: String,
 }
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RemoveSwarmSecrets",
+  description = "Remove swarm secrets.",
+  request_body(content = RemoveSwarmSecrets),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn remove_swarm_secrets() {}
 
 /// `docker secret rm SECRET [SECRET...]`
 ///

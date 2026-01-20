@@ -7,6 +7,20 @@ use crate::entities::update::Update;
 
 use super::KomodoExecuteRequest;
 
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ClearRepoCache",
+  description = "Clears all repos from the Core repo cache.",
+  request_body(content = ClearRepoCache),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn clear_repo_cache() {}
+
 /// **Admin only.** Clears all repos from the Core repo cache.
 /// Response: [Update]
 #[typeshare]
@@ -20,6 +34,18 @@ use super::KomodoExecuteRequest;
 pub struct ClearRepoCache {}
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BackupCoreDatabase",
+  description = "Backs up the Komodo Core database to compressed jsonl files.",
+  request_body(content = BackupCoreDatabase),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn backup_core_database() {}
 
 /// **Admin only.** Backs up the Komodo Core database to compressed jsonl files.
 /// Response: [Update]. Aliases: `backup-database`, `backup-db`, `backup`.
@@ -41,6 +67,18 @@ pub struct BackupCoreDatabase {}
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GlobalAutoUpdate",
+  description = "Trigger a global poll for image updates on Stacks and Deployments.",
+  request_body(content = GlobalAutoUpdate),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn global_auto_update() {}
+
 /// **Admin only.** Trigger a global poll for image updates on Stacks and Deployments
 /// with `poll_for_updates` or `auto_update` enabled.
 /// Response: [Update]. Alias: `auto-update`.
@@ -59,6 +97,18 @@ pub struct GlobalAutoUpdate {}
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RotateAllServerKeys",
+  description = "Rotates all connected Server keys.",
+  request_body(content = RotateAllServerKeys),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn rotate_all_server_keys() {}
+
 /// **Admin only.** Rotates all connected Server keys.
 /// Response: [Update]. Alias: `rotate-keys`.
 #[typeshare]
@@ -72,6 +122,18 @@ pub struct GlobalAutoUpdate {}
 pub struct RotateAllServerKeys {}
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RotateCoreKeys",
+  description = "Rotates the Core private key and all Server public keys.",
+  request_body(content = RotateCoreKeys),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn rotate_core_keys() {}
 
 /// **Admin only.** Rotates the Core private key,
 /// and all Server public keys.

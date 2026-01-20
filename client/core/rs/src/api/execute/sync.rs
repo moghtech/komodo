@@ -7,6 +7,20 @@ use crate::entities::{ResourceTargetVariant, update::Update};
 
 use super::KomodoExecuteRequest;
 
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RunSync",
+  description = "Runs the target resource sync.",
+  request_body(content = RunSync),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn run_sync() {}
+
 /// Runs the target resource sync. Response: [Update]
 #[typeshare]
 #[derive(

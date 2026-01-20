@@ -9,6 +9,18 @@ use super::{BatchExecutionResponse, KomodoExecuteRequest};
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RunBuild",
+  description = "Runs the target build.",
+  request_body(content = RunBuild),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn run_build() {}
+
 /// Runs the target build. Response: [Update].
 ///
 /// 1. Get a handle to the builder. If using AWS builder, this means starting a builder ec2 instance.
@@ -37,6 +49,18 @@ pub struct RunBuild {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BatchRunBuild",
+  description = "Runs multiple builds in parallel that match pattern.",
+  request_body(content = BatchRunBuild),
+  responses(
+    (status = 200, description = "The batch execution response", body = BatchExecutionResponse),
+  ),
+)]
+pub fn batch_run_build() {}
+
 /// Runs multiple builds in parallel that match pattern. Response: [BatchExecutionResponse].
 #[typeshare]
 #[derive(
@@ -61,6 +85,18 @@ pub struct BatchRunBuild {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CancelBuild",
+  description = "Cancels the target build.",
+  request_body(content = CancelBuild),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn cancel_build() {}
 
 /// Cancels the target build.
 /// Only does anything if the build is `building` when called.
