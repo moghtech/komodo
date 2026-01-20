@@ -6,6 +6,20 @@ use crate::entities::onboarding_key::OnboardingKey;
 
 use super::KomodoReadRequest;
 
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListOnboardingKeys",
+  description = "**Admin only.** Gets list of onboarding keys.",
+  request_body(content = ListOnboardingKeys),
+  responses(
+    (status = 200, description = "The list of onboarding keys", body = ListOnboardingKeysResponse),
+  ),
+)]
+pub fn list_onboarding_keys() {}
+
 /// **Admin only.** Gets list of onboarding keys.
 /// Response: [ListOnboardingKeysResponse]
 #[typeshare]

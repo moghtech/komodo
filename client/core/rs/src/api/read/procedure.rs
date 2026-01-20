@@ -10,6 +10,18 @@ use super::KomodoReadRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetProcedure",
+  description = "Get a specific procedure.",
+  request_body(content = GetProcedure),
+  responses(
+    (status = 200, description = "The procedure", body = GetProcedureResponse),
+  ),
+)]
+pub fn get_procedure() {}
+
 /// Get a specific procedure. Response: [Procedure].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -27,6 +39,18 @@ pub struct GetProcedure {
 pub type GetProcedureResponse = Procedure;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListProcedures",
+  description = "List procedures matching optional query.",
+  request_body(content = ListProcedures),
+  responses(
+    (status = 200, description = "The list of procedures", body = ListProceduresResponse),
+  ),
+)]
+pub fn list_procedures() {}
 
 /// List procedures matching optional query. Response: [ListProceduresResponse].
 #[typeshare]
@@ -46,6 +70,18 @@ pub type ListProceduresResponse = Vec<ProcedureListItem>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListFullProcedures",
+  description = "List procedures matching optional query.",
+  request_body(content = ListFullProcedures),
+  responses(
+    (status = 200, description = "The list of procedures", body = ListFullProceduresResponse),
+  ),
+)]
+pub fn list_full_procedures() {}
+
 /// List procedures matching optional query. Response: [ListFullProceduresResponse].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
@@ -64,6 +100,18 @@ pub type ListFullProceduresResponse = Vec<Procedure>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetProcedureActionState",
+  description = "Get current action state for the procedure.",
+  request_body(content = GetProcedureActionState),
+  responses(
+    (status = 200, description = "The procedure action state", body = GetProcedureActionStateResponse),
+  ),
+)]
+pub fn get_procedure_action_state() {}
+
 /// Get current action state for the procedure. Response: [ProcedureActionState].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -81,6 +129,18 @@ pub struct GetProcedureActionState {
 pub type GetProcedureActionStateResponse = ProcedureActionState;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetProceduresSummary",
+  description = "Gets a summary of data relating to all procedures.",
+  request_body(content = GetProceduresSummary),
+  responses(
+    (status = 200, description = "The procedures summary", body = GetProceduresSummaryResponse),
+  ),
+)]
+pub fn get_procedures_summary() {}
 
 /// Gets a summary of data relating to all procedures.
 /// Response: [GetProceduresSummaryResponse].

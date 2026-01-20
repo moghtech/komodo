@@ -6,6 +6,20 @@ use crate::entities::variable::Variable;
 
 use super::KomodoReadRequest;
 
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetVariable",
+  description = "List all available global variables.",
+  request_body(content = GetVariable),
+  responses(
+    (status = 200, description = "The variable", body = GetVariableResponse),
+  ),
+)]
+pub fn get_variable() {}
+
 /// List all available global variables.
 /// Response: [Variable]
 ///
@@ -26,6 +40,18 @@ pub struct GetVariable {
 pub type GetVariableResponse = Variable;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListVariables",
+  description = "List all available global variables.",
+  request_body(content = ListVariables),
+  responses(
+    (status = 200, description = "The list of variables", body = ListVariablesResponse),
+  ),
+)]
+pub fn list_variables() {}
 
 /// List all available global variables.
 /// Response: [ListVariablesResponse]

@@ -17,6 +17,18 @@ use super::KomodoReadRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetServer",
+  description = "Get a specific server.",
+  request_body(content = GetServer),
+  responses(
+    (status = 200, description = "The server", body = GetServerResponse),
+  ),
+)]
+pub fn get_server() {}
+
 /// Get a specific server. Response: [Server].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -34,6 +46,18 @@ pub struct GetServer {
 pub type GetServerResponse = Server;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListServers",
+  description = "List servers matching optional query.",
+  request_body(content = ListServers),
+  responses(
+    (status = 200, description = "The list of servers", body = ListServersResponse),
+  ),
+)]
+pub fn list_servers() {}
 
 /// List servers matching optional query. Response: [ListServersResponse].
 #[typeshare]
@@ -53,6 +77,18 @@ pub type ListServersResponse = Vec<ServerListItem>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListFullServers",
+  description = "List servers matching optional query.",
+  request_body(content = ListFullServers),
+  responses(
+    (status = 200, description = "The list of servers", body = ListFullServersResponse),
+  ),
+)]
+pub fn list_full_servers() {}
+
 /// List servers matching optional query. Response: [ListFullServersResponse].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
@@ -70,6 +106,18 @@ pub struct ListFullServers {
 pub type ListFullServersResponse = Vec<Server>;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetServerState",
+  description = "Get the state of the target server.",
+  request_body(content = GetServerState),
+  responses(
+    (status = 200, description = "The server state", body = GetServerStateResponse),
+  ),
+)]
+pub fn get_server_state() {}
 
 /// Get the state of the target server. Response: [GetServerStateResponse].
 #[typeshare]
@@ -95,6 +143,18 @@ pub struct GetServerStateResponse {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetServerActionState",
+  description = "Get current action state for the servers.",
+  request_body(content = GetServerActionState),
+  responses(
+    (status = 200, description = "The server action state", body = GetServerActionStateResponse),
+  ),
+)]
+pub fn get_server_action_state() {}
+
 /// Get current action state for the servers. Response: [ServerActionState].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -112,6 +172,18 @@ pub struct GetServerActionState {
 pub type GetServerActionStateResponse = ServerActionState;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetPeripheryInformation",
+  description = "Get the Periphery information of the target server, including the Periphery version and public key.",
+  request_body(content = GetPeripheryInformation),
+  responses(
+    (status = 200, description = "The periphery information", body = GetPeripheryInformationResponse),
+  ),
+)]
+pub fn get_periphery_information() {}
 
 /// Get the Periphery information of the target server,
 /// including the Periphery version and public key.
@@ -133,6 +205,18 @@ pub type GetPeripheryInformationResponse = PeripheryInformation;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetSystemInformation",
+  description = "Get the system information of the target server.",
+  request_body(content = GetSystemInformation),
+  responses(
+    (status = 200, description = "The system information", body = GetSystemInformationResponse),
+  ),
+)]
+pub fn get_system_information() {}
+
 /// Get the system information of the target server.
 /// Response: [SystemInformation].
 #[typeshare]
@@ -151,6 +235,18 @@ pub struct GetSystemInformation {
 pub type GetSystemInformationResponse = SystemInformation;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetSystemStats",
+  description = "Get the system stats on the target server.",
+  request_body(content = GetSystemStats),
+  responses(
+    (status = 200, description = "The system stats", body = GetSystemStatsResponse),
+  ),
+)]
+pub fn get_system_stats() {}
 
 /// Get the system stats on the target server. Response: [SystemStats].
 ///
@@ -174,6 +270,18 @@ pub type GetSystemStatsResponse = SystemStats;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListSystemProcesses",
+  description = "List the processes running on the target server.",
+  request_body(content = ListSystemProcesses),
+  responses(
+    (status = 200, description = "The list of processes", body = ListSystemProcessesResponse),
+  ),
+)]
+pub fn list_system_processes() {}
+
 /// List the processes running on the target server.
 /// Response: [ListSystemProcessesResponse].
 ///
@@ -196,6 +304,18 @@ pub struct ListSystemProcesses {
 pub type ListSystemProcessesResponse = Vec<SystemProcess>;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetHistoricalServerStats",
+  description = "Paginated endpoint serving historical (timeseries) server stats for graphing.",
+  request_body(content = GetHistoricalServerStats),
+  responses(
+    (status = 200, description = "The historical server stats", body = GetHistoricalServerStatsResponse),
+  ),
+)]
+pub fn get_historical_server_stats() {}
 
 /// Paginated endpoint serving historical (timeseries) server stats for graphing.
 /// Response: [GetHistoricalServerStatsResponse].
@@ -229,6 +349,18 @@ pub struct GetHistoricalServerStatsResponse {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetServersSummary",
+  description = "Gets a summary of data relating to all servers.",
+  request_body(content = GetServersSummary),
+  responses(
+    (status = 200, description = "The servers summary", body = GetServersSummaryResponse),
+  ),
+)]
+pub fn get_servers_summary() {}
 
 /// Gets a summary of data relating to all servers.
 /// Response: [GetServersSummaryResponse].

@@ -10,6 +10,18 @@ use super::KomodoReadRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetAlerter",
+  description = "Get a specific alerter.",
+  request_body(content = GetAlerter),
+  responses(
+    (status = 200, description = "The alerter", body = GetAlerterResponse),
+  ),
+)]
+pub fn get_alerter() {}
+
 /// Get a specific alerter. Response: [Alerter].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -28,6 +40,18 @@ pub type GetAlerterResponse = Alerter;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListAlerters",
+  description = "List alerters matching optional query.",
+  request_body(content = ListAlerters),
+  responses(
+    (status = 200, description = "The list of alerters", body = ListAlertersResponse),
+  ),
+)]
+pub fn list_alerters() {}
+
 /// List alerters matching optional query. Response: [ListAlertersResponse].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
@@ -43,6 +67,20 @@ pub struct ListAlerters {
 
 #[typeshare]
 pub type ListAlertersResponse = Vec<AlerterListItem>;
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListFullAlerters",
+  description = "List full alerters matching optional query.",
+  request_body(content = ListFullAlerters),
+  responses(
+    (status = 200, description = "The list of alerters", body = ListFullAlertersResponse),
+  ),
+)]
+pub fn list_full_alerters() {}
 
 /// List full alerters matching optional query. Response: [ListFullAlertersResponse].
 #[typeshare]
@@ -61,6 +99,18 @@ pub struct ListFullAlerters {
 pub type ListFullAlertersResponse = Vec<Alerter>;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetAlertersSummary",
+  description = "Gets a summary of data relating to all alerters.",
+  request_body(content = GetAlertersSummary),
+  responses(
+    (status = 200, description = "The alerters summary", body = GetAlertersSummaryResponse),
+  ),
+)]
+pub fn get_alerters_summary() {}
 
 /// Gets a summary of data relating to all alerters.
 /// Response: [GetAlertersSummaryResponse].

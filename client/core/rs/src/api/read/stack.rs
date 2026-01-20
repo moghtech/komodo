@@ -17,6 +17,18 @@ use super::KomodoReadRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetStack",
+  description = "Get a specific stack.",
+  request_body(content = GetStack),
+  responses(
+    (status = 200, description = "The stack", body = GetStackResponse),
+  ),
+)]
+pub fn get_stack() {}
+
 /// Get a specific stack. Response: [Stack].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -35,6 +47,18 @@ pub type GetStackResponse = Stack;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListStackServices",
+  description = "Lists a specific stacks services (the containers).",
+  request_body(content = ListStackServices),
+  responses(
+    (status = 200, description = "The list of services", body = ListStackServicesResponse),
+  ),
+)]
+pub fn list_stack_services() {}
+
 /// Lists a specific stacks services (the containers). Response: [ListStackServicesResponse].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -52,6 +76,18 @@ pub struct ListStackServices {
 pub type ListStackServicesResponse = Vec<StackService>;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/InspectStackContainer",
+  description = "Inspect a docker container associated with a Stack.",
+  request_body(content = InspectStackContainer),
+  responses(
+    (status = 200, description = "The container", body = InspectStackContainerResponse),
+  ),
+)]
+pub fn inspect_stack_container() {}
 
 /// Inspect a docker container associated with a Stack.
 /// Response: [Container].
@@ -74,6 +110,18 @@ pub type InspectStackContainerResponse = Container;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/InspectStackSwarmService",
+  description = "Inspect a swarm service associated with a Stack.",
+  request_body(content = InspectStackSwarmService),
+  responses(
+    (status = 200, description = "The swarm service", body = InspectStackSwarmServiceResponse),
+  ),
+)]
+pub fn inspect_stack_swarm_service() {}
+
 /// Inspect a swarm service associated with a Stack.
 /// Response: [SwarmService].
 #[typeshare]
@@ -95,6 +143,18 @@ pub type InspectStackSwarmServiceResponse = SwarmService;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/InspectStackSwarmInfo",
+  description = "Inspect swarm info associated with a Stack.",
+  request_body(content = InspectStackSwarmInfo),
+  responses(
+    (status = 200, description = "The swarm info", body = InspectStackSwarmInfoResponse),
+  ),
+)]
+pub fn inspect_stack_swarm_info() {}
+
 /// Inspect swarm info associated with a Stack.
 /// Response: [SwarmStack].
 #[typeshare]
@@ -113,6 +173,18 @@ pub struct InspectStackSwarmInfo {
 pub type InspectStackSwarmInfoResponse = SwarmStack;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetStackLog",
+  description = "Get a stack's logs. Filter down included services.",
+  request_body(content = GetStackLog),
+  responses(
+    (status = 200, description = "The stack log", body = GetStackLogResponse),
+  ),
+)]
+pub fn get_stack_log() {}
 
 /// Get a stack's logs. Filter down included services. Response: [GetStackLogResponse].
 ///
@@ -148,6 +220,18 @@ fn default_tail() -> u64 {
 pub type GetStackLogResponse = Log;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/SearchStackLog",
+  description = "Search the stack log's tail using `grep`.",
+  request_body(content = SearchStackLog),
+  responses(
+    (status = 200, description = "The search results", body = SearchStackLogResponse),
+  ),
+)]
+pub fn search_stack_log() {}
 
 /// Search the stack log's tail using `grep`. All lines go to stdout.
 /// Response: [SearchStackLogResponse].
@@ -187,6 +271,18 @@ pub type SearchStackLogResponse = Log;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListCommonStackExtraArgs",
+  description = "Gets a list of existing values used as extra args across other stacks.",
+  request_body(content = ListCommonStackExtraArgs),
+  responses(
+    (status = 200, description = "The list of extra args", body = ListCommonStackExtraArgsResponse),
+  ),
+)]
+pub fn list_common_stack_extra_args() {}
+
 /// Gets a list of existing values used as extra args across other stacks.
 /// Useful to offer suggestions. Response: [ListCommonStackExtraArgsResponse]
 #[typeshare]
@@ -205,6 +301,18 @@ pub struct ListCommonStackExtraArgs {
 pub type ListCommonStackExtraArgsResponse = Vec<String>;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListCommonStackBuildExtraArgs",
+  description = "Gets a list of existing values used as build extra args across other stacks.",
+  request_body(content = ListCommonStackBuildExtraArgs),
+  responses(
+    (status = 200, description = "The list of build extra args", body = ListCommonStackBuildExtraArgsResponse),
+  ),
+)]
+pub fn list_common_stack_build_extra_args() {}
 
 /// Gets a list of existing values used as build extra args across other stacks.
 /// Useful to offer suggestions. Response: [ListCommonStackBuildExtraArgsResponse]
@@ -225,6 +333,18 @@ pub type ListCommonStackBuildExtraArgsResponse = Vec<String>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListStacks",
+  description = "List stacks matching optional query.",
+  request_body(content = ListStacks),
+  responses(
+    (status = 200, description = "The list of stacks", body = ListStacksResponse),
+  ),
+)]
+pub fn list_stacks() {}
+
 /// List stacks matching optional query. Response: [ListStacksResponse].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
@@ -242,6 +362,18 @@ pub struct ListStacks {
 pub type ListStacksResponse = Vec<StackListItem>;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListFullStacks",
+  description = "List stacks matching optional query.",
+  request_body(content = ListFullStacks),
+  responses(
+    (status = 200, description = "The list of stacks", body = ListFullStacksResponse),
+  ),
+)]
+pub fn list_full_stacks() {}
 
 /// List stacks matching optional query. Response: [ListFullStacksResponse].
 #[typeshare]
@@ -261,6 +393,18 @@ pub type ListFullStacksResponse = Vec<Stack>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetStackActionState",
+  description = "Get current action state for the stack.",
+  request_body(content = GetStackActionState),
+  responses(
+    (status = 200, description = "The stack action state", body = GetStackActionStateResponse),
+  ),
+)]
+pub fn get_stack_action_state() {}
+
 /// Get current action state for the stack. Response: [StackActionState].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -278,6 +422,18 @@ pub struct GetStackActionState {
 pub type GetStackActionStateResponse = StackActionState;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetStacksSummary",
+  description = "Gets a summary of data relating to all syncs.",
+  request_body(content = GetStacksSummary),
+  responses(
+    (status = 200, description = "The stacks summary", body = GetStacksSummaryResponse),
+  ),
+)]
+pub fn get_stacks_summary() {}
 
 /// Gets a summary of data relating to all syncs.
 /// Response: [GetStacksSummaryResponse].

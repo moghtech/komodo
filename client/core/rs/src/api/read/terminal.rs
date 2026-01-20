@@ -8,6 +8,18 @@ use super::KomodoReadRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListTerminals",
+  description = "List Terminals.",
+  request_body(content = ListTerminals),
+  responses(
+    (status = 200, description = "The list of terminals", body = ListTerminalsResponse),
+  ),
+)]
+pub fn list_terminals() {}
+
 /// List Terminals.
 /// Response: [ListTerminalsResponse].
 #[typeshare]

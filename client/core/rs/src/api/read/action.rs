@@ -10,6 +10,18 @@ use super::KomodoReadRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetAction",
+  description = "Get a specific action.",
+  request_body(content = GetAction),
+  responses(
+    (status = 200, description = "The action", body = GetActionResponse),
+  ),
+)]
+pub fn get_action() {}
+
 /// Get a specific action. Response: [Action].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -27,6 +39,18 @@ pub struct GetAction {
 pub type GetActionResponse = Action;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListActions",
+  description = "List actions matching optional query.",
+  request_body(content = ListActions),
+  responses(
+    (status = 200, description = "The list of actions", body = ListActionsResponse),
+  ),
+)]
+pub fn list_actions() {}
 
 /// List actions matching optional query. Response: [ListActionsResponse].
 #[typeshare]
@@ -46,6 +70,18 @@ pub type ListActionsResponse = Vec<ActionListItem>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListFullActions",
+  description = "List actions matching optional query.",
+  request_body(content = ListFullActions),
+  responses(
+    (status = 200, description = "The list of actions", body = ListFullActionsResponse),
+  ),
+)]
+pub fn list_full_actions() {}
+
 /// List actions matching optional query. Response: [ListFullActionsResponse].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
@@ -64,6 +100,18 @@ pub type ListFullActionsResponse = Vec<Action>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetActionActionState",
+  description = "Get current action state for the action.",
+  request_body(content = GetActionActionState),
+  responses(
+    (status = 200, description = "The action action state", body = GetActionActionStateResponse),
+  ),
+)]
+pub fn get_action_action_state() {}
+
 /// Get current action state for the action. Response: [ActionActionState].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -81,6 +129,18 @@ pub struct GetActionActionState {
 pub type GetActionActionStateResponse = ActionActionState;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetActionsSummary",
+  description = "Gets a summary of data relating to all actions.",
+  request_body(content = GetActionsSummary),
+  responses(
+    (status = 200, description = "The actions summary", body = GetActionsSummaryResponse),
+  ),
+)]
+pub fn get_actions_summary() {}
 
 /// Gets a summary of data relating to all actions.
 /// Response: [GetActionsSummaryResponse].

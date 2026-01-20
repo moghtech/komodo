@@ -6,6 +6,20 @@ use crate::entities::{I64, MongoDocument, U64, alert::Alert};
 
 use super::KomodoReadRequest;
 
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListAlerts",
+  description = "Get a paginated list of alerts sorted by timestamp descending.",
+  request_body(content = ListAlerts),
+  responses(
+    (status = 200, description = "The paginated list of alerts", body = ListAlertsResponse),
+  ),
+)]
+pub fn list_alerts() {}
+
 /// Get a paginated list of alerts sorted by timestamp descending.
 /// Response: [ListAlertsResponse].
 #[typeshare]
@@ -59,6 +73,18 @@ pub struct ListAlertsResponse {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetAlert",
+  description = "Get an alert.",
+  request_body(content = GetAlert),
+  responses(
+    (status = 200, description = "The alert", body = GetAlertResponse),
+  ),
+)]
+pub fn get_alert() {}
 
 /// Get an alert: Response: [Alert].
 #[typeshare]

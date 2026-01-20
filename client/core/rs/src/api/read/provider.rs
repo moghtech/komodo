@@ -8,6 +8,20 @@ use crate::entities::provider::{
 
 use super::KomodoReadRequest;
 
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetGitProviderAccount",
+  description = "Get a specific git provider account.",
+  request_body(content = GetGitProviderAccount),
+  responses(
+    (status = 200, description = "The git provider account", body = GetGitProviderAccountResponse),
+  ),
+)]
+pub fn get_git_provider_account() {}
+
 /// Get a specific git provider account.
 /// Response: [GetGitProviderAccountResponse].
 #[typeshare]
@@ -24,6 +38,18 @@ pub struct GetGitProviderAccount {
 pub type GetGitProviderAccountResponse = GitProviderAccount;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListGitProviderAccounts",
+  description = "List git provider accounts matching optional query.",
+  request_body(content = ListGitProviderAccounts),
+  responses(
+    (status = 200, description = "The list of git provider accounts", body = ListGitProviderAccountsResponse),
+  ),
+)]
+pub fn list_git_provider_accounts() {}
 
 /// List git provider accounts matching optional query.
 /// Response: [ListGitProviderAccountsResponse].
@@ -45,6 +71,18 @@ pub type ListGitProviderAccountsResponse = Vec<GitProviderAccount>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetDockerRegistryAccount",
+  description = "Get a specific docker registry account.",
+  request_body(content = GetDockerRegistryAccount),
+  responses(
+    (status = 200, description = "The docker registry account", body = GetDockerRegistryAccountResponse),
+  ),
+)]
+pub fn get_docker_registry_account() {}
+
 /// Get a specific docker registry account.
 /// Response: [GetDockerRegistryAccountResponse].
 #[typeshare]
@@ -61,6 +99,18 @@ pub struct GetDockerRegistryAccount {
 pub type GetDockerRegistryAccountResponse = DockerRegistryAccount;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListDockerRegistryAccounts",
+  description = "List docker registry accounts matching optional query.",
+  request_body(content = ListDockerRegistryAccounts),
+  responses(
+    (status = 200, description = "The list of docker registry accounts", body = ListDockerRegistryAccountsResponse),
+  ),
+)]
+pub fn list_docker_registry_accounts() {}
 
 /// List docker registry accounts matching optional query.
 /// Response: [ListDockerRegistryAccountsResponse].

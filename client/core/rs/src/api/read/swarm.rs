@@ -22,6 +22,18 @@ use super::KomodoReadRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetSwarm",
+  description = "Get a specific swarm.",
+  request_body(content = GetSwarm),
+  responses(
+    (status = 200, description = "The swarm", body = GetSwarmResponse),
+  ),
+)]
+pub fn get_swarm() {}
+
 /// Get a specific swarm. Response: [Swarm].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -39,6 +51,18 @@ pub struct GetSwarm {
 pub type GetSwarmResponse = Swarm;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListSwarms",
+  description = "List Swarms matching optional query.",
+  request_body(content = ListSwarms),
+  responses(
+    (status = 200, description = "The list of swarms", body = ListSwarmsResponse),
+  ),
+)]
+pub fn list_swarms() {}
 
 /// List Swarms matching optional query. Response: [ListSwarmsResponse].
 #[typeshare]
@@ -58,6 +82,18 @@ pub type ListSwarmsResponse = Vec<SwarmListItem>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListFullSwarms",
+  description = "List Swarms matching optional query.",
+  request_body(content = ListFullSwarms),
+  responses(
+    (status = 200, description = "The list of swarms", body = ListFullSwarmsResponse),
+  ),
+)]
+pub fn list_full_swarms() {}
+
 /// List Swarms matching optional query. Response: [ListFullSwarmsResponse].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
@@ -76,6 +112,18 @@ pub type ListFullSwarmsResponse = Vec<Swarm>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetSwarmActionState",
+  description = "Get current action state for the swarm.",
+  request_body(content = GetSwarmActionState),
+  responses(
+    (status = 200, description = "The swarm action state", body = GetSwarmActionStateResponse),
+  ),
+)]
+pub fn get_swarm_action_state() {}
+
 /// Get current action state for the swarm. Response: [SwarmActionState].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -93,6 +141,18 @@ pub struct GetSwarmActionState {
 pub type GetSwarmActionStateResponse = SwarmActionState;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetSwarmsSummary",
+  description = "Gets a summary of data relating to all swarms.",
+  request_body(content = GetSwarmsSummary),
+  responses(
+    (status = 200, description = "The swarms summary", body = GetSwarmsSummaryResponse),
+  ),
+)]
+pub fn get_swarms_summary() {}
 
 /// Gets a summary of data relating to all swarms.
 /// Response: [GetSwarmsSummaryResponse].
@@ -121,6 +181,18 @@ pub struct GetSwarmsSummaryResponse {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/InspectSwarm",
+  description = "Inspect information about the swarm.",
+  request_body(content = InspectSwarm),
+  responses(
+    (status = 200, description = "The swarm inspect info", body = InspectSwarmResponse),
+  ),
+)]
+pub fn inspect_swarm() {}
+
 /// Inspect information about the swarm.
 /// Response: [SwarmInspectInfo].
 #[typeshare]
@@ -140,6 +212,18 @@ pub type InspectSwarmResponse = SwarmInspectInfo;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListSwarmNodes",
+  description = "List nodes part of the target Swarm.",
+  request_body(content = ListSwarmNodes),
+  responses(
+    (status = 200, description = "The list of swarm nodes", body = ListSwarmNodesResponse),
+  ),
+)]
+pub fn list_swarm_nodes() {}
+
 /// List nodes part of the target Swarm.
 /// Response: [ListSwarmNodesResponse].
 #[typeshare]
@@ -158,6 +242,18 @@ pub struct ListSwarmNodes {
 pub type ListSwarmNodesResponse = Vec<SwarmNodeListItem>;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/InspectSwarmNode",
+  description = "Inspect a Swarm node.",
+  request_body(content = InspectSwarmNode),
+  responses(
+    (status = 200, description = "The swarm node", body = InspectSwarmNodeResponse),
+  ),
+)]
+pub fn inspect_swarm_node() {}
 
 /// Inspect a Swarm node.
 /// Response: [SwarmNode].
@@ -180,6 +276,18 @@ pub type InspectSwarmNodeResponse = SwarmNode;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListSwarmServices",
+  description = "List services on the target Swarm.",
+  request_body(content = ListSwarmServices),
+  responses(
+    (status = 200, description = "The list of swarm services", body = ListSwarmServicesResponse),
+  ),
+)]
+pub fn list_swarm_services() {}
+
 /// List services on the target Swarm.
 /// Response: [ListSwarmServicesResponse].
 #[typeshare]
@@ -198,6 +306,18 @@ pub struct ListSwarmServices {
 pub type ListSwarmServicesResponse = Vec<SwarmServiceListItem>;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/InspectSwarmService",
+  description = "Inspect a Swarm service.",
+  request_body(content = InspectSwarmService),
+  responses(
+    (status = 200, description = "The swarm service", body = InspectSwarmServiceResponse),
+  ),
+)]
+pub fn inspect_swarm_service() {}
 
 /// Inspect a Swarm service.
 /// Response: [SwarmService].
@@ -219,6 +339,18 @@ pub struct InspectSwarmService {
 pub type InspectSwarmServiceResponse = SwarmService;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetSwarmServiceLog",
+  description = "Get a swarm service's logs.",
+  request_body(content = GetSwarmServiceLog),
+  responses(
+    (status = 200, description = "The swarm service log", body = GetSwarmServiceLogResponse),
+  ),
+)]
+pub fn get_swarm_service_log() {}
 
 /// Get a swarm service's logs. Response: [GetSwarmServiceLogResponse].
 ///
@@ -262,6 +394,18 @@ fn default_tail() -> u64 {
 pub type GetSwarmServiceLogResponse = Log;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/SearchSwarmServiceLog",
+  description = "Search the swarm service log's tail using `grep`.",
+  request_body(content = SearchSwarmServiceLog),
+  responses(
+    (status = 200, description = "The search results", body = SearchSwarmServiceLogResponse),
+  ),
+)]
+pub fn search_swarm_service_log() {}
 
 /// Search the swarm service log's tail using `grep`. All lines go to stdout.
 /// Response: [SearchSwarmServiceLogResponse].
@@ -309,6 +453,18 @@ pub type SearchSwarmServiceLogResponse = Log;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListSwarmTasks",
+  description = "List tasks on the target Swarm.",
+  request_body(content = ListSwarmTasks),
+  responses(
+    (status = 200, description = "The list of swarm tasks", body = ListSwarmTasksResponse),
+  ),
+)]
+pub fn list_swarm_tasks() {}
+
 /// List tasks on the target Swarm.
 /// Response: [ListSwarmTasksResponse].
 #[typeshare]
@@ -327,6 +483,18 @@ pub struct ListSwarmTasks {
 pub type ListSwarmTasksResponse = Vec<SwarmTaskListItem>;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/InspectSwarmTask",
+  description = "Inspect a Swarm task.",
+  request_body(content = InspectSwarmTask),
+  responses(
+    (status = 200, description = "The swarm task", body = InspectSwarmTaskResponse),
+  ),
+)]
+pub fn inspect_swarm_task() {}
 
 /// Inspect a Swarm task.
 /// Response: [SwarmTask].
@@ -349,6 +517,18 @@ pub type InspectSwarmTaskResponse = SwarmTask;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListSwarmSecrets",
+  description = "List secrets on the target Swarm.",
+  request_body(content = ListSwarmSecrets),
+  responses(
+    (status = 200, description = "The list of swarm secrets", body = ListSwarmSecretsResponse),
+  ),
+)]
+pub fn list_swarm_secrets() {}
+
 /// List secrets on the target Swarm.
 /// Response: [ListSwarmSecretsResponse].
 #[typeshare]
@@ -367,6 +547,18 @@ pub struct ListSwarmSecrets {
 pub type ListSwarmSecretsResponse = Vec<SwarmSecretListItem>;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/InspectSwarmSecret",
+  description = "Inspect a Swarm secret.",
+  request_body(content = InspectSwarmSecret),
+  responses(
+    (status = 200, description = "The swarm secret", body = InspectSwarmSecretResponse),
+  ),
+)]
+pub fn inspect_swarm_secret() {}
 
 /// Inspect a Swarm secret.
 /// Response: [SwarmSecret].
@@ -389,6 +581,18 @@ pub type InspectSwarmSecretResponse = SwarmSecret;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListSwarmConfigs",
+  description = "List configs on the target Swarm.",
+  request_body(content = ListSwarmConfigs),
+  responses(
+    (status = 200, description = "The list of swarm configs", body = ListSwarmConfigsResponse),
+  ),
+)]
+pub fn list_swarm_configs() {}
+
 /// List configs on the target Swarm.
 /// Response: [ListSwarmConfigsResponse].
 #[typeshare]
@@ -407,6 +611,18 @@ pub struct ListSwarmConfigs {
 pub type ListSwarmConfigsResponse = Vec<SwarmConfigListItem>;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/InspectSwarmConfig",
+  description = "Inspect a config on the target Swarm.",
+  request_body(content = InspectSwarmConfig),
+  responses(
+    (status = 200, description = "The swarm config", body = InspectSwarmConfigResponse),
+  ),
+)]
+pub fn inspect_swarm_config() {}
 
 /// Inspect a config on the target Swarm.
 /// Response: [InspectSwarmConfigResponse].
@@ -429,6 +645,18 @@ pub type InspectSwarmConfigResponse = SwarmConfig;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListSwarmStacks",
+  description = "List stacks on the target Swarm.",
+  request_body(content = ListSwarmStacks),
+  responses(
+    (status = 200, description = "The list of swarm stacks", body = ListSwarmStacksResponse),
+  ),
+)]
+pub fn list_swarm_stacks() {}
+
 /// List stacks on the target Swarm.
 /// Response: [ListSwarmStacksResponse].
 #[typeshare]
@@ -447,6 +675,18 @@ pub struct ListSwarmStacks {
 pub type ListSwarmStacksResponse = Vec<SwarmStackListItem>;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/InspectSwarmStack",
+  description = "Inspect a stack on the target Swarm.",
+  request_body(content = InspectSwarmStack),
+  responses(
+    (status = 200, description = "The swarm stack", body = InspectSwarmStackResponse),
+  ),
+)]
+pub fn inspect_swarm_stack() {}
 
 /// Inspect a stack on the target Swarm.
 /// Response: [SwarmStackLists].
@@ -468,6 +708,18 @@ pub struct InspectSwarmStack {
 pub type InspectSwarmStackResponse = SwarmStack;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListSwarmNetworks",
+  description = "List the networks on the swarm.",
+  request_body(content = ListSwarmNetworks),
+  responses(
+    (status = 200, description = "The list of swarm networks", body = ListSwarmNetworksResponse),
+  ),
+)]
+pub fn list_swarm_networks() {}
 
 /// List the networks on the swarm. Response: [ListSwarmNetworksResponse].
 ///

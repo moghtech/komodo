@@ -8,6 +8,18 @@ use super::KomodoReadRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetTag",
+  description = "Get data for a specific tag.",
+  request_body(content = GetTag),
+  responses(
+    (status = 200, description = "The tag", body = GetTagResponse),
+  ),
+)]
+pub fn get_tag() {}
+
 /// Get data for a specific tag. Response [Tag].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -25,6 +37,18 @@ pub struct GetTag {
 pub type GetTagResponse = Tag;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListTags",
+  description = "List data for tags matching optional mongo query.",
+  request_body(content = ListTags),
+  responses(
+    (status = 200, description = "The list of tags", body = ListTagsResponse),
+  ),
+)]
+pub fn list_tags() {}
 
 /// List data for tags matching optional mongo query.
 /// Response: [ListTagsResponse].

@@ -9,6 +9,20 @@ use crate::entities::{
 
 use super::KomodoReadRequest;
 
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetUpdate",
+  description = "Get all data for the target update.",
+  request_body(content = GetUpdate),
+  responses(
+    (status = 200, description = "The update", body = GetUpdateResponse),
+  ),
+)]
+pub fn get_update() {}
+
 /// Get all data for the target update.
 /// Response: [Update].
 #[typeshare]
@@ -26,6 +40,18 @@ pub struct GetUpdate {
 pub type GetUpdateResponse = Update;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListUpdates",
+  description = "Paginated endpoint for updates matching optional query.",
+  request_body(content = ListUpdates),
+  responses(
+    (status = 200, description = "The paginated list of updates", body = ListUpdatesResponse),
+  ),
+)]
+pub fn list_updates() {}
 
 /// Paginated endpoint for updates matching optional query.
 /// More recent updates will be returned first.

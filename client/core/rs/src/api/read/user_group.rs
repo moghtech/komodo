@@ -6,6 +6,20 @@ use crate::entities::user_group::UserGroup;
 
 use super::KomodoReadRequest;
 
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetUserGroup",
+  description = "Get a specific user group by name or id.",
+  request_body(content = GetUserGroup),
+  responses(
+    (status = 200, description = "The user group", body = GetUserGroupResponse),
+  ),
+)]
+pub fn get_user_group() {}
+
 /// Get a specific user group by name or id.
 /// Response: [UserGroup].
 #[typeshare]
@@ -23,6 +37,18 @@ pub struct GetUserGroup {
 pub type GetUserGroupResponse = UserGroup;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListUserGroups",
+  description = "List all user groups which user can see.",
+  request_body(content = ListUserGroups),
+  responses(
+    (status = 200, description = "The list of user groups", body = ListUserGroupsResponse),
+  ),
+)]
+pub fn list_user_groups() {}
 
 /// List all user groups which user can see. Response: [ListUserGroupsResponse].
 ///

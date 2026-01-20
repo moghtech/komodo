@@ -10,6 +10,18 @@ use super::KomodoReadRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetRepo",
+  description = "Get a specific repo.",
+  request_body(content = GetRepo),
+  responses(
+    (status = 200, description = "The repo", body = GetRepoResponse),
+  ),
+)]
+pub fn get_repo() {}
+
 /// Get a specific repo. Response: [Repo].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -27,6 +39,18 @@ pub struct GetRepo {
 pub type GetRepoResponse = Repo;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListRepos",
+  description = "List repos matching optional query.",
+  request_body(content = ListRepos),
+  responses(
+    (status = 200, description = "The list of repos", body = ListReposResponse),
+  ),
+)]
+pub fn list_repos() {}
 
 /// List repos matching optional query. Response: [ListReposResponse].
 #[typeshare]
@@ -46,6 +70,18 @@ pub type ListReposResponse = Vec<RepoListItem>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListFullRepos",
+  description = "List repos matching optional query.",
+  request_body(content = ListFullRepos),
+  responses(
+    (status = 200, description = "The list of repos", body = ListFullReposResponse),
+  ),
+)]
+pub fn list_full_repos() {}
+
 /// List repos matching optional query. Response: [ListFullReposResponse].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
@@ -64,6 +100,18 @@ pub type ListFullReposResponse = Vec<Repo>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetRepoActionState",
+  description = "Get current action state for the repo.",
+  request_body(content = GetRepoActionState),
+  responses(
+    (status = 200, description = "The repo action state", body = GetRepoActionStateResponse),
+  ),
+)]
+pub fn get_repo_action_state() {}
+
 /// Get current action state for the repo. Response: [RepoActionState].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -81,6 +129,18 @@ pub struct GetRepoActionState {
 pub type GetRepoActionStateResponse = RepoActionState;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetReposSummary",
+  description = "Gets a summary of data relating to all repos.",
+  request_body(content = GetReposSummary),
+  responses(
+    (status = 200, description = "The repos summary", body = GetReposSummaryResponse),
+  ),
+)]
+pub fn get_repos_summary() {}
 
 /// Gets a summary of data relating to all repos.
 /// Response: [GetReposSummaryResponse].

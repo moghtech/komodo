@@ -10,6 +10,18 @@ use super::KomodoReadRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetBuilder",
+  description = "Get a specific builder by id or name.",
+  request_body(content = GetBuilder),
+  responses(
+    (status = 200, description = "The builder", body = GetBuilderResponse),
+  ),
+)]
+pub fn get_builder() {}
+
 /// Get a specific builder by id or name. Response: [Builder].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -28,6 +40,18 @@ pub type GetBuilderResponse = Builder;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListBuilders",
+  description = "List builders matching structured query.",
+  request_body(content = ListBuilders),
+  responses(
+    (status = 200, description = "The list of builders", body = ListBuildersResponse),
+  ),
+)]
+pub fn list_builders() {}
+
 /// List builders matching structured query. Response: [ListBuildersResponse].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
@@ -45,6 +69,18 @@ pub type ListBuildersResponse = Vec<BuilderListItem>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListFullBuilders",
+  description = "List builders matching structured query.",
+  request_body(content = ListFullBuilders),
+  responses(
+    (status = 200, description = "The list of builders", body = ListFullBuildersResponse),
+  ),
+)]
+pub fn list_full_builders() {}
+
 /// List builders matching structured query. Response: [ListFullBuildersResponse].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
@@ -61,6 +97,18 @@ pub struct ListFullBuilders {
 pub type ListFullBuildersResponse = Vec<Builder>;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetBuildersSummary",
+  description = "Gets a summary of data relating to all builders.",
+  request_body(content = GetBuildersSummary),
+  responses(
+    (status = 200, description = "The builders summary", body = GetBuildersSummaryResponse),
+  ),
+)]
+pub fn get_builders_summary() {}
 
 /// Gets a summary of data relating to all builders.
 /// Response: [GetBuildersSummaryResponse].

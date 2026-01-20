@@ -13,6 +13,18 @@ use super::KomodoReadRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetBuild",
+  description = "Get a specific build.",
+  request_body(content = GetBuild),
+  responses(
+    (status = 200, description = "The build", body = GetBuildResponse),
+  ),
+)]
+pub fn get_build() {}
+
 /// Get a specific build. Response: [Build].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -30,6 +42,18 @@ pub struct GetBuild {
 pub type GetBuildResponse = Build;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListBuilds",
+  description = "List builds matching optional query.",
+  request_body(content = ListBuilds),
+  responses(
+    (status = 200, description = "The list of builds", body = ListBuildsResponse),
+  ),
+)]
+pub fn list_builds() {}
 
 /// List builds matching optional query. Response: [ListBuildsResponse].
 #[typeshare]
@@ -49,6 +73,18 @@ pub type ListBuildsResponse = Vec<BuildListItem>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListFullBuilds",
+  description = "List builds matching optional query.",
+  request_body(content = ListFullBuilds),
+  responses(
+    (status = 200, description = "The list of builds", body = ListFullBuildsResponse),
+  ),
+)]
+pub fn list_full_builds() {}
+
 /// List builds matching optional query. Response: [ListFullBuildsResponse].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
@@ -67,6 +103,18 @@ pub type ListFullBuildsResponse = Vec<Build>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetBuildActionState",
+  description = "Get current action state for the build.",
+  request_body(content = GetBuildActionState),
+  responses(
+    (status = 200, description = "The build action state", body = GetBuildActionStateResponse),
+  ),
+)]
+pub fn get_build_action_state() {}
+
 /// Get current action state for the build. Response: [BuildActionState].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -84,6 +132,18 @@ pub struct GetBuildActionState {
 pub type GetBuildActionStateResponse = BuildActionState;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetBuildsSummary",
+  description = "Gets a summary of data relating to all builds.",
+  request_body(content = GetBuildsSummary),
+  responses(
+    (status = 200, description = "The builds summary", body = GetBuildsSummaryResponse),
+  ),
+)]
+pub fn get_builds_summary() {}
 
 /// Gets a summary of data relating to all builds.
 /// Response: [GetBuildsSummaryResponse].
@@ -113,6 +173,18 @@ pub struct GetBuildsSummaryResponse {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetBuildMonthlyStats",
+  description = "Gets summary and timeseries breakdown of the last months build count / time for charting.",
+  request_body(content = GetBuildMonthlyStats),
+  responses(
+    (status = 200, description = "The build monthly stats", body = GetBuildMonthlyStatsResponse),
+  ),
+)]
+pub fn get_build_monthly_stats() {}
 
 /// Gets summary and timeseries breakdown of the last months build count / time for charting.
 /// Response: [GetBuildMonthlyStatsResponse].

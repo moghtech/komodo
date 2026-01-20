@@ -9,6 +9,20 @@ use crate::{
 
 use super::KomodoReadRequest;
 
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListSchedules",
+  description = "List configured schedules.",
+  request_body(content = ListSchedules),
+  responses(
+    (status = 200, description = "The list of schedules", body = ListSchedulesResponse),
+  ),
+)]
+pub fn list_schedules() {}
+
 /// List configured schedules.
 /// Response: [ListSchedulesResponse].
 #[typeshare]

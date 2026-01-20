@@ -11,6 +11,18 @@ use super::KomodoReadRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetResourceSync",
+  description = "Get a specific sync.",
+  request_body(content = GetResourceSync),
+  responses(
+    (status = 200, description = "The resource sync", body = GetResourceSyncResponse),
+  ),
+)]
+pub fn get_resource_sync() {}
+
 /// Get a specific sync. Response: [ResourceSync].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -28,6 +40,18 @@ pub struct GetResourceSync {
 pub type GetResourceSyncResponse = ResourceSync;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListResourceSyncs",
+  description = "List syncs matching optional query.",
+  request_body(content = ListResourceSyncs),
+  responses(
+    (status = 200, description = "The list of resource syncs", body = ListResourceSyncsResponse),
+  ),
+)]
+pub fn list_resource_syncs() {}
 
 /// List syncs matching optional query. Response: [ListResourceSyncsResponse].
 #[typeshare]
@@ -47,6 +71,18 @@ pub type ListResourceSyncsResponse = Vec<ResourceSyncListItem>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListFullResourceSyncs",
+  description = "List syncs matching optional query.",
+  request_body(content = ListFullResourceSyncs),
+  responses(
+    (status = 200, description = "The list of resource syncs", body = ListFullResourceSyncsResponse),
+  ),
+)]
+pub fn list_full_resource_syncs() {}
+
 /// List syncs matching optional query. Response: [ListFullResourceSyncsResponse].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
@@ -65,6 +101,18 @@ pub type ListFullResourceSyncsResponse = Vec<ResourceSync>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetResourceSyncActionState",
+  description = "Get current action state for the sync.",
+  request_body(content = GetResourceSyncActionState),
+  responses(
+    (status = 200, description = "The resource sync action state", body = GetResourceSyncActionStateResponse),
+  ),
+)]
+pub fn get_resource_sync_action_state() {}
+
 /// Get current action state for the sync. Response: [ResourceSyncActionState].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -82,6 +130,18 @@ pub struct GetResourceSyncActionState {
 pub type GetResourceSyncActionStateResponse = ResourceSyncActionState;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetResourceSyncsSummary",
+  description = "Gets a summary of data relating to all syncs.",
+  request_body(content = GetResourceSyncsSummary),
+  responses(
+    (status = 200, description = "The resource syncs summary", body = GetResourceSyncsSummaryResponse),
+  ),
+)]
+pub fn get_resource_syncs_summary() {}
 
 /// Gets a summary of data relating to all syncs.
 /// Response: [GetResourceSyncsSummaryResponse].

@@ -16,6 +16,18 @@ pub struct TomlResponse {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ExportAllResourcesToToml",
+  description = "Get pretty formatted monrun sync toml for all resources which the user has permissions to view.",
+  request_body(content = ExportAllResourcesToToml),
+  responses(
+    (status = 200, description = "The toml response", body = ExportAllResourcesToTomlResponse),
+  ),
+)]
+pub fn export_all_resources_to_toml() {}
+
 /// Get pretty formatted monrun sync toml for all resources
 /// which the user has permissions to view.
 /// Response: [TomlResponse].
@@ -53,6 +65,18 @@ fn default_include_resources() -> bool {
 pub type ExportAllResourcesToTomlResponse = TomlResponse;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ExportResourcesToToml",
+  description = "Get pretty formatted monrun sync toml for specific resources and user groups.",
+  request_body(content = ExportResourcesToToml),
+  responses(
+    (status = 200, description = "The toml response", body = ExportResourcesToTomlResponse),
+  ),
+)]
+pub fn export_resources_to_toml() {}
 
 /// Get pretty formatted monrun sync toml for specific resources and user groups.
 /// Response: [TomlResponse].

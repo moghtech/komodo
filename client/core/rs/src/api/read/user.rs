@@ -6,6 +6,20 @@ use crate::entities::{api_key::ApiKey, user::User};
 
 use super::KomodoReadRequest;
 
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListApiKeys",
+  description = "Gets list of api keys for the calling user.",
+  request_body(content = ListApiKeys),
+  responses(
+    (status = 200, description = "The list of api keys", body = ListApiKeysResponse),
+  ),
+)]
+pub fn list_api_keys() {}
+
 /// Gets list of api keys for the calling user.
 /// Response: [ListApiKeysResponse]
 #[typeshare]
@@ -20,6 +34,18 @@ pub struct ListApiKeys {}
 pub type ListApiKeysResponse = Vec<ApiKey>;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListApiKeysForServiceUser",
+  description = "**Admin only.** Gets list of api keys for the user.",
+  request_body(content = ListApiKeysForServiceUser),
+  responses(
+    (status = 200, description = "The list of api keys", body = ListApiKeysForServiceUserResponse),
+  ),
+)]
+pub fn list_api_keys_for_service_user() {}
 
 /// **Admin only.**
 /// Gets list of api keys for the user.
@@ -42,6 +68,18 @@ pub type ListApiKeysForServiceUserResponse = Vec<ApiKey>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/FindUser",
+  description = "**Admin only.** Find a user.",
+  request_body(content = FindUser),
+  responses(
+    (status = 200, description = "The user", body = FindUserResponse),
+  ),
+)]
+pub fn find_user() {}
+
 /// **Admin only.**
 /// Find a user.
 /// Response: [FindUserResponse]
@@ -62,6 +100,18 @@ pub type FindUserResponse = User;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/ListUsers",
+  description = "**Admin only.** Gets list of Komodo users.",
+  request_body(content = ListUsers),
+  responses(
+    (status = 200, description = "The list of users", body = ListUsersResponse),
+  ),
+)]
+pub fn list_users() {}
+
 /// **Admin only.**
 /// Gets list of Komodo users.
 /// Response: [ListUsersResponse]
@@ -77,6 +127,18 @@ pub struct ListUsers {}
 pub type ListUsersResponse = Vec<User>;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/read/GetUsername",
+  description = "Gets the username of a specific user.",
+  request_body(content = GetUsername),
+  responses(
+    (status = 200, description = "The username response", body = GetUsernameResponse),
+  ),
+)]
+pub fn get_username() {}
 
 /// Gets the username of a specific user.
 /// Response: [GetUsernameResponse]
