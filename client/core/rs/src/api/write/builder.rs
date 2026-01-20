@@ -11,6 +11,18 @@ use super::KomodoWriteRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateBuilder",
+  description = "Create a builder.",
+  request_body(content = CreateBuilder),
+  responses(
+    (status = 200, description = "The created builder", body = crate::entities::builder::BuilderSchema),
+  ),
+)]
+pub fn create_builder() {}
+
 /// Create a builder. Response: [Builder].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -27,6 +39,18 @@ pub struct CreateBuilder {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CopyBuilder",
+  description = "Copy a builder.",
+  request_body(content = CopyBuilder),
+  responses(
+    (status = 200, description = "The new builder", body = crate::entities::builder::BuilderSchema),
+  ),
+)]
+pub fn copy_builder() {}
 
 /// Creates a new builder with given `name` and the configuration
 /// of the builder at the given `id`. Response: [Builder]
@@ -45,6 +69,18 @@ pub struct CopyBuilder {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteBuilder",
+  description = "Delete a builder.",
+  request_body(content = DeleteBuilder),
+  responses(
+    (status = 200, description = "The deleted builder", body = crate::entities::builder::BuilderSchema),
+  ),
+)]
+pub fn delete_builder() {}
+
 /// Deletes the builder at the given id, and returns the deleted builder.
 /// Response: [Builder]
 #[typeshare]
@@ -59,6 +95,18 @@ pub struct DeleteBuilder {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UpdateBuilder",
+  description = "Update a builder.",
+  request_body(content = UpdateBuilder),
+  responses(
+    (status = 200, description = "The updated builder", body = crate::entities::builder::BuilderSchema),
+  ),
+)]
+pub fn update_builder() {}
 
 /// Update the builder at the given id, and return the updated builder.
 /// Response: [Builder].
@@ -82,6 +130,18 @@ pub struct UpdateBuilder {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RenameBuilder",
+  description = "Rename a builder.",
+  request_body(content = RenameBuilder),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn rename_builder() {}
 
 /// Rename the Builder at id to the given name.
 /// Response: [Update].

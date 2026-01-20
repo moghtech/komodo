@@ -12,6 +12,18 @@ use super::KomodoWriteRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateStack",
+  description = "Create a stack.",
+  request_body(content = CreateStack),
+  responses(
+    (status = 200, description = "The created stack", body = crate::entities::stack::StackSchema),
+  ),
+)]
+pub fn create_stack() {}
+
 /// Create a stack. Response: [Stack].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -28,6 +40,18 @@ pub struct CreateStack {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CopyStack",
+  description = "Copy a stack.",
+  request_body(content = CopyStack),
+  responses(
+    (status = 200, description = "The new stack", body = crate::entities::stack::StackSchema),
+  ),
+)]
+pub fn copy_stack() {}
 
 /// Creates a new stack with given `name` and the configuration
 /// of the stack at the given `id`. Response: [Stack].
@@ -46,6 +70,18 @@ pub struct CopyStack {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteStack",
+  description = "Delete a stack.",
+  request_body(content = DeleteStack),
+  responses(
+    (status = 200, description = "The deleted stack", body = crate::entities::stack::StackSchema),
+  ),
+)]
+pub fn delete_stack() {}
+
 /// Deletes the stack at the given id, and returns the deleted stack.
 /// Response: [Stack]
 #[typeshare]
@@ -60,6 +96,18 @@ pub struct DeleteStack {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UpdateStack",
+  description = "Update a stack.",
+  request_body(content = UpdateStack),
+  responses(
+    (status = 200, description = "The updated stack", body = crate::entities::stack::StackSchema),
+  ),
+)]
+pub fn update_stack() {}
 
 /// Update the stack at the given id, and return the updated stack.
 /// Response: [Stack].
@@ -87,6 +135,18 @@ pub struct UpdateStack {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RenameStack",
+  description = "Rename a stack.",
+  request_body(content = RenameStack),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn rename_stack() {}
+
 /// Rename the stack at id to the given name. Response: [Update].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -102,6 +162,18 @@ pub struct RenameStack {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/WriteStackFileContents",
+  description = "Write file contents to a stack.",
+  request_body(content = WriteStackFileContents),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn write_stack_file_contents() {}
 
 /// Update file contents in Files on Server or Git Repo mode. Response: [Update].
 #[typeshare]
@@ -122,6 +194,18 @@ pub struct WriteStackFileContents {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RefreshStackCache",
+  description = "Trigger a refresh of the cached compose file contents.",
+  request_body(content = RefreshStackCache),
+  responses(
+    (status = 200, description = "No data", body = NoData),
+  ),
+)]
+pub fn refresh_stack_cache() {}
 
 /// Trigger a refresh of the cached compose file contents.
 /// Refreshes:

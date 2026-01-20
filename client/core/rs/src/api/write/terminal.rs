@@ -14,6 +14,18 @@ use super::KomodoWriteRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateTerminal",
+  description = "Create a Terminal.",
+  request_body(content = CreateTerminal),
+  responses(
+    (status = 200, description = "No data", body = NoData),
+  ),
+)]
+pub fn create_terminal() {}
+
 /// Create a Terminal.
 /// Requires minimum Read + Terminal permission on the target Resource.
 /// Response: [NoData]
@@ -48,6 +60,18 @@ pub struct CreateTerminal {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteTerminal",
+  description = "Delete a terminal.",
+  request_body(content = DeleteTerminal),
+  responses(
+    (status = 200, description = "No data", body = NoData),
+  ),
+)]
+pub fn delete_terminal() {}
+
 /// Delete a terminal.
 /// Response: [NoData]
 #[typeshare]
@@ -65,6 +89,18 @@ pub struct DeleteTerminal {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteAllTerminals",
+  description = "Delete all Terminals on the Server.",
+  request_body(content = DeleteAllTerminals),
+  responses(
+    (status = 200, description = "No data", body = NoData),
+  ),
+)]
+pub fn delete_all_terminals() {}
+
 /// Delete all Terminals on the Server.
 /// Response: [NoData]
 #[typeshare]
@@ -79,6 +115,18 @@ pub struct DeleteAllTerminals {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BatchDeleteAllTerminals",
+  description = "Delete all terminals on many or all Servers.",
+  request_body(content = BatchDeleteAllTerminals),
+  responses(
+    (status = 200, description = "No data", body = NoData),
+  ),
+)]
+pub fn batch_delete_all_terminals() {}
 
 /// Delete all terminals on many or all Servers.
 /// Response: [NoData]

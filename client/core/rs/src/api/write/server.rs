@@ -11,6 +11,18 @@ use super::KomodoWriteRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateServer",
+  description = "Create a server.",
+  request_body(content = CreateServer),
+  responses(
+    (status = 200, description = "The new server", body = crate::entities::server::ServerSchema),
+  ),
+)]
+pub fn create_server() {}
+
 /// Create a server. Response: [Server].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -29,6 +41,18 @@ pub struct CreateServer {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CopyServer",
+  description = "Copy a server.",
+  request_body(content = CopyServer),
+  responses(
+    (status = 200, description = "The new server", body = crate::entities::server::ServerSchema),
+  ),
+)]
+pub fn copy_server() {}
 
 /// Creates a new server with given `name` and the configuration
 /// of the server at the given `id`. Response: [Server].
@@ -49,6 +73,18 @@ pub struct CopyServer {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteServer",
+  description = "Delete a server.",
+  request_body(content = DeleteServer),
+  responses(
+    (status = 200, description = "The deleted server", body = crate::entities::server::ServerSchema),
+  ),
+)]
+pub fn delete_server() {}
+
 /// Deletes the server at the given id, and returns the deleted server.
 /// Response: [Server]
 #[typeshare]
@@ -63,6 +99,18 @@ pub struct DeleteServer {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UpdateServer",
+  description = "Update a server.",
+  request_body(content = UpdateServer),
+  responses(
+    (status = 200, description = "The updated server", body = crate::entities::server::ServerSchema),
+  ),
+)]
+pub fn update_server() {}
 
 /// Update the server at the given id, and return the updated server.
 /// Response: [Server].
@@ -87,6 +135,18 @@ pub struct UpdateServer {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RenameServer",
+  description = "Rename a server.",
+  request_body(content = RenameServer),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn rename_server() {}
+
 /// Rename an Server to the given name.
 /// Response: [Update].
 #[typeshare]
@@ -103,6 +163,18 @@ pub struct RenameServer {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateNetwork",
+  description = "Create a docker network on the server.",
+  request_body(content = CreateNetwork),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn create_network() {}
 
 /// Create a docker network on the server.
 /// Response: [Update]
@@ -123,6 +195,18 @@ pub struct CreateNetwork {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UpdateServerPublicKey",
+  description = "Updates the Server with an explicit Public Key.",
+  request_body(content = UpdateServerPublicKey),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn update_server_public_key() {}
+
 /// Updates the Server with an explicit Public Key.
 /// Response: [Update]
 #[typeshare]
@@ -139,6 +223,18 @@ pub struct UpdateServerPublicKey {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RotateServerKeys",
+  description = "Rotate server keys.",
+  request_body(content = RotateServerKeys),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn rotate_server_keys() {}
 
 /// Rotates the private / public keys for the server.
 /// Response: [Update]

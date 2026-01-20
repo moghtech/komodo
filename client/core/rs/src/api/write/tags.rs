@@ -8,6 +8,18 @@ use super::KomodoWriteRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateTag",
+  description = "Create a tag.",
+  request_body(content = CreateTag),
+  responses(
+    (status = 200, description = "The created tag", body = Tag),
+  ),
+)]
+pub fn create_tag() {}
+
 /// Create a tag. Response: [Tag].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -23,6 +35,18 @@ pub struct CreateTag {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteTag",
+  description = "Delete a tag.",
+  request_body(content = DeleteTag),
+  responses(
+    (status = 200, description = "The deleted tag", body = Tag),
+  ),
+)]
+pub fn delete_tag() {}
 
 /// Delete a tag, and return the deleted tag. Response: [Tag].
 ///
@@ -40,6 +64,18 @@ pub struct DeleteTag {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RenameTag",
+  description = "Rename a tag.",
+  request_body(content = RenameTag),
+  responses(
+    (status = 200, description = "The renamed tag", body = Tag),
+  ),
+)]
+pub fn rename_tag() {}
+
 /// Rename a tag at id. Response: [Tag].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -53,6 +89,20 @@ pub struct RenameTag {
   /// The new name of the tag.
   pub name: String,
 }
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UpdateTagColor",
+  description = "Update tag color.",
+  request_body(content = UpdateTagColor),
+  responses(
+    (status = 200, description = "The updated tag", body = Tag),
+  ),
+)]
+pub fn update_tag_color() {}
 
 /// Update color for tag. Response: [Tag].
 #[typeshare]

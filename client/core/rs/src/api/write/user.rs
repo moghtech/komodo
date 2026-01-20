@@ -6,6 +6,20 @@ use crate::entities::user::User;
 
 use super::KomodoWriteRequest;
 
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteUser",
+  description = "**Admin only.** Delete a user.",
+  request_body(content = DeleteUser),
+  responses(
+    (status = 200, description = "The deleted user", body = DeleteUserResponse),
+  ),
+)]
+pub fn delete_user() {}
+
 /// **Admin only**. Delete a user.
 /// Admins can delete any non-admin user.
 /// Only Super Admin can delete an admin.
@@ -28,6 +42,18 @@ pub struct DeleteUser {
 pub type DeleteUserResponse = User;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateLocalUser",
+  description = "**Admin only.** Create a local user.",
+  request_body(content = CreateLocalUser),
+  responses(
+    (status = 200, description = "The new user", body = CreateLocalUserResponse),
+  ),
+)]
+pub fn create_local_user() {}
 
 /// **Admin only.** Create a local user.
 /// Response: [User].
@@ -53,6 +79,18 @@ pub type CreateLocalUserResponse = User;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateServiceUser",
+  description = "**Admin only.** Create a service user.",
+  request_body(content = CreateServiceUser),
+  responses(
+    (status = 200, description = "The new service user", body = CreateServiceUserResponse),
+  ),
+)]
+pub fn create_service_user() {}
+
 /// **Admin only.** Create a service user.
 /// Response: [User].
 #[typeshare]
@@ -72,6 +110,18 @@ pub struct CreateServiceUser {
 pub type CreateServiceUserResponse = User;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UpdateServiceUserDescription",
+  description = "**Admin only.** Update a service user's description.",
+  request_body(content = UpdateServiceUserDescription),
+  responses(
+    (status = 200, description = "The updated user", body = UpdateServiceUserDescriptionResponse),
+  ),
+)]
+pub fn update_service_user_description() {}
 
 /// **Admin only.** Update a service user's description.
 /// Response: [User].

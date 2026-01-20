@@ -11,6 +11,18 @@ use super::KomodoWriteRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateDeployment",
+  description = "Create a deployment.",
+  request_body(content = CreateDeployment),
+  responses(
+    (status = 200, description = "The new deployment", body = crate::entities::deployment::DeploymentSchema),
+  ),
+)]
+pub fn create_deployment() {}
+
 /// Create a deployment. Response: [Deployment].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -27,6 +39,18 @@ pub struct CreateDeployment {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CopyDeployment",
+  description = "Copy a deployment.",
+  request_body(content = CopyDeployment),
+  responses(
+    (status = 200, description = "The new deployment", body = crate::entities::deployment::DeploymentSchema),
+  ),
+)]
+pub fn copy_deployment() {}
 
 /// Creates a new deployment with given `name` and the configuration
 /// of the deployment at the given `id`. Response: [Deployment]
@@ -45,6 +69,18 @@ pub struct CopyDeployment {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateDeploymentFromContainer",
+  description = "Create a Deployment from an existing container.",
+  request_body(content = CreateDeploymentFromContainer),
+  responses(
+    (status = 200, description = "The new deployment", body = crate::entities::deployment::DeploymentSchema),
+  ),
+)]
+pub fn create_deployment_from_container() {}
+
 /// Create a Deployment from an existing container. Response: [Deployment].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
@@ -60,6 +96,18 @@ pub struct CreateDeploymentFromContainer {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteDeployment",
+  description = "Delete a deployment.",
+  request_body(content = DeleteDeployment),
+  responses(
+    (status = 200, description = "The deleted deployment", body = crate::entities::deployment::DeploymentSchema),
+  ),
+)]
+pub fn delete_deployment() {}
 
 /// Deletes the deployment at the given id, and returns the deleted deployment.
 /// Response: [Deployment].
@@ -78,6 +126,18 @@ pub struct DeleteDeployment {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UpdateDeployment",
+  description = "Update a deployment.",
+  request_body(content = UpdateDeployment),
+  responses(
+    (status = 200, description = "The updated deployment", body = crate::entities::deployment::DeploymentSchema),
+  ),
+)]
+pub fn update_deployment() {}
 
 /// Update the deployment at the given id, and return the updated deployment.
 /// Response: [Deployment].
@@ -104,6 +164,18 @@ pub struct UpdateDeployment {
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RenameDeployment",
+  description = "Rename a deployment.",
+  request_body(content = RenameDeployment),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn rename_deployment() {}
 
 /// Rename the deployment at id to the given name. Response: [Update].
 ///
