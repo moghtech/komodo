@@ -1,4 +1,4 @@
-import { MoghAuthClient, Types } from "mogh_auth_client";
+import { MoghAuthClient } from "mogh_auth_client";
 import {
   ExecuteResponses,
   ReadResponses,
