@@ -2,7 +2,6 @@ import { MoghAuthClient, Types } from "mogh_auth_client";
 import {
   ExecuteResponses,
   ReadResponses,
-  UserResponses,
   WriteResponses,
 } from "./responses.js";
 import { terminal_methods, TerminalCallbacks } from "./terminal.js";
@@ -16,7 +15,6 @@ import {
   UpdateListItem,
   UpdateStatus,
   User,
-  UserRequest,
   WriteRequest,
   WsLoginMessage,
 } from "./types.js";
@@ -27,7 +25,6 @@ export * as Types from "./types.js";
 export type {
   ExecuteResponses,
   ReadResponses,
-  UserResponses,
   WriteResponses,
   TerminalCallbacks,
 };
@@ -120,19 +117,6 @@ export function KomodoClient(url: string, options: InitOptions) {
 
   const getUser = async () =>
     await request<undefined, User>("/user", "", undefined, "GET");
-
-  const user = async <
-    T extends UserRequest["type"],
-    Req extends Extract<UserRequest, { type: T }>,
-  >(
-    type: T,
-    params: Req["params"],
-  ) =>
-    await request<Req["params"], UserResponses[Req["type"]]>(
-      "/user",
-      type,
-      params,
-    );
 
   const read = async <
     T extends ReadRequest["type"],
@@ -357,18 +341,6 @@ export function KomodoClient(url: string, options: InitOptions) {
      * https://docs.rs/komodo_client/latest/komodo_client/api/user/index.html
      */
     getUser,
-    /**
-     * Call the `/user` api.
-     *
-     * ```
-     * const { key, secret } = await komodo.user("CreateApiKey", {
-     *   name: "my-api-key"
-     * });
-     * ```
-     *
-     * https://docs.rs/komodo_client/latest/komodo_client/api/user/index.html
-     */
-    user,
     /**
      * Call the `/read` api.
      *

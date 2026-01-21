@@ -179,6 +179,15 @@ pub fn komodo_timestamp() -> i64 {
   unix_timestamp_ms() as i64
 }
 
+/// ⚠️ DO NOT USE DIRECTLY
+/// This is a copy of [mogh_auth_client::api::manage::CreateApiKeyResponse] for local typeshare.
+/// Use the one from mogh auth instead.
+#[typeshare]
+pub struct CreateApiKeyResponse {
+  pub key: String,
+  pub secret: String,
+}
+
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]

@@ -73,7 +73,6 @@ export function KomodoClient(url, options) {
         }
     });
     const getUser = async () => await request("/user", "", undefined, "GET");
-    const user = async (type, params) => await request("/user", type, params);
     const read = async (type, params) => await request("/read", type, params);
     const write = async (type, params) => await request("/write", type, params);
     const execute = async (type, params) => await request("/execute", type, params);
@@ -205,18 +204,6 @@ export function KomodoClient(url, options) {
          * https://docs.rs/komodo_client/latest/komodo_client/api/user/index.html
          */
         getUser,
-        /**
-         * Call the `/user` api.
-         *
-         * ```
-         * const { key, secret } = await komodo.user("CreateApiKey", {
-         *   name: "my-api-key"
-         * });
-         * ```
-         *
-         * https://docs.rs/komodo_client/latest/komodo_client/api/user/index.html
-         */
-        user,
         /**
          * Call the `/read` api.
          *

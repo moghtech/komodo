@@ -3,7 +3,6 @@ import { KomodoClient, MoghAuth, Types } from "komodo_client";
 import {
   ExecuteResponses,
   ReadResponses,
-  UserResponses,
   WriteResponses,
 } from "komodo_client/dist/responses";
 import {
@@ -215,43 +214,6 @@ export const useUserReset = () => {
   };
 };
 
-export const useManageUser = <
-  T extends Types.UserRequest["type"],
-  R extends Extract<Types.UserRequest, { type: T }>,
-  P extends R["params"],
-  C extends Omit<
-    UseMutationOptions<UserResponses[T], unknown, P, unknown>,
-    "mutationKey" | "mutationFn"
-  >,
->(
-  type: T,
-  config?: C,
-) => {
-  const { toast } = useToast();
-  return useMutation({
-    mutationKey: [type],
-    mutationFn: (params: P) => komodo_client().user<T, R>(type, params),
-    onError: (e: { result: { error?: string; trace?: string[] } }, v, c) => {
-      console.log("Auth error:", e);
-      const msg = e.result?.error ?? "Unknown error. See console.";
-      const detail = e.result?.trace
-        ?.map((msg) => msg[0].toUpperCase() + msg.slice(1))
-        .join(" | ");
-      let msg_log = msg ? msg[0].toUpperCase() + msg.slice(1) + " | " : "";
-      if (detail) {
-        msg_log += detail + " | ";
-      }
-      toast({
-        title: `Request ${type} Failed`,
-        description: `${msg_log}See console for details`,
-        variant: "destructive",
-      });
-      config?.onError && config.onError(e, v, c);
-    },
-    ...config,
-  });
-};
-
 export const useRead = <
   T extends Types.ReadRequest["type"],
   R extends Extract<Types.ReadRequest, { type: T }>,
@@ -445,7 +407,7 @@ export const useFilterResources = <Info>(
 export const usePushRecentlyViewed = ({ type, id }: Types.ResourceTarget) => {
   const userInvalidate = useUserInvalidate();
 
-  const push = useManageUser("PushRecentlyViewed", {
+  const push = useWrite("PushRecentlyViewed", {
     onSuccess: userInvalidate,
   }).mutate;
 

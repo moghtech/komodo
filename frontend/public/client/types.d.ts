@@ -1143,16 +1143,13 @@ export interface ProcedureConfig {
  */
 export type Procedure = Resource<ProcedureConfig, undefined>;
 export type CopyProcedureResponse = Procedure;
-/** Response for [CreateApiKey]. */
+/**
+ * ⚠️ DO NOT USE DIRECTLY
+ * This is a copy of [mogh_auth_client::api::manage::CreateApiKeyResponse] for local typeshare.
+ * Use the one from mogh auth instead.
+ */
 export interface CreateApiKeyResponse {
-    /** X-API-KEY */
     key: string;
-    /**
-     * X-API-SECRET
-     *
-     * Note.
-     * There is no way to get the secret again after it is distributed in this message
-     */
     secret: string;
 }
 export type CreateApiKeyForServiceUserResponse = CreateApiKeyResponse;
@@ -1334,7 +1331,6 @@ export interface Variable {
 }
 export type CreateVariableResponse = Variable;
 export type DeleteApiKeyForServiceUserResponse = NoData;
-export type DeleteApiKeyResponse = NoData;
 export type DeleteDockerRegistryAccountResponse = DockerRegistryAccount;
 export type DeleteGitProviderAccountResponse = GitProviderAccount;
 /**
@@ -6165,22 +6161,6 @@ export interface CreateAlerter {
     config?: _PartialAlerterConfig;
 }
 /**
- * Create an api key for the calling user.
- * Response: [CreateApiKeyResponse].
- *
- * Note. After the response is served, there will be no way
- * to get the secret later.
- */
-export interface CreateApiKey {
-    /** The name for the api key. */
-    name: string;
-    /**
-     * A unix timestamp in millseconds specifying api key expire time.
-     * Default is 0, which means no expiry.
-     */
-    expires?: I64;
-}
-/**
  * **Admin only**. Create an api key for a service user.
  * Response: [CreateApiKeyResponse].
  */
@@ -6492,14 +6472,6 @@ export interface DeleteAlerter {
 export interface DeleteAllTerminals {
     /** Server Id or name */
     server: string;
-}
-/**
- * Delete an api key for the calling user.
- * Response: [NoData]
- */
-export interface DeleteApiKey {
-    /** The key which the user intends to delete. */
-    key: string;
 }
 /**
  * **Admin only.** Delete an api key for a service user.
@@ -9103,7 +9075,7 @@ export interface SetEveryoneUserGroup {
     everyone: boolean;
 }
 /**
- * Set the time the user last opened the UI updates.
+ * Set the time the calling user most recently opened the UI updates dropdown.
  * Used for unseen notification dot.
  * Response: [NoData]
  */
@@ -10514,19 +10486,6 @@ export declare enum SyncWebhookAction {
     Refresh = "Refresh",
     Sync = "Sync"
 }
-export type UserRequest = {
-    type: "PushRecentlyViewed";
-    params: PushRecentlyViewed;
-} | {
-    type: "SetLastSeenUpdate";
-    params: SetLastSeenUpdate;
-} | {
-    type: "CreateApiKey";
-    params: CreateApiKey;
-} | {
-    type: "DeleteApiKey";
-    params: DeleteApiKey;
-};
 export type WriteRequest = {
     type: "UpdateResourceMeta";
     params: UpdateResourceMeta;
@@ -10752,6 +10711,12 @@ export type WriteRequest = {
 } | {
     type: "DeleteOnboardingKey";
     params: DeleteOnboardingKey;
+} | {
+    type: "PushRecentlyViewed";
+    params: PushRecentlyViewed;
+} | {
+    type: "SetLastSeenUpdate";
+    params: SetLastSeenUpdate;
 } | {
     type: "CreateLocalUser";
     params: CreateLocalUser;

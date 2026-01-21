@@ -11,10 +11,7 @@ use database::mungos::{
 };
 use interpolate::Interpolator;
 use komodo_client::{
-  api::{
-    execute::{BatchExecutionResponse, BatchRunAction, RunAction},
-    user::{CreateApiKey, CreateApiKeyResponse, DeleteApiKey},
-  },
+  api::execute::{BatchExecutionResponse, BatchRunAction, RunAction},
   entities::{
     FileFormat, JsonObject,
     action::Action,
@@ -28,13 +25,20 @@ use komodo_client::{
   },
   parsers::parse_key_value_list,
 };
+use mogh_auth_client::api::manage::{
+  CreateApiKey, CreateApiKeyResponse,
+};
+use mogh_auth_server::api::manage::api_key::{
+  create_api_key, delete_api_key,
+};
 use mogh_config::merge_objects;
 use mogh_resolver::Resolve;
 use tokio::fs;
 
 use crate::{
   alert::send_alerts,
-  api::{execute::ExecuteRequest, user::UserArgs},
+  api::execute::ExecuteRequest,
+  auth::KomodoAuthImpl,
   config::core_config,
   helpers::{
     query::{VariablesAndSecrets, get_variables_and_secrets},
@@ -135,72 +139,88 @@ impl Resolve<ExecuteArgs> for RunAction {
     let args = serde_json::to_string(&args)
       .context("Failed to serialize action run arguments")?;
 
-    let CreateApiKeyResponse { key, secret } = CreateApiKey {
-      name: update.id.clone(),
-      expires: 0,
-    }
-    .resolve(&UserArgs {
-      user: action_user().to_owned(),
-    })
+    let CreateApiKeyResponse { key, secret } = create_api_key(
+      &KomodoAuthImpl,
+      action_user().id.clone(),
+      CreateApiKey {
+        name: update.id.clone(),
+        expires: 0,
+      },
+    )
     .await?;
 
-    let contents = &mut action.config.file_contents;
+    // Do next steps in seperate error handling block,
+    // and delete the API key before unwrapping the error.
+    // If Komodo shuts down during these steps, there will
+    // be a dangling api key in the DB with user_id: "000000000000000000000002".
+    // These need to be
+    let res = async {
+      let contents = &mut action.config.file_contents;
 
-    // Wrap the file contents in the execution context.
-    *contents = full_contents(contents, &args, &key, &secret);
+      // Wrap the file contents in the execution context.
+      *contents = full_contents(contents, &args, &key, &secret);
 
-    let replacers =
-      interpolate(contents, &mut update, key.clone(), secret.clone())
-        .await?
-        .into_iter()
-        .collect::<Vec<_>>();
+      let replacers = interpolate(
+        contents,
+        &mut update,
+        key.clone(),
+        secret.clone(),
+      )
+      .await?
+      .into_iter()
+      .collect::<Vec<_>>();
 
-    let file = format!("{}.ts", random_string(10));
-    let path = core_config().action_directory.join(&file);
+      let file = format!("{}.ts", random_string(10));
+      let path = core_config().action_directory.join(&file);
 
-    mogh_secret_file::write_async(&path, contents)
-      .await
-      .with_context(|| {
-        format!("Failed to write action file to {path:?}")
-      })?;
+      mogh_secret_file::write_async(&path, contents)
+        .await
+        .with_context(|| {
+          format!("Failed to write action file to {path:?}")
+        })?;
 
-    let CoreConfig { ssl_enabled, .. } = core_config();
+      let CoreConfig { ssl_enabled, .. } = core_config();
 
-    let https_cert_flag = if *ssl_enabled {
-      " --unsafely-ignore-certificate-errors=localhost"
-    } else {
-      ""
-    };
+      let https_cert_flag = if *ssl_enabled {
+        " --unsafely-ignore-certificate-errors=localhost"
+      } else {
+        ""
+      };
 
-    let reload = if action.config.reload_deno_deps {
-      " --reload"
-    } else {
-      ""
-    };
+      let reload = if action.config.reload_deno_deps {
+        " --reload"
+      } else {
+        ""
+      };
 
-    let mut res = run_komodo_standard_command(
-      // Keep this stage name as is, the UI will find the latest update log by matching the stage name
-      "Execute Action",
-      None,
-      format!(
-        "deno run --allow-all{https_cert_flag}{reload} {}",
-        path.display()
-      ),
-    )
+      let mut res = run_komodo_standard_command(
+        // Keep this stage name as is, the UI will find the latest update log by matching the stage name
+        "Execute Action",
+        None,
+        format!(
+          "deno run --allow-all{https_cert_flag}{reload} {}",
+          path.display()
+        ),
+      )
+      .await;
+
+      res.stdout = svi::replace_in_string(&res.stdout, &replacers)
+        .replace(&key, "<ACTION_API_KEY>");
+      res.stderr = svi::replace_in_string(&res.stderr, &replacers)
+        .replace(&secret, "<ACTION_API_SECRET>");
+
+      cleanup_run(file + ".js", &path).await;
+
+      update.logs.push(res);
+      update.finalize();
+
+      mogh_error::Ok(update)
+    }
     .await;
 
-    res.stdout = svi::replace_in_string(&res.stdout, &replacers)
-      .replace(&key, "<ACTION_API_KEY>");
-    res.stderr = svi::replace_in_string(&res.stderr, &replacers)
-      .replace(&secret, "<ACTION_API_SECRET>");
-
-    cleanup_run(file + ".js", &path).await;
-
-    if let Err(e) = (DeleteApiKey { key })
-      .resolve(&UserArgs {
-        user: action_user().to_owned(),
-      })
-      .await
+    if let Err(e) =
+      delete_api_key(&KomodoAuthImpl, &action_user().id, key)
+        .await
     {
       warn!(
         "Failed to delete API key after action execution | {:#}",
@@ -208,8 +228,7 @@ impl Resolve<ExecuteArgs> for RunAction {
       );
     };
 
-    update.logs.push(res);
-    update.finalize();
+    let update = res?;
 
     // Need to manually update the update before cache refresh,
     // and before broadcast with update_update.

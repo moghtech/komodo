@@ -121,6 +121,8 @@ use crate::api::write;
     write::set_users_in_user_group,
     write::set_everyone_user_group,
     // user
+    write::push_recently_viewed,
+    write::set_last_seen_update,
     write::delete_user,
     write::create_local_user,
     write::create_service_user,

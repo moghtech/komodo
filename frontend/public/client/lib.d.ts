@@ -1,10 +1,10 @@
 import { Types } from "npm:mogh_auth_client";
-import { ExecuteResponses, ReadResponses, UserResponses, WriteResponses } from "./responses.js";
+import { ExecuteResponses, ReadResponses, WriteResponses } from "./responses.js";
 import { TerminalCallbacks } from "./terminal.js";
-import { ConnectTerminalQuery, ExecuteRequest, ExecuteTerminalBody, ReadRequest, Update, UpdateListItem, User, UserRequest, WriteRequest } from "./types.js";
+import { ConnectTerminalQuery, ExecuteRequest, ExecuteTerminalBody, ReadRequest, Update, UpdateListItem, User, WriteRequest } from "./types.js";
 export * as MoghAuth from "npm:mogh_auth_client";
 export * as Types from "./types.js";
-export type { ExecuteResponses, ReadResponses, UserResponses, WriteResponses, TerminalCallbacks, };
+export type { ExecuteResponses, ReadResponses, WriteResponses, TerminalCallbacks, };
 export type InitOptions = {
     type: "jwt";
     params: {
@@ -60,20 +60,6 @@ export declare function KomodoClient(url: string, options: InitOptions): {
      * https://docs.rs/komodo_client/latest/komodo_client/api/user/index.html
      */
     getUser: () => Promise<User>;
-    /**
-     * Call the `/user` api.
-     *
-     * ```
-     * const { key, secret } = await komodo.user("CreateApiKey", {
-     *   name: "my-api-key"
-     * });
-     * ```
-     *
-     * https://docs.rs/komodo_client/latest/komodo_client/api/user/index.html
-     */
-    user: <T extends UserRequest["type"], Req extends Extract<UserRequest, {
-        type: T;
-    }>>(type: T, params: Req["params"]) => Promise<UserResponses[Req["type"]]>;
     /**
      * Call the `/read` api.
      *

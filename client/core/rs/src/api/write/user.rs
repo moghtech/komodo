@@ -2,9 +2,69 @@ use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::entities::user::User;
+use crate::entities::{NoData, ResourceTarget, user::User};
 
 use super::KomodoWriteRequest;
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/PushRecentlyViewed",
+  description = "Add a resource to calling user's recently viewed.",
+  request_body(content = PushRecentlyViewed),
+  responses(
+    (status = 200, description = "Successful", body = PushRecentlyViewedResponse),
+    (status = 500, description = "Failed", body = mogh_error::Serror),
+  ),
+)]
+pub fn push_recently_viewed() {}
+
+/// Push a resource to the front of the users 10 most recently viewed resources.
+/// Response: [NoData].
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoWriteRequest)]
+#[response(PushRecentlyViewedResponse)]
+#[error(mogh_error::Error)]
+pub struct PushRecentlyViewed {
+  /// The target to push.
+  pub resource: ResourceTarget,
+}
+
+#[typeshare]
+pub type PushRecentlyViewedResponse = NoData;
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/SetLastSeenUpdate",
+  description = "Set the time the calling user most recently opened the UI updates dropdown.",
+  request_body(content = SetLastSeenUpdate),
+  responses(
+    (status = 200, description = "Successful", body = SetLastSeenUpdateResponse),
+    (status = 500, description = "Failed", body = mogh_error::Serror),
+  ),
+)]
+pub fn set_last_seen_update() {}
+
+/// Set the time the calling user most recently opened the UI updates dropdown.
+/// Used for unseen notification dot.
+/// Response: [NoData]
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoWriteRequest)]
+#[response(SetLastSeenUpdateResponse)]
+#[error(mogh_error::Error)]
+pub struct SetLastSeenUpdate {}
+
+#[typeshare]
+pub type SetLastSeenUpdateResponse = NoData;
 
 //
 

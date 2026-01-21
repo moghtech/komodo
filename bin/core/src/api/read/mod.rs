@@ -1,4 +1,4 @@
-use std::{collections::HashSet, time::Instant};
+use std::collections::HashSet;
 
 use anyhow::{Context, anyhow};
 use axum::{
@@ -25,6 +25,7 @@ use mogh_resolver::Resolve;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use strum::{Display, EnumDiscriminants};
 use typeshare::typeshare;
 use uuid::Uuid;
 
@@ -66,7 +67,10 @@ pub struct ReadArgs {
 }
 
 #[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EnumDiscriminants,
+)]
+#[strum_discriminants(name(ReadRequestVariant), derive(Display))]
 #[args(ReadArgs)]
 #[response(Response)]
 #[error(mogh_error::Error)]
@@ -266,7 +270,7 @@ pub fn router() -> Router {
     .route("/", post(handler))
     .route("/{variant}", post(variant_handler))
     .layer(middleware::from_fn(
-      authenticate_request::<KomodoAuthImpl>,
+      authenticate_request::<KomodoAuthImpl, true>,
     ))
 }
 
@@ -286,15 +290,23 @@ async fn handler(
   Extension(user): Extension<User>,
   Json(request): Json<ReadRequest>,
 ) -> mogh_error::Result<axum::response::Response> {
-  let timer = Instant::now();
   let req_id = Uuid::new_v4();
-  debug!("/read request | user: {}", user.username);
+  let variant: ReadRequestVariant = (&request).into();
+
+  debug!(
+    "READ REQUEST {req_id} | METHOD: {variant} | USER: {} ({})",
+    user.username, user.id
+  );
+
   let res = request.resolve(&ReadArgs { user }).await;
+
   if let Err(e) = &res {
-    debug!("/read request {req_id} error: {:#}", e.error);
+    debug!(
+      "READ REQUEST {req_id} | METHOD: {variant} | ERROR: {:#}",
+      e.error
+    );
   }
-  let elapsed = timer.elapsed();
-  debug!("/read request {req_id} | resolve time: {elapsed:?}");
+
   res.map(|res| res.0)
 }
 

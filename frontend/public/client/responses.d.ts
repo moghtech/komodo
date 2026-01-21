@@ -1,10 +1,4 @@
 import * as Types from "./types.js";
-export type UserResponses = {
-    PushRecentlyViewed: Types.PushRecentlyViewedResponse;
-    SetLastSeenUpdate: Types.SetLastSeenUpdateResponse;
-    CreateApiKey: Types.CreateApiKeyResponse;
-    DeleteApiKey: Types.DeleteApiKeyResponse;
-};
 export type ReadResponses = {
     GetVersion: Types.GetVersionResponse;
     GetCoreInfo: Types.GetCoreInfoResponse;
@@ -222,6 +216,8 @@ export type WriteResponses = {
     CreateOnboardingKey: Types.CreateOnboardingKeyResponse;
     UpdateOnboardingKey: Types.UpdateOnboardingKeyResponse;
     DeleteOnboardingKey: Types.DeleteOnboardingKeyResponse;
+    PushRecentlyViewed: Types.PushRecentlyViewedResponse;
+    SetLastSeenUpdate: Types.SetLastSeenUpdateResponse;
     CreateLocalUser: Types.CreateLocalUserResponse;
     DeleteUser: Types.DeleteUserResponse;
     CreateServiceUser: Types.CreateServiceUserResponse;

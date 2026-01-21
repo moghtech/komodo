@@ -10,7 +10,7 @@ use crate::{
   KomodoClient,
   api::{
     execute::KomodoExecuteRequest, read::KomodoReadRequest,
-    user::KomodoUserRequest, write::KomodoWriteRequest,
+    write::KomodoWriteRequest,
   },
 };
 
@@ -80,41 +80,6 @@ impl KomodoClient {
   ) -> anyhow::Result<T::Response>
   where
     T: Serialize + MoghAuthManageRequest,
-    T::Response: DeserializeOwned,
-  {
-    self.post(
-      "/auth",
-      json!({
-        "type": T::req_type(),
-        "params": request
-      }),
-    )
-  }
-
-  #[cfg(not(feature = "blocking"))]
-  pub async fn user<T>(
-    &self,
-    request: T,
-  ) -> anyhow::Result<T::Response>
-  where
-    T: Serialize + KomodoUserRequest,
-    T::Response: DeserializeOwned,
-  {
-    self
-      .post(
-        "/auth",
-        json!({
-          "type": T::req_type(),
-          "params": request
-        }),
-      )
-      .await
-  }
-
-  #[cfg(feature = "blocking")]
-  pub fn user<T>(&self, request: T) -> anyhow::Result<T::Response>
-  where
-    T: Serialize + KomodoUserRequest,
     T::Response: DeserializeOwned,
   {
     self.post(

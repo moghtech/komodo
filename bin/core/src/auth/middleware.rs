@@ -9,6 +9,7 @@ use crate::{
 
 pub async fn extract_user_from_auth(
   auth: RequestAuthentication,
+  require_user_enabled: bool,
 ) -> anyhow::Result<User> {
   let user_id = match auth {
     RequestAuthentication::UserId(user_id) => user_id,
@@ -17,21 +18,30 @@ pub async fn extract_user_from_auth(
     }
     RequestAuthentication::PublicKey(_) => todo!(),
   };
-  check_enabled(user_id).await
-}
-
-pub async fn auth_jwt_get_user_id(
-  jwt: &str,
-) -> anyhow::Result<String> {
-  JWT_PROVIDER.decode_sub(jwt)
+  if require_user_enabled {
+    check_enabled(&user_id).await
+  } else {
+    get_user(&user_id).await
+  }
 }
 
 pub async fn auth_jwt_check_enabled(
   jwt: &str,
 ) -> anyhow::Result<User> {
-  let user_id = auth_jwt_get_user_id(jwt).await?;
-  check_enabled(user_id).await
+  let user_id = JWT_PROVIDER.decode_sub(jwt)?;
+  check_enabled(&user_id).await
 }
+
+pub async fn auth_api_key_check_enabled(
+  key: &str,
+  secret: &str,
+) -> anyhow::Result<User> {
+  let user_id = auth_api_key_get_user_id(key, secret).await?;
+  check_enabled(&user_id).await
+}
+
+/// Api Key Clock skew tolerance in milliseconds (5 minutes for Api Keys)
+const API_KEY_CLOCK_SKEW_TOLERANCE_MS: i64 = 5 * 60 * 1000;
 
 pub async fn auth_api_key_get_user_id(
   key: &str,
@@ -48,7 +58,7 @@ pub async fn auth_api_key_get_user_id(
   if key.expires != 0
     && key.expires
       < komodo_timestamp()
-        .saturating_sub(super::API_KEY_CLOCK_SKEW_TOLERANCE_MS)
+        .saturating_sub(API_KEY_CLOCK_SKEW_TOLERANCE_MS)
   {
     return Err(anyhow!("Invalid user credentials"));
   }
@@ -63,16 +73,8 @@ pub async fn auth_api_key_get_user_id(
   }
 }
 
-pub async fn auth_api_key_check_enabled(
-  key: &str,
-  secret: &str,
-) -> anyhow::Result<User> {
-  let user_id = auth_api_key_get_user_id(key, secret).await?;
-  check_enabled(user_id).await
-}
-
-async fn check_enabled(user_id: String) -> anyhow::Result<User> {
-  let user = get_user(&user_id).await?;
+async fn check_enabled(user_id: &str) -> anyhow::Result<User> {
+  let user = get_user(user_id).await?;
   if user.enabled {
     Ok(user)
   } else {

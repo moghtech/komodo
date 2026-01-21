@@ -1,10 +1,5 @@
 use std::net::IpAddr;
 
-use crate::{
-  auth::GENERAL_RATE_LIMITER,
-  auth::{auth_api_key_check_enabled, auth_jwt_check_enabled},
-  helpers::query::get_user,
-};
 use anyhow::{Context, anyhow};
 use axum::{
   Router,
@@ -15,6 +10,16 @@ use komodo_client::{entities::user::User, ws::WsLoginMessage};
 use mogh_error::{AddStatusCode, AddStatusCodeError};
 use mogh_rate_limit::WithFailureRateLimit;
 use reqwest::StatusCode;
+
+use crate::{
+  auth::{
+    GENERAL_RATE_LIMITER,
+    middleware::{
+      auth_api_key_check_enabled, auth_jwt_check_enabled,
+    },
+  },
+  helpers::query::get_user,
+};
 
 mod terminal;
 mod update;

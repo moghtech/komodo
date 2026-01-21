@@ -12,7 +12,7 @@ pub fn router() -> Router {
   Router::new()
     .route("/execute", post(execute_terminal))
     .layer(middleware::from_fn(
-      authenticate_request::<KomodoAuthImpl>,
+      authenticate_request::<KomodoAuthImpl, true>,
     ))
 }
 
@@ -39,7 +39,10 @@ async fn execute_terminal(
     init,
   }): Json<ExecuteTerminalBody>,
 ) -> mogh_error::Result<axum::body::Body> {
-  info!("/terminal/execute request | user: {}", user.username);
+  info!(
+    "TERMINAL EXECUTE REQUEST | USER: {} ({})",
+    user.username, user.id
+  );
 
   let (target, terminal, periphery) =
     setup_target_for_user(target, terminal, init, &user).await?;

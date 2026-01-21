@@ -174,7 +174,7 @@ pub fn router() -> Router {
     .route("/", post(handler))
     .route("/{variant}", post(variant_handler))
     .layer(middleware::from_fn(
-      authenticate_request::<KomodoAuthImpl>,
+      authenticate_request::<KomodoAuthImpl, true>,
     ))
 }
 
@@ -271,8 +271,8 @@ pub fn inner_handler(
           let mut update =
             find_one_by_id(&db_client().updates, &update_id)
               .await
-              .context("failed to query to db")?
-              .context("no update exists with given id")?;
+              .context("Failed to query to db")?
+              .context("No update exists with given id")?;
           update.logs.push(log);
           update.finalize();
           update_update(update).await
@@ -281,7 +281,7 @@ pub fn inner_handler(
 
         if let Err(e) = res {
           warn!(
-            "failed to update update with task error log | {e:#}"
+            "Failed to update update with task error log | {e:#}"
           );
         }
       }
@@ -300,8 +300,8 @@ async fn task(
   let variant: ExecuteRequestVariant = (&request).into();
 
   info!(
-    "/execute request {id} | {variant} | user: {}",
-    user.username
+    "EXECUTE REQUEST {id} | METHOD: {variant} | USER: {} ({})",
+    user.username, user.id
   );
 
   let res =
@@ -315,7 +315,7 @@ async fn task(
     };
 
   if let Err(e) = &res {
-    warn!("/execute request {id} error: {e:#}");
+    warn!("EXECUTE REQUEST {id} | METHOD: {variant} | ERROR: {e:#}");
   }
 
   res

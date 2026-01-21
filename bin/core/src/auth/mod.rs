@@ -9,7 +9,6 @@ use database::{
   mungos::by_id::update_one_by_id,
 };
 use komodo_client::entities::{
-  api_key::ApiKey,
   komodo_timestamp, optional_str,
   user::{NewUserParams, User, UserConfig, UserConfigVariant},
 };
@@ -19,16 +18,13 @@ use mogh_auth_client::{
   passkey::Passkey,
 };
 use mogh_auth_server::{
-  AuthImpl, RequestClientArgs,
+  AuthImpl,
   provider::{
     jwt::JwtProvider, oidc::SubjectIdentifier,
     passkey::PasskeyProvider,
   },
   rand::random_string,
   user::{AuthUserImpl, BoxAuthUser},
-  validations::{
-    validate_api_key_name, validate_password, validate_username,
-  },
 };
 use mogh_error::{AddStatusCode, AddStatusCodeError, StatusCode};
 use mogh_pki::RotatableKeyPair;
@@ -36,18 +32,20 @@ use mogh_rate_limit::RateLimiter;
 
 use crate::{
   config::{core_config, core_keys},
-  helpers::query::{
-    find_github_user, find_google_user, find_oidc_user, get_user,
+  helpers::{
+    query::{
+      find_github_user, find_google_user, find_oidc_user, get_user,
+    },
+    validations::{
+      validate_api_key_name, validate_password, validate_username,
+    },
   },
   state::db_client,
 };
 
-mod middleware;
+mod api_key;
 
-pub use middleware::*;
-
-/// Api Key Clock skew tolerance in milliseconds (5 minutes for Api Keys)
-const API_KEY_CLOCK_SKEW_TOLERANCE_MS: i64 = 5 * 60 * 1000;
+pub mod middleware;
 
 pub static JWT_PROVIDER: LazyLock<JwtProvider> =
   LazyLock::new(|| {
@@ -57,17 +55,15 @@ pub static JWT_PROVIDER: LazyLock<JwtProvider> =
     } else {
       config.jwt_secret.clone()
     };
-    JwtProvider::new(
-    secret.as_bytes(),
-    get_timelength_in_ms(
+    let ttl_ms = get_timelength_in_ms(
       config.jwt_ttl.to_string().parse().unwrap_or_else(|e| {
         warn!(
           "Failed to parse 'jwt_ttl' | Using default of 1-day | {e:?}"
         );
         Timelength::OneDay
       }),
-    ),
-  )
+    );
+    JwtProvider::new(secret.as_bytes(), ttl_ms)
   });
 
 pub static GENERAL_RATE_LIMITER: LazyLock<Arc<RateLimiter>> =
@@ -135,20 +131,11 @@ impl AuthUserImpl for AuthUser {
   }
 }
 
-pub struct KomodoAuthImpl {
-  client: RequestClientArgs,
-}
+pub struct KomodoAuthImpl;
 
 impl AuthImpl for KomodoAuthImpl {
-  fn from_client(client: RequestClientArgs) -> Self
-  where
-    Self: Sized,
-  {
-    Self { client }
-  }
-
-  fn client(&self) -> &RequestClientArgs {
-    &self.client
+  fn new() -> Self {
+    Self
   }
 
   fn app_name(&self) -> &'static str {
@@ -184,14 +171,18 @@ impl AuthImpl for KomodoAuthImpl {
   fn handle_request_authentication(
     &self,
     auth: mogh_auth_server::RequestAuthentication,
+    require_user_enabled: bool,
     mut req: axum::extract::Request,
   ) -> mogh_auth_server::DynFuture<
     mogh_error::Result<axum::extract::Request>,
   > {
     Box::pin(async move {
-      let mut user = extract_user_from_auth(auth)
-        .await
-        .status_code(StatusCode::UNAUTHORIZED)?;
+      let mut user = middleware::extract_user_from_auth(
+        auth,
+        require_user_enabled,
+      )
+      .await
+      .status_code(StatusCode::UNAUTHORIZED)?;
       // Sanitize the user for safety before
       // attaching to the request handlers.
       user.sanitize();
@@ -803,22 +794,9 @@ impl AuthImpl for KomodoAuthImpl {
     hashed_secret: String,
   ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
     Box::pin(async move {
-      let api_key = ApiKey {
-        name: body.name,
-        key: key.clone(),
-        secret: hashed_secret,
-        user_id,
-        created_at: komodo_timestamp(),
-        expires: body.expires as i64,
-      };
-
-      db_client()
-        .api_keys
-        .insert_one(api_key)
+      api_key::create_api_key(user_id, body, key, hashed_secret)
         .await
-        .context("Failed to create api key on database")?;
-
-      Ok(())
+        .map_err(Into::into)
     })
   }
 
@@ -827,12 +805,7 @@ impl AuthImpl for KomodoAuthImpl {
     key: String,
   ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
     Box::pin(async move {
-      db_client()
-        .api_keys
-        .delete_one(doc! { "key": key })
-        .await
-        .context("Failed to delete api key from database")?;
-      Ok(())
+      api_key::delete_api_key(&key).await.map_err(Into::into)
     })
   }
 

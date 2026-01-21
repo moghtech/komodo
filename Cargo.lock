@@ -3155,9 +3155,9 @@ dependencies = [
 
 [[package]]
 name = "mogh_auth_client"
-version = "1.1.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2019d6940e0424cc04d61624a4576f38f31285ee7eb489ee5d199b2cef1b0f40"
+checksum = "ba848aef33efa8994455739af7e5cb365ee9ccff413467412dec1b73a2b90e08"
 dependencies = [
  "anyhow",
  "mogh_error",
@@ -3173,9 +3173,9 @@ dependencies = [
 
 [[package]]
 name = "mogh_auth_server"
-version = "1.1.2"
+version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af2b620bffae7176f99e28056854580802caa23bb57df012bc89cdf90206fcca"
+checksum = "35fe018e6c12c840ddc3ae177e9101051d3810d605457877c9445896a3b7db6f"
 dependencies = [
  "anyhow",
  "arc-swap",

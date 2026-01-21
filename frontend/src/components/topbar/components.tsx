@@ -1,9 +1,9 @@
 import {
-  useManageUser,
   useRead,
   useResourceParamType,
   useUser,
   useUserInvalidate,
+  useWrite,
 } from "@lib/hooks";
 import { ResourceComponents } from "../resources";
 import {
@@ -387,7 +387,7 @@ export const TopbarUpdates = () => {
   );
 
   const userInvalidate = useUserInvalidate();
-  const { mutate } = useManageUser("SetLastSeenUpdate", {
+  const { mutate } = useWrite("SetLastSeenUpdate", {
     onSuccess: userInvalidate,
   });
 

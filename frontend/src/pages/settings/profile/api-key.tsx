@@ -1,8 +1,5 @@
 import { ConfirmButton, CopyButton } from "@components/util";
-import {
-  useInvalidate,
-  useManageUser,
-} from "@lib/hooks";
+import { useInvalidate, useManageAuth } from "@lib/hooks";
 import {
   Dialog,
   DialogContent,
@@ -13,12 +10,7 @@ import {
 } from "@ui/dialog";
 import { Button } from "@ui/button";
 import { useToast } from "@ui/use-toast";
-import {
-  Trash,
-  PlusCircle,
-  Loader2,
-  Check,
-} from "lucide-react";
+import { Trash, PlusCircle, Loader2, Check } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@ui/input";
 import {
@@ -39,7 +31,7 @@ export const CreateKey = () => {
   const [expires, setExpires] = useState<ExpiresOptions>("never");
   const [submitted, setSubmitted] = useState<{ key: string; secret: string }>();
   const invalidate = useInvalidate();
-  const { mutate, isPending } = useManageUser("CreateApiKey", {
+  const { mutate, isPending } = useManageAuth("CreateApiKey", {
     onSuccess: ({ key, secret }) => {
       invalidate(["ListApiKeys"]);
       setSubmitted({ key, secret });
@@ -163,7 +155,7 @@ export const CreateKey = () => {
 export const DeleteKey = ({ api_key }: { api_key: string }) => {
   const invalidate = useInvalidate();
   const { toast } = useToast();
-  const { mutate, isPending } = useManageUser("DeleteApiKey", {
+  const { mutate, isPending } = useManageAuth("DeleteApiKey", {
     onSuccess: () => {
       invalidate(["ListApiKeys"]);
       toast({ title: "Api Key Deleted" });

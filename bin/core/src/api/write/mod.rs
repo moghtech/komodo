@@ -159,6 +159,8 @@ pub enum WriteRequest {
   DeleteOnboardingKey(DeleteOnboardingKey),
 
   // ==== USER ====
+  PushRecentlyViewed(PushRecentlyViewed),
+  SetLastSeenUpdate(SetLastSeenUpdate),
   CreateLocalUser(CreateLocalUser),
   DeleteUser(DeleteUser),
 
@@ -213,7 +215,7 @@ pub fn router() -> Router {
     .route("/", post(handler))
     .route("/{variant}", post(variant_handler))
     .layer(middleware::from_fn(
-      authenticate_request::<KomodoAuthImpl>,
+      authenticate_request::<KomodoAuthImpl, true>,
     ))
 }
 
@@ -233,9 +235,7 @@ async fn handler(
   Extension(user): Extension<User>,
   Json(request): Json<WriteRequest>,
 ) -> mogh_error::Result<axum::response::Response> {
-  let req_id = Uuid::new_v4();
-
-  let res = tokio::spawn(task(req_id, request, user))
+  let res = tokio::spawn(task(request, user))
     .await
     .context("failure in spawned task");
 
@@ -243,18 +243,22 @@ async fn handler(
 }
 
 async fn task(
-  req_id: Uuid,
   request: WriteRequest,
   user: User,
 ) -> mogh_error::Result<axum::response::Response> {
+  let req_id = Uuid::new_v4();
   let variant: WriteRequestVariant = (&request).into();
-  info!("/write request | {variant} | user: {}", user.username);
+
+  info!(
+    "WRITE REQUEST {req_id} | METHOD: {variant} | USER: {} ({})",
+    user.username, user.id
+  );
 
   let res = request.resolve(&WriteArgs { user }).await;
 
   if let Err(e) = &res {
     warn!(
-      "/write request {req_id} | {variant} | error: {:#}",
+      "WRITE REQUEST {req_id} | METHOD: {variant} | ERROR: {:#}",
       e.error
     );
   }

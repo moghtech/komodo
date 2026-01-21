@@ -988,16 +988,13 @@ export type Procedure = Resource<ProcedureConfig, undefined>;
 
 export type CopyProcedureResponse = Procedure;
 
-/** Response for [CreateApiKey]. */
+/**
+ * ⚠️ DO NOT USE DIRECTLY
+ * This is a copy of [mogh_auth_client::api::manage::CreateApiKeyResponse] for local typeshare.
+ * Use the one from mogh auth instead.
+ */
 export interface CreateApiKeyResponse {
-	/** X-API-KEY */
 	key: string;
-	/**
-	 * X-API-SECRET
-	 * 
-	 * Note.
-	 * There is no way to get the secret again after it is distributed in this message
-	 */
 	secret: string;
 }
 
@@ -1181,8 +1178,6 @@ export interface Variable {
 export type CreateVariableResponse = Variable;
 
 export type DeleteApiKeyForServiceUserResponse = NoData;
-
-export type DeleteApiKeyResponse = NoData;
 
 export type DeleteDockerRegistryAccountResponse = DockerRegistryAccount;
 
@@ -6408,23 +6403,6 @@ export interface CreateAlerter {
 }
 
 /**
- * Create an api key for the calling user.
- * Response: [CreateApiKeyResponse].
- * 
- * Note. After the response is served, there will be no way
- * to get the secret later.
- */
-export interface CreateApiKey {
-	/** The name for the api key. */
-	name: string;
-	/**
-	 * A unix timestamp in millseconds specifying api key expire time.
-	 * Default is 0, which means no expiry.
-	 */
-	expires?: I64;
-}
-
-/**
  * **Admin only**. Create an api key for a service user.
  * Response: [CreateApiKeyResponse].
  */
@@ -6758,15 +6736,6 @@ export interface DeleteAlerter {
 export interface DeleteAllTerminals {
 	/** Server Id or name */
 	server: string;
-}
-
-/**
- * Delete an api key for the calling user.
- * Response: [NoData]
- */
-export interface DeleteApiKey {
-	/** The key which the user intends to delete. */
-	key: string;
 }
 
 /**
@@ -9637,7 +9606,7 @@ export interface SetEveryoneUserGroup {
 }
 
 /**
- * Set the time the user last opened the UI updates.
+ * Set the time the calling user most recently opened the UI updates dropdown.
  * Used for unseen notification dot.
  * Response: [NoData]
  */
@@ -10679,12 +10648,6 @@ export enum SyncWebhookAction {
 	Sync = "Sync",
 }
 
-export type UserRequest = 
-	| { type: "PushRecentlyViewed", params: PushRecentlyViewed }
-	| { type: "SetLastSeenUpdate", params: SetLastSeenUpdate }
-	| { type: "CreateApiKey", params: CreateApiKey }
-	| { type: "DeleteApiKey", params: DeleteApiKey };
-
 export type WriteRequest = 
 	| { type: "UpdateResourceMeta", params: UpdateResourceMeta }
 	| { type: "CreateSwarm", params: CreateSwarm }
@@ -10761,6 +10724,8 @@ export type WriteRequest =
 	| { type: "CreateOnboardingKey", params: CreateOnboardingKey }
 	| { type: "UpdateOnboardingKey", params: UpdateOnboardingKey }
 	| { type: "DeleteOnboardingKey", params: DeleteOnboardingKey }
+	| { type: "PushRecentlyViewed", params: PushRecentlyViewed }
+	| { type: "SetLastSeenUpdate", params: SetLastSeenUpdate }
 	| { type: "CreateLocalUser", params: CreateLocalUser }
 	| { type: "DeleteUser", params: DeleteUser }
 	| { type: "CreateServiceUser", params: CreateServiceUser }

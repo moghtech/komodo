@@ -1,25 +1,102 @@
-use std::str::FromStr;
+use std::{collections::VecDeque, str::FromStr};
 
 use anyhow::{Context, anyhow};
 use async_timing_util::unix_timestamp_ms;
 use database::{
+  bson::to_bson,
   hash_password,
-  mungos::mongodb::bson::{doc, oid::ObjectId},
+  mungos::{
+    by_id::update_one_by_id,
+    mongodb::bson::{doc, oid::ObjectId},
+  },
 };
 use komodo_client::{
   api::write::*,
-  entities::user::{NewUserParams, User, UserConfig},
+  entities::{
+    komodo_timestamp,
+    user::{NewUserParams, User, UserConfig},
+  },
 };
 use mogh_error::{AddStatusCode as _, AddStatusCodeError};
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
 
 use crate::{
-  helpers::validations::{validate_password, validate_username},
+  helpers::{
+    query::get_user,
+    validations::{validate_password, validate_username},
+  },
   state::db_client,
 };
 
 use super::WriteArgs;
+
+//
+
+const RECENTLY_VIEWED_MAX: usize = 10;
+
+impl Resolve<WriteArgs> for PushRecentlyViewed {
+  async fn resolve(
+    self,
+    WriteArgs { user, .. }: &WriteArgs,
+  ) -> mogh_error::Result<PushRecentlyViewedResponse> {
+    let user = get_user(&user.id).await?;
+
+    let (resource_type, id) = self.resource.extract_variant_id();
+
+    let field = format!("recents.{resource_type}");
+
+    let update = match user.recents.get(&resource_type) {
+      Some(recents) => {
+        let mut recents = recents
+          .iter()
+          .filter(|_id| !id.eq(*_id))
+          .take(RECENTLY_VIEWED_MAX - 1)
+          .collect::<VecDeque<_>>();
+
+        recents.push_front(id);
+
+        doc! { &field: to_bson(&recents)? }
+      }
+      None => {
+        doc! { &field: [id] }
+      }
+    };
+
+    update_one_by_id(
+      &db_client().users,
+      &user.id,
+      database::mungos::update::Update::Set(update),
+      None,
+    )
+    .await
+    .with_context(|| format!("Failed to update user '{field}'"))?;
+
+    Ok(PushRecentlyViewedResponse {})
+  }
+}
+
+//
+
+impl Resolve<WriteArgs> for SetLastSeenUpdate {
+  async fn resolve(
+    self,
+    WriteArgs { user, .. }: &WriteArgs,
+  ) -> mogh_error::Result<SetLastSeenUpdateResponse> {
+    update_one_by_id(
+      &db_client().users,
+      &user.id,
+      database::mungos::update::Update::Set(doc! {
+        "last_update_view": komodo_timestamp()
+      }),
+      None,
+    )
+    .await
+    .context("Failed to update user 'last_update_view'")?;
+
+    Ok(SetLastSeenUpdateResponse {})
+  }
+}
 
 //
 

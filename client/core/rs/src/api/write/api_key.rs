@@ -1,11 +1,9 @@
+use mogh_auth_client::api::manage::CreateApiKeyResponse;
 use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::{
-  api::user::CreateApiKeyResponse,
-  entities::{I64, NoData},
-};
+use crate::entities::{I64, NoData};
 
 use super::KomodoWriteRequest;
 

@@ -1,19 +1,20 @@
 use anyhow::{Context, anyhow};
 use database::mungos::{by_id::find_one_by_id, mongodb::bson::doc};
 use komodo_client::{
-  api::{user::CreateApiKey, write::*},
+  api::write::*,
   entities::{
     komodo_timestamp,
     user::{NewUserParams, User, UserConfig},
   },
 };
+use mogh_auth_client::api::manage::CreateApiKey;
+use mogh_auth_server::api::manage::api_key::create_api_key;
 use mogh_error::{AddStatusCode as _, AddStatusCodeError as _};
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
 
 use crate::{
-  api::user::UserArgs,
-  helpers::validations::{validate_api_key_name, validate_username},
+  auth::KomodoAuthImpl, helpers::validations::validate_username,
   state::db_client,
 };
 
@@ -148,9 +149,6 @@ impl Resolve<WriteArgs> for CreateApiKeyForServiceUser {
       );
     }
 
-    validate_api_key_name(&self.name)
-      .status_code(StatusCode::BAD_REQUEST)?;
-
     let service_user =
       find_one_by_id(&db_client().users, &self.user_id)
         .await
@@ -164,11 +162,14 @@ impl Resolve<WriteArgs> for CreateApiKeyForServiceUser {
       );
     };
 
-    CreateApiKey {
-      name: self.name,
-      expires: self.expires,
-    }
-    .resolve(&UserArgs { user: service_user })
+    create_api_key(
+      &KomodoAuthImpl,
+      service_user.id,
+      CreateApiKey {
+        name: self.name,
+        expires: self.expires as u64,
+      },
+    )
     .await
   }
 }
