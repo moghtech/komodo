@@ -1,4 +1,4 @@
-import { Types } from "./lib";
+import { Types } from "./lib.js";
 export const terminal_methods = (url, state) => {
     const connect_terminal = ({ query: { target, terminal, init }, on_message, on_login, on_open, on_close, }) => {
         let url_query = connect_terminal_target_query(target);

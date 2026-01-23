@@ -1,5 +1,5 @@
-import { ClientState, Types } from "./lib";
-import { ConnectTerminalQuery, ExecuteTerminalBody, InitTerminal } from "./types";
+import { ClientState, Types } from "./lib.js";
+import { ConnectTerminalQuery, ExecuteTerminalBody, InitTerminal } from "./types.js";
 export type TerminalCallbacks = {
     on_message?: (e: MessageEvent<any>) => void;
     on_login?: () => void;

@@ -1,11 +1,11 @@
-import { ClientState, Types } from "./lib";
+import { ClientState, Types } from "./lib.js";
 import {
   ConnectTerminalQuery,
   ExecuteTerminalBody,
   InitTerminal,
   TerminalTarget,
   WsLoginMessage,
-} from "./types";
+} from "./types.js";
 
 export type TerminalCallbacks = {
   on_message?: (e: MessageEvent<any>) => void;

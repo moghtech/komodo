@@ -422,35 +422,7 @@ export declare function KomodoClient(url: string, options: InitOptions): {
         service: string;
         shell: string;
         command: string;
-        terminal
-        /**
-         * Call the `/write` api.
-         *
-         * ```
-         * const build = await komodo.write("UpdateBuild", {
-         *   id: "my-build",
-         *   config: {
-         *     version: "1.0.4"
-         *   }
-         * });
-         * ```
-         *
-         * https://docs.rs/komodo_client/latest/komodo_client/api/write/index.html
-         */
-        ? /**
-         * Call the `/write` api.
-         *
-         * ```
-         * const build = await komodo.write("UpdateBuild", {
-         *   id: "my-build",
-         *   config: {
-         *     version: "1.0.4"
-         *   }
-         * });
-         * ```
-         *
-         * https://docs.rs/komodo_client/latest/komodo_client/api/write/index.html
-         */: string;
+        terminal?: string;
         recreate?: import("./types.js").TerminalRecreateMode;
     }, callbacks?: import("./terminal.js").ExecuteCallbacks) => Promise<void>;
 };
