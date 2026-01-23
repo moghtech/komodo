@@ -83,8 +83,10 @@ pub fn global_auto_update() {}
 /// with `poll_for_updates` or `auto_update` enabled.
 /// Response: [Update]. Alias: `auto-update`.
 ///
-/// 1. `docker compose pull` any Stacks / Deployments with `poll_for_updates` or `auto_update` enabled. This will pick up any available updates.
+/// 1. Run CheckStackForUpdate / CheckDeploymentForUpdate any Stacks / Deployments with `poll_for_updates` or `auto_update` enabled.
+///    This will pick up any available updates.
 /// 2. Redeploy Stacks / Deployments that have updates found and 'auto_update' enabled.
+///      - Skip this using 'skip_auto_update', preferring to only alert even for 'auto_update' resources.
 #[typeshare]
 #[derive(
   Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
@@ -93,7 +95,14 @@ pub fn global_auto_update() {}
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
 #[error(mogh_error::Error)]
-pub struct GlobalAutoUpdate {}
+pub struct GlobalAutoUpdate {
+  /// Normally resources with 'auto_update' will be
+  /// redeployed immediately if updates are found.
+  /// With this enabled, convert this into an UpdateAvailable alert.
+  #[serde(default)]
+  #[arg(long, short = 's', default_value_t = false)]
+  pub skip_auto_update: bool,
+}
 
 //
 

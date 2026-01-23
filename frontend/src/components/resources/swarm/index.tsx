@@ -43,7 +43,7 @@ import { Input } from "@ui/input";
 
 export const useSwarm = (id?: string) =>
   useRead("ListSwarms", {}, { refetchInterval: 10_000 }).data?.find(
-    (d) => d.id === id
+    (d) => d.id === id,
   );
 
 export const useFullSwarm = (id: string) =>
@@ -69,7 +69,7 @@ export const SwarmComponents: RequiredResourceComponents = {
           { intention: "Good", value: summary?.healthy ?? 0, title: "Healthy" },
           {
             intention: "Critical",
-            value: summary?.unhealthy ?? 0,
+            value: (summary?.unhealthy ?? 0) + (summary?.down ?? 0),
             title: "Unhealthy",
           },
           {
@@ -187,14 +187,14 @@ export const SWARM_ICONS: {
     const state = useRead(
       "ListSwarmNodes",
       { swarm: swarm_id! },
-      { enabled: !!swarm_id }
+      { enabled: !!swarm_id },
     ).data?.find((node) => resource_id && node.ID === resource_id)?.State;
     return (
       <Diamond
         className={cn(
           `w-${size} h-${size}`,
           stroke_color_class_by_intention(swarm_node_state_intention(state)),
-          className
+          className,
         )}
       />
     );
@@ -203,14 +203,14 @@ export const SWARM_ICONS: {
     const state = useRead(
       "ListSwarmStacks",
       { swarm: swarm_id! },
-      { enabled: !!swarm_id }
+      { enabled: !!swarm_id },
     ).data?.find((stack) => resource_id && stack.Name === resource_id)?.State;
     return (
       <SquareStack
         className={cn(
           `w-${size} h-${size}`,
           stroke_color_class_by_intention(swarm_state_intention(state)),
-          className
+          className,
         )}
       />
     );
@@ -219,18 +219,18 @@ export const SWARM_ICONS: {
     const state = useRead(
       "ListSwarmServices",
       { swarm: swarm_id! },
-      { enabled: !!swarm_id }
+      { enabled: !!swarm_id },
     ).data?.find(
       (service) =>
         resource_id &&
-        (service.ID === resource_id || service.Name === resource_id)
+        (service.ID === resource_id || service.Name === resource_id),
     )?.State;
     return (
       <FolderCode
         className={cn(
           `w-${size} h-${size}`,
           stroke_color_class_by_intention(swarm_state_intention(state)),
-          className
+          className,
         )}
       />
     );
@@ -239,16 +239,16 @@ export const SWARM_ICONS: {
     const task = useRead(
       "ListSwarmTasks",
       { swarm: swarm_id! },
-      { enabled: !!swarm_id }
+      { enabled: !!swarm_id },
     ).data?.find((task) => resource_id && task.ID === resource_id);
     return (
       <ListTodo
         className={cn(
           `w-${size} h-${size}`,
           stroke_color_class_by_intention(
-            swarm_task_state_intention(task?.State, task?.DesiredState)
+            swarm_task_state_intention(task?.State, task?.DesiredState),
           ),
-          className
+          className,
         )}
       />
     );
@@ -257,18 +257,18 @@ export const SWARM_ICONS: {
     const inUse = useRead(
       "ListSwarmConfigs",
       { swarm: swarm_id! },
-      { enabled: !!swarm_id }
+      { enabled: !!swarm_id },
     ).data?.find(
       (config) =>
         resource_id &&
-        (config.ID === resource_id || config.Name === resource_id)
+        (config.ID === resource_id || config.Name === resource_id),
     )?.InUse;
     return (
       <Settings
         className={cn(
           `w-${size} h-${size}`,
           stroke_color_class_by_intention(inUse ? "Good" : "Critical"),
-          className
+          className,
         )}
       />
     );
@@ -277,18 +277,18 @@ export const SWARM_ICONS: {
     const inUse = useRead(
       "ListSwarmSecrets",
       { swarm: swarm_id! },
-      { enabled: !!swarm_id }
+      { enabled: !!swarm_id },
     ).data?.find(
       (secret) =>
         resource_id &&
-        (secret.ID === resource_id || secret.Name === resource_id)
+        (secret.ID === resource_id || secret.Name === resource_id),
     )?.InUse;
     return (
       <KeyRound
         className={cn(
           `w-${size} h-${size}`,
           stroke_color_class_by_intention(inUse ? "Good" : "Critical"),
-          className
+          className,
         )}
       />
     );
@@ -334,7 +334,7 @@ const JoinSwarmCommands = ({
   close: () => void;
 }) => {
   const addr = useRead("ListSwarmNodes", { swarm: id }).data?.find(
-    (node) => node.State === Types.NodeState.READY && node.ManagerAddr
+    (node) => node.State === Types.NodeState.READY && node.ManagerAddr,
   )?.ManagerAddr;
   const tokens = useRead("InspectSwarm", { swarm: id }).data?.JoinTokens;
   const managerCmd = `docker swarm join --token ${tokens?.Manager} ${addr}`;

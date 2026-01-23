@@ -141,6 +141,7 @@ impl Resolve<WriteArgs> for UpdateStack {
       tokio::spawn(async move {
         let _ = (CheckStackForUpdate {
           stack: self.id,
+          skip_auto_update: false,
           wait_for_auto_update: false,
           skip_cache_refresh: true,
         })
@@ -234,6 +235,7 @@ impl Resolve<WriteArgs> for WriteStackFileContents {
     tokio::spawn(async move {
       let _ = (CheckStackForUpdate {
         stack: id,
+        skip_auto_update: false,
         wait_for_auto_update: false,
         skip_cache_refresh: true,
       })
@@ -689,6 +691,7 @@ impl Resolve<WriteArgs> for CheckStackForUpdate {
     check_stack_for_update_inner(
       stack.id,
       &swarm_or_server,
+      self.skip_auto_update,
       self.wait_for_auto_update,
       self.skip_cache_refresh,
     )
@@ -724,6 +727,7 @@ pub async fn check_stack_for_update_inner(
   // ID or name.
   stack: String,
   swarm_or_server: &SwarmOrServer,
+  skip_auto_update: bool,
   // Otherwise spawns task to run in background
   wait_for_auto_update: bool,
   skip_cache_refresh: bool,
@@ -796,6 +800,9 @@ pub async fn check_stack_for_update_inner(
   };
 
   let StackState::Running = status.curr.state else {
+    alert_cache
+      .retain(|(stack_id, _)| stack_id != &stack.id)
+      .await;
     return Ok(
       status
         .curr
@@ -841,7 +848,7 @@ pub async fn check_stack_for_update_inner(
       latest_digest.update_available(&current_digest.0);
 
     if service_with_update.update_available
-      && !stack.config.auto_update
+      && (skip_auto_update || !stack.config.auto_update)
       && !alert_cache
         .contains(&(stack.id.clone(), service.service.clone()))
         .await
@@ -891,9 +898,18 @@ pub async fn check_stack_for_update_inner(
     .cloned()
     .collect::<Vec<_>>();
 
-  if !stack.config.auto_update || services_with_update.is_empty() {
+  if skip_auto_update
+    || !stack.config.auto_update
+    || services_with_update.is_empty()
+  {
     return Ok(services);
   }
+
+  // Conservatively remove from alert cache so 'skip_auto_update'
+  // doesn't cause alerts not to be sent on subsequent calls.
+  alert_cache
+    .retain(|(stack_id, _)| stack_id != &stack.id)
+    .await;
 
   let deploy_services = if stack.config.auto_update_all_services {
     Vec::new()

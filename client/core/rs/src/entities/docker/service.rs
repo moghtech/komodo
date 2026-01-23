@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::entities::{
-  I64, U64, docker::task::TaskSpecRestartPolicyConditionEnum,
+  I64, NoData, U64, docker::task::TaskSpecRestartPolicyConditionEnum,
   swarm::SwarmState,
 };
 
@@ -39,9 +39,17 @@ pub struct SwarmServiceListItem {
   #[serde(rename = "Restart")]
   pub restart: Option<TaskSpecRestartPolicyConditionEnum>,
 
-  /// Number of replicas
+  /// The service mode.
+  #[serde(rename = "Mode")]
+  pub mode: Option<SwarmServiceMode>,
+
+  /// Number of replicas (in a replicated mode)
   #[serde(rename = "Replicas")]
   pub replicas: Option<I64>,
+
+  /// Max concurrent tasks (in a replicated job mode)
+  #[serde(rename = "MaxConcurrent")]
+  pub max_concurrent: Option<I64>,
 
   /// Attached config names
   #[serde(rename = "Configs")]
@@ -50,6 +58,24 @@ pub struct SwarmServiceListItem {
   /// Attached secret names
   #[serde(rename = "Secrets")]
   pub secrets: Vec<String>,
+
+  /// The number of tasks for the service currently in the Running state.
+  #[serde(rename = "RunningTasks")]
+  pub running_tasks: Option<U64>,
+
+  /// The number of tasks for the service desired to be running.
+  /// - For replicated services, this is the replica count from the service spec.
+  /// - For global services, this is computed by taking count of all tasks for the
+  ///   service with a Desired State other than Shutdown.
+  #[serde(rename = "DesiredTasks")]
+  pub desired_tasks: Option<U64>,
+
+  /// The number of tasks for a job that are in the Completed state.
+  /// This field must be cross-referenced with the service type,
+  /// as the value of 0 may mean the service is not in a job mode,
+  /// or it may mean the job-mode service has no tasks yet Completed.
+  #[serde(rename = "CompletedTasks")]
+  pub completed_tasks: Option<U64>,
 
   /// Swarm service state.
   /// - Healthy if all associated tasks match their desired state (or report no desired state)
@@ -66,6 +92,37 @@ pub struct SwarmServiceListItem {
   pub updated_at: Option<String>,
 }
 
+/// The service mode.
+#[typeshare]
+#[derive(
+  Debug,
+  Clone,
+  Copy,
+  PartialEq,
+  Eq,
+  PartialOrd,
+  Ord,
+  Serialize,
+  Deserialize,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub enum SwarmServiceMode {
+  /// Replicated service
+  /// - Run desired number of replicas
+  Replicated,
+  /// Global service
+  /// - Run once per node
+  Global,
+  /// Replicated job
+  /// - Scheduled tasks which run to completion
+  /// - Run desired number of job replicas
+  ReplicatedJob,
+  /// Global job
+  /// - Scheduled tasks which run to completion
+  /// - Run one job per node
+  GlobalJob,
+}
+
 /// Swarm service details.
 #[typeshare]
 #[derive(
@@ -75,6 +132,26 @@ pub struct SwarmServiceListItem {
 pub struct SwarmService {
   #[serde(rename = "ID")]
   pub id: Option<String>,
+
+  /// The service mode.
+  #[serde(rename = "Mode")]
+  pub mode: Option<SwarmServiceMode>,
+
+  /// Number of replicas (in a replicated mode)
+  #[serde(rename = "Replicas")]
+  pub replicas: Option<I64>,
+
+  /// Max concurrent tasks (in a replicated job mode)
+  #[serde(rename = "MaxConcurrent")]
+  pub max_concurrent: Option<I64>,
+
+  /// Swarm service state.
+  /// - Healthy if all associated tasks match their desired state (or report no desired state)
+  /// - Unhealthy otherwise
+  ///
+  /// Not included in docker cli return, computed by Komodo
+  #[serde(rename = "State")]
+  pub state: SwarmState,
 
   #[serde(rename = "Version")]
   pub version: Option<ObjectVersion>,
@@ -146,13 +223,15 @@ pub struct ServiceSpecMode {
   #[serde(rename = "Replicated")]
   pub replicated: Option<ServiceSpecModeReplicated>,
 
-  // #[serde(rename = "Global")]
-  // pub global: Option<HashMap<(), ()>>,
+  #[serde(rename = "Global")]
+  pub global: Option<NoData>,
+
   #[serde(rename = "ReplicatedJob")]
   pub replicated_job: Option<ServiceSpecModeReplicatedJob>,
-  // /// The mode used for services which run a task to the completed state on each valid node.
-  // #[serde(rename = "GlobalJob")]
-  // pub global_job: Option<HashMap<(), ()>>,
+
+  /// The mode used for services which run a task to the completed state on each valid node.
+  #[serde(rename = "GlobalJob")]
+  pub global_job: Option<NoData>,
 }
 
 #[typeshare]

@@ -272,6 +272,7 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
         if let Err(e) = check_stack_for_update_inner(
           stack.id,
           &swarm_or_server,
+          self.skip_auto_update,
           true,
           false,
         )
@@ -327,6 +328,7 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
       if let Err(e) = check_deployment_for_update_inner(
         deployment,
         &swarm_or_server,
+        self.skip_auto_update,
         true,
       )
       .await

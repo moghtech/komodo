@@ -43,6 +43,7 @@ pub async fn update_swarm_stack_cache(
       .map(|stack| match stack.state {
         Some(SwarmState::Healthy) => StackState::Running,
         Some(SwarmState::Unhealthy) => StackState::Unhealthy,
+        Some(SwarmState::Down) => StackState::Down,
         Some(SwarmState::Unknown) | None => StackState::Unknown,
       })
       .unwrap_or(StackState::Down);
@@ -216,6 +217,7 @@ pub async fn update_swarm_deployment_cache(
       .map(|service| match service.state {
         SwarmState::Healthy => DeploymentState::Running,
         SwarmState::Unhealthy => DeploymentState::Unhealthy,
+        SwarmState::Down => DeploymentState::NotDeployed,
         SwarmState::Unknown => DeploymentState::Unknown,
       })
       .unwrap_or(DeploymentState::NotDeployed);

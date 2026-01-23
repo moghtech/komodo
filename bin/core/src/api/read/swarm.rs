@@ -134,6 +134,9 @@ impl Resolve<ReadArgs> for GetSwarmsSummary {
         SwarmState::Unhealthy => {
           res.unhealthy += 1;
         }
+        SwarmState::Down => {
+          res.down += 1;
+        }
       }
     }
 

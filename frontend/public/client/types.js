@@ -470,6 +470,43 @@ export var HostConfigIsolationEnum;
     HostConfigIsolationEnum["Process"] = "process";
     HostConfigIsolationEnum["Hyperv"] = "hyperv";
 })(HostConfigIsolationEnum || (HostConfigIsolationEnum = {}));
+/** The service mode. */
+export var SwarmServiceMode;
+(function (SwarmServiceMode) {
+    /**
+     * Replicated service
+     * - Run desired number of replicas
+     */
+    SwarmServiceMode["Replicated"] = "Replicated";
+    /**
+     * Global service
+     * - Run once per node
+     */
+    SwarmServiceMode["Global"] = "Global";
+    /**
+     * Replicated job
+     * - Scheduled tasks which run to completion
+     * - Run desired number of job replicas
+     */
+    SwarmServiceMode["ReplicatedJob"] = "ReplicatedJob";
+    /**
+     * Global job
+     * - Scheduled tasks which run to completion
+     * - Run one job per node
+     */
+    SwarmServiceMode["GlobalJob"] = "GlobalJob";
+})(SwarmServiceMode || (SwarmServiceMode = {}));
+export var SwarmState;
+(function (SwarmState) {
+    /** All nodes /tasks OK */
+    SwarmState["Healthy"] = "Healthy";
+    /** Some nodes / tasks don't match desired state */
+    SwarmState["Unhealthy"] = "Unhealthy";
+    /** All nodes / tasks down. */
+    SwarmState["Down"] = "Down";
+    /** Unknown case */
+    SwarmState["Unknown"] = "Unknown";
+})(SwarmState || (SwarmState = {}));
 export var TaskSpecContainerSpecPrivilegesSeccompModeEnum;
 (function (TaskSpecContainerSpecPrivilegesSeccompModeEnum) {
     TaskSpecContainerSpecPrivilegesSeccompModeEnum["EMPTY"] = "";
@@ -593,15 +630,6 @@ export var ClusterVolumePublishStatusStateEnum;
     ClusterVolumePublishStatusStateEnum["PendingNodeUnpublish"] = "pending-node-unpublish";
     ClusterVolumePublishStatusStateEnum["PendingControllerUnpublish"] = "pending-controller-unpublish";
 })(ClusterVolumePublishStatusStateEnum || (ClusterVolumePublishStatusStateEnum = {}));
-export var SwarmState;
-(function (SwarmState) {
-    /** The Swarm is healthy, all nodes OK */
-    SwarmState["Healthy"] = "Healthy";
-    /** The Swarm is unhealthy */
-    SwarmState["Unhealthy"] = "Unhealthy";
-    /** Unknown case */
-    SwarmState["Unknown"] = "Unknown";
-})(SwarmState || (SwarmState = {}));
 export var TaskState;
 (function (TaskState) {
     TaskState["NEW"] = "new";

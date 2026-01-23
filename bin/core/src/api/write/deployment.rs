@@ -248,6 +248,7 @@ impl Resolve<WriteArgs> for UpdateDeployment {
       tokio::spawn(async move {
         let _ = (CheckDeploymentForUpdate {
           deployment: self.id,
+          skip_auto_update: false,
           wait_for_auto_update: false,
         })
         .resolve(&WriteArgs {
@@ -378,6 +379,7 @@ impl Resolve<WriteArgs> for CheckDeploymentForUpdate {
     check_deployment_for_update_inner(
       deployment,
       &swarm_or_server,
+      self.skip_auto_update,
       self.wait_for_auto_update,
     )
     .await?;
@@ -412,6 +414,7 @@ fn deployment_alert_sent_cache() -> &'static SetCache<String> {
 pub async fn check_deployment_for_update_inner(
   deployment: Deployment,
   swarm_or_server: &SwarmOrServer,
+  skip_auto_update: bool,
   // Otherwise spawns task to run in background
   wait_for_auto_update: bool,
 ) -> anyhow::Result<bool> {
@@ -466,13 +469,17 @@ pub async fn check_deployment_for_update_inner(
     return Ok(false);
   }
 
-  if deployment.config.auto_update {
+  if !skip_auto_update && deployment.config.auto_update {
     // Trigger deploy + alert
     let swarm_id = swarm_or_server.swarm_id().map(str::to_string);
     let swarm_name = swarm_or_server.swarm_name().map(str::to_string);
     let server_id = swarm_or_server.server_id().map(str::to_string);
     let server_name =
       swarm_or_server.server_name().map(str::to_string);
+
+    // Conservatively remove from alert cache so 'skip_auto_update'
+    // doesn't cause alerts not to be sent on subsequent calls.
+    alert_cache.remove(&deployment.id).await;
 
     let run = async move {
       match execute::inner_handler(
@@ -520,7 +527,7 @@ pub async fn check_deployment_for_update_inner(
         }
       }
     };
-    
+
     if wait_for_auto_update {
       run.await
     } else {

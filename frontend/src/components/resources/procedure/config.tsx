@@ -143,7 +143,7 @@ export const ProcedureConfig = ({ id }: { id: string }) => {
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
   const [update, set] = useLocalStorage<Partial<Types.ProcedureConfig>>(
     `procedure-${id}-update-v1`,
-    {}
+    {},
   );
   const { mutateAsync } = useWrite("UpdateProcedure");
   const { integrations } = useWebhookIntegrations();
@@ -186,7 +186,7 @@ export const ProcedureConfig = ({ id }: { id: string }) => {
                       setStage={(stage) =>
                         set({
                           stages: stages.map((s, i) =>
-                            index === i ? stage : s
+                            index === i ? stage : s,
                           ),
                         })
                       }
@@ -565,7 +565,7 @@ const Stage = ({
                                   .params,
                             },
                           } as Types.EnabledExecution)
-                        : item
+                        : item,
                     ),
                   })
                 }
@@ -598,7 +598,7 @@ const Stage = ({
                               ...item,
                               execution: { type, params },
                             }
-                          : item
+                          : item,
                       ) as Types.EnabledExecution[],
                     })
                   }
@@ -633,7 +633,7 @@ const Stage = ({
                     setStage({
                       ...stage,
                       executions: stage.executions!.filter(
-                        (_, i) => i !== index
+                        (_, i) => i !== index,
                       ),
                     })
                   }
@@ -660,7 +660,7 @@ const Stage = ({
                     setStage({
                       ...stage,
                       executions: stage.executions!.map((item, i) =>
-                        i === index ? { ...item, enabled: !enabled } : item
+                        i === index ? { ...item, enabled: !enabled } : item,
                       ),
                     })
                   }
@@ -685,7 +685,7 @@ const ExecutionTypeSelector = ({
   disabled: boolean;
 }) => {
   const execution_types = Object.keys(TARGET_COMPONENTS).filter(
-    (c) => !["None"].includes(c)
+    (c) => !["None"].includes(c),
   );
 
   const [open, setOpen] = useState(false);
@@ -1157,7 +1157,7 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
       const [commandText, setCommand] = useState(
         params.command && params.command.length
           ? shellQuote(params.command)
-          : ""
+          : "",
       );
       const [no_tty, setNoTty] = useState(!!params.no_tty);
       const [no_deps, setNoDeps] = useState(!!params.no_deps);
@@ -1182,7 +1182,7 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
         setCommand(
           params.command && params.command.length
             ? shellQuote(params.command)
-            : ""
+            : "",
         );
         setNoTty(!!params.no_tty);
         setNoDeps(!!params.no_deps);
@@ -1197,7 +1197,7 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
             ? Object.entries(params.env)
                 .map(([k, v]) => `${k}=${v}`)
                 .join("\n")
-            : "  # VARIABLE = value\n"
+            : "  # VARIABLE = value\n",
         );
       }, [params]);
 
@@ -1209,12 +1209,12 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
                 if (variable) acc[variable] = value;
                 return acc;
               },
-              {}
+              {},
             )
           : undefined;
         const parsed = commandText.trim()
           ? shellParse(commandText.trim()).map((tok) =>
-              typeof tok === "string" ? tok : ((tok as any).op ?? String(tok))
+              typeof tok === "string" ? tok : ((tok as any).op ?? String(tok)),
             )
           : [];
         setParams({
@@ -1687,8 +1687,18 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
     Component: () => <></>,
   },
   GlobalAutoUpdate: {
-    params: {},
-    Component: () => <></>,
+    params: { skip_auto_update: false },
+    Component: ({ params, setParams, disabled }) => (
+      <div
+        className="flex items-center gap-4"
+        onClick={() =>
+          setParams({ skip_auto_update: !params.skip_auto_update })
+        }
+      >
+        <Switch checked={params.skip_auto_update} disabled={disabled} />
+        Skip redeploy
+      </div>
+    ),
   },
   RotateAllServerKeys: {
     params: {},
@@ -1731,7 +1741,7 @@ const TARGET_COMPONENTS: ExecutionConfigs = {
     Component: ({ params, setParams, disabled }) => {
       const { toast } = useToast();
       const [internal, setInternal] = useState(
-        params.duration_ms?.toString() ?? ""
+        params.duration_ms?.toString() ?? "",
       );
       useEffect(() => {
         setInternal(params.duration_ms?.toString() ?? "");

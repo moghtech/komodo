@@ -47,10 +47,12 @@ pub struct SwarmListItemInfo {
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum SwarmState {
-  /// The Swarm is healthy, all nodes OK
+  /// All nodes /tasks OK
   Healthy,
-  /// The Swarm is unhealthy
+  /// Some nodes / tasks don't match desired state
   Unhealthy,
+  /// All nodes / tasks down.
+  Down,
   /// Unknown case
   #[default]
   Unknown,

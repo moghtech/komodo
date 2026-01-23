@@ -249,6 +249,11 @@ pub fn check_stack_for_update() {}
 pub struct CheckStackForUpdate {
   /// Name or id
   pub stack: String,
+  /// Normally resources with 'auto_update' will be
+  /// redeployed immediately if updates are found.
+  /// With this enabled, convert this into an UpdateAvailable alert.
+  #[serde(default)]
+  pub skip_auto_update: bool,
   /// If check triggers auto deploy,
   /// whether this call should wait on the auto deploy,
   /// or run it in the background.

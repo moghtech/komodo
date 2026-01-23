@@ -69,7 +69,12 @@ pub async fn alert_swarms(
       alerts.get(&AlertDataVariant::SwarmUnhealthy)
     });
     match (swarm_status.state, health_alert) {
-      (SwarmState::Unhealthy | SwarmState::Unknown, None) => {
+      (
+        SwarmState::Unhealthy
+        | SwarmState::Down
+        | SwarmState::Unknown,
+        None,
+      ) => {
         // Only open unreachable alert if not in maintenance and buffer is ready
         if !in_maintenance
           && buffer.ready_to_open(
@@ -94,7 +99,12 @@ pub async fn alert_swarms(
             .push((alert, swarm.config.send_unhealthy_alerts))
         }
       }
-      (SwarmState::Unhealthy | SwarmState::Unknown, Some(alert)) => {
+      (
+        SwarmState::Unhealthy
+        | SwarmState::Down
+        | SwarmState::Unknown,
+        Some(alert),
+      ) => {
         // update alert err
         let mut alert = alert.clone();
         let (id, name) = match alert.data {

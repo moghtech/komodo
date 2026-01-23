@@ -221,6 +221,11 @@ pub fn check_deployment_for_update() {}
 pub struct CheckDeploymentForUpdate {
   /// Name or id
   pub deployment: String,
+  /// Normally resources with 'auto_update' will be
+  /// redeployed immediately if updates are found.
+  /// With this enabled, convert this into an UpdateAvailable alert.
+  #[serde(default)]
+  pub skip_auto_update: bool,
   /// If check triggers auto deploy,
   /// whether this call should wait on the auto deploy,
   /// or run it in the background.

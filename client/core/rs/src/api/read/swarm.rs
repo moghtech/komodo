@@ -175,6 +175,8 @@ pub struct GetSwarmsSummaryResponse {
   pub healthy: u32,
   /// The number of Swarms with Unhealthy state
   pub unhealthy: u32,
+  /// The number of Swarms with Down state
+  pub down: u32,
   /// The number of Swarms with Unknown state
   pub unknown: u32,
 }

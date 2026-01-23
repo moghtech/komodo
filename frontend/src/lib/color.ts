@@ -111,7 +111,7 @@ export const text_color_class_by_intention = (intention: ColorIntention) => {
 };
 
 export const soft_text_color_class_by_intention = (
-  intention: ColorIntention
+  intention: ColorIntention,
 ) => {
   switch (intention) {
     case "Good":
@@ -130,22 +130,24 @@ export const soft_text_color_class_by_intention = (
 };
 
 export const swarm_state_intention: (
-  state?: Types.SwarmState
+  state?: Types.SwarmState,
 ) => ColorIntention = (state) => {
   switch (state) {
     case Types.SwarmState.Healthy:
       return "Good";
     case Types.SwarmState.Unhealthy:
       return "Critical";
-    case Types.SwarmState.Unknown:
+    case Types.SwarmState.Down:
       return "Neutral";
+    case Types.SwarmState.Unknown:
+      return "Unknown";
     case undefined:
       return "None";
   }
 };
 
 export const swarm_node_state_intention: (
-  state?: Types.NodeState
+  state?: Types.NodeState,
 ) => ColorIntention = (state) => {
   switch (state) {
     case Types.NodeState.READY:
@@ -162,7 +164,7 @@ export const swarm_node_state_intention: (
 };
 
 export const swarm_node_availability_intention: (
-  state?: Types.NodeSpecAvailabilityEnum
+  state?: Types.NodeSpecAvailabilityEnum,
 ) => ColorIntention = (state) => {
   switch (state) {
     case Types.NodeSpecAvailabilityEnum.ACTIVE:
@@ -179,7 +181,7 @@ export const swarm_node_availability_intention: (
 };
 
 export const swarm_node_role_intention: (
-  state?: Types.NodeSpecRoleEnum
+  state?: Types.NodeSpecRoleEnum,
 ) => ColorIntention = (state) => {
   switch (state) {
     case Types.NodeSpecRoleEnum.MANAGER:
@@ -195,7 +197,7 @@ export const swarm_node_role_intention: (
 
 export const swarm_task_state_intention: (
   state?: Types.TaskState,
-  desired?: Types.TaskState
+  desired?: Types.TaskState,
 ) => ColorIntention = (state, desired) => {
   // Case when its desired running
   if (desired === Types.TaskState.RUNNING) {
@@ -227,7 +229,7 @@ export const swarm_task_state_intention: (
 
 export const server_state_intention: (
   state?: Types.ServerState,
-  hasVersionMismatch?: boolean
+  hasVersionMismatch?: boolean,
 ) => ColorIntention = (state, hasVersionMismatch) => {
   switch (state) {
     case Types.ServerState.Ok:
@@ -266,7 +268,7 @@ export const stack_state_intention = (state?: Types.StackState) => {
 };
 
 export const deployment_state_intention: (
-  state?: Types.DeploymentState
+  state?: Types.DeploymentState,
 ) => ColorIntention = (state) => {
   switch (state) {
     case undefined:
@@ -287,7 +289,7 @@ export const deployment_state_intention: (
 };
 
 export const container_state_intention: (
-  state?: Types.ContainerStateStatusEnum
+  state?: Types.ContainerStateStatusEnum,
 ) => ColorIntention = (state) => {
   switch (state) {
     case undefined:
@@ -376,7 +378,7 @@ export const action_state_intention = (status?: Types.ActionState) => {
 };
 
 export const resource_sync_state_intention = (
-  status?: Types.ResourceSyncState
+  status?: Types.ResourceSyncState,
 ) => {
   switch (status) {
     case undefined:
@@ -397,7 +399,7 @@ export const resource_sync_state_intention = (
 };
 
 export const alert_level_intention: (
-  level: Types.SeverityLevel
+  level: Types.SeverityLevel,
 ) => ColorIntention = (level) => {
   switch (level) {
     case Types.SeverityLevel.Ok:
@@ -411,7 +413,7 @@ export const alert_level_intention: (
 
 export const diff_type_intention: (
   level: Types.DiffData["type"],
-  reverse: boolean
+  reverse: boolean,
 ) => ColorIntention = (level, reverse) => {
   switch (level) {
     case "Create":

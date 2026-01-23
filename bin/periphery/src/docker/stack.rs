@@ -25,7 +25,7 @@ impl DockerClient {
       self.list_swarm_tasks(),
     )?;
     let services = self
-      .list_swarm_services(Some(&tasks))
+      .list_swarm_services()
       .await?
       .into_iter()
       .filter(|service| {
@@ -66,8 +66,9 @@ impl DockerClient {
   }
 }
 
-pub async fn list_swarm_stacks()
--> anyhow::Result<Vec<SwarmStackListItem>> {
+pub async fn list_swarm_stacks(
+  services: &[SwarmServiceListItem],
+) -> anyhow::Result<Vec<SwarmStackListItem>> {
   let res = run_komodo_standard_command(
     "List Swarm Stacks",
     None,
@@ -91,9 +92,20 @@ pub async fn list_swarm_stacks()
   .into_iter()
   .map(|mut stack| async move {
     let res = async {
-      let tasks =
-        list_swarm_stack_tasks(stack.name.as_ref()?).await.ok()?;
-      Some(state_from_tasks(&tasks))
+      let service_ids =
+        list_swarm_stack_service_ids(stack.name.as_ref()?)
+          .await
+          .ok()?;
+      let services = services.iter().filter(|s| {
+        let Some(id) = &s.id else {
+          return false;
+        };
+        service_ids.iter().any(|sid| {
+          // The service id may be short hash
+          id.starts_with(sid)
+        })
+      });
+      Some(state_from_services(services))
     }
     .await;
     if let Some(state) = res {
@@ -171,46 +183,25 @@ pub async fn list_swarm_stack_tasks(
 pub fn state_from_services<'a>(
   services: impl IntoIterator<Item = &'a SwarmServiceListItem>,
 ) -> SwarmState {
+  let mut state = SwarmState::Unknown;
   for service in services {
     if matches!(service.state, SwarmState::Unhealthy) {
       return SwarmState::Unhealthy;
     }
-  }
-  SwarmState::Healthy
-}
-
-pub fn state_from_tasks<'a>(
-  tasks: impl IntoIterator<Item = &'a SwarmStackTaskListItem>,
-) -> SwarmState {
-  for task in tasks {
-    let (Some(current), Some(desired)) =
-      (&task.current_state, &task.desired_state)
-    else {
+    if matches!(state, SwarmState::Unknown) {
+      state = service.state;
       continue;
-    };
-    // CurrentState example: 'Running 44 minutes ago'.
-    // Only want first "word"
-    let Some(current) = current.split(" ").next() else {
-      continue;
-    };
-    match (current, desired.as_str()) {
-      // Both running, healthy
-      ("Running", "Running") => continue,
-      // Not running when it should be, unhealthy
-      (_, "Running") => return SwarmState::Unhealthy,
-      // Should be shutdown but its running, unhealthy
-      ("Running", "Shutdown") => return SwarmState::Unhealthy,
-      // Very likely healthy
-      (_, "Shutdown") => continue,
-      // All others must match
-      (current, desired) => {
-        if current != desired {
-          return SwarmState::Unhealthy;
-        }
-      }
+    }
+    if state != service.state {
+      return SwarmState::Unhealthy;
     }
   }
-  SwarmState::Healthy
+  if matches!(state, SwarmState::Unknown) {
+    // This happens if services is empty ie down.
+    SwarmState::Down
+  } else {
+    state
+  }
 }
 
 fn cmp_option<T: Ord>(

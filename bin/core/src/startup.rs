@@ -151,7 +151,9 @@ async fn in_progress_update_cleanup() {
     )
     .await
   {
-    error!("Failed to clean up in progress updates on startup | {e:?}")
+    error!(
+      "Failed to clean up in progress updates on startup | {e:?}"
+    )
   }
 }
 
@@ -422,7 +424,7 @@ async fn ensure_init_user_and_resources() {
         enabled: true,
         executions: vec![
           EnabledExecution {
-            execution: Execution::GlobalAutoUpdate(GlobalAutoUpdate {}),
+            execution: Execution::GlobalAutoUpdate(GlobalAutoUpdate { skip_auto_update: false }),
             enabled: true
           }
         ]

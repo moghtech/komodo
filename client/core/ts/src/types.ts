@@ -2716,43 +2716,19 @@ export interface SwarmActionState {
 
 export type GetSwarmActionStateResponse = SwarmActionState;
 
-export type U64 = number;
-
-/** The version number of the object such as node, service, etc. This is needed to avoid conflicting writes. The client must send the version number along with the modified specification when updating these objects.  This approach ensures safe concurrency and determinism in that the change on the object may not be applied if the version number has changed from the last read. In other words, if two update requests specify the same base version, only one of the requests can succeed. As a result, two separate update requests that happen at the same time will not unintentionally overwrite each other. */
-export interface ObjectVersion {
-	Index?: U64;
-}
-
-/** Driver represents a driver (network, logging, secrets). */
-export interface Driver {
-	/** Name of the driver. */
-	Name: string;
-	/** Key/value map of driver-specific options. */
-	Options?: Record<string, string>;
-}
-
-export interface ConfigSpec {
-	/** User-defined name of the config. */
-	Name?: string;
-	/** User-defined key/value metadata. */
-	Labels?: Record<string, string>;
-	/**
-	 * Data is the data to store as a config, formatted as a Base64-url-safe-encoded ([RFC 4648](https://tools.ietf.org/html/rfc4648#section-5)) string.
-	 * It must be empty if the Driver field is set, in which case the data is loaded from an external secret store.
-	 * The maximum allowed size is 500KB, as defined in [MaxSecretSize](https://pkg.go.dev/github.com/moby/swarmkit/v2@v2.0.0-20250103191802-8c1959736554/api/validation#MaxSecretSize).
-	 */
-	Data?: string;
-	/** Templating driver, if applicable  Templating controls whether and how to evaluate the config payload as a template. If no driver is set, no templating is used. */
-	Templating?: Driver;
-}
-
-/** Swarm config details. */
 export interface SwarmConfig {
-	ID?: string;
-	Version?: ObjectVersion;
-	CreatedAt?: string;
-	UpdatedAt?: string;
-	Spec?: ConfigSpec;
+	/**
+	 * The Servers which are swarm manager nodes.
+	 * If a Server is not reachable or gives error,
+	 * tries the next Server.
+	 */
+	server_ids?: string[];
+	/** Configure quick links that are displayed in the resource header */
+	links?: string[];
+	/** Whether to send alerts about the swarm health. */
+	send_unhealthy_alerts: boolean;
+	/** Scheduled maintenance windows during which alerts will be suppressed. */
+	maintenance_windows?: MaintenanceWindow[];
 }
 
 export interface SwarmInfo {
@@ -3493,6 +3469,50 @@ export interface Container {
 
 export type InspectDeploymentContainerResponse = Container;
 
+/** The service mode. */
+export enum SwarmServiceMode {
+	/**
+	 * Replicated service
+	 * - Run desired number of replicas
+	 */
+	Replicated = "Replicated",
+	/**
+	 * Global service
+	 * - Run once per node
+	 */
+	Global = "Global",
+	/**
+	 * Replicated job
+	 * - Scheduled tasks which run to completion
+	 * - Run desired number of job replicas
+	 */
+	ReplicatedJob = "ReplicatedJob",
+	/**
+	 * Global job
+	 * - Scheduled tasks which run to completion
+	 * - Run one job per node
+	 */
+	GlobalJob = "GlobalJob",
+}
+
+export enum SwarmState {
+	/** All nodes /tasks OK */
+	Healthy = "Healthy",
+	/** Some nodes / tasks don't match desired state */
+	Unhealthy = "Unhealthy",
+	/** All nodes / tasks down. */
+	Down = "Down",
+	/** Unknown case */
+	Unknown = "Unknown",
+}
+
+export type U64 = number;
+
+/** The version number of the object such as node, service, etc. This is needed to avoid conflicting writes. The client must send the version number along with the modified specification when updating these objects.  This approach ensures safe concurrency and determinism in that the change on the object may not be applied if the version number has changed from the last read. In other words, if two update requests specify the same base version, only one of the requests can succeed. As a result, two separate update requests that happen at the same time will not unintentionally overwrite each other. */
+export interface ObjectVersion {
+	Index?: U64;
+}
+
 /** Describes a permission the user has to accept upon installing the plugin. */
 export interface PluginPrivilege {
 	Name?: string;
@@ -3807,7 +3827,10 @@ export interface ServiceSpecModeReplicatedJob {
 /** Scheduling mode for the service. */
 export interface ServiceSpecMode {
 	Replicated?: ServiceSpecModeReplicated;
+	Global?: NoData;
 	ReplicatedJob?: ServiceSpecModeReplicatedJob;
+	/** The mode used for services which run a task to the completed state on each valid node. */
+	GlobalJob?: NoData;
 }
 
 export enum ServiceSpecUpdateConfigFailureActionEnum {
@@ -3978,6 +4001,20 @@ export interface ServiceJobStatus {
 /** Swarm service details. */
 export interface SwarmService {
 	ID?: string;
+	/** The service mode. */
+	Mode?: SwarmServiceMode;
+	/** Number of replicas (in a replicated mode) */
+	Replicas?: I64;
+	/** Max concurrent tasks (in a replicated job mode) */
+	MaxConcurrent?: I64;
+	/**
+	 * Swarm service state.
+	 * - Healthy if all associated tasks match their desired state (or report no desired state)
+	 * - Unhealthy otherwise
+	 * 
+	 * Not included in docker cli return, computed by Komodo
+	 */
+	State: SwarmState;
 	Version?: ObjectVersion;
 	CreatedAt?: string;
 	UpdatedAt?: string;
@@ -4344,15 +4381,6 @@ export type InspectDockerVolumeResponse = Volume;
 
 export type InspectStackContainerResponse = Container;
 
-export enum SwarmState {
-	/** The Swarm is healthy, all nodes OK */
-	Healthy = "Healthy",
-	/** The Swarm is unhealthy */
-	Unhealthy = "Unhealthy",
-	/** Unknown case */
-	Unknown = "Unknown",
-}
-
 /** Swarm service list item. */
 export interface SwarmServiceListItem {
 	ID?: string;
@@ -4364,12 +4392,32 @@ export interface SwarmServiceListItem {
 	Runtime?: string;
 	/** Condition for restart. */
 	Restart?: TaskSpecRestartPolicyConditionEnum;
-	/** Number of replicas */
+	/** The service mode. */
+	Mode?: SwarmServiceMode;
+	/** Number of replicas (in a replicated mode) */
 	Replicas?: I64;
+	/** Max concurrent tasks (in a replicated job mode) */
+	MaxConcurrent?: I64;
 	/** Attached config names */
 	Configs: string[];
 	/** Attached secret names */
 	Secrets: string[];
+	/** The number of tasks for the service currently in the Running state. */
+	RunningTasks?: U64;
+	/**
+	 * The number of tasks for the service desired to be running.
+	 * - For replicated services, this is the replica count from the service spec.
+	 * - For global services, this is computed by taking count of all tasks for the
+	 * service with a Desired State other than Shutdown.
+	 */
+	DesiredTasks?: U64;
+	/**
+	 * The number of tasks for a job that are in the Completed state.
+	 * This field must be cross-referenced with the service type,
+	 * as the value of 0 may mean the service is not in a job mode,
+	 * or it may mean the job-mode service has no tasks yet Completed.
+	 */
+	CompletedTasks?: U64;
 	/**
 	 * Swarm service state.
 	 * - Healthy if all associated tasks match their desired state (or report no desired state)
@@ -4681,6 +4729,14 @@ export interface SwarmInspectInfo {
 }
 
 export type InspectSwarmResponse = SwarmInspectInfo;
+
+/** Driver represents a driver (network, logging, secrets). */
+export interface Driver {
+	/** Name of the driver. */
+	Name: string;
+	/** Key/value map of driver-specific options. */
+	Options?: Record<string, string>;
+}
 
 export interface SecretSpec {
 	/** User-defined name of the secret. */
@@ -6010,6 +6066,12 @@ export interface CheckDeploymentForUpdate {
 	/** Name or id */
 	deployment: string;
 	/**
+	 * Normally resources with 'auto_update' will be
+	 * redeployed immediately if updates are found.
+	 * With this enabled, convert this into an UpdateAvailable alert.
+	 */
+	skip_auto_update?: boolean;
+	/**
 	 * If check triggers auto deploy,
 	 * whether this call should wait on the auto deploy,
 	 * or run it in the background.
@@ -6021,6 +6083,12 @@ export interface CheckDeploymentForUpdate {
 export interface CheckStackForUpdate {
 	/** Name or id */
 	stack: string;
+	/**
+	 * Normally resources with 'auto_update' will be
+	 * redeployed immediately if updates are found.
+	 * With this enabled, convert this into an UpdateAvailable alert.
+	 */
+	skip_auto_update?: boolean;
 	/**
 	 * If check triggers auto deploy,
 	 * whether this call should wait on the auto deploy,
@@ -6074,6 +6142,21 @@ export interface CloseAlert {
 export interface CommitSync {
 	/** Id or name */
 	sync: string;
+}
+
+export interface ConfigSpec {
+	/** User-defined name of the config. */
+	Name?: string;
+	/** User-defined key/value metadata. */
+	Labels?: Record<string, string>;
+	/**
+	 * Data is the data to store as a config, formatted as a Base64-url-safe-encoded ([RFC 4648](https://tools.ietf.org/html/rfc4648#section-5)) string.
+	 * It must be empty if the Driver field is set, in which case the data is loaded from an external secret store.
+	 * The maximum allowed size is 500KB, as defined in [MaxSecretSize](https://pkg.go.dev/github.com/moby/swarmkit/v2@v2.0.0-20250103191802-8c1959736554/api/validation#MaxSecretSize).
+	 */
+	Data?: string;
+	/** Templating driver, if applicable  Templating controls whether and how to evaluate the config payload as a template. If no driver is set, no templating is used. */
+	Templating?: Driver;
 }
 
 /**
@@ -7916,6 +7999,8 @@ export interface GetSwarmsSummaryResponse {
 	healthy: number;
 	/** The number of Swarms with Unhealthy state */
 	unhealthy: number;
+	/** The number of Swarms with Down state */
+	down: number;
 	/** The number of Swarms with Unknown state */
 	unknown: number;
 }
@@ -8012,10 +8097,18 @@ export interface GetVersionResponse {
  * with `poll_for_updates` or `auto_update` enabled.
  * Response: [Update]. Alias: `auto-update`.
  * 
- * 1. `docker compose pull` any Stacks / Deployments with `poll_for_updates` or `auto_update` enabled. This will pick up any available updates.
+ * 1. Run CheckStackForUpdate / CheckDeploymentForUpdate any Stacks / Deployments with `poll_for_updates` or `auto_update` enabled.
+ * This will pick up any available updates.
  * 2. Redeploy Stacks / Deployments that have updates found and 'auto_update' enabled.
+ * - Skip this using 'skip_auto_update', preferring to only alert even for 'auto_update' resources.
  */
 export interface GlobalAutoUpdate {
+	/**
+	 * Normally resources with 'auto_update' will be
+	 * redeployed immediately if updates are found.
+	 * With this enabled, convert this into an UpdateAvailable alert.
+	 */
+	skip_auto_update?: boolean;
 }
 
 /**
@@ -9823,19 +9916,13 @@ export interface StopStack {
 	services?: string[];
 }
 
+/** Swarm config details. */
 export interface SwarmConfig {
-	/**
-	 * The Servers which are swarm manager nodes.
-	 * If a Server is not reachable or gives error,
-	 * tries the next Server.
-	 */
-	server_ids?: string[];
-	/** Configure quick links that are displayed in the resource header */
-	links?: string[];
-	/** Whether to send alerts about the swarm health. */
-	send_unhealthy_alerts: boolean;
-	/** Scheduled maintenance windows during which alerts will be suppressed. */
-	maintenance_windows?: MaintenanceWindow[];
+	ID?: string;
+	Version?: ObjectVersion;
+	CreatedAt?: string;
+	UpdatedAt?: string;
+	Spec?: ConfigSpec;
 }
 
 /**
