@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@ui/select";
-import { AlertTriangle, History, Settings } from "lucide-react";
+import { AlertTriangle, Bookmark, History, Settings } from "lucide-react";
 import { Fragment, ReactNode, SetStateAction } from "react";
 
 const keys = <T extends Record<string, unknown>>(obj: T) =>
@@ -166,16 +166,15 @@ export const Config = <T,>({
               <div
                 className={cn(
                   "flex flex-col gap-8 h-fit overflow-auto max-h-[calc(100vh-130px)]",
-                  changesMade && "max-h-[calc(100vh-220px)]"
+                  changesMade && "max-h-[calc(100vh-220px)]",
                 )}
               >
                 {sections.map((section) => (
                   <div key={section}>
-                    {section && (
-                      <p className="text-muted-foreground uppercase text-right mb-2">
-                        {section}
-                      </p>
-                    )}
+                    <div className="flex items-center gap-2 justify-end text-muted-foreground mb-2">
+                      <Bookmark className="w-4 h-4" />
+                      <p className="uppercase">{section || "General"}</p>
+                    </div>
                     <div className="flex flex-col gap-2">
                       {components[section] &&
                         components[section]
@@ -187,7 +186,7 @@ export const Config = <T,>({
                               key={section + item.label}
                             >
                               <Button
-                                variant="secondary"
+                                variant="ghost"
                                 className="justify-end w-full"
                                 size="sm"
                               >
@@ -277,7 +276,7 @@ export const Config = <T,>({
                           id={section + label}
                           className={cn(
                             "p-6 border rounded-md flex flex-col gap-6 scroll-mt-40 xl:scroll-mt-24",
-                            hidden && "hidden"
+                            hidden && "hidden",
                           )}
                         >
                           {!labelHidden && (
@@ -288,7 +287,7 @@ export const Config = <T,>({
                                   <div
                                     className={cn(
                                       "text-lg",
-                                      boldLabel && "font-bold"
+                                      boldLabel && "font-bold",
                                     )}
                                   >
                                     {label}
@@ -314,11 +313,11 @@ export const Config = <T,>({
                             />
                           )}
                         </div>
-                      )
+                      ),
                     )}
                   </div>
                 </div>
-              )
+              ),
           )}
           {changesMade && (
             <div className="flex gap-2 justify-end">
