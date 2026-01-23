@@ -340,4 +340,117 @@ export declare function KomodoClient(url: string, options: InitOptions): {
         command: string;
         init?: import("./types.js").InitTerminal;
     }, callbacks?: import("./terminal.js").ExecuteCallbacks) => Promise<void>;
+    /**
+     * Executes a command on a given Server / Container / terminal,
+     * and gives callbacks to handle the output as it comes in.
+     *
+     * ```ts
+     * await komodo.execute_container_exec(
+     *   {
+     *     server: "my-server",
+     *     container: "my-container",
+     *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *     shell: "bash",
+     *     terminal: "name",
+     *     recreate: Types.TerminalRecreateMode.Always,
+     *   },
+     *   {
+     *     onLine: (line) => console.log(line),
+     *     onFinish: (code) => console.log("Finished:", code),
+     *   }
+     * );
+     * ```
+     */
+    execute_container_exec: ({ server, container, shell, command, terminal, recreate, }: {
+        server: string;
+        container: string;
+        shell: string;
+        command: string;
+        terminal?: string;
+        recreate?: import("./types.js").TerminalRecreateMode;
+    }, callbacks?: import("./terminal.js").ExecuteCallbacks) => Promise<void>;
+    /**
+     * Executes a command on a given Deployment / terminal,
+     * and gives callbacks to handle the output as it comes in.
+     *
+     * ```ts
+     * await komodo.execute_deployment_exec(
+     *   {
+     *     deployment: "my-deployemnt",
+     *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *     shell: "bash",
+     *     terminal: "name",
+     *     recreate: Types.TerminalRecreateMode.Always,
+     *   },
+     *   {
+     *     onLine: (line) => console.log(line),
+     *     onFinish: (code) => console.log("Finished:", code),
+     *   }
+     * );
+     * ```
+     */
+    execute_deployment_exec: ({ deployment, shell, command, terminal, recreate, }: {
+        deployment: string;
+        shell: string;
+        command: string;
+        terminal?: string;
+        recreate?: import("./types.js").TerminalRecreateMode;
+    }, callbacks?: import("./terminal.js").ExecuteCallbacks) => Promise<void>;
+    /**
+     * Executes a command on a given Stack / service / terminal,
+     * and gives callbacks to handle the output as it comes in.
+     *
+     * ```ts
+     * await komodo.execute_stack_exec(
+     *   {
+     *     stack: "my-stack",
+     *     service: "my-service",
+     *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *     shell: "bash",
+     *     terminal: "name",
+     *     recreate: Types.TerminalRecreateMode.Always
+     *   },
+     *   {
+     *     onLine: (line) => console.log(line),
+     *     onFinish: (code) => console.log("Finished:", code),
+     *   }
+     * );
+     * ```
+     */
+    execute_stack_exec: ({ stack, service, shell, command, terminal, recreate, }: {
+        stack: string;
+        service: string;
+        shell: string;
+        command: string;
+        terminal
+        /**
+         * Call the `/write` api.
+         *
+         * ```
+         * const build = await komodo.write("UpdateBuild", {
+         *   id: "my-build",
+         *   config: {
+         *     version: "1.0.4"
+         *   }
+         * });
+         * ```
+         *
+         * https://docs.rs/komodo_client/latest/komodo_client/api/write/index.html
+         */
+        ? /**
+         * Call the `/write` api.
+         *
+         * ```
+         * const build = await komodo.write("UpdateBuild", {
+         *   id: "my-build",
+         *   config: {
+         *     version: "1.0.4"
+         *   }
+         * });
+         * ```
+         *
+         * https://docs.rs/komodo_client/latest/komodo_client/api/write/index.html
+         */: string;
+        recreate?: import("./types.js").TerminalRecreateMode;
+    }, callbacks?: import("./terminal.js").ExecuteCallbacks) => Promise<void>;
 };

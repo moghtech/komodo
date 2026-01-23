@@ -1,4 +1,4 @@
-import { ClientState } from "./lib";
+import { ClientState, Types } from "./lib";
 import { ConnectTerminalQuery, ExecuteTerminalBody, InitTerminal } from "./types";
 export type TerminalCallbacks = {
     on_message?: (e: MessageEvent<any>) => void;
@@ -29,6 +29,12 @@ export declare const terminal_methods: (url: string, state: ClientState) => {
         command: string;
         init?: InitTerminal;
     }, callbacks?: ExecuteCallbacks) => Promise<void>;
+    execute_deployment_terminal: ({ deployment, terminal, command, init, }: {
+        deployment: string;
+        terminal?: string;
+        command: string;
+        init?: InitTerminal;
+    }, callbacks?: ExecuteCallbacks) => Promise<void>;
     execute_stack_service_terminal: ({ stack, service, terminal, command, init, }: {
         stack: string;
         service: string;
@@ -36,10 +42,44 @@ export declare const terminal_methods: (url: string, state: ClientState) => {
         command: string;
         init?: InitTerminal;
     }, callbacks?: ExecuteCallbacks) => Promise<void>;
-    execute_deployment_terminal: ({ deployment, terminal, command, init, }: {
-        deployment: string;
-        terminal?: string;
+    execute_container_exec: ({ server, container, shell, command, terminal, recreate, }: {
+        /** Server Id or name */
+        server: string;
+        /** The container name */
+        container: string;
+        /** The shell to use (eg. `sh` or `bash`) */
+        shell: string;
+        /** The command to execute. */
         command: string;
-        init?: InitTerminal;
+        /** The name of the terminal to connect to */
+        terminal?: string;
+        /** The behavior if  */
+        recreate?: Types.TerminalRecreateMode;
+    }, callbacks?: ExecuteCallbacks) => Promise<void>;
+    execute_deployment_exec: ({ deployment, shell, command, terminal, recreate, }: {
+        /** Deployment Id or name */
+        deployment: string;
+        /** The shell to use (eg. `sh` or `bash`) */
+        shell: string;
+        /** The command to execute. */
+        command: string;
+        /** The name of the terminal to connect to */
+        terminal?: string;
+        /** The behavior if  */
+        recreate?: Types.TerminalRecreateMode;
+    }, callbacks?: ExecuteCallbacks) => Promise<void>;
+    execute_stack_exec: ({ stack, service, shell, command, terminal, recreate, }: {
+        /** Stack Id or name */
+        stack: string;
+        /** The service name to connect to */
+        service: string;
+        /** The shell to use (eg. `sh` or `bash`) */
+        shell: string;
+        /** The command to execute. */
+        command: string;
+        /** The name of the terminal to connect to */
+        terminal?: string;
+        /** The behavior if  */
+        recreate?: Types.TerminalRecreateMode;
     }, callbacks?: ExecuteCallbacks) => Promise<void>;
 };

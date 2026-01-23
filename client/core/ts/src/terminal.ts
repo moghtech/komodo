@@ -43,7 +43,7 @@ export const terminal_methods = (url: string, state: ClientState) => {
       url_query += `&init[mode]=${init.mode}`;
     }
     const ws = new WebSocket(
-      url.replace("http", "ws") + "/ws/terminal?" + url_query
+      url.replace("http", "ws") + "/ws/terminal?" + url_query,
     );
     // Handle login on websocket open
     ws.onopen = () => {
@@ -83,7 +83,7 @@ export const terminal_methods = (url: string, state: ClientState) => {
 
   const execute_terminal = async (
     request: ExecuteTerminalBody,
-    callbacks?: ExecuteCallbacks
+    callbacks?: ExecuteCallbacks,
   ) => {
     const stream = await execute_terminal_stream(request);
     for await (const line of stream) {
@@ -113,11 +113,11 @@ export const terminal_methods = (url: string, state: ClientState) => {
                   authorization: state.jwt,
                 }
               : state.key && state.secret
-              ? {
-                  "x-api-key": state.key,
-                  "x-api-secret": state.secret,
-                }
-              : {}),
+                ? {
+                    "x-api-key": state.key,
+                    "x-api-secret": state.secret,
+                  }
+                : {}),
             "content-type": "application/json",
           },
         });
@@ -139,7 +139,7 @@ export const terminal_methods = (url: string, state: ClientState) => {
                   flush(controller) {
                     if (this.tail) controller.enqueue(this.tail); // final unterminated line
                   },
-                } as Transformer<string, string> & { tail: string })
+                } as Transformer<string, string> & { tail: string }),
               );
             res(stream);
           } else {
@@ -187,7 +187,7 @@ export const terminal_methods = (url: string, state: ClientState) => {
       command: string;
       init?: InitTerminal;
     },
-    callbacks?: ExecuteCallbacks
+    callbacks?: ExecuteCallbacks,
   ) =>
     execute_terminal(
       {
@@ -196,7 +196,7 @@ export const terminal_methods = (url: string, state: ClientState) => {
         command,
         init,
       },
-      callbacks
+      callbacks,
     );
 
   const execute_container_terminal = async (
@@ -213,7 +213,7 @@ export const terminal_methods = (url: string, state: ClientState) => {
       command: string;
       init?: InitTerminal;
     },
-    callbacks?: ExecuteCallbacks
+    callbacks?: ExecuteCallbacks,
   ) =>
     execute_terminal(
       {
@@ -222,7 +222,7 @@ export const terminal_methods = (url: string, state: ClientState) => {
         command,
         init,
       },
-      callbacks
+      callbacks,
     );
 
   const execute_stack_service_terminal = async (
@@ -239,7 +239,7 @@ export const terminal_methods = (url: string, state: ClientState) => {
       command: string;
       init?: InitTerminal;
     },
-    callbacks?: ExecuteCallbacks
+    callbacks?: ExecuteCallbacks,
   ) =>
     execute_terminal(
       {
@@ -248,7 +248,7 @@ export const terminal_methods = (url: string, state: ClientState) => {
         command,
         init,
       },
-      callbacks
+      callbacks,
     );
 
   const execute_deployment_terminal = async (
@@ -263,7 +263,7 @@ export const terminal_methods = (url: string, state: ClientState) => {
       command: string;
       init?: InitTerminal;
     },
-    callbacks?: ExecuteCallbacks
+    callbacks?: ExecuteCallbacks,
   ) =>
     execute_terminal(
       {
@@ -272,7 +272,118 @@ export const terminal_methods = (url: string, state: ClientState) => {
         command,
         init,
       },
-      callbacks
+      callbacks,
+    );
+
+  // LEGACY METHODS
+  const execute_container_exec = (
+    {
+      server,
+      container,
+      shell,
+      command,
+      terminal,
+      recreate = Types.TerminalRecreateMode.DifferentCommand,
+    }: {
+      /** Server Id or name */
+      server: string;
+      /** The container name */
+      container: string;
+      /** The shell to use (eg. `sh` or `bash`) */
+      shell: string;
+      /** The command to execute. */
+      command: string;
+      /** The name of the terminal to connect to */
+      terminal?: string;
+      /** The behavior if  */
+      recreate?: Types.TerminalRecreateMode;
+    },
+    callbacks?: ExecuteCallbacks,
+  ) =>
+    execute_container_terminal(
+      {
+        server,
+        container,
+        command,
+        terminal,
+        init: {
+          command: shell,
+          recreate,
+        },
+      },
+      callbacks,
+    );
+
+  const execute_deployment_exec = (
+    {
+      deployment,
+      shell,
+      command,
+      terminal,
+      recreate = Types.TerminalRecreateMode.DifferentCommand,
+    }: {
+      /** Deployment Id or name */
+      deployment: string;
+      /** The shell to use (eg. `sh` or `bash`) */
+      shell: string;
+      /** The command to execute. */
+      command: string;
+      /** The name of the terminal to connect to */
+      terminal?: string;
+      /** The behavior if  */
+      recreate?: Types.TerminalRecreateMode;
+    },
+    callbacks?: ExecuteCallbacks,
+  ) =>
+    execute_deployment_terminal(
+      {
+        deployment,
+        command,
+        terminal,
+        init: {
+          command: shell,
+          recreate,
+        },
+      },
+      callbacks,
+    );
+
+  const execute_stack_exec = (
+    {
+      stack,
+      service,
+      shell,
+      command,
+      terminal,
+      recreate = Types.TerminalRecreateMode.DifferentCommand,
+    }: {
+      /** Stack Id or name */
+      stack: string;
+      /** The service name to connect to */
+      service: string;
+      /** The shell to use (eg. `sh` or `bash`) */
+      shell: string;
+      /** The command to execute. */
+      command: string;
+      /** The name of the terminal to connect to */
+      terminal?: string;
+      /** The behavior if  */
+      recreate?: Types.TerminalRecreateMode;
+    },
+    callbacks?: ExecuteCallbacks,
+  ) =>
+    execute_stack_service_terminal(
+      {
+        stack,
+        service,
+        command,
+        terminal,
+        init: {
+          command: shell,
+          recreate,
+        },
+      },
+      callbacks,
     );
 
   return {
@@ -282,8 +393,12 @@ export const terminal_methods = (url: string, state: ClientState) => {
     // Convenience methods
     execute_server_terminal,
     execute_container_terminal,
-    execute_stack_service_terminal,
     execute_deployment_terminal,
+    execute_stack_service_terminal,
+    // Legacy convenience methods
+    execute_container_exec,
+    execute_deployment_exec,
+    execute_stack_exec,
   };
 };
 

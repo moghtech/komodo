@@ -6018,6 +6018,11 @@ export interface CheckStackForUpdate {
 	 * or run it in the background.
 	 */
 	wait_for_auto_update?: boolean;
+	/**
+	 * Usually will refresh the stack cache before checking for updates.
+	 * Skip with this option.
+	 */
+	skip_cache_refresh?: boolean;
 }
 
 /**

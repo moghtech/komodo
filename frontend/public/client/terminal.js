@@ -1,3 +1,4 @@
+import { Types } from "./lib";
 export const terminal_methods = (url, state) => {
     const connect_terminal = ({ query: { target, terminal, init }, on_message, on_login, on_open, on_close, }) => {
         let url_query = connect_terminal_target_query(target);
@@ -162,6 +163,36 @@ export const terminal_methods = (url, state) => {
         command,
         init,
     }, callbacks);
+    // LEGACY METHODS
+    const execute_container_exec = ({ server, container, shell, command, terminal, recreate = Types.TerminalRecreateMode.DifferentCommand, }, callbacks) => execute_container_terminal({
+        server,
+        container,
+        command,
+        terminal,
+        init: {
+            command: shell,
+            recreate,
+        },
+    }, callbacks);
+    const execute_deployment_exec = ({ deployment, shell, command, terminal, recreate = Types.TerminalRecreateMode.DifferentCommand, }, callbacks) => execute_deployment_terminal({
+        deployment,
+        command,
+        terminal,
+        init: {
+            command: shell,
+            recreate,
+        },
+    }, callbacks);
+    const execute_stack_exec = ({ stack, service, shell, command, terminal, recreate = Types.TerminalRecreateMode.DifferentCommand, }, callbacks) => execute_stack_service_terminal({
+        stack,
+        service,
+        command,
+        terminal,
+        init: {
+            command: shell,
+            recreate,
+        },
+    }, callbacks);
     return {
         connect_terminal,
         execute_terminal,
@@ -169,8 +200,12 @@ export const terminal_methods = (url, state) => {
         // Convenience methods
         execute_server_terminal,
         execute_container_terminal,
-        execute_stack_service_terminal,
         execute_deployment_terminal,
+        execute_stack_service_terminal,
+        // Legacy convenience methods
+        execute_container_exec,
+        execute_deployment_exec,
+        execute_stack_exec,
     };
 };
 const connect_terminal_target_query = (target) => {

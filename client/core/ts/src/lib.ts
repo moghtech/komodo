@@ -315,6 +315,9 @@ export function KomodoClient(url: string, options: InitOptions) {
     execute_container_terminal,
     execute_stack_service_terminal,
     execute_deployment_terminal,
+    execute_container_exec,
+    execute_deployment_exec,
+    execute_stack_exec,
   } = terminal_methods(url, state);
 
   return {
@@ -573,5 +576,70 @@ export function KomodoClient(url: string, options: InitOptions) {
      * ```
      */
     execute_deployment_terminal,
+    /**
+     * Executes a command on a given Server / Container / terminal,
+     * and gives callbacks to handle the output as it comes in.
+     *
+     * ```ts
+     * await komodo.execute_container_exec(
+     *   {
+     *     server: "my-server",
+     *     container: "my-container",
+     *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *     shell: "bash",
+     *     terminal: "name",
+     *     recreate: Types.TerminalRecreateMode.Always,
+     *   },
+     *   {
+     *     onLine: (line) => console.log(line),
+     *     onFinish: (code) => console.log("Finished:", code),
+     *   }
+     * );
+     * ```
+     */
+    execute_container_exec,
+    /**
+     * Executes a command on a given Deployment / terminal,
+     * and gives callbacks to handle the output as it comes in.
+     *
+     * ```ts
+     * await komodo.execute_deployment_exec(
+     *   {
+     *     deployment: "my-deployemnt",
+     *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *     shell: "bash",
+     *     terminal: "name",
+     *     recreate: Types.TerminalRecreateMode.Always,
+     *   },
+     *   {
+     *     onLine: (line) => console.log(line),
+     *     onFinish: (code) => console.log("Finished:", code),
+     *   }
+     * );
+     * ```
+     */
+    execute_deployment_exec,
+    /**
+     * Executes a command on a given Stack / service / terminal,
+     * and gives callbacks to handle the output as it comes in.
+     *
+     * ```ts
+     * await komodo.execute_stack_exec(
+     *   {
+     *     stack: "my-stack",
+     *     service: "my-service",
+     *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *     shell: "bash",
+     *     terminal: "name",
+     *     recreate: Types.TerminalRecreateMode.Always
+     *   },
+     *   {
+     *     onLine: (line) => console.log(line),
+     *     onFinish: (code) => console.log("Finished:", code),
+     *   }
+     * );
+     * ```
+     */
+    execute_stack_exec,
   };
 }
