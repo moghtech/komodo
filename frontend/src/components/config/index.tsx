@@ -161,11 +161,11 @@ export const Config = <T,>({
     >
       <div className="flex gap-6">
         {!disableSidebar && (
-          <div className="hidden xl:block relative pr-6 border-r">
+          <div className="hidden xl:block relative pr-6 border-r border-t rounded-md">
             <div className="sticky top-24 hidden xl:flex flex-col gap-4 w-[140px] pb-24">
               <div
                 className={cn(
-                  "flex flex-col gap-8 h-fit overflow-auto max-h-[calc(100vh-130px)]",
+                  "flex flex-col gap-8 h-fit pt-4 overflow-auto max-h-[calc(100vh-130px)]",
                   changesMade && "max-h-[calc(100vh-220px)]",
                 )}
               >
@@ -173,7 +173,7 @@ export const Config = <T,>({
                   <div key={section}>
                     <div className="flex items-center gap-2 justify-end text-muted-foreground mb-2">
                       <Bookmark className="w-4 h-4" />
-                      <p className="uppercase">{section || "General"}</p>
+                      <p className="uppercase">{section || "GENERAL"}</p>
                     </div>
                     <div className="flex flex-col gap-2">
                       {components[section] &&
