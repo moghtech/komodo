@@ -352,6 +352,7 @@ export const UpdateAvailable = ({
   if (
     !info ||
     info.swarm_id ||
+    info.build_id ||
     [Types.DeploymentState.NotDeployed, Types.DeploymentState.Unknown].includes(
       state,
     )

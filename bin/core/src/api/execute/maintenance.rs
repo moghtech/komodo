@@ -273,6 +273,7 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
           stack.id,
           &swarm_or_server,
           true,
+          false,
         )
         .await
         {

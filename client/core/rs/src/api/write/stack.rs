@@ -254,6 +254,10 @@ pub struct CheckStackForUpdate {
   /// or run it in the background.
   #[serde(default)]
   pub wait_for_auto_update: bool,
+  /// Usually will refresh the stack cache before checking for updates.
+  /// Skip with this option.
+  #[serde(default)]
+  pub skip_cache_refresh: bool,
 }
 
 #[typeshare]

@@ -129,7 +129,29 @@ impl Resolve<WriteArgs> for UpdateStack {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> mogh_error::Result<Stack> {
-    Ok(resource::update::<Stack>(&self.id, self.config, user).await?)
+    let compose_update = self.config.linked_repo.is_some()
+      || self.config.repo.is_some()
+      || self.config.files_on_host.is_some()
+      || self.config.file_contents.is_some();
+
+    let stack =
+      resource::update::<Stack>(&self.id, self.config, user).await?;
+
+    if compose_update {
+      tokio::spawn(async move {
+        let _ = (CheckStackForUpdate {
+          stack: self.id,
+          wait_for_auto_update: false,
+          skip_cache_refresh: true,
+        })
+        .resolve(&WriteArgs {
+          user: system_user().to_owned(),
+        })
+        .await;
+      });
+    }
+
+    Ok(stack)
   }
 }
 
@@ -191,11 +213,13 @@ impl Resolve<WriteArgs> for WriteStackFileContents {
 
     update.push_simple_log("File contents to write", &contents);
 
-    if stack.config.files_on_host {
+    let id = stack.id.clone();
+
+    let update = if stack.config.files_on_host {
       write_stack_file_contents_on_host(
         stack, file_path, contents, update,
       )
-      .await
+      .await?
     } else {
       write_stack_file_contents_git(
         stack,
@@ -204,8 +228,22 @@ impl Resolve<WriteArgs> for WriteStackFileContents {
         &user.username,
         update,
       )
-      .await
-    }
+      .await?
+    };
+
+    tokio::spawn(async move {
+      let _ = (CheckStackForUpdate {
+        stack: id,
+        wait_for_auto_update: false,
+        skip_cache_refresh: true,
+      })
+      .resolve(&WriteArgs {
+        user: system_user().to_owned(),
+      })
+      .await;
+    });
+
+    Ok(update)
   }
 }
 
@@ -652,6 +690,7 @@ impl Resolve<WriteArgs> for CheckStackForUpdate {
       stack.id,
       &swarm_or_server,
       self.wait_for_auto_update,
+      self.skip_cache_refresh,
     )
     .await?;
 
@@ -687,16 +726,19 @@ pub async fn check_stack_for_update_inner(
   swarm_or_server: &SwarmOrServer,
   // Otherwise spawns task to run in background
   wait_for_auto_update: bool,
+  skip_cache_refresh: bool,
 ) -> anyhow::Result<Vec<StackServiceWithUpdate>> {
-  (RefreshStackCache {
-    stack: stack.clone(),
-  })
-  .resolve(&WriteArgs {
-    user: system_user().to_owned(),
-  })
-  .await
-  .map_err(|e| e.error)
-  .context("Failed to refresh stack cache before update check")?;
+  if !skip_cache_refresh {
+    (RefreshStackCache {
+      stack: stack.clone(),
+    })
+    .resolve(&WriteArgs {
+      user: system_user().to_owned(),
+    })
+    .await
+    .map_err(|e| e.error)
+    .context("Failed to refresh stack cache before update check")?;
+  }
 
   // Query again after refresh
   let mut stack = resource::get::<Stack>(&stack).await?;
