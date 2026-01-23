@@ -409,6 +409,7 @@ export declare enum Operation {
     StopStack = "StopStack",
     DestroyStack = "DestroyStack",
     RunStackService = "RunStackService",
+    CheckStackForUpdate = "CheckStackForUpdate",
     DeployStackService = "DeployStackService",
     PullStackService = "PullStackService",
     StartStackService = "StartStackService",
@@ -429,6 +430,7 @@ export declare enum Operation {
     UnpauseDeployment = "UnpauseDeployment",
     StopDeployment = "StopDeployment",
     DestroyDeployment = "DestroyDeployment",
+    CheckDeploymentForUpdate = "CheckDeploymentForUpdate",
     CreateBuild = "CreateBuild",
     UpdateBuild = "UpdateBuild",
     RenameBuild = "RenameBuild",
@@ -817,6 +819,8 @@ export type BuilderListItem = ResourceListItem<BuilderListItemInfo>;
 export interface BuilderQuerySpecifics {
 }
 export type BuilderQuery = ResourceQuery<BuilderQuerySpecifics>;
+export type CheckDeploymentForUpdateResponse = NoData;
+export type CheckStackForUpdateResponse = NoData;
 /** A wrapper for all Komodo exections. */
 export type Execution = 
 /** The "null" execution. Does nothing. */
@@ -1511,7 +1515,19 @@ export interface DeploymentConfig {
     /** The docker labels given to the container. */
     labels?: string;
 }
-export type Deployment = Resource<DeploymentConfig, undefined>;
+/**
+ * Example:
+ * apache/tika@sha256:c0154cb95587cde64be74f35ada1a2bd7892219f3f0ac3c9dc6cab34046b3573
+ */
+export type ImageDigest = string;
+export interface DeploymentInfo {
+    /**
+     * Store the latest associated image digest.
+     * This includes both the image name / tag, and the specific digest hash.
+     */
+    latest_image_digest?: ImageDigest;
+}
+export type Deployment = Resource<DeploymentConfig, DeploymentInfo>;
 /**
  * Variants de/serialized from/to snake_case.
  *
@@ -1648,6 +1664,18 @@ export type AlertData =
 }
 /** A server could not be reached. */
  | {
+    type: "SwarmUnhealthy";
+    data: {
+        /** The id of the swarm */
+        id: string;
+        /** The name of the swarm */
+        name: string;
+        /** The error data */
+        err?: string;
+    };
+}
+/** A server could not be reached. */
+ | {
     type: "ServerUnreachable";
     data: {
         /** The id of the server */
@@ -1724,7 +1752,10 @@ export type AlertData =
         core_version: string;
     };
 }
-/** A container's state has changed unexpectedly. */
+/**
+ * A container's state has changed unexpectedly.
+ * For swarms, this refers to swarm service.
+ */
  | {
     type: "ContainerStateChange";
     data: {
@@ -1733,9 +1764,13 @@ export type AlertData =
         /** The name of the deployment */
         name: string;
         /** The server id of server that the deployment is on */
-        server_id: string;
+        server_id?: string;
         /** The server name */
-        server_name: string;
+        server_name?: string;
+        /** The swarm id of swarm that the deployment is on */
+        swarm_id?: string;
+        /** The swarm name */
+        swarm_name?: string;
         /** The previous container state */
         from: DeploymentState;
         /** The current container state */
@@ -1751,9 +1786,13 @@ export type AlertData =
         /** The name of the deployment */
         name: string;
         /** The server id of server that the deployment is on */
-        server_id: string;
+        server_id?: string;
         /** The server name */
-        server_name: string;
+        server_name?: string;
+        /** The swarm id of swarm that the deployment is on */
+        swarm_id?: string;
+        /** The swarm name */
+        swarm_name?: string;
         /** The image with update */
         image: string;
     };
@@ -1767,9 +1806,13 @@ export type AlertData =
         /** The name of the deployment */
         name: string;
         /** The server id of server that the deployment is on */
-        server_id: string;
+        server_id?: string;
         /** The server name */
-        server_name: string;
+        server_name?: string;
+        /** The swarm id of swarm that the deployment is on */
+        swarm_id?: string;
+        /** The swarm name */
+        swarm_name?: string;
         /** The updated image */
         image: string;
     };
@@ -1783,9 +1826,13 @@ export type AlertData =
         /** The name of the stack */
         name: string;
         /** The server id of server that the stack is on */
-        server_id: string;
+        server_id?: string;
         /** The server name */
-        server_name: string;
+        server_name?: string;
+        /** The swarm id of swarm that the stack is on */
+        swarm_id?: string;
+        /** The swarm name */
+        swarm_name?: string;
         /** The previous stack state */
         from: StackState;
         /** The current stack state */
@@ -1801,9 +1848,13 @@ export type AlertData =
         /** The name of the stack */
         name: string;
         /** The server id of server that the stack is on */
-        server_id: string;
+        server_id?: string;
         /** The server name */
-        server_name: string;
+        server_name?: string;
+        /** The swarm id of swarm that the stack is on */
+        swarm_id?: string;
+        /** The swarm name */
+        swarm_name?: string;
         /** The service name to update */
         service: string;
         /** The image with update */
@@ -1819,9 +1870,13 @@ export type AlertData =
         /** The name of the stack */
         name: string;
         /** The server id of server that the stack is on */
-        server_id: string;
+        server_id?: string;
         /** The server name */
-        server_name: string;
+        server_name?: string;
+        /** The swarm id of swarm that the stack is on */
+        swarm_id?: string;
+        /** The swarm name */
+        swarm_name?: string;
         /** One or more images that were updated */
         images: string[];
     };
@@ -2719,6 +2774,11 @@ export interface StackServiceNames {
     container_name: string;
     /** The services image. */
     image?: string;
+    /**
+     * Store the associated image digest.
+     * This includes both the image name / tag, and the specific digest hash.
+     */
+    image_digest?: ImageDigest;
 }
 /**
  * Same as [FileContents] with some extra
@@ -2801,6 +2861,10 @@ export interface SwarmConfig {
     server_ids?: string[];
     /** Configure quick links that are displayed in the resource header */
     links?: string[];
+    /** Whether to send alerts about the swarm health. */
+    send_unhealthy_alerts: boolean;
+    /** Scheduled maintenance windows during which alerts will be suppressed. */
+    maintenance_windows?: MaintenanceWindow[];
 }
 export interface SwarmInfo {
 }
@@ -4753,6 +4817,8 @@ export type ListDockerImageHistoryResponse = ImageHistoryResponseItem[];
 export interface ImageListItem {
     /** The first tag in `repo_tags`, or Id if no tags. */
     name: string;
+    /** The first digest in `repo_digests`, or empty if no digests. */
+    digest: string;
     /** ID is the content-addressable ID of an image.  This identifier is a content-addressable digest calculated from the image's configuration (which includes the digests of layers used by the image).  Note that this digest differs from the `RepoDigests` below, which holds digests of image manifests that reference the image. */
     id: string;
     /** ID of the parent image.  Depending on how the image was created, this field may be empty and is only set for images that were built/created locally. This field is empty if the image was pulled from an image registry. */
@@ -5065,8 +5131,8 @@ export interface StackService {
     container?: ContainerListItem;
     /** The service (Swarm mode) */
     swarm_service?: SwarmServiceListItem;
-    /** Whether there is an update available for this services image. */
-    update_available: boolean;
+    /** The service image digest (When deployed) */
+    image_digest?: ImageDigest;
 }
 export type ListStackServicesResponse = StackService[];
 export declare enum StackState {
@@ -5718,6 +5784,28 @@ export interface CancelBuild {
 export interface CancelRepoBuild {
     /** Can be id or name */
     repo: string;
+}
+/** Checks for newer image than what is deployed. Response: [CheckDeploymentForUpdateResponse] */
+export interface CheckDeploymentForUpdate {
+    /** Name or id */
+    deployment: string;
+    /**
+     * If check triggers auto deploy,
+     * whether this call should wait on the auto deploy,
+     * or run it in the background.
+     */
+    wait_for_auto_update?: boolean;
+}
+/** Checks for new images. Response: [CheckStackForUpdateResponse] */
+export interface CheckStackForUpdate {
+    /** Name or id */
+    stack: string;
+    /**
+     * If check triggers auto deploy,
+     * whether this call should wait on the auto deploy,
+     * or run it in the background.
+     */
+    wait_for_auto_update?: boolean;
 }
 /**
  * **Admin only.** Clears all repos from the Core repo cache.
@@ -10562,6 +10650,9 @@ export type WriteRequest = {
     type: "RefreshStackCache";
     params: RefreshStackCache;
 } | {
+    type: "CheckStackForUpdate";
+    params: CheckStackForUpdate;
+} | {
     type: "CreateDeployment";
     params: CreateDeployment;
 } | {
@@ -10579,6 +10670,9 @@ export type WriteRequest = {
 } | {
     type: "RenameDeployment";
     params: RenameDeployment;
+} | {
+    type: "CheckDeploymentForUpdate";
+    params: CheckDeploymentForUpdate;
 } | {
     type: "CreateBuild";
     params: CreateBuild;

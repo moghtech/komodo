@@ -3,11 +3,12 @@ use std::{
   str::FromStr,
 };
 
-use anyhow::Context;
+use anyhow::{Context, anyhow};
 use async_timing_util::unix_timestamp_ms;
-use clap::Parser;
-use mogh_error::Serror;
+use clap::{Parser, ValueEnum};
+use mogh_error::{AddStatusCodeError, Serror};
 use rand::Rng as _;
+use reqwest::StatusCode;
 use serde::{
   Deserialize, Serialize,
   de::{Visitor, value::MapAccessDeserializer},
@@ -394,6 +395,51 @@ pub struct FileContents {
   pub path: String,
   /// The contents of the file
   pub contents: String,
+}
+
+/// Example:
+/// apache/tika@sha256:c0154cb95587cde64be74f35ada1a2bd7892219f3f0ac3c9dc6cab34046b3573
+#[typeshare]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct ImageDigest(pub String);
+
+impl ImageDigest {
+  pub fn new(image: &str, digest: &str) -> Self {
+    Self(format!("{image}@{digest}"))
+  }
+
+  /// Assumes this ImageDigest represents latest.
+  pub fn update_available(&self, current_digest: &str) -> bool {
+    let Some(latest_digest) = self.digest() else {
+      // There is no "latest" to compare to.
+      return false;
+    };
+    let current_digest = current_digest
+      .split_once('@')
+      .map(|r| r.1)
+      .unwrap_or(current_digest);
+    latest_digest != current_digest
+  }
+
+  pub fn is_empty(&self) -> bool {
+    self.0.is_empty()
+  }
+
+  /// Returns (image, digest)
+  pub fn image_digest(&self) -> Option<(&str, &str)> {
+    self.0.split_once('@')
+  }
+
+  /// Get the image part of the digest
+  pub fn image(&self) -> Option<&str> {
+    self.image_digest().map(|(image, _)| image)
+  }
+
+  /// Get the image part of the digest
+  pub fn digest(&self) -> Option<&str> {
+    self.image_digest().map(|(_, digest)| digest)
+  }
 }
 
 /// Represents a scheduled maintenance window
@@ -1133,6 +1179,7 @@ pub enum Operation {
   StopStack,
   DestroyStack,
   RunStackService,
+  CheckStackForUpdate,
 
   // Stack (Service)
   DeployStackService,
@@ -1157,6 +1204,7 @@ pub enum Operation {
   UnpauseDeployment,
   StopDeployment,
   DestroyDeployment,
+  CheckDeploymentForUpdate,
 
   // Build
   CreateBuild,
@@ -1311,7 +1359,8 @@ pub enum TerminationSignal {
     Deserialize,
     Display,
     EnumString,
-    AsRefStr
+    AsRefStr,
+    ValueEnum,
   ))
 )]
 #[cfg_attr(
@@ -1325,7 +1374,8 @@ pub enum TerminationSignal {
     Display,
     EnumString,
     AsRefStr,
-    utoipa::ToSchema
+    ValueEnum,
+    utoipa::ToSchema,
   ))
 )]
 #[serde(tag = "type", content = "id")]
@@ -1549,4 +1599,46 @@ pub fn resource_link(
 pub enum SwarmOrServer {
   Swarm(swarm::Swarm),
   Server(server::Server),
+  None,
+}
+
+impl SwarmOrServer {
+  pub fn verify_has_target(&self) -> mogh_error::Result<()> {
+    if let Self::None = self {
+      Err(
+        anyhow!("Must attach either swarm or server")
+          .status_code(StatusCode::BAD_REQUEST),
+      )
+    } else {
+      Ok(())
+    }
+  }
+
+  pub fn swarm_id(&self) -> Option<&str> {
+    let Self::Swarm(swarm) = self else {
+      return None;
+    };
+    Some(&swarm.id)
+  }
+
+  pub fn swarm_name(&self) -> Option<&str> {
+    let Self::Swarm(swarm) = self else {
+      return None;
+    };
+    Some(&swarm.name)
+  }
+
+  pub fn server_id(&self) -> Option<&str> {
+    let Self::Server(server) = self else {
+      return None;
+    };
+    Some(&server.id)
+  }
+
+  pub fn server_name(&self) -> Option<&str> {
+    let Self::Server(server) = self else {
+      return None;
+    };
+    Some(&server.name)
+  }
 }

@@ -34,6 +34,7 @@ use crate::api::write;
     write::rename_stack,
     write::write_stack_file_contents,
     write::refresh_stack_cache,
+    write::check_stack_for_update,
     // deployment
     write::create_deployment,
     write::copy_deployment,
@@ -41,6 +42,7 @@ use crate::api::write;
     write::delete_deployment,
     write::update_deployment,
     write::rename_deployment,
+    write::check_deployment_for_update,
     // build
     write::create_build,
     write::copy_build,

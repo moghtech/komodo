@@ -7,9 +7,9 @@ use komodo_client::entities::{
   build::Build,
   deployment::{
     Deployment, DeploymentConfig, DeploymentConfigDiff,
-    DeploymentImage, DeploymentListItem, DeploymentListItemInfo,
-    DeploymentQuerySpecifics, DeploymentState,
-    PartialDeploymentConfig, conversions_from_str,
+    DeploymentImage, DeploymentInfo, DeploymentListItem,
+    DeploymentListItemInfo, DeploymentQuerySpecifics,
+    DeploymentState, PartialDeploymentConfig, conversions_from_str,
   },
   environment_vars_from_str,
   permission::{
@@ -43,7 +43,7 @@ impl super::KomodoResource for Deployment {
   type Config = DeploymentConfig;
   type PartialConfig = PartialDeploymentConfig;
   type ConfigDiff = DeploymentConfigDiff;
-  type Info = ();
+  type Info = DeploymentInfo;
   type ListItem = DeploymentListItem;
   type QuerySpecifics = DeploymentQuerySpecifics;
 
@@ -118,33 +118,36 @@ impl super::KomodoResource for Deployment {
       }
       DeploymentImage::Image { image } => (image, None),
     };
-    let (image, update_available) = status
+    let (image, digest) = status
       .as_ref()
-      .and_then(|s| {
-        s.curr
-          .service
-          .as_ref()
-          .map(|service| {
-            (
+      .map(|s| {
+        (
+          s.curr
+            .service
+            .as_ref()
+            .map(|service| {
               service
                 .image
                 .clone()
-                .unwrap_or_else(|| String::from("Unknown")),
-              s.curr.update_available,
-            )
-          })
-          .or_else(|| {
-            s.curr.container.as_ref().map(|c| {
-              (
+                .unwrap_or_else(|| String::from("Unknown"))
+            })
+            .or_else(|| {
+              s.curr.container.as_ref().map(|c| {
                 c.image
                   .clone()
-                  .unwrap_or_else(|| String::from("Unknown")),
-                s.curr.update_available,
-              )
-            })
-          })
+                  .unwrap_or_else(|| String::from("Unknown"))
+              })
+            }),
+          s.curr.image_digest.as_ref(),
+        )
       })
-      .unwrap_or((build_image, false));
+      .unwrap_or_default();
+    let image = image.unwrap_or(build_image);
+    let update_available = digest
+      .map(|digest| {
+        deployment.info.latest_image_digest.update_available(digest)
+      })
+      .unwrap_or_default();
     DeploymentListItem {
       name: deployment.name,
       id: deployment.id,
@@ -220,6 +223,7 @@ impl super::KomodoResource for Deployment {
       SwarmOrServer::Server(server) => {
         update_cache_for_server(&server, true).await;
       }
+      SwarmOrServer::None => {}
     }
     Ok(())
   }
@@ -297,6 +301,7 @@ impl super::KomodoResource for Deployment {
       }
     };
     match swarm_or_server {
+      SwarmOrServer::None => {}
       SwarmOrServer::Swarm(swarm) => match swarm_request(
         &swarm.config.server_ids,
         RemoveSwarmServices {

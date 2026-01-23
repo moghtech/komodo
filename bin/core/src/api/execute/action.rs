@@ -219,8 +219,7 @@ impl Resolve<ExecuteArgs> for RunAction {
     .await;
 
     if let Err(e) =
-      delete_api_key(&KomodoAuthImpl, &action_user().id, key)
-        .await
+      delete_api_key(&KomodoAuthImpl, &action_user().id, key).await
     {
       warn!(
         "Failed to delete API key after action execution | {:#}",

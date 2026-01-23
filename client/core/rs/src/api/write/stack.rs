@@ -225,6 +225,42 @@ pub struct RefreshStackCache {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CheckStackForUpdate",
+  description = "Checks for new images.",
+  request_body(content = CheckStackForUpdate),
+  responses(
+    (status = 200, description = "Checked for updates", body = CheckStackForUpdateResponse),
+  ),
+)]
+pub fn check_stack_for_update() {}
+
+/// Checks for new images. Response: [CheckStackForUpdateResponse]
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoWriteRequest)]
+#[response(CheckStackForUpdateResponse)]
+#[error(mogh_error::Error)]
+pub struct CheckStackForUpdate {
+  /// Name or id
+  pub stack: String,
+  /// If check triggers auto deploy,
+  /// whether this call should wait on the auto deploy,
+  /// or run it in the background.
+  #[serde(default)]
+  pub wait_for_auto_update: bool,
+}
+
+#[typeshare]
+pub type CheckStackForUpdateResponse = NoData;
+
+//
+
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]

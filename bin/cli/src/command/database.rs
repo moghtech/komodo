@@ -358,6 +358,11 @@ async fn v1_downgrade(yes: bool) -> anyhow::Result<()> {
     .await
     .context("Failed to downgrade Server schema")?;
 
+  db.collection::<Document>("Deployment")
+    .update_many(doc! {}, doc! { "$set": { "info": null } })
+    .await
+    .context("Failed to downgrade Deployment schema")?;
+
   info!(
     "V1 Downgrade complete. Ready to downgrade to komodo-core:1 ✅"
   );

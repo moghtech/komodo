@@ -132,14 +132,14 @@ export const ActionButton = forwardRef<
       onBlur,
       "data-confirm-button": dataConfirmButton,
     },
-    ref
+    ref,
   ) => (
     <Button
       size={size}
       variant={variant || "secondary"}
       className={cn(
         "flex flex-1 shrink-0 gap-4 items-center justify-between max-w-[190px]",
-        className
+        className,
       )}
       onClick={onClick}
       onBlur={onBlur}
@@ -149,28 +149,32 @@ export const ActionButton = forwardRef<
     >
       {title} {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : icon}
     </Button>
-  )
+  ),
 );
 
 export const ActionWithDialog = ({
   name,
   title,
+  openTitle,
   icon,
   disabled,
   loading,
   onClick,
   additional,
+  topAdditonal,
   targetClassName,
   variant,
   forceConfirmDialog,
 }: {
   name: string;
   title: string;
+  openTitle?: string;
   icon: ReactNode;
   disabled?: boolean;
   loading?: boolean;
   onClick?: () => void;
   additional?: ReactNode;
+  topAdditonal?: ReactNode;
   targetClassName?: string;
   variant?:
     | "link"
@@ -242,9 +246,10 @@ export const ActionWithDialog = ({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Confirm {title}</DialogTitle>
+          <DialogTitle>Confirm {openTitle ?? title}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-4 my-4">
+          {topAdditonal}
           <p
             onClick={() => {
               navigator.clipboard.writeText(name);
@@ -264,7 +269,7 @@ export const ActionWithDialog = ({
         <DialogFooter>
           <ConfirmButton
             ref={confirmButtonRef}
-            title={title}
+            title={openTitle ?? title}
             icon={icon}
             disabled={disabled || name !== input}
             onClick={() => {
@@ -301,7 +306,7 @@ export const ConfirmButton = forwardRef<
 >(
   (
     { variant, size, title, icon, disabled, loading, onClick, className },
-    ref
+    ref,
   ) => {
     const [confirmed, set] = useState(false);
 
@@ -331,7 +336,7 @@ export const ConfirmButton = forwardRef<
         data-confirm-button={true}
       />
     );
-  }
+  },
 );
 
 export const UserSettings = () => (
@@ -439,14 +444,14 @@ export const TextUpdateMenuMonaco = ({
             className={cn(
               "px-3 py-2 hover:bg-accent/50 transition-colors cursor-pointer",
               fullWidth ? "w-full" : "w-fit",
-              triggerHidden && "hidden"
+              triggerHidden && "hidden",
             )}
           >
             <div
               className={cn(
                 "text-sm text-nowrap overflow-hidden overflow-ellipsis",
                 (!value || !!disabled) && "text-muted-foreground",
-                triggerClassName
+                triggerClassName,
               )}
             >
               {value.split("\n")[0] || placeholder}
@@ -538,7 +543,7 @@ export const StatusBadge = ({
           "inline-flex flex-wrap items-center justify-center text-center",
           "leading-tight gap-x-1",
           "min-h-[1.5rem]", // Minimum height to match other badges, but can grow
-          color
+          color,
         )}
         style={{
           background,
@@ -557,7 +562,7 @@ export const StatusBadge = ({
       className={cn(
         "px-2 py-1 w-fit text-xs text-white rounded-md font-medium tracking-wide",
         "h-6 flex items-center", // Fixed height and center content vertically
-        color
+        color,
       )}
       style={{ background }}
     >
@@ -645,13 +650,13 @@ export const DOCKER_LINK_ICONS: {
   container: ({ server_id, name, size = 4 }) => {
     const state =
       useRead("ListDockerContainers", { server: server_id }).data?.find(
-        (container) => container.name === name
+        (container) => container.name === name,
       )?.state ?? Types.ContainerStateStatusEnum.Empty;
     return (
       <Box
         className={cn(
           `w-${size} h-${size}`,
-          stroke_color_class_by_intention(container_state_intention(state))
+          stroke_color_class_by_intention(container_state_intention(state)),
         )}
       />
     );
@@ -673,8 +678,8 @@ export const DOCKER_LINK_ICONS: {
                 ? ["none", "host", "bridge"].includes(name)
                   ? "None"
                   : "Critical"
-                : "Good"
-          )
+                : "Good",
+          ),
         )}
       />
     );
@@ -690,8 +695,8 @@ export const DOCKER_LINK_ICONS: {
         className={cn(
           `w-${size} h-${size}`,
           stroke_color_class_by_intention(
-            !name ? "Warning" : no_containers ? "Critical" : "Good"
-          )
+            !name ? "Warning" : no_containers ? "Critical" : "Good",
+          ),
         )}
       />
     );
@@ -707,8 +712,8 @@ export const DOCKER_LINK_ICONS: {
         className={cn(
           `w-${size} h-${size}`,
           stroke_color_class_by_intention(
-            !name ? "Warning" : no_containers ? "Critical" : "Good"
-          )
+            !name ? "Warning" : no_containers ? "Critical" : "Good",
+          ),
         )}
       />
     );
@@ -739,7 +744,7 @@ export const DockerResourceLink = ({
       to={`/servers/${server_id}/${type}/${encodeURIComponent(name)}`}
       className={cn(
         "flex items-center gap-2 text-sm hover:underline py-1",
-        muted && "text-muted-foreground"
+        muted && "text-muted-foreground",
       )}
     >
       <Icon server_id={server_id} name={type === "image" ? id : name} />
@@ -764,7 +769,7 @@ export const StackServiceLink = ({
   const services = useRead(
     "ListStackServices",
     { stack: id },
-    { refetchInterval: 10_000 }
+    { refetchInterval: 10_000 },
   ).data;
   const service = services?.find((s) => s.service === _service);
   const intention = service?.swarm_service?.State
@@ -817,7 +822,7 @@ export const DockerContainersSection = ({
   const allRunning = useRead("ListDockerContainers", {
     server: server_id,
   }).data?.every(
-    (container) => container.state === Types.ContainerStateStatusEnum.Running
+    (container) => container.state === Types.ContainerStateStatusEnum.Running,
   );
   const filtered = _search
     ? filterBySplit(containers, _search[0], (container) => container.name)
@@ -1008,7 +1013,7 @@ export const TextUpdateMenuSimple = ({
           className={cn(
             "text-sm text-nowrap overflow-hidden overflow-ellipsis p-2 border rounded-md flex-1 cursor-pointer hover:bg-accent/25",
             (!value || !!disabled) && "text-muted-foreground",
-            triggerClassName
+            triggerClassName,
           )}
         >
           {value.split("\n")[0] || placeholder}
@@ -1138,7 +1143,7 @@ export const TimezoneSelector = ({
           variant="secondary"
           className={cn(
             "flex justify-between gap-2 w-[300px]",
-            triggerClassName
+            triggerClassName,
           )}
           disabled={disabled}
         >
@@ -1188,7 +1193,7 @@ export const TimezoneSelector = ({
                   >
                     <div className="p-1">Default ({core_tz})</div>
                   </CommandItem>
-                )
+                ),
               )}
             </CommandGroup>
           </CommandList>
@@ -1245,7 +1250,7 @@ export type ServerAddress = {
 };
 
 export const useServerAddress = (
-  server_id: string | undefined
+  server_id: string | undefined,
 ): ServerAddress | null => {
   const server = useServer(server_id);
 
@@ -1295,8 +1300,8 @@ export const ContainerPortLink = ({
         .map((p) => p.PublicPort)
         .filter((p): p is number => typeof p === "number")
         .map((n) => Number(n))
-        .filter((n) => !Number.isNaN(n))
-    )
+        .filter((n) => !Number.isNaN(n)),
+    ),
   ).sort((a, b) => a - b);
   const display_text =
     uniqueHostPorts.length <= 1
@@ -1427,7 +1432,7 @@ export const ServerContainerSelector = ({
       } else {
         return 0;
       }
-    }
+    },
   );
 
   return (
@@ -1437,7 +1442,7 @@ export const ServerContainerSelector = ({
           variant="secondary"
           className={cn(
             "flex justify-start gap-2 w-fit max-w-[350px]",
-            targetClassName
+            targetClassName,
           )}
           disabled={disabled}
         >
@@ -1532,7 +1537,7 @@ export const StackServiceSelector = ({
       } else {
         return 0;
       }
-    }
+    },
   );
 
   return (
@@ -1542,7 +1547,7 @@ export const StackServiceSelector = ({
           variant="secondary"
           className={cn(
             "flex justify-start gap-2 w-fit max-w-[350px]",
-            targetClassName
+            targetClassName,
           )}
           disabled={disabled}
         >
@@ -1657,7 +1662,7 @@ export const DashboardPieChart = ({
             <span
               className={cn(
                 "font-bold",
-                text_color_class_by_intention(intention)
+                text_color_class_by_intention(intention),
               )}
             >
               {value}

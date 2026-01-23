@@ -6,8 +6,11 @@ use serde::{Deserialize, Serialize};
 use strum::Display;
 use typeshare::typeshare;
 
-use crate::deserializers::{
-  option_string_list_deserializer, string_list_deserializer,
+use crate::{
+  deserializers::{
+    option_string_list_deserializer, string_list_deserializer,
+  },
+  entities::MaintenanceWindow,
 };
 
 use super::resource::{Resource, ResourceListItem, ResourceQuery};
@@ -96,6 +99,21 @@ pub struct SwarmConfig {
   ))]
   #[builder(default)]
   pub links: Vec<String>,
+
+  /// Whether to send alerts about the swarm health.
+  #[serde(default = "default_send_alerts")]
+  #[builder(default = "default_send_alerts()")]
+  #[partial_default(default_send_alerts())]
+  pub send_unhealthy_alerts: bool,
+
+  /// Scheduled maintenance windows during which alerts will be suppressed.
+  #[serde(default)]
+  #[builder(default)]
+  pub maintenance_windows: Vec<MaintenanceWindow>,
+}
+
+fn default_send_alerts() -> bool {
+  true
 }
 
 #[cfg(feature = "utoipa")]

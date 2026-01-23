@@ -147,7 +147,10 @@ impl Resolve<ReadArgs> for GetDeploymentLog {
     )
     .await?;
 
+    swarm_or_server.verify_has_target()?;
+
     let log = match swarm_or_server {
+      SwarmOrServer::None => unreachable!(),
       SwarmOrServer::Swarm(swarm) => swarm_request(
         &swarm.config.server_ids,
         periphery_client::api::swarm::GetSwarmServiceLog {
@@ -196,7 +199,10 @@ impl Resolve<ReadArgs> for SearchDeploymentLog {
     )
     .await?;
 
+    swarm_or_server.verify_has_target()?;
+
     let log = match swarm_or_server {
+      SwarmOrServer::None => unreachable!(),
       SwarmOrServer::Swarm(swarm) => swarm_request(
         &swarm.config.server_ids,
         periphery_client::api::swarm::GetSwarmServiceLogSearch {

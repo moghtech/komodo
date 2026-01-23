@@ -5,7 +5,6 @@ use database::mungos::{find::find_collect, mongodb::bson::doc};
 use futures_util::future::join_all;
 use helpers::insert_stacks_status_unknown;
 use komodo_client::entities::{
-  build::Build,
   deployment::Deployment,
   komodo_timestamp, optional_string,
   repo::Repo,
@@ -198,17 +197,14 @@ pub async fn update_cache_for_server(server: &Server, force: bool) {
 
   tokio::join!(
     resources::update_server_stack_cache(
-      server.name.clone(),
       resources.stacks,
       containers,
       images
     ),
     resources::update_server_deployment_cache(
-      server.name.clone(),
       resources.deployments,
       containers,
       images,
-      &resources.builds,
     ),
   );
 
@@ -251,13 +247,12 @@ pub async fn update_cache_for_server(server: &Server, force: bool) {
 struct UpdateCacheResources {
   stacks: Vec<Stack>,
   deployments: Vec<Deployment>,
-  builds: Vec<Build>,
   repos: Vec<Repo>,
 }
 
 impl UpdateCacheResources {
   pub async fn load_swarm(swarm: &Swarm) -> Self {
-    let (stacks, deployments, builds) = tokio::join!(
+    let (stacks, deployments) = tokio::join!(
       find_collect(
         &db_client().stacks,
         doc! { "config.swarm_id": &swarm.id },
@@ -268,23 +263,20 @@ impl UpdateCacheResources {
         doc! { "config.swarm_id": &swarm.id },
         None,
       ),
-      find_collect(&db_client().builds, doc! {}, None,),
     );
 
     let stacks = stacks.inspect_err(|e|  error!("Failed to get stacks list from db (update swarm status cache) | swarm: {} | {e:#}", swarm.name)).unwrap_or_default();
     let deployments =  deployments.inspect_err(|e| error!("Failed to get deployments list from db (update swarm status cache) | swarm : {} | {e:#}", swarm.name)).unwrap_or_default();
-    let builds =  builds.inspect_err(|e| error!("Failed to get builds list from db (update swarm status cache) | swarm : {} | {e:#}", swarm.name)).unwrap_or_default();
 
     Self {
       stacks,
       deployments,
-      builds,
       repos: Default::default(),
     }
   }
 
   pub async fn load_server(server: &Server) -> Self {
-    let (stacks, deployments, builds, repos) = tokio::join!(
+    let (stacks, deployments, repos) = tokio::join!(
       find_collect(
         &db_client().stacks,
         doc! { "config.server_id": &server.id },
@@ -295,7 +287,6 @@ impl UpdateCacheResources {
         doc! { "config.server_id": &server.id },
         None,
       ),
-      find_collect(&db_client().builds, doc! {}, None,),
       find_collect(
         &db_client().repos,
         doc! { "config.server_id": &server.id },
@@ -305,13 +296,11 @@ impl UpdateCacheResources {
 
     let stacks = stacks.inspect_err(|e|  error!("Failed to get stacks list from db (update server status cache) | server: {} | {e:#}", server.name)).unwrap_or_default();
     let deployments =  deployments.inspect_err(|e| error!("Failed to get deployments list from db (update server status cache) | server : {} | {e:#}", server.name)).unwrap_or_default();
-    let builds =  builds.inspect_err(|e| error!("Failed to get builds list from db (update server status cache) | server : {} | {e:#}", server.name)).unwrap_or_default();
     let repos = repos.inspect_err(|e|  error!("Failed to get repos list from db (update server status cache) | server: {} | {e:#}", server.name)).unwrap_or_default();
 
     Self {
       stacks,
       deployments,
-      builds,
       repos,
     }
   }

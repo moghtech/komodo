@@ -214,6 +214,7 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
           container_name: format!("{project_name}-{service_name}"),
           service_name,
           image,
+          image_digest: None,
         });
       }
     }

@@ -33,6 +33,11 @@ impl DockerClient {
             .into_iter()
             .next()
             .unwrap_or_else(|| image.id.clone()),
+          digest: image
+            .repo_digests
+            .into_iter()
+            .next()
+            .unwrap_or_default(),
           id: image.id,
           parent_id: image.parent_id,
           created: image.created,
@@ -188,7 +193,7 @@ pub async fn get_image_digest_from_registry(
   image: &str,
 ) -> anyhow::Result<String> {
   let command = String::from(
-    "docker buildx imagetools inspect --format \"{{json .Manifest}}\" ",
+    r#"docker buildx imagetools inspect --format "{{json .Manifest}}" "#,
   ) + image;
   let log = run_komodo_standard_command("", None, command).await;
   if !log.success {

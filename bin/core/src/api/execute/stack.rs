@@ -109,6 +109,8 @@ impl Resolve<ExecuteArgs> for DeployStack {
     )
     .await?;
 
+    swarm_or_server.verify_has_target()?;
+
     let mut repo = if !stack.config.files_on_host
       && !stack.config.linked_repo.is_empty()
     {
@@ -185,6 +187,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
       commit_hash,
       commit_message,
     } = match &swarm_or_server {
+      SwarmOrServer::None => unreachable!(),
       SwarmOrServer::Swarm(swarm) => {
         swarm_request(
           &swarm.config.server_ids,
@@ -308,6 +311,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
 
     // Ensure cached stack state up to date by updating server cache
     match swarm_or_server {
+      SwarmOrServer::None => unreachable!(),
       SwarmOrServer::Swarm(swarm) => {
         update_cache_for_swarm(&swarm, true).await;
       }
@@ -1154,7 +1158,10 @@ impl Resolve<ExecuteArgs> for DestroyStack {
     )
     .await?;
 
+    swarm_or_server.verify_has_target()?;
+
     match swarm_or_server {
+      SwarmOrServer::None => unreachable!(),
       SwarmOrServer::Swarm(swarm) => {
         if !self.services.is_empty() {
           return Err(

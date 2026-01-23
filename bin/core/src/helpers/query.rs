@@ -483,9 +483,7 @@ pub async fn get_swarm_or_server(
   }
 
   if server_id.is_empty() {
-    return Err(anyhow!(
-      "Neither Swarm nor Server has been configured in this resource."
-    ));
+    return Ok(SwarmOrServer::None);
   }
 
   let (server, state) = get_server_with_state(server_id).await?;
@@ -496,6 +494,37 @@ pub async fn get_swarm_or_server(
     ));
   }
 
+  Ok(SwarmOrServer::Server(server))
+}
+
+pub fn find_swarm_or_server(
+  swarm_id: &str,
+  swarms: &[Swarm],
+  server_id: &str,
+  servers: &[Server],
+) -> anyhow::Result<SwarmOrServer> {
+  if !swarm_id.is_empty() {
+    let swarm = swarms
+      .iter()
+      .find(|swarm| swarm.id == swarm_id)
+      .cloned()
+      .with_context(|| {
+        format!("Could not find swarm matching id {swarm_id}")
+      })?;
+    return Ok(SwarmOrServer::Swarm(swarm));
+  }
+
+  if server_id.is_empty() {
+    return Ok(SwarmOrServer::None);
+  }
+
+  let server = servers
+    .iter()
+    .find(|server| server.id == server_id)
+    .cloned()
+    .with_context(|| {
+      format!("Could not find server matching id {server_id}")
+    })?;
   Ok(SwarmOrServer::Server(server))
 }
 

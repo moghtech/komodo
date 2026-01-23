@@ -14,7 +14,7 @@ use komodo_client::{
     RotateAllServerKeys, RotateCoreKeys,
   },
   entities::{
-    deployment::DeploymentState, server::ServerState,
+    SwarmOrServer, deployment::DeploymentState, server::ServerState,
     stack::StackState,
   },
 };
@@ -25,11 +25,17 @@ use reqwest::StatusCode;
 use tokio::sync::Mutex;
 
 use crate::{
-  api::execute::{
-    ExecuteArgs, pull_deployment_inner, pull_stack_inner,
+  api::{
+    execute::ExecuteArgs,
+    write::{
+      check_deployment_for_update_inner, check_stack_for_update_inner,
+    },
   },
   config::{core_config, core_keys},
-  helpers::{periphery_client, update::update_update},
+  helpers::{
+    periphery_client, query::find_swarm_or_server,
+    update::update_update,
+  },
   resource::rotate_server_keys,
   state::{
     db_client, deployment_status_cache, server_status_cache,
@@ -209,6 +215,9 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
     let servers = find_collect(&db_client().servers, None, None)
       .await
       .context("Failed to query for servers from database")?;
+    let swarms = find_collect(&db_client().swarms, None, None)
+      .await
+      .context("Failed to query for swarms from database")?;
 
     let query = doc! {
       "$or": [
@@ -217,11 +226,10 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
       ]
     };
 
-    let (stacks, repos) = tokio::try_join!(
-      find_collect(&db_client().stacks, query.clone(), None),
-      find_collect(&db_client().repos, None, None)
-    )
-    .context("Failed to query for resources from database")?;
+    let stacks =
+      find_collect(&db_client().stacks, query.clone(), None)
+        .await
+        .context("Failed to query for stacks from database")?;
 
     let server_status_cache = server_status_cache();
     let stack_status_cache = stack_status_cache();
@@ -234,10 +242,23 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
       else {
         continue;
       };
+
       // Only pull running stacks.
       if !matches!(status.curr.state, StackState::Running) {
         continue;
       }
+
+      let swarm_or_server = find_swarm_or_server(
+        &stack.config.swarm_id,
+        &swarms,
+        &stack.config.server_id,
+        &servers,
+      )?;
+
+      if let SwarmOrServer::None = &swarm_or_server {
+        continue;
+      }
+
       if let Some(server) =
         servers.iter().find(|s| s.id == stack.config.server_id)
         // This check is probably redundant along with running check
@@ -248,39 +269,26 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
           .map(|s| matches!(s.state, ServerState::Ok))
           .unwrap_or_default()
       {
-        let name = stack.name.clone();
-        let repo = if stack.config.linked_repo.is_empty() {
-          None
-        } else {
-          let Some(repo) =
-            repos.iter().find(|r| r.id == stack.config.linked_repo)
-          else {
-            update.push_error_log(
-              &format!("Pull Stack {name}"),
-              format!(
-                "Did not find any Repo matching {}",
-                stack.config.linked_repo
-              ),
-            );
-            continue;
-          };
-          Some(repo.clone())
-        };
-        if let Err(e) =
-          pull_stack_inner(stack, Vec::new(), server, repo, None)
-            .await
+        if let Err(e) = check_stack_for_update_inner(
+          stack.id,
+          &swarm_or_server,
+          true,
+        )
+        .await
         {
           update.push_error_log(
-            &format!("Pull Stack {name}"),
+            &format!("Check Stack {}", stack.name),
             format_serror(&e.into()),
           );
         } else {
           if !update.logs[0].stdout.is_empty() {
             update.logs[0].stdout.push('\n');
           }
-          update.logs[0]
-            .stdout
-            .push_str(&format!("Pulled Stack {} ✅", bold(name)));
+
+          update.logs[0].stdout.push_str(&format!(
+            "Checked Stack {} ✅",
+            bold(&stack.name)
+          ));
         }
       }
     }
@@ -290,43 +298,49 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
       find_collect(&db_client().deployments, query, None)
         .await
         .context("Failed to query for deployments from database")?;
+
     for deployment in deployments {
       let Some(status) =
         deployment_status_cache.get(&deployment.id).await
       else {
         continue;
       };
+
       // Only pull running deployments.
       if !matches!(status.curr.state, DeploymentState::Running) {
         continue;
       }
-      if let Some(server) =
-        servers.iter().find(|s| s.id == deployment.config.server_id)
-        // This check is probably redundant along with running check
-        // but shouldn't hurt
-        && server_status_cache
-          .get(&server.id)
-          .await
-          .map(|s| matches!(s.state, ServerState::Ok))
-          .unwrap_or_default()
+
+      let swarm_or_server = find_swarm_or_server(
+        &deployment.config.swarm_id,
+        &swarms,
+        &deployment.config.server_id,
+        &servers,
+      )?;
+
+      if let SwarmOrServer::None = &swarm_or_server {
+        continue;
+      }
+
+      let name = deployment.name.clone();
+      if let Err(e) = check_deployment_for_update_inner(
+        deployment,
+        &swarm_or_server,
+        true,
+      )
+      .await
       {
-        let name = deployment.name.clone();
-        if let Err(e) =
-          pull_deployment_inner(deployment, server).await
-        {
-          update.push_error_log(
-            &format!("Pull Deployment {name}"),
-            format_serror(&e.into()),
-          );
-        } else {
-          if !update.logs[0].stdout.is_empty() {
-            update.logs[0].stdout.push('\n');
-          }
-          update.logs[0].stdout.push_str(&format!(
-            "Pulled Deployment {} ✅",
-            bold(name)
-          ));
+        update.push_error_log(
+          &format!("Check Deployment {name}"),
+          format_serror(&e.into()),
+        );
+      } else {
+        if !update.logs[0].stdout.is_empty() {
+          update.logs[0].stdout.push('\n');
         }
+        update.logs[0]
+          .stdout
+          .push_str(&format!("Checked Deployment {} ✅", bold(name)));
       }
     }
 

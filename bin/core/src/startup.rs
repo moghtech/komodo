@@ -23,6 +23,7 @@ use komodo_client::{
   entities::{
     ResourceTarget,
     builder::{PartialBuilderConfig, PartialServerBuilderConfig},
+    deployment::DeploymentInfo,
     komodo_timestamp,
     procedure::{EnabledExecution, ProcedureConfig, ProcedureStage},
     server::{PartialServerConfig, Server, ServerInfo},
@@ -113,7 +114,7 @@ pub async fn on_startup() {
     ensure_first_server_and_builder(),
     ensure_init_user_and_resources(),
     clean_up_server_templates(),
-    init_server_info(),
+    v2_init_missing_resource_info(),
   );
 }
 
@@ -565,9 +566,9 @@ async fn clean_up_server_templates() {
   );
 }
 
-/// v2 adds ServerInfo to ServerSchema.
-/// Need to ensure it is initialized from null.
-async fn init_server_info() {
+/// v2 adds ServerInfo to ServerSchema and DeploymentInfo to DeploymentSchema.
+/// Need to ensure it is initialized from null to avoid de/serialization issues.
+async fn v2_init_missing_resource_info() {
   let default_server_info = match to_bson(&ServerInfo::default()) {
     Ok(info) => info,
     Err(e) => {
@@ -584,5 +585,23 @@ async fn init_server_info() {
     .await
   {
     error!("Failed to migrate ServerInfo to v2 | {e:?}");
+  }
+  let default_deployment_info =
+    match to_bson(&DeploymentInfo::default()) {
+      Ok(info) => info,
+      Err(e) => {
+        error!("Failed to serialize DeploymentInfo to bson | {e:?}");
+        return;
+      }
+    };
+  if let Err(e) = db_client()
+    .deployments
+    .update_many(
+      doc! { "info": null },
+      doc! { "$set": { "info": default_deployment_info } },
+    )
+    .await
+  {
+    error!("Failed to migrate DeploymentInfo to v2 | {e:?}");
   }
 }

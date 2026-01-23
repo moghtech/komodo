@@ -1,33 +1,44 @@
+use std::sync::OnceLock;
+
 use anyhow::{Context, anyhow};
 use database::mungos::{by_id::update_one_by_id, mongodb::bson::doc};
 use komodo_client::{
-  api::write::*,
+  api::{execute::Deploy, write::*},
   entities::{
-    Operation,
+    NoData, Operation, ResourceTarget, SwarmOrServer,
+    alert::{Alert, AlertData, SeverityLevel},
     deployment::{
-      Deployment, DeploymentImage, DeploymentState,
-      PartialDeploymentConfig, RestartMode,
+      Deployment, DeploymentImage, DeploymentInfo, DeploymentState,
+      PartialDeploymentConfig, RestartMode, extract_registry_domain,
     },
     docker::container::RestartPolicyNameEnum,
-    komodo_timestamp,
+    komodo_timestamp, optional_string,
     permission::PermissionLevel,
     server::{Server, ServerState},
     to_container_compatible_name,
     update::Update,
+    user::{auto_redeploy_user, system_user},
   },
 };
+use mogh_cache::SetCache;
 use mogh_resolver::Resolve;
 use periphery_client::api::{self, container::InspectContainer};
 
 use crate::{
+  alert::send_alerts,
+  api::execute::{self, ExecuteRequest},
   helpers::{
     periphery_client,
     query::get_deployment_state,
+    registry_token,
     update::{add_update, make_update},
   },
   permission::get_check_permissions,
-  resource,
-  state::{action_states, db_client, server_status_cache},
+  resource::{self, setup_deployment_execution},
+  state::{
+    action_states, db_client, deployment_status_cache,
+    image_digest_cache, server_status_cache,
+  },
 };
 
 use super::WriteArgs;
@@ -220,10 +231,33 @@ impl Resolve<WriteArgs> for UpdateDeployment {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> mogh_error::Result<Deployment> {
-    Ok(
+    // If the update changes image,
+    // also update the stored latest image digest.
+    let image_update = self
+      .config
+      .image
+      .as_ref()
+      .map(|image| image.as_image().is_some())
+      .unwrap_or_default();
+
+    let deployment =
       resource::update::<Deployment>(&self.id, self.config, user)
-        .await?,
-    )
+        .await?;
+
+    if image_update {
+      tokio::spawn(async move {
+        let _ = (CheckDeploymentForUpdate {
+          deployment: self.id,
+          wait_for_auto_update: false,
+        })
+        .resolve(&WriteArgs {
+          user: system_user().to_owned(),
+        })
+        .await;
+      });
+    }
+
+    Ok(deployment)
   }
 }
 
@@ -313,4 +347,219 @@ impl Resolve<WriteArgs> for RenameDeployment {
 
     Ok(update)
   }
+}
+
+//
+
+impl Resolve<WriteArgs> for CheckDeploymentForUpdate {
+  #[instrument(
+    "CheckDeploymentForUpdate",
+    skip_all,
+    fields(
+      operator = user.id,
+      deployment = self.deployment,
+    )
+  )]
+  async fn resolve(
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> mogh_error::Result<NoData> {
+    // Even though this is a write request, this doesn't change any config. Anyone that can execute the
+    // deployment should be able to do this.
+    let (deployment, swarm_or_server) = setup_deployment_execution(
+      &self.deployment,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
+
+    swarm_or_server.verify_has_target()?;
+
+    check_deployment_for_update_inner(
+      deployment,
+      &swarm_or_server,
+      self.wait_for_auto_update,
+    )
+    .await?;
+
+    Ok(NoData {})
+  }
+}
+
+/// If it goes down the "update available" path,
+/// only send alert if deployment id is not in this cache.
+/// If alert is sent, add ID to cache.
+/// If later it goes down non "update available" path,
+/// remove the id from cache, so next time it does another alert
+/// will be sent.
+fn deployment_alert_sent_cache() -> &'static SetCache<String> {
+  static CACHE: OnceLock<SetCache<String>> = OnceLock::new();
+  CACHE.get_or_init(Default::default)
+}
+
+/// Checks remote registry for latest image digest,
+/// and saves it to database associated with the deployment.
+///
+/// Returns true if update is available and auto deploy is false.
+/// If auto deploy is true, this will deploy.
+#[instrument(
+  "CheckDeploymentForUpdateInner",
+  skip_all,
+  fields(
+    deployment = deployment.id,
+  )
+)]
+pub async fn check_deployment_for_update_inner(
+  deployment: Deployment,
+  swarm_or_server: &SwarmOrServer,
+  // Otherwise spawns task to run in background
+  wait_for_auto_update: bool,
+) -> anyhow::Result<bool> {
+  let alert_cache = deployment_alert_sent_cache();
+
+  let (image, account, token) = match deployment.config.image {
+    DeploymentImage::Image { image } => {
+      let domain = extract_registry_domain(&image)?;
+      let account =
+        optional_string(&deployment.config.image_registry_account);
+      let token = if let Some(account) = &account {
+        registry_token(&domain, account).await?
+      } else {
+        None
+      };
+      (image, account, token)
+    }
+    DeploymentImage::Build { .. } => {
+      alert_cache.remove(&deployment.id).await;
+      // This method not used for build based deployments
+      // as deployed version vs built version can be inferred from Updates.
+      return Ok(false);
+    }
+  };
+
+  let latest_digest = image_digest_cache()
+    .get(&swarm_or_server, &image, account, token)
+    .await?;
+
+  resource::update_info::<Deployment>(
+    &deployment.id,
+    &DeploymentInfo {
+      latest_image_digest: latest_digest.clone(),
+    },
+  )
+  .await?;
+
+  let Some((state, Some(current_digest))) = deployment_status_cache()
+    .get(&deployment.id)
+    .await
+    .map(|s| (s.curr.state, s.curr.image_digest.clone()))
+  else {
+    alert_cache.remove(&deployment.id).await;
+    return Ok(false);
+  };
+
+  // If not running or latest digest matches current, early return
+  if !matches!(state, DeploymentState::Running)
+    || !latest_digest.update_available(&current_digest)
+  {
+    alert_cache.remove(&deployment.id).await;
+    return Ok(false);
+  }
+
+  if deployment.config.auto_update {
+    // Trigger deploy + alert
+    let swarm_id = swarm_or_server.swarm_id().map(str::to_string);
+    let swarm_name = swarm_or_server.swarm_name().map(str::to_string);
+    let server_id = swarm_or_server.server_id().map(str::to_string);
+    let server_name =
+      swarm_or_server.server_name().map(str::to_string);
+
+    let run = async move {
+      match execute::inner_handler(
+        ExecuteRequest::Deploy(Deploy {
+          deployment: deployment.name.clone(),
+          stop_signal: None,
+          stop_time: None,
+        }),
+        auto_redeploy_user().to_owned(),
+      )
+      .await
+      {
+        Ok(_) => {
+          let ts = komodo_timestamp();
+          let alert = Alert {
+            id: Default::default(),
+            ts,
+            resolved: true,
+            resolved_ts: ts.into(),
+            level: SeverityLevel::Ok,
+            target: ResourceTarget::Deployment(deployment.id.clone()),
+            data: AlertData::DeploymentAutoUpdated {
+              id: deployment.id.clone(),
+              name: deployment.name.clone(),
+              swarm_id,
+              swarm_name,
+              server_id,
+              server_name,
+              image: image.clone(),
+            },
+          };
+          let res = db_client().alerts.insert_one(&alert).await;
+          if let Err(e) = res {
+            error!(
+              "Failed to record DeploymentAutoUpdated to db | {e:#}"
+            );
+          }
+          send_alerts(&[alert]).await;
+        }
+        Err(e) => {
+          warn!(
+            "Failed to auto update Deployment {} | {e:#}",
+            deployment.name
+          )
+        }
+      }
+    };
+    
+    if wait_for_auto_update {
+      run.await
+    } else {
+      tokio::spawn(run);
+    }
+  } else {
+    // Avoid spamming alerts
+    if alert_cache.contains(&deployment.id).await {
+      return Ok(true);
+    }
+    alert_cache.insert(deployment.id.clone()).await;
+    let ts = komodo_timestamp();
+    let alert = Alert {
+      id: Default::default(),
+      ts,
+      resolved: true,
+      resolved_ts: ts.into(),
+      level: SeverityLevel::Ok,
+      target: ResourceTarget::Deployment(deployment.id.clone()),
+      data: AlertData::DeploymentImageUpdateAvailable {
+        id: deployment.id.clone(),
+        name: deployment.name.clone(),
+        swarm_id: swarm_or_server.swarm_id().map(str::to_string),
+        swarm_name: swarm_or_server.swarm_name().map(str::to_string),
+        server_id: swarm_or_server.server_id().map(str::to_string),
+        server_name: swarm_or_server
+          .server_name()
+          .map(str::to_string),
+        image: image.clone(),
+      },
+    };
+    let res = db_client().alerts.insert_one(&alert).await;
+    if let Err(e) = res {
+      error!(
+        "Failed to record DeploymentImageUpdateAvailable to db | {e:#}"
+      );
+    }
+    send_alerts(&[alert]).await;
+  }
+
+  Ok(!deployment.config.auto_update)
 }

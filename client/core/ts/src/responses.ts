@@ -225,6 +225,7 @@ export type WriteResponses = {
   RenameStack: Types.Update;
   WriteStackFileContents: Types.Update;
   RefreshStackCache: Types.NoData;
+  CheckStackForUpdate: Types.CheckStackForUpdateResponse;
 
   // ==== DEPLOYMENT ====
   CreateDeployment: Types.Deployment;
@@ -233,6 +234,7 @@ export type WriteResponses = {
   DeleteDeployment: Types.Deployment;
   UpdateDeployment: Types.Deployment;
   RenameDeployment: Types.Update;
+  CheckDeploymentForUpdate: Types.CheckDeploymentForUpdateResponse;
 
   // ==== BUILD ====
   CreateBuild: Types.Build;

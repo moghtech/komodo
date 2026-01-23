@@ -15,6 +15,8 @@ use super::GraphDriverData;
 pub struct ImageListItem {
   /// The first tag in `repo_tags`, or Id if no tags.
   pub name: String,
+  /// The first digest in `repo_digests`, or empty if no digests.
+  pub digest: String,
   /// ID is the content-addressable ID of an image.  This identifier is a content-addressable digest calculated from the image's configuration (which includes the digests of layers used by the image).  Note that this digest differs from the `RepoDigests` below, which holds digests of image manifests that reference the image.
   pub id: String,
   /// ID of the parent image.  Depending on how the image was created, this field may be empty and is only set for images that were built/created locally. This field is empty if the image was pulled from an image registry.

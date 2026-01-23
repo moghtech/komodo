@@ -15,7 +15,10 @@ use crate::{
     option_string_list_deserializer, option_term_labels_deserializer,
     string_list_deserializer, term_labels_deserializer,
   },
-  entities::{EnvironmentVar, environment_vars_from_str},
+  entities::{
+    EnvironmentVar, ImageDigest, environment_vars_from_str,
+    optional_str,
+  },
   parsers::parse_key_value_list,
 };
 
@@ -34,7 +37,7 @@ pub struct DeploymentSchema(
 );
 
 #[typeshare]
-pub type Deployment = Resource<DeploymentConfig, ()>;
+pub type Deployment = Resource<DeploymentConfig, DeploymentInfo>;
 
 #[typeshare]
 pub type DeploymentListItem =
@@ -58,6 +61,16 @@ pub struct DeploymentListItemInfo {
   pub server_id: String,
   /// An attached Komodo Build, if it exists.
   pub build_id: Option<String>,
+}
+
+#[typeshare]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct DeploymentInfo {
+  /// Store the latest associated image digest.
+  /// This includes both the image name / tag, and the specific digest hash.
+  #[serde(default)]
+  pub latest_image_digest: ImageDigest,
 }
 
 #[typeshare(serialized_as = "Partial<DeploymentConfig>")]
@@ -368,6 +381,15 @@ impl Default for DeploymentImage {
     Self::Image {
       image: Default::default(),
     }
+  }
+}
+
+impl DeploymentImage {
+  pub fn as_image(&self) -> Option<&str> {
+    let Self::Image { image } = self else {
+      return None;
+    };
+    optional_str(image)
   }
 }
 

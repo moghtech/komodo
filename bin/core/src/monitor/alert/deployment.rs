@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use komodo_client::entities::{
   ResourceTarget,
   alert::{Alert, AlertData, SeverityLevel},
-  deployment::{Deployment, DeploymentState},
+  deployment::{Deployment, DeploymentState}, optional_string,
 };
 
 use crate::{
@@ -15,6 +15,7 @@ use crate::{
 
 pub async fn alert_deployments(
   ts: i64,
+  swarm_names: &HashMap<String, String>,
   server_names: &HashMap<String, String>,
 ) {
   let mut alerts = Vec::<Alert>::new();
@@ -65,11 +66,14 @@ pub async fn alert_deployments(
       let data = AlertData::ContainerStateChange {
         id: status.curr.id.clone(),
         name: deployment.name,
+        swarm_name: swarm_names
+          .get(&deployment.config.swarm_id)
+          .cloned(),
+        swarm_id: optional_string(&deployment.config.swarm_id),
         server_name: server_names
           .get(&deployment.config.server_id)
-          .cloned()
-          .unwrap_or(String::from("unknown")),
-        server_id: deployment.config.server_id,
+          .cloned(),
+        server_id: optional_string(&deployment.config.server_id),
         from: prev,
         to: status.curr.state,
       };

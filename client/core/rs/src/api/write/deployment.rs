@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::entities::{
+  NoData,
   deployment::{_PartialDeploymentConfig, Deployment},
   update::Update,
 };
@@ -193,3 +194,39 @@ pub struct RenameDeployment {
   /// The new name.
   pub name: String,
 }
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CheckDeploymentForUpdate",
+  description = "Checks for newer image than what is deployed.",
+  request_body(content = CheckDeploymentForUpdate),
+  responses(
+    (status = 200, description = "Checked for update", body = CheckDeploymentForUpdateResponse),
+  ),
+)]
+pub fn check_deployment_for_update() {}
+
+/// Checks for newer image than what is deployed. Response: [CheckDeploymentForUpdateResponse]
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoWriteRequest)]
+#[response(CheckDeploymentForUpdateResponse)]
+#[error(mogh_error::Error)]
+pub struct CheckDeploymentForUpdate {
+  /// Name or id
+  pub deployment: String,
+  /// If check triggers auto deploy,
+  /// whether this call should wait on the auto deploy,
+  /// or run it in the background.
+  #[serde(default)]
+  pub wait_for_auto_update: bool,
+}
+
+#[typeshare]
+pub type CheckDeploymentForUpdateResponse = NoData;

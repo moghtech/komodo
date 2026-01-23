@@ -104,6 +104,7 @@ pub async fn update_cache_for_swarm(swarm: &Swarm, force: bool) {
       .insert(
         swarm.id.clone(),
         CachedSwarmStatus {
+          id: swarm.id.clone(),
           state: SwarmState::Unknown,
           inspect: None,
           lists: None,
@@ -132,6 +133,7 @@ pub async fn update_cache_for_swarm(swarm: &Swarm, force: bool) {
           .insert(
             swarm.id.clone(),
             CachedSwarmStatus {
+              id: swarm.id.clone(),
               state: SwarmState::Unknown,
               inspect: None,
               lists: None,
@@ -168,6 +170,7 @@ pub async fn update_cache_for_swarm(swarm: &Swarm, force: bool) {
     .insert(
       swarm.id.clone(),
       CachedSwarmStatus {
+        id: swarm.id.clone(),
         state,
         inspect,
         lists: Some(lists),

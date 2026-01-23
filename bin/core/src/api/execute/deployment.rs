@@ -9,7 +9,8 @@ use komodo_client::{
     SwarmOrServer, Version,
     build::{Build, ImageRegistryConfig},
     deployment::{
-      Deployment, DeploymentImage, extract_registry_domain,
+      Deployment, DeploymentImage, DeploymentInfo,
+      extract_registry_domain,
     },
     komodo_timestamp, optional_string,
     permission::PermissionLevel,
@@ -94,6 +95,8 @@ impl Resolve<ExecuteArgs> for Deploy {
         PermissionLevel::Execute.into(),
       )
       .await?;
+
+    swarm_or_server.verify_has_target()?;
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -203,7 +206,10 @@ impl Resolve<ExecuteArgs> for Deploy {
     update.version = version;
     update_update(update.clone()).await?;
 
+    let deployment_id = deployment.id.clone();
+
     match swarm_or_server {
+      SwarmOrServer::None => unreachable!(),
       SwarmOrServer::Swarm(swarm) => {
         match swarm_request(
           &swarm.config.server_ids,
@@ -251,6 +257,20 @@ impl Resolve<ExecuteArgs> for Deploy {
           }
         };
       }
+    }
+
+    if let Err(e) = resource::update_info::<Deployment>(
+      &deployment_id,
+      &DeploymentInfo {
+        latest_image_digest: Default::default(),
+      },
+    )
+    .await
+    {
+      warn!(
+        "Failed to update deployment {} info after deploy | {e:#}",
+        deployment_id
+      );
     }
 
     update.finalize();
@@ -860,6 +880,8 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
     )
     .await?;
 
+    swarm_or_server.verify_has_target()?;
+
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
       .deployment
@@ -877,6 +899,7 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
     update_update(update.clone()).await?;
 
     let log = match swarm_or_server {
+      SwarmOrServer::None => unreachable!(),
       SwarmOrServer::Swarm(swarm) => {
         match swarm_request(
           &swarm.config.server_ids,

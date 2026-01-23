@@ -534,6 +534,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
                 ),
                 service_name: format!("{service_name}-{i}"),
                 image: image.clone(),
+                image_digest: None,
               });
             }
           }
@@ -544,6 +545,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
               }),
               service_name,
               image,
+              image_digest: None,
             });
           }
         }

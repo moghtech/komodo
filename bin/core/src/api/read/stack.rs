@@ -90,7 +90,10 @@ impl Resolve<ReadArgs> for GetStackLog {
     )
     .await?;
 
+    swarm_or_server.verify_has_target()?;
+
     let log = match swarm_or_server {
+      SwarmOrServer::None => unreachable!(),
       SwarmOrServer::Swarm(swarm) => {
         let service = services.pop().context(
           "Must pass single service for Swarm mode Stack logs",
@@ -149,7 +152,10 @@ impl Resolve<ReadArgs> for SearchStackLog {
     )
     .await?;
 
+    swarm_or_server.verify_has_target()?;
+
     let log = match swarm_or_server {
+      SwarmOrServer::None => unreachable!(),
       SwarmOrServer::Swarm(swarm) => {
         let service = services.pop().context(
           "Must pass single service for Swarm mode Stack logs",

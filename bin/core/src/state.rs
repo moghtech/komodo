@@ -24,6 +24,7 @@ use crate::{
   connection::PeripheryConnections,
   helpers::{
     action_state::ActionStates, all_resources::AllResourcesById,
+    image_digest::ImageDigestCache,
   },
 };
 
@@ -80,6 +81,7 @@ pub struct History<Curr: Default, Prev> {
 
 #[derive(Default, Clone, Debug)]
 pub struct CachedSwarmStatus {
+  pub id: String,
   pub state: SwarmState,
   pub inspect: Option<SwarmInspectInfo>,
   pub lists: Option<SwarmLists>,
@@ -144,7 +146,7 @@ pub struct CachedDeploymentStatus {
   pub state: DeploymentState,
   pub container: Option<ContainerListItem>,
   pub service: Option<SwarmServiceListItem>,
-  pub update_available: bool,
+  pub image_digest: Option<String>,
 }
 
 /// Cache of ids to status
@@ -209,4 +211,13 @@ pub fn all_resources_cache() -> &'static ArcSwap<AllResourcesById> {
   static ALL_RESOURCES: OnceLock<ArcSwap<AllResourcesById>> =
     OnceLock::new();
   ALL_RESOURCES.get_or_init(Default::default)
+}
+
+/// Maps Image name => (Digest, valid until ms).
+/// Cache the latest queried image digests in order
+/// to infer whether deployments / stacks have updates available.
+pub fn image_digest_cache() -> &'static ImageDigestCache {
+  static IMAGE_DIGEST_CACHE: OnceLock<Arc<ImageDigestCache>> =
+    OnceLock::new();
+  IMAGE_DIGEST_CACHE.get_or_init(|| ImageDigestCache::new())
 }

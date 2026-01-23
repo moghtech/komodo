@@ -1,4 +1,10 @@
-import { useRead } from "@lib/hooks";
+import {
+  useExecute,
+  useInvalidate,
+  usePermissions,
+  useRead,
+  useWrite,
+} from "@lib/hooks";
 import { Types } from "komodo_client";
 import { RequiredResourceComponents } from "@types";
 import { CircleArrowUp, HardDrive, Rocket, Server } from "lucide-react";
@@ -24,7 +30,11 @@ import {
   ResourcePageHeader,
 } from "../common";
 import { RunBuild } from "../build/actions";
-import { DashboardPieChart } from "@components/util";
+import {
+  ActionButton,
+  ActionWithDialog,
+  DashboardPieChart,
+} from "@components/util";
 import {
   ContainerPortsTableView,
   DockerResourceLink,
@@ -34,12 +44,13 @@ import { GroupActions } from "@components/group-actions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 import { DeploymentTabs } from "./tabs";
 import { SwarmResourceLink, useSwarm } from "../swarm";
+import { useToast } from "@ui/use-toast";
 
 // const configOrLog = atomWithStorage("config-or-log-v1", "Config");
 
 export const useDeployment = (id?: string) =>
   useRead("ListDeployments", {}, { refetchInterval: 10_000 }).data?.find(
-    (d) => d.id === id
+    (d) => d.id === id,
   );
 
 export const useFullDeployment = (id: string) =>
@@ -49,7 +60,7 @@ export const useFullDeployment = (id: string) =>
 const DeploymentIcon = ({ id, size }: { id?: string; size: number }) => {
   const state = useDeployment(id)?.info.state;
   const color = stroke_color_class_by_intention(
-    deployment_state_intention(state)
+    deployment_state_intention(state),
   );
   return <Rocket className={cn(`w-${size} h-${size}`, state && color)} />;
 };
@@ -191,7 +202,7 @@ export const DeploymentComponents: RequiredResourceComponents = {
       const service = useRead(
         "ListSwarmServices",
         { swarm: deployment?.info.swarm_id! },
-        { enabled: !!deployment?.info.swarm_id }
+        { enabled: !!deployment?.info.swarm_id },
       ).data?.find((service) => service.Name === deployment?.name);
       if (
         !deployment ||
@@ -250,7 +261,7 @@ export const DeploymentComponents: RequiredResourceComponents = {
         {
           server: deployment?.info.server_id!,
         },
-        { refetchInterval: 10_000, enabled: !!deployment?.info.server_id }
+        { refetchInterval: 10_000, enabled: !!deployment?.info.server_id },
       ).data?.find((container) => container.name === deployment?.name);
       if (!container) return null;
       return (
@@ -314,37 +325,91 @@ export const UpdateAvailable = ({
   id: string;
   small?: boolean;
 }) => {
-  const info = useDeployment(id)?.info;
+  const { toast } = useToast();
+  const { canExecute } = usePermissions({ type: "Deployment", id });
+  const { mutate: deploy, isPending } = useExecute("Deploy");
+  const inv = useInvalidate();
+  const { mutate: checkForUpdate, isPending: checkPending } = useWrite(
+    "CheckDeploymentForUpdate",
+    {
+      onSuccess: () => {
+        toast({ title: "Checked for updates" });
+        inv(["ListDeployments"]);
+      },
+    },
+  );
+  const deploying = useRead(
+    "GetDeploymentActionState",
+    { deployment: id },
+    { refetchInterval: 5_000 },
+  ).data?.deploying;
+
+  const pending = isPending || deploying;
+
+  const deployment = useDeployment(id);
+  const info = deployment?.info;
   const state = info?.state ?? Types.DeploymentState.Unknown;
   if (
     !info ||
-    !info?.update_available ||
+    info.swarm_id ||
     [Types.DeploymentState.NotDeployed, Types.DeploymentState.Unknown].includes(
-      state
+      state,
     )
   ) {
     return null;
   }
+  if (small || !canExecute) {
+    if (!info?.update_available) {
+      return null;
+    }
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            className={cn(
+              "px-2 py-1 border rounded-md border-blue-400 hover:border-blue-500 opacity-50 hover:opacity-70 transition-colors cursor-pointer flex items-center gap-2",
+              small ? "px-2 py-1" : "px-3 py-2",
+            )}
+          >
+            {!small && (
+              <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis">
+                Update Available
+              </div>
+            )}
+            <CircleArrowUp className="w-4 h-4" />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent className="w-fit text-sm">
+          There is a newer image available.
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  if (!info?.update_available) {
+    return (
+      <ActionButton
+        variant="outline"
+        className="flex gap-2 items-center opacity-50 max-w-fit"
+        onClick={() => checkForUpdate({ deployment: id })}
+        loading={checkPending}
+        title="Check"
+        icon={<CircleArrowUp className="w-4 h-4" />}
+      />
+    );
+  }
+
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div
-          className={cn(
-            "px-2 py-1 border rounded-md border-blue-400 hover:border-blue-500 opacity-50 hover:opacity-70 transition-colors cursor-pointer flex items-center gap-2",
-            small ? "px-2 py-1" : "px-3 py-2"
-          )}
-        >
-          <CircleArrowUp className="w-4 h-4" />
-          {!small && (
-            <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis">
-              Update Available
-            </div>
-          )}
-        </div>
-      </TooltipTrigger>
-      <TooltipContent className="w-fit text-sm">
-        There is a newer image available
-      </TooltipContent>
-    </Tooltip>
+    <ActionWithDialog
+      name={deployment.name}
+      variant="outline"
+      targetClassName="border-blue-400 hover:border-blue-500 opacity-50 hover:opacity-70 max-w-fit"
+      title="Update Available"
+      openTitle="Redeploy"
+      icon={<CircleArrowUp className="w-4 h-4" />}
+      onClick={() => deploy({ deployment: id })}
+      disabled={pending}
+      loading={pending}
+    />
   );
 };

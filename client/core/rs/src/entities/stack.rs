@@ -21,8 +21,8 @@ use crate::{
     option_string_list_deserializer, string_list_deserializer,
   },
   entities::{
-    EnvironmentVar, docker::service::SwarmServiceListItem,
-    environment_vars_from_str,
+    EnvironmentVar, ImageDigest,
+    docker::service::SwarmServiceListItem, environment_vars_from_str,
   },
 };
 
@@ -753,6 +753,9 @@ pub struct StackServiceNames {
   /// The services image.
   #[serde(default)]
   pub image: String,
+  /// Store the associated image digest.
+  /// This includes both the image name / tag, and the specific digest hash.
+  pub image_digest: Option<ImageDigest>,
 }
 
 #[typeshare]
@@ -767,8 +770,8 @@ pub struct StackService {
   pub container: Option<ContainerListItem>,
   /// The service (Swarm mode)
   pub swarm_service: Option<SwarmServiceListItem>,
-  /// Whether there is an update available for this services image.
-  pub update_available: bool,
+  /// The service image digest (When deployed)
+  pub image_digest: Option<ImageDigest>,
 }
 
 #[typeshare]

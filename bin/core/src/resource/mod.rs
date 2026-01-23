@@ -4,13 +4,16 @@ use std::{
 };
 
 use anyhow::{Context, anyhow};
-use database::mungos::{
-  by_id::{delete_one_by_id, update_one_by_id},
-  find::find_collect,
-  mongodb::{
-    Collection,
-    bson::{Document, doc, oid::ObjectId, to_document},
-    options::FindOptions,
+use database::{
+  bson::to_bson,
+  mungos::{
+    by_id::{delete_one_by_id, update_one_by_id},
+    find::find_collect,
+    mongodb::{
+      Collection,
+      bson::{Document, doc, oid::ObjectId, to_document},
+      options::FindOptions,
+    },
   },
 };
 use formatting::format_serror;
@@ -724,6 +727,22 @@ pub async fn update_meta<T: KomodoResource>(
     .update_one(id_or_name_filter(id_or_name), doc! { "$set": set })
     .await?;
   refresh_all_resources_cache().await;
+  Ok(())
+}
+
+pub async fn update_info<T: KomodoResource>(
+  id_or_name: &str,
+  info: &T::Info,
+) -> anyhow::Result<()> {
+  let info = to_bson(info)
+    .context("Failed to serialize resource info to BSON")?;
+  T::coll()
+    .update_one(
+      id_or_name_filter(id_or_name),
+      doc! { "$set": { "info": info } },
+    )
+    .await
+    .context("Failed to update resource info on database")?;
   Ok(())
 }
 

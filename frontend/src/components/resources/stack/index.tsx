@@ -1,6 +1,12 @@
-import { useInvalidate, useRead, useWrite } from "@lib/hooks";
+import {
+  useExecute,
+  useInvalidate,
+  usePermissions,
+  useRead,
+  useWrite,
+} from "@lib/hooks";
 import { RequiredResourceComponents } from "@types";
-import { Card } from "@ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@ui/card";
 import {
   CircleArrowUp,
   Layers,
@@ -35,7 +41,11 @@ import {
 import { Badge } from "@ui/badge";
 import { Button } from "@ui/button";
 import { useToast } from "@ui/use-toast";
-import { DashboardPieChart } from "@components/util";
+import {
+  ActionButton,
+  ActionWithDialog,
+  DashboardPieChart,
+} from "@components/util";
 import { StatusBadge } from "@components/util";
 import { GroupActions } from "@components/group-actions";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@ui/tooltip";
@@ -44,7 +54,7 @@ import { useSwarm } from "../swarm";
 
 export const useStack = (id?: string) =>
   useRead("ListStacks", {}, { refetchInterval: 10_000 }).data?.find(
-    (d) => d.id === id
+    (d) => d.id === id,
   );
 
 export const useFullStack = (id: string) =>
@@ -298,7 +308,7 @@ export const StackComponents: RequiredResourceComponents = {
             <Card
               className={cn(
                 "px-3 py-2 hover:bg-accent/50 transition-colors cursor-pointer",
-                out_of_date && border_color_class_by_intention("Warning")
+                out_of_date && border_color_class_by_intention("Warning"),
               )}
             >
               <div className="text-muted-foreground text-sm text-nowrap overflow-hidden overflow-ellipsis">
@@ -322,7 +332,7 @@ export const StackComponents: RequiredResourceComponents = {
                     variant="secondary"
                     className={cn(
                       "w-fit text-muted-foreground border-[1px]",
-                      border_color_class_by_intention("Warning")
+                      border_color_class_by_intention("Warning"),
                     )}
                   >
                     latest
@@ -410,48 +420,147 @@ export const UpdateAvailable = ({
   id: string;
   small?: boolean;
 }) => {
-  const info = useStack(id)?.info;
+  const { toast } = useToast();
+  const { canExecute } = usePermissions({ type: "Stack", id });
+  const { mutate: deploy, isPending } = useExecute("DeployStack");
+  const inv = useInvalidate();
+  const { mutate: checkForUpdate, isPending: checkPending } = useWrite(
+    "CheckStackForUpdate",
+    {
+      onSuccess: () => {
+        toast({ title: "Checked for updates" });
+        inv(["ListStacks"]);
+      },
+    },
+  );
+  const deploying = useRead(
+    "GetStackActionState",
+    { stack: id },
+    { refetchInterval: 5000 },
+  ).data?.deploying;
+  const stack = useStack(id);
+  const fullStack = useFullStack(id);
+  const info = stack?.info;
   const state = info?.state ?? Types.StackState.Unknown;
+
   if (
     !info ||
-    !!info?.services.every((service) => !service.update_available) ||
+    info.swarm_id ||
     [Types.StackState.Down, Types.StackState.Unknown].includes(state)
   ) {
     return null;
   }
+
+  const servicesWithUpdate =
+    info?.services.filter((s) => s.update_available) ?? [];
+
+  const updateAvailable = servicesWithUpdate.length > 0;
+
+  const pending = isPending || deploying;
+
+  if (small || !canExecute) {
+    if (!updateAvailable) {
+      return null;
+    }
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            className={cn(
+              "px-2 py-1 border rounded-md border-blue-400 hover:border-blue-500 opacity-50 hover:opacity-70 transition-colors cursor-pointer flex items-center gap-2",
+              small ? "px-2 py-1" : "px-3 py-2",
+            )}
+          >
+            <CircleArrowUp className="w-4 h-4" />
+            {!small && (
+              <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis">
+                Update
+                {(info?.services.filter((s) => s.update_available).length ??
+                  0) > 1
+                  ? "s"
+                  : ""}{" "}
+                Available
+              </div>
+            )}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent className="flex flex-col gap-2 w-fit">
+          {info?.services
+            .filter((service) => service.update_available)
+            .map((s) => (
+              <div className="text-sm flex gap-2">
+                <div className="text-muted-foreground">{s.service}</div>
+                <div className="text-muted-foreground"> - </div>
+                <div>
+                  {fullStack?.info?.latest_services?.find(
+                    (ser) => ser.service_name == s.service,
+                  )?.image ?? s.image}
+                </div>
+              </div>
+            ))}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  if (!updateAvailable) {
+    return (
+      <ActionButton
+        variant="outline"
+        className="flex gap-2 items-center opacity-50 max-w-fit"
+        onClick={() => checkForUpdate({ stack: id })}
+        loading={checkPending}
+        title="Check"
+        icon={<CircleArrowUp className="w-4 h-4" />}
+      />
+    );
+  }
+
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div
-          className={cn(
-            "px-2 py-1 border rounded-md border-blue-400 hover:border-blue-500 opacity-50 hover:opacity-70 transition-colors cursor-pointer flex items-center gap-2",
-            small ? "px-2 py-1" : "px-3 py-2"
-          )}
-        >
-          <CircleArrowUp className="w-4 h-4" />
-          {!small && (
-            <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis">
-              Update
-              {(info?.services.filter((s) => s.update_available).length ?? 0) >
-              1
-                ? "s"
-                : ""}{" "}
-              Available
-            </div>
-          )}
-        </div>
-      </TooltipTrigger>
-      <TooltipContent className="flex flex-col gap-2 w-fit">
-        {info?.services
-          .filter((service) => service.update_available)
-          .map((s) => (
-            <div className="text-sm flex gap-2">
-              <div className="text-muted-foreground">{s.service}</div>
-              <div className="text-muted-foreground"> - </div>
-              <div>{s.image}</div>
-            </div>
-          ))}
-      </TooltipContent>
-    </Tooltip>
+    <ActionWithDialog
+      name={stack.name}
+      variant="outline"
+      targetClassName="border-blue-400 hover:border-blue-500 opacity-50 hover:opacity-70 max-w-fit"
+      title="Update Available"
+      openTitle="Redeploy"
+      topAdditonal={
+        !fullStack?.config?.auto_update_all_services && (
+          <Card className="flex flex-col gap-1 my-1">
+            <CardHeader className="pb-2">
+              <CardTitle>
+                Service
+                {servicesWithUpdate.length === 1 ? "" : "s"} with update:
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {info?.services
+                .filter((service) => service.update_available)
+                .map((s) => (
+                  <div className="text-sm flex gap-2">
+                    <div className="text-muted-foreground">{s.service}</div>
+                    <div className="text-muted-foreground"> - </div>
+                    <div>
+                      {fullStack?.info?.latest_services?.find(
+                        (ser) => ser.service_name == s.service,
+                      )?.image ?? s.image}
+                    </div>
+                  </div>
+                ))}
+            </CardContent>
+          </Card>
+        )
+      }
+      icon={<CircleArrowUp className="w-4 h-4" />}
+      onClick={() =>
+        deploy({
+          stack: id,
+          services: fullStack?.config?.auto_update_all_services
+            ? []
+            : servicesWithUpdate.map((s) => s.service),
+        })
+      }
+      disabled={pending}
+      loading={pending}
+    />
   );
 };

@@ -1,4 +1,3 @@
-import { Types } from "npm:mogh_auth_client";
 import { ExecuteResponses, ReadResponses, WriteResponses } from "./responses.js";
 import { TerminalCallbacks } from "./terminal.js";
 import { ConnectTerminalQuery, ExecuteRequest, ExecuteTerminalBody, ReadRequest, Update, UpdateListItem, User, WriteRequest } from "./types.js";
@@ -42,13 +41,13 @@ export declare function KomodoClient(url: string, options: InitOptions): {
      * https://docs.rs/mogh_auth_client/latest/mogh_auth_client/api/index.html
      */
     auth: {
-        login: <T extends Types.LoginRequest["type"], Req extends Extract<Types.LoginRequest, {
+        login: <T extends import("mogh_auth_client/dist/types.js").LoginRequest["type"], Req extends Extract<import("mogh_auth_client/dist/types.js").LoginRequest, {
             type: T;
         }>>(type: T, params: Req["params"]) => Promise<import("mogh_auth_client").LoginResponses[Req["type"]]>;
-        manage: <T extends Types.ManageRequest["type"], Req extends Extract<Types.ManageRequest, {
+        manage: <T extends import("mogh_auth_client/dist/types.js").ManageRequest["type"], Req extends Extract<import("mogh_auth_client/dist/types.js").ManageRequest, {
             type: T;
         }>>(type: T, params: Req["params"]) => Promise<import("mogh_auth_client").ManageResponses[Req["type"]]>;
-        externalLogin: (provider: Types.ExternalLoginProvider) => void;
+        externalLogin: (provider: import("mogh_auth_client/dist/types.js").ExternalLoginProvider) => void;
     };
     /**
      * Get the current (calling) user.

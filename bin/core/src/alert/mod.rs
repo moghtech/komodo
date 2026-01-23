@@ -251,6 +251,22 @@ fn standard_alert_content(alert: &Alert) -> String {
         "{level} | If you see this message, then Alerter {name} is working\n{link}",
       )
     }
+    AlertData::SwarmUnhealthy { id, name, err } => {
+      let link = resource_link(ResourceTargetVariant::Swarm, id);
+      match alert.level {
+        SeverityLevel::Ok => {
+          format!("{level} | Swarm {name} is now healthy\n{link}")
+        }
+        SeverityLevel::Critical => {
+          let err = err
+            .as_ref()
+            .map(|e| format!("\nerror: {e}"))
+            .unwrap_or_default();
+          format!("{level} | Swarm {name} is unhealthy ❌\n{link}{err}")
+        }
+        _ => unreachable!(),
+      }
+    }
     AlertData::ServerVersionMismatch {
       id,
       name,
@@ -341,6 +357,8 @@ fn standard_alert_content(alert: &Alert) -> String {
     AlertData::ContainerStateChange {
       id,
       name,
+      swarm_id: _swarm_id,
+      swarm_name,
       server_id: _server_id,
       server_name,
       from,
@@ -348,37 +366,64 @@ fn standard_alert_content(alert: &Alert) -> String {
     } => {
       let link = resource_link(ResourceTargetVariant::Deployment, id);
       let to_state = fmt_docker_container_state(to);
+      let target = if let Some(swarm) = swarm_name {
+        format!("\nswarm: {swarm}")
+      } else if let Some(server) = server_name {
+        format!("\nserver: {server}")
+      } else {
+        format!("")
+      };
       format!(
-        "📦Deployment {name} is now {to_state}\nserver: {server_name}\nprevious: {from}\n{link}",
+        "📦Deployment {name} is now {to_state}{target}\nprevious: {from}\n{link}",
       )
     }
     AlertData::DeploymentImageUpdateAvailable {
       id,
       name,
+      swarm_id: _swarm_id,
+      swarm_name,
       server_id: _server_id,
       server_name,
       image,
     } => {
       let link = resource_link(ResourceTargetVariant::Deployment, id);
+      let target = if let Some(swarm) = swarm_name {
+        format!("\nswarm: {swarm}")
+      } else if let Some(server) = server_name {
+        format!("\nserver: {server}")
+      } else {
+        format!("")
+      };
       format!(
-        "⬆ Deployment {name} has an update available\nserver: {server_name}\nimage: {image}\n{link}",
+        "⬆ Deployment {name} has an update available{target}\nimage: {image}\n{link}",
       )
     }
     AlertData::DeploymentAutoUpdated {
       id,
       name,
+      swarm_id: _swarm_id,
+      swarm_name,
       server_id: _server_id,
       server_name,
       image,
     } => {
       let link = resource_link(ResourceTargetVariant::Deployment, id);
+      let target = if let Some(swarm) = swarm_name {
+        format!("\nswarm: {swarm}")
+      } else if let Some(server) = server_name {
+        format!("\nserver: {server}")
+      } else {
+        format!("")
+      };
       format!(
-        "⬆ Deployment {name} was updated automatically\nserver: {server_name}\nimage: {image}\n{link}",
+        "⬆ Deployment {name} was updated automatically{target}\nimage: {image}\n{link}",
       )
     }
     AlertData::StackStateChange {
       id,
       name,
+      swarm_id: _swarm_id,
+      swarm_name,
       server_id: _server_id,
       server_name,
       from,
@@ -386,26 +431,44 @@ fn standard_alert_content(alert: &Alert) -> String {
     } => {
       let link = resource_link(ResourceTargetVariant::Stack, id);
       let to_state = fmt_stack_state(to);
+      let target = if let Some(swarm) = swarm_name {
+        format!("\nswarm: {swarm}")
+      } else if let Some(server) = server_name {
+        format!("\nserver: {server}")
+      } else {
+        format!("")
+      };
       format!(
-        "🥞 Stack {name} is now {to_state}\nserver: {server_name}\nprevious: {from}\n{link}",
+        "🥞 Stack {name} is now {to_state}{target}\nprevious: {from}\n{link}",
       )
     }
     AlertData::StackImageUpdateAvailable {
       id,
       name,
+      swarm_id: _swarm_id,
+      swarm_name,
       server_id: _server_id,
       server_name,
       service,
       image,
     } => {
       let link = resource_link(ResourceTargetVariant::Stack, id);
+      let target = if let Some(swarm) = swarm_name {
+        format!("\nswarm: {swarm}")
+      } else if let Some(server) = server_name {
+        format!("\nserver: {server}")
+      } else {
+        format!("")
+      };
       format!(
-        "⬆ Stack {name} has an update available\nserver: {server_name}\nservice: {service}\nimage: {image}\n{link}",
+        "⬆ Stack {name} has an update available{target}\nservice: {service}\nimage: {image}\n{link}",
       )
     }
     AlertData::StackAutoUpdated {
       id,
       name,
+      swarm_id: _swarm_id,
+      swarm_name,
       server_id: _server_id,
       server_name,
       images,
@@ -414,8 +477,15 @@ fn standard_alert_content(alert: &Alert) -> String {
       let images_label =
         if images.len() > 1 { "images" } else { "image" };
       let images_str = images.join(", ");
+      let target = if let Some(swarm) = swarm_name {
+        format!("\nswarm: {swarm}")
+      } else if let Some(server) = server_name {
+        format!("\nserver: {server}")
+      } else {
+        format!("")
+      };
       format!(
-        "⬆ Stack {name} was updated automatically ⏫\nserver: {server_name}\n{images_label}: {images_str}\n{link}",
+        "⬆ Stack {name} was updated automatically ⏫{target}\n{images_label}: {images_str}\n{link}",
       )
     }
     AlertData::AwsBuilderTerminationFailed {

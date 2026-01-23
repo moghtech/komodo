@@ -31,6 +31,7 @@ pub struct ImageHistory {
 
 //
 
+/// Returns image digest, eg: `sha256:c0154cb95587cde64be74f35ada1a2bd7892219f3f0ac3c9dc6cab34046b3573`
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(GetLatestImageDigestResponse)]
 #[error(anyhow::Error)]

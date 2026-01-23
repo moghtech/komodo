@@ -30,6 +30,7 @@ pub mod action_state;
 pub mod all_resources;
 pub mod builder;
 pub mod channel;
+pub mod image_digest;
 pub mod maintenance;
 pub mod matcher;
 pub mod procedure;
@@ -284,6 +285,9 @@ where
     }
     SwarmOrServer::Server(server) => {
       periphery_client(server).await?.request(request).await
+    }
+    SwarmOrServer::None => {
+      Err(anyhow!("Resource has neither swarm nor server attached."))
     }
   }
 }

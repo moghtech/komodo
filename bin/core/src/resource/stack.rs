@@ -110,10 +110,36 @@ impl super::KomodoResource for Stack {
         s.curr
           .services
           .iter()
-          .map(|service| StackServiceWithUpdate {
-            service: service.service.clone(),
-            image: service.image.clone(),
-            update_available: service.update_available,
+          .map(|current_service| {
+            let update_available = current_service
+              .image_digest
+              .as_ref()
+              .map(|current_digest| {
+                stack
+                  .info
+                  .latest_services
+                  .iter()
+                  .find_map(|latest_service| {
+                    if current_service.service
+                      == latest_service.service_name
+                    {
+                      latest_service
+                        .image_digest
+                        .as_ref()?
+                        .update_available(&current_digest.0)
+                        .into()
+                    } else {
+                      None
+                    }
+                  })
+                  .unwrap_or_default()
+              })
+              .unwrap_or_default();
+            StackServiceWithUpdate {
+              service: current_service.service.clone(),
+              image: current_service.image.clone(),
+              update_available,
+            }
           })
           .collect::<Vec<_>>()
       })
@@ -273,6 +299,7 @@ impl super::KomodoResource for Stack {
       SwarmOrServer::Server(server) => {
         update_cache_for_server(&server, true).await;
       }
+      SwarmOrServer::None => {}
     }
     Ok(())
   }
@@ -344,6 +371,7 @@ impl super::KomodoResource for Stack {
     };
 
     match swarm_or_server {
+      SwarmOrServer::None => {}
       SwarmOrServer::Swarm(swarm) => {
         match swarm_request(
           &swarm.config.server_ids,

@@ -1,20 +1,29 @@
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf, sync::OnceLock};
 
 use anyhow::{Context, anyhow};
-use database::mungos::mongodb::bson::{doc, to_document};
-use formatting::format_serror;
-use komodo_client::{
-  api::write::*,
-  entities::{
-    FileContents, NoData, Operation, RepoExecutionArgs,
-    all_logs_success,
-    permission::PermissionLevel,
-    repo::Repo,
-    stack::{Stack, StackInfo},
-    update::Update,
-    user::stack_user,
+use database::{
+  bson::to_bson,
+  mungos::{
+    by_id::update_one_by_id,
+    mongodb::bson::{doc, to_document},
   },
 };
+use formatting::format_serror;
+use komodo_client::{
+  api::{execute::DeployStack, write::*},
+  entities::{
+    FileContents, NoData, Operation, RepoExecutionArgs,
+    ResourceTarget, SwarmOrServer,
+    alert::{Alert, AlertData, SeverityLevel},
+    all_logs_success, komodo_timestamp,
+    permission::PermissionLevel,
+    repo::Repo,
+    stack::{Stack, StackInfo, StackServiceWithUpdate, StackState},
+    update::Update,
+    user::{auto_redeploy_user, stack_user, system_user},
+  },
+};
+use mogh_cache::SetCache;
 use mogh_resolver::Resolve;
 use periphery_client::api::compose::{
   GetComposeContentsOnHost, GetComposeContentsOnHostResponse,
@@ -22,6 +31,8 @@ use periphery_client::api::compose::{
 };
 
 use crate::{
+  alert::send_alerts,
+  api::execute::{self, ExecuteRequest},
   config::core_config,
   helpers::{
     query::get_swarm_or_server,
@@ -32,9 +43,12 @@ use crate::{
   resource,
   stack::{
     remote::{RemoteComposeContents, get_repo_compose_contents},
-    services::extract_services_into_res,
+    services::{
+      extract_services_from_stack, extract_services_into_res,
+    },
+    setup_stack_execution,
   },
-  state::db_client,
+  state::{db_client, image_digest_cache, stack_status_cache},
 };
 
 use super::WriteArgs;
@@ -438,6 +452,15 @@ impl Resolve<WriteArgs> for RefreshStackCache {
     }
 
     let mut missing_files = Vec::new();
+    let service_image_digests = stack
+      .info
+      .latest_services
+      .iter()
+      .filter_map(|s| {
+        let digest = s.image_digest.clone()?;
+        Some((s.service_name.clone(), digest))
+      })
+      .collect::<HashMap<_, _>>();
 
     let (
       latest_services,
@@ -487,6 +510,7 @@ impl Resolve<WriteArgs> for RefreshStackCache {
           if let Err(e) = extract_services_into_res(
             &project_name,
             &contents.contents,
+            &service_image_digests,
             &mut services,
           ) {
             warn!(
@@ -529,6 +553,7 @@ impl Resolve<WriteArgs> for RefreshStackCache {
         if let Err(e) = extract_services_into_res(
           &project_name,
           &contents.contents,
+          &service_image_digests,
           &mut services,
         ) {
           warn!(
@@ -554,6 +579,7 @@ impl Resolve<WriteArgs> for RefreshStackCache {
         // this should latest (not deployed), so make the project name fresh.
         &stack.project_name(true),
         &stack.config.file_contents,
+        &service_image_digests,
         &mut services,
       ) {
         warn!(
@@ -594,4 +620,303 @@ impl Resolve<WriteArgs> for RefreshStackCache {
 
     Ok(NoData {})
   }
+}
+
+//
+
+impl Resolve<WriteArgs> for CheckStackForUpdate {
+  #[instrument(
+    "CheckStackForUpdate",
+    skip_all,
+    fields(
+      operator = user.id,
+      stack = self.stack,
+    )
+  )]
+  async fn resolve(
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> mogh_error::Result<NoData> {
+    // Even though this is a write request, this doesn't change any config. Anyone that can execute the
+    // stack should be able to do this.
+    let (stack, swarm_or_server) = setup_stack_execution(
+      &self.stack,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
+
+    swarm_or_server.verify_has_target()?;
+
+    check_stack_for_update_inner(
+      stack.id,
+      &swarm_or_server,
+      self.wait_for_auto_update,
+    )
+    .await?;
+
+    Ok(NoData {})
+  }
+}
+
+/// If it goes down the "update available" path,
+/// only send alert if stack id + service is not in this cache.
+/// If alert is sent, add ID to cache.
+/// If later it goes down non "update available" path,
+/// remove the id from cache, so next time it does another alert
+/// will be sent.
+fn stack_alert_sent_cache() -> &'static SetCache<(String, String)> {
+  static CACHE: OnceLock<SetCache<(String, String)>> =
+    OnceLock::new();
+  CACHE.get_or_init(Default::default)
+}
+
+/// First refresh stack cache, then save
+/// latest available 'image_digest' for stack services
+/// to database.
+#[instrument(
+  "CheckStackForUpdateInner",
+  skip_all,
+  fields(
+    stack = stack,
+  )
+)]
+pub async fn check_stack_for_update_inner(
+  // ID or name.
+  stack: String,
+  swarm_or_server: &SwarmOrServer,
+  // Otherwise spawns task to run in background
+  wait_for_auto_update: bool,
+) -> anyhow::Result<Vec<StackServiceWithUpdate>> {
+  (RefreshStackCache {
+    stack: stack.clone(),
+  })
+  .resolve(&WriteArgs {
+    user: system_user().to_owned(),
+  })
+  .await
+  .map_err(|e| e.error)
+  .context("Failed to refresh stack cache before update check")?;
+
+  // Query again after refresh
+  let mut stack = resource::get::<Stack>(&stack).await?;
+
+  let cache = image_digest_cache();
+
+  for service in &mut stack.info.latest_services {
+    if service.image.is_empty() {
+      service.image_digest = None;
+      continue;
+    }
+    match cache
+      .get(&swarm_or_server, &service.image, None, None)
+      .await
+    {
+      Ok(digest) => service.image_digest = Some(digest),
+      Err(e) => {
+        warn!(
+          "Failed to check for update | Stack: {} | Service: {} | Error: {e:#}",
+          stack.name, service.service_name
+        );
+        service.image_digest = None;
+        continue;
+      }
+    };
+  }
+
+  let latest_services = to_bson(&stack.info.latest_services)
+    .context("Failed to serialize stack latest services to BSON")?;
+
+  update_one_by_id(
+    &db_client().stacks,
+    &stack.id,
+    doc! { "$set": { "info.latest_services": latest_services } },
+    None,
+  )
+  .await?;
+
+  let alert_cache = stack_alert_sent_cache();
+
+  let Some(status) = stack_status_cache().get(&stack.id).await else {
+    alert_cache
+      .retain(|(stack_id, _)| stack_id != &stack.id)
+      .await;
+    return Ok(
+      extract_services_from_stack(&stack)
+        .into_iter()
+        .map(|service| StackServiceWithUpdate {
+          service: service.service_name,
+          image: service.image,
+          update_available: false,
+        })
+        .collect(),
+    );
+  };
+
+  let StackState::Running = status.curr.state else {
+    return Ok(
+      status
+        .curr
+        .services
+        .iter()
+        .map(|service| StackServiceWithUpdate {
+          service: service.service.clone(),
+          image: service.image.clone(),
+          update_available: false,
+        })
+        .collect(),
+    );
+  };
+
+  let mut services = Vec::new();
+
+  for service in status.curr.services.iter() {
+    let mut service_with_update = StackServiceWithUpdate {
+      service: service.service.clone(),
+      image: service.image.clone(),
+      update_available: false,
+    };
+
+    let Some(current_digest) = &service.image_digest else {
+      services.push(service_with_update);
+      continue;
+    };
+
+    let Some(latest_digest) =
+      stack.info.latest_services.iter().find_map(|s| {
+        if s.service_name == service.service {
+          s.image_digest.clone()
+        } else {
+          None
+        }
+      })
+    else {
+      services.push(service_with_update);
+      continue;
+    };
+
+    service_with_update.update_available =
+      latest_digest.update_available(&current_digest.0);
+
+    if service_with_update.update_available
+      && !stack.config.auto_update
+      && !alert_cache
+        .contains(&(stack.id.clone(), service.service.clone()))
+        .await
+    {
+      // Send service update available alert
+      alert_cache
+        .insert((stack.id.clone(), service.service.clone()))
+        .await;
+      let ts = komodo_timestamp();
+      let alert = Alert {
+        id: Default::default(),
+        ts,
+        resolved: true,
+        resolved_ts: ts.into(),
+        level: SeverityLevel::Ok,
+        target: ResourceTarget::Stack(stack.id.clone()),
+        data: AlertData::StackImageUpdateAvailable {
+          id: stack.id.clone(),
+          name: stack.name.clone(),
+          swarm_name: swarm_or_server
+            .swarm_name()
+            .map(str::to_string),
+          swarm_id: swarm_or_server.swarm_id().map(str::to_string),
+          server_name: swarm_or_server
+            .server_name()
+            .map(str::to_string),
+          server_id: swarm_or_server.server_id().map(str::to_string),
+          service: service.service.clone(),
+          image: service.image.clone(),
+        },
+      };
+      let res = db_client().alerts.insert_one(&alert).await;
+      if let Err(e) = res {
+        error!(
+          "Failed to record StackImageUpdateAvailable to db | {e:#}"
+        );
+      }
+      send_alerts(&[alert]).await;
+    }
+
+    services.push(service_with_update);
+  }
+
+  let services_with_update = services
+    .iter()
+    .filter(|service| service.update_available)
+    .cloned()
+    .collect::<Vec<_>>();
+
+  if !stack.config.auto_update || services_with_update.is_empty() {
+    return Ok(services);
+  }
+
+  let deploy_services = if stack.config.auto_update_all_services {
+    Vec::new()
+  } else {
+    services_with_update
+      .iter()
+      .map(|service| service.service.clone())
+      .collect()
+  };
+
+  let swarm_id = swarm_or_server.swarm_id().map(str::to_string);
+  let swarm_name = swarm_or_server.swarm_name().map(str::to_string);
+  let server_id = swarm_or_server.server_id().map(str::to_string);
+  let server_name = swarm_or_server.server_name().map(str::to_string);
+
+  let run = async move {
+    match execute::inner_handler(
+      ExecuteRequest::DeployStack(DeployStack {
+        stack: stack.id.clone(),
+        services: deploy_services,
+        stop_time: None,
+      }),
+      auto_redeploy_user().to_owned(),
+    )
+    .await
+    {
+      Ok(_) => {
+        let ts = komodo_timestamp();
+        let alert = Alert {
+          id: Default::default(),
+          ts,
+          resolved: true,
+          resolved_ts: ts.into(),
+          level: SeverityLevel::Ok,
+          target: ResourceTarget::Stack(stack.id.clone()),
+          data: AlertData::StackAutoUpdated {
+            id: stack.id.clone(),
+            name: stack.name.clone(),
+            swarm_id,
+            swarm_name,
+            server_id,
+            server_name,
+            images: services_with_update
+              .iter()
+              .map(|service| service.image.clone())
+              .collect(),
+          },
+        };
+        let res = db_client().alerts.insert_one(&alert).await;
+        if let Err(e) = res {
+          error!("Failed to record StackAutoUpdated to db | {e:#}");
+        }
+        send_alerts(&[alert]).await;
+      }
+      Err(e) => {
+        warn!("Failed to auto update Stack {} | {e:#}", stack.name)
+      }
+    }
+  };
+
+  if wait_for_auto_update {
+    run.await
+  } else {
+    tokio::spawn(run);
+  }
+
+  Ok(services)
 }

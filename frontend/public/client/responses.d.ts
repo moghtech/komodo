@@ -166,12 +166,14 @@ export type WriteResponses = {
     RenameStack: Types.Update;
     WriteStackFileContents: Types.Update;
     RefreshStackCache: Types.NoData;
+    CheckStackForUpdate: Types.CheckStackForUpdateResponse;
     CreateDeployment: Types.Deployment;
     CopyDeployment: Types.Deployment;
     CreateDeploymentFromContainer: Types.Deployment;
     DeleteDeployment: Types.Deployment;
     UpdateDeployment: Types.Deployment;
     RenameDeployment: Types.Update;
+    CheckDeploymentForUpdate: Types.CheckDeploymentForUpdateResponse;
     CreateBuild: Types.Build;
     CopyBuild: Types.Build;
     DeleteBuild: Types.Build;

@@ -48,10 +48,6 @@ mod sync;
 
 use super::Variant;
 
-pub use {
-  deployment::pull_deployment_inner, stack::pull_stack_inner,
-};
-
 pub struct ExecuteArgs {
   /// The execution id.
   /// Unique for every /execute call.

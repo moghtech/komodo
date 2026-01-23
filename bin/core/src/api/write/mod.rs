@@ -41,6 +41,11 @@ mod user;
 mod user_group;
 mod variable;
 
+pub use {
+  deployment::check_deployment_for_update_inner,
+  stack::check_stack_for_update_inner,
+};
+
 pub struct WriteArgs {
   pub user: User,
 }
@@ -89,6 +94,7 @@ pub enum WriteRequest {
   RenameStack(RenameStack),
   WriteStackFileContents(WriteStackFileContents),
   RefreshStackCache(RefreshStackCache),
+  CheckStackForUpdate(CheckStackForUpdate),
 
   // ==== DEPLOYMENT ====
   CreateDeployment(CreateDeployment),
@@ -97,6 +103,7 @@ pub enum WriteRequest {
   DeleteDeployment(DeleteDeployment),
   UpdateDeployment(UpdateDeployment),
   RenameDeployment(RenameDeployment),
+  CheckDeploymentForUpdate(CheckDeploymentForUpdate),
 
   // ==== BUILD ====
   CreateBuild(CreateBuild),

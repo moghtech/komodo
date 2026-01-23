@@ -1,8 +1,5 @@
 use std::{
-  collections::HashMap,
-  path::PathBuf,
-  str::FromStr,
-  sync::{Mutex, OnceLock},
+  collections::HashMap, path::PathBuf, str::FromStr, sync::OnceLock,
 };
 
 use anyhow::Context;
@@ -22,6 +19,7 @@ use komodo_client::entities::{
 use crate::{
   alert::send_alerts,
   helpers::maintenance::is_in_maintenance,
+  monitor::alert::AlertBuffer,
   state::{db_client, server_status_cache},
 };
 
@@ -30,43 +28,7 @@ type OpenAlertMap<T = AlertDataVariant> =
   HashMap<ResourceTarget, HashMap<T, Alert>>;
 type OpenDiskAlertMap = OpenAlertMap<PathBuf>;
 
-/// Alert buffer to prevent immediate alerts on transient issues
-struct AlertBuffer {
-  buffer: Mutex<HashMap<(String, AlertDataVariant), bool>>,
-}
-
-impl AlertBuffer {
-  fn new() -> Self {
-    Self {
-      buffer: Mutex::new(HashMap::new()),
-    }
-  }
-
-  /// Check if alert should be opened. Requires two consecutive calls to return true.
-  fn ready_to_open(
-    &self,
-    server_id: String,
-    variant: AlertDataVariant,
-  ) -> bool {
-    let mut lock = self.buffer.lock().unwrap();
-    let ready = lock.entry((server_id, variant)).or_default();
-    if *ready {
-      *ready = false;
-      true
-    } else {
-      *ready = true;
-      false
-    }
-  }
-
-  /// Reset buffer state for a specific server/alert combination
-  fn reset(&self, server_id: String, variant: AlertDataVariant) {
-    let mut lock = self.buffer.lock().unwrap();
-    lock.remove(&(server_id, variant));
-  }
-}
-
-/// Global alert buffer instance
+/// Server alert buffer instance
 fn alert_buffer() -> &'static AlertBuffer {
   static BUFFER: OnceLock<AlertBuffer> = OnceLock::new();
   BUFFER.get_or_init(AlertBuffer::new)
