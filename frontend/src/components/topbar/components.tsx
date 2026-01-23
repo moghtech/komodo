@@ -552,6 +552,18 @@ const AlertDetails = ({
   </>
 );
 
+export const Api = () => (
+  <a
+    href="/docs"
+    target="_blank"
+    className="hidden lg:block"
+  >
+    <Button variant="link" size="sm" className="px-2">
+      <div>Api</div>
+    </Button>
+  </a>
+);
+
 export const Docs = () => (
   <a
     href="https://komo.do/docs/intro"

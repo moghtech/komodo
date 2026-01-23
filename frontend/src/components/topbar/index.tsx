@@ -4,6 +4,7 @@ import { OmniSearch, OmniDialog } from "../omnibar";
 import { ThemeToggle } from "@ui/theme";
 import { useState } from "react";
 import {
+  Api,
   CopyCorePubkey,
   Docs,
   KeyboardShortcuts,
@@ -43,6 +44,7 @@ export const Topbar = () => {
         <div className="flex justify-end items-center gap-1">
           <OmniSearch setOpen={setOmniOpen} className="lg:hidden" />
           <div className="flex gap-0">
+            <Api />
             <Docs />
             <Version />
           </div>
