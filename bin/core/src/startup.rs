@@ -111,6 +111,7 @@ pub async fn on_startup() {
   tokio::join!(
     in_progress_update_cleanup(),
     open_alert_cleanup(),
+    action_api_key_cleanup(),
     ensure_first_server_and_builder(),
     ensure_init_user_and_resources(),
     clean_up_server_templates(),
@@ -130,7 +131,7 @@ async fn in_progress_update_cleanup() {
   {
     Ok(log) => log,
     Err(e) => {
-      error!("Failed to cleanup in progress update | {e:#}");
+      error!("Failed to clean up in progress update | {e:#}");
       return;
     }
   };
@@ -150,7 +151,7 @@ async fn in_progress_update_cleanup() {
     )
     .await
   {
-    error!("failed to cleanup in progress updates on startup | {e:#}")
+    error!("Failed to clean up in progress updates on startup | {e:?}")
   }
 }
 
@@ -162,7 +163,7 @@ async fn open_alert_cleanup() {
       .await
       .inspect_err(|e| {
         error!(
-          "failed to list all alerts for startup open alert cleanup | {e:?}"
+          "failed to list all alerts for startup open alert clean up | {e:?}"
         )
       })
   else {
@@ -204,6 +205,18 @@ async fn open_alert_cleanup() {
   {
     error!(
       "failed to clean up invalid open alerts on startup | {e:#}"
+    )
+  }
+}
+
+async fn action_api_key_cleanup() {
+  if let Err(e) = db_client()
+    .api_keys
+    .delete_many(doc! { "user_id": &action_user().id })
+    .await
+  {
+    warn!(
+      "Failed to clean up dangling action api keys on startup | {e:?}"
     )
   }
 }
