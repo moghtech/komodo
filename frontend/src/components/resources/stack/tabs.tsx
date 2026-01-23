@@ -1,4 +1,4 @@
-import { useLocalStorage, usePermissions } from "@lib/hooks";
+import { useLocalStorage, usePermissions, useRead } from "@lib/hooks";
 import { useStack } from ".";
 import { Types } from "komodo_client";
 import { useMemo } from "react";
@@ -10,16 +10,26 @@ import { StackInfo } from "./info";
 import { StackServices } from "./services";
 import { StackLogs } from "./log";
 import { StackConfig } from "./config";
+import { useServer } from "../server";
+import { ContainerTerminals } from "@components/terminal/container";
 
-type StackTabsView = "Config" | "Info" | "Services" | "Log";
+type StackTabsView = "Config" | "Info" | "Services" | "Log" | "Terminals";
 
 export const StackTabs = ({ id }: { id: string }) => {
   const [_view, setView] = useLocalStorage<StackTabsView>(
     "stack-tabs-v2",
-    "Config"
+    "Config",
   );
   const info = useStack(id)?.info;
-  const { specificLogs } = usePermissions({ type: "Stack", id });
+  const { specificLogs, specificTerminal } = usePermissions({
+    type: "Stack",
+    id,
+  });
+
+  const services = useRead("ListStackServices", { stack: id }).data;
+
+  const container_terminals_disabled =
+    useServer(info?.server_id)?.info.container_terminals_disabled ?? false;
 
   const state = info?.state;
   const hideInfo = !info?.files_on_host && !info?.repo && !info?.linked_repo;
@@ -28,6 +38,15 @@ export const StackTabs = ({ id }: { id: string }) => {
     state === Types.StackState.Unknown ||
     state === Types.StackState.Down;
   const hideLogs = hideServices || !specificLogs;
+  const terminalDisabled =
+    !specificTerminal ||
+    container_terminals_disabled ||
+    // All services are not running
+    services?.every(
+      (service) =>
+        !service.container ||
+        service.container.state !== Types.ContainerStateStatusEnum.Running,
+    );
 
   const view =
     (_view === "Info" && hideInfo) ||
@@ -53,8 +72,13 @@ export const StackTabs = ({ id }: { id: string }) => {
         value: "Log",
         disabled: hideLogs,
       },
+      {
+        value: "Terminals",
+        disabled: terminalDisabled,
+        hidden: !specificTerminal,
+      },
     ],
-    [hideInfo, hideServices, specificLogs, hideLogs]
+    [hideInfo, hideServices, specificLogs, hideLogs],
   );
 
   const Selector = (
@@ -66,6 +90,16 @@ export const StackTabs = ({ id }: { id: string }) => {
     />
   );
 
+  const target: Types.TerminalTarget = useMemo(
+    () => ({
+      type: "Stack",
+      params: {
+        stack: id,
+      },
+    }),
+    [id],
+  );
+
   switch (view) {
     case "Config":
       return <StackConfig id={id} titleOther={Selector} />;
@@ -75,5 +109,13 @@ export const StackTabs = ({ id }: { id: string }) => {
       return <StackServices id={id} titleOther={Selector} />;
     case "Log":
       return <StackLogs id={id} titleOther={Selector} />;
+    case "Terminals":
+      return (
+        <ContainerTerminals
+          services={services?.map((service) => service.service) ?? []}
+          target={target}
+          titleOther={Selector}
+        />
+      );
   }
 };

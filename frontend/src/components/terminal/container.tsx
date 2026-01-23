@@ -2,7 +2,7 @@ import { Section } from "@components/layouts";
 import { komodo_client, useLocalStorage, useRead, useWrite } from "@lib/hooks";
 import { Button } from "@ui/button";
 import { Card, CardContent, CardHeader } from "@ui/card";
-import { Loader2, Plus, RefreshCcw, X } from "lucide-react";
+import { Loader2, Plus, RefreshCcw, SearchX, X } from "lucide-react";
 import { ReactNode, useCallback, useState } from "react";
 import { Terminal } from ".";
 import { TerminalCallbacks, Types } from "komodo_client";
@@ -22,9 +22,11 @@ const BASE_COMMANDS = ["sh", "bash", "attach"];
 export const ContainerTerminals = ({
   target,
   titleOther,
+  services,
 }: {
   target: Types.TerminalTarget;
   titleOther?: ReactNode;
+  services?: string[];
 }) => {
   const { data: terminals, refetch: refetchTerminals } = useRead(
     "ListTerminals",
@@ -33,7 +35,7 @@ export const ContainerTerminals = ({
     },
     {
       refetchInterval: 5000,
-    }
+    },
   );
   const { mutateAsync: create_terminal, isPending: create_pending } =
     useWrite("CreateTerminal");
@@ -47,14 +49,16 @@ export const ContainerTerminals = ({
   const [_reconnect, _setReconnect] = useState(false);
   const triggerReconnect = () => _setReconnect((r) => !r);
 
-  const create = async (command: string | undefined) => {
+  const create = async (command: string | undefined, service?: string) => {
     if (!terminals) return;
     const name = next_terminal_name(
       command,
-      terminals.map((t) => t.name)
+      terminals.map((t) => t.name),
     );
     await create_terminal({
-      target,
+      target: service
+        ? { ...target, params: { ...target.params, service } as any }
+        : target,
       name,
       command,
       mode: !command
@@ -73,15 +77,22 @@ export const ContainerTerminals = ({
       <Card>
         <CardHeader>
           <div className="flex gap-4 items-center flex-wrap">
-            {terminals?.map(({ name: terminal, stored_size_kb }) => (
+            {terminals?.map(({ name: terminal, target, stored_size_kb }) => (
               <Badge
                 key={terminal}
                 variant={terminal === selected ? "default" : "secondary"}
-                className="w-fit min-w-[150px] px-2 py-1 cursor-pointer flex gap-4 justify-between"
+                className="w-fit min-w-[150px] px-2 py-1 cursor-pointer flex gap-4 justify-between items-center"
                 onClick={() => setSelected({ selected: terminal })}
               >
-                <div className="text-sm w-full flex gap-1 items-center justify-between">
-                  {terminal}
+                <div className="text-sm w-full flex gap-4 items-center justify-between">
+                  <div className="flex gap-1 items-center">
+                    {services && (
+                      <div className="text-muted-foreground">
+                        {(target.params as any)?.service} -
+                      </div>
+                    )}
+                    {terminal}
+                  </div>
                   {/* <div className="min-w-[20px] max-w-[70px] text-xs text-muted-foreground text-nowrap whitespace-nowrap overflow-hidden overflow-ellipsis">
                     {command}
                   </div> */}
@@ -105,7 +116,13 @@ export const ContainerTerminals = ({
                 </Button>
               </Badge>
             ))}
-            {terminals && (
+            {terminals && services ? (
+              <NewServiceTerminal
+                services={services}
+                create={create}
+                pending={create_pending}
+              />
+            ) : (
               <NewTerminal create={create} pending={create_pending} />
             )}
             <Button
@@ -119,7 +136,7 @@ export const ContainerTerminals = ({
           </div>
         </CardHeader>
         <CardContent className="min-h-[65vh]">
-          {terminals?.map(({ name: terminal }) => (
+          {terminals?.map(({ name: terminal, target }) => (
             <ContainerTerminal
               key={terminal}
               target={target}
@@ -152,7 +169,7 @@ export const ContainerTerminal = ({
         ...callbacks,
       });
     },
-    [target, terminal]
+    [target, terminal],
   );
   return (
     <Terminal make_ws={make_ws} selected={selected} _reconnect={_reconnect} />
@@ -170,7 +187,7 @@ const NewTerminal = ({
   const [search, setSearch] = useState("");
   const [commands, setCommands] = useLocalStorage(
     "container-commands-v1",
-    BASE_COMMANDS
+    BASE_COMMANDS,
   );
   const filtered = filterBySplit(commands, search, (item) => item);
   return (
@@ -215,7 +232,7 @@ const NewTerminal = ({
                       onClick={(e) => {
                         e.stopPropagation();
                         setCommands((commands) =>
-                          commands.filter((s) => s !== command)
+                          commands.filter((s) => s !== command),
                         );
                       }}
                       className="p-1 h-fit"
@@ -246,9 +263,134 @@ const NewTerminal = ({
   );
 };
 
+const NewServiceTerminal = ({
+  create,
+  pending,
+  services,
+}: {
+  create: (command: string | undefined, service: string) => Promise<void>;
+  pending: boolean;
+  services: string[];
+}) => {
+  const [service, setService] = useState<string | undefined>(undefined);
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [commands, setCommands] = useLocalStorage(
+    "container-commands-v1",
+    BASE_COMMANDS,
+  );
+  const filteredServices = filterBySplit(services, search, (item) => item);
+  const filteredCommands = filterBySplit(commands, search, (item) => item);
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(open) => {
+        if (!open) setService(undefined);
+        setOpen(open);
+      }}
+    >
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className="flex items-center gap-2"
+          disabled={pending}
+        >
+          New Terminal
+          {pending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Plus className="w-4 h-4" />
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] max-h-[300px] p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder={service ? "Enter command" : "Select service"}
+            className="h-9"
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList>
+            <CommandGroup>
+              {!service && (
+                <>
+                  {filteredServices.map((service) => (
+                    <CommandItem
+                      key={service}
+                      onSelect={() => setService(service)}
+                      className="flex items-center justify-between cursor-pointer"
+                    >
+                      <div className="p-1">{service}</div>
+                    </CommandItem>
+                  ))}
+                  {filteredServices.length === 0 && (
+                    <CommandItem className="flex items-center justify-between cursor-pointer text-muted-foreground">
+                      <div className="p-1">No results</div>
+                      <SearchX className="w-4 h-4" />
+                    </CommandItem>
+                  )}
+                </>
+              )}
+              {service && (
+                <>
+                  {filteredCommands.map((command) => (
+                    <CommandItem
+                      key={command}
+                      onSelect={() => {
+                        create(
+                          command === "attach" ? undefined : command,
+                          service,
+                        );
+                        setService(undefined);
+                        setOpen(false);
+                      }}
+                      className="flex items-center justify-between cursor-pointer"
+                    >
+                      <div className="p-1">{command}</div>
+                      {!BASE_COMMANDS.includes(command) && (
+                        <Button
+                          variant="destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCommands((commands) =>
+                              commands.filter((s) => s !== command),
+                            );
+                          }}
+                          className="p-1 h-fit"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </CommandItem>
+                  ))}
+                  {filteredCommands.length === 0 && (
+                    <CommandItem
+                      onSelect={() => {
+                        setCommands((commands) => [...commands, search]);
+                        create(search, service);
+                        setService(undefined);
+                        setOpen(false);
+                      }}
+                      className="flex items-center justify-between cursor-pointer"
+                    >
+                      <div className="p-1">{search}</div>
+                      <Plus className="w-4 h-4" />
+                    </CommandItem>
+                  )}
+                </>
+              )}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 const next_terminal_name = (
   _command: string | undefined,
-  terminal_names: string[]
+  terminal_names: string[],
 ) => {
   const command = !_command ? "attach" : _command.split(" ")[0];
   for (let i = 1; i <= terminal_names.length + 1; i++) {
