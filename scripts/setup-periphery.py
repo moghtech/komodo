@@ -116,7 +116,13 @@ def download_binary(args, bin_dir):
 		print("using x86_64 binary")
 
 	# download the binary to bin path
-	print(os.popen(f'curl -sSL {args.binary_url}/{args.version}/{periphery_bin} > {bin_path}').read())
+	if os.system(f'curl -f -sSL {args.binary_url}/{args.version}/{periphery_bin} -o {bin_path}') != 0:
+		raise RuntimeError(
+			f"Failed to download binary from "
+			f"{args.binary_url}/{args.version}/{periphery_bin}"
+			f"\n\nDid you provide an existing tag? Check here for valid tags:"
+			f"\nhttps://github.com/moghtech/komodo/tags"
+		)
 
 	# add executable permissions
 	os.popen(f'chmod +x {bin_path}')
