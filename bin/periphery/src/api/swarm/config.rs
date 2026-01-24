@@ -1,7 +1,7 @@
 use anyhow::Context as _;
 use formatting::format_serror;
 use komodo_client::entities::{
-  docker::config::SwarmConfig, update::Log,
+  docker::config::SwarmConfigDetails, update::Log,
 };
 use mogh_resolver::Resolve;
 use periphery_client::api::swarm::*;
@@ -17,7 +17,7 @@ impl Resolve<crate::api::Args> for InspectSwarmConfig {
   async fn resolve(
     self,
     _: &crate::api::Args,
-  ) -> anyhow::Result<SwarmConfig> {
+  ) -> anyhow::Result<SwarmConfigDetails> {
     inspect_swarm_config(&self.config).await
   }
 }

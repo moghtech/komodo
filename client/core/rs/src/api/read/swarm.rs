@@ -5,7 +5,7 @@ use typeshare::typeshare;
 use crate::entities::{
   SearchCombinator, U64,
   docker::{
-    config::{SwarmConfig, SwarmConfigListItem},
+    config::{SwarmConfigDetails, SwarmConfigListItem},
     network::NetworkListItem,
     node::{SwarmNode, SwarmNodeListItem},
     secret::{SwarmSecret, SwarmSecretListItem},
@@ -643,7 +643,7 @@ pub struct InspectSwarmConfig {
 }
 
 #[typeshare]
-pub type InspectSwarmConfigResponse = SwarmConfig;
+pub type InspectSwarmConfigResponse = SwarmConfigDetails;
 
 //
 

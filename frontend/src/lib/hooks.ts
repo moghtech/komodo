@@ -68,7 +68,7 @@ export const useLogin = <
   return useMutation({
     mutationKey: [type],
     mutationFn: (params: P) => komodo_client().auth.login<T, R>(type, params),
-    onError: (e: { result: { error?: string; trace?: string[] } }, v, c) => {
+    onError: (e: { result: { error?: string; trace?: string[] } }, ...args) => {
       console.log("Login error:", e);
       const msg = e.result.error ?? "Unknown error. See console.";
       const detail = e.result?.trace
@@ -83,7 +83,7 @@ export const useLogin = <
         description: `${msg_log}See console for details`,
         variant: "destructive",
       });
-      config?.onError && config.onError(e, v, c);
+      config?.onError && config.onError(e, ...args);
     },
     ...config,
   });
@@ -105,7 +105,7 @@ export const useManageAuth = <
   return useMutation({
     mutationKey: [type],
     mutationFn: (params: P) => komodo_client().auth.manage<T, R>(type, params),
-    onError: (e: { result: { error?: string; trace?: string[] } }, v, c) => {
+    onError: (e: { result: { error?: string; trace?: string[] } }, ...args) => {
       console.log("Manage auth error:", e);
       const msg = e.result.error ?? "Unknown error. See console.";
       const detail = e.result?.trace
@@ -120,7 +120,7 @@ export const useManageAuth = <
         description: `${msg_log}See console for details`,
         variant: "destructive",
       });
-      config?.onError && config.onError(e, v, c);
+      config?.onError && config.onError(e, ...args);
     },
     ...config,
   });
@@ -267,7 +267,7 @@ export const useWrite = <
   return useMutation({
     mutationKey: [type],
     mutationFn: (params: P) => komodo_client().write<T, R>(type, params),
-    onError: (e: { result: { error?: string; trace?: string[] } }, v, c) => {
+    onError: (e: { result: { error?: string; trace?: string[] } }, ...args) => {
       console.log("Write error:", e);
       const msg = e.result.error ?? "Unknown error. See console.";
       const detail = e.result?.trace
@@ -282,7 +282,7 @@ export const useWrite = <
         description: `${msg_log}See console for details`,
         variant: "destructive",
       });
-      config?.onError && config.onError(e, v, c);
+      config?.onError && config.onError(e, ...args);
     },
     ...config,
   });
@@ -304,7 +304,7 @@ export const useExecute = <
   return useMutation({
     mutationKey: [type],
     mutationFn: (params: P) => komodo_client().execute<T, R>(type, params),
-    onError: (e: { result: { error?: string; trace?: string[] } }, v, c) => {
+    onError: (e: { result: { error?: string; trace?: string[] } }, ...args) => {
       console.log("Execute error:", e);
       const msg = e.result.error ?? "Unknown error. See console.";
       const detail = e.result?.trace
@@ -319,7 +319,7 @@ export const useExecute = <
         description: `${msg_log}See console for details`,
         variant: "destructive",
       });
-      config?.onError && config.onError(e, v, c);
+      config?.onError && config.onError(e, ...args);
     },
     ...config,
   });

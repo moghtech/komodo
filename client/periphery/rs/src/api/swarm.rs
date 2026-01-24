@@ -5,7 +5,7 @@ use komodo_client::entities::{
   deployment::Deployment,
   docker::{
     SwarmLists,
-    config::SwarmConfig,
+    config::SwarmConfigDetails,
     node::{NodeSpecAvailabilityEnum, NodeSpecRoleEnum, SwarmNode},
     secret::SwarmSecret,
     service::SwarmService,
@@ -265,7 +265,7 @@ pub struct InspectSwarmTask {
 // ========
 
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
-#[response(SwarmConfig)]
+#[response(SwarmConfigDetails)]
 #[error(anyhow::Error)]
 pub struct InspectSwarmConfig {
   pub config: String,

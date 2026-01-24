@@ -37,12 +37,16 @@ pub struct SwarmConfigListItem {
 }
 
 /// Swarm config details.
+/// 
+/// This would be just "SwarmConfig", but that would
+/// conflict with the Swarm (Komodo resource) Config type,
+/// which is also SwarmConfig.
 #[typeshare]
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct SwarmConfig {
+pub struct SwarmConfigDetails {
   #[serde(rename = "ID")]
   pub id: Option<String>,
 

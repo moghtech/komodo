@@ -40,7 +40,7 @@ const onMessageHandlers: {
 
 export const useWebsocketMessages = (
   key: string,
-  handler: (update: Types.UpdateListItem) => void
+  handler: (update: Types.UpdateListItem) => void,
 ) => {
   onMessageHandlers[key] = handler;
   useEffect(() => {
@@ -66,7 +66,7 @@ export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
 
   const on_update_fn = useCallback(
     (update: Types.UpdateListItem) => on_update(update, invalidate),
-    [invalidate]
+    [invalidate],
   );
 
   useEffect(() => {
@@ -89,7 +89,7 @@ export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
                 console.info(count, "| Automatically triggering reconnect");
                 reconnect();
               }
-            }, 5_000);
+            }, 5_000) as any;
           }
         },
       });
@@ -103,7 +103,7 @@ export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
 
 const on_update = (
   update: Types.UpdateListItem,
-  invalidate: ReturnType<typeof useInvalidate>
+  invalidate: ReturnType<typeof useInvalidate>,
 ) => {
   const Components = ResourceComponents[update.target.type as UsableResource];
   const title = Components ? (
@@ -178,7 +178,7 @@ const on_update = (
         ["InspectDockerImage"],
         ["ListDockerVolumes"],
         ["InspectDockerVolume"],
-        ["GetResourceMatchingContainer"]
+        ["GetResourceMatchingContainer"],
       );
     }
 
@@ -199,7 +199,7 @@ const on_update = (
         ["ListSwarmConfigs"],
         ["InspectSwarmConfig"],
         ["ListSwarmSecrets"],
-        ["InspectSwarmSecret"]
+        ["InspectSwarmSecret"],
       );
     }
 
@@ -210,7 +210,7 @@ const on_update = (
         ["GetServersSummary"],
         ["GetServer"],
         ["GetServerState"],
-        ["GetHistoricalServerStats"]
+        ["GetHistoricalServerStats"],
       );
     }
 
@@ -228,7 +228,7 @@ const on_update = (
         ["SearchStackLog", { stack: update.target.id }],
         ["GetStack"],
         ["ListStackServices"],
-        ["GetResourceMatchingContainer"]
+        ["GetResourceMatchingContainer"],
       );
     }
 
@@ -243,7 +243,7 @@ const on_update = (
         ["GetDeploymentLog", { deployment: update.target.id }],
         ["SearchDeploymentLog", { deployment: update.target.id }],
         ["GetDeploymentContainer"],
-        ["GetResourceMatchingContainer"]
+        ["GetResourceMatchingContainer"],
       );
     }
 
@@ -254,7 +254,7 @@ const on_update = (
         ["GetBuildsSummary"],
         ["GetBuildMonthlyStats"],
         ["GetBuild"],
-        ["ListBuildVersions"]
+        ["ListBuildVersions"],
       );
     }
 
@@ -263,7 +263,7 @@ const on_update = (
         ["ListRepos"],
         ["ListFullRepos"],
         ["GetReposSummary"],
-        ["GetRepo"]
+        ["GetRepo"],
       );
     }
 
@@ -273,7 +273,7 @@ const on_update = (
         ["ListProcedures"],
         ["ListFullProcedures"],
         ["GetProceduresSummary"],
-        ["GetProcedure"]
+        ["GetProcedure"],
       );
     }
 
@@ -283,7 +283,7 @@ const on_update = (
         ["ListActions"],
         ["ListFullActions"],
         ["GetActionsSummary"],
-        ["GetAction"]
+        ["GetAction"],
       );
     }
 
@@ -292,7 +292,7 @@ const on_update = (
         ["ListResourceSyncs"],
         ["ListFullResourceSyncs"],
         ["GetResourceSyncsSummary"],
-        ["GetResourceSync"]
+        ["GetResourceSync"],
       );
     }
 
@@ -301,7 +301,7 @@ const on_update = (
         ["ListBuilders"],
         ["ListFullBuilders"],
         ["GetBuildersSummary"],
-        ["GetBuilder"]
+        ["GetBuilder"],
       );
     }
 
@@ -310,7 +310,7 @@ const on_update = (
         ["ListAlerters"],
         ["ListFullAlerters"],
         ["GetAlertersSummary"],
-        ["GetAlerter"]
+        ["GetAlerter"],
       );
     }
 

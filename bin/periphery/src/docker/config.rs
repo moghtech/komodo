@@ -9,7 +9,7 @@ use futures_util::{TryStreamExt as _, stream::FuturesUnordered};
 use komodo_client::entities::{
   all_logs_success,
   docker::{
-    config::{SwarmConfig, SwarmConfigListItem},
+    config::{SwarmConfigDetails, SwarmConfigListItem},
     service::{SwarmService, SwarmServiceListItem},
   },
   random_string,
@@ -65,7 +65,7 @@ pub async fn list_swarm_configs(
 
 pub async fn inspect_swarm_config(
   config: &str,
-) -> anyhow::Result<SwarmConfig> {
+) -> anyhow::Result<SwarmConfigDetails> {
   let res = run_komodo_standard_command(
     "Inspect Swarm Config",
     None,
@@ -79,14 +79,15 @@ pub async fn inspect_swarm_config(
     )));
   }
 
-  let mut res = serde_json::from_str::<Vec<SwarmConfig>>(&res.stdout)
-    .context(
-      "Failed to parse 'docker config inspect' response from json",
-    )?
-    .pop()
-    .with_context(|| {
-      format!("Did not find any config matching {config}")
-    })?;
+  let mut res =
+    serde_json::from_str::<Vec<SwarmConfigDetails>>(&res.stdout)
+      .context(
+        "Failed to parse 'docker config inspect' response from json",
+      )?
+      .pop()
+      .with_context(|| {
+        format!("Did not find any config matching {config}")
+      })?;
 
   // Convert data back to readable / editable format
   res.spec.iter_mut().next().map(|spec| {

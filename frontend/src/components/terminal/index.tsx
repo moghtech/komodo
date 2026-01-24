@@ -131,7 +131,7 @@ export const Terminal = ({
           debounce = setTimeout(() => {
             if (!viewport) return;
             viewport.scrollTop = viewport.scrollHeight - viewport.clientHeight;
-          }, 500);
+          }, 500) as any;
         });
       },
       on_close: () => {
