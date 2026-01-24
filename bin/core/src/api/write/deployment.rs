@@ -422,6 +422,10 @@ pub async fn check_deployment_for_update_inner(
 
   let (image, account, token) = match deployment.config.image {
     DeploymentImage::Image { image } => {
+      if image.contains('@') {
+        // Images with a hardcoded digest can't have update.
+        return Ok(false)
+      }
       let domain = extract_registry_domain(&image)?;
       let account =
         optional_string(&deployment.config.image_registry_account);

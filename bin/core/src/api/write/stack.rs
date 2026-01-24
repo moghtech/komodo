@@ -750,7 +750,10 @@ pub async fn check_stack_for_update_inner(
   let cache = image_digest_cache();
 
   for service in &mut stack.info.latest_services {
-    if service.image.is_empty() {
+    if service.image.is_empty() ||
+      // Images with a hardcoded digest can't have update.
+      service.image.contains('@')
+    {
       service.image_digest = None;
       continue;
     }
