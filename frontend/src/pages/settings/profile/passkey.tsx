@@ -2,8 +2,8 @@ import { ConfirmButton } from "@components/util";
 import { useManageAuth, useUserInvalidate } from "@lib/hooks";
 import { Button } from "@ui/button";
 import { Fingerprint, Trash } from "lucide-react";
-import { Types } from "komodo_client";
-import { base64urlToArrayBuffer, cn } from "@lib/utils";
+import { MoghAuth, Types } from "komodo_client";
+import { cn } from "@lib/utils";
 import { useToast } from "@ui/use-toast";
 
 export const EnrollPasskey = ({ user }: { user: Types.User }) => {
@@ -32,22 +32,8 @@ export const EnrollPasskey = ({ user }: { user: Types.User }) => {
 
   const { mutate: begin_enrollment } = useManageAuth("BeginPasskeyEnrollment", {
     onSuccess: (challenge) => {
-      const formatted_challenge = {
-        ...challenge,
-        publicKey: {
-          ...challenge.publicKey,
-          challenge: base64urlToArrayBuffer(challenge.publicKey.challenge),
-          user: {
-            ...challenge.publicKey.user,
-            id: base64urlToArrayBuffer(challenge.publicKey.user.id),
-          },
-          excludeCredentials: challenge.publicKey.excludeCredentials?.map(
-            (cred: any) => ({ ...cred, id: base64urlToArrayBuffer(cred.id) }),
-          ),
-        },
-      };
       navigator.credentials
-        .create(formatted_challenge)
+        .create(MoghAuth.Passkey.prepareCreationChallengeResponse(challenge))
         .then((credential) => confirm_enrollment({ credential }))
         .catch((e) => {
           console.error(e);

@@ -14,7 +14,7 @@ import { useRef, useState } from "react";
 import { ThemeToggle } from "@ui/theme";
 import { KOMODO_BASE_URL, sanitize_query } from "@main";
 import { KeyRound, Loader2, X } from "lucide-react";
-import { cn, preparePasskeyCredential } from "@lib/utils";
+import { cn } from "@lib/utils";
 import { MoghAuth } from "komodo_client";
 import { useToast } from "@ui/use-toast";
 
@@ -96,7 +96,7 @@ export default function Login({
           case "Passkey":
             setPasskeyPending(true);
             return navigator.credentials
-              .get(preparePasskeyCredential(data))
+              .get(MoghAuth.Passkey.prepareRequestChallengeResponse(data))
               .then((credential) => completePasskeyLogin({ credential }))
               .catch((e) => {
                 console.error(e);
