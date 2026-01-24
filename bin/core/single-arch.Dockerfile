@@ -7,7 +7,7 @@ ARG BINARIES_IMAGE=ghcr.io/moghtech/komodo-binaries:latest
 FROM ${BINARIES_IMAGE} AS binaries
 
 # Build Frontend
-FROM node:20.12-alpine AS frontend-builder
+FROM node:22.12-alpine AS frontend-builder
 WORKDIR /builder
 COPY ./frontend ./frontend
 COPY ./client/core/ts ./client
