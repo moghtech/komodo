@@ -114,6 +114,7 @@ export const StackComponents: RequiredResourceComponents = {
     <GroupActions
       type="Stack"
       actions={[
+        "CheckStackForUpdate",
         "PullStack",
         "DeployStack",
         "RestartStack",

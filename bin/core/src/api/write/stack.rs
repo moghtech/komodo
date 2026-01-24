@@ -9,6 +9,7 @@ use database::{
   },
 };
 use formatting::format_serror;
+use futures_util::{StreamExt as _, stream::FuturesOrdered};
 use komodo_client::{
   api::{execute::DeployStack, write::*},
   entities::{
@@ -40,7 +41,7 @@ use crate::{
     update::{add_update, make_update},
   },
   permission::get_check_permissions,
-  resource,
+  resource::{self, list_full_for_user_using_pattern},
   stack::{
     remote::{RemoteComposeContents, get_repo_compose_contents},
     services::{
@@ -676,7 +677,7 @@ impl Resolve<WriteArgs> for CheckStackForUpdate {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> mogh_error::Result<NoData> {
+  ) -> mogh_error::Result<Self::Response> {
     // Even though this is a write request, this doesn't change any config. Anyone that can execute the
     // stack should be able to do this.
     let (stack, swarm_or_server) = setup_stack_execution(
@@ -695,9 +696,8 @@ impl Resolve<WriteArgs> for CheckStackForUpdate {
       self.wait_for_auto_update,
       self.skip_cache_refresh,
     )
-    .await?;
-
-    Ok(NoData {})
+    .await
+    .map_err(Into::into)
   }
 }
 
@@ -731,7 +731,7 @@ pub async fn check_stack_for_update_inner(
   // Otherwise spawns task to run in background
   wait_for_auto_update: bool,
   skip_cache_refresh: bool,
-) -> anyhow::Result<Vec<StackServiceWithUpdate>> {
+) -> anyhow::Result<CheckStackForUpdateResponse> {
   if !skip_cache_refresh {
     (RefreshStackCache {
       stack: stack.clone(),
@@ -790,8 +790,8 @@ pub async fn check_stack_for_update_inner(
     alert_cache
       .retain(|(stack_id, _)| stack_id != &stack.id)
       .await;
-    return Ok(
-      extract_services_from_stack(&stack)
+    return Ok(CheckStackForUpdateResponse {
+      services: extract_services_from_stack(&stack)
         .into_iter()
         .map(|service| StackServiceWithUpdate {
           service: service.service_name,
@@ -799,15 +799,17 @@ pub async fn check_stack_for_update_inner(
           update_available: false,
         })
         .collect(),
-    );
+      stack: stack.id,
+    });
   };
 
   let StackState::Running = status.curr.state else {
     alert_cache
       .retain(|(stack_id, _)| stack_id != &stack.id)
       .await;
-    return Ok(
-      status
+    return Ok(CheckStackForUpdateResponse {
+      stack: stack.id,
+      services: status
         .curr
         .services
         .iter()
@@ -817,7 +819,7 @@ pub async fn check_stack_for_update_inner(
           update_available: false,
         })
         .collect(),
-    );
+    });
   };
 
   let mut services = Vec::new();
@@ -905,7 +907,10 @@ pub async fn check_stack_for_update_inner(
     || !stack.config.auto_update
     || services_with_update.is_empty()
   {
-    return Ok(services);
+    return Ok(CheckStackForUpdateResponse {
+      stack: stack.id,
+      services,
+    });
   }
 
   // Conservatively remove from alert cache so 'skip_auto_update'
@@ -927,6 +932,8 @@ pub async fn check_stack_for_update_inner(
   let swarm_name = swarm_or_server.swarm_name().map(str::to_string);
   let server_id = swarm_or_server.server_id().map(str::to_string);
   let server_name = swarm_or_server.server_name().map(str::to_string);
+
+  let stack_id = stack.id.clone();
 
   let run = async move {
     match execute::inner_handler(
@@ -979,5 +986,70 @@ pub async fn check_stack_for_update_inner(
     tokio::spawn(run);
   }
 
-  Ok(services)
+  Ok(CheckStackForUpdateResponse {
+    stack: stack_id,
+    services,
+  })
+}
+
+//
+
+impl Resolve<WriteArgs> for BatchCheckStackForUpdate {
+  #[instrument(
+    "BatchCheckStackForUpdate",
+    skip_all,
+    fields(
+      operator = user.id,
+      pattern = self.pattern,
+      skip_auto_update = self.skip_auto_update,
+      wait_for_auto_update = self.wait_for_auto_update,
+    )
+  )]
+  async fn resolve(
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> Result<Self::Response, Self::Error> {
+    let stacks = list_full_for_user_using_pattern::<Stack>(
+      &self.pattern,
+      Default::default(),
+      user,
+      PermissionLevel::Execute.into(),
+      &[],
+    )
+    .await?;
+
+    let res = stacks
+      .into_iter()
+      .map(|stack| async move {
+        let swarm_or_server = get_swarm_or_server(
+          &stack.config.swarm_id,
+          &stack.config.server_id,
+        )
+        .await?;
+        swarm_or_server.verify_has_target().map_err(|e| e.error)?;
+        check_stack_for_update_inner(
+          stack.id,
+          &swarm_or_server,
+          self.skip_auto_update,
+          self.wait_for_auto_update,
+          self.skip_cache_refresh,
+        )
+        .await
+      })
+      .collect::<FuturesOrdered<_>>()
+      .collect::<Vec<_>>()
+      .await
+      .into_iter()
+      .filter_map(|res| {
+        res
+          .inspect_err(|e| {
+            warn!(
+              "Failed to check stack for update in batch run | {e:#}"
+            )
+          })
+          .ok()
+      })
+      .collect();
+    Ok(res)
+  }
 }

@@ -120,13 +120,13 @@ const GroupActionDialog = ({
     action! as Types.ExecuteRequest["type"],
     {
       onSuccess: onClose,
-    }
+    },
   );
   const { mutate: write, isPending: writePending } = useWrite(
     action! as Types.WriteRequest["type"],
     {
       onSuccess: onClose,
-    }
+    },
   );
 
   if (!action) return;
@@ -146,7 +146,7 @@ const GroupActionDialog = ({
               <li key={resource}>{resource}</li>
             ))}
           </ul>
-          {!action.startsWith("Refresh") && (
+          {!action.startsWith("Refresh") && !action.startsWith("Check") && (
             <>
               <p
                 onClick={() => {
@@ -173,7 +173,10 @@ const GroupActionDialog = ({
               for (const resource of selected) {
                 if (action.startsWith("Delete")) {
                   write({ id: resource } as any);
-                } else if (action.startsWith("Refresh")) {
+                } else if (
+                  action.startsWith("Refresh") ||
+                  action.startsWith("Check")
+                ) {
                   write({ [usableResourceExecuteKey(type)]: resource } as any);
                 } else {
                   execute({
@@ -185,7 +188,11 @@ const GroupActionDialog = ({
                 setSelected([]);
               }
             }}
-            disabled={action.startsWith("Refresh") ? false : text !== formatted}
+            disabled={
+              action.startsWith("Refresh") || action.startsWith("Check")
+                ? false
+                : text !== formatted
+            }
             loading={isPending}
           />
         </DialogFooter>

@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::entities::{
-  NoData,
   deployment::{_PartialDeploymentConfig, Deployment},
   update::Update,
 };
@@ -234,4 +233,62 @@ pub struct CheckDeploymentForUpdate {
 }
 
 #[typeshare]
-pub type CheckDeploymentForUpdateResponse = NoData;
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct CheckDeploymentForUpdateResponse {
+  /// The deployment ID
+  pub deployment: String,
+  /// Whether update is available
+  pub update_available: bool,
+}
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BatchCheckDeploymentForUpdate",
+  description = "Checks for newer image than what is deployed.",
+  request_body(content = BatchCheckDeploymentForUpdate),
+  responses(
+    (status = 200, description = "Per deployment result", body = BatchCheckDeploymentForUpdateResponse),
+  ),
+)]
+pub fn batch_check_deployment_for_update() {}
+
+/// Checks for newer image than what is deployed. Response: [BatchCheckDeploymentForUpdateResponse]
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoWriteRequest)]
+#[response(BatchCheckDeploymentForUpdateResponse)]
+#[error(mogh_error::Error)]
+pub struct BatchCheckDeploymentForUpdate {
+  /// Id or name or wildcard pattern or regex.
+  /// Supports multiline and comma delineated combinations of the above.
+  ///
+  /// Example:
+  /// ```text
+  /// # match all foo-* deployments
+  /// foo-*
+  /// # add some more
+  /// extra-deployment-1, extra-deployment-2
+  /// ```
+  pub pattern: String,
+  /// Normally resources with 'auto_update' will be
+  /// redeployed immediately if updates are found.
+  /// With this enabled, convert this into an UpdateAvailable alert.
+  #[serde(default)]
+  pub skip_auto_update: bool,
+  /// If check triggers auto deploy,
+  /// whether this call should wait on the auto deploy,
+  /// or run it in the background.
+  #[serde(default)]
+  pub wait_for_auto_update: bool,
+}
+
+#[typeshare]
+pub type BatchCheckDeploymentForUpdateResponse =
+  Vec<CheckDeploymentForUpdateResponse>;

@@ -95,6 +95,7 @@ pub enum WriteRequest {
   WriteStackFileContents(WriteStackFileContents),
   RefreshStackCache(RefreshStackCache),
   CheckStackForUpdate(CheckStackForUpdate),
+  BatchCheckStackForUpdate(BatchCheckStackForUpdate),
 
   // ==== DEPLOYMENT ====
   CreateDeployment(CreateDeployment),
@@ -104,6 +105,7 @@ pub enum WriteRequest {
   UpdateDeployment(UpdateDeployment),
   RenameDeployment(RenameDeployment),
   CheckDeploymentForUpdate(CheckDeploymentForUpdate),
+  BatchCheckDeploymentForUpdate(BatchCheckDeploymentForUpdate),
 
   // ==== BUILD ====
   CreateBuild(CreateBuild),

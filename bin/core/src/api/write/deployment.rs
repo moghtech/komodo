@@ -2,10 +2,11 @@ use std::sync::OnceLock;
 
 use anyhow::{Context, anyhow};
 use database::mungos::{by_id::update_one_by_id, mongodb::bson::doc};
+use futures_util::{StreamExt as _, stream::FuturesOrdered};
 use komodo_client::{
   api::{execute::Deploy, write::*},
   entities::{
-    NoData, Operation, ResourceTarget, SwarmOrServer,
+    Operation, ResourceTarget, SwarmOrServer,
     alert::{Alert, AlertData, SeverityLevel},
     deployment::{
       Deployment, DeploymentImage, DeploymentInfo, DeploymentState,
@@ -29,12 +30,15 @@ use crate::{
   api::execute::{self, ExecuteRequest},
   helpers::{
     periphery_client,
-    query::get_deployment_state,
+    query::{get_deployment_state, get_swarm_or_server},
     registry_token,
     update::{add_update, make_update},
   },
   permission::get_check_permissions,
-  resource::{self, setup_deployment_execution},
+  resource::{
+    self, list_full_for_user_using_pattern,
+    setup_deployment_execution,
+  },
   state::{
     action_states, db_client, deployment_status_cache,
     image_digest_cache, server_status_cache,
@@ -359,12 +363,14 @@ impl Resolve<WriteArgs> for CheckDeploymentForUpdate {
     fields(
       operator = user.id,
       deployment = self.deployment,
+      skip_auto_update = self.skip_auto_update,
+      wait_for_auto_update = self.wait_for_auto_update,
     )
   )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> mogh_error::Result<NoData> {
+  ) -> mogh_error::Result<Self::Response> {
     // Even though this is a write request, this doesn't change any config. Anyone that can execute the
     // deployment should be able to do this.
     let (deployment, swarm_or_server) = setup_deployment_execution(
@@ -382,9 +388,8 @@ impl Resolve<WriteArgs> for CheckDeploymentForUpdate {
       self.skip_auto_update,
       self.wait_for_auto_update,
     )
-    .await?;
-
-    Ok(NoData {})
+    .await
+    .map_err(Into::into)
   }
 }
 
@@ -409,6 +414,8 @@ fn deployment_alert_sent_cache() -> &'static SetCache<String> {
   skip_all,
   fields(
     deployment = deployment.id,
+    skip_auto_update,
+    wait_for_auto_update,
   )
 )]
 pub async fn check_deployment_for_update_inner(
@@ -417,14 +424,17 @@ pub async fn check_deployment_for_update_inner(
   skip_auto_update: bool,
   // Otherwise spawns task to run in background
   wait_for_auto_update: bool,
-) -> anyhow::Result<bool> {
+) -> anyhow::Result<CheckDeploymentForUpdateResponse> {
   let alert_cache = deployment_alert_sent_cache();
 
-  let (image, account, token) = match deployment.config.image {
+  let (image, account, token) = match &deployment.config.image {
     DeploymentImage::Image { image } => {
       if image.contains('@') {
         // Images with a hardcoded digest can't have update.
-        return Ok(false)
+        return Ok(CheckDeploymentForUpdateResponse {
+          deployment: deployment.id,
+          update_available: false,
+        });
       }
       let domain = extract_registry_domain(&image)?;
       let account =
@@ -440,7 +450,10 @@ pub async fn check_deployment_for_update_inner(
       alert_cache.remove(&deployment.id).await;
       // This method not used for build based deployments
       // as deployed version vs built version can be inferred from Updates.
-      return Ok(false);
+      return Ok(CheckDeploymentForUpdateResponse {
+        deployment: deployment.id,
+        update_available: false,
+      });
     }
   };
 
@@ -462,7 +475,10 @@ pub async fn check_deployment_for_update_inner(
     .map(|s| (s.curr.state, s.curr.image_digest.clone()))
   else {
     alert_cache.remove(&deployment.id).await;
-    return Ok(false);
+    return Ok(CheckDeploymentForUpdateResponse {
+      deployment: deployment.id,
+      update_available: false,
+    });
   };
 
   // If not running or latest digest matches current, early return
@@ -470,25 +486,32 @@ pub async fn check_deployment_for_update_inner(
     || !latest_digest.update_available(&current_digest)
   {
     alert_cache.remove(&deployment.id).await;
-    return Ok(false);
+    return Ok(CheckDeploymentForUpdateResponse {
+      deployment: deployment.id,
+      update_available: false,
+    });
   }
 
   if !skip_auto_update && deployment.config.auto_update {
     // Trigger deploy + alert
-    let swarm_id = swarm_or_server.swarm_id().map(str::to_string);
-    let swarm_name = swarm_or_server.swarm_name().map(str::to_string);
-    let server_id = swarm_or_server.server_id().map(str::to_string);
-    let server_name =
-      swarm_or_server.server_name().map(str::to_string);
 
     // Conservatively remove from alert cache so 'skip_auto_update'
     // doesn't cause alerts not to be sent on subsequent calls.
     alert_cache.remove(&deployment.id).await;
 
+    let swarm_id = swarm_or_server.swarm_id().map(str::to_string);
+    let swarm_name = swarm_or_server.swarm_name().map(str::to_string);
+    let server_id = swarm_or_server.server_id().map(str::to_string);
+    let server_name =
+      swarm_or_server.server_name().map(str::to_string);
+    let id = deployment.id.clone();
+    let name = deployment.name.clone();
+    let image = image.clone();
+
     let run = async move {
       match execute::inner_handler(
         ExecuteRequest::Deploy(Deploy {
-          deployment: deployment.name.clone(),
+          deployment: name.clone(),
           stop_signal: None,
           stop_time: None,
         }),
@@ -504,15 +527,15 @@ pub async fn check_deployment_for_update_inner(
             resolved: true,
             resolved_ts: ts.into(),
             level: SeverityLevel::Ok,
-            target: ResourceTarget::Deployment(deployment.id.clone()),
+            target: ResourceTarget::Deployment(id.clone()),
             data: AlertData::DeploymentAutoUpdated {
-              id: deployment.id.clone(),
-              name: deployment.name.clone(),
+              id,
+              name,
               swarm_id,
               swarm_name,
               server_id,
               server_name,
-              image: image.clone(),
+              image,
             },
           };
           let res = db_client().alerts.insert_one(&alert).await;
@@ -524,10 +547,7 @@ pub async fn check_deployment_for_update_inner(
           send_alerts(&[alert]).await;
         }
         Err(e) => {
-          warn!(
-            "Failed to auto update Deployment {} | {e:#}",
-            deployment.name
-          )
+          warn!("Failed to auto update Deployment {name} | {e:#}",)
         }
       }
     };
@@ -540,7 +560,10 @@ pub async fn check_deployment_for_update_inner(
   } else {
     // Avoid spamming alerts
     if alert_cache.contains(&deployment.id).await {
-      return Ok(true);
+      return Ok(CheckDeploymentForUpdateResponse {
+        deployment: deployment.id,
+        update_available: true,
+      });
     }
     alert_cache.insert(deployment.id.clone()).await;
     let ts = komodo_timestamp();
@@ -572,5 +595,69 @@ pub async fn check_deployment_for_update_inner(
     send_alerts(&[alert]).await;
   }
 
-  Ok(!deployment.config.auto_update)
+  Ok(CheckDeploymentForUpdateResponse {
+    deployment: deployment.id,
+    update_available: !deployment.config.auto_update,
+  })
+}
+
+//
+
+impl Resolve<WriteArgs> for BatchCheckDeploymentForUpdate {
+  #[instrument(
+    "BatchCheckDeploymentForUpdate",
+    skip_all,
+    fields(
+      operator = user.id,
+      pattern = self.pattern,
+      skip_auto_update = self.skip_auto_update,
+      wait_for_auto_update = self.wait_for_auto_update,
+    )
+  )]
+  async fn resolve(
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> Result<Self::Response, Self::Error> {
+    let deployments = list_full_for_user_using_pattern::<Deployment>(
+      &self.pattern,
+      Default::default(),
+      user,
+      PermissionLevel::Execute.into(),
+      &[],
+    )
+    .await?;
+
+    let res = deployments
+      .into_iter()
+      .map(|deployment| async move {
+        let swarm_or_server = get_swarm_or_server(
+          &deployment.config.swarm_id,
+          &deployment.config.server_id,
+        )
+        .await?;
+        swarm_or_server.verify_has_target().map_err(|e| e.error)?;
+        check_deployment_for_update_inner(
+          deployment,
+          &swarm_or_server,
+          self.skip_auto_update,
+          self.wait_for_auto_update,
+        )
+        .await
+      })
+      .collect::<FuturesOrdered<_>>()
+      .collect::<Vec<_>>()
+      .await
+      .into_iter()
+      .filter_map(|res| {
+        res
+          .inspect_err(|e| {
+            warn!(
+              "Failed to check deployment for update in batch run | {e:#}"
+            )
+          })
+          .ok()
+      })
+      .collect();
+    Ok(res)
+  }
 }

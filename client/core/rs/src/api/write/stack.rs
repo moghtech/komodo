@@ -4,7 +4,7 @@ use typeshare::typeshare;
 
 use crate::entities::{
   NoData,
-  stack::{_PartialStackConfig, Stack},
+  stack::{_PartialStackConfig, Stack, StackServiceWithUpdate},
   update::Update,
 };
 
@@ -266,7 +266,69 @@ pub struct CheckStackForUpdate {
 }
 
 #[typeshare]
-pub type CheckStackForUpdateResponse = NoData;
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct CheckStackForUpdateResponse {
+  /// The stack ID
+  pub stack: String,
+  /// The stack services with update available status
+  pub services: Vec<StackServiceWithUpdate>,
+}
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BatchCheckStackForUpdate",
+  description = "Checks for new images.",
+  request_body(content = BatchCheckStackForUpdate),
+  responses(
+    (status = 200, description = "Stack / service level results", body = BatchCheckStackForUpdateResponse),
+  ),
+)]
+pub fn batch_check_stack_for_update() {}
+
+/// Checks for new images. Response: [BatchCheckStackForUpdateResponse]
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoWriteRequest)]
+#[response(BatchCheckStackForUpdateResponse)]
+#[error(mogh_error::Error)]
+pub struct BatchCheckStackForUpdate {
+  /// Id or name or wildcard pattern or regex.
+  /// Supports multiline and comma delineated combinations of the above.
+  ///
+  /// Example:
+  /// ```text
+  /// # match all foo-* stacks
+  /// foo-*
+  /// # add some more
+  /// extra-stack-1, extra-stack-2
+  /// ```
+  pub pattern: String,
+  /// Normally resources with 'auto_update' will be
+  /// redeployed immediately if updates are found.
+  /// With this enabled, convert this into an UpdateAvailable alert.
+  #[serde(default)]
+  pub skip_auto_update: bool,
+  /// If check triggers auto deploy,
+  /// whether this call should wait on the auto deploy,
+  /// or run it in the background.
+  #[serde(default)]
+  pub wait_for_auto_update: bool,
+  /// Usually will refresh the stack cache before checking for updates.
+  /// Skip with this option.
+  #[serde(default)]
+  pub skip_cache_refresh: bool,
+}
+
+#[typeshare]
+pub type BatchCheckStackForUpdateResponse =
+  Vec<CheckStackForUpdateResponse>;
 
 //
 

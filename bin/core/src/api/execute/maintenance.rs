@@ -325,6 +325,7 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
       }
 
       let name = deployment.name.clone();
+
       if let Err(e) = check_deployment_for_update_inner(
         deployment,
         &swarm_or_server,

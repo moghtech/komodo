@@ -339,6 +339,32 @@ export interface AlerterQuerySpecifics {
 
 export type AlerterQuery = ResourceQuery<AlerterQuerySpecifics>;
 
+export interface CheckDeploymentForUpdateResponse {
+	/** The deployment ID */
+	deployment: string;
+	/** Whether update is available */
+	update_available: boolean;
+}
+
+export type BatchCheckDeploymentForUpdateResponse = CheckDeploymentForUpdateResponse[];
+
+export interface StackServiceWithUpdate {
+	service: string;
+	/** The service's image */
+	image: string;
+	/** Whether there is a newer image available for this service */
+	update_available: boolean;
+}
+
+export interface CheckStackForUpdateResponse {
+	/** The stack ID */
+	stack: string;
+	/** The stack services with update available status */
+	services: StackServiceWithUpdate[];
+}
+
+export type BatchCheckStackForUpdateResponse = CheckStackForUpdateResponse[];
+
 export type BatchExecutionResponseItem = 
 	| { status: "Ok", data: Update }
 	| { status: "Err", data: BatchExecutionResponseItemErr };
@@ -824,10 +850,6 @@ export interface BuilderQuerySpecifics {
 }
 
 export type BuilderQuery = ResourceQuery<BuilderQuerySpecifics>;
-
-export type CheckDeploymentForUpdateResponse = NoData;
-
-export type CheckStackForUpdateResponse = NoData;
 
 /** A wrapper for all Komodo exections. */
 export type Execution = 
@@ -5373,14 +5395,6 @@ export enum StackState {
 	Unknown = "unknown",
 }
 
-export interface StackServiceWithUpdate {
-	service: string;
-	/** The service's image */
-	image: string;
-	/** Whether there is a newer image available for this service */
-	update_available: boolean;
-}
-
 export interface StackListItemInfo {
 	/** The swarm that stack is deployed on, when in Swarm mode. */
 	swarm_id: string;
@@ -5844,6 +5858,69 @@ export interface BatchBuildRepo {
 	 * ```
 	 */
 	pattern: string;
+}
+
+/** Checks for newer image than what is deployed. Response: [BatchCheckDeploymentForUpdateResponse] */
+export interface BatchCheckDeploymentForUpdate {
+	/**
+	 * Id or name or wildcard pattern or regex.
+	 * Supports multiline and comma delineated combinations of the above.
+	 * 
+	 * Example:
+	 * ```text
+	 * # match all foo-* deployments
+	 * foo-*
+	 * # add some more
+	 * extra-deployment-1, extra-deployment-2
+	 * ```
+	 */
+	pattern: string;
+	/**
+	 * Normally resources with 'auto_update' will be
+	 * redeployed immediately if updates are found.
+	 * With this enabled, convert this into an UpdateAvailable alert.
+	 */
+	skip_auto_update?: boolean;
+	/**
+	 * If check triggers auto deploy,
+	 * whether this call should wait on the auto deploy,
+	 * or run it in the background.
+	 */
+	wait_for_auto_update?: boolean;
+}
+
+/** Checks for new images. Response: [BatchCheckStackForUpdateResponse] */
+export interface BatchCheckStackForUpdate {
+	/**
+	 * Id or name or wildcard pattern or regex.
+	 * Supports multiline and comma delineated combinations of the above.
+	 * 
+	 * Example:
+	 * ```text
+	 * # match all foo-* stacks
+	 * foo-*
+	 * # add some more
+	 * extra-stack-1, extra-stack-2
+	 * ```
+	 */
+	pattern: string;
+	/**
+	 * Normally resources with 'auto_update' will be
+	 * redeployed immediately if updates are found.
+	 * With this enabled, convert this into an UpdateAvailable alert.
+	 */
+	skip_auto_update?: boolean;
+	/**
+	 * If check triggers auto deploy,
+	 * whether this call should wait on the auto deploy,
+	 * or run it in the background.
+	 */
+	wait_for_auto_update?: boolean;
+	/**
+	 * Usually will refresh the stack cache before checking for updates.
+	 * Skip with this option.
+	 */
+	skip_cache_refresh?: boolean;
 }
 
 /** Clones multiple Repos in parallel that match pattern. Response: [BatchExecutionResponse]. */
@@ -10864,6 +10941,7 @@ export type WriteRequest =
 	| { type: "WriteStackFileContents", params: WriteStackFileContents }
 	| { type: "RefreshStackCache", params: RefreshStackCache }
 	| { type: "CheckStackForUpdate", params: CheckStackForUpdate }
+	| { type: "BatchCheckStackForUpdate", params: BatchCheckStackForUpdate }
 	| { type: "CreateDeployment", params: CreateDeployment }
 	| { type: "CopyDeployment", params: CopyDeployment }
 	| { type: "CreateDeploymentFromContainer", params: CreateDeploymentFromContainer }
@@ -10871,6 +10949,7 @@ export type WriteRequest =
 	| { type: "UpdateDeployment", params: UpdateDeployment }
 	| { type: "RenameDeployment", params: RenameDeployment }
 	| { type: "CheckDeploymentForUpdate", params: CheckDeploymentForUpdate }
+	| { type: "BatchCheckDeploymentForUpdate", params: BatchCheckDeploymentForUpdate }
 	| { type: "CreateBuild", params: CreateBuild }
 	| { type: "CopyBuild", params: CopyBuild }
 	| { type: "DeleteBuild", params: DeleteBuild }

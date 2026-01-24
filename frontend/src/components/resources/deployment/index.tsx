@@ -140,6 +140,7 @@ export const DeploymentComponents: RequiredResourceComponents = {
     <GroupActions
       type="Deployment"
       actions={[
+        "CheckDeploymentForUpdate",
         "PullDeployment",
         "Deploy",
         "RestartDeployment",
