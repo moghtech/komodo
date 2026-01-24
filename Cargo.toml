@@ -18,9 +18,6 @@ homepage = "https://komo.do"
 [profile.release]
 strip = "debuginfo"
 
-# [patch.crates-io]
-# mogh_logger = { path = "../lib/crates/logger" }
-
 [workspace.dependencies]
 # LOCAL
 komodo_client = { path = "client/core/rs" }
