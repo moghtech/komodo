@@ -25,7 +25,7 @@ import { cn, usableResourcePath } from "@lib/utils";
 import { Types } from "komodo_client";
 import { RequiredResourceComponents, UsableResource } from "@types";
 import { DataTable, SortableHeader } from "@ui/data-table";
-import { AlertTriangle, Box, Circle, History } from "lucide-react";
+import { AlertTriangle, LayoutDashboard, Circle, History } from "lucide-react";
 import { Link } from "react-router-dom";
 import { UpdateAvailable as StackUpdateAvailable } from "@components/resources/stack";
 import { UpdateAvailable as DeploymentUpdateAvailable } from "@components/resources/deployment";
@@ -40,7 +40,7 @@ export default function Dashboard() {
       <ActiveResources />
       <Page
         title="Dashboard"
-        icon={<Box className="w-8 h-8" />}
+        icon={<LayoutDashboard className="w-8 h-8" />}
         actions={
           <div className="flex items-center gap-2 flex-wrap">
             <ShowTables />
@@ -108,7 +108,7 @@ const TableSection = ({
 
   const filtered = useFilterResources(
     resources as Types.ResourceListItem<unknown>[],
-    search
+    search,
   );
 
   let count = filtered.length;
@@ -164,7 +164,7 @@ const ResourceRow = ({ type }: { type: UsableResource }) => {
   const _recents = useUser().data?.recents?.[type]?.slice(0, 6);
   const _resources = useRead(`List${type}s`, {}).data;
   const recents = _recents?.filter(
-    (recent) => !_resources?.every((resource) => resource.id !== recent)
+    (recent) => !_resources?.every((resource) => resource.id !== recent),
   );
   const resources = _resources
     ?.filter((r) => !recents?.includes(r.id))
@@ -238,7 +238,7 @@ const RecentCard = ({
       className={cn(
         "w-full px-3 py-2 border rounded-md hover:bg-accent/25 hover:-translate-y-1 transition-all duration-1000 linear flex flex-col justify-between",
         showServerStats ? "min-h-32" : "h-20",
-        className
+        className,
       )}
     >
       <div className="flex items-center justify-between">
@@ -256,7 +256,7 @@ const RecentCard = ({
           "overflow-hidden w-full transition-all duration-1000 linear",
           showServerStats
             ? "max-h-40 opacity-100 py-2"
-            : "max-h-0 opacity-0 py-0"
+            : "max-h-0 opacity-0 py-0",
         )}
       >
         <div className="flex flex-col gap-2">
@@ -274,7 +274,7 @@ const RecentCard = ({
 const ActiveResources = () => {
   const builds =
     useRead("ListBuilds", {}).data?.filter(
-      (build) => build.info.state === Types.BuildState.Building
+      (build) => build.info.state === Types.BuildState.Building,
     ) ?? [];
   const repos =
     useRead("ListRepos", {}).data?.filter((repo) =>
@@ -282,15 +282,15 @@ const ActiveResources = () => {
         Types.RepoState.Building,
         Types.RepoState.Cloning,
         Types.RepoState.Pulling,
-      ].includes(repo.info.state)
+      ].includes(repo.info.state),
     ) ?? [];
   const procedures =
     useRead("ListProcedures", {}).data?.filter(
-      (procedure) => procedure.info.state === Types.ProcedureState.Running
+      (procedure) => procedure.info.state === Types.ProcedureState.Running,
     ) ?? [];
   const actions =
     useRead("ListActions", {}).data?.filter(
-      (action) => action.info.state === Types.ActionState.Running
+      (action) => action.info.state === Types.ActionState.Running,
     ) ?? [];
   const global_auto_updates =
     useRead("ListUpdates", {
