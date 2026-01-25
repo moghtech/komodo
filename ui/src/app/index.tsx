@@ -19,11 +19,15 @@ const App = () => {
     >
       <Topbar opened={opened} toggle={toggle} />
 
-      <AppShell.Navbar bg="main">
+      <AppShell.Navbar
+        style={{
+          borderColor: "var(--mantine-color-accent-border-0)",
+        }}
+      >
         <Sidebar close={close} />
       </AppShell.Navbar>
 
-      <AppShell.Main bg="main">
+      <AppShell.Main>
         <Suspense
           fallback={
             <Center h="70vh">

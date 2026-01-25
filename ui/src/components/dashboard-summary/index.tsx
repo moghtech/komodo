@@ -2,7 +2,7 @@ import { Group, Paper, Stack, Text } from "@mantine/core";
 import { PieChart } from "react-minimal-pie-chart";
 import { ReactNode, useMemo } from "react";
 import { ColorIntention, hexColorByIntention } from "@/lib/color";
-import classes from "./index.module.css";
+import classes from "./index.module.scss";
 
 export type PieChartItem = {
   title: string;

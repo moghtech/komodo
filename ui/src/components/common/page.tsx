@@ -1,11 +1,11 @@
-import { Flex, Group, Paper, Text } from "@mantine/core";
+import { Group, Paper, Stack, Text } from "@mantine/core";
 import { CircleQuestionMark } from "lucide-react";
 import { FC, ReactNode } from "react";
 
 export type PageProps = {
   title?: string;
   icon?: FC<{ size?: string | number }>;
-  description?: string;
+  description?: ReactNode;
   rightTitle?: ReactNode;
   /* Replace the default title / icon with a full custom ReactNode */
   customTitle?: ReactNode;
@@ -26,7 +26,7 @@ export const Page = ({
 }: PageProps) => {
   const Icon = icon ?? CircleQuestionMark;
   return (
-    <Flex direction="column" gap="lg">
+    <Stack gap="lg">
       <Paper w="fit-content" px="xl" py="xs" mb="lg" withBorder>
         <Group gap="sm">
           {customTitle ? (
@@ -53,6 +53,6 @@ export const Page = ({
       {actions && <Group gap="sm">{actions}</Group>}
 
       {children}
-    </Flex>
+    </Stack>
   );
 };

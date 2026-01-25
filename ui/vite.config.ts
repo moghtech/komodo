@@ -16,4 +16,12 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        // api: "modern-compiler",
+        additionalData: `@use "${path.join(process.cwd(), "src/theme").replace(/\\/g, "/")}" as theme;`,
+      },
+    },
+  },
 });

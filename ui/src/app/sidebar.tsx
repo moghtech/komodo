@@ -130,7 +130,7 @@ const SidebarLink = ({
     <Button
       variant={
         (to === "/" ? location === "/" : location.startsWith(to))
-          ? "default"
+          ? "light"
           : "subtle"
       }
       c="inherit"

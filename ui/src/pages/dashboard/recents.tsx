@@ -1,4 +1,11 @@
-import { Flex, Group, SimpleGrid, Stack, Text } from "@mantine/core";
+import {
+  Flex,
+  Group,
+  MantineBreakpoint,
+  SimpleGrid,
+  Stack,
+  Text,
+} from "@mantine/core";
 import { History } from "lucide-react";
 import {
   useDashboardPreferences,
@@ -60,7 +67,7 @@ const RecentRow = ({ type }: { type: UsableResource }) => {
 
   const ids = [
     ...(recents ?? []),
-    ...(resources?.slice(0, 6 - (recents?.length || 0)) ?? []),
+    ...(resources?.slice(0, 8 - (recents?.length || 0)) ?? []),
   ];
 
   const Components = ResourceComponents[type];
@@ -88,9 +95,16 @@ const RecentRow = ({ type }: { type: UsableResource }) => {
           <History size="1.2rem" />
           Recently Viewed
         </Flex>
-        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3, xl: 4, xxl: 5 }}>
+        <SimpleGrid cols={{ base: 1, lg: 2, xl2: 3, xl4: 4 }}>
           {ids.map((id, i) => (
-            <RecentCard key={type + id} type={type} id={id} />
+            <RecentCard
+              key={type + id}
+              type={type}
+              id={id}
+              visibleFrom={
+                i > 5 ? "xl4" : i > 3 ? "xl2" : i > 1 ? "lg" : undefined
+              }
+            />
           ))}
         </SimpleGrid>
       </Stack>
@@ -101,14 +115,14 @@ const RecentRow = ({ type }: { type: UsableResource }) => {
     <>
       <Stack
         hiddenFrom="md"
-        bd="1px solid color-mix(in srgb, var(--mantine-color-text) 12%, transparent)"
+        bd="1px solid var(--mantine-color-accent-border-0)"
         bdrs="md"
       >
         {children}
       </Stack>
       <Flex
         visibleFrom="md"
-        bd="1px solid color-mix(in srgb, var(--mantine-color-text) 12%, transparent)"
+        bd="1px solid var(--mantine-color-accent-border-0)"
         bdrs="md"
       >
         {children}
@@ -117,7 +131,15 @@ const RecentRow = ({ type }: { type: UsableResource }) => {
   );
 };
 
-const RecentCard = ({ type, id }: { type: UsableResource; id: string }) => {
+const RecentCard = ({
+  type,
+  id,
+  visibleFrom,
+}: {
+  type: UsableResource;
+  id: string;
+  visibleFrom?: MantineBreakpoint;
+}) => {
   const nav = useNavigate();
   const Components = ResourceComponents[type];
   const resource = Components.useListItem(id);
@@ -142,6 +164,7 @@ const RecentCard = ({ type, id }: { type: UsableResource; id: string }) => {
         />
       )}
       onClick={() => nav(`${usableResourcePath(type)}/${id}`)}
+      visibleFrom={visibleFrom}
     >
       <Group style={{ textWrap: "nowrap" }} gap="sm">
         <Components.Icon id={id} />

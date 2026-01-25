@@ -1,6 +1,7 @@
 import { Types } from "komodo_client";
 import { ActionComponents } from "./action";
 import { PieChartItem } from "@/components/dashboard-summary";
+import React from "react";
 
 export type UsableResource = Exclude<Types.ResourceTarget["type"], "System">;
 
@@ -41,10 +42,10 @@ export const ResourceComponents: {
 };
 
 type IdComponent = React.FC<{ id: string }>;
-type OptionalIdComponent = React.FC<{ id?: string }>;
 
 export interface RequiredResourceComponents {
   useListItem: (id: string) => Types.ResourceListItem<unknown> | undefined;
+  useFull: (id: string) => Types.Resource<unknown, unknown> | undefined;
   useResourceLinks: (
     resource: Types.Resource<unknown, unknown>,
   ) => Array<string> | undefined;
@@ -72,9 +73,8 @@ export interface RequiredResourceComponents {
   /** Dropdown menu to trigger group actions for selected resources */
   GroupActions: React.FC;
 
-  /** Icon for the component */
-  Icon: OptionalIdComponent;
-  BigIcon: OptionalIdComponent;
+  /** Icon for the resource */
+  Icon: React.FC<{ id?: string; size?: string | number }>;
 
   State: IdComponent;
 

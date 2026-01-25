@@ -8,6 +8,23 @@ export type ColorIntention =
   | "Unknown"
   | "None";
 
+export const colorByIntention = (intention: ColorIntention) => {
+  switch (intention) {
+    case "Good":
+      return "green";
+    case "Neutral":
+      return "blue";
+    case "Warning":
+      return "yellow";
+    case "Critical":
+      return "red";
+    case "Unknown":
+      return "purple";
+    case "None":
+      return undefined;
+  }
+};
+
 export const hexColorByIntention = (intention: ColorIntention) => {
   switch (intention) {
     case "Good":

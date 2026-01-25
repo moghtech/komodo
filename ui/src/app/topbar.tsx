@@ -1,4 +1,4 @@
-import { AppShell, Burger, Button, Flex, Text } from "@mantine/core";
+import { AppShell, Burger, Button, Flex, Group, Text } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/common/theme-toggle";
 import { UserDropdown } from "@/components/user-dropdown";
@@ -13,16 +13,18 @@ const Topbar = ({
   const nav = useNavigate();
   return (
     <AppShell.Header
+      renderRoot={(props) => (
+        <Flex align="center" justify="space-between" {...props} />
+      )}
       style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
+        borderColor: "var(--mantine-color-accent-border-0)",
       }}
+      bg="accent"
       pl="1.3rem"
       pr="2rem"
       py="0rem"
     >
-      <Flex align="center" gap="md">
+      <Group gap="md">
         <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
         <Button
           variant="subtle"
@@ -36,11 +38,11 @@ const Topbar = ({
             KOMODO
           </Text>
         </Button>
-      </Flex>
-      <Flex align="center" gap="0.3rem">
+      </Group>
+      <Group gap="0.3rem">
         <ThemeToggle />
         <UserDropdown />
-      </Flex>
+      </Group>
     </AppShell.Header>
   );
 };

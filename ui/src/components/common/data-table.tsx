@@ -22,6 +22,7 @@ import {
   Flex,
   Group,
   Loader,
+  Paper,
   ScrollArea,
   Table,
   Text,
@@ -118,9 +119,19 @@ export function DataTable<TData, TValue>({
   const rows = table.getPrePaginationRowModel().rows;
 
   return (
-    <ScrollArea>
+    <ScrollArea
+      renderRoot={(props) => (
+        <Paper
+          p="md"
+          shadow="sm"
+          bd="1px solid var(--mantine-color-accent-border-0)"
+          {...props}
+        />
+      )}
+    >
       <Table
         striped={striped}
+        borderColor="accent-border"
         highlightOnHover={highlightOnHover}
         withTableBorder={withTableBorder}
         withColumnBorders={withColumnBorders}
@@ -212,6 +223,7 @@ export function DataTable<TData, TValue>({
                     onClick={
                       onRowClick ? () => onRowClick(row.original) : undefined
                     }
+                    style={{ flexWrap: "nowrap", textWrap: "nowrap" }}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </Table.Td>

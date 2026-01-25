@@ -2,19 +2,18 @@ import { actionStateIntention, hexColorByIntention } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
-
-const useAction = (id?: string) =>
-  useRead("ListActions", {}).data?.find((r) => r.id === id);
-
-const ActionIcon = ({ id, size }: { id?: string; size: string | number }) => {
-  const state = useAction(id)?.info.state;
-  const color = state && hexColorByIntention(actionStateIntention(state));
-  return <ICONS.Action size={size} color={color} />;
-};
+import { ActionTable } from "./table";
+import { Types } from "komodo_client";
+import StatusBadge from "@/components/common/status-badge";
 
 export const ActionComponents: RequiredResourceComponents = {
-  useListItem: useAction,
+  useListItem: (id) =>
+    useRead("ListActions", {}).data?.find((r) => r.id === id),
+
+  useFull: (id) => useRead("GetAction", { action: id }).data,
+
   useResourceLinks: () => undefined,
+
   useDashboardSummaryData: () => {
     const summary = useRead("GetActionsSummary", {}).data;
     return [
@@ -42,12 +41,27 @@ export const ActionComponents: RequiredResourceComponents = {
   ResourcePageHeader: () => <></>,
 
   New: () => <></>,
-  GroupActions: () => <></>,
-  Table: () => <></>,
 
-  Icon: ({ id }) => <ActionIcon id={id} size="1rem" />,
-  BigIcon: ({ id }) => <ActionIcon id={id} size="1.4rem" />,
-  State: ({ id }) => <></>,
+  GroupActions: () => <></>,
+
+  Table: ({ resources }) => (
+    <ActionTable actions={resources as Types.ActionListItem[]} />
+  ),
+
+  Icon: ({ id, size = "1rem" }) => {
+    const state = useRead("ListActions", {}).data?.find((r) => r.id === id)
+      ?.info.state;
+    const color = state && hexColorByIntention(actionStateIntention(state));
+    return <ICONS.Action size={size} color={color} />;
+  },
+
+  State: ({ id }) => {
+    let state = (
+      ActionComponents.useListItem(id)?.info as Types.ActionListItemInfo
+    ).state;
+    return <StatusBadge text={state} intent={actionStateIntention(state)} />;
+  },
+
   Config: ({ id }) => <></>,
   DangerZone: ({ id }) => <></>,
 

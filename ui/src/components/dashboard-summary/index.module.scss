@@ -1,0 +1,20 @@
+.dashboard-summary {
+  cursor: pointer;
+  border-top-left-radius: var(--mantine-radius-md);
+  border-bottom-left-radius: var(--mantine-radius-md);
+  border-top-right-radius: 0px;
+  border-bottom-right-radius: 0px;
+  border-right: 1px solid var(--mantine-color-accent-border-0);
+  padding: var(--mantine-spacing-lg);
+  background-color: var(--mantine-color-accent-0);
+  transition: all 150ms ease;
+
+  @include theme.smaller-than(theme.$mantine-breakpoint-md) {
+    border-top-right-radius: var(--mantine-radius-md);
+    border-bottom-left-radius: 0px;
+  }
+}
+
+.dashboard-summary:hover {
+  background-color: var(--mantine-color-accent-hover-0);
+}

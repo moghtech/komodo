@@ -1,0 +1,74 @@
+// https://mantine.dev/styles/sass/#usage-with-vite
+@use 'sass:math';
+
+:root[data-mantine-color-scheme='light'] {
+  --mantine-color-body: #f8f9fa;
+}
+
+:root[data-mantine-color-scheme='dark'] {
+  --mantine-color-body: #0f1115;
+}
+
+$mantine-breakpoint-xs: '36em';
+$mantine-breakpoint-sm: '48em';
+$mantine-breakpoint-md: '62em';
+$mantine-breakpoint-lg: '75em';
+$mantine-breakpoint-xl: '88em';
+$mantine-breakpoint-xl2: '104em';
+$mantine-breakpoint-xl3: '120em';
+$mantine-breakpoint-xl4: '136em';
+
+@function rem($value) {
+  @return #{math.div(math.div($value, $value * 0 + 1), 16)}rem;
+}
+
+@mixin light {
+  [data-mantine-color-scheme='light'] & {
+    @content;
+  }
+}
+
+@mixin dark {
+  [data-mantine-color-scheme='dark'] & {
+    @content;
+  }
+}
+
+@mixin hover {
+  @media (hover: hover) {
+    &:hover {
+      @content;
+    }
+  }
+
+  @media (hover: none) {
+    &:active {
+      @content;
+    }
+  }
+}
+
+@mixin smaller-than($breakpoint) {
+  @media (max-width: $breakpoint) {
+    @content;
+  }
+}
+
+@mixin larger-than($breakpoint) {
+  @media (min-width: $breakpoint) {
+    @content;
+  }
+}
+
+// Add direction mixins if you need rtl support
+@mixin rtl {
+  [dir='rtl'] & {
+    @content;
+  }
+}
+
+@mixin ltr {
+  [dir='ltr'] & {
+    @content;
+  }
+}

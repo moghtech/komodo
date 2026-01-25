@@ -15,6 +15,7 @@ import App from "@/app";
 const Login = lazy(() => import("@/pages/login"));
 const UserDisabled = lazy(() => import("@/pages/user-disabled"));
 const Dashboard = lazy(() => import("@/pages/dashboard"));
+const Resources = lazy(() => import("@/pages/resources"));
 
 export const Router = () => {
   // Handle exchange token loop to avoid showing login flash
@@ -41,6 +42,9 @@ export const Router = () => {
             <Route path="" element={<Dashboard />} />
             <Route path="containers" element={<>CONTAINERS</>} />
             <Route path="terminals" element={<>TERMINALS</>} />
+            <Route path=":type">
+              <Route path="" element={<Resources />} />
+            </Route>
           </Route>
         </Route>
       </Routes>
@@ -84,7 +88,7 @@ const RequireAuth = () => {
 
   if (!user.enabled) {
     return <UserDisabled />;
-  };
+  }
 
   return <Outlet />;
 };
