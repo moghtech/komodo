@@ -3341,9 +3341,9 @@ dependencies = [
 
 [[package]]
 name = "mogh_server"
-version = "1.1.2"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c6c3aa20123c38b4f2cb63f42099352f9f4003ff72e744f26f4cd72023c4274"
+checksum = "07d93cb1468f2fa5996b895ff223e61aaf09e29e8ed77644155e333d59fe810b"
 dependencies = [
  "anyhow",
  "axum",
