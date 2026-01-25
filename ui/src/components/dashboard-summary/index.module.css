@@ -1,0 +1,15 @@
+.dashboard-summary {
+  cursor: pointer;
+  border-top-left-radius: var(--mantine-radius-md);
+  border-bottom-left-radius: var(--mantine-radius-md);
+  border-top-right-radius: 0px;
+  border-bottom-right-radius: 0px;
+  border-right: 1px solid color-mix(in srgb, var(--mantine-color-text) 12%, transparent);
+  background-color: var(--mantine-color-accent-0);
+  padding: var(--mantine-spacing-lg);
+  transition: all 150ms ease;
+}
+
+.dashboard-summary:hover {
+  background-color: var(--mantine-color-main-0);
+}
