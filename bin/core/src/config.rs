@@ -293,9 +293,6 @@ pub fn core_config() -> &'static CoreConfig {
       first_server_name: env
         .komodo_first_server_name
         .or(config.first_server_name),
-      frontend_path: env
-        .komodo_frontend_path
-        .unwrap_or(config.frontend_path),
       jwt_ttl: env.komodo_jwt_ttl.unwrap_or(config.jwt_ttl),
       auth_rate_limit_disabled: env
         .komodo_auth_rate_limit_disabled
@@ -312,15 +309,6 @@ pub fn core_config() -> &'static CoreConfig {
       cors_allow_credentials: env
         .komodo_cors_allow_credentials
         .unwrap_or(config.cors_allow_credentials),
-      sync_directory: env
-        .komodo_sync_directory
-        .unwrap_or(config.sync_directory),
-      repo_directory: env
-        .komodo_repo_directory
-        .unwrap_or(config.repo_directory),
-      action_directory: env
-        .komodo_action_directory
-        .unwrap_or(config.action_directory),
       resource_poll_interval: env
         .komodo_resource_poll_interval
         .unwrap_or(config.resource_poll_interval),
@@ -412,6 +400,21 @@ pub fn core_config() -> &'static CoreConfig {
       ssl_cert_file: env
         .komodo_ssl_cert_file
         .unwrap_or(config.ssl_cert_file),
+      frontend_path: env
+        .komodo_frontend_path
+        .unwrap_or(config.frontend_path),
+      ui_index_force_no_cache: env
+        .komodo_ui_index_force_no_cache
+        .unwrap_or(config.ui_index_force_no_cache),
+      sync_directory: env
+        .komodo_sync_directory
+        .unwrap_or(config.sync_directory),
+      repo_directory: env
+        .komodo_repo_directory
+        .unwrap_or(config.repo_directory),
+      action_directory: env
+        .komodo_action_directory
+        .unwrap_or(config.action_directory),
 
       // These can't be overridden on env
       secrets: config.secrets,

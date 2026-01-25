@@ -94,20 +94,13 @@ pub struct Env {
   /// Override `first_server_address`
   #[serde(alias = "komodo_first_server")]
   pub komodo_first_server_address: Option<String>,
-  /// Override `frontend_path`
-  pub komodo_frontend_path: Option<String>,
   /// Override `jwt_secret`
   pub komodo_jwt_secret: Option<String>,
   /// Override `jwt_secret` from file
   pub komodo_jwt_secret_file: Option<PathBuf>,
   /// Override `jwt_ttl`
   pub komodo_jwt_ttl: Option<Timelength>,
-  /// Override `sync_directory`
-  pub komodo_sync_directory: Option<PathBuf>,
-  /// Override `repo_directory`
-  pub komodo_repo_directory: Option<PathBuf>,
-  /// Override `action_directory`
-  pub komodo_action_directory: Option<PathBuf>,
+
   /// Override `resource_poll_interval`
   pub komodo_resource_poll_interval: Option<Timelength>,
   /// Override `monitoring_interval`
@@ -279,6 +272,17 @@ pub struct Env {
   pub komodo_ssl_key_file: Option<String>,
   /// Override `ssl_cert_file`
   pub komodo_ssl_cert_file: Option<String>,
+
+  /// Override `frontend_path`
+  pub komodo_frontend_path: Option<String>,
+  /// Override `ui_index_force_no_cache`
+  pub komodo_ui_index_force_no_cache: Option<bool>,
+  /// Override `sync_directory`
+  pub komodo_sync_directory: Option<PathBuf>,
+  /// Override `repo_directory`
+  pub komodo_repo_directory: Option<PathBuf>,
+  /// Override `action_directory`
+  pub komodo_action_directory: Option<PathBuf>,
 }
 
 fn default_core_config_paths() -> Vec<PathBuf> {
@@ -408,10 +412,6 @@ pub struct CoreConfig {
     skip_serializing_if = "Option::is_none"
   )]
   pub first_server_address: Option<String>,
-
-  /// The path to the built frontend folder.
-  #[serde(default = "default_frontend_path")]
-  pub frontend_path: String,
 
   /// Configure database connection
   #[serde(default, alias = "mongo")]
@@ -701,6 +701,16 @@ pub struct CoreConfig {
   /// Default: `/action-cache`
   #[serde(default = "default_action_directory")]
   pub action_directory: PathBuf,
+
+  /// The path to the built frontend folder.
+  #[serde(default = "default_frontend_path")]
+  pub frontend_path: String,
+
+  /// Force the `index.html` to served with
+  /// 'Cache-Content: no-cache' header instead
+  /// of using content hash as ETag.
+  #[serde(default)]
+  pub ui_index_force_no_cache: bool,
 }
 
 fn default_title() -> String {
@@ -798,7 +808,6 @@ impl Default for CoreConfig {
       enable_fancy_toml: Default::default(),
       first_server_address: Default::default(),
       first_server_name: Default::default(),
-      frontend_path: default_frontend_path(),
       database: Default::default(),
       local_auth: Default::default(),
       min_password_length: default_min_password_length(),
@@ -843,6 +852,8 @@ impl Default for CoreConfig {
       ssl_enabled: Default::default(),
       ssl_key_file: default_ssl_key_file(),
       ssl_cert_file: default_ssl_cert_file(),
+      frontend_path: default_frontend_path(),
+      ui_index_force_no_cache: Default::default(),
       sync_directory: default_sync_directory(),
       repo_directory: default_repo_directory(),
       action_directory: default_action_directory(),
@@ -868,12 +879,8 @@ impl CoreConfig {
       timezone: config.timezone,
       first_server_address: config.first_server_address,
       first_server_name: config.first_server_name,
-      frontend_path: config.frontend_path,
       jwt_secret: empty_or_redacted(&config.jwt_secret),
       jwt_ttl: config.jwt_ttl,
-      repo_directory: config.repo_directory,
-      action_directory: config.action_directory,
-      sync_directory: config.sync_directory,
       internet_interface: config.internet_interface,
       resource_poll_interval: config.resource_poll_interval,
       monitoring_interval: config.monitoring_interval,
@@ -973,6 +980,11 @@ impl CoreConfig {
       ssl_enabled: config.ssl_enabled,
       ssl_key_file: config.ssl_key_file,
       ssl_cert_file: config.ssl_cert_file,
+      frontend_path: config.frontend_path,
+      ui_index_force_no_cache: config.ui_index_force_no_cache,
+      repo_directory: config.repo_directory,
+      action_directory: config.action_directory,
+      sync_directory: config.sync_directory,
     }
   }
 
