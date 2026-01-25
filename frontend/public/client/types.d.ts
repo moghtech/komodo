@@ -2197,6 +2197,24 @@ export interface ServerConfig {
     disk_warning: number;
     /** The percentage threshhold which triggers CRITICAL state for DISK. */
     disk_critical: number;
+    /**
+     * Minimum duration in seconds that CPU usage must stay above the
+     * configured thresholds before an alert is opened.
+     * 0 means alerts are opened immediately when thresholds are crossed.
+     */
+    cpu_alert_window_seconds: I64;
+    /**
+     * Minimum duration in seconds that memory usage must stay above the
+     * configured thresholds before an alert is opened.
+     * 0 means alerts are opened immediately when thresholds are crossed.
+     */
+    mem_alert_window_seconds: I64;
+    /**
+     * Minimum duration in seconds that disk usage must stay above the
+     * configured thresholds before an alert is opened.
+     * 0 means alerts are opened immediately when thresholds are crossed.
+     */
+    disk_alert_window_seconds: I64;
     /** Scheduled maintenance windows during which alerts will be suppressed. */
     maintenance_windows?: MaintenanceWindow[];
 }

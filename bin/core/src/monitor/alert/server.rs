@@ -33,7 +33,7 @@ type OpenDiskAlertMap = OpenAlertMap<PathBuf>;
 
 /// Alert buffer to prevent immediate alerts on transient issues
 struct AlertBuffer {
-  buffer: Mutex<HashMap<(String, AlertDataVariant), bool>>,
+  buffer: Mutex<HashMap<(String, AlertDataVariant), i64>>,
 }
 
 impl AlertBuffer {
@@ -43,20 +43,42 @@ impl AlertBuffer {
     }
   }
 
-  /// Check if alert should be opened. Requires two consecutive calls to return true.
+  /// Check if alert should be opened.
+  /// If a time-window is configured, only return true if the alert has been
+  /// triggered for the duration of the window.
+  /// Otherwise require two consecutive calls to return true.
   fn ready_to_open(
     &self,
+    ts: i64,
     server_id: String,
     variant: AlertDataVariant,
+    window_secs: i64,
   ) -> bool {
     let mut lock = self.buffer.lock().unwrap();
-    let ready = lock.entry((server_id, variant)).or_default();
-    if *ready {
-      *ready = false;
-      true
+    let buffer_val = lock.entry((server_id, variant)).or_default();
+
+    if window_secs <= 0 {
+      // No time window configured, use simple check for consecutive calls.
+      if *buffer_val == 1 {
+        *buffer_val = 0;
+        true
+      } else {
+        *buffer_val = 1;
+        false
+      }
     } else {
-      *ready = true;
-      false
+      if *buffer_val == 0 {
+        // First trigger, set timestamp.
+        *buffer_val = ts;
+        return false;
+      }
+      // Check if time window has elapsed.
+      let window_ms = window_secs.saturating_mul(1_000);
+      if ts - *buffer_val >= window_ms {
+        true
+      } else {
+        false
+      }
     }
   }
 
@@ -117,8 +139,10 @@ pub async fn alert_servers(
         // Only open unreachable alert if not in maintenance and buffer is ready
         if !in_maintenance
           && buffer.ready_to_open(
+            ts,
             server_status.id.clone(),
             AlertDataVariant::ServerUnreachable,
+            0, // No time window for unreachable
           )
         {
           let alert = Alert {
@@ -196,8 +220,10 @@ pub async fn alert_servers(
         // Only open version mismatch alert if not in maintenance and buffer is ready
         if !in_maintenance
           && buffer.ready_to_open(
+            ts,
             server_status.id.clone(),
             AlertDataVariant::ServerVersionMismatch,
+            0, // No time window for version mismatch
           )
         {
           let alert = Alert {
@@ -266,8 +292,10 @@ pub async fn alert_servers(
         // Only open CPU alert if not in maintenance and buffer is ready
         if !in_maintenance
           && buffer.ready_to_open(
+            ts,
             server_status.id.clone(),
             AlertDataVariant::ServerCpu,
+            server.config.cpu_alert_window_seconds,
           )
         {
           let alert = Alert {
@@ -345,8 +373,10 @@ pub async fn alert_servers(
         // Only open memory alert if not in maintenance and buffer is ready
         if !in_maintenance
           && buffer.ready_to_open(
+            ts,
             server_status.id.clone(),
             AlertDataVariant::ServerMem,
+            server.config.mem_alert_window_seconds,
           )
         {
           let alert = Alert {
@@ -447,8 +477,10 @@ pub async fn alert_servers(
           // Only open disk alert if not in maintenance and buffer is ready
           if !in_maintenance
             && buffer.ready_to_open(
+              ts,
               server_status.id.clone(),
               AlertDataVariant::ServerDisk,
+              server.config.disk_alert_window_seconds,
             )
           {
             let disk =
