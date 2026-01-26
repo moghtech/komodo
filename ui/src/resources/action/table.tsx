@@ -1,5 +1,5 @@
 import { Types } from "komodo_client";
-import { DataTable, SortableHeader } from "@/components/common/data-table";
+import { DataTable, SortableHeader } from "@/ui/data-table";
 import { ResourceLink } from "@/resources/common";
 import { useSelectedResources, useTags } from "@/lib/hooks";
 import { ActionComponents } from ".";

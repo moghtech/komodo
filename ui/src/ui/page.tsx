@@ -27,7 +27,13 @@ export const Page = ({
   const Icon = icon ?? CircleQuestionMark;
   return (
     <Stack gap="lg">
-      <Paper w="fit-content" px="xl" py="xs" mb="lg" withBorder>
+      <Paper
+        w="fit-content"
+        px="xl"
+        py="xs"
+        mb="lg"
+        style={{ border: "1px solid var(--mantine-color-accent-border-0)" }}
+      >
         <Group gap="sm">
           {customTitle ? (
             customTitle

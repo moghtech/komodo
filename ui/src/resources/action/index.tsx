@@ -4,7 +4,8 @@ import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { ActionTable } from "./table";
 import { Types } from "komodo_client";
-import StatusBadge from "@/components/common/status-badge";
+import StatusBadge from "@/ui/status-badge";
+import ResourceHeader from "@/components/resource-header";
 
 export const ActionComponents: RequiredResourceComponents = {
   useListItem: (id) =>
@@ -38,8 +39,6 @@ export const ActionComponents: RequiredResourceComponents = {
 
   Description: () => <>Custom scripts using the Komodo client.</>,
 
-  ResourcePageHeader: () => <></>,
-
   New: () => <></>,
 
   GroupActions: () => <></>,
@@ -53,6 +52,20 @@ export const ActionComponents: RequiredResourceComponents = {
       ?.info.state;
     const color = state && hexColorByIntention(actionStateIntention(state));
     return <ICONS.Action size={size} color={color} />;
+  },
+
+  ResourcePageHeader: ({ id }) => {
+    const action = ActionComponents.useListItem(id) as
+      | Types.ResourceListItem<Types.ActionListItemInfo>
+      | undefined;
+    return (
+      <ResourceHeader
+        intent={actionStateIntention(action?.info.state)}
+        icon={<ActionComponents.Icon id={id} size="2rem" />}
+        name={action?.name}
+        state={action?.info.state}
+      />
+    );
   },
 
   State: ({ id }) => {

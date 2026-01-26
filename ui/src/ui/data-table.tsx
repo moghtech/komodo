@@ -123,6 +123,7 @@ export function DataTable<TData, TValue>({
       renderRoot={(props) => (
         <Paper
           p="md"
+          pt="xs"
           shadow="sm"
           bd="1px solid var(--mantine-color-accent-border-0)"
           {...props}
@@ -148,7 +149,13 @@ export function DataTable<TData, TValue>({
                     selectOptions.disableRow !== true &&
                     table.toggleAllRowsSelected()
                   }
-                  style={{ cursor: "pointer" }}
+                  style={{
+                    cursor: "pointer",
+                    borderColor: "var(--mantine-color-accent-border-0)",
+                    borderWidth: 0,
+                    borderRightWidth: 1,
+                    borderStyle: "solid",
+                  }}
                 >
                   <Checkbox
                     disabled={selectOptions.disableRow === true}
@@ -157,11 +164,21 @@ export function DataTable<TData, TValue>({
                   />
                 </Table.Th>
               )}
-              {hg.headers.map((header) => {
+              {hg.headers.map((header, i) => {
                 // const canSort = header.column.getCanSort();
                 // const sortState = header.column.getIsSorted();
                 return (
-                  <Table.Th key={header.id}>
+                  <Table.Th
+                    key={header.id}
+                    px="md"
+                    style={{
+                      cursor: "pointer",
+                      borderColor: "var(--mantine-color-accent-border-0)",
+                      borderWidth: 0,
+                      borderRightWidth: i < hg.headers.length - 1 ? 1 : 0,
+                      borderStyle: "solid",
+                    }}
+                  >
                     {header.isPlaceholder ? null : (
                       <Text fw={600} size="sm" lineClamp={1}>
                         {flexRender(

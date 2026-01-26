@@ -1,6 +1,6 @@
 import { AppShell, Burger, Button, Flex, Group, Text } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
-import { ThemeToggle } from "@/components/common/theme-toggle";
+import { ThemeToggle } from "@/ui/theme-toggle";
 import { UserDropdown } from "@/components/user-dropdown";
 
 const Topbar = ({

@@ -3,6 +3,10 @@ import { ActionComponents } from "./action";
 import { PieChartItem } from "@/components/dashboard-summary";
 import React from "react";
 
+export type UsableResourceTarget = Exclude<
+  Types.ResourceTarget,
+  { type: "System" }
+>;
 export type UsableResource = Exclude<Types.ResourceTarget["type"], "System">;
 
 export const RESOURCE_TARGETS: UsableResource[] = [
@@ -47,7 +51,7 @@ export interface RequiredResourceComponents {
   useListItem: (id: string) => Types.ResourceListItem<unknown> | undefined;
   useFull: (id: string) => Types.Resource<unknown, unknown> | undefined;
   useResourceLinks: (
-    resource: Types.Resource<unknown, unknown>,
+    resource: Types.Resource<unknown, unknown> | undefined,
   ) => Array<string> | undefined;
   useDashboardSummaryData?: () => Array<PieChartItem>;
 

@@ -19,7 +19,7 @@ import { ResourceComponents, UsableResource } from "@/resources";
 import { ResourceNameSimple } from "@/resources/common";
 import { useNavigate } from "react-router-dom";
 import DashboardSummary from "@/components/dashboard-summary";
-import FancyCard from "@/components/common/fancy-card";
+import FancyCard from "@/ui/fancy-card";
 import { TemplateMarker } from "@/components/template-marker";
 
 const RecentsDashboard = () => {

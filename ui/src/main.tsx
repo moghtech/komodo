@@ -7,6 +7,7 @@ import ReactDOM from "react-dom/client";
 import { MantineProvider } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DEFAULT_COLOR_SCHEME, theme } from "@/theme";
+import { WebsocketProvider } from "@/lib/socket";
 import { Router } from "@/router";
 
 // Run monaco setup
@@ -28,7 +29,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <MantineProvider theme={theme} defaultColorScheme={DEFAULT_COLOR_SCHEME}>
       <QueryClientProvider client={client}>
-        <Router />
+        <WebsocketProvider>
+          <Router />
+        </WebsocketProvider>
       </QueryClientProvider>
       <Notifications />
     </MantineProvider>

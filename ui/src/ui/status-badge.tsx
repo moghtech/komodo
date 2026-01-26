@@ -25,7 +25,8 @@ const StatusBadge = createPolymorphicComponent<"div", StatusBadgeProps>(
         fmtUpperCamelcase(_text),
       ).toUpperCase();
       const color = colorByIntention(intent);
-      const background = hexColorByIntention(intent) + "25";
+      const _background = hexColorByIntention(intent);
+      const background = _background ? _background + "25" : undefined;
 
       return (
         <Text

@@ -16,6 +16,7 @@ const Login = lazy(() => import("@/pages/login"));
 const UserDisabled = lazy(() => import("@/pages/user-disabled"));
 const Dashboard = lazy(() => import("@/pages/dashboard"));
 const Resources = lazy(() => import("@/pages/resources"));
+const Resource = lazy(() => import("@/pages/resource"));
 
 export const Router = () => {
   // Handle exchange token loop to avoid showing login flash
@@ -44,6 +45,7 @@ export const Router = () => {
             <Route path="terminals" element={<>TERMINALS</>} />
             <Route path=":type">
               <Route path="" element={<Resources />} />
+              <Route path=":id" element={<Resource />} />
             </Route>
           </Route>
         </Route>

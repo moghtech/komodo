@@ -11,7 +11,7 @@ import {
 import { ResourceComponents, UsableResource } from "@/resources";
 import { Types } from "komodo_client";
 import { ResourceNotFound } from "@/resources/common";
-import { Page } from "@/components/common/page";
+import { Page } from "@/ui/page";
 import { Flex, Group, Switch, TextInput } from "@mantine/core";
 import { ICONS } from "@/lib/icons";
 
