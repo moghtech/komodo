@@ -165,6 +165,11 @@ export const ServerConfig = ({
                 description:
                   "Send an alert if the CPU usage is above the configured thresholds.",
               },
+              cpu_alert_window_seconds: {
+                label: "CPU Alert Window (seconds)",
+                description:
+                  "Only trigger CPU alerts if CPU usage stays above the configured thresholds for at least this many seconds. 0 keeps the existing instantaneous behavior.",
+              },
               cpu_warning: {
                 description:
                   "Send a 'Warning' alert if the CPU usage in % is above these thresholds",
@@ -184,6 +189,11 @@ export const ServerConfig = ({
                 // boldLabel: true,
                 description:
                   "Send an alert if the memory usage is above the configured thresholds.",
+              },
+              mem_alert_window_seconds: {
+                label: "Memory Alert Window (seconds)",
+                description:
+                  "Only trigger memory alerts if usage stays above the configured thresholds for at least this many seconds. 0 keeps the existing instantaneous behavior.",
               },
               mem_warning: {
                 label: "Memory Warning",
@@ -205,6 +215,11 @@ export const ServerConfig = ({
                 // boldLabel: true,
                 description:
                   "Send an alert if the Disk Usage (for any mounted disk) is above the configured thresholds.",
+              },
+              disk_alert_window_seconds: {
+                label: "Disk Alert Window (seconds)",
+                description:
+                  "Only trigger disk alerts if usage stays above the configured thresholds for at least this many seconds. 0 keeps the existing instantaneous behavior.",
               },
               disk_warning: {
                 description:

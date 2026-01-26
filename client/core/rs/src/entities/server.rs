@@ -205,6 +205,30 @@ pub struct ServerConfig {
   #[partial_default(default_disk_critical())]
   pub disk_critical: f64,
 
+  /// Minimum duration in seconds that CPU usage must stay above the 
+  /// configured thresholds before an alert is opened.
+  /// 0 means alerts are opened immediately when thresholds are crossed.
+  #[serde(default = "default_alert_window_seconds")]
+  #[builder(default = "default_alert_window_seconds()")]
+  #[partial_default(default_alert_window_seconds())]
+  pub cpu_alert_window_seconds: I64,
+
+  /// Minimum duration in seconds that memory usage must stay above the 
+  /// configured thresholds before an alert is opened.
+  /// 0 means alerts are opened immediately when thresholds are crossed.
+  #[serde(default = "default_alert_window_seconds")]
+  #[builder(default = "default_alert_window_seconds()")]
+  #[partial_default(default_alert_window_seconds())]
+  pub mem_alert_window_seconds: I64,
+
+  /// Minimum duration in seconds that disk usage must stay above the 
+  /// configured thresholds before an alert is opened.
+  /// 0 means alerts are opened immediately when thresholds are crossed.
+  #[serde(default = "default_alert_window_seconds")]
+  #[builder(default = "default_alert_window_seconds()")]
+  #[partial_default(default_alert_window_seconds())]
+  pub disk_alert_window_seconds: I64,
+
   /// Scheduled maintenance windows during which alerts will be suppressed.
   #[serde(default)]
   #[builder(default)]
@@ -265,6 +289,10 @@ fn default_disk_critical() -> f64 {
   95.0
 }
 
+fn default_alert_window_seconds() -> i64 {
+  0
+}
+
 impl Default for ServerConfig {
   fn default() -> Self {
     Self {
@@ -289,6 +317,9 @@ impl Default for ServerConfig {
       mem_critical: default_mem_critical(),
       disk_warning: default_disk_warning(),
       disk_critical: default_disk_critical(),
+      cpu_alert_window_seconds: default_alert_window_seconds(),
+      mem_alert_window_seconds: default_alert_window_seconds(),
+      disk_alert_window_seconds: default_alert_window_seconds(),
       maintenance_windows: Default::default(),
     }
   }
