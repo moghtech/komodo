@@ -118,7 +118,7 @@ impl super::KomodoResource for Deployment {
       }
       DeploymentImage::Image { image } => (image, None),
     };
-    let (image, digest) = status
+    let (image, current_digests) = status
       .as_ref()
       .map(|s| {
         (
@@ -138,14 +138,17 @@ impl super::KomodoResource for Deployment {
                   .unwrap_or_else(|| String::from("Unknown"))
               })
             }),
-          s.curr.image_digest.as_ref(),
+          s.curr.image_digests.as_ref(),
         )
       })
       .unwrap_or_default();
     let image = image.unwrap_or(build_image);
-    let update_available = digest
-      .map(|digest| {
-        deployment.info.latest_image_digest.update_available(digest)
+    let update_available = current_digests
+      .map(|current_digests| {
+        deployment
+          .info
+          .latest_image_digest
+          .update_available(current_digests)
       })
       .unwrap_or_default();
     DeploymentListItem {

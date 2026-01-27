@@ -3,6 +3,7 @@ use std::sync::{Arc, OnceLock};
 use anyhow::{Context, anyhow};
 use arc_swap::ArcSwap;
 use komodo_client::entities::{
+  ImageDigest,
   action::ActionState,
   build::BuildState,
   deployment::DeploymentState,
@@ -146,7 +147,7 @@ pub struct CachedDeploymentStatus {
   pub state: DeploymentState,
   pub container: Option<ContainerListItem>,
   pub service: Option<SwarmServiceListItem>,
-  pub image_digest: Option<String>,
+  pub image_digests: Option<Vec<ImageDigest>>,
 }
 
 /// Cache of ids to status

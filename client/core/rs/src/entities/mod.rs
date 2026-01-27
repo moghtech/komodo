@@ -402,24 +402,66 @@ pub struct FileContents {
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct ImageDigest(pub String);
+pub struct ImageDigest(String);
 
 impl ImageDigest {
   pub fn new(image: &str, digest: &str) -> Self {
     Self(format!("{image}@{digest}"))
   }
 
+  /// Handles incoming forms:
+  /// - image-name@sha256:HASH
+  /// - sha256:HASH
+  pub fn parse(digest: &str) -> Option<Self> {
+    if digest.contains('@') {
+      Some(Self(digest.to_string()))
+    } else if digest.starts_with("sha256:") {
+      Some(Self(format!("__unknown__@{digest}")))
+    } else {
+      None
+    }
+  }
+
+  /// Handles incoming forms:
+  /// - image-name@sha256:HASH
+  /// - sha256:HASH (replaces image with __unknown__)
+  pub fn vec(image_digests: &[String]) -> Vec<Self> {
+    image_digests
+      .iter()
+      .filter_map(|digest| ImageDigest::parse(digest))
+      .collect()
+  }
+
+  pub fn into_inner(self) -> String {
+    self.0
+  }
+
+  pub fn as_str(&self) -> &str {
+    self.0.as_str()
+  }
+
   /// Assumes this ImageDigest represents latest.
-  pub fn update_available(&self, current_digest: &str) -> bool {
+  /// Checks all the digests against latest, if none are equal
+  /// then there is an update available.
+  pub fn update_available(
+    &self,
+    current_digests: &[ImageDigest],
+  ) -> bool {
     let Some(latest_digest) = self.digest() else {
-      // There is no "latest" to compare to.
       return false;
     };
-    let current_digest = current_digest
-      .split_once('@')
-      .map(|r| r.1)
-      .unwrap_or(current_digest);
-    latest_digest != current_digest
+    let digests = current_digests
+      .iter()
+      .filter_map(|digest| digest.digest())
+      .collect::<Vec<_>>();
+    // No valid digests to compare to,
+    // avoid potentially false positive
+    if digests.is_empty() {
+      return false;
+    }
+    // If the image digests do not contain latest
+    // digest, then there is update available.
+    !digests.contains(&latest_digest)
   }
 
   pub fn is_empty(&self) -> bool {

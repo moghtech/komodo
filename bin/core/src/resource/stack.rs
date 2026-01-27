@@ -112,9 +112,9 @@ impl super::KomodoResource for Stack {
           .iter()
           .map(|current_service| {
             let update_available = current_service
-              .image_digest
+              .image_digests
               .as_ref()
-              .map(|current_digest| {
+              .map(|current_digests| {
                 stack
                   .info
                   .latest_services
@@ -126,7 +126,7 @@ impl super::KomodoResource for Stack {
                       latest_service
                         .image_digest
                         .as_ref()?
-                        .update_available(&current_digest.0)
+                        .update_available(current_digests)
                         .into()
                     } else {
                       None

@@ -469,10 +469,11 @@ pub async fn check_deployment_for_update_inner(
   )
   .await?;
 
-  let Some((state, Some(current_digest))) = deployment_status_cache()
-    .get(&deployment.id)
-    .await
-    .map(|s| (s.curr.state, s.curr.image_digest.clone()))
+  let Some((state, Some(current_digests))) =
+    deployment_status_cache()
+      .get(&deployment.id)
+      .await
+      .map(|s| (s.curr.state, s.curr.image_digests.clone()))
   else {
     alert_cache.remove(&deployment.id).await;
     return Ok(CheckDeploymentForUpdateResponse {
@@ -483,7 +484,7 @@ pub async fn check_deployment_for_update_inner(
 
   // If not running or latest digest matches current, early return
   if !matches!(state, DeploymentState::Running)
-    || !latest_digest.update_available(&current_digest)
+    || !latest_digest.update_available(&current_digests)
   {
     alert_cache.remove(&deployment.id).await;
     return Ok(CheckDeploymentForUpdateResponse {

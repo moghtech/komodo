@@ -6,7 +6,6 @@ use komodo_client::entities::{
     container::ContainerListItem, image::ImageListItem,
     service::SwarmServiceListItem, stack::SwarmStackListItem,
   },
-  optional_string,
   stack::{Stack, StackService, StackServiceNames, StackState},
   swarm::SwarmState,
 };
@@ -80,7 +79,7 @@ pub async fn update_swarm_stack_cache(
             image: image.clone(),
             container: None,
             swarm_service,
-            image_digest: None,
+            image_digests: Default::default(),
           }
         },
       )
@@ -131,7 +130,7 @@ pub async fn update_server_stack_cache(
         }.is_match(&container.name)
       }).cloned();
 
-      let (image, image_digest) = container
+      let (image, image_digests) = container
         .as_ref()
         .and_then(|container| container.image_id.as_ref())
         .and_then(|image_id| {
@@ -141,7 +140,7 @@ pub async fn update_server_stack_cache(
         })
         .map(|image| (
           image.name.clone(),
-          optional_string(&image.digest).map(ImageDigest)
+          Some(ImageDigest::vec(&image.digests)),
         ))
         .unwrap_or((
           if image.contains(':') {
@@ -157,7 +156,7 @@ pub async fn update_server_stack_cache(
         image: image.clone(),
         container,
         swarm_service: None,
-        image_digest,
+        image_digests,
       }
     }).collect::<Vec<_>>();
 
@@ -230,7 +229,7 @@ pub async fn update_swarm_deployment_cache(
             state: current_state,
             service,
             container: None,
-            image_digest: None,
+            image_digests: None,
           },
           prev: prev_state,
         }
@@ -252,13 +251,13 @@ pub async fn update_server_deployment_cache(
       .iter()
       .find(|container| container.name == deployment.name)
       .cloned();
-    let image_digest = container
+    let image_digests = container
       .as_ref()
       .and_then(|container| container.image_id.as_ref())
       .and_then(|image_id| {
         images.iter().find_map(|image| {
           if &image.id == image_id {
-            optional_string(&image.digest)
+            Some(ImageDigest::vec(&image.digests))
           } else {
             None
           }
@@ -282,7 +281,7 @@ pub async fn update_server_deployment_cache(
             state: current_state,
             container,
             service: None,
-            image_digest,
+            image_digests,
           },
           prev: prev_state,
         }

@@ -27,19 +27,18 @@ impl DockerClient {
             .map(|id| id == &image.id)
             .unwrap_or_default()
         });
+        let name = image
+          .repo_tags
+          .iter()
+          .next()
+          .cloned()
+          .unwrap_or_else(|| image.id.clone());
         ImageListItem {
-          name: image
-            .repo_tags
-            .into_iter()
-            .next()
-            .unwrap_or_else(|| image.id.clone()),
-          digest: image
-            .repo_digests
-            .into_iter()
-            .next()
-            .unwrap_or_default(),
           id: image.id,
           parent_id: image.parent_id,
+          name,
+          tags: image.repo_tags,
+          digests: image.repo_digests,
           created: image.created,
           size: image.size,
           in_use,

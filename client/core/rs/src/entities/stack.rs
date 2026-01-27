@@ -770,8 +770,8 @@ pub struct StackService {
   pub container: Option<ContainerListItem>,
   /// The service (Swarm mode)
   pub swarm_service: Option<SwarmServiceListItem>,
-  /// The service image digest (When deployed)
-  pub image_digest: Option<ImageDigest>,
+  /// The service image digests
+  pub image_digests: Option<Vec<ImageDigest>>,
 }
 
 #[typeshare]

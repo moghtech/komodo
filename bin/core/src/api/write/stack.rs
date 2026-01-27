@@ -831,7 +831,7 @@ pub async fn check_stack_for_update_inner(
       update_available: false,
     };
 
-    let Some(current_digest) = &service.image_digest else {
+    let Some(current_digests) = &service.image_digests else {
       services.push(service_with_update);
       continue;
     };
@@ -850,7 +850,7 @@ pub async fn check_stack_for_update_inner(
     };
 
     service_with_update.update_available =
-      latest_digest.update_available(&current_digest.0);
+      latest_digest.update_available(&current_digests);
 
     if service_with_update.update_available
       && (skip_auto_update || !stack.config.auto_update)

@@ -13,14 +13,22 @@ use super::GraphDriverData;
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ImageListItem {
+  /// ID is the content-addressable ID of an image.
+  /// This identifier is a content-addressable digest calculated from the image's configuration (which includes the digests of layers used by the image).
+  /// Note that this digest differs from the `digests` below, which holds digests of image manifests that reference the image.
+  pub id: String,
+  /// ID of the parent image.
+  /// Depending on how the image was created, this field may be empty and is only set for images that were built/created locally.
+  /// This field is empty if the image was pulled from an image registry.
+  pub parent_id: String,
   /// The first tag in `repo_tags`, or Id if no tags.
   pub name: String,
-  /// The first digest in `repo_digests`, or empty if no digests.
-  pub digest: String,
-  /// ID is the content-addressable ID of an image.  This identifier is a content-addressable digest calculated from the image's configuration (which includes the digests of layers used by the image).  Note that this digest differs from the `RepoDigests` below, which holds digests of image manifests that reference the image.
-  pub id: String,
-  /// ID of the parent image.  Depending on how the image was created, this field may be empty and is only set for images that were built/created locally. This field is empty if the image was pulled from an image registry.
-  pub parent_id: String,
+  /// The unchanged `RepoTags`.
+  #[serde(default)]
+  pub tags: Vec<String>,
+  /// The unchanged `RepoDigests`.
+  #[serde(default)]
+  pub digests: Vec<String>,
   /// Date and time at which the image was created as a Unix timestamp (number of seconds sinds EPOCH).
   pub created: I64,
   /// Total size of the image including all layers it is composed of.

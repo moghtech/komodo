@@ -85,7 +85,7 @@ pub async fn insert_deployments_status_unknown(
             state: DeploymentState::Unknown,
             container: None,
             service: None,
-            image_digest: None,
+            image_digests: None,
           },
           prev,
         }
