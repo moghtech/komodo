@@ -1,7 +1,7 @@
 ## All in one, multi stage compile + runtime Docker build for your architecture.
 
 # Build Core
-FROM rust:1.91.1-trixie AS core-builder
+FROM rust:1.93.0-trixie AS core-builder
 RUN cargo install cargo-strip
 
 WORKDIR /builder
