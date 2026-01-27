@@ -6,11 +6,11 @@ import { ActionComponents } from ".";
 import Tags from "@/components/tags";
 import { Group } from "@mantine/core";
 
-export const ActionTable = ({
+export default function ActionTable({
   actions,
 }: {
   actions: Types.ActionListItem[];
-}) => {
+}) {
   const [_, setSelectedResources] = useSelectedResources("Action");
   const { toggle_tag } = useTags();
   return (

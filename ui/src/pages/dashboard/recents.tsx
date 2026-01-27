@@ -26,7 +26,7 @@ const RecentsDashboard = () => {
   const noResources = useNoResources();
   const user = useUser().data!;
   return (
-    <div className="flex flex-col gap-6 w-full">
+    <Stack gap="xl">
       {noResources && (
         <Group gap="sm" opacity={0.6}>
           <ICONS.Alert size="1rem" />
@@ -38,16 +38,16 @@ const RecentsDashboard = () => {
           </Text>
         </Group>
       )}
-      {/* <RecentRow type="Swarm" />
+      <RecentRow type="Swarm" />
       <RecentRow type="Server" />
       <RecentRow type="Stack" />
       <RecentRow type="Deployment" />
       <RecentRow type="Build" />
       <RecentRow type="Repo" />
-      <RecentRow type="Procedure" /> */}
+      <RecentRow type="Procedure" />
       <RecentRow type="Action" />
-      {/* <RecentRow type="ResourceSync" /> */}
-    </div>
+      <RecentRow type="ResourceSync" />
+    </Stack>
   );
 };
 

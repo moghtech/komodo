@@ -2,7 +2,6 @@ import { actionStateIntention, hexColorByIntention } from "@/lib/color";
 import { useExecute, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
-import { ActionTable } from "./table";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
@@ -10,10 +9,15 @@ import { Badge, Group, Popover, Text } from "@mantine/core";
 import { Clock } from "lucide-react";
 import { useDisclosure } from "@mantine/hooks";
 import { updateLogToHtml } from "@/lib/utils";
-import ActionConfig from "./config";
 import ConfirmModal from "@/ui/confirm-modal";
+import ActionConfig from "./config";
+import ActionTable from "./table";
 
-export const ActionComponents: RequiredResourceComponents = {
+export const ActionComponents: RequiredResourceComponents<
+  Types.ActionConfig,
+  {},
+  Types.ActionListItemInfo
+> = {
   useListItem: (id) =>
     useRead("ListActions", {}).data?.find((r) => r.id === id),
 
@@ -47,11 +51,9 @@ export const ActionComponents: RequiredResourceComponents = {
 
   New: () => <></>,
 
-  GroupActions: () => <></>,
+  GroupExecutions: () => <></>,
 
-  Table: ({ resources }) => (
-    <ActionTable actions={resources as Types.ActionListItem[]} />
-  ),
+  Table: ({ resources }) => <ActionTable actions={resources} />,
 
   Icon: ({ id, size = "1rem" }) => {
     const state = useRead("ListActions", {}).data?.find((r) => r.id === id)
@@ -75,16 +77,13 @@ export const ActionComponents: RequiredResourceComponents = {
   },
 
   State: ({ id }) => {
-    let state = (
-      ActionComponents.useListItem(id)?.info as Types.ActionListItemInfo
-    ).state;
+    let state = ActionComponents.useListItem(id)?.info.state;
     return <StatusBadge text={state} intent={actionStateIntention(state)} />;
   },
   Status: {
     Schedule: ({ id }) => {
-      const next_scheduled_run = (
-        ActionComponents.useListItem(id)?.info as Types.ActionListItemInfo
-      ).next_scheduled_run;
+      const next_scheduled_run =
+        ActionComponents.useListItem(id)?.info.next_scheduled_run;
       return (
         <Group>
           <Clock size="1rem" />
@@ -99,9 +98,7 @@ export const ActionComponents: RequiredResourceComponents = {
     },
     ScheduleErrors: ({ id }) => {
       const [opened, { close, open }] = useDisclosure(false);
-      const error = (
-        ActionComponents.useListItem(id)?.info as Types.ActionListItemInfo
-      ).schedule_error;
+      const error = ActionComponents.useListItem(id)?.info.schedule_error;
 
       if (!error) {
         return null;

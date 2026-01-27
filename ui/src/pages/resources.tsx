@@ -63,7 +63,7 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
       <Flex align="center" justify="space-between">
         <Group>
           {(is_admin || !disable_non_admin_create) && <Components.New />}
-          <Components.GroupActions />
+          <Components.GroupExecutions />
         </Group>
 
         <Group>

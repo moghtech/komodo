@@ -2,6 +2,16 @@ import { Types } from "komodo_client";
 import { ActionComponents } from "./action";
 import { PieChartItem } from "@/components/dashboard-summary";
 import React from "react";
+import { ServerComponents } from "./server";
+import { StackComponents } from "./stack";
+import { SwarmComponents } from "./swarm";
+import { DeploymentComponents } from "./deployment";
+import { BuildComponents } from "./build";
+import { RepoComponents } from "./repo";
+import { ProcedureComponents } from "./procedure";
+import { ResourceSyncComponents } from "./sync";
+import { BuilderComponents } from "./builder";
+import { AlerterComponents } from "./alerter";
 
 export type UsableResourceTarget = Exclude<
   Types.ResourceTarget,
@@ -32,28 +42,32 @@ export const SIDEBAR_RESOURCES: UsableResource[] = RESOURCE_TARGETS.filter(
 export const ResourceComponents: {
   [key in UsableResource]: RequiredResourceComponents;
 } = {
-  Swarm: ActionComponents,
-  Server: ActionComponents,
-  Stack: ActionComponents,
-  Deployment: ActionComponents,
-  Build: ActionComponents,
-  Repo: ActionComponents,
-  Procedure: ActionComponents,
+  Swarm: SwarmComponents,
+  Server: ServerComponents,
+  Stack: StackComponents,
+  Deployment: DeploymentComponents,
+  Build: BuildComponents,
+  Repo: RepoComponents,
+  Procedure: ProcedureComponents,
   Action: ActionComponents,
-  ResourceSync: ActionComponents,
-  Builder: ActionComponents,
-  Alerter: ActionComponents,
+  ResourceSync: ResourceSyncComponents,
+  Builder: BuilderComponents,
+  Alerter: AlerterComponents,
 };
 
 type IdComponent = React.FC<{ id: string }>;
 
-export interface RequiredResourceComponents {
-  useListItem: (id: string) => Types.ResourceListItem<unknown> | undefined;
-  useFull: (id: string) => Types.Resource<unknown, unknown> | undefined;
+export interface RequiredResourceComponents<
+  Config = any,
+  Info = any,
+  ListItemInfo = any,
+> {
+  useListItem: (id: string) => Types.ResourceListItem<ListItemInfo> | undefined;
+  useFull: (id: string) => Types.Resource<Config, Info> | undefined;
   useResourceLinks: (
-    resource: Types.Resource<unknown, unknown> | undefined,
+    resource: Types.Resource<Config, Info> | undefined,
   ) => Array<string> | undefined;
-  useDashboardSummaryData?: () => Array<PieChartItem>;
+  useDashboardSummaryData?: () => Array<PieChartItem | false | undefined>;
 
   Description: React.FC;
 
@@ -72,10 +86,10 @@ export interface RequiredResourceComponents {
   }>;
 
   /** A table component to view resource list */
-  Table: React.FC<{ resources: Types.ResourceListItem<unknown>[] }>;
+  Table: React.FC<{ resources: Types.ResourceListItem<ListItemInfo>[] }>;
 
-  /** Dropdown menu to trigger group actions for selected resources */
-  GroupActions: React.FC;
+  /** Dropdown menu to trigger group executions for selected resources */
+  GroupExecutions: React.FC;
 
   /** Icon for the resource */
   Icon: React.FC<{ id?: string; size?: string | number }>;
