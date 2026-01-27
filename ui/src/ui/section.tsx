@@ -9,7 +9,7 @@ import { forwardRef, ReactNode } from "react";
 
 // https://mantine.dev/guides/polymorphic/#create-your-own-polymorphic-components
 
-interface SectionProps extends StackProps {
+export interface SectionProps extends StackProps {
   titleNode?: ReactNode;
   icon?: ReactNode;
   titleRight?: ReactNode;
@@ -38,10 +38,9 @@ const Section = createPolymorphicComponent<"div", SectionProps>(
       ref,
     ) => (
       <Stack
-        gap="md"
-        px="lg"
-        pt="sm"
-        pb="lg"
+        px={withBorder ? "lg" : undefined}
+        pt={withBorder ? "sm" : undefined}
+        pb={withBorder ? "lg" : undefined}
         bdrs="md"
         style={(theme) => ({
           borderColor: theme.colors["accent-border"][0],

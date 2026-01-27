@@ -79,7 +79,7 @@ export const fmtUpperCamelcase = (input: string) => {
 };
 
 /// list_all_items => List All Items
-export function snakeCaseToUpperSpaceCase(snake: string) {
+export function fmtSnakeCaseToUpperSpaceCase(snake: string) {
   if (snake.length === 0) return "";
   return snake
     .split("_")
@@ -90,7 +90,7 @@ export function snakeCaseToUpperSpaceCase(snake: string) {
 const BYTES_PER_MB = 1e6;
 const BYTES_PER_GB = BYTES_PER_MB * 1000;
 
-export function formatSizeBytes(size_bytes: number) {
+export function fmtSizeBytes(size_bytes: number) {
   if (size_bytes > BYTES_PER_GB) {
     return `${(size_bytes / BYTES_PER_GB).toFixed(1)} GB`;
   } else {

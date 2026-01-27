@@ -13,11 +13,9 @@ import {
   SETTINGS_RESOURCES,
   UsableResource,
 } from "@/resources";
-import {
-  ResourceDescription,
-  ResourceNotFound,
-  ResourceTags,
-} from "@/resources/common";
+import { ResourceDescription, ResourceNotFound } from "@/resources/common";
+import { AddResourceTags, ResourceTags } from "@/resources/tags";
+import Section from "@/ui/section";
 import { Anchor, Box, Button, Flex, Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { Link, useParams } from "react-router-dom";
@@ -35,6 +33,8 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
   const Components = ResourceComponents[type];
   const resources = useRead(`List${type}s`, {}).data;
   const resource = Components.useListItem(id);
+
+  const { canExecute } = usePermissions({ type, id });
 
   usePushRecentlyViewed({ type, id });
   useSetTitle(resource?.name);
@@ -101,16 +101,20 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
         <ResourceUpdates type={type} id={id} />
       </Group>
 
-      <Stack mt="lg">
-        {/* {canExecute && Object.keys(Components.Actions).length > 0 && (
-            <Section title="Execute" icon={<Zap className="w-4 h-4" />}>
-              <div className="flex gap-4 items-center flex-wrap">
-                {Object.entries(Components.Actions).map(([key, Action]) => (
-                  <Action key={key} id={id} />
-                ))}
-              </div>
-            </Section>
-          )} */}
+      <Stack mt="lg" gap="xl">
+        {canExecute && Object.keys(Components.Executions).length > 0 && (
+          <Section
+            title="Execute"
+            icon={<ICONS.Execution size="1rem" />}
+            my="xl"
+          >
+            <Group>
+              {Object.entries(Components.Executions).map(([key, Action]) => (
+                <Action key={key} id={id} />
+              ))}
+            </Group>
+          </Section>
+        )}
         {Object.entries(Components.Page).map(([key, Component]) => (
           <Component key={key} id={id} />
         ))}
@@ -139,9 +143,14 @@ function ResourceHeader({ type, id }: { type: UsableResource; id: string }) {
 
   return (
     <Stack justify="space-between">
-      <Stack gap={0}>
+      <Stack
+        gap="xs"
+        pb="md"
+        bd="1px solid var(--mantine-color-accent-border-0)"
+        bdrs="md"
+      >
         <Components.ResourcePageHeader id={id} />
-        <Group>
+        <Group px="md">
           {infoEntries.map(([key, Info]) => (
             <Box
               key={key}
@@ -160,13 +169,16 @@ function ResourceHeader({ type, id }: { type: UsableResource; id: string }) {
           ))}
         </Group>
         {links && links.length > 0 && (
-          <Group>
+          <Group px="md">
             {links.map((link) => (
               <Anchor
                 key={link}
                 target="_blank"
                 href={link}
-                style={{ display: "flex", alignItems: "center" }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                }}
               >
                 <ICONS.Link size="1rem" />
                 <Text hiddenFrom="lg" maw={150} truncate>
@@ -179,19 +191,7 @@ function ResourceHeader({ type, id }: { type: UsableResource; id: string }) {
             ))}
           </Group>
         )}
-        <Group
-          h="fit-content"
-          px="lg"
-          py="sm"
-          style={{
-            borderWidth: 1,
-            borderTopWidth: 0,
-            borderStyle: "solid",
-            borderColor: "var(--mantine-color-accent-border-0)",
-            borderBottomLeftRadius: "var(--mantine-radius-md)",
-            borderBottomRightRadius: "var(--mantine-radius-md)",
-          }}
-        >
+        <Group px="md" gap="sm">
           <Text c="dimmed" fz="sm">
             Tags:
           </Text>
@@ -200,7 +200,7 @@ function ResourceHeader({ type, id }: { type: UsableResource; id: string }) {
             disabled={!canWrite}
             click_to_delete
           />
-          {/* {canWrite && <AddTags target={{ id, type }} />} */}
+          {canWrite && <AddResourceTags id={id} type={type} />}
         </Group>
       </Stack>
       <ResourceDescription type={type} id={id} />

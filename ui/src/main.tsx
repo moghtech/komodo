@@ -27,13 +27,16 @@ const client = new QueryClient({
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <MantineProvider theme={theme} defaultColorScheme={DEFAULT_COLOR_SCHEME}>
-      <QueryClientProvider client={client}>
-        <WebsocketProvider>
+    <QueryClientProvider client={client}>
+      <WebsocketProvider>
+        <MantineProvider
+          theme={theme}
+          defaultColorScheme={DEFAULT_COLOR_SCHEME}
+        >
           <Router />
-        </WebsocketProvider>
-      </QueryClientProvider>
-      <Notifications />
-    </MantineProvider>
+          <Notifications />
+        </MantineProvider>
+      </WebsocketProvider>
+    </QueryClientProvider>
   </React.StrictMode>,
 );

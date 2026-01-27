@@ -97,8 +97,8 @@ export interface RequiredResourceComponents {
    */
   Info: { [info: string]: IdComponent };
 
-  /** Action buttons */
-  Actions: { [action: string]: IdComponent };
+  /** Execution buttons */
+  Executions: { [action: string]: IdComponent };
 
   /** Resource specific sections */
   Page: { [section: string]: IdComponent };

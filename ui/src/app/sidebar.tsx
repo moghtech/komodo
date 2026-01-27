@@ -1,7 +1,7 @@
 import { ICONS } from "@/lib/icons";
 import { usableResourcePath } from "@/lib/utils";
 import { SIDEBAR_RESOURCES } from "@/resources";
-import { Button, Divider, Flex, ScrollArea, Text } from "@mantine/core";
+import { Button, Divider, ScrollArea, Stack, Text } from "@mantine/core";
 import { ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -14,10 +14,10 @@ const Sidebar = ({ close }: { close: () => void }) => {
   const location = useLocation().pathname;
   const linkProps = { nav, location };
   return (
-    <Flex direction="column" justify="space-between" gap="lg" h="100%" m="xl">
+    <Stack justify="space-between" gap="md" h="100%" m="xl" mt="lg">
       {/* TOP AREA (scrolling) */}
       <ScrollArea>
-        <Flex direction="column" gap="0.5rem">
+        <Stack gap="0.25rem">
           <SidebarLink
             label="Dashboard"
             icon={<ICONS.Dashboard size="1rem" />}
@@ -95,11 +95,11 @@ const Sidebar = ({ close }: { close: () => void }) => {
             to="/settings"
             {...linkProps}
           />
-        </Flex>
+        </Stack>
       </ScrollArea>
 
       {/* BOTTOM AREA */}
-      <Flex direction="column" gap="lg">
+      <Stack gap="lg">
         {/* <Button
           onClick={() => nav("/devices")}
           leftSection={<Server size="1rem" />}
@@ -108,8 +108,8 @@ const Sidebar = ({ close }: { close: () => void }) => {
         >
           Devices
         </Button> */}
-      </Flex>
-    </Flex>
+      </Stack>
+    </Stack>
   );
 };
 

@@ -5,7 +5,7 @@ import {
   ColorIntention,
   hexColorByIntention,
 } from "@/lib/color";
-import { fmtUpperCamelcase, snakeCaseToUpperSpaceCase } from "@/lib/formatting";
+import { fmtUpperCamelcase, fmtSnakeCaseToUpperSpaceCase } from "@/lib/formatting";
 
 // https://mantine.dev/guides/polymorphic/#create-your-own-polymorphic-components
 
@@ -21,7 +21,7 @@ const StatusBadge = createPolymorphicComponent<"div", StatusBadgeProps>(
         return null;
       }
 
-      const text = snakeCaseToUpperSpaceCase(
+      const text = fmtSnakeCaseToUpperSpaceCase(
         fmtUpperCamelcase(_text),
       ).toUpperCase();
       const color = colorByIntention(intent);

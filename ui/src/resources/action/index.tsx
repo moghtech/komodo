@@ -1,11 +1,16 @@
 import { actionStateIntention, hexColorByIntention } from "@/lib/color";
-import { useRead } from "@/lib/hooks";
+import { useExecute, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { ActionTable } from "./table";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
+import { Badge, Button, Group, Popover, Text, Tooltip } from "@mantine/core";
+import { Clock } from "lucide-react";
+import { useDisclosure } from "@mantine/hooks";
+import { updateLogToHtml } from "@/lib/utils";
+import ActionConfig from "./config";
 
 export const ActionComponents: RequiredResourceComponents = {
   useListItem: (id) =>
@@ -74,12 +79,85 @@ export const ActionComponents: RequiredResourceComponents = {
     ).state;
     return <StatusBadge text={state} intent={actionStateIntention(state)} />;
   },
+  Status: {
+    Schedule: ({ id }) => {
+      const next_scheduled_run = (
+        ActionComponents.useListItem(id)?.info as Types.ActionListItemInfo
+      ).next_scheduled_run;
+      return (
+        <Group>
+          <Clock size="1rem" />
+          Next Run:
+          <Text fw="bold">
+            {next_scheduled_run
+              ? new Date(next_scheduled_run).toLocaleString()
+              : "Not Scheduled"}
+          </Text>
+        </Group>
+      );
+    },
+    ScheduleErrors: ({ id }) => {
+      const [opened, { close, open }] = useDisclosure(false);
+      const error = (
+        ActionComponents.useListItem(id)?.info as Types.ActionListItemInfo
+      ).schedule_error;
 
-  Config: ({ id }) => <></>,
+      if (!error) {
+        return null;
+      }
+
+      return (
+        <Popover position="bottom-start" opened={opened}>
+          <Popover.Target>
+            <Badge color="red" onMouseEnter={open} onMouseLeave={close}>
+              Schedule Error
+            </Badge>
+          </Popover.Target>
+
+          <Popover.Dropdown style={{ pointerEvents: "none" }}>
+            <Text
+              component="pre"
+              dangerouslySetInnerHTML={{
+                __html: updateLogToHtml(error),
+              }}
+              fz="xs"
+            />
+          </Popover.Dropdown>
+        </Popover>
+      );
+    },
+  },
+  Info: {},
+
+  Executions: {
+    RunAction: ({ id }) => {
+      const running =
+        (useRead(
+          "GetActionActionState",
+          { action: id },
+          { refetchInterval: 5000 },
+        ).data?.running ?? 0) > 0;
+      const { mutate, isPending } = useExecute("RunAction");
+      const action = ActionComponents.useListItem(id);
+
+      if (!action) {
+        return null;
+      }
+
+      return (
+        <Button
+          leftSection={<ICONS.Action size="1rem" />}
+          onClick={() => mutate({ action: id, args: {} })}
+          loading={running || isPending}
+        >
+          {running ? "Running" : "Run Action"}
+        </Button>
+      );
+    },
+  },
+
+  Config: ActionConfig,
   DangerZone: ({ id }) => <></>,
 
-  Status: {},
-  Info: {},
-  Actions: {},
   Page: {},
 };

@@ -18,8 +18,11 @@ import {
   LayoutDashboard,
   Link,
   Milestone,
+  Minus,
+  Plus,
   Rocket,
   Route,
+  Save,
   Search,
   SearchX,
   Server,
@@ -27,6 +30,7 @@ import {
   Terminal,
   TriangleAlert,
   User,
+  Zap,
 } from "lucide-react";
 
 export const ICONS = {
@@ -55,11 +59,15 @@ export const ICONS = {
   ExternalLink,
   Alert: TriangleAlert,
   Update: Bell,
+  Execution: Zap,
   History,
   Version: Milestone,
   Back: ChevronLeft,
   Calendar: CalendarDays,
   Search,
+  Create: Plus,
+  Delete: Minus,
+  Save: Save,
   NotFound: SearchX,
   Unknown: CircleQuestionMark,
 };

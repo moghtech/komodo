@@ -4,6 +4,7 @@ import { ResourceLink } from "@/resources/common";
 import { useSelectedResources, useTags } from "@/lib/hooks";
 import { ActionComponents } from ".";
 import Tags from "@/components/tags";
+import { Group } from "@mantine/core";
 
 export const ActionTable = ({
   actions,
@@ -62,7 +63,9 @@ export const ActionTable = ({
         {
           header: "Tags",
           cell: ({ row }) => (
-            <Tags tag_ids={row.original.tags} onBadgeClick={toggle_tag} />
+            <Group gap="xs" wrap="nowrap">
+              <Tags tag_ids={row.original.tags} onBadgeClick={toggle_tag} />
+            </Group>
           ),
         },
       ]}

@@ -38,8 +38,8 @@ export const theme = createTheme({
       dark: "darkAccent",
     }),
     // Accent border color
-    lightAccentBorder: colorsTuple(darken(LIGHT_BODY, 0.07)),
-    darkAccentBorder: colorsTuple(lighten(DARK_BODY, 0.07)),
+    lightAccentBorder: colorsTuple(darken(LIGHT_BODY, 0.1)),
+    darkAccentBorder: colorsTuple(lighten(DARK_BODY, 0.08)),
     "accent-border": virtualColor({
       name: "accent-border",
       light: "lightAccentBorder",
@@ -56,11 +56,9 @@ export const theme = createTheme({
   },
   components: {
     Input: Input.extend({
-      styles: (theme) => ({
-        input: {
-          backgroundColor: theme.colors.accent[0],
-        },
-      }),
+      defaultProps: {
+        bg: "accent",
+      },
     }),
     Table: Table.extend({
       vars: (theme) => ({

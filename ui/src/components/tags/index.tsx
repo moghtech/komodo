@@ -1,4 +1,4 @@
-import { Badge, Group } from "@mantine/core";
+import { Badge } from "@mantine/core";
 import { ReactNode } from "react";
 import { useRead } from "@/lib/hooks";
 import { tagColor } from "@/lib/color";
@@ -23,7 +23,7 @@ export default function Tags({
       ? all_tags?.find((t) => t.name === tag)
       : all_tags?.find((t) => t._id?.$oid === tag);
   return (
-    <Group>
+    <>
       {tag_ids?.map((tag_id) => {
         const tag = get_tag(tag_id);
         const color = tagColor(tag?.color);
@@ -41,12 +41,14 @@ export default function Tags({
                 ? tag?.name && onBadgeClick(tag.name)
                 : onBadgeClick(tag_id))
             }
+            style={{ cursor: onBadgeClick ? "pointer" : undefined }}
+            rightSection={icon}
+            w="fit-content"
           >
             {tag?.name ?? "unknown"}
-            {icon}
           </Badge>
         );
       })}
-    </Group>
+    </>
   );
 }

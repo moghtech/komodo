@@ -23,6 +23,7 @@ import {
   sanitizeQueryInner,
 } from "@/lib/utils";
 import { notifications } from "@mantine/notifications";
+import { useWindowEvent } from "@mantine/hooks";
 
 export const komodo_client = () =>
   KomodoClient(KOMODO_BASE_URL, {
@@ -459,50 +460,38 @@ export const useTagsFilter = () => {
   return tags;
 };
 
-export const useKeyListener = (listenKey: string, onPress: () => void) => {
-  useEffect(() => {
-    const keydown = (e: KeyboardEvent) => {
-      // This will ignore Shift + listenKey if it is sent from input / textarea
-      const target = e.target as HTMLElement | null;
-      if (target?.matches("input") || target?.matches("textarea")) return;
-      if (e.key === listenKey) {
-        e.preventDefault();
-        onPress();
-      }
-    };
-    document.addEventListener("keydown", keydown);
-    return () => document.removeEventListener("keydown", keydown);
+export const useKeyListener = (
+  listenKey: string,
+  onPress: () => void,
+  extra?: "shift" | "ctrl",
+) => {
+  useWindowEvent("keydown", (e) => {
+    // This will ignore Shift + listenKey if it is sent from input / textarea
+    const target = e.target as HTMLElement | null;
+    if (target?.matches("input") || target?.matches("textarea")) {
+      return;
+    }
+    if (
+      e.key === listenKey &&
+      (extra === "shift"
+        ? e.shiftKey
+        : extra === "ctrl"
+          ? e.ctrlKey || e.metaKey
+          : true)
+    ) {
+      e.preventDefault();
+      onPress();
+    }
   });
 };
 
 export const useShiftKeyListener = (listenKey: string, onPress: () => void) => {
-  useEffect(() => {
-    const keydown = (e: KeyboardEvent) => {
-      // This will ignore Shift + listenKey if it is sent from input / textarea
-      const target = e.target as HTMLElement | null;
-      if (target?.matches("input") || target?.matches("textarea")) return;
-      if (e.shiftKey && e.key === listenKey) {
-        e.preventDefault();
-        onPress();
-      }
-    };
-    document.addEventListener("keydown", keydown);
-    return () => document.removeEventListener("keydown", keydown);
-  });
+  useKeyListener(listenKey, onPress, "shift");
 };
 
 /** Listens for ctrl (or CMD on mac) + the listenKey */
 export const useCtrlKeyListener = (listenKey: string, onPress: () => void) => {
-  useEffect(() => {
-    const keydown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === listenKey) {
-        e.preventDefault();
-        onPress();
-      }
-    };
-    document.addEventListener("keydown", keydown);
-    return () => document.removeEventListener("keydown", keydown);
-  });
+  useKeyListener(listenKey, onPress, "ctrl");
 };
 
 export interface PromptHotkeysConfig {

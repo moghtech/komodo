@@ -1,6 +1,10 @@
 // https://mantine.dev/styles/sass/#usage-with-vite
 @use 'sass:math';
 
+* {
+  scroll-behavior: smooth;
+}
+
 :root[data-mantine-color-scheme='light'] {
   --mantine-color-body: #f8f9fa;
 }
