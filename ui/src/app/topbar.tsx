@@ -2,6 +2,7 @@ import { AppShell, Burger, Button, Flex, Group, Text } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/ui/theme-toggle";
 import { UserDropdown } from "@/components/user-dropdown";
+import TopbarUpdates from "@/components/updates/topbar";
 
 const Topbar = ({
   opened,
@@ -40,6 +41,7 @@ const Topbar = ({
         </Button>
       </Group>
       <Group gap="0.3rem">
+        <TopbarUpdates />
         <ThemeToggle />
         <UserDropdown />
       </Group>

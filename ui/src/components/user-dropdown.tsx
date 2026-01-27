@@ -3,8 +3,8 @@ import {
   Button,
   Divider,
   Flex,
+  Group,
   Menu,
-  SimpleGrid,
   Text,
 } from "@mantine/core";
 import {
@@ -36,7 +36,7 @@ export const UserDropdown = () => {
   const accounts = MoghAuth.LOGIN_TOKENS.accounts();
   const nav = useNavigate();
   return (
-    <Menu position="bottom-end" offset={17} opened={open} onChange={setOpen}>
+    <Menu position="bottom-end" offset={19} opened={open} onChange={setOpen}>
       <Menu.Target>
         <Button
           variant="subtle"
@@ -55,11 +55,11 @@ export const UserDropdown = () => {
           mb="0.3rem"
           miw={270}
         >
-          <Flex align="center" justify="space-between" gap="md" w="100%">
-            <Flex align="center" gap="md" opacity={0.8} fz="sm" lh="sm">
+          <Group justify="space-between" gap="md" w="100%">
+            <Group gap="md" opacity={0.8} fz="sm" lh="sm">
               <ArrowLeftRight size="1rem" />
               Switch accounts
-            </Flex>
+            </Group>
             <ActionIcon
               variant={viewLogout ? "filled" : "subtle"}
               c="inherit"
@@ -67,7 +67,7 @@ export const UserDropdown = () => {
             >
               <Settings size="1rem" />
             </ActionIcon>
-          </Flex>
+          </Group>
 
           <Divider />
 
@@ -84,7 +84,7 @@ export const UserDropdown = () => {
 
           <Divider />
 
-          <SimpleGrid cols={2}>
+          <Group grow>
             <Button
               variant="subtle"
               c="inherit"
@@ -108,7 +108,7 @@ export const UserDropdown = () => {
             >
               Profile
             </Button>
-          </SimpleGrid>
+          </Group>
 
           {viewLogout && (
             <Button

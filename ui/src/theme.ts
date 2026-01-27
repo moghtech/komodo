@@ -7,6 +7,7 @@ import {
   Input,
   lighten,
   MantineColorScheme,
+  MenuDropdown,
   Table,
   virtualColor,
 } from "@mantine/core";
@@ -92,6 +93,11 @@ export const theme = createTheme({
         bg: "var(--mantine-color-accent-0)",
         bdrs: "sm",
         p: "md",
+      },
+    }),
+    MenuDropdown: MenuDropdown.extend({
+      defaultProps: {
+        bg: "var(--mantine-color-body)",
       },
     }),
   },

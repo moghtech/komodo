@@ -55,6 +55,7 @@ export const ICONS = {
   User,
   Key: KeyRound,
   Settings,
+  System: Settings,
   Link,
   ExternalLink,
   Alert: TriangleAlert,

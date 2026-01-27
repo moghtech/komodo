@@ -41,7 +41,7 @@ export default function UserAvatar({
   }
 
   return (
-    <Group>
+    <Group gap="xs">
       {avatar}
       <Text fz={fz}>{user?.username ?? "Unknown"}</Text>
     </Group>
