@@ -12,8 +12,10 @@ import {
 export const DEFAULT_COLOR_SCHEME: MantineColorScheme = "auto";
 
 // Match in ./index.css
-const LIGHT_BODY = "#ffffff";
-const DARK_BODY = "#131313";
+export const LIGHT_BODY = "#ffffff";
+export const LIGHT_ACCENT = darken(LIGHT_BODY, 0.04);
+export const DARK_BODY = "#131313";
+export const DARK_ACCENT = lighten(DARK_BODY, 0.04);
 
 export const theme = createTheme({
   cursorType: "pointer",
@@ -30,8 +32,8 @@ export const theme = createTheme({
   },
   colors: {
     // Accent background color
-    lightAccent: colorsTuple(darken(LIGHT_BODY, 0.04)),
-    darkAccent: colorsTuple(lighten(DARK_BODY, 0.04)),
+    lightAccent: colorsTuple(LIGHT_ACCENT),
+    darkAccent: colorsTuple(DARK_ACCENT),
     accent: virtualColor({
       name: "accent",
       light: "lightAccent",

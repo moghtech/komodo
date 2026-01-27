@@ -38,7 +38,7 @@ const ConfirmButton = createPolymorphicComponent<"button", ConfirmButtonProps>(
               (leftSection ?? icon ?? <ICONS.Unknown size="1rem" />)
             )
           }
-          miw={miw ?? 120}
+          miw={miw ?? 140}
           {...props}
           ref={ref}
         >

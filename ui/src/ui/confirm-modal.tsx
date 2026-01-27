@@ -13,7 +13,7 @@ import ConfirmButton from "./confirm-button";
 import { notifications } from "@mantine/notifications";
 
 export interface ConfirmModalProps {
-  label: string;
+  children?: string;
   icon: ReactNode;
   disabled?: boolean;
   /** User must enter this text to confirm */
@@ -29,7 +29,7 @@ export interface ConfirmModalProps {
 }
 
 export default function ConfirmModal({
-  label,
+  children,
   icon,
   disabled,
   confirmText,
@@ -53,7 +53,7 @@ export default function ConfirmModal({
         disabled={disabled}
         {...targetProps}
       >
-        {label}
+        {children}
       </ConfirmButton>
     );
   }
@@ -63,7 +63,7 @@ export default function ConfirmModal({
       <Modal
         opened={opened}
         onClose={close}
-        title={title ?? `Confirm ${label}`}
+        title={title ?? `Confirm ${children}`}
       >
         <Stack>
           {topAdditonal}
@@ -104,7 +104,7 @@ export default function ConfirmModal({
               }}
               loading={loading}
             >
-              {label}
+              {children}
             </ConfirmButton>
           </Group>
         </Stack>
@@ -116,7 +116,7 @@ export default function ConfirmModal({
         disabled={disabled}
         {...targetProps}
       >
-        {label}
+        {children}
       </Button>
     </>
   );

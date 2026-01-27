@@ -147,14 +147,15 @@ export const ActionComponents: RequiredResourceComponents = {
 
       return (
         <ConfirmModal
-          label={running ? "Running" : "Run Action"}
           icon={<ICONS.Action size="1rem" />}
           confirmText={action.name}
           onConfirm={async () => {
             await mutateAsync({ action: id, args: {} });
           }}
           loading={running || isPending}
-        />
+        >
+          {running ? "Running" : "Run Action"}
+        </ConfirmModal>
       );
     },
   },

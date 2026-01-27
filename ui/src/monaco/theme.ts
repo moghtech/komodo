@@ -1,12 +1,12 @@
 import * as monaco from "monaco-editor";
 
-// background: #f6f6f6ff
+// background: #f5f5f5
 monaco.editor.defineTheme("light", {
   base: "vs",
   inherit: true,
   rules: [
     {
-      background: "f6f6f6ff",
+      background: "f5f5f5",
       token: "",
     },
     {
@@ -337,7 +337,7 @@ monaco.editor.defineTheme("light", {
     },
   ],
   colors: {
-    "editor.background": "#f6f6f6ff",
+    "editor.background": "#f5f5f5",
     "editor.foreground": "#24292e",
     // "editor.selectionBackground": "#c8c8fa",
     // "editor.inactiveSelectionBackground": "#fafbfc",
@@ -350,13 +350,13 @@ monaco.editor.defineTheme("light", {
   },
 });
 
-// background: #242424
+// background: #1c1c1c
 monaco.editor.defineTheme("dark", {
   base: "vs-dark",
   inherit: true,
   rules: [
     {
-      background: "242424",
+      background: "1c1c1c",
       token: "",
     },
     {
@@ -687,7 +687,7 @@ monaco.editor.defineTheme("dark", {
     },
   ],
   colors: {
-    "editor.background": "#242424",
+    "editor.background": "#1c1c1c",
     "editor.foreground": "#f6f8fa",
     // "editor.selectionBackground": "#4c2889",
     // "editor.inactiveSelectionBackground": "#444d56",
