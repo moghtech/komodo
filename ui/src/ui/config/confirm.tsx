@@ -8,6 +8,7 @@ import ShowHideButton from "@/ui/show-hide-button";
 import { Box, Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useState } from "react";
+import ConfirmButton from "../confirm-button";
 
 export default function ConfirmUpdate<T>({
   previous,
@@ -17,6 +18,7 @@ export default function ConfirmUpdate<T>({
   disabled,
   language,
   fileContentsLanguage,
+  fullWidth,
   openKeyListener = true,
   confirmKeyListener = true,
 }: {
@@ -27,6 +29,7 @@ export default function ConfirmUpdate<T>({
   disabled: boolean;
   language?: MonacoLanguage;
   fileContentsLanguage?: MonacoLanguage;
+  fullWidth?: boolean;
   openKeyListener?: boolean;
   confirmKeyListener?: boolean;
 }) {
@@ -69,13 +72,13 @@ export default function ConfirmUpdate<T>({
             ))}
           </Stack>
           <Group justify="flex-end">
-            <Button
-              leftSection={<ICONS.Save size="1rem" />}
+            <ConfirmButton
+              icon={<ICONS.Save size="1rem" />}
               onClick={handleConfirm}
               loading={loading}
             >
               Save
-            </Button>
+            </ConfirmButton>
           </Group>
         </Stack>
       </Modal>
@@ -84,7 +87,8 @@ export default function ConfirmUpdate<T>({
         leftSection={<ICONS.Save size="1rem" />}
         onClick={open}
         disabled={disabled}
-        w={100}
+        w={fullWidth ? undefined : 100}
+        fullWidth={fullWidth}
       >
         Save
       </Button>

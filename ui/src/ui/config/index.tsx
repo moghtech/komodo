@@ -247,7 +247,13 @@ export function Config<T>({
     [groups],
   );
 
-  const SaveOrReset = ({ unsavedIndicator }: { unsavedIndicator?: boolean }) =>
+  const SaveOrReset = ({
+    unsavedIndicator,
+    fullWidth,
+  }: {
+    unsavedIndicator?: boolean;
+    fullWidth?: boolean;
+  }) =>
     changesMade && (
       <>
         {unsavedIndicator && <UnsavedChanges />}
@@ -256,7 +262,8 @@ export function Config<T>({
           onClick={onReset}
           disabled={disabled || !changesMade}
           leftSection={<ICONS.History size="1rem" />}
-          w={100}
+          fullWidth={fullWidth}
+          w={fullWidth ? undefined : 100}
         >
           Reset
         </Button>
@@ -266,6 +273,7 @@ export function Config<T>({
           onConfirm={onConfirm}
           disabled={disabled}
           fileContentsLanguage={fileContentsLanguage}
+          fullWidth={fullWidth}
         />
       </>
     );
@@ -344,7 +352,7 @@ export function Config<T>({
               </ScrollArea>
 
               {/** SAVE */}
-              <SaveOrReset />
+              <SaveOrReset fullWidth />
             </Stack>
           </Box>
 

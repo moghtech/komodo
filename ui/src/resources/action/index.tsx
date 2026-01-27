@@ -6,11 +6,12 @@ import { ActionTable } from "./table";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
-import { Badge, Button, Group, Popover, Text, Tooltip } from "@mantine/core";
+import { Badge, Group, Popover, Text } from "@mantine/core";
 import { Clock } from "lucide-react";
 import { useDisclosure } from "@mantine/hooks";
 import { updateLogToHtml } from "@/lib/utils";
 import ActionConfig from "./config";
+import ConfirmModal from "@/ui/confirm-modal";
 
 export const ActionComponents: RequiredResourceComponents = {
   useListItem: (id) =>
@@ -137,7 +138,7 @@ export const ActionComponents: RequiredResourceComponents = {
           { action: id },
           { refetchInterval: 5000 },
         ).data?.running ?? 0) > 0;
-      const { mutate, isPending } = useExecute("RunAction");
+      const { mutateAsync, isPending } = useExecute("RunAction");
       const action = ActionComponents.useListItem(id);
 
       if (!action) {
@@ -145,13 +146,15 @@ export const ActionComponents: RequiredResourceComponents = {
       }
 
       return (
-        <Button
-          leftSection={<ICONS.Action size="1rem" />}
-          onClick={() => mutate({ action: id, args: {} })}
+        <ConfirmModal
+          label={running ? "Running" : "Run Action"}
+          icon={<ICONS.Action size="1rem" />}
+          confirmText={action.name}
+          onConfirm={async () => {
+            await mutateAsync({ action: id, args: {} });
+          }}
           loading={running || isPending}
-        >
-          {running ? "Running" : "Run Action"}
-        </Button>
+        />
       );
     },
   },

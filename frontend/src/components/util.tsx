@@ -7,7 +7,6 @@ import {
   SetStateAction,
   forwardRef,
   useEffect,
-  useRef,
   useState,
 } from "react";
 import { Button } from "../ui/button";
@@ -195,7 +194,6 @@ export const ActionWithDialog = ({
     useRead("GetCoreInfo", {}).data?.disable_confirm_dialog ?? false;
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
-  const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
   // Add prompt hotkeys for better UX when dialog is open
   usePromptHotkeys({
@@ -268,7 +266,6 @@ export const ActionWithDialog = ({
         </div>
         <DialogFooter>
           <ConfirmButton
-            ref={confirmButtonRef}
             title={openTitle ?? title}
             icon={icon}
             disabled={disabled || name !== input}

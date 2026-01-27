@@ -5,6 +5,7 @@ import { useInvalidate, komodo_client, useRead, useUser } from "@/lib/hooks";
 import { ResourceComponents, UsableResource } from "@/resources";
 import { ResourceNameSimple } from "@/resources/common";
 import { notifications } from "@mantine/notifications";
+import { Group, Text } from "@mantine/core";
 
 const ws_atom = atom<{
   ws: WebSocket | undefined;
@@ -106,16 +107,14 @@ const on_update = (
 ) => {
   const Components = ResourceComponents[update.target.type as UsableResource];
   const message = Components ? (
-    <div className="flex items-center gap-2">
-      <div>Update</div> -<div>{update.operation}</div> -
-      <div>
-        <ResourceNameSimple
-          type={update.target.type as UsableResource}
-          id={update.target.id}
-        />
-      </div>
-      {!update.success && <div>FAILED</div>}
-    </div>
+    <Group>
+      <Text>{update.operation}</Text> -
+      <ResourceNameSimple
+        type={update.target.type as UsableResource}
+        id={update.target.id}
+      />
+      {!update.success && <Text>FAILED</Text>}
+    </Group>
   ) : (
     `${update.operation}${update.success ? "" : " - FAILED"}`
   );
