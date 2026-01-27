@@ -1,7 +1,9 @@
 import {
+  Code,
   colorsTuple,
   createTheme,
   darken,
+  Drawer,
   Input,
   lighten,
   MantineColorScheme,
@@ -70,6 +72,27 @@ export const theme = createTheme({
           "--table-highlight-on-hover-color": theme.colors["accent-border"][0],
         },
       }),
+    }),
+    Drawer: Drawer.extend({
+      vars: () => ({
+        root: {
+          "--drawer-flex": "",
+        },
+      }),
+      defaultProps: {
+        position: "top",
+        radius: "md",
+      },
+      styles: {
+        inner: { justifyContent: "center" },
+      },
+    }),
+    Code: Code.extend({
+      defaultProps: {
+        bg: "var(--mantine-color-accent-0)",
+        bdrs: "sm",
+        p: "md",
+      },
     }),
   },
 });

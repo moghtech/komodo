@@ -7,7 +7,7 @@ import { ResourceNameSimple } from "@/resources/common";
 import { notifications } from "@mantine/notifications";
 import { Group, Text } from "@mantine/core";
 
-const ws_atom = atom<{
+const wsAtom = atom<{
   ws: WebSocket | undefined;
   connected: boolean;
   count: number;
@@ -17,10 +17,10 @@ const ws_atom = atom<{
   count: 0,
 });
 
-export const useWebsocketConnected = () => useAtom(ws_atom)[0].connected;
+export const useWebsocketConnected = () => useAtom(wsAtom)[0].connected;
 
 export const useWebsocketReconnect = () => {
-  const [ws, set] = useAtom(ws_atom);
+  const [ws, set] = useAtom(wsAtom);
 
   return () => {
     if (ws.ws?.readyState === WebSocket.OPEN) {
@@ -54,7 +54,7 @@ export const useWebsocketMessages = (
 export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
   const user = useUser().data;
   const invalidate = useInvalidate();
-  const [ws, setWs] = useAtom(ws_atom);
+  const [ws, setWs] = useAtom(wsAtom);
   const countRef = useRef<number>(ws.count);
   const reconnect = useWebsocketReconnect();
   const disable_reconnect = useRead("GetCoreInfo", {}).data

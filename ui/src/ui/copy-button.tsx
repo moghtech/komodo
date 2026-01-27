@@ -1,8 +1,19 @@
 import { ActionIcon, CopyButton as MantineCopyButton } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { Check, Copy } from "lucide-react";
+import { ReactNode } from "react";
 
-export const CopyButton = ({ content }: { content: string }) => {
+export interface CopyButtonProps {
+  content: string;
+  icon?: ReactNode;
+  label?: string;
+}
+
+export default function CopyButton({
+  content,
+  icon,
+  label = "content",
+}: CopyButtonProps) {
   return (
     <MantineCopyButton value={content}>
       {({ copied, copy }) => (
@@ -11,7 +22,7 @@ export const CopyButton = ({ content }: { content: string }) => {
           onClick={() => {
             copy();
             if (location.origin.startsWith("https")) {
-              notifications.show({ message: "Copied content to clipboard." });
+              notifications.show({ message: `Copied ${label} to clipboard.` });
             } else {
               notifications.show({
                 message: "Cannot copy to clipboard without HTTPS.",
@@ -20,9 +31,9 @@ export const CopyButton = ({ content }: { content: string }) => {
             }
           }}
         >
-          {copied ? <Check size="1rem" /> : <Copy size="1rem" />}
+          {copied ? <Check size="1rem" /> : (icon ?? <Copy size="1rem" />)}
         </ActionIcon>
       )}
     </MantineCopyButton>
   );
-};
+}
