@@ -574,6 +574,22 @@ pub struct StackConfig {
   #[builder(default)]
   pub compose_cmd_wrapper: String,
 
+  /// Which compose subcommands should use the wrapper.
+  /// Valid values for Compose: "config", "build", "pull", "up", "run"
+  /// Valid values for Swarm: "config", "deploy"
+  /// Default: [] (empty). If empty and wrapper is set, defaults to ["up"] (Compose) or ["deploy"] (Swarm).
+  /// Set to ["config", "build", "pull", "up"] for sops exec-file with {} placeholder.
+  #[serde(
+    default = "default_wrapper_include",
+    deserialize_with = "string_list_deserializer"
+  )]
+  #[partial_attr(serde(
+    default,
+    deserialize_with = "option_string_list_deserializer"
+  ))]
+  #[builder(default = "default_wrapper_include()")]
+  pub compose_cmd_wrapper_include: Vec<String>,
+
   /// Ignore certain services declared in the compose file when checking
   /// the stack status. For example, an init service might be exited, but the
   /// stack should be healthy. This init service should be in `ignore_services`
@@ -652,6 +668,10 @@ fn default_send_alerts() -> bool {
   true
 }
 
+fn default_wrapper_include() -> Vec<String> {
+  vec![]
+}
+
 impl Default for StackConfig {
   fn default() -> Self {
     Self {
@@ -680,6 +700,7 @@ impl Default for StackConfig {
       destroy_before_deploy: Default::default(),
       build_extra_args: Default::default(),
       compose_cmd_wrapper: Default::default(),
+      compose_cmd_wrapper_include: default_wrapper_include(),
       skip_secret_interp: Default::default(),
       linked_repo: Default::default(),
       git_provider: default_git_provider(),

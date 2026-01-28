@@ -352,16 +352,55 @@ impl Resolve<crate::api::Args> for ComposePull {
 
     let project_name = stack.project_name(false);
 
+    // Parse wrapper configuration
+    let compose_cmd_wrapper =
+      parse_multiline_command(&stack.config.compose_cmd_wrapper);
+    // If wrapper_include is empty but wrapper is set, use default ["up"] for backward compatibility
+    let default_include = vec![String::from("up")];
+    let wrapper_include = if stack.config.compose_cmd_wrapper_include.is_empty()
+      && !compose_cmd_wrapper.is_empty()
+    {
+      &default_include
+    } else {
+      &stack.config.compose_cmd_wrapper_include
+    };
+
+    let pull_command = format!(
+      "{docker_compose} -p {project_name} -f {file_args}{env_file_args} pull{service_args}",
+    );
+    let (pull_command, wrapped) = match maybe_wrap_command(
+      pull_command,
+      &compose_cmd_wrapper,
+      wrapper_include,
+      "pull",
+    ) {
+      Ok(result) => result,
+      Err(log) => {
+        res.logs.push(log);
+        return Ok(res);
+      }
+    };
+
     let span = info_span!("RunComposePull");
-    let log = run_komodo_standard_command(
+    let mode = if wrapped {
+      KomodoCommandMode::Shell
+    } else {
+      KomodoCommandMode::Standard
+    };
+    let Some(log) = run_komodo_command_with_sanitization(
       "Compose Pull",
-      run_directory.as_ref(),
-      format!(
-        "{docker_compose} -p {project_name} -f {file_args}{env_file_args} pull{service_args}",
-      ),
+      run_directory.as_path(),
+      pull_command,
+      mode,
+      &replacers,
     )
     .instrument(span)
-    .await;
+    .await
+    else {
+      // Only reachable if command is empty,
+      // not the case since it is provided above.
+      unreachable!()
+    };
 
     res.logs.push(log);
 
@@ -483,25 +522,53 @@ impl Resolve<crate::api::Args> for ComposeUp {
       &stack.config.additional_env_files,
     )?;
 
+    // Parse wrapper configuration once for reuse
+    let compose_cmd_wrapper =
+      parse_multiline_command(&stack.config.compose_cmd_wrapper);
+    // If wrapper_include is empty but wrapper is set, use default ["up"] for backward compatibility
+    let default_include = vec![String::from("up")];
+    let wrapper_include = if stack.config.compose_cmd_wrapper_include.is_empty()
+      && !compose_cmd_wrapper.is_empty()
+    {
+      &default_include
+    } else {
+      &stack.config.compose_cmd_wrapper_include
+    };
+
     // Uses 'docker compose config' command to extract services (including image)
     // after performing interpolation
     {
       let command = format!(
         "{docker_compose} -p {project_name} -f {file_args}{env_file_args} config",
       );
+      let (command, wrapped) = match maybe_wrap_command(
+        command,
+        &compose_cmd_wrapper,
+        wrapper_include,
+        "config",
+      ) {
+        Ok(result) => result,
+        Err(log) => {
+          res.logs.push(log);
+          return Ok(res);
+        }
+      };
+      let mode = if wrapped {
+        KomodoCommandMode::Shell
+      } else {
+        KomodoCommandMode::Standard
+      };
       let span = info_span!("GetComposeConfig", command);
       let Some(config_log) = run_komodo_command_with_sanitization(
         "Compose Config",
         run_directory.as_path(),
         command,
-        KomodoCommandMode::Standard,
+        mode,
         &replacers,
       )
       .instrument(span)
       .await
       else {
-        // Only reachable if command is empty,
-        // not the case since it is provided above.
         unreachable!()
       };
       if !config_log.success {
@@ -558,12 +625,29 @@ impl Resolve<crate::api::Args> for ComposeUp {
       let command = format!(
         "{docker_compose} -p {project_name} -f {file_args}{env_file_args} build{build_extra_args}{service_args}",
       );
+      let (command, wrapped) = match maybe_wrap_command(
+        command,
+        &compose_cmd_wrapper,
+        wrapper_include,
+        "build",
+      ) {
+        Ok(result) => result,
+        Err(log) => {
+          res.logs.push(log);
+          return Ok(res);
+        }
+      };
+      let mode = if wrapped {
+        KomodoCommandMode::Shell
+      } else {
+        KomodoCommandMode::Standard
+      };
       let span = info_span!("ExecuteComposeBuild");
       let Some(log) = run_komodo_command_with_sanitization(
         "Compose Build",
         run_directory.as_path(),
         command,
-        KomodoCommandMode::Shell,
+        mode,
         &replacers,
       )
       .instrument(span)
@@ -584,14 +668,36 @@ impl Resolve<crate::api::Args> for ComposeUp {
       let command = format!(
         "{docker_compose} -p {project_name} -f {file_args}{env_file_args} pull{service_args}",
       );
-      let span = info_span!("RunComposePull");
-      let log = run_komodo_standard_command(
-        "Compose Pull",
-        run_directory.as_ref(),
+      let (command, wrapped) = match maybe_wrap_command(
         command,
+        &compose_cmd_wrapper,
+        wrapper_include,
+        "pull",
+      ) {
+        Ok(result) => result,
+        Err(log) => {
+          res.logs.push(log);
+          return Ok(res);
+        }
+      };
+      let mode = if wrapped {
+        KomodoCommandMode::Shell
+      } else {
+        KomodoCommandMode::Standard
+      };
+      let span = info_span!("RunComposePull");
+      let Some(log) = run_komodo_command_with_sanitization(
+        "Compose Pull",
+        run_directory.as_path(),
+        command,
+        mode,
+        &replacers,
       )
       .instrument(span)
-      .await;
+      .await
+      else {
+        unreachable!()
+      };
       res.logs.push(log);
       if !all_logs_success(&res.logs) {
         return Ok(res);
@@ -611,24 +717,21 @@ impl Resolve<crate::api::Args> for ComposeUp {
 
     // Run compose up
     let extra_args = format_extra_args(&stack.config.extra_args);
-    let mut command = format!(
+    let command = format!(
       "{docker_compose} -p {project_name} -f {file_args}{env_file_args} up -d{extra_args}{service_args}",
     );
-
-    // Apply compose cmd wrapper if configured
-    let compose_cmd_wrapper =
-      parse_multiline_command(&stack.config.compose_cmd_wrapper);
-    if !compose_cmd_wrapper.is_empty() {
-      if !compose_cmd_wrapper.contains("[[COMPOSE_COMMAND]]") {
-        res.logs.push(Log::error(
-          "Compose Command Wrapper",
-          "compose_cmd_wrapper is configured but does not contain [[COMPOSE_COMMAND]] placeholder. The placeholder is required to inject the compose command.".to_string(),
-        ));
+    let (command, _) = match maybe_wrap_command(
+      command,
+      &compose_cmd_wrapper,
+      wrapper_include,
+      "up",
+    ) {
+      Ok(result) => result,
+      Err(log) => {
+        res.logs.push(log);
         return Ok(res);
       }
-      command =
-        compose_cmd_wrapper.replace("[[COMPOSE_COMMAND]]", &command);
-    }
+    };
 
     let span = info_span!("ExecuteComposeUp");
     let Some(log) = run_komodo_command_with_sanitization(
@@ -784,15 +887,48 @@ impl Resolve<crate::api::Args> for ComposeRun {
 
     let project_name = stack.project_name(true);
 
+    // Parse wrapper configuration
+    let compose_cmd_wrapper =
+      parse_multiline_command(&stack.config.compose_cmd_wrapper);
+    // If wrapper_include is empty but wrapper is set, use default ["up"] for backward compatibility
+    let default_include = vec![String::from("up")];
+    let wrapper_include = if stack.config.compose_cmd_wrapper_include.is_empty()
+      && !compose_cmd_wrapper.is_empty()
+    {
+      &default_include
+    } else {
+      &stack.config.compose_cmd_wrapper_include
+    };
+
     if pull.unwrap_or_default() {
-      let pull_log = run_komodo_standard_command(
+      let pull_command = format!(
+        "{docker_compose} -p {project_name} -f {file_args}{env_file_args} pull {service}",
+      );
+      let (pull_command, wrapped) = match maybe_wrap_command(
+        pull_command,
+        &compose_cmd_wrapper,
+        wrapper_include,
+        "pull",
+      ) {
+        Ok(result) => result,
+        Err(log) => return Ok(log),
+      };
+      let mode = if wrapped {
+        KomodoCommandMode::Shell
+      } else {
+        KomodoCommandMode::Standard
+      };
+      let Some(pull_log) = run_komodo_command_with_sanitization(
         "Compose Pull",
-        run_directory.as_ref(),
-        format!(
-          "{docker_compose} -p {project_name} -f {file_args}{env_file_args} pull {service}",
-        ),
+        run_directory.as_path(),
+        pull_command,
+        mode,
+        &replacers,
       )
-      .await;
+      .await
+      else {
+        unreachable!()
+      };
       if !pull_log.success {
         return Ok(pull_log);
       }
@@ -839,15 +975,24 @@ impl Resolve<crate::api::Args> for ComposeRun {
       })
       .unwrap_or_default();
 
-    let command = format!(
+    let run_command = format!(
       "{docker_compose} -p {project_name} -f {file_args}{env_file_args} run{run_flags} {service}{command_args}",
     );
+    let (run_command, _) = match maybe_wrap_command(
+      run_command,
+      &compose_cmd_wrapper,
+      wrapper_include,
+      "run",
+    ) {
+      Ok(result) => result,
+      Err(log) => return Ok(log),
+    };
 
-    let span = info_span!("RunComposeRun", command);
+    let span = info_span!("RunComposeRun", run_command);
     let Some(log) = run_komodo_command_with_sanitization(
       "Compose Run",
       run_directory.as_path(),
-      command,
+      run_command,
       KomodoCommandMode::Shell,
       &replacers,
     )
@@ -886,6 +1031,33 @@ fn env_file_args(
   }
 
   Ok(res)
+}
+
+/// Apply compose_cmd_wrapper to command if the subcommand is in wrapper_include list.
+/// Returns Ok((command, wrapped)) where `wrapped` indicates if wrapper was applied.
+/// Returns Err(Log) if wrapper is invalid (missing placeholder).
+fn maybe_wrap_command(
+  command: String,
+  wrapper: &str,
+  wrapper_include: &[String],
+  subcommand: &str,
+) -> Result<(String, bool), Log> {
+  // Skip wrapping if wrapper is empty or subcommand is not in include list
+  if wrapper.is_empty()
+    || !wrapper_include.iter().any(|c| c == subcommand)
+  {
+    return Ok((command, false));
+  }
+
+  // Validate wrapper contains placeholder
+  if !wrapper.contains("[[COMPOSE_COMMAND]]") {
+    return Err(Log::error(
+      "Compose Command Wrapper",
+      "compose_cmd_wrapper is configured but does not contain [[COMPOSE_COMMAND]] placeholder. The placeholder is required to inject the compose command.".to_string(),
+    ));
+  }
+
+  Ok((wrapper.replace("[[COMPOSE_COMMAND]]", &command), true))
 }
 
 #[instrument("ComposeDown", skip(res))]
