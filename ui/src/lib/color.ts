@@ -470,6 +470,12 @@ export const tagColor = (color?: Types.TagColor) => {
   }
 };
 
+export const tagColorTuple = (color: Types.TagColor, length = 10) => {
+  const c = tagColor(color);
+  // Adds increasing opacity.
+  return Array.from({ length }).map((_, i) => c + (i * 10 + 9).toString());
+};
+
 // ORIGINAL USING TAILWIND
 // export const tagColor = (color?: Types.TagColor) => {
 //   switch (color) {

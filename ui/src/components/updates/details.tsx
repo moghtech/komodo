@@ -14,7 +14,6 @@ import {
   Drawer,
   Group,
   Loader,
-  ScrollArea,
   Stack,
   Text,
 } from "@mantine/core";
@@ -164,10 +163,7 @@ export function UpdateDetailsContent({
         </Group>
       </Stack>
 
-      <ScrollArea
-        renderRoot={(props) => <Stack {...props} />}
-        mah="calc(85vh-110px)"
-      >
+      <Stack>
         {/** CONFIG CHANGE DIFF */}
         {update.prev_toml && update.current_toml && (
           <Section
@@ -260,7 +256,7 @@ export function UpdateDetailsContent({
             )}
           </Section>
         ))}
-      </ScrollArea>
+      </Stack>
     </Stack>
   );
 }

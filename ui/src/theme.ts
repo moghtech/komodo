@@ -12,14 +12,16 @@ import {
   Table,
   virtualColor,
 } from "@mantine/core";
+import { Types } from "komodo_client";
+import { tagColorTuple } from "@/lib/color";
 
 export const DEFAULT_COLOR_SCHEME: MantineColorScheme = "auto";
 
 // Match in ./index.css
 export const LIGHT_BODY = "#ffffff";
-export const LIGHT_ACCENT = darken(LIGHT_BODY, 0.04);
+export const LIGHT_ACCENT = darken(LIGHT_BODY, 0.05);
 export const DARK_BODY = "#131313";
-export const DARK_ACCENT = lighten(DARK_BODY, 0.04);
+export const DARK_ACCENT = lighten(DARK_BODY, 0.022);
 
 export const theme = createTheme({
   cursorType: "pointer",
@@ -59,6 +61,12 @@ export const theme = createTheme({
       light: "lightAccentHover",
       dark: "darkAccentHover",
     }),
+    // Adds the tag colors with increasing opacity
+    ...Object.fromEntries(
+      Object.values(Types.TagColor).map((color) => {
+        return ["Tag" + color, tagColorTuple(color)];
+      }),
+    ),
   },
   components: {
     Button: Button.extend({

@@ -13,6 +13,14 @@
   --mantine-color-body: #0f1115;
 }
 
+a {
+  color: inherit;
+  text-decoration: none;
+}
+a:visited { color: inherit; }
+a:hover,
+a:focus { text-decoration: none; }
+
 $mantine-breakpoint-xs: '36em';
 $mantine-breakpoint-sm: '48em';
 $mantine-breakpoint-md: '62em';

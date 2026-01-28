@@ -1,7 +1,6 @@
 import { Badge } from "@mantine/core";
 import { ReactNode } from "react";
 import { useRead } from "@/lib/hooks";
-import { tagColor } from "@/lib/color";
 import classes from "./index.module.scss";
 
 export default function Tags({
@@ -17,16 +16,16 @@ export default function Tags({
   icon?: ReactNode;
   useName?: boolean;
 }) {
-  const all_tags = useRead("ListTags", {}).data;
-  const get_tag = (tag: string) =>
+  const allTags = useRead("ListTags", {}).data;
+  const getTag = (tag: string) =>
     useName
-      ? all_tags?.find((t) => t.name === tag)
-      : all_tags?.find((t) => t._id?.$oid === tag);
+      ? allTags?.find((t) => t.name === tag)
+      : allTags?.find((t) => t._id?.$oid === tag);
   return (
     <>
       {tag_ids?.map((tag_id) => {
-        const tag = get_tag(tag_id);
-        const color = tagColor(tag?.color);
+        const tag = getTag(tag_id);
+        // const color = tagColor(tag?.color) + "60";
         return (
           <Badge
             key={tag_id}
@@ -34,7 +33,8 @@ export default function Tags({
             className={
               className ? classes["tag"] + " " + className : classes["tag"]
             }
-            color={color}
+            color={tag?.color ? `Tag${tag.color}.4` : "TagSlate.4"}
+            c="inherit"
             onClick={() =>
               onBadgeClick &&
               (useName
@@ -44,6 +44,7 @@ export default function Tags({
             style={{ cursor: onBadgeClick ? "pointer" : undefined }}
             rightSection={icon}
             w="fit-content"
+            bdrs="sm"
           >
             {tag?.name ?? "unknown"}
           </Badge>

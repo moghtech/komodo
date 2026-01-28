@@ -27,6 +27,7 @@ export default function DashboardSummary({
     () => _data?.filter((d) => d) ?? [],
     [_data],
   ) as Array<PieChartItem>;
+
   const children = _children ? (
     _children
   ) : (
@@ -53,8 +54,13 @@ export default function DashboardSummary({
       />
     </Group>
   );
+
   return (
-    <Paper className={classes["dashboard-summary"]} onClick={onClick}>
+    <Paper
+      className={classes["dashboard-summary"]}
+      renderRoot={(props) => <Stack justify="center" gap="0" {...props} />}
+      onClick={onClick}
+    >
       <Group>
         {icon}
         {name}s

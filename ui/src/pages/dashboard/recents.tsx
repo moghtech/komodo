@@ -17,10 +17,11 @@ import { ICONS } from "@/lib/icons";
 import { usableResourcePath } from "@/lib/utils";
 import { ResourceComponents, UsableResource } from "@/resources";
 import { ResourceNameSimple } from "@/resources/common";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import DashboardSummary from "@/components/dashboard-summary";
 import FancyCard from "@/ui/fancy-card";
 import { TemplateMarker } from "@/components/template-marker";
+import Tags from "@/components/tags";
 
 const RecentsDashboard = () => {
   const noResources = useNoResources();
@@ -149,30 +150,41 @@ const RecentCard = ({
     return null;
   }
 
-  const tags = resource?.tags;
   const showServerStats = type === "Server" && preferences.showServerStats;
 
   return (
     <FancyCard
       renderRoot={(props) => (
-        <Flex
+        <Stack
           {...props}
-          align="center"
           justify="space-between"
           p="md"
           bdrs="md"
+          renderRoot={(props) => (
+            <Link
+              to={`${usableResourcePath(type)}/${id}`}
+              style={{ color: "inherit", textDecoration: "none" }}
+              {...props}
+            />
+          )}
         />
       )}
-      onClick={() => nav(`${usableResourcePath(type)}/${id}`)}
+      // onClick={() => nav(`${usableResourcePath(type)}/${id}`)}
       visibleFrom={visibleFrom}
     >
-      <Group style={{ textWrap: "nowrap" }} gap="sm">
-        <Components.Icon id={id} />
-        <ResourceNameSimple type={type} id={id} />
-        {resource.template && <TemplateMarker type={type} />}
-      </Group>
-      {/* {type === "Deployment" && <DeploymentUpdateAvailable id={id} small />}
+      <Group justify="space-between">
+        <Group style={{ textWrap: "nowrap" }} gap="sm">
+          <Components.Icon id={id} />
+          <ResourceNameSimple type={type} id={id} />
+          {resource.template && <TemplateMarker type={type} />}
+        </Group>
+        {/* {type === "Deployment" && <DeploymentUpdateAvailable id={id} small />}
         {type === "Stack" && <StackUpdateAvailable id={id} small />} */}
+      </Group>
+
+      <Group gap="xs">
+        <Tags tag_ids={resource?.tags} />
+      </Group>
     </FancyCard>
   );
 };
