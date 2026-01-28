@@ -5,19 +5,19 @@ import { ResourceLink } from "../common";
 import { fmtVersion } from "@/lib/formatting";
 import { BuildComponents } from ".";
 import TableTags from "@/components/tags/table";
-import { TableProps } from "@mantine/core";
+import { BoxProps } from "@mantine/core";
 
 export default function BuildTable({
   resources,
-  ...tableProps
+  ...boxProps
 }: {
   resources: Types.BuildListItem[];
-} & TableProps) {
+} & BoxProps) {
   const [_, setSelectedResources] = useSelectedResources("Build");
 
   return (
     <DataTable
-      {...tableProps}
+      {...boxProps}
       tableKey="builds"
       data={resources}
       selectOptions={{

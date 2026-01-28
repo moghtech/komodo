@@ -4,18 +4,18 @@ import { ResourceLink } from "@/resources/common";
 import { useSelectedResources } from "@/lib/hooks";
 import { ActionComponents } from ".";
 import TableTags from "@/components/tags/table";
-import { TableProps } from "@mantine/core";
+import { BoxProps } from "@mantine/core";
 
 export default function ActionTable({
   resources,
-  ...tableProps
+  ...boxProps
 }: {
   resources: Types.ActionListItem[];
-} & TableProps) {
+} & BoxProps) {
   const [_, setSelectedResources] = useSelectedResources("Action");
   return (
     <DataTable
-      {...tableProps}
+      {...boxProps}
       tableKey="actions-table"
       data={resources}
       selectOptions={{

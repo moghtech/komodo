@@ -60,7 +60,6 @@ export const ResourceTags = ({
 
 export const AddResourceTags = (target: UsableResourceTarget) => {
   const { type, id } = target;
-  const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const combobox = useCombobox({
     onDropdownClose: () => {
@@ -89,7 +88,6 @@ export const AddResourceTags = (target: UsableResourceTarget) => {
   const { mutate: update } = useWrite("UpdateResourceMeta", {
     onSuccess: () => {
       inv([`List${type}s`]);
-      setOpen(false);
       notifications.show({ message: `Added tag ${search}` });
     },
   });
@@ -97,10 +95,6 @@ export const AddResourceTags = (target: UsableResourceTarget) => {
   const { mutateAsync: create } = useWrite("CreateTag", {
     onSuccess: () => inv([`ListTags`]),
   });
-
-  useEffect(() => {
-    if (open) setSearch("");
-  }, [open]);
 
   const createTag = async (name: string) => {
     if (!name) {
@@ -112,7 +106,6 @@ export const AddResourceTags = (target: UsableResourceTarget) => {
       target,
       tags: [...(resource?.tags ?? []), tag._id!.$oid],
     });
-    setOpen(false);
   };
 
   useEffect(() => {
@@ -177,7 +170,7 @@ export const AddResourceTags = (target: UsableResourceTarget) => {
         />
         <Combobox.Options renderRoot={(props) => <Stack gap="xs" {...props} />}>
           {filtered.map((tag) => (
-            <Combobox.Option key={tag._id?.$oid} value={tag.name}>
+            <Combobox.Option key={tag._id?.$oid} value={tag._id?.$oid!}>
               <Group justify="space-between">
                 <Text>{tag.name}</Text>
                 <Box w={25} h={25} bg={tagColor(tag.color)} bdrs="md" />

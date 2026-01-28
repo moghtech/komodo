@@ -22,7 +22,7 @@ export default function TopbarUpdates() {
   return (
     <Menu
       position="bottom-end"
-      offset={19}
+      offset={20}
       onOpen={() => {
         open();
         setLastSeenUpdate({});
@@ -30,15 +30,15 @@ export default function TopbarUpdates() {
       onClose={() => close()}
     >
       <Menu.Target>
-        <ActionIcon variant="subtle" c="inherit" size="lg">
+        <ActionIcon size="lg" variant="subtle" c="inherit">
           <Center pos="relative">
             <ICONS.Update size="1.3rem" />
             <Circle
               size="0.5rem"
               style={{
                 position: "absolute",
-                top: "0.5rem",
-                right: "0.5rem",
+                top: "4",
+                right: "4",
                 opacity: unseenUpdate ? 1 : 0,
                 transition: "all 150ms ease",
               }}

@@ -4,18 +4,18 @@ import { Types } from "komodo_client";
 import { ResourceLink } from "../common";
 import { ResourceSyncComponents } from ".";
 import TableTags from "@/components/tags/table";
-import { TableProps } from "@mantine/core";
+import { BoxProps } from "@mantine/core";
 
 export default function ResourceSyncTable({
   resources,
-  ...tableProps
+  ...boxProps
 }: {
   resources: Types.ResourceSyncListItem[];
-} & TableProps) {
+} & BoxProps) {
   const [_, setSelectedResources] = useSelectedResources("ResourceSync");
   return (
     <DataTable
-      {...tableProps}
+      {...boxProps}
       tableKey="syncs"
       data={resources}
       selectOptions={{

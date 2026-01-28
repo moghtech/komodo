@@ -10,18 +10,18 @@ import { CheckCircle, Moon, Sun } from "lucide-react";
 export const ThemeToggle = () => {
   const { colorScheme, setColorScheme } = useMantineColorScheme();
   return (
-    <Menu position="bottom-end" offset={19}>
+    <Menu position="bottom-end" offset={20}>
       <Menu.Target>
         <ActionIcon
           aria-label="ThemeToggle"
-          variant="subtle"
           size="lg"
+          variant="subtle"
           c="inherit"
         >
           <ThemeIcon />
         </ActionIcon>
       </Menu.Target>
-      <Menu.Dropdown>
+      <Menu.Dropdown w={150}>
         {["light", "dark", "auto"].map((theme) => (
           <Menu.Item
             key={theme}
@@ -45,14 +45,14 @@ const ThemeIcon = () => {
   return (
     <>
       <Sun
-        color="black"
+        color="var(--mantine-color-text)"
         size="1.3rem"
         style={{
           display: dark ? "none" : undefined,
         }}
       />
       <Moon
-        color="white"
+        color="var(--mantine-color-text)"
         size="1.3rem"
         style={{
           display: dark ? undefined : "none",

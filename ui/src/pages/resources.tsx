@@ -12,9 +12,11 @@ import { ResourceComponents, UsableResource } from "@/resources";
 import { Types } from "komodo_client";
 import { ResourceNotFound } from "@/resources/common";
 import Page from "@/ui/page";
-import { Box, Group, Switch, TextInput } from "@mantine/core";
+import { Group, Switch, TextInput } from "@mantine/core";
 import { ICONS } from "@/lib/icons";
 import TableSkeleton from "@/ui/table-skeleton";
+import TemplateQuerySelector from "@/components/template-query-selector";
+import TagsFilter from "@/components/tags/filter";
 
 export default function Resources({ _type }: { _type?: UsableResource }) {
   const is_admin = useUser().data?.admin ?? false;
@@ -53,7 +55,7 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
     return <ResourceNotFound type={type} />;
   }
 
-  const targets = filtered?.map((resource) => ({ type, id: resource.id }));
+  // const targets = filtered?.map((resource) => ({ type, id: resource.id }));
 
   return (
     <Page
@@ -77,8 +79,8 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
               fz="sm"
             />
           )}
-          {/* <TemplateQueryBehaviorSelector />
-              <TagsFilter /> */}
+          <TemplateQuerySelector />
+          <TagsFilter />
           <TextInput
             value={search}
             onChange={(e) => set(e.target.value)}
@@ -89,21 +91,11 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
         </Group>
       </Group>
 
-      <Box
-        p="lg"
-        pt="0"
-        bd="1px solid var(--mantine-color-accent-border-0)"
-        bdrs="md"
-        w="100%"
-        mah="calc(100vh - 25rem)"
-        style={{ overflow: "auto" }}
-      >
-        {filtered ? (
-          <Components.Table resources={filtered ?? []} stickyHeader />
-        ) : (
-          <TableSkeleton />
-        )}
-      </Box>
+      {filtered ? (
+        <Components.Table resources={filtered ?? []} />
+      ) : (
+        <TableSkeleton />
+      )}
     </Page>
   );
 }

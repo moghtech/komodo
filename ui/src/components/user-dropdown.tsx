@@ -38,12 +38,13 @@ export const UserDropdown = () => {
   const accounts = MoghAuth.LOGIN_TOKENS.accounts();
   const nav = useNavigate();
   return (
-    <Menu position="bottom-end" offset={19} opened={open} onChange={setOpen}>
+    <Menu position="bottom-end" offset={20} opened={open} onChange={setOpen}>
       <Menu.Target>
         <Button
           variant="subtle"
           c="inherit"
           leftSection={<User size="1.3rem" />}
+          px="0.5rem"
         >
           <Username username={user?.username} />
         </Button>

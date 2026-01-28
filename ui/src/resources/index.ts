@@ -12,7 +12,7 @@ import { ProcedureComponents } from "./procedure";
 import { ResourceSyncComponents } from "./sync";
 import { BuilderComponents } from "./builder";
 import { AlerterComponents } from "./alerter";
-import { TableProps } from "@mantine/core";
+import { BoxProps, TableProps } from "@mantine/core";
 
 export type UsableResourceTarget = Exclude<
   Types.ResourceTarget,
@@ -88,7 +88,10 @@ export interface RequiredResourceComponents<
 
   /** A table component to view resource list */
   Table: React.FC<
-    { resources: Types.ResourceListItem<ListItemInfo>[] } & TableProps
+    {
+      resources: Types.ResourceListItem<ListItemInfo>[];
+      tableProps?: TableProps;
+    } & BoxProps
   >;
 
   /** Dropdown menu to trigger group executions for selected resources */

@@ -1,18 +1,18 @@
 import { useDashboardPreferences } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import StandardServerTable from "./standard";
-import { TableProps } from "@mantine/core";
+import { BoxProps } from "@mantine/core";
 
 export default function ServerTable({
   resources,
-  ...tableProps
+  ...boxProps
 }: {
   resources: Types.ServerListItem[];
-} & TableProps) {
+} & BoxProps) {
   const { preferences } = useDashboardPreferences();
   if (preferences.showServerStats) {
     return;
   } else {
-    return <StandardServerTable resources={resources} {...tableProps} />;
+    return <StandardServerTable resources={resources} {...boxProps} />;
   }
 }

@@ -2,17 +2,17 @@ import { useRead, useResourceName, useSelectedResources } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import { ResourceLink } from "../common";
 import { ICONS } from "@/lib/icons";
-import { Group, TableProps } from "@mantine/core";
+import { Group, BoxProps } from "@mantine/core";
 import TableTags from "@/components/tags/table";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import { DeploymentComponents } from ".";
 
 export default function DeploymentTable({
   resources,
-  ...tableProps
+  ...boxProps
 }: {
   resources: Types.DeploymentListItem[];
-} & TableProps) {
+} & BoxProps) {
   const swarmName = useResourceName("Swarm");
   const serverName = useResourceName("Server");
 
@@ -20,7 +20,7 @@ export default function DeploymentTable({
 
   return (
     <DataTable
-      {...tableProps}
+      {...boxProps}
       tableKey="deployments"
       data={resources}
       selectOptions={{

@@ -4,17 +4,17 @@ import { DataTable, SortableHeader } from "@/ui/data-table";
 import { ResourceLink } from "@/resources/common";
 import { RepoComponents } from ".";
 import TableTags from "@/components/tags/table";
-import { TableProps } from "@mantine/core";
+import { BoxProps } from "@mantine/core";
 
 export default function RepoTable({
   resources,
-  ...tableProps
-}: { resources: Types.RepoListItem[] } & TableProps) {
+  ...boxProps
+}: { resources: Types.RepoListItem[] } & BoxProps) {
   const [_, setSelectedResources] = useSelectedResources("Repo");
 
   return (
     <DataTable
-      {...tableProps}
+      {...boxProps}
       tableKey="repo-table"
       data={resources}
       selectOptions={{

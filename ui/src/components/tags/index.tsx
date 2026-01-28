@@ -1,21 +1,22 @@
-import { Badge, Loader } from "@mantine/core";
+import { Badge, BadgeProps, Loader } from "@mantine/core";
 import { ReactNode } from "react";
 import { useRead } from "@/lib/hooks";
-import classes from "./index.module.scss";
+
+export interface TagsProps extends BadgeProps {
+  tag_ids?: string[];
+  onBadgeClick?: (tag_id: string) => void;
+  icon?: ReactNode;
+  useName?: boolean;
+}
 
 export default function Tags({
   tag_ids,
   onBadgeClick,
-  className,
   icon,
   useName,
-}: {
-  tag_ids?: string[];
-  onBadgeClick?: (tag_id: string) => void;
-  className?: string;
-  icon?: ReactNode;
-  useName?: boolean;
-}) {
+  py = "0.3rem",
+  ...badgeProps
+}: TagsProps) {
   const allTags = useRead("ListTags", {}).data;
   const getTag = (tag: string) =>
     useName
@@ -30,9 +31,6 @@ export default function Tags({
           <Badge
             key={tag_id}
             variant="filled"
-            className={
-              className ? classes["tag"] + " " + className : classes["tag"]
-            }
             color={tag?.color ? `Tag${tag.color}.4` : "TagSlate.4"}
             c="inherit"
             onClick={() =>
@@ -44,7 +42,10 @@ export default function Tags({
             style={{ cursor: onBadgeClick ? "pointer" : undefined }}
             rightSection={icon}
             w="fit-content"
+            h="fit-content"
             bdrs="sm"
+            py={py}
+            {...badgeProps}
           >
             {tag?.name ?? <Loader size="0.6rem" />}
           </Badge>

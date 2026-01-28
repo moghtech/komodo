@@ -41,8 +41,10 @@ const Topbar = ({
         </Button>
       </Group>
       <Group gap="0.3rem">
-        <TopbarUpdates />
-        <ThemeToggle />
+        <Group gap="0.5rem">
+          <TopbarUpdates />
+          <ThemeToggle />
+        </Group>
         <UserDropdown />
       </Group>
     </AppShell.Header>
