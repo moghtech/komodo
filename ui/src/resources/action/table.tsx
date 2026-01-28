@@ -1,22 +1,20 @@
 import { Types } from "komodo_client";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import { ResourceLink } from "@/resources/common";
-import { useSelectedResources, useTags } from "@/lib/hooks";
+import { useSelectedResources } from "@/lib/hooks";
 import { ActionComponents } from ".";
-import Tags from "@/components/tags";
-import { Group } from "@mantine/core";
+import TableTags from "@/components/tags/table";
 
 export default function ActionTable({
-  actions,
+  resources,
 }: {
-  actions: Types.ActionListItem[];
+  resources: Types.ActionListItem[];
 }) {
   const [_, setSelectedResources] = useSelectedResources("Action");
-  const { toggle_tag } = useTags();
   return (
     <DataTable
-      tableKey="actions"
-      data={actions}
+      tableKey="actions-table"
+      data={resources}
       selectOptions={{
         selectKey: ({ name }) => name,
         onSelect: setSelectedResources,
@@ -62,13 +60,9 @@ export default function ActionTable({
         },
         {
           header: "Tags",
-          cell: ({ row }) => (
-            <Group gap="xs" wrap="nowrap">
-              <Tags tag_ids={row.original.tags} onBadgeClick={toggle_tag} />
-            </Group>
-          ),
+          cell: ({ row }) => <TableTags tag_ids={row.original.tags} />,
         },
       ]}
     />
   );
-};
+}

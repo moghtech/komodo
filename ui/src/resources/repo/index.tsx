@@ -5,6 +5,7 @@ import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
+import RepoTable from "./table";
 
 export const RepoComponents: RequiredResourceComponents<
   Types.RepoConfig,
@@ -45,10 +46,7 @@ export const RepoComponents: RequiredResourceComponents<
 
   GroupExecutions: () => <></>,
 
-  Table: ({ resources }) => (
-    // <RepoTable repos={resources as Types.RepoListItem[]} />
-    <></>
-  ),
+  Table: RepoTable,
 
   Icon: ({ id, size = "1rem" }) => {
     const state = useRead("ListRepos", {}).data?.find((r) => r.id === id)?.info

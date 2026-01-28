@@ -5,6 +5,7 @@ import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
+import SwarmTable from "./table";
 
 export const SwarmComponents: RequiredResourceComponents<
   Types.SwarmConfig,
@@ -40,10 +41,7 @@ export const SwarmComponents: RequiredResourceComponents<
 
   GroupExecutions: () => <></>,
 
-  Table: ({ resources }) => (
-    // <SwarmTable swarms={resources as Types.SwarmListItem[]} />
-    <></>
-  ),
+  Table: SwarmTable,
 
   Icon: ({ id, size = "1rem" }) => {
     const state = useRead("ListSwarms", {}).data?.find((r) => r.id === id)?.info

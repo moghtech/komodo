@@ -5,6 +5,7 @@ import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
+import DeploymentTable from "./table";
 
 export const DeploymentComponents: RequiredResourceComponents<
   Types.DeploymentConfig,
@@ -60,10 +61,7 @@ export const DeploymentComponents: RequiredResourceComponents<
 
   GroupExecutions: () => <></>,
 
-  Table: ({ resources }) => (
-    // <DeploymentTable deployments={resources as Types.DeploymentListItem[]} />
-    <></>
-  ),
+  Table: DeploymentTable,
 
   Icon: ({ id, size = "1rem" }) => {
     const state = useRead("ListDeployments", {}).data?.find((r) => r.id === id)

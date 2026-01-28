@@ -14,6 +14,7 @@ import { ResourceNotFound } from "@/resources/common";
 import { Page } from "@/ui/page";
 import { Flex, Group, Switch, TextInput } from "@mantine/core";
 import { ICONS } from "@/lib/icons";
+import TableSkeleton from "@/ui/table-skeleton";
 
 export default function Resources({ _type }: { _type?: UsableResource }) {
   const is_admin = useUser().data?.admin ?? false;
@@ -68,14 +69,13 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
 
         <Group>
           {(type === "Stack" || type === "Deployment") && (
-            <Group
+            <Switch
+              label="Pending Update"
+              checked={filter_update_available}
+              onChange={toggle_filter_update_available}
               opacity={0.7}
               fz="sm"
-              onClick={() => toggle_filter_update_available()}
-            >
-              Pending Update
-              <Switch checked={filter_update_available} />
-            </Group>
+            />
           )}
           {/* <TemplateQueryBehaviorSelector />
               <TagsFilter /> */}
@@ -98,7 +98,11 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
         </Group>
       </Flex>
 
-      <Components.Table resources={filtered ?? []} />
+      {filtered ? (
+        <Components.Table resources={filtered ?? []} />
+      ) : (
+        <TableSkeleton />
+      )}
     </Page>
   );
 }

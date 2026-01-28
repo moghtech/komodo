@@ -5,6 +5,7 @@ import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
+import ResourceSyncTable from "./table";
 
 export const ResourceSyncComponents: RequiredResourceComponents<
   Types.ResourceSyncConfig,
@@ -51,10 +52,7 @@ export const ResourceSyncComponents: RequiredResourceComponents<
 
   GroupExecutions: () => <></>,
 
-  Table: ({ resources }) => (
-    // <ResourceSyncTable resourceSyncs={resources as Types.ResourceSyncListItem[]} />
-    <></>
-  ),
+  Table: ResourceSyncTable,
 
   Icon: ({ id, size = "1rem" }) => {
     const state = useRead("ListResourceSyncs", {}).data?.find(

@@ -5,6 +5,7 @@ import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
+import ServerTable from "./table";
 
 export const ServerComponents: RequiredResourceComponents<
   Types.ServerConfig,
@@ -48,10 +49,7 @@ export const ServerComponents: RequiredResourceComponents<
 
   GroupExecutions: () => <></>,
 
-  Table: ({ resources }) => (
-    // <ServerTable servers={resources as Types.ServerListItem[]} />
-    <></>
-  ),
+  Table: ServerTable,
 
   Icon: ({ id, size = "1rem" }) => {
     const state = useRead("ListServers", {}).data?.find((r) => r.id === id)

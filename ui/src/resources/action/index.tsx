@@ -53,7 +53,7 @@ export const ActionComponents: RequiredResourceComponents<
 
   GroupExecutions: () => <></>,
 
-  Table: ({ resources }) => <ActionTable actions={resources} />,
+  Table: ActionTable,
 
   Icon: ({ id, size = "1rem" }) => {
     const state = useRead("ListActions", {}).data?.find((r) => r.id === id)

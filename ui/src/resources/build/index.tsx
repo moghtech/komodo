@@ -5,6 +5,7 @@ import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
+import BuildTable from "./table";
 
 export const BuildComponents: RequiredResourceComponents<
   Types.BuildConfig,
@@ -45,10 +46,7 @@ export const BuildComponents: RequiredResourceComponents<
 
   GroupExecutions: () => <></>,
 
-  Table: ({ resources }) => (
-    // <BuildTable builds={resources as Types.BuildListItem[]} />
-    <></>
-  ),
+  Table: BuildTable,
 
   Icon: ({ id, size = "1rem" }) => {
     const state = useRead("ListBuilds", {}).data?.find((r) => r.id === id)?.info

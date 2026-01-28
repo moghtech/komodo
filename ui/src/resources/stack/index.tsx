@@ -5,6 +5,7 @@ import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
+import StackTable from "./table";
 
 export const StackComponents: RequiredResourceComponents<
   Types.StackConfig,
@@ -57,10 +58,7 @@ export const StackComponents: RequiredResourceComponents<
 
   GroupExecutions: () => <></>,
 
-  Table: ({ resources }) => (
-    // <StackTable stacks={resources as Types.StackListItem[]} />
-    <></>
-  ),
+  Table: StackTable,
 
   Icon: ({ id, size = "1rem" }) => {
     const state = useRead("ListStacks", {}).data?.find((r) => r.id === id)?.info

@@ -12,6 +12,7 @@ import {
   FolderSync,
   GitBranch,
   Hammer,
+  HardDrive,
   History,
   KeyRound,
   Layers,
@@ -51,6 +52,8 @@ export const ICONS = {
   Container: Box,
   Terminal: Terminal,
   Schedule: CalendarDays,
+  // DOCKER
+  Image: HardDrive,
   // MISC
   User,
   Key: KeyRound,

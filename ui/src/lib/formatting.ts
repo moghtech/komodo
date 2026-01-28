@@ -75,7 +75,7 @@ export const fmtOperation = (operation: Types.Operation) => {
 };
 
 export const fmtUpperCamelcase = (input: string) => {
-  return input.match(/[A-Z][a-z]+|[0-9]+/g)?.join(" ")!;
+  return input.match(/[A-Z][a-z]+|[0-9]+/g)?.join(" ") ?? input;
 };
 
 /// list_all_items => List All Items

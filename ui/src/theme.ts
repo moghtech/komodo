@@ -1,4 +1,5 @@
 import {
+  Button,
   Code,
   colorsTuple,
   createTheme,
@@ -60,6 +61,11 @@ export const theme = createTheme({
     }),
   },
   components: {
+    Button: Button.extend({
+      defaultProps: {
+        c: "inherit",
+      },
+    }),
     Input: Input.extend({
       defaultProps: {
         bg: "accent",

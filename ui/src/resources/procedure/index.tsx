@@ -5,6 +5,7 @@ import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
+import ProcedureTable from "./table";
 
 export const ProcedureComponents: RequiredResourceComponents<
   Types.ProcedureConfig,
@@ -46,10 +47,7 @@ export const ProcedureComponents: RequiredResourceComponents<
 
   GroupExecutions: () => <></>,
 
-  Table: ({ resources }) => (
-    // <ProcedureTable procedures={resources as Types.ProcedureListItem[]} />
-    <></>
-  ),
+  Table: ProcedureTable,
 
   Icon: ({ id, size = "1rem" }) => {
     const state = useRead("ListProcedures", {}).data?.find((r) => r.id === id)

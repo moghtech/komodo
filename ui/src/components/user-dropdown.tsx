@@ -1,10 +1,12 @@
 import {
   ActionIcon,
+  Box,
   Button,
   Divider,
   Flex,
   Group,
   Menu,
+  Stack,
   Text,
 } from "@mantine/core";
 import {
@@ -46,17 +48,10 @@ export const UserDropdown = () => {
           <Username username={user?.username} />
         </Button>
       </Menu.Target>
-      <Menu.Dropdown>
-        <Flex
-          direction="column"
-          gap="xs"
-          m="xs"
-          mt="0.3rem"
-          mb="0.3rem"
-          miw={270}
-        >
-          <Group justify="space-between" gap="md" w="100%">
-            <Group gap="md" opacity={0.8} fz="sm" lh="sm">
+      <Menu.Dropdown w={350} maw="96vw">
+        <Stack gap="xs" m="xs" mt="0.3rem" mb="0.3rem">
+          <Group justify="space-between">
+            <Group opacity={0.8} fz="sm" lh="sm">
               <ArrowLeftRight size="1rem" />
               Switch accounts
             </Group>
@@ -87,7 +82,6 @@ export const UserDropdown = () => {
           <Group grow>
             <Button
               variant="subtle"
-              c="inherit"
               leftSection={<Plus size="1rem" />}
               onClick={() => {
                 setOpen(false);
@@ -96,7 +90,10 @@ export const UserDropdown = () => {
                 );
               }}
             >
-              Add account
+              <Box component="span">
+                Add
+                <Box component="span" pl="0.25rem" visibleFrom="xs">Account</Box>
+              </Box>
             </Button>
 
             <Button
@@ -124,7 +121,7 @@ export const UserDropdown = () => {
               Log Out All
             </Button>
           )}
-        </Flex>
+        </Stack>
       </Menu.Dropdown>
     </Menu>
   );
