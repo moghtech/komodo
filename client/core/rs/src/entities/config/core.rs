@@ -225,6 +225,8 @@ pub struct Env {
   pub komodo_cors_allowed_origins: Option<Vec<String>>,
   /// Override `cors_allow_credentials`
   pub komodo_cors_allow_credentials: Option<bool>,
+  /// Override `session_allow_cross_site`
+  pub komodo_session_allow_cross_site: Option<bool>,
 
   /// Override `database.uri`
   #[serde(alias = "komodo_mongo_uri")]
@@ -561,6 +563,12 @@ pub struct CoreConfig {
   #[serde(default)]
   pub cors_allow_credentials: bool,
 
+  /// Use SameSite=None (actually allows samesite) instead of SameSite=Lax.
+  /// The third option, SameSite=Strict, won't work with external login,
+  /// as the session cookie will be lost on redirect with auth provider.
+  #[serde(default)]
+  pub session_allow_cross_site: bool,
+
   // ============
   // = Webhooks =
   // ============
@@ -836,6 +844,7 @@ impl Default for CoreConfig {
         default_auth_rate_limit_window_seconds(),
       cors_allowed_origins: Default::default(),
       cors_allow_credentials: Default::default(),
+      session_allow_cross_site: Default::default(),
       webhook_secret: Default::default(),
       webhook_base_url: Default::default(),
       logging: Default::default(),
@@ -942,6 +951,7 @@ impl CoreConfig {
         .auth_rate_limit_window_seconds,
       cors_allowed_origins: config.cors_allowed_origins,
       cors_allow_credentials: config.cors_allow_credentials,
+      session_allow_cross_site: config.session_allow_cross_site,
       webhook_secret: empty_or_redacted(&config.webhook_secret),
       webhook_base_url: config.webhook_base_url,
       database: config.database.sanitized(),
@@ -1032,13 +1042,16 @@ impl mogh_server::cors::CorsConfig for &CoreConfig {
 }
 
 impl mogh_server::session::SessionConfig for &CoreConfig {
-  fn expiry_seconds(&self) -> i64 {
-    60
+  fn host(&self) -> &str {
+    &self.host
   }
   fn host_env_field(&self) -> &str {
     "KOMODO_HOST"
   }
-  fn host(&self) -> &str {
-    &self.host
+  fn expiry_seconds(&self) -> i64 {
+    60
+  }
+  fn allow_cross_site(&self) -> bool {
+    self.session_allow_cross_site
   }
 }

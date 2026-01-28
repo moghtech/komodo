@@ -309,6 +309,9 @@ pub fn core_config() -> &'static CoreConfig {
       cors_allow_credentials: env
         .komodo_cors_allow_credentials
         .unwrap_or(config.cors_allow_credentials),
+      session_allow_cross_site: env
+        .komodo_session_allow_cross_site
+        .unwrap_or(config.session_allow_cross_site),
       resource_poll_interval: env
         .komodo_resource_poll_interval
         .unwrap_or(config.resource_poll_interval),
