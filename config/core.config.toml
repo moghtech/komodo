@@ -324,9 +324,9 @@ auth_rate_limit_max_attempts = 5
 ## Default: 15
 auth_rate_limit_window_seconds = 15
 
-########
-# CORS #
-########
+##################
+# CORS / SESSION #
+##################
 
 ## Specifically set list of CORS allowed origins.
 ## If empty, allows all origins (`*`).
@@ -340,6 +340,10 @@ cors_allowed_origins = []
 ## Env: KOMODO_CORS_ALLOW_CREDENTIALS
 ## Default: false
 cors_allow_credentials = false
+
+## Enabling this sets 'SameSite=None', which allows externally
+## hosted frontends to use the login flows.
+session_allow_cross_site = false
 
 ##################
 # POLL INTERVALS #
