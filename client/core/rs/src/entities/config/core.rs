@@ -1023,9 +1023,6 @@ impl mogh_server::ServerConfig for &CoreConfig {
 }
 
 impl mogh_server::cors::CorsConfig for &CoreConfig {
-  fn allowed_origins_env_field(&self) -> &'static str {
-    "KOMODO_CORS_ALLOWED_ORIGINS"
-  }
   fn allowed_origins(&self) -> &[String] {
     &self.cors_allowed_origins
   }

@@ -143,9 +143,7 @@ impl AuthImpl for KomodoAuthImpl {
   }
 
   fn host(&self) -> &str {
-    static AUTH_HOST: LazyLock<String> =
-      LazyLock::new(|| format!("{}/auth", core_config().host));
-    &AUTH_HOST
+    &core_config().host
   }
 
   fn post_link_redirect(&self) -> &str {

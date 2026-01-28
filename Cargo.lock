@@ -2772,9 +2772,9 @@ dependencies = [
 
 [[package]]
 name = "jsonwebtoken"
-version = "10.2.0"
+version = "10.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c76e1c7d7df3e34443b3621b459b066a7b79644f059fc8b2db7070c825fd417e"
+checksum = "0529410abe238729a60b108898784df8984c87f6054c9c4fcacc47e4803c1ce1"
 dependencies = [
  "aws-lc-rs",
  "base64 0.22.1",
@@ -3173,9 +3173,9 @@ dependencies = [
 
 [[package]]
 name = "mogh_auth_server"
-version = "1.2.4"
+version = "1.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2eeb8c898da571c59ec9f4997b6869c5a3b31303d95c765ee50713cb4c045be9"
+checksum = "fa05efbe7caf986807ba12d9dcafb722a7c0f2fb51f6dafd87fa2529122a3b87"
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -3341,9 +3341,9 @@ dependencies = [
 
 [[package]]
 name = "mogh_server"
-version = "1.3.0"
+version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffd2b7646dbaa1a09b3df6782f1692e459775a6fb46fb2d613d43ae5ca1a9dcb"
+checksum = "090b51531f26a49eb8484321768ac63a4895741943b97fd203e03f11bfa3b3eb"
 dependencies = [
  "anyhow",
  "axum",
@@ -6135,9 +6135,9 @@ dependencies = [
 
 [[package]]
 name = "uuid"
-version = "1.19.0"
+version = "1.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2e054861b4bd027cd373e18e8d8d8e6548085000e41290d95ce0c373a654b4a"
+checksum = "ee48d38b119b0cd71fe4141b30f5ba9c7c5d9f4e7a3a8b4a674e4b6ef789976f"
 dependencies = [
  "getrandom 0.3.4",
  "js-sys",
