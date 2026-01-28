@@ -5,12 +5,14 @@ import { Types } from "komodo_client";
 import { useCallback } from "react";
 import { ServerComponents } from "..";
 import TableTags from "@/components/tags/table";
+import { TableProps } from "@mantine/core";
 
 export default function StandardServerTable({
   resources,
+  ...tableProps
 }: {
   resources: Types.ServerListItem[];
-}) {
+} & TableProps) {
   const [_, setSelectedResources] = useSelectedResources("Server");
   const deployments = useRead("ListDeployments", {}).data;
   const stacks = useRead("ListStacks", {}).data;
@@ -28,6 +30,7 @@ export default function StandardServerTable({
 
   return (
     <DataTable
+      {...tableProps}
       tableKey="standard-server-table"
       data={resources}
       selectOptions={{

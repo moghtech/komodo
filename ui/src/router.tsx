@@ -8,9 +8,9 @@ import {
   useLocation,
 } from "react-router-dom";
 import { useAuthState, useUser } from "@/lib/hooks";
-import { Center, Loader } from "@mantine/core";
 import { MoghAuth } from "komodo_client";
 import App from "@/app";
+import LoadingScreen from "./ui/loading-screen";
 
 const Login = lazy(() => import("@/pages/login"));
 const UserDisabled = lazy(() => import("@/pages/user-disabled"));
@@ -23,11 +23,7 @@ export const Router = () => {
   const { jwt_redeem_ready, passkey_pending, totp } = useAuthState();
 
   if (jwt_redeem_ready) {
-    return (
-      <Center mt="30vh">
-        <Loader size="xl" />
-      </Center>
-    );
+    return <LoadingScreen />;
   }
 
   if (passkey_pending || totp) {
@@ -65,11 +61,7 @@ const RequireAuth = () => {
   ) {
     // Will just show the spinner without navigate to login,
     // which won't help because its not a login issue.
-    return (
-      <Center mt="30vh">
-        <Loader size="xl" />
-      </Center>
-    );
+    return <LoadingScreen />;
   }
 
   if (!MoghAuth.LOGIN_TOKENS.jwt() || error) {
@@ -81,11 +73,7 @@ const RequireAuth = () => {
   }
 
   if (!user) {
-    return (
-      <Center>
-        <Loader size="xl" />
-      </Center>
-    );
+    return <LoadingScreen />;
   }
 
   if (!user.enabled) {

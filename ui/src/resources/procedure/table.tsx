@@ -4,16 +4,19 @@ import { Types } from "komodo_client";
 import { ResourceLink } from "../common";
 import { ProcedureComponents } from ".";
 import TableTags from "@/components/tags/table";
+import { TableProps } from "@mantine/core";
 
 export default function ProcedureTable({
   resources,
+  ...tableProps
 }: {
   resources: Types.ProcedureListItem[];
-}) {
+} & TableProps) {
   const [_, setSelectedResources] = useSelectedResources("Procedure");
 
   return (
     <DataTable
+      {...tableProps}
       tableKey="procedures"
       data={resources}
       selectOptions={{

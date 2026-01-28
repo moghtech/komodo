@@ -7,7 +7,7 @@
 
 .fancy-card:hover {
   border-color: color-mix(in srgb, var(--mantine-color-text) 50%, transparent);
-  background-color: var(--mantine-color-accent-0);
+  background-color: var(--mantine-color-accent-1);
   transform: translateY(-4%);
   box-shadow: var(--mantine-shadow-md);
 }

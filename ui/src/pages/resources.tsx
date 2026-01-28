@@ -11,8 +11,8 @@ import {
 import { ResourceComponents, UsableResource } from "@/resources";
 import { Types } from "komodo_client";
 import { ResourceNotFound } from "@/resources/common";
-import { Page } from "@/ui/page";
-import { Flex, Group, Switch, TextInput } from "@mantine/core";
+import Page from "@/ui/page";
+import { Box, Group, Switch, TextInput } from "@mantine/core";
 import { ICONS } from "@/lib/icons";
 import TableSkeleton from "@/ui/table-skeleton";
 
@@ -61,7 +61,7 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
       icon={Components.Icon}
       description={<Components.Description />}
     >
-      <Flex align="center" justify="space-between">
+      <Group justify="space-between">
         <Group>
           {(is_admin || !disable_non_admin_create) && <Components.New />}
           <Components.GroupExecutions />
@@ -79,15 +79,6 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
           )}
           {/* <TemplateQueryBehaviorSelector />
               <TagsFilter /> */}
-          {/* <Input leftSection={} /> */}
-          {/* <Input
-            value={search}
-            onChange={(e) => set(e.target.value)}
-            placeholder="search..."
-            leftSection={<ICONS.Search size="0.8rem" />}
-            w={200}
-            hiddenFrom="lg"
-          /> */}
           <TextInput
             value={search}
             onChange={(e) => set(e.target.value)}
@@ -96,13 +87,23 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
             w={{ sm: 200, lg: 300 }}
           />
         </Group>
-      </Flex>
+      </Group>
 
-      {filtered ? (
-        <Components.Table resources={filtered ?? []} />
-      ) : (
-        <TableSkeleton />
-      )}
+      <Box
+        p="lg"
+        pt="0"
+        bd="1px solid var(--mantine-color-accent-border-0)"
+        bdrs="md"
+        w="100%"
+        mah="calc(100vh - 25rem)"
+        style={{ overflow: "auto" }}
+      >
+        {filtered ? (
+          <Components.Table resources={filtered ?? []} stickyHeader />
+        ) : (
+          <TableSkeleton />
+        )}
+      </Box>
     </Page>
   );
 }

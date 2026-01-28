@@ -1,7 +1,7 @@
 import { Center, Group, Tabs, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { FC } from "react";
-import { Page } from "@/ui/page";
+import Page from "@/ui/page";
 import { ICONS } from "@/lib/icons";
 
 export type TabbedPageItem<Tab extends string> = {

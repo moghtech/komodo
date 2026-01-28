@@ -13,15 +13,13 @@ import {
   virtualColor,
 } from "@mantine/core";
 import { Types } from "komodo_client";
-import { tagColorTuple } from "@/lib/color";
+import { tagColor } from "./lib/color";
 
 export const DEFAULT_COLOR_SCHEME: MantineColorScheme = "auto";
 
 // Match in ./index.css
-export const LIGHT_BODY = "#ffffff";
-export const LIGHT_ACCENT = darken(LIGHT_BODY, 0.05);
-export const DARK_BODY = "#131313";
-export const DARK_ACCENT = lighten(DARK_BODY, 0.022);
+export const LIGHT_BODY = "#f8f9fa";
+export const DARK_BODY = "#0f1115";
 
 export const theme = createTheme({
   cursorType: "pointer",
@@ -38,33 +36,51 @@ export const theme = createTheme({
   },
   colors: {
     // Accent background color
-    lightAccent: colorsTuple(LIGHT_ACCENT),
-    darkAccent: colorsTuple(DARK_ACCENT),
+    lightAccent: functionColorsTuple(
+      darken(LIGHT_BODY, 0.005),
+      (color) => darken(color, 0.005),
+      true,
+    ),
+    darkAccent: functionColorsTuple(lighten(DARK_BODY, 0.025), (color) =>
+      lighten(color, 0.005),
+    ),
     accent: virtualColor({
       name: "accent",
       light: "lightAccent",
       dark: "darkAccent",
     }),
     // Accent border color
-    lightAccentBorder: colorsTuple(darken(LIGHT_BODY, 0.1)),
-    darkAccentBorder: colorsTuple(lighten(DARK_BODY, 0.08)),
+    lightAccentBorder: functionColorsTuple(
+      darken(LIGHT_BODY, 0.1),
+      (color) => darken(color, 0.005),
+      true,
+    ),
+    darkAccentBorder: functionColorsTuple(lighten(DARK_BODY, 0.06), (color) =>
+      lighten(color, 0.005),
+    ),
     "accent-border": virtualColor({
       name: "accent-border",
       light: "lightAccentBorder",
       dark: "darkAccentBorder",
     }),
     // Accent background color on hover
-    lightAccentHover: colorsTuple(darken(LIGHT_BODY, 0.02)),
-    darkAccentHover: colorsTuple(lighten(DARK_BODY, 0.02)),
-    "accent-hover": virtualColor({
-      name: "accent-hover",
-      light: "lightAccentHover",
-      dark: "darkAccentHover",
-    }),
+    // lightAccentHover: functionColorsTuple(
+    //   darken(LIGHT_BODY, 0.02),
+    //   (color) => darken(color, 0.005),
+    //   true,
+    // ),
+    // darkAccentHover: functionColorsTuple(lighten(DARK_BODY, 0.02), (color) =>
+    //   lighten(color, 0.005),
+    // ),
+    // "accent-hover": virtualColor({
+    //   name: "accent-hover",
+    //   light: "lightAccentHover",
+    //   dark: "darkAccentHover",
+    // }),
     // Adds the tag colors with increasing opacity
     ...Object.fromEntries(
       Object.values(Types.TagColor).map((color) => {
-        return ["Tag" + color, tagColorTuple(color)];
+        return ["Tag" + color, opacityColorsTuple(tagColor(color))];
       }),
     ),
   },
@@ -87,6 +103,10 @@ export const theme = createTheme({
           "--table-highlight-on-hover-color": theme.colors["accent-border"][0],
         },
       }),
+      defaultProps: {
+        striped: true,
+        highlightOnHover: true,
+      }
     }),
     Drawer: Drawer.extend({
       vars: () => ({
@@ -116,3 +136,28 @@ export const theme = createTheme({
     }),
   },
 });
+
+function opacityColorsTuple(baseHex: string, length = 10) {
+  return colorsTuple(
+    Array.from({ length }).map(
+      (_, i) => baseHex + (i * 10 + 9).toString(16).padStart(2, "0"),
+    ),
+  );
+}
+
+function functionColorsTuple(
+  base: string,
+  fn: (color: string) => string,
+  reverse = false,
+  length = 10,
+) {
+  let b = base;
+  const array = [
+    base,
+    ...Array.from({ length: length - 1 }).map(() => {
+      b = fn(b);
+      return b;
+    }),
+  ];
+  return colorsTuple(reverse ? array.reverse() : array);
+}

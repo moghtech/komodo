@@ -317,7 +317,7 @@ export function Config<T>({
               {/** ANCHORS */}
               <ScrollArea
                 renderRoot={(props) => <Stack {...props} />}
-                mah={changesMade ? "calc(100vh-220px)" : "calc(100vh-130px)"}
+                mah={changesMade ? "calc(100vh - 220px)" : "calc(100vh - 130px)"}
               >
                 {groups.map(([group, groupArgs]) => (
                   <Stack key={group} gap="xs">

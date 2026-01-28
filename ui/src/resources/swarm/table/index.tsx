@@ -4,16 +4,19 @@ import { DataTable, SortableHeader } from "@/ui/data-table";
 import { Types } from "komodo_client";
 import { SwarmComponents } from "..";
 import TableTags from "@/components/tags/table";
+import { TableProps } from "@mantine/core";
 
 export default function SwarmTable({
   resources,
+  ...tableProps
 }: {
   resources: Types.SwarmListItem[];
-}) {
+} & TableProps) {
   const [_, setSelectedResources] = useSelectedResources("Swarm");
 
   return (
     <DataTable
+      {...tableProps}
       tableKey="swarm-table"
       data={resources}
       selectOptions={{

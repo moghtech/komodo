@@ -1,4 +1,4 @@
-import { Badge } from "@mantine/core";
+import { Badge, Loader } from "@mantine/core";
 import { ReactNode } from "react";
 import { useRead } from "@/lib/hooks";
 import classes from "./index.module.scss";
@@ -46,7 +46,7 @@ export default function Tags({
             w="fit-content"
             bdrs="sm"
           >
-            {tag?.name ?? "unknown"}
+            {tag?.name ?? <Loader size="0.6rem" />}
           </Badge>
         );
       })}

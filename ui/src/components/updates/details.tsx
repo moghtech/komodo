@@ -8,15 +8,7 @@ import { useRead } from "@/lib/hooks";
 import { useWebsocketMessages } from "@/lib/socket";
 import { updateLogToHtml, versionIsNone } from "@/lib/utils";
 import { ResourceComponents, UsableResource } from "@/resources";
-import {
-  Center,
-  Code,
-  Drawer,
-  Group,
-  Loader,
-  Stack,
-  Text,
-} from "@mantine/core";
+import { Code, Drawer, Group, Stack, Text } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { ReactNode, useEffect } from "react";
 import UserAvatar from "../user-avatar";
@@ -26,6 +18,7 @@ import { Clock, Link2, SquarePen } from "lucide-react";
 import CopyButton from "@/ui/copy-button";
 import Section from "@/ui/section";
 import { MonacoDiffEditor } from "@/components/monaco";
+import LoadingScreen from "@/ui/loading-screen";
 
 export default function UpdateDetails({
   id,
@@ -61,7 +54,7 @@ export function UpdateDetailsInner({
         content: {
           flex: "none",
           width: 1400,
-          maxWidth: "calc(100vw-4rem)",
+          maxWidth: "calc(100vw - 4rem)",
           height: "fit-content",
         },
       }}
@@ -97,11 +90,7 @@ export function UpdateDetailsContent({
     if (update.id === id) refetch();
   });
   if (!update) {
-    return (
-      <Center>
-        <Loader size="xl" />
-      </Center>
-    );
+    return <LoadingScreen mt="0" h="50vh" />;
   }
   const Components =
     update.target.type === "System"

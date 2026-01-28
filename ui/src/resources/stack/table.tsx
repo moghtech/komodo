@@ -1,6 +1,6 @@
 import { useResourceName, useSelectedResources } from "@/lib/hooks";
 import { DataTable, SortableHeader } from "@/ui/data-table";
-import { Group } from "@mantine/core";
+import { Group, TableProps } from "@mantine/core";
 import { Types } from "komodo_client";
 import { ResourceLink } from "@/resources/common";
 import { StackComponents } from ".";
@@ -8,9 +8,10 @@ import TableTags from "@/components/tags/table";
 
 export default function StackTable({
   resources,
+  ...tableProps
 }: {
   resources: Types.StackListItem[];
-}) {
+} & TableProps) {
   const swarmName = useResourceName("Swarm");
   const serverName = useResourceName("Server");
 
@@ -18,6 +19,7 @@ export default function StackTable({
 
   return (
     <DataTable
+      {...tableProps}
       tableKey="stack-table"
       data={resources}
       selectOptions={{

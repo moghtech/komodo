@@ -1,4 +1,4 @@
-import { Page } from "@/ui/page";
+import Page from "@/ui/page";
 import { useDashboardPreferences, useSetTitle } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import RecentsDashboard from "./recents";

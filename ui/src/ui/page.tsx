@@ -1,8 +1,17 @@
-import { Group, Paper, Stack, Text } from "@mantine/core";
+import {
+  createPolymorphicComponent,
+  Group,
+  Paper,
+  Stack,
+  StackProps,
+  Text,
+} from "@mantine/core";
 import { CircleQuestionMark } from "lucide-react";
-import { FC, ReactNode } from "react";
+import { FC, forwardRef, ReactNode } from "react";
 
-export type PageProps = {
+// https://mantine.dev/guides/polymorphic/#create-your-own-polymorphic-components
+
+export interface PageProps extends StackProps {
   title?: string;
   icon?: FC<{ size?: string | number }>;
   description?: ReactNode;
@@ -12,53 +21,63 @@ export type PageProps = {
   customDescription?: ReactNode;
   actions?: ReactNode;
   children?: ReactNode;
-};
+}
 
-export const Page = ({
-  title,
-  icon,
-  description,
-  rightTitle,
-  customTitle,
-  customDescription,
-  actions,
-  children,
-}: PageProps) => {
-  const Icon = icon ?? CircleQuestionMark;
-  return (
-    <Stack gap="lg">
-      <Paper
-        w="fit-content"
-        px="xl"
-        py="xs"
-        mb="lg"
-        style={{ border: "1px solid var(--mantine-color-accent-border-0)" }}
-      >
-        <Group gap="sm">
-          {customTitle ? (
-            customTitle
-          ) : (
-            <>
-              <Icon size={22} />
-              <Text fz="h2">{title}</Text>
-            </>
-          )}
-          {rightTitle}
-        </Group>
-        {customDescription ? (
-          <Group gap="xs">{customDescription}</Group>
-        ) : (
-          description && (
-            <Text size="md" opacity={0.6}>
-              {description}
-            </Text>
-          )
-        )}
-      </Paper>
+const Page = createPolymorphicComponent<"div", PageProps>(
+  forwardRef<HTMLDivElement, PageProps>(
+    (
+      {
+        title,
+        icon,
+        description,
+        rightTitle,
+        customTitle,
+        customDescription,
+        actions,
+        children,
+        ...stackProps
+      },
+      ref,
+    ) => {
+      const Icon = icon ?? CircleQuestionMark;
+      return (
+        <Stack gap="lg" {...stackProps} ref={ref}>
+          <Paper
+            w="fit-content"
+            px="xl"
+            py="xs"
+            mb="lg"
+            style={{ border: "1px solid var(--mantine-color-accent-border-0)" }}
+          >
+            <Group gap="sm">
+              {customTitle ? (
+                customTitle
+              ) : (
+                <>
+                  <Icon size={22} />
+                  <Text fz="h2">{title}</Text>
+                </>
+              )}
+              {rightTitle}
+            </Group>
+            {customDescription ? (
+              <Group gap="xs">{customDescription}</Group>
+            ) : (
+              description && (
+                <Text size="md" opacity={0.6}>
+                  {description}
+                </Text>
+              )
+            )}
+          </Paper>
 
-      {actions && <Group gap="sm">{actions}</Group>}
+          {actions && <Group gap="sm">{actions}</Group>}
 
-      {children}
-    </Stack>
-  );
-};
+          {children}
+        </Stack>
+      );
+    },
+  ),
+);
+
+export default Page;

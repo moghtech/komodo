@@ -46,7 +46,7 @@ export default function UpdateCard({
     style: { cursor: "pointer" },
     px: "lg",
     py: "sm",
-    bg: accent ? "accent" : undefined,
+    bg: accent ? "accent.0" : undefined,
   };
   return (
     <UpdateDetails

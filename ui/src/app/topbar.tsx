@@ -20,7 +20,7 @@ const Topbar = ({
       style={{
         borderColor: "var(--mantine-color-accent-border-0)",
       }}
-      bg="accent"
+      bg="accent.0"
       pl="1.3rem"
       pr="2rem"
       py="0rem"
