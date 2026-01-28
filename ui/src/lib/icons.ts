@@ -9,6 +9,7 @@ import {
   Component,
   ExternalLink,
   Factory,
+  FileDown,
   FolderSync,
   GitBranch,
   Hammer,
@@ -48,6 +49,7 @@ export const ICONS = {
   Stack: Layers,
   Swarm: Component,
   ResourceSync: FolderSync,
+  ExportToml: FileDown,
   // PAGES
   Dashboard: LayoutDashboard,
   Container: Box,

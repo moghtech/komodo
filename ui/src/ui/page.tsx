@@ -1,5 +1,6 @@
 import {
   createPolymorphicComponent,
+  Flex,
   Group,
   Paper,
   Stack,
@@ -16,6 +17,8 @@ export interface PageProps extends StackProps {
   icon?: FC<{ size?: string | number }>;
   description?: ReactNode;
   rightTitle?: ReactNode;
+  /** The right hand side of page opposite the title */
+  oppositeTitle?: ReactNode;
   /* Replace the default title / icon with a full custom ReactNode */
   customTitle?: ReactNode;
   customDescription?: ReactNode;
@@ -33,6 +36,7 @@ const Page = createPolymorphicComponent<"div", PageProps>(
         rightTitle,
         customTitle,
         customDescription,
+        oppositeTitle,
         actions,
         children,
         ...stackProps
@@ -40,36 +44,48 @@ const Page = createPolymorphicComponent<"div", PageProps>(
       ref,
     ) => {
       const Icon = icon ?? CircleQuestionMark;
+      const titleNode = (
+        <Paper
+          w="fit-content"
+          px="xl"
+          py="xs"
+          mb="lg"
+          style={{
+            border: "1px solid var(--mantine-color-accent-border-0)",
+          }}
+        >
+          <Group gap="sm">
+            {customTitle ? (
+              customTitle
+            ) : (
+              <>
+                <Icon size={22} />
+                <Text fz="h2">{title}</Text>
+              </>
+            )}
+            {rightTitle}
+          </Group>
+          {customDescription ? (
+            <Group gap="xs">{customDescription}</Group>
+          ) : (
+            description && (
+              <Text size="md" opacity={0.6}>
+                {description}
+              </Text>
+            )
+          )}
+        </Paper>
+      );
       return (
         <Stack gap="lg" {...stackProps} ref={ref}>
-          <Paper
-            w="fit-content"
-            px="xl"
-            py="xs"
-            mb="lg"
-            style={{ border: "1px solid var(--mantine-color-accent-border-0)" }}
-          >
-            <Group gap="sm">
-              {customTitle ? (
-                customTitle
-              ) : (
-                <>
-                  <Icon size={22} />
-                  <Text fz="h2">{title}</Text>
-                </>
-              )}
-              {rightTitle}
-            </Group>
-            {customDescription ? (
-              <Group gap="xs">{customDescription}</Group>
-            ) : (
-              description && (
-                <Text size="md" opacity={0.6}>
-                  {description}
-                </Text>
-              )
-            )}
-          </Paper>
+          {oppositeTitle ? (
+            <Flex justify="space-between">
+              {titleNode}
+              {oppositeTitle}
+            </Flex>
+          ) : (
+            titleNode
+          )}
 
           {actions && <Group gap="sm">{actions}</Group>}
 
