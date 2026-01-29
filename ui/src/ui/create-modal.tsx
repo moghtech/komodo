@@ -62,7 +62,7 @@ export default function CreateModal({
       </Modal>
 
       <Button
-        variant="light"
+        variant="default"
         leftSection={<ICONS.Create size="1rem" />}
         onClick={open}
       >

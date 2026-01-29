@@ -93,7 +93,9 @@ export const UserDropdown = () => {
             >
               <Box component="span">
                 Add
-                <Box component="span" pl="0.25rem" visibleFrom="xs">Account</Box>
+                <Box component="span" pl="0.25rem" visibleFrom="xs">
+                  Account
+                </Box>
               </Box>
             </Button>
 
@@ -110,7 +112,6 @@ export const UserDropdown = () => {
 
           {viewLogout && (
             <Button
-              variant="filled"
               color="red"
               rightSection={<LogOut size="1rem" />}
               fullWidth
@@ -192,7 +193,6 @@ const Account = ({
 
       {viewLogout && (
         <ActionIcon
-          variant="filled"
           color="red"
           onClick={() => {
             MoghAuth.LOGIN_TOKENS.remove(user_id);

@@ -34,6 +34,7 @@ const Topbar = ({
             <img src="/mogh-512x512.png" width={32} alt="moghtech" />
           }
           onClick={() => nav("/")}
+          size="lg"
         >
           <Text fz="h2" fw="450" lts="0.1rem">
             KOMODO

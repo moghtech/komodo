@@ -88,7 +88,6 @@ export const theme = createTheme({
   components: {
     Button: Button.extend({
       defaultProps: {
-        variant: "light",
         c: "inherit",
       },
     }),
