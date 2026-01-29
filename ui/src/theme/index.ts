@@ -1,4 +1,5 @@
 import {
+  Badge,
   Button,
   Code,
   colorsTuple,
@@ -89,6 +90,11 @@ export const theme = createTheme({
     Button: Button.extend({
       defaultProps: {
         c: "inherit",
+      },
+    }),
+    Badge: Badge.extend({
+      defaultProps: {
+        bdrs: "sm",
       },
     }),
     Input: Input.extend({

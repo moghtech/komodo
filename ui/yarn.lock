@@ -403,6 +403,13 @@
     "@mantine/store" "8.3.13"
     react-transition-group "4.4.5"
 
+"@mantine/spotlight@^8.3.13":
+  version "8.3.13"
+  resolved "https://registry.yarnpkg.com/@mantine/spotlight/-/spotlight-8.3.13.tgz#26d68d35ad4f26eb05cfa12101bfd9adb2b7bae6"
+  integrity sha512-EaWzjA/HlNEu7YisLVTTztFmNtfDJ1Q3/ziZxfpv476vxxjwjLMnjvcRA9E6duACxTUNZZaMDDJNAtVRa48Qiw==
+  dependencies:
+    "@mantine/store" "8.3.13"
+
 "@mantine/store@8.3.13":
   version "8.3.13"
   resolved "https://registry.yarnpkg.com/@mantine/store/-/store-8.3.13.tgz#8b78c94b5ac8a39af92699fe31148a222d11129d"

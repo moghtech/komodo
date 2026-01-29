@@ -150,7 +150,7 @@ export function UpdateDetailsContent({ id }: { id: string }) {
             title={log.stage}
             titleFz="h3"
             description={
-              <Group c="dimmed">
+              <Group c="dimmed" gap="xs">
                 <Text>
                   Stage {i + 1} of {update.logs.length}
                 </Text>

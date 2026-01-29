@@ -1,8 +1,18 @@
-import { AppShell, Burger, Button, Flex, Group, Text } from "@mantine/core";
+import {
+  AppShell,
+  Burger,
+  Button,
+  Center,
+  Flex,
+  Group,
+  SimpleGrid,
+  Text,
+} from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/ui/theme-toggle";
 import { UserDropdown } from "@/components/user-dropdown";
 import TopbarUpdates from "@/components/updates/topbar";
+import OmniSearch from "@/components/omni-search";
 
 const Topbar = ({
   opened,
@@ -15,7 +25,7 @@ const Topbar = ({
   return (
     <AppShell.Header
       renderRoot={(props) => (
-        <Flex align="center" justify="space-between" {...props} />
+        <SimpleGrid cols={{ base: 2, lg: 3 }} {...props} />
       )}
       style={{
         borderColor: "var(--mantine-color-accent-border-0)",
@@ -25,6 +35,7 @@ const Topbar = ({
       pr="2rem"
       py="0rem"
     >
+      {/** LEFT AREA */}
       <Group gap="md">
         <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
         <Button
@@ -41,7 +52,14 @@ const Topbar = ({
           </Text>
         </Button>
       </Group>
-      <Group gap="0.3rem">
+
+      {/** OMNI SEARCH */}
+      <Center>
+        <OmniSearch />
+      </Center>
+
+      {/** RIGHT AREA */}
+      <Group gap="0.3rem" style={{ justifySelf: "flex-end" }}>
         <Group gap="0.5rem">
           <TopbarUpdates />
           <ThemeToggle />
