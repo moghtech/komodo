@@ -10,6 +10,7 @@ import { Clock } from "lucide-react";
 import { useDisclosure } from "@mantine/hooks";
 import { updateLogToHtml } from "@/lib/utils";
 import ConfirmModal from "@/ui/confirm-modal";
+import NewResource from "@/resources/new";
 import ActionConfig from "./config";
 import ActionTable from "./table";
 
@@ -49,7 +50,7 @@ export const ActionComponents: RequiredResourceComponents<
 
   Description: () => <>Custom scripts using the Komodo client.</>,
 
-  New: () => <></>,
+  New: () => <NewResource type="Action" />,
 
   GroupExecutions: () => <></>,
 

@@ -5,6 +5,7 @@ import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
+import NewResource from "@/resources/new";
 
 export const AlerterComponents: RequiredResourceComponents<
   Types.AlerterConfig,
@@ -25,7 +26,7 @@ export const AlerterComponents: RequiredResourceComponents<
 
   Description: () => <>Route alerts to various endpoints.</>,
 
-  New: () => <></>,
+  New: () => <NewResource type="Alerter" />,
 
   GroupExecutions: () => <></>,
 

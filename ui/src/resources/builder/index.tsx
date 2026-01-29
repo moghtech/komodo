@@ -4,6 +4,7 @@ import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import ResourceHeader from "@/components/resource-header";
 import { ResourceLink } from "@/resources/common";
+import NewResource from "@/resources/new";
 
 export const BuilderComponents: RequiredResourceComponents<
   Types.BuilderConfig,
@@ -24,7 +25,7 @@ export const BuilderComponents: RequiredResourceComponents<
 
   Description: () => <>Build on your servers, or single-use AWS instances.</>,
 
-  New: () => <></>,
+  New: () => <NewResource type="Builder" />,
 
   GroupExecutions: () => <></>,
 

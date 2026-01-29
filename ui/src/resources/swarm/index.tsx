@@ -6,6 +6,7 @@ import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
 import SwarmTable from "./table";
+import NewResource from "@/resources/new";
 
 export const SwarmComponents: RequiredResourceComponents<
   Types.SwarmConfig,
@@ -37,7 +38,7 @@ export const SwarmComponents: RequiredResourceComponents<
 
   Description: () => <>Control and monitor docker swarms.</>,
 
-  New: () => <></>,
+  New: () => <NewResource type="Swarm" />,
 
   GroupExecutions: () => <></>,
 

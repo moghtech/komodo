@@ -6,6 +6,7 @@ import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
 import BuildTable from "./table";
+import NewResource from "@/resources/new";
 
 export const BuildComponents: RequiredResourceComponents<
   Types.BuildConfig,
@@ -42,7 +43,7 @@ export const BuildComponents: RequiredResourceComponents<
 
   Description: () => <>Build container images.</>,
 
-  New: () => <></>,
+  New: () => <NewResource type="Build" />,
 
   GroupExecutions: () => <></>,
 

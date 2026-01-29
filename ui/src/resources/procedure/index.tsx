@@ -6,6 +6,7 @@ import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
 import ProcedureTable from "./table";
+import NewResource from "@/resources/new";
 
 export const ProcedureComponents: RequiredResourceComponents<
   Types.ProcedureConfig,
@@ -43,7 +44,7 @@ export const ProcedureComponents: RequiredResourceComponents<
 
   Description: () => <>Orchestrate multiple Komodo executions.</>,
 
-  New: () => <></>,
+  New: () => <NewResource type="Procedure" />,
 
   GroupExecutions: () => <></>,
 

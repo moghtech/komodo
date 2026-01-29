@@ -1,11 +1,12 @@
 import { resourceSyncStateIntention, hexColorByIntention } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
 import ResourceSyncTable from "./table";
+import { RequiredResourceComponents } from "@/resources";
+import NewResource from "@/resources/new";
 
 export const ResourceSyncComponents: RequiredResourceComponents<
   Types.ResourceSyncConfig,
@@ -48,7 +49,7 @@ export const ResourceSyncComponents: RequiredResourceComponents<
 
   Description: () => <>Declare resources in TOML files.</>,
 
-  New: () => <></>,
+  New: () => <NewResource type="ResourceSync" />,
 
   GroupExecutions: () => <></>,
 

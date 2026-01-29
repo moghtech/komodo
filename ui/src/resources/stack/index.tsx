@@ -6,6 +6,7 @@ import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
 import StackTable from "./table";
+import NewResource from "@/resources/new";
 
 export const StackComponents: RequiredResourceComponents<
   Types.StackConfig,
@@ -54,7 +55,7 @@ export const StackComponents: RequiredResourceComponents<
 
   Description: () => <>Deploy docker compose files.</>,
 
-  New: () => <></>,
+  New: () => <NewResource type="Stack" />,
 
   GroupExecutions: () => <></>,
 

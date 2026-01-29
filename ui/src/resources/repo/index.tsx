@@ -6,6 +6,7 @@ import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
 import RepoTable from "./table";
+import NewResource from "@/resources/new";
 
 export const RepoComponents: RequiredResourceComponents<
   Types.RepoConfig,
@@ -42,7 +43,7 @@ export const RepoComponents: RequiredResourceComponents<
 
   Description: () => <>Configure git repositories.</>,
 
-  New: () => <></>,
+  New: () => <NewResource type="Repo" />,
 
   GroupExecutions: () => <></>,
 

@@ -6,6 +6,7 @@ import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
 import DeploymentTable from "./table";
+import NewResource from "@/resources/new";
 
 export const DeploymentComponents: RequiredResourceComponents<
   Types.DeploymentConfig,
@@ -57,7 +58,7 @@ export const DeploymentComponents: RequiredResourceComponents<
     <>Connect deployments for alerting, building, and deploying.</>
   ),
 
-  New: () => <></>,
+  New: () => <NewResource type="Deployment" />,
 
   GroupExecutions: () => <></>,
 
