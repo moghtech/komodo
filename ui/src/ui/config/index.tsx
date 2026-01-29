@@ -5,6 +5,7 @@ import {
   Anchor,
   Box,
   Button,
+  Divider,
   Flex,
   Group,
   ScrollArea,
@@ -119,20 +120,22 @@ export default function Config<T>({
               </Text>
             )}
 
-            <Stack>
+            <Stack gap="xl">
               {(groupArgs as ConfigGroupArgs<T>[]).map(
-                ({
-                  label,
-                  boldLabel = true,
-                  labelHidden,
-                  icon,
-                  labelExtra,
-                  actions,
-                  description,
-                  hidden,
-                  contentHidden,
-                  fields,
-                }) => (
+                (
+                  {
+                    label,
+                    boldLabel = true,
+                    labelHidden,
+                    icon,
+                    labelExtra,
+                    actions,
+                    description,
+                    hidden,
+                    contentHidden,
+                    fields,
+                  },
+                ) => (
                   <Stack
                     key={group + label}
                     id={group + label}
@@ -228,7 +231,7 @@ export default function Config<T>({
         </>
       )}
       {!disableSidebar && (
-        <Flex w="100%" gap="lg">
+        <Flex w="100%" gap="xl">
           {/** SIDEBAR (XL) */}
           <Box
             visibleFrom="xl"
