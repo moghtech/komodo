@@ -68,6 +68,7 @@ export function ConfigInput({
   disabled,
   placeholder,
   onChange,
+  onValueChange,
   onBlur,
   inputLeft,
   inputRight,
@@ -77,7 +78,7 @@ export function ConfigInput({
   value: string | number | undefined;
   disabled?: boolean;
   placeholder?: string;
-  onChange?: (value: string) => void;
+  onValueChange?: (value: string) => void;
   onBlur?: (value: string) => void;
   inputLeft?: ReactNode;
   inputRight?: ReactNode;
@@ -85,11 +86,15 @@ export function ConfigInput({
 } & Omit<ConfigItemProps, "children">) {
   const inputNode = (
     <TextInput
+      w={{ base: "85%", lg: 400 }}
       value={value}
       placeholder={placeholder}
       disabled={disabled}
       type={typeof value === "number" ? "number" : undefined}
-      onChange={(e) => onChange?.(e.target.value)}
+      onChange={(e) => {
+        onChange?.(e);
+        onValueChange?.(e.target.value);
+      }}
       onBlur={(e) => onBlur?.(e.target.value)}
       {...inputProps}
     />
@@ -143,7 +148,10 @@ export function ConfigList<T>({
   Omit<ConfigItemProps, "children">) {
   return (
     <ConfigItem label={label} boldLabel={boldLabel} description={description}>
-      <InputList {...inputListProps} />
+      <InputList
+        inputProps={{ w: { base: "85%", lg: 400 } }}
+        {...inputListProps}
+      />
       {!inputListProps.disabled && (
         <Button
           variant="light"
@@ -153,6 +161,7 @@ export function ConfigList<T>({
               [inputListProps.field]: [...inputListProps.values, ""],
             } as Partial<T>)
           }
+          w={{ base: "85%", lg: 400 }}
         >
           {addLabel ??
             ("Add " + label?.endsWith("s") ? label?.slice(0, -1) : label)}

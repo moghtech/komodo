@@ -1,3 +1,4 @@
+import { Anchor, Group, Select, Stack, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { useState } from "react";
 import { Types } from "komodo_client";
@@ -8,12 +9,10 @@ import {
   useWebhookIntegrations,
   useWrite,
 } from "@/lib/hooks";
-import { Config } from "@/ui/config";
-import { Anchor, Group, Select, Stack, Text } from "@mantine/core";
-import { MonacoEditor } from "@/components/monaco";
-import ActionInfo from "./info";
 import { fmtSnakeCaseToUpperSpaceCase } from "@/lib/formatting";
-import { ConfigItem } from "@/ui/config/item";
+import { MonacoEditor } from "@/components/monaco";
+import Config from "@/ui/config";
+import ActionInfo from "./info";
 
 export default function ActionConfig({ id }: { id: string }) {
   const [branch, setBranch] = useState("main");

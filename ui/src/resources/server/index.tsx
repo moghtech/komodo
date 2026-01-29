@@ -7,6 +7,7 @@ import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
 import ServerTable from "./table";
 import NewResource from "@/resources/new";
+import ServerConfig from "./config";
 
 export const ServerComponents: RequiredResourceComponents<
   Types.ServerConfig,
@@ -81,7 +82,7 @@ export const ServerComponents: RequiredResourceComponents<
 
   Executions: {},
 
-  Config: () => <>CONFIG</>,
+  Config: ServerConfig,
   DangerZone: ({ id }) => <></>,
 
   Page: {},

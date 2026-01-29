@@ -56,10 +56,9 @@ export default function ConfirmUpdate<T>({
 
   return (
     <>
-      <Modal opened={opened} onClose={close} size="auto">
-        <Stack gap="lg" w={1400} maw="95vw">
+      <Modal title="Confirm Update" opened={opened} onClose={close} size="auto">
+        <Stack gap="xl" w={1400} maw="95vw" my="lg">
           <Stack>
-            <Text>Confirm Update</Text>
             {Object.entries(content).map(([key, val], i) => (
               <ConfirmUpdateItem
                 key={i}
@@ -138,7 +137,13 @@ function ConfirmUpdateItem<T>({
     Math.max(val?.length ?? 0, prev_val?.length ?? 0) > 30;
 
   return (
-    <Stack hidden={val === prev_val}>
+    <Stack
+      hidden={val === prev_val}
+      gap="xs"
+      p="xl"
+      bd="1px solid var(--mantine-color-accent-border-0)"
+      bdrs="md"
+    >
       <Group justify="space-between">
         <Text c={colorByIntention("Neutral")}>
           {fmtSnakeCaseToUpperSpaceCase(_key as string)}

@@ -6,6 +6,7 @@ export interface InputListProps<T> {
   values: string[];
   disabled: boolean;
   set: (update: Partial<T>) => void;
+  placeholder?: string;
   inputProps?: TextInputProps;
 }
 
@@ -14,6 +15,7 @@ export default function InputList<T>({
   values,
   disabled,
   set,
+  placeholder,
   inputProps,
 }: InputListProps<T>) {
   return (
@@ -44,6 +46,7 @@ export default function InputList<T>({
               </ActionIcon>
             )
           }
+          placeholder={placeholder}
           {...inputProps}
         />
       ))}

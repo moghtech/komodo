@@ -23,6 +23,7 @@ import {
   Minus,
   Plus,
   Rocket,
+  RotateCcwKey,
   Route,
   Save,
   Search,
@@ -60,6 +61,7 @@ export const ICONS = {
   // MISC
   User,
   Key: KeyRound,
+  RotateKey: RotateCcwKey,
   Settings,
   System: Settings,
   Tag,

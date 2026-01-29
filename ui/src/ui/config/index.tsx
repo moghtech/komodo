@@ -1,7 +1,6 @@
 import { Fragment, ReactNode, SetStateAction, useMemo } from "react";
 import { MonacoLanguage } from "@/components/monaco";
 import { ICONS } from "@/lib/icons";
-import Section, { SectionProps } from "@/ui/section";
 import {
   Anchor,
   Box,
@@ -13,79 +12,10 @@ import {
   Text,
 } from "@mantine/core";
 import ConfirmUpdate from "./confirm";
-import { ConfigInput, ConfigSwitch } from "./item";
 import { Bookmark } from "lucide-react";
-
-/** Includes save buttons */
-export function ConfigLayout<T>({
-  original,
-  update,
-  disabled,
-  onConfirm,
-  onReset,
-  selector,
-  fileContentsLanguage,
-  title,
-  icon,
-  titleOther,
-  ...sectionProps
-}: {
-  original: T;
-  update: Partial<T>;
-  disabled: boolean;
-  onConfirm: () => Promise<void>;
-  onReset: () => void;
-  selector?: ReactNode;
-  fileContentsLanguage?: MonacoLanguage;
-} & SectionProps) {
-  const titleProps = titleOther
-    ? { titleOther }
-    : {
-        title: title ?? "Config",
-        icon: icon ?? <ICONS.Settings size="1rem" />,
-      };
-  const changesMade = Object.keys(update).length ? true : false;
-  return (
-    <Section
-      actions={
-        <Group>
-          {changesMade && <UnsavedChanges />}
-          {selector}
-          {changesMade && (
-            <>
-              <Button
-                variant="outline"
-                onClick={onReset}
-                disabled={disabled || !changesMade}
-                leftSection={<ICONS.History size="1rem" />}
-                w={100}
-              >
-                Reset
-              </Button>
-              <ConfirmUpdate
-                previous={original}
-                content={update}
-                onConfirm={onConfirm}
-                disabled={disabled}
-                fileContentsLanguage={fileContentsLanguage}
-              />
-            </>
-          )}
-        </Group>
-      }
-      {...titleProps}
-      {...sectionProps}
-    />
-  );
-}
-
-const UnsavedChanges = () => (
-  <Group>
-    <ICONS.Alert size="1rem" />
-    Unsaved changes
-    <ICONS.Alert size="1rem" />
-  </Group>
-);
+import ConfigGroup from "./group";
+import UnsavedChanges from "./unsaved-changes";
+import ConfigLayout from "./layout";
 
 export interface ConfigFieldArgs {
   label?: string;
@@ -116,7 +46,7 @@ export interface ConfigGroupArgs<T> {
   };
 }
 
-export function Config<T>({
+export default function Config<T>({
   original,
   update,
   setUpdate,
@@ -132,7 +62,7 @@ export function Config<T>({
   update: Partial<T>;
   setUpdate: React.Dispatch<SetStateAction<Partial<T>>>;
   disabled: boolean;
-  onSave: () => Promise<void>;
+  onSave: () => Promise<unknown>;
   titleOther?: ReactNode;
   selector?: ReactNode;
   disableSidebar?: boolean;
@@ -184,7 +114,7 @@ export function Config<T>({
                 </div> */}
 
             {group && (
-              <Text visibleFrom="xl" fz="h1" tt="uppercase" mb="sm">
+              <Text visibleFrom="xl" fz="h1" tt="uppercase" mt="xl">
                 {group}
               </Text>
             )}
@@ -208,7 +138,7 @@ export function Config<T>({
                     id={group + label}
                     hidden={hidden}
                     p="xl"
-                    gap="xs"
+                    gap="xl"
                     bd="1px solid var(--mantine-color-accent-border-0)"
                     bdrs="md"
                     style={{ scrollMarginTop: 94 }}
@@ -316,39 +246,42 @@ export function Config<T>({
             <Stack pos="sticky" w={175} top={94} pb={24} m="lg">
               {/** ANCHORS */}
               <ScrollArea
-                renderRoot={(props) => <Stack {...props} />}
-                mah={changesMade ? "calc(100vh - 220px)" : "calc(100vh - 130px)"}
+                mah={
+                  changesMade ? "calc(100vh - 220px)" : "calc(100vh - 130px)"
+                }
               >
-                {groups.map(([group, groupArgs]) => (
-                  <Stack key={group} gap="xs">
-                    <Group justify="flex-end" mr="md" c="dimmed">
-                      <Bookmark size="1rem" />
-                      <Text tt="uppercase">{group || "GENERAL"}</Text>
-                    </Group>
-                    <Stack gap="0.25rem">
-                      {groupArgs &&
-                        groupArgs
-                          .filter((groupArgs) => !groupArgs.hidden)
-                          .map((groupArgs) => (
-                            <Button
-                              key={group + groupArgs.label}
-                              variant="subtle"
-                              c="inherit"
-                              justify="flex-end"
-                              fullWidth
-                              renderRoot={(props) => (
-                                <Anchor
-                                  href={"#" + group + groupArgs.label}
-                                  {...props}
-                                />
-                              )}
-                            >
-                              {groupArgs.label}
-                            </Button>
-                          ))}
+                <Stack>
+                  {groups.map(([group, groupArgs]) => (
+                    <Stack key={group} gap="xs">
+                      <Group justify="flex-end" mr="md" c="dimmed">
+                        <Bookmark size="1rem" />
+                        <Text tt="uppercase">{group || "GENERAL"}</Text>
+                      </Group>
+                      <Stack gap="0.25rem">
+                        {groupArgs &&
+                          groupArgs
+                            .filter((groupArgs) => !groupArgs.hidden)
+                            .map((groupArgs) => (
+                              <Button
+                                key={group + groupArgs.label}
+                                variant="subtle"
+                                c="inherit"
+                                justify="flex-end"
+                                fullWidth
+                                renderRoot={(props) => (
+                                  <Anchor
+                                    href={"#" + group + groupArgs.label}
+                                    {...props}
+                                  />
+                                )}
+                              >
+                                {groupArgs.label}
+                              </Button>
+                            ))}
+                      </Stack>
                     </Stack>
-                  </Stack>
-                ))}
+                  ))}
+                </Stack>
               </ScrollArea>
 
               {/** SAVE */}
@@ -357,7 +290,7 @@ export function Config<T>({
           </Box>
 
           {/** CONTENT */}
-          <Stack style={{ flexGrow: 1 }}>
+          <Stack style={{ flexGrow: 1 }} mb="50vh" gap="lg">
             {groupsComponent}
             <Group justify="flex-end">
               <SaveOrReset unsavedIndicator />
@@ -367,88 +300,4 @@ export function Config<T>({
       )}
     </ConfigLayout>
   );
-}
-
-function ConfigGroup<T>({
-  config,
-  update,
-  setUpdate,
-  disabled,
-  fields,
-}: {
-  config: T;
-  update: Partial<T>;
-  setUpdate: React.Dispatch<SetStateAction<Partial<T>>>;
-  disabled: boolean;
-  fields: ConfigGroupArgs<T>["fields"];
-}) {
-  return Object.entries(fields).map(([key, field]) => {
-    const value =
-      (update as { [key: string]: unknown })[key] ??
-      (config as { [key: string]: unknown })[key];
-    if (typeof field === "function") {
-      return <Fragment key={key}>{field(value, setUpdate)}</Fragment>;
-    } else if (typeof field === "object" || field === true) {
-      const args =
-        typeof field === "object" ? (field as ConfigFieldArgs) : undefined;
-
-      if (args?.hidden) {
-        return null;
-      }
-
-      switch (typeof value) {
-        case "string":
-          return (
-            <ConfigInput
-              key={key}
-              label={args?.label ?? key}
-              value={value}
-              onChange={(value) => setUpdate({ [key]: value } as Partial<T>)}
-              disabled={args?.disabled || disabled}
-              placeholder={args?.placeholder}
-              description={args?.description}
-              boldLabel={args?.boldLabel}
-            />
-          );
-
-        case "number":
-          return (
-            <ConfigInput
-              key={key}
-              label={args?.label ?? key}
-              value={Number(value)}
-              onChange={(value) =>
-                setUpdate({ [key]: Number(value) } as Partial<T>)
-              }
-              disabled={args?.disabled || disabled}
-              placeholder={args?.placeholder}
-              description={args?.description}
-              boldLabel={args?.boldLabel}
-            />
-          );
-
-        case "boolean":
-          return (
-            <ConfigSwitch
-              key={key}
-              label={args?.label ?? key}
-              value={value}
-              onChange={(value) => setUpdate({ [key]: value } as Partial<T>)}
-              disabled={args?.disabled || disabled}
-              description={args?.description}
-              boldLabel={args?.boldLabel}
-            />
-          );
-
-        default:
-          return (
-            <Group>
-              Config '{args?.label ?? key}': <ICONS.Unknown size="1rem" />
-            </Group>
-          );
-      }
-    } else {
-      return <Fragment key={key} />;
-    }
-  });
 }
