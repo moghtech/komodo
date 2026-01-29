@@ -1,0 +1,34 @@
+* {
+  scroll-behavior: smooth;
+}
+
+// These are set explicitly so the body
+// color loads correctly before the mantine body
+// variable is overridden with JS.
+body[data-mantine-color-scheme='light'] {
+  background-color: #f8f9fa;
+}
+body[data-mantine-color-scheme='dark'] {
+  background-color: #0f1115;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+a:visited { color: inherit; }
+a:hover,
+a:focus { text-decoration: none; }
+
+.monaco-editor {
+  position: absolute !important;
+}
+
+.xterm {
+  padding: 12px !important;
+}
+
+.xterm .xterm-viewport::-webkit-scrollbar {
+  width: 15px;
+  border-radius: var(--mantine-radius-sm);
+}

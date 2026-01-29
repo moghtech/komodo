@@ -5,6 +5,7 @@ import { Outlet } from "react-router-dom";
 import Topbar from "@/app/topbar";
 import Sidebar from "@/app/sidebar";
 import LoadingScreen from "@/ui/loading-screen";
+import UpdateDetails from "@/components/updates/details";
 
 export const TOPBAR_HEIGHT = 70;
 
@@ -35,6 +36,7 @@ const App = () => {
       <AppShell.Main>
         <Suspense fallback={<LoadingScreen />}>
           <Outlet />
+          <UpdateDetails />
         </Suspense>
       </AppShell.Main>
     </AppShell>

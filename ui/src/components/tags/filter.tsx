@@ -3,8 +3,10 @@ import { useRead, useShiftKeyListener, useTags } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
 import {
   ActionIcon,
+  Badge,
   Box,
   Button,
+  Center,
   Combobox,
   Group,
   Text,
@@ -63,7 +65,21 @@ export default function TagsFilter() {
         <Combobox.Target>
           <Button
             variant="default"
-            leftSection={<ICONS.Tag size="1rem" />}
+            pl="0.4rem"
+            leftSection={
+              <Badge
+                radius="sm"
+                px="0.3rem"
+                py="0.3rem"
+                color="accent"
+                c="dimmed"
+                h="fit-content"
+              >
+                <Center>
+                  <ICONS.Tag size="0.7rem" />
+                </Center>
+              </Badge>
+            }
             onClick={() => combobox.toggleDropdown()}
           >
             Tag Filter
@@ -82,7 +98,7 @@ export default function TagsFilter() {
               },
             }}
           />
-          <Combobox.Options mah={200} style={{ overflowY: "auto" }}>
+          <Combobox.Options mah={224} style={{ overflowY: "auto" }}>
             {filtered.map((tag) => (
               <Combobox.Option key={tag._id?.$oid} value={tag._id?.$oid!}>
                 <Group justify="space-between">

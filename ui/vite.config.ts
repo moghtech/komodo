@@ -20,7 +20,7 @@ export default defineConfig({
     preprocessorOptions: {
       scss: {
         // api: "modern-compiler",
-        additionalData: `@use "${path.join(process.cwd(), "src/theme").replace(/\\/g, "/")}" as theme;`,
+        additionalData: `@use "${path.join(process.cwd(), "src/theme/index").replace(/\\/g, "/")}" as theme;`,
       },
     },
   },

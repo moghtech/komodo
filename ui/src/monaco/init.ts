@@ -1,6 +1,10 @@
 import * as monaco from "monaco-editor";
 
-export async function init_monaco() {
+/**
+ * Don't need to await to continue app render,
+ * will apply in background when ready.
+ */
+export default async function initMonaco() {
   const promises = ["lib", "responses", "types", "terminal"].map((file) =>
     Promise.all(
       [".js", ".d.ts"].map((extension) =>

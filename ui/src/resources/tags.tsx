@@ -168,7 +168,7 @@ export const AddResourceTags = (target: UsableResourceTarget) => {
             },
           }}
         />
-        <Combobox.Options renderRoot={(props) => <Stack gap="xs" {...props} />}>
+        <Combobox.Options mah={224} style={{ overflowY: "auto" }}>
           {filtered.map((tag) => (
             <Combobox.Option key={tag._id?.$oid} value={tag._id?.$oid!}>
               <Group justify="space-between">

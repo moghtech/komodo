@@ -70,8 +70,6 @@ function ExportTomlInner({
   return (
     <Box
       pos="relative"
-      mah="calc(100vh - 24rem)"
-      style={{ overflowY: "auto" }}
       w={{
         base: "calc(100vw - 5rem)",
         xs: "calc(100vw - 8rem)",

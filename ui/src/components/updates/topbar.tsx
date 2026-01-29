@@ -1,9 +1,16 @@
 import { useRead, useUser, useUserInvalidate, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import { ActionIcon, Center, Menu } from "@mantine/core";
+import {
+  ActionIcon,
+  Center,
+  Menu,
+  useComputedColorScheme,
+} from "@mantine/core";
 import { Circle } from "lucide-react";
 import UpdateList from "./list";
 import { useDisclosure } from "@mantine/hooks";
+import { tagColor } from "@/lib/color";
+import { Types } from "komodo_client";
 
 export default function TopbarUpdates() {
   const [opened, { open, close }] = useDisclosure();
@@ -19,38 +26,45 @@ export default function TopbarUpdates() {
     onSuccess: userInvalidate,
   });
 
+  const isDark = useComputedColorScheme() === "dark";
+  const tagBlue = tagColor(
+    isDark ? Types.TagColor.LightBlue : Types.TagColor.Blue,
+  );
+
   return (
     <Menu
+      opened={opened}
       position="bottom-end"
       offset={20}
       onOpen={() => {
         open();
         setLastSeenUpdate({});
       }}
-      onClose={() => close()}
+      onClose={close}
     >
       <Menu.Target>
         <ActionIcon size="lg" variant="subtle" c="inherit">
           <Center pos="relative">
             <ICONS.Update size="1.3rem" />
             <Circle
-              size="0.5rem"
+              size="0.6rem"
               style={{
                 position: "absolute",
-                top: "4",
-                right: "4",
+                top: "-2px",
+                right: "-2px",
                 opacity: unseenUpdate ? 1 : 0,
-                transition: "all 150ms ease",
+                transition: "all 300ms ease",
               }}
-              color="blue"
+              color={tagBlue}
+              fill={tagBlue}
             />
           </Center>
         </ActionIcon>
       </Menu.Target>
-      <Menu.Dropdown hidden={!opened}>
+      <Menu.Dropdown>
         <UpdateList
           showAllLink="/updates"
-          onUpdateClick={close}
+          onClick={close}
           h={500}
           mah="calc(100vh - 90px)"
           w={{ base: "96vw", md: 500, xl3: 600 }}

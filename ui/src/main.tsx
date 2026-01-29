@@ -1,7 +1,3 @@
-import "@mantine/core/styles.css";
-// ‼️ import notifications styles after core package styles
-import "@mantine/notifications/styles.css";
-
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { MantineProvider } from "@mantine/core";
@@ -10,12 +6,17 @@ import { DEFAULT_COLOR_SCHEME, theme } from "@/theme";
 import { WebsocketProvider } from "@/lib/socket";
 import { Router } from "@/router";
 
+import "@mantine/core/styles.css";
+// ‼️ import notifications styles after core package styles
+import "@mantine/notifications/styles.css";
+import "./index.scss";
+
 // Run monaco setup
 import "@/monaco";
 import { Notifications } from "@mantine/notifications";
-import { init_monaco } from "@/monaco/init";
+import initMonaco from "@/monaco/init";
 
-init_monaco();
+initMonaco();
 
 export const KOMODO_BASE_URL =
   import.meta.env.VITE_KOMODO_HOST ?? location.origin;

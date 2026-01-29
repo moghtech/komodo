@@ -9,11 +9,12 @@ import {
   lighten,
   MantineColorScheme,
   MenuDropdown,
+  Modal,
   Table,
   virtualColor,
 } from "@mantine/core";
 import { Types } from "komodo_client";
-import { tagColor } from "./lib/color";
+import { tagColor } from "@/lib/color";
 
 export const DEFAULT_COLOR_SCHEME: MantineColorScheme = "auto";
 
@@ -87,6 +88,7 @@ export const theme = createTheme({
   components: {
     Button: Button.extend({
       defaultProps: {
+        variant: "light",
         c: "inherit",
       },
     }),
@@ -106,7 +108,7 @@ export const theme = createTheme({
       defaultProps: {
         striped: true,
         highlightOnHover: true,
-      }
+      },
     }),
     Drawer: Drawer.extend({
       vars: () => ({
@@ -122,6 +124,11 @@ export const theme = createTheme({
         inner: { justifyContent: "center" },
       },
     }),
+    Modal: Modal.extend({
+      defaultProps: {
+        styles: { content: { borderRadius: "var(--mantine-radius-md)" } },
+      },
+    }),
     Code: Code.extend({
       defaultProps: {
         bg: "var(--mantine-color-accent-0)",
@@ -132,6 +139,7 @@ export const theme = createTheme({
     MenuDropdown: MenuDropdown.extend({
       defaultProps: {
         bg: "var(--mantine-color-body)",
+        bdrs: "md",
       },
     }),
   },

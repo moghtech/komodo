@@ -1,9 +1,6 @@
 // https://mantine.dev/styles/sass/#usage-with-vite
 @use 'sass:math';
 
-* {
-  scroll-behavior: smooth;
-}
 
 :root[data-mantine-color-scheme='light'] {
   --mantine-color-body: #f8f9fa;
@@ -12,14 +9,6 @@
 :root[data-mantine-color-scheme='dark'] {
   --mantine-color-body: #0f1115;
 }
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-a:visited { color: inherit; }
-a:hover,
-a:focus { text-decoration: none; }
 
 $mantine-breakpoint-xs: '36em';
 $mantine-breakpoint-sm: '48em';

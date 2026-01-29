@@ -9,8 +9,6 @@ import { useWebsocketMessages } from "@/lib/socket";
 import { updateLogToHtml, versionIsNone } from "@/lib/utils";
 import { ResourceComponents, UsableResource } from "@/resources";
 import { Code, Drawer, Group, Stack, Text } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
-import { ReactNode, useEffect } from "react";
 import UserAvatar from "../user-avatar";
 import { ResourceLink } from "@/resources/common";
 import { ICONS } from "@/lib/icons";
@@ -19,36 +17,27 @@ import CopyButton from "@/ui/copy-button";
 import Section from "@/ui/section";
 import { MonacoDiffEditor } from "@/components/monaco";
 import LoadingScreen from "@/ui/loading-screen";
+import { atom, useAtom } from "jotai";
 
-export default function UpdateDetails({
-  id,
-  target,
-}: {
-  id: string;
-  target: (open: () => void) => ReactNode;
-}) {
-  const [opened, { open, close }] = useDisclosure(false);
-  const Target = target(open);
-  return (
-    <>
-      {Target}
-      <UpdateDetailsInner id={id} open={opened} close={close} />
-    </>
+const updateDetailsAtom = atom<string | undefined>(undefined);
+
+/** There is one update details modal mounted, just change the target update id */
+export function useUpdateDetails() {
+  const [updateId, setUpdateId] = useAtom<string | undefined>(
+    updateDetailsAtom,
   );
+  return {
+    updateId,
+    open: (updateId: string) => setUpdateId(updateId),
+    close: () => setUpdateId(undefined),
+  };
 }
 
-export function UpdateDetailsInner({
-  id,
-  open,
-  close,
-}: {
-  id: string;
-  open: boolean;
-  close: () => void;
-}) {
+export default function UpdateDetails() {
+  const { updateId, close } = useUpdateDetails();
   return (
     <Drawer
-      opened={open}
+      opened={!!updateId}
       onClose={close}
       styles={{
         content: {
@@ -60,38 +49,22 @@ export function UpdateDetailsInner({
       }}
       withCloseButton={false}
     >
-      <UpdateDetailsContent id={id} open={open} close={close} />
+      {updateId && <UpdateDetailsContent id={updateId} />}
     </Drawer>
   );
 }
 
-export function UpdateDetailsContent({
-  id,
-  open,
-  close,
-}: {
-  id: string;
-  open?: boolean;
-  close: () => void;
-}) {
-  const { data: update, refetch } = useRead(
-    "GetUpdate",
-    { id },
-    { enabled: false },
-  );
-  useEffect(() => {
-    // handle open state change loading
-    if (open) {
-      refetch();
-    }
-  }, [open]);
-  // Since auto refetching is disabled, listen for updates on the update id and refetch
+export function UpdateDetailsContent({ id }: { id: string }) {
+  const { data: update, refetch } = useRead("GetUpdate", { id });
+  // Listen for updates on the update id and refetch
   useWebsocketMessages("update-details", (update) => {
     if (update.id === id) refetch();
   });
+
   if (!update) {
     return <LoadingScreen mt="0" h="50vh" />;
   }
+
   const Components =
     update.target.type === "System"
       ? null

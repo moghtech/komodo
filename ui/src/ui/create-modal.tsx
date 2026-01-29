@@ -61,7 +61,11 @@ export default function CreateModal({
         </Stack>
       </Modal>
 
-      <Button leftSection={<ICONS.Create size="1rem" />} onClick={open}>
+      <Button
+        variant="light"
+        leftSection={<ICONS.Create size="1rem" />}
+        onClick={open}
+      >
         New {entityType}
       </Button>
     </>
