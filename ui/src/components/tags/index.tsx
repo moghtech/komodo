@@ -45,6 +45,7 @@ export default function Tags({
             h="fit-content"
             bdrs="sm"
             py={py}
+            tt="none"
             {...badgeProps}
           >
             {tag?.name ?? <Loader size="0.6rem" />}

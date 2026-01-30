@@ -33,6 +33,7 @@ import {
   Tag,
   Terminal,
   TriangleAlert,
+  Unlink,
   User,
   Zap,
 } from "lucide-react";
@@ -66,6 +67,7 @@ export const ICONS = {
   System: Settings,
   Tag,
   Link,
+  Unlink,
   ExternalLink,
   Alert: TriangleAlert,
   Update: Bell,

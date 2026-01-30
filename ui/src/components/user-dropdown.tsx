@@ -83,6 +83,7 @@ export const UserDropdown = () => {
           <Group grow>
             <Button
               variant="subtle"
+              c="inherit"
               leftSection={<Plus size="1rem" />}
               onClick={() => {
                 setOpen(false);

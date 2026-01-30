@@ -19,7 +19,7 @@ export interface ConfirmModalProps {
   /** User must enter this text to confirm */
   confirmText: string;
   title?: string;
-  onConfirm?: () => Promise<void>;
+  onConfirm?: () => Promise<unknown>;
   loading?: boolean;
   additional?: ReactNode;
   topAdditonal?: ReactNode;

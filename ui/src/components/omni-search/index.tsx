@@ -11,6 +11,7 @@ export default function OmniSearch({}: {}) {
         // variant="default"
         // variant="light"
         color="accent.9"
+        c="inherit"
         justify="space-between"
         rightSection={
           <Badge

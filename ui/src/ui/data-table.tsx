@@ -50,6 +50,7 @@ export interface DataTableProps<TData, TValue = unknown> extends BoxProps {
   };
   caption?: string;
   tableProps?: TableProps;
+  noBox?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -64,6 +65,7 @@ export function DataTable<TData, TValue>({
   selectOptions,
   caption,
   tableProps,
+  noBox,
   ...boxProps
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>(defaultSort);
@@ -107,137 +109,145 @@ export function DataTable<TData, TValue>({
 
   const rows = table.getPrePaginationRowModel().rows;
 
-  return (
-    <Box
-      p="lg"
-      pt="0"
-      bd="1px solid var(--mantine-color-accent-border-0)"
-      bdrs="md"
-      w="100%"
-      mah="calc(100vh - 25rem)"
-      style={{ overflow: "auto" }}
-      {...boxProps}
+  const tableNode = (
+    <Table
+      borderColor="accent-border"
+      captionSide="top"
+      stickyHeader
+      {...tableProps}
     >
-      <Table
-        borderColor="accent-border"
-        captionSide="top"
-        stickyHeader
-        {...tableProps}
-      >
-        {caption ? <Table.Caption>{caption}</Table.Caption> : null}
+      {caption ? <Table.Caption>{caption}</Table.Caption> : null}
 
-        <Table.Thead>
-          {table.getHeaderGroups().map((hg, i) => (
-            <Table.Tr key={hg.id}>
-              {i === 0 && selectOptions && (
+      <Table.Thead>
+        {table.getHeaderGroups().map((hg, i) => (
+          <Table.Tr key={hg.id}>
+            {i === 0 && selectOptions && (
+              <Table.Th
+                onClick={() =>
+                  selectOptions.disableRow !== true &&
+                  table.toggleAllRowsSelected()
+                }
+                style={{
+                  cursor: "pointer",
+                  borderColor: "var(--mantine-color-accent-border-0)",
+                  borderWidth: 0,
+                  borderRightWidth: 1,
+                  borderStyle: "solid",
+                }}
+              >
+                <Checkbox
+                  disabled={selectOptions.disableRow === true}
+                  checked={table.getIsAllRowsSelected()}
+                  indeterminate={table.getIsSomeRowsSelected()}
+                />
+              </Table.Th>
+            )}
+            {hg.headers.map((header, i) => {
+              // const canSort = header.column.getCanSort();
+              // const sortState = header.column.getIsSorted();
+              return (
                 <Table.Th
-                  onClick={() =>
-                    selectOptions.disableRow !== true &&
-                    table.toggleAllRowsSelected()
-                  }
+                  key={header.id}
+                  px="md"
                   style={{
                     cursor: "pointer",
                     borderColor: "var(--mantine-color-accent-border-0)",
                     borderWidth: 0,
-                    borderRightWidth: 1,
+                    borderRightWidth: i < hg.headers.length - 1 ? 1 : 0,
                     borderStyle: "solid",
                   }}
                 >
-                  <Checkbox
-                    disabled={selectOptions.disableRow === true}
-                    checked={table.getIsAllRowsSelected()}
-                    indeterminate={table.getIsSomeRowsSelected()}
-                  />
+                  {header.isPlaceholder ? null : (
+                    <Text fw={600} size="sm" lineClamp={1}>
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
+                    </Text>
+                  )}
                 </Table.Th>
-              )}
-              {hg.headers.map((header, i) => {
-                // const canSort = header.column.getCanSort();
-                // const sortState = header.column.getIsSorted();
-                return (
-                  <Table.Th
-                    key={header.id}
-                    px="md"
-                    style={{
-                      cursor: "pointer",
-                      borderColor: "var(--mantine-color-accent-border-0)",
-                      borderWidth: 0,
-                      borderRightWidth: i < hg.headers.length - 1 ? 1 : 0,
-                      borderStyle: "solid",
-                    }}
-                  >
-                    {header.isPlaceholder ? null : (
-                      <Text fw={600} size="sm" lineClamp={1}>
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                      </Text>
-                    )}
-                  </Table.Th>
-                );
-              })}
-            </Table.Tr>
-          ))}
-        </Table.Thead>
+              );
+            })}
+          </Table.Tr>
+        ))}
+      </Table.Thead>
 
-        <Table.Tbody>
-          {loading ? (
-            <Table.Tr>
-              <Table.Td
-                colSpan={
-                  table.getAllLeafColumns().length + (selectOptions ? 1 : 0)
-                }
-              >
-                <Group justify="center" py="lg">
-                  <Loader size="sm" />
-                </Group>
-              </Table.Td>
+      <Table.Tbody>
+        {loading ? (
+          <Table.Tr>
+            <Table.Td
+              colSpan={
+                table.getAllLeafColumns().length + (selectOptions ? 1 : 0)
+              }
+            >
+              <Group justify="center" py="lg">
+                <Loader size="sm" />
+              </Group>
+            </Table.Td>
+          </Table.Tr>
+        ) : rows.length === 0 ? (
+          <Table.Tr>
+            <Table.Td
+              colSpan={
+                table.getAllLeafColumns().length + (selectOptions ? 1 : 0)
+              }
+            >
+              <Group justify="center" py="lg">
+                {noResults}
+              </Group>
+            </Table.Td>
+          </Table.Tr>
+        ) : (
+          rows.map((row) => (
+            <Table.Tr
+              key={row.id}
+              style={onRowClick ? { cursor: "pointer" } : undefined}
+            >
+              {selectOptions && (
+                <Table.Td onClick={() => row.toggleSelected()}>
+                  <Checkbox
+                    aria-label="Select row"
+                    disabled={!row.getCanSelect()}
+                    checked={row.getIsSelected()}
+                  />
+                </Table.Td>
+              )}
+              {row.getVisibleCells().map((cell) => (
+                <Table.Td
+                  key={cell.id}
+                  onClick={
+                    onRowClick ? () => onRowClick(row.original) : undefined
+                  }
+                  style={{ flexWrap: "nowrap", textWrap: "nowrap" }}
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </Table.Td>
+              ))}
             </Table.Tr>
-          ) : rows.length === 0 ? (
-            <Table.Tr>
-              <Table.Td
-                colSpan={
-                  table.getAllLeafColumns().length + (selectOptions ? 1 : 0)
-                }
-              >
-                <Group justify="center" py="lg">
-                  {noResults}
-                </Group>
-              </Table.Td>
-            </Table.Tr>
-          ) : (
-            rows.map((row) => (
-              <Table.Tr
-                key={row.id}
-                style={onRowClick ? { cursor: "pointer" } : undefined}
-              >
-                {selectOptions && (
-                  <Table.Td onClick={() => row.toggleSelected()}>
-                    <Checkbox
-                      aria-label="Select row"
-                      disabled={!row.getCanSelect()}
-                      checked={row.getIsSelected()}
-                    />
-                  </Table.Td>
-                )}
-                {row.getVisibleCells().map((cell) => (
-                  <Table.Td
-                    key={cell.id}
-                    onClick={
-                      onRowClick ? () => onRowClick(row.original) : undefined
-                    }
-                    style={{ flexWrap: "nowrap", textWrap: "nowrap" }}
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </Table.Td>
-                ))}
-              </Table.Tr>
-            ))
-          )}
-        </Table.Tbody>
-      </Table>
-    </Box>
+          ))
+        )}
+      </Table.Tbody>
+    </Table>
   );
+
+  if (noBox) {
+    return tableNode;
+  } else {
+    return (
+      <Box
+        p="lg"
+        pt="0"
+        bd="1px solid var(--mantine-color-accent-border-0)"
+        bdrs="md"
+        w="100%"
+        mah="calc(100vh - 25rem)"
+        style={{ overflow: "auto" }}
+        {...boxProps}
+      >
+        {tableNode}
+      </Box>
+    );
+  }
 }
 
 export const SortableHeader = <T, V>({

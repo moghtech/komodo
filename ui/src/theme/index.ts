@@ -6,6 +6,7 @@ import {
   createTheme,
   darken,
   Drawer,
+  Fieldset,
   Input,
   lighten,
   MantineColorScheme,
@@ -89,7 +90,7 @@ export const theme = createTheme({
   components: {
     Button: Button.extend({
       defaultProps: {
-        c: "inherit",
+        // c: "inherit",
       },
     }),
     Badge: Badge.extend({
@@ -144,6 +145,13 @@ export const theme = createTheme({
     MenuDropdown: MenuDropdown.extend({
       defaultProps: {
         bg: "var(--mantine-color-body)",
+        bdrs: "md",
+      },
+    }),
+    Fieldset: Fieldset.extend({
+      defaultProps: {
+        bg: "var(--mantine-color-body)",
+        bd: "1px solid var(--mantine-color-accent-border-0)",
         bdrs: "md",
       },
     }),
