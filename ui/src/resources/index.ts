@@ -63,6 +63,7 @@ export interface RequiredResourceComponents<
   Info = any,
   ListItemInfo = any,
 > {
+  useList: () => Types.ResourceListItem<ListItemInfo>[] | undefined;
   useListItem: (id: string) => Types.ResourceListItem<ListItemInfo> | undefined;
   useFull: (id: string) => Types.Resource<Config, Info> | undefined;
   useResourceLinks: (

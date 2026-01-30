@@ -7,13 +7,15 @@ import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
 import RepoTable from "./table";
 import NewResource from "@/resources/new";
+import RepoConfig from "./config";
 
 export const RepoComponents: RequiredResourceComponents<
   Types.RepoConfig,
   Types.RepoInfo,
   Types.RepoListItemInfo
 > = {
-  useListItem: (id) => useRead("ListRepos", {}).data?.find((r) => r.id === id),
+  useList: () => useRead("ListRepos", {}).data,
+  useListItem: (id) => RepoComponents.useList()?.find((r) => r.id === id),
 
   useFull: (id) => useRead("GetRepo", { repo: id }).data,
 
@@ -77,7 +79,7 @@ export const RepoComponents: RequiredResourceComponents<
 
   Executions: {},
 
-  Config: () => <>CONFIG</>,
+  Config: RepoConfig,
   DangerZone: ({ id }) => <></>,
 
   Page: {},

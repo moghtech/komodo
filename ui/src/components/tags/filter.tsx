@@ -26,13 +26,13 @@ export default function TagsFilter() {
   useShiftKeyListener("T", () => combobox.openDropdown());
   useShiftKeyListener("C", () => clear_tags());
   const combobox = useCombobox({
+    onDropdownOpen: () => {
+      combobox.focusSearchInput();
+    },
     onDropdownClose: () => {
       combobox.resetSelectedOption();
       combobox.focusTarget();
       setSearch("");
-    },
-    onDropdownOpen: () => {
-      combobox.focusSearchInput();
     },
   });
   useEffect(() => {

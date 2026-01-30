@@ -31,19 +31,10 @@ export default function OmniSearch({}: {}) {
         </Group>
       </Button>
 
-      {/* <Spotlight
-        actions={actions}
-        nothingFound="No results."
-        shortcut="shift + S"
-        searchProps={{
-          leftSection: <ICONS.Search size="1.3rem" />,
-          placeholder: "Search...",
-        }}
-        limit={10}
-      /> */}
       <Spotlight.Root
         query={search}
         onQueryChange={setSearch}
+        clearQueryOnClose={false}
         shortcut="shift + S"
       >
         <Spotlight.Search

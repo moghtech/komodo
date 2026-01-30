@@ -11,8 +11,8 @@ export const BuilderComponents: RequiredResourceComponents<
   undefined,
   Types.BuilderListItemInfo
 > = {
-  useListItem: (id) =>
-    useRead("ListBuilders", {}).data?.find((r) => r.id === id),
+  useList: () => useRead("ListBuilders", {}).data,
+  useListItem: (id) => BuilderComponents.useList()?.find((r) => r.id === id),
 
   useFull: (id) => useRead("GetBuilder", { builder: id }).data,
 

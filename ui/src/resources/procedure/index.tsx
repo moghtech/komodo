@@ -13,8 +13,8 @@ export const ProcedureComponents: RequiredResourceComponents<
   undefined,
   Types.ProcedureListItemInfo
 > = {
-  useListItem: (id) =>
-    useRead("ListProcedures", {}).data?.find((r) => r.id === id),
+  useList: () => useRead("ListProcedures", {}).data,
+  useListItem: (id) => ProcedureComponents.useList()?.find((r) => r.id === id),
 
   useFull: (id) => useRead("GetProcedure", { procedure: id }).data,
 

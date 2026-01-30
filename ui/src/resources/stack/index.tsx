@@ -13,7 +13,8 @@ export const StackComponents: RequiredResourceComponents<
   Types.StackInfo,
   Types.StackListItemInfo
 > = {
-  useListItem: (id) => useRead("ListStacks", {}).data?.find((r) => r.id === id),
+  useList: () => useRead("ListStacks", {}).data,
+  useListItem: (id) => StackComponents.useList()?.find((r) => r.id === id),
 
   useFull: (id) => useRead("GetStack", { stack: id }).data,
 

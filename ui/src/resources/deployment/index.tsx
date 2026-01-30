@@ -13,8 +13,8 @@ export const DeploymentComponents: RequiredResourceComponents<
   Types.DeploymentInfo,
   Types.DeploymentListItemInfo
 > = {
-  useListItem: (id) =>
-    useRead("ListDeployments", {}).data?.find((r) => r.id === id),
+  useList: () => useRead("ListDeployments", {}).data,
+  useListItem: (id) => DeploymentComponents.useList()?.find((r) => r.id === id),
 
   useFull: (id) => useRead("GetDeployment", { deployment: id }).data,
 

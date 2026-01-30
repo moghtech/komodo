@@ -13,8 +13,8 @@ export const ResourceSyncComponents: RequiredResourceComponents<
   Types.ResourceSyncInfo,
   Types.ResourceSyncListItemInfo
 > = {
-  useListItem: (id) =>
-    useRead("ListResourceSyncs", {}).data?.find((r) => r.id === id),
+  useList: () => useRead("ListResourceSyncs", {}).data,
+  useListItem: (id) => ResourceSyncComponents.useList()?.find((r) => r.id === id),
 
   useFull: (id) => useRead("GetResourceSync", { sync: id }).data,
 

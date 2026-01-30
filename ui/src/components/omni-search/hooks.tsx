@@ -12,7 +12,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { TemplateMarker } from "../template-marker";
 
-const ITEM_LIMIT = 10;
+const ITEM_LIMIT = 7;
 let count = 0;
 
 export function useOmniSearch(): {

@@ -13,7 +13,8 @@ export const SwarmComponents: RequiredResourceComponents<
   Types.SwarmInfo,
   Types.SwarmListItemInfo
 > = {
-  useListItem: (id) => useRead("ListSwarms", {}).data?.find((r) => r.id === id),
+  useList: () => useRead("ListSwarms", {}).data,
+  useListItem: (id) => SwarmComponents.useList()?.find((r) => r.id === id),
 
   useFull: (id) => useRead("GetSwarm", { swarm: id }).data,
 

@@ -162,6 +162,7 @@ export function ConfigList<T>({
             } as Partial<T>)
           }
           w={{ base: "85%", lg: 400 }}
+          disabled={inputListProps.disabled}
         >
           {addLabel ??
             ("Add " + label?.endsWith("s") ? label?.slice(0, -1) : label)}

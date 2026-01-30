@@ -13,7 +13,8 @@ export const BuildComponents: RequiredResourceComponents<
   Types.BuildInfo,
   Types.BuildListItemInfo
 > = {
-  useListItem: (id) => useRead("ListBuilds", {}).data?.find((r) => r.id === id),
+  useList: () => useRead("ListBuilds", {}).data,
+  useListItem: (id) => BuildComponents.useList()?.find((r) => r.id === id),
 
   useFull: (id) => useRead("GetBuild", { build: id }).data,
 

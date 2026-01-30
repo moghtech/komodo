@@ -19,8 +19,8 @@ export const ActionComponents: RequiredResourceComponents<
   {},
   Types.ActionListItemInfo
 > = {
-  useListItem: (id) =>
-    useRead("ListActions", {}).data?.find((r) => r.id === id),
+  useList: () => useRead("ListActions", {}).data,
+  useListItem: (id) => ActionComponents.useList()?.find((r) => r.id === id),
 
   useFull: (id) => useRead("GetAction", { action: id }).data,
 

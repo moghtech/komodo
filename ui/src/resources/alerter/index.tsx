@@ -1,9 +1,7 @@
-import { hexColorByIntention } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
-import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
 import NewResource from "@/resources/new";
 
@@ -12,8 +10,8 @@ export const AlerterComponents: RequiredResourceComponents<
   undefined,
   Types.AlerterListItemInfo
 > = {
-  useListItem: (id) =>
-    useRead("ListAlerters", {}).data?.find((r) => r.id === id),
+  useList: () => useRead("ListAlerters", {}).data,
+  useListItem: (id) => AlerterComponents.useList()?.find((r) => r.id === id),
 
   useFull: (id) => useRead("GetAlerter", { alerter: id }).data,
 

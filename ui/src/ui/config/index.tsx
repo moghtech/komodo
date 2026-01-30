@@ -5,7 +5,6 @@ import {
   Anchor,
   Box,
   Button,
-  Divider,
   Flex,
   Group,
   ScrollArea,
@@ -47,18 +46,7 @@ export interface ConfigGroupArgs<T> {
   };
 }
 
-export default function Config<T>({
-  original,
-  update,
-  setUpdate,
-  disabled,
-  onSave,
-  titleOther,
-  selector,
-  disableSidebar,
-  fileContentsLanguage,
-  groups: _groups,
-}: {
+export interface ConfigProps<T> {
   original: T;
   update: Partial<T>;
   setUpdate: React.Dispatch<SetStateAction<Partial<T>>>;
@@ -72,7 +60,20 @@ export default function Config<T>({
     string, // Section key
     ConfigGroupArgs<T>[] | false | undefined
   >;
-}) {
+}
+
+export default function Config<T>({
+  original,
+  update,
+  setUpdate,
+  disabled,
+  onSave,
+  titleOther,
+  selector,
+  disableSidebar,
+  fileContentsLanguage,
+  groups: _groups,
+}: ConfigProps<T>) {
   const changesMade = Object.keys(update).length ? true : false;
   const onConfirm = async () => {
     await onSave();
@@ -122,20 +123,18 @@ export default function Config<T>({
 
             <Stack gap="xl">
               {(groupArgs as ConfigGroupArgs<T>[]).map(
-                (
-                  {
-                    label,
-                    boldLabel = true,
-                    labelHidden,
-                    icon,
-                    labelExtra,
-                    actions,
-                    description,
-                    hidden,
-                    contentHidden,
-                    fields,
-                  },
-                ) => (
+                ({
+                  label,
+                  boldLabel = true,
+                  labelHidden,
+                  icon,
+                  labelExtra,
+                  actions,
+                  description,
+                  hidden,
+                  contentHidden,
+                  fields,
+                }) => (
                   <Stack
                     key={group + label}
                     id={group + label}

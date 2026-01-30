@@ -14,8 +14,8 @@ export const ServerComponents: RequiredResourceComponents<
   Types.ServerInfo,
   Types.ServerListItemInfo
 > = {
-  useListItem: (id) =>
-    useRead("ListServers", {}).data?.find((r) => r.id === id),
+  useList: () => useRead("ListServers", {}).data,
+  useListItem: (id) => ServerComponents.useList()?.find((r) => r.id === id),
 
   useFull: (id) => useRead("GetServer", { server: id }).data,
 
