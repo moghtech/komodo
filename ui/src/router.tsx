@@ -18,6 +18,7 @@ const Dashboard = lazy(() => import("@/pages/dashboard"));
 const Resources = lazy(() => import("@/pages/resources"));
 const Resource = lazy(() => import("@/pages/resource"));
 const Profile = lazy(() => import("@/pages/profile"));
+const Containers = lazy(() => import("@/pages/containers"));
 
 export const Router = () => {
   // Handle exchange token loop to avoid showing login flash
@@ -38,7 +39,7 @@ export const Router = () => {
         <Route element={<RequireAuth />}>
           <Route path="/" element={<App />}>
             <Route path="" element={<Dashboard />} />
-            <Route path="containers" element={<>CONTAINERS</>} />
+            <Route path="containers" element={<Containers />} />
             <Route path="terminals" element={<>TERMINALS</>} />
             <Route path="profile" element={<Profile />} />
             <Route path=":type">

@@ -8,6 +8,7 @@ import {
   CircleQuestionMark,
   Clapperboard,
   Component,
+  Database,
   ExternalLink,
   Factory,
   FileDown,
@@ -22,6 +23,7 @@ import {
   Link,
   Milestone,
   Minus,
+  Network,
   Plus,
   Rocket,
   RotateCcwKey,
@@ -55,11 +57,13 @@ export const ICONS = {
   ExportToml: FileDown,
   // PAGES
   Dashboard: LayoutDashboard,
-  Container: Box,
   Terminal: Terminal,
   Schedule: CalendarDays,
   // DOCKER
+  Container: Box,
+  Network,
   Image: HardDrive,
+  Volume: Database,
   // MISC
   User,
   Key: KeyRound,

@@ -5,10 +5,10 @@
 // These are set explicitly so the body
 // color loads correctly before the mantine body
 // variable is overridden with JS.
-body[data-mantine-color-scheme='light'] {
+body[data-mantine-color-scheme="light"] {
   background-color: #f8f9fa;
 }
-body[data-mantine-color-scheme='dark'] {
+body[data-mantine-color-scheme="dark"] {
   background-color: #0f1115;
 }
 
@@ -16,9 +16,20 @@ a {
   color: inherit;
   text-decoration: none;
 }
-a:visited { color: inherit; }
+a:visited {
+  color: inherit;
+}
 a:hover,
-a:focus { text-decoration: none; }
+a:focus {
+  text-decoration: none;
+}
+
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: break-word;
+  text-wrap: nowrap;
+}
 
 .monaco-editor {
   position: absolute !important;
