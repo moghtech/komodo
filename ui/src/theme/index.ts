@@ -59,7 +59,7 @@ export const theme = createTheme({
       true,
     ),
     darkAccentBorder: functionColorsTuple(lighten(DARK_BODY, 0.06), (color) =>
-      lighten(color, 0.005),
+      lighten(color, 0.008),
     ),
     "accent-border": virtualColor({
       name: "accent-border",
@@ -145,6 +145,7 @@ export const theme = createTheme({
     MenuDropdown: MenuDropdown.extend({
       defaultProps: {
         bg: "var(--mantine-color-body)",
+        bd: "1px solid var(--mantine-color-accent-border-9)",
         bdrs: "md",
       },
     }),
