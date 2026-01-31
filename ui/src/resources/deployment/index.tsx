@@ -7,6 +7,7 @@ import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
 import DeploymentTable from "./table";
 import NewResource from "@/resources/new";
+import DeploymentConfig from "./config";
 
 export const DeploymentComponents: RequiredResourceComponents<
   Types.DeploymentConfig,
@@ -95,7 +96,7 @@ export const DeploymentComponents: RequiredResourceComponents<
 
   Executions: {},
 
-  Config: () => <>CONFIG</>,
+  Config: DeploymentConfig,
   DangerZone: ({ id }) => <></>,
 
   Page: {},

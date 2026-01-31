@@ -122,56 +122,56 @@ export default function Config<T>({
             )}
 
             <Stack gap="xl">
-              {(groupArgs as ConfigGroupArgs<T>[]).map(
-                ({
-                  label,
-                  boldLabel = true,
-                  labelHidden,
-                  icon,
-                  labelExtra,
-                  actions,
-                  description,
-                  hidden,
-                  contentHidden,
-                  fields,
-                }) => (
-                  <Stack
-                    key={group + label}
-                    id={group + label}
-                    hidden={hidden}
-                    p="xl"
-                    gap="xl"
-                    bd="1px solid var(--mantine-color-accent-border-0)"
-                    bdrs="md"
-                    style={{ scrollMarginTop: 94 }}
-                  >
-                    {!labelHidden && (
-                      <Group justify="space-between">
-                        <Stack>
-                          <Group>
-                            {icon}
-                            <Text fw={boldLabel ? "bold" : undefined} fz="h2">
-                              {label}
-                            </Text>
-                            {labelExtra}
-                          </Group>
-                          {description && <Text></Text>}
-                        </Stack>
-                        {actions}
-                      </Group>
-                    )}
-                    {!contentHidden && (
-                      <ConfigGroup
-                        config={original}
-                        update={update}
-                        setUpdate={(u) => setUpdate((p) => ({ ...p, ...u }))}
-                        fields={fields}
-                        disabled={disabled}
-                      />
-                    )}
-                  </Stack>
-                ),
-              )}
+              {(groupArgs as ConfigGroupArgs<T>[])
+                .filter(({ hidden }) => !hidden)
+                .map(
+                  ({
+                    label,
+                    boldLabel = true,
+                    labelHidden,
+                    icon,
+                    labelExtra,
+                    actions,
+                    description,
+                    contentHidden,
+                    fields,
+                  }) => (
+                    <Stack
+                      key={group + label}
+                      id={group + label}
+                      p="xl"
+                      gap="xl"
+                      bd="1px solid var(--mantine-color-accent-border-0)"
+                      bdrs="md"
+                      style={{ scrollMarginTop: 94 }}
+                    >
+                      {!labelHidden && (
+                        <Group justify="space-between">
+                          <Stack>
+                            <Group>
+                              {icon}
+                              <Text fw={boldLabel ? "bold" : undefined} fz="h2">
+                                {label}
+                              </Text>
+                              {labelExtra}
+                            </Group>
+                            {description && <Text></Text>}
+                          </Stack>
+                          {actions}
+                        </Group>
+                      )}
+                      {!contentHidden && (
+                        <ConfigGroup
+                          config={original}
+                          update={update}
+                          setUpdate={(u) => setUpdate((p) => ({ ...p, ...u }))}
+                          fields={fields}
+                          disabled={disabled}
+                        />
+                      )}
+                    </Stack>
+                  ),
+                )}
             </Stack>
           </Fragment>
         );

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRead } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
 import { Button, Combobox, useCombobox } from "@mantine/core";
@@ -27,6 +27,9 @@ export default function AddExtraArg({
       setSearch("");
     },
   });
+  useEffect(() => {
+    combobox.selectFirstOption();
+  }, [search]);
 
   if (suggestions.length === 0) {
     return (
@@ -46,10 +49,17 @@ export default function AddExtraArg({
     <Combobox
       store={combobox}
       disabled={disabled}
-      onOptionSubmit={(suggestion) => onSelect(suggestion)}
+      onOptionSubmit={(suggestion) => {
+        onSelect(suggestion);
+        combobox.closeDropdown();
+      }}
     >
       <Combobox.Target>
-        <Button leftSection={<ICONS.Add size="1rem" />} disabled={disabled}>
+        <Button
+          onClick={() => combobox.openDropdown()}
+          leftSection={<ICONS.Add size="1rem" />}
+          disabled={disabled}
+        >
           Add Extra Arg
         </Button>
       </Combobox.Target>

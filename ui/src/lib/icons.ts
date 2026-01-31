@@ -40,6 +40,7 @@ import {
   TriangleAlert,
   Unlink,
   User,
+  X,
   Zap,
 } from "lucide-react";
 
@@ -89,6 +90,7 @@ export const ICONS = {
   Delete: Trash2,
   Add: Plus,
   Remove: Minus,
+  Clear: X,
   Save: Save,
   NotFound: SearchX,
   Unknown: CircleQuestionMark,

@@ -125,7 +125,7 @@ export function ConfigSwitch({
   disabled: boolean;
   onChange: (value: boolean) => void;
   switchProps?: SwitchProps;
-} & Omit<ConfigItemProps, "children">) {
+} & Omit<Omit<ConfigItemProps, "children">, "onChange">) {
   return (
     <ConfigItem {...itemProps}>
       <EnableSwitch
