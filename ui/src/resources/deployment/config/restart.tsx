@@ -29,10 +29,11 @@ export default function DeploymentRestartSelector({
         data={Object.entries(Types.RestartMode).map(([label, value]) => ({
           label:
             label === "NoRestart"
-              ? "Don't Restart"
-              : label.split("-").join(" "),
+              ? "don't restart"
+              : value.split("-").join(" "),
           value,
         }))}
+        w="fit-content"
       />
     </ConfigItem>
   );

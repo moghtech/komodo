@@ -37,6 +37,7 @@ export default function AddExtraArg({
         leftSection={<ICONS.Add size="1rem" />}
         onClick={() => onSelect("")}
         disabled={disabled}
+        w={200}
       >
         Add Extra Arg
       </Button>
@@ -53,12 +54,15 @@ export default function AddExtraArg({
         onSelect(suggestion);
         combobox.closeDropdown();
       }}
+      width={250}
+      position="bottom-start"
     >
       <Combobox.Target>
         <Button
           onClick={() => combobox.openDropdown()}
           leftSection={<ICONS.Add size="1rem" />}
           disabled={disabled}
+          w={200}
         >
           Add Extra Arg
         </Button>

@@ -33,16 +33,14 @@ export default function InputList<T>({
           rightSection={
             !disabled && (
               <ActionIcon
-                variant="light"
                 color="red"
-                c="inherit"
                 onClick={() =>
                   set({
                     [field]: [...values.filter((_, idx) => idx !== i)],
                   } as Partial<T>)
                 }
               >
-                <ICONS.Delete size="1rem" />
+                <ICONS.Remove size="1rem" />
               </ActionIcon>
             )
           }

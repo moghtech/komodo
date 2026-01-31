@@ -54,10 +54,15 @@ export default function SecretSelector({
           notifications.show({ message: "Copied secret key" });
         }
       }}
+      width={300}
       {...comboboxProps}
     >
       <Combobox.Target>
-        <Button leftSection={<ICONS.Search size="1rem" />} disabled={disabled}>
+        <Button
+          leftSection={<ICONS.Search size="1rem" />}
+          disabled={disabled}
+          onClick={() => combobox.toggleDropdown()}
+        >
           {type}s
         </Button>
       </Combobox.Target>

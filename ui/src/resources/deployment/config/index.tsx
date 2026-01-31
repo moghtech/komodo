@@ -2,7 +2,7 @@ import { usePermissions, useRead, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import Config from "@/ui/config";
 import { ConfigItem, ConfigList, ConfigSwitch } from "@/ui/config/item";
-import { ActionIcon, Group, Text } from "@mantine/core";
+import { ActionIcon, Group, Stack, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { ResourceLink } from "@/resources/common";
@@ -229,7 +229,7 @@ export default function DeploymentConfig({ id }: { id: string }) {
             description: "Pass these variables to the container",
             fields: {
               environment: (env, set) => (
-                <div className="flex flex-col gap-4">
+                <Stack>
                   <SecretsSearch
                     server={update.server_id ?? config.server_id}
                   />
@@ -239,7 +239,7 @@ export default function DeploymentConfig({ id }: { id: string }) {
                     language="key_value"
                     readOnly={disabled}
                   />
-                </div>
+                </Stack>
               ),
               // skip_secret_interp: true,
             },

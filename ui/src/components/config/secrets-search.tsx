@@ -29,11 +29,11 @@ export default function SecretsSearch({ server, builder }: SecretsSearchProps) {
         <SecretSelector
           type="Variable"
           keys={variables.map((v) => v.name)}
-          position="right-start"
+          position="bottom-start"
         />
       )}
-      {variables.length > 0 && (
-        <SecretSelector type="Secret" keys={secrets} position="right-start" />
+      {secrets.length > 0 && (
+        <SecretSelector type="Secret" keys={secrets} position="bottom-start" />
       )}
     </Group>
   );
