@@ -93,6 +93,7 @@ export default function DeploymentImageConfig({
           }
           placeholder="image name"
           disabled={disabled}
+          w={{ base: 200, lg: 300, xl: 400 }}
         />
       )}
     </Group>
@@ -116,6 +117,7 @@ function ImageTypeSelector({
         selected && onSelect(selected as Types.DeploymentImage["type"])
       }
       data={["Image", "Build"]}
+      w={100}
     />
   );
 }
@@ -160,6 +162,8 @@ function BuildVersionSelector({
       onOptionSubmit={() => {
         combobox.closeDropdown();
       }}
+      width={250}
+      position="bottom-start"
     >
       <Combobox.Target>
         <Button
@@ -193,15 +197,11 @@ function BuildVersionSelector({
           {filtered.map((v) => {
             const version = fmtVersion(v.version);
             return (
-              <Combobox.Option
-                key={version}
-                value={version}
-                renderRoot={(props) => (
-                  <Group justify="space-between" {...props} />
-                )}
-              >
-                <Text>{version}</Text>
-                <Text c="dimmed">{fmtDate(new Date(v.ts))}</Text>
+              <Combobox.Option key={version} value={version}>
+                <Group justify="space-between" wrap="nowrap">
+                  <Text>{version}</Text>
+                  <Text c="dimmed">{fmtDate(new Date(v.ts))}</Text>
+                </Group>
               </Combobox.Option>
             );
           })}
