@@ -54,14 +54,17 @@ export default function AccountSelector({
   }
   const accounts = [..._accounts];
   accounts.sort();
-  accounts.push("None");
+  accounts.unshift("None");
 
   return (
     <Select
-      value={selected}
+      label={showLabel && "Account"}
+      value={selected || "None"}
       onChange={(value) => value && onSelect(value === "None" ? "" : value)}
       disabled={disabled}
       data={accounts}
+      w="fit-content"
+      placeholder="Select account"
       {...selectProps}
     />
   );

@@ -90,7 +90,8 @@ export default function ResourceSelector({
     <Combobox
       store={combobox}
       width={260}
-      onOptionSubmit={(id, props) => {
+      onOptionSubmit={(_id, props) => {
+        const id = _id === "None" ? "" : _id;
         onSelect?.(id);
         onOptionSubmit?.(id, props);
         combobox.closeDropdown();
@@ -130,6 +131,7 @@ export default function ResourceSelector({
           }}
         />
         <Combobox.Options mah={224} style={{ overflowY: "auto" }}>
+          <Combobox.Option value="None">None</Combobox.Option>
           {filtered.map((resource) => (
             <Combobox.Option key={resource.id} value={resource.id}>
               <Group>

@@ -53,25 +53,25 @@ export default function ProviderSelector({
   }
 
   const domains = new Set<string>();
+  selected && domains.add(selected);
   for (const provider of dbProviders ?? []) {
     domains.add(provider.domain);
   }
   for (const provider of configProviders ?? []) {
     domains.add(provider.domain);
   }
-  const providers = [...domains];
+  const providers = ["None", ...domains];
   providers.sort();
+
   if (showCustom) {
     providers.push("Custom");
-  } else {
-    providers.push("None");
   }
 
   return (
     <Select
       placeholder="Select Provider"
       label={showLabel && "Domain"}
-      value={selected}
+      value={selected || "None"}
       disabled={disabled}
       data={providers}
       onChange={(value) => {

@@ -7,6 +7,7 @@ import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
 import BuildTable from "./table";
 import NewResource from "@/resources/new";
+import BuildConfig from "./config";
 
 export const BuildComponents: RequiredResourceComponents<
   Types.BuildConfig,
@@ -78,7 +79,7 @@ export const BuildComponents: RequiredResourceComponents<
 
   Executions: {},
 
-  Config: () => <>CONFIG</>,
+  Config: BuildConfig,
   DangerZone: ({ id }) => <></>,
 
   Page: {},
