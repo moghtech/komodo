@@ -170,7 +170,7 @@ export function UpdateDetailsContent({ id }: { id: string }) {
               >
                 <Text fw="bold">command</Text>
                 <Code
-                  fz="md"
+                  fz="sm"
                   mah={500}
                   style={{
                     overflowY: "auto",
@@ -189,7 +189,7 @@ export function UpdateDetailsContent({ id }: { id: string }) {
                 <Text fw="bold">stdout</Text>
                 <Code
                   component="pre"
-                  fz="md"
+                  fz="sm"
                   mah={500}
                   dangerouslySetInnerHTML={{
                     __html: updateLogToHtml(log.stdout),
@@ -207,7 +207,7 @@ export function UpdateDetailsContent({ id }: { id: string }) {
                 <Text fw="bold">stderr</Text>
                 <Code
                   component="pre"
-                  fz="md"
+                  fz="sm"
                   mah={500}
                   dangerouslySetInnerHTML={{
                     __html: updateLogToHtml(log.stderr),
