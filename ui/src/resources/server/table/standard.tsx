@@ -95,7 +95,7 @@ export default function StandardServerTable({
         },
         {
           header: "Tags",
-          cell: ({ row }) => <TableTags tag_ids={row.original.tags} />,
+          cell: ({ row }) => <TableTags tagIds={row.original.tags} />,
         },
       ]}
     />

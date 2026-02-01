@@ -183,7 +183,7 @@ const RecentCard = ({
       </Group>
 
       <Group gap="xs">
-        <Tags tag_ids={resource?.tags} py="0.1rem" />
+        <Tags tagIds={resource?.tags} py="0.1rem" />
       </Group>
     </FancyCard>
   );

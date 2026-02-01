@@ -7,6 +7,7 @@ import ResourceHeader from "@/components/resource-header";
 import ResourceSyncTable from "./table";
 import { RequiredResourceComponents } from "@/resources";
 import NewResource from "@/resources/new";
+import ResourceSyncConfig from "./config";
 
 export const ResourceSyncComponents: RequiredResourceComponents<
   Types.ResourceSyncConfig,
@@ -14,7 +15,8 @@ export const ResourceSyncComponents: RequiredResourceComponents<
   Types.ResourceSyncListItemInfo
 > = {
   useList: () => useRead("ListResourceSyncs", {}).data,
-  useListItem: (id) => ResourceSyncComponents.useList()?.find((r) => r.id === id),
+  useListItem: (id) =>
+    ResourceSyncComponents.useList()?.find((r) => r.id === id),
 
   useFull: (id) => useRead("GetResourceSync", { sync: id }).data,
 
@@ -87,7 +89,7 @@ export const ResourceSyncComponents: RequiredResourceComponents<
 
   Executions: {},
 
-  Config: () => <>CONFIG</>,
+  Config: ResourceSyncConfig,
   DangerZone: ({ id }) => <></>,
 
   Page: {},

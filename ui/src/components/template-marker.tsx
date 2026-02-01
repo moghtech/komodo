@@ -9,7 +9,7 @@ export const TemplateMarker = ({ type }: { type: UsableResource }) => {
         <Text>This {fmtResourceType(type).toLowerCase()} is a template.</Text>
       }
     >
-      <Badge radius="sm" px="0.3rem" color="accent" c="inherit">
+      <Badge radius="sm" px="0.3rem" color="gray" c="inherit">
         T
       </Badge>
     </Tooltip>

@@ -77,12 +77,13 @@ export const ResourceLink = ({
         e.stopPropagation();
         onClick?.();
       }}
-      style={{ textDecoration: "underline" }}
       c="inherit"
       wrap="nowrap"
     >
       <Components.Icon id={id} />
-      <Text style={{ textWrap: "nowrap" }}>{resource?.name ?? "Unknown"}</Text>
+      <Text style={{ textDecoration: "underline", textWrap: "nowrap" }}>
+        {resource?.name ?? "Unknown"}
+      </Text>
       {resource?.template && <TemplateMarker type={type} />}
     </Group>
   );

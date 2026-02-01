@@ -44,7 +44,7 @@ export const ResourceTags = ({
   });
   return (
     <Tags
-      tag_ids={resource?.tags}
+      tagIds={resource?.tags}
       onBadgeClick={(tag_id) => {
         if (!click_to_delete) return;
         if (disabled) return;
