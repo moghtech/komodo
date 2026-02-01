@@ -26,8 +26,12 @@ export default function UpdateCard({
 
   const TargetIcon = ICONS[update.target.type];
   const FirstRow = (flexProps: FlexProps) => (
-    <Flex justify="space-between" {...flexProps}>
-      <Group>
+    <Flex
+      justify="space-between"
+      fz={{ base: "xs", md: "sm", lg: "md" }}
+      {...flexProps}
+    >
+      <Group wrap="nowrap">
         <Icon update={update} />
         {fmtOperation(update.operation)}
         {!versionIsNone(update.version) && (
@@ -37,7 +41,7 @@ export default function UpdateCard({
           </Group>
         )}
       </Group>
-      <Group c="dimmed">
+      <Group c="dimmed" wrap="nowrap">
         <ICONS.Calendar size="1rem" />
         {fmtDate(new Date(update.start_ts))}
       </Group>

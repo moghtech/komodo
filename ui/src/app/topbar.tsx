@@ -1,5 +1,7 @@
 import {
+  ActionIcon,
   AppShell,
+  Box,
   Burger,
   Button,
   Center,
@@ -36,8 +38,16 @@ const Topbar = ({
       py="0rem"
     >
       {/** LEFT AREA */}
-      <Group gap="md">
+      <Group gap="xs" wrap="nowrap">
         <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+        <ActionIcon
+          variant="subtle"
+          onClick={() => nav("/")}
+          size="lg"
+          hiddenFrom="md"
+        >
+          <img src="/mogh-512x512.png" width={32} alt="moghtech" />
+        </ActionIcon>
         <Button
           variant="subtle"
           c="inherit"
@@ -46,6 +56,7 @@ const Topbar = ({
           }
           onClick={() => nav("/")}
           size="lg"
+          visibleFrom="md"
         >
           <Text fz="h2" fw="450" lts="0.1rem">
             KOMODO
@@ -54,13 +65,16 @@ const Topbar = ({
       </Group>
 
       {/** OMNI SEARCH */}
-      <Center>
+      <Center visibleFrom="md">
         <OmniSearch />
       </Center>
 
       {/** RIGHT AREA */}
       <Group gap="0.3rem" style={{ justifySelf: "flex-end" }}>
         <Group gap="0.5rem">
+          <Box hiddenFrom="md">
+            <OmniSearch />
+          </Box>
           <TopbarUpdates />
           <ThemeToggle />
         </Group>

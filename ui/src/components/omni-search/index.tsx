@@ -1,4 +1,4 @@
-import { Badge, Button, Group } from "@mantine/core";
+import { ActionIcon, Badge, Button, Group } from "@mantine/core";
 import { Spotlight, spotlight } from "@mantine/spotlight";
 import { useOmniSearch } from "./hooks";
 import { ICONS } from "@/lib/icons";
@@ -7,6 +7,16 @@ export default function OmniSearch({}: {}) {
   const { search, setSearch, actions } = useOmniSearch();
   return (
     <>
+      <ActionIcon
+        variant="subtle"
+        c="inherit"
+        onClick={() => spotlight.open()}
+        hiddenFrom="md"
+        size="lg"
+      >
+        <ICONS.Search size="1.3rem" />
+      </ActionIcon>
+
       <Button
         // variant="default"
         // variant="light"
@@ -25,6 +35,7 @@ export default function OmniSearch({}: {}) {
         }
         onClick={() => spotlight.open()}
         w={{ lg: 400 }}
+        visibleFrom="md"
       >
         <Group>
           <ICONS.Search size="1rem" />

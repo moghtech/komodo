@@ -67,7 +67,7 @@ export default function TopbarUpdates() {
           onClick={close}
           h={500}
           mah="calc(100vh - 90px)"
-          w={{ base: "96vw", md: 500, xl3: 600 }}
+          w={{ base: "92vw", md: 500, xl3: 600 }}
           large
         />
       </Menu.Dropdown>
