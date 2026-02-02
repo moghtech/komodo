@@ -2,6 +2,7 @@ import { Types } from "komodo_client";
 import { ResourceComponents, UsableResource } from ".";
 import {
   Button,
+  ButtonProps,
   Combobox,
   ComboboxProps,
   Group,
@@ -20,11 +21,10 @@ export interface ResourceSelectorProps extends ComboboxProps {
   templates?: Types.TemplatesQueryBehavior;
   onSelect?: (id: string) => void;
   disabled?: boolean;
-  align?: "flex-start" | "center" | "end";
   placeholder?: string;
-  targetClassName?: string;
   state?: unknown;
   excludeIds?: string[];
+  targetProps?: ButtonProps;
 }
 
 export default function ResourceSelector({
@@ -32,14 +32,13 @@ export default function ResourceSelector({
   selected,
   onSelect,
   disabled,
-  align,
   templates = Types.TemplatesQueryBehavior.Exclude,
   placeholder,
-  targetClassName,
   state,
   excludeIds,
   onOptionSubmit,
   position = "bottom-start",
+  targetProps,
   ...comboboxProps
 }: ResourceSelectorProps) {
   const [search, setSearch] = useState("");
@@ -107,6 +106,7 @@ export default function ResourceSelector({
           disabled={disabled}
           w="fit-content"
           maw={{ base: 200, lg: 300 }}
+          {...targetProps}
         >
           <Group gap="xs">
             <Components.Icon id={selected} />
