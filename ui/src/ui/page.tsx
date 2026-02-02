@@ -66,10 +66,12 @@ const Page = createPolymorphicComponent<"div", PageProps>(
             {rightTitle}
           </Group>
           {customDescription ? (
-            <Group gap="xs">{customDescription}</Group>
+            <Group gap="md" c="dimmed">
+              {customDescription}
+            </Group>
           ) : (
             description && (
-              <Text size="md" opacity={0.6}>
+              <Text size="md" c="dimmed">
                 {description}
               </Text>
             )

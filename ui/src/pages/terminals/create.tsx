@@ -215,6 +215,7 @@ function CreateTerminalLayout({
         loading={isPending}
         onClick={() => mutate(finalize(baseRequest))}
         leftSection={<ICONS.Create size="1rem" />}
+        disabled={!baseRequest.name}
       >
         Create
       </Button>

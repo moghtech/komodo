@@ -20,6 +20,7 @@ const Resource = lazy(() => import("@/pages/resource"));
 const Profile = lazy(() => import("@/pages/profile"));
 const Containers = lazy(() => import("@/pages/containers"));
 const Terminals = lazy(() => import("@/pages/terminals"));
+const Terminal = lazy(() => import("@/pages/terminal"));
 
 export const Router = () => {
   // Handle exchange token loop to avoid showing login flash
@@ -46,6 +47,16 @@ export const Router = () => {
             <Route path=":type">
               <Route path="" element={<Resources />} />
               <Route path=":id" element={<Resource />} />
+              {/* Terminal Pages */}
+              <Route path=":id/terminal/:terminal" element={<Terminal />} />
+              <Route
+                path=":id/service/:service/terminal/:terminal"
+                element={<Terminal />}
+              />
+              <Route
+                path=":id/container/:container/terminal/:terminal"
+                element={<Terminal />}
+              />
             </Route>
           </Route>
         </Route>
