@@ -8,7 +8,7 @@ export interface EnableSwitchProps extends SwitchProps {
 
 export default function EnableSwitch({
   checked,
-  color,
+  color = "green.9",
   label,
   onChange,
   onCheckedChange,

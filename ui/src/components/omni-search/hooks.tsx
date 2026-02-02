@@ -1,8 +1,13 @@
-import { useAllResources, useSettingsView, useUser } from "@/lib/hooks";
+import {
+  ResourceMap,
+  useAllResources,
+  useRead,
+  useSettingsView,
+  useUser,
+} from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import { usableResourcePath } from "@/lib/utils";
+import { terminalLink, usableResourcePath } from "@/lib/utils";
 import { RESOURCE_TARGETS, ResourceComponents } from "@/resources";
-import { useLocalStorage } from "@mantine/hooks";
 import {
   spotlight,
   SpotlightActionData,
@@ -11,6 +16,8 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { TemplateMarker } from "../template-marker";
+import { DOCKER_LINK_ICONS } from "../docker/link";
+import { Types } from "komodo_client";
 
 const ITEM_LIMIT = 7;
 let count = 0;
@@ -20,7 +27,6 @@ export function useOmniSearch(): {
   setSearch: (value: string) => void;
   actions: SpotlightActionGroupData[];
 } {
-  const [search, setSearch] = useState("");
   const navigate = useNavigate();
   const nav = useCallback(
     (to: string) => {
@@ -29,18 +35,52 @@ export function useOmniSearch(): {
     },
     [navigate],
   );
-  const [showContainers, setShowContainers] = useLocalStorage({
-    key: "omni-show-containers",
-    defaultValue: false,
-  });
+
+  const [search, setSearch] = useState("");
+  const searchTerms = useMemo(
+    () =>
+      search
+        .toLowerCase()
+        .split(" ")
+        .filter((term) => term),
+    [search],
+  );
+
+  const _containers = useRead(
+    "ListAllDockerContainers",
+    {},
+    { refetchInterval: 30_000 },
+  ).data;
+  const containers = useMemo(() => {
+    return _containers?.filter((c) => {
+      if (searchTerms.length === 0) return true;
+      const lower = c.name.toLowerCase();
+      return searchTerms.every(
+        (term) => lower.includes(term) || "containers".includes(term),
+      );
+    });
+  }, [_containers, searchTerms]);
+
+  const _terminals = useRead(
+    "ListTerminals",
+    {},
+    { refetchInterval: 30_000 },
+  ).data;
+  const terminals = useMemo(() => {
+    return _terminals?.filter((c) => {
+      if (searchTerms.length === 0) return true;
+      const lower = c.name.toLowerCase();
+      return searchTerms.every(
+        (term) => lower.includes(term) || "terminals".includes(term),
+      );
+    });
+  }, [_terminals, searchTerms]);
+
   const user = useUser().data;
   const resources = useAllResources();
   const [_, setSettingsView] = useSettingsView();
+
   const _actions = useMemo(() => {
-    const searchTerms = search
-      .toLowerCase()
-      .split(" ")
-      .filter((term) => term);
     return [
       {
         group: "",
@@ -114,13 +154,50 @@ export function useOmniSearch(): {
                 label: resource.name,
                 onClick: () =>
                   nav(`/${usableResourcePath(_type)}/${resource.id}`),
-                leftSection: <Components.Icon id={resource.id} />,
+                leftSection: <Components.Icon id={resource.id} size="1.3rem" />,
                 rightSection: resource.template && (
                   <TemplateMarker type={_type} />
                 ),
               })) ?? [],
         };
       }),
+
+      {
+        group: "Containers",
+        actions:
+          containers?.map((container) => ({
+            id: container.server_id ?? "" + " " + container.name,
+            label: container.name,
+            description:
+              "Server: " +
+              resources.Server?.find(
+                (server) => container.server_id === server.id,
+              )?.name,
+            onClick: () =>
+              nav(
+                `/servers/${container.server_id}/container/${container.name}`,
+              ),
+            leftSection: (
+              <DOCKER_LINK_ICONS.container
+                serverId={container.server_id!}
+                name={container.name}
+                size="1.3rem"
+              />
+            ),
+          })) ?? [],
+      },
+
+      {
+        group: "Terminals",
+        actions:
+          terminals?.map((terminal) => ({
+            id: JSON.stringify(terminal.target) + " " + terminal.name,
+            label: terminal.name,
+            description: terminalTargetDescription(terminal.target, resources),
+            onClick: () => nav(terminalLink(terminal)),
+            leftSection: <ICONS.Terminal size="1.3rem" />,
+          })) ?? [],
+      },
     ];
   }, [resources]);
 
@@ -150,4 +227,41 @@ export function useOmniSearch(): {
     setSearch,
     actions,
   };
+}
+
+function terminalTargetDescription(
+  target: Types.TerminalTarget,
+  resources: ResourceMap,
+) {
+  switch (target.type) {
+    case "Server":
+      return (
+        "Server: " +
+        resources.Server?.find((server) => target.params.server === server.id)
+          ?.name
+      );
+    case "Container":
+      return (
+        "Server: " +
+        resources.Server?.find((server) => target.params.server === server.id)
+          ?.name +
+        ", Container: " +
+        target.params.container
+      );
+    case "Stack":
+      return (
+        "Stack: " +
+        resources.Stack?.find((stack) => target.params.stack === stack.id)
+          ?.name +
+        ", Service: " +
+        target.params.service
+      );
+    case "Deployment":
+      return (
+        "Deployment: " +
+        resources.Deployment?.find(
+          (deployment) => target.params.deployment === deployment.id,
+        )?.name
+      );
+  }
 }

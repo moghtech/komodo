@@ -49,6 +49,7 @@ export default function Tags({
             bdrs="sm"
             py={py}
             tt="none"
+            fz={{ base: "xs", lg: "sm" }}
             {...badgeProps}
           >
             {tag?.name ?? <Loader size="0.6rem" />}

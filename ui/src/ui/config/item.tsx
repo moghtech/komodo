@@ -154,7 +154,6 @@ export function ConfigList<T>({
       />
       {!inputListProps.disabled && (
         <Button
-          variant="light"
           leftSection={<ICONS.Create size="1rem" />}
           onClick={() =>
             inputListProps.set({

@@ -26,7 +26,7 @@ export const DARK_BODY = "#0f1115";
 
 export const theme = createTheme({
   cursorType: "pointer",
-  primaryColor: "green",
+  primaryColor: "gray",
   breakpoints: {
     xs: "36em",
     sm: "48em",

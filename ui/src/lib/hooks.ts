@@ -337,7 +337,7 @@ export const useResourceParamType = () => {
   return (type[0].toUpperCase() + type.slice(1, -1)) as UsableResource;
 };
 
-type ResourceMap = {
+export type ResourceMap = {
   [Resource in UsableResource]: Types.ResourceListItem<unknown>[] | undefined;
 };
 

@@ -101,7 +101,6 @@ export default function ResourceSelector({
     >
       <Combobox.Target>
         <Button
-          color="accent"
           justify="space-between"
           rightSection={<ChevronsUpDown size="1rem" />}
           onClick={() => combobox.toggleDropdown()}
@@ -109,7 +108,7 @@ export default function ResourceSelector({
           w="fit-content"
           maw={{ base: 200, lg: 300 }}
         >
-          <Group>
+          <Group gap="xs">
             <Components.Icon id={selected} />
             <Text>
               {name || (placeholder ?? `Select ${fmtResourceType(type)}`)}

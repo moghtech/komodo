@@ -1,3 +1,4 @@
+import ExportToml from "@/components/export-toml";
 import ResourceUpdates from "@/components/updates/resource";
 import {
   usePermissions,
@@ -80,8 +81,8 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
         <Group>
           {/* {type !== "Server" && canCreate && (
             <CopyResource type={type} id={id} />
-          )}
-          {showExport && <ExportButton targets={[{ type, id }]} />} */}
+          )} */}
+          {showExport && <ExportToml targets={[{ type, id }]} />}
         </Group>
       </Flex>
 
