@@ -7,6 +7,7 @@ import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
 import StackTable from "./table";
 import NewResource from "@/resources/new";
+import StackConfig from "./config";
 
 export const StackComponents: RequiredResourceComponents<
   Types.StackConfig,
@@ -95,7 +96,7 @@ export const StackComponents: RequiredResourceComponents<
 
   Executions: {},
 
-  Config: () => <>CONFIG</>,
+  Config: StackConfig,
   DangerZone: ({ id }) => <></>,
 
   Page: {},

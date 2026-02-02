@@ -104,7 +104,9 @@ export function ProviderSelectorConfig({
 } & ProviderSelectorProps) {
   const select = accountType === "git" ? "git provider" : "docker registry";
   const label = accountType === "git" ? "Git Provider" : "Image Registry";
-  const selector = <ProviderSelector accountType={accountType} {...props} />;
+  const selector = (
+    <ProviderSelector accountType={accountType} w="fit-content" {...props} />
+  );
   return (
     <ConfigItem
       label={label}
