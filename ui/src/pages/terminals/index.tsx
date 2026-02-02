@@ -5,11 +5,12 @@ import { ICONS } from "@/lib/icons";
 import { filterBySplit, terminalLink } from "@/lib/utils";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import Page from "@/ui/page";
-import { Code, Group, Text, TextInput } from "@mantine/core";
+import { Group, Text, TextInput } from "@mantine/core";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import DeleteTerminal from "./delete";
 import BatchDeleteAllTerminals from "./batch-delete";
+import CreateTerminal from "./create";
 
 export default function Terminals() {
   useSetTitle("Terminals");
@@ -24,7 +25,7 @@ export default function Terminals() {
     >
       <Group justify="space-between">
         <Group>
-          {/* <CreateTerminal /> */}
+          <CreateTerminal />
           <BatchDeleteAllTerminals
             refetch={refetch}
             noTerminals={!terminals?.length}

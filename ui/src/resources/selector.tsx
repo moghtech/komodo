@@ -88,7 +88,7 @@ export default function ResourceSelector({
   return (
     <Combobox
       store={combobox}
-      width={260}
+      width={300}
       onOptionSubmit={(_id, props) => {
         const id = _id === "None" ? "" : _id;
         onSelect?.(id);
@@ -121,16 +121,11 @@ export default function ResourceSelector({
         <Combobox.Search
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          leftSection={<ICONS.Search size="1rem" />}
+          leftSection={<ICONS.Search size="1rem" style={{ marginRight: 6 }} />}
           placeholder="Search"
-          styles={{
-            section: {
-              marginRight: 4,
-            },
-          }}
         />
         <Combobox.Options mah={224} style={{ overflowY: "auto" }}>
-          <Combobox.Option value="None">None</Combobox.Option>
+          {!search && <Combobox.Option value="None">None</Combobox.Option>}
           {filtered.map((resource) => (
             <Combobox.Option key={resource.id} value={resource.id}>
               <Group>

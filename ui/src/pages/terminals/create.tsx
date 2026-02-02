@@ -1,17 +1,8 @@
+import ContainerSelector from "@/components/container-selector";
 import { useRead, useShiftKeyListener, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import { terminalLink } from "@/lib/utils";
 import ResourceSelector from "@/resources/selector";
-import {
-  Button,
-  Grid,
-  Group,
-  Popover,
-  Select,
-  SimpleGrid,
-  Stack,
-  TextInput,
-} from "@mantine/core";
+import { Button, Grid, Menu, Select, Stack, TextInput } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { Fragment, ReactNode, useEffect, useState } from "react";
@@ -26,17 +17,57 @@ const TERMINAL_TYPES: Types.TerminalTarget["type"][] = [
 
 export default function CreateTerminal() {
   const [opened, { open, close, toggle }] = useDisclosure();
-
+  const [type, setType] = useState<Types.TerminalTarget["type"]>("Server");
   useShiftKeyListener("N", () => open());
   return (
-    <Popover opened={opened}>
-      <Popover.Target>
+    <Menu
+      opened={opened}
+      position="bottom-start"
+      offset={21}
+      width="auto"
+      onClose={close}
+    >
+      <Menu.Target>
         <Button leftSection={<ICONS.Create size="1rem" />} onClick={toggle}>
           New Terminal
         </Button>
-      </Popover.Target>
-      <Popover.Dropdown></Popover.Dropdown>
-    </Popover>
+      </Menu.Target>
+      <Menu.Dropdown p="lg">
+        {type === "Server" ? (
+          <CreateServerTerminal
+            type={type}
+            setType={setType}
+            opened={opened}
+            close={close}
+          />
+        ) : type === "Container" ? (
+          <CreateContainerTerminal
+            type={type}
+            setType={setType}
+            opened={opened}
+            close={close}
+          />
+        ) : type === "Stack" ? (
+          // <CreateStackServiceTerminal
+          //   type={type}
+          //   setType={setType}
+          //   opened={opened}
+          //   close={close}
+          // />
+          <></>
+        ) : type === "Deployment" ? (
+          // <CreateDeploymentTerminal
+          //   type={type}
+          //   setType={setType}
+          //   opened={opened}
+          //   close={close}
+          // />
+          <></>
+        ) : (
+          <></>
+        )}
+      </Menu.Dropdown>
+    </Menu>
   );
 }
 
@@ -47,51 +78,57 @@ type Node = {
 };
 
 type BaseRequest = {
-  type: Types.TerminalTarget["type"];
   name: string;
-  mode: "exec" | "attach";
+  mode: Types.ContainerTerminalMode;
   command: string | undefined;
 };
 
 function CreateTerminalLayout({
+  type,
+  setType,
   nodes: _nodes,
   finalize,
+  onSuccess,
   showMode,
   commandPlaceholder = "sh (Optional)",
 }: {
+  type: Types.TerminalTarget["type"];
+  setType: (type: Types.TerminalTarget["type"]) => void;
   nodes: Node[];
   finalize: (baseRequest: BaseRequest) => Types.CreateTerminal;
+  onSuccess: (baseRequest: BaseRequest) => void;
   showMode?: boolean;
   commandPlaceholder?: string;
 }) {
-  const nav = useNavigate();
   const [baseRequest, setBaseRequest] = useState<BaseRequest>({
-    type: "Server",
     name: "",
-    mode: "exec",
+    mode: Types.ContainerTerminalMode.Exec,
     command: undefined,
   });
   const { mutate, isPending } = useWrite("CreateTerminal", {
     onSuccess: () => {
-      nav(terminalLink({ target: { type: baseRequest.type, params: {} } }));
-      close();
-      // setRequest(defaultCreateServerTerminal(firstServer));
+      onSuccess(baseRequest);
+      setBaseRequest({
+        name: "",
+        mode: Types.ContainerTerminalMode.Exec,
+        command: undefined,
+      });
     },
   });
+  const onConfirm = () => {
+    mutate(finalize(baseRequest));
+  };
   const nodes: Node[] = [
     {
       label: "Type",
       node: (
         <Select
-          value={baseRequest.type}
+          value={type}
           onChange={(type) =>
-            type &&
-            setBaseRequest({
-              ...baseRequest,
-              type: type as Types.TerminalTarget["type"],
-            })
+            type && setType(type as Types.TerminalTarget["type"])
           }
           data={TERMINAL_TYPES}
+          comboboxProps={{ withinPortal: false }}
         />
       ),
     },
@@ -107,9 +144,9 @@ function CreateTerminalLayout({
             setBaseRequest({ ...baseRequest, name: e.target.value })
           }
           onKeyDown={(e) => {
-            // if (e.key === "Enter") {
-            //   onConfirm(baseRequest);
-            // }
+            if (e.key === "Enter") {
+              onConfirm();
+            }
           }}
         />
       ),
@@ -122,9 +159,17 @@ function CreateTerminalLayout({
           value={baseRequest.mode}
           onChange={(mode) =>
             mode &&
-            setBaseRequest({ ...baseRequest, mode: mode as "exec" | "attach" })
+            setBaseRequest({
+              ...baseRequest,
+              name:
+                mode === Types.ContainerTerminalMode.Attach
+                  ? "attach"
+                  : baseRequest.name,
+              mode: mode as Types.ContainerTerminalMode,
+            })
           }
           data={["exec", "attach"]}
+          comboboxProps={{ withinPortal: false }}
         />
       ),
     },
@@ -139,16 +184,16 @@ function CreateTerminalLayout({
             setBaseRequest({ ...baseRequest, command: e.target.value })
           }
           onKeyDown={(e) => {
-            // if (e.key === "Enter") {
-            //   onConfirm(baseRequest);
-            // }
+            if (e.key === "Enter") {
+              onConfirm();
+            }
           }}
         />
       ),
     },
   ].filter((n) => !n.hidden);
   return (
-    <Stack>
+    <Stack w={{ base: 300, lg: 500 }}>
       <Stack hiddenFrom="md">
         {nodes.map(({ label, node }) => (
           <Stack key={label} gap="0">
@@ -178,7 +223,18 @@ function CreateTerminalLayout({
   );
 }
 
-function CreateServerTerminal() {
+function CreateServerTerminal({
+  type,
+  setType,
+  opened,
+  close,
+}: {
+  type: Types.TerminalTarget["type"];
+  setType: (type: Types.TerminalTarget["type"]) => void;
+  opened: boolean;
+  close: () => void;
+}) {
+  const nav = useNavigate();
   const firstServer = (useRead("ListServers", {}).data ?? [])[0]?.id ?? "";
   const [server, _setServer] = useState(firstServer);
   const [changed, setChanged] = useState(false);
@@ -189,13 +245,19 @@ function CreateServerTerminal() {
   useEffect(() => {
     if (changed) return;
     setServer(firstServer);
-  }, [open, firstServer]);
+  }, [opened, firstServer]);
   return (
     <CreateTerminalLayout
+      type={type}
+      setType={setType}
       finalize={(baseRequest) => ({
         name: baseRequest.name,
         target: { type: "Server", params: { server: server } },
       })}
+      onSuccess={(request) => {
+        nav(`/servers/${server}/terminal/${request.name}`);
+        close();
+      }}
       nodes={[
         {
           label: "Server",
@@ -205,12 +267,88 @@ function CreateServerTerminal() {
               state={Types.ServerState.Ok}
               selected={server}
               onSelect={(server) => setServer(server)}
-              position="bottom-end"
-              targetProps={{ fullWidth: true }}
+              withinPortal={false}
+              targetProps={{ w: "100%", maw: "100%" }}
             />
           ),
         },
       ]}
+      commandPlaceholder="bash (Optional)"
+    />
+  );
+}
+
+function CreateContainerTerminal({
+  type,
+  setType,
+  opened,
+  close,
+}: {
+  type: Types.TerminalTarget["type"];
+  setType: (type: Types.TerminalTarget["type"]) => void;
+  opened: boolean;
+  close: () => void;
+}) {
+  const nav = useNavigate();
+  const firstServer = (useRead("ListServers", {}).data ?? [])[0]?.id ?? "";
+  const [params, _setParams] = useState({ server: firstServer, container: "" });
+  const [changed, setChanged] = useState(false);
+  const setParams = (params: { server: string; container: string }) => {
+    setChanged(true);
+    _setParams(params);
+  };
+  useEffect(() => {
+    if (changed) return;
+    setParams({ ...params, server: firstServer });
+  }, [opened, firstServer]);
+  return (
+    <CreateTerminalLayout
+      type={type}
+      setType={setType}
+      finalize={(baseRequest) => ({
+        name: baseRequest.name,
+        mode: baseRequest.mode,
+        target: {
+          type: "Container",
+          params: { server: params.server, container: params.container },
+        },
+      })}
+      onSuccess={(request) => {
+        nav(
+          `/servers/${params.server}/container/${params.container}/terminal/${request.name}`,
+        );
+        close();
+        setParams({ server: firstServer, container: "" });
+      }}
+      nodes={[
+        {
+          label: "Server",
+          node: (
+            <ResourceSelector
+              type="Server"
+              state={Types.ServerState.Ok}
+              selected={params.server}
+              onSelect={(server) => setParams({ ...params, server })}
+              withinPortal={false}
+              targetProps={{ w: "100%", maw: "100%" }}
+            />
+          ),
+        },
+        {
+          label: "Container",
+          node: (
+            <ContainerSelector
+              serverId={params.server}
+              selected={params.container}
+              state={Types.ContainerStateStatusEnum.Running}
+              onSelect={(container) => setParams({ ...params, container })}
+              withinPortal={false}
+              targetProps={{ w: "100%", maw: "100%" }}
+            />
+          ),
+        },
+      ]}
+      showMode
     />
   );
 }
