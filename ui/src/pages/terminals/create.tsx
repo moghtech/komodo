@@ -1,12 +1,13 @@
-import ContainerSelector from "@/components/container-selector";
-import { useRead, useShiftKeyListener, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
-import ResourceSelector from "@/resources/selector";
+import { Fragment, ReactNode, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button, Grid, Menu, Select, Stack, TextInput } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Types } from "komodo_client";
-import { Fragment, ReactNode, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRead, useShiftKeyListener, useWrite } from "@/lib/hooks";
+import { ICONS } from "@/lib/icons";
+import ResourceSelector from "@/resources/selector";
+import ContainerSelector from "@/components/docker/container-selector";
+import StackServiceSelector from "@/components/stack-service-selector";
 
 const TERMINAL_TYPES: Types.TerminalTarget["type"][] = [
   "Server",
@@ -48,21 +49,19 @@ export default function CreateTerminal() {
             close={close}
           />
         ) : type === "Stack" ? (
-          // <CreateStackServiceTerminal
-          //   type={type}
-          //   setType={setType}
-          //   opened={opened}
-          //   close={close}
-          // />
-          <></>
+          <CreateStackServiceTerminal
+            type={type}
+            setType={setType}
+            opened={opened}
+            close={close}
+          />
         ) : type === "Deployment" ? (
-          // <CreateDeploymentTerminal
-          //   type={type}
-          //   setType={setType}
-          //   opened={opened}
-          //   close={close}
-          // />
-          <></>
+          <CreateDeploymentTerminal
+            type={type}
+            setType={setType}
+            opened={opened}
+            close={close}
+          />
         ) : (
           <></>
         )}
@@ -349,6 +348,136 @@ function CreateContainerTerminal({
         },
       ]}
       showMode
+    />
+  );
+}
+
+function CreateStackServiceTerminal({
+  type,
+  setType,
+  opened,
+  close,
+}: {
+  type: Types.TerminalTarget["type"];
+  setType: (type: Types.TerminalTarget["type"]) => void;
+  opened: boolean;
+  close: () => void;
+}) {
+  const nav = useNavigate();
+  const firstStack = (useRead("ListStacks", {}).data ?? [])[0]?.id ?? "";
+  const [params, _setParams] = useState({ stack: firstStack, service: "" });
+  const [changed, setChanged] = useState(false);
+  const setParams = (params: { stack: string; service: string }) => {
+    setChanged(true);
+    _setParams(params);
+  };
+  useEffect(() => {
+    if (changed) return;
+    setParams({ ...params, stack: firstStack });
+  }, [opened, firstStack]);
+  return (
+    <CreateTerminalLayout
+      type={type}
+      setType={setType}
+      finalize={(baseRequest) => ({
+        name: baseRequest.name,
+        mode: baseRequest.mode,
+        target: {
+          type: "Stack",
+          params: { stack: params.stack, service: params.service },
+        },
+      })}
+      onSuccess={(request) => {
+        nav(
+          `/stacks/${params.stack}/service/${params.service}/terminal/${request.name}`,
+        );
+        close();
+        setParams({ stack: firstStack, service: "" });
+      }}
+      nodes={[
+        {
+          label: "Stack",
+          node: (
+            <ResourceSelector
+              type="Stack"
+              state={Types.StackState.Running}
+              selected={params.stack}
+              onSelect={(stack) => setParams({ ...params, stack })}
+              withinPortal={false}
+              targetProps={{ w: "100%", maw: "100%" }}
+            />
+          ),
+        },
+        {
+          label: "Service",
+          node: (
+            <StackServiceSelector
+              stackId={params.stack}
+              selected={params.service}
+              state={Types.ContainerStateStatusEnum.Running}
+              onSelect={(service) => setParams({ ...params, service })}
+              withinPortal={false}
+              targetProps={{ w: "100%", maw: "100%" }}
+            />
+          ),
+        },
+      ]}
+      showMode
+    />
+  );
+}
+
+function CreateDeploymentTerminal({
+  type,
+  setType,
+  opened,
+  close,
+}: {
+  type: Types.TerminalTarget["type"];
+  setType: (type: Types.TerminalTarget["type"]) => void;
+  opened: boolean;
+  close: () => void;
+}) {
+  const nav = useNavigate();
+  const firstDeployment =
+    (useRead("ListDeployments", {}).data ?? [])[0]?.id ?? "";
+  const [deployment, _setDeployment] = useState(firstDeployment);
+  const [changed, setChanged] = useState(false);
+  const setDeployment = (deployment: string) => {
+    setChanged(true);
+    _setDeployment(deployment);
+  };
+  useEffect(() => {
+    if (changed) return;
+    setDeployment(firstDeployment);
+  }, [opened, firstDeployment]);
+  return (
+    <CreateTerminalLayout
+      type={type}
+      setType={setType}
+      finalize={(baseRequest) => ({
+        name: baseRequest.name,
+        target: { type: "Deployment", params: { deployment: deployment } },
+      })}
+      onSuccess={(request) => {
+        nav(`/deployments/${deployment}/terminal/${request.name}`);
+        close();
+      }}
+      nodes={[
+        {
+          label: "Deployment",
+          node: (
+            <ResourceSelector
+              type="Deployment"
+              state={Types.DeploymentState.Running}
+              selected={deployment}
+              onSelect={(deployment) => setDeployment(deployment)}
+              withinPortal={false}
+              targetProps={{ w: "100%", maw: "100%" }}
+            />
+          ),
+        },
+      ]}
     />
   );
 }

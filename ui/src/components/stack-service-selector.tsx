@@ -1,5 +1,4 @@
 import { useRead } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
 import { filterBySplit } from "@/lib/utils";
 import {
   Button,
@@ -14,9 +13,10 @@ import { Types } from "komodo_client";
 import { ChevronsUpDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DOCKER_LINK_ICONS } from "./docker/link";
+import { ICONS } from "@/lib/icons";
 
-export interface ContainerSelectorProps extends ComboboxProps {
-  serverId: string;
+export interface StackServiceSelectorProps extends ComboboxProps {
+  stackId: string;
   selected: string | undefined;
   onSelect?: (name: string) => void;
   disabled?: boolean;
@@ -25,8 +25,8 @@ export interface ContainerSelectorProps extends ComboboxProps {
   targetProps?: ButtonProps;
 }
 
-export default function ContainerSelector({
-  serverId,
+export default function StackServiceSelector({
+  stackId,
   selected,
   onSelect,
   disabled,
@@ -36,16 +36,17 @@ export default function ContainerSelector({
   onOptionSubmit,
   targetProps,
   ...comboboxProps
-}: ContainerSelectorProps) {
+}: StackServiceSelectorProps) {
   const [search, setSearch] = useState("");
-  const containers = useRead("ListDockerContainers", {
-    server: serverId,
-  }).data?.filter((container) => !state || container.state === state);
-  const firstContainer = containers?.[0].name;
+  const services = useRead("ListStackServices", {
+    stack: stackId,
+  }).data?.filter((service) => !state || service?.container?.state === state);
+  const firstService = services?.[0].service;
   useEffect(() => {
-    firstContainer && onSelect?.(firstContainer);
-  }, [firstContainer]);
-  const name = containers?.find((r) => r.name === selected)?.name;
+    firstService && onSelect?.(firstService);
+  }, [firstService]);
+  const name = services?.find((s) => s.service === selected)?.service;
+  const container = services?.find((s) => s.service === selected)?.container;
 
   const combobox = useCombobox({
     onDropdownOpen: () => {
@@ -61,13 +62,13 @@ export default function ContainerSelector({
     combobox.selectFirstOption();
   }, [search]);
 
-  if (!containers) return null;
+  if (!services) return null;
 
-  const filtered = filterBySplit(containers, search, (item) => item.name).sort(
+  const filtered = filterBySplit(services, search, (item) => item.service).sort(
     (a, b) => {
-      if (a.name > b.name) {
+      if (a.service > b.service) {
         return 1;
-      } else if (a.name < b.name) {
+      } else if (a.service < b.service) {
         return -1;
       } else {
         return 0;
@@ -97,7 +98,12 @@ export default function ContainerSelector({
           {...targetProps}
         >
           <Group gap="xs">
-            <DOCKER_LINK_ICONS.container serverId={serverId} name={selected} />
+            {container && (
+              <DOCKER_LINK_ICONS.container
+                serverId={container.server_id!}
+                name={container.name}
+              />
+            )}
             <Text>{name || (placeholder ?? "Select container")}</Text>
           </Group>
         </Button>
@@ -112,14 +118,16 @@ export default function ContainerSelector({
         />
         <Combobox.Options mah={224} style={{ overflowY: "auto" }}>
           {!search && <Combobox.Option value="None">None</Combobox.Option>}
-          {filtered.map((container) => (
-            <Combobox.Option key={container.name} value={container.name}>
+          {filtered.map((service) => (
+            <Combobox.Option key={service.service} value={service.service}>
               <Group>
-                <DOCKER_LINK_ICONS.container
-                  serverId={container.server_id!}
-                  name={container.name}
-                />
-                {container.name}
+                {service.container && (
+                  <DOCKER_LINK_ICONS.container
+                    serverId={service.container.server_id!}
+                    name={service.container.name}
+                  />
+                )}
+                {service.service}
               </Group>
             </Combobox.Option>
           ))}
