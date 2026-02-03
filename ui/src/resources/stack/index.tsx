@@ -99,7 +99,6 @@ export const StackComponents: RequiredResourceComponents<
     let state = StackComponents.useListItem(id)?.info.state;
     return <StatusBadge text={state} intent={stackStateIntention(state)} />;
   },
-  Status: {},
   Info: {},
 
   Executions: {

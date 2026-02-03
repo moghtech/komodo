@@ -58,7 +58,7 @@ export default function Terminals() {
                   e.stopPropagation();
                 }}
               >
-                <Group td="underline" fz="md">
+                <Group className="hover-underline" fz="md">
                   <ICONS.Terminal size="1rem" />
                   {row.original.name}
                 </Group>

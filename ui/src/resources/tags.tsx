@@ -15,7 +15,6 @@ import {
   Combobox,
   Divider,
   Group,
-  Stack,
   Text,
   useCombobox,
 } from "@mantine/core";
@@ -144,6 +143,7 @@ export const AddResourceTags = (target: UsableResourceTarget) => {
             tags: [...(resource?.tags ?? []), tag_id],
           });
         }
+        setSearch("");
       }}
     >
       <Combobox.Target>

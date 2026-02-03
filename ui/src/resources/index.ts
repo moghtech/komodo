@@ -64,7 +64,9 @@ export interface RequiredResourceComponents<
   ListItemInfo = any,
 > {
   useList: () => Types.ResourceListItem<ListItemInfo>[] | undefined;
-  useListItem: (id: string | undefined) => Types.ResourceListItem<ListItemInfo> | undefined;
+  useListItem: (
+    id: string | undefined,
+  ) => Types.ResourceListItem<ListItemInfo> | undefined;
   useFull: (id: string) => Types.Resource<Config, Info> | undefined;
   useResourceLinks: (
     resource: Types.Resource<Config, Info> | undefined,
@@ -109,12 +111,9 @@ export interface RequiredResourceComponents<
   /** Danger zone for resource, containing eg delete */
   DangerZone: IdComponent;
 
-  /** status metrics, like deployment state / status */
-  Status: { [status: string]: IdComponent };
-
   /**
    * Some config items shown in header, like deployment server /image
-   * or build repo / branch
+   * or build repo / branch, or status metrics, like deployment state / status
    */
   Info: { [info: string]: IdComponent };
 

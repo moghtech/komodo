@@ -31,6 +31,10 @@ a:focus {
   text-wrap: nowrap;
 }
 
+.hover-underline:hover {
+  text-decoration: underline;
+}
+
 .monaco-editor {
   position: absolute !important;
 }

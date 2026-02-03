@@ -140,7 +140,6 @@ function ResourceHeader({ type, id }: { type: UsableResource; id: string }) {
   const { canWrite } = usePermissions({ type, id });
 
   const infoEntries = Object.entries(Components.Info);
-  const statusEntries = Object.entries(Components.Status);
 
   return (
     <Stack justify="space-between">
@@ -152,21 +151,20 @@ function ResourceHeader({ type, id }: { type: UsableResource; id: string }) {
       >
         <Components.ResourcePageHeader id={id} />
         <Group px="md">
-          {infoEntries.map(([key, Info]) => (
+          {infoEntries.map(([key, Info], i) => (
             <Box
               key={key}
-              pr="md"
+              pl={i > 0 ? "md" : undefined}
               fz="sm"
-              bdrs="md"
               style={{
-                borderRight: "1px solid var(--mantine-color-accent-border-0)",
+                borderLeft:
+                  i > 0
+                    ? "1px solid var(--mantine-color-accent-border-0)"
+                    : undefined,
               }}
             >
               <Info id={id} />
             </Box>
-          ))}
-          {statusEntries.map(([key, Status]) => (
-            <Status key={key} id={id} />
           ))}
         </Group>
         {links && links.length > 0 && (
@@ -193,9 +191,11 @@ function ResourceHeader({ type, id }: { type: UsableResource; id: string }) {
           </Group>
         )}
         <Group px="md" gap="sm">
-          <Text c="dimmed" fz="sm">
-            Tags:
-          </Text>
+          {!resource?.tags.length && (
+            <Text c="dimmed" fz="sm">
+              Tags:
+            </Text>
+          )}
           <ResourceTags
             target={{ id, type }}
             disabled={!canWrite}

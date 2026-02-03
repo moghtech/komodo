@@ -81,7 +81,7 @@ export const ActionComponents: RequiredResourceComponents<
     let state = ActionComponents.useListItem(id)?.info.state;
     return <StatusBadge text={state} intent={actionStateIntention(state)} />;
   },
-  Status: {
+  Info: {
     Schedule: ({ id }) => {
       const next_scheduled_run =
         ActionComponents.useListItem(id)?.info.next_scheduled_run;
@@ -126,7 +126,6 @@ export const ActionComponents: RequiredResourceComponents<
       );
     },
   },
-  Info: {},
 
   Executions: {
     RunAction: ({ id }) => {

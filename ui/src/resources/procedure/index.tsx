@@ -74,7 +74,6 @@ export const ProcedureComponents: RequiredResourceComponents<
     let state = ProcedureComponents.useListItem(id)?.info.state;
     return <StatusBadge text={state} intent={procedureStateIntention(state)} />;
   },
-  Status: {},
   Info: {},
 
   Executions: {},

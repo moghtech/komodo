@@ -91,7 +91,6 @@ export const DeploymentComponents: RequiredResourceComponents<
       <StatusBadge text={state} intent={deploymentStateIntention(state)} />
     );
   },
-  Status: {},
   Info: {},
 
   Executions: {},

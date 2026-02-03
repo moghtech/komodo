@@ -37,7 +37,7 @@ export default function DockerResourceLink({
           {...props}
         />
       )}
-      style={{ textDecoration: "underline" }}
+      className="hover-underline"
       c={dimmed ? "dimmed" : "inherit"}
       wrap="nowrap"
     >

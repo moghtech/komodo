@@ -51,7 +51,6 @@ export const AlerterComponents: RequiredResourceComponents<
   },
 
   State: () => null,
-  Status: {},
   Info: {},
 
   Executions: {},

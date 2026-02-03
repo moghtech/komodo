@@ -81,7 +81,7 @@ export const ResourceLink = ({
       wrap="nowrap"
     >
       <Components.Icon id={id} />
-      <Text style={{ textDecoration: "underline", textWrap: "nowrap" }}>
+      <Text className="hover-underline" style={{ textWrap: "nowrap" }}>
         {resource?.name ?? "Unknown"}
       </Text>
       {resource?.template && <TemplateMarker type={type} />}

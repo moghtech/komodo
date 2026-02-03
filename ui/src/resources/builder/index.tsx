@@ -59,7 +59,6 @@ export const BuilderComponents: RequiredResourceComponents<
   },
 
   State: () => null,
-  Status: {},
   Info: {},
 
   Executions: {},

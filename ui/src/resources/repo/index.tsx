@@ -74,7 +74,6 @@ export const RepoComponents: RequiredResourceComponents<
     let state = RepoComponents.useListItem(id)?.info.state;
     return <StatusBadge text={state} intent={repoStateIntention(state)} />;
   },
-  Status: {},
   Info: {},
 
   Executions: {},

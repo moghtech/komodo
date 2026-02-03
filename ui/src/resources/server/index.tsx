@@ -11,6 +11,9 @@ import ServerConfig from "./config";
 import ConfirmButton from "@/ui/confirm-button";
 import ConfirmModal from "@/ui/confirm-modal";
 import { Prune } from "./executions";
+import ServerVersion from "./version";
+import { Group, HoverCard } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 
 export const ServerComponents: RequiredResourceComponents<
   Types.ServerConfig,
@@ -80,8 +83,136 @@ export const ServerComponents: RequiredResourceComponents<
     let state = ServerComponents.useListItem(id)?.info.state;
     return <StatusBadge text={state} intent={serverStateIntention(state)} />;
   },
-  Status: {},
-  Info: {},
+  Info: {
+    ServerVersion,
+    PublicIp: ({ id }) => {
+      const publicIp = ServerComponents.useListItem(id)?.info.public_ip;
+      return (
+        <HoverCard position="bottom-start">
+          <HoverCard.Target>
+            <Group
+              gap="xs"
+              onClick={() => {
+                publicIp &&
+                  navigator.clipboard
+                    .writeText(publicIp)
+                    .then(() =>
+                      notifications.show({ message: "Copied public IP" }),
+                    );
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              <ICONS.IP size="1rem" />
+              {publicIp ?? "Unknown IP"}
+            </Group>
+          </HoverCard.Target>
+          <HoverCard.Dropdown>Public IP (click to copy)</HoverCard.Dropdown>
+        </HoverCard>
+      );
+    },
+    Cpu: ({ id }) => {
+      const isServerAvailable =
+        ServerComponents.useListItem(id)?.info.state === Types.ServerState.Ok;
+      const coreCount =
+        useRead(
+          "GetSystemInformation",
+          { server: id },
+          {
+            enabled: isServerAvailable,
+            refetchInterval: 5000,
+          },
+        ).data?.core_count ?? 0;
+      return (
+        <HoverCard position="bottom-start">
+          <HoverCard.Target>
+            <Group gap="xs">
+              <ICONS.Cpu size="1rem" />
+              {coreCount
+                ? `${coreCount} Core${coreCount === 1 ? "" : "s"}`
+                : "N/A"}
+            </Group>
+          </HoverCard.Target>
+          <HoverCard.Dropdown>CPU Core Count</HoverCard.Dropdown>
+        </HoverCard>
+      );
+    },
+    LoadAvg: ({ id }) => {
+      const isServerAvailable =
+        ServerComponents.useListItem(id)?.info.state === Types.ServerState.Ok;
+      const stats = useRead(
+        "GetSystemStats",
+        { server: id },
+        {
+          enabled: isServerAvailable,
+          refetchInterval: 5000,
+        },
+      ).data;
+
+      const one = stats?.load_average?.one;
+
+      return (
+        <HoverCard position="bottom-start">
+          <HoverCard.Target>
+            <Group gap="xs">
+              <ICONS.LoadAvg size="1rem" />
+              {one?.toFixed(2) ?? "N/A"}
+            </Group>
+          </HoverCard.Target>
+          <HoverCard.Dropdown>1m Load Average</HoverCard.Dropdown>
+        </HoverCard>
+      );
+    },
+    Memory: ({ id }) => {
+      const isServerAvailable =
+        ServerComponents.useListItem(id)?.info.state === Types.ServerState.Ok;
+      const stats = useRead(
+        "GetSystemStats",
+        { server: id },
+        {
+          enabled: isServerAvailable,
+          refetchInterval: 5000,
+        },
+      ).data;
+      return (
+        <HoverCard position="bottom-start">
+          <HoverCard.Target>
+            <Group gap="xs">
+              <ICONS.Memory size="1rem" />
+              {stats?.mem_total_gb.toFixed(2).concat(" GB") ?? "N/A"}
+            </Group>
+          </HoverCard.Target>
+          <HoverCard.Dropdown>Total Memory</HoverCard.Dropdown>
+        </HoverCard>
+      );
+    },
+    Disk: ({ id }) => {
+      const isServerAvailable =
+        ServerComponents.useListItem(id)?.info.state === Types.ServerState.Ok;
+      const stats = useRead(
+        "GetSystemStats",
+        { server: id },
+        {
+          enabled: isServerAvailable,
+          refetchInterval: 5000,
+        },
+      ).data;
+      const diskTotalGb = stats?.disks.reduce(
+        (acc, curr) => acc + curr.total_gb,
+        0,
+      );
+      return (
+        <HoverCard position="bottom-start">
+          <HoverCard.Target>
+            <Group gap="xs">
+              <ICONS.Disk size="1rem" />
+              {diskTotalGb?.toFixed(2).concat(" GB") ?? "N/A"}
+            </Group>
+          </HoverCard.Target>
+          <HoverCard.Dropdown>Total Disk Capacity</HoverCard.Dropdown>
+        </HoverCard>
+      );
+    },
+  },
 
   Executions: {
     StartAll: ({ id }) => {

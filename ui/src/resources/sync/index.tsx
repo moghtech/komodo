@@ -84,7 +84,6 @@ export const ResourceSyncComponents: RequiredResourceComponents<
       <StatusBadge text={state} intent={resourceSyncStateIntention(state)} />
     );
   },
-  Status: {},
   Info: {},
 
   Executions: {},

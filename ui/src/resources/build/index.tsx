@@ -74,7 +74,6 @@ export const BuildComponents: RequiredResourceComponents<
     let state = BuildComponents.useListItem(id)?.info.state;
     return <StatusBadge text={state} intent={buildStateIntention(state)} />;
   },
-  Status: {},
   Info: {},
 
   Executions: {},

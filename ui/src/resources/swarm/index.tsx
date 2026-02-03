@@ -68,7 +68,6 @@ export const SwarmComponents: RequiredResourceComponents<
     let state = SwarmComponents.useListItem(id)?.info.state;
     return <StatusBadge text={state} intent={swarmStateIntention(state)} />;
   },
-  Status: {},
   Info: {},
 
   Executions: {},
