@@ -2,6 +2,7 @@ import {
   Button,
   ButtonProps,
   Group,
+  Loader,
   Modal,
   Stack,
   Text,
@@ -49,8 +50,8 @@ export default function ConfirmModal({
       <ConfirmButton
         icon={icon}
         onClick={() => (onConfirm ? onConfirm().then(() => close()) : close())}
-        loading={loading}
         disabled={disabled}
+        loading={loading}
         {...targetProps}
       >
         {children}
@@ -63,7 +64,16 @@ export default function ConfirmModal({
       <Modal
         opened={opened}
         onClose={close}
-        title={title ?? `Confirm ${children}`}
+        title={
+          <Text fz="h3">
+            {title ?? (
+              <>
+                Confirm <b>{children}</b>
+              </>
+            )}
+          </Text>
+        }
+        styles={{ content: { padding: "0.5rem" } }}
       >
         <Stack>
           {topAdditonal}
@@ -111,9 +121,14 @@ export default function ConfirmModal({
       </Modal>
 
       <Button
-        onClick={open}
-        leftSection={icon}
         disabled={disabled}
+        onClick={(e) => {
+          e.stopPropagation();
+          open();
+        }}
+        justify="space-between"
+        w={190}
+        rightSection={loading ? <Loader color="white" size="1rem" /> : icon}
         {...targetProps}
       >
         {children}

@@ -1,5 +1,10 @@
 import { ICONS } from "@/lib/icons";
-import { Button, ButtonProps, createPolymorphicComponent } from "@mantine/core";
+import {
+  Button,
+  ButtonProps,
+  createPolymorphicComponent,
+  Loader,
+} from "@mantine/core";
 import { Check } from "lucide-react";
 import {
   FocusEventHandler,
@@ -19,7 +24,10 @@ export interface ConfirmButtonProps extends ButtonProps {
 
 const ConfirmButton = createPolymorphicComponent<"button", ConfirmButtonProps>(
   forwardRef<HTMLButtonElement, ConfirmButtonProps>(
-    ({ icon, leftSection, children, onClick, onBlur, miw, ...props }, ref) => {
+    (
+      { icon, leftSection, children, onClick, onBlur, miw, loading, ...props },
+      ref,
+    ) => {
       const [clickedOnce, setClickedOnce] = useState(false);
       return (
         <Button
@@ -31,14 +39,17 @@ const ConfirmButton = createPolymorphicComponent<"button", ConfirmButtonProps>(
             setClickedOnce(false);
             onBlur?.(e);
           }}
-          leftSection={
+          justify="space-between"
+          w={190}
+          rightSection={
             clickedOnce ? (
               <Check size="1rem" />
+            ) : loading ? (
+              <Loader color="white" size="1rem" />
             ) : (
               (leftSection ?? icon ?? <ICONS.Unknown size="1rem" />)
             )
           }
-          miw={miw ?? 140}
           {...props}
           ref={ref}
         >

@@ -1,14 +1,21 @@
 import { stackStateIntention, hexColorByIntention } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
-import StackTable from "./table";
+import { RequiredResourceComponents } from "@/resources";
 import NewResource from "@/resources/new";
-import StackConfig from "./config";
+import StackTable from "./table";
 import StackTabs from "./tabs";
+import {
+  DeployStack,
+  DestroyStack,
+  PauseUnpauseStack,
+  PullStack,
+  RestartStack,
+  StartStopStack,
+} from "./executions";
 
 export const StackComponents: RequiredResourceComponents<
   Types.StackConfig,
@@ -95,7 +102,14 @@ export const StackComponents: RequiredResourceComponents<
   Status: {},
   Info: {},
 
-  Executions: {},
+  Executions: {
+    DeployStack,
+    PullStack,
+    RestartStack,
+    PauseUnpauseStack,
+    StartStopStack,
+    DestroyStack,
+  },
 
   Config: StackTabs,
   DangerZone: ({ id }) => <></>,

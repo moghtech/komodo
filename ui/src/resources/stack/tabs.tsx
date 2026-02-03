@@ -12,6 +12,7 @@ import StackConfig from "./config";
 import StackInfo from "./info";
 import { Tabs } from "@mantine/core";
 import { ICONS } from "@/lib/icons";
+import { colorByIntention, stackStateIntention } from "@/lib/color";
 
 type StackTabsView = "Config" | "Info" | "Services" | "Log" | "Terminals";
 
@@ -89,7 +90,7 @@ export default function StackTabs({ id }: { id: string }) {
       tabs={tabs}
       value={view}
       onValueChange={setView as any}
-      tabProps={{ w: 110 }}
+      tabProps={{ w: 150 }}
     />
   );
 
@@ -132,7 +133,10 @@ export default function StackTabs({ id }: { id: string }) {
   }
 
   return (
-    <Tabs variant="pills" value={view}>
+    <Tabs
+      color={colorByIntention(stackStateIntention(state))}
+      value={view}
+    >
       {View}
     </Tabs>
   );
