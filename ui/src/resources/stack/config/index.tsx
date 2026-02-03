@@ -34,6 +34,8 @@ import InputList from "@/ui/input-list";
 import { ProviderSelectorConfig } from "@/components/config/provider-selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";
 import LinkedRepo from "@/components/config/linked-repo";
+import { DEFAULT_STACK_FILE_CONTENTS } from "..";
+import { ReactNode } from "react";
 
 type StackMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const STACK_MODES = ["UI Defined", "Files On Server", "Git Repo"] as const;
@@ -52,7 +54,13 @@ function getStackMode(
   return undefined;
 }
 
-export default function StackConfig({ id }: { id: string }) {
+export default function StackConfig({
+  id,
+  titleOther,
+}: {
+  id: string;
+  titleOther: ReactNode;
+}) {
   const [show, setShow] = useLocalStorage({
     key: `stack-${id}-show`,
     defaultValue: {
@@ -882,6 +890,7 @@ export default function StackConfig({ id }: { id: string }) {
 
   return (
     <Config
+      titleOther={titleOther}
       disabled={disabled}
       original={config}
       update={update}
@@ -894,21 +903,3 @@ export default function StackConfig({ id }: { id: string }) {
     />
   );
 }
-
-const DEFAULT_STACK_FILE_CONTENTS = `## Add your compose file here
-services:
-  hello_world:
-    image: hello-world
-    # networks:
-    #   - default
-    # ports:
-    #   - 3000:3000
-    # volumes:
-    #   - data:/data
-
-# networks:
-#   default: {}
-
-# volumes:
-#   data:
-`;

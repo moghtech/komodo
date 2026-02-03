@@ -8,6 +8,7 @@ import ResourceHeader from "@/components/resource-header";
 import StackTable from "./table";
 import NewResource from "@/resources/new";
 import StackConfig from "./config";
+import StackTabs from "./tabs";
 
 export const StackComponents: RequiredResourceComponents<
   Types.StackConfig,
@@ -96,8 +97,26 @@ export const StackComponents: RequiredResourceComponents<
 
   Executions: {},
 
-  Config: StackConfig,
+  Config: StackTabs,
   DangerZone: ({ id }) => <></>,
 
   Page: {},
 };
+
+export const DEFAULT_STACK_FILE_CONTENTS = `## Add your compose file here
+services:
+  hello_world:
+    image: hello-world
+    # networks:
+    #   - default
+    # ports:
+    #   - 3000:3000
+    # volumes:
+    #   - data:/data
+
+# networks:
+#   default: {}
+
+# volumes:
+#   data:
+`;

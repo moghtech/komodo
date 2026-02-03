@@ -40,11 +40,12 @@ export default function StackConfigFiles({
                 {
                   path: "",
                   services: [],
-                  requires: Types.StackFileRequires.None,
+                  requires: Types.StackFileRequires.Restart,
                 },
               ],
             })
           }
+          w={{ base: "85%", lg: 400 }}
         >
           Add File
         </Button>
@@ -62,7 +63,7 @@ export default function StackConfigFiles({
                     values[i] = { ...values[i], path: e.target.value };
                     set({ config_files: [...values] });
                   }}
-                  w={{ base: "100%", md: 330 }}
+                  w={{ base: "100%", md: 400 }}
                   disabled={disabled}
                   rightSection={
                     <ActionIcon
@@ -84,7 +85,9 @@ export default function StackConfigFiles({
                 {/** Services / Requires */}
                 <Group>
                   <MultiSelect
-                    placeholder="All services"
+                    placeholder={
+                      services?.length ? "Add services" : "All services"
+                    }
                     value={services}
                     data={allServices}
                     onChange={(services) => {
@@ -93,6 +96,7 @@ export default function StackConfigFiles({
                     }}
                     disabled={disabled}
                     searchable
+                    clearable
                   />
                   <Select
                     value={requires}

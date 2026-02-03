@@ -40,7 +40,7 @@ const LANGUAGE_EXTENSIONS: Record<MonacoLanguage, string[]> = {
   typescript: [".ts", ".tsx"],
 };
 
-export const language_from_path = (path: string) => {
+export const languageFromPath = (path: string) => {
   for (const [lang, extensions] of Object.entries(LANGUAGE_EXTENSIONS)) {
     for (const extension of extensions) {
       if (path.endsWith(extension)) {

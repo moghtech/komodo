@@ -147,7 +147,7 @@ export default function Config<T>({
                     >
                       {!labelHidden && (
                         <Group justify="space-between">
-                          <Stack>
+                          <Stack gap="0">
                             <Group>
                               {icon}
                               <Text fw={boldLabel ? "bold" : undefined} fz="h2">
@@ -155,7 +155,7 @@ export default function Config<T>({
                               </Text>
                               {labelExtra}
                             </Group>
-                            {description && <Text></Text>}
+                            {description && <Text c="dimmed">{description}</Text>}
                           </Stack>
                           {actions}
                         </Group>

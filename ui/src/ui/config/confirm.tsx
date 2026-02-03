@@ -84,7 +84,10 @@ export default function ConfirmUpdate<T>({
 
       <Button
         leftSection={<ICONS.Save size="1rem" />}
-        onClick={open}
+        onClick={(e) => {
+          e.stopPropagation();
+          open();
+        }}
         disabled={disabled}
         w={fullWidth ? undefined : 100}
         fullWidth={fullWidth}
