@@ -19,6 +19,7 @@ import { AddResourceTags, ResourceTags } from "@/resources/tags";
 import Section from "@/ui/section";
 import { Anchor, Box, Button, Flex, Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
+import { ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 
 export default function Resource() {
@@ -151,21 +152,25 @@ function ResourceHeader({ type, id }: { type: UsableResource; id: string }) {
       >
         <Components.ResourcePageHeader id={id} />
         <Group px="md">
-          {infoEntries.map(([key, Info], i) => (
-            <Box
-              key={key}
-              pl={i > 0 ? "md" : undefined}
-              fz="sm"
-              style={{
-                borderLeft:
-                  i > 0
-                    ? "1px solid var(--mantine-color-accent-border-0)"
-                    : undefined,
-              }}
-            >
-              <Info id={id} />
-            </Box>
-          ))}
+          {infoEntries.map(([key, Info], i) => {
+            let info = Info({ id }) as ReactNode;
+            if (!info) return null;
+            return (
+              <Box
+                key={key}
+                pl={i > 0 ? "md" : undefined}
+                fz="sm"
+                style={{
+                  borderLeft:
+                    i > 0
+                      ? "1px solid var(--mantine-color-accent-border-0)"
+                      : undefined,
+                }}
+              >
+                {info}
+              </Box>
+            );
+          })}
         </Group>
         {links && links.length > 0 && (
           <Group px="md">

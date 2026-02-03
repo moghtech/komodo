@@ -14,6 +14,7 @@ import { Prune } from "./executions";
 import ServerVersion from "./version";
 import { Group, HoverCard } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import ConfirmServerPubkey from "./confirm-pubkey";
 
 export const ServerComponents: RequiredResourceComponents<
   Types.ServerConfig,
@@ -212,6 +213,7 @@ export const ServerComponents: RequiredResourceComponents<
         </HoverCard>
       );
     },
+    ConfirmServerPubkey,
   },
 
   Executions: {

@@ -4,6 +4,7 @@ import {
   Group,
   Loader,
   Modal,
+  ModalProps,
   Stack,
   Text,
   TextInput,
@@ -13,13 +14,17 @@ import { ReactNode, useState } from "react";
 import ConfirmButton from "./confirm-button";
 import { notifications } from "@mantine/notifications";
 
-export interface ConfirmModalProps {
+export interface ConfirmModalProps extends Omit<
+  Omit<ModalProps, "opened">,
+  "onClose"
+> {
   children?: string;
   icon: ReactNode;
   disabled?: boolean;
   /** User must enter this text to confirm */
   confirmText: string;
   title?: string;
+  confirmButtonText?: string;
   onConfirm?: () => Promise<unknown>;
   loading?: boolean;
   additional?: ReactNode;
@@ -35,12 +40,14 @@ export default function ConfirmModal({
   disabled,
   confirmText,
   title,
+  confirmButtonText,
   onConfirm,
   loading,
   additional,
   topAdditonal,
   disableModal,
   targetProps,
+  ...modalProps
 }: ConfirmModalProps) {
   const [opened, { open, close }] = useDisclosure();
   const [input, setInput] = useState("");
@@ -74,6 +81,8 @@ export default function ConfirmModal({
           </Text>
         }
         styles={{ content: { padding: "0.5rem" } }}
+        size="lg"
+        {...modalProps}
       >
         <Stack>
           {topAdditonal}
@@ -114,7 +123,7 @@ export default function ConfirmModal({
               }}
               loading={loading}
             >
-              {children}
+              {confirmButtonText ?? children}
             </ConfirmButton>
           </Group>
         </Stack>
