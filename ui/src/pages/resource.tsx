@@ -145,33 +145,35 @@ function ResourceHeader({ type, id }: { type: UsableResource; id: string }) {
   return (
     <Stack justify="space-between">
       <Stack
-        gap="xs"
+        gap="md"
         pb="md"
         bd="1px solid var(--mantine-color-accent-border-0)"
         bdrs="md"
       >
         <Components.ResourcePageHeader id={id} />
-        <Group px="md">
-          {infoEntries.map(([key, Info], i) => {
-            let info = Info({ id }) as ReactNode;
-            if (!info) return null;
-            return (
-              <Box
-                key={key}
-                pl={i > 0 ? "md" : undefined}
-                fz="sm"
-                style={{
-                  borderLeft:
-                    i > 0
-                      ? "1px solid var(--mantine-color-accent-border-0)"
-                      : undefined,
-                }}
-              >
-                {info}
-              </Box>
-            );
-          })}
-        </Group>
+        {infoEntries.length > 0 && (
+          <Group px="md">
+            {infoEntries.map(([key, Info], i) => {
+              let info = Info({ id }) as ReactNode;
+              if (!info) return null;
+              return (
+                <Box
+                  key={key}
+                  pl={i > 0 ? "md" : undefined}
+                  fz="sm"
+                  style={{
+                    borderLeft:
+                      i > 0
+                        ? "1px solid var(--mantine-color-accent-border-0)"
+                        : undefined,
+                  }}
+                >
+                  {info}
+                </Box>
+              );
+            })}
+          </Group>
+        )}
         {links && links.length > 0 && (
           <Group px="md">
             {links.map((link) => (
