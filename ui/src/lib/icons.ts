@@ -93,6 +93,7 @@ export const ICONS = {
   Pull: Download,
   Pause,
   Prune: Scissors,
+  Refresh: RefreshCcw,
   // MISC
   User,
   Key: KeyRound,

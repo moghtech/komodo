@@ -5,6 +5,7 @@ import { Types } from "komodo_client";
 import { ResourceLink } from "@/resources/common";
 import { StackComponents } from ".";
 import TableTags from "@/components/tags/table";
+import FileSource from "@/components/file-source";
 
 export default function StackTable({
   resources,
@@ -42,14 +43,14 @@ export default function StackTable({
           },
           size: 200,
         },
-        // {
-        //   header: ({ column }) => (
-        //     <SortableHeader column={column} title="Source" />
-        //   ),
-        //   accessorKey: "info.repo",
-        //   cell: ({ row }) => <StandardSource info={row.original.info} />,
-        //   size: 200,
-        // },
+        {
+          header: ({ column }) => (
+            <SortableHeader column={column} title="Source" />
+          ),
+          accessorKey: "info.repo",
+          cell: ({ row }) => <FileSource info={row.original.info} />,
+          size: 200,
+        },
         {
           header: ({ column }) => (
             <SortableHeader column={column} title="Host" />

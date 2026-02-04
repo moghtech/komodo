@@ -79,6 +79,7 @@ export const ResourceLink = ({
       }}
       c="inherit"
       wrap="nowrap"
+      gap="xs"
     >
       <Components.Icon id={id} />
       <Text className="hover-underline" style={{ textWrap: "nowrap" }}>

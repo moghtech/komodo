@@ -1,5 +1,5 @@
 import { stackStateIntention, hexColorByIntention } from "@/lib/color";
-import { useRead } from "@/lib/hooks";
+import { useInvalidate, usePermissions, useRead, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
@@ -16,6 +16,21 @@ import {
   RestartStack,
   StartStopStack,
 } from "./executions";
+import { SwarmComponents } from "../swarm";
+import { ServerComponents } from "../server";
+import { ResourceLink } from "../common";
+import {
+  ActionIcon,
+  Button,
+  Group,
+  HoverCard,
+  List,
+  Loader,
+  Text,
+} from "@mantine/core";
+import FileSource from "@/components/file-source";
+import { ArrowUp } from "lucide-react";
+import { notifications } from "@mantine/notifications";
 
 export const StackComponents: RequiredResourceComponents<
   Types.StackConfig,
@@ -99,7 +114,159 @@ export const StackComponents: RequiredResourceComponents<
     let state = StackComponents.useListItem(id)?.info.state;
     return <StatusBadge text={state} intent={stackStateIntention(state)} />;
   },
-  Info: {},
+  Info: {
+    DeployTarget: ({ id }) => {
+      const info = StackComponents.useListItem(id)?.info;
+      const swarm = SwarmComponents.useListItem(info?.swarm_id);
+      const server = ServerComponents.useListItem(info?.server_id);
+      return swarm?.id ? (
+        <ResourceLink type="Swarm" id={swarm?.id} />
+      ) : server?.id ? (
+        <ResourceLink type="Server" id={server?.id} />
+      ) : (
+        <Group gap="xs">
+          <ICONS.Server size="1rem" />
+          <Text>Unknown</Text>
+        </Group>
+      );
+    },
+    Source: ({ id }) => {
+      const info = StackComponents.useListItem(id)?.info;
+      return <FileSource info={info} />;
+    },
+    Services: ({ id }) => {
+      const info = StackComponents.useListItem(id)?.info;
+      return (
+        <HoverCard position="bottom-start">
+          <HoverCard.Target>
+            <Text>
+              <b>{info?.services.length}</b> Service
+              {(info?.services.length ?? 0 > 1) ? "s" : ""}
+            </Text>
+          </HoverCard.Target>
+          <HoverCard.Dropdown>
+            <List>
+              {info?.services.map((service) => (
+                <List.Item key={service.service}>
+                  <Group gap="xs">
+                    <Text>{service.service}</Text>
+                    <Text c="dimmed">-</Text>
+                    <Text c="dimmed">{service.image}</Text>
+                    {service.update_available && (
+                      <ActionIcon variant="light" color="cyan" size="xs">
+                        <ArrowUp size="0.9rem" />
+                      </ActionIcon>
+                    )}
+                  </Group>
+                </List.Item>
+              ))}
+            </List>
+          </HoverCard.Dropdown>
+        </HoverCard>
+      );
+    },
+    NoConfig: ({ id }) => {
+      const config = StackComponents.useFull(id)?.config;
+      if (
+        !config ||
+        config?.files_on_host ||
+        config?.file_contents ||
+        config?.linked_repo ||
+        config?.repo
+      ) {
+        return null;
+      }
+      return (
+        <HoverCard width={300} position="bottom-start">
+          <HoverCard.Target>
+            <Button color="red">Config Missing</Button>
+          </HoverCard.Target>
+          <HoverCard.Dropdown>
+            <Text>
+              No configuration provided for stack. Cannot get stack state.
+              Either paste the compose file contents into the UI, or configure a
+              git repo containing your files.
+            </Text>
+          </HoverCard.Dropdown>
+        </HoverCard>
+      );
+    },
+    ProjectMissing: ({ id }) => {
+      const info = StackComponents.useListItem(id)?.info;
+      const state = info?.state ?? Types.StackState.Unknown;
+      if (
+        !info ||
+        !info?.project_missing ||
+        [
+          Types.StackState.Deploying,
+          Types.StackState.Down,
+          Types.StackState.Unknown,
+        ].includes(state)
+      ) {
+        return null;
+      }
+      return (
+        <HoverCard width={300} position="bottom-start">
+          <HoverCard.Target>
+            <Button color="red">Project Missing</Button>
+          </HoverCard.Target>
+          <HoverCard.Dropdown>
+            <Text>
+              The compose project is not on the host. If the compose stack is
+              running, the 'Project Name' needs to be set. This can be found
+              with 'docker compose ls'.
+            </Text>
+          </HoverCard.Dropdown>
+        </HoverCard>
+      );
+    },
+    RemoteErrors: ({ id }) => {
+      const info = StackComponents.useFull(id)?.info;
+      const errors = info?.remote_errors;
+      if (!info || !errors || errors.length === 0) {
+        return null;
+      }
+      return (
+        <HoverCard width={300} position="bottom-start">
+          <HoverCard.Target>
+            <Button color="red">Remote Error</Button>
+          </HoverCard.Target>
+          <HoverCard.Dropdown>
+            <Text>
+              There are errors reading the remote file contents. See <b>Info</b>{" "}
+              tab for details.
+            </Text>
+          </HoverCard.Dropdown>
+        </HoverCard>
+      );
+    },
+
+    Refresh: ({ id }) => {
+      const inv = useInvalidate();
+      const { canExecute } = usePermissions({ type: "Stack", id });
+      const { mutate, isPending } = useWrite("RefreshStackCache", {
+        onSuccess: () => {
+          inv(["ListStacks"], ["GetStack", { stack: id }]);
+          notifications.show({ message: "Refreshed stack status cache" });
+        },
+      });
+      if (!canExecute) return null;
+      return (
+        <ActionIcon
+          variant="light"
+          onClick={() => {
+            mutate({ stack: id });
+            notifications.show({
+              message: "Triggered refresh of stack status cache",
+            });
+          }}
+          loading={isPending}
+        >
+          <ICONS.Refresh size="1rem" />
+        </ActionIcon>
+      );
+    },
+  },
 
   Executions: {
     DeployStack,

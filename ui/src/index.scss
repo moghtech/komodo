@@ -15,11 +15,11 @@ body[data-mantine-color-scheme="dark"] {
 a {
   color: inherit;
   text-decoration: none;
+  cursor: pointer;
 }
 a:visited {
   color: inherit;
 }
-a:hover,
 a:focus {
   text-decoration: none;
 }
