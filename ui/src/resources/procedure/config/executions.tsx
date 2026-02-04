@@ -101,7 +101,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
   RunAction: {
     params: { action: "", args: {} },
     Component: ({ params, setParams, disabled }) => (
-      <div className="flex gap-2 items-center">
+      <Group>
         <ResourceSelector
           type="Action"
           selected={params.action}
@@ -117,7 +117,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
           disabled={disabled}
           monacoLanguage="json"
         />
-      </div>
+      </Group>
     ),
   },
   BatchRunAction: {
@@ -1001,15 +1001,15 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
   GlobalAutoUpdate: {
     params: { skip_auto_update: false },
     Component: ({ params, setParams, disabled }) => (
-      <div
-        className="flex items-center gap-4"
+      <Group
+        style={{ cursor: "pointer" }}
         onClick={() =>
           setParams({ skip_auto_update: !params.skip_auto_update })
         }
       >
-        <Switch checked={params.skip_auto_update} disabled={disabled} />
+        <Switch color="green" checked={params.skip_auto_update} disabled={disabled} />
         Skip redeploy
-      </div>
+      </Group>
     ),
   },
   RotateAllServerKeys: {

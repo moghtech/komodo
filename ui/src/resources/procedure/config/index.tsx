@@ -10,7 +10,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useState } from "react";
 import Stage from "./stage";
-import { Button, Select } from "@mantine/core";
+import { Button, Select, Stack } from "@mantine/core";
 import { ICONS } from "@/theme/icons";
 import { ConfigItem, ConfigSwitch } from "@/ui/config/item";
 
@@ -77,7 +77,7 @@ export default function ProcedureConfig({ id }: { id: string }) {
               "The executions in a stage are all run in parallel. The stages themselves are run sequentially.",
             fields: {
               stages: (stages, set) => (
-                <div className="flex flex-col gap-4">
+                <Stack gap="xl">
                   {stages?.map((stage, index) => (
                     <Stage
                       key={index}
@@ -161,7 +161,7 @@ export default function ProcedureConfig({ id }: { id: string }) {
                   >
                     Add Stage
                   </Button>
-                </div>
+                </Stack>
               ),
             },
           },
@@ -207,6 +207,7 @@ export default function ProcedureConfig({ id }: { id: string }) {
                       })
                     }
                     data={Object.values(Types.ScheduleFormat)}
+                    w={{ base: "85%", lg: 400 }}
                   />
                 </ConfigItem>
               ),
