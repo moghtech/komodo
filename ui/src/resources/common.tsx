@@ -5,7 +5,6 @@ import { usableResourcePath } from "@/lib/utils";
 import TextUpdateModal from "@/ui/text-update-modal";
 import { Button, Group, Stack, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ResourceComponents, UsableResource } from ".";
 
@@ -100,8 +99,6 @@ export const ResourceDescription = ({
   const inv = useInvalidate();
   const key = type === "ResourceSync" ? "sync" : type.toLowerCase();
 
-  const [open, setOpen] = useState(false);
-
   const resource = useRead(`Get${type}`, {
     [key]: id,
   } as any).data;
@@ -116,39 +113,36 @@ export const ResourceDescription = ({
   });
 
   return (
-    <>
-      <TextUpdateModal
-        title="Update Description"
-        placeholder="Set Description"
-        value={resource?.description}
-        onUpdate={(description) =>
-          updateDescription({ target: { type, id }, description })
-        }
-        disabled={!canWrite}
-        open={open}
-        setOpen={setOpen}
-      />
-
-      <Button
-        variant="outline"
-        c="dimmed"
-        p="md"
-        bd="1px solid var(--mantine-color-accent-border-0)"
-        bdrs="md"
-        w="100%"
-        h="100%"
-        justify="start"
-        styles={{
-          label: {
-            height: "fit-content",
-            color: "var(--mantine-color-dimmed-0)",
-          },
-          inner: { alignItems: "start" },
-        }}
-        onClick={() => setOpen(true)}
-      >
-        {resource?.description || "Set Description"}
-      </Button>
-    </>
+    <TextUpdateModal
+      title="Update Description"
+      placeholder="Set Description"
+      value={resource?.description}
+      onUpdate={(description) =>
+        updateDescription({ target: { type, id }, description })
+      }
+      disabled={!canWrite}
+      target={(open) => (
+        <Button
+          variant="outline"
+          c="dimmed"
+          p="md"
+          bd="1px solid var(--mantine-color-accent-border-0)"
+          bdrs="md"
+          w="100%"
+          h="100%"
+          justify="start"
+          styles={{
+            label: {
+              height: "fit-content",
+              color: "var(--mantine-color-dimmed-0)",
+            },
+            inner: { alignItems: "start" },
+          }}
+          onClick={open}
+        >
+          {resource?.description || "Set Description"}
+        </Button>
+      )}
+    />
   );
 };

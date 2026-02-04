@@ -7,6 +7,7 @@ import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
 import ProcedureTable from "./table";
 import NewResource from "@/resources/new";
+import ProcedureConfig from "./config";
 
 export const ProcedureComponents: RequiredResourceComponents<
   Types.ProcedureConfig,
@@ -78,7 +79,7 @@ export const ProcedureComponents: RequiredResourceComponents<
 
   Executions: {},
 
-  Config: () => <>CONFIG</>,
+  Config: ProcedureConfig,
   DangerZone: ({ id }) => <></>,
 
   Page: {},

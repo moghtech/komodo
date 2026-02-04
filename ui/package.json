@@ -30,13 +30,15 @@
     "react-minimal-pie-chart": "^9.1.2",
     "react-router-dom": "^7.13.0",
     "react-xtermjs": "^1.0.10",
-    "sanitize-html": "^2.17.0"
+    "sanitize-html": "^2.17.0",
+    "shell-quote": "^1.8.3"
   },
   "devDependencies": {
     "@types/node": "^25.0.10",
     "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
     "@types/sanitize-html": "^2.16.0",
+    "@types/shell-quote": "^1.7.5",
     "@vitejs/plugin-react": "^5.1.2",
     "dotenv": "^17.2.3",
     "postcss": "^8.5.6",

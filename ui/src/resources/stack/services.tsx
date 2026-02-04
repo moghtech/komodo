@@ -10,7 +10,6 @@ import { containerStateIntention, swarmStateIntention } from "@/lib/color";
 import DockerResourceLink from "@/components/docker/link";
 import { Group } from "@mantine/core";
 import { ContainerPorts } from "@/components/docker/container-ports";
-import { ICONS } from "@/theme/icons";
 
 export default function StackServices({
   id,
@@ -37,7 +36,7 @@ export default function StackServices({
   }
 
   return (
-    <Section titleOther={titleOther}>
+    <Section titleOther={titleOther} mb="md">
       {info?.swarm_id ? (
         <StackServicesSwarm stackId={id} services={services} />
       ) : info?.server_id ? (
