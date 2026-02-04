@@ -1,5 +1,5 @@
 import { useRead } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { Group, MantineStyleProps, Text } from "@mantine/core";
 
 export interface UserAvatarProps {

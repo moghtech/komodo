@@ -5,7 +5,7 @@ import { KOMODO_BASE_URL } from "@/main";
 import { notifications } from "@mantine/notifications";
 import { useLoginOptions, useManageAuth } from "@/lib/hooks";
 import { DataTable } from "@/ui/data-table";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import ConfirmModal from "@/ui/confirm-modal";
 
 const useLinkWithExternalLogin = () => {

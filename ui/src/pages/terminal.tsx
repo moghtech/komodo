@@ -1,7 +1,7 @@
 import DockerResourceLink from "@/components/docker/link";
 import TargetTerminal from "@/components/terminal/target";
 import { useSetTitle, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { ResourceLink } from "@/resources/common";
 import { DeploymentComponents } from "@/resources/deployment";
 import { ServerComponents } from "@/resources/server";

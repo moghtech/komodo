@@ -1,7 +1,7 @@
 import { useRead } from "@/lib/hooks";
 import { ServerComponents } from ".";
 import { Group, HoverCard, Text } from "@mantine/core";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { colorByIntention } from "@/lib/color";
 import { Types } from "komodo_client";
 

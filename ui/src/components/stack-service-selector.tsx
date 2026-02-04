@@ -13,7 +13,7 @@ import { Types } from "komodo_client";
 import { ChevronsUpDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DOCKER_LINK_ICONS } from "./docker/link";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 
 export interface StackServiceSelectorProps extends ComboboxProps {
   stackId: string;

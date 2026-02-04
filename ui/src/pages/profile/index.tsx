@@ -13,7 +13,7 @@ import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";
 import { Save } from "lucide-react";
 import { useState } from "react";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { LinkedLogins } from "./linked-logins";
 import { EnrollPasskey } from "./passkey";
 import { EnrollTotp } from "./totp";

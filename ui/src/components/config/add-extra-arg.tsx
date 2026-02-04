@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useRead } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
 import { Button, Combobox, useCombobox } from "@mantine/core";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 
 export interface AddExtraArgProps {
   type: "Deployment" | "Build" | "Stack" | "StackBuild";

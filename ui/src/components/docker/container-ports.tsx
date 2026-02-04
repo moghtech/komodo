@@ -4,7 +4,7 @@ import { Group, Stack, Text, Tooltip } from "@mantine/core";
 import { Types } from "komodo_client";
 import { EthernetPort } from "lucide-react";
 import { colorByIntention } from "@/lib/color";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { fmtPortMount } from "@/lib/formatting";
 
 export interface ContainerPortsProps {

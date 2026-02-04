@@ -2,7 +2,7 @@ import { useRead, useShiftKeyListener, useTags } from "@/lib/hooks";
 import { ActionIcon, Group } from "@mantine/core";
 import Tags from ".";
 import TagSelector from "./selector";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 
 export default function TagsFilter() {
   const { tags, add_tag, remove_tag, clear_tags } = useTags();

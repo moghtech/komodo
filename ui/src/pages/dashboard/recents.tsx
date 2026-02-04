@@ -13,7 +13,7 @@ import {
   useRead,
   useUser,
 } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { usableResourcePath } from "@/lib/utils";
 import { ResourceComponents, UsableResource } from "@/resources";
 import { ResourceNameSimple } from "@/resources/common";

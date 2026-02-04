@@ -1,4 +1,4 @@
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { Group } from "@mantine/core";
 
 export default function UnsavedChanges() {

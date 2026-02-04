@@ -11,8 +11,9 @@ import {
 import StackConfig from "./config";
 import StackInfo from "./info";
 import { Tabs } from "@mantine/core";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { colorByIntention, stackStateIntention } from "@/lib/color";
+import StackServices from "./services";
 
 type StackTabsView = "Config" | "Info" | "Services" | "Log" | "Terminals";
 
@@ -68,18 +69,21 @@ export default function StackTabs({ id }: { id: string }) {
         hidden: hideInfo,
         icon: ICONS.Search,
       },
-      {
-        value: "Services",
-        disabled: hideServices,
-      },
+      // {
+      //   value: "Services",
+      //   disabled: hideServices,
+      //   icon: ICONS.Service,
+      // },
       {
         value: "Log",
         disabled: hideLogs,
+        icon: ICONS.Log,
       },
       {
         value: "Terminals",
         disabled: terminalDisabled,
         hidden: !specificTerminal,
+        icon: ICONS.Terminal,
       },
     ],
     [hideInfo, hideServices, specificLogs, hideLogs],
@@ -90,7 +94,7 @@ export default function StackTabs({ id }: { id: string }) {
       tabs={tabs}
       value={view}
       onValueChange={setView as any}
-      tabProps={{ w: 150 }}
+      tabProps={{ w: 140 }}
     />
   );
 
@@ -113,9 +117,8 @@ export default function StackTabs({ id }: { id: string }) {
       View = <StackInfo id={id} titleOther={Selector} />;
       break;
     case "Services":
-      View = Selector;
+      View = <StackServices id={id} titleOther={Selector} />;
       break;
-    // return <StackServices id={id} titleOther={Selector} />;
     case "Log":
       View = Selector;
       break;
@@ -133,10 +136,7 @@ export default function StackTabs({ id }: { id: string }) {
   }
 
   return (
-    <Tabs
-      color={colorByIntention(stackStateIntention(state))}
-      value={view}
-    >
+    <Tabs color={colorByIntention(stackStateIntention(state))} value={view}>
       {View}
     </Tabs>
   );

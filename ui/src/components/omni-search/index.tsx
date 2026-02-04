@@ -1,7 +1,7 @@
 import { ActionIcon, Badge, Button, Group } from "@mantine/core";
 import { Spotlight, spotlight } from "@mantine/spotlight";
 import { useOmniSearch } from "./hooks";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 
 export default function OmniSearch({}: {}) {
   const { search, setSearch, actions } = useOmniSearch();

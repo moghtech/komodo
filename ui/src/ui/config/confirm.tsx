@@ -2,7 +2,7 @@ import { MonacoDiffEditor, MonacoLanguage } from "@/components/monaco";
 import { colorByIntention } from "@/lib/color";
 import { fmtSnakeCaseToUpperSpaceCase } from "@/lib/formatting";
 import { useCtrlKeyListener, useKeyListener } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { envToText } from "@/lib/utils";
 import ShowHideButton from "@/ui/show-hide-button";
 import { Box, Button, Group, Modal, Stack, Text } from "@mantine/core";

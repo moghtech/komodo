@@ -1,6 +1,6 @@
 import { Fragment, ReactNode, SetStateAction, useMemo } from "react";
 import { MonacoLanguage } from "@/components/monaco";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import {
   Anchor,
   Box,
@@ -292,7 +292,7 @@ export default function Config<T>({
           </Box>
 
           {/** CONTENT */}
-          <Stack style={{ flexGrow: 1 }} mb="50vh" gap="lg">
+          <Stack style={{ flexGrow: 1 }} gap="lg">
             {groupsComponent}
             <Group justify="flex-end">
               <SaveOrReset unsavedIndicator />

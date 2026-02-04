@@ -13,7 +13,7 @@ import { Types } from "komodo_client";
 import { ResourceNotFound } from "@/resources/common";
 import Page from "@/ui/page";
 import { Group, Switch, TextInput } from "@mantine/core";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import TableSkeleton from "@/ui/table-skeleton";
 import TemplateQuerySelector from "@/components/template-query-selector";
 import TagsFilter from "@/components/tags/filter";

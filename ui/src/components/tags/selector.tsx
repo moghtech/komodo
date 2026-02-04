@@ -1,5 +1,5 @@
 import { useShiftKeyListener } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { filterBySplit } from "@/lib/utils";
 import {
   Badge,

@@ -1,5 +1,5 @@
 import { useRead } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import ResourceHeader from "@/components/resource-header";

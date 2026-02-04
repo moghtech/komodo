@@ -2,7 +2,7 @@ import { Dispatch, Fragment, SetStateAction } from "react";
 import { ConfigFieldArgs, ConfigGroupArgs } from ".";
 import { ConfigInput, ConfigSwitch } from "./item";
 import { Group } from "@mantine/core";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 
 export default function ConfigGroup<T>({
   config,

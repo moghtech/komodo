@@ -1,7 +1,7 @@
 import { MonacoLanguage } from "@/components/monaco";
 import { ReactNode } from "react";
 import Section, { SectionProps } from "@/ui/section";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { Button, Group } from "@mantine/core";
 import UnsavedChanges from "./unsaved-changes";
 import ConfirmUpdate from "./confirm";

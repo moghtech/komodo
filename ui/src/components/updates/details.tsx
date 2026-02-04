@@ -11,7 +11,7 @@ import { ResourceComponents, UsableResource } from "@/resources";
 import { Code, Drawer, Group, Stack, Text } from "@mantine/core";
 import UserAvatar from "../user-avatar";
 import { ResourceLink } from "@/resources/common";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { Clock, Link2, SquarePen } from "lucide-react";
 import CopyButton from "@/ui/copy-button";
 import Section from "@/ui/section";

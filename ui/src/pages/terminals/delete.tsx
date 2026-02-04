@@ -1,5 +1,5 @@
 import { useTerminalTargetPermissions, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import ConfirmButton from "@/ui/confirm-button";
 import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";

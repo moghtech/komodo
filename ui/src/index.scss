@@ -1,7 +1,3 @@
-* {
-  scroll-behavior: smooth;
-}
-
 // These are set explicitly so the body
 // color loads correctly before the mantine body
 // variable is overridden with JS.
@@ -10,6 +6,10 @@ body[data-mantine-color-scheme="light"] {
 }
 body[data-mantine-color-scheme="dark"] {
   background-color: #0f1115;
+}
+
+* {
+  scroll-behavior: smooth;
 }
 
 a {
@@ -34,6 +34,7 @@ a:focus {
 .hover-underline:hover {
   text-decoration: underline;
 }
+
 
 .monaco-editor {
   position: absolute !important;

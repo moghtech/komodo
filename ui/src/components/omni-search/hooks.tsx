@@ -5,7 +5,7 @@ import {
   useSettingsView,
   useUser,
 } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { terminalLink, usableResourcePath } from "@/lib/utils";
 import { RESOURCE_TARGETS, ResourceComponents } from "@/resources";
 import {

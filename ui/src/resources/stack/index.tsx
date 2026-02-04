@@ -1,6 +1,6 @@
 import { stackStateIntention, hexColorByIntention } from "@/lib/color";
 import { useInvalidate, usePermissions, useRead, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ResourceHeader from "@/components/resource-header";
@@ -25,12 +25,12 @@ import {
   Group,
   HoverCard,
   List,
-  Loader,
   Text,
 } from "@mantine/core";
 import FileSource from "@/components/file-source";
 import { ArrowUp } from "lucide-react";
 import { notifications } from "@mantine/notifications";
+import StackServices from "./services";
 
 export const StackComponents: RequiredResourceComponents<
   Types.StackConfig,
@@ -243,23 +243,24 @@ export const StackComponents: RequiredResourceComponents<
 
     Refresh: ({ id }) => {
       const inv = useInvalidate();
+      const info = StackComponents.useListItem(id)?.info;
       const { canExecute } = usePermissions({ type: "Stack", id });
       const { mutate, isPending } = useWrite("RefreshStackCache", {
         onSuccess: () => {
           inv(["ListStacks"], ["GetStack", { stack: id }]);
-          notifications.show({ message: "Refreshed stack status cache" });
+          notifications.show({ message: "Refreshed source file contents" });
         },
       });
-      if (!canExecute) return null;
+      if (
+        !canExecute ||
+        // Don't show for UI defined, doesn't do anything
+        (!info?.files_on_host && !info?.linked_repo && !info?.repo)
+      )
+        return null;
       return (
         <ActionIcon
           variant="light"
-          onClick={() => {
-            mutate({ stack: id });
-            notifications.show({
-              message: "Triggered refresh of stack status cache",
-            });
-          }}
+          onClick={() => mutate({ stack: id })}
           loading={isPending}
         >
           <ICONS.Refresh size="1rem" />
@@ -280,7 +281,9 @@ export const StackComponents: RequiredResourceComponents<
   Config: StackTabs,
   DangerZone: ({ id }) => <></>,
 
-  Page: {},
+  Page: {
+    StackServices
+  },
 };
 
 export const DEFAULT_STACK_FILE_CONTENTS = `## Add your compose file here

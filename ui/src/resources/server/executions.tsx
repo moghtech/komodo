@@ -1,7 +1,7 @@
 import { useExecute, usePermissions, useRead } from "@/lib/hooks";
 import { ServerComponents } from ".";
 import ConfirmButton from "@/ui/confirm-button";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import ConfirmModal from "@/ui/confirm-modal";
 
 export const Prune = ({

@@ -2,7 +2,7 @@ import { useRead } from "@/lib/hooks";
 import { getUpdateQuery, usableResourcePath } from "@/lib/utils";
 import { Types } from "komodo_client";
 import Section from "@/ui/section";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { ActionIcon, ScrollArea, Stack } from "@mantine/core";
 import { Link } from "react-router-dom";
 import { UsableResource } from "@/resources";

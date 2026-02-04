@@ -1,6 +1,6 @@
 import Page from "@/ui/page";
 import { useDashboardPreferences, useSetTitle } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import RecentsDashboard from "./recents";
 import ExportToml from "@/components/export-toml";
 

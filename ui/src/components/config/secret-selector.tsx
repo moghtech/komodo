@@ -1,5 +1,5 @@
 import { useSettingsView } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { filterBySplit } from "@/lib/utils";
 import { Button, Combobox, ComboboxProps, useCombobox } from "@mantine/core";
 import { notifications } from "@mantine/notifications";

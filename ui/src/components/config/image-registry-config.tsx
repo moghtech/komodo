@@ -5,7 +5,7 @@ import { Types } from "komodo_client";
 import ProviderSelector from "./provider-selector";
 import AccountSelector from "./account-selector";
 import OrganizationSelector from "./organization-selector";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 
 export interface ImageRegistryConfig {
   registry: Types.ImageRegistryConfig | undefined;

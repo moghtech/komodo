@@ -13,7 +13,7 @@ import { Types } from "komodo_client";
 import ResourceSelector from "@/resources/selector";
 import { ResourceLink } from "@/resources/common";
 import { Button, Group, Select, Text } from "@mantine/core";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import ImageRegistryConfig from "@/components/config/image-registry-config";
 import SystemCommand from "@/components/config/system-command";
 import { MonacoEditor } from "@/components/monaco";

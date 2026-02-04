@@ -6,7 +6,7 @@ import {
   useWebhookIntegrations,
   useWrite,
 } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import Config, { ConfigGroupArgs, ConfigProps } from "@/ui/config";
 import { ConfigItem, ConfigList, ConfigSwitch } from "@/ui/config/item";
 import {
@@ -40,7 +40,7 @@ import { ReactNode } from "react";
 type StackMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const STACK_MODES = ["UI Defined", "Files On Server", "Git Repo"] as const;
 
-function getStackMode(
+export function getStackMode(
   update: Partial<Types.StackConfig>,
   config: Types.StackConfig,
 ): StackMode {

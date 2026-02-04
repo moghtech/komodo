@@ -1,5 +1,5 @@
 import { usePermissions, useRead, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import Config from "@/ui/config";
 import { ConfigItem, ConfigList, ConfigSwitch } from "@/ui/config/item";
 import { ActionIcon, Group, Stack, Text } from "@mantine/core";

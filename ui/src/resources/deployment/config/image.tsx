@@ -1,6 +1,6 @@
 import { fmtDate, fmtVersion } from "@/lib/formatting";
 import { useRead } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { filterBySplit } from "@/lib/utils";
 import ResourceSelector from "@/resources/selector";
 import {

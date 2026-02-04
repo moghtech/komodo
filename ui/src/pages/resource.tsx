@@ -7,7 +7,7 @@ import {
   useResourceParamType,
   useSetTitle,
 } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { usableResourcePath } from "@/lib/utils";
 import {
   ResourceComponents,
@@ -16,10 +16,10 @@ import {
 } from "@/resources";
 import { ResourceDescription, ResourceNotFound } from "@/resources/common";
 import { AddResourceTags, ResourceTags } from "@/resources/tags";
+import DividedChildren from "@/ui/divided-children";
 import Section from "@/ui/section";
-import { Anchor, Box, Button, Flex, Group, Stack, Text } from "@mantine/core";
+import { Anchor, Button, Flex, Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
-import { ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 
 export default function Resource() {
@@ -36,7 +36,7 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
   const resources = useRead(`List${type}s`, {}).data;
   const resource = Components.useListItem(id);
 
-  const { canExecute } = usePermissions({ type, id });
+  const { canExecute, canWrite } = usePermissions({ type, id });
 
   usePushRecentlyViewed({ type, id });
   useSetTitle(resource?.name);
@@ -121,14 +121,11 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
           <Component key={key} id={id} />
         ))}
         <Components.Config id={id} />
-        {/* {canWrite && (
-            <Section
-              title="Danger Zone"
-              icon={<AlertTriangle className="w-6 h-6" />}
-            >
-              <Components.DangerZone id={id} />
-            </Section>
-          )} */}
+        {canWrite && (
+          <Section title="Danger Zone" icon={<ICONS.Alert size="1.3rem" />}>
+            <Components.DangerZone id={id} />
+          </Section>
+        )}
       </Stack>
     </Stack>
   );
@@ -152,28 +149,11 @@ function ResourceHeader({ type, id }: { type: UsableResource; id: string }) {
       >
         <Components.ResourcePageHeader id={id} />
         {infoEntries.length > 0 && (
-          <Group px="md">
-            {infoEntries.map(([key, Info], i) => {
-              return <Info key={key} id={id} />
-              // let info = Info({ id }) as ReactNode;
-              // if (!info) return null;
-              // return (
-              //   <Box
-              //     key={key}
-              //     pl={i > 0 ? "md" : undefined}
-              //     fz="sm"
-              //     style={{
-              //       borderLeft:
-              //         i > 0
-              //           ? "1px solid var(--mantine-color-accent-border-0)"
-              //           : undefined,
-              //     }}
-              //   >
-              //     {info}
-              //   </Box>
-              // );
-            })}
-          </Group>
+          <DividedChildren px="md">
+            {infoEntries.map(([key, Info]) => (
+              <Info key={key} id={id} />
+            ))}
+          </DividedChildren>
         )}
         {links && links.length > 0 && (
           <Group px="md">

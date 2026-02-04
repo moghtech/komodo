@@ -12,7 +12,7 @@ import {
   useWebhookIntegrations,
   useWrite,
 } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import Config, { ConfigGroupArgs, ConfigProps } from "@/ui/config";
 import { ConfigItem, ConfigList, ConfigSwitch } from "@/ui/config/item";
 import ShowHideButton from "@/ui/show-hide-button";

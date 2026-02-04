@@ -1,6 +1,6 @@
 import { TemplateMarker } from "@/components/template-marker";
 import { useInvalidate, usePermissions, useRead, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { usableResourcePath } from "@/lib/utils";
 import TextUpdateModal from "@/ui/text-update-modal";
 import { Button, Group, Stack, Text } from "@mantine/core";
@@ -77,7 +77,6 @@ export const ResourceLink = ({
         e.stopPropagation();
         onClick?.();
       }}
-      c="inherit"
       wrap="nowrap"
       gap="xs"
     >

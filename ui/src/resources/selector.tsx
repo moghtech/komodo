@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import { filterBySplit } from "@/lib/utils";
 import { ChevronsUpDown } from "lucide-react";
 import { fmtResourceType } from "@/lib/formatting";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 
 export interface ResourceSelectorProps extends ComboboxProps {
   type: UsableResource;

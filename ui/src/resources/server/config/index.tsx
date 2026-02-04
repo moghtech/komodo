@@ -6,7 +6,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import Config from "@/ui/config";
 import { ConfigInput, ConfigList } from "@/ui/config/item";
 import ConfirmButton from "@/ui/confirm-button";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { Group } from "@mantine/core";
 
 export default function ServerConfig({ id }: { id: string }) {

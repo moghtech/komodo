@@ -3,7 +3,7 @@ import { Types } from "komodo_client";
 import { StackComponents } from ".";
 import ConfirmModal from "@/ui/confirm-modal";
 import ConfirmButton from "@/ui/confirm-button";
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 
 export const DeployStack = ({
   id,

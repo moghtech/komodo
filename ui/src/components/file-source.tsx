@@ -1,4 +1,4 @@
-import { ICONS } from "@/lib/icons";
+import { ICONS } from "@/theme/icons";
 import { ResourceLink } from "@/resources/common";
 import { Center, Group, Loader, Text } from "@mantine/core";
 import RepoLink from "./repo-link";
