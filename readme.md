@@ -72,7 +72,8 @@ Script your own custom actions to do what you want.
     - Slack
     - Ntfy
     - Pushover
-- OIDC Authentication
+    - More providers from the community => [Community Allerters](https://komo.do/docs/ecosystem/community#community-alerters)
+- OIDC, GitHub and Google OAuth
 - User Groups
 - Granular, per-resource access control
 - Per resource action log
@@ -81,7 +82,7 @@ Script your own custom actions to do what you want.
 
 ## How to get started
 Komodo needs a MongoDB database to store its data.  
-If you're not able to run MongoDB, it is possible to use PostgreSQL with FerretDB *translating* between the two.
+If you're unable/don't want to run MongoDB, it is possible to use PostgreSQL with FerretDB *translating* between the two.
 
 - [Setup Komodo with MongoDB](https://komo.do/docs/setup/mongo)
 - [Setup Komodo with PostgreSQL and FerretDB](https://komo.do/docs/setup/ferretdb)
