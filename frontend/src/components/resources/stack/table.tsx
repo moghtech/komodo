@@ -6,6 +6,48 @@ import { StackComponents, UpdateAvailable } from ".";
 import { Types } from "komodo_client";
 import { useCallback } from "react";
 
+/** Returns a numeric priority for stack states to enable logical sorting.
+ * Lower numbers = higher priority (shown first when sorting ascending).
+ * Priority groups:
+ * - Active/Running states (0-19)
+ * - Inactive but configured states (20-39)
+ * - Down/Unknown states (40+)
+ */
+const getStackStatePriority = (state: Types.StackState): number => {
+  switch (state) {
+    // Active states - highest priority
+    case Types.StackState.Running:
+      return 0;
+    case Types.StackState.Deploying:
+      return 1;
+    case Types.StackState.Restarting:
+      return 2;
+    case Types.StackState.Unhealthy:
+      return 3;
+
+    // Inactive but configured states - medium priority
+    case Types.StackState.Paused:
+      return 20;
+    case Types.StackState.Stopped:
+      return 21;
+    case Types.StackState.Created:
+      return 22;
+
+    // Down/problematic states - lowest priority
+    case Types.StackState.Down:
+      return 40;
+    case Types.StackState.Dead:
+      return 41;
+    case Types.StackState.Removing:
+      return 42;
+    case Types.StackState.Unknown:
+      return 43;
+
+    default:
+      return 99;
+  }
+};
+
 export const StackTable = ({ stacks }: { stacks: Types.StackListItem[] }) => {
   const servers = useRead("ListServers", {}).data;
   const serverName = useCallback(
@@ -74,6 +116,11 @@ export const StackTable = ({ stacks }: { stacks: Types.StackListItem[] }) => {
           header: ({ column }) => (
             <SortableHeader column={column} title="State" />
           ),
+          sortingFn: (a, b) => {
+            const priorityA = getStackStatePriority(a.original.info.state);
+            const priorityB = getStackStatePriority(b.original.info.state);
+            return priorityA - priorityB;
+          },
           cell: ({ row }) => <StackComponents.State id={row.original.id} />,
           size: 120,
         },
