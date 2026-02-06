@@ -15,6 +15,7 @@ import { DashboardPieChart } from "@pages/home/dashboard";
 import { GroupActions } from "@components/group-actions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui/tooltip";
 import { Card } from "@ui/card";
+import { useTheme } from "@ui/theme";
 
 const useProcedure = (id?: string) =>
   useRead("ListProcedures", {}).data?.find((d) => d.id === id);
@@ -97,6 +98,7 @@ export const ProcedureComponents: RequiredResourceComponents = {
       );
     },
     ScheduleErrors: ({ id }) => {
+      const { currentTheme } = useTheme();
       const error = useProcedure(id)?.info.schedule_error;
       if (!error) {
         return null;
@@ -113,7 +115,7 @@ export const ProcedureComponents: RequiredResourceComponents = {
           <TooltipContent className="w-[400px]">
             <pre
               dangerouslySetInnerHTML={{
-                __html: updateLogToHtml(error),
+                __html: updateLogToHtml(error, currentTheme),
               }}
               className="max-h-[500px] overflow-y-auto"
             />

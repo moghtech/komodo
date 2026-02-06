@@ -19,6 +19,7 @@ import { useToast } from "@ui/use-toast";
 import { ConfirmButton, ShowHideButton } from "@components/util";
 import { DEFAULT_BUILD_DOCKERFILE_CONTENTS } from "./config";
 import { fmt_duration } from "@lib/formatting";
+import { useTheme } from "@ui/theme";
 
 export const BuildInfo = ({
   id,
@@ -27,6 +28,7 @@ export const BuildInfo = ({
   id: string;
   titleOther: ReactNode;
 }) => {
+  const { currentTheme } = useTheme();
   const [edits, setEdits] = useLocalStorage<{ contents: string | undefined }>(
     `build-${id}-edits`,
     { contents: undefined }
@@ -99,7 +101,7 @@ export const BuildInfo = ({
           <CardContent className="pr-8">
             <pre
               dangerouslySetInnerHTML={{
-                __html: updateLogToHtml(remote_error),
+                __html: updateLogToHtml(remote_error, currentTheme),
               }}
               className="max-h-[500px] overflow-y-auto"
             />
@@ -202,7 +204,7 @@ export const BuildInfo = ({
                   <CardDescription>stdout</CardDescription>
                   <pre
                     dangerouslySetInnerHTML={{
-                      __html: updateLogToHtml(log.stdout),
+                      __html: updateLogToHtml(log.stdout, currentTheme),
                     }}
                     className="max-h-[500px] overflow-y-auto"
                   />
@@ -213,7 +215,7 @@ export const BuildInfo = ({
                   <CardDescription>stderr</CardDescription>
                   <pre
                     dangerouslySetInnerHTML={{
-                      __html: updateLogToHtml(log.stderr),
+                      __html: updateLogToHtml(log.stderr, currentTheme),
                     }}
                     className="max-h-[500px] overflow-y-auto"
                   />

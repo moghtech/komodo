@@ -3,8 +3,10 @@ import { Card, CardContent, CardHeader } from "@ui/card";
 import { cn, getUpdateQuery, updateLogToHtml } from "@lib/utils";
 import { useRead } from "@lib/hooks";
 import { text_color_class_by_intention } from "@lib/color";
+import { useTheme } from "@ui/theme";
 
 export const ActionInfo = ({ id }: { id: string }) => {
+  const { currentTheme } = useTheme();
   const update = useRead("ListUpdates", {
     query: {
       ...getUpdateQuery({ type: "Action", id }, undefined),
@@ -49,7 +51,7 @@ export const ActionInfo = ({ id }: { id: string }) => {
           <CardContent className="pr-8">
             <pre
               dangerouslySetInnerHTML={{
-                __html: updateLogToHtml(log.stdout),
+                __html: updateLogToHtml(log.stdout, currentTheme),
               }}
               className="max-h-[500px] overflow-y-auto"
             />
@@ -67,7 +69,7 @@ export const ActionInfo = ({ id }: { id: string }) => {
           <CardContent className="pr-8">
             <pre
               dangerouslySetInnerHTML={{
-                __html: updateLogToHtml(log.stderr),
+                __html: updateLogToHtml(log.stderr, currentTheme),
               }}
               className="max-h-[500px] overflow-y-auto"
             />

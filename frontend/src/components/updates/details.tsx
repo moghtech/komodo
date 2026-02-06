@@ -38,6 +38,7 @@ import { CopyButton, UserAvatar } from "@components/util";
 import { ResourceNameSimple } from "@components/resources/common";
 import { useWebsocketMessages } from "@lib/socket";
 import { MonacoDiffEditor } from "@components/monaco";
+import { useTheme } from "@ui/theme";
 
 export const UpdateUser = ({
   user_id,
@@ -124,6 +125,7 @@ export const UpdateDetailsContent = ({
   open?: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
+  const { currentTheme } = useTheme();
   const { data: update, refetch } = useRead(
     "GetUpdate",
     { id },
@@ -255,7 +257,7 @@ export const UpdateDetailsContent = ({
                   <CardDescription>stdout</CardDescription>
                   <pre
                     dangerouslySetInnerHTML={{
-                      __html: updateLogToHtml(log.stdout),
+                      __html: updateLogToHtml(log.stdout, currentTheme),
                     }}
                     className="max-h-[500px] overflow-y-auto"
                   />
@@ -266,7 +268,7 @@ export const UpdateDetailsContent = ({
                   <CardDescription>stderr</CardDescription>
                   <pre
                     dangerouslySetInnerHTML={{
-                      __html: updateLogToHtml(log.stderr),
+                      __html: updateLogToHtml(log.stderr, currentTheme),
                     }}
                     className="max-h-[500px] overflow-y-auto"
                   />

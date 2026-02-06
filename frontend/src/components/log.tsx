@@ -23,6 +23,7 @@ import { Input } from "@ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@ui/toggle-group";
 import { useToast } from "@ui/use-toast";
 import { useLocalStorage } from "@lib/hooks";
+import { useTheme } from "@ui/theme";
 
 export type LogStream = "stdout" | "stderr";
 
@@ -179,6 +180,7 @@ export const Log = ({
   log: Types.Log | undefined;
   stream: "stdout" | "stderr";
 }) => {
+  const { currentTheme } = useTheme();
   const _log = log?.[stream as keyof typeof log] as string | undefined;
   const ref = useRef<HTMLDivElement>(null);
   const scroll = () =>
@@ -192,7 +194,7 @@ export const Log = ({
       <div ref={ref} className="h-[75vh] overflow-y-auto">
         <pre
           dangerouslySetInnerHTML={{
-            __html: _log ? logToHtml(_log) : `no ${stream} logs`,
+            __html: _log ? logToHtml(_log, currentTheme) : `no ${stream} logs`,
           }}
           className="-scroll-mt-24 pb-[20vh]"
         />

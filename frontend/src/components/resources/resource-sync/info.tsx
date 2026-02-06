@@ -11,6 +11,7 @@ import { Button } from "@ui/button";
 import { FilePlus, History } from "lucide-react";
 import { ConfirmUpdate } from "@components/config/util";
 import { ConfirmButton, ShowHideButton } from "@components/util";
+import { useTheme } from "@ui/theme";
 
 export const ResourceSyncInfo = ({
   id,
@@ -19,6 +20,7 @@ export const ResourceSyncInfo = ({
   id: string;
   titleOther: ReactNode;
 }) => {
+  const { currentTheme } = useTheme();
   const [edits, setEdits] = useLocalStorage<Record<string, string | undefined>>(
     `sync-${id}-edits`,
     {}
@@ -93,7 +95,7 @@ export const ResourceSyncInfo = ({
             <CardContent className="pr-8">
               <pre
                 dangerouslySetInnerHTML={{
-                  __html: updateLogToHtml(error.contents),
+                  __html: updateLogToHtml(error.contents, currentTheme),
                 }}
                 className="max-h-[500px] overflow-y-auto"
               />

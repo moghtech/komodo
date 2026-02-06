@@ -19,6 +19,7 @@ import { useToast } from "@ui/use-toast";
 import { ConfirmButton, ShowHideButton, CopyButton } from "@components/util";
 import { DEFAULT_STACK_FILE_CONTENTS } from "./config";
 import { Types } from "komodo_client";
+import { useTheme } from "@ui/theme";
 
 export const StackInfo = ({
   id,
@@ -27,6 +28,7 @@ export const StackInfo = ({
   id: string;
   titleOther: ReactNode;
 }) => {
+  const { currentTheme } = useTheme();
   const [edits, setEdits] = useLocalStorage<Record<string, string | undefined>>(
     `stack-${id}-edits`,
     {}
@@ -119,7 +121,7 @@ export const StackInfo = ({
             <CardContent className="pr-8">
               <pre
                 dangerouslySetInnerHTML={{
-                  __html: updateLogToHtml(error.contents),
+                  __html: updateLogToHtml(error.contents, currentTheme),
                 }}
                 className="max-h-[500px] overflow-y-auto"
               />

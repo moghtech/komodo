@@ -165,23 +165,51 @@ export const sanitizeOnlySpan = (log: string) => {
   });
 };
 
+// Dark mode ANSI color palette with improved contrast
+// Based on GitHub's dark mode terminal colors for excellent readability
+const darkModeColors: Record<number, string> = {
+  0: "#6E7681", // Black -> visible gray
+  1: "#FF7B72", // Red -> bright red
+  2: "#7EE787", // Green -> bright green
+  3: "#FFA657", // Yellow -> bright orange
+  4: "#79C0FF", // Blue -> bright blue (key fix for issue #1049)
+  5: "#D2A8FF", // Magenta -> light purple
+  6: "#56D4DD", // Cyan -> bright cyan
+  7: "#FFFFFF", // White
+  8: "#8B949E", // Bright Black -> medium gray
+  9: "#FF7B72", // Bright Red
+  10: "#7EE787", // Bright Green
+  11: "#FFA657", // Bright Yellow
+  12: "#79C0FF", // Bright Blue
+  13: "#D2A8FF", // Bright Magenta
+  14: "#56D4DD", // Bright Cyan
+  15: "#FFFFFF", // Bright White
+};
+
+const convertLight = new Convert();
+const convertDark = new Convert({ colors: darkModeColors });
+
+export type ThemeMode = "light" | "dark";
+
 /**
  * Converts the ansi colors in an Update log to html.
  * sanitizes incoming log first for any eg. script tags.
  * @param log incoming log string
+ * @param theme current theme mode (defaults to light for backwards compatibility)
  */
-export const updateLogToHtml = (log: string) => {
+export const updateLogToHtml = (log: string, theme: ThemeMode = "light") => {
   if (!log) return "No log.";
+  const convert = theme === "dark" ? convertDark : convertLight;
   return convert.toHtml(sanitizeOnlySpan(log));
 };
 
-const convert = new Convert();
 /**
  * Converts the ansi colors in log to html.
  * sanitizes incoming log first for any eg. script tags.
  * @param log incoming log string
+ * @param theme current theme mode (defaults to light for backwards compatibility)
  */
-export const logToHtml = (log: string) => {
+export const logToHtml = (log: string, theme: ThemeMode = "light") => {
   if (!log) return "No log.";
   const sanitized = sanitizeHtml(log, {
     allowedTags: sanitizeHtml.defaults.allowedTags.filter(
@@ -189,6 +217,7 @@ export const logToHtml = (log: string) => {
     ),
     allowedAttributes: sanitizeHtml.defaults.allowedAttributes,
   });
+  const convert = theme === "dark" ? convertDark : convertLight;
   return convert.toHtml(sanitized);
 };
 
