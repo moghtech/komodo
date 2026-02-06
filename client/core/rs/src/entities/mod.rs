@@ -17,7 +17,7 @@ use strum::{AsRefStr, Display, EnumString};
 use typeshare::typeshare;
 
 use crate::{
-  deserializers::file_contents_deserializer, entities::update::Log,
+  deserializers::command_deserializer, entities::update::Log,
   parsers::parse_key_value_list,
 };
 
@@ -182,7 +182,7 @@ pub struct __Serror {
 pub struct SystemCommand {
   #[serde(default)]
   pub path: String,
-  #[serde(default, deserialize_with = "file_contents_deserializer")]
+  #[serde(default, deserialize_with = "command_deserializer")]
   pub command: String,
 }
 

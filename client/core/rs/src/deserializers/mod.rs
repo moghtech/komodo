@@ -1,5 +1,6 @@
 //! Deserializers for custom behavior and backward compatibility.
 
+mod command;
 mod conversion;
 mod environment;
 mod file_contents;
@@ -11,6 +12,7 @@ mod permission;
 mod string_list;
 mod term_signal_labels;
 
+pub use command::*;
 pub use conversion::*;
 pub use environment::*;
 pub use file_contents::*;
