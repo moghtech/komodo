@@ -430,7 +430,7 @@ export const TextUpdateMenuMonaco = ({
         {triggerChild ?? (
           <Card
             className={cn(
-              "px-3 py-2 hover:bg-accent/50 transition-colors cursor-pointer",
+              "px-3 py-2 hover:bg-accent/50 transition-colors cursor-pointer min-w-0",
               fullWidth ? "w-full" : "w-fit",
               triggerHidden && "hidden"
             )}
@@ -970,7 +970,7 @@ export const TextUpdateMenuSimple = ({
       <DialogTrigger asChild>
         <div
           className={cn(
-            "text-sm text-nowrap overflow-hidden overflow-ellipsis p-2 border rounded-md flex-1 cursor-pointer hover:bg-accent/25",
+            "text-sm text-nowrap overflow-hidden overflow-ellipsis p-2 border rounded-md flex-1 min-w-0 cursor-pointer hover:bg-accent/25",
             (!value || !!disabled) && "text-muted-foreground",
             triggerClassName
           )}
