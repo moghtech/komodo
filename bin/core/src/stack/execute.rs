@@ -180,12 +180,12 @@ impl ExecuteCompose for StopStack {
 }
 
 impl ExecuteCompose for DestroyStack {
-  type Extras = (Option<i32>, bool);
+  type Extras = (Option<i32>, bool, bool);
   async fn execute(
     periphery: PeripheryClient,
     stack: Stack,
     services: Vec<String>,
-    (timeout, remove_orphans): Self::Extras,
+    (timeout, remove_orphans, remove_volumes): Self::Extras,
   ) -> anyhow::Result<Log> {
     let service_args = service_args(&services);
     let maybe_timeout = maybe_timeout(timeout);
@@ -194,11 +194,16 @@ impl ExecuteCompose for DestroyStack {
     } else {
       ""
     };
+    let maybe_remove_volumes = if remove_volumes {
+      " -v"
+    } else {
+      ""
+    };
     periphery
       .request(ComposeExecution {
         project: stack.project_name(false),
         command: format!(
-          "down{maybe_timeout}{maybe_remove_orphans}{service_args}"
+          "down{maybe_timeout}{maybe_remove_orphans}{maybe_remove_volumes}{service_args}"
         ),
       })
       .await

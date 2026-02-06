@@ -923,6 +923,7 @@ impl super::BatchExecute for BatchDestroyStack {
       stack,
       services: Vec::new(),
       remove_orphans: false,
+      remove_volumes: false,
       stop_time: None,
     })
   }
@@ -952,7 +953,7 @@ impl Resolve<ExecuteArgs> for DestroyStack {
       user,
       |state| state.destroying = true,
       update.clone(),
-      (self.stop_time, self.remove_orphans),
+      (self.stop_time, self.remove_orphans, self.remove_volumes),
     )
     .await
     .map_err(Into::into)

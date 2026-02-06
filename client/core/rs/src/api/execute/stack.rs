@@ -344,6 +344,11 @@ pub struct DestroyStack {
   /// Pass `--remove-orphans`
   #[serde(default)]
   pub remove_orphans: bool,
+  /// Pass `-v` to remove named volumes declared in the compose file
+  /// and anonymous volumes attached to containers.
+  /// Default: false (off for safety - prevents accidental data loss)
+  #[serde(default)]
+  pub remove_volumes: bool,
   /// Override the default termination max time.
   pub stop_time: Option<i32>,
 }
