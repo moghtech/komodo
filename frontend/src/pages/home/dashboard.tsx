@@ -96,11 +96,20 @@ export default function Dashboard() {
 const ResourceRow = ({ type }: { type: UsableResource }) => {
   const _recents = useUser().data?.recents?.[type]?.slice(0, 6);
   const _resources = useRead(`List${type}s`, {}).data;
+  
+  // Helper to check if a resource ID corresponds to a template
+  const isTemplate = (id: string) =>
+    _resources?.find((r) => r.id === id)?.template ?? false;
+  
+  // Filter recents to exclude templates and non-existent resources
   const recents = _recents?.filter(
-    (recent) => !_resources?.every((resource) => resource.id !== recent),
+    (recent) =>
+      !_resources?.every((resource) => resource.id !== recent) &&
+      !isTemplate(recent),
   );
+  // Filter resources to exclude templates and already-shown recents
   const resources = _resources
-    ?.filter((r) => !recents?.includes(r.id))
+    ?.filter((r) => !recents?.includes(r.id) && !r.template)
     .map((r) => r.id);
   const ids = [
     ...(recents ?? []),
