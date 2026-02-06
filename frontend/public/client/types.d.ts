@@ -3502,6 +3502,8 @@ export interface ContainerListItem {
     network_mode?: string;
     /** The network names attached to container */
     networks?: string[];
+    /** The IPv4 addresses for each network (in same order as networks) */
+    ip_addresses?: string[];
     /** Port mappings for the container */
     ports?: Port[];
     /** The volume names attached to container */

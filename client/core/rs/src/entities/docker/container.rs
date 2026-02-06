@@ -49,6 +49,9 @@ pub struct ContainerListItem {
   /// The network names attached to container
   #[serde(default, skip_serializing_if = "Vec::is_empty")]
   pub networks: Vec<String>,
+  /// The IPv4 addresses for each network (in same order as networks)
+  #[serde(default, skip_serializing_if = "Vec::is_empty")]
+  pub ip_addresses: Vec<String>,
   /// Port mappings for the container
   #[serde(default, skip_serializing_if = "Vec::is_empty")]
   pub ports: Vec<Port>,

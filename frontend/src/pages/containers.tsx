@@ -188,6 +188,29 @@ export default function ContainersPage() {
               },
             },
             {
+              accessorKey: "ip_addresses.0",
+              size: 140,
+              header: ({ column }) => (
+                <SortableHeader column={column} title="IPv4" />
+              ),
+              cell: ({ row }) => {
+                const ips = row.original.ip_addresses ?? [];
+                if (ips.length === 0) {
+                  return <span className="text-muted-foreground">-</span>;
+                }
+                if (ips.length === 1) {
+                  return <span className="font-mono text-sm">{ips[0]}</span>;
+                }
+                return (
+                  <div className="flex flex-col gap-1">
+                    {ips.map((ip, i) => (
+                      <span key={i} className="font-mono text-sm">{ip}</span>
+                    ))}
+                  </div>
+                );
+              },
+            },
+            {
               accessorKey: "networks.0",
               size: 200,
               header: ({ column }) => (

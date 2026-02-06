@@ -52,12 +52,30 @@ impl DockerClient {
             .and_then(|config| config.network_mode),
           networks: container
             .network_settings
+            .as_ref()
             .and_then(|settings| {
-              settings.networks.map(|networks| {
+              settings.networks.as_ref().map(|networks| {
                 let mut keys =
-                  networks.into_keys().collect::<Vec<_>>();
+                  networks.keys().cloned().collect::<Vec<_>>();
                 keys.sort();
                 keys
+              })
+            })
+            .unwrap_or_default(),
+          ip_addresses: container
+            .network_settings
+            .and_then(|settings| {
+              settings.networks.map(|networks| {
+                let mut entries: Vec<_> = networks.into_iter().collect();
+                entries.sort_by(|a, b| a.0.cmp(&b.0));
+                entries
+                  .into_iter()
+                  .filter_map(|(_, endpoint)| {
+                    endpoint
+                      .ip_address
+                      .filter(|ip| !ip.is_empty())
+                  })
+                  .collect()
               })
             })
             .unwrap_or_default(),
