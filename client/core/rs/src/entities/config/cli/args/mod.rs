@@ -104,7 +104,7 @@ pub struct Execute {
   #[arg(long, short = 's')]
   pub secret: Option<String>,
   /// Always continue on user confirmation prompts.
-  #[arg(long, short = 'y', default_value_t = false)]
+  #[arg(long, short = 'y', default_value_t = false, global = true)]
   pub yes: bool,
 }
 
