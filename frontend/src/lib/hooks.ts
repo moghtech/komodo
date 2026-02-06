@@ -501,9 +501,14 @@ export const useLocalStorage = <T>(
 export const useKeyListener = (listenKey: string, onPress: () => void) => {
   useEffect(() => {
     const keydown = (e: KeyboardEvent) => {
-      // This will ignore Shift + listenKey if it is sent from input / textarea
-      const target = e.target as any;
-      if (target.matches("input") || target.matches("textarea")) return;
+      // Ignore hotkeys when user is typing in an input, textarea, select, or contentEditable element (e.g., Monaco editor)
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT" ||
+        target.isContentEditable
+      ) return;
 
       if (e.key === listenKey) {
         e.preventDefault();
@@ -518,9 +523,14 @@ export const useKeyListener = (listenKey: string, onPress: () => void) => {
 export const useShiftKeyListener = (listenKey: string, onPress: () => void) => {
   useEffect(() => {
     const keydown = (e: KeyboardEvent) => {
-      // This will ignore Shift + listenKey if it is sent from input / textarea
-      const target = e.target as any;
-      if (target.matches("input") || target.matches("textarea")) return;
+      // Ignore hotkeys when user is typing in an input, textarea, select, or contentEditable element (e.g., Monaco editor)
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT" ||
+        target.isContentEditable
+      ) return;
 
       if (e.shiftKey && e.key === listenKey) {
         e.preventDefault();
