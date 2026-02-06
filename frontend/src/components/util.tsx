@@ -93,6 +93,20 @@ import {
 } from "@ui/select";
 import { useServer } from "./resources/server";
 
+/**
+ * Safely copy text to clipboard with error handling.
+ * The clipboard API is async and may fail in certain contexts.
+ */
+export const copyToClipboard = async (text: string): Promise<boolean> => {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    console.error("Failed to copy to clipboard");
+    return false;
+  }
+};
+
 export const ActionButton = forwardRef<
   HTMLButtonElement,
   {
@@ -243,9 +257,11 @@ export const ActionWithDialog = ({
         </DialogHeader>
         <div className="flex flex-col gap-4 my-4">
           <p
-            onClick={() => {
-              navigator.clipboard.writeText(name);
-              toast({ title: `Copied "${name}" to clipboard!` });
+            onClick={async () => {
+              const success = await copyToClipboard(name);
+              if (success) {
+                toast({ title: `Copied "${name}" to clipboard!` });
+              }
             }}
             className="cursor-pointer"
           >
@@ -372,10 +388,12 @@ export const CopyButton = ({
       className={cn("shrink-0", className)}
       size="icon"
       variant="outline"
-      onClick={() => {
+      onClick={async () => {
         if (!content) return;
-        navigator.clipboard.writeText(content);
-        set(true);
+        const success = await copyToClipboard(content);
+        if (success) {
+          set(true);
+        }
       }}
       disabled={!content}
     >

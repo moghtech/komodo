@@ -18,7 +18,7 @@ import { Input } from "@ui/input";
 import { Types } from "komodo_client";
 import { ChevronDown, CheckCircle } from "lucide-react";
 import { useState } from "react";
-import { ConfirmButton } from "./util";
+import { ConfirmButton, copyToClipboard } from "./util";
 import { useToast } from "@ui/use-toast";
 import { usableResourceExecuteKey } from "@lib/utils";
 
@@ -149,9 +149,11 @@ const GroupActionDialog = ({
           {!action.startsWith("Refresh") && (
             <>
               <p
-                onClick={() => {
-                  navigator.clipboard.writeText(formatted);
-                  toast({ title: `Copied "${formatted}" to clipboard!` });
+                onClick={async () => {
+                  const success = await copyToClipboard(formatted);
+                  if (success) {
+                    toast({ title: `Copied "${formatted}" to clipboard!` });
+                  }
                 }}
                 className="cursor-pointer"
               >

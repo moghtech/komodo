@@ -1,4 +1,5 @@
 import { SecretSelector } from "@components/config/util";
+import { copyToClipboard } from "@components/util";
 import { useRead } from "@lib/hooks";
 import { Types } from "komodo_client";
 import { useToast } from "@ui/use-toast";
@@ -47,10 +48,12 @@ const SecretsView = ({
         <SecretSelector
           type="Variable"
           keys={variables.map((v) => v.name)}
-          onSelect={(variable) => {
+          onSelect={async (variable) => {
             if (!variable) return;
-            navigator.clipboard.writeText("[[" + variable + "]]");
-            toast({ title: "Copied selection" });
+            const success = await copyToClipboard("[[" + variable + "]]");
+            if (success) {
+              toast({ title: "Copied selection" });
+            }
           }}
           disabled={false}
           side="right"
@@ -61,10 +64,12 @@ const SecretsView = ({
         <SecretSelector
           type="Secret"
           keys={secrets}
-          onSelect={(secret) => {
+          onSelect={async (secret) => {
             if (!secret) return;
-            navigator.clipboard.writeText("[[" + secret + "]]");
-            toast({ title: "Copied selection" });
+            const success = await copyToClipboard("[[" + secret + "]]");
+            if (success) {
+              toast({ title: "Copied selection" });
+            }
           }}
           disabled={false}
           side="right"
