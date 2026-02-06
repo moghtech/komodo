@@ -43,7 +43,8 @@ pub async fn get_stack_and_server(
 pub fn compose_container_match_regex(
   container_name: &str,
 ) -> anyhow::Result<Regex> {
-  let regex = format!("^{container_name}-?[0-9]*$");
+  let escaped_name = regex::escape(container_name);
+  let regex = format!("^{escaped_name}-?[0-9]*$");
   Regex::new(&regex).with_context(|| {
     format!("failed to construct valid regex from {regex}")
   })
