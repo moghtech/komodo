@@ -197,7 +197,7 @@ const RecentCard = ({
         </div>
       </div>
 
-      <div className="flex flex-row gap-2 w-full py-1">
+      <div className="flex flex-row flex-wrap gap-1 w-full overflow-hidden max-h-6">
         <TagsWithBadge tag_ids={tags} />
       </div>
     </Link>
