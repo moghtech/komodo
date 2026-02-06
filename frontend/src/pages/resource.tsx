@@ -13,7 +13,11 @@ import {
   useResourceParamType,
   useSetTitle,
 } from "@lib/hooks";
-import { SETTINGS_RESOURCES, usableResourcePath } from "@lib/utils";
+import {
+  parseMarkdownLink,
+  SETTINGS_RESOURCES,
+  usableResourcePath,
+} from "@lib/utils";
 import { Types } from "komodo_client";
 import { UsableResource } from "@types";
 import { Button } from "@ui/button";
@@ -148,19 +152,22 @@ export const ResourceHeader = ({
         </div>
         {links && links.length > 0 && (
           <div className="flex items-center gap-x-4 gap-y-2 flex-wrap px-4 py-0">
-            {links?.map((link) => (
-              <a
-                key={link}
-                target="_blank"
-                href={link}
-                className="flex gap-2 items-center pr-4 text-sm border-r cursor-pointer hover:underline last:pr-0 last:border-none"
-              >
-                <LinkIcon className="w-4" />
-                <div className="max-w-[150px] lg:max-w-[250px] text-nowrap overflow-hidden overflow-ellipsis">
-                  {link}
-                </div>
-              </a>
-            ))}
+            {links?.map((link) => {
+              const { text, url } = parseMarkdownLink(link);
+              return (
+                <a
+                  key={link}
+                  target="_blank"
+                  href={url}
+                  className="flex gap-2 items-center pr-4 text-sm border-r cursor-pointer hover:underline last:pr-0 last:border-none"
+                >
+                  <LinkIcon className="w-4" />
+                  <div className="max-w-[150px] lg:max-w-[250px] text-nowrap overflow-hidden overflow-ellipsis">
+                    {text}
+                  </div>
+                </a>
+              );
+            })}
           </div>
         )}
         <div className="flex items-center gap-2 flex-wrap p-4 pt-0">

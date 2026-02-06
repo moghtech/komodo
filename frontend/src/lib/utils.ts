@@ -269,3 +269,36 @@ export const file_contents_empty = (contents?: string) => {
       .filter((line) => line.length !== 0 && !line.startsWith("#")).length === 0
   );
 };
+
+/**
+ * Parse a markdown-style link and extract the display text and URL.
+ * Supports format: [Display Text](https://example.com)
+ * Returns { text, url } if valid markdown link, or { text: input, url: input } for plain URLs.
+ */
+export const parseMarkdownLink = (
+  input: string
+): { text: string; url: string } => {
+  if (!input) return { text: "", url: "" };
+
+  const trimmed = input.trim();
+
+  // Match markdown link pattern: [text](url)
+  // Uses a non-greedy match for text to handle nested brackets correctly
+  const markdownLinkRegex = /^\[([^\]]+)\]\(([^)]+)\)$/;
+  const match = trimmed.match(markdownLinkRegex);
+
+  if (match) {
+    const [, text, url] = match;
+    // Validate that the URL looks reasonable (has protocol or starts with /)
+    if (
+      url.startsWith("http://") ||
+      url.startsWith("https://") ||
+      url.startsWith("/")
+    ) {
+      return { text: text.trim(), url: url.trim() };
+    }
+  }
+
+  // Not a markdown link, return the input as both text and URL
+  return { text: trimmed, url: trimmed };
+};
