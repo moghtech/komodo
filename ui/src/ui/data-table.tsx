@@ -240,7 +240,7 @@ export function DataTable<TData, TValue>({
         bd="1px solid var(--mantine-color-accent-border-0)"
         bdrs="md"
         w="100%"
-        mah="calc(100vh - 25rem)"
+        mah="50vh"
         style={{ overflow: "auto" }}
         {...boxProps}
       >

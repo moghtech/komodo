@@ -8,8 +8,9 @@ import { ResourceLink } from "@/resources/common";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import Page from "@/ui/page";
 import StatusBadge from "@/ui/status-badge";
-import { Group, Text, TextInput } from "@mantine/core";
-import { Fragment, useCallback, useMemo, useState } from "react";
+import { Group, TextInput } from "@mantine/core";
+import { useCallback, useMemo, useState } from "react";
+import DividedChildren from "@/ui/divided-children";
 
 export default function Containers() {
   const [search, setSearch] = useState("");
@@ -102,21 +103,6 @@ export default function Containers() {
             ),
           },
           {
-            accessorKey: "image",
-            size: 300,
-            header: ({ column }) => (
-              <SortableHeader column={column} title="Image" />
-            ),
-            cell: ({ row }) => (
-              <DockerResourceLink
-                type="image"
-                serverId={row.original.server_id!}
-                name={row.original.image}
-                id={row.original.image_id}
-              />
-            ),
-          },
-          {
             accessorKey: "state",
             size: 160,
             header: ({ column }) => (
@@ -133,6 +119,21 @@ export default function Containers() {
             },
           },
           {
+            accessorKey: "image",
+            size: 300,
+            header: ({ column }) => (
+              <SortableHeader column={column} title="Image" />
+            ),
+            cell: ({ row }) => (
+              <DockerResourceLink
+                type="image"
+                serverId={row.original.server_id!}
+                name={row.original.image}
+                id={row.original.image_id}
+              />
+            ),
+          },
+          {
             accessorKey: "networks.0",
             size: 200,
             header: ({ column }) => (
@@ -140,18 +141,16 @@ export default function Containers() {
             ),
             cell: ({ row }) =>
               (row.original.networks?.length ?? 0) > 0 ? (
-                <Group>
-                  {row.original.networks?.map((network, i) => (
-                    <Fragment key={network}>
-                      {i > 0 && <Text c="dimmed">|</Text>}
-                      <DockerResourceLink
-                        type="network"
-                        serverId={row.original.server_id!}
-                        name={network}
-                      />
-                    </Fragment>
+                <DividedChildren>
+                  {row.original.networks?.map((network) => (
+                    <DockerResourceLink
+                      key={network}
+                      type="network"
+                      serverId={row.original.server_id!}
+                      name={network}
+                    />
                   ))}
-                </Group>
+                </DividedChildren>
               ) : (
                 row.original.network_mode && (
                   <DockerResourceLink
@@ -190,6 +189,25 @@ export default function Containers() {
                 ports={row.original.ports ?? []}
                 serverId={row.original.server_id}
               />
+            ),
+          },
+          {
+            accessorKey: "volumes.0",
+            size: 200,
+            header: ({ column }) => (
+              <SortableHeader column={column} title="Volumes" />
+            ),
+            cell: ({ row }) => (
+              <DividedChildren>
+                {row.original.volumes?.map((volume) => (
+                  <DockerResourceLink
+                    key={volume}
+                    type="volume"
+                    serverId={row.original.server_id!}
+                    name={volume}
+                  />
+                ))}
+              </DividedChildren>
             ),
           },
         ]}

@@ -1,18 +1,21 @@
 import { filterMultitermBySplit } from "@/lib/utils";
 import { ICONS } from "@/theme/icons";
 import Section, { SectionProps } from "@/ui/section";
-import { Box, Group, Text, TextInput } from "@mantine/core";
+import { Box, GroupProps, TextInput } from "@mantine/core";
 import { useMemo, useState } from "react";
+import DockerOptions from "./options";
 
 export interface DockerLabelsSectionProps extends Omit<
   SectionProps,
   "children"
 > {
   labels: Record<string, string> | undefined;
+  groupProps?: GroupProps;
 }
 
 export default function DockerLabelsSection({
   labels,
+  groupProps,
   ...props
 }: DockerLabelsSectionProps) {
   const [search, setSearch] = useState("");
@@ -40,27 +43,7 @@ export default function DockerLabelsSection({
       }
       {...props}
     >
-      <Group gap="sm">
-        {filtered.map(([key, value]) => (
-          <Group key={key} gap="0" bdrs="sm" bg="accent" px="xs" py="0.2rem">
-            <Text fz="sm" c="dimmed">
-              {key}
-            </Text>
-            <Text fz="sm" c="dimmed">
-              =
-            </Text>
-            <Text
-              fz="sm"
-              fw="bolder"
-              maw={200}
-              className="text-ellipsis"
-              style={{ textWrap: "nowrap" }}
-            >
-              {value}
-            </Text>
-          </Group>
-        ))}
-      </Group>
+      <DockerOptions options={filtered} {...groupProps} />
     </Section>
   );
 }

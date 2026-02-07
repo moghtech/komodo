@@ -64,9 +64,7 @@ export default function ContainersSection({
                 w={{ base: 200, lg: 300 }}
               />
             )}
-            {setShow && (
-              <ShowHideButton show={show} setShow={setShow} />
-            )}
+            {setShow && <ShowHideButton show={show} setShow={setShow} />}
           </Group>
         ) : undefined
       }
@@ -179,6 +177,25 @@ export default function ContainersSection({
                   ports={row.original.ports ?? []}
                   serverId={row.original.server_id}
                 />
+              ),
+            },
+            {
+              accessorKey: "volumes.0",
+              size: 200,
+              header: ({ column }) => (
+                <SortableHeader column={column} title="Volumes" />
+              ),
+              cell: ({ row }) => (
+                <DividedChildren>
+                  {row.original.volumes?.map((volume) => (
+                    <DockerResourceLink
+                      key={volume}
+                      type="volume"
+                      serverId={row.original.server_id!}
+                      name={volume}
+                    />
+                  ))}
+                </DividedChildren>
               ),
             },
           ]}
