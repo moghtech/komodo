@@ -1,7 +1,7 @@
 import DockerLabelsSection from "@/components/docker/labels-section";
 import DockerResourceLink from "@/components/docker/link";
 import DockerOptions from "@/components/docker/options";
-import { MonacoEditor } from "@/components/monaco";
+import InspectSection from "@/components/inspect-section";
 import ResourceUpdates from "@/components/updates/resource";
 import { hexColorByIntention } from "@/lib/color";
 import { useExecute, usePermissions, useRead, useSetTitle } from "@/lib/hooks";
@@ -14,11 +14,9 @@ import DividedChildren from "@/ui/divided-children";
 import EntityHeader from "@/ui/entity-header";
 import EntityPage from "@/ui/entity-page";
 import Section from "@/ui/section";
-import ShowHideButton from "@/ui/show-hide-button";
-import { Box, Center, Group, Loader, Stack, Text } from "@mantine/core";
+import { Center, Group, Loader, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { Waypoints } from "lucide-react";
-import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 export default function Network() {
@@ -44,7 +42,6 @@ function NetworkInner({
   serverId: string;
   networkName: string;
 }) {
-  const [showInspect, setShowInspect] = useState(false);
   const server = ServerComponents.useListItem(serverId);
   useSetTitle(`${server?.name} | Network | ${networkName}`);
   const nav = useNavigate();
@@ -186,7 +183,7 @@ function NetworkInner({
         )}
 
         {containers && containers.length > 0 && (
-          <Section title="Containers" icon={<ICONS.Container size="1rem" />}>
+          <Section title="Containers" icon={<ICONS.Container size="1.3rem" />}>
             <DataTable
               tableKey="network-containers"
               data={containers}
@@ -235,7 +232,7 @@ function NetworkInner({
         )}
 
         {/* TOP LEVEL NETWORK INFO */}
-        <Section title="Details" icon={<ICONS.Info size="1rem" />}>
+        <Section title="Details" icon={<ICONS.Info size="1.3rem" />}>
           <DataTable
             tableKey="network-info"
             data={[network]}
@@ -264,7 +261,7 @@ function NetworkInner({
         </Section>
 
         {ipamConfig.length > 0 && (
-          <Section title="IPAM" icon={<Waypoints size="1rem" />}>
+          <Section title="IPAM" icon={<Waypoints size="1.3rem" />}>
             <DataTable
               tableKey="network-ipam"
               data={ipamConfig}
@@ -294,23 +291,7 @@ function NetworkInner({
         )}
 
         {specific.includes(Types.SpecificPermission.Inspect) && (
-          <Section
-            title="Inspect"
-            icon={<ICONS.Search size="1rem" />}
-            titleRight={
-              <Box pl="md">
-                <ShowHideButton show={showInspect} setShow={setShowInspect} />
-              </Box>
-            }
-          >
-            {showInspect && (
-              <MonacoEditor
-                value={JSON.stringify(network, null, 2)}
-                language="json"
-                readOnly
-              />
-            )}
-          </Section>
+          <InspectSection json={network} />
         )}
 
         <DockerLabelsSection labels={network?.Labels} />

@@ -165,7 +165,7 @@ function ContainerInner({
         {canExecute && (
           <Section
             title="Execute"
-            icon={<ICONS.Execution size="1rem" />}
+            icon={<ICONS.Execution size="1.3rem" />}
             my="xl"
           >
             <Group>
@@ -182,7 +182,7 @@ function ContainerInner({
 
         {/* TOP LEVEL CONTAINER INFO */}
         {listContainer && (
-          <Section title="Details" icon={<ICONS.Info size="1rem" />}>
+          <Section title="Details" icon={<ICONS.Info size="1.3rem" />}>
             <DataTable
               tableKey="container-info"
               data={[listContainer]}

@@ -30,7 +30,7 @@ export default function DockerLabelsSection({
   return (
     <Section
       title="Labels"
-      icon={<ICONS.Tags size="1rem" />}
+      icon={<ICONS.Tags size="1.3rem" />}
       titleRight={
         <Box pl="md">
           <TextInput

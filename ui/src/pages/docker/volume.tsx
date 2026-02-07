@@ -1,7 +1,7 @@
 import ContainersSection from "@/components/docker/containers-section";
 import DockerLabelsSection from "@/components/docker/labels-section";
 import DockerOptions from "@/components/docker/options";
-import { MonacoEditor } from "@/components/monaco";
+import InspectSection from "@/components/inspect-section";
 import ResourceUpdates from "@/components/updates/resource";
 import { hexColorByIntention } from "@/lib/color";
 import { useExecute, usePermissions, useRead, useSetTitle } from "@/lib/hooks";
@@ -14,10 +14,8 @@ import DividedChildren from "@/ui/divided-children";
 import EntityHeader from "@/ui/entity-header";
 import EntityPage from "@/ui/entity-page";
 import Section from "@/ui/section";
-import ShowHideButton from "@/ui/show-hide-button";
-import { Box, Center, Group, Loader, Stack, Text } from "@mantine/core";
+import { Center, Group, Loader, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
-import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 export default function Volume() {
@@ -43,7 +41,6 @@ function VolumeInner({
   serverId: string;
   volumeName: string;
 }) {
-  const [showInspect, setShowInspect] = useState(false);
   const server = ServerComponents.useListItem(serverId);
   useSetTitle(`${server?.name} | Volume | ${volumeName}`);
   const nav = useNavigate();
@@ -157,7 +154,7 @@ function VolumeInner({
         {canExecute && unused && (
           <Section
             title="Execute"
-            icon={<ICONS.Execution size="1rem" />}
+            icon={<ICONS.Execution size="1.3rem" />}
             my="xl"
           >
             <ConfirmButton
@@ -178,7 +175,7 @@ function VolumeInner({
         )}
 
         {/* TOP LEVEL NETWORK INFO */}
-        <Section title="Details" icon={<ICONS.Info size="1rem" />}>
+        <Section title="Details" icon={<ICONS.Info size="1.3rem" />}>
           <DataTable
             tableKey="volume-info"
             data={[volume]}
@@ -207,23 +204,7 @@ function VolumeInner({
         </Section>
 
         {specific.includes(Types.SpecificPermission.Inspect) && (
-          <Section
-            title="Inspect"
-            icon={<ICONS.Search size="1rem" />}
-            titleRight={
-              <Box pl="md">
-                <ShowHideButton show={showInspect} setShow={setShowInspect} />
-              </Box>
-            }
-          >
-            {showInspect && (
-              <MonacoEditor
-                value={JSON.stringify(volume, null, 2)}
-                language="json"
-                readOnly
-              />
-            )}
-          </Section>
+          <InspectSection json={volume} />
         )}
 
         <DockerLabelsSection labels={volume?.Labels} />

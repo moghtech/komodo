@@ -1,6 +1,6 @@
 import ContainersSection from "@/components/docker/containers-section";
 import DockerLabelsSection from "@/components/docker/labels-section";
-import { MonacoEditor } from "@/components/monaco";
+import InspectSection from "@/components/inspect-section";
 import ResourceUpdates from "@/components/updates/resource";
 import { hexColorByIntention } from "@/lib/color";
 import { fmtDateWithMinutes, fmtSizeBytes } from "@/lib/formatting";
@@ -43,7 +43,6 @@ function ImageInner({
   serverId: string;
   imageName: string;
 }) {
-  const [showInspect, setShowInspect] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const server = ServerComponents.useListItem(serverId);
   useSetTitle(`${server?.name} | Image | ${imageName}`);
@@ -166,7 +165,7 @@ function ImageInner({
         {canExecute && unused && (
           <Section
             title="Execute"
-            icon={<ICONS.Execution size="1rem" />}
+            icon={<ICONS.Execution size="1.3rem" />}
             my="xl"
           >
             <ConfirmButton
@@ -185,7 +184,7 @@ function ImageInner({
         )}
 
         {/* TOP LEVEL IMAGE INFO */}
-        <Section title="Details" icon={<ICONS.Info size="1rem" />}>
+        <Section title="Details" icon={<ICONS.Info size="1.3rem" />}>
           <DataTable
             tableKey="image-info"
             data={[image]}
@@ -213,7 +212,7 @@ function ImageInner({
         {history && history.length > 0 && (
           <Section
             title="History"
-            icon={<ICONS.History size="1rem" />}
+            icon={<ICONS.History size="1.3rem" />}
             titleRight={
               <Box pl="md">
                 <ShowHideButton show={showHistory} setShow={setShowHistory} />
@@ -244,23 +243,7 @@ function ImageInner({
         )}
 
         {specific.includes(Types.SpecificPermission.Inspect) && (
-          <Section
-            title="Inspect"
-            icon={<ICONS.Search size="1rem" />}
-            titleRight={
-              <Box pl="md">
-                <ShowHideButton show={showInspect} setShow={setShowInspect} />
-              </Box>
-            }
-          >
-            {showInspect && (
-              <MonacoEditor
-                value={JSON.stringify(image, null, 2)}
-                language="json"
-                readOnly
-              />
-            )}
-          </Section>
+          <InspectSection json={image} />
         )}
 
         <DockerLabelsSection labels={image?.Config?.Labels} />
