@@ -357,6 +357,12 @@ impl Resolve<ReadArgs> for GetStacksSummary {
     let cache = stack_status_cache();
 
     for stack in stacks {
+      // Count templates separately; don't include in other stats
+      if stack.template {
+        res.templates += 1;
+        continue;
+      }
+
       res.total += 1;
       match cache.get(&stack.id).await.unwrap_or_default().curr.state
       {

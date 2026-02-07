@@ -263,7 +263,7 @@ pub struct GetStacksSummary {}
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct GetStacksSummaryResponse {
-  /// The total number of stacks
+  /// The total number of stacks (excluding templates)
   pub total: u32,
   /// The number of stacks with Running state.
   pub running: u32,
@@ -275,6 +275,9 @@ pub struct GetStacksSummaryResponse {
   pub unhealthy: u32,
   /// The number of stacks with Unknown state.
   pub unknown: u32,
+  /// The number of stacks marked as templates.
+  #[serde(default)]
+  pub templates: u32,
 }
 
 //
