@@ -4,6 +4,9 @@ use anyhow::Context;
 use formatting::format_serror;
 use komodo_client::entities::{EnvironmentVar, update::Log};
 
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
+
 /// If the environment was written and needs to be passed to the compose command,
 /// will return the env file PathBuf.
 /// Should ensure all logs are successful after calling.
@@ -49,6 +52,27 @@ pub async fn write_env_file(
     .with_context(|| {
       format!("Failed to write environment file to {env_file_path:?}")
     })
+  {
+    logs.push(Log::error(
+      "Write Environment File",
+      format_serror(&e.into()),
+    ));
+    return None;
+  }
+
+  // Set secure permissions (600) on the env file since it may contain secrets.
+  // Only applies to Unix systems.
+  #[cfg(unix)]
+  if let Err(e) = tokio::fs::set_permissions(
+    &env_file_path,
+    std::fs::Permissions::from_mode(0o600),
+  )
+  .await
+  .with_context(|| {
+    format!(
+      "Failed to set secure permissions on environment file {env_file_path:?}"
+    )
+  })
   {
     logs.push(Log::error(
       "Write Environment File",
