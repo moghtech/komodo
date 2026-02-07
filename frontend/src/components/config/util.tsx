@@ -299,17 +299,26 @@ export function ConfirmUpdate<T>({
   previous,
   content,
   onConfirm,
-  loading,
+  loading: externalLoading,
   disabled,
   language,
   file_contents_language,
   key_listener = false,
 }: ConfirmUpdateProps<T>) {
   const [open, set] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Combine external loading prop with internal loading state
+  const loading = externalLoading || isLoading;
 
   const handleConfirm = async () => {
-    await onConfirm();
-    set(false);
+    setIsLoading(true);
+    try {
+      await onConfirm();
+      set(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -319,6 +328,7 @@ export function ConfirmUpdate<T>({
   // Keep the existing Ctrl+Enter behavior for backward compatibility
   useCtrlKeyListener("Enter", () => {
     if (!key_listener) return;
+    if (loading) return;
     if (open) {
       handleConfirm();
     } else {
@@ -335,7 +345,7 @@ export function ConfirmUpdate<T>({
   });
 
   return (
-    <Dialog open={open} onOpenChange={set}>
+    <Dialog open={open} onOpenChange={(value) => !loading && set(value)}>
       <DialogTrigger asChild>
         <Button
           onClick={() => set(true)}
@@ -368,6 +378,7 @@ export function ConfirmUpdate<T>({
             icon={<CheckCircle className="w-4 h-4" />}
             onClick={handleConfirm}
             loading={loading}
+            disabled={disabled || loading}
           />
         </DialogFooter>
       </DialogContent>
