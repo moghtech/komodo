@@ -2,7 +2,7 @@ import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
-import ResourceHeader from "@/components/resource-header";
+import EntityHeader from "@/ui/entity-header";
 import NewResource from "@/resources/new";
 
 export const AlerterComponents: RequiredResourceComponents<
@@ -40,7 +40,7 @@ export const AlerterComponents: RequiredResourceComponents<
   ResourcePageHeader: ({ id }) => {
     const alerter = AlerterComponents.useListItem(id);
     return (
-      <ResourceHeader
+      <EntityHeader
         intent="None"
         icon={<AlerterComponents.Icon id={id} size="2rem" />}
         name={alerter?.name}

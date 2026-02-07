@@ -31,7 +31,7 @@ export default function UpdateCard({
       fz={{ base: "xs", md: "sm", lg: "md" }}
       {...flexProps}
     >
-      <Group wrap="nowrap">
+      <Group wrap="nowrap" gap="xs">
         <Icon update={update} />
         {fmtOperation(update.operation)}
         {!versionIsNone(update.version) && (
@@ -41,7 +41,7 @@ export default function UpdateCard({
           </Group>
         )}
       </Group>
-      <Group c="dimmed" wrap="nowrap">
+      <Group c="dimmed" wrap="nowrap" gap="xs">
         <ICONS.Calendar size="1rem" />
         {fmtDate(new Date(update.start_ts))}
       </Group>

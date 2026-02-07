@@ -3,7 +3,7 @@ import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
-import ResourceHeader from "@/components/resource-header";
+import EntityHeader from "@/ui/entity-header";
 import ResourceSyncTable from "./table";
 import { RequiredResourceComponents } from "@/resources";
 import NewResource from "@/resources/new";
@@ -69,7 +69,7 @@ export const ResourceSyncComponents: RequiredResourceComponents<
   ResourcePageHeader: ({ id }) => {
     const resourceSync = ResourceSyncComponents.useListItem(id);
     return (
-      <ResourceHeader
+      <EntityHeader
         intent={resourceSyncStateIntention(resourceSync?.info.state)}
         icon={<ResourceSyncComponents.Icon id={id} size="2rem" />}
         name={resourceSync?.name}

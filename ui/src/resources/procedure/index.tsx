@@ -4,7 +4,7 @@ import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
-import ResourceHeader from "@/components/resource-header";
+import EntityHeader from "@/ui/entity-header";
 import ProcedureTable from "./table";
 import NewResource from "@/resources/new";
 import ProcedureConfig from "./config";
@@ -61,7 +61,7 @@ export const ProcedureComponents: RequiredResourceComponents<
   ResourcePageHeader: ({ id }) => {
     const procedure = ProcedureComponents.useListItem(id);
     return (
-      <ResourceHeader
+      <EntityHeader
         intent={procedureStateIntention(procedure?.info.state)}
         icon={<ProcedureComponents.Icon id={id} size="2rem" />}
         name={procedure?.name}

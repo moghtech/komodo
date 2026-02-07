@@ -4,7 +4,7 @@ import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
-import ResourceHeader from "@/components/resource-header";
+import EntityHeader from "@/ui/entity-header";
 import BuildTable from "./table";
 import NewResource from "@/resources/new";
 import BuildConfig from "./config";
@@ -61,7 +61,7 @@ export const BuildComponents: RequiredResourceComponents<
   ResourcePageHeader: ({ id }) => {
     const build = BuildComponents.useListItem(id);
     return (
-      <ResourceHeader
+      <EntityHeader
         intent={buildStateIntention(build?.info.state)}
         icon={<BuildComponents.Icon id={id} size="2rem" />}
         name={build?.name}

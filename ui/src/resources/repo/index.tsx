@@ -4,7 +4,7 @@ import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
-import ResourceHeader from "@/components/resource-header";
+import EntityHeader from "@/ui/entity-header";
 import RepoTable from "./table";
 import NewResource from "@/resources/new";
 import RepoConfig from "./config";
@@ -61,7 +61,7 @@ export const RepoComponents: RequiredResourceComponents<
   ResourcePageHeader: ({ id }) => {
     const repo = RepoComponents.useListItem(id);
     return (
-      <ResourceHeader
+      <EntityHeader
         intent={repoStateIntention(repo?.info.state)}
         icon={<RepoComponents.Icon id={id} size="2rem" />}
         name={repo?.name}

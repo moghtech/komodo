@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import { useContainerPortsMap, useServerAddress } from "@/lib/hooks";
-import { Group, Stack, Text, Tooltip } from "@mantine/core";
+import { Group, HoverCard, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { EthernetPort } from "lucide-react";
 import { colorByIntention } from "@/lib/color";
@@ -89,9 +89,18 @@ export function ContainerPort({
       : `${uniqueHostPorts[0]}-${uniqueHostPorts[uniqueHostPorts.length - 1]}`;
 
   return (
-    <Tooltip
-      label={
-        <Stack>
+    <HoverCard>
+      <HoverCard.Target>
+        <Group
+          renderRoot={(props) => <a target="_blank" href={link} {...props} />}
+          gap="sm"
+        >
+          <EthernetPort size="1rem" color={colorByIntention("Good")} />
+          {displayText}
+        </Group>
+      </HoverCard.Target>
+      <HoverCard.Dropdown>
+        <Stack gap="xs">
           <Group
             renderRoot={(props) => <a target="_blank" href={link} {...props} />}
           >
@@ -113,14 +122,7 @@ export function ContainerPort({
             </Group>
           )}
         </Stack>
-      }
-    >
-      <Group
-        renderRoot={(props) => <a target="_blank" href={link} {...props} />}
-      >
-        <EthernetPort size="1rem" color={colorByIntention("Good")} />
-        {displayText}
-      </Group>
-    </Tooltip>
+      </HoverCard.Dropdown>
+    </HoverCard>
   );
 }

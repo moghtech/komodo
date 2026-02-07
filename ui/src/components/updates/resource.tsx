@@ -28,7 +28,7 @@ export default function ResourceUpdates({ type, id }: Types.ResourceTarget) {
   return (
     <Section
       title="Updates"
-      icon={<ICONS.Update size="1rem" />}
+      icon={<ICONS.Update size="1.3rem" />}
       actions={
         <ActionIcon
           component={Link}

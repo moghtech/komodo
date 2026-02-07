@@ -6,7 +6,7 @@ import {
 import { Group, Stack, Text } from "@mantine/core";
 import { ReactNode } from "react";
 
-export default function ResourceHeader({
+export default function EntityHeader({
   name,
   icon,
   intent,

@@ -21,6 +21,8 @@ const Profile = lazy(() => import("@/pages/profile"));
 const Containers = lazy(() => import("@/pages/containers"));
 const Terminals = lazy(() => import("@/pages/terminals"));
 const Terminal = lazy(() => import("@/pages/terminal"));
+const Container = lazy(() => import("@/pages/docker/container"));
+const Image = lazy(() => import("@/pages/docker/image"));
 
 export const Router = () => {
   // Handle exchange token loop to avoid showing login flash
@@ -47,6 +49,13 @@ export const Router = () => {
             <Route path=":type">
               <Route path="" element={<Resources />} />
               <Route path=":id" element={<Resource />} />
+
+              {/* Docker Resource */}
+              <Route path=":id/container/:container" element={<Container />} />
+              {/* <Route path=":id/network/:network" element={<Network />} /> */}
+              <Route path=":id/image/:image" element={<Image />} />
+              {/* <Route path=":id/volume/:volume" element={<Volume />} /> */}
+
               {/* Terminal Pages */}
               <Route path=":id/terminal/:terminal" element={<Terminal />} />
               <Route

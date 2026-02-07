@@ -2,7 +2,7 @@ import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
-import ResourceHeader from "@/components/resource-header";
+import EntityHeader from "@/ui/entity-header";
 import { ResourceLink } from "@/resources/common";
 import NewResource from "@/resources/new";
 
@@ -41,7 +41,7 @@ export const BuilderComponents: RequiredResourceComponents<
   ResourcePageHeader: ({ id }) => {
     const builder = BuilderComponents.useListItem(id);
     return (
-      <ResourceHeader
+      <EntityHeader
         intent="None"
         icon={<BuilderComponents.Icon id={id} size="2rem" />}
         name={builder?.name}

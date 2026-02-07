@@ -23,11 +23,11 @@ import {
   Checkbox,
   Flex,
   Group,
+  HoverCard,
   Loader,
   Table,
   TableProps,
   Text,
-  Tooltip,
   UnstyledButton,
 } from "@mantine/core";
 import { ArrowDown, ArrowUp, Info, Minus } from "lucide-react";
@@ -270,9 +270,14 @@ export const SortableHeader = <T, V>({
             {title}
           </Text>
           {description && (
-            <Tooltip label={description}>
-              <Info className="w-4 h-4" />
-            </Tooltip>
+            <HoverCard>
+              <HoverCard.Target>
+                <Info className="w-4 h-4" />
+              </HoverCard.Target>
+              <HoverCard.Dropdown>
+                <Text>{description}</Text>
+              </HoverCard.Dropdown>
+            </HoverCard>
           )}
         </Flex>
         <Center>

@@ -3,7 +3,7 @@ import { useInvalidate, usePermissions, useRead, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
-import ResourceHeader from "@/components/resource-header";
+import EntityHeader from "@/ui/entity-header";
 import { RequiredResourceComponents } from "@/resources";
 import NewResource from "@/resources/new";
 import StackTable from "./table";
@@ -96,7 +96,7 @@ export const StackComponents: RequiredResourceComponents<
   ResourcePageHeader: ({ id }) => {
     const stack = StackComponents.useListItem(id);
     return (
-      <ResourceHeader
+      <EntityHeader
         intent={stackStateIntention(stack?.info.state)}
         icon={<StackComponents.Icon id={id} size="2rem" />}
         name={stack?.name}

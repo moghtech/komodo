@@ -4,7 +4,7 @@ import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
-import ResourceHeader from "@/components/resource-header";
+import EntityHeader from "@/ui/entity-header";
 import ServerTable from "./table";
 import NewResource from "@/resources/new";
 import ServerConfig from "./config";
@@ -70,7 +70,7 @@ export const ServerComponents: RequiredResourceComponents<
   ResourcePageHeader: ({ id }) => {
     const server = ServerComponents.useListItem(id);
     return (
-      <ResourceHeader
+      <EntityHeader
         intent={serverStateIntention(server?.info.state)}
         icon={<ServerComponents.Icon id={id} size="2rem" />}
         name={server?.name}

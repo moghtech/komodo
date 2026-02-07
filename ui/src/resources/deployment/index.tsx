@@ -4,7 +4,7 @@ import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
-import ResourceHeader from "@/components/resource-header";
+import EntityHeader from "@/ui/entity-header";
 import DeploymentTable from "./table";
 import NewResource from "@/resources/new";
 import DeploymentConfig from "./config";
@@ -75,7 +75,7 @@ export const DeploymentComponents: RequiredResourceComponents<
   ResourcePageHeader: ({ id }) => {
     const deployment = DeploymentComponents.useListItem(id);
     return (
-      <ResourceHeader
+      <EntityHeader
         intent={deploymentStateIntention(deployment?.info.state)}
         icon={<DeploymentComponents.Icon id={id} size="2rem" />}
         name={deployment?.name}

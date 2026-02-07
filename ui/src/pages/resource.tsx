@@ -8,7 +8,6 @@ import {
   useSetTitle,
 } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
-import { usableResourcePath } from "@/lib/utils";
 import {
   ResourceComponents,
   SETTINGS_RESOURCES,
@@ -18,9 +17,11 @@ import { ResourceDescription, ResourceNotFound } from "@/resources/common";
 import { AddResourceTags, ResourceTags } from "@/resources/tags";
 import DividedChildren from "@/ui/divided-children";
 import Section from "@/ui/section";
-import { Anchor, Button, Flex, Group, Stack, Text } from "@mantine/core";
+import { Anchor, Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import EntityPage from "@/ui/entity-page";
+import { usableResourcePath } from "@/lib/utils";
 
 export default function Resource() {
   const type = useResourceParamType()!;
@@ -57,36 +58,22 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
   }
 
   return (
-    <Stack gap="lg">
-      <Flex align="center" justify="space-between" mb="lg">
-        <Button
-          variant="light"
-          c="inherit"
-          bg="accent"
-          leftSection={<ICONS.Back className="w-4" />}
-          renderRoot={(props) => (
-            <Link
-              to={
-                "/" +
-                (SETTINGS_RESOURCES.includes(type)
-                  ? "settings"
-                  : usableResourcePath(type))
-              }
-              {...props}
-            />
-          )}
-        >
-          Back
-        </Button>
-
-        <Group>
+    <EntityPage
+      backTo={
+        "/" +
+        (SETTINGS_RESOURCES.includes(type)
+          ? "settings"
+          : usableResourcePath(type))
+      }
+      actions={
+        <>
           {/* {type !== "Server" && canCreate && (
             <CopyResource type={type} id={id} />
           )} */}
           {showExport && <ExportToml targets={[{ type, id }]} />}
-        </Group>
-      </Flex>
-
+        </>
+      }
+    >
       <Stack hiddenFrom="xl" w="100%">
         <ResourceHeader type={type} id={id} />
         <ResourceUpdates type={type} id={id} />
@@ -127,7 +114,7 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
           </Section>
         )}
       </Stack>
-    </Stack>
+    </EntityPage>
   );
 }
 

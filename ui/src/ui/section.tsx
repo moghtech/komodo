@@ -20,8 +20,6 @@ export interface SectionProps extends StackProps {
   description?: ReactNode;
   actions?: ReactNode;
   withBorder?: boolean;
-  // otherwise items-start
-  itemsCenterTitleRow?: boolean;
 }
 
 const Section = createPolymorphicComponent<"div", SectionProps>(
@@ -39,31 +37,31 @@ const Section = createPolymorphicComponent<"div", SectionProps>(
         actions,
         children,
         withBorder,
-        itemsCenterTitleRow,
         ...props
       },
       ref,
     ) => {
-      const TitleComponent = ({ mb }: { mb?: MantineStyleProps["mb"] }) =>
-        (title || titleNode || icon || titleRight || titleOther || actions) && (
-          <Group
-            align={itemsCenterTitleRow ? "center" : undefined}
-            justify="space-between"
-            mb={mb}
-          >
-            {title || titleNode || icon ? (
-              <Group c={titleDimmed ? "dimmed" : undefined} gap="xs">
-                {icon}
-                {title && <Text fz={titleFz}>{title}</Text>}
-                {titleNode}
-                {titleRight}
-              </Group>
-            ) : (
-              titleOther
-            )}
-            {actions}
-          </Group>
-        );
+      const TitleComponent = (title ||
+        titleNode ||
+        icon ||
+        titleRight ||
+        titleOther ||
+        actions) && (
+        <Group justify="space-between">
+          {title || titleNode || icon ? (
+            <Group c={titleDimmed ? "dimmed" : undefined} gap="xs">
+              {icon}
+              {title && <Text fz={titleFz}>{title}</Text>}
+              {titleNode}
+              {titleRight}
+            </Group>
+          ) : (
+            titleOther
+          )}
+          {actions}
+        </Group>
+      );
+
       return (
         <Stack
           px={withBorder ? "lg" : undefined}
@@ -78,14 +76,10 @@ const Section = createPolymorphicComponent<"div", SectionProps>(
           {...props}
           ref={ref}
         >
-          {description ? (
-            <Stack gap="0.2rem" mb="md">
-              <TitleComponent />
-              <Text c="dimmed">{description}</Text>
-            </Stack>
-          ) : (
-            <TitleComponent mb="md" />
-          )}
+          <Stack gap="0.2rem" mb="md">
+            {TitleComponent}
+            {description && <Text c="dimmed">{description}</Text>}
+          </Stack>
           {children}
         </Stack>
       );

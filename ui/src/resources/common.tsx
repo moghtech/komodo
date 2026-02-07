@@ -140,7 +140,9 @@ export const ResourceDescription = ({
           }}
           onClick={open}
         >
-          {resource?.description || "Set Description"}
+          <Text className="text-ellipsis" maw={{ xl: 600, xl2: 750, xl3: 900, xl4: 1050 }}>
+            {resource?.description || "Set Description"}
+          </Text>
         </Button>
       )}
     />

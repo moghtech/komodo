@@ -4,7 +4,7 @@ import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
-import ResourceHeader from "@/components/resource-header";
+import EntityHeader from "@/ui/entity-header";
 import SwarmTable from "./table";
 import NewResource from "@/resources/new";
 
@@ -55,7 +55,7 @@ export const SwarmComponents: RequiredResourceComponents<
   ResourcePageHeader: ({ id }) => {
     const swarm = SwarmComponents.useListItem(id);
     return (
-      <ResourceHeader
+      <EntityHeader
         intent={swarmStateIntention(swarm?.info.state)}
         icon={<SwarmComponents.Icon id={id} size="2rem" />}
         name={swarm?.name}

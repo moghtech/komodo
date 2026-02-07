@@ -4,7 +4,7 @@ import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
-import ResourceHeader from "@/components/resource-header";
+import EntityHeader from "@/ui/entity-header";
 import { Badge, Group, Popover, Text } from "@mantine/core";
 import { Clock } from "lucide-react";
 import { useDisclosure } from "@mantine/hooks";
@@ -68,7 +68,7 @@ export const ActionComponents: RequiredResourceComponents<
       | Types.ResourceListItem<Types.ActionListItemInfo>
       | undefined;
     return (
-      <ResourceHeader
+      <EntityHeader
         intent={actionStateIntention(action?.info.state)}
         icon={<ActionComponents.Icon id={id} size="2rem" />}
         name={action?.name}

@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { Types } from "komodo_client";
 import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
-import { colorByIntention, containerStateIntention } from "@/lib/color";
+import { hexColorByIntention, containerStateIntention } from "@/lib/color";
 import { Box, Group, Text } from "@mantine/core";
 import { Link } from "react-router-dom";
 
@@ -38,7 +38,7 @@ export default function DockerResourceLink({
         />
       )}
       className="hover-underline"
-      c={dimmed ? "dimmed" : "inherit"}
+      c={dimmed ? "dimmed" : undefined}
       wrap="nowrap"
     >
       <Icon serverId={serverId} name={type === "image" ? id : name} />
@@ -65,7 +65,7 @@ export const DOCKER_LINK_ICONS: {
     return (
       <ICONS.Container
         size={size}
-        color={colorByIntention(containerStateIntention(state))}
+        color={hexColorByIntention(containerStateIntention(state))}
       />
     );
   },
@@ -82,7 +82,7 @@ export const DOCKER_LINK_ICONS: {
           ? "None"
           : "Critical"
         : "Good";
-    return <ICONS.Network size={size} color={colorByIntention(intention)} />;
+    return <ICONS.Network size={size} color={hexColorByIntention(intention)} />;
   },
   image: ({ serverId, name, size = "1rem" }) => {
     const containers =
@@ -91,7 +91,7 @@ export const DOCKER_LINK_ICONS: {
       ? false
       : containers.every((container) => container.image_id !== name);
     const intention = !name ? "Warning" : noContainers ? "Critical" : "Good";
-    return <ICONS.Image size={size} color={colorByIntention(intention)} />;
+    return <ICONS.Image size={size} color={hexColorByIntention(intention)} />;
   },
   volume: ({ serverId, name, size = "1rem" }) => {
     const containers =
@@ -100,6 +100,6 @@ export const DOCKER_LINK_ICONS: {
       ? false
       : containers.every((container) => !container.volumes?.includes(name));
     const intention = !name ? "Warning" : noContainers ? "Critical" : "Good";
-    return <ICONS.Volume size={size} color={colorByIntention(intention)} />;
+    return <ICONS.Volume size={size} color={hexColorByIntention(intention)} />;
   },
 };

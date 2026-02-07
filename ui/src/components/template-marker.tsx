@@ -1,17 +1,18 @@
 import { fmtResourceType } from "@/lib/formatting";
 import { UsableResource } from "@/resources";
-import { Badge, Text, Tooltip } from "@mantine/core";
+import { Badge, HoverCard, Text } from "@mantine/core";
 
 export const TemplateMarker = ({ type }: { type: UsableResource }) => {
   return (
-    <Tooltip
-      label={
+    <HoverCard>
+      <HoverCard.Target>
+        <Badge radius="sm" px="0.3rem" color="gray" c="inherit">
+          T
+        </Badge>
+      </HoverCard.Target>
+      <HoverCard.Dropdown>
         <Text>This {fmtResourceType(type).toLowerCase()} is a template.</Text>
-      }
-    >
-      <Badge radius="sm" px="0.3rem" color="gray" c="inherit">
-        T
-      </Badge>
-    </Tooltip>
+      </HoverCard.Dropdown>
+    </HoverCard>
   );
 };
