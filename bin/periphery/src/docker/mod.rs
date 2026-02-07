@@ -1,10 +1,11 @@
-use std::sync::OnceLock;
+use std::{borrow::Cow, sync::OnceLock};
 
 use anyhow::anyhow;
 use bollard::Docker;
 use command::run_komodo_command;
 use komodo_client::entities::{TerminationSignal, update::Log};
 use run_command::async_run_command;
+use shell_escape::unix::escape;
 
 pub mod stats;
 
@@ -46,8 +47,10 @@ pub async fn docker_login(
     Some(token) => token,
     None => crate::helpers::registry_token(domain, account)?,
   };
+  // Escape special shell characters in the token (fixes issues with '(', "'", etc.)
+  let escaped_token = escape(Cow::Borrowed(registry_token));
   let log = async_run_command(&format!(
-    "echo {registry_token} | docker login {domain} --username '{account}' --password-stdin",
+    "echo {escaped_token} | docker login {domain} --username '{account}' --password-stdin",
   ))
   .await;
   if log.success() {
