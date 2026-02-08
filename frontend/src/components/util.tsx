@@ -1245,9 +1245,12 @@ export const ContainerPortLink = ({
   if (!server_address) return null;
 
   const isHttps = server_address.protocol === "https:";
+  const host = server_address.hostname.includes(":")
+    ? `[${server_address.hostname}]`
+    : server_address.hostname;
   const link = host_port === "443" && isHttps
-    ? `https://${server_address.hostname}`
-    : `http://${server_address.hostname}:${host_port}`;
+    ? `https://${host}`
+    : `http://${host}:${host_port}`;
 
   const uniqueHostPorts = Array.from(
     new Set(
