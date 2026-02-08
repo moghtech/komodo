@@ -7,7 +7,7 @@ import { Types } from "komodo_client";
 import { useSelectedResources } from "@lib/hooks";
 
 export const BuildTable = ({ builds }: { builds: Types.BuildListItem[] }) => {
-  const [_, setSelectedResources] = useSelectedResources("Build");
+  const [selectedResources, setSelectedResources] = useSelectedResources("Build");
 
   return (
     <DataTable
@@ -15,6 +15,7 @@ export const BuildTable = ({ builds }: { builds: Types.BuildListItem[] }) => {
       data={builds}
       selectOptions={{
         selectKey: ({ name }) => name,
+        selected: selectedResources,
         onSelect: setSelectedResources,
       }}
       columns={[

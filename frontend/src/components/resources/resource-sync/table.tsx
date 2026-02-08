@@ -10,13 +10,14 @@ export const ResourceSyncTable = ({
 }: {
   syncs: Types.ResourceSyncListItem[];
 }) => {
-  const [_, setSelectedResources] = useSelectedResources("ResourceSync");
+  const [selectedResources, setSelectedResources] = useSelectedResources("ResourceSync");
   return (
     <DataTable
       tableKey="syncs"
       data={syncs}
       selectOptions={{
         selectKey: ({ name }) => name,
+        selected: selectedResources,
         onSelect: setSelectedResources,
       }}
       columns={[

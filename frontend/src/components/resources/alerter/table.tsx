@@ -9,13 +9,14 @@ export const AlerterTable = ({
 }: {
   alerters: Types.AlerterListItem[];
 }) => {
-  const [_, setSelectedResources] = useSelectedResources("Alerter");
+  const [selectedResources, setSelectedResources] = useSelectedResources("Alerter");
   return (
     <DataTable
       tableKey="alerters"
       data={alerters}
       selectOptions={{
         selectKey: ({ name }) => name,
+        selected: selectedResources,
         onSelect: setSelectedResources,
       }}
       columns={[

@@ -10,7 +10,7 @@ export const ActionTable = ({
 }: {
   actions: Types.ActionListItem[];
 }) => {
-  const [_, setSelectedResources] = useSelectedResources("Action");
+  const [selectedResources, setSelectedResources] = useSelectedResources("Action");
 
   return (
     <DataTable
@@ -18,6 +18,7 @@ export const ActionTable = ({
       data={actions}
       selectOptions={{
         selectKey: ({ name }) => name,
+        selected: selectedResources,
         onSelect: setSelectedResources,
       }}
       columns={[

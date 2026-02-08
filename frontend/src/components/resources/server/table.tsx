@@ -11,7 +11,7 @@ export const ServerTable = ({
 }: {
   servers: Types.ServerListItem[];
 }) => {
-  const [_, setSelectedResources] = useSelectedResources("Server");
+  const [selectedResources, setSelectedResources] = useSelectedResources("Server");
   const deployments = useRead("ListDeployments", {}).data;
   const stacks = useRead("ListStacks", {}).data;
   const repos = useRead("ListRepos", {}).data;
@@ -31,6 +31,7 @@ export const ServerTable = ({
       data={servers}
       selectOptions={{
         selectKey: ({ name }) => name,
+        selected: selectedResources,
         onSelect: setSelectedResources,
       }}
       columns={[

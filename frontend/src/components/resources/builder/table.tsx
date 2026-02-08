@@ -10,13 +10,14 @@ export const BuilderTable = ({
 }: {
   builders: Types.BuilderListItem[];
 }) => {
-  const [_, setSelectedResources] = useSelectedResources("Builder");
+  const [selectedResources, setSelectedResources] = useSelectedResources("Builder");
   return (
     <DataTable
       tableKey="builders"
       data={builders}
       selectOptions={{
         selectKey: ({ name }) => name,
+        selected: selectedResources,
         onSelect: setSelectedResources,
       }}
       columns={[

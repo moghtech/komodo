@@ -13,7 +13,7 @@ export const StackTable = ({ stacks }: { stacks: Types.StackListItem[] }) => {
     [servers]
   );
 
-  const [_, setSelectedResources] = useSelectedResources("Stack");
+  const [selectedResources, setSelectedResources] = useSelectedResources("Stack");
 
   return (
     <DataTable
@@ -21,6 +21,7 @@ export const StackTable = ({ stacks }: { stacks: Types.StackListItem[] }) => {
       data={stacks}
       selectOptions={{
         selectKey: ({ name }) => name,
+        selected: selectedResources,
         onSelect: setSelectedResources,
       }}
       columns={[

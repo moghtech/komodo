@@ -10,7 +10,7 @@ export const ProcedureTable = ({
 }: {
   procedures: Types.ProcedureListItem[];
 }) => {
-  const [_, setSelectedResources] = useSelectedResources("Procedure");
+  const [selectedResources, setSelectedResources] = useSelectedResources("Procedure");
 
   return (
     <DataTable
@@ -18,6 +18,7 @@ export const ProcedureTable = ({
       data={procedures}
       selectOptions={{
         selectKey: ({ name }) => name,
+        selected: selectedResources,
         onSelect: setSelectedResources,
       }}
       columns={[

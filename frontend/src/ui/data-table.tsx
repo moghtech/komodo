@@ -34,6 +34,7 @@ interface DataTableProps<TData, TValue> {
   sortDescFirst?: boolean;
   selectOptions?: {
     selectKey: (row: TData) => string;
+    selected?: string[];
     onSelect: (selected: string[]) => void;
     disableRow?: boolean | ((row: Row<TData>) => boolean);
   };
@@ -86,6 +87,15 @@ export function DataTable<TData, TValue>({
   useEffect(() => {
     selectOptions?.onSelect(Object.keys(rowSelection));
   }, [rowSelection]);
+
+  // Sync external selection clears (e.g. after group delete) back to internal state
+  const selectedLength = selectOptions?.selected?.length ?? -1;
+  useEffect(() => {
+    if (selectedLength === -1) return;
+    if (selectedLength === 0 && Object.keys(rowSelection).length > 0) {
+      setRowSelection({});
+    }
+  }, [selectedLength]);
 
   return (
     <div

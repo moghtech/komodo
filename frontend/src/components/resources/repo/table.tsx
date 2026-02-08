@@ -7,7 +7,7 @@ import { useSelectedResources } from "@lib/hooks";
 import { RepoLink } from "@components/util";
 
 export const RepoTable = ({ repos }: { repos: Types.RepoListItem[] }) => {
-  const [_, setSelectedResources] = useSelectedResources("Repo");
+  const [selectedResources, setSelectedResources] = useSelectedResources("Repo");
 
   return (
     <DataTable
@@ -15,6 +15,7 @@ export const RepoTable = ({ repos }: { repos: Types.RepoListItem[] }) => {
       data={repos}
       selectOptions={{
         selectKey: ({ name }) => name,
+        selected: selectedResources,
         onSelect: setSelectedResources,
       }}
       columns={[

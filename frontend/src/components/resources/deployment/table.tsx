@@ -18,7 +18,7 @@ export const DeploymentTable = ({
     [servers]
   );
 
-  const [_, setSelectedResources] = useSelectedResources("Deployment");
+  const [selectedResources, setSelectedResources] = useSelectedResources("Deployment");
 
   return (
     <DataTable
@@ -26,6 +26,7 @@ export const DeploymentTable = ({
       data={deployments}
       selectOptions={{
         selectKey: ({ name }) => name,
+        selected: selectedResources,
         onSelect: setSelectedResources,
       }}
       columns={[
