@@ -1,12 +1,12 @@
 .fancy-card {
   cursor: pointer;
-  border: 1px solid color-mix(in srgb, var(--mantine-color-text) 12%, transparent);
+  border: 1px solid var(--mantine-color-accent-border-0);
   box-shadow: var(--mantine-shadow-xs);
   transition: all 150ms ease;
 }
 
 .fancy-card:hover {
-  border-color: color-mix(in srgb, var(--mantine-color-text) 50%, transparent);
+  border-color: var(--mantine-color-accent-border-5);
   background-color: var(--mantine-color-accent-1);
   transform: translateY(-4%);
   box-shadow: var(--mantine-shadow-md);

@@ -52,7 +52,7 @@ export default function UpdateCard({
     style: { cursor: "pointer" },
     px: "lg",
     py: "sm",
-    bg: accent ? "accent.0" : undefined,
+    bg: accent ? "accent.1" : undefined,
   };
 
   const onClick = () => {
