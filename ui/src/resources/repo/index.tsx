@@ -63,7 +63,7 @@ export const RepoComponents: RequiredResourceComponents<
     return (
       <EntityHeader
         intent={repoStateIntention(repo?.info.state)}
-        icon={<RepoComponents.Icon id={id} size="2rem" />}
+        icon={ICONS.Repo}
         name={repo?.name}
         state={repo?.info.state}
       />

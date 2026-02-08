@@ -42,7 +42,7 @@ export const AlerterComponents: RequiredResourceComponents<
     return (
       <EntityHeader
         intent="None"
-        icon={<AlerterComponents.Icon id={id} size="2rem" />}
+        icon={ICONS.Alerter}
         name={alerter?.name}
         state={alerter?.info.enabled ? "Enabled" : "Disabled"}
         status={alerter?.info.endpoint_type}

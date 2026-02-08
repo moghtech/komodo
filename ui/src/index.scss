@@ -35,6 +35,13 @@ a:focus {
   text-decoration: underline;
 }
 
+.accent-hover {
+  background-color: var(--mantine-color-accent-2);
+}
+.accent-hover:hover {
+  background-color: var(--mantine-color-accent-9);
+}
+
 
 .monaco-editor {
   position: absolute !important;

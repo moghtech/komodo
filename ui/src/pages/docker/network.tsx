@@ -3,7 +3,6 @@ import DockerResourceLink from "@/components/docker/link";
 import DockerOptions from "@/components/docker/options";
 import InspectSection from "@/components/inspect-section";
 import ResourceUpdates from "@/components/updates/resource";
-import { hexColorByIntention } from "@/lib/color";
 import { useExecute, usePermissions, useRead, useSetTitle } from "@/lib/hooks";
 import { ResourceDescription, ResourceLink } from "@/resources/common";
 import { ServerComponents } from "@/resources/server";
@@ -118,9 +117,7 @@ function NetworkInner({
       >
         <EntityHeader
           name={networkName}
-          icon={
-            <ICONS.Network size="2rem" color={hexColorByIntention(intention)} />
-          }
+          icon={ICONS.Network}
           intent={intention}
           state={unused ? "Unused" : "In Use"}
         />

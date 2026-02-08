@@ -155,7 +155,7 @@ export default function Terminal({
   return (
     <div
       ref={termRef}
-      style={{ display: selected ? undefined : "none", height: "65vh" }}
+      style={{ display: selected ? undefined : "none", height: "calc(100vh - 30rem)" }}
     />
   );
 }

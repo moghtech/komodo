@@ -98,7 +98,7 @@ export const StackComponents: RequiredResourceComponents<
     return (
       <EntityHeader
         intent={stackStateIntention(stack?.info.state)}
-        icon={<StackComponents.Icon id={id} size="2rem" />}
+        icon={ICONS.Stack}
         name={stack?.name}
         state={stack?.info.state}
         status={

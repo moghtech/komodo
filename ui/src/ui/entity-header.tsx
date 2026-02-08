@@ -1,31 +1,29 @@
 import {
-  colorByIntention,
   ColorIntention,
   hexColorByIntention,
 } from "@/lib/color";
 import { Group, Stack, Text } from "@mantine/core";
-import { ReactNode } from "react";
+import { FC, ReactNode } from "react";
 
 export default function EntityHeader({
   name,
-  icon,
+  icon: Icon,
   intent,
   state,
   status,
 }: {
   name?: string;
-  icon: ReactNode;
+  icon: FC<{ size?: string | number; color?: string }>;
   intent: ColorIntention;
   state?: ReactNode;
   status?: ReactNode;
 }) {
-  const color = colorByIntention(intent);
-  const _background = hexColorByIntention(intent);
-  const background = _background ? _background + "25" : undefined;
+  const color = hexColorByIntention(intent);
+  const background = color ? color + "25" : undefined;
 
   return (
     <Group
-      gap="md"
+      gap="lg"
       px="xl"
       py="md"
       style={{
@@ -34,10 +32,10 @@ export default function EntityHeader({
         borderTopRightRadius: "var(--mantine-radius-md)",
       }}
     >
-      {icon}
+      <Icon size="2rem" color={color} />
       <Stack gap="0">
         {name && (
-          <Text fz="h1" fw="600">
+          <Text fz="h1" fw="bolder">
             {name}
           </Text>
         )}

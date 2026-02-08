@@ -63,7 +63,7 @@ export const ProcedureComponents: RequiredResourceComponents<
     return (
       <EntityHeader
         intent={procedureStateIntention(procedure?.info.state)}
-        icon={<ProcedureComponents.Icon id={id} size="2rem" />}
+        icon={ICONS.Procedure}
         name={procedure?.name}
         state={procedure?.info.state}
         status={`${procedure?.info.stages} Stage${procedure?.info.stages === 1 ? "" : "s"}`}

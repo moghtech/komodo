@@ -1,7 +1,7 @@
 import { ContainerPort } from "@/components/docker/container-ports";
 import DockerResourceLink from "@/components/docker/link";
 import ResourceUpdates from "@/components/updates/resource";
-import { containerStateIntention, hexColorByIntention } from "@/lib/color";
+import { containerStateIntention } from "@/lib/color";
 import {
   useContainerPortsMap,
   usePermissions,
@@ -22,6 +22,7 @@ import { useParams } from "react-router-dom";
 import { ContainerExecutions } from "./executions";
 import { DataTable } from "@/ui/data-table";
 import DockerLabelsSection from "@/components/docker/labels-section";
+import ContainerTabs from "./tabs";
 
 export default function Container() {
   const {
@@ -84,12 +85,7 @@ function ContainerInner({
       >
         <EntityHeader
           name={listContainer?.name}
-          icon={
-            <ICONS.Container
-              size="2rem"
-              color={hexColorByIntention(intention)}
-            />
-          }
+          icon={ICONS.Container}
           intent={intention}
           state={state}
           status={listContainer?.status}
@@ -179,6 +175,13 @@ function ContainerInner({
             </Group>
           </Section>
         )}
+
+        <ContainerTabs
+          server={serverId}
+          container={containerName}
+          state={state}
+          inspect={inspect}
+        />
 
         {/* TOP LEVEL CONTAINER INFO */}
         {listContainer && (

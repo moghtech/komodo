@@ -3,7 +3,6 @@ import DockerLabelsSection from "@/components/docker/labels-section";
 import DockerOptions from "@/components/docker/options";
 import InspectSection from "@/components/inspect-section";
 import ResourceUpdates from "@/components/updates/resource";
-import { hexColorByIntention } from "@/lib/color";
 import { useExecute, usePermissions, useRead, useSetTitle } from "@/lib/hooks";
 import { ResourceDescription, ResourceLink } from "@/resources/common";
 import { ServerComponents } from "@/resources/server";
@@ -112,9 +111,7 @@ function VolumeInner({
       >
         <EntityHeader
           name={volumeName}
-          icon={
-            <ICONS.Volume size="2rem" color={hexColorByIntention(intention)} />
-          }
+          icon={ICONS.Volume}
           intent={intention}
           state={unused ? "Unused" : "In Use"}
         />

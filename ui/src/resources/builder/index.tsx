@@ -43,7 +43,7 @@ export const BuilderComponents: RequiredResourceComponents<
     return (
       <EntityHeader
         intent="None"
-        icon={<BuilderComponents.Icon id={id} size="2rem" />}
+        icon={ICONS.Builder}
         name={builder?.name}
         state={builder?.info.builder_type}
         status={

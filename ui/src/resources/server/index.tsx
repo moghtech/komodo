@@ -72,7 +72,7 @@ export const ServerComponents: RequiredResourceComponents<
     return (
       <EntityHeader
         intent={serverStateIntention(server?.info.state)}
-        icon={<ServerComponents.Icon id={id} size="2rem" />}
+        icon={ICONS.Server}
         name={server?.name}
         state={server?.info.state}
         status={server?.info.region}

@@ -83,17 +83,23 @@ export function MobileFriendlyTabsSelector({
     <Group>
       {/* DESKTOP VIEW */}
       <Tabs.List visibleFrom={changeAt}>
-        {tabs.map(({ value, label, icon: Icon, disabled }) => (
+        {tabs.map(({ value: tabValue, label, icon: Icon, disabled }) => (
           <Tabs.Tab
-            key={value}
-            value={value}
+            key={tabValue}
+            value={tabValue}
             disabled={disabled}
-            onClick={() => onValueChange(value)}
+            onClick={() => onValueChange(tabValue)}
             w="fit-content"
           >
-            <Group gap="xs" fz="h3" justify="center" {...tabProps}>
+            <Group
+              gap="xs"
+              fz="h3"
+              justify="center"
+              c={tabValue === value ? undefined : "dimmed"}
+              {...tabProps}
+            >
               {Icon && <Icon size={fullIconSize} />}
-              {label ?? value}
+              {label ?? tabValue}
             </Group>
           </Tabs.Tab>
         ))}

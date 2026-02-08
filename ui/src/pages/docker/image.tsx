@@ -2,7 +2,6 @@ import ContainersSection from "@/components/docker/containers-section";
 import DockerLabelsSection from "@/components/docker/labels-section";
 import InspectSection from "@/components/inspect-section";
 import ResourceUpdates from "@/components/updates/resource";
-import { hexColorByIntention } from "@/lib/color";
 import { fmtDateWithMinutes, fmtSizeBytes } from "@/lib/formatting";
 import { useExecute, usePermissions, useRead, useSetTitle } from "@/lib/hooks";
 import { ResourceDescription, ResourceLink } from "@/resources/common";
@@ -121,9 +120,7 @@ function ImageInner({
       >
         <EntityHeader
           name={imageName}
-          icon={
-            <ICONS.Image size="2rem" color={hexColorByIntention(intention)} />
-          }
+          icon={ICONS.Image}
           intent={intention}
           state={unused ? "Unused" : "In Use"}
         />

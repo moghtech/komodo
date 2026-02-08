@@ -77,7 +77,7 @@ export const DeploymentComponents: RequiredResourceComponents<
     return (
       <EntityHeader
         intent={deploymentStateIntention(deployment?.info.state)}
-        icon={<DeploymentComponents.Icon id={id} size="2rem" />}
+        icon={ICONS.Deployment}
         name={deployment?.name}
         state={deployment?.info.state}
         status={deployment?.info.status}

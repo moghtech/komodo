@@ -70,7 +70,7 @@ export const ActionComponents: RequiredResourceComponents<
     return (
       <EntityHeader
         intent={actionStateIntention(action?.info.state)}
-        icon={<ActionComponents.Icon id={id} size="2rem" />}
+        icon={({ size }) => <ActionComponents.Icon id={id} size={size} />}
         name={action?.name}
         state={action?.info.state}
       />

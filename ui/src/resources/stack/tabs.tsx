@@ -126,13 +126,6 @@ export default function StackTabs({ id }: { id: string }) {
     case "Terminals":
       View = Selector;
       break;
-    // return (
-    //   <ContainerTerminals
-    //     services={services?.map((service) => service.service) ?? []}
-    //     target={target}
-    //     titleOther={Selector}
-    //   />
-    // );
   }
 
   return (

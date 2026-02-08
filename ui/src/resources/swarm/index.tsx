@@ -57,7 +57,7 @@ export const SwarmComponents: RequiredResourceComponents<
     return (
       <EntityHeader
         intent={swarmStateIntention(swarm?.info.state)}
-        icon={<SwarmComponents.Icon id={id} size="2rem" />}
+        icon={ICONS.Swarm}
         name={swarm?.name}
         state={swarm?.info.state}
       />

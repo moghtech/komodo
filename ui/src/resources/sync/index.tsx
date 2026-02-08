@@ -71,7 +71,7 @@ export const ResourceSyncComponents: RequiredResourceComponents<
     return (
       <EntityHeader
         intent={resourceSyncStateIntention(resourceSync?.info.state)}
-        icon={<ResourceSyncComponents.Icon id={id} size="2rem" />}
+        icon={ICONS.ResourceSync}
         name={resourceSync?.name}
         state={resourceSync?.info.state}
       />

@@ -1,6 +1,6 @@
 import {
-  colorByIntention,
   containerStateIntention,
+  hexColorByIntention,
   swarmStateIntention,
 } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
@@ -26,7 +26,7 @@ export default function StackServiceLink({
   const intention = service?.swarm_service?.State
     ? swarmStateIntention(service?.swarm_service?.State)
     : containerStateIntention(service?.container?.state);
-  const color = colorByIntention(intention);
+  const color = hexColorByIntention(intention);
   return (
     <Group
       renderRoot={(props) => (
