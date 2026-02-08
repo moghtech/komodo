@@ -80,6 +80,7 @@ pub enum PeripheryRequest {
   GetComposeLogSearch(GetComposeLogSearch),
 
   // Compose (Write)
+  RenameStack(RenameStack),
   WriteComposeContentsToHost(WriteComposeContentsToHost),
   WriteCommitComposeContents(WriteCommitComposeContents),
   ComposePull(ComposePull),

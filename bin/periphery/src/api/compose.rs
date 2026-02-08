@@ -93,6 +93,50 @@ pub struct DockerComposeLsItem {
 
 //
 
+impl Resolve<super::Args> for RenameStack {
+  #[instrument(name = "RenameStack")]
+  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
+    let RenameStack {
+      curr_name,
+      new_name,
+    } = self;
+    let stack_dir = periphery_config().stack_dir();
+    let curr_path = stack_dir.join(to_path_compatible_name(&curr_name));
+    let new_path = stack_dir.join(to_path_compatible_name(&new_name));
+    if !curr_path.exists() {
+      return Ok(Log::simple(
+        "Rename Stack on Server",
+        format!("No stack folder at {} to rename", curr_path.display()),
+      ));
+    }
+    if new_path.exists() {
+      return Ok(Log::error(
+        "Rename Stack on Server",
+        format!(
+          "Target folder {} already exists, cannot rename",
+          new_path.display()
+        ),
+      ));
+    }
+    match fs::rename(&curr_path, &new_path).await {
+      Ok(_) => Ok(Log::simple(
+        "Rename Stack on Server",
+        format!(
+          "Renamed stack directory from {} to {}",
+          curr_path.display(),
+          new_path.display()
+        ),
+      )),
+      Err(e) => Ok(Log::error(
+        "Rename Stack on Server",
+        format!("Failed to rename stack directory: {e}"),
+      )),
+    }
+  }
+}
+
+//
+
 impl Resolve<super::Args> for GetComposeLog {
   #[instrument(name = "GetComposeLog", level = "debug")]
   async fn resolve(self, _: &super::Args) -> serror::Result<Log> {

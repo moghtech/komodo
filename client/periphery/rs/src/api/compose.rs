@@ -23,6 +23,18 @@ pub struct ListComposeProjects {}
 
 //
 
+/// Rename a stack's directory on the host.
+/// Renames `stack_dir/<curr_name>` to `stack_dir/<new_name>`.
+#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
+#[response(Log)]
+#[error(serror::Error)]
+pub struct RenameStack {
+  pub curr_name: String,
+  pub new_name: String,
+}
+
+//
+
 /// Get the compose contents on the host, for stacks using
 /// `files_on_host`.
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]

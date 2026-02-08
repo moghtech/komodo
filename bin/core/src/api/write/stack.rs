@@ -1,7 +1,10 @@
 use std::path::PathBuf;
 
 use anyhow::{Context, anyhow};
-use database::mungos::mongodb::bson::{doc, to_document};
+use database::mungos::{
+  by_id::update_one_by_id,
+  mongodb::bson::{doc, to_document},
+};
 use formatting::format_serror;
 use komodo_client::{
   api::write::*,
@@ -9,11 +12,13 @@ use komodo_client::{
     FileContents, NoData, Operation, RepoExecutionArgs,
     all_logs_success,
     config::core::CoreConfig,
+    komodo_timestamp,
     permission::PermissionLevel,
     repo::Repo,
-    server::ServerState,
+    server::{Server, ServerState},
     stack::{PartialStackConfig, Stack, StackInfo},
-    update::Update,
+    to_path_compatible_name,
+    update::{Log, Update},
     user::stack_user,
   },
 };
@@ -95,7 +100,67 @@ impl Resolve<WriteArgs> for RenameStack {
     self,
     WriteArgs { user }: &WriteArgs,
   ) -> serror::Result<Update> {
-    Ok(resource::rename::<Stack>(&self.id, &self.name, user).await?)
+    let stack = get_check_permissions::<Stack>(
+      &self.id,
+      user,
+      PermissionLevel::Write.into(),
+    )
+    .await?;
+
+    // If stack has no server, just do a simple DB rename
+    if stack.config.server_id.is_empty() {
+      return Ok(
+        resource::rename::<Stack>(&self.id, &self.name, user).await?,
+      );
+    }
+
+    let name = to_path_compatible_name(&self.name);
+
+    let mut update =
+      make_update(&stack, Operation::RenameStack, user);
+
+    update_one_by_id(
+      &db_client().stacks,
+      &stack.id,
+      database::mungos::update::Update::Set(
+        doc! { "name": &name, "updated_at": komodo_timestamp() },
+      ),
+      None,
+    )
+    .await
+    .context("Failed to update Stack name on db")?;
+
+    let server =
+      resource::get::<Server>(&stack.config.server_id).await?;
+
+    // Rename the stack directory on the periphery server
+    let log = match periphery_client(&server)?
+      .request(periphery_client::api::compose::RenameStack {
+        curr_name: to_path_compatible_name(&stack.name),
+        new_name: name.clone(),
+      })
+      .await
+      .context("Failed to rename Stack directory on Server")
+    {
+      Ok(log) => log,
+      Err(e) => Log::error(
+        "Rename Stack directory failure",
+        format_serror(&e.into()),
+      ),
+    };
+
+    update.logs.push(log);
+
+    update.push_simple_log(
+      "Rename Stack",
+      format!("Renamed Stack from {} to {}", stack.name, name),
+    );
+    update.finalize();
+    update.id = add_update(update.clone()).await?;
+
+    resource::refresh_all_resources_cache().await;
+
+    Ok(update)
   }
 }
 
