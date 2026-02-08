@@ -139,8 +139,7 @@ impl Resolve<ReadArgs> for ListUpdates {
       })
       .unwrap_or_else(|| doc! { "target.type": "ResourceSync" });
 
-      let mut query = self.query.unwrap_or_default();
-      query.extend(doc! {
+      let permission_filter = doc! {
         "$or": [
           server_query,
           deployment_query,
@@ -153,8 +152,18 @@ impl Resolve<ReadArgs> for ListUpdates {
           builder_query,
           resource_sync_query,
         ]
-      });
-      query.into()
+      };
+      let user_query = self.query.unwrap_or_default();
+      if user_query.is_empty() {
+        Some(permission_filter)
+      } else {
+        Some(doc! {
+          "$and": [
+            user_query,
+            permission_filter,
+          ]
+        })
+      }
     };
 
     let usernames = find_collect(&db_client().users, None, None)
