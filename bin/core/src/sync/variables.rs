@@ -15,6 +15,13 @@ use crate::{api::write::WriteArgs, state::db_client};
 
 use super::toml::TOML_PRETTY_OPTIONS;
 
+/// Normalize newlines to `\n` for consistent comparison.
+/// TOML parsers normalize line endings to `\n`, but values stored
+/// in the database (e.g. via the web UI) may contain `\r\n`.
+fn normalize_newlines(s: &str) -> String {
+  s.replace("\r\n", "\n")
+}
+
 pub fn variable_to_toml(
   variable: &Variable,
 ) -> anyhow::Result<String> {
@@ -56,8 +63,10 @@ pub async fn get_updates_for_view(
   for variable in variables {
     match map.get(&variable.name) {
       Some(original) => {
-        if original.value == variable.value
-          && original.description == variable.description
+        if normalize_newlines(&original.value)
+          == normalize_newlines(&variable.value)
+          && normalize_newlines(&original.description)
+            == normalize_newlines(&variable.description)
         {
           continue;
         }
@@ -105,9 +114,11 @@ pub async fn get_updates_for_execution(
     match map.get(&variable.name) {
       Some(original) => {
         let item = ToUpdateItem {
-          update_value: original.value != variable.value,
-          update_description: original.description
-            != variable.description,
+          update_value: normalize_newlines(&original.value)
+            != normalize_newlines(&variable.value),
+          update_description: normalize_newlines(
+            &original.description,
+          ) != normalize_newlines(&variable.description),
           update_is_secret: original.is_secret != variable.is_secret,
           variable,
         };
