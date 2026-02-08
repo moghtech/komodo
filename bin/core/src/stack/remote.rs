@@ -47,10 +47,24 @@ pub async fn get_repo_compose_contents(
     {
       missing_files.push(file.path.clone());
     }
-    // If file does not exist, will show up in err case so the log is handled
-    match fs::read_to_string(&file_path).with_context(|| {
-      format!("Failed to read file contents from {file_path:?}")
-    }) {
+    // If file does not exist, will show up in err case so the log is handled.
+    // Retry briefly for files that may still be materialising on disk.
+    let read_result = {
+      let mut result = fs::read_to_string(&file_path);
+      if result.is_err() {
+        for _ in 0..3 {
+          std::thread::sleep(std::time::Duration::from_millis(500));
+          result = fs::read_to_string(&file_path);
+          if result.is_ok() {
+            break;
+          }
+        }
+      }
+      result.with_context(|| {
+        format!("Failed to read file contents from {file_path:?}")
+      })
+    };
+    match read_result {
       Ok(contents) => successful.push(StackRemoteFileContents {
         path: file.path,
         contents,
