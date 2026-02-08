@@ -9,6 +9,18 @@ import DeploymentTable from "./table";
 import NewResource from "@/resources/new";
 import DeploymentTabs from "./tabs";
 import DeleteResource from "../delete";
+import {
+  DeployDeployment,
+  DestroyDeployment,
+  PauseUnpauseDeployment,
+  PullDeployment,
+  RestartDeployment,
+  StartStopDeployment,
+} from "./executions";
+import { SwarmComponents } from "../swarm";
+import { ServerComponents } from "../server";
+import ResourceLink from "../link";
+import { Group, Text } from "@mantine/core";
 
 export const DeploymentComponents: RequiredResourceComponents<
   Types.DeploymentConfig,
@@ -93,9 +105,32 @@ export const DeploymentComponents: RequiredResourceComponents<
       <StatusBadge text={state} intent={deploymentStateIntention(state)} />
     );
   },
-  Info: {},
+  Info: {
+    DeployTarget: ({ id }) => {
+      const info = DeploymentComponents.useListItem(id)?.info;
+      const swarm = SwarmComponents.useListItem(info?.swarm_id);
+      const server = ServerComponents.useListItem(info?.server_id);
+      return swarm?.id ? (
+        <ResourceLink type="Swarm" id={swarm?.id} />
+      ) : server?.id ? (
+        <ResourceLink type="Server" id={server?.id} />
+      ) : (
+        <Group gap="xs">
+          <ICONS.Server size="1rem" />
+          <Text>Unknown</Text>
+        </Group>
+      );
+    },
+  },
 
-  Executions: {},
+  Executions: {
+    DeployDeployment,
+    PullDeployment,
+    RestartDeployment,
+    PauseUnpauseDeployment,
+    StartStopDeployment,
+    DestroyDeployment,
+  },
 
   Config: DeploymentTabs,
 
