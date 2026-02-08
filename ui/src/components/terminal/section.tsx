@@ -87,6 +87,7 @@ export default function TerminalSection({
           existingTerminals={terminals?.map((t) => t.name)}
           refetchTerminals={refetchTerminals}
           setSelected={setSelected}
+          services={services}
         />
 
         {terminals?.[0] ? (

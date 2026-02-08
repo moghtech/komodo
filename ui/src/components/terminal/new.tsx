@@ -20,6 +20,7 @@ export interface NewTerminalProps extends ComboboxProps {
   existingTerminals: string[] | undefined;
   refetchTerminals: () => void;
   setSelected: (value: { selected: string | undefined }) => void;
+  services?: string[];
   targetProps?: ButtonProps;
 }
 
@@ -30,10 +31,12 @@ export default function NewTerminal({
   existingTerminals,
   refetchTerminals,
   setSelected,
+  services,
   position = "bottom-start",
   targetProps,
   ...comboboxProps
 }: NewTerminalProps) {
+  const [service, setService] = useState<string | undefined>(undefined);
   const { mutateAsync: createTerminal } = useWrite("CreateTerminal");
 
   const [search, setSearch] = useState("");
@@ -51,13 +54,9 @@ export default function NewTerminal({
     combobox.selectFirstOption();
   }, [search]);
 
-  const create = async (
-    command: string | undefined,
-    isServer: boolean,
-    service?: string,
-  ) => {
+  const create = async (command: string | undefined, isServer: boolean) => {
     if (!existingTerminals) return;
-    const name = nextTerminalName(command, existingTerminals);
+    const name = nextTerminalName(command, service, existingTerminals);
     await createTerminal({
       target: service
         ? { ...target, params: { ...target.params, service } as any }
@@ -91,15 +90,23 @@ export default function NewTerminal({
       width={300}
       position={position}
       onOptionSubmit={(command) => {
-        create(
-          command === "Default" || (!isServer && command === "attach")
-            ? undefined
-            : command === "Custom"
-              ? search
-              : command,
-          isServer,
-        ).then(() => combobox.closeDropdown());
+        if (!!services && !service) {
+          setService(command);
+        } else {
+          create(
+            command === "Default" || (!isServer && command === "attach")
+              ? undefined
+              : command === "Custom"
+                ? search
+                : command,
+            isServer,
+          ).then(() => {
+            combobox.closeDropdown();
+            setService(undefined);
+          });
+        }
       }}
+      onClose={() => setService(undefined)}
       {...comboboxProps}
     >
       <Combobox.Target>
@@ -116,30 +123,43 @@ export default function NewTerminal({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           leftSection={<ICONS.Search size="1rem" style={{ marginRight: 6 }} />}
-          placeholder="Search"
+          placeholder={
+            !!services && !service ? "Select Service" : "Select Command"
+          }
         />
         <Combobox.Options mah={224} style={{ overflowY: "auto" }}>
-          {isServer && !search && (
-            <Combobox.Option value="Default">Default</Combobox.Option>
+          {!!services &&
+            !service &&
+            services.map((service) => (
+              <Combobox.Option key={service} value={service}>
+                <Text>{service}</Text>
+              </Combobox.Option>
+            ))}
+          {(!services || !!service) && (
+            <>
+              {isServer && !search && (
+                <Combobox.Option value="Default">Default</Combobox.Option>
+              )}
+              {filtered.map((command) => (
+                <Combobox.Option key={command} value={command}>
+                  <Text>{command}</Text>
+                </Combobox.Option>
+              ))}
+
+              <Divider />
+
+              <Combobox.Option
+                value="Custom"
+                disabled={!search || commands.includes(search)}
+                onSelect={() => setCommands((c) => [...c, search])}
+              >
+                <Group justify="center" gap="xs">
+                  <ICONS.Create size="1rem" />
+                  Custom
+                </Group>
+              </Combobox.Option>
+            </>
           )}
-          {filtered.map((command) => (
-            <Combobox.Option key={command} value={command}>
-              <Text>{command}</Text>
-            </Combobox.Option>
-          ))}
-
-          <Divider />
-
-          <Combobox.Option
-            value="Custom"
-            disabled={!search || commands.includes(search)}
-            onSelect={() => setCommands((c) => [...c, search])}
-          >
-            <Group justify="center" gap="xs">
-              <ICONS.Create size="1rem" />
-              Custom
-            </Group>
-          </Combobox.Option>
         </Combobox.Options>
       </Combobox.Dropdown>
     </Combobox>
@@ -147,10 +167,12 @@ export default function NewTerminal({
 }
 
 function nextTerminalName(
-  _command: string | undefined,
+  __command: string | undefined,
+  service: string | undefined,
   existingTerminals: string[],
 ) {
-  const command = !_command ? "attach" : _command.split(" ")[0];
+  const _command = !__command ? "attach" : __command.split(" ")[0];
+  const command = `${service ? service + " " : ""}${_command}`;
   for (let i = 1; i <= existingTerminals.length + 1; i++) {
     const name = i > 1 ? `${command} ${i}` : command;
     if (!existingTerminals.includes(name)) {
