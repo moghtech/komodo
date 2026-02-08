@@ -72,6 +72,10 @@ impl Stack {
       .cloned()
       // Makes sure to dedup them, while maintaining ordering
       .collect::<IndexSet<_>>();
+    // Include the main env file when environment variables are defined
+    if !self.config.environment.is_empty() {
+      res.insert(self.config.env_file_path.clone());
+    }
     res.extend(self.config.additional_env_files.clone());
     res.extend(
       self.config.config_files.iter().map(|f| f.path.clone()),
@@ -87,6 +91,12 @@ impl Stack {
       .map(StackFileDependency::full_redeploy)
       // Makes sure to dedup them, while maintaining ordering
       .collect::<IndexSet<_>>();
+    // Include the main env file when environment variables are defined
+    if !self.config.environment.is_empty() {
+      res.insert(StackFileDependency::full_redeploy(
+        self.config.env_file_path.clone(),
+      ));
+    }
     res.extend(
       self
         .config
