@@ -5,6 +5,7 @@ import { Types } from "komodo_client";
 import EntityHeader from "@/ui/entity-header";
 import ResourceLink from "@/resources/link";
 import NewResource from "@/resources/new";
+import DeleteResource from "../delete";
 
 export const BuilderComponents: RequiredResourceComponents<
   Types.BuilderConfig,
@@ -54,6 +55,7 @@ export const BuilderComponents: RequiredResourceComponents<
             <ResourceLink type="Server" id={builder.info.instance_type} />
           ) : undefined
         }
+        action={<DeleteResource type="Builder" id={id} />}
       />
     );
   },
@@ -64,7 +66,6 @@ export const BuilderComponents: RequiredResourceComponents<
   Executions: {},
 
   Config: () => <>CONFIG</>,
-  DangerZone: ({ id }) => <></>,
 
   Page: {},
 };

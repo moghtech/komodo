@@ -8,6 +8,7 @@ import EntityHeader from "@/ui/entity-header";
 import RepoTable from "./table";
 import NewResource from "@/resources/new";
 import RepoConfig from "./config";
+import DeleteResource from "../delete";
 
 export const RepoComponents: RequiredResourceComponents<
   Types.RepoConfig,
@@ -66,6 +67,7 @@ export const RepoComponents: RequiredResourceComponents<
         icon={ICONS.Repo}
         name={repo?.name}
         state={repo?.info.state}
+        action={<DeleteResource type="Repo" id={id} />}
       />
     );
   },
@@ -79,7 +81,6 @@ export const RepoComponents: RequiredResourceComponents<
   Executions: {},
 
   Config: RepoConfig,
-  DangerZone: ({ id }) => <></>,
 
   Page: {},
 };

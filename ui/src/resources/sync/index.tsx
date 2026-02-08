@@ -8,6 +8,7 @@ import ResourceSyncTable from "./table";
 import { RequiredResourceComponents } from "@/resources";
 import NewResource from "@/resources/new";
 import ResourceSyncConfig from "./config";
+import DeleteResource from "../delete";
 
 export const ResourceSyncComponents: RequiredResourceComponents<
   Types.ResourceSyncConfig,
@@ -74,6 +75,7 @@ export const ResourceSyncComponents: RequiredResourceComponents<
         icon={ICONS.ResourceSync}
         name={resourceSync?.name}
         state={resourceSync?.info.state}
+        action={<DeleteResource type="ResourceSync" id={id} />}
       />
     );
   },
@@ -89,7 +91,6 @@ export const ResourceSyncComponents: RequiredResourceComponents<
   Executions: {},
 
   Config: ResourceSyncConfig,
-  DangerZone: ({ id }) => <></>,
 
   Page: {},
 };

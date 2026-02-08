@@ -30,7 +30,7 @@ export default function StackTabs({ id }: { id: string }) {
 
   const services = useRead("ListStackServices", { stack: id }).data;
 
-  const container_terminals_disabled =
+  const containerTerminalsDisabled =
     ServerComponents.useListItem(info?.server_id)?.info
       .container_terminals_disabled ?? false;
 
@@ -43,7 +43,7 @@ export default function StackTabs({ id }: { id: string }) {
   const hideLogs = hideServices || !specificLogs;
   const terminalDisabled =
     !specificTerminal ||
-    container_terminals_disabled ||
+    containerTerminalsDisabled ||
     // All services are not running
     services?.every(
       (service) =>
@@ -108,7 +108,7 @@ export default function StackTabs({ id }: { id: string }) {
     [id],
   );
 
-  let View = null;
+  let View = Selector;
   switch (view) {
     case "Config":
       View = <StackConfig id={id} titleOther={Selector} />;
@@ -120,11 +120,9 @@ export default function StackTabs({ id }: { id: string }) {
       View = <StackServices id={id} titleOther={Selector} />;
       break;
     case "Log":
-      View = Selector;
       break;
     // return <StackLogs id={id} titleOther={Selector} />;
     case "Terminals":
-      View = Selector;
       break;
   }
 

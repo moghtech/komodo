@@ -31,6 +31,7 @@ import { ArrowUp } from "lucide-react";
 import { notifications } from "@mantine/notifications";
 import StackServices from "./services";
 import ResourceLink from "@/resources/link";
+import DeleteResource from "../delete";
 
 export const StackComponents: RequiredResourceComponents<
   Types.StackConfig,
@@ -106,6 +107,7 @@ export const StackComponents: RequiredResourceComponents<
             ? stack?.info.status
             : undefined
         }
+        action={<DeleteResource type="Stack" id={id} />}
       />
     );
   },
@@ -279,10 +281,9 @@ export const StackComponents: RequiredResourceComponents<
   },
 
   Config: StackTabs,
-  DangerZone: ({ id }) => <></>,
 
   Page: {
-    StackServices
+    StackServices,
   },
 };
 

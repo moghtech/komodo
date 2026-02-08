@@ -22,7 +22,6 @@ import { useParams } from "react-router-dom";
 import EntityPage from "@/ui/entity-page";
 import { usableResourcePath } from "@/lib/utils";
 import ResourceDescription from "@/resources/description";
-import DeleteResource from "@/resources/delete";
 import ResourceNotFound from "@/resources/not-found";
 
 export default function Resource() {
@@ -39,12 +38,10 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
   const resources = useRead(`List${type}s`, {}).data;
   const resource = Components.useListItem(id);
 
-  const { canExecute, canWrite } = usePermissions({ type, id });
+  const { canExecute } = usePermissions({ type, id });
 
   usePushRecentlyViewed({ type, id });
   useSetTitle(resource?.name);
-
-  // const { canCreate, canExecute, canWrite } = usePermissions({ type, id });
 
   if (!type || !id) return null;
 
@@ -110,14 +107,6 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
           <Component key={key} id={id} />
         ))}
         <Components.Config id={id} />
-        {canWrite && (
-          <Section title="Danger Zone" icon={<ICONS.Alert size="1.3rem" />}>
-            <Group justify="end">
-              <Components.DangerZone id={id} />
-              <DeleteResource type={type} id={id} />
-            </Group>
-          </Section>
-        )}
       </Stack>
     </EntityPage>
   );

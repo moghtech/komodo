@@ -4,6 +4,7 @@ import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import EntityHeader from "@/ui/entity-header";
 import NewResource from "@/resources/new";
+import DeleteResource from "../delete";
 
 export const AlerterComponents: RequiredResourceComponents<
   Types.AlerterConfig,
@@ -46,6 +47,7 @@ export const AlerterComponents: RequiredResourceComponents<
         name={alerter?.name}
         state={alerter?.info.enabled ? "Enabled" : "Disabled"}
         status={alerter?.info.endpoint_type}
+        action={<DeleteResource type="Alerter" id={id} />}
       />
     );
   },
@@ -56,7 +58,6 @@ export const AlerterComponents: RequiredResourceComponents<
   Executions: {},
 
   Config: () => <>CONFIG</>,
-  DangerZone: ({ id }) => <></>,
 
   Page: {},
 };

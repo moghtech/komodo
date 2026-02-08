@@ -79,7 +79,7 @@ export default function LogViewer({
       viewportRef={viewportRef}
       onScrollPositionChange={handleScroll}
       onScroll={handleScroll}
-      bg="accent.1"
+      bg="accent.0"
       bd="1px solid var(--mantine-color-accent-border-0)"
       // bdrs="md"
       pos="relative"

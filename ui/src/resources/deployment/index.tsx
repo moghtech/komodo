@@ -7,7 +7,8 @@ import StatusBadge from "@/ui/status-badge";
 import EntityHeader from "@/ui/entity-header";
 import DeploymentTable from "./table";
 import NewResource from "@/resources/new";
-import DeploymentConfig from "./config";
+import DeploymentTabs from "./tabs";
+import DeleteResource from "../delete";
 
 export const DeploymentComponents: RequiredResourceComponents<
   Types.DeploymentConfig,
@@ -81,6 +82,7 @@ export const DeploymentComponents: RequiredResourceComponents<
         name={deployment?.name}
         state={deployment?.info.state}
         status={deployment?.info.status}
+        action={<DeleteResource type="Deployment" id={id} />}
       />
     );
   },
@@ -95,8 +97,7 @@ export const DeploymentComponents: RequiredResourceComponents<
 
   Executions: {},
 
-  Config: DeploymentConfig,
-  DangerZone: ({ id }) => <></>,
+  Config: DeploymentTabs,
 
   Page: {},
 };

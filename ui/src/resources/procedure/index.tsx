@@ -8,6 +8,7 @@ import EntityHeader from "@/ui/entity-header";
 import ProcedureTable from "./table";
 import NewResource from "@/resources/new";
 import ProcedureConfig from "./config";
+import DeleteResource from "../delete";
 
 export const ProcedureComponents: RequiredResourceComponents<
   Types.ProcedureConfig,
@@ -67,6 +68,7 @@ export const ProcedureComponents: RequiredResourceComponents<
         name={procedure?.name}
         state={procedure?.info.state}
         status={`${procedure?.info.stages} Stage${procedure?.info.stages === 1 ? "" : "s"}`}
+        action={<DeleteResource type="Procedure" id={id} />}
       />
     );
   },
@@ -80,7 +82,6 @@ export const ProcedureComponents: RequiredResourceComponents<
   Executions: {},
 
   Config: ProcedureConfig,
-  DangerZone: ({ id }) => <></>,
 
   Page: {},
 };

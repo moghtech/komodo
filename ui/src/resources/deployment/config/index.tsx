@@ -18,8 +18,15 @@ import { Link } from "react-router-dom";
 import AddExtraArg from "@/components/config/add-extra-arg";
 import InputList from "@/ui/input-list";
 import { TerminationSignal, TerminationTimeout } from "./termination";
+import { ReactNode } from "react";
 
-export default function DeploymentConfig({ id }: { id: string }) {
+export default function DeploymentConfig({
+  id,
+  titleOther,
+}: {
+  id: string;
+  titleOther?: ReactNode;
+}) {
   const { canWrite } = usePermissions({ type: "Deployment", id });
   const config = useRead("GetDeployment", { deployment: id }).data?.config;
   const builds = useRead("ListBuilds", {}).data;
@@ -56,6 +63,7 @@ export default function DeploymentConfig({ id }: { id: string }) {
 
   return (
     <Config
+      titleOther={titleOther}
       disabled={disabled}
       original={config}
       update={update}

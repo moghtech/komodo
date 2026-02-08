@@ -7,6 +7,7 @@ import StatusBadge from "@/ui/status-badge";
 import EntityHeader from "@/ui/entity-header";
 import SwarmTable from "./table";
 import NewResource from "@/resources/new";
+import DeleteResource from "../delete";
 
 export const SwarmComponents: RequiredResourceComponents<
   Types.SwarmConfig,
@@ -60,6 +61,7 @@ export const SwarmComponents: RequiredResourceComponents<
         icon={ICONS.Swarm}
         name={swarm?.name}
         state={swarm?.info.state}
+        action={<DeleteResource type="Swarm" id={id} />}
       />
     );
   },
@@ -73,7 +75,6 @@ export const SwarmComponents: RequiredResourceComponents<
   Executions: {},
 
   Config: () => <>CONFIG</>,
-  DangerZone: ({ id }) => <></>,
 
   Page: {},
 };

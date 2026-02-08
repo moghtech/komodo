@@ -108,9 +108,6 @@ export interface RequiredResourceComponents<
   /** Config component for resource */
   Config: IdComponent;
 
-  /** Danger zone for resource, containing eg delete */
-  DangerZone: IdComponent;
-
   /**
    * Some config items shown in header, like deployment server /image
    * or build repo / branch, or status metrics, like deployment state / status

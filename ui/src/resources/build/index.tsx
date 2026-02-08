@@ -8,6 +8,7 @@ import EntityHeader from "@/ui/entity-header";
 import BuildTable from "./table";
 import NewResource from "@/resources/new";
 import BuildConfig from "./config";
+import DeleteResource from "../delete";
 
 export const BuildComponents: RequiredResourceComponents<
   Types.BuildConfig,
@@ -66,6 +67,7 @@ export const BuildComponents: RequiredResourceComponents<
         icon={ICONS.Build}
         name={build?.name}
         state={build?.info.state}
+        action={<DeleteResource type="Build" id={id} />}
       />
     );
   },
@@ -79,7 +81,6 @@ export const BuildComponents: RequiredResourceComponents<
   Executions: {},
 
   Config: BuildConfig,
-  DangerZone: ({ id }) => <></>,
 
   Page: {},
 };

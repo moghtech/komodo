@@ -13,6 +13,7 @@ import ConfirmModal from "@/ui/confirm-modal";
 import NewResource from "@/resources/new";
 import ActionConfig from "./config";
 import ActionTable from "./table";
+import DeleteResource from "../delete";
 
 export const ActionComponents: RequiredResourceComponents<
   Types.ActionConfig,
@@ -73,6 +74,7 @@ export const ActionComponents: RequiredResourceComponents<
         icon={({ size }) => <ActionComponents.Icon id={id} size={size} />}
         name={action?.name}
         state={action?.info.state}
+        action={<DeleteResource type="Action" id={id} />}
       />
     );
   },
@@ -158,7 +160,6 @@ export const ActionComponents: RequiredResourceComponents<
   },
 
   Config: ActionConfig,
-  DangerZone: ({ id }) => <></>,
 
   Page: {},
 };

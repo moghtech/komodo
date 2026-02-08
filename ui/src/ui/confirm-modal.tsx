@@ -18,13 +18,13 @@ export interface ConfirmModalProps extends Omit<
   Omit<ModalProps, "opened">,
   "onClose"
 > {
-  children?: string;
-  icon: ReactNode;
+  children?: ReactNode;
+  icon?: ReactNode;
   disabled?: boolean;
   /** User must enter this text to confirm */
   confirmText: string;
-  title?: string;
-  confirmButtonText?: string;
+  title?: ReactNode;
+  confirmButtonContent?: ReactNode;
   onConfirm?: () => Promise<unknown>;
   loading?: boolean;
   additional?: ReactNode;
@@ -32,6 +32,7 @@ export interface ConfirmModalProps extends Omit<
   /** Converts into ConfirmButton */
   disableModal?: boolean;
   targetProps?: ButtonProps;
+  targetNoIcon?: boolean;
 }
 
 export default function ConfirmModal({
@@ -40,13 +41,14 @@ export default function ConfirmModal({
   disabled,
   confirmText,
   title,
-  confirmButtonText,
+  confirmButtonContent,
   onConfirm,
   loading,
   additional,
   topAdditonal,
   disableModal,
   targetProps,
+  targetNoIcon,
   ...modalProps
 }: ConfirmModalProps) {
   const [opened, { open, close }] = useDisclosure();
@@ -123,7 +125,7 @@ export default function ConfirmModal({
               }}
               loading={loading}
             >
-              {confirmButtonText ?? children}
+              {confirmButtonContent ?? children}
             </ConfirmButton>
           </Group>
         </Stack>
@@ -137,7 +139,14 @@ export default function ConfirmModal({
         }}
         justify="space-between"
         w={190}
-        rightSection={loading ? <Loader color="white" size="1rem" /> : icon}
+        rightSection={
+          targetNoIcon ? undefined : loading ? (
+            <Loader color="white" size="1rem" />
+          ) : (
+            icon
+          )
+        }
+        loading={targetNoIcon ? loading : undefined}
         {...targetProps}
       >
         {children}

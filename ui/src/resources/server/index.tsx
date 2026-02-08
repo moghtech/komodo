@@ -15,6 +15,7 @@ import ServerVersion from "./version";
 import { Group, HoverCard } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import ConfirmServerPubkey from "./confirm-pubkey";
+import DeleteResource from "../delete";
 
 export const ServerComponents: RequiredResourceComponents<
   Types.ServerConfig,
@@ -76,6 +77,7 @@ export const ServerComponents: RequiredResourceComponents<
         name={server?.name}
         state={server?.info.state}
         status={server?.info.region}
+        action={<DeleteResource type="Server" id={id} />}
       />
     );
   },
@@ -370,7 +372,6 @@ export const ServerComponents: RequiredResourceComponents<
   },
 
   Config: ServerConfig,
-  DangerZone: ({ id }) => <></>,
 
   Page: {},
 };

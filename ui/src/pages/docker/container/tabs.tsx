@@ -106,7 +106,7 @@ export default function ContainerTabs({
     [server, container],
   );
 
-  let View = null;
+  let View = Selector;
   switch (view) {
     case "Log":
       View = (
