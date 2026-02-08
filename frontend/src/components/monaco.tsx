@@ -154,7 +154,10 @@ export const MonacoEditor = ({
     readOnly,
     tabSize: 2,
     detectIndentation: true,
-    quickSuggestions: true,
+    quickSuggestions: false,
+    suggestOnTriggerCharacters: false,
+    parameterHints: { enabled: false },
+    hover: { enabled: false },
     padding: {
       top: 15,
     },
