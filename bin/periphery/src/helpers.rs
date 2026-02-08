@@ -67,7 +67,11 @@ pub fn parse_labels(labels: &[EnvironmentVar]) -> String {
         // If the value already wrapped in quotes, don't wrap it again
         format!(" --label {}={}", p.variable, p.value)
       } else {
-        format!(" --label {}=\"{}\"", p.variable, p.value)
+        // Use single quotes to prevent shell interpretation of special
+        // characters (backticks, angle brackets, $, etc.).
+        // Escape any single quotes within the value.
+        let escaped = p.value.replace('\'', "'\\''");
+        format!(" --label {}='{}'", p.variable, escaped)
       }
     })
     .collect::<Vec<_>>()
