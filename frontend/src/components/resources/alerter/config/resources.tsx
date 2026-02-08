@@ -97,6 +97,12 @@ export const ResourcesConfig = ({
         : false,
     })),
   ];
+  // Filter out resources that no longer exist (e.g. deleted resources
+  // that haven't been cleaned up from the alerter config yet)
+  const all_resource_ids = new Set(all_resources.map((r) => `${r.type}:${r.id}`));
+  const valid_resources = resources.filter(
+    (r) => all_resource_ids.has(`${r.type}:${r.id}`)
+  );
   const searchSplit = search.split(" ");
   const filtered_resources = searchSplit.length
     ? all_resources.filter((r) => {
@@ -220,10 +226,10 @@ export const ResourcesConfig = ({
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        {resources.length ? (
+        {valid_resources.length ? (
           <div className="text-muted-foreground">
             Alerts {blacklist ? "blacklisted" : "whitelisted"} by{" "}
-            {resources.length} resources
+            {valid_resources.length} resources
           </div>
         ) : undefined}
       </div>
