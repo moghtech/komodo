@@ -37,7 +37,7 @@ export default function LogSection({ target, ...props }: LogSectionProps) {
     key: "log-poll-v1",
     defaultValue: false,
   });
-  const [stream, setStream] = useState<LogStream>("stdout");
+  const [_stream, setStream] = useState<LogStream>("stdout");
   const [tail, setTail] = useState("100");
   const [terms, setTerms] = useState<string[]>([]);
   const [invert, setInvert] = useState(false);
@@ -93,6 +93,14 @@ export default function LogSection({ target, ...props }: LogSectionProps) {
     setTerms([]);
   };
 
+  // Convenience select stderr first / disabled selector if its only one with logs
+  const hasStdout = !!log?.stdout;
+  const hasStderr = !!log?.stderr;
+  const [stream, streamSelectDisabled] =
+    _stream === "stdout" && !hasStdout && hasStderr
+      ? ["stderr" as LogStream, true]
+      : [_stream, false];
+
   return (
     <Section
       actions={
@@ -140,6 +148,7 @@ export default function LogSection({ target, ...props }: LogSectionProps) {
             value={stream}
             onChange={(stream) => setStream(stream as LogStream)}
             data={["stdout", "stderr"]}
+            disabled={streamSelectDisabled}
           />
 
           <ActionIcon size="lg" onClick={() => refetch()} loading={loading}>
