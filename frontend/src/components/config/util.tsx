@@ -823,7 +823,7 @@ export const AccountSelector = ({
   type: "Server" | "Builder" | "None";
   id?: string;
   account_type: "git" | "docker";
-  provider: string;
+  provider?: string;
   selected: string | undefined;
   onSelect: (id: string) => void;
   placeholder?: string;
@@ -838,10 +838,10 @@ export const AccountSelector = ({
   const config_params =
     type === "None" ? {} : { target: id ? { type, id } : undefined };
   const db_accounts = useRead(db_request, {}).data?.filter(
-    (account) => account.domain === provider
+    (account) => !provider || account.domain === provider
   );
   const config_providers = useRead(config_request, config_params).data?.filter(
-    (_provider) => _provider.domain === provider
+    (_provider) => !provider || _provider.domain === provider
   );
 
   const _accounts = new Set<string>();
@@ -895,7 +895,7 @@ export const AccountSelectorConfig = (params: {
   id?: string;
   type: "Server" | "Builder" | "None";
   account_type: "git" | "docker";
-  provider: string;
+  provider?: string;
   selected: string | undefined;
   onSelect: (id: string) => void;
   placeholder?: string;

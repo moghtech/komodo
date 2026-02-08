@@ -117,7 +117,7 @@ export const DeploymentConfig = ({
                     id={update.server_id ?? config.server_id ?? undefined}
                     type="Server"
                     account_type="docker"
-                    provider={provider ?? "docker.io"}
+                    provider={provider}
                     selected={account}
                     onSelect={(image_registry_account) =>
                       set({ image_registry_account })
