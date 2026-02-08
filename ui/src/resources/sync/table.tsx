@@ -1,7 +1,7 @@
 import { useSelectedResources } from "@/lib/hooks";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import { Types } from "komodo_client";
-import { ResourceLink } from "../common";
+import ResourceLink from "@/resources/link";
 import { ResourceSyncComponents } from ".";
 import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";

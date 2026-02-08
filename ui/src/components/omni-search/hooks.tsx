@@ -15,8 +15,8 @@ import {
 } from "@mantine/spotlight";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { TemplateMarker } from "../template-marker";
-import { DOCKER_LINK_ICONS } from "../docker/link";
+import { TemplateMarker } from "@/components/template-marker";
+import { DOCKER_LINK_ICONS } from "@/components/docker/link";
 import { Types } from "komodo_client";
 
 const ITEM_LIMIT = 7;
@@ -149,16 +149,35 @@ export function useOmniSearch(): {
                   )
                 );
               })
-              .map((resource) => ({
-                id: type + " " + resource.name,
-                label: resource.name,
-                onClick: () =>
-                  nav(`/${usableResourcePath(_type)}/${resource.id}`),
-                leftSection: <Components.Icon id={resource.id} size="1.3rem" />,
-                rightSection: resource.template && (
-                  <TemplateMarker type={_type} />
-                ),
-              })) ?? [],
+              .map((resource) => {
+                const info = resource.info as {
+                  swarm_id: string;
+                  server_id: string;
+                };
+                return {
+                  id: type + " " + resource.name,
+                  label: resource.name,
+                  onClick: () =>
+                    nav(`/${usableResourcePath(_type)}/${resource.id}`),
+                  leftSection: (
+                    <Components.Icon id={resource.id} size="1.3rem" />
+                  ),
+                  rightSection: resource.template && (
+                    <TemplateMarker type={_type} />
+                  ),
+                  description: info.swarm_id
+                    ? "Swarm: " +
+                      resources.Swarm?.find(
+                        (swarm) => info.swarm_id === swarm.id,
+                      )?.name
+                    : info.server_id
+                      ? "Server: " +
+                        resources.Server?.find(
+                          (server) => info.server_id === server.id,
+                        )?.name
+                      : undefined,
+                };
+              }) ?? [],
         };
       }),
 

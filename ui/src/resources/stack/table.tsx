@@ -2,7 +2,7 @@ import { useResourceName, useSelectedResources } from "@/lib/hooks";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import { Group, BoxProps } from "@mantine/core";
 import { Types } from "komodo_client";
-import { ResourceLink } from "@/resources/common";
+import ResourceLink from "@/resources/link";
 import { StackComponents } from ".";
 import TableTags from "@/components/tags/table";
 import FileSource from "@/components/file-source";

@@ -1,10 +1,10 @@
 import { Types } from "komodo_client";
 import { DataTable, SortableHeader } from "@/ui/data-table";
-import { ResourceLink } from "@/resources/common";
 import { useSelectedResources } from "@/lib/hooks";
 import { ActionComponents } from ".";
 import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
+import ResourceLink from "@/resources/link";
 
 export default function ActionTable({
   resources,

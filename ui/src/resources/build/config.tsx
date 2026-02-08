@@ -11,7 +11,7 @@ import { ConfigInput, ConfigItem, ConfigList } from "@/ui/config/item";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import ResourceSelector from "@/resources/selector";
-import { ResourceLink } from "@/resources/common";
+import ResourceLink from "@/resources/link";
 import { Button, Group, Select, Text } from "@mantine/core";
 import { ICONS } from "@/theme/icons";
 import ImageRegistryConfig from "@/components/config/image-registry-config";

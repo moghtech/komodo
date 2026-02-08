@@ -16,12 +16,12 @@ import {
 import { ICONS } from "@/theme/icons";
 import { usableResourcePath } from "@/lib/utils";
 import { ResourceComponents, UsableResource } from "@/resources";
-import { ResourceNameSimple } from "@/resources/common";
 import { Link, useNavigate } from "react-router-dom";
 import DashboardSummary from "@/components/dashboard-summary";
 import FancyCard from "@/ui/fancy-card";
 import { TemplateMarker } from "@/components/template-marker";
 import Tags from "@/components/tags";
+import ResourceName from "@/resources/name";
 
 const RecentsDashboard = () => {
   const noResources = useNoResources();
@@ -175,7 +175,7 @@ const RecentCard = ({
       <Group justify="space-between">
         <Group style={{ textWrap: "nowrap" }} gap="sm">
           <Components.Icon id={id} />
-          <ResourceNameSimple type={type} id={id} />
+          <ResourceName type={type} id={id} />
           {resource.template && <TemplateMarker type={type} />}
         </Group>
         {/* {type === "Deployment" && <DeploymentUpdateAvailable id={id} small />}

@@ -1,7 +1,7 @@
-import { ResourceLink } from "@/resources/common";
 import { Types } from "komodo_client";
 import DockerResourceLink from "@/components/docker/link";
 import { Group } from "@mantine/core";
+import ResourceLink from "@/resources/link";
 
 export default function TerminalTargetLink({ target }: { target: Types.TerminalTarget }) {
   switch (target.type) {

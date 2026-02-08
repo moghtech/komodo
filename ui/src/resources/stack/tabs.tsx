@@ -1,18 +1,18 @@
 import { useLocalStorage } from "@mantine/hooks";
 import { StackComponents } from ".";
 import { usePermissions, useRead } from "@/lib/hooks";
-import { ServerComponents } from "../server";
 import { Types } from "komodo_client";
 import { useMemo } from "react";
 import {
   MobileFriendlyTabsSelector,
   TabNoContent,
 } from "@/ui/mobile-friendly-tabs";
-import StackConfig from "./config";
-import StackInfo from "./info";
 import { Tabs } from "@mantine/core";
 import { ICONS } from "@/theme/icons";
 import { colorByIntention, stackStateIntention } from "@/lib/color";
+import { ServerComponents } from "@/resources/server";
+import StackConfig from "./config";
+import StackInfo from "./info";
 import StackServices from "./services";
 
 type StackTabsView = "Config" | "Info" | "Services" | "Log" | "Terminals";

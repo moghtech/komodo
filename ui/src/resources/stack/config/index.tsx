@@ -20,8 +20,8 @@ import {
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
-import { ResourceLink } from "@/resources/common";
-import ResourceSelector from "../../selector";
+import ResourceLink from "@/resources/link";
+import ResourceSelector from "@/resources/selector";
 import ShowHideButton from "@/ui/show-hide-button";
 import SecretsSearch from "@/components/config/secrets-search";
 import { MonacoEditor } from "@/components/monaco";

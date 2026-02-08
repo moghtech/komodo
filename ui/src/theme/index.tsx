@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Badge,
   Button,
   Code,
@@ -14,6 +15,7 @@ import {
   MantineProvider,
   MenuDropdown,
   Modal,
+  SegmentedControl,
   Select,
   Table,
   virtualColor,
@@ -42,7 +44,7 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
 
 const theme = createTheme({
   cursorType: "pointer",
-  primaryColor: "gray",
+  primaryColor: "accent",
   breakpoints: {
     xs: "36em",
     sm: "48em",
@@ -61,7 +63,7 @@ const theme = createTheme({
       true,
     ),
     darkAccent: functionColorsTuple(lighten(DARK_BODY, 0.025), (color) =>
-      lighten(color, 0.005),
+      lighten(color, 0.02),
     ),
     accent: virtualColor({
       name: "accent",
@@ -75,27 +77,20 @@ const theme = createTheme({
       true,
     ),
     darkAccentBorder: functionColorsTuple(lighten(DARK_BODY, 0.06), (color) =>
-      lighten(color, 0.008),
+      lighten(color, 0.02),
     ),
     "accent-border": virtualColor({
       name: "accent-border",
       light: "lightAccentBorder",
       dark: "darkAccentBorder",
     }),
-    // Accent background color on hover
-    // lightAccentHover: functionColorsTuple(
-    //   darken(LIGHT_BODY, 0.02),
-    //   (color) => darken(color, 0.005),
-    //   true,
-    // ),
-    // darkAccentHover: functionColorsTuple(lighten(DARK_BODY, 0.02), (color) =>
-    //   lighten(color, 0.005),
-    // ),
-    // "accent-hover": virtualColor({
-    //   name: "accent-hover",
-    //   light: "lightAccentHover",
-    //   dark: "darkAccentHover",
-    // }),
+    lightBw: colorsTuple("#000000"),
+    darkBw: colorsTuple("#FFFFFF"),
+    bw: virtualColor({
+      name: "bw",
+      light: "lightBw",
+      dark: "darkBw",
+    }),
     // Adds the tag colors with increasing opacity
     ...Object.fromEntries(
       Object.values(Types.TagColor).map((color) => {
@@ -115,19 +110,28 @@ const theme = createTheme({
     Select: Select.extend({
       styles: (theme) => ({
         input: {
-          backgroundColor: theme.colors.accent[5],
-          borderColor: theme.colors["accent-border"][5],
+          backgroundColor: theme.colors.accent[2],
+          border: "1px solid " + theme.colors["accent-border"][4],
         },
         dropdown: {
-          backgroundColor: theme.colors.accent[9],
-          borderColor: theme.colors["accent-border"][9],
+          backgroundColor: theme.colors.accent[4],
+          borderColor: theme.colors["accent-border"][7],
         },
       }),
     }),
     Button: Button.extend({
-      defaultProps: {
-        // c: "inherit",
-      },
+      vars: () => ({
+        root: {
+          "--button-color": "var(--mantine-color-bw)",
+        },
+      }),
+    }),
+    ActionIcon: ActionIcon.extend({
+      vars: () => ({
+        root: {
+          "--ai-color": "var(--mantine-color-bw)",
+        },
+      }),
     }),
     Badge: Badge.extend({
       defaultProps: {
@@ -175,17 +179,30 @@ const theme = createTheme({
     }),
     MenuDropdown: MenuDropdown.extend({
       defaultProps: {
-        bg: "var(--mantine-color-body)",
-        bd: "1px solid var(--mantine-color-accent-border-9)",
+        bg: "var(--mantine-color-accent-0)",
+        bd: "1px solid var(--mantine-color-accent-border-4)",
         bdrs: "md",
       },
     }),
     Fieldset: Fieldset.extend({
-      defaultProps: {
-        bg: "var(--mantine-color-body)",
-        bd: "1px solid var(--mantine-color-accent-border-0)",
-        bdrs: "md",
-      },
+      styles: (theme) => ({
+        root: {
+          backgroundColor: "var(--mantine-color-body)",
+          border: "1px solid " + theme.colors["accent-border"][2],
+          borderRadius: theme.radius.md,
+        },
+      }),
+    }),
+    SegmentedControl: SegmentedControl.extend({
+      styles: (theme) => ({
+        root: {
+          backgroundColor: theme.colors.accent[2],
+          border: "1px solid " + theme.colors["accent-border"][4],
+        },
+        indicator: {
+          backgroundColor: theme.colors.accent[9],
+        },
+      }),
     }),
   },
 });
@@ -196,13 +213,13 @@ const cssVariablesResolver: CSSVariablesResolver = (theme) => ({
     "--mantine-color-default": theme.colors.accent[5],
     "--mantine-color-default-hover": theme.colors.accent[9],
     "--mantine-color-default-border": theme.colors["accent-border"][5],
-    "--input-bg": theme.colors.accent[5],
+    "--mantine-color-disabled": theme.colors.accent[1],
   },
   dark: {
     "--mantine-color-default": theme.colors.accent[5],
     "--mantine-color-default-hover": theme.colors.accent[9],
     "--mantine-color-default-border": theme.colors["accent-border"][5],
-    "--input-bg": theme.colors.accent[5],
+    "--mantine-color-disabled": theme.colors.accent[1],
   },
 });
 

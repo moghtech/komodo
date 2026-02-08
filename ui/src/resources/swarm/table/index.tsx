@@ -1,5 +1,5 @@
 import { useSelectedResources } from "@/lib/hooks";
-import { ResourceLink } from "@/resources/common";
+import ResourceLink from "@/resources/link";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import { Types } from "komodo_client";
 import { SwarmComponents } from "..";

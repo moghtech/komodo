@@ -10,13 +10,13 @@ import {
 } from "@/lib/hooks";
 import { ResourceComponents, UsableResource } from "@/resources";
 import { Types } from "komodo_client";
-import { ResourceNotFound } from "@/resources/common";
 import Page from "@/ui/page";
 import { Group, Switch, TextInput } from "@mantine/core";
 import { ICONS } from "@/theme/icons";
 import TableSkeleton from "@/ui/table-skeleton";
 import TemplateQuerySelector from "@/components/template-query-selector";
 import TagsFilter from "@/components/tags/filter";
+import ResourceNotFound from "@/resources/not-found";
 
 export default function Resources({ _type }: { _type?: UsableResource }) {
   const is_admin = useUser().data?.admin ?? false;

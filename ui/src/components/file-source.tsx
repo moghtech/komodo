@@ -1,8 +1,8 @@
 import { ICONS } from "@/theme/icons";
-import { ResourceLink } from "@/resources/common";
 import { Center, Group, Loader, Text } from "@mantine/core";
 import RepoLink from "./repo-link";
 import { NotepadText } from "lucide-react";
+import ResourceLink from "@/resources/link";
 
 export interface FileSourceInfo {
   linked_repo: string;

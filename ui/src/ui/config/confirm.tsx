@@ -1,14 +1,14 @@
 import { MonacoDiffEditor, MonacoLanguage } from "@/components/monaco";
-import { colorByIntention } from "@/lib/color";
-import { fmtSnakeCaseToUpperSpaceCase } from "@/lib/formatting";
+import { useState } from "react";
+import { useDisclosure } from "@mantine/hooks";
+import { Box, Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { useCtrlKeyListener, useKeyListener } from "@/lib/hooks";
+import { fmtSnakeCaseToUpperSpaceCase } from "@/lib/formatting";
 import { ICONS } from "@/theme/icons";
 import { envToText } from "@/lib/utils";
+import { colorByIntention } from "@/lib/color";
 import ShowHideButton from "@/ui/show-hide-button";
-import { Box, Button, Group, Modal, Stack, Text } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
-import { useState } from "react";
-import ConfirmButton from "../confirm-button";
+import ConfirmButton from "@/ui/confirm-button";
 
 export default function ConfirmUpdate<T>({
   previous,

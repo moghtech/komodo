@@ -2,7 +2,6 @@ import DockerResourceLink from "@/components/docker/link";
 import TargetTerminal from "@/components/terminal/target";
 import { useSetTitle, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
-import { ResourceLink } from "@/resources/common";
 import { DeploymentComponents } from "@/resources/deployment";
 import { ServerComponents } from "@/resources/server";
 import { StackComponents } from "@/resources/stack";
@@ -13,6 +12,7 @@ import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";
 import { ReactNode, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import ResourceLink from "@/resources/link";
 
 type WithTerminal = "servers" | "deployments" | "stacks" | string;
 

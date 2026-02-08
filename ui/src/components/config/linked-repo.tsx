@@ -1,4 +1,4 @@
-import { ResourceLink } from "@/resources/common";
+import ResourceLink from "@/resources/link";
 import ResourceSelector from "@/resources/selector";
 import { ConfigItem } from "@/ui/config/item";
 import { Group } from "@mantine/core";

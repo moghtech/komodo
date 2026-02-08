@@ -3,9 +3,9 @@ import { ReactNode, useCallback, useEffect, useRef } from "react";
 import { Types } from "komodo_client";
 import { useInvalidate, komodo_client, useRead, useUser } from "@/lib/hooks";
 import { ResourceComponents, UsableResource } from "@/resources";
-import { ResourceNameSimple } from "@/resources/common";
 import { notifications } from "@mantine/notifications";
 import { Group, Text } from "@mantine/core";
+import ResourceName from "@/resources/name";
 
 const wsAtom = atom<{
   ws: WebSocket | undefined;
@@ -109,7 +109,7 @@ const onUpdate = (
   const message = Components ? (
     <Group gap="sm">
       <Text>{update.operation}</Text> -
-      <ResourceNameSimple
+      <ResourceName
         type={update.target.type as UsableResource}
         id={update.target.id}
       />

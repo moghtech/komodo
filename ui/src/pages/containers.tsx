@@ -4,13 +4,13 @@ import { containerStateIntention } from "@/lib/color";
 import { useDebounce, useRead } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import { filterBySplit } from "@/lib/utils";
-import { ResourceLink } from "@/resources/common";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import Page from "@/ui/page";
 import StatusBadge from "@/ui/status-badge";
 import { Group, TextInput } from "@mantine/core";
 import { useCallback, useMemo, useState } from "react";
 import DividedChildren from "@/ui/divided-children";
+import ResourceLink from "@/resources/link";
 
 export default function Containers() {
   const [search, setSearch] = useState("");

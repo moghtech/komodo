@@ -13,7 +13,6 @@ import {
   SETTINGS_RESOURCES,
   UsableResource,
 } from "@/resources";
-import { ResourceDescription, ResourceNotFound } from "@/resources/common";
 import { AddResourceTags, ResourceTags } from "@/resources/tags";
 import DividedChildren from "@/ui/divided-children";
 import Section from "@/ui/section";
@@ -22,6 +21,9 @@ import { Types } from "komodo_client";
 import { useParams } from "react-router-dom";
 import EntityPage from "@/ui/entity-page";
 import { usableResourcePath } from "@/lib/utils";
+import ResourceDescription from "@/resources/description";
+import DeleteResource from "@/resources/delete";
+import ResourceNotFound from "@/resources/not-found";
 
 export default function Resource() {
   const type = useResourceParamType()!;
@@ -110,7 +112,10 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
         <Components.Config id={id} />
         {canWrite && (
           <Section title="Danger Zone" icon={<ICONS.Alert size="1.3rem" />}>
-            <Components.DangerZone id={id} />
+            <Group justify="end">
+              <Components.DangerZone id={id} />
+              <DeleteResource type={type} id={id} />
+            </Group>
           </Section>
         )}
       </Stack>

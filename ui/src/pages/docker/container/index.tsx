@@ -9,7 +9,6 @@ import {
   useSetTitle,
 } from "@/lib/hooks";
 import { UsableResource } from "@/resources";
-import { ResourceDescription, ResourceLink } from "@/resources/common";
 import { ServerComponents } from "@/resources/server";
 import { ICONS } from "@/theme/icons";
 import DividedChildren from "@/ui/divided-children";
@@ -23,6 +22,8 @@ import { ContainerExecutions } from "./executions";
 import { DataTable } from "@/ui/data-table";
 import DockerLabelsSection from "@/components/docker/labels-section";
 import ContainerTabs from "./tabs";
+import ResourceDescription from "@/resources/description";
+import ResourceLink from "@/resources/link";
 
 export default function Container() {
   const {

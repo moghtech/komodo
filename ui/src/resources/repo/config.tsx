@@ -10,8 +10,8 @@ import Config from "@/ui/config";
 import { ConfigItem, ConfigList } from "@/ui/config/item";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
-import { ResourceLink } from "../common";
-import ResourceSelector from "../selector";
+import ResourceLink from "@/resources/link";
+import ResourceSelector from "@/resources/selector";
 import { Group } from "@mantine/core";
 
 export default function RepoConfig({ id }: { id: string }) {

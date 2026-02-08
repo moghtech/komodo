@@ -9,7 +9,6 @@ export default function OmniSearch({}: {}) {
     <>
       <ActionIcon
         variant="subtle"
-        c="inherit"
         onClick={() => spotlight.open()}
         hiddenFrom="md"
         size="lg"
@@ -18,10 +17,7 @@ export default function OmniSearch({}: {}) {
       </ActionIcon>
 
       <Button
-        // variant="default"
-        // variant="light"
-        color="accent.9"
-        c="inherit"
+        c="var(--mantine-color-text)"
         justify="space-between"
         rightSection={
           <Badge

@@ -3,7 +3,7 @@ import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import EntityHeader from "@/ui/entity-header";
-import { ResourceLink } from "@/resources/common";
+import ResourceLink from "@/resources/link";
 import NewResource from "@/resources/new";
 
 export const BuilderComponents: RequiredResourceComponents<

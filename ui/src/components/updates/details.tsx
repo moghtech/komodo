@@ -9,8 +9,7 @@ import { useWebsocketMessages } from "@/lib/socket";
 import { updateLogToHtml, versionIsNone } from "@/lib/utils";
 import { ResourceComponents, UsableResource } from "@/resources";
 import { Code, Drawer, Group, Stack, Text } from "@mantine/core";
-import UserAvatar from "../user-avatar";
-import { ResourceLink } from "@/resources/common";
+import UserAvatar from "@/components/user-avatar";
 import { ICONS } from "@/theme/icons";
 import { Clock, Link2, SquarePen } from "lucide-react";
 import CopyButton from "@/ui/copy-button";
@@ -18,6 +17,7 @@ import Section from "@/ui/section";
 import { MonacoDiffEditor } from "@/components/monaco";
 import LoadingScreen from "@/ui/loading-screen";
 import { atom, useAtom } from "jotai";
+import ResourceLink from "@/resources/link";
 
 const updateDetailsAtom = atom<string | undefined>(undefined);
 

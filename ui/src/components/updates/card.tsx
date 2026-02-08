@@ -5,9 +5,9 @@ import { Check, X } from "lucide-react";
 import { fmtDate, fmtOperation, fmtVersion } from "@/lib/formatting";
 import { versionIsNone } from "@/lib/utils";
 import { ICONS } from "@/theme/icons";
-import { ResourceNameSimple } from "@/resources/common";
 import UserAvatar from "@/components/user-avatar";
 import { useUpdateDetails } from "./details";
+import ResourceName from "@/resources/name";
 
 export default function UpdateCard({
   update,
@@ -74,7 +74,7 @@ export default function UpdateCard({
             {update.target.type === "System" ? (
               "System"
             ) : (
-              <ResourceNameSimple
+              <ResourceName
                 type={update.target.type}
                 id={update.target.id}
               />

@@ -5,7 +5,7 @@ import { ConfigItem, ConfigList, ConfigSwitch } from "@/ui/config/item";
 import { ActionIcon, Group, Stack, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
-import { ResourceLink } from "@/resources/common";
+import ResourceLink from "@/resources/link";
 import ResourceSelector from "@/resources/selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";
 import { extractRegistryDomain } from "@/lib/utils";

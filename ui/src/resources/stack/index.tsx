@@ -16,9 +16,8 @@ import {
   RestartStack,
   StartStopStack,
 } from "./executions";
-import { SwarmComponents } from "../swarm";
-import { ServerComponents } from "../server";
-import { ResourceLink } from "../common";
+import { SwarmComponents } from "@/resources/swarm";
+import { ServerComponents } from "@/resources/server";
 import {
   ActionIcon,
   Button,
@@ -31,6 +30,7 @@ import FileSource from "@/components/file-source";
 import { ArrowUp } from "lucide-react";
 import { notifications } from "@mantine/notifications";
 import StackServices from "./services";
+import ResourceLink from "@/resources/link";
 
 export const StackComponents: RequiredResourceComponents<
   Types.StackConfig,
