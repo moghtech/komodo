@@ -18,7 +18,6 @@ export default function EnableSwitch({
 }: EnableSwitchProps) {
   return (
     <Switch
-      {...props}
       disabled={disabled}
       checked={checked}
       color={color}
@@ -38,6 +37,7 @@ export default function EnableSwitch({
         onChange?.(e);
         onCheckedChange?.(e.target.checked);
       }}
+      {...props}
     />
   );
 }

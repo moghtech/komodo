@@ -9,11 +9,11 @@ import { Tabs } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useMemo } from "react";
-import ContainerLog from "./log";
 import { ICONS } from "@/theme/icons";
 import Section from "@/ui/section";
 import { MonacoEditor } from "@/components/monaco";
 import TerminalSection from "@/components/terminal/section";
+import LogSection from "@/components/log-section";
 
 export type ContainerTabsView = "Log" | "Inspect" | "Terminals";
 
@@ -110,9 +110,8 @@ export default function ContainerTabs({
   switch (view) {
     case "Log":
       View = (
-        <ContainerLog
-          server={server}
-          container={container}
+        <LogSection
+          target={{ type: "Container", serverId: server, container }}
           titleOther={Selector}
         />
       );

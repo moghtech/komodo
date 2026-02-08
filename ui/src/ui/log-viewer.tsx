@@ -1,11 +1,16 @@
-import { ActionIcon, Box, ScrollArea, ScrollAreaProps } from "@mantine/core";
+import {
+  ActionIcon,
+  Box,
+  ScrollArea,
+  ScrollAreaProps,
+  Text,
+} from "@mantine/core";
 import { useEffect, useRef, useState, useMemo } from "react";
 import Convert from "ansi-to-html";
 import { ChevronsDown } from "lucide-react";
 
 export interface LogViewerProps extends ScrollAreaProps {
-  log: string;
-  showLineNumbers?: boolean;
+  log: string | undefined;
   autoScroll?: boolean;
 }
 
@@ -19,7 +24,6 @@ const convert = new Convert({
 
 export default function LogViewer({
   log,
-  showLineNumbers,
   autoScroll = true,
   h = "calc(100vh - 30rem)",
   ...props
@@ -29,7 +33,7 @@ export default function LogViewer({
 
   // Split log into lines and memoize
   const lines = useMemo(() => {
-    return log.split("\n");
+    return log ? log.split("\n") : undefined;
   }, [log]);
 
   // Convert ANSI codes to HTML
@@ -67,6 +71,8 @@ export default function LogViewer({
     }
   };
 
+  console.log(lines);
+
   return (
     <ScrollArea
       h={h}
@@ -79,55 +85,32 @@ export default function LogViewer({
       pos="relative"
       {...props}
     >
-      <Box p="md">
-        <Box
-          component="pre"
-          m={0}
-          ff="monospace"
-          fz="0.85rem"
-          lh={1.5}
-          style={{
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-all",
-          }}
-        >
-          {lines.map((line, index) => (
-            <Box
-              key={index}
-              component="div"
-              style={{
-                display: "flex",
-                contentVisibility: "auto", // Browser-native virtualization
-                containIntrinsicSize: "auto 1.5em", // Hint for height
-              }}
-            >
-              {showLineNumbers && (
-                <Box
-                  component="span"
-                  mr="md"
-                  pr="md"
-                  ta="right"
-                  style={{
-                    userSelect: "none",
-                    minWidth: "3ch",
-                    flexShrink: 0,
-                    borderRight:
-                      "1px solid var(--mantine-color-accent-border-4)",
-                  }}
-                >
-                  {index + 1}
-                </Box>
-              )}
-              <Box
-                component="span"
-                flex={1}
-                dangerouslySetInnerHTML={{
-                  __html: renderLine(line) || "&nbsp;",
-                }}
-              />
-            </Box>
-          ))}
-        </Box>
+      <Box
+        component="pre"
+        p="md"
+        m={0}
+        ff="monospace"
+        fz="0.85rem"
+        lh={1.5}
+        style={{
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-all",
+        }}
+      >
+        {lines?.map((line, index) => (
+          <Box
+            key={index}
+            component="div"
+            style={{
+              contentVisibility: "auto",
+              containIntrinsicSize: "auto 1.5em",
+            }}
+            dangerouslySetInnerHTML={{
+              __html: renderLine(line) || "&nbsp;",
+            }}
+          />
+        ))}
+        {!(lines?.length ?? 0) && <Text>No Results.</Text>}
       </Box>
       <ActionIcon
         onClick={scrollToBottom}

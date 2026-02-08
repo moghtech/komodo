@@ -65,7 +65,7 @@ export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
   }, [ws.count]);
 
   const on_update_fn = useCallback(
-    (update: Types.UpdateListItem) => on_update(update, invalidate),
+    (update: Types.UpdateListItem) => onUpdate(update, invalidate),
     [invalidate],
   );
 
@@ -101,13 +101,13 @@ export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
   return <>{children}</>;
 };
 
-const on_update = (
+const onUpdate = (
   update: Types.UpdateListItem,
   invalidate: ReturnType<typeof useInvalidate>,
 ) => {
   const Components = ResourceComponents[update.target.type as UsableResource];
   const message = Components ? (
-    <Group>
+    <Group gap="sm">
       <Text>{update.operation}</Text> -
       <ResourceNameSimple
         type={update.target.type as UsableResource}

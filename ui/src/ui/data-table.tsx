@@ -201,7 +201,11 @@ export function DataTable<TData, TValue>({
           rows.map((row) => (
             <Table.Tr
               key={row.id}
-              style={onRowClick ? { cursor: "pointer" } : undefined}
+              style={{
+                cursor: onRowClick ? "pointer" : undefined,
+                contentVisibility: "auto",
+                containIntrinsicSize: "auto 2em",
+              }}
             >
               {selectOptions && (
                 <Table.Td onClick={() => row.toggleSelected()}>
