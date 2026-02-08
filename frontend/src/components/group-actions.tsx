@@ -1,4 +1,4 @@
-import { useSelectedResources, useExecute, useWrite } from "@lib/hooks";
+import { useSelectedResources, useExecute, useWrite, useUser } from "@lib/hooks";
 import { UsableResource } from "@types";
 import { Button } from "@ui/button";
 import {
@@ -33,6 +33,9 @@ export const GroupActions = <
 }) => {
   const [action, setAction] = useState<T>();
   const [selected] = useSelectedResources(type);
+  const is_admin = useUser().data?.admin ?? false;
+
+  if (!is_admin) return null;
 
   return (
     <>
