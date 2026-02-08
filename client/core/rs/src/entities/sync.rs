@@ -217,6 +217,12 @@ pub struct ResourceSyncConfig {
   #[builder(default)]
   pub git_account: String,
 
+  /// Use shallow clone (--depth 1) to speed up cloning large repos.
+  /// Only the latest history on the specified branch will be fetched.
+  #[serde(default)]
+  #[builder(default)]
+  pub shallow_clone: bool,
+
   /// Whether incoming webhooks actually trigger action.
   #[serde(default = "default_webhook_enabled")]
   #[builder(default = "default_webhook_enabled()")]
@@ -358,6 +364,7 @@ impl Default for ResourceSyncConfig {
       branch: default_branch(),
       commit: Default::default(),
       git_account: Default::default(),
+      shallow_clone: Default::default(),
       resource_path: Default::default(),
       files_on_host: Default::default(),
       file_contents: Default::default(),

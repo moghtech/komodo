@@ -68,8 +68,9 @@ where
     _ => {}
   }
 
+  let depth_flag = if args.shallow_clone { " --depth 1" } else { "" };
   let command = format!(
-    "git clone {repo_url} {} -b {}",
+    "git clone{depth_flag} {repo_url} {} -b {}",
     res.path.display(),
     args.branch
   );

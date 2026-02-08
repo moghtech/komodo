@@ -361,6 +361,12 @@ pub struct BuildConfig {
   #[builder(default)]
   pub commit: String,
 
+  /// Use shallow clone (--depth 1) to speed up cloning large repos.
+  /// Only the latest history on the specified branch will be fetched.
+  #[serde(default)]
+  #[builder(default)]
+  pub shallow_clone: bool,
+
   /// Whether incoming webhooks actually trigger action.
   #[serde(default = "default_webhook_enabled")]
   #[builder(default = "default_webhook_enabled()")]
@@ -530,6 +536,7 @@ impl Default for BuildConfig {
       repo: Default::default(),
       branch: default_branch(),
       commit: Default::default(),
+      shallow_clone: Default::default(),
       git_account: Default::default(),
       pre_build: Default::default(),
       build_path: default_build_path(),

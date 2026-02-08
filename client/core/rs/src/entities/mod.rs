@@ -444,6 +444,8 @@ pub struct RepoExecutionArgs {
   /// The default folder to use.
   /// Depends on the resource type.
   pub default_folder: DefaultRepoFolder,
+  /// Use shallow clone (--depth 1) to speed up cloning large repos.
+  pub shallow_clone: bool,
 }
 
 impl RepoExecutionArgs {
@@ -519,6 +521,7 @@ impl From<&self::stack::Stack> for RepoExecutionArgs {
       commit: optional_string(&stack.config.commit),
       destination: optional_string(&stack.config.clone_path),
       default_folder: DefaultRepoFolder::Stacks,
+      shallow_clone: stack.config.shallow_clone,
     }
   }
 }
@@ -537,6 +540,7 @@ impl From<&self::build::Build> for RepoExecutionArgs {
       commit: optional_string(&build.config.commit),
       destination: None,
       default_folder: DefaultRepoFolder::Builds,
+      shallow_clone: build.config.shallow_clone,
     }
   }
 }
@@ -555,6 +559,7 @@ impl From<&self::repo::Repo> for RepoExecutionArgs {
       commit: optional_string(&repo.config.commit),
       destination: optional_string(&repo.config.path),
       default_folder: DefaultRepoFolder::Repos,
+      shallow_clone: repo.config.shallow_clone,
     }
   }
 }
@@ -573,6 +578,7 @@ impl From<&self::sync::ResourceSync> for RepoExecutionArgs {
       commit: optional_string(&sync.config.commit),
       destination: None,
       default_folder: DefaultRepoFolder::NotApplicable,
+      shallow_clone: sync.config.shallow_clone,
     }
   }
 }
