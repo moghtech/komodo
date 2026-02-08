@@ -7,7 +7,7 @@ use formatting::format_serror;
 use komodo_client::{
   api::write::*,
   entities::{
-    NoData, Operation, RepoExecutionArgs,
+    NoData, Operation, RepoExecutionArgs, all_logs_success,
     config::core::CoreConfig,
     komodo_timestamp,
     permission::PermissionLevel,
@@ -207,6 +207,27 @@ impl Resolve<WriteArgs> for RefreshRepoCache {
     .with_context(|| {
       format!("Failed to update repo at {repo_path:?}")
     })?;
+
+    if !all_logs_success(&res.logs) {
+      let failed_stages: Vec<_> = res.logs.iter()
+        .filter(|l| !l.success)
+        .map(|l| {
+          let detail = if !l.stderr.is_empty() {
+            &l.stderr
+          } else {
+            &l.stdout
+          };
+          format!("[{}] {}", l.stage, detail)
+        })
+        .collect();
+      return Err(
+        anyhow!(
+          "Git operation failed for repo {}:\n{}",
+          repo.name,
+          failed_stages.join("\n")
+        ).into()
+      );
+    }
 
     let info = RepoInfo {
       last_pulled_at: repo.info.last_pulled_at,

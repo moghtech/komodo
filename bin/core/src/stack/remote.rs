@@ -1,9 +1,9 @@
 use std::{fs, path::PathBuf};
 
-use anyhow::Context;
+use anyhow::{Context, anyhow};
 use formatting::format_serror;
 use komodo_client::entities::{
-  FileContents, RepoExecutionArgs,
+  FileContents, RepoExecutionArgs, all_logs_success,
   repo::Repo,
   stack::{Stack, StackRemoteFileContents},
   update::Log,
@@ -96,10 +96,27 @@ pub async fn ensure_remote_repo(
     clone_args.unique_path(&core_config().repo_directory)?;
   clone_args.destination = Some(repo_path.display().to_string());
 
-  git::pull_or_clone(clone_args, &config.repo_directory, access_token)
+  let (res, _) = git::pull_or_clone(clone_args, &config.repo_directory, access_token)
     .await
-    .context("Failed to clone stack repo")
-    .map(|(res, _)| {
-      (repo_path, res.logs, res.commit_hash, res.commit_message)
-    })
+    .context("Failed to clone stack repo")?;
+
+  if !all_logs_success(&res.logs) {
+    let failed_stages: Vec<_> = res.logs.iter()
+      .filter(|l| !l.success)
+      .map(|l| {
+        let detail = if !l.stderr.is_empty() {
+          &l.stderr
+        } else {
+          &l.stdout
+        };
+        format!("[{}] {}", l.stage, detail)
+      })
+      .collect();
+    return Err(anyhow!(
+      "Git operation failed:\n{}",
+      failed_stages.join("\n")
+    ));
+  }
+
+  Ok((repo_path, res.logs, res.commit_hash, res.commit_message))
 }

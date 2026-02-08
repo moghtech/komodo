@@ -9,6 +9,7 @@ use komodo_client::{
     BackupCoreDatabase, ClearRepoCache, GlobalAutoUpdate,
   },
   entities::{
+    all_logs_success,
     deployment::DeploymentState, server::ServerState,
     stack::StackState,
   },
@@ -247,21 +248,44 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
           };
           Some(repo.clone())
         };
-        if let Err(e) =
-          pull_stack_inner(stack, Vec::new(), server, repo, None)
+        match pull_stack_inner(stack, Vec::new(), server, repo, None)
             .await
         {
-          update.push_error_log(
-            &format!("Pull Stack {name}"),
-            format_serror(&e.into()),
-          );
-        } else {
-          if !update.logs[0].stdout.is_empty() {
-            update.logs[0].stdout.push('\n');
+          Err(e) => {
+            update.push_error_log(
+              &format!("Pull Stack {name}"),
+              format_serror(&e.into()),
+            );
           }
-          update.logs[0]
-            .stdout
-            .push_str(&format!("Pulled Stack {} ✅", bold(name)));
+          Ok(res) if !all_logs_success(&res.logs) => {
+            let failed_logs: Vec<_> = res.logs.iter()
+              .filter(|l| !l.success)
+              .collect();
+            let error_msg = failed_logs.iter()
+              .map(|l| {
+                let mut msg = format!("[{}]", l.stage);
+                if !l.stderr.is_empty() {
+                  msg.push_str(&format!(" {}", l.stderr));
+                } else if !l.stdout.is_empty() {
+                  msg.push_str(&format!(" {}", l.stdout));
+                }
+                msg
+              })
+              .collect::<Vec<_>>()
+              .join("\n");
+            update.push_error_log(
+              &format!("Pull Stack {name}"),
+              error_msg,
+            );
+          }
+          Ok(_) => {
+            if !update.logs[0].stdout.is_empty() {
+              update.logs[0].stdout.push('\n');
+            }
+            update.logs[0]
+              .stdout
+              .push_str(&format!("Pulled Stack {} ✅", bold(name)));
+          }
         }
       }
     }
@@ -292,21 +316,34 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
           .unwrap_or_default()
       {
         let name = deployment.name.clone();
-        if let Err(e) =
-          pull_deployment_inner(deployment, server).await
+        match pull_deployment_inner(deployment, server).await
         {
-          update.push_error_log(
-            &format!("Pull Deployment {name}"),
-            format_serror(&e.into()),
-          );
-        } else {
-          if !update.logs[0].stdout.is_empty() {
-            update.logs[0].stdout.push('\n');
+          Err(e) => {
+            update.push_error_log(
+              &format!("Pull Deployment {name}"),
+              format_serror(&e.into()),
+            );
           }
-          update.logs[0].stdout.push_str(&format!(
-            "Pulled Deployment {} ✅",
-            bold(name)
-          ));
+          Ok(log) if !log.success => {
+            let error_msg = if !log.stderr.is_empty() {
+              log.stderr
+            } else {
+              log.stdout
+            };
+            update.push_error_log(
+              &format!("Pull Deployment {name}"),
+              error_msg,
+            );
+          }
+          Ok(_) => {
+            if !update.logs[0].stdout.is_empty() {
+              update.logs[0].stdout.push('\n');
+            }
+            update.logs[0].stdout.push_str(&format!(
+              "Pulled Deployment {} ✅",
+              bold(name)
+            ));
+          }
         }
       }
     }
