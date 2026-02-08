@@ -152,7 +152,7 @@ export function PullDeployment({ id }: DeploymentId) {
 
   return (
     <ConfirmButton
-      icon={<ICONS.Download size="1rem" />}
+      icon={<ICONS.Pull size="1rem" />}
       onClick={() => pull({ deployment: id })}
       disabled={pullPending}
       loading={pullPending || action_state?.pulling}
