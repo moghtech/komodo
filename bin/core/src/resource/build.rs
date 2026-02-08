@@ -353,7 +353,7 @@ async fn get_build_state_from_db(id: &str) -> BuildState {
   }
   .await
   .inspect_err(|e| {
-    warn!("failed to get build state for {id} | {e:#}")
+    debug!("failed to get build state for {id} | {e:#}")
   })
   .unwrap_or(BuildState::Unknown)
 }

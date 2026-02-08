@@ -837,7 +837,7 @@ async fn get_procedure_state_from_db(id: &str) -> ProcedureState {
   }
   .await
   .inspect_err(|e| {
-    warn!("Failed to get Procedure state for {id} | {e:#}")
+    debug!("Failed to get Procedure state for {id} | {e:#}")
   })
   .unwrap_or(ProcedureState::Unknown)
 }

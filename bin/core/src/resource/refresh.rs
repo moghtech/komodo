@@ -66,7 +66,7 @@ async fn refresh_stacks() {
   let Ok(stacks) = find_collect(&db_client().stacks, None, None)
     .await
     .inspect_err(|e| {
-      warn!(
+      debug!(
         "Failed to get Stacks from database in refresh task | {e:#}"
       )
     })
@@ -80,7 +80,7 @@ async fn refresh_stacks() {
       )
       .await
       .inspect_err(|e| {
-        warn!("Failed to refresh Stack cache in refresh task | Stack: {} | {:#}", stack.name, e.error)
+        debug!("Failed to refresh Stack cache in refresh task | Stack: {} | {:#}", stack.name, e.error)
       })
       .ok();
   }
@@ -90,7 +90,7 @@ async fn refresh_builds() {
   let Ok(builds) = find_collect(&db_client().builds, None, None)
     .await
     .inspect_err(|e| {
-      warn!(
+      debug!(
         "Failed to get Builds from database in refresh task | {e:#}"
       )
     })
@@ -104,7 +104,7 @@ async fn refresh_builds() {
       )
       .await
       .inspect_err(|e| {
-        warn!("Failed to refresh Build cache in refresh task | Build: {} | {:#}", build.name, e.error)
+        debug!("Failed to refresh Build cache in refresh task | Build: {} | {:#}", build.name, e.error)
       })
       .ok();
   }
@@ -114,7 +114,7 @@ async fn refresh_repos() {
   let Ok(repos) = find_collect(&db_client().repos, None, None)
     .await
     .inspect_err(|e| {
-      warn!(
+      debug!(
         "Failed to get Repos from database in refresh task | {e:#}"
       )
     })
@@ -128,7 +128,7 @@ async fn refresh_repos() {
       )
       .await
       .inspect_err(|e| {
-        warn!("Failed to refresh Repo cache in refresh task | Repo: {} | {:#}", repo.name, e.error)
+        debug!("Failed to refresh Repo cache in refresh task | Repo: {} | {:#}", repo.name, e.error)
       })
       .ok();
   }
@@ -142,7 +142,7 @@ async fn refresh_syncs() {
   )
   .await
   .inspect_err(|e| {
-    warn!(
+    debug!(
       "failed to get resource syncs from db in refresh task | {e:#}"
     )
   }) else {
@@ -155,7 +155,7 @@ async fn refresh_syncs() {
       )
       .await
       .inspect_err(|e| {
-        warn!("Failed to refresh ResourceSync in refresh task | Sync: {} | {:#}", sync.name, e.error)
+        debug!("Failed to refresh ResourceSync in refresh task | Sync: {} | {:#}", sync.name, e.error)
       })
       .ok();
   }

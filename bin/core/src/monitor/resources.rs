@@ -248,7 +248,7 @@ pub async fn update_stack_cache(
         {
           Ok(regex) => regex,
           Err(e) => {
-            warn!("{e:#}");
+            debug!("{e:#}");
             return false
           }
         }.is_match(&container.name)

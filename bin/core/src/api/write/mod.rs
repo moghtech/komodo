@@ -239,7 +239,7 @@ async fn task(
   request: WriteRequest,
   user: User,
 ) -> serror::Result<axum::response::Response> {
-  info!("/write request | user: {}", user.username);
+  debug!("/write request | user: {}", user.username);
 
   let timer = Instant::now();
 

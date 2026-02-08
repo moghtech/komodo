@@ -214,7 +214,7 @@ async fn get_action_state_from_db(id: &str) -> ActionState {
   }
   .await
   .inspect_err(|e| {
-    warn!("Failed to get Action state for {id} | {e:#}")
+    debug!("Failed to get Action state for {id} | {e:#}")
   })
   .unwrap_or(ActionState::Unknown)
 }

@@ -457,7 +457,7 @@ impl Resolve<WriteArgs> for RefreshStackCache {
             &contents.contents,
             &mut services,
           ) {
-            warn!(
+            debug!(
               "failed to extract stack services, things won't works correctly. stack: {} | {e:#}",
               stack.name
             );
@@ -499,7 +499,7 @@ impl Resolve<WriteArgs> for RefreshStackCache {
           &contents.contents,
           &mut services,
         ) {
-          warn!(
+          debug!(
             "failed to extract stack services, things won't works correctly. stack: {} | {e:#}",
             stack.name
           );
@@ -524,7 +524,7 @@ impl Resolve<WriteArgs> for RefreshStackCache {
         &stack.config.file_contents,
         &mut services,
       ) {
-        warn!(
+        debug!(
           "Failed to extract Stack services for {}, things may not work correctly. | {e:#}",
           stack.name
         );

@@ -227,7 +227,7 @@ pub async fn refresh_repo_state_cache() {
   }
   .await
   .inspect_err(|e| {
-    warn!("failed to refresh repo state cache | {e:#}")
+    debug!("failed to refresh repo state cache | {e:#}")
   });
 }
 
@@ -320,6 +320,6 @@ async fn get_repo_state_from_db(id: &str) -> RepoState {
     anyhow::Ok(state)
   }
   .await
-  .inspect_err(|e| warn!("failed to get repo state for {id} | {e:#}"))
+  .inspect_err(|e| debug!("failed to get repo state for {id} | {e:#}"))
   .unwrap_or(RepoState::Unknown)
 }
