@@ -9,7 +9,7 @@ export interface BackButtonProps extends ButtonProps {
 export default function BackButton({ to = -1, ...props }: BackButtonProps) {
   return (
     <Button
-      color="accent"
+      variant="default"
       leftSection={<ICONS.Back className="w-4" />}
       renderRoot={(props) => <Link to={to} {...props} />}
       {...props}

@@ -110,7 +110,7 @@ export default function LogViewer({
             }}
           />
         ))}
-        {!(lines?.length ?? 0) && <Text>No Results.</Text>}
+        {!(lines?.length ?? 0) && <Text>No log.</Text>}
       </Box>
       <ActionIcon
         onClick={scrollToBottom}

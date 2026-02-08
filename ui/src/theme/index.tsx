@@ -4,27 +4,43 @@ import {
   Code,
   colorsTuple,
   createTheme,
+  CSSVariablesResolver,
   darken,
   Drawer,
   Fieldset,
   Input,
   lighten,
   MantineColorScheme,
+  MantineProvider,
   MenuDropdown,
   Modal,
+  Select,
   Table,
   virtualColor,
 } from "@mantine/core";
 import { Types } from "komodo_client";
 import { tagColor } from "@/lib/color";
-
-export const DEFAULT_COLOR_SCHEME: MantineColorScheme = "auto";
+import { ReactNode } from "react";
 
 // Match in ./index.css
 export const LIGHT_BODY = "#f8f9fa";
 export const DARK_BODY = "#0f1115";
 
-export const theme = createTheme({
+const DEFAULT_COLOR_SCHEME: MantineColorScheme = "auto";
+
+export default function ThemeProvider({ children }: { children: ReactNode }) {
+  return (
+    <MantineProvider
+      theme={theme}
+      cssVariablesResolver={cssVariablesResolver}
+      defaultColorScheme={DEFAULT_COLOR_SCHEME}
+    >
+      {children}
+    </MantineProvider>
+  );
+}
+
+const theme = createTheme({
   cursorType: "pointer",
   primaryColor: "gray",
   breakpoints: {
@@ -88,6 +104,26 @@ export const theme = createTheme({
     ),
   },
   components: {
+    Input: Input.extend({
+      styles: (theme) => ({
+        input: {
+          backgroundColor: theme.colors.accent[5],
+          borderColor: theme.colors["accent-border"][5],
+        },
+      }),
+    }),
+    Select: Select.extend({
+      styles: (theme) => ({
+        input: {
+          backgroundColor: theme.colors.accent[5],
+          borderColor: theme.colors["accent-border"][5],
+        },
+        dropdown: {
+          backgroundColor: theme.colors.accent[9],
+          borderColor: theme.colors["accent-border"][9],
+        },
+      }),
+    }),
     Button: Button.extend({
       defaultProps: {
         // c: "inherit",
@@ -96,11 +132,6 @@ export const theme = createTheme({
     Badge: Badge.extend({
       defaultProps: {
         bdrs: "sm",
-      },
-    }),
-    Input: Input.extend({
-      defaultProps: {
-        bg: "accent",
       },
     }),
     Table: Table.extend({
@@ -156,6 +187,22 @@ export const theme = createTheme({
         bdrs: "md",
       },
     }),
+  },
+});
+
+const cssVariablesResolver: CSSVariablesResolver = (theme) => ({
+  variables: {},
+  light: {
+    "--mantine-color-default": theme.colors.accent[5],
+    "--mantine-color-default-hover": theme.colors.accent[9],
+    "--mantine-color-default-border": theme.colors["accent-border"][5],
+    "--input-bg": theme.colors.accent[5],
+  },
+  dark: {
+    "--mantine-color-default": theme.colors.accent[5],
+    "--mantine-color-default-hover": theme.colors.accent[9],
+    "--mantine-color-default-border": theme.colors["accent-border"][5],
+    "--input-bg": theme.colors.accent[5],
   },
 });
 

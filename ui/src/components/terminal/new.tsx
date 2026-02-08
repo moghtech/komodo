@@ -4,10 +4,10 @@ import { ICONS } from "@/theme/icons";
 import {
   Button,
   ButtonProps,
-  Center,
   Combobox,
   ComboboxProps,
   Divider,
+  Group,
   Text,
   useCombobox,
 } from "@mantine/core";
@@ -135,10 +135,10 @@ export default function NewTerminal({
             disabled={!search || commands.includes(search)}
             onSelect={() => setCommands((c) => [...c, search])}
           >
-            <Center>
+            <Group justify="center" gap="xs">
               <ICONS.Create size="1rem" />
               Custom
-            </Center>
+            </Group>
           </Combobox.Option>
         </Combobox.Options>
       </Combobox.Dropdown>

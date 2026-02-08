@@ -1,8 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { MantineProvider } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { DEFAULT_COLOR_SCHEME, theme } from "@/theme";
+import ThemeProvider from "@/theme";
 import { WebsocketProvider } from "@/lib/socket";
 import { Router } from "@/router";
 
@@ -32,13 +31,10 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <QueryClientProvider client={client}>
       <WebsocketProvider>
-        <MantineProvider
-          theme={theme}
-          defaultColorScheme={DEFAULT_COLOR_SCHEME}
-        >
+        <ThemeProvider>
           <Router />
           <Notifications />
-        </MantineProvider>
+        </ThemeProvider>
       </WebsocketProvider>
     </QueryClientProvider>
   </React.StrictMode>,
