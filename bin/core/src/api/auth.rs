@@ -1,4 +1,4 @@
-use std::{sync::OnceLock, time::Instant};
+use std::time::Instant;
 
 use axum::{Router, extract::Path, http::HeaderMap, routing::post};
 use derive_variants::{EnumVariants, ExtractVariant};
@@ -108,20 +108,15 @@ async fn handler(
   res.map(|res| res.0)
 }
 
-fn login_options_reponse() -> &'static GetLoginOptionsResponse {
-  static GET_LOGIN_OPTIONS_RESPONSE: OnceLock<
-    GetLoginOptionsResponse,
-  > = OnceLock::new();
-  GET_LOGIN_OPTIONS_RESPONSE.get_or_init(|| {
-    let config = core_config();
-    GetLoginOptionsResponse {
-      local: config.local_auth,
-      github: github_oauth_client().is_some(),
-      google: google_oauth_client().is_some(),
-      oidc: oidc_client().load().is_some(),
-      registration_disabled: config.disable_user_registration,
-    }
-  })
+fn login_options_response() -> GetLoginOptionsResponse {
+  let config = core_config();
+  GetLoginOptionsResponse {
+    local: config.local_auth,
+    github: github_oauth_client().is_some(),
+    google: google_oauth_client().is_some(),
+    oidc: oidc_client().load().is_some(),
+    registration_disabled: config.disable_user_registration,
+  }
 }
 
 impl Resolve<AuthArgs> for GetLoginOptions {
@@ -130,7 +125,7 @@ impl Resolve<AuthArgs> for GetLoginOptions {
     self,
     _: &AuthArgs,
   ) -> serror::Result<GetLoginOptionsResponse> {
-    Ok(*login_options_reponse())
+    Ok(login_options_response())
   }
 }
 

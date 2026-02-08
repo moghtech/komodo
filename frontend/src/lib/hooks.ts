@@ -123,6 +123,7 @@ export const useLoginOptions = () => {
   return useQuery({
     queryKey: ["GetLoginOptions"],
     queryFn: () => komodo_client().auth("GetLoginOptions", {}),
+    refetchInterval: 30_000,
   });
 };
 
