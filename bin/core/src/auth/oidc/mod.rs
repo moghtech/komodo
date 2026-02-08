@@ -248,25 +248,29 @@ async fn callback(
         .await
         .context("Failed to fetch user info for new user")?;
 
-      // Will use preferred_username, then email, then user_id if it isn't available.
-      let mut username = user_info
-        .preferred_username()
-        .map(|username| username.to_string())
-        .unwrap_or_else(|| {
-          let email = user_info
-            .email()
-            .map(|email| email.as_str())
-            .unwrap_or(user_id);
-          if core_config.oidc_use_full_email {
-            email
-          } else {
+      // When oidc_use_full_email is set, always use the full email as username.
+      // Otherwise, prefer preferred_username, then email prefix, then user_id.
+      let mut username = if core_config.oidc_use_full_email {
+        user_info
+          .email()
+          .map(|email| email.to_string())
+          .unwrap_or_else(|| user_id.to_string())
+      } else {
+        user_info
+          .preferred_username()
+          .map(|username| username.to_string())
+          .unwrap_or_else(|| {
+            let email = user_info
+              .email()
+              .map(|email| email.as_str())
+              .unwrap_or(user_id);
             email
               .split_once('@')
               .map(|(username, _)| username)
               .unwrap_or(email)
-          }
-          .to_string()
-        });
+              .to_string()
+          })
+      };
 
       // Modify username if it already exists
       if db_client
