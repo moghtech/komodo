@@ -4,7 +4,65 @@ use komodo_client::{
   entities::{komodo_timestamp, update::Log},
   parsers::parse_multiline_command,
 };
+use regex::Regex;
 use run_command::{CommandOutput, async_run_command};
+
+/// A smarter replacement function that only replaces variable values
+/// when they appear as whole "tokens" — not as substrings of longer
+/// alphanumeric words. This prevents partial replacements in stack
+/// names, service names, paths, etc.
+///
+/// For example, if ESPHOME_USER=esp, this will NOT replace "esp" inside
+/// "esphome" but WILL replace a standalone "esp" (e.g. after a space,
+/// equals sign, or at string boundaries).
+///
+/// For values that start/end with word characters (\w), word boundaries
+/// (\b) are used. For values starting/ending with non-word characters
+/// (like paths), simple string replacement is used as a fallback since
+/// partial-match issues are unlikely for such values.
+pub fn replace_in_string_word_boundary<'a>(
+  input: &str,
+  replacers: impl IntoIterator<Item = &'a (String, String)>,
+) -> String {
+  let mut result = input.to_string();
+
+  for (to_replace, replacer) in replacers {
+    if to_replace.is_empty() {
+      continue;
+    }
+
+    let escaped = regex::escape(to_replace);
+
+    // Determine if we need word boundaries on each side.
+    // \b only works at transitions between \w and \W characters.
+    let first_is_word = to_replace
+      .chars()
+      .next()
+      .map_or(false, |c| c.is_alphanumeric() || c == '_');
+    let last_is_word = to_replace
+      .chars()
+      .last()
+      .map_or(false, |c| c.is_alphanumeric() || c == '_');
+
+    let pattern = format!(
+      "{}{}{}",
+      if first_is_word { r"\b" } else { "" },
+      escaped,
+      if last_is_word { r"\b" } else { "" },
+    );
+
+    if let Ok(re) = Regex::new(&pattern) {
+      let replacement_text = format!("<{}>", replacer);
+      result =
+        re.replace_all(&result, replacement_text.as_str()).to_string();
+    } else {
+      // Fall back to simple replacement if regex fails
+      result = result.replace(to_replace, &format!("<{replacer}>"));
+    }
+  }
+
+  result
+}
 
 pub async fn run_komodo_command(
   stage: &str,
@@ -62,9 +120,9 @@ pub async fn run_komodo_command_with_sanitization(
   }?;
 
   // Sanitize the command and output
-  log.command = svi::replace_in_string(&log.command, replacers);
-  log.stdout = svi::replace_in_string(&log.stdout, replacers);
-  log.stderr = svi::replace_in_string(&log.stderr, replacers);
+  log.command = replace_in_string_word_boundary(&log.command, replacers);
+  log.stdout = replace_in_string_word_boundary(&log.stdout, replacers);
+  log.stderr = replace_in_string_word_boundary(&log.stderr, replacers);
 
   Some(log)
 }

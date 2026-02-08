@@ -483,7 +483,7 @@ pub async fn send_alert(
         .into_iter()
         .collect::<Vec<_>>();
       let sanitized_error =
-        svi::replace_in_string(&format!("{e:?}"), &replacers);
+        command::replace_in_string_word_boundary(&format!("{e:?}"), &replacers);
       anyhow::Error::msg(format!(
         "Error with slack request: {sanitized_error}"
       ))

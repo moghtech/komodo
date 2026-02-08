@@ -177,9 +177,9 @@ impl Resolve<ExecuteArgs> for RunAction {
     )
     .await;
 
-    res.stdout = svi::replace_in_string(&res.stdout, &replacers)
+    res.stdout = command::replace_in_string_word_boundary(&res.stdout, &replacers)
       .replace(&key, "<ACTION_API_KEY>");
-    res.stderr = svi::replace_in_string(&res.stderr, &replacers)
+    res.stderr = command::replace_in_string_word_boundary(&res.stderr, &replacers)
       .replace(&secret, "<ACTION_API_SECRET>");
 
     cleanup_run(file + ".js", &path).await;

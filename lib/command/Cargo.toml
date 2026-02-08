@@ -9,5 +9,6 @@ homepage.workspace = true
 
 [dependencies]
 komodo_client.workspace = true
+regex.workspace = true
 run_command.workspace = true
 svi.workspace = true
