@@ -29,9 +29,15 @@ pub fn spawn_polling_thread() {
     loop {
       let ts = wait_until_timelength(polling_rate, 1).await;
       let mut client = client.write().await;
+      let did_full_disk_refresh =
+        client.disk_refresh_counter + 1
+          >= StatsClient::DISK_FULL_REFRESH_INTERVAL;
       client.refresh();
       client.stats = client.get_system_stats();
       client.stats.refresh_ts = ts as i64;
+      if did_full_disk_refresh {
+        client.stats.refresh_list_ts = ts as i64;
+      }
     }
   });
 }
@@ -46,6 +52,11 @@ pub struct StatsClient {
   system: sysinfo::System,
   disks: sysinfo::Disks,
   networks: sysinfo::Networks,
+
+  /// Counter for periodic full disk list refresh.
+  /// Recreates the disk list from scratch every N polls
+  /// to ensure removed disks are fully cleared.
+  disk_refresh_counter: u32,
 }
 
 const BYTES_PER_GB: f64 = 1073741824.0;
@@ -67,11 +78,17 @@ impl Default for StatsClient {
       disks,
       networks,
       stats,
+      disk_refresh_counter: 0,
     }
   }
 }
 
 impl StatsClient {
+  /// How often to fully recreate the disk list from scratch
+  /// (in number of polling intervals). This ensures stale disk
+  /// entries from detached volumes are completely cleared.
+  const DISK_FULL_REFRESH_INTERVAL: u32 = 30;
+
   fn refresh(&mut self) {
     self.system.refresh_cpu_all();
     self.system.refresh_memory();
@@ -80,7 +97,18 @@ impl StatsClient {
       true,
       ProcessRefreshKind::everything().without_tasks(),
     );
-    self.disks.refresh(true);
+
+    // Periodically recreate the disk list from scratch to ensure
+    // removed/detached disks are fully cleared from the cache.
+    self.disk_refresh_counter += 1;
+    if self.disk_refresh_counter >= Self::DISK_FULL_REFRESH_INTERVAL
+    {
+      self.disks = sysinfo::Disks::new_with_refreshed_list();
+      self.disk_refresh_counter = 0;
+    } else {
+      self.disks.refresh(true);
+    }
+
     self.networks.refresh(true);
   }
 
@@ -125,6 +153,11 @@ impl StatsClient {
       .iter()
       .filter(|d| {
         if d.file_system() == "overlay" {
+          return false;
+        }
+        // Filter out disks that are no longer accessible
+        // (e.g. detached cloud volumes with stale mount entries)
+        if d.total_space() == 0 {
           return false;
         }
         let path = d.mount_point();

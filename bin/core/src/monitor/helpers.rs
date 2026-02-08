@@ -179,6 +179,10 @@ fn get_server_health(
     ..
   } in disks
   {
+    // Skip disks with zero total (inaccessible/detached)
+    if *total_gb <= 0.0 {
+      continue;
+    }
     let perc = 100.0 * used_gb / total_gb;
     let mut state = ServerHealthState::default();
     if perc >= *disk_critical {
