@@ -65,6 +65,7 @@ pub struct BatchDeployStack {
   /// # add some more
   /// extra-stack-1, extra-stack-2
   /// ```
+  #[serde(default)]
   pub pattern: String,
 }
 
@@ -123,6 +124,7 @@ pub struct BatchDeployStackIfChanged {
   /// # add some more
   /// extra-stack-1, extra-stack-2
   /// ```
+  #[serde(default)]
   pub pattern: String,
 }
 
@@ -180,6 +182,7 @@ pub struct BatchPullStack {
   /// # add some more
   /// extra-stack-1, extra-stack-2
   /// ```
+  #[serde(default)]
   pub pattern: String,
 }
 
@@ -434,5 +437,6 @@ pub struct BatchDestroyStack {
   /// # add some more
   /// extra-stack-1, extra-stack-2
   /// ```
+  #[serde(default)]
   pub pattern: String,
 }

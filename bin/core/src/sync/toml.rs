@@ -849,7 +849,11 @@ impl ToToml for Procedure {
             stage,
             // If the execution.params are fully missing,
             // deserialization will fail.
-            TOML_PRETTY_OPTIONS.skip_empty_object(false),
+            // Also keep empty strings (eg pattern = "") so that
+            // all required fields are present in the output.
+            TOML_PRETTY_OPTIONS
+              .skip_empty_object(false)
+              .skip_empty_string(false),
           )
           .context("failed to serialize procedures to toml")?,
         );

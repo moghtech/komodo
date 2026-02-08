@@ -70,6 +70,7 @@ pub struct BatchRunBuild {
   /// # add some more
   /// extra-build-1, extra-build-2
   /// ```
+  #[serde(default)]
   pub pattern: String,
 }
 

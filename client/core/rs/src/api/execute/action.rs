@@ -66,5 +66,6 @@ pub struct BatchRunAction {
   /// # add some more
   /// extra-action-1, extra-action-2
   /// ```
+  #[serde(default)]
   pub pattern: String,
 }

@@ -54,5 +54,6 @@ pub struct BatchRunProcedure {
   /// # add some more
   /// extra-procedure-1, extra-procedure-2
   /// ```
+  #[serde(default)]
   pub pattern: String,
 }

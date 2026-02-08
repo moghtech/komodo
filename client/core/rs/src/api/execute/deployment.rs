@@ -68,6 +68,7 @@ pub struct BatchDeploy {
   /// # add some more
   /// extra-deployment-1, extra-deployment-2
   /// ```
+  #[serde(default)]
   pub pattern: String,
 }
 
@@ -276,5 +277,6 @@ pub struct BatchDestroyDeployment {
   /// # add some more
   /// extra-deployment-1, extra-deployment-2
   /// ```
+  #[serde(default)]
   pub pattern: String,
 }

@@ -66,6 +66,7 @@ pub struct BatchCloneRepo {
   /// # add some more
   /// extra-repo-1, extra-repo-2
   /// ```
+  #[serde(default)]
   pub pattern: String,
 }
 
@@ -124,6 +125,7 @@ pub struct BatchPullRepo {
   /// # add some more
   /// extra-repo-1, extra-repo-2
   /// ```
+  #[serde(default)]
   pub pattern: String,
 }
 
@@ -186,6 +188,7 @@ pub struct BatchBuildRepo {
   /// # add some more
   /// extra-repo-1, extra-repo-2
   /// ```
+  #[serde(default)]
   pub pattern: String,
 }
 
