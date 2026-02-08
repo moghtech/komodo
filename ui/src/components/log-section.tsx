@@ -14,7 +14,7 @@ import {
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 
 export type LogTarget =
   | { type: "Container"; serverId: string; container: string }
@@ -26,9 +26,14 @@ export type LogStream = "stdout" | "stderr";
 
 export interface LogSectionProps extends Omit<SectionProps, "children"> {
   target: LogTarget;
+  extraController?: ReactNode;
 }
 
-export default function LogSection({ target, ...props }: LogSectionProps) {
+export default function LogSection({
+  target,
+  extraController,
+  ...props
+}: LogSectionProps) {
   const [timestamps, setTimestamps] = useLocalStorage({
     key: "log-timestamps-v1",
     defaultValue: false,
@@ -107,7 +112,6 @@ export default function LogSection({ target, ...props }: LogSectionProps) {
         <Group gap="lg">
           <Switch
             label="Invert"
-            color="green"
             checked={invert}
             onChange={(e) => setInvert(e.target.checked)}
           />
@@ -157,14 +161,12 @@ export default function LogSection({ target, ...props }: LogSectionProps) {
 
           <Switch
             label="Timestamps"
-            color="green"
             checked={timestamps}
             onChange={(e) => setTimestamps(e.target.checked)}
           />
 
           <Switch
             label="Poll"
-            color="green"
             checked={poll}
             onChange={(e) => setPoll(e.target.checked)}
           />
@@ -179,6 +181,8 @@ export default function LogSection({ target, ...props }: LogSectionProps) {
             disabled={search.length > 0}
             w={130}
           />
+
+          {extraController}
         </Group>
       }
       {...props}

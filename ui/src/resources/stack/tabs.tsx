@@ -14,6 +14,8 @@ import { ServerComponents } from "@/resources/server";
 import StackConfig from "./config";
 import StackInfo from "./info";
 import StackServices from "./services";
+import LogSection from "@/components/log-section";
+import StackLog from "./log";
 
 type StackTabsView = "Config" | "Info" | "Services" | "Log" | "Terminals";
 
@@ -120,6 +122,7 @@ export default function StackTabs({ id }: { id: string }) {
       View = <StackServices id={id} titleOther={Selector} />;
       break;
     case "Log":
+      View = <StackLog id={id} titleOther={Selector} />;
       break;
     // return <StackLogs id={id} titleOther={Selector} />;
     case "Terminals":

@@ -85,6 +85,7 @@ export default function StackConfigFiles({
                 {/** Services / Requires */}
                 <Group>
                   <MultiSelect
+                    leftSection={<ICONS.Service size="1rem" />}
                     placeholder={
                       services?.length ? "Add services" : "All services"
                     }

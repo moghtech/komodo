@@ -15,8 +15,10 @@ import {
   MantineProvider,
   MenuDropdown,
   Modal,
+  MultiSelect,
   SegmentedControl,
   Select,
+  Switch,
   Table,
   virtualColor,
 } from "@mantine/core";
@@ -119,6 +121,21 @@ const theme = createTheme({
         },
       }),
     }),
+    MultiSelect: MultiSelect.extend({
+      styles: (theme) => ({
+        input: {
+          backgroundColor: theme.colors.accent[2],
+          border: "1px solid " + theme.colors["accent-border"][4],
+        },
+        dropdown: {
+          backgroundColor: theme.colors.accent[4],
+          borderColor: theme.colors["accent-border"][7],
+        },
+      }),
+      defaultProps: {
+        maxDropdownHeight: 250,
+      },
+    }),
     Button: Button.extend({
       vars: () => ({
         root: {
@@ -132,6 +149,11 @@ const theme = createTheme({
           "--ai-color": "var(--mantine-color-bw)",
         },
       }),
+    }),
+    Switch: Switch.extend({
+      defaultProps: {
+        color: "green",
+      },
     }),
     Badge: Badge.extend({
       defaultProps: {

@@ -1007,7 +1007,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
           setParams({ skip_auto_update: !params.skip_auto_update })
         }
       >
-        <Switch color="green" checked={params.skip_auto_update} disabled={disabled} />
+        <Switch checked={params.skip_auto_update} disabled={disabled} />
         Skip redeploy
       </Group>
     ),
