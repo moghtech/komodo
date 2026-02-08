@@ -442,15 +442,15 @@ impl Resolve<WriteArgs> for CommitSync {
         .parse::<PathBuf>()
         .context("Invalid resource path")?;
 
-      if resource_path
-        .extension()
-        .context("Resource path missing '.toml' extension")?
-        != "toml"
-      {
-        return Err(
-          anyhow!("Resource path missing '.toml' extension").into(),
-        );
-      }
+      // If resource_path points to a directory (no .toml extension),
+      // write to a default file inside it.
+      let resource_path =
+        if resource_path.extension().is_some_and(|ext| ext == "toml")
+        {
+          resource_path
+        } else {
+          resource_path.join("resources.toml")
+        };
       Some(resource_path)
     } else {
       None
