@@ -357,6 +357,14 @@ impl Resolve<super::Args> for ComposePull {
       "Failed to validate run directory on host after stack write (canonicalize error)",
     )?;
 
+    interpolate_additional_env_files(
+      &run_directory,
+      &stack.config.additional_env_files,
+      stack.config.skip_secret_interp,
+      &mut res.logs,
+    )
+    .await;
+
     let file_paths = stack
       .all_file_paths()
       .into_iter()
@@ -470,6 +478,14 @@ impl Resolve<super::Args> for ComposeUp {
     let run_directory = run_directory.canonicalize().context(
       "Failed to validate run directory on host after stack write (canonicalize error)",
     )?;
+
+    interpolate_additional_env_files(
+      &run_directory,
+      &stack.config.additional_env_files,
+      stack.config.skip_secret_interp,
+      &mut res.logs,
+    )
+    .await;
 
     validate_files(&stack, &run_directory, &mut res).await;
     if !all_logs_success(&res.logs) {
@@ -751,6 +767,14 @@ impl Resolve<super::Args> for ComposeRun {
       "Failed to validate run directory on host after stack write (canonicalize error)",
     )?;
 
+    interpolate_additional_env_files(
+      &run_directory,
+      &stack.config.additional_env_files,
+      stack.config.skip_secret_interp,
+      &mut Vec::new(),
+    )
+    .await;
+
     maybe_login_registry(&stack, registry_token, &mut Vec::new())
       .await;
 
@@ -841,5 +865,58 @@ impl Resolve<super::Args> for ComposeRun {
     };
 
     Ok(log)
+  }
+}
+
+/// Reads each additional env file from disk, interpolates secret
+/// `[[VARIABLE]]` patterns using the periphery secret store, and
+/// writes the result back.  This mirrors the interpolation that
+/// already happens for the main environment / file_contents but was
+/// previously skipped for extra env files referenced by path.
+async fn interpolate_additional_env_files(
+  run_directory: &std::path::Path,
+  additional_env_files: &[String],
+  skip_secret_interp: bool,
+  logs: &mut Vec<Log>,
+) {
+  if skip_secret_interp || additional_env_files.is_empty() {
+    return;
+  }
+
+  let secrets = &periphery_config().secrets;
+
+  for file in additional_env_files {
+    let path = run_directory.join(file);
+    let contents = match fs::read_to_string(&path).await {
+      Ok(c) => c,
+      Err(e) => {
+        logs.push(Log::error(
+          "Interpolate Additional Env File",
+          format!("Failed to read {file}: {e}"),
+        ));
+        continue;
+      }
+    };
+
+    if contents.is_empty() {
+      continue;
+    }
+
+    let mut interpolator = Interpolator::new(None, secrets);
+    let mut target = contents;
+    if let Err(e) = interpolator.interpolate_string(&mut target) {
+      logs.push(Log::error(
+        "Interpolate Additional Env File",
+        format!("Failed to interpolate {file}: {e}"),
+      ));
+      continue;
+    }
+
+    if let Err(e) = fs::write(&path, &target).await {
+      logs.push(Log::error(
+        "Interpolate Additional Env File",
+        format!("Failed to write {file}: {e}"),
+      ));
+    }
   }
 }
