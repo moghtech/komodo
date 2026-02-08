@@ -179,9 +179,32 @@ impl Resolve<super::Args> for RenameRepo {
       new_name,
     } = self;
     let repo_dir = periphery_config().repo_dir();
-    let renamed =
-      fs::rename(repo_dir.join(&curr_name), repo_dir.join(&new_name))
-        .await;
+    let old_path = repo_dir.join(&curr_name);
+    let new_path = repo_dir.join(&new_name);
+
+    // On case-insensitive filesystems (Windows, macOS default),
+    // renaming with only a case change (e.g. "MyRepo" -> "myrepo")
+    // is a no-op. Use a two-step rename through a temp directory.
+    let renamed = if curr_name.eq_ignore_ascii_case(&new_name)
+      && curr_name != new_name
+    {
+      let temp_path =
+        repo_dir.join(format!("{}__komodo_rename_tmp", &curr_name));
+      match fs::rename(&old_path, &temp_path).await {
+        Ok(_) => fs::rename(&temp_path, &new_path).await,
+        Err(e) => Err(e),
+      }
+    } else {
+      fs::rename(&old_path, &new_path).await
+    };
+
+    // Clean up the old directory if it still exists after rename
+    // (can happen on case-insensitive filesystems where both paths
+    // resolve to the same entry).
+    if renamed.is_ok() && old_path.exists() && old_path != new_path {
+      let _ = fs::remove_dir_all(&old_path).await;
+    }
+
     let msg = match renamed {
       Ok(_) => String::from("Renamed Repo directory on Server"),
       Err(_) => format!("No Repo cloned at {curr_name} to rename"),
