@@ -37,15 +37,29 @@ impl VerifySecret for Gitlab {
 #[derive(Deserialize)]
 struct GitlabWebhookBody {
   #[serde(rename = "ref")]
-  branch: String,
+  git_ref: Option<String>,
+  /// Present in Release Hook payloads
+  tag: Option<String>,
 }
 
 impl ExtractBranch for Gitlab {
   fn extract_branch(body: &str) -> anyhow::Result<String> {
-    let branch = serde_json::from_str::<GitlabWebhookBody>(body)
-      .context("Failed to parse gitlab request body")?
-      .branch
-      .replace("refs/heads/", "");
-    Ok(branch)
+    let payload = serde_json::from_str::<GitlabWebhookBody>(body)
+      .context("Failed to parse gitlab request body")?;
+
+    // Release Hook: use the `tag` field directly
+    if let Some(tag) = payload.tag {
+      return Ok(tag);
+    }
+
+    // Push Hook / Tag Push Hook: strip refs/heads/ or refs/tags/ prefix
+    let git_ref = payload
+      .git_ref
+      .context("Gitlab webhook body has no 'ref' or 'tag' field")?;
+    let branch = git_ref
+      .strip_prefix("refs/heads/")
+      .or_else(|| git_ref.strip_prefix("refs/tags/"))
+      .unwrap_or(&git_ref);
+    Ok(branch.to_string())
   }
 }
