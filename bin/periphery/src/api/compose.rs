@@ -527,28 +527,37 @@ impl Resolve<super::Args> for ComposeUp {
       let command = format!(
         "{docker_compose} -p {project_name} -f {file_args}{env_file_args} config",
       );
-      let Some(config_log) = run_komodo_command_with_sanitization(
+      // Run compose config without sanitization first, so we can
+      // parse service names from the raw output. Sanitization of
+      // secret values can replace substrings that appear in service
+      // names, image names, etc. (see moghtech/komodo#868).
+      let config_log = run_komodo_command(
         "Compose Config",
         run_directory.as_path(),
-        command,
-        false,
-        &replacers,
+        &command,
       )
-      .await
-      else {
-        // Only reachable if command is empty,
-        // not the case since it is provided above.
-        unreachable!()
-      };
+      .await;
       if !config_log.success {
-        res.logs.push(config_log);
+        // Sanitize before pushing to logs so secrets aren't exposed
+        let mut sanitized_log = config_log;
+        sanitized_log.command = svi::replace_in_string(&sanitized_log.command, &replacers);
+        sanitized_log.stdout = svi::replace_in_string(&sanitized_log.stdout, &replacers);
+        sanitized_log.stderr = svi::replace_in_string(&sanitized_log.stderr, &replacers);
+        res.logs.push(sanitized_log);
         return Ok(res);
       }
+      // Parse services from unsanitized output
       let compose =
         serde_yaml_ng::from_str::<ComposeFile>(&config_log.stdout)
           .context("Failed to parse compose contents")?;
-      // Record sanitized compose config output
-      res.compose_config = Some(config_log.stdout);
+      // Store sanitized config for display
+      res.compose_config = Some(svi::replace_in_string(&config_log.stdout, &replacers));
+      // Push sanitized log
+      let mut sanitized_log = config_log;
+      sanitized_log.command = svi::replace_in_string(&sanitized_log.command, &replacers);
+      sanitized_log.stdout = svi::replace_in_string(&sanitized_log.stdout, &replacers);
+      sanitized_log.stderr = svi::replace_in_string(&sanitized_log.stderr, &replacers);
+      res.logs.push(sanitized_log);
       for (
         service_name,
         ComposeService {
