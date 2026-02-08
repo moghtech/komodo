@@ -25,10 +25,61 @@ pub fn read_resources(
     let resource_path = resource_path
       .parse::<PathBuf>()
       .context("Invalid resource path")?;
+
+    // Reject absolute paths (e.g. "/") - joining an absolute path
+    // replaces the base entirely, which would scan the filesystem root.
+    if resource_path.is_absolute() {
+      file_errors.push(SyncFileContents {
+        resource_path: String::new(),
+        path: resource_path.display().to_string(),
+        contents: format_serror(
+          &anyhow!(
+            "Resource path must be relative, not absolute. \
+             Got: {:?}",
+            resource_path
+          )
+          .into(),
+        ),
+      });
+      logs.push(Log::error(
+        "Read remote resources",
+        format!(
+          "{}: Resource path {:?} is absolute and not allowed.",
+          colored("ERROR", Color::Red),
+          resource_path.display()
+        ),
+      ));
+      continue;
+    }
+
+    // Reject paths that would escape the root via ".." components.
     let full_path = root_path
       .join(&resource_path)
       .components()
       .collect::<PathBuf>();
+    if !full_path.starts_with(root_path) {
+      file_errors.push(SyncFileContents {
+        resource_path: String::new(),
+        path: resource_path.display().to_string(),
+        contents: format_serror(
+          &anyhow!(
+            "Resource path must not escape the root directory. \
+             Got: {:?}",
+            resource_path
+          )
+          .into(),
+        ),
+      });
+      logs.push(Log::error(
+        "Read remote resources",
+        format!(
+          "{}: Resource path {:?} escapes the root directory.",
+          colored("ERROR", Color::Red),
+          resource_path.display()
+        ),
+      ));
+      continue;
+    }
 
     let mut log = format!(
       "{}: reading resources from {full_path:?}",

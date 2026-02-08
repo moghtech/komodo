@@ -194,7 +194,19 @@ async fn write_sync_file_contents_on_host(
   let resource_path = resource_path
     .parse::<PathBuf>()
     .context("Invalid resource path")?;
+  if resource_path.is_absolute() {
+    return Err(
+      anyhow!("Resource path must be relative, not absolute")
+        .into(),
+    );
+  }
   let full_path = root.join(&resource_path).join(&file_path);
+  if !full_path.starts_with(&root) {
+    return Err(
+      anyhow!("Resource path must not escape the root directory")
+        .into(),
+    );
+  }
 
   if let Some(parent) = full_path.parent() {
     tokio::fs::create_dir_all(parent).await.with_context(|| {
@@ -283,6 +295,12 @@ async fn write_sync_file_contents_git(
     resource_path.parse::<PathBuf>().with_context(|| {
       format!("Resource path is not a valid path: {resource_path}")
     })?;
+  if resource_path.is_absolute() {
+    return Err(
+      anyhow!("Resource path must be relative, not absolute")
+        .into(),
+    );
+  }
   let full_path = root
     .join(&resource_path)
     .join(&file_path)

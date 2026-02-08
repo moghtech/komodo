@@ -254,10 +254,19 @@ export const ResourceSyncConfig = ({
               <ConfigList
                 label="Resource Paths"
                 addLabel="Add Path"
-                description="Add '.toml' files or folders to the sync. Relative to '/syncs/{sync_name}'."
+                description="Add '.toml' files or folders to the sync. Relative to '/syncs/{sync_name}'. Must be relative paths (no leading '/')."
                 field="resource_path"
                 values={values ?? []}
-                set={set}
+                set={(update) => {
+                  // Sanitize: strip leading slashes to prevent absolute paths
+                  // which would cause the backend to scan from filesystem root.
+                  if (update.resource_path) {
+                    update.resource_path = update.resource_path.map(
+                      (p) => p.replace(/^\/+/, "")
+                    );
+                  }
+                  set(update);
+                }}
                 disabled={disabled}
                 placeholder="Input resource path"
               />
@@ -516,10 +525,19 @@ export const ResourceSyncConfig = ({
               <ConfigList
                 label="Resource Paths"
                 addLabel="Add Path"
-                description="Add '.toml' files or folders to the sync. Relative to the root of the repo."
+                description="Add '.toml' files or folders to the sync. Relative to the root of the repo. Must be relative paths (no leading '/')."
                 field="resource_path"
                 values={values ?? []}
-                set={set}
+                set={(update) => {
+                  // Sanitize: strip leading slashes to prevent absolute paths
+                  // which would cause the backend to scan from filesystem root.
+                  if (update.resource_path) {
+                    update.resource_path = update.resource_path.map(
+                      (p) => p.replace(/^\/+/, "")
+                    );
+                  }
+                  set(update);
+                }}
                 disabled={disabled}
                 placeholder="Input resource path"
               />
