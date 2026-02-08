@@ -11,7 +11,7 @@ use komodo_client::entities::{
 use periphery_client::api::image::*;
 use resolver_api::Resolve;
 
-use crate::docker::{docker_client, docker_login};
+use crate::docker::{docker_client, docker_config_flag, docker_login};
 
 //
 
@@ -67,17 +67,18 @@ impl Resolve<super::Args> for PullImage {
     }
 
     let res = async {
-      docker_login(
+      let config_dir = docker_login(
         &extract_registry_domain(&name)?,
         account.as_deref().unwrap_or_default(),
         token.as_deref(),
       )
       .await?;
+      let config_flag = docker_config_flag(&config_dir);
       anyhow::Ok(
         run_komodo_command(
           "Docker Pull",
           None,
-          format!("docker pull {name}"),
+          format!("docker{config_flag} pull {name}"),
         )
         .await,
       )

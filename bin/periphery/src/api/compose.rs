@@ -23,7 +23,8 @@ use tokio::fs;
 
 use crate::{
   compose::{
-    docker_compose, env_file_args, pull_or_clone_stack,
+    docker_compose, docker_compose_with_config, env_file_args,
+    pull_or_clone_stack,
     up::{maybe_login_registry, validate_files},
     write::write_stack,
   },
@@ -376,12 +377,15 @@ impl Resolve<super::Args> for ComposePull {
       }
     }
 
-    maybe_login_registry(&stack, registry_token, &mut res.logs).await;
+    let config_dir =
+      maybe_login_registry(&stack, registry_token, &mut res.logs)
+        .await;
     if !all_logs_success(&res.logs) {
       return Ok(res);
     }
 
-    let docker_compose = docker_compose();
+    let docker_compose =
+      docker_compose_with_config(&config_dir);
 
     let service_args = if services.is_empty() {
       String::new()
@@ -476,7 +480,9 @@ impl Resolve<super::Args> for ComposeUp {
       return Ok(res);
     }
 
-    maybe_login_registry(&stack, registry_token, &mut res.logs).await;
+    let config_dir =
+      maybe_login_registry(&stack, registry_token, &mut res.logs)
+        .await;
     if !all_logs_success(&res.logs) {
       return Ok(res);
     }
@@ -501,7 +507,8 @@ impl Resolve<super::Args> for ComposeUp {
       };
     }
 
-    let docker_compose = docker_compose();
+    let docker_compose =
+      docker_compose_with_config(&config_dir);
 
     let service_args = if services.is_empty() {
       String::new()
@@ -751,10 +758,12 @@ impl Resolve<super::Args> for ComposeRun {
       "Failed to validate run directory on host after stack write (canonicalize error)",
     )?;
 
-    maybe_login_registry(&stack, registry_token, &mut Vec::new())
-      .await;
+    let config_dir =
+      maybe_login_registry(&stack, registry_token, &mut Vec::new())
+        .await;
 
-    let docker_compose = docker_compose();
+    let docker_compose =
+      docker_compose_with_config(&config_dir);
 
     let file_args = if stack.config.file_paths.is_empty() {
       String::from("compose.yaml")

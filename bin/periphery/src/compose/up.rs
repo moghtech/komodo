@@ -81,30 +81,39 @@ pub async fn validate_files(
   }
 }
 
+/// Returns a docker config directory path if login was performed,
+/// for use with `--config` in subsequent docker commands.
 pub async fn maybe_login_registry(
   stack: &Stack,
   registry_token: Option<String>,
   logs: &mut Vec<Log>,
-) {
-  if !stack.config.registry_provider.is_empty()
-    && !stack.config.registry_account.is_empty()
-    && let Err(e) = docker_login(
-      &stack.config.registry_provider,
-      &stack.config.registry_account,
-      registry_token.as_deref(),
-    )
-    .await
-    .with_context(|| {
-      format!(
-        "Domain: '{}' | Account: '{}'",
-        stack.config.registry_provider, stack.config.registry_account
-      )
-    })
-    .context("Failed to login to image registry")
+) -> Option<PathBuf> {
+  if stack.config.registry_provider.is_empty()
+    || stack.config.registry_account.is_empty()
   {
-    logs.push(Log::error(
-      "Login to Registry",
-      format_serror(&e.into()),
-    ));
+    return None;
+  }
+  match docker_login(
+    &stack.config.registry_provider,
+    &stack.config.registry_account,
+    registry_token.as_deref(),
+  )
+  .await
+  .with_context(|| {
+    format!(
+      "Domain: '{}' | Account: '{}'",
+      stack.config.registry_provider, stack.config.registry_account
+    )
+  })
+  .context("Failed to login to image registry")
+  {
+    Ok(config_dir) => config_dir,
+    Err(e) => {
+      logs.push(Log::error(
+        "Login to Registry",
+        format_serror(&e.into()),
+      ));
+      None
+    }
   }
 }

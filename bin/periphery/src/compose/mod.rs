@@ -1,4 +1,4 @@
-use std::{fmt::Write, path::PathBuf};
+use std::{fmt::Write, path::{Path, PathBuf}};
 
 use anyhow::{Context, anyhow};
 use command::run_komodo_command;
@@ -21,6 +21,18 @@ pub fn docker_compose() -> &'static str {
     "docker-compose"
   } else {
     "docker compose"
+  }
+}
+
+/// Returns the `docker compose` command string with an optional
+/// `DOCKER_CONFIG` env var prefix for per-account registry auth.
+pub fn docker_compose_with_config(
+  config_dir: &Option<PathBuf>,
+) -> String {
+  let dc = docker_compose();
+  match config_dir {
+    Some(dir) => format!("DOCKER_CONFIG='{}' {dc}", dir.display()),
+    None => dc.to_string(),
   }
 }
 

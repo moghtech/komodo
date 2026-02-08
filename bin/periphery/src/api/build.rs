@@ -27,7 +27,7 @@ use tokio::fs;
 use crate::{
   build::{parse_build_args, parse_secret_args, write_dockerfile},
   config::periphery_config,
-  docker::docker_login,
+  docker::{docker_config_flag, docker_login},
   helpers::{parse_extra_args, parse_labels},
 };
 
@@ -178,6 +178,7 @@ impl Resolve<super::Args> for build::Build {
 
     // Maybe docker login
     let mut should_push = false;
+    let mut login_config_dir = None;
     for (domain, account) in image_registry
       .iter()
       .map(|r| (r.domain.as_str(), r.account.as_str()))
@@ -191,8 +192,11 @@ impl Resolve<super::Args> for build::Build {
       )
       .await
       {
-        Ok(logged_in) if logged_in => should_push = true,
-        Ok(_) => {}
+        Ok(Some(dir)) => {
+          should_push = true;
+          login_config_dir = Some(dir);
+        }
+        Ok(None) => {}
         Err(e) => {
           logs.push(Log::error(
             "Docker Login",
@@ -292,9 +296,11 @@ impl Resolve<super::Args> for build::Build {
 
     let maybe_push = if should_push { " --push" } else { "" };
 
+    let config_flag = docker_config_flag(&login_config_dir);
+
     // Construct command
     let command = format!(
-      "docker{buildx} build{build_args}{command_secret_args}{extra_args}{labels}{image_tags}{maybe_push} -f {dockerfile_path} .",
+      "docker{config_flag}{buildx} build{build_args}{command_secret_args}{extra_args}{labels}{image_tags}{maybe_push} -f {dockerfile_path} .",
     );
 
     if let Some(build_log) = run_komodo_command_with_sanitization(

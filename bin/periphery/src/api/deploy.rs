@@ -64,22 +64,25 @@ impl Resolve<super::Args> for Deploy {
       ));
     };
 
-    if let Err(e) = docker_login(
+    let config_dir = match docker_login(
       &extract_registry_domain(image)?,
       &deployment.config.image_registry_account,
       registry_token.as_deref(),
     )
     .await
     {
-      return Ok(Log::error(
-        "docker login",
-        format_serror(
-          &e.context("failed to login to docker registry").into(),
-        ),
-      ));
-    }
+      Ok(dir) => dir,
+      Err(e) => {
+        return Ok(Log::error(
+          "docker login",
+          format_serror(
+            &e.context("failed to login to docker registry").into(),
+          ),
+        ));
+      }
+    };
 
-    let _ = pull_image(image).await;
+    let _ = pull_image(image, &config_dir).await;
     debug!("image pulled");
 
     let _ = (RemoveContainer {
