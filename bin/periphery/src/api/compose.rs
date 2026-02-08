@@ -352,10 +352,22 @@ impl Resolve<super::Args> for ComposePull {
       }
     };
 
+    // If there were failures during write (e.g. git clone failed),
+    // return early with the logs that contain the actual error.
+    if !all_logs_success(&res.logs) {
+      return Ok(res);
+    }
+
     // Canonicalize the path to ensure it exists, and is the cleanest path to the run directory.
-    let run_directory = run_directory.canonicalize().context(
-      "Failed to validate run directory on host after stack write (canonicalize error)",
-    )?;
+    let run_directory = run_directory.canonicalize().with_context(|| {
+      format!(
+        "Failed to validate run directory on host after stack write — \
+        the directory at '{}' does not exist. This can happen if git \
+        is not installed on the host, causing the repo clone to fail silently. \
+        Ensure git is installed and accessible.",
+        run_directory.display()
+      )
+    })?;
 
     let file_paths = stack
       .all_file_paths()
@@ -466,10 +478,22 @@ impl Resolve<super::Args> for ComposeUp {
       }
     };
 
+    // If there were failures during write (e.g. git clone failed),
+    // return early with the logs that contain the actual error.
+    if !all_logs_success(&res.logs) {
+      return Ok(res);
+    }
+
     // Canonicalize the path to ensure it exists, and is the cleanest path to the run directory.
-    let run_directory = run_directory.canonicalize().context(
-      "Failed to validate run directory on host after stack write (canonicalize error)",
-    )?;
+    let run_directory = run_directory.canonicalize().with_context(|| {
+      format!(
+        "Failed to validate run directory on host after stack write — \
+        the directory at '{}' does not exist. This can happen if git \
+        is not installed on the host, causing the repo clone to fail silently. \
+        Ensure git is installed and accessible.",
+        run_directory.display()
+      )
+    })?;
 
     validate_files(&stack, &run_directory, &mut res).await;
     if !all_logs_success(&res.logs) {
@@ -747,9 +771,26 @@ impl Resolve<super::Args> for ComposeRun {
       }
     };
 
-    let run_directory = run_directory.canonicalize().context(
-      "Failed to validate run directory on host after stack write (canonicalize error)",
-    )?;
+    // If there were failures during write (e.g. git clone failed),
+    // return early with the logs that contain the actual error.
+    if !all_logs_success(&res.logs) {
+      return Ok(Log::error(
+        "Write Stack",
+        "Stack write produced errors, check previous logs for details. \
+        If using a git repo, ensure git is installed on the host."
+          .to_string(),
+      ));
+    }
+
+    let run_directory = run_directory.canonicalize().with_context(|| {
+      format!(
+        "Failed to validate run directory on host after stack write — \
+        the directory at '{}' does not exist. This can happen if git \
+        is not installed on the host, causing the repo clone to fail silently. \
+        Ensure git is installed and accessible.",
+        run_directory.display()
+      )
+    })?;
 
     maybe_login_registry(&stack, registry_token, &mut Vec::new())
       .await;
