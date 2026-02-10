@@ -24,6 +24,7 @@ import {
 } from "@/lib/utils";
 import { notifications } from "@mantine/notifications";
 import { useWindowEvent } from "@mantine/hooks";
+import { PermissionLevelAndSpecifics } from "komodo_client/dist/types";
 
 export const komodo_client = () =>
   KomodoClient(KOMODO_BASE_URL, {
@@ -601,10 +602,14 @@ export const usePermissions = ({ type, id }: Types.ResourceTarget) => {
   const disable_non_admin_create = info?.disable_non_admin_create ?? false;
 
   const level =
-    (perms && typeof perms === "string" ? perms : perms?.level) ??
+    (perms && typeof perms === "string"
+      ? perms
+      : (perms as PermissionLevelAndSpecifics | undefined)?.level) ??
     Types.PermissionLevel.None;
   const specific =
-    (perms && typeof perms === "string" ? [] : perms?.specific) ?? [];
+    (perms && typeof perms === "string"
+      ? []
+      : (perms as PermissionLevelAndSpecifics | undefined)?.specific) ?? [];
 
   const canWrite = !ui_write_disabled && level === Types.PermissionLevel.Write;
   const canExecute = hasMinimumPermissions(
@@ -764,7 +769,6 @@ export type ServerAddress = {
   protocol: "http:" | "https:";
   hostname: string;
 };
-
 
 export const useServerAddress = (
   serverId: string | undefined,

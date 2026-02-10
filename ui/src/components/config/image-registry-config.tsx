@@ -42,7 +42,7 @@ export default function ImageRegistryConfig({
           {registry?.domain && registry.domain + " / "}
           {registry?.domain && (namespace ? namespace : "<namespace>") + " / "}
           {imageName}
-          {!registry?.domain && <Badge variant="light">Local</Badge>}
+          {!registry?.domain && <Badge>Local</Badge>}
         </Group>
       }
       gap="xs"

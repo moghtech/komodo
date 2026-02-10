@@ -12,7 +12,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import ResourceSelector from "@/resources/selector";
 import ResourceLink from "@/resources/link";
-import { Button, Group, Select, Text } from "@mantine/core";
+import { Button, Group, Select, Stack, Text } from "@mantine/core";
 import { ICONS } from "@/theme/icons";
 import ImageRegistryConfig from "@/components/config/image-registry-config";
 import SystemCommand from "@/components/config/system-command";
@@ -221,7 +221,6 @@ export default function BuildConfig({
           >
             {!disabled && (
               <Button
-                variant="light"
                 onClick={() =>
                   set({
                     image_registry: [
@@ -615,7 +614,7 @@ export default function BuildConfig({
                 update.dockerfile === undefined &&
                 !(update.repo ?? config.repo);
               return (
-                <div className="flex flex-col gap-4">
+                <Stack>
                   <SecretsSearch />
                   <MonacoEditor
                     value={
@@ -627,7 +626,7 @@ export default function BuildConfig({
                     language="dockerfile"
                     readOnly={disabled}
                   />
-                </div>
+                </Stack>
               );
             },
           },

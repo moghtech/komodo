@@ -97,7 +97,7 @@ export default function ContainerSelector({
           {...targetProps}
         >
           <Group gap="xs">
-            <DOCKER_LINK_ICONS.container serverId={serverId} name={selected} />
+            <DOCKER_LINK_ICONS.Container serverId={serverId} name={selected} />
             <Text>{name || (placeholder ?? "Select container")}</Text>
           </Group>
         </Button>
@@ -115,7 +115,7 @@ export default function ContainerSelector({
           {filtered.map((container) => (
             <Combobox.Option key={container.name} value={container.name}>
               <Group>
-                <DOCKER_LINK_ICONS.container
+                <DOCKER_LINK_ICONS.Container
                   serverId={container.server_id!}
                   name={container.name}
                 />

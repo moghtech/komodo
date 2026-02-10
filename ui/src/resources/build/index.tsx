@@ -20,6 +20,9 @@ import {
 import { notifications } from "@mantine/notifications";
 import { RunBuild } from "./executions";
 import BuildTabs from "./tabs";
+import { useBuilder } from "../builder";
+import ResourceLink from "../link";
+import FileSource from "@/components/file-source";
 
 export function useBuild(id: string | undefined) {
   return useRead("ListBuilds", {}).data?.find((r) => r.id === id);
@@ -96,6 +99,34 @@ export const BuildComponents: RequiredResourceComponents<
   },
 
   Info: {
+    Builder: ({ id }) => {
+      const info = useBuild(id)?.info;
+      const builder = useBuilder(info?.builder_id);
+      return builder?.id ? (
+        <ResourceLink type="Builder" id={builder?.id} />
+      ) : (
+        <Group gap="xs">
+          <ICONS.Builder size="1rem" />
+          <Text>Unknown Builder</Text>
+        </Group>
+      );
+    },
+    Source: ({ id }) => {
+      const info = useBuild(id)?.info;
+      return <FileSource info={info} />;
+    },
+    Branch: ({ id }) => {
+      const info = useBuild(id)?.info;
+      if (!info || (!info.repo && !info.linked_repo)) {
+        return null;
+      }
+      return (
+        <Group gap="xs">
+          <ICONS.Branch size="1rem" />
+          {info.branch}
+        </Group>
+      );
+    },
     Hash: ({ id }) => {
       const info = useFullBuild(id)?.info;
       if (!info?.latest_hash) {

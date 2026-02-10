@@ -4,6 +4,7 @@ import {
   Button,
   Code,
   colorsTuple,
+  Combobox,
   createTheme,
   CSSVariablesResolver,
   darken,
@@ -104,8 +105,8 @@ const theme = createTheme({
     Input: Input.extend({
       styles: (theme) => ({
         input: {
-          backgroundColor: theme.colors.accent[5],
-          borderColor: theme.colors["accent-border"][5],
+          backgroundColor: theme.colors.accent[2],
+          border: "1px solid " + theme.colors["accent-border"][4],
         },
       }),
     }),
@@ -116,8 +117,8 @@ const theme = createTheme({
           border: "1px solid " + theme.colors["accent-border"][4],
         },
         dropdown: {
-          backgroundColor: theme.colors.accent[4],
-          borderColor: theme.colors["accent-border"][7],
+          backgroundColor: theme.colors.accent[2],
+          borderColor: theme.colors["accent-border"][4],
         },
       }),
     }),
@@ -134,6 +135,21 @@ const theme = createTheme({
       }),
       defaultProps: {
         maxDropdownHeight: 250,
+      },
+    }),
+    Combobox: Combobox.extend({
+      styles: (theme) => ({
+        dropdown: {
+          backgroundColor: theme.colors.accent[2],
+          border: "1px solid " + theme.colors["accent-border"][4],
+        },
+      }),
+    }),
+    MenuDropdown: MenuDropdown.extend({
+      defaultProps: {
+        bg: "var(--mantine-color-accent-2)",
+        bd: "1px solid var(--mantine-color-accent-border-4)",
+        bdrs: "md",
       },
     }),
     Button: Button.extend({
@@ -197,13 +213,6 @@ const theme = createTheme({
         bg: "var(--mantine-color-accent-0)",
         bdrs: "sm",
         p: "md",
-      },
-    }),
-    MenuDropdown: MenuDropdown.extend({
-      defaultProps: {
-        bg: "var(--mantine-color-accent-0)",
-        bd: "1px solid var(--mantine-color-accent-border-4)",
-        bdrs: "md",
       },
     }),
     Fieldset: Fieldset.extend({

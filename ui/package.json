@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
+    "preview": "vite preview --host --port 5173",
     "build": "tsc && vite build",
     "build-client": "cd ../client/core/ts && yarn && yarn build && yarn link"
   },

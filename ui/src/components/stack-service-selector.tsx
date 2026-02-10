@@ -99,7 +99,7 @@ export default function StackServiceSelector({
         >
           <Group gap="xs">
             {container && (
-              <DOCKER_LINK_ICONS.container
+              <DOCKER_LINK_ICONS.Container
                 serverId={container.server_id!}
                 name={container.name}
               />
@@ -122,7 +122,7 @@ export default function StackServiceSelector({
             <Combobox.Option key={service.service} value={service.service}>
               <Group>
                 {service.container && (
-                  <DOCKER_LINK_ICONS.container
+                  <DOCKER_LINK_ICONS.Container
                     serverId={service.container.server_id!}
                     name={service.container.name}
                   />

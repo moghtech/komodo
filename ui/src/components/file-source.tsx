@@ -36,7 +36,7 @@ export default function FileSource({ info }: FileSourceProps) {
     return <RepoLink repo={info.repo} link={info.repo_link} />;
   } else {
     return (
-      <Group>
+      <Group gap="xs">
         <NotepadText size="1rem" />
         <Text>UI Defined</Text>
       </Group>

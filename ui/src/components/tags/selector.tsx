@@ -65,8 +65,11 @@ export default function TagSelector({
     >
       <Combobox.Target>
         <Button
-          variant="default"
+          color="accent.2"
           pl="0.4rem"
+          bd="1px solid var(--mantine-color-accent-border-5)"
+          c="var(--mantine-color-text)"
+          fw="normal"
           leftSection={
             <Badge
               radius="sm"

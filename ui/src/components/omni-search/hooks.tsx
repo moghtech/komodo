@@ -197,7 +197,7 @@ export function useOmniSearch(): {
                 `/servers/${container.server_id}/container/${container.name}`,
               ),
             leftSection: (
-              <DOCKER_LINK_ICONS.container
+              <DOCKER_LINK_ICONS.Container
                 serverId={container.server_id!}
                 name={container.name}
                 size="1.3rem"

@@ -19,13 +19,11 @@ import LoadingScreen from "@/ui/loading-screen";
 import { atom, useAtom } from "jotai";
 import ResourceLink from "@/resources/link";
 
-const updateDetailsAtom = atom<string | undefined>(undefined);
+const updateDetailsAtom = atom<string>();
 
 /** There is one update details modal mounted, just change the target update id */
 export function useUpdateDetails() {
-  const [updateId, setUpdateId] = useAtom<string | undefined>(
-    updateDetailsAtom,
-  );
+  const [updateId, setUpdateId] = useAtom(updateDetailsAtom);
   return {
     updateId,
     open: (updateId: string) => setUpdateId(updateId),

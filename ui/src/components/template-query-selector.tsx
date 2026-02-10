@@ -14,9 +14,8 @@ export default function TemplateQuerySelector() {
       leftSection={
         <Badge
           radius="sm"
-          px={isExclude ? "0.2rem" : "0.3rem"}
+          px={isExclude ? "0.3rem" : "0.4rem"}
           py={isExclude ? "0.3rem" : "0.1rem"}
-          color="accent"
           c="dimmed"
           h="fit-content"
         >
