@@ -166,7 +166,7 @@ function StackServicesServer({
           cell: ({ row }) =>
             serverId && (
               <DockerResourceLink
-                type="image"
+                type="Image"
                 serverId={serverId}
                 name={row.original.container?.image}
                 id={row.original.container?.image_id}
@@ -187,7 +187,7 @@ function StackServicesServer({
                   row.original.container?.networks?.map((network, i) => (
                     <Fragment key={network}>
                       <DockerResourceLink
-                        type="network"
+                        type="Network"
                         serverId={serverId}
                         name={network}
                       />
@@ -201,7 +201,7 @@ function StackServicesServer({
               serverId &&
               row.original.container?.network_mode && (
                 <DockerResourceLink
-                  type="network"
+                  type="Network"
                   serverId={serverId}
                   name={row.original.container.network_mode}
                 />

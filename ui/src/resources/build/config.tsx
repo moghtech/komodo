@@ -25,6 +25,7 @@ import ShowHideButton from "@/ui/show-hide-button";
 import LinkedRepo from "@/components/config/linked-repo";
 import { ProviderSelectorConfig } from "@/components/config/provider-selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";
+import { ReactNode } from "react";
 
 type BuildMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const BUILD_MODES = ["UI Defined", "Files On Server", "Git Repo"] as const;
@@ -48,7 +49,13 @@ FROM debian:stable-slim
 RUN echo 'Hello Komodo'
 `;
 
-export default function BuildConfig({ id }: { id: string }) {
+export default function BuildConfig({
+  id,
+  titleOther,
+}: {
+  id: string;
+  titleOther: ReactNode;
+}) {
   const [show, setShow] = useLocalStorage({
     key: `build-${id}-show`,
     defaultValue: {
@@ -155,7 +162,7 @@ export default function BuildConfig({ id }: { id: string }) {
             : _version;
         return (
           <ConfigInput
-            fz="lg"
+            inputProps={{ size: "lg" }}
             label="Version"
             boldLabel
             description="Version the image with major.minor.patch. It can be interpolated using [[$VERSION]]."
@@ -633,6 +640,7 @@ export default function BuildConfig({ id }: { id: string }) {
 
   return (
     <Config
+      titleOther={titleOther}
       disabled={disabled}
       original={config}
       update={update}

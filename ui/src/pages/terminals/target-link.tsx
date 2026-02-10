@@ -10,7 +10,7 @@ export default function TerminalTargetLink({ target }: { target: Types.TerminalT
     case "Container":
       return (
         <DockerResourceLink
-          type="container"
+          type="Container"
           serverId={target.params.server}
           name={target.params.container}
         />

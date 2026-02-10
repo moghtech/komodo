@@ -22,6 +22,9 @@ import { useServer } from "../server";
 import ResourceLink from "../link";
 import { Group, Text } from "@mantine/core";
 import { RunBuild } from "../build/executions";
+import DockerResourceLink from "@/components/docker/link";
+import SwarmResourceLink from "@/components/swarm/link";
+import { ContainerPorts } from "@/components/docker/container-ports";
 
 export function useDeployment(id: string | undefined) {
   return useRead("ListDeployments", {}).data?.find((r) => r.id === id);
@@ -148,6 +151,78 @@ export const DeploymentComponents: RequiredResourceComponents<
               : info?.image.split("@")[0] || "N/A"}
           </Text>
         </Group>
+      );
+    },
+    DockerResource: ({ id }) => {
+      const deployment = useDeployment(id);
+      const service = useRead(
+        "ListSwarmServices",
+        { swarm: deployment?.info.swarm_id! },
+        { enabled: !!deployment?.info.swarm_id },
+      ).data?.find((service) => service.Name === deployment?.name);
+      if (
+        !deployment ||
+        [
+          Types.DeploymentState.Unknown,
+          Types.DeploymentState.NotDeployed,
+        ].includes(deployment.info.state)
+      ) {
+        return null;
+      }
+      if (deployment.info.swarm_id) {
+        return (
+          <>
+            <SwarmResourceLink
+              type="Service"
+              swarmId={deployment.info.swarm_id}
+              resourceId={deployment.name}
+              name={deployment.name}
+            />
+            {service?.Configs.map((config) => (
+              <SwarmResourceLink
+                key={config}
+                type="Config"
+                swarmId={deployment.info.swarm_id}
+                resourceId={config}
+                name={config}
+              />
+            ))}
+            {service?.Secrets.map((secret) => (
+              <SwarmResourceLink
+                key={secret}
+                type="Secret"
+                swarmId={deployment.info.swarm_id}
+                resourceId={secret}
+                name={secret}
+              />
+            ))}
+          </>
+        );
+      } else {
+        return (
+          <DockerResourceLink
+            type="Container"
+            name={deployment.name}
+            serverId={deployment.info.server_id}
+          />
+        );
+      }
+    },
+    Ports: ({ id }) => {
+      const deployment = useDeployment(id);
+      const container = useRead(
+        "ListDockerContainers",
+        {
+          server: deployment?.info.server_id!,
+        },
+        { refetchInterval: 10_000, enabled: !!deployment?.info.server_id },
+      ).data?.find((container) => container.name === deployment?.name);
+      if (!container) return null;
+      return (
+        <ContainerPorts
+          ports={container?.ports ?? []}
+          serverId={deployment?.info.server_id}
+        />
       );
     },
   },

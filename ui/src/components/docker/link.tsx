@@ -6,22 +6,22 @@ import { hexColorByIntention, containerStateIntention } from "@/lib/color";
 import { Box, Group, Text } from "@mantine/core";
 import { Link } from "react-router-dom";
 
-export type DockerResourceType = "container" | "network" | "image" | "volume";
+export type DockerResourceType = "Container" | "Network" | "Image" | "Volume";
 
 export interface DockerResourceLinkProps {
+  type: DockerResourceType;
   serverId: string;
   name: string | undefined;
   id?: string;
-  type: DockerResourceType;
   extra?: ReactNode;
   dimmed?: boolean;
 }
 
 export default function DockerResourceLink({
+  type,
   serverId,
   name,
   id,
-  type,
   extra,
   dimmed,
 }: DockerResourceLinkProps) {
@@ -33,15 +33,16 @@ export default function DockerResourceLink({
     <Group
       renderRoot={(props) => (
         <Link
-          to={`/servers/${serverId}/${type}/${encodeURIComponent(name)}`}
+          to={`/servers/${serverId}/${type.toLowerCase()}/${encodeURIComponent(name)}`}
           {...props}
         />
       )}
       className="hover-underline"
       c={dimmed ? "dimmed" : undefined}
       wrap="nowrap"
+      gap="xs"
     >
-      <Icon serverId={serverId} name={type === "image" ? id : name} />
+      <Icon serverId={serverId} name={type === "Image" ? id : name} />
       <Text className="text-ellipsis" maw={{ base: 250, lg: 300 }} title={name}>
         {name}
       </Text>
@@ -57,7 +58,7 @@ export const DOCKER_LINK_ICONS: {
     size?: string | number;
   }>;
 } = {
-  container: ({ serverId, name, size = "1rem" }) => {
+  Container: ({ serverId, name, size = "1rem" }) => {
     const state =
       useRead("ListDockerContainers", { server: serverId }).data?.find(
         (container) => container.name === name,
@@ -69,7 +70,7 @@ export const DOCKER_LINK_ICONS: {
       />
     );
   },
-  network: ({ serverId, name, size = "1rem" }) => {
+  Network: ({ serverId, name, size = "1rem" }) => {
     const containers =
       useRead("ListDockerContainers", { server: serverId }).data ?? [];
     const noContainers = !name
@@ -84,7 +85,7 @@ export const DOCKER_LINK_ICONS: {
         : "Good";
     return <ICONS.Network size={size} color={hexColorByIntention(intention)} />;
   },
-  image: ({ serverId, name, size = "1rem" }) => {
+  Image: ({ serverId, name, size = "1rem" }) => {
     const containers =
       useRead("ListDockerContainers", { server: serverId }).data ?? [];
     const noContainers = !name
@@ -93,7 +94,7 @@ export const DOCKER_LINK_ICONS: {
     const intention = !name ? "Warning" : noContainers ? "Critical" : "Good";
     return <ICONS.Image size={size} color={hexColorByIntention(intention)} />;
   },
-  volume: ({ serverId, name, size = "1rem" }) => {
+  Volume: ({ serverId, name, size = "1rem" }) => {
     const containers =
       useRead("ListDockerContainers", { server: serverId }).data ?? [];
     const noContainers = !name

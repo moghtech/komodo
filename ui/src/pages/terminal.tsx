@@ -123,7 +123,7 @@ function ContainerTerminalPage({
       terminal={terminal}
       target={target}
       Link={
-        <DockerResourceLink type="container" serverId={id} name={container} />
+        <DockerResourceLink type="Container" serverId={id} name={container} />
       }
     />
   );

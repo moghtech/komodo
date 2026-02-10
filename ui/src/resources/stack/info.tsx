@@ -2,12 +2,7 @@ import { usePermissions, useWrite } from "@/lib/hooks";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { ReactNode, useState } from "react";
-import {
-  DEFAULT_STACK_FILE_CONTENTS,
-  StackComponents,
-  useFullStack,
-  useStack,
-} from ".";
+import { DEFAULT_STACK_FILE_CONTENTS, useFullStack, useStack } from ".";
 import { Types } from "komodo_client";
 import Section from "@/ui/section";
 import { Button, Code, Group, Stack, Text } from "@mantine/core";
@@ -80,7 +75,7 @@ export default function StackInfo({
               {canEdit && (
                 <ConfirmButton
                   loading={isPending}
-                  icon={<FilePlus className="w-4 h-4" />}
+                  icon={<FilePlus size="1rem" />}
                   onClick={() => {
                     if (stack) {
                       mutateAsync({
@@ -111,7 +106,6 @@ export default function StackInfo({
 
       {/* Update latest contents */}
       {latestContents &&
-        latestContents.length > 0 &&
         latestContents.map((content) => {
           const showContents = show[content.path] ?? defaultShowContents;
           const handleToggleShow = () => {

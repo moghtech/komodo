@@ -74,7 +74,7 @@ export default function Containers() {
             ),
             cell: ({ row }) => (
               <DockerResourceLink
-                type="container"
+                type="Container"
                 serverId={row.original.server_id!}
                 name={row.original.name}
               />
@@ -126,7 +126,7 @@ export default function Containers() {
             ),
             cell: ({ row }) => (
               <DockerResourceLink
-                type="image"
+                type="Image"
                 serverId={row.original.server_id!}
                 name={row.original.image}
                 id={row.original.image_id}
@@ -145,7 +145,7 @@ export default function Containers() {
                   {row.original.networks?.map((network) => (
                     <DockerResourceLink
                       key={network}
-                      type="network"
+                      type="Network"
                       serverId={row.original.server_id!}
                       name={network}
                     />
@@ -154,7 +154,7 @@ export default function Containers() {
               ) : (
                 row.original.network_mode && (
                   <DockerResourceLink
-                    type="network"
+                    type="Network"
                     serverId={row.original.server_id!}
                     name={row.original.network_mode}
                   />
@@ -202,7 +202,7 @@ export default function Containers() {
                 {row.original.volumes?.map((volume) => (
                   <DockerResourceLink
                     key={volume}
-                    type="volume"
+                    type="Volume"
                     serverId={row.original.server_id!}
                     name={volume}
                   />

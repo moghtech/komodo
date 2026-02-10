@@ -101,7 +101,7 @@ function ContainerInner({
           )}
           {listContainer?.image && (
             <DockerResourceLink
-              type="image"
+              type="Image"
               serverId={serverId}
               name={listContainer.image}
               id={listContainer.image_id}
@@ -110,7 +110,7 @@ function ContainerInner({
           {listContainer?.networks?.map((network) => (
             <DockerResourceLink
               key={network}
-              type="network"
+              type="Network"
               serverId={serverId}
               name={network}
             />
@@ -118,7 +118,7 @@ function ContainerInner({
           {listContainer?.volumes?.map((volume) => (
             <DockerResourceLink
               key={volume}
-              type="volume"
+              type="Volume"
               serverId={serverId}
               name={volume}
             />

@@ -194,7 +194,7 @@ function NetworkInner({
                   cell: ({ row }) =>
                     row.original.Name ? (
                       <DockerResourceLink
-                        type="container"
+                        type="Container"
                         serverId={serverId}
                         name={row.original.Name}
                       />

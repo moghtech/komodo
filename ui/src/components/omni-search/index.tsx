@@ -17,11 +17,11 @@ export default function OmniSearch({}: {}) {
       </ActionIcon>
 
       <Button
+        color="accent.3"
         c="var(--mantine-color-text)"
         justify="space-between"
         rightSection={
           <Badge
-            color="accent"
             tt="lowercase"
             c="dimmed"
             style={{ cursor: "pointer" }}

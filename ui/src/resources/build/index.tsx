@@ -7,7 +7,6 @@ import StatusBadge from "@/ui/status-badge";
 import EntityHeader from "@/ui/entity-header";
 import BuildTable from "./table";
 import NewResource from "@/resources/new";
-import BuildConfig from "./config";
 import DeleteResource from "../delete";
 import {
   ActionIcon,
@@ -20,6 +19,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { RunBuild } from "./executions";
+import BuildTabs from "./tabs";
 
 export function useBuild(id: string | undefined) {
   return useRead("ListBuilds", {}).data?.find((r) => r.id === id);
@@ -177,7 +177,7 @@ export const BuildComponents: RequiredResourceComponents<
     RunBuild,
   },
 
-  Config: BuildConfig,
+  Config: BuildTabs,
 
   Page: {},
 };
