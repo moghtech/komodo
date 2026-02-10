@@ -37,7 +37,7 @@ export default function ResourceUpdates({ type, id }: Types.ResourceTarget) {
           <ICONS.ExternalLink size="1rem" />
         </ActionIcon>
       }
-      maw={{ xl: 500, xl3: 600 }}
+      maw={{ xl2: 500, xl3: 600 }}
       withBorder
     >
       <ScrollArea component={Stack} mah={180} pr="sm">

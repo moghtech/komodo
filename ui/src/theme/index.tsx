@@ -61,7 +61,7 @@ const theme = createTheme({
   colors: {
     // Accent background color
     lightAccent: functionColorsTuple(
-      darken(LIGHT_BODY, 0.005),
+      darken(LIGHT_BODY, 0.01),
       (color) => darken(color, 0.005),
       true,
     ),
@@ -155,14 +155,14 @@ const theme = createTheme({
     Button: Button.extend({
       vars: () => ({
         root: {
-          "--button-color": "var(--mantine-color-bw)",
+          "--button-color": "var(--mantine-color-bw-0)",
         },
       }),
     }),
     ActionIcon: ActionIcon.extend({
       vars: () => ({
         root: {
-          "--ai-color": "var(--mantine-color-bw)",
+          "--ai-color": "var(--mantine-color-bw-0)",
         },
       }),
     }),
