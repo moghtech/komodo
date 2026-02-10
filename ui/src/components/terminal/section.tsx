@@ -37,8 +37,6 @@ export default function TerminalSection({
     },
   );
 
-  console.log(terminals);
-
   const { mutateAsync: deleteTerminal } = useWrite("DeleteTerminal");
 
   const [_selected, setSelected] = useLocalStorage<{
@@ -56,7 +54,7 @@ export default function TerminalSection({
   return (
     <Section {...props}>
       <Group>
-        {terminals?.map(({ name: terminal, target, stored_size_kb }) => {
+        {terminals?.map(({ name: terminal, stored_size_kb }) => {
           const isSelected = terminal === selected;
           return (
             <Group
@@ -115,7 +113,7 @@ export default function TerminalSection({
           bd="1px solid var(--mantine-color-accent-border-4)"
           bdrs="md"
         >
-          {terminals?.map(({ name: terminal, target }) => (
+          {terminals?.map(({ name: terminal }) => (
             <TargetTerminal
               key={terminal}
               terminal={terminal}
