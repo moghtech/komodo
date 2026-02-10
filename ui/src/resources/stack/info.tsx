@@ -2,7 +2,12 @@ import { usePermissions, useWrite } from "@/lib/hooks";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { ReactNode, useState } from "react";
-import { DEFAULT_STACK_FILE_CONTENTS, StackComponents } from ".";
+import {
+  DEFAULT_STACK_FILE_CONTENTS,
+  StackComponents,
+  useFullStack,
+  useStack,
+} from ".";
 import { Types } from "komodo_client";
 import Section from "@/ui/section";
 import { Button, Code, Group, Stack, Text } from "@mantine/core";
@@ -39,9 +44,8 @@ export default function StackInfo({
     },
   });
 
-  const notDown =
-    StackComponents.useListItem(id)?.info.state !== Types.StackState.Down;
-  const stack = StackComponents.useFull(id);
+  const notDown = useStack(id)?.info.state !== Types.StackState.Down;
+  const stack = useFullStack(id);
 
   const filesOnHost = stack?.config?.files_on_host ?? false;
   const gitRepo = !!(stack?.config?.repo || stack?.config?.linked_repo);

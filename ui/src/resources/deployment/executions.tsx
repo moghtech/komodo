@@ -4,7 +4,7 @@ import { Types } from "komodo_client";
 import { parseKeyValue } from "@/lib/utils";
 import ConfirmModal from "@/ui/confirm-modal";
 import ConfirmButton from "@/ui/confirm-button";
-import { DeploymentComponents } from ".";
+import { useDeployment } from ".";
 import { ICONS } from "@/theme/icons";
 import { Group, Select, Stack, Text } from "@mantine/core";
 
@@ -138,7 +138,7 @@ export function DestroyDeployment({ id }: DeploymentId) {
 }
 
 export function PullDeployment({ id }: DeploymentId) {
-  const deployment = DeploymentComponents.useListItem(id);
+  const deployment = useDeployment(id);
   const { mutate: pull, isPending: pullPending } = useExecute("PullDeployment");
   const action_state = useRead(
     "GetDeploymentActionState",
@@ -163,7 +163,7 @@ export function PullDeployment({ id }: DeploymentId) {
 }
 
 export function RestartDeployment({ id }: DeploymentId) {
-  const deployment = DeploymentComponents.useListItem(id);
+  const deployment = useDeployment(id);
   const state = deployment?.info.state;
   const { mutateAsync: restart, isPending: restartPending } =
     useExecute("RestartDeployment");
@@ -195,7 +195,7 @@ export function RestartDeployment({ id }: DeploymentId) {
 }
 
 export function StartStopDeployment({ id }: DeploymentId) {
-  const deployment = DeploymentComponents.useListItem(id);
+  const deployment = useDeployment(id);
   const state = deployment?.info.state;
   const { mutate: start, isPending: startPending } =
     useExecute("StartDeployment");
@@ -306,7 +306,7 @@ function TermSignalSelector({
 }
 
 export function PauseUnpauseDeployment({ id }: DeploymentId) {
-  const deployment = DeploymentComponents.useListItem(id);
+  const deployment = useDeployment(id);
   const state = deployment?.info.state;
   const { mutate: unpause, isPending: unpausePending } =
     useExecute("UnpauseDeployment");

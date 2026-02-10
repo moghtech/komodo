@@ -141,7 +141,6 @@ const RecentCard = ({
   id: string;
   visibleFrom?: MantineBreakpoint;
 }) => {
-  const nav = useNavigate();
   const Components = ResourceComponents[type];
   const resource = Components.useListItem(id);
   const { preferences } = useDashboardPreferences();

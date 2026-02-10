@@ -1,5 +1,5 @@
 import { Fragment, ReactNode } from "react";
-import { StackComponents } from ".";
+import { useStack } from ".";
 import { useRead } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import Section from "@/ui/section";
@@ -18,7 +18,7 @@ export default function StackServices({
   id: string;
   titleOther?: ReactNode;
 }) {
-  const info = StackComponents.useListItem(id)?.info;
+  const info = useStack(id)?.info;
   const state = info?.state ?? Types.StackState.Unknown;
   const services = useRead(
     "ListStackServices",

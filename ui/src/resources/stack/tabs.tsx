@@ -1,5 +1,5 @@
 import { useLocalStorage } from "@mantine/hooks";
-import { StackComponents } from ".";
+import { StackComponents, useStack } from ".";
 import { usePermissions, useRead } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import { useMemo } from "react";
@@ -10,7 +10,7 @@ import {
 import { Tabs } from "@mantine/core";
 import { ICONS } from "@/theme/icons";
 import { colorByIntention, stackStateIntention } from "@/lib/color";
-import { ServerComponents } from "@/resources/server";
+import { ServerComponents, useServer } from "@/resources/server";
 import StackConfig from "./config";
 import StackInfo from "./info";
 import StackServices from "./services";
@@ -24,7 +24,7 @@ export default function StackTabs({ id }: { id: string }) {
     key: "stack-tabs-v2",
     defaultValue: "Config",
   });
-  const info = StackComponents.useListItem(id)?.info;
+  const info = useStack(id)?.info;
   const { specificLogs, specificTerminal } = usePermissions({
     type: "Stack",
     id,
@@ -33,8 +33,7 @@ export default function StackTabs({ id }: { id: string }) {
   const services = useRead("ListStackServices", { stack: id }).data;
 
   const containerTerminalsDisabled =
-    ServerComponents.useListItem(info?.server_id)?.info
-      .container_terminals_disabled ?? false;
+    useServer(info?.server_id)?.info.container_terminals_disabled ?? false;
 
   const state = info?.state;
   const hideInfo = !info?.files_on_host && !info?.repo && !info?.linked_repo;

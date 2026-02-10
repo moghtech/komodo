@@ -9,15 +9,22 @@ import SwarmTable from "./table";
 import NewResource from "@/resources/new";
 import DeleteResource from "../delete";
 
+export function useSwarm(id: string | undefined) {
+  return useRead("ListSwarms", {}).data?.find((r) => r.id === id);
+}
+
+export function useFullSwarm(id: string) {
+  return useRead("GetSwarm", { swarm: id }).data;
+}
+
 export const SwarmComponents: RequiredResourceComponents<
   Types.SwarmConfig,
   Types.SwarmInfo,
   Types.SwarmListItemInfo
 > = {
   useList: () => useRead("ListSwarms", {}).data,
-  useListItem: (id) => SwarmComponents.useList()?.find((r) => r.id === id),
-
-  useFull: (id) => useRead("GetSwarm", { swarm: id }).data,
+  useListItem: useSwarm,
+  useFull: useFullSwarm,
 
   useResourceLinks: (swarm) => swarm?.config?.links,
 
@@ -54,7 +61,7 @@ export const SwarmComponents: RequiredResourceComponents<
   },
 
   ResourcePageHeader: ({ id }) => {
-    const swarm = SwarmComponents.useListItem(id);
+    const swarm = useSwarm(id);
     return (
       <EntityHeader
         intent={swarmStateIntention(swarm?.info.state)}
@@ -67,7 +74,7 @@ export const SwarmComponents: RequiredResourceComponents<
   },
 
   State: ({ id }) => {
-    let state = SwarmComponents.useListItem(id)?.info.state;
+    let state = useSwarm(id)?.info.state;
     return <StatusBadge text={state} intent={swarmStateIntention(state)} />;
   },
   Info: {},

@@ -1,5 +1,5 @@
 import { useExecute, usePermissions, useRead } from "@/lib/hooks";
-import { ServerComponents } from ".";
+import { useServer } from ".";
 import ConfirmButton from "@/ui/confirm-button";
 import { ICONS } from "@/theme/icons";
 import ConfirmModal from "@/ui/confirm-modal";
@@ -11,7 +11,7 @@ export const Prune = ({
   serverId: string;
   type: "Containers" | "Networks" | "Images" | "Volumes" | "Buildx" | "System";
 }) => {
-  const server = ServerComponents.useListItem(serverId);
+  const server = useServer(serverId);
   const { mutateAsync: prune, isPending } = useExecute(`Prune${type}`);
   const action_state = useRead(
     "GetServerActionState",

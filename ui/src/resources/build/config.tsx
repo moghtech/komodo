@@ -69,14 +69,14 @@ export default function BuildConfig({ id }: { id: string }) {
   });
   const { mutateAsync } = useWrite("UpdateBuild");
   const { integrations } = useWebhookIntegrations();
-  const [id_or_name] = useWebhookIdOrName();
+  const [idOrName] = useWebhookIdOrName();
 
   if (!config) return null;
 
   const disabled = global_disabled || !canWrite;
 
-  const git_provider = update.git_provider ?? config.git_provider;
-  const webhook_integration = getWebhookIntegration(integrations, git_provider);
+  const gitProvider = update.git_provider ?? config.git_provider;
+  const webhookIntegration = getWebhookIntegration(integrations, gitProvider);
 
   const mode = getBuildMode(update, config);
 

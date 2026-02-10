@@ -1,7 +1,7 @@
 import { usePermissions, useRead } from "@/lib/hooks";
 import { useLocalStorage } from "@mantine/hooks";
-import { ServerComponents } from "../server";
-import { DeploymentComponents } from ".";
+import { useServer } from "../server";
+import { useDeployment } from ".";
 import { Types } from "komodo_client";
 import { ReactNode, useMemo } from "react";
 import {
@@ -24,14 +24,13 @@ export default function DeploymentTabs({ id }: { id: string }) {
     key: "deployment-tabs-v1",
     defaultValue: "Config",
   });
-  const info = DeploymentComponents.useListItem(id)?.info;
+  const info = useDeployment(id)?.info;
   const { specificLogs, specificInspect, specificTerminal } = usePermissions({
     type: "Deployment",
     id,
   });
   const containerTerminalsDisabled =
-    ServerComponents.useListItem(info?.server_id)?.info
-      .container_terminals_disabled ?? false;
+    useServer(info?.server_id)?.info.container_terminals_disabled ?? false;
   const state = info?.state;
 
   const downOrUnknown =

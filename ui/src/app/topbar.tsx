@@ -28,9 +28,9 @@ const Topbar = ({
       renderRoot={(props) => (
         <SimpleGrid cols={{ base: 2, lg: 3 }} {...props} />
       )}
-      style={{
-        borderColor: "var(--mantine-color-accent-border-0)",
-      }}
+      style={(theme) => ({
+        borderColor: theme.colors["accent-border"][1],
+      })}
       bg="accent.0"
       pl="1.3rem"
       pr="2rem"

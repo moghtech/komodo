@@ -1,5 +1,5 @@
 import { useRead } from "@/lib/hooks";
-import { ServerComponents } from ".";
+import { useServer } from ".";
 import { Group, HoverCard, Text } from "@mantine/core";
 import { ICONS } from "@/theme/icons";
 import { colorByIntention } from "@/lib/color";
@@ -7,7 +7,7 @@ import { Types } from "komodo_client";
 
 export default function ServerVersion({ id }: { id: string }) {
   const coreVersion = useRead("GetVersion", {}).data?.version;
-  const server = ServerComponents.useListItem(id);
+  const server = useServer(id);
   const serverVersion = server?.info.version;
   const mismatch =
     !!coreVersion && !!serverVersion && coreVersion !== serverVersion;

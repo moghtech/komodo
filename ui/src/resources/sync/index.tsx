@@ -10,16 +10,22 @@ import NewResource from "@/resources/new";
 import ResourceSyncConfig from "./config";
 import DeleteResource from "../delete";
 
+export function useResourceSync(id: string | undefined) {
+  return useRead("ListResourceSyncs", {}).data?.find((r) => r.id === id);
+}
+
+export function useFullResourceSync(id: string) {
+  return useRead("GetResourceSync", { sync: id }).data;
+}
+
 export const ResourceSyncComponents: RequiredResourceComponents<
   Types.ResourceSyncConfig,
   Types.ResourceSyncInfo,
   Types.ResourceSyncListItemInfo
 > = {
   useList: () => useRead("ListResourceSyncs", {}).data,
-  useListItem: (id) =>
-    ResourceSyncComponents.useList()?.find((r) => r.id === id),
-
-  useFull: (id) => useRead("GetResourceSync", { sync: id }).data,
+  useListItem: useResourceSync,
+  useFull: useFullResourceSync,
 
   useResourceLinks: () => undefined,
 
@@ -68,7 +74,7 @@ export const ResourceSyncComponents: RequiredResourceComponents<
   },
 
   ResourcePageHeader: ({ id }) => {
-    const resourceSync = ResourceSyncComponents.useListItem(id);
+    const resourceSync = useResourceSync(id);
     return (
       <EntityHeader
         intent={resourceSyncStateIntention(resourceSync?.info.state)}
@@ -81,7 +87,7 @@ export const ResourceSyncComponents: RequiredResourceComponents<
   },
 
   State: ({ id }) => {
-    let state = ResourceSyncComponents.useListItem(id)?.info.state;
+    let state = useResourceSync(id)?.info.state;
     return (
       <StatusBadge text={state} intent={resourceSyncStateIntention(state)} />
     );

@@ -17,10 +17,19 @@ import {
   RestartDeployment,
   StartStopDeployment,
 } from "./executions";
-import { SwarmComponents } from "../swarm";
-import { ServerComponents } from "../server";
+import { useSwarm } from "../swarm";
+import { useServer } from "../server";
 import ResourceLink from "../link";
 import { Group, Text } from "@mantine/core";
+import { RunBuild } from "../build/executions";
+
+export function useDeployment(id: string | undefined) {
+  return useRead("ListDeployments", {}).data?.find((r) => r.id === id);
+}
+
+export function useFullDeployment(id: string) {
+  return useRead("GetDeployment", { deployment: id }).data;
+}
 
 export const DeploymentComponents: RequiredResourceComponents<
   Types.DeploymentConfig,
@@ -28,9 +37,8 @@ export const DeploymentComponents: RequiredResourceComponents<
   Types.DeploymentListItemInfo
 > = {
   useList: () => useRead("ListDeployments", {}).data,
-  useListItem: (id) => DeploymentComponents.useList()?.find((r) => r.id === id),
-
-  useFull: (id) => useRead("GetDeployment", { deployment: id }).data,
+  useListItem: useDeployment,
+  useFull: useFullDeployment,
 
   useResourceLinks: (deployment) => deployment?.config?.links,
 
@@ -86,7 +94,7 @@ export const DeploymentComponents: RequiredResourceComponents<
   },
 
   ResourcePageHeader: ({ id }) => {
-    const deployment = DeploymentComponents.useListItem(id);
+    const deployment = useDeployment(id);
     return (
       <EntityHeader
         intent={deploymentStateIntention(deployment?.info.state)}
@@ -100,16 +108,16 @@ export const DeploymentComponents: RequiredResourceComponents<
   },
 
   State: ({ id }) => {
-    let state = DeploymentComponents.useListItem(id)?.info.state;
+    let state = useDeployment(id)?.info.state;
     return (
       <StatusBadge text={state} intent={deploymentStateIntention(state)} />
     );
   },
   Info: {
     DeployTarget: ({ id }) => {
-      const info = DeploymentComponents.useListItem(id)?.info;
-      const swarm = SwarmComponents.useListItem(info?.swarm_id);
-      const server = ServerComponents.useListItem(info?.server_id);
+      const info = useDeployment(id)?.info;
+      const swarm = useSwarm(info?.swarm_id);
+      const server = useServer(info?.server_id);
       return swarm?.id ? (
         <ResourceLink type="Swarm" id={swarm?.id} />
       ) : server?.id ? (
@@ -121,9 +129,35 @@ export const DeploymentComponents: RequiredResourceComponents<
         </Group>
       );
     },
+    Image: ({ id }) => {
+      const config = useFullDeployment(id)?.config;
+      const info = useDeployment(id)?.info;
+      return info?.build_id ? (
+        <ResourceLink type="Build" id={info.build_id} />
+      ) : (
+        <Group gap="xs">
+          <ICONS.Image size="1rem" />
+          <Text>
+            {info?.image.startsWith("sha256:")
+              ? (
+                  config?.image as Extract<
+                    Types.DeploymentImage,
+                    { type: "Image" }
+                  >
+                )?.params.image
+              : info?.image.split("@")[0] || "N/A"}
+          </Text>
+        </Group>
+      );
+    },
   },
 
   Executions: {
+    RunBuild: ({ id }) => {
+      const build_id = useDeployment(id)?.info.build_id;
+      if (!build_id) return null;
+      return <RunBuild id={build_id} />;
+    },
     DeployDeployment,
     PullDeployment,
     RestartDeployment,

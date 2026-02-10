@@ -15,15 +15,22 @@ import ActionConfig from "./config";
 import ActionTable from "./table";
 import DeleteResource from "../delete";
 
+export function useAction(id: string | undefined) {
+  return useRead("ListActions", {}).data?.find((r) => r.id === id);
+}
+
+export function useFullAction(id: string) {
+  return useRead("GetAction", { action: id }).data;
+}
+
 export const ActionComponents: RequiredResourceComponents<
   Types.ActionConfig,
   {},
   Types.ActionListItemInfo
 > = {
   useList: () => useRead("ListActions", {}).data,
-  useListItem: (id) => ActionComponents.useList()?.find((r) => r.id === id),
-
-  useFull: (id) => useRead("GetAction", { action: id }).data,
+  useListItem: useAction,
+  useFull: useFullAction,
 
   useResourceLinks: () => undefined,
 
@@ -65,7 +72,7 @@ export const ActionComponents: RequiredResourceComponents<
   },
 
   ResourcePageHeader: ({ id }) => {
-    const action = ActionComponents.useListItem(id) as
+    const action = useAction(id) as
       | Types.ResourceListItem<Types.ActionListItemInfo>
       | undefined;
     return (
@@ -80,20 +87,19 @@ export const ActionComponents: RequiredResourceComponents<
   },
 
   State: ({ id }) => {
-    let state = ActionComponents.useListItem(id)?.info.state;
+    let state = useAction(id)?.info.state;
     return <StatusBadge text={state} intent={actionStateIntention(state)} />;
   },
   Info: {
     Schedule: ({ id }) => {
-      const next_scheduled_run =
-        ActionComponents.useListItem(id)?.info.next_scheduled_run;
+      const nextScheduledRun = useAction(id)?.info.next_scheduled_run;
       return (
         <Group>
           <Clock size="1rem" />
           Next Run:
           <Text fw="bold">
-            {next_scheduled_run
-              ? new Date(next_scheduled_run).toLocaleString()
+            {nextScheduledRun
+              ? new Date(nextScheduledRun).toLocaleString()
               : "Not Scheduled"}
           </Text>
         </Group>
@@ -101,7 +107,7 @@ export const ActionComponents: RequiredResourceComponents<
     },
     ScheduleErrors: ({ id }) => {
       const [opened, { close, open }] = useDisclosure(false);
-      const error = ActionComponents.useListItem(id)?.info.schedule_error;
+      const error = useAction(id)?.info.schedule_error;
 
       if (!error) {
         return null;
@@ -138,7 +144,7 @@ export const ActionComponents: RequiredResourceComponents<
           { refetchInterval: 5000 },
         ).data?.running ?? 0) > 0;
       const { mutateAsync, isPending } = useExecute("RunAction");
-      const action = ActionComponents.useListItem(id);
+      const action = useAction(id);
 
       if (!action) {
         return null;

@@ -7,15 +7,22 @@ import ResourceLink from "@/resources/link";
 import NewResource from "@/resources/new";
 import DeleteResource from "../delete";
 
+export function useBuilder(id: string | undefined) {
+  return useRead("ListBuilders", {}).data?.find((r) => r.id === id);
+}
+
+export function useFullBuilder(id: string) {
+  return useRead("GetBuilder", { builder: id }).data;
+}
+
 export const BuilderComponents: RequiredResourceComponents<
   Types.BuilderConfig,
   undefined,
   Types.BuilderListItemInfo
 > = {
   useList: () => useRead("ListBuilders", {}).data,
-  useListItem: (id) => BuilderComponents.useList()?.find((r) => r.id === id),
-
-  useFull: (id) => useRead("GetBuilder", { builder: id }).data,
+  useListItem: useBuilder,
+  useFull: useFullBuilder,
 
   useResourceLinks: () => undefined,
 
@@ -40,7 +47,7 @@ export const BuilderComponents: RequiredResourceComponents<
   },
 
   ResourcePageHeader: ({ id }) => {
-    const builder = BuilderComponents.useListItem(id);
+    const builder = useBuilder(id);
     return (
       <EntityHeader
         intent="None"

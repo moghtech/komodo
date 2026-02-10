@@ -1,5 +1,6 @@
 import {
   AlarmClock,
+  Ban,
   Bell,
   Box,
   CalendarDays,
@@ -139,6 +140,7 @@ export const ICONS = {
   Save,
   Download,
   Info,
+  Cancel: Ban,
   NotFound: SearchX,
   Unknown: CircleQuestionMark,
 };

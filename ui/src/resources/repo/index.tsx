@@ -10,15 +10,22 @@ import NewResource from "@/resources/new";
 import RepoConfig from "./config";
 import DeleteResource from "../delete";
 
+export function useRepo(id: string | undefined) {
+  return useRead("ListRepos", {}).data?.find((r) => r.id === id);
+}
+
+export function useFullRepo(id: string) {
+  return useRead("GetRepo", { repo: id }).data;
+}
+
 export const RepoComponents: RequiredResourceComponents<
   Types.RepoConfig,
   Types.RepoInfo,
   Types.RepoListItemInfo
 > = {
   useList: () => useRead("ListRepos", {}).data,
-  useListItem: (id) => RepoComponents.useList()?.find((r) => r.id === id),
-
-  useFull: (id) => useRead("GetRepo", { repo: id }).data,
+  useListItem: useRepo,
+  useFull: useFullRepo,
 
   useResourceLinks: (repo) => repo?.config?.links,
 
@@ -60,7 +67,7 @@ export const RepoComponents: RequiredResourceComponents<
   },
 
   ResourcePageHeader: ({ id }) => {
-    const repo = RepoComponents.useListItem(id);
+    const repo = useRepo(id);
     return (
       <EntityHeader
         intent={repoStateIntention(repo?.info.state)}
@@ -73,7 +80,7 @@ export const RepoComponents: RequiredResourceComponents<
   },
 
   State: ({ id }) => {
-    let state = RepoComponents.useListItem(id)?.info.state;
+    let state = useRepo(id)?.info.state;
     return <StatusBadge text={state} intent={repoStateIntention(state)} />;
   },
   Info: {},

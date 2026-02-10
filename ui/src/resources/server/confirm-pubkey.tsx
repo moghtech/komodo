@@ -3,10 +3,10 @@ import { notifications } from "@mantine/notifications";
 import { CircleOff } from "lucide-react";
 import { usePermissions, useWrite } from "@/lib/hooks";
 import ConfirmModal from "@/ui/confirm-modal";
-import { ServerComponents } from ".";
+import { useServer } from ".";
 
 export default function ConfirmServerPubkey({ id }: { id: string }) {
-  const server = ServerComponents.useListItem(id);
+  const server = useServer(id);
   const { canWrite } = usePermissions({ type: "Server", id });
   const { mutateAsync: confirm, isPending } = useWrite(
     "UpdateServerPublicKey",
@@ -26,7 +26,7 @@ export default function ConfirmServerPubkey({ id }: { id: string }) {
     <ConfirmModal
       disabled={!canWrite}
       title="Confirm Public Key"
-      confirmButtonText="Confirm"
+      confirmButtonContent="Confirm"
       confirmText={server.name}
       icon={<CircleOff size="1rem" />}
       targetProps={{ color: "red" }}

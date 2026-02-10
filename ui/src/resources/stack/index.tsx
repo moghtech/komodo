@@ -16,8 +16,8 @@ import {
   RestartStack,
   StartStopStack,
 } from "./executions";
-import { SwarmComponents } from "@/resources/swarm";
-import { ServerComponents } from "@/resources/server";
+import { SwarmComponents, useSwarm } from "@/resources/swarm";
+import { ServerComponents, useServer } from "@/resources/server";
 import {
   ActionIcon,
   Button,
@@ -33,15 +33,22 @@ import StackServices from "./services";
 import ResourceLink from "@/resources/link";
 import DeleteResource from "../delete";
 
+export function useStack(id: string | undefined) {
+  return useRead("ListStacks", {}).data?.find((r) => r.id === id);
+}
+
+export function useFullStack(id: string) {
+  return useRead("GetStack", { stack: id }).data;
+}
+
 export const StackComponents: RequiredResourceComponents<
   Types.StackConfig,
   Types.StackInfo,
   Types.StackListItemInfo
 > = {
   useList: () => useRead("ListStacks", {}).data,
-  useListItem: (id) => StackComponents.useList()?.find((r) => r.id === id),
-
-  useFull: (id) => useRead("GetStack", { stack: id }).data,
+  useListItem: useStack,
+  useFull: useFullStack,
 
   useResourceLinks: (stack) => stack?.config?.links,
 
@@ -95,7 +102,7 @@ export const StackComponents: RequiredResourceComponents<
   },
 
   ResourcePageHeader: ({ id }) => {
-    const stack = StackComponents.useListItem(id);
+    const stack = useStack(id);
     return (
       <EntityHeader
         intent={stackStateIntention(stack?.info.state)}
@@ -113,14 +120,14 @@ export const StackComponents: RequiredResourceComponents<
   },
 
   State: ({ id }) => {
-    let state = StackComponents.useListItem(id)?.info.state;
+    let state = useStack(id)?.info.state;
     return <StatusBadge text={state} intent={stackStateIntention(state)} />;
   },
   Info: {
     DeployTarget: ({ id }) => {
-      const info = StackComponents.useListItem(id)?.info;
-      const swarm = SwarmComponents.useListItem(info?.swarm_id);
-      const server = ServerComponents.useListItem(info?.server_id);
+      const info = useStack(id)?.info;
+      const swarm = useSwarm(info?.swarm_id);
+      const server = useServer(info?.server_id);
       return swarm?.id ? (
         <ResourceLink type="Swarm" id={swarm?.id} />
       ) : server?.id ? (
@@ -133,11 +140,11 @@ export const StackComponents: RequiredResourceComponents<
       );
     },
     Source: ({ id }) => {
-      const info = StackComponents.useListItem(id)?.info;
+      const info = useStack(id)?.info;
       return <FileSource info={info} />;
     },
     Services: ({ id }) => {
-      const info = StackComponents.useListItem(id)?.info;
+      const info = useStack(id)?.info;
       return (
         <HoverCard position="bottom-start">
           <HoverCard.Target>
@@ -168,7 +175,7 @@ export const StackComponents: RequiredResourceComponents<
       );
     },
     NoConfig: ({ id }) => {
-      const config = StackComponents.useFull(id)?.config;
+      const config = useFullStack(id)?.config;
       if (
         !config ||
         config?.files_on_host ||
@@ -194,7 +201,7 @@ export const StackComponents: RequiredResourceComponents<
       );
     },
     ProjectMissing: ({ id }) => {
-      const info = StackComponents.useListItem(id)?.info;
+      const info = useStack(id)?.info;
       const state = info?.state ?? Types.StackState.Unknown;
       if (
         !info ||
@@ -223,7 +230,7 @@ export const StackComponents: RequiredResourceComponents<
       );
     },
     RemoteErrors: ({ id }) => {
-      const info = StackComponents.useFull(id)?.info;
+      const info = useFullStack(id)?.info;
       const errors = info?.remote_errors;
       if (!info || !errors || errors.length === 0) {
         return null;
@@ -245,7 +252,7 @@ export const StackComponents: RequiredResourceComponents<
 
     Refresh: ({ id }) => {
       const inv = useInvalidate();
-      const info = StackComponents.useListItem(id)?.info;
+      const info = useStack(id)?.info;
       const { canExecute } = usePermissions({ type: "Stack", id });
       const { mutate, isPending } = useWrite("RefreshStackCache", {
         onSuccess: () => {
@@ -253,18 +260,16 @@ export const StackComponents: RequiredResourceComponents<
           notifications.show({ message: "Refreshed source file contents" });
         },
       });
+
       if (
         !canExecute ||
         // Don't show for UI defined, doesn't do anything
         (!info?.files_on_host && !info?.linked_repo && !info?.repo)
       )
         return null;
+
       return (
-        <ActionIcon
-          variant="light"
-          onClick={() => mutate({ stack: id })}
-          loading={isPending}
-        >
+        <ActionIcon onClick={() => mutate({ stack: id })} loading={isPending}>
           <ICONS.Refresh size="1rem" />
         </ActionIcon>
       );

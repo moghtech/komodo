@@ -10,7 +10,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { Types } from "komodo_client";
-import { StackComponents } from "..";
+import { useStack } from "..";
 
 export interface StackConfigFilesProps {
   id: string;
@@ -26,8 +26,7 @@ export default function StackConfigFiles({
   disabled,
 }: StackConfigFilesProps) {
   const values = value ?? [];
-  const allServices =
-    StackComponents.useListItem(id)?.info.services.map((s) => s.service) ?? [];
+  const allServices = useStack(id)?.info.services.map((s) => s.service) ?? [];
   return (
     <ConfigItem>
       {!disabled && (

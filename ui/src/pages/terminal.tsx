@@ -2,9 +2,9 @@ import DockerResourceLink from "@/components/docker/link";
 import TargetTerminal from "@/components/terminal/target";
 import { useSetTitle, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
-import { DeploymentComponents } from "@/resources/deployment";
-import { ServerComponents } from "@/resources/server";
-import { StackComponents } from "@/resources/stack";
+import { DeploymentComponents, useDeployment } from "@/resources/deployment";
+import { ServerComponents, useServer } from "@/resources/server";
+import { StackComponents, useStack } from "@/resources/stack";
 import ConfirmButton from "@/ui/confirm-button";
 import Page from "@/ui/page";
 import { Group, Text } from "@mantine/core";
@@ -80,7 +80,7 @@ function ServerTerminalPage({
   id: string;
   terminal: string;
 }) {
-  const server = ServerComponents.useListItem(id);
+  const server = useServer(id);
   useSetTitle(`${server?.name} | Terminal | ${terminal}`);
   const target: Types.TerminalTarget = useMemo(
     () => ({
@@ -109,7 +109,7 @@ function ContainerTerminalPage({
   container: string;
   terminal: string;
 }) {
-  const server = ServerComponents.useListItem(id);
+  const server = useServer(id);
   useSetTitle(`${server?.name} | ${container} Terminal | ${terminal}`);
   const target: Types.TerminalTarget = useMemo(
     () => ({
@@ -140,7 +140,7 @@ function StackServiceTerminalPage({
   service: string;
   terminal: string;
 }) {
-  const stack = StackComponents.useListItem(id);
+  const stack = useStack(id);
   useSetTitle(`${stack?.name} | ${service} Terminal | ${terminal}`);
   const target: Types.TerminalTarget = useMemo(
     () => ({
@@ -177,7 +177,7 @@ function DeploymentTerminalPage({
   id: string;
   terminal: string;
 }) {
-  const deployment = DeploymentComponents.useListItem(id);
+  const deployment = useDeployment(id);
   useSetTitle(`${deployment?.name} | Terminal | ${terminal}`);
   const target: Types.TerminalTarget = useMemo(
     () => ({

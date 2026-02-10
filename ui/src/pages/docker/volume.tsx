@@ -6,7 +6,7 @@ import ResourceUpdates from "@/components/updates/resource";
 import { useExecute, usePermissions, useRead, useSetTitle } from "@/lib/hooks";
 import ResourceDescription from "@/resources/description";
 import ResourceLink from "@/resources/link";
-import { ServerComponents } from "@/resources/server";
+import { useServer } from "@/resources/server";
 import { ICONS } from "@/theme/icons";
 import ConfirmButton from "@/ui/confirm-button";
 import { DataTable } from "@/ui/data-table";
@@ -41,7 +41,7 @@ function VolumeInner({
   serverId: string;
   volumeName: string;
 }) {
-  const server = ServerComponents.useListItem(serverId);
+  const server = useServer(serverId);
   useSetTitle(`${server?.name} | Volume | ${volumeName}`);
   const nav = useNavigate();
 

@@ -9,7 +9,7 @@ import {
   useSetTitle,
 } from "@/lib/hooks";
 import { UsableResource } from "@/resources";
-import { ServerComponents } from "@/resources/server";
+import { useServer } from "@/resources/server";
 import { ICONS } from "@/theme/icons";
 import DividedChildren from "@/ui/divided-children";
 import EntityHeader from "@/ui/entity-header";
@@ -52,7 +52,7 @@ function ContainerInner({
   serverId: string;
   containerName: string;
 }) {
-  const server = ServerComponents.useListItem(serverId);
+  const server = useServer(serverId);
   useSetTitle(`${server?.name} | Container | ${containerName}`);
   const { canExecute } = usePermissions({ type: "Server", id: serverId });
   const listContainer = useRead(

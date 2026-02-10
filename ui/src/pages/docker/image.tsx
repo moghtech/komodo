@@ -6,7 +6,7 @@ import { fmtDateWithMinutes, fmtSizeBytes } from "@/lib/formatting";
 import { useExecute, usePermissions, useRead, useSetTitle } from "@/lib/hooks";
 import ResourceDescription from "@/resources/description";
 import ResourceLink from "@/resources/link";
-import { ServerComponents } from "@/resources/server";
+import { useServer } from "@/resources/server";
 import { ICONS } from "@/theme/icons";
 import ConfirmButton from "@/ui/confirm-button";
 import { DataTable } from "@/ui/data-table";
@@ -44,7 +44,7 @@ function ImageInner({
   imageName: string;
 }) {
   const [showHistory, setShowHistory] = useState(false);
-  const server = ServerComponents.useListItem(serverId);
+  const server = useServer(serverId);
   useSetTitle(`${server?.name} | Image | ${imageName}`);
   const nav = useNavigate();
 

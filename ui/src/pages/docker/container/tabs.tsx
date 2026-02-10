@@ -1,6 +1,6 @@
 import { colorByIntention, containerStateIntention } from "@/lib/color";
 import { usePermissions } from "@/lib/hooks";
-import { ServerComponents } from "@/resources/server";
+import { useServer } from "@/resources/server";
 import {
   MobileFriendlyTabsSelector,
   TabNoContent,
@@ -39,8 +39,7 @@ export default function ContainerTabs({
     id: server,
   });
   const containerTerminalsDisabled =
-    ServerComponents.useListItem(server)?.info.container_terminals_disabled ??
-    true;
+    useServer(server)?.info.container_terminals_disabled ?? true;
   const logDisabled =
     !specificLogs || state === Types.ContainerStateStatusEnum.Empty;
   const inspectDisabled =

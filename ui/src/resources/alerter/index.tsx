@@ -6,15 +6,22 @@ import EntityHeader from "@/ui/entity-header";
 import NewResource from "@/resources/new";
 import DeleteResource from "../delete";
 
+export function useAlerter(id: string | undefined) {
+  return useRead("ListAlerters", {}).data?.find((r) => r.id === id);
+}
+
+export function useFullAlerter(id: string) {
+  return useRead("GetAlerter", { alerter: id }).data;
+}
+
 export const AlerterComponents: RequiredResourceComponents<
   Types.AlerterConfig,
   undefined,
   Types.AlerterListItemInfo
 > = {
   useList: () => useRead("ListAlerters", {}).data,
-  useListItem: (id) => AlerterComponents.useList()?.find((r) => r.id === id),
-
-  useFull: (id) => useRead("GetAlerter", { alerter: id }).data,
+  useListItem: useAlerter,
+  useFull: useFullAlerter,
 
   useResourceLinks: () => undefined,
 
@@ -39,7 +46,7 @@ export const AlerterComponents: RequiredResourceComponents<
   },
 
   ResourcePageHeader: ({ id }) => {
-    const alerter = AlerterComponents.useListItem(id);
+    const alerter = useAlerter(id);
     return (
       <EntityHeader
         intent="None"

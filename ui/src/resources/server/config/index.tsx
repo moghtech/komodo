@@ -1,5 +1,5 @@
 import { usePermissions, useRead, useWrite } from "@/lib/hooks";
-import { ServerComponents } from "..";
+import { useFullServer, useServer } from "..";
 import { useEffect, useState } from "react";
 import { Types } from "komodo_client";
 import { useLocalStorage } from "@mantine/hooks";
@@ -13,10 +13,9 @@ export default function ServerConfig({ id }: { id: string }) {
   const global_disabled =
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
   const { canWrite } = usePermissions({ type: "Server", id });
-  const is_connected =
-    ServerComponents.useListItem(id)?.info.state === Types.ServerState.Ok;
+  const is_connected = useServer(id)?.info.state === Types.ServerState.Ok;
 
-  const server = ServerComponents.useFull(id);
+  const server = useFullServer(id);
   const config = server?.config;
   const [publicKey, setPublicKey] = useState("");
 

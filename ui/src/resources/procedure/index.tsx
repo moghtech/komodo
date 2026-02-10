@@ -10,15 +10,22 @@ import NewResource from "@/resources/new";
 import ProcedureConfig from "./config";
 import DeleteResource from "../delete";
 
+export function useProcedure(id: string | undefined) {
+  return useRead("ListProcedures", {}).data?.find((r) => r.id === id);
+}
+
+export function useFullProcedure(id: string) {
+  return useRead("GetProcedure", { procedure: id }).data;
+}
+
 export const ProcedureComponents: RequiredResourceComponents<
   Types.ProcedureConfig,
   undefined,
   Types.ProcedureListItemInfo
 > = {
   useList: () => useRead("ListProcedures", {}).data,
-  useListItem: (id) => ProcedureComponents.useList()?.find((r) => r.id === id),
-
-  useFull: (id) => useRead("GetProcedure", { procedure: id }).data,
+  useListItem: useProcedure,
+  useFull: useFullProcedure,
 
   useResourceLinks: () => undefined,
 
@@ -60,7 +67,7 @@ export const ProcedureComponents: RequiredResourceComponents<
   },
 
   ResourcePageHeader: ({ id }) => {
-    const procedure = ProcedureComponents.useListItem(id);
+    const procedure = useProcedure(id);
     return (
       <EntityHeader
         intent={procedureStateIntention(procedure?.info.state)}
@@ -74,7 +81,7 @@ export const ProcedureComponents: RequiredResourceComponents<
   },
 
   State: ({ id }) => {
-    let state = ProcedureComponents.useListItem(id)?.info.state;
+    let state = useProcedure(id)?.info.state;
     return <StatusBadge text={state} intent={procedureStateIntention(state)} />;
   },
   Info: {},

@@ -17,15 +17,22 @@ import { notifications } from "@mantine/notifications";
 import ConfirmServerPubkey from "./confirm-pubkey";
 import DeleteResource from "../delete";
 
+export function useServer(id: string | undefined) {
+  return useRead("ListServers", {}).data?.find((r) => r.id === id);
+}
+
+export function useFullServer(id: string) {
+  return useRead("GetServer", { server: id }).data;
+}
+
 export const ServerComponents: RequiredResourceComponents<
   Types.ServerConfig,
   Types.ServerInfo,
   Types.ServerListItemInfo
 > = {
   useList: () => useRead("ListServers", {}).data,
-  useListItem: (id) => ServerComponents.useList()?.find((r) => r.id === id),
-
-  useFull: (id) => useRead("GetServer", { server: id }).data,
+  useListItem: useServer,
+  useFull: useFullServer,
 
   useResourceLinks: (server) => server?.config?.links,
 
@@ -69,7 +76,7 @@ export const ServerComponents: RequiredResourceComponents<
   },
 
   ResourcePageHeader: ({ id }) => {
-    const server = ServerComponents.useListItem(id);
+    const server = useServer(id);
     return (
       <EntityHeader
         intent={serverStateIntention(server?.info.state)}
@@ -83,13 +90,13 @@ export const ServerComponents: RequiredResourceComponents<
   },
 
   State: ({ id }) => {
-    let state = ServerComponents.useListItem(id)?.info.state;
+    let state = useServer(id)?.info.state;
     return <StatusBadge text={state} intent={serverStateIntention(state)} />;
   },
   Info: {
     ServerVersion,
     PublicIp: ({ id }) => {
-      const publicIp = ServerComponents.useListItem(id)?.info.public_ip;
+      const publicIp = useServer(id)?.info.public_ip;
       return (
         <HoverCard position="bottom-start">
           <HoverCard.Target>
@@ -115,7 +122,7 @@ export const ServerComponents: RequiredResourceComponents<
     },
     Cpu: ({ id }) => {
       const isServerAvailable =
-        ServerComponents.useListItem(id)?.info.state === Types.ServerState.Ok;
+        useServer(id)?.info.state === Types.ServerState.Ok;
       const coreCount =
         useRead(
           "GetSystemInformation",
@@ -141,7 +148,7 @@ export const ServerComponents: RequiredResourceComponents<
     },
     LoadAvg: ({ id }) => {
       const isServerAvailable =
-        ServerComponents.useListItem(id)?.info.state === Types.ServerState.Ok;
+        useServer(id)?.info.state === Types.ServerState.Ok;
       const stats = useRead(
         "GetSystemStats",
         { server: id },
@@ -167,7 +174,7 @@ export const ServerComponents: RequiredResourceComponents<
     },
     Memory: ({ id }) => {
       const isServerAvailable =
-        ServerComponents.useListItem(id)?.info.state === Types.ServerState.Ok;
+        useServer(id)?.info.state === Types.ServerState.Ok;
       const stats = useRead(
         "GetSystemStats",
         { server: id },
@@ -190,7 +197,7 @@ export const ServerComponents: RequiredResourceComponents<
     },
     Disk: ({ id }) => {
       const isServerAvailable =
-        ServerComponents.useListItem(id)?.info.state === Types.ServerState.Ok;
+        useServer(id)?.info.state === Types.ServerState.Ok;
       const stats = useRead(
         "GetSystemStats",
         { server: id },
@@ -220,7 +227,7 @@ export const ServerComponents: RequiredResourceComponents<
 
   Executions: {
     StartAll: ({ id }) => {
-      const server = ServerComponents.useListItem(id);
+      const server = useServer(id);
       const { mutate, isPending } = useExecute("StartAllContainers");
       const starting = useRead(
         "GetServerActionState",
@@ -252,7 +259,7 @@ export const ServerComponents: RequiredResourceComponents<
       );
     },
     RestartAll: ({ id }) => {
-      const server = ServerComponents.useListItem(id);
+      const server = useServer(id);
       const { mutateAsync: restart, isPending } = useExecute(
         "RestartAllContainers",
       );
@@ -277,7 +284,7 @@ export const ServerComponents: RequiredResourceComponents<
       );
     },
     PauseAll: ({ id }) => {
-      const server = ServerComponents.useListItem(id);
+      const server = useServer(id);
       const { mutateAsync: pause, isPending } =
         useExecute("PauseAllContainers");
       const pausing = useRead(
@@ -311,7 +318,7 @@ export const ServerComponents: RequiredResourceComponents<
       );
     },
     UnpauseAll: ({ id }) => {
-      const server = ServerComponents.useListItem(id);
+      const server = useServer(id);
       const { mutateAsync: unpause, isPending } = useExecute(
         "UnpauseAllContainers",
       );
@@ -345,7 +352,7 @@ export const ServerComponents: RequiredResourceComponents<
       );
     },
     StopAll: ({ id }) => {
-      const server = ServerComponents.useListItem(id);
+      const server = useServer(id);
       const { mutateAsync: stop, isPending } = useExecute("StopAllContainers");
       const stopping = useRead(
         "GetServerActionState",

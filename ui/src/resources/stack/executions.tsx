@@ -1,6 +1,6 @@
 import { useExecute, useRead } from "@/lib/hooks";
 import { Types } from "komodo_client";
-import { StackComponents } from ".";
+import { useStack } from ".";
 import ConfirmModal from "@/ui/confirm-modal";
 import ConfirmButton from "@/ui/confirm-button";
 import { ICONS } from "@/theme/icons";
@@ -12,7 +12,7 @@ export const DeployStack = ({
   id: string;
   service?: string;
 }) => {
-  const stack = StackComponents.useListItem(id);
+  const stack = useStack(id);
   const state = stack?.info.state;
   const { mutateAsync: deploy, isPending } = useExecute("DeployStack");
   const deploying = useRead(
@@ -76,7 +76,7 @@ export const DestroyStack = ({
   id: string;
   service?: string;
 }) => {
-  const stack = StackComponents.useListItem(id);
+  const stack = useStack(id);
   const state = stack?.info.state;
   const { mutateAsync: destroy, isPending } = useExecute("DestroyStack");
   const destroying = useRead(
@@ -121,7 +121,7 @@ export const PullStack = ({
   id: string;
   service?: string;
 }) => {
-  const stack = StackComponents.useListItem(id);
+  const stack = useStack(id);
   const { mutate: pull, isPending: pullPending } = useExecute("PullStack");
   const actionState = useRead(
     "GetStackActionState",
@@ -156,7 +156,7 @@ export const RestartStack = ({
   id: string;
   service?: string;
 }) => {
-  const stack = StackComponents.useListItem(id);
+  const stack = useStack(id);
   const state = stack?.info.state;
   const { mutateAsync: restart, isPending: restartPending } =
     useExecute("RestartStack");
@@ -204,7 +204,7 @@ export const StartStopStack = ({
   id: string;
   service?: string;
 }) => {
-  const stack = StackComponents.useListItem(id);
+  const stack = useStack(id);
   const state = stack?.info.state ?? Types.StackState.Unknown;
   const { mutate: start, isPending: startPending } = useExecute("StartStack");
   const { mutateAsync: stop, isPending: stopPending } = useExecute("StopStack");
@@ -276,7 +276,7 @@ export const PauseUnpauseStack = ({
   id: string;
   service?: string;
 }) => {
-  const stack = StackComponents.useListItem(id);
+  const stack = useStack(id);
   const state = stack?.info.state;
   const { mutate: unpause, isPending: unpausePending } =
     useExecute("UnpauseStack");
