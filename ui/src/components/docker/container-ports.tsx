@@ -1,11 +1,12 @@
 import { Fragment } from "react";
-import { useContainerPortsMap, useServerAddress } from "@/lib/hooks";
+import { useContainerPortsMap } from "@/lib/hooks";
 import { Group, HoverCard, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { EthernetPort } from "lucide-react";
 import { colorByIntention } from "@/lib/color";
 import { ICONS } from "@/theme/icons";
 import { fmtPortMount } from "@/lib/formatting";
+import { useServerAddress } from "@/resources/server/hooks";
 
 export interface ContainerPortsProps {
   ports: Types.Port[];

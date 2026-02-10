@@ -258,10 +258,12 @@ export const SortableHeader = <T, V>({
   column,
   title,
   description,
+  sortDescFirst,
 }: {
   column: Column<T, V>;
   title: string;
   description?: ReactNode;
+  sortDescFirst?: boolean;
 }) => {
   return (
     <UnstyledButton
@@ -285,15 +287,26 @@ export const SortableHeader = <T, V>({
           )}
         </Flex>
         <Center>
-          <SortIcon state={column.getIsSorted()} />
+          <SortIcon
+            state={column.getIsSorted()}
+            sortDescFirst={sortDescFirst}
+          />
         </Center>
       </Group>
     </UnstyledButton>
   );
 };
 
-function SortIcon({ state }: { state: false | "asc" | "desc" }) {
-  if (state === "asc") return <ArrowUp size={14} />;
-  if (state === "desc") return <ArrowDown size={14} />;
+function SortIcon({
+  state,
+  sortDescFirst,
+}: {
+  state: false | "asc" | "desc";
+  sortDescFirst?: boolean;
+}) {
+  if (state === "asc")
+    return sortDescFirst ? <ArrowDown size={14} /> : <ArrowUp size={14} />;
+  if (state === "desc")
+    return sortDescFirst ? <ArrowUp size={14} /> : <ArrowDown size={14} />;
   return <Minus size={14} />;
 }

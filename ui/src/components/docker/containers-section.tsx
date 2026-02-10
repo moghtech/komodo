@@ -7,7 +7,6 @@ import Section, { SectionProps } from "@/ui/section";
 import ShowHideButton from "@/ui/show-hide-button";
 import { Group, TextInput } from "@mantine/core";
 import { Types } from "komodo_client";
-import { Dispatch, SetStateAction } from "react";
 import DockerResourceLink from "./link";
 import StatusBadge from "@/ui/status-badge";
 import { containerStateIntention } from "@/lib/color";
@@ -21,7 +20,7 @@ export interface ContainersSectionProps extends SectionProps {
   setShow?: (show: boolean) => void;
   pruneButton?: boolean;
   forceTall?: boolean;
-  _search?: [string, Dispatch<SetStateAction<string>>];
+  _search?: [string, (search: string) => void];
 }
 
 export default function ContainersSection({

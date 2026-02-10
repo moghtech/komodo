@@ -12,6 +12,8 @@ import { Tabs } from "@mantine/core";
 import { colorByIntention, serverStateIntention } from "@/lib/color";
 import ServerConfig from "./config";
 import { ICONS } from "@/theme/icons";
+import ServerDockerResources from "./docker";
+import ServerStats from "./stats";
 
 type ServerTabsView = "Config" | "Stats" | "Docker" | "Resources" | "Terminals";
 
@@ -49,12 +51,14 @@ export default function ServerTabs({ id }: { id: string }) {
         value: "Config",
         icon: ICONS.Settings,
       },
-      // {
-      //   value: "Stats",
-      // },
-      // {
-      //   value: "Docker",
-      // },
+      {
+        value: "Stats",
+        icon: ICONS.Stats,
+      },
+      {
+        value: "Docker",
+        icon: ICONS.Docker,
+      },
       // {
       //   value: "Resources",
       //   disabled: noResources,
@@ -91,6 +95,12 @@ export default function ServerTabs({ id }: { id: string }) {
   switch (view) {
     case "Config":
       View = <ServerConfig id={id} titleOther={Selector} />;
+      break;
+    case "Stats":
+      View = <ServerStats id={id} titleOther={Selector} />;
+      break;
+    case "Docker":
+      View = <ServerDockerResources id={id} titleOther={Selector} />;
       break;
     case "Terminals":
       View = <TerminalSection target={target} titleOther={Selector} />;

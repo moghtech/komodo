@@ -26,22 +26,23 @@ import { notifications } from "@mantine/notifications";
 import { useWindowEvent } from "@mantine/hooks";
 import { PermissionLevelAndSpecifics } from "komodo_client/dist/types";
 
-export const komodo_client = () =>
-  KomodoClient(KOMODO_BASE_URL, {
+export function komodo_client() {
+  return KomodoClient(KOMODO_BASE_URL, {
     type: "jwt",
     params: { jwt: MoghAuth.LOGIN_TOKENS.jwt() },
   });
+}
 
 // ============== RESOLVER ==============
 
-export const useLoginOptions = () => {
+export function useLoginOptions() {
   return useQuery({
     queryKey: ["GetLoginOptions"],
     queryFn: () => komodo_client().auth.login("GetLoginOptions", {}),
   });
-};
+}
 
-export const useLogin = <
+export function useLogin<
   T extends MoghAuth.Types.LoginRequest["type"],
   R extends Extract<MoghAuth.Types.LoginRequest, { type: T }>,
   P extends R["params"],
@@ -49,10 +50,7 @@ export const useLogin = <
     UseMutationOptions<MoghAuth.LoginResponses[T], unknown, P, unknown>,
     "mutationKey" | "mutationFn"
   >,
->(
-  type: T,
-  config?: C,
-) => {
+>(type: T, config?: C) {
   return useMutation({
     mutationKey: [type],
     mutationFn: (params: P) => komodo_client().auth.login<T, R>(type, params),
@@ -75,9 +73,9 @@ export const useLogin = <
     },
     ...config,
   });
-};
+}
 
-export const useManageAuth = <
+export function useManageAuth<
   T extends MoghAuth.Types.ManageRequest["type"],
   R extends Extract<MoghAuth.Types.ManageRequest, { type: T }>,
   P extends R["params"],
@@ -85,10 +83,7 @@ export const useManageAuth = <
     UseMutationOptions<MoghAuth.ManageResponses[T], unknown, P, unknown>,
     "mutationKey" | "mutationFn"
   >,
->(
-  type: T,
-  config?: C,
-) => {
+>(type: T, config?: C) {
   return useMutation({
     mutationKey: [type],
     mutationFn: (params: P) => komodo_client().auth.manage<T, R>(type, params),
@@ -111,13 +106,13 @@ export const useManageAuth = <
     },
     ...config,
   });
-};
+}
 
 let jwt_redeem_sent = false;
 let passkey_sent = false;
 
 /// returns whether to show login / loading screen depending on state of exchange token loop
-export const useAuthState = () => {
+export function useAuthState() {
   const onSuccess = ({ jwt }: MoghAuth.Types.JwtResponse) => {
     MoghAuth.LOGIN_TOKENS.add_and_change(jwt);
     sanitizeQueryInner(search);
@@ -164,9 +159,9 @@ export const useAuthState = () => {
     passkey_pending: !!passkey,
     totp: search.get("totp") === "true",
   };
-};
+}
 
-export const useUser = () => {
+export function useUser() {
   const userReset = useUserReset();
   const hasJwt = !!MoghAuth.LOGIN_TOKENS.jwt();
 
@@ -184,23 +179,23 @@ export const useUser = () => {
   }, [query.data, query.error]);
 
   return query;
-};
+}
 
-export const useUserInvalidate = () => {
+export function useUserInvalidate() {
   const qc = useQueryClient();
   return () => {
     qc.invalidateQueries({ queryKey: ["GetUser"] });
   };
-};
+}
 
-export const useUserReset = () => {
+export function useUserReset() {
   const qc = useQueryClient();
   return () => {
     qc.resetQueries({ queryKey: ["GetUser"] });
   };
-};
+}
 
-export const useRead = <
+export function useRead<
   T extends Types.ReadRequest["type"],
   R extends Extract<Types.ReadRequest, { type: T }>,
   P extends R["params"],
@@ -213,11 +208,7 @@ export const useRead = <
     >,
     "queryFn" | "queryKey"
   >,
->(
-  type: T,
-  params: P,
-  config?: C,
-) => {
+>(type: T, params: P, config?: C) {
   const hasJwt = !!MoghAuth.LOGIN_TOKENS.jwt();
   return useQuery({
     queryKey: [type, params],
@@ -225,9 +216,9 @@ export const useRead = <
     enabled: hasJwt && config?.enabled !== false,
     ...config,
   });
-};
+}
 
-export const useInvalidate = () => {
+export function useInvalidate() {
   const qc = useQueryClient();
   return <
     Type extends Types.ReadRequest["type"],
@@ -235,9 +226,9 @@ export const useInvalidate = () => {
   >(
     ...keys: Array<[Type] | [Type, Params]>
   ) => keys.forEach((key) => qc.invalidateQueries({ queryKey: key }));
-};
+}
 
-export const useWrite = <
+export function useWrite<
   T extends Types.WriteRequest["type"],
   R extends Extract<Types.WriteRequest, { type: T }>,
   P extends R["params"],
@@ -245,10 +236,7 @@ export const useWrite = <
     UseMutationOptions<WriteResponses[R["type"]], unknown, P, unknown>,
     "mutationKey" | "mutationFn"
   >,
->(
-  type: T,
-  config?: C,
-) => {
+>(type: T, config?: C) {
   return useMutation({
     mutationKey: [type],
     mutationFn: (params: P) => komodo_client().write<T, R>(type, params),
@@ -271,9 +259,9 @@ export const useWrite = <
     },
     ...config,
   });
-};
+}
 
-export const useExecute = <
+export function useExecute<
   T extends Types.ExecuteRequest["type"],
   R extends Extract<Types.ExecuteRequest, { type: T }>,
   P extends R["params"],
@@ -281,10 +269,7 @@ export const useExecute = <
     UseMutationOptions<ExecuteResponses[T], unknown, P, unknown>,
     "mutationKey" | "mutationFn"
   >,
->(
-  type: T,
-  config?: C,
-) => {
+>(type: T, config?: C) {
   return useMutation({
     mutationKey: [type],
     mutationFn: (params: P) => komodo_client().execute<T, R>(type, params),
@@ -307,11 +292,11 @@ export const useExecute = <
     },
     ...config,
   });
-};
+}
 
 // ============== UTILITY ==============
 
-export const atomWithStorage = <T>(key: string, init: T) => {
+export function atomWithStorage<T>(key: string, init: T) {
   const stored = localStorage.getItem(key);
   const inner = atom(stored ? JSON.parse(stored) : init);
   return atom(
@@ -321,28 +306,28 @@ export const atomWithStorage = <T>(key: string, init: T) => {
       localStorage.setItem(key, JSON.stringify(newValue));
     },
   );
-};
+}
 
-export const useResourceName = (type: UsableResource) => {
+export function useResourceName(type: UsableResource) {
   const resources = useRead(`List${type}s`, {}).data;
   return useCallback(
     (id: string) => resources?.find((resource) => resource.id === id)?.name,
     [resources],
   );
-};
+}
 
-export const useResourceParamType = () => {
+export function useResourceParamType() {
   const type = useParams().type;
   if (!type) return undefined;
   if (type === "resource-syncs") return "ResourceSync";
   return (type[0].toUpperCase() + type.slice(1, -1)) as UsableResource;
-};
+}
 
 export type ResourceMap = {
   [Resource in UsableResource]: Types.ResourceListItem<unknown>[] | undefined;
 };
 
-export const useAllResources = (): ResourceMap => {
+export function useAllResources(): ResourceMap {
   return {
     Swarm: useRead("ListSwarms", {}).data,
     Server: useRead("ListServers", {}).data,
@@ -356,10 +341,10 @@ export const useAllResources = (): ResourceMap => {
     Alerter: useRead("ListAlerters", {}).data,
     ResourceSync: useRead("ListResourceSyncs", {}).data,
   };
-};
+}
 
 // Returns true if Komodo has no resources.
-export const useNoResources = () => {
+export function useNoResources() {
   const resources = useAllResources();
   for (const target of RESOURCE_TARGETS) {
     if (resources[target] && resources[target].length) {
@@ -367,10 +352,10 @@ export const useNoResources = () => {
     }
   }
   return true;
-};
+}
 
 /** returns function that takes a resource target and checks if it exists */
-export const useCheckResourceExists = () => {
+export function useCheckResourceExists() {
   const resources = useAllResources();
   return (target: Types.ResourceTarget) => {
     return (
@@ -379,12 +364,12 @@ export const useCheckResourceExists = () => {
       ) || false
     );
   };
-};
+}
 
-export const useFilterResources = <Info>(
+export function useFilterResources<Info>(
   resources?: Types.ResourceListItem<Info>[],
   search?: string,
-) => {
+) {
   const tags = useTagsFilter();
   const searchSplit = search?.toLowerCase()?.split(" ") || [];
   return (
@@ -398,9 +383,9 @@ export const useFilterResources = <Info>(
           : true),
     ) ?? []
   );
-};
+}
 
-export const usePushRecentlyViewed = ({ type, id }: Types.ResourceTarget) => {
+export function usePushRecentlyViewed({ type, id }: Types.ResourceTarget) {
   const userInvalidate = useUserInvalidate();
 
   const push = useWrite("PushRecentlyViewed", {
@@ -418,9 +403,9 @@ export const usePushRecentlyViewed = ({ type, id }: Types.ResourceTarget) => {
   }, [exists, push]);
 
   return () => push({ resource: { type, id } });
-};
+}
 
-export const useSetTitle = (more?: string) => {
+export function useSetTitle(more?: string) {
   const info = useRead("GetCoreInfo", {}).data;
   const title = more ? `${more} | ${info?.title}` : info?.title;
   useEffect(() => {
@@ -428,11 +413,11 @@ export const useSetTitle = (more?: string) => {
       document.title = title;
     }
   }, [title]);
-};
+}
 
 const tagsAtom = atomWithStorage<string[]>("tags-v0", []);
 
-export const useTags = () => {
+export function useTags() {
   const [tags, setTags] = useAtom<string[]>(tagsAtom);
 
   const add_tag = (tag_id: string) => setTags([...tags, tag_id]);
@@ -454,18 +439,18 @@ export const useTags = () => {
     toggle_tag,
     clear_tags,
   };
-};
+}
 
-export const useTagsFilter = () => {
+export function useTagsFilter() {
   const [tags] = useAtom<string[]>(tagsAtom);
   return tags;
-};
+}
 
-export const useKeyListener = (
+export function useKeyListener(
   listenKey: string,
   onPress: () => void,
   extra?: "shift" | "ctrl",
-) => {
+) {
   useWindowEvent("keydown", (e) => {
     // This will ignore Shift + listenKey if it is sent from input / textarea
     const target = e.target as HTMLElement | null;
@@ -484,28 +469,15 @@ export const useKeyListener = (
       onPress();
     }
   });
-};
+}
 
-export const useShiftKeyListener = (listenKey: string, onPress: () => void) => {
+export function useShiftKeyListener(listenKey: string, onPress: () => void) {
   useKeyListener(listenKey, onPress, "shift");
-};
+}
 
 /** Listens for ctrl (or CMD on mac) + the listenKey */
-export const useCtrlKeyListener = (listenKey: string, onPress: () => void) => {
+export function useCtrlKeyListener(listenKey: string, onPress: () => void) {
   useKeyListener(listenKey, onPress, "ctrl");
-};
-
-export interface PromptHotkeysConfig {
-  /** Function to call when Enter is pressed (confirm action) */
-  onConfirm?: () => void;
-  /** Function to call when Escape is pressed (cancel/close action) */
-  onCancel?: () => void;
-  /** Whether the hotkeys are enabled. Defaults to true */
-  enabled?: boolean;
-  /** Whether to ignore hotkeys when inside input/textarea elements. Defaults to true */
-  ignoreInputs?: boolean;
-  /** Whether the confirm action is disabled (e.g., form validation failed) */
-  confirmDisabled?: boolean;
 }
 
 export type WebhookIntegration = "Github" | "Gitlab";
@@ -518,7 +490,7 @@ const WEBHOOK_INTEGRATIONS_ATOM = atomWithStorage<WebhookIntegrations>(
   {},
 );
 
-export const useWebhookIntegrations = () => {
+export function useWebhookIntegrations() {
   const [integrations, setIntegrations] = useAtom<WebhookIntegrations>(
     WEBHOOK_INTEGRATIONS_ATOM,
   );
@@ -530,18 +502,18 @@ export const useWebhookIntegrations = () => {
         [provider]: integration,
       }),
   };
-};
+}
 
-export const getWebhookIntegration = (
+export function getWebhookIntegration(
   integrations: WebhookIntegrations,
   git_provider: string,
-) => {
+) {
   return integrations[git_provider]
     ? integrations[git_provider]
     : git_provider.includes("gitlab")
       ? "Gitlab"
       : "Github";
-};
+}
 
 export type WebhookIdOrName = "Id" | "Name";
 
@@ -550,12 +522,12 @@ const WEBHOOK_ID_OR_NAME_ATOM = atomWithStorage<WebhookIdOrName>(
   "Id",
 );
 
-export const useWebhookIdOrName = () => {
+export function useWebhookIdOrName() {
   return useAtom<WebhookIdOrName>(WEBHOOK_ID_OR_NAME_ATOM);
-};
+}
 
 export type Dimensions = { width: number; height: number };
-export const useWindowDimensions = () => {
+export function useWindowDimensions() {
   const [dimensions, setDimensions] = useState<Dimensions>({
     width: 0,
     height: 0,
@@ -574,24 +546,23 @@ export const useWindowDimensions = () => {
     };
   }, []);
   return dimensions;
-};
+}
 
-const selected_resources = atomFamily((_: UsableResource) =>
-  atom<string[]>([]),
-);
-export const useSelectedResources = (type: UsableResource) =>
-  useAtom(selected_resources(type));
+const selectedResources = atomFamily((_: UsableResource) => atom<string[]>([]));
+export function useSelectedResources(type: UsableResource) {
+  return useAtom(selectedResources(type));
+}
 
-const filter_by_update_available = atomWithStorage<boolean>(
+const filterByUpdateAvailable = atomWithStorage<boolean>(
   "update-available-filter-v1",
   false,
 );
-export const useFilterByUpdateAvailable: () => [boolean, () => void] = () => {
-  const [filter, set] = useAtom<boolean>(filter_by_update_available);
+export function useFilterByUpdateAvailable(): [boolean, () => void] {
+  const [filter, set] = useAtom<boolean>(filterByUpdateAvailable);
   return [filter, () => set(!filter)];
-};
+}
 
-export const usePermissions = ({ type, id }: Types.ResourceTarget) => {
+export function usePermissions({ type, id }: Types.ResourceTarget) {
   const user = useUser().data;
   const perms = useRead("GetPermission", { target: { type, id } }).data as
     | Types.PermissionLevelAndSpecifics
@@ -656,12 +627,12 @@ export const usePermissions = ({ type, id }: Types.ResourceTarget) => {
     specificAttach,
     specificProcesses,
   };
-};
+}
 
-export const useTerminalTargetPermissions = (target: Types.TerminalTarget) => {
+export function useTerminalTargetPermissions(target: Types.TerminalTarget) {
   const resourceTarget = resourceTargetFromTerminalTarget(target);
   return usePermissions(resourceTarget);
-};
+}
 
 const templatesQueryBehaviorAtom =
   atomWithStorage<Types.TemplatesQueryBehavior>(
@@ -669,8 +640,9 @@ const templatesQueryBehaviorAtom =
     Types.TemplatesQueryBehavior.Exclude,
   );
 
-export const useTemplatesQueryBehavior = () =>
-  useAtom<Types.TemplatesQueryBehavior>(templatesQueryBehaviorAtom);
+export function useTemplatesQueryBehavior() {
+  return useAtom<Types.TemplatesQueryBehavior>(templatesQueryBehaviorAtom);
+}
 
 export type SettingsView =
   | "Variables"
@@ -680,8 +652,9 @@ export type SettingsView =
   | "Profile";
 
 const viewAtom = atomWithStorage<SettingsView>("settings-view-v2", "Variables");
-
-export const useSettingsView = () => useAtom<SettingsView>(viewAtom);
+export function useSettingsView() {
+  return useAtom<SettingsView>(viewAtom);
+}
 
 /**
  * Map of unique host ports to array of formatted full port map spec
@@ -689,7 +662,7 @@ export const useSettingsView = () => useAtom<SettingsView>(viewAtom);
  */
 export type PortsMap = { [host_port: string]: Array<Types.Port> };
 
-export const useContainerPortsMap = (ports: Types.Port[]) => {
+export function useContainerPortsMap(ports: Types.Port[]) {
   return useMemo(() => {
     const map: PortsMap = {};
     for (const port of ports) {
@@ -705,7 +678,7 @@ export const useContainerPortsMap = (ports: Types.Port[]) => {
     }
     return map;
   }, [ports]);
-};
+}
 
 /**
  * A custom React hook that debounces a value, delaying its update until after
@@ -741,7 +714,7 @@ const dashboardPreferencesAtom = atomWithStorage(
   },
 );
 
-export const useDashboardPreferences = () => {
+export function useDashboardPreferences() {
   const [preferences, setPreferences] = useAtom<DashboardPreferences>(
     dashboardPreferencesAtom,
   );
@@ -762,38 +735,4 @@ export const useDashboardPreferences = () => {
     updatePreference,
     togglePreference,
   };
-};
-
-export type ServerAddress = {
-  raw: string;
-  protocol: "http:" | "https:";
-  hostname: string;
-};
-
-export const useServerAddress = (
-  serverId: string | undefined,
-): ServerAddress | null => {
-  const server = useRead("ListServers", {}).data?.find(
-    (s) => s.id === serverId,
-  );
-
-  if (!server) return null;
-
-  const base = server.info.external_address || server.info.address;
-
-  if (!base) return null;
-
-  const parsed = (() => {
-    try {
-      return new URL(base);
-    } catch {
-      return new URL("http://" + base);
-    }
-  })();
-
-  return {
-    raw: base,
-    protocol: parsed.protocol === "https:" ? "https:" : "http:",
-    hostname: parsed.hostname,
-  };
-};
+}

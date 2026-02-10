@@ -12,6 +12,7 @@ import {
   CircleQuestionMark,
   Clapperboard,
   Component,
+  Container,
   Cpu,
   Database,
   Diamond,
@@ -84,6 +85,7 @@ export const ICONS = {
   Terminal: Terminal,
   Schedule: CalendarDays,
   // DOCKER
+  Docker: Container,
   Container: Box,
   Network,
   Image: HardDrive,
@@ -103,6 +105,7 @@ export const ICONS = {
   LoadAvg: ChartLine,
   Memory: MemoryStick,
   Disk: Database,
+  Stats: ChartLine,
   // EXECUTIONS
   Deploy: Rocket,
   Destroy: Trash,
