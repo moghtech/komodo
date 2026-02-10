@@ -18,7 +18,7 @@ type BuildTabsView = "Config" | "Info" | "Deployments";
 
 export default function BuildTabs({ id }: { id: string }) {
   const [view, setView] = useLocalStorage<BuildTabsView>({
-    key: "build-tabs-v1",
+    key: `build-${id}-tab-v2`,
     defaultValue: "Config",
   });
 

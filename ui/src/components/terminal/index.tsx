@@ -1,4 +1,4 @@
-import { useComputedColorScheme } from "@mantine/core";
+import { Box, useComputedColorScheme } from "@mantine/core";
 import { useEffect, useMemo, useRef } from "react";
 import { ITheme } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
@@ -6,17 +6,19 @@ import { useXTerm, UseXTermProps } from "react-xtermjs";
 import { TerminalCallbacks } from "komodo_client";
 
 const LIGHT_THEME: ITheme = {
-  background: "#f5f5f5",
-  foreground: "#24292e",
-  cursor: "#24292e",
-  selectionBackground: "#c8d9fa",
+  background: "#EDEEEF",
+  foreground: "#000000",
+  cursor: "#000000",
+  selectionBackground: "#C8D9FA",
+  scrollbarSliderBackground: "#D3D3D3",
 };
 
 const DARK_THEME: ITheme = {
-  background: "#15171b",
-  foreground: "#f6f8fa",
-  cursor: "#f6f8fa",
-  selectionBackground: "#6e778a",
+  background: "#15171B",
+  foreground: "#FFFFFF",
+  cursor: "#FFFFFF",
+  selectionBackground: "#B4BFD6",
+  scrollbarSliderBackground: "#232528",
 };
 
 export default function Terminal({
@@ -153,9 +155,12 @@ export default function Terminal({
   useEffect(() => term?.clear(), [_clear]);
 
   return (
-    <div
+    <Box
       ref={termRef}
-      style={{ display: selected ? undefined : "none", height: "calc(100vh - 30rem)" }}
+      h="calc(100vh - 30rem)"
+      style={{
+        display: selected ? undefined : "none",
+      }}
     />
   );
 }

@@ -34,9 +34,9 @@ export default function Resource() {
 }
 
 function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
-  const Components = ResourceComponents[type];
+  const RC = ResourceComponents[type];
   const resources = useRead(`List${type}s`, {}).data;
-  const resource = Components.useListItem(id);
+  const resource = RC.useListItem(id);
 
   const { canExecute } = usePermissions({ type, id });
 
@@ -90,35 +90,35 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
       </Group>
 
       <Stack mt="lg" gap="xl">
-        {canExecute && Object.keys(Components.Executions).length > 0 && (
+        {canExecute && Object.keys(RC.Executions).length > 0 && (
           <Section
             title="Execute"
             icon={<ICONS.Execution size="1rem" />}
             my="xl"
           >
             <Group>
-              {Object.entries(Components.Executions).map(([key, Action]) => (
+              {Object.entries(RC.Executions).map(([key, Action]) => (
                 <Action key={key} id={id} />
               ))}
             </Group>
           </Section>
         )}
-        {Object.entries(Components.Page).map(([key, Component]) => (
+        {Object.entries(RC.Page).map(([key, Component]) => (
           <Component key={key} id={id} />
         ))}
-        <Components.Config id={id} />
+        <RC.Config id={id} />
       </Stack>
     </EntityPage>
   );
 }
 
 function ResourceHeader({ type, id }: { type: UsableResource; id: string }) {
-  const Components = ResourceComponents[type];
-  const resource = Components.useListItem(id);
-  const links = Components.useResourceLinks(resource);
+  const RC = ResourceComponents[type];
+  const resource = RC.useListItem(id);
+  const links = RC.useResourceLinks(resource);
   const { canWrite } = usePermissions({ type, id });
 
-  const infoEntries = Object.entries(Components.Info);
+  const infoEntries = Object.entries(RC.Info);
 
   return (
     <Stack justify="space-between">
@@ -128,7 +128,7 @@ function ResourceHeader({ type, id }: { type: UsableResource; id: string }) {
         bd="1px solid var(--mantine-color-accent-border-0)"
         bdrs="md"
       >
-        <Components.ResourcePageHeader id={id} />
+        <RC.ResourcePageHeader id={id} />
         {infoEntries.length > 0 && (
           <DividedChildren px="md">
             {infoEntries.map(([key, Info]) => (

@@ -1,6 +1,6 @@
 import { usePermissions, useRead, useWrite } from "@/lib/hooks";
 import { useFullServer, useServer } from "..";
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Types } from "komodo_client";
 import { useLocalStorage } from "@mantine/hooks";
 import Config from "@/ui/config";
@@ -9,11 +9,17 @@ import ConfirmButton from "@/ui/confirm-button";
 import { ICONS } from "@/theme/icons";
 import { Group } from "@mantine/core";
 
-export default function ServerConfig({ id }: { id: string }) {
-  const global_disabled =
+export default function ServerConfig({
+  id,
+  titleOther,
+}: {
+  id: string;
+  titleOther: ReactNode;
+}) {
+  const globalDisabled =
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
   const { canWrite } = usePermissions({ type: "Server", id });
-  const is_connected = useServer(id)?.info.state === Types.ServerState.Ok;
+  const isConnected = useServer(id)?.info.state === Types.ServerState.Ok;
 
   const server = useFullServer(id);
   const config = server?.config;
@@ -38,12 +44,13 @@ export default function ServerConfig({ id }: { id: string }) {
 
   if (!config) return null;
 
-  const disabled = global_disabled || !canWrite;
+  const disabled = globalDisabled || !canWrite;
   const address = update.address ?? config.address;
-  const tls_address = !!address && !address.startsWith("ws://");
+  const tlsAddress = !!address && !address.startsWith("ws://");
 
   return (
     <Config
+      titleOther={titleOther}
       disabled={disabled}
       original={config}
       update={update}
@@ -94,7 +101,7 @@ export default function ServerConfig({ id }: { id: string }) {
                           maw="120px"
                           onClick={() => rotate({ server: id })}
                           loading={rotatePending}
-                          disabled={!is_connected}
+                          disabled={!isConnected}
                         >
                           Rotate
                         </ConfirmButton>
@@ -120,7 +127,7 @@ export default function ServerConfig({ id }: { id: string }) {
                 placeholder: "12.34.56.78:8120",
               },
               insecure_tls: {
-                hidden: !tls_address,
+                hidden: !tlsAddress,
                 description: "Skip Periphery TLS certificate validation.",
               },
               external_address: {

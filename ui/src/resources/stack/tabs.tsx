@@ -1,5 +1,5 @@
 import { useLocalStorage } from "@mantine/hooks";
-import { StackComponents, useStack } from ".";
+import { useStack } from ".";
 import { usePermissions, useRead } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import { useMemo } from "react";
@@ -10,7 +10,7 @@ import {
 import { Tabs } from "@mantine/core";
 import { ICONS } from "@/theme/icons";
 import { colorByIntention, stackStateIntention } from "@/lib/color";
-import { ServerComponents, useServer } from "@/resources/server";
+import { useServer } from "@/resources/server";
 import StackConfig from "./config";
 import StackInfo from "./info";
 import StackServices from "./services";
@@ -21,7 +21,7 @@ type StackTabsView = "Config" | "Info" | "Services" | "Log" | "Terminals";
 
 export default function StackTabs({ id }: { id: string }) {
   const [_view, setView] = useLocalStorage<StackTabsView>({
-    key: "stack-tabs-v2",
+    key: `stack-${id}-tab-v2`,
     defaultValue: "Config",
   });
   const info = useStack(id)?.info;

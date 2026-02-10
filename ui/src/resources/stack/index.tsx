@@ -16,8 +16,8 @@ import {
   RestartStack,
   StartStopStack,
 } from "./executions";
-import { SwarmComponents, useSwarm } from "@/resources/swarm";
-import { ServerComponents, useServer } from "@/resources/server";
+import { useSwarm } from "@/resources/swarm";
+import { useServer } from "@/resources/server";
 import {
   ActionIcon,
   Button,

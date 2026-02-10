@@ -3,7 +3,15 @@ import Section, { SectionProps } from "@/ui/section";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useState } from "react";
-import { ActionIcon, Button, Center, Group, Stack, Text } from "@mantine/core";
+import {
+  ActionIcon,
+  Box,
+  Button,
+  Center,
+  Group,
+  Stack,
+  Text,
+} from "@mantine/core";
 import TargetTerminal from "./target";
 import { ICONS } from "@/theme/icons";
 import NewTerminal from "./new";
@@ -28,6 +36,8 @@ export default function TerminalSection({
       refetchInterval: 5000,
     },
   );
+
+  console.log(terminals);
 
   const { mutateAsync: deleteTerminal } = useWrite("DeleteTerminal");
 
@@ -99,15 +109,23 @@ export default function TerminalSection({
           </Button>
         ) : null}
       </Group>
-      {terminals?.map(({ name: terminal, target }) => (
-        <TargetTerminal
-          key={terminal}
-          terminal={terminal}
-          target={target}
-          selected={selected === terminal}
-          _reconnect={_reconnect}
-        />
-      ))}
+      {(terminals?.length ?? 0) > 0 && (
+        <Box
+          p="md"
+          bd="1px solid var(--mantine-color-accent-border-4)"
+          bdrs="md"
+        >
+          {terminals?.map(({ name: terminal, target }) => (
+            <TargetTerminal
+              key={terminal}
+              terminal={terminal}
+              target={target}
+              selected={selected === terminal}
+              _reconnect={_reconnect}
+            />
+          ))}
+        </Box>
+      )}
       {terminals && !terminals.length && (
         <Center h="20vh">
           <Stack align="center" justify="center" gap="0">

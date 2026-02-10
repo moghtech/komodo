@@ -7,7 +7,6 @@ import StatusBadge from "@/ui/status-badge";
 import EntityHeader from "@/ui/entity-header";
 import ServerTable from "./table";
 import NewResource from "@/resources/new";
-import ServerConfig from "./config";
 import ConfirmButton from "@/ui/confirm-button";
 import ConfirmModal from "@/ui/confirm-modal";
 import { Prune } from "./executions";
@@ -16,6 +15,7 @@ import { Group, HoverCard } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import ConfirmServerPubkey from "./confirm-pubkey";
 import DeleteResource from "../delete";
+import ServerTabs from "./tabs";
 
 export function useServer(id: string | undefined) {
   return useRead("ListServers", {}).data?.find((r) => r.id === id);
@@ -378,7 +378,7 @@ export const ServerComponents: RequiredResourceComponents<
     PruneSystem: ({ id }) => <Prune serverId={id} type="System" />,
   },
 
-  Config: ServerConfig,
+  Config: ServerTabs,
 
   Page: {},
 };

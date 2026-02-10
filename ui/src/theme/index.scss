@@ -4,10 +4,12 @@
 
 :root[data-mantine-color-scheme='light'] {
   --mantine-color-body: #f8f9fa;
+  --mantine-color-text: #000000;
 }
 
 :root[data-mantine-color-scheme='dark'] {
   --mantine-color-body: #0f1115;
+  --mantine-color-text: #FFFFFF;
 }
 
 $mantine-breakpoint-xs: '36em';

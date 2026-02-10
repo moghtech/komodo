@@ -47,11 +47,11 @@ a:focus {
   position: absolute !important;
 }
 
-.xterm {
-  padding: 12px !important;
-}
+// .xterm {
+//   padding: 12px !important;
+// }
 
 .xterm .xterm-viewport::-webkit-scrollbar {
-  width: 15px;
+  width: 5px;
   border-radius: var(--mantine-radius-sm);
 }
