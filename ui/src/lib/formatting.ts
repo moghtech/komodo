@@ -87,14 +87,19 @@ export function fmtSnakeCaseToUpperSpaceCase(snake: string) {
     .join(" ");
 }
 
-const BYTES_PER_MB = 1e6;
-const BYTES_PER_GB = BYTES_PER_MB * 1000;
+const BYTES_PER_KB = 1024;
+const BYTES_PER_MB = 1024 * BYTES_PER_KB;
+const BYTES_PER_GB = 1024 * BYTES_PER_MB;
 
-export function fmtSizeBytes(size_bytes: number) {
-  if (size_bytes > BYTES_PER_GB) {
-    return `${(size_bytes / BYTES_PER_GB).toFixed(1)} GB`;
+export function fmtSizeBytes(bytes: number) {
+  if (bytes >= BYTES_PER_GB) {
+    return (bytes / BYTES_PER_GB).toFixed(1) + " GiB";
+  } else if (bytes >= BYTES_PER_MB) {
+    return (bytes / BYTES_PER_MB).toFixed(1) + " MiB";
+  } else if (bytes >= BYTES_PER_KB) {
+    return (bytes / BYTES_PER_KB).toFixed(1) + " KiB";
   } else {
-    return `${(size_bytes / BYTES_PER_MB).toFixed(1)} MB`;
+    return bytes.toString() + " bytes";
   }
 }
 

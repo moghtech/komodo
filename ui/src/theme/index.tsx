@@ -105,7 +105,7 @@ const theme = createTheme({
     Input: Input.extend({
       styles: (theme) => ({
         input: {
-          backgroundColor: theme.colors.accent[2],
+          backgroundColor: theme.colors.accent[1],
           border: "1px solid " + theme.colors["accent-border"][4],
         },
       }),
@@ -113,11 +113,11 @@ const theme = createTheme({
     Select: Select.extend({
       styles: (theme) => ({
         input: {
-          backgroundColor: theme.colors.accent[2],
+          backgroundColor: theme.colors.accent[1],
           border: "1px solid " + theme.colors["accent-border"][4],
         },
         dropdown: {
-          backgroundColor: theme.colors.accent[2],
+          backgroundColor: theme.colors.accent[1],
           borderColor: theme.colors["accent-border"][4],
         },
       }),
@@ -125,12 +125,12 @@ const theme = createTheme({
     MultiSelect: MultiSelect.extend({
       styles: (theme) => ({
         input: {
-          backgroundColor: theme.colors.accent[2],
+          backgroundColor: theme.colors.accent[1],
           border: "1px solid " + theme.colors["accent-border"][4],
         },
         dropdown: {
-          backgroundColor: theme.colors.accent[4],
-          borderColor: theme.colors["accent-border"][7],
+          backgroundColor: theme.colors.accent[1],
+          borderColor: theme.colors["accent-border"][4],
         },
       }),
       defaultProps: {
@@ -140,14 +140,14 @@ const theme = createTheme({
     Combobox: Combobox.extend({
       styles: (theme) => ({
         dropdown: {
-          backgroundColor: theme.colors.accent[2],
+          backgroundColor: theme.colors.accent[1],
           border: "1px solid " + theme.colors["accent-border"][4],
         },
       }),
     }),
     MenuDropdown: MenuDropdown.extend({
       defaultProps: {
-        bg: "var(--mantine-color-accent-2)",
+        bg: "var(--mantine-color-accent-1)",
         bd: "1px solid var(--mantine-color-accent-border-4)",
         bdrs: "md",
       },
