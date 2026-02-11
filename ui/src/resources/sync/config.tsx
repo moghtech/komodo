@@ -12,7 +12,6 @@ import {
   useWebhookIntegrations,
   useWrite,
 } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
 import Config, { ConfigGroupArgs, ConfigProps } from "@/ui/config";
 import { ConfigItem, ConfigList, ConfigSwitch } from "@/ui/config/item";
 import ShowHideButton from "@/ui/show-hide-button";
@@ -20,6 +19,7 @@ import { Group, Select } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { CircleMinus } from "lucide-react";
+import { ReactNode } from "react";
 
 type SyncMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const SYNC_MODES = ["UI Defined", "Files On Server", "Git Repo"] as const;
@@ -38,7 +38,13 @@ function getSyncMode(
   return undefined;
 }
 
-export default function ResourceSyncConfig({ id }: { id: string }) {
+export default function ResourceSyncConfig({
+  id,
+  titleOther,
+}: {
+  id: string;
+  titleOther: ReactNode;
+}) {
   const [show, setShow] = useLocalStorage({
     key: `sync-${id}-show`,
     defaultValue: {
@@ -436,6 +442,7 @@ export default function ResourceSyncConfig({ id }: { id: string }) {
 
   return (
     <Config
+      titleOther={titleOther}
       disabled={disabled}
       original={config}
       update={update}

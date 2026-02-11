@@ -15,8 +15,8 @@ import ConfirmButton from "./confirm-button";
 import { notifications } from "@mantine/notifications";
 
 export interface ConfirmModalProps extends Omit<
-  Omit<ModalProps, "opened">,
-  "onClose"
+  Omit<Omit<ModalProps, "opened">, "onClose">,
+  "onClick"
 > {
   children?: ReactNode;
   icon?: ReactNode;

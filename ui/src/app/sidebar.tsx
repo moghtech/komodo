@@ -128,13 +128,11 @@ const SidebarLink = ({
 }) => {
   return (
     <Button
-      color="accent.2"
       variant={
         (to === "/" ? location === "/" : location.startsWith(to))
           ? "filled"
           : "subtle"
       }
-      c="var(--mantine-color-text)"
       onClick={() => nav(to)}
       leftSection={icon}
       justify="flex-start"

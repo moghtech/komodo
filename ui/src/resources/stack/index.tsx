@@ -31,6 +31,7 @@ import { ArrowUp } from "lucide-react";
 import { notifications } from "@mantine/notifications";
 import ResourceLink from "@/resources/link";
 import DeleteResource from "../delete";
+import HashCompare from "@/components/hash-compare";
 
 export function useStack(id: string | undefined) {
   return useRead("ListStacks", {}).data?.find((r) => r.id === id);
@@ -250,6 +251,33 @@ export const StackComponents: RequiredResourceComponents<
             </Text>
           </HoverCard.Dropdown>
         </HoverCard>
+      );
+    },
+
+    Hash: ({ id }) => {
+      const fullInfo = useFullStack(id)?.info;
+      const info = useStack(id)?.info;
+      const state = info?.state;
+      const stackDown =
+        state === undefined ||
+        state === Types.StackState.Unknown ||
+        state === Types.StackState.Down;
+      if (
+        stackDown ||
+        info?.project_missing ||
+        !info?.latest_hash ||
+        !fullInfo
+      ) {
+        return null;
+      }
+      return (
+        <HashCompare
+          lastHash={fullInfo?.deployed_hash}
+          lastMessage={fullInfo?.deployed_message}
+          lastLabel="deployed"
+          latestHash={fullInfo?.latest_hash}
+          latestMessage={fullInfo?.latest_message}
+        />
       );
     },
 

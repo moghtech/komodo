@@ -1,0 +1,130 @@
+import {
+  useExecute,
+  useInvalidate,
+  usePermissions,
+  useRead,
+  useWrite,
+} from "@/lib/hooks";
+import { ICONS } from "@/theme/icons";
+import ConfirmButton from "@/ui/confirm-button";
+import { useFullResourceSync } from ".";
+import { useResourceSyncTabsView } from "./hooks";
+import { fileContentsEmpty, resourceSyncNoChanges } from "@/lib/utils";
+import ConfirmModal from "@/ui/confirm-modal";
+import { NotebookPen, SquarePlay } from "lucide-react";
+import { Button, Loader } from "@mantine/core";
+
+export function RefreshSync({ id }: { id: string }) {
+  const inv = useInvalidate();
+  const { mutate, isPending } = useWrite("RefreshResourceSyncPending", {
+    onSuccess: () => inv(["GetResourceSync"], ["ListResourceSyncs"]),
+  });
+  const pending = isPending;
+  return (
+    <Button
+      justify="space-between"
+      w={190}
+      rightSection={
+        pending ? (
+          <Loader color="white" size="1rem" />
+        ) : (
+          <ICONS.Refresh size="1rem" />
+        )
+      }
+      onClick={() => mutate({ sync: id })}
+      disabled={pending}
+    >
+      Refresh
+    </Button>
+  );
+}
+
+export function ExecuteSync({ id }: { id: string }) {
+  const { mutateAsync: execute, isPending } = useExecute("RunSync");
+  const syncing = useRead(
+    "GetResourceSyncActionState",
+    { sync: id },
+    { refetchInterval: 5000 },
+  ).data?.syncing;
+  const sync = useFullResourceSync(id);
+  const { view } = useResourceSyncTabsView(sync);
+
+  if (
+    view !== "Execute" ||
+    !sync ||
+    resourceSyncNoChanges(sync) ||
+    !sync.info?.remote_contents
+  ) {
+    return null;
+  }
+
+  let all_empty = true;
+  for (const contents of sync.info.remote_contents) {
+    if (contents.contents.length > 0) {
+      all_empty = false;
+      break;
+    }
+  }
+
+  if (all_empty) return null;
+
+  const pending = isPending || syncing;
+
+  return (
+    <ConfirmModal
+      confirmText={sync.name}
+      icon={<SquarePlay className="w-4 h-4" />}
+      onConfirm={() => execute({ sync: id })}
+      disabled={pending}
+      loading={pending}
+    >
+      Execute Sync
+    </ConfirmModal>
+  );
+}
+
+export function CommitSync({ id }: { id: string }) {
+  const { mutateAsync: commit, isPending } = useWrite("CommitSync");
+  const sync = useFullResourceSync(id);
+  const { view } = useResourceSyncTabsView(sync);
+  const { canWrite } = usePermissions({ type: "ResourceSync", id });
+
+  if (view !== "Commit" || !canWrite || !sync) {
+    return null;
+  }
+
+  const freshSync =
+    !sync.config?.files_on_host &&
+    fileContentsEmpty(sync.config?.file_contents) &&
+    !sync.config?.repo &&
+    !sync.config?.linked_repo;
+
+  if (!freshSync && (!sync.config?.managed || resourceSyncNoChanges(sync))) {
+    return null;
+  }
+
+  if (freshSync) {
+    return (
+      <ConfirmButton
+        icon={<NotebookPen className="w-4 h-4" />}
+        onClick={() => commit({ sync: id })}
+        disabled={isPending}
+        loading={isPending}
+      >
+        Commit Changes
+      </ConfirmButton>
+    );
+  } else {
+    return (
+      <ConfirmModal
+        confirmText={sync.name}
+        icon={<NotebookPen className="w-4 h-4" />}
+        onConfirm={() => commit({ sync: id })}
+        disabled={isPending}
+        loading={isPending}
+      >
+        Commit Changes
+      </ConfirmModal>
+    );
+  }
+}

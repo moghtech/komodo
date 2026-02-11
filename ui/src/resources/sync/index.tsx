@@ -7,8 +7,14 @@ import EntityHeader from "@/ui/entity-header";
 import ResourceSyncTable from "./table";
 import { RequiredResourceComponents } from "@/resources";
 import NewResource from "@/resources/new";
-import ResourceSyncConfig from "./config";
 import DeleteResource from "../delete";
+import { CommitSync, ExecuteSync, RefreshSync } from "./executions";
+import FileSource from "@/components/file-source";
+import { Clock } from "lucide-react";
+import { fmtDate } from "@/lib/formatting";
+import { Group } from "@mantine/core";
+import HashCompare from "@/components/hash-compare";
+import ResourceSyncTabs from "./tabs";
 
 export function useResourceSync(id: string | undefined) {
   return useRead("ListResourceSyncs", {}).data?.find((r) => r.id === id);
@@ -92,11 +98,45 @@ export const ResourceSyncComponents: RequiredResourceComponents<
       <StatusBadge text={state} intent={resourceSyncStateIntention(state)} />
     );
   },
-  Info: {},
 
-  Executions: {},
+  Info: {
+    Source: ({ id }) => {
+      const info = useResourceSync(id)?.info;
+      return <FileSource info={info} />;
+    },
+    LastSync: ({ id }) => {
+      const last_ts = useResourceSync(id)?.info.last_sync_ts;
+      return (
+        <Group gap="xs">
+          <Clock size="1rem" />
+          {last_ts ? fmtDate(new Date(last_ts)) : "Never"}
+        </Group>
+      );
+    },
+    Hash: ({ id }) => {
+      const info = useFullResourceSync(id)?.info;
+      if (!info?.pending_hash) {
+        return null;
+      }
+      return (
+        <HashCompare
+          lastHash={info?.last_sync_hash}
+          lastMessage={info?.last_sync_message}
+          lastLabel="synced"
+          latestHash={info?.pending_hash}
+          latestMessage={info?.pending_message}
+        />
+      );
+    },
+  },
 
-  Config: ResourceSyncConfig,
+  Executions: {
+    RefreshSync,
+    ExecuteSync,
+    CommitSync,
+  },
+
+  Config: ResourceSyncTabs,
 
   Page: {},
 };

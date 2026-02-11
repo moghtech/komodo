@@ -3,11 +3,11 @@ import { Types } from "komodo_client";
 import sanitizeHtml from "sanitize-html";
 import ConvertAnsiToHtml from "ansi-to-html";
 
-export const sanitizeQuery = () => {
+export function sanitizeQuery() {
   sanitizeQueryInner(new URLSearchParams(location.search));
-};
+}
 
-export const sanitizeQueryInner = (search: URLSearchParams) => {
+export function sanitizeQueryInner(search: URLSearchParams) {
   search.delete("redeem_ready");
   search.delete("totp");
   search.delete("passkey");
@@ -15,10 +15,11 @@ export const sanitizeQueryInner = (search: URLSearchParams) => {
   location.replace(
     `${location.origin}${location.pathname}${query.length ? "?" + query : ""}`,
   );
-};
+}
 
-export const objectKeys = <T extends object>(o: T): (keyof T)[] =>
-  Object.keys(o) as (keyof T)[];
+export function objectKeys<T extends object>(o: T): (keyof T)[] {
+  return Object.keys(o) as (keyof T)[];
+}
 
 export function envToText(envVars: Types.EnvironmentVar[] | undefined) {
   return envVars?.reduce(
@@ -93,7 +94,7 @@ export function versionIsNone(version?: Types.Version) {
   return version.major === 0 && version.minor === 0 && version.patch === 0;
 }
 
-export const levelToNumber = (level: Types.PermissionLevel | undefined) => {
+export function levelToNumber(level: Types.PermissionLevel | undefined) {
   switch (level) {
     case undefined:
       return 0;
@@ -106,13 +107,13 @@ export const levelToNumber = (level: Types.PermissionLevel | undefined) => {
     case Types.PermissionLevel.Write:
       return 3;
   }
-};
+}
 
-export const hasMinimumPermissions = (
+export function hasMinimumPermissions(
   permission: Types.PermissionLevelAndSpecifics | undefined,
   greater_than: Types.PermissionLevel,
   specific?: Types.SpecificPermission[],
-) => {
+) {
   if (!permission) return false;
   if (levelToNumber(permission.level) < levelToNumber(greater_than))
     return false;
@@ -123,30 +124,32 @@ export const hasMinimumPermissions = (
     }
   }
   return true;
-};
+}
 
 const tzOffsetMs = new Date().getTimezoneOffset() * 60 * 1000;
 
-export const convertTsMsToLocalUnixTsInMs = (ts: number) => ts - tzOffsetMs;
+export function convertTsMsToLocalUnixTsInMs(ts: number) {
+  return ts - tzOffsetMs;
+}
 
-export const usableResourcePath = (resource: UsableResource) => {
+export function usableResourcePath(resource: UsableResource) {
   if (resource === "ResourceSync") return "resource-syncs";
   return `${resource.toLowerCase()}s`;
-};
+}
 
-export const usableResourceExecuteKey = (resource: UsableResource) => {
+export function usableResourceExecuteKey(resource: UsableResource) {
   if (resource === "ResourceSync") return "sync";
   return `${resource.toLowerCase()}`;
-};
+}
 
-export const sanitizeOnlySpan = (log: string) => {
+export function sanitizeOnlySpan(log: string) {
   return sanitizeHtml(log, {
     allowedTags: ["span"],
     allowedAttributes: {
       span: ["class"],
     },
   });
-};
+}
 
 const convert_ansi = new ConvertAnsiToHtml();
 
@@ -155,17 +158,17 @@ const convert_ansi = new ConvertAnsiToHtml();
  * sanitizes incoming log first for any eg. script tags.
  * @param log incoming log string
  */
-export const updateLogToHtml = (log: string) => {
+export function updateLogToHtml(log: string) {
   if (!log) return "No log.";
   return convert_ansi.toHtml(sanitizeOnlySpan(log));
-};
+}
 
 /**
  * Converts the ansi colors in log to html.
  * sanitizes incoming log first for any eg. script tags.
  * @param log incoming log string
  */
-export const logToHtml = (log: string) => {
+export function logToHtml(log: string) {
   if (!log) return "No log.";
   const sanitized = sanitizeHtml(log, {
     allowedTags: sanitizeHtml.defaults.allowedTags.filter(
@@ -174,12 +177,12 @@ export const logToHtml = (log: string) => {
     allowedAttributes: sanitizeHtml.defaults.allowedAttributes,
   });
   return convert_ansi.toHtml(sanitized);
-};
+}
 
-export const getUpdateQuery = (
+export function getUpdateQuery(
   target: Types.ResourceTarget,
   deployments: Types.DeploymentListItem[] | undefined,
-) => {
+) {
   const build_id =
     target.type === "Deployment"
       ? deployments?.find((d) => d.id === target.id)?.info.build_id
@@ -206,13 +209,13 @@ export const getUpdateQuery = (
       "target.id": target.id,
     };
   }
-};
+}
 
-export const filterBySplit = <T>(
+export function filterBySplit<T>(
   items: T[] | undefined,
   search: string,
   extract: (item: T) => string,
-) => {
+) {
   const split = search.toLowerCase().split(" ");
   return (
     (split.length
@@ -222,13 +225,13 @@ export const filterBySplit = <T>(
         })
       : items) ?? []
   );
-};
+}
 
-export const filterMultitermBySplit = <T>(
+export function filterMultitermBySplit<T>(
   items: T[] | undefined,
   search: string,
   extract: (item: T) => (string | undefined)[],
-) => {
+) {
   const split = search.toLowerCase().split(" ");
   return (
     (split.length
@@ -242,18 +245,18 @@ export const filterMultitermBySplit = <T>(
         })
       : items) ?? []
   );
-};
+}
 
-export const syncNoChanges = (sync: Types.ResourceSync) => {
+export function resourceSyncNoChanges(sync: Types.ResourceSync) {
   return (
     (sync.info?.pending_deploy?.to_deploy ?? 0) === 0 &&
     (sync.info?.resource_updates?.length ?? 0) === 0 &&
     (sync.info?.variable_updates?.length ?? 0) === 0 &&
     (sync.info?.user_group_updates?.length ?? 0) === 0
   );
-};
+}
 
-export const extractRegistryDomain = (image_name: string) => {
+export function extractRegistryDomain(image_name: string) {
   if (!image_name) return "docker.io";
   const maybe_domain = image_name.split("/")[0];
   if (maybe_domain.includes(".")) {
@@ -261,10 +264,10 @@ export const extractRegistryDomain = (image_name: string) => {
   } else {
     return "docker.io";
   }
-};
+}
 
 /** Checks file contents empty, not including whitespace / comments */
-export const fileContentsEmpty = (contents?: string) => {
+export function fileContentsEmpty(contents?: string) {
   if (!contents) return true;
   return (
     contents
@@ -272,11 +275,11 @@ export const fileContentsEmpty = (contents?: string) => {
       .map((line) => line.trim())
       .filter((line) => line.length !== 0 && !line.startsWith("#")).length === 0
   );
-};
+}
 
-export const resourceTargetFromTerminalTarget = (
+export function resourceTargetFromTerminalTarget(
   target: Types.TerminalTarget,
-): Types.ResourceTarget => {
+): Types.ResourceTarget {
   switch (target.type) {
     case "Server":
       return { type: "Server", id: target.params.server! };
@@ -287,15 +290,15 @@ export const resourceTargetFromTerminalTarget = (
     case "Deployment":
       return { type: "Deployment", id: target.params.deployment };
   }
-};
+}
 
-export const terminalLink = ({
+export function terminalLink({
   target,
   name,
 }: {
   target: Types.TerminalTarget;
   name: string;
-}) => {
+}) {
   switch (target.type) {
     case "Server":
       return `/servers/${target.params.server}/terminal/${name}`;
@@ -306,4 +309,4 @@ export const terminalLink = ({
     case "Deployment":
       return `/deployments/${target.params.deployment}/terminal/${name}`;
   }
-};
+}

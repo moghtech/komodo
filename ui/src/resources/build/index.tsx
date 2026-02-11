@@ -8,21 +8,14 @@ import EntityHeader from "@/ui/entity-header";
 import BuildTable from "./table";
 import NewResource from "@/resources/new";
 import DeleteResource from "../delete";
-import {
-  ActionIcon,
-  Badge,
-  Box,
-  Group,
-  HoverCard,
-  Stack,
-  Text,
-} from "@mantine/core";
+import { ActionIcon, Group, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { RunBuild } from "./executions";
 import BuildTabs from "./tabs";
 import { useBuilder } from "../builder";
 import ResourceLink from "../link";
 import FileSource from "@/components/file-source";
+import HashCompare from "@/components/hash-compare";
 
 export function useBuild(id: string | undefined) {
   return useRead("ListBuilds", {}).data?.find((r) => r.id === id);
@@ -132,50 +125,14 @@ export const BuildComponents: RequiredResourceComponents<
       if (!info?.latest_hash) {
         return null;
       }
-      const outOfDate = info.built_hash && info.built_hash !== info.latest_hash;
       return (
-        <HoverCard position="bottom-start">
-          <HoverCard.Target>
-            <Box
-              px="sm"
-              py="0.2rem"
-              bdrs="sm"
-              style={{
-                borderColor: outOfDate
-                  ? "var(--mantine-color-yellow-7)"
-                  : "var(--mantine-color-accent-border-1)",
-                borderStyle: "solid",
-                borderWidth: "1px",
-                cursor: "pointer",
-              }}
-            >
-              {info.built_hash ? "built" : "latest"}:{" "}
-              {info.built_hash || info.latest_hash}
-            </Box>
-          </HoverCard.Target>
-          <HoverCard.Dropdown>
-            <Stack>
-              <Stack gap="0.2rem">
-                <Badge>message</Badge>
-                {info.built_message || info.latest_message}
-              </Stack>
-              {outOfDate && (
-                <Stack gap="0.2rem">
-                  <Badge
-                    variant="secondary"
-                    style={{ borderColor: "var(--mantine-color-yellow-7)" }}
-                  >
-                    latest
-                  </Badge>
-                  <Group gap="xs">
-                    <Text c="dimmed">{info.latest_hash}:</Text>
-                    <Text>{info.latest_message}</Text>
-                  </Group>
-                </Stack>
-              )}
-            </Stack>
-          </HoverCard.Dropdown>
-        </HoverCard>
+        <HashCompare
+          lastHash={info?.built_hash}
+          lastMessage={info?.built_message}
+          lastLabel="built"
+          latestHash={info?.latest_hash}
+          latestMessage={info?.latest_message}
+        />
       );
     },
     Refresh: ({ id }) => {

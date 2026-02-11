@@ -64,7 +64,7 @@ export default function BuildInfo({
   const remoteError = build?.info?.remote_error;
 
   return (
-    <Section titleOther={titleOther}>
+    <Section gap="xl" titleOther={titleOther}>
       {/* Errors */}
       {remoteError && remoteError.length > 0 && (
         <Stack
