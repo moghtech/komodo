@@ -35,18 +35,12 @@ export default function ResourceSyncPending({
         <Text c="dimmed">{view} Mode:</Text>
         {view === "Execute" && (
           <Text>
-            Update resources in the
-            <b>UI</b>
-            to match the
-            <b>file changes.</b>
+            Update resources in the <b>UI</b> to match the <b>file changes.</b>
           </Text>
         )}
         {view === "Commit" && (
           <Text>
-            Update resources in the
-            <b>file</b>
-            to match the
-            <b>UI changes.</b>
+            Update resources in the <b>file</b> to match the <b>UI changes.</b>
           </Text>
         )}
       </Group>
