@@ -70,11 +70,11 @@ export default function StackTabs({ id }: { id: string }) {
         hidden: hideInfo,
         icon: ICONS.Search,
       },
-      // {
-      //   value: "Services",
-      //   disabled: hideServices,
-      //   icon: ICONS.Service,
-      // },
+      {
+        value: "Services",
+        disabled: hideServices,
+        icon: ICONS.Service,
+      },
       {
         value: "Log",
         disabled: hideLogs,

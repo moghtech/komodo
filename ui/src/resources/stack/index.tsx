@@ -29,7 +29,6 @@ import {
 import FileSource from "@/components/file-source";
 import { ArrowUp } from "lucide-react";
 import { notifications } from "@mantine/notifications";
-import StackServices from "./services";
 import ResourceLink from "@/resources/link";
 import DeleteResource from "../delete";
 
@@ -188,7 +187,9 @@ export const StackComponents: RequiredResourceComponents<
       return (
         <HoverCard width={300} position="bottom-start">
           <HoverCard.Target>
-            <Button variant="filled" color="red">Config Missing</Button>
+            <Button variant="filled" color="red">
+              Config Missing
+            </Button>
           </HoverCard.Target>
           <HoverCard.Dropdown>
             <Text>
@@ -238,7 +239,9 @@ export const StackComponents: RequiredResourceComponents<
       return (
         <HoverCard width={300} position="bottom-start">
           <HoverCard.Target>
-            <Button variant="filled" color="red">Remote Error</Button>
+            <Button variant="filled" color="red">
+              Remote Error
+            </Button>
           </HoverCard.Target>
           <HoverCard.Dropdown>
             <Text>
@@ -287,9 +290,7 @@ export const StackComponents: RequiredResourceComponents<
 
   Config: StackTabs,
 
-  Page: {
-    StackServices,
-  },
+  Page: {},
 };
 
 export const DEFAULT_STACK_FILE_CONTENTS = `## Add your compose file here
