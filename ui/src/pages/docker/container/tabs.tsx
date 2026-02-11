@@ -54,7 +54,7 @@ export default function ContainerTabs({
       ? "Log"
       : _view;
 
-  const tabsNoContent = useMemo<TabNoContent[]>(
+  const tabs = useMemo<TabNoContent[]>(
     () => [
       {
         value: "Log",
@@ -87,7 +87,7 @@ export default function ContainerTabs({
 
   const Selector = (
     <MobileFriendlyTabsSelector
-      tabs={tabsNoContent}
+      tabs={tabs}
       value={view}
       onValueChange={setView as any}
       tabProps={{ w: 140 }}

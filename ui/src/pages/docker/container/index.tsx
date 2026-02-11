@@ -54,7 +54,10 @@ function ContainerInner({
 }) {
   const server = useServer(serverId);
   useSetTitle(`${server?.name} | Container | ${containerName}`);
-  const { canExecute } = usePermissions({ type: "Server", id: serverId });
+  const { canExecute, specific } = usePermissions({
+    type: "Server",
+    id: serverId,
+  });
   const listContainer = useRead(
     "ListDockerContainers",
     {
@@ -62,10 +65,14 @@ function ContainerInner({
     },
     { refetchInterval: 10_000 },
   ).data?.find((container) => container.name === containerName);
-  const inspect = useRead("InspectDockerContainer", {
-    server: serverId,
-    container: containerName,
-  }).data;
+  const inspect = useRead(
+    "InspectDockerContainer",
+    {
+      server: serverId,
+      container: containerName,
+    },
+    { enabled: specific.includes(Types.SpecificPermission.Inspect) },
+  ).data;
   const { data: attached } = useRead(
     "GetResourceMatchingContainer",
     { server: serverId, container: containerName },
