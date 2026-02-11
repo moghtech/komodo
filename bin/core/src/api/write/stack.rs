@@ -750,17 +750,28 @@ pub async fn check_stack_for_update_inner(
   let cache = image_digest_cache();
 
   for service in &mut stack.info.latest_services {
-    if service.image.is_empty() ||
+    // Prefer the image coming from deployed services
+    // so it will be after any interpolation.
+    let image = stack
+      .info
+      .deployed_services
+      .as_ref()
+      .and_then(|services| {
+        services.iter().find_map(|deployed| {
+          (deployed.service_name == service.service_name)
+            .then_some(&deployed.image)
+        })
+      })
+      .unwrap_or(&service.image);
+
+    if image.is_empty() ||
       // Images with a hardcoded digest can't have update.
-      service.image.contains('@')
+      image.contains('@')
     {
       service.image_digest = None;
       continue;
     }
-    match cache
-      .get(&swarm_or_server, &service.image, None, None)
-      .await
-    {
+    match cache.get(&swarm_or_server, image, None, None).await {
       Ok(digest) => service.image_digest = Some(digest),
       Err(e) => {
         warn!(
