@@ -116,7 +116,6 @@ export function ProviderSelectorConfig({
       {accountType === "git" ? (
         <Group>
           <Button
-            variant="light"
             onClick={onHttpsSwitch}
             disabled={props.disabled}
             px="sm"

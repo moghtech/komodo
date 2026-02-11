@@ -113,6 +113,7 @@ export const UserDropdown = () => {
 
           {viewLogout && (
             <Button
+              variant="filled"
               color="red"
               rightSection={<LogOut size="1rem" />}
               fullWidth

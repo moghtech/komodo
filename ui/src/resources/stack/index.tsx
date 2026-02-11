@@ -162,7 +162,7 @@ export const StackComponents: RequiredResourceComponents<
                     <Text c="dimmed">-</Text>
                     <Text c="dimmed">{service.image}</Text>
                     {service.update_available && (
-                      <ActionIcon variant="light" color="cyan" size="xs">
+                      <ActionIcon color="cyan" size="xs">
                         <ArrowUp size="0.9rem" />
                       </ActionIcon>
                     )}
@@ -188,7 +188,7 @@ export const StackComponents: RequiredResourceComponents<
       return (
         <HoverCard width={300} position="bottom-start">
           <HoverCard.Target>
-            <Button color="red">Config Missing</Button>
+            <Button variant="filled" color="red">Config Missing</Button>
           </HoverCard.Target>
           <HoverCard.Dropdown>
             <Text>
@@ -238,7 +238,7 @@ export const StackComponents: RequiredResourceComponents<
       return (
         <HoverCard width={300} position="bottom-start">
           <HoverCard.Target>
-            <Button color="red">Remote Error</Button>
+            <Button variant="filled" color="red">Remote Error</Button>
           </HoverCard.Target>
           <HoverCard.Dropdown>
             <Text>

@@ -81,7 +81,6 @@ export default function TextUpdateModal({
           {!disabled && (
             <Group justify="end" w="100%">
               <Button
-                variant="light"
                 c="inherit"
                 leftSection={<CheckCircle size="1rem" />}
                 onClick={onClick}

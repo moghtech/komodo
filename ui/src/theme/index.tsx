@@ -60,10 +60,8 @@ const theme = createTheme({
   },
   colors: {
     // Accent background color
-    lightAccent: functionColorsTuple(
-      darken(LIGHT_BODY, 0.01),
-      (color) => darken(color, 0.005),
-      true,
+    lightAccent: functionColorsTuple(darken(LIGHT_BODY, 0.02), (color) =>
+      darken(color, 0.01),
     ),
     darkAccent: functionColorsTuple(lighten(DARK_BODY, 0.025), (color) =>
       lighten(color, 0.02),
@@ -74,13 +72,11 @@ const theme = createTheme({
       dark: "darkAccent",
     }),
     // Accent border color
-    lightAccentBorder: functionColorsTuple(
-      darken(LIGHT_BODY, 0.1),
-      (color) => darken(color, 0.005),
-      true,
+    lightAccentBorder: functionColorsTuple(darken(LIGHT_BODY, 0.1), (color) =>
+      darken(color, 0.01),
     ),
     darkAccentBorder: functionColorsTuple(lighten(DARK_BODY, 0.06), (color) =>
-      lighten(color, 0.02),
+      lighten(color, 0.03),
     ),
     "accent-border": virtualColor({
       name: "accent-border",
@@ -158,6 +154,9 @@ const theme = createTheme({
           "--button-color": "var(--mantine-color-bw-0)",
         },
       }),
+      defaultProps: {
+        variant: "default",
+      },
     }),
     ActionIcon: ActionIcon.extend({
       vars: () => ({
@@ -265,7 +264,6 @@ function opacityColorsTuple(baseHex: string, length = 10) {
 function functionColorsTuple(
   base: string,
   fn: (color: string) => string,
-  reverse = false,
   length = 10,
 ) {
   let b = base;
@@ -276,5 +274,5 @@ function functionColorsTuple(
       return b;
     }),
   ];
-  return colorsTuple(reverse ? array.reverse() : array);
+  return colorsTuple(array);
 }

@@ -119,6 +119,7 @@ export default function LogSection({
           {terms.map((term, index) => (
             <Button
               key={term}
+              variant="filled"
               color="red"
               rightSection={<ICONS.Remove size="1rem" />}
               onClick={() => setTerms(terms.filter((_, i) => i !== index))}

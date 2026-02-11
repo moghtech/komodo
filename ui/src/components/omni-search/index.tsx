@@ -10,7 +10,7 @@ export default function OmniSearch({}: {}) {
       <ActionIcon
         variant="subtle"
         onClick={() => spotlight.open()}
-        hiddenFrom="md"
+        hiddenFrom="lg"
         size="lg"
       >
         <ICONS.Search size="1.3rem" />
@@ -30,8 +30,8 @@ export default function OmniSearch({}: {}) {
           </Badge>
         }
         onClick={() => spotlight.open()}
-        w={{ lg: 400 }}
-        visibleFrom="md"
+        w={{ lg: 300, xl: 400 }}
+        visibleFrom="lg"
       >
         <Group>
           <ICONS.Search size="1rem" />

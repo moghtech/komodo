@@ -64,14 +64,14 @@ const Topbar = ({
       </Group>
 
       {/** OMNI SEARCH */}
-      <Center visibleFrom="md">
+      <Center visibleFrom="lg">
         <OmniSearch />
       </Center>
 
       {/** RIGHT AREA */}
       <Group gap="0.3rem" style={{ justifySelf: "flex-end" }}>
         <Group gap="0.5rem">
-          <Box hiddenFrom="md">
+          <Box hiddenFrom="lg">
             <OmniSearch />
           </Box>
           <TopbarUpdates />

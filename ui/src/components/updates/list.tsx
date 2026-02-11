@@ -38,7 +38,6 @@ export default function UpdateList({
         ))}
         {showAllLink && (
           <Button
-            variant="light"
             c="inherit"
             leftSection={<ICONS.ExternalLink size="1rem" />}
             component={Link}

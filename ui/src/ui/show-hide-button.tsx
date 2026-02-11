@@ -10,7 +10,6 @@ export default function ShowHideButton({
 }) {
   return (
     <Button
-      variant="outline"
       onClick={() => setShow(!show)}
       rightSection={
         show ? <ChevronUp className="w-4" /> : <ChevronDown className="w-4" />

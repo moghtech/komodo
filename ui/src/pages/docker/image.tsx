@@ -167,6 +167,7 @@ function ImageInner({
             my="xl"
           >
             <ConfirmButton
+              variant="filled"
               color="red"
               icon={<ICONS.Delete size="1rem" />}
               loading={deletePending}

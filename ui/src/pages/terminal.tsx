@@ -2,9 +2,9 @@ import DockerResourceLink from "@/components/docker/link";
 import TargetTerminal from "@/components/terminal/target";
 import { useSetTitle, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
-import { DeploymentComponents, useDeployment } from "@/resources/deployment";
-import { ServerComponents, useServer } from "@/resources/server";
-import { StackComponents, useStack } from "@/resources/stack";
+import { useDeployment } from "@/resources/deployment";
+import { useServer } from "@/resources/server";
+import { useStack } from "@/resources/stack";
 import ConfirmButton from "@/ui/confirm-button";
 import Page from "@/ui/page";
 import { Group, Text } from "@mantine/core";
@@ -236,6 +236,7 @@ function DeleteTerminal({
   });
   return (
     <ConfirmButton
+      variant="filled"
       color="red"
       icon={<ICONS.Delete size="1rem" />}
       onClick={() =>

@@ -50,7 +50,6 @@ export const EnrollPasskey = ({ user }: { user: Types.User }) => {
         <Button
           leftSection={<Fingerprint size="1rem" />}
           onClick={() => beginEnrollment({})}
-          variant="default"
           hidden={!!user?.passkey}
           w={220}
         >
@@ -62,6 +61,7 @@ export const EnrollPasskey = ({ user }: { user: Types.User }) => {
           icon={<Trash size="1rem" />}
           loading={unenrollPending}
           onClick={() => unenroll({})}
+          variant="filled"
           color="red"
           w={220}
         >

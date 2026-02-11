@@ -58,7 +58,7 @@ export const ResourceSyncComponents: RequiredResourceComponents<
 
   Description: () => <>Declare resources in TOML files.</>,
 
-  New: () => <NewResource type="ResourceSync" />,
+  New: () => <NewResource type="ResourceSync" readableType="Sync" />,
 
   GroupExecutions: () => <></>,
 
