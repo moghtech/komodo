@@ -75,7 +75,7 @@ const theme = createTheme({
     lightAccentBorder: functionColorsTuple(darken(LIGHT_BODY, 0.1), (color) =>
       darken(color, 0.01),
     ),
-    darkAccentBorder: functionColorsTuple(lighten(DARK_BODY, 0.06), (color) =>
+    darkAccentBorder: functionColorsTuple(lighten(DARK_BODY, 0.08), (color) =>
       lighten(color, 0.03),
     ),
     "accent-border": virtualColor({

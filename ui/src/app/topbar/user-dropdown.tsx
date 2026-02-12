@@ -22,7 +22,7 @@ import { useNavigate } from "react-router-dom";
 import { MoghAuth } from "komodo_client";
 import { useRead, useUser, useUserInvalidate } from "@/lib/hooks";
 
-export const UserDropdown = () => {
+export default function UserDropdown() {
   const [_, setRerender] = useState(false);
   const rerender = () => setRerender((r) => !r);
   const [viewLogout, setViewLogout] = useState(false);
@@ -129,7 +129,7 @@ export const UserDropdown = () => {
       </Menu.Dropdown>
     </Menu>
   );
-};
+}
 
 const Account = ({
   login,

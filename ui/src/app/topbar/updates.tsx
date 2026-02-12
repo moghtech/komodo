@@ -7,10 +7,10 @@ import {
   useComputedColorScheme,
 } from "@mantine/core";
 import { Circle } from "lucide-react";
-import UpdateList from "./list";
 import { useDisclosure } from "@mantine/hooks";
 import { tagColor } from "@/lib/color";
 import { Types } from "komodo_client";
+import UpdateList from "@/components/updates/list";
 
 export default function TopbarUpdates() {
   const [opened, { open, close }] = useDisclosure();

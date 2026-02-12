@@ -1,4 +1,4 @@
-import { AppShell } from "@mantine/core";
+import { AppShell, Box } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Suspense } from "react";
 import { Outlet } from "react-router-dom";
@@ -35,7 +35,9 @@ const App = () => {
 
       <AppShell.Main>
         <Suspense fallback={<LoadingScreen />}>
-          <Outlet />
+          <Box px={{ xl: "xl" }}>
+            <Outlet />
+          </Box>
           <UpdateDetails />
         </Suspense>
       </AppShell.Main>

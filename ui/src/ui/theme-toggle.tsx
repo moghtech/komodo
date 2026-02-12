@@ -7,7 +7,7 @@ import {
 } from "@mantine/core";
 import { CheckCircle, Moon, Sun } from "lucide-react";
 
-export const ThemeToggle = () => {
+export default function ThemeToggle() {
   const { colorScheme, setColorScheme } = useMantineColorScheme();
   return (
     <Menu position="bottom-end" offset={20}>
@@ -37,9 +37,9 @@ export const ThemeToggle = () => {
       </Menu.Dropdown>
     </Menu>
   );
-};
+}
 
-const ThemeIcon = () => {
+function ThemeIcon() {
   const currentTheme = useComputedColorScheme();
   const dark = currentTheme === "dark";
   return (
@@ -60,4 +60,4 @@ const ThemeIcon = () => {
       />
     </>
   );
-};
+}
