@@ -6,6 +6,9 @@ import EntityHeader from "@/ui/entity-header";
 import ResourceLink from "@/resources/link";
 import NewResource from "@/resources/new";
 import DeleteResource from "../delete";
+import BuilderTable from "./table";
+import { useServer } from "../server";
+import { serverStateIntention } from "@/lib/color";
 
 export function useBuilder(id: string | undefined) {
   return useRead("ListBuilders", {}).data?.find((r) => r.id === id);
@@ -37,10 +40,7 @@ export const BuilderComponents: RequiredResourceComponents<
 
   GroupExecutions: () => <></>,
 
-  Table: ({ resources }) => (
-    // <BuilderTable builders={resources as Types.BuilderListItem[]} />
-    <></>
-  ),
+  Table: BuilderTable,
 
   Icon: ({ size = "1rem" }) => {
     return <ICONS.Builder size={size} />;
@@ -48,9 +48,17 @@ export const BuilderComponents: RequiredResourceComponents<
 
   ResourcePageHeader: ({ id }) => {
     const builder = useBuilder(id);
+    const server = useServer(
+      builder?.info.builder_type === "Server"
+        ? builder.info.instance_type
+        : undefined,
+    );
+    const intent = server?.info.state
+      ? serverStateIntention(server.info.state)
+      : "Neutral";
     return (
       <EntityHeader
-        intent="None"
+        intent={intent}
         icon={ICONS.Builder}
         name={builder?.name}
         state={builder?.info.builder_type}

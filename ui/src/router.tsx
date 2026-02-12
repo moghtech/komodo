@@ -14,6 +14,7 @@ import LoadingScreen from "./ui/loading-screen";
 
 const Login = lazy(() => import("@/pages/login"));
 const UserDisabled = lazy(() => import("@/pages/user-disabled"));
+const Settings = lazy(() => import("@/pages/settings"));
 const Dashboard = lazy(() => import("@/pages/dashboard"));
 const Resources = lazy(() => import("@/pages/resources"));
 const Resource = lazy(() => import("@/pages/resource"));
@@ -46,6 +47,7 @@ export const Router = () => {
         <Route element={<RequireAuth />}>
           <Route path="/" element={<App />}>
             <Route path="" element={<Dashboard />} />
+            <Route path="settings" element={<Settings />} />
             <Route path="containers" element={<Containers />} />
             <Route path="terminals" element={<Terminals />} />
             <Route path="profile" element={<Profile />} />

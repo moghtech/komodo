@@ -20,7 +20,7 @@ export default function BatchDeleteAllTerminals({
   return (
     <ConfirmButton
       color="red"
-      icon={<ICONS.Delete className="w-4 h-4" />}
+      icon={<ICONS.Delete size="1rem" />}
       w={160}
       onClick={() => mutate({ query: { tags } })}
       disabled={noTerminals}

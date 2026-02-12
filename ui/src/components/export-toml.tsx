@@ -9,9 +9,9 @@ import LoadingScreen from "@/ui/loading-screen";
 
 export interface ExportTomlProps {
   targets?: Types.ResourceTarget[];
-  user_groups?: string[];
+  userGroups?: string[];
   tags?: string[];
-  include_variables?: boolean;
+  includeVariables?: boolean;
 }
 
 export default function ExportToml(props: ExportTomlProps) {
@@ -36,18 +36,18 @@ export default function ExportToml(props: ExportTomlProps) {
 
 function ExportTomlInner({
   targets,
-  user_groups,
+  userGroups,
   tags,
-  include_variables,
+  includeVariables,
 }: ExportTomlProps) {
-  const useAll = !(targets || user_groups || include_variables);
+  const useAll = !(targets || userGroups || includeVariables);
 
   const { data: resourcesData, isPending: resourcesPending } = useRead(
     "ExportResourcesToToml",
     {
       targets: targets ? targets : [],
-      user_groups: user_groups ? user_groups : [],
-      include_variables,
+      user_groups: userGroups ? userGroups : [],
+      include_variables: includeVariables,
     },
     { enabled: !useAll },
   );

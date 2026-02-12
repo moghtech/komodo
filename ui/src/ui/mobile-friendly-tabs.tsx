@@ -1,5 +1,6 @@
 import { ICONS } from "@/theme/icons";
 import {
+  Box,
   Group,
   GroupProps,
   MantineBreakpoint,
@@ -50,9 +51,11 @@ export function MobileFriendlyTabsWrapper({
   ...tabsProps
 }: MobileFriendlyTabsWrapper) {
   return (
-    <Tabs {...tabsProps}>
+    <Tabs value={value} {...tabsProps}>
       {Selector}
-      <MobileFriendlyTabsContent tabs={tabs} value={value} />
+      <Box mt="xl">
+        <MobileFriendlyTabsContent tabs={tabs} value={value} />
+      </Box>
     </Tabs>
   );
 }
@@ -80,7 +83,7 @@ export function MobileFriendlyTabsSelector({
 }: MobileFriendlyTabsSelectorProps) {
   const tabs = _tabs.filter((t) => !t.hidden);
   return (
-    <Group>
+    <Group justify="space-between">
       {/* DESKTOP VIEW */}
       <Tabs.List visibleFrom={changeAt}>
         {tabs.map(({ value: tabValue, label, icon: Icon, disabled }) => (

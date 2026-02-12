@@ -11,6 +11,7 @@ import {
   CirclePlus,
   CircleQuestionMark,
   Clapperboard,
+  CloudCog,
   Component,
   Container,
   Cpu,
@@ -38,6 +39,7 @@ import {
   ListTodo,
   MemoryStick,
   Milestone,
+  MonitorCloud,
   Network,
   Pause,
   Play,
@@ -62,6 +64,7 @@ import {
   TriangleAlert,
   Unlink,
   User,
+  Variable,
   X,
   Zap,
 } from "lucide-react";
@@ -80,6 +83,8 @@ export const ICONS = {
   Swarm: Component,
   ResourceSync: FolderSync,
   ExportToml: FileDown,
+  Variable,
+  Provider: CloudCog,
   // PAGES
   Dashboard: LayoutDashboard,
   Terminal: Terminal,

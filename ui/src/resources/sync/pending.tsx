@@ -12,6 +12,7 @@ import { UsableResource } from "@/resources";
 import ConfirmButton from "@/ui/confirm-button";
 import { SquarePlay } from "lucide-react";
 import { MonacoDiffEditor, MonacoEditor } from "@/components/monaco";
+import { colorByIntention, diffTypeIntention } from "@/lib/color";
 
 export default function ResourceSyncPending({
   id,
@@ -102,7 +103,12 @@ export default function ResourceSyncPending({
             {/* HEADER */}
             <Group justify="space-between">
               <DividedChildren>
-                <Text ff="monospace">
+                <Text
+                  ff="monospace"
+                  c={colorByIntention(
+                    diffTypeIntention(update.data.type, view === "Commit"),
+                  )}
+                >
                   {view === "Commit"
                     ? reversePendingType(update.data.type)
                     : update.data.type}{" "}
@@ -186,7 +192,12 @@ export default function ResourceSyncPending({
             bdrs="md"
             p="xl"
           >
-            <Text ff="monospace">
+            <Text
+              ff="monospace"
+              c={colorByIntention(
+                diffTypeIntention(data.type, view === "Commit"),
+              )}
+            >
               {view === "Commit" ? reversePendingType(data.type) : data.type}{" "}
               Variable
             </Text>
@@ -237,7 +248,12 @@ export default function ResourceSyncPending({
             bdrs="md"
             p="xl"
           >
-            <Text ff="monospace">
+            <Text
+              ff="monospace"
+              c={colorByIntention(
+                diffTypeIntention(data.type, view === "Commit"),
+              )}
+            >
               {view === "Commit" ? reversePendingType(data.type) : data.type}{" "}
               User Group
             </Text>

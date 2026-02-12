@@ -267,7 +267,6 @@ export default function Config<T>({
                               <Button
                                 key={group + groupArgs.label}
                                 variant="subtle"
-                                c="inherit"
                                 justify="flex-end"
                                 fullWidth
                                 renderRoot={(props) => (

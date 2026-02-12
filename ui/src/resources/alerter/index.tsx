@@ -5,6 +5,7 @@ import { Types } from "komodo_client";
 import EntityHeader from "@/ui/entity-header";
 import NewResource from "@/resources/new";
 import DeleteResource from "../delete";
+import AlerterTable from "./table";
 
 export function useAlerter(id: string | undefined) {
   return useRead("ListAlerters", {}).data?.find((r) => r.id === id);
@@ -36,10 +37,7 @@ export const AlerterComponents: RequiredResourceComponents<
 
   GroupExecutions: () => <></>,
 
-  Table: ({ resources }) => (
-    // <AlerterTable alerters={resources as Types.AlerterListItem[]} />
-    <></>
-  ),
+  Table: AlerterTable,
 
   Icon: ({ size = "1rem" }) => {
     return <ICONS.Alerter size={size} />;

@@ -54,41 +54,47 @@ export default function TerminalSection({
   return (
     <Section {...props}>
       <Group>
-        {terminals?.map(({ name: terminal, stored_size_kb }) => {
-          const isSelected = terminal === selected;
-          return (
-            <Group
-              key={terminal}
-              onClick={() => setSelected({ selected: terminal })}
-              style={{ cursor: "pointer" }}
-              className="accent-hover"
-              bg={isSelected ? "accent.9" : undefined}
-              justify="space-between"
-              px="md"
-              py="0.4rem"
-              bd="1px solid var(--mantine-color-accent-border-7)"
-              bdrs="sm"
-            >
-              <Group gap="xs">
-                <Text fw={isSelected ? "bold" : undefined}>{terminal}</Text>
-                <Text c="dimmed">{stored_size_kb.toFixed()} KiB</Text>
-              </Group>
-              <ActionIcon
-                color="red"
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  await deleteTerminal({ target, terminal });
-                  refetchTerminals();
-                  if (selected === terminal) {
-                    setSelected({ selected: undefined });
-                  }
-                }}
+        {terminals?.map(
+          ({ name: terminal, stored_size_kb, target: responseTarget }) => {
+            const isSelected = terminal === selected;
+            return (
+              <Group
+                key={terminal}
+                onClick={() => setSelected({ selected: terminal })}
+                style={{ cursor: "pointer" }}
+                className="accent-hover"
+                bg={isSelected ? "accent.9" : undefined}
+                justify="space-between"
+                px="md"
+                py="0.4rem"
+                bd="1px solid var(--mantine-color-accent-border-7)"
+                bdrs="sm"
               >
-                <ICONS.Delete size="1rem" />
-              </ActionIcon>
-            </Group>
-          );
-        })}
+                <Group gap="xs">
+                  <Text fw={isSelected ? "bold" : undefined}>{terminal}</Text>
+                  <Text c="dimmed">{stored_size_kb.toFixed()} KiB</Text>
+                </Group>
+                <ActionIcon
+                  color="red"
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    await deleteTerminal({
+                      target:
+                        target.type === "Server" ? target : responseTarget,
+                      terminal,
+                    });
+                    refetchTerminals();
+                    if (selected === terminal) {
+                      setSelected({ selected: undefined });
+                    }
+                  }}
+                >
+                  <ICONS.Delete size="1rem" />
+                </ActionIcon>
+              </Group>
+            );
+          },
+        )}
 
         <NewTerminal
           target={target}
@@ -113,11 +119,11 @@ export default function TerminalSection({
           bd="1px solid var(--mantine-color-accent-border-4)"
           bdrs="md"
         >
-          {terminals?.map(({ name: terminal }) => (
+          {terminals?.map(({ name: terminal, target: responseTarget }) => (
             <TargetTerminal
               key={terminal}
               terminal={terminal}
-              target={target}
+              target={target.type === "Server" ? target : responseTarget}
               selected={selected === terminal}
               _reconnect={_reconnect}
             />
@@ -125,14 +131,15 @@ export default function TerminalSection({
         </Box>
       )}
       {terminals && !terminals.length && (
-        <Center h="20vh">
-          <Stack align="center" justify="center" gap="0">
+        <Stack align="center" justify="center" gap="0">
+          <Group>
+            <ICONS.Terminal size="2rem" />
             <Text fz="h2">No Terminals</Text>
-            <Text c="dimmed">
-              Create a new terminal using the <b>New</b> button.
-            </Text>
-          </Stack>
-        </Center>
+          </Group>
+          <Text c="dimmed">
+            Create a new terminal using the <b>New</b> button.
+          </Text>
+        </Stack>
       )}
     </Section>
   );
