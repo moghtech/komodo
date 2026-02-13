@@ -101,10 +101,13 @@ export default function LogSection({
   // Convenience select stderr first / disabled selector if its only one with logs
   const hasStdout = !!log?.stdout;
   const hasStderr = !!log?.stderr;
-  const [stream, streamSelectDisabled] =
+  const streamSelectDisabled = !hasStdout || !hasStderr;
+  const stream =
     _stream === "stdout" && !hasStdout && hasStderr
-      ? ["stderr" as LogStream, true]
-      : [_stream, false];
+      ? "stderr"
+      : _stream === "stderr" && !hasStderr && hasStdout
+        ? "stdout"
+        : _stream;
 
   return (
     <Section
