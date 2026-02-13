@@ -33,12 +33,13 @@ export default function TopbarAlerts() {
             <ICONS.Alert size="1.3rem" />
             <Box
               bg="red"
+              c="white"
               px="0.3rem"
               py="0.1rem"
               fz="xs"
               pos="absolute"
               top="-8px"
-              right="-8px"
+              right="-6px"
               bdrs="md"
             >
               {alerts.alerts.length}
