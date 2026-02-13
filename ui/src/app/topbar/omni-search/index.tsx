@@ -30,7 +30,7 @@ export default function OmniSearch({}: {}) {
           </Badge>
         }
         onClick={() => spotlight.open()}
-        w={{ lg: 300, xl: 400 }}
+        w={{ lg: 200, xl: 300, xl4: 400 }}
         visibleFrom="lg"
       >
         <Group>

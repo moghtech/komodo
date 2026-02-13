@@ -259,7 +259,7 @@ export default function Config<T>({
                         <Bookmark size="1rem" />
                         <Text tt="uppercase">{group || "GENERAL"}</Text>
                       </Group>
-                      <Stack gap="0.25rem">
+                      <Stack gap="0.1rem">
                         {groupArgs &&
                           groupArgs
                             .filter((groupArgs) => !groupArgs.hidden)
@@ -268,6 +268,7 @@ export default function Config<T>({
                                 key={group + groupArgs.label}
                                 variant="subtle"
                                 justify="flex-end"
+                                size="sm"
                                 fullWidth
                                 renderRoot={(props) => (
                                   <Anchor
