@@ -1,28 +1,26 @@
-import { BoxProps, Flex, FlexProps, Group, Loader, Stack } from "@mantine/core";
+import { BoxProps, Flex, FlexProps, Group, Stack } from "@mantine/core";
 import { Types } from "komodo_client";
-import { UpdateStatus } from "komodo_client/dist/types";
 import { Check, X } from "lucide-react";
-import { fmtDate, fmtOperation, fmtVersion } from "@/lib/formatting";
-import { versionIsNone } from "@/lib/utils";
+import { fmtDate, fmtUpperCamelcase } from "@/lib/formatting";
 import { ICONS } from "@/theme/icons";
-import UserAvatar from "@/components/user-avatar";
-import { useUpdateDetails } from "./details";
+import { useAlertDetails } from "./details";
+import AlertLevel from "./level";
 import ResourceLink from "@/resources/link";
 
-export default function UpdateCard({
-  update,
+export default function AlertCard({
+  alert,
   smallHidden,
   accent,
   onClick: _onClick,
   large,
 }: {
-  update: Types.UpdateListItem;
+  alert: Types.Alert;
   smallHidden?: boolean;
   accent?: boolean;
   onClick?: () => void;
   large?: boolean;
 }) {
-  const { open: openDetails } = useUpdateDetails();
+  const { open: openDetails } = useAlertDetails();
 
   const FirstRow = (flexProps: FlexProps) => (
     <Flex
@@ -31,18 +29,12 @@ export default function UpdateCard({
       {...flexProps}
     >
       <Group wrap="nowrap" gap="xs">
-        <Icon update={update} />
-        {fmtOperation(update.operation)}
-        {!versionIsNone(update.version) && (
-          <Group c="dimmed" gap="xs">
-            <ICONS.Version size="1rem" />
-            {fmtVersion(update.version)}
-          </Group>
-        )}
+        <Icon alert={alert} />
+        {fmtUpperCamelcase(alert.data.type)}
       </Group>
       <Group c="dimmed" wrap="nowrap" gap="xs">
         <ICONS.Calendar size="1rem" />
-        {fmtDate(new Date(update.start_ts))}
+        {fmtDate(new Date(alert.ts))}
       </Group>
     </Flex>
   );
@@ -59,7 +51,7 @@ export default function UpdateCard({
   };
 
   const onClick = () => {
-    openDetails(update.id);
+    openDetails(alert._id?.$oid!);
     _onClick?.();
   };
 
@@ -69,7 +61,7 @@ export default function UpdateCard({
         <FirstRow />
         <Flex justify="space-between" c="dimmed">
           <Group gap="xs">
-            {update.target.type === "System" ? (
+            {alert.target.type === "System" ? (
               <>
                 <ICONS.System size="1rem" />
                 System
@@ -77,13 +69,12 @@ export default function UpdateCard({
             ) : (
               <ResourceLink
                 onClick={_onClick}
-                type={update.target.type}
-                id={update.target.id}
-                noColor
+                type={alert.target.type}
+                id={alert.target.id}
               />
             )}
           </Group>
-          <UserAvatar userId={update.operator} />
+          <AlertLevel level={alert.level} />
         </Flex>
       </Stack>
     );
@@ -92,9 +83,10 @@ export default function UpdateCard({
   }
 }
 
-const Icon = ({ update }: { update: Types.UpdateListItem }) => {
-  if (update.status === UpdateStatus.Complete) {
-    if (update.success) return <Check size="1rem" color="green" />;
-    else return <X size="1rem" color="red" />;
-  } else return <Loader size="1rem" />;
+const Icon = ({ alert }: { alert: Types.Alert }) => {
+  if (alert.resolved) {
+    return <Check size="1rem" color="green" />;
+  } else {
+    return <X size="1rem" color="red" />;
+  }
 };

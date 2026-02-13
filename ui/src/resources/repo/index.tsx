@@ -59,10 +59,12 @@ export const RepoComponents: RequiredResourceComponents<
 
   Table: RepoTable,
 
-  Icon: ({ id, size = "1rem" }) => {
+  Icon: ({ id, size = "1rem", noColor }) => {
     const state = useRead("ListRepos", {}).data?.find((r) => r.id === id)?.info
       .state;
-    const color = state && hexColorByIntention(repoStateIntention(state));
+    const color = noColor
+      ? undefined
+      : state && hexColorByIntention(repoStateIntention(state));
     return <ICONS.Repo size={size} color={color} />;
   },
 

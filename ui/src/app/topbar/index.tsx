@@ -17,6 +17,7 @@ import OmniSearch from "@/app/topbar/omni-search";
 import WebsocketStatus from "@/app/topbar/websocket-status";
 import { useRead } from "@/lib/hooks";
 import TopbarLink from "./link";
+import TopbarAlerts from "./alerts";
 
 const Topbar = ({
   opened,
@@ -87,6 +88,7 @@ const Topbar = ({
             </TopbarLink>
           )}
           <WebsocketStatus />
+          <TopbarAlerts />
           <TopbarUpdates />
           <ThemeToggle />
         </Group>

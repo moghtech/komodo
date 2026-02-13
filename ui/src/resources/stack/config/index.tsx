@@ -13,6 +13,7 @@ import {
   ActionIcon,
   Button,
   Group,
+  MultiSelect,
   Select,
   Stack,
   Text,
@@ -36,6 +37,7 @@ import { AccountSelectorConfig } from "@/components/config/account-selector";
 import LinkedRepo from "@/components/config/linked-repo";
 import { DEFAULT_STACK_FILE_CONTENTS } from "..";
 import { ReactNode } from "react";
+import StackServiceSelector from "@/components/stack-service-selector";
 
 type StackMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const STACK_MODES = ["UI Defined", "Files On Server", "Git Repo"] as const;
@@ -72,6 +74,10 @@ export default function StackConfig({
   });
   const { canWrite } = usePermissions({ type: "Stack", id });
   const stack = useRead("GetStack", { stack: id }).data;
+  const allServices =
+    (stack?.info?.deployed_services ?? stack?.info?.latest_services)?.map(
+      (s) => s.service_name,
+    ) ?? [];
   const config = stack?.config;
   const name = stack?.name;
   const global_disabled =
@@ -83,17 +89,17 @@ export default function StackConfig({
   });
   const { mutateAsync } = useWrite("UpdateStack");
   const { integrations } = useWebhookIntegrations();
-  const [id_or_name] = useWebhookIdOrName();
+  const [idOrName] = useWebhookIdOrName();
 
   if (!config) return null;
 
   const disabled = global_disabled || !canWrite;
 
-  const run_build = update.run_build ?? config.run_build;
+  const runBuild = update.run_build ?? config.run_build;
   const mode = getStackMode(update, config);
 
-  const git_provider = update.git_provider ?? config.git_provider;
-  const webhook_integration = getWebhookIntegration(integrations, git_provider);
+  const gitProvider = update.git_provider ?? config.git_provider;
+  const webhookIntegration = getWebhookIntegration(integrations, gitProvider);
 
   const setMode = (mode: StackMode) => {
     if (mode === "Files On Server") {
@@ -532,16 +538,23 @@ export default function StackConfig({
       labelHidden: true,
       fields: {
         ignore_services: (values, set) => (
-          <ConfigList
+          <ConfigItem
             label="Ignore Services"
             boldLabel
             description="If your compose file has init services that exit early, ignore them here so your stack will report the correct health."
-            field="ignore_services"
-            values={values ?? []}
-            set={set}
-            disabled={disabled}
-            placeholder="Input service name"
-          />
+          >
+            <MultiSelect
+              leftSection={<ICONS.Service size="1rem" />}
+              placeholder={values?.length ? "Add services" : "Select services"}
+              value={values}
+              data={allServices}
+              onChange={(ignore_services) => set({ ignore_services })}
+              disabled={disabled}
+              w="fit-content"
+              searchable
+              clearable
+            />
+          </ConfigItem>
         ),
       },
     },
@@ -599,7 +612,7 @@ export default function StackConfig({
             "Ensure 'docker compose build' is run before redeploying the Stack. Otherwise, can use '--build' as an Extra Arg.",
         },
         build_extra_args: (value, set) =>
-          run_build && (
+          runBuild && (
             <ConfigItem
               label="Build Extra Args"
               description="Add extra args inserted after 'docker compose build'"
@@ -798,7 +811,7 @@ export default function StackConfig({
         ...generalCommon,
         {
           label: "Webhooks",
-          description: `Copy the webhook given here, and configure your ${webhook_integration}-style repo provider to send webhooks to Komodo`,
+          description: `Copy the webhook given here, and configure your ${webhookIntegration}-style repo provider to send webhooks to Komodo`,
           actions: (
             <ShowHideButton
               show={show.webhooks}

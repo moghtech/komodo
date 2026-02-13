@@ -59,10 +59,12 @@ export const ProcedureComponents: RequiredResourceComponents<
 
   Table: ProcedureTable,
 
-  Icon: ({ id, size = "1rem" }) => {
+  Icon: ({ id, size = "1rem", noColor }) => {
     const state = useRead("ListProcedures", {}).data?.find((r) => r.id === id)
       ?.info.state;
-    const color = state && hexColorByIntention(procedureStateIntention(state));
+    const color = noColor
+      ? undefined
+      : state && hexColorByIntention(procedureStateIntention(state));
     return <ICONS.Procedure size={size} color={color} />;
   },
 

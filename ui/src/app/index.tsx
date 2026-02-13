@@ -6,6 +6,7 @@ import Topbar from "@/app/topbar";
 import Sidebar from "@/app/sidebar";
 import LoadingScreen from "@/ui/loading-screen";
 import UpdateDetails from "@/components/updates/details";
+import AlertDetails from "@/components/alerts/details";
 
 export const TOPBAR_HEIGHT = 70;
 
@@ -39,6 +40,7 @@ const App = () => {
             <Outlet />
           </Box>
           <UpdateDetails />
+          <AlertDetails />
         </Suspense>
       </AppShell.Main>
     </AppShell>

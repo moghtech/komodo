@@ -21,7 +21,7 @@ export default function WebsocketStatus() {
   return (
     <HoverCard position="bottom-end" offset={20}>
       <HoverCard.Target>
-        <ActionIcon variant="subtle" onClick={onClick} size="lg">
+        <ActionIcon variant="subtle" onClick={onClick} size="xl">
           <Circle
             size="1.2rem"
             color={color}

@@ -16,6 +16,7 @@ import { notifications } from "@mantine/notifications";
 import ConfirmServerPubkey from "./confirm-pubkey";
 import DeleteResource from "../delete";
 import ServerTabs from "./tabs";
+import { fmtUpperCamelcase } from "@/lib/formatting";
 
 export function useServer(id: string | undefined) {
   return useRead("ListServers", {}).data?.find((r) => r.id === id);
@@ -68,10 +69,12 @@ export const ServerComponents: RequiredResourceComponents<
 
   Table: ServerTable,
 
-  Icon: ({ id, size = "1rem" }) => {
+  Icon: ({ id, size = "1rem", noColor }) => {
     const state = useRead("ListServers", {}).data?.find((r) => r.id === id)
       ?.info.state;
-    const color = state && hexColorByIntention(serverStateIntention(state));
+    const color = noColor
+      ? undefined
+      : state && hexColorByIntention(serverStateIntention(state));
     return <ICONS.Server size={size} color={color} />;
   },
 
@@ -82,7 +85,7 @@ export const ServerComponents: RequiredResourceComponents<
         intent={serverStateIntention(server?.info.state)}
         icon={ICONS.Server}
         name={server?.name}
-        state={server?.info.state}
+        state={fmtUpperCamelcase(server?.info.state ?? "")}
         status={server?.info.region}
         action={<DeleteResource type="Server" id={id} />}
       />

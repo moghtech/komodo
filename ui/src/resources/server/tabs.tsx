@@ -24,6 +24,7 @@ export default function ServerTabs({ id }: { id: string }) {
   });
   const { specificTerminal } = usePermissions({ type: "Server", id });
   const serverInfo = useServer(id)?.info;
+  const notReachable = serverInfo?.state !== Types.ServerState.Ok;
   const terminalDisabled =
     !specificTerminal || (serverInfo?.terminals_disabled ?? true);
 
@@ -58,6 +59,7 @@ export default function ServerTabs({ id }: { id: string }) {
       {
         value: "Docker",
         icon: ICONS.Docker,
+        disabled: notReachable,
       },
       // {
       //   value: "Resources",

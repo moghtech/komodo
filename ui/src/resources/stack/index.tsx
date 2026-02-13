@@ -94,10 +94,12 @@ export const StackComponents: RequiredResourceComponents<
 
   Table: StackTable,
 
-  Icon: ({ id, size = "1rem" }) => {
+  Icon: ({ id, size = "1rem", noColor }) => {
     const state = useRead("ListStacks", {}).data?.find((r) => r.id === id)?.info
       .state;
-    const color = state && hexColorByIntention(stackStateIntention(state));
+    const color = noColor
+      ? undefined
+      : state && hexColorByIntention(stackStateIntention(state));
     return <ICONS.Stack size={size} color={color} />;
   },
 

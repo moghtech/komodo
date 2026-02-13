@@ -1,40 +1,40 @@
 import { useRead } from "@/lib/hooks";
 import { Types } from "komodo_client";
-import UpdateCard from "./card";
+import AlertCard from "./card";
 import { Button, Box, BoxProps, Stack } from "@mantine/core";
 import { ICONS } from "@/theme/icons";
 import { Link } from "react-router-dom";
 
-export interface UpdateListProps extends BoxProps {
-  query?: Types.ListUpdates["query"];
+export interface AlertListProps extends BoxProps {
+  query?: Types.ListAlerts["query"];
   max?: number;
   showAllLink?: string;
-  onUpdateClick?: (update: Types.UpdateListItem) => void;
+  onAlertClick?: (update: Types.Alert) => void;
   onClick?: () => void;
   large?: boolean;
 }
 
-export default function UpdateList({
+export default function AlertList({
   query,
   max,
   showAllLink,
-  onUpdateClick,
+  onAlertClick,
   large,
   style,
-  ...boxProps
-}: UpdateListProps) {
-  const updates = useRead("ListUpdates", {
+  ...scrollProps
+}: AlertListProps) {
+  const alerts = useRead("ListAlerts", {
     query,
   }).data;
   return (
-    <Box style={{ overflow: "auto", ...style }} {...boxProps}>
+    <Box style={{ overflow: "auto", ...style }} {...scrollProps}>
       <Stack pr="sm" gap="0">
-        {updates?.updates.slice(0, max).map((update, i) => (
-          <UpdateCard
-            key={update.id}
-            update={update}
+        {alerts?.alerts.slice(0, max).map((alert, i) => (
+          <AlertCard
+            key={alert._id?.$oid}
+            alert={alert}
             accent={i % 2 === 0}
-            onClick={() => onUpdateClick?.(update)}
+            onClick={() => onAlertClick?.(alert)}
             large={large}
           />
         ))}

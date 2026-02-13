@@ -89,10 +89,12 @@ export const DeploymentComponents: RequiredResourceComponents<
 
   Table: DeploymentTable,
 
-  Icon: ({ id, size = "1rem" }) => {
+  Icon: ({ id, size = "1rem", noColor }) => {
     const state = useRead("ListDeployments", {}).data?.find((r) => r.id === id)
       ?.info.state;
-    const color = state && hexColorByIntention(deploymentStateIntention(state));
+    const color = noColor
+      ? undefined
+      : state && hexColorByIntention(deploymentStateIntention(state));
     return <ICONS.Deployment size={size} color={color} />;
   },
 

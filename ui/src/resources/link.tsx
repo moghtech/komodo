@@ -8,13 +8,15 @@ export default function ResourceLink({
   type,
   id,
   onClick,
+  noColor,
 }: {
   type: UsableResource;
   id: string;
   onClick?: () => void;
+  noColor?: boolean;
 }) {
-  const Components = ResourceComponents[type];
-  const resource = Components.useListItem(id);
+  const RC = ResourceComponents[type];
+  const resource = RC.useListItem(id);
   return (
     <Group
       renderRoot={(props) => (
@@ -27,7 +29,7 @@ export default function ResourceLink({
       wrap="nowrap"
       gap="xs"
     >
-      <Components.Icon id={id} />
+      <RC.Icon id={id} noColor={noColor} />
       <Text className="hover-underline" style={{ textWrap: "nowrap" }}>
         {resource?.name ?? "Unknown"}
       </Text>

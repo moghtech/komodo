@@ -42,7 +42,7 @@ export default function UserDropdown() {
       <Menu.Target>
         <Button
           variant="subtle"
-          c="inherit"
+          size="lg"
           leftSection={<User size="1.3rem" />}
           px="0.5rem"
         >

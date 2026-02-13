@@ -101,7 +101,7 @@ export interface RequiredResourceComponents<
   GroupExecutions: React.FC;
 
   /** Icon for the resource */
-  Icon: React.FC<{ id?: string; size?: string | number }>;
+  Icon: React.FC<{ id?: string; size?: string | number; noColor?: boolean }>;
 
   State: IdComponent;
 

@@ -64,10 +64,12 @@ export const ActionComponents: RequiredResourceComponents<
 
   Table: ActionTable,
 
-  Icon: ({ id, size = "1rem" }) => {
+  Icon: ({ id, size = "1rem", noColor }) => {
     const state = useRead("ListActions", {}).data?.find((r) => r.id === id)
       ?.info.state;
-    const color = state && hexColorByIntention(actionStateIntention(state));
+    const color = noColor
+      ? undefined
+      : state && hexColorByIntention(actionStateIntention(state));
     return <ICONS.Action size={size} color={color} />;
   },
 

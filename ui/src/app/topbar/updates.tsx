@@ -43,15 +43,15 @@ export default function TopbarUpdates() {
       onClose={close}
     >
       <Menu.Target>
-        <ActionIcon size="lg" variant="subtle" c="inherit">
+        <ActionIcon size="xl" variant="subtle" c="inherit">
           <Center pos="relative">
             <ICONS.Update size="1.3rem" />
             <Circle
-              size="0.6rem"
+              size="12px"
               style={{
                 position: "absolute",
-                top: "-2px",
-                right: "-2px",
+                top: "-6px",
+                right: "-6px",
                 opacity: unseenUpdate ? 1 : 0,
                 transition: "all 300ms ease",
               }}
@@ -64,9 +64,8 @@ export default function TopbarUpdates() {
       <Menu.Dropdown>
         <UpdateList
           showAllLink="/updates"
-          onClick={close}
-          h={500}
-          mah="calc(100vh - 90px)"
+          onUpdateClick={close}
+          mah="min(500px, calc(100vh - 90px))"
           w={{ base: "92vw", md: 500, xl3: 600 }}
           large
         />

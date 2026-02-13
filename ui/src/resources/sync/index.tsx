@@ -70,12 +70,13 @@ export const ResourceSyncComponents: RequiredResourceComponents<
 
   Table: ResourceSyncTable,
 
-  Icon: ({ id, size = "1rem" }) => {
+  Icon: ({ id, size = "1rem", noColor }) => {
     const state = useRead("ListResourceSyncs", {}).data?.find(
       (r) => r.id === id,
     )?.info.state;
-    const color =
-      state && hexColorByIntention(resourceSyncStateIntention(state));
+    const color = noColor
+      ? undefined
+      : state && hexColorByIntention(resourceSyncStateIntention(state));
     return <ICONS.ResourceSync size={size} color={color} />;
   },
 

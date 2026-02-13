@@ -12,12 +12,7 @@ export default function ThemeToggle() {
   return (
     <Menu position="bottom-end" offset={20}>
       <Menu.Target>
-        <ActionIcon
-          aria-label="ThemeToggle"
-          size="lg"
-          variant="subtle"
-          c="inherit"
-        >
+        <ActionIcon aria-label="ThemeToggle" size="xl" variant="subtle">
           <ThemeIcon />
         </ActionIcon>
       </Menu.Target>
