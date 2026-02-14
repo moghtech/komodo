@@ -28,7 +28,7 @@ export default function Schedules() {
     <Page
       icon={ICONS.Schedule}
       title="Schedules"
-      description="See an overview of your scheduled tasks."
+      description="See an overview of your scheduled Actions and Procedures."
     >
       <Group justify="end">
         <TagsFilter />
