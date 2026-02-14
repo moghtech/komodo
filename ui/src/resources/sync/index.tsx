@@ -12,7 +12,7 @@ import { CommitSync, ExecuteSync, RefreshSync } from "./executions";
 import FileSource from "@/components/file-source";
 import { Clock } from "lucide-react";
 import { fmtDate } from "@/lib/formatting";
-import { Group } from "@mantine/core";
+import { Box, Group } from "@mantine/core";
 import HashCompare from "@/components/hash-compare";
 import ResourceSyncTabs from "./tabs";
 
@@ -120,13 +120,15 @@ export const ResourceSyncComponents: RequiredResourceComponents<
         return null;
       }
       return (
-        <HashCompare
-          lastHash={info?.last_sync_hash}
-          lastMessage={info?.last_sync_message}
-          lastLabel="synced"
-          latestHash={info?.pending_hash}
-          latestMessage={info?.pending_message}
-        />
+        <Box>
+          <HashCompare
+            lastHash={info?.last_sync_hash}
+            lastMessage={info?.last_sync_message}
+            lastLabel="synced"
+            latestHash={info?.pending_hash}
+            latestMessage={info?.pending_message}
+          />
+        </Box>
       );
     },
   },

@@ -1,14 +1,14 @@
-import ConfirmButton from "@/ui/confirm-button";
 import { useManageAuth, useUserInvalidate } from "@/lib/hooks";
 import { Button } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { MoghAuth, Types } from "komodo_client";
 import { Fingerprint, Trash } from "lucide-react";
+import ConfirmModal from "@/ui/confirm-modal";
 
 export const EnrollPasskey = ({ user }: { user: Types.User }) => {
   const userInvalidate = useUserInvalidate();
 
-  const { mutate: unenroll, isPending: unenrollPending } = useManageAuth(
+  const { mutateAsync: unenroll, isPending: unenrollPending } = useManageAuth(
     "UnenrollPasskey",
     {
       onSuccess: () => {
@@ -57,16 +57,17 @@ export const EnrollPasskey = ({ user }: { user: Types.User }) => {
         </Button>
       )}
       {!!user.passkey?.created_at && (
-        <ConfirmButton
+        <ConfirmModal
+          confirmText="Unenroll"
           icon={<Trash size="1rem" />}
           loading={unenrollPending}
-          onClick={() => unenroll({})}
+          onConfirm={() => unenroll({})}
           variant="filled"
           color="red"
           w={220}
         >
           Unenroll Passkey 2FA
-        </ConfirmButton>
+        </ConfirmModal>
       )}
     </>
   );

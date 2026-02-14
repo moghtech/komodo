@@ -1,6 +1,7 @@
 import {
   Badge,
   Box,
+  Code,
   Group,
   HoverCard,
   HoverCardProps,
@@ -48,19 +49,22 @@ export default function HashCompare({
       </HoverCard.Target>
       <HoverCard.Dropdown>
         <Stack>
-          <Stack gap="0.2rem">
-            <Badge>message</Badge>
-            {lastMessage || latestMessage}
+          <Stack gap="xs">
+            <Group gap="xs">
+              <Badge color="accent.9">message</Badge>
+              <Text c="dimmed">{lastHash}</Text>
+            </Group>
+            <Code>{lastMessage || latestMessage}</Code>
           </Stack>
           {outOfDate && (
-            <Stack gap="0.2rem">
-              <Badge style={{ borderColor: "var(--mantine-color-yellow-7)" }}>
-                latest
-              </Badge>
+            <Stack gap="xs">
               <Group gap="xs">
-                <Text c="dimmed">{latestHash}:</Text>
-                <Text>{latestMessage}</Text>
+                <Badge style={{ borderColor: "var(--mantine-color-yellow-7)" }}>
+                  latest
+                </Badge>
+                <Text c="dimmed">{latestHash}</Text>
               </Group>
+              <Code>{latestMessage}</Code>
             </Stack>
           )}
         </Stack>

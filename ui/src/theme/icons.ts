@@ -39,7 +39,6 @@ import {
   ListTodo,
   MemoryStick,
   Milestone,
-  MonitorCloud,
   Network,
   Pause,
   Play,

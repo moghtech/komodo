@@ -20,6 +20,7 @@ import { useSwarm } from "@/resources/swarm";
 import { useServer } from "@/resources/server";
 import {
   ActionIcon,
+  Box,
   Button,
   Group,
   HoverCard,
@@ -273,13 +274,16 @@ export const StackComponents: RequiredResourceComponents<
         return null;
       }
       return (
-        <HashCompare
-          lastHash={fullInfo?.deployed_hash}
-          lastMessage={fullInfo?.deployed_message}
-          lastLabel="deployed"
-          latestHash={fullInfo?.latest_hash}
-          latestMessage={fullInfo?.latest_message}
-        />
+        // The border is added to the box.
+        <Box>
+          <HashCompare
+            lastHash={fullInfo?.deployed_hash}
+            lastMessage={fullInfo?.deployed_message}
+            lastLabel="deployed"
+            latestHash={fullInfo?.latest_hash}
+            latestMessage={fullInfo?.latest_message}
+          />
+        </Box>
       );
     },
 

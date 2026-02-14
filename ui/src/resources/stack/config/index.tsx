@@ -230,6 +230,8 @@ export default function StackConfig({
             boldLabel
           >
             <Select
+              w="fit-content"
+              placeholder="Choose Mode"
               value={mode}
               onChange={(mode) => mode && setMode(mode as StackMode)}
               disabled={disabled}

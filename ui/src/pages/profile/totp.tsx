@@ -1,4 +1,3 @@
-import ConfirmButton from "@/ui/confirm-button";
 import CopyButton from "@/ui/copy-button";
 import { useManageAuth, useUserInvalidate } from "@/lib/hooks";
 import {
@@ -14,6 +13,7 @@ import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";
 import { Check, RotateCcwKey, Trash } from "lucide-react";
 import { useState } from "react";
+import ConfirmModal from "@/ui/confirm-modal";
 
 export const EnrollTotp = ({ user }: { user: Types.User }) => {
   const userInvalidate = useUserInvalidate();
@@ -34,7 +34,7 @@ export const EnrollTotp = ({ user }: { user: Types.User }) => {
       },
     });
 
-  const { mutate: unenroll, isPending: unenrollPending } = useManageAuth(
+  const { mutateAsync: unenroll, isPending: unenrollPending } = useManageAuth(
     "UnenrollTotp",
     {
       onSuccess: () => {
@@ -128,15 +128,16 @@ export const EnrollTotp = ({ user }: { user: Types.User }) => {
         </>
       )}
       {!!user.totp?.confirmed_at && (
-        <ConfirmButton
+        <ConfirmModal
+          confirmText="Unenroll"
           icon={<Trash size="1rem" />}
           loading={unenrollPending}
-          onClick={() => unenroll({})}
+          onConfirm={() => unenroll({})}
           color="red"
           w={220}
         >
           Unenroll TOTP 2FA
-        </ConfirmButton>
+        </ConfirmModal>
       )}
     </>
   );

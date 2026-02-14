@@ -35,7 +35,6 @@ export default function Tags({
             key={tagId}
             variant="filled"
             color={tag?.color ? `Tag${tag.color}.4` : "TagSlate.4"}
-            c="inherit"
             onClick={() =>
               onBadgeClick &&
               (useName

@@ -191,6 +191,7 @@ export default function BuildConfig({
             boldLabel
           >
             <Select
+              w="fit-content"
               placeholder="Choose Mode"
               value={mode}
               onChange={(mode) => mode && setMode(mode as BuildMode)}

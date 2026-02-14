@@ -16,9 +16,9 @@ import {
 import { AddResourceTags, ResourceTags } from "@/resources/tags";
 import DividedChildren from "@/ui/divided-children";
 import Section from "@/ui/section";
-import { Anchor, Group, Stack, Text } from "@mantine/core";
+import { Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import EntityPage from "@/ui/entity-page";
 import { usableResourcePath } from "@/lib/utils";
 import ResourceDescription from "@/resources/description";
@@ -114,7 +114,7 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
 
 function ResourceHeader({ type, id }: { type: UsableResource; id: string }) {
   const RC = ResourceComponents[type];
-  const resource = RC.useListItem(id);
+  const resource = RC.useFull(id);
   const links = RC.useResourceLinks(resource);
   const { canWrite } = usePermissions({ type, id });
 
@@ -139,28 +139,36 @@ function ResourceHeader({ type, id }: { type: UsableResource; id: string }) {
         {links && links.length > 0 && (
           <Group px="md">
             {links.map((link) => (
-              <Anchor
+              <Group
                 key={link}
-                target="_blank"
-                href={link}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                }}
+                renderRoot={(props) => (
+                  <Link target="_blank" to={link} {...props} />
+                )}
+                gap="xs"
               >
                 <ICONS.Link size="1rem" />
-                <Text hiddenFrom="lg" maw={150} truncate>
+                <Text
+                  className="hover-underline"
+                  hiddenFrom="lg"
+                  maw={150}
+                  truncate
+                >
                   {link}
                 </Text>
-                <Text visibleFrom="lg" maw={250} truncate>
+                <Text
+                  className="hover-underline"
+                  visibleFrom="lg"
+                  maw={250}
+                  truncate
+                >
                   {link}
                 </Text>
-              </Anchor>
+              </Group>
             ))}
           </Group>
         )}
         <Group px="md" gap="sm">
-          {!resource?.tags.length && (
+          {!resource?.tags?.length && (
             <Text c="dimmed" fz="sm">
               Tags:
             </Text>

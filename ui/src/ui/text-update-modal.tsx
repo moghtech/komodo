@@ -1,8 +1,32 @@
 import { MonacoEditor, MonacoLanguage } from "@/components/monaco";
-import { Button, Group, Modal, Stack, Text, Textarea } from "@mantine/core";
+import {
+  Button,
+  Group,
+  Modal,
+  ModalProps,
+  Stack,
+  Text,
+  Textarea,
+} from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { CheckCircle } from "lucide-react";
 import { ReactNode, useEffect, useState } from "react";
+
+export interface TextUpdateModalProps extends Omit<
+  Omit<ModalProps, "opened">,
+  "onClose"
+> {
+  title: string;
+  titleRight?: ReactNode;
+  value: string | undefined;
+  onUpdate: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  target?: (open: () => void) => ReactNode;
+  /* If passed, use monaco editor instead */
+  useMonaco?: boolean;
+  monacoLanguage?: MonacoLanguage;
+}
 
 function defaultTarget(open: () => void, value: string) {
   return (
@@ -22,18 +46,8 @@ export default function TextUpdateModal({
   target,
   useMonaco,
   monacoLanguage,
-}: {
-  title: string;
-  titleRight?: ReactNode;
-  value: string | undefined;
-  onUpdate: (value: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  target?: (open: () => void) => ReactNode;
-  /* If passed, use monaco editor instead */
-  useMonaco?: boolean;
-  monacoLanguage?: MonacoLanguage;
-}) {
+  ...modalProps
+}: TextUpdateModalProps) {
   const [opened, { open, close }] = useDisclosure();
   const [value, setValue] = useState(_value);
   useEffect(() => setValue(_value), [_value]);
@@ -48,7 +62,7 @@ export default function TextUpdateModal({
         opened={opened}
         onClose={close}
         bdrs="md"
-        size="lg"
+        size="xl"
         title={
           titleRight ? (
             <Group>
@@ -59,6 +73,7 @@ export default function TextUpdateModal({
             <Text fz="h2">{title}</Text>
           )
         }
+        {...modalProps}
       >
         <Stack>
           {useMonaco ? (
@@ -75,13 +90,13 @@ export default function TextUpdateModal({
               placeholder={placeholder}
               disabled={disabled}
               resize="vertical"
+              styles={{ input: { minHeight: 200 } }}
             />
           )}
 
           {!disabled && (
             <Group justify="end" w="100%">
               <Button
-                c="inherit"
                 leftSection={<CheckCircle size="1rem" />}
                 onClick={onClick}
               >

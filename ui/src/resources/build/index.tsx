@@ -8,7 +8,7 @@ import EntityHeader from "@/ui/entity-header";
 import BuildTable from "./table";
 import NewResource from "@/resources/new";
 import DeleteResource from "../delete";
-import { ActionIcon, Group, Text } from "@mantine/core";
+import { ActionIcon, Box, Group, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { RunBuild } from "./executions";
 import BuildTabs from "./tabs";
@@ -128,13 +128,15 @@ export const BuildComponents: RequiredResourceComponents<
         return null;
       }
       return (
-        <HashCompare
-          lastHash={info?.built_hash}
-          lastMessage={info?.built_message}
-          lastLabel="built"
-          latestHash={info?.latest_hash}
-          latestMessage={info?.latest_message}
-        />
+        <Box>
+          <HashCompare
+            lastHash={info?.built_hash}
+            lastMessage={info?.built_message}
+            lastLabel="built"
+            latestHash={info?.latest_hash}
+            latestMessage={info?.latest_message}
+          />
+        </Box>
       );
     },
     Refresh: ({ id }) => {

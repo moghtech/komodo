@@ -19,9 +19,10 @@ const Dashboard = lazy(() => import("@/pages/dashboard"));
 const Resources = lazy(() => import("@/pages/resources"));
 const Resource = lazy(() => import("@/pages/resource"));
 const Profile = lazy(() => import("@/pages/profile"));
-const Containers = lazy(() => import("@/pages/containers"));
+const Schedules = lazy(() => import("@/pages/schedules"));
 const Terminals = lazy(() => import("@/pages/terminals"));
 const Terminal = lazy(() => import("@/pages/terminal"));
+const Containers = lazy(() => import("@/pages/containers"));
 const Container = lazy(() => import("@/pages/docker/container"));
 const Image = lazy(() => import("@/pages/docker/image"));
 const Network = lazy(() => import("@/pages/docker/network"));
@@ -51,6 +52,7 @@ export const Router = () => {
             <Route path="containers" element={<Containers />} />
             <Route path="terminals" element={<Terminals />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="schedules" element={<Schedules />} />
             <Route path=":type">
               <Route path="" element={<Resources />} />
               <Route path=":id" element={<Resource />} />

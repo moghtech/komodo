@@ -79,7 +79,7 @@ const Page = createPolymorphicComponent<"div", PageProps>(
         </Paper>
       );
       return (
-        <Stack gap="lg" {...stackProps} ref={ref}>
+        <Stack gap="xl" {...stackProps} ref={ref}>
           {oppositeTitle ? (
             <Flex justify="space-between">
               {titleNode}

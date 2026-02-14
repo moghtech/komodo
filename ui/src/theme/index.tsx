@@ -10,6 +10,7 @@ import {
   darken,
   Drawer,
   Fieldset,
+  HoverCard,
   Input,
   lighten,
   MantineColorScheme,
@@ -148,6 +149,14 @@ const theme = createTheme({
         bdrs: "md",
       },
     }),
+    HoverCard: HoverCard.extend({
+      styles: (theme) => ({
+        dropdown: {
+          backgroundColor: theme.colors.accent[1],
+          border: "1px solid " + theme.colors["accent-border"][4],
+        },
+      }),
+    }),
     Button: Button.extend({
       vars: () => ({
         root: {
@@ -173,6 +182,7 @@ const theme = createTheme({
     Badge: Badge.extend({
       defaultProps: {
         bdrs: "sm",
+        c: "var(--mantine-color-text)"
       },
     }),
     Table: Table.extend({
