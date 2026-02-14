@@ -19,7 +19,7 @@ export default function WebsocketStatus() {
   const color = hexColorByIntention(intention);
 
   return (
-    <HoverCard position="bottom-end" offset={20}>
+    <HoverCard offset={20}>
       <HoverCard.Target>
         <ActionIcon variant="subtle" onClick={onClick} size="xl">
           <Circle

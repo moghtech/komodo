@@ -32,6 +32,7 @@ import {
   History,
   Info,
   KeyRound,
+  KeySquare,
   Layers,
   Layers2,
   LayoutDashboard,
@@ -110,6 +111,7 @@ export const ICONS = {
   Memory: MemoryStick,
   Disk: Database,
   Stats: ChartLine,
+  OnboardingKey: KeySquare,
   // EXECUTIONS
   Deploy: Rocket,
   Destroy: Trash,

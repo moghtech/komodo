@@ -10,7 +10,7 @@ import { CheckCircle, Moon, Sun } from "lucide-react";
 export default function ThemeToggle() {
   const { colorScheme, setColorScheme } = useMantineColorScheme();
   return (
-    <Menu position="bottom-end" offset={20}>
+    <Menu offset={20}>
       <Menu.Target>
         <ActionIcon aria-label="ThemeToggle" size="xl" variant="subtle">
           <ThemeIcon />

@@ -8,6 +8,7 @@ import SettingsVariables from "./variables";
 import SettingsTags from "./tags";
 import SettingsProviders from "./providers";
 import { ICONS } from "@/theme/icons";
+import SettingsOnboardingKeys from "./onboarding";
 
 const Resources = lazy(() => import("@/pages/resources"));
 
@@ -50,9 +51,14 @@ export default function Settings() {
             content: <SettingsProviders />,
             icon: ICONS.Provider,
           },
+          {
+            value: "Onboarding",
+            content: <SettingsOnboardingKeys />,
+            icon: ICONS.OnboardingKey,
+          },
         ]}
         actions={currentView === "Variables" && <ExportToml includeVariables />}
-        tabProps={{ w: 140 }}
+        tabProps={{ w: 150 }}
         tabsProps={{ color: "green" }}
       />
     </Stack>

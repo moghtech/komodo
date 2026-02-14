@@ -22,6 +22,7 @@ export default function DeleteTerminal({
   });
   return (
     <ConfirmButton
+      variant="filled"
       color="red"
       icon={<ICONS.Delete size="1rem" />}
       onClick={() => mutate({ target, terminal })}

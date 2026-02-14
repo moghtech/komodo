@@ -3,15 +3,7 @@ import Section, { SectionProps } from "@/ui/section";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useState } from "react";
-import {
-  ActionIcon,
-  Box,
-  Button,
-  Center,
-  Group,
-  Stack,
-  Text,
-} from "@mantine/core";
+import { ActionIcon, Button, Group, Stack, Text } from "@mantine/core";
 import TargetTerminal from "./target";
 import { ICONS } from "@/theme/icons";
 import NewTerminal from "./new";
@@ -113,32 +105,40 @@ export default function TerminalSection({
           </Button>
         ) : null}
       </Group>
-      {(terminals?.length ?? 0) > 0 && (
-        <Box
+      {terminals?.map(({ name: terminal, target: responseTarget }) => (
+        <TargetTerminal
+          key={terminal}
+          terminal={terminal}
+          target={target.type === "Server" ? target : responseTarget}
+          selected={selected === terminal}
+          _reconnect={_reconnect}
+        />
+      ))}
+      {terminals && !terminals.length && (
+        <Stack
+          align="center"
+          justify="center"
+          h="calc(100vh - 30rem)"
           p="md"
-          bd="1px solid var(--mantine-color-accent-border-4)"
+          bd="1px solid var(--mantine-color-accent-border-3)"
           bdrs="md"
         >
-          {terminals?.map(({ name: terminal, target: responseTarget }) => (
-            <TargetTerminal
-              key={terminal}
-              terminal={terminal}
-              target={target.type === "Server" ? target : responseTarget}
-              selected={selected === terminal}
-              _reconnect={_reconnect}
-            />
-          ))}
-        </Box>
-      )}
-      {terminals && !terminals.length && (
-        <Stack align="center" justify="center" gap="0">
-          <Group>
-            <ICONS.Terminal size="2rem" />
-            <Text fz="h2">No Terminals</Text>
-          </Group>
-          <Text c="dimmed">
-            Create a new terminal using the <b>New</b> button.
-          </Text>
+          <Stack
+            align="center"
+            justify="center"
+            gap="0"
+            p="lg"
+            bg="accent.3"
+            bdrs="md"
+          >
+            <Group>
+              <ICONS.Terminal size="2rem" />
+              <Text fz="h2">No Terminals</Text>
+            </Group>
+            <Text c="dimmed">
+              Create a terminal using the <b>New</b> button.
+            </Text>
+          </Stack>
         </Stack>
       )}
     </Section>

@@ -156,11 +156,14 @@ export default function Terminal({
 
   return (
     <Box
-      ref={termRef}
-      h="calc(100vh - 30rem)"
+      p="md"
+      bd="1px solid var(--mantine-color-accent-border-3)"
+      bdrs="md"
       style={{
         display: selected ? undefined : "none",
       }}
-    />
+    >
+      <Box ref={termRef} h="calc(100vh - 30rem)" />
+    </Box>
   );
 }

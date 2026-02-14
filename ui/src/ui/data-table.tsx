@@ -21,7 +21,6 @@ import {
   BoxProps,
   Center,
   Checkbox,
-  Flex,
   Group,
   HoverCard,
   Loader,
@@ -271,21 +270,21 @@ export const SortableHeader = <T, V>({
       style={{ width: "100%" }}
     >
       <Group justify="space-between" gap="sm" wrap="nowrap">
-        <Flex align="center" gap="sm">
+        <Group gap="xs">
           <Text fw={600} size="sm" lineClamp={1}>
             {title}
           </Text>
           {description && (
-            <HoverCard>
+            <HoverCard offset={10}>
               <HoverCard.Target>
-                <Info className="w-4 h-4" />
+                <Info size="1rem" />
               </HoverCard.Target>
               <HoverCard.Dropdown>
                 <Text>{description}</Text>
               </HoverCard.Dropdown>
             </HoverCard>
           )}
-        </Flex>
+        </Group>
         <Center>
           <SortIcon
             state={column.getIsSorted()}

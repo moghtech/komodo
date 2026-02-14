@@ -246,7 +246,7 @@ function DeleteTerminal({
         })
       }
       loading={isPending}
-      miw={100}
+      w={120}
       size="xs"
     >
       Delete

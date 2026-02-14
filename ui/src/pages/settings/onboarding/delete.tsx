@@ -3,18 +3,16 @@ import { ICONS } from "@/theme/icons";
 import ConfirmButton from "@/ui/confirm-button";
 import { notifications } from "@mantine/notifications";
 
-export default function DeleteProviderAccount({
-  type,
-  id,
+export default function DeleteOnboardingKey({
+  publicKey,
 }: {
-  type: "GitProvider" | "DockerRegistry";
-  id: string;
+  publicKey: string;
 }) {
   const invalidate = useInvalidate();
-  const { mutate, isPending } = useWrite(`Delete${type}Account`, {
+  const { mutate, isPending } = useWrite("DeleteOnboardingKey", {
     onSuccess: () => {
-      invalidate([`List${type}Accounts`], [`Get${type}Account`]);
-      notifications.show({ message: "Account deleted" });
+      invalidate(["ListOnboardingKeys"]);
+      notifications.show({ message: "Onboarding Key Deleted" });
     },
   });
   return (
@@ -22,7 +20,10 @@ export default function DeleteProviderAccount({
       variant="filled"
       color="red"
       icon={<ICONS.Delete size="1rem" />}
-      onClick={() => mutate({ id })}
+      onClick={(e) => {
+        e.stopPropagation();
+        mutate({ public_key: publicKey });
+      }}
       loading={isPending}
     >
       Delete
