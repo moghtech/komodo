@@ -13,6 +13,7 @@ import Stage from "./stage";
 import { Button, Select, Stack } from "@mantine/core";
 import { ICONS } from "@/theme/icons";
 import { ConfigItem, ConfigSwitch } from "@/ui/config/item";
+import TimezoneSelector from "@/components/timezone-selector";
 
 const PROCEDURE_GIT_PROVIDER = "Procedure";
 
@@ -48,7 +49,7 @@ export default function ProcedureConfig({ id }: { id: string }) {
   });
   const { mutateAsync } = useWrite("UpdateProcedure");
   const { integrations } = useWebhookIntegrations();
-  const [id_or_name] = useWebhookIdOrName();
+  const [idOrName] = useWebhookIdOrName();
 
   if (!config) return null;
 
@@ -242,13 +243,13 @@ export default function ProcedureConfig({ id }: { id: string }) {
                     label="Timezone"
                     description="Select specific IANA timezone for schedule expression."
                   >
-                    {/* <TimezoneSelector
+                    <TimezoneSelector
                       timezone={timezone ?? ""}
                       onChange={(schedule_timezone) =>
                         set({ schedule_timezone })
                       }
                       disabled={disabled}
-                    /> */}
+                    />
                   </ConfigItem>
                 );
               },

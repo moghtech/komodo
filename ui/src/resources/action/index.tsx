@@ -96,7 +96,7 @@ export const ActionComponents: RequiredResourceComponents<
     Schedule: ({ id }) => {
       const nextScheduledRun = useAction(id)?.info.next_scheduled_run;
       return (
-        <Group>
+        <Group gap="xs">
           <Clock size="1rem" />
           Next Run:
           <Text fw="bold">

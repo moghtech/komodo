@@ -13,6 +13,8 @@ import { fmtSnakeCaseToUpperSpaceCase } from "@/lib/formatting";
 import { MonacoEditor } from "@/components/monaco";
 import Config from "@/ui/config";
 import ActionInfo from "./info";
+import { ConfigItem, ConfigSwitch } from "@/ui/config/item";
+import TimezoneSelector from "@/components/timezone-selector";
 
 export default function ActionConfig({ id }: { id: string }) {
   const [branch, setBranch] = useState("main");
@@ -128,18 +130,89 @@ export default function ActionConfig({ id }: { id: string }) {
             fields: {
               failure_alert: {
                 boldLabel: true,
-                description: "Send an alert any time the Procedure fails",
+                description: "Send an alert any time the Action fails",
               },
             },
           },
           {
             label: "Schedule",
             description:
-              "Configure the Procedure to run at defined times using English or CRON.",
+              "Configure the Action to run at defined times using English or CRON.",
             fields: {
-              schedule_enabled: {
-                label: "Enabled",
-                disabled: !(update.schedule ?? config.schedule),
+              schedule_enabled: (schedule_enabled, set) => (
+                <ConfigSwitch
+                  label="Enabled"
+                  value={
+                    (update.schedule ?? config.schedule)
+                      ? schedule_enabled
+                      : false
+                  }
+                  disabled={disabled || !(update.schedule ?? config.schedule)}
+                  onChange={(schedule_enabled) => set({ schedule_enabled })}
+                />
+              ),
+              schedule_format: (schedule_format, set) => (
+                <ConfigItem
+                  label="Format"
+                  description="Choose whether to provide English or CRON schedule expression"
+                >
+                  <Select
+                    value={schedule_format}
+                    onChange={(schedule_format) =>
+                      schedule_format &&
+                      set({
+                        schedule_format:
+                          schedule_format as Types.ScheduleFormat,
+                      })
+                    }
+                    data={Object.values(Types.ScheduleFormat)}
+                    w={{ base: "85%", lg: 400 }}
+                  />
+                </ConfigItem>
+              ),
+              schedule: {
+                label: "Expression",
+                description:
+                  (update.schedule_format ?? config.schedule_format) ===
+                  "Cron" ? (
+                    <div className="pt-1 flex flex-col gap-1">
+                      <code>
+                        second - minute - hour - day - month - day-of-week
+                      </code>
+                    </div>
+                  ) : (
+                    <div className="pt-1 flex flex-col gap-1">
+                      <code>Examples:</code>
+                      <code>- Run every day at 4:00 pm</code>
+                      <code>
+                        - Run at 21:00 on the 1st and 15th of the month
+                      </code>
+                      <code>- Every Sunday at midnight</code>
+                    </div>
+                  ),
+                placeholder:
+                  (update.schedule_format ?? config.schedule_format) === "Cron"
+                    ? "0 0 0 ? * SUN"
+                    : "Enter English expression",
+              },
+              schedule_timezone: (timezone, set) => {
+                return (
+                  <ConfigItem
+                    label="Timezone"
+                    description="Select specific IANA timezone for schedule expression."
+                  >
+                    <TimezoneSelector
+                      timezone={timezone ?? ""}
+                      onChange={(schedule_timezone) =>
+                        set({ schedule_timezone })
+                      }
+                      disabled={disabled}
+                    />
+                  </ConfigItem>
+                );
+              },
+              schedule_alert: {
+                description: "Send an alert when the scheduled run occurs",
               },
             },
           },
