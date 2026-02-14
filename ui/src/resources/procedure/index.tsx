@@ -9,6 +9,7 @@ import ProcedureTable from "./table";
 import NewResource from "@/resources/new";
 import ProcedureConfig from "./config";
 import DeleteResource from "../delete";
+import { RunProcedure } from "./executions";
 
 export function useProcedure(id: string | undefined) {
   return useRead("ListProcedures", {}).data?.find((r) => r.id === id);
@@ -88,7 +89,9 @@ export const ProcedureComponents: RequiredResourceComponents<
   },
   Info: {},
 
-  Executions: {},
+  Executions: {
+    RunProcedure,
+  },
 
   Config: ProcedureConfig,
 

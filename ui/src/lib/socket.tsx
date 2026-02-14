@@ -4,7 +4,7 @@ import { Types } from "komodo_client";
 import { useInvalidate, komodo_client, useRead, useUser } from "@/lib/hooks";
 import { ResourceComponents, UsableResource } from "@/resources";
 import { notifications } from "@mantine/notifications";
-import { Group, Text } from "@mantine/core";
+import { Badge, Group, Text } from "@mantine/core";
 import ResourceName from "@/resources/name";
 
 const wsAtom = atom<{
@@ -17,9 +17,11 @@ const wsAtom = atom<{
   count: 0,
 });
 
-export const useWebsocketConnected = () => useAtom(wsAtom)[0].connected;
+export function useWebsocketConnected() {
+  return useAtom(wsAtom)[0].connected;
+}
 
-export const useWebsocketReconnect = () => {
+export function useWebsocketReconnect() {
   const [ws, set] = useAtom(wsAtom);
 
   return () => {
@@ -32,16 +34,16 @@ export const useWebsocketReconnect = () => {
       count: ws.count + 1,
     }));
   };
-};
+}
 
 const onMessageHandlers: {
   [key: string]: (update: Types.UpdateListItem) => void;
 } = {};
 
-export const useWebsocketMessages = (
+export function useWebsocketMessages(
   key: string,
   handler: (update: Types.UpdateListItem) => void,
-) => {
+) {
   onMessageHandlers[key] = handler;
   useEffect(() => {
     // Clean up on unmount
@@ -49,7 +51,7 @@ export const useWebsocketMessages = (
       delete onMessageHandlers[key];
     };
   }, []);
-};
+}
 
 export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
   const user = useUser().data;
@@ -101,25 +103,50 @@ export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
   return <>{children}</>;
 };
 
-const onUpdate = (
+// Prevents multiple redundant in progress notifications
+const IN_PROGRESS_UPDATES: Set<string> = new Set();
+
+function onUpdate(
   update: Types.UpdateListItem,
   invalidate: ReturnType<typeof useInvalidate>,
-) => {
-  const Components = ResourceComponents[update.target.type as UsableResource];
-  const message = Components ? (
-    <Group gap="sm">
-      <Text>{update.operation}</Text> -
-      <ResourceName
-        type={update.target.type as UsableResource}
-        id={update.target.id}
-      />
-      {!update.success && <Text>FAILED</Text>}
-    </Group>
-  ) : (
-    `${update.operation}${update.success ? "" : " - FAILED"}`
-  );
+) {
+  const RC = ResourceComponents[update.target.type as UsableResource];
+  const [state, color] =
+    update.status !== Types.UpdateStatus.Complete
+      ? (["In Progress", "blue"] as const)
+      : update.success
+        ? (["Complete", "green"] as const)
+        : (["Failed", "red"] as const);
 
-  notifications.show({ message });
+  function notify() {
+    notifications.show({
+      title: (
+        <Group gap="sm">
+          <Text>{update.operation}</Text>
+          <Badge color={color}>{state}</Badge>
+        </Group>
+      ),
+      message: RC ? (
+        <ResourceName
+          type={update.target.type as UsableResource}
+          id={update.target.id}
+        />
+      ) : (
+        <Text>System</Text>
+      ),
+      color,
+    });
+  }
+
+  if (state === "In Progress") {
+    if (!IN_PROGRESS_UPDATES.has(update.id)) {
+      IN_PROGRESS_UPDATES.add(update.id);
+      notify();
+    }
+  } else {
+    IN_PROGRESS_UPDATES.delete(update.id);
+    notify();
+  }
 
   // Invalidate these every time
   invalidate(["ListUpdates"]);
@@ -322,4 +349,4 @@ const onUpdate = (
 
   // Run any attached handlers
   Object.values(onMessageHandlers).forEach((handler) => handler(update));
-};
+}
