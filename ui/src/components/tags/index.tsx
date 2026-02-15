@@ -1,6 +1,7 @@
-import { Badge, BadgeProps, Loader } from "@mantine/core";
+import { BadgeProps } from "@mantine/core";
 import { ReactNode, useCallback } from "react";
 import { useRead } from "@/lib/hooks";
+import Tag from "./tag";
 
 export interface TagsProps extends BadgeProps {
   tagIds?: string[];
@@ -14,7 +15,6 @@ export default function Tags({
   onBadgeClick,
   icon,
   useName,
-  py = "0.3rem",
   ...badgeProps
 }: TagsProps) {
   const allTags = useRead("ListTags", {}).data;
@@ -29,30 +29,19 @@ export default function Tags({
     <>
       {tagIds?.map((tagId) => {
         const tag = getTag(tagId);
-        // const color = tagColor(tag?.color) + "60";
         return (
-          <Badge
+          <Tag
             key={tagId}
-            variant="filled"
-            color={tag?.color ? `Tag${tag.color}.4` : "TagSlate.4"}
+            tag={tag}
+            icon={icon}
             onClick={() =>
               onBadgeClick &&
               (useName
                 ? tag?.name && onBadgeClick(tag.name)
                 : onBadgeClick(tagId))
             }
-            style={{ cursor: onBadgeClick ? "pointer" : undefined }}
-            rightSection={icon}
-            w="fit-content"
-            h="fit-content"
-            bdrs="sm"
-            py={py}
-            tt="none"
-            fz={{ base: "xs", lg: "sm" }}
             {...badgeProps}
-          >
-            {tag?.name ?? <Loader size="0.6rem" />}
-          </Badge>
+          />
         );
       })}
     </>

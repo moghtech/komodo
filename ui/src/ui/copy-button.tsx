@@ -30,7 +30,10 @@ export default function CopyButton({
           onClick={() => {
             copy();
             if (location.origin.startsWith("https")) {
-              notifications.show({ message: `Copied ${label} to clipboard.` });
+              notifications.show({
+                message: `Copied ${label} to clipboard.`,
+                color: "green",
+              });
             } else {
               notifications.show({
                 message: "Cannot copy to clipboard without HTTPS.",

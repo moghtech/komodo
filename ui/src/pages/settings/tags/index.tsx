@@ -1,10 +1,13 @@
 import NewTag from "@/components/tags/new";
+import Tag from "@/components/tags/tag";
 import UserAvatar from "@/components/user-avatar";
 import { useRead, useSetTitle, useUser } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import { DataTable } from "@/ui/data-table";
 import { Group, Stack, TextInput } from "@mantine/core";
 import { useState } from "react";
+import TagColorSelector from "./color-selector";
+import DeleteTag from "./delete";
 
 export default function SettingsTags() {
   useSetTitle("Tags");
@@ -35,17 +38,19 @@ export default function SettingsTags() {
             header: "Name",
             size: 200,
             accessorKey: "name",
+            cell: ({ row }) => {
+              return <Tag tag={row.original} />;
+            },
           },
           {
             header: "Color",
             size: 200,
             cell: ({ row }) => (
-              <></>
-              // <ColorSelector
-              //   tag_id={row.original._id?.$oid!}
-              //   color={row.original.color!}
-              //   disabled={!user.admin && row.original.owner !== user._id?.$oid}
-              // />
+              <TagColorSelector
+                tagId={row.original._id?.$oid!}
+                color={row.original.color!}
+                disabled={!user.admin && row.original.owner !== user._id?.$oid}
+              />
             ),
           },
           {
@@ -62,11 +67,10 @@ export default function SettingsTags() {
             header: "Delete",
             size: 200,
             cell: ({ row }) => (
-              <></>
-              // <DeleteTag
-              //   tag_id={row.original._id!.$oid}
-              //   disabled={!user.admin && row.original.owner !== user._id?.$oid}
-              // />
+              <DeleteTag
+                tagId={row.original._id!.$oid}
+                disabled={!user.admin && row.original.owner !== user._id?.$oid}
+              />
             ),
           },
         ]}

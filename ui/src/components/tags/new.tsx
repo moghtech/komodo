@@ -25,7 +25,7 @@ export default function NewTag() {
         <>
           <TextInput
             autoFocus
-            placeholder="variable-name"
+            placeholder="tag-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             error={!name.trim() && "Enter name"}

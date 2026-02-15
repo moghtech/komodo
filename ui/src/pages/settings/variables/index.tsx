@@ -1,0 +1,225 @@
+import NewVariable from "@/pages/settings/variables/new";
+import {
+  useInvalidate,
+  useRead,
+  useSetTitle,
+  useUser,
+  useWrite,
+} from "@/lib/hooks";
+import { filterBySplit } from "@/lib/utils";
+import { ICONS } from "@/theme/icons";
+import CopyButton from "@/ui/copy-button";
+import { DataTable, SortableHeader } from "@/ui/data-table";
+import TextUpdateModal from "@/ui/text-update-modal";
+import {
+  Badge,
+  Button,
+  Group,
+  Stack,
+  Switch,
+  Text,
+  TextInput,
+} from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { useState } from "react";
+import DeleteVariable from "./delete";
+
+export default function SettingsVariables() {
+  const user = useUser().data;
+  const disabled = !user?.admin;
+  useSetTitle("Variables");
+
+  const [search, setSearch] = useState("");
+
+  const variables = useRead("ListVariables", {}).data ?? [];
+  const secrets = useRead("ListSecrets", {}).data ?? [];
+
+  const filtered = filterBySplit(variables, search, (item) => item.name);
+
+  const inv = useInvalidate();
+
+  const { mutate: updateValue } = useWrite("UpdateVariableValue", {
+    onSuccess: () => {
+      inv(["ListVariables"], ["GetVariable"]);
+      notifications.show({ message: "Updated variable value" });
+    },
+  });
+
+  const { mutate: updateDescription } = useWrite("UpdateVariableDescription", {
+    onSuccess: () => {
+      inv(["ListVariables"], ["GetVariable"]);
+      notifications.show({ message: "Updated variable description" });
+    },
+  });
+
+  const { mutate: updateIsSecret } = useWrite("UpdateVariableIsSecret", {
+    onSuccess: () => {
+      inv(["ListVariables"], ["GetVariable"]);
+      notifications.show({ message: "Updated variable 'is secret'" });
+    },
+  });
+
+  return (
+    <Stack>
+      <Group justify="space-between">
+        <NewVariable />
+        <TextInput
+          placeholder="search..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          w={{ base: 200, lg: 300 }}
+          leftSection={<ICONS.Search size="1rem" />}
+        />
+      </Group>
+
+      <DataTable
+        mah="max(300px, calc(100vh - 400px))"
+        tableKey="variables"
+        data={filtered}
+        columns={[
+          {
+            accessorKey: "name",
+            size: 200,
+            header: ({ column }) => (
+              <SortableHeader column={column} title="Name" />
+            ),
+            cell: ({ row }) => {
+              return (
+                <Group gap="sm" wrap="nowrap">
+                  <Text
+                    title={row.original.name}
+                    w={{ base: 200, lg: 300 }}
+                    p="xs"
+                    bd="1px solid var(--mantine-color-accent-border-2)"
+                    bdrs="sm"
+                    style={{ overflow: "hidden", whiteSpace: "nowrap" }}
+                    className="text-ellipsis"
+                    size="sm"
+                  >
+                    {row.original.name}
+                  </Text>
+                  <CopyButton content={row.original.name} />
+                </Group>
+              );
+            },
+          },
+          {
+            accessorKey: "value",
+            size: 300,
+            header: ({ column }) => (
+              <SortableHeader column={column} title="Value" />
+            ),
+            cell: ({ row }) => {
+              return (
+                <Group gap="sm" wrap="nowrap">
+                  <TextUpdateModal
+                    title="Value"
+                    value={row.original.value}
+                    onUpdate={(value) => {
+                      if (row.original.value === value) return;
+                      updateValue({ name: row.original.name, value });
+                    }}
+                    target={(open) => {
+                      return (
+                        <Button
+                          className="overflow-ellipsis"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            open();
+                          }}
+                          w={{ base: 200, lg: 300 }}
+                          justify="start"
+                        >
+                          {(row.original.is_secret
+                            ? "*".repeat(row.original.value?.length ?? 0)
+                            : row.original.value) || (
+                            <Text c="dimmed">Set value</Text>
+                          )}
+                        </Button>
+                      );
+                    }}
+                    disabled={disabled}
+                  />
+                  <CopyButton content={row.original.value ?? ""} />
+                </Group>
+              );
+            },
+          },
+          {
+            accessorKey: "description",
+            size: 200,
+            header: ({ column }) => (
+              <SortableHeader column={column} title="Description" />
+            ),
+            cell: ({ row }) => {
+              return (
+                <TextUpdateModal
+                  title="Description"
+                  value={row.original.description}
+                  onUpdate={(description) => {
+                    if (row.original.description === description) return;
+                    updateDescription({ name: row.original.name, description });
+                  }}
+                  target={(open) => {
+                    return (
+                      <Button
+                        className="overflow-ellipsis"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          open();
+                        }}
+                        w={{ base: 200, lg: 300 }}
+                        justify="start"
+                      >
+                        {row.original.description || (
+                          <Text c="dimmed">Set description</Text>
+                        )}
+                      </Button>
+                    );
+                  }}
+                  disabled={disabled}
+                />
+              );
+            },
+          },
+          {
+            header: "Secret",
+            size: 100,
+            cell: ({ row }) => (
+              <Switch
+                checked={row.original.is_secret}
+                onChange={(e) =>
+                  updateIsSecret({
+                    name: row.original.name,
+                    is_secret: e.target.checked,
+                  })
+                }
+                disabled={disabled}
+              />
+            ),
+          },
+          {
+            header: "Delete",
+            size: 200,
+            cell: ({ row }) => (
+              <DeleteVariable name={row.original.name} disabled={disabled} />
+            ),
+          },
+        ]}
+      />
+
+      {secrets?.length ? (
+        <Group>
+          <Text c="dimmed">Core Secrets:</Text>
+          <Group gap="xs">
+            {secrets.map((secret) => (
+              <Badge key={secret} tt="none">
+                {secret}
+              </Badge>
+            ))}
+          </Group>
+        </Group>
+      ) : undefined}
+    </Stack>
+  );
+}
