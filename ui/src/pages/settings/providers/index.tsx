@@ -7,13 +7,16 @@ import {
 } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import Section from "@/ui/section";
-import { Group, Stack, TextInput } from "@mantine/core";
+import { Button, Group, Stack, Switch, Text, TextInput } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { ReactNode, useState } from "react";
+import { useState } from "react";
 import NewProviderAccount from "./new";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import DeleteProviderAccount from "./delete";
 import ProvidersFromConfig from "./from-config";
+import TextUpdateModal from "@/ui/text-update-modal";
+import CopyButton from "@/ui/copy-button";
+import { Types } from "komodo_client";
 
 export default function SettingsProviders() {
   return (
@@ -28,16 +31,6 @@ function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
   const user = useUser().data;
   const disabled = !user?.admin;
   useSetTitle("Providers");
-  const [updateMenuData, setUpdateMenuData] = useState<
-    | false
-    | {
-        title: string;
-        value: string;
-        placeholder: string;
-        onUpdate: (value: string) => void;
-        titleRight?: ReactNode;
-      }
-  >(false);
   const [search, setSearch] = useState("");
   const accounts = useRead(`List${type}Accounts`, {}).data ?? [];
   const searchSplit = search?.toLowerCase().split(" ") || [];
@@ -95,37 +88,57 @@ function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
             ),
             cell: ({ row }) => {
               return (
-                <></>
-                // <div className="flex items-center gap-2">
-                //   <Card
-                //     className="px-3 py-2 hover:bg-accent/50 transition-colors cursor-pointer w-full"
-                //     onClick={() => {
-                //       setUpdateMenuData({
-                //         title: "Set Domain",
-                //         value: row.original.domain ?? "",
-                //         placeholder: "Input domain, eg. git.komo.do",
-                //         titleRight:
-                //           type === "GitProvider" ? (
-                //             <UpdateHttps id={row.original._id?.$oid!} />
-                //           ) : undefined,
-                //         onUpdate: (domain) => {
-                //           if (row.original.domain === domain) {
-                //             return;
-                //           }
-                //           updateAccount({
-                //             id: row.original._id?.$oid!,
-                //             account: { domain },
-                //           });
-                //         },
-                //       });
-                //     }}
-                //   >
-                //     <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis text-muted-foreground w-[100px] xl:w-[150px] 2xl:w-[200px]">
-                //       {row.original.domain || "Set domain"}
-                //     </div>
-                //   </Card>
-                //   <CopyButton content={row.original.domain} />
-                // </div>
+                <Group gap="sm" wrap="nowrap">
+                  <TextUpdateModal
+                    title="Update Domain"
+                    titleRight={
+                      type === "GitProvider" ? (
+                        <Group gap="xs">
+                          <Text c="dimmed">Use Https:</Text>
+                          <Switch
+                            title="Use Https"
+                            checked={
+                              (row.original as Types.GitProviderAccount).https
+                            }
+                            onChange={(e) =>
+                              updateAccount({
+                                id: row.original._id?.$oid!,
+                                account: { https: e.target.checked },
+                              })
+                            }
+                          />
+                        </Group>
+                      ) : undefined
+                    }
+                    value={row.original.domain}
+                    onUpdate={(domain) => {
+                      if (row.original.domain === domain) return;
+                      updateAccount({
+                        id: row.original._id?.$oid!,
+                        account: { domain },
+                      });
+                    }}
+                    target={(open) => {
+                      return (
+                        <Button
+                          className="overflow-ellipsis"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            open();
+                          }}
+                          w={{ base: 200, lg: 300 }}
+                          justify="start"
+                        >
+                          {row.original.domain || (
+                            <Text c="dimmed">Set domain</Text>
+                          )}
+                        </Button>
+                      );
+                    }}
+                    disabled={disabled}
+                  />
+                  <CopyButton content={row.original.domain ?? ""} />
+                </Group>
               );
             },
           },
@@ -137,33 +150,38 @@ function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
             ),
             cell: ({ row }) => {
               return (
-                <></>
-                // <div className="flex items-center gap-2">
-                //   <Card
-                //     className="px-3 py-2 hover:bg-accent/50 transition-colors cursor-pointer w-full"
-                //     onClick={() => {
-                //       setUpdateMenuData({
-                //         title: "Set Username",
-                //         value: row.original.username ?? "",
-                //         placeholder: "Input account username",
-                //         onUpdate: (username) => {
-                //           if (row.original.username === username) {
-                //             return;
-                //           }
-                //           updateAccount({
-                //             id: row.original._id?.$oid!,
-                //             account: { username },
-                //           });
-                //         },
-                //       });
-                //     }}
-                //   >
-                //     <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis text-muted-foreground w-[100px] xl:w-[150px] 2xl:w-[200px]">
-                //       {row.original.username || "Set username"}
-                //     </div>
-                //   </Card>
-                //   <CopyButton content={row.original.username} />
-                // </div>
+                <Group gap="sm" wrap="nowrap">
+                  <TextUpdateModal
+                    title="Update Username"
+                    value={row.original.username}
+                    onUpdate={(username) => {
+                      if (row.original.username === username) return;
+                      updateAccount({
+                        id: row.original._id?.$oid!,
+                        account: { username },
+                      });
+                    }}
+                    target={(open) => {
+                      return (
+                        <Button
+                          className="overflow-ellipsis"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            open();
+                          }}
+                          w={{ base: 200, lg: 300 }}
+                          justify="start"
+                        >
+                          {row.original.username || (
+                            <Text c="dimmed">Set username</Text>
+                          )}
+                        </Button>
+                      );
+                    }}
+                    disabled={disabled}
+                  />
+                  <CopyButton content={row.original.username ?? ""} />
+                </Group>
               );
             },
           },
@@ -175,34 +193,38 @@ function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
             ),
             cell: ({ row }) => {
               return (
-                <></>
-                // <div className="flex items-center gap-2">
-                //   <Card
-                //     className="px-3 py-2 hover:bg-accent/50 transition-colors cursor-pointer w-full"
-                //     onClick={() => {
-                //       setUpdateMenuData({
-                //         title: "Set Token",
-                //         value: row.original.token ?? "",
-                //         placeholder: "Input account token",
-                //         onUpdate: (token) => {
-                //           if (row.original.token === token) {
-                //             return;
-                //           }
-                //           updateAccount({
-                //             id: row.original._id?.$oid!,
-                //             account: { token },
-                //           });
-                //         },
-                //       });
-                //     }}
-                //   >
-                //     <div className="text-sm text-nowrap overflow-hidden overflow-ellipsis text-muted-foreground w-[100px] xl:w-[150px] 2xl:w-[200px]">
-                //       {"*".repeat(row.original.token?.length || 0) ||
-                //         "Set token"}
-                //     </div>
-                //   </Card>
-                //   <CopyButton content={row.original.token} />
-                // </div>
+                <Group gap="sm" wrap="nowrap">
+                  <TextUpdateModal
+                    title="Update Token"
+                    value={row.original.token}
+                    onUpdate={(token) => {
+                      if (row.original.token === token) return;
+                      updateAccount({
+                        id: row.original._id?.$oid!,
+                        account: { token },
+                      });
+                    }}
+                    target={(open) => {
+                      return (
+                        <Button
+                          className="overflow-ellipsis"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            open();
+                          }}
+                          w={{ base: 200, lg: 300 }}
+                          justify="start"
+                        >
+                          {"*".repeat(row.original.token?.length || 0) || (
+                            <Text c="dimmed">Set token</Text>
+                          )}
+                        </Button>
+                      );
+                    }}
+                    disabled={disabled}
+                  />
+                  <CopyButton content={row.original.token ?? ""} />
+                </Group>
               );
             },
           },
