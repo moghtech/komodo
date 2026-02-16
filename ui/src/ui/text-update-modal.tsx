@@ -61,7 +61,6 @@ export default function TextUpdateModal({
       <Modal
         opened={opened}
         onClose={close}
-        bdrs="md"
         size="xl"
         title={
           titleRight ? (

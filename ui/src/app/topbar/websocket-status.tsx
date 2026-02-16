@@ -13,6 +13,7 @@ export default function WebsocketStatus() {
       message: connected
         ? "Triggered websocket reconnect"
         : "Triggered websocket connect",
+      color: "blue",
     });
   };
   const intention = connected ? "Good" : "Critical";

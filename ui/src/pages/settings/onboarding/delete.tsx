@@ -17,8 +17,6 @@ export default function DeleteOnboardingKey({
   });
   return (
     <ConfirmButton
-      variant="filled"
-      color="red"
       icon={<ICONS.Delete size="1rem" />}
       onClick={(e) => {
         e.stopPropagation();

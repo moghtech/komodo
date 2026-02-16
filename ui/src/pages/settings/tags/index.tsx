@@ -39,7 +39,7 @@ export default function SettingsTags() {
             size: 200,
             accessorKey: "name",
             cell: ({ row }) => {
-              return <Tag tag={row.original} />;
+              return <Tag tag={row.original} size="md" fz="md" />;
             },
           },
           {

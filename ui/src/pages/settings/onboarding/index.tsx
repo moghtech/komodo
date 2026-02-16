@@ -22,7 +22,7 @@ export default function SettingsOnboardingKeys() {
   const { mutate } = useWrite("UpdateOnboardingKey", {
     onSuccess: () => {
       invalidate(["ListOnboardingKeys"]);
-      notifications.show({ message: "Updated onboarding key" });
+      notifications.show({ message: "Updated onboarding key", color: "green" });
     },
   });
   const columns: (
@@ -178,7 +178,12 @@ export default function SettingsOnboardingKeys() {
             original: { expires },
           },
         }) => (
-          <Badge color={expires && expires <= Date.now() ? "red" : "green"}>
+          <Badge
+            color={expires && expires <= Date.now() ? "red" : "green"}
+            fz={{ base: "sm", lg: "md" }}
+            p={{ base: "sm", lg: "md" }}
+            size="md"
+          >
             {expires ? fmtDateWithMinutes(new Date(expires)) : "Never"}
           </Badge>
         ),
