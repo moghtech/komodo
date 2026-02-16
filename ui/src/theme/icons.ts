@@ -17,6 +17,7 @@ import {
   Cpu,
   Database,
   Diamond,
+  DiamondPlus,
   Download,
   ExternalLink,
   Factory,
@@ -104,6 +105,7 @@ export const ICONS = {
   SwarmTask: ListTodo,
   SwarmConfig: Settings,
   SwarmSecret: KeyRound,
+  JoinSwarm: DiamondPlus,
   // Device
   IP: Globe,
   Cpu,

@@ -22,7 +22,9 @@ export default function ServerTabs({ id }: { id: string }) {
     key: `server-${id}-tab-v2`,
     defaultValue: "Config",
   });
+
   const { specificTerminal } = usePermissions({ type: "Server", id });
+
   const serverInfo = useServer(id)?.info;
   const notReachable = serverInfo?.state !== Types.ServerState.Ok;
   const terminalDisabled =

@@ -166,6 +166,7 @@ const theme = createTheme({
       defaultProps: {
         variant: "default",
       },
+      classNames: { root: "bordered-heavy-outline" },
     }),
     ActionIcon: ActionIcon.extend({
       vars: () => ({
@@ -182,7 +183,7 @@ const theme = createTheme({
     Badge: Badge.extend({
       defaultProps: {
         bdrs: "sm",
-        c: "var(--mantine-color-text)"
+        c: "var(--mantine-color-text)",
       },
     }),
     Table: Table.extend({
@@ -228,21 +229,21 @@ const theme = createTheme({
       styles: (theme) => ({
         root: {
           backgroundColor: "var(--mantine-color-body)",
-          border: "1px solid " + theme.colors["accent-border"][2],
           borderRadius: theme.radius.md,
         },
       }),
+      classNames: { root: "bordered-light" },
     }),
     SegmentedControl: SegmentedControl.extend({
       styles: (theme) => ({
         root: {
           backgroundColor: theme.colors.accent[2],
-          border: "1px solid " + theme.colors["accent-border"][4],
         },
         indicator: {
           backgroundColor: theme.colors.accent[9],
         },
       }),
+      classNames: { root: "bordered-heavy" },
     }),
   },
 });

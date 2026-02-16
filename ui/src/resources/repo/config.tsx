@@ -12,7 +12,12 @@ import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import ResourceLink from "@/resources/link";
 import ResourceSelector from "@/resources/selector";
-import { Group } from "@mantine/core";
+import { Group, Stack } from "@mantine/core";
+import { ProviderSelectorConfig } from "@/components/config/provider-selector";
+import { AccountSelectorConfig } from "@/components/config/account-selector";
+import SecretsSearch from "@/components/config/secrets-search";
+import { MonacoEditor } from "@/components/monaco";
+import SystemCommand from "@/components/config/system-command";
 
 export default function RepoConfig({ id }: { id: string }) {
   const { canWrite } = usePermissions({ type: "Repo", id });
@@ -110,31 +115,31 @@ export default function RepoConfig({ id }: { id: string }) {
           {
             label: "Source",
             fields: {
-              // git_provider: (provider, set) => {
-              //   const https = update.git_https ?? config.git_https;
-              //   return (
-              //     <ProviderSelectorConfig
-              //       account_type="git"
-              //       selected={provider}
-              //       disabled={disabled}
-              //       onSelect={(git_provider) => set({ git_provider })}
-              //       https={https}
-              //       onHttpsSwitch={() => set({ git_https: !https })}
-              //     />
-              //   );
-              // },
-              // git_account: (account, set) => (
-              //   <AccountSelectorConfig
-              //     id={update.builder_id ?? config.builder_id ?? undefined}
-              //     type="Builder"
-              //     account_type="git"
-              //     provider={update.git_provider ?? config.git_provider}
-              //     selected={account}
-              //     onSelect={(git_account) => set({ git_account })}
-              //     disabled={disabled}
-              //     placeholder="None"
-              //   />
-              // ),
+              git_provider: (provider, set) => {
+                const https = update.git_https ?? config.git_https;
+                return (
+                  <ProviderSelectorConfig
+                    accountType="git"
+                    selected={provider}
+                    disabled={disabled}
+                    onSelect={(git_provider) => set({ git_provider })}
+                    https={https}
+                    onHttpsSwitch={() => set({ git_https: !https })}
+                  />
+                );
+              },
+              git_account: (account, set) => (
+                <AccountSelectorConfig
+                  id={update.builder_id ?? config.builder_id ?? undefined}
+                  accountType="git"
+                  type="Builder"
+                  provider={update.git_provider ?? config.git_provider}
+                  selected={account}
+                  onSelect={(git_account) => set({ git_account })}
+                  disabled={disabled}
+                  placeholder="None"
+                />
+              ),
               repo: {
                 placeholder: "Enter repo",
                 description:
@@ -180,19 +185,19 @@ export default function RepoConfig({ id }: { id: string }) {
             description:
               "Write these variables to a .env-formatted file at the specified path, before on_clone / on_pull are run.",
             fields: {
-              // environment: (env, set) => (
-              //   <div className="flex flex-col gap-4">
-              //     <SecretsSearch
-              //       server={update.server_id ?? config.server_id}
-              //     />
-              //     <MonacoEditor
-              //       value={env || "  # VARIABLE = value\n"}
-              //       onValueChange={(environment) => set({ environment })}
-              //       language="key_value"
-              //       readOnly={disabled}
-              //     />
-              //   </div>
-              // ),
+              environment: (env, set) => (
+                <Stack gap="xs">
+                  <SecretsSearch
+                    server={update.server_id ?? config.server_id}
+                  />
+                  <MonacoEditor
+                    value={env || "  # VARIABLE = value\n"}
+                    onValueChange={(environment) => set({ environment })}
+                    language="key_value"
+                    readOnly={disabled}
+                  />
+                </Stack>
+              ),
               env_file_path: {
                 description:
                   "The path to write the file to, relative to the root of the repo.",
@@ -206,13 +211,13 @@ export default function RepoConfig({ id }: { id: string }) {
             description:
               "Execute a shell command after cloning the repo. The given Cwd is relative to repo root.",
             fields: {
-              // on_clone: (value, set) => (
-              //   <SystemCommand
-              //     value={value}
-              //     set={(value) => set({ on_clone: value })}
-              //     disabled={disabled}
-              //   />
-              // ),
+              on_clone: (value, set) => (
+                <SystemCommand
+                  value={value}
+                  set={(value) => set({ on_clone: value })}
+                  disabled={disabled}
+                />
+              ),
             },
           },
           {
@@ -220,13 +225,13 @@ export default function RepoConfig({ id }: { id: string }) {
             description:
               "Execute a shell command after pulling the repo. The given Cwd is relative to repo root.",
             fields: {
-              // on_pull: (value, set) => (
-              //   <SystemCommand
-              //     value={value}
-              //     set={(value) => set({ on_pull: value })}
-              //     disabled={disabled}
-              //   />
-              // ),
+              on_pull: (value, set) => (
+                <SystemCommand
+                  value={value}
+                  set={(value) => set({ on_pull: value })}
+                  disabled={disabled}
+                />
+              ),
             },
           },
           {

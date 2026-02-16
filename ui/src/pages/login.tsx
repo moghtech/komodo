@@ -9,10 +9,10 @@ import {
   Button,
   Center,
   Fieldset,
-  Flex,
   Group,
   Loader,
   PasswordInput,
+  Stack,
   Text,
   TextInput,
 } from "@mantine/core";
@@ -137,7 +137,7 @@ export default function Login({
     <Center h="80vh">
       <Fieldset
         legend={
-          <Flex gap="4rem" align="center" justify="space-between">
+          <Group gap="4rem" justify="space-between">
             <Group gap="sm">
               <img
                 src="/mogh-512x512.png"
@@ -145,16 +145,16 @@ export default function Login({
                 height={42}
                 alt="moghtech"
               />
-              <Flex direction="column">
+              <Stack gap="0">
                 <Text fz="h2" fw="450" lts="0.1rem">
                   KOMODO
                 </Text>
                 <Text size="md" opacity={0.6} mt={-8}>
                   Log In
                 </Text>
-              </Flex>
+              </Stack>
             </Group>
-            <Flex gap="sm" align="center" wrap="wrap">
+            <Group gap="sm">
               {(
                 [
                   [options?.oidc, "Oidc"],
@@ -189,8 +189,8 @@ export default function Login({
                     </Button>
                   ),
               )}
-            </Flex>
-          </Flex>
+            </Group>
+          </Group>
         }
         component="form"
         onSubmit={
@@ -199,6 +199,7 @@ export default function Login({
             : (localForm.onSubmit((form) => login(form)) as any)
         }
         style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+        miw={{ lg: "500px" }}
         maw="95vw"
       >
         {options?.local && !secondFactorPending && (
@@ -216,11 +217,11 @@ export default function Login({
               placeholder="Enter password"
               key={localForm.key("password")}
             />
-            <Flex gap="md" mt="sm" justify="flex-end">
+            <Group mt="sm" justify="end">
               {!registration_disabled && (
                 <Button
+                  variant="outline"
                   w={110}
-                  variant="default"
                   onClick={localForm.onSubmit((form) => signup(form)) as any}
                   loading={signupPending}
                 >
@@ -229,13 +230,12 @@ export default function Login({
               )}
               <Button
                 w={110}
-                variant="filled"
                 type="submit"
                 loading={loginPending}
               >
                 Log In
               </Button>
-            </Flex>
+            </Group>
           </>
         )}
 
@@ -254,17 +254,17 @@ export default function Login({
             <TextInput
               {...totpForm.getInputProps("code")}
               label={
-                <Flex align="center" gap="sm">
+                <Group gap="sm">
                   <KeyRound size="1rem" />
                   2FA Code
-                </Flex>
+                </Group>
               }
               autoComplete="code"
               autoCapitalize="none"
               autoCorrect="off"
               autoFocus
             />
-            <Flex justify="flex-end">
+            <Group justify="end">
               <Button
                 w={110}
                 variant="filled"
@@ -273,7 +273,7 @@ export default function Login({
               >
                 Log In
               </Button>
-            </Flex>
+            </Group>
           </>
         )}
       </Fieldset>

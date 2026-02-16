@@ -1,5 +1,5 @@
 import { swarmStateIntention, hexColorByIntention } from "@/lib/color";
-import { useRead } from "@/lib/hooks";
+import { usePermissions, useRead } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
@@ -8,6 +8,11 @@ import EntityHeader from "@/ui/entity-header";
 import SwarmTable from "./table";
 import NewResource from "@/resources/new";
 import DeleteResource from "../delete";
+import SwarmTabs from "./tabs";
+import { useDisclosure } from "@mantine/hooks";
+import { Button, HoverCard, Modal, Text } from "@mantine/core";
+import JoinSwarmCommands from "./join-commands";
+import { updateLogToHtml } from "@/lib/utils";
 
 export function useSwarm(id: string | undefined) {
   return useRead("ListSwarms", {}).data?.find((r) => r.id === id);
@@ -79,11 +84,64 @@ export const SwarmComponents: RequiredResourceComponents<
     let state = useSwarm(id)?.info.state;
     return <StatusBadge text={state} intent={swarmStateIntention(state)} />;
   },
-  Info: {},
+  Info: {
+    Join: ({ id }) => {
+      const [opened, { open, close }] = useDisclosure();
+      const { specificInspect } = usePermissions({ type: "Swarm", id });
+      return (
+        <>
+          <Modal
+            title={<Text fz="h3">Join Commands</Text>}
+            opened={opened}
+            onClose={close}
+            size="auto"
+          >
+            <JoinSwarmCommands id={id} close={close} />
+          </Modal>
+
+          <Button
+            onClick={open}
+            leftSection={<ICONS.JoinSwarm size="1rem" />}
+            disabled={!specificInspect}
+          >
+            Join
+          </Button>
+        </>
+      );
+    },
+    Err: ({ id }) => {
+      const err = useSwarm(id)?.info.err;
+      if (!err) return null;
+      return (
+        <HoverCard>
+          <HoverCard.Target>
+            <Button
+              variant="filled"
+              color="red"
+              leftSection={<ICONS.Alert size="1rem" />}
+            >
+              Error
+            </Button>
+          </HoverCard.Target>
+          <HoverCard.Dropdown>
+            <Text
+              component="pre"
+              fz="sm"
+              mah={500}
+              dangerouslySetInnerHTML={{
+                __html: updateLogToHtml(err),
+              }}
+              style={{ overflowY: "auto" }}
+            />
+          </HoverCard.Dropdown>
+        </HoverCard>
+      );
+    },
+  },
 
   Executions: {},
 
-  Config: () => <>CONFIG</>,
+  Config: SwarmTabs,
 
   Page: {},
 };
