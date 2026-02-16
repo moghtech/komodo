@@ -89,9 +89,12 @@ export default function Updates() {
             value={operation}
             placeholder="Select operation"
             onChange={(op) => {
-              if (!op) return;
               const p = new URLSearchParams(params.toString());
-              op ? p.set("operation", op) : p.delete("operation");
+              if (op) {
+                p.set("operation", op);
+              } else {
+                p.delete("operation");
+              }
               setParams(p);
             }}
             data={
@@ -102,6 +105,7 @@ export default function Updates() {
                   )
             }
             searchable
+            clearable
           />
 
           {/* RESET */}
@@ -109,9 +113,24 @@ export default function Updates() {
             onClick={() => setParams({})}
             variant="filled"
             color="red"
+            disabled={!params.size}
           >
             <ICONS.Clear size="1rem" />
           </ActionIcon>
+
+          {/* PAGINATION */}
+          <Pagination.Root
+            total={updates?.next_page ? page + 2 : page + 1}
+            value={page + 1}
+            onChange={(page) => setPage(page - 1)}
+          >
+            <Group gap="0.2rem" justify="center">
+              <Pagination.First />
+              <Pagination.Previous />
+              <Pagination.Items />
+              <Pagination.Next />
+            </Group>
+          </Pagination.Root>
         </Group>
 
         <DataTable
@@ -141,8 +160,8 @@ export default function Updates() {
               cell: ({ row }) =>
                 row.original.target.type === "System" ? (
                   <Group gap="xs">
-                    <ICONS.System className="w-4 h-4" />
-                    System
+                    <ICONS.System size="1rem" />
+                    <Text>System</Text>
                   </Group>
                 ) : (
                   <ResourceLink
@@ -188,20 +207,6 @@ export default function Updates() {
           ]}
           onRowClick={(row) => openDetails(row.id)}
         />
-
-        <Pagination.Root
-          total={updates?.next_page ? page + 2 : page + 1}
-          value={page + 1}
-          onChange={(page) => setPage(page - 1)}
-        >
-          <Group gap="0.2rem" justify="center">
-            <Pagination.First />
-            <Pagination.Previous />
-            <Pagination.Items />
-            <Pagination.Next />
-            <Pagination.Last />
-          </Group>
-        </Pagination.Root>
       </Stack>
     </Page>
   );
