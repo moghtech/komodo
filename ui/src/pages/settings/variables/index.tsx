@@ -77,7 +77,6 @@ export default function SettingsVariables() {
         </Group>
 
         <DataTable
-          mah="max(300px, calc(100vh - 400px))"
           tableKey="variables"
           data={filtered}
           columns={[

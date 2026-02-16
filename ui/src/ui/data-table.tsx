@@ -243,7 +243,7 @@ export function DataTable<TData, TValue>({
         bd="1px solid var(--mantine-color-accent-border-0)"
         bdrs="md"
         w="100%"
-        mah="max(300px, calc(100vh - 350px))"
+        mah="max(150px, calc(100vh - 400px))"
         style={{ overflow: "auto" }}
         {...boxProps}
       >
