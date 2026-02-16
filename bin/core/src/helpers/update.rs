@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use anyhow::Context;
 use database::mungos::{
   by_id::{find_one_by_id, update_one_by_id},
@@ -16,7 +18,7 @@ use komodo_client::entities::{
   stack::Stack,
   swarm::Swarm,
   sync::ResourceSync,
-  update::{Update, UpdateListItem},
+  update::{Update, UpdateListItem, UpdateStatus},
   user::User,
 };
 
@@ -590,4 +592,18 @@ pub async fn init_execution_update(
   }
 
   Ok(update)
+}
+
+pub async fn poll_update_until_complete(
+  update_id: &str,
+) -> anyhow::Result<Update> {
+  loop {
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    let update = find_one_by_id(&db_client().updates, update_id)
+      .await?
+      .context("No update found at given ID")?;
+    if matches!(update.status, UpdateStatus::Complete) {
+      return Ok(update);
+    }
+  }
 }

@@ -27,12 +27,12 @@ use periphery_client::api::{self, container::InspectContainer};
 
 use crate::{
   alert::send_alerts,
-  api::execute::{self, ExecuteRequest},
+  api::execute::{self, ExecuteRequest, ExecutionResult},
   helpers::{
     periphery_client,
     query::{get_deployment_state, get_swarm_or_server},
     registry_token,
-    update::{add_update, make_update},
+    update::{add_update, make_update, poll_update_until_complete},
   },
   permission::get_check_permissions,
   resource::{
@@ -520,32 +520,42 @@ pub async fn check_deployment_for_update_inner(
       )
       .await
       {
-        Ok(_) => {
-          let ts = komodo_timestamp();
-          let alert = Alert {
-            id: Default::default(),
-            ts,
-            resolved: true,
-            resolved_ts: ts.into(),
-            level: SeverityLevel::Ok,
-            target: ResourceTarget::Deployment(id.clone()),
-            data: AlertData::DeploymentAutoUpdated {
-              id,
-              name,
-              swarm_id,
-              swarm_name,
-              server_id,
-              server_name,
-              image,
-            },
+        Ok(res) => {
+          let ExecutionResult::Single(update) = res else {
+            unreachable!()
           };
-          let res = db_client().alerts.insert_one(&alert).await;
-          if let Err(e) = res {
-            error!(
-              "Failed to record DeploymentAutoUpdated to db | {e:#}"
-            );
+          let Ok(update) =
+            poll_update_until_complete(&update.id).await
+          else {
+            return;
+          };
+          if update.success {
+            let ts = komodo_timestamp();
+            let alert = Alert {
+              id: Default::default(),
+              ts,
+              resolved: true,
+              resolved_ts: ts.into(),
+              level: SeverityLevel::Ok,
+              target: ResourceTarget::Deployment(id.clone()),
+              data: AlertData::DeploymentAutoUpdated {
+                id,
+                name,
+                swarm_id,
+                swarm_name,
+                server_id,
+                server_name,
+                image,
+              },
+            };
+            let res = db_client().alerts.insert_one(&alert).await;
+            if let Err(e) = res {
+              error!(
+                "Failed to record DeploymentAutoUpdated to db | {e:#}"
+              );
+            }
+            send_alerts(&[alert]).await;
           }
-          send_alerts(&[alert]).await;
         }
         Err(e) => {
           warn!("Failed to auto update Deployment {name} | {e:#}",)

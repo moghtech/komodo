@@ -33,12 +33,12 @@ use periphery_client::api::compose::{
 
 use crate::{
   alert::send_alerts,
-  api::execute::{self, ExecuteRequest},
+  api::execute::{self, ExecuteRequest, ExecutionResult},
   config::core_config,
   helpers::{
     query::get_swarm_or_server,
     stack_git_token, swarm_or_server_request,
-    update::{add_update, make_update},
+    update::{add_update, make_update, poll_update_until_complete},
   },
   permission::get_check_permissions,
   resource::{self, list_full_for_user_using_pattern},
@@ -957,33 +957,42 @@ pub async fn check_stack_for_update_inner(
     )
     .await
     {
-      Ok(_) => {
-        let ts = komodo_timestamp();
-        let alert = Alert {
-          id: Default::default(),
-          ts,
-          resolved: true,
-          resolved_ts: ts.into(),
-          level: SeverityLevel::Ok,
-          target: ResourceTarget::Stack(stack.id.clone()),
-          data: AlertData::StackAutoUpdated {
-            id: stack.id.clone(),
-            name: stack.name.clone(),
-            swarm_id,
-            swarm_name,
-            server_id,
-            server_name,
-            images: services_with_update
-              .iter()
-              .map(|service| service.image.clone())
-              .collect(),
-          },
+      Ok(res) => {
+        let ExecutionResult::Single(update) = res else {
+          unreachable!()
         };
-        let res = db_client().alerts.insert_one(&alert).await;
-        if let Err(e) = res {
-          error!("Failed to record StackAutoUpdated to db | {e:#}");
+        let Ok(update) = poll_update_until_complete(&update.id).await
+        else {
+          return;
+        };
+        if update.success {
+          let ts = komodo_timestamp();
+          let alert = Alert {
+            id: Default::default(),
+            ts,
+            resolved: true,
+            resolved_ts: ts.into(),
+            level: SeverityLevel::Ok,
+            target: ResourceTarget::Stack(stack.id.clone()),
+            data: AlertData::StackAutoUpdated {
+              id: stack.id.clone(),
+              name: stack.name.clone(),
+              swarm_id,
+              swarm_name,
+              server_id,
+              server_name,
+              images: services_with_update
+                .iter()
+                .map(|service| service.image.clone())
+                .collect(),
+            },
+          };
+          let res = db_client().alerts.insert_one(&alert).await;
+          if let Err(e) = res {
+            error!("Failed to record StackAutoUpdated to db | {e:#}");
+          }
+          send_alerts(&[alert]).await;
         }
-        send_alerts(&[alert]).await;
       }
       Err(e) => {
         warn!("Failed to auto update Stack {} | {e:#}", stack.name)
