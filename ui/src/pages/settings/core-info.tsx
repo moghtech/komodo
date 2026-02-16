@@ -22,8 +22,7 @@ export default function SettingsCoreInfo() {
         <Text
           ff="monospace"
           fz="xl"
-          bg="accent.3"
-          bd="1px solid var(--mantine-color-accent-border-4)"
+          className="accent-hover-light bordered-heavy"
           bdrs="md"
           px="lg"
           py="0.5rem"
@@ -36,14 +35,14 @@ export default function SettingsCoreInfo() {
 
       {info?.public_key && (
         <Group gap="xs">
-          <Text c="dimmed" size="lg">Public Key:</Text>
+          <Text c="dimmed" size="lg">
+            Public Key:
+          </Text>
           <Text
             ff="monospace"
             title={info?.public_key}
-            className="text-ellipsis"
+            className="text-ellipsis accent-hover-light bordered-heavy"
             w={{ base: 150, md: 230 }}
-            bg="accent.3"
-            bd="1px solid var(--mantine-color-accent-border-4)"
             bdrs="md"
             px="md"
             py="0.4rem"

@@ -49,7 +49,7 @@ export default function ResourceSyncPending({
       {/* PENDING ERROR */}
       {!!sync?.info?.pending_error && (
         <Stack
-          bd="1px solid var(--mantine-color-accent-border-0)"
+          className="bordered-light"
           bdrs="md"
           p="xl"
         >
@@ -71,7 +71,7 @@ export default function ResourceSyncPending({
       {/* PENDING DEPLOY */}
       {view === "Execute" && !!sync?.info?.pending_deploy?.to_deploy && (
         <Stack
-          bd="1px solid var(--mantine-color-accent-border-0)"
+          className="bordered-light"
           bdrs="md"
           p="xl"
         >
@@ -96,7 +96,7 @@ export default function ResourceSyncPending({
         return (
           <Stack
             key={update.target.type + update.target.id}
-            bd="1px solid var(--mantine-color-accent-border-0)"
+            className="bordered-light"
             bdrs="md"
             p="xl"
           >
@@ -188,7 +188,7 @@ export default function ResourceSyncPending({
         return (
           <Stack
             key={i}
-            bd="1px solid var(--mantine-color-accent-border-0)"
+            className="bordered-light"
             bdrs="md"
             p="xl"
           >
@@ -244,7 +244,7 @@ export default function ResourceSyncPending({
         return (
           <Stack
             key={i}
-            bd="1px solid var(--mantine-color-accent-border-0)"
+            className="bordered-light"
             bdrs="md"
             p="xl"
           >

@@ -3,7 +3,7 @@ import Section, { SectionProps } from "@/ui/section";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useState } from "react";
-import { ActionIcon, Button, Group, Stack, Text } from "@mantine/core";
+import { ActionIcon, Box, Button, Group, Stack, Text } from "@mantine/core";
 import TargetTerminal from "./target";
 import { ICONS } from "@/theme/icons";
 import NewTerminal from "./new";
@@ -54,15 +54,23 @@ export default function TerminalSection({
                 key={terminal}
                 onClick={() => setSelected({ selected: terminal })}
                 style={{ cursor: "pointer" }}
-                className="accent-hover"
-                bg={isSelected ? "accent.9" : undefined}
+                className={
+                  isSelected
+                    ? "accent-hover-heavy bordered-heavy"
+                    : "accent-hover-light bordered-light"
+                }
+                bd={
+                  isSelected
+                    ? "2px solid var(--mantine-color-accent-border-9)"
+                    : undefined
+                }
                 justify="space-between"
                 px="md"
                 py="0.4rem"
-                bd="1px solid var(--mantine-color-accent-border-7)"
                 bdrs="sm"
               >
                 <Group gap="xs">
+                  {isSelected && <Box w={12} h={12} bg="green" bdrs="md" />}
                   <Text fw={isSelected ? "bold" : undefined}>{terminal}</Text>
                   <Text c="dimmed">{stored_size_kb.toFixed()} KiB</Text>
                 </Group>
@@ -120,7 +128,7 @@ export default function TerminalSection({
           justify="center"
           h="calc(100vh - 30rem)"
           p="md"
-          bd="1px solid var(--mantine-color-accent-border-3)"
+          className="bordered-light"
           bdrs="md"
         >
           <Stack

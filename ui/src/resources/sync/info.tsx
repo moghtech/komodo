@@ -61,7 +61,7 @@ export default function ResourceSyncInfo({
         latestErrors.length > 0 &&
         latestErrors.map((error) => (
           <Stack
-            bd="1px solid var(--mantine-color-accent-border-0)"
+            className="bordered-light"
             bdrs="md"
             p="xl"
           >
@@ -118,7 +118,7 @@ export default function ResourceSyncInfo({
           };
           return (
             <Stack
-              bd="1px solid var(--mantine-color-accent-border-0)"
+              className="bordered-light"
               bdrs="md"
               p="xl"
             >

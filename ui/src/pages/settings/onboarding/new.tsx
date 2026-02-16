@@ -125,9 +125,7 @@ export default function NewOnboardingKey() {
                 <Text
                   ff="monospace"
                   title={submitted.private_key}
-                  className="text-ellipsis"
-                  bg="accent.3"
-                  bd="1px solid var(--mantine-color-accent-border-4)"
+                  className="text-ellipsis accent-hover-light bordered-heavy"
                   bdrs="md"
                   px="md"
                   py="0.4rem"

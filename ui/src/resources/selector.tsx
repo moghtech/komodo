@@ -71,8 +71,6 @@ export default function ResourceSelector({
     combobox.selectFirstOption();
   }, [search]);
 
-  if (!resources) return null;
-
   const filtered = filterBySplit(resources, search, (item) => item.name).sort(
     (a, b) => {
       if (a.name > b.name) {
@@ -106,6 +104,7 @@ export default function ResourceSelector({
           disabled={disabled}
           w="fit-content"
           maw={{ base: 200, lg: 300 }}
+          loading={!resources}
           {...targetProps}
         >
           <Group gap="xs">

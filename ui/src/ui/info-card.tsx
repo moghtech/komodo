@@ -20,15 +20,11 @@ const InfoCard = createPolymorphicComponent<"div", InfoCardProps>(
   forwardRef<HTMLDivElement, InfoCardProps>(
     ({ title, info, titleProps, children, ...props }, ref) => {
       return (
-        <Stack
-          p="md"
-          bd="1px solid var(--mantine-color-accent-border-1)"
-          bdrs="md"
-          {...props}
-          ref={ref}
-        >
+        <Stack p="md" className="bordered-light" bdrs="md" {...props} ref={ref}>
           <Group justify="space-between">
-            <Text fz="xl" {...titleProps}>{title}</Text>
+            <Text fz="xl" {...titleProps}>
+              {title}
+            </Text>
             {info}
           </Group>
           {children}

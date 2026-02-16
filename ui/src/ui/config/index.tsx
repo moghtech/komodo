@@ -141,7 +141,7 @@ export default function Config<T>({
                       id={group + label}
                       p="xl"
                       gap="xl"
-                      bd="1px solid var(--mantine-color-accent-border-0)"
+                      className="bordered-light"
                       bdrs="md"
                       style={{ scrollMarginTop: 94 }}
                     >
@@ -155,7 +155,9 @@ export default function Config<T>({
                               </Text>
                               {labelExtra}
                             </Group>
-                            {description && <Text c="dimmed">{description}</Text>}
+                            {description && (
+                              <Text c="dimmed">{description}</Text>
+                            )}
                           </Stack>
                           {actions}
                         </Group>

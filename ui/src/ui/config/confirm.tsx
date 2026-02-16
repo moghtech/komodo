@@ -144,7 +144,7 @@ function ConfirmUpdateItem<T>({
       hidden={val === prev_val}
       gap="xs"
       p="xl"
-      bd="1px solid var(--mantine-color-accent-border-0)"
+      className="bordered-light"
       bdrs="md"
     >
       <Group justify="space-between">

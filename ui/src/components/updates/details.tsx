@@ -161,11 +161,7 @@ export function UpdateDetailsContent({ id }: { id: string }) {
             withBorder
           >
             {log.command && (
-              <Stack
-                bd="1px solid var(--mantine-color-accent-border-0)"
-                bdrs="md"
-                p="md"
-              >
+              <Stack className="bordered-light" bdrs="md" p="md">
                 <Text fw="bold">command</Text>
                 <Code
                   fz="sm"
@@ -179,11 +175,7 @@ export function UpdateDetailsContent({ id }: { id: string }) {
               </Stack>
             )}
             {log.stdout && (
-              <Stack
-                bd="1px solid var(--mantine-color-accent-border-0)"
-                bdrs="md"
-                p="md"
-              >
+              <Stack className="bordered-light" bdrs="md" p="md">
                 <Text fw="bold">stdout</Text>
                 <Code
                   component="pre"
@@ -197,11 +189,7 @@ export function UpdateDetailsContent({ id }: { id: string }) {
               </Stack>
             )}
             {log.stderr && (
-              <Stack
-                bd="1px solid var(--mantine-color-accent-border-0)"
-                bdrs="md"
-                p="md"
-              >
+              <Stack className="bordered-light" bdrs="md" p="md">
                 <Text fw="bold">stderr</Text>
                 <Code
                   component="pre"

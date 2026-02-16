@@ -179,7 +179,7 @@ export default function SettingsOnboardingKeys() {
           },
         }) => (
           <Badge
-            color={expires && expires <= Date.now() ? "red" : "green"}
+            color={expires && expires <= Date.now() ? "red" : "accent"}
             fz={{ base: "sm", lg: "md" }}
             p={{ base: "sm", lg: "md" }}
             size="md"

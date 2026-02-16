@@ -80,8 +80,7 @@ export default function LogViewer({
       onScrollPositionChange={handleScroll}
       onScroll={handleScroll}
       bg="accent.0"
-      bd="1px solid var(--mantine-color-accent-border-0)"
-      // bdrs="md"
+      className="bordered-light"
       pos="relative"
       {...props}
     >

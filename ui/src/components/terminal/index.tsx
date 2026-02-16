@@ -157,7 +157,7 @@ export default function Terminal({
   return (
     <Box
       p="md"
-      bd="1px solid var(--mantine-color-accent-border-3)"
+      className="bordered-light"
       bdrs="md"
       style={{
         display: selected ? undefined : "none",

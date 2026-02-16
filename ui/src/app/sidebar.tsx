@@ -130,7 +130,7 @@ const SidebarLink = ({
     <Button
       variant={
         (to === "/" ? location === "/" : location.startsWith(to))
-          ? "filled"
+          ? "default"
           : "subtle"
       }
       onClick={() => nav(to)}

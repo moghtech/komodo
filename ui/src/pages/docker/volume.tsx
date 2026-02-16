@@ -104,12 +104,7 @@ function VolumeInner({
 
   const Header = (
     <Stack justify="space-between">
-      <Stack
-        gap="md"
-        pb="md"
-        bd="1px solid var(--mantine-color-accent-border-0)"
-        bdrs="md"
-      >
+      <Stack gap="md" pb="md" className="bordered-light" bdrs="md">
         <EntityHeader
           name={volumeName}
           icon={ICONS.Volume}

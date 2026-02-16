@@ -93,10 +93,9 @@ export default function SettingsVariables() {
                       title={row.original.name}
                       w={{ base: 200, lg: 300 }}
                       p="xs"
-                      bd="1px solid var(--mantine-color-accent-border-2)"
                       bdrs="sm"
                       style={{ overflow: "hidden", whiteSpace: "nowrap" }}
-                      className="text-ellipsis"
+                      className="text-ellipsis bordered-light"
                       size="sm"
                     >
                       {row.original.name}
@@ -116,7 +115,7 @@ export default function SettingsVariables() {
                 return (
                   <Group gap="sm" wrap="nowrap">
                     <Button
-                      className="overflow-ellipsis"
+                      className="text-ellipsis"
                       onClick={() => {
                         setUpdateMenuData({
                           title: `${row.original.name} - Value`,
@@ -153,7 +152,7 @@ export default function SettingsVariables() {
               cell: ({ row }) => {
                 return (
                   <Button
-                    className="overflow-ellipsis"
+                    className="text-ellipsis"
                     onClick={() => {
                       setUpdateMenuData({
                         title: `${row.original.name} - Description`,

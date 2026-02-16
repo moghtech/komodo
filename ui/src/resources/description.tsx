@@ -42,7 +42,7 @@ export default function ResourceDescription({
           variant="outline"
           c="dimmed"
           p="md"
-          bd="1px solid var(--mantine-color-accent-border-0)"
+          className="bordered-light"
           bdrs="md"
           w="100%"
           h="100%"

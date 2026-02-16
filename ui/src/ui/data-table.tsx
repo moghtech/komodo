@@ -240,7 +240,7 @@ export function DataTable<TData, TValue>({
       <Box
         p="lg"
         pt="0"
-        bd="1px solid var(--mantine-color-accent-border-0)"
+        className="bordered-light"
         bdrs="md"
         w="100%"
         mah="max(150px, calc(100vh - 400px))"

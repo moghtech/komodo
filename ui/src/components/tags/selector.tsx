@@ -68,8 +68,7 @@ export default function TagSelector({
           variant="filled"
           color="accent.1"
           pl="0.4rem"
-          bd="1px solid var(--mantine-color-accent-border-5)"
-          c="var(--mantine-color-text)"
+          className="bordered-heavy"
           fw="normal"
           leftSection={
             <Badge

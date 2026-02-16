@@ -35,25 +35,34 @@ a:focus {
   text-decoration: underline;
 }
 
-.accent-hover {
-  background-color: var(--mantine-color-accent-2);
-}
-.accent-hover:hover {
-  background-color: var(--mantine-color-accent-9);
-}
-
 .bordered-light {
-  border: 1px solid var(--mantine-color-accent-border-2);
+  border: 1px solid var(--mantine-color-accent-border-1);
+  transition: border 150ms ease;
 }
 .bordered-light:hover {
-  border: 1px solid var(--mantine-color-accent-border-5);
+  border: 1px solid var(--mantine-color-accent-border-4);
 }
 
 .bordered-heavy {
   border: 1px solid var(--mantine-color-accent-border-5);
+  transition: border 150ms ease;
 }
 .bordered-heavy:hover {
   border: 1px solid var(--mantine-color-accent-border-9);
+}
+
+.accent-hover-light {
+  background-color: var(--mantine-color-accent-2);
+}
+.accent-hover-light:hover {
+  background-color: var(--mantine-color-accent-5);
+}
+
+.accent-hover-heavy {
+  background-color: var(--mantine-color-accent-7);
+}
+.accent-hover-heavy:hover {
+  background-color: var(--mantine-color-accent-9);
 }
 
 .monaco-editor {

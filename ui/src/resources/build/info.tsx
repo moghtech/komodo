@@ -68,7 +68,7 @@ export default function BuildInfo({
       {/* Errors */}
       {remoteError && remoteError.length > 0 && (
         <Stack
-          bd="1px solid var(--mantine-color-accent-border-0)"
+          className="bordered-light"
           bdrs="md"
           p="xl"
         >
@@ -113,7 +113,7 @@ export default function BuildInfo({
       {/* Update latest contents */}
       {remoteContents && remoteContents.length > 0 && (
         <Stack
-          bd="1px solid var(--mantine-color-accent-border-0)"
+          className="bordered-light"
           bdrs="md"
           p="xl"
         >
@@ -217,7 +217,7 @@ export default function BuildInfo({
           >
             {log.command && (
               <Stack
-                bd="1px solid var(--mantine-color-accent-border-0)"
+                className="bordered-light"
                 bdrs="md"
                 p="md"
               >
@@ -235,7 +235,7 @@ export default function BuildInfo({
             )}
             {log.stdout && (
               <Stack
-                bd="1px solid var(--mantine-color-accent-border-0)"
+                className="bordered-light"
                 bdrs="md"
                 p="md"
               >
@@ -253,7 +253,7 @@ export default function BuildInfo({
             )}
             {log.stderr && (
               <Stack
-                bd="1px solid var(--mantine-color-accent-border-0)"
+                className="bordered-light"
                 bdrs="md"
                 p="md"
               >

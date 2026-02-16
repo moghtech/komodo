@@ -116,14 +116,14 @@ const RecentRow = ({ type }: { type: UsableResource }) => {
     <>
       <Stack
         hiddenFrom="md"
-        bd="1px solid var(--mantine-color-accent-border-0)"
+        className="bordered-light"
         bdrs="md"
       >
         {children}
       </Stack>
       <Flex
         visibleFrom="md"
-        bd="1px solid var(--mantine-color-accent-border-0)"
+        className="bordered-light"
         bdrs="md"
       >
         {children}
