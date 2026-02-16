@@ -122,7 +122,7 @@ export function AlertDetailsContent({
           />
         </Group>
 
-        {isAdmin && (
+        {isAdmin && !alert.resolved && (
           <ConfirmButton
             icon={<ICONS.Delete size="1rem" />}
             variant="destructive"

@@ -1,8 +1,9 @@
+import ResourceTypeSelector from "@/components/resource-type-selector";
 import { useUpdateDetails } from "@/components/updates/details";
 import UserAvatar from "@/components/user-avatar";
 import { fmtDateWithMinutes, fmtOperation } from "@/lib/formatting";
 import { useRead, useSetTitle } from "@/lib/hooks";
-import { RESOURCE_TARGETS, UsableResource } from "@/resources";
+import { UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
 import ResourceSelector from "@/resources/selector";
 import { ICONS } from "@/theme/icons";
@@ -52,8 +53,7 @@ export default function Updates() {
         {/* QUERY */}
         <Group>
           {/* RESOURCE TYPE */}
-          <Select
-            placeholder="Select resource type"
+          <ResourceTypeSelector
             value={type}
             onChange={(type) => {
               const p = new URLSearchParams(params.toString());
@@ -66,9 +66,6 @@ export default function Updates() {
               p.delete("operation");
               setParams(p);
             }}
-            data={RESOURCE_TARGETS}
-            searchable
-            clearable
           />
 
           {/* RESOURCE ID */}
@@ -138,6 +135,31 @@ export default function Updates() {
           data={updates?.updates ?? []}
           columns={[
             {
+              header: "Details",
+              cell: () => {
+                return (
+                  <ActionIcon>
+                    <ICONS.Search size="1rem" />
+                  </ActionIcon>
+                );
+              },
+            },
+            !params.get("id") && {
+              header: "Resource",
+              cell: ({ row }) =>
+                row.original.target.type === "System" ? (
+                  <Group gap="xs">
+                    <ICONS.System size="1rem" />
+                    <Text>System</Text>
+                  </Group>
+                ) : (
+                  <ResourceLink
+                    type={row.original.target.type}
+                    id={row.original.target.id}
+                  />
+                ),
+            },
+            {
               header: "Operation",
               accessorKey: "operation",
               cell: ({ row }) => {
@@ -154,21 +176,6 @@ export default function Updates() {
                   </Group>
                 );
               },
-            },
-            !params.get("id") && {
-              header: "Target",
-              cell: ({ row }) =>
-                row.original.target.type === "System" ? (
-                  <Group gap="xs">
-                    <ICONS.System size="1rem" />
-                    <Text>System</Text>
-                  </Group>
-                ) : (
-                  <ResourceLink
-                    type={row.original.target.type}
-                    id={row.original.target.id}
-                  />
-                ),
             },
             {
               header: "Result",

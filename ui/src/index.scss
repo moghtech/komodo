@@ -42,13 +42,23 @@ a:focus {
   background-color: var(--mantine-color-accent-9);
 }
 
+.bordered-light {
+  border: 1px solid var(--mantine-color-accent-border-2);
+}
+.bordered-light:hover {
+  border: 1px solid var(--mantine-color-accent-border-5);
+}
+
+.bordered-heavy {
+  border: 1px solid var(--mantine-color-accent-border-5);
+}
+.bordered-heavy:hover {
+  border: 1px solid var(--mantine-color-accent-border-9);
+}
+
 .monaco-editor {
   position: absolute !important;
 }
-
-// .xterm {
-//   padding: 12px !important;
-// }
 
 .xterm .xterm-viewport::-webkit-scrollbar {
   width: 5px;

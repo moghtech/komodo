@@ -20,7 +20,7 @@ export type UsableResourceTarget = Exclude<
 >;
 export type UsableResource = Exclude<Types.ResourceTarget["type"], "System">;
 
-export const RESOURCE_TARGETS: UsableResource[] = [
+export const RESOURCE_TARGETS = [
   "Swarm",
   "Server",
   "Stack",
@@ -32,7 +32,7 @@ export const RESOURCE_TARGETS: UsableResource[] = [
   "Builder",
   "Alerter",
   "ResourceSync",
-];
+] as const;
 
 export const SETTINGS_RESOURCES: UsableResource[] = ["Builder", "Alerter"];
 
