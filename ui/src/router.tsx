@@ -31,6 +31,7 @@ const Network = lazy(() => import("@/pages/docker/network"));
 const Volume = lazy(() => import("@/pages/docker/volume"));
 const StackService = lazy(() => import("@/pages/stack-service"));
 const SwarmNode = lazy(() => import("@/pages/swarm/node"));
+const SwarmConfig = lazy(() => import("@/pages/swarm/config"));
 
 export const Router = () => {
   // Handle exchange token loop to avoid showing login flash
@@ -73,6 +74,10 @@ export const Router = () => {
 
               {/* Swarm Resource */}
               <Route path=":id/swarm-node/:node" element={<SwarmNode />} />
+              <Route
+                path=":id/swarm-config/:config"
+                element={<SwarmConfig />}
+              />
 
               {/* Terminal Pages */}
               <Route path=":id/terminal/:terminal" element={<Terminal />} />

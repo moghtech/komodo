@@ -24,7 +24,7 @@ export default function ConfirmUpdate<T>({
 }: {
   previous: T;
   content: Partial<T>;
-  onConfirm: () => Promise<void>;
+  onConfirm: () => Promise<unknown>;
   loading?: boolean;
   disabled: boolean;
   language?: MonacoLanguage;

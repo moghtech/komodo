@@ -1,6 +1,6 @@
 import { colorByIntention, ColorIntention } from "@/lib/color";
 import { usePermissions } from "@/lib/hooks";
-import { MobileFriendlyTabsSelector } from "@/ui/mobile-friendly-tabs";
+import { MobileFriendlyTabsSelector, TabNoContent } from "@/ui/mobile-friendly-tabs";
 import { Tabs } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
@@ -36,7 +36,7 @@ export default function SwarmNodeTabs({
 
   const view = !specificInspect && _view === "Inspect" ? "Tasks" : _view;
 
-  const tabs = useMemo(
+  const tabs = useMemo<TabNoContent[]>(
     () => [
       {
         value: "Tasks",
