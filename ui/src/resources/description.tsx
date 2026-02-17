@@ -39,7 +39,7 @@ export default function ResourceDescription({
       disabled={!canWrite}
       target={(open) => (
         <Button
-          variant="outline"
+          variant="transparent"
           c="dimmed"
           p="md"
           className="bordered-light"

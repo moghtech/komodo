@@ -32,7 +32,7 @@ export default function ContainersSection({
   forceTall,
   _search,
   titleOther,
-  ...props
+  ...sectionProps
 }: ContainersSectionProps) {
   const allRunning = useRead("ListDockerContainers", {
     server: serverId,
@@ -49,7 +49,7 @@ export default function ContainersSection({
       title={!titleOther ? "Containers" : undefined}
       icon={!titleOther ? <ICONS.Container size="1.3rem" /> : undefined}
       actions={
-        (pruneButton && !allRunning) || _search ? (
+        (pruneButton && !allRunning) || _search || setShow ? (
           <Group>
             {pruneButton && !allRunning && (
               <Prune serverId={serverId} type="Containers" />
@@ -67,7 +67,7 @@ export default function ContainersSection({
           </Group>
         ) : undefined
       }
-      {...props}
+      {...sectionProps}
     >
       {show && (
         <DataTable

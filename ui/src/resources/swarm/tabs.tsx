@@ -10,8 +10,9 @@ import { useSwarm } from ".";
 import SwarmConfig from "./config";
 import { Tabs } from "@mantine/core";
 import { colorByIntention, swarmStateIntention } from "@/lib/color";
+import SwarmDockerResources from "./docker";
 
-type SwarmTabsView = "Config" | "Info" | "Resources" | "Inspect";
+type SwarmTabsView = "Config" | "Docker" | "Resources" | "Inspect";
 
 export default function SwarmTabs({ id }: { id: string }) {
   const [view, setView] = useLocalStorage<SwarmTabsView>({
@@ -42,8 +43,8 @@ export default function SwarmTabs({ id }: { id: string }) {
         icon: ICONS.Settings,
       },
       {
-        value: "Info",
-        icon: ICONS.Info,
+        value: "Docker",
+        icon: ICONS.Docker,
       },
       {
         value: "Inspect",
@@ -72,7 +73,8 @@ export default function SwarmTabs({ id }: { id: string }) {
     case "Config":
       View = <SwarmConfig id={id} titleOther={Selector} />;
       break;
-    case "Info":
+    case "Docker":
+      View = <SwarmDockerResources id={id} titleOther={Selector} />;
       break;
     case "Inspect":
       break;

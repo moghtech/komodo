@@ -68,11 +68,7 @@ const Section = createPolymorphicComponent<"div", SectionProps>(
           pt={withBorder ? "sm" : undefined}
           pb={withBorder ? "lg" : undefined}
           bdrs="md"
-          style={(theme) => ({
-            borderColor: theme.colors["accent-border"][0],
-            borderStyle: "solid",
-            borderWidth: withBorder ? 1 : 0,
-          })}
+          className={withBorder ? "bordered-light" : undefined}
           {...props}
           ref={ref}
         >
