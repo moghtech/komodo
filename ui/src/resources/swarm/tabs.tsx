@@ -49,7 +49,7 @@ export default function SwarmTabs({ id }: { id: string }) {
       {
         value: "Inspect",
         disabled: !specificInspect,
-        icon: ICONS.Search,
+        icon: ICONS.Inspect,
       },
       // {
       //   value: "Resources",

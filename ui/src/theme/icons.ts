@@ -98,6 +98,7 @@ export const ICONS = {
   Volume: Database,
   Service: Layers2,
   Log: FileText,
+  Inspect: Search,
   // SWARM
   SwarmNode: Diamond,
   SwarmStack: SquareStack,

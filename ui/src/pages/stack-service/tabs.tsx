@@ -75,7 +75,7 @@ export default function StackServiceTabs({
       {
         value: "Inspect",
         disabled: inspectDisabled,
-        icon: ICONS.Search,
+        icon: ICONS.Inspect,
       },
       {
         value: "Terminals",

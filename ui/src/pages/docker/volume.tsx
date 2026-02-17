@@ -112,6 +112,7 @@ function VolumeInner({
           state={unused ? "Unused" : "In Use"}
         />
         <DividedChildren px="md">
+          <Text>Volume</Text>
           <ResourceLink type="Server" id={serverId} />
           {volume.Scope && (
             <Group gap="xs">

@@ -118,6 +118,7 @@ function NetworkInner({
           state={unused ? "Unused" : "In Use"}
         />
         <DividedChildren px="md">
+          <Text>Network</Text>
           <ResourceLink type="Server" id={serverId} />
           <Group gap="xs">
             <Text c="dimmed">IPV6:</Text>

@@ -94,6 +94,7 @@ function ContainerInner({
           status={listContainer?.status}
         />
         <DividedChildren px="md">
+          <Text>Container</Text>
           <ResourceLink type="Server" id={serverId} />
           {attached?.resource && (
             <ResourceLink

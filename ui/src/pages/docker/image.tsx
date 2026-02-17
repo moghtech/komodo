@@ -121,6 +121,7 @@ function ImageInner({
           state={unused ? "Unused" : "In Use"}
         />
         <DividedChildren px="md">
+          <Text>Image</Text>
           <ResourceLink type="Server" id={serverId} />
           {image.Id && (
             <Group gap="xs">

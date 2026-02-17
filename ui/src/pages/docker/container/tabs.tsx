@@ -66,7 +66,7 @@ export default function ContainerTabs({
         value: "Inspect",
         hidden: !specificInspect,
         disabled: inspectDisabled,
-        icon: ICONS.Search,
+        icon: ICONS.Inspect,
       },
       {
         value: "Terminals",

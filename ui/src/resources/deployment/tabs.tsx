@@ -73,7 +73,7 @@ export default function DeploymentTabs({ id }: { id: string }) {
       },
       {
         value: "Inspect",
-        icon: ICONS.Search,
+        icon: ICONS.Inspect,
         disabled: inspectDisabled,
       },
       {
