@@ -41,6 +41,7 @@ export default function SwarmResourceLink({
 
   return (
     <Group
+      title={`Swarm ${type} - ${name}`}
       renderRoot={(props) => (
         <Link
           to={`/swarms/${swarmId}/swarm-${type.toLowerCase()}/${encodeURIComponent(resourceId)}`}
@@ -53,7 +54,7 @@ export default function SwarmResourceLink({
       gap="xs"
     >
       <Icon swarmId={swarmId} resourceId={resourceId} />
-      <Text className="text-ellipsis" maw={{ base: 250, lg: 300 }} title={name}>
+      <Text className="text-ellipsis" maw={{ base: 250, lg: 300 }}>
         {name}
       </Text>
       {extra && <Box style={{ textDecorationLine: "none" }}>{extra}</Box>}

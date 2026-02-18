@@ -19,6 +19,7 @@ export default function ResourceLink({
   const resource = RC.useListItem(id);
   return (
     <Group
+      title={`${type} - ${resource?.name}`}
       renderRoot={(props) => (
         <Link to={`/${usableResourcePath(type)}/${id}`} {...props} />
       )}

@@ -8,18 +8,18 @@ import { Button, Group } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 
-export interface SwarmConfigEditProps extends SectionProps {
+export interface SwarmSecretEditProps extends SectionProps {
   swarm: string;
-  config: string;
+  secret: string;
 }
 
-export default function SwarmConfigEditSection({
+export default function SwarmSecretEditSection({
   swarm,
-  config,
+  secret,
   ...sectionProps
-}: SwarmConfigEditProps) {
+}: SwarmSecretEditProps) {
   const [{ edit }, setEdit] = useLocalStorage<{ edit: string | undefined }>({
-    key: `swarm-${swarm}-config-${config}-edit-v2`,
+    key: `swarm-${swarm}-secret-${secret}-edit-v2`,
     defaultValue: { edit: undefined },
   });
   const {
@@ -27,18 +27,18 @@ export default function SwarmConfigEditSection({
     isPending,
     refetch,
     isError,
-  } = useRead("InspectSwarmConfig", {
+  } = useRead("InspectSwarmSecret", {
     swarm,
-    config,
+    secret,
   });
   const { canExecute } = usePermissions({
     type: "Swarm",
     id: swarm,
   });
-  const { mutateAsync: confirmEdit } = useExecute("RotateSwarmConfig", {
+  const { mutateAsync: confirmEdit } = useExecute("RotateSwarmSecret", {
     onSuccess: (res) => {
       notifications.show({
-        message: res.success ? "Config updated." : "Failed to update config.",
+        message: res.success ? "Secret updated." : "Failed to update secret.",
         color: res.success ? "green" : "red",
       });
       setEdit({ edit: undefined });
@@ -47,7 +47,6 @@ export default function SwarmConfigEditSection({
   });
 
   const name = inspect?.Spec?.Name;
-  const data = inspect?.Spec?.Data;
   const language = name ? languageFromPath(name) : undefined;
 
   return (
@@ -55,9 +54,9 @@ export default function SwarmConfigEditSection({
       isPending={isPending}
       error={
         isError
-          ? "Failed to inspect swarm config."
-          : !config
-            ? `No swarm config found with given name: ${config}`
+          ? "Failed to inspect swarm secret."
+          : !secret
+            ? `No swarm secret found with given name: ${secret}`
             : undefined
       }
       actions={
@@ -77,12 +76,12 @@ export default function SwarmConfigEditSection({
               Reset
             </Button>
             <ConfirmUpdate
-              previous={{ contents: data }}
+              previous={{ contents: "" }}
               content={{ contents: edit }}
               onConfirm={async () =>
                 name &&
                 edit !== undefined &&
-                (await confirmEdit({ swarm, config: name, data: edit }))
+                (await confirmEdit({ swarm, secret: name, data: edit }))
               }
               disabled={edit === undefined}
               language={language}
@@ -94,7 +93,7 @@ export default function SwarmConfigEditSection({
       {...sectionProps}
     >
       <MonacoEditor
-        value={edit ?? data ?? "Failed to retrieve config data"}
+        value={edit ?? "# Enter new secret and save to rotate"}
         language={language}
         onValueChange={(edit) => setEdit({ edit })}
         readOnly={!canExecute}

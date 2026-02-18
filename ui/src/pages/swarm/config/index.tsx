@@ -37,7 +37,7 @@ export default function SwarmConfig() {
         isError
           ? "Failed to inspect swarm config."
           : !config
-            ? `No swarm config found with given id: ${_config}`
+            ? `No swarm config found with given name: ${_config}`
             : undefined
       }
     >
@@ -59,7 +59,7 @@ export default function SwarmConfig() {
           config?.ID && (
             <RemoveSwarmResource
               swarmId={swarmId}
-              type="Node"
+              type="Config"
               resourceId={config.ID}
               resourceName={config.Spec?.Name}
               disabled={inUse}

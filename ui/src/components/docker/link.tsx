@@ -31,6 +31,7 @@ export default function DockerResourceLink({
 
   return (
     <Group
+      title={`${type} - ${name}`}
       renderRoot={(props) => (
         <Link
           to={`/servers/${serverId}/${type.toLowerCase()}/${encodeURIComponent(name)}`}

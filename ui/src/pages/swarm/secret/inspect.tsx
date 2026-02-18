@@ -2,23 +2,23 @@ import { MonacoEditor } from "@/components/monaco";
 import { useRead } from "@/lib/hooks";
 import Section, { SectionProps } from "@/ui/section";
 
-export interface SwarmNodeInspectSectionProps extends SectionProps {
+export interface SwarmSecretInspectSectionProps extends SectionProps {
   swarm: string;
-  node: string;
+  secret: string;
 }
 
-export default function SwarmNodeInspectSection({
+export default function SwarmSecretInspectSection({
   swarm,
-  node,
+  secret,
   ...sectionProps
-}: SwarmNodeInspectSectionProps) {
+}: SwarmSecretInspectSectionProps) {
   const {
     data: inspect,
     isPending,
     isError,
-  } = useRead("InspectSwarmNode", {
+  } = useRead("InspectSwarmSecret", {
     swarm,
-    node,
+    secret,
   });
 
   return (
@@ -26,9 +26,9 @@ export default function SwarmNodeInspectSection({
       isPending={isPending}
       error={
         isError
-          ? "Failed to inspect swarm node."
+          ? "Failed to inspect swarm secret."
           : !inspect
-            ? `No swarm node found with given id: ${node}`
+            ? `No swarm secret found with given id: ${secret}`
             : undefined
       }
       {...sectionProps}

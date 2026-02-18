@@ -28,7 +28,7 @@ export default function SwarmServiceInspectSection({
         isError
           ? "Failed to inspect swarm service."
           : !inspect
-            ? `No swarm service found with given id: ${service}`
+            ? `No swarm service found with given name: ${service}`
             : undefined
       }
       {...sectionProps}
