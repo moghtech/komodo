@@ -2,23 +2,23 @@ import { MonacoEditor } from "@/components/monaco";
 import { useRead } from "@/lib/hooks";
 import Section, { SectionProps } from "@/ui/section";
 
-export interface SwarmConfigInspectSectionProps extends SectionProps {
+export interface SwarmServiceInspectSectionProps extends SectionProps {
   swarm: string;
-  config: string;
+  service: string;
 }
 
-export default function SwarmConfigInspectSection({
+export default function SwarmServiceInspectSection({
   swarm,
-  config,
+  service,
   ...sectionProps
-}: SwarmConfigInspectSectionProps) {
+}: SwarmServiceInspectSectionProps) {
   const {
     data: inspect,
     isPending,
     isError,
-  } = useRead("InspectSwarmConfig", {
+  } = useRead("InspectSwarmService", {
     swarm,
-    config,
+    service,
   });
 
   return (
@@ -26,9 +26,9 @@ export default function SwarmConfigInspectSection({
       isPending={isPending}
       error={
         isError
-          ? "Failed to inspect swarm config."
+          ? "Failed to inspect swarm service."
           : !inspect
-            ? `No swarm config found with given id: ${config}`
+            ? `No swarm service found with given id: ${service}`
             : undefined
       }
       {...sectionProps}

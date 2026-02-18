@@ -6,6 +6,7 @@ import { ResourceComponents, UsableResource } from "@/resources";
 import { notifications } from "@mantine/notifications";
 import { Badge, Group, Text } from "@mantine/core";
 import ResourceName from "@/resources/name";
+import { fmtOperation } from "./formatting";
 
 const wsAtom = atom<{
   ws: WebSocket | undefined;
@@ -122,7 +123,7 @@ function onUpdate(
     notifications.show({
       title: (
         <Group gap="sm">
-          <Text>{update.operation}</Text>
+          <Text>{fmtOperation(update.operation)}</Text>
           <Badge color={color}>{state}</Badge>
         </Group>
       ),

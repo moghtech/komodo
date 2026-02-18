@@ -31,6 +31,7 @@ const Network = lazy(() => import("@/pages/docker/network"));
 const Volume = lazy(() => import("@/pages/docker/volume"));
 const StackService = lazy(() => import("@/pages/stack-service"));
 const SwarmNode = lazy(() => import("@/pages/swarm/node"));
+const SwarmService = lazy(() => import("@/pages/swarm/service"));
 const SwarmConfig = lazy(() => import("@/pages/swarm/config"));
 
 export const Router = () => {
@@ -74,6 +75,10 @@ export const Router = () => {
 
               {/* Swarm Resource */}
               <Route path=":id/swarm-node/:node" element={<SwarmNode />} />
+              <Route
+                path=":id/swarm-service/:service"
+                element={<SwarmService />}
+              />
               <Route
                 path=":id/swarm-config/:config"
                 element={<SwarmConfig />}

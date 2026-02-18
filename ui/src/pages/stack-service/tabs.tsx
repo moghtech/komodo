@@ -11,8 +11,9 @@ import {
 import { Tabs } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import StackServiceInspect from "./inspect";
+import SwarmServiceTasksSection from "../swarm/service/tasks";
 
 export type StackServiceTabsView = "Tasks" | "Log" | "Inspect" | "Terminals";
 
@@ -107,15 +108,26 @@ export default function StackServiceTabs({
     [stack.id, service],
   );
 
+  const _search = useState("");
+
   let View = Selector;
   switch (view) {
     case "Tasks":
+      View = (
+        <SwarmServiceTasksSection
+          id={stack.info.swarm_id}
+          serviceId={swarmService?.ID}
+          titleOther={Selector}
+          _search={_search}
+        />
+      );
       break;
     case "Log":
       View = (
         <LogSection
           target={{ type: "Stack", stackId: stack.id, services: [service] }}
           titleOther={Selector}
+          disabled={logDisabled}
         />
       );
       break;

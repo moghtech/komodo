@@ -2,6 +2,15 @@ import { ColorIntention, hexColorByIntention } from "@/lib/color";
 import { Group, Stack, Text } from "@mantine/core";
 import { FC, ReactNode } from "react";
 
+export interface EntityHeaderProps {
+  name?: string;
+  icon: FC<{ size?: string | number; color?: string }>;
+  intent: ColorIntention;
+  state?: ReactNode;
+  status?: ReactNode;
+  action?: ReactNode;
+}
+
 export default function EntityHeader({
   name,
   icon: Icon,
@@ -9,17 +18,9 @@ export default function EntityHeader({
   state,
   status,
   action,
-}: {
-  name?: string;
-  icon: FC<{ size?: string | number; color?: string }>;
-  intent: ColorIntention;
-  state?: ReactNode;
-  status?: ReactNode;
-  action?: ReactNode;
-}) {
+}: EntityHeaderProps) {
   const color = hexColorByIntention(intent);
   const background = color ? color + "25" : undefined;
-
   return (
     <Group
       justify="space-between"

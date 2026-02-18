@@ -1,4 +1,4 @@
-import { Center, Group, Stack, Text } from "@mantine/core";
+import { Center, Text } from "@mantine/core";
 import { useParams } from "react-router-dom";
 import {
   DeployStack,
@@ -17,18 +17,13 @@ import {
 } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import { containerStateIntention, swarmStateIntention } from "@/lib/color";
-import EntityHeader from "@/ui/entity-header";
 import { ICONS } from "@/theme/icons";
-import DividedChildren from "@/ui/divided-children";
 import ResourceLink from "@/resources/link";
-import ResourceDescription from "@/resources/description";
-import EntityPage from "@/ui/entity-page";
-import ResourceUpdates from "@/components/updates/resource";
-import Section from "@/ui/section";
 import SwarmResourceLink from "@/components/swarm/link";
 import DockerResourceLink from "@/components/docker/link";
 import { ContainerPort } from "@/components/docker/container-ports";
 import StackServiceTabs from "./tabs";
+import ResourceSubPage from "@/resources/sub-page";
 
 type IdServiceComponent = React.FC<{ id: string; service?: string }>;
 
@@ -92,23 +87,22 @@ function StackServiceInner({
         container?.state ?? Types.ContainerStateStatusEnum.Empty,
       );
 
-  const Header = (
-    <Stack justify="space-between">
-      <Stack gap="md" pb="md" className="bordered-light" bdrs="md">
-        <EntityHeader
-          name={serviceName}
-          icon={ICONS.Service}
-          intent={intention}
-          state={state}
-          status={
-            swarmService
-              ? `${swarmService.Replicas} Replica${swarmService.Replicas === 1 ? "" : "s"}`
-              : container?.status
-          }
-        />
-        <DividedChildren px="md">
-          <ResourceLink type="Stack" id={stackId} />
-
+  return (
+    <ResourceSubPage
+      entityTypeName="Stack Service"
+      parentType="Stack"
+      parentId={stackId}
+      name={serviceName}
+      icon={ICONS.Service}
+      intent={intention}
+      state={state}
+      status={
+        swarmService
+          ? `${swarmService.Replicas} Replica${swarmService.Replicas === 1 ? "" : "s"}`
+          : container?.status
+      }
+      info={
+        <>
           {/* SWARM ONLY */}
           {stack?.info.swarm_id && (
             <>
@@ -187,47 +181,16 @@ function StackServiceInner({
               ))}
             </>
           )}
-        </DividedChildren>
-      </Stack>
-      <ResourceDescription type="Stack" id={stackId} />
-    </Stack>
-  );
-
-  return (
-    <EntityPage backTo={"/stacks/" + stackId}>
-      <Stack hiddenFrom="xl" w="100%">
-        {Header}
-        <ResourceUpdates type="Stack" id={stackId} />
-      </Stack>
-      <Group
-        visibleFrom="xl"
-        gap="xl"
-        w="100%"
-        align="stretch"
-        grow
-        preventGrowOverflow={false}
-      >
-        {Header}
-        <ResourceUpdates type="Stack" id={stackId} />
-      </Group>
-
-      <Stack mt="lg" gap="xl">
-        {canExecute && (
-          <Section
-            title="Execute"
-            icon={<ICONS.Execution size="1.3rem" />}
-            my="xl"
-          >
-            <Group>
-              {Object.entries(Executions).map(([key, Execution]) => (
-                <Execution key={key} id={stackId} service={serviceName} />
-              ))}
-            </Group>
-          </Section>
-        )}
-      </Stack>
-
-      {/** TABS */}
+        </>
+      }
+      executions={
+        <>
+          {Object.entries(Executions).map(([key, Execution]) => (
+            <Execution key={key} id={stackId} service={serviceName} />
+          ))}
+        </>
+      }
+    >
       {stack && (
         <StackServiceTabs
           stack={stack}
@@ -237,6 +200,6 @@ function StackServiceInner({
           intention={intention}
         />
       )}
-    </EntityPage>
+    </ResourceSubPage>
   );
 }

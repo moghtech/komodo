@@ -24,7 +24,7 @@ import { Group, Text } from "@mantine/core";
 import { RunBuild } from "../build/executions";
 import DockerResourceLink from "@/components/docker/link";
 import SwarmResourceLink from "@/components/swarm/link";
-import { ContainerPorts } from "@/components/docker/container-ports";
+import ContainerPorts from "@/components/docker/container-ports";
 
 export function useDeployment(id: string | undefined) {
   return useRead("ListDeployments", {}).data?.find((r) => r.id === id);

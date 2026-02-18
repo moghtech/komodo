@@ -11,7 +11,7 @@ import DockerResourceLink from "./link";
 import StatusBadge from "@/ui/status-badge";
 import { containerStateIntention } from "@/lib/color";
 import DividedChildren from "@/ui/divided-children";
-import { ContainerPorts } from "./container-ports";
+import ContainerPorts from "@/components/docker/container-ports";
 
 export interface ContainersSectionProps extends SectionProps {
   serverId: string;

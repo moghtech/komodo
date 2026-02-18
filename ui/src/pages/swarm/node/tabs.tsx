@@ -61,7 +61,6 @@ export default function SwarmNodeTabs({
   );
 
   let View = Selector;
-
   switch (view) {
     case "Inspect":
       View = (

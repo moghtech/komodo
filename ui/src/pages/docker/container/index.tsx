@@ -1,6 +1,5 @@
 import { ContainerPort } from "@/components/docker/container-ports";
 import DockerResourceLink from "@/components/docker/link";
-import ResourceUpdates from "@/components/updates/resource";
 import { containerStateIntention } from "@/lib/color";
 import {
   useContainerPortsMap,
@@ -11,19 +10,16 @@ import {
 import { UsableResource } from "@/resources";
 import { useServer } from "@/resources/server";
 import { ICONS } from "@/theme/icons";
-import DividedChildren from "@/ui/divided-children";
-import EntityHeader from "@/ui/entity-header";
-import EntityPage from "@/ui/entity-page";
 import Section from "@/ui/section";
-import { Center, Group, Stack, Text } from "@mantine/core";
+import { Center, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useParams } from "react-router-dom";
 import { ContainerExecutions } from "./executions";
 import { DataTable } from "@/ui/data-table";
 import DockerLabelsSection from "@/components/docker/labels-section";
 import ContainerTabs from "./tabs";
-import ResourceDescription from "@/resources/description";
 import ResourceLink from "@/resources/link";
+import ResourceSubPage from "@/resources/sub-page";
 
 export default function Container() {
   const {
@@ -54,7 +50,7 @@ function ContainerInner({
 }) {
   const server = useServer(serverId);
   useSetTitle(`${server?.name} | Container | ${containerName}`);
-  const { canExecute, specific } = usePermissions({
+  const { specific } = usePermissions({
     type: "Server",
     id: serverId,
   });
@@ -83,19 +79,18 @@ function ContainerInner({
   const state = listContainer?.state ?? Types.ContainerStateStatusEnum.Empty;
   const intention = containerStateIntention(state);
 
-  const Header = (
-    <Stack justify="space-between">
-      <Stack gap="md" pb="md" className="bordered-light" bdrs="md">
-        <EntityHeader
-          name={listContainer?.name}
-          icon={ICONS.Container}
-          intent={intention}
-          state={state}
-          status={listContainer?.status}
-        />
-        <DividedChildren px="md">
-          <Text>Container</Text>
-          <ResourceLink type="Server" id={serverId} />
+  return (
+    <ResourceSubPage
+      entityTypeName="Container"
+      parentType="Server"
+      parentId={serverId}
+      name={listContainer?.name}
+      icon={ICONS.Container}
+      intent={intention}
+      state={state}
+      status={listContainer?.status}
+      info={
+        <>
           {attached?.resource && (
             <ResourceLink
               type={attached.resource.type as UsableResource}
@@ -134,89 +129,56 @@ function ContainerInner({
               serverId={serverId}
             />
           ))}
-        </DividedChildren>
-      </Stack>
-      <ResourceDescription type="Server" id={serverId} />
-    </Stack>
-  );
-
-  return (
-    <EntityPage
-      backTo={"/servers/" + serverId}
-      actions={<>{/* <NewDeployment id={id} name={container_name} /> */}</>}
-    >
-      <Stack hiddenFrom="xl" w="100%">
-        {Header}
-        <ResourceUpdates type="Server" id={serverId} />
-      </Stack>
-      <Group
-        visibleFrom="xl"
-        gap="xl"
-        w="100%"
-        align="stretch"
-        grow
-        preventGrowOverflow={false}
-      >
-        {Header}
-        <ResourceUpdates type="Server" id={serverId} />
-      </Group>
-
-      <Stack mt="lg" gap="xl">
-        {canExecute && (
-          <Section
-            title="Execute"
-            icon={<ICONS.Execution size="1.3rem" />}
-            my="xl"
-          >
-            <Group>
-              {Object.entries(ContainerExecutions).map(([key, Execution]) => (
-                <Execution
-                  key={key}
-                  serverId={serverId}
-                  container={containerName}
-                />
-              ))}
-            </Group>
-          </Section>
-        )}
-
-        <ContainerTabs
-          server={serverId}
-          container={containerName}
-          state={state}
-          inspect={inspect}
-        />
-
-        {/* TOP LEVEL CONTAINER INFO */}
-        {listContainer && (
-          <Section title="Details" icon={<ICONS.Info size="1.3rem" />}>
-            <DataTable
-              tableKey="container-info"
-              data={[listContainer]}
-              columns={[
-                {
-                  header: "Id",
-                  accessorKey: "id",
-                },
-                {
-                  header: "Image",
-                  accessorKey: "image",
-                },
-                {
-                  header: "Network Mode",
-                  accessorKey: "network_mode",
-                },
-                {
-                  header: "Networks",
-                  accessorKey: "networks",
-                },
-              ]}
+        </>
+      }
+      executions={
+        <>
+          {Object.entries(ContainerExecutions).map(([key, Execution]) => (
+            <Execution
+              key={key}
+              serverId={serverId}
+              container={containerName}
             />
-          </Section>
-        )}
+          ))}
+        </>
+      }
+    >
+      <ContainerTabs
+        server={serverId}
+        container={containerName}
+        state={state}
+        inspect={inspect}
+      />
 
-        <DockerLabelsSection labels={inspect?.Config?.Labels} />
-      </Stack>
-    </EntityPage>
+      {/* TOP LEVEL CONTAINER INFO */}
+      {listContainer && (
+        <Section title="Details" icon={<ICONS.Info size="1.3rem" />}>
+          <DataTable
+            tableKey="container-info"
+            data={[listContainer]}
+            columns={[
+              {
+                header: "Id",
+                accessorKey: "id",
+              },
+              {
+                header: "Image",
+                accessorKey: "image",
+              },
+              {
+                header: "Network Mode",
+                accessorKey: "network_mode",
+              },
+              {
+                header: "Networks",
+                accessorKey: "networks",
+              },
+            ]}
+          />
+        </Section>
+      )}
+
+      <DockerLabelsSection labels={inspect?.Config?.Labels} />
+    </ResourceSubPage>
   );
 }

@@ -9,6 +9,7 @@ import {
   SegmentedControl,
   Select,
   Switch,
+  Text,
   TextInput,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
@@ -27,9 +28,21 @@ export type LogStream = "stdout" | "stderr";
 export interface LogSectionProps extends Omit<SectionProps, "children"> {
   target: LogTarget;
   extraController?: ReactNode;
+  disabled?: boolean;
 }
 
-export default function LogSection({
+export default function LogSection({ disabled, ...props }: LogSectionProps) {
+  if (disabled) {
+    return (
+      <Section {...props}>
+        <Text>Logs are not available</Text>
+      </Section>
+    );
+  }
+  return <LogSectionInner {...props} />;
+}
+
+export function LogSectionInner({
   target,
   extraController,
   ...props

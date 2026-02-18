@@ -47,7 +47,17 @@ export default function SwarmNodeInspectSection({
   }
 
   return (
-    <Section {...sectionProps}>
+    <Section
+      isPending={isPending}
+      error={
+        isError
+          ? "Failed to inspect swarm node."
+          : !inspect
+            ? `No swarm node found with given id: ${node}`
+            : undefined
+      }
+      {...sectionProps}
+    >
       <MonacoEditor
         value={JSON.stringify(inspect, null, 2)}
         language="json"

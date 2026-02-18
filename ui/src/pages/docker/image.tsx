@@ -1,21 +1,16 @@
 import ContainersSection from "@/components/docker/containers-section";
 import DockerLabelsSection from "@/components/docker/labels-section";
 import InspectSection from "@/components/inspect-section";
-import ResourceUpdates from "@/components/updates/resource";
 import { fmtDateWithMinutes, fmtSizeBytes } from "@/lib/formatting";
 import { useExecute, usePermissions, useRead, useSetTitle } from "@/lib/hooks";
-import ResourceDescription from "@/resources/description";
-import ResourceLink from "@/resources/link";
 import { useServer } from "@/resources/server";
+import ResourceSubPage from "@/resources/sub-page";
 import { ICONS } from "@/theme/icons";
 import ConfirmButton from "@/ui/confirm-button";
 import { DataTable } from "@/ui/data-table";
-import DividedChildren from "@/ui/divided-children";
-import EntityHeader from "@/ui/entity-header";
-import EntityPage from "@/ui/entity-page";
 import Section from "@/ui/section";
 import ShowHideButton from "@/ui/show-hide-button";
-import { Box, Center, Group, Loader, Stack, Text } from "@mantine/core";
+import { Box, Center, Group, Loader, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -48,7 +43,7 @@ function ImageInner({
   useSetTitle(`${server?.name} | Image | ${imageName}`);
   const nav = useNavigate();
 
-  const { canExecute, specific } = usePermissions({
+  const { specific } = usePermissions({
     type: "Server",
     id: serverId,
   });
@@ -111,18 +106,17 @@ function ImageInner({
   const unused = containers && containers.length === 0 ? true : false;
   const intention = unused ? "Critical" : "Good";
 
-  const Header = (
-    <Stack justify="space-between">
-      <Stack gap="md" pb="md" className="bordered-light" bdrs="md">
-        <EntityHeader
-          name={imageName}
-          icon={ICONS.Image}
-          intent={intention}
-          state={unused ? "Unused" : "In Use"}
-        />
-        <DividedChildren px="md">
-          <Text>Image</Text>
-          <ResourceLink type="Server" id={serverId} />
+  return (
+    <ResourceSubPage
+      entityTypeName="Image"
+      parentType="Server"
+      parentId={serverId}
+      name={imageName}
+      icon={ICONS.Image}
+      intent={intention}
+      state={unused ? "Unused" : "In Use"}
+      info={
+        <>
           {image.Id && (
             <Group gap="xs">
               <Text>Id:</Text>
@@ -131,37 +125,11 @@ function ImageInner({
               </Text>
             </Group>
           )}
-        </DividedChildren>
-      </Stack>
-      <ResourceDescription type="Server" id={serverId} />
-    </Stack>
-  );
-
-  return (
-    <EntityPage backTo={"/servers/" + serverId}>
-      <Stack hiddenFrom="xl" w="100%">
-        {Header}
-        <ResourceUpdates type="Server" id={serverId} />
-      </Stack>
-      <Group
-        visibleFrom="xl"
-        gap="xl"
-        w="100%"
-        align="stretch"
-        grow
-        preventGrowOverflow={false}
-      >
-        {Header}
-        <ResourceUpdates type="Server" id={serverId} />
-      </Group>
-
-      <Stack mt="lg" gap="xl">
-        {canExecute && unused && (
-          <Section
-            title="Execute"
-            icon={<ICONS.Execution size="1.3rem" />}
-            my="xl"
-          >
+        </>
+      }
+      executions={
+        <>
+          {unused && (
             <ConfirmButton
               variant="filled"
               color="red"
@@ -171,78 +139,76 @@ function ImageInner({
             >
               Delete Image
             </ConfirmButton>
-          </Section>
-        )}
+          )}
+        </>
+      }
+    >
+      {containers && containers.length > 0 && (
+        <ContainersSection serverId={serverId} containers={containers} />
+      )}
 
-        {containers && containers.length > 0 && (
-          <ContainersSection serverId={serverId} containers={containers} />
-        )}
+      {/* TOP LEVEL IMAGE INFO */}
+      <Section title="Details" icon={<ICONS.Info size="1.3rem" />}>
+        <DataTable
+          tableKey="image-info"
+          data={[image]}
+          columns={[
+            {
+              accessorKey: "Architecture",
+              header: "Architecture",
+            },
+            {
+              accessorKey: "Os",
+              header: "Os",
+            },
+            {
+              accessorKey: "Size",
+              header: "Size",
+              cell: ({ row }) =>
+                row.original.Size ? fmtSizeBytes(row.original.Size) : "Unknown",
+            },
+          ]}
+        />
+      </Section>
 
-        {/* TOP LEVEL IMAGE INFO */}
-        <Section title="Details" icon={<ICONS.Info size="1.3rem" />}>
-          <DataTable
-            tableKey="image-info"
-            data={[image]}
-            columns={[
-              {
-                accessorKey: "Architecture",
-                header: "Architecture",
-              },
-              {
-                accessorKey: "Os",
-                header: "Os",
-              },
-              {
-                accessorKey: "Size",
-                header: "Size",
-                cell: ({ row }) =>
-                  row.original.Size
-                    ? fmtSizeBytes(row.original.Size)
-                    : "Unknown",
-              },
-            ]}
-          />
+      {history && history.length > 0 && (
+        <Section
+          title="History"
+          icon={<ICONS.History size="1.3rem" />}
+          titleRight={
+            <Box pl="md">
+              <ShowHideButton show={showHistory} setShow={setShowHistory} />
+            </Box>
+          }
+        >
+          {showHistory && (
+            <DataTable
+              tableKey="image-history"
+              data={history.toReversed()}
+              columns={[
+                {
+                  accessorKey: "CreatedBy",
+                  header: "Created By",
+                  size: 400,
+                },
+                {
+                  accessorKey: "Created",
+                  header: "Timestamp",
+                  cell: ({ row }) =>
+                    fmtDateWithMinutes(new Date(row.original.Created * 1000)),
+                  size: 200,
+                },
+              ]}
+            />
+          )}
         </Section>
+      )}
 
-        {history && history.length > 0 && (
-          <Section
-            title="History"
-            icon={<ICONS.History size="1.3rem" />}
-            titleRight={
-              <Box pl="md">
-                <ShowHideButton show={showHistory} setShow={setShowHistory} />
-              </Box>
-            }
-          >
-            {showHistory && (
-              <DataTable
-                tableKey="image-history"
-                data={history.toReversed()}
-                columns={[
-                  {
-                    accessorKey: "CreatedBy",
-                    header: "Created By",
-                    size: 400,
-                  },
-                  {
-                    accessorKey: "Created",
-                    header: "Timestamp",
-                    cell: ({ row }) =>
-                      fmtDateWithMinutes(new Date(row.original.Created * 1000)),
-                    size: 200,
-                  },
-                ]}
-              />
-            )}
-          </Section>
-        )}
+      {specific.includes(Types.SpecificPermission.Inspect) && (
+        <InspectSection json={image} />
+      )}
 
-        {specific.includes(Types.SpecificPermission.Inspect) && (
-          <InspectSection json={image} />
-        )}
-
-        <DockerLabelsSection labels={image?.Config?.Labels} />
-      </Stack>
-    </EntityPage>
+      <DockerLabelsSection labels={image?.Config?.Labels} />
+    </ResourceSubPage>
   );
 }

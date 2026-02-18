@@ -112,6 +112,7 @@ export default function ContainerTabs({
         <LogSection
           target={{ type: "Container", serverId: server, container }}
           titleOther={Selector}
+          disabled={logDisabled}
         />
       );
       break;

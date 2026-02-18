@@ -1,6 +1,9 @@
 import {
+  Center,
+  CenterProps,
   createPolymorphicComponent,
   Group,
+  Loader,
   MantineStyleProps,
   Stack,
   StackProps,
@@ -20,6 +23,9 @@ export interface SectionProps extends StackProps {
   description?: ReactNode;
   actions?: ReactNode;
   withBorder?: boolean;
+  isPending?: boolean;
+  error?: false | string;
+  guardProps?: CenterProps;
 }
 
 const Section = createPolymorphicComponent<"div", SectionProps>(
@@ -37,6 +43,9 @@ const Section = createPolymorphicComponent<"div", SectionProps>(
         actions,
         children,
         withBorder,
+        isPending,
+        error,
+        guardProps,
         ...props
       },
       ref,
@@ -76,7 +85,17 @@ const Section = createPolymorphicComponent<"div", SectionProps>(
             {TitleComponent}
             {description && <Text c="dimmed">{description}</Text>}
           </Stack>
-          {children}
+          {isPending ? (
+            <Center {...guardProps}>
+              <Loader size="xl" />
+            </Center>
+          ) : error ? (
+            <Center {...guardProps}>
+              <Text>{error}</Text>
+            </Center>
+          ) : (
+            children
+          )}
         </Stack>
       );
     },

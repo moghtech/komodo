@@ -1,18 +1,12 @@
-import RemoveSwarmResource from "@/components/swarm/remove";
-import ResourceUpdates from "@/components/updates/resource";
+import { useParams } from "react-router-dom";
 import { swarmNodeStateIntention } from "@/lib/color";
-import { usePermissions, useRead, useSetTitle } from "@/lib/hooks";
-import ResourceDescription from "@/resources/description";
-import ResourceLink from "@/resources/link";
+import { useRead, useSetTitle } from "@/lib/hooks";
 import { useSwarm } from "@/resources/swarm";
 import { ICONS } from "@/theme/icons";
-import DividedChildren from "@/ui/divided-children";
-import EntityHeader from "@/ui/entity-header";
-import EntityPage from "@/ui/entity-page";
-import Section from "@/ui/section";
-import { Center, Group, Loader, Stack, Text } from "@mantine/core";
-import { useParams } from "react-router-dom";
+import RemoveSwarmResource from "@/components/swarm/remove";
+import ResourceSubPage from "@/resources/sub-page";
 import SwarmNodeTabs from "./tabs";
+import PageGuard from "@/ui/page-guard";
 
 export default function SwarmNode() {
   const { id: swarmId, node: __node } = useParams() as {
@@ -30,94 +24,44 @@ export default function SwarmNode() {
     node: _node,
   });
   const state = node?.Status?.State;
-  const { canExecute } = usePermissions({
-    type: "Swarm",
-    id: swarmId,
-  });
   useSetTitle(
     `${swarm?.name} | Node | ${node?.Description?.Hostname ?? "Unknown"}`,
   );
 
-  if (isPending) {
-    return (
-      <Center h="30vh">
-        <Loader size="xl" />
-      </Center>
-    );
-  }
-
-  if (isError) {
-    return (
-      <Center h="30vh">
-        <Text>Failed to inspect swarm node.</Text>
-      </Center>
-    );
-  }
-
-  if (!node) {
-    return (
-      <Center h="30vh">
-        <Text>No swarm node found with given id: {_node}</Text>
-      </Center>
-    );
-  }
-
   const intent = swarmNodeStateIntention(state);
 
-  const Header = (
-    <Stack justify="space-between">
-      <Stack gap="md" pb="md" className="bordered-light" bdrs="md">
-        <EntityHeader
-          name={node?.Description?.Hostname}
-          icon={ICONS.SwarmNode}
-          intent={intent}
-          state={state}
-          status={node.Spec?.Role}
-        />
-        <DividedChildren px="md">
-          <Text>Swarm Node</Text>
-          <ResourceLink type="Swarm" id={swarmId} />
-        </DividedChildren>
-      </Stack>
-      <ResourceDescription type="Swarm" id={swarmId} />
-    </Stack>
-  );
-
   return (
-    <EntityPage backTo={"/swarms/" + swarmId}>
-      <Stack hiddenFrom="xl" w="100%">
-        {Header}
-        <ResourceUpdates type="Swarm" id={swarmId} />
-      </Stack>
-      <Group
-        visibleFrom="xl"
-        gap="xl"
-        w="100%"
-        align="stretch"
-        grow
-        preventGrowOverflow={false}
-      >
-        {Header}
-        <ResourceUpdates type="Swarm" id={swarmId} />
-      </Group>
-
-      <Stack mt="lg" gap="xl">
-        {canExecute && node.ID && (
-          <Section
-            title="Execute"
-            icon={<ICONS.Execution size="1.3rem" />}
-            my="xl"
-          >
+    <PageGuard
+      isPending={isPending}
+      error={
+        isError
+          ? "Failed to inspect swarm node."
+          : !node
+            ? `No swarm node found with given id: ${_node}`
+            : undefined
+      }
+    >
+      <ResourceSubPage
+        entityTypeName="Swarm Node"
+        parentType="Swarm"
+        parentId={swarmId}
+        name={node?.Description?.Hostname}
+        icon={ICONS.SwarmNode}
+        intent={intent}
+        state={state}
+        status={node?.Spec?.Role}
+        executions={
+          node?.ID && (
             <RemoveSwarmResource
               swarmId={swarmId}
               type="Node"
               resourceId={node.ID}
               resourceName={node.Description?.Hostname}
             />
-          </Section>
-        )}
-
-        {swarm && (
+          )
+        }
+      >
+        {swarm && node && (
           <SwarmNodeTabs
             swarm={swarm}
             _node={_node}
@@ -125,7 +69,7 @@ export default function SwarmNode() {
             intent={intent}
           />
         )}
-      </Stack>
-    </EntityPage>
+      </ResourceSubPage>
+    </PageGuard>
   );
 }

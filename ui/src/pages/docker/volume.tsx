@@ -2,19 +2,14 @@ import ContainersSection from "@/components/docker/containers-section";
 import DockerLabelsSection from "@/components/docker/labels-section";
 import DockerOptions from "@/components/docker/options";
 import InspectSection from "@/components/inspect-section";
-import ResourceUpdates from "@/components/updates/resource";
 import { useExecute, usePermissions, useRead, useSetTitle } from "@/lib/hooks";
-import ResourceDescription from "@/resources/description";
-import ResourceLink from "@/resources/link";
 import { useServer } from "@/resources/server";
+import ResourceSubPage from "@/resources/sub-page";
 import { ICONS } from "@/theme/icons";
 import ConfirmButton from "@/ui/confirm-button";
 import { DataTable } from "@/ui/data-table";
-import DividedChildren from "@/ui/divided-children";
-import EntityHeader from "@/ui/entity-header";
-import EntityPage from "@/ui/entity-page";
 import Section from "@/ui/section";
-import { Center, Group, Loader, Stack, Text } from "@mantine/core";
+import { Center, Group, Loader, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -45,7 +40,7 @@ function VolumeInner({
   useSetTitle(`${server?.name} | Volume | ${volumeName}`);
   const nav = useNavigate();
 
-  const { canExecute, specific } = usePermissions({
+  const { specific } = usePermissions({
     type: "Server",
     id: serverId,
   });
@@ -102,55 +97,28 @@ function VolumeInner({
 
   const intention = unused ? "Critical" : "Good";
 
-  const Header = (
-    <Stack justify="space-between">
-      <Stack gap="md" pb="md" className="bordered-light" bdrs="md">
-        <EntityHeader
-          name={volumeName}
-          icon={ICONS.Volume}
-          intent={intention}
-          state={unused ? "Unused" : "In Use"}
-        />
-        <DividedChildren px="md">
-          <Text>Volume</Text>
-          <ResourceLink type="Server" id={serverId} />
+  return (
+    <ResourceSubPage
+      entityTypeName="Volume"
+      parentType="Server"
+      parentId={serverId}
+      name={volumeName}
+      icon={ICONS.Volume}
+      intent={intention}
+      state={unused ? "Unused" : "In Use"}
+      info={
+        <>
           {volume.Scope && (
             <Group gap="xs">
               <Text c="dimmed">Scope:</Text>
               <Text>{volume.Scope}</Text>
             </Group>
           )}
-        </DividedChildren>
-      </Stack>
-      <ResourceDescription type="Server" id={serverId} />
-    </Stack>
-  );
-
-  return (
-    <EntityPage backTo={"/servers/" + serverId}>
-      <Stack hiddenFrom="xl" w="100%">
-        {Header}
-        <ResourceUpdates type="Server" id={serverId} />
-      </Stack>
-      <Group
-        visibleFrom="xl"
-        gap="xl"
-        w="100%"
-        align="stretch"
-        grow
-        preventGrowOverflow={false}
-      >
-        {Header}
-        <ResourceUpdates type="Server" id={serverId} />
-      </Group>
-
-      <Stack mt="lg" gap="xl">
-        {canExecute && unused && (
-          <Section
-            title="Execute"
-            icon={<ICONS.Execution size="1.3rem" />}
-            my="xl"
-          >
+        </>
+      }
+      executions={
+        <>
+          {unused && (
             <ConfirmButton
               color="red"
               icon={<ICONS.Delete size="1rem" />}
@@ -161,48 +129,48 @@ function VolumeInner({
             >
               Delete Volume
             </ConfirmButton>
-          </Section>
-        )}
-
-        {containers && containers.length > 0 && (
-          <ContainersSection serverId={serverId} containers={containers} />
-        )}
-
-        {/* TOP LEVEL NETWORK INFO */}
-        <Section title="Details" icon={<ICONS.Info size="1.3rem" />}>
-          <DataTable
-            tableKey="volume-info"
-            data={[volume]}
-            columns={[
-              {
-                accessorKey: "Driver",
-                header: "Driver",
-              },
-              {
-                accessorKey: "Scope",
-                header: "Scope",
-              },
-              {
-                accessorKey: "CreatedAt",
-                header: "Created At",
-              },
-              {
-                accessorKey: "UsageData.Size",
-                header: "Used Size",
-              },
-            ]}
-          />
-          {volume.Options && (
-            <DockerOptions options={Object.entries(volume.Options)} />
           )}
-        </Section>
+        </>
+      }
+    >
+      {containers && containers.length > 0 && (
+        <ContainersSection serverId={serverId} containers={containers} />
+      )}
 
-        {specific.includes(Types.SpecificPermission.Inspect) && (
-          <InspectSection json={volume} />
+      {/* TOP LEVEL NETWORK INFO */}
+      <Section title="Details" icon={<ICONS.Info size="1.3rem" />}>
+        <DataTable
+          tableKey="volume-info"
+          data={[volume]}
+          columns={[
+            {
+              accessorKey: "Driver",
+              header: "Driver",
+            },
+            {
+              accessorKey: "Scope",
+              header: "Scope",
+            },
+            {
+              accessorKey: "CreatedAt",
+              header: "Created At",
+            },
+            {
+              accessorKey: "UsageData.Size",
+              header: "Used Size",
+            },
+          ]}
+        />
+        {volume.Options && (
+          <DockerOptions options={Object.entries(volume.Options)} />
         )}
+      </Section>
 
-        <DockerLabelsSection labels={volume?.Labels} />
-      </Stack>
-    </EntityPage>
+      {specific.includes(Types.SpecificPermission.Inspect) && (
+        <InspectSection json={volume} />
+      )}
+
+      <DockerLabelsSection labels={volume?.Labels} />
+    </ResourceSubPage>
   );
 }

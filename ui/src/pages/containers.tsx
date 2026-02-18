@@ -1,4 +1,4 @@
-import { ContainerPorts } from "@/components/docker/container-ports";
+import ContainerPorts from "@/components/docker/container-ports";
 import DockerResourceLink from "@/components/docker/link";
 import { containerStateIntention } from "@/lib/color";
 import { useDebounce, useRead } from "@/lib/hooks";

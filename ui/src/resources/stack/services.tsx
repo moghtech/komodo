@@ -9,7 +9,7 @@ import StatusBadge from "@/ui/status-badge";
 import { containerStateIntention, swarmStateIntention } from "@/lib/color";
 import DockerResourceLink from "@/components/docker/link";
 import { Group } from "@mantine/core";
-import { ContainerPorts } from "@/components/docker/container-ports";
+import ContainerPorts from "@/components/docker/container-ports";
 
 export default function StackServices({
   id,

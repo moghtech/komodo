@@ -13,7 +13,7 @@ export interface ContainerPortsProps {
   serverId: string | undefined;
 }
 
-export function ContainerPorts({ ports, serverId }: ContainerPortsProps) {
+export default function ContainerPorts({ ports, serverId }: ContainerPortsProps) {
   const portsMap = useContainerPortsMap(ports);
   const sortedNumericPorts = Object.keys(portsMap)
     .map(Number)

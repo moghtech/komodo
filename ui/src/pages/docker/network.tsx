@@ -1,20 +1,15 @@
+import { useExecute, usePermissions, useRead, useSetTitle } from "@/lib/hooks";
 import DockerLabelsSection from "@/components/docker/labels-section";
 import DockerResourceLink from "@/components/docker/link";
 import DockerOptions from "@/components/docker/options";
 import InspectSection from "@/components/inspect-section";
-import ResourceUpdates from "@/components/updates/resource";
-import { useExecute, usePermissions, useRead, useSetTitle } from "@/lib/hooks";
-import ResourceDescription from "@/resources/description";
-import ResourceLink from "@/resources/link";
 import { useServer } from "@/resources/server";
+import ResourceSubPage from "@/resources/sub-page";
 import { ICONS } from "@/theme/icons";
 import ConfirmButton from "@/ui/confirm-button";
 import { DataTable, SortableHeader } from "@/ui/data-table";
-import DividedChildren from "@/ui/divided-children";
-import EntityHeader from "@/ui/entity-header";
-import EntityPage from "@/ui/entity-page";
 import Section from "@/ui/section";
-import { Center, Group, Loader, Stack, Text } from "@mantine/core";
+import { Center, Group, Loader, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { Waypoints } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -46,7 +41,7 @@ function NetworkInner({
   useSetTitle(`${server?.name} | Network | ${networkName}`);
   const nav = useNavigate();
 
-  const { canExecute, specific } = usePermissions({
+  const { specific } = usePermissions({
     type: "Server",
     id: serverId,
   });
@@ -108,18 +103,17 @@ function NetworkInner({
 
   const intention = unused ? "Critical" : "Good";
 
-  const Header = (
-    <Stack justify="space-between">
-      <Stack gap="md" pb="md" className="bordered-light" bdrs="md">
-        <EntityHeader
-          name={networkName}
-          icon={ICONS.Network}
-          intent={intention}
-          state={unused ? "Unused" : "In Use"}
-        />
-        <DividedChildren px="md">
-          <Text>Network</Text>
-          <ResourceLink type="Server" id={serverId} />
+  return (
+    <ResourceSubPage
+      entityTypeName="Network"
+      parentType="Server"
+      parentId={serverId}
+      name={networkName}
+      icon={ICONS.Network}
+      intent={intention}
+      state={unused ? "Unused" : "In Use"}
+      info={
+        <>
           <Group gap="xs">
             <Text c="dimmed">IPV6:</Text>
             <Text>{network.EnableIPv6 ? "Enabled" : "Disabled"}</Text>
@@ -132,37 +126,11 @@ function NetworkInner({
               </Text>
             </Group>
           )}
-        </DividedChildren>
-      </Stack>
-      <ResourceDescription type="Server" id={serverId} />
-    </Stack>
-  );
-
-  return (
-    <EntityPage backTo={"/servers/" + serverId}>
-      <Stack hiddenFrom="xl" w="100%">
-        {Header}
-        <ResourceUpdates type="Server" id={serverId} />
-      </Stack>
-      <Group
-        visibleFrom="xl"
-        gap="xl"
-        w="100%"
-        align="stretch"
-        grow
-        preventGrowOverflow={false}
-      >
-        {Header}
-        <ResourceUpdates type="Server" id={serverId} />
-      </Group>
-
-      <Stack mt="lg" gap="xl">
-        {canExecute && unused && (
-          <Section
-            title="Execute"
-            icon={<ICONS.Execution size="1rem" />}
-            my="xl"
-          >
+        </>
+      }
+      executions={
+        <>
+          {unused && (
             <ConfirmButton
               variant="filled"
               color="red"
@@ -174,123 +142,123 @@ function NetworkInner({
             >
               Delete Network
             </ConfirmButton>
-          </Section>
-        )}
-
-        {containers && containers.length > 0 && (
-          <Section title="Containers" icon={<ICONS.Container size="1.3rem" />}>
-            <DataTable
-              tableKey="network-containers"
-              data={containers}
-              columns={[
-                {
-                  accessorKey: "Name",
-                  header: ({ column }) => (
-                    <SortableHeader column={column} title="Name" />
-                  ),
-                  cell: ({ row }) =>
-                    row.original.Name ? (
-                      <DockerResourceLink
-                        type="Container"
-                        serverId={serverId}
-                        name={row.original.Name}
-                      />
-                    ) : (
-                      "Unknown"
-                    ),
-                  size: 200,
-                },
-                {
-                  accessorKey: "IPv4Address",
-                  header: ({ column }) => (
-                    <SortableHeader column={column} title="IPv4" />
-                  ),
-                  cell: ({ row }) => row.original.IPv4Address || "None",
-                },
-                {
-                  accessorKey: "IPv6Address",
-                  header: ({ column }) => (
-                    <SortableHeader column={column} title="IPv6" />
-                  ),
-                  cell: ({ row }) => row.original.IPv6Address || "None",
-                },
-                {
-                  accessorKey: "MacAddress",
-                  header: ({ column }) => (
-                    <SortableHeader column={column} title="Mac" />
-                  ),
-                  cell: ({ row }) => row.original.MacAddress || "None",
-                },
-              ]}
-            />
-          </Section>
-        )}
-
-        {/* TOP LEVEL NETWORK INFO */}
-        <Section title="Details" icon={<ICONS.Info size="1.3rem" />}>
+          )}
+        </>
+      }
+    >
+      {containers && containers.length > 0 && (
+        <Section title="Containers" icon={<ICONS.Container size="1.3rem" />}>
           <DataTable
-            tableKey="network-info"
-            data={[network]}
+            tableKey="network-containers"
+            data={containers}
+            columns={[
+              {
+                accessorKey: "Name",
+                header: ({ column }) => (
+                  <SortableHeader column={column} title="Name" />
+                ),
+                cell: ({ row }) =>
+                  row.original.Name ? (
+                    <DockerResourceLink
+                      type="Container"
+                      serverId={serverId}
+                      name={row.original.Name}
+                    />
+                  ) : (
+                    "Unknown"
+                  ),
+                size: 200,
+              },
+              {
+                accessorKey: "IPv4Address",
+                header: ({ column }) => (
+                  <SortableHeader column={column} title="IPv4" />
+                ),
+                cell: ({ row }) => row.original.IPv4Address || "None",
+              },
+              {
+                accessorKey: "IPv6Address",
+                header: ({ column }) => (
+                  <SortableHeader column={column} title="IPv6" />
+                ),
+                cell: ({ row }) => row.original.IPv6Address || "None",
+              },
+              {
+                accessorKey: "MacAddress",
+                header: ({ column }) => (
+                  <SortableHeader column={column} title="Mac" />
+                ),
+                cell: ({ row }) => row.original.MacAddress || "None",
+              },
+            ]}
+          />
+        </Section>
+      )}
+
+      {/* TOP LEVEL NETWORK INFO */}
+      <Section title="Details" icon={<ICONS.Info size="1.3rem" />}>
+        <DataTable
+          tableKey="network-info"
+          data={[network]}
+          columns={[
+            {
+              accessorKey: "Driver",
+              header: "Driver",
+            },
+            {
+              accessorKey: "Scope",
+              header: "Scope",
+            },
+            {
+              accessorKey: "Attachable",
+              header: "Attachable",
+            },
+            {
+              accessorKey: "Internal",
+              header: "Internal",
+            },
+          ]}
+        />
+        {network.Options && (
+          <DockerOptions options={Object.entries(network.Options)} />
+        )}
+      </Section>
+
+      {ipamConfig.length > 0 && (
+        <Section title="IPAM" icon={<Waypoints size="1.3rem" />}>
+          <DataTable
+            tableKey="network-ipam"
+            data={ipamConfig}
             columns={[
               {
                 accessorKey: "Driver",
                 header: "Driver",
               },
               {
-                accessorKey: "Scope",
-                header: "Scope",
+                accessorKey: "Subnet",
+                header: "Subnet",
               },
               {
-                accessorKey: "Attachable",
-                header: "Attachable",
+                accessorKey: "Gateway",
+                header: "Gateway",
               },
               {
-                accessorKey: "Internal",
-                header: "Internal",
+                accessorKey: "IPRange",
+                header: "IPRange",
               },
             ]}
           />
-          {network.Options && (
-            <DockerOptions options={Object.entries(network.Options)} />
+          {network.IPAM?.Options && (
+            <DockerOptions options={Object.entries(network.IPAM.Options)} />
           )}
         </Section>
+      )}
 
-        {ipamConfig.length > 0 && (
-          <Section title="IPAM" icon={<Waypoints size="1.3rem" />}>
-            <DataTable
-              tableKey="network-ipam"
-              data={ipamConfig}
-              columns={[
-                {
-                  accessorKey: "Driver",
-                  header: "Driver",
-                },
-                {
-                  accessorKey: "Subnet",
-                  header: "Subnet",
-                },
-                {
-                  accessorKey: "Gateway",
-                  header: "Gateway",
-                },
-                {
-                  accessorKey: "IPRange",
-                  header: "IPRange",
-                },
-              ]}
-            />
-            {network.IPAM?.Options && (
-              <DockerOptions options={Object.entries(network.IPAM.Options)} />
-            )}
-          </Section>
-        )}
+      {specific.includes(Types.SpecificPermission.Inspect) && (
+        <InspectSection json={network} />
+      )}
 
-        {specific.includes(Types.SpecificPermission.Inspect) && (
-          <InspectSection json={network} />
-        )}
-
-        <DockerLabelsSection labels={network?.Labels} />
-      </Stack>
-    </EntityPage>
+      <DockerLabelsSection labels={network?.Labels} />
+    </ResourceSubPage>
   );
 }
