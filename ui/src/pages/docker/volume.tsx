@@ -167,7 +167,7 @@ function VolumeInner({
       </Section>
 
       {specific.includes(Types.SpecificPermission.Inspect) && (
-        <InspectSection json={volume} />
+        <InspectSection json={volume} showToggle />
       )}
 
       <DockerLabelsSection labels={volume?.Labels} />

@@ -205,7 +205,7 @@ function ImageInner({
       )}
 
       {specific.includes(Types.SpecificPermission.Inspect) && (
-        <InspectSection json={image} />
+        <InspectSection json={image} showToggle />
       )}
 
       <DockerLabelsSection labels={image?.Config?.Labels} />

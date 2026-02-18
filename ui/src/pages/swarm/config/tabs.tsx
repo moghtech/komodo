@@ -10,9 +10,9 @@ import { Types } from "komodo_client";
 import { useMemo, useState } from "react";
 import SwarmConfigTasksSection from "./tasks";
 import SwarmConfigServicesSection from "./services";
-import SwarmConfigInspectSection from "./inspect";
 import { Tabs } from "@mantine/core";
 import SwarmConfigEditSection from "./edit";
+import InspectSection from "@/components/inspect-section";
 
 type SwarmConfigTabsView = "Edit" | "Services" | "Tasks" | "Inspect";
 
@@ -85,9 +85,11 @@ export default function SwarmConfigTabs({
       break;
     case "Inspect":
       View = (
-        <SwarmConfigInspectSection
-          swarm={swarm.id}
-          config={config}
+        <InspectSection
+          request={{
+            type: "InspectSwarmConfig",
+            params: { swarm: swarm.id, config },
+          }}
           titleOther={Selector}
         />
       );

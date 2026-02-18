@@ -9,10 +9,10 @@ import { Tabs } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useMemo, useState } from "react";
-import SwarmSecretInspectSection from "./inspect";
 import SwarmSecretServicesSection from "./services";
 import SwarmSecretTasksSection from "./tasks";
 import SwarmSecretEditSection from "./edit";
+import InspectSection from "@/components/inspect-section";
 
 type SwarmSecretTabsView = "Edit" | "Services" | "Tasks" | "Inspect";
 
@@ -85,9 +85,11 @@ export default function SwarmSecretTabs({
       break;
     case "Inspect":
       View = (
-        <SwarmSecretInspectSection
-          swarm={swarm.id}
-          secret={secret}
+        <InspectSection
+          request={{
+            type: "InspectSwarmSecret",
+            params: { swarm: swarm.id, secret },
+          }}
           titleOther={Selector}
         />
       );

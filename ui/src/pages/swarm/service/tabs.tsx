@@ -8,7 +8,7 @@ import { Types } from "komodo_client";
 import { useMemo, useState } from "react";
 import SwarmServiceTasksSection from "./tasks";
 import LogSection from "@/components/log-section";
-import SwarmServiceInspectSection from "./inspect";
+import InspectSection from "@/components/inspect-section";
 
 type SwarmServiceTabsView = "Tasks" | "Log" | "Inspect";
 
@@ -93,9 +93,11 @@ export default function SwarmServiceTabs({
       break;
     case "Inspect":
       View = (
-        <SwarmServiceInspectSection
-          swarm={swarm.id}
-          service={service}
+        <InspectSection
+          request={{
+            type: "InspectSwarmService",
+            params: { swarm: swarm.id, service },
+          }}
           titleOther={Selector}
         />
       );

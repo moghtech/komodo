@@ -4,12 +4,12 @@ import { MobileFriendlyTabsSelector } from "@/ui/mobile-friendly-tabs";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useMemo, useState } from "react";
-import SwarmStackInspectSection from "./inspect";
 import SwarmServicesSection from "@/components/swarm/services-section";
 import SwarmTasksSection from "@/components/swarm/tasks-section";
 import { colorByIntention, ColorIntention } from "@/lib/color";
 import { Tabs } from "@mantine/core";
 import SwarmStackLogsSection from "./logs";
+import InspectSection from "@/components/inspect-section";
 
 type SwarmStackTabsView = "Services" | "Tasks" | "Log" | "Inspect";
 
@@ -107,9 +107,11 @@ export default function SwarmStackTabs({
       break;
     case "Inspect":
       View = (
-        <SwarmStackInspectSection
-          swarm={swarm.id}
-          stack={stack.Name}
+        <InspectSection
+          request={{
+            type: "InspectSwarmStack",
+            params: { swarm: swarm.id, stack: stack.Name },
+          }}
           titleOther={Selector}
         />
       );

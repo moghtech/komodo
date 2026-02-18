@@ -4,30 +4,65 @@ import { useState } from "react";
 import { MonacoEditor } from "./monaco";
 import ShowHideButton from "@/ui/show-hide-button";
 import { Box } from "@mantine/core";
+import { Types } from "komodo_client";
+import { useRead } from "@/lib/hooks";
 
-export interface InspectSectionProps extends SectionProps {
-  json: unknown;
+export interface InspectSectionProps extends Omit<SectionProps, "children"> {
+  /* Inspect a read response */
+  request?: Types.ReadRequest;
+  json?: unknown;
+  /* Use externally controlled show state */
+  show?: boolean;
+  setShow?: (show: boolean) => void;
+  /* Use internal show state */
+  showToggle?: boolean;
 }
 
 export default function InspectSection({
-  json,
+  request,
+  json: __json,
+  showToggle,
+  show: __show = !showToggle,
+  setShow,
   ...props
 }: InspectSectionProps) {
-  const [show, setShow] = useState(false);
+  const {
+    data: _json,
+    isPending,
+    isError,
+  } = useRead(request?.type!, request?.params!, {
+    enabled: !!request,
+    refetchInterval: 10_000,
+  });
+  const json = __json ? __json : _json;
+  const [_show, _setShow] = useState(true);
+  const show = showToggle ? _show : __show;
   return (
     <Section
-      title="Inspect"
-      icon={<ICONS.Search size="1.3rem" />}
+      isPending={!__json && isPending}
+      error={
+        !!__json
+          ? undefined
+          : isError
+            ? "There was an error fetching the information"
+            : !json
+              ? "Did not find requested information"
+              : undefined
+      }
+      title={props.titleOther ? undefined : "Inspect"}
+      icon={props.titleOther ? undefined : <ICONS.Inspect size="1.3rem" />}
       titleRight={
-        <Box pl="md">
-          <ShowHideButton show={show} setShow={setShow} />
-        </Box>
+        (showToggle || setShow) && (
+          <Box pl="md">
+            <ShowHideButton show={show} setShow={setShow ?? _setShow} />
+          </Box>
+        )
       }
       {...props}
     >
       {show && (
         <MonacoEditor
-          value={JSON.stringify(json, null, 2)}
+          value={json ? JSON.stringify(json, null, 2) : "NO DATA"}
           language="json"
           readOnly
         />

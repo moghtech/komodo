@@ -255,7 +255,7 @@ function NetworkInner({
       )}
 
       {specific.includes(Types.SpecificPermission.Inspect) && (
-        <InspectSection json={network} />
+        <InspectSection json={network} showToggle />
       )}
 
       <DockerLabelsSection labels={network?.Labels} />

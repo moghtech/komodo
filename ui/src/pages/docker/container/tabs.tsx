@@ -10,10 +10,9 @@ import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useMemo } from "react";
 import { ICONS } from "@/theme/icons";
-import Section from "@/ui/section";
-import { MonacoEditor } from "@/components/monaco";
 import TerminalSection from "@/components/terminal/section";
 import LogSection from "@/components/log-section";
+import InspectSection from "@/components/inspect-section";
 
 export type ContainerTabsView = "Log" | "Inspect" | "Terminals";
 
@@ -117,15 +116,7 @@ export default function ContainerTabs({
       );
       break;
     case "Inspect":
-      View = (
-        <Section titleOther={Selector}>
-          <MonacoEditor
-            value={inspect ? JSON.stringify(inspect, null, 2) : "NO DATA"}
-            language="json"
-            readOnly
-          />
-        </Section>
-      );
+      View = <InspectSection json={inspect} titleOther={Selector} />;
       break;
     case "Terminals":
       View = <TerminalSection target={target} titleOther={Selector} />;

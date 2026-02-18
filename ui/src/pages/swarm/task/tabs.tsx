@@ -7,7 +7,7 @@ import { Tabs } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useMemo } from "react";
-import SwarmTaskInspectSection from "./inspect";
+import InspectSection from "@/components/inspect-section";
 
 type SwarmTaskTabsView = "Log" | "Inspect";
 
@@ -71,9 +71,11 @@ export default function SwarmTaskTabs({
       break;
     case "Inspect":
       View = (
-        <SwarmTaskInspectSection
-          swarm={swarm.id}
-          task={task}
+        <InspectSection
+          request={{
+            type: "InspectSwarmTask",
+            params: { swarm: swarm.id, task },
+          }}
           titleOther={Selector}
         />
       );
