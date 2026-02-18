@@ -11,6 +11,7 @@ import SwarmConfig from "./config";
 import { Tabs } from "@mantine/core";
 import { colorByIntention, swarmStateIntention } from "@/lib/color";
 import SwarmDockerResources from "./docker";
+import InspectSection from "@/components/inspect-section";
 
 type SwarmTabsView = "Config" | "Docker" | "Resources" | "Inspect";
 
@@ -77,6 +78,15 @@ export default function SwarmTabs({ id }: { id: string }) {
       View = <SwarmDockerResources id={id} titleOther={Selector} />;
       break;
     case "Inspect":
+      View = (
+        <InspectSection
+          request={{
+            type: "InspectSwarm",
+            params: { swarm: id },
+          }}
+          titleOther={Selector}
+        />
+      );
       break;
     case "Resources":
       break;
