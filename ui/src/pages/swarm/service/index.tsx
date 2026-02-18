@@ -90,7 +90,6 @@ export default function SwarmService() {
               swarmId={swarmId}
               type="Service"
               resourceId={service?.Name}
-              resourceName={service?.Name}
             />
           )
         }
