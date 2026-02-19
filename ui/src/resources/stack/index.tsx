@@ -3,7 +3,6 @@ import { useInvalidate, usePermissions, useRead, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
-import EntityHeader from "@/ui/entity-header";
 import { RequiredResourceComponents } from "@/resources";
 import NewResource from "@/resources/new";
 import StackTable from "./table";
@@ -33,7 +32,7 @@ import { notifications } from "@mantine/notifications";
 import ResourceLink from "@/resources/link";
 import HashCompare from "@/components/hash-compare";
 import StackUpdateAvailable from "./update-available";
-import ResourceHeaderAction from "../header-action";
+import ResourceHeader from "../header";
 
 export function useStack(id: string | undefined) {
   return useRead("ListStacks", {}).data?.find((r) => r.id === id);
@@ -108,7 +107,10 @@ export const StackComponents: RequiredResourceComponents<
   ResourcePageHeader: ({ id }) => {
     const stack = useStack(id);
     return (
-      <EntityHeader
+      <ResourceHeader
+        type="Stack"
+        id={id}
+        resource={stack}
         intent={stackStateIntention(stack?.info.state)}
         icon={ICONS.Stack}
         name={stack?.name}
@@ -118,7 +120,6 @@ export const StackComponents: RequiredResourceComponents<
             ? stack?.info.status
             : undefined
         }
-        action={<ResourceHeaderAction type="Stack" id={id} resource={stack} />}
       />
     );
   },

@@ -4,7 +4,6 @@ import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
-import EntityHeader from "@/ui/entity-header";
 import DeploymentTable from "./table";
 import NewResource from "@/resources/new";
 import DeploymentTabs from "./tabs";
@@ -25,7 +24,7 @@ import DockerResourceLink from "@/components/docker/link";
 import SwarmResourceLink from "@/components/swarm/link";
 import ContainerPorts from "@/components/docker/container-ports";
 import DeploymentUpdateAvailable from "./update-available";
-import ResourceHeaderAction from "@/resources/header-action";
+import ResourceHeader from "../header";
 
 export function useDeployment(id: string | undefined) {
   return useRead("ListDeployments", {}).data?.find((r) => r.id === id);
@@ -102,19 +101,15 @@ export const DeploymentComponents: RequiredResourceComponents<
   ResourcePageHeader: ({ id }) => {
     const deployment = useDeployment(id);
     return (
-      <EntityHeader
+      <ResourceHeader
+        type="Deployment"
+        id={id}
+        resource={deployment}
         intent={deploymentStateIntention(deployment?.info.state)}
         icon={ICONS.Deployment}
         name={deployment?.name}
         state={deployment?.info.state}
         status={deployment?.info.status}
-        action={
-          <ResourceHeaderAction
-            type="Deployment"
-            id={id}
-            resource={deployment}
-          />
-        }
       />
     );
   },

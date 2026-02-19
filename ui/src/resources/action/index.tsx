@@ -4,16 +4,15 @@ import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
-import EntityHeader from "@/ui/entity-header";
 import { Badge, Group, Popover, Text } from "@mantine/core";
 import { Clock } from "lucide-react";
 import { useDisclosure } from "@mantine/hooks";
 import { updateLogToHtml } from "@/lib/utils";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 import NewResource from "@/resources/new";
-import ResourceHeaderAction from "@/resources/header-action";
 import ActionConfig from "./config";
 import ActionTable from "./table";
+import ResourceHeader from "../header";
 
 export function useAction(id: string | undefined) {
   return useRead("ListActions", {}).data?.find((r) => r.id === id);
@@ -78,14 +77,14 @@ export const ActionComponents: RequiredResourceComponents<
       | Types.ResourceListItem<Types.ActionListItemInfo>
       | undefined;
     return (
-      <EntityHeader
+      <ResourceHeader
+        type="Action"
+        id={id}
+        resource={action}
         intent={actionStateIntention(action?.info.state)}
         icon={({ size }) => <ActionComponents.Icon id={id} size={size} />}
         name={action?.name}
         state={action?.info.state}
-        action={
-          <ResourceHeaderAction type="Action" id={id} resource={action} />
-        }
       />
     );
   },

@@ -4,7 +4,6 @@ import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
-import EntityHeader from "@/ui/entity-header";
 import ServerTable from "./table";
 import NewResource from "@/resources/new";
 import ConfirmButton from "@/ui/confirm-button";
@@ -16,7 +15,7 @@ import ConfirmServerPubkey from "./confirm-pubkey";
 import ServerTabs from "./tabs";
 import { fmtUpperCamelcase } from "@/lib/formatting";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
-import ResourceHeaderAction from "../header-action";
+import ResourceHeader from "../header";
 
 export function useServer(id: string | undefined) {
   return useRead("ListServers", {}).data?.find((r) => r.id === id);
@@ -81,15 +80,15 @@ export const ServerComponents: RequiredResourceComponents<
   ResourcePageHeader: ({ id }) => {
     const server = useServer(id);
     return (
-      <EntityHeader
+      <ResourceHeader
+        type="Server"
+        id={id}
+        resource={server}
         intent={serverStateIntention(server?.info.state)}
         icon={ICONS.Server}
         name={server?.name}
         state={fmtUpperCamelcase(server?.info.state ?? "")}
         status={server?.info.region}
-        action={
-          <ResourceHeaderAction type="Server" id={id} resource={server} />
-        }
       />
     );
   },

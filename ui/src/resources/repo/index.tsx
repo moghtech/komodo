@@ -4,11 +4,10 @@ import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
-import EntityHeader from "@/ui/entity-header";
 import RepoTable from "./table";
 import NewResource from "@/resources/new";
 import RepoConfig from "./config";
-import ResourceHeaderAction from "../header-action";
+import ResourceHeader from "../header";
 
 export function useRepo(id: string | undefined) {
   return useRead("ListRepos", {}).data?.find((r) => r.id === id);
@@ -71,12 +70,14 @@ export const RepoComponents: RequiredResourceComponents<
   ResourcePageHeader: ({ id }) => {
     const repo = useRepo(id);
     return (
-      <EntityHeader
+      <ResourceHeader
+        type="Repo"
+        id={id}
+        resource={repo}
         intent={repoStateIntention(repo?.info.state)}
         icon={ICONS.Repo}
         name={repo?.name}
         state={repo?.info.state}
-        action={<ResourceHeaderAction type="Repo" id={id} resource={repo} />}
       />
     );
   },

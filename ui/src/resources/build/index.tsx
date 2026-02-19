@@ -4,7 +4,6 @@ import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
-import EntityHeader from "@/ui/entity-header";
 import BuildTable from "./table";
 import NewResource from "@/resources/new";
 import { ActionIcon, Box, Group, Text } from "@mantine/core";
@@ -15,7 +14,7 @@ import { useBuilder } from "../builder";
 import ResourceLink from "../link";
 import FileSource from "@/components/file-source";
 import HashCompare from "@/components/hash-compare";
-import ResourceHeaderAction from "../header-action";
+import ResourceHeader from "../header";
 
 export function useBuild(id: string | undefined) {
   return useRead("ListBuilds", {}).data?.find((r) => r.id === id);
@@ -78,12 +77,14 @@ export const BuildComponents: RequiredResourceComponents<
   ResourcePageHeader: ({ id }) => {
     const build = useBuild(id);
     return (
-      <EntityHeader
+      <ResourceHeader
+        type="Build"
+        id={id}
+        resource={build}
         intent={buildStateIntention(build?.info.state)}
         icon={ICONS.Build}
         name={build?.name}
         state={build?.info.state}
-        action={<ResourceHeaderAction type="Build" id={id} resource={build} />}
       />
     );
   },

@@ -2,13 +2,12 @@ import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
-import EntityHeader from "@/ui/entity-header";
 import ResourceLink from "@/resources/link";
 import NewResource from "@/resources/new";
 import BuilderTable from "./table";
 import { useServer } from "../server";
 import { serverStateIntention } from "@/lib/color";
-import ResourceHeaderAction from "../header-action";
+import ResourceHeader from "../header";
 
 export function useBuilder(id: string | undefined) {
   return useRead("ListBuilders", {}).data?.find((r) => r.id === id);
@@ -57,7 +56,10 @@ export const BuilderComponents: RequiredResourceComponents<
       ? serverStateIntention(server.info.state)
       : "Neutral";
     return (
-      <EntityHeader
+      <ResourceHeader
+        type="Builder"
+        id={id}
+        resource={builder}
         intent={intent}
         icon={ICONS.Builder}
         name={builder?.name}
@@ -69,9 +71,6 @@ export const BuilderComponents: RequiredResourceComponents<
             builder.info.instance_type ? (
             <ResourceLink type="Server" id={builder.info.instance_type} />
           ) : undefined
-        }
-        action={
-          <ResourceHeaderAction type="Builder" id={id} resource={builder} />
         }
       />
     );

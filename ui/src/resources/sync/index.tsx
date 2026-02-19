@@ -3,7 +3,6 @@ import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
-import EntityHeader from "@/ui/entity-header";
 import ResourceSyncTable from "./table";
 import { RequiredResourceComponents } from "@/resources";
 import NewResource from "@/resources/new";
@@ -14,7 +13,7 @@ import { fmtDate } from "@/lib/formatting";
 import { Box, Group } from "@mantine/core";
 import HashCompare from "@/components/hash-compare";
 import ResourceSyncTabs from "./tabs";
-import ResourceHeaderAction from "../header-action";
+import ResourceHeader from "../header";
 
 export function useResourceSync(id: string | undefined) {
   return useRead("ListResourceSyncs", {}).data?.find((r) => r.id === id);
@@ -83,18 +82,14 @@ export const ResourceSyncComponents: RequiredResourceComponents<
   ResourcePageHeader: ({ id }) => {
     const resourceSync = useResourceSync(id);
     return (
-      <EntityHeader
+      <ResourceHeader
+        type="ResourceSync"
+        id={id}
+        resource={resourceSync}
         intent={resourceSyncStateIntention(resourceSync?.info.state)}
         icon={ICONS.ResourceSync}
         name={resourceSync?.name}
         state={resourceSync?.info.state}
-        action={
-          <ResourceHeaderAction
-            type="ResourceSync"
-            id={id}
-            resource={resourceSync}
-          />
-        }
       />
     );
   },

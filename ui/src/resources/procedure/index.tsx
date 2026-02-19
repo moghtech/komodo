@@ -4,12 +4,11 @@ import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
-import EntityHeader from "@/ui/entity-header";
 import ProcedureTable from "./table";
 import NewResource from "@/resources/new";
 import ProcedureConfig from "./config";
 import { RunProcedure } from "./executions";
-import ResourceHeaderAction from "../header-action";
+import ResourceHeader from "../header";
 
 export function useProcedure(id: string | undefined) {
   return useRead("ListProcedures", {}).data?.find((r) => r.id === id);
@@ -72,15 +71,15 @@ export const ProcedureComponents: RequiredResourceComponents<
   ResourcePageHeader: ({ id }) => {
     const procedure = useProcedure(id);
     return (
-      <EntityHeader
+      <ResourceHeader
+        type="Procedure"
+        id={id}
+        resource={procedure}
         intent={procedureStateIntention(procedure?.info.state)}
         icon={ICONS.Procedure}
         name={procedure?.name}
         state={procedure?.info.state}
         status={`${procedure?.info.stages} Stage${procedure?.info.stages === 1 ? "" : "s"}`}
-        action={
-          <ResourceHeaderAction type="Procedure" id={id} resource={procedure} />
-        }
       />
     );
   },
