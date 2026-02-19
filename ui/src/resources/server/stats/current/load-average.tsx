@@ -1,9 +1,9 @@
 import { Types } from "komodo_client";
-import { useServer } from "@/resources/server";
 import { useRead } from "@/lib/hooks";
 import { hexColorByIntention } from "@/lib/color";
 import InfoCard from "@/ui/info-card";
 import { Group, Progress, SimpleGrid, Stack, Text } from "@mantine/core";
+import { useIsServerAvailable } from "@/resources/server/hooks";
 
 export function ServerLoadAverage({
   id,
@@ -14,7 +14,7 @@ export function ServerLoadAverage({
 }) {
   if (!stats?.load_average) return null;
   const { one = 0, five = 0, fifteen = 0 } = stats.load_average || {};
-  const isServerAvailable = useServer(id)?.info.state === Types.ServerState.Ok;
+  const isServerAvailable = useIsServerAvailable(id);
   const cores = useRead(
     "GetSystemInformation",
     { server: id },

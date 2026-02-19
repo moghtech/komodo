@@ -1,4 +1,4 @@
-import { fmtSizeBytes } from "@/lib/formatting";
+import { fmtRateBytes } from "@/lib/formatting";
 import InfoCard from "@/ui/info-card";
 import { Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
@@ -13,11 +13,11 @@ export default function ServerNetworkUsage({
       <Stack gap="0">
         <Group justify="space-between">
           <Text>Ingress</Text>
-          <Text>{fmtSizeBytes(stats?.network_ingress_bytes ?? 0)}</Text>
+          <Text>{fmtRateBytes(stats?.network_ingress_bytes ?? 0)}</Text>
         </Group>
         <Group justify="space-between">
           <Text>Egress</Text>
-          <Text>{fmtSizeBytes(stats?.network_egress_bytes ?? 0)}</Text>
+          <Text>{fmtRateBytes(stats?.network_egress_bytes ?? 0)}</Text>
         </Group>
       </Stack>
     </InfoCard>

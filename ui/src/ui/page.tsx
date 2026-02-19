@@ -1,6 +1,5 @@
 import {
   createPolymorphicComponent,
-  Flex,
   Group,
   Paper,
   Stack,
@@ -81,10 +80,10 @@ const Page = createPolymorphicComponent<"div", PageProps>(
       return (
         <Stack gap="xl" {...stackProps} ref={ref}>
           {oppositeTitle ? (
-            <Flex justify="space-between">
+            <Group justify="space-between" align="start">
               {titleNode}
               {oppositeTitle}
-            </Flex>
+            </Group>
           ) : (
             titleNode
           )}

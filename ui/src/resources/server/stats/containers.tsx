@@ -6,10 +6,9 @@ import ShowHideButton from "@/ui/show-hide-button";
 import { Group, Text, TextInput } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { useState } from "react";
-import { useServer } from "..";
-import { Types } from "komodo_client";
 import { filterBySplit } from "@/lib/utils";
 import DockerResourceLink from "@/components/docker/link";
+import { useIsServerAvailable } from "../hooks";
 
 export default function ServerContainerStats({ id }: { id: string }) {
   const [search, setSearch] = useState("");
@@ -17,7 +16,7 @@ export default function ServerContainerStats({ id }: { id: string }) {
     key: "server-stats-containers-show-v2",
     defaultValue: true,
   });
-  const isServerAvailable = useServer(id)?.info.state === Types.ServerState.Ok;
+  const isServerAvailable = useIsServerAvailable(id);
   const containers = useRead(
     "ListDockerContainers",
     {

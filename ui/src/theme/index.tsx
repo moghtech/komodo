@@ -18,6 +18,7 @@ import {
   MenuDropdown,
   Modal,
   MultiSelect,
+  Progress,
   SegmentedControl,
   Select,
   Switch,
@@ -244,6 +245,13 @@ const theme = createTheme({
         },
       }),
       classNames: { root: "bordered-heavy" },
+    }),
+    Progress: Progress.extend({
+      styles: (theme) => ({
+        root: {
+          backgroundColor: theme.colors.accent[4],
+        },
+      }),
     }),
   },
 });

@@ -1,8 +1,8 @@
 import { DataTable } from "@/ui/data-table";
 import Section from "@/ui/section";
-import { useServer } from "..";
 import { Types } from "komodo_client";
 import { useRead } from "@/lib/hooks";
+import { useIsServerAvailable } from "../hooks";
 
 export default function ServerSystemInfo({
   id,
@@ -11,7 +11,7 @@ export default function ServerSystemInfo({
   id: string;
   stats: Types.SystemStats | undefined;
 }) {
-  const isServerAvailable = useServer(id)?.info.state === Types.ServerState.Ok;
+  const isServerAvailable = useIsServerAvailable(id);
   const info = useRead(
     "GetSystemInformation",
     { server: id },

@@ -15,7 +15,7 @@ export default function ServerVersion({ id }: { id: string }) {
   return (
     <HoverCard width={300} position="bottom-start">
       <HoverCard.Target>
-        <Group gap="xs">
+        <Group gap="xs" wrap="nowrap">
           {!serverVersion ? (
             <ICONS.Alert size="1rem" color={colorByIntention("Unknown")} />
           ) : mismatch ? (

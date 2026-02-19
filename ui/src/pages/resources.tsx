@@ -17,6 +17,8 @@ import TableSkeleton from "@/ui/table-skeleton";
 import TemplateQuerySelector from "@/components/template-query-selector";
 import TagsFilter from "@/components/tags/filter";
 import ResourceNotFound from "@/resources/not-found";
+import ExportToml from "@/components/export-toml";
+import ServerShowStats from "@/resources/server/show-stats";
 
 export default function Resources({ _type }: { _type?: UsableResource }) {
   const is_admin = useUser().data?.admin ?? false;
@@ -55,13 +57,19 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
     return <ResourceNotFound type={type} />;
   }
 
-  // const targets = filtered?.map((resource) => ({ type, id: resource.id }));
+  const targets = filtered?.map((resource) => ({ type, id: resource.id }));
 
   return (
     <Page
       title={`${name}s`}
       icon={Components.Icon}
       description={<Components.Description />}
+      oppositeTitle={
+        <Group wrap="nowrap">
+          {type === "Server" && <ServerShowStats />}
+          <ExportToml targets={targets} />
+        </Group>
+      }
     >
       <Group justify="space-between">
         <Group>

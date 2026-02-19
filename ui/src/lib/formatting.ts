@@ -103,6 +103,10 @@ export function fmtSizeBytes(bytes: number) {
   }
 }
 
+export function fmtRateBytes(bytes: number) {
+  return fmtSizeBytes(bytes) + "/s"
+}
+
 export function fmtResourceType(type: UsableResource) {
   if (type === "ResourceSync") {
     return "Resource Sync";

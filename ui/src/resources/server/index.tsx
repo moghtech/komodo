@@ -16,6 +16,7 @@ import ServerTabs from "./tabs";
 import { fmtUpperCamelcase } from "@/lib/formatting";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 import ResourceHeader from "../header";
+import { useIsServerAvailable } from "./hooks";
 
 export function useServer(id: string | undefined) {
   return useRead("ListServers", {}).data?.find((r) => r.id === id);
@@ -125,8 +126,7 @@ export const ServerComponents: RequiredResourceComponents<
       );
     },
     Cpu: ({ id }) => {
-      const isServerAvailable =
-        useServer(id)?.info.state === Types.ServerState.Ok;
+      const isServerAvailable = useIsServerAvailable(id);
       const coreCount =
         useRead(
           "GetSystemInformation",
@@ -151,8 +151,7 @@ export const ServerComponents: RequiredResourceComponents<
       );
     },
     LoadAvg: ({ id }) => {
-      const isServerAvailable =
-        useServer(id)?.info.state === Types.ServerState.Ok;
+      const isServerAvailable = useIsServerAvailable(id);
       const stats = useRead(
         "GetSystemStats",
         { server: id },
@@ -177,8 +176,7 @@ export const ServerComponents: RequiredResourceComponents<
       );
     },
     Memory: ({ id }) => {
-      const isServerAvailable =
-        useServer(id)?.info.state === Types.ServerState.Ok;
+      const isServerAvailable = useIsServerAvailable(id);
       const stats = useRead(
         "GetSystemStats",
         { server: id },
@@ -200,8 +198,7 @@ export const ServerComponents: RequiredResourceComponents<
       );
     },
     Disk: ({ id }) => {
-      const isServerAvailable =
-        useServer(id)?.info.state === Types.ServerState.Ok;
+      const isServerAvailable = useIsServerAvailable(id);
       const stats = useRead(
         "GetSystemStats",
         { server: id },

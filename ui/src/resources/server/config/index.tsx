@@ -1,5 +1,5 @@
 import { usePermissions, useRead, useWrite } from "@/lib/hooks";
-import { useFullServer, useServer } from "..";
+import { useFullServer } from "..";
 import { ReactNode, useEffect, useState } from "react";
 import { Types } from "komodo_client";
 import { useLocalStorage } from "@mantine/hooks";
@@ -8,6 +8,7 @@ import { ConfigInput, ConfigList } from "@/ui/config/item";
 import ConfirmButton from "@/ui/confirm-button";
 import { ICONS } from "@/theme/icons";
 import { Group } from "@mantine/core";
+import { useIsServerAvailable } from "../hooks";
 
 export default function ServerConfig({
   id,
@@ -19,7 +20,7 @@ export default function ServerConfig({
   const globalDisabled =
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
   const { canWrite } = usePermissions({ type: "Server", id });
-  const isConnected = useServer(id)?.info.state === Types.ServerState.Ok;
+  const isAvailable = useIsServerAvailable(id);
 
   const server = useFullServer(id);
   const config = server?.config;
@@ -101,7 +102,7 @@ export default function ServerConfig({
                           maw="120px"
                           onClick={() => rotate({ server: id })}
                           loading={rotatePending}
-                          disabled={!isConnected}
+                          disabled={!isAvailable}
                         >
                           Rotate
                         </ConfirmButton>

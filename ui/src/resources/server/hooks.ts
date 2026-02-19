@@ -1,6 +1,7 @@
 import { atomWithStorage, useRead } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import { useAtom } from "jotai";
+import { useServer } from ".";
 
 const statsGranularityAtom = atomWithStorage<Types.Timelength>(
   "stats-granularity-v0",
@@ -17,12 +18,8 @@ export type ServerAddress = {
   hostname: string;
 };
 
-export function useServerAddress(
-  serverId: string | undefined,
-): ServerAddress | null {
-  const server = useRead("ListServers", {}).data?.find(
-    (s) => s.id === serverId,
-  );
+export function useServerAddress(id: string | undefined): ServerAddress | null {
+  const server = useServer(id);
 
   if (!server) return null;
 
@@ -42,5 +39,40 @@ export function useServerAddress(
     raw: base,
     protocol: parsed.protocol === "https:" ? "https:" : "http:",
     hostname: parsed.hostname,
+  };
+}
+
+export function useIsServerAvailable(id: string) {
+  return useServer(id)?.info.state === Types.ServerState.Ok;
+}
+
+export function useServerStats(id: string) {
+  const isServerAvailable = useIsServerAvailable(id);
+  return useRead(
+    "GetSystemStats",
+    { server: id },
+    {
+      enabled: isServerAvailable,
+      refetchInterval: 10_000,
+    },
+  ).data;
+}
+
+export function useServerThresholds(id: string) {
+  const isServerAvailable = useIsServerAvailable(id);
+  const config = useRead(
+    "GetServer",
+    { server: id },
+    {
+      enabled: isServerAvailable,
+    },
+  ).data?.config as any;
+  return {
+    cpuWarning: config?.cpu_warning ?? 75,
+    cpuCritical: config?.cpu_critical ?? 90,
+    memWarning: config?.mem_warning ?? 75,
+    memCritical: config?.mem_critical ?? 90,
+    diskWarning: config?.disk_warning ?? 75,
+    diskCritical: config?.disk_critical ?? 90,
   };
 }

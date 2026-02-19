@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
 import { usePermissions, useRead } from "@/lib/hooks";
-import { useServer } from "..";
 import { Types } from "komodo_client";
 import Section from "@/ui/section";
 import ServerProcesses from "./processes";
@@ -9,6 +8,7 @@ import ServerDisks from "./disks";
 import ServerCurrentStats from "./current";
 import ServerHistoricalStats from "./historical";
 import ServerSystemInfo from "./system-info";
+import { useIsServerAvailable } from "../hooks";
 
 export default function ServerStats({
   id,
@@ -18,7 +18,7 @@ export default function ServerStats({
   titleOther?: ReactNode;
 }) {
   const { specific } = usePermissions({ type: "Server", id });
-  const isServerAvailable = useServer(id)?.info.state === Types.ServerState.Ok;
+  const isServerAvailable = useIsServerAvailable(id);
 
   const stats = useRead(
     "GetSystemStats",
