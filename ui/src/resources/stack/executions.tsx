@@ -1,9 +1,9 @@
 import { useExecute, useRead } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import { useStack } from ".";
-import ConfirmModal from "@/ui/confirm-modal";
 import ConfirmButton from "@/ui/confirm-button";
 import { ICONS } from "@/theme/icons";
+import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 
 export const DeployStack = ({
   id,
@@ -43,7 +43,7 @@ export const DeployStack = ({
 
   if (deployed) {
     return (
-      <ConfirmModal
+      <ConfirmModalWithDisable
         confirmText={`${stack?.name}${service ? ` - ${service}` : ""}`}
         icon={<ICONS.Deploy size="1rem" />}
         onConfirm={() =>
@@ -53,7 +53,7 @@ export const DeployStack = ({
         loading={isPending || deploying}
       >
         Deploy
-      </ConfirmModal>
+      </ConfirmModalWithDisable>
     );
   }
 
@@ -100,7 +100,7 @@ export const DestroyStack = ({
   }
 
   return (
-    <ConfirmModal
+    <ConfirmModalWithDisable
       confirmText={`${stack?.name}${service ? ` - ${service}` : ""}`}
       icon={<ICONS.Destroy size="1rem" />}
       onConfirm={() =>
@@ -110,7 +110,7 @@ export const DestroyStack = ({
       loading={isPending || destroying}
     >
       Destroy
-    </ConfirmModal>
+    </ConfirmModalWithDisable>
   );
 };
 
@@ -183,7 +183,7 @@ export const RestartStack = ({
   }
 
   return (
-    <ConfirmModal
+    <ConfirmModalWithDisable
       confirmText={`${stack?.name}${service ? ` - ${service}` : ""}`}
       icon={<ICONS.Restart size="1rem" />}
       onConfirm={() =>
@@ -193,7 +193,7 @@ export const RestartStack = ({
       loading={restartPending || actionState?.restarting}
     >
       Restart
-    </ConfirmModal>
+    </ConfirmModalWithDisable>
   );
 };
 
@@ -253,7 +253,7 @@ export const StartStopStack = ({
         </ConfirmButton>
       )}
       {showStop && (
-        <ConfirmModal
+        <ConfirmModalWithDisable
           confirmText={`${stack?.name}${service ? ` - ${service}` : ""}`}
           icon={<ICONS.Stop size="1rem" />}
           onConfirm={() =>
@@ -263,7 +263,7 @@ export const StartStopStack = ({
           loading={stopPending || actionState?.stopping}
         >
           Stop
-        </ConfirmModal>
+        </ConfirmModalWithDisable>
       )}
     </>
   );
@@ -319,7 +319,7 @@ export const PauseUnpauseStack = ({
     state === Types.StackState.Running
   ) {
     return (
-      <ConfirmModal
+      <ConfirmModalWithDisable
         confirmText={`${stack?.name}${service ? ` - ${service}` : ""}`}
         icon={<ICONS.Pause size="1rem" />}
         onConfirm={() =>
@@ -329,7 +329,7 @@ export const PauseUnpauseStack = ({
         loading={pausePending || actionState?.pausing}
       >
         Pause
-      </ConfirmModal>
+      </ConfirmModalWithDisable>
     );
   }
 };

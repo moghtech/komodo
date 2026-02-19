@@ -58,7 +58,7 @@ export default function ConfirmModal({
     return (
       <ConfirmButton
         icon={icon}
-        onClick={() => (onConfirm ? onConfirm().then(() => close()) : close())}
+        onClick={onConfirm}
         disabled={disabled}
         loading={loading}
         {...targetProps}

@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
+import { Group, Select, Stack, Text } from "@mantine/core";
 import { useExecute, useRead } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import { parseKeyValue } from "@/lib/utils";
-import ConfirmModal from "@/ui/confirm-modal";
-import ConfirmButton from "@/ui/confirm-button";
 import { useDeployment } from ".";
 import { ICONS } from "@/theme/icons";
-import { Group, Select, Stack, Text } from "@mantine/core";
+import ConfirmButton from "@/ui/confirm-button";
+import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 
 interface DeploymentId {
   id: string;
@@ -49,7 +49,7 @@ export function DeployDeployment({ id }: DeploymentId) {
 
   if (deployed) {
     return (
-      <ConfirmModal
+      <ConfirmModalWithDisable
         confirmText={deployment.name}
         icon={<ICONS.Deploy size="1rem" />}
         onConfirm={() => deploy({ deployment: id, stop_signal: signal })}
@@ -66,7 +66,7 @@ export function DeployDeployment({ id }: DeploymentId) {
         }
       >
         Redeploy
-      </ConfirmModal>
+      </ConfirmModalWithDisable>
     );
   } else {
     return (
@@ -116,7 +116,7 @@ export function DestroyDeployment({ id }: DeploymentId) {
   );
 
   return (
-    <ConfirmModal
+    <ConfirmModalWithDisable
       confirmText={deployment.name}
       icon={<ICONS.Destroy size="1rem" />}
       onConfirm={() => destroy({ deployment: id, signal })}
@@ -133,7 +133,7 @@ export function DestroyDeployment({ id }: DeploymentId) {
       }
     >
       Destroy
-    </ConfirmModal>
+    </ConfirmModalWithDisable>
   );
 }
 
@@ -182,7 +182,7 @@ export function RestartDeployment({ id }: DeploymentId) {
   }
 
   return (
-    <ConfirmModal
+    <ConfirmModalWithDisable
       confirmText={deployment.name}
       icon={<ICONS.Refresh size="1rem" />}
       onConfirm={() => restart({ deployment: id })}
@@ -190,7 +190,7 @@ export function RestartDeployment({ id }: DeploymentId) {
       loading={restartPending || action_state?.restarting}
     >
       Restart
-    </ConfirmModal>
+    </ConfirmModalWithDisable>
   );
 }
 
@@ -255,7 +255,7 @@ function StopDeployment({ id }: DeploymentId) {
   );
 
   return (
-    <ConfirmModal
+    <ConfirmModalWithDisable
       confirmText={deployment.name}
       icon={<ICONS.Stop size="1rem" />}
       onConfirm={() => stop({ deployment: id, signal })}
@@ -272,7 +272,7 @@ function StopDeployment({ id }: DeploymentId) {
       }
     >
       Stop
-    </ConfirmModal>
+    </ConfirmModalWithDisable>
   );
 }
 
@@ -336,7 +336,7 @@ export function PauseUnpauseDeployment({ id }: DeploymentId) {
   }
   if (state === Types.DeploymentState.Running) {
     return (
-      <ConfirmModal
+      <ConfirmModalWithDisable
         confirmText={deployment.name}
         icon={<ICONS.Pause size="1rem" />}
         onConfirm={() => pause({ deployment: id })}
@@ -344,7 +344,7 @@ export function PauseUnpauseDeployment({ id }: DeploymentId) {
         loading={pausePending || action_state?.pausing}
       >
         Pause
-      </ConfirmModal>
+      </ConfirmModalWithDisable>
     );
   }
 }

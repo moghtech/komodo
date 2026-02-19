@@ -2,7 +2,7 @@ import { useExecute, usePermissions, useRead } from "@/lib/hooks";
 import { useServer } from ".";
 import ConfirmButton from "@/ui/confirm-button";
 import { ICONS } from "@/theme/icons";
-import ConfirmModal from "@/ui/confirm-modal";
+import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 
 export const Prune = ({
   serverId,
@@ -56,7 +56,7 @@ export const Prune = ({
     );
   } else {
     return (
-      <ConfirmModal
+      <ConfirmModalWithDisable
         confirmText={server?.name}
         icon={<ICONS.Prune size="1rem" />}
         onConfirm={() => prune({ server: serverId })}
@@ -64,7 +64,7 @@ export const Prune = ({
         disabled={!canExecute || pending}
       >
         {`Prune ${type}`}
-      </ConfirmModal>
+      </ConfirmModalWithDisable>
     );
   }
 };

@@ -1,7 +1,7 @@
 import { useExecute, useRead } from "@/lib/hooks";
 import { useProcedure } from ".";
-import ConfirmModal from "@/ui/confirm-modal";
 import { ICONS } from "@/theme/icons";
+import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 
 export function RunProcedure({ id }: { id: string }) {
   const running = useRead(
@@ -13,7 +13,7 @@ export function RunProcedure({ id }: { id: string }) {
   const procedure = useProcedure(id);
   if (!procedure) return null;
   return (
-    <ConfirmModal
+    <ConfirmModalWithDisable
       confirmText={procedure.name}
       icon={<ICONS.Start size="1rem" />}
       onConfirm={() => run({ procedure: id })}
@@ -21,6 +21,6 @@ export function RunProcedure({ id }: { id: string }) {
       loading={running || isPending}
     >
       {running ? "Running" : "Run Procedure"}
-    </ConfirmModal>
+    </ConfirmModalWithDisable>
   );
 }

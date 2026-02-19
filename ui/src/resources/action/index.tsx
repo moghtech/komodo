@@ -9,7 +9,7 @@ import { Badge, Group, Popover, Text } from "@mantine/core";
 import { Clock } from "lucide-react";
 import { useDisclosure } from "@mantine/hooks";
 import { updateLogToHtml } from "@/lib/utils";
-import ConfirmModal from "@/ui/confirm-modal";
+import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 import NewResource from "@/resources/new";
 import ActionConfig from "./config";
 import ActionTable from "./table";
@@ -153,7 +153,7 @@ export const ActionComponents: RequiredResourceComponents<
       }
 
       return (
-        <ConfirmModal
+        <ConfirmModalWithDisable
           icon={<ICONS.Action size="1rem" />}
           confirmText={action.name}
           onConfirm={async () => {
@@ -162,7 +162,7 @@ export const ActionComponents: RequiredResourceComponents<
           loading={running || isPending}
         >
           {running ? "Running" : "Run Action"}
-        </ConfirmModal>
+        </ConfirmModalWithDisable>
       );
     },
   },

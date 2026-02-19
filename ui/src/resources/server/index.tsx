@@ -8,7 +8,6 @@ import EntityHeader from "@/ui/entity-header";
 import ServerTable from "./table";
 import NewResource from "@/resources/new";
 import ConfirmButton from "@/ui/confirm-button";
-import ConfirmModal from "@/ui/confirm-modal";
 import { Prune } from "./executions";
 import ServerVersion from "./version";
 import { Group, HoverCard } from "@mantine/core";
@@ -17,6 +16,7 @@ import ConfirmServerPubkey from "./confirm-pubkey";
 import DeleteResource from "../delete";
 import ServerTabs from "./tabs";
 import { fmtUpperCamelcase } from "@/lib/formatting";
+import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 
 export function useServer(id: string | undefined) {
   return useRead("ListServers", {}).data?.find((r) => r.id === id);
@@ -274,7 +274,7 @@ export const ServerComponents: RequiredResourceComponents<
       const pending = isPending || restarting;
       return (
         server && (
-          <ConfirmModal
+          <ConfirmModalWithDisable
             confirmText={server?.name}
             icon={<ICONS.Restart size="1rem" />}
             onConfirm={() => restart({ server: id })}
@@ -282,7 +282,7 @@ export const ServerComponents: RequiredResourceComponents<
             loading={pending}
           >
             Restart Containers
-          </ConfirmModal>
+          </ConfirmModalWithDisable>
         )
       );
     },
@@ -308,7 +308,7 @@ export const ServerComponents: RequiredResourceComponents<
       const pending = isPending || pausing;
       return (
         server && (
-          <ConfirmModal
+          <ConfirmModalWithDisable
             confirmText={server?.name}
             icon={<ICONS.Pause size="1rem" />}
             onConfirm={() => pause({ server: id })}
@@ -316,7 +316,7 @@ export const ServerComponents: RequiredResourceComponents<
             loading={pending}
           >
             Pause Containers
-          </ConfirmModal>
+          </ConfirmModalWithDisable>
         )
       );
     },
@@ -365,7 +365,7 @@ export const ServerComponents: RequiredResourceComponents<
       const pending = isPending || stopping;
       return (
         server && (
-          <ConfirmModal
+          <ConfirmModalWithDisable
             confirmText={server.name}
             icon={<ICONS.Stop size="1rem" />}
             onConfirm={() => stop({ server: id })}
@@ -373,7 +373,7 @@ export const ServerComponents: RequiredResourceComponents<
             loading={pending}
           >
             Stop Containers
-          </ConfirmModal>
+          </ConfirmModalWithDisable>
         )
       );
     },

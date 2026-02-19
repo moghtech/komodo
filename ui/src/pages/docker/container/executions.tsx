@@ -1,6 +1,6 @@
 import { useExecute, useRead } from "@/lib/hooks";
 import ConfirmButton from "@/ui/confirm-button";
-import ConfirmModal from "@/ui/confirm-modal";
+import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 import { Types } from "komodo_client";
 import { Pause, Play, RefreshCcw, Square, Trash } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -34,7 +34,7 @@ const DestroyContainer = ({
   }
 
   return (
-    <ConfirmModal
+    <ConfirmModalWithDisable
       confirmText={containerName}
       title="Destroy"
       icon={<Trash size="1rem" />}
@@ -43,7 +43,7 @@ const DestroyContainer = ({
       loading={isPending || destroying}
     >
       Destroy
-    </ConfirmModal>
+    </ConfirmModalWithDisable>
   );
 };
 
@@ -69,7 +69,7 @@ const RestartContainer = ({
   }
 
   return (
-    <ConfirmModal
+    <ConfirmModalWithDisable
       confirmText={containerName}
       icon={<RefreshCcw size="1rem" />}
       onConfirm={() => restart({ server: serverId, container: containerName })}
@@ -77,7 +77,7 @@ const RestartContainer = ({
       loading={restartPending || action_state?.restarting_containers}
     >
       Restart
-    </ConfirmModal>
+    </ConfirmModalWithDisable>
   );
 };
 
@@ -117,7 +117,7 @@ const StartStopContainer = ({
   }
   if (state === Types.ContainerStateStatusEnum.Running) {
     return (
-      <ConfirmModal
+      <ConfirmModalWithDisable
         confirmText={containerName}
         icon={<Square size="1rem" />}
         onConfirm={() => stop({ server: serverId, container: containerName })}
@@ -125,7 +125,7 @@ const StartStopContainer = ({
         loading={stopPending || action_state?.stopping_containers}
       >
         Stop
-      </ConfirmModal>
+      </ConfirmModalWithDisable>
     );
   }
 };
@@ -167,7 +167,7 @@ const PauseUnpauseContainer = ({
   }
   if (state === Types.ContainerStateStatusEnum.Running) {
     return (
-      <ConfirmModal
+      <ConfirmModalWithDisable
         confirmText={containerName}
         icon={<Pause size="1rem" />}
         onConfirm={() => pause({ server: serverId, container: containerName })}
@@ -175,7 +175,7 @@ const PauseUnpauseContainer = ({
         loading={pausePending || action_state?.pausing_containers}
       >
         Pause
-      </ConfirmModal>
+      </ConfirmModalWithDisable>
     );
   }
 };

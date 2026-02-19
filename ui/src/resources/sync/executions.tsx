@@ -5,14 +5,14 @@ import {
   useRead,
   useWrite,
 } from "@/lib/hooks";
+import { Button, Loader } from "@mantine/core";
 import { ICONS } from "@/theme/icons";
 import ConfirmButton from "@/ui/confirm-button";
 import { useFullResourceSync } from ".";
 import { useResourceSyncTabsView } from "./hooks";
 import { fileContentsEmpty, resourceSyncNoChanges } from "@/lib/utils";
-import ConfirmModal from "@/ui/confirm-modal";
 import { NotebookPen, SquarePlay } from "lucide-react";
-import { Button, Loader } from "@mantine/core";
+import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 
 export function RefreshSync({ id }: { id: string }) {
   const inv = useInvalidate();
@@ -71,7 +71,7 @@ export function ExecuteSync({ id }: { id: string }) {
   const pending = isPending || syncing;
 
   return (
-    <ConfirmModal
+    <ConfirmModalWithDisable
       confirmText={sync.name}
       icon={<SquarePlay className="w-4 h-4" />}
       onConfirm={() => execute({ sync: id })}
@@ -79,7 +79,7 @@ export function ExecuteSync({ id }: { id: string }) {
       loading={pending}
     >
       Execute Sync
-    </ConfirmModal>
+    </ConfirmModalWithDisable>
   );
 }
 
@@ -116,7 +116,7 @@ export function CommitSync({ id }: { id: string }) {
     );
   } else {
     return (
-      <ConfirmModal
+      <ConfirmModalWithDisable
         confirmText={sync.name}
         icon={<NotebookPen className="w-4 h-4" />}
         onConfirm={() => commit({ sync: id })}
@@ -124,7 +124,7 @@ export function CommitSync({ id }: { id: string }) {
         loading={isPending}
       >
         Commit Changes
-      </ConfirmModal>
+      </ConfirmModalWithDisable>
     );
   }
 }

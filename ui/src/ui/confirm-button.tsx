@@ -25,7 +25,7 @@ export interface ConfirmButtonProps extends ButtonProps {
 const ConfirmButton = createPolymorphicComponent<"button", ConfirmButtonProps>(
   forwardRef<HTMLButtonElement, ConfirmButtonProps>(
     (
-      { icon, leftSection, children, onClick, onBlur, miw, loading, ...props },
+      { icon, rightSection, children, onClick, onBlur, miw, loading, ...props },
       ref,
     ) => {
       const [clickedOnce, setClickedOnce] = useState(false);
@@ -47,7 +47,7 @@ const ConfirmButton = createPolymorphicComponent<"button", ConfirmButtonProps>(
             ) : loading ? (
               <Loader color="white" size="1rem" />
             ) : (
-              (leftSection ?? icon ?? <ICONS.Unknown size="1rem" />)
+              (rightSection ?? icon ?? <ICONS.Unknown size="1rem" />)
             )
           }
           {...props}

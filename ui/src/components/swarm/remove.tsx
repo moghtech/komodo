@@ -1,7 +1,7 @@
 import { useExecute } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
-import ConfirmModal from "@/ui/confirm-modal";
 import { useNavigate } from "react-router-dom";
+import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 
 export type RemovableSwarmResourceType =
   | "Node"
@@ -33,7 +33,7 @@ export default function RemoveSwarmResource({
   });
   let key = `${type.toLowerCase()}s`;
   return (
-    <ConfirmModal
+    <ConfirmModalWithDisable
       confirmText={resourceName ?? resourceId}
       targetProps={{ variant: "filled", color: "red" }}
       icon={<ICONS.Delete size="1rem" />}
@@ -44,6 +44,6 @@ export default function RemoveSwarmResource({
       }
     >
       Remove
-    </ConfirmModal>
+    </ConfirmModalWithDisable>
   );
 }
