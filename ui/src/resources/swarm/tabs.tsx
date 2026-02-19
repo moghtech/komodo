@@ -12,6 +12,7 @@ import { Tabs } from "@mantine/core";
 import { colorByIntention, swarmStateIntention } from "@/lib/color";
 import SwarmDockerResources from "./docker";
 import InspectSection from "@/components/inspect-section";
+import SwarmHostedResourcesSection from "./resources";
 
 type SwarmTabsView = "Config" | "Docker" | "Resources" | "Inspect";
 
@@ -52,10 +53,11 @@ export default function SwarmTabs({ id }: { id: string }) {
         disabled: !specificInspect,
         icon: ICONS.Inspect,
       },
-      // {
-      //   value: "Resources",
-      //   disabled: noResources,
-      // },
+      {
+        value: "Resources",
+        icon: ICONS.Resources,
+        disabled: noResources,
+      },
     ],
     [specificInspect, noResources],
   );
@@ -89,6 +91,14 @@ export default function SwarmTabs({ id }: { id: string }) {
       );
       break;
     case "Resources":
+      View = (
+        <SwarmHostedResourcesSection
+          swarmId={id}
+          stacks={stacks}
+          deployments={deployments}
+          titleOther={Selector}
+        />
+      );
       break;
   }
 

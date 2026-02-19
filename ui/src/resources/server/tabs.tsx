@@ -14,6 +14,7 @@ import ServerConfig from "./config";
 import { ICONS } from "@/theme/icons";
 import ServerDockerResources from "./docker";
 import ServerStats from "./stats";
+import ServerHostedResourcesSection from "./resources";
 
 type ServerTabsView = "Config" | "Stats" | "Docker" | "Resources" | "Terminals";
 
@@ -63,10 +64,11 @@ export default function ServerTabs({ id }: { id: string }) {
         icon: ICONS.Docker,
         disabled: notReachable,
       },
-      // {
-      //   value: "Resources",
-      //   disabled: noResources,
-      // },
+      {
+        value: "Resources",
+        icon: ICONS.Resources,
+        disabled: noResources,
+      },
       {
         value: "Terminals",
         disabled: terminalDisabled,
@@ -105,6 +107,17 @@ export default function ServerTabs({ id }: { id: string }) {
       break;
     case "Docker":
       View = <ServerDockerResources id={id} titleOther={Selector} />;
+      break;
+    case "Resources":
+      View = (
+        <ServerHostedResourcesSection
+          serverId={id}
+          stacks={stacks}
+          deployments={deployments}
+          repos={repos}
+          titleOther={Selector}
+        />
+      );
       break;
     case "Terminals":
       View = <TerminalSection target={target} titleOther={Selector} />;

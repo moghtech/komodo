@@ -73,6 +73,7 @@ import {
 
 export const ICONS = {
   // RESOURCES
+  Resources: LayoutDashboard,
   Action: Clapperboard,
   Alerter: AlarmClock,
   Build: Hammer,
