@@ -6,6 +6,7 @@ import ResourceLink from "@/resources/link";
 import { StackComponents } from ".";
 import TableTags from "@/components/tags/table";
 import FileSource from "@/components/file-source";
+import StackUpdateAvailable from "./update-available";
 
 export default function StackTable({
   resources,
@@ -37,7 +38,7 @@ export default function StackTable({
             return (
               <Group justify="space-between">
                 <ResourceLink type="Stack" id={row.original.id} />
-                {/* <UpdateAvailable id={row.original.id} small /> */}
+                <StackUpdateAvailable id={row.original.id} small />
               </Group>
             );
           },

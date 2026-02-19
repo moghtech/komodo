@@ -33,6 +33,7 @@ import { notifications } from "@mantine/notifications";
 import ResourceLink from "@/resources/link";
 import DeleteResource from "../delete";
 import HashCompare from "@/components/hash-compare";
+import StackUpdateAvailable from "./update-available";
 
 export function useStack(id: string | undefined) {
   return useRead("ListStacks", {}).data?.find((r) => r.id === id);
@@ -256,7 +257,7 @@ export const StackComponents: RequiredResourceComponents<
         </HoverCard>
       );
     },
-
+    UpdateAvalable: StackUpdateAvailable,
     Hash: ({ id }) => {
       const fullInfo = useFullStack(id)?.info;
       const info = useStack(id)?.info;
@@ -286,7 +287,6 @@ export const StackComponents: RequiredResourceComponents<
         </Box>
       );
     },
-
     Refresh: ({ id }) => {
       const inv = useInvalidate();
       const info = useStack(id)?.info;
