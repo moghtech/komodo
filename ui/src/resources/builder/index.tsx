@@ -5,10 +5,10 @@ import { Types } from "komodo_client";
 import EntityHeader from "@/ui/entity-header";
 import ResourceLink from "@/resources/link";
 import NewResource from "@/resources/new";
-import DeleteResource from "../delete";
 import BuilderTable from "./table";
 import { useServer } from "../server";
 import { serverStateIntention } from "@/lib/color";
+import ResourceHeaderAction from "../header-action";
 
 export function useBuilder(id: string | undefined) {
   return useRead("ListBuilders", {}).data?.find((r) => r.id === id);
@@ -70,7 +70,9 @@ export const BuilderComponents: RequiredResourceComponents<
             <ResourceLink type="Server" id={builder.info.instance_type} />
           ) : undefined
         }
-        action={<DeleteResource type="Builder" id={id} />}
+        action={
+          <ResourceHeaderAction type="Builder" id={id} resource={builder} />
+        }
       />
     );
   },

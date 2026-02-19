@@ -4,8 +4,8 @@ import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import EntityHeader from "@/ui/entity-header";
 import NewResource from "@/resources/new";
-import DeleteResource from "../delete";
 import AlerterTable from "./table";
+import ResourceHeaderAction from "../header-action";
 
 export function useAlerter(id: string | undefined) {
   return useRead("ListAlerters", {}).data?.find((r) => r.id === id);
@@ -52,7 +52,7 @@ export const AlerterComponents: RequiredResourceComponents<
         name={alerter?.name}
         state={alerter?.info.enabled ? "Enabled" : "Disabled"}
         status={alerter?.info.endpoint_type}
-        action={<DeleteResource type="Alerter" id={id} />}
+        action={<ResourceHeaderAction type="Alerter" id={id} resource={alerter} />}
       />
     );
   },

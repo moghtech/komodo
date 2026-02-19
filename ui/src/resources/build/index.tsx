@@ -7,7 +7,6 @@ import StatusBadge from "@/ui/status-badge";
 import EntityHeader from "@/ui/entity-header";
 import BuildTable from "./table";
 import NewResource from "@/resources/new";
-import DeleteResource from "../delete";
 import { ActionIcon, Box, Group, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { RunBuild } from "./executions";
@@ -16,6 +15,7 @@ import { useBuilder } from "../builder";
 import ResourceLink from "../link";
 import FileSource from "@/components/file-source";
 import HashCompare from "@/components/hash-compare";
+import ResourceHeaderAction from "../header-action";
 
 export function useBuild(id: string | undefined) {
   return useRead("ListBuilds", {}).data?.find((r) => r.id === id);
@@ -83,7 +83,7 @@ export const BuildComponents: RequiredResourceComponents<
         icon={ICONS.Build}
         name={build?.name}
         state={build?.info.state}
-        action={<DeleteResource type="Build" id={id} />}
+        action={<ResourceHeaderAction type="Build" id={id} resource={build} />}
       />
     );
   },

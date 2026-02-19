@@ -7,7 +7,6 @@ import EntityHeader from "@/ui/entity-header";
 import ResourceSyncTable from "./table";
 import { RequiredResourceComponents } from "@/resources";
 import NewResource from "@/resources/new";
-import DeleteResource from "../delete";
 import { CommitSync, ExecuteSync, RefreshSync } from "./executions";
 import FileSource from "@/components/file-source";
 import { Clock } from "lucide-react";
@@ -15,6 +14,7 @@ import { fmtDate } from "@/lib/formatting";
 import { Box, Group } from "@mantine/core";
 import HashCompare from "@/components/hash-compare";
 import ResourceSyncTabs from "./tabs";
+import ResourceHeaderAction from "../header-action";
 
 export function useResourceSync(id: string | undefined) {
   return useRead("ListResourceSyncs", {}).data?.find((r) => r.id === id);
@@ -88,7 +88,13 @@ export const ResourceSyncComponents: RequiredResourceComponents<
         icon={ICONS.ResourceSync}
         name={resourceSync?.name}
         state={resourceSync?.info.state}
-        action={<DeleteResource type="ResourceSync" id={id} />}
+        action={
+          <ResourceHeaderAction
+            type="ResourceSync"
+            id={id}
+            resource={resourceSync}
+          />
+        }
       />
     );
   },

@@ -31,9 +31,9 @@ import FileSource from "@/components/file-source";
 import { ArrowUp } from "lucide-react";
 import { notifications } from "@mantine/notifications";
 import ResourceLink from "@/resources/link";
-import DeleteResource from "../delete";
 import HashCompare from "@/components/hash-compare";
 import StackUpdateAvailable from "./update-available";
+import ResourceHeaderAction from "../header-action";
 
 export function useStack(id: string | undefined) {
   return useRead("ListStacks", {}).data?.find((r) => r.id === id);
@@ -118,7 +118,7 @@ export const StackComponents: RequiredResourceComponents<
             ? stack?.info.status
             : undefined
         }
-        action={<DeleteResource type="Stack" id={id} />}
+        action={<ResourceHeaderAction type="Stack" id={id} resource={stack} />}
       />
     );
   },

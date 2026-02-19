@@ -8,7 +8,6 @@ import EntityHeader from "@/ui/entity-header";
 import DeploymentTable from "./table";
 import NewResource from "@/resources/new";
 import DeploymentTabs from "./tabs";
-import DeleteResource from "../delete";
 import {
   DeployDeployment,
   DestroyDeployment,
@@ -17,15 +16,16 @@ import {
   RestartDeployment,
   StartStopDeployment,
 } from "./executions";
-import { useSwarm } from "../swarm";
-import { useServer } from "../server";
-import ResourceLink from "../link";
+import { useSwarm } from "@/resources/swarm";
+import { useServer } from "@/resources/server";
+import ResourceLink from "@/resources/link";
 import { Group, Text } from "@mantine/core";
-import { RunBuild } from "../build/executions";
+import { RunBuild } from "@/resources/build/executions";
 import DockerResourceLink from "@/components/docker/link";
 import SwarmResourceLink from "@/components/swarm/link";
 import ContainerPorts from "@/components/docker/container-ports";
 import DeploymentUpdateAvailable from "./update-available";
+import ResourceHeaderAction from "@/resources/header-action";
 
 export function useDeployment(id: string | undefined) {
   return useRead("ListDeployments", {}).data?.find((r) => r.id === id);
@@ -108,7 +108,13 @@ export const DeploymentComponents: RequiredResourceComponents<
         name={deployment?.name}
         state={deployment?.info.state}
         status={deployment?.info.status}
-        action={<DeleteResource type="Deployment" id={id} />}
+        action={
+          <ResourceHeaderAction
+            type="Deployment"
+            id={id}
+            resource={deployment}
+          />
+        }
       />
     );
   },

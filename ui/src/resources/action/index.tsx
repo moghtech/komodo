@@ -11,9 +11,9 @@ import { useDisclosure } from "@mantine/hooks";
 import { updateLogToHtml } from "@/lib/utils";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 import NewResource from "@/resources/new";
+import ResourceHeaderAction from "@/resources/header-action";
 import ActionConfig from "./config";
 import ActionTable from "./table";
-import DeleteResource from "../delete";
 
 export function useAction(id: string | undefined) {
   return useRead("ListActions", {}).data?.find((r) => r.id === id);
@@ -83,7 +83,9 @@ export const ActionComponents: RequiredResourceComponents<
         icon={({ size }) => <ActionComponents.Icon id={id} size={size} />}
         name={action?.name}
         state={action?.info.state}
-        action={<DeleteResource type="Action" id={id} />}
+        action={
+          <ResourceHeaderAction type="Action" id={id} resource={action} />
+        }
       />
     );
   },

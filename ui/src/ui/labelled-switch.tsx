@@ -13,15 +13,15 @@ export interface LabelledSwitchProps extends SwitchProps {
   onCheckedChange: (checked: boolean) => void;
   label?: ReactNode;
   groupProps?: GroupProps;
-  textProps?: TextProps;
+  labelProps?: TextProps;
 }
 
-export default function LabelledSwitchProps({
+export default function LabelledSwitch({
   checked,
   onCheckedChange,
   label,
   groupProps,
-  textProps,
+  labelProps,
   ...switchProps
 }: LabelledSwitchProps) {
   return (
@@ -38,7 +38,7 @@ export default function LabelledSwitchProps({
       style={{ cursor: "pointer" }}
       {...groupProps}
     >
-      <Text c="dimmed" {...textProps}>
+      <Text c={checked ? undefined : "dimmed"} {...labelProps}>
         {label}
       </Text>
       <Switch

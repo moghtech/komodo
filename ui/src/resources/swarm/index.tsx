@@ -7,12 +7,12 @@ import StatusBadge from "@/ui/status-badge";
 import EntityHeader from "@/ui/entity-header";
 import SwarmTable from "./table";
 import NewResource from "@/resources/new";
-import DeleteResource from "../delete";
 import SwarmTabs from "./tabs";
 import { useDisclosure } from "@mantine/hooks";
 import { Button, HoverCard, Modal, Text } from "@mantine/core";
 import JoinSwarmCommands from "./join-commands";
 import { updateLogToHtml } from "@/lib/utils";
+import ResourceHeaderAction from "../header-action";
 
 export function useSwarm(id: string | undefined) {
   return useRead("ListSwarms", {}).data?.find((r) => r.id === id);
@@ -75,7 +75,7 @@ export const SwarmComponents: RequiredResourceComponents<
         icon={ICONS.Swarm}
         name={swarm?.name}
         state={swarm?.info.state}
-        action={<DeleteResource type="Swarm" id={id} />}
+        action={<ResourceHeaderAction type="Swarm" id={id} resource={swarm} />}
       />
     );
   },

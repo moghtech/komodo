@@ -13,10 +13,10 @@ import ServerVersion from "./version";
 import { Group, HoverCard } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import ConfirmServerPubkey from "./confirm-pubkey";
-import DeleteResource from "../delete";
 import ServerTabs from "./tabs";
 import { fmtUpperCamelcase } from "@/lib/formatting";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
+import ResourceHeaderAction from "../header-action";
 
 export function useServer(id: string | undefined) {
   return useRead("ListServers", {}).data?.find((r) => r.id === id);
@@ -87,7 +87,9 @@ export const ServerComponents: RequiredResourceComponents<
         name={server?.name}
         state={fmtUpperCamelcase(server?.info.state ?? "")}
         status={server?.info.region}
-        action={<DeleteResource type="Server" id={id} />}
+        action={
+          <ResourceHeaderAction type="Server" id={id} resource={server} />
+        }
       />
     );
   },

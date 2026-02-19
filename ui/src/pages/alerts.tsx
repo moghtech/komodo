@@ -8,7 +8,7 @@ import ResourceLink from "@/resources/link";
 import ResourceSelector from "@/resources/selector";
 import { ICONS } from "@/theme/icons";
 import { DataTable } from "@/ui/data-table";
-import LabelledSwitchProps from "@/ui/labelled-switch";
+import LabelledSwitch from "@/ui/labelled-switch";
 import Page from "@/ui/page";
 import StatusBadge from "@/ui/status-badge";
 import { ActionIcon, Group, Pagination, Select, Stack } from "@mantine/core";
@@ -119,7 +119,7 @@ export default function Alerts() {
             clearable
           />
 
-          <LabelledSwitchProps
+          <LabelledSwitch
             label="Only Open"
             checked={open}
             onCheckedChange={() => {

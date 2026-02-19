@@ -8,7 +8,7 @@ import EntityHeader from "@/ui/entity-header";
 import RepoTable from "./table";
 import NewResource from "@/resources/new";
 import RepoConfig from "./config";
-import DeleteResource from "../delete";
+import ResourceHeaderAction from "../header-action";
 
 export function useRepo(id: string | undefined) {
   return useRead("ListRepos", {}).data?.find((r) => r.id === id);
@@ -76,7 +76,7 @@ export const RepoComponents: RequiredResourceComponents<
         icon={ICONS.Repo}
         name={repo?.name}
         state={repo?.info.state}
-        action={<DeleteResource type="Repo" id={id} />}
+        action={<ResourceHeaderAction type="Repo" id={id} resource={repo} />}
       />
     );
   },
