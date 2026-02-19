@@ -62,16 +62,18 @@ export default function EntityHeader({
             </Text>
           )}
           {onRename && (
-            <Group mb={editingName ? "xs" : undefined} gap="xs">
+            <Group
+              mb={editingName ? "xs" : undefined}
+              gap="xs"
+              onClick={editingName ? undefined : () => setEditingName(true)}
+              style={{ cursor: editingName ? undefined : "pointer" }}
+            >
               {!editingName && (
                 <>
                   <Text fz="h1" fw="bolder">
                     {name}
                   </Text>
-                  <ActionIcon
-                    title="Rename"
-                    onClick={() => setEditingName(true)}
-                  >
+                  <ActionIcon title="Rename">
                     <ICONS.Edit size="1rem" />
                   </ActionIcon>
                 </>
