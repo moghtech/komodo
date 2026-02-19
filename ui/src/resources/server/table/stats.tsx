@@ -70,38 +70,6 @@ export default function StatsServerTable({
   );
 }
 
-function LoadAvgCell({ id }: { id: string }) {
-  const stats = useServerStats(id);
-  const one = stats?.load_average?.one;
-  const five = stats?.load_average?.five;
-  const fifteen = stats?.load_average?.fifteen;
-  if (one === undefined || five === undefined || fifteen === undefined) {
-    return <Text c="dimmed">N/A</Text>;
-  }
-  return (
-    <Group gap="xs" wrap="nowrap">
-      <Group gap="0.2rem" wrap="nowrap">
-        <Text c="dimmed" size="sm">
-          1m
-        </Text>
-        <Text>{one.toFixed(2)}</Text>
-      </Group>
-      <Group gap="0.2rem" wrap="nowrap">
-        <Text c="dimmed" size="sm">
-          5m
-        </Text>
-        <Text>{five.toFixed(2)}</Text>
-      </Group>
-      <Group gap="0.2rem" wrap="nowrap">
-        <Text c="dimmed" size="sm">
-          15m
-        </Text>
-        <Text>{fifteen.toFixed(2)}</Text>
-      </Group>
-    </Group>
-  );
-}
-
 function CpuCell({ id }: { id: string }) {
   const stats = useServerStats(id);
   const cpu = stats?.cpu_perc ?? 0;
@@ -109,7 +77,7 @@ function CpuCell({ id }: { id: string }) {
     useServerThresholds(id);
   const intent: "Good" | "Warning" | "Critical" =
     cpu < warning ? "Good" : cpu < critical ? "Warning" : "Critical";
-  return <StatCell value={cpu} intent={intent} />;
+  return <StatCell value={stats ? cpu : undefined} intent={intent} />;
 }
 
 function MemCell({ id }: { id: string }) {
@@ -121,7 +89,7 @@ function MemCell({ id }: { id: string }) {
     useServerThresholds(id);
   const intent: "Good" | "Warning" | "Critical" =
     perc < warning ? "Good" : perc < critical ? "Warning" : "Critical";
-  return <StatCell value={perc} intent={intent} />;
+  return <StatCell value={stats ? perc : undefined} intent={intent} />;
 }
 
 function DiskCell({ id }: { id: string }) {
@@ -134,12 +102,50 @@ function DiskCell({ id }: { id: string }) {
     useServerThresholds(id);
   const intent: "Good" | "Warning" | "Critical" =
     perc < warning ? "Good" : perc < critical ? "Warning" : "Critical";
-  return <StatCell value={perc} intent={intent} />;
+  return <StatCell value={stats ? perc : undefined} intent={intent} />;
+}
+
+function LoadAvgCell({ id }: { id: string }) {
+  const stats = useServerStats(id);
+  const one = stats?.load_average?.one;
+  const five = stats?.load_average?.five;
+  const fifteen = stats?.load_average?.fifteen;
+  return (
+    <Group gap="xs" wrap="nowrap">
+      <Group gap="0.2rem" wrap="nowrap">
+        <Text c="dimmed" size="sm">
+          1m
+        </Text>
+        <Text c={one !== undefined ? undefined : "dimmed"}>
+          {one !== undefined ? one.toFixed(2) : "N/A"}
+        </Text>
+      </Group>
+      <Group gap="0.2rem" wrap="nowrap">
+        <Text c="dimmed" size="sm">
+          5m
+        </Text>
+        <Text c={five !== undefined ? undefined : "dimmed"}>
+          {five !== undefined ? five.toFixed(2) : "N/A"}
+        </Text>
+      </Group>
+      <Group gap="0.2rem" wrap="nowrap">
+        <Text c="dimmed" size="sm">
+          15m
+        </Text>
+        <Text c={fifteen !== undefined ? undefined : "dimmed"}>
+          {fifteen !== undefined ? fifteen.toFixed(2) : "N/A"}
+        </Text>
+      </Group>
+    </Group>
+  );
 }
 
 function NetCell({ id }: { id: string }) {
   const stats = useServerStats(id);
   const ingress = stats?.network_ingress_bytes ?? 0;
   const egress = stats?.network_egress_bytes ?? 0;
+  if (!stats) {
+    return <Text c="dimmed">N/A</Text>;
+  }
   return <Text>{fmtRateBytes(ingress + egress)}</Text>;
 }

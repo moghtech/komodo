@@ -9,7 +9,7 @@ import {
 } from "@mantine/core";
 
 export interface StatCellProps extends GroupProps {
-  value: number;
+  value: number | undefined;
   intent: ColorIntention;
   textProps?: TextProps;
   barProps?: ProgressProps;
@@ -24,9 +24,11 @@ export default function StatCell({
 }: StatCellProps) {
   return (
     <Group gap="xs" justify="space-between" wrap="nowrap" {...groupProps}>
-      <Text {...textProps}>{value.toFixed(1)}%</Text>
+      <Text c={value === undefined ? "dimmed" : undefined} {...textProps}>
+        {value === undefined ? "N/A" : value.toFixed(1) + "%"}
+      </Text>
       <Progress
-        value={value}
+        value={value ?? 0}
         color={hexColorByIntention(intent)}
         w="70%"
         miw={80}
