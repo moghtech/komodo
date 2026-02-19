@@ -33,7 +33,7 @@ export default function StackUpdateAvailable({
     "CheckStackForUpdate",
     {
       onSuccess: () => {
-        notifications.show({ message: "Checked for updates" });
+        notifications.show({ message: "Checked for updates", color: "blue" });
         inv(["ListStacks"]);
       },
     },

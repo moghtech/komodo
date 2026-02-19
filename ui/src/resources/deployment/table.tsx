@@ -6,6 +6,7 @@ import TableTags from "@/components/tags/table";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import { DeploymentComponents } from ".";
 import ResourceLink from "@/resources/link";
+import DeploymentUpdateAvailable from "./update-available";
 
 export default function DeploymentTable({
   resources,
@@ -36,7 +37,7 @@ export default function DeploymentTable({
           cell: ({ row }) => (
             <Group justify="space-between">
               <ResourceLink type="Deployment" id={row.original.id} />
-              {/* <UpdateAvailable id={row.original.id} small /> */}
+              <DeploymentUpdateAvailable id={row.original.id} small />
             </Group>
           ),
           size: 200,
