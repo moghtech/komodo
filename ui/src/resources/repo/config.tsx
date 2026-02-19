@@ -12,14 +12,21 @@ import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import ResourceLink from "@/resources/link";
 import ResourceSelector from "@/resources/selector";
-import { Group, Stack } from "@mantine/core";
+import { Group, Stack, Text } from "@mantine/core";
 import { ProviderSelectorConfig } from "@/components/config/provider-selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";
 import SecretsSearch from "@/components/config/secrets-search";
 import { MonacoEditor } from "@/components/monaco";
 import SystemCommand from "@/components/config/system-command";
+import { ReactNode } from "react";
 
-export default function RepoConfig({ id }: { id: string }) {
+export default function RepoConfig({
+  id,
+  titleOther,
+}: {
+  id: string;
+  titleOther?: ReactNode;
+}) {
   const { canWrite } = usePermissions({ type: "Repo", id });
   const repo = useRead("GetRepo", { repo: id }).data;
   const config = repo?.config;
@@ -43,6 +50,7 @@ export default function RepoConfig({ id }: { id: string }) {
 
   return (
     <Config
+      titleOther={titleOther}
       disabled={disabled}
       original={config}
       update={update}
@@ -67,7 +75,7 @@ export default function RepoConfig({ id }: { id: string }) {
                         "Select Server"
                       )
                     }
-                    description="Select the Server to clone on."
+                    description="Select the Server to clone on. Optional."
                   >
                     <ResourceSelector
                       type="Server"
@@ -98,7 +106,7 @@ export default function RepoConfig({ id }: { id: string }) {
                         "Select Builder"
                       )
                     }
-                    description="Select the Builder to build with."
+                    description="Select the Builder to build with. Optional."
                   >
                     <ResourceSelector
                       type="Builder"
@@ -166,16 +174,17 @@ export default function RepoConfig({ id }: { id: string }) {
                 boldLabel: true,
                 placeholder: "/clone/path/on/host",
                 description: (
-                  <div className="flex flex-col gap-0">
-                    <div>
+                  <Stack gap="0">
+                    <Text>
                       Explicitly specify the folder on the host to clone the
                       repo in.
-                    </div>
-                    <div>
-                      If <span className="font-bold">relative</span> (no leading
-                      '/'), relative to {"$root_directory/repos/" + repo.name}
-                    </div>
-                  </div>
+                    </Text>
+                    <Text>
+                      If <b>relative path</b> (no leading
+                      '/'), relative to{" "}
+                      <b>{"$root_directory/repos/" + repo.name}</b>
+                    </Text>
+                  </Stack>
                 ),
               },
             },
@@ -183,7 +192,7 @@ export default function RepoConfig({ id }: { id: string }) {
           {
             label: "Environment",
             description:
-              "Write these variables to a .env-formatted file at the specified path, before on_clone / on_pull are run.",
+              "Write these variables to a .env-formatted file at the specified path before on_clone / on_pull are run.",
             fields: {
               environment: (env, set) => (
                 <Stack gap="xs">

@@ -72,11 +72,19 @@ export default function StackUpdateAvailable({
       <HoverCard>
         <HoverCard.Target>
           {small ? (
-            <ActionIcon>
+            <ActionIcon
+              variant="outline"
+              bd="1px solid var(--mantine-color-blue-7)"
+              size="sm"
+            >
               <ICONS.UpdateAvailable size="1rem" />
             </ActionIcon>
           ) : (
-            <Button leftSection={<ICONS.UpdateAvailable size="1rem" />}>
+            <Button
+              variant="outline"
+              bd="1px solid var(--mantine-color-blue-7)"
+              leftSection={<ICONS.UpdateAvailable size="1rem" />}
+            >
               Update
               {(info?.services.filter((s) => s.update_available).length ?? 0) >
               1
@@ -86,12 +94,12 @@ export default function StackUpdateAvailable({
             </Button>
           )}
         </HoverCard.Target>
-        <HoverCard.Target>
+        <HoverCard.Dropdown>
           <Services
             services={info?.services}
             latestServices={fullStack?.info?.latest_services}
           />
-        </HoverCard.Target>
+        </HoverCard.Dropdown>
       </HoverCard>
     );
   }

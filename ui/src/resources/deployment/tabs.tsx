@@ -58,7 +58,7 @@ export default function DeploymentTabs({ id }: { id: string }) {
     () => [
       {
         value: "Config",
-        icon: ICONS.Settings,
+        icon: ICONS.Config,
       },
       {
         value: "Tasks",

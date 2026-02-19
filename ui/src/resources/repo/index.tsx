@@ -1,13 +1,13 @@
 import { repoStateIntention, hexColorByIntention } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
-import { RequiredResourceComponents } from "..";
+import { RequiredResourceComponents } from "@/resources";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import RepoTable from "./table";
 import NewResource from "@/resources/new";
-import RepoConfig from "./config";
-import ResourceHeader from "../header";
+import ResourceHeader from "@/resources/header";
+import RepoTabs from "./tabs";
 
 export function useRepo(id: string | undefined) {
   return useRead("ListRepos", {}).data?.find((r) => r.id === id);
@@ -90,7 +90,7 @@ export const RepoComponents: RequiredResourceComponents<
 
   Executions: {},
 
-  Config: RepoConfig,
+  Config: RepoTabs,
 
   Page: {},
 };

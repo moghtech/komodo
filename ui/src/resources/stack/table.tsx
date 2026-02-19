@@ -36,7 +36,7 @@ export default function StackTable({
           accessorKey: "name",
           cell: ({ row }) => {
             return (
-              <Group justify="space-between">
+              <Group>
                 <ResourceLink type="Stack" id={row.original.id} />
                 <StackUpdateAvailable id={row.original.id} small />
               </Group>

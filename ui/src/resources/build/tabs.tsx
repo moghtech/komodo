@@ -13,6 +13,7 @@ import Section from "@/ui/section";
 import NewResource from "../new";
 import DeploymentTable from "../deployment/table";
 import BuildInfo from "./info";
+import { ICONS } from "@/theme/icons";
 
 type BuildTabsView = "Config" | "Info" | "Deployments";
 
@@ -33,13 +34,16 @@ export default function BuildTabs({ id }: { id: string }) {
     () => [
       {
         value: "Config",
+        icon: ICONS.Config,
       },
       {
         value: "Info",
+        icon: ICONS.Info,
       },
       {
         value: "Deployments",
         disabled: deploymentsDisabled,
+        icon: ICONS.Deployment,
       },
     ],
     [deploymentsDisabled],

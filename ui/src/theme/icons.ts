@@ -133,6 +133,7 @@ export const ICONS = {
   Key: KeyRound,
   RotateKey: RotateCcwKey,
   Settings,
+  Config: Settings,
   System: Settings,
   Tag,
   Tags,

@@ -61,11 +61,19 @@ export default function DeploymentUpdateAvailable({
       <HoverCard>
         <HoverCard.Target>
           {small ? (
-            <ActionIcon>
+            <ActionIcon
+              variant="outline"
+              bd="1px solid var(--mantine-color-blue-7)"
+              size="sm"
+            >
               <ICONS.UpdateAvailable size="1rem" />
             </ActionIcon>
           ) : (
-            <Button leftSection={<ICONS.UpdateAvailable size="1rem" />}>
+            <Button
+              variant="outline"
+              bd="1px solid var(--mantine-color-blue-7)"
+              leftSection={<ICONS.UpdateAvailable size="1rem" />}
+            >
               Update Available
             </Button>
           )}
