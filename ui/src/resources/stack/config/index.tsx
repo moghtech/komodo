@@ -375,7 +375,7 @@ export default function StackConfig({
           return (
             <ConfigSwitch
               label="Poll for Updates"
-              description="Check for updates to the image on an interval."
+              description="Check for updates to the image during Global Auto Update."
               value={auto_update || poll}
               onChange={(poll_for_updates) => set({ poll_for_updates })}
               disabled={disabled || auto_update}

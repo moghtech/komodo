@@ -10,6 +10,7 @@ import { useFullStack, useStack } from ".";
 import { Types } from "komodo_client";
 import {
   ActionIcon,
+  Box,
   Button,
   Group,
   HoverCard,
@@ -69,95 +70,100 @@ export default function StackUpdateAvailable({
       return null;
     }
     return (
-      <HoverCard>
-        <HoverCard.Target>
-          {small ? (
-            <ActionIcon
-              variant="outline"
-              bd="1px solid var(--mantine-color-blue-7)"
-              size="sm"
-            >
-              <ICONS.UpdateAvailable size="1rem" />
-            </ActionIcon>
-          ) : (
-            <Button
-              variant="outline"
-              bd="1px solid var(--mantine-color-blue-7)"
-              leftSection={<ICONS.UpdateAvailable size="1rem" />}
-            >
-              Update
-              {(info?.services.filter((s) => s.update_available).length ?? 0) >
-              1
-                ? "s"
-                : ""}{" "}
-              Available
-            </Button>
-          )}
-        </HoverCard.Target>
-        <HoverCard.Dropdown>
-          <Services
-            services={info?.services}
-            latestServices={fullStack?.info?.latest_services}
-          />
-        </HoverCard.Dropdown>
-      </HoverCard>
-    );
-  }
-
-  if (!updateAvailable) {
-    return (
-      <Button
-        title="Check for updates"
-        variant="outline"
-        c="dimmed"
-        rightSection={<ICONS.UpdateAvailable size="1rem" />}
-        onClick={() => checkForUpdate({ stack: id })}
-        loading={checkPending}
-      >
-        Check
-      </Button>
-    );
-  }
-
-  return (
-    <ConfirmModalWithDisable
-      title={
-        <>
-          Confirm <b>Redeploy</b>
-        </>
-      }
-      confirmText={stack.name}
-      icon={<ICONS.UpdateAvailable size="1rem" />}
-      targetProps={{
-        variant: "outline",
-        bd: "1px solid var(--mantine-color-blue-7)",
-      }}
-      onConfirm={() =>
-        deploy({
-          stack: id,
-          services: fullStack?.config?.auto_update_all_services
-            ? []
-            : servicesWithUpdate.map((s) => s.service),
-        })
-      }
-      loading={pending}
-      topAdditonal={
-        !fullStack?.config?.auto_update_all_services && (
-          <Stack className="bordered-light" p="md" bdrs="md" gap="sm">
-            <Text size="lg">
-              Service
-              {servicesWithUpdate.length === 1 ? "" : "s"} with update:
-            </Text>
+      <Box>
+        <HoverCard>
+          <HoverCard.Target>
+            {small ? (
+              <ActionIcon
+                variant="outline"
+                bd="1px solid var(--mantine-color-blue-7)"
+                size="sm"
+              >
+                <ICONS.UpdateAvailable size="1rem" />
+              </ActionIcon>
+            ) : (
+              <Button
+                variant="outline"
+                bd="1px solid var(--mantine-color-blue-7)"
+                leftSection={<ICONS.UpdateAvailable size="1rem" />}
+              >
+                Update
+                {(info?.services.filter((s) => s.update_available).length ??
+                  0) > 1
+                  ? "s"
+                  : ""}{" "}
+                Available
+              </Button>
+            )}
+          </HoverCard.Target>
+          <HoverCard.Dropdown>
             <Services
               services={info?.services}
               latestServices={fullStack?.info?.latest_services}
             />
-          </Stack>
-        )
-      }
-    >
-      Update Available
-    </ConfirmModalWithDisable>
+          </HoverCard.Dropdown>
+        </HoverCard>
+      </Box>
+    );
+  }
+
+  return (
+    <>
+      <Box>
+        <Button
+          title="Check for updates"
+          variant="outline"
+          c="dimmed"
+          rightSection={<ICONS.UpdateAvailable size="1rem" />}
+          onClick={() => checkForUpdate({ stack: id })}
+          loading={checkPending}
+        >
+          Check
+        </Button>
+      </Box>
+      {updateAvailable && (
+        <Box>
+          <ConfirmModalWithDisable
+            title={
+              <>
+                Confirm <b>Redeploy</b>
+              </>
+            }
+            confirmText={stack.name}
+            icon={<ICONS.UpdateAvailable size="1rem" />}
+            targetProps={{
+              variant: "outline",
+              bd: "1px solid var(--mantine-color-blue-7)",
+            }}
+            onConfirm={() =>
+              deploy({
+                stack: id,
+                services: fullStack?.config?.auto_update_all_services
+                  ? []
+                  : servicesWithUpdate.map((s) => s.service),
+              })
+            }
+            loading={pending}
+            topAdditonal={
+              !fullStack?.config?.auto_update_all_services && (
+                <Stack className="bordered-light" p="md" bdrs="md" gap="sm">
+                  <Text size="lg">
+                    Service
+                    {servicesWithUpdate.length === 1 ? "" : "s"} with update:
+                  </Text>
+                  <Services
+                    services={info?.services}
+                    latestServices={fullStack?.info?.latest_services}
+                  />
+                </Stack>
+              )
+            }
+          >
+            Update Available
+          </ConfirmModalWithDisable>
+        </Box>
+      )}
+    </>
   );
 }
 

@@ -1,4 +1,3 @@
-import { Fragment } from "react";
 import { useContainerPortsMap } from "@/lib/hooks";
 import { Group, HoverCard, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
@@ -7,13 +6,17 @@ import { colorByIntention } from "@/lib/color";
 import { ICONS } from "@/theme/icons";
 import { fmtPortMount } from "@/lib/formatting";
 import { useServerAddress } from "@/resources/server/hooks";
+import DividedChildren from "@/ui/divided-children";
 
 export interface ContainerPortsProps {
   ports: Types.Port[];
   serverId: string | undefined;
 }
 
-export default function ContainerPorts({ ports, serverId }: ContainerPortsProps) {
+export default function ContainerPorts({
+  ports,
+  serverId,
+}: ContainerPortsProps) {
   const portsMap = useContainerPortsMap(ports);
   const sortedNumericPorts = Object.keys(portsMap)
     .map(Number)
@@ -34,23 +37,21 @@ export default function ContainerPorts({ ports, serverId }: ContainerPortsProps)
     return acc;
   }, []);
 
+  if (!groupedPorts.length) {
+    return null;
+  }
+
   return (
-    <Group>
-      {groupedPorts.map((group, i) => (
-        <Fragment key={group.start}>
-          {i > 0 && (
-            <Text component="span" c="dimmed">
-              |
-            </Text>
-          )}
-          <ContainerPort
-            ports={group.ports}
-            hostPort={String(group.start)}
-            serverId={serverId}
-          />
-        </Fragment>
+    <DividedChildren>
+      {groupedPorts.map((group) => (
+        <ContainerPort
+          key={group.start}
+          ports={group.ports}
+          hostPort={String(group.start)}
+          serverId={serverId}
+        />
       ))}
-    </Group>
+    </DividedChildren>
   );
 }
 

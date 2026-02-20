@@ -159,6 +159,7 @@ export default function ProcedureConfig({ id }: { id: string }) {
                     leftSection={<ICONS.Add size="1rem" />}
                     onClick={addStage}
                     disabled={disabled}
+                    w="fit-content"
                   >
                     Add Stage
                   </Button>

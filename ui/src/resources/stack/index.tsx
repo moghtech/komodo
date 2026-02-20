@@ -179,85 +179,7 @@ export const StackComponents: RequiredResourceComponents<
         </HoverCard>
       );
     },
-    NoConfig: ({ id }) => {
-      const config = useFullStack(id)?.config;
-      if (
-        !config ||
-        config?.files_on_host ||
-        config?.file_contents ||
-        config?.linked_repo ||
-        config?.repo
-      ) {
-        return null;
-      }
-      return (
-        <HoverCard width={300} position="bottom-start">
-          <HoverCard.Target>
-            <Button variant="filled" color="red">
-              Config Missing
-            </Button>
-          </HoverCard.Target>
-          <HoverCard.Dropdown>
-            <Text>
-              No configuration provided for stack. Cannot get stack state.
-              Either paste the compose file contents into the UI, or configure a
-              git repo containing your files.
-            </Text>
-          </HoverCard.Dropdown>
-        </HoverCard>
-      );
-    },
-    ProjectMissing: ({ id }) => {
-      const info = useStack(id)?.info;
-      const state = info?.state ?? Types.StackState.Unknown;
-      if (
-        !info ||
-        !info?.project_missing ||
-        [
-          Types.StackState.Deploying,
-          Types.StackState.Down,
-          Types.StackState.Unknown,
-        ].includes(state)
-      ) {
-        return null;
-      }
-      return (
-        <HoverCard width={300} position="bottom-start">
-          <HoverCard.Target>
-            <Button color="red">Project Missing</Button>
-          </HoverCard.Target>
-          <HoverCard.Dropdown>
-            <Text>
-              The compose project is not on the host. If the compose stack is
-              running, the 'Project Name' needs to be set. This can be found
-              with 'docker compose ls'.
-            </Text>
-          </HoverCard.Dropdown>
-        </HoverCard>
-      );
-    },
-    RemoteErrors: ({ id }) => {
-      const info = useFullStack(id)?.info;
-      const errors = info?.remote_errors;
-      if (!info || !errors || errors.length === 0) {
-        return null;
-      }
-      return (
-        <HoverCard width={300} position="bottom-start">
-          <HoverCard.Target>
-            <Button variant="filled" color="red">
-              Remote Error
-            </Button>
-          </HoverCard.Target>
-          <HoverCard.Dropdown>
-            <Text>
-              There are errors reading the remote file contents. See <b>Info</b>{" "}
-              tab for details.
-            </Text>
-          </HoverCard.Dropdown>
-        </HoverCard>
-      );
-    },
+
     UpdateAvalable: StackUpdateAvailable,
     Hash: ({ id }) => {
       const fullInfo = useFullStack(id)?.info;
@@ -285,6 +207,91 @@ export const StackComponents: RequiredResourceComponents<
             latestHash={fullInfo?.latest_hash}
             latestMessage={fullInfo?.latest_message}
           />
+        </Box>
+      );
+    },
+    NoConfig: ({ id }) => {
+      const config = useFullStack(id)?.config;
+      if (
+        !config ||
+        config?.files_on_host ||
+        config?.file_contents ||
+        config?.linked_repo ||
+        config?.repo
+      ) {
+        return null;
+      }
+      return (
+        <Box>
+          <HoverCard width={300} position="bottom-start">
+            <HoverCard.Target>
+              <Button variant="filled" color="red">
+                Config Missing
+              </Button>
+            </HoverCard.Target>
+            <HoverCard.Dropdown>
+              <Text>
+                No configuration provided for stack. Cannot get stack state.
+                Either paste the compose file contents into the UI, or configure
+                a git repo containing your files.
+              </Text>
+            </HoverCard.Dropdown>
+          </HoverCard>
+        </Box>
+      );
+    },
+    ProjectMissing: ({ id }) => {
+      const info = useStack(id)?.info;
+      const state = info?.state ?? Types.StackState.Unknown;
+      if (
+        !info ||
+        !info?.project_missing ||
+        [
+          Types.StackState.Deploying,
+          Types.StackState.Down,
+          Types.StackState.Unknown,
+        ].includes(state)
+      ) {
+        return null;
+      }
+      return (
+        <Box>
+          <HoverCard width={300} position="bottom-start">
+            <HoverCard.Target>
+              <Button color="red">Project Missing</Button>
+            </HoverCard.Target>
+            <HoverCard.Dropdown>
+              <Text>
+                The compose project is not on the host. If the compose stack is
+                running, the 'Project Name' needs to be set. This can be found
+                with 'docker compose ls'.
+              </Text>
+            </HoverCard.Dropdown>
+          </HoverCard>
+        </Box>
+      );
+    },
+    RemoteErrors: ({ id }) => {
+      const info = useFullStack(id)?.info;
+      const errors = info?.remote_errors;
+      if (!info || !errors || errors.length === 0) {
+        return null;
+      }
+      return (
+        <Box>
+          <HoverCard width={300} position="bottom-start">
+            <HoverCard.Target>
+              <Button variant="filled" color="red">
+                Remote Error
+              </Button>
+            </HoverCard.Target>
+            <HoverCard.Dropdown>
+              <Text>
+                There are errors reading the remote file contents. See{" "}
+                <b>Info</b> tab for details.
+              </Text>
+            </HoverCard.Dropdown>
+          </HoverCard>
         </Box>
       );
     },
