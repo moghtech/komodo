@@ -28,7 +28,7 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
   const type = _type ? _type : __type;
   const name = type === "ResourceSync" ? "Resource Sync" : type;
   useSetTitle(name + "s");
-  const [search, set] = useState("");
+  const [search, setSearch] = useState("");
   const [filter_update_available, toggle_filter_update_available] =
     useFilterByUpdateAvailable();
   const query =
@@ -91,7 +91,7 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
           <TagsFilter />
           <TextInput
             value={search}
-            onChange={(e) => set(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="search..."
             leftSection={<ICONS.Search size="0.8rem" />}
             w={{ sm: 200, lg: 300 }}

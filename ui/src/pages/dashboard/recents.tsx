@@ -1,60 +1,42 @@
 import {
+  Box,
   Flex,
   Group,
   MantineBreakpoint,
   SimpleGrid,
   Stack,
-  Text,
 } from "@mantine/core";
 import { History } from "lucide-react";
-import {
-  useDashboardPreferences,
-  useNoResources,
-  useRead,
-  useUser,
-} from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { useDashboardPreferences, useRead, useUser } from "@/lib/hooks";
 import { usableResourcePath } from "@/lib/utils";
-import { ResourceComponents, UsableResource } from "@/resources";
+import {
+  ResourceComponents,
+  SIDEBAR_RESOURCES,
+  UsableResource,
+} from "@/resources";
 import { Link, useNavigate } from "react-router-dom";
 import DashboardSummary from "@/components/dashboard-summary";
 import FancyCard from "@/ui/fancy-card";
 import { TemplateMarker } from "@/components/template-marker";
 import Tags from "@/components/tags";
 import ResourceName from "@/resources/name";
+import DeploymentUpdateAvailable from "@/resources/deployment/update-available";
+import StackUpdateAvailable from "@/resources/stack/update-available";
+import DashboardNoResources from "./no-resources";
+import ServerStatsCard from "@/resources/server/stats-card";
 
-const RecentsDashboard = () => {
-  const noResources = useNoResources();
-  const user = useUser().data!;
+export default function DashboardRecents() {
   return (
     <Stack gap="xl">
-      {noResources && (
-        <Group gap="sm" opacity={0.6}>
-          <ICONS.Alert size="1rem" />
-          <Text fz="lg">
-            No resources found.{" "}
-            {user.admin
-              ? "To get started, create a server."
-              : "Contact an admin for access to resources."}
-          </Text>
-        </Group>
-      )}
-      <RecentRow type="Swarm" />
-      <RecentRow type="Server" />
-      <RecentRow type="Stack" />
-      <RecentRow type="Deployment" />
-      <RecentRow type="Build" />
-      <RecentRow type="Repo" />
-      <RecentRow type="Procedure" />
-      <RecentRow type="Action" />
-      <RecentRow type="ResourceSync" />
+      <DashboardNoResources />
+      {SIDEBAR_RESOURCES.map((type) => (
+        <RecentRow key={type} type={type} />
+      ))}
     </Stack>
   );
-};
+}
 
-export default RecentsDashboard;
-
-const RecentRow = ({ type }: { type: UsableResource }) => {
+function RecentRow({ type }: { type: UsableResource }) {
   const nav = useNavigate();
   const _recents = useUser().data?.recents?.[type]?.slice(0, 6);
   const _resources = useRead(`List${type}s`, {}).data;
@@ -114,25 +96,17 @@ const RecentRow = ({ type }: { type: UsableResource }) => {
 
   return (
     <>
-      <Stack
-        hiddenFrom="md"
-        className="bordered-light"
-        bdrs="md"
-      >
+      <Stack hiddenFrom="md" className="bordered-light" bdrs="md">
         {children}
       </Stack>
-      <Flex
-        visibleFrom="md"
-        className="bordered-light"
-        bdrs="md"
-      >
+      <Flex visibleFrom="md" className="bordered-light" bdrs="md">
         {children}
       </Flex>
     </>
   );
-};
+}
 
-const RecentCard = ({
+function RecentCard({
   type,
   id,
   visibleFrom,
@@ -140,7 +114,7 @@ const RecentCard = ({
   type: UsableResource;
   id: string;
   visibleFrom?: MantineBreakpoint;
-}) => {
+}) {
   const Components = ResourceComponents[type];
   const resource = Components.useListItem(id);
   const { preferences } = useDashboardPreferences();
@@ -148,8 +122,6 @@ const RecentCard = ({
   if (!resource) {
     return null;
   }
-
-  const showServerStats = type === "Server" && preferences.showServerStats;
 
   return (
     <FancyCard
@@ -159,6 +131,7 @@ const RecentCard = ({
           justify="space-between"
           p="md"
           bdrs="md"
+          gap="0"
           renderRoot={(props) => (
             <Link
               to={`${usableResourcePath(type)}/${id}`}
@@ -168,7 +141,6 @@ const RecentCard = ({
           )}
         />
       )}
-      // onClick={() => nav(`${usableResourcePath(type)}/${id}`)}
       visibleFrom={visibleFrom}
     >
       <Group justify="space-between">
@@ -177,13 +149,29 @@ const RecentCard = ({
           <ResourceName type={type} id={id} />
           {resource.template && <TemplateMarker type={type} />}
         </Group>
-        {/* {type === "Deployment" && <DeploymentUpdateAvailable id={id} small />}
-        {type === "Stack" && <StackUpdateAvailable id={id} small />} */}
+        {type === "Deployment" && <DeploymentUpdateAvailable id={id} small />}
+        {type === "Stack" && <StackUpdateAvailable id={id} small />}
       </Group>
 
-      <Group gap="xs">
-        <Tags tagIds={resource?.tags} py="0.1rem" />
-      </Group>
+      {type === "Server" && (
+        <Box
+          mt={preferences.showServerStats ? "md" : "0"}
+          mah={preferences.showServerStats ? "10rem" : "0rem"}
+          opacity={preferences.showServerStats ? 1 : 0}
+          style={{
+            overflow: "hidden",
+            transition: "all 500ms ease-in-out",
+          }}
+        >
+          <ServerStatsCard id={id} />
+        </Box>
+      )}
+
+      {resource.tags.length ? (
+        <Group gap="xs" mt="md">
+          <Tags tagIds={resource?.tags} py="0.1rem" />
+        </Group>
+      ) : undefined}
     </FancyCard>
   );
-};
+}

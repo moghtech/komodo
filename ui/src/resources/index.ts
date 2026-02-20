@@ -21,8 +21,8 @@ export type UsableResourceTarget = Exclude<
 export type UsableResource = Exclude<Types.ResourceTarget["type"], "System">;
 
 export const RESOURCE_TARGETS = [
-  "Swarm",
   "Server",
+  "Swarm",
   "Stack",
   "Deployment",
   "Build",
@@ -43,8 +43,8 @@ export const SIDEBAR_RESOURCES: UsableResource[] = RESOURCE_TARGETS.filter(
 export const ResourceComponents: {
   [key in UsableResource]: RequiredResourceComponents;
 } = {
-  Swarm: SwarmComponents,
   Server: ServerComponents,
+  Swarm: SwarmComponents,
   Stack: StackComponents,
   Deployment: DeploymentComponents,
   Build: BuildComponents,

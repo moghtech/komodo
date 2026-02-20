@@ -57,7 +57,7 @@ export default function AlertCard({
 
   if (large) {
     return (
-      <Stack onClick={onClick} gap="0" {...containerProps}>
+      <Stack onClick={onClick} gap="0.4rem" {...containerProps}>
         <FirstRow />
         <Flex justify="space-between" c="dimmed">
           <Group gap="xs">
