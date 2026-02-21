@@ -7,8 +7,8 @@ import { ReactNode, useEffect } from "react";
 export interface CreateModalProps {
   entityType: string;
   configSection: (close: () => void) => ReactNode;
-  disabled: boolean;
-  loading: boolean;
+  disabled?: boolean;
+  loading?: boolean;
   onConfirm: () => Promise<unknown>;
   onOpenChange?: (opened: boolean) => void;
   configureLabel?: string;
@@ -40,14 +40,14 @@ export default function CreateModal({
         withCloseButton={false}
         trapFocus
       >
-        <Stack>
-          <Text c="dimmed">
+        <Stack gap="0.2rem">
+          <Text c="dimmed" mb="md">
             Enter {configureLabel} for the new {entityType}.
           </Text>
 
           {configSection(close)}
 
-          <Group justify="flex-end">
+          <Group justify="flex-end" mt="md">
             <Button
               onClick={() => {
                 onConfirm().then(close);

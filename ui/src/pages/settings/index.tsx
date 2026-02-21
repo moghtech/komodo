@@ -9,6 +9,7 @@ import SettingsTags from "./tags";
 import SettingsProviders from "./providers";
 import { ICONS } from "@/theme/icons";
 import SettingsOnboardingKeys from "./onboarding";
+import SettingsUsers from "./users";
 
 const Resources = lazy(() => import("@/pages/resources"));
 
@@ -50,6 +51,12 @@ export default function Settings() {
             value: "Providers",
             content: <SettingsProviders />,
             icon: ICONS.Provider,
+          },
+          {
+            value: "Users",
+            content: <SettingsUsers />,
+            icon: ICONS.User,
+            hidden: !user?.admin,
           },
           {
             value: "Onboarding",

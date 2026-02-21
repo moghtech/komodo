@@ -30,14 +30,6 @@ export default function NewVariable() {
             placeholder="variable-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            // onKeyDown={(e) => {
-            //   if (!name) {
-            //     return;
-            //   }
-            //   if (e.key === "Enter") {
-            //     create({});
-            //   }
-            // }}
             error={!name.trim() && "Enter name"}
           />
         </>

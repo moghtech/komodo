@@ -68,6 +68,7 @@ import {
   TriangleAlert,
   Unlink,
   User,
+  Users,
   Variable,
   X,
   Zap,
@@ -131,6 +132,7 @@ export const ICONS = {
   Refresh: RefreshCcw,
   // MISC
   User,
+  Users,
   Key: KeyRound,
   RotateKey: RotateCcwKey,
   Settings,

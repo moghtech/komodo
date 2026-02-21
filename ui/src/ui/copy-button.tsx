@@ -1,9 +1,9 @@
+import { sendCopyNotification } from "@/lib/utils";
 import {
   ActionIcon,
   ActionIconProps,
   CopyButton as MantineCopyButton,
 } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
 import { Check, Copy } from "lucide-react";
 import { ReactNode } from "react";
 
@@ -27,19 +27,10 @@ export default function CopyButton({
       {({ copied, copy }) => (
         <ActionIcon
           variant="default"
-          onClick={() => {
+          onClick={(e) => {
+            e.stopPropagation();
             copy();
-            if (location.origin.startsWith("https")) {
-              notifications.show({
-                message: `Copied ${label} to clipboard.`,
-                color: "green",
-              });
-            } else {
-              notifications.show({
-                message: "Cannot copy to clipboard without HTTPS.",
-                color: "red",
-              });
-            }
+            sendCopyNotification(label);
           }}
           size={buttonSize}
         >

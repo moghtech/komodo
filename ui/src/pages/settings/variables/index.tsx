@@ -6,7 +6,7 @@ import {
   useUser,
   useWrite,
 } from "@/lib/hooks";
-import { filterBySplit } from "@/lib/utils";
+import { filterBySplit, sendCopyNotification } from "@/lib/utils";
 import { ICONS } from "@/theme/icons";
 import CopyButton from "@/ui/copy-button";
 import { DataTable, SortableHeader } from "@/ui/data-table";
@@ -94,9 +94,17 @@ export default function SettingsVariables() {
                       w={{ base: 200, lg: 300 }}
                       p="xs"
                       bdrs="sm"
-                      style={{ overflow: "hidden", whiteSpace: "nowrap" }}
+                      style={{
+                        overflow: "hidden",
+                        whiteSpace: "nowrap",
+                        cursor: "pointer",
+                      }}
                       className="text-ellipsis bordered-light"
                       size="sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(row.original.name);
+                        sendCopyNotification("variable name");
+                      }}
                     >
                       {row.original.name}
                     </Text>

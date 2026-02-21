@@ -12,7 +12,7 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { ReactNode, useState } from "react";
 import ConfirmButton from "./confirm-button";
-import { notifications } from "@mantine/notifications";
+import { sendCopyNotification } from "@/lib/utils";
 
 export interface ConfirmModalProps extends Omit<
   Omit<Omit<ModalProps, "opened">, "onClose">,
@@ -84,6 +84,7 @@ export default function ConfirmModal({
         }
         styles={{ content: { padding: "0.5rem" } }}
         size="lg"
+        onClick={(e) => e.stopPropagation()}
         {...modalProps}
       >
         <Stack>
@@ -92,9 +93,7 @@ export default function ConfirmModal({
           <Text
             onClick={() => {
               navigator.clipboard.writeText(confirmText);
-              notifications.show({
-                message: `Copied "${confirmText}" to clipboard.`,
-              });
+              sendCopyNotification();
             }}
             style={{ cursor: "pointer" }}
           >
