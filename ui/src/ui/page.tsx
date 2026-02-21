@@ -16,6 +16,7 @@ export interface PageProps extends StackProps {
   icon?: FC<{ size?: string | number }>;
   description?: ReactNode;
   rightTitle?: ReactNode;
+  aboveTitle?: ReactNode;
   /** The right hand side of page opposite the title */
   oppositeTitle?: ReactNode;
   /* Replace the default title / icon with a full custom ReactNode */
@@ -33,6 +34,7 @@ const Page = createPolymorphicComponent<"div", PageProps>(
         icon,
         description,
         rightTitle,
+        aboveTitle,
         customTitle,
         customDescription,
         oppositeTitle,
@@ -79,6 +81,7 @@ const Page = createPolymorphicComponent<"div", PageProps>(
       );
       return (
         <Stack gap="xl" {...stackProps} ref={ref}>
+          {aboveTitle}
           {oppositeTitle ? (
             <Group justify="space-between" align="start">
               {titleNode}

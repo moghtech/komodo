@@ -1,4 +1,4 @@
-import { Anchor, Group, Select, Stack, Text } from "@mantine/core";
+import { Anchor, Code, Group, Select, Stack, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { useState } from "react";
 import { Types } from "komodo_client";
@@ -12,9 +12,10 @@ import {
 import { fmtSnakeCaseToUpperSpaceCase } from "@/lib/formatting";
 import { MonacoEditor } from "@/components/monaco";
 import Config from "@/ui/config";
-import ActionInfo from "./info";
+import ActionLastRun from "./last-run";
 import { ConfigItem, ConfigSwitch } from "@/ui/config/item";
 import TimezoneSelector from "@/components/timezone-selector";
+import SecretsSearch from "@/components/config/secrets-search";
 
 export default function ActionConfig({ id }: { id: string }) {
   const [branch, setBranch] = useState("main");
@@ -30,12 +31,12 @@ export default function ActionConfig({ id }: { id: string }) {
   });
   const { mutateAsync } = useWrite("UpdateAction");
   const { integrations } = useWebhookIntegrations();
-  const [id_or_name] = useWebhookIdOrName();
+  const [idOrName] = useWebhookIdOrName();
 
   if (!config) return null;
 
   const disabled = global_disabled || !canWrite;
-  const webhook_integration = integrations.Action ?? "Github";
+  const webhookIntegration = integrations.Action ?? "Github";
 
   return (
     <Config
@@ -56,7 +57,7 @@ export default function ActionConfig({ id }: { id: string }) {
                 return (
                   <Stack>
                     <Group justify="space-between">
-                      {/* <SecretsSearch /> */}
+                      <SecretsSearch />
                       <Group visibleFrom="lg">
                         <Text c="dimmed">Docs</Text>
                         {["read", "execute", "write"].map((api) => (
@@ -76,7 +77,7 @@ export default function ActionConfig({ id }: { id: string }) {
                       language="typescript"
                       readOnly={disabled}
                     />
-                    <ActionInfo id={id} />
+                    <ActionLastRun id={id} />
                   </Stack>
                 );
               },
@@ -95,7 +96,7 @@ export default function ActionConfig({ id }: { id: string }) {
                 return (
                   <Stack>
                     <Group>
-                      {/* <SecretsSearch /> */}
+                      <SecretsSearch />
                       <Select
                         placeholder="Select format"
                         value={format}
@@ -175,20 +176,17 @@ export default function ActionConfig({ id }: { id: string }) {
                 description:
                   (update.schedule_format ?? config.schedule_format) ===
                   "Cron" ? (
-                    <div className="pt-1 flex flex-col gap-1">
-                      <code>
-                        second - minute - hour - day - month - day-of-week
-                      </code>
-                    </div>
+                    <Text ff="monospace">
+                      second - minute - hour - day - month - day-of-week
+                    </Text>
                   ) : (
-                    <div className="pt-1 flex flex-col gap-1">
-                      <code>Examples:</code>
-                      <code>- Run every day at 4:00 pm</code>
-                      <code>
+                    <Stack gap="0">
+                      <Text>- Run every day at 4:00 pm</Text>
+                      <Text>
                         - Run at 21:00 on the 1st and 15th of the month
-                      </code>
-                      <code>- Every Sunday at midnight</code>
-                    </div>
+                      </Text>
+                      <Text>- Every Sunday at midnight</Text>
+                    </Stack>
                   ),
                 placeholder:
                   (update.schedule_format ?? config.schedule_format) === "Cron"
@@ -213,6 +211,28 @@ export default function ActionConfig({ id }: { id: string }) {
               },
               schedule_alert: {
                 description: "Send an alert when the scheduled run occurs",
+              },
+            },
+          },
+          {
+            label: "Startup",
+            labelHidden: true,
+            fields: {
+              run_at_startup: {
+                label: "Run on Startup",
+                description:
+                  "Run this action on completion of startup of Komodo Core",
+              },
+            },
+          },
+          {
+            label: "Reload",
+            labelHidden: true,
+            fields: {
+              reload_deno_deps: {
+                label: "Reload Dependencies",
+                description:
+                  "Whether deno will be instructed to reload all dependencies. This can usually be kept disabled outside of development.",
               },
             },
           },
