@@ -18,7 +18,7 @@ export default function CopyText({
     <Group gap="sm" wrap="nowrap" {...groupProps}>
       <Text
         title={content}
-        w={{ base: 200, lg: 300 }}
+        w={{ base: 230, lg: 330 }}
         p="xs"
         bdrs="sm"
         style={{

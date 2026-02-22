@@ -1,8 +1,8 @@
 import { listsEqual } from "@/lib/utils";
 import { UsableResource } from "@/resources";
-import { MultiSelect, MultiSelectProps } from "@mantine/core";
+import { Box, MultiSelect, MultiSelectProps } from "@mantine/core";
 import { Types } from "komodo_client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const ALL_PERMISSIONS_BY_TYPE: {
   [type: string]: Types.SpecificPermission[] | undefined;
@@ -50,18 +50,22 @@ export default function SpecificPermissionSelector({
   ...props
 }: SpecificPermissionSelectorProps) {
   const [temp, setTemp] = useState(specific);
-  useEffect(() => setTemp(specific), [specific.length]);
   return (
-    <MultiSelect
-      placeholder={!temp.length ? "Add specific permissions..." : undefined}
-      value={temp}
-      onChange={(specific) => setTemp(specific as Types.SpecificPermission[])}
-      onBlur={() => !listsEqual(specific, temp) && onChange(temp)}
-      onClear={() => onChange?.([])}
-      data={ALL_PERMISSIONS_BY_TYPE[type]}
-      clearable
-      maw={500}
-      {...props}
-    />
+    <Box w={550}>
+      <MultiSelect
+        placeholder={!temp.length ? "Add specific permissions..." : undefined}
+        value={temp}
+        onChange={(specific) => setTemp(specific as Types.SpecificPermission[])}
+        onBlur={() => !listsEqual(specific, temp) && onChange(temp)}
+        onClear={() => {
+          setTemp([]);
+          onChange?.([]);
+        }}
+        data={ALL_PERMISSIONS_BY_TYPE[type]}
+        clearable
+        maw={500}
+        {...props}
+      />
+    </Box>
   );
 }

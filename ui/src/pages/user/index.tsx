@@ -14,7 +14,8 @@ import { notifications } from "@mantine/notifications";
 import { UserCheck, UserMinus } from "lucide-react";
 import { useParams } from "react-router-dom";
 import UserMemberGroups from "./member-groups";
-import SpecificPermissionsTable from "@/components/permissions/specific-table";
+import SpecificPermissionsSection from "@/components/permissions/specific-section";
+import ApiKeysSection from "@/components/api-keys/section";
 
 export default function User() {
   const adminUser = useUser().data;
@@ -174,11 +175,18 @@ export default function User() {
               </Section>
             )}
 
+          {user?.enabled && !user.admin && <UserMemberGroups userId={userId} />}
+
+          {user?.config.type === "Service" && (
+            <ApiKeysSection userId={user._id?.$oid!} mt="md" />
+          )}
+
           {user?.enabled && !user.admin && (
             <>
-              <UserMemberGroups userId={userId} />
-              <SpecificPermissionsTable
+              {/** BASE */}
+              <SpecificPermissionsSection
                 userTarget={{ type: "User", id: user._id?.$oid! }}
+                mt="md"
               />
             </>
           )}

@@ -237,14 +237,11 @@ export default function Config<T>({
           <Box
             visibleFrom="xl"
             pos="relative"
-            bdrs="md"
+            className="bordered-light"
             style={{
-              borderColor: "var(--mantine-color-accent-border-0)",
-              borderStyle: "solid",
-              borderTopWidth: 1,
-              borderRightWidth: 1,
-              borderBottomWidth: 0,
               borderLeftWidth: 0,
+              borderBottomWidth: 0,
+              borderTopRightRadius: "var(--mantine-radius-md)",
             }}
           >
             <Stack pos="sticky" w={175} top={94} pb={24} m="lg">

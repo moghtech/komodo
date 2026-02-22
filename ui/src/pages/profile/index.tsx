@@ -16,6 +16,7 @@ import { EnrollTotp } from "./totp";
 import EnableSwitch from "@/ui/enable-switch";
 import PageGuard from "@/ui/page-guard";
 import EntityPage from "@/ui/entity-page";
+import ApiKeysSection from "@/components/api-keys/section";
 
 export default function Profile() {
   const options = useLoginOptions().data;
@@ -112,6 +113,8 @@ export default function Profile() {
               )}
             </Group>
           </Fieldset>
+
+          <ApiKeysSection mt="lg" />
         </EntityPage>
       )}
     </PageGuard>

@@ -4,7 +4,7 @@ import { ResourceComponents, UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import SearchInput from "@/ui/search-input";
-import Section from "@/ui/section";
+import Section, { SectionProps } from "@/ui/section";
 import { Group, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";
@@ -14,25 +14,26 @@ import LabelledSwitch from "@/ui/labelled-switch";
 import PermissionLevelSelector from "./level-selector";
 import SpecificPermissionSelector from "./specific-selector";
 
-export interface SpecificPermissionsTableProps {
+export interface SpecificPermissionsTableProps extends SectionProps {
   userTarget: Types.UserTarget;
 }
 
-export default function SpecificPermissionsTable({
+export default function SpecificPermissionsSection({
   userTarget,
+  ...sectionProps
 }: SpecificPermissionsTableProps) {
   const [showAll, setShowAll] = useState(false);
   const [resourceType, setResourceType] = useState<UsableResource | null>(null);
-  const [search, setSearch] = useState("");
-  const searchSplit = search.toLowerCase().split(" ");
-  const inv = useInvalidate();
   const permissions = useUserTargetPermissions(userTarget);
+  const inv = useInvalidate();
   const { mutate } = useWrite("UpdatePermissionOnTarget", {
     onSuccess: () => {
       inv(["ListUserTargetPermissions"]);
       notifications.show({ message: "Updated permission", color: "green" });
     },
   });
+  const [search, setSearch] = useState("");
+  const searchSplit = search.toLowerCase().split(" ");
   const tableData =
     permissions?.filter(
       (permission) =>
@@ -65,6 +66,7 @@ export default function SpecificPermissionsTable({
           />
         </Group>
       }
+      {...sectionProps}
     >
       <DataTable
         tableKey="specific-permissions-v1"

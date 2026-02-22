@@ -1,57 +1,76 @@
-import { useInvalidate, useWrite } from "@/lib/hooks";
+import { useInvalidate, useManageAuth, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
-import CopyButton from "@/ui/copy-button";
 import CopyText from "@/ui/copy-text";
 import {
   Button,
   Group,
   Modal,
-  PasswordInput,
   Select,
   Stack,
   Text,
   TextInput,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { notifications } from "@mantine/notifications";
+import { Types } from "komodo_client";
 import { useState } from "react";
 
-type ExpiresOptions = "1 day" | "7 days" | "30 days" | "never";
 const ONE_DAY_MS = 1000 * 60 * 60 * 24;
+type ExpiresOptions = "90 days" | "180 days" | "1 year" | "never";
 
-export default function NewOnboardingKey() {
+export interface NewApiKeyProps {
+  /** For service user api keys */
+  userId?: string;
+}
+
+export default function NewApiKey({ userId }: { userId?: string }) {
   const [opened, { open, close: _close }] = useDisclosure();
   const [name, setName] = useState("");
-  const [privateKey, setPrivateKey] = useState("");
-  const [expires, setExpires] = useState<ExpiresOptions>("1 day");
-
-  const [created, setCreated] = useState<{ private_key: string }>();
+  const [expires, setExpires] = useState<ExpiresOptions>("90 days");
+  const [created, setCreated] = useState<Types.CreateApiKeyResponse>();
   const invalidate = useInvalidate();
-  const { mutate, isPending } = useWrite("CreateOnboardingKey", {
-    onSuccess: ({ private_key }) => {
-      notifications.show({ message: "Onboarding Key Created" });
-      invalidate(["ListOnboardingKeys"]);
-      setCreated({ private_key });
+  const { mutate: regularCreate, isPending: regularPending } = useManageAuth(
+    "CreateApiKey",
+    {
+      onSuccess: (res) => {
+        invalidate(["ListApiKeys"]);
+        setCreated(res);
+      },
     },
-  });
+  );
+  const { mutate: serviceCreate, isPending: servicePending } = useWrite(
+    "CreateApiKeyForServiceUser",
+    {
+      onSuccess: (res) => {
+        invalidate(["ListApiKeysForServiceUser"]);
+        setCreated(res);
+      },
+    },
+  );
   const now = Date.now();
   const expiresOptions: Record<ExpiresOptions, number> = {
-    "1 day": now + ONE_DAY_MS,
-    "7 days": now + ONE_DAY_MS * 7,
-    "30 days": now + ONE_DAY_MS * 90,
+    "90 days": now + ONE_DAY_MS * 90,
+    "180 days": now + ONE_DAY_MS * 180,
+    "1 year": now + ONE_DAY_MS * 365,
     never: 0,
   };
-  const create = () =>
-    mutate({
+  const create = () => {
+    const data = {
       name,
       expires: expiresOptions[expires],
-      private_key: privateKey || undefined,
-    });
+    };
+    if (userId) {
+      serviceCreate({
+        user_id: userId,
+        ...data,
+      });
+    } else {
+      regularCreate(data);
+    }
+  };
 
   const close = () => {
     setName("");
-    setPrivateKey("");
-    setExpires("1 day");
+    setExpires("90 days");
     setCreated(undefined);
     _close();
   };
@@ -63,8 +82,8 @@ export default function NewOnboardingKey() {
         onClose={close}
         title={
           <Text size="lg">
-            {!created && "Create Onboarding Key"}
-            {created && "Onboarding Key Created"}
+            {!created && "Create Api Key" + (userId ? " for Service User" : "")}
+            {created && "Api Key Created"}
           </Text>
         }
         size="lg"
@@ -77,16 +96,6 @@ export default function NewOnboardingKey() {
                 <TextInput
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Optional"
-                  w={{ base: 200, lg: 300 }}
-                />
-              </Group>
-
-              <Group justify="space-between">
-                <Text>Pre-Existing Key</Text>
-                <PasswordInput
-                  value={privateKey}
-                  onChange={(e) => setPrivateKey(e.target.value)}
                   placeholder="Optional"
                   w={{ base: 200, lg: 300 }}
                 />
@@ -108,7 +117,7 @@ export default function NewOnboardingKey() {
                   className="gap-4"
                   onClick={create}
                   leftSection={<ICONS.Check size="1rem" />}
-                  loading={isPending}
+                  loading={userId ? servicePending : regularPending}
                 >
                   Create
                 </Button>
@@ -119,10 +128,19 @@ export default function NewOnboardingKey() {
           {created && (
             <>
               <Text>
-                Use as the <b>PERIPHERY_ONBOARDING_KEY</b>
+                Copy the api key and secret.{" "}
+                <b>The secret will not be shown again.</b>
               </Text>
 
-              <CopyText content={created.private_key} label="private key" />
+              <Group justify="space-between" wrap="nowrap">
+                <Text>Key</Text>
+                <CopyText content={created.key} label="api key" />
+              </Group>
+
+              <Group justify="space-between" wrap="nowrap">
+                <Text>Secret</Text>
+                <CopyText content={created.secret} label="api secret" />
+              </Group>
 
               <Group justify="end" onClick={close}>
                 <Button leftSection={<ICONS.Clear />}>Close</Button>
@@ -133,7 +151,7 @@ export default function NewOnboardingKey() {
       </Modal>
 
       <Button leftSection={<ICONS.Create size="1rem" />} onClick={open}>
-        New Onboarding Key
+        New Api Key
       </Button>
     </>
   );
