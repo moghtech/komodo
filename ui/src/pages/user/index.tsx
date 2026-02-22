@@ -16,6 +16,7 @@ import { useParams } from "react-router-dom";
 import UserMemberGroups from "./member-groups";
 import SpecificPermissionsSection from "@/components/permissions/specific-section";
 import ApiKeysSection from "@/components/api-keys/section";
+import BasePermissionsSection from "@/components/permissions/base-section";
 
 export default function User() {
   const adminUser = useUser().data;
@@ -183,7 +184,10 @@ export default function User() {
 
           {user?.enabled && !user.admin && (
             <>
-              {/** BASE */}
+              <BasePermissionsSection
+                userTarget={{ type: "User", id: user._id?.$oid! }}
+                mt="md"
+              />
               <SpecificPermissionsSection
                 userTarget={{ type: "User", id: user._id?.$oid! }}
                 mt="md"

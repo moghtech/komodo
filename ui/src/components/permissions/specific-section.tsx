@@ -1,5 +1,5 @@
 import { useInvalidate, useUserTargetPermissions, useWrite } from "@/lib/hooks";
-import { levelToNumber } from "@/lib/utils";
+import { levelSortingFn } from "@/lib/utils";
 import { ResourceComponents, UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
 import { DataTable, SortableHeader } from "@/ui/data-table";
@@ -26,7 +26,7 @@ export default function SpecificPermissionsSection({
   const [resourceType, setResourceType] = useState<UsableResource | null>(null);
   const permissions = useUserTargetPermissions(userTarget);
   const inv = useInvalidate();
-  const { mutate } = useWrite("UpdatePermissionOnTarget", {
+  const { mutate: update } = useWrite("UpdatePermissionOnTarget", {
     onSuccess: () => {
       inv(["ListUserTargetPermissions"]);
       notifications.show({ message: "Updated permission", color: "green" });
@@ -113,12 +113,8 @@ export default function SpecificPermissionsSection({
           {
             accessorKey: "level",
             size: 150,
-            sortingFn: (a, b) => {
-              const al = levelToNumber(a.original.level);
-              const bl = levelToNumber(b.original.level);
-              const dif = al - bl;
-              return dif === 0 ? 0 : dif / Math.abs(dif);
-            },
+            sortingFn: (a, b) =>
+              levelSortingFn(a.original.level, b.original.level),
             header: ({ column }) => (
               <SortableHeader column={column} title="Level" />
             ),
@@ -126,7 +122,7 @@ export default function SpecificPermissionsSection({
               <PermissionLevelSelector
                 level={permission.level ?? Types.PermissionLevel.None}
                 onChange={(value) =>
-                  mutate({
+                  update({
                     ...permission,
                     user_target: userTarget,
                     permission: {
@@ -147,7 +143,7 @@ export default function SpecificPermissionsSection({
                   type={permission.resource_target.type as UsableResource}
                   specific={permission.specific ?? []}
                   onChange={(specific) => {
-                    mutate({
+                    update({
                       ...permission,
                       user_target: userTarget,
                       permission: {

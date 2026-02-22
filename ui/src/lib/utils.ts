@@ -110,6 +110,16 @@ export function levelToNumber(level: Types.PermissionLevel | undefined) {
   }
 }
 
+export function levelSortingFn(
+  a: Types.PermissionLevel | undefined,
+  b: Types.PermissionLevel | undefined,
+) {
+  const al = levelToNumber(a);
+  const bl = levelToNumber(b);
+  const dif = al - bl;
+  return dif === 0 ? 0 : dif / Math.abs(dif);
+}
+
 export function hasMinimumPermissions(
   permission: Types.PermissionLevelAndSpecifics | undefined,
   greater_than: Types.PermissionLevel,
