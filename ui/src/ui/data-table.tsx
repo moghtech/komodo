@@ -30,6 +30,7 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { ArrowDown, ArrowUp, Info, Minus } from "lucide-react";
+import { hexColorByIntention } from "@/lib/color";
 
 export interface DataTableProps<TData, TValue = unknown> extends BoxProps {
   /** Unique key given to table so sorting can be remembered on local storage */
@@ -135,6 +136,7 @@ export function DataTable<TData, TValue>({
                 }}
               >
                 <Checkbox
+                  color={hexColorByIntention("Neutral")}
                   disabled={selectOptions.disableRow === true}
                   checked={table.getIsAllRowsSelected()}
                   indeterminate={table.getIsSomeRowsSelected()}
@@ -210,6 +212,7 @@ export function DataTable<TData, TValue>({
                 <Table.Td onClick={() => row.toggleSelected()}>
                   <Checkbox
                     aria-label="Select row"
+                    color={hexColorByIntention("Neutral")}
                     disabled={!row.getCanSelect()}
                     checked={row.getIsSelected()}
                   />
