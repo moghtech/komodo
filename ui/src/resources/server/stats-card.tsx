@@ -132,7 +132,7 @@ export default function ServerStatsCard({ id }: ServerStatsCardProps) {
             <Overlay color="black" backgroundOpacity={0.5} {...props} />
           )}
         >
-          <Text fw="bold" fs="italic">
+          <Text fw="bold" fs="italic" c="dimmed">
             {isDisabled ? "Disabled" : "Unreachable"}
           </Text>
         </Center>

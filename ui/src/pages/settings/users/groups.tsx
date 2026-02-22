@@ -4,10 +4,11 @@ import { filterBySplit } from "@/lib/utils";
 import { ICONS } from "@/theme/icons";
 import { DataTable } from "@/ui/data-table";
 import Section from "@/ui/section";
-import { Group, TextInput } from "@mantine/core";
+import { Group } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
-import DeleteUserGroup from "./delete-group";
+import DeleteUserGroup from "../../../components/user/delete-group";
 import NewUserGroup from "./new-group";
+import SearchInput from "@/ui/search-input";
 
 export default function SettingsUserGroups({
   search,
@@ -24,13 +25,7 @@ export default function SettingsUserGroups({
       <Group justify="space-between">
         <NewUserGroup />
         <Group>
-          <TextInput
-            placeholder="search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            w={{ base: 200, lg: 300 }}
-            leftSection={<ICONS.Search size="1rem" />}
-          />
+          <SearchInput value={search} onSearch={setSearch} />
           <ExportToml userGroups={groups?.map((g) => g._id?.$oid!)} />
         </Group>
       </Group>

@@ -5,12 +5,13 @@ import { ICONS } from "@/theme/icons";
 import { filterBySplit, terminalLink } from "@/lib/utils";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import Page from "@/ui/page";
-import { Group, Text, TextInput } from "@mantine/core";
+import { Group, Text } from "@mantine/core";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import DeleteTerminal from "./delete";
 import BatchDeleteAllTerminals from "./batch-delete";
 import CreateTerminal from "./create";
+import SearchInput from "@/ui/search-input";
 
 export default function Terminals() {
   useSetTitle("Terminals");
@@ -31,14 +32,7 @@ export default function Terminals() {
             noTerminals={!terminals?.length}
           />
         </Group>
-
-        <TextInput
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="search..."
-          w={{ base: 200, lg: 300 }}
-          leftSection={<ICONS.Search size="1rem" />}
-        />
+        <SearchInput value={search} onSearch={setSearch} />
       </Group>
 
       <DataTable

@@ -1,7 +1,7 @@
 import { MonacoEditor } from "@/components/monaco";
 import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
-import CopyButton from "@/ui/copy-button";
+import CopyText from "@/ui/copy-text";
 import DividedChildren from "@/ui/divided-children";
 import {
   ActionIcon,
@@ -23,7 +23,7 @@ export default function SettingsCoreInfo() {
           ff="monospace"
           fz="xl"
           className="accent-hover-light bordered-heavy"
-          bdrs="md"
+          bdrs="sm"
           px="lg"
           py="0.5rem"
         >
@@ -38,18 +38,12 @@ export default function SettingsCoreInfo() {
           <Text c="dimmed" size="lg">
             Public Key:
           </Text>
-          <Text
+          <CopyText
+            content={info.public_key}
+            label="public key"
             ff="monospace"
-            title={info?.public_key}
             className="text-ellipsis accent-hover-light bordered-heavy"
-            w={{ base: 150, md: 230 }}
-            bdrs="md"
-            px="md"
-            py="0.4rem"
-          >
-            {info?.public_key}
-          </Text>
-          <CopyButton content={info.public_key} />
+          />
         </Group>
       )}
     </DividedChildren>

@@ -1,43 +1,29 @@
 import { useLoginOptions, useManageAuth, useUser } from "@/lib/hooks";
 import {
   ActionIcon,
-  Center,
   Fieldset,
   Group,
-  Loader,
   PasswordInput,
   Text,
   TextInput,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { Types } from "komodo_client";
 import { Save } from "lucide-react";
-import { useState } from "react";
-import { ICONS } from "@/theme/icons";
+import { useEffect, useState } from "react";
 import { LinkedLogins } from "./linked-logins";
 import { EnrollPasskey } from "./passkey";
 import { EnrollTotp } from "./totp";
-import Page from "@/ui/page";
 import EnableSwitch from "@/ui/enable-switch";
+import PageGuard from "@/ui/page-guard";
+import EntityPage from "@/ui/entity-page";
 
-const ProfilePage = () => {
-  const user = useUser().data;
-
-  if (!user) {
-    return (
-      <Center>
-        <Loader size="xl" />
-      </Center>
-    );
-  }
-
-  return <ProfileInner user={user} />;
-};
-
-const ProfileInner = ({ user }: { user: Types.User }) => {
-  const { refetch: refetchUser } = useUser();
+export default function Profile() {
   const options = useLoginOptions().data;
-  const [username, setUsername] = useState(user.username);
+  const { data: user, refetch: refetchUser, isPending } = useUser();
+  const [username, setUsername] = useState(user?.username);
+  useEffect(() => {
+    setUsername(user?.username);
+  }, [user?.username]);
   const [password, setPassword] = useState("");
   const { mutate: updateUsername } = useManageAuth("UpdateUsername", {
     onSuccess: () => {
@@ -65,67 +51,69 @@ const ProfileInner = ({ user }: { user: Types.User }) => {
   );
 
   return (
-    <Page title="Profile" icon={ICONS.User}>
-      <Fieldset legend={<Text size="lg">Login</Text>}>
-        <Group>
-          <Text ff="monospace">Username:</Text>
+    <PageGuard isPending={isPending}>
+      {user && (
+        <EntityPage>
+          <Fieldset legend={<Text size="lg">Login</Text>}>
+            <Group>
+              <Text ff="monospace">Username:</Text>
 
-          <TextInput
-            placeholder="Update username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            w={250}
-          />
+              <TextInput
+                placeholder="Update username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                w={250}
+              />
 
-          <ActionIcon
-            onClick={() => updateUsername({ username })}
-            disabled={!username || username === user.username}
-          >
-            <Save size="1rem" />
-          </ActionIcon>
-        </Group>
+              <ActionIcon
+                onClick={() => username && updateUsername({ username })}
+                disabled={!username || username === user.username}
+              >
+                <Save size="1rem" />
+              </ActionIcon>
+            </Group>
 
-        {options?.local && (
-          <Group mt="sm">
-            <Text ff="monospace">Password:</Text>
+            {options?.local && (
+              <Group mt="sm">
+                <Text ff="monospace">Password:</Text>
 
-            <PasswordInput
-              placeholder="Update password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              w={250}
-            />
+                <PasswordInput
+                  placeholder="Update password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  w={250}
+                />
 
-            <ActionIcon
-              onClick={() => updatePassword({ password })}
-              disabled={!password}
-            >
-              <Save size="1rem" />
-            </ActionIcon>
-          </Group>
-        )}
-      </Fieldset>
+                <ActionIcon
+                  onClick={() => updatePassword({ password })}
+                  disabled={!password}
+                >
+                  <Save size="1rem" />
+                </ActionIcon>
+              </Group>
+            )}
+          </Fieldset>
 
-      <LinkedLogins user={user} refetchUser={refetchUser} />
+          <LinkedLogins user={user} refetchUser={refetchUser} />
 
-      <Fieldset legend={<Text size="lg">2FA</Text>}>
-        <Group>
-          <EnrollPasskey user={user} />
-          <EnrollTotp user={user} />
-          {(!!user.totp?.confirmed_at || !!user.passkey?.created_at) && (
-            <EnableSwitch
-              label="Skip 2FA for external logins"
-              checked={user.external_skip_2fa}
-              onCheckedChange={(external_skip_2fa) =>
-                updateExternalSkip2fa({ external_skip_2fa })
-              }
-              redDisabled={false}
-            />
-          )}
-        </Group>
-      </Fieldset>
-    </Page>
+          <Fieldset legend={<Text size="lg">2FA</Text>}>
+            <Group>
+              <EnrollPasskey user={user} />
+              <EnrollTotp user={user} />
+              {(!!user.totp?.confirmed_at || !!user.passkey?.created_at) && (
+                <EnableSwitch
+                  label="Skip 2FA for external logins"
+                  checked={user.external_skip_2fa}
+                  onCheckedChange={(external_skip_2fa) =>
+                    updateExternalSkip2fa({ external_skip_2fa })
+                  }
+                  redDisabled={false}
+                />
+              )}
+            </Group>
+          </Fieldset>
+        </EntityPage>
+      )}
+    </PageGuard>
   );
-};
-
-export default ProfilePage;
+}

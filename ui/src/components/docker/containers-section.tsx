@@ -5,13 +5,14 @@ import { ICONS } from "@/theme/icons";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import Section, { SectionProps } from "@/ui/section";
 import ShowHideButton from "@/ui/show-hide-button";
-import { Group, TextInput } from "@mantine/core";
+import { Group } from "@mantine/core";
 import { Types } from "komodo_client";
 import DockerResourceLink from "./link";
 import StatusBadge from "@/ui/status-badge";
 import { containerStateIntention } from "@/lib/color";
 import DividedChildren from "@/ui/divided-children";
 import ContainerPorts from "@/components/docker/container-ports";
+import SearchInput from "@/ui/search-input";
 
 export interface ContainersSectionProps extends SectionProps {
   serverId: string;
@@ -55,13 +56,7 @@ export default function ContainersSection({
               <Prune serverId={serverId} type="Containers" />
             )}
             {_search && (
-              <TextInput
-                placeholder="search..."
-                leftSection={<ICONS.Search size="1rem" />}
-                value={_search[0]}
-                onChange={(e) => _search[1](e.target.value)}
-                w={{ base: 200, lg: 300 }}
-              />
+              <SearchInput value={_search[0]} onSearch={_search[1]} />
             )}
             {setShow && <ShowHideButton show={show} setShow={setShow} />}
           </Group>

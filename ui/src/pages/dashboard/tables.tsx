@@ -8,12 +8,13 @@ import {
 } from "@/resources";
 import { ICONS } from "@/theme/icons";
 import Section from "@/ui/section";
-import { Group, Stack, Text, TextInput } from "@mantine/core";
+import { Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardNoResources from "./no-resources";
 import ShowHideButton from "@/ui/show-hide-button";
+import SearchInput from "@/ui/search-input";
 
 export default function DashboardTables() {
   const [search, setSearch] = useState("");
@@ -21,13 +22,7 @@ export default function DashboardTables() {
     <Stack gap="xl">
       <Group justify="end">
         <TagsFilter />
-        <TextInput
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="search..."
-          leftSection={<ICONS.Search size="0.8rem" />}
-          w={{ sm: 200, lg: 300 }}
-        />
+        <SearchInput value={search} onSearch={setSearch} />
       </Group>
 
       <DashboardNoResources />

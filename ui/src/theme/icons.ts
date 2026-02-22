@@ -133,6 +133,7 @@ export const ICONS = {
   // MISC
   User,
   Users,
+  UserGroup: Users,
   Key: KeyRound,
   RotateKey: RotateCcwKey,
   Settings,

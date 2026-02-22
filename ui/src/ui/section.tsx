@@ -15,6 +15,7 @@ import { forwardRef, ReactNode } from "react";
 
 export interface SectionProps extends StackProps {
   titleFz?: MantineStyleProps["fz"];
+  titleMb?: MantineStyleProps["mb"];
   titleDimmed?: boolean;
   titleNode?: ReactNode;
   icon?: ReactNode;
@@ -33,6 +34,7 @@ const Section = createPolymorphicComponent<"div", SectionProps>(
     (
       {
         titleFz = "h2",
+        titleMb = "md",
         title,
         titleDimmed,
         titleNode,
@@ -81,7 +83,7 @@ const Section = createPolymorphicComponent<"div", SectionProps>(
           {...props}
           ref={ref}
         >
-          <Stack gap="0.2rem" mb="md">
+          <Stack gap="0.2rem" mb={titleMb}>
             {TitleComponent}
             {description && <Text c="dimmed">{description}</Text>}
           </Stack>

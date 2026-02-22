@@ -4,10 +4,10 @@ import { useRead } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
 import Section from "@/ui/section";
 import { Prune } from "../executions";
-import { Badge, Group, TextInput } from "@mantine/core";
-import { ICONS } from "@/theme/icons";
+import { Badge, Group } from "@mantine/core";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import DockerResourceLink from "@/components/docker/link";
+import SearchInput from "@/ui/search-input";
 
 export default function ServerNetworks({
   id,
@@ -42,12 +42,7 @@ export default function ServerNetworks({
       actions={
         <Group>
           {!allInUse && <Prune serverId={id} type="Networks" />}
-          <TextInput
-            leftSection={<ICONS.Search size="1rem" />}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="search..."
-          />
+          <SearchInput value={search} onSearch={setSearch} />
         </Group>
       }
     >

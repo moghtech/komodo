@@ -325,3 +325,17 @@ export function sendCopyNotification(label = "content") {
     });
   }
 }
+
+export function listsEqual(a: string[], b: string[]) {
+  for (const aa of a) {
+    if (!b.includes(aa)) {
+      return false;
+    }
+  }
+  for (const bb of b) {
+    if (!a.includes(bb)) {
+      return false;
+    }
+  }
+  return true;
+}

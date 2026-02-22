@@ -6,8 +6,7 @@ import {
   useUser,
   useWrite,
 } from "@/lib/hooks";
-import { filterBySplit, sendCopyNotification } from "@/lib/utils";
-import { ICONS } from "@/theme/icons";
+import { filterBySplit } from "@/lib/utils";
 import CopyButton from "@/ui/copy-button";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import {
@@ -17,7 +16,6 @@ import {
   Stack,
   Switch,
   Text,
-  TextInput,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useState } from "react";
@@ -25,6 +23,8 @@ import DeleteVariable from "./delete";
 import SharedTextUpdate, {
   useSharedTextUpdateData,
 } from "@/ui/shared-text-update";
+import CopyText from "@/ui/copy-text";
+import SearchInput from "@/ui/search-input";
 
 export default function SettingsVariables() {
   const user = useUser().data;
@@ -67,13 +67,7 @@ export default function SettingsVariables() {
       <Stack>
         <Group justify="space-between">
           <NewVariable />
-          <TextInput
-            placeholder="search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            w={{ base: 200, lg: 300 }}
-            leftSection={<ICONS.Search size="1rem" />}
-          />
+          <SearchInput value={search} onSearch={setSearch} />
         </Group>
 
         <DataTable
@@ -88,28 +82,7 @@ export default function SettingsVariables() {
               ),
               cell: ({ row }) => {
                 return (
-                  <Group gap="sm" wrap="nowrap">
-                    <Text
-                      title={row.original.name}
-                      w={{ base: 200, lg: 300 }}
-                      p="xs"
-                      bdrs="sm"
-                      style={{
-                        overflow: "hidden",
-                        whiteSpace: "nowrap",
-                        cursor: "pointer",
-                      }}
-                      className="text-ellipsis bordered-light"
-                      size="sm"
-                      onClick={() => {
-                        navigator.clipboard.writeText(row.original.name);
-                        sendCopyNotification("variable name");
-                      }}
-                    >
-                      {row.original.name}
-                    </Text>
-                    <CopyButton content={row.original.name} />
-                  </Group>
+                  <CopyText content={row.original.name} label="variable name" />
                 );
               },
             },

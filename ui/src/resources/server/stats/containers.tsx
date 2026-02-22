@@ -1,14 +1,14 @@
 import { useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import Section from "@/ui/section";
 import ShowHideButton from "@/ui/show-hide-button";
-import { Group, Text, TextInput } from "@mantine/core";
+import { Group, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { useState } from "react";
 import { filterBySplit } from "@/lib/utils";
 import DockerResourceLink from "@/components/docker/link";
 import { useIsServerAvailable } from "../hooks";
+import SearchInput from "@/ui/search-input";
 
 export default function ServerContainerStats({ id }: { id: string }) {
   const [search, setSearch] = useState("");
@@ -36,13 +36,7 @@ export default function ServerContainerStats({ id }: { id: string }) {
       title="Containers"
       titleRight={
         <Group ml="xl" gap="md">
-          <TextInput
-            leftSection={<ICONS.Search size="1rem" />}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="search..."
-            w={{ base: 200, lg: 300 }}
-          />
+          <SearchInput value={search} onSearch={setSearch} />
           <ShowHideButton show={show} setShow={setShow} />
         </Group>
       }

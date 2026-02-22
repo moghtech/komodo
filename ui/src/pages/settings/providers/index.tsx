@@ -19,6 +19,7 @@ import { Types } from "komodo_client";
 import SharedTextUpdate, {
   useSharedTextUpdateData,
 } from "@/ui/shared-text-update";
+import SearchInput from "@/ui/search-input";
 
 export default function SettingsProviders() {
   return (
@@ -74,13 +75,7 @@ function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
       >
         <Group justify="space-between">
           <NewProviderAccount type={type} />
-          <TextInput
-            placeholder="search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            w={{ base: 200, lg: 300 }}
-            leftSection={<ICONS.Search size="1rem" />}
-          />
+          <SearchInput value={search} onSearch={setSearch} />
         </Group>
 
         {/* ACCOUNTS */}

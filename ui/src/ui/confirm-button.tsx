@@ -33,7 +33,12 @@ const ConfirmButton = createPolymorphicComponent<"button", ConfirmButtonProps>(
         <Button
           onClick={(e) => {
             e.stopPropagation();
-            clickedOnce ? onClick?.(e) : setClickedOnce(true);
+            if (clickedOnce) {
+              onClick?.(e);
+              setClickedOnce(false);
+            } else {
+              setClickedOnce(true);
+            }
           }}
           onBlur={(e) => {
             setClickedOnce(false);

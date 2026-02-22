@@ -3,9 +3,10 @@ import { ICONS } from "@/theme/icons";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import Section, { SectionProps } from "@/ui/section";
 import ShowHideButton from "@/ui/show-hide-button";
-import { Group, TextInput } from "@mantine/core";
+import { Group } from "@mantine/core";
 import { Types } from "komodo_client";
 import SwarmResourceLink from "./link";
+import SearchInput from "@/ui/search-input";
 
 export interface SwarmServicesSectionProps extends SectionProps {
   id: string;
@@ -39,13 +40,7 @@ export default function SwarmServicesSection({
         _search || setShow ? (
           <Group>
             {_search && (
-              <TextInput
-                placeholder="search..."
-                leftSection={<ICONS.Search size="1rem" />}
-                value={_search[0]}
-                onChange={(e) => _search[1](e.target.value)}
-                w={{ base: 200, lg: 300 }}
-              />
+              <SearchInput value={_search[0]} onSearch={_search[1]} />
             )}
             {setShow && <ShowHideButton show={show} setShow={setShow} />}
           </Group>

@@ -47,7 +47,7 @@ export default function OmniSearch({}: {}) {
       >
         <Spotlight.Search
           leftSection={<ICONS.Search size="1.3rem" />}
-          placeholder="Search..."
+          placeholder="search..."
         />
         <Spotlight.ActionsList>
           {actions.map((group) => (

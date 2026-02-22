@@ -7,10 +7,11 @@ import { filterBySplit } from "@/lib/utils";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import Page from "@/ui/page";
 import StatusBadge from "@/ui/status-badge";
-import { Group, TextInput } from "@mantine/core";
+import { Group } from "@mantine/core";
 import { useCallback, useMemo, useState } from "react";
 import DividedChildren from "@/ui/divided-children";
 import ResourceLink from "@/resources/link";
+import SearchInput from "@/ui/search-input";
 
 export default function Containers() {
   const [search, setSearch] = useState("");
@@ -52,14 +53,7 @@ export default function Containers() {
     >
       <Group justify="space-between">
         <Group>{/** SERVER MULTI SELECT */}</Group>
-
-        <TextInput
-          leftSection={<ICONS.Search size="1rem" />}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="search..."
-          w={{ base: 200, lg: 300 }}
-        />
+        <SearchInput value={search} onSearch={setSearch} />
       </Group>
 
       <DataTable

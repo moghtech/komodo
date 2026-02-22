@@ -1,11 +1,11 @@
 import { useRead } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
-import { ICONS } from "@/theme/icons";
 import { DataTable, SortableHeader } from "@/ui/data-table";
+import SearchInput from "@/ui/search-input";
 import Section from "@/ui/section";
 import ShowHideButton from "@/ui/show-hide-button";
 import TableSkeleton from "@/ui/table-skeleton";
-import { Group, TextInput } from "@mantine/core";
+import { Group } from "@mantine/core";
 import { useState } from "react";
 
 export default function ServerProcesses({ id }: { id: string }) {
@@ -27,13 +27,7 @@ export default function ServerProcesses({ id }: { id: string }) {
       title="Processes"
       titleRight={
         <Group ml="xl">
-          <TextInput
-            leftSection={<ICONS.Search size="1rem" />}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="search..."
-            w={{ base: 200, lg: 300 }}
-          />
+          <SearchInput value={search} onSearch={setSearch} />
           <ShowHideButton show={show} setShow={setShow} />
         </Group>
       }

@@ -1,9 +1,10 @@
 import { filterMultitermBySplit } from "@/lib/utils";
 import { ICONS } from "@/theme/icons";
 import Section, { SectionProps } from "@/ui/section";
-import { Box, GroupProps, TextInput } from "@mantine/core";
+import { Box, GroupProps } from "@mantine/core";
 import { useMemo, useState } from "react";
 import DockerOptions from "./options";
+import SearchInput from "@/ui/search-input";
 
 export interface DockerLabelsSectionProps extends Omit<
   SectionProps,
@@ -33,12 +34,7 @@ export default function DockerLabelsSection({
       icon={<ICONS.Tags size="1.3rem" />}
       titleRight={
         <Box pl="md">
-          <TextInput
-            placeholder="search..."
-            leftSection={<ICONS.Search size="1rem" />}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <SearchInput value={search} onSearch={setSearch} />
         </Box>
       }
       {...props}

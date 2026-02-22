@@ -2,12 +2,12 @@ import NewTag from "@/components/tags/new";
 import Tag from "@/components/tags/tag";
 import UserAvatar from "@/components/user-avatar";
 import { useRead, useSetTitle, useUser } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
 import { DataTable } from "@/ui/data-table";
-import { Group, Stack, TextInput } from "@mantine/core";
+import { Group, Stack } from "@mantine/core";
 import { useState } from "react";
 import TagColorSelector from "./color-selector";
 import DeleteTag from "./delete";
+import SearchInput from "@/ui/search-input";
 
 export default function SettingsTags() {
   useSetTitle("Tags");
@@ -21,13 +21,7 @@ export default function SettingsTags() {
     <Stack>
       <Group justify="space-between">
         <NewTag />
-        <TextInput
-          placeholder="search..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          w={{ base: 200, lg: 300 }}
-          leftSection={<ICONS.Search size="1rem" />}
-        />
+        <SearchInput value={search} onSearch={setSearch} />
       </Group>
 
       <DataTable

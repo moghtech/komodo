@@ -11,14 +11,14 @@ import {
 import { ResourceComponents, UsableResource } from "@/resources";
 import { Types } from "komodo_client";
 import Page from "@/ui/page";
-import { Group, Switch, TextInput } from "@mantine/core";
-import { ICONS } from "@/theme/icons";
+import { Group, Switch } from "@mantine/core";
 import TableSkeleton from "@/ui/table-skeleton";
 import TemplateQuerySelector from "@/components/template-query-selector";
 import TagsFilter from "@/components/tags/filter";
 import ResourceNotFound from "@/resources/not-found";
 import ExportToml from "@/components/export-toml";
 import ServerShowStats from "@/resources/server/show-stats";
+import SearchInput from "@/ui/search-input";
 
 export default function Resources({ _type }: { _type?: UsableResource }) {
   const is_admin = useUser().data?.admin ?? false;
@@ -89,13 +89,7 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
           )}
           <TemplateQuerySelector />
           <TagsFilter />
-          <TextInput
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="search..."
-            leftSection={<ICONS.Search size="0.8rem" />}
-            w={{ sm: 200, lg: 300 }}
-          />
+          <SearchInput value={search} onSearch={setSearch} />
         </Group>
       </Group>
 

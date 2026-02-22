@@ -1,4 +1,3 @@
-import { useUser } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import ConfirmButton from "@/ui/confirm-button";
 import ConfirmModal from "@/ui/confirm-modal";
@@ -14,7 +13,6 @@ export interface UserTableProps extends BoxProps {
   onUserRemove?: (user_id: string) => void;
   onUserDelete?: (user_id: string) => Promise<unknown>;
   userDeleteDisabled?: (user_id: string) => boolean;
-  onSelfClick?: () => void;
 }
 
 export default function UserTable({
@@ -22,12 +20,9 @@ export default function UserTable({
   onUserRemove,
   onUserDelete,
   userDeleteDisabled,
-  onSelfClick,
   ...boxProps
 }: UserTableProps) {
-  const user = useUser().data;
   const nav = useNavigate();
-
   const columns: ColumnDef<Types.User, "User" | "Admin" | "Super Admin">[] = [
     { header: "Username", accessorKey: "username" },
     {
@@ -98,11 +93,7 @@ export default function UserTable({
       tableKey="user-table"
       data={users}
       columns={columns}
-      onRowClick={(row) =>
-        row._id?.$oid === user?._id?.$oid
-          ? onSelfClick?.()
-          : nav(`/users/${row._id!.$oid}`)
-      }
+      onRowClick={(row) => nav(`/users/${row._id!.$oid}`)}
       {...boxProps}
     />
   );

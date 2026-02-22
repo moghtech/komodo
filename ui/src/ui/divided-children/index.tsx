@@ -7,7 +7,11 @@ import classes from "./index.module.scss";
 const DividedChildren = createPolymorphicComponent<"div", GroupProps>(
   forwardRef<HTMLDivElement, GroupProps>(({ className, ...props }, ref) => (
     <Group
-      className={classes["divided-children"]}
+      className={
+        className
+          ? classes["divided-children"] + " " + className
+          : classes["divided-children"]
+      }
       gap="md"
       {...props}
       ref={ref}

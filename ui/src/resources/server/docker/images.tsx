@@ -3,12 +3,12 @@ import { useServerDockerSearch } from ".";
 import { useRead } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
 import Section from "@/ui/section";
-import { Badge, Group, TextInput } from "@mantine/core";
+import { Badge, Group } from "@mantine/core";
 import { Prune } from "../executions";
-import { ICONS } from "@/theme/icons";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import DockerResourceLink from "@/components/docker/link";
 import { fmtSizeBytes } from "@/lib/formatting";
+import SearchInput from "@/ui/search-input";
 
 export default function ServerImages({
   id,
@@ -32,12 +32,7 @@ export default function ServerImages({
       actions={
         <Group>
           {!allInUse && <Prune serverId={id} type="Images" />}
-          <TextInput
-            leftSection={<ICONS.Search size="1rem" />}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="search..."
-          />
+          <SearchInput value={search} onSearch={setSearch} />
         </Group>
       }
     >

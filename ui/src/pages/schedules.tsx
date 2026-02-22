@@ -13,13 +13,14 @@ import ResourceLink from "@/resources/link";
 import { ICONS } from "@/theme/icons";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import Page from "@/ui/page";
-import { Group, Switch, TextInput } from "@mantine/core";
+import SearchInput from "@/ui/search-input";
+import { Group, Switch } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useState } from "react";
 
 export default function Schedules() {
   useSetTitle("Schedules");
-  const [search, set] = useState("");
+  const [search, setSearch] = useState("");
   const { tags } = useTags();
   const schedules = useRead("ListSchedules", { tags }).data;
   const filtered = filterBySplit(schedules ?? [], search, (item) => item.name);
@@ -32,13 +33,7 @@ export default function Schedules() {
     >
       <Group justify="end">
         <TagsFilter />
-        <TextInput
-          value={search}
-          onChange={(e) => set(e.target.value)}
-          placeholder="search..."
-          leftSection={<ICONS.Search size="1rem" />}
-          w={{ sm: 200, lg: 300 }}
-        />
+        <SearchInput value={search} onSearch={setSearch} />
       </Group>
 
       <DataTable

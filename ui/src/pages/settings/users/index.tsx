@@ -14,14 +14,12 @@ import { notifications } from "@mantine/notifications";
 import { filterBySplit } from "@/lib/utils";
 import { ICONS } from "@/theme/icons";
 import UserTable from "@/components/user/table";
-import { useNavigate } from "react-router-dom";
 import NewServiceUser from "./new-service-user";
 import NewLocalUser from "./new-local-user";
 
 export default function SettingsUsers() {
   useSetTitle("Users");
   const inv = useInvalidate();
-  const nav = useNavigate();
   const [search, setSearch] = useState("");
   const user = useUser().data;
   const localLoginEnabled = useLoginOptions().data?.local;
@@ -57,7 +55,6 @@ export default function SettingsUsers() {
             if (toDelete.super_admin) return true;
             return !user?.super_admin;
           }}
-          onSelfClick={() => nav("/profile")}
         />
       </Section>
     </Stack>

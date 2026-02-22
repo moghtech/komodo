@@ -1,7 +1,7 @@
 import { useRead } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import UpdateCard from "./card";
-import { Button, Box, BoxProps, Stack } from "@mantine/core";
+import { Button, Box, BoxProps, Stack, Center } from "@mantine/core";
 import { ICONS } from "@/theme/icons";
 import { Link } from "react-router-dom";
 
@@ -23,12 +23,17 @@ export default function UpdateList({
   style,
   ...boxProps
 }: UpdateListProps) {
-  const updates = useRead("ListUpdates", {
-    query,
-  }).data;
+  const updates = useRead(
+    "ListUpdates",
+    {
+      query,
+    },
+    { enabled: !!query },
+  ).data;
   return (
     <Box style={{ overflow: "auto", ...style }} {...boxProps}>
       <Stack pr="sm" gap="0">
+        {!updates?.updates.length && <Center c="dimmed">No Updates</Center>}
         {updates?.updates.slice(0, max).map((update, i) => (
           <UpdateCard
             key={update.id}

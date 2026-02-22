@@ -25,14 +25,14 @@ export default function UserAvatar({
     forceDefaultAvatar || !user?.avatar ? (
       <ICONS.User
         size={iconSize}
-        color={dimmed ? "var(--mantine-color-dimmed-0)" : undefined}
+        color={dimmed ? "var(--mantine-color-dimmed-7)" : undefined}
       />
     ) : (
       <img
         src={user.avatar}
         alt="avatar"
         style={{ width: iconSize, height: iconSize }}
-        color={dimmed ? "var(--mantine-color-dimmed-0)" : undefined}
+        color={dimmed ? "var(--mantine-color-dimmed-7)" : undefined}
       />
     );
 
