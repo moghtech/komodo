@@ -3,6 +3,7 @@ import { tagColor } from "@/lib/color";
 import {
   useInvalidate,
   useRead,
+  useSearchCombobox,
   useShiftKeyListener,
   useWrite,
 } from "@/lib/hooks";
@@ -16,11 +17,9 @@ import {
   Divider,
   Group,
   Text,
-  useCombobox,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { MinusCircle } from "lucide-react";
-import { useEffect, useState } from "react";
 import { ResourceComponents, UsableResourceTarget } from ".";
 
 export const ResourceTags = ({
@@ -59,17 +58,7 @@ export const ResourceTags = ({
 
 export const AddResourceTags = (target: UsableResourceTarget) => {
   const { type, id } = target;
-  const [search, setSearch] = useState("");
-  const combobox = useCombobox({
-    onDropdownClose: () => {
-      combobox.resetSelectedOption();
-      combobox.focusTarget();
-      setSearch("");
-    },
-    onDropdownOpen: () => {
-      combobox.focusSearchInput();
-    },
-  });
+  const { search, setSearch, combobox } = useSearchCombobox();
 
   const inv = useInvalidate();
 
@@ -106,10 +95,6 @@ export const AddResourceTags = (target: UsableResourceTarget) => {
       tags: [...(resource?.tags ?? []), tag._id!.$oid],
     });
   };
-
-  useEffect(() => {
-    combobox.selectFirstOption();
-  }, [search]);
 
   if (!resource) {
     return null;

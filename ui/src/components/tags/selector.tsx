@@ -1,4 +1,4 @@
-import { useShiftKeyListener } from "@/lib/hooks";
+import { useSearchCombobox, useShiftKeyListener } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import { filterBySplit } from "@/lib/utils";
 import {
@@ -10,10 +10,8 @@ import {
   ComboboxProps,
   Group,
   Text,
-  useCombobox,
 } from "@mantine/core";
 import { Types } from "komodo_client";
-import { useEffect, useState } from "react";
 
 export interface TagSelectorProps extends ComboboxProps {
   title: string;
@@ -32,21 +30,8 @@ export default function TagSelector({
   disabled,
   ...comboboxProps
 }: TagSelectorProps) {
-  const [search, setSearch] = useState("");
+  const { search, setSearch, combobox } = useSearchCombobox();
   const filtered = filterBySplit(tags, search, (item) => item.name);
-  const combobox = useCombobox({
-    onDropdownOpen: () => {
-      combobox.focusSearchInput();
-    },
-    onDropdownClose: () => {
-      combobox.resetSelectedOption();
-      combobox.focusTarget();
-      setSearch("");
-    },
-  });
-  useEffect(() => {
-    combobox.selectFirstOption();
-  }, [search]);
   useShiftKeyListener(
     shiftKey ?? "",
     () => shiftKey && combobox.openDropdown(),

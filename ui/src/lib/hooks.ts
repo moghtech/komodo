@@ -25,6 +25,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { useWindowEvent } from "@mantine/hooks";
 import { PermissionLevelAndSpecifics } from "komodo_client/dist/types";
+import { useCombobox } from "@mantine/core";
 
 export function komodo_client() {
   return KomodoClient(KOMODO_BASE_URL, {
@@ -779,4 +780,36 @@ function addUserTargetPermissions<I>(
       });
     }
   });
+}
+
+export function useSearchCombobox(props?: {
+  onOpen?: () => void;
+  onClose?: () => void;
+  onSearch?: (search: string) => void;
+  disableSelectFirst?: boolean;
+}) {
+  const [search, setSearch] = useState("");
+  const combobox = useCombobox({
+    onDropdownOpen: () => {
+      combobox.focusSearchInput();
+      props?.onOpen?.();
+    },
+    onDropdownClose: () => {
+      combobox.resetSelectedOption();
+      combobox.focusTarget();
+      setSearch("");
+      props?.onClose?.();
+    },
+  });
+  useEffect(() => {
+    if (!props?.disableSelectFirst) {
+      combobox.selectFirstOption();
+    }
+    props?.onSearch?.(search);
+  }, [search]);
+  return {
+    search,
+    setSearch,
+    combobox,
+  };
 }

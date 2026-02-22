@@ -7,13 +7,12 @@ import {
   ComboboxProps,
   Group,
   Text,
-  useCombobox,
 } from "@mantine/core";
-import { useEffect, useState } from "react";
 import { filterBySplit } from "@/lib/utils";
 import { ChevronsUpDown } from "lucide-react";
 import { fmtResourceType } from "@/lib/formatting";
 import { ICONS } from "@/theme/icons";
+import { useSearchCombobox } from "@/lib/hooks";
 
 export interface ResourceSelectorProps extends ComboboxProps {
   type: UsableResource;
@@ -41,7 +40,6 @@ export default function ResourceSelector({
   targetProps,
   ...comboboxProps
 }: ResourceSelectorProps) {
-  const [search, setSearch] = useState("");
   const templateFilterFn =
     templates === Types.TemplatesQueryBehavior.Exclude
       ? (r: Types.ResourceListItem<unknown>) => !r.template
@@ -57,19 +55,7 @@ export default function ResourceSelector({
   );
   const name = resources?.find((r) => r.id === selected)?.name;
 
-  const combobox = useCombobox({
-    onDropdownOpen: () => {
-      combobox.focusSearchInput();
-    },
-    onDropdownClose: () => {
-      combobox.resetSelectedOption();
-      combobox.focusTarget();
-      setSearch("");
-    },
-  });
-  useEffect(() => {
-    combobox.selectFirstOption();
-  }, [search]);
+  const { search, setSearch, combobox } = useSearchCombobox();
 
   const filtered = filterBySplit(resources, search, (item) => item.name).sort(
     (a, b) => {
@@ -87,13 +73,13 @@ export default function ResourceSelector({
     <Combobox
       store={combobox}
       width={300}
+      position={position}
       onOptionSubmit={(_id, props) => {
         const id = _id === "None" ? "" : _id;
         onSelect?.(id);
         onOptionSubmit?.(id, props);
         combobox.closeDropdown();
       }}
-      position={position}
       {...comboboxProps}
     >
       <Combobox.Target>
@@ -121,7 +107,7 @@ export default function ResourceSelector({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           leftSection={<ICONS.Search size="1rem" style={{ marginRight: 6 }} />}
-          placeholder="Search"
+          placeholder="search..."
         />
         <Combobox.Options mah={224} style={{ overflowY: "auto" }}>
           {!search && <Combobox.Option value="None">None</Combobox.Option>}

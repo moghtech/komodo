@@ -1,4 +1,4 @@
-import { useWrite } from "@/lib/hooks";
+import { useSearchCombobox, useWrite } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
 import { ICONS } from "@/theme/icons";
 import {
@@ -9,11 +9,10 @@ import {
   Divider,
   Group,
   Text,
-  useCombobox,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export interface NewTerminalProps extends ComboboxProps {
   target: Types.TerminalTarget;
@@ -39,20 +38,7 @@ export default function NewTerminal({
   const [service, setService] = useState<string | undefined>(undefined);
   const { mutateAsync: createTerminal } = useWrite("CreateTerminal");
 
-  const [search, setSearch] = useState("");
-  const combobox = useCombobox({
-    onDropdownOpen: () => {
-      combobox.focusSearchInput();
-    },
-    onDropdownClose: () => {
-      combobox.resetSelectedOption();
-      combobox.focusTarget();
-      setSearch("");
-    },
-  });
-  useEffect(() => {
-    combobox.selectFirstOption();
-  }, [search]);
+  const { search, setSearch, combobox } = useSearchCombobox();
 
   const create = async (command: string | undefined, isServer: boolean) => {
     if (!existingTerminals) return;

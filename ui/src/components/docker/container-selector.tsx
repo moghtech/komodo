@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { ChevronsUpDown } from "lucide-react";
 import {
   Button,
@@ -7,10 +7,9 @@ import {
   ComboboxProps,
   Group,
   Text,
-  useCombobox,
 } from "@mantine/core";
 import { Types } from "komodo_client";
-import { useRead } from "@/lib/hooks";
+import { useRead, useSearchCombobox } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import { filterBySplit } from "@/lib/utils";
 import { DOCKER_LINK_ICONS } from "@/components/docker/link";
@@ -37,7 +36,6 @@ export default function ContainerSelector({
   targetProps,
   ...comboboxProps
 }: ContainerSelectorProps) {
-  const [search, setSearch] = useState("");
   const containers = useRead("ListDockerContainers", {
     server: serverId,
   }).data?.filter((container) => !state || container.state === state);
@@ -47,19 +45,7 @@ export default function ContainerSelector({
   }, [firstContainer]);
   const name = containers?.find((r) => r.name === selected)?.name;
 
-  const combobox = useCombobox({
-    onDropdownOpen: () => {
-      combobox.focusSearchInput();
-    },
-    onDropdownClose: () => {
-      combobox.resetSelectedOption();
-      combobox.focusTarget();
-      setSearch("");
-    },
-  });
-  useEffect(() => {
-    combobox.selectFirstOption();
-  }, [search]);
+  const { search, setSearch, combobox } = useSearchCombobox();
 
   if (!containers) return null;
 

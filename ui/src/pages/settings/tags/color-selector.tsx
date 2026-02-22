@@ -1,5 +1,5 @@
 import { fmtUpperCamelcase } from "@/lib/formatting";
-import { useInvalidate, useWrite } from "@/lib/hooks";
+import { useInvalidate, useSearchCombobox, useWrite } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
 import { ICONS } from "@/theme/icons";
 import {
@@ -9,10 +9,8 @@ import {
   ComboboxProps,
   Group,
   Text,
-  useCombobox,
 } from "@mantine/core";
 import { Types } from "komodo_client";
-import { useEffect, useState } from "react";
 
 export interface TagColorSelectorProps extends ComboboxProps {
   tagId: string;
@@ -26,25 +24,12 @@ export default function TagColorSelector({
   disabled,
   ...comboboxProps
 }: TagColorSelectorProps) {
-  const [search, setSearch] = useState("");
+  const { search, setSearch, combobox } = useSearchCombobox();
   const filtered = filterBySplit(
     Object.values(Types.TagColor),
     search,
     (item) => item,
   );
-  const combobox = useCombobox({
-    onDropdownOpen: () => {
-      combobox.focusSearchInput();
-    },
-    onDropdownClose: () => {
-      combobox.resetSelectedOption();
-      combobox.focusTarget();
-      setSearch("");
-    },
-  });
-  useEffect(() => {
-    combobox.selectFirstOption();
-  }, [search]);
 
   const inv = useInvalidate();
   const { mutateAsync: updateColor, isPending } = useWrite("UpdateTagColor", {

@@ -1,5 +1,5 @@
 import { fmtDate, fmtVersion } from "@/lib/formatting";
-import { useRead } from "@/lib/hooks";
+import { useRead, useSearchCombobox } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import { filterBySplit } from "@/lib/utils";
 import ResourceSelector from "@/resources/selector";
@@ -10,11 +10,9 @@ import {
   Select,
   Text,
   TextInput,
-  useCombobox,
 } from "@mantine/core";
 import { Types } from "komodo_client";
 import { ChevronsUpDown } from "lucide-react";
-import { useEffect, useState } from "react";
 
 export interface DeploymentImageConfigProps {
   image: Types.DeploymentImage | undefined;
@@ -133,28 +131,18 @@ function BuildVersionSelector({
   selected: Types.Version | undefined;
   onSelect: (version: Types.Version) => void;
 }) {
-  const [search, setSearch] = useState("");
   const versions = useRead(
     "ListBuildVersions",
     { build: buildId! },
     { enabled: !!buildId },
   ).data;
-  const combobox = useCombobox({
-    onDropdownOpen: () => {
-      combobox.focusSearchInput();
-    },
-    onDropdownClose: () => {
-      combobox.resetSelectedOption();
-      combobox.focusTarget();
-      setSearch("");
-    },
-  });
-  useEffect(() => {
-    combobox.selectFirstOption();
-  }, [search]);
+
+  const { search, setSearch, combobox } = useSearchCombobox();
+
   const filtered = filterBySplit(versions, search, (item) =>
     fmtVersion(item.version),
   );
+
   return (
     <Combobox
       store={combobox}

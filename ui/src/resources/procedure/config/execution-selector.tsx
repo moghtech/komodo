@@ -1,17 +1,11 @@
 import { Types } from "komodo_client";
 import { PROCEDURE_EXECUTIONS } from "./executions";
-import { useEffect, useState } from "react";
 import { filterBySplit } from "@/lib/utils";
-import {
-  Button,
-  ButtonProps,
-  Combobox,
-  ComboboxProps,
-  useCombobox,
-} from "@mantine/core";
+import { Button, ButtonProps, Combobox, ComboboxProps } from "@mantine/core";
 import { ChevronsUpDown } from "lucide-react";
 import { fmtUpperCamelcase } from "@/lib/formatting";
 import { ICONS } from "@/theme/icons";
+import { useSearchCombobox } from "@/lib/hooks";
 
 export interface ProcedureExecutionSelectorProps extends ComboboxProps {
   type: Types.Execution["type"];
@@ -33,21 +27,7 @@ export default function ProcedureExecutionSelector({
     (c) => !["None"].includes(c),
   );
 
-  const [search, setSearch] = useState("");
-
-  const combobox = useCombobox({
-    onDropdownOpen: () => {
-      combobox.focusSearchInput();
-    },
-    onDropdownClose: () => {
-      combobox.resetSelectedOption();
-      combobox.focusTarget();
-      setSearch("");
-    },
-  });
-  useEffect(() => {
-    combobox.selectFirstOption();
-  }, [search]);
+  const { search, setSearch, combobox } = useSearchCombobox();
 
   const filtered = filterBySplit(executionTypes, search, (item) => item);
 

@@ -1,4 +1,4 @@
-import { useRead } from "@/lib/hooks";
+import { useRead, useSearchCombobox } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
 import {
   Button,
@@ -7,11 +7,10 @@ import {
   ComboboxProps,
   Group,
   Text,
-  useCombobox,
 } from "@mantine/core";
 import { Types } from "komodo_client";
 import { ChevronsUpDown } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { DOCKER_LINK_ICONS } from "./docker/link";
 import { ICONS } from "@/theme/icons";
 
@@ -37,7 +36,6 @@ export default function StackServiceSelector({
   targetProps,
   ...comboboxProps
 }: StackServiceSelectorProps) {
-  const [search, setSearch] = useState("");
   const services = useRead("ListStackServices", {
     stack: stackId,
   }).data?.filter((service) => !state || service?.container?.state === state);
@@ -48,19 +46,7 @@ export default function StackServiceSelector({
   const name = services?.find((s) => s.service === selected)?.service;
   const container = services?.find((s) => s.service === selected)?.container;
 
-  const combobox = useCombobox({
-    onDropdownOpen: () => {
-      combobox.focusSearchInput();
-    },
-    onDropdownClose: () => {
-      combobox.resetSelectedOption();
-      combobox.focusTarget();
-      setSearch("");
-    },
-  });
-  useEffect(() => {
-    combobox.selectFirstOption();
-  }, [search]);
+  const { search, setSearch, combobox } = useSearchCombobox();
 
   if (!services) return null;
 

@@ -78,7 +78,7 @@ export default function User() {
     <PageGuard
       isPending={isPending}
       error={
-        !adminUser
+        !adminUser?.admin
           ? "This page is only for admin users."
           : !user
             ? "User could not be found"
@@ -179,17 +179,17 @@ export default function User() {
           {user?.enabled && !user.admin && <UserMemberGroups userId={userId} />}
 
           {user?.config.type === "Service" && (
-            <ApiKeysSection userId={user._id?.$oid!} mt="md" />
+            <ApiKeysSection userId={userId} mt="md" />
           )}
 
           {user?.enabled && !user.admin && (
             <>
               <BasePermissionsSection
-                userTarget={{ type: "User", id: user._id?.$oid! }}
+                userTarget={{ type: "User", id: userId }}
                 mt="md"
               />
               <SpecificPermissionsSection
-                userTarget={{ type: "User", id: user._id?.$oid! }}
+                userTarget={{ type: "User", id: userId }}
                 mt="md"
               />
             </>

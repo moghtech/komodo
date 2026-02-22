@@ -1,9 +1,8 @@
-import { useSettingsView } from "@/lib/hooks";
+import { useSearchCombobox, useSettingsView } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import { filterBySplit } from "@/lib/utils";
-import { Button, Combobox, ComboboxProps, useCombobox } from "@mantine/core";
+import { Button, Combobox, ComboboxProps } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export interface SecretSelectorProps extends ComboboxProps {
@@ -19,16 +18,8 @@ export default function SecretSelector({
 }: SecretSelectorProps) {
   const nav = useNavigate();
   const [_, setSettingsView] = useSettingsView();
-  const [search, setSearch] = useState("");
-  const combobox = useCombobox({
-    onDropdownOpen: () => {
-      combobox.focusSearchInput();
-    },
-    onDropdownClose: () => {
-      combobox.resetSelectedOption();
-      combobox.focusTarget();
-      setSearch("");
-    },
+  const { search, setSearch, combobox } = useSearchCombobox({
+    disableSelectFirst: true,
   });
 
   const filtered = filterBySplit(keys, search, (item) => item).sort((a, b) => {

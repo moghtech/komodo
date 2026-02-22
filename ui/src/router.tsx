@@ -22,6 +22,7 @@ const Resources = lazy(() => import("@/pages/resources"));
 const Resource = lazy(() => import("@/pages/resource"));
 const Profile = lazy(() => import("@/pages/profile"));
 const User = lazy(() => import("@/pages/user"));
+const UserGroup = lazy(() => import("@/pages/user-group"));
 const Schedules = lazy(() => import("@/pages/schedules"));
 const Terminals = lazy(() => import("@/pages/terminals"));
 const Terminal = lazy(() => import("@/pages/terminal"));
@@ -65,6 +66,7 @@ export const Router = () => {
             <Route path="profile" element={<Profile />} />
             <Route path="schedules" element={<Schedules />} />
             <Route path="schedules" element={<Schedules />} />
+            <Route path="user-groups/:id" element={<UserGroup />} />
             <Route path="users/:id" element={<User />} />
             <Route path=":type">
               <Route path="" element={<Resources />} />

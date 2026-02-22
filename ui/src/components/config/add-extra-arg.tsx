@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
-import { useRead } from "@/lib/hooks";
+import { useRead, useSearchCombobox } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
-import { Button, Combobox, useCombobox } from "@mantine/core";
+import { Button, Combobox } from "@mantine/core";
 import { ICONS } from "@/theme/icons";
 
 export interface AddExtraArgProps {
@@ -16,20 +15,7 @@ export default function AddExtraArg({
   disabled,
 }: AddExtraArgProps) {
   const suggestions = useRead(`ListCommon${type}ExtraArgs`, {}).data ?? [];
-  const [search, setSearch] = useState("");
-  const combobox = useCombobox({
-    onDropdownOpen: () => {
-      combobox.focusSearchInput();
-    },
-    onDropdownClose: () => {
-      combobox.resetSelectedOption();
-      combobox.focusTarget();
-      setSearch("");
-    },
-  });
-  useEffect(() => {
-    combobox.selectFirstOption();
-  }, [search]);
+  const { search, setSearch, combobox } = useSearchCombobox();
 
   if (suggestions.length === 0) {
     return (
