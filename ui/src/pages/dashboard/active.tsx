@@ -1,9 +1,11 @@
 import {
   actionStateIntention,
   buildStateIntention,
+  deploymentStateIntention,
   hexColorByIntention,
   procedureStateIntention,
   repoStateIntention,
+  stackStateIntention,
 } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
 import ResourceLink from "@/resources/link";
@@ -17,6 +19,22 @@ import { Circle } from "lucide-react";
 import { ReactNode } from "react";
 
 export default function DashboardActiveResources() {
+  const stacks =
+    useRead("ListStacks", {}).data?.filter((stack) =>
+      [
+        Types.StackState.Deploying,
+        Types.StackState.Restarting,
+        Types.StackState.Removing,
+      ].includes(stack.info.state),
+    ) ?? [];
+  const deployments =
+    useRead("ListDeployments", {}).data?.filter((deployment) =>
+      [
+        Types.DeploymentState.Deploying,
+        Types.DeploymentState.Restarting,
+        Types.DeploymentState.Removing,
+      ].includes(deployment.info.state),
+    ) ?? [];
   const builds =
     useRead("ListBuilds", {}).data?.filter(
       (build) => build.info.state === Types.BuildState.Building,
@@ -51,6 +69,26 @@ export default function DashboardActiveResources() {
     label?: string;
     state: ReactNode;
   }[] = [
+    ...stacks.map((stack) => ({
+      type: "Stack" as Types.ResourceTarget["type"],
+      id: stack.id,
+      state: (
+        <StatusBadge
+          text={stack.info.state}
+          intent={stackStateIntention(stack.info.state)}
+        />
+      ),
+    })),
+    ...deployments.map((deployment) => ({
+      type: "Deployment" as Types.ResourceTarget["type"],
+      id: deployment.id,
+      state: (
+        <StatusBadge
+          text={deployment.info.state}
+          intent={deploymentStateIntention(deployment.info.state)}
+        />
+      ),
+    })),
     ...builds.map((build) => ({
       type: "Build" as Types.ResourceTarget["type"],
       id: build.id,

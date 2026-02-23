@@ -19,6 +19,7 @@ import {
 } from "@mantine/core";
 import { ICONS } from "@/theme/icons";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
+import { hexColorByIntention } from "@/lib/color";
 
 export default function StackUpdateAvailable({
   id,
@@ -76,15 +77,15 @@ export default function StackUpdateAvailable({
             {small ? (
               <ActionIcon
                 variant="outline"
-                bd="1px solid var(--mantine-color-blue-7)"
-                size="sm"
+                bd={"1px solid " + hexColorByIntention("Neutral")}
+                size="md"
               >
                 <ICONS.UpdateAvailable size="1rem" />
               </ActionIcon>
             ) : (
               <Button
                 variant="outline"
-                bd="1px solid var(--mantine-color-blue-7)"
+                bd={"1px solid " + hexColorByIntention("Neutral")}
                 leftSection={<ICONS.UpdateAvailable size="1rem" />}
               >
                 Update
