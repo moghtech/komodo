@@ -21,7 +21,7 @@ export default function Settings() {
       ? "Variables"
       : view;
   return (
-    <Stack gap="xl">
+    <Stack gap="xl" mb="50vh">
       <SettingsCoreInfo />
       <MobileFriendlyTabs
         value={view}

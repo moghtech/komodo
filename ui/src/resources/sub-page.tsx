@@ -53,12 +53,12 @@ export default function ResourceSubPage({
         pageProps?.backTo ?? `/${usableResourcePath(parentType)}/${parentId}`
       }
     >
-      <Stack hiddenFrom="xl" w="100%">
+      <Stack hiddenFrom="lg" w="100%">
         {Header}
         <ResourceUpdates type={parentType} id={parentId} />
       </Stack>
       <Group
-        visibleFrom="xl"
+        visibleFrom="lg"
         gap="xl"
         w="100%"
         align="stretch"

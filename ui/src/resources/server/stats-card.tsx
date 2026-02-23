@@ -129,7 +129,12 @@ export default function ServerStatsCard({ id }: ServerStatsCardProps) {
       {(isUnreachable || isDisabled) && (
         <Center
           renderRoot={(props) => (
-            <Overlay color="black" backgroundOpacity={0.5} {...props} />
+            <Overlay
+              color="black"
+              backgroundOpacity={0.5}
+              zIndex={1 /** to not overlay topbar */}
+              {...props}
+            />
           )}
         >
           <Text fw="bold" fs="italic" c="dimmed">

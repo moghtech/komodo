@@ -73,12 +73,12 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
         </>
       }
     >
-      <Stack hiddenFrom="xl2" w="100%">
+      <Stack hiddenFrom="lg" w="100%">
         <ResourceHeader type={type} id={id} />
         <ResourceUpdates type={type} id={id} />
       </Stack>
       <Group
-        visibleFrom="xl2"
+        visibleFrom="lg"
         gap="xl"
         w="100%"
         align="stretch"

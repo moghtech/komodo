@@ -86,14 +86,14 @@ export default function User() {
       }
     >
       <EntityPage backTo="/settings">
-        <Stack hiddenFrom="xl" w="100%">
+        <Stack hiddenFrom="lg" w="100%">
           {Header}
           <UpdatesSection
             query={user?._id?.$oid && { operator: user._id.$oid }}
           />
         </Stack>
         <Group
-          visibleFrom="xl"
+          visibleFrom="lg"
           gap="xl"
           w="100%"
           align="stretch"

@@ -75,23 +75,21 @@ const Topbar = ({
       </Center>
 
       {/** RIGHT AREA */}
-      <Group gap="0.3rem" style={{ justifySelf: "flex-end" }} wrap="nowrap">
-        <Group gap="0.5rem" wrap="nowrap">
-          <Box hiddenFrom="lg">
-            <OmniSearch />
-          </Box>
-          <TopbarLink to="/docs">Api</TopbarLink>
-          <TopbarLink to="https://komo.do/docs/intro">Docs</TopbarLink>
-          {version && (
-            <TopbarLink to="https://github.com/moghtech/komodo/releases">
-              v{version}
-            </TopbarLink>
-          )}
-          <WebsocketStatus />
-          <TopbarAlerts />
-          <TopbarUpdates />
-          <ThemeToggle />
-        </Group>
+      <Group gap="0" style={{ justifySelf: "flex-end" }} wrap="nowrap">
+        <Box hiddenFrom="lg">
+          <OmniSearch />
+        </Box>
+        <TopbarLink to="/docs">Api</TopbarLink>
+        <TopbarLink to="https://komo.do/docs/intro">Docs</TopbarLink>
+        {version && (
+          <TopbarLink to="https://github.com/moghtech/komodo/releases">
+            v{version}
+          </TopbarLink>
+        )}
+        <WebsocketStatus />
+        <TopbarAlerts />
+        <TopbarUpdates />
+        <ThemeToggle />
         <UserDropdown />
       </Group>
     </AppShell.Header>

@@ -51,14 +51,14 @@ const theme = createTheme({
   cursorType: "pointer",
   primaryColor: "accent",
   breakpoints: {
-    xs: "36em",
-    sm: "48em",
-    md: "62em",
-    lg: "75em",
-    xl: "88em",
-    xl2: "104em",
-    xl3: "120em",
-    xl4: "136em",
+    xs: "40em",
+    sm: "54em",
+    md: "68em",
+    lg: "82em",
+    xl: "96em",
+    xl2: "110em",
+    xl3: "126em",
+    xl4: "142em",
   },
   colors: {
     // Accent background color

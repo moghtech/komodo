@@ -116,7 +116,7 @@ export default function Config<T>({
                 </div> */}
 
             {group && (
-              <Text visibleFrom="xl" fz="h1" tt="uppercase" mt="xl">
+              <Text visibleFrom="lg" fz="h1" tt="uppercase" mt="xl">
                 {group}
               </Text>
             )}
@@ -233,9 +233,9 @@ export default function Config<T>({
       )}
       {!disableSidebar && (
         <Flex w="100%" gap="xl">
-          {/** SIDEBAR (XL) */}
+          {/** SIDEBAR (LG) */}
           <Box
-            visibleFrom="xl"
+            visibleFrom="lg"
             pos="relative"
             className="bordered-light"
             style={{
