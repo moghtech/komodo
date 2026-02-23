@@ -4926,14 +4926,24 @@ export interface ImageHistoryResponseItem {
 }
 export type ListDockerImageHistoryResponse = ImageHistoryResponseItem[];
 export interface ImageListItem {
+    /**
+     * ID is the content-addressable ID of an image.
+     * This identifier is a content-addressable digest calculated from the image's configuration (which includes the digests of layers used by the image).
+     * Note that this digest differs from the `digests` below, which holds digests of image manifests that reference the image.
+     */
+    id: string;
+    /**
+     * ID of the parent image.
+     * Depending on how the image was created, this field may be empty and is only set for images that were built/created locally.
+     * This field is empty if the image was pulled from an image registry.
+     */
+    parent_id: string;
     /** The first tag in `repo_tags`, or Id if no tags. */
     name: string;
-    /** The first digest in `repo_digests`, or empty if no digests. */
-    digest: string;
-    /** ID is the content-addressable ID of an image.  This identifier is a content-addressable digest calculated from the image's configuration (which includes the digests of layers used by the image).  Note that this digest differs from the `RepoDigests` below, which holds digests of image manifests that reference the image. */
-    id: string;
-    /** ID of the parent image.  Depending on how the image was created, this field may be empty and is only set for images that were built/created locally. This field is empty if the image was pulled from an image registry. */
-    parent_id: string;
+    /** The unchanged `RepoTags`. */
+    tags?: string[];
+    /** The unchanged `RepoDigests`. */
+    digests?: string[];
     /** Date and time at which the image was created as a Unix timestamp (number of seconds sinds EPOCH). */
     created: I64;
     /** Total size of the image including all layers it is composed of. */
@@ -5242,8 +5252,8 @@ export interface StackService {
     container?: ContainerListItem;
     /** The service (Swarm mode) */
     swarm_service?: SwarmServiceListItem;
-    /** The service image digest (When deployed) */
-    image_digest?: ImageDigest;
+    /** The service image digests */
+    image_digests?: ImageDigest[];
 }
 export type ListStackServicesResponse = StackService[];
 export declare enum StackState {

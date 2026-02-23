@@ -45,7 +45,7 @@ async fn serve_client_file(
 
   let contents = fs::read_to_string(format!(
     "{}/client/{path}",
-    core_config().frontend_path
+    core_config().ui_path
   ))
   .await
   .with_context(|| format!("Failed to read file: {path}"))?;

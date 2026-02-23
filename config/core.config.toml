@@ -342,7 +342,7 @@ cors_allowed_origins = []
 cors_allow_credentials = false
 
 ## Enabling this sets 'SameSite=None', which allows externally
-## hosted frontends to use the login flows.
+## hosted UIs to use the login flows.
 session_allow_cross_site = false
 
 ##################

@@ -4,14 +4,14 @@ Komodo UI uses Yarn + Vite + React + Mantine UI
 
 ## Setup Dev Environment
 
-The frontend depends on the local package `komodo_client` located at `/client/core/ts`.
+The UI depends on the local package `komodo_client` located at `/client/core/ts`.
 This must first be built and prepared for yarn link.
 
-The following command should setup everything up (run with /frontend as working directory):
+The following command should setup everything up (run with /ui as working directory):
 
 ```sh
 cd ../client/core/ts && yarn && yarn build && yarn link && \
-cd ../../../frontend && yarn link komodo_client && yarn
+cd ../../../ui && yarn link komodo_client && yarn
 ```
 
 You can make a new file `.env.development` (gitignored) which holds:

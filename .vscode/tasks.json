@@ -106,62 +106,62 @@
             "problemMatcher": []
         },
         {
-            "label": "Init Frontend Client",
+            "label": "Init UI Client",
             "type": "shell",
             "command": "yarn link komodo_client && yarn install",
             "options": {
-                "cwd": "${workspaceFolder}/frontend",
+                "cwd": "${workspaceFolder}/ui",
             },
             "problemMatcher": []
         },
         {
-            "label": "Init Frontend",
+            "label": "Init UI",
             "dependsOn": [
                 "Build TS Client Types",
                 "Init TS Client",
-                "Init Frontend Client"
+                "Init UI Client"
             ],
             "dependsOrder": "sequence",
             "problemMatcher": []
         },
         {
-            "label": "Build Frontend",
+            "label": "Build UI",
             "type": "shell",
             "command": "yarn build",
             "options": {
-                "cwd": "${workspaceFolder}/frontend",
+                "cwd": "${workspaceFolder}/ui",
             },
             "problemMatcher": []
         },
         {
-            "label": "Prepare Frontend For Run",
+            "label": "Prepare UI For Run",
             "type": "shell",
-            "command": "cp -r ./client/core/ts/dist/. frontend/public/client/.",
+            "command": "cp -r ./client/core/ts/dist/. ui/public/client/.",
             "options": {
                 "cwd": "${workspaceFolder}",
             },
             "dependsOn": [
                 "Build TS Client Types",
-                "Build Frontend"
+                "Build UI"
             ],
             "dependsOrder": "sequence",
             "problemMatcher": []
         },
         {
-            "label": "Run Frontend",
+            "label": "Run UI",
             "type": "shell",
             "command": "yarn dev",
             "options": {
-                "cwd": "${workspaceFolder}/frontend",
+                "cwd": "${workspaceFolder}/ui",
             },
-            "dependsOn": ["Prepare Frontend For Run"],
+            "dependsOn": ["Prepare UI For Run"],
             "problemMatcher": []
         },
         {
             "label": "Init",
             "dependsOn": [
                 "Build Backend",
-                "Init Frontend"
+                "Init UI"
             ],
             "dependsOrder": "sequence",
             "problemMatcher": []
@@ -171,7 +171,7 @@
             "dependsOn": [
                 "Run Core",
                 "Run Periphery",
-                "Run Frontend"
+                "Run UI"
             ],
             "problemMatcher": []
         },

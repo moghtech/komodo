@@ -3,14 +3,14 @@
 ## Since theres no heavy build here, QEMU multi-arch builds are fine for this image.
 
 ARG BINARIES_IMAGE=ghcr.io/moghtech/komodo-binaries:latest
-ARG FRONTEND_IMAGE=ghcr.io/moghtech/komodo-frontend:latest
+ARG UI_IMAGE=ghcr.io/moghtech/komodo-ui:latest
 ARG X86_64_BINARIES=${BINARIES_IMAGE}-x86_64
 ARG AARCH64_BINARIES=${BINARIES_IMAGE}-aarch64
 
 # This is required to work with COPY --from
 FROM ${X86_64_BINARIES} AS x86_64
 FROM ${AARCH64_BINARIES} AS aarch64
-FROM ${FRONTEND_IMAGE} AS frontend
+FROM ${UI_IMAGE} AS ui
 
 # Final Image
 FROM debian:trixie-slim
@@ -33,9 +33,9 @@ COPY --from=x86_64 /km /app/km/linux/amd64
 COPY --from=aarch64 /km /app/km/linux/arm64
 RUN mv /app/km/${TARGETPLATFORM} /usr/local/bin/km && rm -r /app/km
 
-# Copy default config / static frontend / deno binary
+# Copy default config / static ui / deno binary
 COPY ./config/core.config.toml /config/.default.config.toml
-COPY --from=frontend /frontend /app/frontend
+COPY --from=ui /ui /app/ui
 COPY --from=denoland/deno:bin /deno /usr/local/bin/deno
 
 # Set $DENO_DIR and preload external Deno deps

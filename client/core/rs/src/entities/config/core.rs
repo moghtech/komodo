@@ -275,8 +275,8 @@ pub struct Env {
   /// Override `ssl_cert_file`
   pub komodo_ssl_cert_file: Option<String>,
 
-  /// Override `frontend_path`
-  pub komodo_frontend_path: Option<String>,
+  /// Override `ui_path`
+  pub komodo_ui_path: Option<String>,
   /// Override `ui_index_force_no_cache`
   pub komodo_ui_index_force_no_cache: Option<bool>,
   /// Override `sync_directory`
@@ -710,9 +710,9 @@ pub struct CoreConfig {
   #[serde(default = "default_action_directory")]
   pub action_directory: PathBuf,
 
-  /// The path to the built frontend folder.
-  #[serde(default = "default_frontend_path")]
-  pub frontend_path: String,
+  /// The path to the built ui folder.
+  #[serde(default = "default_ui_path")]
+  pub ui_path: String,
 
   /// Force the `index.html` to served with
   /// 'Cache-Content: no-cache' header instead
@@ -741,8 +741,8 @@ fn default_private_key() -> String {
   String::from("file:/config/keys/core.key")
 }
 
-fn default_frontend_path() -> String {
-  "/app/frontend".to_string()
+fn default_ui_path() -> String {
+  "/app/ui".to_string()
 }
 
 fn default_jwt_ttl() -> Timelength {
@@ -861,7 +861,7 @@ impl Default for CoreConfig {
       ssl_enabled: Default::default(),
       ssl_key_file: default_ssl_key_file(),
       ssl_cert_file: default_ssl_cert_file(),
-      frontend_path: default_frontend_path(),
+      ui_path: default_ui_path(),
       ui_index_force_no_cache: Default::default(),
       sync_directory: default_sync_directory(),
       repo_directory: default_repo_directory(),
@@ -990,7 +990,7 @@ impl CoreConfig {
       ssl_enabled: config.ssl_enabled,
       ssl_key_file: config.ssl_key_file,
       ssl_cert_file: config.ssl_cert_file,
-      frontend_path: config.frontend_path,
+      ui_path: config.ui_path,
       ui_index_force_no_cache: config.ui_index_force_no_cache,
       repo_directory: config.repo_directory,
       action_directory: config.action_directory,

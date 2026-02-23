@@ -82,7 +82,7 @@ pub async fn execute_compose_with_stack_and_server<
   // The returned guard will set the action state back to default when dropped.
   let _action_guard = action_state.update(set_in_progress)?;
 
-  // Send update here for frontend to recheck action state
+  // Send update here for UI to recheck action state
   update_update(update.clone()).await?;
 
   let periphery = periphery_client(&server).await?;

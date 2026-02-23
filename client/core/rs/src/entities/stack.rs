@@ -1084,7 +1084,7 @@ impl<'de> Deserialize<'de> for StackFileDependency {
   }
 }
 
-// // This one is nice for TOML, but annoying to use on frontend
+// // This one is nice for TOML, but annoying to use in UI
 // impl Serialize for StackFileDependency {
 //   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 //   where
