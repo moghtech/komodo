@@ -1,15 +1,10 @@
-import UpdatesSection from "@/components/updates/section";
-import UserAvatar from "@/components/user-avatar";
 import { useInvalidate, useRead, useUser, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
 import ConfirmButton from "@/ui/confirm-button";
-import DividedChildren from "@/ui/divided-children";
-import EntityHeader from "@/ui/entity-header";
 import EntityPage from "@/ui/entity-page";
 import LabelledSwitch from "@/ui/labelled-switch";
 import PageGuard from "@/ui/page-guard";
 import Section from "@/ui/section";
-import { Box, Group, Stack, Text } from "@mantine/core";
+import { Group, Stack } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { UserCheck, UserMinus } from "lucide-react";
 import { useParams } from "react-router-dom";
@@ -17,6 +12,7 @@ import UserMemberGroups from "./member-groups";
 import SpecificPermissionsSection from "@/components/permissions/specific-section";
 import ApiKeysSection from "@/components/api-keys/section";
 import BasePermissionsSection from "@/components/permissions/base-section";
+import UserHeader from "@/components/user/header";
 
 export default function User() {
   const adminUser = useUser().data;
@@ -41,39 +37,6 @@ export default function User() {
       notifications.show({ message: "Modified user admin", color: "green" });
     },
   });
-  const enabledIntent = user?.enabled ? "Good" : "Critical";
-
-  const Header = (
-    <Stack justify="space-between">
-      <Stack gap="md" pb="md" className="bordered-light" bdrs="md">
-        <EntityHeader
-          name={user?.username}
-          icon={ICONS.User}
-          intent={enabledIntent}
-          state={user?.enabled ? "Enabled" : "Disabled"}
-        />
-        <DividedChildren px="md">
-          <Box>
-            <UserAvatar userId={userId} onlyAvatar />
-          </Box>
-          <Text>
-            Level:{" "}
-            <b>
-              {user?.super_admin
-                ? "Super Admin"
-                : user?.admin
-                  ? "Admin"
-                  : "User"}
-            </b>
-          </Text>
-          <Text>
-            Type: <b>{user?.config.type}</b>
-          </Text>
-        </DividedChildren>
-      </Stack>
-    </Stack>
-  );
-
   return (
     <PageGuard
       isPending={isPending}
@@ -86,26 +49,7 @@ export default function User() {
       }
     >
       <EntityPage backTo="/settings">
-        <Stack hiddenFrom="lg" w="100%">
-          {Header}
-          <UpdatesSection
-            query={user?._id?.$oid && { operator: user._id.$oid }}
-          />
-        </Stack>
-        <Group
-          visibleFrom="lg"
-          gap="xl"
-          w="100%"
-          align="stretch"
-          grow
-          preventGrowOverflow={false}
-        >
-          {Header}
-          <UpdatesSection
-            query={user?._id?.$oid && { operator: user._id.$oid }}
-          />
-        </Group>
-
+        <UserHeader user={user} />
         <Stack mt="lg" gap="xl">
           {user?._id?.$oid !== adminUser?._id?.$oid &&
             (!user?.admin || (!user.super_admin && adminUser?.super_admin)) && (

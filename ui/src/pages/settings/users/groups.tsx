@@ -4,7 +4,7 @@ import { filterBySplit } from "@/lib/utils";
 import { ICONS } from "@/theme/icons";
 import { DataTable } from "@/ui/data-table";
 import Section from "@/ui/section";
-import { Group } from "@mantine/core";
+import { Box, Group } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import DeleteUserGroup from "../../../components/user/delete-group";
 import NewUserGroup from "./new-group";
@@ -21,14 +21,22 @@ export default function SettingsUserGroups({
   const groups = useRead("ListUserGroups", {}).data;
   const filtered = filterBySplit(groups, search, (group) => group.name);
   return (
-    <Section title="User Groups" icon={<ICONS.Users size="1.3rem" />}>
-      <Group justify="space-between">
-        <NewUserGroup />
+    <Section
+      title="User Groups"
+      titleMb="0"
+      icon={<ICONS.Users size="1.3rem" />}
+      titleRight={
+        <Box ml="md">
+          <NewUserGroup />
+        </Box>
+      }
+      actions={
         <Group>
           <SearchInput value={search} onSearch={setSearch} />
           <ExportToml userGroups={groups?.map((g) => g._id?.$oid!)} />
         </Group>
-      </Group>
+      }
+    >
       <DataTable
         tableKey="user-groups"
         data={filtered}

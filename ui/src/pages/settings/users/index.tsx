@@ -38,11 +38,17 @@ export default function SettingsUsers() {
     <Stack gap="xl">
       <SettingsUserGroups search={search} setSearch={setSearch} />
 
-      <Section title="Users" icon={<ICONS.User size="1.3rem" />}>
-        <Group>
-          {localLoginEnabled && <NewLocalUser />}
-          <NewServiceUser />
-        </Group>
+      <Section
+        title="Users"
+        titleMb="0"
+        icon={<ICONS.User size="1.3rem" />}
+        titleRight={
+          <Group ml="md">
+            {localLoginEnabled && <NewLocalUser />}
+            <NewServiceUser />
+          </Group>
+        }
+      >
         <UserTable
           users={filtered}
           onUserDelete={

@@ -1,12 +1,13 @@
 import { useMemo } from "react";
 import { MoghAuth, Types } from "komodo_client";
-import { Badge, Button, Fieldset, Text } from "@mantine/core";
+import { Badge, Button, Text } from "@mantine/core";
 import { KOMODO_BASE_URL } from "@/main";
 import { notifications } from "@mantine/notifications";
 import { useLoginOptions, useManageAuth } from "@/lib/hooks";
 import { DataTable } from "@/ui/data-table";
 import { ICONS } from "@/theme/icons";
 import ConfirmModal from "@/ui/confirm-modal";
+import Section from "@/ui/section";
 
 const useLinkWithExternalLogin = () => {
   const { mutateAsync } = useManageAuth("BeginExternalLoginLink");
@@ -91,7 +92,13 @@ export const LinkedLogins = ({
   }
 
   return (
-    <Fieldset legend={<Text size="lg">Providers</Text>}>
+    <Section
+      title="Providers"
+      titleFz="h3"
+      titleMb="0"
+      icon={<ICONS.Provider size="1.2rem" />}
+      withBorder
+    >
       <DataTable
         noBox
         tableKey="login-providers-v1"
@@ -166,6 +173,6 @@ export const LinkedLogins = ({
           },
         ]}
       />
-    </Fieldset>
+    </Section>
   );
 };

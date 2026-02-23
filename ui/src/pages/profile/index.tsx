@@ -1,9 +1,9 @@
 import { useLoginOptions, useManageAuth, useUser } from "@/lib/hooks";
 import {
   ActionIcon,
-  Fieldset,
   Group,
   PasswordInput,
+  Stack,
   Text,
   TextInput,
 } from "@mantine/core";
@@ -17,6 +17,9 @@ import EnableSwitch from "@/ui/enable-switch";
 import PageGuard from "@/ui/page-guard";
 import EntityPage from "@/ui/entity-page";
 import ApiKeysSection from "@/components/api-keys/section";
+import UserHeader from "@/components/user/header";
+import Section from "@/ui/section";
+import { ICONS } from "@/theme/icons";
 
 export default function Profile() {
   const options = useLoginOptions().data;
@@ -52,52 +55,70 @@ export default function Profile() {
   );
 
   return (
-    <PageGuard isPending={isPending}>
+    <PageGuard
+      isPending={isPending}
+      error={!user ? "User not found" : undefined}
+    >
       {user && (
         <EntityPage>
-          <Fieldset legend={<Text size="lg">Login</Text>}>
-            <Group>
-              <Text ff="monospace">Username:</Text>
+          <UserHeader user={user} />
+          <Section
+            title="Login"
+            titleFz="h3"
+            titleMb="0"
+            icon={<ICONS.Key size="1.2rem" />}
+            withBorder
+          >
+            <Stack gap="0">
+              <Group>
+                <Text ff="monospace">Username:</Text>
 
-              <TextInput
-                placeholder="Update username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                w={250}
-              />
-
-              <ActionIcon
-                onClick={() => username && updateUsername({ username })}
-                disabled={!username || username === user.username}
-              >
-                <Save size="1rem" />
-              </ActionIcon>
-            </Group>
-
-            {options?.local && (
-              <Group mt="sm">
-                <Text ff="monospace">Password:</Text>
-
-                <PasswordInput
-                  placeholder="Update password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                <TextInput
+                  placeholder="Update username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   w={250}
                 />
 
                 <ActionIcon
-                  onClick={() => updatePassword({ password })}
-                  disabled={!password}
+                  onClick={() => username && updateUsername({ username })}
+                  disabled={!username || username === user.username}
                 >
                   <Save size="1rem" />
                 </ActionIcon>
               </Group>
-            )}
-          </Fieldset>
+
+              {options?.local && (
+                <Group mt="sm">
+                  <Text ff="monospace">Password:</Text>
+
+                  <PasswordInput
+                    placeholder="Update password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    w={250}
+                  />
+
+                  <ActionIcon
+                    onClick={() => updatePassword({ password })}
+                    disabled={!password}
+                  >
+                    <Save size="1rem" />
+                  </ActionIcon>
+                </Group>
+              )}
+            </Stack>
+          </Section>
 
           <LinkedLogins user={user} refetchUser={refetchUser} />
 
-          <Fieldset legend={<Text size="lg">2FA</Text>}>
+          <Section
+            title="2FA"
+            titleFz="h3"
+            titleMb="0"
+            icon={<ICONS.Key size="1.2rem" />}
+            withBorder
+          >
             <Group>
               <EnrollPasskey user={user} />
               <EnrollTotp user={user} />
@@ -112,9 +133,9 @@ export default function Profile() {
                 />
               )}
             </Group>
-          </Fieldset>
+          </Section>
 
-          <ApiKeysSection mt="lg" />
+          <ApiKeysSection />
         </EntityPage>
       )}
     </PageGuard>

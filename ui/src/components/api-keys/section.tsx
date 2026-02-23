@@ -54,10 +54,12 @@ export default function ApiKeysSection({
           <NewApiKey userId={userId} />
         </Box>
       }
+      withBorder
       {...sectionProps}
     >
       {keys && (
         <ApiKeysTable
+          noBox
           keys={keys}
           onDelete={(key) =>
             userId ? serviceDelete({ key }) : regularDelete({ key })

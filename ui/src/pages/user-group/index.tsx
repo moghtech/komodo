@@ -96,7 +96,9 @@ export default function UserGroup() {
         <Stack mt="lg" gap="xl">
           <Section
             title="Users"
-            icon={<ICONS.User size="1rem" />}
+            titleFz="h3"
+            titleMb="0"
+            icon={<ICONS.User size="1.2rem" />}
             titleRight={
               <Group ml="md">
                 {!group?.everyone && <UserGroupAddUser groupId={groupId} />}
@@ -114,9 +116,11 @@ export default function UserGroup() {
                 )}
               </Group>
             }
+            withBorder
           >
             {!group?.everyone && (
               <UserTable
+                noBox
                 users={
                   users?.filter((user) =>
                     group

@@ -21,6 +21,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MoghAuth } from "komodo_client";
 import { useRead, useUser, useUserInvalidate } from "@/lib/hooks";
+import { hexColorByIntention } from "@/lib/color";
 
 export default function UserDropdown() {
   const [_, setRerender] = useState(false);
@@ -61,7 +62,7 @@ export default function UserDropdown() {
               c="inherit"
               onClick={() => setViewLogout((l) => !l)}
             >
-              <Settings size="1rem" />
+              <LogOut size="1rem" />
             </ActionIcon>
           </Group>
 
@@ -158,12 +159,11 @@ const Account = ({
   return (
     <Flex align="center" gap="md" w="100%">
       <Button
-        variant={selected ? "light" : "subtle"}
-        c="inherit"
+        variant={selected ? "default" : "subtle"}
         rightSection={
           <Circle
             stroke="none"
-            fill="green"
+            fill={hexColorByIntention("Good")}
             size="0.8rem"
             style={{ display: selected ? undefined : "none" }}
           />
