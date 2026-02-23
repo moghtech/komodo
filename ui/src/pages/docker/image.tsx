@@ -116,31 +116,27 @@ function ImageInner({
       intent={intention}
       state={unused ? "Unused" : "In Use"}
       info={
-        <>
-          {image.Id && (
-            <Group gap="xs">
-              <Text>Id:</Text>
-              <Text title={image.Id} maw={150} className="text-ellipsis">
-                {image.Id}
-              </Text>
-            </Group>
-          )}
-        </>
+        image.Id && (
+          <Group gap="xs">
+            <Text>Id:</Text>
+            <Text title={image.Id} maw={150} className="text-ellipsis">
+              {image.Id}
+            </Text>
+          </Group>
+        )
       }
       executions={
-        <>
-          {unused && (
-            <ConfirmButton
-              variant="filled"
-              color="red"
-              icon={<ICONS.Delete size="1rem" />}
-              loading={deletePending}
-              onClick={() => deleteImage({ server: serverId, name: imageName })}
-            >
-              Delete Image
-            </ConfirmButton>
-          )}
-        </>
+        unused && (
+          <ConfirmButton
+            variant="filled"
+            color="red"
+            icon={<ICONS.Delete size="1rem" />}
+            loading={deletePending}
+            onClick={() => deleteImage({ server: serverId, name: imageName })}
+          >
+            Delete Image
+          </ConfirmButton>
+        )
       }
     >
       {containers && containers.length > 0 && (

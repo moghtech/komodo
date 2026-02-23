@@ -107,30 +107,24 @@ function VolumeInner({
       intent={intention}
       state={unused ? "Unused" : "In Use"}
       info={
-        <>
-          {volume.Scope && (
-            <Group gap="xs">
-              <Text c="dimmed">Scope:</Text>
-              <Text>{volume.Scope}</Text>
-            </Group>
-          )}
-        </>
+        volume.Scope && (
+          <Group gap="xs">
+            <Text c="dimmed">Scope:</Text>
+            <Text>{volume.Scope}</Text>
+          </Group>
+        )
       }
       executions={
-        <>
-          {unused && (
-            <ConfirmButton
-              color="red"
-              icon={<ICONS.Delete size="1rem" />}
-              loading={deletePending}
-              onClick={() =>
-                deleteVolume({ server: serverId, name: volumeName })
-              }
-            >
-              Delete Volume
-            </ConfirmButton>
-          )}
-        </>
+        unused && (
+          <ConfirmButton
+            color="red"
+            icon={<ICONS.Delete size="1rem" />}
+            loading={deletePending}
+            onClick={() => deleteVolume({ server: serverId, name: volumeName })}
+          >
+            Delete Volume
+          </ConfirmButton>
+        )
       }
     >
       {containers && containers.length > 0 && (

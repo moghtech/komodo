@@ -129,21 +129,19 @@ function NetworkInner({
         </>
       }
       executions={
-        <>
-          {unused && (
-            <ConfirmButton
-              variant="filled"
-              color="red"
-              icon={<ICONS.Delete size="1rem" />}
-              loading={deletePending}
-              onClick={() =>
-                deleteNetwork({ server: serverId, name: networkName })
-              }
-            >
-              Delete Network
-            </ConfirmButton>
-          )}
-        </>
+        unused ? (
+          <ConfirmButton
+            variant="filled"
+            color="red"
+            icon={<ICONS.Delete size="1rem" />}
+            loading={deletePending}
+            onClick={() =>
+              deleteNetwork({ server: serverId, name: networkName })
+            }
+          >
+            Delete Network
+          </ConfirmButton>
+        ) : undefined
       }
     >
       {containers && containers.length > 0 && (

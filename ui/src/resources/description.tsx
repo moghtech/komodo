@@ -3,6 +3,7 @@ import { UsableResource } from ".";
 import { notifications } from "@mantine/notifications";
 import TextUpdateModal from "@/ui/text-update-modal";
 import { Button, Text } from "@mantine/core";
+import { fmtUpperCamelcase } from "@/lib/formatting";
 
 export default function ResourceDescription({
   type,
@@ -30,7 +31,7 @@ export default function ResourceDescription({
 
   return (
     <TextUpdateModal
-      title="Update Description"
+      title={`Update ${fmtUpperCamelcase(type)} Description`}
       placeholder="Set Description"
       value={resource?.description}
       onUpdate={(description) =>
