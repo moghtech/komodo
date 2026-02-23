@@ -9,12 +9,7 @@ import {
   StartStopStack,
 } from "@/resources/stack/executions";
 import { useStack } from "@/resources/stack";
-import {
-  useContainerPortsMap,
-  usePermissions,
-  useRead,
-  useSetTitle,
-} from "@/lib/hooks";
+import { useContainerPortsMap, useRead, useSetTitle } from "@/lib/hooks";
 import { Types } from "komodo_client";
 import { containerStateIntention, swarmStateIntention } from "@/lib/color";
 import { ICONS } from "@/theme/icons";
@@ -65,10 +60,6 @@ function StackServiceInner({
 }) {
   const stack = useStack(stackId);
   useSetTitle(`${stack?.name} | ${serviceName}`);
-  const { canExecute } = usePermissions({
-    type: "Stack",
-    id: stackId,
-  });
   const services = useRead("ListStackServices", { stack: stackId }).data;
   const service = services?.find((s) => s.service === serviceName);
 
