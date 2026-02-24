@@ -3,7 +3,15 @@ import { useServer } from ".";
 import { Types } from "komodo_client";
 import { useMemo } from "react";
 import { ICONS } from "@/theme/icons";
-import { Center, Group, Overlay, Progress, Stack, Text } from "@mantine/core";
+import {
+  Center,
+  Group,
+  Overlay,
+  Progress,
+  Stack,
+  Text,
+  useComputedColorScheme,
+} from "@mantine/core";
 import { ColorIntention, hexColorByIntention } from "@/lib/color";
 import { LucideIcon } from "lucide-react";
 
@@ -116,8 +124,13 @@ export default function ServerStatsCard({ id }: ServerStatsCardProps) {
     ],
     [cpuPercentage, memoryPercentage, diskPercentage],
   );
+  const theme = useComputedColorScheme();
   return (
-    <Stack gap="xs" pos="relative">
+    <Stack
+      gap="xs"
+      p={isUnreachable || isDisabled ? "xs" : undefined}
+      pos="relative"
+    >
       {statItems.map((item) => (
         <StatItem
           key={item.label}
@@ -131,7 +144,7 @@ export default function ServerStatsCard({ id }: ServerStatsCardProps) {
           renderRoot={(props) => (
             <Overlay
               color="black"
-              backgroundOpacity={0.5}
+              backgroundOpacity={theme === "dark" ? 0.5 : 0.2}
               zIndex={1 /** to not overlay topbar */}
               {...props}
             />
