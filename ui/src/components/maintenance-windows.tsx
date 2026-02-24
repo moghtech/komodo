@@ -53,11 +53,19 @@ export default function ConfigMaintenanceWindows({
   const toggleWindow = (index: number, enabled: boolean) => {
     onUpdate(windows.map((w, i) => (i === index ? { ...w, enabled } : w)));
   };
-  
+
   return (
     <>
       <Stack gap="xs">
-        {!disabled && <>ADD</>}
+        {!disabled && (
+          <Button
+            leftSection={<ICONS.Create size="1rem" />}
+            onClick={() => setEditingWindow(-1)}
+            w={{ base: "85%", lg: 400 }}
+          >
+            Add Window
+          </Button>
+        )}
 
         {windows.length ? (
           <DataTable
@@ -127,7 +135,7 @@ export default function ConfigMaintenanceWindows({
                 header: "Actions",
                 cell: ({ row }) =>
                   !disabled && (
-                    <Group>
+                    <Group gap="xs">
                       <ActionIcon
                         onClick={() =>
                           setEditingWindow([row.index, row.original])
@@ -159,7 +167,7 @@ export default function ConfigMaintenanceWindows({
         }
         opened={!!editingWindow}
         onClose={() => setEditingWindow(null)}
-        size="xl"
+        size="auto"
       >
         {editingWindow && (
           <MaintenanceWindowForm
@@ -357,6 +365,7 @@ function MaintenanceWindowForm({
           error={errors.hour || errors.minute}
         />
         <TimezoneSelector
+          label="Timezone"
           timezone={formData.timezone ?? ""}
           onChange={(timezone) =>
             setFormData((data) => ({ ...data, timezone }))
