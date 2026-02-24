@@ -2,6 +2,7 @@ import { Types } from "komodo_client";
 import DockerResourceLink from "@/components/docker/link";
 import { Group } from "@mantine/core";
 import ResourceLink from "@/resources/link";
+import StackServiceLink from "@/components/stack-service-link";
 
 export default function TerminalTargetLink({ target }: { target: Types.TerminalTarget }) {
   switch (target.type) {
@@ -17,14 +18,14 @@ export default function TerminalTargetLink({ target }: { target: Types.TerminalT
       );
     case "Stack":
       return (
-        <Group>
+        <Group wrap="nowrap">
           <ResourceLink type="Stack" id={target.params.stack} />
-          {/* {target.params.service && (
+          {target.params.service && (
             <StackServiceLink
               id={target.params.stack}
               service={target.params.service}
             />
-          )} */}
+          )}
         </Group>
       );
     case "Deployment":

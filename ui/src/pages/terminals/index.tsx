@@ -52,7 +52,7 @@ export default function Terminals() {
                   e.stopPropagation();
                 }}
               >
-                <Group className="hover-underline" fz="md">
+                <Group className="hover-underline" fz="md" wrap="nowrap">
                   <ICONS.Terminal size="1rem" />
                   {row.original.name}
                 </Group>
