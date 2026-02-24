@@ -9,6 +9,7 @@ import { useServer } from "../server";
 import { serverStateIntention } from "@/lib/color";
 import ResourceHeader from "../header";
 import BuilderConfig from "./config";
+import BatchExecutions from "@/components/batch-executions";
 
 export function useBuilder(id: string | undefined) {
   return useRead("ListBuilders", {}).data?.find((r) => r.id === id);
@@ -38,7 +39,7 @@ export const BuilderComponents: RequiredResourceComponents<
 
   New: () => <NewResource type="Builder" />,
 
-  GroupExecutions: () => <></>,
+  BatchExecutions: () => <BatchExecutions type="Builder" executions={[]} />,
 
   Table: BuilderTable,
 

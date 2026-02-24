@@ -13,6 +13,7 @@ import NewResource from "@/resources/new";
 import ActionConfig from "./config";
 import ActionTable from "./table";
 import ResourceHeader from "../header";
+import BatchExecutions from "@/components/batch-executions";
 
 export function useAction(id: string | undefined) {
   return useRead("ListActions", {}).data?.find((r) => r.id === id);
@@ -59,7 +60,9 @@ export const ActionComponents: RequiredResourceComponents<
 
   New: () => <NewResource type="Action" />,
 
-  GroupExecutions: () => <></>,
+  BatchExecutions: () => (
+    <BatchExecutions type="Action" executions={["RunAction"]} />
+  ),
 
   Table: ActionTable,
 

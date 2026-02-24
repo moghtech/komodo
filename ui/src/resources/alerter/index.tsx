@@ -7,6 +7,7 @@ import AlerterTable from "./table";
 import ResourceHeader from "../header";
 import AlerterConfig from "./config";
 import { hexColorByIntention } from "@/lib/color";
+import BatchExecutions from "@/components/batch-executions";
 
 export function useAlerter(id: string | undefined) {
   return useRead("ListAlerters", {}).data?.find((r) => r.id === id);
@@ -36,7 +37,9 @@ export const AlerterComponents: RequiredResourceComponents<
 
   New: () => <NewResource type="Alerter" />,
 
-  GroupExecutions: () => <></>,
+  BatchExecutions: () => (
+    <BatchExecutions type="Alerter" executions={["TestAlerter"]} />
+  ),
 
   Table: AlerterTable,
 

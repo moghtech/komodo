@@ -115,7 +115,7 @@ export default function ConfirmModal({
 
           {additional}
 
-          <Group justify="flex-end">
+          <Group justify="end">
             <ConfirmButton
               icon={icon}
               disabled={disabled || input !== confirmText}

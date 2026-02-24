@@ -9,6 +9,7 @@ import NewResource from "@/resources/new";
 import ProcedureConfig from "./config";
 import { RunProcedure } from "./executions";
 import ResourceHeader from "../header";
+import BatchExecutions from "@/components/batch-executions";
 
 export function useProcedure(id: string | undefined) {
   return useRead("ListProcedures", {}).data?.find((r) => r.id === id);
@@ -55,7 +56,9 @@ export const ProcedureComponents: RequiredResourceComponents<
 
   New: () => <NewResource type="Procedure" />,
 
-  GroupExecutions: () => <></>,
+  BatchExecutions: () => (
+    <BatchExecutions type="Procedure" executions={["RunProcedure"]} />
+  ),
 
   Table: ProcedureTable,
 

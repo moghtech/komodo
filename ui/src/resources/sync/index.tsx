@@ -14,6 +14,7 @@ import { Box, Group } from "@mantine/core";
 import HashCompare from "@/components/hash-compare";
 import ResourceSyncTabs from "./tabs";
 import ResourceHeader from "../header";
+import BatchExecutions from "@/components/batch-executions";
 
 export function useResourceSync(id: string | undefined) {
   return useRead("ListResourceSyncs", {}).data?.find((r) => r.id === id);
@@ -65,7 +66,12 @@ export const ResourceSyncComponents: RequiredResourceComponents<
 
   New: () => <NewResource type="ResourceSync" readableType="Sync" />,
 
-  GroupExecutions: () => <></>,
+  BatchExecutions: () => (
+    <BatchExecutions
+      type="ResourceSync"
+      executions={["RunSync", "CommitSync"]}
+    />
+  ),
 
   Table: ResourceSyncTable,
 

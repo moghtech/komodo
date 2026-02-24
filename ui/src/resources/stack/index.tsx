@@ -33,6 +33,7 @@ import ResourceLink from "@/resources/link";
 import HashCompare from "@/components/hash-compare";
 import StackUpdateAvailable from "./update-available";
 import ResourceHeader from "../header";
+import BatchExecutions from "@/components/batch-executions";
 
 export function useStack(id: string | undefined) {
   return useRead("ListStacks", {}).data?.find((r) => r.id === id);
@@ -91,7 +92,19 @@ export const StackComponents: RequiredResourceComponents<
 
   New: () => <NewResource type="Stack" />,
 
-  GroupExecutions: () => <></>,
+  BatchExecutions: () => (
+    <BatchExecutions
+      type="Stack"
+      executions={[
+        "CheckStackForUpdate",
+        "PullStack",
+        "DeployStack",
+        "RestartStack",
+        "StopStack",
+        "DestroyStack",
+      ]}
+    />
+  ),
 
   Table: StackTable,
 

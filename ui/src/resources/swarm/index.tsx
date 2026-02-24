@@ -12,6 +12,7 @@ import { Button, HoverCard, Modal, Text } from "@mantine/core";
 import JoinSwarmCommands from "./join-commands";
 import { updateLogToHtml } from "@/lib/utils";
 import ResourceHeader from "../header";
+import BatchExecutions from "@/components/batch-executions";
 
 export function useSwarm(id: string | undefined) {
   return useRead("ListSwarms", {}).data?.find((r) => r.id === id);
@@ -53,7 +54,7 @@ export const SwarmComponents: RequiredResourceComponents<
 
   New: () => <NewResource type="Swarm" />,
 
-  GroupExecutions: () => <></>,
+  BatchExecutions: () => <BatchExecutions type="Swarm" executions={[]} />,
 
   Table: SwarmTable,
 

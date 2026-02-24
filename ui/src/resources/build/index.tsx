@@ -15,6 +15,7 @@ import ResourceLink from "../link";
 import FileSource from "@/components/file-source";
 import HashCompare from "@/components/hash-compare";
 import ResourceHeader from "../header";
+import BatchExecutions from "@/components/batch-executions";
 
 export function useBuild(id: string | undefined) {
   return useRead("ListBuilds", {}).data?.find((r) => r.id === id);
@@ -61,7 +62,9 @@ export const BuildComponents: RequiredResourceComponents<
 
   New: () => <NewResource type="Build" />,
 
-  GroupExecutions: () => <></>,
+  BatchExecutions: () => (
+    <BatchExecutions type="Build" executions={["RunBuild"]} />
+  ),
 
   Table: BuildTable,
 

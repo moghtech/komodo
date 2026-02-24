@@ -8,6 +8,7 @@ import RepoTable from "./table";
 import NewResource from "@/resources/new";
 import ResourceHeader from "@/resources/header";
 import RepoTabs from "./tabs";
+import BatchExecutions from "@/components/batch-executions";
 
 export function useRepo(id: string | undefined) {
   return useRead("ListRepos", {}).data?.find((r) => r.id === id);
@@ -54,7 +55,12 @@ export const RepoComponents: RequiredResourceComponents<
 
   New: () => <NewResource type="Repo" />,
 
-  GroupExecutions: () => <></>,
+  BatchExecutions: () => (
+    <BatchExecutions
+      type="Repo"
+      executions={["PullRepo", "CloneRepo", "BuildRepo"]}
+    />
+  ),
 
   Table: RepoTable,
 

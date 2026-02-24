@@ -74,7 +74,7 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
       <Group justify="space-between">
         <Group>
           {(is_admin || !disable_non_admin_create) && <Components.New />}
-          <Components.GroupExecutions />
+          <Components.BatchExecutions />
         </Group>
 
         <Group>

@@ -17,6 +17,7 @@ import { fmtUpperCamelcase } from "@/lib/formatting";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 import ResourceHeader from "../header";
 import { useIsServerAvailable } from "./hooks";
+import BatchExecutions from "@/components/batch-executions";
 
 export function useServer(id: string | undefined) {
   return useRead("ListServers", {}).data?.find((r) => r.id === id);
@@ -65,7 +66,20 @@ export const ServerComponents: RequiredResourceComponents<
 
   New: () => <NewResource type="Server" />,
 
-  GroupExecutions: () => <></>,
+  BatchExecutions: () => (
+    <BatchExecutions
+      type="Server"
+      executions={[
+        "PruneContainers",
+        "PruneNetworks",
+        "PruneVolumes",
+        "PruneImages",
+        "PruneSystem",
+        "RestartAllContainers",
+        "StopAllContainers",
+      ]}
+    />
+  ),
 
   Table: ServerTable,
 

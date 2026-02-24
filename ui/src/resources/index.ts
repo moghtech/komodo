@@ -97,8 +97,8 @@ export interface RequiredResourceComponents<
     } & BoxProps
   >;
 
-  /** Dropdown menu to trigger group executions for selected resources */
-  GroupExecutions: React.FC;
+  /** Dropdown menu to trigger batch executions for selected resources */
+  BatchExecutions: React.FC;
 
   /** Icon for the resource */
   Icon: React.FC<{ id?: string; size?: string | number; noColor?: boolean }>;

@@ -25,6 +25,7 @@ import SwarmResourceLink from "@/components/swarm/link";
 import ContainerPorts from "@/components/docker/container-ports";
 import DeploymentUpdateAvailable from "./update-available";
 import ResourceHeader from "../header";
+import BatchExecutions from "@/components/batch-executions";
 
 export function useDeployment(id: string | undefined) {
   return useRead("ListDeployments", {}).data?.find((r) => r.id === id);
@@ -85,7 +86,19 @@ export const DeploymentComponents: RequiredResourceComponents<
 
   New: () => <NewResource type="Deployment" />,
 
-  GroupExecutions: () => <></>,
+  BatchExecutions: () => (
+    <BatchExecutions
+      type="Deployment"
+      executions={[
+        "CheckDeploymentForUpdate",
+        "PullDeployment",
+        "Deploy",
+        "RestartDeployment",
+        "StopDeployment",
+        "DestroyDeployment",
+      ]}
+    />
+  ),
 
   Table: DeploymentTable,
 
