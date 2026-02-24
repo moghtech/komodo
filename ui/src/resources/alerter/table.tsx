@@ -1,9 +1,10 @@
 import { useSelectedResources } from "@/lib/hooks";
 import { DataTable, SortableHeader } from "@/ui/data-table";
-import { BoxProps } from "@mantine/core";
+import { Badge, BoxProps } from "@mantine/core";
 import { Types } from "komodo_client";
 import ResourceLink from "@/resources/link";
 import TableTags from "@/components/tags/table";
+import StatusBadge from "@/ui/status-badge";
 
 export default function AlerterTable({
   resources,
@@ -34,11 +35,20 @@ export default function AlerterTable({
           header: ({ column }) => (
             <SortableHeader column={column} title="Type" />
           ),
+          cell: ({ row }) => (
+            <Badge size="lg">{row.original.info.endpoint_type}</Badge>
+          ),
         },
         {
           accessorKey: "info.enabled",
           header: ({ column }) => (
             <SortableHeader column={column} title="Enabled" />
+          ),
+          cell: ({ row }) => (
+            <StatusBadge
+              text={row.original.info.enabled ? "Enabled" : "Disabled"}
+              intent={row.original.info.enabled ? "Good" : "Critical"}
+            />
           ),
         },
         {

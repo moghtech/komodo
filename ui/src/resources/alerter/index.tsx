@@ -5,6 +5,8 @@ import { Types } from "komodo_client";
 import NewResource from "@/resources/new";
 import AlerterTable from "./table";
 import ResourceHeader from "../header";
+import AlerterConfig from "./config";
+import { hexColorByIntention } from "@/lib/color";
 
 export function useAlerter(id: string | undefined) {
   return useRead("ListAlerters", {}).data?.find((r) => r.id === id);
@@ -38,8 +40,14 @@ export const AlerterComponents: RequiredResourceComponents<
 
   Table: AlerterTable,
 
-  Icon: ({ size = "1rem" }) => {
-    return <ICONS.Alerter size={size} />;
+  Icon: ({ id, size = "1rem", noColor }) => {
+    const enabled = useRead("ListAlerters", {}).data?.find((r) => r.id === id)
+      ?.info.enabled;
+    const color =
+      enabled === undefined || noColor
+        ? undefined
+        : hexColorByIntention(enabled ? "Good" : "Critical");
+    return <ICONS.Alerter size={size} color={color} />;
   },
 
   ResourcePageHeader: ({ id }) => {
@@ -49,7 +57,7 @@ export const AlerterComponents: RequiredResourceComponents<
         type="Alerter"
         id={id}
         resource={alerter}
-        intent="None"
+        intent={alerter?.info.enabled ? "Good" : "Critical"}
         icon={ICONS.Alerter}
         name={alerter?.name}
         state={alerter?.info.enabled ? "Enabled" : "Disabled"}
@@ -63,7 +71,7 @@ export const AlerterComponents: RequiredResourceComponents<
 
   Executions: {},
 
-  Config: () => <>CONFIG</>,
+  Config: AlerterConfig,
 
   Page: {},
 };

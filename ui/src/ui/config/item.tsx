@@ -73,6 +73,7 @@ export function ConfigInput({
   inputLeft,
   inputRight,
   inputProps,
+  email,
   ...itemProps
 }: {
   value: string | number | undefined;
@@ -83,6 +84,7 @@ export function ConfigInput({
   inputLeft?: ReactNode;
   inputRight?: ReactNode;
   inputProps?: TextInputProps;
+  email?: boolean;
 } & Omit<ConfigItemProps, "children">) {
   const inputNode = (
     <TextInput
@@ -90,7 +92,7 @@ export function ConfigInput({
       value={value}
       placeholder={placeholder}
       disabled={disabled}
-      type={typeof value === "number" ? "number" : undefined}
+      type={typeof value === "number" ? "number" : email ? "email" : undefined}
       onChange={(e) => {
         onChange?.(e);
         onValueChange?.(e.target.value);

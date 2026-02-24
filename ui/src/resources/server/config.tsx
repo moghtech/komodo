@@ -1,5 +1,5 @@
 import { usePermissions, useRead, useWrite } from "@/lib/hooks";
-import { useFullServer } from "..";
+import { useFullServer } from ".";
 import { ReactNode, useEffect, useState } from "react";
 import { Types } from "komodo_client";
 import { useLocalStorage } from "@mantine/hooks";
@@ -8,7 +8,8 @@ import { ConfigInput, ConfigList } from "@/ui/config/item";
 import ConfirmButton from "@/ui/confirm-button";
 import { ICONS } from "@/theme/icons";
 import { Group } from "@mantine/core";
-import { useIsServerAvailable } from "../hooks";
+import { useIsServerAvailable } from "./hooks";
+import ConfigMaintenanceWindows from "@/components/maintenance-windows";
 
 export default function ServerConfig({
   id,
@@ -269,30 +270,30 @@ export default function ServerConfig({
               },
             },
           },
-          // {
-          //   label: "Maintenance",
-          //   boldLabel: false,
-          //   description: (
-          //     <>
-          //       Configure maintenance windows to temporarily disable alerts
-          //       during scheduled maintenance periods. When a maintenance window
-          //       is active, alerts from this server will be suppressed.
-          //     </>
-          //   ),
-          //   fields: {
-          //     maintenance_windows: (values, set) => {
-          //       return (
-          //         <MaintenanceWindows
-          //           windows={values ?? []}
-          //           onUpdate={(maintenance_windows) =>
-          //             set({ maintenance_windows })
-          //           }
-          //           disabled={disabled}
-          //         />
-          //       );
-          //     },
-          //   },
-          // },
+          {
+            label: "Maintenance",
+            boldLabel: false,
+            description: (
+              <>
+                Configure maintenance windows to temporarily disable alerts
+                during scheduled maintenance periods. When a maintenance window
+                is active, alerts from this server will be suppressed.
+              </>
+            ),
+            fields: {
+              maintenance_windows: (values, set) => {
+                return (
+                  <ConfigMaintenanceWindows
+                    windows={values ?? []}
+                    onUpdate={(maintenance_windows) =>
+                      set({ maintenance_windows })
+                    }
+                    disabled={disabled}
+                  />
+                );
+              },
+            },
+          },
         ],
       }}
     />

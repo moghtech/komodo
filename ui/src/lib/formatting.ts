@@ -104,7 +104,7 @@ export function fmtSizeBytes(bytes: number) {
 }
 
 export function fmtRateBytes(bytes: number) {
-  return fmtSizeBytes(bytes) + "/s"
+  return fmtSizeBytes(bytes) + "/s";
 }
 
 export function fmtResourceType(type: UsableResource) {
@@ -197,4 +197,10 @@ export function fmtUtcOffset(tz: Types.IanaTimezone): string {
 
 export function fmtPortMount(port: Types.Port) {
   return `${port.IP ? port.IP + ":" : ""}${port.PublicPort ?? "NONE"}:${port.PrivatePort ?? "NONE"}${port.Type ? "/" + port.Type : ""}`;
+}
+
+export function fmtMaintenanceWindowTime(window: Types.MaintenanceWindow) {
+  const hours = window.hour!.toString().padStart(2, "0");
+  const minutes = window.minute!.toString().padStart(2, "0");
+  return `${hours}:${minutes} ${window.timezone ? `(${window.timezone})` : ""}`;
 }
