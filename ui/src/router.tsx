@@ -16,6 +16,7 @@ const Login = lazy(() => import("@/pages/login"));
 const UserDisabled = lazy(() => import("@/pages/user-disabled"));
 const Settings = lazy(() => import("@/pages/settings"));
 const Updates = lazy(() => import("@/pages/updates"));
+const Update = lazy(() => import("@/pages/update"));
 const Alerts = lazy(() => import("@/pages/alerts"));
 const Dashboard = lazy(() => import("@/pages/dashboard"));
 const Resources = lazy(() => import("@/pages/resources"));
@@ -68,6 +69,10 @@ export const Router = () => {
             <Route path="schedules" element={<Schedules />} />
             <Route path="user-groups/:id" element={<UserGroup />} />
             <Route path="users/:id" element={<User />} />
+            <Route path="updates">
+              <Route path="" element={<Updates />} />
+              <Route path=":id" element={<Update />} />
+            </Route>
             <Route path=":type">
               <Route path="" element={<Resources />} />
               <Route path=":id" element={<Resource />} />

@@ -18,6 +18,7 @@ import { MonacoDiffEditor } from "@/components/monaco";
 import LoadingScreen from "@/ui/loading-screen";
 import { atom, useAtom } from "jotai";
 import ResourceLink from "@/resources/link";
+import { To, useLocation, useNavigate } from "react-router-dom";
 
 const updateDetailsAtom = atom<string>();
 
@@ -31,12 +32,20 @@ export function useUpdateDetails() {
   };
 }
 
-export default function UpdateDetails() {
-  const { updateId, close } = useUpdateDetails();
+export default function UpdateDetails({
+  updateId: __updateId,
+}: {
+  updateId?: string;
+}) {
+  const { updateId: _updateId, close } = useUpdateDetails();
+  const updateId = __updateId ?? _updateId;
+  // https://github.com/remix-run/react-router/discussions/9788#discussioncomment-4604278
+  const navTo = (useLocation().key === "default" ? "/" : -1) as To;
+  const nav = useNavigate();
   return (
     <Drawer
       opened={!!updateId}
-      onClose={close}
+      onClose={__updateId ? () => nav(navTo) : close}
       styles={{
         content: {
           flex: "none",
