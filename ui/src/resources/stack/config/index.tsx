@@ -37,7 +37,6 @@ import { AccountSelectorConfig } from "@/components/config/account-selector";
 import LinkedRepo from "@/components/config/linked-repo";
 import { DEFAULT_STACK_FILE_CONTENTS } from "..";
 import { ReactNode } from "react";
-import StackServiceSelector from "@/components/stack-service-selector";
 
 type StackMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const STACK_MODES = ["UI Defined", "Files On Server", "Git Repo"] as const;
