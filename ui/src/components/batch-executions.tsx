@@ -5,6 +5,7 @@ import { UsableResource } from "@/resources";
 import { ICONS } from "@/theme/icons";
 import ConfirmButton from "@/ui/confirm-button";
 import {
+  Box,
   Button,
   Divider,
   Group,
@@ -64,7 +65,11 @@ function BatchExecutionsDropdownMenu<T extends Request>({
   return (
     <Menu position="bottom-start" disabled={disabled}>
       <Menu.Target>
-        <Button rightSection={<ChevronDown size="1rem" />} disabled={disabled}>
+        <Button
+          leftSection={<ICONS.Execution size="1rem" />}
+          rightSection={<ChevronDown size="1rem" />}
+          disabled={disabled}
+        >
           Execute
         </Button>
       </Menu.Target>
@@ -96,7 +101,13 @@ function BatchExecutionsDropdownMenu<T extends Request>({
           <Menu.Item
             onClick={() => onSelect(`Delete${type}` as any)}
             renderRoot={(props) => (
-              <Button variant="filled" color="red" fullWidth {...props} />
+              <Button
+                variant="filled"
+                color="red"
+                leftSection={<ICONS.Delete size="1rem" />}
+                fullWidth
+                {...props}
+              />
             )}
           >
             Delete
@@ -147,11 +158,13 @@ function BatchExecutionsModal({
       size="lg"
     >
       <Stack>
-        <List>
-          {selected.map((resource) => (
-            <List.Item key={resource}>{resource}</List.Item>
-          ))}
-        </List>
+        <Box bg="accent.1" p="md">
+          <List>
+            {selected.map((resource) => (
+              <List.Item key={resource}>{resource}</List.Item>
+            ))}
+          </List>
+        </Box>
 
         {!execution.startsWith("Refresh") && !execution.startsWith("Check") && (
           <>
