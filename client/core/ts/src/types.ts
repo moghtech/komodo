@@ -566,6 +566,7 @@ export interface ImageRegistryConfig {
 export interface SystemCommand {
 	path?: string;
 	command?: string;
+	parse_multiline?: boolean;
 }
 
 /** The build configuration. */

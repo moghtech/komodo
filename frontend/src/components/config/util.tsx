@@ -63,6 +63,7 @@ import {
 } from "@components/monaco";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@ui/badge";
+import { Checkbox } from "@ui/checkbox";
 
 export const ConfigItem = ({
   label,
@@ -469,6 +470,12 @@ export const SystemCommand = ({
   disabled: boolean;
   set: (value: Types.SystemCommand) => void;
 }) => {
+  const initContent = (() => {
+    if (value?.parse_multiline) {
+      return "  # Add multiple commands on new lines. Supports comments and escaped newlines.\n  ";
+    }
+    return "  # Add a command to run.\n  ";
+  })();
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
@@ -481,10 +488,25 @@ export const SystemCommand = ({
           disabled={disabled}
         />
       </div>
+      <div className="flex items-center gap-1">
+        <Checkbox
+          checked={value?.parse_multiline ?? false}
+          onCheckedChange={(checked) =>
+            set({
+              ...(value || {}),
+              parse_multiline: checked === true ? true : false,
+            })
+          }
+          disabled={disabled}
+        />
+        <div className="text-sm text-muted-foreground">
+          Split lines into multiple commands. Supports comments, and escaped newlines.
+        </div>
+      </div>
       <MonacoEditor
         value={
           value?.command ||
-          "  # Add multiple commands on new lines. Supports comments.\n  "
+          initContent
         }
         language="shell"
         onValueChange={(command) => set({ ...(value || {}), command })}

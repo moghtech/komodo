@@ -56,7 +56,7 @@ pub async fn handle_post_repo_execution(
       "On Clone",
       path.as_path(),
       on_clone.command,
-      true,
+      on_clone.parse_multiline,
       &replacers,
     )
     .await
@@ -81,7 +81,7 @@ pub async fn handle_post_repo_execution(
       "On Pull",
       path.as_path(),
       on_pull.command,
-      true,
+      on_pull.parse_multiline,
       &replacers,
     )
     .await

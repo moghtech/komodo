@@ -474,14 +474,12 @@ fn standard_alert_content(alert: &Alert) -> String {
       )
     }
     AlertData::Custom { message, details } => {
-      format!(
-        "{level} | {message}{}",
-        if details.is_empty() {
-          format_args!("")
-        } else {
-          format_args!("\n{details}")
-        }
-      )
+      let details_str = if details.is_empty() {
+        String::new()
+      } else {
+        format!("\n{details:#?}")
+      };
+      format!("{level} | {message}{details_str}")
     }
     AlertData::None {} => Default::default(),
   }

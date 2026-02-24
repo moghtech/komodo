@@ -489,7 +489,7 @@ impl Resolve<super::Args> for ComposeUp {
         "Pre Deploy",
         pre_deploy_path.as_path(),
         &stack.config.pre_deploy.command,
-        true,
+        stack.config.pre_deploy.parse_multiline,
         &replacers,
       )
       .await
@@ -667,7 +667,7 @@ impl Resolve<super::Args> for ComposeUp {
         "Post Deploy",
         post_deploy_path.as_path(),
         &stack.config.post_deploy.command,
-        true,
+        stack.config.post_deploy.parse_multiline,
         &replacers,
       )
       .await

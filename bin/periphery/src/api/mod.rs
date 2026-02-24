@@ -252,7 +252,7 @@ impl Resolve<Args> for RunCommand {
   #[instrument(name = "RunCommand")]
   async fn resolve(self, _: &Args) -> serror::Result<Log> {
     let RunCommand {
-      command: SystemCommand { path, command },
+      command: SystemCommand { path, command, parse_multiline: _ },
     } = self;
     let res = tokio::spawn(async move {
       let command = if path.is_empty() {

@@ -247,7 +247,7 @@ impl Resolve<super::Args> for build::Build {
         "Pre Build",
         pre_build_path.as_path(),
         &pre_build.command,
-        true,
+        pre_build.parse_multiline,
         &replacers,
       )
       .await

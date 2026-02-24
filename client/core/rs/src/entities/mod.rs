@@ -184,6 +184,8 @@ pub struct SystemCommand {
   pub path: String,
   #[serde(default, deserialize_with = "file_contents_deserializer")]
   pub command: String,
+  #[serde(default)]
+  pub parse_multiline: bool,
 }
 
 impl SystemCommand {
