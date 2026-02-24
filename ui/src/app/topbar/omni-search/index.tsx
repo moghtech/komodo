@@ -17,15 +17,9 @@ export default function OmniSearch({}: {}) {
       </ActionIcon>
 
       <Button
-        color="accent.3"
-        c="var(--mantine-color-text)"
         justify="space-between"
         rightSection={
-          <Badge
-            tt="lowercase"
-            c="dimmed"
-            style={{ cursor: "pointer" }}
-          >
+          <Badge color="accent.9" tt="lowercase" style={{ cursor: "pointer" }}>
             shift + s
           </Badge>
         }

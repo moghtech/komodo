@@ -8,6 +8,7 @@ import BuilderTable from "./table";
 import { useServer } from "../server";
 import { serverStateIntention } from "@/lib/color";
 import ResourceHeader from "../header";
+import BuilderConfig from "./config";
 
 export function useBuilder(id: string | undefined) {
   return useRead("ListBuilders", {}).data?.find((r) => r.id === id);
@@ -81,7 +82,7 @@ export const BuilderComponents: RequiredResourceComponents<
 
   Executions: {},
 
-  Config: () => <>CONFIG</>,
+  Config: BuilderConfig,
 
   Page: {},
 };
