@@ -45,7 +45,8 @@ const ConfirmButton = createPolymorphicComponent<"button", ConfirmButtonProps>(
             onBlur?.(e);
           }}
           justify="space-between"
-          w={190}
+          w={{ base: "100%", xs: 190 }}
+          miw="fit-content"
           rightSection={
             clickedOnce ? (
               <Check size="1rem" />

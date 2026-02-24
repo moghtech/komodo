@@ -63,12 +63,18 @@ function BatchExecutionsDropdownMenu<T extends Request>({
   disabled: boolean;
 }) {
   return (
-    <Menu position="bottom-start" disabled={disabled}>
+    <Menu
+      position="bottom-start"
+      offset={16}
+      disabled={disabled}
+      width="target"
+    >
       <Menu.Target>
         <Button
           leftSection={<ICONS.Execution size="1rem" />}
           rightSection={<ChevronDown size="1rem" />}
           disabled={disabled}
+          w={{ base: "100%", xs: "fit-content" }}
         >
           Execute
         </Button>

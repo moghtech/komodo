@@ -137,7 +137,8 @@ export default function ConfirmModal({
           open();
         }}
         justify="space-between"
-        w={190}
+        w={{ base: "100%", xs: 190 }}
+        miw="fit-content"
         rightSection={
           targetNoIcon ? undefined : loading ? (
             <Loader color="white" size="1rem" />

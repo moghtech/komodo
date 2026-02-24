@@ -5,6 +5,7 @@ import {
   GroupProps,
   MantineBreakpoint,
   Select,
+  Stack,
   Tabs,
   TabsProps,
 } from "@mantine/core";
@@ -83,57 +84,60 @@ export function MobileFriendlyTabsSelector({
 }: MobileFriendlyTabsSelectorProps) {
   const tabs = _tabs.filter((t) => !t.hidden);
   return (
-    <Group justify="space-between">
+    <>
       {/* DESKTOP VIEW */}
-      <Tabs.List visibleFrom={changeAt}>
-        {tabs.map(({ value: tabValue, label, icon: Icon, disabled }) => (
-          <Tabs.Tab
-            key={tabValue}
-            value={tabValue}
-            disabled={disabled}
-            onClick={() => onValueChange(tabValue)}
-            w="fit-content"
-          >
-            <Group
-              gap="xs"
-              fz="h3"
-              justify="center"
-              c={tabValue === value ? undefined : "dimmed"}
-              {...tabProps}
+      <Group justify="space-between" visibleFrom={changeAt}>
+        <Tabs.List>
+          {tabs.map(({ value: tabValue, label, icon: Icon, disabled }) => (
+            <Tabs.Tab
+              key={tabValue}
+              value={tabValue}
+              disabled={disabled}
+              onClick={() => onValueChange(tabValue)}
+              w="fit-content"
             >
-              {Icon && <Icon size={fullIconSize} />}
-              {label ?? tabValue}
-            </Group>
-          </Tabs.Tab>
-        ))}
-      </Tabs.List>
+              <Group
+                gap="xs"
+                fz="h3"
+                justify="center"
+                c={tabValue === value ? undefined : "dimmed"}
+                {...tabProps}
+              >
+                {Icon && <Icon size={fullIconSize} />}
+                {label ?? tabValue}
+              </Group>
+            </Tabs.Tab>
+          ))}
+        </Tabs.List>
+        {actions}
+      </Group>
 
       {/* MOBILE VIEW */}
-      <Select
-        hiddenFrom={changeAt}
-        value={value}
-        onChange={(value) => value && onValueChange(value)}
-        data={tabs.map((tab) => ({
-          value: tab.value,
-          label: tab.label ?? tab.value,
-          disabled: tab.disabled,
-        }))}
-        renderOption={({ option, checked }) => {
-          const Icon = tabs.find((tab) => tab.value === option.value)?.icon;
-          return (
-            <Group gap="xs" justify="space-between" p="0.25rem">
-              <Group gap="xs" {...tabProps}>
+      <Stack>
+        <Select
+          hiddenFrom={changeAt}
+          width="100%"
+          value={value}
+          onChange={(value) => value && onValueChange(value)}
+          data={tabs.map((tab) => ({
+            value: tab.value,
+            label: tab.label ?? tab.value,
+            disabled: tab.disabled,
+          }))}
+          renderOption={({ option, checked }) => {
+            const Icon = tabs.find((tab) => tab.value === option.value)?.icon;
+            return (
+              <Group gap="xs" p="0.25rem" {...tabProps}>
                 {Icon && <Icon size={mobileIconSize} />}
                 {option.label}
+                {checked && <ICONS.Check size="1rem" />}
               </Group>
-              {checked && <ICONS.Check size="1rem" />}
-            </Group>
-          );
-        }}
-      />
-
-      {actions}
-    </Group>
+            );
+          }}
+        />
+        {actions}
+      </Stack>
+    </>
   );
 }
 

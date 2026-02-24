@@ -11,7 +11,7 @@ export default function OmniSearch({}: {}) {
         variant="subtle"
         onClick={() => spotlight.open()}
         hiddenFrom="lg"
-        size="lg"
+        size="xl"
       >
         <ICONS.Search size="1.3rem" />
       </ActionIcon>

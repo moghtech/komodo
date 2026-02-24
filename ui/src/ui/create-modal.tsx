@@ -65,6 +65,7 @@ export default function CreateModal({
         variant="default"
         leftSection={<ICONS.Create size="1rem" />}
         onClick={open}
+        w={{ base: "100%", xs: "fit-content" }}
       >
         New {entityType}
       </Button>

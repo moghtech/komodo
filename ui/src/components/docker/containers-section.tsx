@@ -51,7 +51,7 @@ export default function ContainersSection({
       icon={!titleOther ? <ICONS.Container size="1.3rem" /> : undefined}
       actions={
         (pruneButton && !allRunning) || _search || setShow ? (
-          <Group>
+          <Group wrap="nowrap">
             {pruneButton && !allRunning && (
               <Prune serverId={serverId} type="Containers" />
             )}

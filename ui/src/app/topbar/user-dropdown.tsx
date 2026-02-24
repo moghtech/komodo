@@ -22,6 +22,7 @@ import { useNavigate } from "react-router-dom";
 import { MoghAuth } from "komodo_client";
 import { useRead, useUser, useUserInvalidate } from "@/lib/hooks";
 import { hexColorByIntention } from "@/lib/color";
+import UserAvatar from "@/components/user-avatar";
 
 export default function UserDropdown() {
   const [_, setRerender] = useState(false);
@@ -45,7 +46,8 @@ export default function UserDropdown() {
           variant="subtle"
           size="lg"
           leftSection={<User size="1.3rem" />}
-          px="0.5rem"
+          pl="0.5rem"
+          pr={{ base: "-20", lg: "0.5rem" }}
         >
           <Username username={user?.username} />
         </Button>
@@ -132,7 +134,7 @@ export default function UserDropdown() {
   );
 }
 
-const Account = ({
+function Account({
   login,
   current_id,
   setOpen,
@@ -144,7 +146,7 @@ const Account = ({
   setOpen: (open: boolean) => void;
   rerender: () => void;
   viewLogout: boolean;
-}) => {
+}) {
   const user_id = useMemo(
     () => MoghAuth.extractUserIdFromJwt(login.jwt),
     [login.jwt],
@@ -190,7 +192,7 @@ const Account = ({
         {!user.avatar && (
           <User size="1.3rem" style={{ marginRight: "0.5rem" }} />
         )}
-        <Username username={user?.username} />
+        <Username username={user?.username} alwaysShowUsername />
       </Button>
 
       {viewLogout && (
@@ -210,9 +212,15 @@ const Account = ({
       )}
     </Flex>
   );
-};
+}
 
-const Username = ({ username }: { username: string | undefined }) => {
+function Username({
+  username,
+  alwaysShowUsername,
+}: {
+  username: string | undefined;
+  alwaysShowUsername?: boolean;
+}) {
   return (
     <Text
       style={{
@@ -220,9 +228,9 @@ const Username = ({ username }: { username: string | undefined }) => {
         textOverflow: "ellipsis",
         maxWidth: 140,
       }}
-      // visibleFrom="lg"
+      visibleFrom={alwaysShowUsername ? undefined : "lg"}
     >
       {username}
     </Text>
   );
-};
+}

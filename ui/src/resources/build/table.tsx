@@ -6,6 +6,7 @@ import { BuildComponents } from ".";
 import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
 import ResourceLink from "@/resources/link";
+import FileSource from "@/components/file-source";
 
 export default function BuildTable({
   resources,
@@ -33,14 +34,14 @@ export default function BuildTable({
           cell: ({ row }) => <ResourceLink type="Build" id={row.original.id} />,
           size: 200,
         },
-        // {
-        //   header: ({ column }) => (
-        //     <SortableHeader column={column} title="Source" />
-        //   ),
-        //   accessorKey: "info.repo",
-        //   cell: ({ row }) => <StandardSource info={row.original.info} />,
-        //   size: 200,
-        // },
+        {
+          header: ({ column }) => (
+            <SortableHeader column={column} title="Source" />
+          ),
+          accessorKey: "info.repo",
+          cell: ({ row }) => <FileSource info={row.original.info} />,
+          size: 200,
+        },
         {
           header: "Version",
           accessorFn: ({ info }) => fmtVersion(info.version),

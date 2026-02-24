@@ -35,7 +35,7 @@ export default function DeploymentTable({
             <SortableHeader column={column} title="Name" />
           ),
           cell: ({ row }) => (
-            <Group justify="space-between">
+            <Group wrap="nowrap">
               <ResourceLink type="Deployment" id={row.original.id} />
               <DeploymentUpdateAvailable id={row.original.id} small />
             </Group>

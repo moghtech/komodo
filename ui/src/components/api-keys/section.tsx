@@ -59,7 +59,7 @@ export default function ApiKeysSection({
     >
       {keys && (
         <ApiKeysTable
-          noBox
+          noBorder
           keys={keys}
           onDelete={(key) =>
             userId ? serviceDelete({ key }) : regularDelete({ key })

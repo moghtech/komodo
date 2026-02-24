@@ -47,7 +47,7 @@ const Page = createPolymorphicComponent<"div", PageProps>(
       const Icon = icon ?? CircleQuestionMark;
       const titleNode = (
         <Paper
-          w="fit-content"
+          w={{ base: "100%", xs: "fit-content" }}
           px="xl"
           py="xs"
           mb="lg"

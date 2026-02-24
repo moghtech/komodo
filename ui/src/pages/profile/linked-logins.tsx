@@ -100,7 +100,7 @@ export const LinkedLogins = ({
       withBorder
     >
       <DataTable
-        noBox
+        noBorder
         tableKey="login-providers-v1"
         data={loginProviders}
         columns={[

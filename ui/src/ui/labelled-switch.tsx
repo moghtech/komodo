@@ -36,6 +36,8 @@ export default function LabelledSwitch({
       py={6}
       bdrs="sm"
       style={{ cursor: "pointer" }}
+      justify="space-between"
+      w={{ base: "100%", xs: "fit-content" }}
       {...groupProps}
     >
       <Text c={checked ? undefined : "dimmed"} {...labelProps}>

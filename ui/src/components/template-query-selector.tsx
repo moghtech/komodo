@@ -10,7 +10,7 @@ export default function TemplateQuerySelector() {
   const isExclude = value === Types.TemplatesQueryBehavior.Exclude;
   return (
     <Select
-      w="200"
+      w={{ base: "100%", xs: "200" }}
       leftSection={
         <Badge
           radius="sm"

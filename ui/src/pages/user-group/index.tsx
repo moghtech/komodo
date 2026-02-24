@@ -120,7 +120,7 @@ export default function UserGroup() {
           >
             {!group?.everyone && (
               <UserTable
-                noBox
+                noBorder
                 users={
                   users?.filter((user) =>
                     group

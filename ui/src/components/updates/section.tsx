@@ -15,6 +15,7 @@ export default function UpdatesSection({
   return (
     <Section
       title="Updates"
+      titleMb="0"
       icon={<ICONS.Update size="1.3rem" />}
       actions={
         link && (
@@ -24,9 +25,10 @@ export default function UpdatesSection({
         )
       }
       maw={{ xl2: 500, xl3: 600 }}
+      forceHeaderGroup
       withBorder
     >
-      <Stack mah={180} pr="sm" style={{ overflow: "auto" }}>
+      <Stack mah={180} style={{ overflow: "auto" }}>
         <UpdateList max={10} showAllLink={link} {...listProps} />
       </Stack>
     </Section>

@@ -15,6 +15,7 @@ export default function ShowTables() {
           <ICONS.Table size="1rem" />
         )
       }
+      w={{ base: "100%", xs: "fit-content" }}
     >
       {preferences.showTables ? "Show Dashboard" : "Show Tables"}
     </Button>

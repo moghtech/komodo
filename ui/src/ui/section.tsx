@@ -27,6 +27,7 @@ export interface SectionProps extends StackProps {
   isPending?: boolean;
   error?: false | string;
   guardProps?: CenterProps;
+  forceHeaderGroup?: boolean;
 }
 
 const Section = createPolymorphicComponent<"div", SectionProps>(
@@ -34,7 +35,7 @@ const Section = createPolymorphicComponent<"div", SectionProps>(
     (
       {
         titleFz = "h2",
-        titleMb = "md",
+        titleMb = "sm",
         title,
         titleDimmed,
         titleNode,
@@ -48,17 +49,18 @@ const Section = createPolymorphicComponent<"div", SectionProps>(
         isPending,
         error,
         guardProps,
+        forceHeaderGroup,
         ...props
       },
       ref,
     ) => {
-      const TitleComponent = (title ||
+      const TitleComponentInner = (title ||
         titleNode ||
         icon ||
         titleRight ||
         titleOther ||
         actions) && (
-        <Group justify="space-between">
+        <>
           {title || titleNode || icon ? (
             <Group c={titleDimmed ? "dimmed" : undefined} gap="xs">
               {icon}
@@ -70,8 +72,21 @@ const Section = createPolymorphicComponent<"div", SectionProps>(
             titleOther
           )}
           {actions}
-        </Group>
+        </>
       );
+
+      const TitleComponent =
+        TitleComponentInner &&
+        (forceHeaderGroup ? (
+          <Group justify="space-between">{TitleComponentInner}</Group>
+        ) : (
+          <>
+            <Stack hiddenFrom="xs">{TitleComponentInner}</Stack>
+            <Group visibleFrom="xs" justify="space-between">
+              {TitleComponentInner}
+            </Group>
+          </>
+        ));
 
       return (
         <Stack

@@ -38,7 +38,7 @@ export default function SwarmServicesSection({
       icon={!titleOther ? <ICONS.SwarmService size="1.3rem" /> : undefined}
       actions={
         _search || setShow ? (
-          <Group>
+          <Group wrap="nowrap">
             {_search && (
               <SearchInput value={_search[0]} onSearch={_search[1]} />
             )}

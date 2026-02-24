@@ -96,9 +96,9 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
             icon={<ICONS.Execution size="1rem" />}
             my="xl"
           >
-            <Group>
-              {Object.entries(RC.Executions).map(([key, Action]) => (
-                <Action key={key} id={id} />
+            <Group justify="stretch">
+              {Object.entries(RC.Executions).map(([key, Execution]) => (
+                <Execution key={key} id={id} />
               ))}
             </Group>
           </Section>

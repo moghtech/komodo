@@ -35,8 +35,12 @@ export default function ServerContainerStats({ id }: { id: string }) {
     <Section
       title="Containers"
       titleRight={
-        <Group ml="xl" gap="md">
-          <SearchInput value={search} onSearch={setSearch} />
+        <Group ml={{ sm: "xl" }}>
+          <SearchInput
+            value={search}
+            onSearch={setSearch}
+            w={{ base: 200, lg: 300 }}
+          />
           <ShowHideButton show={show} setShow={setShow} />
         </Group>
       }

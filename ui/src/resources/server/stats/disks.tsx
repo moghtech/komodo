@@ -24,12 +24,12 @@ export default function ServerDisks({
     <Section
       title="Disks"
       titleRight={
-        <Group ml="xl" gap="md">
-          <Group gap="xs">
+        <Group ml={{ md: "xl" }} gap="md">
+          <Group gap="xs" wrap="nowrap">
             <Text c="dimmed">Used:</Text>
             <Text>{diskUsed?.toFixed(2)} GB</Text>
           </Group>
-          <Group gap="xs">
+          <Group gap="xs" wrap="nowrap">
             <Text c="dimmed">Total:</Text>
             <Text>{diskTotal?.toFixed(2)} GB</Text>
           </Group>

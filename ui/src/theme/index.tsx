@@ -51,9 +51,9 @@ const theme = createTheme({
   cursorType: "pointer",
   primaryColor: "accent",
   breakpoints: {
-    xs: "40em",
-    sm: "54em",
-    md: "68em",
+    xs: "36em",
+    sm: "48em",
+    md: "66em",
     lg: "82em",
     xl: "96em",
     xl2: "110em",

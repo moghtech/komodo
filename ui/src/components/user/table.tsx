@@ -14,7 +14,7 @@ export interface UserTableProps extends BoxProps {
   onUserRemove?: (user_id: string) => void;
   onUserDelete?: (user_id: string) => Promise<unknown>;
   userDeleteDisabled?: (user_id: string) => boolean;
-  noBox?: boolean;
+  noBorder?: boolean;
 }
 
 export default function UserTable({
@@ -22,7 +22,7 @@ export default function UserTable({
   onUserRemove,
   onUserDelete,
   userDeleteDisabled,
-  noBox,
+  noBorder,
   ...boxProps
 }: UserTableProps) {
   const user = useUser().data;
@@ -94,7 +94,7 @@ export default function UserTable({
 
   return (
     <DataTable
-      noBox={noBox}
+      noBorder={noBorder}
       tableKey="user-table"
       data={users}
       columns={columns}

@@ -102,9 +102,8 @@ export const EnrollTotp = ({ user }: { user: Types.User }) => {
                   <Button
                     onClick={() => confirmEnrollment({ code: confirm })}
                     disabled={confirm.length !== 6 || confirmPending}
-                    leftSection={
-                      confirmPending ? <Loader /> : <Check size="1rem" />
-                    }
+                    leftSection={<Check size="1rem" />}
+                    loading={confirmPending}
                   >
                     Confirm
                   </Button>

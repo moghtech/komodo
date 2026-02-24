@@ -19,6 +19,7 @@ import ResourceNotFound from "@/resources/not-found";
 import ExportToml from "@/components/export-toml";
 import ServerShowStats from "@/resources/server/show-stats";
 import SearchInput from "@/ui/search-input";
+import LabelledSwitch from "@/ui/labelled-switch";
 
 export default function Resources({ _type }: { _type?: UsableResource }) {
   const is_admin = useUser().data?.admin ?? false;
@@ -29,13 +30,13 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
   const name = type === "ResourceSync" ? "Resource Sync" : type;
   useSetTitle(name + "s");
   const [search, setSearch] = useState("");
-  const [filter_update_available, toggle_filter_update_available] =
+  const [filterUpdateAvailable, toggleFilterUpdateAvailable] =
     useFilterByUpdateAvailable();
   const query =
     type === "Stack" || type === "Deployment"
       ? {
           query: {
-            specific: { update_available: filter_update_available },
+            specific: { update_available: filterUpdateAvailable },
           },
         }
       : {};
@@ -65,24 +66,24 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
       icon={Components.Icon}
       description={<Components.Description />}
       oppositeTitle={
-        <Group wrap="nowrap">
+        <Group w={{ base: "100%", xs: "fit-content" }}>
           {type === "Server" && <ServerShowStats />}
           <ExportToml targets={targets} />
         </Group>
       }
     >
-      <Group justify="space-between">
-        <Group>
+      <Group justify="space-between" w="100%">
+        <Group w={{ base: "100%", xs: "fit-content" }}>
           {(is_admin || !disable_non_admin_create) && <Components.New />}
           <Components.BatchExecutions />
         </Group>
 
-        <Group>
+        <Group w={{ base: "100%", xs: "fit-content" }}>
           {(type === "Stack" || type === "Deployment") && (
-            <Switch
+            <LabelledSwitch
               label="Pending Update"
-              checked={filter_update_available}
-              onChange={toggle_filter_update_available}
+              checked={filterUpdateAvailable}
+              onCheckedChange={toggleFilterUpdateAvailable}
               opacity={0.7}
               fz="sm"
             />

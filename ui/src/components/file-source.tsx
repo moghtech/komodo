@@ -25,7 +25,7 @@ export default function FileSource({ info }: FileSourceProps) {
     );
   } else if (info.files_on_host) {
     return (
-      <Group gap="xs">
+      <Group gap="xs" wrap="nowrap">
         <ICONS.Server size="1rem" />
         <Text>Files on Server</Text>
       </Group>
@@ -36,7 +36,7 @@ export default function FileSource({ info }: FileSourceProps) {
     return <RepoLink repo={info.repo} link={info.repo_link} />;
   } else {
     return (
-      <Group gap="xs">
+      <Group gap="xs" wrap="nowrap">
         <NotepadText size="1rem" />
         <Text>UI Defined</Text>
       </Group>

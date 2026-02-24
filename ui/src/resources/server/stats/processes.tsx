@@ -26,8 +26,12 @@ export default function ServerProcesses({ id }: { id: string }) {
     <Section
       title="Processes"
       titleRight={
-        <Group ml="xl">
-          <SearchInput value={search} onSearch={setSearch} />
+        <Group ml={{ sm: "xl" }}>
+          <SearchInput
+            value={search}
+            onSearch={setSearch}
+            w={{ base: 200, lg: 300 }}
+          />
           <ShowHideButton show={show} setShow={setShow} />
         </Group>
       }

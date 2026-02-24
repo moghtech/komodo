@@ -14,7 +14,7 @@ export default function ResourceHeaderAction({
   resource: Types.ResourceListItem<unknown> | undefined;
 }) {
   return (
-    <Group>
+    <Group wrap="nowrap">
       <TemplateSwitch type={type} id={id} resource={resource} />
       <DeleteResource type={type} id={id} />
     </Group>

@@ -18,7 +18,7 @@ export default function Dashboard() {
       title="Dashboard"
       icon={ICONS.Dashboard}
       oppositeTitle={
-        <Group>
+        <Group w={{ base: "100%", xs: "fit-content" }}>
           <ShowTables />
           <ServerShowStats />
           <ExportToml />

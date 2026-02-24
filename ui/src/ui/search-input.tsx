@@ -14,7 +14,7 @@ export default function SearchInput({
     <TextInput
       placeholder="search..."
       leftSection={<ICONS.Search size="0.8rem" />}
-      w={{ sm: 200, lg: 300 }}
+      w={{ base: "100%", xs: 200, lg: 300 }}
       onChange={(e) => {
         onChange?.(e);
         onSearch?.(e.target.value);

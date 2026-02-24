@@ -27,6 +27,7 @@ export default function ExportToml(props: ExportTomlProps) {
         variant="default"
         leftSection={<ICONS.ExportToml size="1.1rem" />}
         onClick={open}
+        w={{ base: "100%", xs: "fit-content" }}
       >
         Toml
       </Button>

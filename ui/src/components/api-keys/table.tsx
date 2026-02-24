@@ -11,18 +11,18 @@ export interface ApiKeysTableProps {
   keys: Types.ApiKey[];
   onDelete: (key: string) => void;
   deletePending: boolean;
-  noBox?: boolean;
+  noBorder?: boolean;
 }
 
 export default function ApiKeysTable({
   keys,
   onDelete,
   deletePending,
-  noBox,
+  noBorder,
 }: ApiKeysTableProps) {
   return (
     <DataTable
-      noBox={noBox}
+      noBorder={noBorder}
       tableKey="api-keys"
       data={keys}
       columns={[

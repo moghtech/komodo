@@ -51,6 +51,7 @@ export interface DataTableProps<TData, TValue = unknown> extends BoxProps {
   caption?: string;
   tableProps?: TableProps;
   noBox?: boolean;
+  noBorder?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -66,6 +67,7 @@ export function DataTable<TData, TValue>({
   caption,
   tableProps,
   noBox,
+  noBorder,
   ...boxProps
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>(defaultSort);
@@ -241,9 +243,9 @@ export function DataTable<TData, TValue>({
   } else {
     return (
       <Box
-        p="lg"
+        p={noBorder ? undefined : "lg"}
         pt="0"
-        className="bordered-light"
+        className={noBorder ? undefined : "bordered-light"}
         bdrs="md"
         w="100%"
         mah="max(150px, calc(100vh - 400px))"

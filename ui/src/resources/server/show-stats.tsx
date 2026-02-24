@@ -15,6 +15,7 @@ export default function ServerShowStats() {
           <Eye size="1rem" />
         )
       }
+      w={{ base: "100%", xs: "fit-content" }}
     >
       {preferences.showServerStats ? "Hide Server Stats" : "Show Server Stats"}
     </Button>
