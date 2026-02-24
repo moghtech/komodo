@@ -53,7 +53,6 @@ export interface ConfigProps<T> {
   disabled: boolean;
   onSave: () => Promise<unknown>;
   titleOther?: ReactNode;
-  selector?: ReactNode;
   disableSidebar?: boolean;
   fileContentsLanguage?: MonacoLanguage;
   groups: Record<
@@ -69,7 +68,6 @@ export default function Config<T>({
   disabled,
   onSave,
   titleOther,
-  selector,
   disableSidebar,
   fileContentsLanguage,
   groups: _groups,
@@ -86,7 +84,7 @@ export default function Config<T>({
     [_groups],
   );
 
-  const groupsComponent = useMemo(
+  const GroupsComponent = useMemo(
     () =>
       groups.map(([group, groupArgs]) => {
         return (
@@ -190,7 +188,7 @@ export default function Config<T>({
   }) =>
     changesMade && (
       <>
-        {unsavedIndicator && <UnsavedChanges />}
+        {unsavedIndicator && <UnsavedChanges fullWidth={fullWidth} />}
         <Button
           variant="outline"
           onClick={onReset}
@@ -212,23 +210,23 @@ export default function Config<T>({
       </>
     );
 
+  const SaveOrResetComponent = (
+    <>
+      <Group visibleFrom="lg" justify="flex-end">
+        <SaveOrReset unsavedIndicator />
+      </Group>
+      <Stack hiddenFrom="lg">
+        <SaveOrReset unsavedIndicator fullWidth />
+      </Stack>
+    </>
+  );
+
   return (
-    <ConfigLayout
-      original={original}
-      titleOther={titleOther}
-      update={update}
-      disabled={disabled}
-      onConfirm={onConfirm}
-      onReset={onReset}
-      selector={selector}
-      fileContentsLanguage={fileContentsLanguage}
-    >
+    <ConfigLayout titleOther={titleOther} SaveOrReset={SaveOrResetComponent}>
       {disableSidebar && (
         <>
-          {groupsComponent}
-          <Group justify="flex-end">
-            <SaveOrReset unsavedIndicator />
-          </Group>
+          {GroupsComponent}
+          {SaveOrResetComponent}
         </>
       )}
       {!disableSidebar && (
@@ -292,10 +290,8 @@ export default function Config<T>({
 
           {/** CONTENT */}
           <Stack style={{ flexGrow: 1 }} gap="lg">
-            {groupsComponent}
-            <Group justify="flex-end">
-              <SaveOrReset unsavedIndicator />
-            </Group>
+            {GroupsComponent}
+            {SaveOrResetComponent}
           </Stack>
         </Flex>
       )}

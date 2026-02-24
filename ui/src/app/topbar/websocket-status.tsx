@@ -1,6 +1,6 @@
 import { hexColorByIntention } from "@/lib/color";
 import { useWebsocketConnected, useWebsocketReconnect } from "@/lib/socket";
-import { ActionIcon, HoverCard, Text } from "@mantine/core";
+import { ActionIcon, Box, HoverCard, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { Circle } from "lucide-react";
 
@@ -19,24 +19,32 @@ export default function WebsocketStatus() {
   const intention = connected ? "Good" : "Critical";
   const color = hexColorByIntention(intention);
 
+  const Target = (
+    <ActionIcon variant="subtle" onClick={onClick} size="xl">
+      <Circle
+        size="1.2rem"
+        color={color}
+        fill={color}
+        style={{ transition: "all 300ms ease" }}
+      />
+    </ActionIcon>
+  );
+
   return (
-    <HoverCard offset={20}>
-      <HoverCard.Target>
-        <ActionIcon variant="subtle" onClick={onClick} size="xl">
-          <Circle
-            size="1.2rem"
-            color={color}
-            fill={color}
-            style={{ transition: "all 300ms ease" }}
-          />
-        </ActionIcon>
-      </HoverCard.Target>
-      <HoverCard.Dropdown>
-        <Text>Websocket Status</Text>
-        <Text c="dimmed" fz="sm">
-          Click to reconnect
-        </Text>
-      </HoverCard.Dropdown>
-    </HoverCard>
+    <>
+      {/* The hovercard can open unexpectedly on mobile so is hidden */}
+      <Box hiddenFrom="sm">{Target}</Box>
+      <Box visibleFrom="sm">
+        <HoverCard offset={20}>
+          <HoverCard.Target>{Target}</HoverCard.Target>
+          <HoverCard.Dropdown>
+            <Text>Websocket Status</Text>
+            <Text c="dimmed" fz="sm">
+              Click to reconnect
+            </Text>
+          </HoverCard.Dropdown>
+        </HoverCard>
+      </Box>
+    </>
   );
 }
