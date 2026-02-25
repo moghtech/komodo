@@ -103,16 +103,30 @@ export const ServerComponents: RequiredResourceComponents<
   },
 
   ResourcePageHeader: ({ id }) => {
+    const coreVersion = useRead("GetVersion", {}).data?.version;
     const server = useServer(id);
+    const versionMismatch =
+      !!coreVersion &&
+      !!server?.info.version &&
+      coreVersion !== server.info.version;
     return (
       <ResourceHeader
         type="Server"
         id={id}
         resource={server}
-        intent={serverStateIntention(server?.info.state)}
+        intent={serverStateIntention(
+          server?.info.state,
+          !!coreVersion &&
+            !!server?.info.version &&
+            coreVersion !== server.info.version,
+        )}
         icon={ICONS.Server}
         name={server?.name}
-        state={fmtUpperCamelcase(server?.info.state ?? "")}
+        state={
+          server?.info.state === Types.ServerState.Ok && versionMismatch
+            ? "Version Mismatch"
+            : fmtUpperCamelcase(server?.info.state ?? "")
+        }
         status={server?.info.region}
       />
     );
