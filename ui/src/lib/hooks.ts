@@ -650,9 +650,11 @@ export function useTemplatesQueryBehavior() {
 export type SettingsView =
   | "Variables"
   | "Tags"
+  | "Builders"
+  | "Alerters"
   | "Providers"
   | "Users"
-  | "Profile";
+  | "Onboarding";
 
 const viewAtom = atomWithStorage<SettingsView>("settings-view-v2", "Variables");
 export function useSettingsView() {

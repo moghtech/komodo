@@ -22,7 +22,6 @@ import { useNavigate } from "react-router-dom";
 import { MoghAuth } from "komodo_client";
 import { useRead, useUser, useUserInvalidate } from "@/lib/hooks";
 import { hexColorByIntention } from "@/lib/color";
-import UserAvatar from "@/components/user-avatar";
 
 export default function UserDropdown() {
   const [_, setRerender] = useState(false);

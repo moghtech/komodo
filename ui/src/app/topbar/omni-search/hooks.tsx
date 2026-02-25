@@ -1,5 +1,6 @@
 import {
   ResourceMap,
+  SettingsView,
   useAllResources,
   useRead,
   useSettingsView,
@@ -99,7 +100,14 @@ export function useOmniSearch(): {
               id: type + "s",
               label: type + "s",
               leftSection: <Components.Icon size="1.3rem" />,
-              onClick: () => nav(usableResourcePath(_type)),
+              onClick: () => {
+                if (type === "Builder" || type === "Alerter") {
+                  setSettingsView((type + "s") as SettingsView);
+                  nav("/settings");
+                } else {
+                  nav(usableResourcePath(_type));
+                }
+              },
             };
           }),
 
@@ -120,6 +128,24 @@ export function useOmniSearch(): {
             label: "Schedules",
             leftSection: <ICONS.Schedule size="1.3rem" />,
             onClick: () => nav("/schedules"),
+          },
+          {
+            id: "Variables",
+            label: "Variables",
+            leftSection: <ICONS.Variable size="1.3rem" />,
+            onClick: () => {
+              setSettingsView("Variables");
+              nav("/settings");
+            },
+          },
+          user?.admin && {
+            id: "Users",
+            label: "Users",
+            leftSection: <ICONS.User size="1.3rem" />,
+            onClick: () => {
+              setSettingsView("Users");
+              nav("/settings");
+            },
           },
         ].filter((item) => {
           if (!item) return;

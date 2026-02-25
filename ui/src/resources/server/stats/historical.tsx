@@ -7,7 +7,6 @@ import { useRead } from "@/lib/hooks";
 import { ChartLine, Download, Upload } from "lucide-react";
 import ShowHideButton from "@/ui/show-hide-button";
 import {
-  Box,
   Center,
   Group,
   Loader,

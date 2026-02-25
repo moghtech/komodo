@@ -5,7 +5,7 @@ import {
   WebhookIntegration,
 } from "@/lib/hooks";
 import { ConfigItem, ConfigItemProps } from "@/ui/config/item";
-import { Select, SimpleGrid, Stack } from "@mantine/core";
+import { Select, Stack } from "@mantine/core";
 import { ReactNode } from "react";
 
 export interface WebhookBuilderProps extends Omit<ConfigItemProps, "children"> {

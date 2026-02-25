@@ -3,7 +3,6 @@ import { ICONS } from "@/theme/icons";
 import {
   Group,
   GroupProps,
-  MantineStyleProps,
   Text,
   TextProps,
 } from "@mantine/core";

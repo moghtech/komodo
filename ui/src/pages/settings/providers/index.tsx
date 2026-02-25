@@ -7,7 +7,7 @@ import {
 } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import Section from "@/ui/section";
-import { Button, Group, Stack, Switch, Text, TextInput } from "@mantine/core";
+import { Button, Group, Stack, Switch, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useState } from "react";
 import NewProviderAccount from "./new";

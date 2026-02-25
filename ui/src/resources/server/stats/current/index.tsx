@@ -7,7 +7,6 @@ import { useFullServer } from "@/resources/server";
 import { ServerLoadAverage } from "./load-average";
 import ServerNetworkUsage from "./network-usage";
 import { Clock } from "lucide-react";
-import { fmtSizeBytes } from "@/lib/formatting";
 
 export default function ServerCurrentStats({
   id,

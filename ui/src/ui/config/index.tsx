@@ -17,7 +17,6 @@ import { Bookmark } from "lucide-react";
 import ConfigGroup from "./group";
 import UnsavedChanges from "./unsaved-changes";
 import ConfigLayout from "./layout";
-import { group } from "node:console";
 
 export interface ConfigFieldArgs {
   label?: string;

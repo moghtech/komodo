@@ -1,6 +1,5 @@
 import {
   Anchor,
-  Code,
   Group,
   Select,
   Stack,

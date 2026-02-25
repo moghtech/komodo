@@ -1,7 +1,6 @@
 import {
   ActionIcon,
   Button,
-  Divider,
   Group,
   Modal,
   Select,

@@ -4,7 +4,6 @@ import { ICONS } from "@/theme/icons";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import { RequiredResourceComponents } from "@/resources";
-import NewResource from "@/resources/new";
 import StackTable from "./table";
 import StackTabs from "./tabs";
 import {
@@ -34,8 +33,6 @@ import HashCompare from "@/components/hash-compare";
 import StackUpdateAvailable from "./update-available";
 import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
-import { useState } from "react";
-import ResourceSelector from "../selector";
 import NewResourceWithDeployTarget from "../new-with-deploy-target";
 
 export function useStack(id: string | undefined) {

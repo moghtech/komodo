@@ -11,7 +11,7 @@ import {
 import { ResourceComponents, UsableResource } from "@/resources";
 import { Types } from "komodo_client";
 import Page from "@/ui/page";
-import { Group, Switch } from "@mantine/core";
+import { Group } from "@mantine/core";
 import TableSkeleton from "@/ui/table-skeleton";
 import TemplateQuerySelector from "@/components/template-query-selector";
 import TagsFilter from "@/components/tags/filter";
@@ -94,11 +94,7 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
         </Group>
       </Group>
 
-      {filtered ? (
-        <RC.Table resources={filtered ?? []} />
-      ) : (
-        <TableSkeleton />
-      )}
+      {filtered ? <RC.Table resources={filtered ?? []} /> : <TableSkeleton />}
     </Page>
   );
 }

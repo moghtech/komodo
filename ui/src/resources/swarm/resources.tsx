@@ -4,7 +4,6 @@ import Section, { SectionProps } from "@/ui/section";
 import { Types } from "komodo_client";
 import StackTable from "@/resources/stack/table";
 import DeploymentTable from "@/resources/deployment/table";
-import NewResource from "@/resources/new";
 import { ResourceComponents } from "..";
 
 export interface SwarmHostedResourcesSectionProps extends Omit<

@@ -5,7 +5,6 @@ import Section, { SectionProps } from "@/ui/section";
 import StackTable from "@/resources/stack/table";
 import DeploymentTable from "@/resources/deployment/table";
 import RepoTable from "@/resources/repo/table";
-import NewResource from "@/resources/new";
 import { ResourceComponents } from "..";
 
 export interface ServerHostedResourcesSectionProps extends Omit<

@@ -1,4 +1,4 @@
-import { Group, Stack, Text, TextInput } from "@mantine/core";
+import { Stack, TextInput } from "@mantine/core";
 import { Types } from "komodo_client";
 import { MonacoEditor } from "@/components/monaco";
 

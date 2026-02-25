@@ -1,6 +1,5 @@
 import { useInvalidate, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
-import CopyButton from "@/ui/copy-button";
 import CopyText from "@/ui/copy-text";
 import {
   Button,

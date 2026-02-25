@@ -1,8 +1,7 @@
 import { usePermissions, useRead, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
 import Config from "@/ui/config";
 import { ConfigItem, ConfigList, ConfigSwitch } from "@/ui/config/item";
-import { ActionIcon, Group, Stack, Text } from "@mantine/core";
+import { Group, Stack, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import ResourceLink from "@/resources/link";
@@ -49,17 +48,6 @@ export default function DeploymentConfig({
 
   const currSwarmId = update.swarm_id ?? config.swarm_id;
   const currServerId = update.server_id ?? config.server_id;
-  const ClearServerSwarmButton = (
-    <ActionIcon
-      color="red"
-      onClick={() =>
-        setUpdate((update) => ({ ...update, swarm_id: "", server_id: "" }))
-      }
-      disabled={disabled}
-    >
-      <ICONS.Clear size="1rem" />
-    </ActionIcon>
-  );
 
   return (
     <Config
