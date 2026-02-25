@@ -17,7 +17,7 @@ export default function NewServiceUser() {
   return (
     <CreateModal
       entityType="Service User"
-      onConfirm={() => create({ username, description: "" })}
+      onConfirm={() => create({ username, description: "" }).then(() => true)}
       loading={isPending}
       configureLabel="a unique username"
       configSection={() => (

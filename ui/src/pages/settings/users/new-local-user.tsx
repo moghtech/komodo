@@ -19,7 +19,7 @@ export default function NewLocalUser() {
   return (
     <CreateModal
       entityType="Local User"
-      onConfirm={() => create({ username, password })}
+      onConfirm={() => create({ username, password }).then(() => true)}
       loading={isPending}
       configureLabel="login information"
       configSection={() => (

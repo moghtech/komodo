@@ -6,6 +6,7 @@ import StackTable from "@/resources/stack/table";
 import DeploymentTable from "@/resources/deployment/table";
 import RepoTable from "@/resources/repo/table";
 import NewResource from "@/resources/new";
+import { ResourceComponents } from "..";
 
 export interface ServerHostedResourcesSectionProps extends Omit<
   SectionProps,
@@ -35,7 +36,7 @@ export default function ServerHostedResourcesSection({
         icon={<ICONS.Stack size="1.3rem" />}
         actions={
           (isAdmin || !disableNonAdminCreate) && (
-            <NewResource type="Stack" serverId={serverId} />
+            <ResourceComponents.Stack.New serverId={serverId} />
           )
         }
       >
@@ -46,7 +47,7 @@ export default function ServerHostedResourcesSection({
         icon={<ICONS.Deployment size="1.3rem" />}
         actions={
           (isAdmin || !disableNonAdminCreate) && (
-            <NewResource type="Deployment" serverId={serverId} />
+            <ResourceComponents.Deployment.New serverId={serverId} />
           )
         }
       >
@@ -57,7 +58,7 @@ export default function ServerHostedResourcesSection({
         icon={<ICONS.Repo size="1.3rem" />}
         actions={
           (isAdmin || !disableNonAdminCreate) && (
-            <NewResource type="Repo" serverId={serverId} />
+            <ResourceComponents.Repo.New serverId={serverId} />
           )
         }
       >

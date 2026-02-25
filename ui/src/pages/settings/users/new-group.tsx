@@ -16,7 +16,7 @@ export default function NewUserGroup() {
   return (
     <CreateModal
       entityType="User Group"
-      onConfirm={() => create({ name })}
+      onConfirm={() => create({ name }).then(() => true)}
       loading={isPending}
       configSection={() => (
         <>

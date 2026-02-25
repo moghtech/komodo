@@ -5,6 +5,7 @@ import { Types } from "komodo_client";
 import StackTable from "@/resources/stack/table";
 import DeploymentTable from "@/resources/deployment/table";
 import NewResource from "@/resources/new";
+import { ResourceComponents } from "..";
 
 export interface SwarmHostedResourcesSectionProps extends Omit<
   SectionProps,
@@ -32,7 +33,7 @@ export default function SwarmHostedResourcesSection({
         icon={<ICONS.Stack size="1.3rem" />}
         actions={
           (isAdmin || !disableNonAdminCreate) && (
-            <NewResource type="Stack" swarmId={swarmId} />
+            <ResourceComponents.Stack.New swarmId={swarmId} />
           )
         }
       >
@@ -43,7 +44,7 @@ export default function SwarmHostedResourcesSection({
         icon={<ICONS.Deployment size="1.3rem" />}
         actions={
           (isAdmin || !disableNonAdminCreate) && (
-            <NewResource type="Deployment" swarmId={swarmId} />
+            <ResourceComponents.Deployment.New swarmId={swarmId} />
           )
         }
       >

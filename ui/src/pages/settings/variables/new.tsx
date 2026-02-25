@@ -19,7 +19,7 @@ export default function NewVariable() {
   return (
     <CreateModal
       entityType="Variable"
-      onConfirm={() => create({ name })}
+      onConfirm={() => create({ name }).then(() => true)}
       disabled={disabled}
       loading={isPending}
       openShiftKeyListener="N"

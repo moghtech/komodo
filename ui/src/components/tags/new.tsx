@@ -17,7 +17,7 @@ export default function NewTag() {
   return (
     <CreateModal
       entityType="Tag"
-      onConfirm={() => create({ name })}
+      onConfirm={() => create({ name }).then(() => true)}
       disabled={false}
       loading={isPending}
       openShiftKeyListener="N"
