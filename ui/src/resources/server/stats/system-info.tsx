@@ -3,6 +3,7 @@ import Section from "@/ui/section";
 import { Types } from "komodo_client";
 import { useRead } from "@/lib/hooks";
 import { useIsServerAvailable } from "../hooks";
+import { ICONS } from "@/theme/icons";
 
 export default function ServerSystemInfo({
   id,
@@ -22,7 +23,7 @@ export default function ServerSystemInfo({
     0,
   );
   return (
-    <Section title="System Info">
+    <Section title="System Info" icon={<ICONS.Info size="1.3rem" />}>
       <DataTable
         tableKey="system-info"
         data={

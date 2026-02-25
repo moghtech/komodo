@@ -1,5 +1,6 @@
 import { useRead } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
+import { ICONS } from "@/theme/icons";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import SearchInput from "@/ui/search-input";
 import Section from "@/ui/section";
@@ -25,6 +26,7 @@ export default function ServerProcesses({ id }: { id: string }) {
   return (
     <Section
       title="Processes"
+      icon={<ICONS.Process size="1.3rem" />}
       titleRight={
         <Group ml={{ sm: "xl" }}>
           <SearchInput

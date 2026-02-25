@@ -44,6 +44,7 @@ import {
   MemoryStick,
   Milestone,
   Network,
+  Package,
   Pause,
   Play,
   Plus,
@@ -119,6 +120,7 @@ export const ICONS = {
   Memory: MemoryStick,
   Disk: Database,
   Stats: ChartLine,
+  Process: Package,
   OnboardingKey: KeySquare,
   // EXECUTIONS
   Deploy: Rocket,

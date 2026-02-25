@@ -5,6 +5,9 @@ import { Types } from "komodo_client";
 import { hexColorByIntention } from "@/lib/color";
 import { convertTsMsToLocalUnixTsInMs } from "@/lib/utils";
 import { useRead } from "@/lib/hooks";
+import { ChartLine } from "lucide-react";
+import ShowHideButton from "@/ui/show-hide-button";
+import { Group, Select } from "@mantine/core";
 
 type StatType =
   | "Cpu"
@@ -18,8 +21,39 @@ type StatDatapoint = { date: number; value: number };
 
 export default function ServerHistoricalStats({ id }: { id: string }) {
   const [interval, setInterval] = useStatsGranularity();
-  const [showHistorical, setShowHistorical] = useState(false);
-  return <Section title="Historical">{/* CHARTS */}</Section>;
+  const [show, setShow] = useState(false);
+  return (
+    <Section
+      title="Historical"
+      icon={<ChartLine size="1.3rem" />}
+      titleRight={
+        <Group ml={{ sm: "xl" }}>
+          <Select
+            value={interval}
+            onChange={(interval) =>
+              interval && setInterval(interval as Types.Timelength)
+            }
+            data={[
+              Types.Timelength.FiveSeconds,
+              Types.Timelength.FifteenSeconds,
+              Types.Timelength.ThirtySeconds,
+              Types.Timelength.OneMinute,
+              Types.Timelength.FiveMinutes,
+              Types.Timelength.FifteenMinutes,
+              Types.Timelength.ThirtyMinutes,
+              Types.Timelength.OneHour,
+              Types.Timelength.SixHours,
+              Types.Timelength.OneDay,
+            ]}
+            w={120}
+          />
+          <ShowHideButton show={show} setShow={setShow} />
+        </Group>
+      }
+    >
+      {/* CHARTS */}
+    </Section>
+  );
 }
 
 function StatChart({ serverId, type }: { serverId: string; type: StatType }) {
@@ -75,23 +109,22 @@ function StatChart({ serverId, type }: { serverId: string; type: StatType }) {
   const min = stats?.[0]?.date ?? 0;
   const max = stats?.[stats.length - 1]?.date ?? 0;
   const diff = max - min;
-
 }
 
-const getStat = (stat: Types.SystemStatsRecord, type: StatType) => {
+function getStat(stat: Types.SystemStatsRecord, type: StatType) {
   if (type === "Cpu") return stat.cpu_perc || 0;
   if (type === "Memory") return (100 * stat.mem_used_gb) / stat.mem_total_gb;
   if (type === "Disk") return (100 * stat.disk_used_gb) / stat.disk_total_gb;
   if (type === "Network Ingress") return stat.network_ingress_bytes || 0;
   if (type === "Network Egress") return stat.network_egress_bytes || 0;
   return 0;
-};
+}
 
-const getColor = (type: StatType) => {
+function getColor(type: StatType) {
   if (type === "Cpu") return hexColorByIntention("Good");
   if (type === "Memory") return hexColorByIntention("Warning");
   if (type === "Disk") return hexColorByIntention("Neutral");
   if (type === "Network Ingress") return hexColorByIntention("Good");
   if (type === "Network Egress") return hexColorByIntention("Critical");
   return hexColorByIntention("Unknown");
-};
+}

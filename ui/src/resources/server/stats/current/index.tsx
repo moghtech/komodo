@@ -6,6 +6,7 @@ import { Types } from "komodo_client";
 import { useFullServer } from "@/resources/server";
 import { ServerLoadAverage } from "./load-average";
 import ServerNetworkUsage from "./network-usage";
+import { Clock } from "lucide-react";
 
 export default function ServerCurrentStats({
   id,
@@ -23,7 +24,7 @@ export default function ServerCurrentStats({
     0,
   );
   return (
-    <Section title="Current">
+    <Section title="Current" icon={<Clock size="1.3rem" />}>
       <Group align="stretch">
         <ServerLoadAverage id={id} stats={stats} />
         <Stack w={{ base: "100%", lg: "auto" }}>

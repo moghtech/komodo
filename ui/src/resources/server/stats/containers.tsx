@@ -9,6 +9,7 @@ import { filterBySplit } from "@/lib/utils";
 import DockerResourceLink from "@/components/docker/link";
 import { useIsServerAvailable } from "../hooks";
 import SearchInput from "@/ui/search-input";
+import { ICONS } from "@/theme/icons";
 
 export default function ServerContainerStats({ id }: { id: string }) {
   const [search, setSearch] = useState("");
@@ -34,6 +35,7 @@ export default function ServerContainerStats({ id }: { id: string }) {
   return (
     <Section
       title="Containers"
+      icon={<ICONS.Container size="1.3rem" />}
       titleRight={
         <Group ml={{ sm: "xl" }}>
           <SearchInput

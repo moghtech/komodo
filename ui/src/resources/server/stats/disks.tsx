@@ -1,3 +1,4 @@
+import { ICONS } from "@/theme/icons";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import Section from "@/ui/section";
 import ShowHideButton from "@/ui/show-hide-button";
@@ -23,6 +24,7 @@ export default function ServerDisks({
   return (
     <Section
       title="Disks"
+      icon={<ICONS.Disk size="1.3rem" />}
       titleRight={
         <Group ml={{ md: "xl" }} gap="md">
           <Group gap="xs" wrap="nowrap">
