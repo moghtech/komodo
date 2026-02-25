@@ -18,6 +18,7 @@ import WebsocketStatus from "@/app/topbar/websocket-status";
 import { useRead } from "@/lib/hooks";
 import TopbarLink from "./link";
 import TopbarAlerts from "./alerts";
+import KeyboardShortcuts from "./keyboard-shortcuts";
 
 const Topbar = ({
   opened,
@@ -86,6 +87,7 @@ const Topbar = ({
             v{version}
           </TopbarLink>
         )}
+        <KeyboardShortcuts />
         <WebsocketStatus />
         <TopbarAlerts />
         <TopbarUpdates />
