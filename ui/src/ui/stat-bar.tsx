@@ -6,6 +6,7 @@ import InfoCard from "./info-card";
 export interface StatBarProps extends StackProps {
   title: string;
   icon: ReactNode;
+  description?: ReactNode;
   percentage: number | undefined;
   warning: number | undefined;
   critical: number | undefined;
@@ -14,6 +15,7 @@ export interface StatBarProps extends StackProps {
 export default function StatBar({
   title,
   icon,
+  description,
   percentage: _percentage,
   warning: _warning,
   critical: _critical,
@@ -41,8 +43,15 @@ export default function StatBar({
         </Group>
       }
       w={{ base: "100%", lg: 300 }}
+      gap="0.2rem"
+      justify="space-between"
       {...props}
     >
+      {description && (
+        <Text c="dimmed" size="sm">
+          {description}
+        </Text>
+      )}
       <Progress color="bw" value={percentage} size="xl" />
     </InfoCard>
   );

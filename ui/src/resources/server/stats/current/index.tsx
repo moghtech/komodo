@@ -7,6 +7,7 @@ import { useFullServer } from "@/resources/server";
 import { ServerLoadAverage } from "./load-average";
 import ServerNetworkUsage from "./network-usage";
 import { Clock } from "lucide-react";
+import { fmtSizeBytes } from "@/lib/formatting";
 
 export default function ServerCurrentStats({
   id,
@@ -39,6 +40,11 @@ export default function ServerCurrentStats({
           <StatBar
             title="RAM Usage"
             icon={<ICONS.Memory size="1.3rem" />}
+            description={
+              usedRam &&
+              totalRam &&
+              `Using ${usedRam?.toFixed(1)} GB of ${totalRam?.toFixed(1)} GB`
+            }
             percentage={((usedRam ?? 0) / (totalRam ?? 0)) * 100}
             warning={server?.config?.mem_warning}
             critical={server?.config?.mem_critical}
@@ -49,6 +55,11 @@ export default function ServerCurrentStats({
           <StatBar
             title="Disk Usage"
             icon={<ICONS.Disk size="1.3rem" />}
+            description={
+              usedDisk &&
+              totalDisk &&
+              `Using ${usedDisk?.toFixed(1)} GB of ${totalDisk?.toFixed(1)} GB`
+            }
             percentage={((usedDisk ?? 0) / (totalDisk ?? 0)) * 100}
             warning={server?.config?.disk_warning}
             critical={server?.config?.disk_critical}
