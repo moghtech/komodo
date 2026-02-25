@@ -36,7 +36,7 @@ export function ServerLoadAverage({
   return (
     <InfoCard title="Load Average" w={{ base: "100%", lg: 300 }}>
       {/* CURRENT LOAD */}
-      <Stack>
+      <Stack gap="0.4rem">
         <Group justify="space-between" align="end">
           <Text c={textColor(one)} fz="h2" fw="bold">
             {one.toFixed(2)}

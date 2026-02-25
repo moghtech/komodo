@@ -42,8 +42,12 @@ export default function ServerCurrentStats({
             icon={<ICONS.Memory size="1.3rem" />}
             description={
               usedRam &&
-              totalRam &&
-              `Using ${usedRam?.toFixed(1)} GB of ${totalRam?.toFixed(1)} GB`
+              totalRam && (
+                <>
+                  <b>{usedRam?.toFixed(1)} GB</b> of{" "}
+                  <b>{totalRam?.toFixed(1)} GB</b> in use
+                </>
+              )
             }
             percentage={((usedRam ?? 0) / (totalRam ?? 0)) * 100}
             warning={server?.config?.mem_warning}
@@ -57,8 +61,12 @@ export default function ServerCurrentStats({
             icon={<ICONS.Disk size="1.3rem" />}
             description={
               usedDisk &&
-              totalDisk &&
-              `Using ${usedDisk?.toFixed(1)} GB of ${totalDisk?.toFixed(1)} GB`
+              totalDisk && (
+                <>
+                  <b>{usedDisk?.toFixed(1)} GB</b> of{" "}
+                  <b>{totalDisk?.toFixed(1)} GB</b> in use
+                </>
+              )
             }
             percentage={((usedDisk ?? 0) / (totalDisk ?? 0)) * 100}
             warning={server?.config?.disk_warning}
