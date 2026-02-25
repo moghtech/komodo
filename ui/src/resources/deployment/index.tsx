@@ -18,7 +18,7 @@ import {
 import { useSwarm } from "@/resources/swarm";
 import { useServer } from "@/resources/server";
 import ResourceLink from "@/resources/link";
-import { Group, Text } from "@mantine/core";
+import { Divider, Group, Text } from "@mantine/core";
 import { RunBuild } from "@/resources/build/executions";
 import DockerResourceLink from "@/components/docker/link";
 import SwarmResourceLink from "@/components/swarm/link";
@@ -26,6 +26,9 @@ import ContainerPorts from "@/components/docker/container-ports";
 import DeploymentUpdateAvailable from "./update-available";
 import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
+import { useState } from "react";
+import ResourceSelector from "../selector";
+import NewResourceWithDeployTarget from "../new-with-deploy-target";
 
 export function useDeployment(id: string | undefined) {
   return useRead("ListDeployments", {}).data?.find((r) => r.id === id);
@@ -84,7 +87,7 @@ export const DeploymentComponents: RequiredResourceComponents<
     <>Connect deployments for alerting, building, and deploying.</>
   ),
 
-  New: () => <NewResource type="Deployment" />,
+  New: (props) => <NewResourceWithDeployTarget type="Deployment" {...props} />,
 
   BatchExecutions: () => (
     <BatchExecutions

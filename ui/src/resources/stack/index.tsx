@@ -34,6 +34,9 @@ import HashCompare from "@/components/hash-compare";
 import StackUpdateAvailable from "./update-available";
 import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
+import { useState } from "react";
+import ResourceSelector from "../selector";
+import NewResourceWithDeployTarget from "../new-with-deploy-target";
 
 export function useStack(id: string | undefined) {
   return useRead("ListStacks", {}).data?.find((r) => r.id === id);
@@ -90,7 +93,7 @@ export const StackComponents: RequiredResourceComponents<
 
   Description: () => <>Deploy docker compose files.</>,
 
-  New: () => <NewResource type="Stack" />,
+  New: (props) => <NewResourceWithDeployTarget type="Stack" {...props} />,
 
   BatchExecutions: () => (
     <BatchExecutions

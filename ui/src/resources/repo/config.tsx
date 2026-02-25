@@ -67,9 +67,14 @@ export default function RepoConfig({
                   <ConfigItem
                     label={
                       server_id ? (
-                        <Group gap="xs">
+                        <Group fz="h3">
                           Server:
-                          <ResourceLink type="Server" id={server_id} />
+                          <ResourceLink
+                            type="Server"
+                            id={server_id}
+                            fz="h3"
+                            iconSize="1.2rem"
+                          />
                         </Group>
                       ) : (
                         "Select Server"
@@ -82,7 +87,7 @@ export default function RepoConfig({
                       selected={server_id}
                       onSelect={(server_id) => set({ server_id })}
                       disabled={disabled}
-                      position="bottom-start"
+                      clearable
                     />
                   </ConfigItem>
                 );
@@ -98,9 +103,14 @@ export default function RepoConfig({
                   <ConfigItem
                     label={
                       builder_id ? (
-                        <Group gap="xs">
+                        <Group fz="h3">
                           Builder:
-                          <ResourceLink type="Builder" id={builder_id} />
+                          <ResourceLink
+                            type="Builder"
+                            id={builder_id}
+                            fz="h3"
+                            iconSize="1.2rem"
+                          />
                         </Group>
                       ) : (
                         "Select Builder"
@@ -113,7 +123,7 @@ export default function RepoConfig({
                       selected={builder_id}
                       onSelect={(builder_id) => set({ builder_id })}
                       disabled={disabled}
-                      position="bottom-start"
+                      clearable
                     />
                   </ConfigItem>
                 );
@@ -180,8 +190,7 @@ export default function RepoConfig({
                       repo in.
                     </Text>
                     <Text>
-                      If <b>relative path</b> (no leading
-                      '/'), relative to{" "}
+                      If <b>relative path</b> (no leading '/'), relative to{" "}
                       <b>{"$root_directory/repos/" + repo.name}</b>
                     </Text>
                   </Stack>

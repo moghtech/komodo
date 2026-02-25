@@ -10,6 +10,8 @@ import { serverStateIntention } from "@/lib/color";
 import ResourceHeader from "../header";
 import BuilderConfig from "./config";
 import BatchExecutions from "@/components/batch-executions";
+import { useState } from "react";
+import { Select } from "@mantine/core";
 
 export function useBuilder(id: string | undefined) {
   return useRead("ListBuilders", {}).data?.find((r) => r.id === id);
@@ -37,7 +39,26 @@ export const BuilderComponents: RequiredResourceComponents<
 
   Description: () => <>Build on your servers, or single-use AWS instances.</>,
 
-  New: () => <NewResource type="Builder" />,
+  New: () => {
+    const [type, setType] = useState<Types.BuilderConfig["type"]>("Server");
+    return (
+      <NewResource<{ type: Types.BuilderConfig["type"]; params: {} }>
+        type="Builder"
+        config={() => ({ type, params: {} })}
+        extraInputs={
+          <Select
+            w="100%"
+            label="Builder Type"
+            value={type}
+            onChange={(type) =>
+              type && setType(type as Types.BuilderConfig["type"])
+            }
+            data={["Server", "Url", "Aws"]}
+          />
+        }
+      />
+    );
+  },
 
   BatchExecutions: () => <BatchExecutions type="Builder" executions={[]} />,
 

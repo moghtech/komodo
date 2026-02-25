@@ -1,11 +1,14 @@
 import { Types } from "komodo_client";
 import { ResourceComponents, UsableResource } from ".";
 import {
+  ActionIcon,
   Button,
   ButtonProps,
   Combobox,
   ComboboxProps,
   Group,
+  InputWrapper,
+  InputWrapperProps,
   Text,
 } from "@mantine/core";
 import { filterBySplit } from "@/lib/utils";
@@ -24,6 +27,8 @@ export interface ResourceSelectorProps extends ComboboxProps {
   state?: unknown;
   excludeIds?: string[];
   targetProps?: ButtonProps;
+  wrapperProps?: InputWrapperProps;
+  clearable?: boolean;
 }
 
 export default function ResourceSelector({
@@ -38,6 +43,8 @@ export default function ResourceSelector({
   onOptionSubmit,
   position = "bottom-start",
   targetProps,
+  wrapperProps,
+  clearable,
   ...comboboxProps
 }: ResourceSelectorProps) {
   const templateFilterFn =
@@ -69,7 +76,7 @@ export default function ResourceSelector({
     },
   );
 
-  return (
+  const Selector = (
     <Combobox
       store={combobox}
       width={300}
@@ -85,7 +92,25 @@ export default function ResourceSelector({
       <Combobox.Target>
         <Button
           justify="space-between"
-          rightSection={<ChevronsUpDown size="1rem" />}
+          rightSection={
+            <Group gap="xs" ml="sm">
+              {clearable && (
+                <ActionIcon
+                  size="sm"
+                  variant="filled"
+                  color="red"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelect?.("");
+                  }}
+                  disabled={disabled || !selected}
+                >
+                  <ICONS.Clear size="0.8rem" />
+                </ActionIcon>
+              )}
+              <ChevronsUpDown size="1rem" />
+            </Group>
+          }
           w="fit-content"
           maw={{ base: 200, lg: 300 }}
           onClick={() => combobox.toggleDropdown()}
@@ -126,4 +151,10 @@ export default function ResourceSelector({
       </Combobox.Dropdown>
     </Combobox>
   );
+
+  if (wrapperProps) {
+    return <InputWrapper {...wrapperProps}>{Selector}</InputWrapper>;
+  } else {
+    return Selector;
+  }
 }

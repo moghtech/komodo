@@ -52,9 +52,9 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
     templatesFilterFn,
   );
 
-  const Components = ResourceComponents[type];
+  const RC = ResourceComponents[type];
 
-  if (!Components) {
+  if (!RC) {
     return <ResourceNotFound type={type} />;
   }
 
@@ -63,8 +63,8 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
   return (
     <Page
       title={`${name}s`}
-      icon={Components.Icon}
-      description={<Components.Description />}
+      icon={RC.Icon}
+      description={<RC.Description />}
       oppositeTitle={
         <Group w={{ base: "100%", xs: "fit-content" }}>
           {type === "Server" && <ServerShowStats />}
@@ -74,8 +74,8 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
     >
       <Group justify="space-between" w="100%">
         <Group w={{ base: "100%", xs: "fit-content" }}>
-          {(is_admin || !disable_non_admin_create) && <Components.New />}
-          <Components.BatchExecutions />
+          {(is_admin || !disable_non_admin_create) && <RC.New />}
+          <RC.BatchExecutions />
         </Group>
 
         <Group w={{ base: "100%", xs: "fit-content" }}>
@@ -95,7 +95,7 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
       </Group>
 
       {filtered ? (
-        <Components.Table resources={filtered ?? []} />
+        <RC.Table resources={filtered ?? []} />
       ) : (
         <TableSkeleton />
       )}

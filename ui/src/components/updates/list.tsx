@@ -43,7 +43,7 @@ export default function UpdateList({
             large={large}
           />
         ))}
-        {showAllLink && (
+        {showAllLink && typeof updates?.next_page === "number" && (
           <Button
             leftSection={<ICONS.ExternalLink size="1rem" />}
             component={Link}

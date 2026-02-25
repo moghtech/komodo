@@ -16,6 +16,8 @@ import FileSource from "@/components/file-source";
 import HashCompare from "@/components/hash-compare";
 import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
+import { useState } from "react";
+import ResourceSelector from "../selector";
 
 export function useBuild(id: string | undefined) {
   return useRead("ListBuilds", {}).data?.find((r) => r.id === id);
@@ -60,7 +62,28 @@ export const BuildComponents: RequiredResourceComponents<
 
   Description: () => <>Build container images.</>,
 
-  New: () => <NewResource type="Build" />,
+  New: ({ builderId: _builderId }) => {
+    const [builderId, setBuilderId] = useState("");
+    return (
+      <NewResource<Types.BuildConfig>
+        type="Build"
+        config={() => ({ builder_id: _builderId ?? builderId })}
+        extraInputs={
+          !builderId && (
+            <ResourceSelector
+              type="Builder"
+              selected={builderId}
+              onSelect={setBuilderId}
+              targetProps={{ w: "100%", maw: "100%" }}
+              width="target"
+              position="bottom"
+              clearable
+            />
+          )
+        }
+      />
+    );
+  },
 
   BatchExecutions: () => (
     <BatchExecutions type="Build" executions={["RunBuild"]} />

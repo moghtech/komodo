@@ -41,9 +41,14 @@ export default function ServerBuilderConfig({ id }: { id: string }) {
                   <ConfigItem
                     label={
                       serverId ? (
-                        <Group gap="xs">
+                        <Group fz="h3" fw="bold">
                           Server:
-                          <ResourceLink type="Server" id={serverId} />
+                          <ResourceLink
+                            type="Server"
+                            id={serverId}
+                            fz="h3"
+                            iconSize="1.2rem"
+                          />
                         </Group>
                       ) : (
                         "Select Server"
@@ -56,6 +61,7 @@ export default function ServerBuilderConfig({ id }: { id: string }) {
                       selected={serverId}
                       onSelect={(server_id) => set({ server_id })}
                       disabled={disabled}
+                      clearable
                     />
                   </ConfigItem>
                 );

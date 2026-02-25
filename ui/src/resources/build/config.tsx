@@ -122,14 +122,19 @@ export default function BuildConfig({
     label: "Builder",
     labelHidden: true,
     fields: {
-      builder_id(builder_id, set) {
+      builder_id(builderId, set) {
         return (
           <ConfigItem
             label={
-              builder_id ? (
-                <Group>
+              builderId ? (
+                <Group fz="h3" fw="bold">
                   Builder:
-                  <ResourceLink type="Builder" id={builder_id} />
+                  <ResourceLink
+                    type="Builder"
+                    id={builderId}
+                    fz="h3"
+                    iconSize="1.2rem"
+                  />
                 </Group>
               ) : (
                 "Select Builder"
@@ -140,10 +145,10 @@ export default function BuildConfig({
           >
             <ResourceSelector
               type="Builder"
-              selected={builder_id}
+              selected={builderId}
               onSelect={(builder_id) => set({ builder_id })}
               disabled={disabled}
-              position="bottom-start"
+              clearable
             />
           </ConfigItem>
         );

@@ -9,7 +9,7 @@ export interface CreateModalProps {
   configSection: (close: () => void) => ReactNode;
   disabled?: boolean;
   loading?: boolean;
-  onConfirm: () => Promise<unknown>;
+  onConfirm: () => Promise<boolean>;
   onOpenChange?: (opened: boolean) => void;
   configureLabel?: string;
   openShiftKeyListener?: string;
@@ -47,11 +47,11 @@ export default function CreateModal({
 
           {configSection(close)}
 
-          <Group justify="flex-end" mt="md">
+          <Group justify="flex-end" mt="lg">
             <Button
-              onClick={() => {
-                onConfirm().then(close);
-              }}
+              onClick={async () =>
+                onConfirm().then((success) => success && close())
+              }
               loading={loading}
               disabled={disabled}
             >

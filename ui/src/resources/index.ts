@@ -83,10 +83,10 @@ export interface RequiredResourceComponents<
 
   /** New resource button / dialog */
   New: React.FC<{
-    swarm_id?: string;
-    server_id?: string;
-    builder_id?: string;
-    build_id?: string;
+    swarmId?: string;
+    serverId?: string;
+    builderId?: string;
+    buildId?: string;
   }>;
 
   /** A table component to view resource list */

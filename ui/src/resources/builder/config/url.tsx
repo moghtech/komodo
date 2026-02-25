@@ -37,7 +37,7 @@ export default function UrlBuilderConfig({ id }: { id: string }) {
             fields: {
               address: {
                 description: "The address of the Periphery agent",
-                placeholder: "https://periphery:8120",
+                placeholder: "wss://periphery:8120",
               },
             },
           },

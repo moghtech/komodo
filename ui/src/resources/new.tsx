@@ -1,93 +1,60 @@
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRead, useWrite } from "@/lib/hooks";
 import { UsableResource } from ".";
-import { Types } from "komodo_client";
 import { notifications } from "@mantine/notifications";
 import { usableResourcePath } from "@/lib/utils";
 import CreateModal from "@/ui/create-modal";
-import { TextInput } from "@mantine/core";
+import { Stack, TextInput } from "@mantine/core";
+import ResourceSelector from "./selector";
+import { Types } from "komodo_client";
 
-export interface NewResourceProps {
+export interface NewResourceProps<Config> {
+  config?: () => Partial<Config>;
   type: UsableResource;
   readableType?: string;
-  swarmId?: string;
-  serverId?: string;
-  builderId?: string;
-  buildId?: string;
   name?: string;
-  selectSwarm?: boolean;
-  selectServer?: boolean;
-  selectBuilder?: boolean;
+  extraInputs?: ReactNode;
 }
 
-export default function NewResource({
+export default function NewResource<Config>({
+  config,
   type,
   readableType,
-  swarmId: _swarmId,
-  serverId: _serverId,
-  builderId: _builderId,
-  buildId,
   name: _name = "",
-  selectSwarm,
-  selectServer,
-  selectBuilder,
-}: NewResourceProps) {
+  extraInputs,
+}: NewResourceProps<Config>) {
   const nav = useNavigate();
   const showTemplateSelector =
     (useRead(`List${type}s`, {}).data?.filter((r) => r.template).length ?? 0) >
     0;
-  const swarmsExist = useRead("ListSwarms", {}, { enabled: selectSwarm }).data
-    ?.length
-    ? true
-    : false;
   const { mutateAsync: create, isPending: createPending } = useWrite(
     `Create${type}`,
   );
   const { mutateAsync: copy, isPending: copyPending } = useWrite(`Copy${type}`);
-  const [swarmId, setSwarmId] = useState("");
-  const [serverId, setServerId] = useState("");
-  const [builderId, setBuilderId] = useState("");
   const [templateId, setTemplateId] = useState("");
   const [name, setName] = useState(_name);
 
-  const typeDisplay =
+  const placeholderType =
     type === "ResourceSync" ? "resource-sync" : type.toLowerCase();
-
-  const config: Types._PartialDeploymentConfig | Types._PartialRepoConfig =
-    type === "Deployment"
-      ? {
-          swarm_id: _swarmId ?? swarmId,
-          server_id: _serverId ?? serverId,
-          image: buildId
-            ? { type: "Build", params: { build_id: buildId } }
-            : { type: "Image", params: { image: "" } },
-        }
-      : type === "Stack"
-        ? { swarm_id: _swarmId ?? swarmId, server_id: _serverId ?? serverId }
-        : type === "Repo"
-          ? {
-              server_id: _serverId ?? serverId,
-              builder_id: _builderId ?? builderId,
-            }
-          : type === "Build"
-            ? { builder_id: _builderId ?? builderId }
-            : {};
 
   const onConfirm = async () => {
     if (!name.trim()) {
       notifications.show({ message: "Name cannot be empty", color: "red" });
+      return false;
     }
     try {
       const result = templateId
         ? await copy({ name: name.trim(), id: templateId })
-        : await create({ name: name.trim(), config });
+        : await create({ name: name.trim(), config: config?.() ?? {} });
       const resourceId = result._id?.$oid;
       if (resourceId) {
         nav(`/${usableResourcePath(type)}/${resourceId}`);
       }
+      return true;
     } catch (error) {
       notifications.show({ message: "Unexpected error.", color: "red" });
+      return false;
     }
   };
 
@@ -99,10 +66,10 @@ export default function NewResource({
       loading={createPending || copyPending}
       openShiftKeyListener="N"
       configSection={() => (
-        <>
+        <Stack>
           <TextInput
             autoFocus
-            placeholder={`${typeDisplay}-name`}
+            placeholder={`${placeholderType}-name`}
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => {
@@ -115,7 +82,22 @@ export default function NewResource({
             }}
             error={!name.trim() && "Enter name"}
           />
-        </>
+
+          {extraInputs}
+
+          {showTemplateSelector && (
+            <ResourceSelector
+              type={type}
+              selected={templateId}
+              onSelect={setTemplateId}
+              templates={Types.TemplatesQueryBehavior.Only}
+              placeholder="Template (Optional)"
+              targetProps={{ w: "100%", maw: "100%" }}
+              width="target"
+              position="bottom"
+            />
+          )}
+        </Stack>
       )}
     />
   );

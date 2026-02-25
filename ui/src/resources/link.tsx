@@ -10,6 +10,7 @@ export interface ResourceLinkProps extends TextProps {
   onClick?: () => void;
   noColor?: boolean;
   groupProps?: GroupProps;
+  iconSize?: string | number;
 }
 
 export default function ResourceLink({
@@ -18,6 +19,7 @@ export default function ResourceLink({
   onClick,
   noColor,
   groupProps,
+  iconSize,
   ...textProps
 }: ResourceLinkProps) {
   const RC = ResourceComponents[type];
@@ -36,7 +38,7 @@ export default function ResourceLink({
       gap="xs"
       {...groupProps}
     >
-      <RC.Icon id={id} noColor={noColor} />
+      <RC.Icon id={id} noColor={noColor} size={iconSize} />
       <Text
         className="hover-underline"
         style={{ textWrap: "nowrap" }}

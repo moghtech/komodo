@@ -10,12 +10,12 @@ import { useMemo } from "react";
 import { useBuild } from ".";
 import BuildConfig from "./config";
 import Section from "@/ui/section";
-import NewResource from "../new";
 import DeploymentTable from "../deployment/table";
 import BuildInfo from "./info";
 import { ICONS } from "@/theme/icons";
+import { ResourceComponents } from "..";
 
-type BuildTabsView = "Config" | "Info" | "Deployments";
+type BuildTabsView = "Config" | "Info" | "Resources";
 
 export default function BuildTabs({ id }: { id: string }) {
   const [view, setView] = useLocalStorage<BuildTabsView>({
@@ -41,7 +41,7 @@ export default function BuildTabs({ id }: { id: string }) {
         icon: ICONS.Info,
       },
       {
-        value: "Deployments",
+        value: "Resources",
         disabled: deploymentsDisabled,
         icon: ICONS.Deployment,
       },
@@ -66,11 +66,11 @@ export default function BuildTabs({ id }: { id: string }) {
     case "Info":
       View = <BuildInfo id={id} titleOther={Selector} />;
       break;
-    case "Deployments":
+    case "Resources":
       View = (
         <Section
           titleOther={Selector}
-          actions={<NewResource type="Deployment" buildId={id} />}
+          actions={<ResourceComponents.Deployment.New buildId={id} />}
         >
           <DeploymentTable resources={deployments ?? []} />
         </Section>

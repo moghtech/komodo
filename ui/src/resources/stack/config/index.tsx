@@ -157,9 +157,14 @@ export default function StackConfig({
             <ConfigItem
               label={
                 swarm_id ? (
-                  <Group>
+                  <Group fz="h3" fw="bold">
                     Swarm:
-                    <ResourceLink type="Swarm" id={swarm_id} />
+                    <ResourceLink
+                      type="Swarm"
+                      id={swarm_id}
+                      fz="h3"
+                      iconSize="1.2rem"
+                    />
                   </Group>
                 ) : (
                   "Select Swarm"
@@ -167,15 +172,13 @@ export default function StackConfig({
               }
               description="Select the Swarm to deploy on."
             >
-              <Group>
-                <ResourceSelector
-                  type="Swarm"
-                  selected={swarm_id}
-                  onSelect={(swarm_id) => set({ swarm_id })}
-                  disabled={disabled}
-                />
-                {ClearServerSwarmButton}
-              </Group>
+              <ResourceSelector
+                type="Swarm"
+                selected={swarm_id}
+                onSelect={(swarm_id) => set({ swarm_id, server_id: "" })}
+                disabled={disabled}
+                clearable
+              />
             </ConfigItem>
           );
         },
@@ -191,9 +194,14 @@ export default function StackConfig({
             <ConfigItem
               label={
                 server_id ? (
-                  <Group>
+                  <Group fz="h3" fw="bold">
                     Server:
-                    <ResourceLink type="Server" id={server_id} />
+                    <ResourceLink
+                      type="Server"
+                      id={server_id}
+                      fz="h3"
+                      iconSize="1.2rem"
+                    />
                   </Group>
                 ) : (
                   "Select Server"
@@ -201,15 +209,13 @@ export default function StackConfig({
               }
               description="Select the Server to deploy on."
             >
-              <Group>
-                <ResourceSelector
-                  type="Server"
-                  selected={server_id}
-                  onSelect={(server_id) => set({ server_id })}
-                  disabled={disabled}
-                />
-                {ClearServerSwarmButton}
-              </Group>
+              <ResourceSelector
+                type="Server"
+                selected={server_id}
+                onSelect={(server_id) => set({ server_id, swarm_id: "" })}
+                disabled={disabled}
+                clearable
+              />
             </ConfigItem>
           );
         },
