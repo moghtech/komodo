@@ -27,7 +27,8 @@ export default function HashCompare({
   latestMessage,
   ...props
 }: HashCompareProps) {
-  const outOfDate = lastHash && lastHash !== latestHash;
+  const outOfDate =
+    !!lastHash && lastHash.slice(0, 8) !== latestHash?.slice(0, 8);
   return (
     <HoverCard position="bottom-start" {...props}>
       <HoverCard.Target>
