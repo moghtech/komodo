@@ -69,10 +69,11 @@ export default function ResourceSubPage({
         <ResourceUpdates type={parentType} id={parentId} />
       </Group>
 
-      <Stack mt="sm" gap="xl">
+      <Stack gap="xl">
         {canExecute && executions && (
           <Section
             title="Execute"
+            titleMb="0"
             icon={<ICONS.Execution size="1.3rem" />}
             my="md"
           >

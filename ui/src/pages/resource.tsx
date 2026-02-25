@@ -89,12 +89,13 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
         <ResourceUpdates type={type} id={id} />
       </Group>
 
-      <Stack mt="lg" gap="xl">
+      <Stack gap="xl">
         {canExecute && Object.keys(RC.Executions).length > 0 && (
           <Section
             title="Execute"
+            titleMb="0"
             icon={<ICONS.Execution size="1rem" />}
-            my="xl"
+            my="md"
           >
             <Group justify="stretch">
               {Object.entries(RC.Executions).map(([key, Execution]) => (

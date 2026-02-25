@@ -83,6 +83,7 @@ export function MobileFriendlyTabsSelector({
   tabProps,
 }: MobileFriendlyTabsSelectorProps) {
   const tabs = _tabs.filter((t) => !t.hidden);
+  const SelectedIcon = tabs.find((tab) => tab.value === value)?.icon;
   return (
     <>
       {/* DESKTOP VIEW */}
@@ -113,12 +114,12 @@ export function MobileFriendlyTabsSelector({
       </Group>
 
       {/* MOBILE VIEW */}
-      <Stack>
+      <Stack hiddenFrom={changeAt}>
         <Select
-          hiddenFrom={changeAt}
           width="100%"
           value={value}
           onChange={(value) => value && onValueChange(value)}
+          leftSection={SelectedIcon && <SelectedIcon size="1rem" />}
           data={tabs.map((tab) => ({
             value: tab.value,
             label: tab.label ?? tab.value,

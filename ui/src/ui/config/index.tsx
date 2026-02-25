@@ -8,6 +8,7 @@ import {
   Flex,
   Group,
   ScrollArea,
+  Select,
   Stack,
   Text,
 } from "@mantine/core";
@@ -16,6 +17,7 @@ import { Bookmark } from "lucide-react";
 import ConfigGroup from "./group";
 import UnsavedChanges from "./unsaved-changes";
 import ConfigLayout from "./layout";
+import { group } from "node:console";
 
 export interface ConfigFieldArgs {
   label?: string;
@@ -89,30 +91,6 @@ export default function Config<T>({
       groups.map(([group, groupArgs]) => {
         return (
           <Fragment key={group}>
-            {/* <div className="xl:hidden sticky top-16 h-16 flex items-center justify-between bg-background z-10">
-                  {section && <p className="uppercase text-2xl">{section}</p>}
-                  <Select
-                    onValueChange={(value) => (window.location.hash = value)}
-                  >
-                    <SelectTrigger className="w-32 capitalize xl:hidden">
-                      <SelectValue placeholder="Go To" />
-                    </SelectTrigger>
-                    <SelectContent className="w-32">
-                      {components[section]
-                        .filter((item) => !item.hidden)
-                        .map(({ label }) => (
-                          <SelectItem
-                            key={section + label}
-                            value={section + label}
-                            className="capitalize"
-                          >
-                            {label}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div> */}
-
             {group && (
               <Text visibleFrom="lg" fz="h1" tt="uppercase" mt="xl">
                 {group}
@@ -210,7 +188,7 @@ export default function Config<T>({
       </>
     );
 
-  const SaveOrResetComponent = (
+  const SaveOrResetComponent = changesMade && (
     <>
       <Group visibleFrom="lg" justify="flex-end">
         <SaveOrReset unsavedIndicator />
@@ -230,7 +208,11 @@ export default function Config<T>({
         </>
       )}
       {!disableSidebar && (
-        <Flex w="100%" gap="xl">
+        <Flex
+          w="100%"
+          gap={{ base: "md", lg: "xl" }}
+          direction={{ base: "column", lg: "row" }}
+        >
           {/** SIDEBAR (LG) */}
           <Box
             visibleFrom="lg"
@@ -250,36 +232,38 @@ export default function Config<T>({
                 }
               >
                 <Stack>
-                  {groups.map(([group, groupArgs]) => (
-                    <Stack key={group} gap="xs">
-                      <Group justify="flex-end" mr="md" c="dimmed">
-                        <Bookmark size="1rem" />
-                        <Text tt="uppercase">{group || "GENERAL"}</Text>
-                      </Group>
-                      <Stack gap="0.1rem">
-                        {groupArgs &&
-                          groupArgs
-                            .filter((groupArgs) => !groupArgs.hidden)
-                            .map((groupArgs) => (
-                              <Button
-                                key={group + groupArgs.label}
-                                variant="subtle"
-                                justify="flex-end"
-                                size="sm"
-                                fullWidth
-                                renderRoot={(props) => (
-                                  <Anchor
-                                    href={"#" + group + groupArgs.label}
-                                    {...props}
-                                  />
-                                )}
-                              >
-                                {groupArgs.label}
-                              </Button>
-                            ))}
+                  {groups
+                    .filter(([_, groupArgs]) => groupArgs)
+                    .map(([group, groupArgs]) => (
+                      <Stack key={group} gap="xs">
+                        <Group justify="flex-end" mr="md" c="dimmed">
+                          <Bookmark size="1rem" />
+                          <Text tt="uppercase">{group || "GENERAL"}</Text>
+                        </Group>
+                        <Stack gap="0.1rem">
+                          {groupArgs &&
+                            groupArgs
+                              .filter((groupArgs) => !groupArgs.hidden)
+                              .map((groupArgs) => (
+                                <Button
+                                  key={group + groupArgs.label}
+                                  variant="subtle"
+                                  justify="flex-end"
+                                  size="sm"
+                                  fullWidth
+                                  renderRoot={(props) => (
+                                    <Anchor
+                                      href={"#" + group + groupArgs.label}
+                                      {...props}
+                                    />
+                                  )}
+                                >
+                                  {groupArgs.label}
+                                </Button>
+                              ))}
+                        </Stack>
                       </Stack>
-                    </Stack>
-                  ))}
+                    ))}
                 </Stack>
               </ScrollArea>
 
@@ -288,8 +272,30 @@ export default function Config<T>({
             </Stack>
           </Box>
 
+          {/** SELECTOR (MOBILE) */}
+          <Select
+            hiddenFrom="lg"
+            className="select-nondimmed-placeholder"
+            placeholder="Go To"
+            leftSection={<Bookmark size="1rem" />}
+            value={null}
+            data={groups
+              .filter(([_, groupArgs]) => groupArgs)
+              .map(([group, groupArgs]) => ({
+                group,
+                items: (groupArgs as ConfigGroupArgs<T>[]).map((arg) => ({
+                  label: arg.label,
+                  value: group + arg.label,
+                })),
+              }))}
+            onChange={(group) => {
+              if (!group) return;
+              window.location.hash = group;
+            }}
+          />
+
           {/** CONTENT */}
-          <Stack style={{ flexGrow: 1 }} gap="lg">
+          <Stack style={{ flexGrow: 1 }} gap="md">
             {GroupsComponent}
             {SaveOrResetComponent}
           </Stack>

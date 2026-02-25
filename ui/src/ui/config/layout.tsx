@@ -10,7 +10,7 @@ export default function ConfigLayout({
   SaveOrReset,
   ...sectionProps
 }: {
-  SaveOrReset: ReactNode;
+  SaveOrReset: ReactNode | undefined;
 } & SectionProps) {
   const titleProps = titleOther
     ? { titleOther }
@@ -18,5 +18,5 @@ export default function ConfigLayout({
         title: title ?? "Config",
         icon: icon ?? <ICONS.Settings size="1rem" />,
       };
-  return <Section actions={SaveOrReset} {...titleProps} {...sectionProps} />;
+  return <Section actions={SaveOrReset} gap="md" {...titleProps} {...sectionProps} />;
 }
