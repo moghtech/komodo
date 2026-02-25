@@ -1,20 +1,25 @@
 import { usableResourcePath } from "@/lib/utils";
 import { ResourceComponents, UsableResource } from ".";
-import { Group, Text } from "@mantine/core";
+import { Group, GroupProps, Text, TextProps } from "@mantine/core";
 import { Link } from "react-router-dom";
 import { TemplateMarker } from "@/components/template-marker";
+
+export interface ResourceLinkProps extends TextProps {
+  type: UsableResource;
+  id: string;
+  onClick?: () => void;
+  noColor?: boolean;
+  groupProps?: GroupProps;
+}
 
 export default function ResourceLink({
   type,
   id,
   onClick,
   noColor,
-}: {
-  type: UsableResource;
-  id: string;
-  onClick?: () => void;
-  noColor?: boolean;
-}) {
+  groupProps,
+  ...textProps
+}: ResourceLinkProps) {
   const RC = ResourceComponents[type];
   const resource = RC.useListItem(id);
   return (
@@ -29,12 +34,14 @@ export default function ResourceLink({
       }}
       wrap="nowrap"
       gap="xs"
+      {...groupProps}
     >
       <RC.Icon id={id} noColor={noColor} />
       <Text
         className="hover-underline"
         style={{ textWrap: "nowrap" }}
-        fz={{ base: "xs", md: "sm", lg: "md" }}
+        fz={{ base: "sm", lg: "md" }}
+        {...textProps}
       >
         {resource?.name ?? "Unknown"}
       </Text>

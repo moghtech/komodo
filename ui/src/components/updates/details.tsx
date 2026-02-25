@@ -50,7 +50,7 @@ export default function UpdateDetails({
         content: {
           flex: "none",
           width: 1400,
-          maxWidth: "calc(100vw - 4rem)",
+          maxWidth: "calc(100vw - 2rem)",
           height: "fit-content",
         },
       }}
@@ -80,7 +80,7 @@ export function UpdateDetailsContent({ id }: { id: string }) {
   return (
     <Stack gap="xl" m="md">
       {/** HEADER */}
-      <Text fz="h1">
+      <Text fz="h2">
         {fmtOperation(update.operation)}{" "}
         {!versionIsNone(update.version) && fmtVersion(update.version)}
       </Text>
@@ -90,22 +90,23 @@ export function UpdateDetailsContent({ id }: { id: string }) {
         <UserAvatar userId={update.operator} iconSize="1.3rem" fz="md" />
 
         {/** RESOURCE / VERSION */}
-        <Group gap="xs">
+        <Group>
           {Components ? (
             <ResourceLink
               type={update.target.type as UsableResource}
               id={update.target.id}
               onClick={close}
+              fz="md"
             />
           ) : (
-            <Group>
+            <Group gap="xs" wrap="nowrap">
               <ICONS.Settings size="1rem" />
               System
             </Group>
           )}
 
           {update.version && (
-            <Group>
+            <Group gap="xs" wrap="nowrap">
               <ICONS.Version size="1rem" />
               {fmtVersion(update.version)}
             </Group>
@@ -114,11 +115,11 @@ export function UpdateDetailsContent({ id }: { id: string }) {
 
         {/** DATE / DURATION / COPY LINK */}
         <Group>
-          <Group>
+          <Group gap="xs" wrap="nowrap">
             <ICONS.Calendar size="1rem" />
             {fmtDateWithMinutes(new Date(update.start_ts))}
           </Group>
-          <Group>
+          <Group gap="xs" wrap="nowrap">
             <Clock size="1rem" />
             {update.end_ts
               ? fmtDuration(update.start_ts, update.end_ts)

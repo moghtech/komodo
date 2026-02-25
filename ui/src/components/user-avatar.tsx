@@ -50,7 +50,7 @@ export default function UserAvatar({
   return (
     <Group gap="xs" {...groupProps}>
       {avatar}
-      <Text fz={{ base: "xs", md: "sm", lg: "md" }} {...textProps}>
+      <Text fz={{ base: "sm", lg: "md" }} {...textProps}>
         {user?.username ?? "Unknown"}
       </Text>
     </Group>

@@ -70,7 +70,7 @@ export default function UpdateCard({
         <Flex
           justify="space-between"
           c="dimmed"
-          fz={{ base: "xs", md: "sm", lg: "md" }}
+          fz={{ base: "sm", lg: "md" }}
         >
           <Group gap="xs">
             {update.target.type === "System" ? (

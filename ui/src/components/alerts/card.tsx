@@ -23,11 +23,7 @@ export default function AlertCard({
   const { open: openDetails } = useAlertDetails();
 
   const FirstRow = (flexProps: FlexProps) => (
-    <Flex
-      justify="space-between"
-      fz={{ base: "xs", md: "sm", lg: "md" }}
-      {...flexProps}
-    >
+    <Flex justify="space-between" fz={{ base: "sm", lg: "md" }} {...flexProps}>
       <Group wrap="nowrap" gap="xs">
         <Icon alert={alert} />
         {fmtUpperCamelcase(alert.data.type)}

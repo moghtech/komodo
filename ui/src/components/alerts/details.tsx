@@ -38,7 +38,7 @@ export default function AlertDetails() {
         content: {
           flex: "none",
           width: 1400,
-          maxWidth: "calc(100vw - 4rem)",
+          maxWidth: "calc(100vw - 2rem)",
           height: "fit-content",
         },
       }}
@@ -94,9 +94,10 @@ export function AlertDetailsContent({
               type={alert.target.type as UsableResource}
               id={alert.target.id}
               onClick={close}
+              fz="md"
             />
           ) : (
-            <Group>
+            <Group gap="xs" wrap="nowrap">
               <ICONS.Settings size="1rem" />
               System
             </Group>
@@ -105,11 +106,11 @@ export function AlertDetailsContent({
 
         {/** DATE / DURATION / COPY LINK */}
         <Group>
-          <Group>
+          <Group gap="xs" wrap="nowrap">
             <ICONS.Calendar size="1rem" />
             {fmtDateWithMinutes(new Date(alert.ts))}
           </Group>
-          <Group>
+          <Group gap="xs" wrap="nowrap">
             <Clock size="1rem" />
             {alert.resolved_ts
               ? fmtDuration(alert.ts, alert.resolved_ts)
