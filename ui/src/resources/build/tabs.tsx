@@ -30,6 +30,13 @@ export default function BuildTabs({ id }: { id: string }) {
   );
   const deploymentsDisabled = (deployments?.length || 0) === 0;
 
+  const hasBeenBuilt = !!useRead("ListUpdates", {
+    query: { "target.type": "Build", "target.id": id, operation: "RunBuild" },
+  }).data?.updates[0];
+
+  const showInfo =
+    hasBeenBuilt || info?.files_on_host || !!info?.repo || !!info?.linked_repo;
+
   const tabsNoContent = useMemo<TabNoContent[]>(
     () => [
       {
@@ -39,6 +46,7 @@ export default function BuildTabs({ id }: { id: string }) {
       {
         value: "Info",
         icon: ICONS.Info,
+        hidden: !showInfo,
       },
       {
         value: "Resources",
