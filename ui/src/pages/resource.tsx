@@ -23,6 +23,7 @@ import EntityPage from "@/ui/entity-page";
 import { usableResourcePath } from "@/lib/utils";
 import ResourceDescription from "@/resources/description";
 import ResourceNotFound from "@/resources/not-found";
+import NewResource from "@/resources/new";
 
 export default function Resource() {
   const type = useResourceParamType()!;
@@ -38,7 +39,7 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
   const resources = useRead(`List${type}s`, {}).data;
   const resource = RC.useListItem(id);
 
-  const { canExecute } = usePermissions({ type, id });
+  const { canCreate, canExecute } = usePermissions({ type, id });
 
   usePushRecentlyViewed({ type, id });
   useSetTitle(resource?.name);
@@ -66,9 +67,7 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
       }
       actions={
         <>
-          {/* {type !== "Server" && canCreate && (
-            <CopyResource type={type} id={id} />
-          )} */}
+          {canCreate && <NewResource type={type} copyId={id} />}
           {showExport && <ExportToml targets={[{ type, id }]} />}
         </>
       }

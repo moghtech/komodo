@@ -69,7 +69,7 @@ export const BuildComponents: RequiredResourceComponents<
         type="Build"
         config={() => ({ builder_id: _builderId ?? builderId })}
         extraInputs={
-          !builderId && (
+          !_builderId && (
             <ResourceSelector
               type="Builder"
               selected={builderId}
@@ -81,6 +81,7 @@ export const BuildComponents: RequiredResourceComponents<
             />
           )
         }
+        showTemplateSelector={!!_builderId || !builderId}
       />
     );
   },

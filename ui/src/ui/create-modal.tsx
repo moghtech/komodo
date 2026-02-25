@@ -1,18 +1,18 @@
 import { useShiftKeyListener } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
-import { Button, Group, Modal, Stack, Text } from "@mantine/core";
+import { Button, ButtonProps, Group, Modal, Stack, Text } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { ReactNode, useEffect } from "react";
 
-export interface CreateModalProps {
+export interface CreateModalProps extends ButtonProps {
   entityType: string;
   configSection: (close: () => void) => ReactNode;
-  disabled?: boolean;
   loading?: boolean;
   onConfirm: () => Promise<boolean>;
   onOpenChange?: (opened: boolean) => void;
   configureLabel?: string;
   openShiftKeyListener?: string;
+  children?: ReactNode;
 }
 
 export default function CreateModal({
@@ -24,6 +24,9 @@ export default function CreateModal({
   onOpenChange,
   configureLabel = "a unique name",
   openShiftKeyListener,
+  leftSection,
+  children,
+  ...targetProps
 }: CreateModalProps) {
   const [opened, { open, close }] = useDisclosure();
   useEffect(() => onOpenChange?.(opened), [opened]);
@@ -63,11 +66,12 @@ export default function CreateModal({
 
       <Button
         variant="default"
-        leftSection={<ICONS.Create size="1rem" />}
+        leftSection={leftSection || <ICONS.Create size="1rem" />}
         onClick={open}
         w={{ base: "100%", xs: "fit-content" }}
+        {...targetProps}
       >
-        New {entityType}
+        {children ?? <>New {entityType}</>}
       </Button>
     </>
   );

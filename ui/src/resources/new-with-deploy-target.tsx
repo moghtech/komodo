@@ -56,6 +56,9 @@ export default function NewResourceWithDeployTarget({
           </>
         ) : undefined
       }
+      showTemplateSelector={
+        !!_serverId || !!_swarmId || (!serverId && !swarmId)
+      }
     />
   );
 }
