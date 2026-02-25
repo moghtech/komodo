@@ -10,7 +10,7 @@ Running Komodo from [source](https://github.com/moghtech/komodo) requires either
     * [Rust](https://www.rust-lang.org/) stable via [rustup installer](https://rustup.rs/)
     * [MongoDB](https://www.mongodb.com/) or [FerretDB](https://www.ferretdb.com/) available locally.
     * On Debian/Ubuntu: `apt install build-essential pkg-config libssl-dev` required to build the rust source.
-* Frontend (Web UI)
+* Web UI
     * [Node](https://nodejs.org/en) >= 18.18 + NPM
         * [Yarn](https://yarnpkg.com/) - (Tip: use `corepack enable` after installing `node` to use `yarn`)
     * [typeshare](https://github.com/1password/typeshare)
@@ -30,7 +30,7 @@ Use the included `.devcontainer.json` with VSCode or other compatible IDE to sta
 
 [VSCode Tasks](https://code.visualstudio.com/Docs/editor/tasks) are provided for building and running Komodo. 
 
-After opening the repository with the devcontainer run the task `Init` to build the frontend/backend. Then, the task `Run Komodo` can be used to run frontend/backend. Other tasks for rebuilding/running just one component of the stack (Core API, Periphery API, Frontend) are also provided.
+After opening the repository with the devcontainer run the task `Init` to build the ui/backend. Then, the task `Run Komodo` can be used to run ui/backend. Other tasks for rebuilding/running just one component of the stack (Core API, Periphery API, UI) are also provided.
 
 ## Local
 
@@ -41,13 +41,13 @@ To run a full Komodo instance from a non-container environment run commands in t
 * Build and Run backend
     * `run dev-core` -- Build and run Core API
     * `run dev-periphery` -- Build and run Periphery API
-* Build Frontend
+* Build UI
     * Install **typeshare-cli**: `cargo install typeshare-cli`
-    * **Run this once** -- `run link-client` -- generates TS client and links to the frontend
+    * **Run this once** -- `run link-client` -- generates TS client and links to the ui
     * After running the above once:
         * `run gen-client` -- Rebuild client 
-        * `run dev-frontend` -- Start in dev (watch) mode
-        * `run build-frontend` -- Typecheck and build
+        * `run dev-ui` -- Start in dev (watch) mode
+        * `run build-ui` -- Typecheck and build
             
 
 ## Docsite Development

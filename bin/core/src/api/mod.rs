@@ -39,7 +39,7 @@ pub fn app() -> Router {
     .nest("/client", ts_client::router())
     .layer(memory_session_layer(config))
     .fallback_service(serve_static_ui(
-      &config.frontend_path,
+      &config.ui_path,
       config.ui_index_force_no_cache,
     ))
     .layer(cors_layer(config))

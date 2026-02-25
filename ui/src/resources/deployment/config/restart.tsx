@@ -1,0 +1,40 @@
+import { ConfigItem } from "@/ui/config/item";
+import { Select } from "@mantine/core";
+import { Types } from "komodo_client";
+
+export interface DeploymentRestartSelectorProps {
+  selected: Types.RestartMode | undefined;
+  set: (input: Partial<Types.DeploymentConfig>) => void;
+  disabled: boolean;
+}
+
+export default function DeploymentRestartSelector({
+  selected,
+  set,
+  disabled,
+}: DeploymentRestartSelectorProps) {
+  return (
+    <ConfigItem
+      label="Restart Mode"
+      boldLabel
+      description="Configure the --restart behavior."
+    >
+      <Select
+        value={selected || undefined}
+        onChange={(restart) =>
+          restart && set({ restart: restart as Types.RestartMode })
+        }
+        disabled={disabled}
+        placeholder="Select Mode"
+        data={Object.entries(Types.RestartMode).map(([label, value]) => ({
+          label:
+            label === "NoRestart"
+              ? "don't restart"
+              : value.split("-").join(" "),
+          value,
+        }))}
+        w="fit-content"
+      />
+    </ConfigItem>
+  );
+}

@@ -1182,7 +1182,7 @@ impl Resolve<ExecuteArgs> for DestroyStack {
           action_state.update(|state| state.destroying = true)?;
 
         let mut update = update.clone();
-        // Send update here for frontend to recheck action state
+        // Send update here for UI to recheck action state
         update_update(update.clone()).await?;
 
         match swarm_request(

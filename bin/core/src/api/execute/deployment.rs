@@ -111,7 +111,7 @@ impl Resolve<ExecuteArgs> for Deploy {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
     // This block resolves the attached Build to an actual versioned image
@@ -454,7 +454,7 @@ impl Resolve<ExecuteArgs> for PullDeployment {
       action_state.update(|state| state.pulling = true)?;
 
     let mut update = update.clone();
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
     let log = pull_deployment_inner(deployment, &server).await?;
@@ -509,7 +509,7 @@ impl Resolve<ExecuteArgs> for StartDeployment {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
     let log = match periphery_client(&server)
@@ -577,7 +577,7 @@ impl Resolve<ExecuteArgs> for RestartDeployment {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
     let log = match periphery_client(&server)
@@ -647,7 +647,7 @@ impl Resolve<ExecuteArgs> for PauseDeployment {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
     let log = match periphery_client(&server)
@@ -715,7 +715,7 @@ impl Resolve<ExecuteArgs> for UnpauseDeployment {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
     let log = match periphery_client(&server)
@@ -787,7 +787,7 @@ impl Resolve<ExecuteArgs> for StopDeployment {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
     let log = match periphery_client(&server)
@@ -895,7 +895,7 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
     let log = match swarm_or_server {

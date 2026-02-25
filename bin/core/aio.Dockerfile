@@ -17,13 +17,13 @@ RUN cargo build -p komodo_core --release && \
   cargo build -p komodo_cli --release && \
   cargo strip
 
-# Build Frontend
-FROM node:22.12-alpine AS frontend-builder
+# Build UI
+FROM node:22.12-alpine AS ui-builder
 WORKDIR /builder
-COPY ./frontend ./frontend
+COPY ./ui ./ui
 COPY ./client/core/ts ./client
 RUN cd client && yarn && yarn build && yarn link
-RUN cd frontend && yarn link komodo_client && yarn && yarn build
+RUN cd ui && yarn link komodo_client && yarn && yarn build
 
 # Final Image
 FROM debian:trixie-slim
@@ -37,7 +37,7 @@ WORKDIR /app
 
 # Copy
 COPY ./config/core.config.toml /config/.default.config.toml
-COPY --from=frontend-builder /builder/frontend/dist /app/frontend
+COPY --from=ui-builder /builder/ui/dist /app/ui
 COPY --from=core-builder /builder/target/release/core /usr/local/bin/core
 COPY --from=core-builder /builder/target/release/km /usr/local/bin/km
 COPY --from=denoland/deno:bin /deno /usr/local/bin/deno

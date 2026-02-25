@@ -1,0 +1,157 @@
+import { lazy } from "react";
+import {
+  BrowserRouter,
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
+import { useAuthState, useUser } from "@/lib/hooks";
+import { MoghAuth } from "komodo_client";
+import App from "@/app";
+import LoadingScreen from "./ui/loading-screen";
+
+const Login = lazy(() => import("@/pages/login"));
+const UserDisabled = lazy(() => import("@/pages/user-disabled"));
+const Settings = lazy(() => import("@/pages/settings"));
+const Updates = lazy(() => import("@/pages/updates"));
+const Update = lazy(() => import("@/pages/update"));
+const Alerts = lazy(() => import("@/pages/alerts"));
+const Alert = lazy(() => import("@/pages/alert"));
+const Dashboard = lazy(() => import("@/pages/dashboard"));
+const Resources = lazy(() => import("@/pages/resources"));
+const Resource = lazy(() => import("@/pages/resource"));
+const Profile = lazy(() => import("@/pages/profile"));
+const User = lazy(() => import("@/pages/user"));
+const UserGroup = lazy(() => import("@/pages/user-group"));
+const Schedules = lazy(() => import("@/pages/schedules"));
+const Terminals = lazy(() => import("@/pages/terminals"));
+const Terminal = lazy(() => import("@/pages/terminal"));
+const Containers = lazy(() => import("@/pages/containers"));
+const Container = lazy(() => import("@/pages/docker/container"));
+const Image = lazy(() => import("@/pages/docker/image"));
+const Network = lazy(() => import("@/pages/docker/network"));
+const Volume = lazy(() => import("@/pages/docker/volume"));
+const StackService = lazy(() => import("@/pages/stack-service"));
+const SwarmNode = lazy(() => import("@/pages/swarm/node"));
+const SwarmStack = lazy(() => import("@/pages/swarm/stack"));
+const SwarmService = lazy(() => import("@/pages/swarm/service"));
+const SwarmTask = lazy(() => import("@/pages/swarm/task"));
+const SwarmConfig = lazy(() => import("@/pages/swarm/config"));
+const SwarmSecret = lazy(() => import("@/pages/swarm/secret"));
+
+export const Router = () => {
+  // Handle exchange token loop to avoid showing login flash
+  const { jwt_redeem_ready, passkey_pending, totp } = useAuthState();
+
+  if (jwt_redeem_ready) {
+    return <LoadingScreen />;
+  }
+
+  if (passkey_pending || totp) {
+    return <Login passkeyIsPending={passkey_pending} totpIsPending={totp} />;
+  }
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="login" element={<Login />} />
+        <Route element={<RequireAuth />}>
+          <Route path="/" element={<App />}>
+            <Route path="" element={<Dashboard />} />
+            <Route path="containers" element={<Containers />} />
+            <Route path="terminals" element={<Terminals />} />
+            <Route path="schedules" element={<Schedules />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="user-groups/:id" element={<UserGroup />} />
+            <Route path="users/:id" element={<User />} />
+            <Route path="updates">
+              <Route path="" element={<Updates />} />
+              <Route path=":id" element={<Update />} />
+            </Route>
+            <Route path="alerts">
+              <Route path="" element={<Alerts />} />
+              <Route path=":id" element={<Alert />} />
+            </Route>
+            <Route path=":type">
+              <Route path="" element={<Resources />} />
+              <Route path=":id" element={<Resource />} />
+
+              {/* Stack Service */}
+              <Route path=":id/service/:service" element={<StackService />} />
+
+              {/* Docker Resource */}
+              <Route path=":id/container/:container" element={<Container />} />
+              <Route path=":id/network/:network" element={<Network />} />
+              <Route path=":id/image/:image" element={<Image />} />
+              <Route path=":id/volume/:volume" element={<Volume />} />
+
+              {/* Swarm Resource */}
+              <Route path=":id/swarm-node/:node" element={<SwarmNode />} />
+              <Route path=":id/swarm-stack/:stack" element={<SwarmStack />} />
+              <Route
+                path=":id/swarm-service/:service"
+                element={<SwarmService />}
+              />
+              <Route path=":id/swarm-task/:task" element={<SwarmTask />} />
+              <Route
+                path=":id/swarm-config/:config"
+                element={<SwarmConfig />}
+              />
+              <Route
+                path=":id/swarm-secret/:secret"
+                element={<SwarmSecret />}
+              />
+
+              {/* Terminal Pages */}
+              <Route path=":id/terminal/:terminal" element={<Terminal />} />
+              <Route
+                path=":id/service/:service/terminal/:terminal"
+                element={<Terminal />}
+              />
+              <Route
+                path=":id/container/:container/terminal/:terminal"
+                element={<Terminal />}
+              />
+            </Route>
+          </Route>
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+};
+
+const RequireAuth = () => {
+  const { data: user, error } = useUser();
+  const location = useLocation();
+
+  if (
+    (error as { error?: TypeError } | undefined)?.error?.message?.startsWith(
+      "NetworkError",
+    )
+  ) {
+    // Will just show the spinner without navigate to login,
+    // which won't help because its not a login issue.
+    return <LoadingScreen />;
+  }
+
+  if (!MoghAuth.LOGIN_TOKENS.jwt() || error) {
+    if (location.pathname === "/") {
+      return <Navigate to="/login" replace />;
+    }
+    const backto = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?backto=${backto}`} replace />;
+  }
+
+  if (!user) {
+    return <LoadingScreen />;
+  }
+
+  if (!user.enabled) {
+    return <UserDisabled />;
+  }
+
+  return <Outlet />;
+};

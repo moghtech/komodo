@@ -1,0 +1,71 @@
+import { Types } from "komodo_client";
+import { DataTable, SortableHeader } from "@/ui/data-table";
+import { useSelectedResources } from "@/lib/hooks";
+import { ActionComponents } from ".";
+import TableTags from "@/components/tags/table";
+import { BoxProps } from "@mantine/core";
+import ResourceLink from "@/resources/link";
+
+export default function ActionTable({
+  resources,
+  ...boxProps
+}: {
+  resources: Types.ActionListItem[];
+} & BoxProps) {
+  const [_, setSelectedResources] = useSelectedResources("Action");
+  return (
+    <DataTable
+      {...boxProps}
+      tableKey="actions-table"
+      data={resources}
+      selectOptions={{
+        selectKey: ({ name }) => name,
+        onSelect: setSelectedResources,
+      }}
+      columns={[
+        {
+          accessorKey: "name",
+          header: ({ column }) => (
+            <SortableHeader column={column} title="Name" />
+          ),
+          cell: ({ row }) => (
+            <ResourceLink type="Action" id={row.original.id} />
+          ),
+        },
+        {
+          accessorKey: "info.state",
+          header: ({ column }) => (
+            <SortableHeader column={column} title="State" />
+          ),
+          cell: ({ row }) => <ActionComponents.State id={row.original.id} />,
+        },
+        {
+          accessorKey: "info.next_scheduled_run",
+          header: ({ column }) => (
+            <SortableHeader column={column} title="Next Run" />
+          ),
+          sortingFn: (a, b) => {
+            const sa = a.original.info.next_scheduled_run;
+            const sb = b.original.info.next_scheduled_run;
+
+            if (!sa && !sb) return 0;
+            if (!sa) return 1;
+            if (!sb) return -1;
+
+            if (sa > sb) return 1;
+            else if (sa < sb) return -1;
+            else return 0;
+          },
+          cell: ({ row }) =>
+            row.original.info.next_scheduled_run
+              ? new Date(row.original.info.next_scheduled_run).toLocaleString()
+              : "Not Scheduled",
+        },
+        {
+          header: "Tags",
+          cell: ({ row }) => <TableTags tagIds={row.original.tags} />,
+        },
+      ]}
+    />
+  );
+}

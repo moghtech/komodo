@@ -1,0 +1,353 @@
+import { atom, useAtom } from "jotai";
+import { ReactNode, useCallback, useEffect, useRef } from "react";
+import { Types } from "komodo_client";
+import { useInvalidate, komodo_client, useRead, useUser } from "@/lib/hooks";
+import { ResourceComponents, UsableResource } from "@/resources";
+import { notifications } from "@mantine/notifications";
+import { Badge, Group, Text } from "@mantine/core";
+import ResourceName from "@/resources/name";
+import { fmtOperation } from "./formatting";
+
+const wsAtom = atom<{
+  ws: WebSocket | undefined;
+  connected: boolean;
+  count: number;
+}>({
+  ws: undefined,
+  connected: false,
+  count: 0,
+});
+
+export function useWebsocketConnected() {
+  return useAtom(wsAtom)[0].connected;
+}
+
+export function useWebsocketReconnect() {
+  const [ws, set] = useAtom(wsAtom);
+
+  return () => {
+    if (ws.ws?.readyState === WebSocket.OPEN) {
+      ws.ws?.close();
+    }
+    set((ws) => ({
+      ws: undefined,
+      connected: false,
+      count: ws.count + 1,
+    }));
+  };
+}
+
+const onMessageHandlers: {
+  [key: string]: (update: Types.UpdateListItem) => void;
+} = {};
+
+export function useWebsocketMessages(
+  key: string,
+  handler: (update: Types.UpdateListItem) => void,
+) {
+  onMessageHandlers[key] = handler;
+  useEffect(() => {
+    // Clean up on unmount
+    return () => {
+      delete onMessageHandlers[key];
+    };
+  }, []);
+}
+
+export const WebsocketProvider = ({ children }: { children: ReactNode }) => {
+  const user = useUser().data;
+  const invalidate = useInvalidate();
+  const [ws, setWs] = useAtom(wsAtom);
+  const countRef = useRef<number>(ws.count);
+  const reconnect = useWebsocketReconnect();
+  const disable_reconnect = useRead("GetCoreInfo", {}).data
+    ?.disable_websocket_reconnect;
+
+  useEffect(() => {
+    countRef.current = ws.count;
+  }, [ws.count]);
+
+  const on_update_fn = useCallback(
+    (update: Types.UpdateListItem) => onUpdate(update, invalidate),
+    [invalidate],
+  );
+
+  useEffect(() => {
+    if (user && disable_reconnect !== undefined && ws.ws === undefined) {
+      // make a copy of the count to not change.
+      const count = ws.count;
+      let timeout = -1;
+      const socket = komodo_client().get_update_websocket({
+        on_login: () => {
+          console.info(count, "| Logged into Update websocket");
+          setWs((ws) => ({ ...ws, connected: true }));
+        },
+        on_update: on_update_fn,
+        on_close: () => {
+          console.info(count, "| Update websocket connection closed");
+          setWs((ws) => ({ ...ws, connected: false }));
+          if (!disable_reconnect) {
+            timeout = setTimeout(() => {
+              if (countRef.current === count) {
+                console.info(count, "| Automatically triggering reconnect");
+                reconnect();
+              }
+            }, 5_000) as any;
+          }
+        },
+      });
+      setWs((ws) => ({ ...ws, ws: socket }));
+      return () => clearTimeout(timeout);
+    }
+  }, [user, disable_reconnect, ws.ws, ws.count]);
+
+  return <>{children}</>;
+};
+
+// Prevents multiple redundant in progress notifications
+const IN_PROGRESS_UPDATES: Set<string> = new Set();
+
+function onUpdate(
+  update: Types.UpdateListItem,
+  invalidate: ReturnType<typeof useInvalidate>,
+) {
+  const RC = ResourceComponents[update.target.type as UsableResource];
+  const [state, color] =
+    update.status !== Types.UpdateStatus.Complete
+      ? (["In Progress", "blue"] as const)
+      : update.success
+        ? (["Complete", "green"] as const)
+        : (["Failed", "red"] as const);
+
+  function notify() {
+    notifications.show({
+      title: (
+        <Group gap="sm">
+          <Text>{fmtOperation(update.operation)}</Text>
+          <Badge color={color}>{state}</Badge>
+        </Group>
+      ),
+      message: RC ? (
+        <ResourceName
+          type={update.target.type as UsableResource}
+          id={update.target.id}
+        />
+      ) : (
+        <Text>System</Text>
+      ),
+      color,
+    });
+  }
+
+  if (state === "In Progress") {
+    if (!IN_PROGRESS_UPDATES.has(update.id)) {
+      IN_PROGRESS_UPDATES.add(update.id);
+      notify();
+    }
+  } else {
+    IN_PROGRESS_UPDATES.delete(update.id);
+    notify();
+  }
+
+  // Invalidate these every time
+  invalidate(["ListUpdates"]);
+  invalidate(["GetUpdate", { id: update.id }]);
+  if (update.target.type === "Swarm") {
+    invalidate(["GetSwarmActionState", { swarm: update.target.id }]);
+  } else if (update.target.type === "Server") {
+    invalidate(["GetServerActionState", { server: update.target.id }]);
+  } else if (update.target.type === "Stack") {
+    invalidate(["GetStackActionState", { stack: update.target.id }]);
+  } else if (update.target.type === "Deployment") {
+    invalidate(["GetDeploymentActionState", { deployment: update.target.id }]);
+  } else if (update.target.type === "Build") {
+    invalidate(["GetBuildActionState", { build: update.target.id }]);
+  } else if (update.target.type === "Repo") {
+    invalidate(["GetRepoActionState", { repo: update.target.id }]);
+  } else if (update.target.type === "Procedure") {
+    invalidate(["GetProcedureActionState", { procedure: update.target.id }]);
+  } else if (update.target.type === "Action") {
+    invalidate(["GetActionActionState", { action: update.target.id }]);
+  } else if (update.target.type === "ResourceSync") {
+    invalidate(["GetResourceSyncActionState", { sync: update.target.id }]);
+  }
+
+  // Invalidate lists for execution updates - this updates status
+  if (update.operation === Types.Operation.RunBuild) {
+    invalidate(["ListBuilds"]);
+  } else if (
+    [
+      Types.Operation.CloneRepo,
+      Types.Operation.PullRepo,
+      Types.Operation.BuildRepo,
+    ].includes(update.operation)
+  ) {
+    invalidate(["ListRepos"]);
+  } else if (update.operation === Types.Operation.RunProcedure) {
+    invalidate(["ListProcedures"]);
+  } else if (update.operation === Types.Operation.RunAction) {
+    invalidate(["ListActions"]);
+  }
+
+  // Do invalidations of these only if update is completed
+  if (update.status === Types.UpdateStatus.Complete) {
+    invalidate(["ListAlerts"]);
+
+    // Invalidate docker infos
+    if (["Server", "Deployment", "Stack"].includes(update.target.type)) {
+      invalidate(
+        ["ListDockerContainers"],
+        ["InspectDockerContainer"],
+        ["ListDockerNetworks"],
+        ["InspectDockerNetwork"],
+        ["ListDockerImages"],
+        ["InspectDockerImage"],
+        ["ListDockerVolumes"],
+        ["InspectDockerVolume"],
+        ["GetResourceMatchingContainer"],
+      );
+    }
+
+    if (update.target.type === "Swarm") {
+      invalidate(
+        ["ListSwarms"],
+        ["ListFullSwarms"],
+        ["GetSwarmsSummary"],
+        ["GetSwarm"],
+        ["ListSwarmNodes"],
+        ["InspectSwarmNode"],
+        ["ListSwarmStacks"],
+        ["InspectSwarmStack"],
+        ["ListSwarmServices"],
+        ["InspectSwarmService"],
+        ["ListSwarmTasks"],
+        ["InspectSwarmTask"],
+        ["ListSwarmConfigs"],
+        ["InspectSwarmConfig"],
+        ["ListSwarmSecrets"],
+        ["InspectSwarmSecret"],
+      );
+    }
+
+    if (update.target.type === "Server") {
+      invalidate(
+        ["ListServers"],
+        ["ListFullServers"],
+        ["GetServersSummary"],
+        ["GetServer"],
+        ["GetServerState"],
+        ["GetHistoricalServerStats"],
+      );
+    }
+
+    if (update.target.type === "Stack") {
+      invalidate(
+        ["ListStacks"],
+        ["ListFullStacks"],
+        ["GetStacksSummary"],
+        ["ListCommonStackExtraArgs"],
+        ["ListComposeProjects"],
+        ["ListDockerContainers"],
+        ["ListDockerNetworks"],
+        ["ListDockerImages"],
+        ["GetStackLog", { stack: update.target.id }],
+        ["SearchStackLog", { stack: update.target.id }],
+        ["GetStack"],
+        ["ListStackServices"],
+        ["GetResourceMatchingContainer"],
+      );
+    }
+
+    if (update.target.type === "Deployment") {
+      invalidate(
+        ["ListDeployments"],
+        ["GetDeploymentsSummary"],
+        ["ListDockerContainers"],
+        ["ListDockerNetworks"],
+        ["ListDockerImages"],
+        ["GetDeployment"],
+        ["GetDeploymentLog", { deployment: update.target.id }],
+        ["SearchDeploymentLog", { deployment: update.target.id }],
+        ["GetDeploymentContainer"],
+        ["GetResourceMatchingContainer"],
+      );
+    }
+
+    if (update.target.type === "Build") {
+      invalidate(
+        ["ListBuilds"],
+        ["ListFullBuilds"],
+        ["GetBuildsSummary"],
+        ["GetBuildMonthlyStats"],
+        ["GetBuild"],
+        ["ListBuildVersions"],
+      );
+    }
+
+    if (update.target.type === "Repo") {
+      invalidate(
+        ["ListRepos"],
+        ["ListFullRepos"],
+        ["GetReposSummary"],
+        ["GetRepo"],
+      );
+    }
+
+    if (update.target.type === "Procedure") {
+      invalidate(
+        ["ListSchedules"],
+        ["ListProcedures"],
+        ["ListFullProcedures"],
+        ["GetProceduresSummary"],
+        ["GetProcedure"],
+      );
+    }
+
+    if (update.target.type === "Action") {
+      invalidate(
+        ["ListSchedules"],
+        ["ListActions"],
+        ["ListFullActions"],
+        ["GetActionsSummary"],
+        ["GetAction"],
+      );
+    }
+
+    if (update.target.type === "ResourceSync") {
+      invalidate(
+        ["ListResourceSyncs"],
+        ["ListFullResourceSyncs"],
+        ["GetResourceSyncsSummary"],
+        ["GetResourceSync"],
+      );
+    }
+
+    if (update.target.type === "Builder") {
+      invalidate(
+        ["ListBuilders"],
+        ["ListFullBuilders"],
+        ["GetBuildersSummary"],
+        ["GetBuilder"],
+      );
+    }
+
+    if (update.target.type === "Alerter") {
+      invalidate(
+        ["ListAlerters"],
+        ["ListFullAlerters"],
+        ["GetAlertersSummary"],
+        ["GetAlerter"],
+      );
+    }
+
+    if (
+      update.target.type === "System" &&
+      update.operation.includes("Variable")
+    ) {
+      invalidate(["ListVariables"], ["GetVariable"]);
+    }
+  }
+
+  // Run any attached handlers
+  Object.values(onMessageHandlers).forEach((handler) => handler(update));
+}

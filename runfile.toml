@@ -16,9 +16,10 @@ description = "runs periphery --release pointing to .dev/periphery.config.toml a
 cmd = "cargo run -p komodo_periphery --release -- -c .dev/periphery.config.toml -c .dev/outbound.periphery.config.toml"
 
 [yarn-install]
-description = "downloads latest javacript dependencies for client and frontend"
+alias = "yi"
+description = "downloads latest javacript dependencies for client and ui"
 cmd = """
-cd frontend && yarn && \
+cd ui && yarn && \
 cd ../docsite && yarn && \
 cd ../client/core/ts && yarn
 """
@@ -30,15 +31,15 @@ after = "yarn-install"
 cmd = """
 node ./client/core/ts/generate_types.mjs && \
 cd ./client/core/ts && yarn build && \
-cp -r dist/. ../../../frontend/public/client/. &&
-cd ../../../frontend && node fix_public_client.mjs"""
+cp -r dist/. ../../../ui/public/client/. &&
+cd ../../../ui && node fix_public_client.mjs"""
 
 [link-client]
-description = "yarn links the ts client to the frontend"
+description = "yarn links the ts client to the ui"
 after = "gen-client"
 cmd = """
 cd ./client/core/ts && yarn link && \
-cd ../../../frontend && yarn link komodo_client && yarn"""
+cd ../../../ui && yarn link komodo_client && yarn"""
 
 [dev-compose]
 description = "deploys dev.compose.yaml"

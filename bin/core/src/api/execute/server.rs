@@ -57,7 +57,7 @@ impl Resolve<ExecuteArgs> for StartContainer {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
     let periphery = periphery_client(&server).await?;
@@ -121,7 +121,7 @@ impl Resolve<ExecuteArgs> for RestartContainer {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
     let periphery = periphery_client(&server).await?;
@@ -187,7 +187,7 @@ impl Resolve<ExecuteArgs> for PauseContainer {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
     let periphery = periphery_client(&server).await?;
@@ -251,7 +251,7 @@ impl Resolve<ExecuteArgs> for UnpauseContainer {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
     let periphery = periphery_client(&server).await?;
@@ -319,7 +319,7 @@ impl Resolve<ExecuteArgs> for StopContainer {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
     let periphery = periphery_client(&server).await?;
@@ -393,7 +393,7 @@ impl Resolve<ExecuteArgs> for DestroyContainer {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
     let periphery = periphery_client(&server).await?;
