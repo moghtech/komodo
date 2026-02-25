@@ -137,12 +137,6 @@ export function hasMinimumPermissions(
   return true;
 }
 
-const tzOffsetMs = new Date().getTimezoneOffset() * 60 * 1000;
-
-export function convertTsMsToLocalUnixTsInMs(ts: number) {
-  return ts - tzOffsetMs;
-}
-
 export function usableResourcePath(resource: UsableResource) {
   if (resource === "ResourceSync") return "resource-syncs";
   return `${resource.toLowerCase()}s`;

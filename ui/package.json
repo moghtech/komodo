@@ -31,6 +31,7 @@
     "react-minimal-pie-chart": "^9.1.2",
     "react-router-dom": "^7.13.0",
     "react-xtermjs": "^1.0.10",
+    "recharts": "^3.7.0",
     "sanitize-html": "^2.17.1",
     "shell-quote": "^1.8.3"
   },
