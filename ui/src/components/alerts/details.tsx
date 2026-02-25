@@ -15,6 +15,7 @@ import { atom, useAtom } from "jotai";
 import ResourceLink from "@/resources/link";
 import { notifications } from "@mantine/notifications";
 import ConfirmButton from "@/ui/confirm-button";
+import { To, useLocation, useNavigate } from "react-router-dom";
 
 const alertDetailsAtom = atom<string>();
 
@@ -28,12 +29,20 @@ export function useAlertDetails() {
   };
 }
 
-export default function AlertDetails() {
-  const { alertId, close } = useAlertDetails();
+export default function AlertDetails({
+  alertId: __alertId,
+}: {
+  alertId?: string;
+}) {
+  const { alertId: _alertId, close } = useAlertDetails();
+  const alertId = __alertId ?? _alertId;
+  // https://github.com/remix-run/react-router/discussions/9788#discussioncomment-4604278
+  const navTo = (useLocation().key === "default" ? "/" : -1) as To;
+  const nav = useNavigate();
   return (
     <Drawer
       opened={!!alertId}
-      onClose={close}
+      onClose={__alertId ? () => nav(navTo) : close}
       styles={{
         content: {
           flex: "none",
@@ -75,7 +84,7 @@ export function AlertDetailsContent({
     return <LoadingScreen mt="0" h="50vh" />;
   }
 
-  const Components =
+  const RC =
     alert.target.type === "System"
       ? null
       : ResourceComponents[alert.target.type];
@@ -89,7 +98,7 @@ export function AlertDetailsContent({
       <Stack gap="sm">
         {/** RESOURCE / VERSION */}
         <Group gap="xs">
-          {Components ? (
+          {RC ? (
             <ResourceLink
               type={alert.target.type as UsableResource}
               id={alert.target.id}

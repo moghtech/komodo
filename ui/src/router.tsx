@@ -18,6 +18,7 @@ const Settings = lazy(() => import("@/pages/settings"));
 const Updates = lazy(() => import("@/pages/updates"));
 const Update = lazy(() => import("@/pages/update"));
 const Alerts = lazy(() => import("@/pages/alerts"));
+const Alert = lazy(() => import("@/pages/alert"));
 const Dashboard = lazy(() => import("@/pages/dashboard"));
 const Resources = lazy(() => import("@/pages/resources"));
 const Resource = lazy(() => import("@/pages/resource"));
@@ -59,19 +60,20 @@ export const Router = () => {
         <Route element={<RequireAuth />}>
           <Route path="/" element={<App />}>
             <Route path="" element={<Dashboard />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="updates" element={<Updates />} />
-            <Route path="alerts" element={<Alerts />} />
             <Route path="containers" element={<Containers />} />
             <Route path="terminals" element={<Terminals />} />
+            <Route path="schedules" element={<Schedules />} />
             <Route path="profile" element={<Profile />} />
-            <Route path="schedules" element={<Schedules />} />
-            <Route path="schedules" element={<Schedules />} />
+            <Route path="settings" element={<Settings />} />
             <Route path="user-groups/:id" element={<UserGroup />} />
             <Route path="users/:id" element={<User />} />
             <Route path="updates">
               <Route path="" element={<Updates />} />
               <Route path=":id" element={<Update />} />
+            </Route>
+            <Route path="alerts">
+              <Route path="" element={<Alerts />} />
+              <Route path=":id" element={<Alert />} />
             </Route>
             <Route path=":type">
               <Route path="" element={<Resources />} />

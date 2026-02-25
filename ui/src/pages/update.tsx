@@ -3,7 +3,7 @@ import { useRead, useSetTitle } from "@/lib/hooks";
 import PageGuard from "@/ui/page-guard";
 import { useParams } from "react-router-dom";
 
-export default function UpdatePage() {
+export default function Update() {
   useSetTitle("Update");
   const id = useParams().id as string;
   const { data: update, isPending } = useRead("GetUpdate", { id });
