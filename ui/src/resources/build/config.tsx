@@ -1,5 +1,4 @@
 import {
-  getWebhookIntegration,
   usePermissions,
   useRead,
   useWebhookIdOrName,
@@ -26,6 +25,8 @@ import LinkedRepo from "@/components/config/linked-repo";
 import { ProviderSelectorConfig } from "@/components/config/provider-selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";
 import { ReactNode } from "react";
+import WebhookBuilder from "@/components/webhook/builder";
+import CopyWebhookUrl from "@/components/webhook/copy-url";
 
 type BuildMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const BUILD_MODES = ["UI Defined", "Files On Server", "Git Repo"] as const;
@@ -68,22 +69,22 @@ export default function BuildConfig({
   const build = useRead("GetBuild", { build: id }).data;
   const config = build?.config;
   const name = build?.name;
-  const global_disabled =
+  const globalDisabled =
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
   const [update, setUpdate] = useLocalStorage<Partial<Types.BuildConfig>>({
     key: `build-${id}-update-v1`,
     defaultValue: {},
   });
   const { mutateAsync } = useWrite("UpdateBuild");
-  const { integrations } = useWebhookIntegrations();
+  const { getIntegration } = useWebhookIntegrations();
   const [idOrName] = useWebhookIdOrName();
 
   if (!config) return null;
 
-  const disabled = global_disabled || !canWrite;
+  const disabled = globalDisabled || !canWrite;
 
   const gitProvider = update.git_provider ?? config.git_provider;
-  const webhookIntegration = getWebhookIntegration(integrations, gitProvider);
+  const webhookIntegration = getIntegration(gitProvider);
 
   const mode = getBuildMode(update, config);
 
@@ -389,16 +390,18 @@ export default function BuildConfig({
             label="Extra Args"
             boldLabel
             description={
-              <div className="flex flex-row flex-wrap gap-2">
-                <div>Pass extra arguments to 'docker build'.</div>
-                <Link
+              <Group gap="xs">
+                <Text>Pass extra arguments to 'docker build'.</Text>
+                <Text
+                  className="hover-underline"
+                  fw="bold"
+                  component={Link}
                   to="https://docs.docker.com/reference/cli/docker/buildx/build/"
                   target="_blank"
-                  className="text-primary"
                 >
                   See docker docs.
-                </Link>
-              </div>
+                </Text>
+              </Group>
             }
           >
             {!disabled && (
@@ -555,46 +558,46 @@ export default function BuildConfig({
           },
         },
         ...generalCommon,
-        // {
-        //   label: "Webhook",
-        //   description: `Copy the webhook given here, and configure your ${webhook_integration}-style repo provider to send webhooks to Komodo`,
-        //   contentHidden: !show.webhooks,
-        //   actions: (
-        //     <ShowHideButton
-        //       show={show.webhooks}
-        //       setShow={(webhooks) => setShow({ ...show, webhooks })}
-        //     />
-        //   ),
-        //   fields: {
-        //     ["Guard" as any]: () => {
-        //       if (update.branch ?? config.branch) {
-        //         return null;
-        //       }
-        //       return (
-        //         <ConfigItem label="Configure Branch">
-        //           <div>Must configure Branch before webhooks will work.</div>
-        //         </ConfigItem>
-        //       );
-        //     },
-        //     ["Builder" as any]: () => (
-        //       <WebhookBuilder git_provider={git_provider} />
-        //     ),
-        //     ["build" as any]: () => (
-        //       <ConfigItem label="Webhook Url - Build">
-        //         <CopyWebhook
-        //           integration={webhook_integration}
-        //           path={`/build/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}`}
-        //         />
-        //       </ConfigItem>
-        //     ),
-        //     webhook_enabled: true,
-        //     webhook_secret: {
-        //       description:
-        //         "Provide a custom webhook secret for this resource, or use the global default.",
-        //       placeholder: "Input custom secret",
-        //     },
-        //   },
-        // },
+        {
+          label: "Webhook",
+          description: `Copy the webhook given here, and configure your ${webhookIntegration}-style repo provider to send webhooks to Komodo`,
+          contentHidden: !show.webhooks,
+          actions: (
+            <ShowHideButton
+              show={show.webhooks}
+              setShow={(webhooks) => setShow({ ...show, webhooks })}
+            />
+          ),
+          fields: {
+            ["Guard" as any]: () => {
+              if (update.branch ?? config.branch) {
+                return null;
+              }
+              return (
+                <ConfigItem label="Configure Branch">
+                  <Text>Must configure Branch before webhooks will work.</Text>
+                </ConfigItem>
+              );
+            },
+            ["Builder" as any]: () => (
+              <WebhookBuilder gitProvider={gitProvider} />
+            ),
+            ["Build" as any]: () =>
+              (update.branch ?? config.branch) && (
+                <CopyWebhookUrl
+                  label="Webhook Url - Build"
+                  integration={webhookIntegration}
+                  path={`/build/${idOrName === "Id" ? id : encodeURIComponent(name ?? "...")}`}
+                />
+              ),
+            webhook_enabled: true,
+            webhook_secret: {
+              description:
+                "Provide a custom webhook secret for this resource, or use the global default.",
+              placeholder: "Input custom secret",
+            },
+          },
+        },
       ],
       advanced,
     };

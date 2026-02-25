@@ -17,7 +17,7 @@ import { forwardRef, ReactNode } from "react";
 
 // https://mantine.dev/guides/polymorphic/#create-your-own-polymorphic-components
 
-interface ConfigItemProps extends StackProps {
+export interface ConfigItemProps extends StackProps {
   label?: ReactNode;
   boldLabel?: boolean;
   labelExtra?: ReactNode;

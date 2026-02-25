@@ -1,5 +1,4 @@
 import {
-  getWebhookIntegration,
   usePermissions,
   useRead,
   useWebhookIdOrName,
@@ -37,6 +36,8 @@ import { AccountSelectorConfig } from "@/components/config/account-selector";
 import LinkedRepo from "@/components/config/linked-repo";
 import { DEFAULT_STACK_FILE_CONTENTS } from "..";
 import { ReactNode } from "react";
+import WebhookBuilder from "@/components/webhook/builder";
+import CopyWebhookUrl from "@/components/webhook/copy-url";
 
 type StackMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const STACK_MODES = ["UI Defined", "Files On Server", "Git Repo"] as const;
@@ -87,7 +88,7 @@ export default function StackConfig({
     defaultValue: {},
   });
   const { mutateAsync } = useWrite("UpdateStack");
-  const { integrations } = useWebhookIntegrations();
+  const { getIntegration } = useWebhookIntegrations();
   const [idOrName] = useWebhookIdOrName();
 
   if (!config) return null;
@@ -98,7 +99,7 @@ export default function StackConfig({
   const mode = getStackMode(update, config);
 
   const gitProvider = update.git_provider ?? config.git_provider;
-  const webhookIntegration = getWebhookIntegration(integrations, gitProvider);
+  const webhookIntegration = getIntegration(gitProvider);
 
   const setMode = (mode: StackMode) => {
     if (mode === "Files On Server") {
@@ -827,28 +828,27 @@ export default function StackConfig({
           ),
           contentHidden: !show.webhooks,
           fields: {
-            // ["Guard" as any]: () => {
-            //   if (update.branch ?? config.branch) {
-            //     return null;
-            //   }
-            //   return (
-            //     <ConfigItem label="Configure Branch">
-            //       <div>Must configure Branch before webhooks will work.</div>
-            //     </ConfigItem>
-            //   );
-            // },
-            // ["Builder" as any]: () => (
-            //   <WebhookBuilder git_provider={git_provider} />
-            // ),
-            // ["Deploy" as any]: () =>
-            //   (update.branch ?? config.branch) && (
-            //     <ConfigItem label="Webhook Url - Deploy">
-            //       <CopyWebhook
-            //         integration={webhook_integration}
-            //         path={`/stack/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}/deploy`}
-            //       />
-            //     </ConfigItem>
-            //   ),
+            ["Guard" as any]: () => {
+              if (update.branch ?? config.branch) {
+                return null;
+              }
+              return (
+                <ConfigItem label="Configure Branch">
+                  <Text>Must configure Branch before webhooks will work.</Text>
+                </ConfigItem>
+              );
+            },
+            ["Builder" as any]: () => (
+              <WebhookBuilder gitProvider={gitProvider} />
+            ),
+            ["Deploy" as any]: () =>
+              (update.branch ?? config.branch) && (
+                <CopyWebhookUrl
+                  label="Webhook Url - Deploy"
+                  integration={webhookIntegration}
+                  path={`/stack/${idOrName === "Id" ? id : encodeURIComponent(name ?? "...")}/deploy`}
+                />
+              ),
             webhook_force_deploy: {
               description:
                 "Usually the Stack won't deploy unless there are changes to the files. Use this to force deploy.",

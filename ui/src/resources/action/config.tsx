@@ -1,4 +1,12 @@
-import { Anchor, Code, Group, Select, Stack, Text } from "@mantine/core";
+import {
+  Anchor,
+  Code,
+  Group,
+  Select,
+  Stack,
+  Text,
+  TextInput,
+} from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { useState } from "react";
 import { Types } from "komodo_client";
@@ -16,6 +24,11 @@ import ActionLastRun from "./last-run";
 import { ConfigItem, ConfigSwitch } from "@/ui/config/item";
 import TimezoneSelector from "@/components/timezone-selector";
 import SecretsSearch from "@/components/config/secrets-search";
+import WebhookBuilder from "@/components/webhook/builder";
+import LabelledSwitch from "@/ui/labelled-switch";
+import CopyWebhookUrl from "@/components/webhook/copy-url";
+
+const ACTION_GIT_PROVIDER = "Action";
 
 export default function ActionConfig({ id }: { id: string }) {
   const [branch, setBranch] = useState("main");
@@ -233,6 +246,53 @@ export default function ActionConfig({ id }: { id: string }) {
                 label: "Reload Dependencies",
                 description:
                   "Whether deno will be instructed to reload all dependencies. This can usually be kept disabled outside of development.",
+              },
+            },
+          },
+          {
+            label: "Webhook",
+            description: `Copy the webhook given here, and configure your ${webhookIntegration}-style repo provider to send webhooks to Komodo`,
+            fields: {
+              ["Builder" as any]: () => (
+                <WebhookBuilder
+                  gitProvider={ACTION_GIT_PROVIDER}
+                  extra={
+                    <Group align="end">
+                      <TextInput
+                        label="Listen on branch?"
+                        placeholder="Branch"
+                        value={branch}
+                        onChange={(e) => setBranch(e.target.value)}
+                        w={200}
+                        disabled={branch === "__ANY__"}
+                      />
+                      <LabelledSwitch
+                        label="No branch check"
+                        checked={branch === "__ANY__"}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setBranch("__ANY__");
+                          } else {
+                            setBranch("main");
+                          }
+                        }}
+                      />
+                    </Group>
+                  }
+                />
+              ),
+              ["run" as any]: () => (
+                <CopyWebhookUrl
+                  label="Webhook Url - Run"
+                  integration={webhookIntegration}
+                  path={`/action/${idOrName === "Id" ? id : encodeURIComponent(name ?? "...")}/${branch}`}
+                />
+              ),
+              webhook_enabled: true,
+              webhook_secret: {
+                description:
+                  "Provide a custom webhook secret for this resource, or use the global default.",
+                placeholder: "Input custom secret",
               },
             },
           },

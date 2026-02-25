@@ -1,5 +1,4 @@
 import {
-  getWebhookIntegration,
   usePermissions,
   useRead,
   useWebhookIdOrName,
@@ -19,6 +18,8 @@ import SecretsSearch from "@/components/config/secrets-search";
 import { MonacoEditor } from "@/components/monaco";
 import SystemCommand from "@/components/config/system-command";
 import { ReactNode } from "react";
+import CopyWebhookUrl from "@/components/webhook/copy-url";
+import WebhookBuilder from "@/components/webhook/builder";
 
 export default function RepoConfig({
   id,
@@ -38,15 +39,15 @@ export default function RepoConfig({
     defaultValue: {},
   });
   const { mutateAsync } = useWrite("UpdateRepo");
-  const { integrations } = useWebhookIntegrations();
-  const [id_or_name] = useWebhookIdOrName();
+  const { getIntegration } = useWebhookIntegrations();
+  const [idOrName] = useWebhookIdOrName();
 
   if (!config) return null;
 
   const disabled = global_disabled || !canWrite;
 
-  const git_provider = update.git_provider ?? config.git_provider;
-  const webhook_integration = getWebhookIntegration(integrations, git_provider);
+  const gitProvider = update.git_provider ?? config.git_provider;
+  const webhookIntegration = getIntegration(gitProvider);
 
   return (
     <Config
@@ -254,45 +255,44 @@ export default function RepoConfig({
           },
           {
             label: "Webhooks",
-            description: `Copy the webhook given here, and configure your ${webhook_integration}-style repo provider to send webhooks to Komodo`,
+            description: `Copy the webhook given here, and  your ${webhookIntegration}-style repo provider to send webhooks to Komodo`,
             fields: {
-              // ["Guard" as any]: () => {
-              //   if (update.branch ?? config.branch) {
-              //     return null;
-              //   }
-              //   return (
-              //     <ConfigItem label="Configure Branch">
-              //       <div>Must configure Branch before webhooks will work.</div>
-              //     </ConfigItem>
-              //   );
-              // },
-              // ["Builder" as any]: () => (
-              //   <WebhookBuilder git_provider={git_provider} />
-              // ),
-              // ["pull" as any]: () => (
-              //   <ConfigItem label="Webhook Url - Pull">
-              //     <CopyWebhook
-              //       integration={webhook_integration}
-              //       path={`/repo/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}/pull`}
-              //     />
-              //   </ConfigItem>
-              // ),
-              // ["clone" as any]: () => (
-              //   <ConfigItem label="Webhook Url - Clone">
-              //     <CopyWebhook
-              //       integration={webhook_integration}
-              //       path={`/repo/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}/clone`}
-              //     />
-              //   </ConfigItem>
-              // ),
-              // ["build" as any]: () => (
-              //   <ConfigItem label="Webhook Url - Build">
-              //     <CopyWebhook
-              //       integration={webhook_integration}
-              //       path={`/repo/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}/build`}
-              //     />
-              //   </ConfigItem>
-              // ),
+              ["Guard" as any]: () => {
+                if (update.branch ?? config.branch) {
+                  return null;
+                }
+                return (
+                  <ConfigItem label="Configure Branch">
+                    <Text>
+                      Must configure Branch before webhooks will work.
+                    </Text>
+                  </ConfigItem>
+                );
+              },
+              ["Builder" as any]: () => (
+                <WebhookBuilder gitProvider={gitProvider} />
+              ),
+              ["Pull" as any]: () => (
+                <CopyWebhookUrl
+                  label="Webhook Url - Pull"
+                  integration={webhookIntegration}
+                  path={`/repo/${idOrName === "Id" ? id : encodeURIComponent(name ?? "...")}/pull`}
+                />
+              ),
+              ["Clone" as any]: () => (
+                <CopyWebhookUrl
+                  label="Webhook Url - Clone"
+                  integration={webhookIntegration}
+                  path={`/repo/${idOrName === "Id" ? id : encodeURIComponent(name ?? "...")}/clone`}
+                />
+              ),
+              ["Build" as any]: () => (
+                <CopyWebhookUrl
+                  label="Webhook Url - Build"
+                  integration={webhookIntegration}
+                  path={`/repo/${idOrName === "Id" ? id : encodeURIComponent(name ?? "...")}/build`}
+                />
+              ),
               webhook_enabled: true,
               webhook_secret: {
                 description:

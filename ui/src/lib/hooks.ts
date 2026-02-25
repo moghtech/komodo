@@ -502,18 +502,14 @@ export function useWebhookIntegrations() {
         ...integrations,
         [provider]: integration,
       }),
+    getIntegration: (provider: string) => {
+      return integrations[provider]
+        ? integrations[provider]
+        : provider.includes("gitlab")
+          ? "Gitlab"
+          : "Github";
+    },
   };
-}
-
-export function getWebhookIntegration(
-  integrations: WebhookIntegrations,
-  git_provider: string,
-) {
-  return integrations[git_provider]
-    ? integrations[git_provider]
-    : git_provider.includes("gitlab")
-      ? "Gitlab"
-      : "Github";
 }
 
 export type WebhookIdOrName = "Id" | "Name";

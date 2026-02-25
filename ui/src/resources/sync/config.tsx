@@ -4,8 +4,9 @@ import { ProviderSelectorConfig } from "@/components/config/provider-selector";
 import { MonacoEditor } from "@/components/monaco";
 import Tags from "@/components/tags";
 import TagSelector from "@/components/tags/selector";
+import WebhookBuilder from "@/components/webhook/builder";
+import CopyWebhookUrl from "@/components/webhook/copy-url";
 import {
-  getWebhookIntegration,
   usePermissions,
   useRead,
   useWebhookIdOrName,
@@ -15,7 +16,7 @@ import {
 import Config, { ConfigGroupArgs, ConfigProps } from "@/ui/config";
 import { ConfigItem, ConfigList, ConfigSwitch } from "@/ui/config/item";
 import ShowHideButton from "@/ui/show-hide-button";
-import { Group, Select } from "@mantine/core";
+import { Group, Select, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { CircleMinus } from "lucide-react";
@@ -56,7 +57,8 @@ export default function ResourceSyncConfig({
   const { canWrite } = usePermissions({ type: "ResourceSync", id });
   const sync = useRead("GetResourceSync", { sync: id }).data;
   const config = sync?.config;
-  const global_disabled =
+  const name = sync?.name;
+  const globalDisabled =
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
   const [update, setUpdate] = useLocalStorage<
     Partial<Types.ResourceSyncConfig>
@@ -65,15 +67,15 @@ export default function ResourceSyncConfig({
     defaultValue: {},
   });
   const { mutateAsync } = useWrite("UpdateResourceSync");
-  const { integrations } = useWebhookIntegrations();
-  const [id_or_name] = useWebhookIdOrName();
+  const { getIntegration } = useWebhookIntegrations();
+  const [idOrName] = useWebhookIdOrName();
 
   if (!config) return null;
 
-  const disabled = global_disabled || !canWrite;
+  const disabled = globalDisabled || !canWrite;
 
   const gitProvider = update.git_provider ?? config.git_provider;
-  const webhookIntegration = getWebhookIntegration(integrations, gitProvider);
+  const webhookIntegration = getIntegration(gitProvider);
 
   const mode = getSyncMode(update, config);
   const managed = update.managed ?? config.managed ?? false;
@@ -339,35 +341,29 @@ export default function ResourceSyncConfig({
           }
           return (
             <ConfigItem label="Configure Branch">
-              <div>Must configure Branch before webhooks will work.</div>
+              <Text>Must configure Branch before webhooks will work.</Text>
             </ConfigItem>
           );
         },
-        // ["Builder" as any]: () => (
-        //   <WebhookBuilder git_provider={git_provider} />
-        // ),
-        // ["Refresh" as any]: () => (
-        //   <ConfigItem
-        //     label="Webhook Url - Refresh Pending"
-        //     description="Trigger an update of the pending sync cache, to display the changes in the UI on push."
-        //   >
-        //     <CopyWebhook
-        //       integration={webhook_integration}
-        //       path={`/sync/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}/refresh`}
-        //     />
-        //   </ConfigItem>
-        // ),
-        // ["Sync" as any]: () => (
-        //   <ConfigItem
-        //     label="Webhook Url - Execute Sync"
-        //     description="Trigger an execution of the sync on push."
-        //   >
-        //     <CopyWebhook
-        //       integration={webhook_integration}
-        //       path={`/sync/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}/sync`}
-        //     />
-        //   </ConfigItem>
-        // ),
+        ["Builder" as any]: () => <WebhookBuilder gitProvider={gitProvider} />,
+        ["Refresh" as any]: () =>
+          (update.branch ?? config.branch) && (
+            <CopyWebhookUrl
+              label="Webhook Url - Refresh Pending"
+              description="Trigger an update of the pending sync cache."
+              integration={webhookIntegration}
+              path={`/sync/${idOrName === "Id" ? id : encodeURIComponent(name ?? "...")}/refresh`}
+            />
+          ),
+        ["Sync" as any]: () =>
+          (update.branch ?? config.branch) && (
+            <CopyWebhookUrl
+              label="Webhook Url - Execute Sync"
+              description="Trigger an execution of the sync."
+              integration={webhookIntegration}
+              path={`/sync/${idOrName === "Id" ? id : encodeURIComponent(name ?? "...")}/sync`}
+            />
+          ),
         webhook_enabled: true,
         webhook_secret: {
           description:

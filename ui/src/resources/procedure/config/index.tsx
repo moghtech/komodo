@@ -10,10 +10,13 @@ import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useState } from "react";
 import Stage from "./stage";
-import { Button, Select, Stack } from "@mantine/core";
+import { Button, Group, Select, Stack, TextInput } from "@mantine/core";
 import { ICONS } from "@/theme/icons";
 import { ConfigItem, ConfigSwitch } from "@/ui/config/item";
 import TimezoneSelector from "@/components/timezone-selector";
+import WebhookBuilder from "@/components/webhook/builder";
+import LabelledSwitch from "@/ui/labelled-switch";
+import CopyWebhookUrl from "@/components/webhook/copy-url";
 
 const PROCEDURE_GIT_PROVIDER = "Procedure";
 
@@ -263,44 +266,40 @@ export default function ProcedureConfig({ id }: { id: string }) {
             label: "Webhook",
             description: `Copy the webhook given here, and configure your ${webhookIntegration}-style repo provider to send webhooks to Komodo`,
             fields: {
-              // ["Builder" as any]: () => (
-              //   <WebhookBuilder git_provider={PROCEDURE_GIT_PROVIDER}>
-              //     <div className="text-nowrap text-muted-foreground text-sm">
-              //       Listen on branch:
-              //     </div>
-              //     <div className="flex items-center gap-3 flex-wrap">
-              //       <Input
-              //         placeholder="Branch"
-              //         value={branch}
-              //         onChange={(e) => setBranch(e.target.value)}
-              //         className="w-[200px]"
-              //         disabled={branch === "__ANY__"}
-              //       />
-              //       <div className="flex items-center gap-2">
-              //         <div className="text-muted-foreground text-sm">
-              //           No branch check:
-              //         </div>
-              //         <Switch
-              //           checked={branch === "__ANY__"}
-              //           onChange={(checked) => {
-              //             if (checked) {
-              //               setBranch("__ANY__");
-              //             } else {
-              //               setBranch("main");
-              //             }
-              //           }}
-              //         />
-              //       </div>
-              //     </div>
-              //   </WebhookBuilder>
-              // ),
+              ["Builder" as any]: () => (
+                <WebhookBuilder
+                  gitProvider={PROCEDURE_GIT_PROVIDER}
+                  extra={
+                    <Group align="end">
+                      <TextInput
+                        label="Listen on branch?"
+                        placeholder="Branch"
+                        value={branch}
+                        onChange={(e) => setBranch(e.target.value)}
+                        w={200}
+                        disabled={branch === "__ANY__"}
+                      />
+                      <LabelledSwitch
+                        label="No branch check"
+                        checked={branch === "__ANY__"}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setBranch("__ANY__");
+                          } else {
+                            setBranch("main");
+                          }
+                        }}
+                      />
+                    </Group>
+                  }
+                />
+              ),
               ["run" as any]: () => (
-                <ConfigItem label="Webhook Url - Run">
-                  {/* <CopyWebhook
-                    integration={webhook_integration}
-                    path={`/procedure/${id_or_name === "Id" ? id : encodeURIComponent(name ?? "...")}/${branch}`}
-                  /> */}
-                </ConfigItem>
+                <CopyWebhookUrl
+                  label="Webhook Url - Run"
+                  integration={webhookIntegration}
+                  path={`/procedure/${idOrName === "Id" ? id : encodeURIComponent(name ?? "...")}/${branch}`}
+                />
               ),
               webhook_enabled: true,
               webhook_secret: {
