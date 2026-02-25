@@ -84,11 +84,21 @@ export const ServerComponents: RequiredResourceComponents<
   Table: ServerTable,
 
   Icon: ({ id, size = "1rem", noColor }) => {
-    const state = useRead("ListServers", {}).data?.find((r) => r.id === id)
-      ?.info.state;
+    const coreVersion = useRead("GetVersion", {}).data?.version;
+    const info = useRead("ListServers", {}).data?.find(
+      (r) => r.id === id,
+    )?.info;
+    const state = info?.state;
     const color = noColor
       ? undefined
-      : state && hexColorByIntention(serverStateIntention(state));
+      : state &&
+        hexColorByIntention(
+          serverStateIntention(
+            state,
+            (info.version && coreVersion && info.version !== coreVersion) ||
+              false,
+          ),
+        );
     return <ICONS.Server size={size} color={color} />;
   },
 
