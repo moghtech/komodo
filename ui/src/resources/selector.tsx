@@ -86,10 +86,10 @@ export default function ResourceSelector({
         <Button
           justify="space-between"
           rightSection={<ChevronsUpDown size="1rem" />}
-          onClick={() => combobox.toggleDropdown()}
-          disabled={disabled}
           w="fit-content"
           maw={{ base: 200, lg: 300 }}
+          onClick={() => combobox.toggleDropdown()}
+          disabled={disabled}
           loading={!resources}
           {...targetProps}
         >

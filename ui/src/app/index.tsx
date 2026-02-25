@@ -14,7 +14,7 @@ const App = () => {
   const [opened, { toggle, close }] = useDisclosure();
   return (
     <AppShell
-      padding="xl"
+      padding={{ base: "lg", sm: "xl" }}
       header={{ height: TOPBAR_HEIGHT }}
       navbar={{
         width: 240,

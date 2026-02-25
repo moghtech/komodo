@@ -87,7 +87,7 @@ export function UpdateDetailsContent({ id }: { id: string }) {
 
       {/** DETAILS */}
       <Stack gap="sm">
-        <UserAvatar userId={update.operator} iconSize="1.3rem" />
+        <UserAvatar userId={update.operator} iconSize="1.3rem" fz="md" />
 
         {/** RESOURCE / VERSION */}
         <Group gap="xs">

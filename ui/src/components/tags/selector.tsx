@@ -40,7 +40,7 @@ export default function TagSelector({
   return (
     <Combobox
       store={combobox}
-      width={230}
+      width={260}
       onOptionSubmit={(tag) => {
         onSelect?.(tag);
         setSearch("");
@@ -54,13 +54,14 @@ export default function TagSelector({
           color="accent.1"
           pl="0.4rem"
           className="bordered-heavy"
+          justify="start"
+          w={{ base: "100%", xs: "fit-content" }}
           fw="normal"
           leftSection={
             <Badge
               radius="sm"
               px="0.3rem"
               py="0.3rem"
-              color="accent"
               c="dimmed"
               h="fit-content"
             >

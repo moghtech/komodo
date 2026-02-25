@@ -1,14 +1,20 @@
 import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
-import { Group, MantineStyleProps, Text } from "@mantine/core";
+import {
+  Group,
+  GroupProps,
+  MantineStyleProps,
+  Text,
+  TextProps,
+} from "@mantine/core";
 
-export interface UserAvatarProps {
+export interface UserAvatarProps extends TextProps {
   userId: string;
   iconSize?: string | number;
   dimmed?: boolean;
   onlyAvatar?: boolean;
   forceDefaultAvatar?: boolean;
-  fz?: MantineStyleProps["fz"];
+  groupProps?: GroupProps;
 }
 
 export default function UserAvatar({
@@ -17,7 +23,8 @@ export default function UserAvatar({
   dimmed,
   onlyAvatar,
   forceDefaultAvatar,
-  fz = "md",
+  groupProps,
+  ...textProps
 }: UserAvatarProps) {
   const user = useRead("GetUsername", { user_id: userId }).data;
 
@@ -41,9 +48,11 @@ export default function UserAvatar({
   }
 
   return (
-    <Group gap="xs">
+    <Group gap="xs" {...groupProps}>
       {avatar}
-      <Text fz={fz}>{user?.username ?? "Unknown"}</Text>
+      <Text fz={{ base: "xs", md: "sm", lg: "md" }} {...textProps}>
+        {user?.username ?? "Unknown"}
+      </Text>
     </Group>
   );
 }

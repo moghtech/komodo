@@ -1,6 +1,7 @@
 import {
   ActionIcon,
   Button,
+  Divider,
   Group,
   Modal,
   Select,
@@ -167,7 +168,7 @@ export default function ConfigMaintenanceWindows({
         }
         opened={!!editingWindow}
         onClose={() => setEditingWindow(null)}
-        size="auto"
+        size="lg"
       >
         {editingWindow && (
           <MaintenanceWindowForm
@@ -347,7 +348,7 @@ function MaintenanceWindowForm({
         />
       )}
 
-      <SimpleGrid cols={2}>
+      <SimpleGrid cols={{ base: 1, sm: 2 }}>
         <TextInput
           label="Start Time"
           type="time"
@@ -363,6 +364,7 @@ function MaintenanceWindowForm({
             });
           }}
           error={errors.hour || errors.minute}
+          w="100%"
         />
         <TimezoneSelector
           label="Timezone"
@@ -370,6 +372,7 @@ function MaintenanceWindowForm({
           onChange={(timezone) =>
             setFormData((data) => ({ ...data, timezone }))
           }
+          w="100%"
         />
       </SimpleGrid>
 
@@ -396,7 +399,7 @@ function MaintenanceWindowForm({
         placeholder="e.g., Automated backup process"
       />
 
-      <Group justify="end">
+      <Group justify="end" mt="xs">
         <Button
           variant="outline"
           onClick={onCancel}

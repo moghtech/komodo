@@ -67,7 +67,11 @@ export default function UpdateCard({
     return (
       <Stack onClick={onClick} gap="0" {...containerProps}>
         <FirstRow />
-        <Flex justify="space-between" c="dimmed">
+        <Flex
+          justify="space-between"
+          c="dimmed"
+          fz={{ base: "xs", md: "sm", lg: "md" }}
+        >
           <Group gap="xs">
             {update.target.type === "System" ? (
               <>

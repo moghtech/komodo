@@ -52,7 +52,7 @@ export default function SettingsTags() {
             size: 200,
             cell: ({ row }) =>
               row.original.owner ? (
-                <UserAvatar userId={row.original.owner} />
+                <UserAvatar userId={row.original.owner} fz="md" />
               ) : (
                 "Unknown"
               ),

@@ -209,7 +209,7 @@ export default function Updates() {
             {
               header: "Operator",
               accessorKey: "operator",
-              cell: ({ row }) => <UserAvatar userId={row.original.operator} />,
+              cell: ({ row }) => <UserAvatar userId={row.original.operator} fz="md" />,
             },
           ]}
           onRowClick={(row) => openDetails(row.id)}

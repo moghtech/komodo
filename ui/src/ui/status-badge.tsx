@@ -5,7 +5,10 @@ import {
   ColorIntention,
   hexColorByIntention,
 } from "@/lib/color";
-import { fmtUpperCamelcase, fmtSnakeCaseToUpperSpaceCase } from "@/lib/formatting";
+import {
+  fmtUpperCamelcase,
+  fmtSnakeCaseToUpperSpaceCase,
+} from "@/lib/formatting";
 
 // https://mantine.dev/guides/polymorphic/#create-your-own-polymorphic-components
 
@@ -30,9 +33,8 @@ const StatusBadge = createPolymorphicComponent<"div", StatusBadgeProps>(
 
       return (
         <Text
-          fz="sm"
+          fz={{ base: "xs", md: "sm" }}
           bdrs="md"
-          miw={30}
           w="fit-content"
           c={color}
           bg={background}

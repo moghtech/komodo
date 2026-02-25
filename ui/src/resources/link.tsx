@@ -31,7 +31,11 @@ export default function ResourceLink({
       gap="xs"
     >
       <RC.Icon id={id} noColor={noColor} />
-      <Text className="hover-underline" style={{ textWrap: "nowrap" }}>
+      <Text
+        className="hover-underline"
+        style={{ textWrap: "nowrap" }}
+        fz={{ base: "xs", md: "sm", lg: "md" }}
+      >
         {resource?.name ?? "Unknown"}
       </Text>
       {resource?.template && <TemplateMarker type={type} />}

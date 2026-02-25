@@ -15,7 +15,6 @@ export default function TimezoneSelector({
   ...selectProps
 }: TimezoneSelectorProps) {
   const coreTz = useRead("GetCoreInfo", {}).data?.timezone || "Core TZ";
-
   return (
     <Select
       w={{ base: "85%", lg: 400 }}

@@ -77,7 +77,7 @@ export default function UserGroupAddUser({
         <Combobox.Options mah={224} style={{ overflowY: "auto" }}>
           {filtered.map((user) => (
             <Combobox.Option key={user._id?.$oid!} value={user._id?.$oid!}>
-              <UserAvatar userId={user._id?.$oid!} />
+              <UserAvatar userId={user._id?.$oid!} fz="md" />
             </Combobox.Option>
           ))}
           {filtered.length === 0 && (
