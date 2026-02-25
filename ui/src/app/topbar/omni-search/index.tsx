@@ -2,9 +2,11 @@ import { ActionIcon, Badge, Button, Group } from "@mantine/core";
 import { Spotlight, spotlight } from "@mantine/spotlight";
 import { useOmniSearch } from "./hooks";
 import { ICONS } from "@/theme/icons";
+import { useShiftKeyListener } from "@/lib/hooks";
 
 export default function OmniSearch({}: {}) {
   const { search, setSearch, actions } = useOmniSearch();
+  useShiftKeyListener("S", () => spotlight.open());
   return (
     <>
       <ActionIcon
@@ -37,7 +39,6 @@ export default function OmniSearch({}: {}) {
         query={search}
         onQueryChange={setSearch}
         clearQueryOnClose={false}
-        shortcut="shift + S"
       >
         <Spotlight.Search
           leftSection={<ICONS.Search size="1.3rem" />}

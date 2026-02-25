@@ -60,11 +60,7 @@ export default function StackInfo({
       {latestErrors &&
         latestErrors.length > 0 &&
         latestErrors.map((error) => (
-          <Stack
-            className="bordered-light"
-            bdrs="md"
-            p="xl"
-          >
+          <Stack key={error.path} className="bordered-light" bdrs="md" p="xl">
             {/* HEADER */}
             <Group justify="between">
               <Group ff="monospace">
@@ -116,6 +112,7 @@ export default function StackInfo({
           };
           return (
             <Stack
+              key={content.path}
               className="bordered-light"
               bdrs="md"
               p="xl"
@@ -203,11 +200,7 @@ export default function StackInfo({
         })}
 
       {stack?.info?.deployed_config && notDown && (
-        <Stack
-          className="bordered-light"
-          bdrs="md"
-          p="xl"
-        >
+        <Stack className="bordered-light" bdrs="md" p="xl">
           {/* HEADER */}
           <Stack ff="monospace" gap="0">
             <Text fz="md">Deployed config:</Text>

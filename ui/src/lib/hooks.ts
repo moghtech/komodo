@@ -453,11 +453,17 @@ export function useKeyListener(
   extra?: "shift" | "ctrl",
 ) {
   useWindowEvent("keydown", (e) => {
-    // This will ignore Shift + listenKey if it is sent from input / textarea
+    // This will ignore Shift + listenKey if it is sent from input / textarea / monaco
     const target = e.target as HTMLElement | null;
-    if (target?.matches("input") || target?.matches("textarea")) {
+    if (
+      target?.matches("input") ||
+      target?.matches("textarea") ||
+      target?.matches("select") ||
+      target?.role === "textbox"
+    ) {
       return;
     }
+
     if (
       e.key === listenKey &&
       (extra === "shift"

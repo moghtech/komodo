@@ -40,7 +40,7 @@ export default function KeyboardShortcuts() {
         size="lg"
       >
         <SimpleGrid cols={2} p="md" bg="accent.1">
-          <KeyboardShortcut label="Save" keys={["Ctrl / Cmd", "Enter"]} />
+          <KeyboardShortcut label="Save" keys={["Meta", "Enter"]} />
           <KeyboardShortcut label="New" keys={["Shift", "N"]} />
           <KeyboardShortcut label="Go Home" keys={["Shift", "H"]} />
 
