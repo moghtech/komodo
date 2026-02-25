@@ -135,18 +135,6 @@ export default function StackConfig({
   const currSwarmId = update.swarm_id ?? config.swarm_id;
   const currServerId = update.server_id ?? config.server_id;
 
-  const ClearServerSwarmButton = (
-    <ActionIcon
-      color="red"
-      onClick={() =>
-        setUpdate((update) => ({ ...update, swarm_id: "", server_id: "" }))
-      }
-      disabled={disabled}
-    >
-      <ICONS.Clear size="1rem" />
-    </ActionIcon>
-  );
-
   const swarmServerGroup: ConfigGroupArgs<Types.StackConfig>[] = [
     {
       label: "Swarm",

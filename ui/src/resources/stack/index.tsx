@@ -171,7 +171,7 @@ export const StackComponents: RequiredResourceComponents<
           <HoverCard.Target>
             <Text>
               <b>{info?.services.length}</b> Service
-              {(info?.services.length ?? 0 > 1) ? "s" : ""}
+              {(info?.services.length ?? 0) !== 1 ? "s" : ""}
             </Text>
           </HoverCard.Target>
           <HoverCard.Dropdown>

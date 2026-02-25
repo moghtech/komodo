@@ -15,16 +15,14 @@ export default function SystemCommand({
 }: SystemCommandProps) {
   return (
     <Stack>
-      <Group>
-        <Text c="dimmed">Path:</Text>
-        <TextInput
-          placeholder="Command working directory"
-          value={value?.path}
-          w={{ base: 200, lg: 300 }}
-          onChange={(e) => set({ ...(value || {}), path: e.target.value })}
-          disabled={disabled}
-        />
-      </Group>
+      <TextInput
+        label="Path"
+        placeholder="Command working directory"
+        value={value?.path}
+        w={{ base: "85%", sm: 300 }}
+        onChange={(e) => set({ ...(value || {}), path: e.target.value })}
+        disabled={disabled}
+      />
       <MonacoEditor
         value={
           value?.command ||

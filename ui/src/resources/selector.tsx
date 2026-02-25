@@ -44,7 +44,7 @@ export default function ResourceSelector({
   position = "bottom-start",
   targetProps,
   wrapperProps,
-  clearable,
+  clearable = true,
   ...comboboxProps
 }: ResourceSelectorProps) {
   const templateFilterFn =
@@ -81,8 +81,7 @@ export default function ResourceSelector({
       store={combobox}
       width={300}
       position={position}
-      onOptionSubmit={(_id, props) => {
-        const id = _id === "None" ? "" : _id;
+      onOptionSubmit={(id, props) => {
         onSelect?.(id);
         onOptionSubmit?.(id, props);
         combobox.closeDropdown();
@@ -92,6 +91,8 @@ export default function ResourceSelector({
       <Combobox.Target>
         <Button
           justify="space-between"
+          w="fit-content"
+          maw="100%"
           rightSection={
             <Group gap="xs" ml="sm">
               {clearable && (
@@ -111,16 +112,14 @@ export default function ResourceSelector({
               <ChevronsUpDown size="1rem" />
             </Group>
           }
-          w="fit-content"
-          maw={{ base: 200, lg: 300 }}
           onClick={() => combobox.toggleDropdown()}
           disabled={disabled}
           loading={!resources}
           {...targetProps}
         >
-          <Group gap="xs">
+          <Group gap="xs" wrap="nowrap">
             <Components.Icon id={selected} />
-            <Text>
+            <Text className="text-ellipsis">
               {name || (placeholder ?? `Select ${fmtResourceType(type)}`)}
             </Text>
           </Group>
@@ -135,7 +134,6 @@ export default function ResourceSelector({
           placeholder="search..."
         />
         <Combobox.Options mah={224} style={{ overflowY: "auto" }}>
-          {!search && <Combobox.Option value="None">None</Combobox.Option>}
           {filtered.map((resource) => (
             <Combobox.Option key={resource.id} value={resource.id}>
               <Group>

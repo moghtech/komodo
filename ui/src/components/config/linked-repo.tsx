@@ -30,9 +30,14 @@ export default function LinkedRepo({
     <ConfigItem
       label={
         linkedRepo ? (
-          <Group>
+          <Group fz="h3" fw="bold">
             Repo:
-            <ResourceLink type="Repo" id={linkedRepo} />
+            <ResourceLink
+              type="Repo"
+              id={linkedRepo}
+              fz="h3"
+              iconSize="1.2rem"
+            />
           </Group>
         ) : (
           "Select Repo"
@@ -56,7 +61,7 @@ export default function LinkedRepo({
           });
         }}
         disabled={disabled}
-        position="bottom-start"
+        clearable
       />
     </ConfigItem>
   );
