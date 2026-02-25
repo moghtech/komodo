@@ -11,6 +11,7 @@ import {
   forwardRef,
   MouseEventHandler,
   ReactNode,
+  useEffect,
   useState,
 } from "react";
 
@@ -29,6 +30,14 @@ const ConfirmButton = createPolymorphicComponent<"button", ConfirmButtonProps>(
       ref,
     ) => {
       const [clickedOnce, setClickedOnce] = useState(false);
+      useEffect(() => {
+        if (clickedOnce) {
+          const timeout = setTimeout(() => {
+            setClickedOnce(false);
+          }, 4_000);
+          return () => clearTimeout(timeout);
+        }
+      }, [clickedOnce]);
       return (
         <Button
           onClick={(e) => {
@@ -41,8 +50,8 @@ const ConfirmButton = createPolymorphicComponent<"button", ConfirmButtonProps>(
             }
           }}
           onBlur={(e) => {
-            setClickedOnce(false);
             onBlur?.(e);
+            setClickedOnce(false);
           }}
           justify="space-between"
           w={{ base: "100%", xs: 190 }}

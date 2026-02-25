@@ -10,6 +10,7 @@ import {
   FocusEventHandler,
   forwardRef,
   MouseEventHandler,
+  useEffect,
   useState,
 } from "react";
 
@@ -24,6 +25,14 @@ const ConfirmIcon = createPolymorphicComponent<"button", ConfirmIconProps>(
   forwardRef<HTMLButtonElement, ConfirmIconProps>(
     ({ children, onClick, onBlur, miw, loading, ...props }, ref) => {
       const [clickedOnce, setClickedOnce] = useState(false);
+      useEffect(() => {
+        if (clickedOnce) {
+          const timeout = setTimeout(() => {
+            setClickedOnce(false);
+          }, 4_000);
+          return () => clearTimeout(timeout);
+        }
+      }, [clickedOnce]);
       return (
         <ActionIcon
           onClick={(e) => {
@@ -39,7 +48,7 @@ const ConfirmIcon = createPolymorphicComponent<"button", ConfirmIconProps>(
             setClickedOnce(false);
             onBlur?.(e);
           }}
-          onPointerDown={e => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
           {...props}
           ref={ref}
         >
