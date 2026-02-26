@@ -145,7 +145,7 @@ export default function ResourceSyncConfig({
             label="Delete Unmatched Resources"
             description="Executions will delete any resources not found in the resource files. Only use this when using one sync for everything."
             value={managed || delete_mode}
-            onChange={(delete_mode) => set({ delete: delete_mode })}
+            onCheckedChange={(delete_mode) => set({ delete: delete_mode })}
             disabled={disabled || managed}
           />
         );

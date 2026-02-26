@@ -284,7 +284,7 @@ export default function DeploymentConfig({
                     label="Poll for Updates"
                     description="Check for updates to the image during Global Auto Update."
                     value={autoUpdate || poll}
-                    onChange={(poll_for_updates) => set({ poll_for_updates })}
+                    onCheckedChange={(poll_for_updates) => set({ poll_for_updates })}
                     disabled={disabled || autoUpdate}
                   />
                 );

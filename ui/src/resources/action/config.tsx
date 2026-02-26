@@ -161,7 +161,7 @@ export default function ActionConfig({ id }: { id: string }) {
                       : false
                   }
                   disabled={disabled || !(update.schedule ?? config.schedule)}
-                  onChange={(schedule_enabled) => set({ schedule_enabled })}
+                  onCheckedChange={(schedule_enabled) => set({ schedule_enabled })}
                 />
               ),
               schedule_format: (schedule_format, set) => (

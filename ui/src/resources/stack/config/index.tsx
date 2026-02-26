@@ -371,7 +371,7 @@ export default function StackConfig({
               label="Poll for Updates"
               description="Check for updates to the image during Global Auto Update."
               value={auto_update || poll}
-              onChange={(poll_for_updates) => set({ poll_for_updates })}
+              onCheckedChange={(poll_for_updates) => set({ poll_for_updates })}
               disabled={disabled || auto_update}
             />
           );
@@ -385,7 +385,7 @@ export default function StackConfig({
               label="Full Stack Auto Update"
               description="Always redeploy full stack instead of just specific services with update."
               value={value}
-              onChange={(auto_update_all_services) =>
+              onCheckedChange={(auto_update_all_services) =>
                 set({ auto_update_all_services })
               }
               disabled={disabled || !auto_update}
