@@ -8,7 +8,7 @@ members = [
 ]
 
 [workspace.package]
-version = "2.0.0-dev-118"
+version = "2.0.0-dev-120"
 edition = "2024"
 authors = ["mbecker20 <becker.maxh@gmail.com>"]
 license = "GPL-3.0-or-later"
@@ -77,7 +77,7 @@ indexmap = { version = "2.13.0", features = ["serde"] }
 serde = { version = "1.0.227", features = ["derive"] }
 strum = { version = "0.28.0", features = ["derive"] }
 bson = { version = "2.15.0" } # must keep in sync with mongodb version
-toml = "0.9.11+spec-1.1.0"
+toml = "0.9.11"
 serde_yaml_ng = "0.10.0"
 serde_json = "1.0.149"
 serde_qs = "1.0.0"
