@@ -7,7 +7,7 @@ use anyhow::{Context, anyhow};
 use async_timing_util::unix_timestamp_ms;
 use clap::{Parser, ValueEnum};
 use mogh_error::{AddStatusCodeError, Serror};
-use rand::Rng as _;
+use rand::RngExt as _;
 use reqwest::StatusCode;
 use serde::{
   Deserialize, Serialize,
