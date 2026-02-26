@@ -8,7 +8,7 @@ import { useRead } from "@/lib/hooks";
 import { useWebsocketMessages } from "@/lib/socket";
 import { updateLogToHtml, versionIsNone } from "@/lib/utils";
 import { ResourceComponents, UsableResource } from "@/resources";
-import { Code, Drawer, Group, Stack, Text } from "@mantine/core";
+import { ActionIcon, Code, Drawer, Group, Stack, Text } from "@mantine/core";
 import UserAvatar from "@/components/user-avatar";
 import { ICONS } from "@/theme/icons";
 import { Clock, Link2, SquarePen } from "lucide-react";
@@ -62,6 +62,7 @@ export default function UpdateDetails({
 }
 
 export function UpdateDetailsContent({ id }: { id: string }) {
+  const { close } = useUpdateDetails();
   const { data: update, refetch } = useRead("GetUpdate", { id });
   // Listen for updates on the update id and refetch
   useWebsocketMessages("update-details", (update) => {
@@ -80,10 +81,15 @@ export function UpdateDetailsContent({ id }: { id: string }) {
   return (
     <Stack gap="xl" m="md">
       {/** HEADER */}
-      <Text fz="h2">
-        {fmtOperation(update.operation)}{" "}
-        {!versionIsNone(update.version) && fmtVersion(update.version)}
-      </Text>
+      <Group justify="space-between">
+        <Text fz="h2">
+          {fmtOperation(update.operation)}{" "}
+          {!versionIsNone(update.version) && fmtVersion(update.version)}
+        </Text>
+        <ActionIcon size="lg" variant="filled" color="red" onClick={close}>
+          <ICONS.Clear size="1.3rem" />
+        </ActionIcon>
+      </Group>
 
       {/** DETAILS */}
       <Stack gap="sm">

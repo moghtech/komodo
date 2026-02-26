@@ -5,7 +5,7 @@ import {
 } from "@/lib/formatting";
 import { useInvalidate, useRead, useUser, useWrite } from "@/lib/hooks";
 import { ResourceComponents, UsableResource } from "@/resources";
-import { Drawer, Group, Stack, Text } from "@mantine/core";
+import { ActionIcon, Drawer, Group, Stack, Text } from "@mantine/core";
 import { ICONS } from "@/theme/icons";
 import { Clock, Link2 } from "lucide-react";
 import CopyButton from "@/ui/copy-button";
@@ -92,7 +92,12 @@ export function AlertDetailsContent({
   return (
     <Stack gap="xl" m="md">
       {/** HEADER */}
-      <Text fz="h1">{fmtUpperCamelcase(alert.data.type)}</Text>
+      <Group justify="space-between">
+        <Text fz="h1">{fmtUpperCamelcase(alert.data.type)}</Text>
+        <ActionIcon size="lg" variant="filled" color="red" onClick={close}>
+          <ICONS.Clear size="1.3rem" />
+        </ActionIcon>
+      </Group>
 
       {/** DETAILS */}
       <Stack gap="sm">
