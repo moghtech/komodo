@@ -77,7 +77,6 @@ function TableSection({
           {type + "s"}
         </Text>
       }
-     
       actions={<ShowHideButton show={show} setShow={setShow} />}
     >
       {show && <RC.Table resources={filtered} />}

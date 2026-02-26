@@ -96,7 +96,7 @@ export default function Config<T>({
               </Text>
             )}
 
-            <Stack gap="xl">
+            <Stack>
               {(groupArgs as ConfigGroupArgs<T>[])
                 .filter(({ hidden }) => !hidden)
                 .map(
@@ -209,7 +209,7 @@ export default function Config<T>({
       {!disableSidebar && (
         <Flex
           w="100%"
-          gap={{ base: "md", lg: "xl" }}
+          gap="md"
           direction={{ base: "column", lg: "row" }}
         >
           {/** SIDEBAR (LG) */}

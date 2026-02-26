@@ -14,8 +14,8 @@ export default function EntityPage({
   ...props
 }: EntityPageProps) {
   return (
-    <Stack gap="xl" mb="50vh" {...props}>
-      <Group justify="space-between" mb="lg">
+    <Stack mb="50vh" {...props}>
+      <Group justify="space-between">
         <BackButton to={backTo} />
         {actions && <Group wrap="nowrap">{actions}</Group>}
       </Group>

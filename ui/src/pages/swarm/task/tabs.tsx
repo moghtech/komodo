@@ -83,7 +83,7 @@ export default function SwarmTaskTabs({
   }
 
   return (
-    <Tabs color={colorByIntention(intent)} value={view}>
+    <Tabs color={colorByIntention(intent)} value={view} mt="lg">
       {View}
     </Tabs>
   );

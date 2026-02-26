@@ -27,7 +27,7 @@ import ServerStatsCard from "@/resources/server/stats-card";
 
 export default function DashboardRecents() {
   return (
-    <Stack gap="xl">
+    <Stack>
       <DashboardNoResources />
       {SIDEBAR_RESOURCES.map((type) => (
         <RecentRow key={type} type={type} />

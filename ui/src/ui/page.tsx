@@ -50,7 +50,6 @@ const Page = createPolymorphicComponent<"div", PageProps>(
           w={{ base: "100%", xs: "fit-content" }}
           px="xl"
           py="xs"
-          mb="lg"
           style={{
             border: "1px solid var(--mantine-color-accent-border-0)",
           }}
@@ -80,7 +79,7 @@ const Page = createPolymorphicComponent<"div", PageProps>(
         </Paper>
       );
       return (
-        <Stack gap="xl" {...stackProps} ref={ref}>
+        <Stack {...stackProps} ref={ref}>
           {aboveTitle}
           {oppositeTitle ? (
             <Group justify="space-between" align="start">
