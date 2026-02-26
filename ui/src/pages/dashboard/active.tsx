@@ -142,11 +142,13 @@ export default function DashboardActiveResources() {
     })),
   ];
 
-  if (resources.length === 0) return null;
+  // if (resources.length === 0) return null;
 
   return (
     <Section
       title="Active"
+      titleMb="0"
+      mb="xl"
       icon={
         <Circle
           size="1rem"
