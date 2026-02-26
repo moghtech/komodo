@@ -44,7 +44,6 @@ export default function ResourceSyncTabs({ id }: { id: string }) {
       tabs={tabsNoContent}
       value={view}
       onValueChange={setView as any}
-      tabProps={{ w: 140 }}
     />
   );
 

@@ -189,10 +189,10 @@ export default function Config<T>({
 
   const SaveOrResetComponent = changesMade && (
     <>
-      <Group visibleFrom="lg" justify="flex-end">
+      <Group visibleFrom="xs" justify="flex-end">
         <SaveOrReset unsavedIndicator />
       </Group>
-      <Stack hiddenFrom="lg">
+      <Stack hiddenFrom="xs">
         <SaveOrReset unsavedIndicator fullWidth />
       </Stack>
     </>

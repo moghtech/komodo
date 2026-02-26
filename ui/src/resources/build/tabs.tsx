@@ -62,7 +62,6 @@ export default function BuildTabs({ id }: { id: string }) {
       tabs={tabsNoContent}
       value={view}
       onValueChange={setView as any}
-      tabProps={{ w: 140 }}
     />
   );
 

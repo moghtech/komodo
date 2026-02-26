@@ -83,7 +83,6 @@ export default function ServerTabs({ id }: { id: string }) {
       tabs={tabs}
       value={view}
       onValueChange={setView as any}
-      tabProps={{ w: 140 }}
     />
   );
 

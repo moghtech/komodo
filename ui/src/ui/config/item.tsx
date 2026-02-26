@@ -119,20 +119,20 @@ export function ConfigInput({
 export function ConfigSwitch({
   value,
   disabled,
-  onChange,
+  onCheckedChange,
   switchProps,
   ...itemProps
 }: {
   value: boolean | undefined;
   disabled: boolean;
-  onChange: (value: boolean) => void;
+  onCheckedChange: (value: boolean) => void;
   switchProps?: SwitchProps;
-} & Omit<Omit<ConfigItemProps, "children">, "onChange">) {
+} & Omit<ConfigItemProps, "children">) {
   return (
     <ConfigItem {...itemProps}>
       <EnableSwitch
         checked={value}
-        onCheckedChange={onChange}
+        onCheckedChange={onCheckedChange}
         disabled={disabled}
         {...switchProps}
       />

@@ -95,7 +95,6 @@ export default function StackTabs({ id }: { id: string }) {
       tabs={tabs}
       value={view}
       onValueChange={setView as any}
-      tabProps={{ w: 140 }}
     />
   );
 

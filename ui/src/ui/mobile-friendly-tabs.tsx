@@ -77,12 +77,13 @@ export function MobileFriendlyTabsSelector({
   actions,
   value,
   onValueChange,
-  changeAt = "md",
+  changeAt: _changeAt,
   fullIconSize = "1.3rem",
   mobileIconSize = "1rem",
   tabProps,
 }: MobileFriendlyTabsSelectorProps) {
   const tabs = _tabs.filter((t) => !t.hidden);
+  const changeAt = _changeAt ?? (tabs.length > 4 ? "lg" : "md");
   const SelectedIcon = tabs.find((tab) => tab.value === value)?.icon;
   return (
     <>
@@ -102,6 +103,7 @@ export function MobileFriendlyTabsSelector({
                 fz="h3"
                 justify="center"
                 c={tabValue === value ? undefined : "dimmed"}
+                w={tabProps?.w ?? 140}
                 {...tabProps}
               >
                 {Icon && <Icon size={fullIconSize} />}
