@@ -39,10 +39,10 @@ type StatType =
 type StatDatapoint = { date: number; value: number };
 
 const STAT_TYPES: [StatType, ReactNode][] = [
+  ["Load Average", <ICONS.LoadAvg size="1.1rem" />],
   ["Cpu", <ICONS.Cpu size="1.1rem" />],
   ["Memory", <ICONS.Memory size="1.1rem" />],
   ["Disk", <ICONS.Disk size="1.1rem" />],
-  ["Load Average", <ICONS.LoadAvg size="1.1rem" />],
   ["Network Ingress", <Download size="1.1rem" />],
   ["Network Egress", <Upload size="1.1rem" />],
 ];
@@ -204,7 +204,7 @@ function StatChart({
 
   return (
     <Stack gap={4}>
-      <Group c="dimmed" gap="xs">
+      <Group gap="xs">
         {icon}
         <Text fz="xl" fw={500}>
           {type}
