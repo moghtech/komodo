@@ -15,6 +15,7 @@ import ServerNetworks from "./networks";
 import { ICONS } from "@/theme/icons";
 import ServerVolumes from "./volumes";
 import ServerImages from "./images";
+import { useRead } from "@/lib/hooks";
 
 type ServerDockerView = "Containers" | "Networks" | "Volumes" | "Images";
 
@@ -30,7 +31,9 @@ export default function ServerDockerResources({
   id: string;
   titleOther: ReactNode;
 }) {
-  const state = useServer(id)?.info.state ?? Types.ServerState.NotOk;
+  const coreVersion = useRead("GetVersion", {}).data?.version;
+  const info = useServer(id)?.info;
+  const state = info?.state ?? Types.ServerState.NotOk;
   const [view, setView] = useLocalStorage<ServerDockerView>({
     key: "server-info-view-v1",
     defaultValue: "Containers",
@@ -98,7 +101,15 @@ export default function ServerDockerResources({
 
   return (
     <Section titleOther={titleOther}>
-      <Tabs color={colorByIntention(serverStateIntention(state))} value={view}>
+      <Tabs
+        color={colorByIntention(
+          serverStateIntention(
+            state,
+            !!coreVersion && !!info?.version && coreVersion !== info.version,
+          ),
+        )}
+        value={view}
+      >
         {View}
       </Tabs>
     </Section>

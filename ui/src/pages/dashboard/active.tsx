@@ -75,7 +75,13 @@ export default function DashboardActiveResources() {
       state: (
         <StatusBadge
           text={stack.info.state}
-          intent={stackStateIntention(stack.info.state)}
+          intent={stackStateIntention(
+            stack.info.state,
+            stack.info.services &&
+              !stack.info.services.every(
+                (service) => !service.update_available,
+              ),
+          )}
         />
       ),
     })),
@@ -85,7 +91,10 @@ export default function DashboardActiveResources() {
       state: (
         <StatusBadge
           text={deployment.info.state}
-          intent={deploymentStateIntention(deployment.info.state)}
+          intent={deploymentStateIntention(
+            deployment.info.state,
+            deployment.info.update_available,
+          )}
         />
       ),
     })),
@@ -147,7 +156,6 @@ export default function DashboardActiveResources() {
   return (
     <Section
       title="Active"
-     
       mb="xl"
       icon={
         <Circle

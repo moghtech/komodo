@@ -133,8 +133,17 @@ export const ServerComponents: RequiredResourceComponents<
   },
 
   State: ({ id }) => {
-    let state = useServer(id)?.info.state;
-    return <StatusBadge text={state} intent={serverStateIntention(state)} />;
+    const coreVersion = useRead("GetVersion", {}).data?.version;
+    const info = useServer(id)?.info;
+    return (
+      <StatusBadge
+        text={info?.state}
+        intent={serverStateIntention(
+          info?.state,
+          !!coreVersion && !!info?.version && coreVersion !== info.version,
+        )}
+      />
+    );
   },
   Info: {
     ServerVersion,

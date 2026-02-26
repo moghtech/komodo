@@ -103,11 +103,15 @@ export const DeploymentComponents: RequiredResourceComponents<
   Table: DeploymentTable,
 
   Icon: ({ id, size = "1rem", noColor }) => {
-    const state = useRead("ListDeployments", {}).data?.find((r) => r.id === id)
-      ?.info.state;
+    const info = useRead("ListDeployments", {}).data?.find(
+      (r) => r.id === id,
+    )?.info;
     const color = noColor
       ? undefined
-      : state && hexColorByIntention(deploymentStateIntention(state));
+      : info &&
+        hexColorByIntention(
+          deploymentStateIntention(info.state, info.update_available),
+        );
     return <ICONS.Deployment size={size} color={color} />;
   },
 
@@ -118,7 +122,10 @@ export const DeploymentComponents: RequiredResourceComponents<
         type="Deployment"
         id={id}
         resource={deployment}
-        intent={deploymentStateIntention(deployment?.info.state)}
+        intent={deploymentStateIntention(
+          deployment?.info.state,
+          deployment?.info.update_available,
+        )}
         icon={ICONS.Deployment}
         name={deployment?.name}
         state={deployment?.info.state}
@@ -128,9 +135,12 @@ export const DeploymentComponents: RequiredResourceComponents<
   },
 
   State: ({ id }) => {
-    let state = useDeployment(id)?.info.state;
+    let info = useDeployment(id)?.info;
     return (
-      <StatusBadge text={state} intent={deploymentStateIntention(state)} />
+      <StatusBadge
+        text={info?.state}
+        intent={deploymentStateIntention(info?.state, info?.update_available)}
+      />
     );
   },
   Info: {

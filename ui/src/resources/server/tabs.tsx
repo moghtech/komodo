@@ -26,6 +26,7 @@ export default function ServerTabs({ id }: { id: string }) {
 
   const { specificTerminal } = usePermissions({ type: "Server", id });
 
+  const coreVersion = useRead("GetVersion", {}).data?.version;
   const serverInfo = useServer(id)?.info;
   const notReachable = serverInfo?.state !== Types.ServerState.Ok;
   const terminalDisabled =
@@ -125,7 +126,14 @@ export default function ServerTabs({ id }: { id: string }) {
 
   return (
     <Tabs
-      color={colorByIntention(serverStateIntention(serverInfo?.state))}
+      color={colorByIntention(
+        serverStateIntention(
+          serverInfo?.state,
+          !!coreVersion &&
+            !!serverInfo?.version &&
+            coreVersion !== serverInfo.version,
+        ),
+      )}
       value={view}
     >
       {View}

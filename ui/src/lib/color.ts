@@ -141,13 +141,13 @@ export const swarmTaskStateIntention: (
 };
 
 export const serverStateIntention: (
-  state?: Types.ServerState,
-  hasVersionMismatch?: boolean,
-) => ColorIntention = (state, hasVersionMismatch) => {
+  state: Types.ServerState | undefined,
+  versionMismatch: boolean,
+) => ColorIntention = (state, versionMismatch) => {
   switch (state) {
     case Types.ServerState.Ok:
       // If there's a version mismatch and the server is "Ok", show warning instead
-      return hasVersionMismatch ? "Warning" : "Good";
+      return versionMismatch ? "Warning" : "Good";
     case Types.ServerState.NotOk:
       return "Critical";
     case Types.ServerState.Disabled:
@@ -157,18 +157,17 @@ export const serverStateIntention: (
   }
 };
 
-export const stackStateIntention = (state?: Types.StackState) => {
+export const stackStateIntention = (
+  state: Types.StackState | undefined,
+  updateAvailable: boolean | undefined,
+) => {
   switch (state) {
     case undefined:
       return "None";
     case Types.StackState.Deploying:
       return "Warning";
     case Types.StackState.Running:
-      return "Good";
-    case Types.StackState.Paused:
-      return "Warning";
-    case Types.StackState.Stopped:
-      return "Warning";
+      return updateAvailable ? "Warning" : "Good";
     case Types.StackState.Restarting:
       return "Critical";
     case Types.StackState.Down:
@@ -181,7 +180,8 @@ export const stackStateIntention = (state?: Types.StackState) => {
 };
 
 export const deploymentStateIntention: (
-  state?: Types.DeploymentState,
+  state: Types.DeploymentState | undefined,
+  updateAvailable: boolean | undefined,
 ) => ColorIntention = (state) => {
   switch (state) {
     case undefined:
@@ -192,10 +192,6 @@ export const deploymentStateIntention: (
       return "Good";
     case Types.DeploymentState.NotDeployed:
       return "Neutral";
-    case Types.DeploymentState.Paused:
-      return "Warning";
-    case Types.DeploymentState.Exited:
-      return "Warning";
     case Types.DeploymentState.Unknown:
       return "Unknown";
     default:

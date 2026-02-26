@@ -134,7 +134,16 @@ export default function StackTabs({ id }: { id: string }) {
   }
 
   return (
-    <Tabs color={colorByIntention(stackStateIntention(state))} value={view}>
+    <Tabs
+      color={colorByIntention(
+        stackStateIntention(
+          state,
+          info?.services &&
+            !info.services.every((service) => !service.update_available),
+        ),
+      )}
+      value={view}
+    >
       {View}
     </Tabs>
   );

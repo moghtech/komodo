@@ -129,7 +129,9 @@ export default function DeploymentTabs({ id }: { id: string }) {
 
   return (
     <Tabs
-      color={colorByIntention(deploymentStateIntention(state))}
+      color={colorByIntention(
+        deploymentStateIntention(state, info?.update_available),
+      )}
       value={view}
     >
       {View}

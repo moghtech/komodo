@@ -75,8 +75,14 @@ export const BuilderComponents: RequiredResourceComponents<
         ? builder.info.instance_type
         : undefined,
     );
+    const coreVersion = useRead("GetVersion", {}).data?.version;
     const intent = server?.info.state
-      ? serverStateIntention(server.info.state)
+      ? serverStateIntention(
+          server.info.state,
+          !!coreVersion &&
+            !!server.info.version &&
+            coreVersion !== server.info.version,
+        )
       : "Neutral";
     return (
       <ResourceHeader

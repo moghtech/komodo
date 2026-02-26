@@ -109,11 +109,17 @@ export const StackComponents: RequiredResourceComponents<
   Table: StackTable,
 
   Icon: ({ id, size = "1rem", noColor }) => {
-    const state = useRead("ListStacks", {}).data?.find((r) => r.id === id)?.info
-      .state;
+    const info = useRead("ListStacks", {}).data?.find((r) => r.id === id)?.info;
     const color = noColor
       ? undefined
-      : state && hexColorByIntention(stackStateIntention(state));
+      : info &&
+        hexColorByIntention(
+          stackStateIntention(
+            info.state,
+            info.services &&
+              !info.services.every((service) => !service.update_available),
+          ),
+        );
     return <ICONS.Stack size={size} color={color} />;
   },
 
@@ -124,7 +130,11 @@ export const StackComponents: RequiredResourceComponents<
         type="Stack"
         id={id}
         resource={stack}
-        intent={stackStateIntention(stack?.info.state)}
+        intent={stackStateIntention(
+          stack?.info.state,
+          stack?.info.services &&
+            !stack?.info.services.every((service) => !service.update_available),
+        )}
         icon={ICONS.Stack}
         name={stack?.name}
         state={stack?.info.state}
@@ -138,8 +148,17 @@ export const StackComponents: RequiredResourceComponents<
   },
 
   State: ({ id }) => {
-    let state = useStack(id)?.info.state;
-    return <StatusBadge text={state} intent={stackStateIntention(state)} />;
+    let info = useStack(id)?.info;
+    return (
+      <StatusBadge
+        text={info?.state}
+        intent={stackStateIntention(
+          info?.state,
+          info?.services &&
+            !info.services.every((service) => !service.update_available),
+        )}
+      />
+    );
   },
   Info: {
     DeployTarget: ({ id }) => {
