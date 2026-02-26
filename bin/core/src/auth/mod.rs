@@ -148,7 +148,7 @@ impl AuthImpl for KomodoAuthImpl {
 
   fn post_link_redirect(&self) -> &str {
     static POST_LINK_REDIRECT: LazyLock<String> =
-      LazyLock::new(|| format!("{}/settings", core_config().host));
+      LazyLock::new(|| format!("{}/profile", core_config().host));
     &POST_LINK_REDIRECT
   }
 
