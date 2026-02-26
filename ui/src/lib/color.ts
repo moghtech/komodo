@@ -168,7 +168,7 @@ export const stackStateIntention = (state?: Types.StackState) => {
     case Types.StackState.Paused:
       return "Warning";
     case Types.StackState.Stopped:
-      return "Critical";
+      return "Warning";
     case Types.StackState.Restarting:
       return "Critical";
     case Types.StackState.Down:
@@ -193,6 +193,8 @@ export const deploymentStateIntention: (
     case Types.DeploymentState.NotDeployed:
       return "Neutral";
     case Types.DeploymentState.Paused:
+      return "Warning";
+    case Types.DeploymentState.Exited:
       return "Warning";
     case Types.DeploymentState.Unknown:
       return "Unknown";
