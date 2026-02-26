@@ -142,7 +142,7 @@ export default function DashboardActiveResources() {
     })),
   ];
 
-  // if (resources.length === 0) return null;
+  if (resources.length === 0) return null;
 
   return (
     <Section
