@@ -23,7 +23,7 @@ export interface ConfirmIconProps extends ActionIconProps {
 
 const ConfirmIcon = createPolymorphicComponent<"button", ConfirmIconProps>(
   forwardRef<HTMLButtonElement, ConfirmIconProps>(
-    ({ children, onClick, onBlur, miw, loading, ...props }, ref) => {
+    ({ children, onClick, onBlur, miw, loading, disabled, ...props }, ref) => {
       const [clickedOnce, setClickedOnce] = useState(false);
       useEffect(() => {
         if (clickedOnce) {
@@ -49,6 +49,7 @@ const ConfirmIcon = createPolymorphicComponent<"button", ConfirmIconProps>(
             onBlur?.(e);
           }}
           onPointerDown={(e) => e.stopPropagation()}
+          disabled={disabled || loading}
           {...props}
           ref={ref}
         >

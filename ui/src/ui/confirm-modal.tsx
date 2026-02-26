@@ -131,7 +131,6 @@ export default function ConfirmModal({
       </Modal>
 
       <Button
-        disabled={disabled}
         onClick={(e) => {
           e.stopPropagation();
           open();
@@ -147,6 +146,7 @@ export default function ConfirmModal({
           )
         }
         loading={targetNoIcon ? loading : undefined}
+        disabled={disabled || loading}
         {...targetProps}
       >
         {children}
