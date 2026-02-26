@@ -262,7 +262,7 @@ export default function ActionConfig({ id }: { id: string }) {
                         placeholder="Branch"
                         value={branch}
                         onChange={(e) => setBranch(e.target.value)}
-                        w={200}
+                        w={{ base: "100%", sm: 200 }}
                         disabled={branch === "__ANY__"}
                       />
                       <LabelledSwitch
