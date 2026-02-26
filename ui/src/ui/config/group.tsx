@@ -1,4 +1,4 @@
-import { Dispatch, Fragment, SetStateAction } from "react";
+import { Fragment } from "react";
 import { ConfigFieldArgs, ConfigGroupArgs } from ".";
 import { ConfigInput, ConfigSwitch } from "./item";
 import { Group } from "@mantine/core";
@@ -13,7 +13,7 @@ export default function ConfigGroup<T>({
 }: {
   config: T;
   update: Partial<T>;
-  setUpdate: Dispatch<SetStateAction<Partial<T>>>;
+  setUpdate: (update: Partial<T>) => void;
   disabled: boolean;
   fields: ConfigGroupArgs<T>["fields"];
 }) {
@@ -38,7 +38,9 @@ export default function ConfigGroup<T>({
               key={key}
               label={args?.label ?? key}
               value={value}
-              onChange={(value) => setUpdate({ [key]: value } as Partial<T>)}
+              onValueChange={(value) =>
+                setUpdate({ [key]: value } as Partial<T>)
+              }
               disabled={args?.disabled || disabled}
               placeholder={args?.placeholder}
               description={args?.description}
@@ -52,7 +54,7 @@ export default function ConfigGroup<T>({
               key={key}
               label={args?.label ?? key}
               value={Number(value)}
-              onChange={(value) =>
+              onValueChange={(value) =>
                 setUpdate({ [key]: Number(value) } as Partial<T>)
               }
               disabled={args?.disabled || disabled}
@@ -68,7 +70,9 @@ export default function ConfigGroup<T>({
               key={key}
               label={args?.label ?? key}
               value={value}
-              onChange={(value) => setUpdate({ [key]: value } as Partial<T>)}
+              onCheckedChange={(value) =>
+                setUpdate({ [key]: value } as Partial<T>)
+              }
               disabled={args?.disabled || disabled}
               description={args?.description}
               boldLabel={args?.boldLabel}
