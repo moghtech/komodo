@@ -35,6 +35,7 @@ export default function UserDropdown() {
     }
   };
   const user = useUser().data;
+  const avatar = (user?.config.data as { avatar?: string }).avatar;
   const userInvalidate = useUserInvalidate();
   const accounts = MoghAuth.LOGIN_TOKENS.accounts();
   const nav = useNavigate();
@@ -44,7 +45,20 @@ export default function UserDropdown() {
         <Button
           variant="subtle"
           size="lg"
-          leftSection={<User size="1.3rem" />}
+          leftSection={
+            avatar ? (
+              <img
+                src={avatar}
+                alt="avatar"
+                style={{
+                  width: "1.2rem",
+                  height: "1.2rem",
+                }}
+              />
+            ) : (
+              <User size="1.3rem" />
+            )
+          }
           pl="0.5rem"
           pr={{ base: "-20", lg: "0.5rem" }}
         >
@@ -135,7 +149,7 @@ export default function UserDropdown() {
 
 function Account({
   login,
-  current_id,
+  current_id: currentId,
   setOpen,
   rerender,
   viewLogout,
@@ -146,17 +160,17 @@ function Account({
   rerender: () => void;
   viewLogout: boolean;
 }) {
-  const user_id = useMemo(
+  const userId = useMemo(
     () => MoghAuth.extractUserIdFromJwt(login.jwt),
     [login.jwt],
   );
   const { data: user } = useRead(
     "GetUsername",
-    { user_id: user_id! },
-    { enabled: !!user_id },
+    { user_id: userId! },
+    { enabled: !!userId },
   );
-  if (!user_id || !user) return;
-  const selected = user_id === current_id;
+  if (!userId || !user) return;
+  const selected = userId === currentId;
   return (
     <Flex align="center" gap="md" w="100%">
       <Button
@@ -177,7 +191,7 @@ function Account({
             setOpen(false);
             return;
           }
-          MoghAuth.LOGIN_TOKENS.change(user_id);
+          MoghAuth.LOGIN_TOKENS.change(userId);
           location.reload();
         }}
       >
@@ -185,7 +199,7 @@ function Account({
           <img
             src={user.avatar}
             alt="avatar"
-            style={{ width: "1.3rem", height: "1.3rem", marginRight: "0.5rem" }}
+            style={{ width: "1.2rem", height: "1.2rem", marginRight: "0.5rem" }}
           />
         )}
         {!user.avatar && (
@@ -198,7 +212,7 @@ function Account({
         <ActionIcon
           color="red"
           onClick={() => {
-            MoghAuth.LOGIN_TOKENS.remove(user_id);
+            MoghAuth.LOGIN_TOKENS.remove(userId);
             if (selected) {
               location.reload();
             } else {
