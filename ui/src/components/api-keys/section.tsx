@@ -47,7 +47,7 @@ export default function ApiKeysSection({
       isPending={isPending}
       title="Api Keys"
       titleFz="h3"
-      titleMb="0"
+     
       icon={<ICONS.Key size="1.2rem" />}
       titleRight={
         <Box ml="md">

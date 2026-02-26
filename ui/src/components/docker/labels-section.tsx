@@ -37,6 +37,7 @@ export default function DockerLabelsSection({
           <SearchInput value={search} onSearch={setSearch} />
         </Box>
       }
+     
       {...props}
     >
       <DockerOptions options={filtered} {...groupProps} />

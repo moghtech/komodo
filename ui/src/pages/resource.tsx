@@ -92,7 +92,7 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
         {canExecute && Object.keys(RC.Executions).length > 0 && (
           <Section
             title="Execute"
-            titleMb="0"
+           
             icon={<ICONS.Execution size="1rem" />}
             my="md"
           >

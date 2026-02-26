@@ -51,7 +51,7 @@ export default function SpecificPermissionsSection({
     <Section
       title="Per Resource Permissions"
       titleFz="h3"
-      titleMb="0"
+     
       actions={
         <Group>
           <SearchInput value={search} onSearch={setSearch} />

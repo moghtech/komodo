@@ -15,7 +15,7 @@ export default function UpdatesSection({
   return (
     <Section
       title="Updates"
-      titleMb="0"
+     
       icon={<ICONS.Update size="1.3rem" />}
       actions={
         link && (

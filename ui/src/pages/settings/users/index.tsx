@@ -40,7 +40,7 @@ export default function SettingsUsers() {
 
       <Section
         title="Users"
-        titleMb="0"
+       
         icon={<ICONS.User size="1.3rem" />}
         titleRight={
           <Group ml="md">

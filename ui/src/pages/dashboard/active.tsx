@@ -147,7 +147,7 @@ export default function DashboardActiveResources() {
   return (
     <Section
       title="Active"
-      titleMb="0"
+     
       mb="xl"
       icon={
         <Circle

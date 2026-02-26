@@ -84,7 +84,7 @@ export default function BasePermissionsSection({
       }
       title="Base Permissions on Resource Types"
       titleFz="h3"
-      titleMb="0"
+     
       actions={
         <Group>
           <SearchInput value={search} onSearch={setSearch} />

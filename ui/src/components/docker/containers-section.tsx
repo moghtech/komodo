@@ -48,6 +48,7 @@ export default function ContainersSection({
     <Section
       titleOther={titleOther}
       title={!titleOther ? "Containers" : undefined}
+     
       icon={!titleOther ? <ICONS.Container size="1.3rem" /> : undefined}
       actions={
         (pruneButton && !allRunning) || _search || setShow ? (

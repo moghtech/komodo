@@ -29,7 +29,7 @@ export default function UserMemberGroups({ userId }: { userId: string }) {
       title="Groups"
       icon={<ICONS.UserGroup size="1.2rem" />}
       titleFz="h3"
-      titleMb="0"
+     
       titleRight={
         <Box ml="md">
           <UserAddUserGroup userId={userId} />

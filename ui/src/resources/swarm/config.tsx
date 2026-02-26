@@ -76,6 +76,7 @@ export default function SwarmConfig({
                             }
                             disabled={disabled}
                             targetProps={{ w: "90%", maw: "" }}
+                            clearable={false}
                           />
                           {!disabled && (
                             <ActionIcon variant="filled" color="red">

@@ -49,7 +49,7 @@ export default function Updates() {
       icon={ICONS.Update}
       description="View historical updates"
     >
-      <Stack gap="sm">
+      <Stack>
         {/* QUERY */}
         <Group>
           {/* RESOURCE TYPE */}

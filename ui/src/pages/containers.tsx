@@ -51,7 +51,7 @@ export default function Containers() {
       icon={ICONS.Container}
       description="See all containers across all servers."
     >
-      <Stack gap="xs">
+      <Stack>
         <Group justify="space-between">
           <MultiSelect
             placeholder="Filter by Servers"

@@ -95,7 +95,7 @@ export const LinkedLogins = ({
     <Section
       title="Providers"
       titleFz="h3"
-      titleMb="0"
+     
       icon={<ICONS.Provider size="1.2rem" />}
       withBorder
     >

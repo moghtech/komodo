@@ -65,7 +65,7 @@ export default function Profile() {
           <Section
             title="Login"
             titleFz="h3"
-            titleMb="0"
+           
             icon={<ICONS.Key size="1.2rem" />}
             withBorder
           >
@@ -115,7 +115,7 @@ export default function Profile() {
           <Section
             title="2FA"
             titleFz="h3"
-            titleMb="0"
+           
             icon={<ICONS.Key size="1.2rem" />}
             withBorder
           >

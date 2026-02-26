@@ -56,7 +56,7 @@ export default function User() {
               <Section
                 title="User Permissions"
                 titleFz="h3"
-                titleMb="0"
+               
                 withBorder
               >
                 <Group>

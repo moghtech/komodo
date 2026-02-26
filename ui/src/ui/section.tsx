@@ -35,7 +35,7 @@ const Section = createPolymorphicComponent<"div", SectionProps>(
     (
       {
         titleFz = "h2",
-        titleMb = { base: "0", lg: "sm" },
+        titleMb,
         title,
         titleDimmed,
         titleNode,

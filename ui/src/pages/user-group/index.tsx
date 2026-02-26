@@ -97,7 +97,7 @@ export default function UserGroup() {
           <Section
             title="Users"
             titleFz="h3"
-            titleMb="0"
+           
             icon={<ICONS.User size="1.2rem" />}
             titleRight={
               <Group ml="md">

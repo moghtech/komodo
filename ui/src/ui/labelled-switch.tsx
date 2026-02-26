@@ -33,7 +33,7 @@ export default function LabelledSwitch({
       }}
       className="bordered-light"
       px="xs"
-      py={6}
+      py={4}
       bdrs="sm"
       style={{ cursor: "pointer" }}
       justify="space-between"

@@ -23,7 +23,7 @@ export default function SettingsUserGroups({
   return (
     <Section
       title="User Groups"
-      titleMb="0"
+     
       icon={<ICONS.Users size="1.3rem" />}
       titleRight={
         <Box ml="md">

@@ -73,7 +73,7 @@ export default function ResourceSubPage({
         {canExecute && executions && (
           <Section
             title="Execute"
-            titleMb="0"
+           
             icon={<ICONS.Execution size="1.3rem" />}
             my="md"
           >

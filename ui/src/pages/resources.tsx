@@ -11,7 +11,7 @@ import {
 import { ResourceComponents, UsableResource } from "@/resources";
 import { Types } from "komodo_client";
 import Page from "@/ui/page";
-import { Group } from "@mantine/core";
+import { Group, Stack } from "@mantine/core";
 import TableSkeleton from "@/ui/table-skeleton";
 import TemplateQuerySelector from "@/components/template-query-selector";
 import TagsFilter from "@/components/tags/filter";
@@ -72,29 +72,31 @@ export default function Resources({ _type }: { _type?: UsableResource }) {
         </Group>
       }
     >
-      <Group justify="space-between" w="100%">
-        <Group w={{ base: "100%", xs: "fit-content" }}>
-          {(is_admin || !disable_non_admin_create) && <RC.New />}
-          <RC.BatchExecutions />
+      <Stack>
+        <Group justify="space-between" w="100%">
+          <Group w={{ base: "100%", xs: "fit-content" }}>
+            {(is_admin || !disable_non_admin_create) && <RC.New />}
+            <RC.BatchExecutions />
+          </Group>
+
+          <Group w={{ base: "100%", xs: "fit-content" }}>
+            {(type === "Stack" || type === "Deployment") && (
+              <LabelledSwitch
+                label="Pending Update"
+                checked={filterUpdateAvailable}
+                onCheckedChange={toggleFilterUpdateAvailable}
+                opacity={0.7}
+                fz="sm"
+              />
+            )}
+            <TemplateQuerySelector />
+            <TagsFilter />
+            <SearchInput value={search} onSearch={setSearch} />
+          </Group>
         </Group>
 
-        <Group w={{ base: "100%", xs: "fit-content" }}>
-          {(type === "Stack" || type === "Deployment") && (
-            <LabelledSwitch
-              label="Pending Update"
-              checked={filterUpdateAvailable}
-              onCheckedChange={toggleFilterUpdateAvailable}
-              opacity={0.7}
-              fz="sm"
-            />
-          )}
-          <TemplateQuerySelector />
-          <TagsFilter />
-          <SearchInput value={search} onSearch={setSearch} />
-        </Group>
-      </Group>
-
-      {filtered ? <RC.Table resources={filtered ?? []} /> : <TableSkeleton />}
+        {filtered ? <RC.Table resources={filtered ?? []} /> : <TableSkeleton />}
+      </Stack>
     </Page>
   );
 }

@@ -69,7 +69,7 @@ export default function Alerts() {
       icon={ICONS.Alert}
       description="View historical alerts"
     >
-      <Stack gap="sm">
+      <Stack>
         {/* QUERY */}
         <Group>
           {/* RESOURCE TYPE */}
