@@ -15,6 +15,7 @@ import {
   Stack,
   Text,
   TextInput,
+  useMatches,
 } from "@mantine/core";
 import { Types } from "komodo_client";
 import { ChevronDown } from "lucide-react";
@@ -62,19 +63,18 @@ function BatchExecutionsDropdownMenu<T extends Request>({
   onSelect: (item: T) => void;
   disabled: boolean;
 }) {
+  const width = useMatches({
+    base: "target",
+    xs: 250,
+  });
   return (
-    <Menu
-      position="bottom-start"
-      offset={16}
-      disabled={disabled}
-      width="target"
-    >
+    <Menu position="bottom-start" offset={16} disabled={disabled} width={width}>
       <Menu.Target>
         <Button
           leftSection={<ICONS.Execution size="1rem" />}
           rightSection={<ChevronDown size="1rem" />}
           disabled={disabled}
-          w={{ base: "100%", xs: "fit-content" }}
+          w={{ base: "100%", sm: "fit-content" }}
         >
           Execute
         </Button>
