@@ -21,8 +21,7 @@ export default function JoinSwarmCommands({
   return (
     <Stack>
       <Text c="dimmed">
-        Copy a command below and run it on the target host to join it to the
-        swarm.
+        Copy a command below and run it on the target host to join the swarm.
       </Text>
 
       {addr && tokens ? (
