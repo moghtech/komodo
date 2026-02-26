@@ -115,7 +115,7 @@ export default function NewResource<Config>({
                       }
                     : undefined
                 }
-                placeholder="Template (Optional)"
+                placeholder="Select Template"
                 targetProps={{ w: "100%", maw: "100%" }}
                 width="target"
                 position="bottom"
