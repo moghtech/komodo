@@ -1,9 +1,4 @@
-import {
-  komodo_client,
-  useLogin,
-  useLoginOptions,
-  useUserInvalidate,
-} from "@/lib/hooks";
+import { useLogin, useLoginOptions, useUserInvalidate } from "@/lib/hooks";
 import { sanitizeQuery } from "@/lib/utils";
 import {
   Button,
@@ -12,15 +7,15 @@ import {
   Group,
   Loader,
   PasswordInput,
-  Stack,
   Text,
   TextInput,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { MoghAuth } from "komodo_client";
-import { KeyRound } from "lucide-react";
+import { AlertTriangle, KeyRound } from "lucide-react";
 import { useState } from "react";
+import LoginHeader from "./header";
 
 export default function Login({
   passkeyIsPending: _passkeyIsPending,
@@ -101,11 +96,11 @@ export default function Login({
     },
   );
 
-  // const noAuthConfigured =
-  //   options !== undefined &&
-  //   Object.values(options).every((value) => value === false);
+  const noAuthConfigured =
+    options !== undefined &&
+    Object.values(options).every((value) => value === false);
 
-  // const showSignUp = options !== undefined && !options.registration_disabled;
+  const showSignUp = options !== undefined && !options.registration_disabled;
 
   const localForm = useForm({
     mode: "uncontrolled",
@@ -131,67 +126,10 @@ export default function Login({
     },
   });
 
-  const registration_disabled = options?.registration_disabled ?? true;
-
   return (
     <Center h="80vh">
       <Fieldset
-        legend={
-          <Group gap="4rem" justify="space-between">
-            <Group gap="sm">
-              <img
-                src="/mogh-512x512.png"
-                width={42}
-                height={42}
-                alt="moghtech"
-              />
-              <Stack gap="0">
-                <Text fz="h2" fw="450" lts="0.1rem">
-                  KOMODO
-                </Text>
-                <Text size="md" opacity={0.6} mt={-8}>
-                  Log In
-                </Text>
-              </Stack>
-            </Group>
-            <Group gap="sm">
-              {(
-                [
-                  [options?.oidc, "Oidc"],
-                  [options?.github, "Github"],
-                  [options?.google, "Google"],
-                ] as Array<
-                  [boolean | undefined, MoghAuth.Types.ExternalLoginProvider]
-                >
-              ).map(
-                ([enabled, provider]) =>
-                  enabled && (
-                    <Button
-                      key={provider}
-                      onClick={() =>
-                        komodo_client().auth.externalLogin(provider)
-                      }
-                      leftSection={
-                        provider === "Oidc" ? (
-                          <KeyRound size="1rem" />
-                        ) : (
-                          <img
-                            src={`/icons/${provider.toLowerCase()}.svg`}
-                            alt={provider}
-                            style={{ width: "1rem", height: "1rem" }}
-                          />
-                        )
-                      }
-                      w={110}
-                      disabled={secondFactorPending}
-                    >
-                      {provider}
-                    </Button>
-                  ),
-              )}
-            </Group>
-          </Group>
-        }
+        legend={<LoginHeader secondFactorPending={secondFactorPending} />}
         component="form"
         onSubmit={
           totpIsPending
@@ -218,7 +156,7 @@ export default function Login({
               key={localForm.key("password")}
             />
             <Group mt="sm" justify="end">
-              {!registration_disabled && (
+              {showSignUp && (
                 <Button
                   variant="outline"
                   w={110}
@@ -228,11 +166,7 @@ export default function Login({
                   Sign Up
                 </Button>
               )}
-              <Button
-                w={110}
-                type="submit"
-                loading={loginPending}
-              >
+              <Button w={110} type="submit" loading={loginPending}>
                 Log In
               </Button>
             </Group>
@@ -240,13 +174,11 @@ export default function Login({
         )}
 
         {passkeyIsPending && (
-          <>
+          <Group justify="center" my="lg">
             <KeyRound size="1.5rem" />
-            <Group>
-              <Loader />
-              <Text size="lg">Provide your passkey to finish login</Text>
-            </Group>
-          </>
+            <Text size="lg">Provide your passkey to finish login...</Text>
+            <Loader />
+          </Group>
         )}
 
         {totpIsPending && (
@@ -275,6 +207,25 @@ export default function Login({
               </Button>
             </Group>
           </>
+        )}
+
+        {noAuthConfigured && (
+          <Group my="lg">
+            <AlertTriangle size="2rem" />
+            <Text>
+              No login methods have been configured. <br />
+              See the{" "}
+              <a
+                href="https://github.com/moghtech/komodo/blob/main/config/core.config.toml"
+                target="_blank"
+                rel="noreferrer"
+                className="hover-underline"
+              >
+                <b>example config</b>
+              </a>{" "}
+              for information on configuring auth.
+            </Text>
+          </Group>
         )}
       </Fieldset>
     </Center>
