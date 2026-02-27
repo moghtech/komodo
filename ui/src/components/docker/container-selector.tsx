@@ -82,7 +82,7 @@ export default function ContainerSelector({
           onClick={() => combobox.toggleDropdown()}
           {...targetProps}
         >
-          <Group gap="xs">
+          <Group gap="xs" wrap="nowrap">
             <DOCKER_LINK_ICONS.Container serverId={serverId} name={selected} />
             <Text>{name || (placeholder ?? "Select container")}</Text>
           </Group>

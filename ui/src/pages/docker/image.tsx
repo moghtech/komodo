@@ -134,11 +134,7 @@ function ImageInner({
           )}
 
           {/* TOP LEVEL IMAGE INFO */}
-          <Section
-            title="Details"
-            icon={<ICONS.Info size="1.3rem" />}
-           
-          >
+          <Section title="Details" icon={<ICONS.Info size="1.3rem" />}>
             <DataTable
               tableKey="image-info"
               data={[image]}

@@ -22,12 +22,16 @@ export default function Tag({
       onClick={onClick}
       style={{ cursor: onClick ? "pointer" : undefined }}
       rightSection={icon}
+      className="text-ellipsis"
       w="fit-content"
       h="fit-content"
       bdrs="sm"
       py={py}
       tt="none"
       fz={{ base: "xs", lg: "sm" }}
+      styles={{
+        label: { width: "fit-content", height: "fit-content" },
+      }}
       {...badgeProps}
     >
       {tag?.name ?? <Loader size="0.6rem" />}
