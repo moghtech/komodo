@@ -3,6 +3,7 @@ import { Spotlight, spotlight } from "@mantine/spotlight";
 import { useOmniSearch } from "./hooks";
 import { ICONS } from "@/theme/icons";
 import { useShiftKeyListener } from "@/lib/hooks";
+import classes from "./index.module.scss";
 
 export default function OmniSearch({}: {}) {
   const { search, setSearch, actions } = useOmniSearch();
@@ -48,7 +49,11 @@ export default function OmniSearch({}: {}) {
           {actions.map((group) => (
             <Spotlight.ActionsGroup key={group.group} label={group.group}>
               {group.actions.map((action) => (
-                <Spotlight.Action key={action.id} {...action} />
+                <Spotlight.Action
+                  key={action.id}
+                  className={classes["spotlight-action"]}
+                  {...action}
+                />
               ))}
             </Spotlight.ActionsGroup>
           ))}
