@@ -137,7 +137,7 @@ export default function Login({
             : (localForm.onSubmit((form) => login(form)) as any)
         }
         style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
-        miw={{ lg: "500px" }}
+        miw={{ xs: "530px" }}
         maw="95vw"
       >
         {options?.local && !secondFactorPending && (

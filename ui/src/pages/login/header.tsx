@@ -10,7 +10,7 @@ export default function LoginHeader({
 }) {
   const options = useLoginOptions().data;
   return (
-    <Group gap="4rem" justify="space-between">
+    <Group justify="space-between">
       <Group gap="sm">
         <img src="/mogh-512x512.png" width={42} height={42} alt="moghtech" />
         <Stack gap="0">
