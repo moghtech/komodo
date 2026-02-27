@@ -1,5 +1,11 @@
 import { komodo_client, useLoginOptions } from "@/lib/hooks";
-import { Button, Group, Stack, Text } from "@mantine/core";
+import {
+  Button,
+  Group,
+  Stack,
+  Text,
+  useComputedColorScheme,
+} from "@mantine/core";
 import { MoghAuth } from "komodo_client";
 import { KeyRound } from "lucide-react";
 
@@ -9,6 +15,7 @@ export default function LoginHeader({
   secondFactorPending: boolean;
 }) {
   const options = useLoginOptions().data;
+  const theme = useComputedColorScheme();
   return (
     <Group justify="space-between">
       <Group gap="sm">
@@ -44,7 +51,11 @@ export default function LoginHeader({
                     <img
                       src={`/icons/${provider.toLowerCase()}.svg`}
                       alt={provider}
-                      style={{ width: "1rem", height: "1rem" }}
+                      style={{
+                        width: "1rem",
+                        height: "1rem",
+                        filter: theme === "dark" ? "invert(1)" : undefined,
+                      }}
                     />
                   )
                 }
