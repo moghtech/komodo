@@ -86,7 +86,6 @@ export default function NewApiKey({ userId }: { userId?: string }) {
             {created && "Api Key Created"}
           </Text>
         }
-        size="lg"
       >
         <Stack>
           {!created && (
