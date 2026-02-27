@@ -5,7 +5,7 @@ import { useInvalidate, useRead, useSetTitle, useWrite } from "@/lib/hooks";
 import ResourceSelector from "@/resources/selector";
 import { ICONS } from "@/theme/icons";
 import { DataTable, SortableHeader } from "@/ui/data-table";
-import { Badge, Group, Switch, TextInput } from "@mantine/core";
+import { Badge, Group, Switch, TextInput, useMatches } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { ColumnDef } from "@tanstack/react-table";
 import { Types } from "komodo_client";
@@ -24,6 +24,10 @@ export default function SettingsOnboardingKeys() {
       invalidate(["ListOnboardingKeys"]);
       notifications.show({ message: "Updated onboarding key", color: "green" });
     },
+  });
+  const expiresSize = useMatches({
+    base: "sm",
+    xl: "md",
   });
   const columns: (
     | ColumnDef<Types.OnboardingKey, unknown>
@@ -46,6 +50,7 @@ export default function SettingsOnboardingKeys() {
               })
             }
             onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+            miw={200}
           />
         ),
       },
@@ -74,7 +79,7 @@ export default function SettingsOnboardingKeys() {
             (tag) => !row.original.tags?.includes(tag._id?.$oid!),
           );
           return (
-            <Group>
+            <Group wrap="nowrap" gap="sm">
               <TagSelector
                 title="Select Tags"
                 tags={otherTags}
@@ -180,9 +185,10 @@ export default function SettingsOnboardingKeys() {
         }) => (
           <Badge
             color={expires && expires <= Date.now() ? "red" : "accent"}
-            fz={{ base: "sm", lg: "md" }}
-            p={{ base: "sm", lg: "md" }}
-            size="md"
+            fz={{ base: "sm", xl: "md" }}
+            p={{ base: "sm", xl: "md" }}
+            styles={{ label: { width: "fit-content", height: "fit-content" } }}
+            size={expiresSize}
           >
             {expires ? fmtDateWithMinutes(new Date(expires)) : "Never"}
           </Badge>

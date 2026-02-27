@@ -94,7 +94,7 @@ export default function ResourceSelector({
           w="fit-content"
           maw="100%"
           rightSection={
-            <Group gap="xs" ml="sm">
+            <Group gap="xs" ml="sm" wrap="nowrap">
               {clearable && (
                 <ActionIcon
                   size="sm"

@@ -275,7 +275,7 @@ export const SortableHeader = <T, V>({
       style={{ width: "100%" }}
     >
       <Group justify="space-between" gap="sm" wrap="nowrap">
-        <Group gap="xs">
+        <Group justify="start" gap="xs" wrap="nowrap" miw="120" w="fit-content">
           <Text fw={600} size="sm" lineClamp={1}>
             {title}
           </Text>

@@ -24,6 +24,7 @@ export default function Settings() {
     <Stack gap="xl" mb="50vh">
       <SettingsCoreInfo />
       <MobileFriendlyTabs
+        changeAt="xl"
         value={view}
         onValueChange={setView as any}
         tabs={[

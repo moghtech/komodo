@@ -55,7 +55,7 @@ export default function TagSelector({
           pl="0.4rem"
           className="bordered-heavy"
           justify="start"
-          w={{ base: "100%", xs: "fit-content" }}
+          w={{ base: "100%", xs: "138" }}
           fw="normal"
           leftSection={
             <Badge

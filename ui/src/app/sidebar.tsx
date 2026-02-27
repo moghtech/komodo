@@ -14,10 +14,10 @@ const Sidebar = ({ close }: { close: () => void }) => {
   const location = useLocation().pathname;
   const linkProps = { nav, location };
   return (
-    <Stack justify="space-between" gap="md" h="100%" m="xl" mt="24">
+    <Stack justify="space-between" gap="md" h="96%" m="xl" mt="24">
       {/* TOP AREA (scrolling) */}
       <ScrollArea>
-        <Stack gap="0.25rem">
+        <Stack gap="0.25rem" mr="md">
           <SidebarLink
             label="Dashboard"
             icon={<ICONS.Dashboard size="1rem" />}
