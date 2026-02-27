@@ -25,7 +25,7 @@ const convert = new Convert({
 export default function LogViewer({
   log,
   autoScroll = true,
-  h = "calc(100vh - 250px)",
+  h = "calc(100vh - 270px)",
   ...props
 }: LogViewerProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
