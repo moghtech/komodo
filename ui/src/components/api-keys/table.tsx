@@ -64,8 +64,6 @@ export default function ApiKeysTable({
           header: "Delete",
           cell: ({ row }) => (
             <ConfirmButton
-              variant="filled"
-              color="red"
               icon={<ICONS.Delete size="1rem" />}
               onClick={() => onDelete(row.original.key)}
               loading={deletePending}

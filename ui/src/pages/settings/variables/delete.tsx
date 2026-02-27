@@ -3,7 +3,13 @@ import { ICONS } from "@/theme/icons";
 import ConfirmButton from "@/ui/confirm-button";
 import { notifications } from "@mantine/notifications";
 
-export default function DeleteVariable({ name, disabled }: { name: string; disabled: boolean }) {
+export default function DeleteVariable({
+  name,
+  disabled,
+}: {
+  name: string;
+  disabled: boolean;
+}) {
   const invalidate = useInvalidate();
   const { mutate, isPending } = useWrite("DeleteVariable", {
     onSuccess: () => {

@@ -135,8 +135,7 @@ export const EnrollTotp = ({ user }: { user: Types.User }) => {
           icon={<Trash size="1rem" />}
           loading={unenrollPending}
           onConfirm={() => unenroll({})}
-          color="red"
-          w={220}
+          targetProps={{ variant: "filled", color: "red", c: "bw", w: 220 }}
         >
           Unenroll TOTP 2FA
         </ConfirmModal>

@@ -95,7 +95,6 @@ export const LinkedLogins = ({
     <Section
       title="Providers"
       titleFz="h3"
-     
       icon={<ICONS.Provider size="1.2rem" />}
       withBorder
     >
@@ -151,7 +150,6 @@ export const LinkedLogins = ({
             }) =>
               data ? (
                 <ConfirmModal
-                  targetProps={{ color: "red" }}
                   icon={<ICONS.Unlink size="1rem" />}
                   onConfirm={() => unlink({ provider })}
                   confirmText="Unlink"
