@@ -2,6 +2,7 @@ import { useAlertDetails } from "@/components/alerts/details";
 import AlertLevel from "@/components/alerts/level";
 import ResourceTypeSelector from "@/components/resource-type-selector";
 import { alertLevelIntention } from "@/lib/color";
+import { fmtUpperCamelcase } from "@/lib/formatting";
 import { useRead } from "@/lib/hooks";
 import { UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
@@ -114,7 +115,10 @@ export default function Alerts() {
               }
               setParams(p);
             }}
-            data={alertTypes}
+            data={alertTypes.map((value) => ({
+              value,
+              label: fmtUpperCamelcase(value),
+            }))}
             searchable
             clearable
           />
