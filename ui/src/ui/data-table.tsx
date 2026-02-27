@@ -248,7 +248,7 @@ export function DataTable<TData, TValue>({
         className={noBorder ? undefined : "bordered-light"}
         bdrs="md"
         w="100%"
-        mah="max(150px, calc(100vh - 270px))"
+        mah="max(150px, calc(100vh - 320px))"
         style={{ overflow: "auto" }}
         {...boxProps}
       >

@@ -163,7 +163,7 @@ export default function Terminal({
         display: selected ? undefined : "none",
       }}
     >
-      <Box ref={termRef} h="calc(100vh - 270px)" />
+      <Box ref={termRef} h="max(200px, calc(100vh - 320px))" />
     </Box>
   );
 }
