@@ -39,7 +39,10 @@ export const EnrollTotp = ({ user }: { user: Types.User }) => {
     {
       onSuccess: () => {
         userInvalidate();
-        notifications.show({ message: "Unenrolled in TOTP 2FA." });
+        notifications.show({
+          message: "Unenrolled in TOTP 2FA.",
+          color: "green",
+        });
       },
     },
   );

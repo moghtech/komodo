@@ -13,7 +13,10 @@ export const EnrollPasskey = ({ user }: { user: Types.User }) => {
     {
       onSuccess: () => {
         userInvalidate();
-        notifications.show({ message: "Unenrolled in passkey 2FA" });
+        notifications.show({
+          message: "Unenrolled in passkey 2FA",
+          color: "green",
+        });
       },
     },
   );
@@ -23,7 +26,10 @@ export const EnrollPasskey = ({ user }: { user: Types.User }) => {
     {
       onSuccess: () => {
         userInvalidate();
-        notifications.show({ message: "Enrolled in passkey authentication" });
+        notifications.show({
+          message: "Enrolled in passkey authentication",
+          color: "green",
+        });
       },
     },
   );
