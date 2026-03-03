@@ -15,7 +15,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useState } from "react";
 
-type ExpiresOptions = "1 day" | "7 days" | "30 days" | "never";
+type ExpiresOptions = "1 day" | "7 days" | "30 days" | "Never";
 const ONE_DAY_MS = 1000 * 60 * 60 * 24;
 
 export default function NewOnboardingKey() {
@@ -38,7 +38,7 @@ export default function NewOnboardingKey() {
     "1 day": now + ONE_DAY_MS,
     "7 days": now + ONE_DAY_MS * 7,
     "30 days": now + ONE_DAY_MS * 90,
-    never: 0,
+    Never: 0,
   };
   const create = () =>
     mutate({
