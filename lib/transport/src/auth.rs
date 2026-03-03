@@ -310,7 +310,7 @@ impl HeaderConnectionIdentifiers {
     let key = headers
       .remove("sec-websocket-key")
       .context("Headers do not contain Sec-Websocket-Key")?;
-    let accept = compute_accept(key.as_bytes());
+    let accept = compute_sec_websocket_accept(key.as_bytes());
     Ok(HeaderConnectionIdentifiers { host, accept })
   }
 
@@ -334,7 +334,7 @@ impl HeaderConnectionIdentifiers {
   }
 }
 
-pub fn compute_accept(sec_websocket_key: &[u8]) -> String {
+pub fn compute_sec_websocket_accept(sec_websocket_key: &[u8]) -> String {
   // This is standard GUID to compute Sec-Websocket-Accept
   const GUID: &[u8] = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
   let mut sha1 = sha1::Sha1::new();
