@@ -1,7 +1,7 @@
 import { useSelectedResources } from "@/lib/hooks";
 import ResourceLink from "@/resources/link";
 import { DataTable, SortableHeader } from "@/ui/data-table";
-import { BoxProps, Group, Text } from "@mantine/core";
+import { BoxProps, Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useServerStats, useServerThresholds } from "@/resources/server/hooks";
 import StatCell from "@/ui/stat-cell";
@@ -102,7 +102,38 @@ function DiskCell({ id }: { id: string }) {
     useServerThresholds(id);
   const intent: "Good" | "Warning" | "Critical" =
     perc < warning ? "Good" : perc < critical ? "Warning" : "Critical";
-  return <StatCell value={stats ? perc : undefined} intent={intent} />;
+  return (
+    <StatCell
+      value={stats ? perc : undefined}
+      intent={intent}
+      infoDisabled={!stats}
+      info={
+        <Stack>
+          {stats?.disks.map((disk) => (
+            <Group
+              key={disk.mount}
+              justify="space-between"
+              className="bordered-light"
+              p="sm"
+              bdrs="sm"
+            >
+              <Group>
+                <Text c="dimmed">Mount:</Text>{" "}
+                <Text ff="monospace" bg="accent.6" px="xs" bdrs="sm">
+                  {disk.mount}
+                </Text>
+              </Group>
+              <Text>-</Text>
+              <Text>
+                {disk.used_gb.toFixed(1)} GB out of {disk.total_gb.toFixed(1)}{" "}
+                GB ({((100 * disk.used_gb) / disk.total_gb).toFixed(1)} %)
+              </Text>
+            </Group>
+          ))}
+        </Stack>
+      }
+    />
+  );
 }
 
 function LoadAvgCell({ id }: { id: string }) {
