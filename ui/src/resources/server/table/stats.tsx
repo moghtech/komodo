@@ -108,7 +108,7 @@ function DiskCell({ id }: { id: string }) {
       intent={intent}
       infoDisabled={!stats}
       info={
-        <Stack>
+        <Stack gap="sm">
           {stats?.disks.map((disk) => (
             <Group
               key={disk.mount}
@@ -124,10 +124,11 @@ function DiskCell({ id }: { id: string }) {
                 </Text>
               </Group>
               <Text>-</Text>
-              <Text>
-                {disk.used_gb.toFixed(1)} GB out of {disk.total_gb.toFixed(1)}{" "}
-                GB ({((100 * disk.used_gb) / disk.total_gb).toFixed(1)} %)
-              </Text>
+              <Group gap="0.4rem">
+                {disk.used_gb.toFixed(1)} GB <Text c="dimmed">of</Text>{" "}
+                {disk.total_gb.toFixed(1)} GB <Text c="dimmed">in use</Text> (
+                {((100 * disk.used_gb) / disk.total_gb).toFixed(1)} %)
+              </Group>
             </Group>
           ))}
         </Stack>
