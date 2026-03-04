@@ -207,11 +207,7 @@ export default function Config<T>({
         </>
       )}
       {!disableSidebar && (
-        <Flex
-          w="100%"
-          gap="md"
-          direction={{ base: "column", lg: "row" }}
-        >
+        <Flex w="100%" gap="md" direction={{ base: "column", lg: "row" }}>
           {/** SIDEBAR (LG) */}
           <Box
             visibleFrom="lg"
@@ -267,7 +263,9 @@ export default function Config<T>({
               </ScrollArea>
 
               {/** SAVE */}
-              <SaveOrReset fullWidth />
+              <Stack gap="xs">
+                <SaveOrReset fullWidth />
+              </Stack>
             </Stack>
           </Box>
 
