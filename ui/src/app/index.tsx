@@ -8,7 +8,7 @@ import LoadingScreen from "@/ui/loading-screen";
 import UpdateDetails from "@/components/updates/details";
 import AlertDetails from "@/components/alerts/details";
 
-export const TOPBAR_HEIGHT = 70;
+export const TOPBAR_HEIGHT = 62;
 
 const App = () => {
   const [opened, { toggle, close }] = useDisclosure();

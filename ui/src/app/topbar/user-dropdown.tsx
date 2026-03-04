@@ -40,7 +40,7 @@ export default function UserDropdown() {
   const accounts = MoghAuth.LOGIN_TOKENS.accounts();
   const nav = useNavigate();
   return (
-    <Menu offset={20} opened={open} onChange={setOpen}>
+    <Menu offset={13} opened={open} onChange={setOpen}>
       <Menu.Target>
         <Button
           variant="subtle"

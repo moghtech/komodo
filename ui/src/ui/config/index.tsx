@@ -223,7 +223,7 @@ export default function Config<T>({
               borderTopRightRadius: "var(--mantine-radius-md)",
             }}
           >
-            <Stack pos="sticky" w={175} top={94} pb={24} m="lg">
+            <Stack pos="sticky" w={175} top={88} pb={24} m="lg">
               {/** ANCHORS */}
               <ScrollArea
                 mah={

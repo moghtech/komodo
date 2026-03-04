@@ -23,7 +23,7 @@ export default function TopbarAlerts() {
     <Menu
       opened={opened}
       position="bottom"
-      offset={20}
+      offset={16}
       onOpen={open}
       onClose={close}
     >

@@ -35,7 +35,7 @@ export default function WebsocketStatus() {
       {/* The hovercard can open unexpectedly on mobile so is hidden */}
       <Box hiddenFrom="sm">{Target}</Box>
       <Box visibleFrom="sm">
-        <HoverCard offset={20}>
+        <HoverCard offset={16}>
           <HoverCard.Target>{Target}</HoverCard.Target>
           <HoverCard.Dropdown>
             <Text>Websocket Status</Text>
