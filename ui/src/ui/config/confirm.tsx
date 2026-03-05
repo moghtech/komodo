@@ -8,7 +8,6 @@ import { ICONS } from "@/theme/icons";
 import { envToText } from "@/lib/utils";
 import { colorByIntention } from "@/lib/color";
 import ShowHideButton from "@/ui/show-hide-button";
-import ConfirmButton from "@/ui/confirm-button";
 
 export default function ConfirmUpdate<T>({
   previous,
@@ -71,13 +70,17 @@ export default function ConfirmUpdate<T>({
             ))}
           </Stack>
           <Group justify="flex-end">
-            <ConfirmButton
-              icon={<ICONS.Save size="1rem" />}
-              onClick={handleConfirm}
+            <Button
+              leftSection={<ICONS.Save size="1rem" />}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleConfirm();
+              }}
+              w={{ base: "100%", xs: 100 }}
               loading={loading}
             >
               Save
-            </ConfirmButton>
+            </Button>
           </Group>
         </Stack>
       </Modal>

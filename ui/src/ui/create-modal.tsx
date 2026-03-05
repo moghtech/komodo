@@ -65,7 +65,6 @@ export default function CreateModal({
       </Modal>
 
       <Button
-        variant="default"
         leftSection={leftSection || <ICONS.Create size="1rem" />}
         onClick={open}
         w={{ base: "100%", xs: "fit-content" }}
