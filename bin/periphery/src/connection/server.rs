@@ -110,9 +110,9 @@ async fn handler(
     let query = format!("core={}", urlencoding::encode(&core));
 
     debug!(
-      host = format!("{:?}", identifiers.host),
+      host = identifiers.host.to_str().unwrap_or_default(),
       query,
-      sec_websocket_accept = format!("{:?}", identifiers.accept),
+      sec_websocket_accept = identifiers.accept,
       "[CORE AUTH] Zero trust identifiers"
     );
 

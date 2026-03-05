@@ -71,10 +71,10 @@ impl PeripheryConnectionArgs<'_> {
         };
 
         debug!(
-          id = connection.args.id,
           host = identifiers.host(),
           query = core_connection_query(),
-          sec_websocket_accept = format!("{accept:?}"),
+          sec_websocket_accept = accept.to_str().unwrap_or_default(),
+          resource_id = connection.args.id,
           "[PERIPHERY AUTH] Zero trust identifiers"
         );
 

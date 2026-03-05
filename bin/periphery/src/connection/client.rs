@@ -97,7 +97,7 @@ pub async fn handler(
       debug!(
         host = identifiers.host(),
         query,
-        sec_websocket_accept = format!("{accept:?}"),
+        sec_websocket_accept = accept.to_str().unwrap_or_default(),
         "[CORE AUTH] Zero trust identifiers"
       );
 

@@ -130,10 +130,10 @@ async fn existing_server_handler(
     };
 
     debug!(
-      id = &server.id,
-      host = format!("{:?}", identifiers.host),
+      host = identifiers.host.to_str().unwrap_or_default(),
       query,
-      sec_websocket_accept = format!("{:?}", identifiers.accept),
+      sec_websocket_accept = identifiers.accept,
+      resource_id = &server.id,
       "[PERIPHERY AUTH] Zero trust identifiers"
     );
 
