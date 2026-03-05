@@ -59,8 +59,11 @@ export default function StackConfigFiles({
                   placeholder="configs/config.yaml"
                   value={path}
                   onChange={(e) => {
-                    values[i] = { ...values[i], path: e.target.value };
-                    set({ config_files: [...values] });
+                    set({
+                      config_files: values.map((v, index) =>
+                        i === index ? { ...v, path: e.target.value } : v,
+                      ),
+                    });
                   }}
                   w={{ base: "100%", md: 400 }}
                   disabled={disabled}
@@ -91,8 +94,11 @@ export default function StackConfigFiles({
                     value={services}
                     data={allServices}
                     onChange={(services) => {
-                      values[i] = { ...values[i], services };
-                      set({ config_files: [...values] });
+                      set({
+                        config_files: values.map((v, index) =>
+                          i === index ? { ...v, services } : v,
+                        ),
+                      });
                     }}
                     disabled={disabled}
                     searchable
@@ -102,11 +108,16 @@ export default function StackConfigFiles({
                     value={requires}
                     onChange={(requires) => {
                       if (!requires) return;
-                      values[i] = {
-                        ...values[i],
-                        requires: requires as Types.StackFileRequires,
-                      };
-                      set({ config_files: [...values] });
+                      set({
+                        config_files: values.map((v, index) =>
+                          i === index
+                            ? {
+                                ...v,
+                                requires: requires as Types.StackFileRequires,
+                              }
+                            : v,
+                        ),
+                      });
                     }}
                     disabled={disabled}
                     data={Object.values(Types.StackFileRequires)}

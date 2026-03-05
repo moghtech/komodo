@@ -25,8 +25,11 @@ export default function InputList<T>({
           key={i}
           value={arg}
           onChange={(e) => {
-            values[i] = e.target.value;
-            set({ [field]: [...values] } as Partial<T>);
+            set({
+              [field]: values.map((v, index) =>
+                i === index ? e.target.value : v,
+              ),
+            } as Partial<T>);
           }}
           disabled={disabled}
           w={{ base: 230, md: 400 }}

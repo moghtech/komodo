@@ -279,12 +279,16 @@ export default function StackConfig({
                     <TextInput
                       value={file.path || ""}
                       onChange={(e) => {
-                        const newFiles = [...files];
-                        newFiles[i] = {
-                          path: e.target.value,
-                          track: file.track ?? true,
-                        };
-                        set({ additional_env_files: newFiles });
+                        set({
+                          additional_env_files: files.map((v, index) =>
+                            i === index
+                              ? {
+                                  path: e.target.value,
+                                  track: file.track ?? true,
+                                }
+                              : v,
+                          ),
+                        });
                       }}
                       placeholder=".env"
                       disabled={disabled}
@@ -296,9 +300,11 @@ export default function StackConfig({
                         label="Track"
                         checked={file.track ?? true}
                         onCheckedChange={(track) => {
-                          const newFiles = [...files];
-                          newFiles[i] = { ...newFiles[i], track };
-                          set({ additional_env_files: newFiles });
+                          set({
+                            additional_env_files: files.map((v, index) =>
+                              i === index ? { ...v, track } : v,
+                            ),
+                          });
                         }}
                         disabled={disabled}
                         id={`track-${i}`}
