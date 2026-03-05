@@ -293,7 +293,7 @@ async fn handler(
   let req_id = Uuid::new_v4();
   let variant: ReadRequestVariant = (&request).into();
 
-  debug!(
+  trace!(
     "READ REQUEST {req_id} | METHOD: {variant} | USER: {} ({})",
     user.username, user.id
   );
@@ -301,7 +301,7 @@ async fn handler(
   let res = request.resolve(&ReadArgs { user }).await;
 
   if let Err(e) = &res {
-    debug!(
+    trace!(
       "READ REQUEST {req_id} | METHOD: {variant} | ERROR: {:#}",
       e.error
     );

@@ -70,6 +70,14 @@ impl PeripheryConnectionArgs<'_> {
           }
         };
 
+        debug!(
+          id = connection.args.id,
+          host = identifiers.host(),
+          query = core_connection_query(),
+          sec_websocket_accept = format!("{accept:?}"),
+          "[PERIPHERY AUTH] Zero trust identifiers"
+        );
+
         let identifiers = identifiers.build(
           accept.as_bytes(),
           core_connection_query().as_bytes(),

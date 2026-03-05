@@ -109,6 +109,13 @@ async fn handler(
 
     let query = format!("core={}", urlencoding::encode(&core));
 
+    debug!(
+      host = format!("{:?}", identifiers.host),
+      query,
+      sec_websocket_accept = format!("{:?}", identifiers.accept),
+      "[CORE AUTH] Zero trust identifiers"
+    );
+
     if let Err(e) =
       handle_login(&mut socket, identifiers.build(query.as_bytes()))
         .await

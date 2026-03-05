@@ -3224,9 +3224,9 @@ dependencies = [
 
 [[package]]
 name = "mogh_auth_server"
-version = "1.2.6"
+version = "1.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0053e21d85b214a3288c50433cf56cd07ac1dacda66201f5e93205810423daec"
+checksum = "0d0b5a9302bb66d461840957dccc9f94549df44c0ad4b8b53c3c7293364bf979"
 dependencies = [
  "anyhow",
  "arc-swap",

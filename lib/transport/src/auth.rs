@@ -295,8 +295,8 @@ impl AddressConnectionIdentifiers {
 /// Used to extract owned connection identifier
 /// in server side connection handler.
 pub struct HeaderConnectionIdentifiers {
-  host: HeaderValue,
-  accept: String,
+  pub host: HeaderValue,
+  pub accept: String,
 }
 
 impl HeaderConnectionIdentifiers {

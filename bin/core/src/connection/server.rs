@@ -129,6 +129,14 @@ async fn existing_server_handler(
       return;
     };
 
+    debug!(
+      id = &server.id,
+      host = format!("{:?}", identifiers.host),
+      query,
+      sec_websocket_accept = format!("{:?}", identifiers.accept),
+      "[PERIPHERY AUTH] Zero trust identifiers"
+    );
+
     let span = info_span!(
       "PeripheryLogin",
       server_id = server.id,
