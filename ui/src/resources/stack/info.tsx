@@ -34,7 +34,7 @@ export default function StackInfo({
         message: res.success
           ? "Contents written."
           : "Failed to write contents.",
-        color: res.success ? undefined : "red",
+        color: res.success ? "green" : "red",
       });
     },
   });
