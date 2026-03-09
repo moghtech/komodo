@@ -118,7 +118,7 @@ export function MobileFriendlyTabsSelector({
       {/* MOBILE VIEW */}
       <Stack hiddenFrom={changeAt}>
         <Select
-          width="100%"
+          w={{ base: "100%", md: 300 }}
           value={value}
           onChange={(value) => value && onValueChange(value)}
           leftSection={SelectedIcon && <SelectedIcon size="1rem" />}
@@ -137,6 +137,7 @@ export function MobileFriendlyTabsSelector({
               </Group>
             );
           }}
+          withScrollArea={false}
         />
         {actions}
       </Stack>

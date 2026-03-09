@@ -10,6 +10,7 @@ import {
   Stack,
   Text,
   TextInput,
+  useMatches,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
@@ -55,6 +56,8 @@ export default function NewOnboardingKey() {
     _close();
   };
 
+  const size = useMatches({ base: "90%", md: 500 });
+
   return (
     <>
       <Modal
@@ -66,7 +69,7 @@ export default function NewOnboardingKey() {
             {created && "Onboarding Key Created"}
           </Text>
         }
-        size="lg"
+        size={size}
       >
         <Stack>
           {!created && (
@@ -117,11 +120,15 @@ export default function NewOnboardingKey() {
 
           {created && (
             <>
-              <Text>
-                Use as the <b>PERIPHERY_ONBOARDING_KEY</b>
+              <Text size="md" my="sm">
+                Copy the onboarding key below. <b>It won't be shown again</b>.
               </Text>
 
-              <CopyText content={created.private_key} label="private key" />
+              <CopyText
+                content={created.private_key}
+                label="private key"
+                w="90%"
+              />
 
               <Group justify="end" onClick={close}>
                 <Button leftSection={<ICONS.Clear />}>Close</Button>
