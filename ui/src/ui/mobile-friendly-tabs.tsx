@@ -137,7 +137,11 @@ export function MobileFriendlyTabsSelector({
               </Group>
             );
           }}
+          // maxDropdownHeight="calc(100vh - 230px)"
           withScrollArea={false}
+          styles={{
+            dropdown: { maxHeight: "calc(100vh - 230px)", overflowY: "auto" },
+          }}
         />
         {actions}
       </Stack>
