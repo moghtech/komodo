@@ -74,7 +74,7 @@ export default function SwarmTasksSection({
             {
               accessorKey: "ID",
               header: ({ column }) => (
-                <SortableHeader column={column} title="Id" />
+                <SortableHeader column={column} title="ID" />
               ),
               cell: ({ row }) => (
                 <SwarmResourceLink

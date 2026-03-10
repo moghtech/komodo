@@ -62,7 +62,7 @@ export default function ServerImages({
           {
             accessorKey: "id",
             header: ({ column }) => (
-              <SortableHeader column={column} title="Id" />
+              <SortableHeader column={column} title="ID" />
             ),
           },
           {

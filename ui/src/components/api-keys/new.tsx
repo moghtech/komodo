@@ -82,8 +82,8 @@ export default function NewApiKey({ userId }: { userId?: string }) {
         onClose={close}
         title={
           <Text size="lg">
-            {!created && "Create Api Key" + (userId ? " for Service User" : "")}
-            {created && "Api Key Created"}
+            {!created && "Create API Key" + (userId ? " for Service User" : "")}
+            {created && "API Key Created"}
           </Text>
         }
       >
@@ -127,18 +127,18 @@ export default function NewApiKey({ userId }: { userId?: string }) {
           {created && (
             <>
               <Text>
-                Copy the api key and secret.{" "}
+                Copy the API key and secret.{" "}
                 <b>The secret will not be shown again.</b>
               </Text>
 
               <Group justify="space-between" wrap="nowrap">
                 <Text>Key</Text>
-                <CopyText content={created.key} label="api key" />
+                <CopyText content={created.key} label="API key" />
               </Group>
 
               <Group justify="space-between" wrap="nowrap">
                 <Text>Secret</Text>
-                <CopyText content={created.secret} label="api secret" />
+                <CopyText content={created.secret} label="API secret" />
               </Group>
 
               <Group justify="end" onClick={close}>
@@ -150,7 +150,7 @@ export default function NewApiKey({ userId }: { userId?: string }) {
       </Modal>
 
       <Button leftSection={<ICONS.Create size="1rem" />} onClick={open}>
-        New Api Key
+        New API Key
       </Button>
     </>
   );

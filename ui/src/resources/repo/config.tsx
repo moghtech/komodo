@@ -274,21 +274,21 @@ export default function RepoConfig({
               ),
               ["Pull" as any]: () => (
                 <CopyWebhookUrl
-                  label="Webhook Url - Pull"
+                  label="Webhook URL - Pull"
                   integration={webhookIntegration}
                   path={`/repo/${idOrName === "Id" ? id : encodeURIComponent(name ?? "...")}/pull`}
                 />
               ),
               ["Clone" as any]: () => (
                 <CopyWebhookUrl
-                  label="Webhook Url - Clone"
+                  label="Webhook URL - Clone"
                   integration={webhookIntegration}
                   path={`/repo/${idOrName === "Id" ? id : encodeURIComponent(name ?? "...")}/clone`}
                 />
               ),
               ["Build" as any]: () => (
                 <CopyWebhookUrl
-                  label="Webhook Url - Build"
+                  label="Webhook URL - Build"
                   integration={webhookIntegration}
                   path={`/repo/${idOrName === "Id" ? id : encodeURIComponent(name ?? "...")}/build`}
                 />

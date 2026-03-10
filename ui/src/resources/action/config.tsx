@@ -249,7 +249,7 @@ export default function ActionConfig({ id }: { id: string }) {
             },
           },
           {
-            label: "Webhook",
+            label: "Webhooks",
             description: `Copy the webhook given here, and configure your ${webhookIntegration}-style repo provider to send webhooks to Komodo`,
             fields: {
               ["Builder" as any]: () => (
@@ -282,7 +282,7 @@ export default function ActionConfig({ id }: { id: string }) {
               ),
               ["run" as any]: () => (
                 <CopyWebhookUrl
-                  label="Webhook Url - Run"
+                  label="Webhook URL - Run"
                   integration={webhookIntegration}
                   path={`/action/${idOrName === "Id" ? id : encodeURIComponent(name ?? "...")}/${branch}`}
                 />
