@@ -18,6 +18,8 @@ services:
       KOMODO_LOCAL_AUTH: true
       KOMODO_JWT_SECRET: a_random_secret
       VITE_KOMODO_HOST: http://localhost:9120
+      KOMODO_CORS_ALLOWED_ORIGINS: http://localhost:5173
+      KOMODO_CORS_ALLOW_CREDENTIALS: true
     links:
       - db
     # ...
