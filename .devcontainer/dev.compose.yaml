@@ -1,6 +1,6 @@
 services:
   dev:
-    image: mcr.microsoft.com/devcontainers/rust:1-1-bullseye
+    image: mcr.microsoft.com/devcontainers/rust:1-bookworm 
     volumes:
       # Mount the root folder that contains .git
       - ../:/workspace:cached
@@ -17,6 +17,7 @@ services:
       KOMODO_ENABLE_NEW_USERS: true
       KOMODO_LOCAL_AUTH: true
       KOMODO_JWT_SECRET: a_random_secret
+      VITE_KOMODO_HOST: http://localhost:9120
     links:
       - db
     # ...
