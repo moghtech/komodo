@@ -12,6 +12,9 @@ mod config;
 
 async fn app() -> anyhow::Result<()> {
   dotenvy::dotenv().ok();
+  rustls::crypto::aws_lc_rs::default_provider()
+    .install_default()
+    .expect("Failed to install default crypto provider");
   mogh_logger::init(&config::cli_config().cli_logging)?;
   let args = config::cli_args();
   let env = config::cli_env();
