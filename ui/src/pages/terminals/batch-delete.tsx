@@ -19,7 +19,7 @@ export default function BatchDeleteAllTerminals({
   const { tags } = useTags();
   return (
     <ConfirmButton
-      variant="filled"
+      variant="outline"
       color="red"
       icon={<ICONS.Delete size="1rem" />}
       w={160}

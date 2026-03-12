@@ -117,6 +117,7 @@ function VolumeInner({
       executions={
         unused && (
           <ConfirmButton
+            variant="outline"
             color="red"
             icon={<ICONS.Delete size="1rem" />}
             loading={deletePending}

@@ -57,7 +57,7 @@ export default function UserTable({
       header: "Remove",
       cell: ({ row }) => (
         <ConfirmButton
-          variant="filled"
+          variant="outline"
           color="red"
           icon={<ICONS.Remove size="1rem" />}
           onClick={(e) => {
@@ -76,7 +76,7 @@ export default function UserTable({
       header: "Delete",
       cell: ({ row }) => (
         <ConfirmModal
-          targetProps={{ variant: "filled", color: "red" }}
+          targetProps={{ variant: "outline", color: "red" }}
           icon={<ICONS.Delete size="1rem" />}
           confirmText={row.original.username}
           onConfirm={() => onUserDelete(row.original._id?.$oid!)}

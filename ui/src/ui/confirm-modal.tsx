@@ -117,6 +117,8 @@ export default function ConfirmModal({
 
           <Group justify="end">
             <Button
+              variant="filled"
+              color="red"
               justify="space-between"
               w={{ base: "100%", xs: 190 }}
               miw="fit-content"

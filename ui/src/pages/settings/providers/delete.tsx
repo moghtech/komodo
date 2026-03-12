@@ -19,7 +19,7 @@ export default function DeleteProviderAccount({
   });
   return (
     <ConfirmButton
-      variant="filled"
+      variant="outline"
       color="red"
       icon={<ICONS.Delete size="1rem" />}
       onClick={() => mutate({ id })}

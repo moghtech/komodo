@@ -35,7 +35,7 @@ export default function RemoveSwarmResource({
   return (
     <ConfirmModalWithDisable
       confirmText={resourceName ?? resourceId}
-      targetProps={{ variant: "filled", color: "red" }}
+      targetProps={{ variant: "outline", color: "red" }}
       icon={<ICONS.Delete size="1rem" />}
       disabled={disabled || isPending}
       loading={isPending}

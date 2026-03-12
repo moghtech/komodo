@@ -131,7 +131,7 @@ function NetworkInner({
       executions={
         unused ? (
           <ConfirmButton
-            variant="filled"
+            variant="outline"
             color="red"
             icon={<ICONS.Delete size="1rem" />}
             loading={deletePending}
