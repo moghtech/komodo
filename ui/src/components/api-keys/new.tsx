@@ -86,7 +86,6 @@ export default function NewApiKey({ userId }: { userId?: string }) {
             {created && "Api Key Created"}
           </Text>
         }
-        size="lg"
       >
         <Stack>
           {!created && (
@@ -134,12 +133,12 @@ export default function NewApiKey({ userId }: { userId?: string }) {
 
               <Group justify="space-between" wrap="nowrap">
                 <Text>Key</Text>
-                <CopyText content={created.key} label="api key" />
+                <CopyText content={created.key} label="api key" w={{ base: 200, lg: 250 }} />
               </Group>
 
               <Group justify="space-between" wrap="nowrap">
                 <Text>Secret</Text>
-                <CopyText content={created.secret} label="api secret" />
+                <CopyText content={created.secret} label="api secret" w={{ base: 200, lg: 250 }} />
               </Group>
 
               <Group justify="end" onClick={close}>
