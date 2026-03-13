@@ -96,12 +96,12 @@ export const StackComponents: RequiredResourceComponents<
     <BatchExecutions
       type="Stack"
       executions={[
-        "CheckStackForUpdate",
-        "PullStack",
-        "DeployStack",
-        "RestartStack",
-        "StopStack",
-        "DestroyStack",
+        ["CheckStackForUpdate", ICONS.UpdateAvailable],
+        ["PullStack", ICONS.Pull],
+        ["DeployStack", ICONS.Deploy],
+        ["RestartStack", ICONS.Restart],
+        ["StopStack", ICONS.Stop],
+        ["DestroyStack", ICONS.Destroy],
       ]}
     />
   ),

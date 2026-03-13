@@ -69,7 +69,10 @@ export const ResourceSyncComponents: RequiredResourceComponents<
   BatchExecutions: () => (
     <BatchExecutions
       type="ResourceSync"
-      executions={["RunSync", "CommitSync"]}
+      executions={[
+        ["RunSync", ICONS.Run],
+        ["CommitSync", ICONS.Commit],
+      ]}
     />
   ),
 
@@ -142,7 +145,7 @@ export const ResourceSyncComponents: RequiredResourceComponents<
 
   Executions: {
     RefreshSync,
-    ExecuteSync,
+    ExecuteSync: ExecuteSync,
     CommitSync,
   },
 

@@ -70,13 +70,13 @@ export const ServerComponents: RequiredResourceComponents<
     <BatchExecutions
       type="Server"
       executions={[
-        "PruneContainers",
-        "PruneNetworks",
-        "PruneVolumes",
-        "PruneImages",
-        "PruneSystem",
-        "RestartAllContainers",
-        "StopAllContainers",
+        ["PruneContainers", ICONS.Container],
+        ["PruneNetworks", ICONS.Network],
+        ["PruneVolumes", ICONS.Volume],
+        ["PruneImages", ICONS.Image],
+        ["PruneSystem", ICONS.System],
+        ["RestartAllContainers", ICONS.Restart],
+        ["StopAllContainers", ICONS.Stop],
       ]}
     />
   ),

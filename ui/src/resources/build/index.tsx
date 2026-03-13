@@ -87,7 +87,13 @@ export const BuildComponents: RequiredResourceComponents<
   },
 
   BatchExecutions: () => (
-    <BatchExecutions type="Build" executions={["RunBuild"]} />
+    <BatchExecutions
+      type="Build"
+      executions={[
+        ["RunBuild", ICONS.Build],
+        ["CancelBuild", ICONS.Cancel],
+      ]}
+    />
   ),
 
   Table: BuildTable,

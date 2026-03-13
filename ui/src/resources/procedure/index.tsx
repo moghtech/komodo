@@ -61,7 +61,10 @@ export const ProcedureComponents: RequiredResourceComponents<
   New: () => <NewResource type="Procedure" />,
 
   BatchExecutions: () => (
-    <BatchExecutions type="Procedure" executions={["RunProcedure"]} />
+    <BatchExecutions
+      type="Procedure"
+      executions={[["RunProcedure", ICONS.Run]]}
+    />
   ),
 
   Table: ProcedureTable,

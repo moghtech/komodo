@@ -70,7 +70,7 @@ const ConfirmButton = createPolymorphicComponent<"button", ConfirmButtonProps>(
             clickedOnce ? (
               <Check size="1rem" />
             ) : loading ? (
-              <Loader color="white" size="1rem" />
+              <Loader size="1rem" />
             ) : (
               (rightSection ?? icon ?? <ICONS.Unknown size="1rem" />)
             )

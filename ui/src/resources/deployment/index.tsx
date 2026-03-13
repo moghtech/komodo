@@ -90,12 +90,12 @@ export const DeploymentComponents: RequiredResourceComponents<
     <BatchExecutions
       type="Deployment"
       executions={[
-        "CheckDeploymentForUpdate",
-        "PullDeployment",
-        "Deploy",
-        "RestartDeployment",
-        "StopDeployment",
-        "DestroyDeployment",
+        ["CheckDeploymentForUpdate", ICONS.UpdateAvailable],
+        ["PullDeployment", ICONS.Pull],
+        ["Deploy", ICONS.Deploy],
+        ["RestartDeployment", ICONS.Restart],
+        ["StopDeployment", ICONS.Stop],
+        ["DestroyDeployment", ICONS.Destroy],
       ]}
     />
   ),

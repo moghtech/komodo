@@ -9,6 +9,7 @@ import NewResource from "@/resources/new";
 import ResourceHeader from "@/resources/header";
 import RepoTabs from "./tabs";
 import BatchExecutions from "@/components/batch-executions";
+import { BuildRepo, CloneRepo, PullRepo } from "./executions";
 
 export function useRepo(id: string | undefined) {
   return useRead("ListRepos", {}).data?.find((r) => r.id === id);
@@ -58,7 +59,11 @@ export const RepoComponents: RequiredResourceComponents<
   BatchExecutions: () => (
     <BatchExecutions
       type="Repo"
-      executions={["PullRepo", "CloneRepo", "BuildRepo"]}
+      executions={[
+        ["PullRepo", ICONS.PullRepo],
+        ["CloneRepo", ICONS.CloneRepo],
+        ["BuildRepo", ICONS.Build],
+      ]}
     />
   ),
 
@@ -94,7 +99,11 @@ export const RepoComponents: RequiredResourceComponents<
   },
   Info: {},
 
-  Executions: {},
+  Executions: {
+    CloneRepo,
+    PullRepo,
+    BuildRepo,
+  },
 
   Config: RepoTabs,
 

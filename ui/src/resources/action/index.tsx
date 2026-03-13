@@ -61,7 +61,7 @@ export const ActionComponents: RequiredResourceComponents<
   New: () => <NewResource type="Action" />,
 
   BatchExecutions: () => (
-    <BatchExecutions type="Action" executions={["RunAction"]} />
+    <BatchExecutions type="Action" executions={[["RunAction", ICONS.Run]]} />
   ),
 
   Table: ActionTable,
@@ -158,7 +158,7 @@ export const ActionComponents: RequiredResourceComponents<
 
       return (
         <ConfirmModalWithDisable
-          icon={<ICONS.Action size="1rem" />}
+          icon={<ICONS.Run size="1rem" />}
           confirmText={action.name}
           onConfirm={async () => {
             await mutateAsync({ action: id, args: {} });
