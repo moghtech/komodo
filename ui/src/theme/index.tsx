@@ -23,6 +23,7 @@ import {
   Select,
   Switch,
   Table,
+  Tabs,
   virtualColor,
 } from "@mantine/core";
 import { Types } from "komodo_client";
@@ -250,6 +251,14 @@ const theme = createTheme({
       styles: (theme) => ({
         root: {
           backgroundColor: theme.colors.accent[4],
+        },
+      }),
+    }),
+    Tabs: Tabs.extend({
+      styles: (theme) => ({
+        list: {
+          backgroundColor: theme.colors.accent[1],
+          borderRadius: theme.radius.sm,
         },
       }),
     }),

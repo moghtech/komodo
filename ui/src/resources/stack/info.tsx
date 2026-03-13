@@ -55,7 +55,7 @@ export default function StackInfo({
   const defaultShowContents = !latestContents || latestContents.length < 3;
 
   return (
-    <Section gap="xl" titleOther={titleOther}>
+    <Section titleOther={titleOther}>
       {/* Errors */}
       {latestErrors &&
         latestErrors.length > 0 &&
