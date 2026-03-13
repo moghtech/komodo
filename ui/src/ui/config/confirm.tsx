@@ -56,7 +56,17 @@ export default function ConfirmUpdate<T>({
   return (
     <>
       <Modal title="Confirm Update" opened={opened} onClose={close} size="auto">
-        <Stack gap="xl" w={1400} maw="95vw" my="lg">
+        <Stack
+          gap="xl"
+          w={1400}
+          maw={{
+            base: "calc(100vw - 100px)",
+            xs: "calc(100vw - 150px)",
+            sm: "calc(100vw - 200px)",
+            md: "calc(100vw - 250px)",
+          }}
+          my="lg"
+        >
           <Stack>
             {Object.entries(content).map(([key, val], i) => (
               <ConfirmUpdateItem
