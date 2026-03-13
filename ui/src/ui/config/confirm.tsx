@@ -55,7 +55,13 @@ export default function ConfirmUpdate<T>({
 
   return (
     <>
-      <Modal title="Confirm Update" opened={opened} onClose={close} size="auto">
+      <Modal
+        title={<Text size="xl">Confirm Update</Text>}
+        opened={opened}
+        onClose={close}
+        size="auto"
+        styles={{ content: { overflowY: "hidden" } }}
+      >
         <Stack
           gap="xl"
           w={1400}
@@ -66,8 +72,9 @@ export default function ConfirmUpdate<T>({
             md: "calc(100vw - 250px)",
           }}
           my="lg"
+          style={{ overflowY: "hidden" }}
         >
-          <Stack>
+          <Stack mah="min(calc(100vh - 300px), 800px)" style={{ overflowY: "auto" }}>
             {Object.entries(content).map(([key, val], i) => (
               <ConfirmUpdateItem
                 key={i}
@@ -86,7 +93,7 @@ export default function ConfirmUpdate<T>({
                 e.stopPropagation();
                 handleConfirm();
               }}
-              w={{ base: "100%", xs: 100 }}
+              w={{ base: "100%", xs: 200 }}
               loading={loading}
             >
               Save
