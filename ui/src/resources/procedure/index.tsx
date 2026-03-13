@@ -10,6 +10,10 @@ import ProcedureConfig from "./config";
 import { RunProcedure } from "./executions";
 import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
+import { Badge, Group, Popover, Text } from "@mantine/core";
+import { Clock } from "lucide-react";
+import { useDisclosure } from "@mantine/hooks";
+import { updateLogToHtml } from "@/lib/utils";
 
 export function useProcedure(id: string | undefined) {
   return useRead("ListProcedures", {}).data?.find((r) => r.id === id);
@@ -91,7 +95,50 @@ export const ProcedureComponents: RequiredResourceComponents<
     let state = useProcedure(id)?.info.state;
     return <StatusBadge text={state} intent={procedureStateIntention(state)} />;
   },
-  Info: {},
+  Info: {
+    Schedule: ({ id }) => {
+      const nextScheduledRun = useProcedure(id)?.info.next_scheduled_run;
+      return (
+        <Group gap="xs">
+          <Clock size="1rem" />
+          Next Run:
+          <Text fw="bold">
+            {nextScheduledRun
+              ? new Date(nextScheduledRun).toLocaleString()
+              : "Not Scheduled"}
+          </Text>
+        </Group>
+      );
+    },
+    ScheduleErrors: ({ id }) => {
+      const [opened, { close, open }] = useDisclosure(false);
+      const error = useProcedure(id)?.info.schedule_error;
+
+      if (!error) {
+        return null;
+      }
+
+      return (
+        <Popover position="bottom-start" opened={opened}>
+          <Popover.Target>
+            <Badge color="red" onMouseEnter={open} onMouseLeave={close}>
+              Schedule Error
+            </Badge>
+          </Popover.Target>
+
+          <Popover.Dropdown style={{ pointerEvents: "none" }}>
+            <Text
+              component="pre"
+              dangerouslySetInnerHTML={{
+                __html: updateLogToHtml(error),
+              }}
+              fz="xs"
+            />
+          </Popover.Dropdown>
+        </Popover>
+      );
+    },
+  },
 
   Executions: {
     RunProcedure,
