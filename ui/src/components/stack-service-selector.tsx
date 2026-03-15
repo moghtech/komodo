@@ -1,6 +1,7 @@
 import { useRead, useSearchCombobox } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
 import {
+  ActionIcon,
   Button,
   ButtonProps,
   Combobox,
@@ -13,6 +14,11 @@ import { ChevronsUpDown } from "lucide-react";
 import { useEffect } from "react";
 import { DOCKER_LINK_ICONS } from "./docker/link";
 import { ICONS } from "@/theme/icons";
+import {
+  colorByIntention,
+  containerStateIntention,
+  swarmStateIntention,
+} from "@/lib/color";
 
 export interface StackServiceSelectorProps extends ComboboxProps {
   stackId: string;
@@ -22,6 +28,7 @@ export interface StackServiceSelectorProps extends ComboboxProps {
   placeholder?: string;
   state?: Types.ContainerStateStatusEnum;
   targetProps?: ButtonProps;
+  clearable?: boolean;
 }
 
 export default function StackServiceSelector({
@@ -34,21 +41,32 @@ export default function StackServiceSelector({
   position = "bottom-start",
   onOptionSubmit,
   targetProps,
+  clearable = true,
   ...comboboxProps
 }: StackServiceSelectorProps) {
   const services = useRead("ListStackServices", {
     stack: stackId,
   }).data?.filter((service) => !state || service?.container?.state === state);
+
   const firstService = services?.[0].service;
   useEffect(() => {
     firstService && onSelect?.(firstService);
   }, [firstService]);
-  const name = services?.find((s) => s.service === selected)?.service;
-  const container = services?.find((s) => s.service === selected)?.container;
+
+  const selectedService = services?.find((s) => s.service === selected);
+  const name = selectedService?.service;
+  const container = selectedService?.container;
+  const swarmService = selectedService?.swarm_service;
+
+  const intention = !selectedService
+    ? "None"
+    : swarmService?.State
+      ? swarmStateIntention(swarmService.State)
+      : containerStateIntention(
+          container?.state ?? Types.ContainerStateStatusEnum.Empty,
+        );
 
   const { search, setSearch, combobox } = useSearchCombobox();
-
-  if (!services) return null;
 
   const filtered = filterBySplit(services, search, (item) => item.service).sort(
     (a, b) => {
@@ -76,21 +94,38 @@ export default function StackServiceSelector({
     >
       <Combobox.Target>
         <Button
-          maw={350}
           justify="space-between"
-          disabled={disabled}
-          rightSection={<ChevronsUpDown size="0.9rem" />}
+          w="fit-content"
+          maw="100%"
+          rightSection={
+            <Group gap="xs" ml="sm" wrap="nowrap">
+              {clearable && (
+                <ActionIcon
+                  size="sm"
+                  variant="filled"
+                  color="red"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelect?.("");
+                  }}
+                  disabled={disabled || !selected}
+                >
+                  <ICONS.Clear size="0.8rem" />
+                </ActionIcon>
+              )}
+              <ChevronsUpDown size="1rem" />
+            </Group>
+          }
           onClick={() => combobox.toggleDropdown()}
+          disabled={!stackId || disabled}
+          loading={!!stackId && !services}
           {...targetProps}
         >
-          <Group gap="xs">
-            {container && (
-              <DOCKER_LINK_ICONS.Container
-                serverId={container.server_id!}
-                name={container.name}
-              />
-            )}
-            <Text>{name || (placeholder ?? "Select container")}</Text>
+          <Group gap="xs" wrap="nowrap">
+            <ICONS.Service size="1rem" color={colorByIntention(intention)} />
+            <Text className="text-ellipsis">
+              {name || (placeholder ?? "Select service")}
+            </Text>
           </Group>
         </Button>
       </Combobox.Target>

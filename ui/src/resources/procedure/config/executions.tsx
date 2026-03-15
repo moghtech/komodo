@@ -14,6 +14,7 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";
 import { CheckCircle } from "lucide-react";
@@ -115,6 +116,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
             setParams({ action: params.action, args: JSON.parse(args) })
           }
           disabled={disabled}
+          useMonaco
           monacoLanguage="json"
         />
       </Group>
@@ -131,6 +133,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -158,6 +161,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -198,6 +202,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -290,6 +295,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -317,6 +323,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -343,6 +350,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -369,6 +377,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -450,6 +459,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -470,7 +480,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
       pull: undefined,
     },
     Component: ({ params, setParams, disabled }) => {
-      const [open, setOpen] = useState(false);
+      const [opened, { open, close }] = useDisclosure();
       // local mirrors to allow cancel without committing
       const [stack, setStack] = useState(params.stack ?? "");
       const [service, setService] = useState(params.service ?? "");
@@ -551,128 +561,167 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
           detach: detach ? true : undefined,
           env,
         } as any);
-        setOpen(false);
+        close();
       };
 
       return (
         <>
-          <Button disabled={disabled}>Configure</Button>
+          <Button disabled={disabled} onClick={open}>
+            Configure
+          </Button>
 
           <Modal
-            opened={open}
-            onClose={() => setOpen(false)}
+            opened={opened}
+            onClose={close}
             title="Run Stack Service"
             size="lg"
           >
-            <Stack>
-              <SimpleGrid cols={{ base: 1, md: 2 }}>
-                <Group>
-                  <Text c="dimmed">Stack</Text>
+            <Stack gap="lg">
+              <SimpleGrid cols={{ base: 1, sm: 2 }}>
+                <Stack gap="0">
+                  <Text>Stack</Text>
                   <ResourceSelector
                     type="Stack"
                     selected={stack}
                     onSelect={(id) => setStack(id)}
                     disabled={disabled}
+                    width="target"
+                    targetProps={{ w: "100%" }}
                   />
-                </Group>
-                <Group>
-                  <Text c="dimmed">Service</Text>
+                </Stack>
+
+                <Stack gap="0">
+                  <Text>Service</Text>
                   <StackServiceSelector
                     stackId={stack}
                     selected={service}
                     onSelect={setService}
                     disabled={disabled}
+                    width="target"
+                    targetProps={{ w: "100%" }}
                   />
-                </Group>
+                </Stack>
               </SimpleGrid>
 
-              <Group>
-                <Text c="dimmed">Command</Text>
+              <Stack gap="0">
+                <Text>Command</Text>
                 <TextInput
+                  placeholder="Enter command (Required)"
                   value={commandText}
                   onChange={(e) => setCommand(e.target.value)}
                   disabled={disabled}
                 />
-              </Group>
+              </Stack>
 
-              <SimpleGrid cols={{ base: 2, md: 4 }}>
-                <EnableSwitch
-                  label="No TTY"
-                  checked={no_tty}
-                  onCheckedChange={setNoTty}
-                  disabled={disabled}
-                />
-                <EnableSwitch
-                  label="No Dependencies"
-                  checked={no_deps}
-                  onCheckedChange={setNoDeps}
-                  disabled={disabled}
-                />
-                <EnableSwitch
-                  label="Detach"
-                  checked={detach}
-                  onCheckedChange={setDetach}
-                  disabled={disabled}
-                />
-                <EnableSwitch
-                  label="Service Ports"
-                  checked={service_ports}
-                  onCheckedChange={setServicePorts}
-                  disabled={disabled}
-                />
-                <EnableSwitch
-                  label="Pull Image"
-                  checked={pull}
-                  onCheckedChange={setPull}
-                  disabled={disabled}
-                />
+              <SimpleGrid cols={{ base: 1, sm: 2 }}>
+                <Stack gap="0">
+                  <Text>Working Directory</Text>
+                  <TextInput
+                    placeholder="/work/dir (Optional)"
+                    value={workdir}
+                    onChange={(e) => setWorkdir(e.target.value)}
+                    disabled={disabled}
+                  />
+                </Stack>
+                <Stack gap="0">
+                  <Text>User</Text>
+                  <TextInput
+                    placeholder="uid:gid or user (Optional)"
+                    value={user}
+                    onChange={(e) => setUser(e.target.value)}
+                    disabled={disabled}
+                  />
+                </Stack>
               </SimpleGrid>
-            </Stack>
 
-            <SimpleGrid cols={{ base: 1, md: 2 }}>
-              <Group>
-                <Text c="dimmed">Working Directory</Text>
+              <Stack gap="0">
+                <Text>Entrypoint</Text>
                 <TextInput
-                  placeholder="/work/dir"
-                  value={workdir}
-                  onChange={(e) => setWorkdir(e.target.value)}
-                  disabled={disabled}
-                />
-              </Group>
-              <Group>
-                <Text c="dimmed">User</Text>
-                <TextInput
-                  placeholder="uid:gid or user"
-                  value={user}
-                  onChange={(e) => setUser(e.target.value)}
-                  disabled={disabled}
-                />
-              </Group>
-              <Group>
-                <Text c="dimmed">Entrypoint</Text>
-                <TextInput
+                  placeholder="Custom entrypoint (Optional)"
                   value={entrypoint}
                   onChange={(e) => setEntrypoint(e.target.value)}
                   disabled={disabled}
                 />
-              </Group>
-            </SimpleGrid>
+              </Stack>
 
-            <Group>
-              <Text c="dimmed">Extra Environment Variables</Text>
-              <MonacoEditor
-                value={envText}
-                onValueChange={setEnvText}
-                language="key_value"
-                readOnly={disabled}
-              />
-            </Group>
+              <Stack gap="0">
+                <Text>Extra Env</Text>
+                <MonacoEditor
+                  value={envText}
+                  onValueChange={setEnvText}
+                  language="key_value"
+                  readOnly={disabled}
+                />
+              </Stack>
 
-            {!disabled && (
-              <Button onClick={onConfirm} leftSection={<CheckCircle />}>
-                Confirm
-              </Button>
-            )}
+              <Stack gap="0">
+                <Text>Options</Text>
+                <SimpleGrid
+                  cols={{ base: 1, sm: 2 }}
+                  className="accent-hover-light"
+                  p="md"
+                  bdrs="md"
+                  style={{ placeItems: "center" }}
+                >
+                  <EnableSwitch
+                    label="No TTY"
+                    checked={no_tty}
+                    onCheckedChange={setNoTty}
+                    disabled={disabled}
+                    labelProps={{
+                      w: 210,
+                      justify: "end",
+                    }}
+                  />
+                  <EnableSwitch
+                    label="No Dependencies"
+                    checked={no_deps}
+                    onCheckedChange={setNoDeps}
+                    disabled={disabled}
+                    labelProps={{
+                      w: 210,
+                      justify: "end",
+                    }}
+                  />
+                  <EnableSwitch
+                    label="Detach"
+                    checked={detach}
+                    onCheckedChange={setDetach}
+                    disabled={disabled}
+                    labelProps={{
+                      w: 210,
+                      justify: "end",
+                    }}
+                  />
+                  <EnableSwitch
+                    label="Service Ports"
+                    checked={service_ports}
+                    onCheckedChange={setServicePorts}
+                    disabled={disabled}
+                    labelProps={{
+                      w: 210,
+                      justify: "end",
+                    }}
+                  />
+                  <EnableSwitch
+                    label="Pull Image"
+                    checked={pull}
+                    onCheckedChange={setPull}
+                    disabled={disabled}
+                    labelProps={{
+                      w: 210,
+                      justify: "end",
+                    }}
+                  />
+                </SimpleGrid>
+              </Stack>
+
+              {!disabled && (
+                <Button onClick={onConfirm} leftSection={<CheckCircle />}>
+                  Confirm
+                </Button>
+              )}
+            </Stack>
           </Modal>
         </>
       );
@@ -701,6 +750,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -727,6 +777,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -753,6 +804,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -1042,6 +1094,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         placeholder="Configure custom alert message"
         onUpdate={(message) => setParams({ message })}
         disabled={disabled}
+        useMonaco
         monacoLanguage={undefined}
       />
     ),
