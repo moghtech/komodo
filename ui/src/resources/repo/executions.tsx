@@ -44,12 +44,13 @@ export function PullRepo({ id }: { id: string }) {
   const pending = isPending || pulling;
   return (
     <ConfirmButton
-      title="Pull"
       icon={<ICONS.PullRepo size="1rem" />}
       onClick={() => mutate({ repo: id })}
       disabled={pending}
       loading={pending}
-    />
+    >
+      Pull
+    </ConfirmButton>
   );
 }
 
