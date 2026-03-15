@@ -177,8 +177,8 @@ export default function Config<T>({
           Reset
         </Button>
         <ConfirmUpdate
-          previous={original}
-          content={update}
+          original={original}
+          update={update}
           onConfirm={onConfirm}
           disabled={disabled}
           fileContentsLanguage={fileContentsLanguage}
