@@ -303,11 +303,14 @@ export default function RepoConfig({
           },
           {
             label: "Links",
-            description: "Add quick links in the resource header",
-            contentHidden: ((update.links ?? config.links)?.length ?? 0) === 0,
+            labelHidden: true,
             fields: {
               links: (values, set) => (
                 <ConfigList
+                  label="Links"
+                  boldLabel
+                  addLabel="Add Link"
+                  description="Add quick links in the resource header"
                   field="links"
                   values={values ?? []}
                   set={set}
