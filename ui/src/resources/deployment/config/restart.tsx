@@ -1,3 +1,4 @@
+import { fmtUpperCamelcase } from "@/lib/formatting";
 import { ConfigItem } from "@/ui/config/item";
 import { Select } from "@mantine/core";
 import { Types } from "komodo_client";
@@ -27,13 +28,11 @@ export default function DeploymentRestartSelector({
         disabled={disabled}
         placeholder="Select Mode"
         data={Object.entries(Types.RestartMode).map(([label, value]) => ({
-          label:
-            label === "NoRestart"
-              ? "don't restart"
-              : value.split("-").join(" "),
+          label: fmtUpperCamelcase(label),
           value,
         }))}
-        w="fit-content"
+        tt="capitalize"
+        w={{ base: "100%", xs: "fit-content" }}
       />
     </ConfigItem>
   );
