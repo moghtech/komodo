@@ -113,7 +113,7 @@ So in v1 Action:
 await komodo.write("CreateTerminal", {
   server: "my-server",
   name: "my-terminal",
-  command: "sh",
+  command: "bash",
   recreate: "Always",
 });
 await komodo.execute_terminal(
@@ -131,7 +131,7 @@ await komodo.execute_server_terminal(
     server: "my-server",
     terminal: "my-terminal",
     command: "ls -l",
-    init: { command: "sh", recreate: "Always" },
+    init: { command: "bash", recreate: "Always" },
   },
   { onLine: (line) => console.log(line) },
 );
