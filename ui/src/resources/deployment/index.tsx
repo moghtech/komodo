@@ -80,9 +80,7 @@ export const DeploymentComponents: RequiredResourceComponents<
     ];
   },
 
-  Description: () => (
-    <>Connect deployments for alerting, building, and deploying.</>
-  ),
+  Description: () => <>Deploy individual containers and swarm services.</>,
 
   New: (props) => <NewResourceWithDeployTarget type="Deployment" {...props} />,
 
