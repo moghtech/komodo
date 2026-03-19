@@ -16,7 +16,14 @@ You can install Periphery as a systemd managed process, run it as a [docker cont
 
 ### Install the Periphery agent - systemd
 
-**As root user:**
+:::info
+This is the recommended and simplest method to run Periphery.
+It avoid a number of complications which can come up when running Periphery in a container.
+[See this discussion](https://github.com/moghtech/komodo/discussions/220).
+:::
+
+#### Root install
+
 ```bash
 curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/scripts/setup-periphery.py \
   | python3 - \
@@ -24,6 +31,8 @@ curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/scripts/setup-p
   --connect-as="$(hostname)" \
   --onboarding-key="O-..."
 ```
+
+#### User install
 
 Periphery can also be installed to run as a **systemd user service** (for the calling user).
 
@@ -35,17 +44,28 @@ curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/scripts/setup-p
   --onboarding-key="O-..."
 ```
 
-Edit the `/etc/komodo/periphery.config.toml` config file and modify as required.
-
-
-Enable and start the Periphery service (autostart on reboot).
-
+:::warning
+**User installs**: To ensure periphery stays running when your user logs out, make sure to enable linger:
+```bash
+sudo loginctl enable-linger $USER
 ```
-systemctl enable periphery
-systemctl start periphery  # restart if you edited the periphery.config.toml
+:::
+
+#### Enable the Periphery service to start automatically after a reboot.
+
+```bash
+sudo systemctl enable periphery
 ```
 
-You can find more information (and view the script) in the [readme](https://github.com/moghtech/komodo/tree/main/scripts).
+#### Configuration file
+
+The configuration file location will depend on root vs system install:
+- Root install: `/etc/komodo/periphery.config.toml`
+- User install: `$HOME/.config/komodo/periphery.config.toml`
+
+The [full example configuration file is here](#configuration).
+
+You can find more information (and view the script) in the [script readme](https://github.com/moghtech/komodo/tree/main/scripts).
 
 :::info
 This script can be run multiple times without issue, and it won't change existing config after the first run. Just run it again after a Komodo version release, and it will update the periphery version.
