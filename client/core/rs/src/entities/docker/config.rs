@@ -37,7 +37,7 @@ pub struct SwarmConfigListItem {
 }
 
 /// Swarm config details.
-/// 
+///
 /// This would be just "SwarmConfig", but that would
 /// conflict with the Swarm (Komodo resource) Config type,
 /// which is also SwarmConfig.

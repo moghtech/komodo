@@ -262,7 +262,9 @@ fn standard_alert_content(alert: &Alert) -> String {
             .as_ref()
             .map(|e| format!("\nerror: {e}"))
             .unwrap_or_default();
-          format!("{level} | Swarm {name} is unhealthy ❌\n{link}{err}")
+          format!(
+            "{level} | Swarm {name} is unhealthy ❌\n{link}{err}"
+          )
         }
         _ => unreachable!(),
       }

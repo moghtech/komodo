@@ -20,7 +20,9 @@ pub async fn send_alert(
       let link = resource_link(ResourceTargetVariant::Swarm, id);
       match alert.level {
         SeverityLevel::Ok => {
-          format!("{level} | Swarm **{name}** is now **healthy**\n{link}")
+          format!(
+            "{level} | Swarm **{name}** is now **healthy**\n{link}"
+          )
         }
         SeverityLevel::Critical => {
           let err = err

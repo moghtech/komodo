@@ -3,7 +3,8 @@ use std::collections::HashMap;
 use komodo_client::entities::{
   ResourceTarget,
   alert::{Alert, AlertData, SeverityLevel},
-  deployment::{Deployment, DeploymentState}, optional_string,
+  deployment::{Deployment, DeploymentState},
+  optional_string,
 };
 
 use crate::{

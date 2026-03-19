@@ -2,7 +2,9 @@ use std::{collections::HashMap, sync::Mutex};
 
 use anyhow::Context;
 use komodo_client::entities::{
-  alert::AlertDataVariant, permission::PermissionLevel, resource::ResourceQuery, server::Server, swarm::Swarm, user::system_user
+  alert::AlertDataVariant, permission::PermissionLevel,
+  resource::ResourceQuery, server::Server, swarm::Swarm,
+  user::system_user,
 };
 
 use crate::resource;
