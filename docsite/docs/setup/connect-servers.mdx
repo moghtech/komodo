@@ -35,6 +35,16 @@ curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/scripts/setup-p
   --onboarding-key="O-..."
 ```
 
+Edit the `/etc/komodo/periphery.config.toml` config file and modify as required.
+
+
+Enable and start the Periphery service (autostart on reboot).
+
+```
+systemctl enable periphery
+systemctl start periphery  # restart if you edited the periphery.config.toml
+```
+
 You can find more information (and view the script) in the [readme](https://github.com/moghtech/komodo/tree/main/scripts).
 
 :::info
