@@ -43,7 +43,7 @@ pub struct SwarmStackListItem {
 
 /// All entities related to docker stack available over CLI.
 /// Returned by:
-/// ```
+/// ```shell
 /// docker stack services --format json <STACK>
 /// docker stack ps --format json <STACK>
 /// ```
