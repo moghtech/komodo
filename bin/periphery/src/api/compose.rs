@@ -308,7 +308,7 @@ impl Resolve<crate::api::Args> for ComposePull {
 
     // Canonicalize the path to ensure it exists, and is the cleanest path to the run directory.
     let run_directory = run_directory.canonicalize().context(
-      "Failed to validate run directory on host after stack write (canonicalize error)",
+      format!("Failed to validate run directory on host after stack write (canonicalize error), path={}", run_directory.to_string_lossy()),
     )?;
 
     let file_paths = stack
@@ -428,7 +428,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
 
     // Canonicalize the path to ensure it exists, and is the cleanest path to the run directory.
     let run_directory = run_directory.canonicalize().context(
-      "Failed to validate run directory on host after stack write (canonicalize error)",
+      format!("Failed to validate run directory on host after stack write (canonicalize error), path={}", run_directory.to_string_lossy()),
     )?;
 
     validate_files(&stack, &run_directory, &mut res).await;
@@ -763,7 +763,7 @@ impl Resolve<crate::api::Args> for ComposeRun {
     };
 
     let run_directory = run_directory.canonicalize().context(
-      "Failed to validate run directory on host after stack write (canonicalize error)",
+      format!("Failed to validate run directory on host after stack write (canonicalize error), path={}", run_directory.to_string_lossy())
     )?;
 
     maybe_login_registry(&stack, registry_token, &mut Vec::new())
