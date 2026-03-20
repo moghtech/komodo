@@ -19,6 +19,8 @@ import {
   containerStateIntention,
   swarmStateIntention,
 } from "@/lib/color";
+import { SWARM_LINK_ICONS } from "./swarm/link";
+import { useStack } from "@/resources/stack";
 
 export interface StackServiceSelectorProps extends ComboboxProps {
   stackId: string;
@@ -44,6 +46,7 @@ export default function StackServiceSelector({
   clearable = true,
   ...comboboxProps
 }: StackServiceSelectorProps) {
+  const stack = useStack(stackId);
   const services = useRead("ListStackServices", {
     stack: stackId,
   }).data?.filter((service) => !state || service?.container?.state === state);
@@ -146,6 +149,12 @@ export default function StackServiceSelector({
                   <DOCKER_LINK_ICONS.Container
                     serverId={service.container.server_id!}
                     name={service.container.name}
+                  />
+                )}
+                {service.swarm_service && (
+                  <SWARM_LINK_ICONS.Service
+                    swarmId={stack?.info.swarm_id}
+                    resourceId={service.swarm_service.ID}
                   />
                 )}
                 {service.service}
