@@ -18,6 +18,10 @@ import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 import ResourceHeader from "../header";
 import { useIsServerAvailable } from "./hooks";
 import BatchExecutions from "@/components/batch-executions";
+import { ServerLoadAverage } from "./stats/current/load-average";
+import { ServerRamUsage } from "./stats/current/ram";
+import ServerDiskUsage from "./diskUsage";
+import ServerCpuUsage from "./stats/current/cpu";
 
 export function useServer(id: string | undefined) {
   return useRead("ListServers", {}).data?.find((r) => r.id === id);
@@ -193,7 +197,9 @@ export const ServerComponents: RequiredResourceComponents<
                 : "N/A"}
             </Group>
           </HoverCard.Target>
-          <HoverCard.Dropdown>CPU Core Count</HoverCard.Dropdown>
+          <HoverCard.Dropdown>
+            <ServerCpuUsage id={id} />
+          </HoverCard.Dropdown>
         </HoverCard>
       );
     },
@@ -218,7 +224,9 @@ export const ServerComponents: RequiredResourceComponents<
               {one?.toFixed(2) ?? "N/A"}
             </Group>
           </HoverCard.Target>
-          <HoverCard.Dropdown>1m Load Average</HoverCard.Dropdown>
+          <HoverCard.Dropdown>
+            <ServerLoadAverage id={id} stats={stats} />
+          </HoverCard.Dropdown>
         </HoverCard>
       );
     },
@@ -240,7 +248,9 @@ export const ServerComponents: RequiredResourceComponents<
               {stats?.mem_total_gb.toFixed(2).concat(" GB") ?? "N/A"}
             </Group>
           </HoverCard.Target>
-          <HoverCard.Dropdown>Total Memory</HoverCard.Dropdown>
+          <HoverCard.Dropdown>
+            <ServerRamUsage id={id} stats={stats} />
+          </HoverCard.Dropdown>
         </HoverCard>
       );
     },
@@ -266,7 +276,9 @@ export const ServerComponents: RequiredResourceComponents<
               {diskTotalGb?.toFixed(2).concat(" GB") ?? "N/A"}
             </Group>
           </HoverCard.Target>
-          <HoverCard.Dropdown>Total Disk Capacity</HoverCard.Dropdown>
+          <HoverCard.Dropdown>
+            <ServerDiskUsage id={id} stats={stats} withHeader />
+          </HoverCard.Dropdown>
         </HoverCard>
       );
     },
