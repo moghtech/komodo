@@ -19,6 +19,7 @@ export default function SearchInput({
         onChange?.(e);
         onSearch?.(e.target.value);
       }}
+      onClick={(e) => e.stopPropagation()}
       {...inputProps}
     />
   );

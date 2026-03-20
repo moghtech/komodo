@@ -28,6 +28,7 @@ export interface SectionProps extends StackProps {
   error?: false | string;
   guardProps?: CenterProps;
   forceHeaderGroup?: boolean;
+  onHeaderClick?: () => void;
 }
 
 const Section = createPolymorphicComponent<"div", SectionProps>(
@@ -50,6 +51,7 @@ const Section = createPolymorphicComponent<"div", SectionProps>(
         error,
         guardProps,
         forceHeaderGroup,
+        onHeaderClick,
         ...props
       },
       ref,
@@ -98,7 +100,12 @@ const Section = createPolymorphicComponent<"div", SectionProps>(
           {...props}
           ref={ref}
         >
-          <Stack gap="0.2rem" mb={titleMb}>
+          <Stack
+            gap="0.2rem"
+            mb={titleMb}
+            onClick={onHeaderClick}
+            style={{ cursor: onHeaderClick && "pointer" }}
+          >
             {TitleComponent}
             {description && <Text c="dimmed">{description}</Text>}
           </Stack>
