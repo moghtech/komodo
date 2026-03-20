@@ -92,14 +92,14 @@ const config: Config = {
         },
         {
           href: "https://github.com/moghtech/komodo",
-          label: "Github",
+          label: "GitHub",
           position: "right",
         },
       ],
     },
     footer: {
       style: "dark",
-      copyright: `Built with Docusaurus`,
+      copyright: "© 2026 Mogh Technologies Inc. Licensed under GPL-3.0",
     },
     prism: {
       theme: prismThemes.oneLight,
