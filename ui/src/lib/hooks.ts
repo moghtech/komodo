@@ -330,19 +330,19 @@ export type ResourceMap = {
   [Resource in UsableResource]: Types.ResourceListItem<unknown>[] | undefined;
 };
 
-export function useAllResources(): ResourceMap {
+export function useAllResources(refetchInterval?: number): ResourceMap {
   return {
-    Swarm: useRead("ListSwarms", {}).data,
-    Server: useRead("ListServers", {}).data,
-    Stack: useRead("ListStacks", {}).data,
-    Deployment: useRead("ListDeployments", {}).data,
-    Build: useRead("ListBuilds", {}).data,
-    Repo: useRead("ListRepos", {}).data,
-    Procedure: useRead("ListProcedures", {}).data,
-    Action: useRead("ListActions", {}).data,
-    Builder: useRead("ListBuilders", {}).data,
-    Alerter: useRead("ListAlerters", {}).data,
-    ResourceSync: useRead("ListResourceSyncs", {}).data,
+    Swarm: useRead("ListSwarms", {}, { refetchInterval }).data,
+    Server: useRead("ListServers", {}, { refetchInterval }).data,
+    Stack: useRead("ListStacks", {}, { refetchInterval }).data,
+    Deployment: useRead("ListDeployments", {}, { refetchInterval }).data,
+    Build: useRead("ListBuilds", {}, { refetchInterval }).data,
+    Repo: useRead("ListRepos", {}, { refetchInterval }).data,
+    Procedure: useRead("ListProcedures", {}, { refetchInterval }).data,
+    Action: useRead("ListActions", {}, { refetchInterval }).data,
+    Builder: useRead("ListBuilders", {}, { refetchInterval }).data,
+    Alerter: useRead("ListAlerters", {}, { refetchInterval }).data,
+    ResourceSync: useRead("ListResourceSyncs", {}, { refetchInterval }).data,
   };
 }
 

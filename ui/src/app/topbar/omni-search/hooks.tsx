@@ -50,7 +50,7 @@ export function useOmniSearch(): {
   const _containers = useRead(
     "ListAllDockerContainers",
     {},
-    { refetchInterval: 30_000 },
+    { refetchInterval: 15_000 },
   ).data;
   const containers = useMemo(() => {
     return _containers?.filter((c) => {
@@ -65,7 +65,7 @@ export function useOmniSearch(): {
   const _terminals = useRead(
     "ListTerminals",
     {},
-    { refetchInterval: 30_000 },
+    { refetchInterval: 15_000 },
   ).data;
   const terminals = useMemo(() => {
     return _terminals?.filter((c) => {
@@ -78,7 +78,7 @@ export function useOmniSearch(): {
   }, [_terminals, searchTerms]);
 
   const user = useUser().data;
-  const resources = useAllResources();
+  const resources = useAllResources(15_000);
   const [_, setSettingsView] = useSettingsView();
 
   const _actions = useMemo(() => {
