@@ -115,7 +115,7 @@ export default function Config<T>({
                       key={group + label}
                       id={group + label}
                       p="xl"
-                      gap="xl"
+                      gap="md"
                       className="bordered-light"
                       bdrs="md"
                       style={{ scrollMarginTop: 94 }}

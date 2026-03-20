@@ -68,7 +68,6 @@ export default function StackConfig({
     defaultValue: {
       file: true,
       env: true,
-      git: true,
       webhooks: true,
     },
   });
@@ -517,6 +516,8 @@ export default function StackConfig({
                   '.
                 </Text>
                 <Text
+                  className="hover-underline"
+                  fw="bold"
                   component={Link}
                   to={
                     currSwarmId
@@ -524,7 +525,6 @@ export default function StackConfig({
                       : "https://docs.docker.com/reference/cli/docker/service/create/#options"
                   }
                   target="_blank"
-                  td="underline"
                 >
                   See docker docs.
                 </Text>
@@ -722,13 +722,7 @@ export default function StackConfig({
         ...swarmServerGroup,
         {
           label: "Source",
-          contentHidden: !show.git,
-          actions: (
-            <ShowHideButton
-              show={show.git}
-              setShow={(git) => setShow({ ...show, git })}
-            />
-          ),
+          labelHidden: true,
           fields: {
             linked_repo: (linkedRepo, set) => (
               <LinkedRepo
@@ -809,6 +803,7 @@ export default function StackConfig({
         },
         {
           label: "Files",
+          labelHidden: true,
           fields: {
             run_directory: {
               description:
