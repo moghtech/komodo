@@ -178,6 +178,14 @@ impl ToToml for ResourceSync {
 impl ToToml for Swarm {
   fn replace_ids(resource: &mut Resource<Self::Config, Self::Info>) {
     let all = all_resources_cache().load();
+
+    resource.config.server_ids.iter_mut().for_each(|server_id| {
+      *server_id = all
+        .servers
+        .get(server_id)
+        .map(|s| s.name.clone())
+        .unwrap_or_default();
+    });
     let mut res =
       Vec::with_capacity(resource.config.server_ids.capacity());
     for server_id in &resource.config.server_ids {
