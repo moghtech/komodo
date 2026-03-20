@@ -52,7 +52,6 @@ export interface DataTableProps<TData, TValue = unknown> extends BoxProps {
   tableProps?: TableProps;
   noBox?: boolean;
   noBorder?: boolean;
-  mah?: string;
 }
 
 export function DataTable<TData, TValue>({
