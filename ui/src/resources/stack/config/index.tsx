@@ -356,11 +356,20 @@ export default function StackConfig({
 
   const configFiles: ConfigGroupArgs<Types.StackConfig> = {
     label: "Config Files",
-    description:
-      "Add other config files to associate with the Stack, and edit in the UI. Relative to 'Run Directory'.",
+    labelHidden: true,
     fields: {
       config_files: (value, set) => (
-        <StackConfigFiles id={id} value={value} set={set} disabled={disabled} />
+        <ConfigItem
+          label="Config Files"
+          description="Add other config files to associate with the Stack, and edit in the UI. Relative to 'Run Directory'."
+        >
+          <StackConfigFiles
+            id={id}
+            value={value}
+            set={set}
+            disabled={disabled}
+          />
+        </ConfigItem>
       ),
     },
   };
@@ -370,6 +379,7 @@ export default function StackConfig({
   const generalCommon: ConfigGroupArgs<Types.StackConfig>[] = [
     {
       label: "Auto Update",
+      labelHidden: true,
       fields: {
         poll_for_updates: (poll, set) => {
           return (
@@ -407,7 +417,6 @@ export default function StackConfig({
         links: (values, set) => (
           <ConfigList
             label="Links"
-            boldLabel
             addLabel="Add Link"
             description="Add quick links in the resource header"
             field="links"
@@ -428,7 +437,6 @@ export default function StackConfig({
       fields: {
         project_name: {
           placeholder: "Compose project name",
-          boldLabel: true,
           description:
             "Optionally set a different compose project name. If importing existing stack, this should match the compose project name on your host.",
         },
@@ -436,48 +444,61 @@ export default function StackConfig({
     },
     {
       label: "Pre Deploy",
-      description:
-        "Execute a shell command before running docker compose up. The 'path' is relative to the Run Directory",
+      labelHidden: true,
       fields: {
         pre_deploy: (value, set) => (
-          <SystemCommand
-            value={value}
-            set={(value) => set({ pre_deploy: value })}
-            disabled={disabled}
-          />
+          <ConfigItem
+            label="Pre Deploy"
+            description="Execute a shell command before running docker compose up. The 'path' is relative to the Run Directory"
+          >
+            <SystemCommand
+              value={value}
+              set={(value) => set({ pre_deploy: value })}
+              disabled={disabled}
+            />
+          </ConfigItem>
         ),
       },
     },
     {
       label: "Post Deploy",
-      description:
-        "Execute a shell command after running docker compose up. The 'path' is relative to the Run Directory",
+      labelHidden: true,
       fields: {
         post_deploy: (value, set) => (
-          <SystemCommand
-            value={value}
-            set={(value) => set({ post_deploy: value })}
-            disabled={disabled}
-          />
+          <ConfigItem
+            label="Post Deploy"
+            description="Execute a shell command after running docker compose up. The 'path' is relative to the Run Directory"
+          >
+            <SystemCommand
+              value={value}
+              set={(value) => set({ post_deploy: value })}
+              disabled={disabled}
+            />
+          </ConfigItem>
         ),
       },
     },
     {
       label: "Wrapper",
-      description:
-        "Optional wrapper to execute 'docker compose up -d' as a subcommand of tools like secrets management.",
+      labelHidden: true,
       fields: {
         compose_cmd_wrapper: (value, set) => (
-          <MonacoEditor
-            value={
-              value ?? "# sops exec-env .encrypted.env '[[COMPOSE_COMMAND]]'\n"
-            }
-            language="shell"
-            onValueChange={(compose_cmd_wrapper) =>
-              set({ compose_cmd_wrapper })
-            }
-            readOnly={disabled}
-          />
+          <ConfigItem
+            label="Wrapper"
+            description="Optional wrapper to execute 'docker compose up -d' as a subcommand of tools like secrets management."
+          >
+            <MonacoEditor
+              value={
+                value ??
+                "# sops exec-env .encrypted.env '[[COMPOSE_COMMAND]]'\n"
+              }
+              language="shell"
+              onValueChange={(compose_cmd_wrapper) =>
+                set({ compose_cmd_wrapper })
+              }
+              readOnly={disabled}
+            />
+          </ConfigItem>
         ),
       },
     },
@@ -488,28 +509,35 @@ export default function StackConfig({
         extra_args: (value, set) => (
           <ConfigItem
             label="Extra Args"
-            boldLabel
             description={
-              <div className="flex flex-row flex-wrap gap-2">
-                <div>
+              <Group gap="xs">
+                <Text>
                   Pass extra arguments to '
                   {currSwarmId ? "docker stack deploy" : "docker compose up"}
                   '.
-                </div>
-                <Link
+                </Text>
+                <Text
+                  component={Link}
                   to={
                     currSwarmId
                       ? "https://docs.docker.com/reference/cli/docker/stack/deploy/#options"
                       : "https://docs.docker.com/reference/cli/docker/service/create/#options"
                   }
                   target="_blank"
-                  className="text-primary"
+                  td="underline"
                 >
                   See docker docs.
-                </Link>
-              </div>
+                </Text>
+              </Group>
             }
           >
+            <InputList
+              field="extra_args"
+              values={value ?? []}
+              set={set}
+              disabled={disabled}
+              placeholder="--extra-arg=value"
+            />
             {!disabled && (
               <AddExtraArg
                 type="Stack"
@@ -524,13 +552,6 @@ export default function StackConfig({
                 disabled={disabled}
               />
             )}
-            <InputList
-              field="extra_args"
-              values={value ?? []}
-              set={set}
-              disabled={disabled}
-              placeholder="--extra-arg=value"
-            />
           </ConfigItem>
         ),
       },
@@ -542,7 +563,6 @@ export default function StackConfig({
         ignore_services: (values, set) => (
           <ConfigItem
             label="Ignore Services"
-            boldLabel
             description="If your compose file has init services that exit early, ignore them here so your stack will report the correct health."
           >
             <MultiSelect
@@ -567,7 +587,6 @@ export default function StackConfig({
         registry_provider: (provider, set) => {
           return (
             <ProviderSelectorConfig
-              boldLabel
               description="Login to a registry for private image access."
               accountType="docker"
               selected={provider}
@@ -670,6 +689,7 @@ export default function StackConfig({
         ...swarmServerGroup,
         {
           label: "Files",
+          labelHidden: true,
           fields: {
             run_directory: {
               label: "Run Directory",

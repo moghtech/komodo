@@ -91,7 +91,7 @@ export default function Config<T>({
         return (
           <Fragment key={group}>
             {group && (
-              <Text visibleFrom="lg" fz="h1" tt="uppercase" mt="xl">
+              <Text visibleFrom="lg" fz="h2" tt="uppercase" mt="xl">
                 {group}
               </Text>
             )}
