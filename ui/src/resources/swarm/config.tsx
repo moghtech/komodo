@@ -8,6 +8,7 @@ import { ConfigItem, ConfigList } from "@/ui/config/item";
 import { ActionIcon, Button, Group } from "@mantine/core";
 import ResourceSelector from "@/resources/selector";
 import { ICONS } from "@/theme/icons";
+import ConfigMaintenanceWindows from "@/components/maintenance-windows";
 
 export default function SwarmConfig({
   id,
@@ -49,7 +50,6 @@ export default function SwarmConfig({
                 return (
                   <ConfigItem
                     label="Manager Nodes"
-                    boldLabel
                     description="Select the Servers which have joined the Swarm as Manager Nodes."
                     gap="sm"
                   >
@@ -116,7 +116,41 @@ export default function SwarmConfig({
             },
           },
           {
+            label: "Alerts",
+            labelHidden: true,
+            contentHidden: ((update.links ?? config.links)?.length ?? 0) === 0,
+            fields: {
+              send_unhealthy_alerts: {
+                description: "Send alerts when the Swarm is unhealthy",
+              },
+              maintenance_windows: (values, set) => {
+                return (
+                  <ConfigItem
+                    label="Maintenance"
+                    description={
+                      <>
+                        Configure maintenance windows to temporarily disable
+                        alerts during scheduled maintenance periods. When a
+                        maintenance window is active, alerts from this swarm
+                        will be suppressed.
+                      </>
+                    }
+                  >
+                    <ConfigMaintenanceWindows
+                      windows={values ?? []}
+                      onUpdate={(maintenance_windows) =>
+                        set({ maintenance_windows })
+                      }
+                      disabled={disabled}
+                    />
+                  </ConfigItem>
+                );
+              },
+            },
+          },
+          {
             label: "Links",
+            boldLabel: false,
             description: "Add quick links in the resource header",
             contentHidden: ((update.links ?? config.links)?.length ?? 0) === 0,
             fields: {
