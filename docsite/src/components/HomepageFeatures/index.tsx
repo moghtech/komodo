@@ -12,6 +12,7 @@ import {
   type LucideIcon,
   Route,
   FolderSync,
+  Component,
 } from "lucide-react";
 
 type FeatureItem = {
@@ -21,26 +22,6 @@ type FeatureItem = {
 };
 
 const FeatureList: FeatureItem[] = [
-  {
-    title: "Deploy Containers",
-    icon: Box,
-    description: (
-      <>
-        Deploy and manage Docker containers across all your servers. View status and
-        logs, connect to container shells, and orchestrate them with automations.
-      </>
-    ),
-  },
-  {
-    title: "Docker Compose Stacks",
-    icon: Layers,
-    description: (
-      <>
-        Deploy compose stacks with files defined in the UI or sourced from a git
-        repo, with automatic redeploy on push.
-      </>
-    ),
-  },
   {
     title: "Unlimited Servers",
     icon: Server,
@@ -52,12 +33,34 @@ const FeatureList: FeatureItem[] = [
     ),
   },
   {
+    title: "Containers and Stacks",
+    icon: Layers,
+    description: (
+      <>
+        Deploy and manage containers and compose stacks across all your
+        servers. View status and logs, connect to container shells, and
+        orchestrate with automations.
+      </>
+    ),
+  },
+  {
+    title: "Docker Swarm",
+    icon: Component,
+    description: (
+      <>
+        Manage multiple swarms through a single entrypoint.
+        View connected nodes, deploy services and stacks, and
+        manage swarm configs and secrets.
+      </>
+    ),
+  },
+  {
     title: "Automated Image Builds",
     icon: Hammer,
     description: (
       <>
-        Build auto-versioned Docker images from git repos. Trigger builds on
-        webhook, integrated with AWS spot instances for unlimited capacity.
+        Automatically build images from git repos and push them to your registry for distribution.
+        Integrated with AWS spot instances for unlimited capacity.
       </>
     ),
   },
@@ -66,8 +69,9 @@ const FeatureList: FeatureItem[] = [
     icon: Route,
     description: (
       <>
-        Chain executions into multi-stage procedures, or use the UI editor for
-        scripts that call the Komodo API for complex automations.
+        Chain executions into multi-stage procedures. Create and execute
+        scripts in the UI for complex automations with direct access
+        to your Komodo resources.
       </>
     ),
   },
