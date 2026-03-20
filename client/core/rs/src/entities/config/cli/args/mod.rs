@@ -52,6 +52,10 @@ pub enum Command {
     unsanitized: bool,
   },
 
+  /// Print information about the connected Komodo Core. (alias: `core`)
+  #[clap(alias = "core")]
+  CoreInfo,
+
   /// List Komodo resources (aliases: `ls`, `resources`)
   #[clap(alias = "ls", alias = "resources")]
   List(list::List),

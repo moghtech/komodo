@@ -15,6 +15,7 @@ use wildcard::Wildcard;
 use crate::config::cli_config;
 
 pub mod container;
+pub mod core_info;
 pub mod database;
 pub mod execute;
 pub mod list;

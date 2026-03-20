@@ -45,6 +45,7 @@ async fn app() -> anyhow::Result<()> {
       }
       Ok(())
     }
+    args::Command::CoreInfo => command::core_info::handle().await,
     args::Command::Container(container) => {
       command::container::handle(container).await
     }
