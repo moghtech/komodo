@@ -55,6 +55,7 @@ export default function StackTabs({ id }: { id: string }) {
   const view =
     (_view === "Info" && hideInfo) ||
     (_view === "Services" && hideServices) ||
+    (_view === "Terminals" && terminalDisabled) ||
     (_view === "Log" && hideLogs)
       ? "Config"
       : _view;
@@ -87,7 +88,14 @@ export default function StackTabs({ id }: { id: string }) {
         icon: ICONS.Terminal,
       },
     ],
-    [hideInfo, hideServices, specificLogs, hideLogs],
+    [
+      hideInfo,
+      hideServices,
+      specificLogs,
+      hideLogs,
+      specificTerminal,
+      terminalDisabled,
+    ],
   );
 
   const Selector = (
