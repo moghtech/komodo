@@ -2,7 +2,7 @@
 
 Komodo is able to create, update, delete, and deploy resources declared in TOML files by diffing them against the existing resources,
 and apply updates based on the diffs. Similar to Stacks, the files can be configured in UI, in a local file, or in files pushed to a remote git repo.
-The Komodo Core backend will poll the files for for any updates, and alert about pending changes when diffs are detected.
+The Komodo Core backend will poll the files for any updates, and alert about pending changes when diffs are detected.
 
 You can spread out your resource declarations across any number of files
 and use any nesting of folders to organize resources inside a root folder.
@@ -72,7 +72,7 @@ git_account = "mbecker20"
 image_registry.type = "Standard"
 image_registry.params.domain = "github.com" # or your custom domain
 image_registry.params.account = "your_username"
-image_registry.params.organization = "your_organization" # optinoal
+image_registry.params.organization = "your_organization" # optional
 # Set docker labels
 labels = """
 org.opencontainers.image.source = https://github.com/mbecker20/test_logger
@@ -181,7 +181,7 @@ tags = ["test"]
 name = "Build stuff"
 executions = [
   { execution.type = "RunBuild", execution.params.build = "test_logger" },
-  # Uses the Batch version, witch matches many builds by pattern
+  # Uses the Batch version, which matches many builds by pattern
   # This one matches all builds prefixed with `foo-` (wildcard) and `bar-` (regex).
   { execution.type = "BatchRunBuild", execution.params.pattern = "foo-* , \\^bar-.*$\\" },
   { execution.type = "PullRepo", execution.params.repo = "komodo-periphery" },

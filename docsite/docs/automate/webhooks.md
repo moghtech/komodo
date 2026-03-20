@@ -1,9 +1,9 @@
 # Configuring Webhooks
 
-Multiple Komodo resources can take advantage of webhooks from your git provider. Komodo supports incoming webhooks using either the Github or Gitlab webhook authentication type, which is also supported by other providers like Gitea.
+Multiple Komodo resources can take advantage of webhooks from your git provider. Komodo supports incoming webhooks using either the GitHub or Gitlab webhook authentication type, which is also supported by other providers like Gitea.
 
 :::note
-On Gitea, the default "Gitea" webhook type works with the Github authentication type 👍
+On Gitea, the default "Gitea" webhook type works with the GitHub authentication type 👍
 :::
 
 ## Copy the Webhook URL
@@ -16,7 +16,7 @@ The webhook URL is constructed as follows:
 ```shell
 https://${HOST}/listener/${AUTH_TYPE}/${RESOURCE_TYPE}/${ID_OR_NAME}/${EXECUTION}
 ```
-- **`HOST`**: Your Komodo endpoint to recieve webhooks. 
+- **`HOST`**: Your Komodo endpoint to receive webhooks.
 	- If your Komodo sits in a private network,
 	  you will need a public proxy setup to forward `/listener` requests to Komodo.
 - **`AUTH_TYPE`**:
@@ -38,9 +38,9 @@ https://${HOST}/listener/${AUTH_TYPE}/${RESOURCE_TYPE}/${ID_OR_NAME}/${EXECUTION
 Navigate to the repo page on your git provider, and go to the settings for the Repo.
 Find Webhook settings, and click to create a new webhook.
 
-You will have to input some information. 
+Fill in the following fields:
 
-1. The `Payload URL` is the link that you copied in the step above, `Copy the Resource Payload URL`.
+1. The `Payload URL` is the webhook URL copied in the previous step.
 2. For Content-type, choose `application/json`
 3. For Secret, input the secret you configured in the Komodo Core config (`KOMODO_WEBHOOK_SECRET`).
 4. Enable SSL Verification, if you have proper TLS setup to your git provider (recommended).

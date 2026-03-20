@@ -1,4 +1,4 @@
-# Advanced Configuration
+# Advanced Setup
 
 ### Custom Certificate Authorities
 
@@ -19,23 +19,23 @@ just mount any required root certificates inside `/usr/local/share/ca-certificat
       - /path/to/custom-certs:/usr/local/share/ca-certificates
 ```
 
-### OIDC / Oauth2
+### OIDC / OAuth2
 
 To enable OAuth2 login, you must create a client on the respective OAuth provider,
-for example [Github](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)
+for example [GitHub](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)
 or [Google](https://developers.google.com/identity/protocols/oauth2).
 
-Komodo also supports self hosted Oauth2 providers like [Authentik](https://docs.goauthentik.io/docs/providers/oauth2/), [Gitea](https://docs.gitea.com/development/oauth2-provider) and [Keycloak](https://www.keycloak.org).
+Komodo also supports self hosted OAuth2 providers like [Authentik](https://docs.goauthentik.io/docs/providers/oauth2/), [Gitea](https://docs.gitea.com/development/oauth2-provider) and [Keycloak](https://www.keycloak.org).
 
 - Komodo uses the `web application` login flow.
 - The redirect uri is:
-	- `<KOMODO_HOST>/auth/github/callback` for Github.
+	- `<KOMODO_HOST>/auth/github/callback` for GitHub.
 	- `<KOMODO_HOST>/auth/google/callback` for Google.
 	- `<KOMODO_HOST>/auth/oidc/callback` for OIDC.
 
 ### Authentik
 
-Check out the [Authentik official support documentation](https://integrations.goauthentik.io/infrastructure/komodo/).
+Check out the [Authentik integration docs](https://integrations.goauthentik.io/infrastructure/komodo/).
 
 ### Keycloak
 - Create an [OIDC client](https://www.keycloak.org/docs/latest/server_admin/index.html#proc-creating-oidc-client_server_administration_guide) in Keycloak.

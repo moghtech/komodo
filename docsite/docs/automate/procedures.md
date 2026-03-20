@@ -34,7 +34,7 @@ executions = [
 [[procedure.config.stage]]
 name = "Deploy if changed"
 executions = [
-  # Uses the Batch version, witch matches many stacks by pattern
+  # Uses the Batch version, which matches many stacks by pattern
   # This one matches all stacks prefixed with `foo-` (wildcard) and `bar-` (regex).
   { execution.type = "BatchDeployStackIfChanged", execution.params.pattern = "foo-* , \\^bar-.*$\\" },
 ]

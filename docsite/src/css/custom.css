@@ -17,14 +17,14 @@
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
+/* Dark mode: lighter green ramp consistent with the logo's forest green */
 [data-theme='dark'] {
-  --ifm-color-primary: #25c2a0;
-  --ifm-color-primary-dark: #21af90;
-  --ifm-color-primary-darker: #1fa588;
-  --ifm-color-primary-darkest: #1a8870;
-  --ifm-color-primary-light: #29d5b0;
-  --ifm-color-primary-lighter: #32d8b4;
-  --ifm-color-primary-lightest: #4fddbf;
+  --ifm-color-primary: #4db87a;
+  --ifm-color-primary-dark: #44a46e;
+  --ifm-color-primary-darker: #3f9b67;
+  --ifm-color-primary-darkest: #347f55;
+  --ifm-color-primary-light: #5ec487;
+  --ifm-color-primary-lighter: #6aca90;
+  --ifm-color-primary-lightest: #82d3a1;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }

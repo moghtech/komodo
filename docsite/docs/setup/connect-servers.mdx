@@ -18,7 +18,7 @@ You can install Periphery as a systemd managed process, run it as a [docker cont
 
 :::info
 This is the recommended and simplest method to run Periphery.
-It avoid a number of complications which can come up when running Periphery in a container.
+It avoids a number of complications which can come up when running Periphery in a container.
 [See this discussion](https://github.com/moghtech/komodo/discussions/220).
 :::
 
@@ -133,8 +133,8 @@ command: periphery --config-path /path/in/container/to/periphery.config.base.tom
 
 The configuration can also be passed as **YAML** or **JSON**.
 You can use it-tools to convert this TOML file to your preferred format:
-  - YAML: https://it-tools.tech/toml-to-yaml
-  - JSON: https://it-tools.tech/toml-to-json
+  - YAML: [it-tools.tech/toml-to-yaml](https://it-tools.tech/toml-to-yaml)
+  - JSON: [it-tools.tech/toml-to-json](https://it-tools.tech/toml-to-json)
 
 Quick download to `./komodo/periphery.config.toml`:
 ```bash
@@ -170,4 +170,4 @@ So if you pass `allowed_ips = []` in your override config, the final allowed_ips
 
 For example, with `--merge-nested-config true` you can specify an allowed ip in the base config, and another in the override config, they will both be present in the final config.
 
-Similarly, you can specify a base docker / github account pair, and extend them with additional accounts in the override config.
+Similarly, you can specify a base Docker / GitHub account pair, and extend them with additional accounts in the override config.

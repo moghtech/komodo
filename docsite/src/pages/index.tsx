@@ -23,6 +23,7 @@ function HomepageHeader() {
                 top: "40%",
                 left: "50%",
                 transform: "translate(-50%, -50%)",
+                color: "white",
               }}
             >
               Komodo
@@ -30,43 +31,31 @@ function HomepageHeader() {
           </div>
         </div>
         <p className="hero__subtitle">{siteConfig.tagline}</p>
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <div className={styles.buttons}>
-            <Link
-              className="button button--secondary button--lg"
-              to="/docs/intro"
-            >
-              Docs
-            </Link>
-            <Link
-              className="button button--secondary button--lg"
-              to="https://github.com/moghtech/komodo"
-            >
-              Github
-            </Link>
-            <Link
-              className="button button--secondary button--lg"
-              to="https://github.com/moghtech/komodo#screenshots"
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                gridColumn: "span 2",
-              }}
-            >
-              Screenshots
-            </Link>
-            <Link
-              className="button button--secondary button--lg"
-              to="https://demo.komo.do"
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                gridColumn: "span 2",
-              }}
-            >
-              Demo
-            </Link>
-          </div>
+        <div className={styles.buttons}>
+          <Link
+            className="button button--secondary button--lg"
+            to="/docs/intro"
+          >
+            Docs
+          </Link>
+          <Link
+            className="button button--secondary button--lg"
+            to="https://demo.komo.do"
+          >
+            Live Demo
+          </Link>
+          <Link
+            className="button button--secondary button--lg"
+            to="https://github.com/moghtech/komodo"
+          >
+            GitHub
+          </Link>
+          <Link
+            className="button button--secondary button--lg"
+            to="https://github.com/moghtech/komodo#screenshots"
+          >
+            Screenshots
+          </Link>
         </div>
       </div>
     </header>

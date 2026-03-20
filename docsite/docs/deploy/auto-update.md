@@ -31,17 +31,16 @@ guidance / convenience.
 Both Stacks and Deployments allow you to configure **Poll for Updates** or **Auto Update**.
 When [**GlobalAutoUpdate**](https://docs.rs/komodo_client/latest/komodo_client/api/execute/struct.GlobalAutoUpdate.html)
 is run, Komodo will loop through all the resources with either of these options enabled,
-and run [**PullStack**](https://docs.rs/komodo_client/latest/komodo_client/api/execute/struct.PullStack.html) / [**PullDeployment**](https://docs.rs/komodo_client/latest/komodo_client/api/execute/struct.PullDeployment.html)
-in order to pick up any newer images **at the same tag**.
-Note that in order to work, it requires use of a "Rolling" image tag, such as `:latest`.
+and check with the configured registries for a newer image digest **with the same tag**.
+Note that in order to work, it requires use of a "rolling" image tag, such as `:latest`.
 
 :::info
-If you use git sources Stacks and want to automatically update image tags, check out
-[Renovate](https://github.com/renovatebot/renovate?tab=readme-ov-file#what-is-the-mend-renovate-cli)
+If you use git-sourced stacks and want to automatically update **pinned** image tags, check out
+[Renovate](https://github.com/renovatebot/renovate?tab=readme-ov-file#what-is-the-mend-renovate-cli).
 :::
 
 For resources with **Poll for Updates** enabled and an Alerter configured, it will
-send an alert that a newer image is available, and display the update available indicator in the UI
+send an alert that a newer image is available, and display the update available indicator in the UI.
 
-For resource with **Auto Update** enabled, it will go ahead and Redeploy *just the services* with
-newer images (by default). If an Alerter is configured, it will also send an alert that this occured.
+For resources with **Auto Update** enabled, it will go ahead and Redeploy *just the services* with
+newer images (by default). If an Alerter is configured, it will also send an alert that this occurred.

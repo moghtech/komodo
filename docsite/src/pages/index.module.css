@@ -17,8 +17,9 @@
 }
 
 .buttons {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
-  grid-template-columns: 1fr 1fr;
-  width: fit-content;
+  justify-content: center;
+  margin-top: 0.5rem;
 }

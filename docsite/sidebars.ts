@@ -1,15 +1,5 @@
 import type { SidebarsConfig } from "@docusaurus/plugin-content-docs";
 
-/**
- * Creating a sidebar enables you to:
- - create an ordered group of docs
- - render a sidebar for each doc of that group
- - provide next/previous navigation
-
- The sidebars can be generated from the filesystem, or explicitly defined here.
-
- Create as many sidebars as you want.
- */
 const sidebars: SidebarsConfig = {
   docs: [
     "intro",
@@ -23,52 +13,66 @@ const sidebars: SidebarsConfig = {
       items: [
         "setup/mongo",
         "setup/ferretdb",
+        "setup/advanced",
         "setup/connect-servers",
         "setup/backup",
-        "setup/advanced",
         "setup/version-upgrades",
       ],
     },
     {
       type: "category",
-      label: "Resources",
-      link: {
-        type: "doc",
-        id: "resources/index",
-      },
+      label: "Deploy",
+      collapsible: true,
+      collapsed: false,
       items: [
         {
           type: "category",
-          label: "Build Images",
+          label: "Containers",
           link: {
             type: "doc",
-            id: "resources/build-images/index",
+            id: "deploy/containers/index",
           },
           items: [
-            "resources/build-images/configuration",
-            "resources/build-images/pre-build",
-            "resources/build-images/builders",
-            "resources/build-images/versioning",
+            "deploy/containers/configuration",
+            "deploy/containers/lifetime-management",
           ],
         },
-        {
-          type: "category",
-          label: "Deploy Containers",
-          link: {
-            type: "doc",
-            id: "resources/deploy-containers/index",
-          },
-          items: [
-            "resources/deploy-containers/configuration",
-            "resources/deploy-containers/lifetime-management",
-          ],
-        },
-        "resources/docker-compose",
-        "resources/auto-update",
+        "deploy/docker-compose",
+        "deploy/auto-update",
+      ],
+    },
+    {
+      type: "category",
+      label: "Build Images",
+      link: {
+        type: "doc",
+        id: "build-images/index",
+      },
+      items: [
+        "build-images/configuration",
+        "build-images/builders",
+        "build-images/pre-build",
+        "build-images/versioning",
+      ],
+    },
+    {
+      type: "category",
+      label: "Automate",
+      collapsible: true,
+      collapsed: false,
+      items: [
+        "automate/procedures",
+        "automate/sync-resources",
+        "automate/webhooks",
+      ],
+    },
+    {
+      type: "category",
+      label: "Configuration",
+      collapsible: true,
+      collapsed: false,
+      items: [
         "resources/variables",
-        "resources/procedures",
-        "resources/sync-resources",
-        "resources/webhooks",
         "resources/permissioning",
       ],
     },
