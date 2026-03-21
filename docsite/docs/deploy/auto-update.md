@@ -1,8 +1,23 @@
 # Automatic Updates
 
-Starting from **v1.19.0**, new Komodo installs will automatically create the
-**Global Auto Update** [Procedure](../resources/procedures#procedures), scheduled daily.
-If you don't have it, this is the Toml:
+Komodo can automatically check for newer Docker image digests and redeploy resources when updates are found.
+
+## Configuration
+
+Both **Stacks** and **Deployments** support two update modes:
+
+| Mode | Behavior |
+|---|---|
+| **Poll for Updates** | Checks for newer images with the same tag. Displays an update indicator in the UI and sends an alert (if an Alerter is configured). Does not redeploy. |
+| **Auto Update** | Same check, but automatically redeploys services with newer images. Also sends an alert. |
+
+:::note
+Auto-update requires a "rolling" image tag like `:latest`. For pinned tags in git-sourced stacks, consider [Renovate](https://github.com/renovatebot/renovate).
+:::
+
+## Global Auto Update Procedure
+
+New installs include a **Global Auto Update** Procedure, scheduled daily. It loops through all resources with either mode enabled and checks registries for newer digests.
 
 ```toml
 [[procedure]]
@@ -20,27 +35,5 @@ executions = [
 ```
 
 :::info
-You are also able to integrate `GlobalAutoUpdate` into other Procedures
-to coordinate the timing with other processes, such as backup. There is
-nothing special about this Procedure, it's just created by default for
-guidance / convenience.
+`GlobalAutoUpdate` can be integrated into other Procedures to coordinate timing with processes like backups. There is nothing special about the default Procedure — it is created for convenience.
 :::
-
-### How does it work?
-
-Both Stacks and Deployments allow you to configure **Poll for Updates** or **Auto Update**.
-When [**GlobalAutoUpdate**](https://docs.rs/komodo_client/latest/komodo_client/api/execute/struct.GlobalAutoUpdate.html)
-is run, Komodo will loop through all the resources with either of these options enabled,
-and check with the configured registries for a newer image digest **with the same tag**.
-Note that in order to work, it requires use of a "rolling" image tag, such as `:latest`.
-
-:::info
-If you use git-sourced stacks and want to automatically update **pinned** image tags, check out
-[Renovate](https://github.com/renovatebot/renovate?tab=readme-ov-file#what-is-the-mend-renovate-cli).
-:::
-
-For resources with **Poll for Updates** enabled and an Alerter configured, it will
-send an alert that a newer image is available, and display the update available indicator in the UI.
-
-For resources with **Auto Update** enabled, it will go ahead and Redeploy *just the services* with
-newer images (by default). If an Alerter is configured, it will also send an alert that this occurred.

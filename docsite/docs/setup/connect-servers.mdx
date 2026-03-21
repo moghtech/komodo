@@ -4,11 +4,13 @@
 import RemoteCodeFile from "@site/src/components/RemoteCodeFile";
 ```
 
-Connecting a server to Komodo has 3 steps:
+Every server you want to manage with Komodo needs the **Periphery** agent installed. Periphery is a small, stateless binary that receives commands from Komodo Core.
+
+Connecting a server has 3 steps:
 
 1.  **Create an Onboarding Key** via the Komodo Core API / UI (they can also be reused).
 2.  **Install the Periphery agent** on the server or VM.
-3.  Confirm the connection status is OK.
+3.  Confirm the connection status is **OK**.
 
 ## Install Periphery
 
@@ -44,18 +46,20 @@ curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/scripts/setup-p
   --onboarding-key="O-..."
 ```
 
-:::warning
-**User installs**: To ensure periphery stays running when your user logs out, make sure to enable linger:
-```bash
-sudo loginctl enable-linger $USER
-```
-:::
+
 
 #### Enable the Periphery service to start automatically after a reboot.
 
 ```bash
 sudo systemctl enable periphery
 ```
+
+:::warning Important
+**For systemctl user installs**: To ensure periphery stays running when your user logs out, make sure to enable linger:
+```bash
+sudo loginctl enable-linger $USER
+```
+:::
 
 #### Configuration file
 

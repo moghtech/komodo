@@ -16,12 +16,18 @@ All resources which depend on git repos / docker registries are able to use thes
 - Set alerting thresholds.
 - Can be attached to by **Deployments**, **Stacks**, **Repos**, and **Builders**.
 
-## [Deployment](deploy/containers/index.mdx)
+## [Swarm](swarm)
+
+- Configure the manager nodes to control the Swarm through.
+- Manage swarm nodes, stacks, services, tasks, configs, and secrets.
+- Can be attached to by **Deployments** and **Stacks**.
+
+## [Deployment](deploy/containers)
 
 - Deploy a docker container on the attached Server.
 - Manage services at the container level, perform orchestration using **Procedures** and **ResourceSyncs**.
 
-## [Stack](deploy/docker-compose)
+## [Stack](deploy/compose)
 
 - Deploy with docker compose.
 - Provide the compose file in UI, or move the files to a git repo and use a webhook for auto redeploy on push.
@@ -33,12 +39,12 @@ All resources which depend on git repos / docker registries are able to use thes
 - Put scripts in git repos, and run them on a Server, or using a Builder.
 - Can build binaries, perform automation, really whatever you can think of.
 
-## [Build](build-images/index.mdx)
+## [Build](build)
 
 - Build application source into docker images, and push them to the configured registry.
 - The source can be any git repo containing a Dockerfile.
 
-## [Builder](build-images/builders)
+## [Builder](build#builders)
 
 - Either points to a connected server, or holds configuration to launch a single-use AWS instance to build the image.
 - Can be attached to **Builds** and **Repos**.

@@ -19,42 +19,20 @@ const sidebars: SidebarsConfig = {
         "setup/version-upgrades",
       ],
     },
+    "resources",
     {
       type: "category",
       label: "Deploy",
       collapsible: true,
       collapsed: false,
       items: [
-        {
-          type: "category",
-          label: "Containers",
-          link: {
-            type: "doc",
-            id: "deploy/containers/index",
-          },
-          items: [
-            "deploy/containers/configuration",
-            "deploy/containers/lifetime-management",
-          ],
-        },
-        "deploy/docker-compose",
+        "deploy/containers",
+        "deploy/compose",
         "deploy/auto-update",
       ],
     },
-    {
-      type: "category",
-      label: "Build Images",
-      link: {
-        type: "doc",
-        id: "build-images/index",
-      },
-      items: [
-        "build-images/configuration",
-        "build-images/builders",
-        "build-images/pre-build",
-        "build-images/versioning",
-      ],
-    },
+    "swarm",
+    "build",
     {
       type: "category",
       label: "Automate",
@@ -72,8 +50,9 @@ const sidebars: SidebarsConfig = {
       collapsible: true,
       collapsed: false,
       items: [
-        "resources/variables",
-        "resources/permissioning",
+        "configuration/providers",
+        "configuration/variables",
+        "configuration/permissioning",
       ],
     },
     {

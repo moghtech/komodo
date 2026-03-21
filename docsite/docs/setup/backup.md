@@ -1,12 +1,11 @@
 # Backup and Restore
 
-:::info
-Database backup and restore is actually a function of the [Komodo CLI](../ecosystem/cli),
-which is packaged in with the Komodo Core image for convenience.
-:::
+Komodo can automatically back up its database on a schedule and restore from any previous snapshot. Backups are gzip-compressed and stored on disk or a remote server, and by default the most recent 14 backups are stored. The backup and restore operations are handled by the [Komodo CLI](../ecosystem/cli), which is packaged in the Core image for convenience.
 
-Starting from **v1.19.0**, new Komodo installs will automatically create the
-**Backup Core Database** [Procedure](../resources/procedures#procedures), scheduled daily.
+## Scheduled Backup
+
+New installs (v1.19.0+) automatically create the
+**Backup Core Database** [Procedure](../automate/procedures#procedures), scheduled daily.
 If you don't have it, this is the Toml:
 
 ```toml

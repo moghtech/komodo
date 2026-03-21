@@ -35,6 +35,20 @@ region = "AshburnDc1"
 enabled = true # default: false
 ```
 
+### Swarm
+
+- [Swarm config schema](https://docs.rs/komodo_client/latest/komodo_client/entities/swarm/struct.SwarmConfig.html)
+
+```toml
+[[swarm]]
+name = "production-swarm"
+description = "Production Docker Swarm cluster"
+tags = ["prod"]
+[swarm.config]
+servers = ["manager-01", "manager-02", "manager-03"]
+send_unhealthy_alerts = true
+```
+
 ### Builder and build
 
 - [Builder config schema](https://docs.rs/komodo_client/latest/komodo_client/entities/builder/enum.BuilderConfig.html)
@@ -65,7 +79,7 @@ name = "test_logger"
 description = "Logs randomly at INFO, WARN, ERROR levels to test logging setups"
 tags = ["test"]
 [build.config]
-builder_id = "builder-01"
+builder = "builder-01"
 repo = "mbecker20/test_logger"
 branch = "master"
 git_account = "mbecker20"
@@ -103,7 +117,7 @@ tags = ["test"]
 #  - the attached build has new version.
 deploy = true
 [deployment.config]
-server_id = "server-01"
+server = "server-01"
 image.type = "Build"
 image.params.build = "test_logger"
 # set the volumes / bind mounts
@@ -134,7 +148,7 @@ deploy = true
 # Additionally, any sync deploy of test-logger-01 will also trigger sync deploy of this deployment.
 after = ["test-logger-01"]
 [deployment.config]
-server_id = "server-01"
+server = "server-01"
 image.type = "Build"
 image.params.build = "test_logger"
 volumes = """
@@ -160,7 +174,7 @@ deploy = true
 after = ["test-logger-01"] # Stacks can depend on deployments, and vice versa.
 tags = ["test"]
 [stack.config]
-server_id = "server-prod"
+server = "server-prod"
 file_paths = ["mongo.yaml", "redis.yaml"]
 git_provider = "git.mogh.tech"
 git_account = "mbecker20" # clone private repo by specifying account
@@ -212,7 +226,7 @@ name = "komodo-periphery"
 description = "Builds new versions of the periphery binary. Requires Rust installed on the host."
 tags = ["komodo"]
 [repo.config]
-server_id = "server-01"
+server = "server-01"
 git_provider = "git.mogh.tech" # use an alternate git provider (default is github.com)
 git_account = "mbecker20"
 repo = "moghtech/komodo"

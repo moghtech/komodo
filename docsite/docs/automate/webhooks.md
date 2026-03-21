@@ -1,57 +1,46 @@
-# Configuring Webhooks
+# Webhooks
 
-Multiple Komodo resources can take advantage of webhooks from your git provider. Komodo supports incoming webhooks using either the GitHub or Gitlab webhook authentication type, which is also supported by other providers like Gitea.
+Komodo resources can be triggered by incoming webhooks from your git provider. GitHub and GitLab authentication types are supported, which also covers Gitea, Forgejo, and other compatible providers.
 
 :::note
-On Gitea, the default "Gitea" webhook type works with the GitHub authentication type 👍
+Gitea's default "Gitea" webhook type works with the GitHub authentication type.
 :::
 
-## Copy the Webhook URL
+## Webhook URL
 
-Find the resource in UI, like a `Build`, `Repo`, or `Stack`.
-Go to the `Config` section, find "Webhooks", and copy the webhook for the action you want.
+Find the webhook URL on any resource's Config page under "Webhooks". The URL format is:
 
-The webhook URL is constructed as follows:
-
-```shell
-https://${HOST}/listener/${AUTH_TYPE}/${RESOURCE_TYPE}/${ID_OR_NAME}/${EXECUTION}
 ```
-- **`HOST`**: Your Komodo endpoint to receive webhooks.
-	- If your Komodo sits in a private network,
-	  you will need a public proxy setup to forward `/listener` requests to Komodo.
-- **`AUTH_TYPE`**:
-	- options: `github` | `gitlab`
-	- `github`: Validates the signature attached with `X-Hub-Signature-256`. [reference](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries)
-	- `gitlab`: Checks that the secret attached to `X-Gitlab-Token` is valid. [reference](https://docs.gitlab.com/ee/user/project/integrations/webhooks.html#create-a-webhook)
-- **`RESOURCE_TYPE`**:
-	- options: `build` | `repo` | `stack` | `sync` | `procedure` | `action`
-- **`ID_OR_NAME`**:
-	- Reference the specific resource by id or name. If the name may change, it is better to use id.
-- **`EXECUTION`**:
-	- Which executions are available depends on the `RESOURCE_TYPE`. Builds only have the `/build` action.
-		Repos can select between `/pull`, `/clone`, or `/build`. Stacks have `/deploy` and `/refresh`, and Resource Syncs have `/sync` and `/refresh`.
-	- For **Procedures and Actions**, this will be the **branch to listen to for pushes**, or `__ANY__` to trigger
-		on pushes to any branch.
+https://<HOST>/listener/<AUTH_TYPE>/<RESOURCE_TYPE>/<ID_OR_NAME>/<EXECUTION>
+```
 
-## Create the webhook on the Git Provider
+| Component | Options |
+|---|---|
+| `HOST` | Your Komodo endpoint. If Komodo is on a private network, set up a public proxy for `/listener` requests. |
+| `AUTH_TYPE` | `github` — validates `X-Hub-Signature-256`. `gitlab` — validates `X-Gitlab-Token`. |
+| `RESOURCE_TYPE` | `build`, `repo`, `stack`, `sync`, `procedure`, `action` |
+| `ID_OR_NAME` | Resource ID or name. Use ID if the name may change. |
+| `EXECUTION` | Depends on resource type (see below). |
 
-Navigate to the repo page on your git provider, and go to the settings for the Repo.
-Find Webhook settings, and click to create a new webhook.
+### Executions by resource type
 
-Fill in the following fields:
+| Resource | Available executions |
+|---|---|
+| Build | `/build` |
+| Repo | `/pull`, `/clone`, `/build` |
+| Stack | `/deploy`, `/refresh` |
+| Resource Sync | `/sync`, `/refresh` |
+| Procedure / Action | Branch name to listen for (e.g. `/main`), or `/__ANY__` for all branches. |
 
-1. The `Payload URL` is the webhook URL copied in the previous step.
-2. For Content-type, choose `application/json`
-3. For Secret, input the secret you configured in the Komodo Core config (`KOMODO_WEBHOOK_SECRET`).
-4. Enable SSL Verification, if you have proper TLS setup to your git provider (recommended).
-5. For "events that trigger the webhook", just the push request is what most people want.
-6. Of course, make sure the webhook is "Active" and hit create.
+## Setting Up a Webhook
 
-## When does it trigger?
+1. Copy the webhook URL from the resource's Config page in Komodo.
+2. On your git provider, go to the repo's **Settings > Webhooks** and create a new webhook.
+3. Set the **Payload URL** to the copied URL.
+4. Set **Content-type** to `application/json`.
+5. Set **Secret** to your `KOMODO_WEBHOOK_SECRET`.
+6. Select **Push events** as the trigger.
 
-Your git provider will now push this webhook to Komodo on *every* push to *any* branch. However, your `Build`, `Repo`,
-etc. only cares about a specific branch of the repo.
+## Branch Filtering
 
-Because of this, the webhook will trigger the action **only on pushes to the branch configured on the resource**.
-
-For example, if I make a build, I may point the build to the `release` branch of a particular repo. If I set up a webhook, and push to the `main` branch, the action will *not trigger*. It will only trigger when the push is to the `release` branch.
+Your git provider sends webhooks on pushes to **any** branch. Komodo only triggers the action when the push matches the **branch configured on the resource**. For example, a Build pointed at the `release` branch will ignore pushes to `main`.
