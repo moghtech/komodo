@@ -527,9 +527,7 @@ impl PublicKeyValidator for OnboardingKeyValidator {
     {
       return Err(anyhow!("Onboarding key is invalid"));
     }
-    if self.privileged_required
-      && !onboarding_key.privileged
-    {
+    if self.privileged_required && !onboarding_key.privileged {
       return Err(anyhow!(
         "Onboarding key not able to fix existing servers"
       ));
