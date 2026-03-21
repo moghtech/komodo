@@ -94,7 +94,7 @@ export default function NewResource<Config>({
 
           {!templateId && extraInputs}
 
-          {_showTemplateSelector && showTemplateSelector && (
+          {(!!copyId || (_showTemplateSelector && showTemplateSelector)) && (
             <>
               {!templateId && extraInputs && <Divider />}
               <ResourceSelector
