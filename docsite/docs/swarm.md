@@ -23,9 +23,35 @@ send_unhealthy_alerts = true
 | `maintenance_windows` | Scheduled windows during which alerts are suppressed. | `[]` |
 | `links` | Quick links displayed in the resource header. | `[]` |
 
+## Getting Started
+
+To use Docker Swarm with Komodo, you first need to initialize a swarm on one of your connected servers.
+
+### 1. Initialize the Swarm
+
+SSH into your server (or use a Komodo terminal) and run [`docker swarm init`](https://docs.docker.com/reference/cli/docker/swarm/init/):
+
+```bash
+docker swarm init --advertise-addr <SERVER_IP>
+```
+
+### 2. Create the Swarm resource in Komodo
+
+Create a new Swarm resource and add the server as a manager node. Once created, Komodo will detect the swarm and display its nodes.
+
+### 3. Join additional nodes
+
+To add more servers to the swarm, navigate to the Swarm's node list in the UI and click the **Join** button. This will display the [`docker swarm join`](https://docs.docker.com/reference/cli/docker/swarm/join/) command with the correct token and address — copy it and run it on the server you want to add.
+
+There are separate join commands for **worker** and **manager** nodes.
+
+:::tip
+After a node joins, add it as a Server in Komodo and (for managers) include it in the Swarm resource's `servers` list for redundancy.
+:::
+
 ## Nodes
 
-View all nodes in the swarm with their role, availability, status, platform, and resource usage.
+View all nodes in the swarm with their role, availability, status, and other information.
 
 ## Services
 

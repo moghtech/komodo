@@ -1,6 +1,6 @@
 # Procedures and Actions
 
-Komodo offers `Procedure` and `Action` resources for orchestrating multi-resource workflows.
+Komodo offers `Procedure` and `Action` resources for orchestrating multi-resource workflows. Both can be run on a **[schedule](schedules)**
 
 ## Procedures
 
@@ -29,10 +29,12 @@ executions = [
 
 | Field | Description | Default |
 |---|---|---|
-| `schedule` | Cron-style schedule string (e.g. `"Every day at 03:00"`). | — |
 | `config.stage[].name` | Display name for the stage. | — |
 | `config.stage[].enabled` | Whether the stage is active. | `true` |
 | `config.stage[].executions` | List of executions to run in parallel within the stage. | `[]` |
+| `schedule` | Schedule expression. See [Scheduling](scheduling). | `""` |
+| `schedule_format` | `English` or `Cron`. | `English` |
+| `schedule_enabled` | Whether the schedule is active. | `true` |
 
 ### Batch Executions
 
@@ -48,7 +50,8 @@ executions = [
 
 ## Actions
 
-Actions let you write Typescript scripts that call the Komodo API. A pre-initialized `komodo` client is available — no API keys needed. The editor provides type-aware suggestions and inline docs.
+Actions let you write Typescript scripts that call the Komodo API. A pre-initialized `komodo` client is available — no API key configuration needed.
+The in UI editor provides type-aware suggestions and inline documentation.
 
 ```ts
 const VERSION = "1.16.5";
@@ -74,3 +77,50 @@ for (const app of APPS) {
 ```
 
 The Typescript client is also [published on NPM](https://www.npmjs.com/package/komodo_client).
+
+### Action examples
+
+#### Restart all deployments matching tags
+
+```ts
+const deployments = await komodo.read("ListDeployments", {
+  query: { tags: ["backend"] },
+});
+
+for (const deployment of deployments) {
+  await komodo.execute("RestartDeployment", {
+    deployment: deployment.name,
+  });
+  console.log(`Restarted ${deployment.name}`);
+}
+```
+
+#### Run a command on a server terminal
+
+```ts
+await komodo.execute_server_terminal({
+  server: "server-prod",
+  command: "df -h",
+  init: { command: "bash" },
+}, {
+  onLine: (line) => console.log(line),
+  onFinish: (code) => console.log("Exit code:", code),
+});
+```
+
+#### Scale a deployment based on time of day
+
+```ts
+const hour = new Date().getHours();
+const replicas = hour >= 9 && hour <= 17 ? "4" : "1";
+
+await komodo.write("UpdateDeployment", {
+  id: "api-server",
+  config: {
+    extra_args: [`--replicas=${replicas}`],
+  },
+});
+
+await komodo.execute("Deploy", { deployment: "api-server" });
+console.log(`Scaled api-server to ${replicas} replicas`);
+```

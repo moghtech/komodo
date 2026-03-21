@@ -32,6 +32,7 @@ const sidebars: SidebarsConfig = {
       ],
     },
     "swarm",
+    "terminals",
     "build",
     {
       type: "category",
@@ -40,6 +41,7 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: [
         "automate/procedures",
+        "automate/schedules",
         "automate/sync-resources",
         "automate/webhooks",
       ],

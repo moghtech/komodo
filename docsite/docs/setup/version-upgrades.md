@@ -71,8 +71,8 @@ After updating to Komodo v2, **you can follow these steps to migrate to outbound
 using public key authentication**. Note you must be an Admin user on Komodo.
 
 1. (**Periphery container only**.) Ensure the automatically generated private keys are persisted by mounting to the `/config/keys` of the Periphery container, as noted above.
-2. Navigate to `Settings / Onboarding` and create a new **Onboarding Key**. Save it for later.
-3. Enable **Priviledged mode** on the new Onboarding Key.
+2. Navigate to `Settings / Onboarding` and create a new **onboarding key**. Save it for later.
+3. Enable **privileged mode** on the new Onboarding Key.
 4. **Redeploy Periphery agents with updated configuration:**
 
 ```toml
@@ -94,9 +94,9 @@ connect_as = "<SERVER_NAME>"
 onboarding_key = "<YOUR_ONBOARDING_KEY>"
 ```
 
-Upon connecting, the Priviledged Onboarding Key will allow the existing Server's expected public key
+Upon connecting, the privileged onboarding key will allow the existing server's expected public key
 to be updated, allowing the Periphery agent to connect.
-**In general when onboarding _new_ Servers, Privilidged Mode for Onboarding Keys is not needed.**
+**In general when onboarding _new_ servers, privilidged mode is not needed.**
 
 ### 3. Fix any `komodo.execute_terminal` in Actions
 
