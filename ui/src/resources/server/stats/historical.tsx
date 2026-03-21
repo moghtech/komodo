@@ -60,7 +60,7 @@ export default function ServerHistoricalStats({ id }: { id: string }) {
       title="Historical"
       icon={<ChartLine size="1.3rem" />}
       titleRight={
-        <Group ml={{ sm: "xl" }}>
+        <Group ml={{ sm: "xl" }} onClick={(e) => e.stopPropagation()}>
           <Select
             value={interval}
             onChange={(interval) =>
@@ -79,7 +79,6 @@ export default function ServerHistoricalStats({ id }: { id: string }) {
               Types.Timelength.OneDay,
             ]}
             w={120}
-            onClick={(e) => e.stopPropagation()}
           />
           <ShowHideButton show={show} setShow={setShow} />
         </Group>
