@@ -29,8 +29,7 @@ impl DockerClient {
         });
         let name = image
           .repo_tags
-          .iter()
-          .next()
+          .first()
           .cloned()
           .unwrap_or_else(|| image.id.clone());
         ImageListItem {

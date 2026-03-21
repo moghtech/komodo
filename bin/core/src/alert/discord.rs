@@ -142,7 +142,7 @@ pub async fn send_alert(
       } else if let Some(server) = server_name {
         format!("\nserver: **{server}**")
       } else {
-        format!("")
+        String::new()
       };
       format!(
         "📦 Deployment **{name}** is now **{to}**{target}\nprevious: **{from}**\n{link}"
@@ -163,7 +163,7 @@ pub async fn send_alert(
       } else if let Some(server) = server_name {
         format!("\nserver: **{server}**")
       } else {
-        format!("")
+        String::new()
       };
       format!(
         "⬆ Deployment **{name}** has an update available{target}\nimage: **{image}**\n{link}"
@@ -184,7 +184,7 @@ pub async fn send_alert(
       } else if let Some(server) = server_name {
         format!("\nserver: **{server}**")
       } else {
-        format!("")
+        String::new()
       };
       format!(
         "⬆ Deployment **{name}** was updated automatically ⏫{target}\nimage: **{image}**\n{link}"
@@ -207,7 +207,7 @@ pub async fn send_alert(
       } else if let Some(server) = server_name {
         format!("\nserver: **{server}**")
       } else {
-        format!("")
+        String::new()
       };
       format!(
         "🥞 Stack **{name}** is now {to}{target}\nprevious: **{from}**\n{link}"
@@ -229,7 +229,7 @@ pub async fn send_alert(
       } else if let Some(server) = server_name {
         format!("\nserver: **{server}**")
       } else {
-        format!("")
+        String::new()
       };
       format!(
         "⬆ Stack **{name}** has an update available{target}\nservice: **{service}**\nimage: **{image}**\n{link}"
@@ -253,7 +253,7 @@ pub async fn send_alert(
       } else if let Some(server) = server_name {
         format!("\nserver: **{server}**")
       } else {
-        format!("")
+        String::new()
       };
       format!(
         "⬆ Stack **{name}** was updated automatically ⏫{target}\n{images_label}: **{images}**\n{link}"

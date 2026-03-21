@@ -27,7 +27,7 @@ impl DockerClient {
       .await
       .context("Failed to query for swarm service list")?
       .into_iter()
-      .map(|service| convert_service_list_item(service))
+      .map(convert_service_list_item)
       .collect::<Vec<_>>();
 
     services.sort_by(|a, b| {

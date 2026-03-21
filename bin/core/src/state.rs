@@ -220,5 +220,5 @@ pub fn all_resources_cache() -> &'static ArcSwap<AllResourcesById> {
 pub fn image_digest_cache() -> &'static ImageDigestCache {
   static IMAGE_DIGEST_CACHE: OnceLock<Arc<ImageDigestCache>> =
     OnceLock::new();
-  IMAGE_DIGEST_CACHE.get_or_init(|| ImageDigestCache::new())
+  IMAGE_DIGEST_CACHE.get_or_init(ImageDigestCache::new)
 }

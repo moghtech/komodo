@@ -771,7 +771,7 @@ pub async fn check_stack_for_update_inner(
       service.image_digest = None;
       continue;
     }
-    match cache.get(&swarm_or_server, image, None, None).await {
+    match cache.get(swarm_or_server, image, None, None).await {
       Ok(digest) => service.image_digest = Some(digest),
       Err(e) => {
         warn!(
@@ -861,7 +861,7 @@ pub async fn check_stack_for_update_inner(
     };
 
     service_with_update.update_available =
-      latest_digest.update_available(&current_digests);
+      latest_digest.update_available(current_digests);
 
     if service_with_update.update_available
       && (skip_auto_update || !stack.config.auto_update)
