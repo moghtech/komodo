@@ -163,7 +163,7 @@ async fn existing_server_handler(
         socket: &mut socket,
         identifiers: identifiers.build(query.as_bytes()),
         private_key: core_keys().load().private.as_str(),
-        public_key_validator: OnboardingKeyValidator { fix_existing_servers_required: true },
+        public_key_validator: OnboardingKeyValidator { privileged_required: true },
         should_close: true
       })
       .await
@@ -227,7 +227,7 @@ async fn fix_existing_server_handler(
       socket: &mut socket,
       identifiers: identifiers.build(query.as_bytes()),
       private_key: core_keys().load().private.as_str(),
-      public_key_validator: OnboardingKeyValidator { fix_existing_servers_required: true },
+      public_key_validator: OnboardingKeyValidator { privileged_required: true },
       should_close: true,
     })
     .await
@@ -341,7 +341,7 @@ async fn onboard_new_server_handler(
       socket: &mut socket,
       identifiers: identifiers.build(query.as_bytes()),
       private_key: core_keys().load().private.as_str(),
-      public_key_validator: OnboardingKeyValidator { fix_existing_servers_required: false },
+      public_key_validator: OnboardingKeyValidator { privileged_required: false },
       should_close: true
     })
     .await
@@ -505,7 +505,7 @@ async fn create_server_maybe_builder(
 }
 
 struct OnboardingKeyValidator {
-  fix_existing_servers_required: bool,
+  privileged_required: bool,
 }
 
 impl PublicKeyValidator for OnboardingKeyValidator {
@@ -527,8 +527,8 @@ impl PublicKeyValidator for OnboardingKeyValidator {
     {
       return Err(anyhow!("Onboarding key is invalid"));
     }
-    if self.fix_existing_servers_required
-      && !onboarding_key.fix_existing_servers
+    if self.privileged_required
+      && !onboarding_key.privileged
     {
       return Err(anyhow!(
         "Onboarding key not able to fix existing servers"

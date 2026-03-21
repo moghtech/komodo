@@ -116,7 +116,7 @@ export default function SettingsOnboardingKeys() {
       },
       {
         size: 100,
-        accessorKey: "fix_existing_servers",
+        accessorKey: "privileged",
         header: ({ column }) => (
           <SortableHeader
             column={column}
@@ -126,11 +126,11 @@ export default function SettingsOnboardingKeys() {
         ),
         cell: ({ row }) => (
           <Switch
-            checked={row.original.fix_existing_servers}
+            checked={row.original.privileged}
             onChange={(e) =>
               mutate({
                 public_key: row.original.public_key,
-                fix_existing_servers: e.target.checked,
+                privileged: e.target.checked,
               })
             }
           />

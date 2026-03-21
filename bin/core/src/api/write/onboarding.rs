@@ -61,7 +61,7 @@ impl Resolve<WriteArgs> for CreateOnboardingKey {
       created_at: komodo_timestamp(),
       expires: self.expires,
       tags: self.tags,
-      fix_existing_servers: self.fix_existing_servers,
+      privileged: self.privileged,
       copy_server: self.copy_server,
       create_builder: self.create_builder,
     };
@@ -142,8 +142,8 @@ impl Resolve<WriteArgs> for UpdateOnboardingKey {
       update.insert("tags", tags);
     }
 
-    if let Some(fix_existing_servers) = self.fix_existing_servers {
-      update.insert("fix_existing_servers", fix_existing_servers);
+    if let Some(privileged) = self.privileged {
+      update.insert("privileged", privileged);
     }
 
     if let Some(copy_server) = self.copy_server {
