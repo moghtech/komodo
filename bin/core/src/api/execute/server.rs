@@ -14,7 +14,7 @@ use periphery_client::api;
 
 use crate::{
   helpers::{periphery_client, update::update_update},
-  monitor::update_cache_for_server,
+  monitor::refresh_server_cache,
   permission::get_check_permissions,
   state::action_states,
 };
@@ -76,7 +76,7 @@ impl Resolve<ExecuteArgs> for StartContainer {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -142,7 +142,7 @@ impl Resolve<ExecuteArgs> for RestartContainer {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -206,7 +206,7 @@ impl Resolve<ExecuteArgs> for PauseContainer {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -272,7 +272,7 @@ impl Resolve<ExecuteArgs> for UnpauseContainer {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -340,7 +340,7 @@ impl Resolve<ExecuteArgs> for StopContainer {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -416,7 +416,7 @@ impl Resolve<ExecuteArgs> for DestroyContainer {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -477,7 +477,7 @@ impl Resolve<ExecuteArgs> for StartAllContainers {
       );
     }
 
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -539,7 +539,7 @@ impl Resolve<ExecuteArgs> for RestartAllContainers {
       );
     }
 
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -599,7 +599,7 @@ impl Resolve<ExecuteArgs> for PauseAllContainers {
       );
     }
 
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -661,7 +661,7 @@ impl Resolve<ExecuteArgs> for UnpauseAllContainers {
       );
     }
 
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -721,7 +721,7 @@ impl Resolve<ExecuteArgs> for StopAllContainers {
       );
     }
 
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -785,7 +785,7 @@ impl Resolve<ExecuteArgs> for PruneContainers {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -846,7 +846,7 @@ impl Resolve<ExecuteArgs> for DeleteNetwork {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -909,7 +909,7 @@ impl Resolve<ExecuteArgs> for PruneNetworks {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -967,7 +967,7 @@ impl Resolve<ExecuteArgs> for DeleteImage {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -1028,7 +1028,7 @@ impl Resolve<ExecuteArgs> for PruneImages {
       };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -1089,7 +1089,7 @@ impl Resolve<ExecuteArgs> for DeleteVolume {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -1150,7 +1150,7 @@ impl Resolve<ExecuteArgs> for PruneVolumes {
       };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -1211,7 +1211,7 @@ impl Resolve<ExecuteArgs> for PruneDockerBuilders {
       };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -1272,7 +1272,7 @@ impl Resolve<ExecuteArgs> for PruneBuildx {
       };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -1332,7 +1332,7 @@ impl Resolve<ExecuteArgs> for PruneSystem {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;

@@ -12,7 +12,7 @@ use mogh_resolver::Resolve;
 use crate::{
   api::execute::ExecuteArgs,
   helpers::{swarm::swarm_request, update::update_update},
-  monitor::update_cache_for_swarm,
+  monitor::refresh_swarm_cache,
   permission::get_check_permissions,
 };
 
@@ -55,7 +55,7 @@ impl Resolve<ExecuteArgs> for RemoveSwarmNodes {
     {
       Ok(log) => {
         update.logs.push(log);
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       Err(e) => update.push_error_log(
         "Remove Swarm Nodes",
@@ -111,7 +111,7 @@ impl Resolve<ExecuteArgs> for RemoveSwarmStacks {
     {
       Ok(log) => {
         update.logs.push(log);
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       Err(e) => update.push_error_log(
         "Remove Swarm Stacks",
@@ -165,7 +165,7 @@ impl Resolve<ExecuteArgs> for RemoveSwarmServices {
     {
       Ok(log) => {
         update.logs.push(log);
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       Err(e) => update.push_error_log(
         "Remove Swarm Services",
@@ -222,7 +222,7 @@ impl Resolve<ExecuteArgs> for CreateSwarmConfig {
     {
       Ok(log) => {
         update.logs.push(log);
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       Err(e) => update.push_error_log(
         "Create Swarm Config",
@@ -277,7 +277,7 @@ impl Resolve<ExecuteArgs> for RotateSwarmConfig {
     {
       Ok(logs) => {
         update.logs.extend(logs);
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       Err(e) => update.push_error_log(
         "Rotate Swarm Config",
@@ -331,7 +331,7 @@ impl Resolve<ExecuteArgs> for RemoveSwarmConfigs {
     {
       Ok(log) => {
         update.logs.push(log);
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       Err(e) => update.push_error_log(
         "Remove Swarm Configs",
@@ -389,7 +389,7 @@ impl Resolve<ExecuteArgs> for CreateSwarmSecret {
     {
       Ok(log) => {
         update.logs.push(log);
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       Err(e) => update.push_error_log(
         "Create Swarm Secret",
@@ -444,7 +444,7 @@ impl Resolve<ExecuteArgs> for RotateSwarmSecret {
     {
       Ok(logs) => {
         update.logs.extend(logs);
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       Err(e) => update.push_error_log(
         "Rotate Swarm Secret",
@@ -498,7 +498,7 @@ impl Resolve<ExecuteArgs> for RemoveSwarmSecrets {
     {
       Ok(log) => {
         update.logs.push(log);
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       Err(e) => update.push_error_log(
         "Remove Swarm Secrets",

@@ -32,7 +32,7 @@ use crate::{
     swarm::swarm_request,
     update::update_update,
   },
-  monitor::{update_cache_for_server, update_cache_for_swarm},
+  monitor::{refresh_server_cache, refresh_swarm_cache},
   resource::{self, setup_deployment_execution},
   state::action_states,
 };
@@ -222,7 +222,7 @@ impl Resolve<ExecuteArgs> for Deploy {
         .await
         {
           Ok(logs) => {
-            update_cache_for_swarm(&swarm, true).await;
+            refresh_swarm_cache(&swarm, true).await;
             update.logs.extend(logs)
           }
           Err(e) => {
@@ -246,7 +246,7 @@ impl Resolve<ExecuteArgs> for Deploy {
           .await
         {
           Ok(log) => {
-            update_cache_for_server(&server, true).await;
+            refresh_server_cache(&server, true).await;
             update.logs.push(log)
           }
           Err(e) => {
@@ -401,7 +401,7 @@ pub async fn pull_deployment_inner(
       Err(e) => Log::error("Pull image", format_serror(&e.into())),
     };
 
-    update_cache_for_server(server, true).await;
+    refresh_server_cache(server, true).await;
     anyhow::Ok(log)
   }
   .await;
@@ -527,7 +527,7 @@ impl Resolve<ExecuteArgs> for StartDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -597,7 +597,7 @@ impl Resolve<ExecuteArgs> for RestartDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -665,7 +665,7 @@ impl Resolve<ExecuteArgs> for PauseDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -735,7 +735,7 @@ impl Resolve<ExecuteArgs> for UnpauseDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -813,7 +813,7 @@ impl Resolve<ExecuteArgs> for StopDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -910,7 +910,7 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
         .await
         {
           Ok(log) => {
-            update_cache_for_swarm(&swarm, true).await;
+            refresh_swarm_cache(&swarm, true).await;
             log
           }
           Err(e) => Log::error(
@@ -938,7 +938,7 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
           .await
         {
           Ok(log) => {
-            update_cache_for_server(&server, true).await;
+            refresh_server_cache(&server, true).await;
             log
           }
           Err(e) => Log::error(

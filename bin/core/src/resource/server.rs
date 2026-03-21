@@ -24,7 +24,7 @@ use periphery_client::api;
 use crate::{
   config::core_config,
   helpers::periphery_client,
-  monitor::update_cache_for_server,
+  monitor::refresh_server_cache,
   state::{
     action_states, db_client, periphery_connections,
     server_status_cache,
@@ -151,7 +151,7 @@ impl super::KomodoResource for Server {
     created: &Resource<Self::Config, Self::Info>,
     _update: &mut Update,
   ) -> anyhow::Result<()> {
-    update_cache_for_server(created, true).await;
+    refresh_server_cache(created, true).await;
     Ok(())
   }
 
@@ -173,7 +173,7 @@ impl super::KomodoResource for Server {
     updated: &Self,
     _update: &mut Update,
   ) -> anyhow::Result<()> {
-    update_cache_for_server(updated, true).await;
+    refresh_server_cache(updated, true).await;
     Ok(())
   }
 

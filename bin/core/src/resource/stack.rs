@@ -35,7 +35,7 @@ use crate::{
     repo_link,
     swarm::swarm_request,
   },
-  monitor::{update_cache_for_server, update_cache_for_swarm},
+  monitor::{refresh_server_cache, refresh_swarm_cache},
   state::{
     action_states, all_resources_cache, db_client,
     server_status_cache, stack_status_cache,
@@ -294,10 +294,10 @@ impl super::KomodoResource for Stack {
     };
     match swarm_or_server {
       SwarmOrServer::Swarm(swarm) => {
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       SwarmOrServer::Server(server) => {
-        update_cache_for_server(&server, true).await;
+        refresh_server_cache(&server, true).await;
       }
       SwarmOrServer::None => {}
     }

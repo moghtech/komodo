@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{str::FromStr, time::Duration};
 
 use anyhow::{Context, anyhow};
 use axum::{
@@ -42,6 +42,7 @@ use crate::{
   api::write::WriteArgs,
   config::core_keys,
   helpers::query::id_or_name_filter,
+  monitor::refresh_server_cache,
   resource::KomodoResource,
   state::{db_client, periphery_connections},
 };
@@ -200,6 +201,13 @@ async fn existing_server_handler(
 
       return;
     }
+
+    // Waits until after connection is handled then
+    // force refreshes the server cache.
+    tokio::spawn(async move {
+      tokio::time::sleep(Duration::from_millis(100)).await;
+      refresh_server_cache(&server, true).await;
+    });
 
     connection.handle_socket(socket, &mut receiver).await
   }))

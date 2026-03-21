@@ -14,7 +14,7 @@ use periphery_client::api::compose::*;
 
 use crate::{
   helpers::{periphery_client, update::update_update},
-  monitor::update_cache_for_server,
+  monitor::refresh_server_cache,
   periphery::PeripheryClient,
   state::action_states,
 };
@@ -102,7 +102,7 @@ pub async fn execute_compose_with_stack_and_server<
     .push(T::execute(periphery, stack, services, extras).await?);
 
   // Ensure cached stack state up to date by updating server cache
-  update_cache_for_server(&server, true).await;
+  refresh_server_cache(&server, true).await;
 
   update.finalize();
   update_update(update.clone()).await?;

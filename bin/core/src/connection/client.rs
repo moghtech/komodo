@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use anyhow::{Context, anyhow};
+use komodo_client::entities::server::Server;
 use periphery_client::{
   CONNECTION_RETRY_SECONDS, transport::LoginMessage,
 };
@@ -18,6 +19,7 @@ use transport::{
 
 use crate::{
   config::{core_config, core_connection_query},
+  monitor::refresh_server_cache,
   periphery::PeripheryClient,
   state::periphery_connections,
 };
@@ -46,6 +48,7 @@ impl PeripheryConnectionArgs<'_> {
 
     let responses = connection.responses.clone();
 
+    let _id = id.clone();
     tokio::spawn(async move {
       loop {
         let ws = tokio::select! {
@@ -93,6 +96,21 @@ impl PeripheryConnectionArgs<'_> {
           .await;
           continue;
         };
+
+        // Waits until after connection is handled then
+        // force refreshes the server cache.
+        let id = _id.clone();
+        tokio::spawn(async move {
+          tokio::time::sleep(Duration::from_millis(100)).await;
+          let Ok(server) = crate::resource::get::<Server>(&id).await
+          else {
+            error!(
+              "Failed to find server {id} AFTER connection login."
+            );
+            return;
+          };
+          refresh_server_cache(&server, true).await;
+        });
 
         connection.handle_socket(socket, &mut receiver).await
       }

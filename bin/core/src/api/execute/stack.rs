@@ -39,7 +39,7 @@ use crate::{
       add_update_without_send, init_execution_update, update_update,
     },
   },
-  monitor::{update_cache_for_server, update_cache_for_swarm},
+  monitor::{refresh_server_cache, refresh_swarm_cache},
   permission::get_check_permissions,
   resource,
   stack::{
@@ -313,10 +313,10 @@ impl Resolve<ExecuteArgs> for DeployStack {
     match swarm_or_server {
       SwarmOrServer::None => unreachable!(),
       SwarmOrServer::Swarm(swarm) => {
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       SwarmOrServer::Server(server) => {
-        update_cache_for_server(&server, true).await;
+        refresh_server_cache(&server, true).await;
       }
     }
 
@@ -878,7 +878,7 @@ pub async fn pull_stack_inner(
     .await?;
 
   // Ensure cached stack state up to date by updating server cache
-  update_cache_for_server(server, true).await;
+  refresh_server_cache(server, true).await;
 
   Ok(res)
 }
@@ -1205,7 +1205,7 @@ impl Resolve<ExecuteArgs> for DestroyStack {
         }
 
         // Ensure cached stack state up to date by updating swarm cache
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
 
         update.finalize();
         update_update(update.clone()).await?;
