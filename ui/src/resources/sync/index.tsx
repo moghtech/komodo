@@ -37,7 +37,11 @@ export const ResourceSyncComponents: RequiredResourceComponents<
   useResourceLinks: () => undefined,
 
   useDashboardSummaryData: () => {
-    const summary = useRead("GetResourceSyncsSummary", {}).data;
+    const summary = useRead(
+      "GetResourceSyncsSummary",
+      {},
+      { refetchInterval: 10_000 },
+    ).data;
     return [
       { title: "Ok", intention: "Good", value: summary?.ok ?? 0 },
       {

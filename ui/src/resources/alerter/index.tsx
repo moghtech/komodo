@@ -31,7 +31,11 @@ export const AlerterComponents: RequiredResourceComponents<
   useResourceLinks: () => undefined,
 
   useDashboardSummaryData: () => {
-    const summary = useRead("GetAlertersSummary", {}).data;
+    const summary = useRead(
+      "GetAlertersSummary",
+      {},
+      { refetchInterval: 10_000 },
+    ).data;
     return [{ intention: "Good", value: summary?.total ?? 0, title: "Total" }];
   },
 

@@ -39,7 +39,11 @@ export const BuildComponents: RequiredResourceComponents<
   useResourceLinks: (build) => build?.config?.links,
 
   useDashboardSummaryData: () => {
-    const summary = useRead("GetBuildsSummary", {}).data;
+    const summary = useRead(
+      "GetBuildsSummary",
+      {},
+      { refetchInterval: 10_000 },
+    ).data;
     return [
       { title: "Ok", intention: "Good", value: summary?.ok ?? 0 },
       {

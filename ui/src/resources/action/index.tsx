@@ -35,7 +35,11 @@ export const ActionComponents: RequiredResourceComponents<
   useResourceLinks: () => undefined,
 
   useDashboardSummaryData: () => {
-    const summary = useRead("GetActionsSummary", {}).data;
+    const summary = useRead(
+      "GetActionsSummary",
+      {},
+      { refetchInterval: 10_000 },
+    ).data;
     return [
       { title: "Ok", intention: "Good", value: summary?.ok ?? 0 },
       {

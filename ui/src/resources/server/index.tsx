@@ -43,7 +43,11 @@ export const ServerComponents: RequiredResourceComponents<
   useResourceLinks: (server) => server?.config?.links,
 
   useDashboardSummaryData: () => {
-    const summary = useRead("GetServersSummary", {}).data;
+    const summary = useRead(
+      "GetServersSummary",
+      {},
+      { refetchInterval: 10_000 },
+    ).data;
     return [
       { title: "Healthy", intention: "Good", value: summary?.healthy ?? 0 },
       {

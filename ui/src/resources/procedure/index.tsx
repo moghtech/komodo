@@ -36,7 +36,11 @@ export const ProcedureComponents: RequiredResourceComponents<
   useResourceLinks: () => undefined,
 
   useDashboardSummaryData: () => {
-    const summary = useRead("GetProceduresSummary", {}).data;
+    const summary = useRead(
+      "GetProceduresSummary",
+      {},
+      { refetchInterval: 10_000 },
+    ).data;
     return [
       { title: "Ok", intention: "Good", value: summary?.ok ?? 0 },
       {

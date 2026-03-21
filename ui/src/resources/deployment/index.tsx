@@ -51,7 +51,11 @@ export const DeploymentComponents: RequiredResourceComponents<
   useResourceLinks: (deployment) => deployment?.config?.links,
 
   useDashboardSummaryData: () => {
-    const summary = useRead("GetDeploymentsSummary", {}).data;
+    const summary = useRead(
+      "GetDeploymentsSummary",
+      {},
+      { refetchInterval: 10_000 },
+    ).data;
     const all = [
       summary?.running ?? 0,
       summary?.stopped ?? 0,

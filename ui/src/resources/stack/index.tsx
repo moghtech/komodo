@@ -55,7 +55,11 @@ export const StackComponents: RequiredResourceComponents<
   useResourceLinks: (stack) => stack?.config?.links,
 
   useDashboardSummaryData: () => {
-    const summary = useRead("GetStacksSummary", {}).data;
+    const summary = useRead(
+      "GetStacksSummary",
+      {},
+      { refetchInterval: 10_000 },
+    ).data;
     const all = [
       summary?.running ?? 0,
       summary?.stopped ?? 0,

@@ -36,7 +36,11 @@ export const RepoComponents: RequiredResourceComponents<
   useResourceLinks: (repo) => repo?.config?.links,
 
   useDashboardSummaryData: () => {
-    const summary = useRead("GetReposSummary", {}).data;
+    const summary = useRead(
+      "GetReposSummary",
+      {},
+      { refetchInterval: 10_000 },
+    ).data;
     return [
       { intention: "Good", value: summary?.ok ?? 0, title: "Ok" },
       {

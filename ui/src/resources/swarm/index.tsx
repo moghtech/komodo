@@ -40,7 +40,11 @@ export const SwarmComponents: RequiredResourceComponents<
   useResourceLinks: (swarm) => swarm?.config?.links,
 
   useDashboardSummaryData: () => {
-    const summary = useRead("GetSwarmsSummary", {}).data;
+    const summary = useRead(
+      "GetSwarmsSummary",
+      {},
+      { refetchInterval: 10_000 },
+    ).data;
     return [
       { intention: "Good", value: summary?.healthy ?? 0, title: "Healthy" },
       {
