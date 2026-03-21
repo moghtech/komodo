@@ -98,7 +98,7 @@ export default function TagSelector({
             >
               <Group justify="space-between">
                 <Text>{tag.name}</Text>
-                <Box w={25} h={25} bg={"Tag" + tag.color} bdrs="md" />
+                <Box w={25} h={25} bg={`Tag${tag.color}.9`} bdrs="md" />
               </Group>
             </Combobox.Option>
           ))}
