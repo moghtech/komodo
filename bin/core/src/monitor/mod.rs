@@ -93,154 +93,161 @@ fn refresh_server_cache_controller()
 /// which exits early if the lock is busy or it was completed too recently.
 /// If force is true, it will wait on simultaneous calls, and will
 /// ignore the restriction on being completed too recently.
-pub async fn refresh_server_cache(server: &Server, force: bool) {
-  // Concurrency controller to ensure it isn't done too often
-  // when it happens in other contexts.
-  let controller = refresh_server_cache_controller()
-    .get_or_insert_default(&server.id)
-    .await;
-  let mut lock = match controller.try_lock() {
-    Ok(lock) => lock,
-    Err(_) if force => controller.lock().await,
-    Err(_) => return,
-  };
+///
+/// Returns impl Future for explicit Send bound.
+pub fn refresh_server_cache(
+  server: &Server,
+  force: bool,
+) -> impl Future<Output = ()> + Send + '_ {
+  async move {
+    // Concurrency controller to ensure it isn't done too often
+    // when it happens in other contexts.
+    let controller = refresh_server_cache_controller()
+      .get_or_insert_default(&server.id)
+      .await;
+    let mut lock = match controller.try_lock() {
+      Ok(lock) => lock,
+      Err(_) if force => controller.lock().await,
+      Err(_) => return,
+    };
 
-  let now = komodo_timestamp();
+    let now = komodo_timestamp();
 
-  // early return if called again sooner than 1s.
-  if !force && *lock > now - 1_000 {
-    return;
-  }
+    // early return if called again sooner than 1s.
+    if !force && *lock > now - 1_000 {
+      return;
+    }
 
-  *lock = now;
+    *lock = now;
 
-  let resources = RefreshCacheResources::load_server(server).await;
+    let resources = RefreshCacheResources::load_server(server).await;
 
-  // Handle server disabled
-  if !server.config.enabled {
-    resources.insert_status_unknown().await;
+    // Handle server disabled
+    if !server.config.enabled {
+      resources.insert_status_unknown().await;
+      insert_server_status(
+        server,
+        ServerState::Disabled,
+        None,
+        None,
+        None,
+        None,
+        None,
+      )
+      .await;
+      periphery_connections().remove(&server.id).await;
+      return;
+    }
+
+    let periphery = match periphery_client(server).await {
+      Ok(periphery) => periphery,
+      Err(e) => {
+        resources.insert_status_unknown().await;
+        insert_server_status(
+          server,
+          ServerState::NotOk,
+          None,
+          None,
+          None,
+          None,
+          Serror::from(&e),
+        )
+        .await;
+        return;
+      }
+    };
+
+    let PollStatusResponse {
+      periphery_info,
+      system_info,
+      system_stats,
+      mut docker,
+    } = match periphery
+      .request(api::poll::PollStatus {
+        include_stats: server.config.stats_monitoring,
+        include_docker: true,
+      })
+      .await
+    {
+      Ok(info) => info,
+      Err(e) => {
+        resources.insert_status_unknown().await;
+        insert_server_status(
+          server,
+          ServerState::NotOk,
+          None,
+          None,
+          None,
+          None,
+          Serror::from(&e),
+        )
+        .await;
+        return;
+      }
+    };
+
+    if let Some(docker) = &mut docker {
+      docker.containers.iter_mut().for_each(|container| {
+        container.server_id = Some(server.id.clone())
+      });
+    }
+
+    let containers = docker
+      .as_ref()
+      .map(|docker| docker.containers.as_slice())
+      .unwrap_or(&[]);
+    let images = docker
+      .as_ref()
+      .map(|docker| docker.images.as_slice())
+      .unwrap_or(&[]);
+
+    tokio::join!(
+      resources::update_server_stack_cache(
+        resources.stacks,
+        containers,
+        images
+      ),
+      resources::update_server_deployment_cache(
+        resources.deployments,
+        containers,
+        images,
+      ),
+    );
+
     insert_server_status(
       server,
-      ServerState::Disabled,
-      None,
-      None,
-      None,
-      None,
+      ServerState::Ok,
+      Some(periphery_info),
+      Some(system_info),
+      system_stats.map(|stats| filter_volumes(server, stats)),
+      docker,
       None,
     )
     .await;
-    periphery_connections().remove(&server.id).await;
-    return;
-  }
 
-  let periphery = match periphery_client(server).await {
-    Ok(periphery) => periphery,
-    Err(e) => {
-      resources.insert_status_unknown().await;
-      insert_server_status(
-        server,
-        ServerState::NotOk,
-        None,
-        None,
-        None,
-        None,
-        Serror::from(&e),
-      )
-      .await;
-      return;
+    let status_cache = repo_status_cache();
+    for repo in resources.repos {
+      let (latest_hash, latest_message) = periphery
+        .request(GetLatestCommit {
+          name: repo.name.clone(),
+          path: optional_string(&repo.config.path),
+        })
+        .await
+        .ok()
+        .flatten()
+        .map(|c| (c.hash, c.message))
+        .unzip();
+      status_cache
+        .insert(
+          repo.id,
+          CachedRepoStatus {
+            latest_hash,
+            latest_message,
+          }
+          .into(),
+        )
+        .await;
     }
-  };
-
-  let PollStatusResponse {
-    periphery_info,
-    system_info,
-    system_stats,
-    mut docker,
-  } = match periphery
-    .request(api::poll::PollStatus {
-      include_stats: server.config.stats_monitoring,
-      include_docker: true,
-    })
-    .await
-  {
-    Ok(info) => info,
-    Err(e) => {
-      resources.insert_status_unknown().await;
-      insert_server_status(
-        server,
-        ServerState::NotOk,
-        None,
-        None,
-        None,
-        None,
-        Serror::from(&e),
-      )
-      .await;
-      return;
-    }
-  };
-
-  if let Some(docker) = &mut docker {
-    docker.containers.iter_mut().for_each(|container| {
-      container.server_id = Some(server.id.clone())
-    });
-  }
-
-  let containers = docker
-    .as_ref()
-    .map(|docker| docker.containers.as_slice())
-    .unwrap_or(&[]);
-  let images = docker
-    .as_ref()
-    .map(|docker| docker.images.as_slice())
-    .unwrap_or(&[]);
-
-  tokio::join!(
-    resources::update_server_stack_cache(
-      resources.stacks,
-      containers,
-      images
-    ),
-    resources::update_server_deployment_cache(
-      resources.deployments,
-      containers,
-      images,
-    ),
-  );
-
-  insert_server_status(
-    server,
-    ServerState::Ok,
-    Some(periphery_info),
-    Some(system_info),
-    system_stats.map(|stats| filter_volumes(server, stats)),
-    docker,
-    None,
-  )
-  .await;
-
-  let status_cache = repo_status_cache();
-  for repo in resources.repos {
-    let (latest_hash, latest_message) = periphery
-      .request(GetLatestCommit {
-        name: repo.name.clone(),
-        path: optional_string(&repo.config.path),
-      })
-      .await
-      .ok()
-      .flatten()
-      .map(|c| (c.hash, c.message))
-      .unzip();
-    status_cache
-      .insert(
-        repo.id,
-        CachedRepoStatus {
-          latest_hash,
-          latest_message,
-        }
-        .into(),
-      )
-      .await;
   }
 }
 

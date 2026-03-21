@@ -104,9 +104,6 @@ impl PeripheryConnectionArgs<'_> {
           tokio::time::sleep(Duration::from_millis(100)).await;
           let Ok(server) = crate::resource::get::<Server>(&id).await
           else {
-            error!(
-              "Failed to find server {id} AFTER connection login."
-            );
             return;
           };
           refresh_server_cache(&server, true).await;
