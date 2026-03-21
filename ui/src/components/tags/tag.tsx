@@ -18,7 +18,7 @@ export default function Tag({
   return (
     <Badge
       variant="filled"
-      color={tag?.color ? `Tag${tag.color}.4` : "TagSlate.4"}
+      color={tag?.color ? `Tag${tag.color}.8` : "TagSlate.8"}
       onClick={onClick}
       style={{ cursor: onClick ? "pointer" : undefined }}
       rightSection={icon}
