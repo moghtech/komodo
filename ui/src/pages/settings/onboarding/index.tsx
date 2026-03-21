@@ -120,7 +120,7 @@ export default function SettingsOnboardingKeys() {
         header: ({ column }) => (
           <SortableHeader
             column={column}
-            title="Priviledged"
+            title="Privileged"
             description="Allow the onboarding key to update an existing Server's public key and configuration to enable the connection."
           />
         ),
