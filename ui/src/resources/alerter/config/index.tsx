@@ -6,10 +6,11 @@ import AlerterConfigEndpoint from "./endpoint";
 import AlerterConfigAlertTypes from "./alert-types";
 import AlerterConfigResources from "./resources";
 import ConfigMaintenanceWindows from "@/components/maintenance-windows";
+import { useFullAlerter } from "..";
 
 export default function AlerterConfig({ id }: { id: string }) {
   const { canWrite } = usePermissions({ type: "Alerter", id });
-  const config = useRead("GetAlerter", { alerter: id }).data?.config;
+  const config = useFullAlerter(id)?.config;
   const global_disabled =
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
   const { mutateAsync } = useWrite("UpdateAlerter");

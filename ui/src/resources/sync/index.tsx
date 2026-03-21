@@ -21,7 +21,8 @@ export function useResourceSync(id: string | undefined) {
 }
 
 export function useFullResourceSync(id: string) {
-  return useRead("GetResourceSync", { sync: id }).data;
+  return useRead("GetResourceSync", { sync: id }, { refetchInterval: 30_000 })
+    .data;
 }
 
 export const ResourceSyncComponents: RequiredResourceComponents<

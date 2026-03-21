@@ -1,11 +1,4 @@
-import {
-  Anchor,
-  Group,
-  Select,
-  Stack,
-  Text,
-  TextInput,
-} from "@mantine/core";
+import { Anchor, Group, Select, Stack, Text, TextInput } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { useState } from "react";
 import { Types } from "komodo_client";
@@ -26,13 +19,14 @@ import SecretsSearch from "@/components/config/secrets-search";
 import WebhookBuilder from "@/components/webhook/builder";
 import LabelledSwitch from "@/ui/labelled-switch";
 import CopyWebhookUrl from "@/components/webhook/copy-url";
+import { useFullAction } from ".";
 
 const ACTION_GIT_PROVIDER = "Action";
 
 export default function ActionConfig({ id }: { id: string }) {
   const [branch, setBranch] = useState("main");
   const { canWrite } = usePermissions({ type: "Action", id });
-  const action = useRead("GetAction", { action: id }).data;
+  const action = useFullAction(id);
   const config = action?.config;
   const name = action?.name;
   const global_disabled =
@@ -161,7 +155,9 @@ export default function ActionConfig({ id }: { id: string }) {
                       : false
                   }
                   disabled={disabled || !(update.schedule ?? config.schedule)}
-                  onCheckedChange={(schedule_enabled) => set({ schedule_enabled })}
+                  onCheckedChange={(schedule_enabled) =>
+                    set({ schedule_enabled })
+                  }
                 />
               ),
               schedule_format: (schedule_format, set) => (

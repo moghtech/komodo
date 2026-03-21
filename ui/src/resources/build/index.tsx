@@ -24,7 +24,7 @@ export function useBuild(id: string | undefined) {
 }
 
 export function useFullBuild(id: string) {
-  return useRead("GetBuild", { build: id }).data;
+  return useRead("GetBuild", { build: id }, { refetchInterval: 30_000 }).data;
 }
 
 export const BuildComponents: RequiredResourceComponents<

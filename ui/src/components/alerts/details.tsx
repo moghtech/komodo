@@ -65,7 +65,11 @@ export function AlertDetailsContent({
   id: string;
   close: () => void;
 }) {
-  const { data: alert } = useRead("GetAlert", { id });
+  const { data: alert } = useRead(
+    "GetAlert",
+    { id },
+    { refetchInterval: 10_000 },
+  );
 
   const isAdmin = useUser().data?.admin ?? false;
   const inv = useInvalidate();

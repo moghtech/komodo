@@ -17,6 +17,7 @@ import TimezoneSelector from "@/components/timezone-selector";
 import WebhookBuilder from "@/components/webhook/builder";
 import LabelledSwitch from "@/ui/labelled-switch";
 import CopyWebhookUrl from "@/components/webhook/copy-url";
+import { useFullProcedure } from "..";
 
 const PROCEDURE_GIT_PROVIDER = "Procedure";
 
@@ -41,7 +42,7 @@ export function defaultEnabledExecution(): Types.EnabledExecution {
 export default function ProcedureConfig({ id }: { id: string }) {
   const [branch, setBranch] = useState("main");
   const { canWrite } = usePermissions({ type: "Procedure", id });
-  const procedure = useRead("GetProcedure", { procedure: id }).data;
+  const procedure = useFullProcedure(id);
   const config = procedure?.config;
   const name = procedure?.name;
   const global_disabled =
@@ -194,7 +195,9 @@ export default function ProcedureConfig({ id }: { id: string }) {
                       : false
                   }
                   disabled={disabled || !(update.schedule ?? config.schedule)}
-                  onCheckedChange={(schedule_enabled) => set({ schedule_enabled })}
+                  onCheckedChange={(schedule_enabled) =>
+                    set({ schedule_enabled })
+                  }
                 />
               ),
               schedule_format: (schedule_format, set) => (

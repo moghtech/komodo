@@ -21,7 +21,7 @@ export function useRepo(id: string | undefined) {
 }
 
 export function useFullRepo(id: string) {
-  return useRead("GetRepo", { repo: id }).data;
+  return useRead("GetRepo", { repo: id }, { refetchInterval: 30_000 }).data;
 }
 
 export const RepoComponents: RequiredResourceComponents<

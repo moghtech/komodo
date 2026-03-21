@@ -6,7 +6,11 @@ import { useParams } from "react-router-dom";
 export default function Update() {
   useSetTitle("Update");
   const id = useParams().id as string;
-  const { data: update, isPending } = useRead("GetUpdate", { id });
+  const { data: update, isPending } = useRead(
+    "GetUpdate",
+    { id },
+    { refetchInterval: 10_000 },
+  );
 
   return (
     <PageGuard

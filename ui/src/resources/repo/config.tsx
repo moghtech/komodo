@@ -20,6 +20,7 @@ import SystemCommand from "@/components/config/system-command";
 import { ReactNode } from "react";
 import CopyWebhookUrl from "@/components/webhook/copy-url";
 import WebhookBuilder from "@/components/webhook/builder";
+import { useFullRepo } from ".";
 
 export default function RepoConfig({
   id,
@@ -29,7 +30,7 @@ export default function RepoConfig({
   titleOther?: ReactNode;
 }) {
   const { canWrite } = usePermissions({ type: "Repo", id });
-  const repo = useRead("GetRepo", { repo: id }).data;
+  const repo = useFullRepo(id);
   const config = repo?.config;
   const name = repo?.name;
   const global_disabled =

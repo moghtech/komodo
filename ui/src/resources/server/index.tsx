@@ -28,7 +28,7 @@ export function useServer(id: string | undefined) {
 }
 
 export function useFullServer(id: string) {
-  return useRead("GetServer", { server: id }).data;
+  return useRead("GetServer", { server: id }, { refetchInterval: 30_000 }).data;
 }
 
 export const ServerComponents: RequiredResourceComponents<

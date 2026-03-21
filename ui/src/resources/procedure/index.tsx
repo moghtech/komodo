@@ -20,7 +20,8 @@ export function useProcedure(id: string | undefined) {
 }
 
 export function useFullProcedure(id: string) {
-  return useRead("GetProcedure", { procedure: id }).data;
+  return useRead("GetProcedure", { procedure: id }, { refetchInterval: 30_000 })
+    .data;
 }
 
 export const ProcedureComponents: RequiredResourceComponents<

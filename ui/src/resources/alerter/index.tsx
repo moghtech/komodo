@@ -15,7 +15,8 @@ export function useAlerter(id: string | undefined) {
 }
 
 export function useFullAlerter(id: string) {
-  return useRead("GetAlerter", { alerter: id }).data;
+  return useRead("GetAlerter", { alerter: id }, { refetchInterval: 30_000 })
+    .data;
 }
 
 export const AlerterComponents: RequiredResourceComponents<

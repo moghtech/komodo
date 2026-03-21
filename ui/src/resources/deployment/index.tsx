@@ -32,7 +32,11 @@ export function useDeployment(id: string | undefined) {
 }
 
 export function useFullDeployment(id: string) {
-  return useRead("GetDeployment", { deployment: id }).data;
+  return useRead(
+    "GetDeployment",
+    { deployment: id },
+    { refetchInterval: 30_000 },
+  ).data;
 }
 
 export const DeploymentComponents: RequiredResourceComponents<

@@ -20,7 +20,7 @@ export function useAction(id: string | undefined) {
 }
 
 export function useFullAction(id: string) {
-  return useRead("GetAction", { action: id }).data;
+  return useRead("GetAction", { action: id }, { refetchInterval: 30_000 }).data;
 }
 
 export const ActionComponents: RequiredResourceComponents<

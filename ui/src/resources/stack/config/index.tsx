@@ -34,7 +34,7 @@ import InputList from "@/ui/input-list";
 import { ProviderSelectorConfig } from "@/components/config/provider-selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";
 import LinkedRepo from "@/components/config/linked-repo";
-import { DEFAULT_STACK_FILE_CONTENTS } from "..";
+import { DEFAULT_STACK_FILE_CONTENTS, useFullStack } from "..";
 import { ReactNode } from "react";
 import WebhookBuilder from "@/components/webhook/builder";
 import CopyWebhookUrl from "@/components/webhook/copy-url";
@@ -72,7 +72,7 @@ export default function StackConfig({
     },
   });
   const { canWrite } = usePermissions({ type: "Stack", id });
-  const stack = useRead("GetStack", { stack: id }).data;
+  const stack = useFullStack(id);
   const allServices =
     (stack?.info?.deployed_services ?? stack?.info?.latest_services)?.map(
       (s) => s.service_name,

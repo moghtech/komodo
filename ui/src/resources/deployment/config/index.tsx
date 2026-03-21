@@ -18,6 +18,7 @@ import AddExtraArg from "@/components/config/add-extra-arg";
 import InputList from "@/ui/input-list";
 import { TerminationSignal, TerminationTimeout } from "./termination";
 import { ReactNode } from "react";
+import { useFullDeployment } from "..";
 
 export default function DeploymentConfig({
   id,
@@ -27,7 +28,7 @@ export default function DeploymentConfig({
   titleOther?: ReactNode;
 }) {
   const { canWrite } = usePermissions({ type: "Deployment", id });
-  const config = useRead("GetDeployment", { deployment: id }).data?.config;
+  const config = useFullDeployment(id)?.config;
   const builds = useRead("ListBuilds", {}).data;
   const globalDisabled =
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
@@ -284,7 +285,9 @@ export default function DeploymentConfig({
                     label="Poll for Updates"
                     description="Check for updates to the image during Global Auto Update."
                     value={autoUpdate || poll}
-                    onCheckedChange={(poll_for_updates) => set({ poll_for_updates })}
+                    onCheckedChange={(poll_for_updates) =>
+                      set({ poll_for_updates })
+                    }
                     disabled={disabled || autoUpdate}
                   />
                 );

@@ -40,7 +40,7 @@ export function useStack(id: string | undefined) {
 }
 
 export function useFullStack(id: string) {
-  return useRead("GetStack", { stack: id }).data;
+  return useRead("GetStack", { stack: id }, { refetchInterval: 30_000 }).data;
 }
 
 export const StackComponents: RequiredResourceComponents<

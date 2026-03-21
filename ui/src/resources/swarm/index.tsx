@@ -25,7 +25,7 @@ export function useSwarm(id: string | undefined) {
 }
 
 export function useFullSwarm(id: string) {
-  return useRead("GetSwarm", { swarm: id }).data;
+  return useRead("GetSwarm", { swarm: id }, { refetchInterval: 30_000 }).data;
 }
 
 export const SwarmComponents: RequiredResourceComponents<

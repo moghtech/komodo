@@ -27,6 +27,7 @@ import { AccountSelectorConfig } from "@/components/config/account-selector";
 import { ReactNode } from "react";
 import WebhookBuilder from "@/components/webhook/builder";
 import CopyWebhookUrl from "@/components/webhook/copy-url";
+import { useFullBuild } from ".";
 
 type BuildMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const BUILD_MODES = ["UI Defined", "Files On Server", "Git Repo"] as const;
@@ -66,7 +67,7 @@ export default function BuildConfig({
     },
   });
   const { canWrite } = usePermissions({ type: "Build", id });
-  const build = useRead("GetBuild", { build: id }).data;
+  const build = useFullBuild(id);
   const config = build?.config;
   const name = build?.name;
   const globalDisabled =

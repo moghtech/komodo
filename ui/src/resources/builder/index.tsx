@@ -18,7 +18,8 @@ export function useBuilder(id: string | undefined) {
 }
 
 export function useFullBuilder(id: string) {
-  return useRead("GetBuilder", { builder: id }).data;
+  return useRead("GetBuilder", { builder: id }, { refetchInterval: 30_000 })
+    .data;
 }
 
 export const BuilderComponents: RequiredResourceComponents<
