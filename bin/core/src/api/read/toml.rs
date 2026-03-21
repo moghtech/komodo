@@ -148,16 +148,34 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
     }
     for target in targets {
       match target {
-        ResourceTarget::Server(id) => convert_target!(id, Server, servers),
-        ResourceTarget::Swarm(id) => convert_target!(id, Swarm, swarms),
-        ResourceTarget::Stack(id) => convert_target!(id, Stack, stacks),
-        ResourceTarget::Deployment(id) => convert_target!(id, Deployment, deployments),
-        ResourceTarget::Build(id) => convert_target!(id, Build, builds),
+        ResourceTarget::Server(id) => {
+          convert_target!(id, Server, servers)
+        }
+        ResourceTarget::Swarm(id) => {
+          convert_target!(id, Swarm, swarms)
+        }
+        ResourceTarget::Stack(id) => {
+          convert_target!(id, Stack, stacks)
+        }
+        ResourceTarget::Deployment(id) => {
+          convert_target!(id, Deployment, deployments)
+        }
+        ResourceTarget::Build(id) => {
+          convert_target!(id, Build, builds)
+        }
         ResourceTarget::Repo(id) => convert_target!(id, Repo, repos),
-        ResourceTarget::Procedure(id) => convert_target!(id, Procedure, procedures),
-        ResourceTarget::Action(id) => convert_target!(id, Action, actions),
-        ResourceTarget::Builder(id) => convert_target!(id, Builder, builders),
-        ResourceTarget::Alerter(id) => convert_target!(id, Alerter, alerters),
+        ResourceTarget::Procedure(id) => {
+          convert_target!(id, Procedure, procedures)
+        }
+        ResourceTarget::Action(id) => {
+          convert_target!(id, Action, actions)
+        }
+        ResourceTarget::Builder(id) => {
+          convert_target!(id, Builder, builders)
+        }
+        ResourceTarget::Alerter(id) => {
+          convert_target!(id, Alerter, alerters)
+        }
         ResourceTarget::ResourceSync(id) => {
           let mut sync = get_check_permissions::<ResourceSync>(
             &id,
@@ -277,4 +295,3 @@ fn serialize_resources_toml(
 
   Ok(toml)
 }
- 
