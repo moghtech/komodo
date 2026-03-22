@@ -55,14 +55,14 @@ impl Resolve<ExecuteArgs> for BatchCloneRepo {
     "BatchCloneRepo",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
     )
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, id, .. }: &ExecuteArgs,
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchCloneRepo>(&self.pattern, user)
@@ -76,7 +76,7 @@ impl Resolve<ExecuteArgs> for CloneRepo {
     "CloneRepo",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       repo = self.repo,
@@ -84,7 +84,11 @@ impl Resolve<ExecuteArgs> for CloneRepo {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let mut repo = get_check_permissions::<Repo>(
       &self.repo,
@@ -186,14 +190,14 @@ impl Resolve<ExecuteArgs> for BatchPullRepo {
     "BatchPullRepo",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern
     )
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, id, .. }: &ExecuteArgs,
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchPullRepo>(&self.pattern, user)
@@ -207,7 +211,7 @@ impl Resolve<ExecuteArgs> for PullRepo {
     "PullRepo",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       repo = self.repo,
@@ -215,7 +219,11 @@ impl Resolve<ExecuteArgs> for PullRepo {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let mut repo = get_check_permissions::<Repo>(
       &self.repo,
@@ -363,14 +371,14 @@ impl Resolve<ExecuteArgs> for BatchBuildRepo {
     "BatchBuildRepo",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
     )
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, id, .. }: &ExecuteArgs,
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchBuildRepo>(&self.pattern, user)
@@ -384,7 +392,7 @@ impl Resolve<ExecuteArgs> for BuildRepo {
     "BuildRepo",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       repo = self.repo,
@@ -392,7 +400,11 @@ impl Resolve<ExecuteArgs> for BuildRepo {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let mut repo = get_check_permissions::<Repo>(
       &self.repo,
@@ -705,7 +717,7 @@ impl Resolve<ExecuteArgs> for CancelRepoBuild {
     "CancelRepoBuild",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       repo = self.repo,
@@ -713,7 +725,11 @@ impl Resolve<ExecuteArgs> for CancelRepoBuild {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let repo = get_check_permissions::<Repo>(
       &self.repo,

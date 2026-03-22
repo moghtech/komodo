@@ -66,14 +66,14 @@ impl Resolve<ExecuteArgs> for BatchRunAction {
     "BatchRunAction",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
     )
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, id, .. }: &ExecuteArgs,
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchRunAction>(&self.pattern, user)
@@ -87,7 +87,7 @@ impl Resolve<ExecuteArgs> for RunAction {
     "RunAction",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       action = self.action,
@@ -95,7 +95,11 @@ impl Resolve<ExecuteArgs> for RunAction {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let mut action = get_check_permissions::<Action>(
       &self.action,

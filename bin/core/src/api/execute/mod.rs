@@ -49,9 +49,9 @@ mod sync;
 use super::Variant;
 
 pub struct ExecuteArgs {
-  /// The execution id.
-  /// Unique for every /execute call.
-  pub id: Uuid,
+  /// The task id.
+  /// Unique for every '/execute' call.
+  pub task_id: Uuid,
   pub user: User,
   pub update: Update,
 }
@@ -60,7 +60,7 @@ pub struct ExecuteArgs {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EnumDiscriminants,
 )]
-#[strum_discriminants(name(ExecuteRequestVariant), derive(Display))]
+#[strum_discriminants(name(ExecuteRequestMethod), derive(Display))]
 #[args(ExecuteArgs)]
 #[response(JsonString)]
 #[error(mogh_error::Error)]
@@ -249,11 +249,19 @@ pub fn inner_handler(
       async move {
         let log = match handle.await {
           Ok(Err(e)) => {
-            warn!("/execute request {task_id} task error: {e:#}",);
+            warn!(
+              api = "Execute",
+              task_id = task_id.to_string(),
+              "/execute request task error: {e:#}",
+            );
             Log::error("Task Error", format_serror(&e.into()))
           }
           Err(e) => {
-            warn!("/execute request {task_id} spawn error: {e:?}",);
+            warn!(
+              api = "Execute",
+              task_id = task_id.to_string(),
+              "/execute request spawn error: {e:?}",
+            );
             Log::error("Spawn Error", format!("{e:#?}"))
           }
           _ => return,
@@ -268,7 +276,7 @@ pub fn inner_handler(
             find_one_by_id(&db_client().updates, &update_id)
               .await
               .context("Failed to query to db")?
-              .context("No update exists with given id")?;
+              .context("No Update exists with given id")?;
           update.logs.push(log);
           update.finalize();
           update_update(update).await
@@ -277,7 +285,10 @@ pub fn inner_handler(
 
         if let Err(e) = res {
           warn!(
-            "Failed to update update with task error log | {e:#}"
+            api = "Execute",
+            task_id = task_id.to_string(),
+            update_id,
+            "Failed to modify Update with task error log | {e:#}"
           );
         }
       }
@@ -293,25 +304,44 @@ async fn task(
   user: User,
   update: Update,
 ) -> anyhow::Result<String> {
-  let variant: ExecuteRequestVariant = (&request).into();
+  let method: ExecuteRequestMethod = (&request).into();
+
+  let user_id = user.id.clone();
+  let username = user.username.clone();
 
   info!(
-    "EXECUTE REQUEST {id} | METHOD: {variant} | USER: {} ({})",
-    user.username, user.id
+    api = "Execute",
+    task_id = id.to_string(),
+    method = method.to_string(),
+    user_id,
+    username,
+    "EXECUTE REQUEST",
   );
 
-  let res =
-    match request.resolve(&ExecuteArgs { user, update, id }).await {
-      Err(e) => Err(e.error),
-      Ok(JsonString::Err(e)) => Err(
-        anyhow::Error::from(e)
-          .context("failed to serialize response"),
-      ),
-      Ok(JsonString::Ok(res)) => Ok(res),
-    };
+  let res = match request
+    .resolve(&ExecuteArgs {
+      user,
+      update,
+      task_id: id,
+    })
+    .await
+  {
+    Err(e) => Err(e.error),
+    Ok(JsonString::Err(e)) => Err(
+      anyhow::Error::from(e).context("failed to serialize response"),
+    ),
+    Ok(JsonString::Ok(res)) => Ok(res),
+  };
 
   if let Err(e) = &res {
-    warn!("EXECUTE REQUEST {id} | METHOD: {variant} | ERROR: {e:#}");
+    warn!(
+      api = "Execute",
+      task_id = id.to_string(),
+      method = method.to_string(),
+      user_id,
+      username,
+      "EXECUTE REQUEST | ERROR: {e:#}"
+    );
   }
 
   res

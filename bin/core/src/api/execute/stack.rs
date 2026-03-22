@@ -69,14 +69,14 @@ impl Resolve<ExecuteArgs> for BatchDeployStack {
     "BatchDeployStack",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
     )
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, id, .. }: &ExecuteArgs,
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchDeployStack>(&self.pattern, user)
@@ -90,7 +90,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
     "DeployStack",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       stack = self.stack,
@@ -100,7 +100,11 @@ impl Resolve<ExecuteArgs> for DeployStack {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let (mut stack, swarm_or_server) = setup_stack_execution(
       &self.stack,
@@ -342,14 +346,14 @@ impl Resolve<ExecuteArgs> for BatchDeployStackIfChanged {
     "BatchDeployStackIfChanged",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
     )
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, id, .. }: &ExecuteArgs,
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchDeployStackIfChanged>(
@@ -366,7 +370,7 @@ impl Resolve<ExecuteArgs> for DeployStackIfChanged {
     "DeployStackIfChanged",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       stack = self.stack,
@@ -375,7 +379,11 @@ impl Resolve<ExecuteArgs> for DeployStackIfChanged {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let stack = get_check_permissions::<Stack>(
       &self.stack,
@@ -433,7 +441,7 @@ impl Resolve<ExecuteArgs> for DeployStackIfChanged {
         .resolve(&ExecuteArgs {
           user: user.clone(),
           update,
-          id: *id,
+          task_id: *task_id,
         })
         .await
       }
@@ -572,7 +580,7 @@ async fn deploy_services(
     .resolve(&ExecuteArgs {
       user: user.clone(),
       update,
-      id: Uuid::new_v4(),
+      task_id: Uuid::new_v4(),
     })
     .await
 }
@@ -603,7 +611,7 @@ async fn restart_services(
     .resolve(&ExecuteArgs {
       user: user.clone(),
       update,
-      id: Uuid::new_v4(),
+      task_id: Uuid::new_v4(),
     })
     .await
 }
@@ -766,14 +774,14 @@ impl Resolve<ExecuteArgs> for BatchPullStack {
     "BatchPullStack",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
     )
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, id, .. }: &ExecuteArgs,
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchPullStack>(&self.pattern, user)
@@ -888,7 +896,7 @@ impl Resolve<ExecuteArgs> for PullStack {
     "PullStack",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       stack = self.stack,
@@ -897,7 +905,11 @@ impl Resolve<ExecuteArgs> for PullStack {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let (stack, swarm_or_server) = setup_stack_execution(
       &self.stack,
@@ -959,7 +971,7 @@ impl Resolve<ExecuteArgs> for StartStack {
     "StartStack",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       stack = self.stack,
@@ -968,7 +980,11 @@ impl Resolve<ExecuteArgs> for StartStack {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     execute_compose::<StartStack>(
       &self.stack,
@@ -988,7 +1004,7 @@ impl Resolve<ExecuteArgs> for RestartStack {
     "RestartStack",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       stack = self.stack,
@@ -997,7 +1013,11 @@ impl Resolve<ExecuteArgs> for RestartStack {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     execute_compose::<RestartStack>(
       &self.stack,
@@ -1019,7 +1039,7 @@ impl Resolve<ExecuteArgs> for PauseStack {
     "PauseStack",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       stack = self.stack,
@@ -1028,7 +1048,11 @@ impl Resolve<ExecuteArgs> for PauseStack {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     execute_compose::<PauseStack>(
       &self.stack,
@@ -1048,7 +1072,7 @@ impl Resolve<ExecuteArgs> for UnpauseStack {
     "UnpauseStack",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       stack = self.stack,
@@ -1057,7 +1081,11 @@ impl Resolve<ExecuteArgs> for UnpauseStack {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     execute_compose::<UnpauseStack>(
       &self.stack,
@@ -1077,7 +1105,7 @@ impl Resolve<ExecuteArgs> for StopStack {
     "StopStack",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       stack = self.stack,
@@ -1086,7 +1114,11 @@ impl Resolve<ExecuteArgs> for StopStack {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     execute_compose::<StopStack>(
       &self.stack,
@@ -1118,14 +1150,14 @@ impl Resolve<ExecuteArgs> for BatchDestroyStack {
     "BatchDestroyStack",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
     )
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, id, .. }: &ExecuteArgs,
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     super::batch_execute::<BatchDestroyStack>(&self.pattern, user)
       .await
@@ -1138,7 +1170,7 @@ impl Resolve<ExecuteArgs> for DestroyStack {
     "DestroyStack",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       stack = self.stack,
@@ -1149,7 +1181,11 @@ impl Resolve<ExecuteArgs> for DestroyStack {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let (stack, swarm_or_server) = setup_stack_execution(
       &self.stack,
@@ -1233,7 +1269,7 @@ impl Resolve<ExecuteArgs> for RunStackService {
     "RunStackService",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       stack = self.stack,
@@ -1243,7 +1279,11 @@ impl Resolve<ExecuteArgs> for RunStackService {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let (mut stack, swarm_or_server) = setup_stack_execution(
       &self.stack,

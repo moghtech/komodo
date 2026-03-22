@@ -103,7 +103,7 @@ pub async fn deploy_from_cache(
                 .resolve(&ExecuteArgs {
                   user: user.to_owned(),
                   update,
-                  id,
+                  task_id: id,
                 })
                 .await
             }
@@ -122,7 +122,7 @@ pub async fn deploy_from_cache(
                 .resolve(&ExecuteArgs {
                   user: user.to_owned(),
                   update,
-                  id,
+                  task_id: id,
                 })
                 .await
             }

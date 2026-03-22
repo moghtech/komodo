@@ -54,7 +54,7 @@ pub struct WriteArgs {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EnumDiscriminants,
 )]
-#[strum_discriminants(name(WriteRequestVariant), derive(Display))]
+#[strum_discriminants(name(WriteRequestMethod), derive(Display))]
 #[args(WriteArgs)]
 #[response(Response)]
 #[error(mogh_error::Error)]
@@ -255,8 +255,11 @@ async fn task(
   request: WriteRequest,
   user: User,
 ) -> mogh_error::Result<axum::response::Response> {
-  let req_id = Uuid::new_v4();
-  let variant: WriteRequestVariant = (&request).into();
+  let task_id = Uuid::new_v4();
+  let method: WriteRequestMethod = (&request).into();
+
+  let user_id = user.id.clone();
+  let username = user.username.clone();
 
   if !matches!(
     request,
@@ -264,8 +267,11 @@ async fn task(
       | WriteRequest::PushRecentlyViewed(_)
   ) {
     info!(
-      "WRITE REQUEST {req_id} | METHOD: {variant} | USER: {} ({})",
-      user.username, user.id
+      task_id = task_id.to_string(),
+      method = method.to_string(),
+      user_id,
+      username,
+      "WRITE REQUEST",
     );
   }
 
@@ -273,7 +279,11 @@ async fn task(
 
   if let Err(e) = &res {
     warn!(
-      "WRITE REQUEST {req_id} | METHOD: {variant} | ERROR: {:#}",
+      task_id = task_id.to_string(),
+      method = method.to_string(),
+      user_id,
+      username,
+      "WRITE REQUEST | ERROR: {:#}",
       e.error
     );
   }

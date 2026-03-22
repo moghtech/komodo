@@ -28,7 +28,7 @@ impl Resolve<ExecuteArgs> for TestAlerter {
     "TestAlerter",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       alerter = self.alerter,
@@ -36,7 +36,11 @@ impl Resolve<ExecuteArgs> for TestAlerter {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> Result<Self::Response, Self::Error> {
     let alerter = get_check_permissions::<Alerter>(
       &self.alerter,
@@ -94,7 +98,7 @@ impl Resolve<ExecuteArgs> for SendAlert {
     "SendAlert",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       request = format!("{self:?}"),
@@ -102,7 +106,11 @@ impl Resolve<ExecuteArgs> for SendAlert {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> Result<Self::Response, Self::Error> {
     let alerters = list_full_for_user::<Alerter>(
       Default::default(),

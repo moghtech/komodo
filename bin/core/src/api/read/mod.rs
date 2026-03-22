@@ -70,7 +70,7 @@ pub struct ReadArgs {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Resolve, EnumDiscriminants,
 )]
-#[strum_discriminants(name(ReadRequestVariant), derive(Display))]
+#[strum_discriminants(name(ReadRequestMethod), derive(Display))]
 #[args(ReadArgs)]
 #[response(Response)]
 #[error(mogh_error::Error)]
@@ -291,18 +291,28 @@ async fn handler(
   Json(request): Json<ReadRequest>,
 ) -> mogh_error::Result<axum::response::Response> {
   let req_id = Uuid::new_v4();
-  let variant: ReadRequestVariant = (&request).into();
+  let method: ReadRequestMethod = (&request).into();
+
+  let user_id = user.id.clone();
+  let username = user.username.clone();
 
   trace!(
-    "READ REQUEST {req_id} | METHOD: {variant} | USER: {} ({})",
-    user.username, user.id
+    req_id = req_id.to_string(),
+    method = method.to_string(),
+    user_id,
+    username,
+    "READ REQUEST",
   );
 
   let res = request.resolve(&ReadArgs { user }).await;
 
   if let Err(e) = &res {
     trace!(
-      "READ REQUEST {req_id} | METHOD: {variant} | ERROR: {:#}",
+      req_id = req_id.to_string(),
+      method = method.to_string(),
+      user_id,
+      username,
+      "READ REQUEST | ERROR: {:#}",
       e.error
     );
   }
