@@ -68,6 +68,15 @@ export default function Home(): JSX.Element {
     <Layout title="Home" description={siteConfig.tagline}>
       <HomepageHeader />
       <main>
+        <div className={styles.upgradeBanner}>
+          <div className="container">
+            Running <b>Komodo v1</b>? See the{" "}
+            <Link to="/docs/setup/version-upgrades#upgrading-to-komodo-v2">
+              v2 migration guide
+            </Link>
+            .
+          </div>
+        </div>
         <HomepageFeatures />
       </main>
     </Layout>

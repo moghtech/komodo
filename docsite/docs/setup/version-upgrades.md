@@ -4,14 +4,14 @@ Most version upgrades only require a redeployment of the Core container after pu
 
 Some Core API upgrades may change behavior such as building / cloning, and require updating the Periphery binaries to match the Core version before this functionality can be restored. This will be specifically mentioned in the release notes.
 
-## Updating to Komodo v2
+## Upgrading to Komodo v2
 
 Komodo v2 introduces a new connection and authentication method between Komodo Core and the Periphery agents running on your Servers.
-It is largely backward compatible with Komodo v1 configuration, and users can update from v1 in place by following the steps below.
+It is largely backward compatible with Komodo v1 configuration, and users can upgrade from v1 in place by following the steps below.
 
-### 1. Update Core and Periphery to v2
+### 1. Upgrade Core and Periphery to v2
 
-The first step is to update both Core and Periphery to v2 versions, along with **some small configuration changes**.
+The first step is to upgrade both Core and Periphery to v2 versions, along with **some small configuration changes**.
 
 :::note
 Starting with v2, Komodo will not publish images with the `latest` tag in favor of Semver (`2`, `2.0`, `2.0.0`).

@@ -16,6 +16,25 @@
   }
 }
 
+.upgradeBanner {
+  background: var(--ifm-color-primary-darkest);
+  color: #fff;
+  padding: 1.125rem 0;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.upgradeBanner a {
+  color: #fff;
+  text-decoration: underline;
+  font-weight: 700;
+}
+
+.upgradeBanner a:hover {
+  color: var(--ifm-color-primary-lightest);
+}
+
 .buttons {
   display: flex;
   flex-wrap: wrap;
