@@ -258,10 +258,16 @@ async fn task(
   let req_id = Uuid::new_v4();
   let variant: WriteRequestVariant = (&request).into();
 
-  info!(
-    "WRITE REQUEST {req_id} | METHOD: {variant} | USER: {} ({})",
-    user.username, user.id
-  );
+  if !matches!(
+    request,
+    WriteRequest::SetLastSeenUpdate(_)
+      | WriteRequest::PushRecentlyViewed(_)
+  ) {
+    info!(
+      "WRITE REQUEST {req_id} | METHOD: {variant} | USER: {} ({})",
+      user.username, user.id
+    );
+  }
 
   let res = request.resolve(&WriteArgs { user }).await;
 
