@@ -9,7 +9,7 @@ COPY ./docs ./docs
 COPY ./src ./src
 COPY ./static ./static
 COPY ./babel.config.js ./babel.config.js
-COPY ./docusaurus.config.js ./docusaurus.config.js
+COPY ./docusaurus.config.ts ./docusaurus.config.ts
 COPY ./sidebars.ts ./sidebars.ts
 COPY ./tsconfig.json ./tsconfig.json
 
