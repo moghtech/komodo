@@ -563,7 +563,16 @@ impl Resolve<WriteArgs> for RefreshStackCache {
 
         (services, Some(contents), Some(errors), None, None)
       } else {
-        (vec![], None, None, None, None)
+        // This path is reached if the swarm / server is not available.
+        // It carries over the last successful poll.
+        (
+          stack.info.latest_services,
+          stack.info.remote_contents,
+          stack.info.remote_errors,
+          // Files on host can set hash / message back to None.
+          None,
+          None,
+        )
       }
     } else if !repo_empty {
       // ================
