@@ -29,10 +29,11 @@ export interface ConfirmModalProps extends Omit<
   loading?: boolean;
   additional?: ReactNode;
   topAdditonal?: ReactNode;
-  /** Converts into ConfirmButton */
-  disableModal?: boolean;
   targetProps?: ButtonProps;
   targetNoIcon?: boolean;
+  confirmProps?: ButtonProps;
+  /** Converts into ConfirmButton */
+  disableModal?: boolean;
 }
 
 export default function ConfirmModal({
@@ -46,9 +47,10 @@ export default function ConfirmModal({
   loading,
   additional,
   topAdditonal,
-  disableModal,
   targetProps,
   targetNoIcon,
+  confirmProps,
+  disableModal,
   ...modalProps
 }: ConfirmModalProps) {
   const [opened, { open, close }] = useDisclosure();
@@ -128,6 +130,7 @@ export default function ConfirmModal({
                 e.stopPropagation();
                 onConfirm ? onConfirm().then(() => close()) : close();
               }}
+              {...confirmProps}
             >
               {confirmButtonContent ?? children}
             </Button>

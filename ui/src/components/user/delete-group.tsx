@@ -24,11 +24,11 @@ export default function DeleteUserGroup({ group }: { group: Types.UserGroup }) {
 
   return (
     <ConfirmModal
-      targetProps={{ variant: "filled", color: "red" }}
       icon={<ICONS.Delete size="1rem" />}
       onConfirm={() => deleteGroup({ id: group._id?.$oid! })}
       confirmText={group.name}
       loading={isPending}
+      confirmProps={{ variant: "filled", color: "red" }}
     >
       Delete
     </ConfirmModal>

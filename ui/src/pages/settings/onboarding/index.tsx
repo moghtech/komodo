@@ -76,7 +76,7 @@ export default function SettingsOnboardingKeys() {
         cell: ({ row }) => {
           const tags = useRead("ListTags", {}).data;
           const otherTags = tags?.filter(
-            (tag) => !row.original.tags?.includes(tag._id?.$oid!),
+            (tag) => !row.original.tags?.includes(tag.name),
           );
           return (
             <Group wrap="nowrap" gap="sm">
@@ -90,6 +90,7 @@ export default function SettingsOnboardingKeys() {
                   })
                 }
                 position="bottom-start"
+                useName
               />
 
               <Tags
@@ -185,8 +186,8 @@ export default function SettingsOnboardingKeys() {
         }) => (
           <Badge
             color={expires && expires <= Date.now() ? "red" : "accent"}
-            fz={{ base: "sm", xl: "md" }}
-            p={{ base: "sm", xl: "md" }}
+            fz="sm"
+            p="sm"
             styles={{ label: { width: "fit-content", height: "fit-content" } }}
             size={expiresSize}
           >

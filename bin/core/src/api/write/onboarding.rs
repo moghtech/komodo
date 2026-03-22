@@ -59,7 +59,7 @@ impl Resolve<WriteArgs> for CreateOnboardingKey {
     let tags = if self.tags.is_empty() {
       self.tags
     } else {
-      // fix_tags by ensuring existence, and replace with tag id.
+      // fix_tags by ensuring existence, and force replace with tag name.
       let all_tags = get_all_tags(None).await?;
       self
         .tags
@@ -67,7 +67,7 @@ impl Resolve<WriteArgs> for CreateOnboardingKey {
         .filter_map(|tag| {
           let tag =
             all_tags.iter().find(|t| t.id == tag || t.name == tag)?;
-          Some(tag.id.clone())
+          Some(tag.name.clone())
         })
         .collect()
     };
@@ -157,6 +157,21 @@ impl Resolve<WriteArgs> for UpdateOnboardingKey {
     }
 
     if let Some(tags) = self.tags {
+      let tags = if tags.is_empty() {
+        tags
+      } else {
+        // fix_tags by ensuring existence, and force replace with tag name.
+        let all_tags = get_all_tags(None).await?;
+        tags
+          .into_iter()
+          .filter_map(|tag| {
+            let tag = all_tags
+              .iter()
+              .find(|t| t.id == tag || t.name == tag)?;
+            Some(tag.name.clone())
+          })
+          .collect()
+      };
       update.insert("tags", tags);
     }
 

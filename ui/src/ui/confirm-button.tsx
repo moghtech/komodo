@@ -21,6 +21,8 @@ export interface ConfirmButtonProps extends ButtonProps {
   icon?: ReactNode;
   onClick?: MouseEventHandler<HTMLButtonElement>;
   onBlur?: FocusEventHandler<HTMLButtonElement>;
+  /** Passed when button is in confirm mode */
+  confirmProps?: ButtonProps;
 }
 
 const ConfirmButton = createPolymorphicComponent<"button", ConfirmButtonProps>(
@@ -35,6 +37,7 @@ const ConfirmButton = createPolymorphicComponent<"button", ConfirmButtonProps>(
         miw,
         loading,
         disabled,
+        confirmProps,
         ...props
       },
       ref,
@@ -77,6 +80,7 @@ const ConfirmButton = createPolymorphicComponent<"button", ConfirmButtonProps>(
           }
           disabled={disabled || loading}
           {...props}
+          {...(clickedOnce ? confirmProps : {})}
           ref={ref}
         >
           {clickedOnce ? "Confirm" : children}

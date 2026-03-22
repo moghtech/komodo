@@ -76,7 +76,6 @@ export default function UserTable({
       header: "Delete",
       cell: ({ row }) => (
         <ConfirmModal
-          targetProps={{ variant: "filled", color: "red" }}
           icon={<ICONS.Delete size="1rem" />}
           confirmText={row.original.username}
           onConfirm={() => onUserDelete(row.original._id?.$oid!)}
@@ -85,6 +84,7 @@ export default function UserTable({
               ? (userDeleteDisabled?.(row.original._id.$oid) ?? true)
               : true
           }
+          confirmProps={{ variant: "filled", color: "red" }}
         >
           Delete
         </ConfirmModal>
