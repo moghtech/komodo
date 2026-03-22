@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
 use anyhow::Context;
-use colored::Colorize;
 use database::mungos::{
   find::find_collect,
   mongodb::bson::{
@@ -349,11 +348,11 @@ async fn ensure_init_user_and_resources() {
     || procedures.is_some()
     || tags.is_some()
   {
-    info!("System resources init {}", "DISABLED".red());
+    info!("Skipping initial system resource creation");
     return;
   }
 
-  info!("Creating init system resources...");
+  info!("Creating initial system resources...");
 
   let write_args = WriteArgs {
     user: system_user().to_owned(),
