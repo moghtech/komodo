@@ -3,6 +3,11 @@ alias = "dd"
 description = "starts the documentation site (https://komo.do) in dev mode"
 cmd = "yarn && yarn start"
 
+[build-docsite]
+alias = "bd"
+description = "builds the documentation site (https://komo.do)"
+cmd = "yarn && yarn build"
+
 [publish-docsite]
 description = "publishes the documentation site (https://komo.do) to github pages"
 cmd = "yarn && yarn deploy"

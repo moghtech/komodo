@@ -32,7 +32,7 @@ executions = [
 | `config.stage[].name` | Display name for the stage. | — |
 | `config.stage[].enabled` | Whether the stage is active. | `true` |
 | `config.stage[].executions` | List of executions to run in parallel within the stage. | `[]` |
-| `schedule` | Schedule expression. See [Scheduling](scheduling). | `""` |
+| `schedule` | Schedule expression. See [Schedules](schedules). | `""` |
 | `schedule_format` | `English` or `Cron`. | `English` |
 | `schedule_enabled` | Whether the schedule is active. | `true` |
 
