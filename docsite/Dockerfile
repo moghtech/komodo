@@ -13,6 +13,8 @@ COPY ./docusaurus.config.ts ./docusaurus.config.ts
 COPY ./sidebars.ts ./sidebars.ts
 COPY ./tsconfig.json ./tsconfig.json
 
+RUN yarn build
+
 FROM caddy:latest
 
 # Copy into caddy image /srv
