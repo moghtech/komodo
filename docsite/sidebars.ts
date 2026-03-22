@@ -23,8 +23,6 @@ const sidebars: SidebarsConfig = {
     {
       type: "category",
       label: "Deploy",
-      collapsible: true,
-      collapsed: false,
       items: [
         "deploy/containers",
         "deploy/compose",
@@ -37,8 +35,6 @@ const sidebars: SidebarsConfig = {
     {
       type: "category",
       label: "Automate",
-      collapsible: true,
-      collapsed: false,
       items: [
         "automate/procedures",
         "automate/schedules",
@@ -49,8 +45,6 @@ const sidebars: SidebarsConfig = {
     {
       type: "category",
       label: "Configuration",
-      collapsible: true,
-      collapsed: false,
       items: [
         "configuration/providers",
         "configuration/variables",
