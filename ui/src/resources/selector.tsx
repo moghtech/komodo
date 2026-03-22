@@ -136,7 +136,7 @@ export default function ResourceSelector({
         <Combobox.Options mah={224} style={{ overflowY: "auto" }}>
           {filtered.map((resource) => (
             <Combobox.Option key={resource.id} value={resource.id}>
-              <Group>
+              <Group gap="xs">
                 <Components.Icon id={resource.id} />
                 <Text>{resource.name}</Text>
               </Group>

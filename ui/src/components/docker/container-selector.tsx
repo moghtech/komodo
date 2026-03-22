@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { ChevronsUpDown } from "lucide-react";
 import {
+  ActionIcon,
   Button,
   ButtonProps,
   Combobox,
@@ -22,6 +23,7 @@ export interface ContainerSelectorProps extends ComboboxProps {
   placeholder?: string;
   state?: Types.ContainerStateStatusEnum;
   targetProps?: ButtonProps;
+  clearable?: boolean;
 }
 
 export default function ContainerSelector({
@@ -34,20 +36,21 @@ export default function ContainerSelector({
   position = "bottom-start",
   onOptionSubmit,
   targetProps,
+  clearable,
   ...comboboxProps
 }: ContainerSelectorProps) {
   const containers = useRead("ListDockerContainers", {
     server: serverId,
   }).data?.filter((container) => !state || container.state === state);
+
   const firstContainer = containers?.[0].name;
   useEffect(() => {
-    firstContainer && onSelect?.(firstContainer);
+    !clearable && firstContainer && !selected && onSelect?.(firstContainer);
   }, [firstContainer]);
+
   const name = containers?.find((r) => r.name === selected)?.name;
 
   const { search, setSearch, combobox } = useSearchCombobox();
-
-  if (!containers) return null;
 
   const filtered = filterBySplit(containers, search, (item) => item.name).sort(
     (a, b) => {
@@ -78,7 +81,25 @@ export default function ContainerSelector({
           maw={350}
           justify="space-between"
           disabled={disabled}
-          rightSection={<ChevronsUpDown size="0.9rem" />}
+          rightSection={
+            <Group gap="xs" ml="sm" wrap="nowrap">
+              {clearable && (
+                <ActionIcon
+                  size="sm"
+                  variant="filled"
+                  color="red"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelect?.("");
+                  }}
+                  disabled={disabled || !selected}
+                >
+                  <ICONS.Clear size="0.8rem" />
+                </ActionIcon>
+              )}
+              <ChevronsUpDown size="1rem" />
+            </Group>
+          }
           onClick={() => combobox.toggleDropdown()}
           {...targetProps}
         >
@@ -97,15 +118,14 @@ export default function ContainerSelector({
           placeholder="Search"
         />
         <Combobox.Options mah={224} style={{ overflowY: "auto" }}>
-          {!search && <Combobox.Option value="None">None</Combobox.Option>}
           {filtered.map((container) => (
             <Combobox.Option key={container.name} value={container.name}>
-              <Group>
+              <Group gap="xs">
                 <DOCKER_LINK_ICONS.Container
                   serverId={container.server_id!}
                   name={container.name}
                 />
-                {container.name}
+                <Text>{container.name}</Text>
               </Group>
             </Combobox.Option>
           ))}

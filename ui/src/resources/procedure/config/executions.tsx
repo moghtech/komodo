@@ -1,13 +1,17 @@
+import ContainerSelector from "@/components/docker/container-selector";
 import { MonacoEditor } from "@/components/monaco";
 import StackServiceSelector from "@/components/stack-service-selector";
+import { useRead } from "@/lib/hooks";
 import { textToEnv } from "@/lib/utils";
 import ResourceSelector from "@/resources/selector";
+import { ICONS } from "@/theme/icons";
 import EnableSwitch from "@/ui/enable-switch";
 import TextUpdateModal from "@/ui/text-update-modal";
 import {
   Button,
   Group,
   Modal,
+  MultiSelect,
   SimpleGrid,
   Stack,
   Switch,
@@ -34,12 +38,6 @@ export type ProcedureExecutionComponent<
 
 export type ProcedureMinExecutionType = Exclude<
   ExecutionType,
-  | "StartContainer"
-  | "RestartContainer"
-  | "PauseContainer"
-  | "UnpauseContainer"
-  | "StopContainer"
-  | "DestroyContainer"
   | "DeleteNetwork"
   | "DeleteImage"
   | "DeleteVolume"
@@ -302,15 +300,36 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
   },
   // Stack
   DeployStack: {
-    params: { stack: "" },
-    Component: ({ params, setParams, disabled }) => (
-      <ResourceSelector
-        type="Stack"
-        selected={params.stack}
-        onSelect={(id) => setParams({ stack: id })}
-        disabled={disabled}
-      />
-    ),
+    params: { stack: "", services: [] },
+    Component: ({ params, setParams, disabled }) => {
+      const allServices = useRead("ListStackServices", {
+        stack: params.stack,
+      }).data?.map((s) => s.service);
+      return (
+        <Group>
+          <ResourceSelector
+            type="Stack"
+            selected={params.stack}
+            onSelect={(id) =>
+              setParams(
+                id ? { ...params, stack: id } : { stack: id, services: [] },
+              )
+            }
+            disabled={disabled}
+          />
+          <MultiSelect
+            leftSection={<ICONS.Service size="1rem" />}
+            placeholder={params.services?.length ? undefined : "All services"}
+            value={params.services}
+            data={allServices}
+            onChange={(services) => setParams({ ...params, services })}
+            styles={{ inputField: { width: 130 } }}
+            searchable
+            clearable
+          />
+        </Group>
+      );
+    },
   },
   BatchDeployStack: {
     params: { pattern: "" },
@@ -357,14 +376,35 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
   },
   PullStack: {
     params: { stack: "" },
-    Component: ({ params, setParams, disabled }) => (
-      <ResourceSelector
-        type="Stack"
-        selected={params.stack}
-        onSelect={(id) => setParams({ stack: id })}
-        disabled={disabled}
-      />
-    ),
+    Component: ({ params, setParams, disabled }) => {
+      const allServices = useRead("ListStackServices", {
+        stack: params.stack,
+      }).data?.map((s) => s.service);
+      return (
+        <Group>
+          <ResourceSelector
+            type="Stack"
+            selected={params.stack}
+            onSelect={(id) =>
+              setParams(
+                id ? { ...params, stack: id } : { stack: id, services: [] },
+              )
+            }
+            disabled={disabled}
+          />
+          <MultiSelect
+            leftSection={<ICONS.Service size="1rem" />}
+            placeholder={params.services?.length ? undefined : "All services"}
+            value={params.services}
+            data={allServices}
+            onChange={(services) => setParams({ ...params, services })}
+            styles={{ inputField: { width: 130 } }}
+            searchable
+            clearable
+          />
+        </Group>
+      );
+    },
   },
   BatchPullStack: {
     params: { pattern: "" },
@@ -384,69 +424,195 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
   },
   StartStack: {
     params: { stack: "" },
-    Component: ({ params, setParams, disabled }) => (
-      <ResourceSelector
-        type="Stack"
-        selected={params.stack}
-        onSelect={(id) => setParams({ stack: id })}
-        disabled={disabled}
-      />
-    ),
+    Component: ({ params, setParams, disabled }) => {
+      const allServices = useRead("ListStackServices", {
+        stack: params.stack,
+      }).data?.map((s) => s.service);
+      return (
+        <Group>
+          <ResourceSelector
+            type="Stack"
+            selected={params.stack}
+            onSelect={(id) =>
+              setParams(
+                id ? { ...params, stack: id } : { stack: id, services: [] },
+              )
+            }
+            disabled={disabled}
+          />
+          <MultiSelect
+            leftSection={<ICONS.Service size="1rem" />}
+            placeholder={params.services?.length ? undefined : "All services"}
+            value={params.services}
+            data={allServices}
+            onChange={(services) => setParams({ ...params, services })}
+            styles={{ inputField: { width: 130 } }}
+            searchable
+            clearable
+          />
+        </Group>
+      );
+    },
   },
   RestartStack: {
     params: { stack: "" },
-    Component: ({ params, setParams, disabled }) => (
-      <ResourceSelector
-        type="Stack"
-        selected={params.stack}
-        onSelect={(id) => setParams({ stack: id })}
-        disabled={disabled}
-      />
-    ),
+    Component: ({ params, setParams, disabled }) => {
+      const allServices = useRead("ListStackServices", {
+        stack: params.stack,
+      }).data?.map((s) => s.service);
+      return (
+        <Group>
+          <ResourceSelector
+            type="Stack"
+            selected={params.stack}
+            onSelect={(id) =>
+              setParams(
+                id ? { ...params, stack: id } : { stack: id, services: [] },
+              )
+            }
+            disabled={disabled}
+          />
+          <MultiSelect
+            leftSection={<ICONS.Service size="1rem" />}
+            placeholder={params.services?.length ? undefined : "All services"}
+            value={params.services}
+            data={allServices}
+            onChange={(services) => setParams({ ...params, services })}
+            styles={{ inputField: { width: 130 } }}
+            searchable
+            clearable
+          />
+        </Group>
+      );
+    },
   },
   PauseStack: {
     params: { stack: "" },
-    Component: ({ params, setParams, disabled }) => (
-      <ResourceSelector
-        type="Stack"
-        selected={params.stack}
-        onSelect={(id) => setParams({ stack: id })}
-        disabled={disabled}
-      />
-    ),
+    Component: ({ params, setParams, disabled }) => {
+      const allServices = useRead("ListStackServices", {
+        stack: params.stack,
+      }).data?.map((s) => s.service);
+      return (
+        <Group>
+          <ResourceSelector
+            type="Stack"
+            selected={params.stack}
+            onSelect={(id) =>
+              setParams(
+                id ? { ...params, stack: id } : { stack: id, services: [] },
+              )
+            }
+            disabled={disabled}
+          />
+          <MultiSelect
+            leftSection={<ICONS.Service size="1rem" />}
+            placeholder={params.services?.length ? undefined : "All services"}
+            value={params.services}
+            data={allServices}
+            onChange={(services) => setParams({ ...params, services })}
+            styles={{ inputField: { width: 130 } }}
+            searchable
+            clearable
+          />
+        </Group>
+      );
+    },
   },
   UnpauseStack: {
     params: { stack: "" },
-    Component: ({ params, setParams, disabled }) => (
-      <ResourceSelector
-        type="Stack"
-        selected={params.stack}
-        onSelect={(id) => setParams({ stack: id })}
-        disabled={disabled}
-      />
-    ),
+    Component: ({ params, setParams, disabled }) => {
+      const allServices = useRead("ListStackServices", {
+        stack: params.stack,
+      }).data?.map((s) => s.service);
+      return (
+        <Group>
+          <ResourceSelector
+            type="Stack"
+            selected={params.stack}
+            onSelect={(id) =>
+              setParams(
+                id ? { ...params, stack: id } : { stack: id, services: [] },
+              )
+            }
+            disabled={disabled}
+          />
+          <MultiSelect
+            leftSection={<ICONS.Service size="1rem" />}
+            placeholder={params.services?.length ? undefined : "All services"}
+            value={params.services}
+            data={allServices}
+            onChange={(services) => setParams({ ...params, services })}
+            styles={{ inputField: { width: 130 } }}
+            searchable
+            clearable
+          />
+        </Group>
+      );
+    },
   },
   StopStack: {
     params: { stack: "" },
-    Component: ({ params, setParams, disabled }) => (
-      <ResourceSelector
-        type="Stack"
-        selected={params.stack}
-        onSelect={(id) => setParams({ stack: id })}
-        disabled={disabled}
-      />
-    ),
+    Component: ({ params, setParams, disabled }) => {
+      const allServices = useRead("ListStackServices", {
+        stack: params.stack,
+      }).data?.map((s) => s.service);
+      return (
+        <Group>
+          <ResourceSelector
+            type="Stack"
+            selected={params.stack}
+            onSelect={(id) =>
+              setParams(
+                id ? { ...params, stack: id } : { stack: id, services: [] },
+              )
+            }
+            disabled={disabled}
+          />
+          <MultiSelect
+            leftSection={<ICONS.Service size="1rem" />}
+            placeholder={params.services?.length ? undefined : "All services"}
+            value={params.services}
+            data={allServices}
+            onChange={(services) => setParams({ ...params, services })}
+            styles={{ inputField: { width: 130 } }}
+            searchable
+            clearable
+          />
+        </Group>
+      );
+    },
   },
   DestroyStack: {
     params: { stack: "" },
-    Component: ({ params, setParams, disabled }) => (
-      <ResourceSelector
-        type="Stack"
-        selected={params.stack}
-        onSelect={(id) => setParams({ stack: id })}
-        disabled={disabled}
-      />
-    ),
+    Component: ({ params, setParams, disabled }) => {
+      const allServices = useRead("ListStackServices", {
+        stack: params.stack,
+      }).data?.map((s) => s.service);
+      return (
+        <Group>
+          <ResourceSelector
+            type="Stack"
+            selected={params.stack}
+            onSelect={(id) =>
+              setParams(
+                id ? { ...params, stack: id } : { stack: id, services: [] },
+              )
+            }
+            disabled={disabled}
+          />
+          <MultiSelect
+            leftSection={<ICONS.Service size="1rem" />}
+            placeholder={params.services?.length ? undefined : "All services"}
+            value={params.services}
+            data={allServices}
+            onChange={(services) => setParams({ ...params, services })}
+            styles={{ inputField: { width: 130 } }}
+            searchable
+            clearable
+          />
+        </Group>
+      );
+    },
   },
   BatchDestroyStack: {
     params: { pattern: "" },
@@ -821,72 +987,144 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
     ),
   },
   // Server
-  // StartContainer: {
-  //   params: { server: "" },
-  //   Component: ({ params, setParams, disabled }) => (
-  //     <ResourceSelector
-  //       type="Server"
-  //       selected={params.server}
-  //       onSelect={(server) => setParams({ server })}
-  //       disabled={disabled}
-  //     />
-  //   ),
-  // },
-  // RestartContainer: {
-  //   params: { server: "" },
-  //   Component: ({ params, setParams, disabled }) => (
-  //     <ResourceSelector
-  //       type="Server"
-  //       selected={params.server}
-  //       onSelect={(server) => setParams({ server })}
-  //       disabled={disabled}
-  //     />
-  //   ),
-  // },
-  // PauseContainer: {
-  //   params: { server: "" },
-  //   Component: ({ params, setParams, disabled }) => (
-  //     <ResourceSelector
-  //       type="Server"
-  //       selected={params.server}
-  //       onSelect={(server) => setParams({ server })}
-  //       disabled={disabled}
-  //     />
-  //   ),
-  // },
-  // UnpauseContainer: {
-  //   params: { server: "" },
-  //   Component: ({ params, setParams, disabled }) => (
-  //     <ResourceSelector
-  //       type="Server"
-  //       selected={params.server}
-  //       onSelect={(server) => setParams({ server })}
-  //       disabled={disabled}
-  //     />
-  //   ),
-  // },
-  // StopContainer: {
-  //   params: { server: "" },
-  //   Component: ({ params, setParams, disabled }) => (
-  //     <ResourceSelector
-  //       type="Server"
-  //       selected={params.server}
-  //       onSelect={(server) => setParams({ server })}
-  //       disabled={disabled}
-  //     />
-  //   ),
-  // },
-  // DestroyContainer: {
-  //   params: { server: "", container: "" },
-  //   Component: ({ params, setParams, disabled }) => (
-  //     <ResourceSelector
-  //       type="Server"
-  //       selected={params.server}
-  //       onSelect={(server) => setParams({ server })}
-  //       disabled={disabled}
-  //     />
-  //   ),
-  // },
+  StartContainer: {
+    params: { server: "", container: "" },
+    Component: ({ params, setParams, disabled }) => (
+      <Group>
+        <ResourceSelector
+          type="Server"
+          selected={params.server}
+          onSelect={(server) =>
+            setParams({ server, container: params.container })
+          }
+          disabled={disabled}
+        />
+        <ContainerSelector
+          serverId={params.server}
+          selected={params.container}
+          onSelect={(container) =>
+            setParams({ server: params.server, container })
+          }
+          disabled={disabled}
+        />
+      </Group>
+    ),
+  },
+  RestartContainer: {
+    params: { server: "", container: "" },
+    Component: ({ params, setParams, disabled }) => (
+      <Group>
+        <ResourceSelector
+          type="Server"
+          selected={params.server}
+          onSelect={(server) =>
+            setParams({ server, container: params.container })
+          }
+          disabled={disabled}
+        />
+        <ContainerSelector
+          serverId={params.server}
+          selected={params.container}
+          onSelect={(container) =>
+            setParams({ server: params.server, container })
+          }
+          disabled={disabled}
+        />
+      </Group>
+    ),
+  },
+  PauseContainer: {
+    params: { server: "", container: "" },
+    Component: ({ params, setParams, disabled }) => (
+      <Group>
+        <ResourceSelector
+          type="Server"
+          selected={params.server}
+          onSelect={(server) =>
+            setParams({ server, container: params.container })
+          }
+          disabled={disabled}
+        />
+        <ContainerSelector
+          serverId={params.server}
+          selected={params.container}
+          onSelect={(container) =>
+            setParams({ server: params.server, container })
+          }
+          disabled={disabled}
+        />
+      </Group>
+    ),
+  },
+  UnpauseContainer: {
+    params: { server: "", container: "" },
+    Component: ({ params, setParams, disabled }) => (
+      <Group>
+        <ResourceSelector
+          type="Server"
+          selected={params.server}
+          onSelect={(server) =>
+            setParams({ server, container: params.container })
+          }
+          disabled={disabled}
+        />
+        <ContainerSelector
+          serverId={params.server}
+          selected={params.container}
+          onSelect={(container) =>
+            setParams({ server: params.server, container })
+          }
+          disabled={disabled}
+        />
+      </Group>
+    ),
+  },
+  StopContainer: {
+    params: { server: "", container: "" },
+    Component: ({ params, setParams, disabled }) => (
+      <Group>
+        <ResourceSelector
+          type="Server"
+          selected={params.server}
+          onSelect={(server) =>
+            setParams({ server, container: params.container })
+          }
+          disabled={disabled}
+        />
+        <ContainerSelector
+          serverId={params.server}
+          selected={params.container}
+          onSelect={(container) =>
+            setParams({ server: params.server, container })
+          }
+          disabled={disabled}
+        />
+      </Group>
+    ),
+  },
+  DestroyContainer: {
+    params: { server: "", container: "" },
+    Component: ({ params, setParams, disabled }) => (
+      <Group>
+        <ResourceSelector
+          type="Server"
+          selected={params.server}
+          onSelect={(server) =>
+            setParams({ server, container: params.container })
+          }
+          disabled={disabled}
+        />
+        <ContainerSelector
+          serverId={params.server}
+          selected={params.container}
+          onSelect={(container) =>
+            setParams({ server: params.server, container })
+          }
+          disabled={disabled}
+        />
+      </Group>
+    ),
+  },
   StartAllContainers: {
     params: { server: "" },
     Component: ({ params, setParams, disabled }) => (

@@ -43,7 +43,7 @@ export default function StackServiceSelector({
   position = "bottom-start",
   onOptionSubmit,
   targetProps,
-  clearable = true,
+  clearable,
   ...comboboxProps
 }: StackServiceSelectorProps) {
   const stack = useStack(stackId);
@@ -53,7 +53,7 @@ export default function StackServiceSelector({
 
   const firstService = services?.[0].service;
   useEffect(() => {
-    firstService && onSelect?.(firstService);
+    !clearable && firstService && !selected && onSelect?.(firstService);
   }, [firstService]);
 
   const selectedService = services?.find((s) => s.service === selected);
@@ -141,10 +141,9 @@ export default function StackServiceSelector({
           placeholder="Search"
         />
         <Combobox.Options mah={224} style={{ overflowY: "auto" }}>
-          {!search && <Combobox.Option value="None">None</Combobox.Option>}
           {filtered.map((service) => (
             <Combobox.Option key={service.service} value={service.service}>
-              <Group>
+              <Group gap="xs">
                 {service.container && (
                   <DOCKER_LINK_ICONS.Container
                     serverId={service.container.server_id!}
@@ -157,7 +156,7 @@ export default function StackServiceSelector({
                     resourceId={service.swarm_service.ID}
                   />
                 )}
-                {service.service}
+                <Text>{service.service}</Text>
               </Group>
             </Combobox.Option>
           ))}
