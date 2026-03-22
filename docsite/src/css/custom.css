@@ -17,6 +17,44 @@
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
 }
 
+/* Search bar: center in navbar on desktop */
+@media (min-width: 997px) {
+  .navbar__inner {
+    position: relative;
+  }
+
+  .navbar__search {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .navbar__search-input {
+    width: 280px;
+    transition: width 0.2s ease;
+  }
+
+  .navbar__search-input:focus {
+    width: 360px;
+  }
+}
+
+/* Search results: dropdown centered below search bar on desktop */
+@media (min-width: 997px) {
+  .navbar__search [class*="dropdownMenu"] {
+    position: absolute !important;
+    top: 100% !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+    margin-top: 8px;
+    z-index: 200;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+}
+
 /* Dark mode: lighter green ramp consistent with the logo's forest green */
 [data-theme='dark'] {
   --ifm-color-primary: #4db87a;

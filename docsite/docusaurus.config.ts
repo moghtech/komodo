@@ -56,6 +56,16 @@ const config: Config = {
     ],
   ],
 
+  themes: [
+    [
+      "@easyops-cn/docusaurus-search-local",
+      {
+        hashed: true,
+        indexBlog: false,
+      },
+    ],
+  ],
+
   themeConfig: {
     image: "img/monitor-lizard.png",
     docs: {
