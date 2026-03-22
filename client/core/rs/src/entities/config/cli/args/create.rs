@@ -1,9 +1,9 @@
 #[derive(Debug, Clone, clap::Subcommand)]
 pub enum CreateCommand {
-  /// Create a new API key. (alias: `ak`)
+  /// Create a new api key. (alias: `ak`)
   #[clap(alias = "ak")]
   ApiKey(CreateApiKey),
-  /// Create an new onboarding key. (alias: `ok`)
+  /// Create a new onboarding key. (alias: `ok`)
   #[clap(alias = "ok")]
   OnboardingKey(CreateOnboardingKey),
 }
