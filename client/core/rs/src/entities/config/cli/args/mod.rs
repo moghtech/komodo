@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use crate::api::execute::Execution;
 
 pub mod container;
+pub mod create;
 pub mod database;
 pub mod list;
 pub mod terminal;
@@ -69,6 +70,13 @@ pub enum Command {
     alias = "send"
   )]
   Execute(Execute),
+
+  /// Create resources. (aliases: `new`, `cr`)
+  #[clap(alias = "new", alias = "cr")]
+  Create {
+    #[command(subcommand)]
+    command: create::CreateCommand,
+  },
 
   /// Update resource configuration. (alias: `set`)
   #[clap(alias = "set")]

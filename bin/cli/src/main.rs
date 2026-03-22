@@ -56,6 +56,9 @@ async fn app() -> anyhow::Result<()> {
     args::Command::Execute(args) => {
       command::execute::handle(&args.execution, args.yes).await
     }
+    args::Command::Create { command } => {
+      command::create::handle(command).await
+    }
     args::Command::Update { command } => {
       command::update::handle(command).await
     }

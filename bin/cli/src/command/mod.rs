@@ -16,6 +16,7 @@ use crate::config::cli_config;
 
 pub mod container;
 pub mod core_info;
+pub mod create;
 pub mod database;
 pub mod execute;
 pub mod list;

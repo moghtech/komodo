@@ -2838,6 +2838,7 @@ name = "komodo_cli"
 version = "2.0.0-dev-127"
 dependencies = [
  "anyhow",
+ "bcrypt",
  "chrono",
  "clap",
  "colored",
