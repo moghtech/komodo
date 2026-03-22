@@ -294,7 +294,9 @@ export const StackComponents: RequiredResourceComponents<
         <Box>
           <HoverCard width={300} position="bottom-start">
             <HoverCard.Target>
-              <Button color="red">Project Missing</Button>
+              <Button variant="filled" color="red">
+                Project Missing
+              </Button>
             </HoverCard.Target>
             <HoverCard.Dropdown>
               <Text>
