@@ -71,9 +71,20 @@ impl Resolve<ReadArgs> for ListUsers {
         anyhow!("this route is only accessable by admins").into(),
       );
     }
+    let filter = match self.service_users {
+      komodo_client::api::read::ServiceUserQueryBehavior::Include => {
+        None
+      }
+      komodo_client::api::read::ServiceUserQueryBehavior::Exclude => {
+        Some(doc! { "config.type": { "$ne": "Service" } })
+      }
+      komodo_client::api::read::ServiceUserQueryBehavior::Only => {
+        Some(doc! { "config.type": "Service" })
+      }
+    };
     let mut users = find_collect(
       &db_client().users,
-      None,
+      filter,
       FindOptions::builder().sort(doc! { "username": 1 }).build(),
     )
     .await
