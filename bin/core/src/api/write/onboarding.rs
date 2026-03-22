@@ -15,7 +15,10 @@ use mogh_pki::EncodedKeyPair;
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
 
-use crate::{api::write::WriteArgs, state::db_client};
+use crate::{
+  api::write::WriteArgs, helpers::query::get_all_tags,
+  state::db_client,
+};
 
 //
 
@@ -53,6 +56,21 @@ impl Resolve<WriteArgs> for CreateOnboardingKey {
     )?
     .public
     .into_inner();
+    let tags = if self.tags.is_empty() {
+      self.tags
+    } else {
+      // fix_tags by ensuring existence, and replace with tag id.
+      let all_tags = get_all_tags(None).await?;
+      self
+        .tags
+        .into_iter()
+        .filter_map(|tag| {
+          let tag =
+            all_tags.iter().find(|t| t.id == tag || t.name == tag)?;
+          Some(tag.id.clone())
+        })
+        .collect()
+    };
     let onboarding_key = OnboardingKey {
       public_key,
       name: self.name,
@@ -60,7 +78,7 @@ impl Resolve<WriteArgs> for CreateOnboardingKey {
       onboarded: Default::default(),
       created_at: komodo_timestamp(),
       expires: self.expires,
-      tags: self.tags,
+      tags,
       privileged: self.privileged,
       copy_server: self.copy_server,
       create_builder: self.create_builder,
