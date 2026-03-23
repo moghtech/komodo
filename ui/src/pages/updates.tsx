@@ -153,7 +153,7 @@ export default function Updates() {
               header: "Resource",
               cell: ({ row }) =>
                 row.original.target.type === "System" ? (
-                  <Group gap="xs">
+                  <Group gap="xs" wrap="nowrap">
                     <ICONS.System size="1rem" />
                     <Text>System</Text>
                   </Group>
@@ -175,7 +175,7 @@ export default function Updates() {
                       ? "queued"
                       : undefined;
                 return (
-                  <Group gap="xs">
+                  <Group gap="xs" wrap="nowrap">
                     <Text>{fmtOperation(row.original.operation)}</Text>
                     {more && <Text c="dimmed">{more}</Text>}
                   </Group>
