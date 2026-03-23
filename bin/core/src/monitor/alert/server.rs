@@ -51,7 +51,7 @@ pub async fn alert_servers(
 
   let mut alerts_to_open = Vec::<(Alert, SendAlerts)>::new();
   let mut alerts_to_update = Vec::<(Alert, SendAlerts)>::new();
-  let mut alert_ids_to_close = Vec::<(Alert, SendAlerts)>::new();
+  let mut alerts_to_close = Vec::<(Alert, SendAlerts)>::new();
 
   let buffer = alert_buffer();
 
@@ -74,8 +74,9 @@ pub async fn alert_servers(
     });
     match (server_status.state, health_alert) {
       (ServerState::NotOk, None) => {
-        // Only open unreachable alert if not in maintenance and buffer is ready
-        if !in_maintenance
+        // Only open unreachable alert if unreachable alerts enabled and not in maintenance and buffer is ready
+        if server.config.send_unreachable_alerts
+          && !in_maintenance
           && buffer.ready_to_open(
             server_status.id.clone(),
             AlertDataVariant::ServerUnreachable,
@@ -100,6 +101,16 @@ pub async fn alert_servers(
         }
       }
       (ServerState::NotOk, Some(alert)) => {
+        // Maybe user disabled send unreachable alerts since it was opened
+        // If so, close it here and continue.
+        if !server.config.send_unreachable_alerts {
+          alerts_to_close.push((
+            alert.clone(),
+            server.config.send_unreachable_alerts,
+          ));
+          continue;
+        }
+
         // update alert err
         let mut alert = alert.clone();
         let (id, name, region) = match alert.data {
@@ -126,7 +137,7 @@ pub async fn alert_servers(
 
       // Close an open alert
       (ServerState::Ok | ServerState::Disabled, Some(alert)) => {
-        alert_ids_to_close.push((
+        alerts_to_close.push((
           alert.clone(),
           server.config.send_unreachable_alerts,
         ));
@@ -202,7 +213,7 @@ pub async fn alert_servers(
       }
       (None, Some(alert)) => {
         // Version is now correct, close the alert
-        alert_ids_to_close.push((
+        alerts_to_close.push((
           alert.clone(),
           server.config.send_version_mismatch_alerts,
         ));
@@ -230,8 +241,9 @@ pub async fn alert_servers(
     match (health.cpu.level, cpu_alert, health.cpu.should_close_alert)
     {
       (SeverityLevel::Warning | SeverityLevel::Critical, None, _) => {
-        // Only open CPU alert if not in maintenance and buffer is ready
-        if !in_maintenance
+        // Only open CPU alert if cpu alerts enabled and not in maintenance and buffer is ready
+        if server.config.send_cpu_alerts
+          && !in_maintenance
           && buffer.ready_to_open(
             server_status.id.clone(),
             AlertDataVariant::ServerCpu,
@@ -263,6 +275,14 @@ pub async fn alert_servers(
         Some(mut alert),
         _,
       ) => {
+        // Maybe user disabled send cpu alerts since it was opened
+        // If so, close it here and continue.
+        if !server.config.send_cpu_alerts {
+          alerts_to_close
+            .push((alert.clone(), server.config.send_cpu_alerts));
+          continue;
+        }
+
         // modify alert level only if it has increased and not in maintenance
         if !in_maintenance && alert.level < health.cpu.level {
           alert.level = health.cpu.level;
@@ -292,8 +312,7 @@ pub async fn alert_servers(
             .map(|s| s.cpu_perc as f64)
             .unwrap_or(0.0),
         };
-        alert_ids_to_close
-          .push((alert, server.config.send_cpu_alerts))
+        alerts_to_close.push((alert, server.config.send_cpu_alerts))
       }
       (SeverityLevel::Ok, _, _) => buffer
         .reset(server_status.id.clone(), AlertDataVariant::ServerCpu),
@@ -309,8 +328,9 @@ pub async fn alert_servers(
     match (health.mem.level, mem_alert, health.mem.should_close_alert)
     {
       (SeverityLevel::Warning | SeverityLevel::Critical, None, _) => {
-        // Only open memory alert if not in maintenance and buffer is ready
-        if !in_maintenance
+        // Only open memory alert if memory alerts enabled and not in maintenance and buffer is ready
+        if server.config.send_mem_alerts
+          && !in_maintenance
           && buffer.ready_to_open(
             server_status.id.clone(),
             AlertDataVariant::ServerMem,
@@ -347,6 +367,14 @@ pub async fn alert_servers(
         Some(mut alert),
         _,
       ) => {
+        // Maybe user disabled send mem alerts since it was opened
+        // If so, close it here and continue.
+        if !server.config.send_mem_alerts {
+          alerts_to_close
+            .push((alert.clone(), server.config.send_mem_alerts));
+          continue;
+        }
+
         // modify alert level only if it has increased and not in maintenance
         if !in_maintenance && alert.level < health.mem.level {
           alert.level = health.mem.level;
@@ -386,8 +414,7 @@ pub async fn alert_servers(
             .map(|s| s.mem_used_gb)
             .unwrap_or(0.0),
         };
-        alert_ids_to_close
-          .push((alert, server.config.send_mem_alerts))
+        alerts_to_close.push((alert, server.config.send_mem_alerts))
       }
       (SeverityLevel::Ok, _, _) => buffer
         .reset(server_status.id.clone(), AlertDataVariant::ServerMem),
@@ -411,8 +438,9 @@ pub async fn alert_servers(
           None,
           _,
         ) => {
-          // Only open disk alert if not in maintenance and buffer is ready
-          if !in_maintenance
+          // Only open disk alert if disk alerts enabled and not in maintenance and buffer is ready
+          if server.config.send_disk_alerts
+            && !in_maintenance
             && buffer.ready_to_open(
               server_status.id.clone(),
               AlertDataVariant::ServerDisk,
@@ -451,6 +479,14 @@ pub async fn alert_servers(
           Some(mut alert),
           _,
         ) => {
+          // Maybe user disabled send disk alerts since it was opened
+          // If so, close it here and continue.
+          if !server.config.send_disk_alerts {
+            alerts_to_close
+              .push((alert.clone(), server.config.send_disk_alerts));
+            continue;
+          }
+
           // modify alert level only if it has increased and not in maintenance
           if !in_maintenance && health.level < alert.level {
             let disk =
@@ -485,7 +521,7 @@ pub async fn alert_servers(
             total_gb: disk.map(|d| d.total_gb).unwrap_or_default(),
             used_gb: disk.map(|d| d.used_gb).unwrap_or_default(),
           };
-          alert_ids_to_close
+          alerts_to_close
             .push((alert, server.config.send_disk_alerts))
         }
         (SeverityLevel::Ok, _, _) => buffer.reset(
@@ -501,7 +537,7 @@ pub async fn alert_servers(
         if !health.disks.contains_key(path) {
           let mut alert = alert.clone();
           alert.level = SeverityLevel::Ok;
-          alert_ids_to_close
+          alerts_to_close
             .push((alert, server.config.send_disk_alerts));
         }
       }
@@ -511,7 +547,7 @@ pub async fn alert_servers(
   tokio::join!(
     open_new_alerts(&alerts_to_open),
     update_alerts(&alerts_to_update),
-    resolve_alerts(&alert_ids_to_close),
+    resolve_alerts(&alerts_to_close),
   );
 }
 

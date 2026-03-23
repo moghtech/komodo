@@ -47,7 +47,7 @@ pub async fn alert_swarms(
 
   let mut alerts_to_open = Vec::<(Alert, SendAlerts)>::new();
   let mut alerts_to_update = Vec::<(Alert, SendAlerts)>::new();
-  let mut alert_ids_to_close = Vec::<(Alert, SendAlerts)>::new();
+  let mut alerts_to_close = Vec::<(Alert, SendAlerts)>::new();
 
   let buffer = alert_buffer();
 
@@ -75,8 +75,9 @@ pub async fn alert_swarms(
         | SwarmState::Unknown,
         None,
       ) => {
-        // Only open unreachable alert if not in maintenance and buffer is ready
-        if !in_maintenance
+        // Only open unhealthy alert if unhealthy alerts enabled and not in maintenance and buffer is ready
+        if swarm.config.send_unhealthy_alerts
+          && !in_maintenance
           && buffer.ready_to_open(
             swarm_status.id.clone(),
             AlertDataVariant::SwarmUnhealthy,
@@ -105,6 +106,16 @@ pub async fn alert_swarms(
         | SwarmState::Unknown,
         Some(alert),
       ) => {
+        // Maybe user disabled send unhealthy alerts since it was opened
+        // If so, close it here and continue.
+        if !swarm.config.send_unhealthy_alerts {
+          alerts_to_close.push((
+            alert.clone(),
+            swarm.config.send_unhealthy_alerts,
+          ));
+          continue;
+        }
+
         // update alert err
         let mut alert = alert.clone();
         let (id, name) = match alert.data {
@@ -128,7 +139,7 @@ pub async fn alert_swarms(
 
       // Close an open alert
       (SwarmState::Healthy, Some(alert)) => {
-        alert_ids_to_close
+        alerts_to_close
           .push((alert.clone(), swarm.config.send_unhealthy_alerts));
       }
       (SwarmState::Healthy, None) => buffer.reset(
@@ -141,7 +152,7 @@ pub async fn alert_swarms(
   tokio::join!(
     open_new_alerts(&alerts_to_open),
     update_alerts(&alerts_to_update),
-    resolve_alerts(&alert_ids_to_close),
+    resolve_alerts(&alerts_to_close),
   );
 }
 
