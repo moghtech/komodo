@@ -10,7 +10,7 @@ services:
       - stacks:/etc/komodo/stacks
     command: sleep infinity
     ports:
-      - "9121:9121"
+      - "9120:9120"
     environment:
       KOMODO_HOST: http://localhost:9120
       KOMODO_FIRST_SERVER: http://localhost:8120
