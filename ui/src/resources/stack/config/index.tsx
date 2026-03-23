@@ -479,25 +479,46 @@ export default function StackConfig({
     },
     {
       label: "Wrapper",
-      labelHidden: true,
+      description: currSwarmId
+        ? "Optional wrapper for secrets management tools. Use 'Apply To' to select which docker stack subcommands to wrap."
+        : "Optional wrapper for secrets management tools. Use 'Apply To' to select which docker compose subcommands to wrap.",
       fields: {
+        compose_cmd_wrapper_include: (values, set) => {
+          const commands = currSwarmId
+            ? ["config", "deploy"]
+            : ["config", "build", "pull", "up", "run"];
+          const filtered = (values ?? []).filter((v: string) =>
+            commands.includes(v),
+          );
+          return (
+            <ConfigItem label="Apply To" boldLabel>
+              <MultiSelect
+                placeholder={
+                  filtered.length ? "Add commands" : "Select commands"
+                }
+                value={filtered}
+                data={commands}
+                onChange={(compose_cmd_wrapper_include) =>
+                  set({ compose_cmd_wrapper_include })
+                }
+                disabled={disabled}
+                w="fit-content"
+                clearable
+              />
+            </ConfigItem>
+          );
+        },
         compose_cmd_wrapper: (value, set) => (
-          <ConfigItem
-            label="Wrapper"
-            description="Optional wrapper to execute 'docker compose up -d' as a subcommand of tools like secrets management."
-          >
-            <MonacoEditor
-              value={
-                value ??
-                "# sops exec-env .encrypted.env '[[COMPOSE_COMMAND]]'\n"
-              }
-              language="shell"
-              onValueChange={(compose_cmd_wrapper) =>
-                set({ compose_cmd_wrapper })
-              }
-              readOnly={disabled}
-            />
-          </ConfigItem>
+          <MonacoEditor
+            value={
+              value || "# sops exec-env .encrypted.env '[[COMPOSE_COMMAND]]'\n"
+            }
+            language="shell"
+            onValueChange={(compose_cmd_wrapper) =>
+              set({ compose_cmd_wrapper })
+            }
+            readOnly={disabled}
+          />
         ),
       },
     },

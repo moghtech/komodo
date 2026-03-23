@@ -2595,6 +2595,14 @@ export interface StackConfig {
 	 */
 	compose_cmd_wrapper?: string;
 	/**
+	 * Which compose subcommands should use the wrapper.
+	 * Valid values for Compose: "config", "build", "pull", "up", "run"
+	 * Valid values for Swarm: "config", "deploy"
+	 * Default: [] (empty). If empty and wrapper is set, defaults to ["up"] (Compose) or ["deploy"] (Swarm).
+	 * Set to ["config", "build", "pull", "up"] for sops exec-file with {} placeholder.
+	 */
+	compose_cmd_wrapper_include: string[];
+	/**
 	 * Ignore certain services declared in the compose file when checking
 	 * the stack status. For example, an init service might be exited, but the
 	 * stack should be healthy. This init service should be in `ignore_services`
