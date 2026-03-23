@@ -68,7 +68,7 @@ export default function DeploymentNetworkSelector({
           }}
           disabled={disabled}
           data={networks}
-          w="fit-content"
+          w={{ base: "100%", xs: "fit-content" }}
           searchable
         />
       )}

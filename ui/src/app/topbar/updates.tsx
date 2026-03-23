@@ -35,7 +35,7 @@ export default function TopbarUpdates() {
     <Menu
       opened={opened}
       position="bottom"
-      offset={20}
+      offset={16}
       onOpen={() => {
         open();
         setLastSeenUpdate({});

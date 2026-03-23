@@ -26,6 +26,8 @@ export default function Settings() {
       <MobileFriendlyTabs
         value={view}
         onValueChange={setView as any}
+        actions={currentView === "Variables" && <ExportToml includeVariables />}
+        tabsProps={{ color: "green" }}
         tabs={[
           {
             value: "Variables",
@@ -64,9 +66,6 @@ export default function Settings() {
             icon: ICONS.OnboardingKey,
           },
         ]}
-        actions={currentView === "Variables" && <ExportToml includeVariables />}
-        tabProps={{ w: 150 }}
-        tabsProps={{ color: "green" }}
       />
     </Stack>
   );

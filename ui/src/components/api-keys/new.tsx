@@ -15,7 +15,7 @@ import { Types } from "komodo_client";
 import { useState } from "react";
 
 const ONE_DAY_MS = 1000 * 60 * 60 * 24;
-type ExpiresOptions = "90 days" | "180 days" | "1 year" | "never";
+type ExpiresOptions = "90 days" | "180 days" | "1 year" | "Never";
 
 export interface NewApiKeyProps {
   /** For service user api keys */
@@ -51,7 +51,7 @@ export default function NewApiKey({ userId }: { userId?: string }) {
     "90 days": now + ONE_DAY_MS * 90,
     "180 days": now + ONE_DAY_MS * 180,
     "1 year": now + ONE_DAY_MS * 365,
-    never: 0,
+    Never: 0,
   };
   const create = () => {
     const data = {
@@ -86,7 +86,6 @@ export default function NewApiKey({ userId }: { userId?: string }) {
             {created && "Api Key Created"}
           </Text>
         }
-        size="lg"
       >
         <Stack>
           {!created && (
@@ -134,12 +133,12 @@ export default function NewApiKey({ userId }: { userId?: string }) {
 
               <Group justify="space-between" wrap="nowrap">
                 <Text>Key</Text>
-                <CopyText content={created.key} label="api key" />
+                <CopyText content={created.key} label="api key" w={{ base: 200, lg: 250 }} />
               </Group>
 
               <Group justify="space-between" wrap="nowrap">
                 <Text>Secret</Text>
-                <CopyText content={created.secret} label="api secret" />
+                <CopyText content={created.secret} label="api secret" w={{ base: 200, lg: 250 }} />
               </Group>
 
               <Group justify="end" onClick={close}>

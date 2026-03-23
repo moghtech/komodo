@@ -15,7 +15,7 @@ use komodo_client::entities::{
 
 use crate::{
   config::core_config,
-  monitor::update_cache_for_swarm,
+  monitor::refresh_swarm_cache,
   state::{db_client, swarm_status_cache},
 };
 
@@ -89,7 +89,7 @@ impl super::KomodoResource for Swarm {
     created: &Self,
     _update: &mut Update,
   ) -> anyhow::Result<()> {
-    update_cache_for_swarm(created, true).await;
+    refresh_swarm_cache(created, true).await;
     Ok(())
   }
 
@@ -111,7 +111,7 @@ impl super::KomodoResource for Swarm {
     updated: &Self,
     _update: &mut Update,
   ) -> anyhow::Result<()> {
-    update_cache_for_swarm(updated, true).await;
+    refresh_swarm_cache(updated, true).await;
     Ok(())
   }
 

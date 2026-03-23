@@ -55,7 +55,7 @@ export default function TagSelector({
           pl="0.4rem"
           className="bordered-heavy"
           justify="start"
-          w={{ base: "100%", xs: "fit-content" }}
+          w={{ base: "100%", xs: "138" }}
           fw="normal"
           leftSection={
             <Badge
@@ -98,7 +98,7 @@ export default function TagSelector({
             >
               <Group justify="space-between">
                 <Text>{tag.name}</Text>
-                <Box w={25} h={25} bg={"Tag" + tag.color} bdrs="md" />
+                <Box w={25} h={25} bg={`Tag${tag.color}.9`} bdrs="md" />
               </Group>
             </Combobox.Option>
           ))}

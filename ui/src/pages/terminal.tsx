@@ -1,18 +1,17 @@
 import DockerResourceLink from "@/components/docker/link";
 import TargetTerminal from "@/components/terminal/target";
-import { useSetTitle, useWrite } from "@/lib/hooks";
+import { useSetTitle } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import { useDeployment } from "@/resources/deployment";
 import { useServer } from "@/resources/server";
 import { useStack } from "@/resources/stack";
-import ConfirmButton from "@/ui/confirm-button";
 import Page from "@/ui/page";
 import { Group, Text } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";
 import { ReactNode, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import ResourceLink from "@/resources/link";
+import DeleteTerminal from "./terminals/delete";
 
 type WithTerminal = "servers" | "deployments" | "stacks" | string;
 
@@ -211,45 +210,16 @@ function TerminalLayout({
       customDescription={
         <>
           <Text>Terminal</Text>|{Link}|
-          <DeleteTerminal terminal={terminal} target={target} />
+          <DeleteTerminal
+            terminal={terminal}
+            target={target}
+            size="xs"
+            navTo="/terminals"
+          />
         </>
       }
     >
       <TargetTerminal terminal={terminal} target={target} selected _reconnect />
     </Page>
-  );
-}
-
-function DeleteTerminal({
-  terminal,
-  target,
-}: {
-  terminal: string;
-  target: Types.TerminalTarget;
-}) {
-  const nav = useNavigate();
-  const { mutate, isPending } = useWrite("DeleteTerminal", {
-    onSuccess: () => {
-      notifications.show({ message: `Deleted Terminal '${terminal}'` });
-      nav("/terminals");
-    },
-  });
-  return (
-    <ConfirmButton
-      variant="filled"
-      color="red"
-      icon={<ICONS.Delete size="1rem" />}
-      onClick={() =>
-        mutate({
-          target,
-          terminal,
-        })
-      }
-      loading={isPending}
-      w={120}
-      size="xs"
-    >
-      Delete
-    </ConfirmButton>
   );
 }

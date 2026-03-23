@@ -35,6 +35,8 @@ export default function ServerStats({
 
       <ServerCurrentStats id={id} stats={stats} />
 
+      <ServerHistoricalStats id={id} />
+
       <ServerContainerStats id={id} />
 
       <ServerDisks stats={stats} />
@@ -42,8 +44,6 @@ export default function ServerStats({
       {specific.includes(Types.SpecificPermission.Processes) && (
         <ServerProcesses id={id} />
       )}
-
-      <ServerHistoricalStats id={id} />
     </Section>
   );
 }

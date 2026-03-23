@@ -5,7 +5,7 @@ import { useInvalidate, useRead, useSetTitle, useWrite } from "@/lib/hooks";
 import ResourceSelector from "@/resources/selector";
 import { ICONS } from "@/theme/icons";
 import { DataTable, SortableHeader } from "@/ui/data-table";
-import { Badge, Group, Switch, TextInput } from "@mantine/core";
+import { Badge, Group, Switch, TextInput, useMatches } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { ColumnDef } from "@tanstack/react-table";
 import { Types } from "komodo_client";
@@ -24,6 +24,10 @@ export default function SettingsOnboardingKeys() {
       invalidate(["ListOnboardingKeys"]);
       notifications.show({ message: "Updated onboarding key", color: "green" });
     },
+  });
+  const expiresSize = useMatches({
+    base: "sm",
+    xl: "md",
   });
   const columns: (
     | ColumnDef<Types.OnboardingKey, unknown>
@@ -46,6 +50,7 @@ export default function SettingsOnboardingKeys() {
               })
             }
             onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+            miw={200}
           />
         ),
       },
@@ -71,10 +76,10 @@ export default function SettingsOnboardingKeys() {
         cell: ({ row }) => {
           const tags = useRead("ListTags", {}).data;
           const otherTags = tags?.filter(
-            (tag) => !row.original.tags?.includes(tag._id?.$oid!),
+            (tag) => !row.original.tags?.includes(tag.name),
           );
           return (
-            <Group>
+            <Group wrap="nowrap" gap="sm">
               <TagSelector
                 title="Select Tags"
                 tags={otherTags}
@@ -85,6 +90,7 @@ export default function SettingsOnboardingKeys() {
                   })
                 }
                 position="bottom-start"
+                useName
               />
 
               <Tags
@@ -111,21 +117,21 @@ export default function SettingsOnboardingKeys() {
       },
       {
         size: 100,
-        accessorKey: "fix_existing_servers",
+        accessorKey: "privileged",
         header: ({ column }) => (
           <SortableHeader
             column={column}
-            title="Priviledged"
+            title="Privileged"
             description="Allow the onboarding key to update an existing Server's public key and configuration to enable the connection."
           />
         ),
         cell: ({ row }) => (
           <Switch
-            checked={row.original.fix_existing_servers}
+            checked={row.original.privileged}
             onChange={(e) =>
               mutate({
                 public_key: row.original.public_key,
-                fix_existing_servers: e.target.checked,
+                privileged: e.target.checked,
               })
             }
           />
@@ -180,9 +186,10 @@ export default function SettingsOnboardingKeys() {
         }) => (
           <Badge
             color={expires && expires <= Date.now() ? "red" : "accent"}
-            fz={{ base: "sm", lg: "md" }}
-            p={{ base: "sm", lg: "md" }}
-            size="md"
+            fz="sm"
+            p="sm"
+            styles={{ label: { width: "fit-content", height: "fit-content" } }}
+            size={expiresSize}
           >
             {expires ? fmtDateWithMinutes(new Date(expires)) : "Never"}
           </Badge>

@@ -1,5 +1,5 @@
 import { useContainerPortsMap } from "@/lib/hooks";
-import { Group, HoverCard, Stack, Text } from "@mantine/core";
+import { Group, GroupProps, HoverCard, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { EthernetPort } from "lucide-react";
 import { colorByIntention } from "@/lib/color";
@@ -8,7 +8,7 @@ import { fmtPortMount } from "@/lib/formatting";
 import { useServerAddress } from "@/resources/server/hooks";
 import DividedChildren from "@/ui/divided-children";
 
-export interface ContainerPortsProps {
+export interface ContainerPortsProps extends GroupProps {
   ports: Types.Port[];
   serverId: string | undefined;
 }
@@ -16,6 +16,7 @@ export interface ContainerPortsProps {
 export default function ContainerPorts({
   ports,
   serverId,
+  ...groupProps
 }: ContainerPortsProps) {
   const portsMap = useContainerPortsMap(ports);
   const sortedNumericPorts = Object.keys(portsMap)
@@ -42,7 +43,7 @@ export default function ContainerPorts({
   }
 
   return (
-    <DividedChildren>
+    <DividedChildren {...groupProps}>
       {groupedPorts.map((group) => (
         <ContainerPort
           key={group.start}

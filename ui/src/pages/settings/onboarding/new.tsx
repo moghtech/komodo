@@ -10,12 +10,13 @@ import {
   Stack,
   Text,
   TextInput,
+  useMatches,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useState } from "react";
 
-type ExpiresOptions = "1 day" | "7 days" | "30 days" | "never";
+type ExpiresOptions = "1 day" | "7 days" | "30 days" | "Never";
 const ONE_DAY_MS = 1000 * 60 * 60 * 24;
 
 export default function NewOnboardingKey() {
@@ -38,7 +39,7 @@ export default function NewOnboardingKey() {
     "1 day": now + ONE_DAY_MS,
     "7 days": now + ONE_DAY_MS * 7,
     "30 days": now + ONE_DAY_MS * 90,
-    never: 0,
+    Never: 0,
   };
   const create = () =>
     mutate({
@@ -55,6 +56,8 @@ export default function NewOnboardingKey() {
     _close();
   };
 
+  const size = useMatches({ base: "90%", md: 500 });
+
   return (
     <>
       <Modal
@@ -66,7 +69,7 @@ export default function NewOnboardingKey() {
             {created && "Onboarding Key Created"}
           </Text>
         }
-        size="lg"
+        size={size}
       >
         <Stack>
           {!created && (
@@ -117,11 +120,15 @@ export default function NewOnboardingKey() {
 
           {created && (
             <>
-              <Text>
-                Use as the <b>PERIPHERY_ONBOARDING_KEY</b>
+              <Text size="md" my="sm">
+                Copy the onboarding key below. <b>It won't be shown again</b>.
               </Text>
 
-              <CopyText content={created.private_key} label="private key" />
+              <CopyText
+                content={created.private_key}
+                label="private key"
+                w="90%"
+              />
 
               <Group justify="end" onClick={close}>
                 <Button leftSection={<ICONS.Clear />}>Close</Button>

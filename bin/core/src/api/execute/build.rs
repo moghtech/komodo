@@ -75,14 +75,14 @@ impl Resolve<ExecuteArgs> for BatchRunBuild {
     "BatchRunBuild",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
     )
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, id, .. }: &ExecuteArgs,
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchRunBuild>(&self.pattern, user)
@@ -96,7 +96,7 @@ impl Resolve<ExecuteArgs> for RunBuild {
     "RunBuild",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       build = self.build,
@@ -104,7 +104,11 @@ impl Resolve<ExecuteArgs> for RunBuild {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let mut build = get_check_permissions::<Build>(
       &self.build,
@@ -522,7 +526,7 @@ impl Resolve<ExecuteArgs> for CancelBuild {
     "CancelBuild",
     skip(user, update),
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       build = self.build,
@@ -530,7 +534,11 @@ impl Resolve<ExecuteArgs> for CancelBuild {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let build = get_check_permissions::<Build>(
       &self.build,
@@ -626,7 +634,7 @@ async fn handle_post_build_redeploy(build_id: &str) {
             .resolve(&ExecuteArgs {
               user,
               update,
-              id: Uuid::new_v4(),
+              task_id: Uuid::new_v4(),
             })
             .await
           }

@@ -54,14 +54,18 @@ impl Resolve<ExecuteArgs> for ClearRepoCache {
     "ClearRepoCache",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id
     )
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> Result<Self::Response, Self::Error> {
     if !user.admin {
       return Err(
@@ -133,14 +137,18 @@ impl Resolve<ExecuteArgs> for BackupCoreDatabase {
     "BackupCoreDatabase",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
     )
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> Result<Self::Response, Self::Error> {
     if !user.admin {
       return Err(
@@ -186,14 +194,18 @@ impl Resolve<ExecuteArgs> for GlobalAutoUpdate {
     "GlobalAutoUpdate",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
     )
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> Result<Self::Response, Self::Error> {
     if !user.admin {
       return Err(
@@ -368,14 +380,18 @@ impl Resolve<ExecuteArgs> for RotateAllServerKeys {
     "RotateAllServerKeys",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
     )
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> Result<Self::Response, Self::Error> {
     if !user.admin {
       return Err(
@@ -482,7 +498,7 @@ impl Resolve<ExecuteArgs> for RotateCoreKeys {
     "RotateCoreKeys",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       force = self.force,
@@ -490,7 +506,11 @@ impl Resolve<ExecuteArgs> for RotateCoreKeys {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> Result<Self::Response, Self::Error> {
     if !user.admin {
       return Err(

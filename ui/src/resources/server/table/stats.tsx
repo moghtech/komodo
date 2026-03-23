@@ -7,6 +7,7 @@ import { useServerStats, useServerThresholds } from "@/resources/server/hooks";
 import StatCell from "@/ui/stat-cell";
 import { fmtRateBytes } from "@/lib/formatting";
 import ServerVersion from "@/resources/server/version";
+import ServerDiskUsage from "../diskUsage";
 
 export default function StatsServerTable({
   resources,
@@ -102,7 +103,14 @@ function DiskCell({ id }: { id: string }) {
     useServerThresholds(id);
   const intent: "Good" | "Warning" | "Critical" =
     perc < warning ? "Good" : perc < critical ? "Warning" : "Critical";
-  return <StatCell value={stats ? perc : undefined} intent={intent} />;
+  return (
+    <StatCell
+      value={stats ? perc : undefined}
+      intent={intent}
+      infoDisabled={!stats}
+      info={<ServerDiskUsage id={id} stats={stats} />}
+    />
+  );
 }
 
 function LoadAvgCell({ id }: { id: string }) {

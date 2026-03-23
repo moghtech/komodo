@@ -21,6 +21,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { CircleMinus } from "lucide-react";
 import { ReactNode } from "react";
+import { useFullResourceSync } from ".";
 
 type SyncMode = "UI Defined" | "Files On Server" | "Git Repo" | undefined;
 const SYNC_MODES = ["UI Defined", "Files On Server", "Git Repo"] as const;
@@ -55,7 +56,7 @@ export default function ResourceSyncConfig({
     },
   });
   const { canWrite } = usePermissions({ type: "ResourceSync", id });
-  const sync = useRead("GetResourceSync", { sync: id }).data;
+  const sync = useFullResourceSync(id);
   const config = sync?.config;
   const name = sync?.name;
   const globalDisabled =

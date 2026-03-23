@@ -8,6 +8,7 @@ import { ICONS } from "@/theme/icons";
 import UserAvatar from "@/components/user-avatar";
 import { useUpdateDetails } from "./details";
 import ResourceLink from "@/resources/link";
+import { hexColorByIntention } from "@/lib/color";
 
 export default function UpdateCard({
   update,
@@ -67,11 +68,7 @@ export default function UpdateCard({
     return (
       <Stack onClick={onClick} gap="0" {...containerProps}>
         <FirstRow />
-        <Flex
-          justify="space-between"
-          c="dimmed"
-          fz={{ base: "sm", lg: "md" }}
-        >
+        <Flex justify="space-between" c="dimmed" fz={{ base: "sm", lg: "md" }}>
           <Group gap="xs">
             {update.target.type === "System" ? (
               <>
@@ -98,7 +95,8 @@ export default function UpdateCard({
 
 const Icon = ({ update }: { update: Types.UpdateListItem }) => {
   if (update.status === UpdateStatus.Complete) {
-    if (update.success) return <Check size="1rem" color="green" />;
-    else return <X size="1rem" color="red" />;
+    if (update.success)
+      return <Check size="1rem" color={hexColorByIntention("Good")} />;
+    else return <X size="1rem" color={hexColorByIntention("Critical")} />;
   } else return <Loader size="1rem" />;
 };

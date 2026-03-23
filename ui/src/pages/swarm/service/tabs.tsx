@@ -66,7 +66,6 @@ export default function SwarmServiceTabs({
       tabs={tabs}
       value={view}
       onValueChange={setView as any}
-      tabProps={{ w: 140 }}
     />
   );
 

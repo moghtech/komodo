@@ -34,6 +34,7 @@ export default function ServerContainerStats({ id }: { id: string }) {
   );
   return (
     <Section
+      withBorder
       title="Containers"
       icon={<ICONS.Container size="1.3rem" />}
       titleRight={
@@ -46,9 +47,12 @@ export default function ServerContainerStats({ id }: { id: string }) {
           <ShowHideButton show={show} setShow={setShow} />
         </Group>
       }
+      onHeaderClick={() => setShow((s) => !s)}
     >
       {show && (
         <DataTable
+          sortDescFirst
+          mah="min(400px, calc(100vh - 320px))"
           tableKey="container-stats"
           data={filtered}
           columns={[

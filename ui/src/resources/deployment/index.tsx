@@ -32,7 +32,11 @@ export function useDeployment(id: string | undefined) {
 }
 
 export function useFullDeployment(id: string) {
-  return useRead("GetDeployment", { deployment: id }).data;
+  return useRead(
+    "GetDeployment",
+    { deployment: id },
+    { refetchInterval: 30_000 },
+  ).data;
 }
 
 export const DeploymentComponents: RequiredResourceComponents<
@@ -47,7 +51,11 @@ export const DeploymentComponents: RequiredResourceComponents<
   useResourceLinks: (deployment) => deployment?.config?.links,
 
   useDashboardSummaryData: () => {
-    const summary = useRead("GetDeploymentsSummary", {}).data;
+    const summary = useRead(
+      "GetDeploymentsSummary",
+      {},
+      { refetchInterval: 10_000 },
+    ).data;
     const all = [
       summary?.running ?? 0,
       summary?.stopped ?? 0,
@@ -80,9 +88,7 @@ export const DeploymentComponents: RequiredResourceComponents<
     ];
   },
 
-  Description: () => (
-    <>Connect deployments for alerting, building, and deploying.</>
-  ),
+  Description: () => <>Deploy individual containers and swarm services.</>,
 
   New: (props) => <NewResourceWithDeployTarget type="Deployment" {...props} />,
 
@@ -90,12 +96,12 @@ export const DeploymentComponents: RequiredResourceComponents<
     <BatchExecutions
       type="Deployment"
       executions={[
-        "CheckDeploymentForUpdate",
-        "PullDeployment",
-        "Deploy",
-        "RestartDeployment",
-        "StopDeployment",
-        "DestroyDeployment",
+        ["CheckDeploymentForUpdate", ICONS.UpdateAvailable],
+        ["PullDeployment", ICONS.Pull],
+        ["Deploy", ICONS.Deploy],
+        ["RestartDeployment", ICONS.Restart],
+        ["StopDeployment", ICONS.Stop],
+        ["DestroyDeployment", ICONS.Destroy],
       ]}
     />
   ),

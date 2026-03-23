@@ -8,11 +8,13 @@ export interface RepoLinkProps {
 
 export default function RepoLink({ repo, link }: RepoLinkProps) {
   return (
-    <a href={link} target="_blank">
-      <Group gap="sm">
-        <FolderGit size="1rem" />
-        <Text>{repo}</Text>
-      </Group>
-    </a>
+    <Group
+      renderRoot={(props) => <a href={link} target="_blank" {...props} />}
+      gap="xs"
+      wrap="nowrap"
+    >
+      <FolderGit size="1rem" />
+      <Text>{repo}</Text>
+    </Group>
   );
 }

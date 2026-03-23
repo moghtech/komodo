@@ -127,7 +127,9 @@ export function useAuthState() {
   const search = new URLSearchParams(location.search);
 
   const _passkey = search.get("passkey");
-  const passkey = _passkey ? JSON.parse(_passkey) : null;
+  const passkey = _passkey
+    ? JSON.parse(MoghAuth.Passkey.base64UrlDecode(_passkey))
+    : null;
 
   // guard against multiple reqs sent
   // maybe isPending would do this but not sure about with render loop, this for sure will.
@@ -328,19 +330,19 @@ export type ResourceMap = {
   [Resource in UsableResource]: Types.ResourceListItem<unknown>[] | undefined;
 };
 
-export function useAllResources(): ResourceMap {
+export function useAllResources(refetchInterval?: number): ResourceMap {
   return {
-    Swarm: useRead("ListSwarms", {}).data,
-    Server: useRead("ListServers", {}).data,
-    Stack: useRead("ListStacks", {}).data,
-    Deployment: useRead("ListDeployments", {}).data,
-    Build: useRead("ListBuilds", {}).data,
-    Repo: useRead("ListRepos", {}).data,
-    Procedure: useRead("ListProcedures", {}).data,
-    Action: useRead("ListActions", {}).data,
-    Builder: useRead("ListBuilders", {}).data,
-    Alerter: useRead("ListAlerters", {}).data,
-    ResourceSync: useRead("ListResourceSyncs", {}).data,
+    Swarm: useRead("ListSwarms", {}, { refetchInterval }).data,
+    Server: useRead("ListServers", {}, { refetchInterval }).data,
+    Stack: useRead("ListStacks", {}, { refetchInterval }).data,
+    Deployment: useRead("ListDeployments", {}, { refetchInterval }).data,
+    Build: useRead("ListBuilds", {}, { refetchInterval }).data,
+    Repo: useRead("ListRepos", {}, { refetchInterval }).data,
+    Procedure: useRead("ListProcedures", {}, { refetchInterval }).data,
+    Action: useRead("ListActions", {}, { refetchInterval }).data,
+    Builder: useRead("ListBuilders", {}, { refetchInterval }).data,
+    Alerter: useRead("ListAlerters", {}, { refetchInterval }).data,
+    ResourceSync: useRead("ListResourceSyncs", {}, { refetchInterval }).data,
   };
 }
 

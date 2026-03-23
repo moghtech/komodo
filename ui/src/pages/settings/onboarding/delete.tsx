@@ -23,6 +23,7 @@ export default function DeleteOnboardingKey({
         mutate({ public_key: publicKey });
       }}
       loading={isPending}
+      confirmProps={{ variant: "filled", color: "red" }}
     >
       Delete
     </ConfirmButton>

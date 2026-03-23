@@ -11,7 +11,6 @@ import ConfirmButton from "@/ui/confirm-button";
 import { useFullResourceSync } from ".";
 import { useResourceSyncTabsView } from "./hooks";
 import { fileContentsEmpty, resourceSyncNoChanges } from "@/lib/utils";
-import { NotebookPen, SquarePlay } from "lucide-react";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 
 export function RefreshSync({ id }: { id: string }) {
@@ -73,7 +72,7 @@ export function ExecuteSync({ id }: { id: string }) {
   return (
     <ConfirmModalWithDisable
       confirmText={sync.name}
-      icon={<SquarePlay className="w-4 h-4" />}
+      icon={<ICONS.Run size="1rem" />}
       onConfirm={() => execute({ sync: id })}
       disabled={pending}
       loading={pending}
@@ -106,7 +105,7 @@ export function CommitSync({ id }: { id: string }) {
   if (freshSync) {
     return (
       <ConfirmButton
-        icon={<NotebookPen className="w-4 h-4" />}
+        icon={<ICONS.Commit size="1rem" />}
         onClick={() => commit({ sync: id })}
         disabled={isPending}
         loading={isPending}
@@ -118,7 +117,7 @@ export function CommitSync({ id }: { id: string }) {
     return (
       <ConfirmModalWithDisable
         confirmText={sync.name}
-        icon={<NotebookPen className="w-4 h-4" />}
+        icon={<ICONS.Commit size="1rem" />}
         onConfirm={() => commit({ sync: id })}
         disabled={isPending}
         loading={isPending}

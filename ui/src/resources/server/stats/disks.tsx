@@ -23,6 +23,7 @@ export default function ServerDisks({
 
   return (
     <Section
+      withBorder
       title="Disks"
       icon={<ICONS.Disk size="1.3rem" />}
       titleRight={
@@ -38,6 +39,7 @@ export default function ServerDisks({
           <ShowHideButton show={show} setShow={setShow} />
         </Group>
       }
+      onHeaderClick={() => setShow((s) => !s)}
     >
       {show && (
         <DataTable

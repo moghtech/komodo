@@ -7,6 +7,7 @@ import { useFullServer } from "@/resources/server";
 import { ServerLoadAverage } from "./load-average";
 import ServerNetworkUsage from "./network-usage";
 import { Clock } from "lucide-react";
+import { ServerRamUsage } from "./ram";
 
 export default function ServerCurrentStats({
   id,
@@ -16,8 +17,6 @@ export default function ServerCurrentStats({
   stats: Types.SystemStats | undefined;
 }) {
   const server = useFullServer(id);
-  const usedRam = stats?.mem_used_gb;
-  const totalRam = stats?.mem_total_gb;
   const usedDisk = stats?.disks.reduce((acc, curr) => (acc += curr.used_gb), 0);
   const totalDisk = stats?.disks.reduce(
     (acc, curr) => (acc += curr.total_gb),
@@ -36,23 +35,7 @@ export default function ServerCurrentStats({
             critical={server?.config?.cpu_critical}
             flex="1"
           />
-          <StatBar
-            title="RAM Usage"
-            icon={<ICONS.Memory size="1.3rem" />}
-            description={
-              usedRam &&
-              totalRam && (
-                <>
-                  <b>{usedRam?.toFixed(1)} GB</b> of{" "}
-                  <b>{totalRam?.toFixed(1)} GB</b> in use
-                </>
-              )
-            }
-            percentage={((usedRam ?? 0) / (totalRam ?? 0)) * 100}
-            warning={server?.config?.mem_warning}
-            critical={server?.config?.mem_critical}
-            flex="1"
-          />
+          <ServerRamUsage id={id} stats={stats} />
         </Stack>
         <Stack w={{ base: "100%", lg: "auto" }}>
           <StatBar

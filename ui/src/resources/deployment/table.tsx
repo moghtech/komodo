@@ -122,7 +122,7 @@ const Image = ({
   } else {
     const [img] = image.split(":");
     return (
-      <Group>
+      <Group wrap="nowrap">
         <ICONS.Image size="1rem" />
         {img}
       </Group>

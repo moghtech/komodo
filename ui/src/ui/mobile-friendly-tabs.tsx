@@ -78,12 +78,13 @@ export function MobileFriendlyTabsSelector({
   value,
   onValueChange,
   changeAt: _changeAt,
-  fullIconSize = "1.3rem",
+  fullIconSize = "1.1rem",
   mobileIconSize = "1rem",
   tabProps,
 }: MobileFriendlyTabsSelectorProps) {
   const tabs = _tabs.filter((t) => !t.hidden);
-  const changeAt = _changeAt ?? (tabs.length > 4 ? "lg" : "md");
+  const changeAt =
+    _changeAt ?? (tabs.length > 6 ? "lg" : tabs.length > 3 ? "md" : "sm");
   const SelectedIcon = tabs.find((tab) => tab.value === value)?.icon;
   return (
     <>
@@ -100,10 +101,12 @@ export function MobileFriendlyTabsSelector({
             >
               <Group
                 gap="xs"
-                fz="h3"
+                fz="lg"
                 justify="center"
                 c={tabValue === value ? undefined : "dimmed"}
-                w={tabProps?.w ?? 140}
+                w={100}
+                miw="fit-content"
+                wrap="nowrap"
                 {...tabProps}
               >
                 {Icon && <Icon size={fullIconSize} />}
@@ -116,9 +119,9 @@ export function MobileFriendlyTabsSelector({
       </Group>
 
       {/* MOBILE VIEW */}
-      <Stack hiddenFrom={changeAt}>
+      <Stack hiddenFrom={changeAt} w="100%">
         <Select
-          width="100%"
+          w={{ base: "100%", md: 300 }}
           value={value}
           onChange={(value) => value && onValueChange(value)}
           leftSection={SelectedIcon && <SelectedIcon size="1rem" />}
@@ -136,6 +139,10 @@ export function MobileFriendlyTabsSelector({
                 {checked && <ICONS.Check size="1rem" />}
               </Group>
             );
+          }}
+          withScrollArea={false}
+          styles={{
+            dropdown: { maxHeight: "calc(100vh - 230px)", overflowY: "auto" },
           }}
         />
         {actions}

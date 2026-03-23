@@ -67,11 +67,7 @@ export default function BuildInfo({
     <Section gap="xl" titleOther={titleOther}>
       {/* Errors */}
       {remoteError && remoteError.length > 0 && (
-        <Stack
-          className="bordered-light"
-          bdrs="md"
-          p="xl"
-        >
+        <Stack className="bordered-light" bdrs="md" p="xl">
           {/* HEADER */}
           <Group justify="between">
             <Group ff="monospace">
@@ -112,11 +108,7 @@ export default function BuildInfo({
 
       {/* Update latest contents */}
       {remoteContents && remoteContents.length > 0 && (
-        <Stack
-          className="bordered-light"
-          bdrs="md"
-          p="xl"
-        >
+        <Stack className="bordered-light" bdrs="md" p="xl">
           {/* HEADER */}
           <Group
             justify="space-between"
@@ -160,8 +152,8 @@ export default function BuildInfo({
                     Reset
                   </Button>
                   <ConfirmUpdate
-                    previous={{ contents: remoteContents }}
-                    content={{ contents: edits.contents }}
+                    original={{ contents: remoteContents }}
+                    update={{ contents: edits.contents }}
                     onConfirm={async () => {
                       if (build) {
                         return await mutateAsync({
@@ -194,7 +186,9 @@ export default function BuildInfo({
       )}
 
       {lastBuild && lastBuild.logs.length > 0 && (
-        <Code fz="lg" fw="bold" w="fit-content">Last Build Logs</Code>
+        <Code fz="lg" fw="bold" w="fit-content">
+          Last Build Logs
+        </Code>
       )}
       {lastBuild &&
         lastBuild.logs?.map((log, i) => (
@@ -216,11 +210,7 @@ export default function BuildInfo({
             withBorder
           >
             {log.command && (
-              <Stack
-                className="bordered-light"
-                bdrs="md"
-                p="md"
-              >
+              <Stack className="bordered-light" bdrs="md" p="md">
                 <Text fw="bold">command</Text>
                 <Code
                   fz="sm"
@@ -234,11 +224,7 @@ export default function BuildInfo({
               </Stack>
             )}
             {log.stdout && (
-              <Stack
-                className="bordered-light"
-                bdrs="md"
-                p="md"
-              >
+              <Stack className="bordered-light" bdrs="md" p="md">
                 <Text fw="bold">stdout</Text>
                 <Code
                   component="pre"
@@ -252,11 +238,7 @@ export default function BuildInfo({
               </Stack>
             )}
             {log.stderr && (
-              <Stack
-                className="bordered-light"
-                bdrs="md"
-                p="md"
-              >
+              <Stack className="bordered-light" bdrs="md" p="md">
                 <Text fw="bold">stderr</Text>
                 <Code
                   component="pre"

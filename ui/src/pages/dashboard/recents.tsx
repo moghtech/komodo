@@ -53,9 +53,9 @@ function RecentRow({ type }: { type: UsableResource }) {
     ...(resources?.slice(0, 8 - (recents?.length || 0)) ?? []),
   ];
 
-  const Components = ResourceComponents[type];
+  const RC = ResourceComponents[type];
 
-  const data = Components.useDashboardSummaryData?.();
+  const data = RC.useDashboardSummaryData?.();
 
   if (ids.length === 0) {
     return;
@@ -67,11 +67,11 @@ function RecentRow({ type }: { type: UsableResource }) {
     <>
       <DashboardSummary
         name={name}
-        icon={<Components.Icon />}
+        icon={<RC.Icon />}
         data={data}
         onClick={() => nav(`/${usableResourcePath(type)}`)}
       >
-        {Components.DashboardSummary && <Components.DashboardSummary />}
+        {RC.DashboardSummary && <RC.DashboardSummary />}
       </DashboardSummary>
       <Stack w="100%" px="lg" py="md">
         <Flex align="center" gap="xs" opacity={0.6}>
@@ -115,8 +115,8 @@ function RecentCard({
   id: string;
   visibleFrom?: MantineBreakpoint;
 }) {
-  const Components = ResourceComponents[type];
-  const resource = Components.useListItem(id);
+  const RC = ResourceComponents[type];
+  const resource = RC.useListItem(id);
   const { preferences } = useDashboardPreferences();
 
   if (!resource) {
@@ -145,7 +145,7 @@ function RecentCard({
     >
       <Group justify="space-between">
         <Group style={{ textWrap: "nowrap" }} gap="sm">
-          <Components.Icon id={id} />
+          <RC.Icon id={id} />
           <ResourceName type={type} id={id} />
           {resource.template && <TemplateMarker type={type} />}
         </Group>

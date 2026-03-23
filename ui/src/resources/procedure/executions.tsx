@@ -15,7 +15,7 @@ export function RunProcedure({ id }: { id: string }) {
   return (
     <ConfirmModalWithDisable
       confirmText={procedure.name}
-      icon={<ICONS.Start size="1rem" />}
+      icon={<ICONS.Run size="1rem" />}
       onConfirm={() => run({ procedure: id })}
       disabled={running || isPending}
       loading={running || isPending}

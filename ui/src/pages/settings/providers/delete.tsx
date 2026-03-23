@@ -19,11 +19,10 @@ export default function DeleteProviderAccount({
   });
   return (
     <ConfirmButton
-      variant="filled"
-      color="red"
       icon={<ICONS.Delete size="1rem" />}
       onClick={() => mutate({ id })}
       loading={isPending}
+      confirmProps={{ variant: "filled", color: "red" }}
     >
       Delete
     </ConfirmButton>

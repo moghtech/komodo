@@ -1,6 +1,14 @@
 import { useShiftKeyListener } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
-import { Button, ButtonProps, Group, Modal, Stack, Text } from "@mantine/core";
+import {
+  Button,
+  ButtonProps,
+  Group,
+  Modal,
+  ModalBaseProps,
+  Stack,
+  Text,
+} from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { ReactNode, useEffect } from "react";
 
@@ -13,6 +21,7 @@ export interface CreateModalProps extends ButtonProps {
   configureLabel?: string;
   openShiftKeyListener?: string;
   children?: ReactNode;
+  modalSize?: ModalBaseProps["size"];
 }
 
 export default function CreateModal({
@@ -26,6 +35,7 @@ export default function CreateModal({
   openShiftKeyListener,
   leftSection,
   children,
+  modalSize = "md",
   ...targetProps
 }: CreateModalProps) {
   const [opened, { open, close }] = useDisclosure();
@@ -41,6 +51,7 @@ export default function CreateModal({
         onClose={close}
         title={`New ${entityType}`}
         withCloseButton={false}
+        size={modalSize}
         trapFocus
       >
         <Stack gap="0.2rem">
@@ -65,7 +76,6 @@ export default function CreateModal({
       </Modal>
 
       <Button
-        variant="default"
         leftSection={leftSection || <ICONS.Create size="1rem" />}
         onClick={open}
         w={{ base: "100%", xs: "fit-content" }}

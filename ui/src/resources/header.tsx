@@ -1,6 +1,6 @@
 import EntityHeader, { EntityHeaderProps } from "@/ui/entity-header";
 import { UsableResource } from ".";
-import { useWrite } from "@/lib/hooks";
+import { useInvalidate, useWrite } from "@/lib/hooks";
 import { notifications } from "@mantine/notifications";
 import ResourceHeaderAction from "./header-action";
 import { Types } from "komodo_client";
@@ -17,10 +17,12 @@ export default function ResourceHeader({
   resource,
   ...props
 }: ResourceHeaderProps) {
+  const inv = useInvalidate();
   const { mutateAsync: rename, isPending: renamePending } = useWrite(
     `Rename${type}`,
     {
       onSuccess: () => {
+        inv([`List${type}s`], [`Get${type}`]);
         notifications.show({ message: "Renamed " + type, color: "green" });
       },
     },

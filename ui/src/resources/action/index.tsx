@@ -20,7 +20,7 @@ export function useAction(id: string | undefined) {
 }
 
 export function useFullAction(id: string) {
-  return useRead("GetAction", { action: id }).data;
+  return useRead("GetAction", { action: id }, { refetchInterval: 30_000 }).data;
 }
 
 export const ActionComponents: RequiredResourceComponents<
@@ -35,7 +35,11 @@ export const ActionComponents: RequiredResourceComponents<
   useResourceLinks: () => undefined,
 
   useDashboardSummaryData: () => {
-    const summary = useRead("GetActionsSummary", {}).data;
+    const summary = useRead(
+      "GetActionsSummary",
+      {},
+      { refetchInterval: 10_000 },
+    ).data;
     return [
       { title: "Ok", intention: "Good", value: summary?.ok ?? 0 },
       {
@@ -61,7 +65,7 @@ export const ActionComponents: RequiredResourceComponents<
   New: () => <NewResource type="Action" />,
 
   BatchExecutions: () => (
-    <BatchExecutions type="Action" executions={["RunAction"]} />
+    <BatchExecutions type="Action" executions={[["RunAction", ICONS.Run]]} />
   ),
 
   Table: ActionTable,
@@ -158,7 +162,7 @@ export const ActionComponents: RequiredResourceComponents<
 
       return (
         <ConfirmModalWithDisable
-          icon={<ICONS.Action size="1rem" />}
+          icon={<ICONS.Run size="1rem" />}
           confirmText={action.name}
           onConfirm={async () => {
             await mutateAsync({ action: id, args: {} });

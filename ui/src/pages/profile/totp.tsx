@@ -39,7 +39,10 @@ export const EnrollTotp = ({ user }: { user: Types.User }) => {
     {
       onSuccess: () => {
         userInvalidate();
-        notifications.show({ message: "Unenrolled in TOTP 2FA." });
+        notifications.show({
+          message: "Unenrolled in TOTP 2FA.",
+          color: "green",
+        });
       },
     },
   );
@@ -132,8 +135,8 @@ export const EnrollTotp = ({ user }: { user: Types.User }) => {
           icon={<Trash size="1rem" />}
           loading={unenrollPending}
           onConfirm={() => unenroll({})}
-          color="red"
-          w={220}
+          targetProps={{ c: "bw", w: 220 }}
+          confirmProps={{ variant: "filled", color: "red" }}
         >
           Unenroll TOTP 2FA
         </ConfirmModal>

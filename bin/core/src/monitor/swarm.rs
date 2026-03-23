@@ -23,7 +23,7 @@ use crate::{
   config::monitoring_interval,
   helpers::swarm::swarm_request_custom_timeout,
   monitor::{
-    UpdateCacheResources,
+    RefreshCacheResources,
     resources::{
       update_swarm_deployment_cache, update_swarm_stack_cache,
     },
@@ -35,16 +35,16 @@ const ADDITIONAL_MS: u128 = 1000;
 
 pub fn spawn_swarm_monitoring_loop() {
   tokio::spawn(async move {
-    refresh_swarm_cache().await;
+    refresh_all_swarm_cache().await;
     let interval = monitoring_interval();
     loop {
       wait_until_timelength(interval, ADDITIONAL_MS).await;
-      refresh_swarm_cache().await;
+      refresh_all_swarm_cache().await;
     }
   });
 }
 
-async fn refresh_swarm_cache() {
+async fn refresh_all_swarm_cache() {
   let swarms =
     match find_collect(&db_client().swarms, None, None).await {
       Ok(swarms) => swarms,
@@ -56,7 +56,7 @@ async fn refresh_swarm_cache() {
       }
     };
   let futures = swarms.into_iter().map(|swarm| async move {
-    update_cache_for_swarm(&swarm, false).await;
+    refresh_swarm_cache(&swarm, false).await;
   });
   join_all(futures).await;
   // tokio::join!(check_alerts(ts), record_swarm_stats(ts));
@@ -64,7 +64,7 @@ async fn refresh_swarm_cache() {
 
 /// Makes sure cache for swarm doesn't update too frequently / simultaneously.
 /// If forced, will still block against simultaneous update.
-fn update_cache_for_swarm_controller()
+fn refresh_swarm_cache_controller()
 -> &'static CloneCache<String, Arc<Mutex<i64>>> {
   static CACHE: OnceLock<CloneCache<String, Arc<Mutex<i64>>>> =
     OnceLock::new();
@@ -75,10 +75,10 @@ fn update_cache_for_swarm_controller()
 /// which exits early if the lock is busy or it was completed too recently.
 /// If force is true, it will wait on simultaneous calls, and will
 /// ignore the restriction on being completed too recently.
-pub async fn update_cache_for_swarm(swarm: &Swarm, force: bool) {
+pub async fn refresh_swarm_cache(swarm: &Swarm, force: bool) {
   // Concurrency controller to ensure it isn't done too often
   // when it happens in other contexts.
-  let controller = update_cache_for_swarm_controller()
+  let controller = refresh_swarm_cache_controller()
     .get_or_insert_default(&swarm.id)
     .await;
   let mut lock = match controller.try_lock() {
@@ -96,7 +96,7 @@ pub async fn update_cache_for_swarm(swarm: &Swarm, force: bool) {
 
   *lock = now;
 
-  let resources = UpdateCacheResources::load_swarm(swarm).await;
+  let resources = RefreshCacheResources::load_swarm(swarm).await;
 
   if swarm.config.server_ids.is_empty() {
     resources.insert_status_unknown().await;

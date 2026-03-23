@@ -101,7 +101,11 @@ export interface RequiredResourceComponents<
   BatchExecutions: React.FC;
 
   /** Icon for the resource */
-  Icon: React.FC<{ id?: string; size?: string | number; noColor?: boolean }>;
+  Icon: React.FC<{
+    id?: string;
+    size?: string | number;
+    noColor?: boolean;
+  }>;
 
   State: IdComponent;
 

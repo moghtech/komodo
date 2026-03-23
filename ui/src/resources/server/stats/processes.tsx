@@ -25,6 +25,7 @@ export default function ServerProcesses({ id }: { id: string }) {
 
   return (
     <Section
+      withBorder
       title="Processes"
       icon={<ICONS.Process size="1.3rem" />}
       titleRight={
@@ -37,11 +38,13 @@ export default function ServerProcesses({ id }: { id: string }) {
           <ShowHideButton show={show} setShow={setShow} />
         </Group>
       }
+      onHeaderClick={() => setShow((s) => !s)}
     >
       {show && isPending && !processes && <TableSkeleton />}
       {show && !isPending && (
         <DataTable
           sortDescFirst
+          mah="min(400px, calc(100vh - 320px))"
           tableKey="server-processes"
           data={filtered ?? []}
           columns={[

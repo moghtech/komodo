@@ -3,13 +3,13 @@ import { useExecute, useSelectedResources, useWrite } from "@/lib/hooks";
 import { sendCopyNotification, usableResourceExecuteKey } from "@/lib/utils";
 import { UsableResource } from "@/resources";
 import { ICONS } from "@/theme/icons";
-import ConfirmButton from "@/ui/confirm-button";
 import {
   Box,
   Button,
   Divider,
   Group,
   List,
+  Loader,
   Menu,
   Modal,
   Stack,
@@ -19,13 +19,13 @@ import {
 } from "@mantine/core";
 import { Types } from "komodo_client";
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { FC, useState } from "react";
 
 type Request = Types.ExecuteRequest["type"] | Types.WriteRequest["type"];
 
 export interface BatchExecutionsProps<T extends Request> {
   type: UsableResource;
-  executions: T[];
+  executions: [T, FC<{ size?: string | number }>][];
 }
 
 export default function BatchExecutions<T extends Request>({
@@ -46,6 +46,7 @@ export default function BatchExecutions<T extends Request>({
       <BatchExecutionsModal
         type={type}
         execution={execution}
+        icon={executions.find((e) => e[0] === execution)?.[1] ?? ICONS.Check}
         onClose={() => setExecution(undefined)}
       />
     </>
@@ -59,7 +60,7 @@ function BatchExecutionsDropdownMenu<T extends Request>({
   disabled,
 }: {
   type: UsableResource;
-  executions: T[];
+  executions: [T, FC<{ size?: string | number }>][];
   onSelect: (item: T) => void;
   disabled: boolean;
 }) {
@@ -90,9 +91,10 @@ function BatchExecutionsDropdownMenu<T extends Request>({
             </Menu.Item>
           )}
 
-          {executions.map((execution) => (
+          {executions.map(([execution, Icon]) => (
             <Menu.Item
               key={execution}
+              leftSection={<Icon size="1rem" />}
               onClick={() => onSelect(execution)}
               renderRoot={(props) => <Button fullWidth {...props} />}
             >
@@ -127,23 +129,29 @@ function BatchExecutionsDropdownMenu<T extends Request>({
 function BatchExecutionsModal({
   type,
   execution,
-  onClose,
+  icon: Icon,
+  onClose: _onClose,
 }: {
   type: UsableResource;
   execution: Request | undefined;
+  icon: FC<{ size?: string | number }>;
   onClose: () => void;
 }) {
   const [selected, setSelected] = useSelectedResources(type);
   const [input, setInput] = useState("");
+  const onClose = () => {
+    setInput("");
+    _onClose();
+  };
 
   const { mutate: execute, isPending: executePending } = useExecute(
-    execution! as Types.ExecuteRequest["type"],
+    execution as Types.ExecuteRequest["type"],
     {
       onSuccess: onClose,
     },
   );
   const { mutate: write, isPending: writePending } = useWrite(
-    execution! as Types.WriteRequest["type"],
+    execution as Types.WriteRequest["type"],
     {
       onSuccess: onClose,
     },
@@ -200,8 +208,10 @@ function BatchExecutionsModal({
         )}
 
         <Group justify="end">
-          <ConfirmButton
-            icon={<ICONS.Check size="1rem" />}
+          <Button
+            leftSection={
+              isPending ? <Loader size="1rem" /> : <Icon size="1rem" />
+            }
             onClick={() => {
               for (const resource of selected) {
                 if (execution.startsWith("Delete")) {
@@ -226,10 +236,9 @@ function BatchExecutionsModal({
                 ? false
                 : input !== formatted
             }
-            loading={isPending}
           >
-            Confirm
-          </ConfirmButton>
+            {formatted}
+          </Button>
         </Group>
       </Stack>
     </Modal>

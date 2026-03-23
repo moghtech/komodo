@@ -48,7 +48,6 @@ export default function ContainersSection({
     <Section
       titleOther={titleOther}
       title={!titleOther ? "Containers" : undefined}
-     
       icon={!titleOther ? <ICONS.Container size="1.3rem" /> : undefined}
       actions={
         (pruneButton && !allRunning) || _search || setShow ? (
@@ -124,7 +123,7 @@ export default function ContainersSection({
               ),
               cell: ({ row }) =>
                 (row.original.networks?.length ?? 0) > 0 ? (
-                  <DividedChildren>
+                  <DividedChildren wrap="nowrap">
                     {row.original.networks?.map((network) => (
                       <DockerResourceLink
                         key={network}
@@ -171,6 +170,7 @@ export default function ContainersSection({
                 <ContainerPorts
                   ports={row.original.ports ?? []}
                   serverId={row.original.server_id}
+                  wrap="nowrap"
                 />
               ),
             },
@@ -181,7 +181,7 @@ export default function ContainersSection({
                 <SortableHeader column={column} title="Volumes" />
               ),
               cell: ({ row }) => (
-                <DividedChildren>
+                <DividedChildren wrap="nowrap">
                   {row.original.volumes?.map((volume) => (
                     <DockerResourceLink
                       key={volume}

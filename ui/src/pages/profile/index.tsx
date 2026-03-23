@@ -31,13 +31,13 @@ export default function Profile() {
   const [password, setPassword] = useState("");
   const { mutate: updateUsername } = useManageAuth("UpdateUsername", {
     onSuccess: () => {
-      notifications.show({ message: "Username updated." });
+      notifications.show({ message: "Username updated.", color: "green" });
       refetchUser();
     },
   });
   const { mutate: updatePassword } = useManageAuth("UpdatePassword", {
     onSuccess: () => {
-      notifications.show({ message: "Password updated." });
+      notifications.show({ message: "Password updated.", color: "green" });
       setPassword("");
       refetchUser();
     },
@@ -48,6 +48,7 @@ export default function Profile() {
       onSuccess: () => {
         notifications.show({
           message: "External login skip 2fa mode updated.",
+          color: "green",
         });
         refetchUser();
       },
@@ -65,7 +66,6 @@ export default function Profile() {
           <Section
             title="Login"
             titleFz="h3"
-           
             icon={<ICONS.Key size="1.2rem" />}
             withBorder
           >
@@ -115,7 +115,6 @@ export default function Profile() {
           <Section
             title="2FA"
             titleFz="h3"
-           
             icon={<ICONS.Key size="1.2rem" />}
             withBorder
           >

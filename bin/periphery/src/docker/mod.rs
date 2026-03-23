@@ -151,68 +151,68 @@ fn convert_mount(mount: bollard::models::Mount) -> Mount {
 }
 
 fn convert_mount_type(
-  typ: bollard::secret::MountTypeEnum,
+  typ: bollard::config::MountTypeEnum,
 ) -> MountTypeEnum {
   match typ {
-    bollard::secret::MountTypeEnum::EMPTY => MountTypeEnum::Empty,
-    bollard::secret::MountTypeEnum::BIND => MountTypeEnum::Bind,
-    bollard::secret::MountTypeEnum::VOLUME => MountTypeEnum::Volume,
-    bollard::secret::MountTypeEnum::IMAGE => MountTypeEnum::Image,
-    bollard::secret::MountTypeEnum::TMPFS => MountTypeEnum::Tmpfs,
-    bollard::secret::MountTypeEnum::NPIPE => MountTypeEnum::Npipe,
-    bollard::secret::MountTypeEnum::CLUSTER => MountTypeEnum::Cluster,
+    bollard::config::MountTypeEnum::EMPTY => MountTypeEnum::Empty,
+    bollard::config::MountTypeEnum::BIND => MountTypeEnum::Bind,
+    bollard::config::MountTypeEnum::VOLUME => MountTypeEnum::Volume,
+    bollard::config::MountTypeEnum::IMAGE => MountTypeEnum::Image,
+    bollard::config::MountTypeEnum::TMPFS => MountTypeEnum::Tmpfs,
+    bollard::config::MountTypeEnum::NPIPE => MountTypeEnum::Npipe,
+    bollard::config::MountTypeEnum::CLUSTER => MountTypeEnum::Cluster,
   }
 }
 
 fn convert_mount_propogation(
-  propogation: bollard::secret::MountBindOptionsPropagationEnum,
+  propogation: bollard::config::MountBindOptionsPropagationEnum,
 ) -> MountBindOptionsPropagationEnum {
   match propogation {
-    bollard::secret::MountBindOptionsPropagationEnum::EMPTY => {
+    bollard::config::MountBindOptionsPropagationEnum::EMPTY => {
       MountBindOptionsPropagationEnum::Empty
     }
-    bollard::secret::MountBindOptionsPropagationEnum::PRIVATE => {
+    bollard::config::MountBindOptionsPropagationEnum::PRIVATE => {
       MountBindOptionsPropagationEnum::Private
     }
-    bollard::secret::MountBindOptionsPropagationEnum::RPRIVATE => {
+    bollard::config::MountBindOptionsPropagationEnum::RPRIVATE => {
       MountBindOptionsPropagationEnum::Rprivate
     }
-    bollard::secret::MountBindOptionsPropagationEnum::SHARED => {
+    bollard::config::MountBindOptionsPropagationEnum::SHARED => {
       MountBindOptionsPropagationEnum::Shared
     }
-    bollard::secret::MountBindOptionsPropagationEnum::RSHARED => {
+    bollard::config::MountBindOptionsPropagationEnum::RSHARED => {
       MountBindOptionsPropagationEnum::Rshared
     }
-    bollard::secret::MountBindOptionsPropagationEnum::SLAVE => {
+    bollard::config::MountBindOptionsPropagationEnum::SLAVE => {
       MountBindOptionsPropagationEnum::Slave
     }
-    bollard::secret::MountBindOptionsPropagationEnum::RSLAVE => {
+    bollard::config::MountBindOptionsPropagationEnum::RSLAVE => {
       MountBindOptionsPropagationEnum::Rslave
     }
   }
 }
 
 fn convert_mount_point_type(
-  typ: bollard::secret::MountPointTypeEnum,
+  typ: bollard::config::MountPointTypeEnum,
 ) -> MountTypeEnum {
   match typ {
-    bollard::secret::MountPointTypeEnum::EMPTY => {
+    bollard::config::MountPointTypeEnum::EMPTY => {
       MountTypeEnum::Empty
     }
-    bollard::secret::MountPointTypeEnum::BIND => MountTypeEnum::Bind,
-    bollard::secret::MountPointTypeEnum::VOLUME => {
+    bollard::config::MountPointTypeEnum::BIND => MountTypeEnum::Bind,
+    bollard::config::MountPointTypeEnum::VOLUME => {
       MountTypeEnum::Volume
     }
-    bollard::secret::MountPointTypeEnum::IMAGE => {
+    bollard::config::MountPointTypeEnum::IMAGE => {
       MountTypeEnum::Image
     }
-    bollard::secret::MountPointTypeEnum::TMPFS => {
+    bollard::config::MountPointTypeEnum::TMPFS => {
       MountTypeEnum::Tmpfs
     }
-    bollard::secret::MountPointTypeEnum::NPIPE => {
+    bollard::config::MountPointTypeEnum::NPIPE => {
       MountTypeEnum::Npipe
     }
-    bollard::secret::MountPointTypeEnum::CLUSTER => {
+    bollard::config::MountPointTypeEnum::CLUSTER => {
       MountTypeEnum::Cluster
     }
   }
@@ -290,17 +290,17 @@ fn convert_endpoint_spec_ports(
     .map(|port| EndpointPortConfig {
       name: port.name,
       protocol: port.protocol.map(|protocol| match protocol {
-        bollard::secret::EndpointPortConfigProtocolEnum::EMPTY => EndpointPortConfigProtocolEnum::EMPTY,
-        bollard::secret::EndpointPortConfigProtocolEnum::TCP => EndpointPortConfigProtocolEnum::TCP,
-        bollard::secret::EndpointPortConfigProtocolEnum::UDP => EndpointPortConfigProtocolEnum::UDP,
-        bollard::secret::EndpointPortConfigProtocolEnum::SCTP => EndpointPortConfigProtocolEnum::SCTP,
+        bollard::config::EndpointPortConfigProtocolEnum::EMPTY => EndpointPortConfigProtocolEnum::EMPTY,
+        bollard::config::EndpointPortConfigProtocolEnum::TCP => EndpointPortConfigProtocolEnum::TCP,
+        bollard::config::EndpointPortConfigProtocolEnum::UDP => EndpointPortConfigProtocolEnum::UDP,
+        bollard::config::EndpointPortConfigProtocolEnum::SCTP => EndpointPortConfigProtocolEnum::SCTP,
       }),
       target_port: port.target_port,
       published_port: port.published_port,
       publish_mode: port.publish_mode.map(|protocol| match protocol {
-        bollard::secret::EndpointPortConfigPublishModeEnum::EMPTY => EndpointPortConfigPublishModeEnum::EMPTY,
-        bollard::secret::EndpointPortConfigPublishModeEnum::INGRESS => EndpointPortConfigPublishModeEnum::INGRESS,
-        bollard::secret::EndpointPortConfigPublishModeEnum::HOST => EndpointPortConfigPublishModeEnum::HOST,
+        bollard::config::EndpointPortConfigPublishModeEnum::EMPTY => EndpointPortConfigPublishModeEnum::EMPTY,
+        bollard::config::EndpointPortConfigPublishModeEnum::INGRESS => EndpointPortConfigPublishModeEnum::INGRESS,
+        bollard::config::EndpointPortConfigPublishModeEnum::HOST => EndpointPortConfigPublishModeEnum::HOST,
       }),
     })
     .collect()
@@ -423,10 +423,10 @@ fn convert_task_spec_container_spec(
         seccomp: privilege.seccomp.map(|seccomp| {
           TaskSpecContainerSpecPrivilegesSeccomp {
             mode: seccomp.mode.map(|mode| match mode {
-              bollard::secret::TaskSpecContainerSpecPrivilegesSeccompModeEnum::EMPTY => TaskSpecContainerSpecPrivilegesSeccompModeEnum::EMPTY,
-              bollard::secret::TaskSpecContainerSpecPrivilegesSeccompModeEnum::DEFAULT => TaskSpecContainerSpecPrivilegesSeccompModeEnum::DEFAULT,
-              bollard::secret::TaskSpecContainerSpecPrivilegesSeccompModeEnum::UNCONFINED => TaskSpecContainerSpecPrivilegesSeccompModeEnum::UNCONFINED,
-              bollard::secret::TaskSpecContainerSpecPrivilegesSeccompModeEnum::CUSTOM => TaskSpecContainerSpecPrivilegesSeccompModeEnum::CUSTOM,
+              bollard::config::TaskSpecContainerSpecPrivilegesSeccompModeEnum::EMPTY => TaskSpecContainerSpecPrivilegesSeccompModeEnum::EMPTY,
+              bollard::config::TaskSpecContainerSpecPrivilegesSeccompModeEnum::DEFAULT => TaskSpecContainerSpecPrivilegesSeccompModeEnum::DEFAULT,
+              bollard::config::TaskSpecContainerSpecPrivilegesSeccompModeEnum::UNCONFINED => TaskSpecContainerSpecPrivilegesSeccompModeEnum::UNCONFINED,
+              bollard::config::TaskSpecContainerSpecPrivilegesSeccompModeEnum::CUSTOM => TaskSpecContainerSpecPrivilegesSeccompModeEnum::CUSTOM,
             }),
             profile: seccomp.profile,
           }
@@ -434,9 +434,9 @@ fn convert_task_spec_container_spec(
         app_armor: privilege.app_armor.map(|app_armor| {
           TaskSpecContainerSpecPrivilegesAppArmor {
             mode: app_armor.mode.map(|mode| match mode {
-              bollard::secret::TaskSpecContainerSpecPrivilegesAppArmorModeEnum::EMPTY => TaskSpecContainerSpecPrivilegesAppArmorModeEnum::EMPTY,
-              bollard::secret::TaskSpecContainerSpecPrivilegesAppArmorModeEnum::DEFAULT => TaskSpecContainerSpecPrivilegesAppArmorModeEnum::DEFAULT,
-              bollard::secret::TaskSpecContainerSpecPrivilegesAppArmorModeEnum::DISABLED => TaskSpecContainerSpecPrivilegesAppArmorModeEnum::DISABLED,
+              bollard::config::TaskSpecContainerSpecPrivilegesAppArmorModeEnum::EMPTY => TaskSpecContainerSpecPrivilegesAppArmorModeEnum::EMPTY,
+              bollard::config::TaskSpecContainerSpecPrivilegesAppArmorModeEnum::DEFAULT => TaskSpecContainerSpecPrivilegesAppArmorModeEnum::DEFAULT,
+              bollard::config::TaskSpecContainerSpecPrivilegesAppArmorModeEnum::DISABLED => TaskSpecContainerSpecPrivilegesAppArmorModeEnum::DISABLED,
             }),
           }
         }),
@@ -478,10 +478,10 @@ fn convert_task_spec_container_spec(
       config_name: config.config_name,
     }).collect()),
     isolation: spec.isolation.map(|isolation| match isolation {
-      bollard::secret::TaskSpecContainerSpecIsolationEnum::DEFAULT => TaskSpecContainerSpecIsolationEnum::DEFAULT,
-      bollard::secret::TaskSpecContainerSpecIsolationEnum::PROCESS => TaskSpecContainerSpecIsolationEnum::PROCESS,
-      bollard::secret::TaskSpecContainerSpecIsolationEnum::HYPERV => TaskSpecContainerSpecIsolationEnum::HYPERV,
-      bollard::secret::TaskSpecContainerSpecIsolationEnum::EMPTY => TaskSpecContainerSpecIsolationEnum::EMPTY,
+      bollard::config::TaskSpecContainerSpecIsolationEnum::DEFAULT => TaskSpecContainerSpecIsolationEnum::DEFAULT,
+      bollard::config::TaskSpecContainerSpecIsolationEnum::PROCESS => TaskSpecContainerSpecIsolationEnum::PROCESS,
+      bollard::config::TaskSpecContainerSpecIsolationEnum::HYPERV => TaskSpecContainerSpecIsolationEnum::HYPERV,
+      bollard::config::TaskSpecContainerSpecIsolationEnum::EMPTY => TaskSpecContainerSpecIsolationEnum::EMPTY,
     }),
     init: spec.init,
     sysctls: spec.sysctls,
@@ -492,13 +492,13 @@ fn convert_task_spec_container_spec(
 }
 
 fn convert_task_spec_restart_policy_condition(
-  condition: bollard::secret::TaskSpecRestartPolicyConditionEnum,
+  condition: bollard::config::TaskSpecRestartPolicyConditionEnum,
 ) -> TaskSpecRestartPolicyConditionEnum {
   match condition {
-    bollard::secret::TaskSpecRestartPolicyConditionEnum::EMPTY => TaskSpecRestartPolicyConditionEnum::EMPTY,
-    bollard::secret::TaskSpecRestartPolicyConditionEnum::NONE => TaskSpecRestartPolicyConditionEnum::NONE,
-    bollard::secret::TaskSpecRestartPolicyConditionEnum::ON_FAILURE => TaskSpecRestartPolicyConditionEnum::ON_FAILURE,
-    bollard::secret::TaskSpecRestartPolicyConditionEnum::ANY => TaskSpecRestartPolicyConditionEnum::ANY,
+    bollard::config::TaskSpecRestartPolicyConditionEnum::EMPTY => TaskSpecRestartPolicyConditionEnum::EMPTY,
+    bollard::config::TaskSpecRestartPolicyConditionEnum::NONE => TaskSpecRestartPolicyConditionEnum::NONE,
+    bollard::config::TaskSpecRestartPolicyConditionEnum::ON_FAILURE => TaskSpecRestartPolicyConditionEnum::ON_FAILURE,
+    bollard::config::TaskSpecRestartPolicyConditionEnum::ANY => TaskSpecRestartPolicyConditionEnum::ANY,
   }
 }
 

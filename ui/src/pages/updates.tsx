@@ -1,7 +1,11 @@
 import ResourceTypeSelector from "@/components/resource-type-selector";
 import { useUpdateDetails } from "@/components/updates/details";
 import UserAvatar from "@/components/user-avatar";
-import { fmtDateWithMinutes, fmtOperation } from "@/lib/formatting";
+import {
+  fmtDateWithMinutes,
+  fmtOperation,
+  fmtUpperCamelcase,
+} from "@/lib/formatting";
 import { useRead, useSetTitle } from "@/lib/hooks";
 import { UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
@@ -94,13 +98,12 @@ export default function Updates() {
               }
               setParams(p);
             }}
-            data={
-              type
-                ? OPERATIONS_BY_RESOURCE[type]
-                : Object.values(Types.Operation).filter(
-                    (o) => o !== Types.Operation.None,
-                  )
-            }
+            data={(type
+              ? OPERATIONS_BY_RESOURCE[type]
+              : Object.values(Types.Operation).filter(
+                  (o) => o !== Types.Operation.None,
+                )
+            ).map((value) => ({ value, label: fmtUpperCamelcase(value) }))}
             searchable
             clearable
           />
@@ -209,7 +212,9 @@ export default function Updates() {
             {
               header: "Operator",
               accessorKey: "operator",
-              cell: ({ row }) => <UserAvatar userId={row.original.operator} fz="md" />,
+              cell: ({ row }) => (
+                <UserAvatar userId={row.original.operator} fz="md" />
+              ),
             },
           ]}
           onRowClick={(row) => openDetails(row.id)}

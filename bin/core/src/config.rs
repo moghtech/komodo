@@ -403,9 +403,7 @@ pub fn core_config() -> &'static CoreConfig {
       ssl_cert_file: env
         .komodo_ssl_cert_file
         .unwrap_or(config.ssl_cert_file),
-      ui_path: env
-        .komodo_ui_path
-        .unwrap_or(config.ui_path),
+      ui_path: env.komodo_ui_path.unwrap_or(config.ui_path),
       ui_index_force_no_cache: env
         .komodo_ui_index_force_no_cache
         .unwrap_or(config.ui_index_force_no_cache),

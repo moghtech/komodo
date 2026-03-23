@@ -22,7 +22,7 @@ const InfoCard = createPolymorphicComponent<"div", InfoCardProps>(
       return (
         <Stack p="md" className="bordered-light" bdrs="md" {...props} ref={ref}>
           <Group justify="space-between">
-            <Text fz="xl" {...titleProps}>
+            <Text fz="lg" {...titleProps}>
               {title}
             </Text>
             {info}

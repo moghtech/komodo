@@ -34,7 +34,7 @@ export default function StackInfo({
         message: res.success
           ? "Contents written."
           : "Failed to write contents.",
-        color: res.success ? undefined : "red",
+        color: res.success ? "green" : "red",
       });
     },
   });
@@ -55,7 +55,7 @@ export default function StackInfo({
   const defaultShowContents = !latestContents || latestContents.length < 3;
 
   return (
-    <Section gap="xl" titleOther={titleOther}>
+    <Section titleOther={titleOther}>
       {/* Errors */}
       {latestErrors &&
         latestErrors.length > 0 &&
@@ -158,8 +158,8 @@ export default function StackInfo({
                         Reset
                       </Button>
                       <ConfirmUpdate
-                        previous={{ contents: content.contents }}
-                        content={{ contents: edits[content.path] }}
+                        original={{ contents: content.contents }}
+                        update={{ contents: edits[content.path] }}
                         onConfirm={async () => {
                           if (stack) {
                             return await mutateAsync({

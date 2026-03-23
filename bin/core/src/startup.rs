@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
 use anyhow::Context;
-use colored::Colorize;
 use database::mungos::{
   find::find_collect,
   mongodb::bson::{
@@ -33,6 +32,7 @@ use komodo_client::{
     user::{action_user, system_user},
   },
 };
+use mogh_auth_server::api::login::local::sign_up_local_user;
 use mogh_resolver::Resolve;
 use uuid::Uuid;
 
@@ -41,6 +41,7 @@ use crate::{
     execute::{ExecuteArgs, ExecuteRequest},
     write::WriteArgs,
   },
+  auth::KomodoAuthImpl,
   config::core_config,
   helpers::update::init_execution_update,
   network, resource,
@@ -91,7 +92,7 @@ pub async fn run_startup_actions() {
     .resolve(&ExecuteArgs {
       user: action_user().to_owned(),
       update,
-      id: Uuid::new_v4(),
+      task_id: Uuid::new_v4(),
     })
     .await
     {
@@ -301,7 +302,7 @@ async fn ensure_init_user_and_resources() {
 
   // Assumes if there are any existing users, procedures, or tags,
   // the default procedures do not need to be set up.
-  let Ok((None, None, None)) = tokio::try_join!(
+  let Ok((None, procedures, tags)) = tokio::try_join!(
     db.users.find_one(Document::new()),
     db.procedures.find_one(Document::new()),
     db.tags.find_one(Document::new()),
@@ -314,20 +315,16 @@ async fn ensure_init_user_and_resources() {
   // Init admin user if set in config.
   if let Some(username) = &config.init_admin_username {
     info!("Creating init admin user...");
-    // if let Err(e) = (SignUpLocalUser {
-    //   username: username.clone(),
-    //   password: config.init_admin_password.clone(),
-    // })
-    // .resolve(&AuthArgs {
-    //   headers: Default::default(),
-    //   ip: IpAddr::V4(Ipv4Addr::UNSPECIFIED),
-    //   session: None,
-    // })
-    // .await
-    // {
-    //   error!("Failed to create init admin user | {:#}", e.error);
-    //   return;
-    // }
+    if let Err(e) = sign_up_local_user(
+      &KomodoAuthImpl,
+      username.to_string(),
+      &config.init_admin_password,
+    )
+    .await
+    {
+      error!("Failed to create init admin user | {:#}", e.error);
+      return;
+    }
     match db
       .users
       .find_one(doc! { "username": username })
@@ -347,12 +344,15 @@ async fn ensure_init_user_and_resources() {
     }
   }
 
-  if config.disable_init_resources {
-    info!("System resources init {}", "DISABLED".red());
+  if config.disable_init_resources
+    || procedures.is_some()
+    || tags.is_some()
+  {
+    info!("Skipping initial system resource creation");
     return;
   }
 
-  info!("Creating init system resources...");
+  info!("Creating initial system resources...");
 
   let write_args = WriteArgs {
     user: system_user().to_owned(),

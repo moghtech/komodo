@@ -1386,7 +1386,7 @@ export interface OnboardingKey {
      * 2. Remove Server 'address' configuration, allowing Periphery -> Core connection.
      * 3. Update existing Server's public keys.
      */
-    fix_existing_servers?: boolean;
+    privileged?: boolean;
     /**
      * Optional. If specified, copy this Server config when initializing
      * the Server.
@@ -4489,7 +4489,7 @@ export interface SwarmTaskListItem {
 /**
  * All entities related to docker stack available over CLI.
  * Returned by:
- * ```
+ * ```shell
  * docker stack services --format json <STACK>
  * docker stack ps --format json <STACK>
  * ```
@@ -6562,7 +6562,7 @@ export interface CreateOnboardingKey {
      * 2. Remove Server 'address' configuration, allowing Periphery -> Core connection.
      * 3. Update existing Server's public keys.
      */
-    fix_existing_servers?: boolean;
+    privileged?: boolean;
     /** Optional. New Servers copy this Server's config. */
     copy_server?: string;
     /** Optional. Whether to also create a Builder for the Server. */
@@ -9684,7 +9684,7 @@ export interface UpdateOnboardingKey {
      * 2. Remove Server 'address' configuration, allowing Periphery -> Core connection.
      * 3. Update existing Server's public keys.
      */
-    fix_existing_servers?: boolean;
+    privileged?: boolean;
     /** Update the copy server */
     copy_server?: string;
     /** Update whether to create Builder */

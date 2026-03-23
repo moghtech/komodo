@@ -1,6 +1,8 @@
-# Advanced Configuration
+# Advanced Setup
 
-### Custom Certificate Authorities
+Additional configuration options for Komodo Core and Periphery, including custom certificate authorities, OAuth/OIDC providers, and mounted config files.
+
+## Custom Certificate Authorities
 
 In order to communicate with companion services on private networks,
 such as OIDC and git providers,
@@ -19,25 +21,25 @@ just mount any required root certificates inside `/usr/local/share/ca-certificat
       - /path/to/custom-certs:/usr/local/share/ca-certificates
 ```
 
-### OIDC / Oauth2
+## OIDC / OAuth2
 
 To enable OAuth2 login, you must create a client on the respective OAuth provider,
-for example [Github](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)
+for example [GitHub](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)
 or [Google](https://developers.google.com/identity/protocols/oauth2).
 
-Komodo also supports self hosted Oauth2 providers like [Authentik](https://docs.goauthentik.io/docs/providers/oauth2/), [Gitea](https://docs.gitea.com/development/oauth2-provider) and [Keycloak](https://www.keycloak.org).
+Komodo also supports self hosted OAuth2 providers like [Authentik](https://docs.goauthentik.io/docs/providers/oauth2/), [Gitea](https://docs.gitea.com/development/oauth2-provider) and [Keycloak](https://www.keycloak.org).
 
 - Komodo uses the `web application` login flow.
 - The redirect uri is:
-	- `<KOMODO_HOST>/auth/github/callback` for Github.
+	- `<KOMODO_HOST>/auth/github/callback` for GitHub.
 	- `<KOMODO_HOST>/auth/google/callback` for Google.
 	- `<KOMODO_HOST>/auth/oidc/callback` for OIDC.
 
-### Authentik
+## Authentik
 
-Check out the [Authentik official support documentation](https://integrations.goauthentik.io/infrastructure/komodo/).
+Check out the [Authentik integration docs](https://integrations.goauthentik.io/infrastructure/komodo/).
 
-### Keycloak
+## Keycloak
 - Create an [OIDC client](https://www.keycloak.org/docs/latest/server_admin/index.html#proc-creating-oidc-client_server_administration_guide) in Keycloak.
   - Note down the `Client ID` that you enter (e.g.: "komodo"), you will need it for Komodo configuration
   - `Valid Redirect URIs`: use `<KOMODO_HOST>/auth/oidc/callback` and substitute `<KOMODO_HOST>` with your Komodo url.
@@ -50,7 +52,7 @@ Check out the [Authentik official support documentation](https://integrations.go
   - `KOMODO_OIDC_CLIENT_SECRET=...` that you copied from Keycloak
 
 
-### Mount a config file
+## Mount a Config File
 
 If you prefer to keep sensitive information out of environment variables, you can optionally
 write a config file on your host, and mount it to `/config/config.toml` in the Komodo core container.

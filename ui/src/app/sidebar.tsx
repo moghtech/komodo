@@ -3,21 +3,16 @@ import { usableResourcePath } from "@/lib/utils";
 import { SIDEBAR_RESOURCES } from "@/resources";
 import { Button, Divider, ScrollArea, Stack, Text } from "@mantine/core";
 import { ReactNode } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const Sidebar = ({ close }: { close: () => void }) => {
-  const _nav = useNavigate();
-  const nav = (to: string) => {
-    close();
-    _nav(to);
-  };
   const location = useLocation().pathname;
-  const linkProps = { nav, location };
+  const linkProps = { location, close };
   return (
-    <Stack justify="space-between" gap="md" h="100%" m="xl" mt="24">
+    <Stack justify="space-between" gap="md" h="96%" m="xl" mt="24" mr="md">
       {/* TOP AREA (scrolling) */}
       <ScrollArea>
-        <Stack gap="0.25rem">
+        <Stack gap="0.15rem" mr="md">
           <SidebarLink
             label="Dashboard"
             icon={<ICONS.Dashboard size="1rem" />}
@@ -43,7 +38,7 @@ const Sidebar = ({ close }: { close: () => void }) => {
                 Resources
               </Text>
             }
-            my="xs"
+            my="0.1rem"
           />
 
           {SIDEBAR_RESOURCES.map((type) => {
@@ -65,7 +60,7 @@ const Sidebar = ({ close }: { close: () => void }) => {
                 Notifications
               </Text>
             }
-            my="xs"
+            my="0.1rem"
           />
 
           <SidebarLink
@@ -117,14 +112,14 @@ const SidebarLink = ({
   label,
   icon,
   to,
-  nav,
   location,
+  close,
 }: {
   label: string;
   icon: ReactNode;
   to: string;
-  nav: (to: string) => void;
   location: string;
+  close: () => void;
 }) => {
   return (
     <Button
@@ -133,7 +128,9 @@ const SidebarLink = ({
           ? "default"
           : "subtle"
       }
-      onClick={() => nav(to)}
+      component={Link}
+      to={to}
+      onClick={close}
       leftSection={icon}
       justify="flex-start"
       fullWidth

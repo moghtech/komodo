@@ -222,8 +222,31 @@ where
       .status_code(StatusCode::BAD_REQUEST)?;
     P::verify_secret(headers, body, R::custom_secret(&resource))
       .status_code(StatusCode::UNAUTHORIZED)?;
+
+    info!(
+      resource_type = R::resource_type().to_string(),
+      resource_id = id,
+      source_ip = ip.to_string(),
+      "Successfully authenticated incoming webhook"
+    );
+
+    debug!(
+      resource_type = R::resource_type().to_string(),
+      resource_id = id,
+      source_ip = ip.to_string(),
+      "Webhook body: {body}"
+    );
+
     mogh_error::Result::Ok(resource)
   }
   .with_failure_rate_limit_using_ip(&GENERAL_RATE_LIMITER, &ip)
   .await
+  .inspect_err(|e| {
+    warn!(
+      resource_id = id,
+      source_ip = ip.to_string(),
+      "Incoming webhook failed | ERROR: {:#}",
+      e.error
+    );
+  })
 }

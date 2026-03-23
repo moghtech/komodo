@@ -90,12 +90,7 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
 
       <Stack gap="xl">
         {canExecute && Object.keys(RC.Executions).length > 0 && (
-          <Section
-            title="Execute"
-           
-            icon={<ICONS.Execution size="1rem" />}
-            my="md"
-          >
+          <Section withBorder my="md">
             <Group justify="stretch">
               {Object.entries(RC.Executions).map(([key, Execution]) => (
                 <Execution key={key} id={id} />

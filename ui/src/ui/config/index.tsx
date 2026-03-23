@@ -91,7 +91,7 @@ export default function Config<T>({
         return (
           <Fragment key={group}>
             {group && (
-              <Text visibleFrom="lg" fz="h1" tt="uppercase" mt="xl">
+              <Text visibleFrom="lg" fz="h2" tt="uppercase" mt="xl">
                 {group}
               </Text>
             )}
@@ -115,7 +115,7 @@ export default function Config<T>({
                       key={group + label}
                       id={group + label}
                       p="xl"
-                      gap="xl"
+                      gap="md"
                       className="bordered-light"
                       bdrs="md"
                       style={{ scrollMarginTop: 94 }}
@@ -177,8 +177,8 @@ export default function Config<T>({
           Reset
         </Button>
         <ConfirmUpdate
-          previous={original}
-          content={update}
+          original={original}
+          update={update}
           onConfirm={onConfirm}
           disabled={disabled}
           fileContentsLanguage={fileContentsLanguage}
@@ -207,11 +207,7 @@ export default function Config<T>({
         </>
       )}
       {!disableSidebar && (
-        <Flex
-          w="100%"
-          gap="md"
-          direction={{ base: "column", lg: "row" }}
-        >
+        <Flex w="100%" gap="md" direction={{ base: "column", lg: "row" }}>
           {/** SIDEBAR (LG) */}
           <Box
             visibleFrom="lg"
@@ -223,7 +219,7 @@ export default function Config<T>({
               borderTopRightRadius: "var(--mantine-radius-md)",
             }}
           >
-            <Stack pos="sticky" w={175} top={94} pb={24} m="lg">
+            <Stack pos="sticky" w={175} top={88} pb={24} m="lg">
               {/** ANCHORS */}
               <ScrollArea
                 mah={
@@ -267,7 +263,9 @@ export default function Config<T>({
               </ScrollArea>
 
               {/** SAVE */}
-              <SaveOrReset fullWidth />
+              <Stack gap="xs">
+                <SaveOrReset fullWidth />
+              </Stack>
             </Stack>
           </Box>
 

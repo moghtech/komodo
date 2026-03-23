@@ -39,7 +39,7 @@ export default function ProcedureStage({
 }: ProcedureStageProps) {
   return (
     <Stack>
-      <Group justify="space-between">
+      <Group>
         <TextInput
           value={stage.name}
           onChange={(e) => setStage({ ...stage, name: e.target.value })}

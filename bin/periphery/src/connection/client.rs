@@ -94,6 +94,13 @@ pub async fn handler(
 
       already_logged_connection_error = false;
 
+      debug!(
+        host = identifiers.host(),
+        query,
+        sec_websocket_accept = accept.to_str().unwrap_or_default(),
+        "[CORE AUTH] Zero trust identifiers"
+      );
+
       let identifiers =
         identifiers.build(accept.as_bytes(), query.as_bytes());
 

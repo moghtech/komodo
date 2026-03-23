@@ -14,7 +14,7 @@ use periphery_client::api;
 
 use crate::{
   helpers::{periphery_client, update::update_update},
-  monitor::update_cache_for_server,
+  monitor::refresh_server_cache,
   permission::get_check_permissions,
   state::action_states,
 };
@@ -26,7 +26,7 @@ impl Resolve<ExecuteArgs> for StartContainer {
     "StartContainer",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -35,7 +35,11 @@ impl Resolve<ExecuteArgs> for StartContainer {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -76,7 +80,7 @@ impl Resolve<ExecuteArgs> for StartContainer {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -90,7 +94,7 @@ impl Resolve<ExecuteArgs> for RestartContainer {
     "RestartContainer",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -99,7 +103,11 @@ impl Resolve<ExecuteArgs> for RestartContainer {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -142,7 +150,7 @@ impl Resolve<ExecuteArgs> for RestartContainer {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -156,7 +164,7 @@ impl Resolve<ExecuteArgs> for PauseContainer {
     "PauseContainer",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -165,7 +173,11 @@ impl Resolve<ExecuteArgs> for PauseContainer {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -206,7 +218,7 @@ impl Resolve<ExecuteArgs> for PauseContainer {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -220,7 +232,7 @@ impl Resolve<ExecuteArgs> for UnpauseContainer {
     "UnpauseContainer",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -229,7 +241,11 @@ impl Resolve<ExecuteArgs> for UnpauseContainer {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -272,7 +288,7 @@ impl Resolve<ExecuteArgs> for UnpauseContainer {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -286,7 +302,7 @@ impl Resolve<ExecuteArgs> for StopContainer {
     "StopContainer",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -297,7 +313,11 @@ impl Resolve<ExecuteArgs> for StopContainer {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -340,7 +360,7 @@ impl Resolve<ExecuteArgs> for StopContainer {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -354,7 +374,7 @@ impl Resolve<ExecuteArgs> for DestroyContainer {
     "DestroyContainer",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -365,7 +385,11 @@ impl Resolve<ExecuteArgs> for DestroyContainer {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let DestroyContainer {
       server,
@@ -416,7 +440,7 @@ impl Resolve<ExecuteArgs> for DestroyContainer {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -430,7 +454,7 @@ impl Resolve<ExecuteArgs> for StartAllContainers {
     "StartAllContainers",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -438,7 +462,11 @@ impl Resolve<ExecuteArgs> for StartAllContainers {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -477,7 +505,7 @@ impl Resolve<ExecuteArgs> for StartAllContainers {
       );
     }
 
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -490,7 +518,7 @@ impl Resolve<ExecuteArgs> for RestartAllContainers {
     "RestartAllContainers",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -498,7 +526,11 @@ impl Resolve<ExecuteArgs> for RestartAllContainers {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -539,7 +571,7 @@ impl Resolve<ExecuteArgs> for RestartAllContainers {
       );
     }
 
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -552,7 +584,7 @@ impl Resolve<ExecuteArgs> for PauseAllContainers {
     "PauseAllContainers",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -560,7 +592,11 @@ impl Resolve<ExecuteArgs> for PauseAllContainers {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -599,7 +635,7 @@ impl Resolve<ExecuteArgs> for PauseAllContainers {
       );
     }
 
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -612,7 +648,7 @@ impl Resolve<ExecuteArgs> for UnpauseAllContainers {
     "UnpauseAllContainers",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -620,7 +656,11 @@ impl Resolve<ExecuteArgs> for UnpauseAllContainers {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -661,7 +701,7 @@ impl Resolve<ExecuteArgs> for UnpauseAllContainers {
       );
     }
 
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -674,7 +714,7 @@ impl Resolve<ExecuteArgs> for StopAllContainers {
     "StopAllContainers",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -682,7 +722,11 @@ impl Resolve<ExecuteArgs> for StopAllContainers {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -721,7 +765,7 @@ impl Resolve<ExecuteArgs> for StopAllContainers {
       );
     }
 
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -734,7 +778,7 @@ impl Resolve<ExecuteArgs> for PruneContainers {
     "PruneContainers",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -742,7 +786,11 @@ impl Resolve<ExecuteArgs> for PruneContainers {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -785,7 +833,7 @@ impl Resolve<ExecuteArgs> for PruneContainers {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -799,7 +847,7 @@ impl Resolve<ExecuteArgs> for DeleteNetwork {
     "DeleteNetwork",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -808,7 +856,11 @@ impl Resolve<ExecuteArgs> for DeleteNetwork {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -846,7 +898,7 @@ impl Resolve<ExecuteArgs> for DeleteNetwork {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -860,7 +912,7 @@ impl Resolve<ExecuteArgs> for PruneNetworks {
     "PruneNetworks",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -868,7 +920,11 @@ impl Resolve<ExecuteArgs> for PruneNetworks {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -909,7 +965,7 @@ impl Resolve<ExecuteArgs> for PruneNetworks {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -923,7 +979,7 @@ impl Resolve<ExecuteArgs> for DeleteImage {
     "DeleteImage",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -932,7 +988,11 @@ impl Resolve<ExecuteArgs> for DeleteImage {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -967,7 +1027,7 @@ impl Resolve<ExecuteArgs> for DeleteImage {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -981,7 +1041,7 @@ impl Resolve<ExecuteArgs> for PruneImages {
     "PruneImages",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -989,7 +1049,11 @@ impl Resolve<ExecuteArgs> for PruneImages {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -1028,7 +1092,7 @@ impl Resolve<ExecuteArgs> for PruneImages {
       };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -1042,7 +1106,7 @@ impl Resolve<ExecuteArgs> for DeleteVolume {
     "DeleteVolume",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -1051,7 +1115,11 @@ impl Resolve<ExecuteArgs> for DeleteVolume {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -1089,7 +1157,7 @@ impl Resolve<ExecuteArgs> for DeleteVolume {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -1103,7 +1171,7 @@ impl Resolve<ExecuteArgs> for PruneVolumes {
     "PruneVolumes",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -1111,7 +1179,11 @@ impl Resolve<ExecuteArgs> for PruneVolumes {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -1150,7 +1222,7 @@ impl Resolve<ExecuteArgs> for PruneVolumes {
       };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -1164,7 +1236,7 @@ impl Resolve<ExecuteArgs> for PruneDockerBuilders {
     "PruneDockerBuilders",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -1172,7 +1244,11 @@ impl Resolve<ExecuteArgs> for PruneDockerBuilders {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -1211,7 +1287,7 @@ impl Resolve<ExecuteArgs> for PruneDockerBuilders {
       };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -1225,7 +1301,7 @@ impl Resolve<ExecuteArgs> for PruneBuildx {
     "PruneBuildx",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -1233,7 +1309,11 @@ impl Resolve<ExecuteArgs> for PruneBuildx {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -1272,7 +1352,7 @@ impl Resolve<ExecuteArgs> for PruneBuildx {
       };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -1286,7 +1366,7 @@ impl Resolve<ExecuteArgs> for PruneSystem {
     "PruneSystem",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       server = self.server,
@@ -1294,7 +1374,11 @@ impl Resolve<ExecuteArgs> for PruneSystem {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
@@ -1332,7 +1416,7 @@ impl Resolve<ExecuteArgs> for PruneSystem {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;

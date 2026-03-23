@@ -36,7 +36,7 @@ export default function StatBar({
       title={title}
       info={
         <Group gap="xs">
-          <Text c={color} fz="h3">
+          <Text c={color} fz="lg">
             {percentage.toFixed(2)}%
           </Text>
           {icon}

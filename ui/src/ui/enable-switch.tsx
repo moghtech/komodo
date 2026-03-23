@@ -1,9 +1,10 @@
-import { Badge, Group, Switch, SwitchProps } from "@mantine/core";
+import { Badge, Group, GroupProps, Switch, SwitchProps } from "@mantine/core";
 
 export interface EnableSwitchProps extends SwitchProps {
   checked?: boolean;
   onCheckedChange?: (checked: boolean) => void;
   redDisabled?: boolean;
+  labelProps?: GroupProps;
 }
 
 export default function EnableSwitch({
@@ -14,6 +15,7 @@ export default function EnableSwitch({
   onCheckedChange,
   disabled,
   redDisabled = true,
+  labelProps,
   ...props
 }: EnableSwitchProps) {
   return (
@@ -22,7 +24,7 @@ export default function EnableSwitch({
       checked={checked}
       color={color}
       label={
-        <Group>
+        <Group gap="sm" wrap="nowrap" {...labelProps}>
           {label}
           <Badge
             color={checked ? color : redDisabled ? "red" : "gray"}

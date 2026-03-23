@@ -187,6 +187,10 @@ function onUpdate(
     invalidate(["ListProcedures"]);
   } else if (update.operation === Types.Operation.RunAction) {
     invalidate(["ListActions"]);
+  } else if (update.operation === Types.Operation.Deploy) {
+    invalidate(["ListDeployments"]);
+  } else if (update.operation === Types.Operation.DeployStack) {
+    invalidate(["ListStacks"]);
   }
 
   // Do invalidations of these only if update is completed

@@ -15,7 +15,10 @@ use mogh_pki::EncodedKeyPair;
 use mogh_resolver::Resolve;
 use reqwest::StatusCode;
 
-use crate::{api::write::WriteArgs, state::db_client};
+use crate::{
+  api::write::WriteArgs, helpers::query::get_all_tags,
+  state::db_client,
+};
 
 //
 
@@ -53,6 +56,21 @@ impl Resolve<WriteArgs> for CreateOnboardingKey {
     )?
     .public
     .into_inner();
+    let tags = if self.tags.is_empty() {
+      self.tags
+    } else {
+      // fix_tags by ensuring existence, and force replace with tag name.
+      let all_tags = get_all_tags(None).await?;
+      self
+        .tags
+        .into_iter()
+        .filter_map(|tag| {
+          let tag =
+            all_tags.iter().find(|t| t.id == tag || t.name == tag)?;
+          Some(tag.name.clone())
+        })
+        .collect()
+    };
     let onboarding_key = OnboardingKey {
       public_key,
       name: self.name,
@@ -60,8 +78,8 @@ impl Resolve<WriteArgs> for CreateOnboardingKey {
       onboarded: Default::default(),
       created_at: komodo_timestamp(),
       expires: self.expires,
-      tags: self.tags,
-      fix_existing_servers: self.fix_existing_servers,
+      tags,
+      privileged: self.privileged,
       copy_server: self.copy_server,
       create_builder: self.create_builder,
     };
@@ -139,11 +157,26 @@ impl Resolve<WriteArgs> for UpdateOnboardingKey {
     }
 
     if let Some(tags) = self.tags {
+      let tags = if tags.is_empty() {
+        tags
+      } else {
+        // fix_tags by ensuring existence, and force replace with tag name.
+        let all_tags = get_all_tags(None).await?;
+        tags
+          .into_iter()
+          .filter_map(|tag| {
+            let tag = all_tags
+              .iter()
+              .find(|t| t.id == tag || t.name == tag)?;
+            Some(tag.name.clone())
+          })
+          .collect()
+      };
       update.insert("tags", tags);
     }
 
-    if let Some(fix_existing_servers) = self.fix_existing_servers {
-      update.insert("fix_existing_servers", fix_existing_servers);
+    if let Some(privileged) = self.privileged {
+      update.insert("privileged", privileged);
     }
 
     if let Some(copy_server) = self.copy_server {

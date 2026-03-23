@@ -17,20 +17,17 @@
 //! from the Komodo UI Settings page.
 //!
 //! To call the api, construct JSON bodies following
-//! the schemas given in [read], [mod@write], [execute], and so on.
+//! the schemas in [read], [mod@write], [execute], and so on.
 //!
 //! For example, this is an example body for [read::GetDeployment]:
 //! ```json
 //! {
-//!   "type": "GetDeployment",
-//!   "params": {
-//!     "deployment": "66113df3abe32960b87018dd"
-//!   }
+//!   "deployment": "my-deployment"
 //! }
 //! ```
 //!
-//! The request's parent module (eg. [read], [mod@write]) determines the http path which
-//! must be used for the requests. For example, requests under [read] are made using http path `/read`.
+//! The request's parent module (eg. [read], [mod@write]) and name determines the http path which
+//! must be used for the requests. For example, requests under [read] are made using http path `/read/{REQUEST_NAME}`.
 //!
 //! ## Curl Example
 //!
@@ -40,8 +37,8 @@
 //! curl --header "Content-Type: application/json" \
 //!     --header "X-Api-Key: your_api_key" \
 //!     --header "X-Api-Secret: your_api_secret" \
-//!     --data '{ "type": "UpdateBuild", "params": { "id": "67076689ed600cfdd52ac637", "config": { "version": "1.15.9" } } }' \
-//!     https://komodo.example.com/write
+//!     --data '{ "id": "my-build", "config": { "version": "2.0.0" } }' \
+//!     https://komodo.example.com/write/UpdateBuild
 //! ```
 //!
 //! ## Modules

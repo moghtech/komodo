@@ -109,7 +109,7 @@ pub fn spawn_schedule_executor() {
                     .resolve(&ExecuteArgs {
                       user: action_user().to_owned(),
                       update,
-                      id: Uuid::new_v4(),
+                      task_id: Uuid::new_v4(),
                     })
                     .await
                   {
@@ -180,7 +180,7 @@ pub fn spawn_schedule_executor() {
                     .resolve(&ExecuteArgs {
                       user: procedure_user().to_owned(),
                       update,
-                      id: Uuid::new_v4(),
+                      task_id: Uuid::new_v4(),
                     })
                     .await
                   {

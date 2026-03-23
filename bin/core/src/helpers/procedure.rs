@@ -228,7 +228,7 @@ async fn execute_execution(
   parent_name: &str,
 ) -> anyhow::Result<()> {
   let user = procedure_user().to_owned();
-  let id = Uuid::new_v4();
+  let task_id = Uuid::new_v4();
   let update = match execution {
     Execution::None(_) => return Ok(()),
     Execution::RunProcedure(req) => {
@@ -243,7 +243,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RunProcedure"),
@@ -266,7 +270,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RunAction"),
@@ -289,7 +297,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RunBuild"),
@@ -312,7 +324,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at CancelBuild"),
@@ -329,7 +345,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at Deploy"),
@@ -352,7 +372,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at PullDeployment"),
@@ -369,7 +393,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at StartDeployment"),
@@ -386,7 +414,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RestartDeployment"),
@@ -403,7 +435,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at PauseDeployment"),
@@ -420,7 +456,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at UnpauseDeployment"),
@@ -437,7 +477,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at StopDeployment"),
@@ -454,7 +498,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at DestroyDeployment"),
@@ -477,7 +525,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at CloneRepo"),
@@ -500,7 +552,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at PullRepo"),
@@ -523,7 +579,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at BuildRepo"),
@@ -546,7 +606,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at CancelRepoBuild"),
@@ -563,7 +627,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at StartContainer"),
@@ -580,7 +648,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RestartContainer"),
@@ -597,7 +669,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at PauseContainer"),
@@ -614,7 +690,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at UnpauseContainer"),
@@ -631,7 +711,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at StopContainer"),
@@ -648,7 +732,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RemoveContainer"),
@@ -665,7 +753,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at StartAllContainers"),
@@ -682,7 +774,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RestartAllContainers"),
@@ -699,7 +795,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at PauseAllContainers"),
@@ -716,7 +816,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at UnpauseAllContainers"),
@@ -733,7 +837,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at StopAllContainers"),
@@ -750,7 +858,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at PruneContainers"),
@@ -767,7 +879,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at DeleteNetwork"),
@@ -784,7 +900,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at PruneNetworks"),
@@ -801,7 +921,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at DeleteImage"),
@@ -818,7 +942,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at PruneImages"),
@@ -835,7 +963,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at DeleteVolume"),
@@ -852,7 +984,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at PruneVolumes"),
@@ -869,7 +1005,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at PruneDockerBuilders"),
@@ -886,7 +1026,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at PruneBuildx"),
@@ -903,7 +1047,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at PruneSystem"),
@@ -920,7 +1068,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RunSync"),
@@ -943,7 +1095,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at DeployStack"),
@@ -966,7 +1122,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at DeployStackIfChanged"),
@@ -989,7 +1149,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at PullStack"),
@@ -1012,7 +1176,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at StartStack"),
@@ -1029,7 +1197,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RestartStack"),
@@ -1046,7 +1218,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at PauseStack"),
@@ -1063,7 +1239,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at UnpauseStack"),
@@ -1080,7 +1260,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at StopStack"),
@@ -1097,7 +1281,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at DestroyStack"),
@@ -1114,7 +1302,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RunStackService"),
@@ -1137,7 +1329,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at TestAlerter"),
@@ -1154,7 +1350,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at SendAlert"),
@@ -1171,7 +1371,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RemoveSwarmNodes"),
@@ -1188,7 +1392,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RemoveSwarmStacks"),
@@ -1205,7 +1413,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RemoveSwarmServices"),
@@ -1222,7 +1434,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at CreateSwarmConfig"),
@@ -1239,7 +1455,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RotateSwarmConfig"),
@@ -1256,7 +1476,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RemoveSwarmConfigs"),
@@ -1273,7 +1497,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at CreateSwarmSecret"),
@@ -1290,7 +1518,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RotateSwarmSecret"),
@@ -1307,7 +1539,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RemoveSwarmSecrets"),
@@ -1324,7 +1560,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at ClearRepoCache"),
@@ -1341,7 +1581,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at BackupCoreDatabase"),
@@ -1358,7 +1602,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at GlobalAutoUpdate"),
@@ -1375,7 +1623,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RotateAllServerKeys"),
@@ -1392,7 +1644,11 @@ async fn execute_execution(
       let update_id = update.id.clone();
       handle_resolve_result(
         req
-          .resolve(&ExecuteArgs { user, update, id })
+          .resolve(&ExecuteArgs {
+            user,
+            update,
+            task_id,
+          })
           .await
           .map_err(|e| e.error)
           .context("Failed at RotateCoreKeys"),

@@ -65,7 +65,11 @@ export function AlertDetailsContent({
   id: string;
   close: () => void;
 }) {
-  const { data: alert } = useRead("GetAlert", { id });
+  const { data: alert } = useRead(
+    "GetAlert",
+    { id },
+    { refetchInterval: 10_000 },
+  );
 
   const isAdmin = useUser().data?.admin ?? false;
   const inv = useInvalidate();
@@ -140,9 +144,9 @@ export function AlertDetailsContent({
         {isAdmin && !alert.resolved && (
           <ConfirmButton
             icon={<ICONS.Delete size="1rem" />}
-            variant="destructive"
             onClick={() => closeAlert({ id: alert?._id?.$oid! })}
             loading={closePending}
+            confirmProps={{ variant: "filled", color: "red" }}
           >
             Close Alert
           </ConfirmButton>

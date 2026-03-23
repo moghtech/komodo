@@ -40,7 +40,7 @@ export function useStack(id: string | undefined) {
 }
 
 export function useFullStack(id: string) {
-  return useRead("GetStack", { stack: id }).data;
+  return useRead("GetStack", { stack: id }, { refetchInterval: 30_000 }).data;
 }
 
 export const StackComponents: RequiredResourceComponents<
@@ -55,7 +55,11 @@ export const StackComponents: RequiredResourceComponents<
   useResourceLinks: (stack) => stack?.config?.links,
 
   useDashboardSummaryData: () => {
-    const summary = useRead("GetStacksSummary", {}).data;
+    const summary = useRead(
+      "GetStacksSummary",
+      {},
+      { refetchInterval: 10_000 },
+    ).data;
     const all = [
       summary?.running ?? 0,
       summary?.stopped ?? 0,
@@ -96,12 +100,12 @@ export const StackComponents: RequiredResourceComponents<
     <BatchExecutions
       type="Stack"
       executions={[
-        "CheckStackForUpdate",
-        "PullStack",
-        "DeployStack",
-        "RestartStack",
-        "StopStack",
-        "DestroyStack",
+        ["CheckStackForUpdate", ICONS.UpdateAvailable],
+        ["PullStack", ICONS.Pull],
+        ["DeployStack", ICONS.Deploy],
+        ["RestartStack", ICONS.Restart],
+        ["StopStack", ICONS.Stop],
+        ["DestroyStack", ICONS.Destroy],
       ]}
     />
   ),
@@ -290,7 +294,9 @@ export const StackComponents: RequiredResourceComponents<
         <Box>
           <HoverCard width={300} position="bottom-start">
             <HoverCard.Target>
-              <Button color="red">Project Missing</Button>
+              <Button variant="filled" color="red">
+                Project Missing
+              </Button>
             </HoverCard.Target>
             <HoverCard.Dropdown>
               <Text>

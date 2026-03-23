@@ -1049,7 +1049,7 @@ impl mogh_server::session::SessionConfig for &CoreConfig {
     "KOMODO_HOST"
   }
   fn expiry_seconds(&self) -> i64 {
-    60
+    60 * 3
   }
   fn allow_cross_site(&self) -> bool {
     self.session_allow_cross_site

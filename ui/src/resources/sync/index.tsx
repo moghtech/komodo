@@ -21,7 +21,8 @@ export function useResourceSync(id: string | undefined) {
 }
 
 export function useFullResourceSync(id: string) {
-  return useRead("GetResourceSync", { sync: id }).data;
+  return useRead("GetResourceSync", { sync: id }, { refetchInterval: 30_000 })
+    .data;
 }
 
 export const ResourceSyncComponents: RequiredResourceComponents<
@@ -36,7 +37,11 @@ export const ResourceSyncComponents: RequiredResourceComponents<
   useResourceLinks: () => undefined,
 
   useDashboardSummaryData: () => {
-    const summary = useRead("GetResourceSyncsSummary", {}).data;
+    const summary = useRead(
+      "GetResourceSyncsSummary",
+      {},
+      { refetchInterval: 10_000 },
+    ).data;
     return [
       { title: "Ok", intention: "Good", value: summary?.ok ?? 0 },
       {
@@ -69,7 +74,10 @@ export const ResourceSyncComponents: RequiredResourceComponents<
   BatchExecutions: () => (
     <BatchExecutions
       type="ResourceSync"
-      executions={["RunSync", "CommitSync"]}
+      executions={[
+        ["RunSync", ICONS.Run],
+        ["CommitSync", ICONS.Commit],
+      ]}
     />
   ),
 
@@ -142,7 +150,7 @@ export const ResourceSyncComponents: RequiredResourceComponents<
 
   Executions: {
     RefreshSync,
-    ExecuteSync,
+    ExecuteSync: ExecuteSync,
     CommitSync,
   },
 

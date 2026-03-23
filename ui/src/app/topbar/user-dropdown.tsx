@@ -40,7 +40,7 @@ export default function UserDropdown() {
   const accounts = MoghAuth.LOGIN_TOKENS.accounts();
   const nav = useNavigate();
   return (
-    <Menu offset={20} opened={open} onChange={setOpen}>
+    <Menu offset={13} opened={open} onChange={setOpen}>
       <Menu.Target>
         <Button
           variant="subtle"
@@ -51,16 +51,16 @@ export default function UserDropdown() {
                 src={avatar}
                 alt="avatar"
                 style={{
-                  width: "1.2rem",
-                  height: "1.2rem",
+                  width: "1.1rem",
+                  height: "1.1rem",
                 }}
               />
             ) : (
               <User size="1.3rem" />
             )
           }
-          pl="0.5rem"
-          pr={{ base: "-20", lg: "0.5rem" }}
+          pl="0.7rem"
+          pr={{ base: "-20", lg: "0.7rem" }}
         >
           <Username username={user?.username} />
         </Button>
@@ -199,7 +199,7 @@ function Account({
           <img
             src={user.avatar}
             alt="avatar"
-            style={{ width: "1.2rem", height: "1.2rem", marginRight: "0.5rem" }}
+            style={{ width: "1.1rem", height: "1.1rem", marginRight: "0.5rem" }}
           />
         )}
         {!user.avatar && (

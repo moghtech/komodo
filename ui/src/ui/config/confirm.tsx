@@ -5,14 +5,13 @@ import { Box, Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { useCtrlKeyListener, useKeyListener } from "@/lib/hooks";
 import { fmtSnakeCaseToUpperSpaceCase } from "@/lib/formatting";
 import { ICONS } from "@/theme/icons";
-import { envToText } from "@/lib/utils";
+import { deepCompare, envToText } from "@/lib/utils";
 import { colorByIntention } from "@/lib/color";
 import ShowHideButton from "@/ui/show-hide-button";
-import ConfirmButton from "@/ui/confirm-button";
 
 export default function ConfirmUpdate<T>({
-  previous,
-  content,
+  original,
+  update,
   onConfirm,
   loading,
   disabled,
@@ -22,8 +21,8 @@ export default function ConfirmUpdate<T>({
   openKeyListener = true,
   confirmKeyListener = true,
 }: {
-  previous: T;
-  content: Partial<T>;
+  original: T;
+  update: Partial<T>;
   onConfirm: () => Promise<unknown>;
   loading?: boolean;
   disabled: boolean;
@@ -56,28 +55,54 @@ export default function ConfirmUpdate<T>({
 
   return (
     <>
-      <Modal title="Confirm Update" opened={opened} onClose={close} size="auto">
-        <Stack gap="xl" w={1400} maw="95vw" my="lg">
-          <Stack>
-            {Object.entries(content).map(([key, val], i) => (
-              <ConfirmUpdateItem
-                key={i}
-                _key={key as any}
-                val={val as any}
-                previous={previous}
-                language={language}
-                fileContentsLanguage={fileContentsLanguage}
-              />
-            ))}
+      <Modal
+        title={<Text size="xl">Confirm Update</Text>}
+        opened={opened}
+        onClose={close}
+        size="auto"
+        styles={{ content: { overflowY: "hidden" } }}
+      >
+        <Stack
+          gap="xl"
+          w={1400}
+          maw={{
+            base: "calc(100vw - 100px)",
+            xs: "calc(100vw - 150px)",
+            sm: "calc(100vw - 200px)",
+            md: "calc(100vw - 250px)",
+          }}
+          my="lg"
+          style={{ overflowY: "hidden" }}
+        >
+          <Stack
+            mah="min(calc(100vh - 300px), 800px)"
+            style={{ overflowY: "auto" }}
+          >
+            {Object.entries(update)
+              .filter(([key, val]) => !deepCompare((original as any)[key], val))
+              .map(([key, val], i) => (
+                <ConfirmUpdateItem
+                  key={i}
+                  _key={key as any}
+                  val={val as any}
+                  previous={original}
+                  language={language}
+                  fileContentsLanguage={fileContentsLanguage}
+                />
+              ))}
           </Stack>
           <Group justify="flex-end">
-            <ConfirmButton
-              icon={<ICONS.Save size="1rem" />}
-              onClick={handleConfirm}
+            <Button
+              leftSection={<ICONS.Save size="1rem" />}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleConfirm();
+              }}
+              w={{ base: "100%", xs: 200 }}
               loading={loading}
             >
               Save
-            </ConfirmButton>
+            </Button>
           </Group>
         </Stack>
       </Modal>

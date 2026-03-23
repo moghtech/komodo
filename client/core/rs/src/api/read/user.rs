@@ -1,5 +1,7 @@
+use clap::ValueEnum;
 use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
+use strum::Display;
 use typeshare::typeshare;
 
 use crate::entities::{api_key::ApiKey, user::User};
@@ -107,7 +109,7 @@ pub type FindUserResponse = User;
   description = "**Admin only.** Gets list of Komodo users.",
   request_body(content = ListUsers),
   responses(
-    (status = 200, description = "The list of users", body = ListUsersResponse),
+    (status = 200, description = "The list of users", body = Vec<User>),
   ),
 )]
 pub fn list_users() {}
@@ -121,10 +123,41 @@ pub fn list_users() {}
 #[empty_traits(KomodoReadRequest)]
 #[response(ListUsersResponse)]
 #[error(mogh_error::Error)]
-pub struct ListUsers {}
+pub struct ListUsers {
+  /// Service user query options:
+  ///   - Include (default)
+  ///   - Exclude
+  ///   - Only
+  #[serde(default)]
+  pub service_users: ServiceUserQueryBehavior,
+}
 
 #[typeshare]
 pub type ListUsersResponse = Vec<User>;
+
+#[typeshare]
+#[derive(
+  Debug,
+  Clone,
+  Copy,
+  Default,
+  Serialize,
+  Deserialize,
+  ValueEnum,
+  Display,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+// Only strum serializes lowercase for clap compat.
+#[strum(serialize_all = "lowercase")]
+pub enum ServiceUserQueryBehavior {
+  /// Include service users in results. Default.
+  #[default]
+  Include,
+  /// Exclude service users from results.
+  Exclude,
+  /// Only include service users in results.
+  Only,
+}
 
 //
 

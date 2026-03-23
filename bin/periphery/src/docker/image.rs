@@ -29,8 +29,7 @@ impl DockerClient {
         });
         let name = image
           .repo_tags
-          .iter()
-          .next()
+          .first()
           .cloned()
           .unwrap_or_else(|| image.id.clone());
         ImageListItem {
@@ -73,10 +72,10 @@ impl DockerClient {
               content: manifest.size.content,
             },
             kind: manifest.kind.map(|kind| match kind {
-                bollard::secret::ImageManifestSummaryKindEnum::EMPTY => ImageManifestSummaryKindEnum::Empty,
-                bollard::secret::ImageManifestSummaryKindEnum::IMAGE => ImageManifestSummaryKindEnum::Image,
-                bollard::secret::ImageManifestSummaryKindEnum::ATTESTATION => ImageManifestSummaryKindEnum::Attestation,
-                bollard::secret::ImageManifestSummaryKindEnum::UNKNOWN => ImageManifestSummaryKindEnum::Unknown,
+                bollard::config::ImageManifestSummaryKindEnum::EMPTY => ImageManifestSummaryKindEnum::Empty,
+                bollard::config::ImageManifestSummaryKindEnum::IMAGE => ImageManifestSummaryKindEnum::Image,
+                bollard::config::ImageManifestSummaryKindEnum::ATTESTATION => ImageManifestSummaryKindEnum::Attestation,
+                bollard::config::ImageManifestSummaryKindEnum::UNKNOWN => ImageManifestSummaryKindEnum::Unknown,
             }),
             image_data: manifest.image_data.map(|data| {
               ImageManifestSummaryImageData {
@@ -160,7 +159,7 @@ impl DockerClient {
 }
 
 fn convert_oci_descriptor(
-  descriptor: bollard::secret::OciDescriptor,
+  descriptor: bollard::config::OciDescriptor,
 ) -> OciDescriptor {
   OciDescriptor {
     media_type: descriptor.media_type,
@@ -175,7 +174,7 @@ fn convert_oci_descriptor(
 }
 
 fn convert_oci_platform(
-  platform: bollard::secret::OciPlatform,
+  platform: bollard::config::OciPlatform,
 ) -> OciPlatform {
   OciPlatform {
     architecture: platform.architecture,

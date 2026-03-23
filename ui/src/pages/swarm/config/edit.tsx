@@ -77,8 +77,8 @@ export default function SwarmConfigEditSection({
               Reset
             </Button>
             <ConfirmUpdate
-              previous={{ contents: data }}
-              content={{ contents: edit }}
+              original={{ contents: data }}
+              update={{ contents: edit }}
               onConfirm={async () =>
                 name &&
                 edit !== undefined &&

@@ -18,16 +18,20 @@ export default function Tag({
   return (
     <Badge
       variant="filled"
-      color={tag?.color ? `Tag${tag.color}.4` : "TagSlate.4"}
+      color={tag?.color ? `Tag${tag.color}.7` : "TagSlate.7"}
       onClick={onClick}
       style={{ cursor: onClick ? "pointer" : undefined }}
       rightSection={icon}
+      className="text-ellipsis"
       w="fit-content"
       h="fit-content"
       bdrs="sm"
       py={py}
       tt="none"
       fz={{ base: "xs", lg: "sm" }}
+      styles={{
+        label: { width: "fit-content", height: "fit-content" },
+      }}
       {...badgeProps}
     >
       {tag?.name ?? <Loader size="0.6rem" />}

@@ -34,7 +34,7 @@ import InputList from "@/ui/input-list";
 import { ProviderSelectorConfig } from "@/components/config/provider-selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";
 import LinkedRepo from "@/components/config/linked-repo";
-import { DEFAULT_STACK_FILE_CONTENTS } from "..";
+import { DEFAULT_STACK_FILE_CONTENTS, useFullStack } from "..";
 import { ReactNode } from "react";
 import WebhookBuilder from "@/components/webhook/builder";
 import CopyWebhookUrl from "@/components/webhook/copy-url";
@@ -68,12 +68,11 @@ export default function StackConfig({
     defaultValue: {
       file: true,
       env: true,
-      git: true,
       webhooks: true,
     },
   });
   const { canWrite } = usePermissions({ type: "Stack", id });
-  const stack = useRead("GetStack", { stack: id }).data;
+  const stack = useFullStack(id);
   const allServices =
     (stack?.info?.deployed_services ?? stack?.info?.latest_services)?.map(
       (s) => s.service_name,
@@ -279,12 +278,16 @@ export default function StackConfig({
                     <TextInput
                       value={file.path || ""}
                       onChange={(e) => {
-                        const newFiles = [...files];
-                        newFiles[i] = {
-                          path: e.target.value,
-                          track: file.track ?? true,
-                        };
-                        set({ additional_env_files: newFiles });
+                        set({
+                          additional_env_files: files.map((v, index) =>
+                            i === index
+                              ? {
+                                  path: e.target.value,
+                                  track: file.track ?? true,
+                                }
+                              : v,
+                          ),
+                        });
                       }}
                       placeholder=".env"
                       disabled={disabled}
@@ -296,9 +299,11 @@ export default function StackConfig({
                         label="Track"
                         checked={file.track ?? true}
                         onCheckedChange={(track) => {
-                          const newFiles = [...files];
-                          newFiles[i] = { ...newFiles[i], track };
-                          set({ additional_env_files: newFiles });
+                          set({
+                            additional_env_files: files.map((v, index) =>
+                              i === index ? { ...v, track } : v,
+                            ),
+                          });
                         }}
                         disabled={disabled}
                         id={`track-${i}`}
@@ -350,11 +355,20 @@ export default function StackConfig({
 
   const configFiles: ConfigGroupArgs<Types.StackConfig> = {
     label: "Config Files",
-    description:
-      "Add other config files to associate with the Stack, and edit in the UI. Relative to 'Run Directory'.",
+    labelHidden: true,
     fields: {
       config_files: (value, set) => (
-        <StackConfigFiles id={id} value={value} set={set} disabled={disabled} />
+        <ConfigItem
+          label="Config Files"
+          description="Add other config files to associate with the Stack, and edit in the UI. Relative to 'Run Directory'."
+        >
+          <StackConfigFiles
+            id={id}
+            value={value}
+            set={set}
+            disabled={disabled}
+          />
+        </ConfigItem>
       ),
     },
   };
@@ -364,6 +378,7 @@ export default function StackConfig({
   const generalCommon: ConfigGroupArgs<Types.StackConfig>[] = [
     {
       label: "Auto Update",
+      labelHidden: true,
       fields: {
         poll_for_updates: (poll, set) => {
           return (
@@ -401,7 +416,6 @@ export default function StackConfig({
         links: (values, set) => (
           <ConfigList
             label="Links"
-            boldLabel
             addLabel="Add Link"
             description="Add quick links in the resource header"
             field="links"
@@ -422,7 +436,6 @@ export default function StackConfig({
       fields: {
         project_name: {
           placeholder: "Compose project name",
-          boldLabel: true,
           description:
             "Optionally set a different compose project name. If importing existing stack, this should match the compose project name on your host.",
         },
@@ -430,29 +443,37 @@ export default function StackConfig({
     },
     {
       label: "Pre Deploy",
-      description:
-        "Execute a shell command before running docker compose up. The 'path' is relative to the Run Directory",
+      labelHidden: true,
       fields: {
         pre_deploy: (value, set) => (
-          <SystemCommand
-            value={value}
-            set={(value) => set({ pre_deploy: value })}
-            disabled={disabled}
-          />
+          <ConfigItem
+            label="Pre Deploy"
+            description="Execute a shell command before running docker compose up. The 'path' is relative to the Run Directory"
+          >
+            <SystemCommand
+              value={value}
+              set={(value) => set({ pre_deploy: value })}
+              disabled={disabled}
+            />
+          </ConfigItem>
         ),
       },
     },
     {
       label: "Post Deploy",
-      description:
-        "Execute a shell command after running docker compose up. The 'path' is relative to the Run Directory",
+      labelHidden: true,
       fields: {
         post_deploy: (value, set) => (
-          <SystemCommand
-            value={value}
-            set={(value) => set({ post_deploy: value })}
-            disabled={disabled}
-          />
+          <ConfigItem
+            label="Post Deploy"
+            description="Execute a shell command after running docker compose up. The 'path' is relative to the Run Directory"
+          >
+            <SystemCommand
+              value={value}
+              set={(value) => set({ post_deploy: value })}
+              disabled={disabled}
+            />
+          </ConfigItem>
         ),
       },
     },
@@ -508,28 +529,36 @@ export default function StackConfig({
         extra_args: (value, set) => (
           <ConfigItem
             label="Extra Args"
-            boldLabel
             description={
-              <div className="flex flex-row flex-wrap gap-2">
-                <div>
+              <Group gap="xs">
+                <Text>
                   Pass extra arguments to '
                   {currSwarmId ? "docker stack deploy" : "docker compose up"}
                   '.
-                </div>
-                <Link
+                </Text>
+                <Text
+                  className="hover-underline"
+                  fw="bold"
+                  component={Link}
                   to={
                     currSwarmId
                       ? "https://docs.docker.com/reference/cli/docker/stack/deploy/#options"
                       : "https://docs.docker.com/reference/cli/docker/service/create/#options"
                   }
                   target="_blank"
-                  className="text-primary"
                 >
                   See docker docs.
-                </Link>
-              </div>
+                </Text>
+              </Group>
             }
           >
+            <InputList
+              field="extra_args"
+              values={value ?? []}
+              set={set}
+              disabled={disabled}
+              placeholder="--extra-arg=value"
+            />
             {!disabled && (
               <AddExtraArg
                 type="Stack"
@@ -544,13 +573,6 @@ export default function StackConfig({
                 disabled={disabled}
               />
             )}
-            <InputList
-              field="extra_args"
-              values={value ?? []}
-              set={set}
-              disabled={disabled}
-              placeholder="--extra-arg=value"
-            />
           </ConfigItem>
         ),
       },
@@ -562,7 +584,6 @@ export default function StackConfig({
         ignore_services: (values, set) => (
           <ConfigItem
             label="Ignore Services"
-            boldLabel
             description="If your compose file has init services that exit early, ignore them here so your stack will report the correct health."
           >
             <MultiSelect
@@ -587,7 +608,6 @@ export default function StackConfig({
         registry_provider: (provider, set) => {
           return (
             <ProviderSelectorConfig
-              boldLabel
               description="Login to a registry for private image access."
               accountType="docker"
               selected={provider}
@@ -690,6 +710,7 @@ export default function StackConfig({
         ...swarmServerGroup,
         {
           label: "Files",
+          labelHidden: true,
           fields: {
             run_directory: {
               label: "Run Directory",
@@ -722,13 +743,7 @@ export default function StackConfig({
         ...swarmServerGroup,
         {
           label: "Source",
-          contentHidden: !show.git,
-          actions: (
-            <ShowHideButton
-              show={show.git}
-              setShow={(git) => setShow({ ...show, git })}
-            />
-          ),
+          labelHidden: true,
           fields: {
             linked_repo: (linkedRepo, set) => (
               <LinkedRepo
@@ -809,6 +824,7 @@ export default function StackConfig({
         },
         {
           label: "Files",
+          labelHidden: true,
           fields: {
             run_directory: {
               description:

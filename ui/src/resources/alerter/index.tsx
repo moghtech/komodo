@@ -1,4 +1,4 @@
-import { useRead } from "@/lib/hooks";
+import { useExecute, useRead } from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
@@ -8,13 +8,15 @@ import ResourceHeader from "../header";
 import AlerterConfig from "./config";
 import { hexColorByIntention } from "@/lib/color";
 import BatchExecutions from "@/components/batch-executions";
+import ConfirmButton from "@/ui/confirm-button";
 
 export function useAlerter(id: string | undefined) {
   return useRead("ListAlerters", {}).data?.find((r) => r.id === id);
 }
 
 export function useFullAlerter(id: string) {
-  return useRead("GetAlerter", { alerter: id }).data;
+  return useRead("GetAlerter", { alerter: id }, { refetchInterval: 30_000 })
+    .data;
 }
 
 export const AlerterComponents: RequiredResourceComponents<
@@ -29,7 +31,11 @@ export const AlerterComponents: RequiredResourceComponents<
   useResourceLinks: () => undefined,
 
   useDashboardSummaryData: () => {
-    const summary = useRead("GetAlertersSummary", {}).data;
+    const summary = useRead(
+      "GetAlertersSummary",
+      {},
+      { refetchInterval: 10_000 },
+    ).data;
     return [{ intention: "Good", value: summary?.total ?? 0, title: "Total" }];
   },
 
@@ -38,7 +44,10 @@ export const AlerterComponents: RequiredResourceComponents<
   New: () => <NewResource type="Alerter" />,
 
   BatchExecutions: () => (
-    <BatchExecutions type="Alerter" executions={["TestAlerter"]} />
+    <BatchExecutions
+      type="Alerter"
+      executions={[["TestAlerter", ICONS.Test]]}
+    />
   ),
 
   Table: AlerterTable,
@@ -72,7 +81,23 @@ export const AlerterComponents: RequiredResourceComponents<
   State: () => null,
   Info: {},
 
-  Executions: {},
+  Executions: {
+    TestAlerter: ({ id }) => {
+      const { mutate, isPending } = useExecute("TestAlerter");
+      const alerter = useAlerter(id);
+      if (!alerter) return null;
+      return (
+        <ConfirmButton
+          icon={<ICONS.Test size="1rem" />}
+          loading={isPending}
+          onClick={() => mutate({ alerter: id })}
+          disabled={isPending}
+        >
+          Test Alerter
+        </ConfirmButton>
+      );
+    },
+  },
 
   Config: AlerterConfig,
 

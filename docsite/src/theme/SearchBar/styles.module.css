@@ -1,0 +1,67 @@
+.quickLinks {
+  position: fixed;
+  z-index: 200;
+  width: 320px;
+  background: var(--ifm-background-surface-color);
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: var(--ifm-global-radius);
+  box-shadow: var(--ifm-global-shadow-md);
+  padding: 0.5rem 0;
+}
+
+.quickLinksHeader {
+  padding: 0.375rem 1rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ifm-color-emphasis-500);
+}
+
+.quickLink {
+  display: block;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  color: var(--ifm-font-color-base);
+  text-decoration: none;
+  transition: background 0.1s ease;
+}
+
+.quickLink:hover {
+  background: var(--ifm-color-emphasis-100);
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+}
+
+.shortcutBadge {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.shortcutBadge kbd {
+  font-family: inherit;
+  font-size: 0.65rem;
+  font-weight: 500;
+  padding: 2px 6px;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 4px;
+  color: inherit;
+  background: var(--ifm-color-emphasis-300);
+  line-height: 1.4;
+}
+
+@media (max-width: 996px) {
+  .quickLinks {
+    width: 280px;
+  }
+
+  .shortcutBadge {
+    display: none;
+  }
+}

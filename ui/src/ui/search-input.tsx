@@ -14,11 +14,12 @@ export default function SearchInput({
     <TextInput
       placeholder="search..."
       leftSection={<ICONS.Search size="0.8rem" />}
-      w={{ base: "100%", xs: 200, lg: 300 }}
+      w={{ base: "100%", xs: 220 }}
       onChange={(e) => {
         onChange?.(e);
         onSearch?.(e.target.value);
       }}
+      onClick={(e) => e.stopPropagation()}
       {...inputProps}
     />
   );

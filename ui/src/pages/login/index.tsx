@@ -137,7 +137,7 @@ export default function Login({
             : (localForm.onSubmit((form) => login(form)) as any)
         }
         style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
-        miw={{ lg: "500px" }}
+        miw={{ base: "95vw", xs: "530px" }}
         maw="95vw"
       >
         {options?.local && !secondFactorPending && (
@@ -147,12 +147,18 @@ export default function Login({
               autoFocus
               label="Username"
               placeholder="Enter username"
+              autoComplete="username"
+              autoCapitalize="off"
+              autoCorrect="off"
               key={localForm.key("username")}
             />
             <PasswordInput
               {...localForm.getInputProps("password")}
               label="Password"
               placeholder="Enter password"
+              autoComplete="password"
+              autoCapitalize="off"
+              autoCorrect="off"
               key={localForm.key("password")}
             />
             <Group mt="sm" justify="end">

@@ -79,7 +79,6 @@ export default function ServerDockerResources({
       tabs={tabsNoContent}
       value={view}
       onValueChange={setView as any}
-      tabProps={{ w: 140 }}
     />
   );
 

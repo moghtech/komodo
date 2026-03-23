@@ -1,6 +1,6 @@
 import Section from "@/ui/section";
 import { useStatsGranularity } from "../hooks";
-import { ReactNode, useMemo, useState } from "react";
+import { ReactNode, useMemo } from "react";
 import { Types } from "komodo_client";
 import { hexColorByIntention } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
@@ -27,6 +27,7 @@ import {
 } from "recharts";
 import { fmtSizeBytes } from "@/lib/formatting";
 import { ICONS } from "@/theme/icons";
+import { useLocalStorage } from "@mantine/hooks";
 
 type StatType =
   | "Cpu"
@@ -49,13 +50,17 @@ const STAT_TYPES: [StatType, ReactNode][] = [
 
 export default function ServerHistoricalStats({ id }: { id: string }) {
   const [interval, setInterval] = useStatsGranularity();
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useLocalStorage({
+    key: "server-stats-historical-show-v1",
+    defaultValue: true,
+  });
   return (
     <Section
+      withBorder
       title="Historical"
       icon={<ChartLine size="1.3rem" />}
       titleRight={
-        <Group ml={{ sm: "xl" }}>
+        <Group ml={{ sm: "xl" }} onClick={(e) => e.stopPropagation()}>
           <Select
             value={interval}
             onChange={(interval) =>
@@ -78,6 +83,7 @@ export default function ServerHistoricalStats({ id }: { id: string }) {
           <ShowHideButton show={show} setShow={setShow} />
         </Group>
       }
+      onHeaderClick={() => setShow((s) => !s)}
     >
       {show && (
         <SimpleGrid cols={{ base: 1, xl: 2 }} spacing="xl">
@@ -203,7 +209,7 @@ function StatChart({
     `grad-${serverId}-${type.replace(/\s+/g, "-")}-${label.replace(/\s+/g, "-")}`;
 
   return (
-    <Stack gap={4}>
+    <Stack gap={4} className="bordered-light" p="md" bdrs="md">
       <Group gap="xs">
         {icon}
         <Text fz="xl" fw={500}>

@@ -289,7 +289,7 @@ pub async fn send_alert(
       } else if let Some(server) = server_name {
         format!("server: *{server}*\n")
       } else {
-        format!("")
+        String::new()
       };
       let blocks = vec![
         Block::header(text.clone()),
@@ -317,7 +317,7 @@ pub async fn send_alert(
       } else if let Some(server) = server_name {
         format!("server: *{server}*\n")
       } else {
-        format!("")
+        String::new()
       };
       let blocks = vec![
         Block::header(text.clone()),
@@ -345,7 +345,7 @@ pub async fn send_alert(
       } else if let Some(server) = server_name {
         format!("server: *{server}*\n")
       } else {
-        format!("")
+        String::new()
       };
       let blocks = vec![
         Block::header(text.clone()),
@@ -374,7 +374,7 @@ pub async fn send_alert(
       } else if let Some(server) = server_name {
         format!("server: *{server}*\n")
       } else {
-        format!("")
+        String::new()
       };
       let blocks = vec![
         Block::header(text.clone()),
@@ -402,7 +402,7 @@ pub async fn send_alert(
       } else if let Some(server) = server_name {
         format!("server: *{server}*\n")
       } else {
-        format!("")
+        String::new()
       };
       let blocks = vec![
         Block::header(text.clone()),
@@ -435,7 +435,7 @@ pub async fn send_alert(
       } else if let Some(server) = server_name {
         format!("server: *{server}*\n")
       } else {
-        format!("")
+        String::new()
       };
       let blocks = vec![
         Block::header(text.clone()),

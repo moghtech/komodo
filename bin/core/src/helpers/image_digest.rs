@@ -39,34 +39,34 @@ impl ImageDigestCache {
     account: Option<String>,
     token: Option<String>,
   ) -> anyhow::Result<ImageDigest> {
-    if let Some((digest, valid_until)) = self.0.get(&image).await
+    if let Some((digest, valid_until)) = self.0.get(image).await
       // Ensure the query time was within last 10 mins to use cache.
       && valid_until > komodo_timestamp()
     {
       return Ok(digest);
-    } else {
-      let digest = swarm_or_server_request(
-        &swarm_or_server,
-        GetLatestImageDigest {
-          name: image.clone(),
-          account,
-          token,
-        },
-      )
-      .await?
-      .digest;
-
-      let digest = ImageDigest::new(image, &digest);
-
-      self
-        .0
-        .insert(
-          image,
-          (digest.clone(), komodo_timestamp() + 10 * 60 * 1_000),
-        )
-        .await;
-
-      Ok(digest)
     }
+
+    let digest = swarm_or_server_request(
+      swarm_or_server,
+      GetLatestImageDigest {
+        name: image.clone(),
+        account,
+        token,
+      },
+    )
+    .await?
+    .digest;
+
+    let digest = ImageDigest::new(image, &digest);
+
+    self
+      .0
+      .insert(
+        image,
+        (digest.clone(), komodo_timestamp() + 10 * 60 * 1_000),
+      )
+      .await;
+
+    Ok(digest)
   }
 }
