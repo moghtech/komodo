@@ -24,6 +24,8 @@ function HomepageHeader() {
                 left: "50%",
                 transform: "translate(-50%, -50%)",
                 color: "white",
+                fontWeight: 600,
+                letterSpacing: "0.1rem"
               }}
             >
               Komodo

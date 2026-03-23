@@ -75,12 +75,12 @@ const config: Config = {
       },
     },
     navbar: {
-      title: "Komodo",
+      title: "KOMODO",
       hideOnScroll: true,
       logo: {
         alt: "monitor lizard",
         src: "img/komodo-512x512.png",
-        width: "34px",
+        width: "32px",
       },
       items: [
         {
