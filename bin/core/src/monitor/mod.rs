@@ -97,7 +97,7 @@ fn refresh_server_cache_controller()
 /// Returns impl Future for explicit Send bound, as this function
 /// calls `periphery_client` which in some paths calls back this function `refresh_server_cache`.
 /// While infinite recursion is prevented, the compiler needs some help to know the Send bound.
-/// 
+///
 /// Clippy is not aware of this requirement, so the `manual_async_fn` lint is allowed here.
 #[allow(clippy::manual_async_fn)]
 pub fn refresh_server_cache(
