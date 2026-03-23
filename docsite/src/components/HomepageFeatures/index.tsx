@@ -11,6 +11,9 @@ import {
   Route,
   FolderSync,
   Component,
+  Terminal,
+  Shield,
+  Code,
 } from "lucide-react";
 
 type FeatureItem = {
@@ -57,7 +60,7 @@ const FeatureList: FeatureItem[] = [
     ),
   },
   {
-    title: "Automated Image Builds",
+    title: "Build Images",
     icon: Hammer,
     to: "/docs/build",
     description: (
@@ -73,9 +76,8 @@ const FeatureList: FeatureItem[] = [
     to: "/docs/automate/procedures",
     description: (
       <>
-        Chain executions into multi-stage procedures. Create and execute
-        scripts in the UI for complex automations with direct access
-        to your Komodo resources.
+        Chain executions into multi-stage procedures. Create scripts calling the Komodo API
+        using the built-in editor for complex automations.
       </>
     ),
   },
@@ -87,6 +89,41 @@ const FeatureList: FeatureItem[] = [
       <>
         Define all your resources as TOML files in a git repo and sync them to
         Komodo, keeping your infrastructure in version control.
+      </>
+    ),
+  },
+  {
+    title: "Browser Terminals",
+    icon: Terminal,
+    to: "/docs/terminals",
+    description: (
+      <>
+        Open persistent shell sessions on servers and containers directly from
+        the browser. Multiple named sessions, shared access,
+        and scriptable via Actions.
+      </>
+    ),
+  },
+  {
+    title: "Role-Based Access Control",
+    icon: Shield,
+    to: "/docs/configuration/permissioning",
+    description: (
+      <>
+        Granular permissions with user groups, per-resource access levels, and
+        resource type restrictions. Control who can view or change every resource.
+      </>
+    ),
+  },
+  {
+    title: "API, CLI, and Client Libraries",
+    icon: Code,
+    to: "/docs/ecosystem/api",
+    description: (
+      <>
+        Full OpenAPI spec, a dedicated CLI, and typesafe client libraries for
+        Rust and TypeScript. Integrate Komodo into any workflow or build your own
+        tooling.
       </>
     ),
   },

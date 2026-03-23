@@ -42,3 +42,10 @@
   justify-content: center;
   margin-top: 0.5rem;
 }
+
+@media screen and (max-width: 768px) {
+  .buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}

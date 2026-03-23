@@ -42,7 +42,7 @@ function HomepageHeader() {
             className="button button--secondary button--lg"
             to="https://demo.komo.do"
           >
-            Live Demo
+            Demo
           </Link>
           <Link
             className="button button--secondary button--lg"
