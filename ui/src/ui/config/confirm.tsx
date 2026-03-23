@@ -194,6 +194,7 @@ function ConfirmUpdateItem<T>({
                     ? fileContentsLanguage
                     : "json")
               }
+              readOnly
             />
           ) : (
             <Box component="pre" mih={0}>
