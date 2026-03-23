@@ -3317,9 +3317,9 @@ dependencies = [
 
 [[package]]
 name = "mogh_pki"
-version = "1.1.2"
+version = "1.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3cfb5bfd843c2fbc2027ce9192e471b7bd81d8dbc9b66a2361d830973d16121"
+checksum = "477508d50e1852afd8ed6b546c7cfbc95f6c7c26b9589f9f0f64dd36b5742436"
 dependencies = [
  "anyhow",
  "arc-swap",
