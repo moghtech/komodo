@@ -144,9 +144,9 @@ export function AlertDetailsContent({
         {isAdmin && !alert.resolved && (
           <ConfirmButton
             icon={<ICONS.Delete size="1rem" />}
-            variant="destructive"
             onClick={() => closeAlert({ id: alert?._id?.$oid! })}
             loading={closePending}
+            confirmProps={{ variant: "filled", color: "red" }}
           >
             Close Alert
           </ConfirmButton>

@@ -34,10 +34,11 @@ export default function DeleteResource({
       confirmButtonContent="Delete"
       icon={<ICONS.Delete size="1rem" />}
       targetNoIcon
-      targetProps={{ variant: "filled", color: "red", w: "fit", px: "xs" }}
+      targetProps={{ w: "fit", px: "xs" }}
       confirmText={resource.name}
       onConfirm={() => mutateAsync({ id })}
       loading={isPending}
+      confirmProps={{ variant: "filled", color: "red" }}
     >
       <ICONS.Delete size="1.3rem" />
     </ConfirmModal>
