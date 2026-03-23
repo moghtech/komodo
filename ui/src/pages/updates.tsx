@@ -104,7 +104,7 @@ export default function Updates() {
               : Object.values(Types.Operation).filter(
                   (o) => o !== Types.Operation.None,
                 )
-            ).map((value) => ({ value, label: fmtUpperCamelcase(value) }))}
+            )?.map((value) => ({ value, label: fmtUpperCamelcase(value) }))}
             w={{ base: "100%", xs: 250 }}
             searchable
             clearable
@@ -254,6 +254,21 @@ const OPERATIONS_BY_RESOURCE: { [key: string]: Types.Operation[] } = {
     Types.Operation.PruneDockerBuilders,
     Types.Operation.PruneBuildx,
     Types.Operation.PruneSystem,
+  ],
+  Swarm: [
+    Types.Operation.CreateSwarm,
+    Types.Operation.UpdateSwarm,
+    Types.Operation.DeleteSwarm,
+    Types.Operation.RenameSwarm,
+    Types.Operation.RemoveSwarmNodes,
+    Types.Operation.RemoveSwarmStacks,
+    Types.Operation.RemoveSwarmServices,
+    Types.Operation.CreateSwarmConfig,
+    Types.Operation.RotateSwarmConfig,
+    Types.Operation.RemoveSwarmConfigs,
+    Types.Operation.CreateSwarmSecret,
+    Types.Operation.RotateSwarmSecret,
+    Types.Operation.RemoveSwarmSecrets,
   ],
   Stack: [
     Types.Operation.CreateStack,
