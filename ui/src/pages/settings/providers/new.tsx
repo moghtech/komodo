@@ -46,7 +46,7 @@ export default function NewProviderAccount({
       false,
     ],
     type === "GitProvider"
-      ? ["Use https", https, (https: boolean) => setHttps(https), true]
+      ? ["Use HTTPS", https, (https: boolean) => setHttps(https), true]
       : undefined,
     [
       "Username",

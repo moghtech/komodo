@@ -554,7 +554,7 @@ export default function BuildConfig({
         },
         ...generalCommon,
         {
-          label: "Webhook",
+          label: "Webhooks",
           description: `Copy the webhook given here, and configure your ${webhookIntegration}-style repo provider to send webhooks to Komodo`,
           contentHidden: !show.webhooks,
           actions: (
@@ -580,7 +580,7 @@ export default function BuildConfig({
             ["Build" as any]: () =>
               (update.branch ?? config.branch) && (
                 <CopyWebhookUrl
-                  label="Webhook Url - Build"
+                  label="Webhook URL - Build"
                   integration={webhookIntegration}
                   path={`/build/${idOrName === "Id" ? id : encodeURIComponent(name ?? "...")}`}
                 />

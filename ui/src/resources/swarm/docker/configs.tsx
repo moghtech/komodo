@@ -65,7 +65,7 @@ export default function SwarmConfigs({
           {
             accessorKey: "ID",
             header: ({ column }) => (
-              <SortableHeader column={column} title="Id" />
+              <SortableHeader column={column} title="ID" />
             ),
             cell: ({ row }) => row.original.ID ?? "Unknown",
           },

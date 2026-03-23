@@ -874,7 +874,7 @@ export default function StackConfig({
             ["Deploy" as any]: () =>
               (update.branch ?? config.branch) && (
                 <CopyWebhookUrl
-                  label="Webhook Url - Deploy"
+                  label="Webhook URL - Deploy"
                   integration={webhookIntegration}
                   path={`/stack/${idOrName === "Id" ? id : encodeURIComponent(name ?? "...")}/deploy`}
                 />

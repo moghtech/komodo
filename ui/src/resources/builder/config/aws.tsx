@@ -45,8 +45,8 @@ export default function AwsBuilderConfig({ id }: { id: string }) {
               },
               ami_id: {
                 description:
-                  "Create an Ami with Docker and Komodo Periphery installed.",
-                placeholder: "Input Ami Id",
+                  "Create an AMI with Docker and Komodo Periphery installed.",
+                placeholder: "Input AMI ID",
               },
               volume_gb: {
                 description: "The size of the disk to attach to the instance.",
@@ -63,17 +63,17 @@ export default function AwsBuilderConfig({ id }: { id: string }) {
             fields: {
               subnet_id: {
                 description: "Configure the subnet to launch the instance in.",
-                placeholder: "Input subnet id",
+                placeholder: "Input subnet ID",
               },
               security_group_ids: (values, set) => (
                 <ConfigList
-                  label="Security Group Ids"
+                  label="Security Group IDs"
                   description="Attach security groups to the instance."
                   field="security_group_ids"
                   values={values ?? []}
                   set={set}
                   disabled={disabled}
-                  placeholder="Input Id"
+                  placeholder="Input ID"
                 />
               ),
               assign_public_ip: {

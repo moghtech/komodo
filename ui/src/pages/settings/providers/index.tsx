@@ -102,9 +102,9 @@ function Providers({ type }: { type: "GitProvider" | "DockerRegistry" }) {
                           titleRight:
                             type === "GitProvider" ? (
                               <Group gap="xs">
-                                <Text c="dimmed">Use Https:</Text>
+                                <Text c="dimmed">Use HTTPS:</Text>
                                 <Switch
-                                  title="Use Https"
+                                  title="Use HTTPS"
                                   checked={
                                     (row.original as Types.GitProviderAccount)
                                       .https

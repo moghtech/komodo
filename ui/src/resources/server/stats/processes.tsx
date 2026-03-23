@@ -64,7 +64,7 @@ export default function ServerProcesses({ id }: { id: string }) {
             {
               accessorKey: "cpu_perc",
               header: ({ column }) => (
-                <SortableHeader column={column} title="Cpu" sortDescFirst />
+                <SortableHeader column={column} title="CPU" sortDescFirst />
               ),
               cell: ({ row }) => <>{row.original.cpu_perc.toFixed(2)}%</>,
             },

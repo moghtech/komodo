@@ -34,7 +34,7 @@ export default function ApiKeysTable({
               original: { key },
             },
           }) => {
-            return <CopyText content={key} label="api key" />;
+            return <CopyText content={key} label="API key" />;
           },
         },
         {

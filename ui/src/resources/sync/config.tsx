@@ -325,7 +325,7 @@ export default function ResourceSyncConfig({
       },
     };
     const webhooksConfig: ConfigGroupArgs<Types.ResourceSyncConfig> = {
-      label: "Git Webhooks",
+      label: "Webhooks",
       description: `Copy the webhook given here, and configure your ${webhookIntegration}-style repo provider to send webhooks to Komodo`,
       contentHidden: !show.webhooks,
       actions: (
@@ -349,7 +349,7 @@ export default function ResourceSyncConfig({
         ["Refresh" as any]: () =>
           (update.branch ?? config.branch) && (
             <CopyWebhookUrl
-              label="Webhook Url - Refresh Pending"
+              label="Webhook URL - Refresh Pending"
               description="Trigger an update of the pending sync cache."
               integration={webhookIntegration}
               path={`/sync/${idOrName === "Id" ? id : encodeURIComponent(name ?? "...")}/refresh`}
@@ -358,7 +358,7 @@ export default function ResourceSyncConfig({
         ["Sync" as any]: () =>
           (update.branch ?? config.branch) && (
             <CopyWebhookUrl
-              label="Webhook Url - Execute Sync"
+              label="Webhook URL - Execute Sync"
               description="Trigger an execution of the sync."
               integration={webhookIntegration}
               path={`/sync/${idOrName === "Id" ? id : encodeURIComponent(name ?? "...")}/sync`}
