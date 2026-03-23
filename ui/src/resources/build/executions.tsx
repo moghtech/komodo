@@ -23,7 +23,7 @@ export function RunBuild({ id }: { id: string }) {
     useExecute("CancelBuild");
   const build = useBuild(id);
   const builder = useBuilder(build?.info.builder_id);
-  const canCancel = builder?.info.builder_type !== "Server";
+  const canCancel = builder?.info.builder_type === "Aws";
 
   // make sure hidden without perms.
   // not usually necessary, but this button also used in deployment actions.
@@ -43,7 +43,7 @@ export function RunBuild({ id }: { id: string }) {
       ? latestCancel!.start_ts > latestBuild!.start_ts
       : false);
 
-  if (building) {
+  if (building && canCancel) {
     return (
       <ConfirmButton
         color="red"
@@ -58,9 +58,9 @@ export function RunBuild({ id }: { id: string }) {
     return (
       <ConfirmButton
         icon={<ICONS.Build size="1rem" />}
-        loading={runPending}
+        loading={runPending || building}
         onClick={() => runBuild({ build: id })}
-        disabled={runPending}
+        disabled={runPending || building}
       >
         Build
       </ConfirmButton>
