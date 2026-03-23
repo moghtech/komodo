@@ -436,7 +436,7 @@ pub async fn check_deployment_for_update_inner(
           update_available: false,
         });
       }
-      let domain = extract_registry_domain(&image)?;
+      let domain = extract_registry_domain(image)?;
       let account =
         optional_string(&deployment.config.image_registry_account);
       let token = if let Some(account) = &account {
@@ -458,7 +458,7 @@ pub async fn check_deployment_for_update_inner(
   };
 
   let latest_digest = image_digest_cache()
-    .get(&swarm_or_server, &image, account, token)
+    .get(swarm_or_server, image, account, token)
     .await?;
 
   resource::update_info::<Deployment>(

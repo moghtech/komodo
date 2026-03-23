@@ -6,10 +6,11 @@ import AlerterConfigEndpoint from "./endpoint";
 import AlerterConfigAlertTypes from "./alert-types";
 import AlerterConfigResources from "./resources";
 import ConfigMaintenanceWindows from "@/components/maintenance-windows";
+import { useFullAlerter } from "..";
 
 export default function AlerterConfig({ id }: { id: string }) {
   const { canWrite } = usePermissions({ type: "Alerter", id });
-  const config = useRead("GetAlerter", { alerter: id }).data?.config;
+  const config = useFullAlerter(id)?.config;
   const global_disabled =
     useRead("GetCoreInfo", {}).data?.ui_write_disabled ?? false;
   const { mutateAsync } = useWrite("UpdateAlerter");
@@ -35,7 +36,6 @@ export default function AlerterConfig({ id }: { id: string }) {
             labelHidden: true,
             fields: {
               enabled: {
-                boldLabel: true,
                 description: "Whether to send alerts to the endpoint.",
               },
             },
@@ -84,7 +84,6 @@ export default function AlerterConfig({ id }: { id: string }) {
           },
           {
             label: "Maintenance",
-            boldLabel: false,
             description: (
               <>
                 Configure maintenance windows to temporarily disable alerts

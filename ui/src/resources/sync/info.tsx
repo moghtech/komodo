@@ -170,8 +170,8 @@ export default function ResourceSyncInfo({
                         Reset
                       </Button>
                       <ConfirmUpdate
-                        previous={{ contents: content.contents }}
-                        content={{ contents: edits[keyPath] }}
+                        original={{ contents: content.contents }}
+                        update={{ contents: edits[keyPath] }}
                         onConfirm={async () => {
                           if (sync) {
                             return await writeContents({

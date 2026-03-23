@@ -20,7 +20,6 @@ import ConfigLayout from "./layout";
 
 export interface ConfigFieldArgs {
   label?: string;
-  boldLabel?: boolean;
   description?: ReactNode;
   /** Use a selector instead of input */
   options?: { value: string; label?: string; icon?: ReactNode }[];
@@ -31,7 +30,6 @@ export interface ConfigFieldArgs {
 
 export interface ConfigGroupArgs<T> {
   label: string;
-  boldLabel?: boolean; // defaults to true
   labelExtra?: ReactNode;
   icon?: ReactNode;
   description?: ReactNode;
@@ -91,7 +89,7 @@ export default function Config<T>({
         return (
           <Fragment key={group}>
             {group && (
-              <Text visibleFrom="lg" fz="h1" tt="uppercase" mt="xl">
+              <Text visibleFrom="lg" fz="h2" tt="uppercase" mt="xl">
                 {group}
               </Text>
             )}
@@ -102,7 +100,6 @@ export default function Config<T>({
                 .map(
                   ({
                     label,
-                    boldLabel = true,
                     labelHidden,
                     icon,
                     labelExtra,
@@ -115,7 +112,7 @@ export default function Config<T>({
                       key={group + label}
                       id={group + label}
                       p="xl"
-                      gap="xl"
+                      gap="md"
                       className="bordered-light"
                       bdrs="md"
                       style={{ scrollMarginTop: 94 }}
@@ -125,9 +122,7 @@ export default function Config<T>({
                           <Stack gap="0">
                             <Group>
                               {icon}
-                              <Text fw={boldLabel ? "bold" : undefined} fz="h2">
-                                {label}
-                              </Text>
+                              <Text fz="h3">{label}</Text>
                               {labelExtra}
                             </Group>
                             {description && (
@@ -177,8 +172,8 @@ export default function Config<T>({
           Reset
         </Button>
         <ConfirmUpdate
-          previous={original}
-          content={update}
+          original={original}
+          update={update}
           onConfirm={onConfirm}
           disabled={disabled}
           fileContentsLanguage={fileContentsLanguage}

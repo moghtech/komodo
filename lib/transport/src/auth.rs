@@ -334,7 +334,9 @@ impl HeaderConnectionIdentifiers {
   }
 }
 
-pub fn compute_sec_websocket_accept(sec_websocket_key: &[u8]) -> String {
+pub fn compute_sec_websocket_accept(
+  sec_websocket_key: &[u8],
+) -> String {
   // This is standard GUID to compute Sec-Websocket-Accept
   const GUID: &[u8] = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
   let mut sha1 = sha1::Sha1::new();

@@ -6,7 +6,7 @@ import * as pluginTypescript from "prettier/plugins/typescript";
 import * as pluginEsTree from "prettier/plugins/estree";
 import * as pluginYaml from "prettier/plugins/yaml";
 import { useViewportSize } from "@mantine/hooks";
-import { useComputedColorScheme } from "@mantine/core";
+import { Box, BoxProps, useComputedColorScheme } from "@mantine/core";
 import { useRead } from "@/lib/hooks";
 
 const MIN_EDITOR_HEIGHT = 56;
@@ -51,6 +51,19 @@ export const languageFromPath = (path: string) => {
   return undefined;
 };
 
+export interface MonacoEditorProps extends BoxProps {
+  value: string | undefined;
+  onValueChange?: (value: string) => void;
+  language: MonacoLanguage | undefined;
+  filename?: string;
+  readOnly?: boolean;
+  minHeight?: number;
+  /** Define max height as proportion of dimension height. Should be between 0 and 1. */
+  maxHeightProportion?: number;
+  maxHeight?: number;
+  id?: string;
+}
+
 export const MonacoEditor = ({
   value,
   onValueChange,
@@ -58,20 +71,11 @@ export const MonacoEditor = ({
   readOnly,
   filename,
   minHeight,
-  className,
-  style,
+  maxHeightProportion,
+  maxHeight,
   id,
-}: {
-  value: string | undefined;
-  onValueChange?: (value: string) => void;
-  language: MonacoLanguage | undefined;
-  filename?: string;
-  readOnly?: boolean;
-  minHeight?: number;
-  className?: string;
-  style?: CSSProperties;
-  id?: string;
-}) => {
+  ...boxProps
+}: MonacoEditorProps) => {
   const enable_fancy_toml =
     useRead("GetCoreInfo", {}).data?.enable_fancy_toml ?? false;
   const language = (
@@ -141,7 +145,14 @@ export const MonacoEditor = ({
     const containerNode = editor.getContainerDomNode();
 
     containerNode.style.height = `${Math.max(
-      Math.min(contentHeight, Math.floor(dimensions.height * 0.75)),
+      Math.min(
+        contentHeight,
+        Math.floor(dimensions.height * 0.75),
+        maxHeightProportion
+          ? Math.floor(maxHeightProportion * dimensions.height)
+          : 10_000,
+        maxHeight ?? 10_000,
+      ),
       minHeight ?? MIN_EDITOR_HEIGHT,
     )}px`;
   }, [dimensions.height, editor, line_count]);
@@ -166,7 +177,7 @@ export const MonacoEditor = ({
   };
 
   return (
-    <div id={id} className={className} style={style}>
+    <Box id={id} {...boxProps}>
       <Editor
         language={language}
         value={value}
@@ -176,7 +187,7 @@ export const MonacoEditor = ({
         onChange={(v) => onValueChange?.(v ?? "")}
         onMount={(editor) => setEditor(editor)}
       />
-    </div>
+    </Box>
   );
 };
 

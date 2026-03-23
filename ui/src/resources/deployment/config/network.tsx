@@ -37,7 +37,6 @@ export default function DeploymentNetworkSelector({
   return (
     <ConfigItem
       label="Network Mode"
-      boldLabel
       description="Choose the --network attached to container"
     >
       {customMode && (
@@ -68,7 +67,7 @@ export default function DeploymentNetworkSelector({
           }}
           disabled={disabled}
           data={networks}
-          w="fit-content"
+          w={{ base: "100%", xs: "fit-content" }}
           searchable
         />
       )}

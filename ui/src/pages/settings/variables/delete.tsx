@@ -26,6 +26,7 @@ export default function DeleteVariable({
       }}
       loading={isPending}
       disabled={disabled}
+      confirmProps={{ variant: "filled", color: "red" }}
     >
       Delete
     </ConfirmButton>

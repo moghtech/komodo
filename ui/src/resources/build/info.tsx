@@ -152,8 +152,8 @@ export default function BuildInfo({
                     Reset
                   </Button>
                   <ConfirmUpdate
-                    previous={{ contents: remoteContents }}
-                    content={{ contents: edits.contents }}
+                    original={{ contents: remoteContents }}
+                    update={{ contents: edits.contents }}
                     onConfirm={async () => {
                       if (build) {
                         return await mutateAsync({

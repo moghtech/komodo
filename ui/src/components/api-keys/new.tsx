@@ -133,12 +133,12 @@ export default function NewApiKey({ userId }: { userId?: string }) {
 
               <Group justify="space-between" wrap="nowrap">
                 <Text>Key</Text>
-                <CopyText content={created.key} label="API key" />
+                <CopyText content={created.key} label="API key" w={{ base: 200, lg: 250 }} />
               </Group>
 
               <Group justify="space-between" wrap="nowrap">
                 <Text>Secret</Text>
-                <CopyText content={created.secret} label="API secret" />
+                <CopyText content={created.secret} label="API secret" w={{ base: 200, lg: 250 }} />
               </Group>
 
               <Group justify="end" onClick={close}>

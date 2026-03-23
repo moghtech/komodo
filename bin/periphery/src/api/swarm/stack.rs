@@ -30,6 +30,32 @@ use crate::{
   state::docker_client,
 };
 
+/// Apply compose_cmd_wrapper to command if the subcommand is in wrapper_include list.
+/// Returns Ok((command, wrapped)) where `wrapped` indicates if wrapper was applied.
+fn maybe_wrap_command(
+  command: String,
+  wrapper: &str,
+  wrapper_include: &[String],
+  subcommand: &str,
+) -> Result<(String, bool), Log> {
+  // Skip wrapping if wrapper is empty or subcommand is not in include list
+  if wrapper.is_empty()
+    || !wrapper_include.iter().any(|c| c == subcommand)
+  {
+    return Ok((command, false));
+  }
+
+  // Validate wrapper contains placeholder
+  if !wrapper.contains("[[COMPOSE_COMMAND]]") {
+    return Err(Log::error(
+      "Compose Command Wrapper",
+      "compose_cmd_wrapper is configured but does not contain [[COMPOSE_COMMAND]] placeholder. The placeholder is required to inject the compose command.".to_string(),
+    ));
+  }
+
+  Ok((wrapper.replace("[[COMPOSE_COMMAND]]", &command), true))
+}
+
 impl Resolve<crate::api::Args> for InspectSwarmStack {
   async fn resolve(
     self,
@@ -178,16 +204,47 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
     let last_project_name = stack.project_name(false);
     let project_name = stack.project_name(true);
 
+    // Parse wrapper configuration once for reuse
+    let compose_cmd_wrapper =
+      parse_multiline_command(&stack.config.compose_cmd_wrapper);
+    // If wrapper_include is empty but wrapper is set, use default ["deploy"] for backward compatibility
+    let default_include = vec![String::from("deploy")];
+    let wrapper_include =
+      if stack.config.compose_cmd_wrapper_include.is_empty()
+        && !compose_cmd_wrapper.is_empty()
+      {
+        &default_include
+      } else {
+        &stack.config.compose_cmd_wrapper_include
+      };
+
     // Uses 'docker stack config' command to extract services (including image)
     // after performing interpolation
     {
       let command = format!("docker stack config -c {file_args}",);
+      let (command, wrapped) = match maybe_wrap_command(
+        command,
+        &compose_cmd_wrapper,
+        wrapper_include,
+        "config",
+      ) {
+        Ok(result) => result,
+        Err(log) => {
+          res.logs.push(log);
+          return Ok(res);
+        }
+      };
+      let mode = if wrapped {
+        KomodoCommandMode::Shell
+      } else {
+        KomodoCommandMode::Standard
+      };
       let span = info_span!("GetStackConfig", command);
       let Some(config_log) = run_komodo_command_with_sanitization(
         "Stack Config",
         run_directory.as_path(),
         command,
-        KomodoCommandMode::Standard,
+        mode,
         &replacers,
       )
       .instrument(span)
@@ -240,19 +297,18 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
     write!(&mut command, " {project_name}")?;
 
     // Apply compose cmd wrapper if configured
-    let compose_cmd_wrapper =
-      parse_multiline_command(&stack.config.compose_cmd_wrapper);
-    if !compose_cmd_wrapper.is_empty() {
-      if !compose_cmd_wrapper.contains("[[COMPOSE_COMMAND]]") {
-        res.logs.push(Log::error(
-          "Compose Command Wrapper",
-          "compose_cmd_wrapper is configured but does not contain [[COMPOSE_COMMAND]] placeholder. The placeholder is required to inject the compose command.".to_string(),
-        ));
+    let (command, _) = match maybe_wrap_command(
+      command,
+      &compose_cmd_wrapper,
+      wrapper_include,
+      "deploy",
+    ) {
+      Ok(result) => result,
+      Err(log) => {
+        res.logs.push(log);
         return Ok(res);
       }
-      command =
-        compose_cmd_wrapper.replace("[[COMPOSE_COMMAND]]", &command);
-    }
+    };
 
     let span = info_span!("ExecuteStackDeploy");
     let Some(log) = run_komodo_command_with_sanitization(

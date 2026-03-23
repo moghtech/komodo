@@ -34,7 +34,7 @@ import InputList from "@/ui/input-list";
 import { ProviderSelectorConfig } from "@/components/config/provider-selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";
 import LinkedRepo from "@/components/config/linked-repo";
-import { DEFAULT_STACK_FILE_CONTENTS } from "..";
+import { DEFAULT_STACK_FILE_CONTENTS, useFullStack } from "..";
 import { ReactNode } from "react";
 import WebhookBuilder from "@/components/webhook/builder";
 import CopyWebhookUrl from "@/components/webhook/copy-url";
@@ -68,12 +68,11 @@ export default function StackConfig({
     defaultValue: {
       file: true,
       env: true,
-      git: true,
       webhooks: true,
     },
   });
   const { canWrite } = usePermissions({ type: "Stack", id });
-  const stack = useRead("GetStack", { stack: id }).data;
+  const stack = useFullStack(id);
   const allServices =
     (stack?.info?.deployed_services ?? stack?.info?.latest_services)?.map(
       (s) => s.service_name,
@@ -221,7 +220,6 @@ export default function StackConfig({
           <ConfigItem
             label="Choose Mode"
             description="Will the file contents be defined in UI, stored on the server, or pulled from a git repo?"
-            boldLabel
           >
             <Select
               w="fit-content"
@@ -272,7 +270,7 @@ export default function StackConfig({
             typeof v === "string" ? { path: v, track: true } : v,
           );
           return (
-            <ConfigItem label="Additional Env Files" boldLabel>
+            <ConfigItem label="Additional Env Files">
               <Stack>
                 {files.map((file: any, i: number) => (
                   <Group key={i}>
@@ -356,11 +354,20 @@ export default function StackConfig({
 
   const configFiles: ConfigGroupArgs<Types.StackConfig> = {
     label: "Config Files",
-    description:
-      "Add other config files to associate with the Stack, and edit in the UI. Relative to 'Run Directory'.",
+    labelHidden: true,
     fields: {
       config_files: (value, set) => (
-        <StackConfigFiles id={id} value={value} set={set} disabled={disabled} />
+        <ConfigItem
+          label="Config Files"
+          description="Add other config files to associate with the Stack, and edit in the UI. Relative to 'Run Directory'."
+        >
+          <StackConfigFiles
+            id={id}
+            value={value}
+            set={set}
+            disabled={disabled}
+          />
+        </ConfigItem>
       ),
     },
   };
@@ -370,6 +377,7 @@ export default function StackConfig({
   const generalCommon: ConfigGroupArgs<Types.StackConfig>[] = [
     {
       label: "Auto Update",
+      labelHidden: true,
       fields: {
         poll_for_updates: (poll, set) => {
           return (
@@ -407,7 +415,6 @@ export default function StackConfig({
         links: (values, set) => (
           <ConfigList
             label="Links"
-            boldLabel
             addLabel="Add Link"
             description="Add quick links in the resource header"
             field="links"
@@ -428,7 +435,6 @@ export default function StackConfig({
       fields: {
         project_name: {
           placeholder: "Compose project name",
-          boldLabel: true,
           description:
             "Optionally set a different compose project name. If importing existing stack, this should match the compose project name on your host.",
         },
@@ -436,41 +442,48 @@ export default function StackConfig({
     },
     {
       label: "Pre Deploy",
-      description:
-        "Execute a shell command before running docker compose up. The 'path' is relative to the Run Directory",
+      labelHidden: true,
       fields: {
         pre_deploy: (value, set) => (
-          <SystemCommand
-            value={value}
-            set={(value) => set({ pre_deploy: value })}
-            disabled={disabled}
-          />
+          <ConfigItem
+            label="Pre Deploy"
+            description="Execute a shell command before running docker compose up. The 'path' is relative to the Run Directory"
+          >
+            <SystemCommand
+              value={value}
+              set={(value) => set({ pre_deploy: value })}
+              disabled={disabled}
+            />
+          </ConfigItem>
         ),
       },
     },
     {
       label: "Post Deploy",
-      description:
-        "Execute a shell command after running docker compose up. The 'path' is relative to the Run Directory",
+      labelHidden: true,
       fields: {
         post_deploy: (value, set) => (
-          <SystemCommand
-            value={value}
-            set={(value) => set({ post_deploy: value })}
-            disabled={disabled}
-          />
+          <ConfigItem
+            label="Post Deploy"
+            description="Execute a shell command after running docker compose up. The 'path' is relative to the Run Directory"
+          >
+            <SystemCommand
+              value={value}
+              set={(value) => set({ post_deploy: value })}
+              disabled={disabled}
+            />
+          </ConfigItem>
         ),
       },
     },
     {
       label: "Wrapper",
-      description:
-        "Optional wrapper to execute 'docker compose up -d' as a subcommand of tools like secrets management.",
+      description: "Optional wrapper for secrets management tools.",
       fields: {
         compose_cmd_wrapper: (value, set) => (
           <MonacoEditor
             value={
-              value ?? "# sops exec-env .encrypted.env '[[COMPOSE_COMMAND]]'\n"
+              value || "# sops exec-env .encrypted.env '[[COMPOSE_COMMAND]]'\n"
             }
             language="shell"
             onValueChange={(compose_cmd_wrapper) =>
@@ -479,6 +492,34 @@ export default function StackConfig({
             readOnly={disabled}
           />
         ),
+        compose_cmd_wrapper_include: (values, set) => {
+          const commands = currSwarmId
+            ? ["config", "deploy"]
+            : ["config", "build", "pull", "up", "run"];
+          const filtered = (values ?? []).filter((v: string) =>
+            commands.includes(v),
+          );
+          return (
+            <ConfigItem
+              label="Apply To"
+              description={`Select which docker ${currSwarmId ? "stack" : "compose"} subcommands to wrap.`}
+            >
+              <MultiSelect
+                placeholder={
+                  filtered.length ? "Add commands" : "Select commands"
+                }
+                value={filtered}
+                data={commands}
+                onChange={(compose_cmd_wrapper_include) =>
+                  set({ compose_cmd_wrapper_include })
+                }
+                disabled={disabled}
+                w="fit-content"
+                clearable
+              />
+            </ConfigItem>
+          );
+        },
       },
     },
     {
@@ -488,28 +529,36 @@ export default function StackConfig({
         extra_args: (value, set) => (
           <ConfigItem
             label="Extra Args"
-            boldLabel
             description={
-              <div className="flex flex-row flex-wrap gap-2">
-                <div>
+              <Group gap="xs">
+                <Text>
                   Pass extra arguments to '
                   {currSwarmId ? "docker stack deploy" : "docker compose up"}
                   '.
-                </div>
-                <Link
+                </Text>
+                <Text
+                  className="hover-underline"
+                  fw="bold"
+                  component={Link}
                   to={
                     currSwarmId
                       ? "https://docs.docker.com/reference/cli/docker/stack/deploy/#options"
                       : "https://docs.docker.com/reference/cli/docker/service/create/#options"
                   }
                   target="_blank"
-                  className="text-primary"
                 >
                   See docker docs.
-                </Link>
-              </div>
+                </Text>
+              </Group>
             }
           >
+            <InputList
+              field="extra_args"
+              values={value ?? []}
+              set={set}
+              disabled={disabled}
+              placeholder="--extra-arg=value"
+            />
             {!disabled && (
               <AddExtraArg
                 type="Stack"
@@ -524,13 +573,6 @@ export default function StackConfig({
                 disabled={disabled}
               />
             )}
-            <InputList
-              field="extra_args"
-              values={value ?? []}
-              set={set}
-              disabled={disabled}
-              placeholder="--extra-arg=value"
-            />
           </ConfigItem>
         ),
       },
@@ -542,7 +584,6 @@ export default function StackConfig({
         ignore_services: (values, set) => (
           <ConfigItem
             label="Ignore Services"
-            boldLabel
             description="If your compose file has init services that exit early, ignore them here so your stack will report the correct health."
           >
             <MultiSelect
@@ -567,7 +608,6 @@ export default function StackConfig({
         registry_provider: (provider, set) => {
           return (
             <ProviderSelectorConfig
-              boldLabel
               description="Login to a registry for private image access."
               accountType="docker"
               selected={provider}
@@ -670,6 +710,7 @@ export default function StackConfig({
         ...swarmServerGroup,
         {
           label: "Files",
+          labelHidden: true,
           fields: {
             run_directory: {
               label: "Run Directory",
@@ -702,13 +743,7 @@ export default function StackConfig({
         ...swarmServerGroup,
         {
           label: "Source",
-          contentHidden: !show.git,
-          actions: (
-            <ShowHideButton
-              show={show.git}
-              setShow={(git) => setShow({ ...show, git })}
-            />
-          ),
+          labelHidden: true,
           fields: {
             linked_repo: (linkedRepo, set) => (
               <LinkedRepo
@@ -789,6 +824,7 @@ export default function StackConfig({
         },
         {
           label: "Files",
+          labelHidden: true,
           fields: {
             run_directory: {
               description:

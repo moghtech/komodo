@@ -20,7 +20,9 @@ pub async fn send_alert(
       let link = resource_link(ResourceTargetVariant::Swarm, id);
       match alert.level {
         SeverityLevel::Ok => {
-          format!("{level} | Swarm **{name}** is now **healthy**\n{link}")
+          format!(
+            "{level} | Swarm **{name}** is now **healthy**\n{link}"
+          )
         }
         SeverityLevel::Critical => {
           let err = err
@@ -140,7 +142,7 @@ pub async fn send_alert(
       } else if let Some(server) = server_name {
         format!("\nserver: **{server}**")
       } else {
-        format!("")
+        String::new()
       };
       format!(
         "📦 Deployment **{name}** is now **{to}**{target}\nprevious: **{from}**\n{link}"
@@ -161,7 +163,7 @@ pub async fn send_alert(
       } else if let Some(server) = server_name {
         format!("\nserver: **{server}**")
       } else {
-        format!("")
+        String::new()
       };
       format!(
         "⬆ Deployment **{name}** has an update available{target}\nimage: **{image}**\n{link}"
@@ -182,7 +184,7 @@ pub async fn send_alert(
       } else if let Some(server) = server_name {
         format!("\nserver: **{server}**")
       } else {
-        format!("")
+        String::new()
       };
       format!(
         "⬆ Deployment **{name}** was updated automatically ⏫{target}\nimage: **{image}**\n{link}"
@@ -205,7 +207,7 @@ pub async fn send_alert(
       } else if let Some(server) = server_name {
         format!("\nserver: **{server}**")
       } else {
-        format!("")
+        String::new()
       };
       format!(
         "🥞 Stack **{name}** is now {to}{target}\nprevious: **{from}**\n{link}"
@@ -227,7 +229,7 @@ pub async fn send_alert(
       } else if let Some(server) = server_name {
         format!("\nserver: **{server}**")
       } else {
-        format!("")
+        String::new()
       };
       format!(
         "⬆ Stack **{name}** has an update available{target}\nservice: **{service}**\nimage: **{image}**\n{link}"
@@ -251,7 +253,7 @@ pub async fn send_alert(
       } else if let Some(server) = server_name {
         format!("\nserver: **{server}**")
       } else {
-        format!("")
+        String::new()
       };
       format!(
         "⬆ Stack **{name}** was updated automatically ⏫{target}\n{images_label}: **{images}**\n{link}"

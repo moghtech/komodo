@@ -66,7 +66,7 @@ export const swarmNodeStateIntention: (
     case Types.NodeState.READY:
       return "Good";
     case Types.NodeState.DOWN:
-      return "Warning";
+      return "Critical";
     case Types.NodeState.DISCONNECTED:
       return "Critical";
     case Types.NodeState.UNKNOWN:

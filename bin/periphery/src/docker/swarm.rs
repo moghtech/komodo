@@ -60,8 +60,8 @@ fn convert_swarm_info(
             .into_iter()
             .map(|cas| SwarmSpecCaConfigExternalCas {
               protocol: cas.protocol.map(|protocol| match protocol {
-                bollard::secret::SwarmSpecCaConfigExternalCasProtocolEnum::EMPTY => SwarmSpecCaConfigExternalCasProtocolEnum::EMPTY,
-                bollard::secret::SwarmSpecCaConfigExternalCasProtocolEnum::CFSSL => SwarmSpecCaConfigExternalCasProtocolEnum::CFSSL,
+                bollard::config::SwarmSpecCaConfigExternalCasProtocolEnum::EMPTY => SwarmSpecCaConfigExternalCasProtocolEnum::EMPTY,
+                bollard::config::SwarmSpecCaConfigExternalCasProtocolEnum::CFSSL => SwarmSpecCaConfigExternalCasProtocolEnum::CFSSL,
               }),
               url: cas.url,
               options: cas.options,

@@ -48,14 +48,22 @@ const config: Config = {
           sidebarPath: "./sidebars.ts",
           editUrl: "https://github.com/moghtech/komodo/tree/main/docsite",
         },
-        blog: {
-          showReadingTime: true,
-          editUrl: "https://github.com/moghtech/komodo/tree/main/docsite",
-        },
+        blog: false,
         theme: {
           customCss: "./src/css/custom.css",
         },
       } satisfies Preset.Options,
+    ],
+  ],
+
+  themes: [
+    [
+      "@easyops-cn/docusaurus-search-local",
+      {
+        hashed: true,
+        indexBlog: false,
+        searchBarShortcutHint: false,
+      },
     ],
   ],
 
@@ -67,18 +75,19 @@ const config: Config = {
       },
     },
     navbar: {
-      title: "Komodo",
+      title: "KOMODO",
+      hideOnScroll: true,
       logo: {
         alt: "monitor lizard",
         src: "img/komodo-512x512.png",
-        width: "34px",
+        width: "32px",
       },
       items: [
         {
           type: "docSidebar",
           sidebarId: "docs",
           position: "left",
-          label: "docs",
+          label: "Docs",
         },
         {
           href: "https://opencollective.com/komodo",
@@ -92,19 +101,45 @@ const config: Config = {
         },
         {
           href: "https://github.com/moghtech/komodo",
-          label: "Github",
+          label: "GitHub",
           position: "right",
         },
       ],
     },
     footer: {
       style: "dark",
-      copyright: `Built with Docusaurus`,
+      links: [
+        {
+          title: "Docs",
+          items: [
+            { label: "Getting Started", to: "/docs/intro" },
+            { label: "Setup", to: "/docs/setup" },
+            { label: "Resources", to: "/docs/resources" },
+          ],
+        },
+        {
+          title: "Ecosystem",
+          items: [
+            { label: "CLI", to: "/docs/ecosystem/cli" },
+            { label: "API", to: "/docs/ecosystem/api" },
+            { label: "Community", to: "/docs/ecosystem/community" },
+          ],
+        },
+        {
+          title: "Project",
+          items: [
+            { label: "GitHub", href: "https://github.com/moghtech/komodo" },
+            { label: "Donate", href: "https://opencollective.com/komodo" },
+            { label: "Demo", href: "https://demo.komo.do" },
+          ],
+        },
+      ],
+      copyright: "© 2026 Mogh Technologies Inc. Licensed under GPL-3.0",
     },
     prism: {
       theme: prismThemes.oneLight,
       darkTheme: prismThemes.oneDark,
-      additionalLanguages: ["bash", "yaml", "toml"],
+      additionalLanguages: ["bash", "yaml", "toml", "rust", "json"],
     },
   } satisfies Preset.ThemeConfig,
 };

@@ -154,6 +154,7 @@ export const LinkedLogins = ({
                   onConfirm={() => unlink({ provider })}
                   confirmText="Unlink"
                   title="Unlink Login"
+                  confirmProps={{ variant: "filled", color: "red" }}
                 >
                   Unlink
                 </ConfirmModal>

@@ -67,6 +67,7 @@ export default function ApiKeysTable({
               icon={<ICONS.Delete size="1rem" />}
               onClick={() => onDelete(row.original.key)}
               loading={deletePending}
+              confirmProps={{ variant: "filled", color: "red" }}
             >
               Delete
             </ConfirmButton>

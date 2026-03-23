@@ -1,12 +1,13 @@
 import { useSelectedResources } from "@/lib/hooks";
 import ResourceLink from "@/resources/link";
 import { DataTable, SortableHeader } from "@/ui/data-table";
-import { BoxProps, Group, Stack, Text } from "@mantine/core";
+import { BoxProps, Group, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useServerStats, useServerThresholds } from "@/resources/server/hooks";
 import StatCell from "@/ui/stat-cell";
 import { fmtRateBytes } from "@/lib/formatting";
 import ServerVersion from "@/resources/server/version";
+import ServerDiskUsage from "../diskUsage";
 
 export default function StatsServerTable({
   resources,
@@ -107,32 +108,7 @@ function DiskCell({ id }: { id: string }) {
       value={stats ? perc : undefined}
       intent={intent}
       infoDisabled={!stats}
-      info={
-        <Stack gap="sm">
-          {stats?.disks.map((disk) => (
-            <Group
-              key={disk.mount}
-              justify="space-between"
-              className="bordered-light"
-              p="sm"
-              bdrs="sm"
-            >
-              <Group>
-                <Text c="dimmed">Mount:</Text>{" "}
-                <Text ff="monospace" bg="accent.6" px="xs" bdrs="sm">
-                  {disk.mount}
-                </Text>
-              </Group>
-              <Text>-</Text>
-              <Group gap="0.4rem">
-                {disk.used_gb.toFixed(1)} GB <Text c="dimmed">of</Text>{" "}
-                {disk.total_gb.toFixed(1)} GB <Text c="dimmed">in use</Text> (
-                {((100 * disk.used_gb) / disk.total_gb).toFixed(1)} %)
-              </Group>
-            </Group>
-          ))}
-        </Stack>
-      }
+      info={<ServerDiskUsage id={id} stats={stats} />}
     />
   );
 }

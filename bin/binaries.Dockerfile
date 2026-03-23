@@ -1,7 +1,7 @@
 ## Builds the Komodo Core, Periphery, and Util binaries
 ## for a specific architecture. Requires OpenSSL 3 or later.
 
-FROM rust:1.93.1-bookworm AS builder
+FROM rust:1.94.0-bookworm AS builder
 RUN cargo install cargo-strip
 
 WORKDIR /builder

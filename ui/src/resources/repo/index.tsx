@@ -9,13 +9,19 @@ import NewResource from "@/resources/new";
 import ResourceHeader from "@/resources/header";
 import RepoTabs from "./tabs";
 import BatchExecutions from "@/components/batch-executions";
+import { BuildRepo, CloneRepo, PullRepo } from "./executions";
+import { useServer } from "../server";
+import { useBuilder } from "../builder";
+import { Box, Group } from "@mantine/core";
+import ResourceLink from "../link";
+import RepoLink from "@/components/repo-link";
 
 export function useRepo(id: string | undefined) {
   return useRead("ListRepos", {}).data?.find((r) => r.id === id);
 }
 
 export function useFullRepo(id: string) {
-  return useRead("GetRepo", { repo: id }).data;
+  return useRead("GetRepo", { repo: id }, { refetchInterval: 30_000 }).data;
 }
 
 export const RepoComponents: RequiredResourceComponents<
@@ -30,7 +36,11 @@ export const RepoComponents: RequiredResourceComponents<
   useResourceLinks: (repo) => repo?.config?.links,
 
   useDashboardSummaryData: () => {
-    const summary = useRead("GetReposSummary", {}).data;
+    const summary = useRead(
+      "GetReposSummary",
+      {},
+      { refetchInterval: 10_000 },
+    ).data;
     return [
       { intention: "Good", value: summary?.ok ?? 0, title: "Ok" },
       {
@@ -58,7 +68,11 @@ export const RepoComponents: RequiredResourceComponents<
   BatchExecutions: () => (
     <BatchExecutions
       type="Repo"
-      executions={["PullRepo", "CloneRepo", "BuildRepo"]}
+      executions={[
+        ["PullRepo", ICONS.PullRepo],
+        ["CloneRepo", ICONS.CloneRepo],
+        ["BuildRepo", ICONS.Build],
+      ]}
     />
   ),
 
@@ -92,9 +106,52 @@ export const RepoComponents: RequiredResourceComponents<
     let state = useRepo(id)?.info.state;
     return <StatusBadge text={state} intent={repoStateIntention(state)} />;
   },
-  Info: {},
+  Info: {
+    Target: ({ id }) => {
+      const info = useRepo(id)?.info;
+      const server = useServer(info?.server_id);
+      const builder = useBuilder(info?.builder_id);
 
-  Executions: {},
+      if (!info?.server_id && !info?.builder_id) return null;
+
+      return (
+        <>
+          {server?.id && (
+            <Box>
+              <ResourceLink type="Server" id={server.id} />
+            </Box>
+          )}
+          {builder?.id && (
+            <Box>
+              <ResourceLink type="Builder" id={builder.id} />
+            </Box>
+          )}
+        </>
+      );
+    },
+    Source: ({ id }) => {
+      const info = useRepo(id)?.info;
+
+      if (!info?.repo || !info?.repo_link) return null;
+
+      return <RepoLink repo={info?.repo} link={info?.repo_link} />;
+    },
+    Branch: ({ id }) => {
+      const branch = useRepo(id)?.info.branch;
+      return (
+        <Group gap="xs" wrap="nowrap">
+          <ICONS.Branch size="1rem" />
+          {branch}
+        </Group>
+      );
+    },
+  },
+
+  Executions: {
+    CloneRepo,
+    PullRepo,
+    BuildRepo,
+  },
 
   Config: RepoTabs,
 

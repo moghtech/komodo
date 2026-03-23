@@ -23,6 +23,7 @@ export function TerminationSignal({
         disabled={disabled}
         placeholder="Select signal"
         data={Object.values(Types.TerminationSignal).reverse()}
+        w={{ base: "100%", xs: "fit-content" }}
       />
     </ConfigItem>
   );

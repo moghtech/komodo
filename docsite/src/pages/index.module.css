@@ -16,9 +16,42 @@
   }
 }
 
+.upgradeBanner {
+  background: var(--ifm-color-primary-darkest);
+  color: #fff;
+  padding: 1.125rem 0;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.upgradeBanner a {
+  color: #fff;
+  text-decoration: underline;
+  font-weight: 700;
+}
+
+.upgradeBanner a:hover {
+  color: var(--ifm-color-primary-lightest);
+}
+
 .buttons {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
-  grid-template-columns: 1fr 1fr;
-  width: fit-content;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+@media screen and (max-width: 768px) {
+  .buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .mobile-full-grid {
+    grid-column: span 2;
+  }
 }

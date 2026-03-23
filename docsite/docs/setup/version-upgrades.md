@@ -4,14 +4,14 @@ Most version upgrades only require a redeployment of the Core container after pu
 
 Some Core API upgrades may change behavior such as building / cloning, and require updating the Periphery binaries to match the Core version before this functionality can be restored. This will be specifically mentioned in the release notes.
 
-## Updating to Komodo v2
+## Upgrading to Komodo v2
 
 Komodo v2 introduces a new connection and authentication method between Komodo Core and the Periphery agents running on your Servers.
-It is largely backward compatible with Komodo v1 configuration, and users can update from v1 in place by following the steps below.
+It is largely backward compatible with Komodo v1 configuration, and users can upgrade from v1 in place by following the steps below.
 
-### 1. Update Core and Periphery to v2
+### 1. Upgrade Core and Periphery to v2
 
-The first step is to update both Core and Periphery to v2 versions, along with **some small configuration changes**.
+The first step is to upgrade both Core and Periphery to v2 versions, along with **some small configuration changes**.
 
 :::note
 Starting with v2, Komodo will not publish images with the `latest` tag in favor of Semver (`2`, `2.0`, `2.0.0`).
@@ -71,8 +71,8 @@ After updating to Komodo v2, **you can follow these steps to migrate to outbound
 using public key authentication**. Note you must be an Admin user on Komodo.
 
 1. (**Periphery container only**.) Ensure the automatically generated private keys are persisted by mounting to the `/config/keys` of the Periphery container, as noted above.
-2. Navigate to `Settings / Onboarding` and create a new **Onboarding Key**. Save it for later.
-3. Enable **Priviledged mode** on the new Onboarding Key.
+2. Navigate to `Settings / Onboarding` and create a new **onboarding key**. Save it for later.
+3. Enable **privileged mode** on the new Onboarding Key.
 4. **Redeploy Periphery agents with updated configuration:**
 
 ```toml
@@ -94,9 +94,9 @@ connect_as = "<SERVER_NAME>"
 onboarding_key = "<YOUR_ONBOARDING_KEY>"
 ```
 
-Upon connecting, the Priviledged Onboarding Key will allow the existing Server's expected public key
+Upon connecting, the privileged onboarding key will allow the existing server's expected public key
 to be updated, allowing the Periphery agent to connect.
-**In general when onboarding _new_ Servers, Privilidged Mode for Onboarding Keys is not needed.**
+**In general when onboarding _new_ servers, privilidged mode is not needed.**
 
 ### 3. Fix any `komodo.execute_terminal` in Actions
 
@@ -113,7 +113,7 @@ So in v1 Action:
 await komodo.write("CreateTerminal", {
   server: "my-server",
   name: "my-terminal",
-  command: "sh",
+  command: "bash",
   recreate: "Always",
 });
 await komodo.execute_terminal(
@@ -131,7 +131,7 @@ await komodo.execute_server_terminal(
     server: "my-server",
     terminal: "my-terminal",
     command: "ls -l",
-    init: { command: "sh", recreate: "Always" },
+    init: { command: "bash", recreate: "Always" },
   },
   { onLine: (line) => console.log(line) },
 );

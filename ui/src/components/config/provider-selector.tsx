@@ -91,14 +91,12 @@ export default function ProviderSelector({
 
 export function ProviderSelectorConfig({
   description,
-  boldLabel,
   https,
   onHttpsSwitch,
   accountType,
   ...props
 }: {
   description?: string;
-  boldLabel?: boolean;
   https?: boolean;
   onHttpsSwitch?: () => void;
 } & ProviderSelectorProps) {
@@ -111,7 +109,6 @@ export function ProviderSelectorConfig({
     <ConfigItem
       label={label}
       description={description ?? `Select ${select} domain`}
-      boldLabel={boldLabel}
     >
       {accountType === "git" ? (
         <Group>

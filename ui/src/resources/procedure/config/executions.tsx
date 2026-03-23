@@ -1,19 +1,24 @@
+import ContainerSelector from "@/components/docker/container-selector";
 import { MonacoEditor } from "@/components/monaco";
 import StackServiceSelector from "@/components/stack-service-selector";
+import { useRead } from "@/lib/hooks";
 import { textToEnv } from "@/lib/utils";
 import ResourceSelector from "@/resources/selector";
+import { ICONS } from "@/theme/icons";
 import EnableSwitch from "@/ui/enable-switch";
 import TextUpdateModal from "@/ui/text-update-modal";
 import {
   Button,
   Group,
   Modal,
+  MultiSelect,
   SimpleGrid,
   Stack,
   Switch,
   Text,
   TextInput,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";
 import { CheckCircle } from "lucide-react";
@@ -33,12 +38,6 @@ export type ProcedureExecutionComponent<
 
 export type ProcedureMinExecutionType = Exclude<
   ExecutionType,
-  | "StartContainer"
-  | "RestartContainer"
-  | "PauseContainer"
-  | "UnpauseContainer"
-  | "StopContainer"
-  | "DestroyContainer"
   | "DeleteNetwork"
   | "DeleteImage"
   | "DeleteVolume"
@@ -115,6 +114,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
             setParams({ action: params.action, args: JSON.parse(args) })
           }
           disabled={disabled}
+          useMonaco
           monacoLanguage="json"
         />
       </Group>
@@ -131,6 +131,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -158,6 +159,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -198,6 +200,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -290,21 +293,43 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
   },
   // Stack
   DeployStack: {
-    params: { stack: "" },
-    Component: ({ params, setParams, disabled }) => (
-      <ResourceSelector
-        type="Stack"
-        selected={params.stack}
-        onSelect={(id) => setParams({ stack: id })}
-        disabled={disabled}
-      />
-    ),
+    params: { stack: "", services: [] },
+    Component: ({ params, setParams, disabled }) => {
+      const allServices = useRead("ListStackServices", {
+        stack: params.stack,
+      }).data?.map((s) => s.service);
+      return (
+        <Group>
+          <ResourceSelector
+            type="Stack"
+            selected={params.stack}
+            onSelect={(id) =>
+              setParams(
+                id ? { ...params, stack: id } : { stack: id, services: [] },
+              )
+            }
+            disabled={disabled}
+          />
+          <MultiSelect
+            leftSection={<ICONS.Service size="1rem" />}
+            placeholder={params.services?.length ? undefined : "All services"}
+            value={params.services}
+            data={allServices}
+            onChange={(services) => setParams({ ...params, services })}
+            styles={{ inputField: { width: 130 } }}
+            searchable
+            clearable
+          />
+        </Group>
+      );
+    },
   },
   BatchDeployStack: {
     params: { pattern: "" },
@@ -317,6 +342,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -343,20 +369,42 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
   },
   PullStack: {
     params: { stack: "" },
-    Component: ({ params, setParams, disabled }) => (
-      <ResourceSelector
-        type="Stack"
-        selected={params.stack}
-        onSelect={(id) => setParams({ stack: id })}
-        disabled={disabled}
-      />
-    ),
+    Component: ({ params, setParams, disabled }) => {
+      const allServices = useRead("ListStackServices", {
+        stack: params.stack,
+      }).data?.map((s) => s.service);
+      return (
+        <Group>
+          <ResourceSelector
+            type="Stack"
+            selected={params.stack}
+            onSelect={(id) =>
+              setParams(
+                id ? { ...params, stack: id } : { stack: id, services: [] },
+              )
+            }
+            disabled={disabled}
+          />
+          <MultiSelect
+            leftSection={<ICONS.Service size="1rem" />}
+            placeholder={params.services?.length ? undefined : "All services"}
+            value={params.services}
+            data={allServices}
+            onChange={(services) => setParams({ ...params, services })}
+            styles={{ inputField: { width: 130 } }}
+            searchable
+            clearable
+          />
+        </Group>
+      );
+    },
   },
   BatchPullStack: {
     params: { pattern: "" },
@@ -369,75 +417,202 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
   },
   StartStack: {
     params: { stack: "" },
-    Component: ({ params, setParams, disabled }) => (
-      <ResourceSelector
-        type="Stack"
-        selected={params.stack}
-        onSelect={(id) => setParams({ stack: id })}
-        disabled={disabled}
-      />
-    ),
+    Component: ({ params, setParams, disabled }) => {
+      const allServices = useRead("ListStackServices", {
+        stack: params.stack,
+      }).data?.map((s) => s.service);
+      return (
+        <Group>
+          <ResourceSelector
+            type="Stack"
+            selected={params.stack}
+            onSelect={(id) =>
+              setParams(
+                id ? { ...params, stack: id } : { stack: id, services: [] },
+              )
+            }
+            disabled={disabled}
+          />
+          <MultiSelect
+            leftSection={<ICONS.Service size="1rem" />}
+            placeholder={params.services?.length ? undefined : "All services"}
+            value={params.services}
+            data={allServices}
+            onChange={(services) => setParams({ ...params, services })}
+            styles={{ inputField: { width: 130 } }}
+            searchable
+            clearable
+          />
+        </Group>
+      );
+    },
   },
   RestartStack: {
     params: { stack: "" },
-    Component: ({ params, setParams, disabled }) => (
-      <ResourceSelector
-        type="Stack"
-        selected={params.stack}
-        onSelect={(id) => setParams({ stack: id })}
-        disabled={disabled}
-      />
-    ),
+    Component: ({ params, setParams, disabled }) => {
+      const allServices = useRead("ListStackServices", {
+        stack: params.stack,
+      }).data?.map((s) => s.service);
+      return (
+        <Group>
+          <ResourceSelector
+            type="Stack"
+            selected={params.stack}
+            onSelect={(id) =>
+              setParams(
+                id ? { ...params, stack: id } : { stack: id, services: [] },
+              )
+            }
+            disabled={disabled}
+          />
+          <MultiSelect
+            leftSection={<ICONS.Service size="1rem" />}
+            placeholder={params.services?.length ? undefined : "All services"}
+            value={params.services}
+            data={allServices}
+            onChange={(services) => setParams({ ...params, services })}
+            styles={{ inputField: { width: 130 } }}
+            searchable
+            clearable
+          />
+        </Group>
+      );
+    },
   },
   PauseStack: {
     params: { stack: "" },
-    Component: ({ params, setParams, disabled }) => (
-      <ResourceSelector
-        type="Stack"
-        selected={params.stack}
-        onSelect={(id) => setParams({ stack: id })}
-        disabled={disabled}
-      />
-    ),
+    Component: ({ params, setParams, disabled }) => {
+      const allServices = useRead("ListStackServices", {
+        stack: params.stack,
+      }).data?.map((s) => s.service);
+      return (
+        <Group>
+          <ResourceSelector
+            type="Stack"
+            selected={params.stack}
+            onSelect={(id) =>
+              setParams(
+                id ? { ...params, stack: id } : { stack: id, services: [] },
+              )
+            }
+            disabled={disabled}
+          />
+          <MultiSelect
+            leftSection={<ICONS.Service size="1rem" />}
+            placeholder={params.services?.length ? undefined : "All services"}
+            value={params.services}
+            data={allServices}
+            onChange={(services) => setParams({ ...params, services })}
+            styles={{ inputField: { width: 130 } }}
+            searchable
+            clearable
+          />
+        </Group>
+      );
+    },
   },
   UnpauseStack: {
     params: { stack: "" },
-    Component: ({ params, setParams, disabled }) => (
-      <ResourceSelector
-        type="Stack"
-        selected={params.stack}
-        onSelect={(id) => setParams({ stack: id })}
-        disabled={disabled}
-      />
-    ),
+    Component: ({ params, setParams, disabled }) => {
+      const allServices = useRead("ListStackServices", {
+        stack: params.stack,
+      }).data?.map((s) => s.service);
+      return (
+        <Group>
+          <ResourceSelector
+            type="Stack"
+            selected={params.stack}
+            onSelect={(id) =>
+              setParams(
+                id ? { ...params, stack: id } : { stack: id, services: [] },
+              )
+            }
+            disabled={disabled}
+          />
+          <MultiSelect
+            leftSection={<ICONS.Service size="1rem" />}
+            placeholder={params.services?.length ? undefined : "All services"}
+            value={params.services}
+            data={allServices}
+            onChange={(services) => setParams({ ...params, services })}
+            styles={{ inputField: { width: 130 } }}
+            searchable
+            clearable
+          />
+        </Group>
+      );
+    },
   },
   StopStack: {
     params: { stack: "" },
-    Component: ({ params, setParams, disabled }) => (
-      <ResourceSelector
-        type="Stack"
-        selected={params.stack}
-        onSelect={(id) => setParams({ stack: id })}
-        disabled={disabled}
-      />
-    ),
+    Component: ({ params, setParams, disabled }) => {
+      const allServices = useRead("ListStackServices", {
+        stack: params.stack,
+      }).data?.map((s) => s.service);
+      return (
+        <Group>
+          <ResourceSelector
+            type="Stack"
+            selected={params.stack}
+            onSelect={(id) =>
+              setParams(
+                id ? { ...params, stack: id } : { stack: id, services: [] },
+              )
+            }
+            disabled={disabled}
+          />
+          <MultiSelect
+            leftSection={<ICONS.Service size="1rem" />}
+            placeholder={params.services?.length ? undefined : "All services"}
+            value={params.services}
+            data={allServices}
+            onChange={(services) => setParams({ ...params, services })}
+            styles={{ inputField: { width: 130 } }}
+            searchable
+            clearable
+          />
+        </Group>
+      );
+    },
   },
   DestroyStack: {
     params: { stack: "" },
-    Component: ({ params, setParams, disabled }) => (
-      <ResourceSelector
-        type="Stack"
-        selected={params.stack}
-        onSelect={(id) => setParams({ stack: id })}
-        disabled={disabled}
-      />
-    ),
+    Component: ({ params, setParams, disabled }) => {
+      const allServices = useRead("ListStackServices", {
+        stack: params.stack,
+      }).data?.map((s) => s.service);
+      return (
+        <Group>
+          <ResourceSelector
+            type="Stack"
+            selected={params.stack}
+            onSelect={(id) =>
+              setParams(
+                id ? { ...params, stack: id } : { stack: id, services: [] },
+              )
+            }
+            disabled={disabled}
+          />
+          <MultiSelect
+            leftSection={<ICONS.Service size="1rem" />}
+            placeholder={params.services?.length ? undefined : "All services"}
+            value={params.services}
+            data={allServices}
+            onChange={(services) => setParams({ ...params, services })}
+            styles={{ inputField: { width: 130 } }}
+            searchable
+            clearable
+          />
+        </Group>
+      );
+    },
   },
   BatchDestroyStack: {
     params: { pattern: "" },
@@ -450,6 +625,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -470,7 +646,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
       pull: undefined,
     },
     Component: ({ params, setParams, disabled }) => {
-      const [open, setOpen] = useState(false);
+      const [opened, { open, close }] = useDisclosure();
       // local mirrors to allow cancel without committing
       const [stack, setStack] = useState(params.stack ?? "");
       const [service, setService] = useState(params.service ?? "");
@@ -551,128 +727,167 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
           detach: detach ? true : undefined,
           env,
         } as any);
-        setOpen(false);
+        close();
       };
 
       return (
         <>
-          <Button disabled={disabled}>Configure</Button>
+          <Button disabled={disabled} onClick={open}>
+            Configure
+          </Button>
 
           <Modal
-            opened={open}
-            onClose={() => setOpen(false)}
+            opened={opened}
+            onClose={close}
             title="Run Stack Service"
             size="lg"
           >
-            <Stack>
-              <SimpleGrid cols={{ base: 1, md: 2 }}>
-                <Group>
-                  <Text c="dimmed">Stack</Text>
+            <Stack gap="lg">
+              <SimpleGrid cols={{ base: 1, sm: 2 }}>
+                <Stack gap="0">
+                  <Text>Stack</Text>
                   <ResourceSelector
                     type="Stack"
                     selected={stack}
                     onSelect={(id) => setStack(id)}
                     disabled={disabled}
+                    width="target"
+                    targetProps={{ w: "100%" }}
                   />
-                </Group>
-                <Group>
-                  <Text c="dimmed">Service</Text>
+                </Stack>
+
+                <Stack gap="0">
+                  <Text>Service</Text>
                   <StackServiceSelector
                     stackId={stack}
                     selected={service}
                     onSelect={setService}
                     disabled={disabled}
+                    width="target"
+                    targetProps={{ w: "100%" }}
                   />
-                </Group>
+                </Stack>
               </SimpleGrid>
 
-              <Group>
-                <Text c="dimmed">Command</Text>
+              <Stack gap="0">
+                <Text>Command</Text>
                 <TextInput
+                  placeholder="Enter command (Required)"
                   value={commandText}
                   onChange={(e) => setCommand(e.target.value)}
                   disabled={disabled}
                 />
-              </Group>
+              </Stack>
 
-              <SimpleGrid cols={{ base: 2, md: 4 }}>
-                <EnableSwitch
-                  label="No TTY"
-                  checked={no_tty}
-                  onCheckedChange={setNoTty}
-                  disabled={disabled}
-                />
-                <EnableSwitch
-                  label="No Dependencies"
-                  checked={no_deps}
-                  onCheckedChange={setNoDeps}
-                  disabled={disabled}
-                />
-                <EnableSwitch
-                  label="Detach"
-                  checked={detach}
-                  onCheckedChange={setDetach}
-                  disabled={disabled}
-                />
-                <EnableSwitch
-                  label="Service Ports"
-                  checked={service_ports}
-                  onCheckedChange={setServicePorts}
-                  disabled={disabled}
-                />
-                <EnableSwitch
-                  label="Pull Image"
-                  checked={pull}
-                  onCheckedChange={setPull}
-                  disabled={disabled}
-                />
+              <SimpleGrid cols={{ base: 1, sm: 2 }}>
+                <Stack gap="0">
+                  <Text>Working Directory</Text>
+                  <TextInput
+                    placeholder="/work/dir (Optional)"
+                    value={workdir}
+                    onChange={(e) => setWorkdir(e.target.value)}
+                    disabled={disabled}
+                  />
+                </Stack>
+                <Stack gap="0">
+                  <Text>User</Text>
+                  <TextInput
+                    placeholder="uid:gid or user (Optional)"
+                    value={user}
+                    onChange={(e) => setUser(e.target.value)}
+                    disabled={disabled}
+                  />
+                </Stack>
               </SimpleGrid>
-            </Stack>
 
-            <SimpleGrid cols={{ base: 1, md: 2 }}>
-              <Group>
-                <Text c="dimmed">Working Directory</Text>
+              <Stack gap="0">
+                <Text>Entrypoint</Text>
                 <TextInput
-                  placeholder="/work/dir"
-                  value={workdir}
-                  onChange={(e) => setWorkdir(e.target.value)}
-                  disabled={disabled}
-                />
-              </Group>
-              <Group>
-                <Text c="dimmed">User</Text>
-                <TextInput
-                  placeholder="uid:gid or user"
-                  value={user}
-                  onChange={(e) => setUser(e.target.value)}
-                  disabled={disabled}
-                />
-              </Group>
-              <Group>
-                <Text c="dimmed">Entrypoint</Text>
-                <TextInput
+                  placeholder="Custom entrypoint (Optional)"
                   value={entrypoint}
                   onChange={(e) => setEntrypoint(e.target.value)}
                   disabled={disabled}
                 />
-              </Group>
-            </SimpleGrid>
+              </Stack>
 
-            <Group>
-              <Text c="dimmed">Extra Environment Variables</Text>
-              <MonacoEditor
-                value={envText}
-                onValueChange={setEnvText}
-                language="key_value"
-                readOnly={disabled}
-              />
-            </Group>
+              <Stack gap="0">
+                <Text>Extra Env</Text>
+                <MonacoEditor
+                  value={envText}
+                  onValueChange={setEnvText}
+                  language="key_value"
+                  readOnly={disabled}
+                />
+              </Stack>
 
-            {!disabled && (
-              <Button onClick={onConfirm} leftSection={<CheckCircle />}>
-                Confirm
-              </Button>
-            )}
+              <Stack gap="0">
+                <Text>Options</Text>
+                <SimpleGrid
+                  cols={{ base: 1, sm: 2 }}
+                  className="accent-hover-light"
+                  p="md"
+                  bdrs="md"
+                  style={{ placeItems: "center" }}
+                >
+                  <EnableSwitch
+                    label="No TTY"
+                    checked={no_tty}
+                    onCheckedChange={setNoTty}
+                    disabled={disabled}
+                    labelProps={{
+                      w: 210,
+                      justify: "end",
+                    }}
+                  />
+                  <EnableSwitch
+                    label="No Dependencies"
+                    checked={no_deps}
+                    onCheckedChange={setNoDeps}
+                    disabled={disabled}
+                    labelProps={{
+                      w: 210,
+                      justify: "end",
+                    }}
+                  />
+                  <EnableSwitch
+                    label="Detach"
+                    checked={detach}
+                    onCheckedChange={setDetach}
+                    disabled={disabled}
+                    labelProps={{
+                      w: 210,
+                      justify: "end",
+                    }}
+                  />
+                  <EnableSwitch
+                    label="Service Ports"
+                    checked={service_ports}
+                    onCheckedChange={setServicePorts}
+                    disabled={disabled}
+                    labelProps={{
+                      w: 210,
+                      justify: "end",
+                    }}
+                  />
+                  <EnableSwitch
+                    label="Pull Image"
+                    checked={pull}
+                    onCheckedChange={setPull}
+                    disabled={disabled}
+                    labelProps={{
+                      w: 210,
+                      justify: "end",
+                    }}
+                  />
+                </SimpleGrid>
+              </Stack>
+
+              {!disabled && (
+                <Button onClick={onConfirm} leftSection={<CheckCircle />}>
+                  Confirm
+                </Button>
+              )}
+            </Stack>
           </Modal>
         </>
       );
@@ -701,6 +916,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -727,6 +943,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -753,6 +970,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         }
         onUpdate={(pattern) => setParams({ pattern })}
         disabled={disabled}
+        useMonaco
         monacoLanguage="string_list"
       />
     ),
@@ -769,72 +987,144 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
     ),
   },
   // Server
-  // StartContainer: {
-  //   params: { server: "" },
-  //   Component: ({ params, setParams, disabled }) => (
-  //     <ResourceSelector
-  //       type="Server"
-  //       selected={params.server}
-  //       onSelect={(server) => setParams({ server })}
-  //       disabled={disabled}
-  //     />
-  //   ),
-  // },
-  // RestartContainer: {
-  //   params: { server: "" },
-  //   Component: ({ params, setParams, disabled }) => (
-  //     <ResourceSelector
-  //       type="Server"
-  //       selected={params.server}
-  //       onSelect={(server) => setParams({ server })}
-  //       disabled={disabled}
-  //     />
-  //   ),
-  // },
-  // PauseContainer: {
-  //   params: { server: "" },
-  //   Component: ({ params, setParams, disabled }) => (
-  //     <ResourceSelector
-  //       type="Server"
-  //       selected={params.server}
-  //       onSelect={(server) => setParams({ server })}
-  //       disabled={disabled}
-  //     />
-  //   ),
-  // },
-  // UnpauseContainer: {
-  //   params: { server: "" },
-  //   Component: ({ params, setParams, disabled }) => (
-  //     <ResourceSelector
-  //       type="Server"
-  //       selected={params.server}
-  //       onSelect={(server) => setParams({ server })}
-  //       disabled={disabled}
-  //     />
-  //   ),
-  // },
-  // StopContainer: {
-  //   params: { server: "" },
-  //   Component: ({ params, setParams, disabled }) => (
-  //     <ResourceSelector
-  //       type="Server"
-  //       selected={params.server}
-  //       onSelect={(server) => setParams({ server })}
-  //       disabled={disabled}
-  //     />
-  //   ),
-  // },
-  // DestroyContainer: {
-  //   params: { server: "", container: "" },
-  //   Component: ({ params, setParams, disabled }) => (
-  //     <ResourceSelector
-  //       type="Server"
-  //       selected={params.server}
-  //       onSelect={(server) => setParams({ server })}
-  //       disabled={disabled}
-  //     />
-  //   ),
-  // },
+  StartContainer: {
+    params: { server: "", container: "" },
+    Component: ({ params, setParams, disabled }) => (
+      <Group>
+        <ResourceSelector
+          type="Server"
+          selected={params.server}
+          onSelect={(server) =>
+            setParams({ server, container: params.container })
+          }
+          disabled={disabled}
+        />
+        <ContainerSelector
+          serverId={params.server}
+          selected={params.container}
+          onSelect={(container) =>
+            setParams({ server: params.server, container })
+          }
+          disabled={disabled}
+        />
+      </Group>
+    ),
+  },
+  RestartContainer: {
+    params: { server: "", container: "" },
+    Component: ({ params, setParams, disabled }) => (
+      <Group>
+        <ResourceSelector
+          type="Server"
+          selected={params.server}
+          onSelect={(server) =>
+            setParams({ server, container: params.container })
+          }
+          disabled={disabled}
+        />
+        <ContainerSelector
+          serverId={params.server}
+          selected={params.container}
+          onSelect={(container) =>
+            setParams({ server: params.server, container })
+          }
+          disabled={disabled}
+        />
+      </Group>
+    ),
+  },
+  PauseContainer: {
+    params: { server: "", container: "" },
+    Component: ({ params, setParams, disabled }) => (
+      <Group>
+        <ResourceSelector
+          type="Server"
+          selected={params.server}
+          onSelect={(server) =>
+            setParams({ server, container: params.container })
+          }
+          disabled={disabled}
+        />
+        <ContainerSelector
+          serverId={params.server}
+          selected={params.container}
+          onSelect={(container) =>
+            setParams({ server: params.server, container })
+          }
+          disabled={disabled}
+        />
+      </Group>
+    ),
+  },
+  UnpauseContainer: {
+    params: { server: "", container: "" },
+    Component: ({ params, setParams, disabled }) => (
+      <Group>
+        <ResourceSelector
+          type="Server"
+          selected={params.server}
+          onSelect={(server) =>
+            setParams({ server, container: params.container })
+          }
+          disabled={disabled}
+        />
+        <ContainerSelector
+          serverId={params.server}
+          selected={params.container}
+          onSelect={(container) =>
+            setParams({ server: params.server, container })
+          }
+          disabled={disabled}
+        />
+      </Group>
+    ),
+  },
+  StopContainer: {
+    params: { server: "", container: "" },
+    Component: ({ params, setParams, disabled }) => (
+      <Group>
+        <ResourceSelector
+          type="Server"
+          selected={params.server}
+          onSelect={(server) =>
+            setParams({ server, container: params.container })
+          }
+          disabled={disabled}
+        />
+        <ContainerSelector
+          serverId={params.server}
+          selected={params.container}
+          onSelect={(container) =>
+            setParams({ server: params.server, container })
+          }
+          disabled={disabled}
+        />
+      </Group>
+    ),
+  },
+  DestroyContainer: {
+    params: { server: "", container: "" },
+    Component: ({ params, setParams, disabled }) => (
+      <Group>
+        <ResourceSelector
+          type="Server"
+          selected={params.server}
+          onSelect={(server) =>
+            setParams({ server, container: params.container })
+          }
+          disabled={disabled}
+        />
+        <ContainerSelector
+          serverId={params.server}
+          selected={params.container}
+          onSelect={(container) =>
+            setParams({ server: params.server, container })
+          }
+          disabled={disabled}
+        />
+      </Group>
+    ),
+  },
   StartAllContainers: {
     params: { server: "" },
     Component: ({ params, setParams, disabled }) => (
@@ -1042,6 +1332,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
         placeholder="Configure custom alert message"
         onUpdate={(message) => setParams({ message })}
         disabled={disabled}
+        useMonaco
         monacoLanguage={undefined}
       />
     ),

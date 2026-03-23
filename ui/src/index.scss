@@ -36,30 +36,30 @@ a:focus {
 }
 
 .bordered-light {
-  border: 1px solid var(--mantine-color-accent-border-1);
+  border: 1px solid color-mix(in srgb, var(--mantine-color-accent-border-1) 50%, transparent);
   transition: border 150ms ease;
 }
 .bordered-light:hover {
-  border: 1px solid var(--mantine-color-accent-border-4);
+  border: 1px solid color-mix(in srgb, var(--mantine-color-accent-border-4) 50%, transparent);
 }
 
 .bordered-heavy {
-  border: 1px solid var(--mantine-color-accent-border-5);
+  border: 1px solid color-mix(in srgb, var(--mantine-color-accent-border-5) 50%, transparent);
   transition: border 150ms ease;
 }
 .bordered-heavy:hover {
-  border: 1px solid var(--mantine-color-accent-border-9);
+  border: 1px solid color-mix(in srgb, var(--mantine-color-accent-border-9) 50%, transparent);
 }
 
 .bordered-heavy-outline {
   &[data-variant="outline"] {
-    border: 1px solid var(--mantine-color-accent-border-5);
+    border: 1px solid color-mix(in srgb, var(--mantine-color-accent-border-5) 50%, transparent);
     transition: border 150ms ease;
   }
 }
 .bordered-heavy-outline:hover {
   &[data-variant="outline"] {
-    border: 1px solid var(--mantine-color-accent-border-9);
+    border: 1px solid color-mix(in srgb, var(--mantine-color-accent-border-9) 50%, transparent);
   }
 }
 

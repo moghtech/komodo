@@ -24,7 +24,7 @@ export function useBuild(id: string | undefined) {
 }
 
 export function useFullBuild(id: string) {
-  return useRead("GetBuild", { build: id }).data;
+  return useRead("GetBuild", { build: id }, { refetchInterval: 30_000 }).data;
 }
 
 export const BuildComponents: RequiredResourceComponents<
@@ -39,7 +39,11 @@ export const BuildComponents: RequiredResourceComponents<
   useResourceLinks: (build) => build?.config?.links,
 
   useDashboardSummaryData: () => {
-    const summary = useRead("GetBuildsSummary", {}).data;
+    const summary = useRead(
+      "GetBuildsSummary",
+      {},
+      { refetchInterval: 10_000 },
+    ).data;
     return [
       { title: "Ok", intention: "Good", value: summary?.ok ?? 0 },
       {
@@ -87,7 +91,13 @@ export const BuildComponents: RequiredResourceComponents<
   },
 
   BatchExecutions: () => (
-    <BatchExecutions type="Build" executions={["RunBuild"]} />
+    <BatchExecutions
+      type="Build"
+      executions={[
+        ["RunBuild", ICONS.Build],
+        ["CancelBuild", ICONS.Cancel],
+      ]}
+    />
   ),
 
   Table: BuildTable,

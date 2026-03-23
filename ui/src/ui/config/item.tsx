@@ -19,7 +19,6 @@ import { forwardRef, ReactNode } from "react";
 
 export interface ConfigItemProps extends StackProps {
   label?: ReactNode;
-  boldLabel?: boolean;
   labelExtra?: ReactNode;
   description?: ReactNode;
   children?: ReactNode;
@@ -27,23 +26,14 @@ export interface ConfigItemProps extends StackProps {
 
 export const ConfigItem = createPolymorphicComponent<"div", ConfigItemProps>(
   forwardRef<HTMLDivElement, ConfigItemProps>(
-    (
-      { label, boldLabel, labelExtra, description, children, ...props },
-      ref,
-    ) => {
+    ({ label, labelExtra, description, children, ...props }, ref) => {
       const labelDescription = (label || description) && (
         <Stack gap="0">
           {typeof label === "string" && (
-            <Text fw={boldLabel ? "bold" : undefined} fz="h3">
-              {fmtSnakeCaseToUpperSpaceCase(label)}
-            </Text>
+            <Text fz="h3">{fmtSnakeCaseToUpperSpaceCase(label)}</Text>
           )}
           {label && typeof label !== "string" && label}
-          {description && (
-            <Text c="dimmed" fz="sm">
-              {description}
-            </Text>
-          )}
+          {description && <Text c="dimmed">{description}</Text>}
         </Stack>
       );
       return (
@@ -143,13 +133,12 @@ export function ConfigSwitch({
 export function ConfigList<T>({
   addLabel,
   label,
-  boldLabel,
   description,
   ...inputListProps
 }: { label?: string; addLabel?: string } & InputListProps<T> &
   Omit<ConfigItemProps, "children">) {
   return (
-    <ConfigItem label={label} boldLabel={boldLabel} description={description}>
+    <ConfigItem label={label} description={description}>
       <InputList
         inputProps={{ w: { base: "85%", lg: 400 } }}
         {...inputListProps}

@@ -53,7 +53,7 @@ impl Resolve<ExecuteArgs> for RunSync {
     "RunSync",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       sync = self.sync,
@@ -63,7 +63,11 @@ impl Resolve<ExecuteArgs> for RunSync {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let RunSync {
       sync,

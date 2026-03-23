@@ -3,10 +3,11 @@ import { filterBySplit } from "@/lib/utils";
 import { ReactNode } from "react";
 import { useSwarmDockerSearch } from ".";
 import Section from "@/ui/section";
-import { Badge } from "@mantine/core";
+import { Badge, Group } from "@mantine/core";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import SwarmResourceLink from "@/components/swarm/link";
 import SearchInput from "@/ui/search-input";
+import NewSwarmConfig from "@/resources/swarm/new/config";
 
 export default function SwarmConfigs({
   id,
@@ -29,7 +30,12 @@ export default function SwarmConfigs({
   return (
     <Section
       titleOther={titleOther}
-      actions={<SearchInput value={search} onSearch={setSearch} />}
+      actions={
+        <Group>
+          <NewSwarmConfig id={id} />
+          <SearchInput value={search} onSearch={setSearch} />
+        </Group>
+      }
     >
       <DataTable
         tableKey="swarm-configs"

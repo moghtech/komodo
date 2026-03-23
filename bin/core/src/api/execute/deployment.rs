@@ -32,7 +32,7 @@ use crate::{
     swarm::swarm_request,
     update::update_update,
   },
-  monitor::{update_cache_for_server, update_cache_for_swarm},
+  monitor::{refresh_server_cache, refresh_swarm_cache},
   resource::{self, setup_deployment_execution},
   state::action_states,
 };
@@ -55,14 +55,14 @@ impl Resolve<ExecuteArgs> for BatchDeploy {
     "BatchDeploy",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
     )
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, id, .. }: &ExecuteArgs,
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchDeploy>(&self.pattern, user)
@@ -76,7 +76,7 @@ impl Resolve<ExecuteArgs> for Deploy {
     "Deploy",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       deployment = self.deployment,
@@ -86,7 +86,11 @@ impl Resolve<ExecuteArgs> for Deploy {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let (mut deployment, swarm_or_server) =
       setup_deployment_execution(
@@ -222,7 +226,7 @@ impl Resolve<ExecuteArgs> for Deploy {
         .await
         {
           Ok(logs) => {
-            update_cache_for_swarm(&swarm, true).await;
+            refresh_swarm_cache(&swarm, true).await;
             update.logs.extend(logs)
           }
           Err(e) => {
@@ -246,7 +250,7 @@ impl Resolve<ExecuteArgs> for Deploy {
           .await
         {
           Ok(log) => {
-            update_cache_for_server(&server, true).await;
+            refresh_server_cache(&server, true).await;
             update.logs.push(log)
           }
           Err(e) => {
@@ -401,7 +405,7 @@ pub async fn pull_deployment_inner(
       Err(e) => Log::error("Pull image", format_serror(&e.into())),
     };
 
-    update_cache_for_server(server, true).await;
+    refresh_server_cache(server, true).await;
     anyhow::Ok(log)
   }
   .await;
@@ -418,7 +422,7 @@ impl Resolve<ExecuteArgs> for PullDeployment {
     "PullDeployment",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       deployment = self.deployment,
@@ -426,7 +430,11 @@ impl Resolve<ExecuteArgs> for PullDeployment {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let (deployment, swarm_or_server) = setup_deployment_execution(
       &self.deployment,
@@ -472,7 +480,7 @@ impl Resolve<ExecuteArgs> for StartDeployment {
     "StartDeployment",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       deployment = self.deployment,
@@ -480,7 +488,11 @@ impl Resolve<ExecuteArgs> for StartDeployment {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let (deployment, swarm_or_server) = setup_deployment_execution(
       &self.deployment,
@@ -527,7 +539,7 @@ impl Resolve<ExecuteArgs> for StartDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -540,7 +552,7 @@ impl Resolve<ExecuteArgs> for RestartDeployment {
     "RestartDeployment",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       deployment = self.deployment,
@@ -548,7 +560,11 @@ impl Resolve<ExecuteArgs> for RestartDeployment {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let (deployment, swarm_or_server) = setup_deployment_execution(
       &self.deployment,
@@ -597,7 +613,7 @@ impl Resolve<ExecuteArgs> for RestartDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -610,7 +626,7 @@ impl Resolve<ExecuteArgs> for PauseDeployment {
     "PauseDeployment",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       deployment = self.deployment,
@@ -618,7 +634,11 @@ impl Resolve<ExecuteArgs> for PauseDeployment {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let (deployment, swarm_or_server) = setup_deployment_execution(
       &self.deployment,
@@ -665,7 +685,7 @@ impl Resolve<ExecuteArgs> for PauseDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -678,7 +698,7 @@ impl Resolve<ExecuteArgs> for UnpauseDeployment {
     "UnpauseDeployment",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       deployment = self.deployment,
@@ -686,7 +706,11 @@ impl Resolve<ExecuteArgs> for UnpauseDeployment {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let (deployment, swarm_or_server) = setup_deployment_execution(
       &self.deployment,
@@ -735,7 +759,7 @@ impl Resolve<ExecuteArgs> for UnpauseDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -748,7 +772,7 @@ impl Resolve<ExecuteArgs> for StopDeployment {
     "StopDeployment",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       deployment = self.deployment,
@@ -758,7 +782,11 @@ impl Resolve<ExecuteArgs> for StopDeployment {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let (deployment, swarm_or_server) = setup_deployment_execution(
       &self.deployment,
@@ -813,7 +841,7 @@ impl Resolve<ExecuteArgs> for StopDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -837,14 +865,14 @@ impl Resolve<ExecuteArgs> for BatchDestroyDeployment {
     "BatchDestroyDeployment",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       pattern = self.pattern,
     )
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, id, .. }: &ExecuteArgs,
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
   ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchDestroyDeployment>(
@@ -861,7 +889,7 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
     "DestroyDeployment",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       deployment = self.deployment,
@@ -871,7 +899,11 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> mogh_error::Result<Update> {
     let (deployment, swarm_or_server) = setup_deployment_execution(
       &self.deployment,
@@ -910,7 +942,7 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
         .await
         {
           Ok(log) => {
-            update_cache_for_swarm(&swarm, true).await;
+            refresh_swarm_cache(&swarm, true).await;
             log
           }
           Err(e) => Log::error(
@@ -938,7 +970,7 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
           .await
         {
           Ok(log) => {
-            update_cache_for_server(&server, true).await;
+            refresh_server_cache(&server, true).await;
             log
           }
           Err(e) => Log::error(

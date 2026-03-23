@@ -2,7 +2,7 @@
 ## Sets up the necessary runtime container dependencies for Komodo Periphery.
 ## Since theres no heavy build here, QEMU multi-arch builds are fine for this image.
 
-ARG BINARIES_IMAGE=ghcr.io/moghtech/komodo-binaries:latest
+ARG BINARIES_IMAGE=ghcr.io/moghtech/komodo-binaries:2
 ARG X86_64_BINARIES=${BINARIES_IMAGE}-x86_64
 ARG AARCH64_BINARIES=${BINARIES_IMAGE}-aarch64
 

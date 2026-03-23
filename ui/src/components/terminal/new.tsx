@@ -11,6 +11,7 @@ import {
   Text,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";
 import { useState } from "react";
 
@@ -36,7 +37,10 @@ export default function NewTerminal({
   ...comboboxProps
 }: NewTerminalProps) {
   const [service, setService] = useState<string | undefined>(undefined);
-  const { mutateAsync: createTerminal } = useWrite("CreateTerminal");
+  const { mutateAsync: createTerminal } = useWrite("CreateTerminal", {
+    onSuccess: () =>
+      notifications.show({ message: "Terminal created.", color: "green" }),
+  });
 
   const { search, setSearch, combobox } = useSearchCombobox();
 

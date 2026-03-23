@@ -7,6 +7,7 @@ import { ActionIcon, Box, Button, Group, Stack, Text } from "@mantine/core";
 import TargetTerminal from "./target";
 import { ICONS } from "@/theme/icons";
 import NewTerminal from "./new";
+import { notifications } from "@mantine/notifications";
 
 export interface TerminalSectionProps extends Omit<SectionProps, "children"> {
   target: Types.TerminalTarget;
@@ -29,7 +30,10 @@ export default function TerminalSection({
     },
   );
 
-  const { mutateAsync: deleteTerminal } = useWrite("DeleteTerminal");
+  const { mutateAsync: deleteTerminal } = useWrite("DeleteTerminal", {
+    onSuccess: () =>
+      notifications.show({ message: "Terminal deleted.", color: "green" }),
+  });
 
   const [_selected, setSelected] = useLocalStorage<{
     selected: string | undefined;

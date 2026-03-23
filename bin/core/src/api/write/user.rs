@@ -36,6 +36,15 @@ use super::WriteArgs;
 const RECENTLY_VIEWED_MAX: usize = 10;
 
 impl Resolve<WriteArgs> for PushRecentlyViewed {
+  #[instrument(
+    "PushRecentlyViewed",
+    level = "debug",
+    skip_all,
+    fields(
+      user_id = user.id,
+      resource = format!("{:?}", self.resource)
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user, .. }: &WriteArgs,
@@ -79,6 +88,12 @@ impl Resolve<WriteArgs> for PushRecentlyViewed {
 //
 
 impl Resolve<WriteArgs> for SetLastSeenUpdate {
+  #[instrument(
+    "SetLastSeenUpdate",
+    level = "debug",
+    skip_all,
+    fields(user_id = user.id)
+  )]
   async fn resolve(
     self,
     WriteArgs { user, .. }: &WriteArgs,

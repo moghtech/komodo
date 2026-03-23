@@ -68,6 +68,7 @@ export function DataTable<TData, TValue>({
   tableProps,
   noBox,
   noBorder,
+  mah = "max(150px, calc(100vh - 320px))",
   ...boxProps
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>(defaultSort);
@@ -248,7 +249,7 @@ export function DataTable<TData, TValue>({
         className={noBorder ? undefined : "bordered-light"}
         bdrs="md"
         w="100%"
-        mah="max(150px, calc(100vh - 320px))"
+        mah={mah}
         style={{ overflow: "auto" }}
         {...boxProps}
       >

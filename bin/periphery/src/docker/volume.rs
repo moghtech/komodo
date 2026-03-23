@@ -21,13 +21,13 @@ impl DockerClient {
         let scope = volume
           .scope
           .map(|scope| match scope {
-            bollard::secret::VolumeScopeEnum::EMPTY => {
+            bollard::config::VolumeScopeEnum::EMPTY => {
               VolumeScopeEnum::Empty
             }
-            bollard::secret::VolumeScopeEnum::LOCAL => {
+            bollard::config::VolumeScopeEnum::LOCAL => {
               VolumeScopeEnum::Local
             }
-            bollard::secret::VolumeScopeEnum::GLOBAL => {
+            bollard::config::VolumeScopeEnum::GLOBAL => {
               VolumeScopeEnum::Global
             }
           })
@@ -69,13 +69,13 @@ impl DockerClient {
       scope: volume
         .scope
         .map(|scope| match scope {
-          bollard::secret::VolumeScopeEnum::EMPTY => {
+          bollard::config::VolumeScopeEnum::EMPTY => {
             VolumeScopeEnum::Empty
           }
-          bollard::secret::VolumeScopeEnum::LOCAL => {
+          bollard::config::VolumeScopeEnum::LOCAL => {
             VolumeScopeEnum::Local
           }
-          bollard::secret::VolumeScopeEnum::GLOBAL => {
+          bollard::config::VolumeScopeEnum::GLOBAL => {
             VolumeScopeEnum::Global
           }
         })
@@ -91,16 +91,16 @@ impl DockerClient {
             access_mode: spec.access_mode.map(|mode| {
               ClusterVolumeSpecAccessMode {
                 scope: mode.scope.map(|scope| match scope {
-                  bollard::secret::ClusterVolumeSpecAccessModeScopeEnum::EMPTY => ClusterVolumeSpecAccessModeScopeEnum::Empty,
-                  bollard::secret::ClusterVolumeSpecAccessModeScopeEnum::SINGLE => ClusterVolumeSpecAccessModeScopeEnum::Single,
-                  bollard::secret::ClusterVolumeSpecAccessModeScopeEnum::MULTI => ClusterVolumeSpecAccessModeScopeEnum::Multi,
+                  bollard::config::ClusterVolumeSpecAccessModeScopeEnum::EMPTY => ClusterVolumeSpecAccessModeScopeEnum::Empty,
+                  bollard::config::ClusterVolumeSpecAccessModeScopeEnum::SINGLE => ClusterVolumeSpecAccessModeScopeEnum::Single,
+                  bollard::config::ClusterVolumeSpecAccessModeScopeEnum::MULTI => ClusterVolumeSpecAccessModeScopeEnum::Multi,
                 }).unwrap_or_default(),
                 sharing: mode.sharing.map(|sharing| match sharing {
-                  bollard::secret::ClusterVolumeSpecAccessModeSharingEnum::EMPTY => ClusterVolumeSpecAccessModeSharingEnum::Empty,
-                  bollard::secret::ClusterVolumeSpecAccessModeSharingEnum::NONE => ClusterVolumeSpecAccessModeSharingEnum::None,
-                  bollard::secret::ClusterVolumeSpecAccessModeSharingEnum::READONLY => ClusterVolumeSpecAccessModeSharingEnum::Readonly,
-                  bollard::secret::ClusterVolumeSpecAccessModeSharingEnum::ONEWRITER => ClusterVolumeSpecAccessModeSharingEnum::Onewriter,
-                  bollard::secret::ClusterVolumeSpecAccessModeSharingEnum::ALL => ClusterVolumeSpecAccessModeSharingEnum::All,
+                  bollard::config::ClusterVolumeSpecAccessModeSharingEnum::EMPTY => ClusterVolumeSpecAccessModeSharingEnum::Empty,
+                  bollard::config::ClusterVolumeSpecAccessModeSharingEnum::NONE => ClusterVolumeSpecAccessModeSharingEnum::None,
+                  bollard::config::ClusterVolumeSpecAccessModeSharingEnum::READONLY => ClusterVolumeSpecAccessModeSharingEnum::Readonly,
+                  bollard::config::ClusterVolumeSpecAccessModeSharingEnum::ONEWRITER => ClusterVolumeSpecAccessModeSharingEnum::Onewriter,
+                  bollard::config::ClusterVolumeSpecAccessModeSharingEnum::ALL => ClusterVolumeSpecAccessModeSharingEnum::All,
                 }).unwrap_or_default(),
                 secrets: mode.secrets.unwrap_or_default().into_iter().map(|secret| ClusterVolumeSpecAccessModeSecrets {
                   key: secret.key,
@@ -116,10 +116,10 @@ impl DockerClient {
                   limit_bytes: range.limit_bytes,
                 }),
                 availability: mode.availability.map(|availability| match availability {
-                  bollard::secret::ClusterVolumeSpecAccessModeAvailabilityEnum::EMPTY => ClusterVolumeSpecAccessModeAvailabilityEnum::Empty,
-                  bollard::secret::ClusterVolumeSpecAccessModeAvailabilityEnum::ACTIVE => ClusterVolumeSpecAccessModeAvailabilityEnum::Active,
-                  bollard::secret::ClusterVolumeSpecAccessModeAvailabilityEnum::PAUSE => ClusterVolumeSpecAccessModeAvailabilityEnum::Pause,
-                  bollard::secret::ClusterVolumeSpecAccessModeAvailabilityEnum::DRAIN => ClusterVolumeSpecAccessModeAvailabilityEnum::Drain,
+                  bollard::config::ClusterVolumeSpecAccessModeAvailabilityEnum::EMPTY => ClusterVolumeSpecAccessModeAvailabilityEnum::Empty,
+                  bollard::config::ClusterVolumeSpecAccessModeAvailabilityEnum::ACTIVE => ClusterVolumeSpecAccessModeAvailabilityEnum::Active,
+                  bollard::config::ClusterVolumeSpecAccessModeAvailabilityEnum::PAUSE => ClusterVolumeSpecAccessModeAvailabilityEnum::Pause,
+                  bollard::config::ClusterVolumeSpecAccessModeAvailabilityEnum::DRAIN => ClusterVolumeSpecAccessModeAvailabilityEnum::Drain,
                 }).unwrap_or_default(),
               }
             }),
@@ -137,11 +137,11 @@ impl DockerClient {
             .map(|status| ClusterVolumePublishStatus {
               node_id: status.node_id,
               state: status.state.map(|state| match state {
-                bollard::secret::ClusterVolumePublishStatusStateEnum::EMPTY => ClusterVolumePublishStatusStateEnum::Empty,
-                bollard::secret::ClusterVolumePublishStatusStateEnum::PENDING_PUBLISH => ClusterVolumePublishStatusStateEnum::PendingPublish,
-                bollard::secret::ClusterVolumePublishStatusStateEnum::PUBLISHED => ClusterVolumePublishStatusStateEnum::Published,
-                bollard::secret::ClusterVolumePublishStatusStateEnum::PENDING_NODE_UNPUBLISH => ClusterVolumePublishStatusStateEnum::PendingNodeUnpublish,
-                bollard::secret::ClusterVolumePublishStatusStateEnum::PENDING_CONTROLLER_UNPUBLISH => ClusterVolumePublishStatusStateEnum::PendingControllerUnpublish,
+                bollard::config::ClusterVolumePublishStatusStateEnum::EMPTY => ClusterVolumePublishStatusStateEnum::Empty,
+                bollard::config::ClusterVolumePublishStatusStateEnum::PENDING_PUBLISH => ClusterVolumePublishStatusStateEnum::PendingPublish,
+                bollard::config::ClusterVolumePublishStatusStateEnum::PUBLISHED => ClusterVolumePublishStatusStateEnum::Published,
+                bollard::config::ClusterVolumePublishStatusStateEnum::PENDING_NODE_UNPUBLISH => ClusterVolumePublishStatusStateEnum::PendingNodeUnpublish,
+                bollard::config::ClusterVolumePublishStatusStateEnum::PENDING_CONTROLLER_UNPUBLISH => ClusterVolumePublishStatusStateEnum::PendingControllerUnpublish,
               }).unwrap_or_default(),
               publish_context: status.publish_context.unwrap_or_default(),
             })

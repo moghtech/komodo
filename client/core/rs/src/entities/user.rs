@@ -202,10 +202,10 @@ impl Default for UserConfig {
 
 impl UserConfig {
   pub fn sanitize(&mut self) {
-    if let UserConfig::Local { password } = self {
-      if !password.is_empty() {
-        *password = "#".repeat(8);
-      }
+    if let UserConfig::Local { password } = self
+      && !password.is_empty()
+    {
+      *password = "#".repeat(8);
     }
   }
 }

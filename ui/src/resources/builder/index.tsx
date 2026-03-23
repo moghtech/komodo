@@ -18,7 +18,8 @@ export function useBuilder(id: string | undefined) {
 }
 
 export function useFullBuilder(id: string) {
-  return useRead("GetBuilder", { builder: id }).data;
+  return useRead("GetBuilder", { builder: id }, { refetchInterval: 30_000 })
+    .data;
 }
 
 export const BuilderComponents: RequiredResourceComponents<
@@ -33,7 +34,11 @@ export const BuilderComponents: RequiredResourceComponents<
   useResourceLinks: () => undefined,
 
   useDashboardSummaryData: () => {
-    const summary = useRead("GetBuildersSummary", {}).data;
+    const summary = useRead(
+      "GetBuildersSummary",
+      {},
+      { refetchInterval: 10_000 },
+    ).data;
     return [{ intention: "Good", value: summary?.total ?? 0, title: "Total" }];
   },
 

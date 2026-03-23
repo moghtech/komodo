@@ -1,10 +1,10 @@
-import { useRead } from "@/lib/hooks";
 import UrlBuilderConfig from "./url";
 import ServerBuilderConfig from "./server";
 import AwsBuilderConfig from "./aws";
+import { useFullBuilder } from "..";
 
 export default function BuilderConfig({ id }: { id: string }) {
-  const config = useRead("GetBuilder", { builder: id }).data?.config;
+  const config = useFullBuilder(id)?.config;
   switch (config?.type) {
     case "Aws":
       return <AwsBuilderConfig id={id} />;

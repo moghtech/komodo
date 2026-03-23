@@ -2,6 +2,7 @@ import { ColorIntention, hexColorByIntention } from "@/lib/color";
 import { ICONS } from "@/theme/icons";
 import {
   ActionIcon,
+  FloatingPosition,
   Group,
   GroupProps,
   HoverCard,
@@ -18,6 +19,7 @@ export interface StatCellProps extends GroupProps {
   textProps?: TextProps;
   barProps?: ProgressProps;
   info?: ReactNode;
+  infoPosition?: FloatingPosition;
   infoDisabled?: boolean;
 }
 
@@ -27,6 +29,7 @@ export default function StatCell({
   textProps,
   barProps,
   info,
+  infoPosition = "left-start",
   infoDisabled,
   ...groupProps
 }: StatCellProps) {
@@ -40,12 +43,7 @@ export default function StatCell({
     />
   );
   return (
-    <Group
-      gap="xs"
-      justify="space-between"
-      wrap="nowrap"
-      {...groupProps}
-    >
+    <Group gap="xs" justify="space-between" wrap="nowrap" {...groupProps}>
       <Text
         w={64}
         c={value === undefined ? "dimmed" : undefined}
@@ -55,17 +53,17 @@ export default function StatCell({
       </Text>
       {!info && ProgressComponent}
       {info && (
-        <Group gap="xs" wrap="nowrap">
-          {ProgressComponent}
-          <HoverCard position="bottom-end">
-            <HoverCard.Target>
+        <HoverCard position={infoPosition} disabled={infoDisabled}>
+          <HoverCard.Target>
+            <Group gap="xs" wrap="nowrap">
+              {ProgressComponent}
               <ActionIcon variant="subtle" disabled={infoDisabled}>
                 <ICONS.Info size="1rem" />
               </ActionIcon>
-            </HoverCard.Target>
-            <HoverCard.Dropdown>{info}</HoverCard.Dropdown>
-          </HoverCard>
-        </Group>
+            </Group>
+          </HoverCard.Target>
+          <HoverCard.Dropdown>{info}</HoverCard.Dropdown>
+        </HoverCard>
       )}
     </Group>
   );

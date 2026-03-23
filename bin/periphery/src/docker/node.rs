@@ -116,13 +116,13 @@ fn convert_node(node: bollard::models::Node) -> SwarmNode {
         leader: manager_status.leader,
         reachability: manager_status.reachability.map(
           |reachability| match reachability {
-            bollard::secret::Reachability::UNKNOWN => {
+            bollard::config::Reachability::UNKNOWN => {
               NodeReachability::UNKNOWN
             }
-            bollard::secret::Reachability::UNREACHABLE => {
+            bollard::config::Reachability::UNREACHABLE => {
               NodeReachability::UNREACHABLE
             }
-            bollard::secret::Reachability::REACHABLE => {
+            bollard::config::Reachability::REACHABLE => {
               NodeReachability::REACHABLE
             }
           },
@@ -143,46 +143,46 @@ fn convert_node_spec(spec: bollard::models::NodeSpec) -> NodeSpec {
 }
 
 fn convert_role(
-  role: bollard::secret::NodeSpecRoleEnum,
+  role: bollard::config::NodeSpecRoleEnum,
 ) -> NodeSpecRoleEnum {
   match role {
-    bollard::secret::NodeSpecRoleEnum::EMPTY => {
+    bollard::config::NodeSpecRoleEnum::EMPTY => {
       NodeSpecRoleEnum::EMPTY
     }
-    bollard::secret::NodeSpecRoleEnum::WORKER => {
+    bollard::config::NodeSpecRoleEnum::WORKER => {
       NodeSpecRoleEnum::WORKER
     }
-    bollard::secret::NodeSpecRoleEnum::MANAGER => {
+    bollard::config::NodeSpecRoleEnum::MANAGER => {
       NodeSpecRoleEnum::MANAGER
     }
   }
 }
 
 fn convert_availability(
-  availability: bollard::secret::NodeSpecAvailabilityEnum,
+  availability: bollard::config::NodeSpecAvailabilityEnum,
 ) -> NodeSpecAvailabilityEnum {
   match availability {
-    bollard::secret::NodeSpecAvailabilityEnum::EMPTY => {
+    bollard::config::NodeSpecAvailabilityEnum::EMPTY => {
       NodeSpecAvailabilityEnum::EMPTY
     }
-    bollard::secret::NodeSpecAvailabilityEnum::ACTIVE => {
+    bollard::config::NodeSpecAvailabilityEnum::ACTIVE => {
       NodeSpecAvailabilityEnum::ACTIVE
     }
-    bollard::secret::NodeSpecAvailabilityEnum::PAUSE => {
+    bollard::config::NodeSpecAvailabilityEnum::PAUSE => {
       NodeSpecAvailabilityEnum::PAUSE
     }
-    bollard::secret::NodeSpecAvailabilityEnum::DRAIN => {
+    bollard::config::NodeSpecAvailabilityEnum::DRAIN => {
       NodeSpecAvailabilityEnum::DRAIN
     }
   }
 }
 
-fn convert_state(state: bollard::secret::NodeState) -> NodeState {
+fn convert_state(state: bollard::config::NodeState) -> NodeState {
   match state {
-    bollard::secret::NodeState::UNKNOWN => NodeState::UNKNOWN,
-    bollard::secret::NodeState::DOWN => NodeState::DOWN,
-    bollard::secret::NodeState::READY => NodeState::READY,
-    bollard::secret::NodeState::DISCONNECTED => {
+    bollard::config::NodeState::UNKNOWN => NodeState::UNKNOWN,
+    bollard::config::NodeState::DOWN => NodeState::DOWN,
+    bollard::config::NodeState::READY => NodeState::READY,
+    bollard::config::NodeState::DISCONNECTED => {
       NodeState::DISCONNECTED
     }
   }

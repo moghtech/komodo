@@ -12,7 +12,7 @@ use mogh_resolver::Resolve;
 use crate::{
   api::execute::ExecuteArgs,
   helpers::{swarm::swarm_request, update::update_update},
-  monitor::update_cache_for_swarm,
+  monitor::refresh_swarm_cache,
   permission::get_check_permissions,
 };
 
@@ -21,7 +21,7 @@ impl Resolve<ExecuteArgs> for RemoveSwarmNodes {
     "RemoveSwarmNodes",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       swarm = self.swarm,
@@ -31,7 +31,11 @@ impl Resolve<ExecuteArgs> for RemoveSwarmNodes {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> Result<Self::Response, Self::Error> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
@@ -55,7 +59,7 @@ impl Resolve<ExecuteArgs> for RemoveSwarmNodes {
     {
       Ok(log) => {
         update.logs.push(log);
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       Err(e) => update.push_error_log(
         "Remove Swarm Nodes",
@@ -77,7 +81,7 @@ impl Resolve<ExecuteArgs> for RemoveSwarmStacks {
     "RemoveSwarmStacks",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       swarm = self.swarm,
@@ -87,7 +91,11 @@ impl Resolve<ExecuteArgs> for RemoveSwarmStacks {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> Result<Self::Response, Self::Error> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
@@ -111,7 +119,7 @@ impl Resolve<ExecuteArgs> for RemoveSwarmStacks {
     {
       Ok(log) => {
         update.logs.push(log);
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       Err(e) => update.push_error_log(
         "Remove Swarm Stacks",
@@ -133,7 +141,7 @@ impl Resolve<ExecuteArgs> for RemoveSwarmServices {
     "RemoveSwarmServices",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       swarm = self.swarm,
@@ -142,7 +150,11 @@ impl Resolve<ExecuteArgs> for RemoveSwarmServices {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> Result<Self::Response, Self::Error> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
@@ -165,7 +177,7 @@ impl Resolve<ExecuteArgs> for RemoveSwarmServices {
     {
       Ok(log) => {
         update.logs.push(log);
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       Err(e) => update.push_error_log(
         "Remove Swarm Services",
@@ -187,7 +199,7 @@ impl Resolve<ExecuteArgs> for CreateSwarmConfig {
     "CreateSwarmConfig",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       swarm = self.swarm,
@@ -196,7 +208,11 @@ impl Resolve<ExecuteArgs> for CreateSwarmConfig {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> Result<Self::Response, Self::Error> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
@@ -222,7 +238,7 @@ impl Resolve<ExecuteArgs> for CreateSwarmConfig {
     {
       Ok(log) => {
         update.logs.push(log);
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       Err(e) => update.push_error_log(
         "Create Swarm Config",
@@ -244,7 +260,7 @@ impl Resolve<ExecuteArgs> for RotateSwarmConfig {
     "RotateSwarmConfig",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       swarm = self.swarm,
@@ -253,7 +269,11 @@ impl Resolve<ExecuteArgs> for RotateSwarmConfig {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> Result<Self::Response, Self::Error> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
@@ -277,7 +297,7 @@ impl Resolve<ExecuteArgs> for RotateSwarmConfig {
     {
       Ok(logs) => {
         update.logs.extend(logs);
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       Err(e) => update.push_error_log(
         "Rotate Swarm Config",
@@ -299,7 +319,7 @@ impl Resolve<ExecuteArgs> for RemoveSwarmConfigs {
     "RemoveSwarmConfigs",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       swarm = self.swarm,
@@ -308,7 +328,11 @@ impl Resolve<ExecuteArgs> for RemoveSwarmConfigs {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> Result<Self::Response, Self::Error> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
@@ -331,7 +355,7 @@ impl Resolve<ExecuteArgs> for RemoveSwarmConfigs {
     {
       Ok(log) => {
         update.logs.push(log);
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       Err(e) => update.push_error_log(
         "Remove Swarm Configs",
@@ -353,7 +377,7 @@ impl Resolve<ExecuteArgs> for CreateSwarmSecret {
     "CreateSwarmSecret",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       swarm = self.swarm,
@@ -362,7 +386,11 @@ impl Resolve<ExecuteArgs> for CreateSwarmSecret {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> Result<Self::Response, Self::Error> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
@@ -389,7 +417,7 @@ impl Resolve<ExecuteArgs> for CreateSwarmSecret {
     {
       Ok(log) => {
         update.logs.push(log);
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       Err(e) => update.push_error_log(
         "Create Swarm Secret",
@@ -411,7 +439,7 @@ impl Resolve<ExecuteArgs> for RotateSwarmSecret {
     "RotateSwarmSecret",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       swarm = self.swarm,
@@ -420,7 +448,11 @@ impl Resolve<ExecuteArgs> for RotateSwarmSecret {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> Result<Self::Response, Self::Error> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
@@ -444,7 +476,7 @@ impl Resolve<ExecuteArgs> for RotateSwarmSecret {
     {
       Ok(logs) => {
         update.logs.extend(logs);
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       Err(e) => update.push_error_log(
         "Rotate Swarm Secret",
@@ -466,7 +498,7 @@ impl Resolve<ExecuteArgs> for RemoveSwarmSecrets {
     "RemoveSwarmSecrets",
     skip_all,
     fields(
-      id = id.to_string(),
+      task_id = task_id.to_string(),
       operator = user.id,
       update_id = update.id,
       swarm = self.swarm,
@@ -475,7 +507,11 @@ impl Resolve<ExecuteArgs> for RemoveSwarmSecrets {
   )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update, id }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> Result<Self::Response, Self::Error> {
     let swarm = get_check_permissions::<Swarm>(
       &self.swarm,
@@ -498,7 +534,7 @@ impl Resolve<ExecuteArgs> for RemoveSwarmSecrets {
     {
       Ok(log) => {
         update.logs.push(log);
-        update_cache_for_swarm(&swarm, true).await;
+        refresh_swarm_cache(&swarm, true).await;
       }
       Err(e) => update.push_error_log(
         "Remove Swarm Secrets",

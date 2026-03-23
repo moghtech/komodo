@@ -17,14 +17,88 @@
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
+/* Navbar title styling */
+.navbar__brand {
+  padding-left: 1.3rem;
+}
+
+.navbar__title {
+  font-size: var(--ifm-h2-font-size);
+  font-weight: 500;
+  letter-spacing: 0.1rem;
+  padding-left: 0.1rem;
+}
+
+/* Search bar: center in navbar on desktop */
+@media (min-width: 997px) {
+  .navbar__inner {
+    position: relative;
+  }
+
+  .navbar__search {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+
+  .navbar__search-input {
+    width: 320px;
+  }
+}
+
+/* Search dropdowns: centered below search bar on desktop */
+@media (min-width: 997px) {
+  .navbar__search [class*="dropdownMenu"] {
+    position: absolute !important;
+    top: 100% !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+    margin-top: 8px;
+    z-index: 200;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+}
+
+/* Search bar: higher contrast placeholder and shortcut hints */
+.navbar__search-input {
+  color: inherit;
+  border-radius: 6px;
+}
+
+/* Override search icon color — the SVG is a data URI so currentColor doesn't work */
+:root {
+  --ifm-navbar-search-input-icon: url('data:image/svg+xml;utf8,<svg fill="%23444950" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" height="16px" width="16px"><path d="M6.02945,10.20327a4.17382,4.17382,0,1,1,4.17382-4.17382A4.15609,4.15609,0,0,1,6.02945,10.20327Zm9.69195,4.2199L10.8989,9.59979A5.88021,5.88021,0,0,0,12.058,6.02856,6.00467,6.00467,0,1,0,9.59979,10.8989l4.82338,4.82338a.89729.89729,0,0,0,1.29912,0,.89749.89749,0,0,0-.00087-1.29909Z" /></svg>');
+}
+
 [data-theme='dark'] {
-  --ifm-color-primary: #25c2a0;
-  --ifm-color-primary-dark: #21af90;
-  --ifm-color-primary-darker: #1fa588;
-  --ifm-color-primary-darkest: #1a8870;
-  --ifm-color-primary-light: #29d5b0;
-  --ifm-color-primary-lighter: #32d8b4;
-  --ifm-color-primary-lightest: #4fddbf;
+  --ifm-navbar-search-input-icon: url('data:image/svg+xml;utf8,<svg fill="%23b0b8c4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" height="16px" width="16px"><path d="M6.02945,10.20327a4.17382,4.17382,0,1,1,4.17382-4.17382A4.15609,4.15609,0,0,1,6.02945,10.20327Zm9.69195,4.2199L10.8989,9.59979A5.88021,5.88021,0,0,0,12.058,6.02856,6.00467,6.00467,0,1,0,9.59979,10.8989l4.82338,4.82338a.89729.89729,0,0,0,1.29912,0,.89749.89749,0,0,0-.00087-1.29909Z" /></svg>');
+}
+
+.navbar__search-input::placeholder {
+  color: inherit;
+  opacity: 1;
+}
+
+.navbar__search-input [class*="shortcut"],
+.navbar__search [class*="hint"],
+.navbar__search kbd {
+  color: var(--ifm-color-emphasis-700);
+  border-color: var(--ifm-color-emphasis-400);
+  opacity: 1;
+}
+
+/* Dark mode: lighter green ramp consistent with the logo's forest green */
+[data-theme='dark'] {
+  --ifm-color-primary: #4db87a;
+  --ifm-color-primary-dark: #44a46e;
+  --ifm-color-primary-darker: #3f9b67;
+  --ifm-color-primary-darkest: #347f55;
+  --ifm-color-primary-light: #5ec487;
+  --ifm-color-primary-lighter: #6aca90;
+  --ifm-color-primary-lightest: #82d3a1;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }

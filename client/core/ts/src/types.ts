@@ -1241,7 +1241,7 @@ export interface OnboardingKey {
 	 * 2. Remove Server 'address' configuration, allowing Periphery -> Core connection.
 	 * 3. Update existing Server's public keys.
 	 */
-	fix_existing_servers?: boolean;
+	privileged?: boolean;
 	/**
 	 * Optional. If specified, copy this Server config when initializing
 	 * the Server.
@@ -2594,6 +2594,14 @@ export interface StackConfig {
 	 * - "sops exec-file --no-fifo /path/to/secret.env '[[COMPOSE_COMMAND]]'" (sops)
 	 */
 	compose_cmd_wrapper?: string;
+	/**
+	 * Which compose subcommands should use the wrapper.
+	 * Valid values for Compose: "config", "build", "pull", "up", "run"
+	 * Valid values for Swarm: "config", "deploy"
+	 * Default: [] (empty). If empty and wrapper is set, defaults to ["up"] (Compose) or ["deploy"] (Swarm).
+	 * Set to ["config", "build", "pull", "up"] for sops exec-file with {} placeholder.
+	 */
+	compose_cmd_wrapper_include: string[];
 	/**
 	 * Ignore certain services declared in the compose file when checking
 	 * the stack status. For example, an init service might be exited, but the
@@ -4495,7 +4503,7 @@ export interface SwarmTaskListItem {
 /**
  * All entities related to docker stack available over CLI.
  * Returned by:
- * ```
+ * ```shell
  * docker stack services --format json <STACK>
  * docker stack ps --format json <STACK>
  * ```
@@ -6809,7 +6817,7 @@ export interface CreateOnboardingKey {
 	 * 2. Remove Server 'address' configuration, allowing Periphery -> Core connection.
 	 * 3. Update existing Server's public keys.
 	 */
-	fix_existing_servers?: boolean;
+	privileged?: boolean;
 	/** Optional. New Servers copy this Server's config. */
 	copy_server?: string;
 	/** Optional. Whether to also create a Builder for the Server. */
@@ -8965,12 +8973,28 @@ export interface ListUserTargetPermissions {
 	user_target: UserTarget;
 }
 
+export enum ServiceUserQueryBehavior {
+	/** Include service users in results. Default. */
+	Include = "Include",
+	/** Exclude service users from results. */
+	Exclude = "Exclude",
+	/** Only include service users in results. */
+	Only = "Only",
+}
+
 /**
  * **Admin only.**
  * Gets list of Komodo users.
  * Response: [ListUsersResponse]
  */
 export interface ListUsers {
+	/**
+	 * Service user query options:
+	 * - Include (default)
+	 * - Exclude
+	 * - Only
+	 */
+	service_users?: ServiceUserQueryBehavior;
 }
 
 /**
@@ -10246,7 +10270,7 @@ export interface UpdateOnboardingKey {
 	 * 2. Remove Server 'address' configuration, allowing Periphery -> Core connection.
 	 * 3. Update existing Server's public keys.
 	 */
-	fix_existing_servers?: boolean;
+	privileged?: boolean;
 	/** Update the copy server */
 	copy_server?: string;
 	/** Update whether to create Builder */

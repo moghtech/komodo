@@ -1,11 +1,12 @@
 import { BoxProps, Flex, FlexProps, Group, Stack } from "@mantine/core";
 import { Types } from "komodo_client";
-import { Check, X } from "lucide-react";
+import { AlertTriangle, Check } from "lucide-react";
 import { fmtDate, fmtUpperCamelcase } from "@/lib/formatting";
 import { ICONS } from "@/theme/icons";
 import { useAlertDetails } from "./details";
 import AlertLevel from "./level";
 import ResourceLink from "@/resources/link";
+import { hexColorByIntention } from "@/lib/color";
 
 export default function AlertCard({
   alert,
@@ -81,8 +82,12 @@ export default function AlertCard({
 
 const Icon = ({ alert }: { alert: Types.Alert }) => {
   if (alert.resolved) {
-    return <Check size="1rem" color="green" />;
+    return <Check size="1rem" color={hexColorByIntention("Good")} />;
+  } else if (alert.level !== Types.SeverityLevel.Critical) {
+    return <AlertTriangle size="1rem" color={hexColorByIntention("Warning")} />;
   } else {
-    return <X size="1rem" color="red" />;
+    return (
+      <AlertTriangle size="1rem" color={hexColorByIntention("Critical")} />
+    );
   }
 };
