@@ -82,6 +82,7 @@ export default function Updates() {
                 id === "" ? p.delete("id") : p.set("id", id);
                 setParams(p);
               }}
+              targetProps={{ w: { base: "100%", xs: 250 } }}
             />
           )}
 
@@ -104,6 +105,7 @@ export default function Updates() {
                   (o) => o !== Types.Operation.None,
                 )
             ).map((value) => ({ value, label: fmtUpperCamelcase(value) }))}
+            w={{ base: "100%", xs: 250 }}
             searchable
             clearable
           />

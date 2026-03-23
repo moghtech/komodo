@@ -99,6 +99,7 @@ export default function Alerts() {
                 id === "" ? p.delete("id") : p.set("id", id);
                 setParams(p);
               }}
+              targetProps={{ w: { base: "100%", xs: 250 } }}
             />
           )}
 
@@ -119,6 +120,7 @@ export default function Alerts() {
               value,
               label: fmtUpperCamelcase(value),
             }))}
+            w={{ base: "100%", xs: 250 }}
             searchable
             clearable
           />

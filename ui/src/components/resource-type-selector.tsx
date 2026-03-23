@@ -22,6 +22,7 @@ export default function ResourceTypeSelector({
         onChange?.(type as UsableResource);
       }}
       data={RESOURCE_TARGETS}
+      w={{ base: "100%", xs: 200 }}
       searchable
       clearable
       {...selectProps}
