@@ -120,7 +120,7 @@ def download_binary(args, bin_dir):
 		raise RuntimeError(
 			f"Failed to download binary from "
 			f"{args.binary_url}/{args.version}/{periphery_bin}"
-			f"\n\nDid you provide an existing tag? Check here for valid tags:"
+			f"\n\nDid you provide a valid tag for '--version'? Check here for valid version tags:"
 			f"\nhttps://github.com/moghtech/komodo/tags"
 		)
 
