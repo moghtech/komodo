@@ -2,8 +2,8 @@
 ## Sets up the necessary runtime container dependencies for Komodo Core.
 ## Since theres no heavy build here, QEMU multi-arch builds are fine for this image.
 
-ARG BINARIES_IMAGE=ghcr.io/moghtech/komodo-binaries:latest
-ARG UI_IMAGE=ghcr.io/moghtech/komodo-ui:latest
+ARG BINARIES_IMAGE=ghcr.io/moghtech/komodo-binaries:2
+ARG UI_IMAGE=ghcr.io/moghtech/komodo-ui:2
 ARG X86_64_BINARIES=${BINARIES_IMAGE}-x86_64
 ARG AARCH64_BINARIES=${BINARIES_IMAGE}-aarch64
 

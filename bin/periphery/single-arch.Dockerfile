@@ -1,7 +1,7 @@
 ## Assumes the latest binaries for the required arch are already built (by binaries.Dockerfile).
 ## Sets up the necessary runtime container dependencies for Komodo Periphery.
 
-ARG BINARIES_IMAGE=ghcr.io/moghtech/komodo-binaries:latest
+ARG BINARIES_IMAGE=ghcr.io/moghtech/komodo-binaries:2
 
 # This is required to work with COPY --from
 FROM ${BINARIES_IMAGE} AS binaries
