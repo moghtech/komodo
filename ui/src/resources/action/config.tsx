@@ -180,21 +180,24 @@ export default function ActionConfig({ id }: { id: string }) {
               ),
               schedule: {
                 label: "Expression",
-                description:
-                  (update.schedule_format ?? config.schedule_format) ===
-                  "Cron" ? (
-                    <Text ff="monospace">
-                      second - minute - hour - day - month - day-of-week
-                    </Text>
-                  ) : (
-                    <Stack gap="0">
-                      <Text>- Run every day at 4:00 pm</Text>
-                      <Text>
-                        - Run at 21:00 on the 1st and 15th of the month
-                      </Text>
-                      <Text>- Every Sunday at midnight</Text>
-                    </Stack>
-                  ),
+                description: (
+                  <Stack gap="0" pt="0.2rem">
+                    {(update.schedule_format ?? config.schedule_format) ===
+                    "Cron" ? (
+                      <code>
+                        second - minute - hour - day - month - day-of-week
+                      </code>
+                    ) : (
+                      <>
+                        <code>- Run every day at 4:00 pm</code>
+                        <code>
+                          - Run at 21:00 on the 1st and 15th of the month
+                        </code>
+                        <code>- Every Sunday at midnight</code>
+                      </>
+                    )}
+                  </Stack>
+                ),
                 placeholder:
                   (update.schedule_format ?? config.schedule_format) === "Cron"
                     ? "0 0 0 ? * SUN"

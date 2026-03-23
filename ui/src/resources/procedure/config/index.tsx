@@ -220,24 +220,24 @@ export default function ProcedureConfig({ id }: { id: string }) {
               ),
               schedule: {
                 label: "Expression",
-                description:
-                  (update.schedule_format ?? config.schedule_format) ===
-                  "Cron" ? (
-                    <div className="pt-1 flex flex-col gap-1">
+                description: (
+                  <Stack gap="0" pt="0.2rem">
+                    {(update.schedule_format ?? config.schedule_format) ===
+                    "Cron" ? (
                       <code>
                         second - minute - hour - day - month - day-of-week
                       </code>
-                    </div>
-                  ) : (
-                    <div className="pt-1 flex flex-col gap-1">
-                      <code>Examples:</code>
-                      <code>- Run every day at 4:00 pm</code>
-                      <code>
-                        - Run at 21:00 on the 1st and 15th of the month
-                      </code>
-                      <code>- Every Sunday at midnight</code>
-                    </div>
-                  ),
+                    ) : (
+                      <>
+                        <code>- Run every day at 4:00 pm</code>
+                        <code>
+                          - Run at 21:00 on the 1st and 15th of the month
+                        </code>
+                        <code>- Every Sunday at midnight</code>
+                      </>
+                    )}
+                  </Stack>
+                ),
                 placeholder:
                   (update.schedule_format ?? config.schedule_format) === "Cron"
                     ? "0 0 0 ? * SUN"
