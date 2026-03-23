@@ -461,80 +461,80 @@ impl DockerClient {
 }
 
 fn convert_summary_container_state(
-  state: bollard::secret::ContainerSummaryStateEnum,
+  state: bollard::config::ContainerSummaryStateEnum,
 ) -> ContainerStateStatusEnum {
   match state {
-    bollard::secret::ContainerSummaryStateEnum::EMPTY => {
+    bollard::config::ContainerSummaryStateEnum::EMPTY => {
       ContainerStateStatusEnum::Empty
     }
-    bollard::secret::ContainerSummaryStateEnum::CREATED => {
+    bollard::config::ContainerSummaryStateEnum::CREATED => {
       ContainerStateStatusEnum::Created
     }
-    bollard::secret::ContainerSummaryStateEnum::RUNNING => {
+    bollard::config::ContainerSummaryStateEnum::RUNNING => {
       ContainerStateStatusEnum::Running
     }
-    bollard::secret::ContainerSummaryStateEnum::PAUSED => {
+    bollard::config::ContainerSummaryStateEnum::PAUSED => {
       ContainerStateStatusEnum::Paused
     }
-    bollard::secret::ContainerSummaryStateEnum::RESTARTING => {
+    bollard::config::ContainerSummaryStateEnum::RESTARTING => {
       ContainerStateStatusEnum::Restarting
     }
-    bollard::secret::ContainerSummaryStateEnum::EXITED => {
+    bollard::config::ContainerSummaryStateEnum::EXITED => {
       ContainerStateStatusEnum::Exited
     }
-    bollard::secret::ContainerSummaryStateEnum::REMOVING => {
+    bollard::config::ContainerSummaryStateEnum::REMOVING => {
       ContainerStateStatusEnum::Removing
     }
-    bollard::secret::ContainerSummaryStateEnum::DEAD => {
+    bollard::config::ContainerSummaryStateEnum::DEAD => {
       ContainerStateStatusEnum::Dead
     }
   }
 }
 
 fn convert_container_state_status(
-  state: bollard::secret::ContainerStateStatusEnum,
+  state: bollard::config::ContainerStateStatusEnum,
 ) -> ContainerStateStatusEnum {
   match state {
-    bollard::secret::ContainerStateStatusEnum::EMPTY => {
+    bollard::config::ContainerStateStatusEnum::EMPTY => {
       ContainerStateStatusEnum::Empty
     }
-    bollard::secret::ContainerStateStatusEnum::CREATED => {
+    bollard::config::ContainerStateStatusEnum::CREATED => {
       ContainerStateStatusEnum::Created
     }
-    bollard::secret::ContainerStateStatusEnum::RUNNING => {
+    bollard::config::ContainerStateStatusEnum::RUNNING => {
       ContainerStateStatusEnum::Running
     }
-    bollard::secret::ContainerStateStatusEnum::PAUSED => {
+    bollard::config::ContainerStateStatusEnum::PAUSED => {
       ContainerStateStatusEnum::Paused
     }
-    bollard::secret::ContainerStateStatusEnum::RESTARTING => {
+    bollard::config::ContainerStateStatusEnum::RESTARTING => {
       ContainerStateStatusEnum::Restarting
     }
-    bollard::secret::ContainerStateStatusEnum::EXITED => {
+    bollard::config::ContainerStateStatusEnum::EXITED => {
       ContainerStateStatusEnum::Exited
     }
-    bollard::secret::ContainerStateStatusEnum::REMOVING => {
+    bollard::config::ContainerStateStatusEnum::REMOVING => {
       ContainerStateStatusEnum::Removing
     }
-    bollard::secret::ContainerStateStatusEnum::DEAD => {
+    bollard::config::ContainerStateStatusEnum::DEAD => {
       ContainerStateStatusEnum::Dead
     }
   }
 }
 
 fn convert_port_type(
-  typ: bollard::secret::PortSummaryTypeEnum,
+  typ: bollard::config::PortSummaryTypeEnum,
 ) -> PortTypeEnum {
   match typ {
-    bollard::secret::PortSummaryTypeEnum::EMPTY => {
+    bollard::config::PortSummaryTypeEnum::EMPTY => {
       PortTypeEnum::EMPTY
     }
-    bollard::secret::PortSummaryTypeEnum::TCP => PortTypeEnum::TCP,
-    bollard::secret::PortSummaryTypeEnum::UDP => PortTypeEnum::UDP,
-    bollard::secret::PortSummaryTypeEnum::SCTP => PortTypeEnum::SCTP,
+    bollard::config::PortSummaryTypeEnum::TCP => PortTypeEnum::TCP,
+    bollard::config::PortSummaryTypeEnum::UDP => PortTypeEnum::UDP,
+    bollard::config::PortSummaryTypeEnum::SCTP => PortTypeEnum::SCTP,
   }
 }
-fn convert_port(port: bollard::secret::PortSummary) -> Port {
+fn convert_port(port: bollard::config::PortSummary) -> Port {
   Port {
     ip: port.ip,
     private_port: port.private_port,
@@ -544,27 +544,27 @@ fn convert_port(port: bollard::secret::PortSummary) -> Port {
 }
 
 fn convert_health_status(
-  status: bollard::secret::HealthStatusEnum,
+  status: bollard::config::HealthStatusEnum,
 ) -> HealthStatusEnum {
   match status {
-    bollard::secret::HealthStatusEnum::EMPTY => {
+    bollard::config::HealthStatusEnum::EMPTY => {
       HealthStatusEnum::Empty
     }
-    bollard::secret::HealthStatusEnum::NONE => HealthStatusEnum::None,
-    bollard::secret::HealthStatusEnum::STARTING => {
+    bollard::config::HealthStatusEnum::NONE => HealthStatusEnum::None,
+    bollard::config::HealthStatusEnum::STARTING => {
       HealthStatusEnum::Starting
     }
-    bollard::secret::HealthStatusEnum::HEALTHY => {
+    bollard::config::HealthStatusEnum::HEALTHY => {
       HealthStatusEnum::Healthy
     }
-    bollard::secret::HealthStatusEnum::UNHEALTHY => {
+    bollard::config::HealthStatusEnum::UNHEALTHY => {
       HealthStatusEnum::Unhealthy
     }
   }
 }
 
 fn convert_health_check_result(
-  check: bollard::secret::HealthcheckResult,
+  check: bollard::config::HealthcheckResult,
 ) -> HealthcheckResult {
   HealthcheckResult {
     start: check.start,
@@ -575,57 +575,57 @@ fn convert_health_check_result(
 }
 
 fn convert_restart_policy(
-  policy: bollard::secret::RestartPolicyNameEnum,
+  policy: bollard::config::RestartPolicyNameEnum,
 ) -> RestartPolicyNameEnum {
   match policy {
-    bollard::secret::RestartPolicyNameEnum::EMPTY => {
+    bollard::config::RestartPolicyNameEnum::EMPTY => {
       RestartPolicyNameEnum::Empty
     }
-    bollard::secret::RestartPolicyNameEnum::NO => {
+    bollard::config::RestartPolicyNameEnum::NO => {
       RestartPolicyNameEnum::No
     }
-    bollard::secret::RestartPolicyNameEnum::ALWAYS => {
+    bollard::config::RestartPolicyNameEnum::ALWAYS => {
       RestartPolicyNameEnum::Always
     }
-    bollard::secret::RestartPolicyNameEnum::UNLESS_STOPPED => {
+    bollard::config::RestartPolicyNameEnum::UNLESS_STOPPED => {
       RestartPolicyNameEnum::UnlessStopped
     }
-    bollard::secret::RestartPolicyNameEnum::ON_FAILURE => {
+    bollard::config::RestartPolicyNameEnum::ON_FAILURE => {
       RestartPolicyNameEnum::OnFailure
     }
   }
 }
 
 fn convert_cgroupns_mode(
-  mode: bollard::secret::HostConfigCgroupnsModeEnum,
+  mode: bollard::config::HostConfigCgroupnsModeEnum,
 ) -> HostConfigCgroupnsModeEnum {
   match mode {
-    bollard::secret::HostConfigCgroupnsModeEnum::EMPTY => {
+    bollard::config::HostConfigCgroupnsModeEnum::EMPTY => {
       HostConfigCgroupnsModeEnum::Empty
     }
-    bollard::secret::HostConfigCgroupnsModeEnum::PRIVATE => {
+    bollard::config::HostConfigCgroupnsModeEnum::PRIVATE => {
       HostConfigCgroupnsModeEnum::Private
     }
-    bollard::secret::HostConfigCgroupnsModeEnum::HOST => {
+    bollard::config::HostConfigCgroupnsModeEnum::HOST => {
       HostConfigCgroupnsModeEnum::Host
     }
   }
 }
 
 fn convert_isolation_mode(
-  isolation: bollard::secret::HostConfigIsolationEnum,
+  isolation: bollard::config::HostConfigIsolationEnum,
 ) -> HostConfigIsolationEnum {
   match isolation {
-    bollard::secret::HostConfigIsolationEnum::EMPTY => {
+    bollard::config::HostConfigIsolationEnum::EMPTY => {
       HostConfigIsolationEnum::Empty
     }
-    bollard::secret::HostConfigIsolationEnum::DEFAULT => {
+    bollard::config::HostConfigIsolationEnum::DEFAULT => {
       HostConfigIsolationEnum::Default
     }
-    bollard::secret::HostConfigIsolationEnum::PROCESS => {
+    bollard::config::HostConfigIsolationEnum::PROCESS => {
       HostConfigIsolationEnum::Process
     }
-    bollard::secret::HostConfigIsolationEnum::HYPERV => {
+    bollard::config::HostConfigIsolationEnum::HYPERV => {
       HostConfigIsolationEnum::Hyperv
     }
   }

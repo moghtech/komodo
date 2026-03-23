@@ -37,19 +37,19 @@ mogh_error = { version = "1.0.3", default-features = false }
 derive_default_builder = "0.1.8"
 async_timing_util = "1.1.0"
 mogh_auth_client = "1.2.2"
-mogh_auth_server = "1.2.12"
+mogh_auth_server = "1.2.13"
 mogh_secret_file = "1.0.1"
 mogh_validations = "1.0.1"
 mogh_rate_limit = "1.0.1"
 partial_derive2 = "0.4.5"
 mongo_indexed = "2.0.2"
 mogh_resolver = "1.0.0"
-mogh_config = "1.0.2"
-mogh_logger = "1.3.1"
+mogh_config = "1.0.4"
+mogh_logger = "1.3.2"
 mogh_server = "1.4.5"
 toml_pretty = "2.0.0"
 mogh_cache = "1.1.1"
-mogh_pki = "1.1.0"
+mogh_pki = "1.1.2"
 mungos = "3.2.2"
 svi = "1.2.0"
 
@@ -60,10 +60,10 @@ tokio-util = { version = "0.7.18", features = ["io", "codec"] }
 tokio-stream = { version = "0.1.18", features = ["sync"] }
 pin-project-lite = "0.2.17"
 futures-util = "0.3.32"
-arc-swap = "1.8.2"
+arc-swap = "1.9.0"
 
 # SERVER
-tokio-tungstenite = { version = "0.28.0", features = ["rustls-tls-native-roots"] }
+tokio-tungstenite = { version = "0.29.0", features = ["rustls-tls-native-roots"] }
 axum = { version = "0.8.8", features = ["ws", "json", "macros"] }
 axum-extra = { version = "0.12.5", features = ["typed-header"] }
 
@@ -77,10 +77,10 @@ indexmap = { version = "2.13.0", features = ["serde"] }
 serde = { version = "1.0.227", features = ["derive"] }
 strum = { version = "0.28.0", features = ["derive"] }
 bson = { version = "2.15.0" } # must keep in sync with mongodb version
-toml = "1.0.4"
+toml = "1.1.0"
 serde_yaml_ng = "0.10.0"
 serde_json = "1.0.149"
-serde_qs = "1.0.0"
+serde_qs = "1.1.0"
 url = "2.5.8"
 
 # ERROR
@@ -112,13 +112,13 @@ hickory-resolver = "0.25.2"
 portable-pty = "0.9.0"
 shell-escape = "0.1.5"
 crossterm = "0.29.0"
-bollard = "0.20.1"
-sysinfo = "0.38.3"
+bollard = "0.20.2"
+sysinfo = "0.38.4"
 shlex = "1.3.0"
 
 # CLOUD
 aws-config = "1.8.15"
-aws-sdk-ec2 = "1.216.0"
+aws-sdk-ec2 = "1.220.0"
 aws-credential-types = "1.2.14"
 
 ## CRON

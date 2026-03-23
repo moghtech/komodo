@@ -324,17 +324,17 @@ fn convert_service(
           parallelism: config.parallelism,
           delay: config.delay,
           failure_action: config.failure_action.map(|action| match action {
-            bollard::secret::ServiceSpecUpdateConfigFailureActionEnum::EMPTY => ServiceSpecUpdateConfigFailureActionEnum::EMPTY,
-            bollard::secret::ServiceSpecUpdateConfigFailureActionEnum::CONTINUE => ServiceSpecUpdateConfigFailureActionEnum::CONTINUE,
-            bollard::secret::ServiceSpecUpdateConfigFailureActionEnum::PAUSE => ServiceSpecUpdateConfigFailureActionEnum::PAUSE,
-            bollard::secret::ServiceSpecUpdateConfigFailureActionEnum::ROLLBACK => ServiceSpecUpdateConfigFailureActionEnum::ROLLBACK,
+            bollard::config::ServiceSpecUpdateConfigFailureActionEnum::EMPTY => ServiceSpecUpdateConfigFailureActionEnum::EMPTY,
+            bollard::config::ServiceSpecUpdateConfigFailureActionEnum::CONTINUE => ServiceSpecUpdateConfigFailureActionEnum::CONTINUE,
+            bollard::config::ServiceSpecUpdateConfigFailureActionEnum::PAUSE => ServiceSpecUpdateConfigFailureActionEnum::PAUSE,
+            bollard::config::ServiceSpecUpdateConfigFailureActionEnum::ROLLBACK => ServiceSpecUpdateConfigFailureActionEnum::ROLLBACK,
           }),
           monitor: config.monitor,
           max_failure_ratio: config.max_failure_ratio,
           order: config.order.map(|order| match order {
-            bollard::secret::ServiceSpecUpdateConfigOrderEnum::EMPTY => ServiceSpecUpdateConfigOrderEnum::EMPTY,
-            bollard::secret::ServiceSpecUpdateConfigOrderEnum::STOP_FIRST => ServiceSpecUpdateConfigOrderEnum::STOP_FIRST,
-            bollard::secret::ServiceSpecUpdateConfigOrderEnum::START_FIRST => ServiceSpecUpdateConfigOrderEnum::START_FIRST,
+            bollard::config::ServiceSpecUpdateConfigOrderEnum::EMPTY => ServiceSpecUpdateConfigOrderEnum::EMPTY,
+            bollard::config::ServiceSpecUpdateConfigOrderEnum::STOP_FIRST => ServiceSpecUpdateConfigOrderEnum::STOP_FIRST,
+            bollard::config::ServiceSpecUpdateConfigOrderEnum::START_FIRST => ServiceSpecUpdateConfigOrderEnum::START_FIRST,
           }),
         }
       }),
@@ -343,16 +343,16 @@ fn convert_service(
           parallelism: config.parallelism,
           delay: config.delay,
           failure_action: config.failure_action.map(|action| match action {
-            bollard::secret::ServiceSpecRollbackConfigFailureActionEnum::EMPTY => ServiceSpecRollbackConfigFailureActionEnum::EMPTY,
-            bollard::secret::ServiceSpecRollbackConfigFailureActionEnum::CONTINUE => ServiceSpecRollbackConfigFailureActionEnum::CONTINUE,
-            bollard::secret::ServiceSpecRollbackConfigFailureActionEnum::PAUSE => ServiceSpecRollbackConfigFailureActionEnum::PAUSE,
+            bollard::config::ServiceSpecRollbackConfigFailureActionEnum::EMPTY => ServiceSpecRollbackConfigFailureActionEnum::EMPTY,
+            bollard::config::ServiceSpecRollbackConfigFailureActionEnum::CONTINUE => ServiceSpecRollbackConfigFailureActionEnum::CONTINUE,
+            bollard::config::ServiceSpecRollbackConfigFailureActionEnum::PAUSE => ServiceSpecRollbackConfigFailureActionEnum::PAUSE,
           }),
           monitor: config.monitor,
           max_failure_ratio: config.max_failure_ratio,
           order: config.order.map(|order| match order {
-            bollard::secret::ServiceSpecRollbackConfigOrderEnum::EMPTY => ServiceSpecRollbackConfigOrderEnum::EMPTY,
-            bollard::secret::ServiceSpecRollbackConfigOrderEnum::STOP_FIRST => ServiceSpecRollbackConfigOrderEnum::STOP_FIRST,
-            bollard::secret::ServiceSpecRollbackConfigOrderEnum::START_FIRST => ServiceSpecRollbackConfigOrderEnum::START_FIRST,
+            bollard::config::ServiceSpecRollbackConfigOrderEnum::EMPTY => ServiceSpecRollbackConfigOrderEnum::EMPTY,
+            bollard::config::ServiceSpecRollbackConfigOrderEnum::STOP_FIRST => ServiceSpecRollbackConfigOrderEnum::STOP_FIRST,
+            bollard::config::ServiceSpecRollbackConfigOrderEnum::START_FIRST => ServiceSpecRollbackConfigOrderEnum::START_FIRST,
           }),
         }
       }),
@@ -408,13 +408,13 @@ fn convert_endpoint_spec(
 ) -> EndpointSpec {
   EndpointSpec {
     mode: spec.mode.map(|mode| match mode {
-      bollard::secret::EndpointSpecModeEnum::EMPTY => {
+      bollard::config::EndpointSpecModeEnum::EMPTY => {
         EndpointSpecModeEnum::EMPTY
       }
-      bollard::secret::EndpointSpecModeEnum::VIP => {
+      bollard::config::EndpointSpecModeEnum::VIP => {
         EndpointSpecModeEnum::VIP
       }
-      bollard::secret::EndpointSpecModeEnum::DNSRR => {
+      bollard::config::EndpointSpecModeEnum::DNSRR => {
         EndpointSpecModeEnum::DNSRR
       }
     }),
@@ -423,15 +423,15 @@ fn convert_endpoint_spec(
 }
 
 fn convert_state(
-  state: bollard::secret::ServiceUpdateStatusStateEnum,
+  state: bollard::config::ServiceUpdateStatusStateEnum,
 ) -> ServiceUpdateStatusStateEnum {
   match state {
-    bollard::secret::ServiceUpdateStatusStateEnum::EMPTY => ServiceUpdateStatusStateEnum::EMPTY,
-    bollard::secret::ServiceUpdateStatusStateEnum::UPDATING => ServiceUpdateStatusStateEnum::UPDATING,
-    bollard::secret::ServiceUpdateStatusStateEnum::PAUSED => ServiceUpdateStatusStateEnum::PAUSED,
-    bollard::secret::ServiceUpdateStatusStateEnum::COMPLETED => ServiceUpdateStatusStateEnum::COMPLETED,
-    bollard::secret::ServiceUpdateStatusStateEnum::ROLLBACK_STARTED => ServiceUpdateStatusStateEnum::ROLLBACK_STARTED,
-    bollard::secret::ServiceUpdateStatusStateEnum::ROLLBACK_PAUSED => ServiceUpdateStatusStateEnum::ROLLBACK_PAUSED,
-    bollard::secret::ServiceUpdateStatusStateEnum::ROLLBACK_COMPLETED => ServiceUpdateStatusStateEnum::ROLLBACK_COMPLETED,
+    bollard::config::ServiceUpdateStatusStateEnum::EMPTY => ServiceUpdateStatusStateEnum::EMPTY,
+    bollard::config::ServiceUpdateStatusStateEnum::UPDATING => ServiceUpdateStatusStateEnum::UPDATING,
+    bollard::config::ServiceUpdateStatusStateEnum::PAUSED => ServiceUpdateStatusStateEnum::PAUSED,
+    bollard::config::ServiceUpdateStatusStateEnum::COMPLETED => ServiceUpdateStatusStateEnum::COMPLETED,
+    bollard::config::ServiceUpdateStatusStateEnum::ROLLBACK_STARTED => ServiceUpdateStatusStateEnum::ROLLBACK_STARTED,
+    bollard::config::ServiceUpdateStatusStateEnum::ROLLBACK_PAUSED => ServiceUpdateStatusStateEnum::ROLLBACK_PAUSED,
+    bollard::config::ServiceUpdateStatusStateEnum::ROLLBACK_COMPLETED => ServiceUpdateStatusStateEnum::ROLLBACK_COMPLETED,
   }
 }
