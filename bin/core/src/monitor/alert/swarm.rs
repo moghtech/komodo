@@ -68,16 +68,27 @@ pub async fn alert_swarms(
     let health_alert = swarm_alerts.as_ref().and_then(|alerts| {
       alerts.get(&AlertDataVariant::SwarmUnhealthy)
     });
-    match (swarm_status.state, health_alert) {
+    match (
+      swarm_status.state,
+      health_alert,
+      swarm.config.send_unhealthy_alerts,
+    ) {
       (
         SwarmState::Unhealthy
         | SwarmState::Down
         | SwarmState::Unknown,
         None,
+        false,
+      ) => {}
+      (
+        SwarmState::Unhealthy
+        | SwarmState::Down
+        | SwarmState::Unknown,
+        None,
+        true,
       ) => {
         // Only open unhealthy alert if unhealthy alerts enabled and not in maintenance and buffer is ready
-        if swarm.config.send_unhealthy_alerts
-          && !in_maintenance
+        if !in_maintenance
           && buffer.ready_to_open(
             swarm_status.id.clone(),
             AlertDataVariant::SwarmUnhealthy,
@@ -105,17 +116,8 @@ pub async fn alert_swarms(
         | SwarmState::Down
         | SwarmState::Unknown,
         Some(alert),
+        true,
       ) => {
-        // Maybe user disabled send unhealthy alerts since it was opened
-        // If so, close it here and continue.
-        if !swarm.config.send_unhealthy_alerts {
-          alerts_to_close.push((
-            alert.clone(),
-            swarm.config.send_unhealthy_alerts,
-          ));
-          continue;
-        }
-
         // update alert err
         let mut alert = alert.clone();
         let (id, name) = match alert.data {
@@ -137,12 +139,23 @@ pub async fn alert_swarms(
         alerts_to_update.push((alert, false));
       }
 
-      // Close an open alert
-      (SwarmState::Healthy, Some(alert)) => {
+      (
+        SwarmState::Unhealthy
+        | SwarmState::Down
+        | SwarmState::Unknown,
+        Some(alert),
+        false,
+      ) => {
         alerts_to_close
           .push((alert.clone(), swarm.config.send_unhealthy_alerts));
       }
-      (SwarmState::Healthy, None) => buffer.reset(
+
+      // Close an open alert
+      (SwarmState::Healthy, Some(alert), _) => {
+        alerts_to_close
+          .push((alert.clone(), swarm.config.send_unhealthy_alerts));
+      }
+      (SwarmState::Healthy, None, _) => buffer.reset(
         swarm_status.id.clone(),
         AlertDataVariant::SwarmUnhealthy,
       ),
