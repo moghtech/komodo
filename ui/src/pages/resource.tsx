@@ -91,8 +91,8 @@ function ResourceInner({ type, id }: { type: UsableResource; id: string }) {
       <Stack gap="xl">
         {canExecute && Object.keys(RC.Executions).length > 0 && (
           <Section
+            withBorder
             title="Execute"
-           
             icon={<ICONS.Execution size="1rem" />}
             my="md"
           >
