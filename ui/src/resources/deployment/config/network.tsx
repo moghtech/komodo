@@ -37,7 +37,6 @@ export default function DeploymentNetworkSelector({
   return (
     <ConfigItem
       label="Network Mode"
-      boldLabel
       description="Choose the --network attached to container"
     >
       {customMode && (

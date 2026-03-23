@@ -8507,12 +8507,27 @@ export interface ListUserTargetPermissions {
     /** Specify either a user or a user group. */
     user_target: UserTarget;
 }
+export declare enum ServiceUserQueryBehavior {
+    /** Include service users in results. Default. */
+    Include = "Include",
+    /** Exclude service users from results. */
+    Exclude = "Exclude",
+    /** Only include service users in results. */
+    Only = "Only"
+}
 /**
  * **Admin only.**
  * Gets list of Komodo users.
  * Response: [ListUsersResponse]
  */
 export interface ListUsers {
+    /**
+     * Service user query options:
+     * - Include (default)
+     * - Exclude
+     * - Only
+     */
+    service_users?: ServiceUserQueryBehavior;
 }
 /**
  * List all available global variables.

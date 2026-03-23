@@ -143,7 +143,6 @@ export default function BuildConfig({
               )
             }
             description="Select the Builder to build with."
-            boldLabel
           >
             <ResourceSelector
               type="Builder"
@@ -171,7 +170,6 @@ export default function BuildConfig({
           <ConfigInput
             inputProps={{ size: "lg" }}
             label="Version"
-            boldLabel
             description="Version the image with major.minor.patch. It can be interpolated using [[$VERSION]]."
             placeholder="0.0.0"
             value={version}
@@ -195,7 +193,6 @@ export default function BuildConfig({
           <ConfigItem
             label="Choose Mode"
             description="Will the dockerfile contents be defined in UI, stored on the server, or pulled from a git repo?"
-            boldLabel
           >
             <Select
               w="fit-content"
@@ -223,7 +220,6 @@ export default function BuildConfig({
         image_registry: (image_registries, set) => (
           <ConfigItem
             label="Image Registry"
-            boldLabel
             description="Configure where the built image is pushed."
             gap="xl"
           >
@@ -306,7 +302,6 @@ export default function BuildConfig({
         links: (values, set) => (
           <ConfigList
             label="Links"
-            boldLabel
             addLabel="Add Link"
             description="Add quick links in the resource header"
             field="links"
@@ -389,7 +384,6 @@ export default function BuildConfig({
         extra_args: (value, set) => (
           <ConfigItem
             label="Extra Args"
-            boldLabel
             description={
               <Group gap="xs">
                 <Text>Pass extra arguments to 'docker build'.</Text>

@@ -176,7 +176,6 @@ export default function ProcedureConfig({ id }: { id: string }) {
             labelHidden: true,
             fields: {
               failure_alert: {
-                boldLabel: true,
                 description: "Send an alert any time the Procedure fails",
               },
             },

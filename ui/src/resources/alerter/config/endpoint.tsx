@@ -25,7 +25,6 @@ export default function AlerterConfigEndpoint({
       <ConfigItem
         label="Endpoint"
         description="Configure the endpoint to send the alert to."
-        boldLabel
       >
         <Select
           value={endpoint.type}

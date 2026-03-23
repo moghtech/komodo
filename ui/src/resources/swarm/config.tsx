@@ -150,7 +150,6 @@ export default function SwarmConfig({
           },
           {
             label: "Links",
-            boldLabel: false,
             description: "Add quick links in the resource header",
             contentHidden: ((update.links ?? config.links)?.length ?? 0) === 0,
             fields: {

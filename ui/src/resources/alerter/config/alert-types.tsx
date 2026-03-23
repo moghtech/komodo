@@ -45,7 +45,6 @@ export default function AlerterConfigAlertTypes({
     <ConfigItem
       label="Alert Types"
       description="Only send alerts of certain types."
-      boldLabel
     >
       <Group wrap="nowrap">
         <Select

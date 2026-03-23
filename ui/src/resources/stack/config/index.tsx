@@ -220,7 +220,6 @@ export default function StackConfig({
           <ConfigItem
             label="Choose Mode"
             description="Will the file contents be defined in UI, stored on the server, or pulled from a git repo?"
-            boldLabel
           >
             <Select
               w="fit-content"
@@ -271,7 +270,7 @@ export default function StackConfig({
             typeof v === "string" ? { path: v, track: true } : v,
           );
           return (
-            <ConfigItem label="Additional Env Files" boldLabel>
+            <ConfigItem label="Additional Env Files">
               <Stack>
                 {files.map((file: any, i: number) => (
                   <Group key={i}>
@@ -479,10 +478,20 @@ export default function StackConfig({
     },
     {
       label: "Wrapper",
-      description: currSwarmId
-        ? "Optional wrapper for secrets management tools. Use 'Apply To' to select which docker stack subcommands to wrap."
-        : "Optional wrapper for secrets management tools. Use 'Apply To' to select which docker compose subcommands to wrap.",
+      description: "Optional wrapper for secrets management tools.",
       fields: {
+        compose_cmd_wrapper: (value, set) => (
+          <MonacoEditor
+            value={
+              value || "# sops exec-env .encrypted.env '[[COMPOSE_COMMAND]]'\n"
+            }
+            language="shell"
+            onValueChange={(compose_cmd_wrapper) =>
+              set({ compose_cmd_wrapper })
+            }
+            readOnly={disabled}
+          />
+        ),
         compose_cmd_wrapper_include: (values, set) => {
           const commands = currSwarmId
             ? ["config", "deploy"]
@@ -491,7 +500,10 @@ export default function StackConfig({
             commands.includes(v),
           );
           return (
-            <ConfigItem label="Apply To" boldLabel>
+            <ConfigItem
+              label="Apply To"
+              description={`Select which docker ${currSwarmId ? "stack" : "compose"} subcommands to wrap.`}
+            >
               <MultiSelect
                 placeholder={
                   filtered.length ? "Add commands" : "Select commands"
@@ -508,18 +520,6 @@ export default function StackConfig({
             </ConfigItem>
           );
         },
-        compose_cmd_wrapper: (value, set) => (
-          <MonacoEditor
-            value={
-              value || "# sops exec-env .encrypted.env '[[COMPOSE_COMMAND]]'\n"
-            }
-            language="shell"
-            onValueChange={(compose_cmd_wrapper) =>
-              set({ compose_cmd_wrapper })
-            }
-            readOnly={disabled}
-          />
-        ),
       },
     },
     {

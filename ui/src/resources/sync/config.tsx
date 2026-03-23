@@ -121,7 +121,6 @@ export default function ResourceSyncConfig({
           <ConfigItem
             label="Choose Mode"
             description="Will the file contents be defined in UI, stored on the server, or pulled from a git repo?"
-            boldLabel
           >
             <Select
               w="fit-content"

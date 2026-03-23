@@ -306,7 +306,6 @@ export default function DeploymentConfig({
               command: (value, set) => (
                 <ConfigItem
                   label="Command"
-                  boldLabel
                   description={
                     <Group>
                       <Text>Replace the CMD, or extend the ENTRYPOINT.</Text>
@@ -354,7 +353,6 @@ export default function DeploymentConfig({
               extra_args: (value, set) => (
                 <ConfigItem
                   label="Extra Args"
-                  boldLabel
                   description={
                     <div className="flex flex-row flex-wrap gap-2">
                       <div>

@@ -167,7 +167,6 @@ export default function ServerConfig({
             fields: {
               stats_monitoring: {
                 label: "System Stats Monitoring",
-                // boldLabel: true,
                 description:
                   "Whether to store historical CPU, RAM, and disk usage.",
               },
@@ -179,7 +178,6 @@ export default function ServerConfig({
             fields: {
               auto_prune: {
                 label: "Auto Prune Images",
-                // boldLabel: true,
                 description:
                   "Whether to prune unused images every day at UTC 00:00",
               },
@@ -192,7 +190,6 @@ export default function ServerConfig({
             labelHidden: true,
             fields: {
               send_unreachable_alerts: {
-                // boldLabel: true,
                 description:
                   "Send an alert if the Periphery agent cannot be reached.",
               },
@@ -215,7 +212,6 @@ export default function ServerConfig({
             fields: {
               send_cpu_alerts: {
                 label: "Send CPU Alerts",
-                // boldLabel: true,
                 description:
                   "Send an alert if the CPU usage is above the configured thresholds.",
               },
@@ -235,7 +231,6 @@ export default function ServerConfig({
             fields: {
               send_mem_alerts: {
                 label: "Send Memory Alerts",
-                // boldLabel: true,
                 description:
                   "Send an alert if the memory usage is above the configured thresholds.",
               },
@@ -256,7 +251,6 @@ export default function ServerConfig({
             labelHidden: true,
             fields: {
               send_disk_alerts: {
-                // boldLabel: true,
                 description:
                   "Send an alert if the Disk Usage (for any mounted disk) is above the configured thresholds.",
               },
@@ -272,7 +266,6 @@ export default function ServerConfig({
           },
           {
             label: "Maintenance",
-            boldLabel: false,
             description: (
               <>
                 Configure maintenance windows to temporarily disable alerts

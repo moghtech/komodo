@@ -783,6 +783,15 @@ export var ContainerTerminalMode;
     ContainerTerminalMode["Exec"] = "exec";
     ContainerTerminalMode["Attach"] = "attach";
 })(ContainerTerminalMode || (ContainerTerminalMode = {}));
+export var ServiceUserQueryBehavior;
+(function (ServiceUserQueryBehavior) {
+    /** Include service users in results. Default. */
+    ServiceUserQueryBehavior["Include"] = "Include";
+    /** Exclude service users from results. */
+    ServiceUserQueryBehavior["Exclude"] = "Exclude";
+    /** Only include service users in results. */
+    ServiceUserQueryBehavior["Only"] = "Only";
+})(ServiceUserQueryBehavior || (ServiceUserQueryBehavior = {}));
 export var DefaultRepoFolder;
 (function (DefaultRepoFolder) {
     /** /${root_directory}/stacks */

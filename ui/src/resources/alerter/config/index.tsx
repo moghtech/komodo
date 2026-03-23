@@ -36,7 +36,6 @@ export default function AlerterConfig({ id }: { id: string }) {
             labelHidden: true,
             fields: {
               enabled: {
-                boldLabel: true,
                 description: "Whether to send alerts to the endpoint.",
               },
             },
@@ -85,7 +84,6 @@ export default function AlerterConfig({ id }: { id: string }) {
           },
           {
             label: "Maintenance",
-            boldLabel: false,
             description: (
               <>
                 Configure maintenance windows to temporarily disable alerts

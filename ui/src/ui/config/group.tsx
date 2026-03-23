@@ -46,7 +46,6 @@ export default function ConfigGroup<T>({
                   disabled={args?.disabled || disabled}
                   placeholder={args?.placeholder}
                   description={args?.description}
-                  boldLabel={args?.boldLabel}
                 />
               );
 
@@ -62,7 +61,6 @@ export default function ConfigGroup<T>({
                   disabled={args?.disabled || disabled}
                   placeholder={args?.placeholder}
                   description={args?.description}
-                  boldLabel={args?.boldLabel}
                 />
               );
 
@@ -77,7 +75,6 @@ export default function ConfigGroup<T>({
                   }
                   disabled={args?.disabled || disabled}
                   description={args?.description}
-                  boldLabel={args?.boldLabel}
                 />
               );
 

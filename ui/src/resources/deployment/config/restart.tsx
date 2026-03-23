@@ -17,7 +17,6 @@ export default function DeploymentRestartSelector({
   return (
     <ConfigItem
       label="Restart Mode"
-      boldLabel
       description="Configure the --restart behavior."
     >
       <Select

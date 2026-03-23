@@ -183,7 +183,6 @@ export default function RepoConfig({
             fields: {
               path: {
                 label: "Clone Path",
-                boldLabel: true,
                 placeholder: "/clone/path/on/host",
                 description: (
                   <Stack gap="0">
@@ -309,7 +308,6 @@ export default function RepoConfig({
               links: (values, set) => (
                 <ConfigList
                   label="Links"
-                  boldLabel
                   addLabel="Add Link"
                   description="Add quick links in the resource header"
                   field="links"
