@@ -32,13 +32,12 @@ export default function DeleteTerminal({
   });
   return (
     <ConfirmButton
-      variant="filled"
-      color="red"
       icon={<ICONS.Delete size="1rem" />}
       onClick={() => mutate({ target, terminal })}
-      w={120}
+      w={160}
       disabled={!canWrite}
       loading={isPending}
+      confirmProps={{ variant: "filled", color: "red" }}
       {...buttonProps}
     >
       Delete

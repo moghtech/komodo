@@ -18,6 +18,7 @@ import {
   MenuDropdown,
   Modal,
   MultiSelect,
+  PopoverDropdown,
   Progress,
   SegmentedControl,
   Select,
@@ -145,6 +146,13 @@ const theme = createTheme({
       }),
     }),
     MenuDropdown: MenuDropdown.extend({
+      defaultProps: {
+        bg: "var(--mantine-color-accent-1)",
+        bd: "1px solid var(--mantine-color-accent-border-4)",
+        bdrs: "md",
+      },
+    }),
+    PopoverDropdown: PopoverDropdown.extend({
       defaultProps: {
         bg: "var(--mantine-color-accent-1)",
         bd: "1px solid var(--mantine-color-accent-border-4)",

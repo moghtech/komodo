@@ -3,8 +3,12 @@ use futures_util::{StreamExt as _, stream::FuturesUnordered};
 use komodo_client::{
   api::write::*,
   entities::{
-    NoData, deployment::Deployment, permission::PermissionLevel,
-    server::Server, stack::Stack, terminal::TerminalTarget,
+    NoData,
+    deployment::Deployment,
+    permission::PermissionLevel,
+    server::Server,
+    stack::Stack,
+    terminal::{Terminal, TerminalTarget},
     user::User,
   },
 };
@@ -47,30 +51,35 @@ impl Resolve<WriteArgs> for CreateTerminal {
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> mogh_error::Result<NoData> {
+  ) -> mogh_error::Result<Terminal> {
     match self.target.clone() {
       TerminalTarget::Server { server } => {
         let server = server
           .context("Must provide 'target.params.server'")
           .status_code(StatusCode::BAD_REQUEST)?;
-        create_server_terminal(self, server, user).await?;
+        create_server_terminal(self, server, user)
+          .await
+          .map_err(Into::into)
       }
       TerminalTarget::Container { server, container } => {
         create_container_terminal(self, server, container, user)
-          .await?;
+          .await
+          .map_err(Into::into)
       }
       TerminalTarget::Stack { stack, service } => {
         let service = service
           .context("Must provide 'target.params.service'")
           .status_code(StatusCode::BAD_REQUEST)?;
         create_stack_service_terminal(self, stack, service, user)
-          .await?;
+          .await
+          .map_err(Into::into)
       }
       TerminalTarget::Deployment { deployment } => {
-        create_deployment_terminal(self, deployment, user).await?;
+        create_deployment_terminal(self, deployment, user)
+          .await
+          .map_err(Into::into)
       }
-    };
-    Ok(NoData {})
+    }
   }
 }
 
@@ -84,7 +93,7 @@ async fn create_server_terminal(
   }: CreateTerminal,
   server: String,
   user: &User,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<Terminal> {
   let server = get_check_permissions::<Server>(
     &server,
     user,
@@ -94,7 +103,7 @@ async fn create_server_terminal(
 
   let periphery = periphery_client(&server).await?;
 
-  periphery
+  let mut terminal = periphery
     .request(api::terminal::CreateServerTerminal {
       name,
       command,
@@ -103,7 +112,12 @@ async fn create_server_terminal(
     .await
     .context("Failed to create Server Terminal on Periphery")?;
 
-  Ok(())
+  // Fix server terminal target with server id
+  terminal.target = TerminalTarget::Server {
+    server: Some(server.id),
+  };
+
+  Ok(terminal)
 }
 
 async fn create_container_terminal(
@@ -111,7 +125,7 @@ async fn create_container_terminal(
   server: String,
   container: String,
   user: &User,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<Terminal> {
   let server = get_check_permissions::<Server>(
     &server,
     user,
@@ -127,7 +141,7 @@ async fn create_stack_service_terminal(
   stack: String,
   service: String,
   user: &User,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<Terminal> {
   let (_, periphery, container) =
     get_stack_service_periphery_container(&stack, &service, user)
       .await?;
@@ -138,7 +152,7 @@ async fn create_deployment_terminal(
   req: CreateTerminal,
   deployment: String,
   user: &User,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<Terminal> {
   let (_, periphery, container) =
     get_deployment_periphery_container(&deployment, user).await?;
   create_container_terminal_inner(req, &periphery, container).await

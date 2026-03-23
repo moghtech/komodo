@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::{Context, anyhow};
 use futures_util::{Stream, StreamExt, TryStreamExt};
 use komodo_client::entities::{
-  KOMODO_EXIT_CODE, NoData,
+  KOMODO_EXIT_CODE, NoData, optional_string,
   terminal::{Terminal, TerminalStdinMessage, TerminalTarget},
 };
 use mogh_resolver::Resolve;
@@ -52,20 +52,32 @@ impl Resolve<crate::api::Args> for CreateServerTerminal {
   async fn resolve(
     self,
     args: &crate::api::Args,
-  ) -> anyhow::Result<NoData> {
+  ) -> anyhow::Result<Terminal> {
     if periphery_config().disable_terminals {
       return Err(anyhow!(
         "Terminals are disabled in the Periphery config"
       ));
     }
+    let existing =
+      list_terminals(Some(&TerminalTarget::Server { server: None }))
+        .await;
     create_terminal(
-      self.name,
+      self
+        .name
+        .and_then(optional_string)
+        .unwrap_or_else(|| format!("term-{}", existing.len())),
       TerminalTarget::Server { server: None },
       self.command,
       self.recreate,
     )
     .await
-    .map(|_| NoData {})
+    .map(|terminal| Terminal {
+      name: terminal.name.clone(),
+      target: TerminalTarget::Server { server: None },
+      command: terminal.command.clone(),
+      stored_size_kb: terminal.history.size_kb(),
+      created_at: terminal.created_at,
+    })
   }
 }
 
@@ -87,7 +99,7 @@ impl Resolve<crate::api::Args> for CreateContainerExecTerminal {
   async fn resolve(
     self,
     args: &crate::api::Args,
-  ) -> anyhow::Result<NoData> {
+  ) -> anyhow::Result<Terminal> {
     if periphery_config().disable_container_terminals {
       return Err(anyhow!(
         "Container Terminals are disabled in the Periphery config"
@@ -106,14 +118,23 @@ impl Resolve<crate::api::Args> for CreateContainerExecTerminal {
         "The use of '&&' is forbidden in the container name or command"
       ));
     }
+    let existing = list_terminals(Some(&target)).await;
     create_terminal(
-      name,
+      name.and_then(optional_string).unwrap_or_else(|| {
+        format!("exec-{container}-{}", existing.len())
+      }),
       target,
       Some(format!("docker exec -it {container} {command}")),
       recreate,
     )
     .await
-    .map(|_| NoData {})
+    .map(|terminal| Terminal {
+      name: terminal.name.clone(),
+      target: terminal.target.clone(),
+      command: terminal.command.clone(),
+      stored_size_kb: terminal.history.size_kb(),
+      created_at: terminal.created_at,
+    })
   }
 }
 
@@ -134,7 +155,7 @@ impl Resolve<crate::api::Args> for CreateContainerAttachTerminal {
   async fn resolve(
     self,
     args: &crate::api::Args,
-  ) -> anyhow::Result<NoData> {
+  ) -> anyhow::Result<Terminal> {
     if periphery_config().disable_container_terminals {
       return Err(anyhow!(
         "Container Terminals are disabled in the Periphery config"
@@ -151,14 +172,23 @@ impl Resolve<crate::api::Args> for CreateContainerAttachTerminal {
         "The use of '&&' is forbidden in the container name"
       ));
     }
+    let existing = list_terminals(Some(&target)).await;
     create_terminal(
-      name,
+      name.and_then(optional_string).unwrap_or_else(|| {
+        format!("attach-{container}-{}", existing.len())
+      }),
       target,
       Some(format!("docker attach {container} --sig-proxy=false")),
       recreate,
     )
     .await
-    .map(|_| NoData {})
+    .map(|terminal| Terminal {
+      name: terminal.name.clone(),
+      target: terminal.target.clone(),
+      command: terminal.command.clone(),
+      stored_size_kb: terminal.history.size_kb(),
+      created_at: terminal.created_at,
+    })
   }
 }
 

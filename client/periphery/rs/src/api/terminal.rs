@@ -19,11 +19,12 @@ pub struct ListTerminals {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
-#[response(NoData)]
+#[response(Terminal)]
 #[error(anyhow::Error)]
 pub struct CreateServerTerminal {
-  /// A name for the terminal session
-  pub name: String,
+  /// A name for the terminal session.
+  /// If not provided, a default will be assigned.
+  pub name: Option<String>,
   /// The shell command (eg `bash`) to init the shell.
   ///
   /// This can also include args:
@@ -40,11 +41,12 @@ pub struct CreateServerTerminal {
 //
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
-#[response(NoData)]
+#[response(Terminal)]
 #[error(anyhow::Error)]
 pub struct CreateContainerExecTerminal {
-  /// A name for the terminal session
-  pub name: String,
+  /// A name for the terminal session.
+  /// If not provided, a default will be used.
+  pub name: Option<String>,
   /// The target for the terminal sessions (Container, Stack, Deployment).
   pub target: TerminalTarget,
   /// The name of the container to connect to
@@ -61,11 +63,12 @@ pub struct CreateContainerExecTerminal {
 //
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
-#[response(NoData)]
+#[response(Terminal)]
 #[error(anyhow::Error)]
 pub struct CreateContainerAttachTerminal {
   /// A name for the terminal session
-  pub name: String,
+  /// If not provided, a default will be used.
+  pub name: Option<String>,
   /// The target for the terminal sessions (Container, Stack, Deployment).
   pub target: TerminalTarget,
   /// The name of the container to attach to

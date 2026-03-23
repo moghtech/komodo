@@ -6,7 +6,8 @@ use crate::entities::{
   NoData,
   server::ServerQuery,
   terminal::{
-    ContainerTerminalMode, TerminalRecreateMode, TerminalTarget,
+    ContainerTerminalMode, Terminal, TerminalRecreateMode,
+    TerminalTarget,
   },
 };
 
@@ -21,23 +22,24 @@ use super::KomodoWriteRequest;
   description = "Create a Terminal.",
   request_body(content = CreateTerminal),
   responses(
-    (status = 200, description = "No data", body = NoData),
+    (status = 200, description = "The created terminal", body = Terminal),
   ),
 )]
 pub fn create_terminal() {}
 
 /// Create a Terminal.
 /// Requires minimum Read + Terminal permission on the target Resource.
-/// Response: [NoData]
+/// Response: [Terminal]
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
-#[response(NoData)]
+#[response(Terminal)]
 #[error(mogh_error::Error)]
 pub struct CreateTerminal {
   /// A name for the Terminal session.
-  pub name: String,
+  /// If not specified, a default will be given.
+  pub name: Option<String>,
   /// The target to create terminal for
   pub target: TerminalTarget,
   /// The shell command (eg `bash`) to init the shell.

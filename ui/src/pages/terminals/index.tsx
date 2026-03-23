@@ -10,7 +10,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import DeleteTerminal from "./delete";
 import BatchDeleteAllTerminals from "./batch-delete";
-import CreateTerminal from "./create";
+import NewTerminal from "./new";
 import SearchInput from "@/ui/search-input";
 
 export default function Terminals() {
@@ -27,7 +27,7 @@ export default function Terminals() {
       <Stack>
         <Group justify="space-between">
           <Group>
-            <CreateTerminal />
+            <NewTerminal />
             <BatchDeleteAllTerminals
               refetch={refetch}
               noTerminals={!terminals?.length}

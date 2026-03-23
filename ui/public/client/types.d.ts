@@ -6675,11 +6675,14 @@ export interface CreateTag {
 /**
  * Create a Terminal.
  * Requires minimum Read + Terminal permission on the target Resource.
- * Response: [NoData]
+ * Response: [Terminal]
  */
 export interface CreateTerminal {
-    /** A name for the Terminal session. */
-    name: string;
+    /**
+     * A name for the Terminal session.
+     * If not specified, a default will be given.
+     */
+    name?: string;
     /** The target to create terminal for */
     target: TerminalTarget;
     /**

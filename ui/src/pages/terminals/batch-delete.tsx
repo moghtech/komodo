@@ -19,13 +19,12 @@ export default function BatchDeleteAllTerminals({
   const { tags } = useTags();
   return (
     <ConfirmButton
-      variant="filled"
-      color="red"
       icon={<ICONS.Delete size="1rem" />}
       w={160}
       onClick={() => mutate({ query: { tags } })}
       disabled={noTerminals}
       loading={isPending}
+      confirmProps={{ variant: "filled", color: "red" }}
     >
       Delete All
     </ConfirmButton>

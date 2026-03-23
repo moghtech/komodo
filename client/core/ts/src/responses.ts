@@ -212,7 +212,7 @@ export type WriteResponses = {
   RotateServerKeys: Types.Update;
 
   // ==== TERMINAL ====
-  CreateTerminal: Types.NoData;
+  CreateTerminal: Types.Terminal;
   DeleteTerminal: Types.NoData;
   DeleteAllTerminals: Types.NoData;
   BatchDeleteAllTerminals: Types.NoData;

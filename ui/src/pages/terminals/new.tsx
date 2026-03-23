@@ -1,6 +1,6 @@
 import { Fragment, ReactNode, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Grid, Menu, Select, Stack, TextInput } from "@mantine/core";
+import { Button, Grid, Popover, Select, Stack, TextInput } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useRead, useShiftKeyListener, useWrite } from "@/lib/hooks";
@@ -16,24 +16,25 @@ const TERMINAL_TYPES: Types.TerminalTarget["type"][] = [
   "Deployment",
 ] as const;
 
-export default function CreateTerminal() {
+export default function NewTerminal() {
   const [opened, { open, close, toggle }] = useDisclosure();
   const [type, setType] = useState<Types.TerminalTarget["type"]>("Server");
   useShiftKeyListener("N", () => open());
   return (
-    <Menu
+    <Popover
       opened={opened}
       position="bottom-start"
       offset={21}
       width="auto"
       onClose={close}
+      trapFocus
     >
-      <Menu.Target>
+      <Popover.Target>
         <Button leftSection={<ICONS.Create size="1rem" />} onClick={toggle}>
           New Terminal
         </Button>
-      </Menu.Target>
-      <Menu.Dropdown p="lg">
+      </Popover.Target>
+      <Popover.Dropdown p="lg">
         {type === "Server" ? (
           <CreateServerTerminal
             type={type}
@@ -65,8 +66,8 @@ export default function CreateTerminal() {
         ) : (
           <></>
         )}
-      </Menu.Dropdown>
-    </Menu>
+      </Popover.Dropdown>
+    </Popover>
   );
 }
 
@@ -95,7 +96,7 @@ function CreateTerminalLayout({
   setType: (type: Types.TerminalTarget["type"]) => void;
   nodes: Node[];
   finalize: (baseRequest: BaseRequest) => Types.CreateTerminal;
-  onSuccess: (baseRequest: BaseRequest) => void;
+  onSuccess: (terminal: Types.Terminal) => void;
   showMode?: boolean;
   commandPlaceholder?: string;
 }) {
@@ -105,8 +106,8 @@ function CreateTerminalLayout({
     command: undefined,
   });
   const { mutate, isPending } = useWrite("CreateTerminal", {
-    onSuccess: () => {
-      onSuccess(baseRequest);
+    onSuccess: (terminal) => {
+      onSuccess(terminal);
       setBaseRequest({
         name: "",
         mode: Types.ContainerTerminalMode.Exec,
@@ -137,7 +138,7 @@ function CreateTerminalLayout({
       node: (
         <TextInput
           autoFocus
-          placeholder="terminal-name"
+          placeholder="terminal-name (Optional)"
           value={baseRequest.name}
           onChange={(e) =>
             setBaseRequest({ ...baseRequest, name: e.target.value })
@@ -215,7 +216,6 @@ function CreateTerminalLayout({
         loading={isPending}
         onClick={() => mutate(finalize(baseRequest))}
         leftSection={<ICONS.Create size="1rem" />}
-        disabled={!baseRequest.name}
       >
         Create
       </Button>
@@ -254,8 +254,8 @@ function CreateServerTerminal({
         name: baseRequest.name,
         target: { type: "Server", params: { server: server } },
       })}
-      onSuccess={(request) => {
-        nav(`/servers/${server}/terminal/${request.name}`);
+      onSuccess={(terminal) => {
+        nav(`/servers/${server}/terminal/${terminal.name}`);
         close();
       }}
       nodes={[
@@ -313,9 +313,9 @@ function CreateContainerTerminal({
           params: { server: params.server, container: params.container },
         },
       })}
-      onSuccess={(request) => {
+      onSuccess={(terminal) => {
         nav(
-          `/servers/${params.server}/container/${params.container}/terminal/${request.name}`,
+          `/servers/${params.server}/container/${params.container}/terminal/${terminal.name}`,
         );
         close();
         setParams({ server: firstServer, container: "" });
@@ -388,9 +388,9 @@ function CreateStackServiceTerminal({
           params: { stack: params.stack, service: params.service },
         },
       })}
-      onSuccess={(request) => {
+      onSuccess={(terminal) => {
         nav(
-          `/stacks/${params.stack}/service/${params.service}/terminal/${request.name}`,
+          `/stacks/${params.stack}/service/${params.service}/terminal/${terminal.name}`,
         );
         close();
         setParams({ stack: firstStack, service: "" });
@@ -460,8 +460,8 @@ function CreateDeploymentTerminal({
         name: baseRequest.name,
         target: { type: "Deployment", params: { deployment: deployment } },
       })}
-      onSuccess={(request) => {
-        nav(`/deployments/${deployment}/terminal/${request.name}`);
+      onSuccess={(terminal) => {
+        nav(`/deployments/${deployment}/terminal/${terminal.name}`);
         close();
       }}
       nodes={[

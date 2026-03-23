@@ -6,7 +6,7 @@ use komodo_client::{
     permission::PermissionLevel,
     server::Server,
     stack::Stack,
-    terminal::{ContainerTerminalMode, TerminalTarget},
+    terminal::{ContainerTerminalMode, Terminal, TerminalTarget},
     user::User,
   },
 };
@@ -84,7 +84,7 @@ async fn setup_server_target_for_user(
   if let Some(init) = init {
     periphery
       .request(api::terminal::CreateServerTerminal {
-        name: terminal.clone(),
+        name: Some(terminal.clone()),
         command: init.command,
         recreate: init.recreate,
       })
@@ -131,7 +131,7 @@ async fn setup_container_target_for_user(
   if let Some(init) = init {
     create_container_terminal_inner(
       CreateTerminal {
-        name: terminal.clone(),
+        name: Some(terminal.clone()),
         target: target.clone(),
         command: init.command,
         mode: init.mode,
@@ -166,7 +166,7 @@ async fn setup_stack_service_target_for_user(
   if let Some(init) = init {
     create_container_terminal_inner(
       CreateTerminal {
-        name: terminal.clone(),
+        name: Some(terminal.clone()),
         target: target.clone(),
         command: init.command,
         mode: init.mode,
@@ -199,7 +199,7 @@ async fn setup_deployment_target_for_user(
   if let Some(init) = init {
     create_container_terminal_inner(
       CreateTerminal {
-        name: terminal.clone(),
+        name: Some(terminal.clone()),
         target: target.clone(),
         command: init.command,
         mode: init.mode,
@@ -241,7 +241,7 @@ pub async fn create_container_terminal_inner(
   }: CreateTerminal,
   periphery: &PeripheryClient,
   container: String,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<Terminal> {
   match mode.unwrap_or_default() {
     ContainerTerminalMode::Exec => periphery
       .request(periphery_client::api::terminal::CreateContainerExecTerminal {
@@ -254,7 +254,7 @@ pub async fn create_container_terminal_inner(
       .await
       .context(
         "Failed to create Container Exec Terminal on Periphery",
-      )?,
+      ),
     ContainerTerminalMode::Attach => periphery
       .request(periphery_client::api::terminal::CreateContainerAttachTerminal {
         name,
@@ -265,9 +265,8 @@ pub async fn create_container_terminal_inner(
       .await
       .context(
         "Failed to create Container Attach Terminal on Periphery",
-      )?,
-  };
-  Ok(())
+      ),
+  }
 }
 
 pub async fn get_stack_service_periphery_container(

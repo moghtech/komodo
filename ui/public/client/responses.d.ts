@@ -155,7 +155,7 @@ export type WriteResponses = {
     CreateNetwork: Types.Update;
     UpdateServerPublicKey: Types.Update;
     RotateServerKeys: Types.Update;
-    CreateTerminal: Types.NoData;
+    CreateTerminal: Types.Terminal;
     DeleteTerminal: Types.NoData;
     DeleteAllTerminals: Types.NoData;
     BatchDeleteAllTerminals: Types.NoData;
