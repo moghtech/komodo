@@ -10,7 +10,7 @@
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
 		"ghcr.io/devcontainers/features/node:1": {
-			"version": "20.12.2"
+			"version": "22.12.0" 
 		},
 		"ghcr.io/devcontainers-community/features/deno:1": {
 
@@ -28,6 +28,8 @@
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	"forwardPorts": [
+		5173,
+		9120,
 		9121
 	],
 
@@ -36,11 +38,16 @@
 
 	"runServices": [
 		"db"
-	]
+	],
 
 	// Configure tool-specific properties.
 	// "customizations": {},
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
+	
+	 "remoteEnv": {
+		// Avoid out of memory error when running `yarn build`
+		"NODE_OPTIONS": "--max-old-space-size=4096"
+	}
 }

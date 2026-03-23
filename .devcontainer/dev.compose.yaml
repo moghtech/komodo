@@ -1,6 +1,6 @@
 services:
   dev:
-    image: mcr.microsoft.com/devcontainers/rust:1-1-bullseye
+    image: mcr.microsoft.com/devcontainers/rust:1-bookworm 
     volumes:
       # Mount the root folder that contains .git
       - ../:/workspace:cached
@@ -12,11 +12,17 @@ services:
     ports:
       - "9121:9121"
     environment:
+      KOMODO_HOST: http://localhost:9120
       KOMODO_FIRST_SERVER: http://localhost:8120
       KOMODO_DATABASE_ADDRESS: db
       KOMODO_ENABLE_NEW_USERS: true
       KOMODO_LOCAL_AUTH: true
       KOMODO_JWT_SECRET: a_random_secret
+      VITE_KOMODO_HOST: http://localhost:9120
+      KOMODO_CORS_ALLOWED_ORIGINS: http://localhost:5173
+      KOMODO_CORS_ALLOW_CREDENTIALS: true
+      PERIPHERY_SSL_ENABLED: false
+      KOMODO_SESSION_ALLOW_CROSS_SITE: true
     links:
       - db
     # ...
