@@ -57,8 +57,9 @@ cors_allowed_origins = ["http://localhost:5173"]
 cors_allow_credentials = true
 session_allow_cross_site = true
 
-[database]
-address = "localhost:27017"
+database.address = "localhost:27017"
+database.username = "komodo"
+database.password = "komodo"
 ```
 
 Add `.dev/periphery.config.toml`:
@@ -84,10 +85,16 @@ run link-client
 
 ### Starting the services
 
-Start a FerretDB instance in Docker:
+Start a Mongo instance in Docker:
 
 ```sh
-docker run -d --name komodo-ferretdb -p 27017:27017 -v komodo-ferretdb:/state -e FERRETDB_HANDLER=sqlite ghcr.io/ferretdb/ferretdb:1
+docker run -d --name komodo-mongo \
+-p 27017:27017 \
+-v komodo-mongo-data:/data/db \
+-v komodo-mongo-config:/data/configdb \
+-e MONGO_INITDB_ROOT_USERNAME=komodo \
+-e MONGO_INITDB_ROOT_PASSWORD=komodo \
+mongo
 ```
 
 In separate terminals, run Core, Periphery, and UI.
