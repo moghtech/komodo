@@ -25,7 +25,7 @@ function HomepageHeader() {
                 transform: "translate(-50%, -50%)",
                 color: "white",
                 fontWeight: 600,
-                letterSpacing: "0.1rem"
+                letterSpacing: "0.1rem",
               }}
             >
               Komodo
@@ -47,13 +47,13 @@ function HomepageHeader() {
             Demo
           </Link>
           <Link
-            className="button button--secondary button--lg"
+            className={"button button--secondary button--lg " + styles["mobile-full-grid"]}
             to="https://github.com/moghtech/komodo"
           >
             GitHub
           </Link>
           <Link
-            className="button button--secondary button--lg"
+            className={"button button--secondary button--lg " + styles["mobile-full-grid"]}
             to="https://github.com/moghtech/komodo#screenshots"
           >
             Screenshots
