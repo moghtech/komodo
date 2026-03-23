@@ -8,6 +8,12 @@ alias = "bd"
 description = "builds the documentation site (https://komo.do)"
 cmd = "yarn && yarn build"
 
+[serve-docsite]
+alias = "sd"
+description = "builds and serves the built documentation site (https://komo.do)"
+after = ["build-docsite"]
+cmd = "yarn serve"
+
 [publish-docsite]
 description = "publishes the documentation site (https://komo.do) to github pages"
 cmd = "yarn && yarn deploy"

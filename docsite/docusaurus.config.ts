@@ -62,6 +62,7 @@ const config: Config = {
       {
         hashed: true,
         indexBlog: false,
+        searchBarShortcutHint: false,
       },
     ],
   ],
