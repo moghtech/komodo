@@ -24,8 +24,8 @@ const sidebars: SidebarsConfig = {
       type: "category",
       label: "Deploy",
       items: [
-        "deploy/containers",
         "deploy/compose",
+        "deploy/containers",
         "deploy/auto-update",
       ],
     },

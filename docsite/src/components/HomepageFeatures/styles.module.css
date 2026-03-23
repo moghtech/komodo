@@ -4,6 +4,18 @@
   background: var(--ifm-color-emphasis-100);
 }
 
+.featureCardLink {
+  display: block;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+.featureCardLink:hover {
+  text-decoration: none;
+  color: inherit;
+}
+
 .featureCard {
   background: var(--ifm-background-surface-color);
   border: 1px solid var(--ifm-color-emphasis-200);
@@ -12,11 +24,13 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  transition: box-shadow 0.2s ease;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .featureCard:hover {
   box-shadow: var(--ifm-global-shadow-md);
+  transform: translateY(-2px);
 }
 
 .featureCol {

@@ -1,14 +1,12 @@
 import clsx from "clsx";
 import Heading from "@theme/Heading";
+import Link from "@docusaurus/Link";
 import styles from "./styles.module.css";
 import { JSX } from "react";
 import {
-  Box,
   Layers,
   Server,
   Hammer,
-  Play,
-  GitBranch,
   type LucideIcon,
   Route,
   FolderSync,
@@ -19,12 +17,14 @@ type FeatureItem = {
   title: string;
   icon: LucideIcon;
   description: JSX.Element;
+  to: string;
 };
 
 const FeatureList: FeatureItem[] = [
   {
     title: "Unlimited Servers",
     icon: Server,
+    to: "/docs/setup/connect-servers",
     description: (
       <>
         Connect all your servers, monitor CPU, memory, and disk usage, alert on
@@ -33,8 +33,9 @@ const FeatureList: FeatureItem[] = [
     ),
   },
   {
-    title: "Containers and Stacks",
+    title: "Stacks and Containers",
     icon: Layers,
+    to: "/docs/deploy/compose",
     description: (
       <>
         Deploy and manage containers and compose stacks across all your
@@ -46,6 +47,7 @@ const FeatureList: FeatureItem[] = [
   {
     title: "Docker Swarm",
     icon: Component,
+    to: "/docs/swarm",
     description: (
       <>
         Manage multiple swarms through a single entrypoint.
@@ -57,6 +59,7 @@ const FeatureList: FeatureItem[] = [
   {
     title: "Automated Image Builds",
     icon: Hammer,
+    to: "/docs/build",
     description: (
       <>
         Automatically build images from git repos and push them to your registry for distribution.
@@ -67,6 +70,7 @@ const FeatureList: FeatureItem[] = [
   {
     title: "Procedures and Actions",
     icon: Route,
+    to: "/docs/automate/procedures",
     description: (
       <>
         Chain executions into multi-stage procedures. Create and execute
@@ -78,6 +82,7 @@ const FeatureList: FeatureItem[] = [
   {
     title: "Declarative Resource Sync",
     icon: FolderSync,
+    to: "/docs/automate/sync-resources",
     description: (
       <>
         Define all your resources as TOML files in a git repo and sync them to
@@ -87,16 +92,18 @@ const FeatureList: FeatureItem[] = [
   },
 ];
 
-function Feature({ title, icon: Icon, description }: FeatureItem) {
+function Feature({ title, icon: Icon, description, to }: FeatureItem) {
   return (
     <div className={clsx("col col--4", styles.featureCol)}>
-      <div className={styles.featureCard}>
-        <div className={styles.featureHeader}>
-          <Heading as="h3">{title}</Heading>
-          <Icon className={styles.featureIcon} />
+      <Link to={to} className={styles.featureCardLink}>
+        <div className={styles.featureCard}>
+          <div className={styles.featureHeader}>
+            <Heading as="h3">{title}</Heading>
+            <Icon className={styles.featureIcon} />
+          </div>
+          <p>{description}</p>
         </div>
-        <p>{description}</p>
-      </div>
+      </Link>
     </div>
   );
 }
