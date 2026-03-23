@@ -357,13 +357,14 @@ impl Resolve<crate::api::Args> for ComposePull {
       parse_multiline_command(&stack.config.compose_cmd_wrapper);
     // If wrapper_include is empty but wrapper is set, use default ["up"] for backward compatibility
     let default_include = vec![String::from("up")];
-    let wrapper_include = if stack.config.compose_cmd_wrapper_include.is_empty()
-      && !compose_cmd_wrapper.is_empty()
-    {
-      &default_include
-    } else {
-      &stack.config.compose_cmd_wrapper_include
-    };
+    let wrapper_include =
+      if stack.config.compose_cmd_wrapper_include.is_empty()
+        && !compose_cmd_wrapper.is_empty()
+      {
+        &default_include
+      } else {
+        &stack.config.compose_cmd_wrapper_include
+      };
 
     let pull_command = format!(
       "{docker_compose} -p {project_name} -f {file_args}{env_file_args} pull{service_args}",
@@ -527,13 +528,14 @@ impl Resolve<crate::api::Args> for ComposeUp {
       parse_multiline_command(&stack.config.compose_cmd_wrapper);
     // If wrapper_include is empty but wrapper is set, use default ["up"] for backward compatibility
     let default_include = vec![String::from("up")];
-    let wrapper_include = if stack.config.compose_cmd_wrapper_include.is_empty()
-      && !compose_cmd_wrapper.is_empty()
-    {
-      &default_include
-    } else {
-      &stack.config.compose_cmd_wrapper_include
-    };
+    let wrapper_include =
+      if stack.config.compose_cmd_wrapper_include.is_empty()
+        && !compose_cmd_wrapper.is_empty()
+      {
+        &default_include
+      } else {
+        &stack.config.compose_cmd_wrapper_include
+      };
 
     // Uses 'docker compose config' command to extract services (including image)
     // after performing interpolation
@@ -892,13 +894,14 @@ impl Resolve<crate::api::Args> for ComposeRun {
       parse_multiline_command(&stack.config.compose_cmd_wrapper);
     // If wrapper_include is empty but wrapper is set, use default ["up"] for backward compatibility
     let default_include = vec![String::from("up")];
-    let wrapper_include = if stack.config.compose_cmd_wrapper_include.is_empty()
-      && !compose_cmd_wrapper.is_empty()
-    {
-      &default_include
-    } else {
-      &stack.config.compose_cmd_wrapper_include
-    };
+    let wrapper_include =
+      if stack.config.compose_cmd_wrapper_include.is_empty()
+        && !compose_cmd_wrapper.is_empty()
+      {
+        &default_include
+      } else {
+        &stack.config.compose_cmd_wrapper_include
+      };
 
     if pull.unwrap_or_default() {
       let pull_command = format!(

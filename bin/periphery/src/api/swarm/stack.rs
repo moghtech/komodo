@@ -209,13 +209,14 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
       parse_multiline_command(&stack.config.compose_cmd_wrapper);
     // If wrapper_include is empty but wrapper is set, use default ["deploy"] for backward compatibility
     let default_include = vec![String::from("deploy")];
-    let wrapper_include = if stack.config.compose_cmd_wrapper_include.is_empty()
-      && !compose_cmd_wrapper.is_empty()
-    {
-      &default_include
-    } else {
-      &stack.config.compose_cmd_wrapper_include
-    };
+    let wrapper_include =
+      if stack.config.compose_cmd_wrapper_include.is_empty()
+        && !compose_cmd_wrapper.is_empty()
+      {
+        &default_include
+      } else {
+        &stack.config.compose_cmd_wrapper_include
+      };
 
     // Uses 'docker stack config' command to extract services (including image)
     // after performing interpolation
