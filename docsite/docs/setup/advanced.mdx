@@ -35,11 +35,11 @@ Komodo also supports self hosted OAuth2 providers like [Authentik](https://docs.
 	- `<KOMODO_HOST>/auth/google/callback` for Google.
 	- `<KOMODO_HOST>/auth/oidc/callback` for OIDC.
 
-## Authentik
+### Authentik
 
 Check out the [Authentik integration docs](https://integrations.goauthentik.io/infrastructure/komodo/).
 
-## Keycloak
+### Keycloak
 - Create an [OIDC client](https://www.keycloak.org/docs/latest/server_admin/index.html#proc-creating-oidc-client_server_administration_guide) in Keycloak.
   - Note down the `Client ID` that you enter (e.g.: "komodo"), you will need it for Komodo configuration
   - `Valid Redirect URIs`: use `<KOMODO_HOST>/auth/oidc/callback` and substitute `<KOMODO_HOST>` with your Komodo url.
@@ -51,6 +51,29 @@ Check out the [Authentik integration docs](https://integrations.goauthentik.io/i
   - `KOMODO_OIDC_CLIENT_ID=...` what you specified as `Client ID`
   - `KOMODO_OIDC_CLIENT_SECRET=...` that you copied from Keycloak
 
+## Limit Periphery IPs
+
+If using a reverse proxy with Komodo Core, you can limit the IPs which can connect to the Periphery endpoint. For example with Caddy:
+
+```nginx
+(reject-ips) {
+	@externalIp not remote_ip 192.168.0.0/16 12.34.56.78/32
+	respond @externalIp 403
+}
+
+komodo.example.com {
+	handle /ws/periphery {
+		import reject-ips
+		reverse_proxy komodo-core:9120
+	}
+	handle {
+		reverse_proxy komodo-core:9120
+	}
+}
+```
+:::note
+Your reverse proxy should set `X-FORWARDED-HOST` header to your Komodo Core domain, which caddy does by default.
+:::
 
 ## Mount a Config File
 
