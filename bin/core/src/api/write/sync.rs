@@ -527,7 +527,7 @@ impl Resolve<WriteArgs> for CommitSync {
       include_variables: sync.config.include_variables,
       include_user_groups: sync.config.include_user_groups,
       existing: resources
-        .inspect_err(|e| warn!("Existing resource TOML is unavailable, resource meta will not be preserved"))
+        .inspect_err(|e| warn!("Existing resource TOML is unavailable, resource meta will not be preserved | ERROR: {e:#}"))
         .ok(),
     }
     .resolve(&ReadArgs {
