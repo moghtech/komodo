@@ -77,7 +77,13 @@ impl super::KomodoResource for Stack {
   fn inherit_specific_permissions_from(
     _self: &Resource<Self::Config, Self::Info>,
   ) -> Option<ResourceTarget> {
-    ResourceTarget::Server(_self.config.server_id.clone()).into()
+    if !_self.config.swarm_id.is_empty() {
+      Some(ResourceTarget::Swarm(_self.config.swarm_id.clone()))
+    } else if !_self.config.server_id.is_empty() {
+      Some(ResourceTarget::Server(_self.config.server_id.clone()))
+    } else {
+      None
+    }
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>
