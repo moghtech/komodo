@@ -5,6 +5,7 @@ import ResourceLink from "@/resources/link";
 import { ResourceSyncComponents } from ".";
 import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
+import FileSource from "@/components/file-source";
 
 export default function ResourceSyncTable({
   resources,
@@ -33,14 +34,14 @@ export default function ResourceSyncTable({
           ),
           size: 200,
         },
-        // {
-        //   header: ({ column }) => (
-        //     <SortableHeader column={column} title="Repo" />
-        //   ),
-        //   accessorKey: "info.repo",
-        //   cell: ({ row }) => <StandardSource info={row.original.info} />,
-        //   size: 200,
-        // },
+        {
+          header: ({ column }) => (
+            <SortableHeader column={column} title="Source" />
+          ),
+          accessorKey: "info.repo",
+          cell: ({ row }) => <FileSource info={row.original.info} />,
+          size: 200,
+        },
         {
           header: ({ column }) => (
             <SortableHeader column={column} title="Branch" />

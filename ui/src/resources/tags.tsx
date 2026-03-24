@@ -70,18 +70,21 @@ export const AddResourceTags = (target: UsableResourceTarget) => {
     () => !combobox.dropdownOpened && combobox.openDropdown(),
   );
 
-  const all_tags = useRead("ListTags", {}).data ?? [];
-  const all_tag_names = all_tags.map((tag) => tag.name);
+  const allTags = useRead("ListTags", {}).data ?? [];
+  const allTagNames = allTags.map((tag) => tag.name);
 
   const { mutate: update } = useWrite("UpdateResourceMeta", {
     onSuccess: () => {
       inv([`List${type}s`]);
-      notifications.show({ message: `Added tag ${search}` });
+      notifications.show({ message: `Added tag ${search}`, color: "green" });
     },
   });
 
   const { mutateAsync: create } = useWrite("CreateTag", {
-    onSuccess: () => inv([`ListTags`]),
+    onSuccess: () => {
+      inv([`ListTags`]);
+      notifications.show({ message: `Created tag ${search}`, color: "green" });
+    },
   });
 
   const createTag = async (name: string) => {
@@ -101,7 +104,7 @@ export const AddResourceTags = (target: UsableResourceTarget) => {
   }
 
   const filtered = filterBySplit(
-    all_tags.filter((tag) => !resource?.tags.includes(tag._id!.$oid)),
+    allTags.filter((tag) => !resource?.tags.includes(tag._id!.$oid)),
     search,
     (item) => item.name,
   ).sort((a, b) => {
@@ -167,7 +170,7 @@ export const AddResourceTags = (target: UsableResourceTarget) => {
 
           <Combobox.Option
             value="Create"
-            disabled={!search || all_tag_names.includes(search)}
+            disabled={!search || allTagNames.includes(search)}
           >
             <Center>
               <ICONS.Create size="1rem" />

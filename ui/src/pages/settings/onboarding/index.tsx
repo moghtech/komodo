@@ -91,6 +91,7 @@ export default function SettingsOnboardingKeys() {
                 }
                 position="bottom-start"
                 useName
+                canCreate
               />
 
               <Tags

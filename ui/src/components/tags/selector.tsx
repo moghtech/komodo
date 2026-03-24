@@ -1,4 +1,10 @@
-import { useSearchCombobox, useShiftKeyListener } from "@/lib/hooks";
+import {
+  useInvalidate,
+  useRead,
+  useSearchCombobox,
+  useShiftKeyListener,
+  useWrite,
+} from "@/lib/hooks";
 import { ICONS } from "@/theme/icons";
 import { filterBySplit } from "@/lib/utils";
 import {
@@ -8,10 +14,12 @@ import {
   Center,
   Combobox,
   ComboboxProps,
+  Divider,
   Group,
   Text,
 } from "@mantine/core";
 import { Types } from "komodo_client";
+import { notifications } from "@mantine/notifications";
 
 export interface TagSelectorProps extends ComboboxProps {
   title: string;
@@ -19,6 +27,7 @@ export interface TagSelectorProps extends ComboboxProps {
   onSelect?: (tagId: string) => void;
   shiftKey?: string;
   useName?: boolean;
+  canCreate?: boolean;
 }
 
 export default function TagSelector({
@@ -28,21 +37,47 @@ export default function TagSelector({
   shiftKey,
   useName,
   disabled,
+  canCreate,
   ...comboboxProps
 }: TagSelectorProps) {
   const { search, setSearch, combobox } = useSearchCombobox();
   const filtered = filterBySplit(tags, search, (item) => item.name);
+
   useShiftKeyListener(
     shiftKey ?? "",
     () => shiftKey && combobox.openDropdown(),
   );
+
+  const inv = useInvalidate();
+  const { mutateAsync: create } = useWrite("CreateTag", {
+    onSuccess: () => {
+      inv([`ListTags`]);
+      notifications.show({ message: `Created tag ${search}`, color: "green" });
+    },
+  });
+
+  const createTag = async (name: string) => {
+    if (!name) {
+      notifications.show({ message: "Must provide tag name in input" });
+      return;
+    }
+    const tag = await create({ name });
+    onSelect?.(useName ? tag.name : tag._id?.$oid!);
+  };
+
+  const allTags = useRead("ListTags", {}).data ?? [];
+  const allTagNames = allTags.map((tag) => tag.name);
 
   return (
     <Combobox
       store={combobox}
       width={260}
       onOptionSubmit={(tag) => {
-        onSelect?.(tag);
+        if (tag === "__CREATE__" && search) {
+          createTag(search);
+        } else {
+          onSelect?.(tag);
+        }
         setSearch("");
       }}
       disabled={disabled}
@@ -102,8 +137,22 @@ export default function TagSelector({
               </Group>
             </Combobox.Option>
           ))}
-          {filtered.length === 0 && (
+          {!canCreate && filtered.length === 0 && (
             <Combobox.Empty>No results.</Combobox.Empty>
+          )}
+          {canCreate && (
+            <>
+              <Divider />
+              <Combobox.Option
+                value="__CREATE__"
+                disabled={!search || allTagNames.includes(search)}
+              >
+                <Center>
+                  <ICONS.Create size="1rem" />
+                  Create Tag
+                </Center>
+              </Combobox.Option>
+            </>
           )}
         </Combobox.Options>
       </Combobox.Dropdown>

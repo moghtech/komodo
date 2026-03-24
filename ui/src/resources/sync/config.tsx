@@ -193,6 +193,7 @@ export default function ResourceSyncConfig({
               disabled={disabled || !includeResources}
               position="bottom-start"
               useName
+              canCreate
             />
 
             <Tags

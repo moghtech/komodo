@@ -5,6 +5,7 @@ import ResourceLink from "@/resources/link";
 import { RepoComponents } from ".";
 import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
+import RepoLink from "@/components/repo-link";
 
 export default function RepoTable({
   resources,
@@ -30,19 +31,19 @@ export default function RepoTable({
           cell: ({ row }) => <ResourceLink type="Repo" id={row.original.id} />,
           size: 200,
         },
-        // {
-        //   header: ({ column }) => (
-        //     <SortableHeader column={column} title="Repo" />
-        //   ),
-        //   accessorKey: "info.repo",
-        //   cell: ({ row }) => (
-        //     <RepoLink
-        //       repo={row.original.info.repo}
-        //       link={row.original.info.repo_link}
-        //     />
-        //   ),
-        //   size: 200,
-        // },
+        {
+          header: ({ column }) => (
+            <SortableHeader column={column} title="Repo" />
+          ),
+          accessorKey: "info.repo",
+          cell: ({ row }) => (
+            <RepoLink
+              repo={row.original.info.repo}
+              link={row.original.info.repo_link}
+            />
+          ),
+          size: 200,
+        },
         {
           header: ({ column }) => (
             <SortableHeader column={column} title="Branch" />
