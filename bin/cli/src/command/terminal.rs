@@ -26,7 +26,7 @@ pub async fn handle_connect(
     recreate,
   }: &Connect,
 ) -> anyhow::Result<()> {
-  handle_terminal_forwarding(async {
+  handle_terminal_forwarding(server, async {
     super::komodo_client()
       .await?
       .connect_server_terminal(
@@ -56,25 +56,28 @@ pub async fn handle_exec(
   }: &Exec,
 ) -> anyhow::Result<()> {
   let server = get_server(server.clone(), container).await?;
-  handle_terminal_forwarding(async {
-    super::komodo_client()
-      .await?
-      .connect_container_terminal(
-        server,
-        container.to_string(),
-        None,
-        Some(InitTerminal {
-          command: Some(shell.to_string()),
-          recreate: if *recreate {
-            TerminalRecreateMode::Always
-          } else {
-            TerminalRecreateMode::DifferentCommand
-          },
-          mode: Some(ContainerTerminalMode::Exec),
-        }),
-      )
-      .await
-  })
+  handle_terminal_forwarding(
+    &format!("{server}/{container}"),
+    async {
+      super::komodo_client()
+        .await?
+        .connect_container_terminal(
+          server,
+          container.to_string(),
+          None,
+          Some(InitTerminal {
+            command: Some(shell.to_string()),
+            recreate: if *recreate {
+              TerminalRecreateMode::Always
+            } else {
+              TerminalRecreateMode::DifferentCommand
+            },
+            mode: Some(ContainerTerminalMode::Exec),
+          }),
+        )
+        .await
+    },
+  )
   .await
 }
 
@@ -86,25 +89,28 @@ pub async fn handle_attach(
   }: &Attach,
 ) -> anyhow::Result<()> {
   let server = get_server(server.clone(), container).await?;
-  handle_terminal_forwarding(async {
-    super::komodo_client()
-      .await?
-      .connect_container_terminal(
-        server,
-        container.to_string(),
-        None,
-        Some(InitTerminal {
-          command: None,
-          recreate: if *recreate {
-            TerminalRecreateMode::Always
-          } else {
-            TerminalRecreateMode::DifferentCommand
-          },
-          mode: Some(ContainerTerminalMode::Attach),
-        }),
-      )
-      .await
-  })
+  handle_terminal_forwarding(
+    &format!("{server}/{container}-attach"),
+    async {
+      super::komodo_client()
+        .await?
+        .connect_container_terminal(
+          server,
+          container.to_string(),
+          None,
+          Some(InitTerminal {
+            command: None,
+            recreate: if *recreate {
+              TerminalRecreateMode::Always
+            } else {
+              TerminalRecreateMode::DifferentCommand
+            },
+            mode: Some(ContainerTerminalMode::Attach),
+          }),
+        )
+        .await
+    },
+  )
   .await
 }
 
@@ -163,6 +169,7 @@ async fn get_server(
 async fn handle_terminal_forwarding<
   C: Future<Output = anyhow::Result<TerminalWebsocket>>,
 >(
+  label: &str,
   connect: C,
 ) -> anyhow::Result<()> {
   // Need to forward multiple sources into ws write
@@ -247,6 +254,16 @@ async fn handle_terminal_forwarding<
 
   let forward_read = async {
     let mut stdout = tokio::io::stdout();
+
+    // Write connection message
+    if let Err(e) = write_connection_message(&mut stdout, label)
+      .await
+      .context("Failed to write text to stdout")
+    {
+      cancel.cancel();
+      return Some(e);
+    }
+
     while let Some(msg) =
       future_or_cancel(ws_read.receive_stdout(), &cancel).await
     {
@@ -295,6 +312,31 @@ async fn handle_terminal_forwarding<
 
   // It doesn't seem to exit by itself after the raw mode stuff.
   std::process::exit(0)
+}
+
+async fn write_connection_message(
+  stdout: &mut tokio::io::Stdout,
+  label: &str,
+) -> anyhow::Result<()> {
+  // Use message without ansi for correct length
+  let message_clean = format!("# Connected to {label} (km) #");
+  let bounder = "=".repeat(message_clean.chars().count());
+
+  let message = format!(
+    "# {} to {} {} #",
+    "Connected".green().bold(),
+    label.bold(),
+    "(km)".dimmed()
+  );
+
+  stdout
+    .write_all(
+      format!("\n{bounder}\r\n{message}\r\n{bounder}\r\n").as_bytes(),
+    )
+    .await?;
+  let _ = stdout.flush().await;
+
+  Ok(())
 }
 
 fn resize_message() -> anyhow::Result<TerminalStdinMessage> {

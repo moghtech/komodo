@@ -1,5 +1,4 @@
 use anyhow::{Context, anyhow};
-use colored::Colorize as _;
 use encoding::{
   Encode, EncodedJsonMessage, EncodedResponse, JsonMessage,
 };
@@ -135,7 +134,7 @@ impl Sender<EncodedTransportMessage> {
     self
       .send_message(TerminalMessage::new(
         channel,
-        Err(anyhow!("\n{} {}", "pty".bold(), "exited".red().bold())),
+        Err(anyhow!("pty exited")),
       ))
       .await
   }

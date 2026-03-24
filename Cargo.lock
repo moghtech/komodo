@@ -6002,7 +6002,6 @@ dependencies = [
  "anyhow",
  "axum",
  "bytes",
- "colored",
  "data-encoding",
  "encoding",
  "futures-util",

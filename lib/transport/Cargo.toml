@@ -19,7 +19,6 @@ pin-project-lite.workspace = true
 data-encoding.workspace = true
 futures-util.workspace = true
 tokio-util.workspace = true
-colored.workspace = true
 tracing.workspace = true
 anyhow.workspace = true
 rustls.workspace = true

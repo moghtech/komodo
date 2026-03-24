@@ -5,6 +5,7 @@ use axum::{
   response::IntoResponse,
 };
 use bytes::Bytes;
+use colored::Colorize;
 use futures_util::{SinkExt, StreamExt as _};
 use komodo_client::{
   api::terminal::ConnectTerminalQuery, entities::user::User,
@@ -128,14 +129,26 @@ async fn forward_ws_channel(
           };
         }
         Ok(Err(e)) => {
-          let _ = client_send
-            .send(ws::Message::text(format!("{e:#}")))
-            .await;
+          let message = format!("{}: {e:#}", "ERROR".red().bold());
+          if message.contains("pty exited") {
+            let _ = client_send
+              .send(ws::Message::text(format!(
+                "\n{} {}",
+                "pty".bold(),
+                "exited".red().bold()
+              )))
+              .await;
+          } else {
+            let _ = client_send
+              .send(ws::Message::text(message.replace('\n', "\r\n")))
+              .await;
+          }
           break;
         }
         Err(_) => {
-          let _ =
-            client_send.send(ws::Message::text("STREAM EOF")).await;
+          let _ = client_send
+            .send(ws::Message::text("\r\n\nSTREAM EOF"))
+            .await;
           break;
         }
       }

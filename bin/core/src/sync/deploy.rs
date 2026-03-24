@@ -693,8 +693,8 @@ async fn insert_target_using_after_list<'a>(
                 // Same as the 'Some' case above
                 let (variant, name) = parent.extract_variant_id();
                 cache.insert(
-                target.to_owned(),
-                Some((
+                  target.to_owned(),
+                  Some((
                     format!(
                       "{variant} parent dependency '{}' is deploying",
                       bold(name)
@@ -741,12 +741,12 @@ async fn insert_target_using_after_list<'a>(
                 cache.insert(
                   target.to_owned(),
                   Some((
-                      format!(
-                        "{variant} parent dependency '{}' is deploying",
-                        bold(name)
-                      ),
-                      after,
-                    )),
+                    format!(
+                      "{variant} parent dependency '{}' is deploying",
+                      bold(name)
+                    ),
+                    after,
+                  )),
                 );
                 return Ok(());
               }
