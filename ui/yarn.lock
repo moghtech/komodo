@@ -1261,6 +1261,11 @@ jotai-family@^1.0.1:
   resolved "https://registry.yarnpkg.com/jotai-family/-/jotai-family-1.0.1.tgz#0782aaaf22042b63111df4c1f9acf7b2ceff03cb"
   integrity sha512-Zb/79GNDhC/z82R+6qTTpeKW4l4H6ZCApfF5W8G4SH37E4mhbysU7r8DkP0KX94hWvjB/6lt/97nSr3wB+64Zg==
 
+jotai-location@^0.6.2:
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/jotai-location/-/jotai-location-0.6.2.tgz#7f90ec768d9aca62ce7d509baa771848225edb39"
+  integrity sha512-D+fqGNNgPHpehOsGBsYsS7F3kNgml099MJrGYt8YlLumcnoTVrBdcO+Y11KyMlyzwPihEN0HPUgke9Iihz9OXw==
+
 jotai@^2.18.0:
   version "2.18.0"
   resolved "https://registry.yarnpkg.com/jotai/-/jotai-2.18.0.tgz#b62c682d8e7c20eb94a8a68eead4188359e66f31"

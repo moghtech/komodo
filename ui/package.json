@@ -23,6 +23,7 @@
     "ansi-to-html": "^0.7.2",
     "jotai": "^2.18.0",
     "jotai-family": "^1.0.1",
+    "jotai-location": "^0.6.2",
     "lucide-react": "^0.575.0",
     "monaco-editor": "^0.55.1",
     "monaco-yaml": "^5.4.1",

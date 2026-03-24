@@ -15,6 +15,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { atom, useAtom } from "jotai";
 import { atomFamily } from "jotai-family";
+import { atomWithHash } from "jotai-location";
 import { useParams } from "react-router-dom";
 import { UsableResource, RESOURCE_TARGETS } from "@/resources";
 import {
@@ -558,8 +559,8 @@ export function useSelectedResources(type: UsableResource) {
   return useAtom(selectedResources(type));
 }
 
-const filterByUpdateAvailable = atomWithStorage<boolean>(
-  "update-available-filter-v1",
+const filterByUpdateAvailable = atomWithHash<boolean>(
+  "filter-update-available",
   false,
 );
 export function useFilterByUpdateAvailable(): [boolean, () => void] {
