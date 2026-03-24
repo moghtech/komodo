@@ -16,7 +16,6 @@ const sidebars: SidebarsConfig = {
         "setup/advanced",
         "setup/connect-servers",
         "setup/backup",
-        "setup/version-upgrades",
       ],
     },
     "resources",
@@ -64,6 +63,11 @@ const sidebars: SidebarsConfig = {
         "ecosystem/community",
         "ecosystem/development",
       ],
+    },
+    {
+      type: "category",
+      label: "Releases",
+      items: ["releases/v2.0.0"],
     },
   ],
 };
