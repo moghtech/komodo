@@ -515,11 +515,20 @@ impl Resolve<WriteArgs> for CommitSync {
       None
     };
 
+    // Get the latest existing resources to preserve any meta values
+    let RemoteResources { resources, .. } =
+      crate::sync::remote::get_remote_resources(&sync, repo.as_ref())
+        .await
+        .context("failed to get remote resources")?;
+
     let res = ExportAllResourcesToToml {
       include_resources: sync.config.include_resources,
       tags: sync.config.match_tags.clone(),
       include_variables: sync.config.include_variables,
       include_user_groups: sync.config.include_user_groups,
+      existing: resources
+        .inspect_err(|e| warn!("Existing resource TOML is unavailable, resource meta will not be preserved"))
+        .ok(),
     }
     .resolve(&ReadArgs {
       user: sync_user().to_owned(),

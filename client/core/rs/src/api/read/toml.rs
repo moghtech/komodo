@@ -2,7 +2,7 @@ use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::entities::ResourceTarget;
+use crate::entities::{ResourceTarget, toml::ResourcesToml};
 
 use super::KomodoReadRequest;
 
@@ -54,6 +54,9 @@ pub struct ExportAllResourcesToToml {
   /// Default: false
   #[serde(default)]
   pub include_user_groups: bool,
+  /// Pass an existing [ResourcesToml] to preserve
+  /// the meta configuration.
+  pub existing: Option<ResourcesToml>,
 }
 
 fn default_include_resources() -> bool {
@@ -95,6 +98,9 @@ pub struct ExportResourcesToToml {
   /// Whether to include variables
   #[serde(default)]
   pub include_variables: bool,
+  /// Pass an existing [ResourcesToml] to preserve
+  /// the meta configuration.
+  pub existing: Option<ResourcesToml>,
 }
 
 #[typeshare]

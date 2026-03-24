@@ -110,6 +110,7 @@ impl Resolve<ReadArgs> for ExportAllResourcesToToml {
       targets,
       user_groups,
       include_variables: self.include_variables,
+      existing: self.existing,
     }
     .resolve(args)
     .await
@@ -125,6 +126,7 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
       targets,
       user_groups,
       include_variables,
+      existing,
     } = self;
     let mut res = ResourcesToml::default();
     let id_to_tags = get_id_to_tags(None).await?;
@@ -138,10 +140,17 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
         )
         .await?;
         $Type::replace_ids(&mut resource);
+        let (deploy, after) = existing
+          .as_ref()
+          .and_then(|e| {
+            e.$field.iter().find(|r| r.name == resource.name)
+          })
+          .map(|r| (r.deploy, r.after.clone()))
+          .unwrap_or_default();
         res.$field.push(convert_resource::<$Type>(
           resource,
-          false,
-          vec![],
+          deploy,
+          after,
           &id_to_tags,
         ));
       }};
