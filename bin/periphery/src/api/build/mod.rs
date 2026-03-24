@@ -271,7 +271,7 @@ impl Resolve<crate::api::Args> for build::Build {
         "Pre Build",
         pre_build_path.as_path(),
         &pre_build.command,
-        KomodoCommandMode::Multiline,
+        if pre_build.shell_mode { KomodoCommandMode::Shell } else { KomodoCommandMode::Multiline },
         &replacers,
       )
       .instrument(span)

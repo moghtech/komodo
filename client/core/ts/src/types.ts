@@ -611,6 +611,7 @@ export interface ImageRegistryConfig {
 export interface SystemCommand {
 	path?: string;
 	command?: string;
+	shell_mode?: boolean;
 }
 
 /** The build configuration. */

@@ -490,7 +490,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
         "Pre Deploy",
         pre_deploy_path.as_path(),
         &stack.config.pre_deploy.command,
-        KomodoCommandMode::Multiline,
+        if stack.config.pre_deploy.shell_mode { KomodoCommandMode::Shell } else { KomodoCommandMode::Multiline },
         &replacers,
       )
       .instrument(span)
@@ -760,7 +760,7 @@ impl Resolve<crate::api::Args> for ComposeUp {
         "Post Deploy",
         post_deploy_path.as_path(),
         &stack.config.post_deploy.command,
-        KomodoCommandMode::Multiline,
+        if stack.config.post_deploy.shell_mode { KomodoCommandMode::Shell } else { KomodoCommandMode::Multiline },
         &replacers,
       )
       .instrument(span)

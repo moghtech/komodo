@@ -1,4 +1,4 @@
-import { Stack, TextInput } from "@mantine/core";
+import { Checkbox, Code, Stack, TextInput } from "@mantine/core";
 import { Types } from "komodo_client";
 import { MonacoEditor } from "@/components/monaco";
 
@@ -13,6 +13,9 @@ export default function SystemCommand({
   disabled,
   set,
 }: SystemCommandProps) {
+  const placeholder = value?.shell_mode
+    ? "  # Add a command to run.\n  "
+    : "  # Add multiple commands on new lines. Supports comments and escaped newlines.\n  ";
   return (
     <Stack>
       <TextInput
@@ -23,11 +26,27 @@ export default function SystemCommand({
         onChange={(e) => set({ ...(value || {}), path: e.target.value })}
         disabled={disabled}
       />
-      <MonacoEditor
-        value={
-          value?.command ||
-          "  # Add multiple commands on new lines. Supports comments.\n  "
+      <Checkbox
+        label={
+          <>
+            Run in shell mode (
+            <Code fz="sm" p="0">
+              sh -c
+            </Code>
+            ){" "}
+          </>
         }
+        checked={value?.shell_mode ?? false}
+        onChange={(e) =>
+          set({
+            ...(value || {}),
+            shell_mode: e.currentTarget.checked,
+          })
+        }
+        disabled={disabled}
+      />
+      <MonacoEditor
+        value={value?.command || placeholder}
         language="shell"
         onValueChange={(command) => set({ ...(value || {}), command })}
         readOnly={disabled}
