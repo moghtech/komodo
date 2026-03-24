@@ -26,7 +26,8 @@ use komodo_client::{
     repo::Repo,
     server::Server,
     stack::Stack,
-    sync::{ResourceSync, ResourceSyncInfo, SyncDeployUpdate},
+    swarm::Swarm,
+    sync::{ResourceSync, ResourceSyncInfo},
     to_path_compatible_name,
     update::{Log, Update},
     user::sync_user,
@@ -784,110 +785,40 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
 
           let mut diffs = Vec::new();
 
-          push_updates_for_view::<Server>(
-            resources.servers,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<Stack>(
-            resources.stacks,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<Deployment>(
-            resources.deployments,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<Build>(
-            resources.builds,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<Repo>(
-            resources.repos,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<Procedure>(
-            resources.procedures,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<Action>(
-            resources.actions,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<Builder>(
-            resources.builders,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<Alerter>(
-            resources.alerters,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<ResourceSync>(
-            resources.resource_syncs,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
+          macro_rules! push_updates {
+            ($(($Type:ident, $field:ident)),* $(,)?) => {
+              $(
+                push_updates_for_view::<$Type>(
+                  resources.$field,
+                  delete,
+                  None,
+                  None,
+                  &id_to_tags,
+                  &sync.config.match_tags,
+                  &mut diffs,
+                )
+                .await?;
+              )*
+            };
+          }
+          // New resource types need to be added here manually.
+          push_updates!(
+            (Server, servers),
+            (Swarm, swarms),
+            (Stack, stacks),
+            (Deployment, deployments),
+            (Build, builds),
+            (Repo, repos),
+            (Procedure, procedures),
+            (Action, actions),
+            (Builder, builders),
+            (Alerter, alerters),
+            (ResourceSync, resource_syncs),
+          );
 
           (diffs, deploy_updates)
         } else {
-          (Vec::new(), SyncDeployUpdate::default())
+          Default::default()
         };
 
       let variable_updates = if sync.config.include_variables {
@@ -921,7 +852,7 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
 
     let (
       resource_updates,
-      deploy_updates,
+      (pending_deploys, pending_deploy_error),
       variable_updates,
       user_group_updates,
       pending_error,
@@ -937,7 +868,7 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
     };
 
     let has_updates = !resource_updates.is_empty()
-      || !deploy_updates.to_deploy == 0
+      || !pending_deploys.is_empty()
       || !variable_updates.is_empty()
       || !user_group_updates.is_empty();
 
@@ -949,7 +880,8 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
       remote_errors: sync.info.remote_errors,
       pending_hash: sync.info.pending_hash,
       pending_message: sync.info.pending_message,
-      pending_deploy: deploy_updates,
+      pending_deploys,
+      pending_deploy_error,
       resource_updates,
       variable_updates,
       user_group_updates,

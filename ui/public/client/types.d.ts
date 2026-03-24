@@ -2340,11 +2340,10 @@ export interface ResourceDiff {
     /** The data associated with the diff. */
     data: DiffData;
 }
-export interface SyncDeployUpdate {
-    /** Resources to deploy */
-    to_deploy: number;
-    /** A readable log of all the changes to be applied */
-    log: string;
+export interface SyncDeployTarget {
+    target: ResourceTarget;
+    reason: string;
+    after: ResourceTarget[];
 }
 export interface SyncFileContents {
     /** The base resource path. */
@@ -2368,9 +2367,11 @@ export interface ResourceSyncInfo {
     /** The list of pending updates to user groups */
     user_group_updates?: DiffData[];
     /** The list of pending deploys to resources. */
-    pending_deploy?: SyncDeployUpdate;
+    pending_deploys?: SyncDeployTarget[];
     /** If there is an error, it will be stored here */
     pending_error?: string;
+    /** If there is an getting pending deploys, it will be stored here */
+    pending_deploy_error?: string;
     /** The commit hash which produced these pending updates. */
     pending_hash?: string;
     /** The commit message which produced these pending updates. */
@@ -7060,6 +7061,79 @@ export interface ExecuteTerminalBody {
      */
     init?: InitTerminal;
 }
+export interface ResourceToml<PartialConfig> {
+    /** The resource name. Required */
+    name: string;
+    /** The resource description. Optional. */
+    description?: string;
+    /** Mark resource as a template */
+    template?: boolean;
+    /** Tag ids or names. Optional */
+    tags?: string[];
+    /**
+     * Optional. Only relevant for deployments / stacks.
+     *
+     * Will ensure deployment / stack is running with the latest configuration.
+     * Deploy actions to achieve this will be included in the sync.
+     * Default is false.
+     */
+    deploy?: boolean;
+    /**
+     * Optional. Only relevant for deployments / stacks using the 'deploy' sync feature.
+     *
+     * Specify other deployments / stacks by name as dependencies.
+     * The sync will ensure the deployment / stack will only be deployed 'after' its dependencies.
+     */
+    after?: string[];
+    /** Resource specific configuration. */
+    config?: PartialConfig;
+}
+export interface PermissionToml {
+    /**
+     * Id can be:
+     * - resource name. `id = "abcd-build"`
+     * - regex matching resource names. `id = "\^(.+)-build-([0-9]+)$\"`
+     */
+    target: ResourceTarget;
+    /**
+     * The permission level:
+     * - None
+     * - Read
+     * - Execute
+     * - Write
+     */
+    level?: PermissionLevel;
+    /** Any [SpecificPermissions](SpecificPermission) on the resource */
+    specific?: Array<SpecificPermission>;
+}
+export interface UserGroupToml {
+    /** User group name */
+    name: string;
+    /** Whether all users will implicitly have the permissions in this group. */
+    everyone?: boolean;
+    /** Users in the group */
+    users?: string[];
+    /** Give the user group elevated permissions on all resources of a certain type */
+    all?: Record<ResourceTarget["type"], PermissionLevelAndSpecifics | PermissionLevel>;
+    /** Permissions given to the group */
+    permissions?: PermissionToml[];
+}
+/** Specifies resources to sync on Komodo */
+export interface ResourcesToml {
+    swarms?: ResourceToml<_PartialSwarmConfig>[];
+    servers?: ResourceToml<_PartialServerConfig>[];
+    deployments?: ResourceToml<_PartialDeploymentConfig>[];
+    stacks?: ResourceToml<_PartialStackConfig>[];
+    builds?: ResourceToml<_PartialBuildConfig>[];
+    repos?: ResourceToml<_PartialRepoConfig>[];
+    procedures?: ResourceToml<_PartialProcedureConfig>[];
+    actions?: ResourceToml<_PartialActionConfig>[];
+    alerters?: ResourceToml<_PartialAlerterConfig>[];
+    builders?: ResourceToml<_PartialBuilderConfig>[];
+    resource_syncs?: ResourceToml<_PartialResourceSyncConfig>[];
+    user_groups?: UserGroupToml[];
+    variables?: Variable[];
+}
 /**
  * Get sync toml for all resources which the user has permissions to view.
  * Response: [TomlResponse].
@@ -7086,6 +7160,11 @@ export interface ExportAllResourcesToToml {
      * Default: false
      */
     include_user_groups?: boolean;
+    /**
+     * Pass an existing [ResourcesToml] to preserve
+     * the meta configuration.
+     */
+    existing?: ResourcesToml;
 }
 /**
  * Get sync toml for specific resources, variables, and user groups.
@@ -7098,6 +7177,11 @@ export interface ExportResourcesToToml {
     user_groups?: string[];
     /** Whether to include variables */
     include_variables?: boolean;
+    /**
+     * Pass an existing [ResourcesToml] to preserve
+     * the meta configuration.
+     */
+    existing?: ResourcesToml;
 }
 /**
  * **Admin only.**
@@ -8590,24 +8674,6 @@ export interface PauseStack {
      */
     services?: string[];
 }
-export interface PermissionToml {
-    /**
-     * Id can be:
-     * - resource name. `id = "abcd-build"`
-     * - regex matching resource names. `id = "\^(.+)-build-([0-9]+)$\"`
-     */
-    target: ResourceTarget;
-    /**
-     * The permission level:
-     * - None
-     * - Read
-     * - Execute
-     * - Write
-     */
-    level?: PermissionLevel;
-    /** Any [SpecificPermissions](SpecificPermission) on the resource */
-    specific?: Array<SpecificPermission>;
-}
 /**
  * Prunes the docker buildx cache on the target server. Response: [Update].
  *
@@ -8974,61 +9040,6 @@ export interface RepoExecutionResponse {
     commit_hash?: string;
     /** Latest commit message, if it could be retrieved */
     commit_message?: string;
-}
-export interface ResourceToml<PartialConfig> {
-    /** The resource name. Required */
-    name: string;
-    /** The resource description. Optional. */
-    description?: string;
-    /** Mark resource as a template */
-    template?: boolean;
-    /** Tag ids or names. Optional */
-    tags?: string[];
-    /**
-     * Optional. Only relevant for deployments / stacks.
-     *
-     * Will ensure deployment / stack is running with the latest configuration.
-     * Deploy actions to achieve this will be included in the sync.
-     * Default is false.
-     */
-    deploy?: boolean;
-    /**
-     * Optional. Only relevant for deployments / stacks using the 'deploy' sync feature.
-     *
-     * Specify other deployments / stacks by name as dependencies.
-     * The sync will ensure the deployment / stack will only be deployed 'after' its dependencies.
-     */
-    after?: string[];
-    /** Resource specific configuration. */
-    config?: PartialConfig;
-}
-export interface UserGroupToml {
-    /** User group name */
-    name: string;
-    /** Whether all users will implicitly have the permissions in this group. */
-    everyone?: boolean;
-    /** Users in the group */
-    users?: string[];
-    /** Give the user group elevated permissions on all resources of a certain type */
-    all?: Record<ResourceTarget["type"], PermissionLevelAndSpecifics | PermissionLevel>;
-    /** Permissions given to the group */
-    permissions?: PermissionToml[];
-}
-/** Specifies resources to sync on Komodo */
-export interface ResourcesToml {
-    swarms?: ResourceToml<_PartialSwarmConfig>[];
-    servers?: ResourceToml<_PartialServerConfig>[];
-    deployments?: ResourceToml<_PartialDeploymentConfig>[];
-    stacks?: ResourceToml<_PartialStackConfig>[];
-    builds?: ResourceToml<_PartialBuildConfig>[];
-    repos?: ResourceToml<_PartialRepoConfig>[];
-    procedures?: ResourceToml<_PartialProcedureConfig>[];
-    actions?: ResourceToml<_PartialActionConfig>[];
-    alerters?: ResourceToml<_PartialAlerterConfig>[];
-    builders?: ResourceToml<_PartialBuilderConfig>[];
-    resource_syncs?: ResourceToml<_PartialResourceSyncConfig>[];
-    user_groups?: UserGroupToml[];
-    variables?: Variable[];
 }
 /** Restarts all containers on the target server. Response: [Update] */
 export interface RestartAllContainers {

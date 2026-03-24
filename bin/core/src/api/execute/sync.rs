@@ -21,6 +21,7 @@ use komodo_client::{
     repo::Repo,
     server::Server,
     stack::Stack,
+    swarm::Swarm,
     sync::ResourceSync,
     update::{Log, Update},
     user::sync_user,
@@ -138,56 +139,36 @@ impl Resolve<ExecuteArgs> for RunSync {
           let Some(resource_type) = match_resource_type else {
             return Some(name_or_id);
           };
-          match ObjectId::from_str(&name_or_id) {
-            Ok(_) => match resource_type {
-              ResourceTargetVariant::Swarm => all_resources
-                .swarms
-                .get(&name_or_id)
-                .map(|s| s.name.clone()),
-              ResourceTargetVariant::Server => all_resources
-                .servers
-                .get(&name_or_id)
-                .map(|s| s.name.clone()),
-              ResourceTargetVariant::Stack => all_resources
-                .stacks
-                .get(&name_or_id)
-                .map(|s| s.name.clone()),
-              ResourceTargetVariant::Deployment => all_resources
-                .deployments
-                .get(&name_or_id)
-                .map(|d| d.name.clone()),
-              ResourceTargetVariant::Build => all_resources
-                .builds
-                .get(&name_or_id)
-                .map(|b| b.name.clone()),
-              ResourceTargetVariant::Repo => all_resources
-                .repos
-                .get(&name_or_id)
-                .map(|r| r.name.clone()),
-              ResourceTargetVariant::Procedure => all_resources
-                .procedures
-                .get(&name_or_id)
-                .map(|p| p.name.clone()),
-              ResourceTargetVariant::Action => all_resources
-                .actions
-                .get(&name_or_id)
-                .map(|p| p.name.clone()),
-              ResourceTargetVariant::ResourceSync => all_resources
-                .syncs
-                .get(&name_or_id)
-                .map(|s| s.name.clone()),
-              ResourceTargetVariant::Builder => all_resources
-                .builders
-                .get(&name_or_id)
-                .map(|b| b.name.clone()),
-              ResourceTargetVariant::Alerter => all_resources
-                .alerters
-                .get(&name_or_id)
-                .map(|a| a.name.clone()),
-              ResourceTargetVariant::System => None,
-            },
-            Err(_) => Some(name_or_id),
+          macro_rules! resolve_id_to_name {
+            ($(($Variant:ident, $field:ident)),* $(,)?) => {
+              match ObjectId::from_str(&name_or_id) {
+                Ok(_) => match resource_type {
+                  $(
+                    ResourceTargetVariant::$Variant => all_resources
+                      .$field
+                      .get(&name_or_id)
+                      .map(|r| r.name.clone()),
+                  )*
+                  ResourceTargetVariant::System => None,
+                },
+                Err(_) => Some(name_or_id),
+              }
+            };
           }
+          // New resource types need to be added here manually.
+          resolve_id_to_name!(
+            (Server, servers),
+            (Swarm, swarms),
+            (Stack, stacks),
+            (Deployment, deployments),
+            (Build, builds),
+            (Repo, repos),
+            (Procedure, procedures),
+            (Action, actions),
+            (ResourceSync, syncs),
+            (Builder, builders),
+            (Alerter, alerters),
+          )
         })
         .collect::<Vec<_>>()
     });
@@ -235,136 +216,39 @@ impl Resolve<ExecuteArgs> for RunSync {
 
     let delete = sync.config.managed || sync.config.delete;
 
-    let server_deltas = if sync.config.include_resources {
-      get_updates_for_execution::<Server>(
-        resources.servers,
-        delete,
-        match_resource_type,
-        match_resources.as_deref(),
-        &id_to_tags,
-        &sync.config.match_tags,
-      )
-      .await?
-    } else {
-      Default::default()
-    };
-    let stack_deltas = if sync.config.include_resources {
-      get_updates_for_execution::<Stack>(
-        resources.stacks,
-        delete,
-        match_resource_type,
-        match_resources.as_deref(),
-        &id_to_tags,
-        &sync.config.match_tags,
-      )
-      .await?
-    } else {
-      Default::default()
-    };
-    let deployment_deltas = if sync.config.include_resources {
-      get_updates_for_execution::<Deployment>(
-        resources.deployments,
-        delete,
-        match_resource_type,
-        match_resources.as_deref(),
-        &id_to_tags,
-        &sync.config.match_tags,
-      )
-      .await?
-    } else {
-      Default::default()
-    };
-    let build_deltas = if sync.config.include_resources {
-      get_updates_for_execution::<Build>(
-        resources.builds,
-        delete,
-        match_resource_type,
-        match_resources.as_deref(),
-        &id_to_tags,
-        &sync.config.match_tags,
-      )
-      .await?
-    } else {
-      Default::default()
-    };
-    let repo_deltas = if sync.config.include_resources {
-      get_updates_for_execution::<Repo>(
-        resources.repos,
-        delete,
-        match_resource_type,
-        match_resources.as_deref(),
-        &id_to_tags,
-        &sync.config.match_tags,
-      )
-      .await?
-    } else {
-      Default::default()
-    };
-    let procedure_deltas = if sync.config.include_resources {
-      get_updates_for_execution::<Procedure>(
-        resources.procedures,
-        delete,
-        match_resource_type,
-        match_resources.as_deref(),
-        &id_to_tags,
-        &sync.config.match_tags,
-      )
-      .await?
-    } else {
-      Default::default()
-    };
-    let action_deltas = if sync.config.include_resources {
-      get_updates_for_execution::<Action>(
-        resources.actions,
-        delete,
-        match_resource_type,
-        match_resources.as_deref(),
-        &id_to_tags,
-        &sync.config.match_tags,
-      )
-      .await?
-    } else {
-      Default::default()
-    };
-    let builder_deltas = if sync.config.include_resources {
-      get_updates_for_execution::<Builder>(
-        resources.builders,
-        delete,
-        match_resource_type,
-        match_resources.as_deref(),
-        &id_to_tags,
-        &sync.config.match_tags,
-      )
-      .await?
-    } else {
-      Default::default()
-    };
-    let alerter_deltas = if sync.config.include_resources {
-      get_updates_for_execution::<Alerter>(
-        resources.alerters,
-        delete,
-        match_resource_type,
-        match_resources.as_deref(),
-        &id_to_tags,
-        &sync.config.match_tags,
-      )
-      .await?
-    } else {
-      Default::default()
-    };
-    let resource_sync_deltas = if sync.config.include_resources {
-      get_updates_for_execution::<entities::sync::ResourceSync>(
-        resources.resource_syncs,
-        delete,
-        match_resource_type,
-        match_resources.as_deref(),
-        &id_to_tags,
-        &sync.config.match_tags,
-      )
-      .await?
-    } else {
-      Default::default()
-    };
+    macro_rules! get_deltas {
+      ($(($var:ident, $Type:ident, $field:ident)),* $(,)?) => {
+        $(
+          let $var = if sync.config.include_resources {
+            get_updates_for_execution::<$Type>(
+              resources.$field,
+              delete,
+              match_resource_type,
+              match_resources.as_deref(),
+              &id_to_tags,
+              &sync.config.match_tags,
+            )
+            .await?
+          } else {
+            Default::default()
+          };
+        )*
+      };
+    }
+    // New resource types need to be added here manually.
+    get_deltas!(
+      (server_deltas, Server, servers),
+      (swarm_deltas, Swarm, swarms),
+      (stack_deltas, Stack, stacks),
+      (deployment_deltas, Deployment, deployments),
+      (build_deltas, Build, builds),
+      (repo_deltas, Repo, repos),
+      (procedure_deltas, Procedure, procedures),
+      (action_deltas, Action, actions),
+      (builder_deltas, Builder, builders),
+      (alerter_deltas, Alerter, alerters),
+      (resource_sync_deltas, ResourceSync, resource_syncs),
+    );
 
     let (
       variables_to_create,
@@ -402,6 +286,7 @@ impl Resolve<ExecuteArgs> for RunSync {
     if deploy_cache.is_empty()
       && resource_sync_deltas.no_changes()
       && server_deltas.no_changes()
+      && swarm_deltas.no_changes()
       && deployment_deltas.no_changes()
       && stack_deltas.no_changes()
       && build_deltas.no_changes()
@@ -429,7 +314,11 @@ impl Resolve<ExecuteArgs> for RunSync {
       return Ok(update);
     }
 
-    // =================
+    // =====================================================
+    // The ordering these are executed does matter, since
+    // latter resources may depend on prior synced resources
+    // already being updated with the declared state.
+    // =====================================================
 
     // No deps
     maybe_extend(
@@ -468,6 +357,10 @@ impl Resolve<ExecuteArgs> for RunSync {
     );
 
     // Dependent on server
+    maybe_extend(
+      &mut update.logs,
+      Swarm::execute_sync_updates(swarm_deltas).await,
+    );
     maybe_extend(
       &mut update.logs,
       Builder::execute_sync_updates(builder_deltas).await,

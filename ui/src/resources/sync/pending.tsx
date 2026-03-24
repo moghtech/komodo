@@ -48,11 +48,7 @@ export default function ResourceSyncPending({
 
       {/* PENDING ERROR */}
       {!!sync?.info?.pending_error && (
-        <Stack
-          className="bordered-light"
-          bdrs="md"
-          p="xl"
-        >
+        <Stack className="bordered-light" bdrs="md" p="xl">
           <Text c="red" ff="monospace">
             Error
           </Text>
@@ -68,26 +64,68 @@ export default function ResourceSyncPending({
         </Stack>
       )}
 
-      {/* PENDING DEPLOY */}
-      {view === "Execute" && !!sync?.info?.pending_deploy?.to_deploy && (
-        <Stack
-          className="bordered-light"
-          bdrs="md"
-          p="xl"
-        >
-          <Text c="yellow" ff="monospace">
-            Deploy {sync.info.pending_deploy.to_deploy} Resource
-            {sync.info.pending_deploy.to_deploy > 1 ? "s" : ""}
+      {/* PENDING DEPLOY ERROR */}
+      {view === "Execute" && !!sync?.info?.pending_deploy_error && (
+        <Stack className="bordered-light" bdrs="md" p="xl">
+          <Text c="red" ff="monospace">
+            Deploy Error
           </Text>
           <Code
             component="pre"
             fz="sm"
             mah={500}
             dangerouslySetInnerHTML={{
-              __html: sanitizeOnlySpan(sync.info.pending_deploy.log),
+              __html: sanitizeOnlySpan(sync.info.pending_deploy_error),
             }}
             style={{ overflowY: "auto" }}
           />
+        </Stack>
+      )}
+
+      {/* PENDING DEPLOYS */}
+      {view === "Execute" && !!sync?.info?.pending_deploys?.length && (
+        <Stack className="bordered-light" bdrs="md" p="xl">
+          <Text c="yellow" ff="monospace">
+            Deploy {sync.info.pending_deploys.length} Resource
+            {sync.info.pending_deploys.length === 1 ? "" : "s"}
+          </Text>
+          {sync.info.pending_deploys.map(
+            ({ target: { type, id }, reason, after }) => (
+              <Group
+                key={type + id}
+                className="bordered-light"
+                bdrs="sm"
+                px="md"
+                py="xs"
+              >
+                <ResourceLink type={type as UsableResource} id={id} useName />
+                <Code
+                  component="pre"
+                  fz="sm"
+                  mah={500}
+                  dangerouslySetInnerHTML={{
+                    __html:
+                      '<span style="color: var(--mantine-color-dimmed)">Reason:</span> ' +
+                      sanitizeOnlySpan(reason),
+                  }}
+                  style={{ overflowY: "auto" }}
+                />
+                {after.length > 0 && (
+                  <Group gap="xs">
+                    <Text c="dimmed">After: </Text>
+                    {after.map(({ type, id }) => (
+                      <ResourceLink
+                        key={type + id}
+                        type={type as UsableResource}
+                        id={id}
+                        useName
+                      />
+                    ))}
+                  </Group>
+                )}
+              </Group>
+            ),
+          )}
         </Stack>
       )}
 
@@ -186,12 +224,7 @@ export default function ResourceSyncPending({
       {/* PENDING VARIABLE UPDATES */}
       {sync?.info?.variable_updates?.map((data, i) => {
         return (
-          <Stack
-            key={i}
-            className="bordered-light"
-            bdrs="md"
-            p="xl"
-          >
+          <Stack key={i} className="bordered-light" bdrs="md" p="xl">
             <Text
               ff="monospace"
               c={colorByIntention(
@@ -242,12 +275,7 @@ export default function ResourceSyncPending({
       {/* PENDING USER GROUP UPDATES */}
       {sync?.info?.user_group_updates?.map((data, i) => {
         return (
-          <Stack
-            key={i}
-            className="bordered-light"
-            bdrs="md"
-            p="xl"
-          >
+          <Stack key={i} className="bordered-light" bdrs="md" p="xl">
             <Text
               ff="monospace"
               c={colorByIntention(

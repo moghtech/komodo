@@ -16,8 +16,10 @@ import { Box, Group } from "@mantine/core";
 import ResourceLink from "../link";
 import RepoLink from "@/components/repo-link";
 
-export function useRepo(id: string | undefined) {
-  return useRead("ListRepos", {}).data?.find((r) => r.id === id);
+export function useRepo(id: string | undefined, useName?: boolean) {
+  return useRead("ListRepos", {}).data?.find((r) =>
+    useName ? r.name === id : r.id === id,
+  );
 }
 
 export function useFullRepo(id: string) {

@@ -115,9 +115,11 @@ pub struct ResourceSyncInfo {
   pub user_group_updates: Vec<DiffData>,
   /// The list of pending deploys to resources.
   #[serde(default)]
-  pub pending_deploy: SyncDeployUpdate,
+  pub pending_deploys: Vec<SyncDeployTarget>,
   /// If there is an error, it will be stored here
   pub pending_error: Option<String>,
+  /// If there is an getting pending deploys, it will be stored here
+  pub pending_deploy_error: Option<String>,
   /// The commit hash which produced these pending updates.
   pub pending_hash: Option<String>,
   /// The commit message which produced these pending updates.
@@ -170,11 +172,10 @@ pub enum DiffData {
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-pub struct SyncDeployUpdate {
-  /// Resources to deploy
-  pub to_deploy: i32,
-  /// A readable log of all the changes to be applied
-  pub log: String,
+pub struct SyncDeployTarget {
+  pub target: ResourceTarget,
+  pub reason: String,
+  pub after: Vec<ResourceTarget>,
 }
 
 #[typeshare(serialized_as = "Partial<ResourceSyncConfig>")]

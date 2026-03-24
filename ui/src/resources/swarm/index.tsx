@@ -20,8 +20,10 @@ import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
 import SwarmHeaderInfo from "./header-info";
 
-export function useSwarm(id: string | undefined) {
-  return useRead("ListSwarms", {}).data?.find((r) => r.id === id);
+export function useSwarm(id: string | undefined, useName?: boolean) {
+  return useRead("ListSwarms", {}).data?.find((r) =>
+    useName ? r.name === id : r.id === id,
+  );
 }
 
 export function useFullSwarm(id: string) {

@@ -51,7 +51,7 @@ export function ExecuteSync({ id }: { id: string }) {
   if (
     view !== "Execute" ||
     !sync ||
-    resourceSyncNoChanges(sync) ||
+    (resourceSyncNoChanges(sync) && !sync.info?.pending_deploys?.length) ||
     !sync.info?.remote_contents
   ) {
     return null;

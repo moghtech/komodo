@@ -10,8 +10,10 @@ import { hexColorByIntention } from "@/lib/color";
 import BatchExecutions from "@/components/batch-executions";
 import ConfirmButton from "@/ui/confirm-button";
 
-export function useAlerter(id: string | undefined) {
-  return useRead("ListAlerters", {}).data?.find((r) => r.id === id);
+export function useAlerter(id: string | undefined, useName?: boolean) {
+  return useRead("ListAlerters", {}).data?.find((r) =>
+    useName ? r.name === id : r.id === id,
+  );
 }
 
 export function useFullAlerter(id: string) {

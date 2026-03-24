@@ -27,8 +27,10 @@ import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
 import NewResourceWithDeployTarget from "../new-with-deploy-target";
 
-export function useDeployment(id: string | undefined) {
-  return useRead("ListDeployments", {}).data?.find((r) => r.id === id);
+export function useDeployment(id: string | undefined, useName?: boolean) {
+  return useRead("ListDeployments", {}).data?.find((r) =>
+    useName ? r.name === id : r.id === id,
+  );
 }
 
 export function useFullDeployment(id: string) {

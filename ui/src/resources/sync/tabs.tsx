@@ -14,7 +14,7 @@ import ResourceSyncPending from "./pending";
 export default function ResourceSyncTabs({ id }: { id: string }) {
   const info = useResourceSync(id)?.info;
   const sync = useFullResourceSync(id);
-  const { view, setView, hideInfo, showPending } =
+  const { view, setView, hideInfo, showExecute, showCommit } =
     useResourceSyncTabsView(sync);
 
   const tabsNoContent = useMemo<TabNoContent[]>(
@@ -28,15 +28,15 @@ export default function ResourceSyncTabs({ id }: { id: string }) {
       },
       {
         value: "Execute",
-        disabled: !showPending,
+        disabled: !showExecute,
       },
       {
         value: "Commit",
         hidden: !sync?.config?.managed,
-        disabled: !showPending,
+        disabled: !showCommit,
       },
     ],
-    [hideInfo, sync?.config?.managed, showPending],
+    [hideInfo, sync?.config?.managed, showExecute, showCommit],
   );
 
   const Selector = (

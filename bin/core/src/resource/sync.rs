@@ -10,12 +10,7 @@ use komodo_client::{
     permission::PermissionLevel,
     repo::Repo,
     resource::Resource,
-    sync::{
-      PartialResourceSyncConfig, ResourceSync, ResourceSyncConfig,
-      ResourceSyncConfigDiff, ResourceSyncInfo, ResourceSyncListItem,
-      ResourceSyncListItemInfo, ResourceSyncQuerySpecifics,
-      ResourceSyncState,
-    },
+    sync::*,
     update::Update,
     user::{User, sync_user},
   },
@@ -260,12 +255,15 @@ async fn get_resource_sync_state(
   {
     return state;
   }
-  if data.pending_error.is_some() || !data.remote_errors.is_empty() {
+  if data.pending_error.is_some()
+    || data.pending_deploy_error.is_some()
+    || !data.remote_errors.is_empty()
+  {
     ResourceSyncState::Failed
   } else if !data.resource_updates.is_empty()
     || !data.variable_updates.is_empty()
     || !data.user_group_updates.is_empty()
-    || data.pending_deploy.to_deploy > 0
+    || !data.pending_deploys.is_empty()
   {
     ResourceSyncState::Pending
   } else {

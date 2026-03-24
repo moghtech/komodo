@@ -120,7 +120,7 @@ impl Resolve<ReadArgs> for GetResourceSyncsSummary {
     for resource_sync in resource_syncs {
       res.total += 1;
 
-      if !(resource_sync.info.pending_deploy.to_deploy == 0
+      if !(resource_sync.info.pending_deploys.is_empty()
         && resource_sync.info.resource_updates.is_empty()
         && resource_sync.info.variable_updates.is_empty()
         && resource_sync.info.user_group_updates.is_empty())

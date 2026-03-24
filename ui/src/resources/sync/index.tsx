@@ -16,8 +16,10 @@ import ResourceSyncTabs from "./tabs";
 import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
 
-export function useResourceSync(id: string | undefined) {
-  return useRead("ListResourceSyncs", {}).data?.find((r) => r.id === id);
+export function useResourceSync(id: string | undefined, useName?: boolean) {
+  return useRead("ListResourceSyncs", {}).data?.find((r) =>
+    useName ? r.name === id : r.id === id,
+  );
 }
 
 export function useFullResourceSync(id: string) {

@@ -15,8 +15,10 @@ import { Clock } from "lucide-react";
 import { useDisclosure } from "@mantine/hooks";
 import { updateLogToHtml } from "@/lib/utils";
 
-export function useProcedure(id: string | undefined) {
-  return useRead("ListProcedures", {}).data?.find((r) => r.id === id);
+export function useProcedure(id: string | undefined, useName?: boolean) {
+  return useRead("ListProcedures", {}).data?.find((r) =>
+    useName ? r.name === id : r.id === id,
+  );
 }
 
 export function useFullProcedure(id: string) {

@@ -19,8 +19,10 @@ import BatchExecutions from "@/components/batch-executions";
 import { useState } from "react";
 import ResourceSelector from "../selector";
 
-export function useBuild(id: string | undefined) {
-  return useRead("ListBuilds", {}).data?.find((r) => r.id === id);
+export function useBuild(id: string | undefined, useName?: boolean) {
+  return useRead("ListBuilds", {}).data?.find((r) =>
+    useName ? r.name === id : r.id === id,
+  );
 }
 
 export function useFullBuild(id: string) {

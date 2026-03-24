@@ -15,8 +15,10 @@ import ActionTable from "./table";
 import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
 
-export function useAction(id: string | undefined) {
-  return useRead("ListActions", {}).data?.find((r) => r.id === id);
+export function useAction(id: string | undefined, useName?: boolean) {
+  return useRead("ListActions", {}).data?.find((r) =>
+    useName ? r.name === id : r.id === id,
+  );
 }
 
 export function useFullAction(id: string) {

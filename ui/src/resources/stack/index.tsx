@@ -35,8 +35,10 @@ import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
 import NewResourceWithDeployTarget from "../new-with-deploy-target";
 
-export function useStack(id: string | undefined) {
-  return useRead("ListStacks", {}).data?.find((r) => r.id === id);
+export function useStack(id: string | undefined, useName?: boolean) {
+  return useRead("ListStacks", {}).data?.find((r) =>
+    useName ? r.name === id : r.id === id,
+  );
 }
 
 export function useFullStack(id: string) {

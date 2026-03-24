@@ -11,6 +11,8 @@ export interface ResourceLinkProps extends TextProps {
   noColor?: boolean;
   groupProps?: GroupProps;
   iconSize?: string | number;
+  /** The id field expects the resource name */
+  useName?: boolean;
 }
 
 export default function ResourceLink({
@@ -20,10 +22,11 @@ export default function ResourceLink({
   noColor,
   groupProps,
   iconSize,
+  useName,
   ...textProps
 }: ResourceLinkProps) {
   const RC = ResourceComponents[type];
-  const resource = RC.useListItem(id);
+  const resource = RC.useListItem(id, useName);
   return (
     <Group
       title={`${type} - ${resource?.name}`}
@@ -38,7 +41,11 @@ export default function ResourceLink({
       gap="xs"
       {...groupProps}
     >
-      <RC.Icon id={id} noColor={noColor} size={iconSize} />
+      <RC.Icon
+        id={useName ? resource?.id : id}
+        noColor={noColor}
+        size={iconSize}
+      />
       <Text
         className="hover-underline"
         style={{ textWrap: "nowrap" }}

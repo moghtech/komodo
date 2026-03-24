@@ -23,8 +23,10 @@ import { ServerRamUsage } from "./stats/current/ram";
 import ServerDiskUsage from "./diskUsage";
 import ServerCpuUsage from "./stats/current/cpu";
 
-export function useServer(id: string | undefined) {
-  return useRead("ListServers", {}).data?.find((r) => r.id === id);
+export function useServer(id: string | undefined, useName?: boolean) {
+  return useRead("ListServers", {}).data?.find((r) =>
+    useName ? r.name === id : r.id === id,
+  );
 }
 
 export function useFullServer(id: string) {

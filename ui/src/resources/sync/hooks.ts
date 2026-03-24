@@ -18,13 +18,19 @@ export function useResourceSyncTabsView(sync: Types.ResourceSync | undefined) {
       ? true
       : false;
 
-  const showPending =
-    sync && (!resourceSyncNoChanges(sync) || sync.info?.pending_error);
+  const showCommit = sync && !resourceSyncNoChanges(sync);
+
+  const showExecute =
+    showCommit ||
+    sync?.info?.pending_deploys?.length ||
+    sync?.info?.pending_error ||
+    sync?.info?.pending_deploy_error;
 
   const view =
     _view === "Info" && hideInfo
       ? "Config"
-      : (_view === "Execute" || _view === "Commit") && !showPending
+      : (_view === "Execute" && !showExecute) ||
+          (_view === "Commit" && !showCommit)
         ? sync?.config?.files_on_host ||
           sync?.config?.repo ||
           sync?.config?.linked_repo
@@ -38,6 +44,7 @@ export function useResourceSyncTabsView(sync: Types.ResourceSync | undefined) {
     view,
     setView,
     hideInfo,
-    showPending,
+    showExecute,
+    showCommit,
   };
 }

@@ -13,8 +13,10 @@ import BatchExecutions from "@/components/batch-executions";
 import { useState } from "react";
 import { Select } from "@mantine/core";
 
-export function useBuilder(id: string | undefined) {
-  return useRead("ListBuilders", {}).data?.find((r) => r.id === id);
+export function useBuilder(id: string | undefined, useName?: boolean) {
+  return useRead("ListBuilders", {}).data?.find((r) =>
+    useName ? r.name === id : r.id === id,
+  );
 }
 
 export function useFullBuilder(id: string) {

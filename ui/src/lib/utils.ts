@@ -151,7 +151,7 @@ export function sanitizeOnlySpan(log: string) {
   return sanitizeHtml(log, {
     allowedTags: ["span"],
     allowedAttributes: {
-      span: ["class"],
+      span: ["style"],
     },
   });
 }
@@ -252,9 +252,9 @@ export function filterMultitermBySplit<T>(
   );
 }
 
+/** This does NOT include pending deploys, which are only for Execute direction. */
 export function resourceSyncNoChanges(sync: Types.ResourceSync) {
   return (
-    (sync.info?.pending_deploy?.to_deploy ?? 0) === 0 &&
     (sync.info?.resource_updates?.length ?? 0) === 0 &&
     (sync.info?.variable_updates?.length ?? 0) === 0 &&
     (sync.info?.user_group_updates?.length ?? 0) === 0
