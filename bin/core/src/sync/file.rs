@@ -243,36 +243,27 @@ pub fn extend_resources(
   more: ResourcesToml,
   match_tags: &[String],
 ) {
-  resources
-    .servers
-    .extend(filter_by_tag(more.servers, match_tags));
-  resources
-    .stacks
-    .extend(filter_by_tag(more.stacks, match_tags));
-  resources
-    .deployments
-    .extend(filter_by_tag(more.deployments, match_tags));
-  resources
-    .builds
-    .extend(filter_by_tag(more.builds, match_tags));
-  resources
-    .repos
-    .extend(filter_by_tag(more.repos, match_tags));
-  resources
-    .procedures
-    .extend(filter_by_tag(more.procedures, match_tags));
-  resources
-    .actions
-    .extend(filter_by_tag(more.actions, match_tags));
-  resources
-    .alerters
-    .extend(filter_by_tag(more.alerters, match_tags));
-  resources
-    .builders
-    .extend(filter_by_tag(more.builders, match_tags));
-  resources
-    .resource_syncs
-    .extend(filter_by_tag(more.resource_syncs, match_tags));
+  macro_rules! extend_filtered {
+    ($($field:ident),* $(,)?) => {
+      $(
+        resources.$field.extend(filter_by_tag(more.$field, match_tags));
+      )*
+    };
+  }
+  // New resource types need to be added here manually.
+  extend_filtered!(
+    servers,
+    swarms,
+    stacks,
+    deployments,
+    builds,
+    repos,
+    procedures,
+    actions,
+    alerters,
+    builders,
+    resource_syncs,
+  );
   resources.user_groups.extend(more.user_groups);
   resources.variables.extend(more.variables);
 }
