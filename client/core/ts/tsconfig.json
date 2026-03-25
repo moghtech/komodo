@@ -3,10 +3,11 @@
 		"strict": true,
 		"target": "ESNext",
 		"module": "ESNext",
-		"moduleResolution": "node",
+		"moduleResolution": "bundler",
 		"allowSyntheticDefaultImports": true,
 		"esModuleInterop": true,
 		"isolatedModules": true,
+		"rootDir": "src/",
 		"outDir": "dist",
 		"declaration": true
 	}

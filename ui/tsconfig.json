@@ -21,7 +21,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     /* Module resolution */
-    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./src/*"
