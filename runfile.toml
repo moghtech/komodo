@@ -1,5 +1,10 @@
 # Runfile | https://crates.io/crates/runnables-cli
 
+[dev]
+alias = "d"
+description = "starts all local dev services (db, core, periphery, ui) via mprocs"
+cmd = "mprocs"
+
 [dev-core]
 alias = "dc"
 description = "runs core --release pointing to .dev/core.config.toml"
