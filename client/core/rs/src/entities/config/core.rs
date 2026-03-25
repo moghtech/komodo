@@ -116,27 +116,6 @@ pub struct Env {
   /// Override `webhook_base_url`
   pub komodo_webhook_base_url: Option<String>,
 
-  /// Override `logging.level`
-  pub komodo_logging_level: Option<LogLevel>,
-  /// Override `logging.stdio`
-  pub komodo_logging_stdio: Option<StdioLogMode>,
-  /// Override `logging.pretty`
-  pub komodo_logging_pretty: Option<bool>,
-  /// Override `logging.location`
-  pub komodo_logging_location: Option<bool>,
-  /// Override `logging.ansi`
-  pub komodo_logging_ansi: Option<bool>,
-  /// Override `logging.otlp_endpoint`
-  pub komodo_logging_otlp_endpoint: Option<String>,
-  /// Override `logging.opentelemetry_service_name`
-  pub komodo_logging_opentelemetry_service_name: Option<String>,
-  /// Override `logging.opentelemetry_scope_name`
-  pub komodo_logging_opentelemetry_scope_name: Option<String>,
-  /// Override `pretty_startup_config`
-  pub komodo_pretty_startup_config: Option<bool>,
-  /// Override `unsafe_unsanitized_startup_config`
-  pub komodo_unsafe_unsanitized_startup_config: Option<bool>,
-
   /// Override `transparent_mode`
   pub komodo_transparent_mode: Option<bool>,
   /// Override `ui_write_disabled`
@@ -264,6 +243,29 @@ pub struct Env {
   pub komodo_aws_secret_access_key: Option<String>,
   /// Override `aws.secret_access_key` with file
   pub komodo_aws_secret_access_key_file: Option<PathBuf>,
+
+  /// Override `logging.level`
+  pub komodo_logging_level: Option<LogLevel>,
+  /// Override `logging.stdio`
+  pub komodo_logging_stdio: Option<StdioLogMode>,
+  /// Override `logging.pretty`
+  pub komodo_logging_pretty: Option<bool>,
+  /// Override `logging.location`
+  pub komodo_logging_location: Option<bool>,
+  /// Override `logging.ansi`
+  pub komodo_logging_ansi: Option<bool>,
+  /// Override `logging.timestamps`
+  pub komodo_logging_timestamps: Option<bool>,
+  /// Override `logging.otlp_endpoint`
+  pub komodo_logging_otlp_endpoint: Option<String>,
+  /// Override `logging.opentelemetry_service_name`
+  pub komodo_logging_opentelemetry_service_name: Option<String>,
+  /// Override `logging.opentelemetry_scope_name`
+  pub komodo_logging_opentelemetry_scope_name: Option<String>,
+  /// Override `pretty_startup_config`
+  pub komodo_pretty_startup_config: Option<bool>,
+  /// Override `unsafe_unsanitized_startup_config`
+  pub komodo_unsafe_unsanitized_startup_config: Option<bool>,
 
   /// Override `internet_interface`
   pub komodo_internet_interface: Option<String>,

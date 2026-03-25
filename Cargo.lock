@@ -3301,9 +3301,9 @@ dependencies = [
 
 [[package]]
 name = "mogh_logger"
-version = "1.3.2"
+version = "1.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc71b30d39325fd768c98f0dc60487365f40eb30f3565f0d986fc2d555f95148"
+checksum = "b0aac766e2f34066511e67bf330a88874a9ac9d58732c9c4eb0687546c7a206e"
 dependencies = [
  "anyhow",
  "opentelemetry",

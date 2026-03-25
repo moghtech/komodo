@@ -199,6 +199,8 @@ pub struct Env {
   pub periphery_logging_location: Option<bool>,
   /// Override `logging.ansi`
   pub periphery_logging_ansi: Option<bool>,
+  /// Override `logging.timestamps`
+  pub periphery_logging_timestamps: Option<bool>,
   /// Override `logging.otlp_endpoint`
   pub periphery_logging_otlp_endpoint: Option<String>,
   /// Override `logging.opentelemetry_service_name`

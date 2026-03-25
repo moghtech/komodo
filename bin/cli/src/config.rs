@@ -264,6 +264,9 @@ pub fn cli_config() -> &'static CliConfig {
         ansi: env
           .komodo_cli_logging_ansi
           .unwrap_or(config.cli_logging.ansi),
+        timestamps: env
+          .komodo_cli_logging_timestamps
+          .unwrap_or(config.cli_logging.timestamps),
         otlp_endpoint: env
           .komodo_cli_logging_otlp_endpoint
           .unwrap_or(config.cli_logging.otlp_endpoint),
