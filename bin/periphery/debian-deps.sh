@@ -20,7 +20,7 @@ apt-get update
 apt-get install -y docker-ce-cli docker-buildx-plugin docker-compose-plugin
 
 # Sops only available as a binary
-SOPS_VERSION="v3.11.0"
+SOPS_VERSION="v3.12.2"
 ARCH=$(dpkg --print-architecture)
 curl -L "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.${ARCH}" -o /usr/local/bin/sops
 chmod +x /usr/local/bin/sops
