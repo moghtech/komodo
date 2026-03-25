@@ -150,10 +150,13 @@ export default function SwarmConfig({
           },
           {
             label: "Links",
-            description: "Add quick links in the resource header",
+            labelHidden: true,
             fields: {
               links: (values, set) => (
                 <ConfigList
+                  label="Links"
+                  addLabel="Add Link"
+                  description="Add quick links in the resource header"
                   field="links"
                   values={values ?? []}
                   set={set}
