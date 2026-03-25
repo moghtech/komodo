@@ -772,7 +772,7 @@ export const PROCEDURE_EXECUTIONS: ProcedureExecutions = {
               <Stack gap="0">
                 <Text>Command</Text>
                 <TextInput
-                  placeholder="Enter command (Required)"
+                  placeholder="Enter command (Optional)"
                   value={commandText}
                   onChange={(e) => setCommand(e.target.value)}
                   disabled={disabled}
