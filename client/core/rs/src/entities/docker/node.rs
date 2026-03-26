@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 
+use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
 use strum::AsRefStr;
 use typeshare::typeshare;
@@ -120,6 +121,7 @@ pub struct NodeSpec {
   Serialize,
   Deserialize,
   AsRefStr,
+  ValueEnum,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum NodeSpecRoleEnum {
@@ -145,6 +147,7 @@ pub enum NodeSpecRoleEnum {
   Serialize,
   Deserialize,
   AsRefStr,
+  ValueEnum,
 )]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum NodeSpecAvailabilityEnum {

@@ -148,6 +148,7 @@ pub enum ExecuteRequest {
 
   // ==== SWARM ====
   RemoveSwarmNodes(RemoveSwarmNodes),
+  UpdateSwarmNode(UpdateSwarmNode),
   RemoveSwarmStacks(RemoveSwarmStacks),
   RemoveSwarmServices(RemoveSwarmServices),
   CreateSwarmConfig(CreateSwarmConfig),

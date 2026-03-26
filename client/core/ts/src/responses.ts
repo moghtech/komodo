@@ -433,6 +433,7 @@ export type ExecuteResponses = {
 
   // ==== SWARM ====
   RemoveSwarmNodes: Types.Update;
+  UpdateSwarmNode: Types.Update;
   RemoveSwarmStacks: Types.Update;
   RemoveSwarmServices: Types.Update;
   CreateSwarmConfig: Types.Update;

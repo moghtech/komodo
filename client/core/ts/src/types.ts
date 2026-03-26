@@ -378,6 +378,7 @@ export enum Operation {
 	RenameSwarm = "RenameSwarm",
 	DeleteSwarm = "DeleteSwarm",
 	RemoveSwarmNodes = "RemoveSwarmNodes",
+	UpdateSwarmNode = "UpdateSwarmNode",
 	RemoveSwarmStacks = "RemoveSwarmStacks",
 	RemoveSwarmServices = "RemoveSwarmServices",
 	CreateSwarmConfig = "CreateSwarmConfig",
@@ -927,6 +928,7 @@ export type Execution =
 	| { type: "PruneBuildx", params: PruneBuildx }
 	| { type: "PruneSystem", params: PruneSystem }
 	| { type: "RemoveSwarmNodes", params: RemoveSwarmNodes }
+	| { type: "UpdateSwarmNode", params: UpdateSwarmNode }
 	| { type: "RemoveSwarmStacks", params: RemoveSwarmStacks }
 	| { type: "RemoveSwarmServices", params: RemoveSwarmServices }
 	| { type: "CreateSwarmConfig", params: CreateSwarmConfig }
@@ -10477,6 +10479,26 @@ export interface UpdateSwarm {
 	config: _PartialSwarmConfig;
 }
 
+/**
+ * `docker node update [OPTIONS] NODE`
+ * 
+ * https://docs.docker.com/reference/cli/docker/node/update/
+ */
+export interface UpdateSwarmNode {
+	/** Name or id */
+	swarm: string;
+	/** Node hostname or id */
+	node: string;
+	/** Update the node's availability: 'active', 'pause', or 'drain' */
+	availability?: NodeSpecAvailabilityEnum;
+	/** Add labels to node (`key=value`). */
+	label_add?: string[];
+	/** Add labels to node (`key=value`). (alias: `lr`) */
+	label_rm?: string[];
+	/** Update the node's role: 'worker' or 'manager' */
+	role?: NodeSpecRoleEnum;
+}
+
 /** Update color for tag. Response: [Tag]. */
 export interface UpdateTagColor {
 	/** The name or id of the tag to update. */
@@ -10666,6 +10688,7 @@ export type ExecuteRequest =
 	| { type: "PruneBuildx", params: PruneBuildx }
 	| { type: "PruneSystem", params: PruneSystem }
 	| { type: "RemoveSwarmNodes", params: RemoveSwarmNodes }
+	| { type: "UpdateSwarmNode", params: UpdateSwarmNode }
 	| { type: "RemoveSwarmStacks", params: RemoveSwarmStacks }
 	| { type: "RemoveSwarmServices", params: RemoveSwarmServices }
 	| { type: "CreateSwarmConfig", params: CreateSwarmConfig }

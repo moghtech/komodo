@@ -1,29 +1,27 @@
 use std::collections::HashMap;
 
 use formatting::{Color, bold, colored, muted};
-use komodo_client::{
-  api::execute::Execution,
-  entities::{
-    ResourceTargetVariant,
-    action::Action,
-    alerter::Alerter,
-    build::Build,
-    builder::{Builder, BuilderConfig},
-    deployment::{Deployment, DeploymentImage},
-    procedure::Procedure,
-    repo::Repo,
-    server::Server,
-    stack::Stack,
-    swarm::Swarm,
-    sync::ResourceSync,
-    tag::Tag,
-    update::Log,
-    user::sync_user,
-  },
+use komodo_client::entities::{
+  ResourceTargetVariant,
+  action::Action,
+  alerter::Alerter,
+  build::Build,
+  builder::{Builder, BuilderConfig},
+  deployment::{Deployment, DeploymentImage},
+  procedure::Procedure,
+  repo::Repo,
+  server::Server,
+  stack::Stack,
+  swarm::Swarm,
+  sync::ResourceSync,
+  tag::Tag,
+  update::Log,
+  user::sync_user,
 };
 use partial_derive2::{MaybeNone, PartialDiff};
 
 use crate::{
+  helpers::procedure::replace_procedure_stage_ids_with_names,
   resource::{KomodoResource, ResourceMetaUpdate},
   state::all_resources_cache,
   sync::{ToUpdateItem, execute::run_update_meta},
@@ -341,123 +339,7 @@ impl ResourceSyncTrait for Procedure {
     mut original: Self::Config,
     update: Self::PartialConfig,
   ) -> anyhow::Result<Self::ConfigDiff> {
-    let all = all_resources_cache().load();
-    for stage in &mut original.stages {
-      for execution in &mut stage.executions {
-        // Replaces an id field on config with the resource name from `all`.
-        macro_rules! replace_id_with_name {
-          ($($Variant:ident => $field:ident, $collection:ident);* $(;)?) => {
-            match &mut execution.execution {
-              $(
-                Execution::$Variant(config) => {
-                  config.$field = all
-                    .$collection
-                    .get(&config.$field)
-                    .map(|r| r.name.clone())
-                    .unwrap_or_default();
-                }
-              )*
-              // SendAlert maps a Vec of alerter ids
-              Execution::SendAlert(config) => {
-                config.alerters = config
-                  .alerters
-                  .iter()
-                  .map(|alerter| {
-                    all
-                      .alerters
-                      .get(alerter)
-                      .map(|a| a.name.clone())
-                      .unwrap_or_default()
-                  })
-                  .collect();
-              }
-              // No-op variants
-              Execution::None(_)
-              | Execution::BatchRunProcedure(_)
-              | Execution::BatchRunAction(_)
-              | Execution::BatchRunBuild(_)
-              | Execution::BatchDeploy(_)
-              | Execution::BatchDestroyDeployment(_)
-              | Execution::BatchCloneRepo(_)
-              | Execution::BatchPullRepo(_)
-              | Execution::BatchBuildRepo(_)
-              | Execution::BatchDeployStack(_)
-              | Execution::BatchDeployStackIfChanged(_)
-              | Execution::BatchPullStack(_)
-              | Execution::BatchDestroyStack(_)
-              | Execution::ClearRepoCache(_)
-              | Execution::BackupCoreDatabase(_)
-              | Execution::GlobalAutoUpdate(_)
-              | Execution::RotateAllServerKeys(_)
-              | Execution::RotateCoreKeys(_)
-              | Execution::Sleep(_) => {}
-            }
-          };
-        }
-
-        replace_id_with_name!(
-          RunProcedure => procedure, procedures;
-          RunAction => action, actions;
-          RunBuild => build, builds;
-          CancelBuild => build, builds;
-          Deploy => deployment, deployments;
-          PullDeployment => deployment, deployments;
-          StartDeployment => deployment, deployments;
-          RestartDeployment => deployment, deployments;
-          PauseDeployment => deployment, deployments;
-          UnpauseDeployment => deployment, deployments;
-          StopDeployment => deployment, deployments;
-          DestroyDeployment => deployment, deployments;
-          CloneRepo => repo, repos;
-          PullRepo => repo, repos;
-          BuildRepo => repo, repos;
-          CancelRepoBuild => repo, repos;
-          StartContainer => server, servers;
-          RestartContainer => server, servers;
-          PauseContainer => server, servers;
-          UnpauseContainer => server, servers;
-          StopContainer => server, servers;
-          DestroyContainer => server, servers;
-          StartAllContainers => server, servers;
-          RestartAllContainers => server, servers;
-          PauseAllContainers => server, servers;
-          UnpauseAllContainers => server, servers;
-          StopAllContainers => server, servers;
-          PruneContainers => server, servers;
-          DeleteNetwork => server, servers;
-          PruneNetworks => server, servers;
-          DeleteImage => server, servers;
-          PruneImages => server, servers;
-          DeleteVolume => server, servers;
-          PruneVolumes => server, servers;
-          PruneDockerBuilders => server, servers;
-          PruneBuildx => server, servers;
-          PruneSystem => server, servers;
-          RunSync => sync, syncs;
-          CommitSync => sync, syncs;
-          DeployStack => stack, stacks;
-          DeployStackIfChanged => stack, stacks;
-          PullStack => stack, stacks;
-          StartStack => stack, stacks;
-          RestartStack => stack, stacks;
-          PauseStack => stack, stacks;
-          UnpauseStack => stack, stacks;
-          StopStack => stack, stacks;
-          DestroyStack => stack, stacks;
-          RunStackService => stack, stacks;
-          TestAlerter => alerter, alerters;
-          RemoveSwarmNodes => swarm, swarms;
-          RemoveSwarmStacks => swarm, swarms;
-          RemoveSwarmServices => swarm, swarms;
-          CreateSwarmConfig => swarm, swarms;
-          RotateSwarmConfig => swarm, swarms;
-          RemoveSwarmConfigs => swarm, swarms;
-          CreateSwarmSecret => swarm, swarms;
-          RotateSwarmSecret => swarm, swarms;
-          RemoveSwarmSecrets => swarm, swarms;
-        );
-      }
-    }
+    replace_procedure_stage_ids_with_names(&mut original.stages);
     Ok(original.partial_diff(update))
   }
 }

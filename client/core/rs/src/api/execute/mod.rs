@@ -183,6 +183,7 @@ pub enum Execution {
 
   // SWARM
   RemoveSwarmNodes(RemoveSwarmNodes),
+  UpdateSwarmNode(UpdateSwarmNode),
   RemoveSwarmStacks(RemoveSwarmStacks),
   RemoveSwarmServices(RemoveSwarmServices),
   CreateSwarmConfig(CreateSwarmConfig),

@@ -1,10 +1,6 @@
 use formatting::format_serror;
 use komodo_client::{
-  api::execute::{
-    CreateSwarmConfig, CreateSwarmSecret, RemoveSwarmConfigs,
-    RemoveSwarmNodes, RemoveSwarmSecrets, RemoveSwarmServices,
-    RemoveSwarmStacks, RotateSwarmConfig, RotateSwarmSecret,
-  },
+  api::execute::*,
   entities::{permission::PermissionLevel, swarm::Swarm},
 };
 use mogh_resolver::Resolve;
@@ -65,6 +61,72 @@ impl Resolve<ExecuteArgs> for RemoveSwarmNodes {
         "Remove Swarm Nodes",
         format_serror(
           &e.context("Failed to remove swarm nodes").into(),
+        ),
+      ),
+    };
+
+    update.finalize();
+    update_update(update.clone()).await?;
+
+    Ok(update)
+  }
+}
+
+impl Resolve<ExecuteArgs> for UpdateSwarmNode {
+  #[instrument(
+    "UpdateSwarmNode",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      swarm = self.swarm,
+      node = self.node,
+      availability = format!("{:?}", self.availability),
+      label_add = format!("{:?}", self.label_add),
+      label_rm = format!("{:?}", self.label_rm),
+      role = format!("{:?}", self.role),
+    )
+  )]
+  async fn resolve(
+    self,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> Result<Self::Response, Self::Error> {
+    let swarm = get_check_permissions::<Swarm>(
+      &self.swarm,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
+
+    update_update(update.clone()).await?;
+
+    let mut update = update.clone();
+
+    match swarm_request(
+      &swarm.config.server_ids,
+      periphery_client::api::swarm::UpdateSwarmNode {
+        node: self.node,
+        availability: self.availability,
+        label_add: self.label_add,
+        label_rm: self.label_rm,
+        role: self.role,
+      },
+    )
+    .await
+    {
+      Ok(log) => {
+        update.logs.push(log);
+        refresh_swarm_cache(&swarm, true).await;
+      }
+      Err(e) => update.push_error_log(
+        "Update Swarm Node",
+        format_serror(
+          &e.context("Failed to update swarm node").into(),
         ),
       ),
     };
