@@ -43,6 +43,7 @@ export type ProcedureMinExecutionType = Exclude<
   | "DeleteVolume"
   | "TestAlerter"
   | "RemoveSwarmNodes"
+  | "UpdateSwarmNode"
   | "RemoveSwarmStacks"
   | "RemoveSwarmServices"
   | "CreateSwarmConfig"
