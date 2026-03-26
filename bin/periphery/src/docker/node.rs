@@ -51,24 +51,24 @@ impl DockerClient {
 fn convert_node_list_item(
   node: bollard::models::Node,
 ) -> SwarmNodeListItem {
-  let (name, role, availability) = node
+  let (name, role, availability, labels) = node
     .spec
     .map(|spec| {
       (
         spec.name,
         spec.role.map(convert_role),
         spec.availability.map(convert_availability),
+        spec.labels,
       )
     })
     .unwrap_or_default();
   SwarmNodeListItem {
     id: node.id,
     name,
+    hostname: node.description.and_then(|d| d.hostname),
     role,
     availability,
-    hostname: node
-      .description
-      .and_then(|description| description.hostname),
+    labels,
     state: node
       .status
       .and_then(|status| status.state.map(convert_state)),

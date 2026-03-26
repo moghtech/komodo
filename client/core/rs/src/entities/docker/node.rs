@@ -23,6 +23,7 @@ pub struct SwarmNodeListItem {
   #[serde(rename = "Name")]
   pub name: Option<String>,
 
+  /// Node hostname, more commonly used than Name
   #[serde(rename = "Hostname")]
   pub hostname: Option<String>,
 
@@ -33,6 +34,10 @@ pub struct SwarmNodeListItem {
   /// Availability of the node.
   #[serde(rename = "Availability")]
   pub availability: Option<NodeSpecAvailabilityEnum>,
+
+  /// Labels of the node
+  #[serde(rename = "Labels")]
+  pub labels: Option<HashMap<String, String>>,
 
   /// State of the node
   #[serde(rename = "State")]

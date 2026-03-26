@@ -5365,11 +5365,14 @@ export interface SwarmNodeListItem {
     ID?: string;
     /** Name for the node. */
     Name?: string;
+    /** Node hostname, more commonly used than Name */
     Hostname?: string;
     /** Role of the node. */
     Role?: NodeSpecRoleEnum;
     /** Availability of the node. */
     Availability?: NodeSpecAvailabilityEnum;
+    /** Labels of the node */
+    Labels?: Record<string, string>;
     /** State of the node */
     State?: NodeState;
     /** For manager nodes, include the manager addr. */

@@ -1,7 +1,7 @@
 import { useRead } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
-import { ReactNode } from "react";
-import { useSwarmDockerSearch } from ".";
+import { ReactNode, useState } from "react";
+import { useSwarmDockerSearch } from "..";
 import Section from "@/ui/section";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import SwarmResourceLink from "@/components/swarm/link";
@@ -12,6 +12,10 @@ import {
   swarmNodeStateIntention,
 } from "@/lib/color";
 import SearchInput from "@/ui/search-input";
+import { RowSelectionState } from "@tanstack/react-table";
+import UpdateSwarmNode from "./update";
+import { HoverCard } from "@mantine/core";
+import LabelsGroup from "@/ui/labels-group";
 
 export default function SwarmNodes({
   id,
@@ -25,6 +29,8 @@ export default function SwarmNodes({
     useRead("ListSwarmNodes", { swarm: id }, { refetchInterval: 10_000 })
       .data ?? [];
 
+  const selectState = useState<RowSelectionState>({});
+
   const filtered = filterBySplit(
     nodes,
     search,
@@ -34,11 +40,19 @@ export default function SwarmNodes({
   return (
     <Section
       titleOther={titleOther}
+      titleRight={
+        <UpdateSwarmNode swarm={id} nodes={Object.keys(selectState[0])} />
+      }
       actions={<SearchInput value={search} onSearch={setSearch} />}
     >
       <DataTable
         tableKey="swarm-nodes"
         data={filtered}
+        selectOptions={{
+          selectKey: (node) =>
+            node.Name ?? node.Hostname ?? node.ID ?? "Unknown",
+          state: selectState,
+        }}
         columns={[
           {
             accessorKey: "Hostname",
@@ -100,6 +114,31 @@ export default function SwarmNodes({
                 )}
               />
             ),
+          },
+          {
+            accessorKey: "Labels",
+            header: ({ column }) => (
+              <SortableHeader column={column} title="Labels" />
+            ),
+            cell: ({ row }) => {
+              const labels = Object.entries(row.original.Labels ?? {}).sort();
+              return (
+                <HoverCard position="bottom-start" disabled={labels.length < 3}>
+                  <HoverCard.Target>
+                    <LabelsGroup
+                      labels={labels.slice(0, 2)}
+                      showEllipsis={labels.length > 2}
+                      wrap="nowrap"
+                    />
+                  </HoverCard.Target>
+                  <HoverCard.Dropdown
+                    maw={{ base: "calc(100vw - 100px)", xs: 400 }}
+                  >
+                    <LabelsGroup labels={labels.slice(2)} />
+                  </HoverCard.Dropdown>
+                </HoverCard>
+              );
+            },
           },
           {
             accessorKey: "UpdatedAt",
