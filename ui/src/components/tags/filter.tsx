@@ -14,7 +14,7 @@ export default function TagsFilter() {
     <>
       <Group gap="xs" visibleFrom="xs">
         {tags.length > 0 && (
-          <ActionIcon color="red" onClick={clear_tags} opacity={0.7}>
+          <ActionIcon color="dimmed" onClick={clear_tags}>
             <ICONS.Clear size="1rem" />{" "}
           </ActionIcon>
         )}
@@ -51,7 +51,7 @@ export default function TagsFilter() {
             />
 
             {tags.length > 0 && (
-              <ActionIcon color="red" onClick={clear_tags} opacity={0.7}>
+              <ActionIcon color="dimmed" onClick={clear_tags}>
                 <ICONS.Clear size="1rem" />{" "}
               </ActionIcon>
             )}

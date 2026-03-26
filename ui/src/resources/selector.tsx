@@ -98,8 +98,8 @@ export default function ResourceSelector({
               {clearable && (
                 <ActionIcon
                   size="sm"
-                  variant="filled"
-                  color="red"
+                  variant="subtle"
+                  color="dimmed"
                   onClick={(e) => {
                     e.stopPropagation();
                     onSelect?.("");

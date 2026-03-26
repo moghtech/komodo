@@ -80,7 +80,7 @@ export default function SwarmConfig({
                             clearable={false}
                           />
                           {!disabled && (
-                            <ActionIcon variant="filled" color="red">
+                            <ActionIcon variant="subtle" color="dimmed">
                               <ICONS.Remove
                                 size="1rem"
                                 onClick={() =>

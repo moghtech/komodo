@@ -50,7 +50,7 @@ export default function SwarmConfig() {
         intent={intent}
         state={
           !inUse && (
-            <Badge variant="filled" color="red">
+            <Badge variant="filled" color="blue">
               Unused
             </Badge>
           )

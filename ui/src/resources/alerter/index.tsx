@@ -60,7 +60,7 @@ export const AlerterComponents: RequiredResourceComponents<
     const color =
       enabled === undefined || noColor
         ? undefined
-        : hexColorByIntention(enabled ? "Good" : "Critical");
+        : hexColorByIntention(enabled ? "Good" : "Neutral");
     return <ICONS.Alerter size={size} color={color} />;
   },
 
@@ -71,7 +71,7 @@ export const AlerterComponents: RequiredResourceComponents<
         type="Alerter"
         id={id}
         resource={alerter}
-        intent={alerter?.info.enabled ? "Good" : "Critical"}
+        intent={alerter?.info.enabled ? "Good" : "Neutral"}
         icon={ICONS.Alerter}
         name={alerter?.name}
         state={alerter?.info.enabled ? "Enabled" : "Disabled"}
