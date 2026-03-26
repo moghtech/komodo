@@ -289,7 +289,7 @@ impl Resolve<crate::api::Args> for DeploySwarmStack {
 
     // Run stack deploy
     let mut command =
-      format!("docker stack deploy --detach=false -c {file_args}");
+      format!("docker stack deploy -c {file_args}");
     if use_with_registry_auth {
       command += " --with-registry-auth";
     }
