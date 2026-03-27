@@ -1,72 +1,97 @@
+use futures_util::{StreamExt, stream::FuturesUnordered};
+use komodo_client::entities::config::periphery::Command;
+use tracing::Instrument;
+
+use crate::{
+  config::periphery_args,
+  state::{core_public_keys, periphery_keys},
+};
+
 #[macro_use]
 extern crate tracing;
 
-//
-use std::{net::SocketAddr, str::FromStr};
-
-use anyhow::Context;
-use axum_server::tls_rustls::RustlsConfig;
-use config::periphery_config;
-
 mod api;
-mod build;
-mod compose;
 mod config;
+mod connection;
 mod docker;
-mod git;
 mod helpers;
-mod ssl;
+mod stack;
+mod state;
 mod stats;
 mod terminal;
 
 async fn app() -> anyhow::Result<()> {
   dotenvy::dotenv().ok();
   let config = config::periphery_config();
-  logger::init(&config.logging)?;
+  mogh_logger::init(&config.logging)?;
 
-  info!("Komodo Periphery version: v{}", env!("CARGO_PKG_VERSION"));
+  let startup_span = info_span!("PeripheryStartup");
 
-  if periphery_config().pretty_startup_config {
-    info!("{:#?}", config.sanitized());
-  } else {
-    info!("{:?}", config.sanitized());
-  }
+  let mut handles = async {
+    info!("Komodo Periphery version: v{}", env!("CARGO_PKG_VERSION"));
 
-  stats::spawn_polling_thread();
-  docker::stats::spawn_polling_thread();
+    if config.pretty_startup_config {
+      info!("{:#?}", config.sanitized());
+    } else {
+      info!("{:?}", config.sanitized());
+    }
 
-  let addr = format!(
-    "{}:{}",
-    config::periphery_config().bind_ip,
-    config::periphery_config().port
-  );
+    // Init + log public key. Will crash if invalid private key here.
+    info!("Public Key: {}", periphery_keys().load().public);
 
-  let socket_addr = SocketAddr::from_str(&addr)
-    .context("failed to parse listen address")?;
+    // Init core public keys. Will crash if invalid core public keys here.
+    core_public_keys();
 
-  let app =
-    api::router().into_make_service_with_connect_info::<SocketAddr>();
-
-  if config.ssl_enabled {
-    info!("🔒 Periphery SSL Enabled");
-    rustls::crypto::ring::default_provider()
+    rustls::crypto::aws_lc_rs::default_provider()
       .install_default()
-      .expect("failed to install default rustls CryptoProvider");
-    ssl::ensure_certs().await;
-    info!("Komodo Periphery starting on https://{}", socket_addr);
-    let ssl_config = RustlsConfig::from_pem_file(
-      config.ssl_cert_file(),
-      config.ssl_key_file(),
-    )
-    .await
-    .context("Invalid ssl cert / key")?;
-    axum_server::bind_rustls(socket_addr, ssl_config)
-      .serve(app)
-      .await?
-  } else {
-    info!("🔓 Periphery SSL Disabled");
-    info!("Komodo Periphery starting on http://{}", socket_addr);
-    axum_server::bind(socket_addr).serve(app).await?
+      .expect("Failed to install default crypto provider");
+
+    stats::spawn_polling_thread();
+    docker::stats::spawn_polling_thread();
+
+    let handles = FuturesUnordered::new();
+
+    // Spawn client side connections
+    if !config.core_addresses.is_empty() && config.connect_as.is_empty()
+    {
+      warn!(
+        "'core_addresses' are defined for outbound connection, but missing 'connect_as' (PERIPHERY_CONNECT_AS)."
+      );
+    } else {
+      for address in &config.core_addresses {
+        match connection::client::handler(address).await {
+          Ok(handle) => handles.push(handle),
+          Err(e) => {
+            error!("Failed to start outbound connection to {address} | {e:#}");
+          }
+        }
+      }
+    }
+
+    // Spawn server connection handler.
+    if config.server_enabled() {
+      match connection::server::run().await {
+        Ok(handle) => handles.push(handle),
+        Err(e) => {
+          error!("Failed to run inbound connection server | {e:#}");
+        }
+      }
+    }
+
+    handles
+  }.instrument(startup_span).await;
+
+  // Watch the threads
+  while let Some(res) = handles.next().await {
+    match res {
+      Ok(Err(e)) => {
+        error!("CONNECTION ERROR: {e:#}");
+      }
+      Err(e) => {
+        error!("SPAWN ERROR: {e:#}");
+      }
+      Ok(Ok(())) => {}
+    }
   }
 
   Ok(())
@@ -74,19 +99,21 @@ async fn app() -> anyhow::Result<()> {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+  // Handle `periphery key gen` and `periphery key compute <private-key>`
+  if let Some(Command::Key { command }) = &periphery_args().command {
+    return mogh_pki::cli::handle(command, mogh_pki::PkiKind::Mutual)
+      .await;
+  }
+
   let mut term_signal = tokio::signal::unix::signal(
     tokio::signal::unix::SignalKind::terminate(),
   )?;
-
-  let app = tokio::spawn(app());
-
   tokio::select! {
-    res = app => return res?,
+    res = tokio::spawn(app()) => return res?,
     _ = term_signal.recv() => {
       info!("Exiting all active Terminals for shutdown");
       terminal::delete_all_terminals().await;
+      Ok(())
     },
   }
-
-  Ok(())
 }

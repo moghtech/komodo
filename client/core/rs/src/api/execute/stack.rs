@@ -2,34 +2,41 @@ use crate::entities::update::Update;
 use anyhow::Context;
 use clap::ArgAction::SetTrue;
 use clap::Parser;
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use typeshare::typeshare;
 
 use super::{BatchExecutionResponse, KomodoExecuteRequest};
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeployStack",
+  description = "Deploys the target stack.",
+  request_body(content = DeployStack),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn deploy_stack() {}
+
 /// Deploys the target stack. `docker compose up`. Response: [Update]
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeployStack {
   /// Id or name
   pub stack: String,
   /// Filter to only deploy specific services.
   /// If empty, will deploy all services.
+  ///
+  /// Note. For Swarm mode Stacks, this field is not supported and will be ignored.
   #[serde(default)]
   pub services: Vec<String>,
   /// Override the default termination max time.
@@ -39,21 +46,27 @@ pub struct DeployStack {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BatchDeployStack",
+  description = "Deploys multiple Stacks in parallel that match pattern.",
+  request_body(content = BatchDeployStack),
+  responses(
+    (status = 200, description = "The batch execution response", body = BatchExecutionResponse),
+  ),
+)]
+pub fn batch_deploy_stack() {}
+
 /// Deploys multiple Stacks in parallel that match pattern. Response: [BatchExecutionResponse].
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  PartialEq,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct BatchDeployStack {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.
@@ -70,23 +83,29 @@ pub struct BatchDeployStack {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeployStackIfChanged",
+  description = "Checks deployed contents vs latest contents and deploys if changed.",
+  request_body(content = DeployStackIfChanged),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn deploy_stack_if_changed() {}
+
 /// Checks deployed contents vs latest contents,
 /// and only if any changes found
 /// will `docker compose up`. Response: [Update]
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeployStackIfChanged {
   /// Id or name
   pub stack: String,
@@ -97,21 +116,27 @@ pub struct DeployStackIfChanged {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BatchDeployStackIfChanged",
+  description = "Deploys multiple Stacks if changed in parallel that match pattern.",
+  request_body(content = BatchDeployStackIfChanged),
+  responses(
+    (status = 200, description = "The batch execution response", body = BatchExecutionResponse),
+  ),
+)]
+pub fn batch_deploy_stack_if_changed() {}
+
 /// Deploys multiple Stacks if changed in parallel that match pattern. Response: [BatchExecutionResponse].
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  PartialEq,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct BatchDeployStackIfChanged {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.
@@ -128,21 +153,27 @@ pub struct BatchDeployStackIfChanged {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/PullStack",
+  description = "Pulls images for the target stack.",
+  request_body(content = PullStack),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn pull_stack() {}
+
 /// Pulls images for the target stack. `docker compose pull`. Response: [Update]
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct PullStack {
   /// Id or name
   pub stack: String,
@@ -154,21 +185,27 @@ pub struct PullStack {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BatchPullStack",
+  description = "Pulls multiple Stacks in parallel that match pattern.",
+  request_body(content = BatchPullStack),
+  responses(
+    (status = 200, description = "The batch execution response", body = BatchExecutionResponse),
+  ),
+)]
+pub fn batch_pull_stack() {}
+
 /// Pulls multiple Stacks in parallel that match pattern. Response: [BatchExecutionResponse].
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  PartialEq,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct BatchPullStack {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.
@@ -185,21 +222,27 @@ pub struct BatchPullStack {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/StartStack",
+  description = "Starts the target stack.",
+  request_body(content = StartStack),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn start_stack() {}
+
 /// Starts the target stack. `docker compose start`. Response: [Update]
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct StartStack {
   /// Id or name
   pub stack: String,
@@ -211,21 +254,27 @@ pub struct StartStack {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RestartStack",
+  description = "Restarts the target stack.",
+  request_body(content = RestartStack),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn restart_stack() {}
+
 /// Restarts the target stack. `docker compose restart`. Response: [Update]
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RestartStack {
   /// Id or name
   pub stack: String,
@@ -237,21 +286,27 @@ pub struct RestartStack {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/PauseStack",
+  description = "Pauses the target stack.",
+  request_body(content = PauseStack),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn pause_stack() {}
+
 /// Pauses the target stack. `docker compose pause`. Response: [Update]
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct PauseStack {
   /// Id or name
   pub stack: String,
@@ -263,23 +318,29 @@ pub struct PauseStack {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UnpauseStack",
+  description = "Unpauses the target stack.",
+  request_body(content = UnpauseStack),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn unpause_stack() {}
+
 /// Unpauses the target stack. `docker compose unpause`. Response: [Update].
 ///
 /// Note. This is the only way to restart a paused container.
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UnpauseStack {
   /// Id or name
   pub stack: String,
@@ -291,21 +352,27 @@ pub struct UnpauseStack {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/StopStack",
+  description = "Stops the target stack.",
+  request_body(content = StopStack),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn stop_stack() {}
+
 /// Stops the target stack. `docker compose stop`. Response: [Update]
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct StopStack {
   /// Id or name
   pub stack: String,
@@ -319,21 +386,27 @@ pub struct StopStack {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DestroyStack",
+  description = "Destroys the target stack.",
+  request_body(content = DestroyStack),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn destroy_stack() {}
+
 /// Destoys the target stack. `docker compose down`. Response: [Update]
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DestroyStack {
   /// Id or name
   pub stack: String,
@@ -350,21 +423,27 @@ pub struct DestroyStack {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RunStackService",
+  description = "Runs a one-time command against a service using docker compose run.",
+  request_body(content = RunStackService),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn run_stack_service() {}
+
 /// Runs a one-time command against a service using `docker compose run`. Response: [Update]
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RunStackService {
   /// Id or name
   pub stack: String,
@@ -408,25 +487,31 @@ fn env_parser(args: &str) -> anyhow::Result<HashMap<String, String>> {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BatchDestroyStack",
+  description = "Destroys multiple Stacks in parallel that match pattern.",
+  request_body(content = BatchDestroyStack),
+  responses(
+    (status = 200, description = "The batch execution response", body = BatchExecutionResponse),
+  ),
+)]
+pub fn batch_destroy_stack() {}
+
 /// Destroys multiple Stacks in parallel that match pattern. Response: [BatchExecutionResponse].
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  PartialEq,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct BatchDestroyStack {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.
-  ///d
+  ///
   /// Example:
   /// ```text
   /// # match all foo-* stacks

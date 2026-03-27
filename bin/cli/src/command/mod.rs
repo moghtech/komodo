@@ -15,9 +15,12 @@ use wildcard::Wildcard;
 use crate::config::cli_config;
 
 pub mod container;
+pub mod core_info;
+pub mod create;
 pub mod database;
 pub mod execute;
 pub mod list;
+pub mod terminal;
 pub mod update;
 
 async fn komodo_client() -> anyhow::Result<&'static KomodoClient> {

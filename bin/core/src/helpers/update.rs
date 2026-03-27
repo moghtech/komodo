@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use anyhow::Context;
 use database::mungos::{
   by_id::{find_one_by_id, update_one_by_id},
@@ -14,8 +16,9 @@ use komodo_client::entities::{
   repo::Repo,
   server::Server,
   stack::Stack,
+  swarm::Swarm,
   sync::ResourceSync,
-  update::{Update, UpdateListItem},
+  update::{Update, UpdateListItem, UpdateStatus},
   user::User,
 };
 
@@ -40,7 +43,6 @@ pub fn make_update(
   }
 }
 
-#[instrument(level = "debug")]
 pub async fn add_update(
   mut update: Update,
 ) -> anyhow::Result<String> {
@@ -59,7 +61,6 @@ pub async fn add_update(
   Ok(id)
 }
 
-#[instrument(level = "debug")]
 pub async fn add_update_without_send(
   update: &Update,
 ) -> anyhow::Result<String> {
@@ -75,7 +76,6 @@ pub async fn add_update_without_send(
   Ok(id)
 }
 
-#[instrument(level = "debug")]
 pub async fn update_update(update: Update) -> anyhow::Result<()> {
   update_one_by_id(&db_client().updates, &update.id, database::mungos::update::Update::Set(to_document(&update)?), None)
     .await
@@ -85,7 +85,6 @@ pub async fn update_update(update: Update) -> anyhow::Result<()> {
   Ok(())
 }
 
-#[instrument(level = "debug")]
 async fn update_list_item(
   update: Update,
 ) -> anyhow::Result<UpdateListItem> {
@@ -115,7 +114,6 @@ async fn update_list_item(
   Ok(update)
 }
 
-#[instrument(level = "debug")]
 async fn send_update(update: UpdateListItem) -> anyhow::Result<()> {
   update_channel().sender.lock().await.send(update)?;
   Ok(())
@@ -126,6 +124,62 @@ pub async fn init_execution_update(
   user: &User,
 ) -> anyhow::Result<Update> {
   let (operation, target) = match &request {
+    // Swarm
+    ExecuteRequest::RemoveSwarmNodes(data) => (
+      Operation::RemoveSwarmNodes,
+      ResourceTarget::Swarm(
+        resource::get::<Swarm>(&data.swarm).await?.id,
+      ),
+    ),
+    ExecuteRequest::RemoveSwarmStacks(data) => (
+      Operation::RemoveSwarmStacks,
+      ResourceTarget::Swarm(
+        resource::get::<Swarm>(&data.swarm).await?.id,
+      ),
+    ),
+    ExecuteRequest::RemoveSwarmServices(data) => (
+      Operation::RemoveSwarmServices,
+      ResourceTarget::Swarm(
+        resource::get::<Swarm>(&data.swarm).await?.id,
+      ),
+    ),
+    ExecuteRequest::CreateSwarmConfig(data) => (
+      Operation::CreateSwarmConfig,
+      ResourceTarget::Swarm(
+        resource::get::<Swarm>(&data.swarm).await?.id,
+      ),
+    ),
+    ExecuteRequest::RotateSwarmConfig(data) => (
+      Operation::RotateSwarmConfig,
+      ResourceTarget::Swarm(
+        resource::get::<Swarm>(&data.swarm).await?.id,
+      ),
+    ),
+    ExecuteRequest::RemoveSwarmConfigs(data) => (
+      Operation::RemoveSwarmConfigs,
+      ResourceTarget::Swarm(
+        resource::get::<Swarm>(&data.swarm).await?.id,
+      ),
+    ),
+    ExecuteRequest::CreateSwarmSecret(data) => (
+      Operation::CreateSwarmSecret,
+      ResourceTarget::Swarm(
+        resource::get::<Swarm>(&data.swarm).await?.id,
+      ),
+    ),
+    ExecuteRequest::RotateSwarmSecret(data) => (
+      Operation::RotateSwarmSecret,
+      ResourceTarget::Swarm(
+        resource::get::<Swarm>(&data.swarm).await?.id,
+      ),
+    ),
+    ExecuteRequest::RemoveSwarmSecrets(data) => (
+      Operation::RemoveSwarmSecrets,
+      ResourceTarget::Swarm(
+        resource::get::<Swarm>(&data.swarm).await?.id,
+      ),
+    ),
+
     // Server
     ExecuteRequest::StartContainer(data) => (
       Operation::StartContainer,
@@ -520,6 +574,12 @@ pub async fn init_execution_update(
     ExecuteRequest::GlobalAutoUpdate(_data) => {
       (Operation::GlobalAutoUpdate, ResourceTarget::system())
     }
+    ExecuteRequest::RotateAllServerKeys(_data) => {
+      (Operation::RotateAllServerKeys, ResourceTarget::system())
+    }
+    ExecuteRequest::RotateCoreKeys(_data) => {
+      (Operation::RotateCoreKeys, ResourceTarget::system())
+    }
   };
 
   let mut update = make_update(target, operation, user);
@@ -532,4 +592,18 @@ pub async fn init_execution_update(
   }
 
   Ok(update)
+}
+
+pub async fn poll_update_until_complete(
+  update_id: &str,
+) -> anyhow::Result<Update> {
+  loop {
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    let update = find_one_by_id(&db_client().updates, update_id)
+      .await?
+      .context("No update found at given ID")?;
+    if matches!(update.status, UpdateStatus::Complete) {
+      return Ok(update);
+    }
+  }
 }

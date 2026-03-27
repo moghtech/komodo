@@ -12,16 +12,12 @@ repository.workspace = true
 [dependencies]
 # local
 komodo_client.workspace = true
+encoding.workspace = true
+mogh_pki.workspace = true
 # mogh
-resolver_api.workspace = true
-serror.workspace = true
+mogh_resolver.workspace = true
 # external
-tokio-tungstenite.workspace = true
-serde_json.workspace = true
-serde_qs.workspace = true
-reqwest.workspace = true
-tracing.workspace = true
 anyhow.workspace = true
-rustls.workspace = true
-tokio.workspace = true
 serde.workspace = true
+strum.workspace = true
+uuid.workspace = true

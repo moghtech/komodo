@@ -10,37 +10,43 @@ use crate::{
   deserializers::{
     option_string_list_deserializer, string_list_deserializer,
   },
-  entities::MaintenanceWindow,
+  entities::{MaintenanceWindow, Timelength},
 };
 
 use super::{
-  I64,
   alert::SeverityLevel,
   resource::{AddFilters, Resource, ResourceListItem, ResourceQuery},
 };
 
+#[cfg(feature = "utoipa")]
+#[derive(utoipa::ToSchema)]
+#[schema(as = Server)]
+pub struct ServerSchema(
+  #[schema(inline)] pub Resource<ServerConfig, ServerInfo>,
+);
+
 #[typeshare]
-pub type Server = Resource<ServerConfig, ()>;
+pub type Server = Resource<ServerConfig, ServerInfo>;
 
 #[typeshare]
 pub type ServerListItem = ResourceListItem<ServerListItemInfo>;
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ServerListItemInfo {
   /// The server's state.
   pub state: ServerState,
   /// Region of the server.
   pub region: String,
-  /// Address of the server.
-  pub address: String,
+  /// Address of the server, or null if empty.
+  pub address: Option<String>,
   /// External address of the server (reachable by users).
   /// Used with links.
-  #[serde(default)] // API backward compat
-  pub external_address: String,
-  /// The Komodo Periphery version of the server.
-  pub version: String,
-  /// Whether server is configured to send unreachable alerts.
+  pub external_address: Option<String>,
+  /// Host public ip, if it could be resolved.
+  pub public_ip: Option<String>,
+  /// Whether server is configured to send disconnected alerts.
   pub send_unreachable_alerts: bool,
   /// Whether server is configured to send cpu alerts.
   pub send_cpu_alerts: bool,
@@ -50,10 +56,33 @@ pub struct ServerListItemInfo {
   pub send_disk_alerts: bool,
   /// Whether server is configured to send version mismatch alerts.
   pub send_version_mismatch_alerts: bool,
+  /// The Komodo Periphery version.
+  pub version: Option<String>,
+  /// The public key of Periphery
+  pub public_key: Option<String>,
+  /// If a Periphery fails to authenticate to Core with invalid Periphery public key,
+  /// it will be stored here to accept the connection later on.
+  pub attempted_public_key: Option<String>,
+  /// Whether server is configured to send unreachable alerts.
   /// Whether terminals are disabled for this Server.
   pub terminals_disabled: bool,
-  /// Whether container exec is disabled for this Server.
-  pub container_exec_disabled: bool,
+  /// Whether container terminals are disabled for this Server.
+  pub container_terminals_disabled: bool,
+}
+
+#[typeshare]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct ServerInfo {
+  /// If a Periphery fails to authenticate to Core
+  /// for a disconnected server with invalid Periphery public key,
+  /// it will be stored here to accept the connection later on.
+  #[serde(default)]
+  pub attempted_public_key: String,
+  /// The expected public key associated with
+  /// private key of the periphery agent.
+  #[serde(default)]
+  pub public_key: String,
 }
 
 #[typeshare(serialized_as = "Partial<ServerConfig>")]
@@ -62,15 +91,25 @@ pub type _PartialServerConfig = PartialServerConfig;
 /// Server configuration.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Builder, Partial)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct ServerConfig {
-  /// The http address of the periphery client.
-  /// Default: http://localhost:8120
-  #[serde(default = "default_address")]
-  #[builder(default = "default_address()")]
-  #[partial_default(default_address())]
+  /// The ws/s address of the periphery client.
+  /// If unset, Server expects Periphery -> Core connection.
+  #[serde(default)]
+  #[builder(default)]
   pub address: String,
+
+  /// Only relevant for Core -> Periphery connections.
+  /// Whether to skip Periphery tls certificate validation.
+  /// This defaults to true because Periphery generates self-signed certificates by default,
+  /// but if you use valid certs you can switch this to false.
+  #[serde(default = "default_insecure_tls")]
+  #[builder(default = "default_insecure_tls()")]
+  #[partial_default(default_insecure_tls())]
+  pub insecure_tls: bool,
 
   /// The address to use with links for containers on the server.
   /// If empty, will use the 'address' for links.
@@ -92,13 +131,15 @@ pub struct ServerConfig {
   #[partial_default(default_enabled())]
   pub enabled: bool,
 
-  /// The timeout used to reach the server in seconds.
-  /// default: 2
-  #[serde(default = "default_timeout_seconds")]
-  #[builder(default = "default_timeout_seconds()")]
-  #[partial_default(default_timeout_seconds())]
-  pub timeout_seconds: I64,
+  /// Whether to automatically rotate Server keys when
+  /// RotateAllServerKeys is called.
+  /// Default: true
+  #[serde(default = "default_auto_rotate_keys")]
+  #[builder(default = "default_auto_rotate_keys()")]
+  #[partial_default(default_auto_rotate_keys())]
+  pub auto_rotate_keys: bool,
 
+  /// Deprecated. Use private / public keys instead.
   /// An optional override passkey to use
   /// to authenticate with periphery agent.
   /// If this is empty, will use passkey in core config.
@@ -116,13 +157,6 @@ pub struct ServerConfig {
   #[builder(default)]
   pub ignore_mounts: Vec<String>,
 
-  /// Whether to monitor any server stats beyond passing health check.
-  /// default: true
-  #[serde(default = "default_stats_monitoring")]
-  #[builder(default = "default_stats_monitoring()")]
-  #[partial_default(default_stats_monitoring())]
-  pub stats_monitoring: bool,
-
   /// Whether to trigger 'docker image prune -a -f' every 24 hours.
   /// default: true
   #[serde(default = "default_auto_prune")]
@@ -138,6 +172,13 @@ pub struct ServerConfig {
   ))]
   #[builder(default)]
   pub links: Vec<String>,
+
+  /// Whether to monitor any server stats beyond passing health check.
+  /// default: true
+  #[serde(default = "default_stats_monitoring")]
+  #[builder(default = "default_stats_monitoring()")]
+  #[partial_default(default_stats_monitoring())]
+  pub stats_monitoring: bool,
 
   /// Whether to send alerts about the servers reachability
   #[serde(default = "default_send_alerts")]
@@ -217,16 +258,17 @@ impl ServerConfig {
   }
 }
 
-fn default_address() -> String {
-  String::from("https://periphery:8120")
+fn default_insecure_tls() -> bool {
+  // Peripheries use self signed certs by default
+  true
 }
 
 fn default_enabled() -> bool {
   false
 }
 
-fn default_timeout_seconds() -> i64 {
-  3
+fn default_auto_rotate_keys() -> bool {
+  true
 }
 
 fn default_stats_monitoring() -> bool {
@@ -268,10 +310,11 @@ fn default_disk_critical() -> f64 {
 impl Default for ServerConfig {
   fn default() -> Self {
     Self {
-      address: default_address(),
+      address: Default::default(),
+      insecure_tls: default_insecure_tls(),
       external_address: Default::default(),
       enabled: default_enabled(),
-      timeout_seconds: default_timeout_seconds(),
+      auto_rotate_keys: default_auto_rotate_keys(),
       ignore_mounts: Default::default(),
       stats_monitoring: default_stats_monitoring(),
       auto_prune: default_auto_prune(),
@@ -294,9 +337,21 @@ impl Default for ServerConfig {
   }
 }
 
+#[cfg(feature = "utoipa")]
+impl utoipa::PartialSchema for PartialServerConfig {
+  fn schema()
+  -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+    utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
+  }
+}
+
+#[cfg(feature = "utoipa")]
+impl utoipa::ToSchema for PartialServerConfig {}
+
 /// The health of a part of the server.
 #[typeshare]
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ServerHealthState {
   pub level: SeverityLevel,
   /// Whether the health is good enough to close an open alert.
@@ -306,28 +361,39 @@ pub struct ServerHealthState {
 /// Summary of the health of the server.
 #[typeshare]
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ServerHealth {
   pub cpu: ServerHealthState,
   pub mem: ServerHealthState,
+  #[cfg_attr(feature = "utoipa", schema(value_type = HashMap<String, ServerHealthState>))]
   pub disks: HashMap<PathBuf, ServerHealthState>,
 }
 
-/// Info about an active terminal on a server.
-/// Retrieve with [ListTerminals][crate::api::read::server::ListTerminals].
+/// Info about Periphery configuration
 #[typeshare]
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
-pub struct TerminalInfo {
-  /// The name of the terminal.
-  pub name: String,
-  /// The root program / args of the pty
-  pub command: String,
-  /// The size of the terminal history in memory.
-  pub stored_size_kb: f64,
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct PeripheryInformation {
+  /// The Periphery version.
+  pub version: String,
+  /// The public key of Periphery
+  pub public_key: String,
+  /// Whether terminals are disabled on this Periphery server
+  pub terminals_disabled: bool,
+  /// Whether container exec is disabled on this Periphery server
+  pub container_terminals_disabled: bool,
+  /// The rate the system stats are being polled from the system
+  pub stats_polling_rate: Timelength,
+  /// Whether Periphery is successfully connected to docker daemon.
+  pub docker_connected: bool,
+  /// The host public ip, if it can be resolved.
+  pub public_ip: Option<String>,
 }
 
 /// Current pending actions on the server.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ServerActionState {
   /// Server currently pruning networks
   pub pruning_networks: bool,
@@ -370,6 +436,7 @@ pub struct ServerActionState {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[strum(serialize_all = "kebab-case")]
 pub enum ServerState {
   /// Server health check passing.
@@ -387,6 +454,7 @@ pub type ServerQuery = ResourceQuery<ServerQuerySpecifics>;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ServerQuerySpecifics {}
 
 impl AddFilters for ServerQuerySpecifics {}

@@ -4,13 +4,13 @@ use komodo_client::entities::{
   EnvironmentVar, LatestCommit, RepoExecutionArgs,
   RepoExecutionResponse, SystemCommand, update::Log,
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 
 /// Returns `null` if not a repo
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Option<LatestCommit>)]
-#[error(serror::Error)]
+#[error(anyhow::Error)]
 pub struct GetLatestCommit {
   pub name: String,
   pub path: Option<String>,
@@ -20,7 +20,7 @@ pub struct GetLatestCommit {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[response(PeripheryRepoExecutionResponse)]
-#[error(serror::Error)]
+#[error(anyhow::Error)]
 pub struct CloneRepo {
   pub args: RepoExecutionArgs,
   /// Override git token with one sent from core.
@@ -47,7 +47,7 @@ fn default_env_file_path() -> String {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[response(PeripheryRepoExecutionResponse)]
-#[error(serror::Error)]
+#[error(anyhow::Error)]
 pub struct PullRepo {
   pub args: RepoExecutionArgs,
   /// Override git token with one sent from core.
@@ -69,7 +69,7 @@ pub struct PullRepo {
 /// Either pull or clone depending on whether it exists.
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[response(PeripheryRepoExecutionResponse)]
-#[error(serror::Error)]
+#[error(anyhow::Error)]
 pub struct PullOrCloneRepo {
   pub args: RepoExecutionArgs,
   /// Override git token with one sent from core.
@@ -101,7 +101,7 @@ pub struct PeripheryRepoExecutionResponse {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[response(Log)]
-#[error(serror::Error)]
+#[error(anyhow::Error)]
 pub struct RenameRepo {
   pub curr_name: String,
   pub new_name: String,
@@ -111,7 +111,7 @@ pub struct RenameRepo {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[response(Log)]
-#[error(serror::Error)]
+#[error(anyhow::Error)]
 pub struct DeleteRepo {
   pub name: String,
   /// Clears

@@ -3,7 +3,6 @@ use std::{path::PathBuf, sync::OnceLock};
 use anyhow::Context;
 use clap::Parser;
 use colored::Colorize;
-use environment_file::maybe_read_item_from_file;
 use komodo_client::entities::{
   config::{
     DatabaseConfig,
@@ -14,6 +13,7 @@ use komodo_client::entities::{
   },
   logger::LogConfig,
 };
+use mogh_secret_file::maybe_read_item_from_file;
 
 pub fn cli_args() -> &'static CliArgs {
   static CLI_ARGS: OnceLock<CliArgs> = OnceLock::new();
@@ -28,7 +28,7 @@ pub fn cli_env() -> &'static Env {
     {
       Ok(env) => env,
       Err(e) => {
-        panic!("{e:?}");
+        panic!("{e:?}")
       }
     }
   })
@@ -74,7 +74,7 @@ pub fn cli_config() -> &'static CliConfig {
         "Config File Keywords".dimmed(),
       );
     }
-    let mut unparsed_config = (config::ConfigLoader {
+    let mut unparsed_config = (mogh_config::ConfigLoader {
       paths: &config_paths
         .iter()
         .map(PathBuf::as_path)
@@ -166,7 +166,7 @@ pub fn cli_config() -> &'static CliConfig {
       else {
         panic!("Profile config is not Object type.");
       };
-      config::merge_config(
+      mogh_config::merge_config(
         unparsed_config,
         profile_config.clone(),
         env.komodo_cli_merge_nested_config,
@@ -261,12 +261,18 @@ pub fn cli_config() -> &'static CliConfig {
           .komodo_cli_logging_pretty
           .unwrap_or(config.cli_logging.pretty),
         location: false,
+        ansi: env
+          .komodo_cli_logging_ansi
+          .unwrap_or(config.cli_logging.ansi),
         otlp_endpoint: env
           .komodo_cli_logging_otlp_endpoint
           .unwrap_or(config.cli_logging.otlp_endpoint),
         opentelemetry_service_name: env
           .komodo_cli_logging_opentelemetry_service_name
           .unwrap_or(config.cli_logging.opentelemetry_service_name),
+        opentelemetry_scope_name: env
+          .komodo_cli_logging_opentelemetry_scope_name
+          .unwrap_or(config.cli_logging.opentelemetry_scope_name),
       },
       profile: config.profile,
     }

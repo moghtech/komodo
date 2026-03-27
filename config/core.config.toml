@@ -42,23 +42,42 @@ port = 9120
 ## Default: [::]
 bind_ip = "[::]"
 
-## This is the token used to authenticate core requests to periphery.
-## Ensure this matches a passkey in the connected periphery configs.
-## If the periphery servers don't have passkeys configured, this doesn't need to be changed.
-## Env: KOMODO_PASSKEY or KOMODO_PASSKEY_FILE
-## Required, no default
-passkey = "default-passkey-changeme"
+## Default private key to use with Noise handshake to authenticate with Periphery agents.
+## If using `file:/path/to/file` and the file doesn't exist yet,
+## Core will generate and write new key to the path.
+## Env: KOMODO_PRIVATE_KEY or KOMODO_PRIVATE_KEY_FILE
+## Default: file:/config/keys/core.key
+private_key = "file:/config/keys/core.key"
+
+## Default accepted public key to allow Periphery to connect.
+## If not provided, Periphery -> Core connected Servers must
+## configure accepted public keys individually.
+##
+## Accepts public keys files using `file:/path/to/periphery.pub`
+##
+## Note: If used, the public key can still be overridden on individual Servers / Builders
+##
+## Env: KOMODO_PERIPHERY_PUBLIC_KEY
+## Default: None
+# periphery_public_key = "file:/config/keys/periphery.pub"
+
+## Deprecated. Legacy v1 compatibility.
+## Users should upgrade to private / public key authentication.
+## Env: KOMODO_PASSKEY
+# passkey = "default-passkey"
+
+## Give the first server a custom name.
+## If this is set but 'first_server_address' is not,
+## will assume Periphery -> Core connection.
+## Env: KOMODO_FIRST_SERVER_NAME
+## Default: None
+# first_server_name = "${HOSTNAME}"
 
 ## Ensure a server with this address exists on Core
 ## upon first startup. Example: `https://periphery:8120`
-## Env: KOMODO_FIRST_SERVER
+## Env: KOMODO_FIRST_SERVER_ADDRESS
 ## Optional, no default.
-# first_server = ""
-
-## Give the first server a custom name.
-## Env: KOMODO_FIRST_SERVER_NAME
-## Default: Local
-first_server_name = "Local"
+# first_server_address = ""
 
 ## Disables write support on resources in the UI.
 ## This protects users that that would normally have write priviledges during their UI usage,
@@ -126,6 +145,11 @@ internet_interface = ""
 ## Env: KOMODO_LOCAL_AUTH
 ## Default: false
 local_auth = false
+
+## Configure a minimum password length.
+## Env: KOMODO_MIN_PASSWORD_LENGTH
+## Default: 1
+min_password_length = 1
 
 ## Initialize the first admin user when starting up Komodo for the first time.
 ## Env: KOMODO_INIT_ADMIN_USERNAME or KOMODO_INIT_ADMIN_USERNAME_FILE
@@ -275,6 +299,52 @@ github_oauth.id = ""
 ## Required if github_oauth is enabled.
 github_oauth.secret = ""
 
+######################
+# AUTH RATE LIMITING #
+######################
+
+## By default, all authenticated requests have a global failure rate limiter
+## by client IP address (X-FORWARDED-FOR, X-REAL-IP headers).
+## If clients try too many calls which fail to authenticate,
+## they will be temporarily blocked from making further attempts,
+## mitigating brute force attacks. 
+
+## Disable the auth rate limiting.
+## Env: KOMODO_AUTH_RATE_LIMIT_DISABLED
+## Default: false
+auth_rate_limit_disabled = false
+
+## Configure the max attempts allowed within the given 'window_seconds'.
+## Env: KOMODO_AUTH_RATE_LIMIT_MAX_ATTEMPTS
+## Default: 5
+auth_rate_limit_max_attempts = 5
+
+## Set the rate limiting window in seconds.
+## Env: KOMODO_AUTH_RATE_LIMIT_WINDOW_SECONDS
+## Default: 15
+auth_rate_limit_window_seconds = 15
+
+##################
+# CORS / SESSION #
+##################
+
+## Specifically set list of CORS allowed origins.
+## If empty, allows all origins (`*`).
+## Production setups should configure this explicitly.
+## Env: KOMODO_CORS_ALLOWED_ORIGINS
+## Default: empty
+cors_allowed_origins = []
+
+## Tell CORS to allow credentials in requests.
+## Set true only if needed for authentication proxy.
+## Env: KOMODO_CORS_ALLOW_CREDENTIALS
+## Default: false
+cors_allow_credentials = false
+
+## Enabling this sets 'SameSite=None', which allows externally
+## hosted UIs to use the login flows.
+session_allow_cross_site = false
+
 ##################
 # POLL INTERVALS #
 ##################
@@ -411,6 +481,12 @@ logging.otlp_endpoint = ""
 ## Env: KOMODO_LOGGING_OPENTELEMETRY_SERVICE_NAME
 ## Default: "Komodo"
 logging.opentelemetry_service_name = "Komodo"
+
+## Set the opentelemetry scope name.
+## This will be attached to the telemetry Komodo will send.
+## Env: KOMODO_LOGGING_OPENTELEMETRY_SCOPE_NAME
+## Default: "Komodo"
+logging.opentelemetry_scope_name = "Komodo"
 
 ## Specify whether logging is more human readable.
 ## Note. Single logs will span multiple lines.

@@ -70,4 +70,10 @@ pub enum DatabaseCommand {
     #[arg(long, short = 'y', default_value_t = false)]
     yes: bool,
   },
+  /// Downgrade the database to V1 compatible data structures.
+  V1Downgrade {
+    /// Always continue on user confirmation prompts.
+    #[arg(long, short = 'y', default_value_t = false)]
+    yes: bool,
+  },
 }

@@ -8,7 +8,7 @@ use komodo_client::{
   },
   entities::permission::PermissionLevel,
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{
   helpers::query::get_user_permission_on_target, state::db_client,
@@ -20,7 +20,7 @@ impl Resolve<ReadArgs> for ListPermissions {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListPermissionsResponse> {
+  ) -> mogh_error::Result<ListPermissionsResponse> {
     let res = find_collect(
       &db_client().permissions,
       doc! {
@@ -39,7 +39,7 @@ impl Resolve<ReadArgs> for GetPermission {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetPermissionResponse> {
+  ) -> mogh_error::Result<GetPermissionResponse> {
     if user.admin {
       return Ok(PermissionLevel::Write.all());
     }
@@ -51,7 +51,7 @@ impl Resolve<ReadArgs> for ListUserTargetPermissions {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListUserTargetPermissionsResponse> {
+  ) -> mogh_error::Result<ListUserTargetPermissionsResponse> {
     if !user.admin {
       return Err(anyhow!("this method is admin only").into());
     }

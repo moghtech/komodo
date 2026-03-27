@@ -7,20 +7,23 @@ use komodo_client::{
   api::read::{GetTag, ListTags},
   entities::tag::Tag,
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{helpers::query::get_tag, state::db_client};
 
 use super::ReadArgs;
 
 impl Resolve<ReadArgs> for GetTag {
-  async fn resolve(self, _: &ReadArgs) -> serror::Result<Tag> {
+  async fn resolve(self, _: &ReadArgs) -> mogh_error::Result<Tag> {
     Ok(get_tag(&self.tag).await?)
   }
 }
 
 impl Resolve<ReadArgs> for ListTags {
-  async fn resolve(self, _: &ReadArgs) -> serror::Result<Vec<Tag>> {
+  async fn resolve(
+    self,
+    _: &ReadArgs,
+  ) -> mogh_error::Result<Vec<Tag>> {
     let res = find_collect(
       &db_client().tags,
       self.query,

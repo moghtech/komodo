@@ -1,31 +1,45 @@
+import argparse
 import sys
 import os
 import platform
 import json
 import urllib.request
 
-def load_version():
-	version = ""
-	for arg in sys.argv:
-		if arg.count("--version") > 0:
-			version = arg.split("=")[1]
-	if len(version) == 0:
-		version = load_latest_version()
-	return version
+def parse_args():
+	p = argparse.ArgumentParser(
+		prog="setup-km",
+		description="Install the Komodo CLI",
+		formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+	)
 
-def load_latest_version():
-	return json.load(urllib.request.urlopen("https://api.github.com/repos/moghtech/komodo/releases/latest"))["tag_name"]
+	p.add_argument(
+		"--version", "-v",
+		default=json.load(urllib.request.urlopen("https://api.github.com/repos/moghtech/komodo/releases/latest"))["tag_name"],
+		help="Install a specific version, like 'v2.0.0'"
+	)
 
-def load_bin_dir():
+	p.add_argument(
+		"--user", "-u",
+		action="store_true",
+		help="Install systemd '--user' service"
+	)
+
+	p.add_argument(
+		"--binary-url",
+		default="https://github.com/moghtech/komodo/releases/download",
+		help="Use alternate binary source"
+	)
+
+	return p.parse_args()
+
+def load_bin_dir(args):
 	home_dir = os.environ['HOME']
-	# Checks if setup.py is passed --user arg
-	user_install = sys.argv.count("--user") > 0
-	if user_install:
+	if args.user:
 		return f'{home_dir}/.local/bin'
 	else:
 		return "/usr/local/bin"
 
-def copy_binary(bin_dir, version):
+def download_binary(args, bin_dir):
 	# ensure bin_dir exists
 	if not os.path.isdir(bin_dir):
 		os.makedirs(bin_dir)
@@ -44,23 +58,31 @@ def copy_binary(bin_dir, version):
 		print("using x86_64 binary")
 
 	# download the binary to bin path
-	print(os.popen(f'curl -sSL https://github.com/moghtech/komodo/releases/download/{version}/{km_bin} > {bin_path}').read())
+	if os.system(f'curl -f -sSL {args.binary_url}/{args.version}/{km_bin} -o {bin_path}') != 0:
+		raise RuntimeError(
+			f"Failed to download binary from "
+			f"{args.binary_url}/{args.version}/{km_bin}"
+			f"\n\nDid you provide a valid tag for '--version'? Check here for valid version tags:"
+			f"\nhttps://github.com/moghtech/komodo/tags"
+		)
 
 	# add executable permissions
 	os.popen(f'chmod +x {bin_path}')
 	
 def main():
+	args = parse_args()
+
 	print("======================")
 	print(" KOMODO CLI INSTALLER ")
 	print("======================")
 
-	version = load_version()
-	bin_dir = load_bin_dir()
+	bin_dir = load_bin_dir(args)
  
-	print(f'version: {version}')
-	print(f'install to: {bin_dir}/km')
+	print(f'version: {args.version}')
+	print(f'user install: {args.user}')
+	print(f'bin dir: {bin_dir}')
 
-	copy_binary(bin_dir, version)
+	download_binary(args, bin_dir)
 
 	print("Finished komodo-cli setup. Try running 'km --help'.\n")
 

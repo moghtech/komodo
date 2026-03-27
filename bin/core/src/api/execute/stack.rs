@@ -1,6 +1,6 @@
 use std::{collections::HashSet, str::FromStr};
 
-use anyhow::Context;
+use anyhow::{Context, anyhow};
 use database::mungos::mongodb::bson::{
   doc, oid::ObjectId, to_bson, to_document,
 };
@@ -9,7 +9,7 @@ use interpolate::Interpolator;
 use komodo_client::{
   api::{execute::*, write::RefreshStackCache},
   entities::{
-    FileContents,
+    FileContents, SwarmOrServer,
     permission::PermissionLevel,
     repo::Repo,
     server::Server,
@@ -20,8 +20,13 @@ use komodo_client::{
     user::User,
   },
 };
-use periphery_client::api::compose::*;
-use resolver_api::Resolve;
+use mogh_error::AddStatusCodeError as _;
+use mogh_resolver::Resolve;
+use periphery_client::api::{
+  DeployStackResponse, compose::*, swarm::DeploySwarmStack,
+};
+use reqwest::StatusCode;
+use uuid::Uuid;
 
 use crate::{
   api::write::WriteArgs,
@@ -29,14 +34,20 @@ use crate::{
     periphery_client,
     query::{VariablesAndSecrets, get_variables_and_secrets},
     stack_git_token,
+    swarm::swarm_request,
     update::{
       add_update_without_send, init_execution_update, update_update,
     },
   },
-  monitor::update_cache_for_server,
+  monitor::{refresh_server_cache, refresh_swarm_cache},
   permission::get_check_permissions,
   resource,
-  stack::{execute::execute_compose, get_stack_and_server},
+  stack::{
+    execute::{
+      execute_compose, execute_compose_with_stack_and_server,
+    },
+    setup_stack_execution,
+  },
   state::{action_states, db_client},
 };
 
@@ -54,11 +65,19 @@ impl super::BatchExecute for BatchDeployStack {
 }
 
 impl Resolve<ExecuteArgs> for BatchDeployStack {
-  #[instrument(name = "BatchDeployStack", skip(user), fields(user_id = user.id))]
+  #[instrument(
+    "BatchDeployStack",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      pattern = self.pattern,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchDeployStack>(&self.pattern, user)
         .await?,
@@ -67,18 +86,34 @@ impl Resolve<ExecuteArgs> for BatchDeployStack {
 }
 
 impl Resolve<ExecuteArgs> for DeployStack {
-  #[instrument(name = "DeployStack", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "DeployStack",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      stack = self.stack,
+      services = format!("{:?}", self.services),
+      stop_time = self.stop_time,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
-    let (mut stack, server) = get_stack_and_server(
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
+    let (mut stack, swarm_or_server) = setup_stack_execution(
       &self.stack,
       user,
       PermissionLevel::Execute.into(),
-      true,
     )
     .await?;
+
+    swarm_or_server.verify_has_target()?;
 
     let mut repo = if !stack.config.files_on_host
       && !stack.config.linked_repo.is_empty()
@@ -145,26 +180,45 @@ impl Resolve<ExecuteArgs> for DeployStack {
       Default::default()
     };
 
-    let ComposeUpResponse {
+    let DeployStackResponse {
       logs,
       deployed,
       services,
       file_contents,
       missing_files,
       remote_errors,
-      compose_config,
+      merged_config,
       commit_hash,
       commit_message,
-    } = periphery_client(&server)?
-      .request(ComposeUp {
-        stack: stack.clone(),
-        services: self.services,
-        repo,
-        git_token,
-        registry_token,
-        replacers: secret_replacers.into_iter().collect(),
-      })
-      .await?;
+    } = match &swarm_or_server {
+      SwarmOrServer::None => unreachable!(),
+      SwarmOrServer::Swarm(swarm) => {
+        swarm_request(
+          &swarm.config.server_ids,
+          DeploySwarmStack {
+            stack: stack.clone(),
+            repo,
+            git_token,
+            registry_token,
+            replacers: secret_replacers.into_iter().collect(),
+          },
+        )
+        .await?
+      }
+      SwarmOrServer::Server(server) => {
+        periphery_client(server)
+          .await?
+          .request(ComposeUp {
+            stack: stack.clone(),
+            services: self.services,
+            repo,
+            git_token,
+            registry_token,
+            replacers: secret_replacers.into_iter().collect(),
+          })
+          .await?
+      }
+    };
 
     update.logs.extend(logs);
 
@@ -198,7 +252,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
               })
               .collect(),
           ),
-          compose_config,
+          merged_config,
           commit_hash.clone(),
           commit_message.clone(),
         )
@@ -236,7 +290,7 @@ impl Resolve<ExecuteArgs> for DeployStack {
       };
 
       let info = to_document(&info)
-        .context("failed to serialize stack info to bson")?;
+        .context("Failed to serialize stack info to bson")?;
 
       db_client()
         .stacks
@@ -245,22 +299,30 @@ impl Resolve<ExecuteArgs> for DeployStack {
           doc! { "$set": { "info": info } },
         )
         .await
-        .context("failed to update stack info on db")?;
+        .context("Failed to update stack info on db")?;
       anyhow::Ok(())
     };
 
     // This will be weird with single service deploys. Come back to it.
     if let Err(e) = update_info.await {
       update.push_error_log(
-        "refresh stack info",
+        "Refresh Stack Info",
         format_serror(
-          &e.context("failed to refresh stack info on db").into(),
+          &e.context("Failed to refresh stack info on db").into(),
         ),
       )
     }
 
     // Ensure cached stack state up to date by updating server cache
-    update_cache_for_server(&server, true).await;
+    match swarm_or_server {
+      SwarmOrServer::None => unreachable!(),
+      SwarmOrServer::Swarm(swarm) => {
+        refresh_swarm_cache(&swarm, true).await;
+      }
+      SwarmOrServer::Server(server) => {
+        refresh_server_cache(&server, true).await;
+      }
+    }
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -280,11 +342,19 @@ impl super::BatchExecute for BatchDeployStackIfChanged {
 }
 
 impl Resolve<ExecuteArgs> for BatchDeployStackIfChanged {
-  #[instrument(name = "BatchDeployStackIfChanged", skip(user), fields(user_id = user.id))]
+  #[instrument(
+    "BatchDeployStackIfChanged",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      pattern = self.pattern,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchDeployStackIfChanged>(
         &self.pattern,
@@ -296,11 +366,25 @@ impl Resolve<ExecuteArgs> for BatchDeployStackIfChanged {
 }
 
 impl Resolve<ExecuteArgs> for DeployStackIfChanged {
-  #[instrument(name = "DeployStackIfChanged", skip(user, update), fields(user_id = user.id))]
+  #[instrument(
+    "DeployStackIfChanged",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      stack = self.stack,
+      stop_time = self.stop_time,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let stack = get_check_permissions::<Stack>(
       &self.stack,
       user,
@@ -357,6 +441,7 @@ impl Resolve<ExecuteArgs> for DeployStackIfChanged {
         .resolve(&ExecuteArgs {
           user: user.clone(),
           update,
+          task_id: *task_id,
         })
         .await
       }
@@ -466,11 +551,19 @@ impl Resolve<ExecuteArgs> for DeployStackIfChanged {
   }
 }
 
+#[instrument(
+  "DeployStackServices",
+  skip_all,
+  fields(
+    stack = stack,
+    services = format!("{services:?}")
+  )
+)]
 async fn deploy_services(
   stack: String,
   services: Vec<String>,
   user: &User,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   // The existing update is initialized to DeployStack,
   // but also has not been created on database.
   // Setup a new update here.
@@ -487,15 +580,24 @@ async fn deploy_services(
     .resolve(&ExecuteArgs {
       user: user.clone(),
       update,
+      task_id: Uuid::new_v4(),
     })
     .await
 }
 
+#[instrument(
+  "RestartStackServices",
+  skip_all,
+  fields(
+    stack = stack,
+    services = format!("{services:?}")
+  )
+)]
 async fn restart_services(
   stack: String,
   services: Vec<String>,
   user: &User,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   // The existing update is initialized to DeployStack,
   // but also has not been created on database.
   // Setup a new update here.
@@ -509,6 +611,7 @@ async fn restart_services(
     .resolve(&ExecuteArgs {
       user: user.clone(),
       update,
+      task_id: Uuid::new_v4(),
     })
     .await
 }
@@ -525,6 +628,11 @@ async fn restart_services(
 /// Changes to config files after restart is applied should
 /// be taken as the deployed contents, otherwise next changed check
 /// will restart service again for no reason.
+#[instrument(
+  "UpdateStackDeployedContents",
+  skip_all,
+  fields(stack = id)
+)]
 async fn update_deployed_contents_with_latest(
   id: &str,
   contents: Option<Vec<StackRemoteFileContents>>,
@@ -662,11 +770,19 @@ impl super::BatchExecute for BatchPullStack {
 }
 
 impl Resolve<ExecuteArgs> for BatchPullStack {
-  #[instrument(name = "BatchPullStack", skip(user), fields(user_id = user.id))]
+  #[instrument(
+    "BatchPullStack",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      pattern = self.pattern,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchPullStack>(&self.pattern, user)
         .await?,
@@ -699,6 +815,14 @@ async fn maybe_pull_stack(
   Ok(())
 }
 
+#[instrument(
+  "PullStackInner",
+  skip_all,
+  fields(
+    stack = stack.id,
+    services = format!("{services:?}"),
+  )
+)]
 pub async fn pull_stack_inner(
   mut stack: Stack,
   services: Vec<String>,
@@ -749,7 +873,8 @@ pub async fn pull_stack_inner(
     Default::default()
   };
 
-  let res = periphery_client(server)?
+  let res = periphery_client(server)
+    .await?
     .request(ComposePull {
       stack,
       services,
@@ -761,24 +886,46 @@ pub async fn pull_stack_inner(
     .await?;
 
   // Ensure cached stack state up to date by updating server cache
-  update_cache_for_server(server, true).await;
+  refresh_server_cache(server, true).await;
 
   Ok(res)
 }
 
 impl Resolve<ExecuteArgs> for PullStack {
-  #[instrument(name = "PullStack", skip(user, update), fields(user_id = user.id))]
+  #[instrument(
+    "PullStack",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      stack = self.stack,
+      services = format!("{:?}", self.services),
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
-    let (stack, server) = get_stack_and_server(
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
+    let (stack, swarm_or_server) = setup_stack_execution(
       &self.stack,
       user,
       PermissionLevel::Execute.into(),
-      true,
     )
     .await?;
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
+      return Err(
+        anyhow!(
+          "PullStack should not be called for Stack in Swarm Mode"
+        )
+        .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
 
     let repo = if !stack.config.files_on_host
       && !stack.config.linked_repo.is_empty()
@@ -820,11 +967,25 @@ impl Resolve<ExecuteArgs> for PullStack {
 }
 
 impl Resolve<ExecuteArgs> for StartStack {
-  #[instrument(name = "StartStack", skip(user, update), fields(user_id = user.id))]
+  #[instrument(
+    "StartStack",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      stack = self.stack,
+      services = format!("{:?}", self.services),
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     execute_compose::<StartStack>(
       &self.stack,
       self.services,
@@ -839,11 +1000,25 @@ impl Resolve<ExecuteArgs> for StartStack {
 }
 
 impl Resolve<ExecuteArgs> for RestartStack {
-  #[instrument(name = "RestartStack", skip(user, update), fields(user_id = user.id))]
+  #[instrument(
+    "RestartStack",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      stack = self.stack,
+      services = format!("{:?}", self.services),
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     execute_compose::<RestartStack>(
       &self.stack,
       self.services,
@@ -860,11 +1035,25 @@ impl Resolve<ExecuteArgs> for RestartStack {
 }
 
 impl Resolve<ExecuteArgs> for PauseStack {
-  #[instrument(name = "PauseStack", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "PauseStack",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      stack = self.stack,
+      services = format!("{:?}", self.services),
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     execute_compose::<PauseStack>(
       &self.stack,
       self.services,
@@ -879,11 +1068,25 @@ impl Resolve<ExecuteArgs> for PauseStack {
 }
 
 impl Resolve<ExecuteArgs> for UnpauseStack {
-  #[instrument(name = "UnpauseStack", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "UnpauseStack",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      stack = self.stack,
+      services = format!("{:?}", self.services),
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     execute_compose::<UnpauseStack>(
       &self.stack,
       self.services,
@@ -898,11 +1101,25 @@ impl Resolve<ExecuteArgs> for UnpauseStack {
 }
 
 impl Resolve<ExecuteArgs> for StopStack {
-  #[instrument(name = "StopStack", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "StopStack",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      stack = self.stack,
+      services = format!("{:?}", self.services),
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     execute_compose::<StopStack>(
       &self.stack,
       self.services,
@@ -929,11 +1146,19 @@ impl super::BatchExecute for BatchDestroyStack {
 }
 
 impl Resolve<ExecuteArgs> for BatchDestroyStack {
-  #[instrument(name = "BatchDestroyStack", skip(user), fields(user_id = user.id))]
+  #[instrument(
+    "BatchDestroyStack",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      pattern = self.pattern,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     super::batch_execute::<BatchDestroyStack>(&self.pattern, user)
       .await
       .map_err(Into::into)
@@ -941,37 +1166,140 @@ impl Resolve<ExecuteArgs> for BatchDestroyStack {
 }
 
 impl Resolve<ExecuteArgs> for DestroyStack {
-  #[instrument(name = "DestroyStack", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "DestroyStack",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      stack = self.stack,
+      services = format!("{:?}", self.services),
+      remove_orphans = self.remove_orphans,
+      stop_time = self.stop_time,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
-    execute_compose::<DestroyStack>(
-      &self.stack,
-      self.services,
+    ExecuteArgs {
       user,
-      |state| state.destroying = true,
-      update.clone(),
-      (self.stop_time, self.remove_orphans),
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
+    let (stack, swarm_or_server) = setup_stack_execution(
+      &self.stack,
+      user,
+      PermissionLevel::Execute.into(),
     )
-    .await
-    .map_err(Into::into)
+    .await?;
+
+    swarm_or_server.verify_has_target()?;
+
+    match swarm_or_server {
+      SwarmOrServer::None => unreachable!(),
+      SwarmOrServer::Swarm(swarm) => {
+        if !self.services.is_empty() {
+          return Err(
+            anyhow!("Cannot destroy specific Stack services when in Swarm mode.")
+              .status_code(StatusCode::BAD_REQUEST)
+          );
+        }
+
+        // get the action state for the stack (or insert default).
+        let action_state = action_states()
+          .stack
+          .get_or_insert_default(&stack.id)
+          .await;
+
+        // Will check to ensure stack not already busy before updating, and return Err if so.
+        // The returned guard will set the action state back to default when dropped.
+        let _action_guard =
+          action_state.update(|state| state.destroying = true)?;
+
+        let mut update = update.clone();
+        // Send update here for UI to recheck action state
+        update_update(update.clone()).await?;
+
+        match swarm_request(
+          &swarm.config.server_ids,
+          periphery_client::api::swarm::RemoveSwarmStacks {
+            stacks: vec![stack.project_name(false)],
+            detach: false,
+          },
+        )
+        .await
+        {
+          Ok(log) => update.logs.push(log),
+          Err(e) => update.push_error_log(
+            "Destroy Stack",
+            format_serror(
+              &e.context("Failed to 'docker stack rm' on swarm")
+                .into(),
+            ),
+          ),
+        }
+
+        // Ensure cached stack state up to date by updating swarm cache
+        refresh_swarm_cache(&swarm, true).await;
+
+        update.finalize();
+        update_update(update.clone()).await?;
+
+        Ok(update)
+      }
+      SwarmOrServer::Server(server) => {
+        execute_compose_with_stack_and_server::<DestroyStack>(
+          stack,
+          server,
+          self.services,
+          |state| state.destroying = true,
+          update.clone(),
+          (self.stop_time, self.remove_orphans),
+        )
+        .await
+        .map_err(Into::into)
+      }
+    }
   }
 }
 
 impl Resolve<ExecuteArgs> for RunStackService {
-  #[instrument(name = "RunStackService", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "RunStackService",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      stack = self.stack,
+      service = self.service,
+      request = format!("{self:?}"),
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
-    let (mut stack, server) = get_stack_and_server(
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
+    let (mut stack, swarm_or_server) = setup_stack_execution(
       &self.stack,
       user,
       PermissionLevel::Execute.into(),
-      true,
     )
     .await?;
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
+      return Err(
+        anyhow!(
+          "RunStackService should not be called for Stack in Swarm Mode"
+        )
+        .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
 
     let mut repo = if !stack.config.files_on_host
       && !stack.config.linked_repo.is_empty()
@@ -1022,7 +1350,8 @@ impl Resolve<ExecuteArgs> for RunStackService {
       Default::default()
     };
 
-    let log = periphery_client(&server)?
+    let log = periphery_client(&server)
+      .await?
       .request(ComposeRun {
         stack,
         repo,

@@ -1,11 +1,10 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::entities::{
   NoData,
-  stack::{_PartialStackConfig, Stack},
+  stack::{_PartialStackConfig, Stack, StackServiceWithUpdate},
   update::Update,
 };
 
@@ -13,14 +12,25 @@ use super::KomodoWriteRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateStack",
+  description = "Create a stack.",
+  request_body(content = CreateStack),
+  responses(
+    (status = 200, description = "The created stack", body = crate::entities::stack::StackSchema),
+  ),
+)]
+pub fn create_stack() {}
+
 /// Create a stack. Response: [Stack].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Stack)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateStack {
   /// The name given to newly created stack.
   pub name: String,
@@ -31,15 +41,26 @@ pub struct CreateStack {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CopyStack",
+  description = "Copy a stack.",
+  request_body(content = CopyStack),
+  responses(
+    (status = 200, description = "The new stack", body = crate::entities::stack::StackSchema),
+  ),
+)]
+pub fn copy_stack() {}
+
 /// Creates a new stack with given `name` and the configuration
 /// of the stack at the given `id`. Response: [Stack].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Stack)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CopyStack {
   /// The name of the new stack.
   pub name: String,
@@ -49,21 +70,44 @@ pub struct CopyStack {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteStack",
+  description = "Delete a stack.",
+  request_body(content = DeleteStack),
+  responses(
+    (status = 200, description = "The deleted stack", body = crate::entities::stack::StackSchema),
+  ),
+)]
+pub fn delete_stack() {}
+
 /// Deletes the stack at the given id, and returns the deleted stack.
 /// Response: [Stack]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Stack)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteStack {
   /// The id or name of the stack to delete.
   pub id: String,
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UpdateStack",
+  description = "Update a stack.",
+  request_body(content = UpdateStack),
+  responses(
+    (status = 200, description = "The updated stack", body = crate::entities::stack::StackSchema),
+  ),
+)]
+pub fn update_stack() {}
 
 /// Update the stack at the given id, and return the updated stack.
 /// Response: [Stack].
@@ -77,12 +121,11 @@ pub struct DeleteStack {
 /// the same resources concurrently by ensuring no unintentional
 /// field changes occur from out of date local state.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Stack)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateStack {
   /// The id of the Stack to update.
   pub id: String,
@@ -92,14 +135,25 @@ pub struct UpdateStack {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RenameStack",
+  description = "Rename a stack.",
+  request_body(content = RenameStack),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn rename_stack() {}
+
 /// Rename the stack at id to the given name. Response: [Update].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RenameStack {
   /// The id of the stack to rename.
   pub id: String,
@@ -109,14 +163,25 @@ pub struct RenameStack {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/WriteStackFileContents",
+  description = "Write file contents to a stack.",
+  request_body(content = WriteStackFileContents),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn write_stack_file_contents() {}
+
 /// Update file contents in Files on Server or Git Repo mode. Response: [Update].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct WriteStackFileContents {
   /// The name or id of the target Stack.
   #[serde(alias = "id", alias = "name")]
@@ -130,17 +195,28 @@ pub struct WriteStackFileContents {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RefreshStackCache",
+  description = "Trigger a refresh of the cached compose file contents.",
+  request_body(content = RefreshStackCache),
+  responses(
+    (status = 200, description = "No data", body = NoData),
+  ),
+)]
+pub fn refresh_stack_cache() {}
+
 /// Trigger a refresh of the cached compose file contents.
 /// Refreshes:
 ///   - Whether the remote file is missing
 ///   - The latest json, and for repos, the remote contents, hash, and message.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(NoData)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RefreshStackCache {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -149,51 +225,117 @@ pub struct RefreshStackCache {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CheckStackForUpdate",
+  description = "Checks for new images.",
+  request_body(content = CheckStackForUpdate),
+  responses(
+    (status = 200, description = "Checked for updates", body = CheckStackForUpdateResponse),
+  ),
+)]
+pub fn check_stack_for_update() {}
+
+/// Checks for new images. Response: [CheckStackForUpdateResponse]
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoWriteRequest)]
+#[response(CheckStackForUpdateResponse)]
+#[error(mogh_error::Error)]
+pub struct CheckStackForUpdate {
+  /// Name or id
+  pub stack: String,
+  /// Normally resources with 'auto_update' will be
+  /// redeployed immediately if updates are found.
+  /// With this enabled, convert this into an UpdateAvailable alert.
+  #[serde(default)]
+  pub skip_auto_update: bool,
+  /// If check triggers auto deploy,
+  /// whether this call should wait on the auto deploy,
+  /// or run it in the background.
+  #[serde(default)]
+  pub wait_for_auto_update: bool,
+  /// Usually will refresh the stack cache before checking for updates.
+  /// Skip with this option.
+  #[serde(default)]
+  pub skip_cache_refresh: bool,
+}
+
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct CheckStackForUpdateResponse {
+  /// The stack ID
+  pub stack: String,
+  /// The stack services with update available status
+  pub services: Vec<StackServiceWithUpdate>,
+}
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BatchCheckStackForUpdate",
+  description = "Checks for new images.",
+  request_body(content = BatchCheckStackForUpdate),
+  responses(
+    (status = 200, description = "Stack / service level results", body = BatchCheckStackForUpdateResponse),
+  ),
+)]
+pub fn batch_check_stack_for_update() {}
+
+/// Checks for new images. Response: [BatchCheckStackForUpdateResponse]
+#[typeshare]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoWriteRequest)]
+#[response(BatchCheckStackForUpdateResponse)]
+#[error(mogh_error::Error)]
+pub struct BatchCheckStackForUpdate {
+  /// Id or name or wildcard pattern or regex.
+  /// Supports multiline and comma delineated combinations of the above.
+  ///
+  /// Example:
+  /// ```text
+  /// # match all foo-* stacks
+  /// foo-*
+  /// # add some more
+  /// extra-stack-1, extra-stack-2
+  /// ```
+  pub pattern: String,
+  /// Normally resources with 'auto_update' will be
+  /// redeployed immediately if updates are found.
+  /// With this enabled, convert this into an UpdateAvailable alert.
+  #[serde(default)]
+  pub skip_auto_update: bool,
+  /// If check triggers auto deploy,
+  /// whether this call should wait on the auto deploy,
+  /// or run it in the background.
+  #[serde(default)]
+  pub wait_for_auto_update: bool,
+  /// Usually will refresh the stack cache before checking for updates.
+  /// Skip with this option.
+  #[serde(default)]
+  pub skip_cache_refresh: bool,
+}
+
+#[typeshare]
+pub type BatchCheckStackForUpdateResponse =
+  Vec<CheckStackForUpdateResponse>;
+
+//
+
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum StackWebhookAction {
   Refresh,
   Deploy,
 }
-
-/// Create a webhook on the github repo attached to the stack
-/// passed in request. Response: [CreateStackWebhookResponse]
-#[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
-#[empty_traits(KomodoWriteRequest)]
-#[response(CreateStackWebhookResponse)]
-#[error(serror::Error)]
-pub struct CreateStackWebhook {
-  /// Id or name
-  #[serde(alias = "id", alias = "name")]
-  pub stack: String,
-  /// "Refresh" or "Deploy"
-  pub action: StackWebhookAction,
-}
-
-#[typeshare]
-pub type CreateStackWebhookResponse = NoData;
-
-//
-
-/// Delete the webhook on the github repo attached to the stack
-/// passed in request. Response: [DeleteStackWebhookResponse]
-#[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
-#[empty_traits(KomodoWriteRequest)]
-#[response(DeleteStackWebhookResponse)]
-#[error(serror::Error)]
-pub struct DeleteStackWebhook {
-  /// Id or name
-  #[serde(alias = "id", alias = "name")]
-  pub stack: String,
-  /// "Refresh" or "Deploy"
-  pub action: StackWebhookAction,
-}
-
-#[typeshare]
-pub type DeleteStackWebhookResponse = NoData;

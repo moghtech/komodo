@@ -1,8 +1,6 @@
-use ::slack::types::Block;
 use anyhow::{Context, anyhow};
 use database::mungos::{find::find_collect, mongodb::bson::doc};
-use derive_variants::ExtractVariant;
-use futures::future::join_all;
+use futures_util::future::join_all;
 use interpolate::Interpolator;
 use komodo_client::entities::{
   ResourceTargetVariant,
@@ -12,7 +10,6 @@ use komodo_client::entities::{
   komodo_timestamp,
   stack::StackState,
 };
-use tracing::Instrument;
 
 use crate::helpers::query::get_variables_and_secrets;
 use crate::helpers::{
@@ -25,40 +22,32 @@ mod ntfy;
 mod pushover;
 mod slack;
 
-#[instrument(level = "debug")]
 pub async fn send_alerts(alerts: &[Alert]) {
   if alerts.is_empty() {
     return;
   }
 
-  let span =
-    info_span!("send_alerts", alerts = format!("{alerts:?}"));
-  async {
-    let Ok(alerters) = find_collect(
-      &db_client().alerters,
-      doc! { "config.enabled": true },
-      None,
-    )
-    .await
-    .inspect_err(|e| {
-      error!(
+  let Ok(alerters) = find_collect(
+    &db_client().alerters,
+    doc! { "config.enabled": true },
+    None,
+  )
+  .await
+  .inspect_err(|e| {
+    error!(
       "ERROR sending alerts | failed to get alerters from db | {e:#}"
     )
-    }) else {
-      return;
-    };
+  }) else {
+    return;
+  };
 
-    let handles = alerts
-      .iter()
-      .map(|alert| send_alert_to_alerters(&alerters, alert));
+  let handles = alerts
+    .iter()
+    .map(|alert| send_alert_to_alerters(&alerters, alert));
 
-    join_all(handles).await;
-  }
-  .instrument(span)
-  .await
+  join_all(handles).await;
 }
 
-#[instrument(level = "debug")]
 async fn send_alert_to_alerters(alerters: &[Alerter], alert: &Alert) {
   if alerters.is_empty() {
     return;
@@ -91,14 +80,14 @@ pub async fn send_alert_to_alerter(
     return Ok(());
   }
 
-  let alert_type = alert.data.extract_variant();
+  let alert_variant: AlertDataVariant = (&alert.data).into();
 
   // In the test case, we don't want the filters inside this
   // block to stop the test from being sent to the alerting endpoint.
-  if alert_type != AlertDataVariant::Test {
+  if alert_variant != AlertDataVariant::Test {
     // Don't send if alert type not configured on the alerter
     if !alerter.config.alert_types.is_empty()
-      && !alerter.config.alert_types.contains(&alert_type)
+      && !alerter.config.alert_types.contains(&alert_variant)
     {
       return Ok(());
     }
@@ -162,7 +151,6 @@ pub async fn send_alert_to_alerter(
   }
 }
 
-#[instrument(level = "debug")]
 async fn send_custom_alert(
   url: &str,
   alert: &Alert,
@@ -263,6 +251,24 @@ fn standard_alert_content(alert: &Alert) -> String {
         "{level} | If you see this message, then Alerter {name} is working\n{link}",
       )
     }
+    AlertData::SwarmUnhealthy { id, name, err } => {
+      let link = resource_link(ResourceTargetVariant::Swarm, id);
+      match alert.level {
+        SeverityLevel::Ok => {
+          format!("{level} | Swarm {name} is now healthy\n{link}")
+        }
+        SeverityLevel::Critical => {
+          let err = err
+            .as_ref()
+            .map(|e| format!("\nerror: {e}"))
+            .unwrap_or_default();
+          format!(
+            "{level} | Swarm {name} is unhealthy ❌\n{link}{err}"
+          )
+        }
+        _ => unreachable!(),
+      }
+    }
     AlertData::ServerVersionMismatch {
       id,
       name,
@@ -295,7 +301,7 @@ fn standard_alert_content(alert: &Alert) -> String {
       let link = resource_link(ResourceTargetVariant::Server, id);
       match alert.level {
         SeverityLevel::Ok => {
-          format!("{level} | {name}{region} is now reachable\n{link}")
+          format!("{level} | {name}{region} is now connected\n{link}")
         }
         SeverityLevel::Critical => {
           let err = err
@@ -353,6 +359,8 @@ fn standard_alert_content(alert: &Alert) -> String {
     AlertData::ContainerStateChange {
       id,
       name,
+      swarm_id: _swarm_id,
+      swarm_name,
       server_id: _server_id,
       server_name,
       from,
@@ -360,37 +368,64 @@ fn standard_alert_content(alert: &Alert) -> String {
     } => {
       let link = resource_link(ResourceTargetVariant::Deployment, id);
       let to_state = fmt_docker_container_state(to);
+      let target = if let Some(swarm) = swarm_name {
+        format!("\nswarm: {swarm}")
+      } else if let Some(server) = server_name {
+        format!("\nserver: {server}")
+      } else {
+        String::new()
+      };
       format!(
-        "📦Deployment {name} is now {to_state}\nserver: {server_name}\nprevious: {from}\n{link}",
+        "📦Deployment {name} is now {to_state}{target}\nprevious: {from}\n{link}",
       )
     }
     AlertData::DeploymentImageUpdateAvailable {
       id,
       name,
+      swarm_id: _swarm_id,
+      swarm_name,
       server_id: _server_id,
       server_name,
       image,
     } => {
       let link = resource_link(ResourceTargetVariant::Deployment, id);
+      let target = if let Some(swarm) = swarm_name {
+        format!("\nswarm: {swarm}")
+      } else if let Some(server) = server_name {
+        format!("\nserver: {server}")
+      } else {
+        String::new()
+      };
       format!(
-        "⬆ Deployment {name} has an update available\nserver: {server_name}\nimage: {image}\n{link}",
+        "⬆ Deployment {name} has an update available{target}\nimage: {image}\n{link}",
       )
     }
     AlertData::DeploymentAutoUpdated {
       id,
       name,
+      swarm_id: _swarm_id,
+      swarm_name,
       server_id: _server_id,
       server_name,
       image,
     } => {
       let link = resource_link(ResourceTargetVariant::Deployment, id);
+      let target = if let Some(swarm) = swarm_name {
+        format!("\nswarm: {swarm}")
+      } else if let Some(server) = server_name {
+        format!("\nserver: {server}")
+      } else {
+        String::new()
+      };
       format!(
-        "⬆ Deployment {name} was updated automatically\nserver: {server_name}\nimage: {image}\n{link}",
+        "⬆ Deployment {name} was updated automatically{target}\nimage: {image}\n{link}",
       )
     }
     AlertData::StackStateChange {
       id,
       name,
+      swarm_id: _swarm_id,
+      swarm_name,
       server_id: _server_id,
       server_name,
       from,
@@ -398,26 +433,44 @@ fn standard_alert_content(alert: &Alert) -> String {
     } => {
       let link = resource_link(ResourceTargetVariant::Stack, id);
       let to_state = fmt_stack_state(to);
+      let target = if let Some(swarm) = swarm_name {
+        format!("\nswarm: {swarm}")
+      } else if let Some(server) = server_name {
+        format!("\nserver: {server}")
+      } else {
+        String::new()
+      };
       format!(
-        "🥞 Stack {name} is now {to_state}\nserver: {server_name}\nprevious: {from}\n{link}",
+        "🥞 Stack {name} is now {to_state}{target}\nprevious: {from}\n{link}",
       )
     }
     AlertData::StackImageUpdateAvailable {
       id,
       name,
+      swarm_id: _swarm_id,
+      swarm_name,
       server_id: _server_id,
       server_name,
       service,
       image,
     } => {
       let link = resource_link(ResourceTargetVariant::Stack, id);
+      let target = if let Some(swarm) = swarm_name {
+        format!("\nswarm: {swarm}")
+      } else if let Some(server) = server_name {
+        format!("\nserver: {server}")
+      } else {
+        String::new()
+      };
       format!(
-        "⬆ Stack {name} has an update available\nserver: {server_name}\nservice: {service}\nimage: {image}\n{link}",
+        "⬆ Stack {name} has an update available{target}\nservice: {service}\nimage: {image}\n{link}",
       )
     }
     AlertData::StackAutoUpdated {
       id,
       name,
+      swarm_id: _swarm_id,
+      swarm_name,
       server_id: _server_id,
       server_name,
       images,
@@ -426,8 +479,15 @@ fn standard_alert_content(alert: &Alert) -> String {
       let images_label =
         if images.len() > 1 { "images" } else { "image" };
       let images_str = images.join(", ");
+      let target = if let Some(swarm) = swarm_name {
+        format!("\nswarm: {swarm}")
+      } else if let Some(server) = server_name {
+        format!("\nserver: {server}")
+      } else {
+        String::new()
+      };
       format!(
-        "⬆ Stack {name} was updated automatically ⏫\nserver: {server_name}\n{images_label}: {images_str}\n{link}",
+        "⬆ Stack {name} was updated automatically ⏫{target}\n{images_label}: {images_str}\n{link}",
       )
     }
     AlertData::AwsBuilderTerminationFailed {
@@ -477,9 +537,9 @@ fn standard_alert_content(alert: &Alert) -> String {
       format!(
         "{level} | {message}{}",
         if details.is_empty() {
-          format_args!("")
+          String::new()
         } else {
-          format_args!("\n{details}")
+          format!("\n{details}")
         }
       )
     }

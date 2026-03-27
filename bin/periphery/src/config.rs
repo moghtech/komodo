@@ -2,12 +2,19 @@ use std::{path::PathBuf, sync::OnceLock};
 
 use clap::Parser;
 use colored::Colorize;
-use config::ConfigLoader;
-use environment_file::maybe_read_list_from_file;
 use komodo_client::entities::{
   config::periphery::{CliArgs, Env, PeripheryConfig},
   logger::{LogConfig, LogLevel},
 };
+use mogh_config::ConfigLoader;
+use mogh_secret_file::{
+  maybe_read_item_from_file, maybe_read_list_from_file,
+};
+
+pub fn periphery_args() -> &'static CliArgs {
+  static PERIPHERY_ARGS: OnceLock<CliArgs> = OnceLock::new();
+  PERIPHERY_ARGS.get_or_init(CliArgs::parse)
+}
 
 pub fn periphery_config() -> &'static PeripheryConfig {
   static PERIPHERY_CONFIG: OnceLock<PeripheryConfig> =
@@ -15,9 +22,14 @@ pub fn periphery_config() -> &'static PeripheryConfig {
   PERIPHERY_CONFIG.get_or_init(|| {
     let env: Env = envy::from_env()
       .expect("failed to parse periphery environment");
-    let args = CliArgs::parse();
-    let config_paths =
-      args.config_path.unwrap_or(env.periphery_config_paths);
+    let args = periphery_args();
+
+    let config_paths = args
+      .config_path
+      .as_ref()
+      .unwrap_or(&env.periphery_config_paths);
+
+    println!("{config_paths:?}");
 
     let config = if config_paths.is_empty() {
       println!(
@@ -33,7 +45,8 @@ pub fn periphery_config() -> &'static PeripheryConfig {
           .collect::<Vec<_>>(),
         match_wildcards: &args
           .config_keyword
-          .unwrap_or(env.periphery_config_keywords)
+          .as_ref()
+          .unwrap_or(&env.periphery_config_keywords)
           .iter()
           .map(String::as_str)
           .collect::<Vec<_>>(),
@@ -57,6 +70,36 @@ pub fn periphery_config() -> &'static PeripheryConfig {
     };
 
     PeripheryConfig {
+      private_key: maybe_read_item_from_file(
+        env.periphery_private_key_file,
+        env.periphery_private_key,
+      )
+      .or(config.private_key),
+      onboarding_key: maybe_read_item_from_file(
+        env.periphery_onboarding_key_file,
+        env.periphery_onboarding_key,
+      )
+      .or(config.onboarding_key),
+      core_public_keys: env
+        .periphery_core_public_keys
+        .or(config.core_public_keys),
+      passkeys: maybe_read_list_from_file(
+        env.periphery_passkeys_file,
+        env.periphery_passkeys,
+      )
+      .or(config.passkeys),
+      core_addresses: env
+        .periphery_core_addresses
+        .unwrap_or(config.core_addresses),
+      core_tls_insecure_skip_verify: env
+        .periphery_core_tls_insecure_skip_verify
+        .unwrap_or(config.core_tls_insecure_skip_verify),
+      connect_as: env
+        .periphery_connect_as
+        .unwrap_or(config.connect_as),
+      server_enabled: env
+        .periphery_server_enabled
+        .or(config.server_enabled),
       port: env.periphery_port.unwrap_or(config.port),
       bind_ip: env.periphery_bind_ip.unwrap_or(config.bind_ip),
       root_directory: env
@@ -65,12 +108,15 @@ pub fn periphery_config() -> &'static PeripheryConfig {
       repo_dir: env.periphery_repo_dir.or(config.repo_dir),
       stack_dir: env.periphery_stack_dir.or(config.stack_dir),
       build_dir: env.periphery_build_dir.or(config.build_dir),
+      default_terminal_command: env
+        .periphery_default_terminal_command
+        .unwrap_or(config.default_terminal_command),
       disable_terminals: env
         .periphery_disable_terminals
         .unwrap_or(config.disable_terminals),
-      disable_container_exec: env
-        .periphery_disable_container_exec
-        .unwrap_or(config.disable_container_exec),
+      disable_container_terminals: env
+        .periphery_disable_container_terminals
+        .unwrap_or(config.disable_container_terminals),
       stats_polling_rate: env
         .periphery_stats_polling_rate
         .unwrap_or(config.stats_polling_rate),
@@ -95,12 +141,18 @@ pub fn periphery_config() -> &'static PeripheryConfig {
         location: env
           .periphery_logging_location
           .unwrap_or(config.logging.location),
+        ansi: env
+          .periphery_logging_ansi
+          .unwrap_or(config.logging.ansi),
         otlp_endpoint: env
           .periphery_logging_otlp_endpoint
           .unwrap_or(config.logging.otlp_endpoint),
         opentelemetry_service_name: env
           .periphery_logging_opentelemetry_service_name
           .unwrap_or(config.logging.opentelemetry_service_name),
+        opentelemetry_scope_name: env
+          .periphery_logging_opentelemetry_scope_name
+          .unwrap_or(config.logging.opentelemetry_scope_name),
       },
       pretty_startup_config: env
         .periphery_pretty_startup_config
@@ -108,11 +160,6 @@ pub fn periphery_config() -> &'static PeripheryConfig {
       allowed_ips: env
         .periphery_allowed_ips
         .unwrap_or(config.allowed_ips),
-      passkeys: maybe_read_list_from_file(
-        env.periphery_passkeys_file,
-        env.periphery_passkeys,
-      )
-      .unwrap_or(config.passkeys),
       include_disk_mounts: env
         .periphery_include_disk_mounts
         .unwrap_or(config.include_disk_mounts),

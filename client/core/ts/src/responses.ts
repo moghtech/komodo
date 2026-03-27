@@ -1,20 +1,5 @@
 import * as Types from "./types.js";
 
-export type AuthResponses = {
-  GetLoginOptions: Types.GetLoginOptionsResponse;
-  SignUpLocalUser: Types.SignUpLocalUserResponse;
-  LoginLocalUser: Types.LoginLocalUserResponse;
-  ExchangeForJwt: Types.ExchangeForJwtResponse;
-  GetUser: Types.GetUserResponse;
-};
-
-export type UserResponses = {
-  PushRecentlyViewed: Types.PushRecentlyViewedResponse;
-  SetLastSeenUpdate: Types.SetLastSeenUpdateResponse;
-  CreateApiKey: Types.CreateApiKeyResponse;
-  DeleteApiKey: Types.DeleteApiKeyResponse;
-};
-
 export type ReadResponses = {
   GetVersion: Types.GetVersionResponse;
   GetCoreInfo: Types.GetCoreInfoResponse;
@@ -22,19 +7,108 @@ export type ReadResponses = {
   ListGitProvidersFromConfig: Types.ListGitProvidersFromConfigResponse;
   ListDockerRegistriesFromConfig: Types.ListDockerRegistriesFromConfigResponse;
 
-  // ==== USER ====
-  GetUsername: Types.GetUsernameResponse;
-  GetPermission: Types.GetPermissionResponse;
-  FindUser: Types.FindUserResponse;
-  ListUsers: Types.ListUsersResponse;
-  ListApiKeys: Types.ListApiKeysResponse;
-  ListApiKeysForServiceUser: Types.ListApiKeysForServiceUserResponse;
-  ListPermissions: Types.ListPermissionsResponse;
-  ListUserTargetPermissions: Types.ListUserTargetPermissionsResponse;
+  // ==== SWARM ====
+  GetSwarmsSummary: Types.GetSwarmsSummaryResponse;
+  GetSwarm: Types.GetSwarmResponse;
+  GetSwarmActionState: Types.GetSwarmActionStateResponse;
+  ListSwarms: Types.ListSwarmsResponse;
+  ListFullSwarms: Types.ListFullSwarmsResponse;
+  InspectSwarm: Types.InspectSwarmResponse;
+  ListSwarmNodes: Types.ListSwarmNodesResponse;
+  InspectSwarmNode: Types.InspectSwarmNodeResponse;
+  ListSwarmConfigs: Types.ListSwarmConfigsResponse;
+  InspectSwarmConfig: Types.InspectSwarmConfigResponse;
+  ListSwarmSecrets: Types.ListSwarmSecretsResponse;
+  InspectSwarmSecret: Types.InspectSwarmSecretResponse;
+  ListSwarmStacks: Types.ListSwarmStacksResponse;
+  InspectSwarmStack: Types.InspectSwarmStackResponse;
+  ListSwarmTasks: Types.ListSwarmTasksResponse;
+  InspectSwarmTask: Types.InspectSwarmTaskResponse;
+  ListSwarmServices: Types.ListSwarmServicesResponse;
+  InspectSwarmService: Types.InspectSwarmServiceResponse;
+  GetSwarmServiceLog: Types.GetSwarmServiceLogResponse;
+  SearchSwarmServiceLog: Types.SearchSwarmServiceLogResponse;
+  ListSwarmNetworks: Types.ListSwarmNetworksResponse;
 
-  // ==== USER GROUP ====
-  GetUserGroup: Types.GetUserGroupResponse;
-  ListUserGroups: Types.ListUserGroupsResponse;
+  // ==== SERVER ====
+  GetServersSummary: Types.GetServersSummaryResponse;
+  GetServer: Types.GetServerResponse;
+  GetServerState: Types.GetServerStateResponse;
+  GetPeripheryInformation: Types.GetPeripheryInformationResponse;
+  GetServerActionState: Types.GetServerActionStateResponse;
+  ListServers: Types.ListServersResponse;
+  ListFullServers: Types.ListFullServersResponse;
+
+  // ==== TERMINAL ====
+  ListTerminals: Types.ListTerminalsResponse;
+
+  // ==== DOCKER ====
+  GetDockerContainersSummary: Types.GetDockerContainersSummaryResponse;
+  ListAllDockerContainers: Types.ListAllDockerContainersResponse;
+  ListDockerContainers: Types.ListDockerContainersResponse;
+  InspectDockerContainer: Types.InspectDockerContainerResponse;
+  GetResourceMatchingContainer: Types.GetResourceMatchingContainerResponse;
+  GetContainerLog: Types.GetContainerLogResponse;
+  SearchContainerLog: Types.SearchContainerLogResponse;
+  ListComposeProjects: Types.ListComposeProjectsResponse;
+  ListDockerNetworks: Types.ListDockerNetworksResponse;
+  InspectDockerNetwork: Types.InspectDockerNetworkResponse;
+  ListDockerImages: Types.ListDockerImagesResponse;
+  InspectDockerImage: Types.InspectDockerImageResponse;
+  ListDockerImageHistory: Types.ListDockerImageHistoryResponse;
+  ListDockerVolumes: Types.ListDockerVolumesResponse;
+  InspectDockerVolume: Types.InspectDockerVolumeResponse;
+
+  // ==== SERVER STATS ====
+  GetSystemInformation: Types.GetSystemInformationResponse;
+  GetSystemStats: Types.GetSystemStatsResponse;
+  GetHistoricalServerStats: Types.GetHistoricalServerStatsResponse;
+  ListSystemProcesses: Types.ListSystemProcessesResponse;
+
+  // ==== STACK ====
+  GetStacksSummary: Types.GetStacksSummaryResponse;
+  GetStack: Types.GetStackResponse;
+  GetStackActionState: Types.GetStackActionStateResponse;
+  GetStackLog: Types.GetStackLogResponse;
+  SearchStackLog: Types.SearchStackLogResponse;
+  InspectStackContainer: Types.InspectStackContainerResponse;
+  InspectStackSwarmService: Types.InspectStackSwarmServiceResponse;
+  ListStacks: Types.ListStacksResponse;
+  ListFullStacks: Types.ListFullStacksResponse;
+  ListStackServices: Types.ListStackServicesResponse;
+  ListCommonStackExtraArgs: Types.ListCommonStackExtraArgsResponse;
+  ListCommonStackBuildExtraArgs: Types.ListCommonStackBuildExtraArgsResponse;
+
+  // ==== DEPLOYMENT ====
+  GetDeploymentsSummary: Types.GetDeploymentsSummaryResponse;
+  GetDeployment: Types.GetDeploymentResponse;
+  GetDeploymentContainer: Types.GetDeploymentContainerResponse;
+  GetDeploymentActionState: Types.GetDeploymentActionStateResponse;
+  GetDeploymentStats: Types.GetDeploymentStatsResponse;
+  GetDeploymentLog: Types.GetDeploymentLogResponse;
+  SearchDeploymentLog: Types.SearchDeploymentLogResponse;
+  InspectDeploymentContainer: Types.InspectDeploymentContainerResponse;
+  InspectDeploymentSwarmService: Types.InspectDeploymentSwarmServiceResponse;
+  ListDeployments: Types.ListDeploymentsResponse;
+  ListFullDeployments: Types.ListFullDeploymentsResponse;
+  ListCommonDeploymentExtraArgs: Types.ListCommonDeploymentExtraArgsResponse;
+
+  // ==== BUILD ====
+  GetBuildsSummary: Types.GetBuildsSummaryResponse;
+  GetBuild: Types.GetBuildResponse;
+  GetBuildActionState: Types.GetBuildActionStateResponse;
+  GetBuildMonthlyStats: Types.GetBuildMonthlyStatsResponse;
+  ListBuilds: Types.ListBuildsResponse;
+  ListFullBuilds: Types.ListFullBuildsResponse;
+  ListBuildVersions: Types.ListBuildVersionsResponse;
+  ListCommonBuildExtraArgs: Types.ListCommonBuildExtraArgsResponse;
+
+  // ==== REPO ====
+  GetReposSummary: Types.GetReposSummaryResponse;
+  GetRepo: Types.GetRepoResponse;
+  GetRepoActionState: Types.GetRepoActionStateResponse;
+  ListRepos: Types.ListReposResponse;
+  ListFullRepos: Types.ListFullReposResponse;
 
   // ==== PROCEDURE ====
   GetProceduresSummary: Types.GetProceduresSummaryResponse;
@@ -53,83 +127,10 @@ export type ReadResponses = {
   // ==== SCHEDULE ====
   ListSchedules: Types.ListSchedulesResponse;
 
-  // ==== SERVER ====
-  GetServersSummary: Types.GetServersSummaryResponse;
-  GetServer: Types.GetServerResponse;
-  GetServerState: Types.GetServerStateResponse;
-  GetPeripheryVersion: Types.GetPeripheryVersionResponse;
-  GetDockerContainersSummary: Types.GetDockerContainersSummaryResponse;
-  ListDockerContainers: Types.ListDockerContainersResponse;
-  ListAllDockerContainers: Types.ListAllDockerContainersResponse;
-  InspectDockerContainer: Types.InspectDockerContainerResponse;
-  GetResourceMatchingContainer: Types.GetResourceMatchingContainerResponse;
-  GetContainerLog: Types.GetContainerLogResponse;
-  SearchContainerLog: Types.SearchContainerLogResponse;
-  ListDockerNetworks: Types.ListDockerNetworksResponse;
-  InspectDockerNetwork: Types.InspectDockerNetworkResponse;
-  ListDockerImages: Types.ListDockerImagesResponse;
-  InspectDockerImage: Types.InspectDockerImageResponse;
-  ListDockerImageHistory: Types.ListDockerImageHistoryResponse;
-  ListDockerVolumes: Types.ListDockerVolumesResponse;
-  InspectDockerVolume: Types.InspectDockerVolumeResponse;
-  ListComposeProjects: Types.ListComposeProjectsResponse;
-  GetServerActionState: Types.GetServerActionStateResponse;
-  GetHistoricalServerStats: Types.GetHistoricalServerStatsResponse;
-  ListServers: Types.ListServersResponse;
-  ListFullServers: Types.ListFullServersResponse;
-  ListTerminals: Types.ListTerminalsResponse;
-
-  // ==== STACK ====
-  GetStacksSummary: Types.GetStacksSummaryResponse;
-  GetStack: Types.GetStackResponse;
-  GetStackActionState: Types.GetStackActionStateResponse;
-  GetStackWebhooksEnabled: Types.GetStackWebhooksEnabledResponse;
-  GetStackLog: Types.GetStackLogResponse;
-  SearchStackLog: Types.SearchStackLogResponse;
-  InspectStackContainer: Types.InspectStackContainerResponse;
-  ListStacks: Types.ListStacksResponse;
-  ListFullStacks: Types.ListFullStacksResponse;
-  ListStackServices: Types.ListStackServicesResponse;
-  ListCommonStackExtraArgs: Types.ListCommonStackExtraArgsResponse;
-  ListCommonStackBuildExtraArgs: Types.ListCommonStackBuildExtraArgsResponse;
-
-  // ==== DEPLOYMENT ====
-  GetDeploymentsSummary: Types.GetDeploymentsSummaryResponse;
-  GetDeployment: Types.GetDeploymentResponse;
-  GetDeploymentContainer: Types.GetDeploymentContainerResponse;
-  GetDeploymentActionState: Types.GetDeploymentActionStateResponse;
-  GetDeploymentStats: Types.GetDeploymentStatsResponse;
-  GetDeploymentLog: Types.GetDeploymentLogResponse;
-  SearchDeploymentLog: Types.SearchDeploymentLogResponse;
-  InspectDeploymentContainer: Types.InspectDeploymentContainerResponse;
-  ListDeployments: Types.ListDeploymentsResponse;
-  ListFullDeployments: Types.ListFullDeploymentsResponse;
-  ListCommonDeploymentExtraArgs: Types.ListCommonDeploymentExtraArgsResponse;
-
-  // ==== BUILD ====
-  GetBuildsSummary: Types.GetBuildsSummaryResponse;
-  GetBuild: Types.GetBuildResponse;
-  GetBuildActionState: Types.GetBuildActionStateResponse;
-  GetBuildMonthlyStats: Types.GetBuildMonthlyStatsResponse;
-  GetBuildWebhookEnabled: Types.GetBuildWebhookEnabledResponse;
-  ListBuilds: Types.ListBuildsResponse;
-  ListFullBuilds: Types.ListFullBuildsResponse;
-  ListBuildVersions: Types.ListBuildVersionsResponse;
-  ListCommonBuildExtraArgs: Types.ListCommonBuildExtraArgsResponse;
-
-  // ==== REPO ====
-  GetReposSummary: Types.GetReposSummaryResponse;
-  GetRepo: Types.GetRepoResponse;
-  GetRepoActionState: Types.GetRepoActionStateResponse;
-  GetRepoWebhooksEnabled: Types.GetRepoWebhooksEnabledResponse;
-  ListRepos: Types.ListReposResponse;
-  ListFullRepos: Types.ListFullReposResponse;
-
   // ==== SYNC ====
   GetResourceSyncsSummary: Types.GetResourceSyncsSummaryResponse;
   GetResourceSync: Types.GetResourceSyncResponse;
   GetResourceSyncActionState: Types.GetResourceSyncActionStateResponse;
-  GetSyncWebhooksEnabled: Types.GetSyncWebhooksEnabledResponse;
   ListResourceSyncs: Types.ListResourceSyncsResponse;
   ListFullResourceSyncs: Types.ListFullResourceSyncsResponse;
 
@@ -153,6 +154,20 @@ export type ReadResponses = {
   GetTag: Types.GetTagResponse;
   ListTags: Types.ListTagsResponse;
 
+  // ==== USER ====
+  GetUsername: Types.GetUsernameResponse;
+  GetPermission: Types.GetPermissionResponse;
+  FindUser: Types.FindUserResponse;
+  ListUsers: Types.ListUsersResponse;
+  ListApiKeys: Types.ListApiKeysResponse;
+  ListApiKeysForServiceUser: Types.ListApiKeysForServiceUserResponse;
+  ListPermissions: Types.ListPermissionsResponse;
+  ListUserTargetPermissions: Types.ListUserTargetPermissionsResponse;
+
+  // ==== USER GROUP ====
+  GetUserGroup: Types.GetUserGroupResponse;
+  ListUserGroups: Types.ListUserGroupsResponse;
+
   // ==== UPDATE ====
   GetUpdate: Types.GetUpdateResponse;
   ListUpdates: Types.ListUpdatesResponse;
@@ -160,11 +175,6 @@ export type ReadResponses = {
   // ==== ALERT ====
   ListAlerts: Types.ListAlertsResponse;
   GetAlert: Types.GetAlertResponse;
-
-  // ==== SERVER STATS ====
-  GetSystemInformation: Types.GetSystemInformationResponse;
-  GetSystemStats: Types.GetSystemStatsResponse;
-  ListSystemProcesses: Types.ListSystemProcessesResponse;
 
   // ==== VARIABLE ====
   GetVariable: Types.GetVariableResponse;
@@ -175,38 +185,21 @@ export type ReadResponses = {
   ListGitProviderAccounts: Types.ListGitProviderAccountsResponse;
   GetDockerRegistryAccount: Types.GetDockerRegistryAccountResponse;
   ListDockerRegistryAccounts: Types.ListDockerRegistryAccountsResponse;
+
+  // ==== ONBOARDING KEY ====
+  ListOnboardingKeys: Types.ListOnboardingKeysResponse;
 };
 
 export type WriteResponses = {
-  // ==== USER ====
-  CreateLocalUser: Types.CreateLocalUserResponse;
-  UpdateUserUsername: Types.UpdateUserUsernameResponse;
-  UpdateUserPassword: Types.UpdateUserPasswordResponse;
-  DeleteUser: Types.DeleteUserResponse;
-
-  // ==== SERVICE USER ====
-  CreateServiceUser: Types.CreateServiceUserResponse;
-  UpdateServiceUserDescription: Types.UpdateServiceUserDescriptionResponse;
-  CreateApiKeyForServiceUser: Types.CreateApiKeyForServiceUserResponse;
-  DeleteApiKeyForServiceUser: Types.DeleteApiKeyForServiceUserResponse;
-
-  // ==== USER GROUP ====
-  CreateUserGroup: Types.UserGroup;
-  RenameUserGroup: Types.UserGroup;
-  DeleteUserGroup: Types.UserGroup;
-  AddUserToUserGroup: Types.UserGroup;
-  RemoveUserFromUserGroup: Types.UserGroup;
-  SetUsersInUserGroup: Types.UserGroup;
-  SetEveryoneUserGroup: Types.UserGroup;
-
-  // ==== PERMISSIONS ====
-  UpdateUserAdmin: Types.UpdateUserAdminResponse;
-  UpdateUserBasePermissions: Types.UpdateUserBasePermissionsResponse;
-  UpdatePermissionOnResourceType: Types.UpdatePermissionOnResourceTypeResponse;
-  UpdatePermissionOnTarget: Types.UpdatePermissionOnTargetResponse;
-
   // ==== RESOURCE ====
   UpdateResourceMeta: Types.UpdateResourceMetaResponse;
+
+  // ==== SWARM ====
+  CreateSwarm: Types.Swarm;
+  CopySwarm: Types.Swarm;
+  DeleteSwarm: Types.Swarm;
+  UpdateSwarm: Types.Swarm;
+  RenameSwarm: Types.Update;
 
   // ==== SERVER ====
   CreateServer: Types.Server;
@@ -215,9 +208,14 @@ export type WriteResponses = {
   UpdateServer: Types.Server;
   RenameServer: Types.Update;
   CreateNetwork: Types.Update;
-  CreateTerminal: Types.NoData;
+  UpdateServerPublicKey: Types.Update;
+  RotateServerKeys: Types.Update;
+
+  // ==== TERMINAL ====
+  CreateTerminal: Types.Terminal;
   DeleteTerminal: Types.NoData;
   DeleteAllTerminals: Types.NoData;
+  BatchDeleteAllTerminals: Types.NoData;
 
   // ==== STACK ====
   CreateStack: Types.Stack;
@@ -227,8 +225,8 @@ export type WriteResponses = {
   RenameStack: Types.Update;
   WriteStackFileContents: Types.Update;
   RefreshStackCache: Types.NoData;
-  CreateStackWebhook: Types.CreateStackWebhookResponse;
-  DeleteStackWebhook: Types.DeleteStackWebhookResponse;
+  CheckStackForUpdate: Types.CheckStackForUpdateResponse;
+  BatchCheckStackForUpdate: Types.BatchCheckStackForUpdateResponse;
 
   // ==== DEPLOYMENT ====
   CreateDeployment: Types.Deployment;
@@ -237,6 +235,8 @@ export type WriteResponses = {
   DeleteDeployment: Types.Deployment;
   UpdateDeployment: Types.Deployment;
   RenameDeployment: Types.Update;
+  CheckDeploymentForUpdate: Types.CheckDeploymentForUpdateResponse;
+  BatchCheckDeploymentForUpdate: Types.BatchCheckDeploymentForUpdateResponse;
 
   // ==== BUILD ====
   CreateBuild: Types.Build;
@@ -246,15 +246,6 @@ export type WriteResponses = {
   RenameBuild: Types.Update;
   WriteBuildFileContents: Types.Update;
   RefreshBuildCache: Types.NoData;
-  CreateBuildWebhook: Types.CreateBuildWebhookResponse;
-  DeleteBuildWebhook: Types.DeleteBuildWebhookResponse;
-
-  // ==== BUILDER ====
-  CreateBuilder: Types.Builder;
-  CopyBuilder: Types.Builder;
-  DeleteBuilder: Types.Builder;
-  UpdateBuilder: Types.Builder;
-  RenameBuilder: Types.Update;
 
   // ==== REPO ====
   CreateRepo: Types.Repo;
@@ -263,15 +254,6 @@ export type WriteResponses = {
   UpdateRepo: Types.Repo;
   RenameRepo: Types.Update;
   RefreshRepoCache: Types.NoData;
-  CreateRepoWebhook: Types.CreateRepoWebhookResponse;
-  DeleteRepoWebhook: Types.DeleteRepoWebhookResponse;
-
-  // ==== ALERTER ====
-  CreateAlerter: Types.Alerter;
-  CopyAlerter: Types.Alerter;
-  DeleteAlerter: Types.Alerter;
-  UpdateAlerter: Types.Alerter;
-  RenameAlerter: Types.Update;
 
   // ==== PROCEDURE ====
   CreateProcedure: Types.Procedure;
@@ -296,8 +278,52 @@ export type WriteResponses = {
   CommitSync: Types.Update;
   WriteSyncFileContents: Types.Update;
   RefreshResourceSyncPending: Types.ResourceSync;
-  CreateSyncWebhook: Types.CreateSyncWebhookResponse;
-  DeleteSyncWebhook: Types.DeleteSyncWebhookResponse;
+
+  // ==== BUILDER ====
+  CreateBuilder: Types.Builder;
+  CopyBuilder: Types.Builder;
+  DeleteBuilder: Types.Builder;
+  UpdateBuilder: Types.Builder;
+  RenameBuilder: Types.Update;
+
+  // ==== ALERTER ====
+  CreateAlerter: Types.Alerter;
+  CopyAlerter: Types.Alerter;
+  DeleteAlerter: Types.Alerter;
+  UpdateAlerter: Types.Alerter;
+  RenameAlerter: Types.Update;
+
+  // ==== ONBOARDING KEY ====
+  CreateOnboardingKey: Types.CreateOnboardingKeyResponse;
+  UpdateOnboardingKey: Types.UpdateOnboardingKeyResponse;
+  DeleteOnboardingKey: Types.DeleteOnboardingKeyResponse;
+
+  // ==== USER ====
+  PushRecentlyViewed: Types.PushRecentlyViewedResponse;
+  SetLastSeenUpdate: Types.SetLastSeenUpdateResponse;
+  CreateLocalUser: Types.CreateLocalUserResponse;
+  DeleteUser: Types.DeleteUserResponse;
+
+  // ==== SERVICE USER ====
+  CreateServiceUser: Types.CreateServiceUserResponse;
+  UpdateServiceUserDescription: Types.UpdateServiceUserDescriptionResponse;
+  CreateApiKeyForServiceUser: Types.CreateApiKeyForServiceUserResponse;
+  DeleteApiKeyForServiceUser: Types.DeleteApiKeyForServiceUserResponse;
+
+  // ==== USER GROUP ====
+  CreateUserGroup: Types.UserGroup;
+  RenameUserGroup: Types.UserGroup;
+  DeleteUserGroup: Types.UserGroup;
+  AddUserToUserGroup: Types.UserGroup;
+  RemoveUserFromUserGroup: Types.UserGroup;
+  SetUsersInUserGroup: Types.UserGroup;
+  SetEveryoneUserGroup: Types.UserGroup;
+
+  // ==== PERMISSIONS ====
+  UpdateUserAdmin: Types.UpdateUserAdminResponse;
+  UpdateUserBasePermissions: Types.UpdateUserBasePermissionsResponse;
+  UpdatePermissionOnResourceType: Types.UpdatePermissionOnResourceTypeResponse;
+  UpdatePermissionOnTarget: Types.UpdatePermissionOnTargetResponse;
 
   // ==== TAG ====
   CreateTag: Types.Tag;
@@ -312,39 +338,19 @@ export type WriteResponses = {
   UpdateVariableIsSecret: Types.UpdateVariableIsSecretResponse;
   DeleteVariable: Types.DeleteVariableResponse;
 
-  // ==== PROVIDERS ====
+  // ==== PROVIDER ====
   CreateGitProviderAccount: Types.CreateGitProviderAccountResponse;
   UpdateGitProviderAccount: Types.UpdateGitProviderAccountResponse;
   DeleteGitProviderAccount: Types.DeleteGitProviderAccountResponse;
   CreateDockerRegistryAccount: Types.CreateDockerRegistryAccountResponse;
   UpdateDockerRegistryAccount: Types.UpdateDockerRegistryAccountResponse;
   DeleteDockerRegistryAccount: Types.DeleteDockerRegistryAccountResponse;
+
+  // ==== ALERT ====
+  CloseAlert: Types.NoData;
 };
 
 export type ExecuteResponses = {
-  // ==== SERVER ====
-  StartContainer: Types.Update;
-  RestartContainer: Types.Update;
-  PauseContainer: Types.Update;
-  UnpauseContainer: Types.Update;
-  StopContainer: Types.Update;
-  DestroyContainer: Types.Update;
-  StartAllContainers: Types.Update;
-  RestartAllContainers: Types.Update;
-  PauseAllContainers: Types.Update;
-  UnpauseAllContainers: Types.Update;
-  StopAllContainers: Types.Update;
-  PruneContainers: Types.Update;
-  DeleteNetwork: Types.Update;
-  PruneNetworks: Types.Update;
-  DeleteImage: Types.Update;
-  PruneImages: Types.Update;
-  DeleteVolume: Types.Update;
-  PruneVolumes: Types.Update;
-  PruneDockerBuilders: Types.Update;
-  PruneBuildx: Types.Update;
-  PruneSystem: Types.Update;
-
   // ==== STACK ====
   DeployStack: Types.Update;
   BatchDeployStack: Types.BatchExecutionResponse;
@@ -359,6 +365,7 @@ export type ExecuteResponses = {
   UnpauseStack: Types.Update;
   DestroyStack: Types.Update;
   BatchDestroyStack: Types.BatchExecutionResponse;
+  RunStackService: Types.Update;
 
   // ==== DEPLOYMENT ====
   Deploy: Types.Update;
@@ -397,22 +404,48 @@ export type ExecuteResponses = {
   // ==== SYNC ====
   RunSync: Types.Update;
 
-  // ==== STACK Service ====
-  DeployStackService: Types.Update;
-  StartStackService: Types.Update;
-  RestartStackService: Types.Update;
-  StopStackService: Types.Update;
-  PauseStackService: Types.Update;
-  UnpauseStackService: Types.Update;
-  DestroyStackService: Types.Update;
-  RunStackService: Types.Update;
-  
   // ==== ALERTER ====
   TestAlerter: Types.Update;
   SendAlert: Types.Update;
+
+  // ==== SERVER ====
+  StartContainer: Types.Update;
+  RestartContainer: Types.Update;
+  PauseContainer: Types.Update;
+  UnpauseContainer: Types.Update;
+  StopContainer: Types.Update;
+  DestroyContainer: Types.Update;
+  StartAllContainers: Types.Update;
+  RestartAllContainers: Types.Update;
+  PauseAllContainers: Types.Update;
+  UnpauseAllContainers: Types.Update;
+  StopAllContainers: Types.Update;
+  PruneContainers: Types.Update;
+  DeleteNetwork: Types.Update;
+  PruneNetworks: Types.Update;
+  DeleteImage: Types.Update;
+  PruneImages: Types.Update;
+  DeleteVolume: Types.Update;
+  PruneVolumes: Types.Update;
+  PruneDockerBuilders: Types.Update;
+  PruneBuildx: Types.Update;
+  PruneSystem: Types.Update;
+
+  // ==== SWARM ====
+  RemoveSwarmNodes: Types.Update;
+  RemoveSwarmStacks: Types.Update;
+  RemoveSwarmServices: Types.Update;
+  CreateSwarmConfig: Types.Update;
+  RotateSwarmConfig: Types.Update;
+  RemoveSwarmConfigs: Types.Update;
+  CreateSwarmSecret: Types.Update;
+  RotateSwarmSecret: Types.Update;
+  RemoveSwarmSecrets: Types.Update;
 
   // ==== MAINTENANCE ====
   ClearRepoCache: Types.Update;
   BackupCoreDatabase: Types.Update;
   GlobalAutoUpdate: Types.Update;
+  RotateAllServerKeys: Types.Update;
+  RotateCoreKeys: Types.Update;
 };

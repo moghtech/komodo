@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -11,14 +10,25 @@ use super::KomodoReadRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetRepo",
+  description = "Get a specific repo.",
+  request_body(content = GetRepo),
+  responses(
+    (status = 200, description = "The repo", body = crate::entities::repo::RepoSchema),
+  ),
+)]
+pub fn get_repo() {}
+
 /// Get a specific repo. Response: [Repo].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(Repo)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetRepo {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -30,14 +40,25 @@ pub type GetRepoResponse = Repo;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListRepos",
+  description = "List repos matching optional query.",
+  request_body(content = ListRepos),
+  responses(
+    (status = 200, description = "The list of repos", body = ListReposResponse),
+  ),
+)]
+pub fn list_repos() {}
+
 /// List repos matching optional query. Response: [ListReposResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListReposResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListRepos {
   /// optional structured query to filter repos.
   #[serde(default)]
@@ -49,14 +70,25 @@ pub type ListReposResponse = Vec<RepoListItem>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListFullRepos",
+  description = "List repos matching optional query.",
+  request_body(content = ListFullRepos),
+  responses(
+    (status = 200, description = "The list of repos", body = ListFullReposResponse),
+  ),
+)]
+pub fn list_full_repos() {}
+
 /// List repos matching optional query. Response: [ListFullReposResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullReposResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListFullRepos {
   /// optional structured query to filter repos.
   #[serde(default)]
@@ -68,14 +100,25 @@ pub type ListFullReposResponse = Vec<Repo>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetRepoActionState",
+  description = "Get current action state for the repo.",
+  request_body(content = GetRepoActionState),
+  responses(
+    (status = 200, description = "The repo action state", body = GetRepoActionStateResponse),
+  ),
+)]
+pub fn get_repo_action_state() {}
+
 /// Get current action state for the repo. Response: [RepoActionState].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetRepoActionStateResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetRepoActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -87,20 +130,32 @@ pub type GetRepoActionStateResponse = RepoActionState;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetReposSummary",
+  description = "Gets a summary of data relating to all repos.",
+  request_body(content = GetReposSummary),
+  responses(
+    (status = 200, description = "The repos summary", body = GetReposSummaryResponse),
+  ),
+)]
+pub fn get_repos_summary() {}
+
 /// Gets a summary of data relating to all repos.
 /// Response: [GetReposSummaryResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetReposSummaryResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetReposSummary {}
 
 /// Response for [GetReposSummary]
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetReposSummaryResponse {
   /// The total number of repos
   pub total: u32,
@@ -116,35 +171,4 @@ pub struct GetReposSummaryResponse {
   pub failed: u32,
   /// The number of repos with unknown state.
   pub unknown: u32,
-}
-
-//
-
-/// Get a target Repo's configured webhooks. Response: [GetRepoWebhooksEnabledResponse].
-#[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
-#[empty_traits(KomodoReadRequest)]
-#[response(GetRepoWebhooksEnabledResponse)]
-#[error(serror::Error)]
-pub struct GetRepoWebhooksEnabled {
-  /// Id or name
-  #[serde(alias = "id", alias = "name")]
-  pub repo: String,
-}
-
-/// Response for [GetRepoWebhooksEnabled]
-#[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct GetRepoWebhooksEnabledResponse {
-  /// Whether the repo webhooks can even be managed.
-  /// The repo owner must be in `github_webhook_app.owners` list to be managed.
-  pub managed: bool,
-  /// Whether pushes to branch trigger clone. Will always be false if managed is false.
-  pub clone_enabled: bool,
-  /// Whether pushes to branch trigger pull. Will always be false if managed is false.
-  pub pull_enabled: bool,
-  /// Whether pushes to branch trigger build. Will always be false if managed is false.
-  pub build_enabled: bool,
 }

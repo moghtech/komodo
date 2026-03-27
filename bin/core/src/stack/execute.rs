@@ -1,21 +1,25 @@
+use anyhow::anyhow;
 use komodo_client::{
   api::execute::*,
   entities::{
+    SwarmOrServer,
     permission::PermissionLevel,
+    server::Server,
     stack::{Stack, StackActionState},
     update::{Log, Update},
     user::User,
   },
 };
-use periphery_client::{PeripheryClient, api::compose::*};
+use periphery_client::api::compose::*;
 
 use crate::{
   helpers::{periphery_client, update::update_update},
-  monitor::update_cache_for_server,
+  monitor::refresh_server_cache,
+  periphery::PeripheryClient,
   state::action_states,
 };
 
-use super::get_stack_and_server;
+use super::setup_stack_execution;
 
 pub trait ExecuteCompose {
   type Extras;
@@ -33,17 +37,43 @@ pub async fn execute_compose<T: ExecuteCompose>(
   services: Vec<String>,
   user: &User,
   set_in_progress: impl Fn(&mut StackActionState),
-  mut update: Update,
+  update: Update,
   extras: T::Extras,
 ) -> anyhow::Result<Update> {
-  let (stack, server) = get_stack_and_server(
+  let (stack, swarm_or_server) = setup_stack_execution(
     stack,
     user,
     PermissionLevel::Execute.into(),
-    true,
   )
   .await?;
 
+  let SwarmOrServer::Server(server) = swarm_or_server else {
+    return Err(anyhow!(
+      "Compose executions (Start, Stop, Restart) should not be called for Stack in Swarm Mode"
+    ));
+  };
+
+  execute_compose_with_stack_and_server::<T>(
+    stack,
+    server,
+    services,
+    set_in_progress,
+    update,
+    extras,
+  )
+  .await
+}
+
+pub async fn execute_compose_with_stack_and_server<
+  T: ExecuteCompose,
+>(
+  stack: Stack,
+  server: Server,
+  services: Vec<String>,
+  set_in_progress: impl Fn(&mut StackActionState),
+  mut update: Update,
+  extras: T::Extras,
+) -> anyhow::Result<Update> {
   // get the action state for the stack (or insert default).
   let action_state =
     action_states().stack.get_or_insert_default(&stack.id).await;
@@ -52,10 +82,10 @@ pub async fn execute_compose<T: ExecuteCompose>(
   // The returned guard will set the action state back to default when dropped.
   let _action_guard = action_state.update(set_in_progress)?;
 
-  // Send update here for frontend to recheck action state
+  // Send update here for UI to recheck action state
   update_update(update.clone()).await?;
 
-  let periphery = periphery_client(&server)?;
+  let periphery = periphery_client(&server).await?;
 
   if !services.is_empty() {
     update.logs.push(Log::simple(
@@ -72,7 +102,7 @@ pub async fn execute_compose<T: ExecuteCompose>(
     .push(T::execute(periphery, stack, services, extras).await?);
 
   // Ensure cached stack state up to date by updating server cache
-  update_cache_for_server(&server, true).await;
+  refresh_server_cache(&server, true).await;
 
   update.finalize();
   update_update(update.clone()).await?;

@@ -1,9 +1,9 @@
 use serde::{
-  Deserialize, Deserializer,
+  Deserialize, Deserializer, Serialize,
   de::{IntoDeserializer, Visitor},
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ForgivingVec<T>(pub Vec<T>);
 
 impl<T> ForgivingVec<T> {

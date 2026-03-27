@@ -2,10 +2,9 @@ use anyhow::Context;
 use bson::{Document, doc};
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
-use derive_variants::EnumVariants;
 use partial_derive2::Partial;
 use serde::{Deserialize, Serialize};
-use strum::{Display, EnumString};
+use strum::{AsRefStr, Display, EnumDiscriminants, EnumString};
 use typeshare::typeshare;
 
 use crate::{
@@ -16,7 +15,10 @@ use crate::{
     option_string_list_deserializer, option_term_labels_deserializer,
     string_list_deserializer, term_labels_deserializer,
   },
-  entities::{EnvironmentVar, environment_vars_from_str},
+  entities::{
+    EnvironmentVar, ImageDigest, environment_vars_from_str,
+    optional_str,
+  },
   parsers::parse_key_value_list,
 };
 
@@ -26,8 +28,16 @@ use super::{
   resource::{Resource, ResourceListItem, ResourceQuery},
 };
 
+#[cfg(feature = "utoipa")]
+#[derive(utoipa::ToSchema)]
+#[schema(as = Deployment)]
+pub struct DeploymentSchema(
+  #[schema(inline)]
+  pub  Resource<DeploymentConfig, crate::entities::NoData>,
+);
+
 #[typeshare]
-pub type Deployment = Resource<DeploymentConfig, ()>;
+pub type Deployment = Resource<DeploymentConfig, DeploymentInfo>;
 
 #[typeshare]
 pub type DeploymentListItem =
@@ -35,6 +45,7 @@ pub type DeploymentListItem =
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct DeploymentListItemInfo {
   /// The state of the deployment / underlying docker container.
   pub state: DeploymentState,
@@ -44,10 +55,22 @@ pub struct DeploymentListItemInfo {
   pub image: String,
   /// Whether there is a newer image available at the same tag.
   pub update_available: bool,
-  /// The server that deployment sits on.
+  /// The swarm that deployment is deployed on, when in Swarm mode.
+  pub swarm_id: String,
+  /// The server that deployment is deployed on, when in Server mode.
   pub server_id: String,
   /// An attached Komodo Build, if it exists.
   pub build_id: Option<String>,
+}
+
+#[typeshare]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct DeploymentInfo {
+  /// Store the latest associated image digest.
+  /// This includes both the image name / tag, and the specific digest hash.
+  #[serde(default)]
+  pub latest_image_digest: ImageDigest,
 }
 
 #[typeshare(serialized_as = "Partial<DeploymentConfig>")]
@@ -55,10 +78,24 @@ pub type _PartialDeploymentConfig = PartialDeploymentConfig;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Builder, Partial)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct DeploymentConfig {
-  /// The id of server the deployment is deployed on.
+  /// The Swarm to deploy the Deployment on (as a Swarm Service), setting the Deployment into Swarm mode.
+  ///
+  /// Note. If both swarm_id and server_id are set,
+  /// swarm_id overrides server_id and the Deployment will be in Swarm mode.
+  #[serde(default, alias = "swarm")]
+  #[partial_attr(serde(alias = "swarm"))]
+  #[builder(default)]
+  pub swarm_id: String,
+
+  /// The Server to deploy the Deployment on, setting the Deployment into Container mode.
+  ///
+  /// Note. If both swarm_id and server_id are set,
+  /// swarm_id overrides server_id and the Deployment will be in Swarm mode.
   #[serde(default, alias = "server")]
   #[partial_attr(serde(alias = "server"))]
   #[builder(default)]
@@ -134,6 +171,14 @@ pub struct DeploymentConfig {
   #[builder(default)]
   pub command: String,
 
+  /// The number of replicas for the Service.
+  ///
+  /// Note. Only used in Swarm mode.
+  #[serde(default = "default_replicas")]
+  #[builder(default = "default_replicas()")]
+  #[partial_default(default_replicas())]
+  pub replicas: i32,
+
   /// The default termination signal to use to stop the deployment. Defaults to SigTerm (default docker signal).
   #[serde(default)]
   #[builder(default)]
@@ -145,8 +190,12 @@ pub struct DeploymentConfig {
   #[partial_default(default_termination_timeout())]
   pub termination_timeout: i32,
 
-  /// Extra args which are interpolated into the `docker run` command,
+  /// Extra args which are interpolated into the
+  /// `docker run` / `docker service create` command,
   /// and affect the container configuration.
+  ///
+  /// - Container ref: https://docs.docker.com/reference/cli/docker/container/run/#options
+  /// - Swarm Service ref: https://docs.docker.com/reference/cli/docker/service/create/#options
   #[serde(default, deserialize_with = "string_list_deserializer")]
   #[partial_attr(serde(
     default,
@@ -156,7 +205,8 @@ pub struct DeploymentConfig {
   pub extra_args: Vec<String>,
 
   /// Labels attached to various termination signal options.
-  /// Used to specify different shutdown functionality depending on the termination signal.
+  /// Used to specify different shutdown functionality depending
+  /// on the termination signal.
   #[serde(default, deserialize_with = "term_labels_deserializer")]
   #[partial_attr(serde(
     default,
@@ -186,7 +236,7 @@ pub struct DeploymentConfig {
   #[builder(default)]
   pub volumes: String,
 
-  /// The environment variables passed to the container.
+  /// The environment variables passed to the container / service.
   #[serde(default, deserialize_with = "env_vars_deserializer")]
   #[partial_attr(serde(
     default,
@@ -216,6 +266,10 @@ impl DeploymentConfig {
   }
 }
 
+fn default_replicas() -> i32 {
+  1
+}
+
 fn default_send_alerts() -> bool {
   true
 }
@@ -231,44 +285,75 @@ fn default_network() -> String {
 impl Default for DeploymentConfig {
   fn default() -> Self {
     Self {
+      swarm_id: Default::default(),
       server_id: Default::default(),
-      send_alerts: default_send_alerts(),
-      links: Default::default(),
       image: Default::default(),
       image_registry_account: Default::default(),
       skip_secret_interp: Default::default(),
       redeploy_on_build: Default::default(),
       poll_for_updates: Default::default(),
       auto_update: Default::default(),
-      term_signal_labels: Default::default(),
+      send_alerts: default_send_alerts(),
+      links: Default::default(),
+      network: default_network(),
+      restart: Default::default(),
+      command: Default::default(),
+      replicas: default_replicas(),
       termination_signal: Default::default(),
       termination_timeout: default_termination_timeout(),
+      extra_args: Default::default(),
+      term_signal_labels: Default::default(),
       ports: Default::default(),
       volumes: Default::default(),
       environment: Default::default(),
       labels: Default::default(),
-      network: default_network(),
-      restart: Default::default(),
-      command: Default::default(),
-      extra_args: Default::default(),
     }
   }
 }
 
+#[cfg(feature = "utoipa")]
+impl utoipa::PartialSchema for PartialDeploymentConfig {
+  fn schema()
+  -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+    utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
+  }
+}
+
+#[cfg(feature = "utoipa")]
+impl utoipa::ToSchema for PartialDeploymentConfig {}
+
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, PartialEq, EnumVariants,
+  Serialize, Deserialize, Debug, Clone, PartialEq, EnumDiscriminants,
 )]
-#[variant_derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  Copy,
-  PartialEq,
-  Eq,
-  Display,
-  EnumString
+#[strum_discriminants(name(DeploymentImageVariant))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(
+  not(feature = "utoipa"),
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr
+  ))
+)]
+#[cfg_attr(
+  feature = "utoipa",
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr,
+    utoipa::ToSchema
+  ))
 )]
 #[serde(tag = "type", content = "params")]
 pub enum DeploymentImage {
@@ -299,10 +384,20 @@ impl Default for DeploymentImage {
   }
 }
 
+impl DeploymentImage {
+  pub fn as_image(&self) -> Option<&str> {
+    let Self::Image { image } = self else {
+      return None;
+    };
+    optional_str(image)
+  }
+}
+
 #[typeshare]
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Conversion {
   /// reference on the server.
   pub local: String,
@@ -343,28 +438,31 @@ pub fn conversions_from_str(
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "snake_case")]
 #[strum(serialize_all = "snake_case")]
 pub enum DeploymentState {
   /// The deployment is currently re/deploying
   Deploying,
-  /// Container is running
+  /// Container / Service is running
   Running,
-  /// Container is created but not running
+  /// Server mode only. Container is created but not running.
   Created,
-  /// Container is in restart loop
+  /// Server mode only. Container is in restart loop
   Restarting,
-  /// Container is being removed
+  /// Server mode only. Container is being removed
   Removing,
-  /// Container is paused
+  /// Server mode only. Container is paused
   Paused,
-  /// Container is exited
+  /// Server mode only. Container is exited
   Exited,
-  /// Container is dead
+  /// Server mode only. Container is dead
   Dead,
-  /// The deployment is not deployed (no matching container)
+  /// Swarm mode only. Some tasks don't match their desired state.
+  Unhealthy,
+  /// The deployment is not deployed (no matching Container / Service)
   NotDeployed,
-  /// Server not reachable for status
+  /// Server / Swarm not reachable for status
   #[default]
   Unknown,
 }
@@ -399,7 +497,9 @@ impl From<ContainerStateStatusEnum> for DeploymentState {
   Default,
   Display,
   EnumString,
+  AsRefStr,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum RestartMode {
   #[default]
   #[serde(rename = "no")]
@@ -427,6 +527,7 @@ pub enum RestartMode {
   Eq,
   Builder,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TerminationSignalLabel {
   #[builder(default)]
   pub signal: TerminationSignal,
@@ -452,9 +553,11 @@ pub fn term_signal_labels_from_str(
 
 #[typeshare]
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct DeploymentActionState {
   pub pulling: bool,
   pub deploying: bool,
+  pub updating: bool,
   pub starting: bool,
   pub restarting: bool,
   pub pausing: bool,
@@ -471,6 +574,7 @@ pub type DeploymentQuery = ResourceQuery<DeploymentQuerySpecifics>;
 #[derive(
   Debug, Clone, Default, Serialize, Deserialize, DefaultBuilder,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct DeploymentQuerySpecifics {
   /// Query only for Deployments on these Servers.
   /// If empty, does not filter by Server.

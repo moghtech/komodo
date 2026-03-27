@@ -1,54 +1,62 @@
-use std::str::FromStr;
-
 use anyhow::{Context, anyhow};
-use database::mungos::{
-  by_id::find_one_by_id,
-  mongodb::bson::{doc, oid::ObjectId},
-};
+use database::mungos::{by_id::find_one_by_id, mongodb::bson::doc};
 use komodo_client::{
-  api::{user::CreateApiKey, write::*},
+  api::write::*,
   entities::{
     komodo_timestamp,
-    user::{User, UserConfig},
+    user::{NewUserParams, User, UserConfig},
   },
 };
-use resolver_api::Resolve;
+use mogh_auth_client::api::manage::CreateApiKey;
+use mogh_auth_server::api::manage::api_key::create_api_key;
+use mogh_error::{AddStatusCode as _, AddStatusCodeError as _};
+use mogh_resolver::Resolve;
+use reqwest::StatusCode;
 
-use crate::{api::user::UserArgs, state::db_client};
+use crate::{
+  auth::KomodoAuthImpl, helpers::validations::validate_username,
+  state::db_client,
+};
 
 use super::WriteArgs;
 
 impl Resolve<WriteArgs> for CreateServiceUser {
-  #[instrument(name = "CreateServiceUser", skip(user))]
+  #[instrument(
+    "CreateServiceUser",
+    skip_all,
+    fields(
+      operator = user.id,
+      username = self.username,
+      description = self.description,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<CreateServiceUserResponse> {
+  ) -> mogh_error::Result<CreateServiceUserResponse> {
     if !user.admin {
-      return Err(anyhow!("user not admin").into());
-    }
-    if ObjectId::from_str(&self.username).is_ok() {
       return Err(
-        anyhow!("username cannot be valid ObjectId").into(),
+        anyhow!("Only Admins can manage Service Users")
+          .status_code(StatusCode::FORBIDDEN),
       );
     }
+
+    validate_username(&self.username)
+      .status_code(StatusCode::BAD_REQUEST)?;
+
     let config = UserConfig::Service {
       description: self.description,
     };
-    let mut user = User {
-      id: Default::default(),
+
+    let mut user = User::new(NewUserParams {
       username: self.username,
-      config,
       enabled: true,
       admin: false,
       super_admin: false,
-      create_server_permissions: false,
-      create_build_permissions: false,
-      last_update_view: 0,
-      recents: Default::default(),
-      all: Default::default(),
+      config,
       updated_at: komodo_timestamp(),
-    };
+    });
+
     user.id = db_client()
       .users
       .insert_one(&user)
@@ -58,29 +66,48 @@ impl Resolve<WriteArgs> for CreateServiceUser {
       .as_object_id()
       .context("inserted id is not object id")?
       .to_string();
+
     Ok(user)
   }
 }
 
 impl Resolve<WriteArgs> for UpdateServiceUserDescription {
-  #[instrument(name = "UpdateServiceUserDescription", skip(user))]
+  #[instrument(
+    "UpdateServiceUserDescription",
+    skip_all,
+    fields(
+      operator = user.id,
+      username = self.username,
+      description = self.description,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<UpdateServiceUserDescriptionResponse> {
+  ) -> mogh_error::Result<UpdateServiceUserDescriptionResponse> {
     if !user.admin {
-      return Err(anyhow!("user not admin").into());
+      return Err(
+        anyhow!("Only Admins can manage Service Users")
+          .status_code(StatusCode::FORBIDDEN),
+      );
     }
+
     let db = db_client();
+
     let service_user = db
       .users
       .find_one(doc! { "username": &self.username })
       .await
-      .context("failed to query db for user")?
-      .context("no user with given username")?;
+      .context("Failed to query db for user")?
+      .context("No user with given username")?;
+
     let UserConfig::Service { .. } = &service_user.config else {
-      return Err(anyhow!("user is not service user").into());
+      return Err(
+        anyhow!("Target user is not Service User")
+          .status_code(StatusCode::FORBIDDEN),
+      );
     };
+
     db.users
       .update_one(
         doc! { "username": &self.username },
@@ -88,66 +115,107 @@ impl Resolve<WriteArgs> for UpdateServiceUserDescription {
       )
       .await
       .context("failed to update user on db")?;
-    let res = db
+
+    let service_user = db
       .users
       .find_one(doc! { "username": &self.username })
       .await
       .context("failed to query db for user")?
       .context("user with username not found")?;
-    Ok(res)
+
+    Ok(service_user)
   }
 }
 
 impl Resolve<WriteArgs> for CreateApiKeyForServiceUser {
-  #[instrument(name = "CreateApiKeyForServiceUser", skip(user))]
+  #[instrument(
+    "CreateApiKeyForServiceUser",
+    skip_all,
+    fields(
+      operator = user.id,
+      service_user = self.user_id,
+      name = self.name,
+      expires = self.expires,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<CreateApiKeyForServiceUserResponse> {
+  ) -> mogh_error::Result<CreateApiKeyForServiceUserResponse> {
     if !user.admin {
-      return Err(anyhow!("user not admin").into());
+      return Err(
+        anyhow!("Only Admins can manage Service Users")
+          .status_code(StatusCode::FORBIDDEN),
+      );
     }
+
     let service_user =
       find_one_by_id(&db_client().users, &self.user_id)
         .await
-        .context("failed to query db for user")?
-        .context("no user found with id")?;
+        .context("Failed to query db for user")?
+        .context("No user found with id")?;
+
     let UserConfig::Service { .. } = &service_user.config else {
-      return Err(anyhow!("user is not service user").into());
+      return Err(
+        anyhow!("Target user is not Service User")
+          .status_code(StatusCode::FORBIDDEN),
+      );
     };
-    CreateApiKey {
-      name: self.name,
-      expires: self.expires,
-    }
-    .resolve(&UserArgs { user: service_user })
+
+    create_api_key(
+      &KomodoAuthImpl,
+      service_user.id,
+      CreateApiKey {
+        name: self.name,
+        expires: self.expires as u64,
+      },
+    )
     .await
   }
 }
 
 impl Resolve<WriteArgs> for DeleteApiKeyForServiceUser {
-  #[instrument(name = "DeleteApiKeyForServiceUser", skip(user))]
+  #[instrument(
+    "DeleteApiKeyForServiceUser",
+    skip_all,
+    fields(
+      operator = user.id,
+      key = self.key,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<DeleteApiKeyForServiceUserResponse> {
+  ) -> mogh_error::Result<DeleteApiKeyForServiceUserResponse> {
     if !user.admin {
-      return Err(anyhow!("user not admin").into());
+      return Err(
+        anyhow!("Only Admins can manage Service Users")
+          .status_code(StatusCode::FORBIDDEN),
+      );
     }
+
     let db = db_client();
+
     let api_key = db
       .api_keys
       .find_one(doc! { "key": &self.key })
       .await
       .context("failed to query db for api key")?
       .context("did not find matching api key")?;
+
     let service_user =
       find_one_by_id(&db_client().users, &api_key.user_id)
         .await
         .context("failed to query db for user")?
         .context("no user found with id")?;
+
     let UserConfig::Service { .. } = &service_user.config else {
-      return Err(anyhow!("user is not service user").into());
+      return Err(
+        anyhow!("Target user is not Service User")
+          .status_code(StatusCode::FORBIDDEN),
+      );
     };
+
     db.api_keys
       .delete_one(doc! { "key": self.key })
       .await

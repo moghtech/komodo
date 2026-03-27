@@ -11,10 +11,11 @@ use komodo_client::{
     builder::Builder, deployment::Deployment,
     permission::PermissionLevel, procedure::Procedure, repo::Repo,
     resource::ResourceQuery, server::Server, stack::Stack,
-    sync::ResourceSync, toml::ResourcesToml, user::User,
+    swarm::Swarm, sync::ResourceSync, toml::ResourcesToml,
+    user::User,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{
   helpers::query::{
@@ -37,122 +38,45 @@ async fn get_all_targets(
   user: &User,
 ) -> anyhow::Result<Vec<ResourceTarget>> {
   let mut targets = Vec::<ResourceTarget>::new();
+
   let all_tags = if tags.is_empty() {
     vec![]
   } else {
     get_all_tags(None).await?
   };
-  targets.extend(
-    resource::list_full_for_user::<Alerter>(
-      ResourceQuery::builder().tags(tags).build(),
-      user,
-      PermissionLevel::Read.into(),
-      &all_tags,
-    )
-    .await?
-    .into_iter()
-    .map(|resource| ResourceTarget::Alerter(resource.id)),
+
+  macro_rules! extend_targets {
+    ($($Type:ident),* $(,)?) => {
+      $(
+        targets.extend(
+          resource::list_full_for_user::<$Type>(
+            ResourceQuery::builder().tags(tags).build(),
+            user,
+            PermissionLevel::Read.into(),
+            &all_tags,
+          )
+          .await?
+          .into_iter()
+          .map(|resource| ResourceTarget::$Type(resource.id)),
+        );
+      )*
+    };
+  }
+
+  extend_targets!(
+    Alerter,
+    Builder,
+    Server,
+    Swarm,
+    Stack,
+    Deployment,
+    Build,
+    Repo,
+    Procedure,
+    Action,
+    ResourceSync,
   );
-  targets.extend(
-    resource::list_full_for_user::<Builder>(
-      ResourceQuery::builder().tags(tags).build(),
-      user,
-      PermissionLevel::Read.into(),
-      &all_tags,
-    )
-    .await?
-    .into_iter()
-    .map(|resource| ResourceTarget::Builder(resource.id)),
-  );
-  targets.extend(
-    resource::list_full_for_user::<Server>(
-      ResourceQuery::builder().tags(tags).build(),
-      user,
-      PermissionLevel::Read.into(),
-      &all_tags,
-    )
-    .await?
-    .into_iter()
-    .map(|resource| ResourceTarget::Server(resource.id)),
-  );
-  targets.extend(
-    resource::list_full_for_user::<Stack>(
-      ResourceQuery::builder().tags(tags).build(),
-      user,
-      PermissionLevel::Read.into(),
-      &all_tags,
-    )
-    .await?
-    .into_iter()
-    .map(|resource| ResourceTarget::Stack(resource.id)),
-  );
-  targets.extend(
-    resource::list_full_for_user::<Deployment>(
-      ResourceQuery::builder().tags(tags).build(),
-      user,
-      PermissionLevel::Read.into(),
-      &all_tags,
-    )
-    .await?
-    .into_iter()
-    .map(|resource| ResourceTarget::Deployment(resource.id)),
-  );
-  targets.extend(
-    resource::list_full_for_user::<Build>(
-      ResourceQuery::builder().tags(tags).build(),
-      user,
-      PermissionLevel::Read.into(),
-      &all_tags,
-    )
-    .await?
-    .into_iter()
-    .map(|resource| ResourceTarget::Build(resource.id)),
-  );
-  targets.extend(
-    resource::list_full_for_user::<Repo>(
-      ResourceQuery::builder().tags(tags).build(),
-      user,
-      PermissionLevel::Read.into(),
-      &all_tags,
-    )
-    .await?
-    .into_iter()
-    .map(|resource| ResourceTarget::Repo(resource.id)),
-  );
-  targets.extend(
-    resource::list_full_for_user::<Procedure>(
-      ResourceQuery::builder().tags(tags).build(),
-      user,
-      PermissionLevel::Read.into(),
-      &all_tags,
-    )
-    .await?
-    .into_iter()
-    .map(|resource| ResourceTarget::Procedure(resource.id)),
-  );
-  targets.extend(
-    resource::list_full_for_user::<Action>(
-      ResourceQuery::builder().tags(tags).build(),
-      user,
-      PermissionLevel::Read.into(),
-      &all_tags,
-    )
-    .await?
-    .into_iter()
-    .map(|resource| ResourceTarget::Action(resource.id)),
-  );
-  targets.extend(
-    resource::list_full_for_user::<ResourceSync>(
-      ResourceQuery::builder().tags(tags).build(),
-      user,
-      PermissionLevel::Read.into(),
-      &all_tags,
-    )
-    .await?
-    .into_iter()
-    // These will already be filtered by [ExportResourcesToToml]
-    .map(|resource| ResourceTarget::ResourceSync(resource.id)),
-  );
+
   Ok(targets)
 }
 
@@ -160,7 +84,7 @@ impl Resolve<ReadArgs> for ExportAllResourcesToToml {
   async fn resolve(
     self,
     args: &ReadArgs,
-  ) -> serror::Result<ExportAllResourcesToTomlResponse> {
+  ) -> mogh_error::Result<ExportAllResourcesToTomlResponse> {
     let targets = if self.include_resources {
       get_all_targets(&self.tags, &args.user).await?
     } else {
@@ -186,6 +110,7 @@ impl Resolve<ReadArgs> for ExportAllResourcesToToml {
       targets,
       user_groups,
       include_variables: self.include_variables,
+      existing: self.existing,
     }
     .resolve(args)
     .await
@@ -196,31 +121,69 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
   async fn resolve(
     self,
     args: &ReadArgs,
-  ) -> serror::Result<ExportResourcesToTomlResponse> {
+  ) -> mogh_error::Result<ExportResourcesToTomlResponse> {
     let ExportResourcesToToml {
       targets,
       user_groups,
       include_variables,
+      existing,
     } = self;
     let mut res = ResourcesToml::default();
     let id_to_tags = get_id_to_tags(None).await?;
     let ReadArgs { user } = args;
+    macro_rules! convert_target {
+      ($id:expr, $Type:ident, $field:ident) => {{
+        let mut resource = get_check_permissions::<$Type>(
+          &$id,
+          user,
+          PermissionLevel::Read.into(),
+        )
+        .await?;
+        $Type::replace_ids(&mut resource);
+        let (deploy, after) = existing
+          .as_ref()
+          .and_then(|e| {
+            e.$field.iter().find(|r| r.name == resource.name)
+          })
+          .map(|r| (r.deploy, r.after.clone()))
+          .unwrap_or_default();
+        res.$field.push(convert_resource::<$Type>(
+          resource,
+          deploy,
+          after,
+          &id_to_tags,
+        ));
+      }};
+    }
     for target in targets {
       match target {
+        ResourceTarget::Server(id) => {
+          convert_target!(id, Server, servers)
+        }
+        ResourceTarget::Swarm(id) => {
+          convert_target!(id, Swarm, swarms)
+        }
+        ResourceTarget::Stack(id) => {
+          convert_target!(id, Stack, stacks)
+        }
+        ResourceTarget::Deployment(id) => {
+          convert_target!(id, Deployment, deployments)
+        }
+        ResourceTarget::Build(id) => {
+          convert_target!(id, Build, builds)
+        }
+        ResourceTarget::Repo(id) => convert_target!(id, Repo, repos),
+        ResourceTarget::Procedure(id) => {
+          convert_target!(id, Procedure, procedures)
+        }
+        ResourceTarget::Action(id) => {
+          convert_target!(id, Action, actions)
+        }
+        ResourceTarget::Builder(id) => {
+          convert_target!(id, Builder, builders)
+        }
         ResourceTarget::Alerter(id) => {
-          let mut alerter = get_check_permissions::<Alerter>(
-            &id,
-            user,
-            PermissionLevel::Read.into(),
-          )
-          .await?;
-          Alerter::replace_ids(&mut alerter);
-          res.alerters.push(convert_resource::<Alerter>(
-            alerter,
-            false,
-            vec![],
-            &id_to_tags,
-          ))
+          convert_target!(id, Alerter, alerters)
         }
         ResourceTarget::ResourceSync(id) => {
           let mut sync = get_check_permissions::<ResourceSync>(
@@ -242,126 +205,6 @@ impl Resolve<ReadArgs> for ExportResourcesToToml {
               &id_to_tags,
             ))
           }
-        }
-        ResourceTarget::Server(id) => {
-          let mut server = get_check_permissions::<Server>(
-            &id,
-            user,
-            PermissionLevel::Read.into(),
-          )
-          .await?;
-          Server::replace_ids(&mut server);
-          res.servers.push(convert_resource::<Server>(
-            server,
-            false,
-            vec![],
-            &id_to_tags,
-          ))
-        }
-        ResourceTarget::Builder(id) => {
-          let mut builder = get_check_permissions::<Builder>(
-            &id,
-            user,
-            PermissionLevel::Read.into(),
-          )
-          .await?;
-          Builder::replace_ids(&mut builder);
-          res.builders.push(convert_resource::<Builder>(
-            builder,
-            false,
-            vec![],
-            &id_to_tags,
-          ))
-        }
-        ResourceTarget::Build(id) => {
-          let mut build = get_check_permissions::<Build>(
-            &id,
-            user,
-            PermissionLevel::Read.into(),
-          )
-          .await?;
-          Build::replace_ids(&mut build);
-          res.builds.push(convert_resource::<Build>(
-            build,
-            false,
-            vec![],
-            &id_to_tags,
-          ))
-        }
-        ResourceTarget::Deployment(id) => {
-          let mut deployment = get_check_permissions::<Deployment>(
-            &id,
-            user,
-            PermissionLevel::Read.into(),
-          )
-          .await?;
-          Deployment::replace_ids(&mut deployment);
-          res.deployments.push(convert_resource::<Deployment>(
-            deployment,
-            false,
-            vec![],
-            &id_to_tags,
-          ))
-        }
-        ResourceTarget::Repo(id) => {
-          let mut repo = get_check_permissions::<Repo>(
-            &id,
-            user,
-            PermissionLevel::Read.into(),
-          )
-          .await?;
-          Repo::replace_ids(&mut repo);
-          res.repos.push(convert_resource::<Repo>(
-            repo,
-            false,
-            vec![],
-            &id_to_tags,
-          ))
-        }
-        ResourceTarget::Stack(id) => {
-          let mut stack = get_check_permissions::<Stack>(
-            &id,
-            user,
-            PermissionLevel::Read.into(),
-          )
-          .await?;
-          Stack::replace_ids(&mut stack);
-          res.stacks.push(convert_resource::<Stack>(
-            stack,
-            false,
-            vec![],
-            &id_to_tags,
-          ))
-        }
-        ResourceTarget::Procedure(id) => {
-          let mut procedure = get_check_permissions::<Procedure>(
-            &id,
-            user,
-            PermissionLevel::Read.into(),
-          )
-          .await?;
-          Procedure::replace_ids(&mut procedure);
-          res.procedures.push(convert_resource::<Procedure>(
-            procedure,
-            false,
-            vec![],
-            &id_to_tags,
-          ));
-        }
-        ResourceTarget::Action(id) => {
-          let mut action = get_check_permissions::<Action>(
-            &id,
-            user,
-            PermissionLevel::Read.into(),
-          )
-          .await?;
-          Action::replace_ids(&mut action);
-          res.actions.push(convert_resource::<Action>(
-            action,
-            false,
-            vec![],
-            &id_to_tags,
-          ));
         }
         ResourceTarget::System(_) => continue,
       };
@@ -418,85 +261,32 @@ fn serialize_resources_toml(
 ) -> anyhow::Result<String> {
   let mut toml = String::new();
 
-  for server in resources.servers {
-    if !toml.is_empty() {
-      toml.push_str("\n\n##\n\n");
-    }
-    toml.push_str("[[server]]\n");
-    Server::push_to_toml_string(server, &mut toml)?;
+  macro_rules! serialize_resources {
+    ($(($Type:ident, $field:ident, $header:literal)),* $(,)?) => {
+      $(
+        for resource in resources.$field {
+          if !toml.is_empty() {
+            toml.push_str("\n\n##\n\n");
+          }
+          toml.push_str(concat!("[[",$header,"]]\n"));
+          $Type::push_to_toml_string(resource, &mut toml)?;
+        }
+      )*
+    };
   }
-
-  for stack in resources.stacks {
-    if !toml.is_empty() {
-      toml.push_str("\n\n##\n\n");
-    }
-    toml.push_str("[[stack]]\n");
-    Stack::push_to_toml_string(stack, &mut toml)?;
-  }
-
-  for deployment in resources.deployments {
-    if !toml.is_empty() {
-      toml.push_str("\n\n##\n\n");
-    }
-    toml.push_str("[[deployment]]\n");
-    Deployment::push_to_toml_string(deployment, &mut toml)?;
-  }
-
-  for build in resources.builds {
-    if !toml.is_empty() {
-      toml.push_str("\n\n##\n\n");
-    }
-    toml.push_str("[[build]]\n");
-    Build::push_to_toml_string(build, &mut toml)?;
-  }
-
-  for repo in resources.repos {
-    if !toml.is_empty() {
-      toml.push_str("\n\n##\n\n");
-    }
-    toml.push_str("[[repo]]\n");
-    Repo::push_to_toml_string(repo, &mut toml)?;
-  }
-
-  for procedure in resources.procedures {
-    if !toml.is_empty() {
-      toml.push_str("\n\n##\n\n");
-    }
-    toml.push_str("[[procedure]]\n");
-    Procedure::push_to_toml_string(procedure, &mut toml)?;
-  }
-
-  for action in resources.actions {
-    if !toml.is_empty() {
-      toml.push_str("\n\n##\n\n");
-    }
-    toml.push_str("[[action]]\n");
-    Action::push_to_toml_string(action, &mut toml)?;
-  }
-
-  for alerter in resources.alerters {
-    if !toml.is_empty() {
-      toml.push_str("\n\n##\n\n");
-    }
-    toml.push_str("[[alerter]]\n");
-    Alerter::push_to_toml_string(alerter, &mut toml)?;
-  }
-
-  for builder in resources.builders {
-    if !toml.is_empty() {
-      toml.push_str("\n\n##\n\n");
-    }
-    toml.push_str("[[builder]]\n");
-    Builder::push_to_toml_string(builder, &mut toml)?;
-  }
-
-  for resource_sync in resources.resource_syncs {
-    if !toml.is_empty() {
-      toml.push_str("\n\n##\n\n");
-    }
-    toml.push_str("[[resource_sync]]\n");
-    ResourceSync::push_to_toml_string(resource_sync, &mut toml)?;
-  }
+  serialize_resources!(
+    (Server, servers, "server"),
+    (Swarm, swarms, "swarm"),
+    (Stack, stacks, "stack"),
+    (Deployment, deployments, "deployment"),
+    (Build, builds, "build"),
+    (Repo, repos, "repo"),
+    (Procedure, procedures, "procedure"),
+    (Action, actions, "action"),
+    (Alerter, alerters, "alerter"),
+    (Builder, builders, "builder"),
+    (ResourceSync, resource_syncs, "resource_sync"),
+  );
 
   for variable in &resources.variables {
     if !toml.is_empty() {

@@ -4,54 +4,87 @@ use komodo_client::{
     builder::Builder, permission::PermissionLevel, update::Update,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{permission::get_check_permissions, resource};
 
 use super::WriteArgs;
 
 impl Resolve<WriteArgs> for CreateBuilder {
-  #[instrument(name = "CreateBuilder", skip(user))]
+  #[instrument(
+    "CreateBuilder",
+    skip_all,
+    fields(
+      operator = user.id,
+      builder = self.name,
+      config = serde_json::to_string(&self.config).unwrap(),
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Builder> {
-    resource::create::<Builder>(&self.name, self.config, user).await
+  ) -> mogh_error::Result<Builder> {
+    resource::create::<Builder>(&self.name, self.config, None, user)
+      .await
   }
 }
 
 impl Resolve<WriteArgs> for CopyBuilder {
-  #[instrument(name = "CopyBuilder", skip(user))]
+  #[instrument(
+    "CopyBuilder",
+    skip_all,
+    fields(
+      operator = user.id,
+      builder = self.name,
+      copy_builder = self.id,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Builder> {
+  ) -> mogh_error::Result<Builder> {
     let Builder { config, .. } = get_check_permissions::<Builder>(
       &self.id,
       user,
       PermissionLevel::Write.into(),
     )
     .await?;
-    resource::create::<Builder>(&self.name, config.into(), user).await
+    resource::create::<Builder>(&self.name, config.into(), None, user)
+      .await
   }
 }
 
 impl Resolve<WriteArgs> for DeleteBuilder {
-  #[instrument(name = "DeleteBuilder", skip(args))]
+  #[instrument(
+    "DeleteBuilder",
+    skip_all,
+    fields(
+      operator = user.id,
+      builder = self.id,
+    )
+  )]
   async fn resolve(
     self,
-    args: &WriteArgs,
-  ) -> serror::Result<Builder> {
-    Ok(resource::delete::<Builder>(&self.id, args).await?)
+    WriteArgs { user }: &WriteArgs,
+  ) -> mogh_error::Result<Builder> {
+    Ok(resource::delete::<Builder>(&self.id, user).await?)
   }
 }
 
 impl Resolve<WriteArgs> for UpdateBuilder {
-  #[instrument(name = "UpdateBuilder", skip(user))]
+  #[instrument(
+    "UpdateBuilder",
+    skip_all,
+    fields(
+      operator = user.id,
+      builder = self.id,
+      update = serde_json::to_string(&self.config).unwrap(),
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Builder> {
+  ) -> mogh_error::Result<Builder> {
     Ok(
       resource::update::<Builder>(&self.id, self.config, user)
         .await?,
@@ -60,11 +93,19 @@ impl Resolve<WriteArgs> for UpdateBuilder {
 }
 
 impl Resolve<WriteArgs> for RenameBuilder {
-  #[instrument(name = "RenameBuilder", skip(user))]
+  #[instrument(
+    "RenameBuilder",
+    skip_all,
+    fields(
+      operator = user.id,
+      builder = self.id,
+      new_name = self.name
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     Ok(resource::rename::<Builder>(&self.id, &self.name, user).await?)
   }
 }

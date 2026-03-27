@@ -1,66 +1,92 @@
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf, sync::OnceLock};
 
 use anyhow::{Context, anyhow};
-use database::mungos::mongodb::bson::{doc, to_document};
-use formatting::format_serror;
-use komodo_client::{
-  api::write::*,
-  entities::{
-    FileContents, NoData, Operation, RepoExecutionArgs,
-    all_logs_success,
-    config::core::CoreConfig,
-    permission::PermissionLevel,
-    repo::Repo,
-    server::ServerState,
-    stack::{PartialStackConfig, Stack, StackInfo},
-    update::Update,
-    user::stack_user,
+use database::{
+  bson::to_bson,
+  mungos::{
+    by_id::update_one_by_id,
+    mongodb::bson::{doc, to_document},
   },
 };
-use octorust::types::{
-  ReposCreateWebhookRequest, ReposCreateWebhookRequestConfig,
+use formatting::format_serror;
+use futures_util::{StreamExt as _, stream::FuturesOrdered};
+use komodo_client::{
+  api::{execute::DeployStack, write::*},
+  entities::{
+    FileContents, NoData, Operation, RepoExecutionArgs,
+    ResourceTarget, SwarmOrServer,
+    alert::{Alert, AlertData, SeverityLevel},
+    all_logs_success, komodo_timestamp,
+    permission::PermissionLevel,
+    repo::Repo,
+    stack::{Stack, StackInfo, StackServiceWithUpdate, StackState},
+    update::Update,
+    user::{auto_redeploy_user, stack_user, system_user},
+  },
 };
+use mogh_cache::SetCache;
+use mogh_resolver::Resolve;
 use periphery_client::api::compose::{
   GetComposeContentsOnHost, GetComposeContentsOnHostResponse,
   WriteComposeContentsToHost,
 };
-use resolver_api::Resolve;
 
 use crate::{
+  alert::send_alerts,
+  api::execute::{self, ExecuteRequest, ExecutionResult},
   config::core_config,
   helpers::{
-    periphery_client,
-    query::get_server_with_state,
-    stack_git_token,
-    update::{add_update, make_update},
+    query::get_swarm_or_server,
+    stack_git_token, swarm_or_server_request,
+    update::{add_update, make_update, poll_update_until_complete},
   },
   permission::get_check_permissions,
-  resource,
+  resource::{self, list_full_for_user_using_pattern},
   stack::{
     remote::{RemoteComposeContents, get_repo_compose_contents},
-    services::extract_services_into_res,
+    services::{
+      extract_services_from_stack, extract_services_into_res,
+    },
+    setup_stack_execution,
   },
-  state::{db_client, github_client},
+  state::{db_client, image_digest_cache, stack_status_cache},
 };
 
 use super::WriteArgs;
 
 impl Resolve<WriteArgs> for CreateStack {
-  #[instrument(name = "CreateStack", skip(user))]
+  #[instrument(
+    "CreateStack",
+    skip_all,
+    fields(
+      operator = user.id,
+      stack = self.name,
+      config = serde_json::to_string(&self.config).unwrap(),
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Stack> {
-    resource::create::<Stack>(&self.name, self.config, user).await
+  ) -> mogh_error::Result<Stack> {
+    resource::create::<Stack>(&self.name, self.config, None, user)
+      .await
   }
 }
 
 impl Resolve<WriteArgs> for CopyStack {
-  #[instrument(name = "CopyStack", skip(user))]
+  #[instrument(
+    "CopyStack",
+    skip_all,
+    fields(
+      operator = user.id,
+      stack = self.name,
+      copy_stack = self.id,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Stack> {
+  ) -> mogh_error::Result<Stack> {
     let Stack { config, .. } = get_check_permissions::<Stack>(
       &self.id,
       user,
@@ -68,43 +94,101 @@ impl Resolve<WriteArgs> for CopyStack {
     )
     .await?;
 
-    resource::create::<Stack>(&self.name, config.into(), user).await
+    resource::create::<Stack>(&self.name, config.into(), None, user)
+      .await
   }
 }
 
 impl Resolve<WriteArgs> for DeleteStack {
-  #[instrument(name = "DeleteStack", skip(args))]
-  async fn resolve(self, args: &WriteArgs) -> serror::Result<Stack> {
-    Ok(resource::delete::<Stack>(&self.id, args).await?)
+  #[instrument(
+    "DeleteStack",
+    skip_all,
+    fields(
+      operator = user.id,
+      stack = self.id,
+    )
+  )]
+  async fn resolve(
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> mogh_error::Result<Stack> {
+    Ok(resource::delete::<Stack>(&self.id, user).await?)
   }
 }
 
 impl Resolve<WriteArgs> for UpdateStack {
-  #[instrument(name = "UpdateStack", skip(user))]
+  #[instrument(
+    "UpdateStack",
+    skip_all,
+    fields(
+      operator = user.id,
+      stack = self.id,
+      update = serde_json::to_string(&self.config).unwrap(),
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Stack> {
-    Ok(resource::update::<Stack>(&self.id, self.config, user).await?)
+  ) -> mogh_error::Result<Stack> {
+    let compose_update = self.config.linked_repo.is_some()
+      || self.config.repo.is_some()
+      || self.config.files_on_host.is_some()
+      || self.config.file_contents.is_some();
+
+    let stack =
+      resource::update::<Stack>(&self.id, self.config, user).await?;
+
+    if compose_update {
+      tokio::spawn(async move {
+        let _ = (CheckStackForUpdate {
+          stack: self.id,
+          skip_auto_update: false,
+          wait_for_auto_update: false,
+          skip_cache_refresh: true,
+        })
+        .resolve(&WriteArgs {
+          user: system_user().to_owned(),
+        })
+        .await;
+      });
+    }
+
+    Ok(stack)
   }
 }
 
 impl Resolve<WriteArgs> for RenameStack {
-  #[instrument(name = "RenameStack", skip(user))]
+  #[instrument(
+    "RenameStack",
+    skip_all,
+    fields(
+      operator = user.id,
+      stack = self.id,
+      new_name = self.name
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     Ok(resource::rename::<Stack>(&self.id, &self.name, user).await?)
   }
 }
 
 impl Resolve<WriteArgs> for WriteStackFileContents {
-  #[instrument(name = "WriteStackFileContents", skip(user))]
+  #[instrument(
+    "WriteStackFileContents",
+    skip_all,
+    fields(
+      operator = user.id,
+      stack = self.stack,
+      path = self.file_path,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     let WriteStackFileContents {
       stack,
       file_path,
@@ -131,11 +215,13 @@ impl Resolve<WriteArgs> for WriteStackFileContents {
 
     update.push_simple_log("File contents to write", &contents);
 
-    if stack.config.files_on_host {
+    let id = stack.id.clone();
+
+    let update = if stack.config.files_on_host {
       write_stack_file_contents_on_host(
         stack, file_path, contents, update,
       )
-      .await
+      .await?
     } else {
       write_stack_file_contents_git(
         stack,
@@ -144,42 +230,51 @@ impl Resolve<WriteArgs> for WriteStackFileContents {
         &user.username,
         update,
       )
-      .await
-    }
+      .await?
+    };
+
+    tokio::spawn(async move {
+      let _ = (CheckStackForUpdate {
+        stack: id,
+        skip_auto_update: false,
+        wait_for_auto_update: false,
+        skip_cache_refresh: true,
+      })
+      .resolve(&WriteArgs {
+        user: system_user().to_owned(),
+      })
+      .await;
+    });
+
+    Ok(update)
   }
 }
 
+#[instrument("WriteStackFileContentsOnHost", skip_all)]
 async fn write_stack_file_contents_on_host(
   stack: Stack,
   file_path: String,
   contents: String,
   mut update: Update,
-) -> serror::Result<Update> {
-  if stack.config.server_id.is_empty() {
-    return Err(anyhow!(
-      "Cannot write file, Files on host Stack has not configured a Server"
-    ).into());
-  }
-  let (server, state) =
-    get_server_with_state(&stack.config.server_id).await?;
-  if state != ServerState::Ok {
-    return Err(
-      anyhow!(
-        "Cannot write file when server is unreachable or disabled"
-      )
-      .into(),
-    );
-  }
-  match periphery_client(&server)?
-    .request(WriteComposeContentsToHost {
+) -> mogh_error::Result<Update> {
+  let swarm_or_server = get_swarm_or_server(
+    &stack.config.swarm_id,
+    &stack.config.server_id,
+  )
+  .await?;
+
+  let res = swarm_or_server_request(
+    &swarm_or_server,
+    WriteComposeContentsToHost {
       name: stack.name,
       run_directory: stack.config.run_directory,
       file_path,
       contents,
-    })
-    .await
-    .context("Failed to write contents to host")
-  {
+    },
+  )
+  .await;
+
+  match res {
     Ok(log) => {
       update.logs.push(log);
     }
@@ -189,7 +284,7 @@ async fn write_stack_file_contents_on_host(
         format_serror(&e.into()),
       );
     }
-  };
+  }
 
   if !all_logs_success(&update.logs) {
     update.finalize();
@@ -220,13 +315,14 @@ async fn write_stack_file_contents_on_host(
   Ok(update)
 }
 
+#[instrument("WriteStackFileContentsGit", skip_all)]
 async fn write_stack_file_contents_git(
   mut stack: Stack,
   file_path: &str,
   contents: &str,
   username: &str,
   mut update: Update,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   let mut repo = if !stack.config.linked_repo.is_empty() {
     crate::resource::get::<Repo>(&stack.config.linked_repo)
       .await?
@@ -361,15 +457,10 @@ async fn write_stack_file_contents_git(
 }
 
 impl Resolve<WriteArgs> for RefreshStackCache {
-  #[instrument(
-    name = "RefreshStackCache",
-    level = "debug",
-    skip(user)
-  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<NoData> {
+  ) -> mogh_error::Result<NoData> {
     // Even though this is a write request, this doesn't change any config. Anyone that can execute the
     // stack should be able to do this.
     let stack = get_check_permissions::<Stack>(
@@ -402,6 +493,15 @@ impl Resolve<WriteArgs> for RefreshStackCache {
     }
 
     let mut missing_files = Vec::new();
+    let service_image_digests = stack
+      .info
+      .latest_services
+      .iter()
+      .filter_map(|s| {
+        let digest = s.image_digest.clone()?;
+        Some((s.service_name.clone(), digest))
+      })
+      .collect::<HashMap<_, _>>();
 
     let (
       latest_services,
@@ -413,25 +513,22 @@ impl Resolve<WriteArgs> for RefreshStackCache {
       // =============
       // FILES ON HOST
       // =============
-      let (server, state) = if stack.config.server_id.is_empty() {
-        (None, ServerState::Disabled)
-      } else {
-        let (server, state) =
-          get_server_with_state(&stack.config.server_id).await?;
-        (Some(server), state)
-      };
-      if state != ServerState::Ok {
-        (vec![], None, None, None, None)
-      } else if let Some(server) = server {
+      if let Ok(swarm_or_server) = get_swarm_or_server(
+        &stack.config.swarm_id,
+        &stack.config.server_id,
+      )
+      .await
+      {
         let GetComposeContentsOnHostResponse { contents, errors } =
-          match periphery_client(&server)?
-            .request(GetComposeContentsOnHost {
+          match swarm_or_server_request(
+            &swarm_or_server,
+            GetComposeContentsOnHost {
               file_paths: stack.all_file_dependencies(),
               name: stack.name.clone(),
               run_directory: stack.config.run_directory.clone(),
-            })
-            .await
-            .context("failed to get compose file contents from host")
+            },
+          )
+          .await
           {
             Ok(res) => res,
             Err(e) => GetComposeContentsOnHostResponse {
@@ -442,7 +539,6 @@ impl Resolve<WriteArgs> for RefreshStackCache {
               }],
             },
           };
-
         let project_name = stack.project_name(true);
 
         let mut services = Vec::new();
@@ -455,6 +551,7 @@ impl Resolve<WriteArgs> for RefreshStackCache {
           if let Err(e) = extract_services_into_res(
             &project_name,
             &contents.contents,
+            &service_image_digests,
             &mut services,
           ) {
             warn!(
@@ -466,7 +563,16 @@ impl Resolve<WriteArgs> for RefreshStackCache {
 
         (services, Some(contents), Some(errors), None, None)
       } else {
-        (vec![], None, None, None, None)
+        // This path is reached if the swarm / server is not available.
+        // It carries over the last successful poll.
+        (
+          stack.info.latest_services,
+          stack.info.remote_contents,
+          stack.info.remote_errors,
+          // Files on host can set hash / message back to None.
+          None,
+          None,
+        )
       }
     } else if !repo_empty {
       // ================
@@ -497,6 +603,7 @@ impl Resolve<WriteArgs> for RefreshStackCache {
         if let Err(e) = extract_services_into_res(
           &project_name,
           &contents.contents,
+          &service_image_digests,
           &mut services,
         ) {
           warn!(
@@ -522,6 +629,7 @@ impl Resolve<WriteArgs> for RefreshStackCache {
         // this should latest (not deployed), so make the project name fresh.
         &stack.project_name(true),
         &stack.config.file_contents,
+        &service_image_digests,
         &mut services,
       ) {
         warn!(
@@ -564,215 +672,413 @@ impl Resolve<WriteArgs> for RefreshStackCache {
   }
 }
 
-impl Resolve<WriteArgs> for CreateStackWebhook {
-  #[instrument(name = "CreateStackWebhook", skip(args))]
-  async fn resolve(
-    self,
-    args: &WriteArgs,
-  ) -> serror::Result<CreateStackWebhookResponse> {
-    let WriteArgs { user } = args;
+//
 
-    let Some(github) = github_client() else {
-      return Err(
-        anyhow!(
-          "github_webhook_app is not configured in core config toml"
-        )
-        .into(),
-      );
-    };
-
-    let stack = get_check_permissions::<Stack>(
-      &self.stack,
-      user,
-      PermissionLevel::Write.into(),
+impl Resolve<WriteArgs> for CheckStackForUpdate {
+  #[instrument(
+    "CheckStackForUpdate",
+    skip_all,
+    fields(
+      operator = user.id,
+      stack = self.stack,
     )
-    .await?;
-
-    if stack.config.repo.is_empty() {
-      return Err(
-        anyhow!("No repo configured, can't create webhook").into(),
-      );
-    }
-
-    let mut split = stack.config.repo.split('/');
-    let owner = split.next().context("Stack repo has no owner")?;
-
-    let Some(github) = github.get(owner) else {
-      return Err(
-        anyhow!("Cannot manage repo webhooks under owner {owner}")
-          .into(),
-      );
-    };
-
-    let repo =
-      split.next().context("Stack repo has no repo after the /")?;
-
-    let github_repos = github.repos();
-
-    // First make sure the webhook isn't already created (inactive ones are ignored)
-    let webhooks = github_repos
-      .list_all_webhooks(owner, repo)
-      .await
-      .context("failed to list all webhooks on repo")?
-      .body;
-
-    let CoreConfig {
-      host,
-      webhook_base_url,
-      webhook_secret,
-      ..
-    } = core_config();
-
-    let webhook_secret = if stack.config.webhook_secret.is_empty() {
-      webhook_secret
-    } else {
-      &stack.config.webhook_secret
-    };
-
-    let host = if webhook_base_url.is_empty() {
-      host
-    } else {
-      webhook_base_url
-    };
-    let url = match self.action {
-      StackWebhookAction::Refresh => {
-        format!("{host}/listener/github/stack/{}/refresh", stack.id)
-      }
-      StackWebhookAction::Deploy => {
-        format!("{host}/listener/github/stack/{}/deploy", stack.id)
-      }
-    };
-
-    for webhook in webhooks {
-      if webhook.active && webhook.config.url == url {
-        return Ok(NoData {});
-      }
-    }
-
-    // Now good to create the webhook
-    let request = ReposCreateWebhookRequest {
-      active: Some(true),
-      config: Some(ReposCreateWebhookRequestConfig {
-        url,
-        secret: webhook_secret.to_string(),
-        content_type: String::from("json"),
-        insecure_ssl: None,
-        digest: Default::default(),
-        token: Default::default(),
-      }),
-      events: vec![String::from("push")],
-      name: String::from("web"),
-    };
-    github_repos
-      .create_webhook(owner, repo, &request)
-      .await
-      .context("failed to create webhook")?;
-
-    if !stack.config.webhook_enabled {
-      UpdateStack {
-        id: stack.id,
-        config: PartialStackConfig {
-          webhook_enabled: Some(true),
-          ..Default::default()
-        },
-      }
-      .resolve(args)
-      .await
-      .map_err(|e| e.error)
-      .context("failed to update stack to enable webhook")?;
-    }
-
-    Ok(NoData {})
-  }
-}
-
-impl Resolve<WriteArgs> for DeleteStackWebhook {
-  #[instrument(name = "DeleteStackWebhook", skip(user))]
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<DeleteStackWebhookResponse> {
-    let Some(github) = github_client() else {
-      return Err(
-        anyhow!(
-          "github_webhook_app is not configured in core config toml"
-        )
-        .into(),
-      );
-    };
-
-    let stack = get_check_permissions::<Stack>(
+  ) -> mogh_error::Result<Self::Response> {
+    // Even though this is a write request, this doesn't change any config. Anyone that can execute the
+    // stack should be able to do this.
+    let (stack, swarm_or_server) = setup_stack_execution(
       &self.stack,
       user,
-      PermissionLevel::Write.into(),
+      PermissionLevel::Execute.into(),
     )
     .await?;
 
-    if stack.config.git_provider != "github.com" {
-      return Err(
-        anyhow!("Can only manage github.com repo webhooks").into(),
-      );
+    swarm_or_server.verify_has_target()?;
+
+    check_stack_for_update_inner(
+      stack.id,
+      &swarm_or_server,
+      self.skip_auto_update,
+      self.wait_for_auto_update,
+      self.skip_cache_refresh,
+    )
+    .await
+    .map_err(Into::into)
+  }
+}
+
+/// If it goes down the "update available" path,
+/// only send alert if stack id + service is not in this cache.
+/// If alert is sent, add ID to cache.
+/// If later it goes down non "update available" path,
+/// remove the id from cache, so next time it does another alert
+/// will be sent.
+fn stack_alert_sent_cache() -> &'static SetCache<(String, String)> {
+  static CACHE: OnceLock<SetCache<(String, String)>> =
+    OnceLock::new();
+  CACHE.get_or_init(Default::default)
+}
+
+/// First refresh stack cache, then save
+/// latest available 'image_digest' for stack services
+/// to database.
+#[instrument(
+  "CheckStackForUpdateInner",
+  skip_all,
+  fields(
+    stack = stack,
+  )
+)]
+pub async fn check_stack_for_update_inner(
+  // ID or name.
+  stack: String,
+  swarm_or_server: &SwarmOrServer,
+  skip_auto_update: bool,
+  // Otherwise spawns task to run in background
+  wait_for_auto_update: bool,
+  skip_cache_refresh: bool,
+) -> anyhow::Result<CheckStackForUpdateResponse> {
+  if !skip_cache_refresh {
+    (RefreshStackCache {
+      stack: stack.clone(),
+    })
+    .resolve(&WriteArgs {
+      user: system_user().to_owned(),
+    })
+    .await
+    .map_err(|e| e.error)
+    .context("Failed to refresh stack cache before update check")?;
+  }
+
+  // Query again after refresh
+  let mut stack = resource::get::<Stack>(&stack).await?;
+
+  let cache = image_digest_cache();
+
+  for service in &mut stack.info.latest_services {
+    // Prefer the image coming from deployed services
+    // so it will be after any interpolation.
+    let image = stack
+      .info
+      .deployed_services
+      .as_ref()
+      .and_then(|services| {
+        services.iter().find_map(|deployed| {
+          (deployed.service_name == service.service_name)
+            .then_some(&deployed.image)
+        })
+      })
+      .unwrap_or(&service.image);
+
+    if image.is_empty() ||
+      // Images with a hardcoded digest can't have update.
+      image.contains('@')
+    {
+      service.image_digest = None;
+      continue;
     }
+    match cache.get(swarm_or_server, image, None, None).await {
+      Ok(digest) => service.image_digest = Some(digest),
+      Err(e) => {
+        warn!(
+          "Failed to check for update | Stack: {} | Service: {} | Error: {e:#}",
+          stack.name, service.service_name
+        );
+        service.image_digest = None;
+        continue;
+      }
+    };
+  }
 
-    if stack.config.repo.is_empty() {
-      return Err(
-        anyhow!("No repo configured, can't create webhook").into(),
-      );
-    }
+  let latest_services = to_bson(&stack.info.latest_services)
+    .context("Failed to serialize stack latest services to BSON")?;
 
-    let mut split = stack.config.repo.split('/');
-    let owner = split.next().context("Stack repo has no owner")?;
+  update_one_by_id(
+    &db_client().stacks,
+    &stack.id,
+    doc! { "$set": { "info.latest_services": latest_services } },
+    None,
+  )
+  .await?;
 
-    let Some(github) = github.get(owner) else {
-      return Err(
-        anyhow!("Cannot manage repo webhooks under owner {owner}")
-          .into(),
-      );
+  let alert_cache = stack_alert_sent_cache();
+
+  let Some(status) = stack_status_cache().get(&stack.id).await else {
+    alert_cache
+      .retain(|(stack_id, _)| stack_id != &stack.id)
+      .await;
+    return Ok(CheckStackForUpdateResponse {
+      services: extract_services_from_stack(&stack)
+        .into_iter()
+        .map(|service| StackServiceWithUpdate {
+          service: service.service_name,
+          image: service.image,
+          update_available: false,
+        })
+        .collect(),
+      stack: stack.id,
+    });
+  };
+
+  let StackState::Running = status.curr.state else {
+    alert_cache
+      .retain(|(stack_id, _)| stack_id != &stack.id)
+      .await;
+    return Ok(CheckStackForUpdateResponse {
+      stack: stack.id,
+      services: status
+        .curr
+        .services
+        .iter()
+        .map(|service| StackServiceWithUpdate {
+          service: service.service.clone(),
+          image: service.image.clone(),
+          update_available: false,
+        })
+        .collect(),
+    });
+  };
+
+  let mut services = Vec::new();
+
+  for service in status.curr.services.iter() {
+    let mut service_with_update = StackServiceWithUpdate {
+      service: service.service.clone(),
+      image: service.image.clone(),
+      update_available: false,
     };
 
-    let repo =
-      split.next().context("Sync repo has no repo after the /")?;
+    let Some(current_digests) = &service.image_digests else {
+      services.push(service_with_update);
+      continue;
+    };
 
-    let github_repos = github.repos();
+    let Some(latest_digest) =
+      stack.info.latest_services.iter().find_map(|s| {
+        if s.service_name == service.service {
+          s.image_digest.clone()
+        } else {
+          None
+        }
+      })
+    else {
+      services.push(service_with_update);
+      continue;
+    };
 
-    // First make sure the webhook isn't already created (inactive ones are ignored)
-    let webhooks = github_repos
-      .list_all_webhooks(owner, repo)
+    service_with_update.update_available =
+      latest_digest.update_available(current_digests);
+
+    if service_with_update.update_available
+      && (skip_auto_update || !stack.config.auto_update)
+      && !alert_cache
+        .contains(&(stack.id.clone(), service.service.clone()))
+        .await
+    {
+      // Send service update available alert
+      alert_cache
+        .insert((stack.id.clone(), service.service.clone()))
+        .await;
+      let ts = komodo_timestamp();
+      let alert = Alert {
+        id: Default::default(),
+        ts,
+        resolved: true,
+        resolved_ts: ts.into(),
+        level: SeverityLevel::Ok,
+        target: ResourceTarget::Stack(stack.id.clone()),
+        data: AlertData::StackImageUpdateAvailable {
+          id: stack.id.clone(),
+          name: stack.name.clone(),
+          swarm_name: swarm_or_server
+            .swarm_name()
+            .map(str::to_string),
+          swarm_id: swarm_or_server.swarm_id().map(str::to_string),
+          server_name: swarm_or_server
+            .server_name()
+            .map(str::to_string),
+          server_id: swarm_or_server.server_id().map(str::to_string),
+          service: service.service.clone(),
+          image: service.image.clone(),
+        },
+      };
+      let res = db_client().alerts.insert_one(&alert).await;
+      if let Err(e) = res {
+        error!(
+          "Failed to record StackImageUpdateAvailable to db | {e:#}"
+        );
+      }
+      send_alerts(&[alert]).await;
+    }
+
+    services.push(service_with_update);
+  }
+
+  let services_with_update = services
+    .iter()
+    .filter(|service| service.update_available)
+    .cloned()
+    .collect::<Vec<_>>();
+
+  if skip_auto_update
+    || !stack.config.auto_update
+    || services_with_update.is_empty()
+  {
+    return Ok(CheckStackForUpdateResponse {
+      stack: stack.id,
+      services,
+    });
+  }
+
+  // Conservatively remove from alert cache so 'skip_auto_update'
+  // doesn't cause alerts not to be sent on subsequent calls.
+  alert_cache
+    .retain(|(stack_id, _)| stack_id != &stack.id)
+    .await;
+
+  let deploy_services = if stack.config.auto_update_all_services {
+    Vec::new()
+  } else {
+    services_with_update
+      .iter()
+      .map(|service| service.service.clone())
+      .collect()
+  };
+
+  let swarm_id = swarm_or_server.swarm_id().map(str::to_string);
+  let swarm_name = swarm_or_server.swarm_name().map(str::to_string);
+  let server_id = swarm_or_server.server_id().map(str::to_string);
+  let server_name = swarm_or_server.server_name().map(str::to_string);
+
+  let stack_id = stack.id.clone();
+
+  let run = async move {
+    match execute::inner_handler(
+      ExecuteRequest::DeployStack(DeployStack {
+        stack: stack.id.clone(),
+        services: deploy_services,
+        stop_time: None,
+      }),
+      auto_redeploy_user().to_owned(),
+    )
+    .await
+    {
+      Ok(res) => {
+        let ExecutionResult::Single(update) = res else {
+          unreachable!()
+        };
+        let Ok(update) = poll_update_until_complete(&update.id).await
+        else {
+          return;
+        };
+        if update.success {
+          let ts = komodo_timestamp();
+          let alert = Alert {
+            id: Default::default(),
+            ts,
+            resolved: true,
+            resolved_ts: ts.into(),
+            level: SeverityLevel::Ok,
+            target: ResourceTarget::Stack(stack.id.clone()),
+            data: AlertData::StackAutoUpdated {
+              id: stack.id.clone(),
+              name: stack.name.clone(),
+              swarm_id,
+              swarm_name,
+              server_id,
+              server_name,
+              images: services_with_update
+                .iter()
+                .map(|service| service.image.clone())
+                .collect(),
+            },
+          };
+          let res = db_client().alerts.insert_one(&alert).await;
+          if let Err(e) = res {
+            error!("Failed to record StackAutoUpdated to db | {e:#}");
+          }
+          send_alerts(&[alert]).await;
+        }
+      }
+      Err(e) => {
+        warn!("Failed to auto update Stack {} | {e:#}", stack.name)
+      }
+    }
+  };
+
+  if wait_for_auto_update {
+    run.await
+  } else {
+    tokio::spawn(run);
+  }
+
+  Ok(CheckStackForUpdateResponse {
+    stack: stack_id,
+    services,
+  })
+}
+
+//
+
+impl Resolve<WriteArgs> for BatchCheckStackForUpdate {
+  #[instrument(
+    "BatchCheckStackForUpdate",
+    skip_all,
+    fields(
+      operator = user.id,
+      pattern = self.pattern,
+      skip_auto_update = self.skip_auto_update,
+      wait_for_auto_update = self.wait_for_auto_update,
+    )
+  )]
+  async fn resolve(
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> Result<Self::Response, Self::Error> {
+    let stacks = list_full_for_user_using_pattern::<Stack>(
+      &self.pattern,
+      Default::default(),
+      user,
+      PermissionLevel::Execute.into(),
+      &[],
+    )
+    .await?;
+
+    let res = stacks
+      .into_iter()
+      .map(|stack| async move {
+        let swarm_or_server = get_swarm_or_server(
+          &stack.config.swarm_id,
+          &stack.config.server_id,
+        )
+        .await?;
+        swarm_or_server.verify_has_target().map_err(|e| e.error)?;
+        check_stack_for_update_inner(
+          stack.id,
+          &swarm_or_server,
+          self.skip_auto_update,
+          self.wait_for_auto_update,
+          self.skip_cache_refresh,
+        )
+        .await
+      })
+      .collect::<FuturesOrdered<_>>()
+      .collect::<Vec<_>>()
       .await
-      .context("failed to list all webhooks on repo")?
-      .body;
-
-    let CoreConfig {
-      host,
-      webhook_base_url,
-      ..
-    } = core_config();
-
-    let host = if webhook_base_url.is_empty() {
-      host
-    } else {
-      webhook_base_url
-    };
-    let url = match self.action {
-      StackWebhookAction::Refresh => {
-        format!("{host}/listener/github/stack/{}/refresh", stack.id)
-      }
-      StackWebhookAction::Deploy => {
-        format!("{host}/listener/github/stack/{}/deploy", stack.id)
-      }
-    };
-
-    for webhook in webhooks {
-      if webhook.active && webhook.config.url == url {
-        github_repos
-          .delete_webhook(owner, repo, webhook.id)
-          .await
-          .context("failed to delete webhook")?;
-        return Ok(NoData {});
-      }
-    }
-
-    // No webhook to delete, all good
-    Ok(NoData {})
+      .into_iter()
+      .filter_map(|res| {
+        res
+          .inspect_err(|e| {
+            warn!(
+              "Failed to check stack for update in batch run | {e:#}"
+            )
+          })
+          .ok()
+      })
+      .collect();
+    Ok(res)
   }
 }

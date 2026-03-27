@@ -10,7 +10,9 @@ use komodo_client::{
     provider::{DockerRegistryAccount, GitProviderAccount},
   },
 };
-use resolver_api::Resolve;
+use mogh_error::AddStatusCodeError;
+use mogh_resolver::Resolve;
+use reqwest::StatusCode;
 
 use crate::{
   helpers::update::{add_update, make_update},
@@ -20,25 +22,41 @@ use crate::{
 use super::WriteArgs;
 
 impl Resolve<WriteArgs> for CreateGitProviderAccount {
+  #[instrument(
+    "CreateGitProviderAccount",
+    skip_all,
+    fields(
+      operator = user.id,
+      domain = self.account.domain,
+      username = self.account.username,
+      https = self.account.https.unwrap_or(true),
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<CreateGitProviderAccountResponse> {
+  ) -> mogh_error::Result<CreateGitProviderAccountResponse> {
     if !user.admin {
       return Err(
-        anyhow!("only admins can create git provider accounts")
-          .into(),
+        anyhow!("Only admins can create git provider accounts")
+          .status_code(StatusCode::FORBIDDEN),
       );
     }
 
     let mut account: GitProviderAccount = self.account.into();
 
     if account.domain.is_empty() {
-      return Err(anyhow!("domain cannot be empty string.").into());
+      return Err(
+        anyhow!("Domain cannot be empty string.")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
     }
 
     if account.username.is_empty() {
-      return Err(anyhow!("username cannot be empty string.").into());
+      return Err(
+        anyhow!("Username cannot be empty string.")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
     }
 
     let mut update = make_update(
@@ -51,14 +69,14 @@ impl Resolve<WriteArgs> for CreateGitProviderAccount {
       .git_accounts
       .insert_one(&account)
       .await
-      .context("failed to create git provider account on db")?
+      .context("Failed to create git provider account on db")?
       .inserted_id
       .as_object_id()
-      .context("inserted id is not ObjectId")?
+      .context("Inserted id is not ObjectId")?
       .to_string();
 
     update.push_simple_log(
-      "create git provider account",
+      "Create git provider account",
       format!(
         "Created git provider account for {} with username {}",
         account.domain, account.username
@@ -70,7 +88,7 @@ impl Resolve<WriteArgs> for CreateGitProviderAccount {
     add_update(update)
       .await
       .inspect_err(|e| {
-        error!("failed to add update for create git provider account | {e:#}")
+        error!("Failed to add update for create git provider account | {e:#}")
       })
       .ok();
 
@@ -79,14 +97,25 @@ impl Resolve<WriteArgs> for CreateGitProviderAccount {
 }
 
 impl Resolve<WriteArgs> for UpdateGitProviderAccount {
+  #[instrument(
+    "UpdateGitProviderAccount",
+    skip_all,
+    fields(
+      operator = user.id,
+      id = self.id,
+      domain = self.account.domain,
+      username = self.account.username,
+      https = self.account.https.unwrap_or(true),
+    )
+  )]
   async fn resolve(
     mut self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<UpdateGitProviderAccountResponse> {
+  ) -> mogh_error::Result<UpdateGitProviderAccountResponse> {
     if !user.admin {
       return Err(
-        anyhow!("only admins can update git provider accounts")
-          .into(),
+        anyhow!("Only admins can update git provider accounts")
+          .status_code(StatusCode::FORBIDDEN),
       );
     }
 
@@ -94,8 +123,8 @@ impl Resolve<WriteArgs> for UpdateGitProviderAccount {
       && domain.is_empty()
     {
       return Err(
-        anyhow!("cannot update git provider with empty domain")
-          .into(),
+        anyhow!("Cannot update git provider with empty domain")
+          .status_code(StatusCode::BAD_REQUEST),
       );
     }
 
@@ -103,8 +132,8 @@ impl Resolve<WriteArgs> for UpdateGitProviderAccount {
       && username.is_empty()
     {
       return Err(
-        anyhow!("cannot update git provider with empty username")
-          .into(),
+        anyhow!("Cannot update git provider with empty username")
+          .status_code(StatusCode::BAD_REQUEST),
       );
     }
 
@@ -118,7 +147,7 @@ impl Resolve<WriteArgs> for UpdateGitProviderAccount {
     );
 
     let account = to_document(&self.account).context(
-      "failed to serialize partial git provider account to bson",
+      "Failed to serialize partial git provider account to bson",
     )?;
     let db = db_client();
     update_one_by_id(
@@ -128,17 +157,17 @@ impl Resolve<WriteArgs> for UpdateGitProviderAccount {
       None,
     )
     .await
-    .context("failed to update git provider account on db")?;
+    .context("Failed to update git provider account on db")?;
 
     let Some(account) = find_one_by_id(&db.git_accounts, &self.id)
       .await
-      .context("failed to query db for git accounts")?
+      .context("Failed to query db for git accounts")?
     else {
-      return Err(anyhow!("no account found with given id").into());
+      return Err(anyhow!("No account found with given id").into());
     };
 
     update.push_simple_log(
-      "update git provider account",
+      "Update git provider account",
       format!(
         "Updated git provider account for {} with username {}",
         account.domain, account.username
@@ -150,7 +179,7 @@ impl Resolve<WriteArgs> for UpdateGitProviderAccount {
     add_update(update)
       .await
       .inspect_err(|e| {
-        error!("failed to add update for update git provider account | {e:#}")
+        error!("Failed to add update for update git provider account | {e:#}")
       })
       .ok();
 
@@ -159,14 +188,22 @@ impl Resolve<WriteArgs> for UpdateGitProviderAccount {
 }
 
 impl Resolve<WriteArgs> for DeleteGitProviderAccount {
+  #[instrument(
+    "DeleteGitProviderAccount",
+    skip_all,
+    fields(
+      operator = user.id,
+      id = self.id,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<DeleteGitProviderAccountResponse> {
+  ) -> mogh_error::Result<DeleteGitProviderAccountResponse> {
     if !user.admin {
       return Err(
-        anyhow!("only admins can delete git provider accounts")
-          .into(),
+        anyhow!("Only admins can delete git provider accounts")
+          .status_code(StatusCode::FORBIDDEN),
       );
     }
 
@@ -179,16 +216,19 @@ impl Resolve<WriteArgs> for DeleteGitProviderAccount {
     let db = db_client();
     let Some(account) = find_one_by_id(&db.git_accounts, &self.id)
       .await
-      .context("failed to query db for git accounts")?
+      .context("Failed to query db for git accounts")?
     else {
-      return Err(anyhow!("no account found with given id").into());
+      return Err(
+        anyhow!("No account found with given id")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
     };
     delete_one_by_id(&db.git_accounts, &self.id, None)
       .await
       .context("failed to delete git account on db")?;
 
     update.push_simple_log(
-      "delete git provider account",
+      "Delete git provider account",
       format!(
         "Deleted git provider account for {} with username {}",
         account.domain, account.username
@@ -200,7 +240,7 @@ impl Resolve<WriteArgs> for DeleteGitProviderAccount {
     add_update(update)
       .await
       .inspect_err(|e| {
-        error!("failed to add update for delete git provider account | {e:#}")
+        error!("Failed to add update for delete git provider account | {e:#}")
       })
       .ok();
 
@@ -209,27 +249,42 @@ impl Resolve<WriteArgs> for DeleteGitProviderAccount {
 }
 
 impl Resolve<WriteArgs> for CreateDockerRegistryAccount {
+  #[instrument(
+    "CreateDockerRegistryAccount",
+    skip_all,
+    fields(
+      operator = user.id,
+      domain = self.account.domain,
+      username = self.account.username,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<CreateDockerRegistryAccountResponse> {
+  ) -> mogh_error::Result<CreateDockerRegistryAccountResponse> {
     if !user.admin {
       return Err(
         anyhow!(
-          "only admins can create docker registry account accounts"
+          "Only admins can create docker registry account accounts"
         )
-        .into(),
+        .status_code(StatusCode::FORBIDDEN),
       );
     }
 
     let mut account: DockerRegistryAccount = self.account.into();
 
     if account.domain.is_empty() {
-      return Err(anyhow!("domain cannot be empty string.").into());
+      return Err(
+        anyhow!("Domain cannot be empty string.")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
     }
 
     if account.username.is_empty() {
-      return Err(anyhow!("username cannot be empty string.").into());
+      return Err(
+        anyhow!("Username cannot be empty string.")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
     }
 
     let mut update = make_update(
@@ -243,15 +298,15 @@ impl Resolve<WriteArgs> for CreateDockerRegistryAccount {
       .insert_one(&account)
       .await
       .context(
-        "failed to create docker registry account account on db",
+        "Failed to create docker registry account account on db",
       )?
       .inserted_id
       .as_object_id()
-      .context("inserted id is not ObjectId")?
+      .context("Inserted id is not ObjectId")?
       .to_string();
 
     update.push_simple_log(
-      "create docker registry account",
+      "Create docker registry account",
       format!(
         "Created docker registry account account for {} with username {}",
         account.domain, account.username
@@ -263,7 +318,7 @@ impl Resolve<WriteArgs> for CreateDockerRegistryAccount {
     add_update(update)
       .await
       .inspect_err(|e| {
-        error!("failed to add update for create docker registry account | {e:#}")
+        error!("Failed to add update for create docker registry account | {e:#}")
       })
       .ok();
 
@@ -272,14 +327,24 @@ impl Resolve<WriteArgs> for CreateDockerRegistryAccount {
 }
 
 impl Resolve<WriteArgs> for UpdateDockerRegistryAccount {
+  #[instrument(
+    "UpdateDockerRegistryAccount",
+    skip_all,
+    fields(
+      operator = user.id,
+      id = self.id,
+      domain = self.account.domain,
+      username = self.account.username,
+    )
+  )]
   async fn resolve(
     mut self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<UpdateDockerRegistryAccountResponse> {
+  ) -> mogh_error::Result<UpdateDockerRegistryAccountResponse> {
     if !user.admin {
       return Err(
-        anyhow!("only admins can update docker registry accounts")
-          .into(),
+        anyhow!("Only admins can update docker registry accounts")
+          .status_code(StatusCode::FORBIDDEN),
       );
     }
 
@@ -288,9 +353,9 @@ impl Resolve<WriteArgs> for UpdateDockerRegistryAccount {
     {
       return Err(
         anyhow!(
-          "cannot update docker registry account with empty domain"
+          "Cannot update docker registry account with empty domain"
         )
-        .into(),
+        .status_code(StatusCode::BAD_REQUEST),
       );
     }
 
@@ -299,9 +364,9 @@ impl Resolve<WriteArgs> for UpdateDockerRegistryAccount {
     {
       return Err(
         anyhow!(
-          "cannot update docker registry account with empty username"
+          "Cannot update docker registry account with empty username"
         )
-        .into(),
+        .status_code(StatusCode::BAD_REQUEST),
       );
     }
 
@@ -314,7 +379,7 @@ impl Resolve<WriteArgs> for UpdateDockerRegistryAccount {
     );
 
     let account = to_document(&self.account).context(
-      "failed to serialize partial docker registry account account to bson",
+      "Failed to serialize partial docker registry account account to bson",
     )?;
 
     let db = db_client();
@@ -326,19 +391,19 @@ impl Resolve<WriteArgs> for UpdateDockerRegistryAccount {
     )
     .await
     .context(
-      "failed to update docker registry account account on db",
+      "Failed to update docker registry account account on db",
     )?;
 
     let Some(account) =
       find_one_by_id(&db.registry_accounts, &self.id)
         .await
-        .context("failed to query db for registry accounts")?
+        .context("Failed to query db for registry accounts")?
     else {
-      return Err(anyhow!("no account found with given id").into());
+      return Err(anyhow!("No account found with given id").into());
     };
 
     update.push_simple_log(
-      "update docker registry account",
+      "Update docker registry account",
       format!(
         "Updated docker registry account account for {} with username {}",
         account.domain, account.username
@@ -350,7 +415,7 @@ impl Resolve<WriteArgs> for UpdateDockerRegistryAccount {
     add_update(update)
       .await
       .inspect_err(|e| {
-        error!("failed to add update for update docker registry account | {e:#}")
+        error!("Failed to add update for update docker registry account | {e:#}")
       })
       .ok();
 
@@ -359,14 +424,22 @@ impl Resolve<WriteArgs> for UpdateDockerRegistryAccount {
 }
 
 impl Resolve<WriteArgs> for DeleteDockerRegistryAccount {
+  #[instrument(
+    "DeleteDockerRegistryAccount",
+    skip_all,
+    fields(
+      operator = user.id,
+      id = self.id,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<DeleteDockerRegistryAccountResponse> {
+  ) -> mogh_error::Result<DeleteDockerRegistryAccountResponse> {
     if !user.admin {
       return Err(
-        anyhow!("only admins can delete docker registry accounts")
-          .into(),
+        anyhow!("Only admins can delete docker registry accounts")
+          .status_code(StatusCode::FORBIDDEN),
       );
     }
 
@@ -380,16 +453,19 @@ impl Resolve<WriteArgs> for DeleteDockerRegistryAccount {
     let Some(account) =
       find_one_by_id(&db.registry_accounts, &self.id)
         .await
-        .context("failed to query db for git accounts")?
+        .context("Failed to query db for git accounts")?
     else {
-      return Err(anyhow!("no account found with given id").into());
+      return Err(
+        anyhow!("No account found with given id")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
     };
     delete_one_by_id(&db.registry_accounts, &self.id, None)
       .await
-      .context("failed to delete registry account on db")?;
+      .context("Failed to delete registry account on db")?;
 
     update.push_simple_log(
-      "delete registry account",
+      "Delete registry account",
       format!(
         "Deleted registry account for {} with username {}",
         account.domain, account.username
@@ -401,7 +477,7 @@ impl Resolve<WriteArgs> for DeleteDockerRegistryAccount {
     add_update(update)
       .await
       .inspect_err(|e| {
-        error!("failed to add update for delete docker registry account | {e:#}")
+        error!("Failed to add update for delete docker registry account | {e:#}")
       })
       .ok();
 

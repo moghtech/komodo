@@ -1,4 +1,4 @@
-use futures::future::join_all;
+use futures_util::future::join_all;
 use komodo_client::{
   api::read::*,
   entities::{
@@ -10,7 +10,7 @@ use komodo_client::{
     schedule::Schedule,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{
   helpers::query::{get_all_tags, get_last_run_at},
@@ -24,7 +24,7 @@ impl Resolve<ReadArgs> for ListSchedules {
   async fn resolve(
     self,
     args: &ReadArgs,
-  ) -> serror::Result<Vec<Schedule>> {
+  ) -> mogh_error::Result<Vec<Schedule>> {
     let all_tags = get_all_tags(None).await?;
     let (actions, procedures) = tokio::try_join!(
       list_full_for_user::<Action>(

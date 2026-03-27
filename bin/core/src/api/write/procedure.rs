@@ -4,28 +4,45 @@ use komodo_client::{
     permission::PermissionLevel, procedure::Procedure, update::Update,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{permission::get_check_permissions, resource};
 
 use super::WriteArgs;
 
 impl Resolve<WriteArgs> for CreateProcedure {
-  #[instrument(name = "CreateProcedure", skip(user))]
+  #[instrument(
+    "CreateProcedure",
+    skip_all,
+    fields(
+      operator = user.id,
+      procedure = self.name,
+      config = serde_json::to_string(&self.config).unwrap()
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<CreateProcedureResponse> {
-    resource::create::<Procedure>(&self.name, self.config, user).await
+  ) -> mogh_error::Result<CreateProcedureResponse> {
+    resource::create::<Procedure>(&self.name, self.config, None, user)
+      .await
   }
 }
 
 impl Resolve<WriteArgs> for CopyProcedure {
-  #[instrument(name = "CopyProcedure", skip(user))]
+  #[instrument(
+    "CopyProcedure",
+    skip_all,
+    fields(
+      operator = user.id,
+      procedure = self.name,
+      copy_procedure = self.id,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<CopyProcedureResponse> {
+  ) -> mogh_error::Result<CopyProcedureResponse> {
     let Procedure { config, .. } =
       get_check_permissions::<Procedure>(
         &self.id,
@@ -33,17 +50,30 @@ impl Resolve<WriteArgs> for CopyProcedure {
         PermissionLevel::Write.into(),
       )
       .await?;
-    resource::create::<Procedure>(&self.name, config.into(), user)
-      .await
+    resource::create::<Procedure>(
+      &self.name,
+      config.into(),
+      None,
+      user,
+    )
+    .await
   }
 }
 
 impl Resolve<WriteArgs> for UpdateProcedure {
-  #[instrument(name = "UpdateProcedure", skip(user))]
+  #[instrument(
+    "UpdateProcedure",
+    skip_all,
+    fields(
+      operator = user.id,
+      procedure = self.id,
+      update = serde_json::to_string(&self.config).unwrap(),
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<UpdateProcedureResponse> {
+  ) -> mogh_error::Result<UpdateProcedureResponse> {
     Ok(
       resource::update::<Procedure>(&self.id, self.config, user)
         .await?,
@@ -52,11 +82,19 @@ impl Resolve<WriteArgs> for UpdateProcedure {
 }
 
 impl Resolve<WriteArgs> for RenameProcedure {
-  #[instrument(name = "RenameProcedure", skip(user))]
+  #[instrument(
+    "RenameProcedure",
+    skip_all,
+    fields(
+      operator = user.id,
+      procedure = self.id,
+      new_name = self.name,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     Ok(
       resource::rename::<Procedure>(&self.id, &self.name, user)
         .await?,
@@ -65,11 +103,18 @@ impl Resolve<WriteArgs> for RenameProcedure {
 }
 
 impl Resolve<WriteArgs> for DeleteProcedure {
-  #[instrument(name = "DeleteProcedure", skip(args))]
+  #[instrument(
+    "DeleteProcedure",
+    skip_all,
+    fields(
+      operator = user.id,
+      procedure = self.id
+    )
+  )]
   async fn resolve(
     self,
-    args: &WriteArgs,
-  ) -> serror::Result<DeleteProcedureResponse> {
-    Ok(resource::delete::<Procedure>(&self.id, args).await?)
+    WriteArgs { user }: &WriteArgs,
+  ) -> mogh_error::Result<DeleteProcedureResponse> {
+    Ok(resource::delete::<Procedure>(&self.id, user).await?)
   }
 }

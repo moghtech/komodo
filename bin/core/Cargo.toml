@@ -15,69 +15,72 @@ path = "src/main.rs"
 
 [dependencies]
 # local
-komodo_client = { workspace = true, features = ["mongo"] }
+komodo_client = { workspace = true, features = ["core"] }
 periphery_client.workspace = true
-environment_file.workspace = true
+mogh_validations.workspace = true
 interpolate.workspace = true
+mogh_secret_file.workspace = true
 formatting.workspace = true
+mogh_rate_limit.workspace = true
+transport.workspace = true
 database.workspace = true
-response.workspace = true
+encoding.workspace = true
 command.workspace = true
-config.workspace = true
-logger.workspace = true
-cache.workspace = true
+mogh_config.workspace = true
+mogh_logger.workspace = true
+mogh_cache.workspace = true
+mogh_pki.workspace = true
 git.workspace = true
 # mogh
-serror = { workspace = true, features = ["axum"] }
+mogh_error = { workspace = true, features = ["axum"] }
+mogh_auth_client = { workspace = true, features = ["utoipa"] }
+mogh_auth_server.workspace = true
 async_timing_util.workspace = true
 partial_derive2.workspace = true
-derive_variants.workspace = true
-resolver_api.workspace = true
+mogh_resolver.workspace = true
+mogh_server.workspace = true
 toml_pretty.workspace = true
 slack.workspace = true
 svi.workspace = true
 # external
 aws-credential-types.workspace = true
-tokio-tungstenite.workspace = true
 english-to-cron.workspace = true
-openidconnect.workspace = true
-jsonwebtoken.workspace = true
-axum-server.workspace = true
-urlencoding.workspace = true
+data-encoding.workspace = true
+serde_yaml_ng.workspace = true
+utoipa-scalar.workspace = true
+futures-util.workspace = true
 aws-sdk-ec2.workspace = true
+urlencoding.workspace = true
 aws-config.workspace = true
 tokio-util.workspace = true
 axum-extra.workspace = true
-tower-http.workspace = true
 serde_json.workspace = true
-serde_yaml_ng.workspace = true
 typeshare.workspace = true
 chrono-tz.workspace = true
 indexmap.workspace = true
-octorust.workspace = true
 wildcard.workspace = true
 arc-swap.workspace = true
+serde_qs.workspace = true
 colored.workspace = true
-dashmap.workspace = true
 tracing.workspace = true
 reqwest.workspace = true
-futures.workspace = true
-nom_pem.workspace = true
 dotenvy.workspace = true
 anyhow.workspace = true
+bcrypt.workspace = true
 croner.workspace = true
 chrono.workspace = true
-bcrypt.workspace = true
-base64.workspace = true
 rustls.workspace = true
+utoipa.workspace = true
+bytes.workspace = true
 tokio.workspace = true
 serde.workspace = true
+strum.workspace = true
 regex.workspace = true
 axum.workspace = true
 toml.workspace = true
 uuid.workspace = true
 envy.workspace = true
-rand.workspace = true
 hmac.workspace = true
 sha2.workspace = true
 hex.workspace = true
+url.workspace = true

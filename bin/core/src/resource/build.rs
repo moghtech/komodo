@@ -25,7 +25,7 @@ use komodo_client::{
     user::{User, build_user},
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{
   api::write::WriteArgs,
@@ -253,7 +253,7 @@ pub async fn refresh_build_state_cache() {
   });
 }
 
-#[instrument(skip(user))]
+#[instrument("ValidateBuildConfig", skip_all)]
 async fn validate_config(
   config: &mut PartialBuildConfig,
   user: &User,

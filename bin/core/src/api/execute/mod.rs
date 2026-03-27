@@ -1,4 +1,4 @@
-use std::{pin::Pin, time::Instant};
+use std::pin::Pin;
 
 use anyhow::Context;
 use axum::{
@@ -6,9 +6,8 @@ use axum::{
 };
 use axum_extra::{TypedHeader, headers::ContentType};
 use database::mungos::by_id::find_one_by_id;
-use derive_variants::{EnumVariants, ExtractVariant};
 use formatting::format_serror;
-use futures::future::join_all;
+use futures_util::future::join_all;
 use komodo_client::{
   api::execute::*,
   entities::{
@@ -18,16 +17,18 @@ use komodo_client::{
     user::User,
   },
 };
-use resolver_api::Resolve;
-use response::JsonString;
+use mogh_auth_server::middleware::authenticate_request;
+use mogh_error::Json;
+use mogh_error::JsonString;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use serror::Json;
+use strum::{Display, EnumDiscriminants};
 use typeshare::typeshare;
 use uuid::Uuid;
 
 use crate::{
-  auth::auth_request,
+  auth::KomodoAuthImpl,
   helpers::update::{init_execution_update, update_update},
   resource::{KomodoResource, list_full_for_user_using_pattern},
   state::db_client,
@@ -42,52 +43,29 @@ mod procedure;
 mod repo;
 mod server;
 mod stack;
+mod swarm;
 mod sync;
 
 use super::Variant;
 
-pub use {
-  deployment::pull_deployment_inner, stack::pull_stack_inner,
-};
-
 pub struct ExecuteArgs {
+  /// The task id.
+  /// Unique for every '/execute' call.
+  pub task_id: Uuid,
   pub user: User,
   pub update: Update,
 }
 
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EnumVariants,
+  Serialize, Deserialize, Debug, Clone, Resolve, EnumDiscriminants,
 )]
-#[variant_derive(Debug)]
+#[strum_discriminants(name(ExecuteRequestMethod), derive(Display))]
 #[args(ExecuteArgs)]
 #[response(JsonString)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 #[serde(tag = "type", content = "params")]
 pub enum ExecuteRequest {
-  // ==== SERVER ====
-  StartContainer(StartContainer),
-  RestartContainer(RestartContainer),
-  PauseContainer(PauseContainer),
-  UnpauseContainer(UnpauseContainer),
-  StopContainer(StopContainer),
-  DestroyContainer(DestroyContainer),
-  StartAllContainers(StartAllContainers),
-  RestartAllContainers(RestartAllContainers),
-  PauseAllContainers(PauseAllContainers),
-  UnpauseAllContainers(UnpauseAllContainers),
-  StopAllContainers(StopAllContainers),
-  PruneContainers(PruneContainers),
-  DeleteNetwork(DeleteNetwork),
-  PruneNetworks(PruneNetworks),
-  DeleteImage(DeleteImage),
-  PruneImages(PruneImages),
-  DeleteVolume(DeleteVolume),
-  PruneVolumes(PruneVolumes),
-  PruneDockerBuilders(PruneDockerBuilders),
-  PruneBuildx(PruneBuildx),
-  PruneSystem(PruneSystem),
-
   // ==== STACK ====
   DeployStack(DeployStack),
   BatchDeployStack(BatchDeployStack),
@@ -138,31 +116,69 @@ pub enum ExecuteRequest {
   RunAction(RunAction),
   BatchRunAction(BatchRunAction),
 
+  // ==== SYNC ====
+  RunSync(RunSync),
+
   // ==== ALERTER ====
   TestAlerter(TestAlerter),
   SendAlert(SendAlert),
 
-  // ==== SYNC ====
-  RunSync(RunSync),
+  // ==== SERVER ====
+  StartContainer(StartContainer),
+  RestartContainer(RestartContainer),
+  PauseContainer(PauseContainer),
+  UnpauseContainer(UnpauseContainer),
+  StopContainer(StopContainer),
+  DestroyContainer(DestroyContainer),
+  StartAllContainers(StartAllContainers),
+  RestartAllContainers(RestartAllContainers),
+  PauseAllContainers(PauseAllContainers),
+  UnpauseAllContainers(UnpauseAllContainers),
+  StopAllContainers(StopAllContainers),
+  PruneContainers(PruneContainers),
+  DeleteNetwork(DeleteNetwork),
+  PruneNetworks(PruneNetworks),
+  DeleteImage(DeleteImage),
+  PruneImages(PruneImages),
+  DeleteVolume(DeleteVolume),
+  PruneVolumes(PruneVolumes),
+  PruneDockerBuilders(PruneDockerBuilders),
+  PruneBuildx(PruneBuildx),
+  PruneSystem(PruneSystem),
+
+  // ==== SWARM ====
+  RemoveSwarmNodes(RemoveSwarmNodes),
+  RemoveSwarmStacks(RemoveSwarmStacks),
+  RemoveSwarmServices(RemoveSwarmServices),
+  CreateSwarmConfig(CreateSwarmConfig),
+  RotateSwarmConfig(RotateSwarmConfig),
+  RemoveSwarmConfigs(RemoveSwarmConfigs),
+  CreateSwarmSecret(CreateSwarmSecret),
+  RotateSwarmSecret(RotateSwarmSecret),
+  RemoveSwarmSecrets(RemoveSwarmSecrets),
 
   // ==== MAINTENANCE ====
   ClearRepoCache(ClearRepoCache),
   BackupCoreDatabase(BackupCoreDatabase),
   GlobalAutoUpdate(GlobalAutoUpdate),
+  RotateAllServerKeys(RotateAllServerKeys),
+  RotateCoreKeys(RotateCoreKeys),
 }
 
 pub fn router() -> Router {
   Router::new()
     .route("/", post(handler))
     .route("/{variant}", post(variant_handler))
-    .layer(middleware::from_fn(auth_request))
+    .layer(middleware::from_fn(
+      authenticate_request::<KomodoAuthImpl, true>,
+    ))
 }
 
 async fn variant_handler(
   user: Extension<User>,
   Path(Variant { variant }): Path<Variant>,
   Json(params): Json<serde_json::Value>,
-) -> serror::Result<(TypedHeader<ContentType>, String)> {
+) -> mogh_error::Result<(TypedHeader<ContentType>, String)> {
   let req: ExecuteRequest = serde_json::from_value(json!({
     "type": variant,
     "params": params,
@@ -173,7 +189,7 @@ async fn variant_handler(
 async fn handler(
   Extension(user): Extension<User>,
   Json(request): Json<ExecuteRequest>,
-) -> serror::Result<(TypedHeader<ContentType>, String)> {
+) -> mogh_error::Result<(TypedHeader<ContentType>, String)> {
   let res = match inner_handler(request, user).await? {
     ExecutionResult::Single(update) => serde_json::to_string(&update)
       .context("Failed to serialize Update")?,
@@ -201,7 +217,7 @@ pub fn inner_handler(
   >,
 > {
   Box::pin(async move {
-    let req_id = Uuid::new_v4();
+    let task_id = Uuid::new_v4();
 
     // Need to validate no cancel is active before any update is created.
     // This ensures no double update created if Cancel is called more than once for the same request.
@@ -217,14 +233,14 @@ pub fn inner_handler(
     // here either.
     if update.operation == Operation::None {
       return Ok(ExecutionResult::Batch(
-        task(req_id, request, user, update).await?,
+        task(task_id, request, user, update).await?,
       ));
     }
 
     // Spawn a task for the execution which continues
     // running after this method returns.
     let handle =
-      tokio::spawn(task(req_id, request, user, update.clone()));
+      tokio::spawn(task(task_id, request, user, update.clone()));
 
     // Spawns another task to monitor the first for failures,
     // and add the log to Update about it (which primary task can't do because it errored out)
@@ -233,11 +249,19 @@ pub fn inner_handler(
       async move {
         let log = match handle.await {
           Ok(Err(e)) => {
-            warn!("/execute request {req_id} task error: {e:#}",);
+            warn!(
+              api = "Execute",
+              task_id = task_id.to_string(),
+              "/execute request task error: {e:#}",
+            );
             Log::error("Task Error", format_serror(&e.into()))
           }
           Err(e) => {
-            warn!("/execute request {req_id} spawn error: {e:?}",);
+            warn!(
+              api = "Execute",
+              task_id = task_id.to_string(),
+              "/execute request spawn error: {e:?}",
+            );
             Log::error("Spawn Error", format!("{e:#?}"))
           }
           _ => return,
@@ -251,8 +275,8 @@ pub fn inner_handler(
           let mut update =
             find_one_by_id(&db_client().updates, &update_id)
               .await
-              .context("failed to query to db")?
-              .context("no update exists with given id")?;
+              .context("Failed to query to db")?
+              .context("No Update exists with given id")?;
           update.logs.push(log);
           update.finalize();
           update_update(update).await
@@ -261,7 +285,10 @@ pub fn inner_handler(
 
         if let Err(e) = res {
           warn!(
-            "failed to update update with task error log | {e:#}"
+            api = "Execute",
+            task_id = task_id.to_string(),
+            update_id,
+            "Failed to modify Update with task error log | {e:#}"
           );
         }
       }
@@ -271,25 +298,33 @@ pub fn inner_handler(
   })
 }
 
-#[instrument(
-  name = "ExecuteRequest",
-  skip(user, update),
-  fields(
-    user_id = user.id,
-    update_id = update.id,
-    request = format!("{:?}", request.extract_variant()))
-  )
-]
 async fn task(
-  req_id: Uuid,
+  id: Uuid,
   request: ExecuteRequest,
   user: User,
   update: Update,
 ) -> anyhow::Result<String> {
-  info!("/execute request {req_id} | user: {}", user.username);
-  let timer = Instant::now();
+  let method: ExecuteRequestMethod = (&request).into();
 
-  let res = match request.resolve(&ExecuteArgs { user, update }).await
+  let user_id = user.id.clone();
+  let username = user.username.clone();
+
+  info!(
+    api = "Execute",
+    task_id = id.to_string(),
+    method = method.to_string(),
+    user_id,
+    username,
+    "EXECUTE REQUEST",
+  );
+
+  let res = match request
+    .resolve(&ExecuteArgs {
+      user,
+      update,
+      task_id: id,
+    })
+    .await
   {
     Err(e) => Err(e.error),
     Ok(JsonString::Err(e)) => Err(
@@ -299,11 +334,15 @@ async fn task(
   };
 
   if let Err(e) = &res {
-    warn!("/execute request {req_id} error: {e:#}");
+    warn!(
+      api = "Execute",
+      task_id = id.to_string(),
+      method = method.to_string(),
+      user_id,
+      username,
+      "EXECUTE REQUEST | ERROR: {e:#}"
+    );
   }
-
-  let elapsed = timer.elapsed();
-  debug!("/execute request {req_id} | resolve time: {elapsed:?}");
 
   res
 }
@@ -313,6 +352,7 @@ trait BatchExecute {
   fn single_request(name: String) -> ExecuteRequest;
 }
 
+#[instrument("BatchExecute", skip(user))]
 async fn batch_execute<E: BatchExecute>(
   pattern: &str,
   user: &User,
@@ -325,6 +365,7 @@ async fn batch_execute<E: BatchExecute>(
     &[],
   )
   .await?;
+
   let futures = resources.into_iter().map(|resource| {
     let user = user.clone();
     async move {

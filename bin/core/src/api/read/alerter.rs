@@ -8,11 +8,13 @@ use komodo_client::{
     permission::PermissionLevel,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{
-  helpers::query::get_all_tags, permission::get_check_permissions,
-  resource, state::db_client,
+  helpers::query::get_all_tags,
+  permission::{get_check_permissions, list_resource_ids_for_user},
+  resource,
+  state::db_client,
 };
 
 use super::ReadArgs;
@@ -21,7 +23,7 @@ impl Resolve<ReadArgs> for GetAlerter {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Alerter> {
+  ) -> mogh_error::Result<Alerter> {
     Ok(
       get_check_permissions::<Alerter>(
         &self.alerter,
@@ -37,7 +39,7 @@ impl Resolve<ReadArgs> for ListAlerters {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Vec<AlerterListItem>> {
+  ) -> mogh_error::Result<Vec<AlerterListItem>> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -59,7 +61,7 @@ impl Resolve<ReadArgs> for ListFullAlerters {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListFullAlertersResponse> {
+  ) -> mogh_error::Result<ListFullAlertersResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -81,10 +83,12 @@ impl Resolve<ReadArgs> for GetAlertersSummary {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetAlertersSummaryResponse> {
-    let query = match resource::get_resource_object_ids_for_user::<
-      Alerter,
-    >(user)
+  ) -> mogh_error::Result<GetAlertersSummaryResponse> {
+    let query = match list_resource_ids_for_user::<Alerter>(
+      None,
+      user,
+      PermissionLevel::Read.into(),
+    )
     .await?
     {
       Some(ids) => doc! {

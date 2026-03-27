@@ -13,9 +13,9 @@ use komodo_client::{
     server::Server, stack::Stack, sync::ResourceSync, tag::Tag,
   },
 };
+use mogh_error::AddStatusCodeError;
+use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use resolver_api::Resolve;
-use serror::AddStatusCodeError;
 
 use crate::{
   config::core_config,
@@ -27,11 +27,19 @@ use crate::{
 use super::WriteArgs;
 
 impl Resolve<WriteArgs> for CreateTag {
-  #[instrument(name = "CreateTag", skip(user))]
+  #[instrument(
+    "CreateTag",
+    skip_all,
+    fields(
+      operator = user.id,
+      tag = self.name,
+      color = format!("{:?}", self.color),
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Tag> {
+  ) -> mogh_error::Result<Tag> {
     if core_config().disable_non_admin_create && !user.admin {
       return Err(
         anyhow!("Non admins cannot create tags")
@@ -68,11 +76,19 @@ impl Resolve<WriteArgs> for CreateTag {
 }
 
 impl Resolve<WriteArgs> for RenameTag {
-  #[instrument(name = "RenameTag", skip(user))]
+  #[instrument(
+    "RenameTag",
+    skip_all,
+    fields(
+      operator = user.id,
+      tag = self.id,
+      new_name = self.name,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Tag> {
+  ) -> mogh_error::Result<Tag> {
     if ObjectId::from_str(&self.name).is_ok() {
       return Err(anyhow!("tag name cannot be ObjectId").into());
     }
@@ -93,11 +109,19 @@ impl Resolve<WriteArgs> for RenameTag {
 }
 
 impl Resolve<WriteArgs> for UpdateTagColor {
-  #[instrument(name = "UpdateTagColor", skip(user))]
+  #[instrument(
+    "UpdateTagColor",
+    skip_all,
+    fields(
+      operator = user.id,
+      tag = self.tag,
+      color = format!("{:?}", self.color),
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Tag> {
+  ) -> mogh_error::Result<Tag> {
     let tag = get_tag_check_owner(&self.tag, user).await?;
 
     update_one_by_id(
@@ -114,11 +138,18 @@ impl Resolve<WriteArgs> for UpdateTagColor {
 }
 
 impl Resolve<WriteArgs> for DeleteTag {
-  #[instrument(name = "DeleteTag", skip(user))]
+  #[instrument(
+    "DeleteTag",
+    skip_all,
+    fields(
+      operator = user.id,
+      tag_id = self.id,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Tag> {
+  ) -> mogh_error::Result<Tag> {
     let tag = get_tag_check_owner(&self.id, user).await?;
 
     tokio::try_join!(

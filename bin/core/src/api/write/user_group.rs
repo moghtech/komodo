@@ -10,23 +10,30 @@ use komodo_client::{
   api::write::*,
   entities::{komodo_timestamp, user_group::UserGroup},
 };
+use mogh_error::AddStatusCodeError;
+use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use resolver_api::Resolve;
-use serror::AddStatusCodeError;
 
 use crate::state::db_client;
 
 use super::WriteArgs;
 
 impl Resolve<WriteArgs> for CreateUserGroup {
-  #[instrument(name = "CreateUserGroup", skip(admin), fields(admin = admin.username))]
+  #[instrument(
+    "CreateUserGroup",
+    skip_all,
+    fields(
+      operator = admin.id,
+      group = self.name,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<UserGroup> {
+  ) -> mogh_error::Result<UserGroup> {
     if !admin.admin {
       return Err(
-        anyhow!("This call is admin-only")
+        anyhow!("This call is admin only")
           .status_code(StatusCode::FORBIDDEN),
       );
     }
@@ -57,14 +64,22 @@ impl Resolve<WriteArgs> for CreateUserGroup {
 }
 
 impl Resolve<WriteArgs> for RenameUserGroup {
-  #[instrument(name = "RenameUserGroup", skip(admin), fields(admin = admin.username))]
+  #[instrument(
+    "RenameUserGroup",
+    skip_all,
+    fields(
+      operator = admin.id,
+      group = self.id,
+      new_name = self.name,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<UserGroup> {
+  ) -> mogh_error::Result<UserGroup> {
     if !admin.admin {
       return Err(
-        anyhow!("This call is admin-only")
+        anyhow!("This call is admin only")
           .status_code(StatusCode::FORBIDDEN),
       );
     }
@@ -86,14 +101,21 @@ impl Resolve<WriteArgs> for RenameUserGroup {
 }
 
 impl Resolve<WriteArgs> for DeleteUserGroup {
-  #[instrument(name = "DeleteUserGroup", skip(admin), fields(admin = admin.username))]
+  #[instrument(
+    "DeleteUserGroup",
+    skip_all,
+    fields(
+      operator = admin.id,
+      group = self.id,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<UserGroup> {
+  ) -> mogh_error::Result<UserGroup> {
     if !admin.admin {
       return Err(
-        anyhow!("This call is admin-only")
+        anyhow!("This call is admin only")
           .status_code(StatusCode::FORBIDDEN),
       );
     }
@@ -122,14 +144,22 @@ impl Resolve<WriteArgs> for DeleteUserGroup {
 }
 
 impl Resolve<WriteArgs> for AddUserToUserGroup {
-  #[instrument(name = "AddUserToUserGroup", skip(admin), fields(admin = admin.username))]
+  #[instrument(
+    "AddUserToUserGroup",
+    skip_all,
+    fields(
+      operator = admin.id,
+      group = self.user_group,
+      user = self.user,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<UserGroup> {
+  ) -> mogh_error::Result<UserGroup> {
     if !admin.admin {
       return Err(
-        anyhow!("This call is admin-only")
+        anyhow!("This call is admin only")
           .status_code(StatusCode::FORBIDDEN),
       );
     }
@@ -169,14 +199,22 @@ impl Resolve<WriteArgs> for AddUserToUserGroup {
 }
 
 impl Resolve<WriteArgs> for RemoveUserFromUserGroup {
-  #[instrument(name = "RemoveUserFromUserGroup", skip(admin), fields(admin = admin.username))]
+  #[instrument(
+    "RemoveUserFromUserGroup",
+    skip_all,
+    fields(
+      operator = admin.id,
+      group = self.user_group,
+      user = self.user,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<UserGroup> {
+  ) -> mogh_error::Result<UserGroup> {
     if !admin.admin {
       return Err(
-        anyhow!("This call is admin-only")
+        anyhow!("This call is admin only")
           .status_code(StatusCode::FORBIDDEN),
       );
     }
@@ -216,14 +254,22 @@ impl Resolve<WriteArgs> for RemoveUserFromUserGroup {
 }
 
 impl Resolve<WriteArgs> for SetUsersInUserGroup {
-  #[instrument(name = "SetUsersInUserGroup", skip(admin), fields(admin = admin.username))]
+  #[instrument(
+    "SetUsersInUserGroup",
+    skip_all,
+    fields(
+      operator = admin.id,
+      group = self.user_group,
+      users = format!("{:?}", self.users)
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<UserGroup> {
+  ) -> mogh_error::Result<UserGroup> {
     if !admin.admin {
       return Err(
-        anyhow!("This call is admin-only")
+        anyhow!("This call is admin only")
           .status_code(StatusCode::FORBIDDEN),
       );
     }
@@ -266,14 +312,22 @@ impl Resolve<WriteArgs> for SetUsersInUserGroup {
 }
 
 impl Resolve<WriteArgs> for SetEveryoneUserGroup {
-  #[instrument(name = "SetEveryoneUserGroup", skip(admin), fields(admin = admin.username))]
+  #[instrument(
+    "SetEveryoneUserGroup",
+    skip_all,
+    fields(
+      operator = admin.id,
+      group = self.user_group,
+      everyone = self.everyone,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<UserGroup> {
+  ) -> mogh_error::Result<UserGroup> {
     if !admin.admin {
       return Err(
-        anyhow!("This call is admin-only")
+        anyhow!("This call is admin only")
           .status_code(StatusCode::FORBIDDEN),
       );
     }

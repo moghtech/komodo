@@ -30,7 +30,7 @@ pub struct Container {
   /// Can be specified multiple times. (alias `i`)
   #[arg(name = "image", long, short = 'i')]
   pub images: Vec<String>,
-  /// Filter containers by image. Supports wildcard syntax.
+  /// Filter containers by network. Supports wildcard syntax.
   /// Can be specified multiple times. (alias `--net`, `n`)
   #[arg(name = "network", alias = "net", long, short = 'n')]
   pub networks: Vec<String>,

@@ -3,31 +3,37 @@ use database::mungos::mongodb::Collection;
 use formatting::format_serror;
 use indexmap::IndexSet;
 use komodo_client::entities::{
-  Operation, ResourceTarget, ResourceTargetVariant,
+  Operation, ResourceTarget, ResourceTargetVariant, SwarmOrServer,
   build::Build,
   deployment::{
     Deployment, DeploymentConfig, DeploymentConfigDiff,
-    DeploymentImage, DeploymentListItem, DeploymentListItemInfo,
-    DeploymentQuerySpecifics, DeploymentState,
-    PartialDeploymentConfig, conversions_from_str,
+    DeploymentImage, DeploymentInfo, DeploymentListItem,
+    DeploymentListItemInfo, DeploymentQuerySpecifics,
+    DeploymentState, PartialDeploymentConfig, conversions_from_str,
   },
   environment_vars_from_str,
-  permission::{PermissionLevel, SpecificPermission},
+  permission::{
+    PermissionLevel, PermissionLevelAndSpecifics, SpecificPermission,
+  },
   resource::Resource,
   server::Server,
+  swarm::Swarm,
   to_container_compatible_name,
   update::Update,
   user::User,
 };
-use periphery_client::api::container::RemoveContainer;
+use periphery_client::api::{
+  container::RemoveContainer, swarm::RemoveSwarmServices,
+};
 
 use crate::{
   config::core_config,
   helpers::{
     empty_or_only_spaces, periphery_client,
-    query::get_deployment_state,
+    query::{get_deployment_state, get_swarm_or_server},
+    swarm::swarm_request,
   },
-  monitor::update_cache_for_server,
+  monitor::{refresh_server_cache, refresh_swarm_cache},
   state::{action_states, db_client, deployment_status_cache},
 };
 
@@ -37,7 +43,7 @@ impl super::KomodoResource for Deployment {
   type Config = DeploymentConfig;
   type PartialConfig = PartialDeploymentConfig;
   type ConfigDiff = DeploymentConfigDiff;
-  type Info = ();
+  type Info = DeploymentInfo;
   type ListItem = DeploymentListItem;
   type QuerySpecifics = DeploymentQuerySpecifics;
 
@@ -66,7 +72,13 @@ impl super::KomodoResource for Deployment {
   fn inherit_specific_permissions_from(
     _self: &Resource<Self::Config, Self::Info>,
   ) -> Option<ResourceTarget> {
-    ResourceTarget::Server(_self.config.server_id.clone()).into()
+    if !_self.config.swarm_id.is_empty() {
+      Some(ResourceTarget::Swarm(_self.config.swarm_id.clone()))
+    } else if !_self.config.server_id.is_empty() {
+      Some(ResourceTarget::Server(_self.config.server_id.clone()))
+    } else {
+      None
+    }
   }
 
   fn coll() -> &'static Collection<Resource<Self::Config, Self::Info>>
@@ -112,19 +124,39 @@ impl super::KomodoResource for Deployment {
       }
       DeploymentImage::Image { image } => (image, None),
     };
-    let (image, update_available) = status
+    let (image, current_digests) = status
       .as_ref()
-      .and_then(|s| {
-        s.curr.container.as_ref().map(|c| {
-          (
-            c.image
-              .clone()
-              .unwrap_or_else(|| String::from("Unknown")),
-            s.curr.update_available,
-          )
-        })
+      .map(|s| {
+        (
+          s.curr
+            .service
+            .as_ref()
+            .map(|service| {
+              service
+                .image
+                .clone()
+                .unwrap_or_else(|| String::from("Unknown"))
+            })
+            .or_else(|| {
+              s.curr.container.as_ref().map(|c| {
+                c.image
+                  .clone()
+                  .unwrap_or_else(|| String::from("Unknown"))
+              })
+            }),
+          s.curr.image_digests.as_ref(),
+        )
       })
-      .unwrap_or((build_image, false));
+      .unwrap_or_default();
+    let image = image.unwrap_or(build_image);
+    let update_available = current_digests
+      .map(|current_digests| {
+        deployment
+          .info
+          .latest_image_digest
+          .update_available(current_digests)
+      })
+      .unwrap_or_default();
     DeploymentListItem {
       name: deployment.name,
       id: deployment.id,
@@ -138,6 +170,7 @@ impl super::KomodoResource for Deployment {
         }),
         image,
         update_available,
+        swarm_id: deployment.config.swarm_id,
         server_id: deployment.config.server_id,
         build_id,
       },
@@ -174,21 +207,33 @@ impl super::KomodoResource for Deployment {
     created: &Resource<Self::Config, Self::Info>,
     _update: &mut Update,
   ) -> anyhow::Result<()> {
-    if created.config.server_id.is_empty() {
+    if created.config.swarm_id.is_empty()
+      && created.config.server_id.is_empty()
+    {
       return Ok(());
     }
-    let Ok(server) = super::get::<Server>(&created.config.server_id)
-      .await
-      .inspect_err(|e| {
-        warn!(
-          "Failed to get Server for Deployment {} | {e:#}",
-          created.name
-        )
-      })
-    else {
+    let Ok(swarm_or_server) = get_swarm_or_server(
+      &created.config.swarm_id,
+      &created.config.server_id,
+    )
+    .await
+    .inspect_err(|e| {
+      warn!(
+        "Failed to get Swarm or Server for Deployment {} | {e:#}",
+        created.name
+      )
+    }) else {
       return Ok(());
     };
-    update_cache_for_server(&server, true).await;
+    match swarm_or_server {
+      SwarmOrServer::Swarm(swarm) => {
+        refresh_swarm_cache(&swarm, true).await;
+      }
+      SwarmOrServer::Server(server) => {
+        refresh_server_cache(&server, true).await;
+      }
+      SwarmOrServer::None => {}
+    }
     Ok(())
   }
 
@@ -229,6 +274,11 @@ impl super::KomodoResource for Deployment {
     deployment: &Resource<Self::Config, Self::Info>,
     update: &mut Update,
   ) -> anyhow::Result<()> {
+    if deployment.config.swarm_id.is_empty()
+      && deployment.config.server_id.is_empty()
+    {
+      return Ok(());
+    }
     let state = get_deployment_state(&deployment.id)
       .await
       .context("Failed to get deployment state")?;
@@ -238,65 +288,87 @@ impl super::KomodoResource for Deployment {
     ) {
       return Ok(());
     }
-    // container needs to be destroyed
-    let server = match super::get::<Server>(
+    // container / service needs to be destroyed
+    let swarm_or_server = match get_swarm_or_server(
+      &deployment.config.swarm_id,
       &deployment.config.server_id,
     )
     .await
     {
-      Ok(server) => server,
+      Ok(res) => res,
       Err(e) => {
         update.push_error_log(
-          "Remove Container",
+          "Remove Container / Service",
           format_serror(
-            &e.context(format!(
-              "failed to retrieve server at {} from db.",
-              deployment.config.server_id
-            ))
+            &e.context(
+              "Failed to retrieve Swarm / Server from database",
+            )
             .into(),
           ),
         );
         return Ok(());
       }
     };
-    if !server.config.enabled {
-      // Don't need to
-      update.push_simple_log(
-        "Remove Container",
-        "Skipping container removal, server is disabled.",
-      );
-      return Ok(());
-    }
-    let periphery = match periphery_client(&server) {
-      Ok(periphery) => periphery,
-      Err(e) => {
-        // This case won't ever happen, as periphery_client only fallible if the server is disabled.
-        // Leaving it for completeness sake
-        update.push_error_log(
-          "Remove Container",
-          format_serror(
-            &e.context("Failed to get periphery client").into(),
-          ),
-        );
-        return Ok(());
-      }
-    };
-    match periphery
-      .request(RemoveContainer {
-        name: deployment.name.clone(),
-        signal: deployment.config.termination_signal.into(),
-        time: deployment.config.termination_timeout.into(),
-      })
+    match swarm_or_server {
+      SwarmOrServer::None => {}
+      SwarmOrServer::Swarm(swarm) => match swarm_request(
+        &swarm.config.server_ids,
+        RemoveSwarmServices {
+          services: vec![deployment.name.clone()],
+        },
+      )
       .await
-    {
-      Ok(log) => update.logs.push(log),
-      Err(e) => update.push_error_log(
-        "Remove Container",
-        format_serror(
-          &e.context("Failed to remove container").into(),
+      {
+        Ok(log) => update.logs.push(log),
+        Err(e) => update.push_error_log(
+          "Remove Service",
+          format_serror(
+            &e.context("Failed to remove service").into(),
+          ),
         ),
-      ),
-    };
+      },
+      SwarmOrServer::Server(server) => {
+        if !server.config.enabled {
+          // Don't need to
+          update.push_simple_log(
+            "Remove Container",
+            "Skipping container removal, server is disabled.",
+          );
+          return Ok(());
+        }
+        let periphery = match periphery_client(&server).await {
+          Ok(periphery) => periphery,
+          Err(e) => {
+            // This case won't ever happen, as periphery_client only fallible if the server is disabled.
+            // Leaving it for completeness sake
+            update.push_error_log(
+              "Remove Container",
+              format_serror(
+                &e.context("Failed to get periphery client").into(),
+              ),
+            );
+            return Ok(());
+          }
+        };
+        match periphery
+          .request(RemoveContainer {
+            name: deployment.name.clone(),
+            signal: deployment.config.termination_signal.into(),
+            time: deployment.config.termination_timeout.into(),
+          })
+          .await
+        {
+          Ok(log) => update.logs.push(log),
+          Err(e) => update.push_error_log(
+            "Remove Container",
+            format_serror(
+              &e.context("Failed to remove container").into(),
+            ),
+          ),
+        };
+      }
+    }
+
     Ok(())
   }
 
@@ -309,11 +381,23 @@ impl super::KomodoResource for Deployment {
   }
 }
 
-#[instrument(skip(user))]
+#[instrument("ValidateDeploymentConfig", skip_all)]
 async fn validate_config(
   config: &mut PartialDeploymentConfig,
   user: &User,
 ) -> anyhow::Result<()> {
+  if let Some(swarm_id) = &config.swarm_id
+    && !swarm_id.is_empty()
+  {
+    let swarm = get_check_permissions::<Swarm>(
+      swarm_id,
+      user,
+      PermissionLevel::Read.attach(),
+    )
+    .await
+    .context("Cannot attach Deployment to this Swarm")?;
+    config.swarm_id = Some(swarm.id);
+  }
   if let Some(server_id) = &config.server_id
     && !server_id.is_empty()
   {
@@ -356,4 +440,25 @@ async fn validate_config(
     extra_args.retain(|v| !empty_or_only_spaces(v))
   }
   Ok(())
+}
+
+pub async fn setup_deployment_execution(
+  deployment: &str,
+  user: &User,
+  required_permissions: PermissionLevelAndSpecifics,
+) -> anyhow::Result<(Deployment, SwarmOrServer)> {
+  let deployment = get_check_permissions::<Deployment>(
+    deployment,
+    user,
+    required_permissions,
+  )
+  .await?;
+
+  let swarm_or_server = get_swarm_or_server(
+    &deployment.config.swarm_id,
+    &deployment.config.server_id,
+  )
+  .await?;
+
+  Ok((deployment, swarm_or_server))
 }

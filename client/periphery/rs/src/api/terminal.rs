@@ -1,119 +1,137 @@
-use komodo_client::{
-  api::write::TerminalRecreateMode,
-  entities::{NoData, server::TerminalInfo},
+use komodo_client::entities::{
+  NoData,
+  terminal::{Terminal, TerminalRecreateMode, TerminalTarget},
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+/// Execute Sentinels
+pub const START_OF_OUTPUT: &str = "__KOMODO_START_OF_OUTPUT__";
+pub const END_OF_OUTPUT: &str = "__KOMODO_END_OF_OUTPUT__";
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
-#[response(Vec<TerminalInfo>)]
-#[error(serror::Error)]
-pub struct ListTerminals {}
+#[response(Vec<Terminal>)]
+#[error(anyhow::Error)]
+pub struct ListTerminals {
+  /// Optionally restrict list to specific target.
+  pub target: Option<TerminalTarget>,
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
-#[response(NoData)]
-#[error(serror::Error)]
-pub struct CreateTerminal {
-  /// The name of the terminal to create
-  pub name: String,
+#[response(Terminal)]
+#[error(anyhow::Error)]
+pub struct CreateServerTerminal {
+  /// A name for the terminal session.
+  /// If not provided, a default will be assigned.
+  pub name: Option<String>,
   /// The shell command (eg `bash`) to init the shell.
   ///
   /// This can also include args:
   /// `docker exec -it container sh`
-  #[serde(default = "default_command")]
-  pub command: String,
+  ///
+  /// Default: Set in Periphery config.
+  pub command: Option<String>,
+  /// Specify the recreate behavior.
   /// Default: `Never`
   #[serde(default)]
   pub recreate: TerminalRecreateMode,
 }
 
-fn default_command() -> String {
-  String::from("bash")
+//
+
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[response(Terminal)]
+#[error(anyhow::Error)]
+pub struct CreateContainerExecTerminal {
+  /// A name for the terminal session.
+  /// If not provided, a default will be used.
+  pub name: Option<String>,
+  /// The target for the terminal sessions (Container, Stack, Deployment).
+  pub target: TerminalTarget,
+  /// The name of the container to connect to
+  pub container: String,
+  /// The command to init shell inside container.
+  /// Default: `sh`
+  pub command: Option<String>,
+  /// Specify the recreate behavior.
+  /// Default: `Never`
+  #[serde(default)]
+  pub recreate: TerminalRecreateMode,
 }
 
 //
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
-#[response(NoData)]
-#[error(serror::Error)]
-pub struct DeleteTerminal {
-  /// The name of the terminal to delete
+#[response(Terminal)]
+#[error(anyhow::Error)]
+pub struct CreateContainerAttachTerminal {
+  /// A name for the terminal session
+  /// If not provided, a default will be used.
+  pub name: Option<String>,
+  /// The target for the terminal sessions (Container, Stack, Deployment).
+  pub target: TerminalTarget,
+  /// The name of the container to attach to
+  pub container: String,
+  /// Specify the recreate behavior.
+  /// Default: `Never`
+  #[serde(default)]
+  pub recreate: TerminalRecreateMode,
+}
+
+//
+
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[response(Uuid)]
+#[error(anyhow::Error)]
+pub struct ConnectTerminal {
+  /// The name of the terminal to connect to
   pub terminal: String,
+  /// The target for the terminal session
+  pub target: TerminalTarget,
+}
+
+//
+
+/// Used to disconnect both Terminals and Container Exec sessions.
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[response(NoData)]
+#[error(anyhow::Error)]
+pub struct DisconnectTerminal {
+  /// The channel id of the terminal to disconnect from
+  pub channel: Uuid,
 }
 
 //
 
 #[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
 #[response(NoData)]
-#[error(serror::Error)]
+#[error(anyhow::Error)]
+pub struct DeleteTerminal {
+  /// The name of the terminal to delete.
+  pub terminal: String,
+  /// The terminal target.
+  pub target: TerminalTarget,
+}
+
+//
+
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[response(NoData)]
+#[error(anyhow::Error)]
 pub struct DeleteAllTerminals {}
 
 //
 
-/// Create a single use auth token to connect to periphery terminal websocket.
-#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
-#[response(CreateTerminalAuthTokenResponse)]
-#[error(serror::Error)]
-pub struct CreateTerminalAuthToken {}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct CreateTerminalAuthTokenResponse {
-  pub token: String,
-}
-
-//
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ConnectTerminalQuery {
-  /// Use [CreateTerminalAuthToken] to create a single-use
-  /// token to send in the query.
-  pub token: String,
-  /// Each periphery can keep multiple terminals open.
-  /// If a terminal with the specified name already exists,
-  /// it will be attached to. Otherwise, it will fail.
-  pub terminal: String,
-}
-
-//
-
 /// Note: The `terminal` must already exist, created by [CreateTerminal].
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ExecuteTerminalBody {
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[response(Uuid)]
+#[error(anyhow::Error)]
+pub struct ExecuteTerminal {
   /// Specify the terminal to execute the command on.
   pub terminal: String,
+  /// The terminal target.
+  pub target: TerminalTarget,
   /// The command to execute.
   pub command: String,
-}
-
-//
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ConnectContainerExecQuery {
-  /// Use [CreateTerminalAuthToken] to create a single-use
-  /// token to send in the query.
-  pub token: String,
-  /// The name of the container to connect to.
-  pub container: String,
-  /// The shell to start inside container.
-  /// Default: `sh`
-  #[serde(default = "default_container_shell")]
-  pub shell: String,
-}
-
-//
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ExecuteContainerExecBody {
-  /// The name of the container to execute command in.
-  pub container: String,
-  /// The shell to start inside container.
-  /// Default: `sh`
-  #[serde(default = "default_container_shell")]
-  pub shell: String,
-  /// The command to execute.
-  pub command: String,
-}
-
-fn default_container_shell() -> String {
-  String::from("sh")
 }

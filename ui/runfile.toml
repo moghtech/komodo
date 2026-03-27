@@ -1,0 +1,15 @@
+[dev-ui]
+alias = "du"
+description = "starts the ui in dev mode"
+cmd = "yarn dev"
+
+[build-ui]
+alias = "bu"
+description = "generates fresh ts client and builds the ui"
+cmd = "yarn build"
+after = "gen-client"
+
+[preview-ui]
+alias = "pu"
+description = "runs preview server"
+cmd = "yarn preview"

@@ -1,6 +1,5 @@
 use clap::Parser;
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -9,6 +8,18 @@ use crate::entities::update::Update;
 use super::{BatchExecutionResponse, KomodoExecuteRequest};
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RunBuild",
+  description = "Runs the target build.",
+  request_body(content = RunBuild),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn run_build() {}
 
 /// Runs the target build. Response: [Update].
 ///
@@ -25,18 +36,12 @@ use super::{BatchExecutionResponse, KomodoExecuteRequest};
 /// 6. Deploy any Deployments with *Redeploy on Build* enabled.
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RunBuild {
   /// Can be build id or name
   pub build: String,
@@ -44,21 +49,27 @@ pub struct RunBuild {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BatchRunBuild",
+  description = "Runs multiple builds in parallel that match pattern.",
+  request_body(content = BatchRunBuild),
+  responses(
+    (status = 200, description = "The batch execution response", body = BatchExecutionResponse),
+  ),
+)]
+pub fn batch_run_build() {}
+
 /// Runs multiple builds in parallel that match pattern. Response: [BatchExecutionResponse].
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(BatchExecutionResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct BatchRunBuild {
   /// Id or name or wildcard pattern or regex.
   /// Supports multiline and comma delineated combinations of the above.
@@ -75,23 +86,29 @@ pub struct BatchRunBuild {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CancelBuild",
+  description = "Cancels the target build.",
+  request_body(content = CancelBuild),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn cancel_build() {}
+
 /// Cancels the target build.
 /// Only does anything if the build is `building` when called.
 /// Response: [Update]
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  PartialEq,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CancelBuild {
   /// Can be id or name
   pub build: String,

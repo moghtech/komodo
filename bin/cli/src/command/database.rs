@@ -2,6 +2,7 @@ use std::path::Path;
 
 use anyhow::Context;
 use colored::Colorize;
+use database::mungos::mongodb::bson::{Document, doc};
 use komodo_client::entities::{
   config::cli::args::database::DatabaseCommand, optional_string,
 };
@@ -21,6 +22,7 @@ pub async fn handle(command: &DatabaseCommand) -> anyhow::Result<()> {
     DatabaseCommand::Copy { yes, index, .. } => {
       copy(*index, *yes).await
     }
+    DatabaseCommand::V1Downgrade { yes } => v1_downgrade(*yes).await,
   }
 }
 
@@ -317,4 +319,53 @@ async fn copy(index: bool, yes: bool) -> anyhow::Result<()> {
   };
 
   database::utils::copy(&source_db, &target_db).await
+}
+
+async fn v1_downgrade(yes: bool) -> anyhow::Result<()> {
+  let config = cli_config();
+
+  println!(
+    "\n🦎  {} Database {}  🦎",
+    "Komodo".bold(),
+    "V1 Downgrade".purple().bold()
+  );
+  println!(
+    "\n{}\n",
+    " - Downgrade the database to V1 compatible data structures."
+      .dimmed()
+  );
+  if let Some(uri) = optional_string(&config.database.uri) {
+    println!("{}: {}", " - URI".dimmed(), sanitize_uri(&uri));
+  }
+  if let Some(address) = optional_string(&config.database.address) {
+    println!("{}: {address}", " - Address".dimmed());
+  }
+  if let Some(username) = optional_string(&config.database.username) {
+    println!("{}: {username}", " - Username".dimmed());
+  }
+  println!(
+    "{}: {}\n",
+    " - Db Name".dimmed(),
+    config.database.db_name,
+  );
+
+  crate::command::wait_for_enter("run downgrade", yes)?;
+
+  let db = database::init(&config.database).await?;
+
+  db.collection::<Document>("Server")
+    .update_many(doc! {}, doc! { "$set": { "info": null } })
+    .await
+    .context("Failed to downgrade Server schema")?;
+
+  db.collection::<Document>("Deployment")
+    .update_many(doc! {}, doc! { "$set": { "info": null } })
+    .await
+    .context("Failed to downgrade Deployment schema")?;
+
+  info!(
+    "V1 Downgrade complete. Ready to downgrade to komodo-core:1 ✅"
+  );
+
+  Ok(())
 }

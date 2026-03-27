@@ -10,10 +10,6 @@ use komodo_client::entities::{
 ///   - If it does, it will ensure the remote is correct,
 ///     ensure the correct branch is (force) checked out,
 ///     force pull the repo, and switch to specified hash if provided.
-#[tracing::instrument(
-  level = "debug",
-  skip(clone_args, access_token)
-)]
 pub async fn pull_or_clone<T>(
   clone_args: T,
   root_repo_dir: &Path,

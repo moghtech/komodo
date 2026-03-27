@@ -9,14 +9,18 @@
 //! into the image at `/config/config.toml`.
 //!
 
-use std::{collections::HashMap, path::PathBuf, str::FromStr};
+use std::{collections::HashMap, path::PathBuf};
 
+use mogh_auth_client::config::NamedOauthConfig;
 use serde::Deserialize;
 
-use crate::entities::{
-  Timelength,
-  config::DatabaseConfig,
-  logger::{LogConfig, LogLevel, StdioLogMode},
+use crate::{
+  deserializers::option_string_list_deserializer,
+  entities::{
+    Timelength,
+    config::DatabaseConfig,
+    logger::{LogConfig, LogLevel, StdioLogMode},
+  },
 };
 
 use super::{DockerRegistry, GitProvider, empty_or_redacted};
@@ -71,31 +75,32 @@ pub struct Env {
   pub komodo_port: Option<u16>,
   /// Override `bind_ip`
   pub komodo_bind_ip: Option<String>,
+  /// Override `private_key`
+  pub komodo_private_key: Option<String>,
+  /// Override `private_key` with file
+  pub komodo_private_key_file: Option<PathBuf>,
+  /// Override `periphery_public_keys`
+  #[serde(alias = "komodo_periphery_public_key")]
+  pub komodo_periphery_public_keys: Option<Vec<String>>,
   /// Override `passkey`
   pub komodo_passkey: Option<String>,
-  /// Override `passkey` with file
+  /// Override `passkey` from file
   pub komodo_passkey_file: Option<PathBuf>,
   /// Override `timezone`
-  #[serde(alias = "tz", alias = "TZ")]
+  #[serde(alias = "tz")]
   pub komodo_timezone: Option<String>,
-  /// Override `first_server`
-  pub komodo_first_server: Option<String>,
   /// Override `first_server_name`
   pub komodo_first_server_name: Option<String>,
-  /// Override `frontend_path`
-  pub komodo_frontend_path: Option<String>,
+  /// Override `first_server_address`
+  #[serde(alias = "komodo_first_server")]
+  pub komodo_first_server_address: Option<String>,
   /// Override `jwt_secret`
   pub komodo_jwt_secret: Option<String>,
   /// Override `jwt_secret` from file
   pub komodo_jwt_secret_file: Option<PathBuf>,
   /// Override `jwt_ttl`
   pub komodo_jwt_ttl: Option<Timelength>,
-  /// Override `sync_directory`
-  pub komodo_sync_directory: Option<PathBuf>,
-  /// Override `repo_directory`
-  pub komodo_repo_directory: Option<PathBuf>,
-  /// Override `action_directory`
-  pub komodo_action_directory: Option<PathBuf>,
+
   /// Override `resource_poll_interval`
   pub komodo_resource_poll_interval: Option<Timelength>,
   /// Override `monitoring_interval`
@@ -119,10 +124,14 @@ pub struct Env {
   pub komodo_logging_pretty: Option<bool>,
   /// Override `logging.location`
   pub komodo_logging_location: Option<bool>,
+  /// Override `logging.ansi`
+  pub komodo_logging_ansi: Option<bool>,
   /// Override `logging.otlp_endpoint`
   pub komodo_logging_otlp_endpoint: Option<String>,
   /// Override `logging.opentelemetry_service_name`
   pub komodo_logging_opentelemetry_service_name: Option<String>,
+  /// Override `logging.opentelemetry_scope_name`
+  pub komodo_logging_opentelemetry_scope_name: Option<String>,
   /// Override `pretty_startup_config`
   pub komodo_pretty_startup_config: Option<bool>,
   /// Override `unsafe_unsanitized_startup_config`
@@ -151,6 +160,8 @@ pub struct Env {
 
   /// Override `local_auth`
   pub komodo_local_auth: Option<bool>,
+  /// Override `min_password_length`
+  pub komodo_min_password_length: Option<u16>,
   /// Override `init_admin_username`
   pub komodo_init_admin_username: Option<String>,
   /// Override `init_admin_username` from file
@@ -203,24 +214,19 @@ pub struct Env {
   /// Override `github_oauth.secret` from file
   pub komodo_github_oauth_secret_file: Option<PathBuf>,
 
-  /// Override `github_webhook_app.app_id`
-  pub komodo_github_webhook_app_app_id: Option<i64>,
-  /// Override `github_webhook_app.app_id` from file
-  pub komodo_github_webhook_app_app_id_file: Option<PathBuf>,
-  /// Override `github_webhook_app.installations[i].id`. Accepts comma seperated list.
-  ///
-  /// Note. Paired by index with values in `komodo_github_webhook_app_installations_namespaces`
-  pub komodo_github_webhook_app_installations_ids: Option<Vec<i64>>,
-  /// Override `github_webhook_app.installations[i].id` from file
-  pub komodo_github_webhook_app_installations_ids_file:
-    Option<PathBuf>,
-  /// Override `github_webhook_app.installations[i].namespace`. Accepts comma seperated list.
-  ///
-  /// Note. Paired by index with values in `komodo_github_webhook_app_installations_ids`
-  pub komodo_github_webhook_app_installations_namespaces:
-    Option<Vec<String>>,
-  /// Override `github_webhook_app.pk_path`
-  pub komodo_github_webhook_app_pk_path: Option<String>,
+  /// Override `auth_rate_limit_disabled`
+  pub komodo_auth_rate_limit_disabled: Option<bool>,
+  /// Override `auth_rate_limit_max_attempts`
+  pub komodo_auth_rate_limit_max_attempts: Option<u16>,
+  /// Override `auth_rate_limit_window_seconds`
+  pub komodo_auth_rate_limit_window_seconds: Option<u64>,
+
+  /// Override `cors_allowed_origins`
+  pub komodo_cors_allowed_origins: Option<Vec<String>>,
+  /// Override `cors_allow_credentials`
+  pub komodo_cors_allow_credentials: Option<bool>,
+  /// Override `session_allow_cross_site`
+  pub komodo_session_allow_cross_site: Option<bool>,
 
   /// Override `database.uri`
   #[serde(alias = "komodo_mongo_uri")]
@@ -265,13 +271,24 @@ pub struct Env {
   /// Override `ssl_enabled`.
   pub komodo_ssl_enabled: Option<bool>,
   /// Override `ssl_key_file`
-  pub komodo_ssl_key_file: Option<PathBuf>,
+  pub komodo_ssl_key_file: Option<String>,
   /// Override `ssl_cert_file`
-  pub komodo_ssl_cert_file: Option<PathBuf>,
+  pub komodo_ssl_cert_file: Option<String>,
+
+  /// Override `ui_path`
+  pub komodo_ui_path: Option<String>,
+  /// Override `ui_index_force_no_cache`
+  pub komodo_ui_index_force_no_cache: Option<bool>,
+  /// Override `sync_directory`
+  pub komodo_sync_directory: Option<PathBuf>,
+  /// Override `repo_directory`
+  pub komodo_repo_directory: Option<PathBuf>,
+  /// Override `action_directory`
+  pub komodo_action_directory: Option<PathBuf>,
 }
 
 fn default_core_config_paths() -> Vec<PathBuf> {
-  vec![PathBuf::from_str("/config").unwrap()]
+  vec![PathBuf::from("/config")]
 }
 
 /// # Core Configuration File
@@ -317,10 +334,43 @@ pub struct CoreConfig {
   #[serde(default)]
   pub internet_interface: String,
 
-  /// Sent in auth header with req to periphery.
-  /// Should be some secure hash, maybe 20-40 chars.
-  #[serde(default = "default_passkey")]
-  pub passkey: String,
+  /// Private key to use with Noise handshake to authenticate with Periphery agents.
+  ///
+  /// Supports openssl generated pem file, `openssl genpkey -algorithm X25519 -out private.key`.
+  /// To load from file, use `private_key = "file:/path/to/private.key"`.
+  ///
+  /// If a file is specified and does not exist, will try to generate one at the path
+  /// and use it going forward.
+  ///
+  /// Note. The private key used can be overridden for individual Servers / Builders.
+  ///
+  /// Default: file:/config/keys/core.key
+  #[serde(default = "default_private_key")]
+  pub private_key: String,
+
+  /// Default accepted public keys to allow Periphery to connect.
+  /// Core gains knowledge of the Periphery public key through the noise handshake.
+  /// If not provided, Periphery -> Core connected Servers must
+  /// configure accepted public key individually.
+  ///
+  /// Supports multiple public keys seperated by commas or newlines.
+  ///
+  /// Supports openssl generated pem file, `openssl pkey -in private.key -pubout -out public.key`.
+  /// To load from file, include `file:/path/to/public.key` in the list.
+  ///
+  /// Note: If used, the accepted public key can still be overridden on individual Servers / Builders
+  #[serde(
+    default,
+    alias = "periphery_public_key",
+    deserialize_with = "option_string_list_deserializer",
+    skip_serializing_if = "Option::is_none"
+  )]
+  pub periphery_public_keys: Option<Vec<String>>,
+
+  /// Deprecated. Legacy v1 compatibility.
+  /// Users should upgrade to private / public key authentication.
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub passkey: Option<String>,
 
   /// A TZ Identifier. If not provided, will use Core local timezone.
   /// https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
@@ -349,19 +399,21 @@ pub struct CoreConfig {
   #[serde(default)]
   pub enable_fancy_toml: bool,
 
-  /// If defined, ensure an enabled first server exists at this address.
-  /// Example: `http://periphery:8120`
+  /// If defined, ensure an enabled first server exists with the name.
+  /// If None and "first_server_address" is defined, will default to "Local".
+  /// Set this and not 'first_server_address' for Periphery -> Core Server.
+  /// Default: None
   #[serde(skip_serializing_if = "Option::is_none")]
-  pub first_server: Option<String>,
+  pub first_server_name: Option<String>,
 
-  /// Give the first server this name.
-  /// Default: `Local`
-  #[serde(default = "default_first_server_name")]
-  pub first_server_name: String,
-
-  /// The path to the built frontend folder.
-  #[serde(default = "default_frontend_path")]
-  pub frontend_path: String,
+  /// If defined, ensure an enabled first server exists at this address.
+  /// Example: `wss://periphery:8120`.
+  /// In v1, was just 'first_server', maintains backward compatibility via alias.
+  #[serde(
+    alias = "first_server",
+    skip_serializing_if = "Option::is_none"
+  )]
+  pub first_server_address: Option<String>,
 
   /// Configure database connection
   #[serde(default, alias = "mongo")]
@@ -370,14 +422,20 @@ pub struct CoreConfig {
   // ================
   // = Auth / Login =
   // ================
-  /// enable login with local auth
+  /// Enable login with local auth
   #[serde(default)]
   pub local_auth: bool,
+
+  /// Configure a minimum password length.
+  /// Default: 1
+  #[serde(default = "default_min_password_length")]
+  pub min_password_length: u16,
 
   /// Upon fresh launch, initalize an Admin user with this username.
   /// If this is not provided, no initial user will be created.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub init_admin_username: Option<String>,
+
   /// Upon fresh launch, initalize an Admin user with this password.
   /// Default: `changeme`
   #[serde(default = "default_init_admin_password")]
@@ -470,11 +528,46 @@ pub struct CoreConfig {
   // =========
   /// Configure google oauth
   #[serde(default)]
-  pub google_oauth: OauthCredentials,
+  pub google_oauth: NamedOauthConfig,
 
   /// Configure github oauth
   #[serde(default)]
-  pub github_oauth: OauthCredentials,
+  pub github_oauth: NamedOauthConfig,
+
+  // =================
+  // = Rate Limiting =
+  // =================
+  /// Disable the auth rate limiter.
+  #[serde(default)]
+  pub auth_rate_limit_disabled: bool,
+
+  /// Set the max allowed attempts per IP
+  #[serde(default = "default_auth_rate_limit_max_attempts")]
+  pub auth_rate_limit_max_attempts: u16,
+
+  #[serde(default = "default_auth_rate_limit_window_seconds")]
+  pub auth_rate_limit_window_seconds: u64,
+
+  // =======
+  // = CORS =
+  // =======
+  /// List of CORS allowed origins.
+  /// If empty, allows all origins (`*`).
+  /// Production setups should configure this explicitly.
+  /// Example: `["https://komodo.example.com", "https://app.example.com"]`.
+  #[serde(default)]
+  pub cors_allowed_origins: Vec<String>,
+
+  /// Tell CORS to allow credentials in requests.
+  /// Used if needed for authentication proxy.
+  #[serde(default)]
+  pub cors_allow_credentials: bool,
+
+  /// Use SameSite=None (actually allows samesite) instead of SameSite=Lax.
+  /// The third option, SameSite=Strict, won't work with external login,
+  /// as the session cookie will be lost on redirect with auth provider.
+  #[serde(default)]
+  pub session_allow_cross_site: bool,
 
   // ============
   // = Webhooks =
@@ -493,11 +586,6 @@ pub struct CoreConfig {
   /// A reverse proxy in a public network can forward webhooks to Komodo.
   #[serde(default)]
   pub webhook_base_url: String,
-
-  /// Configure a Github Webhook app.
-  /// Allows users to manage repo webhooks from within the Komodo UI.
-  #[serde(default)]
-  pub github_webhook_app: GithubWebhookAppConfig,
 
   // ===========
   // = Logging =
@@ -596,12 +684,12 @@ pub struct CoreConfig {
   /// Path to the ssl key.
   /// Default: `/config/ssl/key.pem`.
   #[serde(default = "default_ssl_key_file")]
-  pub ssl_key_file: PathBuf,
+  pub ssl_key_file: String,
 
   /// Path to the ssl cert.
   /// Default: `/config/ssl/cert.pem`.
   #[serde(default = "default_ssl_cert_file")]
-  pub ssl_cert_file: PathBuf,
+  pub ssl_cert_file: String,
 
   // =========
   // = Other =
@@ -621,6 +709,16 @@ pub struct CoreConfig {
   /// Default: `/action-cache`
   #[serde(default = "default_action_directory")]
   pub action_directory: PathBuf,
+
+  /// The path to the built ui folder.
+  #[serde(default = "default_ui_path")]
+  pub ui_path: String,
+
+  /// Force the `index.html` to served with
+  /// 'Cache-Content: no-cache' header instead
+  /// of using content hash as ETag.
+  #[serde(default)]
+  pub ui_index_force_no_cache: bool,
 }
 
 fn default_title() -> String {
@@ -639,39 +737,44 @@ fn default_core_bind_ip() -> String {
   "[::]".to_string()
 }
 
-fn default_passkey() -> String {
-  String::from("default-passkey-changeme")
+fn default_private_key() -> String {
+  String::from("file:/config/keys/core.key")
 }
 
-fn default_frontend_path() -> String {
-  "/app/frontend".to_string()
-}
-
-fn default_first_server_name() -> String {
-  String::from("Local")
+fn default_ui_path() -> String {
+  "/app/ui".to_string()
 }
 
 fn default_jwt_ttl() -> Timelength {
   Timelength::OneDay
 }
 
+fn default_min_password_length() -> u16 {
+  1
+}
+
 fn default_init_admin_password() -> String {
   String::from("changeme")
 }
 
+fn default_auth_rate_limit_max_attempts() -> u16 {
+  5
+}
+
+fn default_auth_rate_limit_window_seconds() -> u64 {
+  15
+}
+
 fn default_sync_directory() -> PathBuf {
-  // unwrap ok: `/syncs` will always be valid path
-  PathBuf::from_str("/syncs").unwrap()
+  PathBuf::from("/syncs")
 }
 
 fn default_repo_directory() -> PathBuf {
-  // unwrap ok: `/repo-cache` will always be valid path
-  PathBuf::from_str("/repo-cache").unwrap()
+  PathBuf::from("/repo-cache")
 }
 
 fn default_action_directory() -> PathBuf {
-  // unwrap ok: `/action-cache` will always be valid path
-  PathBuf::from_str("/action-cache").unwrap()
+  PathBuf::from("/action-cache")
 }
 
 fn default_prune_days() -> u64 {
@@ -686,12 +789,12 @@ fn default_monitoring_interval() -> Timelength {
   Timelength::FifteenSeconds
 }
 
-fn default_ssl_key_file() -> PathBuf {
-  "/config/ssl/key.pem".parse().unwrap()
+fn default_ssl_key_file() -> String {
+  "/config/ssl/key.pem".to_string()
 }
 
-fn default_ssl_cert_file() -> PathBuf {
-  "/config/ssl/cert.pem".parse().unwrap()
+fn default_ssl_cert_file() -> String {
+  "/config/ssl/cert.pem".to_string()
 }
 
 impl Default for CoreConfig {
@@ -702,18 +805,20 @@ impl Default for CoreConfig {
       port: default_core_port(),
       bind_ip: default_core_bind_ip(),
       internet_interface: Default::default(),
-      passkey: default_passkey(),
+      private_key: Default::default(),
+      periphery_public_keys: Default::default(),
+      passkey: Default::default(),
       timezone: Default::default(),
       ui_write_disabled: Default::default(),
       disable_confirm_dialog: Default::default(),
       disable_websocket_reconnect: Default::default(),
       disable_init_resources: Default::default(),
       enable_fancy_toml: Default::default(),
-      first_server: Default::default(),
-      first_server_name: default_first_server_name(),
-      frontend_path: default_frontend_path(),
+      first_server_address: Default::default(),
+      first_server_name: Default::default(),
       database: Default::default(),
       local_auth: Default::default(),
+      min_password_length: default_min_password_length(),
       init_admin_username: Default::default(),
       init_admin_password: default_init_admin_password(),
       transparent_mode: Default::default(),
@@ -732,9 +837,16 @@ impl Default for CoreConfig {
       oidc_additional_audiences: Default::default(),
       google_oauth: Default::default(),
       github_oauth: Default::default(),
+      auth_rate_limit_disabled: Default::default(),
+      auth_rate_limit_max_attempts:
+        default_auth_rate_limit_max_attempts(),
+      auth_rate_limit_window_seconds:
+        default_auth_rate_limit_window_seconds(),
+      cors_allowed_origins: Default::default(),
+      cors_allow_credentials: Default::default(),
+      session_allow_cross_site: Default::default(),
       webhook_secret: Default::default(),
       webhook_base_url: Default::default(),
-      github_webhook_app: Default::default(),
       logging: Default::default(),
       pretty_startup_config: Default::default(),
       unsafe_unsanitized_startup_config: Default::default(),
@@ -749,6 +861,8 @@ impl Default for CoreConfig {
       ssl_enabled: Default::default(),
       ssl_key_file: default_ssl_key_file(),
       ssl_cert_file: default_ssl_cert_file(),
+      ui_path: default_ui_path(),
+      ui_index_force_no_cache: Default::default(),
       sync_directory: default_sync_directory(),
       repo_directory: default_repo_directory(),
       action_directory: default_action_directory(),
@@ -764,16 +878,18 @@ impl CoreConfig {
       host: config.host,
       port: config.port,
       bind_ip: config.bind_ip,
-      passkey: empty_or_redacted(&config.passkey),
+      private_key: if self.private_key.starts_with("file:") {
+        self.private_key.clone()
+      } else {
+        empty_or_redacted(&self.private_key)
+      },
+      periphery_public_keys: config.periphery_public_keys,
+      passkey: config.passkey.as_deref().map(empty_or_redacted),
       timezone: config.timezone,
-      first_server: config.first_server,
+      first_server_address: config.first_server_address,
       first_server_name: config.first_server_name,
-      frontend_path: config.frontend_path,
       jwt_secret: empty_or_redacted(&config.jwt_secret),
       jwt_ttl: config.jwt_ttl,
-      repo_directory: config.repo_directory,
-      action_directory: config.action_directory,
-      sync_directory: config.sync_directory,
       internet_interface: config.internet_interface,
       resource_poll_interval: config.resource_poll_interval,
       monitoring_interval: config.monitoring_interval,
@@ -794,6 +910,7 @@ impl CoreConfig {
       disable_non_admin_create: config.disable_non_admin_create,
       lock_login_credentials_for: config.lock_login_credentials_for,
       local_auth: config.local_auth,
+      min_password_length: config.min_password_length,
       init_admin_username: config
         .init_admin_username
         .map(|u| empty_or_redacted(&u)),
@@ -813,19 +930,30 @@ impl CoreConfig {
         .iter()
         .map(|aud| empty_or_redacted(aud))
         .collect(),
-      google_oauth: OauthCredentials {
+      google_oauth: NamedOauthConfig {
         enabled: config.google_oauth.enabled,
-        id: empty_or_redacted(&config.google_oauth.id),
-        secret: empty_or_redacted(&config.google_oauth.id),
+        client_id: empty_or_redacted(&config.google_oauth.client_id),
+        client_secret: empty_or_redacted(
+          &config.google_oauth.client_secret,
+        ),
       },
-      github_oauth: OauthCredentials {
+      github_oauth: NamedOauthConfig {
         enabled: config.github_oauth.enabled,
-        id: empty_or_redacted(&config.github_oauth.id),
-        secret: empty_or_redacted(&config.github_oauth.id),
+        client_id: empty_or_redacted(&config.github_oauth.client_id),
+        client_secret: empty_or_redacted(
+          &config.github_oauth.client_secret,
+        ),
       },
+      auth_rate_limit_disabled: config.auth_rate_limit_disabled,
+      auth_rate_limit_max_attempts: config
+        .auth_rate_limit_max_attempts,
+      auth_rate_limit_window_seconds: config
+        .auth_rate_limit_window_seconds,
+      cors_allowed_origins: config.cors_allowed_origins,
+      cors_allow_credentials: config.cors_allow_credentials,
+      session_allow_cross_site: config.session_allow_cross_site,
       webhook_secret: empty_or_redacted(&config.webhook_secret),
       webhook_base_url: config.webhook_base_url,
-      github_webhook_app: config.github_webhook_app,
       database: config.database.sanitized(),
       aws: AwsCredentials {
         access_key_id: empty_or_redacted(&config.aws.access_key_id),
@@ -862,22 +990,19 @@ impl CoreConfig {
       ssl_enabled: config.ssl_enabled,
       ssl_key_file: config.ssl_key_file,
       ssl_cert_file: config.ssl_cert_file,
+      ui_path: config.ui_path,
+      ui_index_force_no_cache: config.ui_index_force_no_cache,
+      repo_directory: config.repo_directory,
+      action_directory: config.action_directory,
+      sync_directory: config.sync_directory,
     }
   }
-}
 
-/// Generic Oauth credentials
-#[derive(Debug, Clone, Default, Deserialize)]
-pub struct OauthCredentials {
-  /// Whether this oauth method is available for usage.
-  #[serde(default)]
-  pub enabled: bool,
-  /// The Oauth client id.
-  #[serde(default)]
-  pub id: String,
-  /// The Oauth client secret.
-  #[serde(default)]
-  pub secret: String,
+  pub fn oidc_enabled(&self) -> bool {
+    self.oidc_enabled
+      && !self.oidc_provider.is_empty()
+      && !self.oidc_client_id.is_empty()
+  }
 }
 
 /// Provide AWS credentials for Komodo to use.
@@ -889,37 +1014,44 @@ pub struct AwsCredentials {
   pub secret_access_key: String,
 }
 
-/// Provide configuration for a Github Webhook app.
-#[derive(Debug, Clone, Deserialize)]
-pub struct GithubWebhookAppConfig {
-  /// Github app id
-  pub app_id: i64,
-  /// Configure the app installations on multiple accounts / organizations.
-  pub installations: Vec<GithubWebhookAppInstallationConfig>,
-  /// Private key path. Default: /github-private-key.pem.
-  #[serde(default = "default_private_key_path")]
-  pub pk_path: String,
-}
-
-fn default_private_key_path() -> String {
-  String::from("/github/private-key.pem")
-}
-
-impl Default for GithubWebhookAppConfig {
-  fn default() -> Self {
-    GithubWebhookAppConfig {
-      app_id: 0,
-      installations: Default::default(),
-      pk_path: default_private_key_path(),
-    }
+impl mogh_server::ServerConfig for &CoreConfig {
+  fn bind_ip(&self) -> &str {
+    &self.bind_ip
+  }
+  fn port(&self) -> u16 {
+    self.port
+  }
+  fn ssl_enabled(&self) -> bool {
+    self.ssl_enabled
+  }
+  fn ssl_key_file(&self) -> &str {
+    &self.ssl_key_file
+  }
+  fn ssl_cert_file(&self) -> &str {
+    &self.ssl_cert_file
   }
 }
 
-/// Provide configuration for a Github Webhook app installation.
-#[derive(Debug, Clone, Deserialize)]
-pub struct GithubWebhookAppInstallationConfig {
-  /// The installation ID
-  pub id: i64,
-  /// The user or organization name
-  pub namespace: String,
+impl mogh_server::cors::CorsConfig for &CoreConfig {
+  fn allowed_origins(&self) -> &[String] {
+    &self.cors_allowed_origins
+  }
+  fn allow_credentials(&self) -> bool {
+    self.cors_allow_credentials
+  }
+}
+
+impl mogh_server::session::SessionConfig for &CoreConfig {
+  fn host(&self) -> &str {
+    &self.host
+  }
+  fn host_env_field(&self) -> &str {
+    "KOMODO_HOST"
+  }
+  fn expiry_seconds(&self) -> i64 {
+    60 * 3
+  }
+  fn allow_cross_site(&self) -> bool {
+    self.session_allow_cross_site
+  }
 }

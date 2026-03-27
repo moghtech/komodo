@@ -42,6 +42,9 @@ pub mod parsers;
 pub mod terminal;
 pub mod ws;
 
+#[cfg(feature = "utoipa")]
+pub mod openapi;
+
 mod request;
 
 /// &'static KomodoClient initialized from environment.

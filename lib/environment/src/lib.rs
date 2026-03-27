@@ -32,23 +32,14 @@ pub async fn write_env_file(
     .collect::<Vec<_>>()
     .join("\n");
 
-  if let Some(parent) = env_file_path.parent()
-    && let Err(e) = tokio::fs::create_dir_all(parent)
+  if let Err(e) =
+    mogh_secret_file::write_async(&env_file_path, contents)
       .await
-      .with_context(|| format!("Failed to initialize environment file parent directory {parent:?}"))
-  {
-    logs.push(Log::error(
-      "Write Environment File",
-      format_serror(&e.into()),
-    ));
-    return None;
-  }
-
-  if let Err(e) = tokio::fs::write(&env_file_path, contents)
-    .await
-    .with_context(|| {
-      format!("Failed to write environment file to {env_file_path:?}")
-    })
+      .with_context(|| {
+        format!(
+          "Failed to write environment file to {env_file_path:?}"
+        )
+      })
   {
     logs.push(Log::error(
       "Write Environment File",

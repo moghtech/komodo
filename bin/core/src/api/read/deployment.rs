@@ -4,23 +4,31 @@ use anyhow::{Context, anyhow};
 use komodo_client::{
   api::read::*,
   entities::{
+    SwarmOrServer,
     deployment::{
       Deployment, DeploymentActionState, DeploymentConfig,
       DeploymentListItem, DeploymentState,
     },
-    docker::container::{Container, ContainerStats},
+    docker::{
+      container::{Container, ContainerStats},
+      service::SwarmService,
+    },
     permission::PermissionLevel,
     server::{Server, ServerState},
     update::Log,
   },
 };
+use mogh_error::AddStatusCodeError as _;
+use mogh_resolver::Resolve;
 use periphery_client::api::{self, container::InspectContainer};
-use resolver_api::Resolve;
+use reqwest::StatusCode;
 
 use crate::{
-  helpers::{periphery_client, query::get_all_tags},
+  helpers::{
+    periphery_client, query::get_all_tags, swarm::swarm_request,
+  },
   permission::get_check_permissions,
-  resource,
+  resource::{self, setup_deployment_execution},
   state::{
     action_states, deployment_status_cache, server_status_cache,
   },
@@ -32,7 +40,7 @@ impl Resolve<ReadArgs> for GetDeployment {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Deployment> {
+  ) -> mogh_error::Result<Deployment> {
     Ok(
       get_check_permissions::<Deployment>(
         &self.deployment,
@@ -48,7 +56,7 @@ impl Resolve<ReadArgs> for ListDeployments {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Vec<DeploymentListItem>> {
+  ) -> mogh_error::Result<Vec<DeploymentListItem>> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -78,7 +86,7 @@ impl Resolve<ReadArgs> for ListFullDeployments {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListFullDeploymentsResponse> {
+  ) -> mogh_error::Result<ListFullDeploymentsResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -100,7 +108,7 @@ impl Resolve<ReadArgs> for GetDeploymentContainer {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetDeploymentContainerResponse> {
+  ) -> mogh_error::Result<GetDeploymentContainerResponse> {
     let deployment = get_check_permissions::<Deployment>(
       &self.deployment,
       user,
@@ -125,35 +133,49 @@ impl Resolve<ReadArgs> for GetDeploymentLog {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Log> {
+  ) -> mogh_error::Result<Log> {
     let GetDeploymentLog {
       deployment,
       tail,
       timestamps,
     } = self;
-    let Deployment {
-      name,
-      config: DeploymentConfig { server_id, .. },
-      ..
-    } = get_check_permissions::<Deployment>(
+
+    let (deployment, swarm_or_server) = setup_deployment_execution(
       &deployment,
       user,
       PermissionLevel::Read.logs(),
     )
     .await?;
-    if server_id.is_empty() {
-      return Ok(Log::default());
-    }
-    let server = resource::get::<Server>(&server_id).await?;
-    let res = periphery_client(&server)?
-      .request(api::container::GetContainerLog {
-        name,
-        tail: cmp::min(tail, MAX_LOG_LENGTH),
-        timestamps,
-      })
+
+    swarm_or_server.verify_has_target()?;
+
+    let log = match swarm_or_server {
+      SwarmOrServer::None => unreachable!(),
+      SwarmOrServer::Swarm(swarm) => swarm_request(
+        &swarm.config.server_ids,
+        periphery_client::api::swarm::GetSwarmServiceLog {
+          service: deployment.name,
+          tail,
+          timestamps,
+          no_task_ids: false,
+          no_resolve: false,
+          details: false,
+        },
+      )
       .await
-      .context("failed at call to periphery")?;
-    Ok(res)
+      .context("Failed to get service log from swarm")?,
+      SwarmOrServer::Server(server) => periphery_client(&server)
+        .await?
+        .request(api::container::GetContainerLog {
+          name: deployment.name,
+          tail: cmp::min(tail, MAX_LOG_LENGTH),
+          timestamps,
+        })
+        .await
+        .context("failed at call to periphery")?,
+    };
+
+    Ok(log)
   }
 }
 
@@ -161,7 +183,7 @@ impl Resolve<ReadArgs> for SearchDeploymentLog {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Log> {
+  ) -> mogh_error::Result<Log> {
     let SearchDeploymentLog {
       deployment,
       terms,
@@ -169,31 +191,47 @@ impl Resolve<ReadArgs> for SearchDeploymentLog {
       invert,
       timestamps,
     } = self;
-    let Deployment {
-      name,
-      config: DeploymentConfig { server_id, .. },
-      ..
-    } = get_check_permissions::<Deployment>(
+
+    let (deployment, swarm_or_server) = setup_deployment_execution(
       &deployment,
       user,
       PermissionLevel::Read.logs(),
     )
     .await?;
-    if server_id.is_empty() {
-      return Ok(Log::default());
-    }
-    let server = resource::get::<Server>(&server_id).await?;
-    let res = periphery_client(&server)?
-      .request(api::container::GetContainerLogSearch {
-        name,
-        terms,
-        combinator,
-        invert,
-        timestamps,
-      })
+
+    swarm_or_server.verify_has_target()?;
+
+    let log = match swarm_or_server {
+      SwarmOrServer::None => unreachable!(),
+      SwarmOrServer::Swarm(swarm) => swarm_request(
+        &swarm.config.server_ids,
+        periphery_client::api::swarm::GetSwarmServiceLogSearch {
+          service: deployment.name,
+          terms,
+          combinator,
+          invert,
+          timestamps,
+          no_task_ids: false,
+          no_resolve: false,
+          details: false,
+        },
+      )
       .await
-      .context("failed at call to periphery")?;
-    Ok(res)
+      .context("Failed to search service log from swarm")?,
+      SwarmOrServer::Server(server) => periphery_client(&server)
+        .await?
+        .request(api::container::GetContainerLogSearch {
+          name: deployment.name,
+          terms,
+          combinator,
+          invert,
+          timestamps,
+        })
+        .await
+        .context("Failed to search container log from server")?,
+    };
+
+    Ok(log)
   }
 }
 
@@ -201,43 +239,80 @@ impl Resolve<ReadArgs> for InspectDeploymentContainer {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Container> {
+  ) -> mogh_error::Result<Container> {
     let InspectDeploymentContainer { deployment } = self;
-    let Deployment {
-      name,
-      config: DeploymentConfig { server_id, .. },
-      ..
-    } = get_check_permissions::<Deployment>(
+    let (deployment, swarm_or_server) = setup_deployment_execution(
       &deployment,
       user,
       PermissionLevel::Read.inspect(),
     )
     .await?;
-    if server_id.is_empty() {
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
       return Err(
         anyhow!(
-          "Cannot inspect deployment, not attached to any server"
+          "InspectDeploymentContainer should not be called for Deployment in Swarm Mode"
         )
-        .into(),
+        .status_code(StatusCode::BAD_REQUEST),
       );
-    }
-    let server = resource::get::<Server>(&server_id).await?;
+    };
+
     let cache = server_status_cache()
       .get_or_insert_default(&server.id)
       .await;
+
     if cache.state != ServerState::Ok {
       return Err(
         anyhow!(
-          "Cannot inspect container: server is {:?}",
+          "Cannot inspect container: Server is {:?}",
           cache.state
         )
         .into(),
       );
     }
-    let res = periphery_client(&server)?
-      .request(InspectContainer { name })
-      .await?;
-    Ok(res)
+
+    periphery_client(&server)
+      .await?
+      .request(InspectContainer {
+        name: deployment.name,
+      })
+      .await
+      .context("Failed to inspect container on server")
+      .map_err(Into::into)
+  }
+}
+
+impl Resolve<ReadArgs> for InspectDeploymentSwarmService {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<SwarmService> {
+    let InspectDeploymentSwarmService { deployment } = self;
+    let (deployment, swarm_or_server) = setup_deployment_execution(
+      &deployment,
+      user,
+      PermissionLevel::Read.logs(),
+    )
+    .await?;
+
+    let SwarmOrServer::Swarm(swarm) = swarm_or_server else {
+      return Err(
+        anyhow!(
+          "InspectDeploymentSwarmService should only be called for Deployment in Swarm Mode"
+        )
+        .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
+
+    swarm_request(
+      &swarm.config.server_ids,
+      periphery_client::api::swarm::InspectSwarmService {
+        service: deployment.name,
+      },
+    )
+    .await
+    .context("Failed to inspect service on swarm")
+    .map_err(Into::into)
   }
 }
 
@@ -245,7 +320,7 @@ impl Resolve<ReadArgs> for GetDeploymentStats {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ContainerStats> {
+  ) -> mogh_error::Result<ContainerStats> {
     let Deployment {
       name,
       config: DeploymentConfig { server_id, .. },
@@ -262,7 +337,8 @@ impl Resolve<ReadArgs> for GetDeploymentStats {
       );
     }
     let server = resource::get::<Server>(&server_id).await?;
-    let res = periphery_client(&server)?
+    let res = periphery_client(&server)
+      .await?
       .request(api::container::GetContainerStats { name })
       .await
       .context("failed to get stats from periphery")?;
@@ -274,7 +350,7 @@ impl Resolve<ReadArgs> for GetDeploymentActionState {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<DeploymentActionState> {
+  ) -> mogh_error::Result<DeploymentActionState> {
     let deployment = get_check_permissions::<Deployment>(
       &self.deployment,
       user,
@@ -295,7 +371,7 @@ impl Resolve<ReadArgs> for GetDeploymentsSummary {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetDeploymentsSummaryResponse> {
+  ) -> mogh_error::Result<GetDeploymentsSummaryResponse> {
     let deployments = resource::list_full_for_user::<Deployment>(
       Default::default(),
       user,
@@ -321,7 +397,9 @@ impl Resolve<ReadArgs> for GetDeploymentsSummary {
           res.not_deployed += 1;
         }
         DeploymentState::Unknown => {
-          res.unknown += 1;
+          if !deployment.template {
+            res.unknown += 1;
+          }
         }
         _ => {
           res.unhealthy += 1;
@@ -336,7 +414,7 @@ impl Resolve<ReadArgs> for ListCommonDeploymentExtraArgs {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListCommonDeploymentExtraArgsResponse> {
+  ) -> mogh_error::Result<ListCommonDeploymentExtraArgsResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {

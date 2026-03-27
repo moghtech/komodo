@@ -6,6 +6,7 @@ use crate::entities::{I64, ResourceTarget, ScheduleFormat};
 /// A scheduled Action / Procedure run.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Schedule {
   /// Procedure or Alerter
   pub target: ResourceTarget,

@@ -9,12 +9,12 @@ use komodo_client::{
     update::{Log, Update},
   },
 };
+use mogh_resolver::Resolve;
 use periphery_client::api;
-use resolver_api::Resolve;
 
 use crate::{
   helpers::{periphery_client, update::update_update},
-  monitor::update_cache_for_server,
+  monitor::refresh_server_cache,
   permission::get_check_permissions,
   state::action_states,
 };
@@ -22,11 +22,25 @@ use crate::{
 use super::ExecuteArgs;
 
 impl Resolve<ExecuteArgs> for StartContainer {
-  #[instrument(name = "StartContainer", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "StartContainer",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+      container = self.container,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -47,10 +61,10 @@ impl Resolve<ExecuteArgs> for StartContainer {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     let log = match periphery
       .request(api::container::StartContainer {
@@ -60,13 +74,13 @@ impl Resolve<ExecuteArgs> for StartContainer {
     {
       Ok(log) => log,
       Err(e) => Log::error(
-        "start container",
-        format_serror(&e.context("failed to start container").into()),
+        "Start Container",
+        format_serror(&e.context("Failed to start container").into()),
       ),
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -76,11 +90,25 @@ impl Resolve<ExecuteArgs> for StartContainer {
 }
 
 impl Resolve<ExecuteArgs> for RestartContainer {
-  #[instrument(name = "RestartContainer", skip(self, user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "RestartContainer",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+      container = self.container,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -101,10 +129,10 @@ impl Resolve<ExecuteArgs> for RestartContainer {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     let log = match periphery
       .request(api::container::RestartContainer {
@@ -114,15 +142,15 @@ impl Resolve<ExecuteArgs> for RestartContainer {
     {
       Ok(log) => log,
       Err(e) => Log::error(
-        "restart container",
+        "Restart Container",
         format_serror(
-          &e.context("failed to restart container").into(),
+          &e.context("Failed to restart container").into(),
         ),
       ),
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -132,11 +160,25 @@ impl Resolve<ExecuteArgs> for RestartContainer {
 }
 
 impl Resolve<ExecuteArgs> for PauseContainer {
-  #[instrument(name = "PauseContainer", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "PauseContainer",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+      container = self.container,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -157,10 +199,10 @@ impl Resolve<ExecuteArgs> for PauseContainer {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     let log = match periphery
       .request(api::container::PauseContainer {
@@ -170,13 +212,13 @@ impl Resolve<ExecuteArgs> for PauseContainer {
     {
       Ok(log) => log,
       Err(e) => Log::error(
-        "pause container",
-        format_serror(&e.context("failed to pause container").into()),
+        "Pause Container",
+        format_serror(&e.context("Failed to pause container").into()),
       ),
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -186,11 +228,25 @@ impl Resolve<ExecuteArgs> for PauseContainer {
 }
 
 impl Resolve<ExecuteArgs> for UnpauseContainer {
-  #[instrument(name = "UnpauseContainer", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "UnpauseContainer",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+      container = self.container,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -211,10 +267,10 @@ impl Resolve<ExecuteArgs> for UnpauseContainer {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     let log = match periphery
       .request(api::container::UnpauseContainer {
@@ -224,15 +280,15 @@ impl Resolve<ExecuteArgs> for UnpauseContainer {
     {
       Ok(log) => log,
       Err(e) => Log::error(
-        "unpause container",
+        "Unpause Container",
         format_serror(
-          &e.context("failed to unpause container").into(),
+          &e.context("Failed to unpause container").into(),
         ),
       ),
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -242,11 +298,27 @@ impl Resolve<ExecuteArgs> for UnpauseContainer {
 }
 
 impl Resolve<ExecuteArgs> for StopContainer {
-  #[instrument(name = "StopContainer", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "StopContainer",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+      container = self.container,
+      signal = format!("{:?}", self.signal),
+      time = self.time,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -267,10 +339,10 @@ impl Resolve<ExecuteArgs> for StopContainer {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     let log = match periphery
       .request(api::container::StopContainer {
@@ -282,13 +354,13 @@ impl Resolve<ExecuteArgs> for StopContainer {
     {
       Ok(log) => log,
       Err(e) => Log::error(
-        "stop container",
-        format_serror(&e.context("failed to stop container").into()),
+        "Stop Container",
+        format_serror(&e.context("Failed to stop container").into()),
       ),
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -298,11 +370,27 @@ impl Resolve<ExecuteArgs> for StopContainer {
 }
 
 impl Resolve<ExecuteArgs> for DestroyContainer {
-  #[instrument(name = "DestroyContainer", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "DestroyContainer",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+      container = self.container,
+      signal = format!("{:?}", self.signal),
+      time = self.time,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let DestroyContainer {
       server,
       container,
@@ -329,10 +417,10 @@ impl Resolve<ExecuteArgs> for DestroyContainer {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     let log = match periphery
       .request(api::container::RemoveContainer {
@@ -344,13 +432,15 @@ impl Resolve<ExecuteArgs> for DestroyContainer {
     {
       Ok(log) => log,
       Err(e) => Log::error(
-        "stop container",
-        format_serror(&e.context("failed to stop container").into()),
+        "Remove Container",
+        format_serror(
+          &e.context("Failed to remove container").into(),
+        ),
       ),
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -360,11 +450,24 @@ impl Resolve<ExecuteArgs> for DestroyContainer {
 }
 
 impl Resolve<ExecuteArgs> for StartAllContainers {
-  #[instrument(name = "StartAllContainers", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "StartAllContainers",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -387,21 +490,22 @@ impl Resolve<ExecuteArgs> for StartAllContainers {
 
     update_update(update.clone()).await?;
 
-    let logs = periphery_client(&server)?
+    let logs = periphery_client(&server)
+      .await?
       .request(api::container::StartAllContainers {})
       .await
-      .context("failed to start all containers on host")?;
+      .context("Failed to start all containers on host")?;
 
     update.logs.extend(logs);
 
     if all_logs_success(&update.logs) {
       update.push_simple_log(
-        "start all containers",
+        "Start All Containers",
         String::from("All containers have been started on the host."),
       );
     }
 
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -410,11 +514,24 @@ impl Resolve<ExecuteArgs> for StartAllContainers {
 }
 
 impl Resolve<ExecuteArgs> for RestartAllContainers {
-  #[instrument(name = "RestartAllContainers", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "RestartAllContainers",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -437,23 +554,24 @@ impl Resolve<ExecuteArgs> for RestartAllContainers {
 
     update_update(update.clone()).await?;
 
-    let logs = periphery_client(&server)?
+    let logs = periphery_client(&server)
+      .await?
       .request(api::container::RestartAllContainers {})
       .await
-      .context("failed to restart all containers on host")?;
+      .context("Failed to restart all containers on host")?;
 
     update.logs.extend(logs);
 
     if all_logs_success(&update.logs) {
       update.push_simple_log(
-        "restart all containers",
+        "Restart All Containers",
         String::from(
           "All containers have been restarted on the host.",
         ),
       );
     }
 
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -462,11 +580,24 @@ impl Resolve<ExecuteArgs> for RestartAllContainers {
 }
 
 impl Resolve<ExecuteArgs> for PauseAllContainers {
-  #[instrument(name = "PauseAllContainers", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "PauseAllContainers",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -489,21 +620,22 @@ impl Resolve<ExecuteArgs> for PauseAllContainers {
 
     update_update(update.clone()).await?;
 
-    let logs = periphery_client(&server)?
+    let logs = periphery_client(&server)
+      .await?
       .request(api::container::PauseAllContainers {})
       .await
-      .context("failed to pause all containers on host")?;
+      .context("Failed to pause all containers on host")?;
 
     update.logs.extend(logs);
 
     if all_logs_success(&update.logs) {
       update.push_simple_log(
-        "pause all containers",
+        "Pause All Containers",
         String::from("All containers have been paused on the host."),
       );
     }
 
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -512,11 +644,24 @@ impl Resolve<ExecuteArgs> for PauseAllContainers {
 }
 
 impl Resolve<ExecuteArgs> for UnpauseAllContainers {
-  #[instrument(name = "UnpauseAllContainers", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "UnpauseAllContainers",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -539,23 +684,24 @@ impl Resolve<ExecuteArgs> for UnpauseAllContainers {
 
     update_update(update.clone()).await?;
 
-    let logs = periphery_client(&server)?
+    let logs = periphery_client(&server)
+      .await?
       .request(api::container::UnpauseAllContainers {})
       .await
-      .context("failed to unpause all containers on host")?;
+      .context("Failed to unpause all containers on host")?;
 
     update.logs.extend(logs);
 
     if all_logs_success(&update.logs) {
       update.push_simple_log(
-        "unpause all containers",
+        "Unpause All Containers",
         String::from(
           "All containers have been unpaused on the host.",
         ),
       );
     }
 
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -564,11 +710,24 @@ impl Resolve<ExecuteArgs> for UnpauseAllContainers {
 }
 
 impl Resolve<ExecuteArgs> for StopAllContainers {
-  #[instrument(name = "StopAllContainers", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "StopAllContainers",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -591,21 +750,22 @@ impl Resolve<ExecuteArgs> for StopAllContainers {
 
     update_update(update.clone()).await?;
 
-    let logs = periphery_client(&server)?
+    let logs = periphery_client(&server)
+      .await?
       .request(api::container::StopAllContainers {})
       .await
-      .context("failed to stop all containers on host")?;
+      .context("Failed to stop all containers on host")?;
 
     update.logs.extend(logs);
 
     if all_logs_success(&update.logs) {
       update.push_simple_log(
-        "stop all containers",
+        "Stop All Containers",
         String::from("All containers have been stopped on the host."),
       );
     }
 
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -614,11 +774,24 @@ impl Resolve<ExecuteArgs> for StopAllContainers {
 }
 
 impl Resolve<ExecuteArgs> for PruneContainers {
-  #[instrument(name = "PruneContainers", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "PruneContainers",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -641,26 +814,26 @@ impl Resolve<ExecuteArgs> for PruneContainers {
 
     update_update(update.clone()).await?;
 
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     let log = match periphery
       .request(api::container::PruneContainers {})
       .await
       .context(format!(
-        "failed to prune containers on server {}",
+        "Failed to prune containers on server {}",
         server.name
       )) {
       Ok(log) => log,
       Err(e) => Log::error(
-        "prune containers",
+        "Prune Containers",
         format_serror(
-          &e.context("failed to prune containers").into(),
+          &e.context("Failed to prune containers").into(),
         ),
       ),
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -670,11 +843,25 @@ impl Resolve<ExecuteArgs> for PruneContainers {
 }
 
 impl Resolve<ExecuteArgs> for DeleteNetwork {
-  #[instrument(name = "DeleteNetwork", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "DeleteNetwork",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+      network = self.name
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -686,23 +873,23 @@ impl Resolve<ExecuteArgs> for DeleteNetwork {
 
     update_update(update.clone()).await?;
 
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     let log = match periphery
-      .request(api::network::DeleteNetwork {
+      .request(api::docker::DeleteNetwork {
         name: self.name.clone(),
       })
       .await
       .context(format!(
-        "failed to delete network {} on server {}",
+        "Failed to delete network {} on server {}",
         self.name, server.name
       )) {
       Ok(log) => log,
       Err(e) => Log::error(
-        "delete network",
+        "Delete Network",
         format_serror(
           &e.context(format!(
-            "failed to delete network {}",
+            "Failed to delete network {}",
             self.name
           ))
           .into(),
@@ -711,7 +898,7 @@ impl Resolve<ExecuteArgs> for DeleteNetwork {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -721,11 +908,24 @@ impl Resolve<ExecuteArgs> for DeleteNetwork {
 }
 
 impl Resolve<ExecuteArgs> for PruneNetworks {
-  #[instrument(name = "PruneNetworks", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "PruneNetworks",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -748,24 +948,24 @@ impl Resolve<ExecuteArgs> for PruneNetworks {
 
     update_update(update.clone()).await?;
 
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     let log = match periphery
-      .request(api::network::PruneNetworks {})
+      .request(api::docker::PruneNetworks {})
       .await
       .context(format!(
-        "failed to prune networks on server {}",
+        "Failed to prune networks on server {}",
         server.name
       )) {
       Ok(log) => log,
       Err(e) => Log::error(
-        "prune networks",
-        format_serror(&e.context("failed to prune networks").into()),
+        "Prune Networks",
+        format_serror(&e.context("Failed to prune networks").into()),
       ),
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -775,11 +975,25 @@ impl Resolve<ExecuteArgs> for PruneNetworks {
 }
 
 impl Resolve<ExecuteArgs> for DeleteImage {
-  #[instrument(name = "DeleteImage", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "DeleteImage",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+      image = self.name,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -791,29 +1005,29 @@ impl Resolve<ExecuteArgs> for DeleteImage {
 
     update_update(update.clone()).await?;
 
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     let log = match periphery
-      .request(api::image::DeleteImage {
+      .request(api::docker::DeleteImage {
         name: self.name.clone(),
       })
       .await
       .context(format!(
-        "failed to delete image {} on server {}",
+        "Failed to delete image {} on server {}",
         self.name, server.name
       )) {
       Ok(log) => log,
       Err(e) => Log::error(
         "delete image",
         format_serror(
-          &e.context(format!("failed to delete image {}", self.name))
+          &e.context(format!("Failed to delete image {}", self.name))
             .into(),
         ),
       ),
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -823,11 +1037,24 @@ impl Resolve<ExecuteArgs> for DeleteImage {
 }
 
 impl Resolve<ExecuteArgs> for PruneImages {
-  #[instrument(name = "PruneImages", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "PruneImages",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -850,22 +1077,22 @@ impl Resolve<ExecuteArgs> for PruneImages {
 
     update_update(update.clone()).await?;
 
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     let log =
-      match periphery.request(api::image::PruneImages {}).await {
+      match periphery.request(api::docker::PruneImages {}).await {
         Ok(log) => log,
         Err(e) => Log::error(
-          "prune images",
+          "Prune Images",
           format!(
-            "failed to prune images on server {} | {e:#?}",
+            "Failed to prune images on server {} | {e:#?}",
             server.name
           ),
         ),
       };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -875,11 +1102,25 @@ impl Resolve<ExecuteArgs> for PruneImages {
 }
 
 impl Resolve<ExecuteArgs> for DeleteVolume {
-  #[instrument(name = "DeleteVolume", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "DeleteVolume",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+      volume = self.name,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -891,15 +1132,15 @@ impl Resolve<ExecuteArgs> for DeleteVolume {
 
     update_update(update.clone()).await?;
 
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     let log = match periphery
-      .request(api::volume::DeleteVolume {
+      .request(api::docker::DeleteVolume {
         name: self.name.clone(),
       })
       .await
       .context(format!(
-        "failed to delete volume {} on server {}",
+        "Failed to delete volume {} on server {}",
         self.name, server.name
       )) {
       Ok(log) => log,
@@ -907,7 +1148,7 @@ impl Resolve<ExecuteArgs> for DeleteVolume {
         "delete volume",
         format_serror(
           &e.context(format!(
-            "failed to delete volume {}",
+            "Failed to delete volume {}",
             self.name
           ))
           .into(),
@@ -916,7 +1157,7 @@ impl Resolve<ExecuteArgs> for DeleteVolume {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -926,11 +1167,24 @@ impl Resolve<ExecuteArgs> for DeleteVolume {
 }
 
 impl Resolve<ExecuteArgs> for PruneVolumes {
-  #[instrument(name = "PruneVolumes", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "PruneVolumes",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -953,22 +1207,22 @@ impl Resolve<ExecuteArgs> for PruneVolumes {
 
     update_update(update.clone()).await?;
 
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     let log =
-      match periphery.request(api::volume::PruneVolumes {}).await {
+      match periphery.request(api::docker::PruneVolumes {}).await {
         Ok(log) => log,
         Err(e) => Log::error(
-          "prune volumes",
+          "Prune Volumes",
           format!(
-            "failed to prune volumes on server {} | {e:#?}",
+            "Failed to prune volumes on server {} | {e:#?}",
             server.name
           ),
         ),
       };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -978,11 +1232,24 @@ impl Resolve<ExecuteArgs> for PruneVolumes {
 }
 
 impl Resolve<ExecuteArgs> for PruneDockerBuilders {
-  #[instrument(name = "PruneDockerBuilders", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "PruneDockerBuilders",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -1005,22 +1272,22 @@ impl Resolve<ExecuteArgs> for PruneDockerBuilders {
 
     update_update(update.clone()).await?;
 
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     let log =
       match periphery.request(api::build::PruneBuilders {}).await {
         Ok(log) => log,
         Err(e) => Log::error(
-          "prune builders",
+          "Prune Builders",
           format!(
-            "failed to docker builder prune on server {} | {e:#?}",
+            "Failed to docker builder prune on server {} | {e:#?}",
             server.name
           ),
         ),
       };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -1030,11 +1297,24 @@ impl Resolve<ExecuteArgs> for PruneDockerBuilders {
 }
 
 impl Resolve<ExecuteArgs> for PruneBuildx {
-  #[instrument(name = "PruneBuildx", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "PruneBuildx",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -1057,22 +1337,22 @@ impl Resolve<ExecuteArgs> for PruneBuildx {
 
     update_update(update.clone()).await?;
 
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     let log =
       match periphery.request(api::build::PruneBuildx {}).await {
         Ok(log) => log,
         Err(e) => Log::error(
-          "prune buildx",
+          "Prune Buildx",
           format!(
-            "failed to docker buildx prune on server {} | {e:#?}",
+            "Failed to docker buildx prune on server {} | {e:#?}",
             server.name
           ),
         ),
       };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -1082,11 +1362,24 @@ impl Resolve<ExecuteArgs> for PruneBuildx {
 }
 
 impl Resolve<ExecuteArgs> for PruneSystem {
-  #[instrument(name = "PruneSystem", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "PruneSystem",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      server = self.server,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -1109,21 +1402,21 @@ impl Resolve<ExecuteArgs> for PruneSystem {
 
     update_update(update.clone()).await?;
 
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     let log = match periphery.request(api::PruneSystem {}).await {
       Ok(log) => log,
       Err(e) => Log::error(
-        "prune system",
+        "Prune System",
         format!(
-          "failed to docker system prune on server {} | {e:#?}",
+          "Failed to docker system prune on server {} | {e:#?}",
           server.name
         ),
       ),
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
 
     update.finalize();
     update_update(update.clone()).await?;

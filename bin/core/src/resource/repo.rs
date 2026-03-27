@@ -169,7 +169,7 @@ impl super::KomodoResource for Repo {
     }
 
     let server = super::get::<Server>(&repo.config.server_id).await?;
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     match periphery
       .request(DeleteRepo {
@@ -231,7 +231,7 @@ pub async fn refresh_repo_state_cache() {
   });
 }
 
-#[instrument(skip(user))]
+#[instrument("ValidateRepoConfig", skip_all)]
 async fn validate_config(
   config: &mut PartialRepoConfig,
   user: &User,

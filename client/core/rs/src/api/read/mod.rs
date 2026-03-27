@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::{HasResponse, Resolve};
+use mogh_resolver::{HasResponse, Resolve};
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -9,6 +8,8 @@ mod alerter;
 mod build;
 mod builder;
 mod deployment;
+mod docker;
+mod onboarding_key;
 mod permission;
 mod procedure;
 mod provider;
@@ -16,8 +17,10 @@ mod repo;
 mod schedule;
 mod server;
 mod stack;
+mod swarm;
 mod sync;
 mod tag;
+mod terminal;
 mod toml;
 mod update;
 mod user;
@@ -30,6 +33,8 @@ pub use alerter::*;
 pub use build::*;
 pub use builder::*;
 pub use deployment::*;
+pub use docker::*;
+pub use onboarding_key::*;
 pub use permission::*;
 pub use procedure::*;
 pub use provider::*;
@@ -37,8 +42,10 @@ pub use repo::*;
 pub use schedule::*;
 pub use server::*;
 pub use stack::*;
+pub use swarm::*;
 pub use sync::*;
 pub use tag::*;
+pub use terminal::*;
 pub use toml::*;
 pub use update::*;
 pub use user::*;
@@ -50,45 +57,72 @@ use crate::entities::{
   config::{DockerRegistry, GitProvider},
 };
 
+#[cfg(feature = "utoipa")]
+pub mod openapi;
+
 pub trait KomodoReadRequest: HasResponse {}
 
 //
 
-/// Get the version of the Komodo Core api.
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetVersion",
+  description = "Get the version of the Komodo Core API.",
+  request_body(content = GetVersion),
+  responses(
+    (status = 200, description = "Komodo Core version", body = GetVersionResponse),
+  ),
+)]
+pub fn get_version() {}
+
+/// Get the version of the Komodo Core API.
 /// Response: [GetVersionResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetVersionResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetVersion {}
 
 /// Response for [GetVersion].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetVersionResponse {
-  /// The version of the core api.
+  /// The version of the Komodo Core API.
   pub version: String,
 }
 
 //
 
-/// Get info about the core api configuration.
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetCoreInfo",
+  description = "Get information about the Komodo Core API configuration.",
+  request_body(content = GetCoreInfo),
+  responses(
+    (status = 200, description = "Komodo Core info", body = GetCoreInfoResponse),
+  ),
+)]
+pub fn get_core_info() {}
+
+/// Get information about the Komodo Core API configuration.
 /// Response: [GetCoreInfoResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetCoreInfoResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetCoreInfo {}
 
 /// Response for [GetCoreInfo].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetCoreInfoResponse {
   /// The title assigned to this core api.
   pub title: String,
@@ -104,17 +138,31 @@ pub struct GetCoreInfoResponse {
   pub disable_non_admin_create: bool,
   /// Whether confirm dialog should be disabled
   pub disable_confirm_dialog: bool,
-  /// The repo owners for which github webhook management api is available
-  pub github_webhook_owners: Vec<String>,
   /// Whether to disable websocket automatic reconnect.
   pub disable_websocket_reconnect: bool,
   /// Whether to enable fancy toml highlighting.
   pub enable_fancy_toml: bool,
   /// TZ identifier Core is using, if manually set.
   pub timezone: String,
+  /// Default public key allowing this Core to authenticate to Periphery agents.
+  pub public_key: String,
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListGitProvidersFromConfig",
+  description = "List the git providers available in Core / Periphery config files.",
+  request_body(content = ListGitProvidersFromConfig),
+  responses(
+    (status = 200, description = "The available git providers", body = ListGitProvidersFromConfigResponse),
+    (status = 400, description = "Target must be `Server` or `Builder`", body = mogh_error::Serror),
+    (status = 500, description = "Failed", body = mogh_error::Serror),
+  ),
+)]
+pub fn list_git_providers_from_config() {}
 
 /// List the git providers available in Core / Periphery config files.
 /// Response: [ListGitProvidersFromConfigResponse].
@@ -124,12 +172,11 @@ pub struct GetCoreInfoResponse {
 ///   - providers configured on builds, repos, syncs
 ///   - providers on the optional Server or Builder
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListGitProvidersFromConfigResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListGitProvidersFromConfig {
   /// Accepts an optional Server or Builder target to expand the core list with
   /// providers available on that specific resource.
@@ -141,6 +188,20 @@ pub type ListGitProvidersFromConfigResponse = Vec<GitProvider>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListDockerRegistriesFromConfig",
+  description = "List the docker registry providers available in Core / Periphery config files.",
+  request_body(content = ListDockerRegistriesFromConfig),
+  responses(
+    (status = 200, description = "The available docker registries", body = ListDockerRegistriesFromConfigResponse),
+    (status = 400, description = "Target must be `Server` or `Builder`", body = mogh_error::Serror),
+    (status = 500, description = "Failed", body = mogh_error::Serror),
+  ),
+)]
+pub fn list_docker_registries_from_config() {}
+
 /// List the docker registry providers available in Core / Periphery config files.
 /// Response: [ListDockerRegistriesFromConfigResponse].
 ///
@@ -149,12 +210,11 @@ pub type ListGitProvidersFromConfigResponse = Vec<GitProvider>;
 ///   - registries configured on builds, deployments
 ///   - registries on the optional Server or Builder
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDockerRegistriesFromConfigResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListDockerRegistriesFromConfig {
   /// Accepts an optional Server or Builder target to expand the core list with
   /// providers available on that specific resource.
@@ -166,15 +226,28 @@ pub type ListDockerRegistriesFromConfigResponse = Vec<DockerRegistry>;
 
 //
 
-/// List the available secrets from the core config.
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListSecrets",
+  description = "List the secret keys (not values) in the core configuration file.",
+  request_body(content = ListSecrets),
+  responses(
+    (status = 200, description = "The available secret keys", body = ListSecretsResponse),
+    (status = 400, description = "Target must be `Server` or `Builder`", body = mogh_error::Serror),
+    (status = 500, description = "Failed", body = mogh_error::Serror),
+  ),
+)]
+pub fn list_secrets() {}
+
+/// List the secret keys (not values) in the core configuration file.
 /// Response: [ListSecretsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSecretsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListSecrets {
   /// Accepts an optional Server or Builder target to expand the core list with
   /// providers available on that specific resource.

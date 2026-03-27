@@ -1,8 +1,7 @@
 use derive_builder::Builder;
-use derive_variants::EnumVariants;
 use partial_derive2::{Diff, MaybeNone, Partial, PartialDiff};
 use serde::{Deserialize, Serialize};
-use strum::{Display, EnumString};
+use strum::{AsRefStr, Display, EnumDiscriminants, EnumString};
 use typeshare::typeshare;
 
 use crate::deserializers::{
@@ -15,6 +14,14 @@ use super::{
   resource::{AddFilters, Resource, ResourceListItem, ResourceQuery},
 };
 
+#[cfg(feature = "utoipa")]
+#[derive(utoipa::ToSchema)]
+#[schema(as = Builder)]
+pub struct BuilderSchema(
+  #[schema(inline)]
+  pub  Resource<BuilderConfig, crate::entities::NoData>,
+);
+
 #[typeshare]
 pub type Builder = Resource<BuilderConfig, ()>;
 
@@ -26,6 +33,7 @@ pub type _PartialBuilderConfig = PartialBuilderConfig;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct BuilderListItemInfo {
   /// 'Url', 'Server', or 'Aws'
   pub builder_type: String,
@@ -36,15 +44,35 @@ pub struct BuilderListItemInfo {
 }
 
 #[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, EnumVariants)]
-#[variant_derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  Copy,
-  Display,
-  EnumString
+#[derive(Serialize, Deserialize, Debug, Clone, EnumDiscriminants)]
+#[strum_discriminants(name(BuilderConfigVariant))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(
+  not(feature = "utoipa"),
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr
+  ))
+)]
+#[cfg_attr(
+  feature = "utoipa",
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr,
+    utoipa::ToSchema
+  ))
 )]
 #[serde(tag = "type", content = "params")]
 #[allow(clippy::large_enum_variant)]
@@ -67,15 +95,35 @@ impl Default for BuilderConfig {
 
 /// Partial representation of [BuilderConfig]
 #[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, EnumVariants)]
-#[variant_derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  Copy,
-  Display,
-  EnumString
+#[derive(Serialize, Deserialize, Debug, Clone, EnumDiscriminants)]
+#[strum_discriminants(name(PartialBuilderConfigVariant))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(
+  not(feature = "utoipa"),
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr
+  ))
+)]
+#[cfg_attr(
+  feature = "utoipa",
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr,
+    utoipa::ToSchema
+  ))
 )]
 #[serde(tag = "type", content = "params")]
 #[allow(clippy::large_enum_variant)]
@@ -247,6 +295,12 @@ impl MergePartial for BuilderConfig {
         BuilderConfig::Url(config) => {
           let config = UrlBuilderConfig {
             address: partial.address.unwrap_or(config.address),
+            periphery_public_key: partial
+              .periphery_public_key
+              .unwrap_or(config.periphery_public_key),
+            insecure_tls: partial
+              .insecure_tls
+              .unwrap_or(config.insecure_tls),
             passkey: partial.passkey.unwrap_or(config.passkey),
           };
           BuilderConfig::Url(config)
@@ -286,6 +340,12 @@ impl MergePartial for BuilderConfig {
               .unwrap_or(config.use_public_ip),
             port: partial.port.unwrap_or(config.port),
             use_https: partial.use_https.unwrap_or(config.use_https),
+            periphery_public_key: partial
+              .periphery_public_key
+              .unwrap_or(config.periphery_public_key),
+            insecure_tls: partial
+              .insecure_tls
+              .unwrap_or(config.insecure_tls),
             user_data: partial.user_data.unwrap_or(config.user_data),
             git_providers: partial
               .git_providers
@@ -309,14 +369,39 @@ pub type _PartialUrlBuilderConfig = PartialUrlBuilderConfig;
 /// Configuration for a Komodo Url Builder.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Builder, Partial)]
-#[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(
+  not(feature = "utoipa"),
+  partial_derive(Serialize, Deserialize, Debug, Clone, Default)
+)]
+#[cfg_attr(
+  feature = "utoipa",
+  partial_derive(Serialize, Deserialize, Debug, Clone, Default,)
+)]
+#[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct UrlBuilderConfig {
   /// The address of the Periphery agent
   #[serde(default = "default_address")]
+  #[builder(default = default_address())]
+  #[partial_default(default_address())]
   pub address: String,
-  /// A custom passkey to use. Otherwise, use the default passkey.
+  /// An expected public key associated with Periphery private key.
+  /// If empty, doesn't validate Periphery public key.
   #[serde(default)]
+  #[builder(default)]
+  pub periphery_public_key: String,
+  /// Whether to validate the Periphery tls certificates.
+  #[serde(default = "default_insecure_tls")]
+  #[builder(default = default_insecure_tls())]
+  #[partial_default(default_insecure_tls())]
+  pub insecure_tls: bool,
+  /// Deprecated. Use private / public keys instead.
+  /// An optional override passkey to use
+  /// to authenticate with periphery agent.
+  /// If this is empty, will use passkey in core config.
+  #[serde(default)]
+  #[builder(default)]
   pub passkey: String,
 }
 
@@ -324,10 +409,16 @@ fn default_address() -> String {
   String::from("https://periphery:8120")
 }
 
+fn default_insecure_tls() -> bool {
+  true
+}
+
 impl Default for UrlBuilderConfig {
   fn default() -> Self {
     Self {
       address: default_address(),
+      periphery_public_key: Default::default(),
+      insecure_tls: default_insecure_tls(),
       passkey: Default::default(),
     }
   }
@@ -339,6 +430,17 @@ impl UrlBuilderConfig {
   }
 }
 
+#[cfg(feature = "utoipa")]
+impl utoipa::PartialSchema for PartialUrlBuilderConfig {
+  fn schema()
+  -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+    utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
+  }
+}
+
+#[cfg(feature = "utoipa")]
+impl utoipa::ToSchema for PartialUrlBuilderConfig {}
+
 #[typeshare(serialized_as = "Partial<ServerBuilderConfig>")]
 pub type _PartialServerBuilderConfig = PartialServerBuilderConfig;
 
@@ -347,7 +449,9 @@ pub type _PartialServerBuilderConfig = PartialServerBuilderConfig;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, Builder, Partial,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct ServerBuilderConfig {
   /// The server id of the builder
@@ -362,13 +466,26 @@ impl ServerBuilderConfig {
   }
 }
 
+#[cfg(feature = "utoipa")]
+impl utoipa::PartialSchema for PartialServerBuilderConfig {
+  fn schema()
+  -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+    utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
+  }
+}
+
+#[cfg(feature = "utoipa")]
+impl utoipa::ToSchema for PartialServerBuilderConfig {}
+
 #[typeshare(serialized_as = "Partial<AwsBuilderConfig>")]
 pub type _PartialAwsBuilderConfig = PartialAwsBuilderConfig;
 
 /// Configuration for an AWS builder.
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, Builder, Partial)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct AwsBuilderConfig {
   /// The AWS region to create the instance in
@@ -388,18 +505,6 @@ pub struct AwsBuilderConfig {
   #[builder(default = "aws_default_volume_gb()")]
   #[partial_default(aws_default_volume_gb())]
   pub volume_gb: i32,
-
-  /// The port periphery will be running on.
-  /// Default: `8120`
-  #[serde(default = "default_port")]
-  #[builder(default = "default_port()")]
-  #[partial_default(default_port())]
-  pub port: i32,
-
-  #[serde(default = "default_use_https")]
-  #[builder(default = "default_use_https()")]
-  #[partial_default(default_use_https())]
-  pub use_https: bool,
 
   /// The EC2 ami id to create.
   /// The ami should have the periphery client configured to start on startup,
@@ -439,6 +544,29 @@ pub struct AwsBuilderConfig {
   #[builder(default)]
   pub user_data: String,
 
+  /// The port periphery will be running on.
+  /// Default: `8120`
+  #[serde(default = "default_port")]
+  #[builder(default = "default_port()")]
+  #[partial_default(default_port())]
+  pub port: i32,
+
+  #[serde(default = "default_use_https")]
+  #[builder(default = "default_use_https()")]
+  #[partial_default(default_use_https())]
+  pub use_https: bool,
+
+  /// An expected public key associated with Periphery private key.
+  /// If empty, doesn't validate Periphery public key.
+  #[serde(default)]
+  pub periphery_public_key: String,
+
+  /// Whether to validate the Periphery tls certificates.
+  #[serde(default = "default_insecure_tls")]
+  #[builder(default = default_insecure_tls())]
+  #[partial_default(default_insecure_tls())]
+  pub insecure_tls: bool,
+
   /// Which git providers are available on the AMI
   #[serde(default)]
   #[builder(default)]
@@ -472,6 +600,8 @@ impl Default for AwsBuilderConfig {
       assign_public_ip: Default::default(),
       use_public_ip: Default::default(),
       user_data: Default::default(),
+      periphery_public_key: Default::default(),
+      insecure_tls: default_insecure_tls(),
       git_providers: Default::default(),
       docker_registries: Default::default(),
       secrets: Default::default(),
@@ -505,11 +635,23 @@ fn default_use_https() -> bool {
   true
 }
 
+#[cfg(feature = "utoipa")]
+impl utoipa::PartialSchema for PartialAwsBuilderConfig {
+  fn schema()
+  -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+    utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
+  }
+}
+
+#[cfg(feature = "utoipa")]
+impl utoipa::ToSchema for PartialAwsBuilderConfig {}
+
 #[typeshare]
 pub type BuilderQuery = ResourceQuery<BuilderQuerySpecifics>;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct BuilderQuerySpecifics {}
 
 impl AddFilters for BuilderQuerySpecifics {}

@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -10,15 +9,28 @@ use crate::{
 
 use super::KomodoReadRequest;
 
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListSchedules",
+  description = "List configured schedules.",
+  request_body(content = ListSchedules),
+  responses(
+    (status = 200, description = "The list of schedules", body = ListSchedulesResponse),
+  ),
+)]
+pub fn list_schedules() {}
+
 /// List configured schedules.
 /// Response: [ListSchedulesResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListSchedulesResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListSchedules {
   /// Pass Vec of tag ids or tag names
   #[serde(default, deserialize_with = "string_list_deserializer")]

@@ -61,7 +61,8 @@ async fn list_containers(
         .map(|s| (s.id.clone(), s))
         .collect::<HashMap<_, _>>())),
     client.read(ListAllDockerContainers {
-      servers: Default::default()
+      servers: Default::default(),
+      containers: Default::default(),
     }),
   )?;
 
@@ -145,7 +146,8 @@ pub async fn inspect_container(
         .map(|s| (s.id.clone(), s))
         .collect::<HashMap<_, _>>())),
     client.read(ListAllDockerContainers {
-      servers: Default::default()
+      servers: Default::default(),
+      containers: Default::default()
     }),
   )?;
 

@@ -1,7 +1,9 @@
+use std::collections::HashMap;
+
 use anyhow::Context;
-use komodo_client::entities::stack::{
-  ComposeFile, ComposeService, ComposeServiceDeploy, Stack,
-  StackServiceNames,
+use komodo_client::entities::{
+  ImageDigest,
+  stack::{ComposeFile, ComposeService, Stack, StackServiceNames},
 };
 
 pub fn extract_services_from_stack(
@@ -27,6 +29,7 @@ pub fn extract_services_from_stack(
 pub fn extract_services_into_res(
   project_name: &str,
   compose_contents: &str,
+  service_image_digests: &HashMap<String, ImageDigest>,
   res: &mut Vec<StackServiceNames>,
 ) -> anyhow::Result<()> {
   let compose =
@@ -41,36 +44,19 @@ pub fn extract_services_into_res(
     service_name,
     ComposeService {
       container_name,
-      deploy,
       image,
+      ..
     },
   ) in compose.services
   {
     let image = image.unwrap_or_default();
-    match deploy {
-      Some(ComposeServiceDeploy {
-        replicas: Some(replicas),
-      }) if replicas > 1 => {
-        for i in 1..1 + replicas {
-          services.push(StackServiceNames {
-            container_name: format!(
-              "{project_name}-{service_name}-{i}"
-            ),
-            service_name: format!("{service_name}-{i}"),
-            image: image.clone(),
-          });
-        }
-      }
-      _ => {
-        services.push(StackServiceNames {
-          container_name: container_name.unwrap_or_else(|| {
-            format!("{project_name}-{service_name}")
-          }),
-          service_name,
-          image,
-        });
-      }
-    }
+    services.push(StackServiceNames {
+      container_name: container_name
+        .unwrap_or_else(|| format!("{project_name}-{service_name}")),
+      image_digest: service_image_digests.get(&service_name).cloned(),
+      service_name,
+      image,
+    });
   }
 
   res.extend(services);

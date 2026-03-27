@@ -1,6 +1,5 @@
 use clap::Parser;
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -8,21 +7,29 @@ use crate::entities::{alert::SeverityLevel, update::Update};
 
 use super::KomodoExecuteRequest;
 
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/TestAlerter",
+  description = "Tests an Alerter's ability to reach the configured endpoint.",
+  request_body(content = TestAlerter),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn test_alerter() {}
+
 /// Tests an Alerters ability to reach the configured endpoint. Response: [Update]
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  PartialEq,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct TestAlerter {
   /// Name or id
   pub alerter: String,
@@ -30,21 +37,28 @@ pub struct TestAlerter {
 
 //
 
-/// Send a custom alert message to configured Alerters. Response: [Update]
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/SendAlert",
+  description = "Send a custom alert message to configured Alerters.",
+  request_body(content = SendAlert),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn send_alert() {}
+
+/// Send a custom alert message to configured Alerters. Response: [Update].
+/// Alias: `alert`
 #[typeshare]
 #[derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  PartialEq,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Serialize, Deserialize, Debug, Clone, PartialEq, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct SendAlert {
   /// The alert level.
   #[serde(default)]

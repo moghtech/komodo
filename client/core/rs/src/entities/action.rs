@@ -23,6 +23,7 @@ pub type ActionListItem = ResourceListItem<ActionListItemInfo>;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ActionListItemInfo {
   /// Whether last action run successful
   pub state: ActionState,
@@ -50,6 +51,7 @@ pub struct ActionListItemInfo {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum ActionState {
   /// Unknown case
   #[default]
@@ -62,6 +64,13 @@ pub enum ActionState {
   Running,
 }
 
+#[cfg(feature = "utoipa")]
+#[derive(utoipa::ToSchema)]
+#[schema(as = Action)]
+pub struct ActionSchema(
+  #[schema(inline)] pub Resource<ActionConfig, NoData>,
+);
+
 #[typeshare]
 pub type Action = Resource<ActionConfig, NoData>;
 
@@ -70,7 +79,9 @@ pub type _PartialActionConfig = PartialActionConfig;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Builder, Partial)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[diff_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct ActionConfig {
   /// Whether this action should run at startup.
@@ -219,8 +230,20 @@ impl Default for ActionConfig {
   }
 }
 
+#[cfg(feature = "utoipa")]
+impl utoipa::PartialSchema for PartialActionConfig {
+  fn schema()
+  -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+    utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
+  }
+}
+
+#[cfg(feature = "utoipa")]
+impl utoipa::ToSchema for PartialActionConfig {}
+
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ActionActionState {
   /// Number of instances of the Action currently running
   pub running: u32,
@@ -233,6 +256,7 @@ pub type ActionQuery = ResourceQuery<ActionQuerySpecifics>;
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ActionQuerySpecifics {}
 
 impl super::resource::AddFilters for ActionQuerySpecifics {

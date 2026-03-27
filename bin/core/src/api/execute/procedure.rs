@@ -17,7 +17,7 @@ use komodo_client::{
     user::User,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use tokio::sync::Mutex;
 
 use crate::{
@@ -38,11 +38,15 @@ impl super::BatchExecute for BatchRunProcedure {
 }
 
 impl Resolve<ExecuteArgs> for BatchRunProcedure {
-  #[instrument(name = "BatchRunProcedure", skip(user), fields(user_id = user.id))]
+  #[instrument(
+    "BatchRunProcedure",
+    skip_all,
+    fields(operator = user.id)
+  )]
   async fn resolve(
     self,
     ExecuteArgs { user, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchRunProcedure>(&self.pattern, user)
         .await?,
@@ -51,11 +55,24 @@ impl Resolve<ExecuteArgs> for BatchRunProcedure {
 }
 
 impl Resolve<ExecuteArgs> for RunProcedure {
-  #[instrument(name = "RunProcedure", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "RunProcedure",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      procedure = self.procedure,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     Ok(
       resolve_inner(self.procedure, user.clone(), update.clone())
         .await?,
@@ -146,7 +163,6 @@ fn resolve_inner(
     update_update(update.clone()).await?;
 
     if !update.success && procedure.config.failure_alert {
-      warn!("procedure unsuccessful, alerting...");
       let target = update.target.clone();
       tokio::spawn(async move {
         let alert = Alert {

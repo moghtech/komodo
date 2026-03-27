@@ -1,22 +1,43 @@
-# Advanced Configuration
+# Advanced Setup
 
-### OIDC / Oauth2
+Additional configuration options for Komodo Core and Periphery, including custom certificate authorities, OAuth/OIDC providers, and mounted config files.
+
+## Custom Certificate Authorities
+
+In order to communicate with companion services on private networks,
+such as OIDC and git providers,
+**Komodo Core and Periphery may both need to trust one or more custom CAs**.
+
+**Starting in V2**, Both the Komodo Core and Periphery images will automatically `update-ca-certificates` on startup,
+just mount any required root certificates inside `/usr/local/share/ca-certificates`:
+
+```yaml
+    volumes:
+      ## ... (unchanged)
+      ## Mount custom root CA certificates to trust individually
+      - /path/to/root_ca1.crt:/usr/local/share/ca-certificates/root_ca1.crt
+      - /path/to/root_ca2.crt:/usr/local/share/ca-certificates/root_ca2.crt
+      ## OR the whole folder is fine too.
+      - /path/to/custom-certs:/usr/local/share/ca-certificates
+```
+
+## OIDC / OAuth2
 
 To enable OAuth2 login, you must create a client on the respective OAuth provider,
-for example [Github](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)
+for example [GitHub](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)
 or [Google](https://developers.google.com/identity/protocols/oauth2).
 
-Komodo also supports self hosted Oauth2 providers like [Authentik](https://docs.goauthentik.io/docs/providers/oauth2/), [Gitea](https://docs.gitea.com/development/oauth2-provider) and [Keycloak](https://www.keycloak.org).
+Komodo also supports self hosted OAuth2 providers like [Authentik](https://docs.goauthentik.io/docs/providers/oauth2/), [Gitea](https://docs.gitea.com/development/oauth2-provider) and [Keycloak](https://www.keycloak.org).
 
 - Komodo uses the `web application` login flow.
 - The redirect uri is:
-	- `<KOMODO_HOST>/auth/github/callback` for Github.
+	- `<KOMODO_HOST>/auth/github/callback` for GitHub.
 	- `<KOMODO_HOST>/auth/google/callback` for Google.
 	- `<KOMODO_HOST>/auth/oidc/callback` for OIDC.
 
 ### Authentik
 
-Check out the [Authentik official support documentation](https://integrations.goauthentik.io/infrastructure/komodo/).
+Check out the [Authentik integration docs](https://integrations.goauthentik.io/infrastructure/komodo/).
 
 ### Keycloak
 - Create an [OIDC client](https://www.keycloak.org/docs/latest/server_admin/index.html#proc-creating-oidc-client_server_administration_guide) in Keycloak.
@@ -30,14 +51,37 @@ Check out the [Authentik official support documentation](https://integrations.go
   - `KOMODO_OIDC_CLIENT_ID=...` what you specified as `Client ID`
   - `KOMODO_OIDC_CLIENT_SECRET=...` that you copied from Keycloak
 
+## Limit Periphery IPs
 
-### Mount a config file
+If using a reverse proxy with Komodo Core, you can limit the IPs which can connect to the Periphery endpoint. For example with Caddy:
+
+```nginx
+(reject-ips) {
+	@externalIp not remote_ip 192.168.0.0/16 12.34.56.78/32
+	respond @externalIp 403
+}
+
+komodo.example.com {
+	handle /ws/periphery {
+		import reject-ips
+		reverse_proxy komodo-core:9120
+	}
+	handle {
+		reverse_proxy komodo-core:9120
+	}
+}
+```
+:::note
+Your reverse proxy should set `X-FORWARDED-HOST` header to your Komodo Core domain, which caddy does by default.
+:::
+
+## Mount a Config File
 
 If you prefer to keep sensitive information out of environment variables, you can optionally
 write a config file on your host, and mount it to `/config/config.toml` in the Komodo core container.
 
 The configuration can also be passed as **YAML** or **JSON**.
-You can use the it-tools to convert this TOML file to your preferred format:
+You can use it-tools to convert this TOML file to your preferred format:
   - YAML: https://it-tools.tech/toml-to-yaml
   - JSON: https://it-tools.tech/toml-to-json
 

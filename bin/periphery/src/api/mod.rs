@@ -1,64 +1,61 @@
-use anyhow::Context;
-use command::run_komodo_command;
-use derive_variants::EnumVariants;
-use futures::TryFutureExt;
+use command::run_komodo_standard_command;
+use encoding::{EncodedJsonMessage, EncodedResponse};
 use komodo_client::entities::{
-  SystemCommand,
   config::{DockerRegistry, GitProvider},
+  stats::SystemProcess,
   update::Log,
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::{
-  build::*, compose::*, container::*, git::*, image::*, network::*,
-  stats::*, terminal::*, volume::*, *,
+  build::*, compose::*, container::*, docker::*, git::*, keys::*,
+  poll::*, stats::*, swarm::*, terminal::*, *,
 };
-use resolver_api::Resolve;
-use response::Response;
 use serde::{Deserialize, Serialize};
+use strum::EnumDiscriminants;
+use uuid::Uuid;
 
-use crate::{config::periphery_config, docker::docker_client};
+use crate::{config::periphery_config, state::stats_client};
+
+pub mod terminal;
 
 mod build;
 mod compose;
 mod container;
-mod deploy;
+mod docker;
 mod git;
-mod image;
-mod network;
-mod router;
-mod stats;
-mod terminal;
-mod volume;
+mod keys;
+mod poll;
+mod swarm;
 
-pub use router::router;
-
-pub struct Args;
+#[derive(Debug)]
+pub struct Args {
+  pub core: String,
+  /// The execution id.
+  /// Unique for every /execute call.
+  pub id: Uuid,
+}
 
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EnumVariants,
+  Serialize, Deserialize, Debug, Clone, Resolve, EnumDiscriminants,
 )]
+#[strum_discriminants(name(PeripheryRequestVariant))]
 #[args(Args)]
-#[response(Response)]
-#[error(serror::Error)]
-#[variant_derive(Debug)]
+#[response(EncodedResponse<EncodedJsonMessage>)]
+#[error(anyhow::Error)]
 #[serde(tag = "type", content = "params")]
 #[allow(clippy::enum_variant_names, clippy::large_enum_variant)]
 pub enum PeripheryRequest {
-  GetVersion(GetVersion),
+  // Stats / Info (Read)
+  PollStatus(PollStatus),
   GetHealth(GetHealth),
+  GetVersion(GetVersion),
+  GetSystemProcesses(GetSystemProcesses),
+  GetLatestCommit(GetLatestCommit),
 
   // Config (Read)
   ListGitProviders(ListGitProviders),
   ListDockerRegistries(ListDockerRegistries),
   ListSecrets(ListSecrets),
-
-  // Stats / Info (Read)
-  GetSystemInformation(GetSystemInformation),
-  GetSystemStats(GetSystemStats),
-  GetSystemProcesses(GetSystemProcesses),
-  GetLatestCommit(GetLatestCommit),
-
-  // Generic shell execution
-  RunCommand(RunCommand),
 
   // Repo (Write)
   CloneRepo(CloneRepo),
@@ -96,7 +93,7 @@ pub enum PeripheryRequest {
   GetFullContainerStats(GetFullContainerStats),
 
   // Container (Write)
-  Deploy(Deploy),
+  RunContainer(RunContainer),
   StartContainer(StartContainer),
   RestartContainer(RestartContainer),
   PauseContainer(PauseContainer),
@@ -122,6 +119,7 @@ pub enum PeripheryRequest {
   // Image (Read)
   InspectImage(InspectImage),
   ImageHistory(ImageHistory),
+  GetLatestImageDigest(GetLatestImageDigest),
 
   // Image (Write)
   PullImage(PullImage),
@@ -135,28 +133,59 @@ pub enum PeripheryRequest {
   DeleteVolume(DeleteVolume),
   PruneVolumes(PruneVolumes),
 
-  // All in one (Read)
-  GetDockerLists(GetDockerLists),
-
   // All in one (Write)
   PruneSystem(PruneSystem),
 
+  // Swarm (Read)
+  PollSwarmStatus(PollSwarmStatus),
+  InspectSwarmNode(InspectSwarmNode),
+  InspectSwarmStack(InspectSwarmStack),
+  InspectSwarmService(InspectSwarmService),
+  GetSwarmServiceLog(GetSwarmServiceLog),
+  GetSwarmServiceLogSearch(GetSwarmServiceLogSearch),
+  InspectSwarmTask(InspectSwarmTask),
+  InspectSwarmConfig(InspectSwarmConfig),
+  InspectSwarmSecret(InspectSwarmSecret),
+
+  // Swarm (Write)
+  UpdateSwarmNode(UpdateSwarmNode),
+  RemoveSwarmNodes(RemoveSwarmNodes),
+  DeploySwarmStack(DeploySwarmStack),
+  RemoveSwarmStacks(RemoveSwarmStacks),
+  CreateSwarmService(CreateSwarmService),
+  UpdateSwarmService(UpdateSwarmService),
+  RollbackSwarmService(RollbackSwarmService),
+  RemoveSwarmServices(RemoveSwarmServices),
+  CreateSwarmConfig(CreateSwarmConfig),
+  RotateSwarmConfig(RotateSwarmConfig),
+  RemoveSwarmConfigs(RemoveSwarmConfigs),
+  CreateSwarmSecret(CreateSwarmSecret),
+  RotateSwarmSecret(RotateSwarmSecret),
+  RemoveSwarmSecrets(RemoveSwarmSecrets),
+
   // Terminal
   ListTerminals(ListTerminals),
-  CreateTerminal(CreateTerminal),
+  CreateServerTerminal(CreateServerTerminal),
+  CreateContainerExecTerminal(CreateContainerExecTerminal),
+  CreateContainerAttachTerminal(CreateContainerAttachTerminal),
   DeleteTerminal(DeleteTerminal),
   DeleteAllTerminals(DeleteAllTerminals),
-  CreateTerminalAuthToken(CreateTerminalAuthToken),
+  ConnectTerminal(ConnectTerminal),
+  DisconnectTerminal(DisconnectTerminal),
+  ExecuteTerminal(ExecuteTerminal),
+
+  // Keys
+  RotatePrivateKey(RotatePrivateKey),
+  RotateCorePublicKey(RotateCorePublicKey),
 }
 
 //
 
 impl Resolve<Args> for GetHealth {
-  #[instrument(name = "GetHealth", level = "debug", skip_all)]
   async fn resolve(
     self,
     _: &Args,
-  ) -> serror::Result<GetHealthResponse> {
+  ) -> anyhow::Result<GetHealthResponse> {
     Ok(GetHealthResponse {})
   }
 }
@@ -164,11 +193,10 @@ impl Resolve<Args> for GetHealth {
 //
 
 impl Resolve<Args> for GetVersion {
-  #[instrument(name = "GetVersion", level = "debug", skip(self))]
   async fn resolve(
     self,
     _: &Args,
-  ) -> serror::Result<GetVersionResponse> {
+  ) -> anyhow::Result<GetVersionResponse> {
     Ok(GetVersionResponse {
       version: env!("CARGO_PKG_VERSION").to_string(),
     })
@@ -177,26 +205,31 @@ impl Resolve<Args> for GetVersion {
 
 //
 
-impl Resolve<Args> for ListGitProviders {
-  #[instrument(name = "ListGitProviders", level = "debug", skip_all)]
+impl Resolve<Args> for GetSystemProcesses {
   async fn resolve(
     self,
     _: &Args,
-  ) -> serror::Result<Vec<GitProvider>> {
+  ) -> anyhow::Result<Vec<SystemProcess>> {
+    Ok(stats_client().read().await.get_processes())
+  }
+}
+
+//
+
+impl Resolve<Args> for ListGitProviders {
+  async fn resolve(
+    self,
+    _: &Args,
+  ) -> anyhow::Result<Vec<GitProvider>> {
     Ok(periphery_config().git_providers.0.clone())
   }
 }
 
 impl Resolve<Args> for ListDockerRegistries {
-  #[instrument(
-    name = "ListDockerRegistries",
-    level = "debug",
-    skip_all
-  )]
   async fn resolve(
     self,
     _: &Args,
-  ) -> serror::Result<Vec<DockerRegistry>> {
+  ) -> anyhow::Result<Vec<DockerRegistry>> {
     Ok(periphery_config().docker_registries.0.clone())
   }
 }
@@ -204,8 +237,7 @@ impl Resolve<Args> for ListDockerRegistries {
 //
 
 impl Resolve<Args> for ListSecrets {
-  #[instrument(name = "ListSecrets", level = "debug", skip_all)]
-  async fn resolve(self, _: &Args) -> serror::Result<Vec<String>> {
+  async fn resolve(self, _: &Args) -> anyhow::Result<Vec<String>> {
     Ok(
       periphery_config()
         .secrets
@@ -216,62 +248,20 @@ impl Resolve<Args> for ListSecrets {
   }
 }
 
-impl Resolve<Args> for GetDockerLists {
-  #[instrument(name = "GetDockerLists", level = "debug", skip_all)]
-  async fn resolve(
-    self,
-    _: &Args,
-  ) -> serror::Result<GetDockerListsResponse> {
-    let docker = docker_client();
-    let containers =
-      docker.list_containers().await.map_err(Into::into);
-    // Should still try to retrieve other docker lists, but "in_use" will be false for images, networks, volumes
-    let _containers = match &containers {
-      Ok(containers) => containers.as_slice(),
-      Err(_) => &[],
-    };
-    let (networks, images, volumes, projects) = tokio::join!(
-      docker.list_networks(_containers).map_err(Into::into),
-      docker.list_images(_containers).map_err(Into::into),
-      docker.list_volumes(_containers).map_err(Into::into),
-      ListComposeProjects {}
-        .resolve(&Args)
-        .map_err(|e| e.error.into())
-    );
-    Ok(GetDockerListsResponse {
-      containers,
-      networks,
-      images,
-      volumes,
-      projects,
-    })
-  }
-}
-
-impl Resolve<Args> for RunCommand {
-  #[instrument(name = "RunCommand")]
-  async fn resolve(self, _: &Args) -> serror::Result<Log> {
-    let RunCommand {
-      command: SystemCommand { path, command },
-    } = self;
-    let res = tokio::spawn(async move {
-      let command = if path.is_empty() {
-        command
-      } else {
-        format!("cd {path} && {command}")
-      };
-      run_komodo_command("run command", None, command).await
-    })
-    .await
-    .context("failure in spawned task")?;
-    Ok(res)
-  }
-}
-
 impl Resolve<Args> for PruneSystem {
-  #[instrument(name = "PruneSystem", skip_all)]
-  async fn resolve(self, _: &Args) -> serror::Result<Log> {
+  #[instrument(
+    "PruneSystem",
+    skip_all,
+    fields(
+      id = args.id.to_string(),
+      core = args.core
+    )
+  )]
+  async fn resolve(self, args: &Args) -> anyhow::Result<Log> {
     let command = String::from("docker system prune -a -f --volumes");
-    Ok(run_komodo_command("Prune System", None, command).await)
+    Ok(
+      run_komodo_standard_command("Prune System", None, command)
+        .await,
+    )
   }
 }

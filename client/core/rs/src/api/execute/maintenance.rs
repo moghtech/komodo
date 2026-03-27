@@ -1,6 +1,5 @@
 use clap::Parser;
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -8,26 +7,48 @@ use crate::entities::update::Update;
 
 use super::KomodoExecuteRequest;
 
-/// Clears all repos from the Core repo cache. Admin only.
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ClearRepoCache",
+  description = "Clears all repos from the Core repo cache.",
+  request_body(content = ClearRepoCache),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn clear_repo_cache() {}
+
+/// **Admin only.** Clears all repos from the Core repo cache.
 /// Response: [Update]
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ClearRepoCache {}
 
-/// Backs up the Komodo Core database to compressed jsonl files.
-/// Admin only. Response: [Update]
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/BackupCoreDatabase",
+  description = "Backs up the Komodo Core database to compressed jsonl files.",
+  request_body(content = BackupCoreDatabase),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn backup_core_database() {}
+
+/// **Admin only.** Backs up the Komodo Core database to compressed jsonl files.
+/// Response: [Update]. Aliases: `backup-database`, `backup-db`, `backup`.
 ///
 /// Mount a folder to `/backups`, and Core will use it to create
 /// timestamped database dumps, which can be restored using
@@ -36,38 +57,112 @@ pub struct ClearRepoCache {}
 /// https://komo.do/docs/setup/backup
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct BackupCoreDatabase {}
 
-/// Trigger a global poll for image updates on Stacks and Deployments
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GlobalAutoUpdate",
+  description = "Trigger a global poll for image updates on Stacks and Deployments.",
+  request_body(content = GlobalAutoUpdate),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn global_auto_update() {}
+
+/// **Admin only.** Trigger a global poll for image updates on Stacks and Deployments
 /// with `poll_for_updates` or `auto_update` enabled.
-/// Admin only. Response: [Update]
+/// Response: [Update]. Alias: `auto-update`.
 ///
-/// 1. `docker compose pull` any Stacks / Deployments with `poll_for_updates` or `auto_update` enabled. This will pick up any available updates.
+/// 1. Run CheckStackForUpdate / CheckDeploymentForUpdate any Stacks / Deployments with `poll_for_updates` or `auto_update` enabled.
+///    This will pick up any available updates.
 /// 2. Redeploy Stacks / Deployments that have updates found and 'auto_update' enabled.
+///      - Skip this using 'skip_auto_update', preferring to only alert even for 'auto_update' resources.
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoExecuteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
-pub struct GlobalAutoUpdate {}
+#[error(mogh_error::Error)]
+pub struct GlobalAutoUpdate {
+  /// Normally resources with 'auto_update' will be
+  /// redeployed immediately if updates are found.
+  /// With this enabled, convert this into an UpdateAvailable alert.
+  #[serde(default)]
+  #[arg(long, short = 's', default_value_t = false)]
+  pub skip_auto_update: bool,
+}
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RotateAllServerKeys",
+  description = "Rotates all connected Server keys.",
+  request_body(content = RotateAllServerKeys),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn rotate_all_server_keys() {}
+
+/// **Admin only.** Rotates all connected Server keys.
+/// Response: [Update]. Alias: `rotate-keys`.
+#[typeshare]
+#[derive(
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoExecuteRequest)]
+#[response(Update)]
+#[error(mogh_error::Error)]
+pub struct RotateAllServerKeys {}
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RotateCoreKeys",
+  description = "Rotates the Core private key and all Server public keys.",
+  request_body(content = RotateCoreKeys),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn rotate_core_keys() {}
+
+/// **Admin only.** Rotates the Core private key,
+/// and all Server public keys.
+/// Response: [Update].
+///
+/// If any Server is `NotOk`, this will fail.
+/// To proceed anyways, pass `force: true`.
+#[typeshare]
+#[derive(
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
+)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoExecuteRequest)]
+#[response(Update)]
+#[error(mogh_error::Error)]
+pub struct RotateCoreKeys {
+  /// Force the rotation to proceed even if a Server is `NotOk`.
+  /// The Core Public Key in Periphery config may have to be updated manually.
+  /// (alias: `f`)
+  #[serde(default)]
+  #[clap(long, short, alias = "f", default_value_t = false)]
+  pub force: bool,
+}

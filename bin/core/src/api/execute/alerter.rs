@@ -1,6 +1,8 @@
 use anyhow::{Context, anyhow};
 use formatting::format_serror;
-use futures::{TryStreamExt, stream::FuturesUnordered};
+use futures_util::{
+  StreamExt, TryStreamExt, stream::FuturesUnordered,
+};
 use komodo_client::{
   api::execute::{SendAlert, TestAlerter},
   entities::{
@@ -10,9 +12,9 @@ use komodo_client::{
     permission::PermissionLevel,
   },
 };
+use mogh_error::AddStatusCodeError;
+use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use resolver_api::Resolve;
-use serror::AddStatusCodeError;
 
 use crate::{
   alert::send_alert_to_alerter, helpers::update::update_update,
@@ -22,10 +24,23 @@ use crate::{
 use super::ExecuteArgs;
 
 impl Resolve<ExecuteArgs> for TestAlerter {
-  #[instrument(name = "TestAlerter", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "TestAlerter",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      alerter = self.alerter,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> Result<Self::Response, Self::Error> {
     let alerter = get_check_permissions::<Alerter>(
       &self.alerter,
@@ -79,15 +94,28 @@ impl Resolve<ExecuteArgs> for TestAlerter {
 //
 
 impl Resolve<ExecuteArgs> for SendAlert {
-  #[instrument(name = "SendAlert", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "SendAlert",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      request = format!("{self:?}"),
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
   ) -> Result<Self::Response, Self::Error> {
     let alerters = list_full_for_user::<Alerter>(
       Default::default(),
       user,
-      PermissionLevel::Execute.into(),
+      PermissionLevel::Read.into(),
       &[],
     )
     .await?
@@ -101,6 +129,28 @@ impl Resolve<ExecuteArgs> for SendAlert {
           || a.config.alert_types.contains(&AlertDataVariant::Custom))
     })
     .collect::<Vec<_>>();
+
+    let alerters = if user.admin {
+      alerters
+    } else {
+      // Only keep alerters with execute permissions
+      alerters
+        .into_iter()
+        .map(|alerter| async move {
+          get_check_permissions::<Alerter>(
+            &alerter.id,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await
+        })
+        .collect::<FuturesUnordered<_>>()
+        .collect::<Vec<_>>()
+        .await
+        .into_iter()
+        .flatten()
+        .collect()
+    };
 
     if alerters.is_empty() {
       return Err(anyhow!(

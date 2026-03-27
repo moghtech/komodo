@@ -2,16 +2,35 @@ use std::sync::OnceLock;
 
 use super::*;
 
-#[instrument(level = "debug")]
 pub async fn send_alert(
   url: &str,
   alert: &Alert,
 ) -> anyhow::Result<()> {
   let content = standard_alert_content(alert);
-  if !content.is_empty() {
-    send_message(url, content).await?;
+  if content.is_empty() {
+    return Ok(());
   }
-  Ok(())
+
+  let VariablesAndSecrets { variables, secrets } =
+    get_variables_and_secrets().await?;
+  let mut url_interpolated = url.to_string();
+
+  let mut interpolator =
+    Interpolator::new(Some(&variables), &secrets);
+
+  interpolator.interpolate_string(&mut url_interpolated)?;
+
+  send_message(&url_interpolated, content).await.map_err(|e| {
+    let replacers = interpolator
+      .secret_replacers
+      .into_iter()
+      .collect::<Vec<_>>();
+    let sanitized_error =
+      svi::replace_in_string(&format!("{e:?}"), &replacers);
+    anyhow::Error::msg(format!(
+      "Error with request to Pushover: {sanitized_error}"
+    ))
+  })
 }
 
 async fn send_message(

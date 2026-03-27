@@ -1,29 +1,26 @@
 use anyhow::{Context, anyhow};
-use axum::http::StatusCode;
 use formatting::format_serror;
 use komodo_client::entities::{
   DefaultRepoFolder, LatestCommit, update::Log,
 };
+use mogh_resolver::Resolve;
 use periphery_client::api::git::{
   CloneRepo, DeleteRepo, GetLatestCommit,
   PeripheryRepoExecutionResponse, PullOrCloneRepo, PullRepo,
   RenameRepo,
 };
-use resolver_api::Resolve;
-use serror::AddStatusCodeError;
 use std::path::PathBuf;
 use tokio::fs;
 
 use crate::{
-  config::periphery_config, git::handle_post_repo_execution,
+  config::periphery_config, helpers::handle_post_repo_execution,
 };
 
-impl Resolve<super::Args> for GetLatestCommit {
-  #[instrument(name = "GetLatestCommit", level = "debug")]
+impl Resolve<crate::api::Args> for GetLatestCommit {
   async fn resolve(
     self,
-    _: &super::Args,
-  ) -> serror::Result<Option<LatestCommit>> {
+    _: &crate::api::Args,
+  ) -> anyhow::Result<Option<LatestCommit>> {
     let repo_path = match self.path {
       Some(p) => PathBuf::from(p),
       None => periphery_config().repo_dir().join(self.name),
@@ -36,19 +33,21 @@ impl Resolve<super::Args> for GetLatestCommit {
   }
 }
 
-impl Resolve<super::Args> for CloneRepo {
+impl Resolve<crate::api::Args> for CloneRepo {
   #[instrument(
-    name = "CloneRepo",
+    "CloneRepo",
     skip_all,
     fields(
+      id = args.id.to_string(),
+      core = args.core,
       args = format!("{:?}", self.args),
       skip_secret_interp = self.skip_secret_interp,
     )
   )]
   async fn resolve(
     self,
-    _: &super::Args,
-  ) -> serror::Result<PeripheryRepoExecutionResponse> {
+    args: &crate::api::Args,
+  ) -> anyhow::Result<PeripheryRepoExecutionResponse> {
     let CloneRepo {
       args,
       git_token,
@@ -75,25 +74,26 @@ impl Resolve<super::Args> for CloneRepo {
       replacers,
     )
     .await
-    .map_err(Into::into)
   }
 }
 
 //
 
-impl Resolve<super::Args> for PullRepo {
+impl Resolve<crate::api::Args> for PullRepo {
   #[instrument(
-    name = "PullRepo",
+    "PullRepo",
     skip_all,
     fields(
+      id = args.id.to_string(),
+      core = args.core,
       args = format!("{:?}", self.args),
       skip_secret_interp = self.skip_secret_interp,
     )
   )]
   async fn resolve(
     self,
-    _: &super::Args,
-  ) -> serror::Result<PeripheryRepoExecutionResponse> {
+    args: &crate::api::Args,
+  ) -> anyhow::Result<PeripheryRepoExecutionResponse> {
     let PullRepo {
       args,
       git_token,
@@ -119,25 +119,26 @@ impl Resolve<super::Args> for PullRepo {
       replacers,
     )
     .await
-    .map_err(Into::into)
   }
 }
 
 //
 
-impl Resolve<super::Args> for PullOrCloneRepo {
+impl Resolve<crate::api::Args> for PullOrCloneRepo {
   #[instrument(
-    name = "PullOrCloneRepo",
+    "PullOrCloneRepo",
     skip_all,
     fields(
+      id = args.id.to_string(),
+      core = args.core,
       args = format!("{:?}", self.args),
       skip_secret_interp = self.skip_secret_interp,
     )
   )]
   async fn resolve(
     self,
-    _: &super::Args,
-  ) -> serror::Result<PeripheryRepoExecutionResponse> {
+    args: &crate::api::Args,
+  ) -> anyhow::Result<PeripheryRepoExecutionResponse> {
     let PullOrCloneRepo {
       args,
       git_token,
@@ -165,15 +166,26 @@ impl Resolve<super::Args> for PullOrCloneRepo {
       replacers,
     )
     .await
-    .map_err(Into::into)
   }
 }
 
 //
 
-impl Resolve<super::Args> for RenameRepo {
-  #[instrument(name = "RenameRepo")]
-  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
+impl Resolve<crate::api::Args> for RenameRepo {
+  #[instrument(
+    "RenameRepo",
+    skip_all,
+    fields(
+      id = args.id.to_string(),
+      core = args.core,
+      current_name = self.curr_name,
+      new_name = self.new_name,
+    )
+  )]
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let RenameRepo {
       curr_name,
       new_name,
@@ -192,9 +204,21 @@ impl Resolve<super::Args> for RenameRepo {
 
 //
 
-impl Resolve<super::Args> for DeleteRepo {
-  #[instrument(name = "DeleteRepo")]
-  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
+impl Resolve<crate::api::Args> for DeleteRepo {
+  #[instrument(
+    "DeleteRepo",
+    skip_all,
+    fields(
+      id = args.id.to_string(),
+      core = args.core,
+      repo = self.name,
+      is_build = self.is_build,
+    )
+  )]
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let DeleteRepo { name, is_build } = self;
     // If using custom clone path, it will be passed by core instead of name.
     // So the join will resolve to just the absolute path.
@@ -222,16 +246,13 @@ impl Resolve<super::Args> for DeleteRepo {
 
 fn default_folder(
   default_folder: DefaultRepoFolder,
-) -> serror::Result<PathBuf> {
+) -> anyhow::Result<PathBuf> {
   match default_folder {
     DefaultRepoFolder::Stacks => Ok(periphery_config().stack_dir()),
     DefaultRepoFolder::Builds => Ok(periphery_config().build_dir()),
     DefaultRepoFolder::Repos => Ok(periphery_config().repo_dir()),
-    DefaultRepoFolder::NotApplicable => {
-      Err(
-        anyhow!("The clone args should not have a default_folder of NotApplicable using this method.")
-          .status_code(StatusCode::BAD_REQUEST)
-      )
-    }
+    DefaultRepoFolder::NotApplicable => Err(anyhow!(
+      "The clone args should not have a default_folder of NotApplicable using this method."
+    )),
   }
 }

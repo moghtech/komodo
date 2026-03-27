@@ -1,14 +1,12 @@
-use anyhow::{Context, anyhow};
+use anyhow::Context;
 use komodo_client::entities::{
-  permission::PermissionLevelAndSpecifics,
-  server::{Server, ServerState},
-  stack::Stack,
-  user::User,
+  SwarmOrServer, permission::PermissionLevelAndSpecifics,
+  stack::Stack, user::User,
 };
 use regex::Regex;
 
 use crate::{
-  helpers::query::get_server_with_state,
+  helpers::query::get_swarm_or_server,
   permission::get_check_permissions,
 };
 
@@ -16,28 +14,21 @@ pub mod execute;
 pub mod remote;
 pub mod services;
 
-pub async fn get_stack_and_server(
+pub async fn setup_stack_execution(
   stack: &str,
   user: &User,
   permissions: PermissionLevelAndSpecifics,
-  block_if_server_unreachable: bool,
-) -> anyhow::Result<(Stack, Server)> {
+) -> anyhow::Result<(Stack, SwarmOrServer)> {
   let stack =
     get_check_permissions::<Stack>(stack, user, permissions).await?;
 
-  if stack.config.server_id.is_empty() {
-    return Err(anyhow!("Stack has no server configured"));
-  }
+  let swarm_or_server = get_swarm_or_server(
+    &stack.config.swarm_id,
+    &stack.config.server_id,
+  )
+  .await?;
 
-  let (server, state) =
-    get_server_with_state(&stack.config.server_id).await?;
-  if block_if_server_unreachable && state != ServerState::Ok {
-    return Err(anyhow!(
-      "Cannot send command when server is unreachable or disabled"
-    ));
-  }
-
-  Ok((stack, server))
+  Ok((stack, swarm_or_server))
 }
 
 pub fn compose_container_match_regex(

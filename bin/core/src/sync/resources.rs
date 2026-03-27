@@ -14,6 +14,7 @@ use komodo_client::{
     repo::Repo,
     server::Server,
     stack::Stack,
+    swarm::Swarm,
     sync::ResourceSync,
     tag::Tag,
     update::Log,
@@ -23,7 +24,6 @@ use komodo_client::{
 use partial_derive2::{MaybeNone, PartialDiff};
 
 use crate::{
-  api::write::WriteArgs,
   resource::{KomodoResource, ResourceMetaUpdate},
   state::all_resources_cache,
   sync::{ToUpdateItem, execute::run_update_meta},
@@ -46,25 +46,51 @@ impl ResourceSyncTrait for Server {
 
 impl ExecuteResourceSync for Server {}
 
+impl ResourceSyncTrait for Swarm {
+  fn get_diff(
+    mut original: Self::Config,
+    update: Self::PartialConfig,
+  ) -> anyhow::Result<Self::ConfigDiff> {
+    let all = all_resources_cache().load();
+
+    original.server_ids.iter_mut().for_each(|server_id| {
+      *server_id = all
+        .servers
+        .get(server_id)
+        .map(|s| s.name.clone())
+        .unwrap_or_default();
+    });
+
+    Ok(original.partial_diff(update))
+  }
+}
+
+impl ExecuteResourceSync for Swarm {}
+
 impl ResourceSyncTrait for Deployment {
   fn get_diff(
     mut original: Self::Config,
     update: Self::PartialConfig,
   ) -> anyhow::Result<Self::ConfigDiff> {
-    let resources = all_resources_cache().load();
-    // need to replace the server id with name
-    original.server_id = resources
+    let all = all_resources_cache().load();
+
+    original.swarm_id = all
+      .swarms
+      .get(&original.swarm_id)
+      .map(|s| s.name.clone())
+      .unwrap_or_default();
+
+    original.server_id = all
       .servers
       .get(&original.server_id)
       .map(|s| s.name.clone())
       .unwrap_or_default();
 
-    // need to replace the build id with name
     if let DeploymentImage::Build { build_id, version } =
       &original.image
     {
       original.image = DeploymentImage::Build {
-        build_id: resources
+        build_id: all
           .builds
           .get(build_id)
           .map(|b| b.name.clone())
@@ -84,15 +110,21 @@ impl ResourceSyncTrait for Stack {
     mut original: Self::Config,
     update: Self::PartialConfig,
   ) -> anyhow::Result<Self::ConfigDiff> {
-    let resources = all_resources_cache().load();
-    // Need to replace server id with name
-    original.server_id = resources
+    let all = all_resources_cache().load();
+
+    original.swarm_id = all
+      .swarms
+      .get(&original.swarm_id)
+      .map(|s| s.name.clone())
+      .unwrap_or_default();
+
+    original.server_id = all
       .servers
       .get(&original.server_id)
       .map(|s| s.name.clone())
       .unwrap_or_default();
-    // Replace linked repo with name
-    original.linked_repo = resources
+
+    original.linked_repo = all
       .repos
       .get(&original.linked_repo)
       .map(|r| r.name.clone())
@@ -109,13 +141,13 @@ impl ResourceSyncTrait for Build {
     mut original: Self::Config,
     update: Self::PartialConfig,
   ) -> anyhow::Result<Self::ConfigDiff> {
-    let resources = all_resources_cache().load();
-    original.builder_id = resources
+    let all = all_resources_cache().load();
+    original.builder_id = all
       .builders
       .get(&original.builder_id)
       .map(|b| b.name.clone())
       .unwrap_or_default();
-    original.linked_repo = resources
+    original.linked_repo = all
       .repos
       .get(&original.linked_repo)
       .map(|r| r.name.clone())
@@ -143,16 +175,16 @@ impl ResourceSyncTrait for Repo {
     mut original: Self::Config,
     update: Self::PartialConfig,
   ) -> anyhow::Result<Self::ConfigDiff> {
-    let resources = all_resources_cache().load();
+    let all = all_resources_cache().load();
     // Need to replace server id with name
-    original.server_id = resources
+    original.server_id = all
       .servers
       .get(&original.server_id)
       .map(|s| s.name.clone())
       .unwrap_or_default();
 
     // Need to replace builder id with name
-    original.builder_id = resources
+    original.builder_id = all
       .builders
       .get(&original.builder_id)
       .map(|s| s.name.clone())
@@ -182,8 +214,8 @@ impl ResourceSyncTrait for Builder {
   ) -> anyhow::Result<Self::ConfigDiff> {
     // need to replace server builder id with name
     if let BuilderConfig::Server(config) = &mut original {
-      let resources = all_resources_cache().load();
-      config.server_id = resources
+      let all = all_resources_cache().load();
+      config.server_id = all
         .servers
         .get(&config.server_id)
         .map(|s| s.name.clone())
@@ -291,8 +323,8 @@ impl ResourceSyncTrait for ResourceSync {
     mut original: Self::Config,
     update: Self::PartialConfig,
   ) -> anyhow::Result<Self::ConfigDiff> {
-    let resources = all_resources_cache().load();
-    original.linked_repo = resources
+    let all = all_resources_cache().load();
+    original.linked_repo = all
       .repos
       .get(&original.linked_repo)
       .map(|r| r.name.clone())
@@ -309,391 +341,121 @@ impl ResourceSyncTrait for Procedure {
     mut original: Self::Config,
     update: Self::PartialConfig,
   ) -> anyhow::Result<Self::ConfigDiff> {
-    let resources = all_resources_cache().load();
+    let all = all_resources_cache().load();
     for stage in &mut original.stages {
       for execution in &mut stage.executions {
-        match &mut execution.execution {
-          Execution::None(_) => {}
-          Execution::RunProcedure(config) => {
-            config.procedure = resources
-              .procedures
-              .get(&config.procedure)
-              .map(|p| p.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::BatchRunProcedure(_config) => {}
-          Execution::RunAction(config) => {
-            config.action = resources
-              .actions
-              .get(&config.action)
-              .map(|p| p.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::BatchRunAction(_config) => {}
-          Execution::RunBuild(config) => {
-            config.build = resources
-              .builds
-              .get(&config.build)
-              .map(|b| b.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::BatchRunBuild(_config) => {}
-          Execution::CancelBuild(config) => {
-            config.build = resources
-              .builds
-              .get(&config.build)
-              .map(|b| b.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::Deploy(config) => {
-            config.deployment = resources
-              .deployments
-              .get(&config.deployment)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::BatchDeploy(_config) => {}
-          Execution::PullDeployment(config) => {
-            config.deployment = resources
-              .deployments
-              .get(&config.deployment)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::StartDeployment(config) => {
-            config.deployment = resources
-              .deployments
-              .get(&config.deployment)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::RestartDeployment(config) => {
-            config.deployment = resources
-              .deployments
-              .get(&config.deployment)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::PauseDeployment(config) => {
-            config.deployment = resources
-              .deployments
-              .get(&config.deployment)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::UnpauseDeployment(config) => {
-            config.deployment = resources
-              .deployments
-              .get(&config.deployment)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::StopDeployment(config) => {
-            config.deployment = resources
-              .deployments
-              .get(&config.deployment)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::DestroyDeployment(config) => {
-            config.deployment = resources
-              .deployments
-              .get(&config.deployment)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::BatchDestroyDeployment(_config) => {}
-          Execution::CloneRepo(config) => {
-            config.repo = resources
-              .repos
-              .get(&config.repo)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::BatchCloneRepo(_config) => {}
-          Execution::PullRepo(config) => {
-            config.repo = resources
-              .repos
-              .get(&config.repo)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::BatchPullRepo(_config) => {}
-          Execution::BuildRepo(config) => {
-            config.repo = resources
-              .repos
-              .get(&config.repo)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::BatchBuildRepo(_config) => {}
-          Execution::CancelRepoBuild(config) => {
-            config.repo = resources
-              .repos
-              .get(&config.repo)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::StartContainer(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::RestartContainer(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::PauseContainer(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::UnpauseContainer(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::StopContainer(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::DestroyContainer(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::StartAllContainers(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::RestartAllContainers(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::PauseAllContainers(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::UnpauseAllContainers(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::StopAllContainers(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::PruneContainers(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::DeleteNetwork(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::PruneNetworks(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::DeleteImage(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::PruneImages(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::DeleteVolume(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::PruneVolumes(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::PruneDockerBuilders(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::PruneBuildx(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::PruneSystem(config) => {
-            config.server = resources
-              .servers
-              .get(&config.server)
-              .map(|d| d.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::RunSync(config) => {
-            config.sync = resources
-              .syncs
-              .get(&config.sync)
-              .map(|s| s.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::CommitSync(config) => {
-            config.sync = resources
-              .syncs
-              .get(&config.sync)
-              .map(|s| s.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::DeployStack(config) => {
-            config.stack = resources
-              .stacks
-              .get(&config.stack)
-              .map(|s| s.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::BatchDeployStack(_config) => {}
-          Execution::DeployStackIfChanged(config) => {
-            config.stack = resources
-              .stacks
-              .get(&config.stack)
-              .map(|s| s.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::BatchDeployStackIfChanged(_config) => {}
-          Execution::PullStack(config) => {
-            config.stack = resources
-              .stacks
-              .get(&config.stack)
-              .map(|s| s.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::BatchPullStack(_config) => {}
-          Execution::StartStack(config) => {
-            config.stack = resources
-              .stacks
-              .get(&config.stack)
-              .map(|s| s.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::RestartStack(config) => {
-            config.stack = resources
-              .stacks
-              .get(&config.stack)
-              .map(|s| s.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::PauseStack(config) => {
-            config.stack = resources
-              .stacks
-              .get(&config.stack)
-              .map(|s| s.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::UnpauseStack(config) => {
-            config.stack = resources
-              .stacks
-              .get(&config.stack)
-              .map(|s| s.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::StopStack(config) => {
-            config.stack = resources
-              .stacks
-              .get(&config.stack)
-              .map(|s| s.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::DestroyStack(config) => {
-            config.stack = resources
-              .stacks
-              .get(&config.stack)
-              .map(|s| s.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::RunStackService(config) => {
-            config.stack = resources
-              .stacks
-              .get(&config.stack)
-              .map(|s| s.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::BatchDestroyStack(_config) => {}
-          Execution::TestAlerter(config) => {
-            config.alerter = resources
-              .alerters
-              .get(&config.alerter)
-              .map(|a| a.name.clone())
-              .unwrap_or_default();
-          }
-          Execution::SendAlert(config) => {
-            config.alerters = config
-              .alerters
-              .iter()
-              .map(|alerter| {
-                resources
+        // Replaces an id field on config with the resource name from `all`.
+        macro_rules! replace_id_with_name {
+          ($($Variant:ident => $field:ident, $collection:ident);* $(;)?) => {
+            match &mut execution.execution {
+              $(
+                Execution::$Variant(config) => {
+                  config.$field = all
+                    .$collection
+                    .get(&config.$field)
+                    .map(|r| r.name.clone())
+                    .unwrap_or_default();
+                }
+              )*
+              // SendAlert maps a Vec of alerter ids
+              Execution::SendAlert(config) => {
+                config.alerters = config
                   .alerters
-                  .get(alerter)
-                  .map(|a| a.name.clone())
-                  .unwrap_or_default()
-              })
-              .collect();
-          }
-          Execution::ClearRepoCache(_) => {}
-          Execution::BackupCoreDatabase(_) => {}
-          Execution::GlobalAutoUpdate(_) => {}
-          Execution::Sleep(_) => {}
+                  .iter()
+                  .map(|alerter| {
+                    all
+                      .alerters
+                      .get(alerter)
+                      .map(|a| a.name.clone())
+                      .unwrap_or_default()
+                  })
+                  .collect();
+              }
+              // No-op variants
+              Execution::None(_)
+              | Execution::BatchRunProcedure(_)
+              | Execution::BatchRunAction(_)
+              | Execution::BatchRunBuild(_)
+              | Execution::BatchDeploy(_)
+              | Execution::BatchDestroyDeployment(_)
+              | Execution::BatchCloneRepo(_)
+              | Execution::BatchPullRepo(_)
+              | Execution::BatchBuildRepo(_)
+              | Execution::BatchDeployStack(_)
+              | Execution::BatchDeployStackIfChanged(_)
+              | Execution::BatchPullStack(_)
+              | Execution::BatchDestroyStack(_)
+              | Execution::ClearRepoCache(_)
+              | Execution::BackupCoreDatabase(_)
+              | Execution::GlobalAutoUpdate(_)
+              | Execution::RotateAllServerKeys(_)
+              | Execution::RotateCoreKeys(_)
+              | Execution::Sleep(_) => {}
+            }
+          };
         }
+
+        replace_id_with_name!(
+          RunProcedure => procedure, procedures;
+          RunAction => action, actions;
+          RunBuild => build, builds;
+          CancelBuild => build, builds;
+          Deploy => deployment, deployments;
+          PullDeployment => deployment, deployments;
+          StartDeployment => deployment, deployments;
+          RestartDeployment => deployment, deployments;
+          PauseDeployment => deployment, deployments;
+          UnpauseDeployment => deployment, deployments;
+          StopDeployment => deployment, deployments;
+          DestroyDeployment => deployment, deployments;
+          CloneRepo => repo, repos;
+          PullRepo => repo, repos;
+          BuildRepo => repo, repos;
+          CancelRepoBuild => repo, repos;
+          StartContainer => server, servers;
+          RestartContainer => server, servers;
+          PauseContainer => server, servers;
+          UnpauseContainer => server, servers;
+          StopContainer => server, servers;
+          DestroyContainer => server, servers;
+          StartAllContainers => server, servers;
+          RestartAllContainers => server, servers;
+          PauseAllContainers => server, servers;
+          UnpauseAllContainers => server, servers;
+          StopAllContainers => server, servers;
+          PruneContainers => server, servers;
+          DeleteNetwork => server, servers;
+          PruneNetworks => server, servers;
+          DeleteImage => server, servers;
+          PruneImages => server, servers;
+          DeleteVolume => server, servers;
+          PruneVolumes => server, servers;
+          PruneDockerBuilders => server, servers;
+          PruneBuildx => server, servers;
+          PruneSystem => server, servers;
+          RunSync => sync, syncs;
+          CommitSync => sync, syncs;
+          DeployStack => stack, stacks;
+          DeployStackIfChanged => stack, stacks;
+          PullStack => stack, stacks;
+          StartStack => stack, stacks;
+          RestartStack => stack, stacks;
+          PauseStack => stack, stacks;
+          UnpauseStack => stack, stacks;
+          StopStack => stack, stacks;
+          DestroyStack => stack, stacks;
+          RunStackService => stack, stacks;
+          TestAlerter => alerter, alerters;
+          RemoveSwarmNodes => swarm, swarms;
+          RemoveSwarmStacks => swarm, swarms;
+          RemoveSwarmServices => swarm, swarms;
+          CreateSwarmConfig => swarm, swarms;
+          RotateSwarmConfig => swarm, swarms;
+          RemoveSwarmConfigs => swarm, swarms;
+          CreateSwarmSecret => swarm, swarms;
+          RotateSwarmSecret => swarm, swarms;
+          RemoveSwarmSecrets => swarm, swarms;
+        );
       }
     }
     Ok(original.partial_diff(update))
@@ -720,13 +482,8 @@ impl ExecuteResourceSync for Procedure {
       format!("running updates on {}s", Self::resource_type());
 
     for name in to_delete {
-      if let Err(e) = crate::resource::delete::<Procedure>(
-        &name,
-        &WriteArgs {
-          user: sync_user().to_owned(),
-        },
-      )
-      .await
+      if let Err(e) =
+        crate::resource::delete::<Procedure>(&name, sync_user()).await
       {
         has_error = true;
         log.push_str(&format!(
@@ -822,6 +579,7 @@ impl ExecuteResourceSync for Procedure {
         let id = match crate::resource::create::<Procedure>(
           &name,
           resource.config.clone(),
+          None,
           sync_user(),
         )
         .await

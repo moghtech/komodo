@@ -1,9 +1,9 @@
 ## Builds the Komodo Core, Periphery, and Util binaries
-## for a specific architecture.
+## for a specific architecture. Requires OpenSSL 3 or later.
 
 ## Uses chef for dependency caching to help speed up back-to-back builds.
 
-FROM lukemathwalker/cargo-chef:latest-rust-1.89.0-bullseye AS chef
+FROM lukemathwalker/cargo-chef:latest-rust-1.94.0-bookworm AS chef
 WORKDIR /builder
 
 # Plan just the RECIPE to see if things have changed
@@ -31,6 +31,6 @@ COPY --from=builder /builder/target/release/core /core
 COPY --from=builder /builder/target/release/periphery /periphery
 COPY --from=builder /builder/target/release/km /km
 
-LABEL org.opencontainers.image.source=https://github.com/moghtech/komodo
+LABEL org.opencontainers.image.source="https://github.com/moghtech/komodo"
 LABEL org.opencontainers.image.description="Komodo Binaries"
-LABEL org.opencontainers.image.licenses=GPL-3.0
+LABEL org.opencontainers.image.licenses="GPL-3.0"

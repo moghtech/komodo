@@ -12,6 +12,7 @@ use super::{ResourceTarget, Version};
 /// Represents an action performed by Komodo.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
   feature = "mongo",
   derive(mongo_indexed::derive::MongoIndexed)
@@ -111,6 +112,7 @@ impl Update {
 /// Minimal representation of an action performed by Komodo.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct UpdateListItem {
   /// The id of the update
   pub id: String,
@@ -147,6 +149,7 @@ pub struct UpdateListItem {
 /// Represents the output of some command being run
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Log {
   /// A label for the log
   pub stage: String,
@@ -192,12 +195,12 @@ impl Log {
   /// Combines stdout / stderr into one log
   pub fn combined(&self) -> String {
     match (self.stdout.is_empty(), self.stderr.is_empty()) {
-      (true, true) => {
+      (false, false) => {
         format!("stdout: {}\n\nstderr: {}", self.stdout, self.stderr)
       }
-      (true, false) => self.stdout.to_string(),
-      (false, true) => self.stderr.to_string(),
-      (false, false) => String::from("No log"),
+      (false, true) => self.stdout.to_string(),
+      (true, false) => self.stderr.to_string(),
+      (true, true) => String::from("No log"),
     }
   }
 }
@@ -217,6 +220,7 @@ impl Log {
   Copy,
   Default,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum UpdateStatus {
   /// The run is in the system but hasn't started yet
   Queued,

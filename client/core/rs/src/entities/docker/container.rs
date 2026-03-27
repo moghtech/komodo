@@ -7,15 +7,19 @@ use typeshare::typeshare;
 
 use crate::entities::{I64, Usize};
 
-use super::{ContainerConfig, GraphDriverData, PortBinding};
+use super::{
+  ContainerConfig, GraphDriverData, Mount, MountTypeEnum,
+  PortBinding, ResourcesUlimits,
+};
 
 /// Container summary returned by container list apis.
 #[typeshare]
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ContainerListItem {
-  /// The Server which holds the container.
+  /// The Server which hosts the container.
   #[serde(skip_serializing_if = "Option::is_none")]
   pub server_id: Option<String>,
   /// The first name in Names, not including the initial '/'
@@ -69,6 +73,7 @@ pub struct ContainerListItem {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct NameAndId {
   pub name: String,
   pub id: String,
@@ -79,6 +84,7 @@ pub struct NameAndId {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Port {
   /// Host IP address that the container's port is mapped to
   #[serde(rename = "IP")]
@@ -109,6 +115,7 @@ pub struct Port {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum PortTypeEnum {
   #[default]
   #[serde(rename = "")]
@@ -125,6 +132,7 @@ pub enum PortTypeEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Container {
   /// The ID of the container
   #[serde(rename = "Id")]
@@ -215,6 +223,7 @@ pub struct Container {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ContainerState {
   /// String representation of the container state. Can be one of \"created\", \"running\", \"paused\", \"restarting\", \"removing\", \"exited\", or \"dead\".
   #[serde(default, rename = "Status")]
@@ -276,6 +285,7 @@ pub struct ContainerState {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "lowercase")]
 #[strum(serialize_all = "lowercase")]
 pub enum ContainerStateStatusEnum {
@@ -314,6 +324,7 @@ impl ::std::str::FromStr for ContainerStateStatusEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ContainerHealth {
   /// Status is one of `none`, `starting`, `healthy` or `unhealthy`  - \"none\"      Indicates there is no healthcheck - \"starting\"  Starting indicates that the container is not yet ready - \"healthy\"   Healthy indicates that the container is running correctly - \"unhealthy\" Unhealthy indicates that the container has a problem
   #[serde(default, rename = "Status")]
@@ -341,6 +352,7 @@ pub struct ContainerHealth {
   Ord,
   Default,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum HealthStatusEnum {
   #[default]
   #[serde(rename = "")]
@@ -360,6 +372,7 @@ pub enum HealthStatusEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct HealthcheckResult {
   /// Date and time at which this check started in [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format with nano-seconds.
   #[serde(rename = "Start")]
@@ -383,6 +396,7 @@ pub struct HealthcheckResult {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct HostConfig {
   /// An integer value representing this container's relative CPU weight versus other containers.
   #[serde(rename = "CpuShares")]
@@ -455,10 +469,6 @@ pub struct HostConfig {
   /// A list of requests for devices to be sent to device drivers.
   #[serde(default, rename = "DeviceRequests")]
   pub device_requests: Vec<DeviceRequest>,
-
-  /// Hard limit for kernel TCP buffer memory (in bytes). Depending on the OCI runtime in use, this option may be ignored. It is no longer supported by the default (runc) runtime.  This field is omitted when empty.
-  #[serde(rename = "KernelMemoryTCP")]
-  pub kernel_memory_tcp: Option<I64>,
 
   /// Memory soft limit in bytes.
   #[serde(rename = "MemoryReservation")]
@@ -543,7 +553,7 @@ pub struct HostConfig {
 
   /// Specification for mounts to be added to the container.
   #[serde(default, rename = "Mounts")]
-  pub mounts: Vec<ContainerMount>,
+  pub mounts: Vec<Mount>,
 
   /// Initial console size, as an `[height, width]` array.
   #[serde(default, rename = "ConsoleSize")]
@@ -666,6 +676,7 @@ pub struct HostConfig {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ResourcesBlkioWeightDevice {
   #[serde(rename = "Path")]
   pub path: Option<String>,
@@ -678,6 +689,7 @@ pub struct ResourcesBlkioWeightDevice {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ThrottleDevice {
   /// Device path
   #[serde(rename = "Path")]
@@ -693,6 +705,7 @@ pub struct ThrottleDevice {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct DeviceMapping {
   #[serde(rename = "PathOnHost")]
   pub path_on_host: Option<String>,
@@ -709,6 +722,7 @@ pub struct DeviceMapping {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct DeviceRequest {
   #[serde(rename = "Driver")]
   pub driver: Option<String>,
@@ -730,24 +744,6 @@ pub struct DeviceRequest {
 
 #[typeshare]
 #[derive(
-  Debug, Clone, Default, PartialEq, Serialize, Deserialize,
-)]
-pub struct ResourcesUlimits {
-  /// Name of ulimit
-  #[serde(rename = "Name")]
-  pub name: Option<String>,
-
-  /// Soft limit
-  #[serde(rename = "Soft")]
-  pub soft: Option<I64>,
-
-  /// Hard limit
-  #[serde(rename = "Hard")]
-  pub hard: Option<I64>,
-}
-
-#[typeshare]
-#[derive(
   Debug,
   Clone,
   Copy,
@@ -759,6 +755,7 @@ pub struct ResourcesUlimits {
   Ord,
   Default,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum HostConfigIsolationEnum {
   #[default]
   #[serde(rename = "")]
@@ -776,6 +773,7 @@ pub enum HostConfigIsolationEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct HostConfigLogConfig {
   #[serde(rename = "Type")]
   pub typ: Option<String>,
@@ -789,6 +787,7 @@ pub struct HostConfigLogConfig {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct RestartPolicy {
   /// - Empty string means not to restart - `no` Do not automatically restart - `always` Always restart - `unless-stopped` Restart always except when the user has manually stopped the container - `on-failure` Restart only when the container exit code is non-zero
   #[serde(default, rename = "Name")]
@@ -812,6 +811,7 @@ pub struct RestartPolicy {
   Ord,
   Default,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum RestartPolicyNameEnum {
   #[default]
   #[serde(rename = "")]
@@ -828,41 +828,6 @@ pub enum RestartPolicyNameEnum {
 
 #[typeshare]
 #[derive(
-  Debug, Clone, Default, PartialEq, Serialize, Deserialize,
-)]
-pub struct ContainerMount {
-  /// Container path.
-  #[serde(rename = "Target")]
-  pub target: Option<String>,
-
-  /// Mount source (e.g. a volume name, a host path).
-  #[serde(rename = "Source")]
-  pub source: Option<String>,
-
-  /// The mount type. Available types:  - `bind` Mounts a file or directory from the host into the container. Must exist prior to creating the container. - `volume` Creates a volume with the given name and options (or uses a pre-existing volume with the same name and options). These are **not** removed when the container is removed. - `tmpfs` Create a tmpfs with the given options. The mount source cannot be specified for tmpfs. - `npipe` Mounts a named pipe from the host into the container. Must exist prior to creating the container. - `cluster` a Swarm cluster volume
-  #[serde(default, rename = "Type")]
-  pub typ: MountTypeEnum,
-
-  /// Whether the mount should be read-only.
-  #[serde(rename = "ReadOnly")]
-  pub read_only: Option<bool>,
-
-  /// The consistency requirement for the mount: `default`, `consistent`, `cached`, or `delegated`.
-  #[serde(rename = "Consistency")]
-  pub consistency: Option<String>,
-
-  #[serde(rename = "BindOptions")]
-  pub bind_options: Option<MountBindOptions>,
-
-  #[serde(rename = "VolumeOptions")]
-  pub volume_options: Option<MountVolumeOptions>,
-
-  #[serde(rename = "TmpfsOptions")]
-  pub tmpfs_options: Option<MountTmpfsOptions>,
-}
-
-#[typeshare]
-#[derive(
   Debug,
   Clone,
   Copy,
@@ -874,147 +839,7 @@ pub struct ContainerMount {
   Ord,
   Default,
 )]
-pub enum MountTypeEnum {
-  #[default]
-  #[serde(rename = "")]
-  Empty,
-  #[serde(rename = "bind")]
-  Bind,
-  #[serde(rename = "volume")]
-  Volume,
-  #[serde(rename = "image")]
-  Image,
-  #[serde(rename = "tmpfs")]
-  Tmpfs,
-  #[serde(rename = "npipe")]
-  Npipe,
-  #[serde(rename = "cluster")]
-  Cluster,
-}
-
-/// Optional configuration for the `bind` type.
-#[typeshare]
-#[derive(
-  Debug, Clone, Default, PartialEq, Serialize, Deserialize,
-)]
-pub struct MountBindOptions {
-  /// A propagation mode with the value `[r]private`, `[r]shared`, or `[r]slave`.
-  #[serde(default, rename = "Propagation")]
-  pub propagation: MountBindOptionsPropagationEnum,
-
-  /// Disable recursive bind mount.
-  #[serde(rename = "NonRecursive")]
-  pub non_recursive: Option<bool>,
-
-  /// Create mount point on host if missing
-  #[serde(rename = "CreateMountpoint")]
-  pub create_mountpoint: Option<bool>,
-
-  /// Make the mount non-recursively read-only, but still leave the mount recursive (unless NonRecursive is set to `true` in conjunction).  Addded in v1.44, before that version all read-only mounts were non-recursive by default. To match the previous behaviour this will default to `true` for clients on versions prior to v1.44.
-  #[serde(rename = "ReadOnlyNonRecursive")]
-  pub read_only_non_recursive: Option<bool>,
-
-  /// Raise an error if the mount cannot be made recursively read-only.
-  #[serde(rename = "ReadOnlyForceRecursive")]
-  pub read_only_force_recursive: Option<bool>,
-}
-
-#[typeshare]
-#[derive(
-  Debug,
-  Clone,
-  Copy,
-  PartialEq,
-  PartialOrd,
-  Serialize,
-  Deserialize,
-  Eq,
-  Ord,
-  Default,
-)]
-pub enum MountBindOptionsPropagationEnum {
-  #[default]
-  #[serde(rename = "")]
-  Empty,
-  #[serde(rename = "private")]
-  Private,
-  #[serde(rename = "rprivate")]
-  Rprivate,
-  #[serde(rename = "shared")]
-  Shared,
-  #[serde(rename = "rshared")]
-  Rshared,
-  #[serde(rename = "slave")]
-  Slave,
-  #[serde(rename = "rslave")]
-  Rslave,
-}
-
-/// Optional configuration for the `volume` type.
-#[typeshare]
-#[derive(
-  Debug, Clone, Default, PartialEq, Serialize, Deserialize,
-)]
-pub struct MountVolumeOptions {
-  /// Populate volume with data from the target.
-  #[serde(rename = "NoCopy")]
-  pub no_copy: Option<bool>,
-
-  /// User-defined key/value metadata.
-  #[serde(default, rename = "Labels")]
-  pub labels: HashMap<String, String>,
-
-  #[serde(rename = "DriverConfig")]
-  pub driver_config: Option<MountVolumeOptionsDriverConfig>,
-
-  /// Source path inside the volume. Must be relative without any back traversals.
-  #[serde(rename = "Subpath")]
-  pub subpath: Option<String>,
-}
-
-/// Map of driver specific options
-#[typeshare]
-#[derive(
-  Debug, Clone, Default, PartialEq, Serialize, Deserialize,
-)]
-pub struct MountVolumeOptionsDriverConfig {
-  /// Name of the driver to use to create the volume.
-  #[serde(rename = "Name")]
-  pub name: Option<String>,
-
-  /// key/value map of driver specific options.
-  #[serde(default, rename = "Options")]
-  pub options: HashMap<String, String>,
-}
-
-/// Optional configuration for the `tmpfs` type.
-#[typeshare]
-#[derive(
-  Debug, Clone, Default, PartialEq, Serialize, Deserialize,
-)]
-pub struct MountTmpfsOptions {
-  /// The size for the tmpfs mount in bytes.
-  #[serde(rename = "SizeBytes")]
-  pub size_bytes: Option<I64>,
-
-  /// The permission mode for the tmpfs mount in an integer.
-  #[serde(rename = "Mode")]
-  pub mode: Option<I64>,
-}
-
-#[typeshare]
-#[derive(
-  Debug,
-  Clone,
-  Copy,
-  PartialEq,
-  PartialOrd,
-  Serialize,
-  Deserialize,
-  Eq,
-  Ord,
-  Default,
-)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum HostConfigCgroupnsModeEnum {
   #[default]
   #[serde(rename = "")]
@@ -1030,6 +855,7 @@ pub enum HostConfigCgroupnsModeEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct MountPoint {
   /// The mount type:  - `bind` a mount of a file or directory from the host into the container. - `volume` a docker volume with the given `Name`. - `tmpfs` a `tmpfs`. - `npipe` a named pipe from the host into the container. - `cluster` a Swarm cluster volume
   #[serde(default, rename = "Type")]
@@ -1069,11 +895,8 @@ pub struct MountPoint {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct NetworkSettings {
-  /// Name of the default bridge interface when dockerd's --bridge flag is set.
-  #[serde(rename = "Bridge")]
-  pub bridge: Option<String>,
-
   /// SandboxID uniquely represents a container's network stack.
   #[serde(rename = "SandboxID")]
   pub sandbox_id: Option<String>,
@@ -1095,6 +918,7 @@ pub struct NetworkSettings {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct EndpointSettings {
   #[serde(rename = "IPAMConfig")]
   pub ipam_config: Option<EndpointIpamConfig>,
@@ -1155,6 +979,7 @@ pub struct EndpointSettings {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct EndpointIpamConfig {
   #[serde(rename = "IPv4Address")]
   pub ipv4_address: Option<String>,
@@ -1168,6 +993,7 @@ pub struct EndpointIpamConfig {
 
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ContainerStats {
   #[serde(alias = "Name")]
   pub name: String,

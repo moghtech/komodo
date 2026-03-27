@@ -1,16 +1,18 @@
 use std::str::FromStr;
 
-use colored::Colorize;
+use anyhow::Context;
 use database::mungos::{
   find::find_collect,
-  mongodb::bson::{Document, doc, oid::ObjectId, to_document},
+  mongodb::bson::{
+    Document, doc, oid::ObjectId, to_bson, to_document,
+  },
 };
-use futures::future::join_all;
+use futures_util::future::join_all;
 use komodo_client::{
   api::{
-    auth::SignUpLocalUser,
     execute::{
-      BackupCoreDatabase, Execution, GlobalAutoUpdate, RunAction,
+      BackupCoreDatabase, Execution, GlobalAutoUpdate,
+      RotateAllServerKeys, RunAction,
     },
     write::{
       CreateBuilder, CreateProcedure, CreateServer, CreateTag,
@@ -20,23 +22,26 @@ use komodo_client::{
   entities::{
     ResourceTarget,
     builder::{PartialBuilderConfig, PartialServerBuilderConfig},
+    deployment::DeploymentInfo,
     komodo_timestamp,
     procedure::{EnabledExecution, ProcedureConfig, ProcedureStage},
-    server::{PartialServerConfig, Server},
+    server::{PartialServerConfig, Server, ServerInfo},
     sync::ResourceSync,
     tag::TagColor,
     update::Log,
     user::{action_user, system_user},
   },
 };
-use resolver_api::Resolve;
+use mogh_auth_server::api::login::local::sign_up_local_user;
+use mogh_resolver::Resolve;
+use uuid::Uuid;
 
 use crate::{
   api::{
-    auth::AuthArgs,
     execute::{ExecuteArgs, ExecuteRequest},
     write::WriteArgs,
   },
+  auth::KomodoAuthImpl,
   config::core_config,
   helpers::update::init_execution_update,
   network, resource,
@@ -87,6 +92,7 @@ pub async fn run_startup_actions() {
     .resolve(&ExecuteArgs {
       user: action_user().to_owned(),
       update,
+      task_id: Uuid::new_v4(),
     })
     .await
     {
@@ -106,9 +112,11 @@ pub async fn on_startup() {
   tokio::join!(
     in_progress_update_cleanup(),
     open_alert_cleanup(),
-    clean_up_server_templates(),
+    action_api_key_cleanup(),
     ensure_first_server_and_builder(),
     ensure_init_user_and_resources(),
+    clean_up_server_templates(),
+    v2_init_missing_resource_info(),
   );
 }
 
@@ -119,8 +127,15 @@ async fn in_progress_update_cleanup() {
       "Komodo shutdown during execution. If this is a build, the builder may not have been terminated.",
     ),
   );
-  // This static log won't fail to serialize, unwrap ok.
-  let log = to_document(&log).unwrap();
+  let log = match to_document(&log)
+    .context("Failed to serialize log to document")
+  {
+    Ok(log) => log,
+    Err(e) => {
+      error!("Failed to clean up in progress update | {e:#}");
+      return;
+    }
+  };
   if let Err(e) = db_client()
     .updates
     .update_many(
@@ -137,7 +152,9 @@ async fn in_progress_update_cleanup() {
     )
     .await
   {
-    error!("failed to cleanup in progress updates on startup | {e:#}")
+    error!(
+      "Failed to clean up in progress updates on startup | {e:?}"
+    )
   }
 }
 
@@ -149,7 +166,7 @@ async fn open_alert_cleanup() {
       .await
       .inspect_err(|e| {
         error!(
-          "failed to list all alerts for startup open alert cleanup | {e:?}"
+          "failed to list all alerts for startup open alert clean up | {e:?}"
         )
       })
   else {
@@ -195,54 +212,73 @@ async fn open_alert_cleanup() {
   }
 }
 
+async fn action_api_key_cleanup() {
+  if let Err(e) = db_client()
+    .api_keys
+    .delete_many(doc! { "user_id": &action_user().id })
+    .await
+  {
+    warn!(
+      "Failed to clean up dangling action api keys on startup | {e:?}"
+    )
+  }
+}
+
 /// Ensures a default server / builder exists with the defined address
 async fn ensure_first_server_and_builder() {
   let config = core_config();
-  let Some(address) = config.first_server.clone() else {
+  if config.first_server_name.is_none()
+    && config.first_server_address.is_none()
+  {
+    // If neither defined, early return
     return;
-  };
+  }
+  // Maybe create first Server / Builder
   let db = db_client();
-  let Ok(server) = db
-    .servers
-    .find_one(Document::new())
-    .await
-    .inspect_err(|e| error!("Failed to initialize 'first_server'. Failed to query db. {e:?}"))
+  // If any Server exists, exit early.
+  let Ok(None) =
+    db.servers.find_one(Document::new()).await.inspect_err(|e| {
+      error!(
+        "Failed to initialize first Server. Failed to query db. {e:?}"
+      )
+    })
   else {
     return;
   };
-  let server = if let Some(server) = server {
-    server
-  } else {
-    match (CreateServer {
-      name: config.first_server_name.clone(),
-      config: PartialServerConfig {
-        address: Some(address),
-        enabled: Some(true),
-        ..Default::default()
-      },
-    })
-    .resolve(&WriteArgs {
-      user: system_user().to_owned(),
-    })
-    .await
-    {
-      Ok(server) => server,
-      Err(e) => {
-        error!(
-          "Failed to initialize 'first_server'. Failed to CreateServer. {:#}",
-          e.error
-        );
-        return;
-      }
+  // Use the same name for Server and Builder
+  let name = config.first_server_name.as_deref().unwrap_or("Local");
+  let server = match (CreateServer {
+    name: name.to_string(),
+    config: PartialServerConfig {
+      address: config.first_server_address.clone(),
+      enabled: Some(true),
+      ..Default::default()
+    },
+    public_key: None,
+  })
+  .resolve(&WriteArgs {
+    user: system_user().to_owned(),
+  })
+  .await
+  {
+    Ok(server) => server,
+    Err(e) => {
+      error!(
+        "Failed to initialize first Server. Failed to CreateServer. {:#}",
+        e.error
+      );
+      return;
     }
   };
+  // If any builder exists, exit early.
   let Ok(None) = db.builders
     .find_one(Document::new()).await
     .inspect_err(|e| error!("Failed to initialize 'first_builder' | Failed to query db | {e:?}")) else {
       return;
     };
   if let Err(e) = (CreateBuilder {
-    name: config.first_server_name.clone(),
+    // Same name as Server
+    name: name.to_string(),
     config: PartialBuilderConfig::Server(
       PartialServerBuilderConfig {
         server_id: Some(server.id),
@@ -266,7 +302,7 @@ async fn ensure_init_user_and_resources() {
 
   // Assumes if there are any existing users, procedures, or tags,
   // the default procedures do not need to be set up.
-  let Ok((None, None, None)) = tokio::try_join!(
+  let Ok((None, procedures, tags)) = tokio::try_join!(
     db.users.find_one(Document::new()),
     db.procedures.find_one(Document::new()),
     db.tags.find_one(Document::new()),
@@ -279,26 +315,44 @@ async fn ensure_init_user_and_resources() {
   // Init admin user if set in config.
   if let Some(username) = &config.init_admin_username {
     info!("Creating init admin user...");
-    SignUpLocalUser {
-      username: username.clone(),
-      password: config.init_admin_password.clone(),
-    }
-    .resolve(&AuthArgs::default())
+    if let Err(e) = sign_up_local_user(
+      &KomodoAuthImpl,
+      username.to_string(),
+      &config.init_admin_password,
+    )
     .await
-    .expect("Failed to initialize default admin user.");
-    db.users
+    {
+      error!("Failed to create init admin user | {:#}", e.error);
+      return;
+    }
+    match db
+      .users
       .find_one(doc! { "username": username })
       .await
-      .expect("Failed to query database for initial user")
-      .expect("Failed to find initial user after creation");
-  };
+      .context(
+        "Failed to query database for init admin user after creation",
+      ) {
+      Ok(Some(_)) => {
+        info!("Successfully created init admin user.")
+      }
+      Ok(None) => {
+        error!("Failed to find init admin user after creation");
+      }
+      Err(e) => {
+        error!("{e:#}");
+      }
+    }
+  }
 
-  if config.disable_init_resources {
-    info!("System resources init {}", "DISABLED".red());
+  if config.disable_init_resources
+    || procedures.is_some()
+    || tags.is_some()
+  {
+    info!("Skipping initial system resource creation");
     return;
   }
 
-  info!("Creating init system resources...");
+  info!("Creating initial system resources...");
 
   let write_args = WriteArgs {
     user: system_user().to_owned(),
@@ -370,7 +424,7 @@ async fn ensure_init_user_and_resources() {
         enabled: true,
         executions: vec![
           EnabledExecution {
-            execution: Execution::GlobalAutoUpdate(GlobalAutoUpdate {}),
+            execution: Execution::GlobalAutoUpdate(GlobalAutoUpdate { skip_auto_update: false }),
             enabled: true
           }
         ]
@@ -413,6 +467,58 @@ async fn ensure_init_user_and_resources() {
       );
     }
   }.await;
+
+  // RotateAllServerKeys
+  async {
+    let Ok(config) = ProcedureConfig::builder()
+      .stages(vec![ProcedureStage {
+        name: String::from("Stage 1"),
+        enabled: true,
+        executions: vec![
+          EnabledExecution {
+            execution: Execution::RotateAllServerKeys(RotateAllServerKeys {}),
+            enabled: true
+          }
+        ]
+      }])
+      .schedule(String::from("Every day at 06:00"))
+      .build()
+      .inspect_err(|e| error!("Failed to initialize Server key rotation Procedure | Failed to build Procedure | {e:?}")) else {
+      return;
+    };
+    let procedure = match (CreateProcedure {
+      name: String::from("Rotate Server Keys"),
+      config: config.into(),
+    })
+    .resolve(&write_args)
+    .await
+    {
+      Ok(procedure) => procedure,
+      Err(e) => {
+        error!(
+          "Failed to initialize Server key rotation Procedure | Failed to create Procedure | {:#}",
+          e.error
+        );
+        return;
+      }
+    };
+    if let Err(e) = (UpdateResourceMeta {
+      target: ResourceTarget::Procedure(procedure.id),
+      tags: Some(default_tags.clone()),
+      description: Some(String::from(
+        "Rotates all currently connected Server keys.",
+      )),
+      template: None,
+    })
+    .resolve(&write_args)
+    .await
+    {
+      warn!(
+        "Failed to update Server key rotation Procedure tags / description | {:#}",
+        e.error
+      );
+    }
+  }.await;
 }
 
 /// v1.17.5 removes the ServerTemplate resource.
@@ -422,38 +528,95 @@ async fn clean_up_server_templates() {
   let db = db_client();
   tokio::join!(
     async {
-      db.permissions
+      if let Err(e) = db
+        .permissions
         .delete_many(doc! {
           "resource_target.type": "ServerTemplate",
         })
         .await
-        .expect(
-          "Failed to clean up server template permissions on db",
+      {
+        error!(
+          "Failed to clean up server template permissions on database | {e:#}"
         );
+      }
     },
     async {
-      db.updates
+      if let Err(e) = db
+        .updates
         .delete_many(doc! { "target.type": "ServerTemplate" })
         .await
-        .expect("Failed to clean up server template updates on db");
+      {
+        error!(
+          "Failed to clean up server template updates on database | {e:#}"
+        );
+      }
     },
     async {
-      db.users
+      if let Err(e) = db.users
         .update_many(
           Document::new(),
           doc! { "$unset": { "recents.ServerTemplate": 1, "all.ServerTemplate": 1 } }
         )
         .await
-        .expect("Failed to clean up server template updates on db");
+      {
+        error!(
+          "Failed to clean up server template user references on database | {e:#}"
+        );
+      }
     },
     async {
-      db.user_groups
+      if let Err(e) = db
+        .user_groups
         .update_many(
           Document::new(),
           doc! { "$unset": { "all.ServerTemplate": 1 } },
         )
         .await
-        .expect("Failed to clean up server template updates on db");
+      {
+        error!(
+          "Failed to clean up server template user group references on database | {e:#}"
+        );
+      }
     },
   );
+}
+
+/// v2 adds ServerInfo to ServerSchema and DeploymentInfo to DeploymentSchema.
+/// Need to ensure it is initialized from null to avoid de/serialization issues.
+async fn v2_init_missing_resource_info() {
+  let default_server_info = match to_bson(&ServerInfo::default()) {
+    Ok(info) => info,
+    Err(e) => {
+      error!("Failed to serialize ServerInfo to bson | {e:?}");
+      return;
+    }
+  };
+  if let Err(e) = db_client()
+    .servers
+    .update_many(
+      doc! { "info": null },
+      doc! { "$set": { "info": default_server_info } },
+    )
+    .await
+  {
+    error!("Failed to migrate ServerInfo to v2 | {e:?}");
+  }
+  let default_deployment_info =
+    match to_bson(&DeploymentInfo::default()) {
+      Ok(info) => info,
+      Err(e) => {
+        error!("Failed to serialize DeploymentInfo to bson | {e:?}");
+        return;
+      }
+    };
+  if let Err(e) = db_client()
+    .deployments
+    .update_many(
+      doc! { "info": null },
+      doc! { "$set": { "info": default_deployment_info } },
+    )
+    .await
+  {
+    error!("Failed to migrate DeploymentInfo to v2 | {e:?}");
+  }
 }

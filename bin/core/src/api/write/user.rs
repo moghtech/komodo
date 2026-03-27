@@ -1,54 +1,144 @@
-use std::str::FromStr;
+use std::{collections::VecDeque, str::FromStr};
 
 use anyhow::{Context, anyhow};
 use async_timing_util::unix_timestamp_ms;
 use database::{
+  bson::to_bson,
   hash_password,
-  mungos::mongodb::bson::{doc, oid::ObjectId},
+  mungos::{
+    by_id::update_one_by_id,
+    mongodb::bson::{doc, oid::ObjectId},
+  },
 };
 use komodo_client::{
   api::write::*,
   entities::{
-    NoData,
-    user::{User, UserConfig},
+    komodo_timestamp,
+    user::{NewUserParams, User, UserConfig},
   },
 };
+use mogh_error::{AddStatusCode as _, AddStatusCodeError};
+use mogh_resolver::Resolve;
 use reqwest::StatusCode;
-use resolver_api::Resolve;
-use serror::AddStatusCodeError;
 
-use crate::{config::core_config, state::db_client};
+use crate::{
+  helpers::{
+    query::get_user,
+    validations::{validate_password, validate_username},
+  },
+  state::db_client,
+};
 
 use super::WriteArgs;
 
 //
 
+const RECENTLY_VIEWED_MAX: usize = 10;
+
+impl Resolve<WriteArgs> for PushRecentlyViewed {
+  #[instrument(
+    "PushRecentlyViewed",
+    level = "debug",
+    skip_all,
+    fields(
+      user_id = user.id,
+      resource = format!("{:?}", self.resource)
+    )
+  )]
+  async fn resolve(
+    self,
+    WriteArgs { user, .. }: &WriteArgs,
+  ) -> mogh_error::Result<PushRecentlyViewedResponse> {
+    let user = get_user(&user.id).await?;
+
+    let (resource_type, id) = self.resource.extract_variant_id();
+
+    let field = format!("recents.{resource_type}");
+
+    let update = match user.recents.get(&resource_type) {
+      Some(recents) => {
+        let mut recents = recents
+          .iter()
+          .filter(|_id| !id.eq(*_id))
+          .take(RECENTLY_VIEWED_MAX - 1)
+          .collect::<VecDeque<_>>();
+
+        recents.push_front(id);
+
+        doc! { &field: to_bson(&recents)? }
+      }
+      None => {
+        doc! { &field: [id] }
+      }
+    };
+
+    update_one_by_id(
+      &db_client().users,
+      &user.id,
+      database::mungos::update::Update::Set(update),
+      None,
+    )
+    .await
+    .with_context(|| format!("Failed to update user '{field}'"))?;
+
+    Ok(PushRecentlyViewedResponse {})
+  }
+}
+
+//
+
+impl Resolve<WriteArgs> for SetLastSeenUpdate {
+  #[instrument(
+    "SetLastSeenUpdate",
+    level = "debug",
+    skip_all,
+    fields(user_id = user.id)
+  )]
+  async fn resolve(
+    self,
+    WriteArgs { user, .. }: &WriteArgs,
+  ) -> mogh_error::Result<SetLastSeenUpdateResponse> {
+    update_one_by_id(
+      &db_client().users,
+      &user.id,
+      database::mungos::update::Update::Set(doc! {
+        "last_update_view": komodo_timestamp()
+      }),
+      None,
+    )
+    .await
+    .context("Failed to update user 'last_update_view'")?;
+
+    Ok(SetLastSeenUpdateResponse {})
+  }
+}
+
+//
+
 impl Resolve<WriteArgs> for CreateLocalUser {
-  #[instrument(name = "CreateLocalUser", skip(admin, self), fields(admin_id = admin.id, username = self.username))]
+  #[instrument(
+    "CreateLocalUser",
+    skip_all,
+    fields(
+      admin_id = admin.id,
+      username = self.username
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<CreateLocalUserResponse> {
+  ) -> mogh_error::Result<CreateLocalUserResponse> {
     if !admin.admin {
       return Err(
-        anyhow!("This method is admin-only.")
+        anyhow!("This method is Admin Only.")
           .status_code(StatusCode::FORBIDDEN),
       );
     }
 
-    if self.username.is_empty() {
-      return Err(anyhow!("Username cannot be empty.").into());
-    }
-
-    if ObjectId::from_str(&self.username).is_ok() {
-      return Err(
-        anyhow!("Username cannot be valid ObjectId").into(),
-      );
-    }
-
-    if self.password.is_empty() {
-      return Err(anyhow!("Password cannot be empty.").into());
-    }
+    validate_username(&self.username)
+      .status_code(StatusCode::BAD_REQUEST)?;
+    validate_password(&self.password)
+      .status_code(StatusCode::BAD_REQUEST)?;
 
     let db = db_client();
 
@@ -65,22 +155,16 @@ impl Resolve<WriteArgs> for CreateLocalUser {
     let ts = unix_timestamp_ms() as i64;
     let hashed_password = hash_password(self.password)?;
 
-    let mut user = User {
-      id: Default::default(),
+    let mut user = User::new(NewUserParams {
       username: self.username,
       enabled: true,
       admin: false,
       super_admin: false,
-      create_server_permissions: false,
-      create_build_permissions: false,
-      updated_at: ts,
-      last_update_view: 0,
-      recents: Default::default(),
-      all: Default::default(),
       config: UserConfig::Local {
         password: hashed_password,
       },
-    };
+      updated_at: ts,
+    });
 
     user.id = db_client()
       .users
@@ -100,101 +184,38 @@ impl Resolve<WriteArgs> for CreateLocalUser {
 
 //
 
-impl Resolve<WriteArgs> for UpdateUserUsername {
-  #[instrument(name = "UpdateUserUsername", skip(user), fields(user_id = user.id))]
-  async fn resolve(
-    self,
-    WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<UpdateUserUsernameResponse> {
-    for locked_username in &core_config().lock_login_credentials_for {
-      if locked_username == "__ALL__"
-        || *locked_username == user.username
-      {
-        return Err(
-          anyhow!("User not allowed to update their username.")
-            .into(),
-        );
-      }
-    }
-    if self.username.is_empty() {
-      return Err(anyhow!("Username cannot be empty.").into());
-    }
-
-    if ObjectId::from_str(&self.username).is_ok() {
-      return Err(
-        anyhow!("Username cannot be valid ObjectId").into(),
-      );
-    }
-
-    let db = db_client();
-    if db
-      .users
-      .find_one(doc! { "username": &self.username })
-      .await
-      .context("Failed to query for existing users")?
-      .is_some()
-    {
-      return Err(anyhow!("Username already taken.").into());
-    }
-    let id = ObjectId::from_str(&user.id)
-      .context("User id not valid ObjectId.")?;
-    db.users
-      .update_one(
-        doc! { "_id": id },
-        doc! { "$set": { "username": self.username } },
-      )
-      .await
-      .context("Failed to update user username on database.")?;
-    Ok(NoData {})
-  }
-}
-
-//
-
-impl Resolve<WriteArgs> for UpdateUserPassword {
-  #[instrument(name = "UpdateUserPassword", skip(user, self), fields(user_id = user.id))]
-  async fn resolve(
-    self,
-    WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<UpdateUserPasswordResponse> {
-    for locked_username in &core_config().lock_login_credentials_for {
-      if locked_username == "__ALL__"
-        || *locked_username == user.username
-      {
-        return Err(
-          anyhow!("User not allowed to update their password.")
-            .into(),
-        );
-      }
-    }
-    db_client().set_user_password(user, &self.password).await?;
-    Ok(NoData {})
-  }
-}
-
-//
-
 impl Resolve<WriteArgs> for DeleteUser {
-  #[instrument(name = "DeleteUser", skip(admin), fields(user = self.user))]
+  #[instrument(
+    "DeleteUser",
+    skip_all,
+    fields(
+      admin_id = admin.id,
+      user_to_delete = self.user
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user: admin }: &WriteArgs,
-  ) -> serror::Result<DeleteUserResponse> {
+  ) -> mogh_error::Result<DeleteUserResponse> {
     if !admin.admin {
       return Err(
         anyhow!("This method is admin-only.")
           .status_code(StatusCode::FORBIDDEN),
       );
     }
+
     if admin.username == self.user || admin.id == self.user {
       return Err(anyhow!("User cannot delete themselves.").into());
     }
+
     let query = if let Ok(id) = ObjectId::from_str(&self.user) {
       doc! { "_id": id }
     } else {
       doc! { "username": self.user }
     };
+
     let db = db_client();
+
     let Some(user) = db
       .users
       .find_one(query.clone())
@@ -205,21 +226,25 @@ impl Resolve<WriteArgs> for DeleteUser {
         anyhow!("No user found with given id / username").into(),
       );
     };
+
     if user.super_admin {
       return Err(
         anyhow!("Cannot delete a super admin user.").into(),
       );
     }
+
     if user.admin && !admin.super_admin {
       return Err(
         anyhow!("Only a Super Admin can delete an admin user.")
           .into(),
       );
     }
+
     db.users
       .delete_one(query)
       .await
       .context("Failed to delete user from database")?;
+
     // Also remove user id from all user groups
     if let Err(e) = db
       .user_groups
@@ -228,6 +253,7 @@ impl Resolve<WriteArgs> for DeleteUser {
     {
       warn!("Failed to remove deleted user from user groups | {e:?}");
     };
+
     Ok(user)
   }
 }

@@ -1,0 +1,33 @@
+[package]
+name = "transport"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+periphery_client.workspace = true
+encoding.workspace = true
+mogh_pki.workspace = true
+#
+mogh_error.workspace = true
+#
+tokio-tungstenite.workspace = true
+pin-project-lite.workspace = true
+data-encoding.workspace = true
+futures-util.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+anyhow.workspace = true
+rustls.workspace = true
+bytes.workspace = true
+tokio.workspace = true
+serde.workspace = true
+axum.workspace = true
+rand.workspace = true
+sha1.workspace = true
+sha2.workspace = true
+uuid.workspace = true
+url.workspace = true

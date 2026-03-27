@@ -9,5 +9,8 @@ homepage.workspace = true
 
 [dependencies]
 komodo_client.workspace = true
-run_command.workspace = true
+#
 svi.workspace = true
+#
+tokio.workspace = true
+shlex.workspace = true

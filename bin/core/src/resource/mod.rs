@@ -4,17 +4,20 @@ use std::{
 };
 
 use anyhow::{Context, anyhow};
-use database::mungos::{
-  by_id::{delete_one_by_id, update_one_by_id},
-  find::find_collect,
-  mongodb::{
-    Collection,
-    bson::{Document, doc, oid::ObjectId, to_document},
-    options::FindOptions,
+use database::{
+  bson::to_bson,
+  mungos::{
+    by_id::{delete_one_by_id, update_one_by_id},
+    find::find_collect,
+    mongodb::{
+      Collection,
+      bson::{Document, doc, oid::ObjectId, to_document},
+      options::FindOptions,
+    },
   },
 };
 use formatting::format_serror;
-use futures::future::join_all;
+use futures_util::future::join_all;
 use indexmap::IndexSet;
 use komodo_client::{
   api::{read::ExportResourcesToToml, write::CreateTag},
@@ -33,11 +36,11 @@ use komodo_client::{
   },
   parsers::parse_string_list,
 };
+use mogh_error::AddStatusCodeError;
+use mogh_resolver::Resolve;
 use partial_derive2::{Diff, MaybeNone, PartialDiff};
 use reqwest::StatusCode;
-use resolver_api::Resolve;
 use serde::{Serialize, de::DeserializeOwned};
-use serror::AddStatusCodeError;
 
 use crate::{
   api::{read::ReadArgs, write::WriteArgs},
@@ -46,7 +49,7 @@ use crate::{
     query::{get_tag, id_or_name_filter},
     update::{add_update, make_update},
   },
-  permission::{get_check_permissions, get_resource_ids_for_user},
+  permission::{get_check_permissions, list_resources_for_user},
   state::db_client,
 };
 
@@ -60,6 +63,7 @@ mod refresh;
 mod repo;
 mod server;
 mod stack;
+mod swarm;
 mod sync;
 
 pub use action::{
@@ -68,6 +72,7 @@ pub use action::{
 pub use build::{
   refresh_build_state_cache, spawn_build_state_refresh_loop,
 };
+pub use deployment::setup_deployment_execution;
 pub use procedure::{
   refresh_procedure_state_cache, spawn_procedure_state_refresh_loop,
 };
@@ -79,6 +84,7 @@ pub use refresh::{
 pub use repo::{
   refresh_repo_state_cache, spawn_repo_state_refresh_loop,
 };
+pub use server::{rotate_server_keys, update_server_public_key};
 
 /// Implement on each Komodo resource for common methods
 pub trait KomodoResource {
@@ -240,10 +246,10 @@ pub async fn get<T: KomodoResource>(
   T::coll()
     .find_one(id_or_name_filter(id_or_name))
     .await
-    .context("failed to query db for resource")?
+    .context("Failed to query db for resource")?
     .with_context(|| {
       format!(
-        "did not find any {} matching {id_or_name}",
+        "Did not find any {} matching {id_or_name}",
         T::resource_type()
       )
     })
@@ -253,36 +259,34 @@ pub async fn get<T: KomodoResource>(
 // LIST
 // ======
 
-/// Returns None if still no need to filter by resource id (eg transparent mode, group membership with all access).
-#[instrument(level = "debug")]
-pub async fn get_resource_object_ids_for_user<T: KomodoResource>(
-  user: &User,
-) -> anyhow::Result<Option<Vec<ObjectId>>> {
-  get_resource_ids_for_user::<T>(user).await.map(|ids| {
-    ids.map(|ids| {
-      ids
-        .into_iter()
-        .flat_map(|id| ObjectId::from_str(&id))
-        .collect()
-    })
+/// Get full resource list with no permissions check.
+pub async fn list_all_resources<T: KomodoResource>(
+  filters: impl Into<Option<Document>>,
+) -> anyhow::Result<Vec<Resource<T::Config, T::Info>>> {
+  find_collect(
+    T::coll(),
+    filters,
+    FindOptions::builder().sort(doc! { "name": 1 }).build(),
+  )
+  .await
+  .with_context(|| {
+    format!("Failed to pull {}s from mongo", T::resource_type())
   })
 }
 
-#[instrument(level = "debug")]
 pub async fn list_for_user<T: KomodoResource>(
   mut query: ResourceQuery<T::QuerySpecifics>,
   user: &User,
-  permissions: PermissionLevelAndSpecifics,
+  permission: PermissionLevelAndSpecifics,
   all_tags: &[Tag],
 ) -> anyhow::Result<Vec<T::ListItem>> {
   validate_resource_query_tags(&mut query, all_tags)?;
   let mut filters = Document::new();
   query.add_filters(&mut filters);
-  list_for_user_using_document::<T>(filters, user, permissions).await
+  list_for_user_using_document::<T>(filters, user, permission).await
 }
 
-// #[instrument(level = "debug")]
-// pub async fn list_for_user_using_pattern<T: KomodoResource>(
+// // pub async fn list_for_user_using_pattern<T: KomodoResource>(
 //   pattern: &str,
 //   query: ResourceQuery<T::QuerySpecifics>,
 //   user: &User,
@@ -302,13 +306,12 @@ pub async fn list_for_user<T: KomodoResource>(
 //   Ok(join_all(list).await)
 // }
 
-#[instrument(level = "debug")]
 pub async fn list_for_user_using_document<T: KomodoResource>(
   filters: Document,
   user: &User,
-  permissions: PermissionLevelAndSpecifics,
+  permission: PermissionLevelAndSpecifics,
 ) -> anyhow::Result<Vec<T::ListItem>> {
-  let list = list_full_for_user_using_document::<T>(filters, user)
+  let list = list_resources_for_user::<T>(filters, user, permission)
     .await?
     .into_iter()
     .map(|resource| T::to_list_item(resource));
@@ -323,16 +326,15 @@ pub async fn list_for_user_using_document<T: KomodoResource>(
 /// let items = list_full_for_user_using_match_string::<Build>("foo-*", Default::default(), user, all_tags).await?;
 /// let items = list_full_for_user_using_match_string::<Build>("\\^foo-.*$\\", Default::default(), user, all_tags).await?;
 /// ```
-#[instrument(level = "debug")]
 pub async fn list_full_for_user_using_pattern<T: KomodoResource>(
   pattern: &str,
   query: ResourceQuery<T::QuerySpecifics>,
   user: &User,
-  permissions: PermissionLevelAndSpecifics,
+  permission: PermissionLevelAndSpecifics,
   all_tags: &[Tag],
 ) -> anyhow::Result<Vec<Resource<T::Config, T::Info>>> {
   let resources =
-    list_full_for_user::<T>(query, user, permissions, all_tags)
+    list_full_for_user::<T>(query, user, permission, all_tags)
       .await?;
 
   let patterns = parse_string_list(pattern);
@@ -366,7 +368,6 @@ pub async fn list_full_for_user_using_pattern<T: KomodoResource>(
   )
 }
 
-#[instrument(level = "debug")]
 pub async fn list_full_for_user<T: KomodoResource>(
   mut query: ResourceQuery<T::QuerySpecifics>,
   user: &User,
@@ -376,28 +377,7 @@ pub async fn list_full_for_user<T: KomodoResource>(
   validate_resource_query_tags(&mut query, all_tags)?;
   let mut filters = Document::new();
   query.add_filters(&mut filters);
-  list_full_for_user_using_document::<T>(filters, user).await
-}
-
-#[instrument(level = "debug")]
-pub async fn list_full_for_user_using_document<T: KomodoResource>(
-  mut filters: Document,
-  user: &User,
-) -> anyhow::Result<Vec<Resource<T::Config, T::Info>>> {
-  if let Some(ids) =
-    get_resource_object_ids_for_user::<T>(user).await?
-  {
-    filters.insert("_id", doc! { "$in": ids });
-  }
-  find_collect(
-    T::coll(),
-    filters,
-    FindOptions::builder().sort(doc! { "name": 1 }).build(),
-  )
-  .await
-  .with_context(|| {
-    format!("failed to pull {}s from mongo", T::resource_type())
-  })
+  list_resources_for_user::<T>(filters, user, permissions).await
 }
 
 pub type IdResourceMap<T> = HashMap<
@@ -408,7 +388,6 @@ pub type IdResourceMap<T> = HashMap<
   >,
 >;
 
-#[instrument(level = "debug")]
 pub async fn get_id_to_resource_map<T: KomodoResource>(
   id_to_tags: &HashMap<String, Tag>,
   match_tags: &[String],
@@ -416,7 +395,7 @@ pub async fn get_id_to_resource_map<T: KomodoResource>(
   let res = find_collect(T::coll(), None, None)
     .await
     .with_context(|| {
-      format!("failed to pull {}s from mongo", T::resource_type())
+      format!("Failed to pull {}s from mongo", T::resource_type())
     })?
     .into_iter()
     .filter(|resource| {
@@ -459,8 +438,9 @@ pub async fn get_id_to_resource_map<T: KomodoResource>(
 pub async fn create<T: KomodoResource>(
   name: &str,
   mut config: T::PartialConfig,
+  info: Option<T::Info>,
   user: &User,
-) -> serror::Result<Resource<T::Config, T::Info>> {
+) -> mogh_error::Result<Resource<T::Config, T::Info>> {
   if !T::user_can_create(user) {
     return Err(
       anyhow!(
@@ -489,16 +469,13 @@ pub async fn create<T: KomodoResource>(
 
   // Ensure an existing resource with same name doesn't already exist
   // The database indexing also ensures this but doesn't give a good error message.
-  if list_full_for_user::<T>(
-    Default::default(),
-    system_user(),
-    PermissionLevel::Read.into(),
-    &[],
-  )
-  .await
-  .context("Failed to list all resources for duplicate name check")?
-  .into_iter()
-  .any(|r| r.name == name)
+  if T::coll()
+    .find_one(doc! { "name": &name })
+    .await
+    .context(
+      "Failed to check existing resources for duplicate name check",
+    )?
+    .is_some()
   {
     return Err(
       anyhow!("Resource with name '{}' already exists", name)
@@ -517,7 +494,11 @@ pub async fn create<T: KomodoResource>(
     template: Default::default(),
     tags: Default::default(),
     config: config.into(),
-    info: T::default_info().await?,
+    info: if let Some(info) = info {
+      info
+    } else {
+      T::default_info().await?
+    },
     base_permission: PermissionLevel::None.into(),
     updated_at: start_ts,
   };
@@ -526,11 +507,11 @@ pub async fn create<T: KomodoResource>(
     .insert_one(&resource)
     .await
     .with_context(|| {
-      format!("failed to add {} to db", T::resource_type())
+      format!("Failed to add {} to db", T::resource_type())
     })?
     .inserted_id
     .as_object_id()
-    .context("inserted_id is not ObjectId")?
+    .context("Inserted_id is not ObjectId")?
     .to_string();
 
   let resource = get::<T>(&resource_id).await?;
@@ -547,18 +528,18 @@ pub async fn create<T: KomodoResource>(
   let mut update = make_update(target, T::create_operation(), user);
   update.start_ts = start_ts;
   update.push_simple_log(
-    &format!("create {}", T::resource_type()),
+    &format!("Create {}", T::resource_type()),
     format!(
-      "created {}\nid: {}\nname: {}",
+      "Created {}\nid: {}\nname: {}",
       T::resource_type(),
       resource.id,
       resource.name
     ),
   );
   update.push_simple_log(
-    "config",
+    "Config",
     serde_json::to_string_pretty(&resource.config)
-      .context("failed to serialize resource config to JSON")?,
+      .context("Failed to serialize resource config to JSON")?,
   );
 
   T::post_create(&resource, &mut update).await?;
@@ -671,20 +652,21 @@ pub async fn update<T: KomodoResource>(
 fn resource_target<T: KomodoResource>(id: String) -> ResourceTarget {
   match T::resource_type() {
     ResourceTargetVariant::System => ResourceTarget::System(id),
-    ResourceTargetVariant::Build => ResourceTarget::Build(id),
-    ResourceTargetVariant::Builder => ResourceTarget::Builder(id),
+    ResourceTargetVariant::Swarm => ResourceTarget::Swarm(id),
+    ResourceTargetVariant::Server => ResourceTarget::Server(id),
+    ResourceTargetVariant::Stack => ResourceTarget::Stack(id),
     ResourceTargetVariant::Deployment => {
       ResourceTarget::Deployment(id)
     }
-    ResourceTargetVariant::Server => ResourceTarget::Server(id),
+    ResourceTargetVariant::Build => ResourceTarget::Build(id),
     ResourceTargetVariant::Repo => ResourceTarget::Repo(id),
-    ResourceTargetVariant::Alerter => ResourceTarget::Alerter(id),
     ResourceTargetVariant::Procedure => ResourceTarget::Procedure(id),
+    ResourceTargetVariant::Action => ResourceTarget::Action(id),
     ResourceTargetVariant::ResourceSync => {
       ResourceTarget::ResourceSync(id)
     }
-    ResourceTargetVariant::Stack => ResourceTarget::Stack(id),
-    ResourceTargetVariant::Action => ResourceTarget::Action(id),
+    ResourceTargetVariant::Builder => ResourceTarget::Builder(id),
+    ResourceTargetVariant::Alerter => ResourceTarget::Alerter(id),
   }
 }
 
@@ -748,13 +730,29 @@ pub async fn update_meta<T: KomodoResource>(
   Ok(())
 }
 
+pub async fn update_info<T: KomodoResource>(
+  id_or_name: &str,
+  info: &T::Info,
+) -> anyhow::Result<()> {
+  let info = to_bson(info)
+    .context("Failed to serialize resource info to BSON")?;
+  T::coll()
+    .update_one(
+      id_or_name_filter(id_or_name),
+      doc! { "$set": { "info": info } },
+    )
+    .await
+    .context("Failed to update resource info on database")?;
+  Ok(())
+}
+
 pub async fn remove_tag_from_all<T: KomodoResource>(
   tag_id: &str,
 ) -> anyhow::Result<()> {
   T::coll()
     .update_many(doc! {}, doc! { "$pull": { "tags": tag_id } })
     .await
-    .context("failed to remove tag from resources")?;
+    .context("Failed to remove tag from resources")?;
   Ok(())
 }
 
@@ -822,11 +820,11 @@ pub async fn rename<T: KomodoResource>(
 
 pub async fn delete<T: KomodoResource>(
   id_or_name: &str,
-  args: &WriteArgs,
+  user: &User,
 ) -> anyhow::Result<Resource<T::Config, T::Info>> {
   let resource = get_check_permissions::<T>(
     id_or_name,
-    &args.user,
+    user,
     PermissionLevel::Write.into(),
   )
   .await?;
@@ -840,15 +838,13 @@ pub async fn delete<T: KomodoResource>(
     targets: vec![target.clone()],
     ..Default::default()
   }
-  .resolve(&ReadArgs {
-    user: args.user.clone(),
-  })
+  .resolve(&ReadArgs { user: user.clone() })
   .await
   .map_err(|e| e.error)?
   .toml;
 
   let mut update =
-    make_update(target.clone(), T::delete_operation(), &args.user);
+    make_update(target.clone(), T::delete_operation(), user);
 
   T::pre_delete(&resource, &mut update).await?;
 
@@ -871,7 +867,7 @@ pub async fn delete<T: KomodoResource>(
     async {
       if let Err(e) = T::post_delete(&resource, &mut update).await {
         update
-          .push_error_log("post delete", format_serror(&e.into()));
+          .push_error_log("Post delete", format_serror(&e.into()));
       }
     },
     delete_from_alerters::<T>(&resource.id)
@@ -907,7 +903,6 @@ async fn delete_from_alerters<T: KomodoResource>(id: &str) {
 
 // =======
 
-#[instrument(level = "debug")]
 pub fn validate_resource_query_tags<T: Default + std::fmt::Debug>(
   query: &mut ResourceQuery<T>,
   all_tags: &[Tag],
@@ -928,7 +923,7 @@ pub fn validate_resource_query_tags<T: Default + std::fmt::Debug>(
   Ok(())
 }
 
-#[instrument]
+#[instrument("DeleteAllPermissionsOnResource")]
 pub async fn delete_all_permissions_on_resource<T>(target: T)
 where
   T: Into<ResourceTarget> + std::fmt::Debug,
@@ -944,28 +939,29 @@ where
     .await
   {
     warn!(
-      "failed to delete_many permissions matching target {target:?} | {e:#}"
+      "Failed to delete_many permissions matching target {target:?} | {e:#}"
     );
   }
 }
 
-#[instrument]
+#[instrument("RemoveFromRecentlyViewed")]
 pub async fn remove_from_recently_viewed<T>(resource: T)
 where
   T: Into<ResourceTarget> + std::fmt::Debug,
 {
   let resource: ResourceTarget = resource.into();
   let (recent_field, id) = match resource {
+    ResourceTarget::Swarm(id) => ("recents.Swarm", id),
     ResourceTarget::Server(id) => ("recents.Server", id),
+    ResourceTarget::Stack(id) => ("recents.Stack", id),
     ResourceTarget::Deployment(id) => ("recents.Deployment", id),
     ResourceTarget::Build(id) => ("recents.Build", id),
     ResourceTarget::Repo(id) => ("recents.Repo", id),
     ResourceTarget::Procedure(id) => ("recents.Procedure", id),
     ResourceTarget::Action(id) => ("recents.Action", id),
-    ResourceTarget::Stack(id) => ("recents.Stack", id),
+    ResourceTarget::ResourceSync(id) => ("recents.ResourceSync", id),
     ResourceTarget::Builder(id) => ("recents.Builder", id),
     ResourceTarget::Alerter(id) => ("recents.Alerter", id),
-    ResourceTarget::ResourceSync(id) => ("recents.ResourceSync", id),
     ResourceTarget::System(_) => return,
   };
   if let Err(e) = db_client()
@@ -979,7 +975,7 @@ where
       },
     )
     .await
-    .context("failed to remove resource from users recently viewed")
+    .context("Failed to remove resource from users recently viewed")
   {
     warn!("{e:#}");
   }

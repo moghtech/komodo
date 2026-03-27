@@ -1,0 +1,204 @@
+//! Module to handle common parts of deploying Compose and Swarm Stacks.
+
+use std::path::{Path, PathBuf};
+
+use anyhow::{Context as _, anyhow};
+use formatting::format_serror;
+use komodo_client::entities::{
+  FileContents, RepoExecutionArgs,
+  repo::Repo,
+  stack::{Stack, StackRemoteFileContents},
+  to_path_compatible_name,
+  update::Log,
+};
+use mogh_resolver::Resolve as _;
+use periphery_client::api::{
+  DeployStackResponse, git::PullOrCloneRepo,
+};
+
+use crate::{
+  api::Args, config::periphery_config, docker::docker_login,
+};
+
+pub mod write;
+
+#[instrument(
+  "MaybeLoginRegistry",
+  skip_all,
+  fields(stack = stack.name)
+)]
+pub async fn maybe_login_registry(
+  stack: &Stack,
+  registry_token: Option<String>,
+  logs: &mut Vec<Log>,
+) -> bool {
+  if !stack.config.registry_provider.is_empty()
+    && !stack.config.registry_account.is_empty()
+  {
+    if let Err(e) = docker_login(
+      &stack.config.registry_provider,
+      &stack.config.registry_account,
+      registry_token.as_deref(),
+    )
+    .await
+    .with_context(|| {
+      format!(
+        "Domain: '{}' | Account: '{}'",
+        stack.config.registry_provider, stack.config.registry_account
+      )
+    })
+    .context("Failed to login to image registry")
+    {
+      logs.push(Log::error(
+        "Login to Registry",
+        format_serror(&e.into()),
+      ));
+    }
+    true
+  } else {
+    false
+  }
+}
+
+/// Only for git repo based Stacks.
+/// Returns path to root directory of the stack repo.
+///
+/// Both Stack and Repo environment, on clone, on pull are ignored.
+#[instrument(
+  "PullOrCloneStack",
+  skip_all,
+  fields(
+    stack = stack.name,
+    repo = repo.as_ref().map(|repo| &repo.name),
+  )
+)]
+pub async fn pull_or_clone_stack(
+  stack: &Stack,
+  repo: Option<&Repo>,
+  git_token: Option<String>,
+  req_args: &Args,
+) -> anyhow::Result<PathBuf> {
+  if stack.config.files_on_host {
+    return Err(anyhow!(
+      "Wrong method called for files on host stack"
+    ));
+  }
+  if repo.is_none() && stack.config.repo.is_empty() {
+    return Err(anyhow!("Repo is not configured"));
+  }
+
+  let (root, mut args) = if let Some(repo) = repo {
+    let root = periphery_config()
+      .repo_dir()
+      .join(to_path_compatible_name(&repo.name))
+      .join(&repo.config.path)
+      .components()
+      .collect::<PathBuf>();
+    let args: RepoExecutionArgs = repo.into();
+    (root, args)
+  } else {
+    let root = periphery_config()
+      .stack_dir()
+      .join(to_path_compatible_name(&stack.name))
+      .join(&stack.config.clone_path)
+      .components()
+      .collect::<PathBuf>();
+    let args: RepoExecutionArgs = stack.into();
+    (root, args)
+  };
+  args.destination = Some(root.display().to_string());
+
+  let git_token = crate::helpers::git_token(git_token, &args)?;
+
+  PullOrCloneRepo {
+    args,
+    git_token,
+    // All the extra pull functions
+    // (env, on clone, on pull)
+    // are disabled with this method.
+    environment: Default::default(),
+    env_file_path: Default::default(),
+    on_clone: Default::default(),
+    on_pull: Default::default(),
+    skip_secret_interp: Default::default(),
+    replacers: Default::default(),
+  }
+  .resolve(req_args)
+  .await?;
+
+  Ok(root)
+}
+
+#[instrument(
+  "ValidateStackFiles",
+  skip(stack, res),
+  fields(stack = stack.name)
+)]
+pub async fn validate_files(
+  stack: &Stack,
+  run_directory: &Path,
+  res: &mut DeployStackResponse,
+) {
+  let file_paths = stack
+    .all_file_dependencies()
+    .into_iter()
+    .map(|file| {
+      (
+        // This will remove any intermediate uneeded '/./' in the path
+        run_directory
+          .join(&file.path)
+          .components()
+          .collect::<PathBuf>(),
+        file,
+      )
+    })
+    .collect::<Vec<_>>();
+
+  // First validate no missing files
+  for (full_path, file) in &file_paths {
+    if !full_path.exists() {
+      res.missing_files.push(file.path.clone());
+    }
+  }
+  if !res.missing_files.is_empty() {
+    res.logs.push(Log::error(
+      "Validate Files",
+      format_serror(
+        &anyhow!(
+          "Missing files: {}", res.missing_files.join(", ")
+        )
+        .context("Ensure the run_directory and all file paths are correct.")
+        .context("A file doesn't exist after writing stack.")
+        .into(),
+      ),
+    ));
+    return;
+  }
+
+  for (full_path, file) in file_paths {
+    let file_contents =
+      match tokio::fs::read_to_string(&full_path).await.with_context(
+        || format!("Failed to read file contents at {full_path:?}"),
+      ) {
+        Ok(res) => res,
+        Err(e) => {
+          let error = format_serror(&e.into());
+          res
+            .logs
+            .push(Log::error("Read Compose File", error.clone()));
+          // This should only happen for repo stacks, ie remote error
+          res.remote_errors.push(FileContents {
+            path: file.path,
+            contents: error,
+          });
+          return;
+        }
+      };
+    res.file_contents.push(StackRemoteFileContents {
+      path: file.path,
+      contents: file_contents,
+      services: file.services,
+      requires: file.requires,
+    });
+  }
+}

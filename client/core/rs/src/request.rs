@@ -1,25 +1,27 @@
 use anyhow::{Context, anyhow};
+use mogh_auth_client::api::{
+  login::MoghAuthLoginRequest, manage::MoghAuthManageRequest,
+};
+use mogh_error::deserialize_error;
 use serde::{Serialize, de::DeserializeOwned};
 use serde_json::json;
-use serror::deserialize_error;
 
 use crate::{
   KomodoClient,
   api::{
-    auth::KomodoAuthRequest, execute::KomodoExecuteRequest,
-    read::KomodoReadRequest, user::KomodoUserRequest,
+    execute::KomodoExecuteRequest, read::KomodoReadRequest,
     write::KomodoWriteRequest,
   },
 };
 
 impl KomodoClient {
   #[cfg(not(feature = "blocking"))]
-  pub async fn auth<T>(
+  pub async fn auth_login<T>(
     &self,
     request: T,
   ) -> anyhow::Result<T::Response>
   where
-    T: Serialize + KomodoAuthRequest,
+    T: Serialize + MoghAuthLoginRequest,
     T::Response: DeserializeOwned,
   {
     self
@@ -34,9 +36,12 @@ impl KomodoClient {
   }
 
   #[cfg(feature = "blocking")]
-  pub fn auth<T>(&self, request: T) -> anyhow::Result<T::Response>
+  pub fn auth_login<T>(
+    &self,
+    request: T,
+  ) -> anyhow::Result<T::Response>
   where
-    T: Serialize + KomodoAuthRequest,
+    T: Serialize + MoghAuthLoginRequest,
     T::Response: DeserializeOwned,
   {
     self.post(
@@ -49,12 +54,12 @@ impl KomodoClient {
   }
 
   #[cfg(not(feature = "blocking"))]
-  pub async fn user<T>(
+  pub async fn auth_manage<T>(
     &self,
     request: T,
   ) -> anyhow::Result<T::Response>
   where
-    T: Serialize + KomodoUserRequest,
+    T: Serialize + MoghAuthManageRequest,
     T::Response: DeserializeOwned,
   {
     self
@@ -69,9 +74,12 @@ impl KomodoClient {
   }
 
   #[cfg(feature = "blocking")]
-  pub fn user<T>(&self, request: T) -> anyhow::Result<T::Response>
+  pub fn auth_manage<T>(
+    &self,
+    request: T,
+  ) -> anyhow::Result<T::Response>
   where
-    T: Serialize + KomodoUserRequest,
+    T: Serialize + MoghAuthManageRequest,
     T::Response: DeserializeOwned,
   {
     self.post(

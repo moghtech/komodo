@@ -1,17 +1,21 @@
 use std::{collections::HashMap, sync::OnceLock};
 
+use anyhow::anyhow;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
+use strum::{AsRefStr, Display, EnumDiscriminants, EnumString};
 use typeshare::typeshare;
 
 use crate::entities::{I64, MongoId};
 
 use super::{
-  ResourceTargetVariant, permission::PermissionLevelAndSpecifics,
+  JsonValue, ResourceTargetVariant,
+  permission::PermissionLevelAndSpecifics,
 };
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
   feature = "mongo",
   derive(mongo_indexed::derive::MongoIndexed)
@@ -56,8 +60,25 @@ pub struct User {
   #[serde(default)]
   pub create_build_permissions: bool,
 
-  /// The user-type specific config.
+  /// The primary user login.
   pub config: UserConfig,
+
+  /// Additional linked login methods.
+  /// May not contain 'Service' type config.
+  #[serde(default)]
+  pub linked_logins: LinkedLoginsMap,
+
+  /// TOTP 2fa credentials
+  #[serde(default)]
+  pub totp: UserTotpConfig,
+
+  /// WebAuthn Passkey 2fa credentials
+  #[serde(default)]
+  pub passkey: UserPasskeyConfig,
+
+  /// Allow external / third party logins to skip 2fa.
+  #[serde(default = "default_external_skip_2fa")]
+  pub external_skip_2fa: bool,
 
   /// When the user last opened updates dropdown.
   #[serde(default)]
@@ -69,6 +90,7 @@ pub struct User {
 
   /// Give the user elevated permissions on all resources of a certain type
   #[serde(default)]
+  #[cfg_attr(feature = "utoipa", schema(value_type = HashMap<ResourceTargetVariant, PermissionLevelAndSpecifics>))]
   pub all:
     IndexMap<ResourceTargetVariant, PermissionLevelAndSpecifics>,
 
@@ -76,17 +98,201 @@ pub struct User {
   pub updated_at: I64,
 }
 
+fn default_external_skip_2fa() -> bool {
+  true
+}
+
+pub struct NewUserParams {
+  pub username: String,
+  pub enabled: bool,
+  pub admin: bool,
+  pub super_admin: bool,
+  pub config: UserConfig,
+  pub updated_at: i64,
+}
+
 impl User {
-  /// Prepares user object for transport by removing any sensitive fields
-  pub fn sanitize(&mut self) {
-    if let UserConfig::Local { .. } = &self.config {
-      self.config = UserConfig::default();
+  pub fn new(
+    NewUserParams {
+      username,
+      enabled,
+      admin,
+      super_admin,
+      config,
+      updated_at,
+    }: NewUserParams,
+  ) -> User {
+    User {
+      id: Default::default(),
+      username,
+      enabled,
+      admin,
+      super_admin,
+      create_server_permissions: admin,
+      create_build_permissions: admin,
+      updated_at,
+      last_update_view: 0,
+      config,
+      recents: Default::default(),
+      all: Default::default(),
+      linked_logins: Default::default(),
+      totp: Default::default(),
+      passkey: Default::default(),
+      external_skip_2fa: Default::default(),
     }
+  }
+}
+
+#[typeshare]
+#[derive(Debug, Clone, Serialize, Deserialize, EnumDiscriminants)]
+#[strum_discriminants(name(UserConfigVariant))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(
+  not(feature = "utoipa"),
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr
+  ))
+)]
+#[cfg_attr(
+  feature = "utoipa",
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr,
+    utoipa::ToSchema
+  ))
+)]
+#[serde(tag = "type", content = "data")]
+pub enum UserConfig {
+  /// User that logs in with username / password
+  Local { password: String },
+
+  /// User that logs in via Google Oauth
+  Google { google_id: String, avatar: String },
+
+  /// User that logs in via Github Oauth
+  Github { github_id: String, avatar: String },
+
+  /// User that logs in via Oidc provider
+  Oidc { provider: String, user_id: String },
+
+  /// Non-human managed user, can have it's own permissions / api keys
+  Service { description: String },
+}
+
+impl Default for UserConfig {
+  fn default() -> Self {
+    Self::Local {
+      password: String::new(),
+    }
+  }
+}
+
+impl UserConfig {
+  pub fn sanitize(&mut self) {
+    if let UserConfig::Local { password } = self
+      && !password.is_empty()
+    {
+      *password = "#".repeat(8);
+    }
+  }
+}
+
+#[typeshare]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct LinkedLoginsMap(HashMap<UserConfigVariant, UserConfig>);
+
+impl LinkedLoginsMap {
+  pub fn get(
+    &self,
+    variant: UserConfigVariant,
+  ) -> Option<&UserConfig> {
+    self.0.get(&variant)
+  }
+
+  pub fn update(&mut self, login: UserConfig) -> anyhow::Result<()> {
+    if let UserConfig::Service { .. } = &login {
+      return Err(anyhow!(
+        "Cannot insert Service type configuration as additional login method."
+      ));
+    }
+    self.0.insert((&login).into(), login);
+    Ok(())
+  }
+
+  pub fn remove(&mut self, variant: UserConfigVariant) {
+    self.0.remove(&variant);
+  }
+}
+
+#[typeshare]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct UserTotpConfig {
+  /// TOTP shared secret, encrypted
+  pub secret: String,
+  /// Unix timestamp in milliseconds when secret confirmed
+  pub confirmed_at: I64,
+  /// Hashed recovery codes.
+  pub recovery_codes: Vec<String>,
+}
+
+impl UserTotpConfig {
+  pub fn sanitize(&mut self) {
+    self.secret.clear();
+    self.recovery_codes.clear();
+  }
+
+  pub fn enrolled(&self) -> bool {
+    !self.secret.is_empty()
+  }
+}
+
+#[typeshare]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct UserPasskeyConfig {
+  /// Passkey config for 2fa. The exact schema is not public.
+  pub passkey: Option<JsonValue>,
+  /// Unix timestamp in milliseconds when key created
+  pub created_at: I64,
+}
+
+impl UserPasskeyConfig {
+  pub fn sanitize(&mut self) {
+    self.passkey = None;
+  }
+}
+
+impl User {
+  /// Prepares user object for transport by clearing any sensitive fields
+  pub fn sanitize(&mut self) {
+    self.config.sanitize();
+    self
+      .linked_logins
+      .0
+      .values_mut()
+      .for_each(UserConfig::sanitize);
+    self.totp.sanitize();
+    self.passkey.sanitize();
   }
 
   /// Returns whether user is an inbuilt service user
   ///
-  /// NOTE: ALSO UPDATE `frontend/src/lib/utils/is_service_user` to match
+  /// NOTE: ALSO UPDATE `ui/src/lib/utils/is_service_user` to match
   pub fn is_service_user(user_id: &str) -> bool {
     matches!(
       user_id,
@@ -269,32 +475,4 @@ pub fn repo_user() -> &'static User {
       ..Default::default()
     }
   })
-}
-
-#[typeshare]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type", content = "data")]
-pub enum UserConfig {
-  /// User that logs in with username / password
-  Local { password: String },
-
-  /// User that logs in via Google Oauth
-  Google { google_id: String, avatar: String },
-
-  /// User that logs in via Github Oauth
-  Github { github_id: String, avatar: String },
-
-  /// User that logs in via Oidc provider
-  Oidc { provider: String, user_id: String },
-
-  /// Non-human managed user, can have it's own permissions / api keys
-  Service { description: String },
-}
-
-impl Default for UserConfig {
-  fn default() -> Self {
-    Self::Local {
-      password: String::new(),
-    }
-  }
 }

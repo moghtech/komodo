@@ -1,30 +1,41 @@
+use std::str::FromStr;
+
 use anyhow::Context;
-use database::mungos::mongodb::{Collection, bson::doc};
+use database::mungos::mongodb::{
+  Collection,
+  bson::{doc, oid::ObjectId},
+};
 use indexmap::IndexSet;
 use komodo_client::entities::{
   Operation, ResourceTarget, ResourceTargetVariant, komodo_timestamp,
+  optional_string,
   permission::SpecificPermission,
   resource::Resource,
   server::{
     PartialServerConfig, Server, ServerConfig, ServerConfigDiff,
-    ServerListItem, ServerListItemInfo, ServerQuerySpecifics,
+    ServerInfo, ServerListItem, ServerListItemInfo,
+    ServerQuerySpecifics,
   },
   update::Update,
   user::User,
 };
+use periphery_client::api;
 
 use crate::{
   config::core_config,
-  helpers::query::get_system_info,
-  monitor::update_cache_for_server,
-  state::{action_states, db_client, server_status_cache},
+  helpers::periphery_client,
+  monitor::refresh_server_cache,
+  state::{
+    action_states, db_client, periphery_connections,
+    server_status_cache,
+  },
 };
 
 impl super::KomodoResource for Server {
   type Config = ServerConfig;
   type PartialConfig = PartialServerConfig;
   type ConfigDiff = ServerConfigDiff;
-  type Info = ();
+  type Info = ServerInfo;
   type ListItem = ServerListItem;
   type QuerySpecifics = ServerQuerySpecifics;
 
@@ -57,11 +68,23 @@ impl super::KomodoResource for Server {
     server: Resource<Self::Config, Self::Info>,
   ) -> Self::ListItem {
     let status = server_status_cache().get(&server.id).await;
-    let (terminals_disabled, container_exec_disabled) =
-      get_system_info(&server)
-        .await
-        .map(|i| (i.terminals_disabled, i.container_exec_disabled))
-        .unwrap_or((true, true));
+    let (
+      version,
+      public_key,
+      public_ip,
+      terminals_disabled,
+      container_terminals_disabled,
+    ) = match status.as_ref().and_then(|s| s.periphery_info.as_ref())
+    {
+      Some(info) => (
+        Some(info.version.clone()),
+        Some(info.public_key.clone()),
+        info.public_ip.clone(),
+        info.terminals_disabled,
+        info.container_terminals_disabled,
+      ),
+      None => (None, None, None, true, true),
+    };
     ServerListItem {
       name: server.name,
       id: server.id,
@@ -70,12 +93,11 @@ impl super::KomodoResource for Server {
       resource_type: ResourceTargetVariant::Server,
       info: ServerListItemInfo {
         state: status.as_ref().map(|s| s.state).unwrap_or_default(),
-        version: status
-          .map(|s| s.version.clone())
-          .unwrap_or(String::from("Unknown")),
         region: server.config.region,
-        address: server.config.address,
-        external_address: server.config.external_address,
+        address: optional_string(server.config.address),
+        external_address: optional_string(
+          server.config.external_address,
+        ),
         send_unreachable_alerts: server
           .config
           .send_unreachable_alerts,
@@ -85,8 +107,14 @@ impl super::KomodoResource for Server {
         send_version_mismatch_alerts: server
           .config
           .send_version_mismatch_alerts,
+        version,
+        public_key,
+        attempted_public_key: optional_string(
+          server.info.attempted_public_key,
+        ),
+        public_ip,
         terminals_disabled,
-        container_exec_disabled,
+        container_terminals_disabled,
       },
     }
   }
@@ -123,7 +151,7 @@ impl super::KomodoResource for Server {
     created: &Resource<Self::Config, Self::Info>,
     _update: &mut Update,
   ) -> anyhow::Result<()> {
-    update_cache_for_server(created, true).await;
+    refresh_server_cache(created, true).await;
     Ok(())
   }
 
@@ -145,7 +173,7 @@ impl super::KomodoResource for Server {
     updated: &Self,
     _update: &mut Update,
   ) -> anyhow::Result<()> {
-    update_cache_for_server(updated, true).await;
+    refresh_server_cache(updated, true).await;
     Ok(())
   }
 
@@ -212,6 +240,22 @@ impl super::KomodoResource for Server {
       .await
       .context("failed to close deleted server alerts")?;
 
+    let _ = db_client()
+      .onboarding_keys
+      .update_many(
+        doc! { "onboarded": &id },
+        doc! { "$pull": { "onboarded": &id } },
+      )
+      .await;
+
+    let _ = db_client()
+      .onboarding_keys
+      .update_many(
+        doc! { "copy_server": &id },
+        doc! { "$set": { "copy_server": "" } },
+      )
+      .await;
+
     Ok(())
   }
 
@@ -219,7 +263,41 @@ impl super::KomodoResource for Server {
     resource: &Resource<Self::Config, Self::Info>,
     _update: &mut Update,
   ) -> anyhow::Result<()> {
-    server_status_cache().remove(&resource.id).await;
+    tokio::join!(
+      server_status_cache().remove(&resource.id),
+      periphery_connections().remove(&resource.id),
+    );
     Ok(())
   }
+}
+
+pub async fn update_server_public_key(
+  server_id: &str,
+  public_key: &str,
+) -> anyhow::Result<()> {
+  db_client()
+    .servers
+    .update_one(
+      doc! { "_id": ObjectId::from_str(server_id)? },
+      doc! { "$set": { "info.public_key": public_key } },
+    )
+    .await
+    .context("Failed to update Server public key on database")?;
+  Ok(())
+}
+
+/// Rotates Periphery keys and updates
+/// `server.info.public_key` to match new public key.
+/// Does so without making a specific update.
+pub async fn rotate_server_keys(
+  server: &Server,
+) -> anyhow::Result<()> {
+  let periphery = periphery_client(server).await?;
+  let public_key = periphery
+    .request(api::keys::RotatePrivateKey {})
+    .await
+    .context("Failed to rotate Periphery private key")?
+    .public_key;
+  update_server_public_key(&server.id, &public_key).await?;
+  Ok(())
 }

@@ -1,155 +1,813 @@
-use anyhow::{Context, anyhow};
-use async_timing_util::unix_timestamp_ms;
-use axum::{
-  extract::Request, http::HeaderMap, middleware::Next,
-  response::Response,
+use std::sync::{Arc, LazyLock};
+
+use anyhow::{Context as _, anyhow};
+use async_timing_util::{
+  Timelength, get_timelength_in_ms, unix_timestamp_ms,
 };
-use database::mungos::mongodb::bson::doc;
-use komodo_client::entities::{komodo_timestamp, user::User};
-use reqwest::StatusCode;
-use serde::Deserialize;
-use serror::AddStatusCode;
+use database::{
+  bson::{Document, doc, to_bson},
+  mungos::by_id::update_one_by_id,
+};
+use komodo_client::entities::{
+  komodo_timestamp, optional_str,
+  user::{NewUserParams, User, UserConfig, UserConfigVariant},
+};
+use mogh_auth_client::{
+  api::login::LoginProvider,
+  config::{NamedOauthConfig, OidcConfig},
+  passkey::Passkey,
+};
+use mogh_auth_server::{
+  AuthImpl,
+  provider::{
+    jwt::JwtProvider, oidc::SubjectIdentifier,
+    passkey::PasskeyProvider,
+  },
+  rand::random_string,
+  user::{AuthUserImpl, BoxAuthUser},
+};
+use mogh_error::{AddStatusCode, AddStatusCodeError, StatusCode};
+use mogh_pki::RotatableKeyPair;
+use mogh_rate_limit::RateLimiter;
 
 use crate::{
-  helpers::query::get_user,
-  state::{db_client, jwt_client},
+  config::{core_config, core_keys},
+  helpers::{
+    query::{
+      find_github_user, find_google_user, find_oidc_user, get_user,
+    },
+    validations::{
+      validate_api_key_name, validate_password, validate_username,
+    },
+  },
+  state::db_client,
 };
 
-use self::jwt::JwtClaims;
+mod api_key;
 
-pub mod github;
-pub mod google;
-pub mod jwt;
-pub mod oidc;
+pub mod middleware;
 
-mod local;
+pub static JWT_PROVIDER: LazyLock<JwtProvider> =
+  LazyLock::new(|| {
+    let config = core_config();
+    let secret = if config.jwt_secret.is_empty() {
+      random_string(40)
+    } else {
+      config.jwt_secret.clone()
+    };
+    let ttl_ms = get_timelength_in_ms(
+      config.jwt_ttl.to_string().parse().unwrap_or_else(|e| {
+        warn!(
+          "Failed to parse 'jwt_ttl' | Using default of 1-day | {e:?}"
+        );
+        Timelength::OneDay
+      }),
+    );
+    JwtProvider::new(secret.as_bytes(), ttl_ms)
+  });
 
-const STATE_PREFIX_LENGTH: usize = 20;
+pub static GENERAL_RATE_LIMITER: LazyLock<Arc<RateLimiter>> =
+  LazyLock::new(|| {
+    let config = core_config();
+    RateLimiter::new(
+      config.auth_rate_limit_disabled,
+      config.auth_rate_limit_max_attempts as usize,
+      config.auth_rate_limit_window_seconds,
+    )
+  });
 
-#[derive(Debug, Deserialize)]
-struct RedirectQuery {
-  redirect: Option<String>,
-}
+static LOCAL_LOGIN_RATE_LIMITER: LazyLock<Arc<RateLimiter>> =
+  LazyLock::new(|| {
+    let config = core_config();
+    RateLimiter::new(
+      config.auth_rate_limit_disabled,
+      config.auth_rate_limit_max_attempts as usize,
+      config.auth_rate_limit_window_seconds,
+    )
+  });
 
-#[instrument(level = "debug")]
-pub async fn auth_request(
-  headers: HeaderMap,
-  mut req: Request,
-  next: Next,
-) -> serror::Result<Response> {
-  let user = authenticate_check_enabled(&headers)
-    .await
-    .status_code(StatusCode::UNAUTHORIZED)?;
-  req.extensions_mut().insert(user);
-  Ok(next.run(req).await)
-}
+pub struct AuthUser(User);
 
-#[instrument(level = "debug")]
-pub async fn get_user_id_from_headers(
-  headers: &HeaderMap,
-) -> anyhow::Result<String> {
-  match (
-    headers.get("authorization"),
-    headers.get("x-api-key"),
-    headers.get("x-api-secret"),
-  ) {
-    (Some(jwt), _, _) => {
-      // USE JWT
-      let jwt = jwt.to_str().context("jwt is not str")?;
-      auth_jwt_get_user_id(jwt)
-        .await
-        .context("failed to authenticate jwt")
+impl AuthUserImpl for AuthUser {
+  fn id(&self) -> &str {
+    &self.0.id
+  }
+
+  fn username(&self) -> &str {
+    &self.0.username
+  }
+
+  fn hashed_password(&self) -> Option<&str> {
+    if let UserConfig::Local { password } = &self.0.config {
+      optional_str(password)
+    } else if let Some(UserConfig::Local { password }) =
+      self.0.linked_logins.get(UserConfigVariant::Local)
+    {
+      optional_str(password)
+    } else {
+      None
     }
-    (None, Some(key), Some(secret)) => {
-      // USE API KEY / SECRET
-      let key = key.to_str().context("key is not str")?;
-      let secret = secret.to_str().context("secret is not str")?;
-      auth_api_key_get_user_id(key, secret)
-        .await
-        .context("failed to authenticate api key")
-    }
-    _ => {
-      // AUTH FAIL
-      Err(anyhow!(
-        "must attach either AUTHORIZATION header with jwt OR pass X-API-KEY and X-API-SECRET"
-      ))
-    }
+  }
+
+  fn passkey(&self) -> Option<Passkey> {
+    let passkey = self.0.passkey.passkey.as_ref()?;
+    serde_json::from_str(&serde_json::to_string(passkey).ok()?)
+      .inspect_err(|e| {
+        warn!(
+          "User {} ({}) | Invalid passkey on database | {e:?}",
+          self.username(),
+          self.id(),
+        )
+      })
+      .ok()
+  }
+
+  fn totp_secret(&self) -> Option<&str> {
+    optional_str(&self.0.totp.secret)
+  }
+
+  fn external_skip_2fa(&self) -> bool {
+    self.0.external_skip_2fa
   }
 }
 
-#[instrument(level = "debug")]
-pub async fn authenticate_check_enabled(
-  headers: &HeaderMap,
-) -> anyhow::Result<User> {
-  let user_id = get_user_id_from_headers(headers).await?;
-  let user = get_user(&user_id).await?;
-  if user.enabled {
-    Ok(user)
-  } else {
-    Err(anyhow!("user not enabled"))
-  }
-}
+pub struct KomodoAuthImpl;
 
-#[instrument(level = "debug")]
-pub async fn auth_jwt_get_user_id(
-  jwt: &str,
-) -> anyhow::Result<String> {
-  let claims: JwtClaims = jwt_client().decode(jwt)?;
-  if claims.exp > unix_timestamp_ms() {
-    Ok(claims.id)
-  } else {
-    Err(anyhow!("token has expired"))
+impl AuthImpl for KomodoAuthImpl {
+  fn new() -> Self {
+    Self
   }
-}
 
-#[instrument(level = "debug")]
-pub async fn auth_jwt_check_enabled(
-  jwt: &str,
-) -> anyhow::Result<User> {
-  let user_id = auth_jwt_get_user_id(jwt).await?;
-  check_enabled(user_id).await
-}
-
-#[instrument(level = "debug")]
-pub async fn auth_api_key_get_user_id(
-  key: &str,
-  secret: &str,
-) -> anyhow::Result<String> {
-  let key = db_client()
-    .api_keys
-    .find_one(doc! { "key": key })
-    .await
-    .context("failed to query db")?
-    .context("no api key matching key")?;
-  if key.expires != 0 && key.expires < komodo_timestamp() {
-    return Err(anyhow!("api key expired"));
+  fn app_name(&self) -> &'static str {
+    "Komodo"
   }
-  if bcrypt::verify(secret, &key.secret)
-    .context("failed to verify secret hash")?
+
+  fn host(&self) -> &str {
+    &core_config().host
+  }
+
+  fn post_link_redirect(&self) -> &str {
+    static POST_LINK_REDIRECT: LazyLock<String> =
+      LazyLock::new(|| format!("{}/profile", core_config().host));
+    &POST_LINK_REDIRECT
+  }
+
+  fn get_user(
+    &self,
+    user_id: String,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<BoxAuthUser>>
   {
-    // secret matches
-    Ok(key.user_id)
-  } else {
-    // secret mismatch
-    Err(anyhow!("invalid api secret"))
+    Box::pin(async move {
+      Ok(Box::new(AuthUser(
+        get_user(&user_id)
+          .await
+          .status_code(StatusCode::NOT_FOUND)?,
+      )) as BoxAuthUser)
+    })
   }
-}
 
-#[instrument(level = "debug")]
-pub async fn auth_api_key_check_enabled(
-  key: &str,
-  secret: &str,
-) -> anyhow::Result<User> {
-  let user_id = auth_api_key_get_user_id(key, secret).await?;
-  check_enabled(user_id).await
-}
+  fn handle_request_authentication(
+    &self,
+    auth: mogh_auth_server::RequestAuthentication,
+    require_user_enabled: bool,
+    mut req: axum::extract::Request,
+  ) -> mogh_auth_server::DynFuture<
+    mogh_error::Result<axum::extract::Request>,
+  > {
+    Box::pin(async move {
+      let mut user = middleware::extract_user_from_auth(
+        auth,
+        require_user_enabled,
+      )
+      .await
+      .status_code(StatusCode::UNAUTHORIZED)?;
+      // Sanitize the user for safety before
+      // attaching to the request handlers.
+      user.sanitize();
+      req.extensions_mut().insert(user);
+      Ok(req)
+    })
+  }
 
-#[instrument(level = "debug")]
-async fn check_enabled(user_id: String) -> anyhow::Result<User> {
-  let user = get_user(&user_id).await?;
-  if user.enabled {
-    Ok(user)
-  } else {
-    Err(anyhow!("user not enabled"))
+  fn no_users_exist(
+    &self,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<bool>> {
+    Box::pin(async {
+      Ok(db_client().users.find_one(Document::new()).await?.is_none())
+    })
+  }
+
+  fn locked_usernames(&self) -> &'static [String] {
+    &core_config().lock_login_credentials_for
+  }
+
+  fn registration_disabled(&self) -> bool {
+    core_config().disable_user_registration
+  }
+
+  fn validate_username(
+    &self,
+    username: &str,
+  ) -> mogh_error::Result<()> {
+    validate_username(username).status_code(StatusCode::BAD_REQUEST)
+  }
+
+  // =========
+  // = STATE =
+  // =========
+
+  fn jwt_provider(&self) -> &JwtProvider {
+    &JWT_PROVIDER
+  }
+
+  fn passkey_provider(&self) -> Option<&PasskeyProvider> {
+    static PASSKEY_PROVIDER: LazyLock<Option<PasskeyProvider>> =
+      LazyLock::new(|| {
+        PasskeyProvider::new(&core_config().host)
+          .inspect_err(|e| {
+            warn!("Invalid 'host' for passkey provider | {e:#}")
+          })
+          .ok()
+      });
+    PASSKEY_PROVIDER.as_ref()
+  }
+
+  fn general_rate_limiter(&self) -> &RateLimiter {
+    &GENERAL_RATE_LIMITER
+  }
+
+  // ==============
+  // = LOCAL AUTH =
+  // ==============
+
+  fn local_auth_enabled(&self) -> bool {
+    core_config().local_auth
+  }
+
+  fn local_login_rate_limiter(&self) -> &RateLimiter {
+    &LOCAL_LOGIN_RATE_LIMITER
+  }
+
+  fn sign_up_local_user(
+    &self,
+    username: String,
+    hashed_password: String,
+    no_users_exist: bool,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<String>> {
+    Box::pin(async move {
+      let user = User::new(NewUserParams {
+        username,
+        enabled: no_users_exist || core_config().enable_new_users,
+        admin: no_users_exist,
+        super_admin: no_users_exist,
+        config: UserConfig::Local {
+          password: hashed_password,
+        },
+        updated_at: unix_timestamp_ms() as i64,
+      });
+      let user_id = db_client()
+        .users
+        .insert_one(user)
+        .await
+        .context("Failed to create user on database")?
+        .inserted_id
+        .as_object_id()
+        .context("The 'inserted_id' is not ObjectId")?
+        .to_string();
+      Ok(user_id)
+    })
+  }
+
+  fn find_user_with_username(
+    &self,
+    username: String,
+  ) -> mogh_auth_server::DynFuture<
+    mogh_error::Result<Option<BoxAuthUser>>,
+  > {
+    Box::pin(async move {
+      let user = db_client()
+        .users
+        .find_one(doc! { "username": &username })
+        .await?
+        .map(|user| Box::new(AuthUser(user)) as BoxAuthUser);
+      Ok(user)
+    })
+  }
+
+  fn update_user_username(
+    &self,
+    user_id: String,
+    username: String,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
+    Box::pin(async move {
+      let update = doc! { "$set": { "username": username } };
+
+      update_one_by_id(&db_client().users, &user_id, update, None)
+        .await
+        .context("Failed to update user username on database.")?;
+
+      Ok(())
+    })
+  }
+
+  fn validate_password(
+    &self,
+    password: &str,
+  ) -> mogh_error::Result<()> {
+    validate_password(password).status_code(StatusCode::BAD_REQUEST)
+  }
+
+  fn update_user_password(
+    &self,
+    user_id: String,
+    hashed_password: String,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
+    Box::pin(async move {
+      let user = get_user(&user_id).await?;
+      db_client()
+        .set_user_hashed_password(&user, hashed_password)
+        .await?;
+      Ok(())
+    })
+  }
+
+  // =============
+  // = OIDC AUTH =
+  // =============
+
+  fn oidc_config(&self) -> Option<&OidcConfig> {
+    static OIDC_CONFIG: LazyLock<OidcConfig> = LazyLock::new(|| {
+      let config = core_config();
+      OidcConfig {
+        enabled: config.oidc_enabled,
+        provider: config.oidc_provider.clone(),
+        redirect_host: config.oidc_redirect_host.clone(),
+        client_id: config.oidc_client_id.clone(),
+        client_secret: config.oidc_client_secret.clone(),
+        use_full_email: config.oidc_use_full_email,
+        additional_audiences: config
+          .oidc_additional_audiences
+          .clone(),
+      }
+    });
+    Some(&OIDC_CONFIG)
+  }
+
+  fn find_user_with_oidc_subject(
+    &self,
+    subject: SubjectIdentifier,
+  ) -> mogh_auth_server::DynFuture<
+    mogh_error::Result<Option<BoxAuthUser>>,
+  > {
+    Box::pin(async move {
+      let user = find_oidc_user(&subject)
+        .await
+        .status_code(StatusCode::NOT_FOUND)?
+        .map(|user| Box::new(AuthUser(user)) as BoxAuthUser);
+      Ok(user)
+    })
+  }
+
+  fn sign_up_oidc_user(
+    &self,
+    username: String,
+    subject: SubjectIdentifier,
+    no_users_exist: bool,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<String>> {
+    Box::pin(async move {
+      let user = User::new(NewUserParams {
+        username,
+        enabled: no_users_exist || core_config().enable_new_users,
+        admin: no_users_exist,
+        super_admin: no_users_exist,
+        config: UserConfig::Oidc {
+          provider: core_config().oidc_provider.clone(),
+          user_id: subject.to_string(),
+        },
+        updated_at: komodo_timestamp(),
+      });
+
+      let user_id = db_client()
+        .users
+        .insert_one(user)
+        .await
+        .context("failed to create user on database")?
+        .inserted_id
+        .as_object_id()
+        .context("inserted_id is not ObjectId")?
+        .to_string();
+
+      Ok(user_id)
+    })
+  }
+
+  fn link_oidc_login(
+    &self,
+    user_id: String,
+    subject: SubjectIdentifier,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
+    Box::pin(async move {
+      let user = get_user(&user_id).await?;
+
+      if let UserConfig::Oidc { .. } = &user.config {
+        return Err(anyhow!(
+          "User is primary Oidc user, cannot link another Oidc login."
+        ).status_code(StatusCode::UNAUTHORIZED));
+      }
+
+      let oidc_provider = &core_config().oidc_provider;
+      let oidc_user_id = subject.as_str();
+
+      let update = doc! {
+        "$set": {
+          "linked_logins.Oidc.type": "Oidc",
+          "linked_logins.Oidc.data.provider": oidc_provider,
+          "linked_logins.Oidc.data.user_id": oidc_user_id,
+        }
+      };
+
+      update_one_by_id(&db_client().users, &user_id, update, None)
+        .await
+        .context(
+          "Failed to link OIDC login to existing user on database",
+        )?;
+
+      Ok(())
+    })
+  }
+
+  // ===============
+  // = GITHUB AUTH =
+  // ===============
+
+  fn github_config(&self) -> Option<&NamedOauthConfig> {
+    Some(&core_config().github_oauth)
+  }
+
+  fn find_user_with_github_id(
+    &self,
+    github_id: String,
+  ) -> mogh_auth_server::DynFuture<
+    mogh_error::Result<Option<BoxAuthUser>>,
+  > {
+    Box::pin(async move {
+      Ok(
+        find_github_user(&github_id)
+          .await?
+          .map(|user| Box::new(AuthUser(user)) as BoxAuthUser),
+      )
+    })
+  }
+
+  fn sign_up_github_user(
+    &self,
+    username: String,
+    github_id: String,
+    avatar_url: String,
+    no_users_exist: bool,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<String>> {
+    Box::pin(async move {
+      let user = User::new(NewUserParams {
+        username,
+        enabled: no_users_exist || core_config().enable_new_users,
+        admin: no_users_exist,
+        super_admin: no_users_exist,
+        config: UserConfig::Github {
+          github_id,
+          avatar: avatar_url,
+        },
+        updated_at: komodo_timestamp(),
+      });
+
+      let user_id = db_client()
+        .users
+        .insert_one(user)
+        .await
+        .context("Failed to create user on mongo")?
+        .inserted_id
+        .as_object_id()
+        .context("inserted_id is not ObjectId")?
+        .to_string();
+
+      Ok(user_id)
+    })
+  }
+
+  fn link_github_login(
+    &self,
+    user_id: String,
+    github_id: String,
+    avatar_url: String,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
+    Box::pin(async move {
+      let user = get_user(&user_id).await?;
+
+      if let UserConfig::Github { .. } = &user.config {
+        return Err(anyhow!(
+          "User is primary Github user, cannot link another Github login."
+        ).status_code(StatusCode::UNAUTHORIZED));
+      }
+
+      let update = doc! {
+        "$set": {
+          "linked_logins.Github.type": "Github",
+          "linked_logins.Github.data.github_id": &github_id,
+          "linked_logins.Github.data.avatar": &avatar_url,
+        }
+      };
+
+      update_one_by_id(&db_client().users, &user_id, update, None)
+        .await
+        .context(
+          "Failed to link Github login to existing user on database",
+        )?;
+
+      Ok(())
+    })
+  }
+
+  // ===============
+  // = GOOGLE AUTH =
+  // ===============
+
+  fn google_config(&self) -> Option<&NamedOauthConfig> {
+    Some(&core_config().google_oauth)
+  }
+
+  fn find_user_with_google_id(
+    &self,
+    google_id: String,
+  ) -> mogh_auth_server::DynFuture<
+    mogh_error::Result<Option<BoxAuthUser>>,
+  > {
+    Box::pin(async move {
+      Ok(
+        find_google_user(&google_id)
+          .await?
+          .map(|user| Box::new(AuthUser(user)) as BoxAuthUser),
+      )
+    })
+  }
+
+  fn sign_up_google_user(
+    &self,
+    username: String,
+    google_id: String,
+    avatar_url: String,
+    no_users_exist: bool,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<String>> {
+    Box::pin(async move {
+      let user = User::new(NewUserParams {
+        username,
+        enabled: no_users_exist || core_config().enable_new_users,
+        admin: no_users_exist,
+        super_admin: no_users_exist,
+        config: UserConfig::Google {
+          google_id,
+          avatar: avatar_url,
+        },
+        updated_at: komodo_timestamp(),
+      });
+
+      let user_id = db_client()
+        .users
+        .insert_one(user)
+        .await
+        .context("Failed to create user on mongo")?
+        .inserted_id
+        .as_object_id()
+        .context("inserted_id is not ObjectId")?
+        .to_string();
+
+      Ok(user_id)
+    })
+  }
+
+  fn link_google_login(
+    &self,
+    user_id: String,
+    google_id: String,
+    avatar_url: String,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
+    Box::pin(async move {
+      let user = get_user(&user_id).await?;
+
+      if let UserConfig::Google { .. } = &user.config {
+        return Err(anyhow!(
+          "User is primary Google user, cannot link another Google login."
+        ).status_code(StatusCode::UNAUTHORIZED));
+      }
+
+      let update = doc! {
+        "$set": {
+          "linked_logins.Google.type": "Google",
+          "linked_logins.Google.data.google_id": &google_id,
+          "linked_logins.Google.data.avatar": &avatar_url,
+        }
+      };
+
+      update_one_by_id(&db_client().users, &user_id, update, None)
+        .await
+        .context(
+          "Failed to link Google login to existing user on database",
+        )?;
+
+      Ok(())
+    })
+  }
+
+  // ==========
+  // = UNLINK =
+  // ==========
+
+  fn unlink_login(
+    &self,
+    user_id: String,
+    provider: LoginProvider,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
+    Box::pin(async move {
+      let field = format!("linked_logins.{provider}");
+
+      let update = doc! {
+        "$unset": {
+          field: ""
+        }
+      };
+
+      update_one_by_id(&db_client().users, &user_id, update, None)
+        .await
+        .context("Failed to unlink third partly login on database")?;
+
+      Ok(())
+    })
+  }
+
+  // ===============
+  // = PASSKEY 2FA =
+  // ===============
+
+  fn update_user_stored_passkey(
+    &self,
+    user_id: String,
+    passkey: Option<Passkey>,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
+    Box::pin(async move {
+      let update = if let Some(passkey) = passkey {
+        let passkey = to_bson(&passkey)
+          .context("Failed to serialize passkey to BSON")?;
+        doc! {
+          "$set": {
+            "passkey.passkey": passkey,
+            "passkey.created_at": komodo_timestamp()
+          }
+        }
+      } else {
+        doc! {
+          "$set": {
+            "passkey.passkey": null,
+            "passkey.created_at": 0
+          }
+        }
+      };
+
+      update_one_by_id(&db_client().users, &user_id, update, None)
+        .await
+        .context(
+          "Failed to update user passkey options on database",
+        )?;
+
+      Ok(())
+    })
+  }
+
+  // ============
+  // = TOTP 2FA =
+  // ============
+
+  fn update_user_stored_totp(
+    &self,
+    user_id: String,
+    totp_secret: String,
+    hashed_recovery_codes: Vec<String>,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
+    Box::pin(async move {
+      update_one_by_id(
+        &db_client().users,
+        &user_id,
+        doc! {
+          "$set": {
+            "totp.secret": totp_secret,
+            "totp.confirmed_at": komodo_timestamp(),
+            "totp.recovery_codes": hashed_recovery_codes,
+          }
+        },
+        None,
+      )
+      .await
+      .context("Failed to update user totp fields on database")?;
+      Ok(())
+    })
+  }
+
+  fn remove_user_stored_totp(
+    &self,
+    user_id: String,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
+    Box::pin(async move {
+      update_one_by_id(
+        &db_client().users,
+        &user_id,
+        doc! {
+          "$set": {
+            "totp.secret": "",
+            "totp.confirmed_at": 0,
+            "totp.recovery_codes": [],
+          }
+        },
+        None,
+      )
+      .await
+      .context("Failed to clear user totp fields on database")?;
+      Ok(())
+    })
+  }
+
+  // ============
+  // = SKIP 2FA =
+  // ============
+  fn update_user_external_skip_2fa(
+    &self,
+    user_id: String,
+    external_skip_2fa: bool,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
+    Box::pin(async move {
+      let update = doc! {
+        "$set": {
+          "external_skip_2fa": external_skip_2fa
+        }
+      };
+
+      update_one_by_id(&db_client().users, &user_id, update, None)
+        .await
+        .context(
+          "Failed to set skip external login 2fa mode on database",
+        )?;
+
+      Ok(())
+    })
+  }
+
+  // ============
+  // = API KEYS =
+  // ============
+  fn validate_api_key_name(
+    &self,
+    api_key_name: &str,
+  ) -> mogh_error::Result<()> {
+    validate_api_key_name(api_key_name)
+      .status_code(StatusCode::BAD_REQUEST)
+  }
+
+  fn get_api_key_user_id(
+    &self,
+    key: String,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<String>> {
+    Box::pin(async move {
+      let key = db_client()
+        .api_keys
+        .find_one(doc! { "key": key })
+        .await
+        .context("Failed at database query")?
+        .context("No api key with key found")
+        .status_code(StatusCode::NOT_FOUND)?;
+      Ok(key.user_id)
+    })
+  }
+
+  fn create_api_key(
+    &self,
+    user_id: String,
+    body: mogh_auth_client::api::manage::CreateApiKey,
+    key: String,
+    hashed_secret: String,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
+    Box::pin(async move {
+      api_key::create_api_key(user_id, body, key, hashed_secret)
+        .await
+        .map_err(Into::into)
+    })
+  }
+
+  fn delete_api_key(
+    &self,
+    key: String,
+  ) -> mogh_auth_server::DynFuture<mogh_error::Result<()>> {
+    Box::pin(async move {
+      api_key::delete_api_key(&key).await.map_err(Into::into)
+    })
+  }
+
+  fn server_private_key(&self) -> Option<&RotatableKeyPair> {
+    Some(core_keys())
   }
 }

@@ -8,7 +8,7 @@ use komodo_client::{
     permission::PermissionLevel,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{
   helpers::query::get_all_tags,
@@ -23,7 +23,7 @@ impl Resolve<ReadArgs> for GetAction {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Action> {
+  ) -> mogh_error::Result<Action> {
     Ok(
       get_check_permissions::<Action>(
         &self.action,
@@ -39,7 +39,7 @@ impl Resolve<ReadArgs> for ListActions {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Vec<ActionListItem>> {
+  ) -> mogh_error::Result<Vec<ActionListItem>> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -61,7 +61,7 @@ impl Resolve<ReadArgs> for ListFullActions {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListFullActionsResponse> {
+  ) -> mogh_error::Result<ListFullActionsResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -83,7 +83,7 @@ impl Resolve<ReadArgs> for GetActionActionState {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ActionActionState> {
+  ) -> mogh_error::Result<ActionActionState> {
     let action = get_check_permissions::<Action>(
       &self.action,
       user,
@@ -104,7 +104,7 @@ impl Resolve<ReadArgs> for GetActionsSummary {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetActionsSummaryResponse> {
+  ) -> mogh_error::Result<GetActionsSummaryResponse> {
     let actions = resource::list_full_for_user::<Action>(
       Default::default(),
       user,

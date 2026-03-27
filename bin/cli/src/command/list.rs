@@ -7,7 +7,7 @@ use komodo_client::{
   api::read::{
     ListActions, ListAlerters, ListBuilders, ListBuilds,
     ListDeployments, ListProcedures, ListRepos, ListResourceSyncs,
-    ListSchedules, ListServers, ListStacks, ListTags,
+    ListSchedules, ListServers, ListStacks, ListTags, ListTerminals,
   },
   entities::{
     ResourceTargetVariant,
@@ -35,6 +35,7 @@ use komodo_client::{
       ResourceSyncListItem, ResourceSyncListItemInfo,
       ResourceSyncState,
     },
+    terminal::Terminal,
   },
 };
 use serde::Serialize;
@@ -74,14 +75,17 @@ pub async fn handle(list: &args::list::List) -> anyhow::Result<()> {
     Some(ListCommand::Syncs(filters)) => {
       list_resources::<ResourceSyncListItem>(filters, false).await
     }
+    Some(ListCommand::Terminals(filters)) => {
+      list_terminals(filters).await
+    }
+    Some(ListCommand::Schedules(filters)) => {
+      list_schedules(filters).await
+    }
     Some(ListCommand::Builders(filters)) => {
       list_resources::<BuilderListItem>(filters, false).await
     }
     Some(ListCommand::Alerters(filters)) => {
       list_resources::<AlerterListItem>(filters, false).await
-    }
-    Some(ListCommand::Schedules(filters)) => {
-      list_schedules(filters).await
     }
   }
 }
@@ -185,6 +189,26 @@ where
   fix_tags(&mut resources, &tags);
   if !resources.is_empty() {
     print_items(resources, filters.format, filters.links)?;
+  }
+  Ok(())
+}
+
+async fn list_terminals(
+  filters: &ResourceFilters,
+) -> anyhow::Result<()> {
+  let client = crate::command::komodo_client().await?;
+  // let query = ResourceQuery::builder()
+  //   .tags(filters.tags.clone())
+  //   .templates(TemplatesQueryBehavior::Exclude)
+  //   .build();
+  let terminals = client
+    .read(ListTerminals {
+      target: None,
+      use_names: true,
+    })
+    .await?;
+  if !terminals.is_empty() {
+    print_items(terminals, filters.format, filters.links)?;
   }
   Ok(())
 }
@@ -794,7 +818,7 @@ impl PrintTable for ResourceListItem<ServerListItemInfo> {
       Cell::new(self.info.state.to_string())
         .fg(color)
         .add_attribute(Attribute::Bold),
-      Cell::new(self.info.address),
+      Cell::new(self.info.address.as_deref().unwrap_or("inbound")),
       Cell::new(self.tags.join(", ")),
     ];
     if links {
@@ -1134,6 +1158,28 @@ impl PrintTable for ResourceListItem<AlerterListItemInfo> {
   }
 }
 
+impl PrintTable for Terminal {
+  fn header(_links: bool) -> &'static [&'static str] {
+    &["Terminal", "Target", "Command", "Size", "Created"]
+  }
+  fn row(self, _links: bool) -> Vec<comfy_table::Cell> {
+    vec![
+      Cell::new(self.name).add_attribute(Attribute::Bold),
+      Cell::new(format!("{:?}", self.target)),
+      Cell::new(self.command),
+      Cell::new(if self.stored_size_kb < 1.0 {
+        format!("{:.1} KiB", self.stored_size_kb)
+      } else {
+        format!("{:.} KiB", self.stored_size_kb)
+      }),
+      Cell::new(
+        format_timetamp(self.created_at)
+          .unwrap_or_else(|_| String::from("Invalid created at")),
+      ),
+    ]
+  }
+}
+
 impl PrintTable for Schedule {
   fn header(links: bool) -> &'static [&'static str] {
     if links {
@@ -1146,7 +1192,7 @@ impl PrintTable for Schedule {
     let next_run = if let Some(ts) = self.next_scheduled_run {
       Cell::new(
         format_timetamp(ts)
-          .unwrap_or(String::from("Invalid next ts")),
+          .unwrap_or_else(|_| String::from("Invalid next ts")),
       )
       .add_attribute(Attribute::Bold)
     } else {

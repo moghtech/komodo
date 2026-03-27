@@ -11,7 +11,7 @@ use aws_sdk_ec2::{
     Tag, TagSpecification,
   },
 };
-use base64::Engine;
+use data_encoding::BASE64_NOPAD;
 use komodo_client::entities::{
   ResourceTarget,
   alert::{Alert, AlertData, SeverityLevel},
@@ -57,7 +57,6 @@ impl aws_credential_types::provider::ProvideCredentials
   }
 }
 
-#[instrument]
 async fn create_ec2_client(region: String) -> Client {
   let region = Region::new(region);
   let config = aws_config::defaults(BehaviorVersion::latest())
@@ -68,7 +67,7 @@ async fn create_ec2_client(region: String) -> Client {
   Client::new(&config)
 }
 
-#[instrument]
+#[instrument("LaunchEc2Instance")]
 pub async fn launch_ec2_instance(
   name: &str,
   config: &AwsBuilderConfig,
@@ -84,6 +83,8 @@ pub async fn launch_ec2_instance(
     assign_public_ip,
     use_public_ip,
     user_data,
+    periphery_public_key: _,
+    insecure_tls: _,
     port: _,
     use_https: _,
     git_providers: _,
@@ -126,10 +127,7 @@ pub async fn launch_ec2_instance(
     )
     .min_count(1)
     .max_count(1)
-    .user_data(
-      base64::engine::general_purpose::STANDARD_NO_PAD
-        .encode(user_data),
-    );
+    .user_data(BASE64_NOPAD.encode(user_data.as_bytes()));
 
   let res = req
     .send()
@@ -168,7 +166,7 @@ pub async fn launch_ec2_instance(
 const MAX_TERMINATION_TRIES: usize = 5;
 const TERMINATION_WAIT_SECS: u64 = 15;
 
-#[instrument]
+#[instrument("TerminateEc2Instance")]
 pub async fn terminate_ec2_instance_with_retry(
   region: String,
   instance_id: &str,
@@ -208,7 +206,7 @@ pub async fn terminate_ec2_instance_with_retry(
   unreachable!()
 }
 
-#[instrument(skip(client))]
+#[instrument("TerminateEc2InstanceInner", skip_all)]
 async fn terminate_ec2_instance_inner(
   client: &Client,
   instance_id: &str,
@@ -227,7 +225,6 @@ async fn terminate_ec2_instance_inner(
 }
 
 /// Automatically retries 5 times, waiting 2 sec in between
-#[instrument(level = "debug")]
 async fn get_ec2_instance_status(
   client: &Client,
   instance_id: &str,
@@ -259,7 +256,6 @@ async fn get_ec2_instance_status(
   }
 }
 
-#[instrument(level = "debug")]
 async fn get_ec2_instance_state_name(
   client: &Client,
   instance_id: &str,
@@ -279,7 +275,6 @@ async fn get_ec2_instance_state_name(
 }
 
 /// Automatically retries 5 times, waiting 2 sec in between
-#[instrument(level = "debug")]
 async fn get_ec2_instance_public_ip(
   client: &Client,
   instance_id: &str,

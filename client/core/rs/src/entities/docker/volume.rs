@@ -3,14 +3,15 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::entities::{I64, U64};
+use crate::entities::I64;
 
-use super::PortBinding;
+use super::{ObjectVersion, PortBinding};
 
 #[typeshare]
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct VolumeListItem {
   /// The name of the volume
   pub name: String,
@@ -28,6 +29,7 @@ pub struct VolumeListItem {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Volume {
   /// Name of the volume.
   #[serde(rename = "Name")]
@@ -47,7 +49,7 @@ pub struct Volume {
 
   /// Low-level details about the volume, provided by the volume driver. Details are returned as a map with key/value pairs: `{\"key\":\"value\",\"key2\":\"value2\"}`.  The `Status` field is optional, and is omitted if the volume driver does not support this feature.
   #[serde(default, rename = "Status")]
-  pub status: HashMap<String, HashMap<String, ()>>,
+  pub status: Option<Vec<String>>,
 
   /// User-defined key/value metadata.
   #[serde(default, rename = "Labels")]
@@ -81,6 +83,7 @@ pub struct Volume {
   Ord,
   Default,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum VolumeScopeEnum {
   #[default]
   #[serde(rename = "")]
@@ -96,6 +99,7 @@ pub enum VolumeScopeEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ClusterVolume {
   /// The Swarm ID of this volume. Because cluster volumes are Swarm objects, they have an ID, unlike non-cluster volumes. This ID can be used to refer to the Volume instead of the name.
   #[serde(rename = "ID")]
@@ -126,6 +130,7 @@ pub struct ClusterVolume {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ClusterVolumeInfo {
   /// The capacity of the volume in bytes. A value of 0 indicates that the capacity is unknown.
   #[serde(rename = "CapacityBytes")]
@@ -148,6 +153,7 @@ pub struct ClusterVolumeInfo {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ClusterVolumePublishStatus {
   /// The ID of the Swarm node the volume is published on.
   #[serde(rename = "NodeID")]
@@ -175,6 +181,7 @@ pub struct ClusterVolumePublishStatus {
   Ord,
   Default,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum ClusterVolumePublishStatusStateEnum {
   #[default]
   #[serde(rename = "")]
@@ -189,21 +196,12 @@ pub enum ClusterVolumePublishStatusStateEnum {
   PendingControllerUnpublish,
 }
 
-/// The version number of the object such as node, service, etc. This is needed to avoid conflicting writes. The client must send the version number along with the modified specification when updating these objects.  This approach ensures safe concurrency and determinism in that the change on the object may not be applied if the version number has changed from the last read. In other words, if two update requests specify the same base version, only one of the requests can succeed. As a result, two separate update requests that happen at the same time will not unintentionally overwrite each other.
-#[typeshare]
-#[derive(
-  Debug, Clone, Default, PartialEq, Serialize, Deserialize,
-)]
-pub struct ObjectVersion {
-  #[serde(rename = "Index")]
-  pub index: Option<U64>,
-}
-
 /// Cluster-specific options used to create the volume.
 #[typeshare]
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ClusterVolumeSpec {
   /// Group defines the volume group of this volume. Volumes belonging to the same group can be referred to by group name when creating Services.  Referring to a volume by group instructs Swarm to treat volumes in that group interchangeably for the purpose of scheduling. Volumes with an empty string for a group technically all belong to the same, emptystring group.
   #[serde(rename = "Group")]
@@ -218,6 +216,7 @@ pub struct ClusterVolumeSpec {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ClusterVolumeSpecAccessMode {
   /// The set of nodes this volume can be used on at one time. - `single` The volume may only be scheduled to one node at a time. - `multi` the volume may be scheduled to any supported number of nodes at a time.
   #[serde(default, rename = "Scope")]
@@ -257,6 +256,7 @@ pub struct ClusterVolumeSpecAccessMode {
   Ord,
   Default,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum ClusterVolumeSpecAccessModeScopeEnum {
   #[default]
   #[serde(rename = "")]
@@ -280,6 +280,7 @@ pub enum ClusterVolumeSpecAccessModeScopeEnum {
   Ord,
   Default,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum ClusterVolumeSpecAccessModeSharingEnum {
   #[default]
   #[serde(rename = "")]
@@ -299,6 +300,7 @@ pub enum ClusterVolumeSpecAccessModeSharingEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ClusterVolumeSpecAccessModeSecrets {
   /// Key is the name of the key of the key-value pair passed to the plugin.
   #[serde(rename = "Key")]
@@ -314,6 +316,7 @@ pub struct ClusterVolumeSpecAccessModeSecrets {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ClusterVolumeSpecAccessModeAccessibilityRequirements {
   /// A list of required topologies, at least one of which the volume must be accessible from.
   #[serde(default, rename = "Requisite")]
@@ -332,6 +335,7 @@ pub type Topology = HashMap<String, Vec<PortBinding>>;
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ClusterVolumeSpecAccessModeCapacityRange {
   /// The volume must be at least this big. The value of 0 indicates an unspecified minimum
   #[serde(rename = "RequiredBytes")]
@@ -355,6 +359,7 @@ pub struct ClusterVolumeSpecAccessModeCapacityRange {
   Ord,
   Default,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum ClusterVolumeSpecAccessModeAvailabilityEnum {
   #[default]
   #[serde(rename = "")]
@@ -372,6 +377,7 @@ pub enum ClusterVolumeSpecAccessModeAvailabilityEnum {
 #[derive(
   Debug, Clone, Default, PartialEq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct VolumeUsageData {
   /// Amount of disk space used by the volume (in bytes). This information is only available for volumes created with the `\"local\"` volume driver. For volumes created with other volume drivers, this field is set to `-1` (\"not available\")
   #[serde(rename = "Size")]

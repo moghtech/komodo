@@ -1,11 +1,12 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::entities::{
   SearchCombinator, U64,
-  docker::container::Container,
+  docker::{
+    container::Container, service::SwarmService, stack::SwarmStack,
+  },
   stack::{
     Stack, StackActionState, StackListItem, StackQuery, StackService,
   },
@@ -16,14 +17,25 @@ use super::KomodoReadRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetStack",
+  description = "Get a specific stack.",
+  request_body(content = GetStack),
+  responses(
+    (status = 200, description = "The stack", body = crate::entities::stack::StackSchema),
+  ),
+)]
+pub fn get_stack() {}
+
 /// Get a specific stack. Response: [Stack].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStackResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetStack {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -35,14 +47,25 @@ pub type GetStackResponse = Stack;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListStackServices",
+  description = "Lists a specific stacks services (the containers).",
+  request_body(content = ListStackServices),
+  responses(
+    (status = 200, description = "The list of services", body = ListStackServicesResponse),
+  ),
+)]
+pub fn list_stack_services() {}
+
 /// Lists a specific stacks services (the containers). Response: [ListStackServicesResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListStackServicesResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListStackServices {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -54,15 +77,26 @@ pub type ListStackServicesResponse = Vec<StackService>;
 
 //
 
-/// Inspect the docker container associated with the Stack.
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/InspectStackContainer",
+  description = "Inspect a docker container associated with a Stack.",
+  request_body(content = InspectStackContainer),
+  responses(
+    (status = 200, description = "The container", body = InspectStackContainerResponse),
+  ),
+)]
+pub fn inspect_stack_container() {}
+
+/// Inspect a docker container associated with a Stack.
 /// Response: [Container].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectStackContainerResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct InspectStackContainer {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -76,16 +110,91 @@ pub type InspectStackContainerResponse = Container;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/InspectStackSwarmService",
+  description = "Inspect a swarm service associated with a Stack.",
+  request_body(content = InspectStackSwarmService),
+  responses(
+    (status = 200, description = "The swarm service", body = InspectStackSwarmServiceResponse),
+  ),
+)]
+pub fn inspect_stack_swarm_service() {}
+
+/// Inspect a swarm service associated with a Stack.
+/// Response: [SwarmService].
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoReadRequest)]
+#[response(InspectStackSwarmServiceResponse)]
+#[error(mogh_error::Error)]
+pub struct InspectStackSwarmService {
+  /// Id or name
+  #[serde(alias = "id", alias = "name")]
+  pub stack: String,
+  /// The service name to inspect
+  pub service: String,
+}
+
+#[typeshare]
+pub type InspectStackSwarmServiceResponse = SwarmService;
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/InspectStackSwarmInfo",
+  description = "Inspect swarm info associated with a Stack.",
+  request_body(content = InspectStackSwarmInfo),
+  responses(
+    (status = 200, description = "The swarm info", body = InspectStackSwarmInfoResponse),
+  ),
+)]
+pub fn inspect_stack_swarm_info() {}
+
+/// Inspect swarm info associated with a Stack.
+/// Response: [SwarmStack].
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoReadRequest)]
+#[response(InspectStackSwarmInfoResponse)]
+#[error(mogh_error::Error)]
+pub struct InspectStackSwarmInfo {
+  /// Id or name
+  #[serde(alias = "id", alias = "name")]
+  pub stack: String,
+}
+
+#[typeshare]
+pub type InspectStackSwarmInfoResponse = SwarmStack;
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetStackLog",
+  description = "Get a stack's logs. Filter down included services.",
+  request_body(content = GetStackLog),
+  responses(
+    (status = 200, description = "The stack log", body = GetStackLogResponse),
+  ),
+)]
+pub fn get_stack_log() {}
+
 /// Get a stack's logs. Filter down included services. Response: [GetStackLogResponse].
 ///
 /// Note. This call will hit the underlying server directly for most up to date log.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStackLogResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetStackLog {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -112,17 +221,28 @@ pub type GetStackLogResponse = Log;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/SearchStackLog",
+  description = "Search the stack log's tail using `grep`.",
+  request_body(content = SearchStackLog),
+  responses(
+    (status = 200, description = "The search results", body = SearchStackLogResponse),
+  ),
+)]
+pub fn search_stack_log() {}
+
 /// Search the stack log's tail using `grep`. All lines go to stdout.
 /// Response: [SearchStackLogResponse].
 ///
 /// Note. This call will hit the underlying server directly for most up to date log.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(SearchStackLogResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct SearchStackLog {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -151,15 +271,26 @@ pub type SearchStackLogResponse = Log;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListCommonStackExtraArgs",
+  description = "Gets a list of existing values used as extra args across other stacks.",
+  request_body(content = ListCommonStackExtraArgs),
+  responses(
+    (status = 200, description = "The list of extra args", body = ListCommonStackExtraArgsResponse),
+  ),
+)]
+pub fn list_common_stack_extra_args() {}
+
 /// Gets a list of existing values used as extra args across other stacks.
 /// Useful to offer suggestions. Response: [ListCommonStackExtraArgsResponse]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonStackExtraArgsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListCommonStackExtraArgs {
   /// optional structured query to filter stacks.
   #[serde(default)]
@@ -171,15 +302,26 @@ pub type ListCommonStackExtraArgsResponse = Vec<String>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListCommonStackBuildExtraArgs",
+  description = "Gets a list of existing values used as build extra args across other stacks.",
+  request_body(content = ListCommonStackBuildExtraArgs),
+  responses(
+    (status = 200, description = "The list of build extra args", body = ListCommonStackBuildExtraArgsResponse),
+  ),
+)]
+pub fn list_common_stack_build_extra_args() {}
+
 /// Gets a list of existing values used as build extra args across other stacks.
 /// Useful to offer suggestions. Response: [ListCommonStackBuildExtraArgsResponse]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonStackBuildExtraArgsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListCommonStackBuildExtraArgs {
   /// optional structured query to filter stacks.
   #[serde(default)]
@@ -191,14 +333,25 @@ pub type ListCommonStackBuildExtraArgsResponse = Vec<String>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListStacks",
+  description = "List stacks matching optional query.",
+  request_body(content = ListStacks),
+  responses(
+    (status = 200, description = "The list of stacks", body = ListStacksResponse),
+  ),
+)]
+pub fn list_stacks() {}
+
 /// List stacks matching optional query. Response: [ListStacksResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListStacksResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListStacks {
   /// optional structured query to filter stacks.
   #[serde(default)]
@@ -210,14 +363,25 @@ pub type ListStacksResponse = Vec<StackListItem>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListFullStacks",
+  description = "List stacks matching optional query.",
+  request_body(content = ListFullStacks),
+  responses(
+    (status = 200, description = "The list of stacks", body = ListFullStacksResponse),
+  ),
+)]
+pub fn list_full_stacks() {}
+
 /// List stacks matching optional query. Response: [ListFullStacksResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullStacksResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListFullStacks {
   /// optional structured query to filter stacks.
   #[serde(default)]
@@ -229,14 +393,25 @@ pub type ListFullStacksResponse = Vec<Stack>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetStackActionState",
+  description = "Get current action state for the stack.",
+  request_body(content = GetStackActionState),
+  responses(
+    (status = 200, description = "The stack action state", body = GetStackActionStateResponse),
+  ),
+)]
+pub fn get_stack_action_state() {}
+
 /// Get current action state for the stack. Response: [StackActionState].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStackActionStateResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetStackActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -248,20 +423,32 @@ pub type GetStackActionStateResponse = StackActionState;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetStacksSummary",
+  description = "Gets a summary of data relating to all syncs.",
+  request_body(content = GetStacksSummary),
+  responses(
+    (status = 200, description = "The stacks summary", body = GetStacksSummaryResponse),
+  ),
+)]
+pub fn get_stacks_summary() {}
+
 /// Gets a summary of data relating to all syncs.
 /// Response: [GetStacksSummaryResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetStacksSummaryResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetStacksSummary {}
 
 /// Response for [GetStacksSummary]
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetStacksSummaryResponse {
   /// The total number of stacks
   pub total: u32,
@@ -275,33 +462,4 @@ pub struct GetStacksSummaryResponse {
   pub unhealthy: u32,
   /// The number of stacks with Unknown state.
   pub unknown: u32,
-}
-
-//
-
-/// Get a target stack's configured webhooks. Response: [GetStackWebhooksEnabledResponse].
-#[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
-#[empty_traits(KomodoReadRequest)]
-#[response(GetStackWebhooksEnabledResponse)]
-#[error(serror::Error)]
-pub struct GetStackWebhooksEnabled {
-  /// Id or name
-  #[serde(alias = "id", alias = "name")]
-  pub stack: String,
-}
-
-/// Response for [GetStackWebhooksEnabled]
-#[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct GetStackWebhooksEnabledResponse {
-  /// Whether the repo webhooks can even be managed.
-  /// The repo owner must be in `github_webhook_app.owners` list to be managed.
-  pub managed: bool,
-  /// Whether pushes to branch trigger refresh. Will always be false if managed is false.
-  pub refresh_enabled: bool,
-  /// Whether pushes to branch trigger stack execution. Will always be false if managed is false.
-  pub deploy_enabled: bool,
 }

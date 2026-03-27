@@ -1,3 +1,4 @@
+import argparse
 import sys
 import os
 import shutil
@@ -5,30 +6,70 @@ import platform
 import json
 import urllib.request
 
-def load_version():
-	version = ""
-	for arg in sys.argv:
-		if arg.count("--version") > 0:
-			version = arg.split("=")[1]
-	if len(version) == 0:
-		version = load_latest_version()
-	return version
+def parse_args():
+	p = argparse.ArgumentParser(
+		prog="setup-periphery",
+		description="Install systemd-managed Komodo Periphery",
+		formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+	)
 
-def load_latest_version():
-	return json.load(urllib.request.urlopen("https://api.github.com/repos/moghtech/komodo/releases/latest"))["tag_name"]
+	p.add_argument(
+		"--version", "-v",
+		default=json.load(urllib.request.urlopen("https://api.github.com/repos/moghtech/komodo/releases/latest"))["tag_name"],
+		help="Install a specific Komodo version, like 'v2.0.0'"
+	)
 
-def uses_systemd():
-	# First check if systemctl is an available command, then check if systemd is the init system
-	return shutil.which("systemctl") is not None and os.path.exists("/run/systemd/system/")
+	p.add_argument(
+		"--user", "-u",
+		action="store_true",
+		help="Install systemd '--user' service"
+	)
 
-def load_paths():
+	p.add_argument(
+		"--root-directory", "-r",
+		default="/etc/komodo",
+		help="Specify a specific Periphery root directory."
+	)
+
+	p.add_argument(
+		"--core-address", "-c",
+		help="Specify the Komodo Core address for outbound connection. Leave blank to enable inbound connection server."
+	)
+
+	p.add_argument(
+		"--connect-as", "-n",
+		default=os.uname().nodename,
+		help="Specify the Server name to connect as. Defaults to hostname."
+	)
+
+	p.add_argument(
+		"--onboarding-key", "-k",
+		help="Give an onboarding key for automatic Server onboarding into Komodo Core."
+	)
+
+	p.add_argument(
+		"--force-service-file",
+		help="Recreate the systemd service file even if it already exists."
+	)
+
+	p.add_argument(
+		"--config-url",
+		default="https://raw.githubusercontent.com/moghtech/komodo/refs/heads/main/config/periphery.config.toml",
+		help="Use a custom config url."
+	)
+
+	p.add_argument(
+		"--binary-url",
+		default="https://github.com/moghtech/komodo/releases/download",
+		help="Use alternate binary source"
+	)
+
+	return p.parse_args()
+
+def load_paths(args):
 	home_dir = os.environ['HOME']
-	# Checks if setup.py is passed --user arg
-	user_install = sys.argv.count("--user") > 0
-	if user_install:
+	if args.user:
 		return [
-			# Is user install
-			True,
 			# home_dir
 			home_dir,
 			# binary location
@@ -40,8 +81,6 @@ def load_paths():
 		]
 	else:
 		return [
-			# Not user install
-			False,
 			# home_dir
 			home_dir,
 			# binary location
@@ -52,10 +91,10 @@ def load_paths():
 	 		"/etc/systemd/system",
 		]
 
-def copy_binary(user_install, bin_dir, version):
+def download_binary(args, bin_dir):
 	# stop periphery in case its currently in use
 	user = ""
-	if user_install:
+	if args.user:
 		user = " --user"
 	os.popen(f'systemctl{user} stop periphery')
 
@@ -77,42 +116,69 @@ def copy_binary(user_install, bin_dir, version):
 		print("using x86_64 binary")
 
 	# download the binary to bin path
-	print(os.popen(f'curl -sSL https://github.com/moghtech/komodo/releases/download/{version}/{periphery_bin} > {bin_path}').read())
+	if os.system(f'curl -f -sSL {args.binary_url}/{args.version}/{periphery_bin} -o {bin_path}') != 0:
+		raise RuntimeError(
+			f"Failed to download binary from "
+			f"{args.binary_url}/{args.version}/{periphery_bin}"
+			f"\n\nDid you provide a valid tag for '--version'? Check here for valid version tags:"
+			f"\nhttps://github.com/moghtech/komodo/tags"
+		)
 
 	# add executable permissions
 	os.popen(f'chmod +x {bin_path}')
 
-def copy_config(config_dir):
+def map_config_line(args, home_dir, line):
+	## Handle root directory
+	if line.startswith("root_directory ="):
+		if args.root_directory != None:
+			return f'root_directory = "{args.root_directory}"'
+		if args.user:
+			return f'root_directory = "{home_dir}/komodo"'
+	## Handle core_address
+	if line.startswith("# core_address =") and args.core_address != None:
+		return f'core_address = "{args.core_address}"'
+	## Handle connect_as
+	if line.startswith("# connect_as ="):
+		return f'connect_as = "{args.connect_as}"'
+	## Handle onboarding key
+	if line.startswith("# onboarding_key =") and args.onboarding_key != None:
+		return f'onboarding_key = "{args.onboarding_key}"'
+	return line
+
+def write_config(args, home_dir, config_dir):
 	config_file = f'{config_dir}/periphery.config.toml'
 
 	# early return if config file already exists
 	if os.path.isfile(config_file):
-		print("config already exists, skipping...")
+		print(f'Config at {config_file} already exists, skipping...')
 		return
-	
+
 	print(f'creating config at {config_file}')
 
 	# ensure config dir exists
 	if not os.path.isdir(config_dir):
 		os.makedirs(config_dir)
 
-	print(os.popen(f'curl -sSL https://raw.githubusercontent.com/moghtech/komodo/main/config/periphery.config.toml > {config_file}').read())
+	template = urllib.request.urlopen(args.config_url).read().decode("utf-8").split("\n")
+	lines = [map_config_line(args, home_dir, line) for line in template]
+	config = "\n".join(lines)
 
-def copy_service_file(home_dir, bin_dir, config_dir, service_dir, user_install):
+	with open(config_file, "w", encoding="utf-8", newline="\n") as f:
+		f.write(config)
+
+def write_service_file(args, home_dir, bin_dir, config_dir, service_dir):
 	service_file = f'{service_dir}/periphery.service'
 
-	force_service_recopy = sys.argv.count("--force-service-file") > 0
-
-	if force_service_recopy:
+	if args.force_service_file:
 		print("forcing service file recreation")
 
 	# early return is service file already exists
 	if os.path.isfile(service_file):
-		if force_service_recopy:
+		if args.force_service_file:
 			print("deleting existing service file")
 			os.remove(service_file)
 		else:
-			print("service file already exists, skipping...")
+			print(f'service file already exists at {service_file}, skipping...')
 			return
 	
 	print(f'creating service file at {service_file}')
@@ -137,11 +203,17 @@ def copy_service_file(home_dir, bin_dir, config_dir, service_dir, user_install):
 	))
 
 	user = ""
-	if user_install:
+	if args.user:
 		user = " --user"
 	os.popen(f'systemctl{user} daemon-reload')
-	
+
+def uses_systemd():
+	# First check if systemctl is an available command, then check if systemd is the init system
+	return shutil.which("systemctl") is not None and os.path.exists("/run/systemd/system/")
+
 def main():
+	args = parse_args()
+
 	print("=====================")
 	print(" PERIPHERY INSTALLER ")
 	print("=====================")
@@ -150,33 +222,32 @@ def main():
 		print("This installer requires systemd and systemd wasn't found. Exiting")
 		sys.exit(1)
 
-	version = load_version()
-	[user_install, home_dir, bin_dir, config_dir, service_dir] = load_paths()
- 
-	print(f'version: {version}')
-	print(f'user install: {user_install}')
+	[home_dir, bin_dir, config_dir, service_dir] = load_paths(args)
+	
+	print(f'version: {args.version}')
+	print(f'core address: {args.core_address}')
+	print(f'connect as: {args.connect_as}')
+	print(f'user install: {args.user}')
 	print(f'home dir: {home_dir}')
 	print(f'bin dir: {bin_dir}')
 	print(f'config dir: {config_dir}')
 	print(f'service file dir: {service_dir}')
 
-	force_service_recopy = sys.argv.count("--force-service-file") > 0
-	if force_service_recopy:
-		print('forcing service file rewrite')
-
-	copy_binary(user_install, bin_dir, version)
-	copy_config(config_dir)
-	copy_service_file(home_dir, bin_dir, config_dir, service_dir, user_install)
+	download_binary(args, bin_dir)
+	write_config(args, home_dir, config_dir)
+	write_service_file(args, home_dir, bin_dir, config_dir, service_dir)
 
 	user = ""
-	if user_install:
+	if args.user:
 		user = " --user"
 
-	print("starting periphery...")
+	print("Starting Periphery...")
 	print(os.popen(f'systemctl{user} start periphery').read())
 
-	print("Finished periphery setup.\n")
-	print(f'Note. Use "systemctl{user} status periphery" to make sure periphery is running')
-	print(f'Note. Use "systemctl{user} enable periphery" to have periphery start on system boot')
+	print("Finished Periphery setup.\n")
+	print(f'Note. Use "systemctl{user} status periphery" to make sure Periphery is running')
+	print(f'Note. Use "systemctl{user} enable periphery" to have Periphery start on system boot')
+	if args.user:
+		print(f'Note. Use "sudo loginctl enable-linger $USER" to make sure Periphery keeps runnning after user logs out')
 
 main()

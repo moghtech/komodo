@@ -8,12 +8,18 @@ cmd = "KOMODO_CONFIG_PATH=.dev/core.config.toml cargo run -p komodo_core --relea
 [dev-periphery]
 alias = "dp"
 description = "runs periphery --release pointing to .dev/periphery.config.toml"
-cmd = "PERIPHERY_CONFIG_PATH=.dev/periphery.config.toml cargo run -p komodo_periphery --release"
+cmd = "cargo run -p komodo_periphery --release -- -c .dev/periphery.config.toml"
+
+[dev-periphery-outbound]
+alias = "dpo"
+description = "runs periphery --release pointing to .dev/periphery.config.toml and .dev/outbound.periphery.config.toml"
+cmd = "cargo run -p komodo_periphery --release -- -c .dev/periphery.config.toml -c .dev/outbound.periphery.config.toml"
 
 [yarn-install]
-description = "downloads latest javacript dependencies for client and frontend"
+alias = "yi"
+description = "downloads latest javacript dependencies for client and ui"
 cmd = """
-cd frontend && yarn && \
+cd ui && yarn && \
 cd ../docsite && yarn && \
 cd ../client/core/ts && yarn
 """
@@ -25,14 +31,15 @@ after = "yarn-install"
 cmd = """
 node ./client/core/ts/generate_types.mjs && \
 cd ./client/core/ts && yarn build && \
-cp -r dist/. ../../../frontend/public/client/."""
+cp -r dist/. ../../../ui/public/client/. &&
+cd ../../../ui && node fix_public_client.mjs"""
 
 [link-client]
-description = "yarn links the ts client to the frontend"
+description = "yarn links the ts client to the ui"
 after = "gen-client"
 cmd = """
 cd ./client/core/ts && yarn link && \
-cd ../../../frontend && yarn link komodo_client && yarn"""
+cd ../../../ui && yarn link komodo_client && yarn"""
 
 [dev-compose]
 description = "deploys dev.compose.yaml"
@@ -56,4 +63,12 @@ cmd = "cargo doc --no-deps -p komodo_client && http-server -p 8050 target/doc"
 
 [deploy-komodo]
 alias = "dk"
-cmd = "deno run --allow-all deploy/komodo.ts"
+cmd = "deno run --allow-all action/deploy.ts"
+
+[deploy-komodo-fe-only]
+alias = "dkf"
+cmd = "deno run --allow-all action/deploy-fe.ts"
+
+[build-komodo]
+alias = "bk"
+cmd = "deno run --allow-all action/build.ts"

@@ -4,13 +4,12 @@ use komodo_client::entities::stats::{
 
 use crate::state::{db_client, server_status_cache};
 
-#[instrument(level = "debug")]
 pub async fn record_server_stats(ts: i64) {
-  let status = server_status_cache().get_list().await;
+  let status = server_status_cache().get_values().await;
   let records = status
     .into_iter()
     .filter_map(|status| {
-      let stats = status.stats.as_ref()?;
+      let stats = status.system_stats.as_ref()?;
 
       let TotalDiskUsage {
         used_gb: disk_used_gb,

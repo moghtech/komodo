@@ -30,6 +30,7 @@ function fix_types() {
     .replaceAll("AlerterEndpointVariant", 'AlerterEndpoint["type"]')
     .replaceAll("AlertDataVariant", 'AlertData["type"]')
     .replaceAll("ServerTemplateConfigVariant", 'ServerTemplateConfig["type"]')
+    .replaceAll("UserConfigVariant", 'UserConfig["type"]')
     // Add '| string' to env vars
     .replaceAll("EnvironmentVar[]", "EnvironmentVar[] | string")
     .replaceAll("IndexSet", "Array")

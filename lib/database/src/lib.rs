@@ -10,6 +10,7 @@ use komodo_client::entities::{
   builder::Builder,
   config::DatabaseConfig,
   deployment::Deployment,
+  onboarding_key::OnboardingKey,
   permission::Permission,
   procedure::Procedure,
   provider::{DockerRegistryAccount, GitProviderAccount},
@@ -17,6 +18,7 @@ use komodo_client::entities::{
   server::Server,
   stack::Stack,
   stats::SystemStatsRecord,
+  swarm::Swarm,
   sync::ResourceSync,
   tag::Tag,
   update::Update,
@@ -26,15 +28,17 @@ use komodo_client::entities::{
 };
 use mongo_indexed::{create_index, create_unique_index};
 use mungos::{
+  by_id::update_one_by_id,
   init::MongoBuilder,
   mongodb::{
     Collection, Database,
-    bson::{doc, oid::ObjectId},
+    bson::{doc, oid::ObjectId, to_bson},
   },
 };
 
 pub use mongo_indexed;
 pub use mungos;
+pub use mungos::mongodb::bson;
 
 pub mod utils;
 
@@ -44,6 +48,7 @@ pub struct Client {
   pub user_groups: Collection<UserGroup>,
   pub permissions: Collection<Permission>,
   pub api_keys: Collection<ApiKey>,
+  pub onboarding_keys: Collection<OnboardingKey>,
   pub tags: Collection<Tag>,
   pub variables: Collection<Variable>,
   pub git_accounts: Collection<GitProviderAccount>,
@@ -52,6 +57,7 @@ pub struct Client {
   pub alerts: Collection<Alert>,
   pub stats: Collection<SystemStatsRecord>,
   // RESOURCES
+  pub swarms: Collection<Swarm>,
   pub servers: Collection<Server>,
   pub deployments: Collection<Deployment>,
   pub builds: Collection<Build>,
@@ -80,6 +86,7 @@ impl Client {
       user_groups: mongo_indexed::collection(&db, true).await?,
       permissions: mongo_indexed::collection(&db, true).await?,
       api_keys: mongo_indexed::collection(&db, true).await?,
+      onboarding_keys: mongo_indexed::collection(&db, true).await?,
       tags: mongo_indexed::collection(&db, true).await?,
       variables: mongo_indexed::collection(&db, true).await?,
       git_accounts: mongo_indexed::collection(&db, true).await?,
@@ -88,6 +95,7 @@ impl Client {
       alerts: mongo_indexed::collection(&db, true).await?,
       stats: mongo_indexed::collection(&db, true).await?,
       // RESOURCES
+      swarms: resource_collection(&db, "Swarm").await?,
       servers: resource_collection(&db, "Server").await?,
       deployments: resource_collection(&db, "Deployment").await?,
       builds: resource_collection(&db, "Build").await?,
@@ -111,28 +119,79 @@ impl Client {
     user: &User,
     password: &str,
   ) -> anyhow::Result<()> {
-    let UserConfig::Local { .. } = user.config else {
-      return Err(anyhow!(
-        "User is not a 'Local' (username / password) user"
-      ));
-    };
     if password.is_empty() {
       return Err(anyhow!("Password cannot be empty."));
     }
-    let id = ObjectId::from_str(&user.id)
-      .context("User id not valid ObjectId.")?;
     let hashed_password =
       hash_password(password).context("Failed to hash password")?;
+    self.set_user_hashed_password(user, hashed_password).await
+  }
+
+  /// Updates a user's password using a DB call.
+  pub async fn set_user_hashed_password(
+    &self,
+    user: &User,
+    hashed_password: String,
+  ) -> anyhow::Result<()> {
+    let update = match user.config {
+      UserConfig::Service { .. } => {
+        return Err(anyhow!(
+          "Service Users cannot add additional login methods"
+        ));
+      }
+      // Update a primary 'Local' user's password directly.
+      UserConfig::Local { .. } => {
+        doc! {
+          "$set": {
+            "config.data.password": hashed_password
+          }
+        }
+      }
+      // Update User with Local password as an entry in 'additional_logins'
+      _ => {
+        let bson = to_bson(&UserConfig::Local {
+          password: hashed_password,
+        })
+        .context("Failed to serialize login method to bson")?;
+        doc! {
+          "$set": {
+            "linked_logins.Local": bson
+          }
+        }
+      }
+    };
+
+    update_one_by_id(&self.users, &user.id, update, None)
+      .await
+      .context("Failed to update user password on database.")?;
+
+    Ok(())
+  }
+
+  /// Clears users configured passkey / totp 2FA methods.
+  /// Useful if user gets locked out after losing access to their second factor.
+  pub async fn clear_user_2fa_methods(
+    &self,
+    // Username or id
+    id_or_username: &str,
+  ) -> anyhow::Result<()> {
+    let query = match ObjectId::from_str(id_or_username) {
+      Ok(id) => doc! { "_id": id },
+      Err(_) => doc! { "username": id_or_username },
+    };
     self
       .users
       .update_one(
-        doc! { "_id": id },
-        doc! { "$set": {
-          "config.data.password": hashed_password
-        } },
+        query,
+        doc! {
+          "$unset": {
+            "passkey": "",
+            "totp": "",
+          }
+        },
       )
       .await
-      .context("Failed to update user password on database.")?;
+      .context("Failed to clear user 2FA methods on database.")?;
     Ok(())
   }
 }

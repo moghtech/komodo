@@ -22,6 +22,7 @@ pub type ResourceSyncListItem =
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ResourceSyncListItemInfo {
   /// Unix timestamp of last sync, or 0
   pub last_sync_ts: I64,
@@ -65,6 +66,7 @@ pub struct ResourceSyncListItemInfo {
   Deserialize,
   Display,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum ResourceSyncState {
   /// Currently syncing
   Syncing,
@@ -79,12 +81,20 @@ pub enum ResourceSyncState {
   Unknown,
 }
 
+#[cfg(feature = "utoipa")]
+#[derive(utoipa::ToSchema)]
+#[schema(as = ResourceSync)]
+pub struct ResourceSyncSchema(
+  #[schema(inline)] pub Resource<ResourceSyncConfig, ResourceSyncInfo>,
+);
+
 #[typeshare]
 pub type ResourceSync =
   Resource<ResourceSyncConfig, ResourceSyncInfo>;
 
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ResourceSyncInfo {
   /// Unix timestamp of last applied sync
   #[serde(default)]
@@ -105,9 +115,11 @@ pub struct ResourceSyncInfo {
   pub user_group_updates: Vec<DiffData>,
   /// The list of pending deploys to resources.
   #[serde(default)]
-  pub pending_deploy: SyncDeployUpdate,
+  pub pending_deploys: Vec<SyncDeployTarget>,
   /// If there is an error, it will be stored here
   pub pending_error: Option<String>,
+  /// If there is an getting pending deploys, it will be stored here
+  pub pending_deploy_error: Option<String>,
   /// The commit hash which produced these pending updates.
   pub pending_hash: Option<String>,
   /// The commit message which produced these pending updates.
@@ -123,6 +135,7 @@ pub struct ResourceSyncInfo {
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ResourceDiff {
   /// The resource target.
   /// The target id will be empty if "Create" ResourceDiffType.
@@ -133,6 +146,7 @@ pub struct ResourceDiff {
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(tag = "type", content = "data")]
 pub enum DiffData {
   /// Resource will be created
@@ -157,11 +171,11 @@ pub enum DiffData {
 
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct SyncDeployUpdate {
-  /// Resources to deploy
-  pub to_deploy: i32,
-  /// A readable log of all the changes to be applied
-  pub log: String,
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct SyncDeployTarget {
+  pub target: ResourceTarget,
+  pub reason: String,
+  pub after: Vec<ResourceTarget>,
 }
 
 #[typeshare(serialized_as = "Partial<ResourceSyncConfig>")]
@@ -170,7 +184,9 @@ pub type _PartialResourceSyncConfig = PartialResourceSyncConfig;
 /// The sync configuration.
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, Builder, Partial)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[diff_derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[partial(skip_serializing_none, from, diff)]
 pub struct ResourceSyncConfig {
   /// Choose a Komodo Repo (Resource) to source the sync files.
@@ -374,8 +390,20 @@ impl Default for ResourceSyncConfig {
   }
 }
 
+#[cfg(feature = "utoipa")]
+impl utoipa::PartialSchema for PartialResourceSyncConfig {
+  fn schema()
+  -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
+    utoipa::schema!(#[inline] std::collections::HashMap<String, serde_json::Value>).into()
+  }
+}
+
+#[cfg(feature = "utoipa")]
+impl utoipa::ToSchema for PartialResourceSyncConfig {}
+
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SyncFileContents {
   /// The base resource path.
   #[serde(default)]
@@ -388,6 +416,7 @@ pub struct SyncFileContents {
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ResourceSyncActionState {
   /// Whether sync currently syncing
   pub syncing: bool,
@@ -401,6 +430,7 @@ pub type ResourceSyncQuery =
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ResourceSyncQuerySpecifics {
   /// Filter syncs by their repo.
   pub repos: Vec<String>,

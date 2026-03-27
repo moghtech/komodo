@@ -1,3 +1,16 @@
+//! # Action State Management
+//!
+//! This module provides thread-safe state management for resource exections.
+//! It prevents concurrent execution of exections on the same resource using
+//! a Mutex-based locking mechanism with RAII guards.
+//!
+//! ## Safety
+//!
+//! - Uses RAII pattern to ensure locks are always released
+//! - Handles lock poisoning gracefully
+//! - Prevents race conditions through per-resource locks
+//! - No deadlock risk: each resource has independent locks
+
 use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
@@ -8,27 +21,37 @@ use komodo_client::{
     deployment::DeploymentActionState,
     procedure::ProcedureActionState, repo::RepoActionState,
     server::ServerActionState, stack::StackActionState,
-    sync::ResourceSyncActionState,
+    swarm::SwarmActionState, sync::ResourceSyncActionState,
   },
 };
-
-use super::cache::Cache;
+use mogh_cache::CloneCache;
 
 #[derive(Default)]
 pub struct ActionStates {
-  pub server: Cache<String, Arc<ActionState<ServerActionState>>>,
-  pub stack: Cache<String, Arc<ActionState<StackActionState>>>,
+  pub swarm: CloneCache<String, Arc<ActionState<SwarmActionState>>>,
+  pub server: CloneCache<String, Arc<ActionState<ServerActionState>>>,
+  pub stack: CloneCache<String, Arc<ActionState<StackActionState>>>,
   pub deployment:
-    Cache<String, Arc<ActionState<DeploymentActionState>>>,
-  pub build: Cache<String, Arc<ActionState<BuildActionState>>>,
-  pub repo: Cache<String, Arc<ActionState<RepoActionState>>>,
+    CloneCache<String, Arc<ActionState<DeploymentActionState>>>,
+  pub build: CloneCache<String, Arc<ActionState<BuildActionState>>>,
+  pub repo: CloneCache<String, Arc<ActionState<RepoActionState>>>,
   pub procedure:
-    Cache<String, Arc<ActionState<ProcedureActionState>>>,
-  pub action: Cache<String, Arc<ActionState<ActionActionState>>>,
-  pub sync: Cache<String, Arc<ActionState<ResourceSyncActionState>>>,
+    CloneCache<String, Arc<ActionState<ProcedureActionState>>>,
+  pub action: CloneCache<String, Arc<ActionState<ActionActionState>>>,
+  pub sync:
+    CloneCache<String, Arc<ActionState<ResourceSyncActionState>>>,
 }
 
-/// Need to be able to check "busy" with write lock acquired.
+/// Thread-safe state container for resource executions.
+///
+/// Uses a Mutex to prevent concurrent executions and provides
+/// RAII-based locking through [UpdateGuard].
+///
+/// # Safety
+///
+/// - Each resource has its own ActionState instance
+/// - State is reset to default when [UpdateGuard] is dropped
+/// - Lock poisoning error handling is handled gracefully with anyhow::Error
 #[derive(Default)]
 pub struct ActionState<States: Default + Send + 'static>(
   Mutex<States>,
@@ -42,7 +65,7 @@ impl<States: Default + Busy + Copy + Send + 'static>
       *self
         .0
         .lock()
-        .map_err(|e| anyhow!("action state lock poisoned | {e:?}"))?,
+        .map_err(|e| anyhow!("Action state lock poisoned | {e:?}"))?,
     )
   }
 
@@ -51,14 +74,33 @@ impl<States: Default + Busy + Copy + Send + 'static>
       self
         .0
         .lock()
-        .map_err(|e| anyhow!("action state lock poisoned | {e:?}"))?
+        .map_err(|e| anyhow!("Action state lock poisoned | {e:?}"))?
         .busy(),
     )
   }
 
-  /// Will acquire lock, check busy, and if not will
-  /// run the provided update function on the states.
-  /// Returns a guard that returns the states to default (not busy) when dropped.
+  /// Acquires lock, checks if resource is busy, and if not,
+  /// runs the provided update function on the states.
+  ///
+  /// Returns an `UpdateGuard` that automatically resets the state
+  /// to default (not busy) when dropped.
+  ///
+  /// # Errors
+  ///
+  /// Returns an error if:
+  /// - The lock is poisoned
+  /// - The resource is currently busy
+  ///
+  /// # Example
+  ///
+  /// ```rust
+  /// let guard = action_state.update(|state| {
+  ///   *state = SomeNewState;
+  /// })?;
+  /// // State is locked and marked as busy
+  /// // ... perform work ...
+  /// drop(guard) // Guard is dropped, state returns to default
+  /// ```
   pub fn update(
     &self,
     update_fn: impl Fn(&mut States),
@@ -91,10 +133,22 @@ impl<States: Default + Busy + Copy + Send + 'static>
   }
 }
 
-/// When dropped will return the inner state to default.
-/// The inner mutex guard must already be dropped BEFORE this is dropped,
-/// which is guaranteed as the inner guard is dropped by all public methods before
-/// user could drop UpdateGuard.
+/// RAII guard that automatically resets the action state when dropped.
+///
+/// # Safety
+///
+/// The inner mutex guard is guaranteed to be dropped before this guard
+/// is dropped, preventing deadlocks. This is ensured by all public methods
+/// that create UpdateGuard instances.
+///
+/// # Behavior
+///
+/// When dropped, this guard will:
+/// 1. Re-acquire the lock
+/// 2. Call the provided return function (typically resetting to default)
+/// 3. Release the lock
+///
+/// If the lock is poisoned, an error is logged but the drop continues.
 pub struct UpdateGuard<'a, States: Default + Send + 'static>(
   &'a Mutex<States>,
   Box<dyn Fn(&mut States) + Send>,

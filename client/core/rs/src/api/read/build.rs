@@ -1,7 +1,6 @@
 use std::cmp::Ordering;
 
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -14,14 +13,25 @@ use super::KomodoReadRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetBuild",
+  description = "Get a specific build.",
+  request_body(content = GetBuild),
+  responses(
+    (status = 200, description = "The build", body = crate::entities::build::BuildSchema),
+  ),
+)]
+pub fn get_build() {}
+
 /// Get a specific build. Response: [Build].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetBuild {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -33,14 +43,25 @@ pub type GetBuildResponse = Build;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListBuilds",
+  description = "List builds matching optional query.",
+  request_body(content = ListBuilds),
+  responses(
+    (status = 200, description = "The list of builds", body = ListBuildsResponse),
+  ),
+)]
+pub fn list_builds() {}
+
 /// List builds matching optional query. Response: [ListBuildsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListBuildsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListBuilds {
   /// optional structured query to filter builds.
   #[serde(default)]
@@ -52,14 +73,25 @@ pub type ListBuildsResponse = Vec<BuildListItem>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListFullBuilds",
+  description = "List builds matching optional query.",
+  request_body(content = ListFullBuilds),
+  responses(
+    (status = 200, description = "The list of builds", body = ListFullBuildsResponse),
+  ),
+)]
+pub fn list_full_builds() {}
+
 /// List builds matching optional query. Response: [ListFullBuildsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullBuildsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListFullBuilds {
   /// optional structured query to filter builds.
   #[serde(default)]
@@ -71,14 +103,25 @@ pub type ListFullBuildsResponse = Vec<Build>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetBuildActionState",
+  description = "Get current action state for the build.",
+  request_body(content = GetBuildActionState),
+  responses(
+    (status = 200, description = "The build action state", body = GetBuildActionStateResponse),
+  ),
+)]
+pub fn get_build_action_state() {}
+
 /// Get current action state for the build. Response: [BuildActionState].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildActionStateResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetBuildActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -90,20 +133,32 @@ pub type GetBuildActionStateResponse = BuildActionState;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetBuildsSummary",
+  description = "Gets a summary of data relating to all builds.",
+  request_body(content = GetBuildsSummary),
+  responses(
+    (status = 200, description = "The builds summary", body = GetBuildsSummaryResponse),
+  ),
+)]
+pub fn get_builds_summary() {}
+
 /// Gets a summary of data relating to all builds.
 /// Response: [GetBuildsSummaryResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildsSummaryResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetBuildsSummary {}
 
 /// Response for [GetBuildsSummary].
 #[typeshare]
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetBuildsSummaryResponse {
   /// The total number of builds in Komodo.
   pub total: u32,
@@ -119,18 +174,29 @@ pub struct GetBuildsSummaryResponse {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetBuildMonthlyStats",
+  description = "Gets summary and timeseries breakdown of the last months build count / time for charting.",
+  request_body(content = GetBuildMonthlyStats),
+  responses(
+    (status = 200, description = "The build monthly stats", body = GetBuildMonthlyStatsResponse),
+  ),
+)]
+pub fn get_build_monthly_stats() {}
+
 /// Gets summary and timeseries breakdown of the last months build count / time for charting.
 /// Response: [GetBuildMonthlyStatsResponse].
 ///
 /// Note. This method is paginated. One page is 30 days of data.
 /// Query for older pages by incrementing the page, starting at 0.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetBuildMonthlyStatsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetBuildMonthlyStats {
   /// Query for older data by incrementing the page.
   /// `page: 0` is the default, and will return the most recent data.
@@ -141,6 +207,7 @@ pub struct GetBuildMonthlyStats {
 /// Response for [GetBuildMonthlyStats].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetBuildMonthlyStatsResponse {
   pub total_time: f64,  // in hours
   pub total_count: f64, // number of builds
@@ -150,6 +217,7 @@ pub struct GetBuildMonthlyStatsResponse {
 /// Item in [GetBuildMonthlyStatsResponse]
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct BuildStatsDay {
   pub time: f64,
   pub count: f64,
@@ -183,16 +251,27 @@ impl GetBuildMonthlyStatsResponse {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListBuildVersions",
+  description = "Retrieve versions of the build that were built in the past and available for deployment, sorted by most recent first.",
+  request_body(content = ListBuildVersions),
+  responses(
+    (status = 200, description = "The list of build versions", body = ListBuildVersionsResponse),
+  ),
+)]
+pub fn list_build_versions() {}
+
 /// Retrieve versions of the build that were built in the past and available for deployment,
 /// sorted by most recent first.
 /// Response: [ListBuildVersionsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListBuildVersionsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListBuildVersions {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -212,6 +291,7 @@ pub type ListBuildVersionsResponse = Vec<BuildVersionResponseItem>;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct BuildVersionResponseItem {
   pub version: Version,
   pub ts: I64,
@@ -219,15 +299,26 @@ pub struct BuildVersionResponseItem {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListCommonBuildExtraArgs",
+  description = "Gets a list of existing values used as extra args across other builds.",
+  request_body(content = ListCommonBuildExtraArgs),
+  responses(
+    (status = 200, description = "The common extra args", body = ListCommonBuildExtraArgsResponse),
+  ),
+)]
+pub fn list_common_build_extra_args() {}
+
 /// Gets a list of existing values used as extra args across other builds.
 /// Useful to offer suggestions. Response: [ListCommonBuildExtraArgsResponse]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonBuildExtraArgsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListCommonBuildExtraArgs {
   /// optional structured query to filter builds.
   #[serde(default)]
@@ -236,30 +327,3 @@ pub struct ListCommonBuildExtraArgs {
 
 #[typeshare]
 pub type ListCommonBuildExtraArgsResponse = Vec<String>;
-
-//
-
-/// Get whether a Build's target repo has a webhook for the build configured. Response: [GetBuildWebhookEnabledResponse].
-#[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
-#[empty_traits(KomodoReadRequest)]
-#[response(GetBuildWebhookEnabledResponse)]
-#[error(serror::Error)]
-pub struct GetBuildWebhookEnabled {
-  /// Id or name
-  #[serde(alias = "id", alias = "name")]
-  pub build: String,
-}
-
-/// Response for [GetBuildWebhookEnabled]
-#[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct GetBuildWebhookEnabledResponse {
-  /// Whether the repo webhooks can even be managed.
-  /// The repo owner must be in `github_webhook_app.owners` list to be managed.
-  pub managed: bool,
-  /// Whether pushes to branch trigger build. Will always be false if managed is false.
-  pub enabled: bool,
-}

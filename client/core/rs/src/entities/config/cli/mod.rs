@@ -1,4 +1,4 @@
-use std::{path::PathBuf, str::FromStr};
+use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
@@ -94,10 +94,14 @@ pub struct Env {
   pub komodo_cli_logging_stdio: Option<StdioLogMode>,
   /// Override `logging.pretty`
   pub komodo_cli_logging_pretty: Option<bool>,
+  /// Override `logging.ansi`
+  pub komodo_cli_logging_ansi: Option<bool>,
   /// Override `logging.otlp_endpoint`
   pub komodo_cli_logging_otlp_endpoint: Option<String>,
   /// Override `logging.opentelemetry_service_name`
   pub komodo_cli_logging_opentelemetry_service_name: Option<String>,
+  /// Override `logging.opentelemetry_scope_name`
+  pub komodo_cli_logging_opentelemetry_scope_name: Option<String>,
   /// Override `pretty_startup_config`
   pub komodo_cli_pretty_startup_config: Option<bool>,
 
@@ -137,11 +141,11 @@ pub struct Env {
 fn default_config_paths() -> Vec<PathBuf> {
   if let Ok(home) = std::env::var("HOME") {
     vec![
-      PathBuf::from_str(&home).unwrap().join(".config/komodo"),
-      PathBuf::from_str(".").unwrap(),
+      PathBuf::from(&home).join(".config/komodo"),
+      PathBuf::from("."),
     ]
   } else {
-    vec![PathBuf::from_str(".").unwrap()]
+    vec![PathBuf::from(".")]
   }
 }
 
@@ -238,8 +242,7 @@ pub struct CliConfig {
 }
 
 fn default_backups_folder() -> PathBuf {
-  // SAFE: /backups is a valid path.
-  PathBuf::from_str("/backups").unwrap()
+  PathBuf::from("/backups")
 }
 
 fn default_max_backups() -> u16 {

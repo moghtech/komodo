@@ -221,6 +221,33 @@ pub async fn handle(
     Execution::SendAlert(data) => {
       println!("{}: {data:?}", "Data".dimmed())
     }
+    Execution::RemoveSwarmNodes(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
+    Execution::RemoveSwarmStacks(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
+    Execution::RemoveSwarmServices(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
+    Execution::CreateSwarmConfig(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
+    Execution::RotateSwarmConfig(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
+    Execution::RemoveSwarmConfigs(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
+    Execution::CreateSwarmSecret(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
+    Execution::RotateSwarmSecret(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
+    Execution::RemoveSwarmSecrets(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
     Execution::ClearRepoCache(data) => {
       println!("{}: {data:?}", "Data".dimmed())
     }
@@ -228,6 +255,12 @@ pub async fn handle(
       println!("{}: {data:?}", "Data".dimmed())
     }
     Execution::GlobalAutoUpdate(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
+    Execution::RotateAllServerKeys(data) => {
+      println!("{}: {data:?}", "Data".dimmed())
+    }
+    Execution::RotateCoreKeys(data) => {
       println!("{}: {data:?}", "Data".dimmed())
     }
     Execution::Sleep(data) => {
@@ -482,6 +515,42 @@ pub async fn handle(
       .execute(request)
       .await
       .map(|u| ExecutionResult::Single(u.into())),
+    Execution::RemoveSwarmNodes(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::RemoveSwarmStacks(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::RemoveSwarmServices(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::CreateSwarmConfig(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::RotateSwarmConfig(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::RemoveSwarmConfigs(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::CreateSwarmSecret(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::RotateSwarmSecret(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::RemoveSwarmSecrets(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
     Execution::ClearRepoCache(request) => client
       .execute(request)
       .await
@@ -491,6 +560,14 @@ pub async fn handle(
       .await
       .map(|u| ExecutionResult::Single(u.into())),
     Execution::GlobalAutoUpdate(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::RotateAllServerKeys(request) => client
+      .execute(request)
+      .await
+      .map(|u| ExecutionResult::Single(u.into())),
+    Execution::RotateCoreKeys(request) => client
       .execute(request)
       .await
       .map(|u| ExecutionResult::Single(u.into())),

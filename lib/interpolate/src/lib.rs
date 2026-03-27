@@ -38,6 +38,7 @@ impl<'a> Interpolator<'a> {
       .interpolate_string(&mut stack.config.environment)?
       .interpolate_string(&mut stack.config.pre_deploy.command)?
       .interpolate_string(&mut stack.config.post_deploy.command)?
+      .interpolate_string(&mut stack.config.compose_cmd_wrapper)?
       .interpolate_extra_args(&mut stack.config.extra_args)?
       .interpolate_extra_args(&mut stack.config.build_extra_args)
   }

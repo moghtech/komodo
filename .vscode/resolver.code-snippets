@@ -3,8 +3,8 @@
 		"scope": "rust",
 		"prefix": "resolve",
 		"body": [
-			"impl Resolve<${1}, User> for State {",
-			"\tasync fn resolve(&self, ${1} { ${0} }: ${1}, _: User) -> anyhow::Result<${2}> {",
+			"impl Resolve<${0}> for ${1} {",
+			"\tasync fn resolve(self, _: &${0}) -> Result<Self::Response, Self::Error> {",
 			"\t\ttodo!()",
 			"\t}",
 			"}"
@@ -15,9 +15,9 @@
 		"prefix": "static",
 		"body": [
 			"fn ${1}() -> &'static ${2} {",
-			"\tstatic ${3}: OnceLock<${2}> = OnceLock::new();",
-			"\t${3}.get_or_init(|| {",
-			"\t\t${0}",
+			"\tstatic ${0}: OnceLock<${2}> = OnceLock::new();",
+			"\t${0}.get_or_init(|| {",
+			"\t\ttodo!()",
 			"\t})",
 			"}"
 		]

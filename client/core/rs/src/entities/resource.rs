@@ -1,4 +1,6 @@
-use bson::{Document, doc};
+use std::str::FromStr;
+
+use bson::{Document, doc, oid::ObjectId};
 use clap::ValueEnum;
 use derive_builder::Builder;
 use derive_default_builder::DefaultBuilder;
@@ -17,7 +19,11 @@ use super::{
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize, Builder)]
-pub struct Resource<Config: Default, Info: Default = ()> {
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct Resource<Config, Info: Default = ()>
+where
+  Config: Default,
+{
   /// The Mongo ID of the resource.
   /// This field is de/serialized from/to JSON as
   /// `{ "_id": { "$oid": "..." }, ...(rest of serialized Resource<T>) }`
@@ -28,6 +34,7 @@ pub struct Resource<Config: Default, Info: Default = ()> {
     with = "bson::serde_helpers::hex_string_as_object_id"
   )]
   #[builder(setter(skip))]
+  #[cfg_attr(feature = "utoipa", schema(value_type = crate::entities::MongoIdObj))]
   pub id: MongoId,
 
   /// The resource name.
@@ -89,6 +96,7 @@ impl<C: Default, I: Default> Default for Resource<C, I> {
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ResourceListItem<Info> {
   /// The resource id
   pub id: String,
@@ -110,6 +118,7 @@ pub struct ResourceListItem<Info> {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, DefaultBuilder,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ResourceQuery<T: Default> {
   #[serde(default)]
   pub names: Vec<String>,
@@ -136,6 +145,7 @@ pub struct ResourceQuery<T: Default> {
   ValueEnum,
   Display,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 // Only strum serializes lowercase for clap compat.
 #[strum(serialize_all = "lowercase")]
 pub enum TemplatesQueryBehavior {
@@ -150,6 +160,7 @@ pub enum TemplatesQueryBehavior {
 
 #[typeshare]
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum TagQueryBehavior {
   /// Returns resources which have strictly all the tags
   #[default]
@@ -166,8 +177,12 @@ impl AddFilters for () {}
 
 impl<T: AddFilters + Default> AddFilters for ResourceQuery<T> {
   fn add_filters(&self, filters: &mut Document) {
-    if !self.names.is_empty() {
-      filters.insert("name", doc! { "$in": &self.names });
+    let (ids, names) = split_names(&self.names);
+    if !ids.is_empty() {
+      filters.insert("_id", doc! { "$in": ids });
+    }
+    if !names.is_empty() {
+      filters.insert("name", doc! { "$in": names });
     }
     match self.templates {
       TemplatesQueryBehavior::Exclude => {
@@ -197,4 +212,19 @@ impl<T: AddFilters + Default> AddFilters for ResourceQuery<T> {
     }
     self.specific.add_filters(filters);
   }
+}
+
+/// Returns (ids, names)
+fn split_names(
+  names_or_ids: &[String],
+) -> (Vec<ObjectId>, Vec<&String>) {
+  let mut ids = Vec::new();
+  let mut names = Vec::new();
+  for name in names_or_ids {
+    match ObjectId::from_str(name) {
+      Ok(id) => ids.push(id),
+      Err(_) => names.push(name),
+    }
+  }
+  (ids, names)
 }

@@ -8,11 +8,13 @@ use komodo_client::{
     permission::PermissionLevel,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{
-  helpers::query::get_all_tags, permission::get_check_permissions,
-  resource, state::db_client,
+  helpers::query::get_all_tags,
+  permission::{get_check_permissions, list_resource_ids_for_user},
+  resource,
+  state::db_client,
 };
 
 use super::ReadArgs;
@@ -21,7 +23,7 @@ impl Resolve<ReadArgs> for GetBuilder {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Builder> {
+  ) -> mogh_error::Result<Builder> {
     Ok(
       get_check_permissions::<Builder>(
         &self.builder,
@@ -37,7 +39,7 @@ impl Resolve<ReadArgs> for ListBuilders {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Vec<BuilderListItem>> {
+  ) -> mogh_error::Result<Vec<BuilderListItem>> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -59,7 +61,7 @@ impl Resolve<ReadArgs> for ListFullBuilders {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListFullBuildersResponse> {
+  ) -> mogh_error::Result<ListFullBuildersResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -81,10 +83,12 @@ impl Resolve<ReadArgs> for GetBuildersSummary {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetBuildersSummaryResponse> {
-    let query = match resource::get_resource_object_ids_for_user::<
-      Builder,
-    >(user)
+  ) -> mogh_error::Result<GetBuildersSummaryResponse> {
+    let query = match list_resource_ids_for_user::<Builder>(
+      None,
+      user,
+      PermissionLevel::Read.into(),
+    )
     .await?
     {
       Some(ids) => doc! {

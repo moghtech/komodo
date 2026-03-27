@@ -2,7 +2,7 @@ use std::{collections::HashMap, time::Duration};
 
 use anyhow::{Context, anyhow};
 use formatting::{Color, bold, colored, format_serror, muted};
-use futures::future::join_all;
+use futures_util::future::join_all;
 use komodo_client::{
   api::{
     execute::{Deploy, DeployStack},
@@ -18,13 +18,14 @@ use komodo_client::{
       PartialStackConfig, Stack, StackConfig,
       StackRemoteFileContents, StackState,
     },
-    sync::SyncDeployUpdate,
+    sync::SyncDeployTarget,
     toml::ResourceToml,
     update::Log,
     user::sync_user,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
+use uuid::Uuid;
 
 use crate::{
   api::{
@@ -40,8 +41,7 @@ use super::ResourceSyncTrait;
 /// All entries in here are due to be deployed,
 /// after the given dependencies,
 /// with the given reason.
-pub type ToDeployCache =
-  Vec<(ResourceTarget, String, Vec<ResourceTarget>)>;
+pub type ToDeployCache = Vec<SyncDeployTarget>;
 
 #[derive(Clone, Copy)]
 pub struct SyncDeployParams<'a> {
@@ -71,19 +71,22 @@ pub async fn deploy_from_cache(
     // Collect all waiting deployments without waiting dependencies.
     let good_to_deploy = to_deploy
       .iter()
-      .filter(|(_, _, after)| {
-        to_deploy
-          .iter()
-          .all(|(target, _, _)| !after.contains(target))
+      .filter(|SyncDeployTarget { after, .. }| {
+        to_deploy.iter().all(|SyncDeployTarget { target, .. }| {
+          !after.contains(target)
+        })
       })
       // The target / reason need the be cloned out to to_deploy is not borrowed from.
       // to_deploy will be mutably accessed later.
-      .map(|(target, reason, _)| (target.clone(), reason.clone()))
+      .map(|SyncDeployTarget { target, reason, .. }| {
+        (target.clone(), reason.clone())
+      })
       .collect::<HashMap<_, _>>();
 
     // Deploy the ones ready for deployment
     let res = join_all(good_to_deploy.iter().map(
       |(target, reason)| async move {
+        let id = Uuid::new_v4();
         let res = async {
           match &target {
             ResourceTarget::Deployment(name) => {
@@ -101,6 +104,7 @@ pub async fn deploy_from_cache(
                 .resolve(&ExecuteArgs {
                   user: user.to_owned(),
                   update,
+                  task_id: id,
                 })
                 .await
             }
@@ -119,6 +123,7 @@ pub async fn deploy_from_cache(
                 .resolve(&ExecuteArgs {
                   user: user.to_owned(),
                   update,
+                  task_id: id,
                 })
                 .await
             }
@@ -168,8 +173,9 @@ pub async fn deploy_from_cache(
     }
 
     // Remove the deployed ones from 'to_deploy'
-    to_deploy
-      .retain(|(target, _, _)| !good_to_deploy.contains_key(target));
+    to_deploy.retain(|SyncDeployTarget { target, .. }| {
+      !good_to_deploy.contains_key(target)
+    });
 
     // If there must be another round, these are dependent on the first round.
     // Sleep for 1s to allow for first round to startup
@@ -192,46 +198,10 @@ pub async fn deploy_from_cache(
 
 pub async fn get_updates_for_view(
   params: SyncDeployParams<'_>,
-) -> SyncDeployUpdate {
-  let inner = async {
-    let mut update = SyncDeployUpdate {
-      to_deploy: 0,
-      log: String::from("Deploy Updates\n-------------------\n"),
-    };
-    let mut lines = Vec::<String>::new();
-    for (target, reason, after) in build_deploy_cache(params).await? {
-      update.to_deploy += 1;
-      let mut line = format!(
-        "{}: {}. reason: {reason}",
-        colored("Deploy", Color::Green),
-        bold(format!("{target:?}")),
-      );
-      if !after.is_empty() {
-        line.push_str(&format!(
-          "\n{}: {}",
-          colored("After", Color::Blue),
-          after
-            .iter()
-            .map(|target| format!("{target:?}"))
-            .collect::<Vec<_>>()
-            .join(", ")
-        ))
-      }
-      lines.push(line);
-    }
-
-    update.log.push_str(&lines.join("\n-------------------\n"));
-
-    anyhow::Ok(update)
-  };
-  match inner.await {
-    Ok(res) => res,
-    Err(e) => SyncDeployUpdate {
-      to_deploy: 0,
-      log: format_serror(
-        &e.context("failed to get deploy updates for view").into(),
-      ),
-    },
+) -> (Vec<SyncDeployTarget>, Option<String>) {
+  match build_deploy_cache(params).await {
+    Ok(targets) => (targets, None),
+    Err(e) => (Vec::new(), Some(format_serror(&e.into()))),
   }
 }
 
@@ -290,7 +260,11 @@ pub async fn build_deploy_cache(
       .map(|(target, (reason, mut after))| {
         // Only keep targets which are deploying.
         after.retain(|target| clone.contains_key(target));
-        (target, reason, after)
+        SyncDeployTarget {
+          target,
+          reason,
+          after,
+        }
       })
       .collect(),
   )
@@ -616,9 +590,12 @@ fn build_cache_for_stack<'a>(
           || diff.extra_args.is_some()
           || diff.environment.is_some()
           || diff.env_file_path.is_some()
+          || diff.additional_env_files.is_some()
+          || diff.linked_repo.is_some()
           || diff.repo.is_some()
           || diff.branch.is_some()
-          || diff.commit.is_some();
+          || diff.commit.is_some()
+          || diff.compose_cmd_wrapper.is_some();
         if changed {
           cache.insert(
             target,

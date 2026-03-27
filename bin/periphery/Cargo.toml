@@ -15,47 +15,50 @@ path = "src/main.rs"
 
 [dependencies]
 # local
-komodo_client.workspace = true
+komodo_client = { workspace = true, features = ["periphery"] }
 periphery_client.workspace = true
-environment_file.workspace = true
 environment.workspace = true
 interpolate.workspace = true
+mogh_server.workspace = true
+mogh_secret_file.workspace = true
 formatting.workspace = true
-response.workspace = true
+transport.workspace = true
+encoding.workspace = true
 command.workspace = true
-config.workspace = true
-logger.workspace = true
-cache.workspace = true
+mogh_config.workspace = true
+mogh_logger.workspace = true
+mogh_cache.workspace = true
+mogh_pki.workspace = true
 git.workspace = true
 # mogh
-serror = { workspace = true, features = ["axum"] }
+mogh_error = { workspace = true, features = ["axum"] }
 async_timing_util.workspace = true
-derive_variants.workspace = true
-resolver_api.workspace = true
-run_command.workspace = true
+mogh_resolver.workspace = true
 # external
-pin-project-lite.workspace = true
+hickory-resolver.workspace = true
+serde_yaml_ng.workspace = true
+data-encoding.workspace = true
+futures-util.workspace = true
 tokio-stream.workspace = true
 portable-pty.workspace = true
-axum-server.workspace = true
+shell-escape.workspace = true
+urlencoding.workspace = true
 serde_json.workspace = true
-serde_yaml_ng.workspace = true
 tokio-util.workspace = true
 arc-swap.workspace = true
 colored.workspace = true
-futures.workspace = true
 tracing.workspace = true
 bollard.workspace = true
 sysinfo.workspace = true
 dotenvy.workspace = true
 anyhow.workspace = true
 rustls.workspace = true
-tokio.workspace = true
-serde.workspace = true
 bytes.workspace = true
+serde.workspace = true
+shlex.workspace = true
+strum.workspace = true
+tokio.workspace = true
 axum.workspace = true
 clap.workspace = true
 envy.workspace = true
 uuid.workspace = true
-rand.workspace = true
-shell-escape.workspace = true

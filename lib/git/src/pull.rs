@@ -3,13 +3,13 @@ use std::{
   sync::OnceLock,
 };
 
-use cache::TimeoutCache;
-use command::run_komodo_command;
+use command::run_komodo_standard_command;
 use formatting::format_serror;
 use komodo_client::entities::{
   RepoExecutionArgs, RepoExecutionResponse, all_logs_success,
   komodo_timestamp, update::Log,
 };
+use mogh_cache::TimeoutCache;
 
 use crate::get_commit_hash_log;
 
@@ -27,10 +27,6 @@ fn pull_cache()
 /// This will pull in a way that handles edge cases
 /// from possible state of the repo. For example, the user
 /// can change branch after clone, or even the remote.
-#[tracing::instrument(
-  level = "debug",
-  skip(clone_args, access_token)
-)]
 #[allow(clippy::too_many_arguments)]
 pub async fn pull<T>(
   clone_args: T,
@@ -80,7 +76,7 @@ where
     }
 
     // Set remote url
-    let mut set_remote = run_komodo_command(
+    let mut set_remote = run_komodo_standard_command(
       "Set Git Remote",
       res.path.as_ref(),
       format!("git remote set-url origin {repo_url}"),
@@ -101,7 +97,7 @@ where
     }
 
     // First fetch remote branches before checkout
-    let fetch = run_komodo_command(
+    let fetch = run_komodo_standard_command(
       "Git Fetch",
       res.path.as_ref(),
       "git fetch --all --prune",
@@ -112,7 +108,7 @@ where
       return Ok(res);
     }
 
-    let checkout = run_komodo_command(
+    let checkout = run_komodo_standard_command(
       "Checkout branch",
       res.path.as_ref(),
       format!("git checkout -f {}", args.branch),
@@ -123,7 +119,7 @@ where
       return Ok(res);
     }
 
-    let pull_log = run_komodo_command(
+    let pull_log = run_komodo_standard_command(
       "Git pull",
       res.path.as_ref(),
       format!("git pull --rebase --force origin {}", args.branch),
@@ -135,7 +131,7 @@ where
     }
 
     if let Some(commit) = args.commit {
-      let reset_log = run_komodo_command(
+      let reset_log = run_komodo_standard_command(
         "Set commit",
         res.path.as_ref(),
         format!("git reset --hard {commit}"),

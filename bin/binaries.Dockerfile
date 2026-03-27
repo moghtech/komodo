@@ -1,7 +1,7 @@
 ## Builds the Komodo Core, Periphery, and Util binaries
-## for a specific architecture.
+## for a specific architecture. Requires OpenSSL 3 or later.
 
-FROM rust:1.89.0-bullseye AS builder
+FROM rust:1.94.0-bookworm AS builder
 RUN cargo install cargo-strip
 
 WORKDIR /builder
@@ -27,6 +27,6 @@ COPY --from=builder /builder/target/release/core /core
 COPY --from=builder /builder/target/release/periphery /periphery
 COPY --from=builder /builder/target/release/km /km
 
-LABEL org.opencontainers.image.source=https://github.com/moghtech/komodo
+LABEL org.opencontainers.image.source="https://github.com/moghtech/komodo"
 LABEL org.opencontainers.image.description="Komodo Binaries"
-LABEL org.opencontainers.image.licenses=GPL-3.0
+LABEL org.opencontainers.image.licenses="GPL-3.0"

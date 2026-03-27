@@ -5,7 +5,7 @@ use database::mungos::{
   find::find_collect,
   mongodb::{Collection, bson::doc, options::FindOneOptions},
 };
-use futures::{TryStreamExt, stream::FuturesUnordered};
+use futures_util::{TryStreamExt, stream::FuturesUnordered};
 use komodo_client::{
   api::execute::Execution,
   entities::{
@@ -24,6 +24,7 @@ use komodo_client::{
     resource::Resource,
     server::Server,
     stack::Stack,
+    swarm::Swarm,
     sync::ResourceSync,
     update::Update,
     user::User,
@@ -171,7 +172,7 @@ impl super::KomodoResource for Procedure {
   }
 }
 
-#[instrument(skip(user))]
+#[instrument("ValidateProcedureConfig", skip_all)]
 async fn validate_config(
   config: &mut PartialProcedureConfig,
   user: &User,
@@ -753,6 +754,87 @@ async fn validate_config(
             .try_collect::<Vec<_>>()
             .await?;
         }
+        Execution::RemoveSwarmNodes(params) => {
+          let swarm = super::get_check_permissions::<Swarm>(
+            &params.swarm,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.swarm = swarm.id;
+        }
+        Execution::RemoveSwarmStacks(params) => {
+          let swarm = super::get_check_permissions::<Swarm>(
+            &params.swarm,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.swarm = swarm.id;
+        }
+        Execution::RemoveSwarmServices(params) => {
+          let swarm = super::get_check_permissions::<Swarm>(
+            &params.swarm,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.swarm = swarm.id;
+        }
+        Execution::CreateSwarmConfig(params) => {
+          let swarm = super::get_check_permissions::<Swarm>(
+            &params.swarm,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.swarm = swarm.id;
+        }
+        Execution::RotateSwarmConfig(params) => {
+          let swarm = super::get_check_permissions::<Swarm>(
+            &params.swarm,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.swarm = swarm.id;
+        }
+        Execution::RemoveSwarmConfigs(params) => {
+          let swarm = super::get_check_permissions::<Swarm>(
+            &params.swarm,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.swarm = swarm.id;
+        }
+        Execution::CreateSwarmSecret(params) => {
+          let swarm = super::get_check_permissions::<Swarm>(
+            &params.swarm,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.swarm = swarm.id;
+        }
+        Execution::RotateSwarmSecret(params) => {
+          let swarm = super::get_check_permissions::<Swarm>(
+            &params.swarm,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.swarm = swarm.id;
+        }
+        Execution::RemoveSwarmSecrets(params) => {
+          let swarm = super::get_check_permissions::<Swarm>(
+            &params.swarm,
+            user,
+            PermissionLevel::Execute.into(),
+          )
+          .await?;
+          params.swarm = swarm.id;
+        }
         Execution::ClearRepoCache(_params) => {
           if !user.admin {
             return Err(anyhow!(
@@ -771,6 +853,20 @@ async fn validate_config(
           if !user.admin {
             return Err(anyhow!(
               "Non admin user cannot trigger global auto update"
+            ));
+          }
+        }
+        Execution::RotateAllServerKeys(_params) => {
+          if !user.admin {
+            return Err(anyhow!(
+              "Non admin user cannot trigger rotate all server keys"
+            ));
+          }
+        }
+        Execution::RotateCoreKeys(_params) => {
+          if !user.admin {
+            return Err(anyhow!(
+              "Non admin user cannot trigger rotate core keys"
             ));
           }
         }

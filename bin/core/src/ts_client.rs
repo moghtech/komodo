@@ -5,9 +5,9 @@ use axum::{
   http::{HeaderMap, HeaderValue},
   routing::get,
 };
+use mogh_error::AddStatusCodeError;
 use reqwest::StatusCode;
 use serde::Deserialize;
-use serror::AddStatusCodeError;
 use tokio::fs;
 
 use crate::config::core_config;
@@ -35,7 +35,7 @@ struct FilePath {
 #[axum::debug_handler]
 async fn serve_client_file(
   Path(FilePath { path }): Path<FilePath>,
-) -> serror::Result<(HeaderMap, String)> {
+) -> mogh_error::Result<(HeaderMap, String)> {
   if !ALLOWED_FILES.contains(&path.as_str()) {
     return Err(
       anyhow!("File {path} not found.")
@@ -45,7 +45,7 @@ async fn serve_client_file(
 
   let contents = fs::read_to_string(format!(
     "{}/client/{path}",
-    core_config().frontend_path
+    core_config().ui_path
   ))
   .await
   .with_context(|| format!("Failed to read file: {path}"))?;

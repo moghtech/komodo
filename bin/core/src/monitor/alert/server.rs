@@ -1,8 +1,5 @@
 use std::{
-  collections::HashMap,
-  path::PathBuf,
-  str::FromStr,
-  sync::{Mutex, OnceLock},
+  collections::HashMap, path::PathBuf, str::FromStr, sync::OnceLock,
 };
 
 use anyhow::Context;
@@ -12,7 +9,6 @@ use database::mungos::{
   find::find_collect,
   mongodb::bson::{doc, oid::ObjectId, to_bson},
 };
-use derive_variants::ExtractVariant;
 use komodo_client::entities::{
   ResourceTarget,
   alert::{Alert, AlertData, AlertDataVariant, SeverityLevel},
@@ -23,6 +19,7 @@ use komodo_client::entities::{
 use crate::{
   alert::send_alerts,
   helpers::maintenance::is_in_maintenance,
+  monitor::alert::AlertBuffer,
   state::{db_client, server_status_cache},
 };
 
@@ -31,54 +28,17 @@ type OpenAlertMap<T = AlertDataVariant> =
   HashMap<ResourceTarget, HashMap<T, Alert>>;
 type OpenDiskAlertMap = OpenAlertMap<PathBuf>;
 
-/// Alert buffer to prevent immediate alerts on transient issues
-struct AlertBuffer {
-  buffer: Mutex<HashMap<(String, AlertDataVariant), bool>>,
-}
-
-impl AlertBuffer {
-  fn new() -> Self {
-    Self {
-      buffer: Mutex::new(HashMap::new()),
-    }
-  }
-
-  /// Check if alert should be opened. Requires two consecutive calls to return true.
-  fn ready_to_open(
-    &self,
-    server_id: String,
-    variant: AlertDataVariant,
-  ) -> bool {
-    let mut lock = self.buffer.lock().unwrap();
-    let ready = lock.entry((server_id, variant)).or_default();
-    if *ready {
-      *ready = false;
-      true
-    } else {
-      *ready = true;
-      false
-    }
-  }
-
-  /// Reset buffer state for a specific server/alert combination
-  fn reset(&self, server_id: String, variant: AlertDataVariant) {
-    let mut lock = self.buffer.lock().unwrap();
-    lock.remove(&(server_id, variant));
-  }
-}
-
-/// Global alert buffer instance
+/// Server alert buffer instance
 fn alert_buffer() -> &'static AlertBuffer {
   static BUFFER: OnceLock<AlertBuffer> = OnceLock::new();
   BUFFER.get_or_init(AlertBuffer::new)
 }
 
-#[instrument(level = "debug")]
 pub async fn alert_servers(
   ts: i64,
   mut servers: HashMap<String, Server>,
 ) {
-  let server_statuses = server_status_cache().get_list().await;
+  let server_statuses = server_status_cache().get_values().await;
 
   let (open_alerts, open_disk_alerts) = match get_open_alerts().await
   {
@@ -91,7 +51,7 @@ pub async fn alert_servers(
 
   let mut alerts_to_open = Vec::<(Alert, SendAlerts)>::new();
   let mut alerts_to_update = Vec::<(Alert, SendAlerts)>::new();
-  let mut alert_ids_to_close = Vec::<(Alert, SendAlerts)>::new();
+  let mut alerts_to_close = Vec::<(Alert, SendAlerts)>::new();
 
   let buffer = alert_buffer();
 
@@ -106,15 +66,21 @@ pub async fn alert_servers(
     let in_maintenance =
       is_in_maintenance(&server.config.maintenance_windows, ts);
 
-    // ===================
-    // SERVER HEALTH
-    // ===================
+    // ===============
+    //  SERVER HEALTH
+    // ===============
     let health_alert = server_alerts.as_ref().and_then(|alerts| {
       alerts.get(&AlertDataVariant::ServerUnreachable)
     });
-    match (server_status.state, health_alert) {
-      (ServerState::NotOk, None) => {
-        // Only open unreachable alert if not in maintenance and buffer is ready
+    match (
+      server_status.state,
+      health_alert,
+      server.config.send_unreachable_alerts,
+    ) {
+      // Skip alerting if alerts disabled
+      (ServerState::NotOk, None, false) => {}
+      (ServerState::NotOk, None, true) => {
+        // Only open unreachable alert if unreachable alerts enabled and not in maintenance and buffer is ready
         if !in_maintenance
           && buffer.ready_to_open(
             server_status.id.clone(),
@@ -139,19 +105,14 @@ pub async fn alert_servers(
             .push((alert, server.config.send_unreachable_alerts))
         }
       }
-      (ServerState::NotOk, Some(alert)) => {
+      (ServerState::NotOk, Some(alert), true) => {
         // update alert err
         let mut alert = alert.clone();
         let (id, name, region) = match alert.data {
           AlertData::ServerUnreachable {
             id, name, region, ..
           } => (id, name, region),
-          data => {
-            error!(
-              "got incorrect alert data in ServerStatus handler. got {data:?}"
-            );
-            continue;
-          }
+          _ => unreachable!(),
         };
         alert.data = AlertData::ServerUnreachable {
           id,
@@ -164,36 +125,55 @@ pub async fn alert_servers(
         alerts_to_update.push((alert, false));
       }
 
-      // Close an open alert
-      (ServerState::Ok | ServerState::Disabled, Some(alert)) => {
-        alert_ids_to_close.push((
+      (ServerState::NotOk, Some(alert), false) => {
+        alerts_to_close.push((
           alert.clone(),
           server.config.send_unreachable_alerts,
         ));
       }
-      (ServerState::Ok | ServerState::Disabled, None) => buffer
+
+      // Close an open alert
+      (ServerState::Ok | ServerState::Disabled, Some(alert), _) => {
+        alerts_to_close.push((
+          alert.clone(),
+          server.config.send_unreachable_alerts,
+        ));
+      }
+      (ServerState::Ok | ServerState::Disabled, None, _) => buffer
         .reset(
           server_status.id.clone(),
           AlertDataVariant::ServerUnreachable,
         ),
     }
 
-    // ===================
+    // ========================
     // SERVER VERSION MISMATCH
-    // ===================
+    // ========================
     let core_version = env!("CARGO_PKG_VERSION");
-    let has_version_mismatch = server_status.state == ServerState::Ok
-      && !server_status.version.is_empty()
-      && server_status.version != "Unknown"
-      && server_status.version != core_version;
+    let mismatched_server_version =
+      if server_status.state != ServerState::Ok {
+        None
+      } else if let Some(version) =
+        server_status.periphery_info.as_ref().map(|i| &i.version)
+        && version != core_version
+      {
+        Some(version)
+      } else {
+        None
+      };
 
     let version_alert = server_alerts.as_ref().and_then(|alerts| {
       alerts.get(&AlertDataVariant::ServerVersionMismatch)
     });
 
-    match (has_version_mismatch, version_alert) {
-      (true, None) => {
-        // Only open version mismatch alert if not in maintenance and buffer is ready
+    match (
+      mismatched_server_version,
+      version_alert,
+      server.config.send_version_mismatch_alerts,
+    ) {
+      (Some(_), None, false) => {}
+      (Some(version), None, true) => {
+        // Only open version mismatch alert if version mismatch alerts enabled and not in maintenance and buffer is ready
         if !in_maintenance
           && buffer.ready_to_open(
             server_status.id.clone(),
@@ -211,7 +191,7 @@ pub async fn alert_servers(
               id: server_status.id.clone(),
               name: server.name.clone(),
               region: optional_string(&server.config.region),
-              server_version: server_status.version.clone(),
+              server_version: version.clone(),
               core_version: core_version.to_string(),
             },
           };
@@ -220,27 +200,47 @@ pub async fn alert_servers(
             .push((alert, server.config.send_version_mismatch_alerts))
         }
       }
-      (true, Some(alert)) => {
-        // Update existing alert with current version info
-        let mut alert = alert.clone();
-        alert.data = AlertData::ServerVersionMismatch {
-          id: server_status.id.clone(),
-          name: server.name.clone(),
-          region: optional_string(&server.config.region),
-          server_version: server_status.version.clone(),
-          core_version: core_version.to_string(),
-        };
-        // Don't send notification for updates
-        alerts_to_update.push((alert, false));
+      (Some(version), Some(alert), true) => {
+        // Update existing alert with current version info if changed
+        let (alert_server_version, alert_core_version) =
+          match &alert.data {
+            AlertData::ServerVersionMismatch {
+              server_version,
+              core_version,
+              ..
+            } => (server_version, core_version),
+            _ => unreachable!(),
+          };
+
+        if alert_server_version != version
+          || alert_core_version != core_version
+        {
+          let mut alert = alert.clone();
+          alert.data = AlertData::ServerVersionMismatch {
+            id: server_status.id.clone(),
+            name: server.name.clone(),
+            region: optional_string(&server.config.region),
+            server_version: version.clone(),
+            core_version: core_version.to_string(),
+          };
+          // Don't send notification for updates
+          alerts_to_update.push((alert, false));
+        }
       }
-      (false, Some(alert)) => {
-        // Version is now correct, close the alert
-        alert_ids_to_close.push((
+      (Some(_), Some(alert), false) => {
+        alerts_to_close.push((
           alert.clone(),
           server.config.send_version_mismatch_alerts,
         ));
       }
-      (false, None) => {
+      (None, Some(alert), _) => {
+        // Version is now correct, close the alert
+        alerts_to_close.push((
+          alert.clone(),
+          server.config.send_version_mismatch_alerts,
+        ));
+      }
+      (None, None, _) => {
         // Reset buffer state when no mismatch and no alert
         buffer.reset(
           server_status.id.clone(),
@@ -260,10 +260,25 @@ pub async fn alert_servers(
       .as_ref()
       .and_then(|alerts| alerts.get(&AlertDataVariant::ServerCpu))
       .cloned();
-    match (health.cpu.level, cpu_alert, health.cpu.should_close_alert)
-    {
-      (SeverityLevel::Warning | SeverityLevel::Critical, None, _) => {
-        // Only open CPU alert if not in maintenance and buffer is ready
+    match (
+      health.cpu.level,
+      cpu_alert,
+      health.cpu.should_close_alert,
+      server.config.send_cpu_alerts,
+    ) {
+      (
+        SeverityLevel::Warning | SeverityLevel::Critical,
+        None,
+        _,
+        false,
+      ) => {}
+      (
+        SeverityLevel::Warning | SeverityLevel::Critical,
+        None,
+        _,
+        true,
+      ) => {
+        // Only open CPU alert if cpu alerts enabled and not in maintenance and buffer is ready
         if !in_maintenance
           && buffer.ready_to_open(
             server_status.id.clone(),
@@ -282,7 +297,7 @@ pub async fn alert_servers(
               name: server.name.clone(),
               region: optional_string(&server.config.region),
               percentage: server_status
-                .stats
+                .system_stats
                 .as_ref()
                 .map(|s| s.cpu_perc as f64)
                 .unwrap_or(0.0),
@@ -295,6 +310,7 @@ pub async fn alert_servers(
         SeverityLevel::Warning | SeverityLevel::Critical,
         Some(mut alert),
         _,
+        true,
       ) => {
         // modify alert level only if it has increased and not in maintenance
         if !in_maintenance && alert.level < health.cpu.level {
@@ -304,7 +320,7 @@ pub async fn alert_servers(
             name: server.name.clone(),
             region: optional_string(&server.config.region),
             percentage: server_status
-              .stats
+              .system_stats
               .as_ref()
               .map(|s| s.cpu_perc as f64)
               .unwrap_or(0.0),
@@ -313,22 +329,28 @@ pub async fn alert_servers(
             .push((alert, server.config.send_cpu_alerts));
         }
       }
-      (SeverityLevel::Ok, Some(alert), true) => {
-        let mut alert = alert.clone();
+      (
+        SeverityLevel::Warning | SeverityLevel::Critical,
+        Some(alert),
+        _,
+        false,
+      ) => {
+        alerts_to_close.push((alert, server.config.send_cpu_alerts));
+      }
+      (SeverityLevel::Ok, Some(mut alert), true, _) => {
         alert.data = AlertData::ServerCpu {
           id: server_status.id.clone(),
           name: server.name.clone(),
           region: optional_string(&server.config.region),
           percentage: server_status
-            .stats
+            .system_stats
             .as_ref()
             .map(|s| s.cpu_perc as f64)
             .unwrap_or(0.0),
         };
-        alert_ids_to_close
-          .push((alert, server.config.send_cpu_alerts))
+        alerts_to_close.push((alert, server.config.send_cpu_alerts))
       }
-      (SeverityLevel::Ok, _, _) => buffer
+      (SeverityLevel::Ok, _, _, _) => buffer
         .reset(server_status.id.clone(), AlertDataVariant::ServerCpu),
     }
 
@@ -339,10 +361,25 @@ pub async fn alert_servers(
       .as_ref()
       .and_then(|alerts| alerts.get(&AlertDataVariant::ServerMem))
       .cloned();
-    match (health.mem.level, mem_alert, health.mem.should_close_alert)
-    {
-      (SeverityLevel::Warning | SeverityLevel::Critical, None, _) => {
-        // Only open memory alert if not in maintenance and buffer is ready
+    match (
+      health.mem.level,
+      mem_alert,
+      health.mem.should_close_alert,
+      server.config.send_mem_alerts,
+    ) {
+      (
+        SeverityLevel::Warning | SeverityLevel::Critical,
+        None,
+        _,
+        false,
+      ) => {}
+      (
+        SeverityLevel::Warning | SeverityLevel::Critical,
+        None,
+        _,
+        true,
+      ) => {
+        // Only open memory alert if memory alerts enabled and not in maintenance and buffer is ready
         if !in_maintenance
           && buffer.ready_to_open(
             server_status.id.clone(),
@@ -361,12 +398,12 @@ pub async fn alert_servers(
               name: server.name.clone(),
               region: optional_string(&server.config.region),
               total_gb: server_status
-                .stats
+                .system_stats
                 .as_ref()
                 .map(|s| s.mem_total_gb)
                 .unwrap_or(0.0),
               used_gb: server_status
-                .stats
+                .system_stats
                 .as_ref()
                 .map(|s| s.mem_used_gb)
                 .unwrap_or(0.0),
@@ -379,6 +416,7 @@ pub async fn alert_servers(
         SeverityLevel::Warning | SeverityLevel::Critical,
         Some(mut alert),
         _,
+        true,
       ) => {
         // modify alert level only if it has increased and not in maintenance
         if !in_maintenance && alert.level < health.mem.level {
@@ -388,12 +426,12 @@ pub async fn alert_servers(
             name: server.name.clone(),
             region: optional_string(&server.config.region),
             total_gb: server_status
-              .stats
+              .system_stats
               .as_ref()
               .map(|s| s.mem_total_gb)
               .unwrap_or(0.0),
             used_gb: server_status
-              .stats
+              .system_stats
               .as_ref()
               .map(|s| s.mem_used_gb)
               .unwrap_or(0.0),
@@ -402,27 +440,35 @@ pub async fn alert_servers(
             .push((alert, server.config.send_mem_alerts));
         }
       }
-      (SeverityLevel::Ok, Some(alert), true) => {
+      (
+        SeverityLevel::Warning | SeverityLevel::Critical,
+        Some(alert),
+        _,
+        false,
+      ) => {
+        alerts_to_close
+          .push((alert.clone(), server.config.send_mem_alerts));
+      }
+      (SeverityLevel::Ok, Some(alert), true, _) => {
         let mut alert = alert.clone();
         alert.data = AlertData::ServerMem {
           id: server_status.id.clone(),
           name: server.name.clone(),
           region: optional_string(&server.config.region),
           total_gb: server_status
-            .stats
+            .system_stats
             .as_ref()
             .map(|s| s.mem_total_gb)
             .unwrap_or(0.0),
           used_gb: server_status
-            .stats
+            .system_stats
             .as_ref()
             .map(|s| s.mem_used_gb)
             .unwrap_or(0.0),
         };
-        alert_ids_to_close
-          .push((alert, server.config.send_mem_alerts))
+        alerts_to_close.push((alert, server.config.send_mem_alerts))
       }
-      (SeverityLevel::Ok, _, _) => buffer
+      (SeverityLevel::Ok, _, _, _) => buffer
         .reset(server_status.id.clone(), AlertDataVariant::ServerMem),
     }
 
@@ -438,13 +484,25 @@ pub async fn alert_servers(
         .as_ref()
         .and_then(|alerts| alerts.get(path))
         .cloned();
-      match (health.level, disk_alert, health.should_close_alert) {
+      match (
+        health.level,
+        disk_alert,
+        health.should_close_alert,
+        server.config.send_disk_alerts,
+      ) {
         (
           SeverityLevel::Warning | SeverityLevel::Critical,
           None,
           _,
+          false,
+        ) => {}
+        (
+          SeverityLevel::Warning | SeverityLevel::Critical,
+          None,
+          _,
+          true,
         ) => {
-          // Only open disk alert if not in maintenance and buffer is ready
+          // Only open disk alert if disk alerts enabled and not in maintenance and buffer is ready
           if !in_maintenance
             && buffer.ready_to_open(
               server_status.id.clone(),
@@ -452,7 +510,7 @@ pub async fn alert_servers(
             )
           {
             let disk =
-              server_status.stats.as_ref().and_then(|stats| {
+              server_status.system_stats.as_ref().and_then(|stats| {
                 stats.disks.iter().find(|disk| disk.mount == *path)
               });
             let alert = Alert {
@@ -483,11 +541,12 @@ pub async fn alert_servers(
           SeverityLevel::Warning | SeverityLevel::Critical,
           Some(mut alert),
           _,
+          true,
         ) => {
           // modify alert level only if it has increased and not in maintenance
           if !in_maintenance && health.level < alert.level {
             let disk =
-              server_status.stats.as_ref().and_then(|stats| {
+              server_status.system_stats.as_ref().and_then(|stats| {
                 stats.disks.iter().find(|disk| disk.mount == *path)
               });
             alert.level = health.level;
@@ -503,11 +562,20 @@ pub async fn alert_servers(
               .push((alert, server.config.send_disk_alerts));
           }
         }
-        (SeverityLevel::Ok, Some(alert), true) => {
-          let mut alert = alert.clone();
-          let disk = server_status.stats.as_ref().and_then(|stats| {
-            stats.disks.iter().find(|disk| disk.mount == *path)
-          });
+        (
+          SeverityLevel::Warning | SeverityLevel::Critical,
+          Some(alert),
+          _,
+          false,
+        ) => {
+          alerts_to_close
+            .push((alert, server.config.send_disk_alerts));
+        }
+        (SeverityLevel::Ok, Some(mut alert), true, _) => {
+          let disk =
+            server_status.system_stats.as_ref().and_then(|stats| {
+              stats.disks.iter().find(|disk| disk.mount == *path)
+            });
           alert.level = health.level;
           alert.data = AlertData::ServerDisk {
             id: server_status.id.clone(),
@@ -517,10 +585,10 @@ pub async fn alert_servers(
             total_gb: disk.map(|d| d.total_gb).unwrap_or_default(),
             used_gb: disk.map(|d| d.used_gb).unwrap_or_default(),
           };
-          alert_ids_to_close
+          alerts_to_close
             .push((alert, server.config.send_disk_alerts))
         }
-        (SeverityLevel::Ok, _, _) => buffer.reset(
+        (SeverityLevel::Ok, _, _, _) => buffer.reset(
           server_status.id.clone(),
           AlertDataVariant::ServerDisk,
         ),
@@ -533,7 +601,7 @@ pub async fn alert_servers(
         if !health.disks.contains_key(path) {
           let mut alert = alert.clone();
           alert.level = SeverityLevel::Ok;
-          alert_ids_to_close
+          alerts_to_close
             .push((alert, server.config.send_disk_alerts));
         }
       }
@@ -543,11 +611,10 @@ pub async fn alert_servers(
   tokio::join!(
     open_new_alerts(&alerts_to_open),
     update_alerts(&alerts_to_update),
-    resolve_alerts(&alert_ids_to_close),
+    resolve_alerts(&alerts_to_close),
   );
 }
 
-#[instrument(level = "debug")]
 async fn open_new_alerts(alerts: &[(Alert, SendAlerts)]) {
   if alerts.is_empty() {
     return;
@@ -595,7 +662,6 @@ async fn open_new_alerts(alerts: &[(Alert, SendAlerts)]) {
   send_alerts(&alerts).await
 }
 
-#[instrument(level = "debug")]
 async fn update_alerts(alerts: &[(Alert, SendAlerts)]) {
   if alerts.is_empty() {
     return;
@@ -643,7 +709,6 @@ async fn update_alerts(alerts: &[(Alert, SendAlerts)]) {
   }
 }
 
-#[instrument(level = "debug")]
 async fn resolve_alerts(alerts: &[(Alert, SendAlerts)]) {
   if alerts.is_empty() {
     return;
@@ -700,7 +765,6 @@ async fn resolve_alerts(alerts: &[(Alert, SendAlerts)]) {
   }
 }
 
-#[instrument(level = "debug")]
 async fn get_open_alerts()
 -> anyhow::Result<(OpenAlertMap, OpenDiskAlertMap)> {
   let alerts = find_collect(
@@ -722,7 +786,7 @@ async fn get_open_alerts()
       }
       _ => {
         let inner = map.entry(alert.target.clone()).or_default();
-        inner.insert(alert.data.extract_variant(), alert);
+        inner.insert((&alert.data).into(), alert);
       }
     }
   }

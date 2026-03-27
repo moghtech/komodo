@@ -11,23 +11,32 @@ repository.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-# default = ["blocking"] # use to dev client blocking mode
-mongo = ["dep:mongo_indexed"]
 blocking = ["reqwest/blocking"]
+mongo = ["dep:mongo_indexed"]
+utoipa = ["dep:utoipa", "mogh_auth_client/utoipa", "mogh_error/utoipa"]
+logger = ["dep:mogh_logger"]
+cli = ["logger", "dep:mogh_pki",]
+core = ["mongo", "utoipa", "logger", "dep:mogh_server"]
+periphery = ["cli", "dep:ipnetwork", "dep:mogh_server"]
 
 [dependencies]
 # mogh
+mogh_pki = { workspace = true, optional = true, features = ["cli"] }
 mongo_indexed = { workspace = true, optional = true }
-serror = { workspace = true, features = ["axum"]}
+mogh_logger = { workspace = true, optional = true }
+mogh_server = { workspace = true, optional = true }
+mogh_error = { workspace = true, features = ["axum"] }
 derive_default_builder.workspace = true
-derive_empty_traits.workspace = true
 async_timing_util.workspace = true
+mogh_auth_client.workspace = true
 partial_derive2.workspace = true
-derive_variants.workspace = true
-resolver_api.workspace = true
+mogh_resolver.workspace = true
 # external
+ipnetwork = { workspace = true, optional = true }
+utoipa = { workspace = true, optional = true }
 tokio-tungstenite.workspace = true
 derive_builder.workspace = true
+futures-util.workspace = true
 urlencoding.workspace = true
 serde_json.workspace = true
 tokio-util.workspace = true
@@ -35,15 +44,14 @@ thiserror.workspace = true
 typeshare.workspace = true
 indexmap.workspace = true
 serde_qs.workspace = true
-futures.workspace = true
 reqwest.workspace = true
 tracing.workspace = true
 anyhow.workspace = true
+bytes.workspace = true
 serde.workspace = true
 tokio.workspace = true
 strum.workspace = true
-envy.workspace = true
-uuid.workspace = true
-clap.workspace = true
 bson.workspace = true
-ipnetwork.workspace = true
+clap.workspace = true
+envy.workspace = true
+rand.workspace = true

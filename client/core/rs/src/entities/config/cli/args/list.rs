@@ -98,6 +98,9 @@ pub enum ListCommand {
   /// List Syncs (aliases: `sync`, `sn`)
   #[clap(alias = "sync", alias = "sn")]
   Syncs(ResourceFilters),
+  /// List Terminals (aliases: `term`, `tm`)
+  #[clap(alias = "term", alias = "tm")]
+  Terminals(ResourceFilters),
   /// List scheduled Procedures / Actions (aliases: `sched`, `sc`)
   #[clap(alias = "sched", alias = "sc")]
   Schedules(ResourceFilters),

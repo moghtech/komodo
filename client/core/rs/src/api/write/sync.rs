@@ -1,11 +1,9 @@
 use clap::Parser;
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 use crate::entities::{
-  NoData,
   sync::{_PartialResourceSyncConfig, ResourceSync},
   update::Update,
 };
@@ -14,14 +12,25 @@ use super::KomodoWriteRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateResourceSync",
+  description = "Create a resource sync.",
+  request_body(content = CreateResourceSync),
+  responses(
+    (status = 200, description = "The created resource sync", body = crate::entities::sync::ResourceSyncSchema),
+  ),
+)]
+pub fn create_resource_sync() {}
+
 /// Create a sync. Response: [ResourceSync].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ResourceSync)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateResourceSync {
   /// The name given to newly created sync.
   pub name: String,
@@ -32,15 +41,26 @@ pub struct CreateResourceSync {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CopyResourceSync",
+  description = "Copy a resource sync.",
+  request_body(content = CopyResourceSync),
+  responses(
+    (status = 200, description = "The copied resource sync", body = crate::entities::sync::ResourceSyncSchema),
+  ),
+)]
+pub fn copy_resource_sync() {}
+
 /// Creates a new sync with given `name` and the configuration
 /// of the sync at the given `id`. Response: [ResourceSync].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ResourceSync)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CopyResourceSync {
   /// The name of the new sync.
   pub name: String,
@@ -50,21 +70,44 @@ pub struct CopyResourceSync {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteResourceSync",
+  description = "Delete a resource sync.",
+  request_body(content = DeleteResourceSync),
+  responses(
+    (status = 200, description = "The deleted resource sync", body = crate::entities::sync::ResourceSyncSchema),
+  ),
+)]
+pub fn delete_resource_sync() {}
+
 /// Deletes the sync at the given id, and returns the deleted sync.
 /// Response: [ResourceSync]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ResourceSync)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteResourceSync {
   /// The id or name of the sync to delete.
   pub id: String,
 }
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UpdateResourceSync",
+  description = "Update a resource sync.",
+  request_body(content = UpdateResourceSync),
+  responses(
+    (status = 200, description = "The updated resource sync", body = crate::entities::sync::ResourceSyncSchema),
+  ),
+)]
+pub fn update_resource_sync() {}
 
 /// Update the sync at the given id, and return the updated sync.
 /// Response: [ResourceSync].
@@ -75,12 +118,11 @@ pub struct DeleteResourceSync {
 /// the same resources concurrently by ensuring no unintentional
 /// field changes occur from out of date local state.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ResourceSync)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateResourceSync {
   /// The id of the sync to update.
   pub id: String,
@@ -90,15 +132,26 @@ pub struct UpdateResourceSync {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RenameResourceSync",
+  description = "Rename a resource sync.",
+  request_body(content = RenameResourceSync),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn rename_resource_sync() {}
+
 /// Rename the ResourceSync at id to the given name.
 /// Response: [Update].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RenameResourceSync {
   /// The id or name of the ResourceSync to rename.
   pub id: String,
@@ -108,14 +161,25 @@ pub struct RenameResourceSync {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/RefreshResourceSyncPending",
+  description = "Refresh resource sync pending state.",
+  request_body(content = RefreshResourceSyncPending),
+  responses(
+    (status = 200, description = "The refreshed sync", body = crate::entities::sync::ResourceSyncSchema),
+  ),
+)]
+pub fn refresh_resource_sync_pending() {}
+
 /// Trigger a refresh of the computed diff logs for view. Response: [ResourceSync]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(ResourceSync)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct RefreshResourceSyncPending {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -124,14 +188,25 @@ pub struct RefreshResourceSyncPending {
 
 //
 
-/// Rename the stack at id to the given name. Response: [Update].
-#[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/WriteSyncFileContents",
+  description = "Write to the sync toml file contents.",
+  request_body(content = WriteSyncFileContents),
+  responses(
+    (status = 200, description = "The update result", body = Update),
+  ),
 )]
+pub fn write_sync_file_contents() {}
+
+/// Write to the sync toml file contents. Response: [Update].
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct WriteSyncFileContents {
   /// The name or id of the target Sync.
   #[serde(alias = "id", alias = "name")]
@@ -147,23 +222,29 @@ pub struct WriteSyncFileContents {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CommitSync",
+  description = "Exports matching resources, and writes to the target sync's resource file.",
+  request_body(content = CommitSync),
+  responses(
+    (status = 200, description = "The update", body = Update),
+  ),
+)]
+pub fn commit_sync() {}
+
 /// Exports matching resources, and writes to the target sync's resource file. Response: [Update]
 ///
 /// Note. Will fail if the Sync is not `managed`.
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Resolve,
-  EmptyTraits,
-  Parser,
+  Debug, Clone, PartialEq, Serialize, Deserialize, Resolve, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(Update)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CommitSync {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -174,49 +255,8 @@ pub struct CommitSync {
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum SyncWebhookAction {
   Refresh,
   Sync,
 }
-
-/// Create a webhook on the github repo attached to the sync
-/// passed in request. Response: [CreateSyncWebhookResponse]
-#[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
-#[empty_traits(KomodoWriteRequest)]
-#[response(CreateSyncWebhookResponse)]
-#[error(serror::Error)]
-pub struct CreateSyncWebhook {
-  /// Id or name
-  #[serde(alias = "id", alias = "name")]
-  pub sync: String,
-  /// "Refresh" or "Sync"
-  pub action: SyncWebhookAction,
-}
-
-#[typeshare]
-pub type CreateSyncWebhookResponse = NoData;
-
-//
-
-/// Delete the webhook on the github repo attached to the sync
-/// passed in request. Response: [DeleteSyncWebhookResponse]
-#[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
-#[empty_traits(KomodoWriteRequest)]
-#[response(DeleteSyncWebhookResponse)]
-#[error(serror::Error)]
-pub struct DeleteSyncWebhook {
-  /// Id or name
-  #[serde(alias = "id", alias = "name")]
-  pub sync: String,
-  /// "Refresh" or "Sync"
-  pub action: SyncWebhookAction,
-}
-
-#[typeshare]
-pub type DeleteSyncWebhookResponse = NoData;

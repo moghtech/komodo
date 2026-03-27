@@ -1,4 +1,4 @@
-use futures::{Stream, StreamExt, TryStreamExt};
+use futures_util::{Stream, StreamExt, TryStreamExt};
 
 pub struct TerminalStreamResponse(pub reqwest::Response);
 

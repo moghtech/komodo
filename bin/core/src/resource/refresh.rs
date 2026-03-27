@@ -9,7 +9,7 @@ use komodo_client::{
   },
   entities::user::{build_user, repo_user, stack_user, sync_user},
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{
   api::write::WriteArgs,

@@ -1,4 +1,4 @@
-use std::{collections::HashSet, sync::OnceLock, time::Instant};
+use std::collections::HashSet;
 
 use anyhow::{Context, anyhow};
 use axum::{
@@ -18,16 +18,21 @@ use komodo_client::{
     user::User,
   },
 };
-use resolver_api::Resolve;
-use response::Response;
+use mogh_auth_server::middleware::authenticate_request;
+use mogh_error::Response;
+use mogh_error::{AddStatusCodeError, Json};
+use mogh_resolver::Resolve;
+use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use serror::Json;
+use strum::{Display, EnumDiscriminants};
 use typeshare::typeshare;
 use uuid::Uuid;
 
 use crate::{
-  auth::auth_request, config::core_config, helpers::periphery_client,
+  auth::KomodoAuthImpl,
+  config::{core_config, core_keys},
+  helpers::periphery_client,
   resource,
 };
 
@@ -39,6 +44,7 @@ mod alerter;
 mod build;
 mod builder;
 mod deployment;
+mod onboarding_key;
 mod permission;
 mod procedure;
 mod provider;
@@ -46,8 +52,10 @@ mod repo;
 mod schedule;
 mod server;
 mod stack;
+mod swarm;
 mod sync;
 mod tag;
+mod terminal;
 mod toml;
 mod update;
 mod user;
@@ -59,10 +67,13 @@ pub struct ReadArgs {
 }
 
 #[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[derive(
+  Serialize, Deserialize, Debug, Clone, Resolve, EnumDiscriminants,
+)]
+#[strum_discriminants(name(ReadRequestMethod), derive(Display))]
 #[args(ReadArgs)]
 #[response(Response)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 #[serde(tag = "type", content = "params")]
 enum ReadRequest {
   GetVersion(GetVersion),
@@ -71,19 +82,108 @@ enum ReadRequest {
   ListGitProvidersFromConfig(ListGitProvidersFromConfig),
   ListDockerRegistriesFromConfig(ListDockerRegistriesFromConfig),
 
-  // ==== USER ====
-  GetUsername(GetUsername),
-  GetPermission(GetPermission),
-  FindUser(FindUser),
-  ListUsers(ListUsers),
-  ListApiKeys(ListApiKeys),
-  ListApiKeysForServiceUser(ListApiKeysForServiceUser),
-  ListPermissions(ListPermissions),
-  ListUserTargetPermissions(ListUserTargetPermissions),
+  // ==== SWARM ====
+  GetSwarmsSummary(GetSwarmsSummary),
+  GetSwarm(GetSwarm),
+  GetSwarmActionState(GetSwarmActionState),
+  ListSwarms(ListSwarms),
+  InspectSwarm(InspectSwarm),
+  ListFullSwarms(ListFullSwarms),
+  ListSwarmNodes(ListSwarmNodes),
+  InspectSwarmNode(InspectSwarmNode),
+  ListSwarmConfigs(ListSwarmConfigs),
+  InspectSwarmConfig(InspectSwarmConfig),
+  ListSwarmSecrets(ListSwarmSecrets),
+  InspectSwarmSecret(InspectSwarmSecret),
+  ListSwarmStacks(ListSwarmStacks),
+  InspectSwarmStack(InspectSwarmStack),
+  ListSwarmTasks(ListSwarmTasks),
+  InspectSwarmTask(InspectSwarmTask),
+  ListSwarmServices(ListSwarmServices),
+  InspectSwarmService(InspectSwarmService),
+  GetSwarmServiceLog(GetSwarmServiceLog),
+  SearchSwarmServiceLog(SearchSwarmServiceLog),
+  ListSwarmNetworks(ListSwarmNetworks),
 
-  // ==== USER GROUP ====
-  GetUserGroup(GetUserGroup),
-  ListUserGroups(ListUserGroups),
+  // ==== SERVER ====
+  GetServersSummary(GetServersSummary),
+  GetServer(GetServer),
+  GetServerState(GetServerState),
+  GetPeripheryInformation(GetPeripheryInformation),
+  GetServerActionState(GetServerActionState),
+  ListServers(ListServers),
+  ListFullServers(ListFullServers),
+
+  // ==== TERMINAL ====
+  ListTerminals(ListTerminals),
+
+  // ==== DOCKER ====
+  GetDockerContainersSummary(GetDockerContainersSummary),
+  ListAllDockerContainers(ListAllDockerContainers),
+  ListDockerContainers(ListDockerContainers),
+  InspectDockerContainer(InspectDockerContainer),
+  GetResourceMatchingContainer(GetResourceMatchingContainer),
+  GetContainerLog(GetContainerLog),
+  SearchContainerLog(SearchContainerLog),
+  ListComposeProjects(ListComposeProjects),
+  ListDockerNetworks(ListDockerNetworks),
+  InspectDockerNetwork(InspectDockerNetwork),
+  ListDockerImages(ListDockerImages),
+  InspectDockerImage(InspectDockerImage),
+  ListDockerImageHistory(ListDockerImageHistory),
+  ListDockerVolumes(ListDockerVolumes),
+  InspectDockerVolume(InspectDockerVolume),
+
+  // ==== SERVER STATS ====
+  GetSystemInformation(GetSystemInformation),
+  GetSystemStats(GetSystemStats),
+  GetHistoricalServerStats(GetHistoricalServerStats),
+  ListSystemProcesses(ListSystemProcesses),
+
+  // ==== STACK ====
+  GetStacksSummary(GetStacksSummary),
+  GetStack(GetStack),
+  GetStackActionState(GetStackActionState),
+  GetStackLog(GetStackLog),
+  SearchStackLog(SearchStackLog),
+  InspectStackContainer(InspectStackContainer),
+  InspectStackSwarmService(InspectStackSwarmService),
+  ListStacks(ListStacks),
+  ListFullStacks(ListFullStacks),
+  ListStackServices(ListStackServices),
+  ListCommonStackExtraArgs(ListCommonStackExtraArgs),
+  ListCommonStackBuildExtraArgs(ListCommonStackBuildExtraArgs),
+
+  // ==== DEPLOYMENT ====
+  GetDeploymentsSummary(GetDeploymentsSummary),
+  GetDeployment(GetDeployment),
+  GetDeploymentContainer(GetDeploymentContainer),
+  GetDeploymentActionState(GetDeploymentActionState),
+  GetDeploymentStats(GetDeploymentStats),
+  GetDeploymentLog(GetDeploymentLog),
+  SearchDeploymentLog(SearchDeploymentLog),
+  InspectDeploymentContainer(InspectDeploymentContainer),
+  InspectDeploymentSwarmService(InspectDeploymentSwarmService),
+  ListDeployments(ListDeployments),
+  ListFullDeployments(ListFullDeployments),
+  ListCommonDeploymentExtraArgs(ListCommonDeploymentExtraArgs),
+
+  // ==== BUILD ====
+  GetBuildsSummary(GetBuildsSummary),
+  GetBuild(GetBuild),
+  GetBuildActionState(GetBuildActionState),
+  GetBuildMonthlyStats(GetBuildMonthlyStats),
+  ListBuildVersions(ListBuildVersions),
+  ListBuilds(ListBuilds),
+  ListFullBuilds(ListFullBuilds),
+  ListCommonBuildExtraArgs(ListCommonBuildExtraArgs),
+
+  // ==== REPO ====
+  GetReposSummary(GetReposSummary),
+  GetRepo(GetRepo),
+  GetRepoActionState(GetRepoActionState),
+  ListRepos(ListRepos),
+  ListFullRepos(ListFullRepos),
 
   // ==== PROCEDURE ====
   GetProceduresSummary(GetProceduresSummary),
@@ -102,88 +202,10 @@ enum ReadRequest {
   // ==== SCHEDULE ====
   ListSchedules(ListSchedules),
 
-  // ==== SERVER ====
-  GetServersSummary(GetServersSummary),
-  GetServer(GetServer),
-  GetServerState(GetServerState),
-  GetPeripheryVersion(GetPeripheryVersion),
-  GetServerActionState(GetServerActionState),
-  GetHistoricalServerStats(GetHistoricalServerStats),
-  ListServers(ListServers),
-  ListFullServers(ListFullServers),
-  InspectDockerContainer(InspectDockerContainer),
-  GetResourceMatchingContainer(GetResourceMatchingContainer),
-  GetContainerLog(GetContainerLog),
-  SearchContainerLog(SearchContainerLog),
-  InspectDockerNetwork(InspectDockerNetwork),
-  InspectDockerImage(InspectDockerImage),
-  ListDockerImageHistory(ListDockerImageHistory),
-  InspectDockerVolume(InspectDockerVolume),
-  GetDockerContainersSummary(GetDockerContainersSummary),
-  ListAllDockerContainers(ListAllDockerContainers),
-  ListDockerContainers(ListDockerContainers),
-  ListDockerNetworks(ListDockerNetworks),
-  ListDockerImages(ListDockerImages),
-  ListDockerVolumes(ListDockerVolumes),
-  ListComposeProjects(ListComposeProjects),
-  ListTerminals(ListTerminals),
-
-  // ==== SERVER STATS ====
-  GetSystemInformation(GetSystemInformation),
-  GetSystemStats(GetSystemStats),
-  ListSystemProcesses(ListSystemProcesses),
-
-  // ==== STACK ====
-  GetStacksSummary(GetStacksSummary),
-  GetStack(GetStack),
-  GetStackActionState(GetStackActionState),
-  GetStackWebhooksEnabled(GetStackWebhooksEnabled),
-  GetStackLog(GetStackLog),
-  SearchStackLog(SearchStackLog),
-  InspectStackContainer(InspectStackContainer),
-  ListStacks(ListStacks),
-  ListFullStacks(ListFullStacks),
-  ListStackServices(ListStackServices),
-  ListCommonStackExtraArgs(ListCommonStackExtraArgs),
-  ListCommonStackBuildExtraArgs(ListCommonStackBuildExtraArgs),
-
-  // ==== DEPLOYMENT ====
-  GetDeploymentsSummary(GetDeploymentsSummary),
-  GetDeployment(GetDeployment),
-  GetDeploymentContainer(GetDeploymentContainer),
-  GetDeploymentActionState(GetDeploymentActionState),
-  GetDeploymentStats(GetDeploymentStats),
-  GetDeploymentLog(GetDeploymentLog),
-  SearchDeploymentLog(SearchDeploymentLog),
-  InspectDeploymentContainer(InspectDeploymentContainer),
-  ListDeployments(ListDeployments),
-  ListFullDeployments(ListFullDeployments),
-  ListCommonDeploymentExtraArgs(ListCommonDeploymentExtraArgs),
-
-  // ==== BUILD ====
-  GetBuildsSummary(GetBuildsSummary),
-  GetBuild(GetBuild),
-  GetBuildActionState(GetBuildActionState),
-  GetBuildMonthlyStats(GetBuildMonthlyStats),
-  ListBuildVersions(ListBuildVersions),
-  GetBuildWebhookEnabled(GetBuildWebhookEnabled),
-  ListBuilds(ListBuilds),
-  ListFullBuilds(ListFullBuilds),
-  ListCommonBuildExtraArgs(ListCommonBuildExtraArgs),
-
-  // ==== REPO ====
-  GetReposSummary(GetReposSummary),
-  GetRepo(GetRepo),
-  GetRepoActionState(GetRepoActionState),
-  GetRepoWebhooksEnabled(GetRepoWebhooksEnabled),
-  ListRepos(ListRepos),
-  ListFullRepos(ListFullRepos),
-
   // ==== SYNC ====
   GetResourceSyncsSummary(GetResourceSyncsSummary),
   GetResourceSync(GetResourceSync),
   GetResourceSyncActionState(GetResourceSyncActionState),
-  GetSyncWebhooksEnabled(GetSyncWebhooksEnabled),
   ListResourceSyncs(ListResourceSyncs),
   ListFullResourceSyncs(ListFullResourceSyncs),
 
@@ -207,6 +229,20 @@ enum ReadRequest {
   GetTag(GetTag),
   ListTags(ListTags),
 
+  // ==== USER ====
+  GetUsername(GetUsername),
+  GetPermission(GetPermission),
+  FindUser(FindUser),
+  ListUsers(ListUsers),
+  ListApiKeys(ListApiKeys),
+  ListApiKeysForServiceUser(ListApiKeysForServiceUser),
+  ListPermissions(ListPermissions),
+  ListUserTargetPermissions(ListUserTargetPermissions),
+
+  // ==== USER GROUP ====
+  GetUserGroup(GetUserGroup),
+  ListUserGroups(ListUserGroups),
+
   // ==== UPDATE ====
   GetUpdate(GetUpdate),
   ListUpdates(ListUpdates),
@@ -224,20 +260,25 @@ enum ReadRequest {
   ListGitProviderAccounts(ListGitProviderAccounts),
   GetDockerRegistryAccount(GetDockerRegistryAccount),
   ListDockerRegistryAccounts(ListDockerRegistryAccounts),
+
+  // ==== ONBOARDING KEY ====
+  ListOnboardingKeys(ListOnboardingKeys),
 }
 
 pub fn router() -> Router {
   Router::new()
     .route("/", post(handler))
     .route("/{variant}", post(variant_handler))
-    .layer(middleware::from_fn(auth_request))
+    .layer(middleware::from_fn(
+      authenticate_request::<KomodoAuthImpl, true>,
+    ))
 }
 
 async fn variant_handler(
   user: Extension<User>,
   Path(Variant { variant }): Path<Variant>,
   Json(params): Json<serde_json::Value>,
-) -> serror::Result<axum::response::Response> {
+) -> mogh_error::Result<axum::response::Response> {
   let req: ReadRequest = serde_json::from_value(json!({
     "type": variant,
     "params": params,
@@ -245,20 +286,37 @@ async fn variant_handler(
   handler(user, Json(req)).await
 }
 
-#[instrument(name = "ReadHandler", level = "debug", skip(user), fields(user_id = user.id))]
 async fn handler(
   Extension(user): Extension<User>,
   Json(request): Json<ReadRequest>,
-) -> serror::Result<axum::response::Response> {
-  let timer = Instant::now();
+) -> mogh_error::Result<axum::response::Response> {
   let req_id = Uuid::new_v4();
-  debug!("/read request | user: {}", user.username);
+  let method: ReadRequestMethod = (&request).into();
+
+  let user_id = user.id.clone();
+  let username = user.username.clone();
+
+  trace!(
+    req_id = req_id.to_string(),
+    method = method.to_string(),
+    user_id,
+    username,
+    "READ REQUEST",
+  );
+
   let res = request.resolve(&ReadArgs { user }).await;
+
   if let Err(e) = &res {
-    debug!("/read request {req_id} error: {:#}", e.error);
+    trace!(
+      req_id = req_id.to_string(),
+      method = method.to_string(),
+      user_id,
+      username,
+      "READ REQUEST | ERROR: {:#}",
+      e.error
+    );
   }
-  let elapsed = timer.elapsed();
-  debug!("/read request {req_id} | resolve time: {elapsed:?}");
+
   res.map(|res| res.0)
 }
 
@@ -266,18 +324,22 @@ impl Resolve<ReadArgs> for GetVersion {
   async fn resolve(
     self,
     _: &ReadArgs,
-  ) -> serror::Result<GetVersionResponse> {
+  ) -> mogh_error::Result<GetVersionResponse> {
     Ok(GetVersionResponse {
       version: env!("CARGO_PKG_VERSION").to_string(),
     })
   }
 }
 
-fn core_info() -> &'static GetCoreInfoResponse {
-  static CORE_INFO: OnceLock<GetCoreInfoResponse> = OnceLock::new();
-  CORE_INFO.get_or_init(|| {
+//
+
+impl Resolve<ReadArgs> for GetCoreInfo {
+  async fn resolve(
+    self,
+    _: &ReadArgs,
+  ) -> mogh_error::Result<GetCoreInfoResponse> {
     let config = core_config();
-    GetCoreInfoResponse {
+    let info = GetCoreInfoResponse {
       title: config.title.clone(),
       monitoring_interval: config.monitoring_interval,
       webhook_base_url: if config.webhook_base_url.is_empty() {
@@ -291,31 +353,20 @@ fn core_info() -> &'static GetCoreInfoResponse {
       disable_non_admin_create: config.disable_non_admin_create,
       disable_websocket_reconnect: config.disable_websocket_reconnect,
       enable_fancy_toml: config.enable_fancy_toml,
-      github_webhook_owners: config
-        .github_webhook_app
-        .installations
-        .iter()
-        .map(|i| i.namespace.to_string())
-        .collect(),
       timezone: config.timezone.clone(),
-    }
-  })
-}
-
-impl Resolve<ReadArgs> for GetCoreInfo {
-  async fn resolve(
-    self,
-    _: &ReadArgs,
-  ) -> serror::Result<GetCoreInfoResponse> {
-    Ok(core_info().clone())
+      public_key: core_keys().load().public.to_string(),
+    };
+    Ok(info)
   }
 }
+
+//
 
 impl Resolve<ReadArgs> for ListSecrets {
   async fn resolve(
     self,
     _: &ReadArgs,
-  ) -> serror::Result<ListSecretsResponse> {
+  ) -> mogh_error::Result<ListSecretsResponse> {
     let mut secrets = core_config()
       .secrets
       .keys()
@@ -337,13 +388,15 @@ impl Resolve<ReadArgs> for ListSecrets {
         }
         _ => {
           return Err(
-            anyhow!("target must be `Server` or `Builder`").into(),
+            anyhow!("target must be `Server` or `Builder`")
+              .status_code(StatusCode::BAD_REQUEST),
           );
         }
       };
       if let Some(id) = server_id {
         let server = resource::get::<Server>(&id).await?;
-        let more = periphery_client(&server)?
+        let more = periphery_client(&server)
+          .await?
           .request(periphery_client::api::ListSecrets {})
           .await
           .with_context(|| {
@@ -363,11 +416,13 @@ impl Resolve<ReadArgs> for ListSecrets {
   }
 }
 
+//
+
 impl Resolve<ReadArgs> for ListGitProvidersFromConfig {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListGitProvidersFromConfigResponse> {
+  ) -> mogh_error::Result<ListGitProvidersFromConfigResponse> {
     let mut providers = core_config().git_providers.clone();
 
     if let Some(target) = self.target {
@@ -395,7 +450,8 @@ impl Resolve<ReadArgs> for ListGitProvidersFromConfig {
         }
         _ => {
           return Err(
-            anyhow!("target must be `Server` or `Builder`").into(),
+            anyhow!("target must be `Server` or `Builder`")
+              .status_code(StatusCode::BAD_REQUEST),
           );
         }
       }
@@ -465,11 +521,13 @@ impl Resolve<ReadArgs> for ListGitProvidersFromConfig {
   }
 }
 
+//
+
 impl Resolve<ReadArgs> for ListDockerRegistriesFromConfig {
   async fn resolve(
     self,
     _: &ReadArgs,
-  ) -> serror::Result<ListDockerRegistriesFromConfigResponse> {
+  ) -> mogh_error::Result<ListDockerRegistriesFromConfigResponse> {
     let mut registries = core_config().docker_registries.clone();
 
     if let Some(target) = self.target {
@@ -513,9 +571,10 @@ impl Resolve<ReadArgs> for ListDockerRegistriesFromConfig {
 async fn merge_git_providers_for_server(
   providers: &mut Vec<GitProvider>,
   server_id: &str,
-) -> serror::Result<()> {
+) -> mogh_error::Result<()> {
   let server = resource::get::<Server>(server_id).await?;
-  let more = periphery_client(&server)?
+  let more = periphery_client(&server)
+    .await?
     .request(periphery_client::api::ListGitProviders {})
     .await
     .with_context(|| {
@@ -551,9 +610,10 @@ fn merge_git_providers(
 async fn merge_docker_registries_for_server(
   registries: &mut Vec<DockerRegistry>,
   server_id: &str,
-) -> serror::Result<()> {
+) -> mogh_error::Result<()> {
   let server = resource::get::<Server>(server_id).await?;
-  let more = periphery_client(&server)?
+  let more = periphery_client(&server)
+    .await?
     .request(periphery_client::api::ListDockerRegistries {})
     .await
     .with_context(|| {

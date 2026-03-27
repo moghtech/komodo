@@ -1,74 +1,52 @@
 use komodo_client::entities::{
   alert::SeverityLevel,
   deployment::{Deployment, DeploymentState},
-  docker::{
-    container::ContainerListItem, image::ImageListItem,
-    network::NetworkListItem, volume::VolumeListItem,
-  },
+  docker::DockerLists,
   repo::Repo,
   server::{
-    Server, ServerConfig, ServerHealth, ServerHealthState,
-    ServerState,
+    PeripheryInformation, Server, ServerConfig, ServerHealth,
+    ServerHealthState, ServerState,
   },
-  stack::{ComposeProject, Stack, StackState},
-  stats::{SingleDiskUsage, SystemStats},
+  stack::{Stack, StackState},
+  stats::{SingleDiskUsage, SystemInformation, SystemStats},
 };
-use serror::Serror;
+use mogh_error::Serror;
 
 use crate::state::{
-  deployment_status_cache, repo_status_cache, server_status_cache,
-  stack_status_cache,
-};
-
-use super::{
   CachedDeploymentStatus, CachedRepoStatus, CachedServerStatus,
-  CachedStackStatus, History,
+  CachedStackStatus, History, deployment_status_cache,
+  repo_status_cache, server_status_cache, stack_status_cache,
 };
 
-#[instrument(level = "debug", skip_all)]
-pub async fn insert_deployments_status_unknown(
-  deployments: Vec<Deployment>,
+pub async fn insert_server_status(
+  server: &Server,
+  state: ServerState,
+  periphery_info: Option<PeripheryInformation>,
+  system_info: Option<SystemInformation>,
+  system_stats: Option<SystemStats>,
+  docker: Option<DockerLists>,
+  err: impl Into<Option<Serror>>,
 ) {
-  let status_cache = deployment_status_cache();
-  for deployment in deployments {
-    let prev =
-      status_cache.get(&deployment.id).await.map(|s| s.curr.state);
-    status_cache
-      .insert(
-        deployment.id.clone(),
-        History {
-          curr: CachedDeploymentStatus {
-            id: deployment.id,
-            state: DeploymentState::Unknown,
-            container: None,
-            update_available: false,
-          },
-          prev,
-        }
-        .into(),
-      )
-      .await;
-  }
+  let health =
+    system_stats.as_ref().map(|s| get_server_health(server, s));
+  server_status_cache()
+    .insert(
+      server.id.clone(),
+      CachedServerStatus {
+        id: server.id.clone(),
+        state,
+        periphery_info,
+        system_info,
+        system_stats,
+        health,
+        docker,
+        err: err.into(),
+      }
+      .into(),
+    )
+    .await;
 }
 
-#[instrument(level = "debug", skip_all)]
-pub async fn insert_repos_status_unknown(repos: Vec<Repo>) {
-  let status_cache = repo_status_cache();
-  for repo in repos {
-    status_cache
-      .insert(
-        repo.id.clone(),
-        CachedRepoStatus {
-          latest_hash: None,
-          latest_message: None,
-        }
-        .into(),
-      )
-      .await;
-  }
-}
-
-#[instrument(level = "debug", skip_all)]
 pub async fn insert_stacks_status_unknown(stacks: Vec<Stack>) {
   let status_cache = stack_status_cache();
   for stack in stacks {
@@ -91,43 +69,46 @@ pub async fn insert_stacks_status_unknown(stacks: Vec<Stack>) {
   }
 }
 
-type DockerLists = (
-  Option<Vec<ContainerListItem>>,
-  Option<Vec<NetworkListItem>>,
-  Option<Vec<ImageListItem>>,
-  Option<Vec<VolumeListItem>>,
-  Option<Vec<ComposeProject>>,
-);
-
-#[instrument(level = "debug", skip_all)]
-pub async fn insert_server_status(
-  server: &Server,
-  state: ServerState,
-  version: String,
-  stats: Option<SystemStats>,
-  (containers, networks, images, volumes, projects): DockerLists,
-  err: impl Into<Option<Serror>>,
+pub async fn insert_deployments_status_unknown(
+  deployments: Vec<Deployment>,
 ) {
-  let health = stats.as_ref().map(|s| get_server_health(server, s));
-  server_status_cache()
-    .insert(
-      server.id.clone(),
-      CachedServerStatus {
-        id: server.id.clone(),
-        state,
-        version,
-        stats,
-        health,
-        containers,
-        networks,
-        images,
-        volumes,
-        projects,
-        err: err.into(),
-      }
-      .into(),
-    )
-    .await;
+  let status_cache = deployment_status_cache();
+  for deployment in deployments {
+    let prev =
+      status_cache.get(&deployment.id).await.map(|s| s.curr.state);
+    status_cache
+      .insert(
+        deployment.id.clone(),
+        History {
+          curr: CachedDeploymentStatus {
+            id: deployment.id,
+            state: DeploymentState::Unknown,
+            container: None,
+            service: None,
+            image_digests: None,
+          },
+          prev,
+        }
+        .into(),
+      )
+      .await;
+  }
+}
+
+pub async fn insert_repos_status_unknown(repos: Vec<Repo>) {
+  let status_cache = repo_status_cache();
+  for repo in repos {
+    status_cache
+      .insert(
+        repo.id.clone(),
+        CachedRepoStatus {
+          latest_hash: None,
+          latest_message: None,
+        }
+        .into(),
+      )
+      .await;
+  }
 }
 
 const ALERT_PERCENTAGE_THRESHOLD: f32 = 5.0;

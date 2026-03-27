@@ -14,22 +14,27 @@ path = "src/main.rs"
 
 [dependencies]
 # local
-environment_file.workspace = true
-komodo_client.workspace = true
+komodo_client = { workspace = true, features = ["cli"] }
+mogh_secret_file.workspace = true
+mogh_pki.workspace = true
 database.workspace = true
-config.workspace = true
-logger.workspace = true
+mogh_config.workspace = true
+mogh_logger.workspace = true
 # external
 futures-util.workspace = true
 comfy-table.workspace = true
+tokio-util.workspace = true
 serde_json.workspace = true
+crossterm.workspace = true
 serde_qs.workspace = true
 wildcard.workspace = true
 tracing.workspace = true
 colored.workspace = true
 dotenvy.workspace = true
 anyhow.workspace = true
+bcrypt.workspace = true
 chrono.workspace = true
+rustls.workspace = true
 tokio.workspace = true
 serde.workspace = true
 clap.workspace = true

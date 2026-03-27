@@ -144,6 +144,7 @@ pub trait ExecuteResourceSync: ResourceSyncTrait {
       let id = match crate::resource::create::<Self>(
         &resource.name,
         resource.config,
+        None,
         sync_user(),
       )
       .await
@@ -238,13 +239,8 @@ pub trait ExecuteResourceSync: ResourceSyncTrait {
     }
 
     for resource in to_delete {
-      if let Err(e) = crate::resource::delete::<Self>(
-        &resource,
-        &WriteArgs {
-          user: sync_user().to_owned(),
-        },
-      )
-      .await
+      if let Err(e) =
+        crate::resource::delete::<Self>(&resource, sync_user()).await
       {
         has_error = true;
         log.push_str(&format!(

@@ -8,15 +8,15 @@ use komodo_client::{
   api::read::{
     GetAlert, GetAlertResponse, ListAlerts, ListAlertsResponse,
   },
-  entities::{
-    deployment::Deployment, server::Server, stack::Stack,
-    sync::ResourceSync,
-  },
+  entities::permission::PermissionLevel,
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{
-  config::core_config, permission::get_resource_ids_for_user,
+  config::core_config,
+  permission::{
+    check_user_target_access, user_resource_target_query,
+  },
   state::db_client,
 };
 
@@ -28,26 +28,11 @@ impl Resolve<ReadArgs> for ListAlerts {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListAlertsResponse> {
-    let mut query = self.query.unwrap_or_default();
-    if !user.admin && !core_config().transparent_mode {
-      let server_ids =
-        get_resource_ids_for_user::<Server>(user).await?;
-      let stack_ids =
-        get_resource_ids_for_user::<Stack>(user).await?;
-      let deployment_ids =
-        get_resource_ids_for_user::<Deployment>(user).await?;
-      let sync_ids =
-        get_resource_ids_for_user::<ResourceSync>(user).await?;
-      query.extend(doc! {
-        "$or": [
-          { "target.type": "Server", "target.id": { "$in": &server_ids } },
-          { "target.type": "Stack", "target.id": { "$in": &stack_ids } },
-          { "target.type": "Deployment", "target.id": { "$in": &deployment_ids } },
-          { "target.type": "ResourceSync", "target.id": { "$in": &sync_ids } },
-        ]
-      });
-    }
+  ) -> mogh_error::Result<ListAlertsResponse> {
+    // Alerts
+    let query = user_resource_target_query(user, self.query)
+      .await?
+      .unwrap_or_default();
 
     let alerts = find_collect(
       &db_client().alerts,
@@ -76,13 +61,21 @@ impl Resolve<ReadArgs> for ListAlerts {
 impl Resolve<ReadArgs> for GetAlert {
   async fn resolve(
     self,
-    _: &ReadArgs,
-  ) -> serror::Result<GetAlertResponse> {
-    Ok(
-      find_one_by_id(&db_client().alerts, &self.id)
-        .await
-        .context("failed to query db for alert")?
-        .context("no alert found with given id")?,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<GetAlertResponse> {
+    let alert = find_one_by_id(&db_client().alerts, &self.id)
+      .await
+      .context("failed to query db for alert")?
+      .context("no alert found with given id")?;
+    if user.admin || core_config().transparent_mode {
+      return Ok(alert);
+    }
+    check_user_target_access(
+      &alert.target,
+      user,
+      PermissionLevel::Read.into(),
     )
+    .await?;
+    Ok(alert)
   }
 }

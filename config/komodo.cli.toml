@@ -21,9 +21,9 @@ default_profile = "Default"
 # Default: 14
 max_backups = 7
 
-# Options: HorizontalOnly, VeriticalOnly, OutsideOnly, InsideOnly, AllBorders
-# Default: HorizontalOnly
-table_format = "HorizontalOnly"
+# Options: Horizontal, Veritical, Outside, Inside, All
+# Default: Horizontal
+table_borders = "Horizontal"
 
 [[profile]]
 name = "Default"

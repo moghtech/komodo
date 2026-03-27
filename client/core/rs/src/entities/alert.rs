@@ -1,8 +1,7 @@
 use std::path::PathBuf;
 
-use derive_variants::EnumVariants;
 use serde::{Deserialize, Serialize};
-use strum::{Display, EnumString};
+use strum::{Display, EnumDiscriminants, EnumString};
 use typeshare::typeshare;
 
 use crate::entities::{I64, MongoId};
@@ -15,6 +14,7 @@ use super::{
 /// Representation of an alert in the system.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
   feature = "mongo",
   derive(mongo_indexed::derive::MongoIndexed)
@@ -58,16 +58,21 @@ pub struct Alert {
 
 /// The variants of data related to the alert.
 #[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone, EnumVariants)]
-#[variant_derive(
-  Serialize,
-  Deserialize,
-  Debug,
-  Clone,
-  Copy,
-  PartialEq,
-  Eq,
-  Hash
+#[derive(Serialize, Deserialize, Debug, Clone, EnumDiscriminants)]
+#[strum_discriminants(name(AlertDataVariant))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(
+  not(feature = "utoipa"),
+  strum_discriminants(derive(Serialize, Deserialize, Hash))
+)]
+#[cfg_attr(
+  feature = "utoipa",
+  strum_discriminants(derive(
+    Serialize,
+    Deserialize,
+    Hash,
+    utoipa::ToSchema
+  ))
 )]
 #[serde(tag = "type", content = "data")]
 pub enum AlertData {
@@ -81,6 +86,16 @@ pub enum AlertData {
     id: String,
     /// The name of the alerter
     name: String,
+  },
+
+  /// A server could not be reached.
+  SwarmUnhealthy {
+    /// The id of the swarm
+    id: String,
+    /// The name of the swarm
+    name: String,
+    /// The error data
+    err: Option<String>,
   },
 
   /// A server could not be reached.
@@ -130,6 +145,7 @@ pub enum AlertData {
     /// The region of the server
     region: Option<String>,
     /// The mount path of the disk
+    #[cfg_attr(feature = "utoipa", schema(value_type = String))]
     path: PathBuf,
     /// The used portion of the disk in GB
     used_gb: f64,
@@ -152,15 +168,20 @@ pub enum AlertData {
   },
 
   /// A container's state has changed unexpectedly.
+  /// For swarms, this refers to swarm service.
   ContainerStateChange {
     /// The id of the deployment
     id: String,
     /// The name of the deployment
     name: String,
     /// The server id of server that the deployment is on
-    server_id: String,
+    server_id: Option<String>,
     /// The server name
-    server_name: String,
+    server_name: Option<String>,
+    /// The swarm id of swarm that the deployment is on
+    swarm_id: Option<String>,
+    /// The swarm name
+    swarm_name: Option<String>,
     /// The previous container state
     from: DeploymentState,
     /// The current container state
@@ -174,9 +195,13 @@ pub enum AlertData {
     /// The name of the deployment
     name: String,
     /// The server id of server that the deployment is on
-    server_id: String,
+    server_id: Option<String>,
     /// The server name
-    server_name: String,
+    server_name: Option<String>,
+    /// The swarm id of swarm that the deployment is on
+    swarm_id: Option<String>,
+    /// The swarm name
+    swarm_name: Option<String>,
     /// The image with update
     image: String,
   },
@@ -188,9 +213,13 @@ pub enum AlertData {
     /// The name of the deployment
     name: String,
     /// The server id of server that the deployment is on
-    server_id: String,
+    server_id: Option<String>,
     /// The server name
-    server_name: String,
+    server_name: Option<String>,
+    /// The swarm id of swarm that the deployment is on
+    swarm_id: Option<String>,
+    /// The swarm name
+    swarm_name: Option<String>,
     /// The updated image
     image: String,
   },
@@ -202,9 +231,13 @@ pub enum AlertData {
     /// The name of the stack
     name: String,
     /// The server id of server that the stack is on
-    server_id: String,
+    server_id: Option<String>,
     /// The server name
-    server_name: String,
+    server_name: Option<String>,
+    /// The swarm id of swarm that the stack is on
+    swarm_id: Option<String>,
+    /// The swarm name
+    swarm_name: Option<String>,
     /// The previous stack state
     from: StackState,
     /// The current stack state
@@ -218,9 +251,13 @@ pub enum AlertData {
     /// The name of the stack
     name: String,
     /// The server id of server that the stack is on
-    server_id: String,
+    server_id: Option<String>,
     /// The server name
-    server_name: String,
+    server_name: Option<String>,
+    /// The swarm id of swarm that the stack is on
+    swarm_id: Option<String>,
+    /// The swarm name
+    swarm_name: Option<String>,
     /// The service name to update
     service: String,
     /// The image with update
@@ -234,9 +271,13 @@ pub enum AlertData {
     /// The name of the stack
     name: String,
     /// The server id of server that the stack is on
-    server_id: String,
+    server_id: Option<String>,
     /// The server name
-    server_name: String,
+    server_name: Option<String>,
+    /// The swarm id of swarm that the stack is on
+    swarm_id: Option<String>,
+    /// The swarm name
+    swarm_name: Option<String>,
     /// One or more images that were updated
     images: Vec<String>,
   },
@@ -340,6 +381,7 @@ impl Default for AlertDataVariant {
   Display,
   EnumString,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "UPPERCASE")]
 #[strum(serialize_all = "UPPERCASE")]
 pub enum SeverityLevel {

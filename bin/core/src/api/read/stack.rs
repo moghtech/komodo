@@ -4,29 +4,30 @@ use anyhow::{Context, anyhow};
 use komodo_client::{
   api::read::*,
   entities::{
-    config::core::CoreConfig,
-    docker::container::Container,
+    SwarmOrServer,
+    docker::{
+      container::Container, service::SwarmService, stack::SwarmStack,
+    },
     permission::PermissionLevel,
-    server::{Server, ServerState},
     stack::{Stack, StackActionState, StackListItem, StackState},
   },
 };
+use mogh_error::AddStatusCodeError as _;
+use mogh_resolver::Resolve;
 use periphery_client::api::{
   compose::{GetComposeLog, GetComposeLogSearch},
   container::InspectContainer,
 };
-use resolver_api::Resolve;
+use reqwest::StatusCode;
 
 use crate::{
-  config::core_config,
-  helpers::{periphery_client, query::get_all_tags},
+  helpers::{
+    periphery_client, query::get_all_tags, swarm::swarm_request,
+  },
   permission::get_check_permissions,
   resource,
-  stack::get_stack_and_server,
-  state::{
-    action_states, github_client, server_status_cache,
-    stack_status_cache,
-  },
+  stack::setup_stack_execution,
+  state::{action_states, stack_status_cache},
 };
 
 use super::ReadArgs;
@@ -35,7 +36,7 @@ impl Resolve<ReadArgs> for GetStack {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Stack> {
+  ) -> mogh_error::Result<Stack> {
     Ok(
       get_check_permissions::<Stack>(
         &self.stack,
@@ -51,7 +52,7 @@ impl Resolve<ReadArgs> for ListStackServices {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListStackServicesResponse> {
+  ) -> mogh_error::Result<ListStackServicesResponse> {
     let stack = get_check_permissions::<Stack>(
       &self.stack,
       user,
@@ -75,30 +76,59 @@ impl Resolve<ReadArgs> for GetStackLog {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetStackLogResponse> {
+  ) -> mogh_error::Result<GetStackLogResponse> {
     let GetStackLog {
       stack,
-      services,
+      mut services,
       tail,
       timestamps,
     } = self;
-    let (stack, server) = get_stack_and_server(
+    let (stack, swarm_or_server) = setup_stack_execution(
       &stack,
       user,
       PermissionLevel::Read.logs(),
-      true,
     )
     .await?;
-    let res = periphery_client(&server)?
-      .request(GetComposeLog {
-        project: stack.project_name(false),
-        services,
-        tail,
-        timestamps,
-      })
-      .await
-      .context("Failed to get stack log from periphery")?;
-    Ok(res)
+
+    swarm_or_server.verify_has_target()?;
+
+    let log = match swarm_or_server {
+      SwarmOrServer::None => unreachable!(),
+      SwarmOrServer::Swarm(swarm) => {
+        let service = services.pop().context(
+          "Must pass single service for Swarm mode Stack logs",
+        )?;
+        swarm_request(
+          &swarm.config.server_ids,
+          periphery_client::api::swarm::GetSwarmServiceLog {
+            // The actual service name on swarm will be stackname_servicename
+            service: format!(
+              "{}_{service}",
+              stack.project_name(false)
+            ),
+            tail,
+            timestamps,
+            no_task_ids: false,
+            no_resolve: false,
+            details: false,
+          },
+        )
+        .await
+        .context("Failed to get stack service log from swarm")?
+      }
+      SwarmOrServer::Server(server) => periphery_client(&server)
+        .await?
+        .request(GetComposeLog {
+          project: stack.project_name(false),
+          services,
+          tail,
+          timestamps,
+        })
+        .await
+        .context("Failed to get stack log from periphery")?,
+    };
+
+    Ok(log)
   }
 }
 
@@ -106,34 +136,61 @@ impl Resolve<ReadArgs> for SearchStackLog {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<SearchStackLogResponse> {
+  ) -> mogh_error::Result<SearchStackLogResponse> {
     let SearchStackLog {
       stack,
-      services,
+      mut services,
       terms,
       combinator,
       invert,
       timestamps,
     } = self;
-    let (stack, server) = get_stack_and_server(
+    let (stack, swarm_or_server) = setup_stack_execution(
       &stack,
       user,
       PermissionLevel::Read.logs(),
-      true,
     )
     .await?;
-    let res = periphery_client(&server)?
-      .request(GetComposeLogSearch {
-        project: stack.project_name(false),
-        services,
-        terms,
-        combinator,
-        invert,
-        timestamps,
-      })
-      .await
-      .context("Failed to search stack log from periphery")?;
-    Ok(res)
+
+    swarm_or_server.verify_has_target()?;
+
+    let log = match swarm_or_server {
+      SwarmOrServer::None => unreachable!(),
+      SwarmOrServer::Swarm(swarm) => {
+        let service = services.pop().context(
+          "Must pass single service for Swarm mode Stack logs",
+        )?;
+        swarm_request(
+          &swarm.config.server_ids,
+          periphery_client::api::swarm::GetSwarmServiceLogSearch {
+            service,
+            terms,
+            combinator,
+            invert,
+            timestamps,
+            no_task_ids: false,
+            no_resolve: false,
+            details: false,
+          },
+        )
+        .await
+        .context("Failed to get stack service log from swarm")?
+      }
+      SwarmOrServer::Server(server) => periphery_client(&server)
+        .await?
+        .request(GetComposeLogSearch {
+          project: stack.project_name(false),
+          services,
+          terms,
+          combinator,
+          invert,
+          timestamps,
+        })
+        .await
+        .context("Failed to search stack log from periphery")?,
+    };
+
+    Ok(log)
   }
 }
 
@@ -141,40 +198,31 @@ impl Resolve<ReadArgs> for InspectStackContainer {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Container> {
+  ) -> mogh_error::Result<Container> {
     let InspectStackContainer { stack, service } = self;
-    let stack = get_check_permissions::<Stack>(
+    let (stack, swarm_or_server) = setup_stack_execution(
       &stack,
       user,
       PermissionLevel::Read.inspect(),
     )
     .await?;
-    if stack.config.server_id.is_empty() {
-      return Err(
-        anyhow!("Cannot inspect stack, not attached to any server")
-          .into(),
-      );
-    }
-    let server =
-      resource::get::<Server>(&stack.config.server_id).await?;
-    let cache = server_status_cache()
-      .get_or_insert_default(&server.id)
-      .await;
-    if cache.state != ServerState::Ok {
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
       return Err(
         anyhow!(
-          "Cannot inspect container: server is {:?}",
-          cache.state
+          "InspectStackContainer should not be called for Stack in Swarm Mode"
         )
-        .into(),
+        .status_code(StatusCode::BAD_REQUEST),
       );
-    }
+    };
+
     let services = &stack_status_cache()
       .get(&stack.id)
       .await
       .unwrap_or_default()
       .curr
       .services;
+
     let Some(name) = services
       .iter()
       .find(|s| s.service == service)
@@ -184,10 +232,98 @@ impl Resolve<ReadArgs> for InspectStackContainer {
         "No service found matching '{service}'. Was the stack last deployed manually?"
       ).into());
     };
-    let res = periphery_client(&server)?
+
+    let res = periphery_client(&server)
+      .await?
       .request(InspectContainer { name })
-      .await?;
+      .await
+      .context("Failed to inspect container on server")?;
+
     Ok(res)
+  }
+}
+
+impl Resolve<ReadArgs> for InspectStackSwarmService {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<SwarmService> {
+    let InspectStackSwarmService { stack, service } = self;
+    let (stack, swarm_or_server) = setup_stack_execution(
+      &stack,
+      user,
+      PermissionLevel::Read.inspect(),
+    )
+    .await?;
+
+    let SwarmOrServer::Swarm(swarm) = swarm_or_server else {
+      return Err(
+        anyhow!(
+          "InspectStackSwarmService should only be called for Stack in Swarm Mode"
+        )
+        .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
+
+    let services = &stack_status_cache()
+      .get(&stack.id)
+      .await
+      .unwrap_or_default()
+      .curr
+      .services;
+
+    let Some(service) = services
+      .iter()
+      .find(|s| s.service == service)
+      .and_then(|s| {
+        s.swarm_service.as_ref().and_then(|c| c.name.clone())
+      })
+    else {
+      return Err(anyhow!(
+        "No service found matching '{service}'. Was the stack last deployed manually?"
+      ).into());
+    };
+
+    swarm_request(
+      &swarm.config.server_ids,
+      periphery_client::api::swarm::InspectSwarmService { service },
+    )
+    .await
+    .context("Failed to inspect service on swarm")
+    .map_err(Into::into)
+  }
+}
+
+impl Resolve<ReadArgs> for InspectStackSwarmInfo {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<SwarmStack> {
+    let (stack, swarm_or_server) = setup_stack_execution(
+      &self.stack,
+      user,
+      PermissionLevel::Read.inspect(),
+    )
+    .await?;
+
+    let SwarmOrServer::Swarm(swarm) = swarm_or_server else {
+      return Err(
+        anyhow!(
+          "InspectStackSwarmInfo should only be called for Stack in Swarm Mode"
+        )
+        .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
+
+    swarm_request(
+      &swarm.config.server_ids,
+      periphery_client::api::swarm::InspectSwarmStack {
+        stack: stack.project_name(false),
+      },
+    )
+    .await
+    .context("Failed to inspect stack info on swarm")
+    .map_err(Into::into)
   }
 }
 
@@ -195,7 +331,7 @@ impl Resolve<ReadArgs> for ListCommonStackExtraArgs {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListCommonStackExtraArgsResponse> {
+  ) -> mogh_error::Result<ListCommonStackExtraArgsResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -208,7 +344,7 @@ impl Resolve<ReadArgs> for ListCommonStackExtraArgs {
       &all_tags,
     )
     .await
-    .context("failed to get resources matching query")?;
+    .context("Failed to get resources matching query")?;
 
     // first collect with guaranteed uniqueness
     let mut res = HashSet::<String>::new();
@@ -229,7 +365,7 @@ impl Resolve<ReadArgs> for ListCommonStackBuildExtraArgs {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListCommonStackBuildExtraArgsResponse> {
+  ) -> mogh_error::Result<ListCommonStackBuildExtraArgsResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -242,7 +378,7 @@ impl Resolve<ReadArgs> for ListCommonStackBuildExtraArgs {
       &all_tags,
     )
     .await
-    .context("failed to get resources matching query")?;
+    .context("Failed to get resources matching query")?;
 
     // first collect with guaranteed uniqueness
     let mut res = HashSet::<String>::new();
@@ -263,7 +399,7 @@ impl Resolve<ReadArgs> for ListStacks {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Vec<StackListItem>> {
+  ) -> mogh_error::Result<Vec<StackListItem>> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -299,7 +435,7 @@ impl Resolve<ReadArgs> for ListFullStacks {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListFullStacksResponse> {
+  ) -> mogh_error::Result<ListFullStacksResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -321,7 +457,7 @@ impl Resolve<ReadArgs> for GetStackActionState {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<StackActionState> {
+  ) -> mogh_error::Result<StackActionState> {
     let stack = get_check_permissions::<Stack>(
       &self.stack,
       user,
@@ -342,7 +478,7 @@ impl Resolve<ReadArgs> for GetStacksSummary {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetStacksSummaryResponse> {
+  ) -> mogh_error::Result<GetStacksSummaryResponse> {
     let stacks = resource::list_full_for_user::<Stack>(
       Default::default(),
       user,
@@ -350,7 +486,7 @@ impl Resolve<ReadArgs> for GetStacksSummary {
       &[],
     )
     .await
-    .context("failed to get stacks from db")?;
+    .context("Failed to get stacks from database")?;
 
     let mut res = GetStacksSummaryResponse::default();
 
@@ -363,99 +499,15 @@ impl Resolve<ReadArgs> for GetStacksSummary {
         StackState::Running => res.running += 1,
         StackState::Stopped | StackState::Paused => res.stopped += 1,
         StackState::Down => res.down += 1,
-        StackState::Unknown => res.unknown += 1,
+        StackState::Unknown => {
+          if !stack.template {
+            res.unknown += 1
+          }
+        }
         _ => res.unhealthy += 1,
       }
     }
 
     Ok(res)
-  }
-}
-
-impl Resolve<ReadArgs> for GetStackWebhooksEnabled {
-  async fn resolve(
-    self,
-    ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetStackWebhooksEnabledResponse> {
-    let Some(github) = github_client() else {
-      return Ok(GetStackWebhooksEnabledResponse {
-        managed: false,
-        refresh_enabled: false,
-        deploy_enabled: false,
-      });
-    };
-
-    let stack = get_check_permissions::<Stack>(
-      &self.stack,
-      user,
-      PermissionLevel::Read.into(),
-    )
-    .await?;
-
-    if stack.config.git_provider != "github.com"
-      || stack.config.repo.is_empty()
-    {
-      return Ok(GetStackWebhooksEnabledResponse {
-        managed: false,
-        refresh_enabled: false,
-        deploy_enabled: false,
-      });
-    }
-
-    let mut split = stack.config.repo.split('/');
-    let owner = split.next().context("Sync repo has no owner")?;
-
-    let Some(github) = github.get(owner) else {
-      return Ok(GetStackWebhooksEnabledResponse {
-        managed: false,
-        refresh_enabled: false,
-        deploy_enabled: false,
-      });
-    };
-
-    let repo_name =
-      split.next().context("Repo repo has no repo after the /")?;
-
-    let github_repos = github.repos();
-
-    let webhooks = github_repos
-      .list_all_webhooks(owner, repo_name)
-      .await
-      .context("failed to list all webhooks on repo")?
-      .body;
-
-    let CoreConfig {
-      host,
-      webhook_base_url,
-      ..
-    } = core_config();
-
-    let host = if webhook_base_url.is_empty() {
-      host
-    } else {
-      webhook_base_url
-    };
-    let refresh_url =
-      format!("{host}/listener/github/stack/{}/refresh", stack.id);
-    let deploy_url =
-      format!("{host}/listener/github/stack/{}/deploy", stack.id);
-
-    let mut refresh_enabled = false;
-    let mut deploy_enabled = false;
-
-    for webhook in webhooks {
-      if webhook.active && webhook.config.url == refresh_url {
-        refresh_enabled = true
-      }
-      if webhook.active && webhook.config.url == deploy_url {
-        deploy_enabled = true
-      }
-    }
-
-    Ok(GetStackWebhooksEnabledResponse {
-      managed: true,
-      refresh_enabled,
-      deploy_enabled,
-    })
   }
 }

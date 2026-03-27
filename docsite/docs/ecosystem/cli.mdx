@@ -2,8 +2,9 @@
 
 The Komodo CLI, `km`, can be used to:
   - Quickly **run executions** and update **resources** and **variables**.
-  - **Reset user passwords** and elevate users to **Super Admin**. 
+  - **Reset user passwords** and elevate users to **Super Admin**.
   - Perform Database **backup**, **restore**, and **copy**.
+  - **Connect to server / container shell** via Komodo Terminals.
 
 The Komodo Core image comes packaged with the Komodo CLI,
 and is available for usage inside running container with `docker exec -it komodo-core km ...`.
@@ -21,6 +22,61 @@ This way, it inherits the Core database config in order to easily perform backup
   - `km x commit my-sync`
   - `km set user mbecks super-admin true`
   - `km set user mbecks password "temp-password"`
+  - `km ssh my-server`
+  - `km connect my-server bash -n my-session`
+  - `km exec my-container bash`
+  - `km attach my-container -s my-server`
+
+### Terminals
+
+All terminal commands share the same disconnect shortcut: press **Alt+Q** to end the session.
+The session itself stays running and will keep the history if you connect again, or connect from a
+different device.
+
+#### SSH / Connect
+
+The `km ssh` command (alias for `km connect`) opens an interactive shell on a server managed by Komodo Periphery. Analogous to `ssh`.
+
+```
+km ssh <server> [command] [options]
+km connect <server> [command] [options]
+```
+
+| Argument | Description |
+|---|---|
+| `server` | Server name (required) |
+| `command` | Shell command to start, e.g. `bash` (optional, defaults to Periphery default) |
+| `-n`, `--name` | Terminal session name (default: `ssh`) |
+| `-r`, `--recreate` | Force a fresh terminal, replacing any existing session with the same name |
+
+#### Exec
+
+The `km exec` command opens an interactive shell inside a running container. Analogous to `docker exec`.
+
+```
+km exec <container> <shell> [options]
+```
+
+| Argument | Description |
+|---|---|
+| `container` | Container name (required) |
+| `shell` | Shell to use, e.g. `bash` or `sh` (required) |
+| `-s`, `--server` | Server name — required if multiple servers have a container with the same name |
+| `-r`, `--recreate` | Force a fresh terminal, replacing any existing session |
+
+#### Attach
+
+The `km attach` command attaches to a running container's main process stdio. Analogous to `docker attach`.
+
+```
+km attach <container> [options]
+```
+
+| Argument | Description |
+|---|---|
+| `container` | Container name (required) |
+| `-s`, `--server` | Server name — required if multiple servers have a container with the same name |
+| `-r`, `--recreate` | Force a fresh terminal, replacing any existing session |
 
 ### Install
 
@@ -53,7 +109,7 @@ brew tap moghtech/komodo && \
 
 You can alias a docker run command:
 ```bash
-alias km='docker run --rm -v $HOME/.config/komodo:/config ghcr.io/moghtech/komodo-cli km'
+alias km='docker run --rm -v $HOME/.config/komodo:/config ghcr.io/moghtech/komodo-cli:2 km'
 km config
 ```
 
@@ -101,7 +157,7 @@ set at the top level of the file.
 #### Example File
 
 The configuration can also be passed as **YAML** or **JSON**.
-You can use the it-tools to convert this TOML file to your preferred format:
+You can use it-tools to convert this TOML file to your preferred format:
   - YAML: https://it-tools.tech/toml-to-yaml
   - JSON: https://it-tools.tech/toml-to-json
 

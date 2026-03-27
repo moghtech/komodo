@@ -5,7 +5,7 @@ use database::mungos::{
   mongodb::options::FindOptions,
 };
 use komodo_client::api::read::*;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::state::db_client;
 
@@ -15,7 +15,7 @@ impl Resolve<ReadArgs> for GetGitProviderAccount {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetGitProviderAccountResponse> {
+  ) -> mogh_error::Result<GetGitProviderAccountResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only admins can read git provider accounts").into(),
@@ -35,7 +35,7 @@ impl Resolve<ReadArgs> for ListGitProviderAccounts {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListGitProviderAccountsResponse> {
+  ) -> mogh_error::Result<ListGitProviderAccountsResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only admins can read git provider accounts").into(),
@@ -65,7 +65,7 @@ impl Resolve<ReadArgs> for GetDockerRegistryAccount {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetDockerRegistryAccountResponse> {
+  ) -> mogh_error::Result<GetDockerRegistryAccountResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only admins can read docker registry accounts")
@@ -87,7 +87,7 @@ impl Resolve<ReadArgs> for ListDockerRegistryAccounts {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListDockerRegistryAccountsResponse> {
+  ) -> mogh_error::Result<ListDockerRegistryAccountsResponse> {
     if !user.admin {
       return Err(
         anyhow!("Only admins can read docker registry accounts")

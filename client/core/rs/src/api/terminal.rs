@@ -1,114 +1,64 @@
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-/// Query to connect to a terminal (interactive shell over websocket) on the given server.
-/// TODO: Document calling.
+use crate::entities::terminal::{
+  ContainerTerminalMode, TerminalRecreateMode, TerminalTarget,
+};
+
+/// Connect to a Terminal.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ConnectTerminalQuery {
-  /// Server Id or name
-  pub server: String,
-  /// Each periphery can keep multiple terminals open.
-  /// If a terminals with the specified name does not exist,
-  /// the call will fail.
-  /// Create a terminal using [CreateTerminal][super::write::server::CreateTerminal]
-  pub terminal: String,
+  /// The target to create terminal for.
+  pub target: TerminalTarget,
+  /// Terminal name to connect to.
+  /// If it may not exist yet, also pass 'init' params
+  /// to include initialization.
+  /// Default: Depends on target.
+  pub terminal: Option<String>,
+  /// Pass to init the terminal session
+  /// for when the terminal doesn't already exist.
+  ///
+  /// Example: ?...(query)&init[command]=bash&init[recreate]=DifferentCommand
+  pub init: Option<InitTerminal>,
+}
+
+/// Args to init the Terminal if needed.
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct InitTerminal {
+  /// The shell command (eg `bash`) to init the shell.
+  ///
+  /// Default:
+  ///   - Server: Configured on each Periphery
+  ///   - Container: `sh`
+  pub command: Option<String>,
+  /// Default: `Never`
+  #[serde(default)]
+  pub recreate: TerminalRecreateMode,
+  /// Only relevant for container-type terminals.
+  /// Specify the container terminal mode (`exec` or `attach`).
+  /// Default: `exec`
+  pub mode: Option<ContainerTerminalMode>,
 }
 
 /// Execute a terminal command on the given server.
-/// TODO: Document calling.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ExecuteTerminalBody {
-  /// Server Id or name
-  pub server: String,
-  /// The name of the terminal on the server to use to execute.
-  /// If the terminal at name exists, it will be used to execute the command.
-  /// Otherwise, a new terminal will be created for this command, which will
-  /// persist until it exits or is deleted.
-  pub terminal: String,
+  /// The target to create terminal for.
+  pub target: TerminalTarget,
+  /// Terminal name to connect to.
+  /// If it may not exist yet, also pass 'init' params
+  /// to include initialization.
+  /// Default: Depends on target.
+  pub terminal: Option<String>,
   /// The command to execute.
   pub command: String,
-}
-
-/// Query to connect to a container exec session (interactive shell over websocket) on the given server.
-/// TODO: Document calling.
-#[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ConnectContainerExecQuery {
-  /// Server Id or name
-  pub server: String,
-  /// The container name
-  pub container: String,
-  /// The shell to use (eg. `sh` or `bash`)
-  pub shell: String,
-}
-
-/// Execute a command in the given containers shell.
-/// TODO: Document calling.
-#[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ExecuteContainerExecBody {
-  /// Server Id or name
-  pub server: String,
-  /// The container name
-  pub container: String,
-  /// The shell to use (eg. `sh` or `bash`)
-  pub shell: String,
-  /// The command to execute.
-  pub command: String,
-}
-
-/// Query to connect to a container exec session (interactive shell over websocket) on the given Deployment.
-/// This call will use access to the Deployment Terminal to permission the call.
-/// TODO: Document calling.
-#[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ConnectDeploymentExecQuery {
-  /// Deployment Id or name
-  pub deployment: String,
-  /// The shell to use (eg. `sh` or `bash`)
-  pub shell: String,
-}
-
-/// Execute a command in the given containers shell.
-/// TODO: Document calling.
-#[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ExecuteDeploymentExecBody {
-  /// Deployment Id or name
-  pub deployment: String,
-  /// The shell to use (eg. `sh` or `bash`)
-  pub shell: String,
-  /// The command to execute.
-  pub command: String,
-}
-
-/// Query to connect to a container exec session (interactive shell over websocket) on the given Stack / service.
-/// This call will use access to the Stack Terminal to permission the call.
-/// TODO: Document calling.
-#[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ConnectStackExecQuery {
-  /// Stack Id or name
-  pub stack: String,
-  /// The service name to connect to
-  pub service: String,
-  /// The shell to use (eg. `sh` or `bash`)
-  pub shell: String,
-}
-
-/// Execute a command in the given containers shell.
-/// TODO: Document calling.
-#[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ExecuteStackExecBody {
-  /// Stack Id or name
-  pub stack: String,
-  /// The service name to connect to
-  pub service: String,
-  /// The shell to use (eg. `sh` or `bash`)
-  pub shell: String,
-  /// The command to execute.
-  pub command: String,
+  /// Pass to init the terminal session
+  /// for when the terminal doesn't already exist.
+  pub init: Option<InitTerminal>,
 }

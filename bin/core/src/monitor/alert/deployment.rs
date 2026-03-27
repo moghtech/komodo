@@ -4,6 +4,7 @@ use komodo_client::entities::{
   ResourceTarget,
   alert::{Alert, AlertData, SeverityLevel},
   deployment::{Deployment, DeploymentState},
+  optional_string,
 };
 
 use crate::{
@@ -13,14 +14,14 @@ use crate::{
   state::{action_states, db_client},
 };
 
-#[instrument(level = "debug")]
 pub async fn alert_deployments(
   ts: i64,
+  swarm_names: &HashMap<String, String>,
   server_names: &HashMap<String, String>,
 ) {
   let mut alerts = Vec::<Alert>::new();
   let action_states = action_states();
-  for status in deployment_status_cache().get_list().await {
+  for status in deployment_status_cache().get_values().await {
     // Don't alert if prev None
     let Some(prev) = status.prev else {
       continue;
@@ -66,11 +67,14 @@ pub async fn alert_deployments(
       let data = AlertData::ContainerStateChange {
         id: status.curr.id.clone(),
         name: deployment.name,
+        swarm_name: swarm_names
+          .get(&deployment.config.swarm_id)
+          .cloned(),
+        swarm_id: optional_string(&deployment.config.swarm_id),
         server_name: server_names
           .get(&deployment.config.server_id)
-          .cloned()
-          .unwrap_or(String::from("unknown")),
-        server_id: deployment.config.server_id,
+          .cloned(),
+        server_id: optional_string(&deployment.config.server_id),
         from: prev,
         to: status.curr.state,
       };

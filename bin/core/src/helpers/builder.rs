@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use anyhow::{Context, anyhow};
+use database::mungos::mongodb::bson::oid::ObjectId;
 use formatting::muted;
 use komodo_client::entities::{
   Version,
@@ -9,10 +10,7 @@ use komodo_client::entities::{
   server::Server,
   update::{Log, Update},
 };
-use periphery_client::{
-  PeripheryClient,
-  api::{self, GetVersionResponse},
-};
+use periphery_client::api::{self, GetVersionResponse};
 
 use crate::{
   cloud::{
@@ -22,8 +20,9 @@ use crate::{
       terminate_ec2_instance_with_retry,
     },
   },
-  config::core_config,
+  connection::PeripheryConnectionArgs,
   helpers::update::update_update,
+  periphery::PeripheryClient,
   resource,
 };
 
@@ -32,8 +31,16 @@ use super::periphery_client;
 const BUILDER_POLL_RATE_SECS: u64 = 2;
 const BUILDER_POLL_MAX_TRIES: usize = 60;
 
-#[instrument(skip_all, fields(builder_id = builder.id, update_id = update.id))]
-pub async fn get_builder_periphery(
+#[instrument(
+  "ConnectBuilderPeriphery",
+  skip_all,
+  fields(
+    resource_name,
+    builder_id = builder.id,
+    update_id = update.id
+  )
+)]
+pub async fn connect_builder_periphery(
   // build: &Build,
   resource_name: String,
   version: Option<Version>,
@@ -47,27 +54,28 @@ pub async fn get_builder_periphery(
           "Builder has not yet configured an address"
         ));
       }
+      // TODO: Dont use builder id, or will be problems
+      // with simultaneous spawned builders.
       let periphery = PeripheryClient::new(
-        config.address,
-        if config.passkey.is_empty() {
-          core_config().passkey.clone()
-        } else {
-          config.passkey
-        },
-        Duration::from_secs(3),
-      );
+        PeripheryConnectionArgs::from_url_builder(
+          &ObjectId::new().to_hex(),
+          &config,
+        ),
+        config.insecure_tls,
+      )
+      .await?;
       periphery
         .health_check()
         .await
         .context("Url Builder failed health check")?;
-      Ok((periphery, BuildCleanupData::Server))
+      Ok((periphery, BuildCleanupData::Url))
     }
     BuilderConfig::Server(config) => {
       if config.server_id.is_empty() {
         return Err(anyhow!("Builder has not configured a server"));
       }
       let server = resource::get::<Server>(&config.server_id).await?;
-      let periphery = periphery_client(&server)?;
+      let periphery = periphery_client(&server).await?;
       Ok((periphery, BuildCleanupData::Server))
     }
     BuilderConfig::Aws(config) => {
@@ -76,7 +84,14 @@ pub async fn get_builder_periphery(
   }
 }
 
-#[instrument(skip_all, fields(resource_name, update_id = update.id))]
+#[instrument(
+  "GetAwsBuilder",
+  skip_all,
+  fields(
+    resource_name,
+    update_id = update.id,
+  )
+)]
 async fn get_aws_builder(
   resource_name: &str,
   version: Option<Version>,
@@ -90,10 +105,8 @@ async fn get_aws_builder(
   let Ec2Instance { instance_id, ip } =
     launch_ec2_instance(&instance_name, &config).await?;
 
-  info!("ec2 instance launched");
-
   let log = Log {
-    stage: "start build instance".to_string(),
+    stage: "Start Build Instance".to_string(),
     success: true,
     stdout: start_aws_builder_log(&instance_id, &ip, &config),
     start_ts: start_create_ts,
@@ -105,14 +118,20 @@ async fn get_aws_builder(
 
   update_update(update.clone()).await?;
 
-  let protocol = if config.use_https { "https" } else { "http" };
+  let protocol = if config.use_https { "wss" } else { "ws" };
+
+  // TODO: Handle ad-hoc (non server) periphery connections. These don't have ids.
   let periphery_address =
     format!("{protocol}://{ip}:{}", config.port);
   let periphery = PeripheryClient::new(
-    &periphery_address,
-    &core_config().passkey,
-    Duration::from_secs(3),
-  );
+    PeripheryConnectionArgs::from_aws_builder(
+      &ObjectId::new().to_hex(),
+      &periphery_address,
+      &config,
+    ),
+    config.insecure_tls,
+  )
+  .await?;
 
   let start_connect_ts = komodo_timestamp();
   let mut res = Ok(GetVersionResponse {
@@ -164,8 +183,13 @@ async fn get_aws_builder(
   )
 }
 
-#[instrument(skip(update))]
+#[instrument(
+  "CleanupBuilderInstance",
+  skip_all,
+  fields(update_id = update.id)
+)]
 pub async fn cleanup_builder_instance(
+  periphery: PeripheryClient,
   cleanup_data: BuildCleanupData,
   update: &mut Update,
 ) {
@@ -173,10 +197,14 @@ pub async fn cleanup_builder_instance(
     BuildCleanupData::Server => {
       // Nothing to clean up
     }
+    BuildCleanupData::Url => {
+      periphery.cleanup().await;
+    }
     BuildCleanupData::Aws {
       instance_id,
       region,
     } => {
+      periphery.cleanup().await;
       let _instance_id = instance_id.clone();
       tokio::spawn(async move {
         let _ =

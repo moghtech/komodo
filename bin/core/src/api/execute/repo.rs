@@ -22,15 +22,15 @@ use komodo_client::{
     update::{Log, Update},
   },
 };
+use mogh_resolver::Resolve;
 use periphery_client::api;
-use resolver_api::Resolve;
 use tokio_util::sync::CancellationToken;
 
 use crate::{
   alert::send_alerts,
   api::write::WriteArgs,
   helpers::{
-    builder::{cleanup_builder_instance, get_builder_periphery},
+    builder::{cleanup_builder_instance, connect_builder_periphery},
     channel::repo_cancel_channel,
     git_token, periphery_client,
     query::{VariablesAndSecrets, get_variables_and_secrets},
@@ -51,11 +51,19 @@ impl super::BatchExecute for BatchCloneRepo {
 }
 
 impl Resolve<ExecuteArgs> for BatchCloneRepo {
-  #[instrument(name = "BatchCloneRepo", skip( user), fields(user_id = user.id))]
+  #[instrument(
+    "BatchCloneRepo",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      pattern = self.pattern,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchCloneRepo>(&self.pattern, user)
         .await?,
@@ -64,11 +72,24 @@ impl Resolve<ExecuteArgs> for BatchCloneRepo {
 }
 
 impl Resolve<ExecuteArgs> for CloneRepo {
-  #[instrument(name = "CloneRepo", skip( user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "CloneRepo",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      repo = self.repo,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let mut repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
@@ -105,7 +126,7 @@ impl Resolve<ExecuteArgs> for CloneRepo {
     let server =
       resource::get::<Server>(&repo.config.server_id).await?;
 
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     // interpolate variables / secrets, returning the sanitizing replacers to send to
     // periphery so it may sanitize the final command for safe logging (avoids exposing secret values)
@@ -165,11 +186,19 @@ impl super::BatchExecute for BatchPullRepo {
 }
 
 impl Resolve<ExecuteArgs> for BatchPullRepo {
-  #[instrument(name = "BatchPullRepo", skip(user), fields(user_id = user.id))]
+  #[instrument(
+    "BatchPullRepo",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      pattern = self.pattern
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchPullRepo>(&self.pattern, user)
         .await?,
@@ -178,11 +207,24 @@ impl Resolve<ExecuteArgs> for BatchPullRepo {
 }
 
 impl Resolve<ExecuteArgs> for PullRepo {
-  #[instrument(name = "PullRepo", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "PullRepo",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      repo = self.repo,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let mut repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
@@ -220,7 +262,7 @@ impl Resolve<ExecuteArgs> for PullRepo {
     let server =
       resource::get::<Server>(&repo.config.server_id).await?;
 
-    let periphery = periphery_client(&server)?;
+    let periphery = periphery_client(&server).await?;
 
     // interpolate variables / secrets, returning the sanitizing replacers to send to
     // periphery so it may sanitize the final command for safe logging (avoids exposing secret values)
@@ -275,10 +317,14 @@ impl Resolve<ExecuteArgs> for PullRepo {
   }
 }
 
-#[instrument(skip_all, fields(update_id = update.id))]
+#[instrument(
+  "HandleRepoEarlyReturn",
+  skip_all,
+  fields(update_id = update.id)
+)]
 async fn handle_repo_update_return(
   update: Update,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   // Need to manually update the update before cache refresh,
   // and before broadcast with add_update.
   // The Err case of to_document should be unreachable,
@@ -297,7 +343,7 @@ async fn handle_repo_update_return(
   Ok(update)
 }
 
-#[instrument]
+#[instrument("UpdateLastPulledTime")]
 async fn update_last_pulled_time(repo_name: &str) {
   let res = db_client()
     .repos
@@ -321,11 +367,19 @@ impl super::BatchExecute for BatchBuildRepo {
 }
 
 impl Resolve<ExecuteArgs> for BatchBuildRepo {
-  #[instrument(name = "BatchBuildRepo", skip(user), fields(user_id = user.id))]
+  #[instrument(
+    "BatchBuildRepo",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      pattern = self.pattern,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchBuildRepo>(&self.pattern, user)
         .await?,
@@ -334,11 +388,24 @@ impl Resolve<ExecuteArgs> for BatchBuildRepo {
 }
 
 impl Resolve<ExecuteArgs> for BuildRepo {
-  #[instrument(name = "BuildRepo", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "BuildRepo",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      repo = self.repo,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let mut repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
@@ -419,7 +486,7 @@ impl Resolve<ExecuteArgs> for BuildRepo {
 
     // GET BUILDER PERIPHERY
 
-    let (periphery, cleanup_data) = match get_builder_periphery(
+    let (periphery, cleanup_data) = match connect_builder_periphery(
       repo.name.clone(),
       None,
       builder,
@@ -463,7 +530,7 @@ impl Resolve<ExecuteArgs> for BuildRepo {
       _ = cancel.cancelled() => {
         debug!("build cancelled during clone, cleaning up builder");
         update.push_error_log("build cancelled", String::from("user cancelled build during repo clone"));
-        cleanup_builder_instance(cleanup_data, &mut update)
+        cleanup_builder_instance(periphery, cleanup_data, &mut update)
           .await;
         info!("builder cleaned up");
         return handle_builder_early_return(update, repo.id, repo.name, true).await
@@ -510,7 +577,8 @@ impl Resolve<ExecuteArgs> for BuildRepo {
 
     // If building on temporary cloud server (AWS),
     // this will terminate the server.
-    cleanup_builder_instance(cleanup_data, &mut update).await;
+    cleanup_builder_instance(periphery, cleanup_data, &mut update)
+      .await;
 
     // Need to manually update the update before cache refresh,
     // and before broadcast with add_update.
@@ -530,7 +598,6 @@ impl Resolve<ExecuteArgs> for BuildRepo {
     update_update(update.clone()).await?;
 
     if !update.success {
-      warn!("repo build unsuccessful, alerting...");
       let target = update.target.clone();
       tokio::spawn(async move {
         let alert = Alert {
@@ -553,13 +620,13 @@ impl Resolve<ExecuteArgs> for BuildRepo {
   }
 }
 
-#[instrument(skip(update))]
+#[instrument("HandleRepoBuildEarlyReturn", skip(update))]
 async fn handle_builder_early_return(
   mut update: Update,
   repo_id: String,
   repo_name: String,
   is_cancel: bool,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   update.finalize();
   // Need to manually update the update before cache refresh,
   // and before broadcast with add_update.
@@ -577,7 +644,6 @@ async fn handle_builder_early_return(
   }
   update_update(update.clone()).await?;
   if !update.success && !is_cancel {
-    warn!("repo build unsuccessful, alerting...");
     let target = update.target.clone();
     tokio::spawn(async move {
       let alert = Alert {
@@ -598,7 +664,6 @@ async fn handle_builder_early_return(
   Ok(update)
 }
 
-#[instrument(skip_all)]
 pub async fn validate_cancel_repo_build(
   request: &ExecuteRequest,
 ) -> anyhow::Result<()> {
@@ -648,11 +713,24 @@ pub async fn validate_cancel_repo_build(
 }
 
 impl Resolve<ExecuteArgs> for CancelRepoBuild {
-  #[instrument(name = "CancelRepoBuild", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "CancelRepoBuild",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      repo = self.repo,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let repo = get_check_permissions::<Repo>(
       &self.repo,
       user,
@@ -708,6 +786,13 @@ impl Resolve<ExecuteArgs> for CancelRepoBuild {
   }
 }
 
+#[instrument(
+  "Interpolate",
+  skip_all,
+  fields(
+    skip_secret_interp = repo.config.skip_secret_interp
+  )
+)]
 async fn interpolate(
   repo: &mut Repo,
   update: &mut Update,

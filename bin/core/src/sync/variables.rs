@@ -9,7 +9,7 @@ use komodo_client::{
     sync::DiffData, update::Log, user::sync_user, variable::Variable,
   },
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 
 use crate::{api::write::WriteArgs, state::db_client};
 

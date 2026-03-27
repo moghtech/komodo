@@ -2,6 +2,8 @@ use indexmap::{IndexMap, IndexSet};
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
+use crate::entities::swarm::_PartialSwarmConfig;
+
 use super::{
   ResourceTarget, ResourceTargetVariant,
   action::_PartialActionConfig,
@@ -23,7 +25,15 @@ use super::{
 /// Specifies resources to sync on Komodo
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ResourcesToml {
+  #[serde(
+    default,
+    alias = "swarm",
+    skip_serializing_if = "Vec::is_empty"
+  )]
+  pub swarms: Vec<ResourceToml<_PartialSwarmConfig>>,
+
   #[serde(
     default,
     alias = "server",
@@ -111,6 +121,7 @@ pub struct ResourcesToml {
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ResourceToml<PartialConfig: Default> {
   /// The resource name. Required
   pub name: String,
@@ -153,6 +164,7 @@ fn is_false(b: &bool) -> bool {
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct UserGroupToml {
   /// User group name
   pub name: String,
@@ -167,6 +179,7 @@ pub struct UserGroupToml {
 
   /// Give the user group elevated permissions on all resources of a certain type
   #[serde(default)]
+  #[cfg_attr(feature = "utoipa", schema(value_type = HashMap<ResourceTargetVariant, PermissionLevelAndSpecifics>))]
   pub all:
     IndexMap<ResourceTargetVariant, PermissionLevelAndSpecifics>,
 
@@ -177,6 +190,7 @@ pub struct UserGroupToml {
 
 #[typeshare]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PermissionToml {
   /// Id can be:
   ///   - resource name. `id = "abcd-build"`
@@ -193,5 +207,6 @@ pub struct PermissionToml {
 
   /// Any [SpecificPermissions](SpecificPermission) on the resource
   #[serde(default, skip_serializing_if = "IndexSet::is_empty")]
+  #[cfg_attr(feature = "utoipa", schema(value_type = Vec<SpecificPermission>))]
   pub specific: IndexSet<SpecificPermission>,
 }

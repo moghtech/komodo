@@ -1,4 +1,4 @@
-use anyhow::Context;
+use anyhow::{Context, anyhow};
 use komodo_client::entities::{
   RepoExecutionArgs, RepoExecutionResponse,
   repo::Repo,
@@ -99,9 +99,22 @@ async fn get_repo(
     format!("Failed to update resource repo at {repo_path:?}")
   })?;
 
-  // let hash = hash.context("failed to get commit hash")?;
-  // let message =
-  //   message.context("failed to get commit hash message")?;
+  // Ensure clone / pull successful,
+  // propogate error log -> 'errored' and return.
+  if let Some(failure) = logs.iter().find(|log| !log.success) {
+    return Ok(RemoteResources {
+      resources: Err(anyhow!("Repo clone / pull failed")),
+      files: Vec::new(),
+      file_errors: vec![SyncFileContents {
+        resource_path: String::from("Repo error"),
+        path: format!("Failed at: {}", failure.stage),
+        contents: failure.combined(),
+      }],
+      logs,
+      hash: None,
+      message: None,
+    });
+  }
 
   let (mut files, mut file_errors) = (Vec::new(), Vec::new());
   let resources = super::file::read_resources(

@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use komodo_client::entities::{
   ResourceTarget,
   alert::{Alert, AlertData, SeverityLevel},
+  optional_string,
   stack::{Stack, StackState},
 };
 
@@ -12,14 +13,14 @@ use crate::{
   state::{action_states, db_client, stack_status_cache},
 };
 
-#[instrument(level = "debug")]
 pub async fn alert_stacks(
   ts: i64,
+  swarm_names: &HashMap<String, String>,
   server_names: &HashMap<String, String>,
 ) {
   let action_states = action_states();
   let mut alerts = Vec::<Alert>::new();
-  for status in stack_status_cache().get_list().await {
+  for status in stack_status_cache().get_values().await {
     // Don't alert if prev None
     let Some(prev) = status.prev else {
       continue;
@@ -63,11 +64,12 @@ pub async fn alert_stacks(
       let data = AlertData::StackStateChange {
         id: status.curr.id.clone(),
         name: stack.name,
+        swarm_name: swarm_names.get(&stack.config.swarm_id).cloned(),
+        swarm_id: optional_string(stack.config.swarm_id),
         server_name: server_names
           .get(&stack.config.server_id)
-          .cloned()
-          .unwrap_or(String::from("unknown")),
-        server_id: stack.config.server_id,
+          .cloned(),
+        server_id: optional_string(stack.config.server_id),
         from: prev,
         to: status.curr.state,
       };

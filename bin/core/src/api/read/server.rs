@@ -25,33 +25,31 @@ use komodo_client::{
       network::Network,
       volume::Volume,
     },
-    komodo_timestamp,
     permission::PermissionLevel,
     server::{
-      Server, ServerActionState, ServerListItem, ServerState,
-      TerminalInfo,
+      Server, ServerActionState, ServerListItem, ServerQuery,
+      ServerState,
     },
     stack::{Stack, StackServiceNames},
     stats::{SystemInformation, SystemProcess},
     update::Log,
   },
 };
+use mogh_error::AddStatusCode;
+use mogh_resolver::Resolve;
 use periphery_client::api::{
   self as periphery,
   container::InspectContainer,
-  image::{ImageHistory, InspectImage},
-  network::InspectNetwork,
-  volume::InspectVolume,
+  docker::{
+    ImageHistory, InspectImage, InspectNetwork, InspectVolume,
+  },
 };
-use resolver_api::Resolve;
+use reqwest::StatusCode;
 use tokio::sync::Mutex;
 
 use crate::{
-  helpers::{
-    periphery_client,
-    query::{get_all_tags, get_system_info},
-  },
-  permission::get_check_permissions,
+  helpers::{periphery_client, query::get_all_tags},
+  permission::{get_check_permissions, list_resources_for_user},
   resource,
   stack::compose_container_match_regex,
   state::{action_states, db_client, server_status_cache},
@@ -63,7 +61,7 @@ impl Resolve<ReadArgs> for GetServersSummary {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetServersSummaryResponse> {
+  ) -> mogh_error::Result<GetServersSummaryResponse> {
     let servers = resource::list_for_user::<Server>(
       Default::default(),
       user,
@@ -80,11 +78,8 @@ impl Resolve<ReadArgs> for GetServersSummary {
       match server.info.state {
         ServerState::Ok => {
           // Check for version mismatch
-          let has_version_mismatch = !server.info.version.is_empty()
-            && server.info.version != "Unknown"
-            && server.info.version != core_version;
-
-          if has_version_mismatch {
+          if matches!(&server.info.version, Some(version) if version != core_version)
+          {
             res.warning += 1;
           } else {
             res.healthy += 1;
@@ -94,7 +89,9 @@ impl Resolve<ReadArgs> for GetServersSummary {
           res.unhealthy += 1;
         }
         ServerState::Disabled => {
-          res.disabled += 1;
+          if !server.template {
+            res.disabled += 1;
+          }
         }
       }
     }
@@ -102,31 +99,11 @@ impl Resolve<ReadArgs> for GetServersSummary {
   }
 }
 
-impl Resolve<ReadArgs> for GetPeripheryVersion {
-  async fn resolve(
-    self,
-    ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetPeripheryVersionResponse> {
-    let server = get_check_permissions::<Server>(
-      &self.server,
-      user,
-      PermissionLevel::Read.into(),
-    )
-    .await?;
-    let version = server_status_cache()
-      .get(&server.id)
-      .await
-      .map(|s| s.version.clone())
-      .unwrap_or(String::from("unknown"));
-    Ok(GetPeripheryVersionResponse { version })
-  }
-}
-
 impl Resolve<ReadArgs> for GetServer {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Server> {
+  ) -> mogh_error::Result<Server> {
     Ok(
       get_check_permissions::<Server>(
         &self.server,
@@ -142,7 +119,7 @@ impl Resolve<ReadArgs> for ListServers {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Vec<ServerListItem>> {
+  ) -> mogh_error::Result<Vec<ServerListItem>> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -164,7 +141,7 @@ impl Resolve<ReadArgs> for ListFullServers {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListFullServersResponse> {
+  ) -> mogh_error::Result<ListFullServersResponse> {
     let all_tags = if self.query.tags.is_empty() {
       vec![]
     } else {
@@ -186,7 +163,7 @@ impl Resolve<ReadArgs> for GetServerState {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetServerStateResponse> {
+  ) -> mogh_error::Result<GetServerStateResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -208,7 +185,7 @@ impl Resolve<ReadArgs> for GetServerActionState {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ServerActionState> {
+  ) -> mogh_error::Result<ServerActionState> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -225,18 +202,50 @@ impl Resolve<ReadArgs> for GetServerActionState {
   }
 }
 
-impl Resolve<ReadArgs> for GetSystemInformation {
+impl Resolve<ReadArgs> for GetPeripheryInformation {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<SystemInformation> {
+  ) -> mogh_error::Result<GetPeripheryInformationResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
       PermissionLevel::Read.into(),
     )
     .await?;
-    get_system_info(&server).await.map_err(Into::into)
+    server_status_cache()
+      .get(&server.id)
+      .await
+      .context("Missing server status")?
+      .periphery_info
+      .as_ref()
+      .cloned()
+      .context("Server status missing Periphery Info. The Server may be disconnected.")
+      .status_code(StatusCode::INTERNAL_SERVER_ERROR)
+  }
+}
+
+impl Resolve<ReadArgs> for GetSystemInformation {
+  async fn resolve(
+    self,
+    ReadArgs { user }: &ReadArgs,
+  ) -> mogh_error::Result<SystemInformation> {
+    let server = get_check_permissions::<Server>(
+      &self.server,
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await
+    .status_code(StatusCode::BAD_REQUEST)?;
+    server_status_cache()
+      .get(&server.id)
+      .await
+      .context("Missing server status")?
+      .system_info
+      .as_ref()
+      .cloned()
+      .context("Server status missing system Info. The Server may be disconnected.")
+      .status_code(StatusCode::INTERNAL_SERVER_ERROR)
   }
 }
 
@@ -244,22 +253,22 @@ impl Resolve<ReadArgs> for GetSystemStats {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetSystemStatsResponse> {
+  ) -> mogh_error::Result<GetSystemStatsResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
       PermissionLevel::Read.into(),
     )
     .await?;
-    let status =
-      server_status_cache().get(&server.id).await.with_context(
-        || format!("did not find status for server at {}", server.id),
-      )?;
-    let stats = status
-      .stats
+    server_status_cache()
+      .get(&server.id)
+      .await
+      .context("Missing server status")?
+      .system_stats
       .as_ref()
-      .context("server stats not available")?;
-    Ok(stats.clone())
+      .cloned()
+      .context("Server status missing system stats. The Server may be disconnected.")
+      .status_code(StatusCode::INTERNAL_SERVER_ERROR)
   }
 }
 
@@ -276,7 +285,7 @@ impl Resolve<ReadArgs> for ListSystemProcesses {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListSystemProcessesResponse> {
+  ) -> mogh_error::Result<ListSystemProcessesResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -289,7 +298,8 @@ impl Resolve<ReadArgs> for ListSystemProcesses {
         cached.0.clone()
       }
       _ => {
-        let stats = periphery_client(&server)?
+        let stats = periphery_client(&server)
+          .await?
           .request(periphery::stats::GetSystemProcesses {})
           .await?;
         lock.insert(
@@ -310,7 +320,7 @@ impl Resolve<ReadArgs> for GetHistoricalServerStats {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetHistoricalServerStatsResponse> {
+  ) -> mogh_error::Result<GetHistoricalServerStatsResponse> {
     let GetHistoricalServerStats {
       server,
       granularity,
@@ -363,7 +373,7 @@ impl Resolve<ReadArgs> for ListDockerContainers {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListDockerContainersResponse> {
+  ) -> mogh_error::Result<ListDockerContainersResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -373,8 +383,8 @@ impl Resolve<ReadArgs> for ListDockerContainers {
     let cache = server_status_cache()
       .get_or_insert_default(&server.id)
       .await;
-    if let Some(containers) = &cache.containers {
-      Ok(containers.clone())
+    if let Some(docker) = &cache.docker {
+      Ok(docker.containers.clone())
     } else {
       Ok(Vec::new())
     }
@@ -385,20 +395,14 @@ impl Resolve<ReadArgs> for ListAllDockerContainers {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListAllDockerContainersResponse> {
+  ) -> mogh_error::Result<ListAllDockerContainersResponse> {
     let servers = resource::list_for_user::<Server>(
-      Default::default(),
+      ServerQuery::builder().names(self.servers.clone()).build(),
       user,
       PermissionLevel::Read.into(),
       &[],
     )
-    .await?
-    .into_iter()
-    .filter(|server| {
-      self.servers.is_empty()
-        || self.servers.contains(&server.id)
-        || self.servers.contains(&server.name)
-    });
+    .await?;
 
     let mut containers = Vec::<ContainerListItem>::new();
 
@@ -406,9 +410,18 @@ impl Resolve<ReadArgs> for ListAllDockerContainers {
       let cache = server_status_cache()
         .get_or_insert_default(&server.id)
         .await;
-      if let Some(more_containers) = &cache.containers {
-        containers.extend(more_containers.clone());
-      }
+      let Some(docker) = &cache.docker else {
+        continue;
+      };
+      let more = docker
+        .containers
+        .iter()
+        .filter(|container| {
+          self.containers.is_empty()
+            || self.containers.contains(&container.name)
+        })
+        .cloned();
+      containers.extend(more);
     }
 
     Ok(containers)
@@ -419,7 +432,7 @@ impl Resolve<ReadArgs> for GetDockerContainersSummary {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetDockerContainersSummaryResponse> {
+  ) -> mogh_error::Result<GetDockerContainersSummaryResponse> {
     let servers = resource::list_full_for_user::<Server>(
       Default::default(),
       user,
@@ -436,8 +449,8 @@ impl Resolve<ReadArgs> for GetDockerContainersSummary {
         .get_or_insert_default(&server.id)
         .await;
 
-      if let Some(containers) = &cache.containers {
-        for container in containers {
+      if let Some(docker) = &cache.docker {
+        for container in &docker.containers {
           res.total += 1;
           match container.state {
             ContainerStateStatusEnum::Created
@@ -459,7 +472,7 @@ impl Resolve<ReadArgs> for InspectDockerContainer {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Container> {
+  ) -> mogh_error::Result<Container> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -478,7 +491,8 @@ impl Resolve<ReadArgs> for InspectDockerContainer {
         .into(),
       );
     }
-    let res = periphery_client(&server)?
+    let res = periphery_client(&server)
+      .await?
       .request(InspectContainer {
         name: self.container,
       })
@@ -493,7 +507,7 @@ impl Resolve<ReadArgs> for GetContainerLog {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Log> {
+  ) -> mogh_error::Result<Log> {
     let GetContainerLog {
       server,
       container,
@@ -506,7 +520,8 @@ impl Resolve<ReadArgs> for GetContainerLog {
       PermissionLevel::Read.logs(),
     )
     .await?;
-    let res = periphery_client(&server)?
+    let res = periphery_client(&server)
+      .await?
       .request(periphery::container::GetContainerLog {
         name: container,
         tail: cmp::min(tail, MAX_LOG_LENGTH),
@@ -522,7 +537,7 @@ impl Resolve<ReadArgs> for SearchContainerLog {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Log> {
+  ) -> mogh_error::Result<Log> {
     let SearchContainerLog {
       server,
       container,
@@ -537,7 +552,8 @@ impl Resolve<ReadArgs> for SearchContainerLog {
       PermissionLevel::Read.logs(),
     )
     .await?;
-    let res = periphery_client(&server)?
+    let res = periphery_client(&server)
+      .await?
       .request(periphery::container::GetContainerLogSearch {
         name: container,
         terms,
@@ -555,7 +571,7 @@ impl Resolve<ReadArgs> for GetResourceMatchingContainer {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<GetResourceMatchingContainerResponse> {
+  ) -> mogh_error::Result<GetResourceMatchingContainerResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -572,12 +588,12 @@ impl Resolve<ReadArgs> for GetResourceMatchingContainer {
     }
 
     // then check stacks
-    let stacks =
-      resource::list_full_for_user_using_document::<Stack>(
-        doc! { "config.server_id": &server.id },
-        user,
-      )
-      .await?;
+    let stacks = list_resources_for_user::<Stack>(
+      doc! { "config.server_id": &server.id },
+      user,
+      PermissionLevel::Read.into(),
+    )
+    .await?;
 
     // check matching stack
     for stack in stacks {
@@ -616,7 +632,7 @@ impl Resolve<ReadArgs> for ListDockerNetworks {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListDockerNetworksResponse> {
+  ) -> mogh_error::Result<ListDockerNetworksResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -626,8 +642,8 @@ impl Resolve<ReadArgs> for ListDockerNetworks {
     let cache = server_status_cache()
       .get_or_insert_default(&server.id)
       .await;
-    if let Some(networks) = &cache.networks {
-      Ok(networks.clone())
+    if let Some(docker) = &cache.docker {
+      Ok(docker.networks.clone())
     } else {
       Ok(Vec::new())
     }
@@ -638,7 +654,7 @@ impl Resolve<ReadArgs> for InspectDockerNetwork {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Network> {
+  ) -> mogh_error::Result<Network> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -657,7 +673,8 @@ impl Resolve<ReadArgs> for InspectDockerNetwork {
         .into(),
       );
     }
-    let res = periphery_client(&server)?
+    let res = periphery_client(&server)
+      .await?
       .request(InspectNetwork { name: self.network })
       .await?;
     Ok(res)
@@ -668,7 +685,7 @@ impl Resolve<ReadArgs> for ListDockerImages {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListDockerImagesResponse> {
+  ) -> mogh_error::Result<ListDockerImagesResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -678,8 +695,8 @@ impl Resolve<ReadArgs> for ListDockerImages {
     let cache = server_status_cache()
       .get_or_insert_default(&server.id)
       .await;
-    if let Some(images) = &cache.images {
-      Ok(images.clone())
+    if let Some(docker) = &cache.docker {
+      Ok(docker.images.clone())
     } else {
       Ok(Vec::new())
     }
@@ -690,7 +707,7 @@ impl Resolve<ReadArgs> for InspectDockerImage {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Image> {
+  ) -> mogh_error::Result<Image> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -706,7 +723,8 @@ impl Resolve<ReadArgs> for InspectDockerImage {
           .into(),
       );
     }
-    let res = periphery_client(&server)?
+    let res = periphery_client(&server)
+      .await?
       .request(InspectImage { name: self.image })
       .await?;
     Ok(res)
@@ -717,7 +735,7 @@ impl Resolve<ReadArgs> for ListDockerImageHistory {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Vec<ImageHistoryResponseItem>> {
+  ) -> mogh_error::Result<Vec<ImageHistoryResponseItem>> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -736,7 +754,8 @@ impl Resolve<ReadArgs> for ListDockerImageHistory {
         .into(),
       );
     }
-    let res = periphery_client(&server)?
+    let res = periphery_client(&server)
+      .await?
       .request(ImageHistory { name: self.image })
       .await?;
     Ok(res)
@@ -747,7 +766,7 @@ impl Resolve<ReadArgs> for ListDockerVolumes {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListDockerVolumesResponse> {
+  ) -> mogh_error::Result<ListDockerVolumesResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -757,8 +776,8 @@ impl Resolve<ReadArgs> for ListDockerVolumes {
     let cache = server_status_cache()
       .get_or_insert_default(&server.id)
       .await;
-    if let Some(volumes) = &cache.volumes {
-      Ok(volumes.clone())
+    if let Some(docker) = &cache.docker {
+      Ok(docker.volumes.clone())
     } else {
       Ok(Vec::new())
     }
@@ -769,7 +788,7 @@ impl Resolve<ReadArgs> for InspectDockerVolume {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<Volume> {
+  ) -> mogh_error::Result<Volume> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -785,7 +804,8 @@ impl Resolve<ReadArgs> for InspectDockerVolume {
           .into(),
       );
     }
-    let res = periphery_client(&server)?
+    let res = periphery_client(&server)
+      .await?
       .request(InspectVolume { name: self.volume })
       .await?;
     Ok(res)
@@ -796,7 +816,7 @@ impl Resolve<ReadArgs> for ListComposeProjects {
   async fn resolve(
     self,
     ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListComposeProjectsResponse> {
+  ) -> mogh_error::Result<ListComposeProjectsResponse> {
     let server = get_check_permissions::<Server>(
       &self.server,
       user,
@@ -806,73 +826,54 @@ impl Resolve<ReadArgs> for ListComposeProjects {
     let cache = server_status_cache()
       .get_or_insert_default(&server.id)
       .await;
-    if let Some(projects) = &cache.projects {
-      Ok(projects.clone())
+    if let Some(docker) = &cache.docker {
+      Ok(docker.projects.clone())
     } else {
       Ok(Vec::new())
     }
   }
 }
 
-#[derive(Default)]
-struct TerminalCacheItem {
-  list: Vec<TerminalInfo>,
-  ttl: i64,
-}
+// impl Resolve<ReadArgs> for ListAllTerminals {
+//   async fn resolve(
+//     self,
+//     args: &ReadArgs,
+//   ) -> Result<Self::Response, Self::Error> {
+//     // match self.tar
+//     let mut terminals = resource::list_full_for_user::<Server>(
+//       self.query, &args.user, &all_tags,
+//     )
+//     .await?
+//     .into_iter()
+//     .map(|server| async move {
+//       (
+//         list_terminals_inner(&server, self.fresh).await,
+//         (server.id, server.name),
+//       )
+//     })
+//     .collect::<FuturesUnordered<_>>()
+//     .collect::<Vec<_>>()
+//     .await
+//     .into_iter()
+//     .flat_map(|(terminals, server)| {
+//       let terminals = terminals.ok()?;
+//       Some((terminals, server))
+//     })
+//     .flat_map(|(terminals, (server_id, server_name))| {
+//       terminals.into_iter().map(move |info| {
+//         TerminalInfoWithServer::from_terminal_info(
+//           &server_id,
+//           &server_name,
+//           info,
+//         )
+//       })
+//     })
+//     .collect::<Vec<_>>();
 
-const TERMINAL_CACHE_TIMEOUT: i64 = 30_000;
+//     terminals.sort_by(|a, b| {
+//       a.server_name.cmp(&b.server_name).then(a.name.cmp(&b.name))
+//     });
 
-#[derive(Default)]
-struct TerminalCache(
-  std::sync::Mutex<
-    HashMap<String, Arc<tokio::sync::Mutex<TerminalCacheItem>>>,
-  >,
-);
-
-impl TerminalCache {
-  fn get_or_insert(
-    &self,
-    server_id: String,
-  ) -> Arc<tokio::sync::Mutex<TerminalCacheItem>> {
-    if let Some(cached) =
-      self.0.lock().unwrap().get(&server_id).cloned()
-    {
-      return cached;
-    }
-    let to_cache =
-      Arc::new(tokio::sync::Mutex::new(TerminalCacheItem::default()));
-    self.0.lock().unwrap().insert(server_id, to_cache.clone());
-    to_cache
-  }
-}
-
-fn terminals_cache() -> &'static TerminalCache {
-  static TERMINALS: OnceLock<TerminalCache> = OnceLock::new();
-  TERMINALS.get_or_init(Default::default)
-}
-
-impl Resolve<ReadArgs> for ListTerminals {
-  async fn resolve(
-    self,
-    ReadArgs { user }: &ReadArgs,
-  ) -> serror::Result<ListTerminalsResponse> {
-    let server = get_check_permissions::<Server>(
-      &self.server,
-      user,
-      PermissionLevel::Read.terminal(),
-    )
-    .await?;
-    let cache = terminals_cache().get_or_insert(server.id.clone());
-    let mut cache = cache.lock().await;
-    if self.fresh || komodo_timestamp() > cache.ttl {
-      cache.list = periphery_client(&server)?
-        .request(periphery_client::api::terminal::ListTerminals {})
-        .await
-        .context("Failed to get fresh terminal list")?;
-      cache.ttl = komodo_timestamp() + TERMINAL_CACHE_TIMEOUT;
-      Ok(cache.list.clone())
-    } else {
-      Ok(cache.list.clone())
-    }
-  }
-}
+//     Ok(terminals)
+//   }
+// }

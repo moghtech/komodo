@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -7,18 +6,31 @@ use crate::entities::{NoData, ResourceTarget};
 
 use super::KomodoWriteRequest;
 
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UpdateResourceMeta",
+  description = "Update a resource's common meta fields.",
+  request_body(content = UpdateResourceMeta),
+  responses(
+    (status = 200, description = "Resource meta updated.", body = UpdateResourceMetaResponse),
+  ),
+)]
+pub fn update_resource_meta() {}
+
 /// Update a resources common meta fields.
 /// - description
 /// - template
 /// - tags
 /// Response: [NoData].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateResourceMetaResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateResourceMeta {
   /// The target resource to set update meta.
   pub target: ResourceTarget,

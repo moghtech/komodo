@@ -1,49 +1,84 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::entities::{NoData, user::User};
+use crate::entities::{NoData, ResourceTarget, user::User};
 
 use super::KomodoWriteRequest;
 
 //
 
-/// **Only for local users**. Update the calling users username.
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/PushRecentlyViewed",
+  description = "Add a resource to calling user's recently viewed.",
+  request_body(content = PushRecentlyViewed),
+  responses(
+    (status = 200, description = "Successful", body = PushRecentlyViewedResponse),
+    (status = 500, description = "Failed", body = mogh_error::Serror),
+  ),
+)]
+pub fn push_recently_viewed() {}
+
+/// Push a resource to the front of the users 10 most recently viewed resources.
 /// Response: [NoData].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
-#[response(UpdateUserUsernameResponse)]
-#[error(serror::Error)]
-pub struct UpdateUserUsername {
-  pub username: String,
+#[response(PushRecentlyViewedResponse)]
+#[error(mogh_error::Error)]
+pub struct PushRecentlyViewed {
+  /// The target to push.
+  pub resource: ResourceTarget,
 }
 
 #[typeshare]
-pub type UpdateUserUsernameResponse = NoData;
+pub type PushRecentlyViewedResponse = NoData;
 
 //
 
-/// **Only for local users**. Update the calling users password.
-/// Response: [NoData].
-#[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/SetLastSeenUpdate",
+  description = "Set the time the calling user most recently opened the UI updates dropdown.",
+  request_body(content = SetLastSeenUpdate),
+  responses(
+    (status = 200, description = "Successful", body = SetLastSeenUpdateResponse),
+    (status = 500, description = "Failed", body = mogh_error::Serror),
+  ),
 )]
+pub fn set_last_seen_update() {}
+
+/// Set the time the calling user most recently opened the UI updates dropdown.
+/// Used for unseen notification dot.
+/// Response: [NoData]
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
-#[response(UpdateUserPasswordResponse)]
-#[error(serror::Error)]
-pub struct UpdateUserPassword {
-  pub password: String,
-}
+#[response(SetLastSeenUpdateResponse)]
+#[error(mogh_error::Error)]
+pub struct SetLastSeenUpdate {}
 
 #[typeshare]
-pub type UpdateUserPasswordResponse = NoData;
+pub type SetLastSeenUpdateResponse = NoData;
 
 //
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteUser",
+  description = "**Admin only.** Delete a user.",
+  request_body(content = DeleteUser),
+  responses(
+    (status = 200, description = "The deleted user", body = DeleteUserResponse),
+  ),
+)]
+pub fn delete_user() {}
 
 /// **Admin only**. Delete a user.
 /// Admins can delete any non-admin user.
@@ -52,12 +87,11 @@ pub type UpdateUserPasswordResponse = NoData;
 /// User cannot delete themselves.
 /// Response: [NoData].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteUserResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteUser {
   /// User id or username
   #[serde(alias = "username", alias = "id")]
@@ -69,6 +103,18 @@ pub type DeleteUserResponse = User;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateLocalUser",
+  description = "**Admin only.** Create a local user.",
+  request_body(content = CreateLocalUser),
+  responses(
+    (status = 200, description = "The new user", body = CreateLocalUserResponse),
+  ),
+)]
+pub fn create_local_user() {}
+
 /// **Admin only.** Create a local user.
 /// Response: [User].
 ///
@@ -76,12 +122,11 @@ pub type DeleteUserResponse = User;
 /// This method requires admin user credentials, and can
 /// bypass disabled user registration.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateLocalUserResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateLocalUser {
   /// The username for the local user.
   pub username: String,
@@ -94,15 +139,26 @@ pub type CreateLocalUserResponse = User;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateServiceUser",
+  description = "**Admin only.** Create a service user.",
+  request_body(content = CreateServiceUser),
+  responses(
+    (status = 200, description = "The new service user", body = CreateServiceUserResponse),
+  ),
+)]
+pub fn create_service_user() {}
+
 /// **Admin only.** Create a service user.
 /// Response: [User].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateServiceUserResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateServiceUser {
   /// The username for the service user.
   pub username: String,
@@ -115,15 +171,26 @@ pub type CreateServiceUserResponse = User;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/UpdateServiceUserDescription",
+  description = "**Admin only.** Update a service user's description.",
+  request_body(content = UpdateServiceUserDescription),
+  responses(
+    (status = 200, description = "The updated user", body = UpdateServiceUserDescriptionResponse),
+  ),
+)]
+pub fn update_service_user_description() {}
+
 /// **Admin only.** Update a service user's description.
 /// Response: [User].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(UpdateServiceUserDescriptionResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct UpdateServiceUserDescription {
   /// The service user's username
   pub username: String,

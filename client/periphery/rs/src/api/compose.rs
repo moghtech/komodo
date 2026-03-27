@@ -1,25 +1,14 @@
 use komodo_client::entities::{
   FileContents, RepoExecutionResponse, SearchCombinator,
   repo::Repo,
-  stack::{
-    ComposeProject, Stack, StackFileDependency,
-    StackRemoteFileContents, StackServiceNames,
-  },
+  stack::{Stack, StackFileDependency, StackRemoteFileContents},
   update::Log,
 };
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-/// List the compose project names that are on the host.
-/// List running `docker compose ls`
-///
-/// Incoming from docker like:
-/// [{"Name":"project_name","Status":"running(1)","ConfigFiles":"/root/compose/compose.yaml,/root/compose/compose2.yaml"}]
-#[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
-#[response(Vec<ComposeProject>)]
-#[error(serror::Error)]
-pub struct ListComposeProjects {}
+use crate::api::DeployStackResponse;
 
 //
 
@@ -27,7 +16,7 @@ pub struct ListComposeProjects {}
 /// `files_on_host`.
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(GetComposeContentsOnHostResponse)]
-#[error(serror::Error)]
+#[error(anyhow::Error)]
 pub struct GetComposeContentsOnHost {
   /// The name of the stack
   pub name: String,
@@ -47,7 +36,7 @@ pub struct GetComposeContentsOnHostResponse {
 /// The stack folder must already exist for this to work
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Log)]
-#[error(serror::Error)]
+#[error(anyhow::Error)]
 pub struct GetComposeLog {
   /// The name of the project
   pub project: String,
@@ -72,7 +61,7 @@ fn default_tail() -> u64 {
 /// The stack folder must already exist for this to work
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Log)]
-#[error(serror::Error)]
+#[error(anyhow::Error)]
 pub struct GetComposeLogSearch {
   /// The name of the project
   pub project: String,
@@ -100,7 +89,7 @@ pub struct GetComposeLogSearch {
 /// `files_on_host`.
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Log)]
-#[error(serror::Error)]
+#[error(anyhow::Error)]
 pub struct WriteComposeContentsToHost {
   /// The name of the stack
   pub name: String,
@@ -119,7 +108,7 @@ pub struct WriteComposeContentsToHost {
 /// Only works with git repo based stacks.
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(RepoExecutionResponse)]
-#[error(serror::Error)]
+#[error(anyhow::Error)]
 pub struct WriteCommitComposeContents {
   /// The stack to write to.
   pub stack: Stack,
@@ -141,7 +130,7 @@ pub struct WriteCommitComposeContents {
 /// and runs docker compose up. Response: [ComposePullResponse]
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(ComposePullResponse)]
-#[error(serror::Error)]
+#[error(anyhow::Error)]
 pub struct ComposePull {
   /// The stack to deploy
   pub stack: Stack,
@@ -175,8 +164,8 @@ pub struct ComposePullResponse {
 
 /// docker compose up.
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
-#[response(ComposeUpResponse)]
-#[error(serror::Error)]
+#[response(DeployStackResponse)]
+#[error(anyhow::Error)]
 pub struct ComposeUp {
   /// The stack to deploy
   pub stack: Stack,
@@ -195,31 +184,6 @@ pub struct ComposeUp {
   pub replacers: Vec<(String, String)>,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct ComposeUpResponse {
-  /// If any of the required files are missing, they will be here.
-  pub missing_files: Vec<String>,
-  /// The logs produced by the deploy
-  pub logs: Vec<Log>,
-  /// Whether stack was successfully deployed
-  pub deployed: bool,
-  /// The stack services.
-  ///
-  /// Note. The "image" is after interpolation.
-  #[serde(default)]
-  pub services: Vec<StackServiceNames>,
-  /// The deploy compose file contents if they could be acquired, or empty vec.
-  pub file_contents: Vec<StackRemoteFileContents>,
-  /// The error in getting remote file contents at the path, or null
-  pub remote_errors: Vec<FileContents>,
-  /// The output of `docker compose config` at deploy time
-  pub compose_config: Option<String>,
-  /// If its a repo based stack, will include the latest commit hash
-  pub commit_hash: Option<String>,
-  /// If its a repo based stack, will include the latest commit message
-  pub commit_message: Option<String>,
-}
-
 //
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -233,7 +197,7 @@ pub struct ComposeRunResponse {
 /// General compose command runner
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Log)]
-#[error(serror::Error)]
+#[error(anyhow::Error)]
 pub struct ComposeExecution {
   /// The compose project name to run the execution on.
   /// Usually its he name of the stack / folder under the `stack_dir`.
@@ -247,7 +211,7 @@ pub struct ComposeExecution {
 /// docker compose run one-time service execution.
 #[derive(Debug, Clone, Serialize, Deserialize, Resolve)]
 #[response(Log)]
-#[error(serror::Error)]
+#[error(anyhow::Error)]
 pub struct ComposeRun {
   /// The stack to run a service for
   pub stack: Stack,

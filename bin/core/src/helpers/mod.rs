@@ -1,9 +1,10 @@
-use std::{fmt::Write, time::Duration};
+use std::fmt::Write;
 
 use anyhow::{Context, anyhow};
 use database::mongo_indexed::Document;
 use database::mungos::mongodb::bson::{Bson, doc};
 use indexmap::IndexSet;
+use komodo_client::entities::SwarmOrServer;
 use komodo_client::entities::{
   ResourceTarget,
   build::Build,
@@ -15,24 +16,30 @@ use komodo_client::entities::{
   stack::Stack,
   user::User,
 };
-use periphery_client::PeripheryClient;
-use rand::Rng;
+use mogh_resolver::HasResponse;
+use serde::Serialize;
+use serde::de::DeserializeOwned;
 
-use crate::{config::core_config, state::db_client};
+use crate::helpers::swarm::swarm_request;
+use crate::{
+  config::core_config, connection::PeripheryConnectionArgs,
+  periphery::PeripheryClient, state::db_client,
+};
 
 pub mod action_state;
 pub mod all_resources;
 pub mod builder;
-pub mod cache;
 pub mod channel;
+pub mod image_digest;
 pub mod maintenance;
 pub mod matcher;
 pub mod procedure;
 pub mod prune;
 pub mod query;
+pub mod swarm;
+pub mod terminal;
 pub mod update;
-
-// pub mod resource;
+pub mod validations;
 
 pub fn empty_or_only_spaces(word: &str) -> bool {
   if word.is_empty() {
@@ -44,14 +51,6 @@ pub fn empty_or_only_spaces(word: &str) -> bool {
     }
   }
   true
-}
-
-pub fn random_string(length: usize) -> String {
-  rand::rng()
-    .sample_iter(&rand::distr::Alphanumeric)
-    .take(length)
-    .map(char::from)
-    .collect()
 }
 
 /// First checks db for token, then checks core config.
@@ -185,27 +184,27 @@ pub async fn registry_token(
 
 //
 
-pub fn periphery_client(
+pub async fn periphery_client(
   server: &Server,
 ) -> anyhow::Result<PeripheryClient> {
   if !server.config.enabled {
     return Err(anyhow!("server not enabled"));
   }
-
-  let client = PeripheryClient::new(
-    &server.config.address,
-    if server.config.passkey.is_empty() {
-      &core_config().passkey
-    } else {
-      &server.config.passkey
-    },
-    Duration::from_secs(server.config.timeout_seconds as u64),
-  );
-
-  Ok(client)
+  PeripheryClient::new(
+    PeripheryConnectionArgs::from_server(server),
+    server.config.insecure_tls,
+  )
+  .await
 }
 
-#[instrument]
+#[instrument(
+  "CreatePermission",
+  skip(user),
+  fields(
+    operator = user.id,
+    username = user.username
+  )
+)]
 pub async fn create_permission<T>(
   user: &User,
   target: T,
@@ -270,4 +269,25 @@ pub fn repo_link(
     let _ = write!(&mut res, "/tree/{branch}");
   }
   res
+}
+
+pub async fn swarm_or_server_request<T>(
+  swarm_or_server: &SwarmOrServer,
+  request: T,
+) -> anyhow::Result<T::Response>
+where
+  T: std::fmt::Debug + Clone + Serialize + HasResponse,
+  T::Response: DeserializeOwned,
+{
+  match swarm_or_server {
+    SwarmOrServer::Swarm(swarm) => {
+      swarm_request(&swarm.config.server_ids, request).await
+    }
+    SwarmOrServer::Server(server) => {
+      periphery_client(server).await?.request(request).await
+    }
+    SwarmOrServer::None => {
+      Err(anyhow!("Resource has neither swarm nor server attached."))
+    }
+  }
 }

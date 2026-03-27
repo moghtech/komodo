@@ -26,6 +26,9 @@ pub async fn update(
     UpdateUserCommand::SuperAdmin { enabled, yes } => {
       update_super_admin(username, *enabled, *yes).await
     }
+    UpdateUserCommand::Clear2fa { yes } => {
+      clear_2fa(username, *yes).await
+    }
   }
 }
 
@@ -117,6 +120,23 @@ async fn update_super_admin(
     .context("Failed to update user super admin on db")?;
 
   info!("Super admin updated ✅");
+
+  Ok(())
+}
+
+async fn clear_2fa(username: &str, yes: bool) -> anyhow::Result<()> {
+  println!("\n{}: Clear 2FA Methods\n", "Mode".dimmed());
+  println!(" - {}: {username}", "Username".dimmed());
+
+  crate::command::wait_for_enter("clear user 2FA methods", yes)?;
+
+  info!("Clearing 2FA methods...");
+
+  let db = database::Client::new(&cli_config().database).await?;
+
+  db.clear_user_2fa_methods(username).await?;
+
+  info!("2FA methods cleared ✅");
 
   Ok(())
 }

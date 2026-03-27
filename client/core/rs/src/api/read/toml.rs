@@ -1,31 +1,41 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::entities::ResourceTarget;
+use crate::entities::{ResourceTarget, toml::ResourcesToml};
 
 use super::KomodoReadRequest;
 
 /// Response containing pretty formatted toml contents.
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TomlResponse {
   pub toml: String,
 }
 
 //
 
-/// Get pretty formatted monrun sync toml for all resources
-/// which the user has permissions to view.
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ExportAllResourcesToToml",
+  description = "Get sync toml for all resources which the user has permissions to view.",
+  request_body(content = ExportAllResourcesToToml),
+  responses(
+    (status = 200, description = "The toml response", body = ExportAllResourcesToTomlResponse),
+  ),
+)]
+pub fn export_all_resources_to_toml() {}
+
+/// Get sync toml for all resources which the user has permissions to view.
 /// Response: [TomlResponse].
 #[typeshare]
-#[derive(
-  Debug, Clone, Default, Serialize, Deserialize, Resolve, EmptyTraits,
-)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ExportAllResourcesToTomlResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ExportAllResourcesToToml {
   /// Whether to include any resources (servers, stacks, etc.)
   /// in the exported contents.
@@ -44,6 +54,9 @@ pub struct ExportAllResourcesToToml {
   /// Default: false
   #[serde(default)]
   pub include_user_groups: bool,
+  /// Pass an existing [ResourcesToml] to preserve
+  /// the meta configuration.
+  pub existing: Option<ResourcesToml>,
 }
 
 fn default_include_resources() -> bool {
@@ -55,15 +68,26 @@ pub type ExportAllResourcesToTomlResponse = TomlResponse;
 
 //
 
-/// Get pretty formatted monrun sync toml for specific resources and user groups.
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ExportResourcesToToml",
+  description = "Get sync toml for specific resources, variables, and user groups.",
+  request_body(content = ExportResourcesToToml),
+  responses(
+    (status = 200, description = "The toml response", body = ExportResourcesToTomlResponse),
+  ),
+)]
+pub fn export_resources_to_toml() {}
+
+/// Get sync toml for specific resources, variables, and user groups.
 /// Response: [TomlResponse].
 #[typeshare]
-#[derive(
-  Debug, Clone, Default, Serialize, Deserialize, Resolve, EmptyTraits,
-)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ExportResourcesToTomlResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ExportResourcesToToml {
   /// The targets to include in the export.
   #[serde(default)]
@@ -74,6 +98,9 @@ pub struct ExportResourcesToToml {
   /// Whether to include variables
   #[serde(default)]
   pub include_variables: bool,
+  /// Pass an existing [ResourcesToml] to preserve
+  /// the meta configuration.
+  pub existing: Option<ResourcesToml>,
 }
 
 #[typeshare]

@@ -1,101 +1,46 @@
+use std::{borrow::Cow, fmt::Write, path::PathBuf};
+
 use anyhow::{Context, anyhow};
 use command::{
-  run_komodo_command, run_komodo_command_with_sanitization,
+  KomodoCommandMode, run_komodo_command_with_sanitization,
+  run_komodo_shell_command, run_komodo_standard_command,
 };
 use formatting::format_serror;
 use git::write_commit_file;
 use interpolate::Interpolator;
-use komodo_client::entities::{
-  FileContents, RepoExecutionResponse, all_logs_success,
-  stack::{
-    ComposeFile, ComposeProject, ComposeService,
-    ComposeServiceDeploy, StackRemoteFileContents, StackServiceNames,
+use komodo_client::{
+  entities::{
+    FileContents, RepoExecutionResponse, all_logs_success,
+    stack::{
+      AdditionalEnvFile, ComposeFile, ComposeService,
+      ComposeServiceDeploy, StackRemoteFileContents,
+      StackServiceNames,
+    },
+    to_path_compatible_name,
+    update::Log,
   },
-  to_path_compatible_name,
-  update::Log,
+  parsers::parse_multiline_command,
 };
-use periphery_client::api::compose::*;
-use resolver_api::Resolve;
-use serde::{Deserialize, Serialize};
+use mogh_resolver::Resolve;
+use periphery_client::api::{DeployStackResponse, compose::*};
 use shell_escape::unix::escape;
-use std::{borrow::Cow, path::PathBuf};
-use tokio::fs;
+use tracing::Instrument;
 
 use crate::{
-  compose::{
-    docker_compose, env_file_args, pull_or_clone_stack,
-    up::{maybe_login_registry, validate_files},
+  config::periphery_config,
+  docker::compose::docker_compose,
+  helpers::{format_extra_args, format_log_grep},
+  stack::{
+    maybe_login_registry, pull_or_clone_stack, validate_files,
     write::write_stack,
   },
-  config::periphery_config,
-  helpers::{log_grep, parse_extra_args},
 };
 
-impl Resolve<super::Args> for ListComposeProjects {
-  #[instrument(name = "ComposeInfo", level = "debug", skip_all)]
+impl Resolve<crate::api::Args> for GetComposeLog {
   async fn resolve(
     self,
-    _: &super::Args,
-  ) -> serror::Result<Vec<ComposeProject>> {
-    let docker_compose = docker_compose();
-    let res = run_komodo_command(
-      "List Projects",
-      None,
-      format!("{docker_compose} ls --all --format json"),
-    )
-    .await;
-
-    if !res.success {
-      return Err(
-        anyhow!("{}", res.combined())
-          .context(format!(
-            "failed to list compose projects using {docker_compose} ls"
-          ))
-          .into(),
-      );
-    }
-
-    let res =
-      serde_json::from_str::<Vec<DockerComposeLsItem>>(&res.stdout)
-        .with_context(|| res.stdout.clone())
-        .with_context(|| {
-          format!(
-            "failed to parse '{docker_compose} ls' response to json"
-          )
-        })?
-        .into_iter()
-        .filter(|item| !item.name.is_empty())
-        .map(|item| ComposeProject {
-          name: item.name,
-          status: item.status,
-          compose_files: item
-            .config_files
-            .split(',')
-            .map(str::to_string)
-            .collect(),
-        })
-        .collect();
-
-    Ok(res)
-  }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DockerComposeLsItem {
-  #[serde(default, alias = "Name")]
-  pub name: String,
-  #[serde(alias = "Status")]
-  pub status: Option<String>,
-  /// Comma seperated list of paths
-  #[serde(default, alias = "ConfigFiles")]
-  pub config_files: String,
-}
-
-//
-
-impl Resolve<super::Args> for GetComposeLog {
-  #[instrument(name = "GetComposeLog", level = "debug")]
-  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
+    _: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let GetComposeLog {
       project,
       services,
@@ -112,13 +57,18 @@ impl Resolve<super::Args> for GetComposeLog {
       "{docker_compose} -p {project} logs --tail {tail}{timestamps} {}",
       services.join(" ")
     );
-    Ok(run_komodo_command("get stack log", None, command).await)
+    Ok(
+      run_komodo_standard_command("Get Stack Log", None, command)
+        .await,
+    )
   }
 }
 
-impl Resolve<super::Args> for GetComposeLogSearch {
-  #[instrument(name = "GetComposeLogSearch", level = "debug")]
-  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
+impl Resolve<crate::api::Args> for GetComposeLogSearch {
+  async fn resolve(
+    self,
+    _: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let GetComposeLogSearch {
       project,
       services,
@@ -128,7 +78,7 @@ impl Resolve<super::Args> for GetComposeLogSearch {
       timestamps,
     } = self;
     let docker_compose = docker_compose();
-    let grep = log_grep(&terms, combinator, invert);
+    let grep = format_log_grep(&terms, combinator, invert);
     let timestamps = if timestamps {
       " --timestamps"
     } else {
@@ -138,18 +88,20 @@ impl Resolve<super::Args> for GetComposeLogSearch {
       "{docker_compose} -p {project} logs --tail 5000{timestamps} {} 2>&1 | {grep}",
       services.join(" ")
     );
-    Ok(run_komodo_command("Get stack log grep", None, command).await)
+    Ok(
+      run_komodo_shell_command("Search Stack Log", None, command)
+        .await,
+    )
   }
 }
 
 //
 
-impl Resolve<super::Args> for GetComposeContentsOnHost {
-  #[instrument(name = "GetComposeContentsOnHost", level = "debug")]
+impl Resolve<crate::api::Args> for GetComposeContentsOnHost {
   async fn resolve(
     self,
-    _: &super::Args,
-  ) -> serror::Result<GetComposeContentsOnHostResponse> {
+    _: &crate::api::Args,
+  ) -> anyhow::Result<GetComposeContentsOnHostResponse> {
     let GetComposeContentsOnHost {
       name,
       run_directory,
@@ -161,12 +113,6 @@ impl Resolve<super::Args> for GetComposeContentsOnHost {
     let run_directory =
       root.join(&run_directory).components().collect::<PathBuf>();
 
-    if !run_directory.exists() {
-      fs::create_dir_all(&run_directory)
-        .await
-        .context("Failed to initialize run directory")?;
-    }
-
     let mut res = GetComposeContentsOnHostResponse::default();
 
     for file in file_paths {
@@ -174,11 +120,13 @@ impl Resolve<super::Args> for GetComposeContentsOnHost {
         .join(&file.path)
         .components()
         .collect::<PathBuf>();
-      match fs::read_to_string(&full_path).await.with_context(|| {
-        format!(
-          "Failed to read compose file contents at {full_path:?}"
-        )
-      }) {
+      match tokio::fs::read_to_string(&full_path).await.with_context(
+        || {
+          format!(
+            "Failed to read compose file contents at {full_path:?}"
+          )
+        },
+      ) {
         Ok(contents) => {
           // The path we store here has to be the same as incoming file path in the array,
           // in order for WriteComposeContentsToHost to write to the correct path.
@@ -204,17 +152,22 @@ impl Resolve<super::Args> for GetComposeContentsOnHost {
 
 //
 
-impl Resolve<super::Args> for WriteComposeContentsToHost {
+impl Resolve<crate::api::Args> for WriteComposeContentsToHost {
   #[instrument(
-    name = "WriteComposeContentsToHost",
+    "WriteComposeContentsToHost",
     skip_all,
     fields(
-      stack = &self.name,
-      run_directory = &self.run_directory,
-      file_path = &self.file_path,
+      id = args.id.to_string(),
+      core = args.core,
+      stack = self.name,
+      run_directory = self.run_directory,
+      file_path = self.file_path,
     )
   )]
-  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let WriteComposeContentsToHost {
       name,
       run_directory,
@@ -228,17 +181,13 @@ impl Resolve<super::Args> for WriteComposeContentsToHost {
       .join(file_path)
       .components()
       .collect::<PathBuf>();
-    // Ensure parent directory exists
-    if let Some(parent) = file_path.parent() {
-      fs::create_dir_all(&parent)
-        .await
-        .with_context(|| format!("Failed to initialize compose file parent directory {parent:?}"))?;
-    }
-    fs::write(&file_path, contents).await.with_context(|| {
-      format!(
-        "Failed to write compose file contents to {file_path:?}"
-      )
-    })?;
+    mogh_secret_file::write_async(&file_path, contents)
+      .await
+      .with_context(|| {
+        format!(
+          "Failed to write compose file contents to {file_path:?}"
+        )
+      })?;
     Ok(Log::simple(
       "Write contents to host",
       format!("File contents written to {file_path:?}"),
@@ -248,11 +197,13 @@ impl Resolve<super::Args> for WriteComposeContentsToHost {
 
 //
 
-impl Resolve<super::Args> for WriteCommitComposeContents {
+impl Resolve<crate::api::Args> for WriteCommitComposeContents {
   #[instrument(
-    name = "WriteCommitComposeContents",
+    "WriteCommitComposeContents",
     skip_all,
     fields(
+      id = args.id.to_string(),
+      core = args.core,
       stack = &self.stack.name,
       username = &self.username,
       file_path = &self.file_path,
@@ -260,8 +211,8 @@ impl Resolve<super::Args> for WriteCommitComposeContents {
   )]
   async fn resolve(
     self,
-    _: &super::Args,
-  ) -> serror::Result<RepoExecutionResponse> {
+    args: &crate::api::Args,
+  ) -> anyhow::Result<RepoExecutionResponse> {
     let WriteCommitComposeContents {
       stack,
       repo,
@@ -272,7 +223,8 @@ impl Resolve<super::Args> for WriteCommitComposeContents {
     } = self;
 
     let root =
-      pull_or_clone_stack(&stack, repo.as_ref(), git_token).await?;
+      pull_or_clone_stack(&stack, repo.as_ref(), git_token, args)
+        .await?;
 
     let file_path = stack
       .config
@@ -295,25 +247,26 @@ impl Resolve<super::Args> for WriteCommitComposeContents {
       &stack.config.branch,
     )
     .await
-    .map_err(Into::into)
   }
 }
 
 //
 
-impl Resolve<super::Args> for ComposePull {
+impl Resolve<crate::api::Args> for ComposePull {
   #[instrument(
-    name = "ComposePull",
+    "ComposePull",
     skip_all,
     fields(
+      id = args.id.to_string(),
+      core = args.core,
       stack = &self.stack.name,
       services = format!("{:?}", self.services),
     )
   )]
   async fn resolve(
     self,
-    _: &super::Args,
-  ) -> serror::Result<ComposePullResponse> {
+    args: &crate::api::Args,
+  ) -> anyhow::Result<ComposePullResponse> {
     let ComposePull {
       mut stack,
       repo,
@@ -340,6 +293,7 @@ impl Resolve<super::Args> for ComposePull {
       git_token,
       replacers.clone(),
       &mut res,
+      args,
     )
     .await
     {
@@ -353,12 +307,12 @@ impl Resolve<super::Args> for ComposePull {
     };
 
     // Canonicalize the path to ensure it exists, and is the cleanest path to the run directory.
-    let run_directory = run_directory.canonicalize().context(
-      "Failed to validate run directory on host after stack write (canonicalize error)",
+    let run_directory = run_directory.canonicalize().with_context(||
+      format!("Failed to validate run directory on host after stack write (canonicalize error), path={}", run_directory.to_string_lossy()),
     )?;
 
     let file_paths = stack
-      .all_file_paths()
+      .all_tracked_file_paths()
       .into_iter()
       .map(|path| {
         (
@@ -372,7 +326,7 @@ impl Resolve<super::Args> for ComposePull {
     // Validate files
     for (full_path, path) in &file_paths {
       if !full_path.exists() {
-        return Err(anyhow!("Missing compose file at {path}").into());
+        return Err(anyhow!("Missing compose file at {path}"));
       }
     }
 
@@ -398,14 +352,56 @@ impl Resolve<super::Args> for ComposePull {
 
     let project_name = stack.project_name(false);
 
-    let log = run_komodo_command(
+    // Parse wrapper configuration
+    let compose_cmd_wrapper =
+      parse_multiline_command(&stack.config.compose_cmd_wrapper);
+    // If wrapper_include is empty but wrapper is set, use default ["up"] for backward compatibility
+    let default_include = vec![String::from("up")];
+    let wrapper_include =
+      if stack.config.compose_cmd_wrapper_include.is_empty()
+        && !compose_cmd_wrapper.is_empty()
+      {
+        &default_include
+      } else {
+        &stack.config.compose_cmd_wrapper_include
+      };
+
+    let pull_command = format!(
+      "{docker_compose} -p {project_name} -f {file_args}{env_file_args} pull{service_args}",
+    );
+    let (pull_command, wrapped) = match maybe_wrap_command(
+      pull_command,
+      &compose_cmd_wrapper,
+      wrapper_include,
+      "pull",
+    ) {
+      Ok(result) => result,
+      Err(log) => {
+        res.logs.push(log);
+        return Ok(res);
+      }
+    };
+
+    let span = info_span!("RunComposePull");
+    let mode = if wrapped {
+      KomodoCommandMode::Shell
+    } else {
+      KomodoCommandMode::Standard
+    };
+    let Some(log) = run_komodo_command_with_sanitization(
       "Compose Pull",
-      run_directory.as_ref(),
-      format!(
-        "{docker_compose} -p {project_name} -f {file_args}{env_file_args} pull{service_args}",
-      ),
+      run_directory.as_path(),
+      pull_command,
+      mode,
+      &replacers,
     )
-    .await;
+    .instrument(span)
+    .await
+    else {
+      // Only reachable if command is empty,
+      // not the case since it is provided above.
+      unreachable!()
+    };
 
     res.logs.push(log);
 
@@ -415,19 +411,22 @@ impl Resolve<super::Args> for ComposePull {
 
 //
 
-impl Resolve<super::Args> for ComposeUp {
+impl Resolve<crate::api::Args> for ComposeUp {
   #[instrument(
-    name = "ComposeUp",
+    "ComposeUp",
     skip_all,
     fields(
-      stack = &self.stack.name,
+      id = args.id.to_string(),
+      core = args.core,
+      stack = self.stack.name,
+      repo = self.repo.as_ref().map(|repo| &repo.name),
       services = format!("{:?}", self.services),
     )
   )]
   async fn resolve(
     self,
-    _: &super::Args,
-  ) -> serror::Result<ComposeUpResponse> {
+    args: &crate::api::Args,
+  ) -> anyhow::Result<DeployStackResponse> {
     let ComposeUp {
       mut stack,
       repo,
@@ -437,7 +436,7 @@ impl Resolve<super::Args> for ComposeUp {
       mut replacers,
     } = self;
 
-    let mut res = ComposeUpResponse::default();
+    let mut res = DeployStackResponse::default();
 
     let mut interpolator =
       Interpolator::new(None, &periphery_config().secrets);
@@ -454,6 +453,7 @@ impl Resolve<super::Args> for ComposeUp {
       git_token,
       replacers.clone(),
       &mut res,
+      args,
     )
     .await
     {
@@ -467,8 +467,8 @@ impl Resolve<super::Args> for ComposeUp {
     };
 
     // Canonicalize the path to ensure it exists, and is the cleanest path to the run directory.
-    let run_directory = run_directory.canonicalize().context(
-      "Failed to validate run directory on host after stack write (canonicalize error)",
+    let run_directory = run_directory.canonicalize().with_context(||
+      format!("Failed to validate run directory on host after stack write (canonicalize error), path={}", run_directory.to_string_lossy()),
     )?;
 
     validate_files(&stack, &run_directory, &mut res).await;
@@ -485,13 +485,15 @@ impl Resolve<super::Args> for ComposeUp {
     if !stack.config.pre_deploy.is_none() {
       let pre_deploy_path =
         run_directory.join(&stack.config.pre_deploy.path);
+      let span = info_span!("ExecutePreDeploy");
       if let Some(log) = run_komodo_command_with_sanitization(
         "Pre Deploy",
         pre_deploy_path.as_path(),
         &stack.config.pre_deploy.command,
-        true,
+        KomodoCommandMode::Multiline,
         &replacers,
       )
+      .instrument(span)
       .await
       {
         res.logs.push(log);
@@ -521,23 +523,54 @@ impl Resolve<super::Args> for ComposeUp {
       &stack.config.additional_env_files,
     )?;
 
+    // Parse wrapper configuration once for reuse
+    let compose_cmd_wrapper =
+      parse_multiline_command(&stack.config.compose_cmd_wrapper);
+    // If wrapper_include is empty but wrapper is set, use default ["up"] for backward compatibility
+    let default_include = vec![String::from("up")];
+    let wrapper_include =
+      if stack.config.compose_cmd_wrapper_include.is_empty()
+        && !compose_cmd_wrapper.is_empty()
+      {
+        &default_include
+      } else {
+        &stack.config.compose_cmd_wrapper_include
+      };
+
     // Uses 'docker compose config' command to extract services (including image)
     // after performing interpolation
     {
       let command = format!(
         "{docker_compose} -p {project_name} -f {file_args}{env_file_args} config",
       );
+      let (command, wrapped) = match maybe_wrap_command(
+        command,
+        &compose_cmd_wrapper,
+        wrapper_include,
+        "config",
+      ) {
+        Ok(result) => result,
+        Err(log) => {
+          res.logs.push(log);
+          return Ok(res);
+        }
+      };
+      let mode = if wrapped {
+        KomodoCommandMode::Shell
+      } else {
+        KomodoCommandMode::Standard
+      };
+      let span = info_span!("GetComposeConfig", command);
       let Some(config_log) = run_komodo_command_with_sanitization(
         "Compose Config",
         run_directory.as_path(),
         command,
-        false,
+        mode,
         &replacers,
       )
+      .instrument(span)
       .await
       else {
-        // Only reachable if command is empty,
-        // not the case since it is provided above.
         unreachable!()
       };
       if !config_log.success {
@@ -547,8 +580,8 @@ impl Resolve<super::Args> for ComposeUp {
       let compose =
         serde_yaml_ng::from_str::<ComposeFile>(&config_log.stdout)
           .context("Failed to parse compose contents")?;
-      // Record sanitized compose config output
-      res.compose_config = Some(config_log.stdout);
+      // Store sanitized compose config output
+      res.merged_config = Some(config_log.stdout);
       for (
         service_name,
         ComposeService {
@@ -570,6 +603,7 @@ impl Resolve<super::Args> for ComposeUp {
                 ),
                 service_name: format!("{service_name}-{i}"),
                 image: image.clone(),
+                image_digest: None,
               });
             }
           }
@@ -580,6 +614,7 @@ impl Resolve<super::Args> for ComposeUp {
               }),
               service_name,
               image,
+              image_digest: None,
             });
           }
         }
@@ -588,17 +623,36 @@ impl Resolve<super::Args> for ComposeUp {
 
     if stack.config.run_build {
       let build_extra_args =
-        parse_extra_args(&stack.config.build_extra_args);
+        format_extra_args(&stack.config.build_extra_args);
       let command = format!(
         "{docker_compose} -p {project_name} -f {file_args}{env_file_args} build{build_extra_args}{service_args}",
       );
+      let (command, wrapped) = match maybe_wrap_command(
+        command,
+        &compose_cmd_wrapper,
+        wrapper_include,
+        "build",
+      ) {
+        Ok(result) => result,
+        Err(log) => {
+          res.logs.push(log);
+          return Ok(res);
+        }
+      };
+      let mode = if wrapped {
+        KomodoCommandMode::Shell
+      } else {
+        KomodoCommandMode::Standard
+      };
+      let span = info_span!("ExecuteComposeBuild");
       let Some(log) = run_komodo_command_with_sanitization(
         "Compose Build",
         run_directory.as_path(),
         command,
-        false,
+        mode,
         &replacers,
       )
+      .instrument(span)
       .await
       else {
         unreachable!()
@@ -616,12 +670,36 @@ impl Resolve<super::Args> for ComposeUp {
       let command = format!(
         "{docker_compose} -p {project_name} -f {file_args}{env_file_args} pull{service_args}",
       );
-      let log = run_komodo_command(
-        "Compose Pull",
-        run_directory.as_ref(),
+      let (command, wrapped) = match maybe_wrap_command(
         command,
+        &compose_cmd_wrapper,
+        wrapper_include,
+        "pull",
+      ) {
+        Ok(result) => result,
+        Err(log) => {
+          res.logs.push(log);
+          return Ok(res);
+        }
+      };
+      let mode = if wrapped {
+        KomodoCommandMode::Shell
+      } else {
+        KomodoCommandMode::Standard
+      };
+      let span = info_span!("RunComposePull");
+      let Some(log) = run_komodo_command_with_sanitization(
+        "Compose Pull",
+        run_directory.as_path(),
+        command,
+        mode,
+        &replacers,
       )
-      .await;
+      .instrument(span)
+      .await
+      else {
+        unreachable!()
+      };
       res.logs.push(log);
       if !all_logs_success(&res.logs) {
         return Ok(res);
@@ -632,26 +710,40 @@ impl Resolve<super::Args> for ComposeUp {
       // Also check if project name changed, which also requires taking down.
       || last_project_name != project_name
     {
-      // Take down the existing containers.
+      // Take down the existing compose stack.
       // This one tries to use the previously deployed service name, to ensure the right stack is taken down.
-      crate::compose::down(&last_project_name, &services, &mut res)
+      compose_down(&last_project_name, &services, &mut res)
         .await
-        .context("failed to destroy existing containers")?;
+        .context("Failed to take down existing compose stack")?;
     }
 
     // Run compose up
-    let extra_args = parse_extra_args(&stack.config.extra_args);
+    let extra_args = format_extra_args(&stack.config.extra_args);
     let command = format!(
       "{docker_compose} -p {project_name} -f {file_args}{env_file_args} up -d{extra_args}{service_args}",
     );
+    let (command, _) = match maybe_wrap_command(
+      command,
+      &compose_cmd_wrapper,
+      wrapper_include,
+      "up",
+    ) {
+      Ok(result) => result,
+      Err(log) => {
+        res.logs.push(log);
+        return Ok(res);
+      }
+    };
 
+    let span = info_span!("ExecuteComposeUp");
     let Some(log) = run_komodo_command_with_sanitization(
       "Compose Up",
       run_directory.as_path(),
       command,
-      false,
+      KomodoCommandMode::Shell,
       &replacers,
     )
+    .instrument(span)
     .await
     else {
       unreachable!()
@@ -663,13 +755,15 @@ impl Resolve<super::Args> for ComposeUp {
     if res.deployed && !stack.config.post_deploy.is_none() {
       let post_deploy_path =
         run_directory.join(&stack.config.post_deploy.path);
+      let span = info_span!("ExecutePostDeploy");
       if let Some(log) = run_komodo_command_with_sanitization(
         "Post Deploy",
         post_deploy_path.as_path(),
         &stack.config.post_deploy.command,
-        true,
+        KomodoCommandMode::Multiline,
         &replacers,
       )
+      .instrument(span)
       .await
       {
         res.logs.push(log);
@@ -682,12 +776,24 @@ impl Resolve<super::Args> for ComposeUp {
 
 //
 
-impl Resolve<super::Args> for ComposeExecution {
-  #[instrument(name = "ComposeExecution")]
-  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
+impl Resolve<crate::api::Args> for ComposeExecution {
+  #[instrument(
+    "ComposeExecution",
+    skip_all,
+    fields(
+      id = args.id.to_string(),
+      core = args.core,
+      project = self.project,
+      command = self.command,
+    )
+  )]
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let ComposeExecution { project, command } = self;
     let docker_compose = docker_compose();
-    let log = run_komodo_command(
+    let log = run_komodo_standard_command(
       "Compose Command",
       None,
       format!("{docker_compose} -p {project} {command}"),
@@ -699,9 +805,22 @@ impl Resolve<super::Args> for ComposeExecution {
 
 //
 
-impl Resolve<super::Args> for ComposeRun {
-  #[instrument(name = "ComposeRun", level = "debug", skip_all, fields(stack = &self.stack.name, service = &self.service))]
-  async fn resolve(self, _: &super::Args) -> serror::Result<Log> {
+impl Resolve<crate::api::Args> for ComposeRun {
+  #[instrument(
+    "ComposeRun",
+    skip_all,
+    fields(
+      id = args.id.to_string(),
+      core = args.core,
+      stack = self.stack.name,
+      repo = self.repo.as_ref().map(|repo| &repo.name),
+      service = &self.service
+    )
+  )]
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
     let ComposeRun {
       mut stack,
       repo,
@@ -735,6 +854,7 @@ impl Resolve<super::Args> for ComposeRun {
       git_token,
       replacers.clone(),
       &mut res,
+      args,
     )
     .await
     {
@@ -747,8 +867,8 @@ impl Resolve<super::Args> for ComposeRun {
       }
     };
 
-    let run_directory = run_directory.canonicalize().context(
-      "Failed to validate run directory on host after stack write (canonicalize error)",
+    let run_directory = run_directory.canonicalize().with_context(||
+      format!("Failed to validate run directory on host after stack write (canonicalize error), path={}", run_directory.to_string_lossy())
     )?;
 
     maybe_login_registry(&stack, registry_token, &mut Vec::new())
@@ -769,15 +889,49 @@ impl Resolve<super::Args> for ComposeRun {
 
     let project_name = stack.project_name(true);
 
+    // Parse wrapper configuration
+    let compose_cmd_wrapper =
+      parse_multiline_command(&stack.config.compose_cmd_wrapper);
+    // If wrapper_include is empty but wrapper is set, use default ["up"] for backward compatibility
+    let default_include = vec![String::from("up")];
+    let wrapper_include =
+      if stack.config.compose_cmd_wrapper_include.is_empty()
+        && !compose_cmd_wrapper.is_empty()
+      {
+        &default_include
+      } else {
+        &stack.config.compose_cmd_wrapper_include
+      };
+
     if pull.unwrap_or_default() {
-      let pull_log = run_komodo_command(
+      let pull_command = format!(
+        "{docker_compose} -p {project_name} -f {file_args}{env_file_args} pull {service}",
+      );
+      let (pull_command, wrapped) = match maybe_wrap_command(
+        pull_command,
+        &compose_cmd_wrapper,
+        wrapper_include,
+        "pull",
+      ) {
+        Ok(result) => result,
+        Err(log) => return Ok(log),
+      };
+      let mode = if wrapped {
+        KomodoCommandMode::Shell
+      } else {
+        KomodoCommandMode::Standard
+      };
+      let Some(pull_log) = run_komodo_command_with_sanitization(
         "Compose Pull",
-        run_directory.as_ref(),
-        format!(
-          "{docker_compose} -p {project_name} -f {file_args}{env_file_args} pull {service}",
-        ),
+        run_directory.as_path(),
+        pull_command,
+        mode,
+        &replacers,
       )
-      .await;
+      .await
+      else {
+        unreachable!()
+      };
       if !pull_log.success {
         return Ok(pull_log);
       }
@@ -824,17 +978,28 @@ impl Resolve<super::Args> for ComposeRun {
       })
       .unwrap_or_default();
 
-    let command = format!(
+    let run_command = format!(
       "{docker_compose} -p {project_name} -f {file_args}{env_file_args} run{run_flags} {service}{command_args}",
     );
+    let (run_command, _) = match maybe_wrap_command(
+      run_command,
+      &compose_cmd_wrapper,
+      wrapper_include,
+      "run",
+    ) {
+      Ok(result) => result,
+      Err(log) => return Ok(log),
+    };
 
+    let span = info_span!("RunComposeRun", run_command);
     let Some(log) = run_komodo_command_with_sanitization(
       "Compose Run",
       run_directory.as_path(),
-      command,
-      false,
+      run_command,
+      KomodoCommandMode::Shell,
       &replacers,
     )
+    .instrument(span)
     .await
     else {
       unreachable!()
@@ -842,4 +1007,87 @@ impl Resolve<super::Args> for ComposeRun {
 
     Ok(log)
   }
+}
+
+fn env_file_args(
+  env_file_path: Option<&str>,
+  additional_env_files: &[AdditionalEnvFile],
+) -> anyhow::Result<String> {
+  let mut res = String::new();
+
+  // Add additional env files (except komodo's own, which comes last)
+  for file in additional_env_files
+    .iter()
+    .filter(|f| env_file_path != Some(f.path.as_str()))
+  {
+    let path = &file.path;
+    write!(res, " --env-file {path}").with_context(|| {
+      format!("Failed to write --env-file arg for {path}")
+    })?;
+  }
+
+  // Add komodo's env file last for highest priority
+  if let Some(file) = env_file_path {
+    write!(res, " --env-file {file}").with_context(|| {
+      format!("Failed to write --env-file arg for {file}")
+    })?;
+  }
+
+  Ok(res)
+}
+
+/// Apply compose_cmd_wrapper to command if the subcommand is in wrapper_include list.
+/// Returns Ok((command, wrapped)) where `wrapped` indicates if wrapper was applied.
+/// Returns Err(Log) if wrapper is invalid (missing placeholder).
+fn maybe_wrap_command(
+  command: String,
+  wrapper: &str,
+  wrapper_include: &[String],
+  subcommand: &str,
+) -> Result<(String, bool), Log> {
+  // Skip wrapping if wrapper is empty or subcommand is not in include list
+  if wrapper.is_empty()
+    || !wrapper_include.iter().any(|c| c == subcommand)
+  {
+    return Ok((command, false));
+  }
+
+  // Validate wrapper contains placeholder
+  if !wrapper.contains("[[COMPOSE_COMMAND]]") {
+    return Err(Log::error(
+      "Compose Command Wrapper",
+      "compose_cmd_wrapper is configured but does not contain [[COMPOSE_COMMAND]] placeholder. The placeholder is required to inject the compose command.".to_string(),
+    ));
+  }
+
+  Ok((wrapper.replace("[[COMPOSE_COMMAND]]", &command), true))
+}
+
+#[instrument("ComposeDown", skip(res))]
+async fn compose_down(
+  project: &str,
+  services: &[String],
+  res: &mut DeployStackResponse,
+) -> anyhow::Result<()> {
+  let docker_compose = docker_compose();
+  let service_args = if services.is_empty() {
+    String::new()
+  } else {
+    format!(" {}", services.join(" "))
+  };
+  let log = run_komodo_standard_command(
+    "Compose Down",
+    None,
+    format!("{docker_compose} -p {project} down{service_args}"),
+  )
+  .await;
+  let success = log.success;
+  res.logs.push(log);
+  if !success {
+    return Err(anyhow!(
+      "Failed to bring down existing container(s) with docker compose down. Stopping run."
+    ));
+  }
+
+  Ok(())
 }

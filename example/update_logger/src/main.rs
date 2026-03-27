@@ -13,7 +13,7 @@ async fn handle_incoming_update(update: UpdateWsMessage) {
 /// ========================
 
 async fn app() -> anyhow::Result<()> {
-  logger::init(&Default::default())?;
+  mogh_logger::init(&Default::default())?;
 
   info!("v {}", env!("CARGO_PKG_VERSION"));
 

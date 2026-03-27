@@ -1,10 +1,10 @@
 use std::fmt::Write;
 
-use derive_variants::EnumVariants;
 use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
 use strum::{
-  AsRefStr, Display, EnumString, IntoStaticStr, VariantArray,
+  AsRefStr, Display, EnumDiscriminants, EnumString, IntoStaticStr,
+  VariantArray,
 };
 use typeshare::typeshare;
 
@@ -13,6 +13,7 @@ use super::{MongoId, ResourceTarget};
 /// Representation of a User or UserGroups permission on a resource.
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
   feature = "mongo",
   derive(mongo_indexed::derive::MongoIndexed)
@@ -46,18 +47,40 @@ pub struct Permission {
   pub level: PermissionLevel,
   /// Any specific permissions for the [user_target] on the [resource_target].
   #[serde(default)]
+  #[cfg_attr(feature = "utoipa", schema(value_type = Vec<SpecificPermission>))]
   pub specific: IndexSet<SpecificPermission>,
 }
 
 #[typeshare]
-#[derive(Debug, Clone, Serialize, Deserialize, EnumVariants)]
-#[variant_derive(
-  Debug,
-  Clone,
-  Copy,
-  Serialize,
-  Deserialize,
-  AsRefStr
+#[derive(Debug, Clone, Serialize, Deserialize, EnumDiscriminants)]
+#[strum_discriminants(name(UserTargetVariant))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(
+  not(feature = "utoipa"),
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr
+  ))
+)]
+#[cfg_attr(
+  feature = "utoipa",
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr,
+    utoipa::ToSchema
+  ))
 )]
 #[serde(tag = "type", content = "id")]
 pub enum UserTarget {
@@ -94,6 +117,7 @@ impl UserTarget {
   Ord,
   Default,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum PermissionLevel {
   /// No permissions.
   #[default]
@@ -131,6 +155,7 @@ impl Default for &PermissionLevel {
   PartialOrd,
   Ord,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum SpecificPermission {
   /// On **Server**
   ///   - Access the terminal apis
@@ -167,8 +192,10 @@ impl SpecificPermission {
 
 #[typeshare]
 #[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PermissionLevelAndSpecifics {
   pub level: PermissionLevel,
+  #[cfg_attr(feature = "utoipa", schema(value_type = Vec<SpecificPermission>))]
   pub specific: IndexSet<SpecificPermission>,
 }
 
@@ -246,6 +273,47 @@ impl PermissionLevel {
 }
 
 impl PermissionLevelAndSpecifics {
+  /// Elevates self by permissions in other:
+  /// - If other.level > self.level, set self.level = other.level
+  /// - If other includes more specifics, add them.
+  pub fn elevate(&mut self, other: &impl HasLevelAndSpecific) {
+    let other_level = other.level();
+    if other_level > self.level {
+      self.level = other_level;
+    }
+    self.specific.extend(other.specific().iter().cloned());
+  }
+
+  /// Joins permissions in self with other to produce a new PermissionsLevelAndSpecifics:
+  /// - If other.level > self.level, set self.level = other.level
+  /// - If other includes more specifics, add them.
+  pub fn join(
+    &self,
+    other: &impl HasLevelAndSpecific,
+  ) -> PermissionLevelAndSpecifics {
+    let mut specific = self.specific.clone();
+    specific.extend(other.specific().iter().cloned());
+    PermissionLevelAndSpecifics {
+      level: std::cmp::max(self.level, other.level()),
+      specific,
+    }
+  }
+
+  /// Joins permissions in self with other to produce a new PermissionsLevelAndSpecifics:
+  /// - If other.level > self.level, set self.level = other.level
+  /// - If other includes more specifics, add them.
+  pub fn join_permission(
+    &self,
+    other: &Permission,
+  ) -> PermissionLevelAndSpecifics {
+    let mut specific = self.specific.clone();
+    specific.extend(other.specific.iter().cloned());
+    PermissionLevelAndSpecifics {
+      level: std::cmp::max(self.level, other.level),
+      specific,
+    }
+  }
+
   /// Returns true when self.level >= other.level,
   /// and has all required specific permissions.
   pub fn fulfills(
@@ -330,5 +398,28 @@ impl PermissionLevelAndSpecifics {
   /// Operation requires Processes permission
   pub fn processes(self) -> PermissionLevelAndSpecifics {
     self.specific(SpecificPermission::Processes)
+  }
+}
+
+pub trait HasLevelAndSpecific {
+  fn level(&self) -> PermissionLevel;
+  fn specific(&self) -> &IndexSet<SpecificPermission>;
+}
+
+impl HasLevelAndSpecific for Permission {
+  fn level(&self) -> PermissionLevel {
+    self.level
+  }
+  fn specific(&self) -> &IndexSet<SpecificPermission> {
+    &self.specific
+  }
+}
+
+impl HasLevelAndSpecific for PermissionLevelAndSpecifics {
+  fn level(&self) -> PermissionLevel {
+    self.level
+  }
+  fn specific(&self) -> &IndexSet<SpecificPermission> {
+    &self.specific
   }
 }

@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, sync::OnceLock};
+use std::cmp::Ordering;
 
 use async_timing_util::wait_until_timelength;
 use komodo_client::entities::stats::{
@@ -6,15 +6,8 @@ use komodo_client::entities::stats::{
   SystemProcess, SystemStats,
 };
 use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System};
-use tokio::sync::RwLock;
 
-use crate::config::periphery_config;
-
-pub fn stats_client() -> &'static RwLock<StatsClient> {
-  static STATS_CLIENT: OnceLock<RwLock<StatsClient>> =
-    OnceLock::new();
-  STATS_CLIENT.get_or_init(|| RwLock::new(StatsClient::default()))
-}
+use crate::{config::periphery_config, state::stats_client};
 
 /// This should be called before starting the server in main.rs.
 /// Keeps the cached stats up to date
@@ -201,7 +194,6 @@ impl StatsClient {
 fn get_system_information(
   sys: &sysinfo::System,
 ) -> SystemInformation {
-  let config = periphery_config();
   SystemInformation {
     name: System::name(),
     os: System::long_os_version(),
@@ -214,7 +206,5 @@ fn get_system_information(
       .next()
       .map(|cpu| cpu.brand().to_string())
       .unwrap_or_default(),
-    terminals_disabled: config.disable_terminals,
-    container_exec_disabled: config.disable_container_exec,
   }
 }

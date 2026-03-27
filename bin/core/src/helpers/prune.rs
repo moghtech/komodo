@@ -3,8 +3,8 @@ use async_timing_util::{
   ONE_DAY_MS, Timelength, unix_timestamp_ms, wait_until_timelength,
 };
 use database::mungos::{find::find_collect, mongodb::bson::doc};
-use futures::{StreamExt, stream::FuturesUnordered};
-use periphery_client::api::image::PruneImages;
+use futures_util::{StreamExt, stream::FuturesUnordered};
+use periphery_client::api::docker::PruneImages;
 
 use crate::{config::core_config, state::db_client};
 
@@ -41,7 +41,10 @@ async fn prune_images() -> anyhow::Result<()> {
   .map(|server| async move {
     (
       async {
-        periphery_client(&server)?.request(PruneImages {}).await
+        periphery_client(&server)
+          .await?
+          .request(PruneImages {})
+          .await
       }
       .await,
       server,
@@ -51,8 +54,8 @@ async fn prune_images() -> anyhow::Result<()> {
 
   while let Some((res, server)) = futures.next().await {
     if let Err(e) = res {
-      error!(
-        "failed to prune images on server {} ({}) | {e:#}",
+      warn!(
+        "failed to prune images on Server {} ({}) | {e:#}",
         server.name, server.id
       )
     }

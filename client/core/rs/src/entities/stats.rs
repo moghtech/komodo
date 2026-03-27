@@ -8,6 +8,7 @@ use crate::entities::{I64, Timelength};
 /// System information of a server
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SystemInformation {
   /// The system name
   pub name: Option<String>,
@@ -21,15 +22,12 @@ pub struct SystemInformation {
   pub host_name: Option<String>,
   /// The CPU's brand
   pub cpu_brand: String,
-  /// Whether terminals are disabled on this Periphery server
-  pub terminals_disabled: bool,
-  /// Whether container exec is disabled on this Periphery server
-  pub container_exec_disabled: bool,
 }
 
 /// System stats stored on the database.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[cfg_attr(
   feature = "mongo",
   derive(mongo_indexed::derive::MongoIndexed)
@@ -72,6 +70,7 @@ pub struct SystemStatsRecord {
 /// Realtime system stats data.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SystemStats {
   /// Cpu usage percentage
   pub cpu_perc: f32,
@@ -111,8 +110,10 @@ pub struct SystemStats {
 /// Info for a single disk mounted on the system.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SingleDiskUsage {
   /// The mount point of the disk
+  #[cfg_attr(feature = "utoipa", schema(value_type = String))]
   pub mount: PathBuf,
   /// Detected file system
   pub file_system: String,
@@ -125,6 +126,7 @@ pub struct SingleDiskUsage {
 /// Info for network interface usage.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SingleNetworkInterfaceUsage {
   /// The network interface name
   pub name: String,
@@ -147,6 +149,7 @@ pub fn sum_disk_usage(disks: &[SingleDiskUsage]) -> TotalDiskUsage {
 /// Info for the all system disks combined.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct TotalDiskUsage {
   /// Used portion in GB
   pub used_gb: f64,
@@ -157,6 +160,7 @@ pub struct TotalDiskUsage {
 /// Information about a process on the system.
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SystemProcess {
   /// The process PID
   pub pid: u32,
@@ -184,6 +188,7 @@ pub struct SystemProcess {
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SystemLoadAverage {
   /// 1m load average
   pub one: f64,

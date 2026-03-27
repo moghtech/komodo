@@ -12,14 +12,13 @@ use formatting::format_serror;
 use komodo_client::{
   api::{read::ExportAllResourcesToToml, write::*},
   entities::{
-    self, NoData, Operation, RepoExecutionArgs, ResourceTarget,
+    self, Operation, RepoExecutionArgs, ResourceTarget,
     action::Action,
     alert::{Alert, AlertData, SeverityLevel},
     alerter::Alerter,
     all_logs_success,
     build::Build,
     builder::Builder,
-    config::core::CoreConfig,
     deployment::Deployment,
     komodo_timestamp,
     permission::PermissionLevel,
@@ -27,19 +26,15 @@ use komodo_client::{
     repo::Repo,
     server::Server,
     stack::Stack,
-    sync::{
-      PartialResourceSyncConfig, ResourceSync, ResourceSyncInfo,
-      SyncDeployUpdate,
-    },
+    swarm::Swarm,
+    sync::{ResourceSync, ResourceSyncInfo},
     to_path_compatible_name,
     update::{Log, Update},
     user::sync_user,
   },
 };
-use octorust::types::{
-  ReposCreateWebhookRequest, ReposCreateWebhookRequestConfig,
-};
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
+use tracing::Instrument;
 
 use crate::{
   alert::send_alerts,
@@ -53,7 +48,7 @@ use crate::{
   },
   permission::get_check_permissions,
   resource,
-  state::{db_client, github_client},
+  state::db_client,
   sync::{
     deploy::SyncDeployParams, remote::RemoteResources,
     view::push_updates_for_view,
@@ -63,22 +58,43 @@ use crate::{
 use super::WriteArgs;
 
 impl Resolve<WriteArgs> for CreateResourceSync {
-  #[instrument(name = "CreateResourceSync", skip(user))]
+  #[instrument(
+    "CreateResourceSync",
+    skip_all,
+    fields(
+      operator = user.id,
+      sync = self.name,
+      config = serde_json::to_string(&self.config).unwrap(),
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<ResourceSync> {
-    resource::create::<ResourceSync>(&self.name, self.config, user)
-      .await
+  ) -> mogh_error::Result<ResourceSync> {
+    resource::create::<ResourceSync>(
+      &self.name,
+      self.config,
+      None,
+      user,
+    )
+    .await
   }
 }
 
 impl Resolve<WriteArgs> for CopyResourceSync {
-  #[instrument(name = "CopyResourceSync", skip(user))]
+  #[instrument(
+    "CopyResourceSync",
+    skip_all,
+    fields(
+      operator = user.id,
+      sync = self.name,
+      copy_sync = self.id,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<ResourceSync> {
+  ) -> mogh_error::Result<ResourceSync> {
     let ResourceSync { config, .. } =
       get_check_permissions::<ResourceSync>(
         &self.id,
@@ -86,27 +102,47 @@ impl Resolve<WriteArgs> for CopyResourceSync {
         PermissionLevel::Write.into(),
       )
       .await?;
-    resource::create::<ResourceSync>(&self.name, config.into(), user)
-      .await
+    resource::create::<ResourceSync>(
+      &self.name,
+      config.into(),
+      None,
+      user,
+    )
+    .await
   }
 }
 
 impl Resolve<WriteArgs> for DeleteResourceSync {
-  #[instrument(name = "DeleteResourceSync", skip(args))]
+  #[instrument(
+    "DeleteResourceSync",
+    skip_all,
+    fields(
+      operator = user.id,
+      sync = self.id,
+    )
+  )]
   async fn resolve(
     self,
-    args: &WriteArgs,
-  ) -> serror::Result<ResourceSync> {
-    Ok(resource::delete::<ResourceSync>(&self.id, args).await?)
+    WriteArgs { user }: &WriteArgs,
+  ) -> mogh_error::Result<ResourceSync> {
+    Ok(resource::delete::<ResourceSync>(&self.id, user).await?)
   }
 }
 
 impl Resolve<WriteArgs> for UpdateResourceSync {
-  #[instrument(name = "UpdateResourceSync", skip(user))]
+  #[instrument(
+    "UpdateResourceSync",
+    skip_all,
+    fields(
+      operator = user.id,
+      sync = self.id,
+      update = serde_json::to_string(&self.config).unwrap(),
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<ResourceSync> {
+  ) -> mogh_error::Result<ResourceSync> {
     Ok(
       resource::update::<ResourceSync>(&self.id, self.config, user)
         .await?,
@@ -115,11 +151,19 @@ impl Resolve<WriteArgs> for UpdateResourceSync {
 }
 
 impl Resolve<WriteArgs> for RenameResourceSync {
-  #[instrument(name = "RenameResourceSync", skip(user))]
+  #[instrument(
+    "RenameResourceSync",
+    skip_all,
+    fields(
+      operator = user.id,
+      sync = self.id,
+      new_name = self.name
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     Ok(
       resource::rename::<ResourceSync>(&self.id, &self.name, user)
         .await?,
@@ -128,8 +172,20 @@ impl Resolve<WriteArgs> for RenameResourceSync {
 }
 
 impl Resolve<WriteArgs> for WriteSyncFileContents {
-  #[instrument(name = "WriteSyncFileContents", skip(args))]
-  async fn resolve(self, args: &WriteArgs) -> serror::Result<Update> {
+  #[instrument(
+    "WriteSyncFileContents",
+    skip_all,
+    fields(
+      operator = args.user.id,
+      sync = self.sync,
+      resource_path = self.resource_path,
+      file_path = self.file_path,
+    )
+  )]
+  async fn resolve(
+    self,
+    args: &WriteArgs,
+  ) -> mogh_error::Result<Update> {
     let sync = get_check_permissions::<ResourceSync>(
       &self.sync,
       &args.user,
@@ -173,12 +229,13 @@ impl Resolve<WriteArgs> for WriteSyncFileContents {
   }
 }
 
+#[instrument("WriteSyncFileContentsOnHost", skip_all)]
 async fn write_sync_file_contents_on_host(
   req: WriteSyncFileContents,
   args: &WriteArgs,
   sync: ResourceSync,
   mut update: Update,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   let WriteSyncFileContents {
     sync: _,
     resource_path,
@@ -196,15 +253,7 @@ async fn write_sync_file_contents_on_host(
     .context("Invalid resource path")?;
   let full_path = root.join(&resource_path).join(&file_path);
 
-  if let Some(parent) = full_path.parent() {
-    tokio::fs::create_dir_all(parent).await.with_context(|| {
-      format!(
-        "Failed to initialize resource file parent directory {parent:?}"
-      )
-    })?;
-  }
-
-  if let Err(e) = tokio::fs::write(&full_path, &contents)
+  if let Err(e) = mogh_secret_file::write_async(&full_path, &contents)
     .await
     .with_context(|| {
       format!(
@@ -243,13 +292,14 @@ async fn write_sync_file_contents_on_host(
   Ok(update)
 }
 
+#[instrument("WriteSyncFileContentsGit", skip_all)]
 async fn write_sync_file_contents_git(
   req: WriteSyncFileContents,
   args: &WriteArgs,
   sync: ResourceSync,
   repo: Option<Repo>,
   mut update: Update,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   let WriteSyncFileContents {
     sync: _,
     resource_path,
@@ -394,8 +444,18 @@ async fn write_sync_file_contents_git(
 }
 
 impl Resolve<WriteArgs> for CommitSync {
-  #[instrument(name = "CommitSync", skip(args))]
-  async fn resolve(self, args: &WriteArgs) -> serror::Result<Update> {
+  #[instrument(
+    "CommitSync",
+    skip_all,
+    fields(
+      operator = args.user.id,
+      sync = self.sync,
+    )
+  )]
+  async fn resolve(
+    self,
+    args: &WriteArgs,
+  ) -> mogh_error::Result<Update> {
     let WriteArgs { user } = args;
 
     let sync = get_check_permissions::<entities::sync::ResourceSync>(
@@ -456,11 +516,20 @@ impl Resolve<WriteArgs> for CommitSync {
       None
     };
 
+    // Get the latest existing resources to preserve any meta values
+    let RemoteResources { resources, .. } =
+      crate::sync::remote::get_remote_resources(&sync, repo.as_ref())
+        .await
+        .context("failed to get remote resources")?;
+
     let res = ExportAllResourcesToToml {
       include_resources: sync.config.include_resources,
       tags: sync.config.match_tags.clone(),
       include_variables: sync.config.include_variables,
       include_user_groups: sync.config.include_user_groups,
+      existing: resources
+        .inspect_err(|e| warn!("Existing resource TOML is unavailable, resource meta will not be preserved | ERROR: {e:#}"))
+        .ok(),
     }
     .resolve(&ReadArgs {
       user: sync_user().to_owned(),
@@ -481,16 +550,14 @@ impl Resolve<WriteArgs> for CommitSync {
         .sync_directory
         .join(to_path_compatible_name(&sync.name))
         .join(&resource_path);
-      if let Some(parent) = file_path.parent() {
-        tokio::fs::create_dir_all(parent)
+      let span = info_span!("CommitSyncOnHost");
+      if let Err(e) =
+        mogh_secret_file::write_async(&file_path, &res.toml)
+          .instrument(span)
           .await
-          .with_context(|| format!("Failed to initialize resource file parent directory {parent:?}"))?;
-      };
-      if let Err(e) = tokio::fs::write(&file_path, &res.toml)
-        .await
-        .with_context(|| {
-          format!("Failed to write resource file to {file_path:?}",)
-        })
+          .with_context(|| {
+            format!("Failed to write resource file to {file_path:?}",)
+          })
       {
         update.push_error_log(
           "Write resource file",
@@ -579,6 +646,7 @@ impl Resolve<WriteArgs> for CommitSync {
   }
 }
 
+#[instrument("CommitSyncGit", skip_all)]
 async fn commit_git_sync(
   mut args: RepoExecutionArgs,
   resource_path: &Path,
@@ -623,15 +691,10 @@ async fn commit_git_sync(
 }
 
 impl Resolve<WriteArgs> for RefreshResourceSyncPending {
-  #[instrument(
-    name = "RefreshResourceSyncPending",
-    level = "debug",
-    skip(user)
-  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<ResourceSync> {
+  ) -> mogh_error::Result<ResourceSync> {
     // Even though this is a write request, this doesn't change any config. Anyone that can execute the
     // sync should be able to do this.
     let mut sync =
@@ -722,110 +785,40 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
 
           let mut diffs = Vec::new();
 
-          push_updates_for_view::<Server>(
-            resources.servers,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<Stack>(
-            resources.stacks,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<Deployment>(
-            resources.deployments,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<Build>(
-            resources.builds,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<Repo>(
-            resources.repos,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<Procedure>(
-            resources.procedures,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<Action>(
-            resources.actions,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<Builder>(
-            resources.builders,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<Alerter>(
-            resources.alerters,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
-          push_updates_for_view::<ResourceSync>(
-            resources.resource_syncs,
-            delete,
-            None,
-            None,
-            &id_to_tags,
-            &sync.config.match_tags,
-            &mut diffs,
-          )
-          .await?;
+          macro_rules! push_updates {
+            ($(($Type:ident, $field:ident)),* $(,)?) => {
+              $(
+                push_updates_for_view::<$Type>(
+                  resources.$field,
+                  delete,
+                  None,
+                  None,
+                  &id_to_tags,
+                  &sync.config.match_tags,
+                  &mut diffs,
+                )
+                .await?;
+              )*
+            };
+          }
+          // New resource types need to be added here manually.
+          push_updates!(
+            (Server, servers),
+            (Swarm, swarms),
+            (Stack, stacks),
+            (Deployment, deployments),
+            (Build, builds),
+            (Repo, repos),
+            (Procedure, procedures),
+            (Action, actions),
+            (Builder, builders),
+            (Alerter, alerters),
+            (ResourceSync, resource_syncs),
+          );
 
           (diffs, deploy_updates)
         } else {
-          (Vec::new(), SyncDeployUpdate::default())
+          Default::default()
         };
 
       let variable_updates = if sync.config.include_variables {
@@ -859,7 +852,7 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
 
     let (
       resource_updates,
-      deploy_updates,
+      (pending_deploys, pending_deploy_error),
       variable_updates,
       user_group_updates,
       pending_error,
@@ -875,7 +868,7 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
     };
 
     let has_updates = !resource_updates.is_empty()
-      || !deploy_updates.to_deploy == 0
+      || !pending_deploys.is_empty()
       || !variable_updates.is_empty()
       || !user_group_updates.is_empty();
 
@@ -887,7 +880,8 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
       remote_errors: sync.info.remote_errors,
       pending_hash: sync.info.pending_hash,
       pending_message: sync.info.pending_message,
-      pending_deploy: deploy_updates,
+      pending_deploys,
+      pending_deploy_error,
       resource_updates,
       variable_updates,
       user_group_updates,
@@ -970,217 +964,5 @@ impl Resolve<WriteArgs> for RefreshResourceSyncPending {
     });
 
     Ok(crate::resource::get::<ResourceSync>(&sync.id).await?)
-  }
-}
-
-impl Resolve<WriteArgs> for CreateSyncWebhook {
-  #[instrument(name = "CreateSyncWebhook", skip(args))]
-  async fn resolve(
-    self,
-    args: &WriteArgs,
-  ) -> serror::Result<CreateSyncWebhookResponse> {
-    let WriteArgs { user } = args;
-    let Some(github) = github_client() else {
-      return Err(
-        anyhow!(
-          "github_webhook_app is not configured in core config toml"
-        )
-        .into(),
-      );
-    };
-
-    let sync = get_check_permissions::<ResourceSync>(
-      &self.sync,
-      user,
-      PermissionLevel::Write.into(),
-    )
-    .await?;
-
-    if sync.config.repo.is_empty() {
-      return Err(
-        anyhow!("No repo configured, can't create webhook").into(),
-      );
-    }
-
-    let mut split = sync.config.repo.split('/');
-    let owner = split.next().context("Sync repo has no owner")?;
-
-    let Some(github) = github.get(owner) else {
-      return Err(
-        anyhow!("Cannot manage repo webhooks under owner {owner}")
-          .into(),
-      );
-    };
-
-    let repo =
-      split.next().context("Repo repo has no repo after the /")?;
-
-    let github_repos = github.repos();
-
-    // First make sure the webhook isn't already created (inactive ones are ignored)
-    let webhooks = github_repos
-      .list_all_webhooks(owner, repo)
-      .await
-      .context("failed to list all webhooks on repo")?
-      .body;
-
-    let CoreConfig {
-      host,
-      webhook_base_url,
-      webhook_secret,
-      ..
-    } = core_config();
-
-    let webhook_secret = if sync.config.webhook_secret.is_empty() {
-      webhook_secret
-    } else {
-      &sync.config.webhook_secret
-    };
-
-    let host = if webhook_base_url.is_empty() {
-      host
-    } else {
-      webhook_base_url
-    };
-    let url = match self.action {
-      SyncWebhookAction::Refresh => {
-        format!("{host}/listener/github/sync/{}/refresh", sync.id)
-      }
-      SyncWebhookAction::Sync => {
-        format!("{host}/listener/github/sync/{}/sync", sync.id)
-      }
-    };
-
-    for webhook in webhooks {
-      if webhook.active && webhook.config.url == url {
-        return Ok(NoData {});
-      }
-    }
-
-    // Now good to create the webhook
-    let request = ReposCreateWebhookRequest {
-      active: Some(true),
-      config: Some(ReposCreateWebhookRequestConfig {
-        url,
-        secret: webhook_secret.to_string(),
-        content_type: String::from("json"),
-        insecure_ssl: None,
-        digest: Default::default(),
-        token: Default::default(),
-      }),
-      events: vec![String::from("push")],
-      name: String::from("web"),
-    };
-    github_repos
-      .create_webhook(owner, repo, &request)
-      .await
-      .context("failed to create webhook")?;
-
-    if !sync.config.webhook_enabled {
-      UpdateResourceSync {
-        id: sync.id,
-        config: PartialResourceSyncConfig {
-          webhook_enabled: Some(true),
-          ..Default::default()
-        },
-      }
-      .resolve(args)
-      .await
-      .map_err(|e| e.error)
-      .context("failed to update sync to enable webhook")?;
-    }
-
-    Ok(NoData {})
-  }
-}
-
-impl Resolve<WriteArgs> for DeleteSyncWebhook {
-  #[instrument(name = "DeleteSyncWebhook", skip(user))]
-  async fn resolve(
-    self,
-    WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<DeleteSyncWebhookResponse> {
-    let Some(github) = github_client() else {
-      return Err(
-        anyhow!(
-          "github_webhook_app is not configured in core config toml"
-        )
-        .into(),
-      );
-    };
-
-    let sync = get_check_permissions::<ResourceSync>(
-      &self.sync,
-      user,
-      PermissionLevel::Write.into(),
-    )
-    .await?;
-
-    if sync.config.git_provider != "github.com" {
-      return Err(
-        anyhow!("Can only manage github.com repo webhooks").into(),
-      );
-    }
-
-    if sync.config.repo.is_empty() {
-      return Err(
-        anyhow!("No repo configured, can't create webhook").into(),
-      );
-    }
-
-    let mut split = sync.config.repo.split('/');
-    let owner = split.next().context("Sync repo has no owner")?;
-
-    let Some(github) = github.get(owner) else {
-      return Err(
-        anyhow!("Cannot manage repo webhooks under owner {owner}")
-          .into(),
-      );
-    };
-
-    let repo =
-      split.next().context("Sync repo has no repo after the /")?;
-
-    let github_repos = github.repos();
-
-    // First make sure the webhook isn't already created (inactive ones are ignored)
-    let webhooks = github_repos
-      .list_all_webhooks(owner, repo)
-      .await
-      .context("failed to list all webhooks on repo")?
-      .body;
-
-    let CoreConfig {
-      host,
-      webhook_base_url,
-      ..
-    } = core_config();
-
-    let host = if webhook_base_url.is_empty() {
-      host
-    } else {
-      webhook_base_url
-    };
-    let url = match self.action {
-      SyncWebhookAction::Refresh => {
-        format!("{host}/listener/github/sync/{}/refresh", sync.id)
-      }
-      SyncWebhookAction::Sync => {
-        format!("{host}/listener/github/sync/{}/sync", sync.id)
-      }
-    };
-
-    for webhook in webhooks {
-      if webhook.active && webhook.config.url == url {
-        github_repos
-          .delete_webhook(owner, repo, webhook.id)
-          .await
-          .context("failed to delete webhook")?;
-        return Ok(NoData {});
-      }
-    }
-
-    // No webhook to delete, all good
-    Ok(NoData {})
   }
 }

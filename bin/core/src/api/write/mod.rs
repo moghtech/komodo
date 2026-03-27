@@ -1,28 +1,30 @@
-use std::time::Instant;
-
 use anyhow::Context;
 use axum::{
   Extension, Router, extract::Path, middleware, routing::post,
 };
-use derive_variants::{EnumVariants, ExtractVariant};
 use komodo_client::{api::write::*, entities::user::User};
-use resolver_api::Resolve;
-use response::Response;
+use mogh_auth_server::middleware::authenticate_request;
+use mogh_error::Json;
+use mogh_error::Response;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use serror::Json;
+use strum::Display;
+use strum::EnumDiscriminants;
 use typeshare::typeshare;
 use uuid::Uuid;
 
-use crate::auth::auth_request;
+use crate::auth::KomodoAuthImpl;
 
 use super::Variant;
 
 mod action;
+mod alert;
 mod alerter;
 mod build;
 mod builder;
 mod deployment;
+mod onboarding;
 mod permissions;
 mod procedure;
 mod provider;
@@ -31,11 +33,18 @@ mod resource;
 mod server;
 mod service_user;
 mod stack;
+mod swarm;
 mod sync;
 mod tag;
+mod terminal;
 mod user;
 mod user_group;
 mod variable;
+
+pub use {
+  deployment::check_deployment_for_update_inner,
+  stack::check_stack_for_update_inner,
+};
 
 pub struct WriteArgs {
   pub user: User,
@@ -43,43 +52,23 @@ pub struct WriteArgs {
 
 #[typeshare]
 #[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EnumVariants,
+  Serialize, Deserialize, Debug, Clone, Resolve, EnumDiscriminants,
 )]
-#[variant_derive(Debug)]
+#[strum_discriminants(name(WriteRequestMethod), derive(Display))]
 #[args(WriteArgs)]
 #[response(Response)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 #[serde(tag = "type", content = "params")]
 pub enum WriteRequest {
-  // ==== USER ====
-  CreateLocalUser(CreateLocalUser),
-  UpdateUserUsername(UpdateUserUsername),
-  UpdateUserPassword(UpdateUserPassword),
-  DeleteUser(DeleteUser),
-
-  // ==== SERVICE USER ====
-  CreateServiceUser(CreateServiceUser),
-  UpdateServiceUserDescription(UpdateServiceUserDescription),
-  CreateApiKeyForServiceUser(CreateApiKeyForServiceUser),
-  DeleteApiKeyForServiceUser(DeleteApiKeyForServiceUser),
-
-  // ==== USER GROUP ====
-  CreateUserGroup(CreateUserGroup),
-  RenameUserGroup(RenameUserGroup),
-  DeleteUserGroup(DeleteUserGroup),
-  AddUserToUserGroup(AddUserToUserGroup),
-  RemoveUserFromUserGroup(RemoveUserFromUserGroup),
-  SetUsersInUserGroup(SetUsersInUserGroup),
-  SetEveryoneUserGroup(SetEveryoneUserGroup),
-
-  // ==== PERMISSIONS ====
-  UpdateUserAdmin(UpdateUserAdmin),
-  UpdateUserBasePermissions(UpdateUserBasePermissions),
-  UpdatePermissionOnResourceType(UpdatePermissionOnResourceType),
-  UpdatePermissionOnTarget(UpdatePermissionOnTarget),
-
   // ==== RESOURCE ====
   UpdateResourceMeta(UpdateResourceMeta),
+
+  // ==== SWARM ====
+  CreateSwarm(CreateSwarm),
+  CopySwarm(CopySwarm),
+  DeleteSwarm(DeleteSwarm),
+  UpdateSwarm(UpdateSwarm),
+  RenameSwarm(RenameSwarm),
 
   // ==== SERVER ====
   CreateServer(CreateServer),
@@ -88,9 +77,14 @@ pub enum WriteRequest {
   UpdateServer(UpdateServer),
   RenameServer(RenameServer),
   CreateNetwork(CreateNetwork),
+  UpdateServerPublicKey(UpdateServerPublicKey),
+  RotateServerKeys(RotateServerKeys),
+
+  // ==== TERMINAL ====
   CreateTerminal(CreateTerminal),
   DeleteTerminal(DeleteTerminal),
   DeleteAllTerminals(DeleteAllTerminals),
+  BatchDeleteAllTerminals(BatchDeleteAllTerminals),
 
   // ==== STACK ====
   CreateStack(CreateStack),
@@ -100,8 +94,8 @@ pub enum WriteRequest {
   RenameStack(RenameStack),
   WriteStackFileContents(WriteStackFileContents),
   RefreshStackCache(RefreshStackCache),
-  CreateStackWebhook(CreateStackWebhook),
-  DeleteStackWebhook(DeleteStackWebhook),
+  CheckStackForUpdate(CheckStackForUpdate),
+  BatchCheckStackForUpdate(BatchCheckStackForUpdate),
 
   // ==== DEPLOYMENT ====
   CreateDeployment(CreateDeployment),
@@ -110,6 +104,8 @@ pub enum WriteRequest {
   DeleteDeployment(DeleteDeployment),
   UpdateDeployment(UpdateDeployment),
   RenameDeployment(RenameDeployment),
+  CheckDeploymentForUpdate(CheckDeploymentForUpdate),
+  BatchCheckDeploymentForUpdate(BatchCheckDeploymentForUpdate),
 
   // ==== BUILD ====
   CreateBuild(CreateBuild),
@@ -119,15 +115,6 @@ pub enum WriteRequest {
   RenameBuild(RenameBuild),
   WriteBuildFileContents(WriteBuildFileContents),
   RefreshBuildCache(RefreshBuildCache),
-  CreateBuildWebhook(CreateBuildWebhook),
-  DeleteBuildWebhook(DeleteBuildWebhook),
-
-  // ==== BUILDER ====
-  CreateBuilder(CreateBuilder),
-  CopyBuilder(CopyBuilder),
-  DeleteBuilder(DeleteBuilder),
-  UpdateBuilder(UpdateBuilder),
-  RenameBuilder(RenameBuilder),
 
   // ==== REPO ====
   CreateRepo(CreateRepo),
@@ -136,15 +123,6 @@ pub enum WriteRequest {
   UpdateRepo(UpdateRepo),
   RenameRepo(RenameRepo),
   RefreshRepoCache(RefreshRepoCache),
-  CreateRepoWebhook(CreateRepoWebhook),
-  DeleteRepoWebhook(DeleteRepoWebhook),
-
-  // ==== ALERTER ====
-  CreateAlerter(CreateAlerter),
-  CopyAlerter(CopyAlerter),
-  DeleteAlerter(DeleteAlerter),
-  UpdateAlerter(UpdateAlerter),
-  RenameAlerter(RenameAlerter),
 
   // ==== PROCEDURE ====
   CreateProcedure(CreateProcedure),
@@ -169,8 +147,52 @@ pub enum WriteRequest {
   WriteSyncFileContents(WriteSyncFileContents),
   CommitSync(CommitSync),
   RefreshResourceSyncPending(RefreshResourceSyncPending),
-  CreateSyncWebhook(CreateSyncWebhook),
-  DeleteSyncWebhook(DeleteSyncWebhook),
+
+  // ==== BUILDER ====
+  CreateBuilder(CreateBuilder),
+  CopyBuilder(CopyBuilder),
+  DeleteBuilder(DeleteBuilder),
+  UpdateBuilder(UpdateBuilder),
+  RenameBuilder(RenameBuilder),
+
+  // ==== ALERTER ====
+  CreateAlerter(CreateAlerter),
+  CopyAlerter(CopyAlerter),
+  DeleteAlerter(DeleteAlerter),
+  UpdateAlerter(UpdateAlerter),
+  RenameAlerter(RenameAlerter),
+
+  // ==== ONBOARDING KEY ====
+  CreateOnboardingKey(CreateOnboardingKey),
+  UpdateOnboardingKey(UpdateOnboardingKey),
+  DeleteOnboardingKey(DeleteOnboardingKey),
+
+  // ==== USER ====
+  PushRecentlyViewed(PushRecentlyViewed),
+  SetLastSeenUpdate(SetLastSeenUpdate),
+  CreateLocalUser(CreateLocalUser),
+  DeleteUser(DeleteUser),
+
+  // ==== SERVICE USER ====
+  CreateServiceUser(CreateServiceUser),
+  UpdateServiceUserDescription(UpdateServiceUserDescription),
+  CreateApiKeyForServiceUser(CreateApiKeyForServiceUser),
+  DeleteApiKeyForServiceUser(DeleteApiKeyForServiceUser),
+
+  // ==== USER GROUP ====
+  CreateUserGroup(CreateUserGroup),
+  RenameUserGroup(RenameUserGroup),
+  DeleteUserGroup(DeleteUserGroup),
+  AddUserToUserGroup(AddUserToUserGroup),
+  RemoveUserFromUserGroup(RemoveUserFromUserGroup),
+  SetUsersInUserGroup(SetUsersInUserGroup),
+  SetEveryoneUserGroup(SetEveryoneUserGroup),
+
+  // ==== PERMISSIONS ====
+  UpdateUserAdmin(UpdateUserAdmin),
+  UpdateUserBasePermissions(UpdateUserBasePermissions),
+  UpdatePermissionOnResourceType(UpdatePermissionOnResourceType),
+  UpdatePermissionOnTarget(UpdatePermissionOnTarget),
 
   // ==== TAG ====
   CreateTag(CreateTag),
@@ -185,27 +207,32 @@ pub enum WriteRequest {
   UpdateVariableIsSecret(UpdateVariableIsSecret),
   DeleteVariable(DeleteVariable),
 
-  // ==== PROVIDERS ====
+  // ==== PROVIDER ====
   CreateGitProviderAccount(CreateGitProviderAccount),
   UpdateGitProviderAccount(UpdateGitProviderAccount),
   DeleteGitProviderAccount(DeleteGitProviderAccount),
   CreateDockerRegistryAccount(CreateDockerRegistryAccount),
   UpdateDockerRegistryAccount(UpdateDockerRegistryAccount),
   DeleteDockerRegistryAccount(DeleteDockerRegistryAccount),
+
+  // ==== ALERT ====
+  CloseAlert(CloseAlert),
 }
 
 pub fn router() -> Router {
   Router::new()
     .route("/", post(handler))
     .route("/{variant}", post(variant_handler))
-    .layer(middleware::from_fn(auth_request))
+    .layer(middleware::from_fn(
+      authenticate_request::<KomodoAuthImpl, true>,
+    ))
 }
 
 async fn variant_handler(
   user: Extension<User>,
   Path(Variant { variant }): Path<Variant>,
   Json(params): Json<serde_json::Value>,
-) -> serror::Result<axum::response::Response> {
+) -> mogh_error::Result<axum::response::Response> {
   let req: WriteRequest = serde_json::from_value(json!({
     "type": variant,
     "params": params,
@@ -216,41 +243,50 @@ async fn variant_handler(
 async fn handler(
   Extension(user): Extension<User>,
   Json(request): Json<WriteRequest>,
-) -> serror::Result<axum::response::Response> {
-  let req_id = Uuid::new_v4();
-
-  let res = tokio::spawn(task(req_id, request, user))
+) -> mogh_error::Result<axum::response::Response> {
+  let res = tokio::spawn(task(request, user))
     .await
     .context("failure in spawned task");
 
   res?
 }
 
-#[instrument(
-  name = "WriteRequest",
-  skip(user, request),
-  fields(
-    user_id = user.id,
-    request = format!("{:?}", request.extract_variant())
-  )
-)]
 async fn task(
-  req_id: Uuid,
   request: WriteRequest,
   user: User,
-) -> serror::Result<axum::response::Response> {
-  info!("/write request | user: {}", user.username);
+) -> mogh_error::Result<axum::response::Response> {
+  let task_id = Uuid::new_v4();
+  let method: WriteRequestMethod = (&request).into();
 
-  let timer = Instant::now();
+  let user_id = user.id.clone();
+  let username = user.username.clone();
+
+  if !matches!(
+    request,
+    WriteRequest::SetLastSeenUpdate(_)
+      | WriteRequest::PushRecentlyViewed(_)
+  ) {
+    info!(
+      task_id = task_id.to_string(),
+      method = method.to_string(),
+      user_id,
+      username,
+      "WRITE REQUEST",
+    );
+  }
 
   let res = request.resolve(&WriteArgs { user }).await;
 
   if let Err(e) = &res {
-    warn!("/write request {req_id} error: {:#}", e.error);
+    warn!(
+      task_id = task_id.to_string(),
+      method = method.to_string(),
+      user_id,
+      username,
+      "WRITE REQUEST | ERROR: {:#}",
+      e.error
+    );
   }
-
-  let elapsed = timer.elapsed();
-  debug!("/write request {req_id} | resolve time: {elapsed:?}");
 
   res.map(|res| res.0)
 }

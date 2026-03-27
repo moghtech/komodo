@@ -1,11 +1,6 @@
-use std::{
-  collections::HashMap,
-  str::FromStr,
-  sync::{Arc, OnceLock},
-};
+use std::{collections::HashMap, str::FromStr};
 
 use anyhow::{Context, anyhow};
-use async_timing_util::{ONE_MIN_MS, unix_timestamp_ms};
 use database::mungos::{
   find::find_collect,
   mongodb::{
@@ -16,7 +11,7 @@ use database::mungos::{
 use komodo_client::{
   busy::Busy,
   entities::{
-    Operation, ResourceTarget, ResourceTargetVariant,
+    Operation, ResourceTarget, ResourceTargetVariant, SwarmOrServer,
     action::{Action, ActionState},
     alerter::Alerter,
     build::Build,
@@ -30,7 +25,7 @@ use komodo_client::{
     repo::Repo,
     server::{Server, ServerState},
     stack::{Stack, StackServiceNames, StackState},
-    stats::SystemInformation,
+    swarm::Swarm,
     sync::ResourceSync,
     tag::Tag,
     update::Update,
@@ -39,11 +34,11 @@ use komodo_client::{
     variable::Variable,
   },
 };
-use periphery_client::api::stats;
-use tokio::sync::Mutex;
+use mogh_auth_server::provider::oidc::SubjectIdentifier;
 
 use crate::{
   config::core_config,
+  helpers::swarm::swarm_request,
   permission::get_user_permission_on_resource,
   resource::{self, KomodoResource},
   stack::compose_container_match_regex,
@@ -54,10 +49,7 @@ use crate::{
   },
 };
 
-use super::periphery_client;
-
 // user: Id or username
-#[instrument(level = "debug")]
 pub async fn get_user(user: &str) -> anyhow::Result<User> {
   if let Some(user) = admin_service_user(user) {
     return Ok(user);
@@ -66,11 +58,21 @@ pub async fn get_user(user: &str) -> anyhow::Result<User> {
     .users
     .find_one(id_or_username_filter(user))
     .await
-    .context("failed to query mongo for user")?
-    .with_context(|| format!("no user found with {user}"))
+    .context("Failed to query mongo for user")?
+    .with_context(|| format!("No user found matching '{user}'"))
 }
 
-#[instrument(level = "debug")]
+pub async fn get_swarm_reachability(
+  swarm: &Swarm,
+) -> anyhow::Result<()> {
+  swarm_request(
+    &swarm.config.server_ids,
+    periphery_client::api::GetVersion {},
+  )
+  .await
+  .map(|_| ())
+}
+
 pub async fn get_server_with_state(
   server_id_or_name: &str,
 ) -> anyhow::Result<(Server, ServerState)> {
@@ -79,15 +81,15 @@ pub async fn get_server_with_state(
   Ok((server, state))
 }
 
-#[instrument(level = "debug")]
 pub async fn get_server_state(server: &Server) -> ServerState {
   if !server.config.enabled {
     return ServerState::Disabled;
   }
-  // Unwrap ok: Server disabled check above
-  match super::periphery_client(server)
-    .unwrap()
-    .request(periphery_client::api::GetHealth {})
+  let Ok(periphery) = super::periphery_client(server).await else {
+    return ServerState::NotOk;
+  };
+  match periphery
+    .request(periphery_client::api::GetVersion {})
     .await
   {
     Ok(_) => ServerState::Ok,
@@ -95,7 +97,6 @@ pub async fn get_server_state(server: &Server) -> ServerState {
   }
 }
 
-#[instrument(level = "debug")]
 pub async fn get_deployment_state(
   id: &String,
 ) -> anyhow::Result<DeploymentState> {
@@ -191,11 +192,12 @@ pub fn get_stack_state_from_containers(
   StackState::Unhealthy
 }
 
-#[instrument(level = "debug")]
 pub async fn get_stack_state(
   stack: &Stack,
 ) -> anyhow::Result<StackState> {
-  if stack.config.server_id.is_empty() {
+  if stack.config.swarm_id.is_empty()
+    && stack.config.server_id.is_empty()
+  {
     return Ok(StackState::Down);
   }
   let state = stack_status_cache()
@@ -207,7 +209,6 @@ pub async fn get_stack_state(
   Ok(state)
 }
 
-#[instrument(level = "debug")]
 pub async fn get_tag(id_or_name: &str) -> anyhow::Result<Tag> {
   let query = match ObjectId::from_str(id_or_name) {
     Ok(id) => doc! { "_id": id },
@@ -221,7 +222,6 @@ pub async fn get_tag(id_or_name: &str) -> anyhow::Result<Tag> {
     .with_context(|| format!("no tag found matching {id_or_name}"))
 }
 
-#[instrument(level = "debug")]
 pub async fn get_tag_check_owner(
   id_or_name: &str,
   user: &User,
@@ -253,7 +253,6 @@ pub async fn get_id_to_tags(
   Ok(res)
 }
 
-#[instrument(level = "debug")]
 pub async fn get_user_user_groups(
   user_id: &str,
 ) -> anyhow::Result<Vec<UserGroup>> {
@@ -271,7 +270,6 @@ pub async fn get_user_user_groups(
   .context("failed to query db for user groups")
 }
 
-#[instrument(level = "debug")]
 pub async fn get_user_user_group_ids(
   user_id: &str,
 ) -> anyhow::Result<Vec<String>> {
@@ -305,23 +303,23 @@ pub async fn get_user_permission_on_target(
 ) -> anyhow::Result<PermissionLevelAndSpecifics> {
   match target {
     ResourceTarget::System(_) => Ok(PermissionLevel::None.into()),
-    ResourceTarget::Build(id) => {
-      get_user_permission_on_resource::<Build>(user, id).await
-    }
-    ResourceTarget::Builder(id) => {
-      get_user_permission_on_resource::<Builder>(user, id).await
-    }
-    ResourceTarget::Deployment(id) => {
-      get_user_permission_on_resource::<Deployment>(user, id).await
+    ResourceTarget::Swarm(id) => {
+      get_user_permission_on_resource::<Swarm>(user, id).await
     }
     ResourceTarget::Server(id) => {
       get_user_permission_on_resource::<Server>(user, id).await
     }
+    ResourceTarget::Stack(id) => {
+      get_user_permission_on_resource::<Stack>(user, id).await
+    }
+    ResourceTarget::Deployment(id) => {
+      get_user_permission_on_resource::<Deployment>(user, id).await
+    }
+    ResourceTarget::Build(id) => {
+      get_user_permission_on_resource::<Build>(user, id).await
+    }
     ResourceTarget::Repo(id) => {
       get_user_permission_on_resource::<Repo>(user, id).await
-    }
-    ResourceTarget::Alerter(id) => {
-      get_user_permission_on_resource::<Alerter>(user, id).await
     }
     ResourceTarget::Procedure(id) => {
       get_user_permission_on_resource::<Procedure>(user, id).await
@@ -332,8 +330,11 @@ pub async fn get_user_permission_on_target(
     ResourceTarget::ResourceSync(id) => {
       get_user_permission_on_resource::<ResourceSync>(user, id).await
     }
-    ResourceTarget::Stack(id) => {
-      get_user_permission_on_resource::<Stack>(user, id).await
+    ResourceTarget::Builder(id) => {
+      get_user_permission_on_resource::<Builder>(user, id).await
+    }
+    ResourceTarget::Alerter(id) => {
+      get_user_permission_on_resource::<Alerter>(user, id).await
     }
   }
 }
@@ -413,39 +414,6 @@ pub async fn get_variables_and_secrets()
   Ok(VariablesAndSecrets { variables, secrets })
 }
 
-// This protects the peripheries from spam requests
-const SYSTEM_INFO_EXPIRY: u128 = ONE_MIN_MS;
-type SystemInfoCache =
-  Mutex<HashMap<String, Arc<(SystemInformation, u128)>>>;
-fn system_info_cache() -> &'static SystemInfoCache {
-  static SYSTEM_INFO_CACHE: OnceLock<SystemInfoCache> =
-    OnceLock::new();
-  SYSTEM_INFO_CACHE.get_or_init(Default::default)
-}
-
-pub async fn get_system_info(
-  server: &Server,
-) -> anyhow::Result<SystemInformation> {
-  let mut lock = system_info_cache().lock().await;
-  let res = match lock.get(&server.id) {
-    Some(cached) if cached.1 > unix_timestamp_ms() => {
-      cached.0.clone()
-    }
-    _ => {
-      let stats = periphery_client(server)?
-        .request(stats::GetSystemInformation {})
-        .await?;
-      lock.insert(
-        server.id.clone(),
-        (stats.clone(), unix_timestamp_ms() + SYSTEM_INFO_EXPIRY)
-          .into(),
-      );
-      stats
-    }
-  };
-  Ok(res)
-}
-
 /// Get last time procedure / action was run using Update query.
 /// Ignored whether run was successful.
 pub async fn get_last_run_at<R: KomodoResource>(
@@ -497,4 +465,127 @@ pub async fn get_procedure_state(id: &String) -> ProcedureState {
     return ProcedureState::Running;
   }
   procedure_state_cache().get(id).await.unwrap_or_default()
+}
+
+/// Get's a resource's assigned swarm or server, with swarm taking precedence.
+/// Makes sure the target is reachable before passing along for commands.
+pub async fn get_swarm_or_server(
+  swarm_id: &str,
+  server_id: &str,
+) -> anyhow::Result<SwarmOrServer> {
+  if !swarm_id.is_empty() {
+    let swarm = resource::get::<Swarm>(swarm_id).await?;
+
+    // Errors if not reachable, and returns the error
+    get_swarm_reachability(&swarm).await?;
+
+    return Ok(SwarmOrServer::Swarm(swarm));
+  }
+
+  if server_id.is_empty() {
+    return Ok(SwarmOrServer::None);
+  }
+
+  let (server, state) = get_server_with_state(server_id).await?;
+
+  if state != ServerState::Ok {
+    return Err(anyhow!(
+      "Cannot send command when Server is unreachable or disabled"
+    ));
+  }
+
+  Ok(SwarmOrServer::Server(server))
+}
+
+pub fn find_swarm_or_server(
+  swarm_id: &str,
+  swarms: &[Swarm],
+  server_id: &str,
+  servers: &[Server],
+) -> anyhow::Result<SwarmOrServer> {
+  if !swarm_id.is_empty() {
+    let swarm = swarms
+      .iter()
+      .find(|swarm| swarm.id == swarm_id)
+      .cloned()
+      .with_context(|| {
+        format!("Could not find swarm matching id {swarm_id}")
+      })?;
+    return Ok(SwarmOrServer::Swarm(swarm));
+  }
+
+  if server_id.is_empty() {
+    return Ok(SwarmOrServer::None);
+  }
+
+  let server = servers
+    .iter()
+    .find(|server| server.id == server_id)
+    .cloned()
+    .with_context(|| {
+      format!("Could not find server matching id {server_id}")
+    })?;
+  Ok(SwarmOrServer::Server(server))
+}
+
+pub async fn find_github_user(
+  github_id: &str,
+) -> anyhow::Result<Option<User>> {
+  db_client()
+    .users
+    .find_one(doc! {
+      // Find either primary or linked Github user
+      "$or": [
+        // User is primary Github user
+        { "config.data.github_id": &github_id },
+        // User has linked this Github login
+        { "linked_logins.Github.data.github_id": &github_id }
+      ]
+    })
+    .await
+    .context("Failed at find user query from database")
+}
+
+pub async fn find_google_user(
+  google_id: &str,
+) -> anyhow::Result<Option<User>> {
+  db_client()
+    .users
+    .find_one(doc! {
+      // Find either primary or linked Google user
+      "$or": [
+        // User is primary Google user
+        { "config.data.google_id": &google_id },
+        // User has linked this Google login
+        { "linked_logins.Google.data.google_id": &google_id }
+      ]
+    })
+    .await
+    .context("Failed at find user query from database")
+}
+
+pub async fn find_oidc_user(
+  subject: &SubjectIdentifier,
+) -> anyhow::Result<Option<User>> {
+  let oidc_provider = &core_config().oidc_provider;
+  let oidc_user_id = subject.as_str();
+  db_client()
+    .users
+    .find_one(doc! {
+      // Find either primary or linked Oidc user
+      "$or": [
+        // User is primary Oidc user
+        {
+          "config.data.provider": oidc_provider,
+          "config.data.user_id": oidc_user_id
+        },
+        // User has linked this Oidc login
+        {
+          "linked_logins.Oidc.data.provider": oidc_provider,
+          "linked_logins.Oidc.data.user_id": oidc_user_id
+        }
+      ]
+    })
+    .await
+    .context("Failed at find user query from database")
 }

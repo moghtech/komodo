@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -9,7 +8,10 @@ use crate::entities::{
     Deployment, DeploymentActionState, DeploymentListItem,
     DeploymentQuery, DeploymentState,
   },
-  docker::container::{Container, ContainerListItem, ContainerStats},
+  docker::{
+    container::{Container, ContainerListItem, ContainerStats},
+    service::SwarmService,
+  },
   update::Log,
 };
 
@@ -17,14 +19,25 @@ use super::KomodoReadRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetDeployment",
+  description = "Get a specific deployment by name or id.",
+  request_body(content = GetDeployment),
+  responses(
+    (status = 200, description = "The deployment", body = crate::entities::deployment::DeploymentSchema),
+  ),
+)]
+pub fn get_deployment() {}
+
 /// Get a specific deployment by name or id. Response: [Deployment].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetDeployment {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -36,15 +49,26 @@ pub type GetDeploymentResponse = Deployment;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListDeployments",
+  description = "List deployments matching optional query.",
+  request_body(content = ListDeployments),
+  responses(
+    (status = 200, description = "The list of deployments", body = ListDeploymentsResponse),
+  ),
+)]
+pub fn list_deployments() {}
+
 /// List deployments matching optional query.
 /// Response: [ListDeploymentsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListDeploymentsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListDeployments {
   /// optional structured query to filter deployments.
   #[serde(default)]
@@ -56,15 +80,26 @@ pub type ListDeploymentsResponse = Vec<DeploymentListItem>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListFullDeployments",
+  description = "List deployments matching optional query.",
+  request_body(content = ListFullDeployments),
+  responses(
+    (status = 200, description = "The list of deployments", body = ListFullDeploymentsResponse),
+  ),
+)]
+pub fn list_full_deployments() {}
+
 /// List deployments matching optional query.
 /// Response: [ListFullDeploymentsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullDeploymentsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListFullDeployments {
   /// optional structured query to filter deployments.
   #[serde(default)]
@@ -76,6 +111,18 @@ pub type ListFullDeploymentsResponse = Vec<Deployment>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetDeploymentContainer",
+  description = "Get the container, including image / status, of the target deployment.",
+  request_body(content = GetDeploymentContainer),
+  responses(
+    (status = 200, description = "The deployment container", body = GetDeploymentContainerResponse),
+  ),
+)]
+pub fn get_deployment_container() {}
+
 /// Get the container, including image / status, of the target deployment.
 /// Response: [GetDeploymentContainerResponse].
 ///
@@ -83,12 +130,11 @@ pub type ListFullDeploymentsResponse = Vec<Deployment>;
 /// in memory cache on the core, which hits the server periodically
 /// to keep it up to date.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentContainerResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetDeploymentContainer {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -98,6 +144,7 @@ pub struct GetDeploymentContainer {
 /// Response for [GetDeploymentContainer].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetDeploymentContainerResponse {
   pub state: DeploymentState,
   pub container: Option<ContainerListItem>,
@@ -105,15 +152,26 @@ pub struct GetDeploymentContainerResponse {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/InspectDeploymentContainer",
+  description = "Inspect the docker container associated with the Deployment.",
+  request_body(content = InspectDeploymentContainer),
+  responses(
+    (status = 200, description = "The container", body = InspectDeploymentContainerResponse),
+  ),
+)]
+pub fn inspect_deployment_container() {}
+
 /// Inspect the docker container associated with the Deployment.
 /// Response: [Container].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(InspectDeploymentContainerResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct InspectDeploymentContainer {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -125,17 +183,59 @@ pub type InspectDeploymentContainerResponse = Container;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/InspectDeploymentSwarmService",
+  description = "Inspect the swarm service associated with the Deployment.",
+  request_body(content = InspectDeploymentSwarmService),
+  responses(
+    (status = 200, description = "The swarm service", body = InspectDeploymentSwarmServiceResponse),
+  ),
+)]
+pub fn inspect_deployment_swarm_service() {}
+
+/// Inspect the swarm service associated with the Deployment.
+/// Response: [SwarmService].
+#[typeshare]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[empty_traits(KomodoReadRequest)]
+#[response(InspectDeploymentSwarmServiceResponse)]
+#[error(mogh_error::Error)]
+pub struct InspectDeploymentSwarmService {
+  /// Id or name
+  #[serde(alias = "id", alias = "name")]
+  pub deployment: String,
+}
+
+#[typeshare]
+pub type InspectDeploymentSwarmServiceResponse = SwarmService;
+
+//
+
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetDeploymentLog",
+  description = "Get the deployment log's tail, split by stdout/stderr.",
+  request_body(content = GetDeploymentLog),
+  responses(
+    (status = 200, description = "The log", body = GetDeploymentLogResponse),
+  ),
+)]
+pub fn get_deployment_log() {}
+
 /// Get the deployment log's tail, split by stdout/stderr.
 /// Response: [Log].
 ///
 /// Note. This call will hit the underlying server directly for most up to date log.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentLogResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetDeploymentLog {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -159,17 +259,28 @@ pub type GetDeploymentLogResponse = Log;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/SearchDeploymentLog",
+  description = "Search the deployment log's tail using `grep`.",
+  request_body(content = SearchDeploymentLog),
+  responses(
+    (status = 200, description = "The log", body = SearchDeploymentLogResponse),
+  ),
+)]
+pub fn search_deployment_log() {}
+
 /// Search the deployment log's tail using `grep`. All lines go to stdout.
 /// Response: [Log].
 ///
 /// Note. This call will hit the underlying server directly for most up to date log.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(SearchDeploymentLogResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct SearchDeploymentLog {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -195,17 +306,28 @@ pub type SearchDeploymentLogResponse = Log;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetDeploymentStats",
+  description = "Get the deployment container's stats using `docker stats`.",
+  request_body(content = GetDeploymentStats),
+  responses(
+    (status = 200, description = "The deployment stats", body = GetDeploymentStatsResponse),
+  ),
+)]
+pub fn get_deployment_stats() {}
+
 /// Get the deployment container's stats using `docker stats`.
 /// Response: [GetDeploymentStatsResponse].
 ///
 /// Note. This call will hit the underlying server directly for most up to date stats.
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentStatsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetDeploymentStats {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -217,15 +339,26 @@ pub type GetDeploymentStatsResponse = ContainerStats;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetDeploymentActionState",
+  description = "Get current action state for the deployment.",
+  request_body(content = GetDeploymentActionState),
+  responses(
+    (status = 200, description = "The deployment action state", body = GetDeploymentActionStateResponse),
+  ),
+)]
+pub fn get_deployment_action_state() {}
+
 /// Get current action state for the deployment.
 /// Response: [DeploymentActionState].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(DeploymentActionState)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetDeploymentActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -237,20 +370,32 @@ pub type GetDeploymentActionStateResponse = DeploymentActionState;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetDeploymentsSummary",
+  description = "Gets a summary of data relating to all deployments.",
+  request_body(content = GetDeploymentsSummary),
+  responses(
+    (status = 200, description = "The deployments summary", body = GetDeploymentsSummaryResponse),
+  ),
+)]
+pub fn get_deployments_summary() {}
+
 /// Gets a summary of data relating to all deployments.
 /// Response: [GetDeploymentsSummaryResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetDeploymentsSummaryResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetDeploymentsSummary {}
 
 /// Response for [GetDeploymentsSummary].
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetDeploymentsSummaryResponse {
   /// The total number of Deployments
   pub total: I64,
@@ -268,15 +413,26 @@ pub struct GetDeploymentsSummaryResponse {
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListCommonDeploymentExtraArgs",
+  description = "Gets a list of existing values used as extra args across other deployments.",
+  request_body(content = ListCommonDeploymentExtraArgs),
+  responses(
+    (status = 200, description = "The common extra args", body = ListCommonDeploymentExtraArgsResponse),
+  ),
+)]
+pub fn list_common_deployment_extra_args() {}
+
 /// Gets a list of existing values used as extra args across other deployments.
 /// Useful to offer suggestions. Response: [ListCommonDeploymentExtraArgsResponse]
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListCommonDeploymentExtraArgsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListCommonDeploymentExtraArgs {
   /// optional structured query to filter deployments.
   #[serde(default)]

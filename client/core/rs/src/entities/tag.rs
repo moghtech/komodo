@@ -11,6 +11,7 @@ pub type _PartialTag = PartialTag;
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Builder, Partial)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[partial_derive(Serialize, Deserialize, Debug, Clone, Default)]
 #[cfg_attr(
   feature = "mongo",
@@ -60,6 +61,7 @@ impl Tag {
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Default, Debug, Clone, AsRefStr)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum TagColor {
   LightSlate,
   #[default]

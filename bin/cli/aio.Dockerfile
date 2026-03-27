@@ -1,4 +1,4 @@
-FROM rust:1.89.0-bullseye AS builder
+FROM rust:1.94.0-bullseye AS builder
 RUN cargo install cargo-strip
 
 WORKDIR /builder
@@ -20,6 +20,6 @@ ENV KOMODO_CLI_CONFIG_PATHS="/config"
 
 CMD [ "km" ]
 
-LABEL org.opencontainers.image.source=https://github.com/moghtech/komodo
+LABEL org.opencontainers.image.source="https://github.com/moghtech/komodo"
 LABEL org.opencontainers.image.description="Komodo CLI"
-LABEL org.opencontainers.image.licenses=GPL-3.0
+LABEL org.opencontainers.image.licenses="GPL-3.0"

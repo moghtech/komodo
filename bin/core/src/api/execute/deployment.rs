@@ -1,37 +1,39 @@
 use std::sync::OnceLock;
 
 use anyhow::{Context, anyhow};
-use cache::TimeoutCache;
 use formatting::format_serror;
 use interpolate::Interpolator;
 use komodo_client::{
   api::execute::*,
   entities::{
-    Version,
+    SwarmOrServer, Version,
     build::{Build, ImageRegistryConfig},
     deployment::{
-      Deployment, DeploymentImage, extract_registry_domain,
+      Deployment, DeploymentImage, DeploymentInfo,
+      extract_registry_domain,
     },
     komodo_timestamp, optional_string,
     permission::PermissionLevel,
     server::Server,
     update::{Log, Update},
-    user::User,
   },
 };
+use mogh_cache::TimeoutCache;
+use mogh_error::AddStatusCodeError;
+use mogh_resolver::Resolve;
 use periphery_client::api;
-use resolver_api::Resolve;
+use reqwest::StatusCode;
 
 use crate::{
   helpers::{
     periphery_client,
     query::{VariablesAndSecrets, get_variables_and_secrets},
     registry_token,
+    swarm::swarm_request,
     update::update_update,
   },
-  monitor::update_cache_for_server,
-  permission::get_check_permissions,
-  resource,
+  monitor::{refresh_server_cache, refresh_swarm_cache},
+  resource::{self, setup_deployment_execution},
   state::action_states,
 };
 
@@ -49,11 +51,19 @@ impl super::BatchExecute for BatchDeploy {
 }
 
 impl Resolve<ExecuteArgs> for BatchDeploy {
-  #[instrument(name = "BatchDeploy", skip(user), fields(user_id = user.id))]
+  #[instrument(
+    "BatchDeploy",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      pattern = self.pattern,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchDeploy>(&self.pattern, user)
         .await?,
@@ -61,39 +71,36 @@ impl Resolve<ExecuteArgs> for BatchDeploy {
   }
 }
 
-async fn setup_deployment_execution(
-  deployment: &str,
-  user: &User,
-) -> anyhow::Result<(Deployment, Server)> {
-  let deployment = get_check_permissions::<Deployment>(
-    deployment,
-    user,
-    PermissionLevel::Execute.into(),
-  )
-  .await?;
-
-  if deployment.config.server_id.is_empty() {
-    return Err(anyhow!("Deployment has no Server configured"));
-  }
-
-  let server =
-    resource::get::<Server>(&deployment.config.server_id).await?;
-
-  if !server.config.enabled {
-    return Err(anyhow!("Attached Server is not enabled"));
-  }
-
-  Ok((deployment, server))
-}
-
 impl Resolve<ExecuteArgs> for Deploy {
-  #[instrument(name = "Deploy", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "Deploy",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      deployment = self.deployment,
+      stop_signal = format!("{:?}", self.stop_signal),
+      stop_time = self.stop_time,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
-    let (mut deployment, server) =
-      setup_deployment_execution(&self.deployment, user).await?;
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
+    let (mut deployment, swarm_or_server) =
+      setup_deployment_execution(
+        &self.deployment,
+        user,
+        PermissionLevel::Execute.into(),
+      )
+      .await?;
+
+    swarm_or_server.verify_has_target()?;
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -108,7 +115,7 @@ impl Resolve<ExecuteArgs> for Deploy {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
     // This block resolves the attached Build to an actual versioned image
@@ -203,26 +210,72 @@ impl Resolve<ExecuteArgs> for Deploy {
     update.version = version;
     update_update(update.clone()).await?;
 
-    match periphery_client(&server)?
-      .request(api::container::Deploy {
-        deployment,
-        stop_signal: self.stop_signal,
-        stop_time: self.stop_time,
-        registry_token,
-        replacers: secret_replacers.into_iter().collect(),
-      })
-      .await
-    {
-      Ok(log) => update.logs.push(log),
-      Err(e) => {
-        update.push_error_log(
-          "Deploy Container",
-          format_serror(&e.into()),
-        );
-      }
-    };
+    let deployment_id = deployment.id.clone();
 
-    update_cache_for_server(&server, true).await;
+    match swarm_or_server {
+      SwarmOrServer::None => unreachable!(),
+      SwarmOrServer::Swarm(swarm) => {
+        match swarm_request(
+          &swarm.config.server_ids,
+          api::swarm::CreateSwarmService {
+            deployment,
+            registry_token,
+            replacers: secret_replacers.into_iter().collect(),
+          },
+        )
+        .await
+        {
+          Ok(logs) => {
+            refresh_swarm_cache(&swarm, true).await;
+            update.logs.extend(logs)
+          }
+          Err(e) => {
+            update.push_error_log(
+              "Create Swarm Service",
+              format_serror(&e.into()),
+            );
+          }
+        };
+      }
+      SwarmOrServer::Server(server) => {
+        match periphery_client(&server)
+          .await?
+          .request(api::container::RunContainer {
+            deployment,
+            stop_signal: self.stop_signal,
+            stop_time: self.stop_time,
+            registry_token,
+            replacers: secret_replacers.into_iter().collect(),
+          })
+          .await
+        {
+          Ok(log) => {
+            refresh_server_cache(&server, true).await;
+            update.logs.push(log)
+          }
+          Err(e) => {
+            update.push_error_log(
+              "Deploy Container",
+              format_serror(&e.into()),
+            );
+          }
+        };
+      }
+    }
+
+    if let Err(e) = resource::update_info::<Deployment>(
+      &deployment_id,
+      &DeploymentInfo {
+        latest_image_digest: Default::default(),
+      },
+    )
+    .await
+    {
+      warn!(
+        "Failed to update deployment {} info after deploy | {e:#}",
+        deployment_id
+      );
+    }
 
     update.finalize();
     update_update(update.clone()).await?;
@@ -242,6 +295,14 @@ fn pull_cache() -> &'static PullCache {
   PULL_CACHE.get_or_init(Default::default)
 }
 
+#[instrument(
+  "PullDeploymentInner",
+  skip_all,
+  fields(
+    deployment = deployment.id,
+    server = server.id
+  )
+)]
 pub async fn pull_deployment_inner(
   deployment: Deployment,
   server: &Server,
@@ -331,8 +392,9 @@ pub async fn pull_deployment_inner(
   }
 
   let res = async {
-    let log = match periphery_client(server)?
-      .request(api::image::PullImage {
+    let log = match periphery_client(server)
+      .await?
+      .request(api::docker::PullImage {
         name: image,
         account,
         token,
@@ -343,7 +405,7 @@ pub async fn pull_deployment_inner(
       Err(e) => Log::error("Pull image", format_serror(&e.into())),
     };
 
-    update_cache_for_server(server, true).await;
+    refresh_server_cache(server, true).await;
     anyhow::Ok(log)
   }
   .await;
@@ -356,13 +418,37 @@ pub async fn pull_deployment_inner(
 }
 
 impl Resolve<ExecuteArgs> for PullDeployment {
-  #[instrument(name = "PullDeployment", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "PullDeployment",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      deployment = self.deployment,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
-    let (deployment, server) =
-      setup_deployment_execution(&self.deployment, user).await?;
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
+    let (deployment, swarm_or_server) = setup_deployment_execution(
+      &self.deployment,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
+      return Err(
+        anyhow!("PullDeployment should not be called for Deployment in Swarm Mode")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -376,7 +462,7 @@ impl Resolve<ExecuteArgs> for PullDeployment {
       action_state.update(|state| state.pulling = true)?;
 
     let mut update = update.clone();
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
     let log = pull_deployment_inner(deployment, &server).await?;
@@ -390,13 +476,37 @@ impl Resolve<ExecuteArgs> for PullDeployment {
 }
 
 impl Resolve<ExecuteArgs> for StartDeployment {
-  #[instrument(name = "StartDeployment", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "StartDeployment",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      deployment = self.deployment,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
-    let (deployment, server) =
-      setup_deployment_execution(&self.deployment, user).await?;
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
+    let (deployment, swarm_or_server) = setup_deployment_execution(
+      &self.deployment,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
+      return Err(
+        anyhow!("StartDeployment should not be called for Deployment in Swarm Mode")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -411,10 +521,11 @@ impl Resolve<ExecuteArgs> for StartDeployment {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
-    let log = match periphery_client(&server)?
+    let log = match periphery_client(&server)
+      .await?
       .request(api::container::StartContainer {
         name: deployment.name,
       })
@@ -428,7 +539,7 @@ impl Resolve<ExecuteArgs> for StartDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -437,13 +548,37 @@ impl Resolve<ExecuteArgs> for StartDeployment {
 }
 
 impl Resolve<ExecuteArgs> for RestartDeployment {
-  #[instrument(name = "RestartDeployment", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "RestartDeployment",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      deployment = self.deployment,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
-    let (deployment, server) =
-      setup_deployment_execution(&self.deployment, user).await?;
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
+    let (deployment, swarm_or_server) = setup_deployment_execution(
+      &self.deployment,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
+      return Err(
+        anyhow!("RestartDeployment should not be called for Deployment in Swarm Mode")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -458,10 +593,11 @@ impl Resolve<ExecuteArgs> for RestartDeployment {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
-    let log = match periphery_client(&server)?
+    let log = match periphery_client(&server)
+      .await?
       .request(api::container::RestartContainer {
         name: deployment.name,
       })
@@ -477,7 +613,7 @@ impl Resolve<ExecuteArgs> for RestartDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -486,13 +622,37 @@ impl Resolve<ExecuteArgs> for RestartDeployment {
 }
 
 impl Resolve<ExecuteArgs> for PauseDeployment {
-  #[instrument(name = "PauseDeployment", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "PauseDeployment",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      deployment = self.deployment,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
-    let (deployment, server) =
-      setup_deployment_execution(&self.deployment, user).await?;
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
+    let (deployment, swarm_or_server) = setup_deployment_execution(
+      &self.deployment,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
+      return Err(
+        anyhow!("PauseDeployment should not be called for Deployment in Swarm Mode")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -507,10 +667,11 @@ impl Resolve<ExecuteArgs> for PauseDeployment {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
-    let log = match periphery_client(&server)?
+    let log = match periphery_client(&server)
+      .await?
       .request(api::container::PauseContainer {
         name: deployment.name,
       })
@@ -524,7 +685,7 @@ impl Resolve<ExecuteArgs> for PauseDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -533,13 +694,37 @@ impl Resolve<ExecuteArgs> for PauseDeployment {
 }
 
 impl Resolve<ExecuteArgs> for UnpauseDeployment {
-  #[instrument(name = "UnpauseDeployment", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "UnpauseDeployment",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      deployment = self.deployment,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
-    let (deployment, server) =
-      setup_deployment_execution(&self.deployment, user).await?;
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
+    let (deployment, swarm_or_server) = setup_deployment_execution(
+      &self.deployment,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
+      return Err(
+        anyhow!("UnpauseDeployment should not be called for Deployment in Swarm Mode")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -554,10 +739,11 @@ impl Resolve<ExecuteArgs> for UnpauseDeployment {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
-    let log = match periphery_client(&server)?
+    let log = match periphery_client(&server)
+      .await?
       .request(api::container::UnpauseContainer {
         name: deployment.name,
       })
@@ -573,7 +759,7 @@ impl Resolve<ExecuteArgs> for UnpauseDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -582,13 +768,39 @@ impl Resolve<ExecuteArgs> for UnpauseDeployment {
 }
 
 impl Resolve<ExecuteArgs> for StopDeployment {
-  #[instrument(name = "StopDeployment", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "StopDeployment",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      deployment = self.deployment,
+      signal = format!("{:?}", self.signal),
+      time = self.time,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
-    let (deployment, server) =
-      setup_deployment_execution(&self.deployment, user).await?;
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
+    let (deployment, swarm_or_server) = setup_deployment_execution(
+      &self.deployment,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
+
+    let SwarmOrServer::Server(server) = swarm_or_server else {
+      return Err(
+        anyhow!("StopDeployment should not be called for Deployment in Swarm Mode")
+          .status_code(StatusCode::BAD_REQUEST),
+      );
+    };
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -603,10 +815,11 @@ impl Resolve<ExecuteArgs> for StopDeployment {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
-    let log = match periphery_client(&server)?
+    let log = match periphery_client(&server)
+      .await?
       .request(api::container::StopContainer {
         name: deployment.name,
         signal: self
@@ -628,7 +841,7 @@ impl Resolve<ExecuteArgs> for StopDeployment {
     };
 
     update.logs.push(log);
-    update_cache_for_server(&server, true).await;
+    refresh_server_cache(&server, true).await;
     update.finalize();
     update_update(update.clone()).await?;
 
@@ -648,11 +861,19 @@ impl super::BatchExecute for BatchDestroyDeployment {
 }
 
 impl Resolve<ExecuteArgs> for BatchDestroyDeployment {
-  #[instrument(name = "BatchDestroyDeployment", skip(user), fields(user_id = user.id))]
+  #[instrument(
+    "BatchDestroyDeployment",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      pattern = self.pattern,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchDestroyDeployment>(
         &self.pattern,
@@ -664,13 +885,34 @@ impl Resolve<ExecuteArgs> for BatchDestroyDeployment {
 }
 
 impl Resolve<ExecuteArgs> for DestroyDeployment {
-  #[instrument(name = "DestroyDeployment", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "DestroyDeployment",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      deployment = self.deployment,
+      signal = format!("{:?}", self.signal),
+      time = self.time,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
-    let (deployment, server) =
-      setup_deployment_execution(&self.deployment, user).await?;
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
+    let (deployment, swarm_or_server) = setup_deployment_execution(
+      &self.deployment,
+      user,
+      PermissionLevel::Execute.into(),
+    )
+    .await?;
+
+    swarm_or_server.verify_has_target()?;
 
     // get the action state for the deployment (or insert default).
     let action_state = action_states()
@@ -685,33 +927,65 @@ impl Resolve<ExecuteArgs> for DestroyDeployment {
 
     let mut update = update.clone();
 
-    // Send update after setting action state, this way frontend gets correct state.
+    // Send update after setting action state, this way UI gets correct state.
     update_update(update.clone()).await?;
 
-    let log = match periphery_client(&server)?
-      .request(api::container::RemoveContainer {
-        name: deployment.name,
-        signal: self
-          .signal
-          .unwrap_or(deployment.config.termination_signal)
-          .into(),
-        time: self
-          .time
-          .unwrap_or(deployment.config.termination_timeout)
-          .into(),
-      })
-      .await
-    {
-      Ok(log) => log,
-      Err(e) => Log::error(
-        "stop container",
-        format_serror(&e.context("failed to stop container").into()),
-      ),
+    let log = match swarm_or_server {
+      SwarmOrServer::None => unreachable!(),
+      SwarmOrServer::Swarm(swarm) => {
+        match swarm_request(
+          &swarm.config.server_ids,
+          api::swarm::RemoveSwarmServices {
+            services: vec![deployment.name],
+          },
+        )
+        .await
+        {
+          Ok(log) => {
+            refresh_swarm_cache(&swarm, true).await;
+            log
+          }
+          Err(e) => Log::error(
+            "Remove Swarm Service",
+            format_serror(
+              &e.context("Failed to remove swarm service").into(),
+            ),
+          ),
+        }
+      }
+      SwarmOrServer::Server(server) => {
+        match periphery_client(&server)
+          .await?
+          .request(api::container::RemoveContainer {
+            name: deployment.name,
+            signal: self
+              .signal
+              .unwrap_or(deployment.config.termination_signal)
+              .into(),
+            time: self
+              .time
+              .unwrap_or(deployment.config.termination_timeout)
+              .into(),
+          })
+          .await
+        {
+          Ok(log) => {
+            refresh_server_cache(&server, true).await;
+            log
+          }
+          Err(e) => Log::error(
+            "Destroy Container",
+            format_serror(
+              &e.context("Failed to destroy container").into(),
+            ),
+          ),
+        }
+      }
     };
 
     update.logs.push(log);
     update.finalize();
-    update_cache_for_server(&server, true).await;
+
     update_update(update.clone()).await?;
 
     Ok(update)

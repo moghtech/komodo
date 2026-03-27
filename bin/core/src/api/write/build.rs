@@ -1,65 +1,79 @@
-use std::{path::PathBuf, str::FromStr, time::Duration};
+use std::{path::PathBuf, time::Duration};
 
 use anyhow::{Context, anyhow};
-use database::mongo_indexed::doc;
 use database::mungos::mongodb::bson::to_document;
+use database::{
+  mongo_indexed::doc, mungos::mongodb::bson::oid::ObjectId,
+};
 use formatting::format_serror;
 use komodo_client::{
   api::write::*,
   entities::{
     FileContents, NoData, Operation, RepoExecutionArgs,
     all_logs_success,
-    build::{Build, BuildInfo, PartialBuildConfig},
+    build::{Build, BuildInfo},
     builder::{Builder, BuilderConfig},
-    config::core::CoreConfig,
     permission::PermissionLevel,
     repo::Repo,
     server::ServerState,
     update::Update,
   },
 };
-use octorust::types::{
-  ReposCreateWebhookRequest, ReposCreateWebhookRequestConfig,
+use mogh_resolver::Resolve;
+use periphery_client::api::build::{
+  GetDockerfileContentsOnHost, WriteDockerfileContentsToHost,
 };
-use periphery_client::{
-  PeripheryClient,
-  api::build::{
-    GetDockerfileContentsOnHost, WriteDockerfileContentsToHost,
-  },
-};
-use resolver_api::Resolve;
 use tokio::fs;
 
 use crate::{
   config::core_config,
+  connection::PeripheryConnectionArgs,
   helpers::{
     git_token, periphery_client,
     query::get_server_with_state,
     update::{add_update, make_update},
   },
+  periphery::PeripheryClient,
   permission::get_check_permissions,
   resource,
-  state::{db_client, github_client},
+  state::db_client,
 };
 
 use super::WriteArgs;
 
 impl Resolve<WriteArgs> for CreateBuild {
-  #[instrument(name = "CreateBuild", skip(user))]
+  #[instrument(
+    "CreateBuild",
+    skip_all,
+    fields(
+      operator = user.id,
+      build = self.name,
+      config = serde_json::to_string(&self.config).unwrap(),
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Build> {
-    resource::create::<Build>(&self.name, self.config, user).await
+  ) -> mogh_error::Result<Build> {
+    resource::create::<Build>(&self.name, self.config, None, user)
+      .await
   }
 }
 
 impl Resolve<WriteArgs> for CopyBuild {
-  #[instrument(name = "CopyBuild", skip(user))]
+  #[instrument(
+    "CopyBuild",
+    skip_all,
+    fields(
+      operator = user.id,
+      build = self.name,
+      copy_build = self.id,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Build> {
+  ) -> mogh_error::Result<Build> {
     let Build { mut config, .. } = get_check_permissions::<Build>(
       &self.id,
       user,
@@ -68,40 +82,77 @@ impl Resolve<WriteArgs> for CopyBuild {
     .await?;
     // reset version to 0.0.0
     config.version = Default::default();
-    resource::create::<Build>(&self.name, config.into(), user).await
+    resource::create::<Build>(&self.name, config.into(), None, user)
+      .await
   }
 }
 
 impl Resolve<WriteArgs> for DeleteBuild {
-  #[instrument(name = "DeleteBuild", skip(args))]
-  async fn resolve(self, args: &WriteArgs) -> serror::Result<Build> {
-    Ok(resource::delete::<Build>(&self.id, args).await?)
+  #[instrument(
+    "DeleteBuild",
+    skip_all,
+    fields(
+      operator = user.id,
+      build = self.id,
+    )
+  )]
+  async fn resolve(
+    self,
+    WriteArgs { user }: &WriteArgs,
+  ) -> mogh_error::Result<Build> {
+    Ok(resource::delete::<Build>(&self.id, user).await?)
   }
 }
 
 impl Resolve<WriteArgs> for UpdateBuild {
-  #[instrument(name = "UpdateBuild", skip(user))]
+  #[instrument(
+    "UpdateBuild",
+    skip_all,
+    fields(
+      operator = user.id,
+      build = self.id,
+      update = serde_json::to_string(&self.config).unwrap(),
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Build> {
+  ) -> mogh_error::Result<Build> {
     Ok(resource::update::<Build>(&self.id, self.config, user).await?)
   }
 }
 
 impl Resolve<WriteArgs> for RenameBuild {
-  #[instrument(name = "RenameBuild", skip(user))]
+  #[instrument(
+    "RenameBuild",
+    skip_all,
+    fields(
+      operator = user.id,
+      build = self.id,
+      new_name = self.name,
+    )
+  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<Update> {
+  ) -> mogh_error::Result<Update> {
     Ok(resource::rename::<Build>(&self.id, &self.name, user).await?)
   }
 }
 
 impl Resolve<WriteArgs> for WriteBuildFileContents {
-  #[instrument(name = "WriteBuildFileContents", skip(args))]
-  async fn resolve(self, args: &WriteArgs) -> serror::Result<Update> {
+  #[instrument(
+    "WriteBuildFileContents",
+    skip_all,
+    fields(
+      operator = args.user.id,
+      build = self.build,
+    )
+  )]
+  async fn resolve(
+    self,
+    args: &WriteArgs,
+  ) -> mogh_error::Result<Update> {
     let build = get_check_permissions::<Build>(
       &self.build,
       &args.user,
@@ -172,12 +223,13 @@ impl Resolve<WriteArgs> for WriteBuildFileContents {
   }
 }
 
+#[instrument("WriteDockerfileContentsGit", skip_all)]
 async fn write_dockerfile_contents_git(
   req: WriteBuildFileContents,
   args: &WriteArgs,
   build: Build,
   mut update: Update,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   let WriteBuildFileContents { build: _, contents } = req;
 
   let mut repo_args: RepoExecutionArgs = if !build
@@ -269,8 +321,9 @@ async fn write_dockerfile_contents_git(
     return Ok(update);
   }
 
-  if let Err(e) =
-    fs::write(&full_path, &contents).await.with_context(|| {
+  if let Err(e) = mogh_secret_file::write_async(&full_path, &contents)
+    .await
+    .with_context(|| {
       format!("Failed to write dockerfile contents to {full_path:?}")
     })
   {
@@ -317,15 +370,10 @@ async fn write_dockerfile_contents_git(
 }
 
 impl Resolve<WriteArgs> for RefreshBuildCache {
-  #[instrument(
-    name = "RefreshBuildCache",
-    level = "debug",
-    skip(user)
-  )]
   async fn resolve(
     self,
     WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<NoData> {
+  ) -> mogh_error::Result<NoData> {
     // Even though this is a write request, this doesn't change any config. Anyone that can execute the
     // build should be able to do this.
     let build = get_check_permissions::<Build>(
@@ -345,23 +393,28 @@ impl Resolve<WriteArgs> for RefreshBuildCache {
       None
     };
 
-    let (
-      remote_path,
-      remote_contents,
-      remote_error,
-      latest_hash,
-      latest_message,
-    ) = if build.config.files_on_host {
+    let RemoteDockerfileContents {
+      path,
+      contents,
+      error,
+      hash,
+      message,
+    } = if build.config.files_on_host {
       // =============
       // FILES ON HOST
       // =============
       match get_on_host_dockerfile(&build).await {
         Ok(FileContents { path, contents }) => {
-          (Some(path), Some(contents), None, None, None)
+          RemoteDockerfileContents {
+            path: Some(path),
+            contents: Some(contents),
+            ..Default::default()
+          }
         }
-        Err(e) => {
-          (None, None, Some(format_serror(&e.into())), None, None)
-        }
+        Err(e) => RemoteDockerfileContents {
+          error: Some(format_serror(&e.into())),
+          ..Default::default()
+        },
       }
     } else if let Some(repo) = &repo {
       let Some(res) = get_git_remote(&build, repo.into()).await?
@@ -381,7 +434,7 @@ impl Resolve<WriteArgs> for RefreshBuildCache {
       // =============
       // UI BASED FILE
       // =============
-      (None, None, None, None, None)
+      RemoteDockerfileContents::default()
     };
 
     let info = BuildInfo {
@@ -389,11 +442,11 @@ impl Resolve<WriteArgs> for RefreshBuildCache {
       built_hash: build.info.built_hash,
       built_message: build.info.built_message,
       built_contents: build.info.built_contents,
-      remote_path,
-      remote_contents,
-      remote_error,
-      latest_hash,
-      latest_message,
+      remote_path: path,
+      remote_contents: contents,
+      remote_error: error,
+      latest_hash: hash,
+      latest_message: message,
     };
 
     let info = to_document(&info)
@@ -428,13 +481,26 @@ async fn get_on_host_periphery(
       Err(anyhow!("Files on host doesn't work with AWS builder"))
     }
     BuilderConfig::Url(config) => {
+      // TODO: Ensure connection is actually established.
+      // Builder id no good because it may be active for multiple connections.
       let periphery = PeripheryClient::new(
-        config.address,
-        config.passkey,
-        Duration::from_secs(3),
-      );
-      periphery.health_check().await?;
-      Ok(periphery)
+        PeripheryConnectionArgs::from_url_builder(
+          &ObjectId::new().to_hex(),
+          &config,
+        ),
+        config.insecure_tls,
+      )
+      .await?;
+      // Poll for connection to be estalished
+      let mut err = None;
+      for _ in 0..10 {
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        match periphery.health_check().await {
+          Ok(_) => return Ok(periphery),
+          Err(e) => err = Some(e),
+        };
+      }
+      Err(err.context("Missing error")?)
     }
     BuilderConfig::Server(config) => {
       if config.server_id.is_empty() {
@@ -449,7 +515,7 @@ async fn get_on_host_periphery(
           "Builder server is disabled or not reachable"
         ));
       };
-      periphery_client(&server)
+      periphery_client(&server).await
     }
   }
 }
@@ -472,15 +538,7 @@ async fn get_on_host_dockerfile(
 async fn get_git_remote(
   build: &Build,
   mut clone_args: RepoExecutionArgs,
-) -> anyhow::Result<
-  Option<(
-    Option<String>,
-    Option<String>,
-    Option<String>,
-    Option<String>,
-    Option<String>,
-  )>,
-> {
+) -> anyhow::Result<Option<RemoteDockerfileContents>> {
   if clone_args.provider.is_empty() {
     // Nothing to do here
     return Ok(None);
@@ -507,10 +565,19 @@ async fn get_git_remote(
     access_token,
   )
   .await
-  .context("failed to clone build repo")?;
+  .context("Failed to clone Build repo")?;
 
-  let relative_path = PathBuf::from_str(&build.config.build_path)
-    .context("Invalid build path")?
+  // Ensure clone / pull successful,
+  // propogate error log -> 'errored' and return.
+  if let Some(failure) = res.logs.iter().find(|log| !log.success) {
+    return Ok(Some(RemoteDockerfileContents {
+      path: Some(format!("Failed at: {}", failure.stage)),
+      error: Some(failure.combined()),
+      ..Default::default()
+    }));
+  }
+
+  let relative_path = PathBuf::from(&build.config.build_path)
     .join(&build.config.dockerfile_path);
 
   let full_path = repo_path.join(&relative_path);
@@ -521,209 +588,20 @@ async fn get_git_remote(
       Ok(contents) => (Some(contents), None),
       Err(e) => (None, Some(format_serror(&e.into()))),
     };
-  Ok(Some((
-    Some(relative_path.display().to_string()),
+  Ok(Some(RemoteDockerfileContents {
+    path: Some(relative_path.display().to_string()),
     contents,
     error,
-    res.commit_hash,
-    res.commit_message,
-  )))
+    hash: res.commit_hash,
+    message: res.commit_message,
+  }))
 }
 
-impl Resolve<WriteArgs> for CreateBuildWebhook {
-  #[instrument(name = "CreateBuildWebhook", skip(args))]
-  async fn resolve(
-    self,
-    args: &WriteArgs,
-  ) -> serror::Result<CreateBuildWebhookResponse> {
-    let Some(github) = github_client() else {
-      return Err(
-        anyhow!(
-          "github_webhook_app is not configured in core config toml"
-        )
-        .into(),
-      );
-    };
-
-    let WriteArgs { user } = args;
-
-    let build = get_check_permissions::<Build>(
-      &self.build,
-      user,
-      PermissionLevel::Write.into(),
-    )
-    .await?;
-
-    if build.config.repo.is_empty() {
-      return Err(
-        anyhow!("No repo configured, can't create webhook").into(),
-      );
-    }
-
-    let mut split = build.config.repo.split('/');
-    let owner = split.next().context("Build repo has no owner")?;
-
-    let Some(github) = github.get(owner) else {
-      return Err(
-        anyhow!("Cannot manage repo webhooks under owner {owner}")
-          .into(),
-      );
-    };
-
-    let repo =
-      split.next().context("Build repo has no repo after the /")?;
-
-    let github_repos = github.repos();
-
-    // First make sure the webhook isn't already created (inactive ones are ignored)
-    let webhooks = github_repos
-      .list_all_webhooks(owner, repo)
-      .await
-      .context("failed to list all webhooks on repo")?
-      .body;
-
-    let CoreConfig {
-      host,
-      webhook_base_url,
-      webhook_secret,
-      ..
-    } = core_config();
-
-    let webhook_secret = if build.config.webhook_secret.is_empty() {
-      webhook_secret
-    } else {
-      &build.config.webhook_secret
-    };
-
-    let host = if webhook_base_url.is_empty() {
-      host
-    } else {
-      webhook_base_url
-    };
-    let url = format!("{host}/listener/github/build/{}", build.id);
-
-    for webhook in webhooks {
-      if webhook.active && webhook.config.url == url {
-        return Ok(NoData {});
-      }
-    }
-
-    // Now good to create the webhook
-    let request = ReposCreateWebhookRequest {
-      active: Some(true),
-      config: Some(ReposCreateWebhookRequestConfig {
-        url,
-        secret: webhook_secret.to_string(),
-        content_type: String::from("json"),
-        insecure_ssl: None,
-        digest: Default::default(),
-        token: Default::default(),
-      }),
-      events: vec![String::from("push")],
-      name: String::from("web"),
-    };
-    github_repos
-      .create_webhook(owner, repo, &request)
-      .await
-      .context("failed to create webhook")?;
-
-    if !build.config.webhook_enabled {
-      UpdateBuild {
-        id: build.id,
-        config: PartialBuildConfig {
-          webhook_enabled: Some(true),
-          ..Default::default()
-        },
-      }
-      .resolve(args)
-      .await
-      .map_err(|e| e.error)
-      .context("failed to update build to enable webhook")?;
-    }
-
-    Ok(NoData {})
-  }
-}
-
-impl Resolve<WriteArgs> for DeleteBuildWebhook {
-  #[instrument(name = "DeleteBuildWebhook", skip(user))]
-  async fn resolve(
-    self,
-    WriteArgs { user }: &WriteArgs,
-  ) -> serror::Result<DeleteBuildWebhookResponse> {
-    let Some(github) = github_client() else {
-      return Err(
-        anyhow!(
-          "github_webhook_app is not configured in core config toml"
-        )
-        .into(),
-      );
-    };
-
-    let build = get_check_permissions::<Build>(
-      &self.build,
-      user,
-      PermissionLevel::Write.into(),
-    )
-    .await?;
-
-    if build.config.git_provider != "github.com" {
-      return Err(
-        anyhow!("Can only manage github.com repo webhooks").into(),
-      );
-    }
-
-    if build.config.repo.is_empty() {
-      return Err(
-        anyhow!("No repo configured, can't delete webhook").into(),
-      );
-    }
-
-    let mut split = build.config.repo.split('/');
-    let owner = split.next().context("Build repo has no owner")?;
-
-    let Some(github) = github.get(owner) else {
-      return Err(
-        anyhow!("Cannot manage repo webhooks under owner {owner}")
-          .into(),
-      );
-    };
-
-    let repo =
-      split.next().context("Build repo has no repo after the /")?;
-
-    let github_repos = github.repos();
-
-    let webhooks = github_repos
-      .list_all_webhooks(owner, repo)
-      .await
-      .context("failed to list all webhooks on repo")?
-      .body;
-
-    let CoreConfig {
-      host,
-      webhook_base_url,
-      ..
-    } = core_config();
-
-    let host = if webhook_base_url.is_empty() {
-      host
-    } else {
-      webhook_base_url
-    };
-    let url = format!("{host}/listener/github/build/{}", build.id);
-
-    for webhook in webhooks {
-      if webhook.active && webhook.config.url == url {
-        github_repos
-          .delete_webhook(owner, repo, webhook.id)
-          .await
-          .context("failed to delete webhook")?;
-        return Ok(NoData {});
-      }
-    }
-
-    // No webhook to delete, all good
-    Ok(NoData {})
-  }
+#[derive(Default)]
+pub struct RemoteDockerfileContents {
+  pub path: Option<String>,
+  pub contents: Option<String>,
+  pub error: Option<String>,
+  pub hash: Option<String>,
+  pub message: Option<String>,
 }

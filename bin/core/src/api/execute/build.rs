@@ -14,12 +14,15 @@ use database::mungos::{
   },
 };
 use formatting::format_serror;
-use futures::future::join_all;
+use futures_util::future::join_all;
 use interpolate::Interpolator;
 use komodo_client::{
-  api::execute::{
-    BatchExecutionResponse, BatchRunBuild, CancelBuild, Deploy,
-    RunBuild,
+  api::{
+    execute::{
+      BatchExecutionResponse, BatchRunBuild, CancelBuild, Deploy,
+      RunBuild,
+    },
+    write::RefreshBuildCache,
   },
   entities::{
     alert::{Alert, AlertData, SeverityLevel},
@@ -34,15 +37,17 @@ use komodo_client::{
     user::auto_redeploy_user,
   },
 };
+use mogh_resolver::Resolve;
 use periphery_client::api;
-use resolver_api::Resolve;
 use tokio_util::sync::CancellationToken;
+use uuid::Uuid;
 
 use crate::{
   alert::send_alerts,
+  api::write::WriteArgs,
   helpers::{
     build_git_token,
-    builder::{cleanup_builder_instance, get_builder_periphery},
+    builder::{cleanup_builder_instance, connect_builder_periphery},
     channel::build_cancel_channel,
     query::{
       VariablesAndSecrets, get_deployment_state,
@@ -66,11 +71,19 @@ impl super::BatchExecute for BatchRunBuild {
 }
 
 impl Resolve<ExecuteArgs> for BatchRunBuild {
-  #[instrument(name = "BatchRunBuild", skip(user), fields(user_id = user.id))]
+  #[instrument(
+    "BatchRunBuild",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      pattern = self.pattern,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, .. }: &ExecuteArgs,
-  ) -> serror::Result<BatchExecutionResponse> {
+    ExecuteArgs { user, task_id, .. }: &ExecuteArgs,
+  ) -> mogh_error::Result<BatchExecutionResponse> {
     Ok(
       super::batch_execute::<BatchRunBuild>(&self.pattern, user)
         .await?,
@@ -79,11 +92,24 @@ impl Resolve<ExecuteArgs> for BatchRunBuild {
 }
 
 impl Resolve<ExecuteArgs> for RunBuild {
-  #[instrument(name = "RunBuild", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "RunBuild",
+    skip_all,
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      build = self.build,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let mut build = get_check_permissions::<Build>(
       &self.build,
       user,
@@ -168,7 +194,7 @@ impl Resolve<ExecuteArgs> for RunBuild {
             update.finalize();
             let id = update.id.clone();
             if let Err(e) = update_update(update).await {
-              warn!("failed to modify Update {id} on db | {e:#}");
+              warn!("Failed to modify Update {id} on db | {e:#}");
             }
             if !is_server_builder {
               cancel_clone.cancel();
@@ -186,7 +212,7 @@ impl Resolve<ExecuteArgs> for RunBuild {
     });
 
     // GET BUILDER PERIPHERY
-    let (periphery, cleanup_data) = match get_builder_periphery(
+    let (periphery, cleanup_data) = match connect_builder_periphery(
       build.name.clone(),
       Some(build.config.version),
       builder,
@@ -197,12 +223,12 @@ impl Resolve<ExecuteArgs> for RunBuild {
       Ok(builder) => builder,
       Err(e) => {
         warn!(
-          "failed to get builder for build {} | {e:#}",
+          "Failed to get Builder for Build {} | {e:#}",
           build.name
         );
         update.logs.push(Log::error(
-          "get builder",
-          format_serror(&e.context("failed to get builder").into()),
+          "Get Builder",
+          format_serror(&e.context("Failed to get Builder").into()),
         ));
         return handle_early_return(
           update, build.id, build.name, false,
@@ -247,18 +273,18 @@ impl Resolve<ExecuteArgs> for RunBuild {
             replacers: Default::default(),
           }) => res,
         _ = cancel.cancelled() => {
-          debug!("build cancelled during clone, cleaning up builder");
-          update.push_error_log("build cancelled", String::from("user cancelled build during repo clone"));
-          cleanup_builder_instance(cleanup_data, &mut update)
+          debug!("Build cancelled during clone, cleaning up builder");
+          update.push_error_log("Build cancelled", String::from("user cancelled build during repo clone"));
+          cleanup_builder_instance(periphery, cleanup_data, &mut update)
             .await;
-          info!("builder cleaned up");
+          info!("Builder cleaned up");
           return handle_early_return(update, build.id, build.name, true).await
         },
       };
 
       let commit_message = match res {
         Ok(res) => {
-          debug!("finished repo clone");
+          debug!("Finished repo clone");
           update.logs.extend(res.res.logs);
           update.commit_hash =
             res.res.commit_hash.unwrap_or_default().to_string();
@@ -294,11 +320,11 @@ impl Resolve<ExecuteArgs> for RunBuild {
             commit_hash: optional_string(&update.commit_hash),
             // Unused for now
             additional_tags: Default::default(),
-          }) => res.context("failed at call to periphery to build"),
+          }) => res.context("Failed at call to Periphery to build"),
         _ = cancel.cancelled() => {
-          info!("build cancelled during build, cleaning up builder");
-          update.push_error_log("build cancelled", String::from("user cancelled build during docker build"));
-          cleanup_builder_instance(cleanup_data, &mut update)
+          info!("Build cancelled during build, cleaning up builder");
+          update.push_error_log("Build cancelled", String::from("User cancelled build during docker build"));
+          cleanup_builder_instance(periphery, cleanup_data, &mut update)
             .await;
           return handle_early_return(update, build.id, build.name, true).await
         },
@@ -310,10 +336,10 @@ impl Resolve<ExecuteArgs> for RunBuild {
           update.logs.extend(logs);
         }
         Err(e) => {
-          warn!("error in build | {e:#}");
+          warn!("Error in build | {e:#}");
           update.push_error_log(
-            "build",
-            format_serror(&e.context("failed to build").into()),
+            "Build Error",
+            format_serror(&e.context("Failed to build").into()),
           )
         }
       };
@@ -344,7 +370,8 @@ impl Resolve<ExecuteArgs> for RunBuild {
 
     // If building on temporary cloud server (AWS),
     // this will terminate the server.
-    cleanup_builder_instance(cleanup_data, &mut update).await;
+    cleanup_builder_instance(periphery, cleanup_data, &mut update)
+      .await;
 
     // Need to manually update the update before cache refresh,
     // and before broadcast with add_update.
@@ -363,13 +390,15 @@ impl Resolve<ExecuteArgs> for RunBuild {
 
     update_update(update.clone()).await?;
 
+    let Build { id, name, .. } = build;
+
     if update.success {
       // don't hold response up for user
       tokio::spawn(async move {
-        handle_post_build_redeploy(&build.id).await;
+        handle_post_build_redeploy(&id).await;
       });
     } else {
-      warn!("build unsuccessful, alerting...");
+      let name = name.clone();
       let target = update.target.clone();
       let version = update.version;
       tokio::spawn(async move {
@@ -380,27 +409,33 @@ impl Resolve<ExecuteArgs> for RunBuild {
           resolved_ts: Some(komodo_timestamp()),
           resolved: true,
           level: SeverityLevel::Warning,
-          data: AlertData::BuildFailed {
-            id: build.id,
-            name: build.name,
-            version,
-          },
+          data: AlertData::BuildFailed { id, name, version },
         };
         send_alerts(&[alert]).await
       });
+    }
+
+    if let Err(e) = (RefreshBuildCache { build: name })
+      .resolve(&WriteArgs { user: user.clone() })
+      .await
+    {
+      update.push_error_log(
+        "Refresh build cache",
+        format_serror(&e.error.into()),
+      );
     }
 
     Ok(update.clone())
   }
 }
 
-#[instrument(skip(update))]
+#[instrument("HandleEarlyReturn", skip(update))]
 async fn handle_early_return(
   mut update: Update,
   build_id: String,
   build_name: String,
   is_cancel: bool,
-) -> serror::Result<Update> {
+) -> mogh_error::Result<Update> {
   update.finalize();
   // Need to manually update the update before cache refresh,
   // and before broadcast with add_update.
@@ -418,7 +453,6 @@ async fn handle_early_return(
   }
   update_update(update.clone()).await?;
   if !update.success && !is_cancel {
-    warn!("build unsuccessful, alerting...");
     let target = update.target.clone();
     let version = update.version;
     tokio::spawn(async move {
@@ -488,11 +522,24 @@ pub async fn validate_cancel_build(
 }
 
 impl Resolve<ExecuteArgs> for CancelBuild {
-  #[instrument(name = "CancelBuild", skip(user, update), fields(user_id = user.id, update_id = update.id))]
+  #[instrument(
+    "CancelBuild",
+    skip(user, update),
+    fields(
+      task_id = task_id.to_string(),
+      operator = user.id,
+      update_id = update.id,
+      build = self.build,
+    )
+  )]
   async fn resolve(
     self,
-    ExecuteArgs { user, update }: &ExecuteArgs,
-  ) -> serror::Result<Update> {
+    ExecuteArgs {
+      user,
+      update,
+      task_id,
+    }: &ExecuteArgs,
+  ) -> mogh_error::Result<Update> {
     let build = get_check_permissions::<Build>(
       &self.build,
       user,
@@ -539,7 +586,7 @@ impl Resolve<ExecuteArgs> for CancelBuild {
       .await
       {
         warn!(
-          "failed to set CancelBuild Update status Complete after timeout | {e:#}"
+          "Failed to set CancelBuild Update status Complete after timeout | {e:#}"
         )
       }
     });
@@ -548,7 +595,7 @@ impl Resolve<ExecuteArgs> for CancelBuild {
   }
 }
 
-#[instrument]
+#[instrument("PostBuildRedeploy")]
 async fn handle_post_build_redeploy(build_id: &str) {
   let Ok(redeploy_deployments) = find_collect(
     &db_client().deployments,
@@ -584,7 +631,11 @@ async fn handle_post_build_redeploy(build_id: &str) {
               stop_signal: None,
               stop_time: None,
             }
-            .resolve(&ExecuteArgs { user, update })
+            .resolve(&ExecuteArgs {
+              user,
+              update,
+              task_id: Uuid::new_v4(),
+            })
             .await
           }
           .await;
@@ -610,13 +661,14 @@ async fn handle_post_build_redeploy(build_id: &str) {
 /// This will make sure that a build with non-none image registry has an account attached,
 /// and will check the core config for a token matching requirements.
 /// Otherwise it is left to periphery.
+#[instrument("ValidateRegistryTokens")]
 async fn validate_account_extract_registry_tokens(
   Build {
     config: BuildConfig { image_registry, .. },
     ..
   }: &Build,
   // Maps (domain, account) -> token
-) -> serror::Result<Vec<(String, String, String)>> {
+) -> mogh_error::Result<Vec<(String, String, String)>> {
   let mut res = HashMap::with_capacity(image_registry.capacity());
 
   for (domain, account) in image_registry

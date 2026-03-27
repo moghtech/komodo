@@ -10,7 +10,7 @@ Running Komodo from [source](https://github.com/moghtech/komodo) requires either
     * [Rust](https://www.rust-lang.org/) stable via [rustup installer](https://rustup.rs/)
     * [MongoDB](https://www.mongodb.com/) or [FerretDB](https://www.ferretdb.com/) available locally.
     * On Debian/Ubuntu: `apt install build-essential pkg-config libssl-dev` required to build the rust source.
-* Frontend (Web UI)
+* Web UI
     * [Node](https://nodejs.org/en) >= 18.18 + NPM
         * [Yarn](https://yarnpkg.com/) - (Tip: use `corepack enable` after installing `node` to use `yarn`)
     * [typeshare](https://github.com/1password/typeshare)
@@ -28,27 +28,97 @@ After making changes to the project, run `run dev-compose-build` to rebuild Komo
 
 Use the included `.devcontainer.json` with VSCode or other compatible IDE to stand-up a full environment, including database, with one click.
 
-[VSCode Tasks](https://code.visualstudio.com/Docs/editor/tasks) are provided for building and running Komodo. 
+[VSCode Tasks](https://code.visualstudio.com/Docs/editor/tasks) are provided for building and running Komodo.
 
-After opening the repository with the devcontainer run the task `Init` to build the frontend/backend. Then, the task `Run Komodo` can be used to run frontend/backend. Other tasks for rebuilding/running just one component of the stack (Core API, Periphery API, Frontend) are also provided.
+After opening the repository with the devcontainer run the task `Init` to build the ui/backend. Then, the task `Run Komodo` can be used to run ui/backend. Other tasks for rebuilding/running just one component of the stack (Core API, Periphery API, UI) are also provided.
 
 ## Local
 
-To run a full Komodo instance from a non-container environment run commands in this order:
+You can also run the components locally, using Docker only for the database.
 
-* Ensure dependencies are up to date
-    * `rustup update` -- ensure rust toolchain is up to date
-* Build and Run backend
-    * `run dev-core` -- Build and run Core API
-    * `run dev-periphery` -- Build and run Periphery API
-* Build Frontend
-    * Install **typeshare-cli**: `cargo install typeshare-cli`
-    * **Run this once** -- `run link-client` -- generates TS client and links to the frontend
-    * After running the above once:
-        * `run gen-client` -- Rebuild client 
-        * `run dev-frontend` -- Start in dev (watch) mode
-        * `run build-frontend` -- Typecheck and build
-            
+### Initial One-time Setup
+
+Create the local config directories.
+
+```sh
+mkdir -p .dev/keys .dev/periphery
+```
+
+Add `.dev/core.config.toml` with the following contents:
+
+```toml
+host = "http://localhost:9120"
+private_key = "file:.dev/keys/core.key"
+local_auth = true
+enable_new_users = true
+jwt_secret = "a_random_secret"
+first_server_address = "http://localhost:8120"
+cors_allowed_origins = ["http://localhost:5173"]
+cors_allow_credentials = true
+session_allow_cross_site = true
+
+database.address = "localhost:27017"
+database.username = "komodo"
+database.password = "komodo"
+```
+
+Add `.dev/periphery.config.toml`:
+
+```toml
+ssl_enabled = false
+root_directory = ".dev/periphery"
+```
+
+Create `ui/.env.development` with the following:
+
+```
+VITE_KOMODO_HOST=http://localhost:9120
+```
+
+Make sure your Rust toolchain is up to date and install the CLI tools:
+
+```sh
+rustup update
+cargo install typeshare-cli runnables-cli
+run link-client
+```
+
+### Starting the services
+
+Start a Mongo instance in Docker:
+
+```sh
+docker run -d --name komodo-mongo \
+-p 27017:27017 \
+-v komodo-mongo-data:/data/db \
+-v komodo-mongo-config:/data/configdb \
+-e MONGO_INITDB_ROOT_USERNAME=komodo \
+-e MONGO_INITDB_ROOT_PASSWORD=komodo \
+mongo
+```
+
+In separate terminals, run Core, Periphery, and UI.
+
+```sh
+run dev-core
+```
+
+```sh
+run dev-periphery
+
+```sh
+run dev-ui      # Start in dev (watch) mode
+```
+
+Once everything is running, open `http://localhost:5173` and create a user account.
+
+### Rebuilding the frontend client
+
+After API changes, rebuild the client with
+
+```bash
+run gen-client  # Rebuild client (after API changes)
+```
 
 ## Docsite Development
 

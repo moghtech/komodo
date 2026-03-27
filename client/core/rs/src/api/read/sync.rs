@@ -1,5 +1,4 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
@@ -12,14 +11,25 @@ use super::KomodoReadRequest;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetResourceSync",
+  description = "Get a specific sync.",
+  request_body(content = GetResourceSync),
+  responses(
+    (status = 200, description = "The resource sync", body = crate::entities::sync::ResourceSyncSchema),
+  ),
+)]
+pub fn get_resource_sync() {}
+
 /// Get a specific sync. Response: [ResourceSync].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ResourceSync)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetResourceSync {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -31,14 +41,25 @@ pub type GetResourceSyncResponse = ResourceSync;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListResourceSyncs",
+  description = "List syncs matching optional query.",
+  request_body(content = ListResourceSyncs),
+  responses(
+    (status = 200, description = "The list of resource syncs", body = ListResourceSyncsResponse),
+  ),
+)]
+pub fn list_resource_syncs() {}
+
 /// List syncs matching optional query. Response: [ListResourceSyncsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListResourceSyncsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListResourceSyncs {
   /// optional structured query to filter syncs.
   #[serde(default)]
@@ -50,14 +71,25 @@ pub type ListResourceSyncsResponse = Vec<ResourceSyncListItem>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/ListFullResourceSyncs",
+  description = "List syncs matching optional query.",
+  request_body(content = ListFullResourceSyncs),
+  responses(
+    (status = 200, description = "The list of resource syncs", body = ListFullResourceSyncsResponse),
+  ),
+)]
+pub fn list_full_resource_syncs() {}
+
 /// List syncs matching optional query. Response: [ListFullResourceSyncsResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Default, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(ListFullResourceSyncsResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct ListFullResourceSyncs {
   /// optional structured query to filter syncs.
   #[serde(default)]
@@ -69,14 +101,25 @@ pub type ListFullResourceSyncsResponse = Vec<ResourceSync>;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetResourceSyncActionState",
+  description = "Get current action state for the sync.",
+  request_body(content = GetResourceSyncActionState),
+  responses(
+    (status = 200, description = "The resource sync action state", body = GetResourceSyncActionStateResponse),
+  ),
+)]
+pub fn get_resource_sync_action_state() {}
+
 /// Get current action state for the sync. Response: [ResourceSyncActionState].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetResourceSyncActionStateResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetResourceSyncActionState {
   /// Id or name
   #[serde(alias = "id", alias = "name")]
@@ -88,20 +131,32 @@ pub type GetResourceSyncActionStateResponse = ResourceSyncActionState;
 
 //
 
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/GetResourceSyncsSummary",
+  description = "Gets a summary of data relating to all syncs.",
+  request_body(content = GetResourceSyncsSummary),
+  responses(
+    (status = 200, description = "The resource syncs summary", body = GetResourceSyncsSummaryResponse),
+  ),
+)]
+pub fn get_resource_syncs_summary() {}
+
 /// Gets a summary of data relating to all syncs.
 /// Response: [GetResourceSyncsSummaryResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoReadRequest)]
 #[response(GetResourceSyncsSummaryResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct GetResourceSyncsSummary {}
 
 /// Response for [GetResourceSyncsSummary]
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetResourceSyncsSummaryResponse {
   /// The total number of syncs
   pub total: u32,
@@ -115,33 +170,4 @@ pub struct GetResourceSyncsSummaryResponse {
   pub failed: u32,
   /// The number of syncs with unknown state.
   pub unknown: u32,
-}
-
-//
-
-/// Get a target Sync's configured webhooks. Response: [GetSyncWebhooksEnabledResponse].
-#[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
-#[empty_traits(KomodoReadRequest)]
-#[response(GetSyncWebhooksEnabledResponse)]
-#[error(serror::Error)]
-pub struct GetSyncWebhooksEnabled {
-  /// Id or name
-  #[serde(alias = "id", alias = "name")]
-  pub sync: String,
-}
-
-/// Response for [GetSyncWebhooksEnabled]
-#[typeshare]
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct GetSyncWebhooksEnabledResponse {
-  /// Whether the repo webhooks can even be managed.
-  /// The repo owner must be in `github_webhook_app.owners` list to be managed.
-  pub managed: bool,
-  /// Whether pushes to branch trigger refresh. Will always be false if managed is false.
-  pub refresh_enabled: bool,
-  /// Whether pushes to branch trigger sync execution. Will always be false if managed is false.
-  pub sync_enabled: bool,
 }

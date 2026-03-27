@@ -179,7 +179,7 @@ impl super::KomodoResource for Builder {
   }
 }
 
-#[instrument(skip(user))]
+#[instrument("ValidateBuilderConfig", skip_all)]
 async fn validate_config(
   config: &mut PartialBuilderConfig,
   user: &User,

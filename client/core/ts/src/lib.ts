@@ -1,18 +1,11 @@
+import { MoghAuthClient } from "mogh_auth_client";
 import {
-  AuthResponses,
   ExecuteResponses,
   ReadResponses,
-  UserResponses,
   WriteResponses,
 } from "./responses.js";
+import { terminal_methods, TerminalCallbacks } from "./terminal.js";
 import {
-  terminal_methods,
-  ConnectExecQuery,
-  ExecuteExecBody,
-  TerminalCallbacks,
-} from "./terminal.js";
-import {
-  AuthRequest,
   BatchExecutionResponse,
   ConnectTerminalQuery,
   ExecuteRequest,
@@ -21,14 +14,20 @@ import {
   Update,
   UpdateListItem,
   UpdateStatus,
-  UserRequest,
+  User,
   WriteRequest,
   WsLoginMessage,
 } from "./types.js";
 
+export * as MoghAuth from "mogh_auth_client";
 export * as Types from "./types.js";
 
-export type { ConnectExecQuery, ExecuteExecBody, TerminalCallbacks };
+export type {
+  ExecuteResponses,
+  ReadResponses,
+  WriteResponses,
+  TerminalCallbacks,
+};
 
 export type InitOptions =
   | { type: "jwt"; params: { jwt: string } }
@@ -58,15 +57,18 @@ export function KomodoClient(url: string, options: InitOptions) {
     secret: options.type === "api-key" ? options.params.secret : undefined,
   };
 
-  const request = <Params, Res>(
-    path: "/auth" | "/user" | "/read" | "/execute" | "/write",
+  const auth = MoghAuthClient(url + "/auth", state.jwt);
+
+  const request = <Params = undefined, Res = unknown>(
+    path: "/user" | "/read" | "/execute" | "/write",
     type: string,
-    params: Params
+    params: Params,
+    method = "POST",
   ): Promise<Res> =>
     new Promise(async (res, rej) => {
       try {
-        let response = await fetch(`${url}${path}/${type}`, {
-          method: "POST",
+        let response = await fetch(`${url}${path}${type ? "/" + type : ""}`, {
+          method,
           body: JSON.stringify(params),
           headers: {
             ...(state.jwt
@@ -74,13 +76,14 @@ export function KomodoClient(url: string, options: InitOptions) {
                   authorization: state.jwt,
                 }
               : state.key && state.secret
-              ? {
-                  "x-api-key": state.key,
-                  "x-api-secret": state.secret,
-                }
-              : {}),
+                ? {
+                    "x-api-key": state.key,
+                    "x-api-secret": state.secret,
+                  }
+                : {}),
             "content-type": "application/json",
           },
+          credentials: "include",
         });
         if (response.status === 200) {
           const body: Res = await response.json();
@@ -112,77 +115,54 @@ export function KomodoClient(url: string, options: InitOptions) {
       }
     });
 
-  const auth = async <
-    T extends AuthRequest["type"],
-    Req extends Extract<AuthRequest, { type: T }>
-  >(
-    type: T,
-    params: Req["params"]
-  ) =>
-    await request<Req["params"], AuthResponses[Req["type"]]>(
-      "/auth",
-      type,
-      params
-    );
-
-  const user = async <
-    T extends UserRequest["type"],
-    Req extends Extract<UserRequest, { type: T }>
-  >(
-    type: T,
-    params: Req["params"]
-  ) =>
-    await request<Req["params"], UserResponses[Req["type"]]>(
-      "/user",
-      type,
-      params
-    );
+  const getUser = async () =>
+    await request<undefined, User>("/user", "", undefined, "GET");
 
   const read = async <
     T extends ReadRequest["type"],
-    Req extends Extract<ReadRequest, { type: T }>
+    Req extends Extract<ReadRequest, { type: T }>,
   >(
     type: T,
-    params: Req["params"]
+    params: Req["params"],
   ) =>
     await request<Req["params"], ReadResponses[Req["type"]]>(
       "/read",
       type,
-      params
+      params,
     );
 
   const write = async <
     T extends WriteRequest["type"],
-    Req extends Extract<WriteRequest, { type: T }>
+    Req extends Extract<WriteRequest, { type: T }>,
   >(
     type: T,
-    params: Req["params"]
+    params: Req["params"],
   ) =>
     await request<Req["params"], WriteResponses[Req["type"]]>(
       "/write",
       type,
-      params
+      params,
     );
 
   const execute = async <
     T extends ExecuteRequest["type"],
-    Req extends Extract<ExecuteRequest, { type: T }>
+    Req extends Extract<ExecuteRequest, { type: T }>,
   >(
     type: T,
-    params: Req["params"]
+    params: Req["params"],
   ) =>
     await request<Req["params"], ExecuteResponses[Req["type"]]>(
       "/execute",
       type,
-      params
+      params,
     );
 
   const execute_and_poll = async <
     T extends ExecuteRequest["type"],
-    Req extends Extract<ExecuteRequest, { type: T }>
+    Req extends Extract<ExecuteRequest, { type: T }>,
   >(
     type: T,
-    params: Req["params"]
+    params: Req["params"],
   ) => {
     const res = await execute(type, params);
     // Check if its a batch of updates or a single update;
@@ -194,7 +174,7 @@ export function KomodoClient(url: string, options: InitOptions) {
             return item;
           }
           return await poll_update_until_complete(item.data._id?.$oid!);
-        })
+        }),
       );
     } else {
       // it is a single update
@@ -331,16 +311,13 @@ export function KomodoClient(url: string, options: InitOptions) {
     connect_terminal,
     execute_terminal,
     execute_terminal_stream,
-    connect_exec,
-    connect_container_exec,
+    execute_server_terminal,
+    execute_container_terminal,
+    execute_stack_service_terminal,
+    execute_deployment_terminal,
     execute_container_exec,
-    execute_container_exec_stream,
-    connect_deployment_exec,
     execute_deployment_exec,
-    execute_deployment_exec_stream,
-    connect_stack_exec,
     execute_stack_exec,
-    execute_stack_exec_stream,
   } = terminal_methods(url, state);
 
   return {
@@ -348,24 +325,25 @@ export function KomodoClient(url: string, options: InitOptions) {
      * Call the `/auth` api.
      *
      * ```
-     * const login_options = await komodo.auth("GetLoginOptions", {});
+     * const { jwt } = await komodo.auth.login("LoginLocalUser", {
+     *   username: "test-user",
+     *   password: "test-pass"
+     * });
      * ```
      *
-     * https://docs.rs/komodo_client/latest/komodo_client/api/auth/index.html
+     * https://docs.rs/mogh_auth_client/latest/mogh_auth_client/api/index.html
      */
     auth,
     /**
-     * Call the `/user` api.
+     * Get the current (calling) user.
      *
      * ```
-     * const { key, secret } = await komodo.user("CreateApiKey", {
-     *   name: "my-api-key"
-     * });
+     * const user = await komodo.getUser();
      * ```
      *
      * https://docs.rs/komodo_client/latest/komodo_client/api/user/index.html
      */
-    user,
+    getUser,
     /**
      * Call the `/read` api.
      *
@@ -444,15 +422,24 @@ export function KomodoClient(url: string, options: InitOptions) {
      */
     connect_terminal,
     /**
-     * Executes a command on a given Server / terminal,
-     * and gives a callback to handle the output as it comes in.
+     * Executes a command on a given target / terminal,
+     * and gives callbacks to handle the output as it comes in.
      *
      * ```ts
      * await komodo.execute_terminal(
      *   {
-     *     server: "my-server",
+     *     target: {
+     *       type: "Server",
+     *       params: {
+     *         server: "my-server"
+     *       }
+     *     },
      *     terminal: "name",
      *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *     init: {
+     *       command: "bash",
+     *       recreate: Types.TerminalRecreateMode.Always
+     *     }
      *   },
      *   {
      *     onLine: (line) => console.log(line),
@@ -463,7 +450,7 @@ export function KomodoClient(url: string, options: InitOptions) {
      */
     execute_terminal,
     /**
-     * Executes a command on a given Server / terminal,
+     * Executes a command on a given target / terminal,
      * and returns a stream to process the output as it comes in.
      *
      * Note. The final line of the stream will usually be
@@ -475,9 +462,18 @@ export function KomodoClient(url: string, options: InitOptions) {
      *
      * ```ts
      * const stream = await komodo.execute_terminal_stream({
-     *   server: "my-server",
+     *   target: {
+     *     type: "Server",
+     *     params: {
+     *       server: "my-server"
+     *     }
+     *   },
      *   terminal: "name",
      *   command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *   init: {
+     *     command: "bash",
+     *     recreate: Types.TerminalRecreateMode.Always
+     *   }
      * });
      *
      * for await (const line of stream) {
@@ -487,29 +483,112 @@ export function KomodoClient(url: string, options: InitOptions) {
      */
     execute_terminal_stream,
     /**
-     * Subscribes to container exec io over websocket message,
-     * for use with xtermjs. Can connect to container on a Server,
-     * or associated with a Deployment or Stack.
-     * Terminal permission on connecting resource required.
+     * Executes a command on a given Server / terminal,
+     * and gives callbacks to handle the output as it comes in.
+     *
+     * ```ts
+     * await komodo.execute_server_terminal(
+     *   {
+     *     server: "my-server",
+     *     terminal: "name",
+     *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *     init: {
+     *       command: "bash",
+     *       recreate: Types.TerminalRecreateMode.Always
+     *     }
+     *   },
+     *   {
+     *     onLine: (line) => console.log(line),
+     *     onFinish: (code) => console.log("Finished:", code),
+     *   }
+     * );
+     * ```
      */
-    connect_exec,
+    execute_server_terminal,
     /**
-     * Subscribes to container exec io over websocket message,
-     * for use with xtermjs. Can connect to Container on a Server.
-     * Server Terminal permission required.
+     * Executes a command on a given Server / Container / terminal,
+     * and gives callbacks to handle the output as it comes in.
+     *
+     * ```ts
+     * await komodo.execute_container_terminal(
+     *   {
+     *     server: "my-server",
+     *     container: "my-container",
+     *     terminal: "name",
+     *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *     init: {
+     *       command: "bash",
+     *       recreate: Types.TerminalRecreateMode.Always
+     *     }
+     *   },
+     *   {
+     *     onLine: (line) => console.log(line),
+     *     onFinish: (code) => console.log("Finished:", code),
+     *   }
+     * );
+     * ```
      */
-    connect_container_exec,
+    execute_container_terminal,
     /**
-     * Executes a command on a given container,
-     * and gives a callback to handle the output as it comes in.
+     * Executes a command on a given Stack / service / terminal,
+     * and gives callbacks to handle the output as it comes in.
+     *
+     * ```ts
+     * await komodo.execute_stack_service_terminal(
+     *   {
+     *     stack: "my-stack",
+     *     service: "my-service",
+     *     terminal: "name",
+     *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *     init: {
+     *       command: "bash",
+     *       recreate: Types.TerminalRecreateMode.Always
+     *     }
+     *   },
+     *   {
+     *     onLine: (line) => console.log(line),
+     *     onFinish: (code) => console.log("Finished:", code),
+     *   }
+     * );
+     * ```
+     */
+    execute_stack_service_terminal,
+    /**
+     * Executes a command on a given Deployment / terminal,
+     * and gives callbacks to handle the output as it comes in.
+     *
+     * ```ts
+     * await komodo.execute_deployment_terminal(
+     *   {
+     *     deployment: "my-deployemnt",
+     *     terminal: "name",
+     *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *     init: {
+     *       command: "bash",
+     *       recreate: Types.TerminalRecreateMode.Always
+     *     }
+     *   },
+     *   {
+     *     onLine: (line) => console.log(line),
+     *     onFinish: (code) => console.log("Finished:", code),
+     *   }
+     * );
+     * ```
+     */
+    execute_deployment_terminal,
+    /**
+     * Executes a command on a given Server / Container / terminal,
+     * and gives callbacks to handle the output as it comes in.
      *
      * ```ts
      * await komodo.execute_container_exec(
      *   {
      *     server: "my-server",
-     *     container: "name",
-     *     shell: "bash",
+     *     container: "my-container",
      *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *     shell: "bash",
+     *     terminal: "name",
+     *     recreate: Types.TerminalRecreateMode.Always,
      *   },
      *   {
      *     onLine: (line) => console.log(line),
@@ -520,46 +599,17 @@ export function KomodoClient(url: string, options: InitOptions) {
      */
     execute_container_exec,
     /**
-     * Executes a command on a given container,
-     * and returns a stream to process the output as it comes in.
-     *
-     * Note. The final line of the stream will usually be
-     * `__KOMODO_EXIT_CODE__:0`. The number
-     * is the exit code of the command.
-     *
-     * If this line is NOT present, it means the stream
-     * was terminated early, ie like running `exit`.
-     *
-     * ```ts
-     * const stream = await komodo.execute_container_exec_stream({
-     *   server: "my-server",
-     *   container: "name",
-     *   shell: "bash",
-     *   command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
-     * });
-     *
-     * for await (const line of stream) {
-     *   console.log(line);
-     * }
-     * ```
-     */
-    execute_container_exec_stream,
-    /**
-     * Subscribes to deployment container exec io over websocket message,
-     * for use with xtermjs. Can connect to Deployment container.
-     * Deployment Terminal permission required.
-     */
-    connect_deployment_exec,
-    /**
-     * Executes a command on a given deployment container,
-     * and gives a callback to handle the output as it comes in.
+     * Executes a command on a given Deployment / terminal,
+     * and gives callbacks to handle the output as it comes in.
      *
      * ```ts
      * await komodo.execute_deployment_exec(
      *   {
-     *     deployment: "my-deployment",
-     *     shell: "bash",
+     *     deployment: "my-deployemnt",
      *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *     shell: "bash",
+     *     terminal: "name",
+     *     recreate: Types.TerminalRecreateMode.Always,
      *   },
      *   {
      *     onLine: (line) => console.log(line),
@@ -570,46 +620,18 @@ export function KomodoClient(url: string, options: InitOptions) {
      */
     execute_deployment_exec,
     /**
-     * Executes a command on a given deployment container,
-     * and returns a stream to process the output as it comes in.
-     *
-     * Note. The final line of the stream will usually be
-     * `__KOMODO_EXIT_CODE__:0`. The number
-     * is the exit code of the command.
-     *
-     * If this line is NOT present, it means the stream
-     * was terminated early, ie like running `exit`.
-     *
-     * ```ts
-     * const stream = await komodo.execute_deployment_exec_stream({
-     *   deployment: "my-deployment",
-     *   shell: "bash",
-     *   command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
-     * });
-     *
-     * for await (const line of stream) {
-     *   console.log(line);
-     * }
-     * ```
-     */
-    execute_deployment_exec_stream,
-    /**
-     * Subscribes to container exec io over websocket message,
-     * for use with xtermjs. Can connect to Stack service container.
-     * Stack Terminal permission required.
-     */
-    connect_stack_exec,
-    /**
-     * Executes a command on a given stack service container,
-     * and gives a callback to handle the output as it comes in.
+     * Executes a command on a given Stack / service / terminal,
+     * and gives callbacks to handle the output as it comes in.
      *
      * ```ts
      * await komodo.execute_stack_exec(
      *   {
      *     stack: "my-stack",
-     *     service: "database"
-     *     shell: "bash",
+     *     service: "my-service",
      *     command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
+     *     shell: "bash",
+     *     terminal: "name",
+     *     recreate: Types.TerminalRecreateMode.Always
      *   },
      *   {
      *     onLine: (line) => console.log(line),
@@ -619,30 +641,5 @@ export function KomodoClient(url: string, options: InitOptions) {
      * ```
      */
     execute_stack_exec,
-    /**
-     * Executes a command on a given stack service container,
-     * and returns a stream to process the output as it comes in.
-     *
-     * Note. The final line of the stream will usually be
-     * `__KOMODO_EXIT_CODE__:0`. The number
-     * is the exit code of the command.
-     *
-     * If this line is NOT present, it means the stream
-     * was terminated early, ie like running `exit`.
-     *
-     * ```ts
-     * const stream = await komodo.execute_stack_exec_stream({
-     *   stack: "my-stack",
-     *   service: "service1",
-     *   shell: "bash",
-     *   command: 'for i in {1..3}; do echo "$i"; sleep 1; done',
-     * });
-     *
-     * for await (const line of stream) {
-     *   console.log(line);
-     * }
-     * ```
-     */
-    execute_stack_exec_stream,
   };
 }

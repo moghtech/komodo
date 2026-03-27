@@ -1,26 +1,34 @@
-use derive_empty_traits::EmptyTraits;
-use resolver_api::Resolve;
+use mogh_auth_client::api::manage::CreateApiKeyResponse;
+use mogh_resolver::Resolve;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::{
-  api::user::CreateApiKeyResponse,
-  entities::{I64, NoData},
-};
+use crate::entities::{I64, NoData};
 
 use super::KomodoWriteRequest;
 
 //
 
-/// Admin only method to create an api key for a service user.
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/CreateApiKeyForServiceUser",
+  description = "**Admin only**. Create an api key for a service user.",
+  request_body(content = CreateApiKeyForServiceUser),
+  responses(
+    (status = 200, description = "The new alerter", body = crate::entities::alerter::AlerterSchema),
+  ),
+)]
+pub fn create_api_key_for_service_user() {}
+
+/// **Admin only**. Create an api key for a service user.
 /// Response: [CreateApiKeyResponse].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(CreateApiKeyForServiceUserResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct CreateApiKeyForServiceUser {
   /// Must be service user
   pub user_id: String,
@@ -37,15 +45,26 @@ pub type CreateApiKeyForServiceUserResponse = CreateApiKeyResponse;
 
 //
 
-/// Admin only method to delete an api key for a service user.
+#[cfg(feature = "utoipa")]
+#[utoipa::path(
+  post,
+  path = "/DeleteApiKeyForServiceUser",
+  description = "**Admin only.** Delete an api key for a service user.",
+  request_body(content = DeleteApiKeyForServiceUser),
+  responses(
+    (status = 200, description = "The new alerter", body = crate::entities::alerter::AlerterSchema),
+  ),
+)]
+pub fn delete_api_key_for_service_user() {}
+
+/// **Admin only.** Delete an api key for a service user.
 /// Response: [NoData].
 #[typeshare]
-#[derive(
-  Serialize, Deserialize, Debug, Clone, Resolve, EmptyTraits,
-)]
+#[derive(Serialize, Deserialize, Debug, Clone, Resolve)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[empty_traits(KomodoWriteRequest)]
 #[response(DeleteApiKeyForServiceUserResponse)]
-#[error(serror::Error)]
+#[error(mogh_error::Error)]
 pub struct DeleteApiKeyForServiceUser {
   pub key: String,
 }

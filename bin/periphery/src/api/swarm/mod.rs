@@ -1,0 +1,179 @@
+use anyhow::Context as _;
+use command::run_komodo_standard_command;
+use komodo_client::entities::{
+  docker::{SwarmLists, node::SwarmNode, task::SwarmTask},
+  update::Log,
+};
+use mogh_resolver::Resolve;
+use periphery_client::api::swarm::*;
+
+use crate::{
+  docker::{config::list_swarm_configs, stack::list_swarm_stacks},
+  state::docker_client,
+};
+
+mod config;
+mod secret;
+mod service;
+mod stack;
+
+impl Resolve<crate::api::Args> for PollSwarmStatus {
+  async fn resolve(
+    self,
+    _: &crate::api::Args,
+  ) -> anyhow::Result<PollSwarmStatusResponse> {
+    let client = docker_client().load();
+    let client = client
+      .iter()
+      .next()
+      .context("Could not connect to docker client")?;
+    let (inspect, nodes, services, tasks) = tokio::join!(
+      client.inspect_swarm(),
+      client.list_swarm_nodes(),
+      client.list_swarm_services(),
+      client.list_swarm_tasks(),
+    );
+    let services = services.unwrap_or_default();
+    let (stacks, configs, secrets) = tokio::join!(
+      list_swarm_stacks(&services),
+      list_swarm_configs(&services),
+      client.list_swarm_secrets(&services),
+    );
+    Ok(PollSwarmStatusResponse {
+      inspect: inspect.ok(),
+      lists: SwarmLists {
+        services,
+        nodes: nodes.unwrap_or_default(),
+        tasks: tasks.unwrap_or_default(),
+        stacks: stacks.unwrap_or_default(),
+        configs: configs.unwrap_or_default(),
+        secrets: secrets.unwrap_or_default(),
+      },
+    })
+  }
+}
+
+// ======
+//  Node
+// ======
+
+impl Resolve<crate::api::Args> for InspectSwarmNode {
+  async fn resolve(
+    self,
+    _: &crate::api::Args,
+  ) -> anyhow::Result<SwarmNode> {
+    let client = docker_client().load();
+    let client = client
+      .iter()
+      .next()
+      .context("Could not connect to docker client")?;
+    client.inspect_swarm_node(&self.node).await
+  }
+}
+
+impl Resolve<crate::api::Args> for UpdateSwarmNode {
+  #[instrument(
+    "UpdateSwarmNode",
+    skip_all,
+    fields(
+      id = args.id.to_string(),
+      core = args.core,
+      node = self.node,
+      update = serde_json::to_string(&self).unwrap_or_else(|e| e.to_string())
+    )
+  )]
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
+    let mut command = String::from("docker node update");
+
+    if let Some(role) = self.role {
+      command += " --role=";
+      command += role.as_ref();
+    }
+
+    if let Some(availability) = self.availability {
+      command += " --availability=";
+      command += availability.as_ref();
+    }
+
+    if let Some(label_add) = self.label_add {
+      for (key, value) in label_add {
+        command += " --label-add ";
+        command += &key;
+        if let Some(value) = value {
+          command += "=";
+          command += &value;
+        }
+      }
+    }
+
+    if let Some(label_rm) = self.label_rm {
+      for key in label_rm {
+        command += " --label-rm ";
+        command += &key;
+      }
+    }
+
+    command += " ";
+    command += &self.node;
+
+    Ok(
+      run_komodo_standard_command("Update Swarm Node", None, command)
+        .await,
+    )
+  }
+}
+
+impl Resolve<crate::api::Args> for RemoveSwarmNodes {
+  #[instrument(
+    "RemoveSwarmNodes",
+    skip_all,
+    fields(
+      id = args.id.to_string(),
+      core = args.core,
+      nodes = serde_json::to_string(&self.nodes).unwrap_or_else(|e| e.to_string()),
+      force = self.force,
+    )
+  )]
+  async fn resolve(
+    self,
+    args: &crate::api::Args,
+  ) -> anyhow::Result<Log> {
+    let mut command = String::from("docker node rm");
+    if self.force {
+      command += " --force"
+    }
+    for node in self.nodes {
+      command += " ";
+      command += &node;
+    }
+    Ok(
+      run_komodo_standard_command(
+        "Remove Swarm Nodes",
+        None,
+        command,
+      )
+      .await,
+    )
+  }
+}
+
+// ======
+//  Task
+// ======
+
+impl Resolve<crate::api::Args> for InspectSwarmTask {
+  async fn resolve(
+    self,
+    _: &crate::api::Args,
+  ) -> anyhow::Result<SwarmTask> {
+    let client = docker_client().load();
+    let client = client
+      .iter()
+      .next()
+      .context("Could not connect to docker client")?;
+    client.inspect_swarm_task(&self.task).await
+  }
+}

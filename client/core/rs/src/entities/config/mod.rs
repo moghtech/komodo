@@ -3,18 +3,24 @@ use std::sync::OnceLock;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
+#[cfg(feature = "cli")]
 pub mod cli;
+#[cfg(feature = "core")]
 pub mod core;
+#[cfg(feature = "periphery")]
 pub mod periphery;
 
+#[cfg(any(feature = "core", feature = "periphery"))]
 fn default_config_keywords() -> Vec<String> {
   vec![String::from("*config.*")]
 }
 
+#[cfg(any(feature = "cli", feature = "core", feature = "periphery"))]
 fn default_merge_nested_config() -> bool {
   true
 }
 
+#[cfg(any(feature = "cli", feature = "core", feature = "periphery"))]
 fn default_extend_config_arrays() -> bool {
   true
 }
@@ -112,6 +118,7 @@ impl DatabaseConfig {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GitProvider {
   /// The git provider domain. Default: `github.com`.
   #[serde(default = "default_git_provider")]
@@ -144,6 +151,7 @@ fn default_git_https() -> bool {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct DockerRegistry {
   /// The docker provider domain. Default: `docker.io`.
   #[serde(default = "default_docker_provider")]
@@ -173,6 +181,7 @@ fn default_docker_provider() -> String {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ProviderAccount {
   /// The account username. Required.
   #[serde(alias = "account")]

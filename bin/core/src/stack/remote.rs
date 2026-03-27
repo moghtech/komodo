@@ -11,12 +11,13 @@ use komodo_client::entities::{
 
 use crate::{config::core_config, helpers::git_token};
 
+#[derive(Default)]
 pub struct RemoteComposeContents {
   pub successful: Vec<StackRemoteFileContents>,
   pub errored: Vec<FileContents>,
   pub hash: Option<String>,
   pub message: Option<String>,
-  pub _logs: Vec<Log>,
+  // pub logs: Vec<Log>,
 }
 
 /// Returns Result<(read paths, error paths, logs, short hash, commit message)>
@@ -28,10 +29,22 @@ pub async fn get_repo_compose_contents(
 ) -> anyhow::Result<RemoteComposeContents> {
   let clone_args: RepoExecutionArgs =
     repo.map(Into::into).unwrap_or(stack.into());
-  let (repo_path, _logs, hash, message) =
+  let (repo_path, logs, hash, message) =
     ensure_remote_repo(clone_args)
       .await
       .context("Failed to clone stack repo")?;
+
+  // Ensure clone / pull successful,
+  // propogate error log -> 'errored' and return.
+  if let Some(failure) = logs.iter().find(|log| !log.success) {
+    return Ok(RemoteComposeContents {
+      errored: vec![FileContents {
+        path: format!("Failed at: {}", failure.stage),
+        contents: failure.combined(),
+      }],
+      ..Default::default()
+    });
+  }
 
   let run_directory = repo_path.join(&stack.config.run_directory);
   // This will remove any intermediate '/./' which can be a problem for some OS.
@@ -69,7 +82,6 @@ pub async fn get_repo_compose_contents(
     errored,
     hash,
     message,
-    _logs,
   })
 }
 

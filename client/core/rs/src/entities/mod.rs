@@ -3,17 +3,17 @@ use std::{
   str::FromStr,
 };
 
-use anyhow::Context;
+use anyhow::{Context, anyhow};
 use async_timing_util::unix_timestamp_ms;
-use clap::Parser;
-use derive_empty_traits::EmptyTraits;
-use derive_variants::{EnumVariants, ExtractVariant};
+use clap::{Parser, ValueEnum};
+use mogh_error::{AddStatusCodeError, Serror};
+use rand::RngExt as _;
+use reqwest::StatusCode;
 use serde::{
   Deserialize, Serialize,
   de::{Visitor, value::MapAccessDeserializer},
 };
-use serror::Serror;
-use strum::{AsRefStr, Display, EnumString};
+use strum::{AsRefStr, Display, EnumDiscriminants, EnumString};
 use typeshare::typeshare;
 
 use crate::{
@@ -41,6 +41,8 @@ pub mod deployment;
 pub mod docker;
 /// Subtypes of [LogConfig][logger::LogConfig].
 pub mod logger;
+/// Subtypes of [CreationKey][creation_key::CreationKey]
+pub mod onboarding_key;
 /// Subtypes of [Permission][permission::Permission].
 pub mod permission;
 /// Subtypes of [Procedure][procedure::Procedure].
@@ -59,10 +61,14 @@ pub mod server;
 pub mod stack;
 /// Subtypes for server stats reporting.
 pub mod stats;
+/// Subtypes of [Swarm][swarm::Swarm].
+pub mod swarm;
 /// Subtypes of [ResourceSync][sync::ResourceSync]
 pub mod sync;
 /// Subtypes of [Tag][tag::Tag].
 pub mod tag;
+/// Subtypes of [Terminal][terminal::Terminal].
+pub mod terminal;
 /// Subtypes of [ResourcesToml][toml::ResourcesToml].
 pub mod toml;
 /// Subtypes of [Update][update::Update].
@@ -94,20 +100,29 @@ pub type _Serror = Serror;
 /// Represents an empty json object: `{}`
 #[typeshare]
 #[derive(
-  Debug,
-  Clone,
-  Default,
-  PartialEq,
-  Serialize,
-  Deserialize,
-  Parser,
-  EmptyTraits,
+  Debug, Clone, Default, PartialEq, Serialize, Deserialize, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct NoData {}
 
 pub trait MergePartial: Sized {
   type Partial;
   fn merge_partial(self, partial: Self::Partial) -> Self;
+}
+
+pub fn random_string(length: usize) -> String {
+  rand::rng()
+    .sample_iter(&rand::distr::Alphanumeric)
+    .take(length)
+    .map(char::from)
+    .collect()
+}
+
+pub fn random_bytes(length: usize) -> Vec<u8> {
+  rand::rng()
+    .sample_iter(&rand::distr::Alphanumeric)
+    .take(length)
+    .collect()
 }
 
 pub fn all_logs_success(logs: &[update::Log]) -> bool {
@@ -126,6 +141,10 @@ pub fn optional_string(string: impl Into<String>) -> Option<String> {
   } else {
     Some(string)
   }
+}
+
+pub fn optional_str(str: &str) -> Option<&str> {
+  if str.is_empty() { None } else { Some(str) }
 }
 
 pub fn to_general_name(name: &str) -> String {
@@ -161,8 +180,18 @@ pub fn komodo_timestamp() -> i64 {
   unix_timestamp_ms() as i64
 }
 
+/// ⚠️ DO NOT USE DIRECTLY
+/// This is a copy of [mogh_auth_client::api::manage::CreateApiKeyResponse] for local typeshare.
+/// Use the one from mogh auth instead.
+#[typeshare]
+pub struct CreateApiKeyResponse {
+  pub key: String,
+  pub secret: String,
+}
+
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct MongoIdObj {
   #[serde(rename = "$oid")]
   pub oid: String,
@@ -170,6 +199,7 @@ pub struct MongoIdObj {
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct __Serror {
   pub error: String,
   pub trace: Vec<String>,
@@ -179,6 +209,7 @@ pub struct __Serror {
 #[derive(
   Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SystemCommand {
   #[serde(default)]
   pub path: String,
@@ -206,6 +237,7 @@ impl SystemCommand {
 
 #[typeshare]
 #[derive(Serialize, Debug, Clone, Copy, Default, PartialEq)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Version {
   pub major: i32,
   pub minor: i32,
@@ -328,8 +360,9 @@ impl Version {
 
 #[typeshare]
 #[derive(
-  Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize,
+  Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, Parser,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct EnvironmentVar {
   pub variable: String,
   pub value: String,
@@ -348,6 +381,7 @@ pub fn environment_vars_from_str(
 
 #[typeshare]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct LatestCommit {
   pub hash: String,
   pub message: String,
@@ -355,6 +389,7 @@ pub struct LatestCommit {
 
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct FileContents {
   /// The path to the file
   pub path: String,
@@ -362,9 +397,97 @@ pub struct FileContents {
   pub contents: String,
 }
 
+/// Example:
+/// apache/tika@sha256:c0154cb95587cde64be74f35ada1a2bd7892219f3f0ac3c9dc6cab34046b3573
+#[typeshare]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+pub struct ImageDigest(String);
+
+impl ImageDigest {
+  pub fn new(image: &str, digest: &str) -> Self {
+    Self(format!("{image}@{digest}"))
+  }
+
+  /// Handles incoming forms:
+  /// - image-name@sha256:HASH
+  /// - sha256:HASH
+  pub fn parse(digest: &str) -> Option<Self> {
+    if digest.contains('@') {
+      Some(Self(digest.to_string()))
+    } else if digest.starts_with("sha256:") {
+      Some(Self(format!("__unknown__@{digest}")))
+    } else {
+      None
+    }
+  }
+
+  /// Handles incoming forms:
+  /// - image-name@sha256:HASH
+  /// - sha256:HASH (replaces image with __unknown__)
+  pub fn vec(image_digests: &[String]) -> Vec<Self> {
+    image_digests
+      .iter()
+      .filter_map(|digest| ImageDigest::parse(digest))
+      .collect()
+  }
+
+  pub fn into_inner(self) -> String {
+    self.0
+  }
+
+  pub fn as_str(&self) -> &str {
+    self.0.as_str()
+  }
+
+  /// Assumes this ImageDigest represents latest.
+  /// Checks all the digests against latest, if none are equal
+  /// then there is an update available.
+  pub fn update_available(
+    &self,
+    current_digests: &[ImageDigest],
+  ) -> bool {
+    let Some(latest_digest) = self.digest() else {
+      return false;
+    };
+    let digests = current_digests
+      .iter()
+      .filter_map(|digest| digest.digest())
+      .collect::<Vec<_>>();
+    // No valid digests to compare to,
+    // avoid potentially false positive
+    if digests.is_empty() {
+      return false;
+    }
+    // If the image digests do not contain latest
+    // digest, then there is update available.
+    !digests.contains(&latest_digest)
+  }
+
+  pub fn is_empty(&self) -> bool {
+    self.0.is_empty()
+  }
+
+  /// Returns (image, digest)
+  pub fn image_digest(&self) -> Option<(&str, &str)> {
+    self.0.split_once('@')
+  }
+
+  /// Get the image part of the digest
+  pub fn image(&self) -> Option<&str> {
+    self.image_digest().map(|(image, _)| image)
+  }
+
+  /// Get the image part of the digest
+  pub fn digest(&self) -> Option<&str> {
+    self.image_digest().map(|(_, digest)| digest)
+  }
+}
+
 /// Represents a scheduled maintenance window
 #[typeshare]
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct MaintenanceWindow {
   /// Name for the maintenance window (required)
   pub name: String,
@@ -408,6 +531,7 @@ fn default_enabled() -> bool {
 #[derive(
   Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum DefaultRepoFolder {
   /// /${root_directory}/stacks
   Stacks,
@@ -423,6 +547,7 @@ pub enum DefaultRepoFolder {
 
 #[typeshare]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct RepoExecutionArgs {
   /// Resource name (eg Build name, Repo name)
   pub name: String,
@@ -579,10 +704,12 @@ impl From<&self::sync::ResourceSync> for RepoExecutionArgs {
 
 #[typeshare]
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct RepoExecutionResponse {
   /// Response logs
   pub logs: Vec<Log>,
   /// Absolute path to the repo root on the host.
+  #[cfg_attr(feature = "utoipa", schema(value_type = String))]
   pub path: PathBuf,
   /// Latest short commit hash, if it could be retrieved
   pub commit_hash: Option<String>,
@@ -604,6 +731,7 @@ pub struct RepoExecutionResponse {
   Display,
   EnumString,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "snake_case")]
 #[strum(serialize_all = "snake_case")]
 pub enum Timelength {
@@ -611,6 +739,14 @@ pub enum Timelength {
   #[serde(rename = "1-sec")]
   #[strum(serialize = "1-sec")]
   OneSecond,
+  /// `1-sec`
+  #[serde(rename = "2-sec")]
+  #[strum(serialize = "2-sec")]
+  TwoSeconds,
+  /// `1-sec`
+  #[serde(rename = "3-sec")]
+  #[strum(serialize = "3-sec")]
+  ThreeSeconds,
   /// `5-sec`
   #[serde(rename = "5-sec")]
   #[strum(serialize = "5-sec")]
@@ -636,6 +772,10 @@ pub enum Timelength {
   #[serde(rename = "2-min")]
   #[strum(serialize = "2-min")]
   TwoMinutes,
+  /// `3-min`
+  #[serde(rename = "3-min")]
+  #[strum(serialize = "3-min")]
+  ThreeMinutes,
   /// `5-min`
   #[serde(rename = "5-min")]
   #[strum(serialize = "5-min")]
@@ -660,6 +800,10 @@ pub enum Timelength {
   #[serde(rename = "2-hr")]
   #[strum(serialize = "2-hr")]
   TwoHours,
+  /// `3-hr`
+  #[serde(rename = "3-hr")]
+  #[strum(serialize = "3-hr")]
+  ThreeHours,
   /// `6-hr`
   #[serde(rename = "6-hr")]
   #[strum(serialize = "6-hr")]
@@ -676,10 +820,14 @@ pub enum Timelength {
   #[serde(rename = "1-day")]
   #[strum(serialize = "1-day")]
   OneDay,
+  /// `2-day`
+  #[serde(rename = "2-day")]
+  #[strum(serialize = "2-day")]
+  TwoDays,
   /// `3-day`
   #[serde(rename = "3-day")]
   #[strum(serialize = "3-day")]
-  ThreeDay,
+  ThreeDays,
   /// `1-wk`
   #[serde(rename = "1-wk")]
   #[strum(serialize = "1-wk")]
@@ -717,6 +865,7 @@ impl TryInto<async_timing_util::Timelength> for Timelength {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum DayOfWeek {
   #[default]
   #[serde(alias = "monday", alias = "Mon", alias = "mon")]
@@ -770,6 +919,7 @@ pub enum DayOfWeek {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum MaintenanceScheduleType {
   /// Daily at the specified time
   #[default]
@@ -796,6 +946,7 @@ pub enum MaintenanceScheduleType {
   Serialize,
   Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum IanaTimezone {
   /// UTC−12:00
   #[serde(rename = "Etc/GMT+12")]
@@ -1004,14 +1155,31 @@ pub enum IanaTimezone {
   EnumString,
   AsRefStr,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum Operation {
   // do nothing
   #[default]
   None,
 
-  // server
+  // Swarm
+  CreateSwarm,
+  UpdateSwarm,
+  RenameSwarm,
+  DeleteSwarm,
+  RemoveSwarmNodes,
+  RemoveSwarmStacks,
+  RemoveSwarmServices,
+  CreateSwarmConfig,
+  RotateSwarmConfig,
+  RemoveSwarmConfigs,
+  CreateSwarmSecret,
+  RotateSwarmSecret,
+  RemoveSwarmSecrets,
+
+  // Server
   CreateServer,
   UpdateServer,
+  UpdateServerKey,
   DeleteServer,
   RenameServer,
   StartContainer,
@@ -1037,7 +1205,7 @@ pub enum Operation {
   PruneBuildx,
   PruneSystem,
 
-  // stack
+  // Stack
   CreateStack,
   UpdateStack,
   RenameStack,
@@ -1053,8 +1221,9 @@ pub enum Operation {
   StopStack,
   DestroyStack,
   RunStackService,
+  CheckStackForUpdate,
 
-  // stack (service)
+  // Stack (Service)
   DeployStackService,
   PullStackService,
   StartStackService,
@@ -1064,7 +1233,7 @@ pub enum Operation {
   StopStackService,
   DestroyStackService,
 
-  // deployment
+  // Deployment
   CreateDeployment,
   UpdateDeployment,
   RenameDeployment,
@@ -1077,8 +1246,9 @@ pub enum Operation {
   UnpauseDeployment,
   StopDeployment,
   DestroyDeployment,
+  CheckDeploymentForUpdate,
 
-  // build
+  // Build
   CreateBuild,
   UpdateBuild,
   RenameBuild,
@@ -1087,7 +1257,7 @@ pub enum Operation {
   CancelBuild,
   WriteDockerfile,
 
-  // repo
+  // Repo
   CreateRepo,
   UpdateRepo,
   RenameRepo,
@@ -1097,35 +1267,21 @@ pub enum Operation {
   BuildRepo,
   CancelRepoBuild,
 
-  // procedure
+  // Procedure
   CreateProcedure,
   UpdateProcedure,
   RenameProcedure,
   DeleteProcedure,
   RunProcedure,
 
-  // action
+  // Action
   CreateAction,
   UpdateAction,
   RenameAction,
   DeleteAction,
   RunAction,
 
-  // builder
-  CreateBuilder,
-  UpdateBuilder,
-  RenameBuilder,
-  DeleteBuilder,
-
-  // alerter
-  CreateAlerter,
-  UpdateAlerter,
-  RenameAlerter,
-  DeleteAlerter,
-  TestAlerter,
-  SendAlert,
-
-  // sync
+  // Sync
   CreateResourceSync,
   UpdateResourceSync,
   RenameResourceSync,
@@ -1134,22 +1290,38 @@ pub enum Operation {
   CommitSync,
   RunSync,
 
-  // maintenance
+  // Builder
+  CreateBuilder,
+  UpdateBuilder,
+  RenameBuilder,
+  DeleteBuilder,
+
+  // Alerter
+  CreateAlerter,
+  UpdateAlerter,
+  RenameAlerter,
+  DeleteAlerter,
+  TestAlerter,
+  SendAlert,
+
+  // Maintenance
   ClearRepoCache,
   BackupCoreDatabase,
   GlobalAutoUpdate,
+  RotateAllServerKeys,
+  RotateCoreKeys,
 
-  // variable
+  // Variable
   CreateVariable,
   UpdateVariableValue,
   DeleteVariable,
 
-  // git provider
+  // Git Provider
   CreateGitProviderAccount,
   UpdateGitProviderAccount,
   DeleteGitProviderAccount,
 
-  // docker registry
+  // Docker Registry
   CreateDockerRegistryAccount,
   UpdateDockerRegistryAccount,
   DeleteDockerRegistryAccount,
@@ -1169,6 +1341,7 @@ pub enum Operation {
   Clone,
   Copy,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum SearchCombinator {
   #[default]
   Or,
@@ -1189,6 +1362,7 @@ pub enum SearchCombinator {
   Display,
   EnumString,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "UPPERCASE")]
 #[strum(serialize_all = "UPPERCASE")]
 pub enum TerminationSignal {
@@ -1213,26 +1387,43 @@ pub enum TerminationSignal {
   Hash,
   Serialize,
   Deserialize,
-  EnumVariants,
+  EnumDiscriminants,
 )]
-#[variant_derive(
-  Debug,
-  Clone,
-  Copy,
-  PartialEq,
-  Eq,
-  PartialOrd,
-  Ord,
-  Hash,
-  Serialize,
-  Deserialize,
-  Display,
-  EnumString,
-  AsRefStr
+#[strum_discriminants(name(ResourceTargetVariant))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
+#[cfg_attr(
+  not(feature = "utoipa"),
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr,
+    ValueEnum,
+  ))
+)]
+#[cfg_attr(
+  feature = "utoipa",
+  strum_discriminants(derive(
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    AsRefStr,
+    ValueEnum,
+    utoipa::ToSchema,
+  ))
 )]
 #[serde(tag = "type", content = "id")]
 pub enum ResourceTarget {
   System(String),
+  Swarm(String),
   Server(String),
   Stack(String),
   Deployment(String),
@@ -1261,6 +1452,7 @@ impl ResourceTarget {
   pub fn is_empty(&self) -> bool {
     match self {
       ResourceTarget::System(id) => id.is_empty(),
+      ResourceTarget::Swarm(id) => id.is_empty(),
       ResourceTarget::Server(id) => id.is_empty(),
       ResourceTarget::Stack(id) => id.is_empty(),
       ResourceTarget::Deployment(id) => id.is_empty(),
@@ -1274,11 +1466,16 @@ impl ResourceTarget {
     }
   }
 
+  pub fn extract_variant(&self) -> ResourceTargetVariant {
+    self.into()
+  }
+
   pub fn extract_variant_id(
     &self,
   ) -> (ResourceTargetVariant, &String) {
     let id = match self {
       ResourceTarget::System(id) => id,
+      ResourceTarget::Swarm(id) => id,
       ResourceTarget::Server(id) => id,
       ResourceTarget::Stack(id) => id,
       ResourceTarget::Build(id) => id,
@@ -1290,19 +1487,7 @@ impl ResourceTarget {
       ResourceTarget::Action(id) => id,
       ResourceTarget::ResourceSync(id) => id,
     };
-    (self.extract_variant(), id)
-  }
-}
-
-impl From<&build::Build> for ResourceTarget {
-  fn from(build: &build::Build) -> Self {
-    Self::Build(build.id.clone())
-  }
-}
-
-impl From<&deployment::Deployment> for ResourceTarget {
-  fn from(deployment: &deployment::Deployment) -> Self {
-    Self::Deployment(deployment.id.clone())
+    (self.into(), id)
   }
 }
 
@@ -1312,9 +1497,45 @@ impl From<&server::Server> for ResourceTarget {
   }
 }
 
+impl From<&stack::Stack> for ResourceTarget {
+  fn from(stack: &stack::Stack) -> Self {
+    Self::Stack(stack.id.clone())
+  }
+}
+
+impl From<&deployment::Deployment> for ResourceTarget {
+  fn from(deployment: &deployment::Deployment) -> Self {
+    Self::Deployment(deployment.id.clone())
+  }
+}
+
+impl From<&build::Build> for ResourceTarget {
+  fn from(build: &build::Build) -> Self {
+    Self::Build(build.id.clone())
+  }
+}
+
 impl From<&repo::Repo> for ResourceTarget {
   fn from(repo: &repo::Repo) -> Self {
     Self::Repo(repo.id.clone())
+  }
+}
+
+impl From<&procedure::Procedure> for ResourceTarget {
+  fn from(procedure: &procedure::Procedure) -> Self {
+    Self::Procedure(procedure.id.clone())
+  }
+}
+
+impl From<&action::Action> for ResourceTarget {
+  fn from(action: &action::Action) -> Self {
+    Self::Action(action.id.clone())
+  }
+}
+
+impl From<&sync::ResourceSync> for ResourceTarget {
+  fn from(resource_sync: &sync::ResourceSync) -> Self {
+    Self::ResourceSync(resource_sync.id.clone())
   }
 }
 
@@ -1330,45 +1551,22 @@ impl From<&alerter::Alerter> for ResourceTarget {
   }
 }
 
-impl From<&procedure::Procedure> for ResourceTarget {
-  fn from(procedure: &procedure::Procedure) -> Self {
-    Self::Procedure(procedure.id.clone())
-  }
-}
-
-impl From<&sync::ResourceSync> for ResourceTarget {
-  fn from(resource_sync: &sync::ResourceSync) -> Self {
-    Self::ResourceSync(resource_sync.id.clone())
-  }
-}
-
-impl From<&stack::Stack> for ResourceTarget {
-  fn from(stack: &stack::Stack) -> Self {
-    Self::Stack(stack.id.clone())
-  }
-}
-
-impl From<&action::Action> for ResourceTarget {
-  fn from(action: &action::Action) -> Self {
-    Self::Action(action.id.clone())
-  }
-}
-
 impl ResourceTargetVariant {
   /// These need to use snake case
   pub fn toml_header(&self) -> &'static str {
     match self {
       ResourceTargetVariant::System => "system",
-      ResourceTargetVariant::Build => "build",
-      ResourceTargetVariant::Builder => "builder",
-      ResourceTargetVariant::Deployment => "deployment",
+      ResourceTargetVariant::Swarm => "swarm",
       ResourceTargetVariant::Server => "server",
-      ResourceTargetVariant::Repo => "repo",
-      ResourceTargetVariant::Alerter => "alerter",
-      ResourceTargetVariant::Procedure => "procedure",
-      ResourceTargetVariant::ResourceSync => "resource_sync",
       ResourceTargetVariant::Stack => "stack",
+      ResourceTargetVariant::Deployment => "deployment",
+      ResourceTargetVariant::Build => "build",
+      ResourceTargetVariant::Repo => "repo",
+      ResourceTargetVariant::Procedure => "procedure",
       ResourceTargetVariant::Action => "action",
+      ResourceTargetVariant::ResourceSync => "resource_sync",
+      ResourceTargetVariant::Builder => "builder",
+      ResourceTargetVariant::Alerter => "alerter",
     }
   }
 }
@@ -1377,6 +1575,7 @@ impl ResourceTargetVariant {
 #[derive(
   Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum ScheduleFormat {
   #[default]
   English,
@@ -1387,6 +1586,7 @@ pub enum ScheduleFormat {
 #[derive(
   Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[serde(rename_all = "snake_case")]
 pub enum FileFormat {
   #[default]
@@ -1406,23 +1606,18 @@ pub fn resource_link(
 ) -> String {
   let path = match resource_type {
     ResourceTargetVariant::System => unreachable!(),
-    ResourceTargetVariant::Build => format!("/builds/{id}"),
-    ResourceTargetVariant::Builder => {
-      format!("/builders/{id}")
-    }
-    ResourceTargetVariant::Deployment => {
-      format!("/deployments/{id}")
+    ResourceTargetVariant::Swarm => format!("/swarms/{id}"),
+    ResourceTargetVariant::Server => {
+      format!("/servers/{id}")
     }
     ResourceTargetVariant::Stack => {
       format!("/stacks/{id}")
     }
-    ResourceTargetVariant::Server => {
-      format!("/servers/{id}")
+    ResourceTargetVariant::Deployment => {
+      format!("/deployments/{id}")
     }
+    ResourceTargetVariant::Build => format!("/builds/{id}"),
     ResourceTargetVariant::Repo => format!("/repos/{id}"),
-    ResourceTargetVariant::Alerter => {
-      format!("/alerters/{id}")
-    }
     ResourceTargetVariant::Procedure => {
       format!("/procedures/{id}")
     }
@@ -1432,6 +1627,60 @@ pub fn resource_link(
     ResourceTargetVariant::ResourceSync => {
       format!("/resource-syncs/{id}")
     }
+    ResourceTargetVariant::Builder => {
+      format!("/builders/{id}")
+    }
+    ResourceTargetVariant::Alerter => {
+      format!("/alerters/{id}")
+    }
   };
   format!("{host}{path}")
+}
+
+#[allow(clippy::large_enum_variant)]
+pub enum SwarmOrServer {
+  Swarm(swarm::Swarm),
+  Server(server::Server),
+  None,
+}
+
+impl SwarmOrServer {
+  pub fn verify_has_target(&self) -> mogh_error::Result<()> {
+    if let Self::None = self {
+      Err(
+        anyhow!("Must attach either swarm or server")
+          .status_code(StatusCode::BAD_REQUEST),
+      )
+    } else {
+      Ok(())
+    }
+  }
+
+  pub fn swarm_id(&self) -> Option<&str> {
+    let Self::Swarm(swarm) = self else {
+      return None;
+    };
+    Some(&swarm.id)
+  }
+
+  pub fn swarm_name(&self) -> Option<&str> {
+    let Self::Swarm(swarm) = self else {
+      return None;
+    };
+    Some(&swarm.name)
+  }
+
+  pub fn server_id(&self) -> Option<&str> {
+    let Self::Server(server) = self else {
+      return None;
+    };
+    Some(&server.id)
+  }
+
+  pub fn server_name(&self) -> Option<&str> {
+    let Self::Server(server) = self else {
+      return None;
+    };
+    Some(&server.name)
+  }
 }

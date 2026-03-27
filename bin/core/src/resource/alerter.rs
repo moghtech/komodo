@@ -1,5 +1,4 @@
 use database::mungos::mongodb::Collection;
-use derive_variants::ExtractVariant;
 use komodo_client::entities::{
   Operation, ResourceTarget, ResourceTargetVariant,
   alerter::{
@@ -44,7 +43,7 @@ impl super::KomodoResource for Alerter {
       tags: alerter.tags,
       resource_type: ResourceTargetVariant::Alerter,
       info: AlerterListItemInfo {
-        endpoint_type: alerter.config.endpoint.extract_variant(),
+        endpoint_type: alerter.config.endpoint.into(),
         enabled: alerter.config.enabled,
       },
     }

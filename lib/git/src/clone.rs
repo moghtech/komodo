@@ -1,7 +1,7 @@
 use std::{io::ErrorKind, path::Path};
 
 use anyhow::Context;
-use command::run_komodo_command;
+use command::run_komodo_standard_command;
 use formatting::format_serror;
 use komodo_client::entities::{
   RepoExecutionArgs, RepoExecutionResponse, all_logs_success,
@@ -16,10 +16,6 @@ use crate::get_commit_hash_log;
 ///
 /// Assumes all interpolation is already done and takes the list of replacers
 /// for the On Clone command.
-#[tracing::instrument(
-  level = "debug",
-  skip(clone_args, access_token)
-)]
 pub async fn clone<T>(
   clone_args: T,
   root_repo_dir: &Path,
@@ -74,7 +70,8 @@ where
     args.branch
   );
 
-  let mut log = run_komodo_command("Clone Repo", None, command).await;
+  let mut log =
+    run_komodo_standard_command("Clone Repo", None, command).await;
 
   if let Some(token) = access_token {
     log.command = log.command.replace(&token, "<TOKEN>");
@@ -89,7 +86,7 @@ where
   }
 
   if let Some(commit) = args.commit {
-    let reset_log = run_komodo_command(
+    let reset_log = run_komodo_standard_command(
       "set commit",
       res.path.as_path(),
       format!("git reset --hard {commit}",),

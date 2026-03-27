@@ -20,13 +20,12 @@ services:
       - mongo-data:/data/db
       - mongo-config:/data/configdb
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${KOMODO_DB_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${KOMODO_DB_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME: ${KOMODO_DATABASE_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${KOMODO_DATABASE_PASSWORD}
   
   core:
-    image: ghcr.io/moghtech/komodo-core:${COMPOSE_KOMODO_IMAGE_TAG:-latest}
-    labels:
-      komodo.skip: # Prevent Komodo from stopping with StopAllContainers
+    image: ghcr.io/moghtech/komodo-core:${COMPOSE_KOMODO_IMAGE_TAG:-2}
+    init: true
     restart: unless-stopped
     depends_on:
       - mongo
@@ -35,41 +34,49 @@ services:
     env_file: ./compose.env
     environment:
       KOMODO_DATABASE_ADDRESS: mongo:27017
-      KOMODO_DATABASE_USERNAME: ${KOMODO_DB_USERNAME}
-      KOMODO_DATABASE_PASSWORD: ${KOMODO_DB_PASSWORD}
     volumes:
+      ## Attach the Core / Periphery communication keys
+      - keys:/config/keys
       ## Store dated backups of the database - https://komo.do/docs/setup/backup
       - ${COMPOSE_KOMODO_BACKUPS_PATH}:/backups
       ## Store sync files on server
       # - /path/to/syncs:/syncs
       ## Optionally mount a custom core.config.toml
       # - /path/to/core.config.toml:/config/config.toml
-    ## Allows for systemd Periphery connection at 
-    ## "https://host.docker.internal:8120"
-    # extra_hosts:
-    #   - host.docker.internal:host-gateway
+      ## Optionally mount custom root CA certificate to trust
+      # - /path/to/root_ca.crt:/usr/local/share/ca-certificates/root_ca.crt
 
   ## Deploy Periphery container using this block,
   ## or deploy the Periphery binary with systemd using 
   ## https://github.com/moghtech/komodo/tree/main/scripts
   periphery:
-    image: ghcr.io/moghtech/komodo-periphery:${COMPOSE_KOMODO_IMAGE_TAG:-latest}
-    labels:
-      komodo.skip: # Prevent Komodo from stopping with StopAllContainers
+    image: ghcr.io/moghtech/komodo-periphery:${COMPOSE_KOMODO_IMAGE_TAG:-2}
+    init: true
     restart: unless-stopped
+    depends_on:
+      - core
     env_file: ./compose.env
     volumes:
+      ## Attach the Core / Periphery communication keys
+      - keys:/config/keys
       ## Mount external docker socket
       - /var/run/docker.sock:/var/run/docker.sock
       ## Allow Periphery to see processes outside of container
       - /proc:/proc
       ## Specify the Periphery agent root directory.
+      ## All your configs / repos must be children of this directory for Periphery to be able to see it.
       ## Must be the same inside and outside the container,
       ## or docker will get confused. See https://github.com/moghtech/komodo/discussions/180.
       ## Default: /etc/komodo.
       - ${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}:${PERIPHERY_ROOT_DIRECTORY:-/etc/komodo}
+      ## Optionally mount a custom periphery.config.toml
+      # - /path/to/periphery.config.toml:/config/config.toml
+      ## Optionally mount custom root CA certificate to trust
+      # - /path/to/root_ca.crt:/usr/local/share/ca-certificates/root_ca.crt
 
 volumes:
   # Mongo
   mongo-data:
   mongo-config:
+  # Core / Periphery
+  keys:

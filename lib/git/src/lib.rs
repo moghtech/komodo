@@ -1,12 +1,11 @@
 use std::path::Path;
 
-use anyhow::{Context, anyhow};
+use anyhow::anyhow;
+use command::run_standard_command;
 use formatting::{bold, muted};
 use komodo_client::entities::{
   LatestCommit, komodo_timestamp, update::Log,
 };
-use run_command::async_run_command;
-use tracing::instrument;
 
 mod clone;
 mod commit;
@@ -22,79 +21,68 @@ pub use crate::{
   pull_or_clone::pull_or_clone,
 };
 
-#[instrument(level = "debug")]
 pub async fn get_commit_hash_info(
   repo_dir: &Path,
 ) -> anyhow::Result<LatestCommit> {
-  let command = format!(
-    "cd {} && git rev-parse --short HEAD && git rev-parse HEAD && git log -1 --pretty=%B",
-    repo_dir.display()
-  );
-  let output = async_run_command(&command).await;
-  let mut split = output.stdout.split('\n');
-  let (hash, _, message) = (
-    split
-      .next()
-      .context("Failed to get short commit hash")?
-      .to_string(),
-    split.next().context("failed to get long commit hash")?,
-    split
-      .next()
-      .context("Failed to get commit message")?
-      .to_string(),
-  );
+  let hash =
+    run_standard_command("git rev-parse --short HEAD", repo_dir)
+      .await;
+  let hash = if hash.status.success() {
+    hash.stdout.trim().to_string()
+  } else {
+    return Err(anyhow!(
+      "Failed to get short hash | {}",
+      hash.stderr
+    ));
+  };
+  let message =
+    run_standard_command("git log -1 --pretty=%B", repo_dir).await;
+  let message = if message.status.success() {
+    message.stdout.trim().to_string()
+  } else {
+    return Err(anyhow!(
+      "Failed to get commit message | {}",
+      message.stderr
+    ));
+  };
   Ok(LatestCommit { hash, message })
 }
 /// returns (Log, commit hash, commit message)
-#[instrument(level = "debug")]
 pub async fn get_commit_hash_log(
   repo_dir: &Path,
 ) -> anyhow::Result<(Log, String, String)> {
   let start_ts = komodo_timestamp();
-  let command = format!(
-    "cd {} && git rev-parse --short HEAD && git rev-parse HEAD && git log -1 --pretty=%B",
-    repo_dir.display()
-  );
-  let output = async_run_command(&command).await;
-  let mut split = output.stdout.split('\n');
-  let (short_hash, _, msg) = (
-    split
-      .next()
-      .context("Failed to get short commit hash")?
-      .to_string(),
-    split.next().context("Failed to get long commit hash")?,
-    split
-      .next()
-      .context("Failed to get commit message")?
-      .to_string(),
-  );
+  let LatestCommit { hash, message } =
+    get_commit_hash_info(repo_dir).await?;
   let log = Log {
     stage: "Latest Commit".into(),
-    command,
+    command: String::from(
+      "git rev-parse --short HEAD && git log -1 --pretty=%B",
+    ),
     stdout: format!(
       "{} {}\n{} {}",
       muted("hash:"),
-      bold(&short_hash),
+      bold(&hash),
       muted("message:"),
-      bold(&msg),
+      bold(&message),
     ),
     stderr: String::new(),
     success: true,
     start_ts,
     end_ts: komodo_timestamp(),
   };
-  Ok((log, short_hash, msg))
+  Ok((log, hash, message))
 }
 
 /// Gets the remote url, with `.git` stripped from the end.
 pub async fn get_remote_url(path: &Path) -> anyhow::Result<String> {
-  let command =
-    format!("cd {} && git remote show origin", path.display());
-  let output = async_run_command(&command).await;
+  let output =
+    run_standard_command("git remote show origin", path).await;
   if output.success() {
     Ok(
       output
         .stdout
+        .trim()
         .strip_suffix(".git")
         .map(str::to_string)
         .unwrap_or(output.stdout),
