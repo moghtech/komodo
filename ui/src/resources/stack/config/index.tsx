@@ -334,9 +334,9 @@ export default function StackConfig({
                         ],
                       });
                     }}
-                    w="fit-content"
+                    leftSection={<ICONS.Add size="1rem" />}
+                    w={{ base: "85%", lg: 400 }}
                   >
-                    <ICONS.Add size="1rem" />
                     Add Env File
                   </Button>
                 )}
