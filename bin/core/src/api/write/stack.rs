@@ -775,7 +775,13 @@ pub async fn check_stack_for_update_inner(
 
     if image.is_empty() ||
       // Images with a hardcoded digest can't have update.
-      image.contains('@')
+      image.contains('@') ||
+      // Services explicitly excluded from global auto-update checks.
+      // Manual checks should still evaluate all services.
+      (wait_for_auto_update &&
+        stack.config.ignore_polling_services.contains(
+          &service.service_name,
+        ))
     {
       service.image_digest = None;
       continue;

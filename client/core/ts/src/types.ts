@@ -2455,6 +2455,12 @@ export interface StackConfig {
 	/** Whether to poll for any updates to the images. */
 	poll_for_updates?: boolean;
 	/**
+	 * Ignore certain services during Global Auto Update polling.
+	 * Services listed here are skipped only in the global auto-update flow.
+	 * Manual checks still include all services.
+	 */
+	ignore_polling_services?: string[];
+	/**
 	 * Whether to automatically redeploy when
 	 * newer images are found. Will implicitly
 	 * enable `poll_for_updates`, you don't need to

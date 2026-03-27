@@ -2604,6 +2604,12 @@ export interface StackConfig {
      */
     auto_update?: boolean;
     /**
+     * Ignore certain services during Global Auto Update polling.
+     * Services listed here are skipped only in the global auto-update flow.
+     * Manual checks still include all services.
+     */
+    ignore_polling_services?: string[];
+    /**
      * If auto update is enabled, Komodo will
      * by default only update the specific services
      * with image updates. If this parameter is set to true,
