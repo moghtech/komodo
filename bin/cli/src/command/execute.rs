@@ -28,7 +28,7 @@ pub async fn handle(
   }
 
   println!("\n{}: Execution", "Mode".dimmed());
-  
+
   macro_rules! handle_execution {
     (
       execute: [$($ExecVariant:ident),* $(,)?],
