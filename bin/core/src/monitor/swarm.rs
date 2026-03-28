@@ -6,7 +6,6 @@ use std::{
 use anyhow::anyhow;
 use async_timing_util::wait_until_timelength;
 use database::mungos::find::find_collect;
-use formatting::format_serror;
 use futures_util::future::join_all;
 use komodo_client::entities::{
   docker::node::NodeState,
@@ -108,9 +107,9 @@ pub async fn refresh_swarm_cache(swarm: &Swarm, force: bool) {
           state: SwarmState::Unknown,
           inspect: None,
           lists: None,
-          err: Some(format_serror(
-            &anyhow!("No Servers configured as manager nodes").into(),
-          )),
+          err: Some(
+            anyhow!("No servers configured as manager nodes").into(),
+          ),
         }
         .into(),
       )
@@ -137,7 +136,7 @@ pub async fn refresh_swarm_cache(swarm: &Swarm, force: bool) {
               state: SwarmState::Unknown,
               inspect: None,
               lists: None,
-              err: Some(format_serror(&e.into())),
+              err: Some(e.into()),
             }
             .into(),
           )

@@ -1694,7 +1694,7 @@ export type AlertData =
         /** The name of the swarm */
         name: string;
         /** The error data */
-        err?: string;
+        err?: _Serror;
     };
 }
 /** A server could not be reached. */
@@ -5213,9 +5213,19 @@ export declare enum ServerState {
     /** Server is disabled. */
     Disabled = "Disabled"
 }
+export interface __Serror {
+    error: string;
+    trace: string[];
+}
+export type _Serror = __Serror;
 export interface ServerListItemInfo {
     /** The server's state. */
     state: ServerState;
+    /**
+     * If there is an error reaching
+     * the server, message will be given here.
+     */
+    err?: _Serror;
     /** Region of the server. */
     region: string;
     /** Address of the server, or null if empty. */
@@ -5437,7 +5447,7 @@ export interface SwarmListItemInfo {
      * If there is an error reaching
      * Swarm, message will be given here.
      */
-    err?: string;
+    err?: _Serror;
 }
 export type SwarmListItem = ResourceListItem<SwarmListItemInfo>;
 export type ListSwarmsResponse = SwarmListItem[];
@@ -5592,11 +5602,6 @@ export type _PartialStackConfig = Partial<StackConfig>;
 export type _PartialSwarmConfig = Partial<SwarmConfig>;
 export type _PartialTag = Partial<Tag>;
 export type _PartialUrlBuilderConfig = Partial<UrlBuilderConfig>;
-export interface __Serror {
-    error: string;
-    trace: string[];
-}
-export type _Serror = __Serror;
 /** **Admin only.** Add a user to a user group. Response: [UserGroup] */
 export interface AddUserToUserGroup {
     /** The name or id of UserGroup that user should be added to. */
