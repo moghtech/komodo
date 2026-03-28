@@ -9,6 +9,7 @@ use periphery_client::transport::{
   EncodedRequestMessage, EncodedTransportMessage, RequestMessage,
   TransportMessage,
 };
+use tokio_util::sync::CancellationToken;
 use transport::{
   auth::{
     ConnectionIdentifiers, LoginFlow, LoginFlowArgs,
@@ -16,7 +17,8 @@ use transport::{
   },
   channel::{BufferedReceiver, Sender},
   websocket::{
-    Websocket, WebsocketReceiverExt as _, WebsocketSender as _,
+    Websocket, WebsocketReceiver as _, WebsocketReceiverExt as _,
+    WebsocketSender as _,
   },
 };
 
@@ -79,7 +81,12 @@ async fn handle_socket<W: Websocket>(
     }
   );
 
+  let cancel = CancellationToken::new();
+
   let (mut ws_write, mut ws_read) = socket.split();
+
+  ws_read.set_cancel(cancel.clone());
+  receiver.set_cancel(cancel.clone());
 
   let forward_writes = async {
     loop {
@@ -110,6 +117,7 @@ async fn handle_socket<W: Websocket>(
       }
     }
     let _ = ws_write.close().await;
+    cancel.cancel();
   };
 
   let handle_reads = async {
@@ -132,12 +140,10 @@ async fn handle_socket<W: Websocket>(
         _ => {}
       }
     }
+    cancel.cancel();
   };
 
-  tokio::select! {
-    _ = forward_writes => {},
-    _ = handle_reads => {},
-  }
+  tokio::join!(forward_writes, handle_reads);
 }
 
 fn handle_request(
