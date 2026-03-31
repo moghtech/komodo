@@ -693,7 +693,7 @@ export default function StackConfig({
         destroy_before_deploy: {
           label: "Destroy Before Deploy",
           description: `Ensure '${
-            currSwarmId ? "docker service rm" : "docker compose down"
+            currSwarmId ? "docker stack rm" : "docker compose down"
           }' is run before redeploying the Stack.`,
         },
       },
