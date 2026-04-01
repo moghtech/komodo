@@ -168,7 +168,7 @@ fn shell() -> &'static str {
     } else if PathBuf::from("/usr/bin/bash").exists() {
       String::from("/usr/bin/bash")
     } else {
-      String::from("sh")
+      String::from("/bin/sh")
     }
   })
 }

@@ -389,6 +389,7 @@ fn env_file_args(
   }
 
   if !res.is_empty() {
+    // Add 'set -a' so vars are auto exported to child 'docker stack' process.
     Ok(format!("set -a && {res}"))
   } else {
     Ok(res)
