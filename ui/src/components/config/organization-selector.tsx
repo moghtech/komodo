@@ -25,6 +25,7 @@ export default function OrganizationSelector({
   if (customMode) {
     return (
       <TextInput
+        label="Organization"
         placeholder="Input custom organization name"
         w={{ base: "85%", lg: 400 }}
         value={selected}
@@ -65,6 +66,7 @@ export default function OrganizationSelector({
           onSelect(value);
         }
       }}
+      searchable
       {...selectorProps}
     />
   );
