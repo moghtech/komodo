@@ -939,7 +939,10 @@ pub async fn check_stack_for_update_inner(
     .retain(|(stack_id, _)| stack_id != &stack.id)
     .await;
 
-  let deploy_services = if stack.config.auto_update_all_services {
+  let deploy_services = if stack.config.auto_update_all_services
+    // Swarm stacks don't support individual service deploy
+    || !stack.config.swarm_id.is_empty()
+  {
     Vec::new()
   } else {
     services_with_update

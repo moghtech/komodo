@@ -45,7 +45,6 @@ export default function DeploymentUpdateAvailable({
   const state = info?.state ?? Types.DeploymentState.Unknown;
   if (
     !info ||
-    info.swarm_id ||
     info.build_id ||
     [Types.DeploymentState.NotDeployed, Types.DeploymentState.Unknown].includes(
       state,
