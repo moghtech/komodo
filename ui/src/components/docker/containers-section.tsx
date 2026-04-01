@@ -170,7 +170,6 @@ export default function ContainersSection({
                 <ContainerPorts
                   ports={row.original.ports ?? []}
                   serverId={row.original.server_id}
-                  wrap="nowrap"
                 />
               ),
             },
