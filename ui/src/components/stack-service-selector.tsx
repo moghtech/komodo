@@ -51,7 +51,7 @@ export default function StackServiceSelector({
     stack: stackId,
   }).data?.filter((service) => !state || service?.container?.state === state);
 
-  const firstService = services?.[0].service;
+  const firstService = services?.[0]?.service;
   useEffect(() => {
     !clearable && firstService && !selected && onSelect?.(firstService);
   }, [firstService]);
