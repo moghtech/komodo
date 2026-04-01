@@ -190,8 +190,7 @@ export default function ResourceSyncInfo({
                       />
                     </>
                   )}
-                  {/* The toggle onClick is given to entire header */}
-                  <ShowHideButton show={showContents} setShow={() => {}} />
+                  <ShowHideButton show={showContents} setShow={handleToggleShow} />
                 </Group>
               </Group>
 
