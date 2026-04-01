@@ -237,8 +237,7 @@ export default function StackConfig({
 
   const environment: ConfigGroupArgs<Types.StackConfig> = {
     label: "Environment",
-    hidden: !!currSwarmId,
-    description: "Pass these variables to the compose command",
+    description: `Pass these variables to the docker ${currSwarmId ? "stack" : "compose"} command`,
     actions: (
       <ShowHideButton
         show={show.env}
@@ -532,8 +531,8 @@ export default function StackConfig({
             description={
               <Group gap="xs">
                 <Text>
-                  Pass extra arguments to '
-                  {currSwarmId ? "docker stack deploy" : "docker compose up"}
+                  Pass extra arguments to docker '
+                  {currSwarmId ? "stack deploy" : "compose up"}
                   '.
                 </Text>
                 <Text
