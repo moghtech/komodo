@@ -46,7 +46,7 @@ pub async fn update_swarm_stack_cache(
         Some(SwarmState::Unknown) | None => StackState::Unknown,
       })
       .unwrap_or(StackState::Down);
-    
+
     let services = extract_services_from_stack(&stack);
     let service_prefix = format!("{project_name}_");
 
