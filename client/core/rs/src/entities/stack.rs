@@ -371,6 +371,17 @@ pub struct StackConfig {
   #[builder(default)]
   pub auto_update_all_services: bool,
 
+  /// Ignore certain services during Global Auto Update polling.
+  /// Services listed here are skipped only in the global auto-update flow.
+  /// Manual checks still include all services.
+  #[serde(default, deserialize_with = "string_list_deserializer")]
+  #[partial_attr(serde(
+    default,
+    deserialize_with = "option_string_list_deserializer"
+  ))]
+  #[builder(default)]
+  pub auto_update_skip_services: Vec<String>,
+
   /// Whether to run `docker compose down` before `compose up`.
   #[serde(default)]
   #[builder(default)]
@@ -601,17 +612,6 @@ pub struct StackConfig {
   #[builder(default)]
   pub ignore_services: Vec<String>,
 
-  /// Ignore certain services during Global Auto Update polling.
-  /// Services listed here are skipped only in the global auto-update flow.
-  /// Manual checks still include all services.
-  #[serde(default, deserialize_with = "string_list_deserializer")]
-  #[partial_attr(serde(
-    default,
-    deserialize_with = "option_string_list_deserializer"
-  ))]
-  #[builder(default)]
-  pub ignore_polling_services: Vec<String>,
-
   /// The contents of the file directly, for management in the UI.
   /// If this is empty, it will fall back to checking git config for
   /// repo based compose file.
@@ -699,8 +699,8 @@ impl Default for StackConfig {
       poll_for_updates: Default::default(),
       auto_update: Default::default(),
       auto_update_all_services: Default::default(),
+      auto_update_skip_services: Default::default(),
       ignore_services: Default::default(),
-      ignore_polling_services: Default::default(),
       pre_deploy: Default::default(),
       post_deploy: Default::default(),
       extra_args: Default::default(),

@@ -392,7 +392,7 @@ export default function StackConfig({
             />
           );
         },
-        ignore_polling_services: (values, set) =>
+        auto_update_skip_services: (values, set) =>
           poll_for_updates && (
             <ConfigItem
               label="Ignore Services During Polling"
@@ -403,8 +403,8 @@ export default function StackConfig({
                 placeholder={values?.length ? "Add services" : "Select services"}
                 value={values}
                 data={allServices}
-                onChange={(ignore_polling_services) =>
-                  set({ ignore_polling_services })
+                onChange={(auto_update_skip_services) =>
+                  set({ auto_update_skip_services })
                 }
                 disabled={disabled}
                 w="fit-content"

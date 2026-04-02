@@ -779,7 +779,7 @@ pub async fn check_stack_for_update_inner(
       // Services explicitly excluded from global auto-update checks.
       // Manual checks should still evaluate all services.
       (wait_for_auto_update &&
-        stack.config.ignore_polling_services.contains(
+        stack.config.auto_update_skip_services.contains(
           &service.service_name,
         ))
     {

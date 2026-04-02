@@ -2604,18 +2604,18 @@ export interface StackConfig {
      */
     auto_update?: boolean;
     /**
-     * Ignore certain services during Global Auto Update polling.
-     * Services listed here are skipped only in the global auto-update flow.
-     * Manual checks still include all services.
-     */
-    ignore_polling_services?: string[];
-    /**
      * If auto update is enabled, Komodo will
      * by default only update the specific services
      * with image updates. If this parameter is set to true,
      * Komodo will redeploy the whole Stack (all services).
      */
     auto_update_all_services?: boolean;
+    /**
+     * Ignore certain services during Global Auto Update polling.
+     * Services listed here are skipped only in the global auto-update flow.
+     * Manual checks still include all services.
+     */
+    auto_update_skip_services?: string[];
     /** Whether to run `docker compose down` before `compose up`. */
     destroy_before_deploy?: boolean;
     /** Whether to skip secret interpolation into the stack environment variables. */
