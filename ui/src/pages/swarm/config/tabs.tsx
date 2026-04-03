@@ -4,7 +4,7 @@ import { ICONS } from "@/lib/icons";
 import {
   MobileFriendlyTabsSelector,
   TabNoContent,
-} from "@/ui/mobile-friendly-tabs";
+} from "mogh_ui";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useMemo, useState } from "react";

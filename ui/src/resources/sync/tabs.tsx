@@ -4,7 +4,7 @@ import { useResourceSyncTabsView } from "./hooks";
 import {
   MobileFriendlyTabsSelector,
   TabNoContent,
-} from "@/ui/mobile-friendly-tabs";
+} from "mogh_ui";
 import { Tabs } from "@mantine/core";
 import ResourceSyncConfig from "./config";
 import { colorByIntention, resourceSyncStateIntention } from "@/lib/color";

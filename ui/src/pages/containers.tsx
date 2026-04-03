@@ -9,7 +9,7 @@ import Page from "@/ui/page";
 import StatusBadge from "@/ui/status-badge";
 import { Group, MultiSelect, Stack } from "@mantine/core";
 import { useCallback, useMemo, useState } from "react";
-import DividedChildren from "@/ui/divided-children";
+import { DividedChildren } from "mogh_ui";
 import ResourceLink from "@/resources/link";
 import SearchInput from "@/ui/search-input";
 

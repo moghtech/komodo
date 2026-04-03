@@ -2,7 +2,7 @@ import LogSection from "@/components/log-section";
 import { colorByIntention, ColorIntention } from "@/lib/color";
 import { usePermissions } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import { MobileFriendlyTabsSelector } from "@/ui/mobile-friendly-tabs";
+import { MobileFriendlyTabsSelector } from "mogh_ui";
 import { Tabs } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";

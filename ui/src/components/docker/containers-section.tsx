@@ -10,9 +10,9 @@ import { Types } from "komodo_client";
 import DockerResourceLink from "./link";
 import StatusBadge from "@/ui/status-badge";
 import { containerStateIntention } from "@/lib/color";
-import DividedChildren from "@/ui/divided-children";
 import ContainerPorts from "@/components/docker/container-ports";
 import SearchInput from "@/ui/search-input";
+import { DividedChildren } from "mogh_ui";
 
 export interface ContainersSectionProps extends SectionProps {
   serverId: string;

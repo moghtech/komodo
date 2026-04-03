@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import {
   MobileFriendlyTabsSelector,
   TabNoContent,
-} from "@/ui/mobile-friendly-tabs";
+} from "mogh_ui";
 import { Types } from "komodo_client";
 import TerminalSection from "@/components/terminal/section";
 import { Tabs } from "@mantine/core";

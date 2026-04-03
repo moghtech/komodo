@@ -8,7 +8,7 @@ import { Center, Stack, Tabs, Text } from "@mantine/core";
 import {
   MobileFriendlyTabsSelector,
   TabNoContent,
-} from "@/ui/mobile-friendly-tabs";
+} from "mogh_ui";
 import { colorByIntention, serverStateIntention } from "@/lib/color";
 import ServerContainers from "./containers";
 import ServerNetworks from "./networks";

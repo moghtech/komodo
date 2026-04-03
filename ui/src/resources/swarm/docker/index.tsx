@@ -8,7 +8,7 @@ import { Center, Stack, Tabs, Text } from "@mantine/core";
 import {
   MobileFriendlyTabsSelector,
   TabNoContent,
-} from "@/ui/mobile-friendly-tabs";
+} from "mogh_ui";
 import { colorByIntention, swarmStateIntention } from "@/lib/color";
 import { ICONS } from "@/lib/icons";
 import SwarmNodes from "./nodes";

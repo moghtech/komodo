@@ -6,7 +6,7 @@ import Section from "@/ui/section";
 import { Code, Group, Stack, Text } from "@mantine/core";
 import { sanitizeOnlySpan } from "@/lib/utils";
 import { Types } from "komodo_client";
-import DividedChildren from "@/ui/divided-children";
+import { DividedChildren } from "mogh_ui";
 import ResourceLink from "@/resources/link";
 import { UsableResource } from "@/resources";
 import ConfirmButton from "@/ui/confirm-button";

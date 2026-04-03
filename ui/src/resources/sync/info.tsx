@@ -10,7 +10,7 @@ import { FilePlus } from "lucide-react";
 import { updateLogToHtml } from "@/lib/utils";
 import { ICONS } from "@/lib/icons";
 import ConfirmUpdate from "@/ui/config/confirm";
-import DividedChildren from "@/ui/divided-children";
+import { DividedChildren } from "mogh_ui";
 import ShowHideButton from "@/ui/show-hide-button";
 import { MonacoEditor } from "@/components/monaco";
 

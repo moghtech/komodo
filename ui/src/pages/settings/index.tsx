@@ -2,7 +2,7 @@ import { lazy } from "react";
 import { useSettingsView, useUser } from "@/lib/hooks";
 import { Stack } from "@mantine/core";
 import SettingsCoreInfo from "./core-info";
-import MobileFriendlyTabs from "@/ui/mobile-friendly-tabs";
+import { MobileFriendlyTabs } from "mogh_ui";
 import ExportToml from "@/components/export-toml";
 import SettingsVariables from "./variables";
 import SettingsTags from "./tags";

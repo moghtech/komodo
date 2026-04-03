@@ -1,5 +1,5 @@
 import { ICONS } from "@/lib/icons";
-import DividedChildren from "@/ui/divided-children";
+import { DividedChildren } from "mogh_ui";
 import EntityHeader from "@/ui/entity-header";
 import { Box, Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
