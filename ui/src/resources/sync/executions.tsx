@@ -6,7 +6,7 @@ import {
   useWrite,
 } from "@/lib/hooks";
 import { Button, Loader } from "@mantine/core";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ConfirmButton from "@/ui/confirm-button";
 import { useFullResourceSync } from ".";
 import { useResourceSyncTabsView } from "./hooks";

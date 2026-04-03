@@ -13,7 +13,7 @@ import { Types } from "komodo_client";
 import { ChevronsUpDown } from "lucide-react";
 import { useEffect } from "react";
 import { DOCKER_LINK_ICONS } from "./docker/link";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import {
   colorByIntention,
   containerStateIntention,

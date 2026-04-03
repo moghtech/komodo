@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Types } from "komodo_client";
 import { useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { hexColorByIntention, containerStateIntention } from "@/lib/color";
 import { Box, Group, Text } from "@mantine/core";
 import { Link } from "react-router-dom";

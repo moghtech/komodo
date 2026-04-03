@@ -1,5 +1,5 @@
 import { useExecute } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { useNavigate } from "react-router-dom";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 

@@ -2,7 +2,7 @@ import { Fragment } from "react";
 import { ConfigFieldArgs, ConfigGroupArgs } from ".";
 import { ConfigInput, ConfigSwitch } from "./item";
 import { Group, Stack } from "@mantine/core";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 
 export default function ConfigGroup<T>({
   config,

@@ -1,6 +1,6 @@
 import LogSection, { LogSectionProps } from "@/components/log-section";
 import { useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { MultiSelect, Select } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { useStack } from ".";

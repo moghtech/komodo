@@ -3,7 +3,7 @@ import TerminalSection from "@/components/terminal/section";
 import { colorByIntention, ColorIntention } from "@/lib/color";
 import { usePermissions } from "@/lib/hooks";
 import { useServer } from "@/resources/server";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import {
   MobileFriendlyTabsSelector,
   TabNoContent,

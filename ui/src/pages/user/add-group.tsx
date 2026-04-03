@@ -5,7 +5,7 @@ import {
   useWrite,
 } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { Button, Combobox, ComboboxProps, Group, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 

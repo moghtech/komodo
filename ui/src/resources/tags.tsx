@@ -7,7 +7,7 @@ import {
   useShiftKeyListener,
   useWrite,
 } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { filterBySplit } from "@/lib/utils";
 import {
   ActionIcon,

@@ -9,7 +9,7 @@ import {
 } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
 import ResourceLink from "@/resources/link";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import Section from "@/ui/section";
 import StatusBadge from "@/ui/status-badge";

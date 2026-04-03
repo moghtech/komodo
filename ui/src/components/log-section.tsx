@@ -1,5 +1,5 @@
 import { useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import LogViewer from "@/ui/log-viewer";
 import Section, { SectionProps } from "@/ui/section";
 import {

@@ -1,9 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import ThemeProvider from "@/theme";
 import { WebsocketProvider } from "@/lib/socket";
 import { Router } from "@/router";
+import { Theme } from "mogh_ui";
+import { themeAdditionalColors } from "@/lib/color";
 
 import "@mantine/core/styles.css";
 // ‼️ import extra package styles after core package styles
@@ -31,10 +32,10 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <QueryClientProvider client={client}>
       <WebsocketProvider>
-        <ThemeProvider>
+        <Theme.Provider additionalColors={themeAdditionalColors()}>
           <Router />
           <Notifications />
-        </ThemeProvider>
+        </Theme.Provider>
       </WebsocketProvider>
     </QueryClientProvider>
   </React.StrictMode>,

@@ -1,4 +1,4 @@
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import Section, { SectionProps } from "@/ui/section";
 import NewApiKey from "./new";
 import ApiKeysTable from "./table";

@@ -1,6 +1,6 @@
 import { buildStateIntention, hexColorByIntention } from "@/lib/color";
 import { useInvalidate, usePermissions, useRead, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";

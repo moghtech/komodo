@@ -1,5 +1,5 @@
 import { useInvalidate, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ConfirmModal from "@/ui/confirm-modal";
 import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";

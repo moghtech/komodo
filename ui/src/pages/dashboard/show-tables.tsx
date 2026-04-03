@@ -1,5 +1,5 @@
 import { useDashboardPreferences } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { Button } from "@mantine/core";
 
 export default function ShowTables() {

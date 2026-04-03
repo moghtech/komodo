@@ -2,7 +2,7 @@ import { useDashboardPreferences, useRead } from "@/lib/hooks";
 import { useServer } from ".";
 import { Types } from "komodo_client";
 import { useMemo } from "react";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import {
   Center,
   Group,

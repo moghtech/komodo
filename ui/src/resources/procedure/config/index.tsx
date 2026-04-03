@@ -11,7 +11,7 @@ import { Types } from "komodo_client";
 import { useState } from "react";
 import Stage from "./stage";
 import { Button, Group, Select, Stack, TextInput } from "@mantine/core";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { ConfigItem, ConfigSwitch } from "@/ui/config/item";
 import TimezoneSelector from "@/components/timezone-selector";
 import WebhookBuilder from "@/components/webhook/builder";
