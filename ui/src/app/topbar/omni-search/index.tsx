@@ -40,6 +40,7 @@ export default function OmniSearch({}: {}) {
         query={search}
         onQueryChange={setSearch}
         clearQueryOnClose={false}
+        radius="sm"
       >
         <Spotlight.Search
           leftSection={<ICONS.Search size="1.3rem" />}

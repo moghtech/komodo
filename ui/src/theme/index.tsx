@@ -103,6 +103,11 @@ const theme = createTheme({
   },
   components: {
     Input: Input.extend({
+      vars: (theme) => ({
+        wrapper: {
+          "--input-radius": theme.radius.sm,
+        },
+      }),
       styles: (theme) => ({
         input: {
           backgroundColor: theme.colors.accent[1],
@@ -168,9 +173,10 @@ const theme = createTheme({
       }),
     }),
     Button: Button.extend({
-      vars: () => ({
+      vars: (theme) => ({
         root: {
-          "--button-color": "var(--mantine-color-bw-0)",
+          "--button-color": theme.colors.bw[0],
+          "--button-radius": theme.radius.sm,
         },
       }),
       defaultProps: {
@@ -179,9 +185,10 @@ const theme = createTheme({
       classNames: { root: "bordered-heavy-outline" },
     }),
     ActionIcon: ActionIcon.extend({
-      vars: () => ({
+      vars: (theme) => ({
         root: {
-          "--ai-color": "var(--mantine-color-bw-0)",
+          "--ai-color": theme.colors.bw[0],
+          "--ai-radius": theme.radius.sm,
         },
       }),
     }),
@@ -263,6 +270,11 @@ const theme = createTheme({
       }),
     }),
     Tabs: Tabs.extend({
+      vars: (theme) => ({
+        root: {
+          "--tabs-radius": theme.radius.sm,
+        },
+      }),
       styles: (theme) => ({
         list: {
           backgroundColor: theme.colors.accent[1],
