@@ -25,7 +25,6 @@ import {
 } from "@/lib/utils";
 import { notifications } from "@mantine/notifications";
 import { useWindowEvent } from "@mantine/hooks";
-import { PermissionLevelAndSpecifics } from "komodo_client/dist/types";
 import { useCombobox } from "@mantine/core";
 
 export function komodo_client() {
@@ -581,12 +580,13 @@ export function usePermissions({ type, id }: Types.ResourceTarget) {
   const level =
     (perms && typeof perms === "string"
       ? perms
-      : (perms as PermissionLevelAndSpecifics | undefined)?.level) ??
+      : (perms as Types.PermissionLevelAndSpecifics | undefined)?.level) ??
     Types.PermissionLevel.None;
   const specific =
     (perms && typeof perms === "string"
       ? []
-      : (perms as PermissionLevelAndSpecifics | undefined)?.specific) ?? [];
+      : (perms as Types.PermissionLevelAndSpecifics | undefined)?.specific) ??
+    [];
 
   const canWrite = !ui_write_disabled && level === Types.PermissionLevel.Write;
   const canExecute = hasMinimumPermissions(

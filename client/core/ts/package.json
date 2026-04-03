@@ -1,6 +1,6 @@
 {
   "name": "komodo_client",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "Komodo client package",
   "homepage": "https://komo.do",
   "main": "dist/lib.js",
