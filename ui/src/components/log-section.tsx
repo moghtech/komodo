@@ -1,6 +1,6 @@
 import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import LogViewer from "@/ui/log-viewer";
+import LogViewer from "@/components/log-viewer";
 import { Section, SectionProps } from "mogh_ui";
 import {
   ActionIcon,
