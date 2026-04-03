@@ -3,7 +3,7 @@ import { useExecute, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { RequiredResourceComponents } from "..";
 import { Types } from "komodo_client";
-import { StatusBadge } from "mogh_ui";
+import { hexColorByIntention, StatusBadge } from "mogh_ui";
 import { Badge, Group, Popover, Text } from "@mantine/core";
 import { Clock } from "lucide-react";
 import { useDisclosure } from "@mantine/hooks";
@@ -75,7 +75,9 @@ export const ActionComponents: RequiredResourceComponents<
   Icon: ({ id, size = "1rem", noColor }) => {
     const state = useRead("ListActions", {}).data?.find((r) => r.id === id)
       ?.info.state;
-    const color = noColor ? undefined : state && actionStateIntention(state);
+    const color = noColor
+      ? undefined
+      : state && hexColorByIntention(actionStateIntention(state));
     return <ICONS.Action size={size} color={color} />;
   },
 

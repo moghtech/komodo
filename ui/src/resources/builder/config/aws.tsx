@@ -1,4 +1,4 @@
-import { MonacoEditor } from "@/components/monaco";
+import { MonacoEditor } from "mogh_monaco";
 import { usePermissions, useRead, useWrite } from "@/lib/hooks";
 import Config from "@/ui/config";
 import { ConfigList } from "@/ui/config/item";

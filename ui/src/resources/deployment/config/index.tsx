@@ -9,7 +9,7 @@ import ResourceSelector from "@/resources/selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";
 import { extractRegistryDomain } from "@/lib/utils";
 import DeploymentImageConfig from "./image";
-import { MonacoEditor } from "@/components/monaco";
+import { MonacoEditor } from "mogh_monaco";
 import DeploymentNetworkSelector from "./network";
 import SecretsSearch from "@/components/config/secrets-search";
 import DeploymentRestartSelector from "./restart";

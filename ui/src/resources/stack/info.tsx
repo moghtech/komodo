@@ -13,7 +13,7 @@ import { CopyButton } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import ConfirmUpdate from "@/ui/config/confirm";
 import { ShowHideButton } from "mogh_ui";
-import { languageFromPath, MonacoEditor } from "@/components/monaco";
+import { languageFromPath, MonacoEditor } from "mogh_monaco";
 
 export default function StackInfo({
   id,

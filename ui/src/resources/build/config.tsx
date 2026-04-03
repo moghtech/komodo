@@ -15,7 +15,7 @@ import { Button, Group, Select, Stack, Text } from "@mantine/core";
 import { ICONS } from "@/lib/icons";
 import ImageRegistryConfig from "@/components/config/image-registry-config";
 import SystemCommand from "@/components/config/system-command";
-import { MonacoEditor } from "@/components/monaco";
+import { MonacoEditor } from "mogh_monaco";
 import SecretsSearch from "@/components/config/secrets-search";
 import { Link } from "react-router-dom";
 import AddExtraArg from "@/components/config/add-extra-arg";

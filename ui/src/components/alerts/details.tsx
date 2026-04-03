@@ -5,7 +5,7 @@ import { ActionIcon, Drawer, Group, Stack, Text } from "@mantine/core";
 import { ICONS } from "@/lib/icons";
 import { Clock, Link2 } from "lucide-react";
 import { CopyButton } from "mogh_ui";
-import { MonacoEditor } from "@/components/monaco";
+import { MonacoEditor } from "mogh_monaco";
 import { LoadingScreen } from "mogh_ui";
 import { atom, useAtom } from "jotai";
 import ResourceLink from "@/resources/link";

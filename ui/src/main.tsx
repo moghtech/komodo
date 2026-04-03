@@ -5,6 +5,8 @@ import { WebsocketProvider } from "@/lib/socket";
 import { Router } from "@/router";
 import { ThemeProvider } from "mogh_ui";
 import { themeAdditionalColors } from "@/lib/color";
+import { Notifications } from "@mantine/notifications";
+import initMonaco from "@/monaco";
 
 import "@mantine/core/styles.css";
 // ‼️ import extra package styles after core package styles
@@ -12,11 +14,6 @@ import "@mantine/notifications/styles.css";
 import "@mantine/spotlight/styles.css";
 // Import local css after to avoid mantine default body color flash.
 import "./index.scss";
-
-// Run monaco setup
-import "@/monaco";
-import { Notifications } from "@mantine/notifications";
-import initMonaco from "@/monaco/init";
 
 initMonaco();
 
