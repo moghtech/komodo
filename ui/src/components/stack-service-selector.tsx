@@ -1,4 +1,4 @@
-import { useRead, useSearchCombobox } from "@/lib/hooks";
+import { useRead } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
 import {
   ActionIcon,
@@ -17,7 +17,7 @@ import { ICONS } from "@/lib/icons";
 import { containerStateIntention, swarmStateIntention } from "@/lib/color";
 import { SWARM_LINK_ICONS } from "./swarm/link";
 import { useStack } from "@/resources/stack";
-import { hexColorByIntention } from "mogh_ui";
+import { hexColorByIntention, useSearchCombobox } from "mogh_ui";
 
 export interface StackServiceSelectorProps extends ComboboxProps {
   stackId: string;

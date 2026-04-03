@@ -19,7 +19,7 @@ import { Section } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { Link, useParams } from "react-router-dom";
-import EntityPage from "@/ui/entity-page";
+import { EntityPage } from "mogh_ui";
 import { usableResourcePath } from "@/lib/utils";
 import ResourceDescription from "@/resources/description";
 import ResourceNotFound from "@/resources/not-found";

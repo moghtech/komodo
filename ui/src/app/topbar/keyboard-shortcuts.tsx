@@ -1,4 +1,4 @@
-import { useSettingsView, useShiftKeyListener } from "@/lib/hooks";
+import { useSettingsView } from "@/lib/hooks";
 import {
   ActionIcon,
   Divider,
@@ -10,6 +10,7 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Keyboard } from "lucide-react";
+import { useShiftKeyListener } from "mogh_ui";
 import { useNavigate } from "react-router-dom";
 
 export default function KeyboardShortcuts() {

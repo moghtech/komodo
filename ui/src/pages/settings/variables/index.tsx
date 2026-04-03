@@ -9,20 +9,11 @@ import {
 import { filterBySplit } from "@/lib/utils";
 import { CopyButton } from "mogh_ui";
 import { DataTable, SortableHeader } from "mogh_ui";
-import {
-  Badge,
-  Button,
-  Group,
-  Stack,
-  Switch,
-  Text,
-} from "@mantine/core";
+import { Badge, Button, Group, Stack, Switch, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useState } from "react";
 import DeleteVariable from "./delete";
-import SharedTextUpdate, {
-  useSharedTextUpdateData,
-} from "@/ui/shared-text-update";
+import { SharedTextUpdate, useSharedTextUpdateData } from "mogh_ui";
 import { CopyText } from "mogh_ui";
 import { SearchInput } from "mogh_ui";
 

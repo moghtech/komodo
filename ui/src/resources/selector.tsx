@@ -15,7 +15,7 @@ import { filterBySplit } from "@/lib/utils";
 import { ChevronsUpDown } from "lucide-react";
 import { fmtResourceType } from "@/lib/formatting";
 import { ICONS } from "@/lib/icons";
-import { useSearchCombobox } from "@/lib/hooks";
+import { useSearchCombobox } from "mogh_ui";
 
 export interface ResourceSelectorProps extends ComboboxProps {
   type: UsableResource;

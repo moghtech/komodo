@@ -2,7 +2,7 @@ import { ActionIcon, Badge, Button, Group } from "@mantine/core";
 import { Spotlight, spotlight } from "@mantine/spotlight";
 import { useOmniSearch } from "./hooks";
 import { ICONS } from "@/lib/icons";
-import { useShiftKeyListener } from "@/lib/hooks";
+import { useShiftKeyListener } from "mogh_ui";
 import classes from "./index.module.scss";
 
 export default function OmniSearch({}: {}) {

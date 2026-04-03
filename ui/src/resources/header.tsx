@@ -1,4 +1,4 @@
-import EntityHeader, { EntityHeaderProps } from "@/ui/entity-header";
+import { EntityHeader, EntityHeaderProps } from "mogh_ui";
 import { UsableResource } from ".";
 import { useInvalidate, useWrite } from "@/lib/hooks";
 import { notifications } from "@mantine/notifications";
