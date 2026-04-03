@@ -3,7 +3,7 @@ import { filterBySplit } from "@/lib/utils";
 import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import SearchInput from "@/ui/search-input";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import ShowHideButton from "@/ui/show-hide-button";
 import TableSkeleton from "@/ui/table-skeleton";
 import { Group } from "@mantine/core";

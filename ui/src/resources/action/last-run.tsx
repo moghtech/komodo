@@ -1,7 +1,7 @@
 import { hexColorByIntention } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
 import { getUpdateQuery, updateLogToHtml } from "@/lib/utils";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Box, Code, Group, Stack, Text } from "@mantine/core";
 
 export default function ActionLastRun({ id }: { id: string }) {

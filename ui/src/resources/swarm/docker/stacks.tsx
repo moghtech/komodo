@@ -2,7 +2,7 @@ import { useRead } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
 import { ReactNode } from "react";
 import { useSwarmDockerSearch } from ".";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import SwarmResourceLink from "@/components/swarm/link";
 import StatusBadge from "@/ui/status-badge";

@@ -1,5 +1,5 @@
 import { ICONS } from "@/lib/icons";
-import Section, { SectionProps } from "@/ui/section";
+import { Section, SectionProps } from "mogh_ui";
 import { useState } from "react";
 import { MonacoEditor } from "./monaco";
 import ShowHideButton from "@/ui/show-hide-button";

@@ -1,7 +1,7 @@
 import { filterBySplit } from "@/lib/utils";
 import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader } from "@/ui/data-table";
-import Section, { SectionProps } from "@/ui/section";
+import { Section, SectionProps } from "mogh_ui";
 import ShowHideButton from "@/ui/show-hide-button";
 import { Group } from "@mantine/core";
 import { Types } from "komodo_client";

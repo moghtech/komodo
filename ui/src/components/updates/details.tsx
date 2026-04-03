@@ -13,7 +13,7 @@ import UserAvatar from "@/components/user-avatar";
 import { ICONS } from "@/lib/icons";
 import { Clock, Link2, SquarePen } from "lucide-react";
 import { CopyButton } from "mogh_ui";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { MonacoDiffEditor } from "@/components/monaco";
 import LoadingScreen from "@/ui/loading-screen";
 import { atom, useAtom } from "jotai";

@@ -5,7 +5,7 @@ import { DividedChildren } from "mogh_ui";
 import EntityHeader from "@/ui/entity-header";
 import EntityPage from "@/ui/entity-page";
 import PageGuard from "@/ui/page-guard";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useParams } from "react-router-dom";

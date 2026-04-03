@@ -6,7 +6,7 @@ import {
   useWrite,
 } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Button, Group, Stack, Switch, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useState } from "react";

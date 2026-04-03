@@ -7,7 +7,7 @@ import { useLoginOptions, useManageAuth } from "@/lib/hooks";
 import { DataTable } from "@/ui/data-table";
 import { ICONS } from "@/lib/icons";
 import ConfirmModal from "@/ui/confirm-modal";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 
 const useLinkWithExternalLogin = () => {
   const { mutateAsync } = useManageAuth("BeginExternalLoginLink");

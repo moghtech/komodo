@@ -4,7 +4,7 @@ import { ResourceComponents, UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import SearchInput from "@/ui/search-input";
-import Section, { SectionProps } from "@/ui/section";
+import { Section, SectionProps } from "mogh_ui";
 import { Group, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";

@@ -8,7 +8,7 @@ import ResourceSubPage from "@/resources/sub-page";
 import { ICONS } from "@/lib/icons";
 import ConfirmButton from "@/ui/confirm-button";
 import { DataTable, SortableHeader } from "@/ui/data-table";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Center, Group, Loader, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { Waypoints } from "lucide-react";

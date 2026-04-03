@@ -15,7 +15,7 @@ import DeploymentConfig from "./config";
 import LogSection from "@/components/log-section";
 import TerminalSection from "@/components/terminal/section";
 import { MonacoEditor } from "@/components/monaco";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 
 type DeploymentTabsView = "Config" | "Tasks" | "Log" | "Inspect" | "Terminals";
 

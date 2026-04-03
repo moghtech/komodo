@@ -1,6 +1,6 @@
 import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader } from "@/ui/data-table";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import ShowHideButton from "@/ui/show-hide-button";
 import { Group, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";

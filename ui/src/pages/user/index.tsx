@@ -3,7 +3,7 @@ import ConfirmButton from "@/ui/confirm-button";
 import EntityPage from "@/ui/entity-page";
 import LabelledSwitch from "@/ui/labelled-switch";
 import PageGuard from "@/ui/page-guard";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Group, Stack } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { UserCheck, UserMinus } from "lucide-react";

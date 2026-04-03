@@ -1,5 +1,5 @@
 import { DataTable } from "@/ui/data-table";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Types } from "komodo_client";
 import { useRead } from "@/lib/hooks";
 import { useIsServerAvailable } from "../hooks";

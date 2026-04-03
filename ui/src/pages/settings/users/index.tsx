@@ -9,7 +9,7 @@ import {
   useWrite,
 } from "@/lib/hooks";
 import { useState } from "react";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { notifications } from "@mantine/notifications";
 import { filterBySplit } from "@/lib/utils";
 import { ICONS } from "@/lib/icons";

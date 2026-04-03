@@ -1,4 +1,4 @@
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import UpdateList, { UpdateListProps } from "./list";
 import { ICONS } from "@/lib/icons";
 import { ActionIcon, Stack } from "@mantine/core";

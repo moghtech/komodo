@@ -1,6 +1,6 @@
 import { useInvalidate, useRead, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Box, Group, Text } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import UserAddUserGroup from "./add-group";

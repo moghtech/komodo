@@ -3,7 +3,7 @@ import { ReactNode, useMemo } from "react";
 import { useServer } from "..";
 import { Types } from "komodo_client";
 import { useLocalStorage } from "@mantine/hooks";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Center, Stack, Tabs, Text } from "@mantine/core";
 import {
   MobileFriendlyTabsSelector,
