@@ -1150,10 +1150,14 @@ dependencies = [
 [[package]]
 name = "command"
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
 >>>>>>> ff30626e6 (fix login page import)
+=======
+version = "2.2.0-dev-1"
+>>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
 dependencies = [
  "komodo_client",
  "shlex",
@@ -1494,10 +1498,14 @@ checksum = "d7a1e2f27636f116493b8b860f5546edb47c8d8f8ea73e1d2a20be88e28d1fea"
 [[package]]
 name = "database"
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
 >>>>>>> ff30626e6 (fix login page import)
+=======
+version = "2.2.0-dev-1"
+>>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
 dependencies = [
  "anyhow",
  "async-compression",
@@ -1768,10 +1776,14 @@ dependencies = [
 [[package]]
 name = "encoding"
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
 >>>>>>> ff30626e6 (fix login page import)
+=======
+version = "2.2.0-dev-1"
+>>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
 dependencies = [
  "anyhow",
  "bytes",
@@ -1814,10 +1826,14 @@ dependencies = [
 [[package]]
 name = "environment"
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
 >>>>>>> ff30626e6 (fix login page import)
+=======
+version = "2.2.0-dev-1"
+>>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
 dependencies = [
  "anyhow",
  "formatting",
@@ -1947,10 +1963,14 @@ dependencies = [
 [[package]]
 name = "formatting"
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
 >>>>>>> ff30626e6 (fix login page import)
+=======
+version = "2.2.0-dev-1"
+>>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
 dependencies = [
  "mogh_error",
 ]
@@ -2130,10 +2150,14 @@ dependencies = [
 [[package]]
 name = "git"
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
 >>>>>>> ff30626e6 (fix login page import)
+=======
+version = "2.2.0-dev-1"
+>>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
 dependencies = [
  "anyhow",
  "command",
@@ -2734,10 +2758,14 @@ dependencies = [
 [[package]]
 name = "interpolate"
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
 >>>>>>> ff30626e6 (fix login page import)
+=======
+version = "2.2.0-dev-1"
+>>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
 dependencies = [
  "anyhow",
  "komodo_client",
@@ -2864,10 +2892,14 @@ dependencies = [
 [[package]]
 name = "komodo_cli"
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
 >>>>>>> ff30626e6 (fix login page import)
+=======
+version = "2.2.0-dev-1"
+>>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
 dependencies = [
  "anyhow",
  "bcrypt",
@@ -2898,10 +2930,14 @@ dependencies = [
 [[package]]
 name = "komodo_client"
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
 >>>>>>> ff30626e6 (fix login page import)
+=======
+version = "2.2.0-dev-1"
+>>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
 dependencies = [
  "anyhow",
  "async_timing_util",
@@ -2941,10 +2977,14 @@ dependencies = [
 [[package]]
 name = "komodo_core"
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
 >>>>>>> ff30626e6 (fix login page import)
+=======
+version = "2.2.0-dev-1"
+>>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -3018,10 +3058,14 @@ dependencies = [
 [[package]]
 name = "komodo_periphery"
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
 >>>>>>> ff30626e6 (fix login page import)
+=======
+version = "2.2.0-dev-1"
+>>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -4077,10 +4121,14 @@ checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
 [[package]]
 name = "periphery_client"
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
 >>>>>>> ff30626e6 (fix login page import)
+=======
+version = "2.2.0-dev-1"
+>>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
 dependencies = [
  "anyhow",
  "encoding",
@@ -6046,10 +6094,14 @@ dependencies = [
 [[package]]
 name = "transport"
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
 >>>>>>> ff30626e6 (fix login page import)
+=======
+version = "2.2.0-dev-1"
+>>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
 dependencies = [
  "anyhow",
  "axum",
