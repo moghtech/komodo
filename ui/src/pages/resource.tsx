@@ -14,7 +14,7 @@ import {
   UsableResource,
 } from "@/resources";
 import { AddResourceTags, ResourceTags } from "@/resources/tags";
-import DividedChildren from "@/ui/divided-children";
+import { DividedChildren } from "mogh_ui";
 import Section from "@/ui/section";
 import { Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
