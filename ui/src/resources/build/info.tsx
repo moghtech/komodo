@@ -9,7 +9,7 @@ import ConfirmButton from "@/ui/confirm-button";
 import { Clock, FilePlus } from "lucide-react";
 import { DEFAULT_BUILD_DOCKERFILE_CONTENTS } from "./config";
 import { updateLogToHtml } from "@/lib/utils";
-import CopyButton from "@/ui/copy-button";
+import { CopyButton } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import ConfirmUpdate from "@/ui/config/confirm";
 import ShowHideButton from "@/ui/show-hide-button";

@@ -8,7 +8,7 @@ import { ResourceComponents, UsableResource } from "@/resources";
 import { ActionIcon, Drawer, Group, Stack, Text } from "@mantine/core";
 import { ICONS } from "@/lib/icons";
 import { Clock, Link2 } from "lucide-react";
-import CopyButton from "@/ui/copy-button";
+import { CopyButton } from "mogh_ui";
 import { MonacoEditor } from "@/components/monaco";
 import LoadingScreen from "@/ui/loading-screen";
 import { atom, useAtom } from "jotai";

@@ -13,7 +13,7 @@ import { defaultEnabledExecution } from ".";
 import { ICONS } from "@/lib/icons";
 import ProcedureExecutionSelector from "./execution-selector";
 import { PROCEDURE_EXECUTIONS, ProcedureMinExecutionType } from "./executions";
-import EnableSwitch from "@/ui/enable-switch";
+import { EnableSwitch } from "mogh_ui";
 import { ArrowDown, ArrowUp, Ellipsis, Plus, Trash } from "lucide-react";
 
 export interface ProcedureStageProps {

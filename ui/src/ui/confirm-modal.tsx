@@ -12,7 +12,7 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { ReactNode, useState } from "react";
 import ConfirmButton from "./confirm-button";
-import { sendCopyNotification } from "@/lib/utils";
+import { sendCopyNotification } from "mogh_ui";
 
 export interface ConfirmModalProps extends Omit<
   Omit<Omit<ModalProps, "opened">, "onClose">,

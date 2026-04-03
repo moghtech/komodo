@@ -4,7 +4,7 @@ import { Box, Button, Modal } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { MonacoEditor } from "@/components/monaco";
-import CopyButton from "@/ui/copy-button";
+import { CopyButton } from "mogh_ui";
 import LoadingScreen from "@/ui/loading-screen";
 
 export interface ExportTomlProps {

@@ -12,7 +12,7 @@ import { ActionIcon, Code, Drawer, Group, Stack, Text } from "@mantine/core";
 import UserAvatar from "@/components/user-avatar";
 import { ICONS } from "@/lib/icons";
 import { Clock, Link2, SquarePen } from "lucide-react";
-import CopyButton from "@/ui/copy-button";
+import { CopyButton } from "mogh_ui";
 import Section from "@/ui/section";
 import { MonacoDiffEditor } from "@/components/monaco";
 import LoadingScreen from "@/ui/loading-screen";
