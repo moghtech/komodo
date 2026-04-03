@@ -1151,6 +1151,7 @@ dependencies = [
 name = "command"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
@@ -1158,6 +1159,9 @@ version = "2.2.0-dev-0"
 =======
 version = "2.2.0-dev-1"
 >>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
+=======
+version = "2.2.0-dev-2"
+>>>>>>> 522556250 (deploy 2.2.0-dev-2)
 dependencies = [
  "komodo_client",
  "shlex",
@@ -1499,6 +1503,7 @@ checksum = "d7a1e2f27636f116493b8b860f5546edb47c8d8f8ea73e1d2a20be88e28d1fea"
 name = "database"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
@@ -1506,6 +1511,9 @@ version = "2.2.0-dev-0"
 =======
 version = "2.2.0-dev-1"
 >>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
+=======
+version = "2.2.0-dev-2"
+>>>>>>> 522556250 (deploy 2.2.0-dev-2)
 dependencies = [
  "anyhow",
  "async-compression",
@@ -1777,6 +1785,7 @@ dependencies = [
 name = "encoding"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
@@ -1784,6 +1793,9 @@ version = "2.2.0-dev-0"
 =======
 version = "2.2.0-dev-1"
 >>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
+=======
+version = "2.2.0-dev-2"
+>>>>>>> 522556250 (deploy 2.2.0-dev-2)
 dependencies = [
  "anyhow",
  "bytes",
@@ -1827,6 +1839,7 @@ dependencies = [
 name = "environment"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
@@ -1834,6 +1847,9 @@ version = "2.2.0-dev-0"
 =======
 version = "2.2.0-dev-1"
 >>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
+=======
+version = "2.2.0-dev-2"
+>>>>>>> 522556250 (deploy 2.2.0-dev-2)
 dependencies = [
  "anyhow",
  "formatting",
@@ -1964,6 +1980,7 @@ dependencies = [
 name = "formatting"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
@@ -1971,6 +1988,9 @@ version = "2.2.0-dev-0"
 =======
 version = "2.2.0-dev-1"
 >>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
+=======
+version = "2.2.0-dev-2"
+>>>>>>> 522556250 (deploy 2.2.0-dev-2)
 dependencies = [
  "mogh_error",
 ]
@@ -2151,6 +2171,7 @@ dependencies = [
 name = "git"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
@@ -2158,6 +2179,9 @@ version = "2.2.0-dev-0"
 =======
 version = "2.2.0-dev-1"
 >>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
+=======
+version = "2.2.0-dev-2"
+>>>>>>> 522556250 (deploy 2.2.0-dev-2)
 dependencies = [
  "anyhow",
  "command",
@@ -2759,6 +2783,7 @@ dependencies = [
 name = "interpolate"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
@@ -2766,6 +2791,9 @@ version = "2.2.0-dev-0"
 =======
 version = "2.2.0-dev-1"
 >>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
+=======
+version = "2.2.0-dev-2"
+>>>>>>> 522556250 (deploy 2.2.0-dev-2)
 dependencies = [
  "anyhow",
  "komodo_client",
@@ -2893,6 +2921,7 @@ dependencies = [
 name = "komodo_cli"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
@@ -2900,6 +2929,9 @@ version = "2.2.0-dev-0"
 =======
 version = "2.2.0-dev-1"
 >>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
+=======
+version = "2.2.0-dev-2"
+>>>>>>> 522556250 (deploy 2.2.0-dev-2)
 dependencies = [
  "anyhow",
  "bcrypt",
@@ -2931,6 +2963,7 @@ dependencies = [
 name = "komodo_client"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
@@ -2938,6 +2971,9 @@ version = "2.2.0-dev-0"
 =======
 version = "2.2.0-dev-1"
 >>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
+=======
+version = "2.2.0-dev-2"
+>>>>>>> 522556250 (deploy 2.2.0-dev-2)
 dependencies = [
  "anyhow",
  "async_timing_util",
@@ -2978,6 +3014,7 @@ dependencies = [
 name = "komodo_core"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
@@ -2985,6 +3022,9 @@ version = "2.2.0-dev-0"
 =======
 version = "2.2.0-dev-1"
 >>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
+=======
+version = "2.2.0-dev-2"
+>>>>>>> 522556250 (deploy 2.2.0-dev-2)
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -3059,6 +3099,7 @@ dependencies = [
 name = "komodo_periphery"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
@@ -3066,6 +3107,9 @@ version = "2.2.0-dev-0"
 =======
 version = "2.2.0-dev-1"
 >>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
+=======
+version = "2.2.0-dev-2"
+>>>>>>> 522556250 (deploy 2.2.0-dev-2)
 dependencies = [
  "anyhow",
  "arc-swap",
@@ -4122,6 +4166,7 @@ checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
 name = "periphery_client"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
@@ -4129,6 +4174,9 @@ version = "2.2.0-dev-0"
 =======
 version = "2.2.0-dev-1"
 >>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
+=======
+version = "2.2.0-dev-2"
+>>>>>>> 522556250 (deploy 2.2.0-dev-2)
 dependencies = [
  "anyhow",
  "encoding",
@@ -6095,6 +6143,7 @@ dependencies = [
 name = "transport"
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 version = "2.1.2"
 =======
 version = "2.2.0-dev-0"
@@ -6102,6 +6151,9 @@ version = "2.2.0-dev-0"
 =======
 version = "2.2.0-dev-1"
 >>>>>>> 2bdf354a3 (deploy 2.2.0-dev-1)
+=======
+version = "2.2.0-dev-2"
+>>>>>>> 522556250 (deploy 2.2.0-dev-2)
 dependencies = [
  "anyhow",
  "axum",
