@@ -1,4 +1,4 @@
-import { MonacoEditor, MonacoLanguage } from "@/components/monaco";
+import { MonacoEditor, MonacoLanguage } from "mogh_monaco";
 import {
   Button,
   Group,

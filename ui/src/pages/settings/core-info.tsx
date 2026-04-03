@@ -1,4 +1,4 @@
-import { MonacoEditor } from "@/components/monaco";
+import { MonacoEditor } from "mogh_monaco";
 import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { CopyText } from "mogh_ui";

@@ -1,4 +1,4 @@
-import { MonacoEditor } from "@/components/monaco";
+import { MonacoEditor } from "mogh_monaco";
 import { ConfigInput, ConfigItem } from "@/ui/config/item";
 import { Select } from "@mantine/core";
 import { Types } from "komodo_client";

@@ -24,7 +24,7 @@ import ResourceLink from "@/resources/link";
 import ResourceSelector from "@/resources/selector";
 import { ShowHideButton } from "mogh_ui";
 import SecretsSearch from "@/components/config/secrets-search";
-import { MonacoEditor } from "@/components/monaco";
+import { MonacoEditor } from "mogh_monaco";
 import { EnableSwitch } from "mogh_ui";
 import StackConfigFiles from "./config-files";
 import SystemCommand from "@/components/config/system-command";

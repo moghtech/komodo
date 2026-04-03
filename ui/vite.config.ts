@@ -15,6 +15,17 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    dedupe: [
+      "@mantine/core",
+      "@mantine/hooks",
+      "@tanstack/react-table",
+      "@monaco-editor/react",
+      "lucide-react",
+      "monaco-editor",
+      "monaco-yaml",
+      "react",
+      "react-dom",
+    ],
   },
   css: {
     preprocessorOptions: {

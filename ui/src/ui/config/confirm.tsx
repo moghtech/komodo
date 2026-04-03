@@ -1,4 +1,4 @@
-import { MonacoDiffEditor, MonacoLanguage } from "@/components/monaco";
+import { MonacoDiffEditor, MonacoLanguage } from "mogh_monaco";
 import { useState } from "react";
 import { useDisclosure } from "@mantine/hooks";
 import { Box, Button, Group, Modal, Stack, Text } from "@mantine/core";

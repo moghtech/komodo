@@ -1,5 +1,5 @@
 import ContainerSelector from "@/components/docker/container-selector";
-import { MonacoEditor } from "@/components/monaco";
+import { MonacoEditor } from "mogh_monaco";
 import StackServiceSelector from "@/components/stack-service-selector";
 import { useRead } from "@/lib/hooks";
 import { textToEnv } from "@/lib/utils";

@@ -1,4 +1,4 @@
-import { languageFromPath, MonacoEditor } from "@/components/monaco";
+import { languageFromPath, MonacoEditor } from "mogh_monaco";
 import { useExecute, usePermissions, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import ConfirmUpdate from "@/ui/config/confirm";
