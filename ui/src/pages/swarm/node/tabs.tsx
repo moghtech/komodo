@@ -9,7 +9,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useMemo, useState } from "react";
 import SwarmNodeTasksSection from "./tasks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import InspectSection from "@/components/inspect-section";
 
 type SwarmNodeTabsView = "Tasks" | "Inspect";

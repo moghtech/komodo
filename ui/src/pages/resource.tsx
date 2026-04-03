@@ -7,7 +7,7 @@ import {
   useResourceParamType,
   useSetTitle,
 } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import {
   ResourceComponents,
   SETTINGS_RESOURCES,

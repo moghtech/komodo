@@ -1,5 +1,5 @@
 import { useRead, useUser, useUserInvalidate, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import {
   ActionIcon,
   Center,

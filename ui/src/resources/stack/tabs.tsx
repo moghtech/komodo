@@ -8,7 +8,7 @@ import {
   TabNoContent,
 } from "@/ui/mobile-friendly-tabs";
 import { Tabs } from "@mantine/core";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { colorByIntention, stackStateIntention } from "@/lib/color";
 import { useServer } from "@/resources/server";
 import StackConfig from "./config";

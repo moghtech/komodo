@@ -1,5 +1,5 @@
 import { ColorIntention, hexColorByIntention } from "@/lib/color";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { ActionIcon, Group, Stack, Text, TextInput } from "@mantine/core";
 import { FC, ReactNode, useEffect, useState } from "react";
 

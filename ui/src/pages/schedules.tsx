@@ -10,7 +10,7 @@ import {
 import { filterBySplit } from "@/lib/utils";
 import { UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import Page from "@/ui/page";
 import SearchInput from "@/ui/search-input";

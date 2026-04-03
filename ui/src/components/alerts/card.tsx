@@ -2,7 +2,7 @@ import { BoxProps, Flex, FlexProps, Group, Stack } from "@mantine/core";
 import { Types } from "komodo_client";
 import { AlertTriangle, Check } from "lucide-react";
 import { fmtDate, fmtUpperCamelcase } from "@/lib/formatting";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { useAlertDetails } from "./details";
 import AlertLevel from "./level";
 import ResourceLink from "@/resources/link";

@@ -9,7 +9,7 @@ import { notifications } from "@mantine/notifications";
 import { useDeployment } from ".";
 import { Types } from "komodo_client";
 import { ActionIcon, Box, Button, HoverCard } from "@mantine/core";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 import { hexColorByIntention } from "@/lib/color";
 

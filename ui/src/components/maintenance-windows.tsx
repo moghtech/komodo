@@ -15,7 +15,7 @@ import { useState } from "react";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import { Calendar, CalendarDays, Clock } from "lucide-react";
 import { fmtMaintenanceWindowTime } from "@/lib/formatting";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import TimezoneSelector from "./timezone-selector";
 
 export interface ConfigMaintenanceWindowsProps {

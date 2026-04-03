@@ -10,7 +10,7 @@ import {
   TabNoContent,
 } from "@/ui/mobile-friendly-tabs";
 import { colorByIntention, swarmStateIntention } from "@/lib/color";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import SwarmNodes from "./nodes";
 import SwarmStacks from "./stacks";
 import SwarmConfigs from "./configs";

@@ -10,7 +10,7 @@ import ConfirmButton from "@/ui/confirm-button";
 import { FilePlus } from "lucide-react";
 import { updateLogToHtml } from "@/lib/utils";
 import CopyButton from "@/ui/copy-button";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ConfirmUpdate from "@/ui/config/confirm";
 import ShowHideButton from "@/ui/show-hide-button";
 import { languageFromPath, MonacoEditor } from "@/components/monaco";

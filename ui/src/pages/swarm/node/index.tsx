@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { swarmNodeStateIntention } from "@/lib/color";
 import { useRead, useSetTitle } from "@/lib/hooks";
 import { useSwarm } from "@/resources/swarm";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import RemoveSwarmResource from "@/components/swarm/remove";
 import ResourceSubPage from "@/resources/sub-page";
 import SwarmNodeTabs from "./tabs";

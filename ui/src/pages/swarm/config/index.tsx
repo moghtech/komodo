@@ -1,6 +1,6 @@
 import { useRead, useSetTitle } from "@/lib/hooks";
 import { useSwarm } from "@/resources/swarm";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { Badge } from "@mantine/core";
 import { useParams } from "react-router-dom";
 import RemoveSwarmResource from "@/components/swarm/remove";

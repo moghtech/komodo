@@ -3,7 +3,7 @@ import TagSelector from "@/components/tags/selector";
 import { fmtDateWithMinutes } from "@/lib/formatting";
 import { useInvalidate, useRead, useSetTitle, useWrite } from "@/lib/hooks";
 import ResourceSelector from "@/resources/selector";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import { Badge, Group, Switch, TextInput, useMatches } from "@mantine/core";
 import { notifications } from "@mantine/notifications";

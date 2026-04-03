@@ -11,7 +11,7 @@ import {
 import { Types } from "komodo_client";
 import { EthernetPort } from "lucide-react";
 import { colorByIntention } from "@/lib/color";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { fmtPortMount } from "@/lib/formatting";
 import { useServerAddress } from "@/resources/server/hooks";
 import DividedChildren from "@/ui/divided-children";

@@ -1,4 +1,4 @@
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { Center, Group, Loader, Text } from "@mantine/core";
 import RepoLink from "./repo-link";
 import { NotepadText } from "lucide-react";

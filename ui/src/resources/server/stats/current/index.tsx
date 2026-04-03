@@ -1,4 +1,4 @@
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import Section from "@/ui/section";
 import StatBar from "@/ui/stat-bar";
 import { Group, Stack } from "@mantine/core";

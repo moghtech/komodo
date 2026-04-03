@@ -7,7 +7,7 @@ import { useRead } from "@/lib/hooks";
 import { UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
 import ResourceSelector from "@/resources/selector";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { DataTable } from "@/ui/data-table";
 import LabelledSwitch from "@/ui/labelled-switch";
 import Page from "@/ui/page";

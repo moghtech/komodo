@@ -1,5 +1,5 @@
 import { ColorIntention, hexColorByIntention } from "@/lib/color";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import {
   ActionIcon,
   FloatingPosition,

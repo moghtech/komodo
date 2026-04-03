@@ -1,6 +1,6 @@
 import Section from "@/ui/section";
 import UpdateList, { UpdateListProps } from "./list";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { ActionIcon, Stack } from "@mantine/core";
 import { Link } from "react-router-dom";
 

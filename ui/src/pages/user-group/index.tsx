@@ -1,6 +1,6 @@
 import UserTable from "@/components/user/table";
 import { useInvalidate, useRead, useUser, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import DividedChildren from "@/ui/divided-children";
 import EntityHeader from "@/ui/entity-header";
 import EntityPage from "@/ui/entity-page";

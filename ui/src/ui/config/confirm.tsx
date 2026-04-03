@@ -4,7 +4,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { Box, Button, Group, Modal, Stack, Text } from "@mantine/core";
 import { useCtrlKeyListener, useKeyListener } from "@/lib/hooks";
 import { fmtSnakeCaseToUpperSpaceCase } from "@/lib/formatting";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { deepCompare, envToText } from "@/lib/utils";
 import { colorByIntention } from "@/lib/color";
 import ShowHideButton from "@/ui/show-hide-button";

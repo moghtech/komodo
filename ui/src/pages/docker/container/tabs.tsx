@@ -9,7 +9,7 @@ import { Tabs } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useMemo } from "react";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import TerminalSection from "@/components/terminal/section";
 import LogSection from "@/components/log-section";
 import InspectSection from "@/components/inspect-section";

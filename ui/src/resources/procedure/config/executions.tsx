@@ -4,7 +4,7 @@ import StackServiceSelector from "@/components/stack-service-selector";
 import { useRead } from "@/lib/hooks";
 import { textToEnv } from "@/lib/utils";
 import ResourceSelector from "@/resources/selector";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import EnableSwitch from "@/ui/enable-switch";
 import TextUpdateModal from "@/ui/text-update-modal";
 import {

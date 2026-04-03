@@ -3,7 +3,7 @@ import { useRepo } from ".";
 import { useBuilder } from "../builder";
 import { Types } from "komodo_client";
 import ConfirmButton from "@/ui/confirm-button";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 
 export function CloneRepo({ id }: { id: string }) {
   const { mutate, isPending } = useExecute("CloneRepo");

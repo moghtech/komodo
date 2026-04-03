@@ -1,5 +1,5 @@
 import { useInvalidate, useRead, useWrite } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import Section from "@/ui/section";
 import { Box, Group, Text } from "@mantine/core";
 import { useNavigate } from "react-router-dom";

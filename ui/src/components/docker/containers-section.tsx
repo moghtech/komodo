@@ -1,7 +1,7 @@
 import { useRead } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
 import { Prune } from "@/resources/server/executions";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import Section, { SectionProps } from "@/ui/section";
 import ShowHideButton from "@/ui/show-hide-button";

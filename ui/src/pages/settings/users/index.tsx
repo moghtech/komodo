@@ -12,7 +12,7 @@ import { useState } from "react";
 import Section from "@/ui/section";
 import { notifications } from "@mantine/notifications";
 import { filterBySplit } from "@/lib/utils";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import UserTable from "@/components/user/table";
 import NewServiceUser from "./new-service-user";
 import NewLocalUser from "./new-local-user";

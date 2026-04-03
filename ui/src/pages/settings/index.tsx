@@ -7,7 +7,7 @@ import ExportToml from "@/components/export-toml";
 import SettingsVariables from "./variables";
 import SettingsTags from "./tags";
 import SettingsProviders from "./providers";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import SettingsOnboardingKeys from "./onboarding";
 import SettingsUsers from "./users";
 

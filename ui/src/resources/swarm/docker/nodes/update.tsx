@@ -14,7 +14,7 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { useMemo, useState } from "react";
 import { Types } from "komodo_client";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import LabelsGroup from "@/ui/labels-group";
 
 export interface UpdateSwarmNodeProps {

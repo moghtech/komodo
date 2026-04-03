@@ -5,7 +5,7 @@ import DockerOptions from "@/components/docker/options";
 import InspectSection from "@/components/inspect-section";
 import { useServer } from "@/resources/server";
 import ResourceSubPage from "@/resources/sub-page";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ConfirmButton from "@/ui/confirm-button";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import Section from "@/ui/section";

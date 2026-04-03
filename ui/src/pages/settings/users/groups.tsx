@@ -1,7 +1,7 @@
 import ExportToml from "@/components/export-toml";
 import { useRead } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { DataTable } from "@/ui/data-table";
 import Section from "@/ui/section";
 import { Box, Group } from "@mantine/core";

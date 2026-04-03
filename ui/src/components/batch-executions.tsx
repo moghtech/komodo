@@ -2,7 +2,7 @@ import { fmtUpperCamelcase } from "@/lib/formatting";
 import { useExecute, useSelectedResources, useWrite } from "@/lib/hooks";
 import { sendCopyNotification, usableResourceExecuteKey } from "@/lib/utils";
 import { UsableResource } from "@/resources";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import {
   Box,
   Button,

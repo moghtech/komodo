@@ -2,7 +2,7 @@ import ContainerPorts from "@/components/docker/container-ports";
 import DockerResourceLink from "@/components/docker/link";
 import { containerStateIntention } from "@/lib/color";
 import { useDebounce, useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { filterBySplit } from "@/lib/utils";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import Page from "@/ui/page";

@@ -1,7 +1,7 @@
 import { fmtUpperCamelcase } from "@/lib/formatting";
 import { useInvalidate, useSearchCombobox, useWrite } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import {
   Box,
   Button,

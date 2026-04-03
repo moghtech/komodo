@@ -1,6 +1,6 @@
 import { useServerStats } from "@/resources/server/hooks";
 import { useFullServer } from "@/resources/server";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import StatBar from "@/ui/stat-bar";
 
 export default function ServerCpuUsage({ id }: { id: string }) {

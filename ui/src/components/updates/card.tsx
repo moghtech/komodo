@@ -4,7 +4,7 @@ import { UpdateStatus } from "komodo_client/dist/types";
 import { Check, X } from "lucide-react";
 import { fmtDate, fmtOperation, fmtVersion } from "@/lib/formatting";
 import { versionIsNone } from "@/lib/utils";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import UserAvatar from "@/components/user-avatar";
 import { useUpdateDetails } from "./details";
 import ResourceLink from "@/resources/link";

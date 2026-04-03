@@ -4,7 +4,7 @@ import {
   swarmStateIntention,
 } from "@/lib/color";
 import { useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { Group, Text } from "@mantine/core";
 import { Link } from "react-router-dom";
 

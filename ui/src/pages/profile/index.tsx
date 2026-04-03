@@ -19,7 +19,7 @@ import EntityPage from "@/ui/entity-page";
 import ApiKeysSection from "@/components/api-keys/section";
 import UserHeader from "@/components/user/header";
 import Section from "@/ui/section";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 
 export default function Profile() {
   const options = useLoginOptions().data;

@@ -1,6 +1,6 @@
 import { useRead, useResourceName, useSelectedResources } from "@/lib/hooks";
 import { Types } from "komodo_client";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { Group, BoxProps } from "@mantine/core";
 import TableTags from "@/components/tags/table";
 import { DataTable, SortableHeader } from "@/ui/data-table";

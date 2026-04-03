@@ -12,7 +12,7 @@ import BuildConfig from "./config";
 import Section from "@/ui/section";
 import DeploymentTable from "../deployment/table";
 import BuildInfo from "./info";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { ResourceComponents } from "..";
 
 type BuildTabsView = "Config" | "Info" | "Resources";

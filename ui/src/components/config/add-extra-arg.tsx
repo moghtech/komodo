@@ -1,7 +1,7 @@
 import { useRead, useSearchCombobox } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
 import { Button, Combobox } from "@mantine/core";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 
 export interface AddExtraArgProps {
   type: "Deployment" | "Build" | "Stack" | "StackBuild";

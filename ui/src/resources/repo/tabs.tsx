@@ -5,7 +5,7 @@ import {
   MobileFriendlyTabsSelector,
   TabNoContent,
 } from "@/ui/mobile-friendly-tabs";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { colorByIntention, repoStateIntention } from "@/lib/color";
 import { Tabs } from "@mantine/core";
 import RepoConfig from "./config";

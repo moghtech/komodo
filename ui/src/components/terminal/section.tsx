@@ -5,7 +5,7 @@ import { Types } from "komodo_client";
 import { useState } from "react";
 import { ActionIcon, Box, Button, Group, Stack, Text } from "@mantine/core";
 import TargetTerminal from "./target";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import NewTerminal from "./new";
 import { notifications } from "@mantine/notifications";
 

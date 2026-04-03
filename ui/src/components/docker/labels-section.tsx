@@ -1,5 +1,5 @@
 import { filterMultitermBySplit } from "@/lib/utils";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import Section, { SectionProps } from "@/ui/section";
 import { Box, GroupProps } from "@mantine/core";
 import { useMemo, useState } from "react";
