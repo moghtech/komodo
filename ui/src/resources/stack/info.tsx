@@ -11,9 +11,9 @@ import { FilePlus } from "lucide-react";
 import { updateLogToHtml } from "@/lib/utils";
 import { CopyButton } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
-import ConfirmUpdate from "@/ui/config/confirm";
+import { ConfirmUpdate } from "mogh_ui";
 import { ShowHideButton } from "mogh_ui";
-import { languageFromPath, MonacoEditor } from "mogh_monaco";
+import { languageFromPath, MonacoEditor } from "mogh_ui";
 
 export default function StackInfo({
   id,

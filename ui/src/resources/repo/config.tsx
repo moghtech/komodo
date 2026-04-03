@@ -5,8 +5,7 @@ import {
   useWebhookIntegrations,
   useWrite,
 } from "@/lib/hooks";
-import Config from "@/ui/config";
-import { ConfigItem, ConfigList } from "@/ui/config/item";
+import { Config, ConfigItem, ConfigList } from "mogh_ui";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import ResourceLink from "@/resources/link";
@@ -15,7 +14,7 @@ import { Group, Stack, Text } from "@mantine/core";
 import { ProviderSelectorConfig } from "@/components/config/provider-selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";
 import SecretsSearch from "@/components/config/secrets-search";
-import { MonacoEditor } from "mogh_monaco";
+import { MonacoEditor } from "mogh_ui";
 import SystemCommand from "@/components/config/system-command";
 import { ReactNode } from "react";
 import CopyWebhookUrl from "@/components/webhook/copy-url";

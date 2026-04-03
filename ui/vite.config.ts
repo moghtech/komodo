@@ -18,6 +18,7 @@ export default defineConfig({
     dedupe: [
       "@mantine/core",
       "@mantine/hooks",
+      "@mantine/notifications",
       "@tanstack/react-table",
       "@monaco-editor/react",
       "lucide-react",
@@ -25,12 +26,13 @@ export default defineConfig({
       "monaco-yaml",
       "react",
       "react-dom",
+      "react-router-dom",
     ],
   },
   css: {
     preprocessorOptions: {
       scss: {
-        additionalData: '@use "mogh_ui/index.scss" as theme;',
+        additionalData: '@use "mogh_ui/theme.scss" as theme;',
       },
     },
   },

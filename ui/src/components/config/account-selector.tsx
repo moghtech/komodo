@@ -1,5 +1,5 @@
 import { useRead } from "@/lib/hooks";
-import { ConfigItem } from "@/ui/config/item";
+import { ConfigItem } from "mogh_ui";
 import { Select, SelectProps } from "@mantine/core";
 
 export interface AccountSelectorProps extends Omit<SelectProps, "onSelect"> {

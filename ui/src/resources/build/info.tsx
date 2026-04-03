@@ -11,9 +11,9 @@ import { DEFAULT_BUILD_DOCKERFILE_CONTENTS } from "./config";
 import { updateLogToHtml } from "@/lib/utils";
 import { CopyButton } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
-import ConfirmUpdate from "@/ui/config/confirm";
+import { ConfirmUpdate } from "mogh_ui";
 import { ShowHideButton } from "mogh_ui";
-import { MonacoEditor } from "mogh_monaco";
+import { MonacoEditor } from "mogh_ui";
 
 export default function BuildInfo({
   id,

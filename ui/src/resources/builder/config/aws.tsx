@@ -1,7 +1,6 @@
-import { MonacoEditor } from "mogh_monaco";
+import { MonacoEditor } from "mogh_ui";
 import { usePermissions, useRead, useWrite } from "@/lib/hooks";
-import Config from "@/ui/config";
-import { ConfigList } from "@/ui/config/item";
+import { Config, ConfigList } from "mogh_ui";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 

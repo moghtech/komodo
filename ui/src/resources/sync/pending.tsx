@@ -11,7 +11,7 @@ import ResourceLink from "@/resources/link";
 import { UsableResource } from "@/resources";
 import { ConfirmButton } from "mogh_ui";
 import { SquarePlay } from "lucide-react";
-import { MonacoDiffEditor, MonacoEditor } from "mogh_monaco";
+import { MonacoDiffEditor, MonacoEditor } from "mogh_ui";
 import { diffTypeIntention } from "@/lib/color";
 
 export default function ResourceSyncPending({
@@ -27,6 +27,7 @@ export default function ResourceSyncPending({
   const { view } = useResourceSyncTabsView(sync);
   const { canExecute } = usePermissions({ type: "ResourceSync", id });
   const { mutate: runSync, isPending } = useExecute("RunSync");
+  const enableFancyToml = useRead("GetCoreInfo", {}).data?.enable_fancy_toml;
   const loading = isPending || syncing;
 
   return (
@@ -185,6 +186,7 @@ export default function ResourceSyncPending({
               <MonacoEditor
                 value={update.data.data.proposed}
                 language="fancy_toml"
+                enableFancyToml={enableFancyToml}
                 readOnly
               />
             )}
@@ -195,6 +197,7 @@ export default function ResourceSyncPending({
                     original={update.data.data.current}
                     modified={update.data.data.proposed}
                     language="fancy_toml"
+                    enableFancyToml={enableFancyToml}
                     readOnly
                   />
                 )}
@@ -203,6 +206,7 @@ export default function ResourceSyncPending({
                     original={update.data.data.proposed}
                     modified={update.data.data.current}
                     language="fancy_toml"
+                    enableFancyToml={enableFancyToml}
                     readOnly
                   />
                 )}
@@ -212,6 +216,7 @@ export default function ResourceSyncPending({
               <MonacoEditor
                 value={update.data.data.current}
                 language="fancy_toml"
+                enableFancyToml={enableFancyToml}
                 readOnly
               />
             )}
@@ -234,6 +239,7 @@ export default function ResourceSyncPending({
               <MonacoEditor
                 value={data.data.proposed}
                 language="fancy_toml"
+                enableFancyToml={enableFancyToml}
                 readOnly
               />
             )}
@@ -244,6 +250,7 @@ export default function ResourceSyncPending({
                     original={data.data.current}
                     modified={data.data.proposed}
                     language="fancy_toml"
+                    enableFancyToml={enableFancyToml}
                     readOnly
                   />
                 )}
@@ -252,6 +259,7 @@ export default function ResourceSyncPending({
                     original={data.data.proposed}
                     modified={data.data.current}
                     language="fancy_toml"
+                    enableFancyToml={enableFancyToml}
                     readOnly
                   />
                 )}
@@ -261,6 +269,7 @@ export default function ResourceSyncPending({
               <MonacoEditor
                 value={data.data.current}
                 language="fancy_toml"
+                enableFancyToml={enableFancyToml}
                 readOnly
               />
             )}
@@ -283,6 +292,7 @@ export default function ResourceSyncPending({
               <MonacoEditor
                 value={data.data.proposed}
                 language="fancy_toml"
+                enableFancyToml={enableFancyToml}
                 readOnly
               />
             )}
@@ -293,6 +303,7 @@ export default function ResourceSyncPending({
                     original={data.data.current}
                     modified={data.data.proposed}
                     language="fancy_toml"
+                    enableFancyToml={enableFancyToml}
                     readOnly
                   />
                 )}
@@ -301,6 +312,7 @@ export default function ResourceSyncPending({
                     original={data.data.proposed}
                     modified={data.data.current}
                     language="fancy_toml"
+                    enableFancyToml={enableFancyToml}
                     readOnly
                   />
                 )}
@@ -310,6 +322,7 @@ export default function ResourceSyncPending({
               <MonacoEditor
                 value={data.data.current}
                 language="fancy_toml"
+                enableFancyToml={enableFancyToml}
                 readOnly
               />
             )}

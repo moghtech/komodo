@@ -1,5 +1,5 @@
 import { ICONS } from "@/lib/icons";
-import { ConfigItem } from "@/ui/config/item";
+import { ConfigItem } from "mogh_ui";
 import {
   ActionIcon,
   Button,
