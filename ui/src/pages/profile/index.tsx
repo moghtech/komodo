@@ -14,7 +14,7 @@ import { LinkedLogins } from "./linked-logins";
 import { EnrollPasskey } from "./passkey";
 import { EnrollTotp } from "./totp";
 import { EnableSwitch } from "mogh_ui";
-import PageGuard from "@/ui/page-guard";
+import { PageGuard } from "mogh_ui";
 import EntityPage from "@/ui/entity-page";
 import ApiKeysSection from "@/components/api-keys/section";
 import UserHeader from "@/components/user/header";

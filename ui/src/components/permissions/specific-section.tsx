@@ -3,7 +3,7 @@ import { levelSortingFn } from "@/lib/utils";
 import { ResourceComponents, UsableResource } from "@/resources";
 import ResourceLink from "@/resources/link";
 import { DataTable, SortableHeader } from "mogh_ui";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 import { Section, SectionProps } from "mogh_ui";
 import { Group, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";

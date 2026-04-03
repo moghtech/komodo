@@ -17,7 +17,7 @@ import JoinSwarmCommands from "./join-commands";
 import ResourceHeader from "../header";
 import BatchExecutions from "@/components/batch-executions";
 import SwarmHeaderInfo from "./header-info";
-import HoverError from "@/ui/hover-error";
+import { HoverError } from "mogh_ui";
 import { hexColorByIntention } from "mogh_ui";
 
 export function useSwarm(id: string | undefined, useName?: boolean) {

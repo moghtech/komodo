@@ -13,7 +13,7 @@ import ResourceLink from "@/resources/link";
 import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader } from "mogh_ui";
 import { Page } from "mogh_ui";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 import { Group, Stack, Switch } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useState } from "react";

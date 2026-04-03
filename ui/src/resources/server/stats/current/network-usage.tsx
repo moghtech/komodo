@@ -1,4 +1,4 @@
-import InfoCard from "@/ui/info-card";
+import { InfoCard } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { fmtRateBytes } from "mogh_ui";

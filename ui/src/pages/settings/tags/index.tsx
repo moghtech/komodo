@@ -7,7 +7,7 @@ import { Group, Stack } from "@mantine/core";
 import { useState } from "react";
 import TagColorSelector from "./color-selector";
 import DeleteTag from "./delete";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export default function SettingsTags() {
   useSetTitle("Tags");

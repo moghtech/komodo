@@ -4,7 +4,7 @@ import { Section, SectionProps } from "mogh_ui";
 import { Box, GroupProps } from "@mantine/core";
 import { useMemo, useState } from "react";
 import DockerOptions from "./options";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export interface DockerLabelsSectionProps extends Omit<
   SectionProps,

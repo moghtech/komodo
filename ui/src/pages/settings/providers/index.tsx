@@ -19,7 +19,7 @@ import { Types } from "komodo_client";
 import SharedTextUpdate, {
   useSharedTextUpdateData,
 } from "@/ui/shared-text-update";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export default function SettingsProviders() {
   return (

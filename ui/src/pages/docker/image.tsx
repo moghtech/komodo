@@ -7,7 +7,7 @@ import ResourceSubPage from "@/resources/sub-page";
 import { ICONS } from "@/lib/icons";
 import { ConfirmButton, fmtDateWithMinutes, fmtSizeBytes } from "mogh_ui";
 import { DataTable } from "mogh_ui";
-import PageGuard from "@/ui/page-guard";
+import { PageGuard } from "mogh_ui";
 import { Section } from "mogh_ui";
 import ShowHideButton from "@/ui/show-hide-button";
 import { Box, Center, Group, Text } from "@mantine/core";
