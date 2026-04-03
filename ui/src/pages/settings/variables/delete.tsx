@@ -1,6 +1,6 @@
 import { useInvalidate, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 import { notifications } from "@mantine/notifications";
 
 export default function DeleteVariable({

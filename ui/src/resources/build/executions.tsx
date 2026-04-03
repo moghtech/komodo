@@ -2,7 +2,7 @@ import { Types } from "komodo_client";
 import { useExecute, usePermissions, useRead } from "@/lib/hooks";
 import { useBuilder } from "../builder";
 import { useBuild } from ".";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 
 export function RunBuild({ id }: { id: string }) {

@@ -11,7 +11,7 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { ReactNode, useState } from "react";
-import ConfirmButton from "./confirm-button";
+import { ConfirmButton } from "mogh_ui";
 import { sendCopyNotification } from "mogh_ui";
 
 export interface ConfirmModalProps extends Omit<

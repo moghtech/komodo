@@ -1,5 +1,5 @@
 import { useExecute, useRead } from "@/lib/hooks";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 import { Types } from "komodo_client";
 import { Pause, Play, RefreshCcw, Square, Trash } from "lucide-react";
