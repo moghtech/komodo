@@ -16,9 +16,7 @@ import DeleteProviderAccount from "./delete";
 import ProvidersFromConfig from "./from-config";
 import { CopyButton } from "mogh_ui";
 import { Types } from "komodo_client";
-import SharedTextUpdate, {
-  useSharedTextUpdateData,
-} from "@/ui/shared-text-update";
+import { SharedTextUpdate, useSharedTextUpdateData } from "mogh_ui";
 import { SearchInput } from "mogh_ui";
 
 export default function SettingsProviders() {

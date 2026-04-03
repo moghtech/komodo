@@ -1,8 +1,9 @@
-import { useSearchCombobox, useSettingsView } from "@/lib/hooks";
+import { useSettingsView } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { filterBySplit } from "@/lib/utils";
 import { Button, Combobox, ComboboxProps } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { useSearchCombobox } from "mogh_ui";
 import { useNavigate } from "react-router-dom";
 
 export interface SecretSelectorProps extends ComboboxProps {

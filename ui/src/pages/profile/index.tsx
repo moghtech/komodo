@@ -15,7 +15,7 @@ import { EnrollPasskey } from "./passkey";
 import { EnrollTotp } from "./totp";
 import { EnableSwitch } from "mogh_ui";
 import { PageGuard } from "mogh_ui";
-import EntityPage from "@/ui/entity-page";
+import { EntityPage } from "mogh_ui";
 import ApiKeysSection from "@/components/api-keys/section";
 import UserHeader from "@/components/user/header";
 import { Section } from "mogh_ui";

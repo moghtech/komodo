@@ -1,7 +1,8 @@
-import { useRead, useSearchCombobox } from "@/lib/hooks";
+import { useRead } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
 import { Button, Combobox } from "@mantine/core";
 import { ICONS } from "@/lib/icons";
+import { useSearchCombobox } from "mogh_ui";
 
 export interface AddExtraArgProps {
   type: "Deployment" | "Build" | "Stack" | "StackBuild";

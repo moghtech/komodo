@@ -1,7 +1,11 @@
 import { UsableResource } from ".";
-import EntityHeader, { EntityHeaderProps } from "@/ui/entity-header";
+import {
+  EntityHeader,
+  EntityHeaderProps,
+  EntityPage,
+  EntityPageProps,
+} from "mogh_ui";
 import { ReactNode } from "react";
-import EntityPage, { EntityPageProps } from "@/ui/entity-page";
 import { Group, Stack, Text } from "@mantine/core";
 import { DividedChildren } from "mogh_ui";
 import ResourceLink from "./link";
@@ -73,7 +77,6 @@ export default function ResourceSubPage({
         {canExecute && executions && (
           <Section
             title="Execute"
-           
             icon={<ICONS.Execution size="1.3rem" />}
             my="md"
           >
