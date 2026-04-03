@@ -2,7 +2,7 @@ import { MonacoDiffEditor, MonacoLanguage } from "@/components/monaco";
 import { useState } from "react";
 import { useDisclosure } from "@mantine/hooks";
 import { Box, Button, Group, Modal, Stack, Text } from "@mantine/core";
-import { useCtrlKeyListener, useKeyListener } from "@/lib/hooks";
+import { useCtrlKeyListener, useKeyListener } from "mogh_ui";
 import { fmtSnakeCaseToUpperSpaceCase } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import { deepCompare, envToText } from "@/lib/utils";

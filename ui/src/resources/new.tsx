@@ -4,7 +4,7 @@ import { useRead, useWrite } from "@/lib/hooks";
 import { UsableResource } from ".";
 import { notifications } from "@mantine/notifications";
 import { usableResourcePath } from "@/lib/utils";
-import CreateModal from "@/ui/create-modal";
+import { CreateModal } from "mogh_ui";
 import { Divider, Stack, Text, TextInput } from "@mantine/core";
 import ResourceSelector from "./selector";
 import { Types } from "komodo_client";

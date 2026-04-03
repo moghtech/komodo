@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { Button, Grid, Popover, Select, Stack, TextInput } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Types } from "komodo_client";
-import { useRead, useShiftKeyListener, useWrite } from "@/lib/hooks";
+import { useRead, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import ResourceSelector from "@/resources/selector";
 import ContainerSelector from "@/components/docker/container-selector";
 import StackServiceSelector from "@/components/stack-service-selector";
+import { useShiftKeyListener } from "mogh_ui";
 
 const TERMINAL_TYPES: Types.TerminalTarget["type"][] = [
   "Server",

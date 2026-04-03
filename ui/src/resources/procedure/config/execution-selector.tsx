@@ -5,7 +5,7 @@ import { Button, ButtonProps, Combobox, ComboboxProps } from "@mantine/core";
 import { ChevronsUpDown } from "lucide-react";
 import { fmtUpperCamelcase } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
-import { useSearchCombobox } from "@/lib/hooks";
+import { useSearchCombobox } from "mogh_ui";
 
 export interface ProcedureExecutionSelectorProps extends ComboboxProps {
   type: Types.Execution["type"];

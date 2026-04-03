@@ -1,6 +1,6 @@
 import { useInvalidate, useRead, useUser, useWrite } from "@/lib/hooks";
 import { ConfirmButton } from "mogh_ui";
-import EntityPage from "@/ui/entity-page";
+import { EntityPage } from "mogh_ui";
 import { LabelledSwitch } from "mogh_ui";
 import { PageGuard } from "mogh_ui";
 import { Section } from "mogh_ui";

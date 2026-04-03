@@ -1,10 +1,10 @@
 import ContainerPorts from "@/components/docker/container-ports";
 import DockerResourceLink from "@/components/docker/link";
 import { containerStateIntention } from "@/lib/color";
-import { useDebounce, useRead } from "@/lib/hooks";
+import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import { filterBySplit } from "@/lib/utils";
-import { DataTable, SortableHeader } from "mogh_ui";
+import { DataTable, SortableHeader, useDebounce } from "mogh_ui";
 import { Page } from "mogh_ui";
 import { StatusBadge } from "mogh_ui";
 import { Group, MultiSelect, Stack } from "@mantine/core";
