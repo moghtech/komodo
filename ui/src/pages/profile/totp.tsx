@@ -1,4 +1,4 @@
-import CopyButton from "@/ui/copy-button";
+import { CopyButton } from "mogh_ui";
 import { useManageAuth, useUserInvalidate } from "@/lib/hooks";
 import {
   Button,

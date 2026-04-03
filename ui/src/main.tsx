@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WebsocketProvider } from "@/lib/socket";
 import { Router } from "@/router";
-import { Theme } from "mogh_ui";
+import { ThemeProvider } from "mogh_ui";
 import { themeAdditionalColors } from "@/lib/color";
 
 import "@mantine/core/styles.css";
@@ -32,10 +32,10 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <QueryClientProvider client={client}>
       <WebsocketProvider>
-        <Theme.Provider additionalColors={themeAdditionalColors()}>
+        <ThemeProvider additionalColors={themeAdditionalColors()}>
           <Router />
           <Notifications />
-        </Theme.Provider>
+        </ThemeProvider>
       </WebsocketProvider>
     </QueryClientProvider>
   </React.StrictMode>,

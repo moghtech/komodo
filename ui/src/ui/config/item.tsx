@@ -1,6 +1,6 @@
 import { fmtSnakeCaseToUpperSpaceCase } from "@/lib/formatting";
 import { ICONS } from "@/lib/icons";
-import EnableSwitch from "@/ui/enable-switch";
+import { EnableSwitch } from "mogh_ui";
 import InputList, { InputListProps } from "@/ui/input-list";
 import {
   Button,

@@ -7,7 +7,7 @@ import {
   useWrite,
 } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
-import CopyButton from "@/ui/copy-button";
+import { CopyButton } from "mogh_ui";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import {
   Badge,
@@ -23,7 +23,7 @@ import DeleteVariable from "./delete";
 import SharedTextUpdate, {
   useSharedTextUpdateData,
 } from "@/ui/shared-text-update";
-import CopyText from "@/ui/copy-text";
+import { CopyText } from "mogh_ui";
 import SearchInput from "@/ui/search-input";
 
 export default function SettingsVariables() {

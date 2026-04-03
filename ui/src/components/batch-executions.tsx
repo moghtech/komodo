@@ -1,6 +1,6 @@
 import { fmtUpperCamelcase } from "@/lib/formatting";
 import { useExecute, useSelectedResources, useWrite } from "@/lib/hooks";
-import { sendCopyNotification, usableResourceExecuteKey } from "@/lib/utils";
+import { usableResourceExecuteKey } from "@/lib/utils";
 import { UsableResource } from "@/resources";
 import { ICONS } from "@/lib/icons";
 import {
@@ -20,6 +20,7 @@ import {
 import { Types } from "komodo_client";
 import { ChevronDown } from "lucide-react";
 import { FC, useState } from "react";
+import { sendCopyNotification } from "mogh_ui";
 
 type Request = Types.ExecuteRequest["type"] | Types.WriteRequest["type"];
 

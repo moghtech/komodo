@@ -14,7 +14,7 @@ import NewProviderAccount from "./new";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import DeleteProviderAccount from "./delete";
 import ProvidersFromConfig from "./from-config";
-import CopyButton from "@/ui/copy-button";
+import { CopyButton } from "mogh_ui";
 import { Types } from "komodo_client";
 import SharedTextUpdate, {
   useSharedTextUpdateData,

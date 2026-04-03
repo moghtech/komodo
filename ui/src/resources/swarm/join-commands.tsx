@@ -1,6 +1,6 @@
 import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import CopyButton from "@/ui/copy-button";
+import { CopyButton } from "mogh_ui";
 import { Button, Center, Group, Loader, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 

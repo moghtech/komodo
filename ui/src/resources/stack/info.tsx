@@ -9,7 +9,7 @@ import { Button, Code, Group, Stack, Text } from "@mantine/core";
 import ConfirmButton from "@/ui/confirm-button";
 import { FilePlus } from "lucide-react";
 import { updateLogToHtml } from "@/lib/utils";
-import CopyButton from "@/ui/copy-button";
+import { CopyButton } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import ConfirmUpdate from "@/ui/config/confirm";
 import ShowHideButton from "@/ui/show-hide-button";

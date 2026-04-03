@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import { LinkedLogins } from "./linked-logins";
 import { EnrollPasskey } from "./passkey";
 import { EnrollTotp } from "./totp";
-import EnableSwitch from "@/ui/enable-switch";
+import { EnableSwitch } from "mogh_ui";
 import PageGuard from "@/ui/page-guard";
 import EntityPage from "@/ui/entity-page";
 import ApiKeysSection from "@/components/api-keys/section";
