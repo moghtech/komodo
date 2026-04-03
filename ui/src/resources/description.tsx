@@ -1,7 +1,7 @@
 import { useInvalidate, usePermissions, useRead, useWrite } from "@/lib/hooks";
 import { UsableResource } from ".";
 import { notifications } from "@mantine/notifications";
-import TextUpdateModal from "@/ui/text-update-modal";
+import { TextUpdateModal } from "mogh_ui";
 import { Button, Text } from "@mantine/core";
 import { fmtUpperCamelcase } from "mogh_ui";
 
