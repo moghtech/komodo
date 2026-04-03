@@ -7,7 +7,7 @@ import {
   UsableResource,
 } from "@/resources";
 import { ICONS } from "@/lib/icons";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useState } from "react";

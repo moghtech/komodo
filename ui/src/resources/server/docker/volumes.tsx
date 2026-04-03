@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { useServerDockerSearch } from ".";
 import { useRead } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Prune } from "../executions";
 import { Badge, Group } from "@mantine/core";
 import { DataTable, SortableHeader } from "@/ui/data-table";

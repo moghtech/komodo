@@ -1,6 +1,6 @@
 import { ICONS } from "@/lib/icons";
 import { Types } from "komodo_client";
-import Section, { SectionProps } from "@/ui/section";
+import { Section, SectionProps } from "mogh_ui";
 import StackTable from "@/resources/stack/table";
 import BuildTable from "../build/table";
 import ResourceSyncTable from "../sync/table";

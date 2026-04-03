@@ -1,5 +1,5 @@
 import { ICONS } from "@/lib/icons";
-import Section, { SectionProps } from "@/ui/section";
+import { Section, SectionProps } from "mogh_ui";
 import NewApiKey from "./new";
 import ApiKeysTable from "./table";
 import { useInvalidate, useManageAuth, useRead, useWrite } from "@/lib/hooks";
