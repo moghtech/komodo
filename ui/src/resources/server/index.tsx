@@ -6,7 +6,7 @@ import { Types } from "komodo_client";
 import StatusBadge from "@/ui/status-badge";
 import ServerTable from "./table";
 import NewResource from "@/resources/new";
-import ConfirmButton from "@/ui/confirm-button";
+import { ConfirmButton } from "mogh_ui";
 import { Prune } from "./executions";
 import ServerVersion from "./version";
 import { Box, Group, HoverCard } from "@mantine/core";
