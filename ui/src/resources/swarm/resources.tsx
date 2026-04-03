@@ -1,5 +1,5 @@
 import { useRead, useUser } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import Section, { SectionProps } from "@/ui/section";
 import { Types } from "komodo_client";
 import StackTable from "@/resources/stack/table";

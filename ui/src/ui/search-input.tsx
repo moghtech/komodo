@@ -1,4 +1,4 @@
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { TextInput, TextInputProps } from "@mantine/core";
 
 export interface SearchInputProps extends TextInputProps {

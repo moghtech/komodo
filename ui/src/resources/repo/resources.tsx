@@ -1,4 +1,4 @@
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { Types } from "komodo_client";
 import Section, { SectionProps } from "@/ui/section";
 import StackTable from "@/resources/stack/table";

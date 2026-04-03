@@ -1,6 +1,6 @@
 import Page from "@/ui/page";
 import { useDashboardPreferences, useSetTitle } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { Group } from "@mantine/core";
 import DashboardRecents from "./recents";
 import ExportToml from "@/components/export-toml";

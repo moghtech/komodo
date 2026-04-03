@@ -1,6 +1,6 @@
 import { useExecute, useRead } from "@/lib/hooks";
 import { useProcedure } from ".";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 
 export function RunProcedure({ id }: { id: string }) {

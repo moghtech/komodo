@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import Section, { SectionProps } from "@/ui/section";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 
 /** Includes save buttons */
 export default function ConfigLayout({

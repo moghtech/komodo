@@ -1,6 +1,6 @@
 import { languageFromPath, MonacoEditor } from "@/components/monaco";
 import { useExecute, usePermissions, useRead } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ConfirmUpdate from "@/ui/config/confirm";
 import UnsavedChanges from "@/ui/config/unsaved-changes";
 import Section, { SectionProps } from "@/ui/section";

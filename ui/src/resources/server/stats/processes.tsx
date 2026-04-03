@@ -1,6 +1,6 @@
 import { useRead } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import SearchInput from "@/ui/search-input";
 import Section from "@/ui/section";

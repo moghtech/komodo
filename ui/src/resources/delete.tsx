@@ -3,7 +3,7 @@ import { UsableResource } from ".";
 import { usePermissions, useRead, useWrite } from "@/lib/hooks";
 import { usableResourcePath } from "@/lib/utils";
 import ConfirmModal from "@/ui/confirm-modal";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 
 export default function DeleteResource({
   type,

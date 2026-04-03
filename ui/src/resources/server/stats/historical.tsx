@@ -26,7 +26,7 @@ import {
   Legend,
 } from "recharts";
 import { fmtSizeBytes } from "@/lib/formatting";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { useLocalStorage } from "@mantine/hooks";
 
 type StatType =

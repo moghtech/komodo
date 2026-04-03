@@ -3,7 +3,7 @@ import { useExecute, usePermissions, useRead } from "@/lib/hooks";
 import { useBuilder } from "../builder";
 import { useBuild } from ".";
 import ConfirmButton from "@/ui/confirm-button";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 
 export function RunBuild({ id }: { id: string }) {
   const { canExecute } = usePermissions({ type: "Build", id });

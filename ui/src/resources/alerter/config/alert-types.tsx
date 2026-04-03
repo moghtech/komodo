@@ -1,5 +1,5 @@
 import { fmtUpperCamelcase } from "@/lib/formatting";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { ConfigItem } from "@/ui/config/item";
 import { Badge, Group, Select } from "@mantine/core";
 import { Types } from "komodo_client";

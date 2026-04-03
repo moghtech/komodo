@@ -11,7 +11,7 @@ import {
 } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useRead, useSearchCombobox } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { filterBySplit } from "@/lib/utils";
 import { DOCKER_LINK_ICONS } from "@/components/docker/link";
 

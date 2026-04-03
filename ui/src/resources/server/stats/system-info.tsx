@@ -3,7 +3,7 @@ import Section from "@/ui/section";
 import { Types } from "komodo_client";
 import { useRead } from "@/lib/hooks";
 import { useIsServerAvailable } from "../hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 
 export default function ServerSystemInfo({
   id,

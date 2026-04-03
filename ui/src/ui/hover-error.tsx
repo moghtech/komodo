@@ -1,4 +1,4 @@
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { Button, Code, Group, HoverCard, Stack, Text } from "@mantine/core";
 
 export interface HoverErrorProps {

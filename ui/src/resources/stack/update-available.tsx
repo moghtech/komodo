@@ -17,7 +17,7 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ConfirmModalWithDisable from "@/components/confirm-modal-with-disable";
 import { hexColorByIntention } from "@/lib/color";
 

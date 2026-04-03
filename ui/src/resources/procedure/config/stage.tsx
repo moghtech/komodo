@@ -10,7 +10,7 @@ import {
 } from "@mantine/core";
 import { Types } from "komodo_client";
 import { defaultEnabledExecution } from ".";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ProcedureExecutionSelector from "./execution-selector";
 import { PROCEDURE_EXECUTIONS, ProcedureMinExecutionType } from "./executions";
 import EnableSwitch from "@/ui/enable-switch";

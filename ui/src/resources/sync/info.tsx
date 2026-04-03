@@ -8,7 +8,7 @@ import { Button, Code, Group, Stack, Text } from "@mantine/core";
 import ConfirmButton from "@/ui/confirm-button";
 import { FilePlus } from "lucide-react";
 import { updateLogToHtml } from "@/lib/utils";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ConfirmUpdate from "@/ui/config/confirm";
 import DividedChildren from "@/ui/divided-children";
 import ShowHideButton from "@/ui/show-hide-button";

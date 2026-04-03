@@ -1,4 +1,4 @@
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { Group } from "@mantine/core";
 
 export default function UnsavedChanges({ fullWidth }: { fullWidth?: boolean }) {

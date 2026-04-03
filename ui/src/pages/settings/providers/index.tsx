@@ -5,7 +5,7 @@ import {
   useUser,
   useWrite,
 } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import Section from "@/ui/section";
 import { Button, Group, Stack, Switch, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";

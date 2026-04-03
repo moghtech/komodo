@@ -7,7 +7,7 @@ import Config from "@/ui/config";
 import { ConfigItem, ConfigList } from "@/ui/config/item";
 import { ActionIcon, Button, Group } from "@mantine/core";
 import ResourceSelector from "@/resources/selector";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ConfigMaintenanceWindows from "@/components/maintenance-windows";
 
 export default function SwarmConfig({

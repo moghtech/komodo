@@ -2,7 +2,7 @@ import { Group, Stack, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useServerThresholds } from "@/resources/server/hooks";
 import { hexColorByIntention } from "@/lib/color";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 
 export default function ServerDiskUsage({
   id,

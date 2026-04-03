@@ -1,5 +1,5 @@
 import { fmtSnakeCaseToUpperSpaceCase } from "@/lib/formatting";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import EnableSwitch from "@/ui/enable-switch";
 import InputList, { InputListProps } from "@/ui/input-list";
 import {

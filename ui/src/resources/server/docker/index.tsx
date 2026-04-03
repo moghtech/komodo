@@ -12,7 +12,7 @@ import {
 import { colorByIntention, serverStateIntention } from "@/lib/color";
 import ServerContainers from "./containers";
 import ServerNetworks from "./networks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ServerVolumes from "./volumes";
 import ServerImages from "./images";
 import { useRead } from "@/lib/hooks";

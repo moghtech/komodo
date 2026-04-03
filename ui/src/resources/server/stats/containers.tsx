@@ -9,7 +9,7 @@ import { filterBySplit } from "@/lib/utils";
 import DockerResourceLink from "@/components/docker/link";
 import { useIsServerAvailable } from "../hooks";
 import SearchInput from "@/ui/search-input";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 
 export default function ServerContainerStats({ id }: { id: string }) {
   const [search, setSearch] = useState("");

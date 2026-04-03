@@ -9,7 +9,7 @@ import {
 } from "@/lib/hooks";
 import { UsableResource } from "@/resources";
 import { useServer } from "@/resources/server";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import Section from "@/ui/section";
 import { Center, Text } from "@mantine/core";
 import { Types } from "komodo_client";

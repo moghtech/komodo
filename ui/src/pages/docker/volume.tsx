@@ -5,7 +5,7 @@ import InspectSection from "@/components/inspect-section";
 import { useExecute, usePermissions, useRead, useSetTitle } from "@/lib/hooks";
 import { useServer } from "@/resources/server";
 import ResourceSubPage from "@/resources/sub-page";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ConfirmButton from "@/ui/confirm-button";
 import { DataTable } from "@/ui/data-table";
 import Section from "@/ui/section";

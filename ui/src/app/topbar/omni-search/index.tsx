@@ -1,7 +1,7 @@
 import { ActionIcon, Badge, Button, Group } from "@mantine/core";
 import { Spotlight, spotlight } from "@mantine/spotlight";
 import { useOmniSearch } from "./hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import { useShiftKeyListener } from "@/lib/hooks";
 import classes from "./index.module.scss";
 

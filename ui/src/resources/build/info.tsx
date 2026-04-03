@@ -10,7 +10,7 @@ import { Clock, FilePlus } from "lucide-react";
 import { DEFAULT_BUILD_DOCKERFILE_CONTENTS } from "./config";
 import { updateLogToHtml } from "@/lib/utils";
 import CopyButton from "@/ui/copy-button";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ConfirmUpdate from "@/ui/config/confirm";
 import ShowHideButton from "@/ui/show-hide-button";
 import { MonacoEditor } from "@/components/monaco";

@@ -1,6 +1,6 @@
 import { colorByIntention, ColorIntention } from "@/lib/color";
 import { usePermissions } from "@/lib/hooks";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import {
   MobileFriendlyTabsSelector,
   TabNoContent,

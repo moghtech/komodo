@@ -11,7 +11,7 @@ import TerminalSection from "@/components/terminal/section";
 import { Tabs } from "@mantine/core";
 import { colorByIntention, serverStateIntention } from "@/lib/color";
 import ServerConfig from "./config";
-import { ICONS } from "@/theme/icons";
+import { ICONS } from "@/lib/icons";
 import ServerDockerResources from "./docker";
 import ServerStats from "./stats";
 import ServerHostedResourcesSection from "./resources";
