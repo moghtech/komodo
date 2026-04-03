@@ -3,7 +3,7 @@ import { useExecute, usePermissions, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import ConfirmUpdate from "@/ui/config/confirm";
 import UnsavedChanges from "@/ui/config/unsaved-changes";
-import Section, { SectionProps } from "@/ui/section";
+import { Section, SectionProps } from "mogh_ui";
 import { Button, Group } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";

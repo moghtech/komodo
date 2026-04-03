@@ -1,6 +1,6 @@
 import { MonacoEditor } from "@/components/monaco";
 import { usePermissions, useRead } from "@/lib/hooks";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Center, Text } from "@mantine/core";
 import { Types } from "komodo_client";
 import { ReactNode } from "react";

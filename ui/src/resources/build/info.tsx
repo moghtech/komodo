@@ -3,7 +3,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { ReactNode, useState } from "react";
 import { useFullBuild } from ".";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Button, Code, Group, Stack, Text } from "@mantine/core";
 import ConfirmButton from "@/ui/confirm-button";
 import { Clock, FilePlus } from "lucide-react";

@@ -1,4 +1,4 @@
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { useStatsGranularity } from "../hooks";
 import { ReactNode, useMemo } from "react";
 import { Types } from "komodo_client";

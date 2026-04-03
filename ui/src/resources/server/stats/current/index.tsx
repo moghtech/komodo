@@ -1,5 +1,5 @@
 import { ICONS } from "@/lib/icons";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import StatBar from "@/ui/stat-bar";
 import { Group, Stack } from "@mantine/core";
 import { Types } from "komodo_client";

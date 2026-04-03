@@ -3,7 +3,7 @@ import { useRead } from "@/lib/hooks";
 import { filterBySplit } from "@/lib/utils";
 import { ICONS } from "@/lib/icons";
 import { DataTable } from "@/ui/data-table";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Box, Group } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import DeleteUserGroup from "../../../components/user/delete-group";

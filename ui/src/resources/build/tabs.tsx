@@ -9,7 +9,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import { useMemo } from "react";
 import { useBuild } from ".";
 import BuildConfig from "./config";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import DeploymentTable from "../deployment/table";
 import BuildInfo from "./info";
 import { ICONS } from "@/lib/icons";

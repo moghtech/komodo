@@ -4,7 +4,7 @@ import { notifications } from "@mantine/notifications";
 import { ReactNode, useState } from "react";
 import { DEFAULT_STACK_FILE_CONTENTS, useFullStack, useStack } from ".";
 import { Types } from "komodo_client";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Button, Code, Group, Stack, Text } from "@mantine/core";
 import ConfirmButton from "@/ui/confirm-button";
 import { FilePlus } from "lucide-react";

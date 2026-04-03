@@ -2,7 +2,7 @@ import { useExecute, usePermissions, useRead } from "@/lib/hooks";
 import { ReactNode } from "react";
 import { useFullResourceSync } from ".";
 import { useResourceSyncTabsView } from "./hooks";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { Code, Group, Stack, Text } from "@mantine/core";
 import { sanitizeOnlySpan } from "@/lib/utils";
 import { Types } from "komodo_client";

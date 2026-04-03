@@ -9,7 +9,7 @@ import { ICONS } from "@/lib/icons";
 import ConfirmButton from "@/ui/confirm-button";
 import { DataTable } from "@/ui/data-table";
 import PageGuard from "@/ui/page-guard";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import ShowHideButton from "@/ui/show-hide-button";
 import { Box, Center, Group, Text } from "@mantine/core";
 import { Types } from "komodo_client";

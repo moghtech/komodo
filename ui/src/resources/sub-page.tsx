@@ -9,7 +9,7 @@ import ResourceDescription from "./description";
 import { usableResourcePath } from "@/lib/utils";
 import ResourceUpdates from "@/components/updates/resource";
 import { usePermissions } from "@/lib/hooks";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 
 export interface ResourceSubPageProps extends EntityHeaderProps {

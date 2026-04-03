@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import Section, { SectionProps } from "@/ui/section";
+import { Section, SectionProps } from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 
 /** Includes save buttons */

@@ -2,7 +2,7 @@ import { Fragment, ReactNode } from "react";
 import { useStack } from ".";
 import { useRead } from "@/lib/hooks";
 import { Types } from "komodo_client";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import { DataTable, SortableHeader } from "@/ui/data-table";
 import StackServiceLink from "@/components/stack-service-link";
 import StatusBadge from "@/ui/status-badge";

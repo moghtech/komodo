@@ -11,7 +11,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Types } from "komodo_client";
 import { useMemo } from "react";
 import DeleteOnboardingKey from "./delete";
-import Section from "@/ui/section";
+import { Section } from "mogh_ui";
 import NewOnboardingKey from "./new";
 
 export default function SettingsOnboardingKeys() {
