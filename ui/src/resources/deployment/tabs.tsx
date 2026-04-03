@@ -7,7 +7,7 @@ import { ReactNode, useMemo } from "react";
 import {
   MobileFriendlyTabsSelector,
   TabNoContent,
-} from "@/ui/mobile-friendly-tabs";
+} from "mogh_ui";
 import { ICONS } from "@/lib/icons";
 import { Tabs } from "@mantine/core";
 import { colorByIntention, deploymentStateIntention } from "@/lib/color";

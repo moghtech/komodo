@@ -3,7 +3,7 @@ import EntityHeader, { EntityHeaderProps } from "@/ui/entity-header";
 import { ReactNode } from "react";
 import EntityPage, { EntityPageProps } from "@/ui/entity-page";
 import { Group, Stack, Text } from "@mantine/core";
-import DividedChildren from "@/ui/divided-children";
+import { DividedChildren } from "mogh_ui";
 import ResourceLink from "./link";
 import ResourceDescription from "./description";
 import { usableResourcePath } from "@/lib/utils";

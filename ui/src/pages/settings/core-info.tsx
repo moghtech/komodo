@@ -2,7 +2,7 @@ import { MonacoEditor } from "@/components/monaco";
 import { useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
 import CopyText from "@/ui/copy-text";
-import DividedChildren from "@/ui/divided-children";
+import { DividedChildren } from "mogh_ui";
 import {
   ActionIcon,
   Box,
