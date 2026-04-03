@@ -9,7 +9,7 @@ import ResourceLink from "@/resources/link";
 import ResourceSelector from "@/resources/selector";
 import { ICONS } from "@/lib/icons";
 import { DataTable } from "mogh_ui";
-import LabelledSwitch from "@/ui/labelled-switch";
+import { LabelledSwitch } from "mogh_ui";
 import { Page } from "mogh_ui";
 import { StatusBadge } from "mogh_ui";
 import { ActionIcon, Group, Pagination, Select, Stack } from "@mantine/core";

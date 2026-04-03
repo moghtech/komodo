@@ -1,7 +1,3 @@
-import { fmtSnakeCaseToUpperSpaceCase } from "mogh_ui";
-import { ICONS } from "@/lib/icons";
-import { EnableSwitch } from "mogh_ui";
-import InputList, { InputListProps } from "@/ui/input-list";
 import {
   Button,
   createPolymorphicComponent,
@@ -13,6 +9,13 @@ import {
   TextInput,
   TextInputProps,
 } from "@mantine/core";
+import {
+  fmtSnakeCaseToUpperSpaceCase,
+  EnableSwitch,
+  InputList,
+  InputListProps,
+} from "mogh_ui";
+import { ICONS } from "@/lib/icons";
 import { forwardRef, ReactNode } from "react";
 
 // https://mantine.dev/guides/polymorphic/#create-your-own-polymorphic-components

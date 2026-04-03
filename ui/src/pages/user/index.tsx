@@ -1,7 +1,7 @@
 import { useInvalidate, useRead, useUser, useWrite } from "@/lib/hooks";
 import { ConfirmButton } from "mogh_ui";
 import EntityPage from "@/ui/entity-page";
-import LabelledSwitch from "@/ui/labelled-switch";
+import { LabelledSwitch } from "mogh_ui";
 import { PageGuard } from "mogh_ui";
 import { Section } from "mogh_ui";
 import { Group, Stack } from "@mantine/core";

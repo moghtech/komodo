@@ -1,6 +1,6 @@
 import { useInvalidate, usePermissions, useWrite } from "@/lib/hooks";
 import { UsableResource } from "@/resources";
-import LabelledSwitch from "@/ui/labelled-switch";
+import { LabelledSwitch } from "mogh_ui";
 import { notifications } from "@mantine/notifications";
 import { Types } from "komodo_client";
 

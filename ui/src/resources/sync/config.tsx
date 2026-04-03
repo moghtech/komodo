@@ -15,7 +15,7 @@ import {
 } from "@/lib/hooks";
 import Config, { ConfigGroupArgs, ConfigProps } from "@/ui/config";
 import { ConfigItem, ConfigList, ConfigSwitch } from "@/ui/config/item";
-import ShowHideButton from "@/ui/show-hide-button";
+import { ShowHideButton } from "mogh_ui";
 import { Group, Select, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
