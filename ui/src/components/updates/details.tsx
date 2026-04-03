@@ -14,7 +14,7 @@ import {
   fmtUpperCamelcase,
 } from "mogh_ui";
 import { Section } from "mogh_ui";
-import { MonacoDiffEditor } from "mogh_monaco";
+import { MonacoDiffEditor } from "mogh_ui";
 import { LoadingScreen } from "mogh_ui";
 import { atom, useAtom } from "jotai";
 import ResourceLink from "@/resources/link";
@@ -68,6 +68,8 @@ export function UpdateDetailsContent({ id }: { id: string }) {
   useWebsocketMessages("update-details", (update) => {
     if (update.id === id) refetch();
   });
+
+  const enableFancyToml = useRead("GetCoreInfo", {}).data?.enable_fancy_toml;
 
   if (!update) {
     return <LoadingScreen mt="0" h="50vh" />;
@@ -152,6 +154,7 @@ export function UpdateDetailsContent({ id }: { id: string }) {
               original={update.prev_toml}
               modified={update.current_toml}
               language="fancy_toml"
+              enableFancyToml={enableFancyToml}
               readOnly
             />
           </Section>

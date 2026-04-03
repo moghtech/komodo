@@ -1,4 +1,4 @@
-import { MonacoEditor } from "mogh_monaco";
+import { MonacoEditor } from "mogh_ui";
 import { usePermissions, useRead } from "@/lib/hooks";
 import { Section } from "mogh_ui";
 import { Center, Text } from "@mantine/core";

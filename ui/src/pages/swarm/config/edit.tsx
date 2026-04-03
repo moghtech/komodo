@@ -1,8 +1,8 @@
-import { languageFromPath, MonacoEditor } from "mogh_monaco";
+import { languageFromPath, MonacoEditor } from "mogh_ui";
 import { useExecute, usePermissions, useRead } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import ConfirmUpdate from "@/ui/config/confirm";
-import UnsavedChanges from "@/ui/config/unsaved-changes";
+import { ConfirmUpdate } from "mogh_ui";
+import { UnsavedChanges } from "mogh_ui";
 import { Section, SectionProps } from "mogh_ui";
 import { Button, Group } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";

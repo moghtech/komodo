@@ -1,6 +1,5 @@
 import { usePermissions, useRead, useWrite } from "@/lib/hooks";
-import Config from "@/ui/config";
-import { ConfigItem, ConfigList, ConfigSwitch } from "@/ui/config/item";
+import { Config, ConfigItem, ConfigList, ConfigSwitch } from "mogh_ui";
 import { Group, Stack, Text } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
@@ -9,7 +8,7 @@ import ResourceSelector from "@/resources/selector";
 import { AccountSelectorConfig } from "@/components/config/account-selector";
 import { extractRegistryDomain } from "@/lib/utils";
 import DeploymentImageConfig from "./image";
-import { MonacoEditor } from "mogh_monaco";
+import { MonacoEditor } from "mogh_ui";
 import DeploymentNetworkSelector from "./network";
 import SecretsSearch from "@/components/config/secrets-search";
 import DeploymentRestartSelector from "./restart";

@@ -1,4 +1,4 @@
-import { languageFromPath, MonacoEditor } from "mogh_monaco";
+import { languageFromPath, MonacoEditor } from "mogh_ui";
 import { useExecute, useInvalidate, usePermissions } from "@/lib/hooks";
 import { CreateModal } from "mogh_ui";
 import { Stack, Text, TextInput } from "@mantine/core";

@@ -6,8 +6,14 @@ import {
   useWrite,
 } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import Config, { ConfigGroupArgs, ConfigProps } from "@/ui/config";
-import { ConfigItem, ConfigList, ConfigSwitch } from "@/ui/config/item";
+import {
+  Config,
+  ConfigGroupArgs,
+  ConfigProps,
+  ConfigItem,
+  ConfigList,
+  ConfigSwitch,
+} from "mogh_ui";
 import {
   ActionIcon,
   Button,
@@ -24,7 +30,7 @@ import ResourceLink from "@/resources/link";
 import ResourceSelector from "@/resources/selector";
 import { ShowHideButton } from "mogh_ui";
 import SecretsSearch from "@/components/config/secrets-search";
-import { MonacoEditor } from "mogh_monaco";
+import { MonacoEditor } from "mogh_ui";
 import { EnableSwitch } from "mogh_ui";
 import StackConfigFiles from "./config-files";
 import SystemCommand from "@/components/config/system-command";

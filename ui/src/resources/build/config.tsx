@@ -5,8 +5,14 @@ import {
   useWebhookIntegrations,
   useWrite,
 } from "@/lib/hooks";
-import Config, { ConfigGroupArgs, ConfigProps } from "@/ui/config";
-import { ConfigInput, ConfigItem, ConfigList } from "@/ui/config/item";
+import {
+  Config,
+  ConfigGroupArgs,
+  ConfigProps,
+  ConfigInput,
+  ConfigItem,
+  ConfigList,
+} from "mogh_ui";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import ResourceSelector from "@/resources/selector";
@@ -15,7 +21,7 @@ import { Button, Group, Select, Stack, Text } from "@mantine/core";
 import { ICONS } from "@/lib/icons";
 import ImageRegistryConfig from "@/components/config/image-registry-config";
 import SystemCommand from "@/components/config/system-command";
-import { MonacoEditor } from "mogh_monaco";
+import { MonacoEditor } from "mogh_ui";
 import SecretsSearch from "@/components/config/secrets-search";
 import { Link } from "react-router-dom";
 import AddExtraArg from "@/components/config/add-extra-arg";

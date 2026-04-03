@@ -10,10 +10,9 @@ import {
   useWrite,
 } from "@/lib/hooks";
 import { fmtSnakeCaseToUpperSpaceCase } from "mogh_ui";
-import { MonacoEditor } from "mogh_monaco";
-import Config from "@/ui/config";
+import { MonacoEditor } from "mogh_ui";
+import { Config, ConfigItem, ConfigSwitch } from "mogh_ui";
 import ActionLastRun from "./last-run";
-import { ConfigItem, ConfigSwitch } from "@/ui/config/item";
 import TimezoneSelector from "@/components/timezone-selector";
 import SecretsSearch from "@/components/config/secrets-search";
 import WebhookBuilder from "@/components/webhook/builder";

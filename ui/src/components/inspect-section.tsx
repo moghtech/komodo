@@ -5,7 +5,7 @@ import { ShowHideButton } from "mogh_ui";
 import { Box } from "@mantine/core";
 import { Types } from "komodo_client";
 import { useRead } from "@/lib/hooks";
-import { MonacoEditor } from "mogh_monaco";
+import { MonacoEditor } from "mogh_ui";
 
 export interface InspectSectionProps extends Omit<SectionProps, "children"> {
   /* Inspect a read response */

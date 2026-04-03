@@ -1,4 +1,4 @@
-import { usePermissions, useWrite } from "@/lib/hooks";
+import { usePermissions, useRead, useWrite } from "@/lib/hooks";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { ReactNode, useState } from "react";
@@ -9,10 +9,10 @@ import { ConfirmButton } from "mogh_ui";
 import { FilePlus } from "lucide-react";
 import { updateLogToHtml } from "@/lib/utils";
 import { ICONS } from "@/lib/icons";
-import ConfirmUpdate from "@/ui/config/confirm";
+import { ConfirmUpdate } from "mogh_ui";
 import { DividedChildren } from "mogh_ui";
 import { ShowHideButton } from "mogh_ui";
-import { MonacoEditor } from "mogh_monaco";
+import { MonacoEditor } from "mogh_ui";
 
 export default function ResourceSyncInfo({
   id,
@@ -26,6 +26,7 @@ export default function ResourceSyncInfo({
   );
   const [show, setShow] = useState<Record<string, boolean | undefined>>({});
   const { canWrite } = usePermissions({ type: "ResourceSync", id });
+  const enableFancyToml = useRead("GetCoreInfo", {}).data?.enable_fancy_toml;
 
   const { mutateAsync: writeContents, isPending } = useWrite(
     "WriteSyncFileContents",
@@ -41,6 +42,7 @@ export default function ResourceSyncInfo({
     },
   );
   const sync = useFullResourceSync(id);
+  
   const filesOnHost = sync?.config?.files_on_host ?? false;
   const gitRepo =
     sync?.config?.repo || sync?.config?.linked_repo ? true : false;
@@ -117,11 +119,7 @@ export default function ResourceSyncInfo({
             }));
           };
           return (
-            <Stack
-              className="bordered-light"
-              bdrs="md"
-              p="xl"
-            >
+            <Stack className="bordered-light" bdrs="md" p="xl">
               {/* HEADER */}
               <Group
                 justify="space-between"
@@ -186,11 +184,15 @@ export default function ResourceSyncInfo({
                         }}
                         disabled={!edits[keyPath]}
                         language="fancy_toml"
+                        enableFancyToml={enableFancyToml}
                         loading={isPending}
                       />
                     </>
                   )}
-                  <ShowHideButton show={showContents} setShow={handleToggleShow} />
+                  <ShowHideButton
+                    show={showContents}
+                    setShow={handleToggleShow}
+                  />
                 </Group>
               </Group>
 
@@ -199,6 +201,7 @@ export default function ResourceSyncInfo({
                 <MonacoEditor
                   value={edits[keyPath] ?? content.contents}
                   language="fancy_toml"
+                  enableFancyToml={enableFancyToml}
                   readOnly={!canEdit}
                   filename={content.path}
                   onValueChange={editFileCallback(keyPath)}

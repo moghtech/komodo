@@ -5,14 +5,13 @@ import {
   useWebhookIntegrations,
   useWrite,
 } from "@/lib/hooks";
-import Config from "@/ui/config";
+import { Config, ConfigItem, ConfigSwitch } from "mogh_ui";
 import { useLocalStorage } from "@mantine/hooks";
 import { Types } from "komodo_client";
 import { useState } from "react";
 import Stage from "./stage";
 import { Button, Group, Select, Stack, TextInput } from "@mantine/core";
 import { ICONS } from "@/lib/icons";
-import { ConfigItem, ConfigSwitch } from "@/ui/config/item";
 import TimezoneSelector from "@/components/timezone-selector";
 import WebhookBuilder from "@/components/webhook/builder";
 import { LabelledSwitch } from "mogh_ui";
