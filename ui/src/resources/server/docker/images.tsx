@@ -7,7 +7,7 @@ import { Badge, Group } from "@mantine/core";
 import { Prune } from "../executions";
 import { DataTable, SortableHeader } from "mogh_ui";
 import DockerResourceLink from "@/components/docker/link";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export default function ServerImages({
   id,

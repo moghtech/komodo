@@ -24,7 +24,7 @@ import SharedTextUpdate, {
   useSharedTextUpdateData,
 } from "@/ui/shared-text-update";
 import { CopyText } from "mogh_ui";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export default function SettingsVariables() {
   const user = useUser().data;

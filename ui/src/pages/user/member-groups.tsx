@@ -1,11 +1,10 @@
 import { useInvalidate, useRead, useWrite } from "@/lib/hooks";
 import { ICONS } from "@/lib/icons";
-import { Section } from "mogh_ui";
+import { Section, ConfirmIcon } from "mogh_ui";
 import { Box, Group, Text } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import UserAddUserGroup from "./add-group";
 import { notifications } from "@mantine/notifications";
-import ConfirmIcon from "@/ui/confirm-icon";
 
 export default function UserMemberGroups({ userId }: { userId: string }) {
   const allGroups = useRead("ListUserGroups", {}).data;
@@ -29,7 +28,6 @@ export default function UserMemberGroups({ userId }: { userId: string }) {
       title="Groups"
       icon={<ICONS.UserGroup size="1.2rem" />}
       titleFz="h3"
-     
       titleRight={
         <Box ml="md">
           <UserAddUserGroup userId={userId} />

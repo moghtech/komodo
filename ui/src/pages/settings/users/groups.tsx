@@ -8,7 +8,7 @@ import { Box, Group } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import DeleteUserGroup from "../../../components/user/delete-group";
 import NewUserGroup from "./new-group";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export default function SettingsUserGroups({
   search,

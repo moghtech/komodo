@@ -1,6 +1,6 @@
 import AlertDetails from "@/components/alerts/details";
 import { useRead, useSetTitle } from "@/lib/hooks";
-import PageGuard from "@/ui/page-guard";
+import { PageGuard } from "mogh_ui";
 import { useParams } from "react-router-dom";
 
 export default function Alert() {

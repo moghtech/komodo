@@ -10,7 +10,7 @@ import { Link } from "react-router-dom";
 import DeleteTerminal from "./delete";
 import BatchDeleteAllTerminals from "./batch-delete";
 import NewTerminal from "./new";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export default function Terminals() {
   useSetTitle("Terminals");

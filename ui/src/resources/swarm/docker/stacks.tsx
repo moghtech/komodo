@@ -7,7 +7,7 @@ import { DataTable, SortableHeader } from "mogh_ui";
 import SwarmResourceLink from "@/components/swarm/link";
 import { StatusBadge } from "mogh_ui";
 import { swarmStateIntention } from "@/lib/color";
-import SearchInput from "@/ui/search-input";
+import { SearchInput } from "mogh_ui";
 
 export default function SwarmStacks({
   id,
