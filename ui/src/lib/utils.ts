@@ -2,7 +2,6 @@ import { UsableResource } from "@/resources";
 import { Types } from "komodo_client";
 import sanitizeHtml from "sanitize-html";
 import ConvertAnsiToHtml from "ansi-to-html";
-import { notifications } from "@mantine/notifications";
 
 export function sanitizeQuery() {
   sanitizeQueryInner(new URLSearchParams(location.search));
@@ -313,20 +312,6 @@ export function terminalLink({
       return `/stacks/${target.params.stack}/service/${target.params.service}/terminal/${name}`;
     case "Deployment":
       return `/deployments/${target.params.deployment}/terminal/${name}`;
-  }
-}
-
-export function sendCopyNotification(label = "content") {
-  if (location.origin.startsWith("https")) {
-    notifications.show({
-      message: `Copied ${label} to clipboard.`,
-      color: "green",
-    });
-  } else {
-    notifications.show({
-      message: "Cannot copy to clipboard without HTTPS.",
-      color: "red",
-    });
   }
 }
 

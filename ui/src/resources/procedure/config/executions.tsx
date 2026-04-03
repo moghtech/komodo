@@ -5,7 +5,7 @@ import { useRead } from "@/lib/hooks";
 import { textToEnv } from "@/lib/utils";
 import ResourceSelector from "@/resources/selector";
 import { ICONS } from "@/lib/icons";
-import EnableSwitch from "@/ui/enable-switch";
+import { EnableSwitch } from "mogh_ui";
 import TextUpdateModal from "@/ui/text-update-modal";
 import {
   Button,

@@ -25,7 +25,7 @@ import ResourceSelector from "@/resources/selector";
 import ShowHideButton from "@/ui/show-hide-button";
 import SecretsSearch from "@/components/config/secrets-search";
 import { MonacoEditor } from "@/components/monaco";
-import EnableSwitch from "@/ui/enable-switch";
+import { EnableSwitch } from "mogh_ui";
 import StackConfigFiles from "./config-files";
 import SystemCommand from "@/components/config/system-command";
 import { Link } from "react-router-dom";

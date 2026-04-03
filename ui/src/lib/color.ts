@@ -1,10 +1,10 @@
 import { Types } from "komodo_client";
-import { Theme } from "mogh_ui";
+import { opacityColorsTuple } from "mogh_ui";
 
 export function themeAdditionalColors() {
   return Object.fromEntries(
     Object.values(Types.TagColor).map((color) => {
-      return ["Tag" + color, Theme.opacityColorsTuple(tagColor(color))];
+      return ["Tag" + color, opacityColorsTuple(tagColor(color))];
     }),
   );
 }
